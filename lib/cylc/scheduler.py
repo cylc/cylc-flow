@@ -22,12 +22,11 @@ import logging
 import os
 from pipes import quote
 from Queue import Empty
+import shlex
 from shutil import copy as copyfile, copytree, rmtree
-import signal
 from subprocess import call, Popen, PIPE
 import sys
 from tempfile import mkstemp
-import threading
 from time import sleep, time
 import traceback
 
@@ -185,6 +184,7 @@ class Scheduler(object):
         self.pool = None
         self.request_handler = None
         self.comms_daemon = None
+        self.info_interface = None
 
         self._profile_amounts = {}
         self._profile_update_times = {}
@@ -204,6 +204,8 @@ class Scheduler(object):
         self.hold_suite_now = False
         self.suite_timer_timeout = 0.0
         self.suite_timer_active = False
+        self.suite_inactivity_timeout = 0.0
+        self.already_inactive = False
 
         self.time_next_kill = None
         self.already_timed_out = False
@@ -852,7 +854,7 @@ conditions; see `cylc conditions`.
 
     def command_set_verbosity(self, lvl):
         """Remove suite verbosity."""
-        self.log.setLevel(lvl)
+        self.log.logger.setLevel(lvl)
         cylc.flags.debug = (lvl == logging.DEBUG)
         return True, 'OK'
 
@@ -907,7 +909,7 @@ conditions; see `cylc conditions`.
                 get_current_time_string()))
         self.suite_timer_active = True
 
-    def set_suite_inactivity_timer(self, reset=False):
+    def set_suite_inactivity_timer(self):
         """Set suite's inactivity timer."""
         self.suite_inactivity_timeout = time() + (
             self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT)
@@ -1254,8 +1256,11 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
             if (self.run_mode == mode_name and
                     self.config.cfg['cylc'][key]['disable suite event hooks']):
                 return
+        self._run_event_mail(event, message)
+        self._run_event_custom_handlers(event, message)
 
-        # Email notification
+    def _run_event_mail(self, event, message):
+        """Helper for "run_event_handlers", do mail notification."""
         if event in self._get_events_conf('mail events', []):
             # SMTP server
             env = dict(os.environ)
@@ -1264,6 +1269,23 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
                 env['smtp'] = mail_smtp
             subject = '[suite %(event)s] %(suite)s' % {
                 'suite': self.suite, 'event': event}
+            stdin_str = ''
+            for name, value in [
+                    ('suite event', event),
+                    ('reason', message),
+                    ('suite', self.suite),
+                    ('host', self.host),
+                    ('port', self.port),
+                    ('owner', self.owner)]:
+                if value:
+                    stdin_str += '%s: %s\n' % (name, value)
+            mail_footer_tmpl = self._get_events_conf('mail footer')
+            if mail_footer_tmpl:
+                stdin_str += (mail_footer_tmpl + '\n') % {
+                    'host': self.host,
+                    'port': self.port,
+                    'owner': self.owner,
+                    'suite': self.suite}
             ctx = SuiteProcContext(
                 (self.SUITE_EVENT_HANDLER, event),
                 [
@@ -1274,7 +1296,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
                     self._get_events_conf('mail to', USER),
                 ],
                 env=env,
-                stdin_str=subject + '\n')
+                stdin_str=stdin_str)
             if SuiteProcPool.get_inst().is_closed():
                 # Run command in foreground if process pool is closed
                 SuiteProcPool.get_inst().run_command(ctx)
@@ -1284,6 +1306,8 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
                 SuiteProcPool.get_inst().put_command(
                     ctx, self._run_event_mail_callback)
 
+    def _run_event_custom_handlers(self, event, message):
+        """Helper for "run_event_handlers", custom event handlers."""
         # Look for event handlers
         # 1. Handlers for specific event
         # 2. General handlers
@@ -1412,7 +1436,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
                         (time() - time0))
 
             self.pool.process_queued_task_messages()
-            self.pool.process_queued_task_event_handlers()
+            self.process_queued_task_event_handlers()
             self.process_command_queue()
             if cylc.flags.iflag or self.do_update_state_summary:
                 cylc.flags.iflag = False
@@ -1554,14 +1578,14 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
                 raise SchedulerError('Abort on suite timeout is set')
 
     def check_suite_inactive(self):
+        """Check if suite is inactive or not."""
         if self.already_inactive:
             return
         if time() > self.suite_inactivity_timeout:
             self.already_inactive = True
             message = 'suite timed out after inactivity for %s' % (
                 get_seconds_as_interval_string(
-                    self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT))
-            )
+                    self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT)))
             self.log.warning(message)
             self.run_event_handlers(self.EVENT_INACTIVITY_TIMEOUT, message)
             if self._get_events_conf('abort on inactivity'):
@@ -1585,7 +1609,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
             if self._get_events_conf('abort on stalled'):
                 raise SchedulerError('Abort on suite stalled is set')
             # Start suite timer
-            if self._get_events_conf(self.EVENT_TIMEOUT) is not None:
+            if self._get_events_conf(self.EVENT_TIMEOUT):
                 self.set_suite_timer()
         else:
             self.stalled_last = pool_is_stalled
@@ -1650,6 +1674,195 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
 
         return process
 
+    def process_queued_task_event_handlers(self):
+        """Process task event handlers."""
+        ctx_groups = {}
+        env = None
+        for itask in self.pool.get_tasks():
+            for key, try_state in itask.event_handler_try_states.items():
+                # This should not happen, ignore for now.
+                if try_state.ctx is None:
+                    del itask.event_handler_try_states[key]
+                    continue
+                if try_state.is_waiting:
+                    continue
+                # Set timer if timeout is None.
+                if not try_state.is_timeout_set():
+                    if try_state.next() is None:
+                        itask.log(logging.WARNING, "%s failed" % str(key))
+                        del itask.event_handler_try_states[key]
+                        continue
+                    # Report retries and delayed 1st try
+                    tmpl = None
+                    if try_state.num > 1:
+                        tmpl = "%s failed, retrying in %s (after %s)"
+                    elif try_state.delay:
+                        tmpl = "%s will run after %s (after %s)"
+                    if tmpl:
+                        itask.log(logging.DEBUG, tmpl % (
+                            str(key),
+                            try_state.delay_as_seconds(),
+                            try_state.timeout_as_str()))
+                # Ready to run?
+                if not try_state.is_delay_done():
+                    continue
+                try_state.set_waiting()
+
+                if try_state.ctx.ctx_type == TaskProxy.CUSTOM_EVENT_HANDLER:
+                    # Run custom event handlers on their own
+                    if env is None:
+                        env = dict(os.environ)
+                        if TaskProxy.event_handler_env:
+                            env.update(TaskProxy.event_handler_env)
+                    SuiteProcPool.get_inst().put_command(
+                        SuiteProcContext(
+                            key, try_state.ctx.cmd, env=env, shell=True,
+                        ),
+                        itask.custom_event_handler_callback)
+                else:
+                    # Group together built-in event handlers, where possible
+                    if try_state.ctx not in ctx_groups:
+                        ctx_groups[try_state.ctx] = []
+                    # "itask.submit_num" may have moved on at this point
+                    key1, submit_num = key
+                    ctx_groups[try_state.ctx].append(
+                        (key1, str(itask.point), itask.tdef.name, submit_num))
+
+        for ctx, id_keys in ctx_groups.items():
+            if ctx.ctx_type == TaskProxy.EVENT_MAIL:
+                self._process_task_event_email(ctx, id_keys)
+            elif ctx.ctx_type == TaskProxy.JOB_LOGS_RETRIEVE:
+                self._process_task_job_logs_retrieval(ctx, id_keys)
+
+    def _process_task_event_email(self, ctx, id_keys):
+        """Process event notification, by email."""
+        subject = "[%(n_tasks)d task(s) %(event)s] %(suite)s" % {
+            "suite": self.suite,
+            "n_tasks": len(id_keys),
+            "event": ctx.event}
+        cmd = ["mail", "-s", subject]
+        # From: and To:
+        cmd.append("-r")
+        cmd.append(ctx.mail_from)
+        cmd.append(ctx.mail_to)
+        # STDIN for mail, tasks
+        stdin_str = ""
+        for i, id_key in enumerate(id_keys):
+            point, name, submit_num = id_key[1:]
+            stdin_str += "task %d: %s/%s/%02d\n" % (
+                i + 1, point, name, submit_num)
+        # STDIN for mail, event info + suite detail
+        stdin_str += "\n"
+        for name, value in [
+                ("task event", ctx.event),
+                ('suite', self.suite),
+                ("host", self.host),
+                ("port", self.port),
+                ("owner", self.owner)]:
+            if value:
+                stdin_str += "%s: %s\n" % (name, value)
+        mail_footer_tmpl = self._get_events_conf("mail footer")
+        if mail_footer_tmpl:
+            stdin_str += (mail_footer_tmpl + "\n") % {
+                "host": self.host,
+                "port": self.port,
+                "owner": self.owner,
+                "suite": self.suite}
+        # SMTP server
+        env = dict(os.environ)
+        mail_smtp = ctx.mail_smtp
+        if mail_smtp:
+            env["smtp"] = mail_smtp
+        SuiteProcPool.get_inst().put_command(
+            SuiteProcContext(
+                ctx, cmd, env=env, stdin_str=stdin_str, id_keys=id_keys,
+            ),
+            self._task_event_email_callback)
+
+    def _task_event_email_callback(self, ctx):
+        """Call back when email notification command exits."""
+        tasks = {}
+        for itask in self.pool.get_tasks():
+            if itask.point is not None and itask.submit_num:
+                tasks[(str(itask.point), itask.tdef.name)] = itask
+        for id_key in ctx.cmd_kwargs["id_keys"]:
+            key1, point, name, submit_num = id_key
+            try:
+                itask = tasks[(point, name)]
+                try_states = itask.event_handler_try_states
+                if ctx.ret_code == 0:
+                    del try_states[(key1, submit_num)]
+                    log_ctx = SuiteProcContext((key1, submit_num), None)
+                    log_ctx.ret_code = 0
+                    itask.command_log(log_ctx)
+                else:
+                    try_states[(key1, submit_num)].unset_waiting()
+            except KeyError:
+                if cylc.flags.debug:
+                    traceback.print_exc()
+
+    def _process_task_job_logs_retrieval(self, ctx, id_keys):
+        """Process retrieval of task job logs from remote user@host."""
+        if ctx.user_at_host and "@" in ctx.user_at_host:
+            s_user, s_host = ctx.user_at_host.split("@", 1)
+        else:
+            s_user, s_host = (None, ctx.user_at_host)
+        ssh_tmpl = str(GLOBAL_CFG.get_host_item(
+            "remote shell template", s_host, s_user)).replace(" %s", "")
+        rsync_str = str(GLOBAL_CFG.get_host_item(
+            "retrieve job logs command", s_host, s_user))
+
+        cmd = shlex.split(rsync_str) + ["--rsh=" + ssh_tmpl]
+        if cylc.flags.debug:
+            cmd.append("-v")
+        if ctx.max_size:
+            cmd.append("--max-size=%s" % (ctx.max_size,))
+        # Includes and excludes
+        includes = set()
+        for _, point, name, submit_num in id_keys:
+            # Include relevant directories, all levels needed
+            includes.add("/%s" % (point))
+            includes.add("/%s/%s" % (point, name))
+            includes.add("/%s/%s/%02d" % (point, name, submit_num))
+            includes.add("/%s/%s/%02d/**" % (point, name, submit_num))
+        cmd += ["--include=%s" % (include) for include in sorted(includes)]
+        cmd.append("--exclude=/**")  # exclude everything else
+        # Remote source
+        cmd.append(ctx.user_at_host + ":" + GLOBAL_CFG.get_derived_host_item(
+            self.suite, "suite job log directory", s_host, s_user) + "/")
+        # Local target
+        cmd.append(GLOBAL_CFG.get_derived_host_item(
+            self.suite, "suite job log directory") + "/")
+        SuiteProcPool.get_inst().put_command(
+            SuiteProcContext(ctx, cmd, env=dict(os.environ), id_keys=id_keys),
+            self._task_job_logs_retrieval_callback)
+
+    def _task_job_logs_retrieval_callback(self, ctx):
+        """Call back when log job retrieval completes."""
+        tasks = {}
+        for itask in self.pool.get_tasks():
+            if itask.point is not None and itask.submit_num:
+                tasks[(str(itask.point), itask.tdef.name)] = itask
+        for id_key in ctx.cmd_kwargs["id_keys"]:
+            key1, point, name, submit_num = id_key
+            try:
+                itask = tasks[(point, name)]
+                try_states = itask.event_handler_try_states
+                job_out = itask.get_job_log_path(
+                    itask.HEAD_MODE_LOCAL, submit_num, "job.out")
+                job_err = itask.get_job_log_path(
+                    itask.HEAD_MODE_LOCAL, submit_num, "job.err")
+                if os.path.exists(job_out) or os.path.exists(job_err):
+                    log_ctx = SuiteProcContext((key1, submit_num), None)
+                    log_ctx.ret_code = 0
+                    itask.command_log(log_ctx)
+                    del try_states[(key1, submit_num)]
+                else:
+                    try_states[(key1, submit_num)].unset_waiting()
+            except KeyError:
+                if cylc.flags.debug:
+                    traceback.print_exc()
+
     def shutdown(self, reason=None):
         """Shutdown the suite."""
         msg = "Suite shutting down at " + get_current_time_string()
@@ -1671,7 +1884,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
             try:
                 handle = open(
                     os.path.join(self.config.fdir, 'reference.log'), 'wb')
-                for line in open(self.suite_log.get_path()):
+                for line in open(self.suite_log.get_log_path(SuiteLog.LOG)):
                     if any([text in line for text in self.REF_LOG_TEXTS]):
                         handle.write(line)
                 handle.close()
@@ -1912,7 +2125,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
         self._update_profile_info("CPU %", cpu_frac, amount_format="%.1f")
 
     def _get_events_conf(self, key, default=None):
-        """Return a named event hooks configuration."""
+        """Return a named [cylc][[events]] configuration."""
         for getter in [
                 self.config.cfg['cylc']['events'],
                 GLOBAL_CFG.get(['cylc', 'events'])]:

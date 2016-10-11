@@ -329,6 +329,26 @@ Specify the suite events for which notification emails should be sent.
     \item {\em example:} \lstinline@handler = startup, shutdown, timeout@
 \end{myitemize}
 
+\paragraph[mail footer]{[cylc] \textrightarrow [[events]] \textrightarrow mail footer}
+
+Specify a string or string template to insert to footers of notification emails
+for both suite events and task events.
+
+A template string may have any or all of these patterns which will be
+substituted with actual values:
+\begin{myitemize}
+    \item \%(host)s: suite host name
+    \item \%(port)s: suite port number
+    \item \%(owner)s: suite owner name
+    \item \%(suite)s: suite name
+\end{myitemize}
+
+\begin{myitemize}
+    \item {\em type:} 
+    \item {\em default:} (none)
+    \item {\em example:} \lstinline@mail footer = see: http://localhost/%(owner)s/notes-on/%(suite)s/@
+\end{myitemize}
+
 \paragraph[mail from]{[cylc] \textrightarrow [[events]] \textrightarrow mail from}
 
 Specify an alternate \lstinline=from:= email address for suite event notifications.

@@ -35,8 +35,6 @@ from fnmatch import fnmatchcase
 from logging import DEBUG, INFO, WARNING, getLogger
 import os
 import Queue
-import re
-import shlex
 from time import time
 import traceback
 
@@ -57,7 +55,6 @@ from cylc.network.suite_broadcast_server import BroadcastServer
 from cylc.owner import is_remote_user
 from cylc.rundb import CylcSuiteDAO
 from cylc.suite_host import is_remote_host
-from cylc.task_proxy import TaskProxy
 from cylc.task_state import (
     TASK_STATUSES_ACTIVE, TASK_STATUSES_NOT_STALLED, TASK_STATUSES_FINAL,
     TASK_STATUS_HELD, TASK_STATUS_WAITING, TASK_STATUS_EXPIRED,
@@ -1049,177 +1046,6 @@ class TaskPool(object):
             if itask.identity in task_id_messages:
                 for priority, message in task_id_messages[itask.identity]:
                     itask.process_incoming_message(priority, message)
-
-    def process_queued_task_event_handlers(self):
-        """Process task event handlers."""
-        ctx_groups = {}
-        env = None
-        for itask in self.get_tasks():
-            for key, try_state in itask.event_handler_try_states.items():
-                # This should not happen, ignore for now.
-                if try_state.ctx is None:
-                    del itask.event_handler_try_states[key]
-                    continue
-                if try_state.is_waiting:
-                    continue
-                # Set timer if timeout is None.
-                if not try_state.is_timeout_set():
-                    if try_state.next() is None:
-                        itask.log(WARNING, "%s failed" % str(key))
-                        del itask.event_handler_try_states[key]
-                        continue
-                    # Report retries and delayed 1st try
-                    tmpl = None
-                    if try_state.num > 1:
-                        tmpl = "%s failed, retrying in %s (after %s)"
-                    elif try_state.delay:
-                        tmpl = "%s will run after %s (after %s)"
-                    if tmpl:
-                        itask.log(DEBUG, tmpl % (
-                            str(key),
-                            try_state.delay_as_seconds(),
-                            try_state.timeout_as_str()))
-                # Ready to run?
-                if not try_state.is_delay_done():
-                    continue
-                try_state.set_waiting()
-
-                if try_state.ctx.ctx_type == TaskProxy.CUSTOM_EVENT_HANDLER:
-                    # Run custom event handlers on their own
-                    if env is None:
-                        env = dict(os.environ)
-                        if TaskProxy.event_handler_env:
-                            env.update(TaskProxy.event_handler_env)
-                    SuiteProcPool.get_inst().put_command(
-                        SuiteProcContext(
-                            key, try_state.ctx.cmd, env=env, shell=True,
-                        ),
-                        itask.custom_event_handler_callback)
-                else:
-                    # Group together built-in event handlers, where possible
-                    if try_state.ctx not in ctx_groups:
-                        ctx_groups[try_state.ctx] = []
-                    # "itask.submit_num" may have moved on at this point
-                    key1, submit_num = key
-                    ctx_groups[try_state.ctx].append(
-                        (key1, str(itask.point), itask.tdef.name, submit_num))
-
-        for ctx, id_keys in ctx_groups.items():
-            if ctx.ctx_type == TaskProxy.EVENT_MAIL:
-                self._process_task_event_email(ctx, id_keys)
-            elif ctx.ctx_type == TaskProxy.JOB_LOGS_RETRIEVE:
-                self._process_task_job_logs_retrieval(ctx, id_keys)
-
-    def _process_task_event_email(self, ctx, id_keys):
-        """Process event notification, by email."""
-        subject = "[%(n_tasks)d task(s) %(event)s] %(suite_name)s" % {
-            "suite_name": self.suite_name,
-            "n_tasks": len(id_keys),
-            "event": ctx.event}
-        cmd = ["mail", "-s", subject]
-        # From: and To:
-        cmd.append("-r")
-        cmd.append(ctx.mail_from)
-        cmd.append(ctx.mail_to)
-        # Tasks
-        stdin_str = ""
-        for _, point, name, submit_num in id_keys:
-            stdin_str += "%s/%s/%02d: %s\n" % (
-                point, name, submit_num, ctx.event)
-        # SMTP server
-        env = dict(os.environ)
-        mail_smtp = ctx.mail_smtp
-        if mail_smtp:
-            env["smtp"] = mail_smtp
-        SuiteProcPool.get_inst().put_command(
-            SuiteProcContext(
-                ctx, cmd, env=env, stdin_str=stdin_str, id_keys=id_keys,
-            ),
-            self._task_event_email_callback)
-
-    def _task_event_email_callback(self, ctx):
-        """Call back when email notification command exits."""
-        tasks = {}
-        for itask in self.get_tasks():
-            if itask.point is not None and itask.submit_num:
-                tasks[(str(itask.point), itask.tdef.name)] = itask
-        for id_key in ctx.cmd_kwargs["id_keys"]:
-            key1, point, name, submit_num = id_key
-            try:
-                itask = tasks[(point, name)]
-                try_states = itask.event_handler_try_states
-                if ctx.ret_code == 0:
-                    del try_states[(key1, submit_num)]
-                    log_ctx = SuiteProcContext((key1, submit_num), None)
-                    log_ctx.ret_code = 0
-                    itask.command_log(log_ctx)
-                else:
-                    try_states[(key1, submit_num)].unset_waiting()
-            except KeyError:
-                if cylc.flags.debug:
-                    traceback.print_exc()
-
-    def _process_task_job_logs_retrieval(self, ctx, id_keys):
-        """Process retrieval of task job logs from remote user@host."""
-        if ctx.user_at_host and "@" in ctx.user_at_host:
-            s_user, s_host = ctx.user_at_host.split("@", 1)
-        else:
-            s_user, s_host = (None, ctx.user_at_host)
-        ssh_tmpl = str(GLOBAL_CFG.get_host_item(
-            "remote shell template", s_host, s_user)).replace(" %s", "")
-        rsync_str = str(GLOBAL_CFG.get_host_item(
-            "retrieve job logs command", s_host, s_user))
-
-        cmd = shlex.split(rsync_str) + ["--rsh=" + ssh_tmpl]
-        if cylc.flags.debug:
-            cmd.append("-v")
-        if ctx.max_size:
-            cmd.append("--max-size=%s" % (ctx.max_size,))
-        # Includes and excludes
-        includes = set()
-        for _, point, name, submit_num in id_keys:
-            # Include relevant directories, all levels needed
-            includes.add("/%s" % (point))
-            includes.add("/%s/%s" % (point, name))
-            includes.add("/%s/%s/%02d" % (point, name, submit_num))
-            includes.add("/%s/%s/%02d/**" % (point, name, submit_num))
-        cmd += ["--include=%s" % (include) for include in sorted(includes)]
-        cmd.append("--exclude=/**")  # exclude everything else
-        # Remote source
-        cmd.append(ctx.user_at_host + ":" + GLOBAL_CFG.get_derived_host_item(
-            self.suite_name, "suite job log directory", s_host, s_user) + "/")
-        # Local target
-        cmd.append(GLOBAL_CFG.get_derived_host_item(
-            self.suite_name, "suite job log directory") + "/")
-        SuiteProcPool.get_inst().put_command(
-            SuiteProcContext(ctx, cmd, env=dict(os.environ), id_keys=id_keys),
-            self._task_job_logs_retrieval_callback)
-
-    def _task_job_logs_retrieval_callback(self, ctx):
-        """Call back when log job retrieval completes."""
-        tasks = {}
-        for itask in self.get_tasks():
-            if itask.point is not None and itask.submit_num:
-                tasks[(str(itask.point), itask.tdef.name)] = itask
-        for id_key in ctx.cmd_kwargs["id_keys"]:
-            key1, point, name, submit_num = id_key
-            try:
-                itask = tasks[(point, name)]
-                try_states = itask.event_handler_try_states
-                job_out = itask.get_job_log_path(
-                    itask.HEAD_MODE_LOCAL, submit_num, "job.out")
-                job_err = itask.get_job_log_path(
-                    itask.HEAD_MODE_LOCAL, submit_num, "job.err")
-                if os.path.exists(job_out) or os.path.exists(job_err):
-                    log_ctx = SuiteProcContext((key1, submit_num), None)
-                    log_ctx.ret_code = 0
-                    itask.command_log(log_ctx)
-                    del try_states[(key1, submit_num)]
-                else:
-                    try_states[(key1, submit_num)].unset_waiting()
-            except KeyError:
-                if cylc.flags.debug:
-                    traceback.print_exc()
 
     def process_queued_db_ops(self):
         """Handle queued db operations for each task proxy."""
