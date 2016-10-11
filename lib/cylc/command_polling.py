@@ -15,20 +15,19 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Encapsulates polling activity for CLI commands."""
 
 import sys
-from time import sleep, time
-
-from cylc.suite_logging import OUT, ERR
+from time import sleep
 
 
-class poller(object):
+class Poller(object):
     """Encapsulates polling activity for cylc commands. Derived classes
     must override the check() method to test the polling condition."""
 
     @classmethod
     def add_to_cmd_options(cls, parser, d_interval=60, d_max_polls=10):
-        # add command line options for polling
+        """Add command line options for commands that can do polling"""
         parser.add_option(
             "--max-polls",
             help="Maximum number of polls (default " + str(d_max_polls) + ").",
@@ -47,26 +46,28 @@ class poller(object):
             dest="interval",
             default=d_interval)
 
-    def __init__(self, condition, interval, max_polls, args={}):
+    def __init__(self, condition, interval, max_polls, args):
 
         self.condition = condition  # e.g. "suite stopped"
 
-        """check max_polls is an int"""
+        # check max_polls is an int
         try:
             self.max_polls = int(max_polls)
-        except:
-            ERR.error("max_polls must be an int")
-            sys.exit(1)
+        except ValueError:
+            sys.exit("max_polls must be an int")
 
-        """check interval is an int"""
+        # check interval is an int
         try:
             self.interval = int(interval)
-        except:
-            ERR.error("interval must be an integer")
-            sys.exit(1)
+        except ValueError:
+            sys.exit("interval must be an integer")
 
         self.n_polls = 0
         self.args = args  # any extra parameters needed by check()
+
+    def check(self):
+        """Abstract method. Test polling condition."""
+        raise NotImplementedError()
 
     def poll(self):
         """Poll for the condition embodied by self.check().
@@ -76,27 +77,23 @@ class poller(object):
             # exit 1 as we can't know if the condition is satisfied
             sys.exit("WARNING: nothing to do (--max-polls=0)")
         elif self.max_polls == 1:
-            log_msg = "checking"
+            sys.stdout.write("checking for '%s'" % self.condition)
         else:
-            log_msg = "polling"
-        log_msg += " for '" + self.condition + "'"
+            sys.stdout.write("polling for '%s'" % self.condition)
 
-        done = False
-        while (not done and self.n_polls < self.max_polls):
+        while self.n_polls < self.max_polls:
             self.n_polls += 1
             if self.check():
-                done = True
-            else:
-                if self.max_polls > 1:
-                    log_msg += '.'
-                    sleep(self.interval)
-        if done:
-            OUT.info(log_msg + ": satisfied")
-            return True
-        else:
-            OUT.info(log_msg)
-            err_msg = "condition not satisfied",
+                sys.stdout.write(": satisfied\n")
+                return True
             if self.max_polls > 1:
-                err_msg += "\nafter " + str(self.max_polls) + " polls"
-            ERR.error(err_msg)
-            return False
+                sys.stdout.write(".")
+                sleep(self.interval)
+        sys.stdout.write("\n")
+        if self.max_polls > 1:
+            sys.stderr.write(
+                "ERROR: condition not satisfied after %d polls\n" %
+                self.max_polls)
+        else:
+            sys.stderr.write("ERROR: condition not satisfied\n")
+        return False
