@@ -1223,11 +1223,11 @@ can be accessed at run time by right-clicking on the task in the cylc GUI, or
 printed to the terminal:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc log tut.oneoff.basic hello.1
+shell$ cylc cat-log tut.oneoff.basic hello.1
 \end{lstlisting}
 This command can also print the suite log (and stdout and stderr for suites
 in daemon mode) and task stdout and stderr logs (see
-\lstinline=cylc log --help=).
+\lstinline=cylc cat-log --help=).
 A new job script can also be generated on the fly for inspection:
 \lstset{language=transcript}
 \begin{lstlisting}
@@ -1334,17 +1334,17 @@ requirement.
 Task job logs can be viewed by right-clicking on tasks in the gcylc
 GUI (so long as the task proxy is live in the suite), manually
 accessed from the log directory (of course), or printed to the terminal
-with the \lstinline=cylc log= command:
+with the \lstinline=cylc cat-log= command:
 \lstset{language=transcript}
 \begin{lstlisting}
 # suite logs:
-shell$ cylc log    tut.oneoff.basic           # suite event log
-shell$ cylc log -o tut.oneoff.basic           # suite stdout log
-shell$ cylc log -e tut.oneoff.basic           # suite stderr log
+shell$ cylc cat-log    tut.oneoff.basic           # suite event log
+shell$ cylc cat-log -o tut.oneoff.basic           # suite stdout log
+shell$ cylc cat-log -e tut.oneoff.basic           # suite stderr log
 # task logs:
-shell$ cylc log    tut.oneoff.basic hello.1   # task job script
-shell$ cylc log -o tut.oneoff.basic hello.1   # task stdout log
-shell$ cylc log -e tut.oneoff.basic hello.1   # task stderr log
+shell$ cylc cat-log    tut.oneoff.basic hello.1   # task job script
+shell$ cylc cat-log -o tut.oneoff.basic hello.1   # task stdout log
+shell$ cylc cat-log -e tut.oneoff.basic hello.1   # task stderr log
 \end{lstlisting}
 \begin{myitemize}
     \item For a web-based interface to suite and task logs (and much more),
@@ -1533,7 +1533,7 @@ task:
 \begin{lstlisting}
 shell$ cat ~/cylc-run/tut.oneoff.goodbye/log/job/1/goodbye/01/job.out
   # or
-shell$ cylc log -o tut.oneoff.goodbye goodbye.1
+shell$ cylc cat-log -o tut.oneoff.goodbye goodbye.1
 JOB SCRIPT STARTING
 cylc (scheduler - 2014-08-14T15:09:30+12): goodbye.1 started at 2014-08-14T15:09:30+12
 cylc Suite and Task Identity:
@@ -5445,7 +5445,7 @@ method and override it for specific tasks or families:
 As shown in the Tutorial (\ref{RunningSuitesCLI}) job scripts are
 saved to the suite run directory; the commands used to submit them are
 printed to stdout by cylc in debug mode; and they can be printed with the
-\lstinline=cylc log= command or new ones generated and printed with the
+\lstinline=cylc cat-log= command or new ones generated and printed with the
 \lstinline=cylc jobscript= command. Take a look at one to see exactly
 how cylc wraps and runs your tasks.
 
@@ -5738,7 +5738,7 @@ to here will be complete task job logs.
 Some job submission methods, such as \lstinline=pbs=, redirect a job's stdout
 and stderr streams to a separate cache area while the job is running. The
 contents are only copied to the normal locations when the job completes. This
-means that \lstinline=cylc log= or the gcylc GUI will be unable to find the
+means that \lstinline=cylc cat-log= or the gcylc GUI will be unable to find the
 job's stdout and stderr streams while the job is running. Some sites with these
 job submission methods are known to provide commands for viewing and/or
 tail-follow a job's stdout and stderr streams that are redirected to these
