@@ -5823,6 +5823,13 @@ see~\ref{SubmissionPollingIntervals} and~\ref{ExecutionPollingIntervals}).
 Note that regular polling is not as efficient as task messaging in updating
 task status, and it should be used sparingly in large suites.
 
+Note that for polling to work correctly, the batch queueing system must have a
+job listing command for listing your jobs, and that the job listing must
+display job IDs as they are returned by the batch queueing system submit
+command. For example, for pbs, moab and sge, the \lstinline=qstat= command
+should list jobs with their IDs displayed in exactly the same format as they
+are returned by the \lstinline=qsub= command.
+
 \subsection{Job Killing}
 
 For supported job submission methods, the suite daemon can execute a process on
