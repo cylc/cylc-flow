@@ -164,6 +164,14 @@ class TaskStateError(ValueError):
 class TaskState(object):
     """Task status and utilities."""
 
+    # Memory optimization - constrain possible attributes to this list.
+    __slots__ = ["_STATUS_MAP", "status", "identity", "db_events_insert",
+                 "db_update_status", "log", "_recalc_satisfied",
+                 "_is_satisfied", "_suicide_is_satisfied", "prerequisites",
+                 "suicide_prerequisites", "external_triggers", "outputs",
+                 "kill_failed", "hold_on_retry", "_state_pre_hold", "run_mode",
+                 "submission_timer_timeout", "execution_timer_timeout"]
+
     # Associate status names with other properties.
     _STATUS_MAP = {
         TASK_STATUS_RUNAHEAD: {

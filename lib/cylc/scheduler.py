@@ -598,7 +598,6 @@ conditions; see `cylc conditions`.
             elif status in (TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING):
                 itask.state.set_prerequisites_all_satisfied()
                 # update the task proxy with submit ID etc.
-                itask.try_number = try_num
                 itask.user_at_host = user_at_host
                 self.old_user_at_host_set.add(itask.user_at_host)
                 if itask.user_at_host is None:
