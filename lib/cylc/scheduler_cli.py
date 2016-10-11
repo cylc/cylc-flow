@@ -96,7 +96,7 @@ def parse_commandline(is_restart):
     if is_restart:
         parser.add_option(
             "--checkpoint",
-            help="Use specified instead of latest checkpoint to restart",
+            help="Use specified checkpoint to restart",
             metavar="CHECKPOINT", action="store", dest="checkpoint")
 
         parser.add_option(
