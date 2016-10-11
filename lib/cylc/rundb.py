@@ -639,8 +639,8 @@ class CylcSuiteDAO(object):
         prepare an insert into the checkpoint_id table the event and the
         current time.
 
-        If other_daos is a specified, it should a list of CylcSuiteDAO objects.
-        The logic will prepare insertion of the same items into the
+        If other_daos is a specified, it should be a list of CylcSuiteDAO
+        objects.  The logic will prepare insertion of the same items into the
         *_checkpoints tables of these DAOs as well.
         """
         id_ = 1
