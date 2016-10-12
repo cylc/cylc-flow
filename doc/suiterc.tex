@@ -731,6 +731,29 @@ any future triggering.
     \item {\em default:} 3
 \end{myitemize}
 
+\subsubsection[spawn to max active cycle points]{[scheduling] \textrightarrow
+ spawn to max active cycle points}
+\label{spawn to max active cycle points}
+
+Allows tasks to spawn out to \lstinline=max active cycle points=
+(\ref{max active cycle points}), removing restriction that a task has to have
+submitted before its successor can be spawned.
+
+{\em Important:} This should be used with care given the potential impact of
+additional task proxies both in terms of memory and cpu for the cylc daemon as
+well as overheads in rendering all the additional tasks in gcylc. Also, use
+of the setting may highlight any deficiencies in graphing dependent on the
+default behaviour where downstream tasks would otherwise be waiting on ones
+upstream submitting and the suite would have stalled e.g. a housekeeping task
+at a later cycle deleting an earlier cycle's data before that cycle has had
+chance to run where previously the task would not have been spawned until its
+predecessor had been submitted.
+
+\begin{myitemize}
+    \item {\em type:} boolean
+    \item {\em default:} False
+\end{myitemize}
+
 
 \subsubsection[{[[}queues{]]}]{[scheduling] \textrightarrow [[queues]]}
 
