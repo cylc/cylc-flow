@@ -32,7 +32,7 @@ cylc stop --max-polls=10 --interval=2 $SUITE_NAME 2>'/dev/null'
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-suite-log-log
 cylc cat-log $SUITE_NAME >$TEST_NAME.out
-grep_ok 'Suite starting on' $TEST_NAME.out
+grep_ok 'Suite starting' $TEST_NAME.out
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-suite-log-out
 cylc cat-log -o $SUITE_NAME >$TEST_NAME.out

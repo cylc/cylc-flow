@@ -113,6 +113,10 @@ class Scheduler(object):
     SUITE_EVENT_HANDLER = 'suite-event-handler'
     SUITE_EVENT_MAIL = 'suite-event-mail'
 
+    START_MESSAGE_PREFIX = 'Suite starting: '
+    START_MESSAGE_TMPL = (
+        START_MESSAGE_PREFIX + 'server=%(host)s:%(port)s pid=%(pid)s')
+
     # Dependency negotation etc. will run after these commands
     PROC_CMDS = (
         'release_suite',
@@ -258,8 +262,7 @@ class Scheduler(object):
                         os.unlink(os.path.join(run_dir, "state.tar.gz"))
                     except OSError:
                         pass
-                    ERR.warning(
-                        "ERROR: cannot tar-gzip + remove old state/ directory")
+                    ERR.error("cannot tar-gzip + remove old state/ directory")
             else:
                 pri_dao = CylcSuiteDAO(pri_db_path)
 
@@ -395,7 +398,8 @@ conditions; see `cylc conditions`.
         if self.gen_reference_log or self.reference_test_mode:
             self.configure_reftest()
 
-        self.log.info('Suite starting on %s:%s' % (self.host, self.port))
+        self.log.info(self.START_MESSAGE_TMPL % {
+            'host': self.host, 'port': self.port, 'pid': os.getpid()})
         # Note that the following lines must be present at the top of
         # the suite log file for use in reference test runs:
         self.log.info('Run mode: ' + self.run_mode)
@@ -2060,7 +2064,6 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
 
     def command_trigger_tasks(self, items):
         """Trigger tasks."""
-        print "Trigger", items
         return self.pool.trigger_tasks(items)
 
     def command_dry_run_tasks(self, items):
