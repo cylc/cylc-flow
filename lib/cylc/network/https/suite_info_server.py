@@ -63,8 +63,10 @@ class SuiteInfoServer(BaseCommsServer):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def get_task_info(self, name):
-        return self._put("get_task_info", (name,))
+    def get_task_info(self, names):
+        if not isinstance(names, list):
+            names = [names]
+        return self._put("get_task_info", (names,))
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
@@ -114,8 +116,10 @@ class SuiteInfoServer(BaseCommsServer):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def get_task_requisites(self, name, point_string):
-        return self._put("get_task_requisites", (name, point_string))
+    def get_task_requisites(self, items):
+        if not isinstance(items, list):
+            items = [items]
+        return self._put("get_task_requisites", (items,))
 
     def _put(self, command, command_args, command_kwargs=None):
         if command_args is None:

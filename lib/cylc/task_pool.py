@@ -865,7 +865,7 @@ class TaskPool(object):
         """
         if self.run_mode == 'simulation':
             return
-        itasks, n_warnings = self._filter_task_proxies(items)
+        itasks, bad_items = self._filter_task_proxies(items)
         active_itasks = []
         for itask in itasks:
             if itask.state.status in TASK_STATUSES_ACTIVE:
@@ -875,7 +875,7 @@ class TaskPool(object):
                     '%s: skip poll, task not pollable' % itask.identity)
         self._run_job_cmd(
             self.JOBS_POLL, active_itasks, self.poll_task_jobs_callback)
-        return n_warnings
+        return len(bad_items)
 
     def poll_task_jobs_callback(self, ctx):
         """Callback when poll tasks command exits."""
@@ -895,7 +895,7 @@ class TaskPool(object):
         If items is specified, kill active tasks matching given IDs.
 
         """
-        itasks, n_warnings = self._filter_task_proxies(items)
+        itasks, bad_items = self._filter_task_proxies(items)
         active_itasks = []
         for itask in itasks:
             is_active = itask.state.status in TASK_STATUSES_ACTIVE
@@ -909,7 +909,7 @@ class TaskPool(object):
                     '%s: skip kill, task not killable' % itask.identity)
         self._run_job_cmd(
             self.JOBS_KILL, active_itasks, self.kill_task_jobs_callback)
-        return n_warnings
+        return len(bad_items)
 
     def kill_task_jobs_callback(self, ctx):
         """Callback when kill tasks command exits."""
@@ -983,17 +983,17 @@ class TaskPool(object):
 
     def hold_tasks(self, items):
         """Hold tasks with IDs matching any item in "ids"."""
-        itasks, n_warnings = self._filter_task_proxies(items)
+        itasks, bad_items = self._filter_task_proxies(items)
         for itask in itasks:
             itask.state.reset_state(TASK_STATUS_HELD)
-        return n_warnings
+        return len(bad_items)
 
     def release_tasks(self, items):
         """Release held tasks with IDs matching any item in "ids"."""
-        itasks, n_warnings = self._filter_task_proxies(items)
+        itasks, bad_items = self._filter_task_proxies(items)
         for itask in itasks:
             itask.state.release()
-        return n_warnings
+        return len(bad_items)
 
     def hold_all_tasks(self):
         """Hold all tasks."""
@@ -1218,16 +1218,16 @@ class TaskPool(object):
         """Force tasks to spawn successors if they haven't already.
 
         """
-        itasks, n_warnings = self._filter_task_proxies(items)
+        itasks, bad_items = self._filter_task_proxies(items)
         for itask in itasks:
             if not itask.has_spawned:
                 itask.log(INFO, "forced spawning")
                 self.force_spawn(itask)
-        return n_warnings
+        return len(bad_items)
 
     def reset_task_states(self, items, status):
         """Reset task states."""
-        itasks, n_warnings = self._filter_task_proxies(items)
+        itasks, bad_items = self._filter_task_proxies(items)
         for itask in itasks:
             itask.log(INFO, "resetting state to %s" % status)
             if status == TASK_STATUS_READY:
@@ -1244,20 +1244,21 @@ class TaskPool(object):
                     get_time_string_from_unix_time(time_))
             else:
                 itask.state.reset_state(status)
-        return n_warnings
+        return len(bad_items)
 
     def remove_tasks(self, items, spawn=False):
         """Remove tasks from pool."""
-        itasks, n_warnings = self._filter_task_proxies(items)
+        itasks, bad_items = self._filter_task_proxies(items)
         for itask in itasks:
             if spawn:
                 self.force_spawn(itask)
             self.remove(itask, 'by request')
-        return n_warnings
+        return len(bad_items)
 
     def trigger_tasks(self, items):
         """Trigger tasks."""
-        itasks, n_warnings = self._filter_task_proxies(items)
+        itasks, bad_items = self._filter_task_proxies(items)
+        n_warnings = len(bad_items)
         for itask in itasks:
             if itask.state.status in TASK_STATUSES_ACTIVE:
                 self.log.warning('%s: already triggered' % itask.identity)
@@ -1270,7 +1271,8 @@ class TaskPool(object):
 
     def dry_run_task(self, items):
         """Create job file for "cylc trigger --edit"."""
-        itasks, n_warnings = self._filter_task_proxies(items)
+        itasks, bad_items = self._filter_task_proxies(items)
+        n_warnings = len(bad_items)
         if len(itasks) > 1:
             self.log.warning("Unique task match not found: %s" % items)
             n_warnings += 1
@@ -1394,33 +1396,41 @@ class TaskPool(object):
                 return path, os.path.dirname(os.path.dirname(path))
         return False, "task not found"
 
-    def get_task_requisites(self, taskid):
-        info = {}
-        found = False
-        for itask in self.get_tasks():
-            id_ = itask.identity
-            if id_ == taskid:
-                found = True
-                extra_info = {}
-                if itask.tdef.clocktrigger_offset is not None:
-                    extra_info['Clock trigger time reached'] = (
-                        itask.start_time_reached())
-                    extra_info['Triggers at'] = itask.delayed_start_str
-                for trig, satisfied in itask.state.external_triggers.items():
-                    if satisfied:
-                        state = 'satisfied'
-                    else:
-                        state = 'NOT satisfied'
-                    extra_info['External trigger "%s"' % trig] = state
+    def get_task_requisites(self, items):
+        """Return task prerequisites.
 
-                info[id_] = [
-                    itask.state.prerequisites_dump(),
-                    itask.state.outputs.dump(),
-                    extra_info,
-                ]
-        if not found:
-            self.log.warning('task state info request: task(s) not found')
-        return info
+        Result in a dict of a dict:
+        {
+            "task_id": {
+                "descriptions": {key: value, ...},
+                "prerequisites": {key: value, ...},
+                "outputs": {key: value, ...},
+                "extras": {key: value, ...},
+            },
+            ...
+        }
+        """
+        itasks, bad_items = self._filter_task_proxies(items)
+        results = {}
+        for itask in itasks:
+            extras = {}
+            if itask.tdef.clocktrigger_offset is not None:
+                extras['Clock trigger time reached'] = (
+                    itask.start_time_reached())
+                extras['Triggers at'] = itask.delayed_start_str
+            for trig, satisfied in itask.state.external_triggers.items():
+                if satisfied:
+                    state = 'satisfied'
+                else:
+                    state = 'NOT satisfied'
+                extras['External trigger "%s"' % trig] = state
+
+            results[itask.identity] = {
+                "descriptions": itask.tdef.describe(),
+                "prerequisites": itask.state.prerequisites_dump(),
+                "outputs": itask.state.outputs.dump(),
+                "extras": extras}
+        return results, bad_items
 
     def match_ext_triggers(self):
         """See if any queued external event messages can trigger tasks."""
@@ -1486,6 +1496,7 @@ class TaskPool(object):
     def _filter_task_proxies(self, items):
         """Return task proxies that match names, points, states in items.
 
+        Return (itasks, bad_items).
         In the new form, the arguments should look like:
         items -- a list of strings for matching task proxies, each with
                  the general form name[.point][:state] or [point/]name[:state]
@@ -1494,7 +1505,7 @@ class TaskPool(object):
 
         """
         itasks = []
-        n_warnings = 0
+        bad_items = []
         if not items:
             itasks += self.get_all_tasks()
         else:
@@ -1519,8 +1530,8 @@ class TaskPool(object):
                         tasks_found = True
                 if not tasks_found:
                     self.log.warning(self.ERR_PREFIX_TASKID_MATCH + item)
-                    n_warnings += 1
-        return itasks, n_warnings
+                    bad_items.append(item)
+        return itasks, bad_items
 
     @classmethod
     def _parse_task_item(cls, item):

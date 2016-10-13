@@ -37,13 +37,16 @@ from cylc.task_id import TaskID
 
 
 def main():
+    """Implement "cylc show" CLI."""
     parser = COP(
-        __doc__, comms=True, noforce=True,
-        argdoc=[('REG', 'Suite name'),
-                ('[' + TaskID.SYNTAX_OPT_POINT + ']', 'Task name or ID')])
+        __doc__, comms=True, noforce=True, multitask=True,
+        argdoc=[
+            ('REG', 'Suite name'),
+            ('[TASKID ...]', 'Task names or identifiers')])
 
-    (options, args) = parser.parse_args()
+    options, args = parser.parse_args()
     suite = args[0]
+    task_args = args[1:]
 
     pclient = SuiteInfoClient(
         suite, options.owner, options.host, options.comms_timeout,
@@ -51,66 +54,53 @@ def main():
         print_uuid=options.print_uuid
     )
 
-    if len(args) == 1:
+    if not task_args:
         # Print suite info.
         suite_info = pclient.get_info('get_suite_info')
         for key, value in sorted(suite_info.items(), reverse=True):
             print '%s: %s' % (key, value or "(not given)")
-        sys.exit(0)
+        return
 
-    point_string = None
-    arg = args[1]
-    try:
-        name, point_string = TaskID.split(arg)
-    except ValueError:
-        # Print task info.
-        name = arg
-    else:
-        # Print task instance info.
-        task_id = arg
+    task_names = [arg for arg in task_args if TaskID.is_valid_name(arg)]
+    task_ids = [arg for arg in task_args if TaskID.is_valid_id_2(arg)]
 
-    info = pclient.get_info('get_task_info', name=name)
-    if not info:
-        sys.exit("ERROR: task not found: %s" % name)
-    for key, value in sorted(info.items(), reverse=True):
-        print "%s: %s" % (key, value or "(not given)")
+    if task_names:
+        results = pclient.get_info('get_task_info', names=task_names)
+        for task_name, result in sorted(results.items()):
+            if len(results) > 1:
+                print "----\nTASK NAME: %s" % task_name
+            for key, value in sorted(result.items(), reverse=True):
+                print "%s: %s" % (key, value or "(not given)")
 
-    if point_string is not None:
-        result = pclient.get_info('get_task_requisites',
-                                  name=name,
-                                  point_string=point_string)
-        if not result:
-            sys.exit("ERROR: task instance not found: %s" % task_id)
+    if task_ids:
+        results, bad_items = pclient.get_info(
+            'get_task_requisites', items=task_ids)
+        for task_id, result in sorted(results.items()):
+            if len(results) > 1:
+                print "----\nTASK ID: %s" % task_id
+            for key, value in sorted(
+                    result["descriptions"].items(), reverse=True):
+                print "%s: %s" % (key, value or "(not given)")
 
-        for task_id in result.keys():
-            [pre, out, extra_info] = result[task_id]
+            for name, done in [
+                    ("prerequisites", "satisfied"), ("outputs", "completed")]:
+                print '\n%s (- => not %s):' % (name, done)
+                if not result[name]:
+                    print '  (None)'
+                for msg, state in sorted(result[name]):
+                    if state:
+                        print '  + ' + msg
+                    else:
+                        print '  - ' + msg
 
-            print '\nprerequisites (- => not satisfied):'
-            if len(pre) == 0:
-                print '  (None)'
-            for item in sorted(pre):
-                [msg, state] = item
-                if state:
-                    descr = '  + '
-                else:
-                    descr = '  - '
-                print descr + msg
-
-            print '\noutputs (- => not completed):'
-            if len(out) == 0:
-                print '  (None)'
-            for item in sorted(out):
-                [msg, state] = item
-                if state:
-                    descr = '  + '
-                else:
-                    descr = '  - '
-                print descr + msg
-
-            if len(extra_info.keys()) > 0:
+            if result["extras"]:
                 print '\nother:'
-                for item in extra_info:
-                    print '  o ', item, '...', extra_info[item]
+                for key, value in result["extras"].items():
+                    print '  o  %s ... %s' % (key, value)
+        for bad_item in bad_items:
+            sys.stderr.write("No matching tasks found: %s\n" % bad_item)
+        if bad_items:
+            sys.exit(1)
 
 
 if __name__ == "__main__":

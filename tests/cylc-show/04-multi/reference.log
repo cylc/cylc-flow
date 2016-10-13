@@ -1,0 +1,5 @@
+2014-11-17T09:01:57Z INFO - Initial point: 2016
+2014-11-17T09:01:57Z INFO - Final point: 2018
+2014-11-17T09:01:58Z INFO - [t1.2016] -triggered off []
+2014-11-17T09:02:03Z INFO - [t1.2017] -triggered off ['t1.2016']
+2014-11-17T09:02:06Z INFO - [t1.2018] -triggered off ['t1.2017']
