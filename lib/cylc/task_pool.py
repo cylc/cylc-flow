@@ -1289,24 +1289,8 @@ class TaskPool(object):
         now = time()
         poll_task_ids = set()
         for itask in self.get_tasks():
-            if itask.state.status == TASK_STATUS_SUBMITTED:
-                if (itask.state.submission_timer_timeout is not None and
-                        now > itask.state.submission_timer_timeout):
-                    if itask.handle_submission_timeout():
-                        poll_task_ids.add(itask.identity)
-                if (itask.submission_poll_timer and
-                        itask.submission_poll_timer.get()):
-                    itask.submission_poll_timer.set_timer()
-                    poll_task_ids.add(itask.identity)
-            elif itask.state.status == TASK_STATUS_RUNNING:
-                if (itask.state.execution_timer_timeout is not None and
-                        now > itask.state.execution_timer_timeout):
-                    if itask.handle_execution_timeout():
-                        poll_task_ids.add(itask.identity)
-                if (itask.execution_poll_timer and
-                        itask.execution_poll_timer.get()):
-                    itask.execution_poll_timer.set_timer()
-                    poll_task_ids.add(itask.identity)
+            if itask.check_poll_ready(now):
+                poll_task_ids.add(itask.identity)
         if poll_task_ids:
             self.poll_task_jobs(poll_task_ids)
 

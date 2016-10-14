@@ -376,13 +376,13 @@ SPEC = {
                 'batch system': vdr(vtype='string', default='background'),
                 'batch submit command template': vdr(vtype='string'),
                 'execution polling intervals': vdr(
-                    vtype='interval_minutes_list', default=[]),
+                    vtype='interval_minutes_list'),
                 'execution retry delays': vdr(
                     vtype='interval_minutes_list', default=[]),
                 'execution time limit': vdr(vtype='interval_seconds'),
                 'shell': vdr(vtype='string', default='/bin/bash'),
                 'submission polling intervals': vdr(
-                    vtype='interval_minutes_list', default=[]),
+                    vtype='interval_minutes_list'),
                 'submission retry delays': vdr(
                     vtype='interval_minutes_list', default=[]),
             },

@@ -23,14 +23,14 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 create_test_globalrc '
-execution polling intervals = PT0.2M, PT0.1M
-submission polling intervals = PT0.2M, PT0.1M' '
 [task messaging]
    connection timeout = PT20S
    retry interval = PT9S
 [hosts]
    [[localhost]]
-      task communication method = poll'
+        task communication method = poll
+        execution polling intervals = PT0.2M, PT0.1M
+        submission polling intervals = PT0.2M, PT0.1M'
 
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug "${SUITE_NAME}"
@@ -42,8 +42,8 @@ run_ok "job" grep -q "CYLC_TASK_COMMS_METHOD=poll" "${JOB_FILE}"
 run_ok "job" grep -q "CYLC_TASK_MSG_RETRY_INTVL=9.0" "${JOB_FILE}"
 run_ok "job" grep -q "CYLC_TASK_MSG_TIMEOUT=20.0" "${JOB_FILE}"
 LOG_FILE="${SUITE_RUN_DIR}/log/suite/log"
-run_ok "log" grep -q "using default submission polling intervals" "${LOG_FILE}"
-run_ok "log" grep -q "using default execution polling intervals" "${LOG_FILE}"
+run_ok "log" grep -Fq '[bar.1] -next job poll' "${LOG_FILE}"
+run_ok "log" grep -Fq '[foo.1] -next job poll' "${LOG_FILE}"
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
 exit
