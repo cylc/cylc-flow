@@ -2237,6 +2237,8 @@ shown here in the state they were in at the time of triggering.''')
                 local_job_log_dir = os.path.join(itask_log_dir, submit_num_str)
                 for filename in ["job", "job-activity.log"]:
                     filenames.append(os.path.join(local_job_log_dir, filename))
+                if job_user_at_host is None:
+                    continue
                 if '@' in job_user_at_host:
                     job_user, job_host = job_user_at_host.split('@', 1)
                 else:
