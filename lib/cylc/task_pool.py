@@ -1393,12 +1393,10 @@ class TaskPool(object):
         return False, "task not found"
 
     def get_task_requisites(self, taskid):
+        """Return task prerequisites."""
         info = {}
-        found = False
-        for itask in self.get_tasks():
-            id_ = itask.identity
-            if id_ == taskid:
-                found = True
+        for itask in self.get_all_tasks():
+            if itask.identity == taskid:
                 extra_info = {}
                 if itask.tdef.clocktrigger_offset is not None:
                     extra_info['Clock trigger time reached'] = (
@@ -1411,12 +1409,12 @@ class TaskPool(object):
                         state = 'NOT satisfied'
                     extra_info['External trigger "%s"' % trig] = state
 
-                info[id_] = [
+                info[itask.identity] = [
                     itask.state.prerequisites_dump(),
                     itask.state.outputs.dump(),
                     extra_info,
                 ]
-        if not found:
+        if not info:
             self.log.warning('task state info request: task(s) not found')
         return info
 

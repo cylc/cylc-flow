@@ -1541,6 +1541,7 @@ been defined for this suite""").inform()
             tb.insert(tb.get_end_iter(), line)
 
     def popup_requisites(self, w, e, task_id):
+        """Show prerequisites of task_id in a pop up window."""
         name, point_string = TaskID.split(task_id)
         result = self.get_pyro_info('get_task_requisites', name, point_string)
         if result:
