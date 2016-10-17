@@ -177,7 +177,8 @@ class TaskProxy(object):
     __slots__ = ["JOB_LOG_FMT_1", "JOB_LOG_FMT_M", "CUSTOM_EVENT_HANDLER",
                  "EVENT_MAIL", "HEAD_MODE_LOCAL", "HEAD_MODE_REMOTE",
                  "JOB_FILE_BASE", "JOB_KILL", "JOB_LOGS_RETRIEVE", "JOB_POLL",
-                 "JOB_SUBMIT", "MANAGE_JOB_LOGS_TRY_DELAYS", "NN",
+                 "JOB_SUBMIT", "KEY_EXECUTE", "KEY_SUBMIT",
+                 "MANAGE_JOB_LOGS_TRY_DELAYS", "NN",
                  "LOGGING_LVL_OF", "RE_MESSAGE_TIME", "TABLE_TASK_JOBS",
                  "TABLE_TASK_EVENTS", "TABLE_TASK_STATES", "POLLED_INDICATOR",
                  "event_handler_env", "stop_sim_mode_job_submission", "tdef",
@@ -185,9 +186,8 @@ class TaskProxy(object):
                  "cleanup_cutoff", "identity", "has_spawned",
                  "point_as_seconds", "stop_point", "manual_trigger",
                  "is_manual_submit", "summary", "local_job_file_path",
-                 "retries_configured", "run_try_state", "sub_try_state",
-                 "event_handler_try_states",
-                 "execution_time_limit_poll_timer", "db_inserts_map",
+                 "retries_configured", "try_timers",
+                 "event_handler_try_timers", "db_inserts_map",
                  "db_updates_map", "suite_name", "task_host", "task_owner",
                  "user_at_host", "job_vacated", "poll_timers",
                  "event_hooks", "sim_mode_run_length",
@@ -208,6 +208,9 @@ class TaskProxy(object):
     JOB_LOGS_RETRIEVE = "job-logs-retrieve"
     JOB_POLL = "job-poll"
     JOB_SUBMIT = "job-submit"
+    KEY_EXECUTE = "execution"
+    KEY_EXECUTE_TIME_LIMIT = "execution_time_limit"
+    KEY_SUBMIT = "submission"
     MANAGE_JOB_LOGS_TRY_DELAYS = (0, 30, 180)  # PT0S, PT30S, PT3M
     NN = "NN"
 
@@ -233,9 +236,10 @@ class TaskProxy(object):
 
     def __init__(
             self, tdef, start_point, status=TASK_STATUS_WAITING,
-            has_spawned=False, stop_point=None, is_startup=False,
-            validate_mode=False, submit_num=0, is_reload_or_restart=False,
-            pre_reload_inst=None, message_queue=None):
+            hold_swap=None, has_spawned=False, stop_point=None,
+            is_startup=False, validate_mode=False, submit_num=0,
+            is_reload_or_restart=False, pre_reload_inst=None,
+            message_queue=None):
         self.tdef = tdef
         if submit_num is None:
             self.submit_num = 0
@@ -299,10 +303,11 @@ class TaskProxy(object):
 
         self.retries_configured = False
 
-        self.run_try_state = TaskActionTimer()
-        self.sub_try_state = TaskActionTimer()
-        self.event_handler_try_states = {}
-        self.execution_time_limit_poll_timer = None
+        self.try_timers = {
+            self.KEY_EXECUTE: TaskActionTimer(),
+            self.KEY_SUBMIT: TaskActionTimer()}
+        self.event_handler_try_timers = {}
+        self.poll_timers = {}
 
         self.db_inserts_map = {
             self.TABLE_TASK_JOBS: [],
@@ -327,8 +332,6 @@ class TaskProxy(object):
 
         self.job_vacated = False
 
-        self.poll_timers = {"submission": None, "execution": None}
-
         # An initial db state entry is created at task proxy init. On reloading
         # or restarting the suite, the task proxies already have this db entry.
         if (not self.validate_mode and not is_reload_or_restart and
@@ -351,9 +354,9 @@ class TaskProxy(object):
         self.expire_time_str = None
         self.expire_time = None
 
-        self.state = TaskState(status, self.point, self.identity, tdef,
-                               self.db_events_insert, self.db_update_status,
-                               self.log)
+        self.state = TaskState(
+            status, hold_swap, self.point, self.identity, tdef,
+            self.db_events_insert, self.db_update_status, self.log)
 
         if tdef.sequential:
             # Adjust clean-up cutoff.
@@ -377,8 +380,7 @@ class TaskProxy(object):
             # Retain some state from my pre suite-reload predecessor.
             self.has_spawned = pre_reload_inst.has_spawned
             self.summary = pre_reload_inst.summary
-            self.run_try_state = pre_reload_inst.run_try_state
-            self.sub_try_state = pre_reload_inst.sub_try_state
+            self.try_timers = pre_reload_inst.try_timers
             self.submit_num = pre_reload_inst.submit_num
             self.db_inserts_map = pre_reload_inst.db_inserts_map
             self.db_updates_map = pre_reload_inst.db_updates_map
@@ -451,14 +453,14 @@ class TaskProxy(object):
         self.db_updates_map[self.TABLE_TASK_STATES].append({
             "time_updated": get_current_time_string(),
             "submit_num": self.submit_num,
-            "try_num": self.run_try_state.num + 1,
+            "try_num": self.try_timers[self.KEY_EXECUTE].num + 1,
             "status": self.state.status})
 
     def retry_delay_done(self):
         """Is retry delay done? Can I retry now?"""
         now = time.time()
-        return (self.run_try_state.is_delay_done(now) or
-                self.sub_try_state.is_delay_done(now))
+        return (self.try_timers[self.KEY_EXECUTE].is_delay_done(now) or
+                self.try_timers[self.KEY_SUBMIT].is_delay_done(now))
 
     def ready_to_run(self):
         """Am I in a pre-run state but ready to run?
@@ -723,9 +725,9 @@ class TaskProxy(object):
         if (event not in ['failed', 'retry', 'succeeded'] or
                 self.user_at_host in [USER + '@localhost', 'localhost'] or
                 not self._get_host_conf("retrieve job logs") or
-                key2 in self.event_handler_try_states):
+                key2 in self.event_handler_try_timers):
             return
-        self.event_handler_try_states[key2] = TaskActionTimer(
+        self.event_handler_try_timers[key2] = TaskActionTimer(
             TaskJobLogsRetrieveContext(
                 # key
                 self.JOB_LOGS_RETRIEVE,
@@ -740,11 +742,11 @@ class TaskProxy(object):
     def setup_event_mail(self, event, _):
         """Event notification, by email."""
         key1 = (self.EVENT_MAIL, event)
-        if ((key1, self.submit_num) in self.event_handler_try_states or
+        if ((key1, self.submit_num) in self.event_handler_try_timers or
                 event not in self._get_events_conf("mail events", [])):
             return
 
-        self.event_handler_try_states[(key1, self.submit_num)] = (
+        self.event_handler_try_timers[(key1, self.submit_num)] = (
             TaskActionTimer(
                 TaskEventMailContext(
                     key1,
@@ -772,7 +774,7 @@ class TaskProxy(object):
             self._get_host_conf("task event handler retry delays", []))
         for i, handler in enumerate(handlers):
             key1 = ("%s-%02d" % (self.CUSTOM_EVENT_HANDLER, i), event)
-            if (key1, self.submit_num) in self.event_handler_try_states or (
+            if (key1, self.submit_num) in self.event_handler_try_timers or (
                     only_list and i not in only_list):
                 continue
             cmd = handler % {
@@ -789,7 +791,7 @@ class TaskProxy(object):
                 cmd = "%s '%s' '%s' '%s' '%s'" % (
                     handler, event, self.suite_name, self.identity, message)
             self.log(DEBUG, "Queueing %s handler: %s" % (event, cmd))
-            self.event_handler_try_states[(key1, self.submit_num)] = (
+            self.event_handler_try_timers[(key1, self.submit_num)] = (
                 TaskActionTimer(
                     CustomTaskEventHandlerContext(
                         key1,
@@ -803,9 +805,9 @@ class TaskProxy(object):
         self.command_log(result)
         try:
             if result.ret_code == 0:
-                del self.event_handler_try_states[result.cmd_key]
+                del self.event_handler_try_timers[result.cmd_key]
             else:
-                self.event_handler_try_states[result.cmd_key].unset_waiting()
+                self.event_handler_try_timers[result.cmd_key].unset_waiting()
         except KeyError:
             pass
 
@@ -822,7 +824,7 @@ class TaskProxy(object):
             del self.summary['submit_method_id']
         except KeyError:
             pass
-        if self.sub_try_state.next() is None:
+        if self.try_timers[self.KEY_SUBMIT].next() is None:
             # No submission retry lined up: definitive failure.
             self.summary['finished_time'] = float(
                 get_unix_time_from_time_string(event_time))
@@ -834,10 +836,10 @@ class TaskProxy(object):
             self.state.set_submit_failed()
         else:
             # There is a submission retry lined up.
-            timeout_str = self.sub_try_state.timeout_as_str()
+            timeout_str = self.try_timers[self.KEY_SUBMIT].timeout_as_str()
 
             delay_msg = "submit-retrying in %s" % (
-                self.sub_try_state.delay_as_seconds())
+                self.try_timers[self.KEY_SUBMIT].delay_as_seconds())
             msg = "submission failed, %s (after %s)" % (delay_msg, timeout_str)
             self.log(INFO, "job(%02d) " % self.submit_num + msg)
             self.summary['latest_message'] = msg
@@ -846,7 +848,8 @@ class TaskProxy(object):
             # TODO - is this insert redundant with setup_event_handlers?
             self.db_events_insert(
                 event="submission failed",
-                message="submit-retrying in " + str(self.sub_try_state.delay))
+                message="submit-retrying in " + str(
+                    self.try_timers[self.KEY_SUBMIT].delay))
             self.setup_event_handlers(
                 "submission retry", "job submission failed, " + delay_msg)
             self.state.set_submit_retry()
@@ -892,7 +895,7 @@ class TaskProxy(object):
                     self.summary['submitted_time'] + submit_timeout)
             else:
                 self.state.submission_timer_timeout = None
-            self._set_next_poll_time('submission')
+            self._set_next_poll_time(self.KEY_SUBMIT)
 
     def job_execution_failed(self, event_time=None):
         """Handle a job failure."""
@@ -909,7 +912,7 @@ class TaskProxy(object):
             "time_run_exit": self.summary['finished_time_string'],
         })
         self.state.execution_timer_timeout = None
-        if self.run_try_state.next() is None:
+        if self.try_timers[self.KEY_EXECUTE].next() is None:
             # No retry lined up: definitive failure.
             # Note the TASK_STATUS_FAILED output is only added if needed.
             flags.pflag = True
@@ -917,9 +920,9 @@ class TaskProxy(object):
             self.setup_event_handlers("failed", 'job failed')
         else:
             # There is a retry lined up
-            timeout_str = self.run_try_state.timeout_as_str()
+            timeout_str = self.try_timers[self.KEY_EXECUTE].timeout_as_str()
             delay_msg = "retrying in %s" % (
-                self.run_try_state.delay_as_seconds())
+                self.try_timers[self.KEY_EXECUTE].delay_as_seconds())
             msg = "failed, %s (after %s)" % (delay_msg, timeout_str)
             self.log(INFO, "job(%02d) " % self.submit_num + msg)
             self.summary['latest_message'] = msg
@@ -933,8 +936,8 @@ class TaskProxy(object):
             self.manual_trigger = False
             self.is_manual_submit = True
             # unset any retry delay timers
-            self.run_try_state.timeout = None
-            self.sub_try_state.timeout = None
+            self.try_timers[self.KEY_EXECUTE].timeout = None
+            self.try_timers[self.KEY_SUBMIT].timeout = None
 
     def set_from_rtconfig(self, cfg=None):
         """Populate task proxy with runtime configuration.
@@ -962,9 +965,9 @@ class TaskProxy(object):
                 # note that a *copy* of the retry delays list is needed
                 # so that all instances of the same task don't pop off
                 # the same deque (but copy of rtconfig above solves this).
-                self.run_try_state.delays = list(
+                self.try_timers[self.KEY_EXECUTE].delays = list(
                     rtconfig['job']['execution retry delays'])
-                self.sub_try_state.delays = list(
+                self.try_timers[self.KEY_SUBMIT].delays = list(
                     rtconfig['job']['submission retry delays'])
 
         rrange = rtconfig['simulation mode']['run time range']
@@ -980,7 +983,7 @@ class TaskProxy(object):
 
         self.event_hooks = rtconfig['events']
 
-        for key in 'submission', 'execution':
+        for key in self.KEY_SUBMIT, self.KEY_EXECUTE:
             values = self._get_host_conf(
                 key + ' polling intervals', skey='job')
             if values:
@@ -1064,7 +1067,7 @@ class TaskProxy(object):
         self.db_events_insert(event="incrementing submit number")
         self.db_inserts_map[self.TABLE_TASK_JOBS].append({
             "is_manual_submit": self.is_manual_submit,
-            "try_num": self.run_try_state.num + 1,
+            "try_num": self.try_timers[self.KEY_EXECUTE].num + 1,
             "time_submit": get_current_time_string(),
         })
         if overrides:
@@ -1110,7 +1113,7 @@ class TaskProxy(object):
         if self.summary['execution_time_limit']:
             # Default = 1, 2 and 7 minutes intervals, roughly 1, 3 and 10
             # minutes after time limit exceeded
-            self.execution_time_limit_poll_timer = (
+            self.poll_timers[self.KEY_EXECUTE_TIME_LIMIT] = (
                 TaskActionTimer(delays=batch_sys_conf.get(
                     'execution time limit polling intervals', [60, 120, 420])))
 
@@ -1157,7 +1160,7 @@ class TaskProxy(object):
             'submit num': self.submit_num,
             'suite name': self.suite_name,
             'task id': self.identity,
-            'try number': self.run_try_state.num + 1,
+            'try number': self.try_timers[self.KEY_EXECUTE].num + 1,
             'work sub-directory': rtconfig['work sub-directory'],
         }
 
@@ -1256,13 +1259,13 @@ class TaskProxy(object):
         if timeout is None or now <= timeout:
             return False
         if self.summary['execution_time_limit']:
-            try_state = self.execution_time_limit_poll_timer
-            if not try_state.is_timeout_set():
-                try_state.next()
-            if not try_state.is_delay_done():
+            timer = self.poll_timers[self.KEY_EXECUTE_TIME_LIMIT]
+            if not timer.is_timeout_set():
+                timer.next()
+            if not timer.is_delay_done():
                 # Don't poll
                 return False
-            if self.execution_time_limit_poll_timer.next() is not None:
+            if timer.next() is not None:
                 # Poll now, and more retries lined up
                 return True
         # No more retry lined up, issue execution timeout event
@@ -1354,7 +1357,9 @@ class TaskProxy(object):
             return
 
         # Check registered outputs.
-        self.state.record_output(message, is_polled)
+        if not self.state.record_output(message, is_polled):
+            self.log(WARNING, (
+                "Unexpected output (already completed):\n  " + message))
 
         if is_polled and self.state.status not in TASK_STATUSES_ACTIVE:
             # A poll result can come in after a task finishes.
@@ -1389,9 +1394,9 @@ class TaskProxy(object):
                 self.state.execution_timer_timeout = None
 
             # submission was successful so reset submission try number
-            self.sub_try_state.num = 0
+            self.try_timers[self.KEY_SUBMIT].num = 0
             self.setup_event_handlers('started', 'job started')
-            self._set_next_poll_time('execution')
+            self._set_next_poll_time(self.KEY_EXECUTE)
 
         elif (message == TASK_OUTPUT_SUCCEEDED and
                 self.state.status in [
@@ -1400,7 +1405,6 @@ class TaskProxy(object):
                     TASK_STATUS_FAILED]):
             # Received a 'task succeeded' message
             self.state.execution_timer_timeout = None
-            self.state.hold_on_retry = False
             flags.pflag = True
             self.summary['finished_time'] = float(
                 get_unix_time_from_time_string(event_time))
@@ -1415,7 +1419,9 @@ class TaskProxy(object):
                     self.summary['finished_time'] -
                     self.summary['started_time'])
             self.setup_event_handlers("succeeded", "job succeeded")
-            self.state.set_execution_succeeded(is_polled)
+            warnings = self.state.set_execution_succeeded(is_polled)
+            for warning in warnings:
+                self.log(WARNING, warning)
 
         elif (message == TASK_OUTPUT_FAILED and
                 self.state.status in [
@@ -1438,7 +1444,7 @@ class TaskProxy(object):
             self.state.execution_timer_timeout = None
             self.summary['started_time'] = None
             self.summary['started_time_string'] = None
-            self.sub_try_state.num = 0
+            self.try_timers[self.KEY_SUBMIT].num = 0
             self.job_vacated = True
 
         elif message == "submission failed":
@@ -1464,7 +1470,7 @@ class TaskProxy(object):
         next_point = self.next_point()
         if next_point:
             return TaskProxy(
-                self.tdef, next_point, state, False, self.stop_point,
+                self.tdef, next_point, state, None, False, self.stop_point,
                 message_queue=self.message_queue)
         else:
             # next_point instance is out of the sequence bounds
@@ -1539,12 +1545,12 @@ class TaskProxy(object):
         return (
             self.state.status == TASK_STATUS_SUBMITTED and (
                 self.check_submission_timeout(now) or
-                self._check_poll_timer('submission', now)
+                self._check_poll_timer(self.KEY_SUBMIT, now)
             )
         ) or (
             self.state.status == TASK_STATUS_RUNNING and (
                 self.check_execution_timeout(now) or
-                self._check_poll_timer('execution', now)
+                self._check_poll_timer(self.KEY_EXECUTE, now)
             )
         )
 

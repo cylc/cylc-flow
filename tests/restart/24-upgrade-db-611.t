@@ -15,25 +15,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test re-run event handler on restart.
+# Test upgrade of 6.11.X database on restart.
 . "$(dirname "$0")/test_header"
-set_test_number 7
+
+set_test_number 8
+
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-SUITED="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
+mkdir -p "${SUITE_RUN_DIR}/state"
+sqlite3 "${SUITE_RUN_DIR}/state/cylc-suite.db" <"cylc-suite-db.dump"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --debug
-sqlite3 "${SUITED}/log/db" \
-    'SELECT COUNT(*) FROM task_action_timers' \
-    >"${TEST_NAME_BASE}-db-n-entries"
-cmp_ok "${TEST_NAME_BASE}-db-n-entries" <<<'3'
-suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart "${SUITE_NAME}" --debug
-cmp_ok "${SUITED}/file" <<'__TEXT__'
-1
-2
-__TEXT__
-grep_ok 'LOADING task action timers' "${SUITED}/log/suite/out"
-grep_ok "+ t01\\.1 (('event-handler-00', 'succeeded'), 1)" "${SUITED}/log/suite/out"
+suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart --debug "${SUITE_NAME}"
+sed -i 's/^.* INFO - //' "${TEST_NAME_BASE}-restart.stdout"
+exists_ok "${SUITE_RUN_DIR}/.service/db" 
+exists_ok "${SUITE_RUN_DIR}/log/db" 
+exists_fail "${SUITE_RUN_DIR}/cylc-suite-private.db" 
+exists_fail "${SUITE_RUN_DIR}/cylc-suite-public" 
+exists_fail "${SUITE_RUN_DIR}/cylc-suite-env" 
+sqlite3 "${SUITE_RUN_DIR}/log/db" '.schema task_pool' >'task_pool.schema'
+cmp_ok 'task_pool.schema' \
+    <<<'CREATE TABLE task_pool(cycle TEXT, name TEXT, spawned INTEGER, status TEXT, hold_swap TEXT, PRIMARY KEY(cycle, name));'
 
 purge_suite "${SUITE_NAME}"
 exit

@@ -1,20 +1,15 @@
-#!jinja2
 [cylc]
-    UTC mode=True
     cycle point format = %Y
     [[events]]
-        abort on stalled = True
+        inactivity = PT1M
         abort on inactivity = True
-        inactivity = P1M
         startup handler = cylc release '%(suite)s'
 [scheduling]
     initial cycle point = 2016
     final cycle point = 2020
     [[dependencies]]
         [[[P1Y]]]
-            graph=t1 & t2
+            graph = t1 & t2 &t3
 [runtime]
-    [[t1, t2]]
-        script = sleep $((RANDOM % 2 + 1))
-        [[[job]]]
-            execution time limit = PT15S
+    [[t1, t2, t3]]
+        script = true

@@ -1,6 +1,8 @@
 #!Jinja2
 [cylc]
    UTC mode = True
+   [[events]]
+       startup handler = cylc release '%(suite)s'
    [[reference test]]
        live mode suite timeout = PT1M
        required run mode = live

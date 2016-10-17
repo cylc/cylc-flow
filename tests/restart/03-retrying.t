@@ -40,7 +40,7 @@ grep_ok "retrying_task|20130923T0000Z|1|1|retrying" \
     $TEST_DIR/pre-restart-db
 contains_ok $TEST_DIR/post-restart-db <<'__DB_DUMP__'
 finish|20130923T0000Z|0||waiting
-retrying_task|20130923T0000Z|2|1|retrying
+retrying_task|20130923T0000Z|1|1|retrying
 shutdown|20130923T0000Z|1|1|succeeded
 __DB_DUMP__
 "${TEST_SOURCE_DIR}/bin/ctb-select-task-states" "${SUITE_RUN_DIR}" \
@@ -48,7 +48,7 @@ __DB_DUMP__
 contains_ok $TEST_DIR/db <<'__DB_DUMP__'
 finish|20130923T0000Z|1|1|succeeded
 output_states|20130923T0000Z|1|1|succeeded
-retrying_task|20130923T0000Z|4|3|succeeded
+retrying_task|20130923T0000Z|3|3|succeeded
 shutdown|20130923T0000Z|1|1|succeeded
 __DB_DUMP__
 #-------------------------------------------------------------------------------

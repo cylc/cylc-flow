@@ -71,7 +71,7 @@ from cylc.task_state import (
     TaskState, TASK_STATUSES_ALL, TASK_STATUSES_RESTRICTED,
     TASK_STATUSES_WITH_JOB_SCRIPT, TASK_STATUSES_WITH_JOB_LOGS,
     TASK_STATUSES_TRIGGERABLE, TASK_STATUSES_ACTIVE,
-    TASK_STATUS_WAITING, TASK_STATUS_READY,
+    TASK_STATUS_WAITING, TASK_STATUS_HELD, TASK_STATUS_READY,
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED)
 
 
@@ -3220,7 +3220,7 @@ For more Stop options use the Control menu.""")
         # Pause: avoid "stopped with TASK_STATUS_RUNNING".
         pause_ok = (
             "running" in new_status and "stopped" not in new_status)
-        unpause_ok = "held" == new_status
+        unpause_ok = TASK_STATUS_HELD == new_status
         stop_ok = ("stopped" not in new_status and
                    "connected" != new_status and
                    "initialising" != new_status)

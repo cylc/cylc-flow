@@ -234,45 +234,12 @@ class Scheduler(object):
 
     def start(self):
         """Start the server."""
-        self._print_blurb()
+        self._start_print_blurb()
 
         GLOBAL_CFG.create_cylc_run_tree(self.suite)
 
         if self.is_restart:
-            pri_db_path = os.path.join(
-                self.suite_srv_files_mgr.get_suite_srv_dir(self.suite),
-                CylcSuiteDAO.DB_FILE_BASE_NAME)
-
-            # Backward compat, upgrade database with state file if necessary
-            run_dir = GLOBAL_CFG.get_derived_host_item(
-                self.suite, 'suite run directory')
-            old_pri_db_path = os.path.join(
-                run_dir, 'state', CylcSuiteDAO.OLD_DB_FILE_BASE_NAME)
-            old_state_file_path = os.path.join(run_dir, "state", "state")
-            if (os.path.exists(old_pri_db_path) and
-                    os.path.exists(old_state_file_path) and
-                    not os.path.exists(pri_db_path)):
-                copyfile(old_pri_db_path, pri_db_path)
-                pri_dao = CylcSuiteDAO(pri_db_path)
-                pri_dao.upgrade_with_state_file(old_state_file_path)
-                target = os.path.join(run_dir, "state.tar.gz")
-                cmd = ["tar", "-C", run_dir, "-czf", target, "state"]
-                if call(cmd) == 0:
-                    rmtree(os.path.join(run_dir, "state"), ignore_errors=True)
-                else:
-                    try:
-                        os.unlink(os.path.join(run_dir, "state.tar.gz"))
-                    except OSError:
-                        pass
-                    ERR.error("cannot tar-gzip + remove old state/ directory")
-            else:
-                pri_dao = CylcSuiteDAO(pri_db_path)
-
-            # Vacuum the primary/private database file
-            OUT.info("Vacuuming the suite db ...")
-            pri_dao.vacuum()
-            OUT.info("...done")
-            pri_dao.close()
+            self._start_db_upgrade()
 
         try:
             if not self.options.no_detach and not cylc.flags.debug:
@@ -324,7 +291,7 @@ class Scheduler(object):
         self.profiler.stop()
 
     @staticmethod
-    def _print_blurb():
+    def _start_print_blurb():
         """Print copyright and license information."""
         logo = (
             "            ,_,       \n"
@@ -352,6 +319,64 @@ conditions; see `cylc conditions`.
         lmax = max(len(line) for line in license_lines)
         for i in range(len(logo_lines)):
             print logo_lines[i], ('{0: ^%s}' % lmax).format(license_lines[i])
+
+    def _start_db_upgrade(self):
+        """Vacuum/upgrade runtime DB on restart."""
+        pri_db_path = os.path.join(
+            self.suite_srv_files_mgr.get_suite_srv_dir(self.suite),
+            CylcSuiteDAO.DB_FILE_BASE_NAME)
+
+        # Backward compat, upgrade database with state file if necessary
+        run_dir = GLOBAL_CFG.get_derived_host_item(
+            self.suite, 'suite run directory')
+        old_pri_db_path = os.path.join(
+            run_dir, 'state', CylcSuiteDAO.OLD_DB_FILE_BASE_NAME)
+        old_pri_db_path_611 = os.path.join(
+            run_dir, CylcSuiteDAO.OLD_DB_FILE_BASE_NAME_611[0])
+        old_state_file_path = os.path.join(run_dir, "state", "state")
+        if (os.path.exists(old_pri_db_path) and
+                os.path.exists(old_state_file_path) and
+                not os.path.exists(pri_db_path)):
+            # Upgrade pre-6.11.X runtime database + state file
+            copyfile(old_pri_db_path, pri_db_path)
+            pri_dao = CylcSuiteDAO(pri_db_path)
+            pri_dao.upgrade_with_state_file(old_state_file_path)
+            target = os.path.join(run_dir, "state.tar.gz")
+            cmd = ["tar", "-C", run_dir, "-czf", target, "state"]
+            if call(cmd) == 0:
+                rmtree(os.path.join(run_dir, "state"), ignore_errors=True)
+            else:
+                try:
+                    os.unlink(os.path.join(run_dir, "state.tar.gz"))
+                except OSError:
+                    pass
+                ERR.error("cannot tar-gzip + remove old state/ directory")
+            # Remove old files as well
+            try:
+                os.unlink(os.path.join(run_dir, "cylc-suite-env"))
+            except OSError:
+                pass
+        elif os.path.exists(old_pri_db_path_611):
+            # Upgrade 6.11.X runtime database
+            os.rename(old_pri_db_path_611, pri_db_path)
+            pri_dao = CylcSuiteDAO(pri_db_path)
+            pri_dao.upgrade_from_611()
+            # Remove old files as well
+            for name in [
+                    CylcSuiteDAO.OLD_DB_FILE_BASE_NAME_611[1],
+                    "cylc-suite-env"]:
+                try:
+                    os.unlink(os.path.join(run_dir, name))
+                except OSError:
+                    pass
+        else:
+            pri_dao = CylcSuiteDAO(pri_db_path)
+
+        # Vacuum the primary/private database file
+        OUT.info("Vacuuming the suite db ...")
+        pri_dao.vacuum()
+        OUT.info("...done")
+        pri_dao.close()
 
     def configure(self):
         """Configure suite daemon."""
@@ -470,8 +495,7 @@ conditions; see `cylc conditions`.
         self.pri_dao.select_task_job_run_times(self._load_task_run_times)
         self.pri_dao.select_task_pool_for_restart(
             self._load_task_pool, self.options.checkpoint)
-        self.pri_dao.select_task_event_handler_try_states(
-            self._load_task_event_handler_try_state)
+        self.pri_dao.select_task_action_timers(self._load_task_action_timers)
         self.pool.poll_task_jobs()
 
     def _load_broadcast_states(self, row_idx, row):
@@ -560,13 +584,15 @@ conditions; see `cylc conditions`.
         """
         if row_idx == 0:
             OUT.info("LOADING task proxies")
-        cycle, name, spawned, status, submit_num, try_num, user_at_host = row
+        (cycle, name, spawned, status, hold_swap, submit_num, try_num,
+         user_at_host) = row
         try:
             itask = get_task_proxy(
                 name,
                 get_point(cycle),
-                status,
-                bool(spawned),
+                status=status,
+                hold_swap=hold_swap,
+                has_spawned=bool(spawned),
                 submit_num=submit_num,
                 is_reload_or_restart=True,
                 message_queue=self.pool.message_queue)
@@ -583,14 +609,7 @@ conditions; see `cylc conditions`.
             traceback.print_exc()
             ERR.error("could not load task %s" % name)
         else:
-            if status == TASK_STATUS_HELD:
-                # Only waiting tasks get held. These need to be released
-                # on restart to avoid the automatic shutdown criterion:
-                # if all tasks are succeeded or held (e.g. because they
-                # passed the final cycle point) shut down automatically.
-                itask.state.set_state(TASK_STATUS_WAITING)
-
-            elif status in (TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING):
+            if status in (TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING):
                 itask.state.set_prerequisites_all_satisfied()
                 # update the task proxy with submit ID etc.
                 itask.user_at_host = user_at_host
@@ -606,14 +625,13 @@ conditions; see `cylc conditions`.
             elif status in (TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_FAILED):
                 itask.state.set_prerequisites_all_satisfied()
 
-            elif status in (
-                    TASK_STATUS_QUEUED,
-                    TASK_STATUS_READY,
-                    TASK_STATUS_SUBMIT_RETRYING,
-                    TASK_STATUS_RETRYING):
+            elif status in (TASK_STATUS_QUEUED, TASK_STATUS_READY):
                 itask.state.set_prerequisites_all_satisfied()
                 # reset to waiting as these had not been submitted yet.
-                itask.state.set_state('waiting')
+                itask.state.set_state(TASK_STATUS_WAITING)
+
+            elif status in (TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING):
+                itask.state.set_prerequisites_all_satisfied()
 
             elif itask.state.status == TASK_STATUS_SUCCEEDED:
                 itask.state.set_prerequisites_all_satisfied()
@@ -622,13 +640,16 @@ conditions; see `cylc conditions`.
 
             if user_at_host:
                 itask.summary['job_hosts'][int(submit_num)] = user_at_host
-            OUT.info("+ %s.%s %s" % (name, cycle, status))
+            if hold_swap:
+                OUT.info("+ %s.%s %s (%s)" % (name, cycle, status, hold_swap))
+            else:
+                OUT.info("+ %s.%s %s" % (name, cycle, status))
             self.pool.add_to_runahead_pool(itask)
 
-    def _load_task_event_handler_try_state(self, row_idx, row):
-        """Load a task event handler try state."""
+    def _load_task_action_timers(self, row_idx, row):
+        """Load a task action timer, e.g. event handlers, retry states."""
         if row_idx == 0:
-            OUT.info("LOADING task event handler try states")
+            OUT.info("LOADING task action timers")
         (
             cycle, name, ctx_key_pickle, ctx_pickle, delays_pickle, num, delay,
             timeout,
@@ -644,16 +665,22 @@ conditions; see `cylc conditions`.
             ctx = pickle.loads(str(ctx_pickle))
             delays = pickle.loads(str(delays_pickle))
             num = int(num)
-            delay = float(delay)
-            timeout = float(timeout)
+            if delay is not None:
+                delay = float(delay)
+            if timeout is not None:
+                timeout = float(timeout)
         except (EOFError, TypeError, LookupError):
             ERR.warning(
-                "%(id)s: skip event handler try state %(ctx_key)s" %
+                "%(id)s: skip action timer %(ctx_key)s" %
                 {"id": id_, "ctx_key": ctx_key})
             ERR.warning(traceback.format_exc())
             return
-        itask.event_handler_try_states[ctx_key] = TaskActionTimer(
-            ctx, delays, num, delay, timeout)
+        if ctx_key and ctx_key[0] in ["poll_timers", "try_timers"]:
+            getattr(itask, ctx_key[0])[ctx_key[1]] = TaskActionTimer(
+                ctx, delays, num, delay, timeout)
+        else:
+            itask.event_handler_try_timers[ctx_key] = TaskActionTimer(
+                ctx, delays, num, delay, timeout)
         OUT.info("+ %s.%s %s" % (name, cycle, ctx_key))
 
     def process_command_queue(self):
@@ -1712,36 +1739,36 @@ conditions; see `cylc conditions`.
         ctx_groups = {}
         env = None
         for itask in self.pool.get_tasks():
-            for key, try_state in itask.event_handler_try_states.items():
+            for key, try_timer in itask.event_handler_try_timers.items():
                 # This should not happen, ignore for now.
-                if try_state.ctx is None:
-                    del itask.event_handler_try_states[key]
+                if try_timer.ctx is None:
+                    del itask.event_handler_try_timers[key]
                     continue
-                if try_state.is_waiting:
+                if try_timer.is_waiting:
                     continue
                 # Set timer if timeout is None.
-                if not try_state.is_timeout_set():
-                    if try_state.next() is None:
+                if not try_timer.is_timeout_set():
+                    if try_timer.next() is None:
                         itask.log(logging.WARNING, "%s failed" % str(key))
-                        del itask.event_handler_try_states[key]
+                        del itask.event_handler_try_timers[key]
                         continue
                     # Report retries and delayed 1st try
                     tmpl = None
-                    if try_state.num > 1:
+                    if try_timer.num > 1:
                         tmpl = "%s failed, retrying in %s (after %s)"
-                    elif try_state.delay:
+                    elif try_timer.delay:
                         tmpl = "%s will run after %s (after %s)"
                     if tmpl:
                         itask.log(logging.DEBUG, tmpl % (
                             str(key),
-                            try_state.delay_as_seconds(),
-                            try_state.timeout_as_str()))
+                            try_timer.delay_as_seconds(),
+                            try_timer.timeout_as_str()))
                 # Ready to run?
-                if not try_state.is_delay_done():
+                if not try_timer.is_delay_done():
                     continue
-                try_state.set_waiting()
+                try_timer.set_waiting()
 
-                if try_state.ctx.ctx_type == TaskProxy.CUSTOM_EVENT_HANDLER:
+                if try_timer.ctx.ctx_type == TaskProxy.CUSTOM_EVENT_HANDLER:
                     # Run custom event handlers on their own
                     if env is None:
                         env = dict(os.environ)
@@ -1749,16 +1776,16 @@ conditions; see `cylc conditions`.
                             env.update(TaskProxy.event_handler_env)
                     SuiteProcPool.get_inst().put_command(
                         SuiteProcContext(
-                            key, try_state.ctx.cmd, env=env, shell=True,
+                            key, try_timer.ctx.cmd, env=env, shell=True,
                         ),
                         itask.custom_event_handler_callback)
                 else:
                     # Group together built-in event handlers, where possible
-                    if try_state.ctx not in ctx_groups:
-                        ctx_groups[try_state.ctx] = []
+                    if try_timer.ctx not in ctx_groups:
+                        ctx_groups[try_timer.ctx] = []
                     # "itask.submit_num" may have moved on at this point
                     key1, submit_num = key
-                    ctx_groups[try_state.ctx].append(
+                    ctx_groups[try_timer.ctx].append(
                         (key1, str(itask.point), itask.tdef.name, submit_num))
 
         for ctx, id_keys in ctx_groups.items():
@@ -1822,14 +1849,14 @@ conditions; see `cylc conditions`.
             key1, point, name, submit_num = id_key
             try:
                 itask = tasks[(point, name)]
-                try_states = itask.event_handler_try_states
+                try_timers = itask.event_handler_try_timers
                 if ctx.ret_code == 0:
-                    del try_states[(key1, submit_num)]
+                    del try_timers[(key1, submit_num)]
                     log_ctx = SuiteProcContext((key1, submit_num), None)
                     log_ctx.ret_code = 0
                     itask.command_log(log_ctx)
                 else:
-                    try_states[(key1, submit_num)].unset_waiting()
+                    try_timers[(key1, submit_num)].unset_waiting()
             except KeyError:
                 if cylc.flags.debug:
                     traceback.print_exc()
@@ -1880,7 +1907,7 @@ conditions; see `cylc conditions`.
             key1, point, name, submit_num = id_key
             try:
                 itask = tasks[(point, name)]
-                try_states = itask.event_handler_try_states
+                try_timers = itask.event_handler_try_timers
                 job_out = itask.get_job_log_path(
                     itask.HEAD_MODE_LOCAL, submit_num, "job.out")
                 job_err = itask.get_job_log_path(
@@ -1889,9 +1916,9 @@ conditions; see `cylc conditions`.
                     log_ctx = SuiteProcContext((key1, submit_num), None)
                     log_ctx.ret_code = 0
                     itask.command_log(log_ctx)
-                    del try_states[(key1, submit_num)]
+                    del try_timers[(key1, submit_num)]
                 else:
-                    try_states[(key1, submit_num)].unset_waiting()
+                    try_timers[(key1, submit_num)].unset_waiting()
             except KeyError:
                 if cylc.flags.debug:
                     traceback.print_exc()
