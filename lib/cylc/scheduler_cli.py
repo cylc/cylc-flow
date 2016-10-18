@@ -95,6 +95,11 @@ def parse_commandline(is_restart):
 
     if is_restart:
         parser.add_option(
+            "--checkpoint",
+            help="Use specified checkpoint to restart",
+            metavar="CHECKPOINT", action="store", dest="checkpoint")
+
+        parser.add_option(
             "--ignore-final-cycle-point",
             help=(
                 "Ignore the final cycle point in the suite run database. " +
@@ -125,8 +130,7 @@ def parse_commandline(is_restart):
         "--until",
         help=("Shut down after all tasks have PASSED " +
               "this cycle point."),
-        metavar="CYCLE_POINT", action="store",
-        dest="final_point_string")
+        metavar="CYCLE_POINT", action="store", dest="final_point_string")
 
     parser.add_option(
         "--hold",
