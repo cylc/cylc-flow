@@ -25,13 +25,12 @@ to view the User Guide.  Otherwise, an online copy is available here:
 
 ### Presentations
 
-Format: HTML5 with embedded .webm videos (plays natively in Firefox or Chrome).
+Format HTML5 with embedded .webm videos (plays natively in Firefox or Chrome).
+Hit the "Home" and "End" keys to skip to the beginning and end of the
+presentation, and the 'o' key for a multi-slide summary. This is the
+[dzslides](https://github.com/paulrouget/dzslides) framework by Paul Roget.
 
-Hit "Home" and "End" keys to skip to the beginning or end of the presentation,
-and the 'o' key for a multi-slide summary. This is the <a
-href="https://github.com/paulrouget/dzslides"dzslides</a> framework by Paul Roget.
-
-* [Cylc Keynote Presentation](cylc-keynote-lisbon-Sept2016/index.html) - from
+* [Cylc Keynote](cylc-keynote-lisbon-Sept2016/index.html) - from
   the IS-ENES2 Workshop on Workflow in Earth Systems Modeling, Lisbon,
   September 2016
 
