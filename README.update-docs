@@ -1,0 +1,18 @@
+From the release branch (usually master) generate new PDF and HTML docs, and
+copy the doc/ directory to $HOME.
+
+Checkout gh-pages and run this script:
+
+rm -r doc html
+mkdir doc
+cp ~/doc/pdf/cug-pdf.pdf doc/cylc-user-guide.pdf
+for f in ~/doc/html/{single,multi}/*.{html,css}; do
+    F=${f#*doc/}
+    echo $F
+    mkdir -p $(dirname $F)
+    cp $f $F
+done
+
+Fnially:
+
+git add any new files under html/

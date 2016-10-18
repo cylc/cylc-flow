@@ -7,7 +7,7 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2016-09-14 12:22:00"> 
+<meta name="date" content="2016-10-19 10:17:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -160,12 +160,14 @@ href="cug-htmlse7.html#x8-430007.11">7.11<!--tex4ht:ref: RunningSuitesCLI --></a
 them are printed to stdout by cylc in debug mode; and they can be printed with the <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">log</span></span> command or new
-ones generated and printed with the <span class="lstinline"><span 
+class="pcrr7t-">cat</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">log</span></span> command or
+new ones generated and printed with the <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">jobscript</span></span> command. Take a look at one to see exactly how cylc wraps
-and runs your tasks.
+class="pcrr7t-">jobscript</span></span> command. Take a look at one to see exactly how cylc
+wraps and runs your tasks.
 <!--l. 5450--><p class="noindent" >
 <!--l. 5450--><p class="indent" >    <h4 id="11.2" class="subsectionHead"> <span class="titlemark"> <a href="#11.2"> 11.2</a>  <a 
  id="x12-16100011.2"></a>Supported Job Submission Methods </span></h4>
@@ -1469,7 +1471,7 @@ class="pcrr7t-">name</span></span> is too long. For version 12 or below, this is
 236 characters. The default setting will truncate the job name string to 15 characters. If you have PBS 13 at your
 site, you should modify your site&#8217;s global configuration file to allow the job name to be longer. (See also
 Section&#x00A0;<a 
-href="cug-htmlse18.html#x19-457000B.9.1.17.5">B.9.1.17.5<!--tex4ht:ref: JobNameLengthMaximum --></a>.) For example:
+href="cug-htmlse18.html#x19-461000B.9.1.17.5">B.9.1.17.5<!--tex4ht:ref: JobNameLengthMaximum --></a>.) For example:
    <!--l. 5691-->
    <div class="lstlisting" id="listing-233"><span class="label"><a 
  id="x12-170001r1"></a></span><span 
@@ -1698,10 +1700,12 @@ while the job is running. The contents are only copied to the normal locations w
 that <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">log</span></span> or the gcylc GUI will be unable to find the job&#8217;s stdout and stderr streams while the job is running.
-Some sites with these job submission methods are known to provide commands for viewing and/or tail-follow a job&#8217;s
-stdout and stderr streams that are redirected to these cache areas. If this is the case at your site, you can configure
-cylc to make use of the provided commands by adding some settings to the global site/user config.
+class="pcrb7t-">cat</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">log</span></span> or the gcylc GUI will be unable to find the job&#8217;s stdout and stderr streams while the job is
+running. Some sites with these job submission methods are known to provide commands for viewing and/or
+tail-follow a job&#8217;s stdout and stderr streams that are redirected to these cache areas. If this is the case at your site,
+you can configure cylc to make use of the provided commands by adding some settings to the global site/user config.
 E.g.:
    <!--l. 5747-->
    <div class="lstlisting" id="listing-235"><span class="label"><a 
@@ -2059,7 +2063,7 @@ class="pcrr7t-">s</span>
    
    </div>
 <!--l. 5775--><p class="indent" >   As explained in&#x00A0;<a 
-href="cug-htmlse17.html#x18-244000A">A<!--tex4ht:ref: SuiteRCReference --></a> the template&#8217;s %(job)s will be substituted by the job file path.
+href="cug-htmlse17.html#x18-247000A">A<!--tex4ht:ref: SuiteRCReference --></a> the template&#8217;s %(job)s will be substituted by the job file path.
 <!--l. 5778--><p class="noindent" >
 <!--l. 5778--><p class="indent" >    <h4 id="11.5" class="subsectionHead"> <span class="titlemark"> <a href="#11.5"> 11.5</a>  <a 
  id="x12-17400011.5"></a>Job Polling </span></h4>
@@ -2080,10 +2084,10 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">poll</span></span> command.
 <!--l. 5793--><p class="indent" >   Tasks are polled automatically, once, if they timeout while queueing in a batch scheduler and submission timeout
 is set. (See&#x00A0;<a 
-href="cug-htmlse17.html#x18-348000A.5.1.17">A.5.1.17<!--tex4ht:ref: TaskEventHandling --></a> for how to configure timeouts).
+href="cug-htmlse17.html#x18-353000A.5.1.17">A.5.1.17<!--tex4ht:ref: TaskEventHandling --></a> for how to configure timeouts).
 <!--l. 5797--><p class="indent" >   Tasks are polled multiple times, where necessary, when they exceed their execution time limits. These are
 normally set with some initial delays to allow the batch systems to kill the jobs. (See&#x00A0;<a 
-href="cug-htmlse18.html#x19-458000B.9.1.17.6">B.9.1.17.6<!--tex4ht:ref: ExecutionTimeLimitPollingIntervals --></a> for how to configure
+href="cug-htmlse18.html#x19-462000B.9.1.17.6">B.9.1.17.6<!--tex4ht:ref: ExecutionTimeLimitPollingIntervals --></a> for how to configure
 the polling intervals).
 <!--l. 5803--><p class="indent" >   Any tasks recorded in the <span 
 class="cmti-10">submitted </span>or <span 
@@ -2103,13 +2107,13 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">poll</span></span> in cylc site and
 user global config (see&#x00A0;<a 
-href="cug-htmlse18.html#x19-438000B.9.1.3">B.9.1.3<!--tex4ht:ref: task_comms_method --></a>). The default polling intervals can be overridden for all suites there too (see&#x00A0;<a 
-href="cug-htmlse18.html#x19-403000B.1.8">B.1.8<!--tex4ht:ref: submission_polling --></a>
+href="cug-htmlse18.html#x19-442000B.9.1.3">B.9.1.3<!--tex4ht:ref: task_comms_method --></a>). The default polling intervals can be overridden for all suites there too (see&#x00A0;<a 
+href="cug-htmlse18.html#x19-407000B.1.7">B.1.7<!--tex4ht:ref: submission_polling --></a>
 and&#x00A0;<a 
-href="cug-htmlse18.html#x19-402000B.1.7">B.1.7<!--tex4ht:ref: execution_polling --></a>), or in specific suite definitions (in which case polling will be done regardless of the task communication
+href="cug-htmlse18.html#x19-406000B.1.6">B.1.6<!--tex4ht:ref: execution_polling --></a>), or in specific suite definitions (in which case polling will be done regardless of the task communication
 method configured for the host; see&#x00A0;<a 
-href="cug-htmlse17.html#x18-339000A.5.1.15.7">A.5.1.15.7<!--tex4ht:ref: SubmissionPollingIntervals --></a> and&#x00A0;<a 
-href="cug-htmlse17.html#x18-340000A.5.1.15.8">A.5.1.15.8<!--tex4ht:ref: ExecutionPollingIntervals --></a>).
+href="cug-htmlse17.html#x18-344000A.5.1.15.7">A.5.1.15.7<!--tex4ht:ref: SubmissionPollingIntervals --></a> and&#x00A0;<a 
+href="cug-htmlse17.html#x18-345000A.5.1.15.8">A.5.1.15.8<!--tex4ht:ref: ExecutionPollingIntervals --></a>).
 <!--l. 5821--><p class="indent" >   Note that regular polling is not as efficient as task messaging in updating task status, and it should be used
 sparingly in large suites.
 <!--l. 5824--><p class="noindent" >
@@ -2312,24 +2316,24 @@ class="pcrr7t-">PBSHandler</span><span
 class="pcrr7t-">):</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x12-179007r7"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">"""</span><span 
-class="pcrr7t-">A</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">user</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">defined</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">batch</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">system</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">handler</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">"""</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">"""</span><span 
+class="pcrro7t-">A</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">user</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">defined</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">batch</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">system</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">handler</span><span 
+class="pcrro7t-">.</span><span 
+class="pcrro7t-">"""</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x12-179008r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 

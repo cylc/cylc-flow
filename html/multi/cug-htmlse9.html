@@ -7,7 +7,7 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2016-09-14 12:22:00"> 
+<meta name="date" content="2016-10-19 10:17:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -696,7 +696,7 @@ run time. Some values are complex strings that require further parsing by cylc t
 correctness (this is also done during validation). All legal entries are documented in the <span 
 class="cmti-10">Suite.rc Reference</span>
 (<a 
-href="cug-htmlse17.html#x18-244000A">A<!--tex4ht:ref: SuiteRCReference --></a>).
+href="cug-htmlse17.html#x18-247000A">A<!--tex4ht:ref: SuiteRCReference --></a>).
 <!--l. 2542--><p class="indent" >   The validator reports the line numbers of detected errors. Here&#8217;s an example showing a section heading with a
 missing right bracket:  <!--l. 2545-->
    <div class="lstlisting" id="listing-82"><span class="label"><a 
@@ -10825,7 +10825,7 @@ more than one cycle there may be no point in running it because the freshly copi
 overwritten immediately by the next task instance as the suite catches back up to real time operation.
 Clock-expire tasks are configured like clock-trigger tasks, with a date-time offset relative to cycle point
 (<a 
-href="cug-htmlse17.html#x18-304000A.4.10.4">A.4.10.4<!--tex4ht:ref: ClockExpireRef --></a>). The offset should be positive to make the task expire if the wall-clock time has gone beyond the
+href="cug-htmlse17.html#x18-309000A.4.11.4">A.4.11.4<!--tex4ht:ref: ClockExpireRef --></a>). The offset should be positive to make the task expire if the wall-clock time has gone beyond the
 cycle point. Triggering off an expired task typically requires suicide triggers to remove the workflow
 that runs if the task has not expired. Here a task called <span class="lstinline"><span 
 class="pcrr7t-">copy</span></span> expires, and its downstream workflow
@@ -11036,7 +11036,7 @@ that identifies this type of event to the suite, and an ID that distinguishes th
 cylc, but it typically identifies the filename(s) of the latest dataset in some way. When the suite daemon receives the
 external event notification it will trigger the next instance of any task waiting on that trigger (whatever its
 cycle point) and then broadcast (see&#x00A0;<a 
-href="cug-htmlse12.html#x13-20600012.19">12.19<!--tex4ht:ref: cylc-broadcast --></a>) the event ID to the cycle point of the triggered task as
+href="cug-htmlse12.html#x13-20900012.19">12.19<!--tex4ht:ref: cylc-broadcast --></a>) the event ID to the cycle point of the triggered task as
 <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_EXT_TRIGGER_ID</span></span>. Downstream tasks with the same cycle point therefore know the new event ID too and
@@ -11654,7 +11654,7 @@ individual tasks. This allows all common configuration detail to be factored out
 place.
 <!--l. 4099--><p class="indent" >   Any namespace can configure any or all of the items defined in the <span 
 class="cmti-10">Suite.rc Reference </span>(<a 
-href="cug-htmlse17.html#x18-244000A">A<!--tex4ht:ref: SuiteRCReference --></a>).
+href="cug-htmlse17.html#x18-247000A">A<!--tex4ht:ref: SuiteRCReference --></a>).
 <!--l. 4102--><p class="indent" >   Namespaces that do not explicitly inherit from others automatically inherit from the <span 
 class="cmti-10">root </span>namespace
 (below).
@@ -11683,7 +11683,7 @@ defined by dependency graph alone. The <span
 class="cmti-10">script </span>item, for example, defaults to code that prints a message
 then sleeps for between 1 and 15 seconds and exits. Default values are documented with each item
 in&#x00A0;<a 
-href="cug-htmlse17.html#x18-244000A">A<!--tex4ht:ref: SuiteRCReference --></a>. You can override the defaults or provide your own defaults by explicitly configuring the root
+href="cug-htmlse17.html#x18-247000A">A<!--tex4ht:ref: SuiteRCReference --></a>. You can override the defaults or provide your own defaults by explicitly configuring the root
 namespace.
 <!--l. 4141--><p class="noindent" >
 <!--l. 4141--><p class="indent" >    <h4 id="9.4.3" class="subsubsectionHead"><span class="titlemark"> <a href="#9.4.3"> 9.4.3</a>  <a 
@@ -14716,7 +14716,7 @@ class="pcrr7t-">CYLC_SUITE_SHARE_DIR</span></span>. In a cycling suite, output f
 cycle point sub-directories of the suite share directory.
 <!--l. 4352--><p class="indent" >   The top level share and work directory (below) location can be changed (e.g.&#x00A0;to a large data area) by a global
 config setting (see&#x00A0;<a 
-href="cug-htmlse18.html#x19-437000B.9.1.2">B.9.1.2<!--tex4ht:ref: workdirectory --></a>).
+href="cug-htmlse18.html#x19-441000B.9.1.2">B.9.1.2<!--tex4ht:ref: workdirectory --></a>).
 <!--l. 4356--><p class="noindent" >
 <!--l. 4356--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-1280009.4.7.5"></a><span 
@@ -14732,10 +14732,10 @@ class="pcrb7t-">cd</span></span> elsewhere at
 runtime). By default the location contains task name and cycle point, to provide a unique workspace for every
 instance of every task. This can be overridden in the suite definition, however, to get several tasks to share the same
 work directory (see&#x00A0;<a 
-href="cug-htmlse17.html#x18-324000A.5.1.10">A.5.1.10<!--tex4ht:ref: worksubdirectory --></a>).
+href="cug-htmlse17.html#x18-329000A.5.1.10">A.5.1.10<!--tex4ht:ref: worksubdirectory --></a>).
 <!--l. 4367--><p class="indent" >   The top level work and share directory (above) location can be changed (e.g.&#x00A0;to a large data area) by a global
 config setting (see&#x00A0;<a 
-href="cug-htmlse18.html#x19-437000B.9.1.2">B.9.1.2<!--tex4ht:ref: workdirectory --></a>).
+href="cug-htmlse18.html#x19-441000B.9.1.2">B.9.1.2<!--tex4ht:ref: workdirectory --></a>).
 <!--l. 4372--><p class="noindent" >
 <!--l. 4372--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-1290009.4.7.6"></a><span 
@@ -14936,7 +14936,7 @@ class="cmbx-10">Dynamic Host Selection</span></span>
    Instead of hardwiring host names into the suite definition you can specify a shell command that prints a
 hostname, or an environment variable that holds a hostname, as the value of the host config item.
 See&#x00A0;<a 
-href="cug-htmlse17.html#x18-342000A.5.1.16.1">A.5.1.16.1<!--tex4ht:ref: DynamicHostSelection --></a>.
+href="cug-htmlse17.html#x18-347000A.5.1.16.1">A.5.1.16.1<!--tex4ht:ref: DynamicHostSelection --></a>.
 <!--l. 4463--><p class="noindent" >
 <!--l. 4463--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-1340009.4.9.2"></a><span 
@@ -14953,7 +14953,7 @@ like local ones, are created on the fly, if necessary, during job submission.
 <!--l. 4475--><p class="indent" >   The visualization section of a suite definition is used to configure suite graphing, principally graph node (task)
 and edge (dependency arrow) style attributes. Tasks can be grouped for the purpose of applying common style
 attributes. See&#x00A0;<a 
-href="cug-htmlse17.html#x18-244000A">A<!--tex4ht:ref: SuiteRCReference --></a> for details.
+href="cug-htmlse17.html#x18-247000A">A<!--tex4ht:ref: SuiteRCReference --></a> for details.
 <!--l. 4480--><p class="noindent" >
 <!--l. 4480--><p class="indent" >    <h4 id="9.5.1" class="subsubsectionHead"><span class="titlemark"> <a href="#9.5.1"> 9.5.1</a>  <a 
  id="x10-1360009.5.1"></a>Collapsible Families In Suite Graphs </span></h4>
@@ -15355,7 +15355,7 @@ class="pcrr7t-">.</span>
    
    </div>
 <!--l. 4604--><p class="indent" >   (See&#x00A0;<a 
-href="cug-htmlse17.html#x18-259000A.2.10">A.2.10<!--tex4ht:ref: RefParameterTemplates --></a> for more on the string template syntax.)
+href="cug-htmlse17.html#x18-262000A.2.10">A.2.10<!--tex4ht:ref: RefParameterTemplates --></a> for more on the string template syntax.)
 <!--l. 4606--><p class="indent" >   Any number of parameters can be used at once. This parameterization: <!--l. 4607-->
    <div class="lstlisting" id="listing-174"><span class="label"><a 
  id="x10-138015r1"></a></span><span 
@@ -20492,8 +20492,8 @@ class="pcrr7t-">submit</span></span>) use one or both of [scheduling][[special t
 class="cmti-10">include at start-up </span>or <span 
 class="cmti-10">exclude at start-up</span>
 (documented in&#x00A0;<a 
-href="cug-htmlse17.html#x18-308000A.4.10.8">A.4.10.8<!--tex4ht:ref: IASU --></a> and&#x00A0;<a 
-href="cug-htmlse17.html#x18-307000A.4.10.7">A.4.10.7<!--tex4ht:ref: EASU --></a>). Then the graph still defines the validity of the tasks and their
+href="cug-htmlse17.html#x18-313000A.4.11.8">A.4.11.8<!--tex4ht:ref: IASU --></a> and&#x00A0;<a 
+href="cug-htmlse17.html#x18-312000A.4.11.7">A.4.11.7<!--tex4ht:ref: EASU --></a>). Then the graph still defines the validity of the tasks and their
 dependencies, but they are not actually loaded into the suite at start-up. Other tasks that depend on
 the omitted ones, if any, will have to wait on their insertion at a later time or otherwise be triggered
 manually.
