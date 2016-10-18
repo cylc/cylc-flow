@@ -22,6 +22,7 @@ to view the User Guide.  Otherwise, an online copy is available here:
 * [Cylc User Guide - PDF ~3MB](doc/cylc-user-guide.pdf)
 * [Cylc User Guide - HTML single page](html/single/cug-html.html)
 * [Cylc User Guide - HTML multi page](html/multi/cug-html.html)
+* [Cylc Keynote Presentation](cylc-keynote-lisbon-Sept2016/index.html) - from the IS-ENES2 Workshop on Workflow in Earth Systems Modeling, Lisbon, September 2016
 
 ---
 
