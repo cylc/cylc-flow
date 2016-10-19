@@ -1,0 +1,16 @@
+[cylc]
+    [[reference test]]
+        live mode suite timeout = PT1M
+
+[scheduling]
+    [[dependencies]]
+        graph = t1 & t2
+
+[runtime]
+    [[root]]
+        script = true
+    [[t1]]
+    [[t2]]
+        [[[job]]]
+            submission polling intervals = 10*PT6S
+            execution polling intervals = 10*PT6S
