@@ -33,6 +33,24 @@ class TaskMessageServer(BaseCommsServer):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def put(self, task_id, priority, message):
+        """Notify the suite daemon of a task message.
+
+        Example URL:
+
+        * /put?task_id=foo.1&priority=NORMAL&message=foo.1+succeeded
+
+        Args:
+
+        * task_id - string
+            task_id should be the task that originates the message.
+        * priority - string
+            priority should be NORMAL, WARNING, or CRITICAL
+        * message - string
+            message should usually be a known output message for the
+            task (e.g. to indicate that the task succeeded). It can
+            also be a custom message.
+
+        """
         check_access_priv(self, 'full-control')
         self.report('task_message')
         self.queue.put((task_id, priority, str(message)))

@@ -48,6 +48,13 @@ class SuiteIdServer(BaseCommsServer):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def identify(self):
+        """Provide key identity information about the suite.
+
+        Example URL:
+
+        * /identify
+
+        """
         self.report("identify")
         result = {}
         if access_priv_ok(self, "identity"):

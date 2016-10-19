@@ -36,16 +36,44 @@ class SuiteInfoServer(BaseCommsServer):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def ping_suite(self):
+        """Return True if the suite is alive!
+
+        Example URL:
+
+        * /ping_suite
+
+        """
         return self._put("ping_suite", None)
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def get_cylc_version(self):
+        """Return the cylc version used to run this suite."""
         return self._put("get_cylc_version", None)
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def ping_task(self, task_id, exists_only=False):
+        """Return True if task exists and is running.
+
+        Example URL:
+
+        * /ping_task?task_id=foo.1
+        * /ping_task?task_id=foo.2&exists_only=True
+
+        Args:
+
+        * task_id - string
+            task_id should be the task to ping.
+
+        Kwargs:
+
+        * exists_only - boolean
+            exists_only, if True, means that the task
+            does not need to be running for this method
+            to return True - it only needs to exist.
+
+        """
         if isinstance(exists_only, basestring):
             exists_only = ast.literal_eval(exists_only)
         return self._put("ping_task", (task_id,),
@@ -54,21 +82,60 @@ class SuiteInfoServer(BaseCommsServer):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def get_task_jobfile_path(self, task_id):
+        """Return the path to the task job script for task_id.
+
+        Example URL:
+
+        * /get_task_jobfile_path?task_id=foo.1
+
+        Args:
+
+        * task_id - string
+            task_id should be the task to get the job file for.
+
+        """
         return self._put("get_task_jobfile_path", (task_id,))
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def get_suite_info(self):
+        """Return a dict with key-values for suite title and description.
+
+        Example URL:
+
+        * /get_suite_info
+
+        """
         return self._put("get_suite_info", None)
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def get_task_info(self, name):
+        """Return a dict with key-values for task title and description.
+
+        Example URL:
+
+        * /get_task_info?name=foo
+
+        """
         return self._put("get_task_info", (name,))
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def get_all_families(self, exclude_root=False):
+        """Return a list of all families.
+
+        Example URLs:
+
+        * /get_all_families
+        * /get_all_families?exclude_root=True
+
+        Kwargs:
+
+        * exclude_root - boolean
+            if exclude_root is True, do not include 'root' in the list.
+
+        """
         if isinstance(exclude_root, basestring):
             exclude_root = ast.literal_eval(exclude_root)
         return self._put("get_all_families", None,
@@ -77,11 +144,31 @@ class SuiteInfoServer(BaseCommsServer):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def get_first_parent_descendants(self):
+        """Return a dict of families (keys) vs descendant lists (values).
+
+        Example URL:
+
+        * /get_first_parent_descendants
+
+        """
         return self._put("get_first_parent_descendants", None)
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def get_first_parent_ancestors(self, pruned=None):
+    def get_first_parent_ancestors(self, pruned=False):
+        """Return a dict of families (keys) vs ancestor lists (values).
+
+        Example URL:
+
+        * /get_first_parent_ancestors
+        * /get_first_parent_ancestors?pruned=True
+
+        Kwargs:
+
+        * pruned - boolean
+            If True, prune non-task namespaces from ancestors dict.
+
+        """
         if isinstance(pruned, basestring):
             pruned = ast.literal_eval(pruned)
         return self._put("get_first_parent_ancestors", None,
@@ -93,6 +180,37 @@ class SuiteInfoServer(BaseCommsServer):
                       group_nodes=None, ungroup_nodes=None,
                       ungroup_recursive=False, group_all=False,
                       ungroup_all=False):
+        """Return a list of graph edges for this suite.
+
+        Example URLs:
+
+        * /get_graph_raw?start_point_string=20160101T0000Z&stop_point_string=20160501T0000Z
+        * /get_graph_raw?start_point_string=10&stop_point_string=20&group_all=True
+
+        Args:
+
+        * start_point_string - string
+            This should be the cycle point to begin graphing with.
+        * stop_point_string - string
+            This should be the cycle point to end graphing with.
+
+        Kwargs:
+
+        * group_nodes - list or None
+            This should be the list of custom nodes to 'group up'.
+        * ungroup_nodes - list or None
+            This should be the list of custom nodes to 'ungroup'.
+        * ungroup_recursive - boolean
+            If True and ungroup_nodes is given, recursively ungroup
+            those nodes.
+        * group_all - boolean
+            If True, group all tasks and families up to the highest
+            non-root level possible.
+        * ungroup_all - boolean
+            If True, ungroup all families so that only task edges are
+            present.
+
+        """
         if isinstance(group_nodes, basestring):
             group_nodes = ast.literal_eval(group_nodes)
         if isinstance(ungroup_nodes, basestring):
@@ -115,6 +233,20 @@ class SuiteInfoServer(BaseCommsServer):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def get_task_requisites(self, name, point_string):
+        """Get task requisites for task name at point_string.
+
+        Example URL:
+
+        * /get_task_requisites?name=foo&point_string=20161201T0000Z
+
+        Args:
+
+        * name - string
+            name of the task, excluding cycle point
+        * point_string - string
+            cycle point of the task.
+
+        """
         return self._put("get_task_requisites", (name, point_string))
 
     def _put(self, command, command_args, command_kwargs=None):

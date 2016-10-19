@@ -2067,7 +2067,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
         """Dry-run tasks, e.g. edit run."""
         return self.pool.dry_run_task(items)
 
-    def command_reset_task_states(self, items, state=None):
+    def command_reset_task_states(self, items, state):
         """Reset the state of tasks."""
         return self.pool.reset_task_states(items, state)
 

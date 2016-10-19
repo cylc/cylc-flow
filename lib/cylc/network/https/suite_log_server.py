@@ -49,7 +49,26 @@ class SuiteLogServer(BaseCommsServer):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def get_err_content(self, prev_size, max_lines):
-        """Return the content and new size of the error file."""
+        """Return the content and new size of the suite error file.
+
+        Returns a list of most recent error file lines and the new size
+        of the file, only if the size is different from prev_size.
+
+        Example URL:
+
+        * /get_err_content?prev_size=4824&max_lines=10
+
+        Args:
+
+        * prev_size - integer
+            If prev_size matches the err file size, return zero content
+            and prev_size ([], prev_size).
+
+        * max_lines - integer
+            If the suite error file has changed size, return up to the
+            last max_lines lines of error file.
+
+        """
         check_access_priv(self, 'full-read')
         self.report("get_err_content")
         prev_size = int(prev_size)
