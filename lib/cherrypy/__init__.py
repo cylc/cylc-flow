@@ -59,6 +59,8 @@ These API's are described in the `CherryPy specification <https://bitbucket.org/
 import warnings
 
 warnings.filterwarnings('ignore', 'Module cherrypy was already imported')
+warnings.filterwarnings('ignore', 'Module jinja2 was already imported')
+warnings.filterwarnings('ignore', 'Module markupsafe was already imported')
 try:
     import pkg_resources
 except ImportError:

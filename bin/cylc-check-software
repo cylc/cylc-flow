@@ -77,8 +77,7 @@ fi
 
 # Python packages
 # sqlite3 is part of the standard library since Python 2.5
-PKGS="Jinja2:jinja2 \
-pygraphviz:pygraphviz \
+PKGS="pygraphviz:pygraphviz \
 pygtk:pygtk"
 
 echo "Checking for Python packages:"

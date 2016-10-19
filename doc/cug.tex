@@ -396,9 +396,7 @@ previous section, emerges naturally at run time.
 \end{myitemize}
 
 The following packages are technically optional as you can construct
-and run cylc suites without dependency graphing, the gcylc GUI, or
-template processing {\em but this is not recommended, and without
-Jinja2 you will not be able to run many of the example suites}:
+and run cylc suites without dependency graphing and the gcylc GUI:
 
 \begin{myitemize}
     \item {\bf PyGTK}, a Python wrapper for the GTK+ GUI toolkit,
@@ -410,10 +408,6 @@ Jinja2 you will not be able to run many of the example suites}:
         interface to it.
         \newline \url{http://www.graphviz.org}
         \newline \url{http://pygraphviz.github.io/}
-    \item {\bf Jinja2}, a template processor for Python (latest tested:
-        2.6). Jinja2 allows use of general programming constructs in
-        suite definitions.
-        \newline \url{http://jinja.pocoo.org/docs}
 \end{myitemize}
 
 If you use a binary package manager to install graphviz you may also
@@ -450,6 +444,11 @@ Python requests library if available (recommended) or via pure Python via
 urllib2.
 \newline \url{http://www.cherrypy.org/}
 \newline \url{http://docs.python-requests.org/}
+
+Cylc includes Jinja2 2.8, a full featured template engine for Python and its
+dependency MarkupSafe 0.23, both BSD licensed.
+\newline \url{http://jinja.pocoo.org/}
+\newline \url{http://www.pocoo.org/projects/markupsafe/}
 
 Finally, cylc makes heavy use of Python {\em ordered dictionary}
 data structures. Significant speedup in parsing large suites can be had
@@ -508,7 +507,7 @@ viewer (\url{https://github.com/jrfonseca/xdot.py}, LGPL license).
 
 \subsection{Install The External Dependencies}
 
-First install graphviz, Pygraphviz, Jinja2, \TeX, and ImageMagick
+First install graphviz, Pygraphviz, \TeX, and ImageMagick
 using the package manager on your system if possible; otherwise download
 the packages manually and follow their native installation documentation.
 On a modern Linux system, this is very easy. For example, to install
@@ -529,7 +528,6 @@ shell$ yum install texlive-preprint
 shell$ yum install ImageMagick
 
 # Python packages:
-shell$ easy_install Jinja2 # (2.6)
 shell$ easy_install pygraphviz
 
 # (sqlite 3.7.13 already installed on the system)
@@ -549,7 +547,6 @@ Checking for non-Python packages:
  + Graphviz ... ok
  + sqlite ... ok
 Checking for Python packages:
- + Jinja2 ... ok
  + pygraphviz ... ok
  + pygtk ... ok
 \end{lstlisting}
@@ -657,7 +654,6 @@ Checking for non-Python packages:
  + Graphviz ... ok
  + sqlite ... ok
 Checking for Python packages:
- + Jinja2 ... ok
  + pygraphviz ... ok
  + pygtk ... ok
 \end{lstlisting}
@@ -1387,7 +1383,7 @@ unless the last-resort one way {\em task polling} communication method
 is used.
 
 \item Cylc must be installed on the task host. Other software dependencies like
-graphviz and Jinja2 are not required there.
+graphviz are not required there.
 
 \item Any files needed by a remote task must be installed on the task
 host. In this example there is nothing to install because the

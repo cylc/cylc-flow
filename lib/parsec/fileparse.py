@@ -40,17 +40,9 @@ import traceback
 from parsec import ParsecError
 from parsec.OrderedDict import OrderedDictWithDefaults
 from parsec.include import inline, IncludeFileNotFoundError
+from parsec.jinja2support import jinja2process, TemplateError, UndefinedError
 from parsec.util import itemstr
 import cylc.flags
-
-
-try:
-    from parsec.jinja2support import (
-        jinja2process, TemplateError, UndefinedError)
-except ImportError:
-    jinja2_disabled = True
-else:
-    jinja2_disabled = False
 
 
 # heading/sections can contain commas (namespace name lists) and any
@@ -270,8 +262,6 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
     # process with Jinja2
     if do_jinja2:
         if flines and re.match('^#![jJ]inja2\s*', flines[0]):
-            if jinja2_disabled:
-                raise FileParseError('Jinja2 is not installed')
             if cylc.flags.verbose:
                 print "Processing with Jinja2"
             try:

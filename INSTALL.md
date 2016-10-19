@@ -9,7 +9,7 @@ hosts.*
 ### External Software Packages.
 
 Several external packages required on suite hosts are not needed on task hosts:
-*Jinja2*, *graphviz*, and *pygraphviz*.  These should only need to be installed
+*graphviz*, and *pygraphviz*.  These should only need to be installed
 once, and then updated infrequently.
 
 ### Installing Cylc Releases
