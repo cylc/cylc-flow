@@ -18,8 +18,6 @@
 
 import json
 import re
-import sys
-import cPickle as pickle
 import threading
 
 from cylc.broadcast_report import (

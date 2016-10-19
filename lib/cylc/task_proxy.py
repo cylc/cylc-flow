@@ -93,15 +93,15 @@ class TryState(object):
     # Memory optimization - constrain possible attributes to this list.
     __slots__ = ["ctx", "delays", "num", "delay", "timeout", "is_waiting"]
 
-    def __init__(self, ctx=None, delays=None):
+    def __init__(self, ctx=None, delays=None, num=0, delay=None, timeout=None):
         self.ctx = ctx
         if delays:
             self.delays = list(delays)
         else:
             self.delays = [0]
-        self.num = 0
-        self.delay = None
-        self.timeout = None
+        self.num = num
+        self.delay = delay
+        self.timeout = timeout
         self.is_waiting = False
 
     def delay_as_seconds(self):

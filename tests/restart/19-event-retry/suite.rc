@@ -1,0 +1,12 @@
+[cylc]
+   UTC mode = True
+[scheduling]
+    [[dependencies]]
+        graph = t01
+[runtime]
+    [[t01]]
+        script = true
+        [[[events]]]
+            handlers = my-handler "%(suite)s"
+            handler events = succeeded
+            handler retry delays = PT0S, PT10S
