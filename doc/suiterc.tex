@@ -172,10 +172,12 @@ on it will abort with exit status 1 if any task fails.
 \end{myitemize}
 
 \subsubsection[health check interval]{[cylc] \textrightarrow health check interval}
+\label{health-check-interval}
 
 Specify an time interval when a running cylc suite will attempt to check that
 its run directory and port file exist, and that the port file contains the
-expected information.
+expected information. If the suite run directory is not found or if the port
+file is removed or modified, the suite will shut itself down automatically.
 
 \begin{myitemize}
     \item {\em type:} ISO 8601 duration/interval representation (e.g.
