@@ -20,7 +20,7 @@
 
 import os
 import sys
-from time import sleep
+from time import sleep, time
 from cylc.suite_logging import SuiteLog
 
 
@@ -41,6 +41,8 @@ Suite Info:
  + Host: %(host)s
  + Port: %(port)s
  + Logs: %(logd)s/{log,out,err}""" + SUITE_SCAN_INFO_TMPL
+
+_TIMEOUT = 300.0  # 5 minutes
 
 
 def redirect(logd):
@@ -81,7 +83,9 @@ def daemonize(server):
             # Poll for suite log to be populated
             suite_pid = None
             suite_port = None
-            while suite_pid is None or suite_port is None:
+            timeout = time() + _TIMEOUT
+            while time() <= timeout and (
+                    suite_pid is None or suite_port is None):
                 sleep(0.1)
                 try:
                     log_stat = os.stat(log_fname)
@@ -106,6 +110,8 @@ def daemonize(server):
                             sys.exit("Suite daemon exited")
                 except (IOError, OSError, ValueError):
                     pass
+            if suite_pid is None or suite_port is None:
+                sys.exit("Suite not started after %ds" % _TIMEOUT)
             # Print suite information
             sys.stdout.write(_INFO_TMPL % {
                 "suite": server.suite,
