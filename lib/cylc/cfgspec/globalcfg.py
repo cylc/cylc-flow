@@ -53,10 +53,6 @@ SPEC = {
     'enable run directory housekeeping': vdr(vtype='boolean', default=False),
     'run directory rolling archive length': vdr(
         vtype='integer', vmin=0, default=2),
-    'submission polling intervals': vdr(
-        vtype='interval_minutes_list', default=[]),
-    'execution polling intervals': vdr(
-        vtype='interval_minutes_list', default=[]),
     'task host select command timeout': vdr(
         vtype='interval_seconds', default=DurationFloat(10)),
 

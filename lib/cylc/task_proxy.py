@@ -120,7 +120,12 @@ class TaskActionTimer(object):
         return self.timeout is not None
 
     def next(self, no_exhaust=False):
-        """Return the next retry delay if there is one, or None otherwise."""
+        """Return the next retry delay.
+
+        When delay list has no more item:
+        * Return None if no_exhaust is False
+        * Return the final delay if no_exhaust is True.
+        """
         try:
             self.delay = self.delays[self.num]
         except IndexError:
