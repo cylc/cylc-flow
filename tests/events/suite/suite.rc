@@ -7,7 +7,6 @@
 [runtime]
     [[common]]
         script = """
-cylc unreg $REG
 cylc reg $REG $DEF
 echo "Sub-suite log file is: $PWD/$LOG"
 if cylc run --debug $REG > $LOG 2>&1; then 
@@ -21,10 +20,10 @@ else
         exit 1
     fi
 fi
-cylc unreg $REG"""
+"""
         [[[environment]]]
             DEF = $CYLC_SUITE_DEF_PATH/hidden/${CYLC_TASK_NAME}
-            REG = ${CYLC_SUITE_REG_NAME}-${CYLC_TASK_NAME}
+            REG = ${CYLC_SUITE_NAME}-${CYLC_TASK_NAME}
             LOG = ${CYLC_TASK_NAME}.log
             GREP = "ERROR - ${CYLC_TASK_NAME} EVENT HANDLER FAILED"
         [[[remote]]]

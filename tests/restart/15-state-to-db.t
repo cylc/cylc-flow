@@ -46,8 +46,8 @@ LOADING task proxies
 + bar.20040101T0000Z held
 + foo.20040101T0000Z held" "${TEST_NAME_BASE}-restart.stdout"
 exists_ok "${SUITE_RUN_DIR}/state.tar.gz"
-exists_ok "${SUITE_RUN_DIR}/cylc-suite-private.db" 
-exists_ok "${SUITE_RUN_DIR}/cylc-suite-public.db" 
+exists_ok "${SUITE_RUN_DIR}/.cylc-var/db" 
+exists_ok "${SUITE_RUN_DIR}/log/cylc-suite.db" 
 
 run_ok "${TEST_NAME_BASE}-checkpoint_id" \
     sqlite3 "${SUITE_RUN_DIR}/cylc-suite.db" \

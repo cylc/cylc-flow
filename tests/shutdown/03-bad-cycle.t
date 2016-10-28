@@ -25,7 +25,8 @@ install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 # N.B. No validate test because this suite does not validate.
 TEST_NAME=$TEST_NAME_BASE-run
 run_fail $TEST_NAME cylc run $SUITE_NAME --debug
-exists_fail ~/.cylc/ports/$SUITE_NAME
+RUND="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
+exists_fail "${RUND}/.cylc-var/contact"
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
 exit

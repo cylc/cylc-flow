@@ -18,8 +18,8 @@
         script = """
 wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
 # Corrupt port file and don't report back to suite
-PORTSD="$(cylc get-global-config --item='[communication]ports directory')"
-echo 'Haha! I have corrupted the port file!' >"${PORTSD}/${CYLC_SUITE_NAME}"
+SRVD="$(cylc get-global-config --print-run-dir)/${CYLC_SUITE_NAME}/.cylc-var"
+echo 'Haha! I have corrupted the port file!' >"${SRVD}/contact"
 trap '' EXIT
 exit
 """

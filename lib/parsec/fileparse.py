@@ -306,20 +306,16 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
     return [fl.rstrip() for fl in flines]
 
 
-def parse(fpath, write_proc=False, template_vars=None):
+def parse(fpath, output_fname=None, template_vars=None):
     "Parse file items line-by-line into a corresponding nested dict."
 
     # read and process the file (jinja2, include-files, line continuation)
     flines = read_and_proc(fpath, template_vars)
-    # write the processed for suite.rc if it lives in a writable directory
-    if write_proc and \
-            os.access(os.path.dirname(fpath), os.W_OK):
-        fpath_processed = fpath + '.processed'
+    if output_fname:
+        with open(output_fname, 'wb') as handle:
+            handle.write('\n'.join(flines) + '\n')
         if cylc.flags.verbose:
-            print "Writing file " + fpath_processed
-        f = open(fpath_processed, 'w')
-        f.write('\n'.join(flines) + '\n')
-        f.close()
+            print "Processed configuration dumped: %s" % output_fname
 
     nesting_level = 0
     config = OrderedDictWithDefaults()

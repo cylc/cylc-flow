@@ -70,6 +70,7 @@ from shutil import copy
 import cylc.flags
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.option_parsers import CylcOptionParser as COP
+from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from parsec.include import inline, \
     split_file, backup, backups, newfiles, cleanup, modtimes
 from cylc.wallclock import get_current_time_string
@@ -94,7 +95,7 @@ def main():
 
     (options, args) = parser.parse_args()
 
-    suite, suiterc = parser.get_suite()
+    suite, suiterc = SuiteSrvFilesManager().parse_suite_arg(options, args[0])
 
     if options.geditor:
         editor = GLOBAL_CFG.get(['editors', 'gui'])

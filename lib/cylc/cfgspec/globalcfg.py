@@ -124,7 +124,6 @@ SPEC = {
                       options=["https"]),
         'base port': vdr(vtype='integer', default=43001),
         'maximum number of ports': vdr(vtype='integer', default=100),
-        'ports directory': vdr(vtype='string', default="$HOME/.cylc/ports/"),
         'proxies on': vdr(vtype='boolean', default=False),
         'options': vdr(vtype='string_list', default=[]),
     },
@@ -348,7 +347,6 @@ def upg(cfg, descr):
     u.obsolete(
         '7.0.0',
         ['pyro', 'ports directory'],
-        ['communication', 'ports directory']
     )
     u.obsolete(
         '7.0.0',
@@ -574,10 +572,6 @@ class GlobalConfig(config):
         if value:
             self.create_directory(value, item)
 
-        item = '[communication]ports directory'
-        value = cfg['communication']['ports directory']
-        self.create_directory(value, item)
-
     def get_tmpdir(self):
         """Make a new temporary directory and arrange for it to be
         deleted automatically when we're finished with it. Call this
@@ -623,9 +617,6 @@ class GlobalConfig(config):
         # Expand environment variables and ~user in LOCAL file paths.
         for key, val in cfg['documentation']['files'].items():
             cfg['documentation']['files'][key] = expandvars(val)
-
-        cfg['communication']['ports directory'] = expandvars(
-            cfg['communication']['ports directory'])
 
         for key, val in cfg['hosts']['localhost'].items():
             if val and 'directory' in key:

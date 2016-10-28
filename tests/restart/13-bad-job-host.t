@@ -31,7 +31,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug "${SUITE_NAME}"
 # Modify DB with garbage host
 CYLC_SUITE_RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
-for DB_NAME in 'cylc-suite.db' 'cylc-suite-private.db'; do
+for DB_NAME in 'cylc-suite.db' '.cylc-var/db'; do
     sqlite3 "${CYLC_SUITE_RUN_DIR}/${DB_NAME}" \
         'UPDATE task_jobs SET user_at_host="garbage" WHERE name=="t-remote";'
 done

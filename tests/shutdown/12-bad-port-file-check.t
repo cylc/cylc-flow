@@ -32,14 +32,10 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate ${OPT_SET} "${SUITE_NAME}"
 suite_run_fail "${TEST_NAME_BASE}-run" \
     cylc run --no-detach ${OPT_SET} "${SUITE_NAME}"
+SRVD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/.cylc-var"
 LOGD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log"
-PORTSD="$(cylc get-global-config --item='[communication]ports directory')"
-while [[ "${PORTSD}" == */ ]]; do  # remove trailing slashes
-    PORTSD="${PORTSD%/}"
-done
 grep_ok \
-    "${PORTSD}/${SUITE_NAME}: port file corrupted/modified and will be left" \
+    "${SRVD}/contact: suite contact file corrupted/modified and may be left" \
     "${LOGD}/suite/log"
-rm -f "${PORTSD}/${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

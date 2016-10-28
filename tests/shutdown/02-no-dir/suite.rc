@@ -6,8 +6,8 @@
         script = """
 wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
 sleep 2
+cylc shutdown "${CYLC_SUITE_NAME}"
 rm -f "${CYLC_SUITE_RUN_DIR}"
-cylc shutdown --now "${CYLC_SUITE_REG_NAME}"
 trap '' EXIT
 exit
 """

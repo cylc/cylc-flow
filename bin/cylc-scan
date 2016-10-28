@@ -207,8 +207,7 @@ def main():
         state_legend = state_legend.rstrip()
 
     skip_one = True
-    for host, port, suite_identity in scan_all(
-            args, options.db, options.comms_timeout):
+    for host, port, suite_identity in scan_all(args, options.comms_timeout):
         name = suite_identity['name']
         owner = suite_identity['owner']
 

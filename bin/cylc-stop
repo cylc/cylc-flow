@@ -61,7 +61,7 @@ class StopPoller(Poller):
         self.pclient = SuiteInfoClient(
             self.args['suite'], owner=self.args['owner'],
             host=self.args['host'], timeout=self.args['comms_timeout'],
-            port=self.args['port'], db=self.args['db'])
+            port=self.args['port'])
 
     def check(self):
         # return True if suite has stopped (success) else False
@@ -118,8 +118,8 @@ def main():
         parser.error("ERROR: --kill is not compatible with --now")
 
     pclient = SuiteCommandClient(
-        suite, options.owner, options.host, options.comms_timeout,
-        options.port, options.db, my_uuid=options.set_uuid,
+        suite, options.owner, options.host, options.port,
+        options.comms_timeout, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
 
     if int(options.max_polls) > 0:
@@ -132,7 +132,6 @@ def main():
                 'host': options.host,
                 'comms_timeout': options.comms_timeout,
                 'port': options.port,
-                'db': options.db
             }
         )
 

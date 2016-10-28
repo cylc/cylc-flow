@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "HELLO FROM log-check.sh shutdown handler for $CYLC_SUITE_REG_NAME"
+echo "HELLO FROM log-check.sh shutdown handler for $CYLC_SUITE_NAME"
 
 # compare events.log with the reference version
 # sorted so that event order doesn't matter
@@ -18,4 +18,4 @@ else
     echo "OK: event handler output logs agree"
 fi
 
-echo "BYE FROM log-check.sh shutdown handler for $CYLC_SUITE_REG_NAME"
+echo "BYE FROM log-check.sh shutdown handler for $CYLC_SUITE_NAME"

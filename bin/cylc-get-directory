@@ -18,13 +18,13 @@
 
 """cylc [db] get-directory REG
 
-Retrieve and print the directory location of suite REG.
-Here's an easy way to move to a suite directory:
+Retrieve and print the source directory location of suite REG.
+Here's an easy way to move to a suite source directory:
   $ cd $(cylc get-dir REG)."""
 
 import sys
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.registration import RegistrationDB
+from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 import cylc.flags
 
 from cylc.remote import remrun
@@ -33,13 +33,10 @@ if remrun().execute():
 
 
 def main():
-    parser = COP(__doc__)
-
-    (options, args) = parser.parse_args()
-
-    reg = args[0]
-    db = RegistrationDB(options.db)
-    print db.get_suitedir(reg)
+    """Implement "cylc get-directory"."""
+    options, args = COP(__doc__, prep=True).parse_args()
+    print SuiteSrvFilesManager().get_suite_source_dir(
+        args[0], options.suite_owner)
 
 
 if __name__ == "__main__":

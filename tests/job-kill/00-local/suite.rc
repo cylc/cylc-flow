@@ -25,6 +25,6 @@ t2:start=>stop
         inherit=T
     [[stop]]
         script="""
-cylc kill "$CYLC_SUITE_REG_NAME" 't1.1' 't2.1' || true
-cylc stop "$CYLC_SUITE_REG_NAME"
+cylc kill "$CYLC_SUITE_NAME" 't1.1' 't2.1' || true
+cylc stop "$CYLC_SUITE_NAME"
 """

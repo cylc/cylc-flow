@@ -40,7 +40,7 @@ cat >"${SUITE2_RUND}/suite.rc" <<__SUITERC__
 __SUITERC__
 cylc register "${SUITE2}" "${SUITE2_RUND}"
 cylc run --no-detach "${SUITE1}" 1>'1.out' 2>&1 &
-poll '!' test -e "${HOME}/.cylc/ports/${SUITE1}"
+poll '!' test -e "${SUITE1_RUND}/.cylc-var/contact"
 run_ok "${TEST_NAME_BASE}" cylc run --no-detach "${SUITE2}"
 cylc shutdown "${SUITE1}" --max-polls=10 --interval=1 1>'/dev/null' 2>&1 || true
 purge_suite "${SUITE1}"

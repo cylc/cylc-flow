@@ -158,6 +158,11 @@ def parse_commandline(is_restart):
         help="Do a test run against a previously generated reference log.",
         action="store_true", default=False, dest="reftest")
 
+    parser.add_option(
+        "--source", "-S",
+        help="Specify the suite source.",
+        metavar="SOURCE", action="store", dest="source")
+
     options, args = parser.parse_args()
 
     if not is_restart and options.warm and len(args) < 2:

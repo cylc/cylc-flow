@@ -70,6 +70,16 @@ class ConnectionDeniedError(ConnectionError):
         return self.MESSAGE % (self.args[0], self.args[1], self.args[2])
 
 
+class ConnectionInfoError(ConnectionError):
+
+    """An error raised when the client is unable to load the contact info."""
+
+    MESSAGE = "Contact info not found for suite \"%s\", suite not running?"
+
+    def __str__(self):
+        return self.MESSAGE % (self.args[0])
+
+
 class ConnectionTimeout(ConnectionError):
 
     """An error raised on connection timeout."""

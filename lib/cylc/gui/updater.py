@@ -25,7 +25,6 @@ import threading
 from time import sleep, time
 import traceback
 
-from cylc.exceptions import PortFileError
 import cylc.flags
 from cylc.dump import get_stop_state_summary
 from cylc.gui.cat_state import cat_state
@@ -176,8 +175,7 @@ class Updater(threading.Thread):
         self.version_mismatch_warned = False
 
         client_args = (self.cfg.suite, self.cfg.owner, self.cfg.host,
-                       self.cfg.comms_timeout, self.cfg.port, self.cfg.db,
-                       self.cfg.my_uuid)
+                       self.cfg.port, self.cfg.comms_timeout, self.cfg.my_uuid)
         self.state_summary_client = StateSummaryClient(*client_args)
         self.suite_info_client = SuiteInfoClient(*client_args)
         self.suite_log_client = SuiteLogClient(*client_args)
@@ -197,7 +195,7 @@ class Updater(threading.Thread):
         try:
             self.daemon_version = self.suite_info_client.get_info(
                 'get_cylc_version')
-        except (ConnectionError, PortFileError) as exc:
+        except (ConnectionError) as exc:
             # Failed to (re)connect
             # Suite not running, starting up or just stopped.
             if cylc.flags.debug:

@@ -19,37 +19,8 @@
 
 from optparse import OptionParser, OptionConflictError
 import os
-import re
 import cylc.flags
 from cylc.owner import USER
-from cylc.registration import RegistrationDB, RegistrationError
-from cylc.regpath import IllegalRegPathError
-
-
-class DBOptParse(object):
-    def __init__(self, dbopt):
-        # input is DB option spec from the cylc command line
-        self.owner = USER
-        self.location = None
-        if dbopt:
-            self.parse(dbopt)
-
-    def parse(self, dbopt):
-        # determine DB location and owner
-        if dbopt.startswith('u:'):
-            self.owner = dbopt[2:]
-            dbopt = os.path.join('~' + self.owner, '.cylc', 'DB')
-        if dbopt.startswith('~'):
-            dbopt = os.path.expanduser(dbopt)
-        else:
-            dbopt = os.path.abspath(dbopt)
-        self.location = dbopt
-
-    def get_db_owner(self):
-        return self.owner
-
-    def get_db_location(self):
-        return self.location
 
 
 class CylcOptionParser(OptionParser):
@@ -83,10 +54,10 @@ avoid this, use the '--no-multitask-compat' option, or use the new syntax
 
         self.auto_add = auto_add
         if argdoc is None:
-            if not prep:
-                argdoc = [('REG', 'Suite name')]
-            else:
+            if prep:
                 argdoc = [('SUITE', 'Suite name or path')]
+            else:
+                argdoc = [('REG', 'Suite name')]
 
         # noforce=True is for commands that don't use interactive prompts at
         # all
@@ -128,7 +99,7 @@ Arguments:"""
             pad = (maxlen - len(arg[0])) * ' ' + '               '
             usage += "\n   " + arg[0] + pad + arg[1]
 
-        usage = re.sub('ARGS', args, usage)
+        usage = usage.replace('ARGS', args)
 
         OptionParser.__init__(self, usage)
 
@@ -174,16 +145,15 @@ Arguments:"""
         except OptionConflictError:
             pass
 
-        try:
-            self.add_option(
-                "--db",
-                help=(
-                    "Alternative suite registration database location, "
-                    "defaults to $HOME/.cylc/REGDB."
-                ),
-                metavar="PATH", action="store", default=None, dest="db")
-        except OptionConflictError:
-            pass
+        if self.prep:
+            try:
+                self.add_option(
+                    "--suite-owner",
+                    help="Specify suite owner",
+                    metavar="OWNER", action="store", default=None,
+                    dest="suite_owner")
+            except OptionConflictError:
+                pass
 
         if self.comms:
             try:
@@ -323,32 +293,6 @@ Arguments:"""
             except OptionConflictError:
                 pass
 
-    def get_suite(self, index=0):
-        """Return suite name."""
-        return self.suite_info[index]
-
-    def _getdef(self, arg, options):
-        """Return (suite_name, suite_rc_path).
-
-        If arg is a registered suite, suite name is the registered suite name.
-        If arg is a directory, suite name is the name of the directory.
-        If arg is a file, suite name is the name of its container directory.
-
-        """
-        reg_db = RegistrationDB(options.db)
-        try:
-            path = reg_db.get_suiterc(arg)
-            name = arg
-        except (IllegalRegPathError, RegistrationError):
-            arg = os.path.abspath(arg)
-            if os.path.isdir(arg):
-                path = os.path.join(arg, 'suite.rc')
-                name = os.path.basename(arg)
-            else:
-                path = arg
-                name = os.path.basename(os.path.dirname(arg))
-        return name, path
-
     def parse_args(self, remove_opts=[]):
         """Parse options and arguments, overrides OptionParser.parse_args."""
         if self.auto_add:
@@ -370,28 +314,10 @@ Arguments:"""
                 len(args) > self.n_compulsory_args + self.n_optional_args:
             self.error("Wrong number of arguments (too many)")
 
-        foo = DBOptParse(options.db)
-        options.db = foo.get_db_location()
-        options.db_owner = foo.get_db_owner()
-
         if self.jset:
             if options.templatevars_file:
                 options.templatevars_file = os.path.abspath(os.path.expanduser(
                     options.templatevars_file))
-
-        if self.prep:
-            # allow file path or suite name
-            try:
-                self.suite_info.append(self._getdef(args[0], options))
-                if self.twosuites:
-                    self.suite_info.append(self._getdef(args[1], options))
-            except IndexError:
-                if options.filename:
-                    # Empty args list is OK if we supplied a filename
-                    pass
-                else:
-                    # No filename, so we're expecting an argument
-                    self.error("Need either a filename or suite name(s)")
 
         cylc.flags.verbose = options.verbose
         cylc.flags.debug = options.debug

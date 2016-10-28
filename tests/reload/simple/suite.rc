@@ -9,4 +9,4 @@
     [[a,c]]
         script = "true"
     [[b]]
-        script = "cylc reload $CYLC_SUITE_REG_NAME -f; sleep 5"
+        script = "cylc reload $CYLC_SUITE_NAME -f; sleep 5"

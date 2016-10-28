@@ -95,7 +95,7 @@ def main():
     else:
         suite = None
     app = ControlApp(
-        suite, options.db, options.owner, options.host,
+        suite, options.owner, options.host,
         options.port, options.comms_timeout,
         load_template_vars(options.templatevars, options.templatevars_file),
         options.restricted)

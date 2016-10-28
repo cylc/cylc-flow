@@ -34,7 +34,6 @@ set_test_number 4
 SUITE_NAME="$(uuidgen)"
 SUITE_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
 cp -r "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}" "${SUITE_DIR}"
-cylc unregister "${SUITE_NAME}" 2>'/dev/null' || true
 cylc register "${SUITE_NAME}" "${SUITE_DIR}" 2>'/dev/null'
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"

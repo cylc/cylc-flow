@@ -28,8 +28,7 @@ from cylc.gui.warning_dialog import warning_dialog, info_dialog
 from cylc.gui.util import get_icon, EntryTempText, EntryDialog
 from cylc.network.port_scan import scan_all
 from cylc.owner import is_remote_user
-from cylc.registration import RegistrationDB
-from cylc.regpath import RegPath
+from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.run_get_stdout import run_get_stdout
 from cylc.suite_host import is_remote_host
 
@@ -38,8 +37,8 @@ class db_updater(threading.Thread):
 
     SCAN_INTERVAL = 60.0
 
-    def __init__(self, regd_treestore, db, filtr=None, timeout=None):
-        self.db = db
+    def __init__(self, regd_treestore, filtr=None, timeout=None):
+        self.db = SuiteSrvFilesManager()
         self.quit = False
         if timeout:
             self.timeout = float(timeout)
@@ -53,7 +52,7 @@ class db_updater(threading.Thread):
         self.running_choices = None
         self.newtree = {}
 
-        self.regd_choices = self.db.get_list(filtr)
+        self.regd_choices = self.db.list_suites(filtr)
 
     def construct_newtree(self):
         """construct self.newtree[one][two]...[nnn] = [auth, descr, dir ]"""
@@ -72,7 +71,7 @@ class db_updater(threading.Thread):
                     _, suite_dir, descr = regd_choices[suite]
                     del regd_choices[suite]
             nest2 = self.newtree
-            regp = suite.split(RegPath.delimiter)
+            regp = suite.split(SuiteSrvFilesManager.DELIM)
             for key in regp[:-1]:
                 if key not in nest2:
                     nest2[key] = {}
@@ -82,7 +81,7 @@ class db_updater(threading.Thread):
         for suite, suite_dir, descr in regd_choices.values():
             suite_dir = re.sub('^' + os.environ['HOME'], '~', suite_dir)
             nest2 = self.newtree
-            regp = suite.split(RegPath.delimiter)
+            regp = suite.split(SuiteSrvFilesManager.DELIM)
             for key in regp[:-1]:
                 if key not in nest2:
                     nest2[key] = {}
@@ -273,10 +272,8 @@ class db_updater(threading.Thread):
 
 
 class dbchooser(object):
-    def __init__(self, parent, db, db_owner, tmpdir, timeout):
+    def __init__(self, parent, tmpdir, timeout):
 
-        self.db = db
-        self.db_owner = db_owner
         if timeout:
             self.timeout = float(timeout)
         else:
@@ -317,14 +314,6 @@ class dbchooser(object):
         self.regd_treeview.connect('key_press_event', self.on_suite_select)
         self.regd_treeview.connect('button_press_event', self.on_suite_select)
         self.regd_treeview.set_search_column(0)
-
-        # Start updating the liststore now, as we need values in it
-        # immediately below (it may be possible to delay this till the
-        # end of __init___() but it doesn't really matter.
-        if self.db:
-            self.dbopt = '--db=' + self.db
-        else:
-            self.dbopt = ''
 
         regd_ts = self.regd_treeview.get_selection()
         regd_ts.set_mode(gtk.SELECTION_SINGLE)
@@ -412,12 +401,9 @@ class dbchooser(object):
         self.start_updater()
 
     def start_updater(self, filtr=None):
-        db = RegistrationDB(self.db)
-        # self.db_button.set_label("_Local/Central DB")
         if self.updater:
             self.updater.quit = True  # does this take effect?
-        self.updater = db_updater(
-            self.regd_treestore, db, filtr, self.timeout)
+        self.updater = db_updater(self.regd_treestore, filtr, self.timeout)
         self.updater.start()
 
     # TODO: a button to do this?
@@ -514,7 +500,7 @@ class dbchooser(object):
                 par = model.iter_parent(iter_)
                 if par:
                     val, = model.get(par, 0)
-                    reg = get_reg(val, par) + RegPath.delimiter + reg
+                    reg = get_reg(val, par) + SuiteSrvFilesManager.DELIM + reg
             return reg
 
         reg = get_reg(item, iter_)
@@ -534,99 +520,21 @@ class dbchooser(object):
         if event.button == 1:
             return False
 
-        menu = gtk.Menu()
-
-        if group_clicked:
-            group = reg
-            # MENU OPTIONS FOR GROUPS
-            copy_item = gtk.MenuItem('C_opy')
-            menu.append(copy_item)
-            copy_item.connect('activate', self.copy_popup, group, True)
-
-            reregister_item = gtk.MenuItem('_Reregister')
-            menu.append(reregister_item)
-            reregister_item.connect(
-                'activate', self.reregister_popup, group, True)
-
-            del_item = gtk.MenuItem('_Unregister')
-            menu.append(del_item)
-            del_item.connect('activate', self.unregister_popup, group, True)
-
-        else:
-            copy_item = gtk.MenuItem('_Copy')
-            menu.append(copy_item)
-            copy_item.connect('activate', self.copy_popup, reg)
-
-            reregister_item = gtk.MenuItem('_Reregister')
-            menu.append(reregister_item)
-            reregister_item.connect('activate', self.reregister_popup, reg)
-
-            del_item = gtk.MenuItem('_Unregister')
-            menu.append(del_item)
-            del_item.connect('activate', self.unregister_popup, reg)
-
+        if suite_dir:
+            menu = gtk.Menu()
             compare_item = gtk.MenuItem('C_ompare')
             menu.append(compare_item)
             compare_item.connect('activate', self.compare_popup, reg)
 
-        menu.show_all()
-        # button only:
-        # menu.popup(None, None, None, event.button, event.time)
-        # this seems to work with keypress and button:
-        menu.popup(None, None, None, 0, event.time)
+            menu.show_all()
+            # button only:
+            # menu.popup(None, None, None, event.button, event.time)
+            # this seems to work with keypress and button:
+            menu.popup(None, None, None, 0, event.time)
 
-        # TODO - POPUP MENU MUST BE DESTROY()ED AFTER EVERY USE AS
-        # POPPING DOWN DOES NOT DO THIS (=> MEMORY LEAK?)
-        return False
-
-    def unregister_popup(self, w, reg, is_group=False):
-
-        window = gtk.MessageDialog(
-            parent=self.window,
-            flags=0,
-            type=gtk.MESSAGE_QUESTION,
-            buttons=gtk.BUTTONS_NONE,
-            message_format="Unregistering Suite " + reg + """
-\nDelete suite definition directory too? (DANGEROUS!)""")
-
-        window.add_button(gtk.STOCK_YES, gtk.RESPONSE_YES)
-        window.add_button(gtk.STOCK_NO, gtk.RESPONSE_NO)
-        window.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
-        response = window.run()
-        window.destroy()
-
-        if is_group:
-            reg = '^' + reg + '\..*$'
-        else:
-            reg = '^' + reg + '$'
-
-        if response == gtk.RESPONSE_YES:
-            command = "cylc unregister -f -d " + reg
-        elif response == gtk.RESPONSE_NO:
-            command = "cylc unregister " + reg
-        else:
-            command = None
-        if command:
-            res, out = run_get_stdout(command)
-            if not res:
-                warning_dialog('\n'.join(out), self.window).warn()
-
-    def reregister_popup(self, w, reg, is_group=False):
-
-        window = EntryDialog(
-            parent=self.window,
-            flags=0,
-            type=gtk.MESSAGE_QUESTION,
-            buttons=gtk.BUTTONS_OK_CANCEL,
-            message_format="Reregister Suite " + reg + " As")
-
-        rereg = window.run()
-        window.destroy()
-        if rereg:
-            command = "cylc reregister " + reg + ' ' + rereg
-            res, out = run_get_stdout(command)
-            if not res:
-                warning_dialog('\n'.join(out), self.window).warn()
+            # TODO - POPUP MENU MUST BE DESTROY()ED AFTER EVERY USE AS
+            # POPPING DOWN DOES NOT DO THIS (=> MEMORY LEAK?)
+            return False
 
     def compare_popup(self, w, reg):
 
@@ -647,32 +555,3 @@ class dbchooser(object):
             else:
                 # TODO: need a bigger scrollable window here!
                 info_dialog('\n'.join(out), self.window).inform()
-
-    def copy_popup(self, w, reg, is_group=False):
-
-        window = EntryDialog(
-            parent=self.window,
-            flags=0,
-            type=gtk.MESSAGE_QUESTION,
-            buttons=gtk.BUTTONS_OK_CANCEL,
-            message_format="Copy Suite " + reg + """To
-NAME,TOP_DIRECTORY""")
-
-        out = window.run()
-        window.destroy()
-        if out:
-            try:
-                name, topdir = re.split(' *, *', out)
-            except Exception, e:
-                warning_dialog(str(e), self.window).warn()
-            else:
-                print name, topdir
-                topdir = os.path.expanduser(os.path.expandvars(topdir))
-                print name, topdir
-                command = "cylc cp " + reg + ' ' + name + ' ' + topdir
-                print command
-                res, out = run_get_stdout(command)
-                if not res:
-                    warning_dialog('\n'.join(out), self.window).warn()
-                elif out:
-                    info_dialog('\n'.join(out), self.window).inform()

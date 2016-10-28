@@ -36,20 +36,22 @@ for HOST in $(tr -d ',' <<<"${HOSTS}"); do
         cp "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/suite.rc" .
         cylc register "${UUID}-${HOST}" "${HOST_WORK_DIR}" 1>/dev/null 2>&1
         cylc run "${UUID}-${HOST}" 1>/dev/null 2>&1
-        poll '!' test -e "${HOME}/.cylc/ports/${UUID}-${HOST}"
+        RUND="$(cylc get-global-config '--print-run-dir')/${UUID}-${HOST}"
+        poll '!' test -e "${RUND}/.cylc-var/contact"
     else
         HOST_WORK_DIR="$($SSH -n "${HOST}" 'mktemp -d')"
         $SCP "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/suite.rc" \
             "${HOST}:${HOST_WORK_DIR}"
         cylc register "--host=${HOST}" "${UUID}-${HOST}" "${HOST_WORK_DIR}" \
             1>/dev/null 2>&1
-        mkdir -p "${HOME}/.cylc/passphrases/${USER}@${HOST}/${UUID}-${HOST}"
-        ${SCP} -p "${HOST}:${HOST_WORK_DIR}/passphrase" \
-            "${HOME}/.cylc/passphrases/${USER}@${HOST}/${UUID}-${HOST}/"
-        ${SCP} -p "${HOST}:${HOST_WORK_DIR}/ssl.*" \
-            "${HOME}/.cylc/passphrases/${USER}@${HOST}/${UUID}-${HOST}/"
+        mkdir -p "${HOME}/.cylc/auth/${USER}@${HOST}/${UUID}-${HOST}"
+        ${SCP} -p \
+            "${HOST}:cylc-run/${UUID}-${HOST}/.cylc-var/passphrase" \
+            "${HOST}:cylc-run/${UUID}-${HOST}/.cylc-var/ssl.*" \
+            "${HOME}/.cylc/auth/${USER}@${HOST}/${UUID}-${HOST}/"
         cylc run "--host=${HOST}" "${UUID}-${HOST}" 1>/dev/null 2>&1
-        poll '!' ${SSH} -n "${HOST}" "test -e '.cylc/ports/${UUID}-${HOST}'"
+        poll '!' ${SSH} -n "${HOST}" \
+            "test -e 'cylc-run/${UUID}-${HOST}/.cylc-var/contact'"
     fi
     echo "${HOST}:${HOST_WORK_DIR}" >>'host-work-dirs.list'
 done
@@ -65,17 +67,14 @@ for ITEM in $(<'host-work-dirs.list'); do
         cylc shutdown --now --max-polls=30 --interval=2 "${UUID}-${HOST}" \
             1>'/dev/null' 2>&1
         rm -fr "$(cylc get-global-config '--print-run-dir')/${UUID}-${HOST}"
-        cylc unregister "${UUID}-${HOST}"
     else
         cylc shutdown --now --max-polls=30 --interval=2 \
-            "--host=${HOST}" "${UUID}-${HOST}" 1>'/dev/null' 2>&1
-        $SSH -n "${HOST}" \
-            "rm -fr '${HOST_WORK_DIR}' 'cylc-run/${UUID}-${HOST}'"
-        rm -fr "${HOME}/.cylc/passphrases/${USER}@${HOST}/${UUID}-${HOST}/"
-        rmdir "${HOME}/.cylc/passphrases/${USER}@${HOST}/" 2>'/dev/null' || true
-        cylc unregister "--host=${HOST}" "${UUID}-${HOST}"
+            "--host=${HOST}" "${UUID}-${HOST}"
+        $SSH -n "${HOST}" "rm -fr '${HOST_WORK_DIR}' 'cylc-run/${UUID}-${HOST}'"
+        rm -fr "${HOME}/.cylc/auth/${USER}@${HOST}/${UUID}-${HOST}/"
+        rmdir "${HOME}/.cylc/auth/${USER}@${HOST}/" 2>'/dev/null' || true
     fi
 done
-rmdir "${HOME}/.cylc/passphrases/" 2>'/dev/null' || true
+rmdir "${HOME}/.cylc/auth/" 2>'/dev/null' || true
 #-------------------------------------------------------------------------------
 exit

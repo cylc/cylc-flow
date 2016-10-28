@@ -99,7 +99,6 @@ def match_command(abbrev):
     finished_matching = False
     for dct in [admin_commands,
                 license_commands,
-                database_commands,
                 preparation_commands,
                 information_commands,
                 discovery_commands,
@@ -179,7 +178,6 @@ def pretty_print(incom, choose_dict, indent=True, numbered=False, sort=False):
 # categories[category] = [aliases]
 categories = OrderedDict()
 categories['all'] = ['all']
-categories['database'] = ['db', 'database']
 categories['preparation'] = ['preparation']
 categories['information'] = ['information']
 categories['discovery'] = ['discovery']
@@ -250,10 +248,8 @@ hook_commands['job-logs-retrieve'] = ['job-logs-retrieve']
 hook_commands['check-triggering'] = ['check-triggering']
 
 admin_commands = OrderedDict()
-admin_commands['test-db'] = ['test-db']
 admin_commands['test-battery'] = ['test-battery']
 admin_commands['import-examples'] = ['import-examples']
-admin_commands['upgrade-db'] = ['upgrade-db']
 admin_commands['upgrade-run-dir'] = ['upgrade-run-dir']
 admin_commands['check-software'] = ['check-software']
 
@@ -261,16 +257,10 @@ license_commands = OrderedDict()
 license_commands['warranty'] = ['warranty']
 license_commands['conditions'] = ['conditions']
 
-database_commands = OrderedDict()
-database_commands['register'] = ['register']
-database_commands['reregister'] = ['reregister', 'rename']
-database_commands['unregister'] = ['unregister']
-database_commands['copy'] = ['copy', 'cp']
-database_commands['print'] = ['print']
-database_commands['get-directory'] = ['get-directory']
-database_commands['refresh'] = ['refresh']
-
 preparation_commands = OrderedDict()
+preparation_commands['register'] = ['register']
+preparation_commands['print'] = ['print']
+preparation_commands['get-directory'] = ['get-directory']
 preparation_commands['edit'] = ['edit']
 preparation_commands['view'] = ['view']
 preparation_commands['validate'] = ['validate']
@@ -297,7 +287,6 @@ task_commands['job-submit'] = ['job-submit']
 
 all_commands = OrderedDict()
 for dct in [
-        database_commands,
         preparation_commands,
         information_commands,
         discovery_commands,
@@ -339,7 +328,6 @@ catsum = OrderedDict()
 catsum['all'] = "The complete command set."
 catsum['admin'] = "Cylc installation, testing, and example suites."
 catsum['license'] = "Software licensing information (GPL v3.0)."
-catsum['database'] = "Suite name registration, copying, deletion, etc."
 catsum['information'] = "Interrogate suite definitions and running suites."
 catsum['preparation'] = "Suite editing, validation, visualization, etc."
 catsum['discovery'] = "Detect running suites."
@@ -357,13 +345,6 @@ optional, but they organize help and disambiguate abbreviated commands:
   % cylc con trig SUITE TASK            # ditto
   % cylc c t SUITE TASK                 # ditto
 
-CYLC SUITE NAMES AND YOUR REGISTRATION DATABASE
-  Suites are addressed by hierarchical names such as suite1, nwp.oper,
-nwp.test.LAM2, etc. in a "name registration database" ($HOME/.cylc/REGDB)
-that simply associates names with the suite definition locations.  The
-'--db=' command option can be used to view and copy suites from other
-users, with access governed by normal filesystem permissions.
-
 TASK IDENTIFICATION IN CYLC SUITES
   Tasks are identified by NAME.CYCLE_POINT where POINT is either a
   date-time or an integer.
@@ -379,30 +360,23 @@ HOW TO DRILL DOWN TO COMMAND USAGE HELP:
 
 Command CATEGORIES:"""
 
-# Some commands and categories are aliased (db|database, cp|copy) and
+# Some commands and categories are aliased and
 # some common typographical errors are corrected (e.g. cycl => cylc).
 
 # command summaries
 comsum = OrderedDict()
 # admin
-comsum['test-db'] = 'Run an automated suite name database test'
 comsum['test-battery'] = 'Run a battery of self-diagnosing test suites'
-comsum['import-examples'] = 'Import example suites your suite name database'
-comsum['upgrade-db'] = 'Upgrade a pre-cylc-5.4 suite name database'
+comsum['import-examples'] = 'Import example suites your suite run directory'
 comsum['upgrade-run-dir'] = 'Upgrade a pre-cylc-6 suite run directory'
 comsum['check-software'] = 'Check required software is installed.'
 # license
 comsum['warranty'] = 'Print the GPLv3 disclaimer of warranty'
 comsum['conditions'] = 'Print the GNU General Public License v3.0'
-# database
-comsum['register'] = 'Register a suite for use'
-comsum['reregister'] = 'Change the name of a suite'
-comsum['unregister'] = 'Unregister and optionally delete suites'
-comsum['copy'] = 'Copy a suite or a group of suites'
-comsum['print'] = 'Print registered suites'
-comsum['get-directory'] = 'Retrieve suite definition directory paths'
-comsum['refresh'] = 'Report invalid registrations and update suite titles'
 # preparation
+comsum['register'] = 'Register a suite for use'
+comsum['print'] = 'Print registered suites'
+comsum['get-directory'] = 'Retrieve suite source directory paths'
 comsum['edit'] = 'Edit suite definitions, optionally inlined'
 comsum['view'] = 'View suite definitions, inlined and Jinja2 processed'
 comsum['validate'] = 'Parse and validate suite definitions'
@@ -485,8 +459,6 @@ def category_help(category):
     coms = eval(category + '_commands')
     alts = '|'.join(categories[category])
     print 'CATEGORY: ' + alts + ' - ' + catsum[category]
-    if category == 'database':
-        print "Suite name registrations are held under $HOME/.cylc/REGDB."
     print
     print 'HELP: cylc [' + alts + '] COMMAND help,--help'
     print '  You can abbreviate ' + alts + ' and COMMAND.'

@@ -38,8 +38,8 @@ cylc suite-state "${SUITE_NAME}" --task=foo --status=failed --point=1 \
     --interval=1 --max-polls=10 || exit 1
 
 # Disable the suite passphrase (to leave us with public access privilege).
-mv "${TEST_DIR}/${SUITE_NAME}/passphrase" \
-    "${TEST_DIR}/${SUITE_NAME}/passphrase.DIS"
+SRV_D="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/.cylc-var"
+mv "${SRV_D}/passphrase" "${SRV_D}/passphrase.DIS"
 
 PORT=$(cylc ping -v "${SUITE_NAME}" | cut -d':' -f 2)
 cylc scan --comms-timeout=5 -fb -n "${SUITE_NAME}" 'localhost' \
@@ -76,6 +76,6 @@ grep_ok "\[client-connect] DENIED (privilege 'shutdown' < 'full-control') ${USER
 
 # Stop OK (without the passphrase!).
 TEST_NAME="${TEST_NAME_BASE}-stop"
-run_ok "${TEST_NAME}" cylc stop --max-polls=10 --interval=1 "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc stop --max-polls=20 --interval=1 "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

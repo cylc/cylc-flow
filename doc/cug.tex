@@ -897,12 +897,14 @@ in {\em suite definition directories} that may also contain a
     and~\ref{SuiteRCReference}.
 \end{myitemize}
 
-\subsection{Suite Name Registration}
+\subsection{Suite Registration}
 
-Suite registration associates a name with a suite definition directory,
-in a simple database. Cylc commands that parse suite definition files
-can take the file path or the suite name as input; commands that
-interact with running suites have to target the suite by name.
+Suite registration creates the suite run directory (a directory with the suite
+name under \lstinline=~/cylc-run/= by default), and populates it with
+authentication files and a symbolic link to a suite definition directory.  Cylc
+commands that parse suite definition files can take the file path or the suite
+name as input. Commands that interact with running suites have to target the
+suite by name.
 \lstset{language=transcript}
 \begin{lstlisting}
 # target a suite by file path:
@@ -918,25 +920,19 @@ shell$ cylc stop my.suite
 # etc.
 \end{lstlisting}
 
-\begin{myitemize}
-\item For more on registering, copying, deleting, and renaming suites,
-see \lstinline=cylc db --help= (see~\ref{SuiteRegistration}
-and~\ref{SuiteStorageEtc}).
-\end{myitemize}
-
 \subsection{Suite Passphrases}
 \label{tutPassphrases}
 
 A suite-specific passphrase file is automatically generated in the suite
-definition directory at registration time. It is loaded by the suite daemon at
-start-up and used to authenticate all client connections. Clients on the suite
-host account automatically load the passphrase from the suite definition
-directory. The passphrase is also installed automatically in the suite run
-directory on hosts for running task jobs. On other accounts that do not share
-the same HOME directory with the suite host account and do not have
-non-interactive SSH access to the suite host account, it is possible to install
-the passphrase manually. (A client will attempt to install the passphrase
-automatically via non-interactive SSH.)
+definition directory at registration time, or on suite start up.  It is loaded
+by the suite daemon at start-up and used to authenticate all client connections.
+Clients on the suite host account automatically load the passphrase from the
+suite definition directory. The passphrase is also installed automatically in
+the suite run directory on hosts for running task jobs. On other accounts that
+do not share the same HOME directory with the suite host account and do not have
+non-interactive SSH access to the suite host account, it is possible to
+install the passphrase manually. (A client will attempt to install the
+passphrase automatically via non-interactive SSH.)
 
 Possession of a suite passphrase gives full control and full read-access to the
 suite. Without it, client access is determined by the suite's public access
@@ -960,20 +956,20 @@ else use a different location). List the newly registered tutorial
 suites using the \lstinline=cylc print= command:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc db print examples.tutorial -y
+shell$ cylc print examples.tutorial -y
 examples.tutorial.oneoff.jinja2   /tmp/examples/tutorial/oneoff/jinja2
 examples.tutorial.cycling.two     /tmp/examples/tutorial/cycling/two
 examples.tutorial.cycling.three   /tmp/examples/tutorial/cycling/three
 examples.tutorial.oneoff.remote   /tmp/examples/tutorial/oneoff/remote
 # ...
 \end{lstlisting}
-See \lstinline=cylc db print --help= for other display options. The
+See \lstinline=cylc print --help= for other display options. The
 tree-form display shows how hierarchical suite names can be used to
 organize related suites nicely (suite names do not have to be related
 to their source directory paths, although they are in this case):
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc db pr --tree -x examples.tutorial
+shell$ cylc print --tree -x examples.tutorial
 examples
  `-tutorial
    `-cycling
@@ -993,11 +989,9 @@ examples
 Rename (re-register) the tutorial suites to make their names a bit
 shorter:
 \begin{lstlisting}
-$ cylc rereg examples.tutorial tut
-REREGISTER examples.tutorial.oneoff.jinja2 to tut.oneoff.jinja2
-#...
-shell$ cylc db print -x tut
-tut.oneoff.external   Hello World! from an external task script
+$ cd ~/cylc-run/examples/tutorial ~/cylc-run/tut
+shell$ cylc print -x tut
+tut/oneoff/external   Hello World! from an external task script
 # ...
 \end{lstlisting}
 
@@ -1009,12 +1003,12 @@ the suite.
 \lstset{language=transcript}
 \begin{lstlisting}
 # pass:
-shell$ cylc validate tut.oneoff.basic
+shell$ cylc validate tut/oneoff/basic
 Valid for cylc-6.0.0
 shell$ echo $?
 0
 # fail:
-shell$ cylc validate my.bad.suite
+shell$ cylc validate my/bad/suite
 'Illegal item: [scheduling]special tusks'
 shell$ echo $?
 1
@@ -1022,7 +1016,7 @@ shell$ echo $?
 
 \subsection{Hello World in Cylc}
 
-\hilight{ suite: \lstinline=tut.oneoff.basic= }
+\hilight{ suite: \lstinline=tut/oneoff/basic= }
 \vspace{3mm}
 
 Here's the traditional {\em Hello World} program rendered as a cylc
@@ -1063,13 +1057,13 @@ just above and open the {\em Hello World} suite definition in your text
 editor:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc edit tut.oneoff.basic # in-terminal
-shell$ cylc edit -g tut.oneoff.basic & # or GUI
+shell$ cylc edit tut/oneoff/basic # in-terminal
+shell$ cylc edit -g tut/oneoff/basic & # or GUI
 \end{lstlisting}
 Alternatively, start gcylc on the suite:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ gcylc tut.oneoff.basic &
+shell$ gcylc tut/oneoff/basic &
 \end{lstlisting}
 and choose {\em Suite } \textrightarrow {\em Edit} from the menu.
 
@@ -1083,7 +1077,7 @@ instructions.
 \label{RunningSuitesCLI}
 
 \subsubsection{CLI}
-Run \lstinline=tut.oneoff.basic= using the \lstinline=cylc run= command.
+Run \lstinline=tut/oneoff/basic= using the \lstinline=cylc run= command.
 As a suite runs detailed timestamped information is written to a {\em suite
 log} and progress can be followed with cylc's suite monitoring tools (below).
 By default a running suite daemonizes after printing a short message so that
@@ -1091,7 +1085,7 @@ you can exit the terminal or even log out without killing the suite:
 
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc run tut.oneoff.basic
+shell$ cylc run tut/oneoff/basic
 ************************************************************************
 *                     The Cylc Suite Engine [6.0.0]                    *
 *             Copyright (C) 2008-2016 NIWA              *
@@ -1102,15 +1096,15 @@ shell$ cylc run tut.oneoff.basic
 ************************************************************************
 
 Suite Info:
- + Name: tut.oneoff.basic
+ + Name: tut/oneoff/basic
  + PID:  29338
  + Port: 7766
- + Logs: /home/oliverh/cylc-run/tut.oneoff.basic/log/suite/{log,out,err}
+ + Logs: /home/oliverh/cylc-run/tut/oneoff/basic/log/suite/{log,out,err}
 
 To see if this suite is still running:
  * cylc scan
- * cylc ping -v tut.oneoff.basic
- * ps -fu $USER | grep 'cylc-run .* tut.oneoff.basic'
+ * cylc ping -v tut/oneoff/basic
+ * ps -fu $USER | grep 'cylc-run .* tut/oneoff/basic'
 
 To run in non-daemon mode use --no-detach or --debug.
 For more information see 'cylc --help' and the User Guide.
@@ -1120,7 +1114,7 @@ If you're quick enough (this example only takes 10-15 seconds to run) the
 \lstinline=cylc scan= command will detect the running suite:
 \begin{lstlisting}
 shell$ cylc scan
-tut.oneoff.basic oliverh oliverh-34403DL 7766
+tut/oneoff/basic oliverh oliverh-34403DL 7766
 
 # wait 10-15 seconds ...
 
@@ -1135,7 +1129,7 @@ submission commands to to be printed stdout:
 
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc run --debug tut.oneoff.basic
+shell$ cylc run --debug tut/oneoff/basic
 ************************************************************************
 *                     The Cylc Suite Engine [6.0.0]                    *
 *             Copyright (C) 2008-2016 NIWA              *
@@ -1144,7 +1138,7 @@ shell$ cylc run --debug tut.oneoff.basic
 * you are welcome to redistribute it under certain conditions. Details:*
 *          `cylc license conditions'; `cylc license warranty'          *
 ************************************************************************
-cylc job-submit /home/oliverh/cylc-run/tut.oneoff.basic/log/job/1/hello/01/job
+cylc job-submit /home/oliverh/cylc-run/tut/oneoff/basic/log/job/1/hello/01/job
 'Finished'
 Suite shutting down at 2014-08-14T13:26:52+12
 DONE
@@ -1166,7 +1160,7 @@ The suite shuts down automatically once all tasks have succeeded.
 The cylc GUI can start and stop suites, or (re)connect to suites that
 are already running:
 \begin{lstlisting}
-shell$ cylc gui tut.oneoff.basic &
+shell$ cylc gui tut/oneoff/basic &
 \end{lstlisting}
 Use the tool bar {\em Play} button, or the {\em Control}
 \textrightarrow {\em Run} menu item, to run the suite again.
@@ -1183,7 +1177,7 @@ GUI tools:
 \begin{lstlisting}
 # list currently running suites and their port numbers:
 shell$ cylc scan
-tut.oneoff.basic oliverh oliverh-34403DL 7766
+tut/oneoff/basic oliverh oliverh-34403DL 7766
 
 # GUI summary view of running suites:
 shell$ cylc gscan &
@@ -1207,7 +1201,7 @@ still has to be used to target the task instance with cylc commands.
 
 \subsection{Job Submission: How Tasks Are Executed}
 
-\hilight{ suite: \lstinline=tut.oneoff.jobsub= }
+\hilight{ suite: \lstinline=tut/oneoff/jobsub= }
 \vspace{3mm}
 
 Task {\em job scripts} are generated by cylc to wrap the task implementation
@@ -1219,7 +1213,7 @@ can be accessed at run time by right-clicking on the task in the cylc GUI, or
 printed to the terminal:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc cat-log tut.oneoff.basic hello.1
+shell$ cylc cat-log tut/oneoff/basic hello.1
 \end{lstlisting}
 This command can also print the suite log (and stdout and stderr for suites
 in daemon mode) and task stdout and stderr logs (see
@@ -1227,7 +1221,7 @@ in daemon mode) and task stdout and stderr logs (see
 A new job script can also be generated on the fly for inspection:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc jobscript tut.oneoff.basic hello.1
+shell$ cylc jobscript tut/oneoff/basic hello.1
 \end{lstlisting}
 
 Take a look at the job script generated for \lstinline=hello.1= during
@@ -1237,7 +1231,7 @@ toward the bottom of the file.
 The \lstinline=hello= task in the first tutorial suite defaults to
 running as a background job on the suite host. To submit it to the Unix
 \lstinline=at= scheduler instead, configure its job submission settings
-as in \lstinline=tut.oneoff.jobsub=:
+as in \lstinline=tut/oneoff/jobsub=:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
@@ -1251,7 +1245,7 @@ If you run the suite (first check that the {\em at daemon}
 job submission command printed to stdout:
 \lstset{language=transcript}
 \begin{lstlisting}
- cylc run --debug tut.oneoff.jobsub
+ cylc run --debug tut/oneoff/jobsub
 ************************************************************************
 *        The Cylc Suite Engine [6.0.0alpha1-294-ge08560-dirty]         *
 *             Copyright (C) 2008-2016 NIWA              *
@@ -1260,7 +1254,7 @@ job submission command printed to stdout:
 * you are welcome to redistribute it under certain conditions. Details:*
 *          `cylc license conditions'; `cylc license warranty'          *
 ************************************************************************
-cylc job-submit /home/oliverh/cylc-run/tut.oneoff.jobsub/log/job/1/hello/01/job
+cylc job-submit /home/oliverh/cylc-run/tut/oneoff/jobsub/log/job/1/hello/01/job
 'Finished'
 Suite shutting down at 2014-08-14T14:14:43+12
 DONE
@@ -1287,11 +1281,16 @@ time-stamped suite log file, and task job scripts and job logs
 
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ tree $HOME/cylc-run/tut.oneoff.basic/
+shell$ tree $HOME/cylc-run/tut/oneoff/basic/
+|-- .cylc-var             # location of run time service files
+|    |-- contact          # detail on how to contact the running suite
+|    |-- passphrase       # passphrase for client authentication
+|    |-- source           # symbolic link to source directory
+|    |-- ssl.cert         # SSL certificate for the suite server
+|    `-- ssl.pem          # SSL private key
 |-- cylc-suite-private.db # private suite run database
 |-- cylc-suite-public.db  # public suite run database
 |-- cylc-suite.db         # symbolic link to public suite run database
-|-- cylc-suite-env        # suite environment file
 |-- share                 # suite share directory (not used in this example)
 |-- work                  # task work space (sub-dirs are deleted if not used)
 |    `-- 1                   # task cycle point directory (or 1)
@@ -1334,13 +1333,13 @@ with the \lstinline=cylc cat-log= command:
 \lstset{language=transcript}
 \begin{lstlisting}
 # suite logs:
-shell$ cylc cat-log    tut.oneoff.basic           # suite event log
-shell$ cylc cat-log -o tut.oneoff.basic           # suite stdout log
-shell$ cylc cat-log -e tut.oneoff.basic           # suite stderr log
+shell$ cylc cat-log    tut/oneoff/basic           # suite event log
+shell$ cylc cat-log -o tut/oneoff/basic           # suite stdout log
+shell$ cylc cat-log -e tut/oneoff/basic           # suite stderr log
 # task logs:
-shell$ cylc cat-log    tut.oneoff.basic hello.1   # task job script
-shell$ cylc cat-log -o tut.oneoff.basic hello.1   # task stdout log
-shell$ cylc cat-log -e tut.oneoff.basic hello.1   # task stderr log
+shell$ cylc cat-log    tut/oneoff/basic hello.1   # task job script
+shell$ cylc cat-log -o tut/oneoff/basic hello.1   # task stdout log
+shell$ cylc cat-log -e tut/oneoff/basic hello.1   # task stderr log
 \end{lstlisting}
 \begin{myitemize}
     \item For a web-based interface to suite and task logs (and much more),
@@ -1352,12 +1351,12 @@ shell$ cylc cat-log -e tut.oneoff.basic hello.1   # task stderr log
 \subsection{Remote Tasks}
 \label{RemoteTasks}
 
-\hilight{ suite: \lstinline=tut.oneoff.remote= }
+\hilight{ suite: \lstinline=tut/oneoff/remote= }
 \vspace{3mm}
 
 The \lstinline=hello= task in the first two tutorial suites defaults to
 running on the suite host. To make it run on a remote host instead
-change its runtime configuration as in \lstinline=tut.oneoff.remote=:
+change its runtime configuration as in \lstinline=tut/oneoff/remote=:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
@@ -1406,12 +1405,12 @@ to run there by the configured job submission method:
 
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc run --debug tut.oneoff.remote
+shell$ cylc run --debug tut/oneoff/remote
 # ...
 ssh -oBatchMode=yes -oConnectTimeout=10 wrh-1.niwa.co.nz\
 'CYLC_VERSION='"'"'6.1.0'"'"\
 ' "/opt/cylc/bin/cylc" '"'"'job-submit'"'"\
-' --remote-mode "/home/oliverh/cylc-run/tut.oneoff.remote/log/job/1/hello/01/job"'
+' --remote-mode "/home/oliverh/cylc-run/tut/oneoff/remote/log/job/1/hello/01/job"'
 \end{lstlisting}
 (Don't be intimidated by this - it is really quite straightforward and would
 appear much simpler if the job log path was shorter!). Remote task job logs are
@@ -1432,8 +1431,8 @@ want the job logs pulled back to the suite host automatically, you can set
 
 The suite will attempt to \lstinline=rsync= the job logs once from the remote
 host each time a task job completes. E.g. if the job file is
-\lstinline=~/cylc-run/tut.oneoff.remote/log/job/1/hello/01/job=, anything under
-\lstinline=~/cylc-run/tut.oneoff.remote/log/job/1/hello/01/= will be retrieved.
+\lstinline=~/cylc-run/tut/oneoff/remote/log/job/1/hello/01/job=, anything under
+\lstinline=~/cylc-run/tut/oneoff/remote/log/job/1/hello/01/= will be retrieved.
 
 Some batch systems have considerable delays between the time when the job
 completes and when it writes the job logs in its normal location. If this is
@@ -1495,13 +1494,13 @@ regularly, you should try the following:
 
 \subsection{Task Triggering}
 
-\hilight{ suite: \lstinline=tut.oneoff.goodbye= }
+\hilight{ suite: \lstinline=tut/oneoff/goodbye= }
 \vspace{3mm}
 
 To make a second task called \lstinline=goodbye= trigger after
 \lstinline=hello= finishes successfully, return to the original
-example, \lstinline=tut.oneoff.basic=, and change the suite graph
-as in \lstinline=tut.oneoff.goodbye=:
+example, \lstinline=tut/oneoff/basic=, and change the suite graph
+as in \lstinline=tut/oneoff/goodbye=:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
@@ -1523,17 +1522,17 @@ and configure the new task's behaviour under \lstinline=[runtime]=:
         script = "sleep 10; echo Goodbye World!"
 \end{lstlisting}
 
-Run \lstinline=tut.oneoff.goodbye= and check the output from the new
+Run \lstinline=tut/oneoff/goodbye= and check the output from the new
 task:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cat ~/cylc-run/tut.oneoff.goodbye/log/job/1/goodbye/01/job.out
+shell$ cat ~/cylc-run/tut/oneoff/goodbye/log/job/1/goodbye/01/job.out
   # or
-shell$ cylc cat-log -o tut.oneoff.goodbye goodbye.1
+shell$ cylc cat-log -o tut/oneoff/goodbye goodbye.1
 JOB SCRIPT STARTING
 cylc (scheduler - 2014-08-14T15:09:30+12): goodbye.1 started at 2014-08-14T15:09:30+12
 cylc Suite and Task Identity:
-  Suite Name  : tut.oneoff.goodbye
+  Suite Name  : tut/oneoff/goodbye
   Suite Host  : oliverh-34403dl.niwa.local
   Suite Port  : 7766
   Suite Owner : oliverh
@@ -1549,7 +1548,7 @@ JOB SCRIPT EXITING (TASK SUCCEEDED)
 
 \subsubsection{Task Failure And Suicide Triggering}
 
-\hilight{ suite: \lstinline=tut.oneoff.suicide= }
+\hilight{ suite: \lstinline=tut/oneoff/suicide= }
 \vspace{3mm}
 
 Task names in the graph string can be qualified with a state indicator
@@ -1588,7 +1587,7 @@ This means if \lstinline=goodbye= fails, trigger
 \lstinline=really_goodbye=; and otherwise, if \lstinline=goodbye=
 succeeds, remove \lstinline=really_goodbye= from the suite.
 
-Try running \lstinline=tut.oneoff.suicide=, which also configures
+Try running \lstinline=tut/oneoff/suicide=, which also configures
 the \lstinline=hello= task's runtime to make it fail, to see how this
 works.
 \begin{myitemize}
@@ -1598,7 +1597,7 @@ works.
 
 \subsection{Runtime Inheritance}
 
-\hilight{ suite: \lstinline=tut.oneoff.inherit= }
+\hilight{ suite: \lstinline=tut/oneoff/inherit= }
 \vspace{3mm}
 
 The \lstinline=[runtime]= section is actually a {\em multiple
@@ -1621,7 +1620,7 @@ is required, as shown below.
 
 \subsection{Triggering Families}
 
-\hilight{ suite: \lstinline=tut.oneoff.ftrigger1= }
+\hilight{ suite: \lstinline=tut/oneoff/ftrigger1= }
 \vspace{3mm}
 
 Task families defined by runtime inheritance can also be used as
@@ -1655,7 +1654,7 @@ Verbose validation shows the family member substitution done
 when the suite definition is parsed:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc val -v tut.oneoff.ftrigger1
+shell$ cylc val -v tut/oneoff/ftrigger1
 ...
 Graph line substitutions occurred:
   IN: foo => GREETERS
@@ -1663,12 +1662,12 @@ Graph line substitutions occurred:
 ...
 \end{lstlisting}
 
-Experiment with the \lstinline=tut.oneoff.ftrigger1= suite to see
+Experiment with the \lstinline=tut/oneoff/ftrigger1= suite to see
 how this works.
 
 \subsection{Triggering Off Families}
 
-\hilight{ suite: \lstinline=tut.oneoff.ftrigger2= }
+\hilight{ suite: \lstinline=tut/oneoff/ftrigger2= }
 \vspace{3mm}
 
 Tasks (or families) can also trigger {\em off} other families, but
@@ -1685,7 +1684,7 @@ the upstream family members. Here's how to trigger another task
 Verbose validation in this case reports:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc val -v tut.oneoff.ftrigger2
+shell$ cylc val -v tut/oneoff/ftrigger2
 ...
 Graph line substitutions occurred:
   IN: GREETERS:succeed-all => bar
@@ -1721,7 +1720,7 @@ family triggers can simplify complex graphs, even for this tiny
 two-member family:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc val -v tut.oneoff.ftrigger2
+shell$ cylc val -v tut/oneoff/ftrigger2
 ...
 Graph line substitutions occurred:
   IN: GREETERS:finish-all & GREETERS:succeed-any => bar
@@ -1731,7 +1730,7 @@ Graph line substitutions occurred:
 ...
 \end{lstlisting}
 
-Experiment with \lstinline=tut.oneoff.ftrigger2= to see how this
+Experiment with \lstinline=tut/oneoff/ftrigger2= to see how this
 works.
 
 \begin{myitemize}
@@ -1743,7 +1742,7 @@ works.
 \lstset{language=suiterc}
 You can style dependency graphs with an optional
 \lstinline=[visualization]= section, as shown in
-\lstinline=tut.oneoff.ftrigger2=:
+\lstinline=tut/oneoff/ftrigger2=:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [visualization]
@@ -1757,8 +1756,8 @@ You can style dependency graphs with an optional
 To display the graph in an interactive viewer:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc graph tut.oneoff.ftrigger2 &    # dependency graph
-shell$ cylc graph -n tut.oneoff.ftrigger2 & # runtime inheritance graph
+shell$ cylc graph tut/oneoff/ftrigger2 &    # dependency graph
+shell$ cylc graph -n tut/oneoff/ftrigger2 & # runtime inheritance graph
 \end{lstlisting}
 It should look like Figure~\ref{fig-tut-hello-multi} (with the
 GREETERS family node expanded on the right).
@@ -1770,7 +1769,7 @@ GREETERS family node expanded on the right).
         \hspace{20mm}
         \includegraphics[height=0.3\textheight]{graphics/png/orig/tut-hello-multi-3.png}
     \end{center}
-    \caption{The {\em tut.oneoff.ftrigger2} dependency and runtime inheritance graphs}
+    \caption{The {\em tut/oneoff/ftrigger2} dependency and runtime inheritance graphs}
 \label{fig-tut-hello-multi}
 \end{figure}
 
@@ -1780,7 +1779,7 @@ Graph styling can be applied to entire families at once, and custom
 
 \subsection{External Task Scripts}
 
-\hilight{ suite: \lstinline=tut.oneoff.external= }
+\hilight{ suite: \lstinline=tut/oneoff/external= }
 \vspace{3mm}
 
 The tasks in our examples so far have all had inlined implementation, in
@@ -1812,7 +1811,7 @@ automatically detect unforeseen errors.
 
 \subsection{Cycling Tasks}
 
-\hilight{ suite: \lstinline=tut.cycling.one= }
+\hilight{ suite: \lstinline=tut/cycling/one= }
 \vspace{3mm}
 
 So far we've considered non-cycling tasks, which finish without spawning
@@ -1829,7 +1828,7 @@ the opportunity arises and their dependencies allow it. Alternatively, a
 sequence can be defined with only one valid cycle point - in that case, a task
 belonging to that sequence may only run once.
 
-Open the \lstinline=tut.cycling.one= suite:
+Open the \lstinline=tut/cycling/one= suite:
 \lstset{language=suiterc}
 \lstinputlisting{../examples/tutorial/cycling/one/suite.rc}
 The difference between cycling and non-cycling suites is all in the
@@ -1846,7 +1845,7 @@ Figure~\ref{fig-tut-one}.
         %Q Image out of date now
         \includegraphics[width=0.5\textwidth]{graphics/png/orig/tut-one.png}
     \end{center}
-    \caption{The \lstinline=tut.cycling.one= suite}
+    \caption{The \lstinline=tut/cycling/one= suite}
 \label{fig-tut-one}
 \end{figure}
 
@@ -1859,7 +1858,7 @@ runahead limit, which defaults to a few cycles but is configurable, prevents
 uncontrolled spawning of cycling tasks in suites that are not constrained by
 clock triggers in real time operation.
 
-Experiment with \lstinline=tut.cycling.one= to see how cycling tasks work.
+Experiment with \lstinline=tut/cycling/one= to see how cycling tasks work.
 
 \paragraph{ISO 8601 Date-Time Syntax}
 
@@ -1897,10 +1896,10 @@ e.g.
 \subsubsection{Inter-Cycle Triggers}
 \label{TutInterCyclePointTriggers}
 
-\hilight{ suite: \lstinline=tut.cycling.two= }
+\hilight{ suite: \lstinline=tut/cycling/two= }
 \vspace{3mm}
 
-The \lstinline=tut.cycling.two= suite adds inter-cycle dependence
+The \lstinline=tut/cycling/two= suite adds inter-cycle dependence
 to the previous example:
 \begin{lstlisting}
 [scheduling]
@@ -1920,7 +1919,7 @@ graph sections together.
     \begin{center}
         \includegraphics[width=0.5\textwidth]{graphics/png/orig/tut-two.png}
     \end{center}
-    \caption{The \lstinline=tut.cycling.two= suite}
+    \caption{The \lstinline=tut/cycling/two= suite}
 \label{fig-tut-two}
 \end{figure}
 
@@ -1936,7 +1935,7 @@ to do it. The following section shows one way to handle this in cylc suites.
 
 \subsubsection{Initial Non-Repeating (R1) Tasks}
 \label{initial-non-repeating-r1-tasks}
-\hilight{ suite: \lstinline=tut.cycling.three= }
+\hilight{ suite: \lstinline=tut/cycling/three= }
 \vspace{3mm}
 
 Sometimes we want to be able to run a task at the initial cycle point, but
@@ -1958,7 +1957,7 @@ which is what we want. We've also missed out specifying the period - this is
 set by cylc to a zero amount of time in this case (as it never
 repeats, this is not significant).
 
-For example, in \lstinline=tut.cycling.three=:
+For example, in \lstinline=tut/cycling/three=:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [cylc]
@@ -2010,7 +2009,7 @@ prep.20130808T0000+13 => foo.20130808T0000+13
     \begin{center}
         \includegraphics[width=0.5\textwidth]{graphics/png/orig/tut-three.png}
     \end{center}
-    \caption{The \lstinline=tut.cycling.three= suite}
+    \caption{The \lstinline=tut/cycling/three= suite}
 \label{fig-tut-three}
 \end{figure}
 
@@ -2024,13 +2023,13 @@ prep.20130808T0000+13 => foo.20130808T0000+13
 
 \subsubsection{Integer Cycling}
 \label{TutInteger}
-\hilight{ suite: \lstinline=tut.cycling.integer= }
+\hilight{ suite: \lstinline=tut/cycling/integer= }
 \vspace{3mm}
 
 Cylc can do also do integer cycling for repeating workflows that are not
 date-time based.
 
-Open the \lstinline=tut.cycling.integer= suite, which is plotted in
+Open the \lstinline=tut/cycling/integer= suite, which is plotted in
 Figure~\ref{fig-tut-int}.
 \lstset{language=suiterc}
 \lstinputlisting{../examples/tutorial/cycling/integer/suite.rc}
@@ -2039,7 +2038,7 @@ Figure~\ref{fig-tut-int}.
     \begin{center}
         \includegraphics[width=0.65\textwidth]{graphics/png/orig/tut-cyc-int.png}
     \end{center}
-    \caption{The \lstinline=tut.cycling.integer= suite}
+    \caption{The \lstinline=tut/cycling/integer= suite}
 \label{fig-tut-int}
 \end{figure}
 
@@ -2061,14 +2060,14 @@ denotes period (interval) just like in the date-time notation.
 \end{myitemize}
 
 \subsection{Jinja2}
-\hilight{ suite: \lstinline=tut.oneoff.jinja2= }
+\hilight{ suite: \lstinline=tut/oneoff/jinja2= }
 \vspace{3mm}
 
 Cylc has built in support for the Jinja2 template processor, which
 allows us to embed code in suite definitions to generate the
 final result seen by cylc.
 
-The \lstinline=tut.oneoff.jinja2= suite illustrates two common
+The \lstinline=tut/oneoff/jinja2= suite illustrates two common
 uses of Jinja2: changing suite content or structure based on the value
 of a logical switch; and iteratively generating dependencies and runtime
 configuration for groups of related tasks:
@@ -2079,7 +2078,7 @@ To view the result of Jinja2 processing with the Jinja2 flag
 \lstinline@MULTI@ set to \lstinline=False=:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc view --jinja2 --stdout tut.oneoff.jinja2
+shell$ cylc view --jinja2 --stdout tut/oneoff/jinja2
 \end{lstlisting}
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -2095,7 +2094,7 @@ title = "A Jinja2 Hello World! suite"
 And with \lstinline=MULTI= set to \lstinline=True=:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc view --jinja2 --stdout tut.oneoff.jinja2
+shell$ cylc view --jinja2 --stdout tut/oneoff/jinja2
 \end{lstlisting}
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -2118,7 +2117,7 @@ title = "A Jinja2 Hello World! suite"
 
 \subsection{Task Retry On Failure}
 
-\hilight{ suite: \lstinline=tut.oneoff.retry= }
+\hilight{ suite: \lstinline=tut/oneoff/retry= }
 \vspace{3mm}
 
 Tasks can be configured to retry a number of times if they fail.
@@ -2133,7 +2132,7 @@ into the {\em retrying} state until the next retry delay is up, then it
 resubmits. It only enters the {\em failed} state on a final definitive
 failure.
 
-Experiment with \lstinline=tut.oneoff.retry= to see how this works.
+Experiment with \lstinline=tut/oneoff/retry= to see how this works.
 
 \subsection{Other Users' Suites}
 
@@ -2221,122 +2220,24 @@ as the suite runs.
 \section{Suite Name Registration}
 \label{SuiteRegistration}
 
-Cylc commands target suites via names registered in a {\em suite name
-database} located at \lstinline=$HOME/.cylc/REGDB/=. Suite names are
-hierarchical like directory paths, allowing nested tree-like grouping,
-but use the `.' character as a delimiter. This :
+Cylc commands target suites via their names, which are relative path names under
+the suite run directory (\lstinline=~/cylc-run/= by default). Suites can be
+grouped together under sub-directories.
+E.g.:
 \begin{lstlisting}
-shell$ cylc db print -t nwp
+shell$ cylc print -t nwp
 nwp
  |-oper
- | |-region1  Local Model Region1       /oper/nwp/suites/LocalModel/nested/Region1
- | `-region2  Local Model Region2       /oper/nwp/suites/LocalModel/nested/Region2
+ | |-region1  Local Model Region1       /home/hilary/cylc-run/nwp/oper/region1
+ | `-region2  Local Model Region2       /home/hilary/cylc-run/nwp/oper/region2
  `-test
-   `-region1  Local Model TEST Region1  /home/hilary/suites/Regional/TESTS/Region1
+   `-region1  Local Model TEST Region1  /home/hilary/cylc-run/nwp/test/region1
 \end{lstlisting}
 
-Suite titles held in the name database are parsed from the suite
-definition at the time of initial suite registration. If you change the
-title later use \lstinline=cylc db refresh= to update the database.
-
-Name groups are entirely virtual, they do not need to be
-explicitly created before use, and they automatically disappear if all
-tasks are removed from them. From the listing above, for example, to
-move the suite \lstinline=nwp.oper.region2= into the
-\lstinline=nwp.test= group:
-\begin{lstlisting}
-shell$ cylc db rereg nwp.oper.region2 nwp.test.region2
-REREGISTER nwp.oper.region2 to nwp.test.region2
-shell$ cylc db print -tx nwp
-nwp
- |-oper
- | `-region1  Local Model Region1
- `-test
-   |-region1  Local Model TEST Region1
-   `-region2  Local Model Region2
-\end{lstlisting}
-And to move \lstinline=nwp.test.region2= into a new group \lstinline=nwp.para=:
-\begin{lstlisting}
-shell$ cylc db rereg nwp.test.region2 nwp.para.region2
-REREGISTER nwp.test.region2 to nwp.para.region2
-shell$ cylc db print -tx nwp
-nwp
- |-oper
- | `-region1  Local Model Region1
- |-test
- | `-region1  Local Model TEST Region1
- `-para
-   `-region2  Local Model Region2
-\end{lstlisting}
-
-Currently you cannot explicitly indicate a group name on the command
-line by appending a dot character. Rather, in database operations such
-as copy, reregister, or unregister, the identity of the source item
-(group or suite) is inferred from the content of the database; and if
-the source item is a group, so must the target be a group (or it will
-be, in the case of an item that will be created by the operation). This
-means that you cannot copy a single suite into a group that does not
-exist yet unless you specify the entire target suite name.
-
-\lstinline=cylc db register --help= shows a number of other examples.
-
-\subsection{Suite Name Registration Commands}
-
-On the command line, the  `database' (or `db') command category contains
-commands to implement the aforementioned operations.
-
-\lstset{language=usage}
-\begin{lstlisting}
-shell$ cylc db help
-CATEGORY: db|database - Suite name registration, copying, deletion, etc.
-
-Suite name registrations are held in a simple database $HOME/.cylc/REGDB
-$ cat $HOME/.cylc/REGDB/my.suite
-   title=my suite title
-   path=/path/to/my/suite
-
-HELP: cylc [db|database] COMMAND help,--help
-  You can abbreviate db|database and COMMAND.
-  The category db|database may be omitted.
-
-COMMANDS:
-  copy|cp ............. Copy a suite or a group of suites
-  get-directory ....... Retrieve suite definition directory paths
-  print ............... Print registered suites
-  refresh ............. Report invalid registrations and update suite titles
-  register ............ Register a suite for use
-  reregister|rename ... Change the name of a suite
-  unregister .......... Unregister and optionally delete suites
-\end{lstlisting}
-
-Groups of suites (at any level in the name hierarchy) can be deleted,
-copied, imported, and exported; as well as individual suites. To do this,
-just use suite group names as source and/or target for operations, as
-appropriate. For instance, if a group \lstinline=foo.bar= contains the
-suites \lstinline=foo.bar.baz= and \lstinline=foo.bar.qux=, you can copy
-a single suite like this:
-\lstset{language=transcript}
-\begin{lstlisting}
-shell$ cylc copy foo.bar.baz boo $HOME/suites
-\end{lstlisting}
-(resulting in a new suite \lstinline=boo=); or the group like this:
-\lstset{language=transcript}
-\begin{lstlisting}
-shell$ cylc copy foo.bar boo $HOME/suites
-\end{lstlisting}
-(resulting in new suites \lstinline=boo.baz= and \lstinline=boo.qux=); or the group like this:
-\lstset{language=transcript}
-\begin{lstlisting}
-shell$ cylc copy foo boo $HOME/suites
-\end{lstlisting}
-(resulting in new suites \lstinline=boo.bar.baz= and \lstinline=boo.bar.qux=).
-When suites are copied, the suite definition directories are copied into
-a directory tree, under the target directory, that reflects the
-suite name hierarchy. \lstinline=cylc copy --help= has some explicit examples.
-
-The same functionality is also available by right-clicking on suites
-or groups in the gcylc ``Open Registered Suite'' dialog.
-
+Suites can be pre-registered with a name using the \lstinline=cylc register=
+command. The creates the essential directory structure for the suite, and
+generates some service files underneath it. Otherwise, \lstinline=cylc run= will
+create these files on suite start up.
 
 %\pagebreak
 \section{Suite Definition}
@@ -5709,11 +5610,11 @@ re-triggered multiple times:
 \lstset{language=bash}
 \begin{lstlisting}
 # task job script:
-~/cylc-run/tut.oneoff.basic/log/job/1/hello/01/job
+~/cylc-run/tut/oneoff/basic/log/job/1/hello/01/job
 # task stdout:
-~/cylc-run/tut.oneoff.basic/log/job/1/hello/01/job.out
+~/cylc-run/tut/oneoff/basic/log/job/1/hello/01/job.out
 # task stderr:
-~/cylc-run/tut.oneoff.basic/log/job/1/hello/01/job.err
+~/cylc-run/tut/oneoff/basic/log/job/1/hello/01/job.err
 \end{lstlisting}
 
 How the stdout and stderr streams are directed into these files depends
@@ -5929,7 +5830,7 @@ use it in a suite definition:
 and generate a job script to see the resulting directives:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc db reg test $HOME/test
+shell$ cylc register test $HOME/test
 shell$ cylc jobscript test a.1 | grep QSUB
 #QSUB -e /home/hilary/cylc-run/my.suite/log/job/1/a/01/job.err
 #QSUB -l nodes=1

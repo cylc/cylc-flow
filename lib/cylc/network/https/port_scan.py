@@ -29,7 +29,8 @@ from cylc.network import ConnectionError, ConnectionTimeout
 from cylc.network.https.suite_state_client import SuiteStillInitialisingError
 from cylc.network.https.suite_identifier_client import (
     SuiteIdClientAnon, SuiteIdClient)
-from cylc.registration import RegistrationDB
+from cylc.suite_srv_files_mgr import (
+    SuiteSrvFilesManager, SuiteServiceFileError)
 from cylc.suite_host import is_remote_host, get_host_ip_by_name
 
 
@@ -40,8 +41,9 @@ MSG_TIMEOUT = "TIMEOUT"
 SLEEP_INTERVAL = 0.01
 
 
-def _scan1_impl(conn, reg_db_path, timeout, my_uuid):
+def _scan1_impl(conn, timeout, my_uuid):
     """Connect to host:port to get suite identify."""
+    srv_files_mgr = SuiteSrvFilesManager()
     while True:
         if not conn.poll(SLEEP_INTERVAL):
             continue
@@ -69,28 +71,32 @@ def _scan1_impl(conn, reg_db_path, timeout, my_uuid):
             if states is None:
                 # This suite keeps its state info private.
                 # Try again with the passphrase if I have it.
-                reg_db = RegistrationDB(reg_db_path)
-                pphrase = reg_db.load_passphrase(name, owner, host)
-                if pphrase:
-                    client = SuiteIdClient(
-                        name, owner=owner, host=host, port=port,
-                        my_uuid=my_uuid, timeout=timeout)
-                    try:
-                        result = client.identify()
-                    except Exception:
-                        # Nope (private suite, wrong passphrase).
-                        if cylc.flags.debug:
-                            print >> sys.stderr, '    (wrong passphrase)'
-                    else:
-                        reg_db.cache_passphrase(name, owner, host, pphrase)
-                        if cylc.flags.debug:
-                            print >> sys.stderr, (
-                                '    (got states with passphrase)')
+                try:
+                    pphrase = srv_files_mgr.get_auth_item(
+                        srv_files_mgr.FILE_BASE_PASSPHRASE, name, owner, host,
+                        content=True)
+                except SuiteServiceFileError:
+                    pass
+                else:
+                    if pphrase:
+                        client = SuiteIdClient(
+                            name, owner=owner, host=host, port=port,
+                            my_uuid=my_uuid, timeout=timeout)
+                        try:
+                            result = client.identify()
+                        except ConnectionError as exc:
+                            # Nope (private suite, wrong passphrase).
+                            if cylc.flags.debug:
+                                print >> sys.stderr, '    (wrong passphrase)'
+                        else:
+                            if cylc.flags.debug:
+                                print >> sys.stderr, (
+                                    '    (got states with passphrase)')
             conn.send((host, port, result))
     conn.close()
 
 
-def scan_all(hosts=None, reg_db_path=None, timeout=None):
+def scan_all(hosts=None, timeout=None):
     """Scan all hosts."""
     try:
         timeout = float(timeout)
@@ -163,8 +169,7 @@ def scan_all(hosts=None, reg_db_path=None, timeout=None):
         # Create some child processes where necessary
         while len(proc_items) < max_procs and todo_set:
             my_conn, conn = Pipe()
-            proc = Process(target=_scan1_impl, args=(
-                conn, reg_db_path, timeout, my_uuid))
+            proc = Process(target=_scan1_impl, args=(conn, timeout, my_uuid))
             proc.start()
             host, port = todo_set.pop()
             wait_set.add((host, port))

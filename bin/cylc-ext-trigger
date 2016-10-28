@@ -70,8 +70,8 @@ def main():
     print 'Send to suite %s: "%s" (%s)' % (suite, event_msg, event_id)
 
     pclient = ExtTriggerClient(
-        suite, options.owner, options.host, options.comms_timeout,
-        options.port, options.db, my_uuid=options.set_uuid,
+        suite, options.owner, options.host, options.port,
+        options.comms_timeout, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
 
     pclient.send_retry(

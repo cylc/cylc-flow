@@ -32,9 +32,10 @@ from cylc.remote import remrun
 if remrun().execute():
     sys.exit(0)
 
+from cylc.config import SuiteConfig
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.config import SuiteConfig
+from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.templatevars import load_template_vars
 
 
@@ -81,7 +82,7 @@ def main():
         metavar="START[,STOP]", action="store", default=None, dest="crange")
 
     (options, args) = parser.parse_args()
-    suite, suiterc = parser.get_suite()
+    suite, suiterc = SuiteSrvFilesManager().parse_suite_arg(options, args[0])
 
     if options.all_tasks and options.all_namespaces:
         parser.error("Choose either -a or -n")

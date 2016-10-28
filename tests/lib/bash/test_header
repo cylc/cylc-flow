@@ -310,17 +310,15 @@ function graph_suite() {
 }
 
 function init_suite() {
-    local TEST_NAME=$1
-    local SUITE_RC=${2:-'-'}
-    local SNAME=$(echo ${TEST_SOURCE_DIR##*tests/} | tr '/' '_')
+    local TEST_NAME="$1"
+    local SUITE_RC="${2:--}"
+    local SNAME="$(echo ${TEST_SOURCE_DIR##*tests/} | tr '/' '_')"
     SUITE_NAME="$(date -u +%Y%m%dT%H%M%SZ)_cylc_test_${SNAME}_${TEST_NAME}"
     mkdir "$TEST_DIR/$SUITE_NAME/"
     cat "$SUITE_RC" >"$TEST_DIR/$SUITE_NAME/suite.rc"
-    cylc unregister "$SUITE_NAME" 2>/dev/null
-    cylc register "$SUITE_NAME $TEST_DIR/$SUITE_NAME" 2>/dev/null
+    cylc register "$SUITE_NAME" "$TEST_DIR/$SUITE_NAME" 2>/dev/null
     while ! cylc get-directory "$SUITE_NAME" 1>/dev/null 2>&1; do
         sleep 1
-        cylc unregister "$SUITE_NAME" 2>/dev/null
         cylc register "$SUITE_NAME" "$TEST_DIR/$SUITE_NAME" 2>/dev/null
     done
     cd "$TEST_DIR/$SUITE_NAME"
@@ -332,11 +330,9 @@ function install_suite() {
     SUITE_NAME=$(date -u +%Y%m%dT%H%M%SZ)_cylc_test_${SNAME}_${1}
     mkdir $TEST_DIR/$SUITE_NAME/
     cp -r $TEST_SOURCE_DIR/${2}/* $TEST_DIR/$SUITE_NAME
-    cylc unregister $SUITE_NAME 2>/dev/null
     cylc register $SUITE_NAME $TEST_DIR/$SUITE_NAME 2>/dev/null
     while ! cylc get-directory $SUITE_NAME 1>/dev/null 2>&1; do
         sleep 1
-        cylc unregister $SUITE_NAME 2>/dev/null
         cylc register $SUITE_NAME $TEST_DIR/$SUITE_NAME 2>/dev/null
     done
     cd $TEST_DIR/$SUITE_NAME
@@ -353,7 +349,6 @@ function purge_suite() {
     fi
     cd "${TEST_DIR:-}"
     if [[ -n "${SUITE_NAME:-}" ]]; then
-        cylc unregister "${SUITE_NAME}" 2>/dev/null || true
         if [[ -n "${TEST_DIR:-}" ]]; then
             rm -rf "${TEST_DIR}/${SUITE_NAME}/"
         fi
@@ -459,10 +454,10 @@ function create_test_globalrc() {
 CYLC_DIR=${CYLC_DIR:-$(cd $(dirname $BASH_SOURCE)/../../.. && pwd)}
 PATH=$CYLC_DIR/bin:$PATH
 
-TEST_NAME_BASE=$(basename $0 .t)
-TEST_SOURCE_DIR=$(cd $(dirname $0) && pwd)
-TEST_DIR=$(mktemp -d)
-cd $TEST_DIR
+TEST_NAME_BASE="$(basename "$0" '.t')"
+TEST_SOURCE_DIR="$(cd "$(dirname "$0")" && pwd)"
+TEST_DIR="$(mktemp -d)"
+cd "$TEST_DIR"
 TEST_LOG_DIR_BASE=${TMPDIR:-/tmp}/cylc-tests-"$LOGNAME"/$(basename $TEST_SOURCE_DIR)
 TEST_LOG_DIR=$TEST_LOG_DIR_BASE/$TEST_NAME_BASE-$(date -u +%Y%m%dT%H%M%SZ)
 SUITE_RUN_FAILS=false

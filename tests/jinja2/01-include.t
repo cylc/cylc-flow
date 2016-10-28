@@ -23,9 +23,9 @@ set_test_number 2
 install_suite $TEST_NAME_BASE include
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+run_ok $TEST_NAME cylc validate -o 'suite.rc.processed' "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-check-expansion
-cmp_ok $TEST_DIR/$SUITE_NAME/suite.rc.processed $TEST_SOURCE_DIR/include/suite.rc-expanded
+cmp_ok 'suite.rc.processed' $TEST_SOURCE_DIR/include/suite.rc-expanded
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

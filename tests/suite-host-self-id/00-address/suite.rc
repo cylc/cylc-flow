@@ -10,5 +10,5 @@
 [runtime]
     [[t1]]
         script = """
-grep -F -q "CYLC_SUITE_HOST={{MY_HOST_IP}}" "${CYLC_SUITE_RUN_DIR}/cylc-suite-env"
+grep -F -q "CYLC_SUITE_HOST={{MY_HOST_IP}}" "${CYLC_SUITE_RUN_DIR}/.cylc-var/contact"
 """

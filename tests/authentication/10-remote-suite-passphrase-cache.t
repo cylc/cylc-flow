@@ -37,7 +37,6 @@ scp ${SSH_OPTS} -pqr "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/"* \
     "${CYLC_TEST_HOST}:${HOST_WORK_DIR}"
 
 SUITE_NAME="$(basename "${HOST_WORK_DIR}")"
-cylc unregister "${SUITE_NAME}" 2>'/dev/null' || true
 cylc register --host="${CYLC_TEST_HOST}" "${SUITE_NAME}" "${HOST_WORK_DIR}"
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate --host="${CYLC_TEST_HOST}" "${SUITE_NAME}"
@@ -47,7 +46,7 @@ cylc run --debug --host="${CYLC_TEST_HOST}" --reference-test "${SUITE_NAME}" \
 SUITE_PID=$!
 
 # Wait until the task failed
-poll '!' grep -q 't1.19700101T0000Z.*failed' 'err'
+poll '!' grep -q 't1.19700101T0000Z.*failed' 'err' 2>'/dev/null'
 
 run_ok "${TEST_NAME_BASE}-broadcast" \
     cylc broadcast --host="${CYLC_TEST_HOST}" "${SUITE_NAME}" \
@@ -57,15 +56,14 @@ run_ok "${TEST_NAME_BASE}-trigger" \
     cylc trigger --host="${CYLC_TEST_HOST}" "${SUITE_NAME}" '*:failed'
 
 # Check that we have cached the passphrase
-CACHED="${HOME}/.cylc/passphrases/${USER}@${CYLC_TEST_HOST}/${SUITE_NAME}"
+CACHED="${HOME}/.cylc/auth/${USER}@${CYLC_TEST_HOST}/${SUITE_NAME}"
 exists_ok "${CACHED}/passphrase"
 
 run_ok "${TEST_NAME_BASE}" wait "${SUITE_PID}"
 
-cylc unregister --host="${CYLC_TEST_HOST}" "${SUITE_NAME}"
 ssh ${SSH_OPTS} -n "${CYLC_TEST_HOST}" "rm -fr '${HOST_WORK_DIR}'" >&2
 rm -fr "${CACHED}"
-rmdir "${HOME}/.cylc/passphrases/${USER}@${CYLC_TEST_HOST}" 2>'/dev/null' \
+rmdir "${HOME}/.cylc/auth/${USER}@${CYLC_TEST_HOST}" 2>'/dev/null' \
     || true
 
 exit

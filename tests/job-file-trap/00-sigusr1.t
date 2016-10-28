@@ -64,7 +64,7 @@ run_tests() {
     $SUITE_RUN_DIR/log/job/1/t1/01/job </dev/null >/dev/null 2>&1 &
     # Wait for suite to complete
     TIMEOUT=$(($(date +%s) + 120))
-    while [[ -f ~/.cylc/ports/$SUITE_NAME ]] && (($TIMEOUT > $(date +%s))); do
+    while [[ -f "${SUITE_RUN_DIR}/.cylc-var/contact" ]] && (($TIMEOUT > $(date +%s))); do
         sleep 1
     done
     # Test t1 status in DB

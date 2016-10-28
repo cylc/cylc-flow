@@ -61,6 +61,7 @@ from cylc.gui.option_group import controlled_option_group
 from cylc.gui.color_rotator import rotator
 from cylc.gui.cylc_logviewer import cylc_logviewer
 from cylc.gui.gcapture import gcapture_tmpfile
+from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.suite_logging import SuiteLog
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gcylc import gcfg
@@ -135,14 +136,13 @@ class InitData(object):
     """
 Class to hold initialisation data.
     """
-    def __init__(self, suite, owner, host, port, db,
+    def __init__(self, suite, owner, host, port,
                  comms_timeout, template_vars, ungrouped_views,
                  use_defn_order):
         self.suite = suite
         self.owner = owner
         self.host = host
         self.port = port
-        self.db = db
         if comms_timeout:
             self.comms_timeout = float(comms_timeout)
         else:
@@ -521,7 +521,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         VIEWS["graph"] = ControlGraph
         VIEWS_ORDERED.append("graph")
 
-    def __init__(self, suite, db, owner, host, port, comms_timeout,
+    def __init__(self, suite, owner, host, port, comms_timeout,
                  template_vars, restricted_display):
 
         gobject.threads_init()
@@ -535,7 +535,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                 self.__class__.VIEWS_ORDERED.remove('graph')
 
         self.cfg = InitData(
-            suite, owner, host, port, db, comms_timeout, template_vars,
+            suite, owner, host, port, comms_timeout, template_vars,
             gcfg.get(["ungrouped views"]),
             gcfg.get(["sort by definition order"]))
 
@@ -974,8 +974,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.quit()
 
     def click_open(self, foo=None):
-        app = dbchooser(self.window, self.cfg.db, self.cfg.owner,
-                        self.cfg.cylc_tmpdir, self.cfg.comms_timeout)
+        app = dbchooser(
+            self.window, self.cfg.cylc_tmpdir, self.cfg.comms_timeout)
         reg, auth = None, None
         while True:
             response = app.window.run()
@@ -2876,7 +2876,7 @@ to reduce network traffic.""")
         )
         filter = gtk.FileFilter()
         filter.set_name("Cylc Suite Definition Files")
-        filter.add_pattern("suite.rc")
+        filter.add_pattern(SuiteSrvFilesManager.FILE_BASE_SUITE_RC)
         dialog.add_filter(filter)
 
         response = dialog.run()
@@ -2891,11 +2891,14 @@ to reduce network traffic.""")
         dir = os.path.dirname(res)
         fil = os.path.basename(res)
 
-        if fil != "suite.rc":
+        if fil != SuiteSrvFilesManager.FILE_BASE_SUITE_RC:
             warning_dialog(
-                "Suite definitions filenames must be \"suite.rc\" : " +
-                fil, self.window).warn()
-            fil = "suite.rc"
+                "Suite definitions filenames must be \"%s\" : %s" % (
+                    SuiteSrvFilesManager.FILE_BASE_SUITE_RC, fil
+                ),
+                self.window
+            ).warn()
+            fil = SuiteSrvFilesManager.FILE_BASE_SUITE_RC
 
         # handle home directories under gpfs filesets, e.g.: if my home
         # directory is /home/oliver:
