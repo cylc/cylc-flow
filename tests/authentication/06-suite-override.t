@@ -64,7 +64,7 @@ grep_ok "\[client-command] get_suite_info ${USER}@.*:cylc-show" suite.log1
 
 # "cylc show" (task info) OK.
 TEST_NAME="${TEST_NAME_BASE}-show2"
-run_ok "${TEST_NAME}" cylc show "${SUITE_NAME}" foo.1
+run_ok "${TEST_NAME}" cylc show "${SUITE_NAME}" foo
 cylc log "${SUITE_NAME}" > suite.log2
 grep_ok "\[client-command] get_task_info ${USER}@.*:cylc-show" suite.log2
 

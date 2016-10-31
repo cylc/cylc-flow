@@ -769,12 +769,15 @@ conditions; see `cylc conditions`.
         return {'title': self.config.cfg['title'],
                 'description': self.config.cfg['description']}
 
-    def info_get_task_info(self, name):
+    def info_get_task_info(self, names):
         """Return info of a task."""
-        try:
-            return self.config.describe(name)
-        except KeyError:
-            return {}
+        results = {}
+        for name in names:
+            try:
+                results[name] = self.config.describe(name)
+            except KeyError:
+                results[name] = {}
+        return results
 
     def info_get_all_families(self, exclude_root=False):
         """Return info of all families."""
@@ -804,10 +807,9 @@ conditions; see `cylc conditions`.
             rgraph, self.config.suite_polling_tasks, self.config.leaves,
             self.config.feet)
 
-    def info_get_task_requisites(self, name, point_string):
+    def info_get_task_requisites(self, items):
         """Return prerequisites of a task."""
-        return self.pool.get_task_requisites(
-            TaskID.get(name, self.get_standardised_point_string(point_string)))
+        return self.pool.get_task_requisites(items)
 
     def command_set_stop_cleanly(self, kill_active_tasks=False):
         """Stop job submission and set the flag for clean shutdown."""

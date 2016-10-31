@@ -1553,18 +1553,17 @@ been defined for this suite""").inform()
             tb.insert(tb.get_end_iter(), line)
 
     def popup_requisites(self, w, e, task_id):
+        """Show prerequisites of task_id in a pop up window."""
         name, point_string = TaskID.split(task_id)
-        result = self.get_comms_info(
-            'get_task_requisites', name=name, point_string=point_string)
-        if result:
-            # (else no tasks were found at all -suite shutting down)
-            if task_id not in result:
-                warning_dialog(
-                    "Task proxy " + task_id +
-                    " not found in " + self.cfg.suite +
-                    ".\nTasks are removed once they are no longer needed.",
-                    self.window).warn()
-                return
+        results, bad_items = self.get_comms_info(
+            'get_task_requisites', items=[task_id])
+        if not results or task_id in bad_items:
+            warning_dialog(
+                "Task proxy " + task_id +
+                " not found in " + self.cfg.suite +
+                ".\nTasks are removed once they are no longer needed.",
+                self.window).warn()
+            return
 
         window = gtk.Window()
         window.set_title(task_id + " State")
@@ -1595,45 +1594,27 @@ been defined for this suite""").inform()
         self.update_tb(tb, 'TASK ', [bold])
         self.update_tb(tb, task_id, [bold, blue])
         self.update_tb(tb, ' in SUITE ', [bold])
-        self.update_tb(tb, self.cfg.suite + '\n\n', [bold, blue])
+        self.update_tb(tb, self.cfg.suite + '\n', [bold, blue])
 
-        [pre, out, extra_info] = result[task_id]
+        for name, done in [
+                ("prerequisites", "satisfied"), ("outputs", "completed")]:
+            self.update_tb(tb, '\n' + name.title(), [bold])
+            self.update_tb(tb, ' (')
+            self.update_tb(tb, 'red', [red])
+            self.update_tb(tb, '=> NOT %s)\n' % done)
+            if not results[task_id][name]:
+                self.update_tb(tb, ' - (None)\n')
+            for msg, state in results[task_id][name]:
+                if state:
+                    tags = None
+                else:
+                    tags = [red]
+                self.update_tb(tb, ' - ' + msg + '\n', tags)
 
-        self.update_tb(tb, 'Prerequisites', [bold])
-        self.update_tb(tb, ' (')
-        self.update_tb(tb, 'red', [red])
-        self.update_tb(tb, '=> NOT satisfied)\n')
-
-        if len(pre) == 0:
-            self.update_tb(tb, ' - (None)\n')
-        for item in pre:
-            [msg, state] = item
-            if state:
-                tags = None
-            else:
-                tags = [red]
-            self.update_tb(tb, ' - ' + msg + '\n', tags)
-
-        self.update_tb(tb, '\nOutputs', [bold])
-        self.update_tb(tb, ' (')
-        self.update_tb(tb, 'red', [red])
-        self.update_tb(tb, '=> NOT completed)\n')
-
-        if len(out) == 0:
-            self.update_tb(tb, ' - (None)\n')
-        for item in out:
-            [msg, state] = item
-            if state:
-                tags = []
-            else:
-                tags = [red]
-            self.update_tb(tb, ' - ' + msg + '\n', tags)
-
-        if len(extra_info.keys()) > 0:
+        if results[task_id]['extras']:
             self.update_tb(tb, '\nOther\n', [bold])
-            for item in extra_info:
-                self.update_tb(
-                    tb, ' - ' + item + ': ' + str(extra_info[item]) + '\n')
+            for key, value in results[task_id]['extras'].items():
+                self.update_tb(tb, ' - %s: %s\n' % (key, value))
 
         self.update_tb(tb, '\nNOTE: ', [bold])
         self.update_tb(
@@ -2180,7 +2161,7 @@ shown here in the state they were in at the time of triggering.''')
             warning_dialog('Enter valid task/family IDs', self.window).warn()
             return
         for i, task_id in enumerate(task_ids):
-            if not TaskID.is_valid_id_for_insert(task_id):
+            if not TaskID.is_valid_id_2(task_id):
                 warning_dialog(
                     '"%s": invalid task ID (argument %d)' % (task_id, i + 1),
                     self.window).warn()

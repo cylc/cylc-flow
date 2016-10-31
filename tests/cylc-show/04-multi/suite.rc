@@ -1,0 +1,29 @@
+#!jinja2
+[cylc]
+    cycle point format = %Y
+    UTC mode = True
+[scheduling]
+    initial cycle point = 2016
+    final cycle point = 2018
+    [[dependencies]]
+        [[[P1Y]]]
+            graph = t1[-P1Y]:start => t1
+[runtime]
+    [[t1]]
+        script = """
+# Final task runs the show. The other wait after starting.
+if [[ "${CYLC_TASK_CYCLE_POINT}" == '2018' ]]; then
+    # Ensure suite knows about current task started
+    wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
+    sleep 5
+    # Test alternate syntaxes
+    cylc show "${CYLC_SUITE_NAME}" 't1.*' >"${CYLC_SUITE_RUN_DIR}/show1.txt"
+    cylc show "${CYLC_SUITE_NAME}" '*/t1' >"${CYLC_SUITE_RUN_DIR}/show2.txt"
+else
+    while [[ ! -s "${CYLC_SUITE_RUN_DIR}/show2.txt" ]]; do
+        sleep 1
+    done
+fi
+"""
+        [[[job]]]
+            execution time limit = PT1M
