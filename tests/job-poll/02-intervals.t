@@ -34,7 +34,6 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 TEST_NAME="${TEST_NAME_BASE}"
 SUITE_RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
 LOG_FILE="${SUITE_RUN_DIR}/log/suite/log"
-grep 'next job poll' "${SUITE_RUN_DIR}/log/suite/log" >&2
 # t1.1 should get the submission polling intervals
 run_ok "log" grep -Fq '[t1.1] -next job poll in PT2S' "${LOG_FILE}"
 run_ok "log" grep -Fq '[t1.1] -next job poll in PT10S' "${LOG_FILE}"

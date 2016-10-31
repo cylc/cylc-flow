@@ -409,7 +409,7 @@ class TaskProxy(object):
             try:
                 return GLOBAL_CFG.get_host_item(
                     key, self.task_host, self.task_owner)
-            except ItemNotFoundError:
+            except (KeyError, ItemNotFoundError):
                 pass
         return default
 
