@@ -198,6 +198,10 @@ SPEC = {
             'work directory': vdr(vtype='string'),
             'task communication method': vdr(
                 vtype='string', options=["default", "ssh", "poll"]),
+            'submission polling intervals': vdr(
+                vtype='interval_list', default=[]),
+            'execution polling intervals': vdr(
+                vtype='interval_list', default=[]),
             'remote copy template': vdr(vtype='string'),
             'remote shell template': vdr(vtype='string'),
             'use login shell': vdr(vtype='boolean', default=None),
