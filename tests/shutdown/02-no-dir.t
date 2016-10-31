@@ -16,16 +16,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test suite can shutdown successfully if its run dir is deleted
-. $(dirname $0)/test_header
-#-------------------------------------------------------------------------------
-set_test_number 2
-#-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-run_fail $TEST_NAME cylc run $SUITE_NAME --debug
-#-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+. "$(dirname "$0")/test_header"
+set_test_number 3
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+# Suite run directory is now a symbolic link, so we can easily delete it.
+RUND="$(cylc get-global-config --print-run-dir)"
+REAL_SUITE_RUND="$(mktemp -d "${RUND}/${SUITE_NAME}XXXXXXXX")"
+ln -s "$(basename "${REAL_SUITE_RUND}")" "${RUND}/${SUITE_NAME}"
+run_fail "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --debug
+grep_ok 'Suite shutting down.*ERROR: unable to open database file' \
+    "${REAL_SUITE_RUND}/log/suite/log"
+
+rm -fr "${REAL_SUITE_RUND}"
+purge_suite "${SUITE_NAME}"
+exit

@@ -1,0 +1,25 @@
+#!Jinja2
+[cylc]
+    abort if any task fails = True
+{% if GLOBALCFG is not defined %}
+    health check interval = PT10S
+{% endif %}{# not GLOBALCFG is not defined #}
+    [[events]]
+        abort on stalled = False
+        abort on timeout = True
+        timeout = PT1M
+
+[scheduling]
+    [[dependencies]]
+        graph = t1
+
+[runtime]
+    [[t1]]
+        script = """
+wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
+sleep 5
+# Remove suite run directory and don't report back to suite
+rm -f "${CYLC_SUITE_RUN_DIR}"
+trap '' EXIT
+exit
+"""

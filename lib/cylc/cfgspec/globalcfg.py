@@ -36,6 +36,7 @@ from cylc.cfgspec.utils import (
     coerce_interval, coerce_interval_list, DurationFloat)
 from cylc.network import PRIVILEGE_LEVELS
 
+coercers['interval'] = coerce_interval
 coercers['interval_seconds'] = lambda *args: coerce_interval(
     *args, check_syntax_version=False)
 coercers['interval_minutes'] = lambda *args: coerce_interval(
@@ -66,6 +67,8 @@ SPEC = {
 
     'cylc': {
         'UTC mode': vdr(vtype='boolean', default=False),
+        'health check interval': vdr(
+            vtype='interval', default=DurationFloat(600)),
         'events': {
             'handlers': vdr(vtype='string_list', default=[]),
             'handler events': vdr(vtype='string_list', default=[]),

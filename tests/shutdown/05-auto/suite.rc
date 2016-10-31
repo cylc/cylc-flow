@@ -3,7 +3,7 @@
 [cylc]
     disable automatic shutdown = {{environ['SUITE_DISABLE_AUTO_SHUTDOWN'] | default(false)}}
     [[events]]
-        timeout = PT1M
+        timeout = PT2M
         abort on timeout = true
 [scheduling]
     initial cycle point = 2020-01-01

@@ -1,0 +1,13 @@
+[cylc]
+    [[events]]
+        abort on stalled = False
+        abort on timeout = True
+        timeout = PT1M
+
+[scheduling]
+    [[dependencies]]
+        graph = t1
+
+[runtime]
+    [[t1]]
+        script = false
