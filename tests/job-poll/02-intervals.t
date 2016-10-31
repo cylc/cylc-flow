@@ -15,35 +15,32 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test that global config is used search for poll
+# Test the correct intervals are used
 . "$(dirname "${0}")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 7
+set_test_number 6
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 create_test_globalrc '
-[task messaging]
-   connection timeout = PT20S
-   retry interval = PT9S
 [hosts]
    [[localhost]]
-        task communication method = poll
-        execution polling intervals = PT0.2M, PT0.1M
-        submission polling intervals = PT0.2M, PT0.1M'
+        submission polling intervals = PT2S,6*PT10S
+        execution polling intervals = 2*PT1S,10*PT6S'
 
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}"
 SUITE_RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
-JOB_FILE="${SUITE_RUN_DIR}/log/job/1/foo/NN/job"
-run_ok "job" grep -q "CYLC_TASK_COMMS_METHOD=poll" "${JOB_FILE}"
-run_ok "job" grep -q "CYLC_TASK_MSG_RETRY_INTVL=9.0" "${JOB_FILE}"
-run_ok "job" grep -q "CYLC_TASK_MSG_TIMEOUT=20.0" "${JOB_FILE}"
 LOG_FILE="${SUITE_RUN_DIR}/log/suite/log"
-run_ok "log" grep -Fq '[bar.1] -next job poll' "${LOG_FILE}"
-run_ok "log" grep -Fq '[foo.1] -next job poll' "${LOG_FILE}"
+grep 'next job poll' "${SUITE_RUN_DIR}/log/suite/log" >&2
+# t1.1 should get the submission polling intervals
+run_ok "log" grep -Fq '[t1.1] -next job poll in PT2S' "${LOG_FILE}"
+run_ok "log" grep -Fq '[t1.1] -next job poll in PT10S' "${LOG_FILE}"
+# t2.1 should get the execution polling intervals
+run_ok "log" grep -Fq '[t2.1] -next job poll in PT1S' "${LOG_FILE}"
+run_ok "log" grep -Fq '[t2.1] -next job poll in PT6S' "${LOG_FILE}"
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
 exit

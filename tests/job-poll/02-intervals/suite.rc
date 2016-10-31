@@ -1,0 +1,22 @@
+[cylc]
+    [[reference test]]
+        live mode suite timeout = PT1M
+
+[scheduling]
+    [[dependencies]]
+        graph = t1 & t2
+
+[runtime]
+    [[t1]]
+        env-script = """
+# Simulate disappearing after job submission
+export CYLC_TASK_COMMS_METHOD=poll
+sleep 10
+"""
+        script = true
+    [[t2]]
+        script = """
+# Simulate disappearing after job running
+export CYLC_TASK_COMMS_METHOD=poll
+sleep 10
+"""

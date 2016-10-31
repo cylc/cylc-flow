@@ -49,7 +49,6 @@ from cylc.job_file import JobFile
 from cylc.job_host import RemoteJobHostManager
 from cylc.batch_sys_manager import BATCH_SYS_MANAGER
 from cylc.owner import is_remote_user, USER
-from cylc.poll_timer import PollTimer
 from cylc.suite_host import is_remote_host, get_suite_host
 from parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.mp_pool import SuiteProcPool, SuiteProcContext
@@ -87,8 +86,8 @@ TaskJobLogsRetrieveContext = namedtuple(
     ["key", "ctx_type", "user_at_host", "max_size"])
 
 
-class TryState(object):
-    """Represent the current state of a (re)try."""
+class TaskActionTimer(object):
+    """A timer with delays for task actions."""
 
     # Memory optimization - constrain possible attributes to this list.
     __slots__ = ["ctx", "delays", "num", "delay", "timeout", "is_waiting"]
@@ -120,16 +119,22 @@ class TryState(object):
         """Return True if timeout is set."""
         return self.timeout is not None
 
-    def next(self):
-        """Return the next retry delay if there is one, or None otherwise."""
+    def next(self, no_exhaust=False):
+        """Return the next retry delay.
+
+        When delay list has no more item:
+        * Return None if no_exhaust is False
+        * Return the final delay if no_exhaust is True.
+        """
         try:
             self.delay = self.delays[self.num]
         except IndexError:
-            return None
-        else:
+            if not no_exhaust:
+                self.delay = None
+        if self.delay is not None:
             self.timeout = time.time() + self.delay
             self.num += 1
-            return self.delay
+        return self.delay
 
     def set_waiting(self):
         """Set waiting flag, while waiting for action to complete."""
@@ -182,12 +187,12 @@ class TaskProxy(object):
                  "is_manual_submit", "summary", "local_job_file_path",
                  "retries_configured", "run_try_state", "sub_try_state",
                  "event_handler_try_states",
-                 "execution_time_limit_poll_try_state", "db_inserts_map",
+                 "execution_time_limit_poll_timer", "db_inserts_map",
                  "db_updates_map", "suite_name", "task_host", "task_owner",
-                 "user_at_host", "job_vacated", "submission_poll_timer",
-                 "execution_poll_timer", "event_hooks", "sim_mode_run_length",
+                 "user_at_host", "job_vacated", "poll_timers",
+                 "event_hooks", "sim_mode_run_length",
                  "delayed_start_str", "delayed_start", "expire_time_str",
-                 "expire_time", "state", "log"]
+                 "expire_time", "state"]
 
     # Format string for single line output
     JOB_LOG_FMT_1 = "%(timestamp)s [%(cmd_key)s %(attr)s] %(mesg)s"
@@ -294,10 +299,10 @@ class TaskProxy(object):
 
         self.retries_configured = False
 
-        self.run_try_state = TryState()
-        self.sub_try_state = TryState()
+        self.run_try_state = TaskActionTimer()
+        self.sub_try_state = TaskActionTimer()
         self.event_handler_try_states = {}
-        self.execution_time_limit_poll_try_state = None
+        self.execution_time_limit_poll_timer = None
 
         self.db_inserts_map = {
             self.TABLE_TASK_JOBS: [],
@@ -322,8 +327,7 @@ class TaskProxy(object):
 
         self.job_vacated = False
 
-        self.submission_poll_timer = None
-        self.execution_poll_timer = None
+        self.poll_timers = {"submission": None, "execution": None}
 
         # An initial db state entry is created at task proxy init. On reloading
         # or restarting the suite, the task proxies already have this db entry.
@@ -397,10 +401,10 @@ class TaskProxy(object):
                 pass
         return default
 
-    def _get_host_conf(self, key, default=None):
+    def _get_host_conf(self, key, default=None, skey="remote"):
         """Return a host setting from suite then global configuration."""
-        if self.tdef.rtconfig["remote"].get(key) is not None:
-            return self.tdef.rtconfig["remote"][key]
+        if self.tdef.rtconfig[skey].get(key) is not None:
+            return self.tdef.rtconfig[skey][key]
         else:
             try:
                 return GLOBAL_CFG.get_host_item(
@@ -721,7 +725,7 @@ class TaskProxy(object):
                 not self._get_host_conf("retrieve job logs") or
                 key2 in self.event_handler_try_states):
             return
-        self.event_handler_try_states[key2] = TryState(
+        self.event_handler_try_states[key2] = TaskActionTimer(
             TaskJobLogsRetrieveContext(
                 # key
                 self.JOB_LOGS_RETRIEVE,
@@ -740,19 +744,20 @@ class TaskProxy(object):
                 event not in self._get_events_conf("mail events", [])):
             return
 
-        self.event_handler_try_states[(key1, self.submit_num)] = TryState(
-            TaskEventMailContext(
-                key1,
-                self.EVENT_MAIL,  # ctx_type
-                event,
-                self._get_events_conf(  # mail_from
-                    "mail from",
-                    "notifications@" + get_suite_host(),
+        self.event_handler_try_states[(key1, self.submit_num)] = (
+            TaskActionTimer(
+                TaskEventMailContext(
+                    key1,
+                    self.EVENT_MAIL,  # ctx_type
+                    event,
+                    self._get_events_conf(  # mail_from
+                        "mail from",
+                        "notifications@" + get_suite_host(),
+                    ),
+                    self._get_events_conf("mail to", USER),  # mail_to
+                    self._get_events_conf("mail smtp"),  # mail_smtp
                 ),
-                self._get_events_conf("mail to", USER),  # mail_to
-                self._get_events_conf("mail smtp"),  # mail_smtp
-            ),
-            self._get_events_conf("mail retry delays", []))
+                self._get_events_conf("mail retry delays", [])))
 
     def setup_custom_event_handlers(self, event, message, only_list=None):
         """Call custom event handlers."""
@@ -784,13 +789,14 @@ class TaskProxy(object):
                 cmd = "%s '%s' '%s' '%s' '%s'" % (
                     handler, event, self.suite_name, self.identity, message)
             self.log(DEBUG, "Queueing %s handler: %s" % (event, cmd))
-            self.event_handler_try_states[(key1, self.submit_num)] = TryState(
-                CustomTaskEventHandlerContext(
-                    key1,
-                    self.CUSTOM_EVENT_HANDLER,
-                    cmd,
-                ),
-                retry_delays)
+            self.event_handler_try_states[(key1, self.submit_num)] = (
+                TaskActionTimer(
+                    CustomTaskEventHandlerContext(
+                        key1,
+                        self.CUSTOM_EVENT_HANDLER,
+                        cmd,
+                    ),
+                    retry_delays))
 
     def custom_event_handler_callback(self, result):
         """Callback when a custom event handler is done."""
@@ -886,7 +892,7 @@ class TaskProxy(object):
                     self.summary['submitted_time'] + submit_timeout)
             else:
                 self.state.submission_timer_timeout = None
-            self.submission_poll_timer.set_timer()
+            self._set_next_poll_time('submission')
 
     def job_execution_failed(self, event_time=None):
         """Handle a job failure."""
@@ -974,15 +980,11 @@ class TaskProxy(object):
 
         self.event_hooks = rtconfig['events']
 
-        self.submission_poll_timer = PollTimer(
-            copy(rtconfig['job']['submission polling intervals']),
-            copy(GLOBAL_CFG.get(['submission polling intervals'])),
-            'submission', self.log)
-
-        self.execution_poll_timer = PollTimer(
-            copy(rtconfig['job']['execution polling intervals']),
-            copy(GLOBAL_CFG.get(['execution polling intervals'])),
-            'execution', self.log)
+        for key in 'submission', 'execution':
+            values = self._get_host_conf(
+                key + ' polling intervals', skey='job')
+            if values:
+                self.poll_timers[key] = TaskActionTimer(delays=values)
 
     def submit(self):
         """For "cylc submit". See also "TaskPool.submit_task_jobs"."""
@@ -1100,8 +1102,6 @@ class TaskProxy(object):
             self.user_at_host = self.task_host
         self.summary['host'] = self.user_at_host
         self.summary['job_hosts'][self.submit_num] = self.user_at_host
-        self.submission_poll_timer.set_host(self.task_host)
-        self.execution_poll_timer.set_host(self.task_host)
         try:
             batch_sys_conf = self._get_host_conf('batch systems')[
                 rtconfig['job']['batch system']]
@@ -1110,8 +1110,8 @@ class TaskProxy(object):
         if self.summary['execution_time_limit']:
             # Default = 1, 2 and 7 minutes intervals, roughly 1, 3 and 10
             # minutes after time limit exceeded
-            self.execution_time_limit_poll_try_state = (
-                TryState(delays=batch_sys_conf.get(
+            self.execution_time_limit_poll_timer = (
+                TaskActionTimer(delays=batch_sys_conf.get(
                     'execution time limit polling intervals', [60, 120, 420])))
 
         RemoteJobHostManager.get_inst().init_suite_run_dir(
@@ -1235,39 +1235,41 @@ class TaskProxy(object):
                 exc.filename = target
             raise exc
 
-    def handle_submission_timeout(self):
-        """Handle submission timeout, only called if TASK_STATUS_SUBMITTED."""
+    def check_submission_timeout(self, now):
+        """Check/handle submission timeout, called if TASK_STATUS_SUBMITTED."""
+        timeout = self.state.submission_timer_timeout
+        if timeout is None or now <= timeout:
+            return False
         # Extend timeout so the job can be polled again at next timeout
         # just in case the job is still stuck in a queue
-        old_timeout = self.state.submission_timer_timeout
-        self.state.submission_timer_timeout = None
         msg = 'job submitted %s ago, but has not started' % (
             get_seconds_as_interval_string(
-                old_timeout - self.summary['submitted_time']))
+                timeout - self.summary['submitted_time']))
+        self.state.submission_timer_timeout = None
         self.log(WARNING, msg)
         self.setup_event_handlers('submission timeout', msg)
         return True
 
-    def handle_execution_timeout(self):
-        """Handle execution timeout, only called if TASK_STATUS_RUNNING."""
-        old_timeout = self.state.execution_timer_timeout
+    def check_execution_timeout(self, now):
+        """Check/handle execution timeout, called if TASK_STATUS_RUNNING."""
+        timeout = self.state.execution_timer_timeout
+        if timeout is None or now <= timeout:
+            return False
         if self.summary['execution_time_limit']:
-            try_state = self.execution_time_limit_poll_try_state
+            try_state = self.execution_time_limit_poll_timer
             if not try_state.is_timeout_set():
                 try_state.next()
             if not try_state.is_delay_done():
                 # Don't poll
                 return False
-            if self.execution_time_limit_poll_try_state.next() is not None:
+            if self.execution_time_limit_poll_timer.next() is not None:
                 # Poll now, and more retries lined up
                 return True
-            # No more retry lined up, issue execution timeout event
-            self.state.execution_timer_timeout = None
-        else:
-            self.state.execution_timer_timeout = None
+        # No more retry lined up, issue execution timeout event
         msg = 'job started %s ago, but has not finished' % (
             get_seconds_as_interval_string(
-                old_timeout - self.summary['started_time']))
+                timeout - self.summary['started_time']))
+        self.state.execution_timer_timeout = None
         self.log(WARNING, msg)
         self.setup_event_handlers('execution timeout', msg)
         return True
@@ -1389,7 +1391,7 @@ class TaskProxy(object):
             # submission was successful so reset submission try number
             self.sub_try_state.num = 0
             self.setup_event_handlers('started', 'job started')
-            self.execution_poll_timer.set_timer()
+            self._set_next_poll_time('execution')
 
         elif (message == TASK_OUTPUT_SUCCEEDED and
                 self.state.status in [
@@ -1528,3 +1530,37 @@ class TaskProxy(object):
         if tail:
             args.append(tail)
         return os.path.join(*args)
+
+    def check_poll_ready(self, now=None):
+        """Check if it is the next poll time."""
+        return (
+            self.state.status == TASK_STATUS_SUBMITTED and (
+                self.check_submission_timeout(now) or
+                self._check_poll_timer('submission', now)
+            )
+        ) or (
+            self.state.status == TASK_STATUS_RUNNING and (
+                self.check_execution_timeout(now) or
+                self._check_poll_timer('execution', now)
+            )
+        )
+
+    def _check_poll_timer(self, key, now=None):
+        """Set the next execution/submission poll time."""
+        timer = self.poll_timers.get(key)
+        if timer is not None and timer.is_delay_done(now):
+            self._set_next_poll_time(key)
+            return True
+        else:
+            return False
+
+    def _set_next_poll_time(self, key):
+        """Set the next execution/submission poll time."""
+        timer = self.poll_timers.get(key)
+        if timer is not None:
+            if timer.num is None:
+                timer.num = 0
+            delay = timer.next(no_exhaust=True)
+            if delay is not None:
+                self.log(INFO, 'next job poll in %s (after %s)' % (
+                    timer.delay_as_seconds(), timer.timeout_as_str()))

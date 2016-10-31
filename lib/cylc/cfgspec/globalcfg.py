@@ -53,20 +53,15 @@ SPEC = {
     'enable run directory housekeeping': vdr(vtype='boolean', default=False),
     'run directory rolling archive length': vdr(
         vtype='integer', vmin=0, default=2),
-    'submission polling intervals': vdr(
-        vtype='interval_minutes_list', default=[]),
-    'execution polling intervals': vdr(
-        vtype='interval_minutes_list', default=[]),
-
     'task host select command timeout': vdr(
         vtype='interval_seconds', default=DurationFloat(10)),
+
     'task messaging': {
         'retry interval': vdr(
             vtype='interval_seconds', default=DurationFloat(5)),
         'maximum number of tries': vdr(vtype='integer', vmin=1, default=7),
         'connection timeout': vdr(
             vtype='interval_seconds', default=DurationFloat(30)),
-
     },
 
     'cylc': {
@@ -151,6 +146,10 @@ SPEC = {
             'task communication method': vdr(
                 vtype='string',
                 options=["default", "ssh", "poll"], default="default"),
+            'submission polling intervals': vdr(
+                vtype='interval_minutes_list', default=[]),
+            'execution polling intervals': vdr(
+                vtype='interval_minutes_list', default=[]),
             'remote copy template': vdr(
                 vtype='string',
                 default='scp -oBatchMode=yes -oConnectTimeout=10'),
@@ -363,6 +362,14 @@ def upg(cfg, descr):
         '7.0.0',
         ['authentication', 'scan hash']
     )
+    u.deprecate(
+        '7.0.0',
+        ['execution polling intervals'],
+        ['hosts', 'localhost', 'execution polling intervals'])
+    u.deprecate(
+        '7.0.0',
+        ['submission polling intervals'],
+        ['hosts', 'localhost', 'submission polling intervals'])
     u.upgrade()
 
 

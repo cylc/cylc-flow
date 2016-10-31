@@ -71,7 +71,8 @@ from cylc.suite_host import get_suite_host
 from cylc.suite_logging import SuiteLog, OUT, ERR, LOG
 from cylc.task_id import TaskID
 from cylc.task_pool import TaskPool
-from cylc.task_proxy import TaskProxy, TaskProxySequenceBoundsError, TryState
+from cylc.task_proxy import (
+    TaskProxy, TaskProxySequenceBoundsError, TaskActionTimer)
 from cylc.task_state import (
     TASK_STATUS_HELD, TASK_STATUS_WAITING,
     TASK_STATUS_QUEUED, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
@@ -615,8 +616,6 @@ conditions; see `cylc conditions`.
                     host = itask.user_at_host.split('@', 1)[1]
                 else:
                     host = itask.user_at_host
-                itask.submission_poll_timer.set_host(host, set_timer=True)
-                itask.execution_poll_timer.set_host(host, set_timer=True)
 
             elif status in (TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_FAILED):
                 itask.state.set_prerequisites_all_satisfied()
@@ -667,7 +666,7 @@ conditions; see `cylc conditions`.
                 {"id": id_, "ctx_key": ctx_key})
             ERR.warning(traceback.format_exc())
             return
-        itask.event_handler_try_states[ctx_key] = TryState(
+        itask.event_handler_try_states[ctx_key] = TaskActionTimer(
             ctx, delays, num, delay, timeout)
         OUT.info("+ %s.%s %s" % (name, cycle, ctx_key))
 
