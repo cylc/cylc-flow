@@ -4,7 +4,7 @@ description = """change the size of a queue via a reload."""
 [cylc]
    [[reference test]]
        required run mode = live
-       live mode suite timeout = 1.5 # minutes
+       live mode suite timeout=PT1M
 
 [scheduling]
     [[ queues ]]

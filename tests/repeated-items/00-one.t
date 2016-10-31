@@ -40,7 +40,7 @@ bar => baz
 __END
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-c
-cylc get-config -i '[scheduling][dependencies][0]graph' $SUITE_NAME >c.txt \
+cylc get-config -i '[scheduling][dependencies][T00]graph' $SUITE_NAME >c.txt \
     2>/dev/null
 cmp_ok c.txt <<'__END'
 cfoo => cbar

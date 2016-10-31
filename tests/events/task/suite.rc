@@ -10,7 +10,7 @@ title = "test all event hooks"
     [[environment]]
         EVNTLOG = {{ EVNTLOG }}
     [[reference test]]
-        live mode suite timeout = 1.0
+        live mode suite timeout = PT1M
         suite shutdown event handler = log-check.sh
         expected task failures = bar.1, baz.1
  
@@ -40,12 +40,12 @@ else
     sleep 10; cylc task message -p WARNING 'this is a user-defined warning message'
 fi"""
         [[[job]]]
-            execution retry delays = 0.05
+            execution retry delays = PT3S
         [[[events]]]
             succeeded handler = {{ HANDLER }}
             warning handler = {{ HANDLER }}
             retry handler = {{ HANDLER }}
-            execution timeout = 0.05
+            execution timeout = PT3S
             execution timeout handler = {{ HANDLER }}
 
     [[bar]]
@@ -54,7 +54,7 @@ fi"""
             submission failed handler = {{ HANDLER }}
             submission retry handler = {{ HANDLER }}
         [[[job]]]
-            submission retry delays = 0.05
+            submission retry delays = PT3S
         [[[remote]]]
             host = NOHOST
 
@@ -66,5 +66,5 @@ fi"""
             submitted handler = {{ HANDLER }}
             started handler = {{ HANDLER }}
             failed handler = {{ HANDLER }}
-            submission timeout = 0.05
+            submission timeout = PT3S
             submission timeout handler = {{ HANDLER }}

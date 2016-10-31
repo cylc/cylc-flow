@@ -4,8 +4,8 @@
        required run mode = live
        live mode suite timeout = PT2M
 [scheduling]
-    initial cycle time = 20100101T00
-    final cycle time   = 20100101T18
+    initial cycle point = 20100101T00
+    final cycle point   = 20100101T18
     runahead limit = PT18H
     [[special tasks]]
         sequential = "foo"

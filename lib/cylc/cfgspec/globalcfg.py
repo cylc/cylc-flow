@@ -37,13 +37,7 @@ from cylc.cfgspec.utils import (
 from cylc.network import PRIVILEGE_LEVELS
 
 coercers['interval'] = coerce_interval
-coercers['interval_seconds'] = lambda *args: coerce_interval(
-    *args, check_syntax_version=False)
-coercers['interval_minutes'] = lambda *args: coerce_interval(
-    *args, back_comp_unit_factor=60, check_syntax_version=False)
-coercers['interval_minutes_list'] = lambda *args: coerce_interval_list(
-    *args, back_comp_unit_factor=60, check_syntax_version=False)
-
+coercers['interval_list'] = coerce_interval_list
 
 SPEC = {
     'process pool size': vdr(vtype='integer', default=4),
@@ -55,14 +49,13 @@ SPEC = {
     'run directory rolling archive length': vdr(
         vtype='integer', vmin=0, default=2),
     'task host select command timeout': vdr(
-        vtype='interval_seconds', default=DurationFloat(10)),
-
+        vtype='interval', default=DurationFloat(10)),
     'task messaging': {
         'retry interval': vdr(
-            vtype='interval_seconds', default=DurationFloat(5)),
+            vtype='interval', default=DurationFloat(5)),
         'maximum number of tries': vdr(vtype='integer', vmin=1, default=7),
         'connection timeout': vdr(
-            vtype='interval_seconds', default=DurationFloat(30)),
+            vtype='interval', default=DurationFloat(30)),
     },
 
     'cylc': {
@@ -82,8 +75,8 @@ SPEC = {
             'inactivity handler': vdr(vtype='string_list', default=[]),
             'shutdown handler': vdr(vtype='string_list', default=[]),
             'stalled handler': vdr(vtype='string_list', default=[]),
-            'timeout': vdr(vtype='interval_minutes'),
-            'inactivity': vdr(vtype='interval_minutes'),
+            'timeout': vdr(vtype='interval'),
+            'inactivity': vdr(vtype='interval'),
             'abort on timeout': vdr(vtype='boolean', default=False),
             'abort on inactivity': vdr(vtype='boolean', default=False),
             'abort on stalled': vdr(vtype='boolean', default=False),
@@ -150,9 +143,9 @@ SPEC = {
                 vtype='string',
                 options=["default", "ssh", "poll"], default="default"),
             'submission polling intervals': vdr(
-                vtype='interval_minutes_list', default=[]),
+                vtype='interval_list', default=[]),
             'execution polling intervals': vdr(
-                vtype='interval_minutes_list', default=[]),
+                vtype='interval_list', default=[]),
             'remote copy template': vdr(
                 vtype='string',
                 default='scp -oBatchMode=yes -oConnectTimeout=10'),
@@ -169,9 +162,9 @@ SPEC = {
                 vtype='string', default='rsync -a'),
             'retrieve job logs max size': vdr(vtype='string'),
             'retrieve job logs retry delays': vdr(
-                vtype='interval_minutes_list', default=[]),
+                vtype='interval_list', default=[]),
             'task event handler retry delays': vdr(
-                vtype='interval_minutes_list', default=[]),
+                vtype='interval_list', default=[]),
             'local tail command template': vdr(
                 vtype='string', default="tail -n +1 -F %(filename)s"),
             'remote tail command template': vdr(
@@ -196,7 +189,7 @@ SPEC = {
                     'out viewer': vdr(vtype='string'),
                     'job name length maximum': vdr(vtype='integer'),
                     'execution time limit polling intervals': vdr(
-                        vtype='interval_minutes_list', default=[]),
+                        vtype='interval_list', default=[]),
                 },
             },
         },
@@ -205,6 +198,10 @@ SPEC = {
             'work directory': vdr(vtype='string'),
             'task communication method': vdr(
                 vtype='string', options=["default", "ssh", "poll"]),
+            'submission polling intervals': vdr(
+                vtype='interval_list', default=[]),
+            'execution polling intervals': vdr(
+                vtype='interval_list', default=[]),
             'remote copy template': vdr(vtype='string'),
             'remote shell template': vdr(vtype='string'),
             'use login shell': vdr(vtype='boolean', default=None),
@@ -216,9 +213,9 @@ SPEC = {
             'retrieve job logs command': vdr(vtype='string'),
             'retrieve job logs max size': vdr(vtype='string'),
             'retrieve job logs retry delays': vdr(
-                vtype='interval_minutes_list'),
+                vtype='interval_list'),
             'task event handler retry delays': vdr(
-                vtype='interval_minutes_list'),
+                vtype='interval_list'),
             'local tail command template': vdr(vtype='string'),
             'remote tail command template': vdr(vtype='string'),
             'batch systems': {
@@ -229,24 +226,24 @@ SPEC = {
                     'err viewer': vdr(vtype='string'),
                     'job name length maximum': vdr(vtype='integer'),
                     'execution time limit polling intervals': vdr(
-                        vtype='interval_minutes_list'),
+                        vtype='interval_list'),
                 },
             },
         },
     },
 
     'task events': {
-        'execution timeout': vdr(vtype='interval_minutes'),
+        'execution timeout': vdr(vtype='interval'),
         'handlers': vdr(vtype='string_list', default=[]),
         'handler events': vdr(vtype='string_list', default=[]),
-        'handler retry delays': vdr(vtype='interval_minutes_list'),
+        'handler retry delays': vdr(vtype='interval_list'),
         'mail events': vdr(vtype='string_list', default=[]),
         'mail from': vdr(vtype='string'),
-        'mail retry delays': vdr(vtype='interval_minutes_list', default=[]),
+        'mail retry delays': vdr(vtype='interval_list', default=[]),
         'mail smtp': vdr(vtype='string'),
         'mail to': vdr(vtype='string'),
         'reset timer': vdr(vtype='boolean', default=False),
-        'submission timeout': vdr(vtype='interval_minutes'),
+        'submission timeout': vdr(vtype='interval'),
     },
 
     'test battery': {

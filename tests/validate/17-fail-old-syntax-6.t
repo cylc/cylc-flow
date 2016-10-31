@@ -15,28 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test execution retries are working
+# Test validation with a new-style cycle point and an async graph.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 3
+set_test_number 2
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE submission
+install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-check
-sqlite3 \
-    "$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/cylc-suite.db" \
-    'select try_num, submit_num from task_jobs' >'select.out'
-cmp_ok 'select.out' <<'__OUT__'
-1|1
-1|2
-1|3
-1|4
-__OUT__
+TEST_NAME=$TEST_NAME_BASE
+run_fail $TEST_NAME cylc validate --debug -v -v $SUITE_NAME
+grep_ok "'Obsolete syntax: mixed integer \[dependencies\]graph with cycling \
+\[dependencies\]\[12\]'" $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
+exit

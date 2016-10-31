@@ -10,6 +10,6 @@ title=Test validation of blank script in automatic suite polling task
     [[eat]]
         script=
         [[[suite state polling]]]
-            interval=2
+            interval=PT2S
             max-polls=20
     [[full]]

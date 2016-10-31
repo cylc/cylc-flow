@@ -1,9 +1,0 @@
-[scheduling]
-    initial cycle time = 20140303T00Z
-    final cycle time   = 20140303T06Z
-    [[dependencies]]
-        [[[P1D]]]
-            graph = t1
-[runtime]
-    [[t1]]
-        script = true

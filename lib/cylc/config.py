@@ -45,8 +45,6 @@ from cylc.graphnode import graphnode, GraphNodeError
 from cylc.message_output import MessageOutput
 from cylc.print_tree import print_tree
 from cylc.regpath import RegPath
-from cylc.syntax_flags import (
-    SyntaxVersion, set_syntax_version, VERSION_PREV, VERSION_NEW)
 from cylc.taskdef import TaskDef, TaskDefError
 from cylc.task_id import TaskID
 from cylc.task_trigger import TaskTrigger
@@ -238,12 +236,14 @@ class SuiteConfig(object):
             if dependency_map.get('graph'):
                 # There is an async graph setting.
                 # If it is by itself, it is integer shorthand.
-                # If there are cycling graphs as well, it is handled as
-                # backwards-compatiblity for mixed-async suites.
+                # If there are cycling graphs as well, it is obsolete
+                # (pre cylc-6) syntax.
                 just_has_async_graph = True
+                non_async_item = None
                 for item, value in dependency_map.items():
                     if item != 'graph' and value.get('graph'):
                         just_has_async_graph = False
+                        non_async_item = item
                         break
                 icp = self.cfg['scheduling'].get('initial cycle point')
                 fcp = self.cfg['scheduling'].get('final cycle point')
@@ -251,8 +251,8 @@ class SuiteConfig(object):
                         icp in [None, "1"] and fcp in [None, icp]):
                     raise SuiteConfigError(
                         'Conflicting syntax: integer vs ' +
-                        'cycling suite, are you missing an [[R1]] section in' +
-                        ' your graph?')
+                        'cycling suite: ' +
+                        'are you missing a [dependencies][[[R1]]] section?')
                 if just_has_async_graph:
                     # There aren't any other graphs, so set integer cycling.
                     self.cfg['scheduling']['cycling mode'] = (
@@ -263,18 +263,12 @@ class SuiteConfig(object):
                     if 'final cycle point' not in self.cfg['scheduling']:
                         self.cfg['scheduling']['final cycle point'] = "1"
                 else:
-                    # A cylc-5 async graph in a cycling suite defines a bunch
-                    # of cylc-5 start-up tasks.
-                    if 'special tasks' not in self.cfg['scheduling']:
-                        self.cfg['scheduling']['special tasks'] = {}
-                    if 'start-up' not in self.cfg['scheduling'][
-                            'special tasks']:
-                        self.cfg['scheduling'][
-                            'special tasks']['start-up'] = []
-                    for name, _, _ in GraphParser.REC_NODES.findall(
-                            self.cfg['scheduling']['dependencies']['graph']):
-                        self.cfg['scheduling'][
-                            'special tasks']['start-up'].append(name)
+                    # Looks like cylc-5 mixed-async.
+                    raise SuiteConfigError(
+                        'Obsolete syntax: mixed integer [dependencies]graph ' +
+                        'with cycling [dependencies][{0}]'.format(
+                            non_async_item)
+                    )
 
         # allow test suites with no [runtime]:
         if 'runtime' not in self.cfg:
@@ -493,24 +487,6 @@ class SuiteConfig(object):
                             ERR.warning(
                                 "%s offsets are normally positive: %s" % (
                                     type, item))
-                    offset_converted_from_prev = False
-                    try:
-                        float(offset_string)
-                    except ValueError:
-                        # So the offset should be an ISO8601 interval.
-                        pass
-                    else:
-                        # Backward-compatibility for a raw float number of
-                        # hours.
-                        set_syntax_version(
-                            VERSION_PREV,
-                            "%s=%s: integer offset" % (type, item)
-                        )
-                        if (get_interval_cls().get_null().TYPE ==
-                                ISO8601_CYCLING_TYPE):
-                            seconds = int(float(offset_string) * 3600)
-                            offset_string = "PT%sS" % seconds
-                        offset_converted_from_prev = True
                     try:
                         offset_interval = (
                             get_interval(offset_string).standardise())
@@ -518,12 +494,6 @@ class SuiteConfig(object):
                         raise SuiteConfigError(
                             "ERROR: Illegal %s spec: %s" % (
                                 type, offset_string))
-                    else:
-                        if not offset_converted_from_prev:
-                            set_syntax_version(
-                                VERSION_NEW,
-                                "%s=%s: ISO 8601 offset" % (type, item)
-                            )
                     extn = "(" + offset_string + ")"
 
                 # Replace family names with members.
@@ -1347,9 +1317,6 @@ class SuiteConfig(object):
                         "ERROR: script cannot be defined for automatic" +
                         " suite polling task " + l_task)
 
-    def get_coldstart_task_list(self):
-        return self.cfg['scheduling']['special tasks']['cold-start']
-
     def get_task_name_list(self):
         # return a list of all tasks used in the dependency graph
         return self.taskdefs.keys()
@@ -1447,25 +1414,6 @@ class SuiteConfig(object):
             if not my_taskdef_node.is_absolute:
                 if offset_string:
                     self.taskdefs[name].used_in_offset_trigger = True
-                    if SyntaxVersion.VERSION == VERSION_PREV:
-                        # Implicit cycling: foo[T+6] generates a +6 sequence.
-                        # TODO: old version cached sequences:
-                        # if offset_string in offset_seq_map:
-                        #    seq_offset = offset_seq_map[offset_string]
-                        # else:
-                        seq_offset = get_sequence(
-                            section,
-                            self.cfg['scheduling']['initial cycle point'],
-                            self.cfg['scheduling']['final cycle point']
-                        )
-                        seq_offset.set_offset(
-                            get_interval(offset_string))
-                        # TODO: offset_seq_map[offset_string] = seq_offset
-                        self.taskdefs[name].add_sequence(
-                            seq_offset, is_implicit=True)
-                        if seq_offset not in self.sequences:
-                            self.sequences.append(seq_offset)
-                    # We don't handle implicit cycling in new-style cycling.
                 else:
                     self.taskdefs[name].add_sequence(seq)
 
@@ -1865,19 +1813,13 @@ class SuiteConfig(object):
             else:
                 sections.append((section, sec_map['graph']))
 
-        # Back-compat a): extract cylc-5 start-up triggers.
-        startup_tasks = self.cfg['scheduling']['special tasks']['start-up']
-        if startup_tasks:
-            self._load_startup_graph(startup_tasks, sections, family_map)
-
         # Parse and process each graph section.
-        # Back-compat b): ignoring cylc-5 start-up triggers (now extracted).
         for section, graph in sections:
             seq = get_sequence(section,
                                self.cfg['scheduling']['initial cycle point'],
                                self.cfg['scheduling']['final cycle point'])
             self.sequences.append(seq)
-            gp = GraphParser(family_map, self.parameters, startup_tasks)
+            gp = GraphParser(family_map, self.parameters)
             gp.parse_graph(graph)
             self.suite_polling_tasks.update(gp.suite_state_polling_tasks)
             self._proc_triggers(gp.triggers, gp.original, section, seq)
@@ -1896,95 +1838,6 @@ class SuiteConfig(object):
                     orig_expr, lefts, right, section, seq, base_interval)
                 self.generate_triggers(
                     expr, lefts, right, seq, suicide, base_interval)
-
-    def _load_startup_graph(self, startup_tasks, sections, family_map):
-        """Back-compat for cylc-5 "start-up tasks".
-
-        These appear in general cycling sections but only run once at the
-        initial cycle point. To support these in cylc-6 we need to pre-parse
-        each graph string to extract all start-up triggers into R1 sections.
-        Then in the main parse, prune start-up triggers from cycling sections.
-
-        TODO - REMOVE THIS AT cylc-7.
-        """
-        startup_trigs = {}
-        r1_points = []
-        set_syntax_version(VERSION_PREV,
-                           "start-up tasks: %s" % ",".join(startup_tasks))
-        for section, graph in sections:
-            seq = get_sequence(
-                section,
-                self.cfg['scheduling']['initial cycle point'],
-                self.cfg['scheduling']['final cycle point'])
-            first_point = seq.get_first_point(
-                get_point(self.cfg['scheduling']['initial cycle point']))
-            # Define the R1 section for start-up triggers in this section.
-            if first_point != self.initial_point:
-                r1_point = str(first_point)
-                r1_sec = 'R1/%s' % r1_point
-            else:
-                r1_point = None
-                r1_sec = 'R1'
-            # Parse the graph string.
-            gp = GraphParser(family_map, self.parameters, startup_tasks)
-            gp.parse_graph(graph, get_startup=True, r1_point=r1_point)
-            self.suite_polling_tasks.update(gp.suite_state_polling_tasks)
-            r1_seq = get_sequence(
-                r1_sec, self.cfg['scheduling']['initial cycle point'],
-                self.cfg['scheduling']['final cycle point'])
-            if r1_point in startup_trigs:
-                _, _, trigs, origs, texts = startup_trigs[r1_point]
-                trigs.update(gp.triggers)
-                origs.update(gp.original)
-                if gp.startup_graph_text not in texts:
-                    texts += gp.startup_graph_text
-            else:
-                trigs = gp.triggers
-                origs = gp.original
-                texts = gp.startup_graph_text
-            startup_trigs[r1_point] = (r1_seq, r1_sec, trigs, origs, texts)
-        # Sort parsed start-up triggers in order of section start points, and
-        # if a trigger appears at multiple R1 points keep only the first.
-        # This is messy.
-        r1_points = startup_trigs.keys()
-        r1_points_sorted = []
-        if None in r1_points:
-            pts = [None]
-            r1_points.remove(None)
-        else:
-            pts = []
-        r1_points_sorted = pts + sorted(r1_points)
-        seen = set()
-        for r1p in r1_points_sorted:
-            r1_seq, r1_sec, r1_trigs, r1_orig, r1_text = startup_trigs[r1p]
-            proc_trigs = {}
-            for name, trigs in r1_trigs.items():
-                use = True
-                proc_inner = {}
-                for expr, info in trigs.items():
-                    if not use:
-                        break
-                    for upstream_name, _, _ in (
-                            GraphParser.REC_NODES.findall(expr)):
-                        key = '%s=>%s' % (upstream_name, name)
-                        if upstream_name in startup_tasks:
-                            if key in seen:
-                                use = False
-                                break
-                        seen.add(key)
-                    if use:
-                        proc_inner[expr] = info
-                proc_trigs[name] = proc_inner
-            # Process the parsed graph information.
-            if proc_trigs:
-                self.sequences.append(r1_seq)
-                self._proc_triggers(proc_trigs, r1_orig, r1_sec, r1_seq)
-                if self.validation:
-                    print '''\
-# REPLACING START-UP/ASYNC DEPENDENCIES WITH AN R1* SECTION
-# (VARYING INITIAL CYCLE POINT MAY AFFECT VALIDITY)
-    [[[%s]]]
-        graph = """%s"""''' % (r1_sec, r1_text)
 
     def get_taskdef(self, name):
         """Get the dense task runtime."""
@@ -2012,9 +1865,6 @@ class SuiteConfig(object):
 
         taskd.sequential = (
             name in self.cfg['scheduling']['special tasks']['sequential'])
-
-        taskd.is_coldstart = (
-            name in self.cfg['scheduling']['special tasks']['cold-start'])
 
         foo = copy(self.runtime['linearized ancestors'][name])
         foo.reverse()

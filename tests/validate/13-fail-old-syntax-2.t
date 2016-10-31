@@ -15,17 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test cold starting, including that the cold start task has actually run
+# Test validation with a new-style cycle point and a prev-style offset.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE cold
+install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
+TEST_NAME=$TEST_NAME_BASE
+run_fail $TEST_NAME cylc validate --debug -v -v $SUITE_NAME
+grep_ok 'Illegal graph node: foo\[T\-24\]:succeed' "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
+exit

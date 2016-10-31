@@ -80,10 +80,6 @@ def main():
              "START [through STOP] cycle points.",
         metavar="START[,STOP]", action="store", default=None, dest="crange")
 
-    parser.add_option(
-        "-c", "--cycles", help="(deprecated: use -p/--points).",
-        metavar="START[,STOP]", action="store", default=None, dest="crange")
-
     (options, args) = parser.parse_args()
     suite, suiterc = parser.get_suite()
 

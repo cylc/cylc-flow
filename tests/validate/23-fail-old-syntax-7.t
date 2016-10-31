@@ -24,10 +24,7 @@ install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE
 run_fail $TEST_NAME cylc validate --debug -v -v $SUITE_NAME
-grep_ok "Conflicting syntax: pre-cylc-6 syntax \
-(integer interval: \[cylc\]\[events\]timeout = 4320) \
-vs post-cylc-6 syntax \
-(ISO 8601 interval: \[runtime\]\[A\]\[job\]execution retry delays = PT30M)" \
+grep_ok "Illegal ISO 8601 interval value: \[cylc\]\[events\]timeout = 4320" \
     $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

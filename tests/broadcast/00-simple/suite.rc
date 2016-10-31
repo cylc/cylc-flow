@@ -16,8 +16,8 @@ generated reference version.
         suite shutdown event handler = complog.py
 
 [scheduling]
-    initial cycle time = 20100808T00
-    final cycle time   = 20100809T00
+    initial cycle point = 20100808T00
+    final cycle point   = 20100809T00
     [[dependencies]]
         [[[R1]]]
             graph = prep => foo

@@ -15,19 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validation with a prev-style cycle point and a new-style ^ offset.
+# Test changing final cycle point
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
+install_suite $TEST_NAME_BASE final-cycle
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE
-run_fail $TEST_NAME cylc validate --debug -v -v $SUITE_NAME
-grep_ok "Conflicting syntax: pre-cylc-6 syntax \
-(initial/final cycle point format: CCYYMMDDhh) \
-vs post-cylc-6 syntax \
-(graphnode: cold_foo\[^T00\]:succeed: ISO 8601 offset)" $TEST_NAME.stderr
+TEST_NAME=$TEST_NAME_BASE-validate
+run_ok $TEST_NAME cylc validate $SUITE_NAME
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-run
+suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
-exit

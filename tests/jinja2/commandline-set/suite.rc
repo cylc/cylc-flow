@@ -6,15 +6,16 @@ line or else this test will fail to validate: TASKNAME and STEP. Also,
 to pass the test run their values must be 'foo' and '2', respectively."""
 
 [cylc]
+    UTC mode = True
     [[reference test]]
         required run mode = live
-        live mode suite timeout = 0.5
+        live mode suite timeout = PT30S
 
 [scheduling]
-    initial cycle time = 2010
-    final cycle time = 2012
+    initial cycle point = 2010
+    final cycle point = 2012
     [[dependencies]]
-        [[[ Yearly(2010,{{STEP}}) ]]]
+        [[[ P{{STEP}}Y ]]]
             graph = {{TASKNAME}}
 [runtime]
     [[ {{TASKNAME}} ]]

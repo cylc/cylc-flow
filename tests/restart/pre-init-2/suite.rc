@@ -1,4 +1,4 @@
-# Test restart with an inter-cycle trigger and no initial cycle time in
+# Test restart with an inter-cycle trigger and no initial cycle point in
 # the suite definition. See github #957.
 
 # INSTRUCTIONS:
@@ -16,7 +16,7 @@
 [scheduling]
     # DO NOT PUT AN INITIAL CYCLE TIME HERE,
     # use the command line as described above
-    final cycle time = 20100810T00
+    final cycle point = 20100810T00
     [[dependencies]]
         [[[T00]]]
             graph = """

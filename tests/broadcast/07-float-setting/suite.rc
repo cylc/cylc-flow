@@ -7,8 +7,8 @@ title = "test suite for broadcast timeout functionality"
         live mode suite timeout = PT1M
 
 [scheduling]
-    initial cycle time = 20100808T0000Z
-    final cycle time   = 20100809T0000Z
+    initial cycle point = 20100808T0000Z
+    final cycle point   = 20100809T0000Z
     [[dependencies]]
         [[[R1]]]
             graph = """
