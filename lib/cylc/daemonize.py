@@ -20,7 +20,8 @@
 
 import os
 import sys
-from cylc.suite_output import SuiteOutput
+from time import sleep, time
+from cylc.suite_logging import SuiteLog
 
 
 SUITE_SCAN_INFO_TMPL = r"""
@@ -41,6 +42,23 @@ Suite Info:
  + Port: %(port)s
  + Logs: %(logd)s/{log,out,err}""" + SUITE_SCAN_INFO_TMPL
 
+_TIMEOUT = 300.0  # 5 minutes
+
+
+def redirect(logd):
+    """Redirect standard file descriptors
+
+    Note that simply reassigning the sys streams is not sufficient
+    if we import modules that write to stdin and stdout from C
+    code - evidently the subprocess module is in this category!
+    """
+    sout = file(os.path.join(logd, SuiteLog.OUT), 'a+', 0)  # 0 => unbuffered
+    serr = file(os.path.join(logd, SuiteLog.ERR), 'a+', 0)
+    dvnl = file(os.devnull, 'r')
+    os.dup2(sout.fileno(), sys.stdout.fileno())
+    os.dup2(serr.fileno(), sys.stderr.fileno())
+    os.dup2(dvnl.fileno(), sys.stdin.fileno())
+
 
 def daemonize(server):
     """Turn a cylc scheduler into a Unix daemon.
@@ -52,13 +70,57 @@ def daemonize(server):
     http://code.activestate.com/recipes/66012-fork-a-daemon-process-on-unix/
 
     """
-
-    sout = SuiteOutput(server.suite)
-
+    logd = SuiteLog.get_dir_for_suite(server.suite)
+    log_fname = os.path.join(logd, SuiteLog.LOG)
+    try:
+        old_log_mtime = os.stat(log_fname).st_mtime
+    except OSError:
+        old_log_mtime = None
+    # fork 1
     try:
         pid = os.fork()
         if pid > 0:
-            # exit first parent
+            # Poll for suite log to be populated
+            suite_pid = None
+            suite_port = None
+            timeout = time() + _TIMEOUT
+            while time() <= timeout and (
+                    suite_pid is None or suite_port is None):
+                sleep(0.1)
+                try:
+                    log_stat = os.stat(log_fname)
+                    if (log_stat.st_mtime == old_log_mtime or
+                            log_stat.st_size == 0):
+                        continue
+                    # Line 1 of suite log should contain start up message, host
+                    # name and port number. Format is:
+                    # LOG-PREIFX Suite starting: server=HOST:PORT, pid=PID
+                    # Otherwise, something has gone wrong, print the suite log
+                    # and exit with an error.
+                    log_line1 = open(log_fname).readline()
+                    if server.START_MESSAGE_PREFIX in log_line1:
+                        server_str, pid_str = log_line1.rsplit()[-2:]
+                        suite_pid = pid_str.rsplit("=", 1)[-1]
+                        suite_port = server_str.rsplit(":", 1)[-1]
+                    else:
+                        try:
+                            sys.stderr.write(open(log_fname).read())
+                            sys.exit(1)
+                        except IOError:
+                            sys.exit("Suite daemon exited")
+                except (IOError, OSError, ValueError):
+                    pass
+            if suite_pid is None or suite_port is None:
+                sys.exit("Suite not started after %ds" % _TIMEOUT)
+            # Print suite information
+            sys.stdout.write(_INFO_TMPL % {
+                "suite": server.suite,
+                "host": server.host,
+                "port": suite_port,
+                "pid": suite_pid,
+                "logd": logd,
+            })
+            # exit parent 1
             sys.exit(0)
     except OSError, exc:
         sys.stderr.write(
@@ -70,17 +132,11 @@ def daemonize(server):
     os.setsid()
     os.umask(0)
 
-    # do second fork
+    # fork 2
     try:
         pid = os.fork()
         if pid > 0:
-            # exit from second parent, print eventual PID before
-            sys.stdout.write(_INFO_TMPL % {
-                "suite": server.suite,
-                "host": server.host,
-                "port": server.port,
-                "pid": pid,
-                "logd": os.path.dirname(sout.get_path())})
+            # exit parent 2
             sys.exit(0)
     except OSError, exc:
         sys.stderr.write(
@@ -91,4 +147,4 @@ def daemonize(server):
     os.umask(022)
 
     # redirect output to the suite log files
-    sout.redirect()
+    redirect(logd)
