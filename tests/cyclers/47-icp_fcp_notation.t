@@ -24,9 +24,7 @@ set_test_number 6
 TEST_NAME=$TEST_NAME_BASE
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 TEST_NAME=$TEST_NAME_BASE-run
-run_ok $TEST_NAME cylc run $SUITE_NAME
-
-sleep 10  # wait for suite to complete
+run_ok $TEST_NAME cylc run $SUITE_NAME --no-detach
 
 TEST_NAME=$TEST_NAME_BASE-out
 grep_ok "\[foo\.20160101T0000Z\]" "$HOME/cylc-run/$SUITE_NAME/log/suite/log"
