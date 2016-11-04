@@ -112,15 +112,9 @@ class db_updater(threading.Thread):
 
         # Scan for running suites
         choices = []
-        for host, scan_result in scan_all(timeout=self.timeout):
-            try:
-                port, suite_identity = scan_result
-            except ValueError:
-                # Back-compat <= 6.5.0
-                port, name, owner = scan_result
-            else:
-                name = suite_identity['name']
-                owner = suite_identity['owner']
+        for host, port, suite_identity in scan_all(timeout=self.timeout):
+            name = suite_identity['name']
+            owner = suite_identity['owner']
             if is_remote_user(owner):
                 continue  # current user only
             auth = "%s:%d" % (host, port)
