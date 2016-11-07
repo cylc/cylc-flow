@@ -232,10 +232,10 @@ class TreeUpdater(threading.Thread):
                     # Family timing currently left empty.
                     for dt in tkeys:
                         t_info[dt] = ""
-                        t_info['mean_total_elapsed_time_string'] = ""
+                        t_info['mean_elapsed_time_string'] = ""
                         t_info['progress'] = 0
                 else:
-                    meant = summary[id].get('mean total elapsed time')
+                    meant = summary[id].get('mean_elapsed_time')
                     tstart = summary[id].get('started_time')
                     tetc_string = None
 
@@ -307,7 +307,7 @@ class TreeUpdater(threading.Thread):
                         meant_string = meant
                     else:
                         meant_string = "*"
-                    t_info['mean_total_elapsed_time_string'] = meant_string
+                    t_info['mean_elapsed_time_string'] = meant_string
 
                     for dt in tkeys:
                         if t_info[dt] is None:
@@ -351,7 +351,7 @@ class TreeUpdater(threading.Thread):
                     t_info['submitted_time_string'],
                     t_info['started_time_string'],
                     t_info['finished_time_string'],
-                    t_info['mean_total_elapsed_time_string'],
+                    t_info['mean_elapsed_time_string'],
                     message, icon, t_info['progress']
                 ]
                 dest[point_string][name] = new_info

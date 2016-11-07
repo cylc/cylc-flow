@@ -69,6 +69,7 @@ from cylc.rundb import CylcSuiteDAO
 from cylc.suite_env import CylcSuiteEnv
 from cylc.suite_host import get_suite_host
 from cylc.suite_logging import SuiteLog, OUT, ERR, LOG
+from cylc.taskdef import TaskDef
 from cylc.task_id import TaskID
 from cylc.task_pool import TaskPool
 from cylc.task_proxy import (
@@ -500,6 +501,7 @@ conditions; see `cylc conditions`.
             self._load_suite_params, self.options.checkpoint)
         self.pri_dao.select_broadcast_states(
             self._load_broadcast_states, self.options.checkpoint)
+        self.pri_dao.select_task_job_run_times(self._load_task_run_times)
         self.pri_dao.select_task_pool_for_restart(
             self._load_task_pool, self.options.checkpoint)
         self.pri_dao.select_task_event_handler_try_states(
@@ -553,6 +555,22 @@ conditions; see `cylc conditions`.
                 # reinstate from old
                 setattr(self, self_attr, point)
             OUT.info("+ %s cycle point = %s" % (key_str, value))
+
+    def _load_task_run_times(self, row_idx, row):
+        """Load run times of previously succeeded task jobs."""
+        if row_idx == 0:
+            OUT.info("LOADING task run times")
+        name, run_times_str = row
+        try:
+            taskdef = self.config.taskdefs[name]
+            maxlen = TaskDef.MAX_LEN_ELAPSED_TIMES
+            for run_time_str in run_times_str.rsplit(",", maxlen)[-maxlen:]:
+                run_time = int(run_time_str)
+                taskdef.elapsed_times.append(run_time)
+            OUT.info("+ %s: %s" % (
+                name, ",".join(str(s) for s in taskdef.elapsed_times)))
+        except (KeyError, ValueError, AttributeError):
+            return
 
     def _load_task_pool(self, row_idx, row):
         """Load a task from previous task pool.

@@ -18,6 +18,8 @@
 
 """Task definition."""
 
+from collections import deque
+
 from cylc.cycling.loader import get_point_relative, get_interval
 from cylc.task_id import TaskID
 
@@ -37,14 +39,17 @@ class TaskDef(object):
     """Task definition."""
 
     # Memory optimization - constrain possible attributes to this list.
-    __slots__ = ["run_mode", "rtconfig", "start_point", "sequences",
-                 "implicit_sequences", "used_in_offset_trigger",
-                 "max_future_prereq_offset", "intercycle_offsets",
-                 "sequential", "is_coldstart", "suite_polling_cfg",
-                 "clocktrigger_offset", "expiration_offset",
-                 "namespace_hierarchy", "triggers", "outputs",
-                 "external_triggers", "name", "elapsed_times",
-                 "mean_total_elapsed_time", "spawn_ahead"]
+    __slots__ = [
+        "MAX_LEN_ELAPSED_TIMES", "run_mode", "rtconfig", "start_point",
+        "spawn_ahead", "sequences", "implicit_sequences",
+        "used_in_offset_trigger", "max_future_prereq_offset",
+        "intercycle_offsets", "sequential", "is_coldstart",
+        "suite_polling_cfg", "clocktrigger_offset", "expiration_offset",
+        "namespace_hierarchy", "triggers", "outputs", "external_triggers",
+        "name", "elapsed_times"]
+
+    # Store the elapsed times for a maximum of 10 cycles
+    MAX_LEN_ELAPSED_TIMES = 10
 
     def __init__(self, name, rtcfg, run_mode, start_point, spawn_ahead):
         if not TaskID.is_valid_name(name):
@@ -75,8 +80,7 @@ class TaskDef(object):
         self.external_triggers = []
 
         self.name = name
-        self.elapsed_times = []
-        self.mean_total_elapsed_time = None
+        self.elapsed_times = deque(maxlen=self.MAX_LEN_ELAPSED_TIMES)
 
     def add_trigger(self, triggers, expression, sequence):
         """Add triggers to a named sequence."""
@@ -150,13 +154,3 @@ class TaskDef(object):
             return max_cutoff_point
         # There aren't any dependent tasks in other cycles for my_point.
         return my_point
-
-    def update_mean_total_elapsed_time(self, t_started, t_succeeded):
-        """Update the mean total elapsed time (all instances of this task)."""
-        if not t_started:
-            # In case the started messaged did not come in.
-            # (TODO - and we don't retain started time on restart?)
-            return
-        self.elapsed_times.append(t_succeeded - t_started)
-        self.mean_total_elapsed_time = (
-            sum(self.elapsed_times) / len(self.elapsed_times))

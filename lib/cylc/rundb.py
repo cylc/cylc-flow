@@ -554,6 +554,27 @@ class CylcSuiteDAO(object):
         except sqlite3.DatabaseError:
             return None
 
+    def select_task_job_run_times(self, callback):
+        """Select run times of succeeded task jobs grouped by task names.
+
+        Invoke callback(row_idx, row) on each row, where each row contains:
+            [name, run_times_str]
+
+        where run_times_str is a string containing comma separated list of
+        integer run times. This method is used to re-populate elapsed run times
+        of each task on restart.
+        """
+        stmt = (
+            r"SELECT" +
+            r" name," +
+            r" GROUP_CONCAT(" +
+            r"     CAST(strftime('%s', time_run_exit) AS NUMERIC) -" +
+            r"     CAST(strftime('%s', time_run) AS NUMERIC))" +
+            r" FROM task_jobs" +
+            r" WHERE run_status==0 GROUP BY name ORDER BY time_run_exit")
+        for row_idx, row in enumerate(self.connect().execute(stmt)):
+            callback(row_idx, list(row))
+
     def select_task_states_by_task_ids(self, keys, task_ids=None):
         """Select items from task_states by task IDs.
 

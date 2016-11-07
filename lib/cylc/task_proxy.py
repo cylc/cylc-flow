@@ -1410,8 +1410,10 @@ class TaskProxy(object):
                 "time_run_exit": self.summary['finished_time_string'],
             })
             # Update mean elapsed time only on task succeeded.
-            self.tdef.update_mean_total_elapsed_time(
-                self.summary['started_time'], self.summary['finished_time'])
+            if self.summary['started_time'] is not None:
+                self.tdef.elapsed_times.append(
+                    self.summary['finished_time'] -
+                    self.summary['started_time'])
             self.setup_event_handlers("succeeded", "job succeeded")
             self.state.set_execution_succeeded(is_polled)
 
@@ -1492,8 +1494,9 @@ class TaskProxy(object):
         """Return a dict containing the state summary of this task proxy."""
         self.summary['state'] = self.state.status
         self.summary['spawned'] = str(self.has_spawned)
-        self.summary['mean total elapsed time'] = (
-            self.tdef.mean_total_elapsed_time)
+        self.summary['mean_elapsed_time'] = (
+            float(sum(self.tdef.elapsed_times)) /
+            max(len(self.tdef.elapsed_times), 1))
         return self.summary
 
     def next_point(self):
