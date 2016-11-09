@@ -1151,6 +1151,7 @@ class ScanAppUpdater(BaseScanUpdater):
             if group_id in group_counts:
                 group_counts[group_id]['total'] += 1
             else:
+                group_counts[group_id] = {}
                 group_counts[group_id]['total'] = 1
 
             if KEY_STATES in suite_info:
