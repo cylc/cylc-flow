@@ -645,7 +645,8 @@ class ScanApp(object):
         model = self.suite_treeview.get_model()
         iter_ = model.get_iter(path)
         parent_iter = model.iter_parent(iter_)
-        if parent_iter is None:
+        if parent_iter is None or (
+                parent_iter and model.iter_has_child(iter_)):
             host = model.get_value(iter_, self.HOST_COLUMN)
             suite = model.get_value(iter_, self.SUITE_COLUMN)
             child_row_number = None
@@ -757,8 +758,9 @@ class ScanApp(object):
             is_stopped = model.get_value(iter_, self.STOPPED_COLUMN)
             info = re.findall(r'\D+\d+', state_info)
             if index < len(info):
-                state = info[index].rsplit(" ", self.SUITE_COLUMN)[0].strip()
-                icon = self.dots.get_icon(state.strip(), is_stopped=is_stopped)
+                state = info[index].strip().rsplit(
+                            " ", self.SUITE_COLUMN)[0].strip()
+                icon = self.dots.get_icon(state, is_stopped=is_stopped)
                 cell.set_property("visible", True)
             else:
                 icon = None
@@ -1198,8 +1200,8 @@ class ScanAppUpdater(BaseScanUpdater):
                             # 'runahead' states are usually hidden.
                             states_text += '%s %d ' % (state, number)
 
-                    summary_text = "%s suites in group %s" % (
-                        group_counts[group]['total'], group)
+                    summary_text = "%s - %s suites" % (
+                        group, group_counts[group]['total'])
 
                     group_iters[group] = self.suite_treemodel.append(None, [
                         summary_text, "", "", False, "", suite_updated_time,
@@ -1234,7 +1236,7 @@ class ScanAppUpdater(BaseScanUpdater):
                     # Set up the columns, including the cycle point column.
                     if key == KEY_STATES:
                         parent_iter = self.suite_treemodel.append(group_iter, [
-                            group, host, suite, is_stopped, title,
+                            None, host, suite, is_stopped, title,
                             suite_updated_time, None, states_text,
                             warning_text])
                     else:
