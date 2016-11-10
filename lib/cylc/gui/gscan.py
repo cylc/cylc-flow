@@ -759,7 +759,7 @@ class ScanApp(object):
             info = re.findall(r'\D+\d+', state_info)
             if index < len(info):
                 state = info[index].strip().rsplit(
-                            " ", self.SUITE_COLUMN)[0].strip()
+                    " ", self.SUITE_COLUMN)[0].strip()
                 icon = self.dots.get_icon(state, is_stopped=is_stopped)
                 cell.set_property("visible", True)
             else:
