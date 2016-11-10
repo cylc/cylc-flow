@@ -1183,7 +1183,7 @@ class ScanAppUpdater(BaseScanUpdater):
 
             group = suite_info.get("group")
             if group is None:
-                group = ""
+                group = "ungrouped"
 
             if 'tasks-by-state' in suite_info:
                 self.tasks_by_state[(suite, host)] = suite_info[
@@ -1227,7 +1227,6 @@ class ScanAppUpdater(BaseScanUpdater):
                         if state != TASK_STATUS_RUNAHEAD:
                             # 'runahead' states are usually hidden.
                             states_text += '%s %d ' % (state, number)
-                            # Extractable counts here?
                     if not states_text:
                         # Purely runahead cycle.
                         continue
