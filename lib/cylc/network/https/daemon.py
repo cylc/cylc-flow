@@ -19,6 +19,7 @@
 
 import binascii
 import os
+import random
 import socket
 import sys
 import traceback
@@ -49,7 +50,7 @@ class CommsDaemon(object):
             int(base_port),
             int(base_port) + int(max_ports)
         )
-
+        random.shuffle(self.ok_ports)
         comms_options = GLOBAL_CFG.get(['communication', 'options'])
         # HTTP Digest Auth uses MD5 - pretty secure in this use case.
         # Extending it with extra algorithms is allowed, but won't be
@@ -142,6 +143,7 @@ def _ws_init(service_inst, *args, **kwargs):
     cherrypy.config['tools.connect_log.on'] = True
     host = get_hostname()
     service_inst.engine = cherrypy.engine
+
     for port in service_inst.ok_ports:
         my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
