@@ -132,8 +132,8 @@ def main():
     parser.add_option(
         "--comms-timeout", "--pyro-timeout", metavar="SEC",
         help="Set a timeout for network connections "
-             "to running suites. The default is 60 seconds.",
-        action="store", default=60, dest="comms_timeout")
+             "to each running suite. The default is 5 seconds.",
+        action="store", default=None, dest="comms_timeout")
 
     parser.add_option(
         "--old", "--old-format",
@@ -207,26 +207,10 @@ def main():
         state_legend = state_legend.rstrip()
 
     skip_one = True
-    for result in scan_all(args, options.db, options.comms_timeout):
-        host, scan_result = result
-        try:
-            port, suite_identity = scan_result
-        except ValueError:
-            # Back-compat (<= 6.5.0 no title or state totals).
-            port, name, owner = scan_result
-            if not (re.match(pattern_name, name) and
-                    re.match(pattern_owner, owner)):
-                continue
-            if options.old_format:
-                print name, owner, host, port
-            elif options.raw_format:
-                print "%s|%s|%s|port|%s" % (name, owner, host, port)
-            else:
-                print "%s %s@%s:%s" % (name, owner, host, port)
-            continue
-        else:
-            name = suite_identity['name']
-            owner = suite_identity['owner']
+    for host, port, suite_identity in scan_all(
+            args, options.db, options.comms_timeout):
+        name = suite_identity['name']
+        owner = suite_identity['owner']
 
         if not (re.match(pattern_name, name) and
                 re.match(pattern_owner, owner)):

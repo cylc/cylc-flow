@@ -52,8 +52,7 @@ KEY_UPDATE_TIME = "update-time"
 def get_hosts_suites_info(hosts, timeout=None, owner=None):
     """Return a dictionary of hosts, suites, and their properties."""
     host_suites_map = {}
-    for host, (port, result) in scan_all(
-            hosts=hosts, timeout=timeout):
+    for host, port, result in scan_all(hosts=hosts, timeout=timeout):
         if owner and owner != result.get(KEY_OWNER):
             continue
         if host not in host_suites_map:

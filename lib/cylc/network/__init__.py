@@ -70,6 +70,16 @@ class ConnectionDeniedError(ConnectionError):
         return self.MESSAGE % (self.args[0], self.args[1], self.args[2])
 
 
+class ConnectionTimeout(ConnectionError):
+
+    """An error raised on connection timeout."""
+
+    MESSAGE = "Connection timeout: %s: %s"
+
+    def __str__(self):
+        return self.MESSAGE % (self.args[0], self.args[1])
+
+
 def access_priv_ok(server_obj, required_privilege_level):
     """Return True if a client is allowed access to info from server_obj.
 

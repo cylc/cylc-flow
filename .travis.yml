@@ -62,7 +62,7 @@ install:
 # Run tests
 script: 
     # Custom diff command to ignore Xlib errors (xvfb has not RANDR extension).
-    - export CYLC_TEST_DIFF_CMD='diff -I Xlib'
+    - export CYLC_TEST_DIFF_CMD='diff -I Xlib -u'
     # Only run the generic tests on Travis CI.
     - export CYLC_TEST_RUN_PLATFORM=false
     # Run tests with virtual frame buffer for X support.
