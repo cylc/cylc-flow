@@ -400,7 +400,10 @@ class ScanApp(object):
         self.owner = owner
 
         self.window = gtk.Window()
-        self.window.set_title("cylc gscan")
+        if name:
+            self.window.set_title("cylc gscan (filtered)")
+        else:
+            self.window.set_title("cylc gscan")
         self.window.set_icon(get_icon())
         self.vbox = gtk.VBox()
         self.vbox.show()
@@ -519,6 +522,11 @@ class ScanApp(object):
         else:
             name_pattern = ['.*']
         name_pattern = "(" + ")|(".join(name_pattern) + ")"
+
+        try:
+            name_pattern = re.compile(name_pattern)
+        except re.error:
+            raise ValueError("Invalid names pattern: %s" % str(name))
 
         self.updater = ScanAppUpdater(
             self.hosts, suite_treemodel, self.suite_treeview,
