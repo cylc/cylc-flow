@@ -388,7 +388,7 @@ class ScanApp(object):
     HOST_COLUMN = 0
     ICON_SIZE = 17
 
-    def __init__(self, hosts=None, owner=None, poll_interval=None):
+    def __init__(self, hosts=None, owner=None, poll_interval=None, name=None):
         gobject.threads_init()
         set_exception_hook_dialog("cylc gscan")
         setup_icons()
@@ -398,8 +398,12 @@ class ScanApp(object):
         if owner is None:
             owner = USER
         self.owner = owner
+
         self.window = gtk.Window()
-        self.window.set_title("cylc gscan")
+        if name:
+            self.window.set_title("cylc gscan (filtered)")
+        else:
+            self.window.set_title("cylc gscan")
         self.window.set_icon(get_icon())
         self.vbox = gtk.VBox()
         self.vbox.show()
@@ -512,9 +516,22 @@ class ScanApp(object):
         scrolled_window.add(self.suite_treeview)
         scrolled_window.show()
         self.vbox.pack_start(scrolled_window, expand=True, fill=True)
+
+        if name:
+            name_pattern = name
+        else:
+            name_pattern = ['.*']
+        name_pattern = "(" + ")|(".join(name_pattern) + ")"
+
+        try:
+            name_pattern = re.compile(name_pattern)
+        except re.error:
+            raise ValueError("Invalid names pattern: %s" % str(name))
+
         self.updater = ScanAppUpdater(
             self.hosts, suite_treemodel, self.suite_treeview,
-            owner=self.owner, poll_interval=poll_interval
+            owner=self.owner, poll_interval=poll_interval,
+            name_pattern=name_pattern
         )
         self.updater.start()
         self.window.add(self.vbox)
@@ -1003,11 +1020,12 @@ class ScanAppUpdater(BaseScanUpdater):
     WARNING_STATES = [TASK_STATUS_FAILED, TASK_STATUS_SUBMIT_FAILED]
 
     def __init__(self, hosts, suite_treemodel, suite_treeview, owner=None,
-                 poll_interval=None):
+                 poll_interval=None, name_pattern=None):
         self.suite_treemodel = suite_treemodel
         self.suite_treeview = suite_treeview
         self.tasks_by_state = {}
         self.warning_times = {}
+        self.name_pattern = name_pattern
         super(ScanAppUpdater, self).__init__(hosts, owner=owner,
                                              poll_interval=poll_interval)
 
@@ -1125,6 +1143,9 @@ class ScanAppUpdater(BaseScanUpdater):
             if 'tasks-by-state' in suite_info:
                 self.tasks_by_state[(suite, host)] = suite_info[
                     'tasks-by-state']
+
+            if not self.name_pattern.match(suite):
+                continue
 
             warning_text = ''
             tasks = sorted(self._get_warnings(suite, host), reverse=True)
