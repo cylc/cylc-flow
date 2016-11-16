@@ -1055,7 +1055,7 @@ class ScanAppUpdater(BaseScanUpdater):
             return ['<i>Cannot connect to suite.</i>']
 
         # Append "And x more" to list if required.
-        temp = [(dt, tn, ps) for (dt, tn, ps) in tasks if dt is None]
+        temp = [[dt, tn, ps] for (dt, tn, ps) in tasks if dt is None]
         suffix = []
         if temp:
             tasks.remove(temp[0])
