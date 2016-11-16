@@ -1144,7 +1144,7 @@ class ScanAppUpdater(BaseScanUpdater):
                 self.tasks_by_state[(suite, host)] = suite_info[
                     'tasks-by-state']
 
-            if not (re.match(self.name_pattern, suite)):
+            if not self.name_pattern.match(suite):
                 continue
 
             warning_text = ''
