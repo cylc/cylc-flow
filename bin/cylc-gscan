@@ -35,6 +35,12 @@ parser.add_option("--host",
 parser.add_option("--poll-interval",
                   help="Polling interval (time between updates) in seconds",
                   type="int", metavar="SECONDS", dest="interval")
+parser.add_option(
+    "-n", "--name",
+    metavar="PATTERN",
+    help="List suites with name matching PATTERN (regular expression). "
+         "Defaults to any name. Can be used multiple times.",
+    action="append", dest="patterns_name", default=[])
 
 options, args = parser.parse_args()
 
@@ -45,5 +51,5 @@ warnings.filterwarnings('ignore', 'use the new', Warning)
 from cylc.gui.gscan import ScanApp
 
 ScanApp(hosts=options.hosts, owner=options.owner,
-        poll_interval=options.interval)
+        poll_interval=options.interval, name=options.patterns_name)
 gtk.main()

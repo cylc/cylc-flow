@@ -53,8 +53,7 @@ KEY_UPDATE_TIME = "update-time"
 def get_hosts_suites_info(hosts, timeout=None, owner=None):
     """Return a dictionary of hosts, suites, and their properties."""
     host_suites_map = {}
-    for host, (port, result) in scan_all(
-            hosts=hosts, timeout=timeout):
+    for host, port, result in scan_all(hosts=hosts, timeout=timeout):
         if owner and owner != result.get(KEY_OWNER):
             continue
         if host not in host_suites_map:
@@ -391,7 +390,7 @@ class ScanApp(object):
     GROUP_COLUMN = 0
     ICON_SIZE = 17
 
-    def __init__(self, hosts=None, owner=None, poll_interval=None):
+    def __init__(self, hosts=None, owner=None, poll_interval=None, name=None):
         gobject.threads_init()
         set_exception_hook_dialog("cylc gscan")
         setup_icons()
@@ -401,8 +400,12 @@ class ScanApp(object):
         if owner is None:
             owner = USER
         self.owner = owner
+
         self.window = gtk.Window()
-        self.window.set_title("cylc gscan")
+        if name:
+            self.window.set_title("cylc gscan (filtered)")
+        else:
+            self.window.set_title("cylc gscan")
         self.window.set_icon(get_icon())
         self.vbox = gtk.VBox()
         self.vbox.show()
@@ -526,10 +529,22 @@ class ScanApp(object):
         scrolled_window.add(self.suite_treeview)
         scrolled_window.show()
         self.vbox.pack_start(scrolled_window, expand=True, fill=True)
+
+        if name:
+            name_pattern = name
+        else:
+            name_pattern = ['.*']
+        name_pattern = "(" + ")|(".join(name_pattern) + ")"
+
+        try:
+            name_pattern = re.compile(name_pattern)
+        except re.error:
+            raise ValueError("Invalid names pattern: %s" % str(name))
+
         self.updater = ScanAppUpdater(
             self.hosts, suite_treemodel, self.suite_treeview,
             owner=self.owner, poll_interval=poll_interval,
-            group_column_id=self.GROUP_COLUMN
+            group_column_id=self.GROUP_COLUMN, name_pattern=name_pattern
         )
         self.updater.start()
         self.window.add(self.vbox)
@@ -1031,12 +1046,13 @@ class ScanAppUpdater(BaseScanUpdater):
     WARNING_STATES = [TASK_STATUS_FAILED, TASK_STATUS_SUBMIT_FAILED]
 
     def __init__(self, hosts, suite_treemodel, suite_treeview, owner=None,
-                 poll_interval=None, group_column_id=0):
+                 poll_interval=None, group_column_id=0, name_pattern=None):
         self.suite_treemodel = suite_treemodel
         self.suite_treeview = suite_treeview
         self.group_column_id = group_column_id
         self.tasks_by_state = {}
         self.warning_times = {}
+        self.name_pattern = name_pattern
         super(ScanAppUpdater, self).__init__(hosts, owner=owner,
                                              poll_interval=poll_interval)
 
@@ -1084,7 +1100,7 @@ class ScanAppUpdater(BaseScanUpdater):
             return ['<i>Cannot connect to suite.</i>']
 
         # Append "And x more" to list if required.
-        temp = [(dt, tn, ps) for (dt, tn, ps) in tasks if dt is None]
+        temp = [[dt, tn, ps] for (dt, tn, ps) in tasks if dt is None]
         suffix = []
         if temp:
             tasks.remove(temp[0])
@@ -1148,7 +1164,7 @@ class ScanAppUpdater(BaseScanUpdater):
             else:
                 suite_info = stop_info[host][suite]
 
-            group_id = suite_info.get("group", "")
+            group_id = suite_info.get("group")
 
             if group_id in group_counts:
                 group_counts[group_id]['total'] += 1
@@ -1182,8 +1198,6 @@ class ScanAppUpdater(BaseScanUpdater):
             title = suite_info.get("title")
 
             group = suite_info.get("group")
-            if group is None:
-                group = "ungrouped"
 
             if 'tasks-by-state' in suite_info:
                 self.tasks_by_state[(suite, host)] = suite_info[
@@ -1209,6 +1223,9 @@ class ScanAppUpdater(BaseScanUpdater):
                 group_iter = group_iters[group]
             else:
                 group_iter = None
+
+            if not self.name_pattern.match(suite):
+                continue
 
             warning_text = ''
             tasks = sorted(self._get_warnings(suite, host), reverse=True)

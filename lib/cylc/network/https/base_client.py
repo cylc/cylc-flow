@@ -28,7 +28,8 @@ warnings.filterwarnings("ignore", "Certificate has no `subjectAltName`")
 from cylc.exceptions import PortFileError
 import cylc.flags
 from cylc.network import (
-    ConnectionError, ConnectionDeniedError, NO_PASSPHRASE, handle_proxies)
+    ConnectionError, ConnectionDeniedError, ConnectionTimeout, NO_PASSPHRASE,
+    handle_proxies)
 from cylc.owner import is_remote_user, USER
 from cylc.registration import RegistrationDB, PassphraseError
 from cylc.suite_host import get_hostname, is_remote_host
@@ -134,7 +135,12 @@ class BaseCommsClient(object):
                 import traceback
                 traceback.print_exc()
             raise ConnectionError(url, exc)
-        except Exception as exc:
+        except requests.exceptions.Timeout as exc:
+            if cylc.flags.debug:
+                import traceback
+                traceback.print_exc()
+            raise ConnectionTimeout(url, exc)
+        except requests.exceptions.RequestException as exc:
             if cylc.flags.debug:
                 import traceback
                 traceback.print_exc()
@@ -151,7 +157,7 @@ class BaseCommsClient(object):
                 sys.stderr.write(ret.text)
         try:
             ret.raise_for_status()
-        except Exception as exc:
+        except requests.exceptions.HTTPError as exc:
             if cylc.flags.debug:
                 import traceback
                 traceback.print_exc()
@@ -203,7 +209,10 @@ class BaseCommsClient(object):
             if cylc.flags.debug:
                 import traceback
                 traceback.print_exc()
-            raise ConnectionError(url, exc)
+            if "timed out" in str(exc):
+                raise ConnectionTimeout(url, exc)
+            else:
+                raise ConnectionError(url, exc)
         except Exception as exc:
             if cylc.flags.debug:
                 import traceback

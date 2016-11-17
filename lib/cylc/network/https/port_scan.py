@@ -17,90 +17,87 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Port scan utilities."""
 
-from multiprocessing import cpu_count, Pool
+from multiprocessing import cpu_count, Process, Pipe
 import sys
-from time import sleep
+from time import sleep, time
 import traceback
 from uuid import uuid4
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
-from cylc.network import NO_PASSPHRASE, ConnectionError
+from cylc.network import ConnectionError, ConnectionTimeout
 from cylc.network.https.suite_state_client import SuiteStillInitialisingError
 from cylc.network.https.suite_identifier_client import (
     SuiteIdClientAnon, SuiteIdClient)
-from cylc.owner import USER
 from cylc.registration import RegistrationDB
-from cylc.suite_host import get_hostname, is_remote_host, get_host_ip_by_name
+from cylc.suite_host import is_remote_host, get_host_ip_by_name
 
 
-def scan(host=None, db=None, timeout=None):
-    """Scan ports, return a list of suites found: [(port, suite.identify())].
+CONNECT_TIMEOUT = 5.0
+INACTIVITY_TIMEOUT = 10.0
+MSG_QUIT = "QUIT"
+MSG_TIMEOUT = "TIMEOUT"
+SLEEP_INTERVAL = 0.01
 
-    Note that we could easily scan for a given suite+owner and return its
-    port instead of reading port files, but this may not always be fast enough.
-    """
-    if host is None:
-        host = get_hostname()
-    base_port = GLOBAL_CFG.get(
-        ['communication', 'base port'])
-    last_port = base_port + GLOBAL_CFG.get(
-        ['communication', 'maximum number of ports'])
-    if timeout:
-        timeout = float(timeout)
-    else:
-        timeout = None
 
-    reg_db = RegistrationDB(db)
-    results = []
-    my_uuid = uuid4()
-    host_for_anon = host
-    if is_remote_host(host):
-        host_for_anon = get_host_ip_by_name(host)  # IP reduces DNS traffic.
-    for port in range(base_port, last_port):
-        client = SuiteIdClientAnon(None, host=host_for_anon, port=port,
-                                   my_uuid=my_uuid, timeout=timeout)
-        try:
-            result = (port, client.identify())
-        except ConnectionError as exc:
-            if cylc.flags.debug:
-                traceback.print_exc()
+def _scan1_impl(conn, reg_db_path, timeout, my_uuid):
+    """Connect to host:port to get suite identify."""
+    while True:
+        if not conn.poll(SLEEP_INTERVAL):
             continue
-        except Exception as exc:
-            if cylc.flags.debug:
-                traceback.print_exc()
-            raise
+        item = conn.recv()
+        if item == MSG_QUIT:
+            break
+        host, port = item
+        host_anon = host
+        if is_remote_host(host):
+            host_anon = get_host_ip_by_name(host)  # IP reduces DNS traffic
+        client = SuiteIdClientAnon(
+            None, host=host_anon, port=port, my_uuid=my_uuid, timeout=timeout)
+        try:
+            result = client.identify()
+        except ConnectionTimeout as exc:
+            conn.send((host, port, MSG_TIMEOUT))
+        except ConnectionError as exc:
+            conn.send((host, port, None))
         else:
-            owner = result[1].get('owner')
-            name = result[1].get('name')
-            states = result[1].get('states', None)
+            owner = result.get('owner')
+            name = result.get('name')
+            states = result.get('states', None)
             if cylc.flags.debug:
-                print '   suite:', name, owner
+                print >> sys.stderr, '   suite:', name, owner
             if states is None:
                 # This suite keeps its state info private.
                 # Try again with the passphrase if I have it.
+                reg_db = RegistrationDB(reg_db_path)
                 pphrase = reg_db.load_passphrase(name, owner, host)
                 if pphrase:
-                    client = SuiteIdClient(name, owner=owner, host=host,
-                                           port=port, my_uuid=my_uuid,
-                                           timeout=timeout)
+                    client = SuiteIdClient(
+                        name, owner=owner, host=host, port=port,
+                        my_uuid=my_uuid, timeout=timeout)
                     try:
-                        result = (port, client.identify())
+                        result = client.identify()
                     except Exception:
                         # Nope (private suite, wrong passphrase).
                         if cylc.flags.debug:
-                            print '    (wrong passphrase)'
+                            print >> sys.stderr, '    (wrong passphrase)'
                     else:
-                        reg_db.cache_passphrase(
-                            name, owner, host, pphrase)
+                        reg_db.cache_passphrase(name, owner, host, pphrase)
                         if cylc.flags.debug:
-                            print '    (got states with passphrase)'
-        results.append(result)
-    return results
+                            print >> sys.stderr, (
+                                '    (got states with passphrase)')
+            conn.send((host, port, result))
+    conn.close()
 
 
 def scan_all(hosts=None, reg_db_path=None, timeout=None):
     """Scan all hosts."""
+    try:
+        timeout = float(timeout)
+    except:
+        timeout = CONNECT_TIMEOUT
+    my_uuid = uuid4()
+    # Determine hosts to scan
     if not hosts:
         hosts = GLOBAL_CFG.get(["suite host scanning", "hosts"])
     # Ensure that it does "localhost" only once
@@ -109,31 +106,77 @@ def scan_all(hosts=None, reg_db_path=None, timeout=None):
         if not is_remote_host(host):
             hosts.remove(host)
             hosts.add("localhost")
-    proc_pool_size = GLOBAL_CFG.get(["process pool size"])
-    if proc_pool_size is None:
-        proc_pool_size = cpu_count()
-    if proc_pool_size > len(hosts):
-        proc_pool_size = len(hosts)
-    proc_pool = Pool(proc_pool_size)
-    async_results = {}
+    # Determine ports to scan
+    base_port = GLOBAL_CFG.get(['communication', 'base port'])
+    max_ports = GLOBAL_CFG.get(['communication', 'maximum number of ports'])
+    # Number of child processes
+    max_procs = GLOBAL_CFG.get(["process pool size"])
+    if max_procs is None:
+        max_procs = cpu_count()
+    # To do and wait (submitted, waiting for results) sets
+    todo_set = set()
+    wait_set = set()
     for host in hosts:
-        async_results[host] = proc_pool.apply_async(
-            scan, [host, reg_db_path, timeout])
-    proc_pool.close()
-    scan_results = []
-    scan_results_hosts = []
-    while async_results:
-        sleep(0.05)
-        for host, async_result in async_results.items():
-            if async_result.ready():
-                async_results.pop(host)
-                try:
-                    res = async_result.get()
-                except Exception:
-                    if cylc.flags.debug:
-                        traceback.print_exc()
+        for port in range(base_port, base_port + max_ports):
+            todo_set.add((host, port))
+    proc_items = []
+    results = []
+    while todo_set or proc_items:
+        no_action = True
+        # Get results back from child processes where possible
+        busy_proc_items = []
+        while proc_items:
+            proc, my_conn, terminate_time = proc_items.pop()
+            if my_conn.poll():
+                host, port, result = my_conn.recv()
+                if result is None:
+                    # Can't connect, ignore
+                    wait_set.remove((host, port))
+                elif result == MSG_TIMEOUT:
+                    # Connection timeout, leave in "wait_set"
+                    pass
                 else:
-                    scan_results.extend(res)
-                    scan_results_hosts.extend([host] * len(res))
-    proc_pool.join()
-    return zip(scan_results_hosts, scan_results)
+                    # Connection success
+                    results.append((host, port, result))
+                    wait_set.remove((host, port))
+                if todo_set:
+                    # Immediately give the child process something to do
+                    host, port = todo_set.pop()
+                    wait_set.add((host, port))
+                    my_conn.send((host, port))
+                    busy_proc_items.append(
+                        (proc, my_conn, time() + INACTIVITY_TIMEOUT))
+                else:
+                    # Or quit if there is nothing left to do
+                    my_conn.send(MSG_QUIT)
+                    my_conn.close()
+                    proc.join()
+                no_action = False
+            elif time() > terminate_time:
+                # Terminate child process if it is taking too long
+                proc.terminate()
+                proc.join()
+                no_action = False
+            else:
+                busy_proc_items.append((proc, my_conn, terminate_time))
+        proc_items += busy_proc_items
+        # Create some child processes where necessary
+        while len(proc_items) < max_procs and todo_set:
+            my_conn, conn = Pipe()
+            proc = Process(target=_scan1_impl, args=(
+                conn, reg_db_path, timeout, my_uuid))
+            proc.start()
+            host, port = todo_set.pop()
+            wait_set.add((host, port))
+            my_conn.send((host, port))
+            proc_items.append((proc, my_conn, time() + INACTIVITY_TIMEOUT))
+            no_action = False
+        if no_action:
+            sleep(SLEEP_INTERVAL)
+    # Report host:port with no results
+    if wait_set:
+        print >> sys.stderr, (
+            'WARNING, scan timed out, no result for the following:')
+        for key in sorted(wait_set):
+            print >> sys.stderr, '  %s:%s' % key
+    return results
