@@ -43,7 +43,6 @@ finish|20130923T0000Z|0||waiting
 shutdown|20130923T0000Z|1|1|succeeded
 submit_failed_task|20130923T0000Z|1|1|submit-failed
 __DB_DUMP__
-SUITE_RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
 "${TEST_SOURCE_DIR}/bin/ctb-select-task-states" "${SUITE_RUN_DIR}" \
     > "${TEST_DIR}/db"
 contains_ok $TEST_DIR/db <<'__DB_DUMP__'
@@ -53,10 +52,10 @@ shutdown|20130923T0000Z|1|1|succeeded
 submit_failed_task|20130923T0000Z|1|1|submit-failed
 __DB_DUMP__
 #-------------------------------------------------------------------------------
-purge_suite "$SUITE_NAME"
 if [[ -n "${CYLC_TEST_BATCH_TASK_HOST:-}" && \
     "${CYLC_TEST_BATCH_TASK_HOST:-}" != 'None' ]]
 then
-    ssh -n ${SSH_OPTS} "${CYLC_TEST_BATCH_TASK_HOST}" \
-        "rm -fr .cylc/${SUITE_NAME} cylc-run/${SUITE_NAME}"
+    purge_suite_remote "${CYLC_TEST_BATCH_TASK_HOST}" "${SUITE_NAME}"
 fi
+purge_suite "$SUITE_NAME"
+exit

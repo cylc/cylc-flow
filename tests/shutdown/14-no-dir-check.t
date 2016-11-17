@@ -30,14 +30,13 @@ fi
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate ${OPT_SET} "${SUITE_NAME}"
 # Suite run directory is now a symbolic link, so we can easily delete it.
-RUND="$(cylc get-global-config --print-run-dir)"
-SYM_SUITE_RUND="$(mktemp -u "${RUND}/${SUITE_NAME}XXXXXXXX")"
-SYM_SUITE_NAME="$(basename "${SYM_SUITE_RUND}")"
-ln -s "${SUITE_NAME}" "${SYM_SUITE_RUND}"
+SYM_SUITE_RUND="${SUITE_RUN_DIR}-sym"
+SYM_SUITE_NAME="${SUITE_NAME}-sym"
+ln -s "$(basename "${SUITE_NAME}")" "${SYM_SUITE_RUND}"
 suite_run_fail "${TEST_NAME_BASE}-run" \
     cylc run --no-detach ${OPT_SET} "${SYM_SUITE_NAME}"
 grep_ok "${SYM_SUITE_RUND}: suite run directory not found" \
-    "${RUND}/${SUITE_NAME}/log/suite/log"
+    "${SUITE_RUN_DIR}/log/suite/log"
 
 rm -f "${SYM_SUITE_RUND}"
 purge_suite "${SUITE_NAME}"

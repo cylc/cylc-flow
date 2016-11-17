@@ -50,9 +50,8 @@ cylc cat-log $SUITE_NAME -o --tail foo.1 > ${TEST_NAME}.out
 grep_ok "HELLO from foo 1" ${TEST_NAME}.out
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-stop
-run_ok $TEST_NAME cylc stop --kill --max-polls=10 --interval=1 $SUITE_NAME
+run_ok $TEST_NAME cylc stop --kill --max-polls=20 --interval=1 $SUITE_NAME
 #-------------------------------------------------------------------------------
-$SSH -n "${CYLC_TEST_HOST}" \
-    "rm -rf '.cylc/${SUITE_NAME}' 'cylc-run/${SUITE_NAME}'"
+purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
 purge_suite $SUITE_NAME
-
+exit

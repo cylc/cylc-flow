@@ -63,7 +63,7 @@ fi
 
 DIFF_FILES=""
 for SUITE in $SUITES; do
-    FILE=$(mktemp -t $SUITE.graph.ref.XXXX)
+    FILE=$(mktemp -t "$(tr '/' '.' <<<"${SUITE}").graph.ref.XXXX")
     cylc graph --reference "$@" $SUITE >$FILE
     DIFF_FILES="$DIFF_FILES $FILE"
 done

@@ -70,5 +70,5 @@ script:
 
 # Check output (more useful if you narrow down what tests get run)
 after_script:
-    - for file in $(find $HOME/cylc-run/*/log/{job,suite}/*err -type f); do echo; echo "== $file =="; cat $file; done
-    - for file in $(find /tmp/cylc-tests-$USER -type f); do echo; echo "== $file =="; cat $file; done
+    - find $HOME/cylc-run -type f -name '*err' -exec echo '==== {} ====' \; -exec cat '{}' \;
+    - find /tmp/${USER}/cylctb-* -type f -exec echo '==== {} ====' \; -exec cat '{}' \;

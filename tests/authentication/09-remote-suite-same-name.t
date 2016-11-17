@@ -40,8 +40,6 @@ cylc register --host="${CYLC_TEST_HOST}" "${SUITE_NAME}" "${HOST_WORK_DIR}"
 suite_run_ok "${TEST_NAME_BASE}" \
     cylc run --debug --reference-test "${SUITE_NAME}"
 
-${SSH} -n "${CYLC_TEST_HOST}" \
-    "rm -fr '${HOST_WORK_DIR}' 'cylc-run/${SUITE_NAME}'" >&2
-
+purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

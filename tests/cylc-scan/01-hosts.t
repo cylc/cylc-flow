@@ -26,7 +26,7 @@ fi
 #-------------------------------------------------------------------------------
 set_test_number "$(($(wc -w <<<"${HOSTS}") + 1))"
 #-------------------------------------------------------------------------------
-UUID="$(uuidgen)"
+PREFIX="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}"
 SSH='ssh -oBatchMode=yes -oConnectTimeout=5'
 SCP='scp -oBatchMode=yes -oConnectTimeout=5'
 set -e
@@ -34,24 +34,24 @@ for HOST in $(tr -d ',' <<<"${HOSTS}"); do
     if [[ "${HOST}" == 'localhost' ]]; then
         HOST_WORK_DIR="${PWD}"
         cp "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/suite.rc" .
-        cylc register "${UUID}-${HOST}" "${HOST_WORK_DIR}" 1>/dev/null 2>&1
-        cylc run "${UUID}-${HOST}" 1>/dev/null 2>&1
-        RUND="$(cylc get-global-config '--print-run-dir')/${UUID}-${HOST}"
+        cylc register "${PREFIX}-${HOST}" "${HOST_WORK_DIR}" 1>/dev/null 2>&1
+        cylc run "${PREFIX}-${HOST}" 1>/dev/null 2>&1
+        RUND="$(cylc get-global-config '--print-run-dir')/${PREFIX}-${HOST}"
         poll '!' test -e "${RUND}/.cylc-var/contact"
     else
         HOST_WORK_DIR="$($SSH -n "${HOST}" 'mktemp -d')"
         $SCP "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/suite.rc" \
             "${HOST}:${HOST_WORK_DIR}"
-        cylc register "--host=${HOST}" "${UUID}-${HOST}" "${HOST_WORK_DIR}" \
+        cylc register "--host=${HOST}" "${PREFIX}-${HOST}" "${HOST_WORK_DIR}" \
             1>/dev/null 2>&1
-        mkdir -p "${HOME}/.cylc/auth/${USER}@${HOST}/${UUID}-${HOST}"
+        mkdir -p "${HOME}/.cylc/auth/${USER}@${HOST}/${PREFIX}-${HOST}"
         ${SCP} -p \
-            "${HOST}:cylc-run/${UUID}-${HOST}/.cylc-var/passphrase" \
-            "${HOST}:cylc-run/${UUID}-${HOST}/.cylc-var/ssl.*" \
-            "${HOME}/.cylc/auth/${USER}@${HOST}/${UUID}-${HOST}/"
-        cylc run "--host=${HOST}" "${UUID}-${HOST}" 1>/dev/null 2>&1
+            "${HOST}:cylc-run/${PREFIX}-${HOST}/.cylc-var/passphrase" \
+            "${HOST}:cylc-run/${PREFIX}-${HOST}/.cylc-var/ssl.*" \
+            "${HOME}/.cylc/auth/${USER}@${HOST}/${PREFIX}-${HOST}/"
+        cylc run "--host=${HOST}" "${PREFIX}-${HOST}" 1>/dev/null 2>&1
         poll '!' ${SSH} -n "${HOST}" \
-            "test -e 'cylc-run/${UUID}-${HOST}/.cylc-var/contact'"
+            "test -e 'cylc-run/${PREFIX}-${HOST}/.cylc-var/contact'"
     fi
     echo "${HOST}:${HOST_WORK_DIR}" >>'host-work-dirs.list'
 done
@@ -62,16 +62,16 @@ for ITEM in $(<'host-work-dirs.list'); do
     HOST="${ITEM%%:*}"
     HOST_WORK_DIR="${ITEM#*:}"
     run_ok "${TEST_NAME_BASE}-grep-${HOST}" \
-        grep -q "^${UUID}-${HOST}" "${TEST_NAME_BASE}.stdout"
+        grep -q "^${PREFIX}-${HOST}" "${TEST_NAME_BASE}.stdout"
     if [[ "${HOST}" == 'localhost' ]]; then
-        cylc shutdown --now --max-polls=30 --interval=2 "${UUID}-${HOST}" \
+        cylc shutdown --now --max-polls=30 --interval=2 "${PREFIX}-${HOST}" \
             1>'/dev/null' 2>&1
-        rm -fr "$(cylc get-global-config '--print-run-dir')/${UUID}-${HOST}"
+        rm -fr "$(cylc get-global-config '--print-run-dir')/${PREFIX}-${HOST}"
     else
         cylc shutdown --now --max-polls=30 --interval=2 \
-            "--host=${HOST}" "${UUID}-${HOST}"
-        $SSH -n "${HOST}" "rm -fr '${HOST_WORK_DIR}' 'cylc-run/${UUID}-${HOST}'"
-        rm -fr "${HOME}/.cylc/auth/${USER}@${HOST}/${UUID}-${HOST}/"
+            "--host=${HOST}" "${PREFIX}-${HOST}"
+        purge_suite_remote "${HOST}" "${PREFIX}-${HOST}"
+        rm -fr "${HOME}/.cylc/auth/${USER}@${HOST}/${PREFIX}-${HOST}/"
         rmdir "${HOME}/.cylc/auth/${USER}@${HOST}/" 2>'/dev/null' || true
     fi
 done

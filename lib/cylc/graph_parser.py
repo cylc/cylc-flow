@@ -125,7 +125,7 @@ class GraphParser(object):
     REC_PARAMETERS = re.compile(r'<[\w,=\-+]+>')
 
     # Detect and extract suite state polling task info.
-    REC_SUITE_STATE = re.compile('(\w+)(<([\w\.\-]+)::(\w+)(:\w+)?>)')
+    REC_SUITE_STATE = re.compile('(\w+)(<([\w\.\-/]+)::(\w+)(:\w+)?>)')
 
     def __init__(self, family_map=None, parameters=None):
         """Initializing the graph string parser.

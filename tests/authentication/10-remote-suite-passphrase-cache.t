@@ -62,6 +62,7 @@ exists_ok "${CACHED}/passphrase"
 run_ok "${TEST_NAME_BASE}" wait "${SUITE_PID}"
 
 ssh ${SSH_OPTS} -n "${CYLC_TEST_HOST}" "rm -fr '${HOST_WORK_DIR}'" >&2
+purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
 rm -fr "${CACHED}"
 rmdir "${HOME}/.cylc/auth/${USER}@${CYLC_TEST_HOST}" 2>'/dev/null' \
     || true

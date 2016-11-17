@@ -22,29 +22,24 @@ set_test_number 18
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-SUITE_RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
 mkdir -p "${SUITE_RUN_DIR}/state"
 sqlite3 "${SUITE_RUN_DIR}/state/cylc-suite.db" <"cylc-suite-db.dump"
 cp -p 'state/state' "${SUITE_RUN_DIR}/state/"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart --debug "${SUITE_NAME}"
-greps_ok "Populating suite_params table
- + run_mode=live
- + initial_point=20000101T0000Z
- + final_point=20030101T0000Z
-Populating task_pool table
- + bar.20030101T0000Z
- + bar.20040101T0000Z
- + foo.20040101T0000Z
+sed -i 's/^.* INFO - //' "${TEST_NAME_BASE}-restart.stdout"
+contains_ok "${TEST_NAME_BASE}-restart.stdout" <<'__OUT__'
 LOADING suite parameters
 + initial cycle point = 20000101T0000Z
 + final cycle point = 20030101T0000Z
 LOADING broadcast states
-+ \[root.*\] \[environment\]CYLC_TEST_VAR=hello
++ [root.*] [environment]CYLC_TEST_VAR=hello
+LOADING task run times
 LOADING task proxies
 + bar.20030101T0000Z succeeded
 + bar.20040101T0000Z held
-+ foo.20040101T0000Z held" "${TEST_NAME_BASE}-restart.stdout"
++ foo.20040101T0000Z held
+__OUT__
 exists_ok "${SUITE_RUN_DIR}/state.tar.gz"
 exists_ok "${SUITE_RUN_DIR}/.cylc-var/db" 
 exists_ok "${SUITE_RUN_DIR}/log/cylc-suite.db" 

@@ -36,7 +36,6 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}"
-SUITE_RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
 JOB_FILE="${SUITE_RUN_DIR}/log/job/1/foo/NN/job"
 run_ok "job" grep -q "CYLC_TASK_COMMS_METHOD=poll" "${JOB_FILE}"
 run_ok "job" grep -q "CYLC_TASK_MSG_RETRY_INTVL=9.0" "${JOB_FILE}"

@@ -46,7 +46,6 @@ cylc jobs-kill --debug -- ${RUN_DIR}/log/job 1/local-1/01 1/local-2/01 1/local-3
 __LOG__
 cmp_ok 'edited-suite-log' 'edited-suite-log-ref'
 
-ssh -n -oBatchMode=yes -oConnectTimeout=5 "${CYLC_TEST_HOST}" \
-    "rm -rf 'cylc-run/${SUITE_NAME}'"
+purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

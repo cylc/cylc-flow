@@ -39,7 +39,6 @@ suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart --debug "${SUITE_NAME}"
 grep_ok 'ERROR - garbage: initialisation did not complete' \
     "${CYLC_SUITE_RUN_DIR}/log/suite/err"
 #-------------------------------------------------------------------------------
-ssh -n -oBatchMode=yes -oConnectTimeout=5 "${CYLC_TEST_HOST}" \
-    "rm -rf 'cylc-run/${SUITE_NAME}'"
+purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

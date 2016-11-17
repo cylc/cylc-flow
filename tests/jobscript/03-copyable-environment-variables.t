@@ -31,7 +31,6 @@ FOO='foo foo' BAR='bar bar' BAZ='baz baz' \
     cylc run --reference-test --debug "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}"
-SUITE_RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
 JOB_FILE="${SUITE_RUN_DIR}/log/job/1/foo/NN/job"
 run_ok "${TEST_NAME}.stdout-FOO" grep -q "FOO='foo foo'" "${JOB_FILE}"
 run_ok "${TEST_NAME}.stdout-BAR" grep -q "BAR='bar bar'" "${JOB_FILE}"

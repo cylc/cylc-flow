@@ -24,7 +24,6 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 # Note: reset timer is not used by a reference test
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug "${SUITE_NAME}"
 # If reset timer is False, suite will shutdown well before it can run foo.2010
-SUITE_RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
 grep_ok '\[foo\.20100101T0000Z\]' "${SUITE_RUN_DIR}/log/suite/log"
 
 purge_suite "${SUITE_NAME}"

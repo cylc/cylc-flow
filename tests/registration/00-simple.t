@@ -20,14 +20,11 @@
 #-------------------------------------------------------------------------------
 set_test_number 5
 #-------------------------------------------------------------------------------
-SUITE_NAME=$(date -u +%Y%m%dT%H%M%SZ)_cylc_test_$(basename $TEST_SOURCE_DIR)_regtest
-mkdir $TEST_DIR/$SUITE_NAME/ 2>&1 
-cp -r $TEST_SOURCE_DIR/basic/* $TEST_DIR/$SUITE_NAME 2>&1
+install_suite "${TEST_NAME_BASE}" 'basic'
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-register
-run_ok $TEST_NAME cylc register $SUITE_NAME $TEST_DIR/$SUITE_NAME
-RUND="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
-exists_ok "${RUND}/.cylc-var/passphrase"
+run_ok $TEST_NAME cylc register "${SUITE_NAME}"
+exists_ok "${SUITE_RUN_DIR}/.cylc-var/passphrase"
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-get-dir
 run_ok $TEST_NAME cylc get-directory $SUITE_NAME
@@ -44,3 +41,5 @@ if [[ -n ${TEST_DIR:-} ]]; then
     rm -rf $TEST_DIR/$SUITE_NAME/
 fi
 #-------------------------------------------------------------------------------
+purge_suite "${SUITE_NAME}"
+exit

@@ -33,8 +33,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate ${OPT_SET} "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug ${OPT_SET} "${SUITE_NAME}"
 
-SUITE_RUN_DIR="$(cylc get-global-config '--print-run-dir')"
-LOG="${SUITE_RUN_DIR}/${SUITE_NAME}/log/job/1/t1/NN/job-activity.log"
+LOG="${SUITE_RUN_DIR}/log/job/1/t1/NN/job-activity.log"
 sed "/(('event-handler-00', 'succeeded'), 1)/!d; s/^.* \[/[/" "${LOG}" \
     >'edited-job-activity.log'
 cmp_ok 'edited-job-activity.log' <<'__LOG__'

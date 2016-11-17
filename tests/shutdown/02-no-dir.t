@@ -22,13 +22,12 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 # Suite run directory is now a symbolic link, so we can easily delete it.
-RUND="$(cylc get-global-config --print-run-dir)"
-SYM_SUITE_RUND="$(mktemp -u "${RUND}/${SUITE_NAME}XXXXXXXX")"
-SYM_SUITE_NAME="$(basename "${SYM_SUITE_RUND}")"
-ln -s "${SUITE_NAME}" "${SYM_SUITE_RUND}"
+SYM_SUITE_RUND="${SUITE_RUN_DIR}-sym"
+SYM_SUITE_NAME="${SUITE_NAME}-sym"
+ln -s "$(basename "${SUITE_NAME}")" "${SYM_SUITE_RUND}"
 run_fail "${TEST_NAME_BASE}-run" cylc run "${SYM_SUITE_NAME}" --debug
 grep_ok 'Suite shutting down.*ERROR: unable to open database file' \
-    "${RUND}/${SUITE_NAME}/log/suite/log"
+    "${SUITE_RUN_DIR}/log/suite/log"
 
 rm -f "${SYM_SUITE_RUND}"
 purge_suite "${SUITE_NAME}"

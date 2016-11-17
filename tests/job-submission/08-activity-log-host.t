@@ -39,7 +39,6 @@ grep_ok "^(${CYLC_TEST_HOST}) .*\\[STDOUT\\]" \
 grep_ok "^(${CYLC_TEST_HOST}) .*\\[STDOUT\\]" \
     "${RUN_DIR}/log/job/19990101T0000Z/sleeper/02/job-activity.log"
 
-ssh -n -oBatchMode=yes -oConnectTimeout=5 "${CYLC_TEST_HOST}" \
-    "rm -fr 'cylc-run/${SUITE_NAME}'"
+purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit
