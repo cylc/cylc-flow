@@ -1,0 +1,17 @@
+title = "Test Suite"
+description="Testing grouping options"
+group="test group 1"
+
+[scheduling]
+    max active cycle points = 3
+    spawn to max active cycle points = False
+    cycling mode = integer
+    initial cycle point = 1
+[[dependencies]]
+[[[P1]]]
+graph = foo => bar
+
+[runtime]
+[[root]]
+script = sleep 1
+

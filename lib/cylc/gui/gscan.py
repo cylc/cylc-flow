@@ -43,6 +43,7 @@ from cylc.task_state import (TASK_STATUSES_ORDERED, TASK_STATUS_RUNAHEAD,
                              TASK_STATUS_FAILED, TASK_STATUS_SUBMIT_FAILED)
 from cylc.cfgspec.gscan import gsfg
 
+KEY_GROUP = "group"
 KEY_NAME = "name"
 KEY_OWNER = "owner"
 KEY_STATES = "states"
@@ -378,14 +379,15 @@ class ScanApp(object):
 
     """Summarize running suite statuses for a given set of hosts."""
 
-    WARNINGS_COLUMN = 7
-    STATUS_COLUMN = 6
-    CYCLE_COLUMN = 5
-    UPDATE_TIME_COLUMN = 4
-    TITLE_COLUMN = 3
-    STOPPED_COLUMN = 2
-    SUITE_COLUMN = 1
-    HOST_COLUMN = 0
+    WARNINGS_COLUMN = 8
+    STATUS_COLUMN = 7
+    CYCLE_COLUMN = 6
+    UPDATE_TIME_COLUMN = 5
+    TITLE_COLUMN = 4
+    STOPPED_COLUMN = 3
+    SUITE_COLUMN = 2
+    HOST_COLUMN = 1
+    GROUP_COLUMN = 0
     ICON_SIZE = 17
 
     def __init__(self, hosts=None, owner=None, poll_interval=None, name=None):
@@ -415,9 +417,19 @@ class ScanApp(object):
 
         self.dots = DotMaker(self.theme)
         suite_treemodel = gtk.TreeStore(
-            str, str, bool, str, int, str, str, str)
+            str, str, str, bool, str, int, str, str, str)
         self._prev_tooltip_location_id = None
         self.suite_treeview = gtk.TreeView(suite_treemodel)
+
+        # Construct the group column.
+        group_name_column = gtk.TreeViewColumn("Group")
+        cell_text_group = gtk.CellRendererText()
+        group_name_column.pack_start(cell_text_group, expand=False)
+        group_name_column.set_cell_data_func(
+            cell_text_group, self._set_cell_text_group)
+        group_name_column.set_sort_column_id(self.GROUP_COLUMN)
+        group_name_column.set_visible("group" in gsfg.get(["columns"]))
+        group_name_column.set_resizable(True)
 
         # Construct the host column.
         host_name_column = gtk.TreeViewColumn("Host")
@@ -425,7 +437,7 @@ class ScanApp(object):
         host_name_column.pack_start(cell_text_host, expand=False)
         host_name_column.set_cell_data_func(
             cell_text_host, self._set_cell_text_host)
-        host_name_column.set_sort_column_id(0)
+        host_name_column.set_sort_column_id(self.HOST_COLUMN)
         host_name_column.set_visible("host" in gsfg.get(["columns"]))
         host_name_column.set_resizable(True)
 
@@ -435,7 +447,7 @@ class ScanApp(object):
         suite_name_column.pack_start(cell_text_name, expand=False)
         suite_name_column.set_cell_data_func(
             cell_text_name, self._set_cell_text_name)
-        suite_name_column.set_sort_column_id(1)
+        suite_name_column.set_sort_column_id(self.SUITE_COLUMN)
         suite_name_column.set_visible("suite" in gsfg.get(["columns"]))
         suite_name_column.set_resizable(True)
 
@@ -445,7 +457,7 @@ class ScanApp(object):
         suite_title_column.pack_start(cell_text_title, expand=False)
         suite_title_column.set_cell_data_func(
             cell_text_title, self._set_cell_text_title)
-        suite_title_column.set_sort_column_id(3)
+        suite_title_column.set_sort_column_id(self.TITLE_COLUMN)
         suite_title_column.set_visible("title" in gsfg.get(
             ["columns"]))
         suite_title_column.set_resizable(True)
@@ -456,10 +468,11 @@ class ScanApp(object):
         time_column.pack_start(cell_text_time, expand=False)
         time_column.set_cell_data_func(
             cell_text_time, self._set_cell_text_time)
-        time_column.set_sort_column_id(4)
+        time_column.set_sort_column_id(self.UPDATE_TIME_COLUMN)
         time_column.set_visible("updated" in gsfg.get(["columns"]))
         time_column.set_resizable(True)
 
+        self.suite_treeview.append_column(group_name_column)
         self.suite_treeview.append_column(host_name_column)
         self.suite_treeview.append_column(suite_name_column)
         self.suite_treeview.append_column(suite_title_column)
@@ -531,7 +544,7 @@ class ScanApp(object):
         self.updater = ScanAppUpdater(
             self.hosts, suite_treemodel, self.suite_treeview,
             owner=self.owner, poll_interval=poll_interval,
-            name_pattern=name_pattern
+            group_column_id=self.GROUP_COLUMN, name_pattern=name_pattern
         )
         self.updater.start()
         self.window.add(self.vbox)
@@ -647,7 +660,8 @@ class ScanApp(object):
         model = self.suite_treeview.get_model()
         iter_ = model.get_iter(path)
         parent_iter = model.iter_parent(iter_)
-        if parent_iter is None:
+        if parent_iter is None or (
+                parent_iter and model.iter_has_child(iter_)):
             host = model.get_value(iter_, self.HOST_COLUMN)
             suite = model.get_value(iter_, self.SUITE_COLUMN)
             child_row_number = None
@@ -730,12 +744,16 @@ class ScanApp(object):
                     return False
                 state = info[cell_index - 1].strip().split(' ')[0]
                 point_string = model.get(iter_, self.CYCLE_COLUMN)[0]
-                tasks = self.updater.get_last_n_tasks(
-                    suite, host, state, point_string)
-                tooltip.set_markup(tooltip_prefix + (
-                    '\n<b>Recent {state} tasks</b>\n{tasks}').format(
-                    state=state, tasks='\n'.join(tasks))
-                )
+
+                tooltip_text = tooltip_prefix
+
+                if suite:
+                    tasks = self.updater.get_last_n_tasks(
+                        suite, host, state, point_string)
+                    tooltip_text += (
+                        '\n<b>Recent {state} tasks</b>\n{tasks}').format(
+                            state=state, tasks='\n'.join(tasks))
+                tooltip.set_markup(tooltip_text)
                 return True
 
         # Set the tooltip to a generic status for this suite.
@@ -746,6 +764,7 @@ class ScanApp(object):
         column_index, is_visible = menu_item._connect_args
         column = self.suite_treeview.get_columns()[column_index]
         column.set_visible(not is_visible)
+        self.updater.update()
         return False
 
     def _set_cell_pixbuf_state(self, column, cell, model, iter_, index):
@@ -754,8 +773,9 @@ class ScanApp(object):
             is_stopped = model.get_value(iter_, self.STOPPED_COLUMN)
             info = re.findall(r'\D+\d+', state_info)
             if index < len(info):
-                state = info[index].rsplit(" ", self.SUITE_COLUMN)[0].strip()
-                icon = self.dots.get_icon(state.strip(), is_stopped=is_stopped)
+                state = info[index].strip().rsplit(
+                    " ", self.SUITE_COLUMN)[0].strip()
+                icon = self.dots.get_icon(state, is_stopped=is_stopped)
                 cell.set_property("visible", True)
             else:
                 icon = None
@@ -782,6 +802,12 @@ class ScanApp(object):
             self.warnings[(suite, host)] = None
             if not (suite, host) in self.warning_icon_shown:
                 cell.set_property('pixbuf', self.warn_icon_blank)
+
+    def _set_cell_text_group(self, column, cell, model, iter_):
+        group = model.get_value(iter_, self.GROUP_COLUMN)
+        is_stopped = model.get_value(iter_, self.STOPPED_COLUMN)
+        cell.set_property("sensitive", not is_stopped)
+        cell.set_property("text", group)
 
     def _set_cell_text_host(self, column, cell, model, iter_):
         host = model.get_value(iter_, self.HOST_COLUMN)
@@ -1020,9 +1046,10 @@ class ScanAppUpdater(BaseScanUpdater):
     WARNING_STATES = [TASK_STATUS_FAILED, TASK_STATUS_SUBMIT_FAILED]
 
     def __init__(self, hosts, suite_treemodel, suite_treeview, owner=None,
-                 poll_interval=None, name_pattern=None):
+                 poll_interval=None, group_column_id=0, name_pattern=None):
         self.suite_treemodel = suite_treemodel
         self.suite_treeview = suite_treeview
+        self.group_column_id = group_column_id
         self.tasks_by_state = {}
         self.warning_times = {}
         self.name_pattern = name_pattern
@@ -1128,6 +1155,36 @@ class ScanAppUpdater(BaseScanUpdater):
                 if (suite, host) not in suite_host_tuples:
                     suite_host_tuples.append((suite, host))
         suite_host_tuples.sort()
+
+        group_counts = {"": {'total': 0}}
+        for suite, host in suite_host_tuples:
+            # Only create summary counts for running suites
+            if suite in info.get(host, {}):
+                suite_info = info[host][suite]
+            else:
+                suite_info = stop_info[host][suite]
+
+            group_id = suite_info.get("group")
+
+            if group_id in group_counts:
+                group_counts[group_id]['total'] += 1
+            else:
+                group_counts[group_id] = {}
+                group_counts[group_id]['total'] = 1
+
+            if KEY_STATES in suite_info:
+                for key in sorted(suite_info):
+                    if not key == KEY_STATES:
+                        continue
+                    for state, number in sorted(
+                            suite_info[key].items(), key=lambda _: _[1]):
+                        if state in group_counts[group_id]:
+                            group_counts[group_id][state] += number
+                        else:
+                            group_counts[group_id][state] = number
+
+        group_iters = {}
+
         for suite, host in suite_host_tuples:
             if suite in info.get(host, {}):
                 suite_info = info[host][suite]
@@ -1140,9 +1197,32 @@ class ScanAppUpdater(BaseScanUpdater):
             )
             title = suite_info.get("title")
 
+            group = suite_info.get("group")
+
             if 'tasks-by-state' in suite_info:
                 self.tasks_by_state[(suite, host)] = suite_info[
                     'tasks-by-state']
+
+            # Build up and assign group iters across the various suites
+            if self.suite_treeview.get_column(
+                    self.group_column_id).get_visible():
+                if group_iters.get(group) is None:
+                    states_text = ""
+                    for state, number in sorted(
+                            group_counts[group].items()):
+                        if state != TASK_STATUS_RUNAHEAD and state != 'total':
+                            # 'runahead' states are usually hidden.
+                            states_text += '%s %d ' % (state, number)
+
+                    summary_text = "%s - %s suites" % (
+                        group, group_counts[group]['total'])
+
+                    group_iters[group] = self.suite_treemodel.append(None, [
+                        summary_text, "", "", False, "", suite_updated_time,
+                        None, states_text, None])
+                group_iter = group_iters[group]
+            else:
+                group_iter = None
 
             if not self.name_pattern.match(suite):
                 continue
@@ -1171,20 +1251,23 @@ class ScanAppUpdater(BaseScanUpdater):
 
                     # Set up the columns, including the cycle point column.
                     if key == KEY_STATES:
-                        parent_iter = self.suite_treemodel.append(None, [
-                            host, suite, is_stopped, title, suite_updated_time,
-                            None, states_text, warning_text])
+                        parent_iter = self.suite_treemodel.append(group_iter, [
+                            None, host, suite, is_stopped, title,
+                            suite_updated_time, None, states_text,
+                            warning_text])
                     else:
                         self.suite_treemodel.append(parent_iter, [
-                            None, None, is_stopped, title, suite_updated_time,
+                            None, None, None, is_stopped, title,
+                            suite_updated_time,
                             key.replace(KEY_STATES + ":", "", 1), states_text,
                             warning_text
                         ])
             else:
                 # No states in suite_info
-                self.suite_treemodel.append(None, [
-                    host, suite, is_stopped, title, suite_updated_time, None,
-                    None, warning_text])
+                self.suite_treemodel.append(group_iter, [
+                    group, host, suite, is_stopped, title, suite_updated_time,
+                    None, None, warning_text])
+
         self.suite_treemodel.foreach(self._expand_row, row_ids)
         return False
 

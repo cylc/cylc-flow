@@ -57,6 +57,7 @@ class SuiteIdServer(BaseCommsServer):
             config = SuiteConfig.get_inst()
             result['title'] = config.cfg['title']
             result['description'] = config.cfg['description']
+            result['group'] = config.cfg['group']
         if access_priv_ok(self, "state-totals"):
             result['states'] = StateSummaryServer.get_inst().get_state_totals()
             result['update-time'] = (
