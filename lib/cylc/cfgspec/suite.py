@@ -203,7 +203,7 @@ coercers['parameter_list'] = _coerce_parameter_list
 SPEC = {
     'title': vdr(vtype='string', default=""),
     'description': vdr(vtype='string', default=""),
-    'group': vdr(vtype='string', default="(default)"),
+    'group': vdr(vtype='string', default="(ungrouped)"),
     'URL': vdr(vtype='string', default=""),
     'cylc': {
         'UTC mode': vdr(
