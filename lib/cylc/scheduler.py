@@ -42,7 +42,7 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.config import SuiteConfig, TaskNotDefinedError
 from cylc.cycling import PointParsingError
 from cylc.cycling.loader import get_point, standardise_point_string
-from cylc.daemonize import daemonize, SUITE_SCAN_INFO_TMPL
+from cylc.daemonize import daemonize
 from cylc.exceptions import CylcError
 import cylc.flags
 from cylc.get_task_proxy import get_task_proxy
@@ -63,6 +63,7 @@ from cylc.network.suite_info_server import SuiteInfoServer
 from cylc.network.suite_log_server import SuiteLogServer
 from cylc.network.suite_state_server import StateSummaryServer
 from cylc.owner import USER
+from cylc.suite_host import is_remote_host
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
 from cylc.rundb import CylcSuiteDAO
@@ -232,7 +233,7 @@ class Scheduler(object):
     def start(self):
         """Start the server."""
         try:
-            self._check_contact_file_does_not_exist()
+            self._detect_old_contact_file()
         except SchedulerError:
             sys.exit(1)
 
@@ -325,38 +326,76 @@ class Scheduler(object):
 
         self.profiler.stop()
 
-    def _check_contact_file_does_not_exist(self):
-        """Fail if suite contact file exists."""
+    def _detect_old_contact_file(self):
+        """Detect old suite contact file.
+
+        Raise SchedulerError if old contact file exists, and there is evidence
+        that the old suite is still running.
+        """
+        # An old suite of the same name may be running if a contact file exists
+        # and can be loaded.
         try:
             data = self.suite_srv_files_mgr.load_contact_file(self.suite)
+            old_host = data[self.suite_srv_files_mgr.KEY_HOST]
+            old_port = data[self.suite_srv_files_mgr.KEY_PORT]
+            old_proc_str = data[self.suite_srv_files_mgr.KEY_PROCESS]
         except (IOError, ValueError, SuiteServiceFileError):
-            # Suite is not likely to be running if contact file cannot be
-            # loaded
+            # Contact file does not exist or corrupted, should be OK to proceed
             return
-        else:
-            fname = self.suite_srv_files_mgr.get_contact_file(self.suite)
-            sys.stderr.write(
-                (
-                    r"""ERROR: suite contact file exists: %(fname)s
+        # Run the "ps" command to see if the process is still running or not.
+        # If the old suite process is still running, it should show up with the
+        # same command line as before.
+        old_pid_str = old_proc_str.split(None, 1)[0].strip()
+        cmd = ["ps", "-opid,args", str(old_pid_str)]
+        if is_remote_host(old_host):
+            ssh_tmpl = str(GLOBAL_CFG.get_host_item(
+                "remote shell template", old_host)).replace(" %s", "")
+            cmd = shlex.split(ssh_tmpl) + ["-n", old_host] + cmd
+        proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
+        # Terminate command after 10 seconds to prevent hanging SSH, etc.
+        timeout = time() + 10.0
+        while proc.poll() is None:
+            if time() > timeout:
+                proc.terminate()
+            sleep(0.1)
+        fname = self.suite_srv_files_mgr.get_contact_file(self.suite)
+        proc.wait()
+        for line in reversed(proc.communicate()[0].splitlines()):
+            if line.strip() == old_proc_str:
+                # Suite definitely still running
+                break
+            elif line.split(None, 1)[0].strip() == "PID":
+                # Only "ps" header - "ps" has run, but no matching results.
+                # Suite not running. Attempt to remove suite contact file.
+                try:
+                    os.unlink(fname)
+                    return
+                except OSError:
+                    break
+
+        sys.stderr.write(
+            (
+                r"""ERROR, suite contact file exists: %(fname)s
 
 If %(suite)s is not running, delete the suite contact file and try again.
 If it is running but unresponsive, kill any left over suite processes too.
 
 To see if %(suite)s is running on '%(host)s:%(port)s':
- * cylc scan -n '\b%(suite)s\b' %(host)s
- * cylc ping -v --host=%(host)s %(suite)s
- * ssh %(host)s "pgrep -a -P 1 -fu $USER 'cylc-r.* \b%(suite)s\b'"
+ * cylc scan -n '\b%(suite)s\b' '%(host)s'
+ * cylc ping -v --host='%(host)s' '%(suite)s'
+ * ssh -n '%(host)s' 'ps -o pid,args %(pid)s'
 
 """
-                ) % {
-                    "host": data["CYLC_SUITE_HOST"],
-                    "port": data["CYLC_SUITE_PORT"],
-                    "fname": fname,
-                    "suite": self.suite,
-                }
-            )
-            raise SchedulerError(
-                "ERROR, suite contact file exists: %s" % fname)
+            ) % {
+                "host": old_host,
+                "port": old_port,
+                "pid": old_pid_str,
+                "fname": fname,
+                "suite": self.suite,
+            }
+        )
+        raise SchedulerError(
+            "ERROR, suite contact file exists: %s" % fname)
 
     @staticmethod
     def _print_blurb():
@@ -548,10 +587,8 @@ conditions; see `cylc conditions`.
                 # Given in the suite.rc file
                 if my_point != point:
                     ERR.warning(
-                        ("old %s cycle point " +
-                         "%s, overriding suite.rc %s") % (
-                             key_str, point, my_point)
-                    )
+                        "old %s cycle point %s, overriding suite.rc %s" %
+                        (key_str, point, my_point))
                     setattr(self, self_attr, point)
             else:
                 # reinstate from old
@@ -985,10 +1022,29 @@ conditions; see `cylc conditions`.
         """Create and configure daemon."""
         self.comms_daemon = CommsDaemon(self.suite)
         self.port = self.comms_daemon.get_port()
-        self._check_contact_file_does_not_exist()
+        # Make sure another suite of the same name has not started while this
+        # one is starting
+        self._detect_old_contact_file()
+        # Get "pid,args" process string with "ps"
+        pid_str = str(os.getpid())
+        proc = Popen(
+            ["ps", "h", "-opid,args", pid_str], stdout=PIPE, stderr=PIPE)
+        out, err = proc.communicate()
+        ret_code = proc.wait()
+        process_str = None
+        for line in out.splitlines():
+            if line.split(None, 1)[0].strip() == pid_str:
+                process_str = line.strip()
+                break
+        if ret_code or not process_str:
+            raise SchedulerError(
+                'ERROR, cannot get process "args" from "ps": %s' % err)
+        # Write suite contact file.
+        # Preserve contact data in memory, for regular health check.
         contact_data = {
             self.suite_srv_files_mgr.KEY_NAME: self.suite,
             self.suite_srv_files_mgr.KEY_HOST: self.host,
+            self.suite_srv_files_mgr.KEY_PROCESS: process_str,
             self.suite_srv_files_mgr.KEY_PORT: str(self.port),
             self.suite_srv_files_mgr.KEY_OWNER: self.owner,
             self.suite_srv_files_mgr.KEY_VERSION: CYLC_VERSION}
@@ -996,10 +1052,9 @@ conditions; see `cylc conditions`.
             self.suite_srv_files_mgr.dump_contact_file(
                 self.suite, contact_data)
         except IOError as exc:
-            sys.stderr.write(str(exc) + "\n")
             raise SchedulerError(
-                'ERROR, cannot write suite contact file: %s' %
-                self.suite_srv_files_mgr.get_contact_file(self.suite))
+                'ERROR, cannot write suite contact file: %s: %s' %
+                (self.suite_srv_files_mgr.get_contact_file(self.suite), exc))
         else:
             self.contact_data = contact_data
 
@@ -1093,7 +1148,7 @@ conditions; see `cylc conditions`.
         if self.final_point is not None:
             self.final_point.standardise()
 
-        if (not self.initial_point and not self.is_restart):
+        if not self.initial_point and not self.is_restart:
             ERR.warning('No initial cycle point provided - no cycling tasks '
                         'will be loaded.')
 
@@ -2007,7 +2062,7 @@ conditions; see `cylc conditions`.
     def set_stop_clock(self, unix_time, date_time_string):
         """Set stop clock time."""
         self.log.info("Setting stop clock time: %s (unix time: %s)" % (
-                      date_time_string, unix_time))
+            date_time_string, unix_time))
         self.stop_clock_time = unix_time
         self.stop_clock_time_string = date_time_string
 

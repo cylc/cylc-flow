@@ -50,6 +50,7 @@ class SuiteSrvFilesManager(object):
     KEY_HOST = "CYLC_SUITE_HOST"
     KEY_NAME = "CYLC_SUITE_NAME"
     KEY_OWNER = "CYLC_SUITE_OWNER"
+    KEY_PROCESS = "CYLC_SUITE_PROCESS"
     KEY_PORT = "CYLC_SUITE_PORT"
     KEY_VERSION = "CYLC_VERSION"
     PASSPHRASE_CHARSET = ascii_letters + digits
