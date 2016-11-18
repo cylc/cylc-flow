@@ -30,14 +30,11 @@ fi
 set_test_number 5
 
 SSH_OPTS='-oBatchMode=yes -oConnectTimeout=5'
-HOST_WORK_DIR="$( \
-    ssh ${SSH_OPTS} -n "${CYLC_TEST_HOST}" \
-    'mktemp -d --tmpdir="${HOME}/cylc-run" ctb-XXXXXXXX')"
-scp ${SSH_OPTS} -pqr "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/"* \
-    "${CYLC_TEST_HOST}:${HOST_WORK_DIR}"
+SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}"
 
-SUITE_NAME="$(basename "${HOST_WORK_DIR}")"
-cylc register --host="${CYLC_TEST_HOST}" "${SUITE_NAME}" "${HOST_WORK_DIR}"
+cylc register --host="${CYLC_TEST_HOST}" "${SUITE_NAME}"
+scp ${SSH_OPTS} -pqr "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/"* \
+    "${CYLC_TEST_HOST}:cylc-run/${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate --host="${CYLC_TEST_HOST}" "${SUITE_NAME}"
 
@@ -61,10 +58,11 @@ exists_ok "${CACHED}/passphrase"
 
 run_ok "${TEST_NAME_BASE}" wait "${SUITE_PID}"
 
-ssh ${SSH_OPTS} -n "${CYLC_TEST_HOST}" "rm -fr '${HOST_WORK_DIR}'" >&2
 purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
 rm -fr "${CACHED}"
-rmdir "${HOME}/.cylc/auth/${USER}@${CYLC_TEST_HOST}" 2>'/dev/null' \
-    || true
+(cd "${HOME}/.cylc/auth/" \
+    && rmdir -p "${USER}@${CYLC_TEST_HOST}/$(dirname "${SUITE_NAME}")" 2>'/dev/null' \
+    || true)
+rmdir "${HOME}/.cylc/auth/" 2>'/dev/null' || true
 
 exit

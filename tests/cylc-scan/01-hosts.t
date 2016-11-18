@@ -72,7 +72,9 @@ for ITEM in $(<'host-work-dirs.list'); do
             "--host=${HOST}" "${PREFIX}-${HOST}"
         purge_suite_remote "${HOST}" "${PREFIX}-${HOST}"
         rm -fr "${HOME}/.cylc/auth/${USER}@${HOST}/${PREFIX}-${HOST}/"
-        rmdir "${HOME}/.cylc/auth/${USER}@${HOST}/" 2>'/dev/null' || true
+        (cd "${HOME}/.cylc/auth/" \
+            && rmdir -p "${USER}@${HOST}/$(dirname "${PREFIX}")" 2>'/dev/null' \
+            || true)
     fi
 done
 rmdir "${HOME}/.cylc/auth/" 2>'/dev/null' || true

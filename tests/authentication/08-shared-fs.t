@@ -31,10 +31,11 @@ set_test_number 4
 # "install_suite" does not work here because it installs suites on the TMPDIR,
 # which is often on local file systems. We need to ensure that the suite
 # definition directory is on a shared file system.
-SUITE_NAME="$(uuidgen)"
-SUITE_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
-cp -r "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}" "${SUITE_DIR}"
-cylc register "${SUITE_NAME}" "${SUITE_DIR}" 2>'/dev/null'
+SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}"
+SUITE_RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
+mkdir -p "$(dirname "${SUITE_RUN_DIR}")"
+cp -r "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}" "${SUITE_RUN_DIR}"
+cylc register "${SUITE_NAME}" 2>'/dev/null'
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
@@ -43,7 +44,7 @@ cylc run --debug --reference-test --host="${CYLC_TEST_HOST}" "${SUITE_NAME}" \
 SUITE_PID="$!"
 
 # Poll for job to fail
-SUITE_LOG="${SUITE_DIR}/log/suite/log"
+SUITE_LOG="${SUITE_RUN_DIR}/log/suite/log"
 poll '!' test -e "${SUITE_LOG}"
 poll '!' grep -q -F 't1.19700101T0000Z failed' "${SUITE_LOG}" 2>'/dev/null'
 

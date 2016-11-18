@@ -5,8 +5,8 @@
         abort on timeout = True
         timeout = PT1M
 [scheduling]
-    initial cycle time = 20100808T00
-    final cycle time = 20100808T06
+    initial cycle point = 20100808T00
+    final cycle point = 20100808T06
     [[dependencies]]
         [[[R1]]]
             graph = "p1 => p2"

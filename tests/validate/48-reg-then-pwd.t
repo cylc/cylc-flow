@@ -19,9 +19,9 @@
 . "$(dirname "$0")/test_header"
 set_test_number 2
 
-SUITE_NAME="$(uuidgen)"
+SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}"
 
-mkdir 'good' "${SUITE_NAME}"
+mkdir -p 'good' "${SUITE_NAME}"
 cat >'good/suite.rc' <<'__SUITE_RC__'
 [scheduling]
     [[dependencies]]
@@ -45,6 +45,6 @@ run_fail "${TEST_NAME_BASE}" cylc validate "${SUITE_NAME}"
 # This should validate registered good suite
 cylc register "${SUITE_NAME}" "${PWD}/good"
 run_ok "${TEST_NAME_BASE}" cylc validate "${SUITE_NAME}"
-cylc unregister "${SUITE_NAME}"
 
+purge_suite "${SUITE_NAME}"
 exit
