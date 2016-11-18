@@ -349,7 +349,7 @@ class Scheduler(object):
         cmd = ["ps", "-opid,args", str(old_pid_str)]
         if is_remote_host(old_host):
             ssh_tmpl = str(GLOBAL_CFG.get_host_item(
-                "remote shell template", old_host)).replace(" %s", "")
+                "remote shell template", old_host))
             cmd = shlex.split(ssh_tmpl) + ["-n", old_host] + cmd
         proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
         # Terminate command after 10 seconds to prevent hanging SSH, etc.
@@ -1915,7 +1915,7 @@ conditions; see `cylc conditions`.
         else:
             s_user, s_host = (None, ctx.user_at_host)
         ssh_tmpl = str(GLOBAL_CFG.get_host_item(
-            "remote shell template", s_host, s_user)).replace(" %s", "")
+            "remote shell template", s_host, s_user))
         rsync_str = str(GLOBAL_CFG.get_host_item(
             "retrieve job logs command", s_host, s_user))
 

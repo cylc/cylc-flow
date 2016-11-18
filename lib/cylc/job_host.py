@@ -59,7 +59,7 @@ class RemoteJobHostManager(object):
         return cls._INSTANCE
 
     def __init__(self):
-        self.initialised_hosts = []
+        self.initialised_hosts = {}
         self.single_task_mode = False
         self.suite_srv_files_mgr = SuiteSrvFilesManager()
 
@@ -88,27 +88,31 @@ class RemoteJobHostManager(object):
             reg, 'suite job log directory', host, owner)
         r_suite_srv_dir = os.path.join(
             r_suite_run_dir, self.suite_srv_files_mgr.DIR_BASE_SRV)
-        LOG.info('Initialising %s:%s' % (user_at_host, r_suite_run_dir))
 
+        cmds = []
+        # Command to create suite directory structure on remote host.
         ssh_tmpl = GLOBAL_CFG.get_host_item(
             'remote shell template', host, owner)
-        scp_tmpl = GLOBAL_CFG.get_host_item(
-            'remote copy template', host, owner)
-
-        cmds = [
-            shlex.split(ssh_tmpl) + [
-                '-n', user_at_host,
-                'mkdir', '-p',
-                r_suite_run_dir, r_log_job_dir, r_suite_srv_dir],
-            shlex.split(scp_tmpl) + [
+        cmds.append(shlex.split(ssh_tmpl) + [
+            '-n', user_at_host,
+            'mkdir', '-p',
+            r_suite_run_dir, r_log_job_dir, r_suite_srv_dir])
+        # Command to copy contact and authentication files to remote host.
+        # Note: no need to do this if task communication method is "poll".
+        can_talk_back = GLOBAL_CFG.get_host_item(
+            'task communication method', host, owner) != "poll"
+        if can_talk_back:
+            scp_tmpl = GLOBAL_CFG.get_host_item(
+                'remote copy template', host, owner)
+            cmds.append(shlex.split(scp_tmpl) + [
                 '-p',
                 self.suite_srv_files_mgr.get_contact_file(reg),
                 self.suite_srv_files_mgr.get_auth_item(
                     self.suite_srv_files_mgr.FILE_BASE_PASSPHRASE, reg),
                 self.suite_srv_files_mgr.get_auth_item(
                     self.suite_srv_files_mgr.FILE_BASE_SSL_CERT, reg),
-                user_at_host + ':' + r_suite_srv_dir + '/'],
-        ]
+                user_at_host + ':' + r_suite_srv_dir + '/'])
+        # Command to copy python library to remote host.
         suite_run_py = os.path.join(
             GLOBAL_CFG.get_derived_host_item(reg, 'suite run directory'),
             'python')
@@ -116,6 +120,7 @@ class RemoteJobHostManager(object):
             cmds.append(shlex.split(scp_tmpl) + [
                 '-pr',
                 suite_run_py, user_at_host + ':' + r_suite_run_dir + '/'])
+        # Run commands in sequence.
         for cmd in cmds:
             proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
             out, err = proc.communicate()
@@ -124,7 +129,8 @@ class RemoteJobHostManager(object):
                     RemoteJobHostInitError.MSG_INIT,
                     user_at_host, ' '.join([quote(item) for item in cmd]),
                     proc.returncode, out, err)
-        self.initialised_hosts.append(user_at_host)
+        self.initialised_hosts[user_at_host] = can_talk_back
+        LOG.info('Initialised %s:%s' % (user_at_host, r_suite_run_dir))
 
     def unlink_suite_contact_files(self, reg):
         """Remove suite contact files from initialised hosts.
@@ -134,7 +140,9 @@ class RemoteJobHostManager(object):
         """
         # Issue all SSH commands in parallel
         procs = {}
-        for user_at_host in self.initialised_hosts:
+        for user_at_host, can_talk_back in self.initialised_hosts.items():
+            if not can_talk_back:
+                continue
             if '@' in user_at_host:
                 owner, host = user_at_host.split('@', 1)
             else:
