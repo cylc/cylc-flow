@@ -1471,13 +1471,16 @@ class SuiteConfig(object):
 
             # Record custom message outputs, and generate scripting to fake
             # their completion in dummy mode.
-            dm_scrpt = self.taskdefs[name].rtconfig['dummy mode']['script']
+            rtconfig = self.taskdefs[name].rtconfig
+            dm_scrpt = rtconfig['dummy mode']['script']
             for msg in self.cfg['runtime'][name]['outputs'].values():
                 outp = MessageOutput(msg, base_interval)
                 if outp not in self.taskdefs[name].outputs:
                     self.taskdefs[name].outputs.append(outp)
                     dm_scrpt += "\nsleep 2; cylc message '%s'" % msg
-                self.taskdefs[name].rtconfig['dummy mode']['script'] = dm_scrpt
+            if rtconfig['dummy mode']['script'] != dm_scrpt:
+                rtconfig['dummy mode'] = copy(rtconfig['dummy mode'])
+                rtconfig['dummy mode']['script'] = dm_scrpt
 
     def generate_triggers(self, lexpression, left_nodes,
                           right, seq, suicide, base_interval):

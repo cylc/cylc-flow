@@ -1,0 +1,16 @@
+#!Jinja2
+[cylc]
+   UTC mode = True
+[scheduling]
+    initial cycle point = 2000
+    initial cycle point = 2000
+    [[dependencies]]
+        [[[P1Y]]]
+            graph = foo => bar
+[runtime]
+    [[bar]]
+        script = true
+        [[[outputs]]]
+            greet = greet
+    [[foo]]
+        script = true
