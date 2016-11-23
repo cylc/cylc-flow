@@ -1,6 +1,6 @@
 [scheduling]
     initial cycle point = 20120909T00
-    final cycle time   = 20120913T00
+    final cycle point   = 20120913T00
 
     [[dependencies]]
         [[[R1/T12]]]
@@ -18,7 +18,7 @@
             """
 [visualization]
     initial cycle point = 20120909T00
-    final cycle time   = 20120913T00
+    final cycle point   = 20120913T00
     [[node attributes]]
         foo = "color=blue"
         bar = "color=red"

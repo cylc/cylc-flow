@@ -29,7 +29,7 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 # Run suite.
 cylc run $SUITE_NAME
 # Wait for task foo to fail.
-cylc suite-state $SUITE_NAME --task=foo --cycle=1 \
+cylc suite-state $SUITE_NAME --task=foo --point=1 \
     --status=failed --max-polls=10 --interval=2
 # Remove it.
 cylc remove "$SUITE_NAME" 'foo.1'

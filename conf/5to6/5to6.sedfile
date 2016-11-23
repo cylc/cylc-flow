@@ -56,7 +56,7 @@ s/^\( *\)runahead limit *= *\([0-9]\+\)/\1runahead limit = PT\2H # UPGRADE CHANG
 /polling intervals *= *[0-9*. ,]\+/{s/\([0-9]\+\*\)\{0,1\}\([0-9.]\+\)/\1PT\2M/g; s/$/ # UPGRADE CHANGE: intervals as ISO 8601 durations/g}
 #
 # Create a warning for the use of start-up tasks.
-/^ *start-up *=/{s@$@ # UPGRADE INFO: Replace this and *all* start-up/async graph deps with 'cylc validate' 'R1*' output@g}
+/^ *start-up *=/{s@$@ # UPGRADE INFO: Replace this and *all* start-up/async graph deps with *cylc 6* 'cylc validate' 'R1*' output@g}
 #
 # Convert the suite state polling interval into seconds: e.g. 5 => PT5S
 s/^\( *\)interval *= *\([0-9.]\+\)/\1interval = PT\2S # UPGRADE CHANGE: ISO 8601 durations/g

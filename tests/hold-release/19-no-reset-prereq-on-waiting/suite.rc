@@ -7,8 +7,8 @@ title = Test cylc hold/release remembers satisfied dependencies
         live mode suite timeout = PT30S
         required run mode = live
 [scheduling]
-    initial cycle time = 2016
-    final cycle time = 2016
+    initial cycle point = 2016
+    final cycle point = 2016
     [[dependencies]]
         [[[P1Y]]]
             graph = """

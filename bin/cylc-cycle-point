@@ -24,14 +24,7 @@ Cycle point date-time offset computation, and filename templating.
 Filename templating replaces elements of a template string with corresponding
 elements of the current or given cycle point.
 
-The template string format changed at cylc-6, but is backward compatible.
-
-If a 10-digit pre cylc-6 cycle time is detected, the template string
-elements are 'YYYY' (year), 'MM' (month), 'DD' (day), and 'HH' (hour):
-  % cylc cyclepoint 2010080800 --template foo-YYYY-MM-DD-HH.nc
-  foo-2010-08-08-00.nc
-
-Otherwise (cylc-6+) use ISO 8601 or posix date-time format elements:
+Use ISO 8601 or posix date-time format elements:
   % cylc cyclepoint 2010080T00 --template foo-CCYY-MM-DD-Thh.nc
   foo-2010-08-08-T00.nc
   % cylc cyclepoint 2010080T00 --template foo-%Y-%m-%d-Thh.nc
@@ -132,7 +125,7 @@ def main():
         action="store_true", default=False, dest="print_day")
 
     parser.add_option(
-        "--print-hour", help="Print only HH of result",
+        "--print-hour", help="Print only hh of result",
         action="store_true", default=False, dest="print_hour")
 
     (options, args) = parser.parse_args()
@@ -189,16 +182,6 @@ def main():
         if n_chosen != 0 and n_chosen != 1:
             parser.error("Choose NONE or ONE of print_(year|month|day|hour)")
 
-    if re.match("\d{10}$", cycle_point_string):
-        # Auto-detect prev Cylc format.
-        if template is None:
-            template = "%Y%m%d%H"
-        else:
-            template = template.replace("YYYY", "%Y")
-            template = template.replace("MM", "%m")
-            template = template.replace("DD", "%d")
-            template = template.replace("HH", "%H")
-
     cylc.cycling.iso8601.init(
         num_expanded_year_digits=options.num_expanded_year_digits,
         time_zone=options.time_zone
@@ -212,12 +195,8 @@ def main():
     try:
         cycle_point = iso_point_parser.parse(
             cycle_point_string, dump_as_parsed=(template is None))
-    except ValueError:
-        # May be in prev Cylc format.
-        try:
-            cycle_point = cylc.cycling.iso8601.point_parse(cycle_point_string)
-        except ValueError as exc:
-            parser.error('ERROR: invalid cycle: %s' % exc)
+    except ValueError as exc:
+        parser.error('ERROR: invalid cycle: %s' % exc)
 
     offset_props = {}
 
@@ -262,7 +241,13 @@ def main():
     if template is None:
         print cycle_point
     else:
-        print iso_point_dumper.dump(cycle_point, template)
+        dump_string = iso_point_dumper.dump(cycle_point, template)
+        if (dump_string == template and
+                not any([_ in template for _ in ["CCYY", "MM", "DD", "%"]])):
+            # A pure time string, no date - not well handled in isodatetime.
+            print iso_point_dumper.dump(cycle_point, "T" + template)[1:]
+        else:
+            print dump_string
 
 
 if __name__ == "__main__":

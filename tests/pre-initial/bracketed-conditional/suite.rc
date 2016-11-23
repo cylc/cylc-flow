@@ -1,10 +1,12 @@
+[cylc]
+    UTC mode = True
 [scheduling]
-    initial cycle time = 2013122512
-    final cycle time = 2013122512
+    initial cycle point = 20131225T1200Z
+    final cycle point = 20131225T1200Z
     [[dependencies]]
-        [[[ 12 ]]]
+        [[[ T12 ]]]
             graph = """
-                (a[T-24]:fail | b[T-24]:fail | c[T-24]:fail) => d
+                (a[-P1D]:fail | b[-P1D]:fail | c[-P1D]:fail) => d
                 a & b & c  # Implied by implicit cycling now...
             """
 [runtime]

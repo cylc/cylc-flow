@@ -108,7 +108,6 @@
         <keyword>submission failed handler</keyword>
         <keyword>startup handler</keyword>
         <keyword>started handler</keyword>
-        <keyword>start-up</keyword>
         <keyword>stalled handler</keyword>
         <keyword>simulation mode suite timeout</keyword>
         <keyword>simulate failure</keyword>
@@ -190,7 +189,6 @@
         <keyword>cycle point num expanded year digits</keyword>
         <keyword>cycle point format</keyword>
         <keyword>collapsed families</keyword>
-        <keyword>cold-start</keyword>
         <keyword>clock-trigger</keyword>
         <keyword>clock-expire</keyword>
         <keyword>batch system</keyword>

@@ -12,9 +12,9 @@ expressions."""
 
 [cylc]
     [[reference test]]
-        live mode suite timeout = 0.5
-        dummy mode suite timeout = 0.5
-        simulation mode suite timeout = 0.5
+        live mode suite timeout = PT30S
+        dummy mode suite timeout = PT30S
+        simulation mode suite timeout = PT30S
 
 [scheduling]
     [[dependencies]]

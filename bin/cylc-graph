@@ -90,7 +90,7 @@ from cylc.option_parsers import CylcOptionParser as COP
 # of which could stand some refactoring to streamline the code a bit.
 
 # TODO - clarify what it means to choose visualization boundaries (by CLI
-# or in-suite) outside of the defined suite initial and final cycle times.
+# or in-suite) outside of the defined suite initial and final cycle points.
 
 
 def on_url_clicked(widget, url, event, window):

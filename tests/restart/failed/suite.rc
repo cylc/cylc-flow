@@ -6,8 +6,8 @@
         timeout handler = shutdown_this_suite_hook
         timeout = PT3M
 [scheduling]
-    initial cycle time = 20130923T00
-    final cycle time   = 20130923T00
+    initial cycle point = 20130923T00
+    final cycle point   = 20130923T00
     [[dependencies]]
         [[[R1]]]
             graph = """

@@ -4,8 +4,8 @@
         timeout = PT0.2M
         abort on timeout = True
 [scheduling]
-    initial cycle time = 2010-01-01
-    final cycle time = 2010-01-05
+    initial cycle point = 2010-01-01
+    final cycle point = 2010-01-05
     runahead limit = PT12H # marker
     [[dependencies]]
         [[[T00]]]

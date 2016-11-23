@@ -2,8 +2,8 @@
 title = "A test with nested include-files"
 
 [scheduling]
-    initial cycle time = 20130101T00
-    final cycle time = 20130101T00
+    initial cycle point = 20130101T00
+    final cycle point = 20130101T00
     [[dependencies]]
         [[[R1]]]
             graph = foo => bar

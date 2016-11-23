@@ -1483,7 +1483,7 @@ class TaskProxy(object):
            * its state is >= submitted (allows successive instances
              to run concurrently, but not out of order).
         """
-        if (self.has_spawned or self.tdef.is_coldstart or
+        if (self.has_spawned or
                 self.state.status == TASK_STATUS_SUBMIT_FAILED):
             return False
         else:

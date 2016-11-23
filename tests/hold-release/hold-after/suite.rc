@@ -9,8 +9,8 @@ description = """One task that holds future cycles after a given cycle."""
         live mode suite timeout = PT1M
 
 [scheduling]
-    initial cycle time = 20140101T00
-    final cycle time   = 20140104T00
+    initial cycle point = 20140101T00
+    final cycle point   = 20140104T00
     max active cycle points = 10
     [[dependencies]]
         [[[R1]]]

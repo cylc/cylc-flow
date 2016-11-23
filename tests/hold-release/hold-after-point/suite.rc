@@ -9,8 +9,8 @@ description = """Define a hold after point in the suite.rc"""
         live mode suite timeout = PT1M
 
 [scheduling]
-    initial cycle time  = 20100101T00Z
-    final cycle time    = 20100110T00Z
+    initial cycle point  = 20100101T00Z
+    final cycle point    = 20100110T00Z
     hold after point    = 20100102T00Z
     [[dependencies]]
         [[[R1]]]

@@ -1,5 +1,5 @@
-bar|2010080800|succeeded
-foo|2010080800|succeeded
-foo|2010080900|held
-p1|2010080800|succeeded
-p2|2010080800|succeeded
+bar|20100808T0000Z|succeeded
+foo|20100808T0000Z|succeeded
+foo|20100809T0000Z|held
+p1|20100808T0000Z|succeeded
+p2|20100808T0000Z|succeeded
