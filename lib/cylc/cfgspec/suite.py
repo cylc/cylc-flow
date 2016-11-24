@@ -56,10 +56,10 @@ def _coerce_cycletime(value, keys, _):
     """Coerce value to a cycle point."""
     if not value:
         return None
+    value = _strip_and_unquote(keys, value)
     if value == "now":
         # Handle this later in config.py when the suite UTC mode is known.
         return value
-    value = _strip_and_unquote(keys, value)
     if re.match(r"\d+$", value):
         # Could be an old date-time cycle point format, or integer format.
         return value
