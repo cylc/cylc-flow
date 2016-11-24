@@ -136,13 +136,15 @@ class Scheduler(object):
         'triggered off', 'Initial point', 'Start point', 'Final point')
 
     def __init__(self, is_restart, options, args):
-
         self.options = options
-        self.profiler = Profiler(self.options.profile_mode)
         self.suite = args[0]
+        self.profiler = Profiler(self.options.profile_mode)
         self.suite_srv_files_mgr = SuiteSrvFilesManager()
+        try:
+            self.suite_srv_files_mgr.register(self.suite, options.source)
+        except SuiteServiceFileError:
+            sys.exit(1)
         # Register suite if not already done
-        self.suite_srv_files_mgr.register(self.suite, options.source)
         self.suite_dir = self.suite_srv_files_mgr.get_suite_source_dir(
             self.suite)
         self.suiterc = self.suite_srv_files_mgr.get_suite_rc(self.suite)
@@ -232,11 +234,6 @@ class Scheduler(object):
 
     def start(self):
         """Start the server."""
-        try:
-            self._detect_old_contact_file()
-        except SchedulerError:
-            sys.exit(1)
-
         self._print_blurb()
 
         GLOBAL_CFG.create_cylc_run_tree(self.suite)
@@ -325,77 +322,6 @@ class Scheduler(object):
             self.shutdown()
 
         self.profiler.stop()
-
-    def _detect_old_contact_file(self):
-        """Detect old suite contact file.
-
-        Raise SchedulerError if old contact file exists, and there is evidence
-        that the old suite is still running.
-        """
-        # An old suite of the same name may be running if a contact file exists
-        # and can be loaded.
-        try:
-            data = self.suite_srv_files_mgr.load_contact_file(self.suite)
-            old_host = data[self.suite_srv_files_mgr.KEY_HOST]
-            old_port = data[self.suite_srv_files_mgr.KEY_PORT]
-            old_proc_str = data[self.suite_srv_files_mgr.KEY_PROCESS]
-        except (IOError, ValueError, SuiteServiceFileError):
-            # Contact file does not exist or corrupted, should be OK to proceed
-            return
-        # Run the "ps" command to see if the process is still running or not.
-        # If the old suite process is still running, it should show up with the
-        # same command line as before.
-        old_pid_str = old_proc_str.split(None, 1)[0].strip()
-        cmd = ["ps", "-opid,args", str(old_pid_str)]
-        if is_remote_host(old_host):
-            ssh_tmpl = str(GLOBAL_CFG.get_host_item(
-                "remote shell template", old_host))
-            cmd = shlex.split(ssh_tmpl) + ["-n", old_host] + cmd
-        proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-        # Terminate command after 10 seconds to prevent hanging SSH, etc.
-        timeout = time() + 10.0
-        while proc.poll() is None:
-            if time() > timeout:
-                proc.terminate()
-            sleep(0.1)
-        fname = self.suite_srv_files_mgr.get_contact_file(self.suite)
-        proc.wait()
-        for line in reversed(proc.communicate()[0].splitlines()):
-            if line.strip() == old_proc_str:
-                # Suite definitely still running
-                break
-            elif line.split(None, 1)[0].strip() == "PID":
-                # Only "ps" header - "ps" has run, but no matching results.
-                # Suite not running. Attempt to remove suite contact file.
-                try:
-                    os.unlink(fname)
-                    return
-                except OSError:
-                    break
-
-        sys.stderr.write(
-            (
-                r"""ERROR, suite contact file exists: %(fname)s
-
-If %(suite)s is not running, delete the suite contact file and try again.
-If it is running but unresponsive, kill any left over suite processes too.
-
-To see if %(suite)s is running on '%(host)s:%(port)s':
- * cylc scan -n '\b%(suite)s\b' '%(host)s'
- * cylc ping -v --host='%(host)s' '%(suite)s'
- * ssh -n '%(host)s' 'ps -o pid,args %(pid)s'
-
-"""
-            ) % {
-                "host": old_host,
-                "port": old_port,
-                "pid": old_pid_str,
-                "fname": fname,
-                "suite": self.suite,
-            }
-        )
-        raise SchedulerError(
-            "ERROR, suite contact file exists: %s" % fname)
 
     @staticmethod
     def _print_blurb():
@@ -1024,7 +950,7 @@ conditions; see `cylc conditions`.
         self.port = self.comms_daemon.get_port()
         # Make sure another suite of the same name has not started while this
         # one is starting
-        self._detect_old_contact_file()
+        self.suite_srv_files_mgr.detect_old_contact_file(self.suite)
         # Get "pid,args" process string with "ps"
         pid_str = str(os.getpid())
         proc = Popen(

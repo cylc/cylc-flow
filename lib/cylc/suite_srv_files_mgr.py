@@ -86,6 +86,81 @@ class SuiteSrvFilesManager(object):
                     import traceback
                     traceback.print_exc()
 
+    def detect_old_contact_file(self, reg):
+        """Detect old suite contact file.
+
+        Raise SuiteServiceFileError if old contact file exists, and there is
+        evidence that the old suite is still running.
+        """
+        # An old suite of the same name may be running if a contact file exists
+        # and can be loaded.
+        try:
+            data = self.load_contact_file(reg)
+            old_host = data[self.KEY_HOST]
+            old_port = data[self.KEY_PORT]
+            old_proc_str = data[self.KEY_PROCESS]
+        except (IOError, ValueError, SuiteServiceFileError):
+            # Contact file does not exist or corrupted, should be OK to proceed
+            return
+        # Run the "ps" command to see if the process is still running or not.
+        # If the old suite process is still running, it should show up with the
+        # same command line as before.
+        old_pid_str = old_proc_str.split(None, 1)[0].strip()
+        cmd = ["ps", "-opid,args", str(old_pid_str)]
+        if is_remote_host(old_host):
+            import shlex
+            from cylc.cfgspec.globalcfg import GLOBAL_CFG
+            ssh_tmpl = str(GLOBAL_CFG.get_host_item(
+                "remote shell template", old_host))
+            cmd = shlex.split(ssh_tmpl) + ["-n", old_host] + cmd
+        from subprocess import Popen, PIPE
+        from time import sleep, time
+        proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
+        # Terminate command after 10 seconds to prevent hanging SSH, etc.
+        timeout = time() + 10.0
+        while proc.poll() is None:
+            if time() > timeout:
+                proc.terminate()
+            sleep(0.1)
+        fname = self.get_contact_file(reg)
+        proc.wait()
+        for line in reversed(proc.communicate()[0].splitlines()):
+            if line.strip() == old_proc_str:
+                # Suite definitely still running
+                break
+            elif line.split(None, 1)[0].strip() == "PID":
+                # Only "ps" header - "ps" has run, but no matching results.
+                # Suite not running. Attempt to remove suite contact file.
+                try:
+                    os.unlink(fname)
+                    return
+                except OSError:
+                    break
+
+        sys.stderr.write(
+            (
+                r"""ERROR, suite contact file exists: %(fname)s
+
+If %(suite)s is not running, delete the suite contact file and try again.
+If it is running but unresponsive, kill any left over suite processes too.
+
+To see if %(suite)s is running on '%(host)s:%(port)s':
+ * cylc scan -n '\b%(suite)s\b' '%(host)s'
+ * cylc ping -v --host='%(host)s' '%(suite)s'
+ * ssh -n '%(host)s' 'ps -o pid,args %(pid)s'
+
+"""
+            ) % {
+                "host": old_host,
+                "port": old_port,
+                "pid": old_pid_str,
+                "fname": fname,
+                "suite": reg,
+            }
+        )
+        raise SuiteServiceFileError(
+            "ERROR, suite contact file exists: %s" % fname)
+
     def dump_contact_file(self, reg, data):
         """Create contact file. Data should be a key=value dict."""
         with open(self.get_contact_file(reg), "wb") as handle:
@@ -305,6 +380,7 @@ class SuiteSrvFilesManager(object):
 
     def register(self, reg, source=None):
         """Generate service files for a suite. Record its source location."""
+        self.detect_old_contact_file(reg)
         srv_d = self.get_suite_srv_dir(reg)
         target = os.path.join(srv_d, self.FILE_BASE_SOURCE)
         if source is None:
