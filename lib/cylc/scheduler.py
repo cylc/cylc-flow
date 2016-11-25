@@ -241,13 +241,13 @@ class Scheduler(object):
         if self.is_restart:
             pri_db_path = os.path.join(
                 self.suite_srv_files_mgr.get_suite_srv_dir(self.suite),
-                CylcSuiteDAO.PRI_DB_FILE_BASE_NAME)
+                CylcSuiteDAO.DB_FILE_BASE_NAME)
 
             # Backward compat, upgrade database with state file if necessary
             run_dir = GLOBAL_CFG.get_derived_host_item(
                 self.suite, 'suite run directory')
             old_pri_db_path = os.path.join(
-                run_dir, 'state', CylcSuiteDAO.PUB_DB_FILE_BASE_NAME)
+                run_dir, 'state', CylcSuiteDAO.OLD_DB_FILE_BASE_NAME)
             old_state_file_path = os.path.join(run_dir, "state", "state")
             if (os.path.exists(old_pri_db_path) and
                     os.path.exists(old_state_file_path) and
@@ -1052,7 +1052,7 @@ conditions; see `cylc conditions`.
             # Things that can't change on suite reload.
             pri_db_path = os.path.join(
                 self.suite_srv_files_mgr.get_suite_srv_dir(self.suite),
-                CylcSuiteDAO.PRI_DB_FILE_BASE_NAME)
+                CylcSuiteDAO.DB_FILE_BASE_NAME)
             self.pri_dao = CylcSuiteDAO(pri_db_path)
             self.pri_dao.select_suite_params(self._load_initial_cycle_point)
             self.pri_dao.select_suite_template_vars(self._load_template_vars)
@@ -1090,9 +1090,9 @@ conditions; see `cylc conditions`.
                 self.suite, 'suite run directory')
             pri_db_path = os.path.join(
                 self.suite_srv_files_mgr.get_suite_srv_dir(self.suite),
-                CylcSuiteDAO.PRI_DB_FILE_BASE_NAME)
+                CylcSuiteDAO.DB_FILE_BASE_NAME)
             pub_db_path = os.path.join(
-                run_dir, 'log', CylcSuiteDAO.PUB_DB_FILE_BASE_NAME)
+                run_dir, 'log', CylcSuiteDAO.DB_FILE_BASE_NAME)
             if not self.is_restart:
                 # Remove database created by previous runs
                 try:
@@ -1108,12 +1108,12 @@ conditions; see `cylc conditions`.
             self.pub_dao = CylcSuiteDAO(pub_db_path, is_public=True)
             self._copy_pri_db_to_pub_db()
             pub_db_path_symlink = os.path.join(
-                run_dir, CylcSuiteDAO.PUB_DB_FILE_BASE_NAME)
+                run_dir, CylcSuiteDAO.OLD_DB_FILE_BASE_NAME)
             try:
                 orig_source = os.readlink(pub_db_path_symlink)
             except OSError:
                 orig_source = None
-            source = os.path.join('log', CylcSuiteDAO.PUB_DB_FILE_BASE_NAME)
+            source = os.path.join('log', CylcSuiteDAO.DB_FILE_BASE_NAME)
             if orig_source != source:
                 try:
                     os.unlink(pub_db_path_symlink)
@@ -2115,7 +2115,7 @@ conditions; see `cylc conditions`.
             open(self.pub_dao.db_file_name, "a").close()  # touch
             st_mode = os.stat(self.pub_dao.db_file_name).st_mode
             temp_pub_db_file_name = mkstemp(
-                prefix=self.pub_dao.PUB_DB_FILE_BASE_NAME,
+                prefix=self.pub_dao.DB_FILE_BASE_NAME,
                 dir=os.path.dirname(self.pub_dao.db_file_name))[1]
             copyfile(
                 self.pri_dao.db_file_name, temp_pub_db_file_name)

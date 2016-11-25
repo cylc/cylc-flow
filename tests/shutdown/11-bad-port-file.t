@@ -25,7 +25,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
 LOGD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log"
 poll "! grep -q 'WARNING - suite stalled' '${LOGD}/suite/log'"
-SRVD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/.cylc-var"
+SRVD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/.service"
 # Read port from port file before corrupting it
 PORT="$(awk -F= '$1 ~ /CYLC_SUITE_PORT/ {print $2}' "${SRVD}/contact")"
 if [[ -z "${PORT}" ]]; then

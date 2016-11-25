@@ -25,7 +25,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart --debug "${SUITE_NAME}"
 
 RUND="$(cylc get-global-config --print-run-dir)"
-sqlite3 "${RUND}/${SUITE_NAME}/cylc-suite.db" \
+sqlite3 "${RUND}/${SUITE_NAME}/log/db" \
     'SELECT name, cycle, status FROM task_states ORDER BY name, cycle' \
     >'final-state'
 contains_ok 'final-state' "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/ref-state"

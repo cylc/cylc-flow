@@ -18,7 +18,7 @@
 set -eu
 CYLC_SUITE_RUN_DIR="$1"
 CYLC_TASK_NAME="${2:-}"
-sqlite3 "${CYLC_SUITE_RUN_DIR}/cylc-suite.db" "
+sqlite3 "${CYLC_SUITE_RUN_DIR}/log/db" "
 SELECT
     task_states.name,
     task_states.cycle,

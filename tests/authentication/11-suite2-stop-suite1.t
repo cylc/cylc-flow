@@ -40,7 +40,7 @@ cat >"${SUITE2_RUND}/suite.rc" <<__SUITERC__
         script=cylc shutdown "${NAME1}"
 __SUITERC__
 cylc run --no-detach "${NAME1}" 1>'1.out' 2>&1 &
-poll '!' test -e "${SUITE1_RUND}/.cylc-var/contact"
+poll '!' test -e "${SUITE1_RUND}/.service/contact"
 run_ok "${TEST_NAME_BASE}" cylc run --no-detach "${NAME2}"
 cylc shutdown "${NAME1}" --max-polls=10 --interval=1 1>'/dev/null' 2>&1 || true
 purge_suite "${NAME1}"

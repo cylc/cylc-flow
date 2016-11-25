@@ -24,7 +24,7 @@ install_suite "${TEST_NAME_BASE}" 'basic'
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-register
 run_ok $TEST_NAME cylc register "${SUITE_NAME}"
-exists_ok "${SUITE_RUN_DIR}/.cylc-var/passphrase"
+exists_ok "${SUITE_RUN_DIR}/.service/passphrase"
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-get-dir
 run_ok $TEST_NAME cylc get-directory $SUITE_NAME

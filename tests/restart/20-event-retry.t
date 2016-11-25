@@ -23,7 +23,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 SUITED="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --debug
-sqlite3 "${SUITED}/cylc-suite.db" \
+sqlite3 "${SUITED}/log/db" \
     'SELECT COUNT(*) FROM task_event_handler_try_states' \
     >"${TEST_NAME_BASE}-db-n-entries"
 cmp_ok "${TEST_NAME_BASE}-db-n-entries" <<<'1'

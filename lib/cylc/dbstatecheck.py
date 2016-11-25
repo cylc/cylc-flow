@@ -56,13 +56,11 @@ class CylcSuiteDBChecker(object):
     STATE_ALIASES['fail'] = [TASK_STATUS_FAILED]
     STATE_ALIASES['succeed'] = [TASK_STATUS_SUCCEEDED]
 
-    def __init__(self, suite_dir, suite, dbname=None):
+    def __init__(self, suite_dir, suite):
         # possible to set suite_dir to system default cylc-run dir?
         suite_dir = os.path.expanduser(suite_dir)
-        if dbname is not None:
-            CylcSuiteDAO.PUB_DB_FILE_BASE_NAME = dbname
-        self.db_address = (
-            suite_dir + "/" + suite + "/" + CylcSuiteDAO.PUB_DB_FILE_BASE_NAME)
+        self.db_address = os.path.join(
+            suite_dir, suite, "log", CylcSuiteDAO.DB_FILE_BASE_NAME)
         if not os.path.exists(self.db_address):
             raise DBNotFoundError(self.db_address)
         self.conn = sqlite3.connect(self.db_address, timeout=10.0)

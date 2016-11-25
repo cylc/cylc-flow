@@ -163,8 +163,8 @@ class CylcSuiteDAO(object):
     """Data access object for the suite runtime database."""
 
     CONN_TIMEOUT = 0.2
-    PRI_DB_FILE_BASE_NAME = "db"
-    PUB_DB_FILE_BASE_NAME = "cylc-suite.db"
+    DB_FILE_BASE_NAME = "db"
+    OLD_DB_FILE_BASE_NAME = "cylc-suite.db"
     MAX_TRIES = 100
     CHECKPOINT_LATEST_ID = 0
     CHECKPOINT_LATEST_EVENT = "latest"

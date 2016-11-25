@@ -32,7 +32,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate ${OPT_SET} "${SUITE_NAME}"
 suite_run_fail "${TEST_NAME_BASE}-run" \
     cylc run --no-detach ${OPT_SET} "${SUITE_NAME}"
-SRVD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/.cylc-var"
+SRVD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/.service"
 LOGD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log"
 grep_ok \
     "${SRVD}/contact: suite contact file corrupted/modified and may be left" \

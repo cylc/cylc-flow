@@ -185,7 +185,7 @@ def get_task_job_attrs(options, suite, point, task, submit_num):
     suite_dao = CylcSuiteDAO(
         os.path.join(
             GLOBAL_CFG.get_derived_host_item(suite, "suite run directory"),
-            CylcSuiteDAO.PUB_DB_FILE_BASE_NAME),
+            "log", CylcSuiteDAO.DB_FILE_BASE_NAME),
         is_public=True)
     task_job_data = suite_dao.select_task_job(None, point, task, submit_num)
     suite_dao.close()

@@ -35,14 +35,14 @@ JOB_PID="$(awk -F'=' '$1 == "CYLC_JOB_PID" {print $2}' \
 # Cannot use cmp_ok as the error message is prefixed by a timestamp.
 grep_ok "WARNING - cannot execute database statement:" \
     "${TEST_NAME_BASE}-run.stderr.grep"
-grep_ok "file=${SUITE_RUN_DIR}/log/cylc-suite.db:" \
+grep_ok "file=${SUITE_RUN_DIR}/log/db:" \
     "${TEST_NAME_BASE}-run.stderr.grep"
 grep_ok "stmt=DELETE FROM task_pool" \
     "${TEST_NAME_BASE}-run.stderr.grep"
 grep_ok "stmt_args\[0\]=\[\]" \
     "${TEST_NAME_BASE}-run.stderr.grep"
 
-DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/cylc-suite.db"
+DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/log/db"
 
 NAME='select-task-states.out'
 sqlite3 "${DB_FILE}" \

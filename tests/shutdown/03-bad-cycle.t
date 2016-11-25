@@ -26,7 +26,7 @@ install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 TEST_NAME=$TEST_NAME_BASE-run
 run_fail $TEST_NAME cylc run $SUITE_NAME --debug
 RUND="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
-exists_fail "${RUND}/.cylc-var/contact"
+exists_fail "${RUND}/.service/contact"
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
 exit

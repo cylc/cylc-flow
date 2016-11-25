@@ -29,7 +29,7 @@ TEST_NAME=$TEST_NAME_BASE-run
 run_fail $TEST_NAME cylc run --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-check-fail
-DB_FILE="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/cylc-suite.db"
+DB_FILE="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/db"
 QUERY='SELECT COUNT(*) FROM task_states WHERE status == "failed"'
 run_ok "${TEST_NAME}" test "$(sqlite3 "${DB_FILE}" "${QUERY}")" -eq 4
 #-------------------------------------------------------------------------------

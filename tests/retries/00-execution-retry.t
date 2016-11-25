@@ -29,7 +29,7 @@ TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 sqlite3 \
-    "$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/cylc-suite.db" \
+    "$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/db" \
     'select try_num, submit_num from task_jobs' >'select.out'
 cmp_ok 'select.out' <<'__OUT__'
 1|1

@@ -24,7 +24,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --reference-test "${SUITE_NAME}"
 sqlite3 \
-    "$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/cylc-suite.db" \
+    "$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/db" \
     'SELECT submit_num,submit_status FROM task_jobs WHERE name=="t1"' \
     >'sqlite3.out'
 cmp_ok 'sqlite3.out' <<'__OUT__'

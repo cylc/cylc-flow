@@ -20,7 +20,7 @@ TRUES:succeed-all => done
         inherit = TRUES
     [[done]]
         script = """
-while ! grep -F -q 'cylc-suite.db: recovered' "${CYLC_SUITE_LOG_DIR}/log"; do
+while ! grep -F -q 'db: recovered' "${CYLC_SUITE_LOG_DIR}/log"; do
     sleep 1
 done
 """

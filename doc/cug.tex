@@ -1282,34 +1282,34 @@ time-stamped suite log file, and task job scripts and job logs
 \lstset{language=transcript}
 \begin{lstlisting}
 shell$ tree $HOME/cylc-run/tut/oneoff/basic/
-|-- .cylc-var             # location of run time service files
+|-- .service              # location of run time service files
 |    |-- contact          # detail on how to contact the running suite
+|    |-- db               # private suite run database
 |    |-- passphrase       # passphrase for client authentication
 |    |-- source           # symbolic link to source directory
 |    |-- ssl.cert         # SSL certificate for the suite server
 |    `-- ssl.pem          # SSL private key
-|-- cylc-suite-private.db # private suite run database
-|-- cylc-suite-public.db  # public suite run database
-|-- cylc-suite.db         # symbolic link to public suite run database
+|-- cylc-suite.db         # back compat symlink to public suite run database
 |-- share                 # suite share directory (not used in this example)
 |-- work                  # task work space (sub-dirs are deleted if not used)
 |    `-- 1                   # task cycle point directory (or 1)
 |        `-- hello              # task work directory (deleted if not used)
 |-- log                   # suite log directory
+|   |-- db                   # public suite run database
+|   |-- job                  # task job log directory
+|   |   `-- 1                   # task cycle point directory (or 1)
+|   |       `-- hello              # task name
+|   |           |-- 01                # task submission number
+|   |           |   |-- job              # task job script
+|   |           |   `-- job-activity.log # task job activity log
+|   |           |   |-- job.err          # task stderr log
+|   |           |   |-- job.out          # task stdout log
+|   |           |   `-- job.status       # task status file
+|   |           `-- NN -> 01          # symlink to latest submission number
 |   `-- suite                # suite daemon log directory
-|   |   |-- err                 # suite daemon stderr log (daemon mode only)
-|   |   |-- out                 # suite daemon stdout log (damon mode only)
-|   |   `-- log                 # suite daemon event log (timestamped info)
-|   `-- job                  # task job log directory
-|       `-- 1                   # task cycle point directory (or 1)
-|           `-- hello              # task name
-|               |-- 01                # task submission number
-|               |   |-- job              # task job script
-|               |   `-- job-activity.log # task job activity log
-|               |   |-- job.err          # task stderr log
-|               |   |-- job.out          # task stdout log
-|               |   `-- job.status       # task status file
-|               `-- NN -> 01          # symlink to latest submission number
+|       |-- err                 # suite daemon stderr log (daemon mode only)
+|       |-- out                 # suite daemon stdout log (damon mode only)
+|       `-- log                 # suite daemon event log (timestamped info)
 \end{lstlisting}
 The suite run database files, suite environment file,
 and task status files are used internally by cylc. Tasks execute in

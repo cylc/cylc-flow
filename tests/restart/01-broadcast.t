@@ -55,7 +55,7 @@ output_states|20130923T0000Z|1|1|succeeded
 send_a_broadcast_task|20130923T0000Z|1|1|succeeded
 shutdown|20130923T0000Z|1|1|succeeded
 __DB_DUMP__
-sqlite3 "${SUITE_RUN_DIR}/cylc-suite.db" '
+sqlite3 "${SUITE_RUN_DIR}/log/db" '
     SELECT
         point,namespace,key,value
     FROM

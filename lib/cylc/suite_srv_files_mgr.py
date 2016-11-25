@@ -40,7 +40,7 @@ class SuiteSrvFilesManager(object):
 
     DELIM = "/"
     DIR_BASE_AUTH = 'auth'
-    DIR_BASE_SRV = ".cylc-var"
+    DIR_BASE_SRV = ".service"
     FILE_BASE_CONTACT = "contact"
     FILE_BASE_PASSPHRASE = 'passphrase'
     FILE_BASE_SOURCE = "source"
@@ -514,7 +514,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
     def _is_local_auth_ok(self, reg, owner, host):
         """Return True if it is OK to use local passphrase, ssl.* files.
 
-        Use values in ~/cylc-run/REG/.cylc-var/contact to make a judgement.
+        Use values in ~/cylc-run/REG/.service/contact to make a judgement.
         Cache results in self.can_use_load_auths.
         """
         if (reg, owner, host) not in self.can_use_load_auths:

@@ -37,7 +37,7 @@ for HOST in $(tr -d ',' <<<"${HOSTS}"); do
         cylc register "${PREFIX}-${HOST}" "${HOST_WORK_DIR}" 1>/dev/null 2>&1
         cylc run "${PREFIX}-${HOST}" 1>/dev/null 2>&1
         RUND="$(cylc get-global-config '--print-run-dir')/${PREFIX}-${HOST}"
-        poll '!' test -e "${RUND}/.cylc-var/contact"
+        poll '!' test -e "${RUND}/.service/contact"
     else
         HOST_WORK_DIR="$($SSH -n "${HOST}" 'mktemp -d')"
         $SCP "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/suite.rc" \
@@ -46,12 +46,12 @@ for HOST in $(tr -d ',' <<<"${HOSTS}"); do
             1>/dev/null 2>&1
         mkdir -p "${HOME}/.cylc/auth/${USER}@${HOST}/${PREFIX}-${HOST}"
         ${SCP} -p \
-            "${HOST}:cylc-run/${PREFIX}-${HOST}/.cylc-var/passphrase" \
-            "${HOST}:cylc-run/${PREFIX}-${HOST}/.cylc-var/ssl.*" \
+            "${HOST}:cylc-run/${PREFIX}-${HOST}/.service/passphrase" \
+            "${HOST}:cylc-run/${PREFIX}-${HOST}/.service/ssl.*" \
             "${HOME}/.cylc/auth/${USER}@${HOST}/${PREFIX}-${HOST}/"
         cylc run "--host=${HOST}" "${PREFIX}-${HOST}" 1>/dev/null 2>&1
         poll '!' ${SSH} -n "${HOST}" \
-            "test -e 'cylc-run/${PREFIX}-${HOST}/.cylc-var/contact'"
+            "test -e 'cylc-run/${PREFIX}-${HOST}/.service/contact'"
     fi
     echo "${HOST}:${HOST_WORK_DIR}" >>'host-work-dirs.list'
 done

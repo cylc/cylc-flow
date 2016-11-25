@@ -97,8 +97,8 @@ def list_checkpoints(suite, callback):
 def _get_dao(suite):
     """Return the DAO (public) for suite."""
     pub_db_path = os.path.join(
-        GLOBAL_CFG.get_derived_host_item(suite, 'suite run directory'),
-        CylcSuiteDAO.PUB_DB_FILE_BASE_NAME)
+        GLOBAL_CFG.get_derived_host_item(suite, 'suite log directory'),
+        CylcSuiteDAO.DB_FILE_BASE_NAME)
     return CylcSuiteDAO(pub_db_path, is_public=True)
 
 
