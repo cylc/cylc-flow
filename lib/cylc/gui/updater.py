@@ -205,15 +205,22 @@ class Updater(threading.Thread):
             # Use info bar to display stop summary if available.
             # Otherwise, just display the reconnect count down.
             if self.cfg.suite and self.stop_summary is None:
-                self.stop_summary = get_stop_state_summary(
+                stop_summary = get_stop_state_summary(
                     cat_state(self.cfg.suite, self.cfg.host, self.cfg.owner))
                 self.last_update_time = time()
-            if self.stop_summary is not None and any(self.stop_summary):
-                gobject.idle_add(
-                    self.info_bar.set_stop_summary, self.stop_summary)
-            else:
-                self.info_bar.set_update_time(
-                    None, self.info_bar.DISCONNECTED_TEXT)
+                if stop_summary != self.stop_summary:
+                    self.stop_summary = stop_summary
+                    self.status = SUITE_STATUS_STOPPED
+                    gobject.idle_add(
+                        self.info_bar.set_stop_summary, stop_summary)
+            try:
+                update_time_str = get_time_string_from_unix_time(
+                    self.stop_summary[0]["last_updated"])
+            except (AttributeError, IndexError, KeyError):
+                update_time_str = None
+            gobject.idle_add(
+                self.info_bar.set_update_time,
+                update_time_str, self.info_bar.DISCONNECTED_TEXT)
             return
         except ConnectionDeniedError as exc:
             if cylc.flags.debug:
@@ -360,9 +367,11 @@ class Updater(threading.Thread):
 
     def set_status(self, status=None):
         """Update status bar."""
+        if status == self.status:
+            return
         if status is not None:
             self.status = status
-        self.info_bar.set_status(self.status)
+        gobject.idle_add(self.info_bar.set_status, self.status)
 
     def warn(self, msg):
         """Pop up a warning dialog; call on idle_add!"""
