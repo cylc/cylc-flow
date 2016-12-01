@@ -422,9 +422,6 @@ Use (Re-)connect button to reconnect immediately.""")
         if num_failed:
             summary += ": %s failed tasks" % num_failed
         self.set_status(summary)
-        self.set_update_time(
-            get_time_string_from_unix_time(global_summary["last_updated"]),
-            self.DISCONNECTED_TEXT)
         # (called on idle_add)
         return False
 
