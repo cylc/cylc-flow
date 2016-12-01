@@ -107,8 +107,8 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
         len_header = sum(len(s) for s in TASK_STATUSES_ORDERED)
 
         self.pclient = StateSummaryClient(
-            suite, options.owner, options.host, options.comms_timeout,
-            options.port, options.db)
+            suite, options.owner, options.host, options.port,
+            options.comms_timeout)
 
         while True:
             try:

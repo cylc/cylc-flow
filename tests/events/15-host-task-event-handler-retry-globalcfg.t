@@ -40,7 +40,6 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug -s "HOST=${HOST}" -s 'GLOBALCFG=True' \
     "${SUITE_NAME}"
 
-SUITE_RUN_DIR="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}"
 LOG="${SUITE_RUN_DIR}/log/job/1/t1/NN/job-activity.log"
 sed "/(('event-handler-00', 'succeeded'), 1)/!d; s/^.* \[/[/" "${LOG}" \
     >'edited-job-activity.log'
@@ -61,7 +60,6 @@ cmp_ok 'edited-log' <<'__LOG__'
 [t1.1] -(('event-handler-00', 'succeeded'), 1) will run after PT1S
 __LOG__
 
-ssh -n -oBatchMode=yes -oConnectTimeout=5 "${HOST}" \
-    "rm -rf 'cylc-run/${SUITE_NAME}'"
+purge_suite_remote "${HOST}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

@@ -35,6 +35,7 @@ from cylc.option_parsers import CylcOptionParser as COP
 from cylc.version import CYLC_VERSION
 from cylc.config import SuiteConfig, SuiteConfigError
 from cylc.prerequisite import TriggerExpressionError
+from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.task_proxy import TaskProxy
 from cylc.templatevars import load_template_vars
 from cylc.profiler import Profiler
@@ -58,9 +59,9 @@ def main():
         action="store_true", default=False, dest="strict")
 
     parser.add_option(
-        "--no-write",
-        help="Don't write out the processed suite definition.",
-        action="store_true", default=False, dest="nowrite")
+        "--output", "-o",
+        help="Specify a file name to dump the processed suite.rc.",
+        metavar="FILENAME", action="store", dest="output")
 
     parser.add_option(
         "--profile", help="Output profiling (performance) information",
@@ -71,14 +72,14 @@ def main():
     profiler = Profiler(options.profile_mode)
     profiler.start()
 
-    suite, suiterc = parser.get_suite()
+    suite, suiterc = SuiteSrvFilesManager().parse_suite_arg(options, args[0])
 
     cfg = SuiteConfig.get_inst(
         suite, suiterc,
         load_template_vars(options.templatevars, options.templatevars_file),
         cli_initial_point_string=options.icp,
         validation=True, strict=options.strict,
-        write_proc=not options.nowrite,
+        output_fname=options.output,
         mem_log_func=profiler.log_memory)
 
     # Instantiate tasks and force evaluation of trigger expressions.

@@ -2,8 +2,9 @@
 {%- set TEST_DIR = environ['TEST_DIR'] %}
 [cylc]
     UTC mode = True
+    abort if any task fails = True
     [[events]]
-        timeout handler = shutdown_this_suite_hook
+        abort on timeout = True
         timeout = PT1M
 [scheduling]
     initial cycle point = 20130923T00
@@ -17,14 +18,11 @@
                 broadcast_task => finish
             """
 [runtime]
-    [[root]]
-        [[[events]]]
-            failed handler = shutdown_this_suite_hook
     [[send_a_broadcast_task]]
         description = "Broadcast setup task"
         script = """
-            cylc broadcast -n broadcast_task -p $CYLC_TASK_CYCLE_POINT -s "[environment]MY_VALUE='something'" $CYLC_SUITE_REG_NAME
-            cylc broadcast -d $CYLC_SUITE_REG_NAME
+            cylc broadcast -n broadcast_task -p $CYLC_TASK_CYCLE_POINT -s "[environment]MY_VALUE='something'" $CYLC_SUITE_NAME
+            cylc broadcast -d $CYLC_SUITE_NAME
         """
     [[broadcast_task]]
         description = "Broadcast-recipient task (runs after restart)"

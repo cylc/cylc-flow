@@ -58,8 +58,9 @@ if remrun().execute():
 
 import re
 from cylc.config import SuiteConfig, SuiteConfigError
-from cylc.option_parsers import CylcOptionParser as COP
 import cylc.flags
+from cylc.option_parsers import CylcOptionParser as COP
+from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.templatevars import load_template_vars
 
 
@@ -109,8 +110,7 @@ def main():
         action="store_true", default=False, dest="tasks")
 
     (options, args) = parser.parse_args()
-    owner = options.db_owner
-    suite, suiterc = parser.get_suite()
+    suite, suiterc = SuiteSrvFilesManager().parse_suite_arg(options, args[0])
 
     if options.markup:
         prefix = '!cylc!'
@@ -119,8 +119,7 @@ def main():
 
     config = SuiteConfig(
         suite, suiterc,
-        load_template_vars(options.templatevars, options.templatevars_file),
-        owner=owner)
+        load_template_vars(options.templatevars, options.templatevars_file))
     if options.tasks:
         for task in config.get_task_name_list():
             print prefix + task

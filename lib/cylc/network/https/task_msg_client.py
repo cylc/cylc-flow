@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.owner import USER
-from cylc.suite_host import get_hostname
 from cylc.network import COMMS_TASK_MESSAGE_OBJ_NAME
 from cylc.network.https.base_client import BaseCommsClient
 
@@ -25,14 +23,11 @@ from cylc.network.https.base_client import BaseCommsClient
 class TaskMessageClient(BaseCommsClient):
     """Client-side task messaging interface"""
 
-    def __init__(self, suite, task_id, owner=USER,
-                 host=get_hostname(), timeout=None, port=None):
-        self.task_id = task_id
-        super(TaskMessageClient, self).__init__(suite, owner, host,
-                                                port=port, timeout=timeout)
+    def __init__(self, suite, timeout=None):
+        super(TaskMessageClient, self).__init__(suite, timeout=timeout)
 
-    def put(self, priority, message):
-        return self.call_server_func(COMMS_TASK_MESSAGE_OBJ_NAME, "put",
-                                     task_id=self.task_id,
-                                     priority=priority,
-                                     message=message)
+    def put(self, task_id, priority, message):
+        """Send task message."""
+        return self.call_server_func(
+            COMMS_TASK_MESSAGE_OBJ_NAME, "put",
+            task_id=task_id, priority=priority, message=message)

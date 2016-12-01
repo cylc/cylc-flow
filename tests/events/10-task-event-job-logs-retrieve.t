@@ -43,8 +43,6 @@ run_ok "${TEST_NAME_BASE}-validate" \
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug ${OPT_SET} -s "HOST=${HOST}" "${SUITE_NAME}"
 
-SUITE_RUN_DIR="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}"
-
 sed "/'job-logs-retrieve'/!d" \
     "${SUITE_RUN_DIR}/log/job/1/t1/"{01,02,03}"/job-activity.log" \
     >'edited-activities.log'
@@ -66,7 +64,6 @@ else
     cmp_ok 'edited-log' <'/dev/null'  # P0Y not displayed
 fi
 
-ssh -n -oBatchMode=yes -oConnectTimeout=5 "${HOST}" \
-    "rm -rf 'cylc-run/${SUITE_NAME}'"
+purge_suite_remote "${HOST}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

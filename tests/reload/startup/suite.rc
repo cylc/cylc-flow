@@ -17,4 +17,4 @@
     [[a,c,start]]
         script = "sleep 1"
     [[b]]
-        script = "cylc reload $CYLC_SUITE_REG_NAME -f; sleep 5"
+        script = "cylc reload $CYLC_SUITE_NAME -f; sleep 5"

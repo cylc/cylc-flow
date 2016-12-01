@@ -116,7 +116,6 @@ cylc cat-log -l $SUITE_NAME a-task.1 >$TEST_NAME.out
 grep_ok "$SUITE_NAME/log/job/1/a-task/NN/job$" $TEST_NAME.out
 #-------------------------------------------------------------------------------
 # Clean up the task host.
-ssh -n -oBatchMode=yes -oConnectTimeout=5 "${CYLC_TEST_HOST}" \
-    "rm -rf 'cylc-run/${SUITE_NAME}'"
+purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
 purge_suite $SUITE_NAME
 exit

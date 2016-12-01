@@ -40,7 +40,6 @@ run_fail $TEST_NAME \
     ${SSH} -n "${CYLC_TEST_HOST}" \
     "ps \$(cat cylc-run/$SUITE_NAME/work/*/t*/file)"
 #-------------------------------------------------------------------------------
-${SSH} -n "${CYLC_TEST_HOST}" \
-    "rm -rf 'cylc-run/${SUITE_NAME}'"
+purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
 purge_suite $SUITE_NAME
 exit

@@ -42,7 +42,6 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
+purge_suite_remote "${CYLC_TEST_BATCH_TASK_HOST}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
-ssh -n -oBatchMode=yes -oConnectTimeout=5 "${CYLC_TEST_BATCH_TASK_HOST}" \
-    "rm -fr 'cylc-run/${SUITE_NAME}'"
 exit

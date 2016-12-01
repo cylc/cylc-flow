@@ -40,13 +40,13 @@ class NotSingleItemError(ParsecError):
 class config(object):
     "Object wrapper for parsec functions"
 
-    def __init__(self, spec, upgrader=None, write_proc=False, tvars=None):
+    def __init__(self, spec, upgrader=None, output_fname=None, tvars=None):
 
         self.sparse = OrderedDictWithDefaults()
         self.dense = OrderedDictWithDefaults()
         self.upgrader = upgrader
         self.tvars = tvars
-        self.write_proc = write_proc
+        self.output_fname = output_fname
         self.checkspec(spec)
         self.spec = spec
 
@@ -67,7 +67,7 @@ class config(object):
         validate it against the spec, and if this is not the first load,
         combine/override with the existing loaded config."""
 
-        sparse = parse(rcfile, self.write_proc, self.tvars)
+        sparse = parse(rcfile, self.output_fname, self.tvars)
 
         if self.upgrader is not None:
             self.upgrader(sparse, title)

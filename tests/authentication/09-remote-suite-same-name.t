@@ -32,16 +32,11 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
 SSH='ssh -oBatchMode=yes -oConnectTimeout=5'
-HOST_WORK_DIR="$( \
-    ${SSH} -n "${CYLC_TEST_HOST}" 'mktemp -d --tmpdir=${PWD} ctb-XXXXXXXX')"
-${SSH} -n "${CYLC_TEST_HOST}" "touch '${HOST_WORK_DIR}/suite.rc'"
-cylc register --host="${CYLC_TEST_HOST}" "${SUITE_NAME}" "${HOST_WORK_DIR}"
+cylc register --host="${CYLC_TEST_HOST}" "${SUITE_NAME}"
 
 suite_run_ok "${TEST_NAME_BASE}" \
     cylc run --debug --reference-test "${SUITE_NAME}"
 
-cylc unregister --host="${CYLC_TEST_HOST}" "${SUITE_NAME}"
-${SSH} -n "${CYLC_TEST_HOST}" "rm -fr '${HOST_WORK_DIR}'" >&2
-
+purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

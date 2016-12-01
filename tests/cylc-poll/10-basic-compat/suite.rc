@@ -9,4 +9,4 @@
     [[a]]
         script = sleep 20
     [[b]]
-        script = cylc poll "$CYLC_SUITE_REG_NAME" 'a' '1'
+        script = cylc poll "$CYLC_SUITE_NAME" 'a' '1'

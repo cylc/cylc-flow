@@ -96,9 +96,11 @@ grep_ok "Job ID: ${JOB_ID}" "${TEST_NAME_BASE}.stdout"
 cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'
 #-------------------------------------------------------------------------------
 if [[ -n "${SSH}" ]]; then
+    poll ! $SSH "grep -q 'CYLC_JOB_INIT_TIME=' \"${ST_FILE}\"" 2>/dev/null
     poll ! $SSH "grep -q 'CYLC_JOB_EXIT=' \"${ST_FILE}\"" 2>/dev/null
-    $SSH "rm -r 'cylc-run/${SUITE_NAME}'" 2>/dev/null
+    purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
 else
+    poll ! grep -q 'CYLC_JOB_INIT_TIME=' "${ST_FILE}" 2>/dev/null
     poll ! grep -q 'CYLC_JOB_EXIT=' "${ST_FILE}" 2>/dev/null
 fi
 purge_suite "${SUITE_NAME}"

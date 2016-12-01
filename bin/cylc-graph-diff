@@ -48,7 +48,7 @@ for ARG in "$@"; do
         DIFF_CMD=${ARG#*=}
     else
         # A suite - check it's registered.
-        if ! cylc db print --fail "$ARG$" >/dev/null 2>&1; then
+        if ! cylc print --fail "$ARG$" >/dev/null 2>&1; then
             echo "Suite not found: "$ARG >&2
             exit 1
         fi
@@ -63,7 +63,7 @@ fi
 
 DIFF_FILES=""
 for SUITE in $SUITES; do
-    FILE=$(mktemp -t $SUITE.graph.ref.XXXX)
+    FILE=$(mktemp -t "$(tr '/' '.' <<<"${SUITE}").graph.ref.XXXX")
     cylc graph --reference "$@" $SUITE >$FILE
     DIFF_FILES="$DIFF_FILES $FILE"
 done

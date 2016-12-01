@@ -20,25 +20,26 @@
 import os
 from pipes import quote
 from subprocess import Popen, PIPE
-from logging import getLogger
 import shlex
+from time import sleep, time
+from uuid import uuid4
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.owner import USER
-from cylc.suite_env import CylcSuiteEnv
+from cylc.suite_logging import ERR, LOG
+from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 
 
 class RemoteJobHostInitError(Exception):
     """Cannot initialise suite run directory of remote job host."""
 
+    MSG_INIT = "%s: initialisation did not complete:\n"  # %s user_at_host
+    MSG_TIDY = "%s: clean up did not complete:\n"  # %s user_at_host
+
     def __str__(self):
-        user_at_host, cmd_str, ret_code, out, err = self.args
-        ret = (
-            # user_at_host
-            "%s: initialisation did not complete:\n" +
-            # command  # return code
-            "COMMAND FAILED (%d): %s\n"
-        ) % (user_at_host, ret_code, cmd_str)
+        msg, user_at_host, cmd_str, ret_code, out, err = self.args
+        ret = (msg + "COMMAND FAILED (%d): %s\n") % (
+            user_at_host, ret_code, cmd_str)
         for label, item in ("STDOUT", out), ("STDERR", err):
             if item:
                 for line in item.splitlines(True):  # keep newline chars
@@ -59,10 +60,11 @@ class RemoteJobHostManager(object):
         return cls._INSTANCE
 
     def __init__(self):
-        self.initialised_hosts = []
+        self.initialised_hosts = {}  # user_at_host: should_unlink
         self.single_task_mode = False
+        self.suite_srv_files_mgr = SuiteSrvFilesManager()
 
-    def init_suite_run_dir(self, suite_name, user_at_host):
+    def init_suite_run_dir(self, reg, user_at_host):
         """Initialise suite run dir on a user@host.
 
         Create SUITE_RUN_DIR/log/job/ if necessary.
@@ -81,37 +83,126 @@ class RemoteJobHostManager(object):
                 self.single_task_mode):
             return
 
-        suite_run_dir = GLOBAL_CFG.get_derived_host_item(
-            suite_name, 'suite run directory')
-        sources = [os.path.join(suite_run_dir, CylcSuiteEnv.BASE_NAME)]
-        if 'CYLC_SUITE_DEF_PATH' in os.environ:
-            sources.append(
-                os.path.join(os.getenv('CYLC_SUITE_DEF_PATH'), 'passphrase'))
-        suite_run_py = os.path.join(suite_run_dir, 'python')
-        if os.path.isdir(suite_run_py):
-            sources.append(suite_run_py)
         r_suite_run_dir = GLOBAL_CFG.get_derived_host_item(
-            suite_name, 'suite run directory', host, owner)
+            reg, 'suite run directory', host, owner)
         r_log_job_dir = GLOBAL_CFG.get_derived_host_item(
-            suite_name, 'suite job log directory', host, owner)
-        getLogger('log').info('Initialising %s:%s' % (
-            user_at_host, r_suite_run_dir))
+            reg, 'suite job log directory', host, owner)
+        r_suite_srv_dir = os.path.join(
+            r_suite_run_dir, self.suite_srv_files_mgr.DIR_BASE_SRV)
 
+        # Create a UUID file in the service directory.
+        # If remote host has the file in its service directory, we can assume
+        # that the remote host has a shared file system with the suite host.
         ssh_tmpl = GLOBAL_CFG.get_host_item(
-            'remote shell template', host, owner).replace(' %s', '')
-        scp_tmpl = GLOBAL_CFG.get_host_item(
-            'remote copy template', host, owner)
+            'remote shell template', host, owner)
+        uuid_str = str(uuid4())
+        uuid_fname = os.path.join(
+            self.suite_srv_files_mgr.get_suite_srv_dir(reg), uuid_str)
+        try:
+            open(uuid_fname, 'wb').close()
+            proc = Popen(
+                shlex.split(ssh_tmpl) + [
+                    '-n', user_at_host,
+                    'test', '-e', os.path.join(r_suite_srv_dir, uuid_str)],
+                stdout=PIPE, stderr=PIPE)
+            if proc.wait() == 0:
+                # Initialised, but no need to tidy up
+                self.initialised_hosts[user_at_host] = False
+                return
+        finally:
+            try:
+                os.unlink(uuid_fname)
+            except OSError:
+                pass
 
-        cmd1 = shlex.split(ssh_tmpl) + [
-            "-n", user_at_host,
-            'mkdir', '-p', r_suite_run_dir, r_log_job_dir]
-        cmd2 = shlex.split(scp_tmpl) + ['-pr'] + sources + [
-            user_at_host + ":" + r_suite_run_dir + '/']
-        for cmd in [cmd1, cmd2]:
+        cmds = []
+        # Command to create suite directory structure on remote host.
+        cmds.append(shlex.split(ssh_tmpl) + [
+            '-n', user_at_host,
+            'mkdir', '-p',
+            r_suite_run_dir, r_log_job_dir, r_suite_srv_dir])
+        # Command to copy contact and authentication files to remote host.
+        # Note: no need to do this if task communication method is "poll".
+        should_unlink = GLOBAL_CFG.get_host_item(
+            'task communication method', host, owner) != "poll"
+        if should_unlink:
+            scp_tmpl = GLOBAL_CFG.get_host_item(
+                'remote copy template', host, owner)
+            cmds.append(shlex.split(scp_tmpl) + [
+                '-p',
+                self.suite_srv_files_mgr.get_contact_file(reg),
+                self.suite_srv_files_mgr.get_auth_item(
+                    self.suite_srv_files_mgr.FILE_BASE_PASSPHRASE, reg),
+                self.suite_srv_files_mgr.get_auth_item(
+                    self.suite_srv_files_mgr.FILE_BASE_SSL_CERT, reg),
+                user_at_host + ':' + r_suite_srv_dir + '/'])
+        # Command to copy python library to remote host.
+        suite_run_py = os.path.join(
+            GLOBAL_CFG.get_derived_host_item(reg, 'suite run directory'),
+            'python')
+        if os.path.isdir(suite_run_py):
+            cmds.append(shlex.split(scp_tmpl) + [
+                '-pr',
+                suite_run_py, user_at_host + ':' + r_suite_run_dir + '/'])
+        # Run commands in sequence.
+        for cmd in cmds:
             proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
             out, err = proc.communicate()
             if proc.wait():
                 raise RemoteJobHostInitError(
-                    user_at_host, " ".join([quote(item) for item in cmd]),
+                    RemoteJobHostInitError.MSG_INIT,
+                    user_at_host, ' '.join([quote(item) for item in cmd]),
                     proc.returncode, out, err)
-        self.initialised_hosts.append(user_at_host)
+        self.initialised_hosts[user_at_host] = should_unlink
+        LOG.info('Initialised %s:%s' % (user_at_host, r_suite_run_dir))
+
+    def unlink_suite_contact_files(self, reg):
+        """Remove suite contact files from initialised hosts.
+
+        This is called on shutdown, so we don't want anything to hang.
+        Terminate any incomplete SSH commands after 10 seconds.
+        """
+        # Issue all SSH commands in parallel
+        procs = {}
+        for user_at_host, should_unlink in self.initialised_hosts.items():
+            if not should_unlink:
+                continue
+            if '@' in user_at_host:
+                owner, host = user_at_host.split('@', 1)
+            else:
+                owner, host = None, user_at_host
+            ssh_tmpl = GLOBAL_CFG.get_host_item(
+                'remote shell template', host, owner)
+            r_suite_contact_file = os.path.join(
+                GLOBAL_CFG.get_derived_host_item(
+                    reg, 'suite run directory', host, owner),
+                SuiteSrvFilesManager.DIR_BASE_SRV,
+                SuiteSrvFilesManager.FILE_BASE_CONTACT)
+            cmd = shlex.split(ssh_tmpl) + [
+                '-n', user_at_host, 'rm', '-f', r_suite_contact_file]
+            procs[user_at_host] = (cmd, Popen(cmd, stdout=PIPE, stderr=PIPE))
+        # Wait for commands to complete for a max of 10 seconds
+        timeout = time() + 10.0
+        while procs and time() < timeout:
+            for user_at_host, (cmd, proc) in procs.items():
+                if not proc.poll():
+                    continue
+                del procs[user_at_host]
+                out, err = proc.communicate()
+                if proc.wait():
+                    ERR.warning(RemoteJobHostInitError(
+                        RemoteJobHostInitError.MSG_TIDY,
+                        user_at_host, ' '.join([quote(item) for item in cmd]),
+                        proc.returncode, out, err))
+        # Terminate any remaining commands
+        for user_at_host, (cmd, proc) in procs.items():
+            try:
+                proc.terminate()
+            except OSError:
+                pass
+            out, err = proc.communicate()
+            proc.wait()
+            ERR.warning(RemoteJobHostInitError(
+                RemoteJobHostInitError.MSG_TIDY,
+                user_at_host, ' '.join([quote(item) for item in cmd]),
+                proc.returncode, out, err))

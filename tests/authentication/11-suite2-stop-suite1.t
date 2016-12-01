@@ -22,12 +22,13 @@
 set_test_number 1
 
 RUND="$(cylc get-global-config --print-run-dir)"
-SUITE1_RUND="$(mktemp -d --tmpdir="${RUND}" 'ctb-authentication-11-XXXXXXXX')"
-SUITE1="$(basename "${SUITE1_RUND}")"
-SUITE2_RUND="$(mktemp -d --tmpdir="${RUND}" 'ctb-authentication-11-XXXXXXXX')"
-SUITE2="$(basename "${SUITE2_RUND}")"
+NAME1="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}-1"
+NAME2="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}-2"
+SUITE1_RUND="${RUND}/${NAME1}"
+SUITE2_RUND="${RUND}/${NAME2}"
+cylc register "${NAME1}"
 cp -p "${TEST_SOURCE_DIR}/basic/suite.rc" "${SUITE1_RUND}"
-cylc register "${SUITE1}" "${SUITE1_RUND}"
+cylc register "${NAME2}"
 cat >"${SUITE2_RUND}/suite.rc" <<__SUITERC__
 [cylc]
     abort if any task fails=True
@@ -36,14 +37,12 @@ cat >"${SUITE2_RUND}/suite.rc" <<__SUITERC__
         graph=t1
 [runtime]
     [[t1]]
-        script=cylc shutdown "${SUITE1}"
+        script=cylc shutdown "${NAME1}"
 __SUITERC__
-cylc register "${SUITE2}" "${SUITE2_RUND}"
-cylc run --no-detach "${SUITE1}" 1>'1.out' 2>&1 &
-poll '!' test -e "${HOME}/.cylc/ports/${SUITE1}"
-run_ok "${TEST_NAME_BASE}" cylc run --no-detach "${SUITE2}"
-cylc shutdown "${SUITE1}" --max-polls=10 --interval=1 1>'/dev/null' 2>&1 || true
-purge_suite "${SUITE1}"
-purge_suite "${SUITE2}"
-rm -fr "${SUITE1_RUND}" "${SUITE2_RUND}"
+cylc run --no-detach "${NAME1}" 1>'1.out' 2>&1 &
+poll '!' test -e "${SUITE1_RUND}/.service/contact"
+run_ok "${TEST_NAME_BASE}" cylc run --no-detach "${NAME2}"
+cylc shutdown "${NAME1}" --max-polls=10 --interval=1 1>'/dev/null' 2>&1 || true
+purge_suite "${NAME1}"
+purge_suite "${NAME2}"
 exit

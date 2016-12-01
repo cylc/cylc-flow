@@ -30,7 +30,7 @@ install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 set -eu
 SSH='ssh -oBatchMode=yes -oConnectTimeout=5'
 SCP='scp -oBatchMode=yes -oConnectTimeout=5'
-$SSH -n "${CYLC_TEST_HOST}" "mkdir -p .cylc/$SUITE_NAME/bin"
+$SSH -n "${CYLC_TEST_HOST}" "mkdir -p cylc-run/$SUITE_NAME/bin"
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
@@ -38,21 +38,24 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 create_test_globalrc "" "
 [hosts]
    [[$CYLC_TEST_HOST]]
-        remote tail command template = \$HOME/.cylc/$SUITE_NAME/bin/my-tailer.sh %(filename)s"
-$SCP $PWD/bin/my-tailer.sh ${CYLC_TEST_HOST}:.cylc/$SUITE_NAME/bin/my-tailer.sh
+        remote tail command template = \$HOME/cylc-run/$SUITE_NAME/bin/my-tailer.sh %(filename)s"
+$SCP $PWD/bin/my-tailer.sh ${CYLC_TEST_HOST}:cylc-run/$SUITE_NAME/bin/my-tailer.sh
 #-------------------------------------------------------------------------------
 # Run detached.
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-sleep 10
+while ! grep -q -F '[foo.1] -(current:submitted)> started' \
+    "${SUITE_RUN_DIR}/log/suite/log"
+do
+    sleep 1
+done
 TEST_NAME=$TEST_NAME_BASE-cat-log
 cylc cat-log $SUITE_NAME -o --tail foo.1 > ${TEST_NAME}.out
 grep_ok "HELLO from foo 1" ${TEST_NAME}.out
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-stop
-run_ok $TEST_NAME cylc stop --kill --max-polls=10 --interval=1 $SUITE_NAME
+run_ok $TEST_NAME cylc stop --kill --max-polls=20 --interval=1 $SUITE_NAME
 #-------------------------------------------------------------------------------
-$SSH -n "${CYLC_TEST_HOST}" \
-    "rm -rf '.cylc/${SUITE_NAME}' 'cylc-run/${SUITE_NAME}'"
+purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
 purge_suite $SUITE_NAME
-
+exit

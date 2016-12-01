@@ -29,8 +29,3 @@ class CylcError(Exception):
 
     def __str__(self):
         return repr(self.msg)
-
-
-class PortFileError(CylcError):
-    """Error reading a port file."""
-    pass

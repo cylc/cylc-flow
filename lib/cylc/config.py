@@ -44,7 +44,6 @@ import cylc.flags
 from cylc.graphnode import graphnode, GraphNodeError
 from cylc.message_output import MessageOutput
 from cylc.print_tree import print_tree
-from cylc.regpath import RegPath
 from cylc.taskdef import TaskDef, TaskDefError
 from cylc.task_id import TaskID
 from cylc.task_trigger import TaskTrigger
@@ -113,7 +112,7 @@ class SuiteConfig(object):
                  owner=None, run_mode='live', validation=False, strict=False,
                  collapsed=[], cli_initial_point_string=None,
                  cli_start_point_string=None, cli_final_point_string=None,
-                 is_restart=False, is_reload=False, write_proc=True,
+                 is_restart=False, is_reload=False, output_fname=None,
                  vis_start_string=None, vis_stop_string=None,
                  mem_log_func=None):
         """Return a singleton instance.
@@ -128,7 +127,7 @@ class SuiteConfig(object):
                 suite, fpath, template_vars, owner,
                 run_mode, validation, strict, collapsed,
                 cli_initial_point_string, cli_start_point_string,
-                cli_final_point_string, is_restart, is_reload, write_proc,
+                cli_final_point_string, is_restart, is_reload, output_fname,
                 vis_start_string, vis_stop_string, mem_log_func)
         return cls._INSTANCE
 
@@ -136,7 +135,7 @@ class SuiteConfig(object):
                  owner=None, run_mode='live', validation=False, strict=False,
                  collapsed=[], cli_initial_point_string=None,
                  cli_start_point_string=None, cli_final_point_string=None,
-                 is_restart=False, is_reload=False, write_proc=True,
+                 is_restart=False, is_reload=False, output_fname=None,
                  vis_start_string=None, vis_stop_string=None,
                  mem_log_func=None):
 
@@ -199,7 +198,8 @@ class SuiteConfig(object):
         # items
         self.mem_log("config.py: before RawSuiteConfig.get_inst")
         self.pcfg = RawSuiteConfig.get_inst(
-            fpath, force=is_reload, tvars=template_vars, write_proc=write_proc)
+            fpath, force=is_reload, tvars=template_vars,
+            output_fname=output_fname)
         self.mem_log("config.py: after RawSuiteConfig.get_inst")
         self.mem_log("config.py: before get(sparse=True")
         self.cfg = self.pcfg.get(sparse=True)
@@ -1254,7 +1254,6 @@ class SuiteConfig(object):
 
     def process_directories(self):
         os.environ['CYLC_SUITE_NAME'] = self.suite
-        os.environ['CYLC_SUITE_REG_PATH'] = RegPath(self.suite).get_fpath()
         os.environ['CYLC_SUITE_DEF_PATH'] = self.fdir
 
     def check_tasks(self):

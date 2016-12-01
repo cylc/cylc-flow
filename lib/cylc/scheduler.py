@@ -42,7 +42,7 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.config import SuiteConfig, TaskNotDefinedError
 from cylc.cycling import PointParsingError
 from cylc.cycling.loader import get_point, standardise_point_string
-from cylc.daemonize import daemonize, SUITE_SCAN_INFO_TMPL
+from cylc.daemonize import daemonize
 from cylc.exceptions import CylcError
 import cylc.flags
 from cylc.get_task_proxy import get_task_proxy
@@ -63,10 +63,10 @@ from cylc.network.suite_info_server import SuiteInfoServer
 from cylc.network.suite_log_server import SuiteLogServer
 from cylc.network.suite_state_server import StateSummaryServer
 from cylc.owner import USER
-from cylc.registration import RegistrationDB
-from cylc.regpath import RegPath
+from cylc.suite_host import is_remote_host
+from cylc.suite_srv_files_mgr import (
+    SuiteSrvFilesManager, SuiteServiceFileError)
 from cylc.rundb import CylcSuiteDAO
-from cylc.suite_env import CylcSuiteEnv
 from cylc.suite_host import get_suite_host
 from cylc.suite_logging import SuiteLog, OUT, ERR, LOG
 from cylc.taskdef import TaskDef
@@ -136,12 +136,18 @@ class Scheduler(object):
         'triggered off', 'Initial point', 'Start point', 'Final point')
 
     def __init__(self, is_restart, options, args):
-
         self.options = options
-        self.profiler = Profiler(self.options.profile_mode)
         self.suite = args[0]
-        self.suiterc = RegistrationDB(self.options.db).get_suiterc(self.suite)
-        self.suite_dir = os.path.dirname(self.suiterc)
+        self.profiler = Profiler(self.options.profile_mode)
+        self.suite_srv_files_mgr = SuiteSrvFilesManager()
+        try:
+            self.suite_srv_files_mgr.register(self.suite, options.source)
+        except SuiteServiceFileError:
+            sys.exit(1)
+        # Register suite if not already done
+        self.suite_dir = self.suite_srv_files_mgr.get_suite_source_dir(
+            self.suite)
+        self.suiterc = self.suite_srv_files_mgr.get_suite_rc(self.suite)
         # For user-defined job submission methods:
         sys.path.append(os.path.join(self.suite_dir, 'python'))
 
@@ -169,7 +175,6 @@ class Scheduler(object):
         self.owner = USER
         self.host = get_suite_host()
         self.port = None
-        self.port_file = None
 
         self.is_stalled = False
         self.stalled_last = False
@@ -178,7 +183,7 @@ class Scheduler(object):
 
         self.suite_env = {}
         self.suite_task_env = {}
-        self.suite_env_dumper = None
+        self.contact_data = None
 
         self.do_process_tasks = False
         self.do_update_state_summary = True
@@ -229,24 +234,20 @@ class Scheduler(object):
 
     def start(self):
         """Start the server."""
-        try:
-            self._check_port_file_does_not_exist(self.suite)
-        except SchedulerError:
-            sys.exit(1)
-
         self._print_blurb()
 
         GLOBAL_CFG.create_cylc_run_tree(self.suite)
 
         if self.is_restart:
-            run_dir = GLOBAL_CFG.get_derived_host_item(
-                self.suite, 'suite run directory')
             pri_db_path = os.path.join(
-                run_dir, CylcSuiteDAO.PRI_DB_FILE_BASE_NAME)
+                self.suite_srv_files_mgr.get_suite_srv_dir(self.suite),
+                CylcSuiteDAO.DB_FILE_BASE_NAME)
 
             # Backward compat, upgrade database with state file if necessary
+            run_dir = GLOBAL_CFG.get_derived_host_item(
+                self.suite, 'suite run directory')
             old_pri_db_path = os.path.join(
-                run_dir, 'state', CylcSuiteDAO.DB_FILE_BASE_NAME)
+                run_dir, 'state', CylcSuiteDAO.OLD_DB_FILE_BASE_NAME)
             old_state_file_path = os.path.join(run_dir, "state", "state")
             if (os.path.exists(old_pri_db_path) and
                     os.path.exists(old_state_file_path) and
@@ -321,35 +322,6 @@ class Scheduler(object):
             self.shutdown()
 
         self.profiler.stop()
-
-    @staticmethod
-    def _check_port_file_does_not_exist(suite):
-        """Fail if port file exists. Return port file path otherwise."""
-        port_file_path = os.path.join(
-            GLOBAL_CFG.get(['communication', 'ports directory']), suite)
-        try:
-            port, host = open(port_file_path).read().splitlines()
-        except (IOError, ValueError):
-            # Suite is not likely to be running if port file does not exist
-            # or if port file does not contain good values of port and host.
-            return port_file_path
-        else:
-            ERR.error(
-                (
-                    r"""port file exists: %(port_file_path)s
-
-If %(suite)s is not running, delete the port file and try again.  If it is
-running but not responsive, kill any left over suite processes too.""" +
-                    SUITE_SCAN_INFO_TMPL
-                ) % {
-                    "host": host,
-                    "port": port,
-                    "port_file_path": port_file_path,
-                    "suite": suite,
-                }
-            )
-            raise SchedulerError(
-                "ERROR, port file exists: %s" % port_file_path)
 
     @staticmethod
     def _print_blurb():
@@ -427,7 +399,6 @@ conditions; see `cylc conditions`.
         # Write suite contact environment file
         suite_run_dir = GLOBAL_CFG.get_derived_host_item(
             self.suite, 'suite run directory')
-        self.suite_env_dumper.dump(suite_run_dir)
 
         # Copy local python modules from source to run directory
         for sub_dir in ["python", os.path.join("lib", "python")]:
@@ -542,10 +513,8 @@ conditions; see `cylc conditions`.
                 # Given in the suite.rc file
                 if my_point != point:
                     ERR.warning(
-                        ("old %s cycle point " +
-                         "%s, overriding suite.rc %s") % (
-                             key_str, point, my_point)
-                    )
+                        "old %s cycle point %s, overriding suite.rc %s" %
+                        (key_str, point, my_point))
                     setattr(self, self_attr, point)
             else:
                 # reinstate from old
@@ -977,46 +946,43 @@ conditions; see `cylc conditions`.
 
     def configure_comms_daemon(self):
         """Create and configure daemon."""
-        self.comms_daemon = CommsDaemon(self.suite, self.suite_dir)
+        self.comms_daemon = CommsDaemon(self.suite)
         self.port = self.comms_daemon.get_port()
-        self.port_file = os.path.join(
-            GLOBAL_CFG.get(['communication', 'ports directory']), self.suite)
-        try:
-            port, host = open(self.port_file).read().splitlines()
-        except (IOError, ValueError):
-            # Suite is not likely to be running if port file does not exist
-            # or if port file does not contain good values of port and host.
-            pass
-        else:
-            sys.stderr.write(
-                (
-                    r"""ERROR: port file exists: %(port_file)s
-
-If %(suite)s is not running, delete the port file and try again.  If it is
-running but not responsive, kill any left over suite processes too.
-
-To see if %(suite)s is running on '%(host)s:%(port)s':
- * cylc scan -n '\b%(suite)s\b' %(host)s
- * cylc ping -v --host=%(host)s %(suite)s
- * ssh %(host)s "pgrep -a -P 1 -fu $USER 'cylc-r.* \b%(suite)s\b'"
-
-"""
-                ) % {
-                    "host": host,
-                    "port": port,
-                    "port_file": self.port_file,
-                    "suite": self.suite,
-                }
-            )
+        # Make sure another suite of the same name has not started while this
+        # one is starting
+        self.suite_srv_files_mgr.detect_old_contact_file(self.suite)
+        # Get "pid,args" process string with "ps"
+        pid_str = str(os.getpid())
+        proc = Popen(
+            ["ps", "h", "-opid,args", pid_str], stdout=PIPE, stderr=PIPE)
+        out, err = proc.communicate()
+        ret_code = proc.wait()
+        process_str = None
+        for line in out.splitlines():
+            if line.split(None, 1)[0].strip() == pid_str:
+                process_str = line.strip()
+                break
+        if ret_code or not process_str:
             raise SchedulerError(
-                "ERROR, port file exists: %s" % self.port_file)
+                'ERROR, cannot get process "args" from "ps": %s' % err)
+        # Write suite contact file.
+        # Preserve contact data in memory, for regular health check.
+        contact_data = {
+            self.suite_srv_files_mgr.KEY_NAME: self.suite,
+            self.suite_srv_files_mgr.KEY_HOST: self.host,
+            self.suite_srv_files_mgr.KEY_PROCESS: process_str,
+            self.suite_srv_files_mgr.KEY_PORT: str(self.port),
+            self.suite_srv_files_mgr.KEY_OWNER: self.owner,
+            self.suite_srv_files_mgr.KEY_VERSION: CYLC_VERSION}
         try:
-            with open(self.port_file, 'w') as handle:
-                handle.write("%d\n%s\n" % (self.port, self.host))
+            self.suite_srv_files_mgr.dump_contact_file(
+                self.suite, contact_data)
         except IOError as exc:
-            sys.stderr.write(str(exc) + "\n")
             raise SchedulerError(
-                'ERROR, cannot write port file: %s' % self.port_file)
+                'ERROR, cannot write suite contact file: %s: %s' %
+                (self.suite_srv_files_mgr.get_contact_file(self.suite), exc))
+        else:
+            self.contact_data = contact_data
 
     def load_suiterc(self, reconfigure):
         """Load and log the suite definition."""
@@ -1028,7 +994,11 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
             cli_start_point_string=self._cli_start_point_string,
             cli_final_point_string=self.options.final_point_string,
             is_restart=self.is_restart, is_reload=reconfigure,
-            mem_log_func=self.profiler.log_memory
+            mem_log_func=self.profiler.log_memory,
+            output_fname=os.path.join(
+                GLOBAL_CFG.get_derived_host_item(
+                    self.suite, 'suite run directory'),
+                self.suite_srv_files_mgr.FILE_BASE_SUITE_RC + '.processed'),
         )
         # Dump the loaded suiterc for future reference.
         cfg_logdir = GLOBAL_CFG.get_derived_host_item(
@@ -1080,10 +1050,9 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
         elif self.is_restart:
             # This logic handles the lack of initial cycle point in "suite.rc".
             # Things that can't change on suite reload.
-            run_dir = GLOBAL_CFG.get_derived_host_item(
-                self.suite, 'suite run directory')
             pri_db_path = os.path.join(
-                run_dir, CylcSuiteDAO.PRI_DB_FILE_BASE_NAME)
+                self.suite_srv_files_mgr.get_suite_srv_dir(self.suite),
+                CylcSuiteDAO.DB_FILE_BASE_NAME)
             self.pri_dao = CylcSuiteDAO(pri_db_path)
             self.pri_dao.select_suite_params(self._load_initial_cycle_point)
             self.pri_dao.select_suite_template_vars(self._load_template_vars)
@@ -1105,7 +1074,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
         if self.final_point is not None:
             self.final_point.standardise()
 
-        if (not self.initial_point and not self.is_restart):
+        if not self.initial_point and not self.is_restart:
             ERR.warning('No initial cycle point provided - no cycling tasks '
                         'will be loaded.')
 
@@ -1120,9 +1089,10 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
             run_dir = GLOBAL_CFG.get_derived_host_item(
                 self.suite, 'suite run directory')
             pri_db_path = os.path.join(
-                run_dir, CylcSuiteDAO.PRI_DB_FILE_BASE_NAME)
+                self.suite_srv_files_mgr.get_suite_srv_dir(self.suite),
+                CylcSuiteDAO.DB_FILE_BASE_NAME)
             pub_db_path = os.path.join(
-                run_dir, CylcSuiteDAO.PUB_DB_FILE_BASE_NAME)
+                run_dir, 'log', CylcSuiteDAO.DB_FILE_BASE_NAME)
             if not self.is_restart:
                 # Remove database created by previous runs
                 try:
@@ -1138,18 +1108,18 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
             self.pub_dao = CylcSuiteDAO(pub_db_path, is_public=True)
             self._copy_pri_db_to_pub_db()
             pub_db_path_symlink = os.path.join(
-                run_dir, CylcSuiteDAO.DB_FILE_BASE_NAME)
+                run_dir, CylcSuiteDAO.OLD_DB_FILE_BASE_NAME)
             try:
-                source = os.readlink(pub_db_path_symlink)
+                orig_source = os.readlink(pub_db_path_symlink)
             except OSError:
-                source = None
-            if source != CylcSuiteDAO.PUB_DB_FILE_BASE_NAME:
+                orig_source = None
+            source = os.path.join('log', CylcSuiteDAO.DB_FILE_BASE_NAME)
+            if orig_source != source:
                 try:
                     os.unlink(pub_db_path_symlink)
                 except OSError:
                     pass
-                os.symlink(
-                    CylcSuiteDAO.PUB_DB_FILE_BASE_NAME, pub_db_path_symlink)
+                os.symlink(source, pub_db_path_symlink)
 
             if self.config.cfg['scheduling']['hold after point']:
                 self.pool_hold_point = get_point(
@@ -1201,13 +1171,13 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
             'CYLC_VERBOSE': str(cylc.flags.verbose),
             'CYLC_DIR_ON_SUITE_HOST': os.environ['CYLC_DIR'],
             'CYLC_SUITE_NAME': self.suite,
-            'CYLC_SUITE_REG_NAME': self.suite,  # DEPRECATED
             'CYLC_SUITE_HOST': str(self.host),
             'CYLC_SUITE_OWNER': self.owner,
             'CYLC_SUITE_PORT': str(self.comms_daemon.get_port()),
-            # DEPRECATED
-            'CYLC_SUITE_REG_PATH': RegPath(self.suite).get_fpath(),
             'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST': self.suite_dir,
+            'CYLC_SUITE_RUN_DIR_ON_SUITE_HOST': (
+                GLOBAL_CFG.get_derived_host_item(
+                    self.suite, 'suite run directory')),
             # may be "None"
             'CYLC_SUITE_INITIAL_CYCLE_POINT': str(self.initial_point),
             # may be "None"
@@ -1219,11 +1189,6 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
             # needed by the test battery
             'CYLC_SUITE_LOG_DIR': self.suite_log.get_dir(),
         }
-
-        # Contact details for remote tasks, written to file on task
-        # hosts because the details can change on restarting a suite.
-        self.suite_env_dumper = CylcSuiteEnv(self.suite_env)
-        self.suite_env_dumper.suite_cylc_version = CYLC_VERSION
 
         # Set local values of variables that are potenitally task-specific
         # due to different directory paths on different task hosts. These
@@ -1586,19 +1551,20 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
                 self.check_suite_stalled()
             now = time()
             if time_next_fs_check is None or now > time_next_fs_check:
-                for message, item in [
-                        ("%s: suite run directory not found", suite_run_dir),
-                        ("%s: port file not found", self.port_file)]:
-                    if not os.path.exists(item):
-                        raise SchedulerError(message % (item))
+                if not os.path.exists(suite_run_dir):
+                    raise SchedulerError(
+                        "%s: suite run directory not found" % (suite_run_dir))
                 try:
-                    port, host = open(self.port_file).read().splitlines()
-                    assert self.port == int(port) and self.host == host
-                except (AssertionError, IOError, IndexError, ValueError):
+                    contact_data = self.suite_srv_files_mgr.load_contact_file(
+                        self.suite)
+                    assert contact_data == self.contact_data
+                except (AssertionError, IOError, ValueError,
+                        SuiteServiceFileError):
+                    traceback.print_exc()
                     exc = SchedulerError(
-                        ("%s: port file corrupted/modified and" +
-                         " will be left") % self.port_file)
-                    self.port_file = None
+                        ("%s: suite contact file corrupted/modified and" +
+                         " may be left") %
+                        self.suite_srv_files_mgr.get_contact_file(self.suite))
                     raise exc
                 time_next_fs_check = (
                     now + self._get_cylc_conf('health check interval'))
@@ -1875,7 +1841,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
         else:
             s_user, s_host = (None, ctx.user_at_host)
         ssh_tmpl = str(GLOBAL_CFG.get_host_item(
-            "remote shell template", s_host, s_user)).replace(" %s", "")
+            "remote shell template", s_host, s_user))
         rsync_str = str(GLOBAL_CFG.get_host_item(
             "retrieve job logs command", s_host, s_user))
 
@@ -1988,16 +1954,18 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
                     pass
             self.comms_daemon.shutdown()
 
-        # Make sure errors and info are written before the port file goes.
+        # Flush errors and info before removing suite contact file
         sys.stdout.flush()
         sys.stderr.flush()
 
-        if self.comms_daemon and self.port_file:
+        if self.contact_data:
+            fname = self.suite_srv_files_mgr.get_contact_file(self.suite)
             try:
-                os.unlink(self.port_file)
+                os.unlink(fname)
             except OSError as exc:
-                ERR.warning("failed to remove port file: %s\n%s\n" % (
-                    self.port_file, exc))
+                ERR.warning("failed to remove suite contact file: %s\n%s\n" % (
+                    fname, exc))
+        RemoteJobHostManager.get_inst().unlink_suite_contact_files(self.suite)
 
         # disconnect from suite-db, stop db queue
         if getattr(self, "db", None) is not None:
@@ -2020,7 +1988,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
     def set_stop_clock(self, unix_time, date_time_string):
         """Set stop clock time."""
         self.log.info("Setting stop clock time: %s (unix time: %s)" % (
-                      date_time_string, unix_time))
+            date_time_string, unix_time))
         self.stop_clock_time = unix_time
         self.stop_clock_time_string = date_time_string
 
@@ -2147,7 +2115,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
             open(self.pub_dao.db_file_name, "a").close()  # touch
             st_mode = os.stat(self.pub_dao.db_file_name).st_mode
             temp_pub_db_file_name = mkstemp(
-                prefix=self.pub_dao.PUB_DB_FILE_BASE_NAME,
+                prefix=self.pub_dao.DB_FILE_BASE_NAME,
                 dir=os.path.dirname(self.pub_dao.db_file_name))[1]
             copyfile(
                 self.pri_dao.db_file_name, temp_pub_db_file_name)

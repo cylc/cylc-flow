@@ -34,7 +34,6 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --reference-test -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}" \
     "${SUITE_NAME}"
 
-ssh -n -oBatchMode=yes -oConnectTimeout=5 "${CYLC_TEST_HOST}" \
-    "rm -fr 'cylc-run/${SUITE_NAME}'"
+purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

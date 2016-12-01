@@ -8,7 +8,7 @@ from subprocess import call
 
 def main():
     handle = open(
-        os.path.join(os.getenv("CYLC_SUITE_RUN_DIR"), "cylc-suite-public.db"))
+        os.path.join(os.getenv("CYLC_SUITE_RUN_DIR"), "log", "db"))
     lockf(handle, LOCK_SH)
     call([
         "cylc", "task", "message",
@@ -17,7 +17,7 @@ def main():
     suite_log_dir = os.getenv("CYLC_SUITE_LOG_DIR")
     while True:
         for line in open(os.path.join(suite_log_dir, "log")):
-            if "cylc-suite-public.db: recovered from" in line:
+            if "db: recovered from" in line:
                 return
         time.sleep(1)
 

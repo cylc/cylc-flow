@@ -24,7 +24,7 @@ Note on result filtering:
   (a) The filter patterns are Regular Expressions, not shell globs, so
 the general wildcard is '.*' (match zero or more of anything), NOT '*'.
   (b) For printing purposes there is an implicit wildcard at the end of
-each pattern ('foo' is the same as 'foo.*'); use the string end marker
+each pattern ('foo' is the same as 'foo/*'); use the string end marker
 to prevent this ('foo$' matches only literal 'foo')."""
 
 import sys
@@ -37,15 +37,14 @@ import re
 
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.registration import RegistrationDB
+from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.print_tree import print_tree
-from cylc.regpath import RegPath
 
 
 def get_padding(reglist):
     maxlen = 0
     for reg in reglist:
-        items = RegPath(reg[0]).get_list()
+        items = reg[0].split(SuiteSrvFilesManager.DELIM)
         for i in range(0, len(items)):
             if i == 0:
                 tmp = len(items[i])
@@ -94,8 +93,7 @@ def main():
     else:
         parser.error("Wrong number of arguments.")
 
-    db = RegistrationDB(options.db)
-    allsuites = db.get_list(regfilter)
+    allsuites = SuiteSrvFilesManager().list_suites(regfilter)
     if options.fail and len(allsuites) == 0:
         raise SystemExit('ERROR: no suites matched.')
     if not options.tree:
@@ -136,7 +134,7 @@ def main():
             dir = re.sub('^' + os.environ['HOME'], '~', dir)
             if options.align:
                 title = title + spacer_title[len(title):]
-            regpath = RegPath(suite).get_list()
+            regpath = suite.split(SuiteSrvFilesManager.DELIM)
             sub = tree
             for key in regpath[:-1]:
                 if key not in sub:

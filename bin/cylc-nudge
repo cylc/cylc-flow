@@ -48,8 +48,8 @@ def main():
     suite = args[0]
 
     pclient = SuiteCommandClient(
-        suite, options.owner, options.host, options.comms_timeout,
-        options.port, options.db, my_uuid=options.set_uuid,
+        suite, options.owner, options.host, options.port,
+        options.comms_timeout, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
 
     success, msg = pclient.put_command('nudge')

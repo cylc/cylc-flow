@@ -84,8 +84,8 @@ def main():
     prompt(msg, options.force)
 
     cmd_client = SuiteCommandClient(
-        suite, options.owner, options.host, options.comms_timeout,
-        options.port, options.db, my_uuid=options.set_uuid,
+        suite, options.owner, options.host, options.port,
+        options.comms_timeout, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
 
     if options.edit_run:
@@ -93,8 +93,8 @@ def main():
         task_id = items[0]
         # Check that TASK is a unique task.
         info_client = SuiteInfoClient(
-            suite, options.owner, options.host, options.comms_timeout,
-            options.port, options.db, my_uuid=cmd_client.my_uuid)
+            suite, options.owner, options.host, options.port,
+            options.comms_timeout, my_uuid=cmd_client.my_uuid)
         success, msg = info_client.get_info(
             'ping_task', task_id=task_id, exists_only=True)
         if not success:

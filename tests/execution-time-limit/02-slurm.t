@@ -54,9 +54,8 @@ grep_ok '#SBATCH --time=1:10' "${LOGD}/01/job"
 #grep_ok 'CYLC_JOB_EXIT=EXIT' "${LOGD}/01/job.status"
 #grep_ok 'CYLC_JOB_EXIT=SUCCEEDED' "${LOGD}/02/job.status"
 
-purge_suite "${SUITE_NAME}"
 if [[ "${CYLC_TEST_BATCH_TASK_HOST}" != 'localhost' ]]; then
-    ssh -n -oBatchMode=yes -oConnectTimeout=5 "${CYLC_TEST_BATCH_TASK_HOST}" \
-        "rm -fr 'cylc-run/${SUITE_NAME}'"
+    purge_suite_remote "${CYLC_TEST_BATCH_TASK_HOST}" "${SUITE_NAME}"
 fi
+purge_suite "${SUITE_NAME}"
 exit

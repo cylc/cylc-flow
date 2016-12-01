@@ -27,7 +27,6 @@ run_tests() {
     run_ok $TEST_NAME cylc validate $SUITE_NAME
     TEST_NAME=$TEST_NAME_BASE-run
     suite_run_ok $TEST_NAME cylc run --reference-test $SUITE_NAME
-    SUITE_RUN_DIR=$(cylc get-global-config --print-run-dir)/$SUITE_NAME
 
     # Make sure t1.1.1's status file is in place
     T1_STATUS_FILE=$SUITE_RUN_DIR/log/job/1/t1/01/job.status
@@ -50,7 +49,7 @@ run_tests() {
         sleep 1
     done
     TIMEOUT=$(($(date +%s) + 10))
-    while ! sqlite3 $SUITE_RUN_DIR/cylc-suite.db \
+    while ! sqlite3 "${SUITE_RUN_DIR}/log/db" \
                 'SELECT status FROM task_states WHERE name=="t1";' \
                 >"$TEST_NAME-db-t1" 2>/dev/null \
             && (($TIMEOUT > $(date +%s)))
@@ -64,11 +63,11 @@ run_tests() {
     $SUITE_RUN_DIR/log/job/1/t1/01/job </dev/null >/dev/null 2>&1 &
     # Wait for suite to complete
     TIMEOUT=$(($(date +%s) + 120))
-    while [[ -f ~/.cylc/ports/$SUITE_NAME ]] && (($TIMEOUT > $(date +%s))); do
+    while [[ -f "${SUITE_RUN_DIR}/.service/contact" ]] && (($TIMEOUT > $(date +%s))); do
         sleep 1
     done
     # Test t1 status in DB
-    sqlite3 $SUITE_RUN_DIR/cylc-suite.db \
+    sqlite3 "${SUITE_RUN_DIR}/log/db" \
         'SELECT status FROM task_states WHERE name=="t1";' >"$TEST_NAME-db-t1"
     cmp_ok "$TEST_NAME-db-t1" - <<<'succeeded'
     # Test reference

@@ -3,7 +3,7 @@
 [cylc]
     UTC mode = True
     [[events]]
-        timeout handler = shutdown_this_suite_hook
+        abort on timeout = True
         timeout = PT3M
 [scheduling]
     initial cycle point = 20130923T00
@@ -24,6 +24,6 @@
 {% include 'suite-runtime-restart.rc' %}
     [[shutdown]]
         post-script = """
-            cylc shutdown --now $CYLC_SUITE_REG_NAME
+            cylc shutdown --now $CYLC_SUITE_NAME
             sleep 5
         """

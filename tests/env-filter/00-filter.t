@@ -21,7 +21,7 @@
 set_test_number 17 
 #-------------------------------------------------------------------------------
 # a test suite that uses environment filtering:
-init_suite $TEST_NAME_BASE <<'__SUITERC__'
+init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
 [scheduling]
     [[dependencies]]
         graph = "foo & bar & baz & qux"
@@ -91,28 +91,32 @@ cmp_ok $TEST_NAME.stderr - </dev/null
 TEST_NAME=$TEST_NAME_BASE-jobscript
 
 cylc jobscript $SUITE_NAME foo.1 2> /dev/null | \
-    perl -0777 -ne 'print $1 if /# TASK RUNTIME ENVIRONMENT:\n(.*?)export/s' > $SUITE_NAME.stdout
-cmp_ok $SUITE_NAME.stdout - <<__OUT__
+    perl -0777 -ne 'print $1 if /# TASK RUNTIME ENVIRONMENT:\n(.*?)export/s' \
+    >'foo.1.stdout'
+cmp_ok 'foo.1.stdout' - <<__OUT__
 FOO="foo"
 BAR="bar"
 __OUT__
 
 cylc jobscript $SUITE_NAME bar.1 2> /dev/null | \
-    perl -0777 -ne 'print $1 if /# TASK RUNTIME ENVIRONMENT:\n(.*?)export/s' > $SUITE_NAME.stdout
-cmp_ok $SUITE_NAME.stdout - <<__OUT__
+    perl -0777 -ne 'print $1 if /# TASK RUNTIME ENVIRONMENT:\n(.*?)export/s' \
+    >'bar.1.stdout'
+cmp_ok 'bar.1.stdout' - <<__OUT__
 BAR="bar"
 __OUT__
 
 cylc jobscript $SUITE_NAME baz.1 2> /dev/null | \
-    perl -0777 -ne 'print $1 if /# TASK RUNTIME ENVIRONMENT:\n(.*?)export/s' > $SUITE_NAME.stdout
-cmp_ok $SUITE_NAME.stdout - <<__OUT__
+    perl -0777 -ne 'print $1 if /# TASK RUNTIME ENVIRONMENT:\n(.*?)export/s' \
+    >'baz.1.stdout'
+cmp_ok 'baz.1.stdout' - <<__OUT__
 BAZ="baz"
 QUX="qux"
 __OUT__
 
 cylc jobscript $SUITE_NAME qux.1 2> /dev/null | \
-    perl -0777 -ne 'print $1 if /# TASK RUNTIME ENVIRONMENT:\n(.*?)export/s' > $SUITE_NAME.stdout
-cmp_ok $SUITE_NAME.stdout - <<__OUT__
+    perl -0777 -ne 'print $1 if /# TASK RUNTIME ENVIRONMENT:\n(.*?)export/s' \
+    >'qux.1.stdout'
+cmp_ok 'qux.1.stdout' - <<__OUT__
 FOO="foo"
 BAR="bar"
 BAZ="baz"
@@ -120,4 +124,5 @@ QUX="qux"
 __OUT__
 
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite "${SUITE_NAME}"
+exit

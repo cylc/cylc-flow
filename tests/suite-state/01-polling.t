@@ -28,15 +28,14 @@ install_suite $TEST_NAME_BASE polling
 cp -r $TEST_SOURCE_DIR/upstream $TEST_DIR/
 # this version uses a simple Rose-style suite name [\w-]
 UPSTREAM=${SUITE_NAME}-upstream
-cylc unreg $UPSTREAM
 cylc reg $UPSTREAM $TEST_DIR/upstream
 #-------------------------------------------------------------------------------
 # validate both suites as tests
 TEST_NAME=$TEST_NAME_BASE-validate-upstream
-run_ok $TEST_NAME cylc val $UPSTREAM
+run_ok $TEST_NAME cylc val --debug $UPSTREAM
 
 TEST_NAME=$TEST_NAME_BASE-validate-polling
-run_ok $TEST_NAME cylc val --set UPSTREAM=$UPSTREAM $SUITE_NAME
+run_ok $TEST_NAME cylc val --debug --set UPSTREAM=$UPSTREAM $SUITE_NAME
 
 #-------------------------------------------------------------------------------
 # run the upstream suite and detach (not a test)
@@ -54,5 +53,5 @@ purge_suite $SUITE_NAME
 # clean up the upstream suite
 # just in case (expect error message here, but exit 0):
 cylc stop --now $UPSTREAM --max-polls=20 --interval=2 > /dev/null 2>&1
-rm -rf $( cylc get-global-config --print-run-dir )/$UPSTREAM
-cylc unreg $UPSTREAM
+purge_suite "${UPSTREAM}"
+exit

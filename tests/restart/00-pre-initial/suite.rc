@@ -1,0 +1,26 @@
+#!jinja2
+[cylc]
+    UTC mode = True
+    [[events]]
+        abort on timeout = True
+        timeout = PT1M
+[scheduling]
+    initial cycle point = 20100808T00
+    final cycle point = 20100808T06
+    [[dependencies]]
+        [[[R1]]]
+            graph = "p1 => p2"
+        [[[T00]]]
+            graph = """p2 => foo
+                foo[-P1D] => foo => bar"""
+[runtime]
+    [[p1]]
+        script = """
+wait "${CYLC_TASK_MESSAGE_STARTED_PID}"
+sleep 1
+cylc shutdown --now --max-polls=30 --interval=2 "${CYLC_SUITE_NAME}"
+"""
+    [[foo, p2]]
+        script = true
+    [[bar]]
+        script = true

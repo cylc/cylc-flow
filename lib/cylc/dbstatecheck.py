@@ -19,6 +19,7 @@
 import os
 import sqlite3
 import sys
+from cylc.rundb import CylcSuiteDAO
 from cylc.task_state import (
     TASK_STATUS_HELD, TASK_STATUS_WAITING, TASK_STATUS_EXPIRED,
     TASK_STATUS_QUEUED, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
@@ -44,7 +45,6 @@ class DBNotFoundError(Exception):
 
 class CylcSuiteDBChecker(object):
     """Object for querying a suite database"""
-    DB_FILE_BASE_NAME = "cylc-suite.db"
     STATE_ALIASES = {}
     STATE_ALIASES['finish'] = [TASK_STATUS_FAILED, TASK_STATUS_SUCCEEDED]
     STATE_ALIASES['start'] = [TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED,
@@ -56,13 +56,11 @@ class CylcSuiteDBChecker(object):
     STATE_ALIASES['fail'] = [TASK_STATUS_FAILED]
     STATE_ALIASES['succeed'] = [TASK_STATUS_SUCCEEDED]
 
-    def __init__(self, suite_dir, suite, dbname=None):
+    def __init__(self, suite_dir, suite):
         # possible to set suite_dir to system default cylc-run dir?
         suite_dir = os.path.expanduser(suite_dir)
-        if dbname is not None:
-            self.DB_FILE_BASE_NAME = dbname
-        self.db_address = (
-            suite_dir + "/" + suite + "/" + self.DB_FILE_BASE_NAME)
+        self.db_address = os.path.join(
+            suite_dir, suite, "log", CylcSuiteDAO.DB_FILE_BASE_NAME)
         if not os.path.exists(self.db_address):
             raise DBNotFoundError(self.db_address)
         self.conn = sqlite3.connect(self.db_address, timeout=10.0)

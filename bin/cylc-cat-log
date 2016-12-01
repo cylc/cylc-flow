@@ -185,7 +185,7 @@ def get_task_job_attrs(options, suite, point, task, submit_num):
     suite_dao = CylcSuiteDAO(
         os.path.join(
             GLOBAL_CFG.get_derived_host_item(suite, "suite run directory"),
-            CylcSuiteDAO.DB_FILE_BASE_NAME),
+            "log", CylcSuiteDAO.DB_FILE_BASE_NAME),
         is_public=True)
     task_job_data = suite_dao.select_task_job(None, point, task, submit_num)
     suite_dao.close()
@@ -302,7 +302,7 @@ def main():
     # Deal with remote [user@]host
     if user_at_host:
         ssh = str(GLOBAL_CFG.get_host_item(
-            "remote shell template", host, owner)).replace(" %s", "")
+            "remote shell template", host, owner))
         for i, command in enumerate(commands):
             commands[i] = shlex.split(ssh) + ["-n", user_at_host] + command
 

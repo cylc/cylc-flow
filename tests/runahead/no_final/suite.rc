@@ -19,4 +19,4 @@
     [[shutdown]]
         script = """
 sleep 5
-cylc shutdown $CYLC_SUITE_REG_NAME"""
+cylc shutdown $CYLC_SUITE_NAME"""

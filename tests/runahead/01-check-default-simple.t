@@ -29,7 +29,7 @@ TEST_NAME=$TEST_NAME_BASE-run
 run_fail $TEST_NAME cylc run --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-max-cycle
-DB=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db
+DB="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/db"
 run_ok $TEST_NAME sqlite3 $DB "select max(cycle) from task_states"
 cmp_ok "$TEST_NAME.stdout" <<'__OUT__'
 20100101T1800Z

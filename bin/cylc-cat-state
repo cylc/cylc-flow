@@ -58,6 +58,8 @@ def main():
     try:
         lines = _get_state_lines(suite)
     except sqlite3.Error as exc:
+        if cylc.flags.debug:
+            traceback.print_exc()
         try:
             lines = _get_state_lines_compat(suite)
         except IOError:
@@ -77,7 +79,7 @@ def _get_state_lines(suite):
     dao = CylcSuiteDAO(
         os.path.join(
             GLOBAL_CFG.get_derived_host_item(suite, 'suite run directory'),
-            CylcSuiteDAO.DB_FILE_BASE_NAME),
+            'log', CylcSuiteDAO.DB_FILE_BASE_NAME),
         is_public=True)
     data = {
         "run_mode": None,

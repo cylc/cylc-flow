@@ -25,22 +25,16 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
 LOGD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log"
 poll "! grep -q 'WARNING - suite stalled' '${LOGD}/suite/log'"
-PORTSD="$(cylc get-global-config --item='[communication]ports directory')"
-while [[ "${PORTSD}" == */ ]]; do  # remove trailing slashes
-    PORTSD="${PORTSD%/}"
-done
-if [[ -z "${PORTSD}" ]]; then
-    exit 1
-fi
+SRVD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/.service"
 # Read port from port file before corrupting it
-PORT="$(head -1 "${PORTSD}/${SUITE_NAME}")"
+PORT="$(awk -F= '$1 ~ /CYLC_SUITE_PORT/ {print $2}' "${SRVD}/contact")"
 if [[ -z "${PORT}" ]]; then
     exit 1
 fi
-echo 'garbage' >"${PORTSD}/${SUITE_NAME}"
+echo 'garbage' >"${SRVD}/contact"
 run_fail "${TEST_NAME_BASE}-stop-1" cylc stop "${SUITE_NAME}"
 contains_ok "${TEST_NAME_BASE}-stop-1.stderr" <<__ERR__
-'ERROR, bad content in port file: ${PORTSD}/${SUITE_NAME}'
+Contact info not found for suite "${SUITE_NAME}", suite not running?
 __ERR__
 run_ok "${TEST_NAME_BASE}-stop-2" \
     cylc stop --port="${PORT}" "${SUITE_NAME}" --max-polls='5' --interval='2'

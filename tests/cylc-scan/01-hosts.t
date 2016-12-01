@@ -26,7 +26,7 @@ fi
 #-------------------------------------------------------------------------------
 set_test_number "$(($(wc -w <<<"${HOSTS}") + 1))"
 #-------------------------------------------------------------------------------
-UUID="$(uuidgen)"
+PREFIX="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}"
 SSH='ssh -oBatchMode=yes -oConnectTimeout=5'
 SCP='scp -oBatchMode=yes -oConnectTimeout=5'
 set -e
@@ -34,22 +34,24 @@ for HOST in $(tr -d ',' <<<"${HOSTS}"); do
     if [[ "${HOST}" == 'localhost' ]]; then
         HOST_WORK_DIR="${PWD}"
         cp "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/suite.rc" .
-        cylc register "${UUID}-${HOST}" "${HOST_WORK_DIR}" 1>/dev/null 2>&1
-        cylc run "${UUID}-${HOST}" 1>/dev/null 2>&1
-        poll '!' test -e "${HOME}/.cylc/ports/${UUID}-${HOST}"
+        cylc register "${PREFIX}-${HOST}" "${HOST_WORK_DIR}" 1>/dev/null 2>&1
+        cylc run "${PREFIX}-${HOST}" 1>/dev/null 2>&1
+        RUND="$(cylc get-global-config '--print-run-dir')/${PREFIX}-${HOST}"
+        poll '!' test -e "${RUND}/.service/contact"
     else
         HOST_WORK_DIR="$($SSH -n "${HOST}" 'mktemp -d')"
         $SCP "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/suite.rc" \
             "${HOST}:${HOST_WORK_DIR}"
-        cylc register "--host=${HOST}" "${UUID}-${HOST}" "${HOST_WORK_DIR}" \
+        cylc register "--host=${HOST}" "${PREFIX}-${HOST}" "${HOST_WORK_DIR}" \
             1>/dev/null 2>&1
-        mkdir -p "${HOME}/.cylc/passphrases/${USER}@${HOST}/${UUID}-${HOST}"
-        ${SCP} -p "${HOST}:${HOST_WORK_DIR}/passphrase" \
-            "${HOME}/.cylc/passphrases/${USER}@${HOST}/${UUID}-${HOST}/"
-        ${SCP} -p "${HOST}:${HOST_WORK_DIR}/ssl.*" \
-            "${HOME}/.cylc/passphrases/${USER}@${HOST}/${UUID}-${HOST}/"
-        cylc run "--host=${HOST}" "${UUID}-${HOST}" 1>/dev/null 2>&1
-        poll '!' ${SSH} -n "${HOST}" "test -e '.cylc/ports/${UUID}-${HOST}'"
+        mkdir -p "${HOME}/.cylc/auth/${USER}@${HOST}/${PREFIX}-${HOST}"
+        ${SCP} -p \
+            "${HOST}:cylc-run/${PREFIX}-${HOST}/.service/passphrase" \
+            "${HOST}:cylc-run/${PREFIX}-${HOST}/.service/ssl.*" \
+            "${HOME}/.cylc/auth/${USER}@${HOST}/${PREFIX}-${HOST}/"
+        cylc run "--host=${HOST}" "${PREFIX}-${HOST}" 1>/dev/null 2>&1
+        poll '!' ${SSH} -n "${HOST}" \
+            "test -e 'cylc-run/${PREFIX}-${HOST}/.service/contact'"
     fi
     echo "${HOST}:${HOST_WORK_DIR}" >>'host-work-dirs.list'
 done
@@ -60,22 +62,21 @@ for ITEM in $(<'host-work-dirs.list'); do
     HOST="${ITEM%%:*}"
     HOST_WORK_DIR="${ITEM#*:}"
     run_ok "${TEST_NAME_BASE}-grep-${HOST}" \
-        grep -q "^${UUID}-${HOST}" "${TEST_NAME_BASE}.stdout"
+        grep -q "^${PREFIX}-${HOST}" "${TEST_NAME_BASE}.stdout"
     if [[ "${HOST}" == 'localhost' ]]; then
-        cylc shutdown --now --max-polls=30 --interval=2 "${UUID}-${HOST}" \
+        cylc shutdown --now --max-polls=30 --interval=2 "${PREFIX}-${HOST}" \
             1>'/dev/null' 2>&1
-        rm -fr "$(cylc get-global-config '--print-run-dir')/${UUID}-${HOST}"
-        cylc unregister "${UUID}-${HOST}"
+        rm -fr "$(cylc get-global-config '--print-run-dir')/${PREFIX}-${HOST}"
     else
         cylc shutdown --now --max-polls=30 --interval=2 \
-            "--host=${HOST}" "${UUID}-${HOST}" 1>'/dev/null' 2>&1
-        $SSH -n "${HOST}" \
-            "rm -fr '${HOST_WORK_DIR}' 'cylc-run/${UUID}-${HOST}'"
-        rm -fr "${HOME}/.cylc/passphrases/${USER}@${HOST}/${UUID}-${HOST}/"
-        rmdir "${HOME}/.cylc/passphrases/${USER}@${HOST}/" 2>'/dev/null' || true
-        cylc unregister "--host=${HOST}" "${UUID}-${HOST}"
+            "--host=${HOST}" "${PREFIX}-${HOST}"
+        purge_suite_remote "${HOST}" "${PREFIX}-${HOST}"
+        rm -fr "${HOME}/.cylc/auth/${USER}@${HOST}/${PREFIX}-${HOST}/"
+        (cd "${HOME}/.cylc/auth/" \
+            && rmdir -p "${USER}@${HOST}/$(dirname "${PREFIX}")" 2>'/dev/null' \
+            || true)
     fi
 done
-rmdir "${HOME}/.cylc/passphrases/" 2>'/dev/null' || true
+rmdir "${HOME}/.cylc/auth/" 2>'/dev/null' || true
 #-------------------------------------------------------------------------------
 exit

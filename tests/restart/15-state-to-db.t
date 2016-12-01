@@ -22,42 +22,37 @@ set_test_number 18
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-SUITE_RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
 mkdir -p "${SUITE_RUN_DIR}/state"
 sqlite3 "${SUITE_RUN_DIR}/state/cylc-suite.db" <"cylc-suite-db.dump"
 cp -p 'state/state' "${SUITE_RUN_DIR}/state/"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart --debug "${SUITE_NAME}"
-greps_ok "Populating suite_params table
- + run_mode=live
- + initial_point=20000101T0000Z
- + final_point=20030101T0000Z
-Populating task_pool table
- + bar.20030101T0000Z
- + bar.20040101T0000Z
- + foo.20040101T0000Z
+sed -i 's/^.* INFO - //' "${TEST_NAME_BASE}-restart.stdout"
+contains_ok "${TEST_NAME_BASE}-restart.stdout" <<'__OUT__'
 LOADING suite parameters
 + initial cycle point = 20000101T0000Z
 + final cycle point = 20030101T0000Z
 LOADING broadcast states
-+ \[root.*\] \[environment\]CYLC_TEST_VAR=hello
++ [root.*] [environment]CYLC_TEST_VAR=hello
+LOADING task run times
 LOADING task proxies
 + bar.20030101T0000Z succeeded
 + bar.20040101T0000Z held
-+ foo.20040101T0000Z held" "${TEST_NAME_BASE}-restart.stdout"
++ foo.20040101T0000Z held
+__OUT__
 exists_ok "${SUITE_RUN_DIR}/state.tar.gz"
-exists_ok "${SUITE_RUN_DIR}/cylc-suite-private.db" 
-exists_ok "${SUITE_RUN_DIR}/cylc-suite-public.db" 
+exists_ok "${SUITE_RUN_DIR}/.service/db" 
+exists_ok "${SUITE_RUN_DIR}/log/db" 
 
 run_ok "${TEST_NAME_BASE}-checkpoint_id" \
-    sqlite3 "${SUITE_RUN_DIR}/cylc-suite.db" \
+    sqlite3 "${SUITE_RUN_DIR}/log/db" \
     'SELECT id,event FROM checkpoint_id ORDER BY id'
 cmp_ok "${TEST_NAME_BASE}-checkpoint_id.stdout" <<__OUT__
 0|latest
 1|restart
 __OUT__
 run_ok "${TEST_NAME_BASE}-suite_params" \
-    sqlite3 "${SUITE_RUN_DIR}/cylc-suite.db" \
+    sqlite3 "${SUITE_RUN_DIR}/log/db" \
     'SELECT key,value FROM suite_params ORDER BY key'
 cmp_ok "${TEST_NAME_BASE}-suite_params.stdout" <<__OUT__
 final_point|20050101T0000Z
@@ -65,7 +60,7 @@ initial_point|20000101T0000Z
 run_mode|live
 __OUT__
 run_ok "${TEST_NAME_BASE}-suite_params_checkpoints" \
-    sqlite3 "${SUITE_RUN_DIR}/cylc-suite.db" \
+    sqlite3 "${SUITE_RUN_DIR}/log/db" \
     'SELECT key,value FROM suite_params_checkpoints WHERE id==1 ORDER BY key'
 cmp_ok "${TEST_NAME_BASE}-suite_params.stdout" <<__OUT__
 final_point|20050101T0000Z
@@ -73,7 +68,7 @@ initial_point|20000101T0000Z
 run_mode|live
 __OUT__
 run_ok "${TEST_NAME_BASE}-task_pool" \
-    sqlite3 "${SUITE_RUN_DIR}/cylc-suite.db" \
+    sqlite3 "${SUITE_RUN_DIR}/log/db" \
     'SELECT cycle,name,spawned,status FROM task_pool ORDER BY cycle, name'
 cmp_ok "${TEST_NAME_BASE}-task_pool.stdout" <<__OUT__
 20050101T0000Z|bar|1|succeeded
@@ -81,7 +76,7 @@ cmp_ok "${TEST_NAME_BASE}-task_pool.stdout" <<__OUT__
 20060101T0000Z|foo|0|held
 __OUT__
 run_ok "${TEST_NAME_BASE}-task_pool_checkpoints" \
-    sqlite3 "${SUITE_RUN_DIR}/cylc-suite.db" \
+    sqlite3 "${SUITE_RUN_DIR}/log/db" \
     'SELECT cycle,name,spawned,status FROM task_pool_checkpoints 
      WHERE id==1 ORDER BY cycle, name'
 cmp_ok "${TEST_NAME_BASE}-task_pool_checkpoints.stdout" <<__OUT__
@@ -90,7 +85,7 @@ cmp_ok "${TEST_NAME_BASE}-task_pool_checkpoints.stdout" <<__OUT__
 20040101T0000Z|foo|0|held
 __OUT__
 run_ok "${TEST_NAME_BASE}-task_states" \
-    sqlite3 "${SUITE_RUN_DIR}/cylc-suite.db" \
+    sqlite3 "${SUITE_RUN_DIR}/log/db" \
     'SELECT cycle,name,status FROM task_states ORDER BY cycle, name'
 cmp_ok "${TEST_NAME_BASE}-task_states.stdout" <<__OUT__
 20000101T0000Z|bar|succeeded

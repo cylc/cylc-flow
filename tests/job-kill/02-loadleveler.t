@@ -39,9 +39,8 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
 if [[ $CYLC_TEST_BATCH_TASK_HOST != 'localhost' ]]; then
-    ssh -n -oBatchMode=yes -oConnectTimeout=5 "${CYLC_TEST_BATCH_TASK_HOST}" \
-        "rm -fr 'cylc-run/${SUITE_NAME}'"
+    purge_suite_remote "${CYLC_TEST_BATCH_TASK_HOST}" "${SUITE_NAME}"
 fi
+purge_suite "${SUITE_NAME}"
 exit

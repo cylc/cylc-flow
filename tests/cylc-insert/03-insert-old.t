@@ -1,7 +1,7 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2016 NIWA
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -37,7 +37,7 @@ cmp_ok $TEST_NAME </dev/null
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-db-end
 RUN_DIR=$(cylc get-global-config --print-run-dir)
-run_ok "$TEST_NAME" sqlite3 $RUN_DIR/$SUITE_NAME/cylc-suite.db \
+run_ok "$TEST_NAME" sqlite3 "${RUN_DIR}/${SUITE_NAME}/log/db" \
     "select name, cycle, submit_num, status from task_states order by name, cycle"
 cmp_ok "$TEST_NAME.stdout" <<'__OUT__'
 foo|20140101T0000Z|1|succeeded

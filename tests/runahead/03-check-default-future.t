@@ -31,7 +31,7 @@ run_fail $TEST_NAME cylc run --debug --set=FUTURE_TRIGGER_START_POINT=T04 \
     $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-max-cycle
-DB=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db
+DB="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/db"
 run_ok $TEST_NAME sqlite3 $DB "select max(cycle) from task_states where name \
 is 'foo' and status is 'failed'"
 cmp_ok "$TEST_NAME.stdout" <<'__OUT__'

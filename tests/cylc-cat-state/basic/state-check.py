@@ -38,7 +38,7 @@ def main(argv):
         print >> sys.stderr, err
         sys.exit(1)
 
-    db = (os.sep).join([rundir, sname, "cylc-suite.db"])
+    db = (os.sep).join([rundir, sname, "log", "db"])
     cnx = sqlite3.Connection(db)
     cur = cnx.cursor()
 

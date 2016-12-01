@@ -61,7 +61,6 @@ ${OPT_HEAD} --include=/1/t1/02 --include=/1/t1/02/** ${OPT_TAIL} ${ARGS}
 ${OPT_HEAD} --include=/1/t1/03 --include=/1/t1/03/** ${OPT_TAIL} ${ARGS}
 __LOG__
 
-ssh -n -oBatchMode=yes -oConnectTimeout=5 "${HOST}" \
-    "rm -rf 'cylc-run/${SUITE_NAME}'"
+purge_suite_remote "${HOST}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

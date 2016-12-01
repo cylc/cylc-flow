@@ -61,7 +61,6 @@ foo|20130924T1200Z|1|1|succeeded
 foo|20130925T0000Z|0||waiting
 shutdown|20130925T0000Z|1|1|succeeded
 __DB_DUMP__
-SUITE_RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
 "${TEST_SOURCE_DIR}/bin/ctb-select-task-states" "${SUITE_RUN_DIR}" \
     > "${TEST_DIR}/db"
 cmp_ok $TEST_DIR/db <<'__DB_DUMP__'

@@ -29,13 +29,12 @@ TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-userathost
-SUITE_RUN_DIR=$(cylc get-global-config --print-run-dir)/$SUITE_NAME
-sqlite3 "${SUITE_RUN_DIR}/cylc-suite.db" \
+sqlite3 "${SUITE_RUN_DIR}/log/db" \
     'select user_at_host from task_jobs where name=="foo"' >'foo-host.txt'
 cmp_ok 'foo-host.txt' <<<"${CYLC_TEST_TASK_OWNER}@${CYLC_TEST_TASK_HOST}"
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-hostonly
-sqlite3 "${SUITE_RUN_DIR}/cylc-suite.db" \
+sqlite3 "${SUITE_RUN_DIR}/log/db" \
     'select user_at_host from task_jobs where name=="bar"' >'bar-host.txt'
 cmp_ok 'bar-host.txt' - <<<"${CYLC_TEST_TASK_HOST}"
 #-------------------------------------------------------------------------------

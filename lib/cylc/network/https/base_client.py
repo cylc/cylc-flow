@@ -25,15 +25,14 @@ import warnings
 # Ignore incorrect SSL certificate warning from urllib3 via requests.
 warnings.filterwarnings("ignore", "Certificate has no `subjectAltName`")
 
-from cylc.exceptions import PortFileError
 import cylc.flags
 from cylc.network import (
-    ConnectionError, ConnectionDeniedError, ConnectionTimeout, NO_PASSPHRASE,
-    handle_proxies)
+    ConnectionError, ConnectionDeniedError, ConnectionInfoError,
+    ConnectionTimeout, NO_PASSPHRASE, handle_proxies)
 from cylc.owner import is_remote_user, USER
-from cylc.registration import RegistrationDB, PassphraseError
+from cylc.suite_srv_files_mgr import (
+    SuiteSrvFilesManager, SuiteServiceFileError)
 from cylc.suite_host import get_hostname, is_remote_host
-from cylc.suite_env import CylcSuiteEnv, CylcSuiteEnvLoadError
 from cylc.version import CYLC_VERSION
 
 
@@ -51,25 +50,32 @@ class BaseCommsClient(object):
     METHOD_POST = 'POST'
     METHOD_GET = 'GET'
 
-    def __init__(self, suite, owner=USER, host=None, timeout=None,
-                 port=None, db=None, my_uuid=None, print_uuid=False):
+    def __init__(self, suite, owner=USER, host=None, port=None, timeout=None,
+                 my_uuid=None, print_uuid=False):
         self.suite = suite
-        self.host = host
         self.owner = owner
+        self.host = host
+        self.port = port
         if timeout is not None:
             timeout = float(timeout)
         self.timeout = timeout
-        self.port = port
         self.my_uuid = my_uuid or uuid4()
         if print_uuid:
             print >> sys.stderr, '%s' % self.my_uuid
-        self.reg_db = RegistrationDB(db)
+        self.srv_files_mgr = SuiteSrvFilesManager()
         self.prog_name = os.path.basename(sys.argv[0])
+        self.server_cert = None
+        self.auth = None
 
     def call_server_func(self, category, fname, **fargs):
         """Call server_object.fname(*fargs, **fargs)."""
+        if self.host is None and self.port is not None:
+            self.host = get_hostname()
         if self.host is None or self.port is None:
-            self._load_contact_info()
+            try:
+                self._load_contact_info()
+            except (IOError, ValueError, SuiteServiceFileError):
+                raise ConnectionInfoError(self.suite)
         handle_proxies()
         payload = fargs.pop("payload", None)
         method = fargs.pop("method", self.METHOD)
@@ -78,16 +84,14 @@ class BaseCommsClient(object):
             host = self.host.split(".")[0]
         if host == "localhost":
             host = get_hostname().split(".")[0]
-        url = 'https://%s:%s/%s/%s' % (
-            host, self.port, category, fname
-        )
+        url = 'https://%s:%s/%s/%s' % (host, self.port, category, fname)
         if fargs:
             import urllib
             params = urllib.urlencode(fargs, doseq=True)
             url += "?" + params
-        return self.get_data_from_url(url, payload, method=method)
+        return self._get_data_from_url(url, payload, method=method)
 
-    def get_data_from_url(self, url, json_data, method=None):
+    def _get_data_from_url(self, url, json_data, method=None):
         requests_ok = True
         try:
             import requests
@@ -98,12 +102,12 @@ class BaseCommsClient(object):
             if version < [2, 4, 2]:
                 requests_ok = False
         if requests_ok:
-            return self.get_data_from_url_with_requests(
+            return self._get_data_from_url_with_requests(
                 url, json_data, method=method)
-        return self.get_data_from_url_with_urllib2(
+        return self._get_data_from_url_with_urllib2(
             url, json_data, method=method)
 
-    def get_data_from_url_with_requests(self, url, json_data, method=None):
+    def _get_data_from_url_with_requests(self, url, json_data, method=None):
         import requests
         username, password = self._get_auth()
         auth = requests.auth.HTTPDigestAuth(username, password)
@@ -129,7 +133,7 @@ class BaseCommsClient(object):
             if "unknown protocol" in str(exc) and url.startswith("https:"):
                 # Server is using http rather than https, for some reason.
                 sys.stderr.write(WARNING_NO_HTTPS_SUPPORT.format(exc))
-                return self.get_data_from_url_with_requests(
+                return self._get_data_from_url_with_requests(
                     url.replace("https:", "http:", 1), json_data)
             if cylc.flags.debug:
                 import traceback
@@ -162,12 +166,15 @@ class BaseCommsClient(object):
                 import traceback
                 traceback.print_exc()
             raise ConnectionError(url, exc)
+        if self.auth and self.auth[1] != NO_PASSPHRASE:
+            self.srv_files_mgr.cache_passphrase(
+                self.suite, self.owner, self.host, self.auth[1])
         try:
             return ret.json()
         except ValueError:
             return ret.text
 
-    def get_data_from_url_with_urllib2(self, url, json_data, method=None):
+    def _get_data_from_url_with_urllib2(self, url, json_data, method=None):
         import json
         import urllib2
         import ssl
@@ -204,7 +211,7 @@ class BaseCommsClient(object):
             if "unknown protocol" in str(exc) and url.startswith("https:"):
                 # Server is using http rather than https, for some reason.
                 sys.stderr.write(WARNING_NO_HTTPS_SUPPORT.format(exc))
-                return self.get_data_from_url_with_urllib2(
+                return self._get_data_from_url_with_urllib2(
                     url.replace("https:", "http:", 1), orig_json_data)
             if cylc.flags.debug:
                 import traceback
@@ -232,6 +239,9 @@ class BaseCommsClient(object):
                 sys.stderr.write(response_text)
             raise ConnectionError(url,
                                   "%s HTTP return code" % response.getcode())
+        if self.auth and self.auth[1] != NO_PASSPHRASE:
+            self.srv_files_mgr.cache_passphrase(
+                self.suite, self.owner, self.host, self.auth[1])
         try:
             return json.loads(response_text)
         except ValueError:
@@ -239,14 +249,18 @@ class BaseCommsClient(object):
 
     def _get_auth(self):
         """Return a user/password Digest Auth."""
-        self.pphrase = self.reg_db.load_passphrase(
-            self.suite, self.owner, self.host)
-        if self.pphrase:
-            self.reg_db.cache_passphrase(
-                self.suite, self.owner, self.host, self.pphrase)
-        if self.pphrase is None:
-            return 'anon', NO_PASSPHRASE
-        return 'cylc', self.pphrase
+        if self.auth is None:
+            self.auth = ('anon', NO_PASSPHRASE)
+            try:
+                pphrase = self.srv_files_mgr.get_auth_item(
+                    self.srv_files_mgr.FILE_BASE_PASSPHRASE,
+                    self.suite, self.owner, self.host, content=True)
+            except SuiteServiceFileError:
+                pass
+            else:
+                if pphrase and pphrase != NO_PASSPHRASE:
+                    self.auth = ('cylc', pphrase)
+        return self.auth
 
     def _get_headers(self):
         """Return HTTP headers identifying the client."""
@@ -261,99 +275,31 @@ class BaseCommsClient(object):
 
     def _get_verify(self):
         """Return the server certificate if possible."""
-        if not hasattr(self, "server_cert"):
+        if self.server_cert is None:
             try:
-                self.server_cert = self.reg_db.load_item(
-                    self.suite, self.owner, self.host, "certificate")
-            except PassphraseError:
-                return False
+                self.server_cert = self.srv_files_mgr.get_auth_item(
+                    self.srv_files_mgr.FILE_BASE_SSL_CERT,
+                    self.suite, self.owner, self.host)
+            except SuiteServiceFileError:
+                self.server_cert = False
         return self.server_cert
 
     def _load_contact_info(self):
-        """Obtain URL info.
+        """Obtain suite owner, host, port info.
 
         Determine host and port using content in port file, unless already
         specified.
-
         """
         if self.host and self.port:
             return
-        if 'CYLC_SUITE_RUN_DIR' in os.environ:
-            # Looks like we are in a running task job, so we should be able to
-            # use "cylc-suite-env" file under the suite running directory
-            try:
-                suite_env = CylcSuiteEnv.load(
-                    self.suite, os.environ['CYLC_SUITE_RUN_DIR'])
-            except CylcSuiteEnvLoadError:
-                if cylc.flags.debug:
-                    import traceback
-                    traceback.print_exc()
-            else:
-                self.host = suite_env.suite_host
-                self.port = suite_env.suite_port
-                self.owner = suite_env.suite_owner
-        if self.host is None or self.port is None:
-            self._load_port_file()
-
-    def _load_port_file(self):
-        """Load port, host, etc from port file."""
-        # GLOBAL_CFG is expensive to import, so only load on demand
-        from cylc.cfgspec.globalcfg import GLOBAL_CFG
-        port_file_path = os.path.join(
-            GLOBAL_CFG.get(['communication', 'ports directory']), self.suite)
-        out = ""
-        if is_remote_host(self.host) or is_remote_user(self.owner):
-            # Only load these modules on demand, as they may be expensive
-            import shlex
-            from subprocess import Popen, PIPE
-            ssh_tmpl = str(GLOBAL_CFG.get_host_item(
-                'remote shell template', self.host, self.owner))
-            ssh_tmpl = ssh_tmpl.replace(' %s', '')
-            user_at_host = ''
-            if self.owner:
-                user_at_host = self.owner + '@'
-            if self.host:
-                user_at_host += self.host
-            else:
-                user_at_host += 'localhost'
-            r_port_file_path = port_file_path.replace(
-                os.environ['HOME'], '$HOME')
-            command = shlex.split(ssh_tmpl) + [
-                user_at_host, 'cat', r_port_file_path]
-            proc = Popen(command, stdout=PIPE, stderr=PIPE)
-            out, err = proc.communicate()
-            ret_code = proc.wait()
-            if ret_code:
-                if cylc.flags.debug:
-                    print >> sys.stderr, {
-                        "code": ret_code,
-                        "command": command,
-                        "stdout": out,
-                        "stderr": err}
-                if self.port is None:
-                    raise PortFileError(
-                        "Port file '%s:%s' not found - suite not running?." %
-                        (user_at_host, r_port_file_path))
-        else:
-            try:
-                out = open(port_file_path).read()
-            except IOError:
-                if self.port is None:
-                    raise PortFileError(
-                        "Port file '%s' not found - suite not running?." %
-                        (port_file_path))
-        lines = out.splitlines()
-        if self.port is None:
-            try:
-                self.port = int(lines[0])
-            except (IndexError, ValueError):
-                raise PortFileError(
-                    "ERROR, bad content in port file: %s" % port_file_path)
-        if self.host is None:
-            if len(lines) >= 2:
-                self.host = lines[1].strip()
-            else:
-                self.host = get_hostname()
+        data = self.srv_files_mgr.load_contact_file(
+            self.suite, self.owner, self.host)
+        if not self.host:
+            self.host = data.get(self.srv_files_mgr.KEY_HOST)
+        if not self.port:
+            self.port = int(data.get(self.srv_files_mgr.KEY_PORT))
+        if not self.owner:
+            self.owner = data.get(self.srv_files_mgr.KEY_OWNER)
 
     def reset(self, *args, **kwargs):
         pass

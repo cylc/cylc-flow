@@ -55,7 +55,7 @@ def main():
     else:
         source_owner, source_host = (None, source_auth)
     ssh_tmpl = str(GLOBAL_CFG.get_host_item(
-        "remote shell template", source_host, source_owner)).replace(" %s", "")
+        "remote shell template", source_host, source_owner))
 
     # Retrieve remote job logs
     # N.B. "scp" does not have a "max-size" option.

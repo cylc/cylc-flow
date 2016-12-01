@@ -13,7 +13,7 @@
         description = "Force a shutdown of the suite"
         inherit = OUTPUT
         post-script = """
-            cylc shutdown $CYLC_SUITE_REG_NAME
+            cylc shutdown $CYLC_SUITE_NAME
             sleep 5
         """
         [[[environment]]]

@@ -30,15 +30,15 @@ EXAMPLES:
 For suite definition directories /home/bob/(one,two,three,four):
 
 % cylc db reg bob         /home/bob/one
-% cylc db reg foo.bag     /home/bob/two
-% cylc db reg foo.bar.baz /home/bob/three
-% cylc db reg foo.bar.waz /home/bob/four
+% cylc db reg foo/bag     /home/bob/two
+% cylc db reg foo/bar/baz /home/bob/three
+% cylc db reg foo/bar/waz /home/bob/four
 
 % cylc db pr '^foo'             # print in flat form
   bob         | 'Test Suite One'   | /home/bob/one
-  foo.bag     | 'Test Suite Two'   | /home/bob/two
-  foo.bar.baz | 'Test Suite Four'  | /home/bob/three
-  foo.bar.waz | 'Test Suite Three' | /home/bob/four
+  foo/bag     | 'Test Suite Two'   | /home/bob/two
+  foo/bar/baz | 'Test Suite Four'  | /home/bob/three
+  foo/bar/waz | 'Test Suite Three' | /home/bob/four
 
 % cylc db pr -t '^foo'          # print in tree form
   bob        'Test Suite One'   | /home/bob/one
@@ -53,10 +53,8 @@ from cylc.remote import remrun
 if remrun().execute():
     sys.exit(0)
 
-import os
-
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.registration import RegistrationDB
+from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 import cylc.flags
 
 
@@ -64,20 +62,14 @@ def main():
     parser = COP(
         __doc__,
         argdoc=[("REG", "Suite name"),
-                ("PATH", "Suite definition directory")])
-
-    (options, args) = parser.parse_args()
-    suite = args[0]
-
-    if args[1].endswith('suite.rc'):
-        suiterc = args[1]
-        rdir = os.path.dirname(suiterc)
+                ("[PATH]", "Suite definition directory")])
+    options, args = parser.parse_args()
+    if len(args) == 2:
+        SuiteSrvFilesManager().register(args[0], args[1])
+        print 'REGISTER %s: %s' % (args[0], args[1])
     else:
-        rdir = args[1]
-        suiterc = os.path.join(rdir, 'suite.rc')
-
-    db = RegistrationDB(options.db)
-    db.register(suite, rdir)
+        SuiteSrvFilesManager().register(args[0])
+        print 'REGISTER %s' % (args[0])
 
 
 if __name__ == "__main__":

@@ -40,6 +40,7 @@ if remrun().execute():
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.config import SuiteConfig
+from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.templatevars import load_template_vars
 
 n_oone = 0
@@ -129,8 +130,9 @@ def main():
 
     (options, args) = parser.parse_args()
 
-    suite1, suite1rc = parser.get_suite()
-    suite2, suite2rc = parser.get_suite(index=1)
+    srv_files_manager = SuiteSrvFilesManager()
+    suite1, suite1rc = srv_files_manager.parse_suite_arg(options, args[0])
+    suite1, suite1rc = srv_files_manager.parse_suite_arg(options, args[1])
     if suite1 == suite2:
         parser.error("You can't diff a single suite.")
     print "Parsing %s (%s)" % (suite1, suite1rc)

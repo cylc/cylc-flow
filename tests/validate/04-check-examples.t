@@ -28,7 +28,7 @@ set_test_number $(echo "$SDEFS" | wc -l)
 for SDEF in $SDEFS; do
     # capture validation stderr:
     SDEF_NAME=$(basename $(dirname $SDEF))
-    RES=$( cylc val --no-write --debug $SDEF 2>&1 >/dev/null )
+    RES=$( cylc val --debug $SDEF 2>&1 >/dev/null )
     TEST_NAME=$TEST_NAME_BASE-$TEST_NUMBER-"$SDEF_NAME"
     if [[ -n $RES ]]; then
         fail $TEST_NAME
