@@ -718,7 +718,10 @@ class ScanApp(object):
         # tasks.
         dot_offset, dot_width = tuple(column.cell_get_position(
             column.get_cell_renderers()[2]))
-        cell_index = ((cell_x - dot_offset) // dot_width) + 1
+        try:
+            cell_index = ((cell_x - dot_offset) // dot_width) + 1
+        except ZeroDivisionError:
+            return False
         if cell_index >= 0:
             # NOTE: TreeViewColumn.get_cell_renderers() does not always return
             # cell renderers for the correct row.
