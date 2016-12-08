@@ -724,7 +724,8 @@ class SuiteConfig(object):
                 # Detect cyclic dependence.
                 # (ignore suicide triggers as they look like cyclic dependence:
                 #    "foo:fail => bar => !foo" looks like "foo => bar => foo").
-                graph = self.get_graph(ungroup_all=True, ignore_suicide=True)
+                graph = self.get_graph(ungroup_all=True, ignore_suicide=True,
+                                       is_validate=True)
                 # Original edges.
                 o_edges = graph.edges()
                 # Reverse any back edges using graphviz 'acyclic'.
@@ -1674,14 +1675,17 @@ class SuiteConfig(object):
     def get_graph(self, start_point_string=None, stop_point_string=None,
                   group_nodes=[], ungroup_nodes=[], ungroup_recursive=False,
                   group_all=False, ungroup_all=False, ignore_suicide=False,
-                  subgraphs_on=False):
+                  subgraphs_on=False, is_validate=False):
 
         # If graph extent is not given, use visualization settings.
         if start_point_string is None:
             start_point_string = (
                 self.cfg['visualization']['initial cycle point'])
 
-        if stop_point_string is None:
+        # Use visualization settings in absence of final cycle point definition
+        # when not validating (stops slowdown of validation due to vis
+        # settings)
+        if stop_point_string is None and not is_validate:
             vfcp = self.cfg['visualization']['final cycle point']
             if vfcp:
                 try:
