@@ -132,6 +132,7 @@ class TaskPool(object):
         self.task_name_list = config.get_task_name_list()
 
         self.db_deletes_map = {
+            self.TABLE_SUITE_PARAMS: [],
             self.TABLE_TASK_POOL: [],
             self.TABLE_TASK_ACTION_TIMERS: []}
         self.db_inserts_map = {
@@ -989,11 +990,14 @@ class TaskPool(object):
         self.is_held = True
         for itask in self.get_all_tasks():
             itask.state.reset_state(TASK_STATUS_HELD)
+        self.db_inserts_map[self.TABLE_SUITE_PARAMS].append(
+            {"key": "is_held", "value": 1})
 
     def release_all_tasks(self):
         """Release all held tasks."""
         self.is_held = False
         self.release_tasks(None)
+        self.db_deletes_map[self.TABLE_SUITE_PARAMS].append({"key": "is_held"})
 
     def get_failed_tasks(self):
         failed = []
@@ -1418,6 +1422,9 @@ class TaskPool(object):
             {"key": "initial_point", "value": str(initial_point)},
             {"key": "final_point", "value": str(final_point)},
         ])
+        if self.is_held:
+            self.db_inserts_map[self.TABLE_SUITE_PARAMS].append(
+                {"key": "is_held", "value": 1})
 
     def put_rundb_suite_template_vars(self, template_vars):
         """Put template_vars in runtime database.

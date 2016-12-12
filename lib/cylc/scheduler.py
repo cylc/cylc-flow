@@ -212,7 +212,6 @@ class Scheduler(object):
         self.start_point = None
         self.final_point = None
         self.pool_hold_point = None
-        self.hold_suite_now = False
         self.suite_timer_timeout = 0.0
         self.suite_timer_active = False
         self.suite_inactivity_timeout = 0.0
@@ -516,6 +515,10 @@ conditions; see `cylc conditions`.
         if row_idx == 0:
             OUT.info("LOADING suite parameters")
         key, value = row
+        if key == "is_held":
+            self.pool.is_held = bool(value)
+            OUT.info("+ hold suite = %s" % (bool(value),))
+            return
         for key_str, self_attr, option_ignore_attr in [
                 ("initial", "start_point", "ignore_start_point"),
                 ("final", "stop_point", "ignore_stop_point")]:
@@ -2041,7 +2044,6 @@ conditions; see `cylc conditions`.
     def hold_suite(self, point=None):
         """Hold all tasks in suite."""
         if point is None:
-            self.hold_suite_now = True
             self.pool.hold_all_tasks()
         else:
             self.log.info("Setting suite hold cycle point: " + str(point))
@@ -2049,9 +2051,8 @@ conditions; see `cylc conditions`.
 
     def release_suite(self):
         """Release (un-hold) all tasks in suite."""
-        if self.hold_suite_now:
+        if self.pool.is_held:
             self.log.info("RELEASE: new tasks will be queued when ready")
-            self.hold_suite_now = False
         self.pool.set_hold_point(None)
         self.pool.release_all_tasks()
 
@@ -2077,7 +2078,7 @@ conditions; see `cylc conditions`.
 
     def paused(self):
         """Is the suite paused?"""
-        return self.hold_suite_now
+        return self.pool.is_held
 
     def will_pause_at(self):
         """Return self.pool.get_hold_point()."""
