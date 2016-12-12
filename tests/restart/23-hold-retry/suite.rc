@@ -24,6 +24,7 @@ fi
 if [[ "${CYLC_TASK_CYCLE_POINT}" == '2016' && "${CYLC_TASK_TRY_NUMBER}" == '1' ]]
 then
     cylc stop "${CYLC_SUITE_NAME}"
+    sleep 5
     cylc kill "${CYLC_SUITE_NAME}" "${CYLC_TASK_ID}"
     sleep 60
 fi
