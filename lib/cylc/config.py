@@ -1085,12 +1085,14 @@ class SuiteConfig(object):
         # Then reassign to other queues as requested.
         warnings = []
         requeued = []
-        for queue in queues:
-            if queue == 'default':
+        for key, queue in queues.copy().items():
+            # queues.copy() is essential here to allow items to be removed from
+            # the queues dict.
+            if key == 'default':
                 continue
             # Assign tasks to queue and remove them from default.
             qmembers = []
-            for qmember in queues[queue]['members']:
+            for qmember in queue['members']:
                 # Is a family.
                 if qmember in self.runtime['descendants']:
                     # Replace with member tasks.
@@ -1102,7 +1104,7 @@ class SuiteConfig(object):
                             except ValueError:
                                 if fmem in requeued:
                                     msg = "%s: ignoring %s from %s (%s)" % (
-                                        queue, fmem, qmember,
+                                        key, fmem, qmember,
                                         'already assigned to a queue')
                                     warnings.append(msg)
                                 else:
@@ -1119,11 +1121,11 @@ class SuiteConfig(object):
                         except ValueError:
                             if qmember in requeued:
                                 msg = "%s: ignoring '%s' (%s)" % (
-                                    queue, qmember, 'task already assigned')
+                                    key, qmember, 'task already assigned')
                                 warnings.append(msg)
                             elif qmember not in all_task_names:
                                 msg = "%s: ignoring '%s' (%s)" % (
-                                    queue, qmember, 'task not defined')
+                                    key, qmember, 'task not defined')
                                 warnings.append(msg)
                             else:
                                 # Ignore: task not used in the graph.
@@ -1132,24 +1134,23 @@ class SuiteConfig(object):
                             qmembers.append(qmember)
                             requeued.append(qmember)
 
-            if len(warnings) > 0:
+            if warnings:
                 err_msg = "Queue configuration warnings:"
                 for msg in warnings:
                     err_msg += "\n+ %s" % msg
                 ERR.warning(err_msg)
 
-            if len(qmembers) > 0:
-                queues[queue]['members'] = qmembers
+            if qmembers:
+                queue['members'] = qmembers
             else:
-                del queues[queue]
+                del queues[key]
 
-        if cylc.flags.verbose and len(queues.keys()) > 1:
+        if cylc.flags.verbose and len(queues) > 1:
             log_msg = "Internal queues created:"
-            for queue in queues:
-                if queue == 'default':
+            for key, queue in queues.items():
+                if key == 'default':
                     continue
-                log_msg += "\n+ %s: %s" % (
-                    queue, ', '.join(queues[queue]['members']))
+                log_msg += "\n+ %s: %s" % (key, ', '.join(queue['members']))
             OUT.info(log_msg)
 
     def get_parent_lists(self):
