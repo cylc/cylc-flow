@@ -6163,14 +6163,13 @@ to point to your cylc copy.
 Access to the cylc executable for different hosts can be configured using
 the site and user global configuration files.
 If the environment for running the cylc executable is only set up correctly in
-a login shell for a given host, you can set the
-\lstinline=[hosts] \textrightarrow HOST \textrightarrow cylc executable=
-setting for the relevant host to \lstinline=True=.
-(This is the default behaviour.)
+a login shell for a given host, you can set 
+\lstinline=[hosts][HOST]cylc executable=
+for the relevant host to \lstinline=True= (this is the default behaviour).
 If the environment is already correct without the login shell, but the cylc
-executable is not in \lstinline=$PATH=, then the
-\lstinline=[hosts] \textrightarrow HOST \textrightarrow cylc executable=
-setting can be used to specify the path to the cylc executable.
+executable is not in \lstinline=$PATH=, then 
+\lstinline=[hosts][HOST]cylc executable=
+can be used to specify the path to the cylc executable.
 
 The site/user global config item \lstinline=global init-script= can also be
 used if necessary (see~\ref{GlobalInitScript}).
