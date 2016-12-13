@@ -214,7 +214,7 @@ class Updater(threading.Thread):
             try:
                 update_time_str = get_time_string_from_unix_time(
                     self.stop_summary[0]["last_updated"])
-            except (AttributeError, IndexError, KeyError):
+            except (AttributeError, IndexError, KeyError, TypeError):
                 update_time_str = None
             gobject.idle_add(
                 self.info_bar.set_update_time,
