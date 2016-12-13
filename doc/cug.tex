@@ -5145,6 +5145,20 @@ line will {\em restart} with the same settings. However, you can set
 them again on the \lstinline=cylc restart= command line if they need to
 be overridden.
 
+\subsubsection{Jinja2 Variable Scope}
+
+Jinja2 variable scoping rules may be surprising. Variables set inside a
+{\em for loop} block, for instance, are not accessible outside of the block,
+so the following will print \lstinline=# FOO is 0=, not \lstinline=# FOO is 9=:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+{% set COUNT = 0 %}
+{% for I in range(10) %}
+   {% set FOO = I %}
+{% endfor %}
+# FOO is {{FOO}}
+\end{lstlisting}
 
 \subsection{Omitting Tasks At Runtime}
 
