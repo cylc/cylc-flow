@@ -899,12 +899,12 @@ in {\em suite definition directories} that may also contain a
 
 \subsection{Suite Registration}
 
-Suite registration creates the suite run directory (a directory with the suite
-name under \lstinline=~/cylc-run/= by default), and populates it with
-authentication files and a symbolic link to a suite definition directory.  Cylc
-commands that parse suite definition files can take the file path or the suite
-name as input. Commands that interact with running suites have to target the
-suite by name.
+Suite registration creates the suite run directory under
+(\lstinline=~/cylc-run/= by default) and populates it with authentication files
+and a symbolic link to a suite definition directory.  Cylc commands that parse
+suite definitions can take the file path or the suite name as input. Commands
+that interact with running suites have to target the suite by name.
+
 \lstset{language=transcript}
 \begin{lstlisting}
 # target a suite by file path:
@@ -4009,11 +4009,6 @@ purposes.
 \subsubsection{Namespace Names}
 
 Namespace names may contain letters, digits, underscores, and hyphens.
-%They may not contain colons, which would preclude use of suite
-%suite names in shell \lstinline=$PATH= variables. The
-%`.' character is the suite registration hierarchy delimiter (which
-%separates suite groups and names, e.g.\
-%my\_suites.test.foo).
 
 Note that {\em task names need not be hardwired into task implementations}
 because task and suite identity can be extracted portably from the task
@@ -6644,7 +6639,7 @@ for details.
 
 Broadcast settings targeted at a specific task ID or cycle point expire and
 are forgotten as the suite moves on. Un-targeted variables and those
-targetted at a task name persist throughout the suite run, even across
+targeted at a task name persist throughout the suite run, even across
 restarts, unless manually cleared using the broadcast command - and so
 should be used sparingly.
 

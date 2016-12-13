@@ -318,7 +318,7 @@ class TaskState(object):
         return self._suicide_is_satisfied
 
     def prerequisites_get_target_points(self):
-        """Return a list of cycle points targetted by each prerequisite."""
+        """Return a list of cycle points targeted by each prerequisite."""
         points = []
         for preq in self.prerequisites:
             points += preq.get_target_points()

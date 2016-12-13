@@ -20,9 +20,8 @@
 
 Register the suite definition located in PATH (or $PWD) as REG.
 
-This creates the suite run directory, and service files (passphrase, ssl
-certificate, symlink to source directory, etc.) under ".service/" in the run
-directory.
+This creates the suite run directory, and populates it with authentication
+files, and a symlink to source directory, under ".service/".
 
 Suite names correspond to the directory path under the suite run directory.
 They may contain letters, digits, underscore, and hyphens.
