@@ -169,7 +169,7 @@ class TaskState(object):
                  "db_update_status", "log", "_recalc_satisfied",
                  "_is_satisfied", "_suicide_is_satisfied", "prerequisites",
                  "suicide_prerequisites", "external_triggers", "outputs",
-                 "kill_failed", "hold_on_retry", "_state_pre_hold", "run_mode",
+                 "kill_failed", "hold_swap", "run_mode",
                  "submission_timer_timeout", "execution_timer_timeout"]
 
     # Associate status names with other properties.
@@ -241,10 +241,11 @@ class TaskState(object):
         except KeyError:
             raise TaskStateError("Bad task status (%s, %s)" % (status, key))
 
-    def __init__(self, status, point, identity, tdef, db_events_insert,
-                 db_update_status, log):
+    def __init__(self, status, hold_swap, point, identity, tdef,
+                 db_events_insert, db_update_status, log):
 
         self.status = status
+        self.hold_swap = hold_swap
         self.identity = identity
         self.db_events_insert = db_events_insert
         self.db_update_status = db_update_status
@@ -279,8 +280,6 @@ class TaskState(object):
         self.outputs.add(TASK_OUTPUT_SUCCEEDED)
 
         self.kill_failed = False
-        self.hold_on_retry = False
-        self._state_pre_hold = None
         self.run_mode = tdef.run_mode
 
         # TODO - these are here because current use in reset_state(); should be
@@ -367,7 +366,6 @@ class TaskState(object):
         (Otherwise they appear as incomplete outputs when the task finishes).
 
         """
-        self.hold_on_retry = False
         self.kill_failed = False
         self.outputs.remove(TASK_OUTPUT_EXPIRED)
         self.outputs.remove(TASK_OUTPUT_SUBMIT_FAILED)
@@ -375,49 +373,56 @@ class TaskState(object):
 
     def release(self):
         """Reset to my pre-held state, if not beyond the stop point."""
-        self.hold_on_retry = False
-        if not self.status == TASK_STATUS_HELD:
+        if self.status != TASK_STATUS_HELD:
             return
-        if self._state_pre_hold is None:
+        elif self.hold_swap is None:
             self.reset_state(TASK_STATUS_WAITING)
-            return
-        old_status = self._state_pre_hold
-        self._state_pre_hold = None
-        self.log(INFO, 'held => %s' % (old_status))
+        elif self.hold_swap == TASK_STATUS_HELD:
+            self.hold_swap = None
+        else:
+            self.submission_timer_timeout = None
+            self.execution_timer_timeout = None
+            self.set_state(self.hold_swap)
 
-        # Turn off submission and execution timeouts.
-        self.submission_timer_timeout = None
-        self.execution_timer_timeout = None
-        self.set_state(old_status)
-
-    def set_state(self, status):
+    def set_state(self, status, loglvl=DEBUG):
         """Set, log and record task status (normal change, not forced - don't
         update task_events table)."""
-        if status != self.status:
-            flags.iflag = True
-            self.log(DEBUG, '(setting: %s)' % status)
-            self.status = status
-            self.db_update_status()
+        if self.status == self.hold_swap:
+            self.hold_swap = None
+        if status == self.status and self.hold_swap is None:
+            return
+        if status == TASK_STATUS_HELD:
+            self.log(loglvl, '%s => %s (%s)' % (
+                self.status, status, self.status))
+            self.hold_swap = self.status
+        elif (self.hold_swap == TASK_STATUS_HELD and
+                status not in TASK_STATUSES_FINAL):
+            self.log(loglvl, '%s (%s) => %s (%s)' % (
+                self.status, TASK_STATUS_HELD,
+                TASK_STATUS_HELD, status))
+            self.hold_swap = status
+            status = TASK_STATUS_HELD
+        elif self.hold_swap:
+            self.log(loglvl, '%s (%s) => %s' % (
+                self.status, self.hold_swap, status))
+            self.hold_swap = None
+        else:
+            self.log(loglvl, '%s => %s' % (self.status, status))
+        self.status = status
+        flags.iflag = True
+        self.db_update_status()
 
     def reset_state(self, status):
         """Reset status of task."""
         if status == TASK_STATUS_HELD:
             if self.status in TASK_STATUSES_ACTIVE:
-                self.hold_on_retry = True
+                self.hold_swap = TASK_STATUS_HELD
                 return
             if self.status not in [
                     TASK_STATUS_WAITING, TASK_STATUS_QUEUED,
                     TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING]:
                 return
-            self._state_pre_hold = self.status
-            self.log(INFO, '%s => held' % self._state_pre_hold)
-
-        # Turn off submission and execution timeouts.
-        self.submission_timer_timeout = None
-        self.execution_timer_timeout = None
-
-        self.set_state(status)
-        if status == TASK_STATUS_EXPIRED:
+        elif status == TASK_STATUS_EXPIRED:
             self.set_prerequisites_all_satisfied()
             self.unset_special_outputs()
             self.outputs.set_all_incomplete()
@@ -437,11 +442,13 @@ class TaskState(object):
             self.outputs.set_all_completed()
         elif status == TASK_STATUS_FAILED:
             self.set_prerequisites_all_satisfied()
-            self.hold_on_retry = False
             self.outputs.set_all_incomplete()
             # Set a new failed output just as if a failure message came in
             self.outputs.add(TASK_OUTPUT_FAILED, True)
-        # TODO - handle other state resets here too, such as retrying...?
+
+        self.submission_timer_timeout = None
+        self.execution_timer_timeout = None
+        return self.set_state(status)
 
     def is_ready_to_run(self, retry_delay_done, start_time_reached):
         """With current status, is the task ready to run?"""
@@ -484,8 +491,6 @@ class TaskState(object):
         self.outputs.remove(TASK_OUTPUT_SUBMITTED)
         self.set_state(TASK_STATUS_SUBMIT_RETRYING)
         self.set_prerequisites_all_satisfied()
-        if self.hold_on_retry:
-            self.reset_state(TASK_STATUS_HELD)
 
     def set_submit_succeeded(self):
         """Set status to submitted."""
@@ -511,24 +516,26 @@ class TaskState(object):
     def set_execution_succeeded(self, msg_was_polled):
         """Manipulate state for job execution success."""
         self.set_state(TASK_STATUS_SUCCEEDED)
+        warnings = []
         if not self.outputs.all_completed():
             err = "Succeeded with unreported outputs:"
             for key in self.outputs.not_completed:
                 err += "\n  " + key
-            self.log(WARNING, err)
+            warnings.append(err)
             if msg_was_polled:
                 # Assume all outputs complete (e.g. poll at restart).
                 # TODO - just poll for outputs in the job status file.
-                self.log(WARNING, "Assuming ALL outputs completed.")
+                warnings.append("Assuming ALL outputs completed.")
                 self.outputs.set_all_completed()
             else:
                 # A succeeded task MUST have submitted and started.
                 # TODO - just poll for outputs in the job status file?
                 for output in [TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED]:
                     if not self.outputs.is_completed(output):
-                        self.log(WARNING,
-                                 "Assuming output completed:  \n %s" % output)
+                        warnings.append(
+                            "Assuming output completed:  \n %s" % output)
                         self.outputs.set_completed(output)
+        return warnings
 
     def set_execution_failed(self):
         """Manipulate state for job execution failure."""
@@ -538,8 +545,6 @@ class TaskState(object):
         """Manipulate state for job execution retry."""
         self.set_state(TASK_STATUS_RETRYING)
         self.set_prerequisites_all_satisfied()
-        if self.hold_on_retry:
-            self.reset_state(TASK_STATUS_HELD)
 
     def record_output(self, msg, msg_was_polled):
         """Record a completed output."""
@@ -552,8 +557,8 @@ class TaskState(object):
                 # This output has already been reported complete. Not an error
                 # condition - maybe the network was down for a bit. Ok for
                 # polling as multiple polls *should* produce the same result.
-                self.log(WARNING,
-                         "Unexpected output (already completed):\n  " + msg)
+                return False
+        return True
 
     def _add_prerequisites(self, point, identity, tdef):
         """Add task prerequisites."""

@@ -15,25 +15,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test re-run event handler on restart.
+# Test restart with held (waiting) task
 . "$(dirname "$0")/test_header"
-set_test_number 7
+set_test_number 6
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-SUITED="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --debug
-sqlite3 "${SUITED}/log/db" \
-    'SELECT COUNT(*) FROM task_action_timers' \
-    >"${TEST_NAME_BASE}-db-n-entries"
-cmp_ok "${TEST_NAME_BASE}-db-n-entries" <<<'3'
+sqlite3 "${SUITE_RUN_DIR}/log/db" \
+    'SELECT status,hold_swap FROM task_pool WHERE cycle=="2016" AND name=="t2"' \
+    >'t2-status.out'
+cmp_ok 't2-status.out' <<<'held|waiting'
 suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart "${SUITE_NAME}" --debug
-cmp_ok "${SUITED}/file" <<'__TEXT__'
-1
-2
-__TEXT__
-grep_ok 'LOADING task action timers' "${SUITED}/log/suite/out"
-grep_ok "+ t01\\.1 (('event-handler-00', 'succeeded'), 1)" "${SUITED}/log/suite/out"
-
+grep_ok 'INFO - + t2\.2016 held (waiting)' "${SUITE_RUN_DIR}/log/suite/out"
+sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT * FROM task_pool ORDER BY cycle, name' \
+    >'task-pool.out'
+cmp_ok 'task-pool.out' <<__OUT__
+2017|t1|1|succeeded|
+2017|t2|1|succeeded|
+2018|t1|0|waiting|
+2018|t2|0|waiting|
+__OUT__
 purge_suite "${SUITE_NAME}"
 exit

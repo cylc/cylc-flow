@@ -84,8 +84,7 @@ class TaskPool(object):
     TABLE_SUITE_PARAMS = CylcSuiteDAO.TABLE_SUITE_PARAMS
     TABLE_SUITE_TEMPLATE_VARS = CylcSuiteDAO.TABLE_SUITE_TEMPLATE_VARS
     TABLE_TASK_POOL = CylcSuiteDAO.TABLE_TASK_POOL
-    TABLE_TASK_EVENT_HANDLER_TRY_STATES = (
-        CylcSuiteDAO.TABLE_TASK_EVENT_HANDLER_TRY_STATES)
+    TABLE_TASK_ACTION_TIMERS = CylcSuiteDAO.TABLE_TASK_ACTION_TIMERS
     TABLE_CHECKPOINT_ID = CylcSuiteDAO.TABLE_CHECKPOINT_ID
 
     def __init__(self, suite, pri_dao, pub_dao, stop_point, comms_daemon, log,
@@ -133,14 +132,15 @@ class TaskPool(object):
         self.task_name_list = config.get_task_name_list()
 
         self.db_deletes_map = {
+            self.TABLE_SUITE_PARAMS: [],
             self.TABLE_TASK_POOL: [],
-            self.TABLE_TASK_EVENT_HANDLER_TRY_STATES: []}
+            self.TABLE_TASK_ACTION_TIMERS: []}
         self.db_inserts_map = {
             self.TABLE_SUITE_PARAMS: [],
             self.TABLE_SUITE_TEMPLATE_VARS: [],
             self.TABLE_CHECKPOINT_ID: [],
             self.TABLE_TASK_POOL: [],
-            self.TABLE_TASK_EVENT_HANDLER_TRY_STATES: []}
+            self.TABLE_TASK_ACTION_TIMERS: []}
 
     def assign_queues(self):
         """self.myq[taskname] = qfoo"""
@@ -237,7 +237,6 @@ class TaskPool(object):
             self.log.warning(
                 itask.identity +
                 ' cannot be added to pool: task ID already exists')
-            del itask
             return False
 
         # do not add if an inserted task is beyond its own stop point
@@ -245,27 +244,16 @@ class TaskPool(object):
         if itask.stop_point and itask.point > itask.stop_point:
             self.log.info(
                 itask.identity + ' not adding to pool: beyond task stop cycle')
-            del itask
             return False
 
-        # add in held state if beyond the suite stop point
-        if self.stop_point and itask.point > self.stop_point:
-            itask.log(
-                INFO,
-                "holding (beyond suite stop point) " + str(self.stop_point))
-            itask.state.reset_state(TASK_STATUS_HELD)
-
         # add in held state if beyond the suite hold point
-        elif self.hold_point and itask.point > self.hold_point:
+        if self.hold_point and itask.point > self.hold_point:
             itask.log(
                 INFO,
                 "holding (beyond suite hold point) " + str(self.hold_point))
             itask.state.reset_state(TASK_STATUS_HELD)
-
-        # add in held state if a future trigger goes beyond the suite stop
-        # point (note this only applies to tasks below the suite stop point
-        # themselves)
-        elif self.task_has_future_trigger_overrun(itask):
+        elif (itask.point <= self.stop_point and
+                self.task_has_future_trigger_overrun(itask)):
             itask.log(INFO, "holding (future trigger beyond stop point)")
             self.held_future_tasks.append(itask.identity)
             itask.state.reset_state(TASK_STATUS_HELD)
@@ -367,6 +355,8 @@ class TaskPool(object):
                         )
                     )
             self._prev_runahead_base_point = runahead_base_point
+        if latest_allowed_point > self.stop_point:
+            latest_allowed_point = self.stop_point
 
         released = False
         for point, itask_id_map in self.runahead_pool.items():
@@ -782,7 +772,7 @@ class TaskPool(object):
         if stop_mode == self.STOP_REQUEST_NOW_NOW:
             return True
         for itask in self.get_tasks():
-            if itask.event_handler_try_states:
+            if itask.event_handler_try_timers:
                 return False
             if (stop_mode == self.STOP_REQUEST_CLEAN and
                     itask.state.status in TASK_STATUSES_ACTIVE and
@@ -800,8 +790,8 @@ class TaskPool(object):
             elif itask.state.status in TASK_STATUSES_ACTIVE:
                 self.log.warning("%s: orphaned task (%s)" % (
                     itask.identity, itask.state.status))
-            elif itask.event_handler_try_states:
-                for key in itask.event_handler_try_states:
+            elif itask.event_handler_try_timers:
+                for key in itask.event_handler_try_timers:
                     self.log.warning("%s: incomplete task event handler %s" % (
                         itask.identity, key))
 
@@ -993,7 +983,6 @@ class TaskPool(object):
         itasks, bad_items = self._filter_task_proxies(items)
         for itask in itasks:
             itask.state.release()
-        return len(bad_items)
 
     def hold_all_tasks(self):
         """Hold all tasks."""
@@ -1001,12 +990,14 @@ class TaskPool(object):
         self.is_held = True
         for itask in self.get_all_tasks():
             itask.state.reset_state(TASK_STATUS_HELD)
+        self.db_inserts_map[self.TABLE_SUITE_PARAMS].append(
+            {"key": "is_held", "value": 1})
 
     def release_all_tasks(self):
         """Release all held tasks."""
         self.is_held = False
-        for itask in self.get_all_tasks():
-            itask.state.release()
+        self.release_tasks(None)
+        self.db_deletes_map[self.TABLE_SUITE_PARAMS].append({"key": "is_held"})
 
     def get_failed_tasks(self):
         failed = []
@@ -1204,7 +1195,7 @@ class TaskPool(object):
             if (itask.state.status in [TASK_STATUS_SUCCEEDED,
                                        TASK_STATUS_EXPIRED] and
                     itask.has_spawned and
-                    not itask.event_handler_try_states and
+                    not itask.event_handler_try_timers and
                     itask.cleanup_cutoff is not None and
                     cutoff > itask.cleanup_cutoff):
                 spent.append(itask)
@@ -1302,7 +1293,7 @@ class TaskPool(object):
                 # Don't if any unsucceeded task exists.
                 if (itask.state.status not in [TASK_STATUS_SUCCEEDED,
                                                TASK_STATUS_EXPIRED] or
-                        itask.event_handler_try_states):
+                        itask.event_handler_try_timers):
                     shutdown = False
                     break
             elif (itask.point <= self.stop_point and
@@ -1431,6 +1422,9 @@ class TaskPool(object):
             {"key": "initial_point", "value": str(initial_point)},
             {"key": "final_point", "value": str(final_point)},
         ])
+        if self.is_held:
+            self.db_inserts_map[self.TABLE_SUITE_PARAMS].append(
+                {"key": "is_held", "value": 1})
 
     def put_rundb_suite_template_vars(self, template_vars):
         """Put template_vars in runtime database.
@@ -1444,31 +1438,42 @@ class TaskPool(object):
     def put_rundb_task_pool(self):
         """Put statements to update the task_pool table in runtime database.
 
-        Update the task_pool table and the task_event_handler_try_states table.
+        Update the task_pool table and the task_action_timers table.
         Queue delete (everything) statements to wipe the tables, and queue the
         relevant insert statements for the current tasks in the pool.
         """
         self.db_deletes_map[self.TABLE_TASK_POOL].append({})
-        self.db_deletes_map[self.TABLE_TASK_EVENT_HANDLER_TRY_STATES].append(
-            {})
+        self.db_deletes_map[self.TABLE_TASK_ACTION_TIMERS].append({})
         for itask in self.get_all_tasks():
             self.db_inserts_map[self.TABLE_TASK_POOL].append({
                 "name": itask.tdef.name,
                 "cycle": str(itask.point),
                 "spawned": int(itask.has_spawned),
-                "status": itask.state.status})
-            for ctx_key, try_state in itask.event_handler_try_states.items():
-                self.db_inserts_map[
-                    self.TABLE_TASK_EVENT_HANDLER_TRY_STATES
-                ].append({
+                "status": itask.state.status,
+                "hold_swap": itask.state.hold_swap})
+            for ctx_key_0 in ["poll_timers", "try_timers"]:
+                for ctx_key_1, timer in getattr(itask, ctx_key_0).items():
+                    if timer is None:
+                        continue
+                    self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
+                        "name": itask.tdef.name,
+                        "cycle": str(itask.point),
+                        "ctx_key_pickle": pickle.dumps((ctx_key_0, ctx_key_1)),
+                        "ctx_pickle": pickle.dumps(timer.ctx),
+                        "delays_pickle": pickle.dumps(timer.delays),
+                        "num": timer.num,
+                        "delay": timer.delay,
+                        "timeout": timer.timeout})
+            for ctx_key, timer in itask.event_handler_try_timers.items():
+                self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
                     "name": itask.tdef.name,
                     "cycle": str(itask.point),
                     "ctx_key_pickle": pickle.dumps(ctx_key),
-                    "ctx_pickle": pickle.dumps(try_state.ctx),
-                    "delays_pickle": pickle.dumps(try_state.delays),
-                    "num": try_state.num,
-                    "delay": try_state.delay,
-                    "timeout": try_state.timeout})
+                    "ctx_pickle": pickle.dumps(timer.ctx),
+                    "delays_pickle": pickle.dumps(timer.delays),
+                    "num": timer.num,
+                    "delay": timer.delay,
+                    "timeout": timer.timeout})
         self.db_inserts_map[self.TABLE_CHECKPOINT_ID].append({
             # id = -1 for latest
             "id": CylcSuiteDAO.CHECKPOINT_LATEST_ID,

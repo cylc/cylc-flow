@@ -71,7 +71,7 @@ bar|20130924T1200Z|1|1|succeeded
 bar|20130925T0000Z|1|1|succeeded
 bar|20130925T1200Z|1|1|succeeded
 bar|20130926T0000Z|1|1|succeeded
-bar|20130926T1200Z|0||held
+bar|20130926T1200Z|0||waiting
 foo|20130923T0000Z|1|1|succeeded
 foo|20130923T1200Z|1|1|succeeded
 foo|20130924T0000Z|1|1|succeeded
@@ -79,7 +79,7 @@ foo|20130924T1200Z|1|1|succeeded
 foo|20130925T0000Z|1|1|succeeded
 foo|20130925T1200Z|1|1|succeeded
 foo|20130926T0000Z|1|1|succeeded
-foo|20130926T1200Z|0||held
+foo|20130926T1200Z|0||waiting
 output_states|20130925T0000Z|1|1|succeeded
 shutdown|20130925T0000Z|1|1|succeeded
 __DB_DUMP__

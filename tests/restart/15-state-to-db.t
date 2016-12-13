@@ -72,8 +72,8 @@ run_ok "${TEST_NAME_BASE}-task_pool" \
     'SELECT cycle,name,spawned,status FROM task_pool ORDER BY cycle, name'
 cmp_ok "${TEST_NAME_BASE}-task_pool.stdout" <<__OUT__
 20050101T0000Z|bar|1|succeeded
-20060101T0000Z|bar|0|held
-20060101T0000Z|foo|0|held
+20060101T0000Z|bar|0|waiting
+20060101T0000Z|foo|0|waiting
 __OUT__
 run_ok "${TEST_NAME_BASE}-task_pool_checkpoints" \
     sqlite3 "${SUITE_RUN_DIR}/log/db" \
@@ -100,8 +100,8 @@ cmp_ok "${TEST_NAME_BASE}-task_states.stdout" <<__OUT__
 20040101T0000Z|foo|succeeded
 20050101T0000Z|bar|succeeded
 20050101T0000Z|foo|succeeded
-20060101T0000Z|bar|held
-20060101T0000Z|foo|held
+20060101T0000Z|bar|waiting
+20060101T0000Z|foo|waiting
 __OUT__
 
 purge_suite "${SUITE_NAME}"

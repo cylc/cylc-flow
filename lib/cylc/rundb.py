@@ -165,6 +165,8 @@ class CylcSuiteDAO(object):
     CONN_TIMEOUT = 0.2
     DB_FILE_BASE_NAME = "db"
     OLD_DB_FILE_BASE_NAME = "cylc-suite.db"
+    OLD_DB_FILE_BASE_NAME_611 = (
+        "cylc-suite-private.db", "cylc-suite-public.db")
     MAX_TRIES = 100
     CHECKPOINT_LATEST_ID = 0
     CHECKPOINT_LATEST_EVENT = "latest"
@@ -176,7 +178,7 @@ class CylcSuiteDAO(object):
     TABLE_SUITE_TEMPLATE_VARS = "suite_template_vars"
     TABLE_TASK_JOBS = "task_jobs"
     TABLE_TASK_EVENTS = "task_events"
-    TABLE_TASK_EVENT_HANDLER_TRY_STATES = "task_event_handler_try_states"
+    TABLE_TASK_ACTION_TIMERS = "task_action_timers"
     TABLE_CHECKPOINT_ID = "checkpoint_id"
     TABLE_TASK_POOL = "task_pool"
     TABLE_TASK_POOL_CHECKPOINTS = "task_pool_checkpoints"
@@ -222,6 +224,16 @@ class CylcSuiteDAO(object):
             ["key", {"is_primary_key": True}],
             ["value"],
         ],
+        TABLE_TASK_ACTION_TIMERS: [
+            ["cycle", {"is_primary_key": True}],
+            ["name", {"is_primary_key": True}],
+            ["ctx_key_pickle", {"is_primary_key": True}],
+            ["ctx_pickle"],
+            ["delays_pickle"],
+            ["num", {"datatype": "INTEGER"}],
+            ["delay"],
+            ["timeout"],
+        ],
         TABLE_TASK_JOBS: [
             ["cycle", {"is_primary_key": True}],
             ["name", {"is_primary_key": True}],
@@ -247,21 +259,12 @@ class CylcSuiteDAO(object):
             ["event"],
             ["message"],
         ],
-        TABLE_TASK_EVENT_HANDLER_TRY_STATES: [
-            ["cycle", {"is_primary_key": True}],
-            ["name", {"is_primary_key": True}],
-            ["ctx_key_pickle", {"is_primary_key": True}],
-            ["ctx_pickle"],
-            ["delays_pickle"],
-            ["num", {"datatype": "INTEGER"}],
-            ["delay"],
-            ["timeout"],
-        ],
         TABLE_TASK_POOL: [
             ["cycle", {"is_primary_key": True}],
             ["name", {"is_primary_key": True}],
             ["spawned", {"datatype": "INTEGER"}],
             ["status"],
+            ["hold_swap"],
         ],
         TABLE_TASK_POOL_CHECKPOINTS: [
             ["id", {"datatype": "INTEGER", "is_primary_key": True}],
@@ -269,6 +272,7 @@ class CylcSuiteDAO(object):
             ["name", {"is_primary_key": True}],
             ["spawned", {"datatype": "INTEGER"}],
             ["status"],
+            ["hold_swap"],
         ],
         TABLE_TASK_STATES: [
             ["name", {"is_primary_key": True}],
@@ -507,17 +511,16 @@ class CylcSuiteDAO(object):
                 r"SELECT key,value FROM %s" % self.TABLE_SUITE_TEMPLATE_VARS)):
             callback(row_idx, list(row))
 
-    def select_task_event_handler_try_states(self, callback):
-        """Select from task_event_handler_try_states for restart.
+    def select_task_action_timers(self, callback):
+        """Select from task_action_timers for restart.
 
         Invoke callback(row_idx, row) on each row.
         """
         attrs = []
-        for item in self.TABLES_ATTRS[
-                self.TABLE_TASK_EVENT_HANDLER_TRY_STATES]:
+        for item in self.TABLES_ATTRS[self.TABLE_TASK_ACTION_TIMERS]:
             attrs.append(item[0])
         stmt = r"SELECT %s FROM %s" % (
-            ",".join(attrs), self.TABLE_TASK_EVENT_HANDLER_TRY_STATES)
+            ",".join(attrs), self.TABLE_TASK_ACTION_TIMERS)
         for row_idx, row in enumerate(self.connect().execute(stmt)):
             callback(row_idx, list(row))
 
@@ -635,7 +638,8 @@ class CylcSuiteDAO(object):
         """Select from task_pool+task_states+task_jobs for restart.
 
         Invoke callback(row_idx, row) on each row, where each row contains:
-            [cycle, name, spawned, status, submit_num, try_num, user_at_host]
+            [cycle, name, spawned, status, hold_swap, submit_num, try_num,
+             user_at_host]
 
         If id_key is specified,
         select from task_pool table if id_key == CHECKPOINT_LATEST_ID.
@@ -647,6 +651,7 @@ class CylcSuiteDAO(object):
             r"    %(task_pool)s.name," +
             r"    %(task_pool)s.spawned,"
             r"    %(task_pool)s.status," +
+            r"    %(task_pool)s.hold_swap," +
             r"    %(task_states)s.submit_num," +
             r"    %(task_jobs)s.try_num," +
             r"    %(task_jobs)s.user_at_host " +
@@ -708,6 +713,16 @@ class CylcSuiteDAO(object):
                 for dao in daos:
                     dao.tables[table_name + "_checkpoints"].add_insert_item(
                         [id_] + list(row))
+
+    def upgrade_from_611(self):
+        """Upgrade database on restart with a 6.11.X private database."""
+        conn = self.connect()
+        # Add hold_swap column task_pool(_checkpoints) tables
+        for t_name in [self.TABLE_TASK_POOL, self.TABLE_TASK_POOL_CHECKPOINTS]:
+            sys.stdout.write("Add hold_swap column to %s\n" % (t_name,))
+            conn.execute(
+                r"ALTER TABLE " + t_name + r" ADD COLUMN hold_swap TEXT")
+        conn.commit()
 
     def upgrade_with_state_file(self, state_file_path):
         """Upgrade database on restart with an old state file.
@@ -791,7 +806,8 @@ class CylcSuiteDAO(object):
             "name": name,
             "cycle": cycle,
             "spawned": spawned,
-            "status": status})
+            "status": status,
+            "hold_swap": None})
         sys.stdout.write("\n + %s" % head)
 
     def _upgrade_with_state_file_extras(self):

@@ -44,7 +44,7 @@ foo|20140101T0000Z|1|succeeded
 foo|20140102T0000Z|1|succeeded
 foo|20140103T0000Z|1|succeeded
 foo|20140104T0000Z|1|succeeded
-foo|20140105T0000Z|0|held
+foo|20140105T0000Z|0|waiting
 foo_cold|20140101T0000Z|2|succeeded
 reinsert_foo|20140102T0000Z|1|succeeded
 __OUT__
