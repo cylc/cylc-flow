@@ -899,12 +899,12 @@ in {\em suite definition directories} that may also contain a
 
 \subsection{Suite Registration}
 
-Suite registration creates the suite run directory (a directory with the suite
-name under \lstinline=~/cylc-run/= by default), and populates it with
-authentication files and a symbolic link to a suite definition directory.  Cylc
-commands that parse suite definition files can take the file path or the suite
-name as input. Commands that interact with running suites have to target the
-suite by name.
+Suite registration creates the suite run directory under
+(\lstinline=~/cylc-run/= by default) and populates it with authentication files
+and a symbolic link to a suite definition directory.  Cylc commands that parse
+suite definitions can take the file path or the suite name as input. Commands
+that interact with running suites have to target the suite by name.
+
 \lstset{language=transcript}
 \begin{lstlisting}
 # target a suite by file path:
@@ -986,10 +986,9 @@ examples
 
 \subsection{Rename The Imported Tutorial Suites}
 \
-Rename (re-register) the tutorial suites to make their names a bit
-shorter:
+Rename the tutorial suites to make their names a bit shorter:
 \begin{lstlisting}
-$ cd ~/cylc-run/examples/tutorial ~/cylc-run/tut
+shell$ mv ~/cylc-run/examples/tutorial ~/cylc-run/tut
 shell$ cylc print -x tut
 tut/oneoff/external   Hello World! from an external task script
 # ...
@@ -4010,11 +4009,6 @@ purposes.
 \subsubsection{Namespace Names}
 
 Namespace names may contain letters, digits, underscores, and hyphens.
-%They may not contain colons, which would preclude use of suite
-%suite names in shell \lstinline=$PATH= variables. The
-%`.' character is the suite registration hierarchy delimiter (which
-%separates suite groups and names, e.g.\
-%my\_suites.test.foo).
 
 Note that {\em task names need not be hardwired into task implementations}
 because task and suite identity can be extracted portably from the task
@@ -5145,6 +5139,20 @@ line will {\em restart} with the same settings. However, you can set
 them again on the \lstinline=cylc restart= command line if they need to
 be overridden.
 
+\subsubsection{Jinja2 Variable Scope}
+
+Jinja2 variable scoping rules may be surprising. Variables set inside a
+{\em for loop} block, for instance, are not accessible outside of the block,
+so the following will print \lstinline=# FOO is 0=, not \lstinline=# FOO is 9=:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+{% set COUNT = 0 %}
+{% for I in range(10) %}
+   {% set FOO = I %}
+{% endfor %}
+# FOO is {{FOO}}
+\end{lstlisting}
 
 \subsection{Omitting Tasks At Runtime}
 
@@ -6163,14 +6171,13 @@ to point to your cylc copy.
 Access to the cylc executable for different hosts can be configured using
 the site and user global configuration files.
 If the environment for running the cylc executable is only set up correctly in
-a login shell for a given host, you can set the
-\lstinline=[hosts] \textrightarrow HOST \textrightarrow cylc executable=
-setting for the relevant host to \lstinline=True=.
-(This is the default behaviour.)
+a login shell for a given host, you can set 
+\lstinline=[hosts][HOST]cylc executable=
+for the relevant host to \lstinline=True= (this is the default behaviour).
 If the environment is already correct without the login shell, but the cylc
-executable is not in \lstinline=$PATH=, then the
-\lstinline=[hosts] \textrightarrow HOST \textrightarrow cylc executable=
-setting can be used to specify the path to the cylc executable.
+executable is not in \lstinline=$PATH=, then 
+\lstinline=[hosts][HOST]cylc executable=
+can be used to specify the path to the cylc executable.
 
 The site/user global config item \lstinline=global init-script= can also be
 used if necessary (see~\ref{GlobalInitScript}).
@@ -6632,7 +6639,7 @@ for details.
 
 Broadcast settings targeted at a specific task ID or cycle point expire and
 are forgotten as the suite moves on. Un-targeted variables and those
-targetted at a task name persist throughout the suite run, even across
+targeted at a task name persist throughout the suite run, even across
 restarts, unless manually cleared using the broadcast command - and so
 should be used sparingly.
 

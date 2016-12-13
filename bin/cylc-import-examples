@@ -54,7 +54,7 @@ else
     TOPGRP=cylc-$( cylc -v | tr '.' '-' )
 fi
 
-if $( cylc db print --fail $TOPGRP > /dev/null 2>&1 ); then
+if $( cylc print --fail $TOPGRP > /dev/null 2>&1 ); then
     echo "ERROR: the $TOPGRP name group already exists." >&2
     echo " Reregister it, or choose another name group." >&2
     exit 1
@@ -78,7 +78,7 @@ SUITE_RCS=$( find . -name suite.rc | sed -e 's@./@@' )
 for SUITE_RC in $SUITE_RCS; do
     SUITE_DEF_DIR=$( dirname $SUITE_RC )
     SUITE_REG_NAME=${TOPGRP}.$( echo $SUITE_DEF_DIR | tr '/' '.' )
-    cylc db register $SUITE_REG_NAME $SUITE_DEF_DIR
+    cylc register $SUITE_REG_NAME $SUITE_DEF_DIR
 done
 
 echo "DONE"

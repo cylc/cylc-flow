@@ -151,7 +151,7 @@ def main():
 
     parser.add_option(
         "-s", "--offset",
-        help="Specify an offset to add to the targetted cycle point",
+        help="Specify an offset to add to the targeted cycle point",
         action="store", dest="offset", default=None)
 
     conds = ("Valid triggering conditions to check for include: '" +
@@ -187,7 +187,7 @@ def main():
     if options.offset and not options.cycle:
         sys.exit("ERROR: You must target a cycle point to use an offset")
 
-    # Attempt to apply specified offset to the targetted cycle
+    # Attempt to apply specified offset to the targeted cycle
     if options.offset:
         my_parser = TimePointParser()
         my_target_point = my_parser.parse(options.cycle, dump_as_parsed=True)
@@ -211,7 +211,7 @@ def main():
 
         options.cycle = str(my_target_point)
 
-    # Reformat cycle point for querying targetted suite
+    # Reformat cycle point for querying targeted suite
     if options.template:
         if options.cycle:
             my_parser = TimePointParser()
