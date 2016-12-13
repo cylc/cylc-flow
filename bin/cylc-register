@@ -20,18 +20,28 @@
 
 Register the suite definition located in PATH (or $PWD) as REG.
 
-This creates the suite run directory, and populates it with authentication
-files, and a symlink to source directory, under ".service/".
+This creates the suite run directory, and authentication files in a
+sub-directory called ".service/".
 
-Suite names correspond to the directory path under the suite run directory.
-They may contain letters, digits, underscore, and hyphens.
+Suite names are the same as the directory path under the suite run directory.
+They may contain alphanumeric characters plus '_' '-' and '/'.
 
-Example: if /home/bob/suites/test is a suite source directory, then:
-    % cylc reg nwp/test1 /home/bob/suites/test
+Example: if the cylc run directory is $HOME/cylc-run (the default) and
+/home/bob/suites/test is a suite source directory, then:
 
-will create $HOME/cylc-run/nwp/test1 as a run directory for the suite. The
-suite can subsequently be started and targeted by cylc commands using
-"nwp/test1" as the suite name."""
+% cylc reg nwp/test1 /home/bob/suites/test
+
+will create the following suite run directory:
+
+/home/bob/cylc-run/nwp/test1
+`-- .service
+    |-- passphrase
+    |-- source -> /home/bob/test
+    |-- ssl.cert
+    `-- ssl.pem
+
+The suite can subsequently be started and targeted by cylc commands using
+"nwp/test1" as the name."""
 
 import sys
 from cylc.remote import remrun
