@@ -30,7 +30,7 @@ if [[ $1 == "-h" || $1 == "--help" || $1 == "help" ]]; then
 fi
 
 SUITE=$1
-if ! cylc db pr --fail $SUITE >/dev/null; then
+if ! cylc pr --fail $SUITE >/dev/null; then
     usage
     exit 1
 fi
