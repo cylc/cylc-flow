@@ -755,7 +755,7 @@ class ScanApp(object):
                         suite, host, state, point_string)
                     tooltip_text += (
                         '\n<b>Recent {state} tasks</b>\n{tasks}').format(
-                            state=state, tasks='\n'.join(tasks))
+                        state=state, tasks='\n'.join(tasks))
                 tooltip.set_markup(tooltip_text)
                 return True
 
