@@ -36,6 +36,6 @@ if [[ "${CYLC_TASK_CYCLE_POINT}" == '2017' ]]; then
 fi
 """
         [[[job]]]
-            execution time limit = PT15S
+            execution time limit = PT50S
         [[[events]]]
             failed handler = cylc release '%(suite)s'
