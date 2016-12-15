@@ -325,7 +325,7 @@ class GraphParser(object):
             info = n_info
 
             # Determine semantics of all family triggers present.
-            families = {}
+            family_trig_map = {}
             for name, offset, trig in info:
                 if name in self.family_map:
                     if trig.endswith(self.__class__.FAM_TRIG_EXT_ANY):
@@ -338,15 +338,15 @@ class GraphParser(object):
                         # Unqualified (FAM => foo) or bad (FAM:bad => foo).
                         raise GraphParseError(
                             "ERROR, bad family trigger in %s" % expr)
-                    families[name] = (ttype, ext)
+                    family_trig_map[name+trig] = (ttype, ext)
                 else:
                     if (trig.endswith(self.__class__.FAM_TRIG_EXT_ANY) or
                             trig.endswith(self.__class__.FAM_TRIG_EXT_ALL)):
                         raise GraphParseError("ERROR, family trigger on non-"
                                               "family namespace %s" % expr)
-            self._families_all_to_all(expr, rights, info, families)
+            self._families_all_to_all(expr, rights, info, family_trig_map)
 
-    def _families_all_to_all(self, expr, rights, info, families):
+    def _families_all_to_all(self, expr, rights, info, family_trig_map):
         """Replace all family names with member names, for all/any semantics.
 
         (Also for graph segments with no family names.)
@@ -354,8 +354,8 @@ class GraphParser(object):
         n_info = []
         n_expr = expr
         for name, offset, trig in info:
-            if name in families:
-                ttype, extn = families[name]
+            if name+trig in family_trig_map:
+                ttype, extn = family_trig_map[name+trig]
                 m_info = []
                 m_expr = []
                 for mem in self.family_map[name]:
