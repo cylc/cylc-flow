@@ -338,7 +338,7 @@ class GraphParser(object):
                         # Unqualified (FAM => foo) or bad (FAM:bad => foo).
                         raise GraphParseError(
                             "ERROR, bad family trigger in %s" % expr)
-                    family_trig_map[name + trig] = (ttype, ext)
+                    family_trig_map[(name, trig)] = (ttype, ext)
                 else:
                     if (trig.endswith(self.__class__.FAM_TRIG_EXT_ANY) or
                             trig.endswith(self.__class__.FAM_TRIG_EXT_ALL)):
@@ -354,8 +354,8 @@ class GraphParser(object):
         n_info = []
         n_expr = expr
         for name, offset, trig in info:
-            if name + trig in family_trig_map:
-                ttype, extn = family_trig_map[name + trig]
+            if (name, trig) in family_trig_map:
+                ttype, extn = family_trig_map[(name, trig)]
                 m_info = []
                 m_expr = []
                 for mem in self.family_map[name]:
