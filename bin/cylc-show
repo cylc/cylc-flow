@@ -86,7 +86,7 @@ def main():
                 print '\n%s (- => not %s):' % (name, done)
                 if not result[name]:
                     print '  (None)'
-                for msg, state in sorted(result[name]):
+                for msg, state in result[name]:
                     if state:
                         print '  + ' + msg
                     else:

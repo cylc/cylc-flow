@@ -15,28 +15,31 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test graph = """a => c
-#                 b => c"""
-# gives the same result as
-#      graph = "a & b => c"
-
+# Test correct expansion of (FOO:finish-all & FOO:fail-any)
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 3
+set_test_number 4
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE multiline_and2
+install_suite $TEST_NAME_BASE fam-expansion
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
+suite_run_ok $TEST_NAME cylc run --hold $SUITE_NAME
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-check-c
-cylc run $SUITE_NAME --hold
-sleep 5
-cylc show $SUITE_NAME c.1 | sed -n "/prerequisites/,/outputs/p" > c-prereqs
-contains_ok $TEST_SOURCE_DIR/multiline_and_refs/c-ref-2 c-prereqs
-cylc shutdown $SUITE_NAME --now -f
+TEST_NAME=$TEST_NAME_BASE-show
+run_ok $TEST_NAME cylc show $SUITE_NAME bar.1
+#-------------------------------------------------------------------------------
+contains_ok $TEST_NAME.stdout <<'__SHOW_DUMP__'
+  -     LABEL: foo3_colon_succeed = foo3.1 succeeded
+  -     LABEL: foo1_colon_succeed = foo1.1 succeeded
+  -     LABEL: foo2_colon_succeed = foo2.1 succeeded
+  -     LABEL: foo3_colon_fail = foo3.1 failed
+  -     LABEL: foo2_colon_fail = foo2.1 failed
+  -     LABEL: foo1_colon_fail = foo1.1 failed
+__SHOW_DUMP__
+#-------------------------------------------------------------------------------
+cylc stop $SUITE_NAME
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

@@ -33,7 +33,7 @@ suite_run_ok $TEST_NAME cylc run --reference-test --debug \
     --set=TEST_OUTPUT_PATH="$TEST_SHOW_OUTPUT_PATH" "$SUITE_NAME"
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-show
-cmp_ok $TEST_NAME.stdout <<__SHOW_OUTPUT__
+contains_ok $TEST_NAME.stdout <<__SHOW_OUTPUT__
 title: a test suite
 description: the quick brown fox
 title: a task

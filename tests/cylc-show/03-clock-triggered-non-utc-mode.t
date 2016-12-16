@@ -45,7 +45,7 @@ suite_run_ok $TEST_NAME cylc run --reference-test --debug \
     --set=TZ_OFFSET_BASIC="$TZ_OFFSET_BASIC" "$SUITE_NAME"
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-show
-cmp_ok $TEST_NAME.stdout <<__SHOW_OUTPUT__
+contains_ok $TEST_NAME.stdout <<__SHOW_OUTPUT__
 title: (not given)
 description: (not given)
 

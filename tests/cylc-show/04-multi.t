@@ -28,7 +28,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 
 RUND="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
 for FILE in "${RUND}/show1.txt" "${RUND}/show2.txt"; do
-    cmp_ok "${FILE}" <<'__TXT__'
+    contains_ok "${FILE}" <<'__TXT__'
 ----
 TASK ID: t1.2016
 title: (not given)
