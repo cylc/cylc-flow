@@ -26,16 +26,18 @@ cp -p 'suite.rc' 'suite1.rc'
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
 # Suite reloads+inserts new task to mess up prerequisites - suite should stall
-suite_run_fail "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --debug
+suite_run_fail "${TEST_NAME_BASE}-run" \
+    timeout 120 cylc run "${SUITE_NAME}" --debug
 # Restart should stall in exactly the same way
 suite_run_fail "${TEST_NAME_BASE}-restart-1" \
-    cylc restart "${SUITE_NAME}" --debug
+    timeout 60 cylc restart "${SUITE_NAME}" --debug
 
 # Restart from a checkpoint before the reload should allow the suite to proceed
 # normally.
 cp -p 'suite1.rc' 'suite.rc'
 suite_run_ok "${TEST_NAME_BASE}-restart-2" \
-    cylc restart "${SUITE_NAME}" --checkpoint=1 --debug --reference-test
+    timeout 120 cylc restart "${SUITE_NAME}" \
+    --checkpoint=1 --debug --reference-test
 
 purge_suite "${SUITE_NAME}"
 exit
