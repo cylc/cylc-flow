@@ -18,7 +18,7 @@
 # Test intercycle dependencies.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 4
+set_test_number 6
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE no_final_cycle_point
 #-------------------------------------------------------------------------------
@@ -26,10 +26,16 @@ TEST_NAME=$TEST_NAME_BASE-validate
 run_fail $TEST_NAME cylc validate $SUITE_NAME
 grep_ok "This suite requires a final cycle point\." \
     $TEST_NAME.stderr
+contains_ok "$TEST_NAME.stderr" <<'__ERR__'
+'ERROR: Invalid/unsupported recurrence representation: R1/P0D'
+__ERR__
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
 run_fail $TEST_NAME cylc run --debug $SUITE_NAME
 grep_ok "This suite requires a final cycle point\." \
     $TEST_NAME.stderr
+contains_ok "$TEST_NAME.stderr" <<'__ERR__'
+cylc.config.SuiteConfigError: 'ERROR: Invalid/unsupported recurrence representation: R1/P0D'
+__ERR__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

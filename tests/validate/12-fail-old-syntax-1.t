@@ -24,8 +24,9 @@ install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE
 run_fail $TEST_NAME cylc validate --debug -v -v $SUITE_NAME
-grep_ok "'0': not a valid cylc-shorthand or full ISO 8601 date representation" \
-    $TEST_NAME.stderr
+contains_ok "${TEST_NAME}.stderr" <<__ERR__
+cylc.config.SuiteConfigError: 'ERROR: Invalid/unsupported recurrence representation: 0'
+__ERR__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
 exit

@@ -3720,6 +3720,35 @@ You can see there is a dependence on the initial \lstinline=R1= task
 and at the first \lstinline=T12= cycle point. Thereafter, \lstinline=foo= just
 depends on its previous (12 hours ago) instance.
 
+Finally, it is also possible to have a dependency on a task at a specific cycle
+point.
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    [[dependencies]]
+        [[[R1/20200202]]]
+            graph = "baz[20200101] => qux"
+\end{lstlisting}
+\lstset{language=transcript}
+
+However, in a long running suite, a repeating cycle should avoid having a
+dependency on a task with a specific cycle point (including the initial cycle
+point) - as it can currently cause performance issue. In the following example,
+all instances of \lstinline=qux= will depend on \lstinline=baz.20200101=, which
+will never be removed from the task pool.:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    initial cycle point = 2010
+    [[dependencies]]
+        # Can cause performance issue!
+        [[[P1D]]]
+            graph = "baz[20200101] => qux"
+\end{lstlisting}
+\lstset{language=transcript}
+
 \paragraph{Special Sequential Tasks}
 \label{SequentialTasks}
 

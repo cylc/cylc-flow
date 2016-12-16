@@ -288,7 +288,7 @@ class IntegerSequence(SequenceBase):
             break
 
         if not matched_recurrence:
-            raise Exception(
+            raise ValueError(
                 "ERROR, bad integer cycling format: %s" % expression)
 
         self.p_start = get_point_from_expression(
@@ -354,7 +354,7 @@ class IntegerSequence(SequenceBase):
 
         if self.i_step and self.i_step < IntegerInterval.get_null():
             # (TODO - this should be easy to handle but needs testing)
-            raise Exception(
+            raise ValueError(
                 "ERROR, negative intervals not supported yet: %s" %
                 self.i_step
             )
@@ -562,6 +562,11 @@ def get_point_from_expression(point_expr, context_point, is_required=False):
     if point_expr is None:
         return context_point
     return get_point_relative(point_expr, context_point)
+
+
+def is_offset_absolute(offset_string):
+    """Return True if offset_string is a point rather than an interval."""
+    return not REC_RELATIVE_POINT.search(offset_string)
 
 
 class TestIntegerSequence(unittest.TestCase):

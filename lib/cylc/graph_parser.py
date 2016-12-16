@@ -102,7 +102,7 @@ class GraphParser(object):
         (
         (?:(?:!)?\w[\w\-+%@]*)  # node name
         (?:<[\w,=\-+]+>)?       # optional parameter list
-        (?:\[[\w\-\+\^]+\])?    # optional cycle point offset
+        (?:\[[\w\-\+\^:]+\])?   # optional cycle point offset
         (?::[\w\-]+)?           # optional trigger type
         )
     ''', re.X)           # end of string
@@ -110,7 +110,7 @@ class GraphParser(object):
     # Extract node info from a left-side expression, after parameter expansion.
     REC_NODES = re.compile(r'''
         ((?:!)?\w[\w\-+%@]*)  # node name
-        (\[[\w\-\+\^]+\])?    # optional cycle point offset
+        (\[[\w\-\+\^:]+\])?   # optional cycle point offset
         (:[\w\-]+)?           # optional trigger type
     ''', re.X)
 

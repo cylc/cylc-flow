@@ -127,10 +127,12 @@ class PointBase(object):
         # Stringify.
         return self.value
 
+    __repr__ = __str__
+
     def __cmp__(self, other):
         # Compare to other point.
-        if not other:
-            return False
+        if other is None:
+            return -1
         if self.TYPE != other.TYPE:
             return cmp(self.TYPE_SORT_KEY, other.TYPE_SORT_KEY)
         if self.value == other.value:

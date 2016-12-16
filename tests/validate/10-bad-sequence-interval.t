@@ -23,8 +23,9 @@ install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-val
 run_fail "$TEST_NAME_BASE" cylc validate suite.rc
-grep_ok "Invalid ISO 8601 duration representation: PT5D" \
-    "$TEST_NAME_BASE.stderr"
+contains_ok "${TEST_NAME_BASE}.stderr" <<'__ERR__'
+'ERROR: Invalid/unsupported recurrence representation: R/T00/PT5D'
+__ERR__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
 exit
