@@ -26,21 +26,18 @@ from cylc.suite_logging import SuiteLog
 
 SUITE_SCAN_INFO_TMPL = r"""
 
-To see if '%(suite)s' is running on '%(host)s:%(port)s':
- * cylc scan -n '\b%(suite)s\b' %(host)s
- * cylc ping -v --host=%(host)s %(suite)s
- * ssh %(host)s "pgrep -a -P 1 -fu $USER 'cylc-r.* \b%(suite)s\b'"
+To view suite daemon contact information:
+ $ cylc get-suite-contact %(suite)s
+
+Other ways to see if the suite is still running:
+ $ cylc scan -n '\b%(suite)s\b' %(host)s
+ $ cylc ping -v --host=%(host)s %(suite)s
+ $ ssh %(host)s "pgrep -a -P 1 -fu $USER 'cylc-r.* \b%(suite)s\b'"
 
 """
 
-
 _INFO_TMPL = r"""
-Suite Info:
- + Name: %(suite)s
- + PID: %(pid)s
- + Host: %(host)s
- + Port: %(port)s
- + Logs: %(logd)s/{log,out,err}""" + SUITE_SCAN_INFO_TMPL
+*** listening on %(host)s:%(port)s ***""" + SUITE_SCAN_INFO_TMPL
 
 _TIMEOUT = 300.0  # 5 minutes
 

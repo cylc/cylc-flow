@@ -293,14 +293,14 @@ class Scheduler(object):
     def _start_print_blurb():
         """Print copyright and license information."""
         logo = (
-            "            ,_,       \n"
+            "            ._.       \n"
             "            | |       \n"
-            ",_____,_, ,_| |_____, \n"
-            "| ,___| | | | | ,___| \n"
-            "| |___| |_| | | |___, \n"
-            "\_____\___, |_\_____| \n"
-            "      ,___| |         \n"
-            "      \_____|         \n"
+            "._____._. ._| |_____. \n"
+            "| .___| | | | | .___| \n"
+            "| !___| !_! | | !___. \n"
+            "!_____!___. |_!_____! \n"
+            "      .___! |         \n"
+            "      !_____!         \n"
         )
         cylc_license = """
 The Cylc Suite Engine [%s]
