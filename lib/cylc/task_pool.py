@@ -1166,7 +1166,7 @@ class TaskPool(object):
             if itask.state.status in [TASK_STATUS_WAITING, TASK_STATUS_HELD]:
                 if cutoff is None or itask.point < cutoff:
                     cutoff = itask.point
-            elif not itask.has_spawned:
+            elif not itask.has_spawned and not itask.tdef.is_coldstart:
                 # (e.g. TASK_STATUS_READY)
                 nxt = itask.next_point()
                 if nxt is not None and (cutoff is None or nxt < cutoff):
