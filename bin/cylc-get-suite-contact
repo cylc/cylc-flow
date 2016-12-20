@@ -1,0 +1,47 @@
+#!/usr/bin/env python
+
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) 2008-2016 NIWA
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""cylc [info] get-suite-contact [OPTIONS] ARGS
+
+Print contact information of running suite REG."""
+
+import sys
+from cylc.remote import remrun
+if remrun().execute():
+    sys.exit(0)
+
+from cylc.option_parsers import CylcOptionParser as COP
+from cylc.suite_srv_files_mgr import (
+    SuiteSrvFilesManager, SuiteServiceFileError)
+
+
+def main():
+    """CLI for "cylc get-suite-contact"."""
+    parser = COP(__doc__, argdoc=[('REG', 'Suite name')])
+    reg = parser.parse_args()[1][0]
+    try:
+        data = SuiteSrvFilesManager().load_contact_file(reg)
+    except SuiteServiceFileError:
+        sys.exit("%s: cannot get contact info, suite not running?" % (reg,))
+    else:
+        for key, value in sorted(data.items()):
+            print("%s=%s" % (key, value))
+
+
+if __name__ == "__main__":
+    main()

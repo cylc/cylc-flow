@@ -198,6 +198,8 @@ information_commands['dump'] = ['dump']
 information_commands['cat-state'] = ['cat-state']
 information_commands['show'] = ['show']
 information_commands['cat-log'] = ['cat-log', 'log']
+information_commands['get-suite-contact'] = [
+    'get-suite-contact', 'get-contact', 'print-contact']
 information_commands['get-suite-version'] = [
     'get-suite-version', 'get-cylc-version']
 information_commands['version'] = ['version']
@@ -396,6 +398,7 @@ comsum['monitor'] = 'An in-terminal suite monitor (see also gcylc)'
 comsum['get-suite-config'] = 'Print suite configuration items'
 comsum['get-site-config'] = 'Print site/user configuration items'
 comsum['get-gui-config'] = 'Print gcylc configuration items'
+comsum['get-suite-contact'] = 'Print the contact information of a suite daemon'
 comsum['get-suite-version'] = 'Print the cylc version of a suite daemon'
 comsum['version'] = 'Print the cylc release version'
 comsum['gscan'] = 'Scan GUI for monitoring multiple suites'
