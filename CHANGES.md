@@ -5,6 +5,16 @@ milestones](https://github.com/cylc/cylc/milestones?state=closed).
 
 -------------------------------------------------------------------------------
 
+## __cylc-6.11.3 (2016-12-21)__
+
+One minor bug fix on top of 6.11.2.
+
+[#2091](https://github.com/cylc/cylc/pull/2091): Since 6.11.0 use of cylc-5
+special "cold start tasks" caused downstream tasks to become immortal. This
+fixes the problem, but note that you should no longer be using this deprecated
+feature (which will be removed from cylc-7).
+
+
 ## __cylc-6.11.2 (2016-10-19)__
 
 Some minor enhancements and fixes.
