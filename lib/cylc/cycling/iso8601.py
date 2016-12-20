@@ -663,6 +663,16 @@ def interval_parse(interval_string):
                 interval_string.replace("+", "", 1)).copy()
 
 
+def is_offset_absolute(offset_string):
+    """Return True if offset_string is a point rather than an interval."""
+    try:
+        interval_parse(offset_string)
+    except Exception:
+        return True
+    else:
+        return False
+
+
 @memoize
 def _interval_parse(interval_string):
     """Parse an interval_string into a proper Duration object."""

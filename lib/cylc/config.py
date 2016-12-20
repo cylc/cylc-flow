@@ -30,6 +30,7 @@ import sys
 import traceback
 
 from cylc.c3mro import C3
+from cylc.exceptions import CylcError
 from cylc.graph_parser import GraphParser
 from cylc.param_expand import NameExpander
 from cylc.cfgspec.suite import RawSuiteConfig
@@ -1793,7 +1794,6 @@ class SuiteConfig(object):
 
         icp = self.cfg['scheduling']['initial cycle point']
         fcp = self.cfg['scheduling']['final cycle point']
-        initial_point = get_point(icp)
 
         # Make a stack of sections and graphs [(sec1, graph1), ...]
         sections = []
@@ -1822,9 +1822,19 @@ class SuiteConfig(object):
 
         # Parse and process each graph section.
         for section, graph in sections:
-            seq = get_sequence(section,
-                               self.cfg['scheduling']['initial cycle point'],
-                               self.cfg['scheduling']['final cycle point'])
+            try:
+                seq = get_sequence(section, icp, fcp)
+            except CylcError as exc:
+                ERR.error(str(exc))
+                raise SuiteConfigError(
+                    "ERROR: Invalid/unsupported recurrence representation: " +
+                    str(section))
+            except (AttributeError, TypeError, ValueError):
+                if cylc.flags.debug:
+                    traceback.print_exc()
+                raise SuiteConfigError(
+                    "ERROR: Invalid/unsupported recurrence representation: " +
+                    str(section))
             self.sequences.append(seq)
             gp = GraphParser(family_map, self.parameters)
             gp.parse_graph(graph)

@@ -29,6 +29,11 @@ from isodatetime.data import Calendar
 ISO8601_CYCLING_TYPE = 'iso8601'
 INTEGER_CYCLING_TYPE = 'integer'
 
+IS_OFFSET_ABSOLUTE_IMPLS = {
+    INTEGER_CYCLING_TYPE: integer.is_offset_absolute,
+    ISO8601_CYCLING_TYPE: iso8601.is_offset_absolute,
+}
+
 
 POINTS = {INTEGER_CYCLING_TYPE: integer.IntegerPoint,
           ISO8601_CYCLING_TYPE: iso8601.ISO8601Point}
@@ -112,6 +117,12 @@ def init_cyclers(cfg):
     if DefaultCycler.TYPE in Calendar.MODES:
         DefaultCycler.TYPE = ISO8601_CYCLING_TYPE
     INIT_FUNCTIONS[DefaultCycler.TYPE](cfg)
+
+
+def is_offset_absolute(offset_string, **kwargs):
+    """Return True if offset_string is a point rather than an interval."""
+    cycling_type = kwargs.pop("cycling_type", DefaultCycler.TYPE)
+    return IS_OFFSET_ABSOLUTE_IMPLS[cycling_type](offset_string)
 
 
 def standardise_point_string(point_string, cycling_type=None):

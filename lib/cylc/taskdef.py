@@ -20,7 +20,8 @@
 
 from collections import deque
 
-from cylc.cycling.loader import get_point_relative, get_interval
+from cylc.cycling.loader import (
+    get_point_relative, get_interval, is_offset_absolute)
 from cylc.task_id import TaskID
 
 
@@ -126,10 +127,21 @@ class TaskDef(object):
                 cutoff_points.append(
                     my_point - get_interval(offset_string))
                 continue
+            if is_offset_absolute(offset_string):
+                stop_point = sequence.get_stop_point()
+                if stop_point:
+                    # Stop point of the sequence is a good cutoff point for an
+                    # absolute "offset"
+                    cutoff_points.append(stop_point)
+                    continue
+                else:
+                    # The dependency lasts for the whole run.
+                    return None
+
             # This is a complicated offset like [02T00-P1W].
             dependent_point = sequence.get_start_point()
 
-            matching_dependent_points = []
+            my_cutoff_point = None
             while dependent_point is not None:
                 # TODO: Is it realistically possible to hang in this loop?
                 target_point = (
@@ -139,12 +151,12 @@ class TaskDef(object):
                     break
                 if target_point == my_point:
                     # We have found a dependent_point for my_point.
-                    matching_dependent_points.append(dependent_point)
+                    my_cutoff_point = dependent_point
                 dependent_point = sequence.get_next_point_on_sequence(
                     dependent_point)
-            if matching_dependent_points:
+            if my_cutoff_point:
                 # Choose the largest of the dependent points.
-                cutoff_points.append(matching_dependent_points[-1])
+                cutoff_points.append(my_cutoff_point)
         if cutoff_points:
             max_cutoff_point = max(cutoff_points)
             if max_cutoff_point < my_point:

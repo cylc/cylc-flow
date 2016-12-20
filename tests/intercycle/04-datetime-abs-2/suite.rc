@@ -1,0 +1,16 @@
+[cylc]
+    UTC mode = True
+    [[events]]
+        abort on stalled = True
+[scheduling]
+    initial cycle point = 20000101T00Z
+    [[dependencies]]
+        [[[R1]]]
+            graph = start
+        [[[T00]]]
+            graph = start[^] => foo
+        [[[R1/20000102T12Z]]]
+            graph = foo[20000102T00Z] => bar
+[runtime]
+    [[root]]
+        script = true

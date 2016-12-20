@@ -15,18 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validation for a bad sequence interval.
-. $(dirname $0)/test_header
-#-------------------------------------------------------------------------------
-set_test_number 3
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-val
-run_fail "$TEST_NAME" cylc validate suite.rc
-grep_ok "2 digit centuries not allowed" "$TEST_NAME.stderr"
-contains_ok "$TEST_NAME.stderr" <<'__ERR__'
-'ERROR: Invalid/unsupported recurrence representation: R/00/P5D'
-__ERR__
-#-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+# Test dependency on absolute datetime point
+# https://github.com/cylc/cylc/issues/1951
+. "$(dirname "$0")/test_header"
+
+set_test_number 2
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}" \
+    cylc run --reference-test --debug "${SUITE_NAME}"
+
+purge_suite "${SUITE_NAME}"
 exit
