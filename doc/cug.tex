@@ -667,91 +667,95 @@ Upgrading is just a matter of unpacking the new cylc release. Successive
 cylc releases can be installed in parallel as suggested in the
 \lstinline=INSTALL= file (\ref{INSTALL}).
 
-\section{{\em Cycling} And {\em Cycle Points} In Cylc}
+\section{Cylc Terminology}
 
-There are several reasons why an atmospheric model (say) may need to be cycled:
-\begin{myitemize}
-    \item In real time forecasting it may need to wait on new real time data
-        before each run.
-    \item Job run length limits on compute hosts may require long jobs
-        to be split into multiple shorter jobs. (This also makes
-        incremental post-processing easier.)
-\end{myitemize}
-This section defines the terminology associated with cycling, and describes the
-two ways to make a cylc workflow that cycles a model and associated jobs.
+\subsection{Jobs and Tasks}
+
+A {\em job} is a program or script that runs on a computer, and a {\em task} is
+a workflow abstraction - a node in the suite dependency graph - that represents
+a job.
 
 \subsection{Cycle Points}
 
-In cylc terminology, a {\em cycle point} is a particular
-date-time (or integer) point in a sequence. If a task has an hourly date-time
-cycle that starts at 2014-01-01T00 and ends at 2014-01-02T00, the first cycle
-point will be 2014-01-01T01, the second will be 2014-01-01T02, and so on.
+A {\em cycle point} is a particular date-time (or integer) point in a sequence
+of date-time (or integer) points. Each cylc task has a private cycle point and
+can advance independently to subsequent cycle points. It may sometimes be
+convenient, however, to refer to the ``current cycle point'' of a suite (or the
+previous or next one, etc.) with reference to a particular task, or in the
+sense of all tasks instances that ``belong to'' a particular cycle point. But
+keep in mind that different tasks may pass through the ``current cycle point''
+(etc.) at different times as the suite evolves.
 
-You may be accustomed to the idea that a forecasting suite has a global (in the
-suite-wide, not geographic, sense) cycle point that only advances when all
-tasks in the current cycle point have finished (or even when a particular wall
-clock time is reached, in real time operation). As explained in the
-Introduction, that is not how cylc works. Rather, each task has a private cycle
-point and can advance independently. The workflow is constrained only by the
-dependencies of individual tasks, which may cross over to other cycle points.
-It may still be convenient at times, however, to refer to the ``current cycle
-point'', the ``previous cycle point'', or the ``next cycle point'' and so
-forth, with reference to a particular task, or in the sense of all tasks that
-``belong to'' a particular cycle point. But keep in mind that the members of
-these groups may not be present simultaneously in the running suite - different
-tasks may pass through the ``current cycle point'' at different times as the
-suite evolves.
+\section{Workflows For Cycling Systems}
+\label{Workflows For Cycling Systems}
 
-\subsection{Ways Of Cycling}
-\label{Ways Of Cycling}
+A model run and associated processing may need to be cycled for the following
+reasons:
 
-\subsubsection{Iterative Cycling}
+\begin{myitemize}
+    \item In real time forecasting systems, a new forecast may be initiated
+        at regular intervals when new real time data comes in.
+    \item Batch scheduler queue limits may require that long single runs
+      be split into many smaller runs with incremental processing of associated
+      inputs and outputs.
+\end{myitemize}
 
-Cylc's classic cycling mode, as described in the Introduction, can be termed
-{\em iterative cycling.} The scheduler continually extends the workflow to
-future cycle points as the suite runs, and each instance of a repeated job is
-represented by the same logical task with a different cycle point.  For
-example, a program \lstinline=model.exe= could be executed by a task
-\lstinline@model@ that runs repeatedly for a series of cycle points
-\lstinline=2016-01-01, 2016-01-02, 2016-01-03, ...=
+Cylc provides two ways of constructing workflows for cycling systems: {\em
+cycling workflows} and {\em parameterized tasks}.
 
-This is the most powerful and flexible way of running cycling jobs in cylc, and
-it is really the only way to run large operational suites that need to continue
-indefinitely. The cycling is configured with general standards-based (ISO 8601)
-{\em recurrence expressions} for any date-time sequence. Multiple cycling
-sequences can be used at once. See Section~\ref{ConfiguringScheduling}.
+\subsection{Cycling Workflows}
+\label{Cycling Workflows}
 
-\subsubsection{Parameterized Cycling}
+This is cylc's classic cycling mode as described in the Introduction. Each
+instance of a cycling job is represented by a new instance of {\em the same
+task}, with a new cycle point. The suite configuration defines patterns for
+extending the workflow on the fly, so it can keep running indefinitely if
+necessary. For example, to cycle \lstinline=model.exe= on a monthly sequence we
+could define a single task \lstinline=model=, an initial cycle point, and a
+monthly sequence. Cylc then generates the date-time sequence and creates a new
+task instance for each cycle point as it comes up. Workflow dependencies are
+defined generically with respect to the ``current cycle point'' of the tasks
+involved.
 
-{\em Parameterized cycling} is alternative cycling mode for workflows that are
-{\em finite in extent and not too large}. Parameter expansion (or Jinja2 loops)
-can be used to generate the entire workflow from start to finish, at start-up.
-Once this is done, there is no sequence of cycle points in the sense defined
-above, and every single instance of a repeated job is represented by a
-different logical task with a different task name.  Functionally this is
-entirely equivalent to defining every task instance separately in the suite
-definition; parameter expansion is just a very efficient way to do that.
-For example, a program \lstinline=model.exe= could be executed by each
-of a series of tasks called
-\lstinline=model-run0, model-run1, model-run2, ...=, where the integer
-parameter values in the task names can be multiplied by an interval
-(e.g.\ \lstinline=P1D= for one day) to get to the correct ``cycle point'' for
-the job.
+This is only sensible way to run very large suites or operational suites that
+need to continue cycling indefinitely. The cycling is configured with
+standards-based ISO 8601 date-time {\em recurrence expressions}. Multiple
+cycling sequences can be used at once in the same suite. See
+Section~\ref{ConfiguringScheduling}.
 
-This is generally not as flexible or powerful as iterative cycling, and it has
-several significant disadvantages: it is necessarily bounded (i.e.\ it can't go
-on indefinitely), the difficult date-time arithmetic is not done automatically,
-and at run time the full extent of the workflow (every single task instance
-from start to finish) is visible at all times.  However, for smaller suites of
-relatively short duration, it may be useful.  See Section~\ref{Parameterized
-Cycling}.
+\subsection{Parameterized Tasks as a Proxy for Cycling}
+\label{Parameterized Tasks as a Proxy for Cycling}
 
-\subsubsection{Mixed Cycling}
+It is also possible to run cycling jobs with a pre-defined static workflow in
+which each instance of a cycling job is represented by {\em a different task}:
+as far as the abstract workflow is concerned there is no cycling. The sequence
+of tasks can be constructed efficiently, however, using cylc's built-in suite
+parameters (\ref{Parameterized Cycling}) or explicit Jinja2 loops
+(\ref{Jinja2}).
 
-The two cycling approaches can be combined within a single suite.  In a daily
-iterative cycling suite, for instance, long daily model runs could be split
-into multiple shorter steps or chunks by parameterized cycling. (However, you
-should first consider simply using a shorter iterative cycle).
+For example, to run \lstinline=model.exe= 12 times on a monthly cycle we could
+loop over an integer parameter \lstinline@R = 0, 1, 2, ..., 11@ to define tasks
+\lstinline=model-R0, model-R1, model-R2, ...model-R11=, and the parameter
+values could be multiplied by the interval \lstinline=P1M= (one month) to get
+the start point point for the corresponding model run.
+
+This method is only good for smaller workflows of finite duration because every
+single task has to be mapped out in advance, and cylc has to be aware of all of
+them throughout the entire run. Additionally Cylc's {\em cycling workflow}
+capabilities (above) are more powerful, more flexible, and generally easier to
+use (Cylc will do the date-time arithmetic for you, for instance), so that is
+the recommended way to drive most cycling systems.
+
+The primary use of parameterized tasks in cylc is to generate ensembles and
+other groups of related tasks at the same cycle point, not as a proxy for
+cycling.
+
+\subsection{Mixed Cycling Workflows}
+
+For completeness we note that parameterized cycling can be used within a
+cycling workflow. For example, in a daily cycling workflow long (daily)
+model runs could be split into four shorter runs by parameterized cycling.
+A simpler six-hourly cycling workflow should be considered first, however.
 
 \section{Global (Site, User) Configuration Files}
 \label{SiteAndUserConfiguration}
@@ -4759,18 +4763,14 @@ expands to:
 \subsubsection{Parameterized Cycling}
 \label{Parameterized Cycling}
 
-Parameterized cycling is described and contrasted with iterative cycling in
-Section~\ref{Ways Of Cycling}. In iterative cycling (which is recommended in
-most cases) each instance of a cycled job is run by the same logical task at
-different cycle points, and the scheduler extends the workflow to future cycle
-points as the suite runs, potentially indefinitely.  In parameterized cycling,
-parameter expansion (or Jinja2 loops) is used to generate the entire workflow
-(every task instance from start to finish) at start-up. Each instance of a
-cycled job is run by a different logical task with a different task name, and
-the only ``cycling'' that occurs in the scheduler is during the workflow
-definition phase at start-up.
+Two ways of constructing cycling systems are described and contrasted in
+Section~\ref{Workflows For Cycling Systems}.  For most purposes use of a proper
+{\em cycling workflow} is recommended, wherein cylc incrementally generates the
+date-time sequence and extends the workflow, potentially indefinitely, at run
+time. For smaller systems of finite duration, however, parameter expansion
+can be used to generate a sequence of pre-defined tasks as a proxy for cycling.
 
-Here's an iterative cycling workflow of two-monthly model runs for one year,
+Here's a cycling workflow of two-monthly model runs for one year,
 with previous-instance model dependence (e.g.\ for model restart files):
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -4810,12 +4810,11 @@ run-model $(cylc cyclepoint --offset=$OFFSET $INITIAL_POINT)"""
 \end{lstlisting}
 
 The two workflows are shown together in Figure~\ref{fig-eg2}. They both achieve
-the same result, and special tasks at the start or end, or anywhere in between,
-can easily be added in both cases. But note that parameterized version has
+the same result, and both can include special tasks at the start, end, or
+anywhere in between. But as noted earlier the parameterized version has
 several disadvantages: it must be finite in extent and not too large; the
-date-time arithmetic has to be done manually; and the full extent of the workflow
-will be visible at all times as the suite runs - because it does not have
-``cycle points''.
+date-time arithmetic has to be done by the user; and the full extent of the
+workflow will be visible at all times as the suite runs.
 
 \begin{figure}
     \begin{center}
@@ -4824,11 +4823,11 @@ will be visible at all times as the suite runs - because it does not have
     \begin{center}
         \includegraphics[width=10cm]{graphics/png/orig/eg2-dynamic.png}
     \end{center}
-    \caption[Parameterized (top) and iterative cycling (bottom) versions of the
-        same workflow.]{\scriptsize parameterized and iterative cycling versions
-            of the same workflow. The first three cycle points are shown in the
-            iterative case (the parameterized case does not have ``cycle
-        points'').}
+    \caption[Parameterized (top) and cycling (bottom) versions of the same
+    workflow.]{\scriptsize parameterized and cycling versions of the same
+      workflow. The first three cycle points are shown in the
+      cycling case. The parameterized case does not have ``cycle
+    points''.}
     \label{fig-eg2}
 \end{figure}
 
@@ -4847,7 +4846,7 @@ point:
 \end{lstlisting}
 Note the inter-cycle trigger that connects the first chunk in each cycle point
 to the last chunk in the previous cycle point. Of course it would be simpler
-to just use 3-monthly iterative cycling:
+to just use 3-monthly cycling:
 \begin{lstlisting}
 [scheduling]
     initial cycle point = 2020-01
@@ -4856,21 +4855,20 @@ to just use 3-monthly iterative cycling:
             graph = "model[-P3M] => model"
 \end{lstlisting}
 
-A possible use-case for mixed iterative and parameterized cycling: consider a
-portable date-time cycling workflow of model jobs that can each take too long
-to run, or not, depending on the host platform.  This could be handled without
-changing the (iterative) cycling structure of the suite, by splitting the run
-(at each cycle point) into a variable number of shorter steps, using more steps
-on less powerful hosts.
+Here's a possible valid use-case for mixed cycling: consider a portable
+date-time cycling workflow of model jobs that can each take too long to run on
+some supported platforms. This could be handled without changing the cycling
+structure of the suite by splitting the run (at each cycle point) into a
+variable number of shorter steps, using more steps on less powerful hosts.
 
 \paragraph{Cycle Point And Parameter Offsets At Start-Up}
 
-In iterative cycling, cylc ignores anything earlier than the suite initial
+In cycling workflows cylc ignores anything earlier than the suite initial
 cycle point. So this graph:
 \begin{lstlisting}
     graph = "model[-P1D] => model"
 \end{lstlisting}
-simplifies at the initial cycle point to:
+simplifies at the initial cycle point to this:
 \begin{lstlisting}
     graph = "model"
 \end{lstlisting}
