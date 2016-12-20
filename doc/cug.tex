@@ -717,8 +717,8 @@ task instance for each cycle point as it comes up. Workflow dependencies are
 defined generically with respect to the ``current cycle point'' of the tasks
 involved.
 
-This is only sensible way to run very large suites or operational suites that
-need to continue cycling indefinitely. The cycling is configured with
+This is the only sensible way to run very large suites or operational suites
+that need to continue cycling indefinitely. The cycling is configured with
 standards-based ISO 8601 date-time {\em recurrence expressions}. Multiple
 cycling sequences can be used at once in the same suite. See
 Section~\ref{ConfiguringScheduling}.
@@ -746,7 +746,7 @@ capabilities (above) are more powerful, more flexible, and generally easier to
 use (Cylc will do the date-time arithmetic for you, for instance), so that is
 the recommended way to drive most cycling systems.
 
-The primary use of parameterized tasks in cylc is to generate ensembles and
+The primary use for parameterized tasks in cylc is to generate ensembles and
 other groups of related tasks at the same cycle point, not as a proxy for
 cycling.
 
@@ -824,12 +824,13 @@ one at first, see~\ref{SiteAndUserConfiguration} and~\ref{SiteRCReference}.
 \end{myitemize}
 
 \subsubsection{Configure Environment on Job Hosts}
+\label{Configure Environment on Job Hosts}
 
 If you submit task jobs to hosts other than the hosts you use to run your
-suites, you may need to customise the environment for
-running cylc. A cylc suite generates task job scripts that normally invoke
-\lstinline=bash=. The job will attempt to source the first of these files it
-finds to set up its environment:
+suites, you may need to customise the environment for running cylc. A cylc
+suite generates task job scripts that normally invoke \lstinline=bash=. The job
+will attempt to source the first of these files it finds to set up its
+environment:
 
 \begin{myitemize}
 \item \lstinline=${HOME}/.cylc/job-init-env.sh=
@@ -840,7 +841,7 @@ finds to set up its environment:
 The \lstinline=${CYLC_DIR}/conf/job-init-env-default.sh= file is provided in
 the cylc distribution, and will attempt to source \lstinline=/etc/profile= and
 \lstinline=${HOME}/.profile=. If this behaviour is not desirable, your site
-administrator who installed cylc should have overridden it by adding a
+administrator should have overridden it by adding a
 \lstinline=${CYLC_DIR}/conf/job-init-env.sh= file and populate it with the
 appropriate contents. If customisation is still required, you can add your own
 \lstinline=${HOME}/.cylc/job-init-env.sh= file and populate it with the
@@ -927,23 +928,17 @@ shell$ cylc stop my.suite
 \subsection{Suite Passphrases}
 \label{tutPassphrases}
 
-A suite-specific passphrase file is automatically generated in the suite
-definition directory at registration time, or on suite start up.  It is loaded
-by the suite daemon at start-up and used to authenticate all client connections.
-Clients on the suite host account automatically load the passphrase from the
-suite definition directory. The passphrase is also installed automatically in
-the suite run directory on hosts for running task jobs. On other accounts that
-do not share the same HOME directory with the suite host account and do not have
-non-interactive SSH access to the suite host account, it is possible to
-install the passphrase manually. (A client will attempt to install the
-passphrase automatically via non-interactive SSH.)
+Registration (above) also generates a suite-specific passphrase file under
+\lstinline=.service/= in the suite run directory. It is loaded by the suite
+daemon at start-up and used to authenticate connections from client programs.
 
-Possession of a suite passphrase gives full control and full read-access to the
-suite. Without it, client access is determined by the suite's public access
-privilege level.
+Possession of a suite's passphrase file gives full control over it.
+Without it, the information avaiable to a client is determined by the suite's
+public access privilege level.
 
 For more on connection authentication, suite passphrases, and public access,
 see~\ref{ConnectionAuthentication}.
+
 
 \subsection{Import The Example Suites}
 \label{ImportTheExampleSuites}
@@ -6053,7 +6048,7 @@ tracking (see these with \lstinline=cylc get-site-config=):
 
 \lstset{language=suiterc}
 \begin{lstlisting}
-#SITE AND USER CONFIG
+# SITE AND USER CONFIG
 
 # Task messaging settings affect task-to-suite communications.
 [task messaging]
@@ -6063,7 +6058,7 @@ tracking (see these with \lstinline=cylc get-site-config=):
     maximum number of tries = 7
 
     # This timeout is the same as --comms-timeout for user commands. If
-    # set to None (no timeout) message send to non-responsive suite
+    # set to None (no timeout) messages to non-responsive suites
     # (e.g. suspended with Ctrl-Z) could hang indefinitely.
     connection timeout in seconds = 30
 
@@ -6077,8 +6072,8 @@ tracking (see these with \lstinline=cylc get-site-config=):
 # SITE ONLY 
     method = https
 
-    # Each suite listens on a dedicated network port.
-    # Servers bind on the first port available from the base port up:
+    # Each suite listens on a dedicated network port. The port to bind to is
+    # selected randomly from the allowed range of ports.
 # SITE ONLY
     base port = 43001
 
@@ -6086,25 +6081,22 @@ tracking (see these with \lstinline=cylc get-site-config=):
 # SITE ONLY
     maximum number of ports = 100
 
-    # Port numbers are recorded in this directory, by suite name.
-    ports directory = "$HOME/.cylc/ports/"
-
 [hosts]
     # The default task host is the suite host, i.e. localhost:
     # Add task host sections if local defaults are not sufficient.
     [[HOST]]
        # Method of communication of task progress back to the suite:
-        #   1) default - direct client-server RPC via network ports
+        #   1) default - HTTPS via network ports
         #   2) ssh  - re-invoke messaging commands on suite server
         #   3) poll - the suite polls for status of passive tasks
         # HTTPS comms are still required in all cases *on the suite host*
         # for cylc clients (commands etc.) to communicate with suites.
         task communication method = "default" # or "ssh" or "poll"
         # The "poll" method sets a default interval here to ensure no
-        # tasks are accidentally left unpolled. You should override this
-        # with run-length appropriate intervals under task [runtime] -
-        # which will also result in routine polling to check task health
-        # under the default or ssh communications methods.
+        # tasks are accidentally left unpolled. You can override this
+        # with run-length appropriate intervals under task [runtime]
+        # (however this will also result in routine polling under the 
+        # default or ssh communications).
         default polling interval in minutes = 1.0
 \end{lstlisting}
 
@@ -6129,35 +6121,28 @@ are listening on.
 
 Client programs have to authenticate with the target suite daemon before
 issuing commands or requesting information. Cylc has two authentication
-levels: full read and control via a suite-specific passphrase
-(see~\ref{passphrases}); and configurable free ``public'' access
-(see~\ref{PublicAccess}).
+levels: full control via a suite-specific passphrase (see~\ref{passphrases});
+and configurable free ``public'' access (see~\ref{PublicAccess}).
 
 \subsubsection{Full Control - Suite Passphrases}
 \label{passphrases}
 
-A file called \lstinline=passphrase= is generated in the suite definition
-directory at registration time, containing a single line of random text.
-The passphrase is loaded by the suite daemon at start-up and used to
-authenticate client connections. Suite passphrases are used in an encrypted
+A file called \lstinline=passphrase= with owner-only permissions is generated
+under \lstinline=.server/= in the suite run directory at registration time. It
+is loaded by the suite daemon at start-up and used to authenticate connections
+from client programs. Suite passphrases are used in an encrypted
 challenge-response scheme; they are never sent raw over the network.
 
-Clients on the suite host account automatically pick up the passphrase from the
-suite definition directory. On submission of the first task job on a host, the
-suite host will attempt to install the passphrase to the run directory to
-enable task jobs to connect to the suite. On other accounts that do not share
-the same HOME directory with the suite host account and do not have
-non-interactive SSH access to the suite host account, it is possible to install
-the passphrase manually. Allowed passphrase locations are:
-\begin{myenumerate}
-    \item \lstinline=$HOME/.cylc/SUITE_OWNER@SUITE_HOST/SUITE_NAME/passphrase=
-    \item \lstinline=$HOME/.cylc/SUITE_HOST/SUITE_OWNER/SUITE_NAME/passphrase=
-    \item \lstinline=$HOME/.cylc/SUITE_HOST/SUITE_NAME/passphrase=
-    \item \lstinline=$HOME/.cylc/SUITE_NAME/passphrase=
-\end{myenumerate}
+On submission of the first job on another task host cylc will attempt to
+install the passphrase to the run directory there to enable task jobs to
+connect to the suite, using non-interactive ssh.
 
-Note: A client will attempt to install the passphrase automatically via
-non-interactive SSH to the first location listed above.
+Client programs on other accounts will attempt to read the passphrase via
+non-interactive SSH and install it to
+\lstinline=$HOME/.cylc/auth/OWNER@HOST/SUITE/passphrase=.
+Alternatively, if the suite owner gives you the passphrase you can install it
+yourself to the same location.
+
 
 \subsubsection{Public Access - No Passphrase}
 \label{PublicAccess}
@@ -6196,18 +6181,18 @@ of cylc rather than a centrally installed one, set \lstinline=$CYLC_HOME=
 to point to your cylc copy.
 
 Access to the cylc executable for different hosts can be configured using
-the site and user global configuration files.
-If the environment for running the cylc executable is only set up correctly in
-a login shell for a given host, you can set 
-\lstinline=[hosts][HOST]cylc executable=
-for the relevant host to \lstinline=True= (this is the default behaviour).
-If the environment is already correct without the login shell, but the cylc
-executable is not in \lstinline=$PATH=, then 
-\lstinline=[hosts][HOST]cylc executable=
-can be used to specify the path to the cylc executable.
+the site and user global configuration files. If the environment for running
+the cylc executable is only set up correctly in a login shell for a given host,
+you can set \lstinline@[hosts][HOST]use login shell = True@ for the relevant
+host (this is the default behaviour). If the environment is already correct
+without the login shell, but the cylc executable is not in \lstinline=$PATH=,
+then \lstinline=[hosts][HOST]cylc executable= can be used to specify the path
+to the cylc executable.
 
-The site/user global config item \lstinline=global init-script= can also be
-used if necessary (see~\ref{GlobalInitScript}).
+To customize the environment more generally for cylc on jobs hosts,
+use of \lstinline=job-init-env.sh= is described in~\ref{Configure Environment
+on Job Hosts}.
+
 
 \subsection{Restarting Suites}
 \label{RestartingSuites}
