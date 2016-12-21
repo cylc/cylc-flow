@@ -515,20 +515,20 @@ cylc-5.1.0 on the Fedora 18 Linux distribution:
 
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ yum install graphviz       # (2.28)
-shell$ yum install graphviz-devel # (for pgraphviz build)
-shell$ yum install python-devel   # (ditto)
+$ yum install graphviz       # (2.28)
+$ yum install graphviz-devel # (for pgraphviz build)
+$ yum install python-devel   # (ditto)
 
 # TeX packages, and ImageMagick, for generating the Cylc User Guide:
-shell$ yum install texlive
-shell$ yum install texlive-tex4ht
-shell$ yum install texlive-tocloft
-shell$ yum install texlive-framed
-shell$ yum install texlive-preprint
-shell$ yum install ImageMagick
+$ yum install texlive
+$ yum install texlive-tex4ht
+$ yum install texlive-tocloft
+$ yum install texlive-framed
+$ yum install texlive-preprint
+$ yum install ImageMagick
 
 # Python packages:
-shell$ easy_install pygraphviz
+$ easy_install pygraphviz
 
 # (sqlite 3.7.13 already installed on the system)
 \end{lstlisting}
@@ -541,7 +541,7 @@ Now check that everything other than the \LaTeX packages is
 installed properly:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc check-software
+$ cylc check-software
 Checking for Python >= 2.6 ... found 2.7.3 ... ok
 Checking for non-Python packages:
  + Graphviz ... ok
@@ -618,13 +618,13 @@ in your \lstinline=PYTHONPATH= environment variable.
 \begin{myitemize}
 \item For \lstinline=python setup.py install= installation:
 \begin{lstlisting}
-shell$ python setup.py install --prefix=/my/local/install/path
+$ python setup.py install --prefix=/my/local/install/path
 \end{lstlisting}
 \item For building graphviz from source:
 \begin{lstlisting}
-shell$ ./configure --prefix=/my/local/install/path --with-qt=no
-shell$ make
-shell$ make install
+$ ./configure --prefix=/my/local/install/path --with-qt=no
+$ make
+$ make install
 \end{lstlisting}
 The graphviz build reportedly may fail on systems that do not have QT
 installed, hence the \lstinline@./configure --with-qt=no@ option above.
@@ -648,7 +648,7 @@ processing) is installed:
 
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc check-software
+$ cylc check-software
 Checking for Python >= 2.6 ... found 2.7.3 ... ok
 Checking for non-Python packages:
  + Graphviz ... ok
@@ -786,7 +786,7 @@ if any, overridden by user settings, if any. To generate an
 initial site or user global config file:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc get-site-config > $HOME/.cylc/global.rc
+$ cylc get-site-config > $HOME/.cylc/global.rc
 \end{lstlisting}
 Settings that do not need to be changed should be deleted or commented
 out of user global config files so that they don't override future changes to
@@ -860,8 +860,8 @@ and their help documentation.
 
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc help       # Top level command help.
-shell$ cylc run --help # Example command-specific help.
+$ cylc help       # Top level command help.
+$ cylc run --help # Example command-specific help.
 \end{lstlisting}
 
 Command help transcripts are printed in~\ref{CommandReference} and are
@@ -879,9 +879,9 @@ GUI does not affect the suite itself.
 
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ gcylc & # or:
-shell$ cylc gui & # Single suite control GUI.
-shell$ cylc gscan & # Multi-suite monitor GUI.
+$ gcylc & # or:
+$ cylc gui & # Single suite control GUI.
+$ cylc gscan & # Multi-suite monitor GUI.
 \end{lstlisting}
 
 Clicking on a suite in gscan, shown in Figure~\ref{fig-gscan}, opens a gcylc
@@ -910,17 +910,17 @@ suites have to target the suite by name.
 \lstset{language=transcript}
 \begin{lstlisting}
 # Target a suite by file path:
-shell$ cylc validate /path/to/my/suite/suite.rc
-shell$ cylc graph /path/to/my/suite/suite.rc
+$ cylc validate /path/to/my/suite/suite.rc
+$ cylc graph /path/to/my/suite/suite.rc
 
 # Register a suite:
-shell$ cylc register my.suite /path/to/my/suite/
+$ cylc register my.suite /path/to/my/suite/
 
 # Target a suite by name:
-shell$ cylc graph my.suite
-shell$ cylc validate my.suite
-shell$ cylc run my.suite
-shell$ cylc stop my.suite
+$ cylc graph my.suite
+$ cylc validate my.suite
+$ cylc run my.suite
+$ cylc stop my.suite
 # etc.
 \end{lstlisting}
 
@@ -947,7 +947,7 @@ your own use:
 
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc import-examples /tmp
+$ cylc import-examples /tmp
 \end{lstlisting}
 
 \subsection{Rename The Imported Tutorial Suites}
@@ -957,8 +957,8 @@ Make the tutorial suite names shorter, and print their locations with
 \lstinline=cylc print=:
 
 \begin{lstlisting}
-shell$ mv ~/cylc-run/$(cylc --version)/examples/tutorial ~/cylc-run/tut
-shell$ cylc print -ya tut
+$ mv ~/cylc-run/$(cylc --version)/examples/tutorial ~/cylc-run/tut
+$ cylc print -ya tut
 tut/oneoff/jinja2  | /tmp/cylc-examples/7.0.0/tutorial/oneoff/jinja2
 tut/cycling/two    | /tmp/cylc-examples/7.0.0/tutorial/cycling/two
 tut/cycling/three  | /tmp/cylc-examples/7.0.0/tutorial/cycling/three
@@ -974,14 +974,14 @@ Suite definitions can be validated to detect syntax (and other) errors:
 \lstset{language=transcript}
 \begin{lstlisting}
 # pass:
-shell$ cylc validate tut/oneoff/basic
+$ cylc validate tut/oneoff/basic
 Valid for cylc-6.0.0
-shell$ echo $?
+$ echo $?
 0
 # fail:
-shell$ cylc validate my/bad/suite
+$ cylc validate my/bad/suite
 Illegal item: [scheduling]special tusks
-shell$ echo $?
+$ echo $?
 1
 \end{lstlisting}
 
@@ -1028,13 +1028,13 @@ just above and open the {\em Hello World} suite definition in your text
 editor:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc edit tut/oneoff/basic # in-terminal
-shell$ cylc edit -g tut/oneoff/basic & # or GUI
+$ cylc edit tut/oneoff/basic # in-terminal
+$ cylc edit -g tut/oneoff/basic & # or GUI
 \end{lstlisting}
 Alternatively, start gcylc on the suite:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ gcylc tut/oneoff/basic &
+$ gcylc tut/oneoff/basic &
 \end{lstlisting}
 and choose {\em Suite } \textrightarrow {\em Edit} from the menu.
 
@@ -1081,7 +1081,7 @@ Other ways to see if the suite is still running:
 If you're quick enough (this example only takes 10-15 seconds to run) the
 \lstinline=cylc scan= command will detect the running suite:
 \begin{lstlisting}
-shell$ cylc scan
+$ cylc scan
 tut/oneoff/basic oliverh@nwp-1:43027
 \end{lstlisting}
 
@@ -1108,7 +1108,7 @@ The suite shuts down automatically once all tasks have succeeded.
 The cylc GUI can start and stop suites, or (re)connect to suites that
 are already running:
 \begin{lstlisting}
-shell$ cylc gui tut/oneoff/basic &
+$ cylc gui tut/oneoff/basic &
 \end{lstlisting}
 Use the tool bar {\em Play} button, or the {\em Control}
 \textrightarrow {\em Run} menu item, to run the suite again.
@@ -1124,11 +1124,11 @@ Suites that are currently running can be detected with command line or
 GUI tools:
 \begin{lstlisting}
 # list currently running suites and their port numbers:
-shell$ cylc scan
+$ cylc scan
 tut/oneoff/basic oliverh oliverh-34403DL 7766
 
 # GUI summary view of running suites:
-shell$ cylc gscan &
+$ cylc gscan &
 \end{lstlisting}
 
 The scan GUI is shown in Figure~\ref{fig-gscan}; clicking on a suite in it
@@ -1161,7 +1161,7 @@ can be accessed at run time by right-clicking on the task in the cylc GUI, or
 printed to the terminal:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc cat-log tut/oneoff/basic hello.1
+$ cylc cat-log tut/oneoff/basic hello.1
 \end{lstlisting}
 This command can also print the suite log (and stdout and stderr for suites
 in daemon mode) and task stdout and stderr logs (see
@@ -1169,7 +1169,7 @@ in daemon mode) and task stdout and stderr logs (see
 A new job script can also be generated on the fly for inspection:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc jobscript tut/oneoff/basic hello.1
+$ cylc jobscript tut/oneoff/basic hello.1
 \end{lstlisting}
 
 Take a look at the job script generated for \lstinline=hello.1= during
@@ -1214,7 +1214,7 @@ time-stamped suite log file, and task job scripts and job logs
 
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ tree $HOME/cylc-run/tut/oneoff/basic/
+$ tree $HOME/cylc-run/tut/oneoff/basic/
 |-- .service              # location of run time service files
 |    |-- contact          # detail on how to contact the running suite
 |    |-- db               # private suite run database
@@ -1266,13 +1266,13 @@ with the \lstinline=cylc cat-log= command:
 \lstset{language=transcript}
 \begin{lstlisting}
 # suite logs:
-shell$ cylc cat-log    tut/oneoff/basic           # suite event log
-shell$ cylc cat-log -o tut/oneoff/basic           # suite stdout log
-shell$ cylc cat-log -e tut/oneoff/basic           # suite stderr log
+$ cylc cat-log    tut/oneoff/basic           # suite event log
+$ cylc cat-log -o tut/oneoff/basic           # suite stdout log
+$ cylc cat-log -e tut/oneoff/basic           # suite stderr log
 # task logs:
-shell$ cylc cat-log    tut/oneoff/basic hello.1   # task job script
-shell$ cylc cat-log -o tut/oneoff/basic hello.1   # task stdout log
-shell$ cylc cat-log -e tut/oneoff/basic hello.1   # task stderr log
+$ cylc cat-log    tut/oneoff/basic hello.1   # task job script
+$ cylc cat-log -o tut/oneoff/basic hello.1   # task stdout log
+$ cylc cat-log -e tut/oneoff/basic hello.1   # task stderr log
 \end{lstlisting}
 \begin{myitemize}
     \item For a web-based interface to suite and task logs (and much more),
@@ -1443,9 +1443,9 @@ Run \lstinline=tut/oneoff/goodbye= and check the output from the new
 task:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cat ~/cylc-run/tut/oneoff/goodbye/log/job/1/goodbye/01/job.out
+$ cat ~/cylc-run/tut/oneoff/goodbye/log/job/1/goodbye/01/job.out
   # or
-shell$ cylc cat-log -o tut/oneoff/goodbye goodbye.1
+$ cylc cat-log -o tut/oneoff/goodbye goodbye.1
 JOB SCRIPT STARTING
 cylc (scheduler - 2014-08-14T15:09:30+12): goodbye.1 started at 2014-08-14T15:09:30+12
 cylc Suite and Task Identity:
@@ -1589,7 +1589,7 @@ the upstream family members. Here's how to trigger another task
 Verbose validation in this case reports:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc val -v tut/oneoff/ftrigger2
+$ cylc val -v tut/oneoff/ftrigger2
 ...
 Graph line substitutions occurred:
   IN: GREETERS:succeed-all => bar
@@ -1625,7 +1625,7 @@ family triggers can simplify complex graphs, even for this tiny
 two-member family:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc val -v tut/oneoff/ftrigger2
+$ cylc val -v tut/oneoff/ftrigger2
 ...
 Graph line substitutions occurred:
   IN: GREETERS:finish-all & GREETERS:succeed-any => bar
@@ -1661,8 +1661,8 @@ You can style dependency graphs with an optional
 To display the graph in an interactive viewer:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc graph tut/oneoff/ftrigger2 &    # dependency graph
-shell$ cylc graph -n tut/oneoff/ftrigger2 & # runtime inheritance graph
+$ cylc graph tut/oneoff/ftrigger2 &    # dependency graph
+$ cylc graph -n tut/oneoff/ftrigger2 & # runtime inheritance graph
 \end{lstlisting}
 It should look like Figure~\ref{fig-tut-hello-multi} (with the
 GREETERS family node expanded on the right).
@@ -1983,7 +1983,7 @@ To view the result of Jinja2 processing with the Jinja2 flag
 \lstinline@MULTI@ set to \lstinline=False=:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc view --jinja2 --stdout tut/oneoff/jinja2
+$ cylc view --jinja2 --stdout tut/oneoff/jinja2
 \end{lstlisting}
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -1999,7 +1999,7 @@ title = "A Jinja2 Hello World! suite"
 And with \lstinline=MULTI= set to \lstinline=True=:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc view --jinja2 --stdout tut/oneoff/jinja2
+$ cylc view --jinja2 --stdout tut/oneoff/jinja2
 \end{lstlisting}
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -2056,7 +2056,7 @@ will need to copy their suite passphrase to
 \end{lstlisting}
 Once you have this information, you can run
 \begin{lstlisting}
-shell$ cylc monitor --user=SUITE_OWNER --port=SUITE_PORT SUITE_NAME
+$ cylc monitor --user=SUITE_OWNER --port=SUITE_PORT SUITE_NAME
 \end{lstlisting}
 to view the progress of their suite.
 
@@ -2107,7 +2107,7 @@ the suite run directory (\lstinline=~/cylc-run/= by default). Suites can be
 grouped together under sub-directories.
 E.g.:
 \begin{lstlisting}
-shell$ cylc print -t nwp
+$ cylc print -t nwp
 nwp
  |-oper
  | |-region1  Local Model Region1       /home/oliverh/cylc-run/nwp/oper/region1
@@ -2258,7 +2258,7 @@ Cylc's native file inclusion mechanism supports optional inlined
 editing:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc edit --inline SUITE
+$ cylc edit --inline SUITE
 \end{lstlisting}
 The suite will be split back into its constituent include-files when you
 exit the edit session. While editing, the inlined file becomes the
@@ -2324,7 +2324,7 @@ The validator reports the line numbers of detected errors. Here's an
 example showing a section heading with a missing right bracket:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc validate my.suite
+$ cylc validate my.suite
     [[special tasks]
 'Section bracket mismatch, line 19'
 \end{lstlisting}
@@ -3819,7 +3819,7 @@ Then, each time a new dataset arrives the external detection system should
 notify the suite like this:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc ext-trigger sat-proc "new sat X data avail" passX12334a
+$ cylc ext-trigger sat-proc "new sat X data avail" passX12334a
 \end{lstlisting}
 where ``sat-proc'' is the suite name and ``passX12334a'' is the ID string for
 the new event. The suite passphrase must be installed on triggering account.
@@ -3855,7 +3855,7 @@ Once the variable-length waiting is finished, an external detection system
 should notify the suite like this:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc ext-trigger data-proc "data arrived for 20150126T00" passX12334a
+$ cylc ext-trigger data-proc "data arrived for 20150126T00" passX12334a
 \end{lstlisting}
 where ``data-proc'' is the suite name, the cycle point has replaced the
 variable in the trigger string, and ``passX12334a'' is the ID string for
@@ -3996,7 +3996,7 @@ multiple inheritance:
 \lstinline=cylc get-suite-config= provides an easy way to check the result of
 inheritance in a suite. You can extract specific items, e.g.:
 \begin{lstlisting}
-shell$ cylc get-suite-config --item '[runtime][var_p2]script' \
+$ cylc get-suite-config --item '[runtime][var_p2]script' \
     inherit.multi.one
 echo ``RUN: run-var.sh''
 \end{lstlisting}
@@ -4004,7 +4004,7 @@ or use the \lstinline=--sparse= option to print entire namespaces
 without obscuring the result with the dense runtime structure obtained
 from the root namespace:
 \begin{lstlisting}
-shell$ cylc get-suite-config --sparse --item '[runtime]ops_s1' inherit.multi.one
+$ cylc get-suite-config --sparse --item '[runtime]ops_s1' inherit.multi.one
 script = echo ``RUN: run-ops.sh''
 inherit = ['OPS', 'SERIAL']
 [directives]
@@ -4955,7 +4955,7 @@ Here's an example, from \\*
 Here's the result:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc get-suite-config -i [runtime][airs]directives SUITE
+$ cylc get-suite-config -i [runtime][airs]directives SUITE
 -I = ncpus=9
 \end{lstlisting}
 
@@ -5001,26 +5001,26 @@ Here's the result:
 
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc list SUITE
+$ cylc list SUITE
 Jinja2 Template Error
 'FIRST_TASK' is undefined
 cylc-list foo  failed:  1
 
-shell$ cylc list --set FIRST_TASK=bob foo
+$ cylc list --set FIRST_TASK=bob foo
 bob
 baz
 mem_2
 mem_1
 mem_0
 
-shell$ cylc list --set FIRST_TASK=bob --set LAST_TASK=alice foo
+$ cylc list --set FIRST_TASK=bob --set LAST_TASK=alice foo
 bob
 alice
 mem_2
 mem_1
 mem_0
 
-shell$ cylc list --set FIRST_TASK=bob --set N_MEMBERS=10 foo
+$ cylc list --set FIRST_TASK=bob --set N_MEMBERS=10 foo
 mem_9
 mem_8
 mem_7
@@ -5744,8 +5744,8 @@ use it in a suite definition:
 and generate a job script to see the resulting directives:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc register test $HOME/test
-shell$ cylc jobscript test a.1 | grep QSUB
+$ cylc register test $HOME/test
+$ cylc jobscript test a.1 | grep QSUB
 #QSUB -e /home/oliverh/cylc-run/my.suite/log/job/1/a/01/job.err
 #QSUB -l nodes=1
 #QSUB -l walltime=60
@@ -5799,7 +5799,7 @@ if you decide that's what you really intended.
 A cold start is the primary way to start a suite run from scratch:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc run SUITE [INITIAL_CYCLE_POINT]
+$ cylc run SUITE [INITIAL_CYCLE_POINT]
 \end{lstlisting}
 The initial cycle point may be specified on the command line or in the suite.rc
 file. The scheduler starts by loading the first instance of each task at the
@@ -5813,7 +5813,7 @@ shut down or killed, without rerunning tasks that were already completed, or
 which were already submitted or running when the suite went down.
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc restart SUITE
+$ cylc restart SUITE
 \end{lstlisting}
 For a restart, the scheduler starts by loading each task in its recorded state.
 Any tasks recorded as `submitted' or `running' will be polled automatically to
@@ -5832,7 +5832,7 @@ accidentally deleted (for instance). The warm start cycle point must be given
 on the command line:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc run --warm SUITE [START_CYCLE_POINT]
+$ cylc run --warm SUITE [START_CYCLE_POINT]
 \end{lstlisting}
 The original suite initial cycle point is preserved, but all tasks and
 dependencies before the given start cycle point are ignored.
@@ -6092,7 +6092,7 @@ with the suite name:
 
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc restart SUITE
+$ cylc restart SUITE
 \end{lstlisting}
 
 It will restart the suite from the latest checkpoint.
@@ -6116,7 +6116,7 @@ Once you have identified the checkpoint to restart from, invoke the
 
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc restart --checkpoint=CHECKPOINT-ID SUITE
+$ cylc restart --checkpoint=CHECKPOINT-ID SUITE
 \end{lstlisting}
 
 \subsubsection{Behaviour of Tasks on Restart}
@@ -6205,14 +6205,14 @@ remote port file. Then use the \lstinline=--user= and
 \lstinline=--host= command options to connect:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc monitor --user=USER --host=HOST SUITE
+$ cylc monitor --user=USER --host=HOST SUITE
 \end{lstlisting}
 
 Alternatively, you can determine suite port numbers using \lstinline=cylc scan=,
 and use them explicitly on the command line:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc monitor --user=USER --host=HOST --port=PORT SUITE
+$ cylc monitor --user=USER --host=HOST --port=PORT SUITE
 \end{lstlisting}
 
 Possession of a suite passphrase gives full control over the suite, and
@@ -6596,7 +6596,7 @@ The run mode, which defaults to {\em live}, is set on the command line
 (for run and restart):
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc run --mode=dummy SUITE
+$ cylc run --mode=dummy SUITE
 \end{lstlisting}
 but you can configure the suite to force a particular run mode:
 \lstset{language=suiterc}
