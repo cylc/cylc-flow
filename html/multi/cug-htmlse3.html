@@ -7,7 +7,7 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2016-10-19 10:17:00"> 
+<meta name="date" content="2016-12-21 11:54:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -26,7 +26,7 @@ href="#x4-120003.2">Other Software Used Internally By Cylc</a></span>
    </div>
      <ul class="itemize1">
      <li class="itemize"><span 
-class="cmbx-10">Cylc</span>, the version associated with this document is: 6.11.2 . <br 
+class="cmbx-10">Cylc</span>, the version associated with this document is: 7.0.0 . <br 
 class="newline" />Cylc can be downloaded from from GitHub: <a 
 href="https://cylc.github.com/cylc" class="url" ><span 
 class="pcrr7t-">https://cylc.github.com/cylc</span></a>
@@ -49,10 +49,7 @@ class="newline" /><a
 href="http://sqlite.org" class="url" ><span 
 class="pcrr7t-">http://sqlite.org</span></a></li></ul>
 <!--l. 398--><p class="indent" >   The following packages are technically optional as you can construct and run cylc suites without dependency
-graphing, the gcylc GUI, or template processing <span 
-class="cmti-10">but this is not recommended, and without Jinja2 you will not be able</span>
-<span 
-class="cmti-10">to run many of the example suites</span>:
+graphing and the gcylc GUI:
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmbx-10">PyGTK</span>, a Python wrapper for the GTK+ GUI toolkit, required for the gcylc GUI. PyGTK is included
@@ -70,25 +67,18 @@ href="http://www.graphviz.org" class="url" ><span
 class="pcrr7t-">http://www.graphviz.org</span></a> <br 
 class="newline" /><a 
 href="http://pygraphviz.github.io/" class="url" ><span 
-class="pcrr7t-">http://pygraphviz.github.io/</span></a>
-     </li>
-     <li class="itemize"><span 
-class="cmbx-10">Jinja2</span>, a template processor for Python (latest tested: 2.6). Jinja2 allows use of general programming
-     constructs in suite definitions. <br 
-class="newline" /><a 
-href="http://jinja.pocoo.org/docs" class="url" ><span 
-class="pcrr7t-">http://jinja.pocoo.org/docs</span></a></li></ul>
-<!--l. 419--><p class="indent" >   If you use a binary package manager to install graphviz you may also need a couple of <span 
+class="pcrr7t-">http://pygraphviz.github.io/</span></a></li></ul>
+<!--l. 413--><p class="indent" >   If you use a binary package manager to install graphviz you may also need a couple of <span 
 class="cmti-10">devel </span>packages for the
 pygraphviz build:
      <ul class="itemize1">
      <li class="itemize">python-devel
+     </li>
+     <li class="itemize">graphviz-devel</li></ul>
                                                                                          
 
                                                                                          
-     </li>
-     <li class="itemize">graphviz-devel</li></ul>
-<!--l. 427--><p class="indent" >   This user guide can be generated from the <span class="LATEX">L<span class="A">A</span><span class="TEX">T<span 
+<!--l. 421--><p class="indent" >   This user guide can be generated from the <span class="LATEX">L<span class="A">A</span><span class="TEX">T<span 
 class="E">E</span>X</span></span>source by running <span class="lstinline"><span 
 class="pcrr7t-">make</span></span> in the top level cylc directory after
 download. The following <span class="TEX">T<span 
@@ -102,19 +92,30 @@ OS or distribution-dependent):
      <li class="itemize">texlive-framed
      </li>
      <li class="itemize">texlive-preprint (for fullpage.sty, formerly in tetex)</li></ul>
-<!--l. 438--><p class="noindent" >And for HTML versions of the User Guide:
+<!--l. 432--><p class="noindent" >And for HTML versions of the User Guide:
      <ul class="itemize1">
      <li class="itemize">texlive-tex4ht
      </li>
      <li class="itemize">ImageMagick (for image scaling)</li></ul>
-<!--l. 445--><p class="indent" >   Note: Older versions of cylc require Pyro-3 (Python Remote Objects). Current version of cylc includes a
-modified version of Pyro 3.16 in its distribution. Pyro is used for network communication between
-server processes (cylc suites) and client programs (running tasks, the gcylc GUI, user commands).
-<br 
+<!--l. 439--><p class="indent" >   Cylc includes a slightly modified version of cherrypy 6.0.2, a pure Python HTTP framework that we use as a web
+server for communication between server processes (cylc suites) and client programs (running tasks, the gcylc GUI,
+user commands). Client communication is done via the Python requests library if available (recommended) or via
+pure Python via urllib2. <br 
 class="newline" /><a 
-href="https://pypi.python.org/pypi/Pyro/" class="url" ><span 
-class="pcrr7t-">https://pypi.python.org/pypi/Pyro/</span></a>
-<!--l. 451--><p class="indent" >   Finally, cylc makes heavy use of Python <span 
+href="http://www.cherrypy.org/" class="url" ><span 
+class="pcrr7t-">http://www.cherrypy.org/</span></a> <br 
+class="newline" /><a 
+href="http://docs.python-requests.org/" class="url" ><span 
+class="pcrr7t-">http://docs.python-_requests.org/</span></a>
+<!--l. 448--><p class="indent" >   Cylc includes Jinja2 2.8, a full featured template engine for Python and its dependency MarkupSafe 0.23, both
+BSD licensed. <br 
+class="newline" /><a 
+href="http://jinja.pocoo.org/" class="url" ><span 
+class="pcrr7t-">http://jinja.pocoo.org/</span></a> <br 
+class="newline" /><a 
+href="http://www.pocoo.org/projects/markupsafe/" class="url" ><span 
+class="pcrr7t-">http://www.pocoo.org/projects/markupsafe/</span></a>
+<!--l. 453--><p class="indent" >   Finally, cylc makes heavy use of Python <span 
 class="cmti-10">ordered dictionary </span>data structures. Significant speedup in
 parsing large suites can be had by installing the fast C-coded <span class="lstinline"><span 
 class="pcrr7t-">ordereddict</span></span> module by Anthon van der
@@ -125,7 +126,7 @@ class="cmbx-10">ordereddict </span>(latest tested 0.4.5) <br
 class="newline" /><a 
 href="https://anthon.home.xs4all.nl/Python/ordereddict/" class="url" ><span 
 class="pcrr7t-">https://anthon.home.xs4all.nl/Python/ordereddict/</span></a></li></ul>
-<!--l. 459--><p class="noindent" ><span 
+<!--l. 461--><p class="noindent" ><span 
 class="cmti-10">This module is currently included with cylc </span>under <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_DIR</span><span 
@@ -133,19 +134,19 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">ext</span></span>, and is built by the top level cylc Makefile. If you
 install the resulting library appropriately cylc will automatically use it in place of a slower Python implementation
 of the ordered dictionary structure.
-<!--l. 465--><p class="noindent" >
-<!--l. 465--><p class="indent" >    <h4 id="3.1" class="subsectionHead"> <span class="titlemark"> <a href="#3.1"> 3.1</a>  <a 
+<!--l. 467--><p class="noindent" >
+<!--l. 467--><p class="indent" >    <h4 id="3.1" class="subsectionHead"> <span class="titlemark"> <a href="#3.1"> 3.1</a>  <a 
  id="x4-100003.1"></a>Known Version Compatibility Issues </span></h4>
-<!--l. 467--><p class="indent" >   Cylc should run &#8220;out of the box&#8221; on recent Linux distributions.
-<!--l. 469--><p class="noindent" >
-<!--l. 469--><p class="indent" >    <h4 id="3.1.1" class="subsubsectionHead"><span class="titlemark"> <a href="#3.1.1"> 3.1.1</a>  <a 
+<!--l. 469--><p class="indent" >   Cylc should run &#8220;out of the box&#8221; on recent Linux distributions.
+<!--l. 471--><p class="noindent" >
+<!--l. 471--><p class="indent" >    <h4 id="3.1.1" class="subsubsectionHead"><span class="titlemark"> <a href="#3.1.1"> 3.1.1</a>  <a 
  id="x4-110003.1.1"></a>Apple Mac OSX </span></h4>
-<!--l. 471--><p class="indent" >   It has been reported that cylc runs fine on OSX 10.6 SnowLeopard, but on OSX 10.7 Lion there is an issue with
-constructing proper FQDNs (Fully Qualified Domain Names) that requires a change to the DNS service. Here&#8217;s how
-to solve the problem:
                                                                                          
 
                                                                                          
+<!--l. 473--><p class="indent" >   It has been reported that cylc runs fine on OSX 10.6 SnowLeopard, but on OSX 10.7 Lion there is an issue with
+constructing proper FQDNs (Fully Qualified Domain Names) that requires a change to the DNS service. Here&#8217;s how
+to solve the problem:
      <ul class="itemize1">
      <li class="itemize">Edit <span class="lstinline"><span 
 class="pcrr7t-">/</span><span 
@@ -169,7 +170,7 @@ class="pcrr7t-">&#x003E;-</span><span
 class="pcrr7t-">AlwaysAppendSearchDomains</span><span 
 class="pcrr7t-">&#x003C;/</span><span 
 class="pcrr7t-">string</span><span 
-class="pcrr7t-">&#x003E;</span></span> after line 16: <!--l. 479-->
+class="pcrr7t-">&#x003E;</span></span> after line 16: <!--l. 481-->
      <div class="lstlisting" id="listing-1"><span class="label"><a 
  id="x4-11001r1"></a></span><span 
 class="pcrr7t-">&#x003C;</span><span 
@@ -243,7 +244,7 @@ class="pcrr7t-">&#x003E;</span>
      
      </div>
      </li>
-     <li class="itemize">Now unload and reload the mDNSResponder service: <!--l. 488-->
+     <li class="itemize">Now unload and reload the mDNSResponder service: <!--l. 490-->
      <div class="lstlisting" id="listing-2"><span class="label"><a 
  id="x4-11007r1"></a></span><span 
 class="pcrr7t-">%</span><span 
@@ -303,10 +304,10 @@ class="pcrr7t-">plist</span>
      
      </div>
      </li></ul>
-<!--l. 497--><p class="noindent" >
-<!--l. 497--><p class="indent" >    <h4 id="3.2" class="subsectionHead"> <span class="titlemark"> <a href="#3.2"> 3.2</a>  <a 
+<!--l. 499--><p class="noindent" >
+<!--l. 499--><p class="indent" >    <h4 id="3.2" class="subsectionHead"> <span class="titlemark"> <a href="#3.2"> 3.2</a>  <a 
  id="x4-120003.2"></a>Other Software Used Internally By Cylc </span></h4>
-<!--l. 499--><p class="indent" >   Cylc has incorporated a custom-modified version the <span 
+<!--l. 501--><p class="indent" >   Cylc has incorporated a custom-modified version the <span 
 class="cmti-10">xdot </span>graph viewer (<a 
 href="https://github.com/jrfonseca/xdot.py" class="url" ><span 
 class="pcrr7t-">https://github.com/jrfonseca/xdot.py</span></a>,
@@ -314,12 +315,12 @@ LGPL license).
                                                                                          
 
                                                                                          
-   <!--l. 503--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 505--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse4.html" >next</a>] [<a 
 href="cug-htmlse2.html" >prev</a>] [<a 
 href="cug-htmlse2.html#tailcug-htmlse2.html" >prev-tail</a>] [<a 
 href="cug-htmlse3.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse3.html" >up</a>] </p></div>
-<!--l. 503--><p class="indent" >   <a 
+<!--l. 505--><p class="indent" >   <a 
  id="tailcug-htmlse3.html"></a>   
 </body></html> 
