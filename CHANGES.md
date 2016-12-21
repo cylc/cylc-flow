@@ -5,6 +5,108 @@ milestones](https://github.com/cylc/cylc/milestones?state=closed).
 
 -------------------------------------------------------------------------------
 
+## __cylc-7.0.0 (2016-12-21)__
+
+<span style="background:yellow">**WARNING: cylc-7 communications is not
+backward compatible: cylc-7 clients cannot see cylc-6 suite daemons, and vice
+versa**.</span>
+
+
+### Highlighted Changes
+
+[#](https://github.com/cylc/cylc/pull/): **A new HTTPS layer replaces Pyro RPC,
+for all client-server communications.**
+
+[#2092](https://github.com/cylc/cylc/pull/2092): New command `cylc
+get-suite-contact` to print suite contact information (host, port, PID, etc.)
+
+[#2089](https://github.com/cylc/cylc/pull/2089): Revised User Guide
+documentation on cycling workflows and use of parameterized tasks as a proxy
+for cycling.
+
+[#2088](https://github.com/cylc/cylc/pull/2088): Support dependence on absolute
+cycle points in cycling graphs.
+
+[#2067](https://github.com/cylc/cylc/pull/2067): Consolidate suite service
+files (passphrase, SSL files, contact file, etc.) under `.service/` in the
+suite run directory. This also removes the need for the old suite registration
+database and port files under `$HOME/.cylc/`.
+
+[#2074](https://github.com/cylc/cylc/pull/2074): Retry states and timers, and
+poll timers, now persist across suite restarts. Waiting tasks are not
+put in the held state before shutdown.  Held tasks are not automatically
+released on restart.
+
+[#2071](https://github.com/cylc/cylc/pull/2071): Fix quote stripping on
+`initial cycle point = "now"`.
+
+[#2063](https://github.com/cylc/cylc/pull/2063): **Removed deprecated cylc-5
+syntax and features.**
+
+[#2070](https://github.com/cylc/cylc/pull/2070): Fix dummy mode support for
+custom task outputs (since cylc-6.11.0): they were incorrectly propagated to
+other tasks.
+
+[#2024](https://github.com/cylc/cylc/pull/2024): `cylc gscan` now supports
+collapsible suite groups via a top level suite config `group` item.
+Right-click *View Column* "Group".
+
+[#2065](https://github.com/cylc/cylc/pull/2065): `cylc gscan` now supports
+suite name filtering via a `--name` command line option.
+
+[#2060](https://github.com/cylc/cylc/pull/2060): Sensible 5 second timeout for
+if hanging connections are encountered during port scanning.
+
+[#2055](https://github.com/cylc/cylc/pull/2055): Task elapsed times now persist
+over restarts.
+
+[#2044](https://github.com/cylc/cylc/pull/2044): Suite start-up now aborts with
+a sensible message on suite configuration errors (previously this happened post
+daemonization so the user had to check suite logs to see the error).
+
+[#2046](https://github.com/cylc/cylc/pull/2046): Multi-task interface for the
+`cylc show` command. You can now *View Prerequisites* for tasks in the runahead
+pool.
+
+[#2049](https://github.com/cylc/cylc/pull/2049): Per-host job submission and
+execution polling intervals via global/user config files.
+
+[#2051](https://github.com/cylc/cylc/pull/2051): Bundle Jinja2 2.8 with Cylc -
+one less external software dependency.
+
+[#2004](https://github.com/cylc/cylc/pull/2004): Continue task event handlers
+on restart.
+
+[#2042](https://github.com/cylc/cylc/pull/2042): Documented `[scheduling]spawn
+to max active cycle points` (new in 6.11.0), which lets successive instances of
+the same task run out of order if dependencies allow.
+
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+
+### Other Changes
+
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+
 
 ## __cylc-6.11.0 (2016-09-13)__
 

@@ -5940,7 +5940,7 @@ For a restart, the scheduler starts by loading each task in its recorded state.
 Any tasks recorded as `submitted' or `running' will be polled automatically to
 determine what happened to them while the suite was down.
 
-See ~\ref{RestartingSuites} for more detail.
+See Section~\ref{RestartingSuites} for more detail.
 
 \subsubsection{Warm Start}
 
@@ -6216,7 +6216,7 @@ A restarted suite (see \lstinline=cylc restart --help=) is initialized from a
 previous recorded checkpoint, which is normally the end of a previous run, so
 that it can carry on from wherever it got to before being shut down or killed.
 
-\subsubsection{Restart Suite from Latest}
+\subsubsection{Restart From Latest}
 
 A normal restart is easy. Simply invoke the \lstinline=cylc restart= command
 with the suite name:
@@ -6228,7 +6228,7 @@ shell$ cylc restart SUITE
 
 It will restart the suite from the latest checkpoint.
 
-\subsubsection{Restart Suite from a Check Point}
+\subsubsection{Restart From Checkpoint}
 
 You can use the \lstinline=cylc ls-checkpoints= command to identify the
 checkpoint to use to restart a suite. (See also
@@ -6236,12 +6236,12 @@ checkpoint to use to restart a suite. (See also
 
 The checkpoint ID 0 (zero) is always used for latest state of the suite, which
 is updated continuously as the suite progresses. The checkpoint IDs of
-non-latest states are positive integers starting from 1, and incremented each
-time a new checkpoint is stored. Currently a suite will automatically stores
+earlier states are positive integers starting from 1, and incremented each
+time a new checkpoint is stored. Currently suites automatically store
 checkpoints before and after reloads, and on restarts (using the latest
 checkpoints before the restarts).
 
-Once you have identified the checkpoint to use, invoke the
+Once you have identified the checkpoint to restart from, invoke the
 \lstinline=cylc restart= command with the suite name and the
 \lstinline@--checkpoint=CHECKPOINT@ option:
 
@@ -6250,18 +6250,16 @@ Once you have identified the checkpoint to use, invoke the
 shell$ cylc restart --checkpoint=CHECKPOINT-ID SUITE
 \end{lstlisting}
 
-It will restart the suite from the specified checkpoint.
+\subsubsection{Behaviour of Tasks on Restart}
 
-\subsubsection{Behaviour of Tasks on Suite Restart}
+All tasks are reloaded in exactly their former states as recorded in
+checkpoint. Failed tasks, for instance, are not automatically resubmitted at
+restart in case the underlying problem has not been addressed yet.
 
-Tasks that were recorded in the submitted or running states are automatically
-polled on restart, to see if they are still submitted (e.g. waiting in a PBS
-batch queue or similar), still running, or if they finished (succeeded or
-failed) while the suite was down.
+Tasks recorded in the submitted or running states are automatically polled on
+restart, to see if they are still waiting in a batch queue, still running, or
+if they succeeded or failed while the suite was down.
 
-Tasks recorded in the failed state at shutdown are not automatically
-resubmitted on restarting the suite, in case the underlying problem has not
-been addressed yet.
 
 \subsection{Task States}
 

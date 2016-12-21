@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [info] ls-checkpoints [OPTIONS] REG ARGS
+"""cylc [info] ls-checkpoints [OPTIONS] ARGS
 
 In the absence of arguments and the --all option, list checkpoint IDs, their
 time and events. Otherwise, display the latest and/or the checkpoints of suite
@@ -96,9 +96,11 @@ def list_checkpoints(suite, callback):
 
 def _get_dao(suite):
     """Return the DAO (public) for suite."""
-    pub_db_path = os.path.join(
-        GLOBAL_CFG.get_derived_host_item(suite, 'suite log directory'),
-        CylcSuiteDAO.DB_FILE_BASE_NAME)
+
+    suite_log_dir = GLOBAL_CFG.get_derived_host_item(
+        suite, 'suite log directory')
+    pub_db_path = os.path.join(os.path.dirname(suite_log_dir),
+                               CylcSuiteDAO.DB_FILE_BASE_NAME)
     return CylcSuiteDAO(pub_db_path, is_public=True)
 
 
