@@ -1125,7 +1125,7 @@ GUI tools:
 \begin{lstlisting}
 # list currently running suites and their port numbers:
 $ cylc scan
-tut/oneoff/basic oliverh oliverh-34403DL 7766
+tut/oneoff/basic oliverh@nwp-1:43001
 
 # GUI summary view of running suites:
 $ cylc gscan &
@@ -1451,10 +1451,10 @@ cylc (scheduler - 2014-08-14T15:09:30+12): goodbye.1 started at 2014-08-14T15:09
 cylc Suite and Task Identity:
   Suite Name  : tut/oneoff/goodbye
   Suite Host  : oliverh-34403dl.niwa.local
-  Suite Port  : 7766
+  Suite Port  : 43001
   Suite Owner : oliverh
   Task ID     : goodbye.1
-  Task Host   : oliverh-34403DL
+  Task Host   : nwp-1
   Task Owner  : oliverh
   Task Try No.: 1
 
@@ -4138,7 +4138,7 @@ $CYLC_SUITE_DEF_PATH   # $HOME/mysuites/baz (e.g.)
 $CYLC_SUITE_NAME       # foo.bar.baz (e.g.)
 $CYLC_SUITE_REG_PATH   # name translate to path: foo/bar/baz
 $CYLC_SUITE_HOST       # orca.niwa.co.nz (e.g.)
-$CYLC_SUITE_PORT       # 7766 (e.g.)
+$CYLC_SUITE_PORT       # 43001 (e.g.)
 $CYLC_SUITE_OWNER      # oliverh (e.g.)
 \end{lstlisting}
 Some of these variables are also used by cylc task messaging commands in
