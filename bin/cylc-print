@@ -16,9 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [db] print [OPTIONS] [REGEX]
+"""cylc [prep] print [OPTIONS] [REGEX]
 
-Print suite database registrations.
+Print registered (installed) suites.
 
 Note on result filtering:
   (a) The filter patterns are Regular Expressions, not shell globs, so
@@ -60,7 +60,7 @@ def main():
                  argdoc=[('[REGEX]', 'Suite name regular expression pattern')])
 
     parser.add_option(
-        "-t", "--tree", help="Print registrations in nested tree form.",
+        "-t", "--tree", help="Print suites in nested tree form.",
         action="store_true", default=False, dest="tree")
 
     parser.add_option(

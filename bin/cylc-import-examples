@@ -19,18 +19,18 @@
 set -e
 
 usage() {
-    echo ""
-    echo "Usage: cylc [admin] import-examples DIR [GROUP]"
-    echo ""
-    echo "Copy the cylc example suites to DIR/GROUP and register"
-    echo "them for use under the GROUP suite name group."
-    echo ""
-    echo "Arguments:"
-    echo "   DIR    destination directory"
-    echo "   GROUP  suite name group (default: cylc-<version>)"
+    cat << __END__
+Usage: cylc [admin] import-examples DIR
+
+Copy the cylc example suites to DIR and register them for use under the GROUP
+suite name group.
+
+Arguments:
+   DIR    destination directory
+__END__
 }
 
-if [[ $1 == '-h' ]] || [[ $1 == '--help' ]]; then
+if [[ $1 == '-h' || $1 == '--help' ]]; then
     usage
     exit 0
 fi
@@ -46,38 +46,24 @@ if [[ $# > 2 ]] || [[ $# < 1 ]]; then
     exit 1
 fi
 
-DIR=$1
-
-if [[ $# == 2 ]]; then
-    TOPGRP=$2
-else
-    TOPGRP=cylc-$( cylc -v | tr '.' '-' )
-fi
-
-if $( cylc print --fail $TOPGRP > /dev/null 2>&1 ); then
-    echo "ERROR: the $TOPGRP name group already exists." >&2
-    echo " Reregister it, or choose another name group." >&2
-    exit 1
-fi
-
-TOPDIR=$DIR/$TOPGRP
-
-if [[ -d $TOPDIR ]]; then
-    echo "ERROR: $TOPDIR already exists." >&2
-    echo "Remove it or choose another DIR." >&2
+TOP_DIR=$1
+BASE_DIR=examples/$(cylc -v)
+DESTINATION=$TOP_DIR/cylc-$BASE_DIR
+if [[ -d $DESTINATION ]]; then
+    echo "ERROR: $DESTINATION already exists." >&2
     exit 1
 fi
 
 echo " + Copying example suites"
-mkdir -p $TOPDIR
-cp -r $CYLC_DIR/examples/* $TOPDIR
+mkdir -p $DESTINATION
+cp -r $CYLC_DIR/examples/* $DESTINATION
 
 echo " + Registering example suites"
-cd $TOPDIR
-SUITE_RCS=$( find . -name suite.rc | sed -e 's@./@@' )
+cd $DESTINATION
+SUITE_RCS=$(find . -name suite.rc | sed -e 's@./@@')
 for SUITE_RC in $SUITE_RCS; do
-    SUITE_DEF_DIR=$( dirname $SUITE_RC )
-    SUITE_REG_NAME=${TOPGRP}.$( echo $SUITE_DEF_DIR | tr '/' '.' )
+    SUITE_DEF_DIR=$(dirname $SUITE_RC)
+    SUITE_REG_NAME=$BASE_DIR/$SUITE_DEF_DIR
     cylc register $SUITE_REG_NAME $SUITE_DEF_DIR
 done
 

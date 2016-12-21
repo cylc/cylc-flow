@@ -29,7 +29,8 @@ daemonization so the user had to check suite logs to see the error).
 [#2067](https://github.com/cylc/cylc/pull/2067): Consolidated suite service
 files (passphrase, SSL files, contact file, etc.) under `.service/` in the
 suite run directory; the suite registration database and port files under
-`$HOME/.cylc/` are no longer used.
+`$HOME/.cylc/` are no longer used; suites can now be grouped in sub-directory
+trees under the top level run directory.
 
 [#2033](https://github.com/cylc/cylc/pull/2033): Allow restart from suite state
 checkpoints other than the latest (checkpoints are also recorded automatically

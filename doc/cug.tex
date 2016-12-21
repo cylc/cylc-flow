@@ -800,16 +800,14 @@ Legal items, values, and system defaults are documented in
 \label{Tutorial}
 
 This section provides a hands-on tutorial introduction to basic cylc
-suite preparation and control. A number of features are not yet touched
-on by the tutorial examples, however, so please also read the rest of
-the User Guide.
+functionality.
 
 \subsection{User Config File}
 
-Some global parameters affecting cylc's behaviour are defined in a
-{\em site global config file}, and can be customized per user in
-{\em user global config files}. For example, to choose the text editor
-invoked by cylc on suite definitions:
+Some settings affecting cylc's behaviour can be defined in site and user
+{\em global config files}. For example, to choose the text editor invoked by
+cylc on suite definitions:
+
 \lstset{language=suiterc}
 \begin{lstlisting}
 # $HOME/.cylc/global.rc
@@ -819,8 +817,8 @@ invoked by cylc on suite definitions:
 \end{lstlisting}
 
 \begin{myitemize}
-\item For more on site and user global config files, including how to generate
-one at first, see~\ref{SiteAndUserConfiguration} and~\ref{SiteRCReference}.
+\item For more on site and user global config files
+  see~\ref{SiteAndUserConfiguration} and~\ref{SiteRCReference}.
 \end{myitemize}
 
 \subsubsection{Configure Environment on Job Hosts}
@@ -850,30 +848,27 @@ appropriate contents.
 \subsection{User Interfaces}
 \label{CUI}
 
-Cylc has command line (CLI) and graphical (GUI) user interfaces.
-To access them {\em do not simply put the bin directory of the current release
-the shell search path for users.} Instead, as described in the cylc INSTALL
-file (\ref{INSTALL}), configure the provided multi-version wrapper script to
-point to install location for any or all cylc releases. This allows existing
-suites to continue running at old cylc versions if necessary.
+You should have access to the cylc command line (CLI) and graphical (GUI) user
+interfaces once cylc has been installed as described in
+Section~\ref{InstallCylc}.
 
 \subsubsection{Command Line Interface (CLI)}
 
 The command line interface is unified under a single top level
 \lstinline=cylc= command that provides access to many sub-commands
 and their help documentation.
+
 \lstset{language=transcript}
 \begin{lstlisting}
 shell$ cylc help       # Top level command help.
 shell$ cylc run --help # Example command-specific help.
 \end{lstlisting}
 
-\begin{myitemize}
-    \item Command help transcripts are also printed in~\ref{CommandReference},
-        and can be accessed from the \lstinline=cylc gui= Help menu.
-    \item Cylc suites are {\em scriptable} because the error status returned by
-        all commands can be relied on.
-\end{myitemize}
+Command help transcripts are printed in~\ref{CommandReference} and are
+available from the GUI Help menu.
+
+Cylc is {\em scriptable} - the error status returned by commands can be
+relied on.
 
 \subsubsection{Graphical User Interface (GUI)}
 
@@ -881,14 +876,16 @@ The cylc GUI covers the same functionality as the CLI, but it has more
 sophisticated suite monitoring capability. It can start and stop suites, or
 connect to suites that are already running; in either case, shutting down the
 GUI does not affect the suite itself.
+
 \lstset{language=transcript}
 \begin{lstlisting}
 shell$ gcylc & # or:
-shell$ cylc gui & # Use the File menu to switch to specific suite.
-shell$ cylc gscan & # Scan GUI for multiple running suites.
+shell$ cylc gui & # Single suite control GUI.
+shell$ cylc gscan & # Multi-suite monitor GUI.
 \end{lstlisting}
-Clicking on a suite in the scan GUI, shown in
-Figure~\ref{fig-gscan}, opens a gcylc instance for it.
+
+Clicking on a suite in gscan, shown in Figure~\ref{fig-gscan}, opens a gcylc
+instance for it.
 
 \subsection{Suite Definitions}
 
@@ -904,20 +901,22 @@ in {\em suite definition directories} that may also contain a
 
 \subsection{Suite Registration}
 
-Suite registration creates the suite run directory under
-(\lstinline=~/cylc-run/= by default) and populates it with authentication files
-and a symbolic link to a suite definition directory.  Cylc commands that parse
-suite definitions can take the file path or the suite name as input. Commands
-that interact with running suites have to target the suite by name.
+Suite registration creates a run directory (under \lstinline=~/cylc-run/= by
+default) and populates it with authentication files and a symbolic link to a
+suite definition directory. Cylc commands that parse suite definitions can take
+the file path or the suite name as input. Commands that interact with running
+suites have to target the suite by name.
 
 \lstset{language=transcript}
 \begin{lstlisting}
-# target a suite by file path:
+# Target a suite by file path:
 shell$ cylc validate /path/to/my/suite/suite.rc
 shell$ cylc graph /path/to/my/suite/suite.rc
-# register a name for a suite:
+
+# Register a suite:
 shell$ cylc register my.suite /path/to/my/suite/
-# target a suite by name:
+
+# Target a suite by name:
 shell$ cylc graph my.suite
 shell$ cylc validate my.suite
 shell$ cylc run my.suite
@@ -943,61 +942,35 @@ see~\ref{ConnectionAuthentication}.
 \subsection{Import The Example Suites}
 \label{ImportTheExampleSuites}
 
-Run the following command to import cylc's example suites to a chosen
-directory location and register them for use under the {\em examples}
-name group:
+Run the following command to copy cylc's example suites and register them for
+your own use:
+
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc import-examples $TMPDIR examples
-\end{lstlisting}
-(first check that \lstinline=$TMPDIR= is defined in your environment, or
-else use a different location). List the newly registered tutorial
-suites using the \lstinline=cylc print= command:
-\lstset{language=transcript}
-\begin{lstlisting}
-shell$ cylc print examples.tutorial -y
-examples.tutorial.oneoff.jinja2   /tmp/examples/tutorial/oneoff/jinja2
-examples.tutorial.cycling.two     /tmp/examples/tutorial/cycling/two
-examples.tutorial.cycling.three   /tmp/examples/tutorial/cycling/three
-examples.tutorial.oneoff.remote   /tmp/examples/tutorial/oneoff/remote
-# ...
-\end{lstlisting}
-See \lstinline=cylc print --help= for other display options. The
-tree-form display shows how hierarchical suite names can be used to
-organize related suites nicely (suite names do not have to be related
-to their source directory paths, although they are in this case):
-\lstset{language=transcript}
-\begin{lstlisting}
-shell$ cylc print --tree -x examples.tutorial
-examples
- `-tutorial
-   `-cycling
-   | | ...
-   | |-two        Two cycling tasks with inter-cycle dependence.
-   | | ...
-   `-oneoff
-     |-retry      A task with automatic retry on failure
-     |-remote     Hello World! on a remote host
-     | ...
-     |-basic      The cylc Hello World! suite
-     `-jobsub     Hello World! by 'at' job submission
+shell$ cylc import-examples /tmp
 \end{lstlisting}
 
 \subsection{Rename The Imported Tutorial Suites}
-\
-Rename the tutorial suites to make their names a bit shorter:
+
+Suites can be renames by simply renaming (i.e.\ moving) their run directories.
+Make the tutorial suite names shorter, and print their locations with
+\lstinline=cylc print=:
+
 \begin{lstlisting}
-shell$ mv ~/cylc-run/examples/tutorial ~/cylc-run/tut
-shell$ cylc print -x tut
-tut/oneoff/external   Hello World! from an external task script
+shell$ mv ~/cylc-run/$(cylc --version)/examples/tutorial ~/cylc-run/tut
+shell$ cylc print -ya tut
+tut/oneoff/jinja2  | /tmp/cylc-examples/7.0.0/tutorial/oneoff/jinja2
+tut/cycling/two    | /tmp/cylc-examples/7.0.0/tutorial/cycling/two
+tut/cycling/three  | /tmp/cylc-examples/7.0.0/tutorial/cycling/three
 # ...
 \end{lstlisting}
 
+See \lstinline=cylc print --help= for other display options.
+
 \subsection{Suite Validation}
 
-Suite definitions can be validated against the \lstinline=suite.rc=
-file format specification to detect many types of error without running
-the suite.
+Suite definitions can be validated to detect syntax (and other) errors:
+
 \lstset{language=transcript}
 \begin{lstlisting}
 # pass:
@@ -1007,7 +980,7 @@ shell$ echo $?
 0
 # fail:
 shell$ cylc validate my/bad/suite
-'Illegal item: [scheduling]special tusks'
+Illegal item: [scheduling]special tusks
 shell$ echo $?
 1
 \end{lstlisting}
@@ -1083,73 +1056,50 @@ you can exit the terminal or even log out without killing the suite:
 
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc run tut/oneoff/basic
-************************************************************************
-*                     The Cylc Suite Engine [6.0.0]                    *
-*             Copyright (C) 2008-2016 NIWA              *
-*                                                                      *
-* This program comes with ABSOLUTELY NO WARRANTY.  It is free software;*
-* you are welcome to redistribute it under certain conditions. Details:*
-*          `cylc license conditions'; `cylc license warranty'          *
-************************************************************************
+$ cylc run tut/oneoff/basic
+            ._.                                                       
+            | |                 The Cylc Suite Engine [7.0.0]         
+._____._. ._| |_____.           Copyright (C) 2008-2016 NIWA          
+| .___| | | | | .___|  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+| !___| !_! | | !___.  This program comes with ABSOLUTELY NO WARRANTY;
+!_____!___. |_!_____!  see `cylc warranty`.  It is free software, you 
+      .___! |           are welcome to redistribute it under certain  
+      !_____!                conditions; see `cylc conditions`.       
 
-Suite Info:
- + Name: tut/oneoff/basic
- + PID:  29338
- + Port: 7766
- + Logs: /home/oliverh/cylc-run/tut/oneoff/basic/log/suite/{log,out,err}
+*** listening on nwp-1:43027 ***
 
-To see if this suite is still running:
- * cylc scan
- * cylc ping -v tut/oneoff/basic
- * ps -fu $USER | grep 'cylc-run .* tut/oneoff/basic'
+To view suite daemon contact information:
+ $ cylc get-suite-contact tut/oneoff/basic
 
-To run in non-daemon mode use --no-detach or --debug.
-For more information see 'cylc --help' and the User Guide.
+Other ways to see if the suite is still running:
+ $ cylc scan -n '\btut/oneoff/basic\b' nwp-1
+ $ cylc ping -v --host=nwp-1 tut/oneoff/basic
+ $ ssh nwp-1 "pgrep -a -P 1 -fu $USER 'cylc-r.* \btut/oneoff/basic\b'"
+
 \end{lstlisting}
 
 If you're quick enough (this example only takes 10-15 seconds to run) the
 \lstinline=cylc scan= command will detect the running suite:
 \begin{lstlisting}
 shell$ cylc scan
-tut/oneoff/basic oliverh oliverh-34403DL 7766
-
-# wait 10-15 seconds ...
-
-shell$ cylc scan
-# (nothing: suite finished)
+tut/oneoff/basic oliverh@nwp-1:43027
 \end{lstlisting}
 
-Using the \lstinline=--no-detach= option prevents the suite daemonizing,
-but only warnings and errors, if any, are printed to the terminal.
-The \lstinline=--debug= option, however, causes (among other things) task job
-submission commands to to be printed stdout:
+Note you can use the \lstinline=--no-detach= and \lstinline=--debug= options
+to \lstinline=cylc-run= to prevent the suite from daemonizing (i.e.\ to make
+it stay attached to your terminal until it exits).
 
-\lstset{language=transcript}
-\begin{lstlisting}
-shell$ cylc run --debug tut/oneoff/basic
-************************************************************************
-*                     The Cylc Suite Engine [6.0.0]                    *
-*             Copyright (C) 2008-2016 NIWA              *
-*                                                                      *
-* This program comes with ABSOLUTELY NO WARRANTY.  It is free software;*
-* you are welcome to redistribute it under certain conditions. Details:*
-*          `cylc license conditions'; `cylc license warranty'          *
-************************************************************************
-cylc job-submit /home/oliverh/cylc-run/tut/oneoff/basic/log/job/1/hello/01/job
-'Finished'
-Suite shutting down at 2014-08-14T13:26:52+12
-DONE
-\end{lstlisting}
-When a task is ready to run a {\em job script} is generated to run it. The
-command printed just above is how cylc executes background jobs on the
-suite host (this is the default), retrieves the job process ID, and directs the
-output to log files in standard locations. For the log file locations that can
-be seen above, in \lstinline=job/1/hello/01/= the first \lstinline=1/= is the
-{\em cycle point} of the task \lstinline=hello= (for a non-cycling task
-this is just the integer 1); and the final \lstinline=01/= directory is
-its {\em submission number} (tasks can be made to retry on failure, manually
-or automatically, in which case the submission number increments).
+When a task is ready cylc generates a {\em job script} to run it, by
+default as a background jobs on the suite host.  The job process ID is
+captured, and job output is directed to log files in standard
+locations under the suite run directory.
+
+Log file locations relative to the suite run directory look like
+\lstinline=job/1/hello/01/= where the first digit is the {\em cycle point} of
+the task \lstinline=hello= (for non-cycling tasks this is just `1'); and the
+final \lstinline=01= is the {\em submit number} (tasks can be made to retry on
+failure or manually retriggered - each time a new log directory is used to
+avoid overwriting previous output).
 
 The suite shuts down automatically once all tasks have succeeded.
 
@@ -1230,6 +1180,7 @@ The \lstinline=hello= task in the first tutorial suite defaults to
 running as a background job on the suite host. To submit it to the Unix
 \lstinline=at= scheduler instead, configure its job submission settings
 as in \lstinline=tut/oneoff/jobsub=:
+
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
@@ -1238,31 +1189,15 @@ as in \lstinline=tut/oneoff/jobsub=:
         [[[job]]]
             batch system = at
 \end{lstlisting}
-If you run the suite (first check that the {\em at daemon}
-\lstinline=atd= is running on the suite host) you'll see a slightly different
-job submission command printed to stdout:
-\lstset{language=transcript}
-\begin{lstlisting}
- cylc run --debug tut/oneoff/jobsub
-************************************************************************
-*        The Cylc Suite Engine [6.0.0alpha1-294-ge08560-dirty]         *
-*             Copyright (C) 2008-2016 NIWA              *
-*                                                                      *
-* This program comes with ABSOLUTELY NO WARRANTY.  It is free software;*
-* you are welcome to redistribute it under certain conditions. Details:*
-*          `cylc license conditions'; `cylc license warranty'          *
-************************************************************************
-cylc job-submit /home/oliverh/cylc-run/tut/oneoff/jobsub/log/job/1/hello/01/job
-'Finished'
-Suite shutting down at 2014-08-14T14:14:43+12
-DONE
-\end{lstlisting}
+
+Run the suite again after checking that \lstinline=atd= is running on your
+system. 
 
 Cylc supports a number of different job submission methods. Tasks
 submitted to external batch queuing systems like \lstinline=at=,
 \lstinline=PBS=, \lstinline=SLURM=, \lstinline=Moab=, or
 \lstinline=LoadLeveler=, are displayed as {\em submitted} in the cylc GUI until
-they actually start executing.
+they start executing.
 
 \begin{myitemize}
 \item For more on task job scripts, see~\ref{JobScripts}.
@@ -1367,17 +1302,16 @@ change its runtime configuration as in \lstinline=tut/oneoff/remote=:
 For remote task hosting to work several requirements must be satisfied:
 \begin{myitemize}
 
-\item Passwordless ssh must be enabled from the suite host account to
+\item Non-interactive ssh must be enabled from the suite host account to
 the task host account, for task job submission.
 
 \item Your shell initialization (.profile, .bashrc, .cshrc, etc) on the remote
 host must not produce any standard output as it may confuse commands such as
 scp. See \url{http://www.openssh.com/faq.html#2.9} for more information.
 
-\item Networking settings must allow communication {\em back} from
-the task host to the suite host, either by network ports or ssh,
-unless the last-resort one way {\em task polling} communication method
-is used.
+\item Network settings must allow communication {\em back} from the task host
+  to the suite host, either by network ports or ssh, unless the last-resort one
+  way {\em task polling} communication method is used.
 
 \item Cylc must be installed on the task host. Other software dependencies like
 graphviz are not required there.
@@ -1394,28 +1328,15 @@ If your username is different on the task host the
 \lstinline@owner=username@ item, or your \lstinline=$HOME/.ssh/config=
 file can be configured for username translation.
 
-If you configure a task host according to the requirements above and run
-the suite again in debug mode, you'll see that the job submission command
-printed to suite stdout is now considerably more complicated. That's because it
-has to create remote log directories, source login scripts on the remote host
+If you configure a task host according to the requirements cylc will
+create remote log directories, source login scripts on the remote host
 to ensure cylc is visible there, send the task job script over, and submit it
 to run there by the configured job submission method:
 
-\lstset{language=transcript}
-\begin{lstlisting}
-shell$ cylc run --debug tut/oneoff/remote
-# ...
-ssh -oBatchMode=yes -oConnectTimeout=10 wrh-1.niwa.co.nz\
-'CYLC_VERSION='"'"'6.1.0'"'"\
-' "/opt/cylc/bin/cylc" '"'"'job-submit'"'"\
-' --remote-mode "/home/oliverh/cylc-run/tut/oneoff/remote/log/job/1/hello/01/job"'
-\end{lstlisting}
-(Don't be intimidated by this - it is really quite straightforward and would
-appear much simpler if the job log path was shorter!). Remote task job logs are
-saved to the suite run directory on the task host, not on the suite host,
-although they can be retrieved by right-clicking on the task in the GUI. If you
-want the job logs pulled back to the suite host automatically, you can set
-"retrieve job logs=True" under the "[[[remote]]]" section:
+Remote task job logs are saved to the suite run directory on the task host, not
+on the suite host. They can be retrieved by right-clicking on the task
+in the GUI, or to have cylc pull them back to the suite host automatically
+do this:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -1427,10 +1348,8 @@ want the job logs pulled back to the suite host automatically, you can set
             retrieve job logs = True
 \end{lstlisting}
 
-The suite will attempt to \lstinline=rsync= the job logs once from the remote
-host each time a task job completes. E.g. if the job file is
-\lstinline=~/cylc-run/tut/oneoff/remote/log/job/1/hello/01/job=, anything under
-\lstinline=~/cylc-run/tut/oneoff/remote/log/job/1/hello/01/= will be retrieved.
+This suite will attempt to \lstinline=rsync= job logs from the remote
+host each time a task job completes.
 
 Some batch systems have considerable delays between the time when the job
 completes and when it writes the job logs in its normal location. If this is
@@ -1647,18 +1566,6 @@ hierarchy shown:
 
 (Note that we recommend given ALL-CAPS names to task families to help
 distinguish them from task names. However, this is just a convention).
-
-Verbose validation shows the family member substitution done
-when the suite definition is parsed:
-\lstset{language=transcript}
-\begin{lstlisting}
-shell$ cylc val -v tut/oneoff/ftrigger1
-...
-Graph line substitutions occurred:
-  IN: foo => GREETERS
-  OUT: foo => greeter_1 & greeter_2
-...
-\end{lstlisting}
 
 Experiment with the \lstinline=tut/oneoff/ftrigger1= suite to see
 how this works.
@@ -2153,30 +2060,7 @@ shell$ cylc monitor --user=SUITE_OWNER --port=SUITE_PORT SUITE_NAME
 \end{lstlisting}
 to view the progress of their suite.
 
-Other suite-connecting commands work in the same way too;
-see~\ref{RemoteControl}.
-
-\subsection{Searching A Suite}
-
-The cylc suite search tool reports pattern matches in the suite definition
-by line number, suite section, and file, even if the suite uses nested
-include-files, and by file and line number for matches in suite bin
-scripts:
-\lstset{language=transcript}
-
-\begin{lstlisting}
-shell$ cylc search examples/admin/suite.rc OUTPUT_DIR
-
-FILE: /home/hilary/cylc/examples/admin/suite.rc
-   SECTION: [runtime]->[[root]]->[[[environment]]]
-      (52):             OUTPUT_DIR = $WORKSPACE
-
-FILE: /home/hilary/cylc/examples/admin/bin/A.sh
-   (28): touch $OUTPUT_DIR/surface-winds-${CYLC_TASK_CYCLE_POINT}.nc
-   (29): touch $OUTPUT_DIR/precipitation-${CYLC_TASK_CYCLE_POINT}.nc
-
-#...
-\end{lstlisting}
+Other suite-connecting commands work in the same way; see~\ref{RemoteControl}.
 
 \subsection{Other Things To Try}
 
@@ -2226,10 +2110,10 @@ E.g.:
 shell$ cylc print -t nwp
 nwp
  |-oper
- | |-region1  Local Model Region1       /home/hilary/cylc-run/nwp/oper/region1
- | `-region2  Local Model Region2       /home/hilary/cylc-run/nwp/oper/region2
+ | |-region1  Local Model Region1       /home/oliverh/cylc-run/nwp/oper/region1
+ | `-region2  Local Model Region2       /home/oliverh/cylc-run/nwp/oper/region2
  `-test
-   `-region1  Local Model TEST Region1  /home/hilary/cylc-run/nwp/test/region1
+   `-region1  Local Model TEST Region1  /home/oliverh/cylc-run/nwp/test/region1
 \end{lstlisting}
 
 Suites can be pre-registered with a name using the \lstinline=cylc register=
@@ -4255,7 +4139,7 @@ $CYLC_SUITE_NAME       # foo.bar.baz (e.g.)
 $CYLC_SUITE_REG_PATH   # name translate to path: foo/bar/baz
 $CYLC_SUITE_HOST       # orca.niwa.co.nz (e.g.)
 $CYLC_SUITE_PORT       # 7766 (e.g.)
-$CYLC_SUITE_OWNER      # hilary (e.g.)
+$CYLC_SUITE_OWNER      # oliverh (e.g.)
 \end{lstlisting}
 Some of these variables are also used by cylc task messaging commands in
 order to target the right task proxy object in the right suite.
@@ -5862,10 +5746,10 @@ and generate a job script to see the resulting directives:
 \begin{lstlisting}
 shell$ cylc register test $HOME/test
 shell$ cylc jobscript test a.1 | grep QSUB
-#QSUB -e /home/hilary/cylc-run/my.suite/log/job/1/a/01/job.err
+#QSUB -e /home/oliverh/cylc-run/my.suite/log/job/1/a/01/job.err
 #QSUB -l nodes=1
 #QSUB -l walltime=60
-#QSUB -o /home/hilary/cylc-run/my.suite/log/job/1/a/01/job.out
+#QSUB -o /home/oliverh/cylc-run/my.suite/log/job/1/a/01/job.out
 #QSUB -N a.1
 #QSUB -q long
 #QSUB -V
