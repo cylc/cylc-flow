@@ -23,9 +23,10 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-run" cylc run --hold "${SUITE_NAME}"
-SUITE_PID=$(cylc get-suite-contact foo | \
+sleep 5
+SUITE_PID=$(cylc get-suite-contact ${SUITE_NAME} | \
   awk '/CYLC_SUITE_PROCESS/ {print $1}' | sed -e 's/^.*=//')
-SUITE_PORT=$(cylc get-suite-contact foo | \
+SUITE_PORT=$(cylc get-suite-contact ${SUITE_NAME} | \
   awk '/CYLC_SUITE_PORT/ {print $1}' | sed -e 's/^.*=//')
 
 # Suspend the suite, simulate Ctrl-Z
