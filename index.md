@@ -5,7 +5,7 @@ title: a workflow engine
 
 **Cylc (*"silk"*) is a workflow engine for cycling systems** - it orchestrates
 complex distributed **suites** of interdependent **cycling tasks**.
-There are several reasons why jobs might need to be cycled:
+There are several reasons why tasks might need to be cycled:
 
  * In real time environmental forecasting systems, a new forecast may be
  initiated at regular intervals as new real time data comes in.
