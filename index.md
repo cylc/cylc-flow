@@ -3,11 +3,16 @@ layout: frontpage
 title: a workflow engine
 ---
 
-**Cylc (*"silk"*) is a workflow engine** - it orchestrates complex distributed
-**suites** of interdependent **tasks**.  As well as ordinary workflows it
-handles *continuous (ongoing) workflows of cycling tasks* (for weather and
-climate forecasting, for example) with no hard boundaries between cycles:
-the workflow is continually generated on the fly as the suite runs.
+**Cylc (*"silk"*) is a workflow engine for cycling systems** - it orchestrates
+complex distributed **suites** of interdependent **cycling tasks**.
+There are several reasons why jobs might need to be cycled:
+
+ * In real time environmental forecasting systems, a new forecast may be
+ initiated at regular intervals as new real time data comes in.
+
+ * Batch scheduler queue limits may require that single long jobs be split into
+ many smaller runs with incremental processing of associated inputs and
+ outputs.
 
 Cylc was originally developed for operational environmental forecasting at
 [NIWA](http://www.niwa.co.nz) by [Dr Hilary
