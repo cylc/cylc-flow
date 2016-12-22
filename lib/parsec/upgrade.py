@@ -121,6 +121,15 @@ class upgrader(object):
         else:
             i = -1
             nkeys = upg['new']
+            if nkeys is None:  # No new keys defined.
+                for m in many:
+                    exp_upgs.append({
+                        'old': pre + [m] + post,
+                        'new': None,
+                        'cvt': upg['cvt'],
+                        'silent': upg['silent'],
+                    })
+                return exp_upgs
             npre = []
             npost = []
             for k in nkeys:
