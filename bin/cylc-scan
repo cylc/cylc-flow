@@ -130,7 +130,7 @@ def main():
         action="store_true", default=False, dest="print_ports")
 
     parser.add_option(
-        "--comms-timeout", "--pyro-timeout", metavar="SEC",
+        "--comms-timeout", metavar="SEC",
         help="Set a timeout for network connections "
              "to each running suite. The default is 5 seconds.",
         action="store", default=None, dest="comms_timeout")

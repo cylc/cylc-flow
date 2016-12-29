@@ -33,6 +33,15 @@ COMMS_LOG_OBJ_NAME = 'log'
 COMMS_STATE_OBJ_NAME = 'state'
 COMMS_TASK_MESSAGE_OBJ_NAME = 'message'
 
+KEY_DESCRIPTION = "description"
+KEY_GROUP = "group"
+KEY_NAME = "name"
+KEY_OWNER = "owner"
+KEY_STATES = "states"
+KEY_TASKS_BY_STATE = "tasks-by-state"
+KEY_TITLE = "title"
+KEY_UPDATE_TIME = "update-time"
+
 # Ordered privilege levels for authenticated users.
 PRIVILEGE_LEVELS = [
     "identity",
