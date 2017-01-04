@@ -635,12 +635,18 @@ conditions; see `cylc conditions`.
 
             elif status in (TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING):
                 itask.state.set_prerequisites_all_satisfied()
-                # update the task proxy with submit ID etc.
                 itask.try_number = try_num
+                # update the task proxy with user@host
+                if user_at_host is None:
+                    user_at_host = "localhost"
+                try:
+                    itask.task_owner, itask.task_host = user_at_host.split(
+                        "@", 1)
+                except ValueError:
+                    itask.task_owner = None
+                    itask.task_host = user_at_host
                 itask.user_at_host = user_at_host
-                self.old_user_at_host_set.add(itask.user_at_host)
-                if itask.user_at_host is None:
-                    itask.user_at_host = "localhost"
+                self.old_user_at_host_set.add(user_at_host)
                 # update timers in case regular polling is configured for itask
                 if '@' in itask.user_at_host:
                     host = itask.user_at_host.split('@', 1)[1]
