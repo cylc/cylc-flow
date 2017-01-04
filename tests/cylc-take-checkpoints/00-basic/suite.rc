@@ -1,0 +1,32 @@
+#!jinja2
+[cylc]
+    UTC mode=True
+    cycle point format = %Y
+    [[events]]
+        abort on stalled = True
+        abort on inactivity = True
+        inactivity = P1M
+[scheduling]
+    initial cycle point = 2016
+    final cycle point = 2020
+    [[dependencies]]
+        [[[P1Y]]]
+            graph=t1[-P1Y] => t1
+[runtime]
+    [[t1]]
+        script = """
+if [[ "${CYLC_TASK_CYCLE_POINT}" == '2017' ]]; then
+    wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
+    sleep 2  # state of current task should be recorded after 2 seconds
+    cylc checkpoint "${CYLC_SUITE_NAME}" 'snappy'
+    LOG="${CYLC_SUITE_LOG_DIR}/log"
+    while ! grep -qF "INFO - Command succeeded: take_checkpoints([u'snappy'])" \
+        "${LOG}"
+    do
+        sleep 1  # make sure take_checkpoints command completes
+    done
+    sleep 2  # checkpoint should be recorded after 2 seconds
+fi
+"""
+        [[[job]]]
+            execution time limit = PT50S

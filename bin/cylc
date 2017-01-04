@@ -235,6 +235,7 @@ control_commands['set-runahead'] = ['set-runahead']
 control_commands['set-verbosity'] = ['set-verbosity']
 control_commands['broadcast'] = ['broadcast', 'bcast']
 control_commands['ext-trigger'] = ['ext-trigger', 'external-trigger']
+control_commands['checkpoint'] = ['checkpoint']
 
 utility_commands = OrderedDict()
 utility_commands['cycle-point'] = [
@@ -423,6 +424,7 @@ comsum['reload'] = 'Reload the suite definition at run time'
 comsum['set-runahead'] = 'Change the runahead limit in a running suite.'
 comsum['set-verbosity'] = 'Change a running suite\'s logging verbosity'
 comsum['ext-trigger'] = 'Report an external trigger event to a suite'
+comsum['checkpoint'] = 'Tell suite to checkpoint its current state'
 # discovery
 comsum['ping'] = 'Check that a suite is running'
 comsum['scan'] = 'Scan a host for running suites'

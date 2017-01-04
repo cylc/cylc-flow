@@ -6118,6 +6118,21 @@ Once you have identified the checkpoint to restart from, invoke the
 $ cylc restart --checkpoint=CHECKPOINT-ID SUITE
 \end{lstlisting}
 
+\subsubsection{Manual Checkpoints}
+
+You can use the \lstinline=cylc checkpoint= command to tell a running suite to
+record a checkpoint at any time:
+
+\lstset{language=transcript}
+\begin{lstlisting}
+$ cylc checkpoint SUITE CHECKPOINT-NAME
+\end{lstlisting}
+
+The 2nd argument is a name you give to the checkpoint so you can easily
+identify it when you need to use it.
+
+(See also \lstinline=cylc checkpoint --help=.)
+
 \subsubsection{Behaviour of Tasks on Restart}
 
 All tasks are reloaded in exactly their former states as recorded in
