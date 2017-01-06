@@ -226,9 +226,6 @@ class Scheduler(object):
         self.suite_log = None
         self.log = LOG
 
-        # FIXME: can this be a local variable?
-        self.old_user_at_host_set = set()
-
         self.ref_test_allowed_failures = []
 
     def start(self):
@@ -438,15 +435,6 @@ conditions; see `cylc conditions`.
                     pass
                 copytree(suite_py, suite_run_py)
 
-        # 2) restart only: copy to other accounts with still-running tasks
-        for user_at_host in self.old_user_at_host_set:
-            try:
-                RemoteJobHostManager.get_inst().init_suite_run_dir(
-                    self.suite, user_at_host)
-            except RemoteJobHostInitError as exc:
-                self.log.error(str(exc))
-        self.old_user_at_host_set.clear()
-
         self.already_timed_out = False
         self.set_suite_timer()
 
@@ -495,6 +483,17 @@ conditions; see `cylc conditions`.
         self.pri_dao.select_task_pool_for_restart(
             self._load_task_pool, self.options.checkpoint)
         self.pri_dao.select_task_action_timers(self._load_task_action_timers)
+        # Re-initialise run directory for user@host for each submitted and
+        # running tasks.
+        # Note: tasks should all be in the runahead pool at this point.
+        for itask in self.pool.get_rh_tasks():
+            if itask.state.status in [
+                    TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING]:
+                try:
+                    RemoteJobHostManager.get_inst().init_suite_run_dir(
+                        self.suite, itask.task_host, itask.task_owner)
+                except RemoteJobHostInitError as exc:
+                    self.log.error(str(exc))
         self.pool.poll_task_jobs()
 
     def _load_broadcast_states(self, row_idx, row):
@@ -621,7 +620,6 @@ conditions; see `cylc conditions`.
                 except ValueError:
                     itask.task_owner = None
                     itask.task_host = user_at_host
-                self.old_user_at_host_set.add(user_at_host)
 
             elif status in (TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_FAILED):
                 itask.state.set_prerequisites_all_satisfied()
@@ -634,7 +632,7 @@ conditions; see `cylc conditions`.
             elif status in (TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING):
                 itask.state.set_prerequisites_all_satisfied()
 
-            elif itask.state.status == TASK_STATUS_SUCCEEDED:
+            elif status == TASK_STATUS_SUCCEEDED:
                 itask.state.set_prerequisites_all_satisfied()
                 # TODO - just poll for outputs in the job status file.
                 itask.state.outputs.set_all_completed()
