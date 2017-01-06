@@ -42,7 +42,6 @@ import traceback
 from cylc.network import COMMS_TASK_MESSAGE_OBJ_NAME
 from cylc.network.task_msg_server import TaskMessageServer
 from cylc.batch_sys_manager import BATCH_SYS_MANAGER
-from cylc.broker import broker
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.config import SuiteConfig
 from cylc.cycling.loader import (
@@ -125,8 +124,6 @@ class TaskPool(object):
         self.is_held = False
         self.hold_point = None
         self.held_future_tasks = []
-
-        self.broker = broker()
 
         self.orphans = []
         self.task_name_list = config.get_task_name_list()
@@ -411,38 +408,26 @@ class TaskPool(object):
             self.set_max_future_offset()
         del itask
 
-    def update_pool_list(self):
-        """Regenerate the task list if the pool has changed."""
+    def get_all_tasks(self):
+        """Return a list of all task proxies."""
+        return self.get_rh_tasks() + self.get_tasks()
+
+    def get_tasks(self):
+        """Return a list of task proxies in the main task pool."""
         if self.pool_changed:
             self.pool_changed = False
             self.pool_list = []
-            for queue in self.queues:
-                for itask in self.queues[queue].values():
-                    self.pool_list.append(itask)
+            for itask_id_maps in self.queues.values():
+                self.pool_list.extend(itask_id_maps.values())
+        return self.pool_list
 
-    def update_rhpool_list(self):
-        """Regenerate the runahead task list if the runhead pool has
-        changed."""
+    def get_rh_tasks(self):
+        """Return a list of task proxies in the runahead pool."""
         if self.rhpool_changed:
             self.rhpool_changed = False
             self.rhpool_list = []
             for itask_id_maps in self.runahead_pool.values():
                 self.rhpool_list.extend(itask_id_maps.values())
-
-    def get_all_tasks(self):
-        """Return a list of all task proxies."""
-        self.update_pool_list()
-        self.update_rhpool_list()
-        return self.rhpool_list + self.pool_list
-
-    def get_tasks(self):
-        """Return a list of task proxies in the main task pool."""
-        self.update_pool_list()
-        return self.pool_list
-
-    def get_rh_tasks(self):
-        """Return a list of task proxies in the runahead pool."""
-        self.update_rhpool_list()
         return self.rhpool_list
 
     def get_tasks_by_point(self, incl_runahead):
@@ -1021,12 +1006,14 @@ class TaskPool(object):
         outputs. Brokered negotiation is O(n) in number of tasks.
 
         """
-        self.broker.reset()
-        self.broker.register(self.get_tasks())
+        all_outputs = {}   # all_outputs[message] = taskid
+        for itask in self.get_tasks():
+            all_outputs.update(itask.state.outputs.completed)
+        all_output_msgs = set(all_outputs)
         for itask in self.get_tasks():
             # Try to satisfy itask if not already satisfied.
             if itask.state.prerequisites_are_not_all_satisfied():
-                self.broker.negotiate(itask)
+                itask.state.satisfy_me(all_output_msgs, all_outputs)
 
     def process_queued_task_messages(self):
         """Handle incoming task messages for each task proxy."""
