@@ -3,10 +3,8 @@
 title=Task Event Mail
 
 [cylc]
-{% if GLOBALCFG is not defined %}
     [[events]]
         mail footer = see: http://localhost/stuff/%(owner)s/%(suite)s/
-{% endif %}{# not GLOBALCFG is not defined #}
     [[reference test]]
         live mode suite timeout=PT1M
 
@@ -18,9 +16,7 @@ title=Task Event Mail
     [[t1]]
         script=test "${CYLC_TASK_TRY_NUMBER}" -eq 2
         [[[job]]]
-            execution retry delays = PT5S
-{% if GLOBALCFG is not defined %}
+            execution retry delays = PT1S
         [[[events]]]
-            mail events = failed, retry, succeeded
+            mail events = failed, retry
             mail smtp = {{MAIL_SMTP}}
-{% endif %}{# not GLOBALCFG is not defined #}

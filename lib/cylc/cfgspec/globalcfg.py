@@ -62,6 +62,8 @@ SPEC = {
         'UTC mode': vdr(vtype='boolean', default=False),
         'health check interval': vdr(
             vtype='interval', default=DurationFloat(600)),
+        'task event mail interval': vdr(
+            vtype='interval', default=DurationFloat(300)),
         'events': {
             'handlers': vdr(vtype='string_list', default=[]),
             'handler events': vdr(vtype='string_list', default=[]),

@@ -227,6 +227,7 @@ class Scheduler(object):
         self.log = LOG
 
         self.ref_test_allowed_failures = []
+        self.next_task_event_mail_time = None
 
     def start(self):
         """Start the server."""
@@ -1738,6 +1739,7 @@ conditions; see `cylc conditions`.
         """Process task event handlers."""
         ctx_groups = {}
         env = None
+        now = time()
         for itask in self.pool.get_tasks():
             for key, try_timer in itask.event_handler_try_timers.items():
                 # This should not happen, ignore for now.
@@ -1764,10 +1766,18 @@ conditions; see `cylc conditions`.
                             try_timer.delay_as_seconds(),
                             try_timer.timeout_as_str()))
                 # Ready to run?
-                if not try_timer.is_delay_done():
+                if not try_timer.is_delay_done() or (
+                    # Avoid flooding user's mail box with mail notification.
+                    # Group together as many notifications as possible within a
+                    # given interval.
+                    try_timer.ctx.ctx_type == TaskProxy.EVENT_MAIL and
+                    not self.stop_mode and
+                    self.next_task_event_mail_time is not None and
+                    self.next_task_event_mail_time > now
+                ):
                     continue
-                try_timer.set_waiting()
 
+                try_timer.set_waiting()
                 if try_timer.ctx.ctx_type == TaskProxy.CUSTOM_EVENT_HANDLER:
                     # Run custom event handlers on their own
                     if env is None:
@@ -1788,18 +1798,32 @@ conditions; see `cylc conditions`.
                     ctx_groups[try_timer.ctx].append(
                         (key1, str(itask.point), itask.tdef.name, submit_num))
 
+        next_task_event_mail_time = (
+            now + self._get_cylc_conf("task event mail interval"))
         for ctx, id_keys in ctx_groups.items():
             if ctx.ctx_type == TaskProxy.EVENT_MAIL:
+                # Set next_task_event_mail_time if any mail sent
+                self.next_task_event_mail_time = next_task_event_mail_time
                 self._process_task_event_email(ctx, id_keys)
             elif ctx.ctx_type == TaskProxy.JOB_LOGS_RETRIEVE:
                 self._process_task_job_logs_retrieval(ctx, id_keys)
 
     def _process_task_event_email(self, ctx, id_keys):
         """Process event notification, by email."""
-        subject = "[%(n_tasks)d task(s) %(event)s] %(suite)s" % {
-            "suite": self.suite,
-            "n_tasks": len(id_keys),
-            "event": ctx.event}
+        if len(id_keys) == 1:
+            # 1 event from 1 task
+            (_, event), point, name, submit_num = id_keys[0]
+            subject = "[%s/%s/%02d %s] %s" % (
+                point, name, submit_num, event, self.suite)
+        else:
+            event_set = set([id_key[0][1] for id_key in id_keys])
+            if len(event_set) == 1:
+                # 1 event from n tasks
+                subject = "[%d tasks %s] %s" % (
+                    len(id_keys), event_set.pop(), self.suite)
+            else:
+                # n events from n tasks
+                subject = "[%d task events] %s" % (len(id_keys), self.suite)
         cmd = ["mail", "-s", subject]
         # From: and To:
         cmd.append("-r")
@@ -1807,14 +1831,12 @@ conditions; see `cylc conditions`.
         cmd.append(ctx.mail_to)
         # STDIN for mail, tasks
         stdin_str = ""
-        for i, id_key in enumerate(id_keys):
-            point, name, submit_num = id_key[1:]
-            stdin_str += "task %d: %s/%s/%02d\n" % (
-                i + 1, point, name, submit_num)
+        for id_key in sorted(id_keys):
+            (_, event), point, name, submit_num = id_key
+            stdin_str += "%s: %s/%s/%02d\n" % (event, point, name, submit_num)
         # STDIN for mail, event info + suite detail
         stdin_str += "\n"
         for name, value in [
-                ("task event", ctx.event),
                 ('suite', self.suite),
                 ("host", self.host),
                 ("port", self.port),

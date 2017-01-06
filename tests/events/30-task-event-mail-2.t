@@ -1,7 +1,7 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2017 NIWA
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test event mail, 2 different task events
+# Test event mail.
 . "$(dirname "$0")/test_header"
 if ! mail -V 2>'/dev/null'; then
     skip_all '"mail" command not available'
@@ -39,18 +39,31 @@ fi
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate ${OPT_SET} "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" \
+suite_run_fail "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug ${OPT_SET} "${SUITE_NAME}"
 
 contains_ok "${TEST_SMTPD_LOG}" <<__LOG__
 retry: 1/t1/01
-succeeded: 1/t1/02
+retry: 1/t2/01
+retry: 1/t3/01
+retry: 1/t4/01
+retry: 1/t5/01
+retry: 1/t1/02
+retry: 1/t2/02
+retry: 1/t3/02
+retry: 1/t4/02
+retry: 1/t5/02
+failed: 1/t1/03
+failed: 1/t2/03
+failed: 1/t3/03
+failed: 1/t4/03
+failed: 1/t5/03
 see: http://localhost/stuff/${USER}/${SUITE_NAME}/
 __LOG__
 run_ok "${TEST_NAME_BASE}-grep-log" \
-    grep -q "Subject: \\[1/t1/01 retry\\].* ${SUITE_NAME}" "${TEST_SMTPD_LOG}"
+    grep -q "Subject: \\[5 tasks retry\\].* ${SUITE_NAME}" "${TEST_SMTPD_LOG}"
 run_ok "${TEST_NAME_BASE}-grep-log" \
-    grep -q "Subject: \\[1/t1/02 succeeded\\].* ${SUITE_NAME}" "${TEST_SMTPD_LOG}"
+    grep -q "Subject: \\[5 tasks failed\\].* ${SUITE_NAME}" "${TEST_SMTPD_LOG}"
 
 purge_suite "${SUITE_NAME}"
 mock_smtpd_kill
