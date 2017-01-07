@@ -41,10 +41,11 @@ cmp_ok val.out <<__END__
  * (6.4.0) [runtime][foo, cat, dog][dummy mode][command scripting] -> [runtime][foo, cat, dog][dummy mode][script] - value unchanged
  * (6.5.0) [scheduling][special tasks][clock-triggered] -> [scheduling][special tasks][clock-trigger] - value unchanged
  * (6.5.0) [scheduling][special tasks][external-triggered] -> [scheduling][special tasks][external-trigger] - value unchanged
- * (6.11.0) [runtime][foo, cat, dog][event hooks][retry handler] -> [runtime][foo, cat, dog][events][retry handler] - value unchanged
- * (6.11.0) [runtime][foo, cat, dog][job submission][method] -> [runtime][foo, cat, dog][job][batch system] - value unchanged
- * (6.11.0) [runtime][foo, cat, dog][job submission][command template] -> [runtime][foo, cat, dog][job][batch submit command template] - value unchanged
- * (6.11.0) [runtime][foo, cat, dog][job submission][retry delays] -> [runtime][foo, cat, dog][job][submission retry delays] - value unchanged
+ * (6.11.0) [runtime][foo, cat, dog][event hooks] -> [runtime][foo, cat, dog][events] - value unchanged
+ * (6.11.0) [runtime][foo, cat, dog][job submission] -> [runtime][foo, cat, dog][job] - value unchanged
+ * (6.11.0) [runtime][foo, cat, dog][job][method] -> [runtime][foo, cat, dog][job][batch system] - value unchanged
+ * (6.11.0) [runtime][foo, cat, dog][job][command template] -> [runtime][foo, cat, dog][job][batch submit command template] - value unchanged
+ * (6.11.0) [runtime][foo, cat, dog][job][retry delays] -> [runtime][foo, cat, dog][job][submission retry delays] - value unchanged
  * (6.11.0) [runtime][foo, cat, dog][retry delays] -> [runtime][foo, cat, dog][job][execution retry delays] - value unchanged
  * (6.11.0) [runtime][foo, cat, dog][submission polling intervals] -> [runtime][foo, cat, dog][job][submission polling intervals] - value unchanged
  * (6.11.0) [runtime][foo, cat, dog][execution polling intervals] -> [runtime][foo, cat, dog][job][execution polling intervals] - value unchanged
