@@ -60,11 +60,11 @@ class RemoteJobHostManager(object):
         return cls._INSTANCE
 
     def __init__(self):
-        self.initialised_hosts = {}  # user_at_host: should_unlink
+        self.initialised = {}  # {(user, host): should_unlink, ...}
         self.single_task_mode = False
         self.suite_srv_files_mgr = SuiteSrvFilesManager()
 
-    def init_suite_run_dir(self, reg, user_at_host):
+    def init_suite_run_dir(self, reg, host, owner):
         """Initialise suite run dir on a user@host.
 
         Create SUITE_RUN_DIR/log/job/ if necessary.
@@ -74,14 +74,14 @@ class RemoteJobHostManager(object):
         Raise RemoteJobHostInitError if initialisation cannot complete.
 
         """
-        if '@' in user_at_host:
-            owner, host = user_at_host.split('@', 1)
-        else:
-            owner, host = None, user_at_host
-        if ((owner, host) in [(None, 'localhost'), (USER, 'localhost')] or
-                host in self.initialised_hosts or
-                self.single_task_mode):
+        if host is None:
+            host = 'localhost'
+        if ((host, owner) in [('localhost', None), ('localhost', USER)] or
+                (host, owner) in self.initialised or self.single_task_mode):
             return
+        user_at_host = host
+        if owner:
+            user_at_host = owner + '@' + host
 
         r_suite_run_dir = GLOBAL_CFG.get_derived_host_item(
             reg, 'suite run directory', host, owner)
@@ -107,7 +107,7 @@ class RemoteJobHostManager(object):
                 stdout=PIPE, stderr=PIPE)
             if proc.wait() == 0:
                 # Initialised, but no need to tidy up
-                self.initialised_hosts[user_at_host] = False
+                self.initialised[(host, owner)] = False
                 return
         finally:
             try:
@@ -153,7 +153,7 @@ class RemoteJobHostManager(object):
                     RemoteJobHostInitError.MSG_INIT,
                     user_at_host, ' '.join([quote(item) for item in cmd]),
                     proc.returncode, out, err)
-        self.initialised_hosts[user_at_host] = should_unlink
+        self.initialised[(host, owner)] = should_unlink
         LOG.info('Initialised %s:%s' % (user_at_host, r_suite_run_dir))
 
     def unlink_suite_contact_files(self, reg):
@@ -164,13 +164,12 @@ class RemoteJobHostManager(object):
         """
         # Issue all SSH commands in parallel
         procs = {}
-        for user_at_host, should_unlink in self.initialised_hosts.items():
+        for (host, owner), should_unlink in self.initialised.items():
             if not should_unlink:
                 continue
-            if '@' in user_at_host:
-                owner, host = user_at_host.split('@', 1)
-            else:
-                owner, host = None, user_at_host
+            user_at_host = host
+            if owner:
+                user_at_host = owner + '@' + host
             ssh_tmpl = GLOBAL_CFG.get_host_item(
                 'remote shell template', host, owner)
             r_suite_contact_file = os.path.join(

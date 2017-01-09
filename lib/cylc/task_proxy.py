@@ -1129,7 +1129,7 @@ class TaskProxy(object):
                     'execution time limit polling intervals', [60, 120, 420])))
 
         RemoteJobHostManager.get_inst().init_suite_run_dir(
-            self.suite_name, user_at_host)
+            self.suite_name, self.task_host, self.task_owner)
         self.db_updates_map[self.TABLE_TASK_JOBS].append({
             "user_at_host": user_at_host,
             "batch_sys_name": self.summary['batch_sys_name'],
