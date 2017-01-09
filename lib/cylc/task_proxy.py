@@ -94,10 +94,10 @@ class TaskActionTimer(object):
 
     def __init__(self, ctx=None, delays=None, num=0, delay=None, timeout=None):
         self.ctx = ctx
-        if delays:
-            self.delays = list(delays)
-        else:
+        if delays is None:
             self.delays = [0]
+        else:
+            self.delays = list(delays)
         self.num = num
         self.delay = delay
         self.timeout = timeout
@@ -189,7 +189,7 @@ class TaskProxy(object):
                  "retries_configured", "try_timers",
                  "event_handler_try_timers", "db_inserts_map",
                  "db_updates_map", "suite_name", "task_host", "task_owner",
-                 "user_at_host", "job_vacated", "poll_timers",
+                 "job_vacated", "poll_timers",
                  "event_hooks", "sim_mode_run_length",
                  "delayed_start_str", "delayed_start", "expire_time_str",
                  "expire_time", "state"]
@@ -304,8 +304,8 @@ class TaskProxy(object):
         self.retries_configured = False
 
         self.try_timers = {
-            self.KEY_EXECUTE: TaskActionTimer(),
-            self.KEY_SUBMIT: TaskActionTimer()}
+            self.KEY_EXECUTE: TaskActionTimer(delays=[]),
+            self.KEY_SUBMIT: TaskActionTimer(delays=[])}
         self.event_handler_try_timers = {}
         self.poll_timers = {}
 
@@ -328,7 +328,6 @@ class TaskProxy(object):
         # dynamic host selection could be used).
         self.task_host = 'localhost'
         self.task_owner = None
-        self.user_at_host = self.task_host
 
         self.job_vacated = False
 
@@ -722,22 +721,29 @@ class TaskProxy(object):
         """Set up remote job logs retrieval."""
         # TODO - use string constants for event names.
         key2 = (self.JOB_LOGS_RETRIEVE, self.submit_num)
+        if self.task_owner:
+            user_at_host = self.task_owner + "@" + self.task_host
+        else:
+            user_at_host = self.task_host
         if (event not in ['failed', 'retry', 'succeeded'] or
-                self.user_at_host in [USER + '@localhost', 'localhost'] or
+                user_at_host in [USER + '@localhost', 'localhost'] or
                 not self._get_host_conf("retrieve job logs") or
                 key2 in self.event_handler_try_timers):
             return
+        retry_delays = self._get_host_conf("retrieve job logs retry delays")
+        if not retry_delays:
+            retry_delays = [0]
         self.event_handler_try_timers[key2] = TaskActionTimer(
             TaskJobLogsRetrieveContext(
                 # key
                 self.JOB_LOGS_RETRIEVE,
                 # ctx_type
                 self.JOB_LOGS_RETRIEVE,
-                self.user_at_host,
+                user_at_host,
                 # max_size
                 self._get_host_conf("retrieve job logs max size"),
             ),
-            self._get_host_conf("retrieve job logs retry delays", []))
+            retry_delays)
 
     def setup_event_mail(self, event, _):
         """Event notification, by email."""
@@ -746,6 +752,9 @@ class TaskProxy(object):
                 event not in self._get_events_conf("mail events", [])):
             return
 
+        retry_delays = self._get_events_conf("mail retry delays")
+        if not retry_delays:
+            retry_delays = [0]
         self.event_handler_try_timers[(key1, self.submit_num)] = (
             TaskActionTimer(
                 TaskEventMailContext(
@@ -759,7 +768,7 @@ class TaskProxy(object):
                     self._get_events_conf("mail to", USER),  # mail_to
                     self._get_events_conf("mail smtp"),  # mail_smtp
                 ),
-                self._get_events_conf("mail retry delays", [])))
+                retry_delays))
 
     def setup_custom_event_handlers(self, event, message, only_list=None):
         """Call custom event handlers."""
@@ -771,7 +780,9 @@ class TaskProxy(object):
             handlers = self._get_events_conf('handlers', [])
         retry_delays = self._get_events_conf(
             'handler retry delays',
-            self._get_host_conf("task event handler retry delays", []))
+            self._get_host_conf("task event handler retry delays"))
+        if not retry_delays:
+            retry_delays = [0]
         for i, handler in enumerate(handlers):
             key1 = ("%s-%02d" % (self.CUSTOM_EVENT_HANDLER, i), event)
             if (key1, self.submit_num) in self.event_handler_try_timers or (
@@ -1100,11 +1111,11 @@ class TaskProxy(object):
         self.task_owner = rtconfig['remote']['owner']
 
         if self.task_owner:
-            self.user_at_host = self.task_owner + "@" + self.task_host
+            user_at_host = self.task_owner + "@" + self.task_host
         else:
-            self.user_at_host = self.task_host
-        self.summary['host'] = self.user_at_host
-        self.summary['job_hosts'][self.submit_num] = self.user_at_host
+            user_at_host = self.task_host
+        self.summary['host'] = user_at_host
+        self.summary['job_hosts'][self.submit_num] = user_at_host
         try:
             batch_sys_conf = self._get_host_conf('batch systems')[
                 rtconfig['job']['batch system']]
@@ -1118,9 +1129,9 @@ class TaskProxy(object):
                     'execution time limit polling intervals', [60, 120, 420])))
 
         RemoteJobHostManager.get_inst().init_suite_run_dir(
-            self.suite_name, self.user_at_host)
+            self.suite_name, user_at_host)
         self.db_updates_map[self.TABLE_TASK_JOBS].append({
-            "user_at_host": self.user_at_host,
+            "user_at_host": user_at_host,
             "batch_sys_name": self.summary['batch_sys_name'],
         })
         self.is_manual_submit = False
