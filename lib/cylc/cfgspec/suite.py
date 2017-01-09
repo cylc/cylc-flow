@@ -555,31 +555,31 @@ def upg(cfg, descr):
         ['scheduling', 'special tasks', 'external-triggered'],
         ['scheduling', 'special tasks', 'external-trigger'],
     )
-    for key in SPEC['cylc']['events']:
-        u.deprecate(
-            '6.11.0', ['cylc', 'event hooks', key], ['cylc', 'events', key])
-    u.deprecate('6.11.0', ['cylc', 'event hooks'])
-    for key in SPEC['runtime']['__MANY__']['events']:
-        u.deprecate(
-            '6.11.0',
-            ['runtime', '__MANY__', 'event hooks', key],
-            ['runtime', '__MANY__', 'events', key])
-    u.deprecate('6.11.0', ['runtime', '__MANY__', 'event hooks'])
+    u.deprecate(
+        '6.11.0', ['cylc', 'event hooks'], ['cylc', 'events'])
     u.deprecate(
         '6.11.0',
-        ['runtime', '__MANY__', 'job submission', 'method'],
+        ['runtime', '__MANY__', 'event hooks'],
+        ['runtime', '__MANY__', 'events'])
+    u.deprecate(
+        '6.11.0',
+        ['runtime', '__MANY__', 'job submission'],
+        ['runtime', '__MANY__', 'job'])
+    u.deprecate(
+        '6.11.0',
+        ['runtime', '__MANY__', 'job', 'method'],
         ['runtime', '__MANY__', 'job', 'batch system'])
     u.deprecate(
         '6.11.0',
-        ['runtime', '__MANY__', 'job submission', 'command template'],
+        ['runtime', '__MANY__', 'job', 'command template'],
         ['runtime', '__MANY__', 'job', 'batch submit command template'])
     u.deprecate(
         '6.11.0',
-        ['runtime', '__MANY__', 'job submission', 'shell'],
+        ['runtime', '__MANY__', 'job', 'shell'],
         ['runtime', '__MANY__', 'job', 'shell'])
     u.deprecate(
         '6.11.0',
-        ['runtime', '__MANY__', 'job submission', 'retry delays'],
+        ['runtime', '__MANY__', 'job', 'retry delays'],
         ['runtime', '__MANY__', 'job', 'submission retry delays'])
     u.deprecate('6.11.0', ['runtime', '__MANY__', 'job submission'])
     u.deprecate(
@@ -595,13 +595,6 @@ def upg(cfg, descr):
         ['runtime', '__MANY__', 'execution polling intervals'],
         ['runtime', '__MANY__', 'job', 'execution polling intervals'])
     u.upgrade()
-    if 'cylc' in cfg and 'event hooks' in cfg['cylc']:
-        del cfg['cylc']['event hooks']
-    if 'runtime' in cfg:
-        for section in cfg['runtime'].values():
-            for key in ['event hooks', 'job submission']:
-                if key in section:
-                    del section[key]
 
     # Force pre cylc-6 "cycling = Yearly" type suites to the explicit
     # dependency heading form for which backward compatibility is provided:
