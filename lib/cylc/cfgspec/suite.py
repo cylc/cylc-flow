@@ -484,10 +484,6 @@ def upg(cfg, descr):
         ['runtime', '__MANY__', 'job', 'batch submit command template'])
     u.deprecate(
         '6.11.0',
-        ['runtime', '__MANY__', 'job', 'shell'],
-        ['runtime', '__MANY__', 'job', 'shell'])
-    u.deprecate(
-        '6.11.0',
         ['runtime', '__MANY__', 'job', 'retry delays'],
         ['runtime', '__MANY__', 'job', 'submission retry delays'])
     u.deprecate(
