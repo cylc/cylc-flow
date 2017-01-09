@@ -1561,17 +1561,22 @@ class TaskPool(object):
             if (itask.task_host, itask.task_owner) not in auth_itasks:
                 auth_itasks[(itask.task_host, itask.task_owner)] = []
             auth_itasks[(itask.task_host, itask.task_owner)].append(itask)
-        for auth, itasks in sorted(auth_itasks.items()):
+        for (host, owner), itasks in sorted(auth_itasks.items()):
             cmd = ["cylc", cmd_key]
             if cylc.flags.debug:
                 cmd.append("--debug")
-            host, owner = auth
-            for key, value, test_func in [
-                    ('host', host, is_remote_host),
-                    ('user', owner, is_remote_user)]:
-                if test_func(value):
-                    cmd.append('--%s=%s' % (key, value))
-                    kwargs[key] = value
+            try:
+                if is_remote_host(host):
+                    cmd.append("--host=%s" % (host))
+                    kwargs["host"] = host
+            except IOError:
+                # Bad host, run the command any way, command will fail and
+                # callback will deal with it
+                cmd.append("--host=%s" % (host))
+                kwargs["host"] = host
+            if is_remote_user(owner):
+                cmd.append("--user=%s" % (owner))
+                kwargs["user"] = owner
             cmd.append("--")
             cmd.append(GLOBAL_CFG.get_derived_host_item(
                 self.suite_name, 'suite job log directory', host, owner))
