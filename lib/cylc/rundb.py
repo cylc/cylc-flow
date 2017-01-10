@@ -623,7 +623,7 @@ class CylcSuiteDAO(object):
         select from task_pool table if id_key == CHECKPOINT_LATEST_ID.
         Otherwise select from task_pool_checkpoints where id == id_key.
         """
-        form_stmt = r"SELECT cycle,name,spawned,status FROM %s"
+        form_stmt = r"SELECT cycle,name,spawned,status,hold_swap FROM %s"
         if id_key is None or id_key == self.CHECKPOINT_LATEST_ID:
             stmt = form_stmt % self.TABLE_TASK_POOL
             stmt_args = []

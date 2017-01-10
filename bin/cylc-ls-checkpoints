@@ -39,7 +39,7 @@ DELIM = "#" * 71
 TITLE_CHECKPOINT_ID = "\n# CHECKPOINT ID (ID|TIME|EVENT)\n"
 TITLE_SUITE_PARAMS = "\n# SUITE PARAMS (KEY|VALUE)\n"
 TITLE_BROADCAST_STATES = "\n# BROADCAST STATES (POINT|NAMESPACE|KEY|VALUE)\n"
-TITLE_TASK_POOL = "\n# TASK POOL (CYCLE|NAME|SPAWNED|STATUS)\n"
+TITLE_TASK_POOL = "\n# TASK POOL (CYCLE|NAME|SPAWNED|STATUS|HOLD_SWAP)\n"
 
 
 def main():
@@ -113,7 +113,12 @@ def _write_row(title, row_idx, row):
         if title == TITLE_CHECKPOINT_ID:
             sys.stdout.write(DELIM)
         sys.stdout.write(title)
-    sys.stdout.write("|".join([str(item) for item in list(row)]) + "\n")
+    items = []
+    for item in row:
+        if item is None:
+            item = ""
+        items.append(str(item))
+    sys.stdout.write("|".join(items) + "\n")
 
 
 if __name__ == "__main__":
