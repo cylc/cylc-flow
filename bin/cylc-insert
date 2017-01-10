@@ -58,6 +58,9 @@ def main():
         "--stop-point", "--remove-point",
         help="Optional hold/stop cycle point for inserted task.",
         metavar="POINT", action="store", dest="stop_point_string")
+    parser.add_option(
+        "--no-check", help="Add task even if the provided cycle point is not "
+        "valid for the given task.", action="store_true", default=False)
 
     options, args = parser.parse_args()
     suite = args.pop(0)
@@ -87,7 +90,7 @@ def main():
         print_uuid=options.print_uuid)
 
     pclient.put_command(
-        'insert_tasks', items=items,
+        'insert_tasks', items=items, no_check=options.no_check,
         stop_point_string=options.stop_point_string
     )
 

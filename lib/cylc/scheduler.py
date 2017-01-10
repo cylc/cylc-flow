@@ -916,9 +916,10 @@ conditions; see `cylc conditions`.
         """Remove tasks."""
         return self.pool.remove_tasks(items, spawn)
 
-    def command_insert_tasks(self, items, stop_point_string=None):
+    def command_insert_tasks(self, items, stop_point_string=None,
+                             no_check=False):
         """Insert tasks."""
-        return self.pool.insert_tasks(items, stop_point_string)
+        return self.pool.insert_tasks(items, stop_point_string, no_check)
 
     def command_nudge(self):
         """Cause the task processing loop to be invoked"""
