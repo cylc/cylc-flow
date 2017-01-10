@@ -16,14 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import copy
-import datetime
 import os
 import re
-import shlex
-import subprocess
+from subprocess import Popen, STDOUT
 import sys
-import threading
 import time
 import traceback
 
@@ -33,22 +29,22 @@ import warnings
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gcylc import gcfg
-from cylc.gui.gscan import (get_scan_menu, launch_gscan,
-                            BaseScanTimeoutUpdater)
+from cylc.cfgspec.gscan import gsfg
+import cylc.flags
 from cylc.gui.app_gcylc import run_get_stdout
 from cylc.gui.dot_maker import DotMaker
+from cylc.gui.scanutil import KEY_PORT, get_scan_menu, update_suites_info
 from cylc.gui.util import get_icon, setup_icons
-from cylc.owner import USER
+from cylc.network import KEY_STATES
 from cylc.network.suite_state_client import extract_group_state
-from cylc.cfgspec.gscan import gsfg
+from cylc.owner import USER
 
 
 class ScanPanelApplet(object):
 
     """Panel Applet (GNOME 2) to summarise running suite statuses."""
 
-    def __init__(self, hosts=None, owner=None, poll_interval=None,
-                 is_compact=False):
+    def __init__(self, hosts=None, poll_interval=None, is_compact=False):
         # We can't use gobject.threads_init() for panel applets.
         warnings.filterwarnings('ignore', 'use the new', Warning)
         setup_icons()
@@ -59,9 +55,6 @@ class ScanPanelApplet(object):
                 hosts = ["localhost"]
         self.is_compact = is_compact
         self.hosts = hosts
-        if owner is None:
-            owner = USER
-        self.owner = owner
         dot_hbox = gtk.HBox()
         dot_hbox.show()
         dot_eb = gtk.EventBox()
@@ -79,7 +72,6 @@ class ScanPanelApplet(object):
         self.top_hbox.show()
         self.updater = ScanPanelAppletUpdater(hosts, dot_hbox, image,
                                               self.is_compact,
-                                              owner=owner,
                                               poll_interval=poll_interval)
         self.top_hbox.connect("destroy", self.stop)
         if gsfg.get(["activate on startup"]):
@@ -104,51 +96,100 @@ class ScanPanelApplet(object):
         tooltip.set_tip(widget, text)
 
 
-class ScanPanelAppletUpdater(BaseScanTimeoutUpdater):
+class ScanPanelAppletUpdater(object):
 
     """Update the scan panel applet - subclass of gscan equivalent."""
 
     IDLE_STOPPED_TIME = 3600  # 1 hour.
     MAX_INDIVIDUAL_SUITES = 5
+    POLL_INTERVAL = 60
 
-    def __init__(self, hosts, dot_hbox, gcylc_image, is_compact, owner=None,
+    def __init__(self, hosts, dot_hbox, gcylc_image, is_compact,
                  poll_interval=None):
-        self.quit = True
+        self.hosts = hosts
         self.dot_hbox = dot_hbox
         self.gcylc_image = gcylc_image
         self.is_compact = is_compact
+        if poll_interval is None:
+            poll_interval = self.POLL_INTERVAL
+        self.poll_interval = poll_interval
+        self._should_force_update = False
+        self._last_running_time = None
+        self.quit = True
+        self.last_update_time = None
         self._set_gcylc_image_tooltip()
         self.gcylc_image.set_sensitive(False)
         self.theme_name = gcfg.get(['use theme'])
         self.theme = gcfg.get(['themes', self.theme_name])
         self.dots = DotMaker(self.theme)
-        self.hosts_suites_info = {}
-        self.stopped_hosts_suites_info = {}
+        self.suite_info_map = {}
         self._set_exception_hook()
-        super(ScanPanelAppletUpdater, self).__init__(
-            hosts, owner=owner, poll_interval=poll_interval)
+        self.owner_pattern = re.compile(r'\A%s\Z' % USER)
 
     def clear_stopped_suites(self):
         """Clear stopped suite information that may have built up."""
-        self.stopped_hosts_suites_info.clear()
+        for key, result in self.suite_info_map.copy().items():
+            if KEY_PORT not in result:
+                del self.suite_info_map[key]
         gobject.idle_add(self.update)
+
+    def has_stopped_suites(self):
+        """Return True if we have any stopped suite information."""
+        for result in self.suite_info_map.copy().values():
+            if KEY_PORT not in result:
+                return True
+        return False
+
+    def run(self):
+        """Extract running suite information at particular intervals."""
+        if self.quit:
+            return False
+        now = time.time()
+        if (self._last_running_time is not None and
+                self.IDLE_STOPPED_TIME is not None and
+                now > self._last_running_time + self.IDLE_STOPPED_TIME):
+            self.stop()
+            return True
+        if (not self._should_force_update and
+                self.last_update_time is not None and
+                now < self.last_update_time + self.poll_interval):
+            return True
+        if self._should_force_update:
+            self._should_force_update = False
+
+        # Get new information.
+        self.suite_info_map = update_suites_info(
+            self.hosts, owner_pattern=self.owner_pattern,
+            prev_results=self.suite_info_map)
+        self.last_update_time = time.time()
+        if self.suite_info_map:
+            self._last_running_time = None
+        else:
+            self._last_running_time = self.last_update_time
+        gobject.idle_add(self.update)
+        return True
+
+    def set_hosts(self, new_hosts):
+        del self.hosts[:]
+        self.hosts.extend(new_hosts)
+        self.update_now()
 
     def start(self):
         self.gcylc_image.set_sensitive(True)
-        super(ScanPanelAppletUpdater, self).start()
+        self.quit = False
+        self._last_running_time = None
+        gobject.timeout_add(1000, self.run)
         self._set_gcylc_image_tooltip()
 
     def stop(self):
         self.gcylc_image.set_sensitive(False)
-        super(ScanPanelAppletUpdater, self).stop()
+        self.quit = True
         self._set_gcylc_image_tooltip()
 
-    def launch_context_menu(self, event, suite_host_tuples=None,
-                            extra_items=None):
-        has_stopped_suites = bool(self.stopped_hosts_suites_info)
+    def launch_context_menu(self, event, suite_keys=None, extra_items=None):
 
-        if suite_host_tuples is None:
-            suite_host_tuples = []
+        if suite_keys is None:
+            suite_keys = []
 
         if extra_items is None:
             extra_items = []
@@ -162,9 +203,9 @@ class ScanPanelAppletUpdater(BaseScanTimeoutUpdater):
 
         extra_items.append(gscan_item)
 
-        menu = get_scan_menu(suite_host_tuples,
+        menu = get_scan_menu(suite_keys,
                              self.theme_name, self._set_theme,
-                             has_stopped_suites,
+                             self.has_stopped_suites(),
                              self.clear_stopped_suites,
                              self.hosts,
                              self.set_hosts,
@@ -172,58 +213,42 @@ class ScanPanelAppletUpdater(BaseScanTimeoutUpdater):
                              self.start,
                              program_name="cylc gpanel",
                              extra_items=extra_items,
-                             owner=self.owner,
                              is_stopped=self.quit)
         menu.popup(None, None, None, event.button, event.time)
         return False
 
     def update(self):
         """Update the Applet."""
-        info = copy.deepcopy(self.hosts_suites_info)
-        stop_info = copy.deepcopy(self.stopped_hosts_suites_info)
-        suite_host_tuples = []
-        for host in self.hosts:
-            suites = (info.get(host, {}).keys() +
-                      stop_info.get(host, {}).keys())
-            for suite in suites:
-                if (suite, host) not in suite_host_tuples:
-                    suite_host_tuples.append((suite, host))
-        suite_host_tuples.sort()
         for child in self.dot_hbox.get_children():
             self.dot_hbox.remove(child)
-        number_mode = (not self.is_compact and
-                       len(suite_host_tuples) > self.MAX_INDIVIDUAL_SUITES)
+        number_mode = (
+            not self.is_compact and
+            len(self.suite_info_map) > self.MAX_INDIVIDUAL_SUITES)
         suite_statuses = {}
         compact_suite_statuses = []
-        for suite, host in suite_host_tuples:
-            if suite in info.get(host, {}):
-                suite_info = info[host][suite]
-                is_stopped = False
-            else:
-                suite_info = stop_info[host][suite]
-                is_stopped = True
-
-            if "states" not in suite_info:
+        for key, suite_info in sorted(self.suite_info_map.items()):
+            if KEY_STATES not in suite_info:
                 continue
-
-            status = extract_group_state(suite_info['states'].keys(),
-                                         is_stopped=is_stopped)
-            status_map = suite_info['states']
+            host, _, suite = key
+            is_stopped = KEY_PORT not in suite_info
+            status = extract_group_state(
+                suite_info[KEY_STATES][0].keys(), is_stopped=is_stopped)
+            status_map = suite_info[KEY_STATES][0]
             if number_mode:
                 suite_statuses.setdefault(is_stopped, {})
                 suite_statuses[is_stopped].setdefault(status, [])
                 suite_statuses[is_stopped][status].append(
                     (suite, host, status_map.items()))
             elif self.is_compact:
-                compact_suite_statuses.append((suite, host, status,
-                                               status_map.items(), is_stopped))
+                compact_suite_statuses.append(
+                    (suite, host, status, status_map.items(), is_stopped))
             else:
-                self._add_image_box([(suite, host, status, status_map.items(),
-                                      is_stopped)])
+                self._add_image_box(
+                    [(suite, host, status, status_map.items(), is_stopped)])
         if number_mode:
-            for is_stopped in sorted(suite_statuses.keys()):
-                statuses = suite_statuses[is_stopped].items()
+            for is_stopped, status_map in sorted(suite_statuses.items()):
                 # Sort by number of suites in this state.
+                statuses = status_map.items()
                 statuses.sort(lambda x, y: cmp(len(y[1]), len(x[1])))
                 for status, suite_host_states_tuples in statuses:
                     label = gtk.Label(str(len(suite_host_states_tuples)) + ":")
@@ -231,8 +256,8 @@ class ScanPanelAppletUpdater(BaseScanTimeoutUpdater):
                     self.dot_hbox.pack_start(label, expand=False, fill=False)
                     suite_info_tuples = []
                     for suite, host, task_states in suite_host_states_tuples:
-                        suite_info_tuples.append((suite, host, status,
-                                                  task_states, is_stopped))
+                        suite_info_tuples.append(
+                            (suite, host, status, task_states, is_stopped))
                     self._add_image_box(suite_info_tuples)
         if self.is_compact:
             if not compact_suite_statuses:
@@ -243,16 +268,20 @@ class ScanPanelAppletUpdater(BaseScanTimeoutUpdater):
             self._add_image_box(compact_suite_statuses)
         return False
 
+    def update_now(self):
+        """Force an update as soon as possible."""
+        self._should_force_update = True
+
     def _add_image_box(self, suite_host_info_tuples):
         image_eb = gtk.EventBox()
         image_eb.show()
         is_all_stopped = False
         running_status_list = []
         status_list = []
-        suite_host_tuples = []
+        suite_keys = []
         for info_tuple in suite_host_info_tuples:
             suite, host, status, task_states, is_stopped = info_tuple
-            suite_host_tuples.append((suite, host))
+            suite_keys.append((host, USER, suite))
             if not is_stopped:
                 running_status_list.append(status)
             status_list.append(status)
@@ -265,7 +294,7 @@ class ScanPanelAppletUpdater(BaseScanTimeoutUpdater):
             image = self.dots.get_image(status, is_stopped=True)
         image.show()
         image_eb.add(image)
-        image_eb._connect_args = suite_host_tuples
+        image_eb._connect_args = suite_keys
         image_eb.connect("button-press-event",
                          self._on_button_press_event)
 
@@ -309,14 +338,27 @@ class ScanPanelAppletUpdater(BaseScanTimeoutUpdater):
         self.dot_hbox.pack_start(image_eb, expand=False, fill=False,
                                  padding=1)
 
+    def launch_gscan(self):
+        """Launch gscan."""
+        if cylc.flags.debug:
+            stdout = sys.stdout
+            stderr = sys.stderr
+            command = ["cylc", "gscan", "--debug"]
+        else:
+            stdout = open(os.devnull, "w")
+            stderr = STDOUT
+            command = ["cylc", "gscan"]
+        if self.hosts:
+            command += self.hosts
+        Popen(command, stdout=stdout, stderr=stderr)
+
     def _on_button_press_event(self, widget, event):
         if event.button == 1:
-            self.launch_context_menu(event,
-                                     suite_host_tuples=widget._connect_args)
+            self.launch_context_menu(event, suite_keys=widget._connect_args)
         return False
 
     def _on_button_press_event_gscan(self, widget, event):
-        launch_gscan(hosts=self.hosts, owner=self.owner)
+        self.launch_gscan()
 
     def _on_img_tooltip_query(self, widget, x, y, kbd, tooltip, tip_widget):
         tooltip.set_custom(tip_widget)

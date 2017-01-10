@@ -33,27 +33,40 @@ SPEC = {
 }
 
 
-class gscanconfig(config):
+class GScanConfig(config):
+    """Configuration for "gscan"."""
+
+    COL_GROUP = "Group"
+    COL_HOST = "Host"
+    COL_OWNER = "Owner"
+    COL_SUITE = "Suite"
+    COL_TITLE = "Title"
+    COL_UPDATED = "Updated"
+    COL_STATUS = "Status"
+    COLS_DEFAULT = (COL_SUITE.lower(), COL_STATUS.lower())
+    COLS = [col.lower() for col in (
+        COL_GROUP, COL_HOST, COL_OWNER, COL_SUITE, COL_TITLE, COL_UPDATED,
+        COL_STATUS)]
 
     def check(self):
+        """Custom configuration check."""
         cfg = self.get(sparse=True)
         if 'columns' in cfg:
             for column in cfg['columns']:
-                if column not in ['host', 'suite', 'title', 'updated',
-                                  'status']:
-                    print >> sys.stderr, ("WARNING: illegal column name "
-                                          "'" + column + "'")
+                if column not in self.COLS:
+                    print >> sys.stderr, (
+                        "WARNING: illegal column name '%s'" % column)
                     cfg['columns'].remove(column)
-            if len(cfg['columns']) < 1:
-                print >> sys.stderr, ('WARNING: at least one column must be '
-                                      'specified, defaulting to "suite, '
-                                      'status"')
-                cfg['columns'] = ['suite', 'status']
+            if not cfg['columns']:
+                print >> sys.stderr, (
+                    'WARNING: at least one column must be specified,' +
+                    ' defaulting to "%s, %s"' % self.COLS_DEFAULT)
+                cfg['columns'] = list(self.COLS_DEFAULT)
 
 
 gsfg = None
 if not gsfg:
-    gsfg = gscanconfig(SPEC)
+    gsfg = GScanConfig(SPEC)
     if os.access(USER_FILE, os.F_OK | os.R_OK):
         try:
             gsfg.loadcfg(USER_FILE, 'user config')

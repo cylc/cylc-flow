@@ -24,32 +24,70 @@ hosts.
 To customize themes copy $CYLC_DIR/conf/gcylcrc/gcylc.rc.eg to
 $HOME/.cylc/gcylc.rc and follow the instructions in the file."""
 
-from cylc.option_parsers import CylcOptionParser as COP
-
-parser = COP(__doc__, argdoc=[])
-
-parser.add_option("--host",
-                  help="Host names to monitor (override site default).",
-                  metavar="HOST", action="append",
-                  dest="hosts")
-parser.add_option("--poll-interval",
-                  help="Polling interval (time between updates) in seconds",
-                  type="int", metavar="SECONDS", dest="interval")
-parser.add_option(
-    "-n", "--name",
-    metavar="PATTERN",
-    help="List suites with name matching PATTERN (regular expression). "
-         "Defaults to any name. Can be used multiple times.",
-    action="append", dest="patterns_name", default=[])
-
-options, args = parser.parse_args()
+import sys
+if "--use-ssh" in sys.argv[1:]:
+    sys.argv.remove("--use-ssh")
+    from cylc.remote import remrun
+    if remrun().execute():
+        sys.exit(0)
 
 import gtk
 import warnings
 warnings.filterwarnings('ignore', 'use the new', Warning)
 
 from cylc.gui.gscan import ScanApp
+from cylc.option_parsers import CylcOptionParser as COP
+from cylc.owner import USER
 
-ScanApp(hosts=options.hosts, owner=options.owner,
-        poll_interval=options.interval, name=options.patterns_name)
-gtk.main()
+
+def main():
+    """Implement "cylc gscan"."""
+    parser = COP(
+        __doc__,
+        comms=True,
+        noforce=True,
+        argdoc=[(
+            "[HOSTS ...]", "Hosts to scan instead of the configured hosts.")])
+    parser.add_option(
+        "-a", "--all", "--all-suites",
+        help="List all suites found on all scanned hosts (the default is "
+             "just your own suites).",
+        action="store_true", default=False, dest="all_suites")
+    parser.add_option(
+        "-n", "--name",
+        metavar="PATTERN",
+        help="List suites with name matching PATTERN (regular expression). "
+             "Defaults to any name. Can be used multiple times.",
+        action="append", dest="patterns_name", default=[])
+    parser.add_option(
+        "-o", "--suite-owner",
+        metavar="PATTERN",
+        help="List suites with owner matching PATTERN (regular expression). "
+             "Defaults to just your own suites. Can be used multiple times.",
+        action="append", dest="patterns_owner", default=[])
+    parser.add_option(
+        "--comms-timeout", metavar="SEC",
+        help="Set a timeout for network connections "
+             "to each running suite. The default is 5 seconds.",
+        action="store", default=None, dest="comms_timeout")
+    parser.add_option(
+        "--poll-interval",
+        help="Polling interval (time between updates) in seconds",
+        type="int", metavar="SECONDS", dest="interval")
+    options, args = parser.parse_args()
+
+    if options.all_suites:
+        options.patterns_owner = [r".*"]
+    elif not options.patterns_owner:
+        options.patterns_owner = [USER]
+    ScanApp(
+        hosts=args,
+        patterns_name=options.patterns_name,
+        patterns_owner=options.patterns_owner,
+        comms_timeout=options.comms_timeout,
+        poll_interval=options.interval)
+    gtk.main()
+
+
+if __name__ == "__main__":
+    main()

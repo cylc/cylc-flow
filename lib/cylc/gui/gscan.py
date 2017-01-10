@@ -15,397 +15,69 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Implement "cylc gscan"."""
 
-import copy
-import os
 import re
-from subprocess import Popen, PIPE, STDOUT
-import sys
 import threading
 import time
 
 import gtk
 import gobject
-from isodatetime.data import get_timepoint_from_seconds_since_unix_epoch
 
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from isodatetime.data import (
+    get_timepoint_from_seconds_since_unix_epoch as timepoint_from_epoch)
+
 from cylc.cfgspec.gcylc import gcfg
-from cylc.dump import get_stop_state_summary
-import cylc.flags
-from cylc.gui.cat_state import cat_state
-from cylc.gui.legend import ThemeLegendWindow
-from cylc.gui.dot_maker import DotMaker
-from cylc.gui.util import get_icon, setup_icons, set_exception_hook_dialog
-from cylc.network.port_scan import scan_all
-from cylc.owner import USER
-from cylc.version import CYLC_VERSION
-from cylc.task_state import (TASK_STATUSES_ORDERED, TASK_STATUS_RUNAHEAD,
-                             TASK_STATUS_FAILED, TASK_STATUS_SUBMIT_FAILED)
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gscan import gsfg
-
-KEY_GROUP = "group"
-KEY_NAME = "name"
-KEY_OWNER = "owner"
-KEY_STATES = "states"
-KEY_UPDATE_TIME = "update-time"
-
-
-def get_hosts_suites_info(hosts, timeout=None, owner=None):
-    """Return a dictionary of hosts, suites, and their properties."""
-    host_suites_map = {}
-    for host, port, result in scan_all(hosts=hosts, timeout=timeout):
-        if owner and owner != result.get(KEY_OWNER):
-            continue
-        if host not in host_suites_map:
-            host_suites_map[host] = {}
-        try:
-            host_suites_map[host][result[KEY_NAME]] = {}
-            props = host_suites_map[host][result[KEY_NAME]]
-            props["port"] = port
-            for key, value in result.items():
-                if key == KEY_NAME:
-                    continue
-                elif key == KEY_STATES:
-                    # Overall states
-                    props[KEY_STATES] = value[0]
-                    for cycle, cycle_states in value[1].items():
-                        name = "%s:%s" % (KEY_STATES, cycle)
-                        props[name] = cycle_states
-                elif key == KEY_UPDATE_TIME:
-                    props[key] = int(float(value))
-                else:
-                    props[key] = value
-        except (AttributeError, IndexError, KeyError):
-            pass
-    for host, suites_map in host_suites_map.items():
-        for suite, suite_info in suites_map.items():
-            if suite_info.keys() == ["port"]:
-                # Just the port file - could be an older suite daemon.
-                suite_info.update(
-                    get_unscannable_suite_info(
-                        host, suite, owner=owner))
-    return host_suites_map
-
-
-def get_unscannable_suite_info(host, suite, owner=None):
-    """Return a map like cylc scan --raw for states and last update time."""
-    summaries = get_stop_state_summary(cat_state(suite, host, owner))
-    suite_info = {}
-    if summaries is None:
-        return suite_info
-    global_summary, task_summary = summaries
-    for item in task_summary.values():
-        # Note: item['label'] equivalent to item['point']
-        for states_point in (KEY_STATES, KEY_STATES + ":" + item['label']):
-            suite_info.setdefault(states_point, {})
-            suite_info[states_point].setdefault(item['state'], 0)
-            suite_info[states_point][item['state']] += 1
-    suite_info[KEY_UPDATE_TIME] = global_summary["last_updated"]
-    return suite_info
-
-
-def get_scan_menu(suite_host_tuples,
-                  theme_name, set_theme_func,
-                  has_stopped_suites, clear_stopped_suites_func,
-                  scanned_hosts, change_hosts_func,
-                  update_now_func, start_func,
-                  program_name, extra_items=None, owner=None,
-                  is_stopped=False):
-    """Return a right click menu for scan GUIs.
-
-    suite_host_tuples should be a list of (suite, host) tuples (if any).
-    theme_name should be the name of the current theme.
-    set_theme_func should be a function accepting a new theme name.
-    has_stopped_suites should be a boolean denoting currently
-    stopped suites.
-    clear_stopped_suites should be a function with no arguments that
-    removes stopped suites from the current view.
-    scanned_hosts should be a list of currently scanned suite hosts.
-    change_hosts_func should be a function accepting a new list of
-    suite hosts to scan.
-    update_now_func should be a function with no arguments that
-    forces an update now or soon.
-    start_func should be a function with no arguments that
-    re-activates idle GUIs.
-    program_name should be a string describing the parent program.
-    extra_items (keyword) should be a list of extra menu items to add
-    to the right click menu.
-    owner (keyword) should be the owner of the suites, if not the
-    current user.
-    is_stopped (keyword) denotes whether the GUI is in an inactive
-    state.
-
-    """
-    menu = gtk.Menu()
-
-    if is_stopped:
-        switch_on_item = gtk.ImageMenuItem("Activate")
-        img = gtk.image_new_from_stock(gtk.STOCK_YES, gtk.ICON_SIZE_MENU)
-        switch_on_item.set_image(img)
-        switch_on_item.show()
-        switch_on_item.connect("button-press-event",
-                               lambda b, e: start_func())
-        menu.append(switch_on_item)
-
-    # Construct gcylc launcher items for each relevant suite.
-    for suite, host in suite_host_tuples:
-        gcylc_item = gtk.ImageMenuItem("Launch gcylc: %s - %s" % (
-            suite.replace('_', '__'), host))
-        img = gtk.image_new_from_stock("gcylc", gtk.ICON_SIZE_MENU)
-        gcylc_item.set_image(img)
-        gcylc_item._connect_args = (suite, host)
-        gcylc_item.connect(
-            "button-press-event",
-            lambda b, e: launch_gcylc(b._connect_args[1],
-                                      b._connect_args[0],
-                                      owner=owner)
-        )
-        gcylc_item.show()
-        menu.append(gcylc_item)
-    if suite_host_tuples:
-        sep_item = gtk.SeparatorMenuItem()
-        sep_item.show()
-        menu.append(sep_item)
-
-    if extra_items is not None:
-        for item in extra_items:
-            menu.append(item)
-        sep_item = gtk.SeparatorMenuItem()
-        sep_item.show()
-        menu.append(sep_item)
-
-    # Construct theme chooser items (same as cylc.gui.app_main).
-    theme_item = gtk.ImageMenuItem('Theme')
-    img = gtk.image_new_from_stock(gtk.STOCK_SELECT_COLOR, gtk.ICON_SIZE_MENU)
-    theme_item.set_image(img)
-    theme_item.set_sensitive(not is_stopped)
-    thememenu = gtk.Menu()
-    theme_item.set_submenu(thememenu)
-    theme_item.show()
-
-    theme_items = {}
-    theme = "default"
-    theme_items[theme] = gtk.RadioMenuItem(label=theme)
-    thememenu.append(theme_items[theme])
-    theme_items[theme].theme_name = theme
-    for theme in gcfg.get(['themes']):
-        if theme == "default":
-            continue
-        theme_items[theme] = gtk.RadioMenuItem(
-            group=theme_items['default'], label=theme)
-        thememenu.append(theme_items[theme])
-        theme_items[theme].theme_name = theme
-
-    # set_active then connect, to avoid causing an unnecessary toggle now.
-    theme_items[theme_name].set_active(True)
-    for theme in gcfg.get(['themes']):
-        theme_items[theme].show()
-        theme_items[theme].connect('toggled',
-                                   lambda i: (i.get_active() and
-                                              set_theme_func(i.theme_name)))
-
-    menu.append(theme_item)
-    theme_legend_item = gtk.MenuItem("Show task state key")
-    theme_legend_item.show()
-    theme_legend_item.set_sensitive(not is_stopped)
-    theme_legend_item.connect(
-        "button-press-event",
-        lambda b, e: launch_theme_legend(gcfg.get(['themes', theme_name]))
-    )
-    menu.append(theme_legend_item)
-    sep_item = gtk.SeparatorMenuItem()
-    sep_item.show()
-    menu.append(sep_item)
-
-    # Construct a trigger update item.
-    update_now_item = gtk.ImageMenuItem("Update Now")
-    img = gtk.image_new_from_stock(gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU)
-    update_now_item.set_image(img)
-    update_now_item.show()
-    update_now_item.set_sensitive(not is_stopped)
-    update_now_item.connect("button-press-event",
-                            lambda b, e: update_now_func())
-    menu.append(update_now_item)
-
-    # Construct a clean stopped suites item.
-    clear_item = gtk.ImageMenuItem("Clear Stopped Suites")
-    img = gtk.image_new_from_stock(gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU)
-    clear_item.set_image(img)
-    clear_item.show()
-    clear_item.set_sensitive(has_stopped_suites)
-    clear_item.connect("button-press-event",
-                       lambda b, e: clear_stopped_suites_func())
-    menu.append(clear_item)
-
-    # Construct a configure scanned hosts item.
-    hosts_item = gtk.ImageMenuItem("Configure Hosts")
-    img = gtk.image_new_from_stock(gtk.STOCK_PREFERENCES, gtk.ICON_SIZE_MENU)
-    hosts_item.set_image(img)
-    hosts_item.show()
-    hosts_item.connect("button-press-event",
-                       lambda b, e: launch_hosts_dialog(scanned_hosts,
-                                                        change_hosts_func))
-    menu.append(hosts_item)
-
-    sep_item = gtk.SeparatorMenuItem()
-    sep_item.show()
-    menu.append(sep_item)
-
-    # Construct an about dialog item.
-    info_item = gtk.ImageMenuItem("About")
-    img = gtk.image_new_from_stock(gtk.STOCK_ABOUT, gtk.ICON_SIZE_MENU)
-    info_item.set_image(img)
-    info_item.show()
-    info_item.connect(
-        "button-press-event",
-        lambda b, e: launch_about_dialog(program_name,
-                                         scanned_hosts)
-    )
-    menu.append(info_item)
-    return menu
-
-
-def launch_about_dialog(program_name, hosts):
-    """Launch a modified version of the app_main.py About dialog."""
-    hosts_text = "Hosts monitored: " + ", ".join(hosts)
-    comments_text = hosts_text
-    about = gtk.AboutDialog()
-    if gtk.gtk_version[0] == 2 and gtk.gtk_version[1] >= 12:
-        # set_program_name() was added in PyGTK 2.12
-        about.set_program_name(program_name)
-    else:
-        comments_text = program_name + "\n" + hosts_text
-
-    about.set_version(CYLC_VERSION)
-    about.set_copyright("Copyright (C) 2008-2016 NIWA")
-    about.set_comments(comments_text)
-    about.set_icon(get_icon())
-    about.run()
-    about.destroy()
-
-
-def launch_gcylc(host, suite, owner=None):
-    """Launch gcylc for a given suite and host."""
-    if owner is None:
-        owner = USER
-    args = ["--host=" + host, "--user=" + owner, suite]
-
-    # Get version of suite
-    f_null = open(os.devnull, "w")
-    if cylc.flags.debug:
-        stderr = sys.stderr
-        args = ["--debug"] + args
-    else:
-        stderr = f_null
-    command = ["cylc", "get-suite-version"] + args
-    proc = Popen(command, stdout=PIPE, stderr=stderr)
-    suite_version = proc.communicate()[0].strip()
-    proc.wait()
-
-    # Run correct version of "cylc gui", provided that "admin/cylc-wrapper" is
-    # installed.
-    env = None
-    if suite_version != CYLC_VERSION:
-        env = dict(os.environ)
-        env["CYLC_VERSION"] = suite_version
-    command = ["cylc", "gui"] + args
-    if cylc.flags.debug:
-        stdout = sys.stdout
-        stderr = sys.stderr
-        Popen(command, env=env, stdout=stdout, stderr=stderr)
-    else:
-        stdout = f_null
-        stderr = STDOUT
-        Popen(["nohup"] + command, env=env, stdout=stdout, stderr=stderr)
-
-
-def launch_gscan(hosts=None, owner=None):
-    """Launch gscan for a given list of hosts and/or owner."""
-    if cylc.flags.debug:
-        stdout = sys.stdout
-        stderr = sys.stderr
-        command = ["cylc", "gscan", "--debug"]
-    else:
-        stdout = open(os.devnull, "w")
-        stderr = STDOUT
-        command = ["cylc", "gscan"]
-    if hosts is not None:
-        for host in hosts:
-            command += ["--host=%s" % host]
-    if owner is not None:
-        command += ["--user=%s" % owner]
-    Popen(command, stdout=stdout, stderr=stderr)
-
-
-def launch_hosts_dialog(existing_hosts, change_hosts_func):
-    """Launch a dialog for configuring the suite hosts to scan.
-
-    Arguments:
-    existing_hosts should be a list of currently scanned host names.
-    change_hosts_func should be a function accepting a new list of
-    host names to scan.
-
-    """
-    dialog = gtk.Dialog()
-    dialog.set_icon(get_icon())
-    dialog.vbox.set_border_width(5)
-    dialog.set_title("Configure suite hosts")
-    dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
-    dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
-    label = gtk.Label("Enter a comma-delimited list of suite hosts to scan")
-    label.show()
-    label_hbox = gtk.HBox()
-    label_hbox.pack_start(label, expand=False, fill=False)
-    label_hbox.show()
-    entry = gtk.Entry()
-    entry.set_text(", ".join(existing_hosts))
-    entry.connect("activate", lambda e: dialog.response(gtk.RESPONSE_OK))
-    entry.show()
-    dialog.vbox.pack_start(label_hbox, expand=False, fill=False, padding=5)
-    dialog.vbox.pack_start(entry, expand=False, fill=False, padding=5)
-    response = dialog.run()
-    if response == gtk.RESPONSE_OK:
-        new_hosts = [h.strip() for h in entry.get_text().split(",")]
-        change_hosts_func(new_hosts)
-    dialog.destroy()
-
-
-def launch_theme_legend(theme):
-    """Launch a theme legend window."""
-    ThemeLegendWindow(None, theme)
+from cylc.gui.dot_maker import DotMaker
+from cylc.gui.scanutil import (
+    KEY_PORT, get_scan_menu, launch_gcylc, update_suites_info)
+from cylc.gui.util import get_icon, setup_icons, set_exception_hook_dialog
+from cylc.network import (
+    KEY_GROUP, KEY_STATES, KEY_TASKS_BY_STATE, KEY_TITLE, KEY_UPDATE_TIME)
+from cylc.owner import USER
+from cylc.task_state import (
+    TASK_STATUSES_ORDERED, TASK_STATUS_RUNAHEAD, TASK_STATUS_FAILED,
+    TASK_STATUS_SUBMIT_FAILED)
 
 
 class ScanApp(object):
 
     """Summarize running suite statuses for a given set of hosts."""
 
-    WARNINGS_COLUMN = 8
-    STATUS_COLUMN = 7
-    CYCLE_COLUMN = 6
-    UPDATE_TIME_COLUMN = 5
-    TITLE_COLUMN = 4
-    STOPPED_COLUMN = 3
-    SUITE_COLUMN = 2
+    WARNINGS_COLUMN = 9
+    STATUS_COLUMN = 8
+    CYCLE_COLUMN = 7
+    UPDATE_TIME_COLUMN = 6
+    TITLE_COLUMN = 5
+    STOPPED_COLUMN = 4
+    SUITE_COLUMN = 3
+    OWNER_COLUMN = 2
     HOST_COLUMN = 1
     GROUP_COLUMN = 0
+
     ICON_SIZE = 17
 
-    def __init__(self, hosts=None, owner=None, poll_interval=None, name=None):
+    def __init__(
+            self, hosts=None, patterns_name=None, patterns_owner=None,
+            comms_timeout=None, poll_interval=None):
         gobject.threads_init()
         set_exception_hook_dialog("cylc gscan")
         setup_icons()
         if not hosts:
             hosts = GLOBAL_CFG.get(["suite host scanning", "hosts"])
         self.hosts = hosts
-        if owner is None:
-            owner = USER
-        self.owner = owner
 
         self.window = gtk.Window()
-        if name:
-            self.window.set_title("cylc gscan (filtered)")
-        else:
-            self.window.set_title("cylc gscan")
+        title = "cylc gscan"
+        for opt, items, skip in [
+                ("-n", patterns_name, None), ("-o", patterns_owner, USER)]:
+            if items:
+                for pattern in items:
+                    if pattern != skip:
+                        title += " %s %s" % (opt, pattern)
+        self.window.set_title(title)
         self.window.set_icon(get_icon())
         self.vbox = gtk.VBox()
         self.vbox.show()
@@ -417,71 +89,53 @@ class ScanApp(object):
 
         self.dots = DotMaker(self.theme)
         suite_treemodel = gtk.TreeStore(
-            str, str, str, bool, str, int, str, str, str)
+            str,  # group
+            str,  # host
+            str,  # owner
+            str,  # suite
+            bool,  # is_stopped
+            str,  # title
+            int,  # update_time
+            str,  # states
+            str,  # states_text
+            str)  # warning_text
         self._prev_tooltip_location_id = None
         self.suite_treeview = gtk.TreeView(suite_treemodel)
 
-        # Construct the group column.
-        group_name_column = gtk.TreeViewColumn("Group")
-        cell_text_group = gtk.CellRendererText()
-        group_name_column.pack_start(cell_text_group, expand=False)
-        group_name_column.set_cell_data_func(
-            cell_text_group, self._set_cell_text_group)
-        group_name_column.set_sort_column_id(self.GROUP_COLUMN)
-        group_name_column.set_visible("group" in gsfg.get(["columns"]))
-        group_name_column.set_resizable(True)
-
-        # Construct the host column.
-        host_name_column = gtk.TreeViewColumn("Host")
-        cell_text_host = gtk.CellRendererText()
-        host_name_column.pack_start(cell_text_host, expand=False)
-        host_name_column.set_cell_data_func(
-            cell_text_host, self._set_cell_text_host)
-        host_name_column.set_sort_column_id(self.HOST_COLUMN)
-        host_name_column.set_visible("host" in gsfg.get(["columns"]))
-        host_name_column.set_resizable(True)
-
-        # Construct the suite name column.
-        suite_name_column = gtk.TreeViewColumn("Suite")
-        cell_text_name = gtk.CellRendererText()
-        suite_name_column.pack_start(cell_text_name, expand=False)
-        suite_name_column.set_cell_data_func(
-            cell_text_name, self._set_cell_text_name)
-        suite_name_column.set_sort_column_id(self.SUITE_COLUMN)
-        suite_name_column.set_visible("suite" in gsfg.get(["columns"]))
-        suite_name_column.set_resizable(True)
-
-        # Construct the suite title column.
-        suite_title_column = gtk.TreeViewColumn("Title")
-        cell_text_title = gtk.CellRendererText()
-        suite_title_column.pack_start(cell_text_title, expand=False)
-        suite_title_column.set_cell_data_func(
-            cell_text_title, self._set_cell_text_title)
-        suite_title_column.set_sort_column_id(self.TITLE_COLUMN)
-        suite_title_column.set_visible("title" in gsfg.get(
-            ["columns"]))
-        suite_title_column.set_resizable(True)
-
-        # Construct the update time column.
-        time_column = gtk.TreeViewColumn("Updated")
-        cell_text_time = gtk.CellRendererText()
-        time_column.pack_start(cell_text_time, expand=False)
-        time_column.set_cell_data_func(
-            cell_text_time, self._set_cell_text_time)
-        time_column.set_sort_column_id(self.UPDATE_TIME_COLUMN)
-        time_column.set_visible("updated" in gsfg.get(["columns"]))
-        time_column.set_resizable(True)
-
-        self.suite_treeview.append_column(group_name_column)
-        self.suite_treeview.append_column(host_name_column)
-        self.suite_treeview.append_column(suite_name_column)
-        self.suite_treeview.append_column(suite_title_column)
-        self.suite_treeview.append_column(time_column)
+        # Visibility of columns
+        vis_cols = gsfg.get(["columns"])
+        # Doesn't make any sense without suite name column
+        if gsfg.COL_SUITE not in vis_cols:
+            vis_cols.append(gsfg.COL_SUITE.lower())
+        # In multiple host environment, add host column by default
+        if hosts:
+            vis_cols.append(gsfg.COL_HOST.lower())
+        # In multiple owner environment, add owner column by default
+        if patterns_owner != [USER]:
+            vis_cols.append(gsfg.COL_OWNER.lower())
+        # Construct the group, host, owner, suite, title, update time column.
+        for col_title, col_id, col_cell_text_setter in [
+                (gsfg.COL_GROUP, self.GROUP_COLUMN, self._set_cell_text_group),
+                (gsfg.COL_HOST, self.HOST_COLUMN, self._set_cell_text_host),
+                (gsfg.COL_OWNER, self.OWNER_COLUMN, self._set_cell_text_owner),
+                (gsfg.COL_SUITE, self.SUITE_COLUMN, self._set_cell_text_name),
+                (gsfg.COL_TITLE, self.TITLE_COLUMN, self._set_cell_text_title),
+                (gsfg.COL_UPDATED, self.UPDATE_TIME_COLUMN,
+                 self._set_cell_text_time),
+        ]:
+            column = gtk.TreeViewColumn(col_title)
+            cell_text = gtk.CellRendererText()
+            column.pack_start(cell_text, expand=False)
+            column.set_cell_data_func(cell_text, col_cell_text_setter)
+            column.set_sort_column_id(col_id)
+            column.set_visible(col_title.lower() in vis_cols)
+            column.set_resizable(True)
+            self.suite_treeview.append_column(column)
 
         # Construct the status column.
-        status_column = gtk.TreeViewColumn("Status")
-        status_column.set_sort_column_id(5)
-        status_column.set_visible("status" in gsfg.get(["columns"]))
+        status_column = gtk.TreeViewColumn(gsfg.COL_STATUS)
+        status_column.set_sort_column_id(self.STATUS_COLUMN)
+        status_column.set_visible(gsfg.COL_STATUS.lower() in vis_cols)
         status_column.set_resizable(True)
         cell_text_cycle = gtk.CellRendererText()
         status_column.pack_start(cell_text_cycle, expand=False)
@@ -530,22 +184,21 @@ class ScanApp(object):
         scrolled_window.show()
         self.vbox.pack_start(scrolled_window, expand=True, fill=True)
 
-        if name:
-            name_pattern = name
-        else:
-            name_pattern = ['.*']
-        name_pattern = "(" + ")|(".join(name_pattern) + ")"
-
-        try:
-            name_pattern = re.compile(name_pattern)
-        except re.error:
-            raise ValueError("Invalid names pattern: %s" % str(name))
+        patterns = {"name": None, "owner": None}
+        for label, items in [
+                ("owner", patterns_owner), ("name", patterns_name)]:
+            if items:
+                patterns[label] = r"\A(?:" + r")|(?:".join(items) + r")\Z"
+                try:
+                    patterns[label] = re.compile(patterns[label])
+                except re.error:
+                    raise ValueError("Invalid %s pattern: %s" % (label, items))
 
         self.updater = ScanAppUpdater(
             self.hosts, suite_treemodel, self.suite_treeview,
-            owner=self.owner, poll_interval=poll_interval,
-            group_column_id=self.GROUP_COLUMN, name_pattern=name_pattern
-        )
+            comms_timeout=comms_timeout, poll_interval=poll_interval,
+            group_column_id=self.GROUP_COLUMN,
+            name_pattern=patterns["name"], owner_pattern=patterns["owner"])
         self.updater.start()
         self.window.add(self.vbox)
         self.window.connect("destroy", self._on_destroy_event)
@@ -556,6 +209,7 @@ class ScanApp(object):
         self.warning_icon_shown = []
 
     def _on_button_press_event(self, treeview, event):
+        """Tree view button press callback."""
         x = int(event.x)
         y = int(event.y)
         pth = treeview.get_path_at_pos(x, y)
@@ -565,8 +219,8 @@ class ScanApp(object):
         if (event.button == 1):
             if not pth:
                 return False
-            path, column, cell_x, cell_y = (pth)
-            if column.get_title() == "Status":
+            path, column, cell_x, _ = pth
+            if column.get_title() == gsfg.COL_STATUS:
                 dot_offset, dot_width = tuple(column.cell_get_position(
                     column.get_cell_renderers()[1]))
                 if not dot_width:
@@ -575,40 +229,38 @@ class ScanApp(object):
                 if cell_index == 0:
 
                     iter_ = treemodel.get_iter(path)
-                    host, suite = treemodel.get(iter_, self.HOST_COLUMN,
-                                                self.SUITE_COLUMN)
+                    host, owner, suite = treemodel.get(
+                        iter_,
+                        self.HOST_COLUMN, self.OWNER_COLUMN, self.SUITE_COLUMN)
 
-                    self.updater.clear_warnings(suite, host)
+                    self.updater.clear_warnings(host, owner, suite)
                     treemodel.set(iter_, self.WARNINGS_COLUMN, '')
                     return True
 
         # Display menu on right click.
-        if (event.type != gtk.gdk._2BUTTON_PRESS and
-                event.button != 3):
+        if event.type != gtk.gdk._2BUTTON_PRESS and event.button != 3:
             return False
 
-        suite_host_tuples = []
+        suite_keys = []
 
         if pth is not None:
             # Add a gcylc launcher item.
-            path, col, cellx, celly = pth
+            path = pth[0]
 
             iter_ = treemodel.get_iter(path)
-            host, suite = treemodel.get(iter_, self.HOST_COLUMN,
-                                        self.SUITE_COLUMN)
+            host, owner, suite = treemodel.get(
+                iter_, self.HOST_COLUMN, self.OWNER_COLUMN, self.SUITE_COLUMN)
             if suite is None:
                 # On an expanded cycle point row, so get from parent.
-                host, suite = treemodel.get(treemodel.iter_parent(iter_),
-                                            self.HOST_COLUMN,
-                                            self.SUITE_COLUMN)
-            suite_host_tuples.append((suite, host))
+                host, owner, suite = treemodel.get(
+                    treemodel.iter_parent(iter_),
+                    self.HOST_COLUMN, self.OWNER_COLUMN, self.SUITE_COLUMN)
+            suite_keys.append((host, owner, suite))
 
         if event.type == gtk.gdk._2BUTTON_PRESS:
-            if suite_host_tuples:
-                launch_gcylc(host, suite, owner=self.owner)
+            if suite_keys:
+                launch_gcylc(suite_keys[0])
             return False
-
-        has_stopped_suites = bool(self.updater.stopped_hosts_suites_info)
 
         view_item = gtk.ImageMenuItem("View Column...")
         img = gtk.image_new_from_stock(gtk.STOCK_INDEX, gtk.ICON_SIZE_MENU)
@@ -627,10 +279,10 @@ class ScanApp(object):
             view_menu.append(column_item)
 
         menu = get_scan_menu(
-            suite_host_tuples,
+            suite_keys,
             self.theme_name,
             self._set_theme,
-            has_stopped_suites,
+            self.updater.has_stopped_suites(),
             self.updater.clear_stopped_suites,
             self.hosts,
             self.updater.set_hosts,
@@ -638,54 +290,55 @@ class ScanApp(object):
             self.updater.start,
             program_name="cylc gscan",
             extra_items=[view_item],
-            owner=self.owner
         )
         menu.popup(None, None, None, event.button, event.time)
         return False
 
-    def _on_destroy_event(self, widget):
+    def _on_destroy_event(self, _):
+        """Callback on destroy of main window."""
         self.updater.quit = True
         gtk.main_quit()
         return False
 
-    def _on_query_tooltip(self, widget, x, y, kbd_ctx, tooltip):
+    def _on_query_tooltip(self, _, x, y, kbd_ctx, tooltip):
         """Handle a tooltip creation request."""
         tip_context = self.suite_treeview.get_tooltip_context(x, y, kbd_ctx)
         if tip_context is None:
             self._prev_tooltip_location_id = None
             return False
         x, y = self.suite_treeview.convert_widget_to_bin_window_coords(x, y)
-        path, column, cell_x, cell_y = (
+        path, column, cell_x, _ = (
             self.suite_treeview.get_path_at_pos(x, y))
         model = self.suite_treeview.get_model()
         iter_ = model.get_iter(path)
         parent_iter = model.iter_parent(iter_)
-        if parent_iter is None or (
-                parent_iter and model.iter_has_child(iter_)):
-            host = model.get_value(iter_, self.HOST_COLUMN)
-            suite = model.get_value(iter_, self.SUITE_COLUMN)
+        if parent_iter is None or parent_iter and model.iter_has_child(iter_):
+            host, owner, suite = model.get(
+                iter_, self.HOST_COLUMN, self.OWNER_COLUMN, self.SUITE_COLUMN)
             child_row_number = None
         else:
-            host = model.get_value(parent_iter, self.HOST_COLUMN)
-            suite = model.get_value(parent_iter, self.SUITE_COLUMN)
+            host, owner, suite = model.get(
+                parent_iter,
+                self.HOST_COLUMN, self.OWNER_COLUMN, self.SUITE_COLUMN)
             child_row_number = path[-1]
         suite_update_time = model.get_value(iter_, self.UPDATE_TIME_COLUMN)
-        location_id = (host, suite, suite_update_time, column.get_title(),
-                       child_row_number)
+        location_id = (
+            host, owner, suite, suite_update_time, column.get_title(),
+            child_row_number)
 
         if location_id != self._prev_tooltip_location_id:
             self._prev_tooltip_location_id = location_id
             tooltip.set_text(None)
             return False
-        if column.get_title() in ["Host", "Suite"]:
-            tooltip.set_text(suite + " - " + host)
+        if column.get_title() in [
+                gsfg.COL_HOST, gsfg.COL_OWNER, gsfg.COL_SUITE]:
+            tooltip.set_text("%s - %s:%s" % (suite, owner, host))
             return True
-        if column.get_title() == "Updated":
-            suite_update_point = get_timepoint_from_seconds_since_unix_epoch(
-                suite_update_time)
+        if column.get_title() == gsfg.COL_UPDATED:
+            suite_update_point = timepoint_from_epoch(suite_update_time)
             if (self.updater.last_update_time is not None and
                     suite_update_time != int(self.updater.last_update_time)):
-                retrieval_point = get_timepoint_from_seconds_since_unix_epoch(
+                retrieval_point = timepoint_from_epoch(
                     int(self.updater.last_update_time))
                 text = "Last changed at %s\n" % suite_update_point
                 text += "Last scanned at %s" % retrieval_point
@@ -695,7 +348,7 @@ class ScanApp(object):
             tooltip.set_text(text)
             return True
 
-        if column.get_title() != "Status":
+        if column.get_title() != gsfg.COL_STATUS:
             tooltip.set_text(None)
             return False
 
@@ -730,14 +383,13 @@ class ScanApp(object):
                 point_string = model.get(iter_, self.CYCLE_COLUMN)[0]
                 if point_string:
                     return False
-                if (suite, host) not in self.warnings or not self.warnings[
-                        (suite, host)]:
+                if not self.warnings.get((host, owner, suite)):
                     return False
                 tooltip.set_markup(
                     tooltip_prefix +
                     '\n<b>New failures</b> (<i>last 5</i>) <i><span ' +
                     'foreground="#2222BB">click to dismiss</span></i>\n' +
-                    self.warnings[(suite, host)])
+                    self.warnings[(host, owner, suite)])
                 return True
             else:
                 # Hovering over a status indicator.
@@ -752,7 +404,7 @@ class ScanApp(object):
 
                 if suite:
                     tasks = self.updater.get_last_n_tasks(
-                        suite, host, state, point_string)
+                        host, owner, suite, state, point_string)
                     tooltip_text += (
                         '\n<b>Recent {state} tasks</b>\n{tasks}').format(
                         state=state, tasks='\n'.join(tasks))
@@ -764,13 +416,15 @@ class ScanApp(object):
         return True
 
     def _on_toggle_column_visible(self, menu_item):
+        """Toggle column visibility callback."""
         column_index, is_visible = menu_item._connect_args
         column = self.suite_treeview.get_columns()[column_index]
         column.set_visible(not is_visible)
         self.updater.update()
         return False
 
-    def _set_cell_pixbuf_state(self, column, cell, model, iter_, index):
+    def _set_cell_pixbuf_state(self, _, cell, model, iter_, index):
+        """State info pixbuf."""
         state_info = model.get_value(iter_, self.STATUS_COLUMN)
         if state_info is not None:
             is_stopped = model.get_value(iter_, self.STOPPED_COLUMN)
@@ -788,56 +442,67 @@ class ScanApp(object):
             cell.set_property("visible", False)
         cell.set_property("pixbuf", icon)
 
-    def _set_error_icon_state(self, column, cell, model, iter_):
+    def _set_error_icon_state(self, _, cell, model, iter_):
         """Update the state of the warning icon."""
-        host, suite, warnings, point_string = model.get(
-            iter_, self.HOST_COLUMN, self.SUITE_COLUMN,
+        host, owner, suite, warnings, point_string = model.get(
+            iter_, self.HOST_COLUMN, self.OWNER_COLUMN, self.SUITE_COLUMN,
             self.WARNINGS_COLUMN, self.CYCLE_COLUMN)
+        key = (host, owner, suite)
         if point_string:
             # Error icon only for first row.
             cell.set_property('pixbuf', self.warn_icon_blank)
         elif warnings:
             cell.set_property('pixbuf', self.warn_icon_colour)
-            self.warning_icon_shown.append((suite, host))
-            self.warnings[(suite, host)] = warnings
+            self.warning_icon_shown.append(key)
+            self.warnings[key] = warnings
         else:
             cell.set_property('pixbuf', self.warn_icon_grey)
-            self.warnings[(suite, host)] = None
-            if not (suite, host) in self.warning_icon_shown:
+            self.warnings[key] = None
+            if key not in self.warning_icon_shown:
                 cell.set_property('pixbuf', self.warn_icon_blank)
 
-    def _set_cell_text_group(self, column, cell, model, iter_):
+    def _set_cell_text_group(self, _, cell, model, iter_):
+        """Set cell text for "group" column."""
         group = model.get_value(iter_, self.GROUP_COLUMN)
         is_stopped = model.get_value(iter_, self.STOPPED_COLUMN)
         cell.set_property("sensitive", not is_stopped)
         cell.set_property("text", group)
 
-    def _set_cell_text_host(self, column, cell, model, iter_):
+    def _set_cell_text_host(self, _, cell, model, iter_):
+        """Set cell text for "host" column."""
         host = model.get_value(iter_, self.HOST_COLUMN)
         is_stopped = model.get_value(iter_, self.STOPPED_COLUMN)
         cell.set_property("sensitive", not is_stopped)
         cell.set_property("text", host)
 
-    def _set_cell_text_name(self, column, cell, model, iter_):
+    def _set_cell_text_owner(self, _, cell, model, iter_):
+        """Set cell text for "owner" column."""
+        value = model.get_value(iter_, self.OWNER_COLUMN)
+        is_stopped = model.get_value(iter_, self.STOPPED_COLUMN)
+        cell.set_property("sensitive", not is_stopped)
+        cell.set_property("text", value)
+
+    def _set_cell_text_name(self, _, cell, model, iter_):
+        """Set cell text for (suite name) "name" column."""
         name = model.get_value(iter_, self.SUITE_COLUMN)
         is_stopped = model.get_value(iter_, self.STOPPED_COLUMN)
         cell.set_property("sensitive", not is_stopped)
         cell.set_property("text", name)
 
-    def _set_cell_text_title(self, column, cell, model, iter_):
+    def _set_cell_text_title(self, _, cell, model, iter_):
+        """Set cell text for "title" column."""
         title = model.get_value(iter_, self.TITLE_COLUMN)
         is_stopped = model.get_value(iter_, self.STOPPED_COLUMN)
         cell.set_property("sensitive", not is_stopped)
         cell.set_property("text", title)
 
-    def _set_cell_text_time(self, column, cell, model, iter_):
+    def _set_cell_text_time(self, _, cell, model, iter_):
+        """Set cell text for "update-time" column."""
         suite_update_time = model.get_value(iter_, self.UPDATE_TIME_COLUMN)
-        time_point = get_timepoint_from_seconds_since_unix_epoch(
-            suite_update_time)
+        time_point = timepoint_from_epoch(suite_update_time)
         time_point.set_time_zone_to_local()
         current_time = time.time()
-        current_point = (
-            get_timepoint_from_seconds_since_unix_epoch(current_time))
+        current_point = timepoint_from_epoch(current_time)
         if str(time_point).split("T")[0] == str(current_point).split("T")[0]:
             time_string = str(time_point).split("T")[1]
         else:
@@ -846,220 +511,56 @@ class ScanApp(object):
         cell.set_property("sensitive", not is_stopped)
         cell.set_property("text", time_string)
 
-    def _set_cell_text_cycle(self, column, cell, model, iter_, active_cycle):
+    def _set_cell_text_cycle(self, _, cell, model, iter_, active_cycle):
+        """Set cell text for "cycle" column."""
         cycle = model.get_value(iter_, active_cycle)
         is_stopped = model.get_value(iter_, self.STOPPED_COLUMN)
         cell.set_property("sensitive", not is_stopped)
         cell.set_property("text", cycle)
 
     def _set_theme(self, new_theme_name):
+        """Set GUI theme."""
         self.theme_name = new_theme_name
         self.theme = gcfg.get(['themes', self.theme_name])
         self.dots = DotMaker(self.theme)
 
-    def _set_tooltip(self, widget, text):
+    @staticmethod
+    def _set_tooltip(widget, text):
+        """Set tooltip for a widget."""
         tooltip = gtk.Tooltips()
         tooltip.enable()
         tooltip.set_tip(widget, text)
 
 
-class BaseScanUpdater(threading.Thread):
-
-    """Retrieve running suite scan information.
-
-    Subclasses must provide an update method.
-
-    """
-
-    POLL_INTERVAL = 60
-
-    def __init__(self, hosts, owner=None, poll_interval=None):
-        self.hosts = hosts
-        if owner is None:
-            owner = USER
-        if poll_interval is None:
-            poll_interval = self.POLL_INTERVAL
-        self.poll_interval = poll_interval
-        self.owner = owner
-        self.hosts_suites_info = {}
-        self.stopped_hosts_suites_info = {}
-        self.prev_hosts_suites = []
-        self.last_update_time = None
-        self._should_force_update = False
-        self.quit = False
-        super(BaseScanUpdater, self).__init__()
-
-    def update(self):
-        """An update method that must be defined in subclasses."""
-        raise NotImplementedError()
-
-    def update_now(self):
-        """Force an update as soon as possible."""
-        self._should_force_update = True
-
-    def run(self):
-        """Execute the main loop of the thread."""
-        while not self.quit:
-            time_for_update = (
-                self.last_update_time is None or
-                time.time() >= self.last_update_time + self.poll_interval
-            )
-            if not self._should_force_update and not time_for_update:
-                time.sleep(1)
-                continue
-            if self._should_force_update:
-                self._should_force_update = False
-
-            # Sanitise hosts.
-            for host in self.stopped_hosts_suites_info:
-                if host not in self.hosts:
-                    self.stopped_hosts_suites_info.pop(host)
-            for (host, suite) in list(self.prev_hosts_suites):
-                if host not in self.hosts:
-                    self.prev_hosts_suites.remove((host, suite))
-
-            # Get new information.
-            self.hosts_suites_info, self.stopped_hosts_suites_info = (
-                update_hosts_suites_info(
-                    self.hosts, self.owner,
-                    prev_stopped_hosts_suites_info=(
-                        self.stopped_hosts_suites_info),
-                    prev_hosts_suites=self.prev_hosts_suites
-                )
-            )
-            prev_hosts_suites = []
-            for host, suites in self.hosts_suites_info.items():
-                for suite in suites:
-                    prev_hosts_suites.append((host, suite))
-            self.prev_hosts_suites = prev_hosts_suites
-            self.last_update_time = time.time()
-            gobject.idle_add(self.update)
-            time.sleep(1)
-
-    def set_hosts(self, new_hosts):
-        """Set new hosts."""
-        del self.hosts[:]
-        self.hosts.extend(new_hosts)
-        self.update_now()
-
-
-class BaseScanTimeoutUpdater(object):
-
-    """Retrieve running suite scan information.
-
-    Subclasses must provide an update method.
-
-    """
-
-    IDLE_STOPPED_TIME = None
-    POLL_INTERVAL = 60
-
-    def __init__(self, hosts, owner=None, poll_interval=None):
-        self.hosts = hosts
-        if owner is None:
-            owner = USER
-        if poll_interval is None:
-            poll_interval = self.POLL_INTERVAL
-        self.poll_interval = poll_interval
-        self.owner = owner
-        self.hosts_suites_info = {}
-        self.stopped_hosts_suites_info = {}
-        self._should_force_update = False
-        self._last_running_time = None
-        self.quit = True
-        self.last_update_time = None
-        self.prev_hosts_suites = []
-
-    def update(self):
-        """An update method that must be defined in subclasses."""
-        raise NotImplementedError()
-
-    def update_now(self):
-        """Force an update as soon as possible."""
-        self._should_force_update = True
-
-    def start(self):
-        """Start looping."""
-        self.quit = False
-        self._last_running_time = None
-        gobject.timeout_add(1000, self.run)
-        return False
-
-    def stop(self):
-        """Stop looping."""
-        self.quit = True
-
-    def run(self):
-        """Extract running suite information at particular intervals."""
-        if self.quit:
-            return False
-        current_time = time.time()
-        if (self._last_running_time is not None and
-                self.IDLE_STOPPED_TIME is not None and
-                current_time > (
-                    self._last_running_time + self.IDLE_STOPPED_TIME)):
-            self.stop()
-            return True
-        if (not self._should_force_update and
-                (self.last_update_time is not None and
-                 current_time < self.last_update_time + self.poll_interval)):
-            return True
-        if self._should_force_update:
-            self._should_force_update = False
-
-        # Sanitise hosts.
-        for host in self.stopped_hosts_suites_info.keys():
-            if host not in self.hosts:
-                self.stopped_hosts_suites_info.pop(host)
-        for (host, suite) in list(self.prev_hosts_suites):
-            if host not in self.hosts:
-                self.prev_hosts_suites.remove((host, suite))
-
-        # Get new information.
-        self.hosts_suites_info, self.stopped_hosts_suites_info = (
-            update_hosts_suites_info(
-                self.hosts, self.owner,
-                prev_stopped_hosts_suites_info=self.stopped_hosts_suites_info,
-                prev_hosts_suites=self.prev_hosts_suites
-            )
-        )
-        prev_hosts_suites = []
-        for host, suites in self.hosts_suites_info.items():
-            for suite in suites:
-                prev_hosts_suites.append((host, suite))
-        self.prev_hosts_suites = prev_hosts_suites
-        self.last_update_time = time.time()
-        if self.hosts_suites_info:
-            self._last_running_time = None
-        else:
-            self._last_running_time = self.last_update_time
-        gobject.idle_add(self.update)
-        return True
-
-    def set_hosts(self, new_hosts):
-        del self.hosts[:]
-        self.hosts.extend(new_hosts)
-        self.update_now()
-
-
-class ScanAppUpdater(BaseScanUpdater):
+class ScanAppUpdater(threading.Thread):
 
     """Update the scan app."""
 
-    WARNING_STATES = [TASK_STATUS_FAILED, TASK_STATUS_SUBMIT_FAILED]
+    POLL_INTERVAL = 60
 
-    def __init__(self, hosts, suite_treemodel, suite_treeview, owner=None,
-                 poll_interval=None, group_column_id=0, name_pattern=None):
+    def __init__(self, hosts, suite_treemodel, suite_treeview,
+                 comms_timeout=None, poll_interval=None, group_column_id=0,
+                 name_pattern=None, owner_pattern=None):
+        self.hosts = hosts
+        self.comms_timeout = comms_timeout
+        if poll_interval is None:
+            poll_interval = self.POLL_INTERVAL
+        self.poll_interval = poll_interval
+        self.suite_info_map = {}
+        self.last_update_time = None
+        self._should_force_update = False
+        self.quit = False
         self.suite_treemodel = suite_treemodel
         self.suite_treeview = suite_treeview
         self.group_column_id = group_column_id
         self.tasks_by_state = {}
         self.warning_times = {}
         self.name_pattern = name_pattern
-        super(ScanAppUpdater, self).__init__(hosts, owner=owner,
-                                             poll_interval=poll_interval)
+        self.owner_pattern = owner_pattern
+        super(ScanAppUpdater, self).__init__()
 
-    def _add_expanded_row(self, view, rpath, row_ids):
+    @staticmethod
+    def _add_expanded_row(view, rpath, row_ids):
         """Add user-expanded rows to a list of suite and hosts to be
         expanded."""
         model = view.get_model()
@@ -1084,23 +585,41 @@ class ScanAppUpdater(BaseScanUpdater):
         self.suite_treeview.map_expanded_rows(self._add_expanded_row, names)
         return names
 
+    def _get_warnings(self, key):
+        """Updates the list of tasks to issue warning for. To be called
+        on update only."""
+        if key not in self.tasks_by_state:
+            return []
+        warn_time = 0
+        if key in self.warning_times:
+            warn_time = self.warning_times[key]
+        failed_tasks = []
+        for state in (TASK_STATUS_FAILED, TASK_STATUS_SUBMIT_FAILED):
+            failed_tasks += self.tasks_by_state[key].get(state, [])
+        warnings = [warn for warn in failed_tasks if warn[0] > warn_time]
+        warnings.sort()
+        return warnings[-5:]
+
     def clear_stopped_suites(self):
         """Clear stopped suite information that may have built up."""
-        self.stopped_hosts_suites_info.clear()
+        for key, result in self.suite_info_map.copy().items():
+            if KEY_PORT not in result:
+                del self.suite_info_map[key]
         gobject.idle_add(self.update)
 
-    def get_last_n_tasks(self, suite, host, task_state, point_string):
+    def clear_warnings(self, host, owner, suite):
+        """Marks all presently issued warnings for a suite as read."""
+        self.warning_times[(host, owner, suite)] = time.time()
+
+    def get_last_n_tasks(self, host, owner, suite, task_state, point_string):
         """Returns a list of the last 'n' tasks with the provided state for
         the provided suite."""
         # Get list of tasks for the provided state or return an error msg.
-        if (suite, host) not in self.tasks_by_state:
-            return [('<i>Could not get info; suite running with older cylc '
-                     'version?</i>')]
-        if task_state not in self.tasks_by_state[(suite, host)]:
+        key = (host, owner, suite)
+        if (key not in self.tasks_by_state or
+                task_state not in self.tasks_by_state[key]):
             return []
-        tasks = list(self.tasks_by_state[(suite, host)][task_state])
-        if tasks is False:
-            return ['<i>Cannot connect to suite.</i>']
+        tasks = list(self.tasks_by_state[key][task_state])
 
         # Append "And x more" to list if required.
         temp = [[dt, tn, ps] for (dt, tn, ps) in tasks if dt is None]
@@ -1124,196 +643,135 @@ class ScanAppUpdater(BaseScanUpdater):
 
         return ret + suffix
 
-    def clear_warnings(self, suite, host):
-        """Marks all presently issued warnings for a suite as read."""
-        self.warning_times[(suite, host,)] = time.time()
+    def has_stopped_suites(self):
+        """Return True if we have any stopped suite information."""
+        for result in self.suite_info_map.copy().values():
+            if KEY_PORT not in result:
+                return True
+        return False
 
-    def _get_warnings(self, suite, host):
-        """Updates the list of tasks to issue warning for. To be called
-        on update only."""
-        stp = (suite, host,)
-        if stp not in self.tasks_by_state:
-            return []
-        warn_time = 0
-        if stp in self.warning_times:
-            warn_time = self.warning_times[stp]
-        failed_tasks = []
-        for state in self.WARNING_STATES:
-            failed_tasks += self.tasks_by_state[stp].get(state, [])
-        warnings = [warn for warn in failed_tasks if warn[0] > warn_time]
-        warnings.sort()
-        return warnings[-5:]
+    def run(self):
+        """Execute the main loop of the thread."""
+        while not self.quit:
+            time_for_update = (
+                self.last_update_time is None or
+                time.time() >= self.last_update_time + self.poll_interval
+            )
+            if not self._should_force_update and not time_for_update:
+                time.sleep(1)
+                continue
+            if self._should_force_update:
+                self._should_force_update = False
+            self.suite_info_map = update_suites_info(
+                self.hosts, self.comms_timeout, self.owner_pattern,
+                self.name_pattern, self.suite_info_map)
+            self.last_update_time = time.time()
+            gobject.idle_add(self.update)
+            time.sleep(1)
+
+    def set_hosts(self, new_hosts):
+        """Set new hosts."""
+        del self.hosts[:]
+        self.hosts.extend(new_hosts)
+        self.update_now()
 
     def update(self):
         """Update the Applet."""
+        # Get expanded row IDs here, so the same expansion can be applied again
+        # after the update.
         row_ids = self._get_user_expanded_row_ids()
-        info = copy.deepcopy(self.hosts_suites_info)
-        stop_info = copy.deepcopy(self.stopped_hosts_suites_info)
+        group_counts = self._update_group_counts()
         self.suite_treemodel.clear()
-        suite_host_tuples = []
-        for host in self.hosts:
-            suites = (info.get(host, {}).keys() +
-                      stop_info.get(host, {}).keys())
-            for suite in suites:
-                if (suite, host) not in suite_host_tuples:
-                    suite_host_tuples.append((suite, host))
-        suite_host_tuples.sort()
-
-        group_counts = {"": {'total': 0}}
-        for suite, host in suite_host_tuples:
-            # Only create summary counts for running suites
-            if suite in info.get(host, {}):
-                suite_info = info[host][suite]
-            else:
-                suite_info = stop_info[host][suite]
-
-            group_id = suite_info.get("group")
-
-            if group_id in group_counts:
-                group_counts[group_id]['total'] += 1
-            else:
-                group_counts[group_id] = {}
-                group_counts[group_id]['total'] = 1
-
-            if KEY_STATES in suite_info:
-                for key in sorted(suite_info):
-                    if not key == KEY_STATES:
-                        continue
-                    for state, number in sorted(
-                            suite_info[key].items(), key=lambda _: _[1]):
-                        if state in group_counts[group_id]:
-                            group_counts[group_id][state] += number
-                        else:
-                            group_counts[group_id][state] = number
-
         group_iters = {}
-
-        for suite, host in suite_host_tuples:
-            if suite in info.get(host, {}):
-                suite_info = info[host][suite]
-                is_stopped = False
-            else:
-                suite_info = stop_info[host][suite]
-                is_stopped = True
+        for key, suite_info in sorted(self.suite_info_map.items()):
+            host, owner, suite = key
             suite_updated_time = suite_info.get(
-                KEY_UPDATE_TIME, int(time.time())
-            )
-            title = suite_info.get("title")
+                KEY_UPDATE_TIME, int(time.time()))
+            title = suite_info.get(KEY_TITLE)
+            group = suite_info.get(KEY_GROUP)
 
-            group = suite_info.get("group")
-
-            if 'tasks-by-state' in suite_info:
-                self.tasks_by_state[(suite, host)] = suite_info[
-                    'tasks-by-state']
+            try:
+                self.tasks_by_state[key] = suite_info[KEY_TASKS_BY_STATE]
+            except KeyError:
+                pass
 
             # Build up and assign group iters across the various suites
-            if self.suite_treeview.get_column(
-                    self.group_column_id).get_visible():
-                if group_iters.get(group) is None:
-                    states_text = ""
-                    for state, number in sorted(
-                            group_counts[group].items()):
-                        if state != TASK_STATUS_RUNAHEAD and state != 'total':
-                            # 'runahead' states are usually hidden.
-                            states_text += '%s %d ' % (state, number)
+            if (group_iters.get(group) is None and
+                    self.suite_treeview.get_column(
+                        self.group_column_id).get_visible()):
+                states_text = ""
+                for state, number in sorted(group_counts[group].items()):
+                    if state != TASK_STATUS_RUNAHEAD and state != 'total':
+                        # 'runahead' states are usually hidden.
+                        states_text += '%s %d ' % (state, number)
+                summary_text = "%s - %d" % (
+                    group, group_counts[group]['total'])
+                group_iters[group] = self.suite_treemodel.append(None, [
+                    summary_text, None, None, None, False, None,
+                    suite_updated_time, None, states_text, None])
 
-                    summary_text = "%s - %s suites" % (
-                        group, group_counts[group]['total'])
-
-                    group_iters[group] = self.suite_treemodel.append(None, [
-                        summary_text, "", "", False, "", suite_updated_time,
-                        None, states_text, None])
-                group_iter = group_iters[group]
-            else:
-                group_iter = None
-
-            if not self.name_pattern.match(suite):
-                continue
-
-            warning_text = ''
-            tasks = sorted(self._get_warnings(suite, host), reverse=True)
+            tasks = sorted(self._get_warnings(key), reverse=True)
             warning_text = '\n'.join(
                 [warn[1] + '.' + warn[2] for warn in tasks[0:6]])
 
+            is_stopped = KEY_PORT not in suite_info
             if KEY_STATES in suite_info:
-                for key in sorted(suite_info):
-                    if not key.startswith(KEY_STATES):
-                        continue
-
-                    # Add the state count column (e.g. 'failed 1 succeeded 2').
-                    states_text = ""
-                    for state, number in sorted(
-                            suite_info[key].items(), key=lambda _: _[1]):
-                        if state != TASK_STATUS_RUNAHEAD:
-                            # 'runahead' states are usually hidden.
-                            states_text += '%s %d ' % (state, number)
+                # Add the state count column (e.g. 'failed 1 succeeded 2').
+                # Total count of each state
+                parent_iter = self.suite_treemodel.append(
+                    group_iters.get(group), [
+                        None, host, owner, suite, is_stopped, title,
+                        suite_updated_time, None,
+                        self._states_to_text(suite_info[KEY_STATES][0]),
+                        warning_text])
+                # Count of each state by cycle points
+                for point, states in sorted(suite_info[KEY_STATES][1].items()):
+                    states_text = self._states_to_text(states)
                     if not states_text:
-                        # Purely runahead cycle.
+                        # Purely runahead cycle point.
                         continue
-                    states_text = states_text.rstrip()
-
-                    # Set up the columns, including the cycle point column.
-                    if key == KEY_STATES:
-                        parent_iter = self.suite_treemodel.append(group_iter, [
-                            None, host, suite, is_stopped, title,
-                            suite_updated_time, None, states_text,
-                            warning_text])
-                    else:
-                        self.suite_treemodel.append(parent_iter, [
-                            None, None, None, is_stopped, title,
-                            suite_updated_time,
-                            key.replace(KEY_STATES + ":", "", 1), states_text,
-                            warning_text
-                        ])
+                    self.suite_treemodel.append(
+                        parent_iter, [
+                            None, None, None, None, is_stopped, title,
+                            suite_updated_time, str(point),
+                            states_text, warning_text])
             else:
                 # No states in suite_info
-                self.suite_treemodel.append(group_iter, [
-                    group, host, suite, is_stopped, title, suite_updated_time,
-                    None, None, warning_text])
+                self.suite_treemodel.append(group_iters.get(group), [
+                    None, host, owner, suite, is_stopped, title,
+                    suite_updated_time, None, None, warning_text])
 
         self.suite_treemodel.foreach(self._expand_row, row_ids)
         return False
 
+    def _update_group_counts(self):
+        """Helper for self.update."""
+        group_counts = {"": {'total': 0}}
+        for suite_info in self.suite_info_map.values():
+            group_id = suite_info.get(KEY_GROUP)
 
-def update_hosts_suites_info(hosts, owner, prev_stopped_hosts_suites_info=None,
-                             prev_hosts_suites=None,
-                             stop_suite_clear_time=86400):
-    """Return dictionaries of host suite info and stopped host suite info."""
-    hosts = copy.deepcopy(hosts)
-    hosts_suites_info = get_hosts_suites_info(hosts, owner=owner)
+            if group_id in group_counts:
+                group_counts[group_id]['total'] += 1
+            else:
+                group_counts[group_id] = {'total': 1}
 
-    if prev_stopped_hosts_suites_info is None:
-        prev_stopped_hosts_suites_info = {}
-    if prev_hosts_suites is None:
-        prev_hosts_suites = []
-    stopped_hosts_suites_info = copy.deepcopy(prev_stopped_hosts_suites_info)
-    current_time = time.time()
-    current_hosts_suites = []
-    for host, suites in hosts_suites_info.items():
-        for suite, suite_info in suites.items():
-            if (KEY_STATES not in suite_info or
-                    KEY_UPDATE_TIME not in suite_info):
-                continue
-            if (host in stopped_hosts_suites_info and
-                    suite in stopped_hosts_suites_info[host]):
-                stopped_hosts_suites_info[host].pop(suite)
-            current_hosts_suites.append((host, suite))
+            if KEY_STATES in suite_info:
+                for state, number in sorted(
+                        suite_info[KEY_STATES][0].items(), key=lambda _: _[1]):
+                    group_counts[group_id].setdefault(state, 0)
+                    group_counts[group_id][state] += number
+        return group_counts
 
-    # Detect newly stopped suites and get some info for them.
-    for host, suite in prev_hosts_suites:
-        if (host, suite) not in current_hosts_suites:
-            stopped_hosts_suites_info.setdefault(host, {})
-            suite_info = get_unscannable_suite_info(host, suite, owner=owner)
-            if suite_info:
-                stopped_hosts_suites_info[host][suite] = suite_info
+    @staticmethod
+    def _states_to_text(states):
+        """Helper for self.update. Build states text from states."""
+        states_text = ""
+        for state, number in sorted(states.items(), key=lambda _: _[1]):
+            if state != TASK_STATUS_RUNAHEAD:
+                # 'runahead' states are usually hidden.
+                states_text += '%s %d ' % (state, number)
+        return states_text.rstrip()
 
-    # Remove expired stopped suites.
-    for host in stopped_hosts_suites_info:
-        remove_suites = []
-        for suite, suite_info in stopped_hosts_suites_info[host].items():
-            update_time = suite_info.get(KEY_UPDATE_TIME, 0)
-            if update_time + stop_suite_clear_time < current_time:
-                remove_suites.append(suite)
-        for suite in remove_suites:
-            stopped_hosts_suites_info[host].pop(suite)
-    return hosts_suites_info, stopped_hosts_suites_info
+    def update_now(self):
+        """Force an update as soon as possible."""
+        self._should_force_update = True
