@@ -105,16 +105,3 @@ class OrderedDictWithDefaults(OrderedDict):
     def __nonzero__(self):
         """Include any default keys in the nonzero calculation."""
         return bool(self.keys())
-
-    def __repr__(self):
-        """User-friendly-ish representation of defaults and others."""
-        non_default_items = []
-        non_default_keys = list(self)
-        for key in non_default_keys:
-            non_default_items.append((key, self[key]))
-        default_items = []
-        for key in getattr(self, 'defaults_', []):
-            if key not in non_default_keys:
-                default_items.append((key, self[key]))
-        repr_map = {"": non_default_items, "defaults_": default_items}
-        return "<" + type(self).__name__ + "(" + repr(repr_map) + ")>\n"
