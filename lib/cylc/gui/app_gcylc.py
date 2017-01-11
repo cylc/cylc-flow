@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2016 NIWA
+# Copyright (C) 2008-2017 NIWA
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1190,7 +1190,7 @@ been defined for this suite""").inform()
                 # set_program_name() was added in PyGTK 2.12
                 about.set_program_name("cylc")
         about.set_version(CYLC_VERSION)
-        about.set_copyright("Copyright (C) 2008-2016 NIWA")
+        about.set_copyright("Copyright (C) 2008-2017 NIWA")
         about.set_comments(
             "The Cylc Suite Engine.\n\nclient UUID:\n%s" % self.cfg.my_uuid)
         about.set_logo(get_logo())
