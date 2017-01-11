@@ -1,0 +1,6 @@
+[environment]
+    CYLC_FOOBAR="""
+foo
+bar
+baz
+"""

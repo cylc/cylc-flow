@@ -15,17 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test broadcasts, with overriding inheritance.
-. $(dirname $0)/test_header
-#-------------------------------------------------------------------------------
+# Test broadcast settings in 2 files
+. "$(dirname "$0")/test_header"
 set_test_number 2
-#-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
-#-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}" \
+    cylc run --debug --reference-test "${SUITE_NAME}"
+
+purge_suite "${SUITE_NAME}"
+exit

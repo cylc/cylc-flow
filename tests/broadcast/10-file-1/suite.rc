@@ -1,0 +1,15 @@
+[cylc]
+    UTC mode = True
+    [[reference test]]
+        live mode suite timeout = PT1M
+[scheduling]
+    [[dependencies]]
+        graph = "t1 => t2"
+[runtime]
+    [[t1]]
+        script = """
+cylc broadcast -n 't2' -F "${CYLC_SUITE_DEF_PATH}/broadcast.rc" "${CYLC_SUITE_NAME}"
+sleep 1
+"""
+    [[t2]]
+        script = false

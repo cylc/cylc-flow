@@ -1,0 +1,1 @@
+script=printenv CYLC_FOOBAR

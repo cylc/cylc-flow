@@ -1,0 +1,8 @@
+script=printenv CYLC_FOOBAR && ! printenv CYLC_QUX
+[environment]
+    CYLC_FOOBAR="""
+foo
+bar
+baz
+"""
+    CYLC_QUX=quux corge

@@ -16,6 +16,7 @@
 [runtime]
     [[t1]]
         script = """
+wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
 if [[ "${CYLC_TASK_CYCLE_POINT}" == '2017' ]]; then
     cylc broadcast "${CYLC_SUITE_NAME}" -p '2017' -n 't1' --set='script=true'
     cylc hold "${CYLC_SUITE_NAME}"
