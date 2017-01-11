@@ -1057,14 +1057,14 @@ you can exit the terminal or even log out without killing the suite:
 \lstset{language=transcript}
 \begin{lstlisting}
 $ cylc run tut/oneoff/basic
-            ._.                                                       
-            | |                 The Cylc Suite Engine [7.0.0]         
-._____._. ._| |_____.           Copyright (C) 2008-2016 NIWA          
+            ._.
+            | |                 The Cylc Suite Engine [7.0.0]
+._____._. ._| |_____.           Copyright (C) 2008-2017 NIWA
 | .___| | | | | .___|  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 | !___| !_! | | !___.  This program comes with ABSOLUTELY NO WARRANTY;
-!_____!___. |_!_____!  see `cylc warranty`.  It is free software, you 
-      .___! |           are welcome to redistribute it under certain  
-      !_____!                conditions; see `cylc conditions`.       
+!_____!___. |_!_____!  see `cylc warranty`.  It is free software, you
+      .___! |           are welcome to redistribute it under certain
+      !_____!                conditions; see `cylc conditions`.
 
 *** listening on nwp-1:43027 ***
 
@@ -1191,7 +1191,7 @@ as in \lstinline=tut/oneoff/jobsub=:
 \end{lstlisting}
 
 Run the suite again after checking that \lstinline=atd= is running on your
-system. 
+system.
 
 Cylc supports a number of different job submission methods. Tasks
 submitted to external batch queuing systems like \lstinline=at=,
@@ -4476,7 +4476,7 @@ Integer parameter values are zero-padded according to the size of their
 largest value, so \lstinline@foo<p>@ for \lstinline@p = 9..10@ expands to
 \lstinline@foo_p09, foo_p10@.
 
-To get thicker padding, prepend extra zeroes to the upper range value: 
+To get thicker padding, prepend extra zeroes to the upper range value:
 \lstinline@foo<p>@ for \lstinline@p = 9..010@ expands to
 \lstinline@foo_p009, foo_p010@.
 
@@ -5953,7 +5953,7 @@ tracking (see these with \lstinline=cylc get-site-config=):
 
     # Configure the choice of communication method. Only https is supported
     # at the moment.
-# SITE ONLY 
+# SITE ONLY
     method = https
 
     # Each suite listens on a dedicated network port. The port to bind to is
@@ -5979,7 +5979,7 @@ tracking (see these with \lstinline=cylc get-site-config=):
         # The "poll" method sets a default interval here to ensure no
         # tasks are accidentally left unpolled. You can override this
         # with run-length appropriate intervals under task [runtime]
-        # (however this will also result in routine polling under the 
+        # (however this will also result in routine polling under the
         # default or ssh communications).
         default polling interval in minutes = 1.0
 \end{lstlisting}
