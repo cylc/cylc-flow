@@ -18,7 +18,7 @@
 # Test cylc get-config
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 15
+set_test_number 19
 #-------------------------------------------------------------------------------
 init_suite "${TEST_NAME_BASE}" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/suite.rc"
 #-------------------------------------------------------------------------------
@@ -55,6 +55,17 @@ sort ${TEST_NAME}.stdout > stdout.1
 sort "$TEST_SOURCE_DIR/$TEST_NAME_BASE/section2.stdout" > stdout.2
 cmp_ok stdout.1 stdout.2
 cmp_ok $TEST_NAME.stderr - </dev/null
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-python
+run_ok $TEST_NAME cylc get-config --python --sparse $SUITE_NAME
+run_ok $TEST_NAME-parse-config python -c "
+import sys
+from parsec.OrderedDict import OrderedDictWithDefaults
+with open(sys.argv[1], 'r') as file_:
+    print eval(file_.read())
+" "$TEST_NAME.stdout"
+cmp_ok "$TEST_NAME-parse-config.stdout" "$TEST_NAME.stdout"
+cmp_ok "$TEST_NAME-parse-config.stderr" /dev/null
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
 exit
