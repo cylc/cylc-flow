@@ -18,7 +18,11 @@
 # Test restart from a checkpoint before a reload
 . "$(dirname "$0")/test_header"
 
-set_test_number 4
+date-remove() {
+    sed 's/[0-9]\+\(-[0-9]\{2\}\)\{2\}T[0-9]\{2\}\(:[0-9]\{2\}\)\{2\}Z/DATE/'
+}
+
+set_test_number 8
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 cp -p 'suite.rc' 'suite1.rc'
@@ -28,6 +32,73 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 # Suite reloads+inserts new task to mess up prerequisites - suite should stall
 suite_run_fail "${TEST_NAME_BASE}-run" \
     timeout 120 cylc run "${SUITE_NAME}" --debug
+cylc ls-checkpoints "${SUITE_NAME}" | date-remove >'cylc-ls-checkpoints.out'
+contains_ok 'cylc-ls-checkpoints.out' <<'__OUT__'
+#######################################################################
+# CHECKPOINT ID (ID|TIME|EVENT)
+1|DATE|reload-init
+2|DATE|reload-done
+0|DATE|latest
+__OUT__
+
+cylc ls-checkpoints "${SUITE_NAME}" 1 | date-remove >'cylc-ls-checkpoints-1.out'
+contains_ok 'cylc-ls-checkpoints-1.out' <<'__OUT__'
+#######################################################################
+# CHECKPOINT ID (ID|TIME|EVENT)
+1|DATE|reload-init
+
+# SUITE PARAMS (KEY|VALUE)
+final_point|2020
+initial_point|2016
+is_held|1
+run_mode|live
+
+# BROADCAST STATES (POINT|NAMESPACE|KEY|VALUE)
+2017|t1|script|true
+
+# TASK POOL (CYCLE|NAME|SPAWNED|STATUS|HOLD_SWAP)
+2017|t1|1|running|held
+2018|t1|0|held|waiting
+__OUT__
+cylc ls-checkpoints "${SUITE_NAME}" 2 | date-remove >'cylc-ls-checkpoints-2.out'
+contains_ok 'cylc-ls-checkpoints-2.out' <<'__OUT__'
+#######################################################################
+# CHECKPOINT ID (ID|TIME|EVENT)
+2|DATE|reload-done
+
+# SUITE PARAMS (KEY|VALUE)
+final_point|2020
+initial_point|2016
+is_held|1
+run_mode|live
+
+# BROADCAST STATES (POINT|NAMESPACE|KEY|VALUE)
+2017|t1|script|true
+
+# TASK POOL (CYCLE|NAME|SPAWNED|STATUS|HOLD_SWAP)
+2017|t1|1|running|held
+2018|t1|0|held|waiting
+__OUT__
+cylc ls-checkpoints "${SUITE_NAME}" 0 | date-remove >'cylc-ls-checkpoints-0.out'
+contains_ok 'cylc-ls-checkpoints-0.out' <<'__OUT__'
+#######################################################################
+# CHECKPOINT ID (ID|TIME|EVENT)
+0|DATE|latest
+
+# SUITE PARAMS (KEY|VALUE)
+run_mode|live
+initial_point|2016
+final_point|2020
+
+# BROADCAST STATES (POINT|NAMESPACE|KEY|VALUE)
+2017|t1|script|true
+
+# TASK POOL (CYCLE|NAME|SPAWNED|STATUS|HOLD_SWAP)
+2017|t2|1|failed|
+2018|t1|0|waiting|
+2018|t2|0|waiting|
+__OUT__
+
 # Restart should stall in exactly the same way
 suite_run_fail "${TEST_NAME_BASE}-restart-1" \
     timeout 60 cylc restart "${SUITE_NAME}" --debug

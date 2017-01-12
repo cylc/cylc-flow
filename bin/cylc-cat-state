@@ -137,7 +137,7 @@ def _callback_broadcast_states(data, row):
 
 def _callback_task_pool(data, row):
     """Callback for dao.select_task_pool."""
-    cycle, name, spawned, status = row
+    cycle, name, spawned, status, _ = row
     data["task_pool"].append({
         "cycle": cycle,
         "name": name,
