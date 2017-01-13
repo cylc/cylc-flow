@@ -2491,9 +2491,9 @@ for the same task have an AND relationship. So this:
     graph = """A => X  # X triggers off A
                B => X  # X also triggers off B"""
 \end{lstlisting}
-\lstset{language=transcript}
-\lstset{language=suiterc}
+
 is equivalent to this:
+\lstset{language=suiterc}
 \begin{lstlisting}
     graph = "A & B => X"  # X triggers off A AND B
 \end{lstlisting}
@@ -2524,29 +2524,28 @@ and comments to make the graph structure as clear as possible.
                B => D"""
 \end{lstlisting}
 
-\paragraph{Handling Long Graph Lines}
+\paragraph{Splitting Up Long Graph Lines}
 
-Long chains of dependencies can be split into pairs:
+\lstset{language=suiterc}
+
+It is not necessary to use the general line continuation marker
+\lstinline=\= to split long graph lines. Just break at dependency arrows,
+or split long chains into smaller ones. This graph:
 \begin{lstlisting}
     graph = "A => B => C"
-# is equivalent to this:
+\end{lstlisting}
+
+is equivalent to this:
+\begin{lstlisting}
+    graph = """A => B =>
+                 C"""
+\end{lstlisting}
+
+and also to this:
+\begin{lstlisting}
     graph = """A => B
                B => C"""
-# BUT THIS IS AN ERROR:
-    graph = """A => B => # WRONG!
-               C"""      # WRONG!
 \end{lstlisting}
-If you have very long task names, or long conditional trigger
-expressions (below) then you can use the suite.rc line continuation
-marker:
-\begin{lstlisting}
-    graph = "A => B \
-    => C"  # OK
-\end{lstlisting}
-Note that a line continuation marker must be the final character on
-the line; it cannot be followed by trailing spaces or a comment.
-
-\lstset{language=transcript}
 
 \subsubsection{Graph Types}
 \label{GraphTypes}
