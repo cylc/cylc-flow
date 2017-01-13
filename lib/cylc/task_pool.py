@@ -70,6 +70,7 @@ class TaskPool(object):
     """Task pool of a suite."""
 
     ERR_PREFIX_TASKID_MATCH = "No matching tasks found: "
+    ERR_PREFIX_TASK_NOT_ON_SEQUENCE = "Invalid cycle point for task: "
     JOBS_KILL = "jobs-kill"
     JOBS_POLL = "jobs-poll"
     JOBS_SUBMIT = SuiteProcPool.JOBS_SUBMIT
@@ -148,7 +149,7 @@ class TaskPool(object):
             for taskname in qconfig[queue]['members']:
                 self.myq[taskname] = queue
 
-    def insert_tasks(self, items, stop_point_str):
+    def insert_tasks(self, items, stop_point_str, no_check=False):
         """Insert tasks."""
         n_warnings = 0
         config = SuiteConfig.get_inst()
@@ -208,6 +209,20 @@ class TaskPool(object):
             ["submit_num"], task_ids)
         for name_str, point_str in task_ids:
             # TODO - insertion of start-up tasks? (startup=False assumed here)
+
+            # Check that the cycle point is on one of the tasks sequences.
+            on_sequence = False
+            point = get_point(point_str)
+            if not no_check:  # Check if cycle point is on the tasks sequence.
+                for sequence in config.taskdefs[name_str].sequences:
+                    if sequence.is_on_sequence(point):
+                        on_sequence = True
+                        break
+                if not on_sequence:
+                    self.log.warning(self.ERR_PREFIX_TASK_NOT_ON_SEQUENCE +
+                                     name_str + ', ' + point_str)
+                    continue
+
             submit_num = None
             if (name_str, point_str) in task_states_data:
                 submit_num = task_states_data[(name_str, point_str)].get(

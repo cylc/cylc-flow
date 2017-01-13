@@ -148,13 +148,14 @@ class SuiteCommandServer(BaseCommsServer):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def insert_tasks(self, items, stop_point_string=None):
+    def insert_tasks(self, items, stop_point_string=None, no_check=False):
         if not isinstance(items, list):
             items = [items]
         if stop_point_string == "None":
             stop_point_string = None
         return self._put("insert_tasks", (items,),
-                         {"stop_point_string": stop_point_string})
+                         {"stop_point_string": stop_point_string,
+                          "no_check": no_check in ['True', True]})
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
