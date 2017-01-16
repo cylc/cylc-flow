@@ -382,7 +382,7 @@ class TaskState(object):
         else:
             self.submission_timer_timeout = None
             self.execution_timer_timeout = None
-            self.set_state(self.hold_swap)
+            self.reset_state(self.hold_swap)
 
     def set_state(self, status, loglvl=DEBUG):
         """Set, log and record task status (normal change, not forced - don't
