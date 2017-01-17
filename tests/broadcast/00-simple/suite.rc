@@ -40,7 +40,7 @@ set +x
 {
     # broadcast to all cycles and namespaces:
         cylc broadcast -s "[environment]BCAST = ROOT" $CYLC_SUITE_NAME
-    # broadcast to foo%20100808T00:
+    # broadcast to foo.20100808T00:
         cylc broadcast -p 20100808T00 -n foo -s "[environment]BCAST = FOO" $CYLC_SUITE_NAME
     # broadcast to bar at all cycles:
         cylc broadcast -n bar -s "[environment]BCAST = BAR" $CYLC_SUITE_NAME

@@ -201,7 +201,7 @@ class BaseCommsClient(object):
         req = urllib2.Request(url, json_data, json_headers)
 
         # This is an unpleasant monkey patch, but there isn't an alternative.
-        # urllib2 uses POST iff there is a data payload, but that is not the
+        # urllib2 uses POST if there is a data payload, but that is not the
         # correct criterion. The difference is basically that POST changes
         # server state and GET doesn't.
         req.get_method = lambda: method
