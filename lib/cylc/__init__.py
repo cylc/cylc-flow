@@ -37,7 +37,7 @@ def environ_init(argv0=None):
         if cylc_dir != os.getenv('CYLC_DIR', ''):
             os.environ['CYLC_DIR'] = cylc_dir
 
-        cylc_dir_lib = os.path.join(cylc_dir, 'lib')
+        cylc_dir_lib = os.path.normpath(os.path.join(cylc_dir, 'lib'))
         my_lib = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
         if cylc_dir_lib == my_lib:
             dirs = []
@@ -49,6 +49,11 @@ def environ_init(argv0=None):
             dirs.append(os.getenv('CYLC_SUITE_DEF_PATH'))
         environ_path_add(dirs)
         environ_path_add([cylc_dir_lib], 'PYTHONPATH')
+        # Ensure cylc library is at the front of "sys.path".
+        if sys.path[0:1] != [cylc_dir_lib]:
+            if cylc_dir_lib in sys.path:
+                sys.path.remove(cylc_dir_lib)
+            sys.path.insert(0, cylc_dir_lib)
 
     # Python output buffering delays appearance of stdout and stderr
     # when output is not directed to a terminal (this occurred when

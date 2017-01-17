@@ -22,11 +22,12 @@ import sys
 
 def prelude():
     """Ensure cylc library is at the front of "sys.path"."""
-    lib = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), '..', 'lib')
-    if lib in sys.path:
-        sys.path.remove(lib)
-    sys.path.insert(0, lib)
+    lib = os.path.normpath(os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), '..', 'lib'))
+    if sys.path[0:1] != [lib]:
+        if lib in sys.path:
+            sys.path.remove(lib)
+        sys.path.insert(0, lib)
 
 
 prelude()
