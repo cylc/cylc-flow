@@ -1,6 +1,8 @@
 # The Cylc Suite Engine
 
 [![Build Status](https://travis-ci.org/cylc/cylc.svg?branch=master)](https://travis-ci.org/cylc/cylc)
+[![DOI](https://zenodo.org/badge/1836229.svg)](https://zenodo.org/badge/latestdoi/1836229)
+
 
 ## A Workflow Engine and Meta-Scheduler
 
