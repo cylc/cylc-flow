@@ -73,12 +73,7 @@ CustomTaskEventHandlerContext = namedtuple(
 
 TaskEventMailContext = namedtuple(
     "TaskEventMailContext",
-    ["key", "ctx_type", "event", "mail_from", "mail_to", "mail_smtp"])
-
-
-TaskJobLogsRegisterContext = namedtuple(
-    "TaskJobLogsRegisterContext",
-    ["key", "ctx_type"])
+    ["key", "ctx_type", "mail_from", "mail_to", "mail_smtp"])
 
 
 TaskJobLogsRetrieveContext = namedtuple(
@@ -735,40 +730,34 @@ class TaskProxy(object):
             retry_delays = [0]
         self.event_handler_try_timers[key2] = TaskActionTimer(
             TaskJobLogsRetrieveContext(
-                # key
-                self.JOB_LOGS_RETRIEVE,
-                # ctx_type
-                self.JOB_LOGS_RETRIEVE,
-                user_at_host,
-                # max_size
-                self._get_host_conf("retrieve job logs max size"),
+                self.JOB_LOGS_RETRIEVE,  # key
+                self.JOB_LOGS_RETRIEVE,  # ctx_type
+                self.user_at_host,
+                self._get_host_conf("retrieve job logs max size"),  # max_size
             ),
             retry_delays)
 
     def setup_event_mail(self, event, _):
         """Event notification, by email."""
-        key1 = (self.EVENT_MAIL, event)
-        if ((key1, self.submit_num) in self.event_handler_try_timers or
+        key2 = ((self.EVENT_MAIL, event), self.submit_num)
+        if (key2 in self.event_handler_try_timers or
                 event not in self._get_events_conf("mail events", [])):
             return
-
         retry_delays = self._get_events_conf("mail retry delays")
         if not retry_delays:
             retry_delays = [0]
-        self.event_handler_try_timers[(key1, self.submit_num)] = (
-            TaskActionTimer(
-                TaskEventMailContext(
-                    key1,
-                    self.EVENT_MAIL,  # ctx_type
-                    event,
-                    self._get_events_conf(  # mail_from
-                        "mail from",
-                        "notifications@" + get_suite_host(),
-                    ),
-                    self._get_events_conf("mail to", USER),  # mail_to
-                    self._get_events_conf("mail smtp"),  # mail_smtp
+        self.event_handler_try_timers[key2] = TaskActionTimer(
+            TaskEventMailContext(
+                self.EVENT_MAIL,  # key
+                self.EVENT_MAIL,  # ctx_type
+                self._get_events_conf(  # mail_from
+                    "mail from",
+                    "notifications@" + get_suite_host(),
                 ),
-                retry_delays))
+                self._get_events_conf("mail to", USER),  # mail_to
+                self._get_events_conf("mail smtp"),  # mail_smtp
+            ),
+            retry_delays)
 
     def setup_custom_event_handlers(self, event, message, only_list=None):
         """Call custom event handlers."""

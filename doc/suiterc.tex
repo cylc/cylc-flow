@@ -197,6 +197,18 @@ file is removed or modified, the suite will shut itself down automatically.
     \item {\em default:} PT10M
 \end{myitemize}
 
+\subsubsection[task event mail interval]{[cylc] \textrightarrow task event mail interval}
+\label{task-event-mail-interval}
+
+Group together all the task event mail notifications into a single email within
+a given interval. This is useful to prevent flooding users' mail boxes when
+many task events occur within a short period of time.
+
+\begin{myitemize}
+  \item {\em type:} ISO 8601 duration/interval representation (e.g. \lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
+  \item {\em default: PT5M}
+\end{myitemize}
+
 \subsubsection[disable automatic shutdown]{[cylc] \textrightarrow disable automatic shutdown}
 
 This has the same effect as the \lstinline{--no-auto-shutdown} flag for

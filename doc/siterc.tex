@@ -74,45 +74,6 @@ housekeeping is enabled.
 \item {\em default:} 2
 \end{myitemize}
 
-\subsubsection{execution polling intervals}
-\label{execution_polling}
-
-Cylc can poll running jobs to catch problems that prevent task messages
-from being sent back to the suite, such as hard job kills, network
-outages, or unplanned task host shutdown. Routine polling is done only
-for the polling {\em task communication method} (below) unless
-suite-specific polling is configured in the suite definition.
-A list of interval values can be specified, with the last value used
-repeatedly until the task is finished - this allows more frequent
-polling near the beginning and end of the anticipated task run time.
-Multipliers can be used as shorthand as in the example below.
-
-\begin{myitemize}
-\item {\em type:} ISO 8601 duration/interval representation (e.g.
-\lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
-\item {\em default:}
-\item {\em example:} \lstinline@execution polling intervals = 5*PT1M, 10*PT5M, 5*PT1M@
-\end{myitemize}
-
-
-\subsubsection{submission polling intervals}
-\label{submission_polling}
-
-Cylc can also poll submitted jobs to catch problems that prevent the
-submitted job from executing at all, such as deletion from an external
-batch scheduler queue. Routine polling is done only for the polling {\em
-task communication method} (below) unless suite-specific polling
-is configured in the suite definition. A list of interval
-values can be specified as for execution polling (above) but a single
-value is probably sufficient for job submission polling.
-
-\begin{myitemize}
-\item {\em type:} ISO 8601 duration/interval representation (e.g.
-\lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
-\item {\em default:}
-\item {\em example:} (see the execution polling example above)
-\end{myitemize}
-
 \subsubsection{task host select command timeout}
 
 When a task host in a suite is a shell command string, cylc calls the shell to
@@ -498,6 +459,45 @@ See above for default polling intervals for the poll method.
     \item {\bf poll} - the suite polls for the status of tasks (no task messaging)
   \end{myitemize}
 \item {\em localhost default:} default
+\end{myitemize}
+
+\paragraph[execution polling intervals]{[hosts] \textrightarrow [[HOST]] \textrightarrow execution polling intervals}
+\label{execution_polling}
+
+Cylc can poll running jobs to catch problems that prevent task messages
+from being sent back to the suite, such as hard job kills, network
+outages, or unplanned task host shutdown. Routine polling is done only
+for the polling {\em task communication method} (below) unless
+suite-specific polling is configured in the suite definition.
+A list of interval values can be specified, with the last value used
+repeatedly until the task is finished - this allows more frequent
+polling near the beginning and end of the anticipated task run time.
+Multipliers can be used as shorthand as in the example below.
+
+\begin{myitemize}
+\item {\em type:} ISO 8601 duration/interval representation (e.g.
+\lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
+\item {\em default:}
+\item {\em example:} \lstinline@execution polling intervals = 5*PT1M, 10*PT5M, 5*PT1M@
+\end{myitemize}
+
+
+\paragraph[submission polling intervals]{[hosts] \textrightarrow [[HOST]] \textrightarrow submission polling intervals}
+\label{submission_polling}
+
+Cylc can also poll submitted jobs to catch problems that prevent the
+submitted job from executing at all, such as deletion from an external
+batch scheduler queue. Routine polling is done only for the polling {\em
+task communication method} (above) unless suite-specific polling
+is configured in the suite definition. A list of interval
+values can be specified as for execution polling (above) but a single
+value is probably sufficient for job submission polling.
+
+\begin{myitemize}
+\item {\em type:} ISO 8601 duration/interval representation (e.g.
+\lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
+\item {\em default:}
+\item {\em example:} (see the execution polling example above)
 \end{myitemize}
 
 \paragraph[remote copy template]{[hosts] \textrightarrow [[HOST]] \textrightarrow remote copy template }
@@ -887,6 +887,11 @@ See ~\ref{UTC-mode} for details.
 
 Site default suite health check interval.
 See ~\ref{health-check-interval} for details.
+
+\subsubsection[task event mail interval]{[cylc] \textrightarrow task event mail interval}
+
+Site default task event mail interval.
+See ~\ref{task-event-mail-interval} for details.
 
 \subsubsection[{[}events{]}]{[cylc] \textrightarrow [[events]]}
 \label{SiteCylcHooks}
