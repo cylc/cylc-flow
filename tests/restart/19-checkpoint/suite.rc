@@ -24,6 +24,7 @@ if [[ "${CYLC_TASK_CYCLE_POINT}" == '2017' ]]; then
     while ! grep -qF 'INFO - Command succeeded: hold_suite()' "${LOG}"; do
         sleep 1  # make sure hold completes
     done
+    sleep 2
     (cd "${CYLC_SUITE_DEF_PATH}"; cp -p 'suite2.rc' 'suite.rc')
     cylc reload "${CYLC_SUITE_NAME}"
     while ! grep -q 'Reload completed' "${LOG}"; do
