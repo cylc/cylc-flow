@@ -1,0 +1,32 @@
+#!Jinja2
+[cylc]
+   [[events]]
+       abort on stalled = True
+   [[reference test]]
+       live mode suite timeout = PT1M
+       required run mode = live
+       expected task failures = foo.1
+[scheduling]
+    [[dependencies]]
+        graph="foo:start => bar"
+
+[runtime]
+    [[bar]]
+        script="""
+wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
+cylc reload "${CYLC_SUITE_NAME}"
+LOG="${CYLC_SUITE_LOG_DIR}/log"
+while ! grep -q 'Reload completed' "${LOG}"; do
+    sleep 1  # make sure reload completes
+done
+cylc kill "${CYLC_SUITE_NAME}" 'foo.1'
+while ! grep -qF '[foo.1] -job(01) killed' "${LOG}"; do
+    sleep 1  # make sure reload completes
+done
+"""
+        [[[job]]]
+            execution time limit = PT1M
+    [[foo]]
+        script=sleep 61
+        [[[remote]]]
+            host = {{CYLC_TEST_HOST}}
