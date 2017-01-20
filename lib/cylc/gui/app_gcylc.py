@@ -25,7 +25,7 @@ import gtk
 import pango
 import gobject
 import shlex
-import subprocess
+from subprocess import Popen, PIPE, STDOUT
 from uuid import uuid4
 from isodatetime.parsers import TimePointParser
 
@@ -77,8 +77,7 @@ from cylc.task_state import (
 
 def run_get_stdout(command, filter=False):
     try:
-        popen = subprocess.Popen(command, shell=True, stderr=subprocess.PIPE,
-                                 stdout=subprocess.PIPE)
+        popen = Popen(command, shell=True, stderr=PIPE, stdout=PIPE)
         out = popen.stdout.read()
         err = popen.stderr.read()
         res = popen.wait()
@@ -973,9 +972,14 @@ Main Control GUI that displays one or more views or interfaces to the suite.
     def click_exit(self, foo):
         self.quit()
 
-    def click_open(self, foo=None):
+    def click_open(self, widget, new_window=False):
+        """Callback for File -> Open Another Suite."""
+        if new_window:
+            title = "Open Another Suite In New Window"
+        else:
+            title = "Open Another Suite"
         app = dbchooser(
-            self.window, self.cfg.cylc_tmpdir, self.cfg.comms_timeout)
+            title, self.window, self.cfg.cylc_tmpdir, self.cfg.comms_timeout)
         reg, auth = None, None
         while True:
             response = app.window.run()
@@ -990,7 +994,26 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                 break
         app.updater.quit = True
         app.window.destroy()
-        if reg:
+        if not reg:
+            return
+        if new_window:
+            # This is essentially a double fork to ensure that the child
+            # process can detach as a process group leader and not subjected to
+            # SIGHUP from the current process.
+            # See also "cylc.batch_sys_handlers.background".
+            proc = Popen(
+                [
+                    "nohup",
+                    "bash",
+                    "-c",
+                    "exec cylc gui \"$0\" <'/dev/null' >'/dev/null' 2>&1",
+                    reg,
+                ],
+                preexec_fn=os.setpgrp,
+                stdin=open(os.devnull),
+                stdout=open(os.devnull, "wb"),
+                stderr=STDOUT)
+        else:
             self.reset(reg, auth)
 
     def pause_suite(self, bt):
@@ -1178,7 +1201,7 @@ been defined for this suite""").inform()
         print command
 
         try:
-            subprocess.Popen([command], shell=True)
+            Popen([command], shell=True)
         except OSError, e:
             warning_dialog('Error: failed to start ' + self.cfg.suite,
                            self.window).warn()
@@ -2315,6 +2338,7 @@ shown here in the state they were in at the time of triggering.''')
         tooltip.set_tip(widget, tip_text)
 
     def create_main_menu(self):
+        """Create the main menu."""
         self.menu_bar = gtk.MenuBar()
 
         file_menu = gtk.Menu()
@@ -2322,16 +2346,23 @@ shown here in the state they were in at the time of triggering.''')
         file_menu_root = gtk.MenuItem('_File')
         file_menu_root.set_submenu(file_menu)
 
-        open_item = gtk.ImageMenuItem('_Switch To Another Suite')
+        open_item = gtk.ImageMenuItem('_Open Another Suite')
         img = gtk.image_new_from_stock(gtk.STOCK_OPEN, gtk.ICON_SIZE_MENU)
         open_item.set_image(img)
         open_item.connect('activate', self.click_open)
         file_menu.append(open_item)
 
-        reg_new_item = gtk.ImageMenuItem('Register A _New Suite')
+        open_new_item = gtk.ImageMenuItem('Open Another Suite In _New Window')
+        img = gtk.image_new_from_stock(gtk.STOCK_OPEN, gtk.ICON_SIZE_MENU)
+        open_new_item.set_image(img)
+        open_new_item.connect(
+            'activate', self.click_open, True)  # new_window=True
+        file_menu.append(open_new_item)
+
+        reg_new_item = gtk.ImageMenuItem('_Register A New Suite')
         img = gtk.image_new_from_stock(gtk.STOCK_OPEN, gtk.ICON_SIZE_MENU)
         reg_new_item.set_image(img)
-        reg_new_item.connect('activate', self.newreg_popup)
+        reg_new_item.connect('activate', self.click_register)
         file_menu.append(reg_new_item)
 
         exit_item = gtk.ImageMenuItem('E_xit Gcylc')
@@ -2867,7 +2898,8 @@ to reduce network traffic.""")
         self.gcapture_windows.append(foo)
         foo.run()
 
-    def newreg_popup(self, w):
+    def click_register(self, w):
+        """Callback for File -> Register A New Suite."""
         dialog = gtk.FileChooserDialog(
             title='Register Or Create A Suite',
             action=gtk.FILE_CHOOSER_ACTION_SAVE,
@@ -2959,16 +2991,15 @@ This is what my suite does:..."""
         cat_menu.append(cylc_help_item)
         cylc_help_item.connect('activate', self.command_help)
 
-        cout = subprocess.Popen(["cylc", "categories"],
-                                stdout=subprocess.PIPE).communicate()[0]
+        cout = Popen(["cylc", "categories"], stdout=PIPE).communicate()[0]
         categories = cout.rstrip().split()
         for category in categories:
             foo_item = gtk.MenuItem(category)
             cat_menu.append(foo_item)
             com_menu = gtk.Menu()
             foo_item.set_submenu(com_menu)
-            cout = subprocess.Popen(["cylc", "category=" + category],
-                                    stdout=subprocess.PIPE).communicate()[0]
+            proc = Popen(["cylc", "category=" + category], stdout=PIPE)
+            cout = proc.communicate()[0]
             commands = cout.rstrip().split()
             for command in commands:
                 bar_item = gtk.MenuItem(command)
