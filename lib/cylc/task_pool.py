@@ -797,15 +797,21 @@ class TaskPool(object):
 
     def pool_is_stalled(self):
         """Return True if no active, queued or clock trigger awaiting tasks"""
+        can_be_stalled = False
         for itask in self.get_tasks():
             if itask.point > self.stop_point:
                 # Don't consider task beyond stop point
+                continue
+            if itask.state.status in [
+                    TASK_STATUS_SUCCEEDED, TASK_STATUS_EXPIRED]:
+                # Succeeded and expired tasks don't stall the suite
                 continue
             if itask.state.status in TASK_STATUSES_NOT_STALLED or (
                     not itask.start_time_reached() and
                     itask.state.status not in TASK_STATUSES_FINAL):
                 return False
-        return True
+            can_be_stalled = True
+        return can_be_stalled
 
     def report_stalled_task_deps(self):
         """Return a set of unmet dependencies"""
