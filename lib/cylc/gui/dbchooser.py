@@ -272,7 +272,7 @@ class db_updater(threading.Thread):
 
 
 class dbchooser(object):
-    def __init__(self, parent, tmpdir, timeout):
+    def __init__(self, title, parent, tmpdir, timeout):
 
         if timeout:
             self.timeout = float(timeout)
@@ -295,7 +295,7 @@ class dbchooser(object):
             (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK,
              gtk.RESPONSE_OK))
         # self.window.set_modal(True)
-        self.window.set_title("Suite Chooser")
+        self.window.set_title(title)
         self.window.set_size_request(750, 400)
         # TODO: not needed for a dialog window?
         self.window.set_icon(get_icon())
