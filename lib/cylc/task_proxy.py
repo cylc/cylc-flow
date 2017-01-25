@@ -176,7 +176,7 @@ class TaskProxy(object):
                  "MANAGE_JOB_LOGS_TRY_DELAYS", "NN",
                  "LOGGING_LVL_OF", "RE_MESSAGE_TIME", "TABLE_TASK_JOBS",
                  "TABLE_TASK_EVENTS", "TABLE_TASK_STATES", "POLLED_INDICATOR",
-                 "event_handler_env", "stop_sim_mode_job_submission", "tdef",
+                 "stop_sim_mode_job_submission", "tdef",
                  "submit_num", "validate_mode", "message_queue", "point",
                  "cleanup_cutoff", "identity", "has_spawned",
                  "point_as_seconds", "stop_point", "manual_trigger",
@@ -226,7 +226,6 @@ class TaskProxy(object):
 
     POLLED_INDICATOR = "(polled)"
 
-    event_handler_env = {}
     stop_sim_mode_job_submission = False
 
     def __init__(
@@ -372,12 +371,21 @@ class TaskProxy(object):
             if pre_reload_inst.state.status in TASK_STATUSES_ACTIVE:
                 self.log(WARNING, "job is active with pre-reload settings")
             # Retain some state from my pre suite-reload predecessor.
-            self.has_spawned = pre_reload_inst.has_spawned
-            self.summary = pre_reload_inst.summary
-            self.try_timers = pre_reload_inst.try_timers
             self.submit_num = pre_reload_inst.submit_num
+            self.has_spawned = pre_reload_inst.has_spawned
+            self.manual_trigger = pre_reload_inst.manual_trigger
+            self.is_manual_submit = pre_reload_inst.is_manual_submit
+            self.summary = pre_reload_inst.summary
+            self.local_job_file_path = pre_reload_inst.local_job_file_path
+            self.try_timers = pre_reload_inst.try_timers
+            self.event_handler_try_timers = (
+                pre_reload_inst.event_handler_try_timers)
             self.db_inserts_map = pre_reload_inst.db_inserts_map
             self.db_updates_map = pre_reload_inst.db_updates_map
+            self.task_host = pre_reload_inst.task_host
+            self.task_owner = pre_reload_inst.task_owner
+            self.job_vacated = pre_reload_inst.job_vacated
+            self.poll_timers = pre_reload_inst.poll_timers
             # Retain status of outputs.
             for msg, oid in pre_reload_inst.state.outputs.completed.items():
                 self.state.outputs.completed[msg] = oid
@@ -732,7 +740,7 @@ class TaskProxy(object):
             TaskJobLogsRetrieveContext(
                 self.JOB_LOGS_RETRIEVE,  # key
                 self.JOB_LOGS_RETRIEVE,  # ctx_type
-                self.user_at_host,
+                user_at_host,
                 self._get_host_conf("retrieve job logs max size"),  # max_size
             ),
             retry_delays)

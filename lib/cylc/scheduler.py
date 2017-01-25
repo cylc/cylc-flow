@@ -183,6 +183,7 @@ class Scheduler(object):
 
         self.suite_env = {}
         self.suite_task_env = {}
+        self.task_event_handler_env = {}
         self.contact_data = None
 
         self.do_process_tasks = False
@@ -1252,7 +1253,7 @@ conditions; see `cylc conditions`.
 
         # Make [cylc][environment] available to task event handlers in worker
         # processes,
-        TaskProxy.event_handler_env = cenv
+        self.task_event_handler_env = cenv
         # and to suite event handlers in this process.
         for var, val in cenv.items():
             os.environ[var] = val
@@ -1782,8 +1783,8 @@ conditions; see `cylc conditions`.
                     # Run custom event handlers on their own
                     if env is None:
                         env = dict(os.environ)
-                        if TaskProxy.event_handler_env:
-                            env.update(TaskProxy.event_handler_env)
+                        if self.task_event_handler_env:
+                            env.update(self.task_event_handler_env)
                     SuiteProcPool.get_inst().put_command(
                         SuiteProcContext(
                             key, try_timer.ctx.cmd, env=env, shell=True,
