@@ -355,6 +355,8 @@ class TaskProxy(object):
             self.run_try_state = pre_reload_inst.run_try_state
             self.sub_try_state = pre_reload_inst.sub_try_state
             self.submit_num = pre_reload_inst.submit_num
+            self.task_host = pre_reload_inst.task_host
+            self.task_owner = pre_reload_inst.task_owner
             self.db_inserts_map = pre_reload_inst.db_inserts_map
             self.db_updates_map = pre_reload_inst.db_updates_map
             # Retain status of outputs.
