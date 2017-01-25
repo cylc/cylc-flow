@@ -2119,6 +2119,11 @@ conditions; see `cylc conditions`.
         """Force spawn task successors."""
         return self.pool.spawn_tasks(items)
 
+    def command_take_checkpoints(self, items):
+        """Insert current task_pool, etc to checkpoints tables."""
+        return self.pri_dao.take_checkpoints(
+            items[0], other_daos=[self.pub_dao])
+
     def filter_initial_task_list(self, inlist):
         """Return list of initial tasks after applying a filter."""
         included_by_rc = self.config.cfg[

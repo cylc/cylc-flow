@@ -1,0 +1,57 @@
+#!/usr/bin/env python
+
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) 2008-2016 NIWA
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""cylc [control] checkpoint [OPTIONS] ARGS
+
+Tell suite to checkpoint its current state.
+"""
+
+import sys
+if "--use-ssh" in sys.argv[1:]:
+    sys.argv.remove("--use-ssh")
+    from cylc.remote import remrun
+    if remrun().execute(force_required=True):
+        sys.exit(0)
+
+import cylc.flags
+from cylc.option_parsers import CylcOptionParser as COP
+from cylc.network.suite_command_client import SuiteCommandClient
+
+
+def main():
+    parser = COP(__doc__, comms=True, argdoc=[
+        ("REG", "Suite name"),
+        ("CHECKPOINT-NAME", "Checkpoint name")])
+
+    options, args = parser.parse_args()
+    suite, name = args
+
+    pclient = SuiteCommandClient(
+        suite, options.owner, options.host, options.port,
+        options.comms_timeout, my_uuid=options.set_uuid,
+        print_uuid=options.print_uuid)
+    pclient.put_command("take_checkpoints", items=[name])
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(str(exc))

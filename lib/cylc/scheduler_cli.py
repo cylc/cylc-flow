@@ -96,8 +96,8 @@ def parse_commandline(is_restart):
     if is_restart:
         parser.add_option(
             "--checkpoint",
-            help="Use specified checkpoint to restart",
-            metavar="CHECKPOINT", action="store", dest="checkpoint")
+            help="Specify the ID of a checkpoint to restart from",
+            metavar="CHECKPOINT-ID", action="store", dest="checkpoint")
 
         parser.add_option(
             "--ignore-final-cycle-point",

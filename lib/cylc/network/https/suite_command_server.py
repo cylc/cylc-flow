@@ -183,6 +183,13 @@ class SuiteCommandServer(BaseCommsServer):
             items = [items]
         return self._put("kill_tasks", (items,))
 
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def take_checkpoints(self, items):
+        if not isinstance(items, list):
+            items = [items]
+        return self._put("take_checkpoints", (items,))
+
     def _put(self, command, command_args, command_kwargs=None):
         if command_args is None:
             command_args = tuple()
