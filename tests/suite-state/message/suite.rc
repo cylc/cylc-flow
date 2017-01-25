@@ -1,0 +1,18 @@
+[cylc]
+    UTC mode = True
+    [[reference test]]
+        live mode suite timeout = PT1M
+
+[scheduling]
+    initial cycle point = 20100101T0000Z
+    [[dependencies]]
+        [[[R1]]]
+            graph = t1:out1 => t2
+
+[runtime]
+    [[t1]]
+        script = cylc task message 'hello'
+        [[[outputs]]] 
+            out1 = "hello"
+    [[t2]]
+        script = true

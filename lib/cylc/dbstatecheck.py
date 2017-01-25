@@ -56,6 +56,9 @@ class CylcSuiteDBChecker(object):
     STATE_ALIASES['fail'] = [TASK_STATUS_FAILED]
     STATE_ALIASES['succeed'] = [TASK_STATUS_SUCCEEDED]
 
+    TABLE_TASK_STATES = "task_states"
+    TABLE_TASK_EVENTS = "task_events"
+
     def __init__(self, suite_dir, suite):
         # possible to set suite_dir to system default cylc-run dir?
         suite_dir = os.path.expanduser(suite_dir)
@@ -80,31 +83,48 @@ class CylcSuiteDBChecker(object):
         else:
             return state
 
-    def suite_state_query(self, task=None, cycle=None, status=None, mask=None):
+    def suite_state_query(self, task=None, cycle=None, status=None, mask=None,
+                          check_message=False):
         """run a query on the suite database"""
         vals = []
         additionals = []
         res = []
+
         if mask is None:
             mask = "name, cycle, status"
-        q_base = "select {0} from task_states".format(mask)
+
+        if check_message:
+            target_table = self.TABLE_TASK_EVENTS
+            mask = "name"
+        else:
+            target_table = self.TABLE_TASK_STATES
+
+        q_base = "select {0} from {1}".format(mask, target_table)
         if task is not None:
             additionals.append("name==?")
             vals.append(task)
         if cycle is not None:
             additionals.append("cycle==?")
             vals.append(cycle)
+
         if status is not None:
-            st = self.state_lookup(status)
-            if type(st) is list:
-                add = []
-                for s in st:
-                    vals.append(s)
-                    add.append("status==?")
-                additionals.append("(" + (" OR ").join(add) + ")")
-            else:
-                additionals.append("status==?")
+            if check_message:
+                message_type = "message {0}".format(status)
+                additionals.append("event LIKE ?")
+                vals.append("message %")
+                additionals.append("message==?")
                 vals.append(status)
+            else:
+                st = self.state_lookup(status)
+                if type(st) is list:
+                    add = []
+                    for s in st:
+                        vals.append(s)
+                        add.append("status==?")
+                    additionals.append("(" + (" OR ").join(add) + ")")
+                else:
+                    additionals.append("status==?")
+                    vals.append(status)
         if additionals:
             q = q_base + " where " + (" AND ").join(additionals)
         else:
@@ -129,9 +149,10 @@ class CylcSuiteDBChecker(object):
         res = self.suite_state_query(task, cycle, mask="status")
         return res[0]
 
-    def task_state_met(self, task, cycle, status):
+    def task_state_met(self, task, cycle, status, check_message=False):
         """used to check if a task is in a particular state"""
-        res = self.suite_state_query(task, cycle, status)
+        res = self.suite_state_query(task, cycle, status,
+                                     check_message=check_message)
         return len(res) > 0
 
     def validate_mask(self, mask):

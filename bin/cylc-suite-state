@@ -19,7 +19,8 @@
 """cylc suite-state REG [OPTIONS]
 
 Print task states retrieved from a suite database; or (with --task,
---point, and --status) poll until a given task reaches a given state.
+--point, and --status) poll until a given task reaches a given state; or (with
+--task, --point, and --message) poll until a task receives a given message.
 Polling is configurable with --interval and --max-polls; for a one-off
 check use --max-polls=1. The suite database does not need to exist at
 the time polling commences but allocated polls are consumed waiting for
@@ -108,13 +109,15 @@ class SuitePoller(Poller):
 
     def check(self):
         # return True if desired suite state achieved, else False
-        if self.checker.task_state_met(
-                self.args['task'],
-                self.args['cycle'],
-                self.args['status']):
-            return True
+        if self.args['message']:
+            return self.checker.task_state_met(self.args['task'],
+                                               self.args['cycle'],
+                                               self.args['message'],
+                                               True)
         else:
-            return False
+            return self.checker.task_state_met(self.args['task'],
+                                               self.args['cycle'],
+                                               self.args['status'])
 
 
 def main():
@@ -169,6 +172,11 @@ def main():
              "check for. " + conds + states,
         action="store", dest="status", default=None)
 
+    parser.add_option(
+        "-m", "--message",
+        help="Specify a particular message to check for.",
+        action="store", dest="msg", default=None)
+
     SuitePoller.add_to_cmd_options(parser)
     (options, args) = parser.parse_args(remove_opts=["--db", "--debug"])
 
@@ -211,6 +219,19 @@ def main():
 
         options.cycle = str(my_target_point)
 
+    # Exit if both task state and message are to being polled
+    if options.status and options.msg:
+        sys.exit("ERROR: cannot poll both status and message")
+
+    if options.msg and not options.task and not options.cycle:
+        sys.exit("ERROR: need a taskname and cyclepoint")
+
+    # Exit if an invalid status is requested
+    if (options.status and
+            options.status not in TASK_STATUSES_ORDERED and
+            options.status not in CylcSuiteDBChecker.STATE_ALIASES):
+        sys.exit("ERROR: invalid status '" + options.status + "'")
+
     # Reformat cycle point for querying targeted suite
     if options.template:
         if options.cycle:
@@ -227,29 +248,30 @@ def main():
         os.path.expanduser(
             options.run_dir or GLOBAL_CFG.get_host_item('run directory')))
 
-    spoller = SuitePoller(
-        "requested state",
-        options.interval, options.max_polls,
-        args={'suite': suite,
-              'run_dir': run_dir,
-              'task': options.task,
-              'cycle': options.cycle,
-              'status': options.status
-              })
+    pollargs = {'suite': suite,
+                'run_dir': run_dir,
+                'task': options.task,
+                'cycle': options.cycle,
+                'status': options.status,
+                'message': options.msg
+                }
+
+    spoller = SuitePoller("requested state",
+                          options.interval,
+                          options.max_polls,
+                          args=pollargs)
 
     if not spoller.connect():
         sys.exit("ERROR: cannot connect to the suite DB")
 
-    if options.status:
-        if (options.status in TASK_STATUSES_ORDERED or
-                options.status in CylcSuiteDBChecker.STATE_ALIASES):
-            pass
-        else:
-            sys.exit("ERROR: invalid status '" + options.status + "'")
-
     if options.status and options.task and options.cycle:
         """check a task status"""
         spoller.condition = options.status
+        if not spoller.poll():
+            sys.exit(1)
+    elif options.msg:
+        """Check for a task message"""
+        spoller.condition = "message: %s" % options.msg
         if not spoller.poll():
             sys.exit(1)
     else:
