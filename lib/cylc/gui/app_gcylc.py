@@ -1224,16 +1224,14 @@ been defined for this suite""").inform()
         about.run()
         about.destroy()
 
-    def view_task_descr(self, w, e, task_id):
+    def view_task_descr(self, w, task_id):
         command = ("cylc show" + self.get_remote_run_opts() + " " +
                    self.cfg.suite + " " + task_id)
         foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 600, 400)
         self.gcapture_windows.append(foo)
         foo.run()
 
-    def view_task_info(self, w, e, task_id, choice):
-        if hasattr(e, "button") and e.button != 1:
-            return False
+    def view_task_info(self, w, task_id, choice):
         try:
             task_state_summary = self.updater.full_state_summary[task_id]
         except KeyError:
@@ -1308,7 +1306,7 @@ been defined for this suite""").inform()
                     item.set_image(gtk.image_new_from_stock(
                         gtk.STOCK_DND, gtk.ICON_SIZE_MENU))
                     view_menu.append(item)
-                    item.connect('button-release-event', self.view_task_info,
+                    item.connect('activate', self.view_task_info,
                                  task_ids[0], filename)
                     item.set_sensitive(
                         t_states[0] in TASK_STATUSES_WITH_JOB_SCRIPT)
@@ -1320,7 +1318,7 @@ been defined for this suite""").inform()
                     item.set_image(gtk.image_new_from_stock(
                         gtk.STOCK_DND, gtk.ICON_SIZE_MENU))
                     view_menu.append(item)
-                    item.connect('button-release-event', self.view_task_info,
+                    item.connect('activate', self.view_task_info,
                                  task_ids[0], filename)
                     item.set_sensitive(
                         t_states[0] in TASK_STATUSES_WITH_JOB_LOGS)
@@ -1331,7 +1329,7 @@ been defined for this suite""").inform()
                 info_item.set_image(img)
                 view_menu.append(info_item)
                 info_item.connect(
-                    'button-release-event', self.popup_requisites, task_ids[0])
+                    'activate', self.popup_requisites, task_ids[0])
 
                 js0_item = gtk.ImageMenuItem('run "cylc show"')
                 img = gtk.image_new_from_stock(
@@ -1339,7 +1337,7 @@ been defined for this suite""").inform()
                 js0_item.set_image(img)
                 view_menu.append(js0_item)
                 js0_item.connect(
-                    'button-release-event', self.view_task_descr, task_ids[0])
+                    'activate', self.view_task_descr, task_ids[0])
 
                 # PDF user guide.
                 # This method of setting a custom menu item is not supported
@@ -1419,17 +1417,16 @@ been defined for this suite""").inform()
             gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU)
         reset_ready_item.set_image(reset_img)
         reset_menu.append(reset_ready_item)
-        reset_ready_item.connect('button-release-event', self.reset_task_state,
-                                 task_ids, TASK_STATUS_READY, task_is_family)
+        reset_ready_item.connect(
+            'activate', self.reset_task_state, task_ids, TASK_STATUS_READY)
 
         reset_waiting_item = gtk.ImageMenuItem('"%s"' % TASK_STATUS_WAITING)
         reset_img = gtk.image_new_from_stock(
             gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU)
         reset_waiting_item.set_image(reset_img)
         reset_menu.append(reset_waiting_item)
-        reset_waiting_item.connect('button-release-event',
-                                   self.reset_task_state, task_ids,
-                                   TASK_STATUS_WAITING, task_is_family)
+        reset_waiting_item.connect(
+            'activate', self.reset_task_state, task_ids, TASK_STATUS_WAITING)
 
         reset_succeeded_item = gtk.ImageMenuItem(
             '"%s"' % TASK_STATUS_SUCCEEDED)
@@ -1437,25 +1434,22 @@ been defined for this suite""").inform()
                                              gtk.ICON_SIZE_MENU)
         reset_succeeded_item.set_image(reset_img)
         reset_menu.append(reset_succeeded_item)
-        reset_succeeded_item.connect('button-release-event',
-                                     self.reset_task_state, task_ids,
-                                     TASK_STATUS_SUCCEEDED, task_is_family)
+        reset_succeeded_item.connect(
+            'activate', self.reset_task_state, task_ids, TASK_STATUS_SUCCEEDED)
 
         reset_failed_item = gtk.ImageMenuItem('"%s"' % TASK_STATUS_FAILED)
         reset_img = gtk.image_new_from_stock(gtk.STOCK_CONVERT,
                                              gtk.ICON_SIZE_MENU)
         reset_failed_item.set_image(reset_img)
         reset_menu.append(reset_failed_item)
-        reset_failed_item.connect('button-release-event',
-                                  self.reset_task_state, task_ids,
-                                  TASK_STATUS_FAILED, task_is_family)
+        reset_failed_item.connect(
+            'activate', self.reset_task_state, task_ids, TASK_STATUS_FAILED)
 
         spawn_item = gtk.ImageMenuItem('Force spawn')
         img = gtk.image_new_from_stock(gtk.STOCK_ADD, gtk.ICON_SIZE_MENU)
         spawn_item.set_image(img)
         menu.append(spawn_item)
-        spawn_item.connect('button-release-event', self.spawn_task,
-                           task_ids, task_is_family)
+        spawn_item.connect('activate', self.spawn_task, task_ids)
 
         # Separator.
         menu.append(gtk.SeparatorMenuItem())
@@ -1466,8 +1460,7 @@ been defined for this suite""").inform()
                                        gtk.ICON_SIZE_MENU)
         stoptask_item.set_image(img)
         menu.append(stoptask_item)
-        stoptask_item.connect('activate', self.hold_task, task_ids, True,
-                              task_is_family)
+        stoptask_item.connect('activate', self.hold_task, task_ids, True)
 
         # Release.
         unstoptask_item = gtk.ImageMenuItem('Release')
@@ -1475,8 +1468,7 @@ been defined for this suite""").inform()
                                        gtk.ICON_SIZE_MENU)
         unstoptask_item.set_image(img)
         menu.append(unstoptask_item)
-        unstoptask_item.connect('activate', self.hold_task, task_ids, False,
-                                task_is_family)
+        unstoptask_item.connect('activate', self.hold_task, task_ids, False)
 
         # Separator.
         menu.append(gtk.SeparatorMenuItem())
@@ -1572,7 +1564,7 @@ been defined for this suite""").inform()
         else:
             tb.insert(tb.get_end_iter(), line)
 
-    def popup_requisites(self, w, e, task_id):
+    def popup_requisites(self, w, task_id):
         """Show prerequisites of task_id in a pop up window."""
         name, point_string = TaskID.split(task_id)
         results, bad_items = self.get_comms_info(
@@ -1657,7 +1649,7 @@ shown here in the state they were in at the time of triggering.''')
         prompt.destroy()
         return response == gtk.RESPONSE_YES
 
-    def hold_task(self, b, task_ids, stop=True, is_family=False):
+    def hold_task(self, b, task_ids, stop=True):
         """Hold or release a task."""
         if type(task_ids) is not list:
             task_ids = [task_ids]
@@ -1673,7 +1665,7 @@ shown here in the state they were in at the time of triggering.''')
                     return
             self.put_comms_command('release_tasks', items=task_ids)
 
-    def trigger_task_now(self, b, task_ids, is_family=False):
+    def trigger_task_now(self, b, task_ids):
         """Trigger task via the suite daemon's command interface."""
         if type(task_ids) is not list:
             task_ids = [task_ids]
@@ -1695,7 +1687,7 @@ shown here in the state they were in at the time of triggering.''')
         self.gcapture_windows.append(foo)
         foo.run()
 
-    def poll_task(self, b, task_ids, is_family=False):
+    def poll_task(self, b, task_ids):
         """Poll a task/family."""
         if type(task_ids) is not list:
             task_ids = [task_ids]
@@ -1705,7 +1697,7 @@ shown here in the state they were in at the time of triggering.''')
                 return
         self.put_comms_command('poll_tasks', items=task_ids)
 
-    def kill_task(self, b, task_ids, is_family=False):
+    def kill_task(self, b, task_ids):
         """Kill a task/family."""
         if type(task_ids) is not list:
             task_ids = [task_ids]
@@ -1716,26 +1708,22 @@ shown here in the state they were in at the time of triggering.''')
                 return
         self.put_comms_command('kill_tasks', items=task_ids)
 
-    def spawn_task(self, b, e, task_ids, is_family=False):
+    def spawn_task(self, b, task_ids):
         """For tasks to spawn their successors."""
         if type(task_ids) is not list:
             task_ids = [task_ids]
 
         for task_id in task_ids:
-            if hasattr(e, "button") and e.button != 1:
-                return False
             if not self.get_confirmation("Force spawn %s?" % task_id):
                 return
         self.put_comms_command('spawn_tasks', items=task_ids)
 
-    def reset_task_state(self, b, e, task_ids, state, is_family=False):
+    def reset_task_state(self, b, task_ids, state):
         """Reset the state of a task/family."""
         if type(task_ids) is not list:
             task_ids = [task_ids]
 
         for task_id in task_ids:
-            if hasattr(e, "button") and e.button != 1:
-                return False
             if not self.get_confirmation("reset %s to %s?" % (task_id, state)):
                 return
         self.put_comms_command('reset_task_states', items=task_ids,
