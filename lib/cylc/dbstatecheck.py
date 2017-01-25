@@ -76,6 +76,15 @@ class CylcSuiteDBChecker(object):
             for row in res:
                 sys.stdout.write((", ").join(row).encode("utf-8") + "\n")
 
+    def get_remote_point_format(self):
+        q = "select value from suite_params where key==?"
+        vals = ['cycle_point_format']
+        self.c.execute(q, vals)
+        res = self.c.fetchone()
+        if res:
+            return res[0]
+        return None
+
     def state_lookup(self, state):
         """allows for multiple states to be searched via a status alias"""
         if state in self.STATE_ALIASES:

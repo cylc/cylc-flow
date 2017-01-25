@@ -1420,7 +1420,7 @@ class TaskPool(object):
             if itask.state.external_triggers:
                 ets.retrieve(itask)
 
-    def put_rundb_suite_params(self, initial_point, final_point):
+    def put_rundb_suite_params(self, initial_point, final_point, format=None):
         """Put run mode, initial/final cycle point in runtime database.
 
         This method queues the relevant insert statements.
@@ -1430,6 +1430,11 @@ class TaskPool(object):
             {"key": "initial_point", "value": str(initial_point)},
             {"key": "final_point", "value": str(final_point)},
         ])
+        if format:
+            print "during format thing"
+            self.db_inserts_map[self.TABLE_SUITE_PARAMS].extend([
+                {"key": "cycle_point_format", "value": str(format)}
+            ])
         if self.is_held:
             self.db_inserts_map[self.TABLE_SUITE_PARAMS].append(
                 {"key": "is_held", "value": 1})
