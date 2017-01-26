@@ -13,6 +13,6 @@ for f in ~/doc/html/{single,multi}/*.{html,css}; do
     cp $f $F
 done
 
-Fnially:
+Finally:
 
 git add any new files under html/

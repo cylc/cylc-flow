@@ -7,42 +7,42 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2016-12-21 11:54:00"> 
+<meta name="date" content="2017-01-26 03:54:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 5114--><div class="crosslinks"><p class="noindent">[<a 
+<!--l. 5113--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse12.html" >next</a>] [<a 
 href="cug-htmlse10.html" >prev</a>] [<a 
 href="cug-htmlse10.html#tailcug-htmlse10.html" >prev-tail</a>] [<a 
 href="#tailcug-htmlse11.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse11.html" >up</a>] </p></div>
-<!--l. 5114--><p class="indent" >    <h3 id="11" class="sectionHead"><span class="titlemark"> <a href="#11">11</a>  <a 
+<!--l. 5113--><p class="noindent" > <h3 id="11" class="sectionHead"><span class="titlemark"> <a href="#11">11</a>  <a 
  id="x12-15400011"></a>Task Implementation </span></h3> <div class="sectionTOCS">
-   &#x00A0;<span class="subsectionToc" >11.1 <a 
+&#x00A0;<span class="subsectionToc" >11.1 <a 
 href="#x12-15500011.1">Inlined Tasks</a></span>
-<br />   &#x00A0;<span class="subsectionToc" >11.2 <a 
+<br />&#x00A0;<span class="subsectionToc" >11.2 <a 
 href="#x12-15600011.2">Returning Proper Error Status</a></span>
-<br />   &#x00A0;<span class="subsectionToc" >11.3 <a 
+<br />&#x00A0;<span class="subsectionToc" >11.3 <a 
 href="#x12-15700011.3">Other Task Messages</a></span>
-<br />   &#x00A0;<span class="subsectionToc" >11.4 <a 
+<br />&#x00A0;<span class="subsectionToc" >11.4 <a 
 href="#x12-15800011.4">Avoid Detaching Processes</a></span>
-   </div>
-<!--l. 5117--><p class="indent" >   Existing scripts or executables can be used as cylc tasks without any modification so long as they
+</div>
+<!--l. 5116--><p class="noindent" >Existing scripts or executables can be used as cylc tasks without any modification so long as they
 return standard exit status on success or failure, and do not internally spawn detaching processes
 (see&#x00A0;<a 
 href="#x12-15800011.4">11.4<!--tex4ht:ref: DetachingJobs --></a>).
-<!--l. 5122--><p class="noindent" >
-<!--l. 5122--><p class="indent" >    <h4 id="11.1" class="subsectionHead"> <span class="titlemark"> <a href="#11.1"> 11.1</a>  <a 
+<!--l. 5121--><p class="noindent" >
+<!--l. 5121--><p class="noindent" > <h4 id="11.1" class="subsectionHead"> <span class="titlemark"> <a href="#11.1"> 11.1</a>  <a 
  id="x12-15500011.1"></a>Inlined Tasks </span></h4>
-<!--l. 5124--><p class="indent" >   Simple tasks can be entirely implemented within the suite.rc file, as the task <span 
+<!--l. 5123--><p class="noindent" >Simple tasks can be entirely implemented within the suite.rc file, as the task <span 
 class="cmti-10">script </span>items can be multi-line
 strings.
-<!--l. 5127--><p class="noindent" >
-<!--l. 5127--><p class="indent" >    <h4 id="11.2" class="subsectionHead"> <span class="titlemark"> <a href="#11.2"> 11.2</a>  <a 
+<!--l. 5126--><p class="noindent" >
+<!--l. 5126--><p class="noindent" > <h4 id="11.2" class="subsectionHead"> <span class="titlemark"> <a href="#11.2"> 11.2</a>  <a 
  id="x12-15600011.2"></a>Returning Proper Error Status </span></h4>
-<!--l. 5129--><p class="indent" >   Tasks should abort with non-zero exit status if a fatal error occurs (this is just good coding practice anyway).
-This allows cylc&#8217;s task job scripts to automatically trap errors and send <span class="lstinline"><span 
+<!--l. 5128--><p class="noindent" >Tasks should abort with non-zero exit status if a fatal error occurs (this is just good coding practice anyway). This
+allows cylc&#8217;s task job scripts to automatically trap errors and send <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">task</span><span 
@@ -57,8 +57,8 @@ class="pcrr7t-">set</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">e</span></span> option can be used in lieu of explicit error checks for every command:
-<!--l. 5136-->
-   <div class="lstlisting" id="listing-204"><span class="label"><a 
+<!--l. 5135-->
+<div class="lstlisting" id="listing-205"><span class="label"><a 
  id="x12-156001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
@@ -107,13 +107,15 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">error</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">status</span>
-   
-   </div>
-<!--l. 5143--><p class="noindent" >
-<!--l. 5143--><p class="indent" >    <h4 id="11.3" class="subsectionHead"> <span class="titlemark"> <a href="#11.3"> 11.3</a>  <a 
+</div>
+                                                                                         
+
+                                                                                         
+<!--l. 5142--><p class="noindent" >
+<!--l. 5142--><p class="noindent" > <h4 id="11.3" class="subsectionHead"> <span class="titlemark"> <a href="#11.3"> 11.3</a>  <a 
  id="x12-15700011.3"></a>Other Task Messages </span></h4>
-<!--l. 5145--><p class="indent" >   General (non-output) messages can also be sent to report progress, warnings, and so on, e.g.:  <!--l. 5148-->
-   <div class="lstlisting" id="listing-205"><span class="label"><a 
+<!--l. 5144--><p class="noindent" >General (non-output) messages can also be sent to report progress, warnings, and so on, e.g.:  <!--l. 5147-->
+<div class="lstlisting" id="listing-206"><span class="label"><a 
  id="x12-157001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
@@ -210,10 +212,9 @@ class="pcrr7t-">task</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">foo</span><span 
 class="pcrr7t-">"</span>
-   
-   </div>
-<!--l. 5156--><p class="indent" >   Explanatory messages can be sent before aborting on error:  <!--l. 5158-->
-   <div class="lstlisting" id="listing-206"><span class="label"><a 
+</div>
+<!--l. 5155--><p class="noindent" >Explanatory messages can be sent before aborting on error:  <!--l. 5157-->
+<div class="lstlisting" id="listing-207"><span class="label"><a 
  id="x12-157006r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
@@ -352,13 +353,9 @@ class="pcrro7t-">message</span><span
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x12-157012r7"></a></span><span 
 class="pcrb7t-">fi</span>
-   
-                                                                                         
-
-                                                                                         
-   </div>
-<!--l. 5167--><p class="indent" >   Or equivalently, with different syntax:  <!--l. 5169-->
-   <div class="lstlisting" id="listing-207"><span class="label"><a 
+</div>
+<!--l. 5166--><p class="noindent" >Or equivalently, with different syntax:  <!--l. 5168-->
+<div class="lstlisting" id="listing-208"><span class="label"><a 
  id="x12-157013r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
@@ -441,10 +438,9 @@ class="pcrr7t-">1</span><span
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x12-157018r6"></a></span><span 
 class="pcrr7t-">}</span>
-   
-   </div>
-<!--l. 5177--><p class="indent" >   But not this:  <!--l. 5179-->
-   <div class="lstlisting" id="listing-208"><span class="label"><a 
+</div>
+<!--l. 5176--><p class="noindent" >But not this:  <!--l. 5178-->
+<div class="lstlisting" id="listing-209"><span class="label"><a 
  id="x12-157019r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
@@ -554,14 +550,13 @@ class="pcrr7t-">1</span><span
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x12-157025r7"></a></span><span 
 class="pcrb7t-">fi</span>
-   
-   </div>
-<!--l. 5188--><p class="indent" >   If critical errors are not reported in this way task failures will still be detected and logged by the suite daemon,
-but you may have to examine task logs to determine what the problem was.
-<!--l. 5192--><p class="noindent" >
-<!--l. 5192--><p class="indent" >    <h4 id="11.4" class="subsectionHead"> <span class="titlemark"> <a href="#11.4"> 11.4</a>  <a 
+</div>
+<!--l. 5187--><p class="noindent" >If critical errors are not reported in this way task failures will still be detected and logged by the suite daemon, but
+you may have to examine task logs to determine what the problem was.
+<!--l. 5191--><p class="noindent" >
+<!--l. 5191--><p class="noindent" > <h4 id="11.4" class="subsectionHead"> <span class="titlemark"> <a href="#11.4"> 11.4</a>  <a 
  id="x12-15800011.4"></a>Avoid Detaching Processes </span></h4>
-<!--l. 5196--><p class="indent" >   If a task script starts background sub-processes and does not wait on them, or internally submits jobs to a batch
+<!--l. 5195--><p class="noindent" >If a task script starts background sub-processes and does not wait on them, or internally submits jobs to a batch
 scheduler and then exits immediately, the detached processes will not be visible to cylc and the task will
 appear to finish when the top-level script finishes. You will need to modify scripts like this to make
 them execute all sub-processes in the foreground (or use the shell <span class="lstinline"><span 
@@ -587,10 +582,10 @@ class="pcrr7t-">block</span><span
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">true</span></span> for
 PBS).
-<!--l. 5207--><p class="indent" >   If this is not possible - perhaps you don&#8217;t have control over the script or can&#8217;t work out how to fix it - one
+<!--l. 5206--><p class="noindent" >If this is not possible - perhaps you don&#8217;t have control over the script or can&#8217;t work out how to fix it - one
 alternative approach is to use another task to repeatedly poll for the results of the detached processes:
-<!--l. 5210-->
-   <div class="lstlisting" id="listing-209"><span class="label"><a 
+<!--l. 5209-->
+<div class="lstlisting" id="listing-210"><span class="label"><a 
  id="x12-158001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -843,17 +838,16 @@ class="pcrr7t-">exit</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">1</span><span 
 class="pcrr7t-">"</span>
-   
-   </div>
+</div>
                                                                                          
 
                                                                                          
-   <!--l. 5225--><div class="crosslinks"><p class="noindent">[<a 
+<!--l. 5224--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse12.html" >next</a>] [<a 
 href="cug-htmlse10.html" >prev</a>] [<a 
 href="cug-htmlse10.html#tailcug-htmlse10.html" >prev-tail</a>] [<a 
 href="cug-htmlse11.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse11.html" >up</a>] </p></div>
-<!--l. 5225--><p class="indent" >   <a 
- id="tailcug-htmlse11.html"></a>   
+<!--l. 5224--><p class="noindent" ><a 
+ id="tailcug-htmlse11.html"></a>  
 </body></html> 
