@@ -50,16 +50,16 @@ et. al.)__ and another that references it, __Seamless Manage- ment of Ensemble
 Climate Prediction Experiments on HPC Platforms (2016, Domingo Manubens-Gil et.
 al.)__. Two of us are listed as contributors to the first paper but it should be
 noted that this contribution was limited by time and workload constraints to
-correction of any major misunderstandings of Cylc.
+correction of any major misunderstandings of Cylc.*
 
-The lead author of both papers is also the lead developer of Autosubmit so it
+*The lead author of both papers is also the lead developer of Autosubmit so it
 is perhaps inevitable that the comparison plays to Autosubmit’s strengths.
 However this was not made clear in the comparison paper, and we would like to
 address several points that we believe convey a misleading impression to
 readers.*
 
-[__Here is the full 2-page
-response__](doc/cylc-response-to-autosubmit-comparison-report.pdf)
+[Click here for the full 2-page
+response](doc/cylc-response-to-autosubmit-comparison-report.pdf) (PDF)
 
 ---
 
