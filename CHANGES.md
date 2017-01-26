@@ -4,6 +4,66 @@ For the full list of all changes for each release see [closed
 milestones](https://github.com/cylc/cylc/milestones?state=closed).
 
 -------------------------------------------------------------------------------
+## __cylc-7.0.1 (2017-01-26)__
+
+### Highlighted Changes
+
+[#2021](https://github.com/cylc/cylc/pull/2021): New command `cylc checkpoint`
+to create a named suite state checkpoint that you can restart from.
+
+[#2124](https://github.com/cylc/cylc/pull/2124): open another GUI window (to
+view another suite) via the gcylc File menu.
+
+[#2100](https://github.com/cylc/cylc/pull/2100): group multiple task event
+notifications into a single email over a 5 minute interval (configurable).
+
+[#2112](https://github.com/cylc/cylc/pull/2112): broadcast settings can now be loaded or canceled from a file as well as on the command line.
+
+[#2096](https://github.com/cylc/cylc/pull/2096): the `cylc gscan` GUI can now
+display summary states for suites owned by others.
+
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+
+### Other Changes
+
+[#2126](https://github.com/cylc/cylc/pull/2126): fixed occasional
+misidentification of suite stall when only succeeded tasks exist just prior to
+shutdown.
+
+[#2127](https://github.com/cylc/cylc/pull/2127): fixed the `cylc diff` command
+(broken at 7.0.0)
+
+[#2119](https://github.com/cylc/cylc/pull/2119): fixed remote job kill after a
+suite definition reload, for task proxies that exist at the time of the reload.
+
+[#2025](https://github.com/cylc/cylc/pull/2025): GUI right-click menu items can
+now be selected with either mouse button 1 or 3.
+
+[#2117](https://github.com/cylc/cylc/pull/2117): improved logic for adding
+`lib/cylc` to Python `sys.path` (there was one reported instance of the
+system-level `cherrpy` being imported instead of the Cylc-bundled one, in
+cylc-7.0.0).
+
+[#2114](https://github.com/cylc/cylc/pull/2114): documented syntax-driven line
+continuation in suite graph configuration.
+
+[#2116](https://github.com/cylc/cylc/pull/2116): corrected a rare edge-case
+side-effect of manual task-state reset.
+
+[#2107](https://github.com/cylc/cylc/pull/2107): `cylc insert` - disallow
+insertion at cycle points that are not valid for the task (but can override
+with `--no-check`).
+
+[#2106](https://github.com/cylc/cylc/pull/2106): fixed `cylc get-config
+--python` output formatting, broken since cylc-6.6.0.
+
+[#2097](https://github.com/cylc/cylc/pull/2097): fixed a problem with task host
+and owner task proxies reloaded at suite restart (could cause job poll and
+kill to fail in some cases, for tasks in this category).
+
+[#2095](https://github.com/cylc/cylc/pull/2095): fixed validation of mixed
+deprecated and new suite.rc syntax.
 
 ## __cylc-7.0.0 (2016-12-21)__
 
