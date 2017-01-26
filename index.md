@@ -48,3 +48,5 @@ Please [let us know](mailto:hilary.oliver@niwa.co.nz) if your organization
 should be included in the **[list of Cylc users](./users.html)**.
 
 Here's the DOI to use when citing Cylc: [![DOI](https://zenodo.org/badge/1836229.svg)](https://zenodo.org/badge/latestdoi/1836229)
+
+See also [publications and citations](./documentation.html#publications-and-citations)

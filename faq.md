@@ -8,7 +8,7 @@ title: FAQ
 ## Frequently Asked Questions
 {:.no_toc}
 
-*This page is a work in progress - it was started after cylc-6.10.1 (May 2016).*
+*This FAQ is new as of 2016, and is not yet very comprehensive.*
 
 If you have a question that you think should be added to the FAQ,
 please [email the cylc forum](mailto:cylc@google-groups.com).

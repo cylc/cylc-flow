@@ -36,6 +36,31 @@ presentation, and the 'o' key for a multi-slide summary. This is the
   the IS-ENES2 Workshop on Workflow in Earth Systems Modeling, Lisbon,
   September 2016
 
+### Publications and Citations
+
+The Cylc developers plan to write a reference paper in 2017.
+
+In the meantime Cylc has a citable DOI: [![DOI](https://zenodo.org/badge/1836229.svg)](https://zenodo.org/badge/latestdoi/1836229) 
+
+#### Cylc Response to "Assessment Report on Autosubmit, Cylc and ecFlow"
+
+*The Cylc developers would like to respond to a recent comparison paper,
+__Assessment report on Autosubmit, Cylc and ecFlow (2016, Domingo Manubens-Gil
+et. al.)__ and another that references it, __Seamless Manage- ment of Ensemble
+Climate Prediction Experiments on HPC Platforms (2016, Domingo Manubens-Gil et.
+al.)__. Two of us are listed as contributors to the first paper but it should be
+noted that this contribution was limited by time and workload constraints to
+correction of any major misunderstandings of Cylc.
+
+The lead author of both papers is also the lead developer of Autosubmit so it
+is perhaps inevitable that the comparison plays to Autosubmit’s strengths.
+However this was not made clear in the comparison paper, and we would like to
+address several points that we believe convey a misleading impression to
+readers.*
+
+[__Here is the full 2-page
+response__](doc/cylc-response-to-autosubmit-comparison-report.pdf)
+
 ---
 
 ## A Cycling Workflow Example
