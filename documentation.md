@@ -40,7 +40,8 @@ presentation, and the 'o' key for a multi-slide summary. This is the
 
 The Cylc developers plan to write a reference paper in 2017.
 
-In the meantime Cylc has a citable DOI: [![DOI](https://zenodo.org/badge/1836229.svg)](https://zenodo.org/badge/latestdoi/1836229) 
+In the meantime Cylc releases have a citable DOI:
+[![DOI](https://zenodo.org/badge/1836229.svg)](https://zenodo.org/badge/latestdoi/1836229) 
 
 #### Cylc Response to "Assessment Report on Autosubmit, Cylc and ecFlow"
 
