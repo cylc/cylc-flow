@@ -46,7 +46,7 @@ In the meantime Cylc has a citable DOI: [![DOI](https://zenodo.org/badge/1836229
 
 *The Cylc developers would like to respond to a recent comparison paper,
 __Assessment report on Autosubmit, Cylc and ecFlow (2016, Domingo Manubens-Gil
-et. al.)__ and another that references it, __Seamless Manage- ment of Ensemble
+et. al.)__ and another that references it, __Seamless Management of Ensemble
 Climate Prediction Experiments on HPC Platforms (2016, Domingo Manubens-Gil et.
 al.)__. Two of us are listed as contributors to the first paper but it should be
 noted that this contribution was limited by time and workload constraints to
@@ -58,8 +58,8 @@ However this was not made clear in the comparison paper, and we would like to
 address several points that we believe convey a misleading impression to
 readers.*
 
-[Click here for the full 2-page
-response](doc/cylc-response-to-autosubmit-comparison-report.pdf) (PDF)
+...[CLICK HERE FOR THE FULL 2-PAGE
+RESPONSE](doc/cylc-response-to-autosubmit-comparison-report.pdf) (PDF)
 
 ---
 
