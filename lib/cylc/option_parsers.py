@@ -49,8 +49,8 @@ avoid this, use the '--no-multitask-compat' option, or use the new syntax
 (with a '/' or a '.') when specifying 2 TASKID arguments."""
 
     def __init__(self, usage, argdoc=None, comms=False, noforce=False,
-                 jset=False, multitask=False, prep=False, twosuites=False,
-                 auto_add=True):
+                 jset=False, multitask=False, prep=False, auto_add=True,
+                 icp=False):
 
         self.auto_add = auto_add
         if argdoc is None:
@@ -74,12 +74,10 @@ Arguments:"""
         self.comms = comms
         self.jset = jset
         self.noforce = noforce
-
         self.multitask = multitask
-
         self.prep = prep
+        self.icp = icp
         self.suite_info = []
-        self.twosuites = twosuites
 
         maxlen = 0
         for arg in argdoc:
@@ -103,195 +101,154 @@ Arguments:"""
 
         OptionParser.__init__(self, usage)
 
+    def add_std_option(self, *args, **kwargs):
+        """Add a standard option, ignoring override."""
+        try:
+            self.add_option(*args, **kwargs)
+        except OptionConflictError:
+            pass
+
     def add_std_options(self):
         """Add standard options if they have not been overridden."""
-        try:
-            self.add_option(
-                "--user",
-                help=(
-                    "Other user account name. This results in "
-                    "command reinvocation on the remote account."
-                ),
-                metavar="USER", default=USER,
-                action="store", dest="owner")
-        except OptionConflictError:
-            pass
-
-        try:
-            self.add_option(
-                "--host",
-                help="Other host name. This results in "
-                "command reinvocation on the remote account.",
-                metavar="HOST", action="store", dest="host")
-        except OptionConflictError:
-            pass
-
-        try:
-            self.add_option(
-                "-v", "--verbose",
-                help="Verbose output mode.",
-                action="store_true", default=False, dest="verbose")
-        except OptionConflictError:
-            pass
-
-        try:
-            self.add_option(
-                "--debug",
-                help=(
-                    "Run suites in non-daemon mode, "
-                    "and show exception tracebacks."
-                ),
-                action="store_true", default=False, dest="debug")
-        except OptionConflictError:
-            pass
+        self.add_std_option(
+            "--user",
+            help=(
+                "Other user account name. This results in "
+                "command reinvocation on the remote account."
+            ),
+            metavar="USER", default=USER,
+            action="store", dest="owner")
+        self.add_std_option(
+            "--host",
+            help="Other host name. This results in "
+            "command reinvocation on the remote account.",
+            metavar="HOST", action="store", dest="host")
+        self.add_std_option(
+            "-v", "--verbose",
+            help="Verbose output mode.",
+            action="store_true", default=False, dest="verbose")
+        self.add_std_option(
+            "--debug",
+            help=(
+                "Run suites in non-daemon mode, "
+                "and show exception tracebacks."
+            ),
+            action="store_true", default=False, dest="debug")
 
         if self.prep:
-            try:
-                self.add_option(
-                    "--suite-owner",
-                    help="Specify suite owner",
-                    metavar="OWNER", action="store", default=None,
-                    dest="suite_owner")
-            except OptionConflictError:
-                pass
+            self.add_std_option(
+                "--suite-owner",
+                help="Specify suite owner",
+                metavar="OWNER", action="store", default=None,
+                dest="suite_owner")
 
         if self.comms:
-            try:
-                self.add_option(
-                    "--port",
-                    help=(
-                        "Suite port number on the suite host. "
-                        "NOTE: this is retrieved automatically if "
-                        "non-interactive ssh is configured to the suite host."
-                    ),
-                    metavar="INT", action="store", default=None, dest="port")
-            except OptionConflictError:
-                pass
-
-            try:
-                self.add_option(
-                    "--use-ssh",
-                    help="Use ssh to re-invoke the command on the suite host.",
-                    action="store_true", default=False, dest="use_ssh")
-            except OptionConflictError:
-                pass
-
-            try:
-                self.add_option(
-                    "--no-login",
-                    help=(
-                        "Do not use a login shell to run remote ssh commands. "
-                        "The default is to use a login shell."
-                    ),
-                    action="store_false", default=True, dest="ssh_login")
-            except OptionConflictError:
-                pass
-
-            try:
-                self.add_option(
-                    "--comms-timeout", "--pyro-timeout", metavar='SEC',
-                    help=(
-                        "Set a timeout for network connections "
-                        "to the running suite. The default is no timeout. "
-                        "For task messaging connections see "
-                        "site/user config file documentation."
-                    ),
-                    action="store", default=None, dest="comms_timeout")
-            except OptionConflictError:
-                pass
-
-            try:
-                self.add_option(
-                    "--print-uuid",
-                    help=(
-                        "Print the client UUID to stderr. "
-                        "This can be matched "
-                        "to information logged by the receiving suite daemon."
-                    ),
-                    action="store_true", default=False, dest="print_uuid")
-            except OptionConflictError:
-                pass
-
-            try:
-                self.add_option(
-                    "--set-uuid", metavar="UUID",
-                    help=(
-                        "Set the client UUID manually (e.g. from prior use of "
-                        "--print-uuid). This can be used to log multiple "
-                        "commands under the same UUID (but note that only the "
-                        "first [info] command from the same client ID will be "
-                        "logged unless the suite is running in debug mode)."
-                    ),
-                    action="store", default=None, dest="set_uuid")
-            except OptionConflictError:
-                pass
+            self.add_std_option(
+                "--port",
+                help=(
+                    "Suite port number on the suite host. "
+                    "NOTE: this is retrieved automatically if "
+                    "non-interactive ssh is configured to the suite host."
+                ),
+                metavar="INT", action="store", default=None, dest="port")
+            self.add_std_option(
+                "--use-ssh",
+                help="Use ssh to re-invoke the command on the suite host.",
+                action="store_true", default=False, dest="use_ssh")
+            self.add_std_option(
+                "--no-login",
+                help=(
+                    "Do not use a login shell to run remote ssh commands. "
+                    "The default is to use a login shell."
+                ),
+                action="store_false", default=True, dest="ssh_login")
+            self.add_std_option(
+                "--comms-timeout", "--pyro-timeout", metavar='SEC',
+                help=(
+                    "Set a timeout for network connections "
+                    "to the running suite. The default is no timeout. "
+                    "For task messaging connections see "
+                    "site/user config file documentation."
+                ),
+                action="store", default=None, dest="comms_timeout")
+            self.add_std_option(
+                "--print-uuid",
+                help=(
+                    "Print the client UUID to stderr. "
+                    "This can be matched "
+                    "to information logged by the receiving suite daemon."
+                ),
+                action="store_true", default=False, dest="print_uuid")
+            self.add_std_option(
+                "--set-uuid", metavar="UUID",
+                help=(
+                    "Set the client UUID manually (e.g. from prior use of "
+                    "--print-uuid). This can be used to log multiple "
+                    "commands under the same UUID (but note that only the "
+                    "first [info] command from the same client ID will be "
+                    "logged unless the suite is running in debug mode)."
+                ),
+                action="store", default=None, dest="set_uuid")
 
             if not self.noforce:
-                try:
-                    self.add_option(
-                        "-f", "--force",
-                        help=(
-                            "Do not ask for confirmation before acting. "
-                            "Note that it is not necessary to use this option "
-                            "if interactive command prompts have been "
-                            "disabled in the site/user config files."
-                        ),
-                        action="store_true", default=False, dest="force")
-                except OptionConflictError:
-                    pass
+                self.add_std_option(
+                    "-f", "--force",
+                    help=(
+                        "Do not ask for confirmation before acting. "
+                        "Note that it is not necessary to use this option "
+                        "if interactive command prompts have been "
+                        "disabled in the site/user config files."
+                    ),
+                    action="store_true", default=False, dest="force")
 
         if self.jset:
-            try:
-                self.add_option(
-                    "-s", "--set", metavar="NAME=VALUE",
-                    help=(
-                        "Set the value of a Jinja2 template variable in the "
-                        "suite definition. This option can be used multiple "
-                        "times on the command line. "
-                        "NOTE: these settings persist across suite restarts, "
-                        "but can be set again on the \"cylc restart\" "
-                        "command line if they need to be overridden."
-                    ),
-                    action="append", default=[], dest="templatevars")
-            except OptionConflictError:
-                pass
+            self.add_std_option(
+                "-s", "--set", metavar="NAME=VALUE",
+                help=(
+                    "Set the value of a Jinja2 template variable in the "
+                    "suite definition. This option can be used multiple "
+                    "times on the command line. "
+                    "NOTE: these settings persist across suite restarts, "
+                    "but can be set again on the \"cylc restart\" "
+                    "command line if they need to be overridden."
+                ),
+                action="append", default=[], dest="templatevars")
 
-            try:
-                self.add_option(
-                    "--set-file", metavar="FILE",
-                    help=(
-                        "Set the value of Jinja2 template variables in the "
-                        "suite definition from a file containing NAME=VALUE "
-                        "pairs (one per line). "
-                        "NOTE: these settings persist across suite restarts, "
-                        "but can be set again on the \"cylc restart\" "
-                        "command line if they need to be overridden."
-                    ),
-                    action="store", default=None, dest="templatevars_file")
-            except OptionConflictError:
-                pass
+            self.add_std_option(
+                "--set-file", metavar="FILE",
+                help=(
+                    "Set the value of Jinja2 template variables in the "
+                    "suite definition from a file containing NAME=VALUE "
+                    "pairs (one per line). "
+                    "NOTE: these settings persist across suite restarts, "
+                    "but can be set again on the \"cylc restart\" "
+                    "command line if they need to be overridden."
+                ),
+                action="store", default=None, dest="templatevars_file")
 
         if self.multitask:
-            try:
-                self.add_option(
-                    "-m", "--family",
-                    help=(
-                        "(Obsolete) This option is now ignored "
-                        "and is retained for backward compatibility only. "
-                        "TASKID in the argument list can be used to match "
-                        "task and family names regardless of this option."),
-                    action="store_true", default=False, dest="is_family")
-            except OptionConflictError:
-                pass
+            self.add_std_option(
+                "-m", "--family",
+                help=(
+                    "(Obsolete) This option is now ignored "
+                    "and is retained for backward compatibility only. "
+                    "TASKID in the argument list can be used to match "
+                    "task and family names regardless of this option."),
+                action="store_true", default=False, dest="is_family")
 
-            try:
-                self.add_option(
-                    "--no-multitask-compat",
-                    help="Disallow backward compatible multitask interface.",
-                    action="store_false", default=True,
-                    dest="multitask_compat")
-            except OptionConflictError:
-                pass
+            self.add_std_option(
+                "--no-multitask-compat",
+                help="Disallow backward compatible multitask interface.",
+                action="store_false", default=True,
+                dest="multitask_compat")
+
+        if self.icp:
+            self.add_option(
+                "--icp",
+                metavar="CYCLE_POINT",
+                help=(
+                    "Set initial cycle point. "
+                    "Required if not defined in suite.rc."))
 
     def parse_args(self, remove_opts=[]):
         """Parse options and arguments, overrides OptionParser.parse_args."""

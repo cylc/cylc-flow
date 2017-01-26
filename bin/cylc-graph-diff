@@ -17,7 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 set -eu
 
-usage() {
+_clean() {
+    if [[ -n "${DIFF_FILES:-}" ]]; then
+        rm -f ${DIFF_FILES:-}
+    fi
+}
+
+_usage() {
   cat <<'__USAGE__'
 Usage: cylc graph-diff [OPTIONS] SUITE1 SUITE2 -- [GRAPH_OPTIONS_ARGS]
 
@@ -40,7 +46,7 @@ for ARG in "$@"; do
     if [[ "$ARG" == '--' ]]; then
         break
     elif [[ "$ARG" == '--help' ]]; then
-        usage
+        _usage
         exit 0
     elif [[ "$ARG" == "-g" ]]; then
         GRAPHICAL_DIFF=true
@@ -57,14 +63,16 @@ for ARG in "$@"; do
     fi
 done
 if (( NUM_SUITES != 2 )); then
-    usage >&2
+    _usage >&2
     exit 1
 fi
 
+trap _clean EXIT
+trap _clean ERR
 DIFF_FILES=""
 for SUITE in $SUITES; do
     FILE=$(mktemp -t "$(tr '/' '.' <<<"${SUITE}").graph.ref.XXXX")
-    cylc graph --reference "$@" $SUITE >$FILE
+    cylc graph --reference "${SUITE}" "$@" >$FILE
     DIFF_FILES="$DIFF_FILES $FILE"
 done
 

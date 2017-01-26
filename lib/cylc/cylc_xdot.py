@@ -46,6 +46,7 @@ class CylcDotViewerCommon(xdot.DotWindow):
             self.suiterc = SuiteConfig(
                 self.suite, self.file, self.template_vars,
                 is_reload=is_reload, collapsed=collapsed,
+                cli_initial_point_string=self.start_point_string,
                 vis_start_string=self.start_point_string,
                 vis_stop_string=self.stop_point_string)
         except Exception, x:
