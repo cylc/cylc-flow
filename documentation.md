@@ -36,7 +36,7 @@ presentation, and the 'o' key for a multi-slide summary. This is the
   the IS-ENES2 Workshop on Workflow in Earth Systems Modeling, Lisbon,
   September 2016
 
-### Publications and Citations
+### Publications, Citations, and References
 
 The Cylc developers plan to write a reference paper in 2017.
 
