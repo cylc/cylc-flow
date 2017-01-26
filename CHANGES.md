@@ -5,6 +5,24 @@ milestones](https://github.com/cylc/cylc/milestones?state=closed).
 
 -------------------------------------------------------------------------------
 
+## __cylc-6.11.4 (2017-01-26)__
+
+More bug fixes backported from early Cylc-7 releases.
+
+[#2120](https://github.com/cylc/cylc/pull/2120): fixed remote job kill after a
++suite definition reload, for task proxies that exist at the time of the reload.
+
+[#2111](https://github.com/cylc/cylc/pull/2111): fixed member-expansion of
+complex `(FAMILY:fail-any & FAMILYI:finish-all)` graph triggers.
+
+[#2102](https://github.com/cylc/cylc/pull/2102): fixed validation of mixed
+deprecated and new suite.rc syntax.
+
+[#2098](https://github.com/cylc/cylc/pull/2098): fixed a problem with task host
+and owner task proxies reloaded at suite restart (could cause job poll and
+kill to fail in some cases, for tasks in this category).
+
+
 ## __cylc-6.11.3 (2016-12-21)__
 
 One minor bug fix on top of 6.11.2.
@@ -66,7 +84,7 @@ Three minor bug fixes on top of 6.11.0:
 
 [#2002](https://github.com/cylc/cylc/pull/2002): fix a bug in the graph string 
 parser - if a task appears both with and without a cycle point offset in the 
-same conditional trigger epression (unlikely, but possible!)
+same conditional trigger expression (unlikely, but possible!)
 
 [#2007](https://github.com/cylc/cylc/pull/2007): fix handling of OS Error if
 the user run into the limit for number of forked processes.
@@ -76,6 +94,10 @@ the user run into the limit for number of forked processes.
 
 
 ## __cylc-6.11.0 (2016-09-13)__
+
+**This is the last Cylc-6 major release.**  Cylc-7 bug fixes will be
+back-ported to 6.11.x for some time to come, however, for those who have not
+transitioned to Cylc-7 yet.**
 
 ### Highlighted Changes
 
