@@ -503,7 +503,10 @@ value is probably sufficient for job submission polling.
 \paragraph[remote copy template]{[hosts] \textrightarrow [[HOST]] \textrightarrow remote copy template }
 
 A string for the command used to copy files to a remote host. This is not used
-on the suite host unless you run local tasks under another user account.
+on the suite host unless you run local tasks under another user account. The
+value is assumed to be \lstinline=scp= with some initial options or a command
+that implements a similar interface to \lstinline=scp=.
+
 
 \begin{myitemize}
 \item {\em type:} string
@@ -512,11 +515,10 @@ on the suite host unless you run local tasks under another user account.
 
 \paragraph[remote shell template]{[hosts] \textrightarrow [[HOST]] \textrightarrow remote shell template }
 
-A string for the command used to invoke commands on this host.
-This is not used on the suite host unless you run local tasks under
-another user account. (N.B. This setting used to be a string template with a \%s
-being a placeholder for the name of the host. This is no longer the case. Any
-\%s in the string will now be discarded.)
+A string for the command used to invoke commands on this host. This is not
+used on the suite host unless you run local tasks under another user account.
+The value is assumed to be \lstinline=ssh= with some initial options or a
+command that implements a similar interface to \lstinline=ssh=.
 
 \begin{myitemize}
 \item {\em type:} string
