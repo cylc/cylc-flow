@@ -105,15 +105,14 @@ class TaskNotDefinedError(SuiteConfigError):
 class SuiteConfig(object):
     """Class for suite configuration items and derived quantities."""
 
-    _INSTANCE = None
-    _FORCE = False  # Override singleton behaviour (only used by "cylc diff"!)
+    _INSTANCES = {}
 
     @classmethod
     def get_inst(cls, suite=None, fpath=None, template_vars=None,
                  owner=None, run_mode='live', validation=False, strict=False,
                  collapsed=[], cli_initial_point_string=None,
                  cli_start_point_string=None, cli_final_point_string=None,
-                 is_restart=False, is_reload=False, output_fname=None,
+                 is_reload=False, output_fname=None,
                  vis_start_string=None, vis_stop_string=None,
                  mem_log_func=None):
         """Return a singleton instance.
@@ -122,21 +121,23 @@ class SuiteConfig(object):
         Argument list is only relevant on 1st call.
 
         """
-        if cls._INSTANCE is None or cls._FORCE:
-            cls._FORCE = False
-            cls._INSTANCE = cls(
+        if suite not in cls._INSTANCES or is_reload:
+            cls._INSTANCES[suite] = cls(
                 suite, fpath, template_vars, owner,
                 run_mode, validation, strict, collapsed,
                 cli_initial_point_string, cli_start_point_string,
-                cli_final_point_string, is_restart, is_reload, output_fname,
+                cli_final_point_string, is_reload, output_fname,
                 vis_start_string, vis_stop_string, mem_log_func)
-        return cls._INSTANCE
+            # Default instance
+            if suite is not None:
+                cls._INSTANCES[None] = cls._INSTANCES[suite]
+        return cls._INSTANCES[suite]
 
     def __init__(self, suite, fpath, template_vars=None,
                  owner=None, run_mode='live', validation=False, strict=False,
                  collapsed=[], cli_initial_point_string=None,
                  cli_start_point_string=None, cli_final_point_string=None,
-                 is_restart=False, is_reload=False, output_fname=None,
+                 is_reload=False, output_fname=None,
                  vis_start_string=None, vis_stop_string=None,
                  mem_log_func=None):
 
@@ -156,7 +157,6 @@ class SuiteConfig(object):
         self.validation = validation
         self.initial_point = None
         self.start_point = None
-        self.is_restart = is_restart
         self.first_graph = True
         self.clock_offsets = {}
         self.expiration_offsets = {}
@@ -199,7 +199,7 @@ class SuiteConfig(object):
         # items
         self.mem_log("config.py: before RawSuiteConfig.get_inst")
         self.pcfg = RawSuiteConfig.get_inst(
-            fpath, force=is_reload, tvars=template_vars,
+            fpath, is_reload=is_reload, tvars=template_vars,
             output_fname=output_fname)
         self.mem_log("config.py: after RawSuiteConfig.get_inst")
         self.mem_log("config.py: before get(sparse=True")
@@ -526,14 +526,12 @@ class SuiteConfig(object):
             # on suite reload retain an existing state of collapse
             # (used by the "cylc graph" viewer)
             self.closed_families = collapsed
-            fromrc = False
         else:
             self.closed_families = self.collapsed_families_rc
-            fromrc = True
         for cfam in self.closed_families:
             if cfam not in self.runtime['descendants']:
                 self.closed_families.remove(cfam)
-                if fromrc and cylc.flags.verbose:
+                if not is_reload and cylc.flags.verbose:
                     ERR.warning(
                         '[visualization][collapsed families]: ' +
                         'family ' + cfam + ' not defined')

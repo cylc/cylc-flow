@@ -504,18 +504,16 @@ def upg(cfg, descr):
 
 class RawSuiteConfig(config):
     """Raw suite configuration."""
-    _SUITECFG = None
-    _CFPATH = None
+    _INSTANCES = {}
 
     @classmethod
-    def get_inst(cls, fpath, force=False, tvars=None, output_fname=None):
+    def get_inst(cls, fpath, is_reload=False, tvars=None, output_fname=None):
         """Return the default instance."""
-        if cls._SUITECFG is None or fpath != cls._CFPATH or force:
-            cls._CFPATH = fpath
+        if fpath not in cls._INSTANCES or is_reload:
             if tvars is None:
                 tvars = []
             # TODO - output_fname should be in loadcfg
-            cls._SUITECFG = cls(
+            cls._INSTANCES[fpath] = cls(
                 SPEC, upg, tvars=tvars, output_fname=output_fname)
-            cls._SUITECFG.loadcfg(fpath, "suite definition")
-        return cls._SUITECFG
+            cls._INSTANCES[fpath].loadcfg(fpath, "suite definition")
+        return cls._INSTANCES[fpath]
