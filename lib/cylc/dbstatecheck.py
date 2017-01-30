@@ -77,6 +77,7 @@ class CylcSuiteDBChecker(object):
                 sys.stdout.write((", ").join(row).encode("utf-8") + "\n")
 
     def get_remote_point_format(self):
+        """Query a remote suite database for a 'cycle point format' entry"""
         q = "select value from suite_params where key==?"
         vals = ['cycle_point_format']
         self.c.execute(q, vals)
