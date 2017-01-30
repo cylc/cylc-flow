@@ -1015,14 +1015,13 @@ conditions; see `cylc conditions`.
 
     def load_suiterc(self, reconfigure):
         """Load and log the suite definition."""
-        SuiteConfig._FORCE = True  # Reset the singleton!
         self.config = SuiteConfig.get_inst(
             self.suite, self.suiterc, self.template_vars,
             run_mode=self.run_mode,
             cli_initial_point_string=self._cli_initial_point_string,
             cli_start_point_string=self._cli_start_point_string,
             cli_final_point_string=self.options.final_point_string,
-            is_restart=self.is_restart, is_reload=reconfigure,
+            is_reload=reconfigure,
             mem_log_func=self.profiler.log_memory,
             output_fname=os.path.join(
                 GLOBAL_CFG.get_derived_host_item(

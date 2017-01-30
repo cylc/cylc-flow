@@ -25,10 +25,6 @@ account of default values that are not explicitly defined, it disregards
 the order of configuration items, and it sees any include-file content
 after inlining has occurred.
 
-Note that seemingly identical suites normally differ due to inherited
-default configuration values (e.g. the default job submission log
-directory.
-
 Files in the suite bin directory and other sub-directories of the
 suite definition directory are not currently differenced."""
 
@@ -138,10 +134,11 @@ def main():
     print "Parsing %s (%s)" % (suite1, suite1rc)
     template_vars = load_template_vars(
         options.templatevars, options.templatevars_file)
-    config1 = SuiteConfig.get_inst(suite1, suite1rc, template_vars).cfg
-    SuiteConfig._FORCE = True
+    config1 = SuiteConfig.get_inst(
+        suite1, suite1rc, template_vars).cfg
     print "Parsing %s (%s)" % (suite2, suite2rc)
-    config2 = SuiteConfig.get_inst(suite2, suite2rc, template_vars).cfg
+    config2 = SuiteConfig.get_inst(
+        suite2, suite2rc, template_vars, is_reload=True).cfg
 
     if config1 == config2:
         print "Suite definitions %s and %s are identical" % (suite1, suite2)
