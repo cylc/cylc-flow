@@ -10,7 +10,7 @@ communication method, connection timeout and retry interval the in global.rc"""
 [scheduling]
     [[dependencies]]
         graph = "foo & bar"
-    
+
 [runtime]
     [[foo]]
     [[bar]]

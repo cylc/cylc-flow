@@ -23,9 +23,6 @@ from cylc.network.https.base_client import BaseCommsClient
 class TaskMessageClient(BaseCommsClient):
     """Client-side task messaging interface"""
 
-    def __init__(self, suite, timeout=None):
-        super(TaskMessageClient, self).__init__(suite, timeout=timeout)
-
     def put(self, task_id, priority, message):
         """Send task message."""
         return self.call_server_func(

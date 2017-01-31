@@ -316,7 +316,7 @@ SPEC = {
             'enable resurrection': vdr(vtype='boolean', default=False),
             'work sub-directory': vdr(
                 vtype='string',
-                default='$CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME'),
+                default='${CYLC_TASK_CYCLE_POINT}/${CYLC_TASK_NAME}'),
             'environment filter': {
                 'include': vdr(vtype='string_list'),
                 'exclude': vdr(vtype='string_list'),

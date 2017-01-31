@@ -5,7 +5,7 @@
     title = 
     URL = 
     extra log files = 
-    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
+    work sub-directory = ${CYLC_TASK_CYCLE_POINT}/${CYLC_TASK_NAME}
     description = 
     init-script = 
     pre-script = 
@@ -83,7 +83,7 @@
     title = 
     URL = 
     extra log files = 
-    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
+    work sub-directory = ${CYLC_TASK_CYCLE_POINT}/${CYLC_TASK_NAME}
     description = 
     init-script = 
     pre-script = 
@@ -160,7 +160,7 @@
     title = 
     URL = 
     extra log files = 
-    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
+    work sub-directory = ${CYLC_TASK_CYCLE_POINT}/${CYLC_TASK_NAME}
     description = 
     init-script = 
     pre-script = 
@@ -238,7 +238,7 @@
     title = 
     URL = 
     extra log files = 
-    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
+    work sub-directory = ${CYLC_TASK_CYCLE_POINT}/${CYLC_TASK_NAME}
     description = 
     init-script = 
     pre-script = 
@@ -316,7 +316,7 @@
     title = 
     URL = 
     extra log files = 
-    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
+    work sub-directory = ${CYLC_TASK_CYCLE_POINT}/${CYLC_TASK_NAME}
     description = 
     init-script = 
     pre-script = 
@@ -394,7 +394,7 @@
     title = 
     URL = 
     extra log files = 
-    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
+    work sub-directory = ${CYLC_TASK_CYCLE_POINT}/${CYLC_TASK_NAME}
     description = 
     init-script = 
     pre-script = 
@@ -472,7 +472,7 @@
     title = 
     URL = 
     extra log files = 
-    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
+    work sub-directory = ${CYLC_TASK_CYCLE_POINT}/${CYLC_TASK_NAME}
     description = 
     init-script = 
     pre-script = 
@@ -550,7 +550,7 @@
     title = 
     URL = 
     extra log files = 
-    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
+    work sub-directory = ${CYLC_TASK_CYCLE_POINT}/${CYLC_TASK_NAME}
     description = 
     init-script = 
     pre-script = 
@@ -627,7 +627,7 @@
     title = 
     URL = 
     extra log files = 
-    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
+    work sub-directory = ${CYLC_TASK_CYCLE_POINT}/${CYLC_TASK_NAME}
     description = 
     init-script = 
     pre-script = 
@@ -705,7 +705,7 @@
     title = 
     URL = 
     extra log files = 
-    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
+    work sub-directory = ${CYLC_TASK_CYCLE_POINT}/${CYLC_TASK_NAME}
     description = 
     init-script = 
     pre-script = 
@@ -783,7 +783,7 @@
     title = 
     URL = 
     extra log files = 
-    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
+    work sub-directory = ${CYLC_TASK_CYCLE_POINT}/${CYLC_TASK_NAME}
     description = 
     init-script = 
     pre-script = 
@@ -860,7 +860,7 @@
     title = 
     URL = 
     extra log files = 
-    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
+    work sub-directory = ${CYLC_TASK_CYCLE_POINT}/${CYLC_TASK_NAME}
     description = 
     init-script = 
     pre-script = 
@@ -938,7 +938,7 @@
     title = 
     URL = 
     extra log files = 
-    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
+    work sub-directory = ${CYLC_TASK_CYCLE_POINT}/${CYLC_TASK_NAME}
     description = 
     init-script = 
     pre-script = 

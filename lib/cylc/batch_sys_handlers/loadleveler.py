@@ -37,10 +37,10 @@ class LoadlevelerHandler(object):
 
     def format_directives(self, job_conf):
         """Format the job directives for a job file."""
-        job_file_path = re.sub(r"\$HOME/", "", job_conf["job file path"])
+        job_file_path = re.sub(r"\$HOME/", "", job_conf["job_file_path"])
         directives = job_conf["directives"].__class__()
         directives["job_name"] = (
-            job_conf["suite name"] + "." + job_conf["task id"])
+            job_conf["suite_name"] + "." + job_conf["task_id"])
         directives["output"] = job_file_path + ".out"
         directives["error"] = job_file_path + ".err"
         # NOTE ON SHELL DIRECTIVE: on AIX at NIWA '#@ shell = /bin/bash'
@@ -51,11 +51,11 @@ class LoadlevelerHandler(object):
         # executed* (that is determined by the '#!' at the top of the task
         # job script).
         directives["shell"] = "/bin/ksh"
-        if (job_conf["execution time limit"] and
+        if (job_conf["execution_time_limit"] and
                 directives.get("wall_clock_limit") is None):
             directives["wall_clock_limit"] = "%d,%d" % (
-                job_conf["execution time limit"] + 60,
-                job_conf["execution time limit"])
+                job_conf["execution_time_limit"] + 60,
+                job_conf["execution_time_limit"])
         for key, value in job_conf["directives"].items():
             directives[key] = value
         lines = []

@@ -71,11 +71,10 @@ class BaseCommsClient(object):
         """Call server_object.fname(*fargs, **fargs)."""
         if self.host is None and self.port is not None:
             self.host = get_hostname()
-        if self.host is None or self.port is None:
-            try:
-                self._load_contact_info()
-            except (IOError, ValueError, SuiteServiceFileError):
-                raise ConnectionInfoError(self.suite)
+        try:
+            self._load_contact_info()
+        except (IOError, ValueError, SuiteServiceFileError):
+            raise ConnectionInfoError(self.suite)
         handle_proxies()
         payload = fargs.pop("payload", None)
         method = fargs.pop("method", self.METHOD)

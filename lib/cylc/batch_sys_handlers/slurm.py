@@ -43,17 +43,17 @@ class SLURMHandler(object):
 
     def format_directives(self, job_conf):
         """Format the job directives for a job file."""
-        job_file_path = re.sub(r'\$HOME/', '', job_conf['job file path'])
+        job_file_path = re.sub(r'\$HOME/', '', job_conf['job_file_path'])
         directives = job_conf['directives'].__class__()
         directives['--job-name'] = (
-            job_conf['suite name'] + '.' + job_conf['task id'])
+            job_conf['suite_name'] + '.' + job_conf['task_id'])
         directives['--output'] = job_file_path + ".out"
         directives['--error'] = job_file_path + ".err"
-        if (job_conf["execution time limit"] and
+        if (job_conf["execution_time_limit"] and
                 directives.get("--time") is None):
             directives["--time"] = "%d:%02d" % (
-                job_conf["execution time limit"] / 60,
-                job_conf["execution time limit"] % 60)
+                job_conf["execution_time_limit"] / 60,
+                job_conf["execution_time_limit"] % 60)
         for key, value in job_conf['directives'].items():
             directives[key] = value
         lines = []
