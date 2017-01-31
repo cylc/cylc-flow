@@ -183,8 +183,8 @@ class RemoteJobHostManager(object):
         # Wait for commands to complete for a max of 10 seconds
         timeout = time() + 10.0
         while procs and time() < timeout:
-            for user_at_host, (cmd, proc) in procs.items():
-                if not proc.poll():
+            for user_at_host, (cmd, proc) in procs.copy().items():
+                if proc.poll() is None:
                     continue
                 del procs[user_at_host]
                 out, err = proc.communicate()
@@ -200,8 +200,8 @@ class RemoteJobHostManager(object):
             except OSError:
                 pass
             out, err = proc.communicate()
-            proc.wait()
-            ERR.warning(RemoteJobHostInitError(
-                RemoteJobHostInitError.MSG_TIDY,
-                user_at_host, ' '.join([quote(item) for item in cmd]),
-                proc.returncode, out, err))
+            if proc.wait():
+                ERR.warning(RemoteJobHostInitError(
+                    RemoteJobHostInitError.MSG_TIDY,
+                    user_at_host, ' '.join([quote(item) for item in cmd]),
+                    proc.returncode, out, err))
