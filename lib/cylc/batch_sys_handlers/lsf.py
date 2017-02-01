@@ -47,7 +47,7 @@ class LSFHandler(object):
         directives["-e"] = job_file_path + ".err"
         if (job_conf["execution time limit"] and
                 directives.get("-W") is None):
-            directives["-W"] = "%d" % job_conf["execution time limit"] / 60
+            directives["-W"] = "%d" % (job_conf["execution time limit"] / 60)
         for key, value in job_conf["directives"].items():
             directives[key] = value
         lines = []
