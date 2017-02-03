@@ -39,15 +39,15 @@ sed -i 's/^--- original $/--- original/; s/^+++ edited $/+++ edited/' $DIFF_LOG
 cmp_ok "${DIFF_LOG}" - <<'__END__'
 --- original
 +++ edited
-@@ -112,7 +112,7 @@
- cd "${CYLC_TASK_WORK_DIR}"
+@@ -30,7 +30,7 @@
  
+ cylc::job::inst::script() {
  # SCRIPT:
 -/bin/false
 +/bin/true
+ }
  
- # EMPTY WORK DIRECTORY REMOVE:
- cd
+ . "${CYLC_DIR}/lib/cylc/job.sh"
 __END__
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"

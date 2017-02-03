@@ -460,6 +460,9 @@ class GlobalConfig(config):
         elif item == 'suite config log directory':
             value = os.path.join(srdir, 'log', 'suiterc')
 
+        elif item == 'suite work root':
+            value = swdir
+
         elif item == 'suite work directory':
             value = os.path.join(swdir, 'work')
 

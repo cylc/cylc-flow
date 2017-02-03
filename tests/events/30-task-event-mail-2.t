@@ -61,10 +61,9 @@ failed: 1/t5/03
 see: http://localhost/stuff/${USER}/${SUITE_NAME}/
 __LOG__
 run_ok "${TEST_NAME_BASE}-grep-log" \
-    grep -q "Subject: \\[5 tasks retry\\].* ${SUITE_NAME}" "${TEST_SMTPD_LOG}"
+    grep -q "Subject: \\[. tasks retry\\].* ${SUITE_NAME}" "${TEST_SMTPD_LOG}"
 run_ok "${TEST_NAME_BASE}-grep-log" \
-    grep -q "Subject: \\[5 tasks failed\\].* ${SUITE_NAME}" "${TEST_SMTPD_LOG}"
-
+    grep -q "Subject: \\[. tasks failed\\].* ${SUITE_NAME}" "${TEST_SMTPD_LOG}"
 purge_suite "${SUITE_NAME}"
 mock_smtpd_kill
 exit

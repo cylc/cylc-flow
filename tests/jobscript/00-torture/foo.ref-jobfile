@@ -5,125 +5,47 @@
 # Task: foo.1
 # Job log directory: 1/foo/01
 # Job submit method: background
-
-# PRELUDE
 export CYLC_DIR=
 export CYLC_VERSION=
-for FILE_NAME in \
-    "${HOME}/.cylc/job-init-env.sh" \
-    "${CYLC_DIR}/conf/job-init-env.sh" \
-    "${CYLC_DIR}/conf/job-init-env-default.sh"
-do
-    if [[ -f "${FILE_NAME}" ]]; then
-        . "${FILE_NAME}" 1>'/dev/null' 2>&1
-        break
-    fi
-done
-unset FILE_NAME
+CYLC_FAIL_SIGNALS='EXIT ERR TERM XCPU'
 
-# TRAP ERROR SIGNALS:
-FAIL_SIGNALS='EXIT ERR TERM XCPU'
-cylcjob::trap_err() {
-    typeset SIGNAL="$1"
-    echo "Received signal $SIGNAL" >&2
-    typeset S=
-    for S in ${VACATION_SIGNALS:-} ${FAIL_SIGNALS}; do
-        trap "" "${S}"
-    done
-    if [[ -n "${CYLC_TASK_MESSAGE_STARTED_PID:-}" ]]; then
-        wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2'>/dev/null' || true
-    fi
-    cylc task message -p 'CRITICAL' "Task job script received signal ${SIGNAL}" 'failed'
-    exit 1
+cylc::job::inst::cylc-env() {
+    # CYLC SUITE ENVIRONMENT:
+    export CYLC_CYCLING_MODE=
+    export CYLC_SUITE_FINAL_CYCLE_POINT=
+    export CYLC_SUITE_INITIAL_CYCLE_POINT=
+    export CYLC_SUITE_NAME=
+    export CYLC_UTC=
+    export CYLC_VERBOSE=
+
+    export CYLC_SUITE_RUN_DIR=
+    export CYLC_SUITE_DEF_PATH=
+    export CYLC_SUITE_DEF_PATH_ON_SUITE_HOST=
+
+    # CYLC TASK ENVIRONMENT:
+    export CYLC_TASK_JOB=
+    export CYLC_TASK_NAMESPACE_HIERARCHY=
+    export CYLC_TASK_TRY_NUMBER=
 }
-S=
-for S in ${FAIL_SIGNALS}; do
-    trap "cylcjob::trap_err ${S}" "${S}"
-done
-unset S
 
-set -o pipefail
-set -u
+cylc::job::inst::user-env() {
+    # TASK RUNTIME ENVIRONMENT:
+    E_ONE="$( cylc util rnd 1 10 )"
+    E_TWO="$VAR_IS"
+    E_THR="$CYLC_SUITE_SHARE_PATH"
+    E_FOU="$CYLC_TASK_NAME"
+    E_FIV="$( foo.sh )"
+    export E_ONE E_TWO E_THR E_FOU E_FIV
+}
 
-# TASK JOB SELF-IDENTIFY:
-USER="${USER:-$(whoami)}"
-if [[ "$(uname)" == 'AIX' ]]; then
-    # on AIX the hostname command has no '-f' option
-    HOSTNAME="$(hostname).$(namerslv -sn 2>'/dev/null' | awk '{print $2}')"
-else
-    HOSTNAME="$(hostname -f)"
-fi
-cat <<__OUT__
-Suite       : ##suitename##
-Task ID     : foo.1
-Submit (Try): 1 (1)
-User@Host   : ${USER}@${HOSTNAME}
-__OUT__
-echo
-
+cylc::job::inst::init-script() {
 # INIT-SCRIPT:
 echo "HELLO FROM INIT-SCRIPT"
 # define a variable
 export VAR_IS=is
+}
 
-# CYLC SUITE ENVIRONMENT:
-export CYLC_CYCLING_MODE=
-export CYLC_DEBUG=
-export CYLC_SUITE_FINAL_CYCLE_POINT=
-export CYLC_SUITE_INITIAL_CYCLE_POINT=
-export CYLC_SUITE_NAME=
-export CYLC_UTC=
-export CYLC_VERBOSE=
-
-export CYLC_SUITE_RUN_DIR=
-export CYLC_SUITE_LOG_DIR=
-export CYLC_SUITE_SHARE_DIR=
-export CYLC_SUITE_WORK_DIR=
-export CYLC_SUITE_DEF_PATH=
-export CYLC_SUITE_DEF_PATH_ON_SUITE_HOST=
-
-# CYLC TASK ENVIRONMENT:
-export CYLC_TASK_ID=
-export CYLC_TASK_CYCLE_POINT=
-export CYLC_TASK_NAME=
-export CYLC_TASK_LOG_ROOT=
-export CYLC_TASK_NAMESPACE_HIERARCHY=
-export CYLC_TASK_SUBMIT_NUMBER=
-export CYLC_TASK_TRY_NUMBER=
-export CYLC_TASK_WORK_DIR=
-
-# DEPRECATED
-export CYLC_SUITE_SHARE_PATH=
-export CYLC_SUITE_INITIAL_CYCLE_TIME=
-export CYLC_SUITE_FINAL_CYCLE_TIME=
-export CYLC_TASK_CYCLE_TIME=
-export CYLC_TASK_WORK_PATH=
-
-# SEND TASK STARTED MESSAGE:
-cylc task message 'started' &
-CYLC_TASK_MESSAGE_STARTED_PID=$!
-
-# ACCESS TO THE SUITE BIN DIRECTORY:
-if [[ -n "${CYLC_SUITE_DEF_PATH:-}" && -d "${CYLC_SUITE_DEF_PATH}/bin" ]]; then
-    export PATH="${CYLC_SUITE_DEF_PATH}/bin:${PATH}"
-fi
-
-# TASK RUNTIME ENVIRONMENT:
-E_ONE="$( cylc util rnd 1 10 )"
-E_TWO="$VAR_IS"
-E_THR="$CYLC_SUITE_SHARE_PATH"
-E_FOU="$CYLC_TASK_NAME"
-E_FIV="$( foo.sh )"
-export E_ONE E_TWO E_THR E_FOU E_FIV
-
-# SHARE DIRECTORY CREATE:
-mkdir -p "${CYLC_SUITE_SHARE_DIR}" || true
-
-# WORK DIRECTORY CREATE:
-mkdir -p "$(dirname "${CYLC_TASK_WORK_DIR}")" || true
-mkdir -p "${CYLC_TASK_WORK_DIR}"
-cd "${CYLC_TASK_WORK_DIR}"
-
+cylc::job::inst::pre-script() {
 # PRE-SCRIPT:
 echo "HELLO FROM PRE-SCRIPT"
 # init-script must be done:
@@ -136,7 +58,9 @@ echo E_FOU is $E_FOU
 echo E_FIV is $E_FIV
 # define a variable
 export VAR_PreCS=precs
+}
 
+cylc::job::inst::script() {
 # SCRIPT:
 echo "HELLO FROM SCRIPT"
 # init-script must be done:
@@ -151,7 +75,9 @@ echo E_FOU is $E_FOU
 echo E_FIV is $E_FIV
 # define a variable
 export VAR_CS=var_cs
+}
 
+cylc::job::inst::post-script() {
 # POST-SCRIPT:
 echo "HELLO FROM POST-SCRIPT"
 # init-script must be done:
@@ -171,14 +97,9 @@ echo VAR_PreCS is $VAR_PreCS
 echo VAR_CS is $VAR_CS
 # define a variable
 export VAR_PostCS=postcs
+}
 
-# EMPTY WORK DIRECTORY REMOVE:
-cd
-rmdir "${CYLC_TASK_WORK_DIR}" 2>'/dev/null' || true
-
-# SEND TASK SUCCEEDED MESSAGE:
-wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
-cylc task message 'succeeded' || true
-trap '' EXIT
+. "${CYLC_DIR}/lib/cylc/job.sh"
+cylc::job::main
 
 #EOF: 1/foo/01

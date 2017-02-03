@@ -77,6 +77,6 @@ grep_ok "\[client-connect] DENIED (privilege 'full-read' < 'shutdown') ${USER}@.
 mv "${SRV_D}/passphrase.DIS" "${SRV_D}/passphrase"
 
 # Stop and purge the suite.
-cylc stop --max-polls=10 --interval=1 "${SUITE_NAME}"
+cylc stop --max-polls=20 --interval=1 "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

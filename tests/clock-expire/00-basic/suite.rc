@@ -28,6 +28,7 @@ Skip a daily post-processing workflow if the 'copy' task has expired."""
     [[copy]]
         script = """
 # Abort if I run in either of the first two cycle points.
-[[ $CYLC_TASK_CYCLE_POINT == $CYLC_SUITE_INITIAL_CYCLE_POINT ]] && exit 1
-P2D=$(cylc cyclepoint --offset=P1D $CYLC_SUITE_INITIAL_CYCLE_POINT)
-[[ $CYLC_TASK_CYCLE_POINT == $P2D ]] && exit 1"""
+test "${CYLC_TASK_CYCLE_POINT}" != "${CYLC_SUITE_INITIAL_CYCLE_POINT}"
+P2D="$(cylc cyclepoint --offset='P1D' "${CYLC_SUITE_INITIAL_CYCLE_POINT}")"
+test "${CYLC_TASK_CYCLE_POINT}" != "${P2D}"
+"""

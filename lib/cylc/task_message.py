@@ -135,7 +135,7 @@ class TaskMessage(object):
                 else:
                     sys.stderr.write(
                         "   retry in %s seconds, timeout is %s\n" % (
-                            retry_intvl, timeout))
+                            retry_intvl, client.timeout))
                     sleep(retry_intvl)
                     # Reset in case contact info or passphrase change
                     client.host = None

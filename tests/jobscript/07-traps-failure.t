@@ -27,12 +27,12 @@ run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 for batch_sys in at background loadleveler pbs sge; do
     TEST_NAME="${TEST_NAME_BASE}-script-$batch_sys"
     run_ok "${TEST_NAME}" cylc jobscript "${SUITE_NAME}" "foo_$batch_sys.1"
-    grep_ok "^FAIL_SIGNALS='EXIT ERR TERM XCPU'" "${TEST_NAME}.stdout"
+    grep_ok "^CYLC_FAIL_SIGNALS='EXIT ERR TERM XCPU'" "${TEST_NAME}.stdout"
 done
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-script-slurm"
 run_ok "${TEST_NAME}" cylc jobscript "${SUITE_NAME}" foo_slurm.1
-grep_ok "^FAIL_SIGNALS='EXIT ERR XCPU'" "${TEST_NAME}.stdout"
+grep_ok "^CYLC_FAIL_SIGNALS='EXIT ERR XCPU'" "${TEST_NAME}.stdout"
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
 exit
