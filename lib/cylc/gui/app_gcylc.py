@@ -113,7 +113,7 @@ class TaskFilterWindow(gtk.Window):
     """
     A popup window displaying task filtering options.
     """
-    def __init__(self, parent_window, widgets, reset_task_filters):
+    def __init__(self, parent_window, widgets):
         super(TaskFilterWindow, self).__init__()
         self.set_border_width(10)
         self.set_title("Task Filtering")
@@ -122,12 +122,7 @@ class TaskFilterWindow(gtk.Window):
         else:
             self.set_transient_for(parent_window)
         self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DIALOG)
-        vbox = gtk.VBox()
-        button = gtk.Button("_Reset")
-        button.connect("clicked", reset_task_filters)
-        vbox.pack_start(widgets)
-        vbox.pack_start(button)
-        self.add(vbox)
+        self.add(widgets)
         self.show_all()
 
 
@@ -375,8 +370,13 @@ Use (Re-)connect button to reconnect immediately.""")
             self.filter_state_widget.pack_start(ebox, False, False)
             ttip_text = "Click to filter tasks by state or name"
         else:
-            ttip_text = "Current filtering (click to alter):\n%s" % (
-                ", ".join(self._filter_states_excl))
+            ttip_text = "Filtering (click to alter):\n"
+            if self._filter_states_excl:
+                ttip_text += "STATES EXCLUDED:\n  %s" % (
+                    ", ".join(self._filter_states_excl))
+            if self._filter_name_string:
+                ttip_text += "\nNAMES INCLUDED:\n  %s" % (
+                    self._filter_name_string)
             hbox = gtk.HBox()
             hbox.pack_start(gtk.Label(" (filtered:"))
             for state in self._filter_states_excl:
@@ -386,7 +386,6 @@ Use (Re-)connect button to reconnect immediately.""")
             if self._filter_name_string:
                 label = gtk.Label(" %s" % self._filter_name_string)
                 hbox.pack_start(label)
-                ttip_text += ", %s" % self._filter_name_string
             hbox.pack_start(gtk.Label(") "))
             ebox = gtk.EventBox()
             ebox.add(hbox)
@@ -2997,7 +2996,7 @@ This is what my suite does:..."""
 
     def check_task_filter_buttons(self, tb=None):
         task_states = []
-        for subbox in self.task_filter_box.get_children():
+        for subbox in self.state_filter_box.get_children():
             for ebox in subbox.get_children():
                 box = ebox.get_children()[0]
                 try:
@@ -3023,8 +3022,8 @@ This is what my suite does:..."""
             self.updater.refilter()
             self.refresh_views()
 
-    def reset_filter_box(self, w=None):
-        for subbox in self.task_filter_box.get_children():
+    def select_state_filters(self, w, arg):
+        for subbox in self.state_filter_box.get_children():
             for ebox in subbox.get_children():
                 box = ebox.get_children()[0]
                 try:
@@ -3034,8 +3033,10 @@ This is what my suite does:..."""
                     # AttributeError: the name filter entry box.
                     pass
                 else:
-                    cb.set_active(True)
+                    cb.set_active(arg)
         self.check_task_filter_buttons()
+
+    def reset_filter_entry(self, w):
         self.filter_entry.set_text("")
         self.check_filter_entry()
 
@@ -3066,7 +3067,19 @@ This is what my suite does:..."""
                 view.refresh()
 
     def create_task_filter_widgets(self):
-        self.task_filter_box = gtk.VBox()
+        self.filter_widgets = gtk.VBox()
+        self.filter_widgets.pack_start(
+            gtk.Label("Filter by task state"))
+        sel_button = gtk.Button("_Select All")
+        des_button = gtk.Button("Select _None")
+        sel_button.connect("clicked", self.select_state_filters, True)
+        des_button.connect("clicked", self.select_state_filters, False)
+        hbox = gtk.HBox()
+        hbox.pack_start(sel_button)
+        hbox.pack_start(des_button)
+        self.filter_widgets.pack_start(hbox)
+
+        self.state_filter_box = gtk.VBox()
         PER_ROW = 3
         n_states = len(self.legal_task_states)
         n_rows = n_states / PER_ROW
@@ -3075,7 +3088,7 @@ This is what my suite does:..."""
         dotm = DotMaker(self.theme, size=self.dot_size)
         for row in range(0, n_rows):
             subbox = gtk.HBox(homogeneous=True)
-            self.task_filter_box.pack_start(subbox)
+            self.state_filter_box.pack_start(subbox)
             for i in range(0, PER_ROW):
                 ebox = gtk.EventBox()
                 box = gtk.HBox()
@@ -3097,21 +3110,25 @@ This is what my suite does:..."""
                     box.pack_start(cb, expand=False)
                 subbox.pack_start(ebox, fill=True)
 
+        self.filter_widgets.pack_start(self.state_filter_box)
+        self.filter_widgets.pack_start(gtk.Label("Filter by task name"))
         self.filter_entry = EntryTempText()
         self.filter_entry.set_width_chars(7)
         self.filter_entry.connect("activate", self.check_filter_entry)
-        self.filter_entry.set_temp_text("task name filter")
-        hbox = gtk.HBox()
+        filter_entry_help_text = "Enter a substring or regular expression"
+        self.filter_entry.set_temp_text(filter_entry_help_text)
         ebox = gtk.EventBox()
         ebox.add(self.filter_entry)
+
+        hbox = gtk.HBox()
         hbox.pack_start(ebox)
-        self.task_filter_box.pack_start(hbox)
+        button = gtk.Button("_Reset")
+        button.connect("clicked", self.reset_filter_entry)
+        hbox.pack_start(button, expand=False)
+        self.filter_widgets.pack_start(hbox)
         tooltip = gtk.Tooltips()
         tooltip.enable()
-        tooltip.set_tip(self.filter_entry,
-                        "Filter by task name.\n"
-                        "Enter a sub-string or regex and hit Enter\n"
-                        "(to reset, clear the entry and hit Enter)")
+        tooltip.set_tip(self.filter_entry, filter_entry_help_text)
 
     def create_tool_bar(self):
         """Create the tool bar for the control GUI."""
@@ -3313,7 +3330,7 @@ For more Stop options use the Control menu.""")
         if self.filter_dialog_window is None:
             self.create_task_filter_widgets()
             self.filter_dialog_window = TaskFilterWindow(
-                self.window, self.task_filter_box, self.reset_filter_box)
+                self.window, self.filter_widgets)
             self.filter_dialog_window.connect(
                 "destroy", self.destroy_filter_dialog)
         else:
