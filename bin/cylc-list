@@ -41,7 +41,7 @@ from cylc.templatevars import load_template_vars
 
 def main():
 
-    parser = COP(__doc__, jset=True, prep=True)
+    parser = COP(__doc__, jset=True, prep=True, icp=True)
 
     parser.add_option(
         "-a", "--all-tasks",
@@ -113,7 +113,8 @@ def main():
 
     config = SuiteConfig(
         suite, suiterc,
-        load_template_vars(options.templatevars, options.templatevars_file))
+        load_template_vars(options.templatevars, options.templatevars_file),
+        cli_initial_point_string=options.icp)
     if options.tree:
         config.print_first_parent_tree(
             pretty=options.box, titles=options.titles)

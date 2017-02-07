@@ -57,7 +57,7 @@ def main():
     parser.add_option(
         "--stop-point", "--remove-point",
         help="Optional hold/stop cycle point for inserted task.",
-        metavar="POINT", action="store", dest="stop_point_string")
+        metavar="CYCLE_POINT", action="store", dest="stop_point_string")
     parser.add_option(
         "--no-check", help="Add task even if the provided cycle point is not "
         "valid for the given task.", action="store_true", default=False)

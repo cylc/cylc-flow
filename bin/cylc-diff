@@ -115,7 +115,7 @@ def prdict(dct, arrow='<', section='', level=0, diff=False, nested=False):
 
 def main():
     parser = COP(
-        __doc__, jset=True, prep=True, twosuites=True,
+        __doc__, jset=True, prep=True, icp=True,
         argdoc=[('SUITE1', 'Suite name or path'),
                 ('SUITE2', 'Suite name or path')])
 
@@ -135,10 +135,13 @@ def main():
     template_vars = load_template_vars(
         options.templatevars, options.templatevars_file)
     config1 = SuiteConfig.get_inst(
-        suite1, suite1rc, template_vars).cfg
+        suite1, suite1rc, template_vars,
+        cli_initial_point_string=options.icp).cfg
+    SuiteConfig._FORCE = True
     print "Parsing %s (%s)" % (suite2, suite2rc)
     config2 = SuiteConfig.get_inst(
-        suite2, suite2rc, template_vars, is_reload=True).cfg
+        suite2, suite2rc, template_vars,
+        cli_initial_point_string=options.icp, is_reload=True).cfg
 
     if config1 == config2:
         print "Suite definitions %s and %s are identical" % (suite1, suite2)
