@@ -83,20 +83,20 @@ class JobFile(object):
             stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
         os.chmod(local_job_file_path, mode)
 
-    @classmethod
-    def _get_derived_host_item(cls, job_conf, key):
+    @staticmethod
+    def _get_derived_host_item(job_conf, key):
         """Return derived host item from GLOBAL_CFG."""
         return GLOBAL_CFG.get_derived_host_item(
             job_conf['suite_name'], key, job_conf["host"], job_conf["owner"])
 
-    @classmethod
-    def _get_host_item(cls, job_conf, key):
+    @staticmethod
+    def _get_host_item(job_conf, key):
         """Return host item from GLOBAL_CFG."""
         return GLOBAL_CFG.get_host_item(
             key, job_conf["host"], job_conf["owner"])
 
-    @classmethod
-    def _write_header(cls, handle, job_conf):
+    @staticmethod
+    def _write_header(handle, job_conf):
         """Write job script header."""
         handle.write("#!" + job_conf['shell'])
         handle.write("\n#\n# ++++ THIS IS A CYLC TASK JOB SCRIPT ++++")
@@ -113,8 +113,8 @@ class JobFile(object):
             if value:
                 handle.write("\n%s%s" % (prefix, value))
 
-    @classmethod
-    def _write_directives(cls, handle, job_conf):
+    @staticmethod
+    def _write_directives(handle, job_conf):
         """Job directives."""
         lines = BATCH_SYS_MANAGER.format_directives(job_conf)
         if lines:
@@ -253,8 +253,8 @@ class JobFile(object):
             handle.write(global_init_script)
             handle.write("\n}")
 
-    @classmethod
-    def _write_script(cls, handle, job_conf):
+    @staticmethod
+    def _write_script(handle, job_conf):
         """Write pre-script, script, and post-script."""
         for prefix in ['init-', 'env-', 'pre-', '', 'post-']:
             value = job_conf[prefix + 'script']
@@ -264,8 +264,8 @@ class JobFile(object):
                     prefix.upper(), value))
                 handle.write("\n}")
 
-    @classmethod
-    def _write_epilogue(cls, handle, job_conf):
+    @staticmethod
+    def _write_epilogue(handle, job_conf):
         """Write epilogue."""
         handle.write('\n\n. "${CYLC_DIR}/lib/cylc/job.sh"\ncylc::job::main')
         handle.write("\n\n%s%s\n" % (
