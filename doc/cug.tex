@@ -2052,7 +2052,7 @@ will need to copy their suite passphrase to
 (use of the host and owner names is optional here - see~\ref{passphrases})
 {\em and} also retrieve the port number of the running suite from:
 \begin{lstlisting}
-    ~SUITE_OWNER/.cylc/ports/SUITE_NAME
+    ~SUITE_OWNER/cylc-run/SUITE_NAME/.service/contact
 \end{lstlisting}
 Once you have this information, you can run
 \begin{lstlisting}
@@ -6203,38 +6203,32 @@ Connecting to a running suite requires knowing the {\em network port} it
 is listening on, and the {\em suite passphrase} to authenticate with once
 a connection is made to the port.
 
-Suites write their port number to \lstinline=$HOME/.cylc/ports/<SUITE>=
-at start-up, and suite-connecting commands read this file to get the
-number.\footnote{If you accidentally delete a port file while a suite
-is running, use \lstinline=cylc scan= to determine the port number
-then use it on the command line (\lstinline=--port=) or rewrite the port
-file manually.} An exception to this is the messaging commands called by
-tasks. Running tasks know the port number from the execution environment
-provided by the suite (via the task job script).
+A suite writes its contact information to
+\lstinline=$HOME/cylc-run/<SUITE>/.service/contact= at start-up. Client
+commands that connect to the suite read this file to obtain the necessary
+information on how to connect to the suite.
 
-So, to connect to a suite running on another account you must install
-the suite passphrase (\ref{passphrases}), and configure
-non-interactive ssh so that the port number can be retrieved from the
-remote port file. Then use the \lstinline=--user= and
-\lstinline=--host= command options to connect:
+To connect to a suite running on another account you must install the suite
+passphrase (\ref{passphrases}), and configure non-interactive ssh so that the
+contact information can be retrieved from the remote contact file. Then use the
+\lstinline=--user= and \lstinline=--host= command options to connect:
 \lstset{language=transcript}
 \begin{lstlisting}
 $ cylc monitor --user=USER --host=HOST SUITE
 \end{lstlisting}
 
-Alternatively, you can determine suite port numbers using \lstinline=cylc scan=,
-and use them explicitly on the command line:
+Alternatively, you can determine suite contact information using
+\lstinline=cylc scan=, and use them explicitly on the command line:
 \lstset{language=transcript}
 \begin{lstlisting}
 $ cylc monitor --user=USER --host=HOST --port=PORT SUITE
 \end{lstlisting}
 
-Possession of a suite passphrase gives full control over the suite, and
-ssh access to the port file also implies full access to the suite host
-account, so it is recommended that this only be used to interact with
-your own suites running on other hosts. We plan to implement
-finer-grained authentication in the future to allow suite owners to
-grant read-only access to others.
+Possession of a suite passphrase gives full control over the suite, and ssh
+access to the contact file also implies full access to the suite host account,
+so it is recommended that this only be used to interact with suites running on
+accounts that you already have full access.
+(See also~\ref{PublicAccess}.)
 
 
 
