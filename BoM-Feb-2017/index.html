@@ -1,0 +1,1707 @@
+<!DOCTYPE html>
+
+<head>
+<link href="etc/prism/prism.css" rel="stylesheet" />
+<link href="etc/my-dzslides.css" rel="stylesheet" />
+<!-- to use online fonts:
+<link href="https://fonts.googleapis.com/css?family=Titillium+Web" rel="stylesheet">
+--> 
+</head>
+
+<meta charset="utf-8">
+<script src="etc/prism/prism.js"></script>
+
+<title>Cylc - BoM, 2-3 Feb 2017</title>
+
+<!--prism.js syntax highlight: use double-quotes for Cylc strings,
+single for jinja2 strings-->
+
+<!-- One section is one slide -->
+
+<section class="chapter">
+  <h1>
+    <span style="color:#ff5966">c</span>
+    <span style="color:#eebb00">y</span>
+    <span style="color:#00c798">l</span>
+    <span style="color:#00b4fd">c</span>
+    <img src='etc/gfx/cylc-logo.svg' style="width:150px; margin-bottom:-30px"/>
+  </h1>
+  <p/>
+  <h3>a high level introduction</h3>
+  <p>with an operational slant</p>
+  <p>Bureau of Meteorlogy Melbourne 2-3 Feb 2016</p>
+
+  <footer style="padding:25px;">
+    <div style="float:right">
+      Hilary James Oliver, <a href="http://niwa.co.nz">NIWA</a> &nbsp;
+      <div class="nav" style="float:right">
+        <a href="shells/onstage.html?../index.html#../index.html">onstage</a>
+      </div>
+      &nbsp;
+      <span style="color:#ff5966">c</span>
+      <span style="color:#eebb00">y</span>
+      <span style="color:#00c798">l</span>
+      <span style="color:#00b4fd">c</span>
+      <img src='etc/gfx/cylc-logo.svg' style="width:25px; margin-bottom:-5px"/>
+    </div>
+  </footer>
+</section>
+
+<section>
+  <h4>topics</h4>
+  <ul>
+    <li> cycling workflows
+    <li> the Cylc client/server model
+    <li> PBS integration
+    <li> Cylc CLI and GUIs
+    <li> performance
+    <li> research vs operations
+    <li> workflow definition
+    <li> roadmap
+    <li> major differences from XXX (name redacted)
+    <li> who's using Cylc?
+  </ul>
+</section>
+
+<section class="dark">
+  <h2>cycling workflows</h2>
+</section>
+
+<section>
+  <h3 class="subtitle">why is cycling important?</h3>
+
+  <ul class="incremental">
+    <li> <strong>operational forecasting</strong>: repeat (with variations) a
+    workflow at intervals, when real-time data comes in
+    <ul>
+      <li> needs clock-triggers; and continue cycling indefinitely
+    </ul>
+    <li> <strong>forecasting research and testing</strong>: run operational
+    workflows (or variations thereof) over historical periods, off archived
+    data 
+    <ul>
+      <li> no clock-triggers, unless we catch up to the clock
+    </ul>
+
+    <li> <strong>to split a long model run into many short runs</strong> 
+    (e.g. for long climate simulations) with associated processing for each
+    chunk
+    <ul>
+      <li> no clock-triggers
+    </ul>
+  </ul>
+</section>
+
+<section>
+  <h3 class="subtitle">first some Cylc terminology</h3>
+  <ul class="incremental">
+    <li> a <strong>task</strong> is an abstract representation of a computer
+    <strong>job</strong>
+    <li> a <strong>workflow</strong> is a <strong>suite</strong> of
+    interdependent tasks
+    <li> a <strong>dependency graph</strong> is a DAG representation of a
+    workflow (graph nodes = tasks; graph edges = dependencies) 
+    <li> a <strong>cycle point</strong> is a particular point in sequence
+    of date-time (or integer) points
+  </ul>
+</section>
+
+<section>
+  <figure class="white">
+    <img src="etc/gfx/graph1-1.svg" style="float:left">
+    <div style="margin-left:280px; margin-top:130px">
+      <h4>a small workflow <strong>graph</strong></h4>
+      <ul>
+        <li> <strong>nodes</strong> represent <strong>tasks</strong><br/>
+        (which represent real jobs)
+        <li> <strong>edges </strong>represent <strong>dependence</strong><br/>
+        (typically input/output files)
+        <li> this shows <strong>cycle point 1</strong>
+      </ul>
+    </div>
+  </figure>
+</section>
+
+<section>
+  <figure class="white">
+    <img src="etc/gfx/graph1-2.svg">
+    <p style="margin-top:160px; margin-left:530px"><strong>repeat</strong>,
+    for the next forecast<br/>(cycle point 2)</p>
+  </figure>
+</section>
+
+<section>
+  <figure class="white">
+    <img src="etc/gfx/graph1-2a.svg">
+    <p style="margin-top:160px; margin-left:530px; margin-right:0px">
+    BUT NOTE there is <strong>inter-cycle dependence</strong>
+    (e.g. model restart files)<br/>
+    <code>foo[1] => foo[2]</code> 
+    <code>bar[1] => baz[2]</code> 
+    </p>
+  </figure>
+</section>
+
+<section>
+  <figure class="white">
+    <img src="etc/gfx/graph1-3a.svg">
+  </figure>
+</section>
+
+<section>
+  <figure class="white">
+    <img src="etc/gfx/graph1-cont.svg">
+    <p style="margin-left:370px; margin-top:40px">
+    inter-cycle dependence makes this <br/><strong>a
+      continuous workflow</strong><br/> not a sequence of single workflows</p>
+  </figure>
+</section>
+
+<section>
+  <figure class="white">
+    <img src="etc/gfx/graph1-cont5.svg">
+    <p style="margin-left:400px; margin-top:60px">
+    there are <strong>no boundaries between cycles</strong>
+    (in real-time operation clock-triggers simply <b>delay</b> a few tasks)</p>
+  </figure>
+  <div role="note">
+  </div>
+</section>
+
+<section>
+  <figure class="white">
+    <img src="etc/gfx/graph1-cont20.svg">
+    <p style="margin-left:350px; margin-top:60px">
+    &amp; the workflow may be unbounded...</p>
+  </figure>
+</section>
+
+<section>
+  <figure class="white">
+    <img src="etc/gfx/graph1-cont50.svg">
+  </figure>
+</section>
+
+<section>
+  <figure class="white">
+    <img src="etc/gfx/graph1-cont100.svg">
+  </figure>
+</section>
+
+<section>
+  <figure class="white">
+    <img src="etc/gfx/graph1-cont250.svg">
+  </figure>
+</section>
+
+<section class="dark">
+  <h2>how can we run</h2>
+  <h2 style="margin-top:0px">such a system?!</h2>
+</section>
+
+<section>
+  <h3>static workflow managers</h3>
+  <p>e.g. most non-NWP workflow schedulers</p>
+    <ul>
+      <li>these have <strong>no concept of cycling</strong>
+      <li> but <strong>they can run cycling jobs:</strong> if each instance of
+      a cycling job is represented by a different logical task
+      <li> efficient scheduling: no artificial barriers between "cycle points"
+    <li> but static workflows must be <strong class="warning">not too
+      large</strong> and <strong class="warning">finite in extent</strong>
+    <li> <strong class="warning">performance and monitoring</strong>: users
+    (like the server) are presented with the entire workflow from start to finish
+  </ul>
+  <div role="note">
+    <p>I'm presenting this because Cylc uniquely peforms like static workflow
+    manager, with indefinite cycling</p>
+  </div>
+</section> 
+
+<section>
+  <img src="etc/gfx/basic-static2.svg" style="height:90%; margin:2%; margin-left:10%"/>
+  <div style="position:absolute; top:50px; right:20px; width:400px">
+    <code>model_p1</code> runs <code>model.exe</code> for <code>T=1</code> <br/>
+    <code>model_p2</code> runs <code>model.exe</code> for <code>T=2</code> <br/>
+    <code>model_p3</code> runs <code>model.exe</code> for <code>T=3</code> <br/> etc.
+  </div>
+  <div role="note">
+    <p>As far as the abstract workflow is concerned these are all distinct
+    tasks.</p>
+  </div>
+</section>
+
+<section>
+  <img src="etc/gfx/mad-static.svg" style="height:90%; margin:1%; margin-left:10%"/>
+  <div style="position:absolute; top:50px; right:20px; width:400px">
+    <code>pink..</code> runs <code>model.exe</code> for <code>T=1</code> <br/>
+    <code>yellow</code> runs <code>model.exe</code> for <code>T=2</code><br/>
+    <code>red...</code> runs <code>model.exe</code> for <code>T=3</code><br/> etc.
+  </div>
+</section>
+
+<section>
+  <div class="vid">
+    <h4>static (video)</h4>
+    <video onclick="this.paused ? this.play() : this.pause();"
+      style="width:100%;">
+      <source src="etc/gfx/cylc-static-5.webm">
+      Your browser does not support webm video
+    </video>
+  </div>
+  <div class="vid">
+    <h4>static (image)</h4>
+    <img src="etc/gfx/static5.svg" style="width:90%">
+  </div>
+  <div role="note">
+    <p>This is optimally efficient in the sense that each task can run as soon
+    as it is ready, regardless of its "cycle point".</p>
+  </div>
+</section>
+
+<section>
+  <h3>fixed cycling workflow managers</h3>
+  <p><strong>sequentially repeat the full single-cycle workflow</strong><br/>
+  &nbsp; &nbsp; e.g. traditional operational NWP workflow schedulers</p>
+  <ul class="incremental">
+    <li> the obvious way to get an ongoing cycling workflow
+    <ul>
+      <li> fine for clock-limited operational NWP (mostly...!)
+      <li> can continue indefinitely, but:
+    </ul>
+    <li> this puts <strong class="warning">artificial hard boundaries between
+      cycles</strong>
+    <ul>
+      <li> (but could have multi-step static workflows at each cycle)
+    </ul>
+  </ul>
+  <div role="note">
+  </div>
+</section> 
+
+<section>
+  <div class="vid">
+    <h4>fixed cycling (video)</h4>
+    <video onclick="this.paused ? this.play() : this.pause();"
+      style="width:100%; margin-top:30%">
+      <source src="etc/gfx/cylc-fixed-5.webm">
+      Your browser does not support webm video
+    </video>
+  </div>
+  <div class="vid">
+    <h4>cycling workflow (image)</h4>
+    <img src="etc/gfx/cycling5.svg" style="width:88%">
+  </div>
+</section>
+
+<section>
+  <h3>free cycling workflow (only Cylc!)</h3>
+  <p>there is <strong>no global cycle loop</strong>;<br/> &nbsp; &nbsp;
+    <strong>cycling jobs</strong> are represented by <strong>cycling
+      tasks</strong></p>
+  <ul class="incremental">
+    <li>  inter-cycle dependence is explicit
+    <li> same scheduling efficiency as a static workflow (no artificial hard
+    boundary between cycles), but can continue indefinitely
+    <li> it's a single continuous workflow
+    <ul>
+      <li> but we don't need to "know about" the entire workflow;
+      cylc <strong>dynamically generates workflow</strong>
+    </ul>
+  </ul>
+  <div role="note">
+    By "scheduling efficiency" I mean the workflow engine determines that a
+    task is ready to run as soon as possible based on only the task's
+    individual dependencies.
+  </div>
+</section> 
+
+<section>
+  <div class="vid">
+    <h4>cycling (video)</h4>
+    <video onclick="this.paused ? this.play() : this.pause();"
+      style="width:100%; margin-top:30%">
+      <source src="etc/gfx/cylc-cycling-5.webm">
+      Your browser does not support webm video
+    </video>
+  </div>
+  <div class="vid">
+    <h4>cycling (image)</h4>
+    <img src="etc/gfx/cycling5.svg" style="width:88%">
+  </div>
+</section>
+
+<section>
+  <div class="vid" style="float:left">
+    <h4>static (video)</h4>
+    <video onclick="this.paused ? this.play() : this.pause();"
+      style="width:140%">
+      <source src="etc/gfx/comp-static-workflow-10.webm">
+      Your browser does not support webm video
+    </video>
+  </div>
+  <div class="vid" style="float:left">
+    <h4>cycling (video)</h4>
+    <video onclick="this.paused ? this.play() : this.pause();"
+      style="width:100%;">
+      <source src="etc/gfx/comp-cycling-workflow-10.webm">
+      Your browser does not support webm video
+    </video>
+  </div>
+</section>
+
+<section>
+  <div class="vid">
+    <h4>cycling, with delay (vid.)</h4>
+    <video onclick="this.paused ? this.play() : this.pause();"
+      style="width:100%">
+      <source src="etc/gfx/cycling-workflow-10-retries.webm">
+      Your browser does not support webm video
+    </video>
+  </div>
+  <div class="vid">
+    <h4>cycling (vid.)</h4>
+    <video onclick="this.paused ? this.play() : this.pause();"
+      style="width:100%">
+      <source src="etc/gfx/cycling-workflow-10.webm">
+      Your browser does not support webm video
+    </video>
+  </div>
+</section>
+
+<section> 
+    <h3>fixed vs free cycling after a delay</h3>
+      <img src="etc/gfx/dep-two-cycles.svg" style="margin-left:15%; height:30%">
+</section>
+
+<section> 
+    <h3>fixed vs free cycling after a delay</h3>
+      <img src="etc/gfx/dep-two-cycles.svg" style="margin-left:15%; height:30%">
+      <img src="etc/gfx/timeline-three.svg" style="width:100%">
+</section>
+
+
+<section class="dark">
+  <h2>the Cylc client/<br/>server model</h2>
+</section>
+
+<section>
+  <h4>Cylc has no central server</h4>
+  <ul class="incremental">
+    <li> <code>cylc run foo</code> (or via GUI) starts a dedicated server for
+    <code>foo</code>
+      <li> <strong>Cylc servers</strong> are daemon processes that:
+      <ul>
+        <li> start automatically when you run a suite
+        <li> run as you, and they run their tasks as you, i.e.</br>
+        &nbsp; &nbsp; <strong>Cylc does not need elevated system
+        privileges</strong>
+        <li> shut down automatically when/if your suite finishes
+      </ul>
+      <li> Cylc suites are entirely independent
+      <ul>
+        <li> (but can have cross-triggering)
+      </ul>
+      <li> <strong>Cylc clients are </strong> GUIs, CLI commands, and task jobs
+      <li> <strong>HTTPS client-server communications</strong> (since cylc-7)
+  </ul>
+</section>
+
+<section>
+  <h3>advantages of this model</h3>
+  <ul class="incremental">
+    <li> <strong>zero admin</strong> - no server maintenance, account management etc.
+    <li> <strong>security</strong> - no elevated system privileges required
+    <li> <strong>robustness</strong> - nothing (Cylc-related) can bring down
+    all suites
+    <li> <strong>trivial system upgrades</strong> - can do one suite at a time
+    <li> <strong>scalability</strong> - just add more suite hosts or VMs
+    <li> <strong>ease of use</strong> - even for small sites and individuals
+    <ul>
+      <li> you can unpack Cylc on a laptop and run it "out of the box"
+  </ul>
+</section>
+
+<section>
+  <h4>disadvantages?</h4>
+  <ul class="incremental">
+    <li> harder to get a global view of multiple independent suites
+    running on (potentially) multiple hosts 
+    <ul>
+      <li> but we have <code>cylc scan</code> (CLI) and <code>cylc gscan</code>
+      (GUI)
+    </ul>
+    <li> harder to shut down all of your suites at once?
+    <ul>
+      <li> why would you? (there's no central server to upgrade...)
+      <li> for hardware maintenance, just suspend the VM...
+      <li> (its safe to kill suites if necessary - just restart later)
+    </ul>
+    <li> harder to give multiple users control over specific suites?
+    <ul>
+      <li> only to *start up* suites (can do if already running)
+      <li> (use role/service accounts for all operational suites)
+    </ul>
+  </ul>
+  <div role="note">
+    Multiple users via passphrase: user and client UUID is logged by the suite.
+  </div>
+</section>
+
+<section class="dark">
+  <h2>Cylc suite and job hosts</h2>
+</section>
+
+<section class="dark">
+  <img src="etc/gfx/cylc-server-hpc.svg" style="width:100%"/>
+  <div role="note">
+    <p>Supercomputer as fashion accessory! Cray XMP early 80s?</p>
+  </div>
+</section>
+
+<section class="dark">
+  <img src="etc/gfx/cylc-server-2.svg" style="width:100%"/>
+</section>
+
+<section>
+  <h3>run Cylc on HPC login nodes?</h3>
+  <p> running all your suite daemons and jobs on the HPC is
+  <strong>possible</strong> but <strong class="warning">not
+    recommended</strong></p>
+
+  <ul class="incremental">
+    <li> scalability for large numbers of suites?
+    <li>HPC is for large massively parallel models and large file IO,
+    <ul>
+      <li> (and often doesn't support other processing very well)
+      <li> not large(ish) long-running workflow engines
+      <li> not large large numbers of serial jobs generating large numbers of
+      small files (Lustre filesystem reportedly doesn't like this)
+    </ul>
+  </ul>
+  <div role="note">
+    <p>e.g. ongoing support for up-to-date versions of svn and git, and IDL,
+    ncl, anything...</p>
+  </div>
+</section>
+
+<section>
+    <!-- div style="position:absolute; width:38%; right:0px; top:0px">
+      one cylc suite on a Linux server, several task hosts
+    </div -->
+  <img src="etc/gfx/cylc-server.svg" style="height:100%"/>
+</section>
+
+<section>
+  <h3>Cylc on Linux, HPC job host (1/3)</h3>
+  <p> run suite daemons on one or more Linux servers or VMs, submitting
+  appropriate jobs to the HPC</p>
+
+  <ul class="incremental">
+    <li> doesn't affect HPC performance
+    <li> use other Linux hosts for serial jobs
+    <li> scalable - add more suite servers if required
+    <li> maintenance - Cylc suites and VMs are transferable
+  </ul>
+</section>
+
+<section>
+  <h3>Cylc on Linux, HPC job host (2/3)</h3>
+  <p>two configurations that currently work "out of the box":</p>
+  <ul class="incremental">
+    <li> <strong>direct interaction with remote job hosts</strong>
+    <ul>
+      <li> requires non-interactive ssh - "passwordless" or a manually
+      authenticated persistent ssh tunnel
+    </ul>
+    <li> <strong>make remote job hosts look local to Cylc</strong>
+    <ul>
+      <li> local PBS (e.g.) submits jobs to remote hosts
+      <li> requires a shared filesystem (for access to job logs etc.)
+    </ul>
+    <li> (both need HTTPS comms from job host to suite host, or else have to
+    poll for job status)
+  </ul>
+</section>
+
+<section>
+  <h3>Cylc on Linux, HPC job host (3/3)</h3>
+  <p><strong>some high-security sites want local PBS but no
+    shared filesystem and no ssh to HPC - only rsync?</strong></p>
+  <ul class="incremental">
+    <li> distributed workflow automation requires *actions* on job hosts
+    <ul>
+      <li> can we get full capability without ssh? (maybe...?) 
+    </ul>
+    <li> are these restrictions technically justified?
+    <ul>
+      <li> can't I just rsync a malicious script and run it via PBS?
+    </ul>
+    <li> why not just put Cylc servers inside the HPC trust zone?
+    <li> what about <b>ssh whitelisting</b> a handful of <code>cylc</code>
+    commands?
+  </ul>
+  <div role="note">
+  </div>
+</section>
+
+<section>
+  <h3>Cylc remote job host interaction</h3>
+  <ul>
+    <li> test for shared filesystem
+    <li> create suite .service directory, copy some of its content
+    <li> execute Cylc commands:
+    <ul>
+      <li> <code>cylc jobs-submit</code> - submit jobs
+      <li> <code>cylc jobs-kill</code> - cancel/kill jobs
+      <li> <code>cylc jobs-poll</code> - query PBS (e.g.) <b>and</b> job status
+      files
+    </ul>
+    <li> retrieve job logs
+    <li> remove suite .service directory
+    <li> (also: file installation via <code>rose suite-run</code> etc.)
+  </ul>
+  <div role="note">
+    Poll jobs:
+    * manually, on demand
+    * regularly - if no HTTPS comms to job host
+    * automatically after specified execution time limit
+    * automatically for orphaned tasks at restart
+  </div>
+</section>
+
+<section class="dark">
+  <h2>PBS integration</h2>
+  <p>(and similarly other batch schedulers/resource managers)</p>
+</section>
+
+<section>
+  <p>a suite with one task that submits its job to PBS...</p>
+  <br/>
+  <pre><code class="language-cylc">[scheduling]
+    [[dependencies]]
+       graph = "hello_world"
+ [runtime]
+    [[hello_world]]
+       script = echo "Hello World!"
+       [[[job]]]
+          batch system = pbs
+          execution time limit = PT1M  # 1 minute
+       [[[directives]]]
+          -V = '' 
+          -q = serial
+          -l nodes = 1</code></pre>
+</section>
+
+<section>
+  <p>...and the resulting task job script</p>
+  <br/>
+  <pre style="font-size:75%"><code class="language-bash">#!/bin/bash
+
+# ++++ THIS IS A CYLC TASK JOB SCRIPT ++++
+# Suite: test-pbs
+# Task: hello_world.1
+# Job log directory: 1/hello_world/01
+# Batch system: pbs
+# Execution time limit: 600.0
+
+#PBS -N hello_world.1.b
+#PBS -o /home/hilary/cylc-run/bar/log/job/1/hello_world/01/job.out
+#PBS -e /home/hilary/cylc-run/bar/log/job/1/hello_world/01/job.err
+#PBS -l walltime=600
+#PBS -V
+#PBS -q serial
+#PBS -l nodes=1
+...
+echo "Hello World!"
+...</code></pre>
+</section>
+
+<section>
+  <h3>batch scheduler support requirements</h3>
+  <ul>
+    <li> job submit command: <code>%qsub %(job)s</code>
+    <li> (and recover <b>job ID</b> from job submit output)
+    <li> directive formatting, and prefix: <code>#PBS</code>
+    <li> kill/cancel command: <code>qdel %(job_id)s</code>
+    <li> poll/query command: <code>qstat %(job_id)s</code>
+  </ul>
+  <p>Note that full job poll capability requires more than <code>qstat</code>:
+  if a job did not report in finished but is not in PBS, did it succeed,
+  fail, or never run? - Cylc can figure this out automatically</p>
+</section>
+
+<section class="dark">
+  <h2>Cylc CLI and GUIs</h2>
+</section>
+
+<section>
+  <h3>powerful CLI</h2>
+  <p>suites are scriptable via an extensive, powerful CLI<br/></p>
+  <p>see <code>cylc help</code></p>
+  <ul class="incremental">
+    <li> e.g. to simultaneously re-trigger all failed tasks with names starting
+    with <b>get_*</b> in all <b>2020*</b> cycle points, in suite
+    <b>expt1</b>:<br/>
+    <code>cylc trigger expt1 2020*/get_*:failed</code>
+  </ul>
+</section>
+
+<section>
+  <h3>Cylc GUIs</h3>
+  <ul class="incremental">
+    <li> a <strong>suite control GUI</strong> - <code>cylc gui</code>
+    (aka <code>gcylc</code>)
+    <ul>
+      <li> three suite state "views" (graph, dot, text tree)
+      <li> interact with suite and tasks (re-trigger jobs, view logs
+      etc.)
+      <li> task sort order, and filtering by task state and name
+    </ul>
+    <li> a <strong>multi-suite multi-host summary GUI</strong> - <code>cylc
+      gscan</code>
+    <li> powerful <strong>web job log viewer</strong> - <code>rose bush</code>
+  </ul>
+</section>
+
+<section class="dark">
+  <img style="width:100%" src="etc/gfx/gcylc-1.png">
+</section>
+
+<section class="dark">
+  <img style="width:100%" src="etc/gfx/gcylc-3.png">
+</section>
+
+<!--section class="dark">
+    <img style="height:100%; margin-left:25%" src="etc/gfx/cylc-gscan-mo-oper.png">
+</section-->
+
+<section class="dark">
+    <img style="width:100%; margin-top:5%" src="etc/gfx/gscan.png">
+</section>
+
+<section>
+  <div style="position:absolute; top:-42px; right:0"><h4>Rose Bush</h4><p>(note
+  very outdated screenshot)</p></div>
+    <img style="width:100%; height:100%"
+    src="etc/gfx/cylc-rose-bush.png">
+</section>
+
+<section class="dark">
+  <div style="position:absolute; top:-40px; right:0; line-height:100%">
+    <h4>the future: web GUIs<br/>
+   Cylc suites are now web servers</h4>
+  </div>
+  <img style="height:100%" src="etc/gfx/cylc-https.png"/>
+</section>
+
+<section class="dark">
+  <h2>performance</h2>
+</section>
+
+<section>
+    <div style="position:absolute; left:50px; top:120px">
+      (credit Dave Matthews, Lisbon Workflow Solutions Workshop 2016)
+    </div>
+  <img style="width:100%; height:100%" src="etc/gfx/mo-cylc-load.png">
+</section>
+
+<!--
+<section>
+  <figure class="white">
+    <img src="etc/gfx/complex-0.png">
+  </figure>
+</section>
+-->
+
+<section>
+  <figure class="white">
+    <img src="etc/gfx/complex-1.png">
+  </figure>
+</section>
+
+<section>
+    <div style="position:absolute; width:50%; right:2%; top:4%">
+      <span style="color:black">
+      Cylc can easily run this (with dummy tasks!) on a laptop VM
+      </span>
+    </div>
+    <img src="etc/gfx/complex-1.png" style="width:100%; height:100%">
+</section>
+
+<section>
+  <figure class="white">
+    <img src="etc/gfx/complex-2.png">
+  </figure>
+</section>
+
+<!--
+<section>
+  <figure class="white">
+    <img src="etc/gfx/u-ab778.svg">
+  </figure>
+</section>
+-->
+
+<section>
+  <figure class="white">
+    <img src="etc/gfx/u-ab778-3.svg">
+  </figure>
+</section>
+
+<section class="dark">
+  <figure class="dark">
+    <img src="etc/gfx/string-art-fun2.jpg" style="padding-left:200px; width:600px">
+  </figure>
+</section>
+
+<section class="dark">
+  <h2>research and operations</h2>
+  <div role="note">
+    Part of Cylc's design brief was to diminish the barrier between research
+    and operations but providing a workflow engine that can do both. Scientific
+    modeling systems evolve quickly, and workflows are getting bigger and more
+    complex - translating them to a different operational framework is very
+    very difficult.
+  </div>
+</section>
+
+<section>
+  <h3> Cylc is very general-purpose</h3>
+  <p>Cylc can handle NWP, climate, satellite processing, and product generation
+  workflows, in research &amp; operations</p>
+  <ul class="incremental">
+    <li> <strong>static workflows</strong> - for non-cycling or cycling jobs
+    <li> <strong>continuous cycling workflows</strong>
+    <ul>
+      <li> date-time cycling
+      <li> integer cycling
+    </ul>
+    <li> <strong>real-time triggering</strong> for real-time operations:
+    <ul>
+      <li> clock-triggered
+      <li> external-triggered - e.g. for satellite processing
+    </ul>
+  </ul>
+  <div role="note">
+    <p>This is one of the reasons Met Office chose Cylc - it is a big advantage
+    to using the same tool across the whole organisation.</p>
+  </div>
+</section>
+
+<section>
+  <h3>research and operations</h3>
+  <p> with Cylc, it is <em>possible</em> to use the same suites in research and
+  operations, because:<p>
+  <ul class="incremental">
+    <li> Cylc suites seamlessly transition from continuous cycling behind
+    the clock, to clock-limited real time operation
+    <li> operations-specific parts of a workflow can be "factored out"
+    <li> so: the researchers can do science upgrades etc. in the operational
+    suites (via a safe collaborative development model) - <strong>~no
+      translation required</strong> between research and operations
+</section>
+ 
+<section>
+  <h3>organisational efficiency</h3>
+  <p><strong>big savings</strong> can be made by:
+  <ul class="incremental">
+    <li> using the same workflow scheduler across the organisation
+    <li> leveraging collaboratively developed UM Consortium suites
+    <ul>
+      <li> we are even developing site-portable Cylc suites
+    </ul>
+    <li> research and ops using the same suites (where appropriate)
+    <ul>
+      <li> the effort required to continually translate to a different
+      operational scheduler is a massive barrier to progress
+    </ul>
+  </ul>
+  <div role="note">
+  </div>
+</section>
+ 
+<section class="dark">
+  <h2>workflow definition</h2>
+</section>
+
+<section>
+  <h3>Cylc uses plain text config files</h3>
+  <ul class="incremental">
+    <li> why? workflow definition by any means <strong>is a configuration
+    job</strong>: it configures the behaviour of a program, the workflow engine
+    <li>maximally human-readable
+    <li> programmability in this context is for generating parts
+    of the workflow definition - we get this from embedded Jinja2 code
+    <li> it allows extremely <strong>efficient</strong> workflow descriptions 
+    - important as workflows inevitably get more complex (more later...)
+    <li> compatible with proper modern version control for collaborative
+    development of complex workflows (need text-based diffs etc.)
+  </ul>
+  <div role="note">
+    <p>config files are clearly structured and can be validated against a
+    spec</p>
+  </div>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus
+ [scheduling]
+    [[dependencies]]
+       graph = "hello => goodbye & farewell"
+ [runtime]
+    [[hello]]
+       script = echo "Hello World!"
+    [[goodbye]]
+       script = echo "Goodbye World!"
+    [[farewell]]
+       script = echo "Farewell World!"</code></pre>
+  <img src="etc/gfx/hello.svg" style="width:35%; margin-left:35%"/>
+  <div role="note">
+    note this example does not even scratch the surface
+  </div>
+</section>
+
+<section>
+  <h3>defining workflow structure</h3>
+  <ul class="incremental">
+    <li>in <strong>traditional NWP metaschedulers</strong> structure is
+    implicit: task dependencies are considered task runtime configuration
+    <ul>
+      <li> they shouldn't be: they determine <em>when</em> a task runs
+    </ul>
+    <li><strong>Cylc</strong> lets you work directly with workflow
+    structure:
+    <ul>
+      <li> an efficient text-based cycling graph "language"
+      <li> and static visualisation over given cycle-point ranges
+    </ul>
+    <li>but: a fully graphical workflow definition interface is a bad idea
+    for complex cycling workflows, because: efficiency...
+  </ul>
+  <div role="note">
+  </div>
+</section>
+
+<section>
+  <h3> efficient workflow definition</h3>
+    <ul class="incremental">
+      <li> proper modern branch-and-merge version control (which requires text
+      diffs!) is critical, esp. to collaborative development:
+      <ul>
+        <li> you must version control suites as a self-consistent whole!
+        (built-in versioning of individual tasks is totally inadequate)
+      </ul>
+      <li> drop-down lists and dialog boxes are a major impediment c.f. having
+      all settings at hand in your power text editor of choice 
+      <li>complex workflows should be as simple, clear, and concise as
+      possible, without duplication of configuration - otherwise: maintenance
+      nightmare
+</section>
+
+<section class="dark">
+  <h3>efficient workflow definition:<br>parameterized tasks</h3>
+</section>
+
+<section>
+  <div>
+    <p>a simple workflow:</p>
+    <img src="etc/gfx/param-simple.svg"
+    style="width:40%; margin-left:30%"/>
+  </div>
+  <div class="incremental">
+    <p>we want to replicate it over 5 members, like this:</p>
+    <img src="etc/gfx/params-5.svg"
+    style="width:50%; margin-left:25%">
+  </div>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> [scheduling]
+     [[dependencies]]
+         graph = "pre => sim => post => done"
+ [runtime]
+     # (task config omitted)
+     [[pre]]
+     [[sim]]
+     [[post]]
+     [[done]]</code></pre>
+  <img src="etc/gfx/param-simple.svg"
+  style="width:50%; margin-left:25%; margin-top:10%"/>
+</section>
+
+<!--for prism match params <m> in headings, replace only the first < with &lt; -->
+<section>
+  <pre><code class="language-cylc"> [cylc]
+    [[parameters]]
+        m = 1..5  # 1, 2, 3, 4, 5
+ [scheduling]
+     [[dependencies]]
+         graph = "pre => sim&lt;m&gt; => post&lt;m&gt; => done"
+ [runtime]
+     # (task config omitted)
+     [[pre]]
+     [[sim&lt;m>]]
+     [[post&lt;m>]]
+     [[done]]
+  </code></pre>
+</section>
+
+<section>
+  <pre><code class="language-cylc">graph = pre => sim => post => done</code></pre>
+  <img src="etc/gfx/param-simple.svg"
+  style="height:15%; margin-left:25%">
+  <pre><code class="language-cylc">graph = "pre => sim&lt;m> => post&lt;m> => done"  # m = 1..5</code></pre>
+  <img src="etc/gfx/params-5.svg"
+  style="height:60%; margin-left:25%">
+</section>
+
+<section>
+  <pre><code class="language-cylc" style="font-size:70%">graph = "prep => init => sim => post => close => done"</code></pre>
+  <img src="etc/gfx/pre-param.svg" style="width:70%; margin-left:15%">
+  <pre><code class="language-cylc"  style="font-size:70%">graph = "prep => init&lt;r> => sim&lt;r,m> => post&lt;r,m> => close&lt;r> => done"
+#  for r = 1..3, and m = a, b, c</code></pre>
+  <img src="etc/gfx/param1-tasks.svg" style="width:70%; margin-left:15%">
+</section>
+
+<section class="dark">
+  <h3>efficient workflow definition:<br>task families</h3>
+</section>
+
+<section>
+  <h3>task families</h3>
+
+  <p>task families in Cylc are defined by a multiple inheritance hierarchy 
+  under <code>[runtime]</code>, allowing:</p>
+  <ul class="incremental">
+    <li> optimal <strong>sharing of all commonality</strong> among tasks
+    without repitition or use of global variables (both are maintenance risks)
+    <li> <strong>mass triggering</strong> of tasks (use family names in the
+    graph)
+    <li> <strong>clean visualization, monitoring, control</strong> (families
+    collapse)
+  </ul>
+</section>
+
+<section class="dark">
+  <h3>efficient workflow definition:<br>cycling graph notation</h3>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> [scheduling]
+    [[dependencies]]
+        graph = "foo => bar & baz => qux"</code></pre>
+  <p><img src="etc/gfx/foo-0.svg" style="width:20%"></p>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> [scheduling]
+    initial cycle point = 2010-01
+    [[dependencies]]
+       [[[R/^/P1M]]]
+          graph = "foo => bar & baz => qux"</code></pre>
+  <p><img src="etc/gfx/foo-1.svg" style="width:100%"></p>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> [scheduling]
+    initial cycle point = 2010-01
+    [[dependencies]]
+       [[[R1/^]]]
+          graph = prep => foo
+       [[[R/^/P1M]]]
+          graph = "foo => bar & baz => qux"</code></pre>
+  <p><img src="etc/gfx/foo-2.svg" style="width:60%"></p>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> [scheduling]
+    initial cycle point = 2010-01
+    [[dependencies]]
+       [[[R1/^]]]
+          graph = prep => foo
+       [[[R/^/P1M]]]
+          graph = """foo => bar & baz => qux
+                     foo[-P1M] => foo"""</code></pre>
+<img src="etc/gfx/foo-3.svg" style="width:30%; margin-left:35%">
+</section>
+
+<section>
+<img src="etc/gfx/foo-3.svg" style="width:50%; margin-left:25%"/>
+</section>
+
+<section>
+<img src="etc/gfx/foo-3a.svg" style="width:70%; margin-left:15%"/>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> [scheduling]
+    initial cycle point = 2010-01
+    [[dependencies]]
+       [[[R1/^]]]
+          graph = prep => foo
+       [[[R/^/P1M]]]
+          graph = """foo => bar & baz => qux
+                     foo[-P1M] => foo"""</code></pre>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> [scheduling]
+    initial cycle point = 2010-01
+    [[dependencies]]
+       [[[R1/^]]]
+          graph = prep => foo
+       [[[R/^/P1M]]]
+          graph = """foo => bar & baz => qux
+                     foo[-P1M] => foo"""
+       [[[R2/^+P2M/P1M]]]
+          graph = baz & qux[-P2M] => boo</code></pre>
+</section>
+
+<section>
+<img src="etc/gfx/foo-4.svg" style="width:70%; margin-left:15%"/>
+</section>
+
+<section class="dark">
+  <h2>roadmap</h2>
+</section>
+
+<section>
+  <h3>future plans include:</h3>
+  <ul class="incremental">
+    <li> support for <strong>workflow modules</strong>
+    <li> web based GUIs
+    <li> migrate <code>rose suite-run</code> to Cylc
+    <li> migrate <code>rose bush</code> to Cylc
+    <li> queue prioritization
+    <li> port to Python-3
+    <li> more internal efficiency improvements
+  </ul>
+</section>
+
+<section>
+  <h3>major differences from XXX? 1/2</h3>
+  <ul class="incremental">
+    <li> no central server - every suite is independent
+    <li> automatic cycle interleaving (fast catch up from delays)
+    <li> universal ISO8601 datetime support (including for cycling config)
+    <li> separation of scheduling from task runtime configuration
+    <ul>
+      <li> efficient graph "language" for cycling workflows
+      <li> advanced triggering (conditional, and many states)
+      <li> supports "automatic recovery workflows"
+    </ul>
+    <li> modern (but not yet web...) GUI
+  </ul>
+</section>
+
+<section>
+  <h3>major differences from XXX? 2/2</h3>
+  <ul class="incremental">
+    <li> integer cycling and external event triggers (satellite data...)
+    <li> optimal sharing of *all* common task runtime settings
+    <li> magic restart (determine the fate of orphaned remote tasks)
+    <li> more comprehensive event handling and alerting
+    <ul>
+      <li> suite and task events, inheritable
+      <li> event emails link to job logs (via rose bush)
+      <li> alert email aggregration (recent)
+      <li> suite stall warning and event
+    </ul>
+    <li> abitrary restart checkpointing (recent)
+  </ul>
+</section>
+
+
+<section class="dark">
+  <h2>documentation etc.</h2>
+</section>
+
+<section class="dark">
+  <h4 style="position:absolute; top:-42px; right:0">
+    <a style="color:black" href="https://cylc.github.io/cylc/">
+      https://cylc.github.io/cylc/</a></h4>
+    <img style="width:100%; height:100%" src="etc/gfx/cylc-web.png">
+</section>
+
+<section>
+  <img style="width:100%; height:100%" src="etc/gfx/cylc-cug.png">
+</section>
+
+<section>
+  <h4 style="position:absolute; top:-42px; right:0">
+    <a style="color:black" href="https://github.com/cylc/cylc">
+      https://github.com/cylc/cylc</a>
+  </h4>
+  <img style="width:100%; height:100%" src="etc/gfx/cylc-issues.png">
+  <div role="note">
+  </div>
+</section>
+
+<section>
+  <h4 style="position:absolute; top:-42px; right:0">
+    <a style="color:black"
+      href="https://groups.google.com/forum/#!forum/cylc">
+      https://groups.google.com/forum/#!forum/cylc</a></h4>
+    <img style="width:100%; height:100%" src="etc/gfx/cylc-group.png">
+</section>
+
+<!--section>
+  <h4 style="position:absolute; top:-42px; right:0">
+    <a style="color:black"
+      href="https://www.esiwace.eu/services/sup_cylc">
+      https://www.esiwace.eu/services/sup_cylc</a></h4>
+    <img style="width:100%; height:100%" src="etc/gfx/cylc-esiwace.png">
+</section-->
+
+<section class="map">
+  <h3 style="color:black">who's using Cylc?</h3>
+  <div role="note">
+    <p>Many of these are UM sites, but Cylc is not in any way UM-specific.</p>
+  </div>
+</section>
+
+<section>
+  <p style="font-size:80%"> NIWA (NZ) <span style="color:red">*</span>
+  <br/> Met Office (UK) <span style="color:red">*</span>
+  <br/> Max-Planck-Institut f&uuml;r Meteorologie (DE)
+  <br/> Deutches Klimarechenzentrum (DE)
+  <br/> Bureau of Meteorology (AU) <span style="color:red">*</span>
+  <br/> NRL Marine Meteorology Division (US)
+  <br/> 557th Weather Wing (US) <span style="color:red">*</span>
+  <br/> Geophysical Fluid Dynamics Laboratory (US)
+  <br/> Meteorological Service Singapore (SG) <span style="color:red">*</span>
+  <br/> South African Weather Service (ZA) <span style="color:red">*</span>
+  <br/> National Centre for Medium Range Weather Forecasting (IN) <span style="color:red">*</span>
+  <br/> Korean Meteorological Administration (KR) <span style="color:red">*</span>
+  <br/> National Center for Atmospheric Research - NCAR (US)
+  <br/> <!-- Centre of Excellence in Simulation of Weather and Climate in
+  Europe (EU) --><br/>
+  <span style="font-size:70%">
+    <em><span style="color:red">*</span> used with Rose, a framework for
+      managing meteorological suites.</em> <br/>
+    </span> </p>
+</section>
+
+<section class="chapter">
+  <br/>
+  <br/>
+  <h1>end</h1>
+  <footer style="padding:25px;">
+    <div style="float:right">
+      Hilary James Oliver, <a href="http://niwa.co.nz">NIWA</a> &nbsp;
+      <div class="nav" style="float:right">
+        <a href="shells/onstage.html?../index.html#../index.html">onstage</a>
+      </div>
+      &nbsp;
+      <span style="color:#ff5966">c</span>
+      <span style="color:#eebb00">y</span>
+      <span style="color:#00c798">l</span>
+      <span style="color:#00b4fd">c</span>
+      <img src='etc/gfx/cylc-logo.svg' style="width:25px; margin-bottom:-5px"/>
+    </div>
+  </footer>
+</section>
+
+
+<!-- Your Style -->
+<!-- HJO - cut out for common use -->
+<!-- Define the style of your presentation -->
+
+<!--firefox: disable fullscreen approval dialog in about:config -->
+
+<!--
+I've downloaded the font .woff files for offline use.
+(or converted ttf to woff at https://andrewsun.com/tools/woffer-woff-font-converter/)
+<link href='http://fonts.googleapis.com/css?family=Oswald' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Share+Tech+Mono' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=VT323' rel='stylesheet' type='text/css'>
+-->
+
+<style>
+@font-face {
+  font-family: 'Titillium Web';
+  font-style: normal;
+  font-weight: 400;
+  src: local('TitilliumWeb'),
+  url('etc/fonts/TitilliumWeb/TitilliumWeb-Regular.WOFF')
+  format('woff');
+}
+</style>
+
+
+<!-- {{{{ dzslides core
+#
+#
+#     __  __  __       .  __   ___  __
+#    |  \  / /__` |    | |  \ |__  /__`
+#    |__/ /_ .__/ |___ | |__/ |___ .__/ core :€
+#
+#
+# The following block of code is not supposed to be edited.
+# But if you want to change the behavior of these slides,
+# feel free to hack it!
+#
+-->
+
+<div id="progress-bar"></div>
+
+<!-- Default Style -->
+<style>
+* { margin: 0; padding: 0; -moz-box-sizing: border-box; -webkit-box-sizing: border-box; box-sizing: border-box; }
+[role="note"] { display: none; }
+body {
+  width: 800px; height: 600px;
+  margin-left: -400px; margin-top: -300px;
+  position: absolute; top: 50%; left: 50%;
+  overflow: hidden;
+  display: none;
+}
+.view body {
+  position: static;
+  margin: 0; padding: 0;
+  width: 100%; height: 100%;
+  display: inline-block;
+  overflow: visible; overflow-x: hidden;
+  /* undo Dz.onresize */
+  transform: none !important;
+  -moz-transform: none !important;
+  -webkit-transform: none !important;
+  -o-transform: none !important;
+  -ms-transform: none !important;
+}
+.view head, .view head > title { display: block }
+section {
+  position: absolute;
+  pointer-events: none;
+  width: 100%; height: 100%;
+}
+.view section {
+  pointer-events: auto;
+  position: static;
+  width: 800px; height: 600px;
+  margin: -150px -200px;
+  float: left;
+  transform: scale(.4);
+  -moz-transform: scale(.4);
+  -webkit-transform: scale(.4);
+  -o-transform: scale(.4);
+  -ms-transform: scale(.4);
+}
+.view section > * { pointer-events: none; }
+section[aria-selected] { pointer-events: auto; }
+html { overflow: hidden; }
+html.view { overflow: visible; }
+body.loaded { display: block; }
+.incremental {visibility: hidden; }
+.incremental[active] {visibility: visible; }
+#progress-bar{
+  bottom: 0;
+  position: absolute;
+  -moz-transition: width 400ms linear 0s;
+  -webkit-transition: width 400ms linear 0s;
+  -ms-transition: width 400ms linear 0s;
+  transition: width 400ms linear 0s;
+}
+.view #progress-bar {
+  display: none;
+}
+</style>
+
+<script>
+var Dz = {
+remoteWindows: [],
+               idx: -1,
+               step: 0,
+               html: null,
+               slides: null,
+               progressBar : null,
+               params: {
+                 //autoplay: "1"
+               }
+};
+
+Dz.init = function() {
+  document.body.className = "loaded";
+  this.slides = Array.prototype.slice.call($$("body > section"));
+  this.progressBar = $("#progress-bar");
+  this.html = document.body.parentNode;
+  this.setupParams();
+  this.onhashchange();
+  this.setupTouchEvents();
+  this.onresize();
+  this.setupView();
+}
+
+Dz.setupParams = function() {
+  var p = window.location.search.substr(1).split('&');
+  p.forEach(function(e, i, a) {
+      var keyVal = e.split('=');
+      Dz.params[keyVal[0]] = decodeURIComponent(keyVal[1]);
+      });
+  // Specific params handling
+  //  if (!+this.params.autoplay)
+  //   $$.forEach($$("video"), function(v){ v.controls = true });
+}
+
+Dz.onkeydown = function(aEvent) {
+  // Don't intercept keyboard shortcuts
+  if (aEvent.altKey
+      || aEvent.ctrlKey
+      || aEvent.metaKey
+      || aEvent.shiftKey) {
+    return;
+  }
+  if ( aEvent.keyCode == 37 // left arrow
+      || aEvent.keyCode == 38 // up arrow
+      || aEvent.keyCode == 33 // page up
+     ) {
+    aEvent.preventDefault();
+    this.back();
+  }
+  if ( aEvent.keyCode == 39 // right arrow
+      || aEvent.keyCode == 40 // down arrow
+      || aEvent.keyCode == 34 // page down
+     ) {
+    aEvent.preventDefault();
+    this.forward();
+  }
+  if (aEvent.keyCode == 35) { // end
+    aEvent.preventDefault();
+    this.goEnd();
+  }
+  if (aEvent.keyCode == 36) { // home
+    aEvent.preventDefault();
+    this.goStart();
+  }
+  if (aEvent.keyCode == 32) { // space
+    aEvent.preventDefault();
+    this.toggleContent();
+  }
+  if (aEvent.keyCode == 70) { // f
+    aEvent.preventDefault();
+    this.goFullscreen();
+  }
+  if (aEvent.keyCode == 79) { // o
+    aEvent.preventDefault();
+    this.toggleView();
+  }
+}
+
+/* Touch Events */
+
+Dz.setupTouchEvents = function() {
+  var orgX, newX;
+  var tracking = false;
+
+  var db = document.body;
+  db.addEventListener("touchstart", start.bind(this), false);
+  db.addEventListener("touchmove", move.bind(this), false);
+
+  function start(aEvent) {
+    aEvent.preventDefault();
+    tracking = true;
+    orgX = aEvent.changedTouches[0].pageX;
+  }
+
+  function move(aEvent) {
+    if (!tracking) return;
+    newX = aEvent.changedTouches[0].pageX;
+    if (orgX - newX > 100) {
+      tracking = false;
+      this.forward();
+    } else {
+      if (orgX - newX < -100) {
+        tracking = false;
+        this.back();
+      }
+    }
+  }
+}
+
+Dz.setupView = function() {
+  document.body.addEventListener("click", function ( e ) {
+      if (!Dz.html.classList.contains("view")) return;
+      if (!e.target || e.target.nodeName != "SECTION") return;
+
+      Dz.html.classList.remove("view");
+      Dz.setCursor(Dz.slides.indexOf(e.target) + 1);
+      }, false);
+}
+
+/* Adapt the size of the slides to the window */
+
+Dz.onresize = function() {
+  var db = document.body;
+  var sx = db.clientWidth / window.innerWidth;
+  var sy = db.clientHeight / window.innerHeight;
+  var transform = "scale(" + (1/Math.max(sx, sy)) + ")";
+
+  db.style.MozTransform = transform;
+  db.style.WebkitTransform = transform;
+  db.style.OTransform = transform;
+  db.style.msTransform = transform;
+  db.style.transform = transform;
+}
+
+
+Dz.getNotes = function(aIdx) {
+  var s = $("section:nth-of-type(" + aIdx + ")");
+  var d = s.$("[role='note']");
+  return d ? d.innerHTML : "";
+}
+
+Dz.onmessage = function(aEvent) {
+  var argv = aEvent.data.split(" "), argc = argv.length;
+  argv.forEach(function(e, i, a) { a[i] = decodeURIComponent(e) });
+  var win = aEvent.source;
+  if (argv[0] === "REGISTER" && argc === 1) {
+    this.remoteWindows.push(win);
+    this.postMsg(win, "REGISTERED", document.title, this.slides.length);
+    this.postMsg(win, "CURSOR", this.idx + "." + this.step);
+    return;
+  }
+  if (argv[0] === "BACK" && argc === 1)
+    this.back();
+  if (argv[0] === "FORWARD" && argc === 1)
+    this.forward();
+  if (argv[0] === "START" && argc === 1)
+    this.goStart();
+  if (argv[0] === "END" && argc === 1)
+    this.goEnd();
+  if (argv[0] === "TOGGLE_CONTENT" && argc === 1)
+    this.toggleContent();
+  if (argv[0] === "SET_CURSOR" && argc === 2)
+    window.location.hash = "#" + argv[1];
+  if (argv[0] === "GET_CURSOR" && argc === 1)
+    this.postMsg(win, "CURSOR", this.idx + "." + this.step);
+  if (argv[0] === "GET_NOTES" && argc === 1)
+    this.postMsg(win, "NOTES", this.getNotes(this.idx));
+}
+
+Dz.toggleContent = function() {
+  // If a Video is present in this new slide, play it.
+  // If a Video is present in the previous slide, stop it.
+  var s = $("section[aria-selected]");
+  if (s) {
+    var video = s.$("video");
+    if (video) {
+      if (video.ended || video.paused) {
+        video.play();
+      } else {
+        video.pause();
+      }
+    }
+  }
+}
+
+Dz.setCursor = function(aIdx, aStep) {
+  // If the user change the slide number in the URL bar, jump
+  // to this slide.
+  aStep = (aStep != 0 && typeof aStep !== "undefined") ? "." + aStep : ".0";
+  window.location.hash = "#" + aIdx + aStep;
+}
+
+Dz.onhashchange = function() {
+  var cursor = window.location.hash.split("#"),
+      newidx = 1,
+      newstep = 0;
+  if (cursor.length == 2) {
+    newidx = ~~cursor[1].split(".")[0];
+    newstep = ~~cursor[1].split(".")[1];
+    if (newstep > Dz.slides[newidx - 1].$$('.incremental > *').length) {
+      newstep = 0;
+      newidx++;
+    }
+  }
+  this.setProgress(newidx, newstep);
+  if (newidx != this.idx) {
+    this.setSlide(newidx);
+  }
+  if (newstep != this.step) {
+    this.setIncremental(newstep);
+  }
+  for (var i = 0; i < this.remoteWindows.length; i++) {
+    this.postMsg(this.remoteWindows[i], "CURSOR", this.idx + "." + this.step);
+  }
+}
+
+Dz.back = function() {
+  if (this.idx == 1 && this.step == 0) {
+    return;
+  }
+  if (this.step == 0) {
+    this.setCursor(this.idx - 1,
+        this.slides[this.idx - 2].$$('.incremental > *').length);
+  } else {
+    this.setCursor(this.idx, this.step - 1);
+  }
+}
+
+Dz.forward = function() {
+  if (this.idx >= this.slides.length &&
+      this.step >= this.slides[this.idx - 1].$$('.incremental > *').length) {
+    return;
+  }
+  if (this.step >= this.slides[this.idx - 1].$$('.incremental > *').length) {
+    this.setCursor(this.idx + 1, 0);
+  } else {
+    this.setCursor(this.idx, this.step + 1);
+  }
+}
+
+Dz.goStart = function() {
+  this.setCursor(1, 0);
+}
+
+Dz.goEnd = function() {
+  var lastIdx = this.slides.length;
+  var lastStep = this.slides[lastIdx - 1].$$('.incremental > *').length;
+  this.setCursor(lastIdx, lastStep);
+}
+
+Dz.toggleView = function() {
+  this.html.classList.toggle("view");
+
+  if (this.html.classList.contains("view")) {
+    $("section[aria-selected]").scrollIntoView(true);
+  }
+}
+
+Dz.setSlide = function(aIdx) {
+  this.idx = aIdx;
+  var old = $("section[aria-selected]");
+  var next = $("section:nth-of-type("+ this.idx +")");
+  if (old) {
+    old.removeAttribute("aria-selected");
+    var video = old.$("video");
+    if (video) {
+      video.pause();
+    }
+  }
+  if (next) {
+    next.setAttribute("aria-selected", "true");
+    if (this.html.classList.contains("view")) {
+      next.scrollIntoView();
+    }
+    var video = next.$("video");
+    //if (video && !!+this.params.autoplay) {
+    //  video.play();
+    //}
+  } else {
+    // That should not happen
+    this.idx = -1;
+    // console.warn("Slide doesn't exist.");
+  }
+}
+
+Dz.setIncremental = function(aStep) {
+  this.step = aStep;
+  var old = this.slides[this.idx - 1].$('.incremental > *[aria-selected]');
+  if (old) {
+    old.removeAttribute('aria-selected');
+  }
+  var incrementals = $$('.incremental');
+  if (this.step <= 0) {
+    $$.forEach(incrementals, function(aNode) {
+        aNode.removeAttribute('active');
+        });
+    return;
+  }
+  var next = this.slides[this.idx - 1].$$('.incremental > *')[this.step - 1];
+  if (next) {
+    next.setAttribute('aria-selected', true);
+    next.parentNode.setAttribute('active', true);
+    var found = false;
+    $$.forEach(incrementals, function(aNode) {
+        if (aNode != next.parentNode)
+        if (found)
+        aNode.removeAttribute('active');
+        else
+        aNode.setAttribute('active', true);
+        else
+        found = true;
+        });
+  } else {
+    setCursor(this.idx, 0);
+  }
+  return next;
+}
+
+Dz.goFullscreen = function() {
+  var html = $('html'),
+      requestFullscreen = html.requestFullscreen || html.requestFullScreen || html.mozRequestFullScreen || html.webkitRequestFullScreen;
+  if (requestFullscreen) {
+    requestFullscreen.apply(html);
+  }
+}
+
+Dz.setProgress = function(aIdx, aStep) {
+  var slide = $("section:nth-of-type("+ aIdx +")");
+  if (!slide)
+    return;
+  var steps = slide.$$('.incremental > *').length + 1,
+      slideSize = 100 / (this.slides.length - 1),
+      stepSize = slideSize / steps;
+  this.progressBar.style.width = ((aIdx - 1) * slideSize + aStep * stepSize) + '%';
+}
+
+Dz.postMsg = function(aWin, aMsg) { // [arg0, [arg1...]]
+  aMsg = [aMsg];
+  for (var i = 2; i < arguments.length; i++)
+    aMsg.push(encodeURIComponent(arguments[i]));
+  aWin.postMessage(aMsg.join(" "), "*");
+}
+
+function init() {
+  Dz.init();
+  window.onkeydown = Dz.onkeydown.bind(Dz);
+  window.onresize = Dz.onresize.bind(Dz);
+  window.onhashchange = Dz.onhashchange.bind(Dz);
+  window.onmessage = Dz.onmessage.bind(Dz);
+}
+
+window.onload = init;
+</script>
+
+
+<script> // Helpers
+if (!Function.prototype.bind) {
+  Function.prototype.bind = function (oThis) {
+
+    // closest thing possible to the ECMAScript 5 internal IsCallable
+    // function 
+    if (typeof this !== "function")
+      throw new TypeError(
+          "Function.prototype.bind - what is trying to be fBound is not callable"
+          );
+
+    var aArgs = Array.prototype.slice.call(arguments, 1),
+        fToBind = this,
+        fNOP = function () {},
+        fBound = function () {
+          return fToBind.apply( this instanceof fNOP ? this : oThis || window,
+              aArgs.concat(Array.prototype.slice.call(arguments)));
+        };
+
+    fNOP.prototype = this.prototype;
+    fBound.prototype = new fNOP();
+
+    return fBound;
+  };
+}
+
+var $ = (HTMLElement.prototype.$ = function(aQuery) {
+    return this.querySelector(aQuery);
+    }).bind(document);
+
+var $$ = (HTMLElement.prototype.$$ = function(aQuery) {
+    return this.querySelectorAll(aQuery);
+    }).bind(document);
+
+$$.forEach = function(nodeList, fun) {
+  Array.prototype.forEach.call(nodeList, fun);
+}
+
+</script>
+<!-- vim: set fdm=marker: }}} -->
