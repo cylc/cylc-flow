@@ -415,7 +415,10 @@ conditions; see `cylc conditions`.
             self.load_tasks_for_run()
         self.profiler.log_memory("scheduler.py: after load_tasks")
 
-        self.pool.put_rundb_suite_params(self.initial_point, self.final_point)
+        self.pool.put_rundb_suite_params(
+            self.initial_point,
+            self.final_point,
+            self.config.cfg['cylc']['cycle point format'])
         self.pool.put_rundb_suite_template_vars(self.template_vars)
         self.configure_suite_environment()
 
@@ -943,7 +946,10 @@ conditions; see `cylc conditions`.
         self.configure_suite_environment()
         if self.gen_reference_log or self.reference_test_mode:
             self.configure_reftest(recon=True)
-        self.pool.put_rundb_suite_params(self.initial_point, self.final_point)
+        self.pool.put_rundb_suite_params(
+            self.initial_point,
+            self.final_point,
+            self.config.cfg['cylc']['cycle point format'])
         self.do_update_state_summary = True
 
     def command_set_runahead(self, interval=None):
