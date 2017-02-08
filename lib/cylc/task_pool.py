@@ -1272,12 +1272,12 @@ class TaskPool(object):
         n_warnings = len(bad_items)
         if len(itasks) > 1:
             self.log.warning("Unique task match not found: %s" % items)
-            n_warnings += 1
+            return n_warnings + 1
+        overrides = BroadcastServer.get_inst().get(itasks[0].identity)
+        if itasks[0].prep_submit(overrides=overrides, dry_run=True) is None:
+            return n_warnings + 1
         else:
-            itasks[0].prep_submit(
-                overrides=BroadcastServer.get_inst().get(itasks[0].identity),
-                dry_run=True)
-        return n_warnings
+            return n_warnings
 
     def check_task_timers(self):
         """Check submission and execution timeout timers for current tasks.

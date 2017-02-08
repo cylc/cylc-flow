@@ -20,13 +20,11 @@
 import os
 import re
 import stat
+from subprocess import Popen, PIPE
+
 from cylc.batch_sys_manager import BATCH_SYS_MANAGER
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
-from cylc.task_id import TaskID
-from cylc.task_message import TaskMessage
-from cylc.task_outputs import (
-    TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED)
 
 
 class JobFile(object):
@@ -64,24 +62,36 @@ class JobFile(object):
         # that cylc commands can be used in defining user environment
         # variables: NEXT_CYCLE=$( cylc cycle-point --offset-hours=6 )
 
-        handle = open(local_job_file_path, 'wb')
-        self._write_header(handle, job_conf)
-        self._write_directives(handle, job_conf)
-        self._write_prelude(handle, job_conf)
-        self._write_environment_1(handle, job_conf)
-        self._write_global_init_script(handle, job_conf)
-        # suite bin access must be before runtime environment
-        # because suite bin commands may be used in variable
-        # assignment expressions: FOO=$(command args).
-        self._write_environment_2(handle, job_conf)
-        self._write_script(handle, job_conf)
-        self._write_epilogue(handle, job_conf)
-        handle.close()
-        # make it executable
-        mode = (
-            os.stat(local_job_file_path).st_mode |
-            stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-        os.chmod(local_job_file_path, mode)
+        tmp_name = local_job_file_path + '.tmp'
+        try:
+            with open(tmp_name, 'wb') as handle:
+                self._write_header(handle, job_conf)
+                self._write_directives(handle, job_conf)
+                self._write_prelude(handle, job_conf)
+                self._write_environment_1(handle, job_conf)
+                self._write_global_init_script(handle, job_conf)
+                # suite bin access must be before runtime environment
+                # because suite bin commands may be used in variable
+                # assignment expressions: FOO=$(command args).
+                self._write_environment_2(handle, job_conf)
+                self._write_script(handle, job_conf)
+                self._write_epilogue(handle, job_conf)
+            # check syntax
+            proc = Popen(['bash', '-n', tmp_name], stderr=PIPE)
+            if proc.wait():
+                raise RuntimeError(proc.communicate()[1])
+            # make it executable
+            mode = (
+                os.stat(tmp_name).st_mode |
+                stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+            os.chmod(tmp_name, mode)
+            os.rename(tmp_name, local_job_file_path)
+        finally:
+            # don't leave behind any bad file
+            try:
+                os.unlink(tmp_name)
+            except OSError:
+                pass
 
     @staticmethod
     def _get_derived_host_item(job_conf, key):
@@ -158,6 +168,7 @@ class JobFile(object):
         work_d = self._get_derived_host_item(job_conf, 'suite work root')
         handle.write('\n    export CYLC_SUITE_RUN_DIR="%s"' % run_d)
         if work_d != run_d:
+            # Note: not an environment variable, but used by job.sh
             handle.write('\n    CYLC_SUITE_WORK_DIR_ROOT="%s"' % work_d)
         if job_conf['remote_suite_d']:
             handle.write(
@@ -181,6 +192,7 @@ class JobFile(object):
         handle.write(
             '\n    export CYLC_TASK_TRY_NUMBER=%s' % job_conf['try_num'])
         if job_conf['work_d']:
+            # Note: not an environment variable, but used by job.sh
             handle.write(
                 "\n    CYLC_TASK_WORK_DIR_BASE='%s'" % job_conf['work_d'])
         handle.write("\n}")

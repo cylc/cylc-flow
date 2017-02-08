@@ -436,8 +436,7 @@ class TaskProxy(object):
             with open(job_activity_log, "ab") as handle:
                 handle.write(ctx_str + '\n')
         except IOError as exc:
-            LOG.warning(
-                "%s: write failed\n%s" % (job_activity_log, exc))
+            LOG.warning("%s: write failed\n%s" % (job_activity_log, exc))
         if ctx.cmd and ctx.ret_code:
             LOG.error(ctx_str)
         elif ctx.cmd:
@@ -1054,14 +1053,15 @@ class TaskProxy(object):
             self.command_log(SuiteProcContext(
                 self.JOB_SUBMIT, '(prepare job file)', err=exc,
                 ret_code=1))
-            self.job_submission_failed()
+            if not dry_run:
+                self.job_submission_failed()
             return
         self.local_job_file_path = local_job_file_path
 
         if dry_run:
             # This will be shown next to submit num in gcylc:
-            self.summary['latest_message'] = 'job file written for edit-run'
-            self.log(WARNING, self.summary['latest_message'])
+            self.summary['latest_message'] = 'job file written (edit/dry-run)'
+            self.log(DEBUG, self.summary['latest_message'])
 
         # Return value used by "cylc submit" and "cylc jobscript":
         return self
