@@ -365,21 +365,17 @@ SPEC = {
                 'reset timer': vdr(vtype='boolean', default=None),
                 'submission timeout': vdr(vtype='interval'),
 
-                'expired handler': vdr(vtype='string_list', default=[]),
-                'submitted handler': vdr(vtype='string_list', default=[]),
-                'started handler': vdr(vtype='string_list', default=[]),
-                'succeeded handler': vdr(vtype='string_list', default=[]),
-                'failed handler': vdr(vtype='string_list', default=[]),
-                'submission failed handler': vdr(
-                    vtype='string_list', default=[]),
-                'warning handler': vdr(vtype='string_list', default=[]),
-                'retry handler': vdr(vtype='string_list', default=[]),
-                'submission retry handler': vdr(
-                    vtype='string_list', default=[]),
-                'execution timeout handler': vdr(
-                    vtype='string_list', default=[]),
-                'submission timeout handler': vdr(
-                    vtype='string_list', default=[]),
+                'expired handler': vdr(vtype='string_list'),
+                'submitted handler': vdr(vtype='string_list'),
+                'started handler': vdr(vtype='string_list'),
+                'succeeded handler': vdr(vtype='string_list'),
+                'failed handler': vdr(vtype='string_list'),
+                'submission failed handler': vdr(vtype='string_list'),
+                'warning handler': vdr(vtype='string_list'),
+                'retry handler': vdr(vtype='string_list'),
+                'submission retry handler': vdr(vtype='string_list'),
+                'execution timeout handler': vdr(vtype='string_list'),
+                'submission timeout handler': vdr(vtype='string_list'),
             },
             'suite state polling': {
                 'user': vdr(vtype='string'),

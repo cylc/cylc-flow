@@ -36,6 +36,7 @@ from logging import DEBUG, INFO, WARNING, getLogger
 import os
 import pickle
 import Queue
+from random import randrange
 from time import time
 import traceback
 
@@ -48,13 +49,13 @@ from cylc.cycling.loader import (
     get_interval, get_interval_cls, get_point, ISO8601_CYCLING_TYPE,
     standardise_point_string)
 import cylc.flags
-from cylc.get_task_proxy import get_task_proxy
 from cylc.mp_pool import SuiteProcPool, SuiteProcContext
 from cylc.network.ext_trigger_server import ExtTriggerServer
 from cylc.network.suite_broadcast_server import BroadcastServer
 from cylc.owner import is_remote_user
 from cylc.rundb import CylcSuiteDAO
 from cylc.suite_host import is_remote_host
+from cylc.task_proxy import TaskProxy
 from cylc.task_state import (
     TASK_STATUSES_ACTIVE, TASK_STATUSES_NOT_STALLED, TASK_STATUSES_FINAL,
     TASK_STATUS_HELD, TASK_STATUS_WAITING, TASK_STATUS_EXPIRED,
@@ -227,9 +228,9 @@ class TaskPool(object):
             if (name_str, point_str) in task_states_data:
                 submit_num = task_states_data[(name_str, point_str)].get(
                     "submit_num")
-            new_task = get_task_proxy(
-                name_str, get_point(point_str), stop_point=stop_point,
-                submit_num=submit_num, message_queue=self.message_queue)
+            new_task = TaskProxy(
+                config.get_taskdef(name_str), get_point(point_str),
+                stop_point=stop_point, submit_num=submit_num)
             if new_task:
                 self.add_to_runahead_pool(new_task)
         return n_warnings
@@ -543,7 +544,6 @@ class TaskPool(object):
 
         # Prepare tasks for job submission
         config = SuiteConfig.get_inst()
-        bcast = BroadcastServer.get_inst()
         prepared_tasks = []
         for itask in ready_tasks:
             if (config.cfg['cylc']['log resolved dependencies'] and
@@ -551,13 +551,10 @@ class TaskPool(object):
                 itask.log(INFO,
                           'triggered off %s' % (
                               itask.state.get_resolved_dependencies()))
-            overrides = bcast.get(itask.identity)
-            if itask.prep_submit(overrides=overrides) is not None:
-                if self.run_mode == 'simulation':
-                    itask.state.set_ready_to_submit()
-                    itask.job_submission_succeeded()
-                else:
-                    prepared_tasks.append(itask)
+            if self.run_mode == 'simulation':
+                itask.job_submission_succeeded()
+            elif itask.prep_submit() is not None:
+                prepared_tasks.append(itask)
 
         if not prepared_tasks:
             return
@@ -725,6 +722,7 @@ class TaskPool(object):
         for task in self.orphans:
             if task not in [tsk.tdef.name for tsk in self.get_all_tasks()]:
                 getLogger("log").log(WARNING, "Removed task: '%s'" % (task,))
+        config = SuiteConfig.get_inst()
         for itask in self.get_all_tasks():
             if itask.tdef.name in self.orphans:
                 if itask.state.status in [
@@ -739,10 +737,11 @@ class TaskPool(object):
                     itask.has_spawned = True
                     itask.log(WARNING, "last instance (orphaned by reload)")
             else:
-                new_task = get_task_proxy(
-                    itask.tdef.name, itask.point, itask.state.status,
-                    stop_point=itask.stop_point, submit_num=itask.submit_num,
-                    is_reload_or_restart=True, pre_reload_inst=itask)
+                new_task = TaskProxy(
+                    config.get_taskdef(itask.tdef.name), itask.point,
+                    itask.state.status, stop_point=itask.stop_point,
+                    submit_num=itask.submit_num, is_reload_or_restart=True,
+                    pre_reload_inst=itask)
                 self.remove(itask, '(suite definition reload)')
                 self.add_to_runahead_pool(new_task)
         self.log.info("Reload completed.")
@@ -1283,8 +1282,7 @@ class TaskPool(object):
         if len(itasks) > 1:
             self.log.warning("Unique task match not found: %s" % items)
             return n_warnings + 1
-        overrides = BroadcastServer.get_inst().get(itasks[0].identity)
-        if itasks[0].prep_submit(overrides=overrides, dry_run=True) is None:
+        if itasks[0].prep_submit(dry_run=True) is None:
             return n_warnings + 1
         else:
             return n_warnings
@@ -1325,11 +1323,25 @@ class TaskPool(object):
         return shutdown
 
     def sim_time_check(self):
+        """Simulation mode: simulate task run times and set states."""
         sim_task_state_changed = False
         for itask in self.get_tasks():
-            if itask.state.status == TASK_STATUS_RUNNING:
-                if itask.sim_time_check():
-                    sim_task_state_changed = True
+            if itask.state.status != TASK_STATUS_RUNNING:
+                continue
+            timeout = (itask.summary['started_time'] +
+                       itask.tdef.rtconfig['job']['simulated run length'])
+            if time.time() > timeout:
+                # Time up.
+                if itask.sim_job_fail():
+                    self.message_queue.put(
+                        itask.identity, 'CRITICAL', TASK_STATUS_FAILED)
+                else:
+                    # Simulate message outputs.
+                    for msg in itask.tdef.rtconfig['outputs'].values():
+                        self.message_queue.put(itask.identity, 'NORMAL', msg)
+                    self.message_queue.put(
+                        itask.identity, 'NORMAL', TASK_STATUS_SUCCEEDED)
+                sim_task_state_changed = True
         return sim_task_state_changed
 
     def waiting_tasks_ready(self):
@@ -1412,7 +1424,8 @@ class TaskPool(object):
             if itask.tdef.clocktrigger_offset is not None:
                 extras['Clock trigger time reached'] = (
                     itask.start_time_reached())
-                extras['Triggers at'] = itask.delayed_start_str
+                extras['Triggers at'] = get_time_string_from_unix_time(
+                    itask.delayed_start)
             for trig, satisfied in itask.state.external_triggers.items():
                 if satisfied:
                     state = 'satisfied'

@@ -40,13 +40,13 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.config import SuiteConfig
 from cylc.cycling.loader import get_point
 import cylc.flags
-from cylc.get_task_proxy import get_task_proxy
 from cylc.job_file import JobFile
 from cylc.job_host import RemoteJobHostManager
 from cylc.mp_pool import SuiteProcPool
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.task_id import TaskID
+from cylc.task_proxy import TaskProxy
 from cylc.task_state import TASK_STATUS_SUBMIT_FAILED
 from cylc.templatevars import load_template_vars
 import cylc.version  # Ensures '$CYLC_VERSION' is set.
@@ -105,10 +105,10 @@ def main():
     })
 
     task_name, point_string = TaskID.split(task_id)
-    point = get_point(point_string).standardise()
-    # Try to get a graphed task of the given name.
-    itask = get_task_proxy(task_name, point, is_startup=True)
-
+    itask = TaskProxy(
+        config.get_taskdef(task_name),
+        get_point(point_string).standardise(),
+        is_startup=True)
     if itask.prep_submit(dry_run=options.dry_run) is None:
         sys.exit(1)
     if options.dry_run:

@@ -46,6 +46,7 @@ from cylc.message_output import MessageOutput
 from cylc.print_tree import print_tree
 from cylc.taskdef import TaskDef, TaskDefError
 from cylc.task_id import TaskID
+from cylc.task_proxy import TaskProxy
 from cylc.task_trigger import TaskTrigger
 from cylc.wallclock import get_current_time_string
 from isodatetime.data import Calendar
@@ -91,13 +92,6 @@ class SuiteConfigError(Exception):
 
     def __str__(self):
         return repr(self.msg)
-
-
-class TaskNotDefinedError(SuiteConfigError):
-    """A named task not defined."""
-
-    def __str__(self):
-        return "Task not defined: %s" % self.msg
 
 # TODO: separate config for run and non-run purposes?
 
@@ -1500,12 +1494,7 @@ class SuiteConfig(object):
                 self.ns_defn_order.append(name)
 
             # check task name legality and create the taskdef
-            if name not in self.taskdefs:
-                try:
-                    self.taskdefs[name] = self.get_taskdef(name)
-                except TaskDefError as exc:
-                    ERR.error(orig_expr)
-                    raise SuiteConfigError(str(exc))
+            self.get_taskdef(name, orig_expr)
 
             if name in self.suite_polling_tasks:
                 self.taskdefs[name].suite_polling_cfg = {
@@ -1949,13 +1938,24 @@ class SuiteConfig(object):
                 self.generate_triggers(
                     expr, lefts, right, seq, suicide, base_interval)
 
-    def get_taskdef(self, name):
+    def get_taskdef(self, name, orig_expr=None):
+        """Return an instance of TaskDef for task name."""
+        if name not in self.taskdefs:
+            try:
+                self.taskdefs[name] = self._get_taskdef(name)
+            except TaskDefError as exc:
+                if orig_expr:
+                    ERR.error(orig_expr)
+                raise SuiteConfigError(str(exc))
+        return self.taskdefs[name]
+
+    def _get_taskdef(self, name):
         """Get the dense task runtime."""
         # (TaskDefError caught above)
         try:
             rtcfg = self.cfg['runtime'][name]
         except KeyError:
-            raise TaskNotDefinedError(name)
+            raise SuiteConfigError("Task not defined: %s" % name)
         # We may want to put in some handling for cases of changing the
         # initial cycle via restart (accidentally or otherwise).
 

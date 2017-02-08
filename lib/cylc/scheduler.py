@@ -39,13 +39,12 @@ from cylc.broadcast_report import (
     CHANGE_FMT as BROADCAST_LOAD_FMT,
     CHANGE_PREFIX_SET as BROADCAST_LOAD_PREFIX)
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
-from cylc.config import SuiteConfig, TaskNotDefinedError
+from cylc.config import SuiteConfig, SuiteConfigError
 from cylc.cycling import PointParsingError
 from cylc.cycling.loader import get_point, standardise_point_string
 from cylc.daemonize import daemonize
 from cylc.exceptions import CylcError
 import cylc.flags
-from cylc.get_task_proxy import get_task_proxy
 from cylc.job_file import JobFile
 from cylc.job_host import RemoteJobHostManager, RemoteJobHostInitError
 from cylc.log_diagnosis import LogSpec
@@ -464,14 +463,12 @@ conditions; see `cylc conditions`.
                 # No start cycle point at which to load cycling tasks.
                 continue
             try:
-                itask = get_task_proxy(
-                    name, self.start_point, is_startup=True,
-                    message_queue=self.pool.message_queue)
+                self.pool.add_to_runahead_pool(TaskProxy(
+                    self.config.get_taskdef(name), self.start_point,
+                    is_startup=True))
             except TaskProxySequenceBoundsError as exc:
                 self.log.debug(str(exc))
                 continue
-            # Load task.
-            self.pool.add_to_runahead_pool(itask)
 
     def load_tasks_for_restart(self):
         """Load tasks for restart."""
@@ -589,24 +586,22 @@ conditions; see `cylc conditions`.
         (cycle, name, spawned, status, hold_swap, submit_num, try_num,
          user_at_host) = row
         try:
-            itask = get_task_proxy(
-                name,
+            itask = TaskProxy(
+                self.config.get_taskdef(name),
                 get_point(cycle),
                 status=status,
                 hold_swap=hold_swap,
                 has_spawned=bool(spawned),
                 submit_num=submit_num,
-                is_reload_or_restart=True,
-                message_queue=self.pool.message_queue)
-        except TaskNotDefinedError as exc:
+                is_reload_or_restart=True)
+        except SuiteConfigError as exc:
             if cylc.flags.debug:
                 ERR.error(traceback.format_exc())
             else:
                 ERR.error(str(exc))
             ERR.warning((
-                "ignoring task %s from the suite run database file\n"
-                "(the task definition has probably been deleted from the "
-                "suite).") % name)
+                "ignoring task %s from the suite run database\n"
+                "(its task definition has probably been deleted).") % name)
         except Exception:
             ERR.error(traceback.format_exc())
             ERR.error("could not load task %s" % name)
@@ -834,7 +829,6 @@ conditions; see `cylc conditions`.
     def _set_stop(self, stop_mode=None):
         """Set shutdown mode."""
         SuiteProcPool.get_inst().stop_job_submission()
-        TaskProxy.stop_sim_mode_job_submission = True
         if stop_mode is None:
             stop_mode = TaskPool.STOP_REQUEST_CLEAN
         self.stop_mode = stop_mode

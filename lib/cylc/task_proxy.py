@@ -24,7 +24,6 @@ from logging import (
     getLevelName, getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG)
 import os
 from pipes import quote
-from random import randrange
 import re
 from shutil import rmtree
 import time
@@ -52,6 +51,7 @@ from cylc.owner import is_remote_user, USER
 from cylc.suite_host import is_remote_host, get_suite_host
 from parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.mp_pool import SuiteProcPool, SuiteProcContext
+from cylc.network.suite_broadcast_server import BroadcastServer
 from cylc.rundb import CylcSuiteDAO
 from cylc.task_id import TaskID
 from cylc.task_message import TaskMessage
@@ -135,6 +135,13 @@ class TaskActionTimer(object):
             self.num += 1
         return self.delay
 
+    def reset(self):
+        """Reset num, delay, timeout and is_waiting."""
+        self.num = 0
+        self.delay = None
+        self.timeout = None
+        self.is_waiting = False
+
     def set_waiting(self):
         """Set waiting flag, while waiting for action to complete."""
         self.delay = None
@@ -180,17 +187,14 @@ class TaskProxy(object):
                  "MANAGE_JOB_LOGS_TRY_DELAYS", "NN",
                  "LOGGING_LVL_OF", "RE_MESSAGE_TIME", "TABLE_TASK_JOBS",
                  "TABLE_TASK_EVENTS", "TABLE_TASK_STATES", "POLLED_INDICATOR",
-                 "stop_sim_mode_job_submission", "tdef",
-                 "submit_num", "validate_mode", "message_queue", "point",
-                 "cleanup_cutoff", "identity", "has_spawned",
+                 "tdef", "submit_num",
+                 "point", "cleanup_cutoff", "identity", "has_spawned",
                  "point_as_seconds", "stop_point", "manual_trigger",
                  "is_manual_submit", "summary", "local_job_file_path",
-                 "retries_configured", "try_timers",
-                 "event_handler_try_timers", "db_inserts_map",
-                 "db_updates_map", "task_host", "task_owner",
-                 "job_vacated", "poll_timers", "event_hooks",
-                 "delayed_start_str", "delayed_start", "expire_time_str",
-                 "expire_time", "state"]
+                 "try_timers", "event_handler_try_timers", "db_inserts_map",
+                 "db_updates_map", "suite_name", "task_host", "task_owner",
+                 "job_vacated", "poll_timers", "events_conf",
+                 "delayed_start", "expire_time", "state"]
 
     # Format string for single line output
     JOB_LOG_FMT_1 = "%(timestamp)s [%(cmd_key)s %(attr)s] %(mesg)s"
@@ -229,25 +233,16 @@ class TaskProxy(object):
 
     POLLED_INDICATOR = "(polled)"
 
-    stop_sim_mode_job_submission = False
-
-    # Updated during config parsing:
-    suite_name = None
-    suite_url = None
-
     def __init__(
             self, tdef, start_point, status=TASK_STATUS_WAITING,
             hold_swap=None, has_spawned=False, stop_point=None,
             is_startup=False, validate_mode=False, submit_num=0,
-            is_reload_or_restart=False, pre_reload_inst=None,
-            message_queue=None):
+            is_reload_or_restart=False, pre_reload_inst=None):
         self.tdef = tdef
         if submit_num is None:
             self.submit_num = 0
         else:
             self.submit_num = submit_num
-        self.validate_mode = validate_mode
-        self.message_queue = message_queue
 
         if is_startup:
             # adjust up to the first on-sequence cycle point
@@ -280,6 +275,13 @@ class TaskProxy(object):
         self.manual_trigger = False
         self.is_manual_submit = False
 
+        overrides = BroadcastServer.get_inst().get(self.identity)
+        if overrides:
+            rtconfig = pdeepcopy(self.tdef.rtconfig)
+            poverride(rtconfig, overrides)
+        else:
+            rtconfig = self.tdef.rtconfig
+
         self.summary = {
             'latest_message': "",
             'submitted_time': None,
@@ -290,25 +292,22 @@ class TaskProxy(object):
             'finished_time': None,
             'finished_time_string': None,
             'name': self.tdef.name,
-            'description': self.tdef.rtconfig['description'],
-            'title': self.tdef.rtconfig['title'],
+            'description': rtconfig['description'],
+            'title': rtconfig['title'],
             'label': str(self.point),
             'logfiles': [],
             'job_hosts': {},
             'execution_time_limit': None,
         }
-        for lfile in self.tdef.rtconfig['extra log files']:
+        for lfile in rtconfig['extra log files']:
             self.summary['logfiles'].append(expandvars(lfile))
 
         self.local_job_file_path = None
-
-        self.retries_configured = False
 
         self.try_timers = {
             self.KEY_EXECUTE: TaskActionTimer(delays=[]),
             self.KEY_SUBMIT: TaskActionTimer(delays=[])}
         self.event_handler_try_timers = {}
-        self.poll_timers = {}
 
         self.db_inserts_map = {
             self.TABLE_TASK_JOBS: [],
@@ -331,23 +330,36 @@ class TaskProxy(object):
 
         # An initial db state entry is created at task proxy init. On reloading
         # or restarting the suite, the task proxies already have this db entry.
-        if (not self.validate_mode and not is_reload_or_restart and
+        if (not validate_mode and not is_reload_or_restart and
                 self.submit_num == 0):
             self.db_inserts_map[self.TABLE_TASK_STATES].append({
                 "time_created": get_current_time_string(),
                 "time_updated": get_current_time_string(),
                 "status": status})
 
-        if not self.validate_mode and self.submit_num > 0:
+        if not validate_mode and self.submit_num > 0:
             self.db_updates_map[self.TABLE_TASK_STATES].append({
                 "time_updated": get_current_time_string(),
                 "status": status})
 
-        self.event_hooks = None
-        self.set_from_rtconfig()
-        self.delayed_start_str = None
+        self.events_conf = rtconfig['events']
+        # configure retry delays before the first try
+        if self.tdef.run_mode == 'live':
+            # note that a *copy* of the retry delays list is needed
+            # so that all instances of the same task don't pop off
+            # the same deque
+            self.try_timers[self.KEY_EXECUTE].delays = list(
+                rtconfig['job']['execution retry delays'])
+            self.try_timers[self.KEY_SUBMIT].delays = list(
+                rtconfig['job']['submission retry delays'])
+        self.poll_timers = {}
+        for key in self.KEY_SUBMIT, self.KEY_EXECUTE:
+            values = self._get_host_conf(
+                key + ' polling intervals', skey='job')
+            if values:
+                self.poll_timers[key] = TaskActionTimer(delays=values)
+
         self.delayed_start = None
-        self.expire_time_str = None
         self.expire_time = None
 
         self.state = TaskState(
@@ -399,7 +411,7 @@ class TaskProxy(object):
 
     def _get_events_conf(self, key, default=None):
         """Return an events setting from suite then global configuration."""
-        for getter in [self.event_hooks, GLOBAL_CFG.get()["task events"]]:
+        for getter in [self.events_conf, GLOBAL_CFG.get()["task events"]]:
             try:
                 value = getter.get(key)
                 if value is not None:
@@ -410,7 +422,10 @@ class TaskProxy(object):
 
     def _get_host_conf(self, key, default=None, skey="remote"):
         """Return a host setting from suite then global configuration."""
-        if self.tdef.rtconfig[skey].get(key) is not None:
+        overrides = BroadcastServer.get_inst().get(self.identity)
+        if skey in overrides and overrides[skey].get(key) is not None:
+            return overrides[skey][key]
+        elif self.tdef.rtconfig[skey].get(key) is not None:
             return self.tdef.rtconfig[skey][key]
         else:
             try:
@@ -510,8 +525,6 @@ class TaskProxy(object):
             self.delayed_start = (
                 self.get_point_as_seconds() +
                 self.get_offset_as_seconds(self.tdef.clocktrigger_offset))
-            self.delayed_start_str = get_time_string_from_unix_time(
-                self.delayed_start)
         return time.time() > self.delayed_start
 
     def _has_expired(self):
@@ -522,8 +535,6 @@ class TaskProxy(object):
             self.expire_time = (
                 self.get_point_as_seconds() +
                 self.get_offset_as_seconds(self.tdef.expiration_offset))
-            self.expire_time_str = get_time_string_from_unix_time(
-                self.expire_time)
         return time.time() > self.expire_time
 
     def job_submission_callback(self, result):
@@ -772,12 +783,12 @@ class TaskProxy(object):
 
     def setup_custom_event_handlers(self, event, message, only_list=None):
         """Call custom event handlers."""
-        handlers = []
-        if self.event_hooks[event + ' handler']:
-            handlers = self.event_hooks[event + ' handler']
-        elif (self._get_events_conf('handlers', []) and
+        handlers = self._get_events_conf(event + ' handler')
+        if (handlers is None and
                 event in self._get_events_conf('handler events', [])):
-            handlers = self._get_events_conf('handlers', [])
+            handlers = self._get_events_conf('handlers')
+        if handlers is None:
+            return
         retry_delays = self._get_events_conf(
             'handler retry delays',
             self._get_host_conf("task event handler retry delays"))
@@ -952,37 +963,6 @@ class TaskProxy(object):
             self.try_timers[self.KEY_EXECUTE].timeout = None
             self.try_timers[self.KEY_SUBMIT].timeout = None
 
-    def set_from_rtconfig(self, cfg=None):
-        """Populate task proxy with runtime configuration.
-
-        Some [runtime] config requiring consistency checking on reload,
-        and self variables requiring updating for the same.
-
-        """
-
-        if cfg:
-            rtconfig = cfg
-        else:
-            rtconfig = self.tdef.rtconfig
-
-        if not self.retries_configured:
-            # configure retry delays before the first try
-            self.retries_configured = True
-            # TODO - saving the retry delay lists here is not necessary
-            # (it can be handled like the polling interval lists).
-            self.try_timers[self.KEY_EXECUTE].delays = list(
-                rtconfig['job']['execution retry delays'])
-            self.try_timers[self.KEY_SUBMIT].delays = list(
-                rtconfig['job']['submission retry delays'])
-
-        self.event_hooks = rtconfig['events']
-
-        for key in self.KEY_SUBMIT, self.KEY_EXECUTE:
-            values = self._get_host_conf(
-                key + ' polling intervals', skey='job')
-            if values:
-                self.poll_timers[key] = TaskActionTimer(delays=values)
-
     def submit(self):
         """For "cylc submit". See also "TaskPool.submit_task_jobs"."""
 
@@ -1018,7 +998,7 @@ class TaskProxy(object):
         return SuiteProcPool.get_inst().put_command(
             ctx, self.job_submission_callback)
 
-    def prep_submit(self, dry_run=False, overrides=None):
+    def prep_submit(self, dry_run=False):
         """Prepare job submission.
 
         Return self on a good preparation.
@@ -1027,9 +1007,6 @@ class TaskProxy(object):
         if self.local_job_file_path and not dry_run:
             return self
         try:
-            job_conf = self._prep_submit_impl(overrides)
-            if self.tdef.run_mode == 'simulation':
-                return self
             local_job_file_path = self.get_job_log_path(
                 self.HEAD_MODE_LOCAL, tail=self.JOB_FILE_BASE)
             JobFile.get_inst().write(local_job_file_path, job_conf)
@@ -1053,8 +1030,14 @@ class TaskProxy(object):
         # Return value used by "cylc submit" and "cylc jobscript":
         return self
 
-    def _prep_submit_impl(self, overrides=None):
+    def _prep_submit_impl(self):
         """Helper for self.prep_submit."""
+        overrides = BroadcastServer.get_inst().get(self.identity)
+        if overrides:
+            rtconfig = pdeepcopy(self.tdef.rtconfig)
+            poverride(rtconfig, overrides)
+        else:
+            rtconfig = self.tdef.rtconfig
         self.log(DEBUG, "incrementing submit number")
         self.submit_num += 1
         self.summary['submit_num'] = self.submit_num
@@ -1065,12 +1048,8 @@ class TaskProxy(object):
             "try_num": self.try_timers[self.KEY_EXECUTE].num + 1,
             "time_submit": get_current_time_string(),
         })
-        if overrides:
-            rtconfig = pdeepcopy(self.tdef.rtconfig)
-            poverride(rtconfig, overrides)
-        else:
-            rtconfig = self.tdef.rtconfig
-        self.set_from_rtconfig(rtconfig)
+
+        self.events_conf = rtconfig['events']
 
         # construct the job_sub_method here so that a new one is used if
         # the task is re-triggered by the suite operator - so it will
@@ -1122,6 +1101,11 @@ class TaskProxy(object):
             self.poll_timers[self.KEY_EXECUTE_TIME_LIMIT] = (
                 TaskActionTimer(delays=batch_sys_conf.get(
                     'execution time limit polling intervals', [60, 120, 420])))
+        for key in self.KEY_SUBMIT, self.KEY_EXECUTE:
+            try:
+                self.poll_timers[key].reset()
+            except (AttributeError, KeyError):
+                pass
 
         if self.tdef.run_mode != 'simulation':
             RemoteJobHostManager.get_inst().init_suite_run_dir(
@@ -1256,30 +1240,7 @@ class TaskProxy(object):
                 self.try_timers[self.KEY_EXECUTE].num != 0):
             return False
         fail_pts = self.tdef.rtconfig['simulation']['fail cycle points']
-        if fail_pts is None or self.point in fail_pts:
-            return True
-        return False
-
-    def sim_time_check(self):
-        """Check simulated run time."""
-        if (time.time() >
-            self.summary['started_time'] +
-                self.tdef.rtconfig['job']['simulated run length']):
-            # Time up.
-            if self.sim_job_fail():
-                self.message_queue.put(
-                    self.identity, 'CRITICAL', TASK_STATUS_FAILED)
-            else:
-                # Simulate message outputs.
-                for msg in self.tdef.rtconfig['outputs'].values():
-                    self.message_queue.put(
-                        self.identity, 'NORMAL', msg)
-                self.message_queue.put(
-                    self.identity, 'NORMAL', TASK_STATUS_SUCCEEDED)
-            return True
-        else:
-            # Still simulated-running.
-            return False
+        return fail_pts is None or self.point in fail_pts
 
     def reject_if_failed(self, message):
         """Reject a message if in the failed state.
@@ -1458,8 +1419,7 @@ class TaskProxy(object):
         next_point = self.next_point()
         if next_point:
             return TaskProxy(
-                self.tdef, next_point, state, None, False, self.stop_point,
-                message_queue=self.message_queue)
+                self.tdef, next_point, state, None, False, self.stop_point)
         else:
             # next_point instance is out of the sequence bounds
             return None
