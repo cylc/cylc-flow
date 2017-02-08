@@ -137,6 +137,7 @@ cylc::job::run_inst_func() {
         "cylc::job::inst::${NAME}"
     fi
 }
+
 ###############################################################################
 # Trap error signals.
 # Globals:
