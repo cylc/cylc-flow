@@ -15,9 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test cylc suite registration
+# Test cylc print doesn't skip special names at root level,
+# e.g. "~/cylc-run/work"
 . "$(dirname "$0")/test_header"
-set_test_number 7
+set_test_number 3
 
 init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 title = the quick brown fox
@@ -28,21 +29,15 @@ title = the quick brown fox
     [[a,b,c]]
         script = true
 __SUITE_RC__
-
-run_ok "${TEST_NAME_BASE}-register" cylc register "${SUITE_NAME}"
-exists_ok "${SUITE_RUN_DIR}/.service/passphrase"
-
-run_ok "${TEST_NAME_BASE}-get-dir" cylc get-directory "${SUITE_NAME}"
-
-cd .. # necessary so the suite is being validated via the database not filepath
-run_ok "${TEST_NAME_BASE}-val" cylc validate "${SUITE_NAME}"
-cd "${OLDPWD}"
+RUND="$(cylc get-global-config --print-run-dir)"
+ln -sf "${SUITE_NAME}" "${RUND}/work"
 
 run_ok "${TEST_NAME_BASE}-print" cylc print
 contains_ok "${TEST_NAME_BASE}-print.stdout" <<__OUT__
-${SUITE_NAME} | the quick brown fox | ${TEST_DIR}/${SUITE_NAME}
+work | the quick brown fox | ${TEST_DIR}/${SUITE_NAME}
 __OUT__
 cmp_ok "${TEST_NAME_BASE}-print.stderr" <'/dev/null'
 
+rm -f "${RUND}/work"
 purge_suite "${SUITE_NAME}"
 exit

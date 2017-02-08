@@ -325,13 +325,15 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
         from cylc.cfgspec.globalcfg import GLOBAL_CFG
         run_d = GLOBAL_CFG.get_host_item('run directory')
         results = []
-        skip_names = [
-            "log", "share", "work", self.DIR_BASE_SRV, self.FILE_BASE_SUITE_RC]
         for dirpath, dnames, fnames in os.walk(run_d, followlinks=True):
-            # Don't descent further if it looks like a suite directory
-            if any([name in dnames or name in fnames for name in skip_names]):
+            # Always descend for top directory, but
+            # don't descend further if it has a:
+            # * .service/
+            # * cylc-suite.db: (pre-cylc-7 suites don't have ".service/").
+            if dirpath != run_d and (
+                    self.DIR_BASE_SRV in dnames or "cylc-suite.db" in fnames):
                 dnames[:] = []
-            # Choose only suites with info file and matching filter
+            # Choose only suites with .service and matching filter
             reg = os.path.relpath(dirpath, run_d)
             path = os.path.join(dirpath, self.DIR_BASE_SRV)
             if (not self._locate_item(self.FILE_BASE_SOURCE, path) or

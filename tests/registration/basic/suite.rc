@@ -1,7 +1,0 @@
-title = "the quick brown fox"
-[scheduling]
-    [[dependencies]]
-        graph = "a => b => c"
-[runtime]
-    [[a,b,c]]
-        script = true
