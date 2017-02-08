@@ -5508,9 +5508,33 @@ Section~\ref{JobNameLengthMaximum}.) For example:
 
 \subsubsection{Directives Section Quirks (PBS, SGE, ...) }
 
-As shown in the example above, to get a naked option flag such as
-\lstinline=-V= in PBS or \lstinline=-cwd= in SGE you must give a
-null string as the directive value in the suite.rc file.
+To specify an option with no argument, such as \lstinline=-V= in PBS or
+\lstinline=-cwd= in SGE you must give a null string as the directive value in
+the suite.rc file.
+
+The left hand side of a setting (i.e. the string before the first equal sign)
+must be unique. To specify multiple values using an option such as
+\lstinline=-l= option in PBS, SGE, etc., either specify all items in a single
+line:
+
+\begin{lstlisting}
+-l=select=28:ncpus=36:mpiprocs=18:ompthreads=2:walltime=12:00:00
+\end{lstlisting}
+
+(Left hand side is \lstinline=-l=. A second \lstinline@-l=...@ line will
+override the first.)
+
+Or separate the items (note: no equal sign after \lstinline=-l=):
+
+\begin{lstlisting}
+-l select=28
+-l ncpus=36
+-l mpiprocs=18
+-l ompthreads=2
+-l walltime=12:00:00
+\end{lstlisting}
+
+(Left hand sides are now \lstinline=-l select=, \lstinline=-l ncpus=, etc.)
 
 \subsection{Task stdout And stderr Logs}
 \label{WhitherStdoutAndStderr}
