@@ -1431,7 +1431,6 @@ class TaskPool(object):
             {"key": "final_point", "value": str(final_point)},
         ])
         if format:
-            print "during format thing"
             self.db_inserts_map[self.TABLE_SUITE_PARAMS].extend([
                 {"key": "cycle_point_format", "value": str(format)}
             ])
