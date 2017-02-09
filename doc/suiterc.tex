@@ -1331,14 +1331,10 @@ job file path.
 \subparagraph[shell]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[job]]] \textrightarrow shell}
 \label{JobSubShell}
 
-This is the shell used to interpret the job script submitted by the suite
-daemon when a task is ready to run.  {\em It has no bearing on the shell used
-in task implementations.} Scripting and suite environment
-variable assignment expressions must be valid for this shell. The
-latter is currently hardwired into cylc as
-\lstinline@export item=value@ - valid for both bash and ksh
-because \lstinline=value= is entirely user-defined - but cylc would have
-to be modified slightly to allow use of the C shell.
+Location of the bash command used to interpret the job script submitted by the
+suite daemon when a task is ready to run.
+{\em It has no bearing on any sub-shells that may be called by the job script.}
+You only have to set this if bash is not in a standard location in your system.
 
 \begin{myitemize}
 \item {\em type:} string
