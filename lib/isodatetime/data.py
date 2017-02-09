@@ -479,7 +479,8 @@ class Duration(object):
                     return new
                 new.to_days()
             elif other.get_is_in_weeks():
-                other = other.copy().to_days()
+                other = other.copy()
+                other.to_days()
             new.years += other.years
             new.months += other.months
             new.days += other.days
