@@ -1,6 +1,8 @@
 [cylc]
+    [[reference test]]
+        expected task failures = foo.1
     [[events]]
-        timeout = PT10S
+        abort on stalled = True
 [scheduling]
     [[dependencies]]
         graph = foo:submit-failed => bar

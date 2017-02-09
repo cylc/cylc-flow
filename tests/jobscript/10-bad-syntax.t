@@ -41,7 +41,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 TEST_NAME="${TEST_NAME_BASE}-advanced-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 TEST_NAME="${TEST_NAME_BASE}-advanced-run"
-run_ok "${TEST_NAME}" cylc run "${SUITE_NAME}" --reference-test
+run_ok "${TEST_NAME}" cylc run "${SUITE_NAME}" --reference-test --debug
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
 exit
