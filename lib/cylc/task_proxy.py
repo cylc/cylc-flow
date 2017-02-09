@@ -1508,9 +1508,13 @@ class TaskProxy(object):
         """Return a dict containing the state summary of this task proxy."""
         self.summary['state'] = self.state.status
         self.summary['spawned'] = str(self.has_spawned)
-        self.summary['mean_elapsed_time'] = (
-            float(sum(self.tdef.elapsed_times)) /
-            max(len(self.tdef.elapsed_times), 1))
+        count = len(self.tdef.elapsed_times)
+        if count == 0:
+            self.summary['mean_elapsed_time'] = \
+                max(self.summary['execution_time_limit'], 1)
+        else:
+            self.summary['mean_elapsed_time'] = (
+                float(sum(self.tdef.elapsed_times)) / count)
         return self.summary
 
     def next_point(self):
