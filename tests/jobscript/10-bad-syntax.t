@@ -17,8 +17,9 @@
 #-------------------------------------------------------------------------------
 # Test "cylc jobscript" when we have bad syntax in "script" value.
 . "$(dirname "${0}")/test_header"
-
-set_test_number 3
+#-------------------------------------------------------------------------------
+set_test_number 5
+#-------------------------------------------------------------------------------
 init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 [scheduling]
     [[dependencies]]
@@ -28,10 +29,19 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
         script = fi
 __SUITE_RC__
 
-run_fail "${TEST_NAME_BASE}" cylc jobscript "${SUITE_NAME}" 'foo.1'
-cmp_ok "${TEST_NAME_BASE}.stdout" <'/dev/null'
-contains_ok "${TEST_NAME_BASE}.stderr" <<__ERR__
+TEST_NAME="${TEST_NAME_BASE}"-simple
+run_fail "${TEST_NAME}" cylc jobscript "${SUITE_NAME}" 'foo.1'
+cmp_ok "${TEST_NAME}.stdout" <'/dev/null'
+contains_ok "${TEST_NAME}.stderr" <<__ERR__
 ERROR: no jobscript generated
 __ERR__
+purge_suite "${SUITE_NAME}"
+#-------------------------------------------------------------------------------
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+TEST_NAME="${TEST_NAME_BASE}-advanced-validate"
+run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+TEST_NAME="${TEST_NAME_BASE}-advanced-run"
+run_ok "${TEST_NAME}" cylc run "${SUITE_NAME}" --reference-test
+#-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
 exit
