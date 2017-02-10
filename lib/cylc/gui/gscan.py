@@ -216,7 +216,7 @@ class ScanApp(object):
         treemodel = treeview.get_model()
 
         # Dismiss warnings by clicking on a warning icon.
-        if (event.button == 1):
+        if event.button == 1:
             if not pth:
                 return False
             path, column, cell_x, _ = pth
@@ -225,7 +225,10 @@ class ScanApp(object):
                     column.get_cell_renderers()[1]))
                 if not dot_width:
                     return False
-                cell_index = (cell_x - dot_offset) // dot_width
+                try:
+                    cell_index = (cell_x - dot_offset) // dot_width
+                except ZeroDivisionError:
+                    return False
                 if cell_index == 0:
 
                     iter_ = treemodel.get_iter(path)
