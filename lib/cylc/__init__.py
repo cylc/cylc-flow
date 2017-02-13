@@ -18,42 +18,21 @@
 """Set up the cylc environment."""
 
 import os
-import socket
 import sys
 
 
-def environ_init(argv0=None):
+def environ_init():
     """Initialise cylc environment."""
-
-    if not argv0:
-        argv0 = sys.argv[0]
-    # NOTE: the above works if invoked via top level cylc or gcylc
-    # command but not for this:
-    # BAZ=$(python -c 'from cylc.foo import bar; print bar')
-    # where argv0 will be '-c'.
-
-    if argv0 and argv0 != "-":
-        cylc_dir = os.path.dirname(os.path.dirname(os.path.realpath(argv0)))
-        if cylc_dir != os.getenv('CYLC_DIR', ''):
-            os.environ['CYLC_DIR'] = cylc_dir
-
-        cylc_dir_lib = os.path.normpath(os.path.join(cylc_dir, 'lib'))
-        my_lib = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-        if cylc_dir_lib == my_lib:
-            dirs = []
-        else:
-            # For backward compat, old versions of "cylc" may end up loading an
-            # incorrect version of this file.
-            dirs = [os.path.join(cylc_dir, 'bin')]
-        if os.getenv('CYLC_SUITE_DEF_PATH', ''):
-            dirs.append(os.getenv('CYLC_SUITE_DEF_PATH'))
-        environ_path_add(dirs)
-        environ_path_add([cylc_dir_lib], 'PYTHONPATH')
-        # Ensure cylc library is at the front of "sys.path".
-        if sys.path[0:1] != [cylc_dir_lib]:
-            if cylc_dir_lib in sys.path:
-                sys.path.remove(cylc_dir_lib)
-            sys.path.insert(0, cylc_dir_lib)
+    cylc_dir_lib = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    environ_path_add([cylc_dir_lib], 'PYTHONPATH')
+    # Ensure cylc library is at the front of "sys.path".
+    if sys.path[0:1] != [cylc_dir_lib]:
+        if cylc_dir_lib in sys.path:
+            sys.path.remove(cylc_dir_lib)
+        sys.path.insert(0, cylc_dir_lib)
+    os.environ['CYLC_DIR'] = os.path.dirname(cylc_dir_lib)
+    if os.getenv('CYLC_SUITE_DEF_PATH', ''):
+        environ_path_add([os.getenv('CYLC_SUITE_DEF_PATH')])
 
     # Python output buffering delays appearance of stdout and stderr
     # when output is not directed to a terminal (this occurred when
