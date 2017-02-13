@@ -1150,6 +1150,7 @@ class TaskProxy(object):
             'environment': rtconfig['environment'],
             'execution_time_limit': execution_time_limit,
             'env-script': rtconfig['env-script'],
+            'err-script': rtconfig['err-script'],
             'host': self.task_host,
             'init-script': rtconfig['init-script'],
             'job_file_path': self.get_job_log_path(

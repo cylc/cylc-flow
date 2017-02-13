@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2017 NIWA
@@ -17,19 +17,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ###############################################################################
-# Shell functions for a cylc task job.
+# Bash/ksh93 functions for a cylc task job.
 ###############################################################################
 
 ###############################################################################
 # The main function for a cylc task job.
-cylc::job::main() {
+cylc__job__main() {
     # Turn on xtrace in debug mode
     if "${CYLC_DEBUG:-false}"; then
-        PS4='+[\D{%Y%m%dT%H%M%S%z}]\u@\h '
+        if [[ -n "${BASH:-}" ]]; then
+            PS4='+[\D{%Y%m%dT%H%M%S%z}]\u@\h '
+        fi
         set -x
     fi
     # Prelude
-    local NAME=
+    typeset NAME=
     for NAME in \
         "${HOME}/.cylc/job-init-env.sh" \
         "${CYLC_DIR}/conf/job-init-env.sh" \
@@ -41,27 +43,27 @@ cylc::job::main() {
         fi
     done
     # Init-Script
-    cylc::job::run_inst_func 'global-init-script'
-    cylc::job::run_inst_func 'init-script'
+    cylc__job__run_inst_func 'global_init_script'
+    cylc__job__run_inst_func 'init_script'
     # Start error and vacation traps
-    local S=
+    typeset S=
     for S in ${CYLC_FAIL_SIGNALS}; do
-        trap "cylc::job::trap_err ${S}" "${S}"
+        trap "cylc__job__trap_err ${S}" "${S}"
     done
     for S in ${CYLC_VACATION_SIGNALS:-}; do
-        trap "cylc::job::trap_vacation ${S}" "${S}"
+        trap "cylc__job__trap_vacation ${S}" "${S}"
     done
     set -u
     set -o pipefail
     # Export CYLC_ suite and task environment variables
-    cylc::job::inst::cylc-env
+    cylc__job__inst__cylc_env
     # Write task job self-identify
     USER="${USER:-$(whoami)}"
     if [[ "$(uname)" == 'AIX' ]]; then
         # On AIX the hostname command has no '-f' option
-        local HOSTNAME="$(hostname).$(namerslv -sn 2>'/dev/null' | awk '{print $2}')"
+        typeset HOSTNAME="$(hostname).$(namerslv -sn 2>'/dev/null' | awk '{print $2}')"
     else
-        local HOSTNAME="$(hostname -f)"
+        typeset HOSTNAME="$(hostname -f)"
     fi
     cat <<__OUT__
 Suite    : ${CYLC_SUITE_NAME}
@@ -97,7 +99,7 @@ __OUT__
     export CYLC_TASK_CYCLE_TIME="${CYLC_TASK_CYCLE_POINT}"
     export CYLC_TASK_WORK_PATH="${CYLC_TASK_WORK_DIR}"
     # Env-Script
-    cylc::job::run_inst_func 'env-script'
+    cylc__job__run_inst_func 'env_script'
     # Send task started message
     cylc task message 'started' &
     CYLC_TASK_MESSAGE_STARTED_PID=$!
@@ -112,8 +114,8 @@ __OUT__
     mkdir -p "${CYLC_TASK_WORK_DIR}"
     cd "${CYLC_TASK_WORK_DIR}"
     # User Environment, Pre-Script, Script and Post-Script
-    for NAME in 'user-env' 'pre-script' 'script' 'post-script'; do
-        cylc::job::run_inst_func "${NAME}"
+    for NAME in 'user_env' 'pre_script' 'script' 'post_script'; do
+        cylc__job__run_inst_func "${NAME}"
     done
     # Empty work directory remove
     cd
@@ -128,13 +130,14 @@ __OUT__
 ###############################################################################
 # Run a function in the task job instant file, if possible.
 # Arguments:
-#   NAME - name of function without the "cylc::job::inst::" prefix
+#   NAME - name of function without the "cylc__job__inst__" prefix
 # Returns:
 #   return 0, or the return code of the function if called
-cylc::job::run_inst_func() {
-    local NAME="$1"
-    if declare -F "cylc::job::inst::${NAME}" 1>'/dev/null' 2>&1; then
-        "cylc::job::inst::${NAME}"
+cylc__job__run_inst_func() {
+    typeset NAME="$1"
+    shift 1
+    if typeset -f "cylc__job__inst__${NAME}" 1>'/dev/null' 2>&1; then
+        "cylc__job__inst__${NAME}" "$@"
     fi
 }
 
@@ -148,10 +151,10 @@ cylc::job::run_inst_func() {
 #   SIGNAL - trapped signal
 # Returns:
 #   exit 1
-cylc::job::trap_err() {
-    local SIGNAL="$1"
+cylc__job__trap_err() {
+    typeset SIGNAL="$1"
     echo "Received signal ${SIGNAL}" >&2
-    local S=
+    typeset S=
     for S in ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}; do
         trap '' "${S}"
     done
@@ -160,6 +163,7 @@ cylc::job::trap_err() {
     fi
     cylc task message -p 'CRITICAL' \
         "Task job script received signal ${SIGNAL}" 'failed' || true
+    cylc__job__run_inst_func 'err_script' "${SIGNAL}" >&2
     exit 1
 }
 
@@ -173,10 +177,10 @@ cylc::job::trap_err() {
 #   SIGNAL - trapped signal
 # Returns:
 #   exit 1
-cylc::job::trap_vacation() {
-    local SIGNAL="$1"
+cylc__job__trap_vacation() {
+    typeset SIGNAL="$1"
     echo "Received signal ${SIGNAL}" >&2
-    local S=
+    typeset S=
     for S in ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}; do
         trap '' "${S}"
     done

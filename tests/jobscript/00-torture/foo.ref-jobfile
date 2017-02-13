@@ -9,7 +9,7 @@ export CYLC_DIR=
 export CYLC_VERSION=
 CYLC_FAIL_SIGNALS='EXIT ERR TERM XCPU'
 
-cylc::job::inst::cylc-env() {
+cylc__job__inst__cylc_env() {
     # CYLC SUITE ENVIRONMENT:
     export CYLC_CYCLING_MODE=
     export CYLC_SUITE_FINAL_CYCLE_POINT=
@@ -28,7 +28,7 @@ cylc::job::inst::cylc-env() {
     export CYLC_TASK_TRY_NUMBER=
 }
 
-cylc::job::inst::user-env() {
+cylc__job__inst__user_env() {
     # TASK RUNTIME ENVIRONMENT:
     E_ONE="$( cylc util rnd 1 10 )"
     E_TWO="$VAR_IS"
@@ -38,14 +38,14 @@ cylc::job::inst::user-env() {
     export E_ONE E_TWO E_THR E_FOU E_FIV
 }
 
-cylc::job::inst::init-script() {
+cylc__job__inst__init_script() {
 # INIT-SCRIPT:
 echo "HELLO FROM INIT-SCRIPT"
 # define a variable
 export VAR_IS=is
 }
 
-cylc::job::inst::pre-script() {
+cylc__job__inst__pre_script() {
 # PRE-SCRIPT:
 echo "HELLO FROM PRE-SCRIPT"
 # init-script must be done:
@@ -60,7 +60,7 @@ echo E_FIV is $E_FIV
 export VAR_PreCS=precs
 }
 
-cylc::job::inst::script() {
+cylc__job__inst__script() {
 # SCRIPT:
 echo "HELLO FROM SCRIPT"
 # init-script must be done:
@@ -77,7 +77,7 @@ echo E_FIV is $E_FIV
 export VAR_CS=var_cs
 }
 
-cylc::job::inst::post-script() {
+cylc__job__inst__post_script() {
 # POST-SCRIPT:
 echo "HELLO FROM POST-SCRIPT"
 # init-script must be done:
@@ -100,6 +100,6 @@ export VAR_PostCS=postcs
 }
 
 . "${CYLC_DIR}/lib/cylc/job.sh"
-cylc::job::main
+cylc__job__main
 
 #EOF: 1/foo/01

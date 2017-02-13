@@ -2,6 +2,7 @@
     script = echo "RUN: run-var.sh"
     enable resurrection = False
     env-script = 
+    err-script = 
     title = 
     URL = 
     extra log files = 
@@ -80,6 +81,7 @@
     script = echo "RUN: run-ops.sh"
     enable resurrection = False
     env-script = 
+    err-script = 
     title = 
     URL = 
     extra log files = 
@@ -157,6 +159,7 @@
     script = echo "RUN: run-ops.sh"
     enable resurrection = False
     env-script = 
+    err-script = 
     title = 
     URL = 
     extra log files = 
@@ -235,6 +238,7 @@
     script = echo "RUN: run-ops.sh"
     enable resurrection = False
     env-script = 
+    err-script = 
     title = 
     URL = 
     extra log files = 
@@ -313,6 +317,7 @@
     script = echo "RUN: run-ops.sh"
     enable resurrection = False
     env-script = 
+    err-script = 
     title = 
     URL = 
     extra log files = 
@@ -391,6 +396,7 @@
     script = echo "RUN: run-ops.sh"
     enable resurrection = False
     env-script = 
+    err-script = 
     title = 
     URL = 
     extra log files = 
@@ -469,6 +475,7 @@
     script = echo "RUN: run-var.sh"
     enable resurrection = False
     env-script = 
+    err-script = 
     title = 
     URL = 
     extra log files = 
@@ -547,6 +554,7 @@
     script = echo "RUN: run-var.sh"
     enable resurrection = False
     env-script = 
+    err-script = 
     title = 
     URL = 
     extra log files = 
@@ -624,6 +632,7 @@
     script = echo "RUN: run-var.sh"
     enable resurrection = False
     env-script = 
+    err-script = 
     title = 
     URL = 
     extra log files = 
@@ -702,6 +711,7 @@
     script = echo Dummy task; sleep $(cylc rnd 1 16)
     enable resurrection = False
     env-script = 
+    err-script = 
     title = 
     URL = 
     extra log files = 
@@ -780,6 +790,7 @@
     script = echo Dummy task; sleep $(cylc rnd 1 16)
     enable resurrection = False
     env-script = 
+    err-script = 
     title = 
     URL = 
     extra log files = 
@@ -857,6 +868,7 @@
     script = echo Dummy task; sleep $(cylc rnd 1 16)
     enable resurrection = False
     env-script = 
+    err-script = 
     title = 
     URL = 
     extra log files = 
@@ -935,6 +947,7 @@
     script = echo "RUN: run-var.sh"
     enable resurrection = False
     env-script = 
+    err-script = 
     title = 
     URL = 
     extra log files = 

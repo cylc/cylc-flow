@@ -307,6 +307,7 @@ SPEC = {
             'URL': vdr(vtype='string', default=""),
             'init-script': vdr(vtype='string'),
             'env-script': vdr(vtype='string'),
+            'err-script': vdr(vtype='string'),
             'pre-script': vdr(vtype='string'),
             'script': vdr(
                 vtype='string',

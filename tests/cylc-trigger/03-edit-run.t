@@ -41,7 +41,7 @@ cmp_ok "${DIFF_LOG}" - <<'__END__'
 +++ edited
 @@ -30,7 +30,7 @@
  
- cylc::job::inst::script() {
+ cylc__job__inst__script() {
  # SCRIPT:
 -/bin/false
 +/bin/true
