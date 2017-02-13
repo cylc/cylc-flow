@@ -1150,8 +1150,8 @@ multiple lines of scripting.  See also \lstinline=init-script=,
 
 This is any custom script to be invoked at the end the error trap.
 The output of this will always be sent to STDERR and \lstinline=$1= is set to
-the name of the signal caught by the error trap. The script should fast and
-uses very little system resource to ensure that the error trap can return
+the name of the signal caught by the error trap. The script should be fast and
+use very little system resource to ensure that the error trap can return
 quickly. It can be a single command or multiple lines of scripting. See also
 \lstinline=init-script=, \lstinline=env-script=, \lstinline=pre-script=,
 \lstinline=script=, and \lstinline=post-script=.

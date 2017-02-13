@@ -20,7 +20,7 @@
 if ! KSH="$(which ksh)" 2>'/dev/null'; then
     skip_all 'ksh not installed'
 fi
-set_test_number 3
+set_test_number 4
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" \
@@ -29,6 +29,7 @@ run_ok "${TEST_NAME_BASE}-run" \
     cylc run "${SUITE_NAME}" --reference-test --debug --set=KSH="${KSH}"
 head -1 "${SUITE_RUN_DIR}/log/job/1/foo/NN/job" >'job-head.out'
 cmp_ok 'job-head.out' <<<"#!${KSH}"
+grep_ok 'Kornflakes' "${SUITE_RUN_DIR}/log/job/1/foo/NN/job.out"
 
 purge_suite "${SUITE_NAME}"
 exit
