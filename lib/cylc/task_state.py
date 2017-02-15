@@ -109,9 +109,7 @@ TASK_STATUSES_ACTIVE = set([
 ])
 
 # Task statuses in which tasks cannot be considered stalled
-TASK_STATUSES_NOT_STALLED = (
-    TASK_STATUSES_ACTIVE | TASK_STATUSES_TO_BE_ACTIVE |
-    set([TASK_STATUS_HELD]))
+TASK_STATUSES_NOT_STALLED = TASK_STATUSES_ACTIVE | TASK_STATUSES_TO_BE_ACTIVE
 
 # Task statuses that can be manually triggered.
 TASK_STATUSES_TRIGGERABLE = set([

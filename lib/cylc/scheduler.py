@@ -178,7 +178,6 @@ class Scheduler(object):
         self.port = None
 
         self.is_stalled = False
-        self.stalled_last = False
 
         self.graph_warned = {}
 
@@ -1441,16 +1440,15 @@ conditions; see `cylc conditions`.
                     self.log.debug("BEGIN TASK PROCESSING")
                     time0 = time()
 
-                changes = 0
                 self.pool.match_dependencies()
-                if self.stop_mode is None:
-                    changes += self.pool.submit_tasks()
-                changes += self.pool.spawn_all_tasks()
-                changes += self.pool.remove_spent_tasks()
-                changes += self.pool.remove_suiciding_tasks()
-
-                if changes:
+                if self.stop_mode is None and self.pool.submit_tasks():
                     self.do_update_state_summary = True
+                for meth in [
+                        self.pool.spawn_all_tasks,
+                        self.pool.remove_spent_tasks,
+                        self.pool.remove_suiciding_tasks]:
+                    if meth():
+                        self.do_update_state_summary = True
 
                 BroadcastServer.get_inst().expire(self.pool.get_min_point())
 
@@ -1462,9 +1460,8 @@ conditions; see `cylc conditions`.
             self.pool.process_queued_task_messages()
             self.process_queued_task_event_handlers()
             self.process_command_queue()
-            if cylc.flags.iflag or self.do_update_state_summary:
-                cylc.flags.iflag = False
-                self.do_update_state_summary = False
+            has_changes = cylc.flags.iflag or self.do_update_state_summary
+            if has_changes:
                 self.pool.put_rundb_task_pool()
                 self.update_state_summary()
             try:
@@ -1551,7 +1548,7 @@ conditions; see `cylc conditions`.
                 self.time_next_kill = time() + self.INTERVAL_STOP_KILL
 
             # Suite health checks
-            if self.stop_mode is None:
+            if self.stop_mode is None and not has_changes:
                 self.check_suite_stalled()
             now = time()
             if time_next_fs_check is None or now > time_next_fs_check:
@@ -1598,6 +1595,16 @@ conditions; see `cylc conditions`.
             self.will_pause_at(), self.stop_mode is not None,
             self.will_stop_at(), self.config.ns_defn_order,
             self.pool.do_reload)
+        cylc.flags.iflag = False
+        self.do_update_state_summary = False
+        self.is_stalled = False
+        if self.suite_timer_active:
+            self.suite_timer_active = False
+            if cylc.flags.verbose:
+                OUT.info("%s suite timer stopped NOW: %s" % (
+                    get_seconds_as_interval_string(
+                        self._get_events_conf(self.EVENT_TIMEOUT)),
+                    get_current_time_string()))
 
     def check_suite_timer(self):
         """Check if suite has timed out or not."""
@@ -1631,34 +1638,19 @@ conditions; see `cylc conditions`.
 
     def check_suite_stalled(self):
         """Check if suite is stalled or not."""
-        if self.is_stalled:
+        if self.is_stalled:  # already reported
             return
-        # Suite should only be considered stalled if two consecutive
-        # scheduler loops meet the criteria. This caters for pauses between
-        # tasks succeeding and those triggering off them moving to ready
-        # e.g. foo[-P1D] => foo
-        pool_is_stalled = self.pool.pool_is_stalled()
-        if self.stalled_last and pool_is_stalled:
-            self.is_stalled = True
+        self.is_stalled = self.pool.is_stalled()
+        if self.is_stalled:
             message = 'suite stalled'
             self.log.warning(message)
             self.run_event_handlers(self.EVENT_STALLED, message)
             self.pool.report_stalled_task_deps()
             if self._get_events_conf('abort on stalled'):
                 raise SchedulerError('Abort on suite stalled is set')
-            # Start suite timer
+            # Start suite timeout timer
             if self._get_events_conf(self.EVENT_TIMEOUT):
                 self.set_suite_timer()
-        else:
-            self.stalled_last = pool_is_stalled
-            # De-activate suite timeout timer if not stalled
-            if self.suite_timer_active:
-                self.suite_timer_active = False
-                if cylc.flags.verbose:
-                    OUT.info("%s suite timer stopped NOW: %s" % (
-                        get_seconds_as_interval_string(
-                            self._get_events_conf(self.EVENT_TIMEOUT)),
-                        get_current_time_string()))
 
     def process_tasks(self):
         """Return True if waiting tasks are ready."""
@@ -1677,10 +1669,6 @@ conditions; see `cylc conditions`.
             if (self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT) and
                     self._get_events_conf('reset inactivity timer')):
                 self.set_suite_inactivity_timer()
-
-            # New suite activity, so reset the stalled flag.
-            self.stalled_last = False
-            self.is_stalled = False
 
         if self.pool.waiting_tasks_ready():
             process = True
