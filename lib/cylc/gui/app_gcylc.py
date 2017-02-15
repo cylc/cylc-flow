@@ -2142,6 +2142,11 @@ shown here in the state they were in at the time of triggering.''')
         hbox.pack_start(entry_stop_point, True)
         vbox.pack_start(hbox)
 
+        no_check_cb = gtk.CheckButton(
+            "Do not check if cycle point is valid or not")
+        no_check_cb.set_active(False)
+        vbox.pack_start(no_check_cb, True)
+
         help_button = gtk.Button("_Help")
         help_button.connect("clicked", self.command_help, "control", "insert")
 
@@ -2149,8 +2154,7 @@ shown here in the state they were in at the time of triggering.''')
         insert_button = gtk.Button("_Insert")
         insert_button.connect(
             "clicked", self.insert_task, window, entry_task_ids,
-            entry_stop_point,
-        )
+            entry_stop_point, no_check_cb)
         cancel_button = gtk.Button("_Cancel")
         cancel_button.connect("clicked", lambda x: window.destroy())
         hbox.pack_start(insert_button, False)
@@ -2161,7 +2165,8 @@ shown here in the state they were in at the time of triggering.''')
         window.add(vbox)
         window.show_all()
 
-    def insert_task(self, w, window, entry_task_ids, entry_stop_point):
+    def insert_task(
+            self, w, window, entry_task_ids, entry_stop_point, no_check_cb):
         """Insert a task, callback for "insert_task_popup"."""
         task_ids = shlex.split(entry_task_ids.get_text())
         if not task_ids:
@@ -2179,8 +2184,8 @@ shown here in the state they were in at the time of triggering.''')
             stop_point_str = None
         self.put_comms_command(
             'insert_tasks', items=task_ids,
-            stop_point_string=stop_point_str
-        )
+            stop_point_string=stop_point_str,
+            no_check=no_check_cb.get_active())
 
     def poll_all(self, w):
         """Poll all active tasks."""
