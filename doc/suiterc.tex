@@ -1148,11 +1148,12 @@ multiple lines of scripting.  See also \lstinline=init-script=,
 
 \paragraph[err-script]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow err-script}
 
-This is any custom script to be invoked at the end the error trap.
-The output of this will always be sent to STDERR and \lstinline=$1= is set to
-the name of the signal caught by the error trap. The script should be fast and
-use very little system resource to ensure that the error trap can return
-quickly. It can be a single command or multiple lines of scripting. See also
+This is any custom script to be invoked at the end of the error trap, (if the
+error trap is triggered due to failure of a command in the task job). The
+output of this will always be sent to STDERR and \lstinline=$1= is set to the
+name of the signal caught by the error trap. The script should be fast and use
+very little system resource to ensure that the error trap can return quickly.
+It can be a single command or multiple lines of scripting. See also
 \lstinline=init-script=, \lstinline=env-script=, \lstinline=pre-script=,
 \lstinline=script=, and \lstinline=post-script=.
 
@@ -1356,8 +1357,9 @@ suite daemon when a task is ready to run. This can be set to the location of
 location.
 {\em Note: It has no bearing on any sub-shells that may be called by the job script.}
 
-Setting this to the path of a ksh93 interpretter is supported but not recommended.
-Setting this to any other shell is not supported.
+Setting this to the path of a ksh93 interpreter is deprecated. Support of which
+will be withdrawn in a future cylc release. Setting this to any other shell is
+not supported.
 
 \begin{myitemize}
 \item {\em type:} string

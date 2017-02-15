@@ -1277,6 +1277,13 @@ class SuiteConfig(object):
                 taskdef.check_for_explicit_cycling()
             except TaskDefError as exc:
                 raise SuiteConfigError(str(exc))
+            # Check use of ksh in "[job]shell" setting
+            job_shell = taskdef.rtconfig['job']['shell']
+            if job_shell and 'ksh' in os.path.basename(job_shell):
+                ERR.warning(
+                    ('deprecated: [runtime][%s][job]shell=%s: '
+                     'use of ksh to run cylc task job file') %
+                    (taskdef.name, job_shell))
 
         if cylc.flags.verbose:
             OUT.info("Checking for defined tasks not used in the graph")

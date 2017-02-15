@@ -78,7 +78,7 @@ def main():
         sys.exit("Invalid task ID " + task_id)
     suiterc = SuiteSrvFilesManager().get_suite_rc(suite)
     suite_dir = os.path.dirname(suiterc)
-    # For user-defined job submission methods:
+    # For user-defined batch system handlers
     sys.path.append(os.path.join(suite_dir, 'python'))
     suite_run_dir = GLOBAL_CFG.get_derived_host_item(
         suite, 'suite run directory')

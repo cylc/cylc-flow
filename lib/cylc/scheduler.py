@@ -148,7 +148,7 @@ class Scheduler(object):
         self.suite_dir = self.suite_srv_files_mgr.get_suite_source_dir(
             self.suite)
         self.suiterc = self.suite_srv_files_mgr.get_suite_rc(self.suite)
-        # For user-defined job submission methods:
+        # For user-defined batch system handlers
         sys.path.append(os.path.join(self.suite_dir, 'python'))
         self.suite_run_dir = GLOBAL_CFG.get_derived_host_item(
             self.suite, 'suite run directory')

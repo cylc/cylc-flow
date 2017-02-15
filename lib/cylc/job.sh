@@ -78,8 +78,8 @@ __OUT__
     export CYLC_SUITE_WORK_DIR="${CYLC_SUITE_WORK_DIR_ROOT}/work"
     export CYLC_TASK_CYCLE_POINT="$(cut -d '/' -f 1 <<<"${CYLC_TASK_JOB}")"
     export CYLC_TASK_NAME="$(cut -d '/' -f 2 <<<"${CYLC_TASK_JOB}")"
-    # The "10#" part ensures that the submit number is interpretted in base 10.
-    # Otherwise, a zero padded number will be interpretted as an octal.
+    # The "10#" part ensures that the submit number is interpreted in base 10.
+    # Otherwise, a zero padded number will be interpreted as an octal.
     export CYLC_TASK_SUBMIT_NUMBER=$((10#$(cut -d '/' -f 3 <<<"${CYLC_TASK_JOB}")))
     export CYLC_TASK_ID="${CYLC_TASK_NAME}.${CYLC_TASK_CYCLE_POINT}"
     export CYLC_TASK_LOG_ROOT="${CYLC_SUITE_RUN_DIR}/log/job/${CYLC_TASK_JOB}/job"
@@ -128,7 +128,7 @@ __OUT__
 }
 
 ###############################################################################
-# Run a function in the task job instant file, if possible.
+# Run a function in the task job instance file, if possible.
 # Arguments:
 #   NAME - name of function without the "cylc__job__inst__" prefix
 # Returns:
