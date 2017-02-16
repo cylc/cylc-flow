@@ -1,0 +1,28 @@
+#!Jinja2
+
+{% set START_CYCLE = '01231212T1212' %}
+
+[scheduling]
+    initial cycle point = {{START_CYCLE}}
+    [[dependencies]]
+        [[[R1]]]
+            graph = strftime => pad => end
+[runtime]
+    [[strftime]]
+        script = """
+if [[ "$HOURS:$MINUTES:$SECONDS" != '12:12:0' ]]; then
+    exit 1
+fi
+"""
+        [[[environment]]]
+            HOURS = {{ START_CYCLE | strftime('%H') }}
+            MINUTES = {{ START_CYCLE | strftime('%M') }}
+            SECONDS = {{ START_CYCLE | strftime('%S') }}
+    [[pad]]
+        script = """
+if [[ {{ 42 | pad(3, 0) }} != '042' ]]; then
+    exit 1
+fi 
+"""
+    [[end]]
+        script = true
