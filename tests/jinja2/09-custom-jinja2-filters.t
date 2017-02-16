@@ -15,21 +15,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test compliance with PEP8.
-. "$(dirname "$0")/test_header"
-
-if ! pep8 --version 1>'/dev/null' 2>&1; then
-    skip_all '"pep8" command not available'
-fi
-
-set_test_number 3
-
-run_ok "${TEST_NAME_BASE}" pep8 --ignore=E402 \
-    "${CYLC_DIR}/lib/cylc" \
-    "${CYLC_DIR}/lib/Jinja2Filters"/*.py \
-    "${CYLC_DIR}/lib/parsec"/*.py \
-    $(grep -l '#!.*\<python\>' "${CYLC_DIR}/bin/"*)
-cmp_ok "${TEST_NAME_BASE}.stdout" <'/dev/null'
-cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'
-
-exit
+# basic jinja2 include and expand test
+. $(dirname $0)/test_header
+#-------------------------------------------------------------------------------
+FILTER_DIR="${CYLC_DIR}/lib/Jinja2Filters"
+CUSTOM_FILTERS=($(find "${FILTER_DIR}/" -name \*.py))
+let NUM_TESTS=${#CUSTOM_FILTERS[@]}*2
+set_test_number $NUM_TESTS
+#-------------------------------------------------------------------------------
+# Run doctest on all built-in Jinja2 filters.
+for filter in "${CUSTOM_FILTERS[@]}"; do
+    TEST_NAME="${TEST_NAME_BASE}-$(basename ${filter})"
+    #1>&2 echo python -m doctest -v "${filter}"
+    run_ok "${TEST_NAME}" python -m doctest "${filter}"
+    sed -i /1034h/d "${TEST_NAME}.stdout"  # Remove some nasty unicode output.
+    cmp_ok "${TEST_NAME}.stdout" /dev/null
+done
