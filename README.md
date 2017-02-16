@@ -12,7 +12,7 @@ used for non-cycling systems.
 
 ### Copyright and Terms of Use
 
-Copyright (C) 2008-2016 [NIWA](https://www.niwa.co.nz)
+Copyright (C) 2008-2017 [NIWA](https://www.niwa.co.nz)
  
 Cylc is free software: you can redistribute it and/or modify it under the terms
 of the GNU General Public License as published by the Free Software Foundation,
