@@ -79,8 +79,6 @@ class BaseCommsClient(object):
         payload = fargs.pop("payload", None)
         method = fargs.pop("method", self.METHOD)
         host = self.host
-        if not self.host.split(".")[0].isdigit():
-            host = self.host.split(".")[0]
         if host == "localhost":
             host = get_hostname().split(".")[0]
         url = 'https://%s:%s/%s/%s' % (host, self.port, category, fname)
