@@ -264,19 +264,19 @@ class Scheduler(object):
         except KeyboardInterrupt as exc:
             try:
                 self.shutdown(str(exc))
-            except Exception as exc1:
+            except Exception:
                 # In case of exceptions in the shutdown method itself.
-                traceback.print_exc(exc1)
+                ERR.warning(traceback.format_exc())
                 sys.exit(1)
 
         except Exception as exc:
-            traceback.print_exc()
+            ERR.critical(traceback.format_exc())
             ERR.error("error caught: cleaning up before exit")
             try:
                 self.shutdown('ERROR: ' + str(exc))
-            except Exception, exc1:
+            except Exception:
                 # In case of exceptions in the shutdown method itself
-                traceback.print_exc(exc1)
+                ERR.warning(traceback.format_exc())
             if cylc.flags.debug:
                 raise
             else:
@@ -605,7 +605,7 @@ conditions; see `cylc conditions`.
                 message_queue=self.pool.message_queue)
         except TaskNotDefinedError as exc:
             if cylc.flags.debug:
-                traceback.print_exc()
+                ERR.error(traceback.format_exc())
             else:
                 ERR.error(str(exc))
             ERR.warning((
@@ -613,7 +613,7 @@ conditions; see `cylc conditions`.
                 "(the task definition has probably been deleted from the "
                 "suite).") % name)
         except Exception:
-            traceback.print_exc()
+            ERR.error(traceback.format_exc())
             ERR.error("could not load task %s" % name)
         else:
             if status in (TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING):
@@ -668,23 +668,18 @@ conditions; see `cylc conditions`.
             ctx_key = pickle.loads(str(ctx_key_pickle))
             ctx = pickle.loads(str(ctx_pickle))
             delays = pickle.loads(str(delays_pickle))
-            num = int(num)
-            if delay is not None:
-                delay = float(delay)
-            if timeout is not None:
-                timeout = float(timeout)
-        except (EOFError, TypeError, LookupError):
+            if ctx_key and ctx_key[0] in ["poll_timers", "try_timers"]:
+                getattr(itask, ctx_key[0])[ctx_key[1]] = TaskActionTimer(
+                    ctx, delays, num, delay, timeout)
+            else:
+                itask.event_handler_try_timers[ctx_key] = TaskActionTimer(
+                    ctx, delays, num, delay, timeout)
+        except (EOFError, TypeError, LookupError, ValueError):
             ERR.warning(
                 "%(id)s: skip action timer %(ctx_key)s" %
                 {"id": id_, "ctx_key": ctx_key})
             ERR.warning(traceback.format_exc())
             return
-        if ctx_key and ctx_key[0] in ["poll_timers", "try_timers"]:
-            getattr(itask, ctx_key[0])[ctx_key[1]] = TaskActionTimer(
-                ctx, delays, num, delay, timeout)
-        else:
-            itask.event_handler_try_timers[ctx_key] = TaskActionTimer(
-                ctx, delays, num, delay, timeout)
         OUT.info("+ %s.%s %s" % (name, cycle, ctx_key))
 
     def process_command_queue(self):
@@ -1594,7 +1589,7 @@ conditions; see `cylc conditions`.
                     assert contact_data == self.contact_data
                 except (AssertionError, IOError, ValueError,
                         SuiteServiceFileError):
-                    traceback.print_exc()
+                    ERR.critical(traceback.format_exc())
                     exc = SchedulerError(
                         ("%s: suite contact file corrupted/modified and" +
                          " may be left") %
@@ -1887,7 +1882,7 @@ conditions; see `cylc conditions`.
                     try_timers[(key1, submit_num)].unset_waiting()
             except KeyError:
                 if cylc.flags.debug:
-                    traceback.print_exc()
+                    ERR.debug(traceback.format_exc())
 
     def _process_task_job_logs_retrieval(self, ctx, id_keys):
         """Process retrieval of task job logs from remote user@host."""
@@ -1949,7 +1944,7 @@ conditions; see `cylc conditions`.
                     try_timers[(key1, submit_num)].unset_waiting()
             except KeyError:
                 if cylc.flags.debug:
-                    traceback.print_exc()
+                    ERR.debug(traceback.format_exc())
 
     def shutdown(self, reason=None):
         """Shutdown the suite."""
