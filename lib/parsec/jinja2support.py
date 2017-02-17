@@ -76,7 +76,7 @@ def jinja2process(flines, dir_, template_vars=None):
 
     # Jinja2 render method requires a dictionary as argument (not None):
     if not template_vars:
-        template_vars={}
+        template_vars = {}
 
     # CALLERS SHOULD HANDLE JINJA2 TEMPLATESYNTAXERROR AND TEMPLATEERROR
     # AND TYPEERROR (e.g. for not using "|int" filter on number inputs.
