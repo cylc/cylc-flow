@@ -92,6 +92,11 @@ __OUT__
         CYLC_TASK_WORK_DIR_BASE="${CYLC_TASK_CYCLE_POINT}/${CYLC_TASK_NAME}"
     fi
     export CYLC_TASK_WORK_DIR="${CYLC_SUITE_WORK_DIR}/${CYLC_TASK_WORK_DIR_BASE}"
+    typeset CONTACT="${CYLC_SUITE_RUN_DIR}/.service/contact"
+    if [[ -f "${CONTACT}" ]]; then
+        export CYLC_SUITE_HOST="$(sed -n 's/^CYLC_SUITE_HOST=//p' "${CONTACT}")"
+        export CYLC_SUITE_OWNER="$(sed -n 's/^CYLC_SUITE_OWNER=//p' "${CONTACT}")"
+    fi
     # DEPRECATED environment variables
     export CYLC_SUITE_SHARE_PATH="${CYLC_SUITE_SHARE_DIR}"
     export CYLC_SUITE_INITIAL_CYCLE_TIME="${CYLC_SUITE_INITIAL_CYCLE_POINT}"
