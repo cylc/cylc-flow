@@ -49,7 +49,7 @@ EXPERIMENTS_PATH = os.path.join('dev', 'profile-experiments'
                                 )  # Path to built-in experiments.
 
 # Ancestor commit for cylc profile-battery
-PROFILE_COMMIT = 'abf238271d6cfe9cc5db5de812907195a5f8d5c7'  # TODO
+PROFILE_COMMIT = '0f5a7999ba9c93174d846a6679db4ce413388df7'
 
 # Ancestor commit for analysis-compatible cylc (run|validate) --profile
 CYLC_PROFILING_COMMIT = '016e6a97be16eaf1a33ea19398a1ade09f86719e'
