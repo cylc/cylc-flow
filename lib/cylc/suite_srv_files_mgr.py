@@ -215,17 +215,12 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
         suite_owner = os.getenv('CYLC_SUITE_OWNER')
         if reg == os.getenv('CYLC_SUITE_NAME'):
             env_keys = []
-            if is_remote_host(suite_host) or is_remote_user(suite_owner):
-                # 1(a)/ Task messaging call on a remote account.
-                # Look in the remote suite run directory:
-                env_keys = ['CYLC_SUITE_RUN_DIR']
-            elif suite_host or suite_owner:
-                # 1(b)/ Task messaging call on the suite host account.
-
-                # Could be a local task or a remote task with 'ssh
-                # messaging = True'. In either case use
-                # $CYLC_SUITE_RUN_DIR_ON_SUITE_HOST which never changes.
-                env_keys = ['CYLC_SUITE_RUN_DIR_ON_SUITE_HOST']
+            if 'CYLC_SUITE_RUN_DIR' in os.environ:
+                # 1(a)/ Task messaging call.
+                env_keys.append('CYLC_SUITE_RUN_DIR')
+            elif self.KEY_SUITE_RUN_DIR_ON_SUITE_HOST in os.environ:
+                # 1(b)/ Task messaging call via ssh messaging.
+                env_keys.append(self.SUITE_RUN_DIR_ON_SUITE_HOST)
             for key in env_keys:
                 path = os.path.join(os.environ[key], self.DIR_BASE_SRV)
                 if content:
@@ -259,8 +254,6 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
                 return value
 
         # 4/ Disk cache for remote suites
-        if host is None:
-            host = suite_host
         if owner is not None and host is not None:
             paths = [self._get_cache_dir(reg, owner, host)]
             short_host = host.split('.', 1)[0]
