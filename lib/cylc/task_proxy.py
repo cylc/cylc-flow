@@ -90,11 +90,15 @@ class TaskActionTimer(object):
     def __init__(self, ctx=None, delays=None, num=0, delay=None, timeout=None):
         self.ctx = ctx
         if delays is None:
-            self.delays = [0]
+            self.delays = [float(0)]
         else:
-            self.delays = list(delays)
-        self.num = num
+            self.delays = [float(delay) for delay in delays]
+        self.num = int(num)
+        if delay is not None:
+            delay = float(delay)
         self.delay = delay
+        if timeout is not None:
+            timeout = float(timeout)
         self.timeout = timeout
         self.is_waiting = False
 
