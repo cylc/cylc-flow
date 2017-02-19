@@ -4911,8 +4911,12 @@ locations:
 
 In the filter function argument list, the first argument is the variable
 value to be ``filtered'', and subsequent arguments can be whatever is
-needed. Currently there is one custom filter called ``pad'' in the
-central cylc Jinja2 filter directory, for padding string values to some
+needed. Currently there are two custom filters:
+
+
+\paragraph{pad}
+
+The ``pad'' filter is for padding string values to some
 constant length with a fill character - useful for generating task names
 and related values in ensemble suites:
 
@@ -4923,6 +4927,26 @@ and related values in ensemble suites:
     A_{{j}}          # A_00, A_01, ..., A_99
 {% endfor %}
 \end{lstlisting}
+
+\paragraph{strftime}
+
+The ``strftime'' filter can be used to format ISO8601 date-time strings using
+an strftime string.
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+{% set START_CYCLE = '10661004T08+01' %}
+{{ START_CYCLE | strftime('%H') }}  # 00
+\end{lstlisting}}
+
+Examples:
+
+\begin{myitemize}
+    \item \lstinline={{START_CYCLE | strftime('%Y')}}= - 1066
+    \item \lstinline={{START_CYCLE | strftime('%m')}}= - 10
+    \item \lstinline={{START_CYCLE | strftime('%d')}}= - 14
+    \item \lstinline={{START_CYCLE | strftime('%H:%M:%S %z')}}= - 08:00:00 +01
+\end{myitemize}
 
 \subsubsection{Associative Arrays In Jinja2}
 
