@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # (C) British Crown Copyright 2013-2014 Met Office.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -14,6 +14,6 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 
-__version__ = "2014.10.0"
+__version__ = "2017.02.0"

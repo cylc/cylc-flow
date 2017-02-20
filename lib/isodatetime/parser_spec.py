@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # (C) British Crown Copyright 2013-2014 Met Office.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 
 """This provides data to drive ISO 8601 parsing functionality."""
 
@@ -56,7 +56,8 @@ YYWww
 -WwwD
 -Www
 -W-D
-"""    },
+"""
+    },
     "extended": {
         "complete": """
 CCYY-MM-DD
@@ -81,7 +82,8 @@ YY-Www
 -z-WwwD
 -z-Www
 -Www-D
-"""    }
+"""
+    }
 }
 TIME_EXPRESSIONS = {
     "basic": {
@@ -117,7 +119,8 @@ hh
 -mmss.tt
 -mm.nn
 --ss.tt
-"""    },
+"""
+    },
     "extended": {
         "complete": """
 # No Time Zone
@@ -149,7 +152,8 @@ hh             # Deviation? Not allowed in standard ?
 -mm:ss.tt
 -mm.nn          # Deviation? Not allowed in standard ?
 --ss.tt         # Deviation? Not allowed in standard ?
-"""    }
+"""
+    }
 }
 TIME_ZONE_EXPRESSIONS = {
     "basic": """
@@ -242,7 +246,7 @@ LOCAL_TIME_ZONE_EXTENDED = timezone.get_local_time_zone_format(
 LOCAL_TIME_ZONE_EXTENDED_NO_Z = LOCAL_TIME_ZONE_EXTENDED
 if LOCAL_TIME_ZONE_EXTENDED_NO_Z == "Z":
     LOCAL_TIME_ZONE_EXTENDED_NO_Z = "+0000"
-    
+
 # Note: we only accept the following subset of strftime syntax.
 # This is due to inconsistencies with the ISO 8601 representations.
 REC_SPLIT_STRFTIME_DIRECTIVE = re.compile(r"(%\w)")

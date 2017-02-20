@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # (C) British Crown Copyright 2013-2014 Met Office.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 
 """This provides ISO 8601 parsing functionality."""
 
@@ -225,8 +225,7 @@ class TimePointParser(object):
     def parse_time_zone_expression_to_regex(self, expression):
         """Construct regular expressions for the time zone."""
         for expr_regex, substitute, format_, name in (
-                parser_spec.get_time_zone_translate_info(
-                    )):
+                parser_spec.get_time_zone_translate_info()):
             expression = re.sub(expr_regex, substitute, expression)
         expression = "^" + expression + "$"
         return expression
@@ -330,7 +329,8 @@ class TimePointParser(object):
             else:
                 regex += re.escape(item)
         regex += "$"
-        return self._parse_from_custom_regex(regex, strptime_data_string,
+        return self._parse_from_custom_regex(
+            regex, strptime_data_string,
             dump_format=None, source=strptime_format_string)
 
     def _parse_from_custom_regex(self, regex, data_string, dump_format=None,
@@ -494,8 +494,7 @@ class TimePointParser(object):
                 )
                 time_zone_info = self.process_time_zone_info(time_zone_info)
             time_expr, time_info = self.get_time_info(
-                                           time, bad_formats=bad_formats,
-                                           bad_types=bad_types)
+                time, bad_formats=bad_formats, bad_types=bad_types)
             parsed_expr += parser_spec.TIME_DESIGNATOR + (
                 time_expr + time_zone_expr)
             time_info.update(time_zone_info)
@@ -511,7 +510,7 @@ class TimePointParser(object):
                 # No given value to assume.
                 if self.default_to_unknown_time_zone:
                     # Return no time zone information.
-                    return {} 
+                    return {}
                 # Set the time zone to the current local time zone.
                 utc_hour_offset, utc_minute_offset = (
                     timezone.get_local_time_zone())
