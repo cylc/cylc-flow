@@ -35,70 +35,53 @@ if remrun().execute():
     sys.exit(0)
 
 import os
-import subprocess
-from time import sleep
 
-import cylc.flags
-from parsec.OrderedDict import OrderedDict
-from cylc.execute import execute
-from cylc.job_file import JobFile
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.config import SuiteConfig
+from cylc.cycling.loader import get_point
+import cylc.flags
+from cylc.get_task_proxy import get_task_proxy
+from cylc.job_file import JobFile
+from cylc.job_host import RemoteJobHostManager
+from cylc.mp_pool import SuiteProcPool
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.task_id import TaskID
-from cylc.get_task_proxy import get_task_proxy
-from cylc.cycling.loader import get_point
-from cylc.job_host import RemoteJobHostManager
-from cylc.suite_host import get_suite_host, get_hostname
-from cylc.suite_logging import SuiteLog
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
-from cylc.mp_pool import SuiteProcPool
-import cylc.version  # Ensures '$CYLC_VERSION' is set.
 from cylc.task_state import TASK_STATUS_SUBMIT_FAILED
 from cylc.templatevars import load_template_vars
+import cylc.version  # Ensures '$CYLC_VERSION' is set.
 
 
-def commandline_parser():
+def main():
+    """cylc submit CLI.
+
+    No TASK EVENT HOOKS are set for the submit command because there is
+    no scheduler instance watching for task failure etc.
+
+    Note: a suite contact env file is not written by this command (it
+    would overwrite the real one if the suite is running).
+    """
     parser = COP(
         __doc__, jset=True, icp=True,
         argdoc=[("REG", "Suite name"),
                 ("TASK", "Target task (" + TaskID.SYNTAX + ")")])
-
     parser.set_defaults(sched=False, dry_run=False)
-
     parser.add_option(
         "-d", "--dry-run",
         help="Generate the job script for the task, but don't submit it.",
         action="store_true", dest="dry_run")
-
-    return parser
-
-
-def main():
-    parser = commandline_parser()
     (options, args) = parser.parse_args()
     if options.debug:
         cylc.flags.debug = True
-    suite = args[0]
-    suiterc = SuiteSrvFilesManager().get_suite_rc(suite)
-
-    owner = options.owner
-    host = options.host
-
-    suite_env = {}
-    suite_task_env = {}
-
-    task_id = args[1]
-
-    suite_dir = os.path.dirname(suiterc)
-    # For user-defined job submission methods:
-    sys.path.append(os.path.join(suite_dir, 'python'))
-
-    # check task
+    suite, task_id = args
     if not TaskID.is_valid_id(task_id):
         sys.exit("Invalid task ID " + task_id)
-
-    task_name, point_string = TaskID.split(task_id)
+    suiterc = SuiteSrvFilesManager().get_suite_rc(suite)
+    suite_dir = os.path.dirname(suiterc)
+    # For user-defined batch system handlers
+    sys.path.append(os.path.join(suite_dir, 'python'))
+    suite_run_dir = GLOBAL_CFG.get_derived_host_item(
+        suite, 'suite run directory')
 
     # load suite config
     config = SuiteConfig.get_inst(
@@ -106,78 +89,33 @@ def main():
         load_template_vars(options.templatevars, options.templatevars_file),
         cli_initial_point_string=options.icp)
 
-    # No TASK EVENT HOOKS are set for the submit command because there is
-    # no scheduler instance watching for task failure etc.
-
-    # Running in UTC time? (else just use the system clock)
-    utc = config.cfg['cylc']['UTC mode']
-
-    # create log (after CYLC_MODE is exported)
-    os.environ['CYLC_MODE'] = 'submit'
-
     GLOBAL_CFG.create_cylc_run_tree(suite)
-    suite_log_dir = SuiteLog.get_dir_for_suite(suite)
 
     RemoteJobHostManager.get_inst().single_task_mode = True
-
-    ict = config.cfg['scheduling']['initial cycle point']
-    fct = config.cfg['scheduling']['final cycle point']
-
-    # static cylc and suite-specific variables:
-    suite_env = {
-        'CYLC_UTC': str(utc),
-        'CYLC_MODE': 'submit',
+    JobFile.get_inst().set_suite_env({
+        'CYLC_UTC': str(config.cfg['cylc']['UTC mode']),
         'CYLC_DEBUG': str(cylc.flags.debug),
         'CYLC_VERBOSE': str(cylc.flags.verbose),
-        'CYLC_DIR_ON_SUITE_HOST': os.environ['CYLC_DIR'],
         'CYLC_SUITE_NAME': suite,
-        'CYLC_SUITE_HOST': str(get_suite_host()),
-        'CYLC_SUITE_OWNER': owner,
-        'CYLC_SUITE_PORT': 'None',
-        'CYLC_SUITE_RUN_DIR_ON_SUITE_HOST': GLOBAL_CFG.get_derived_host_item(
-            suite, 'suite run directory'),
-        'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST': suite_dir,
-        'CYLC_SUITE_INITIAL_CYCLE_POINT': str(ict),  # may be "None"
-        'CYLC_SUITE_FINAL_CYCLE_POINT': str(fct),  # may be "None"
-        'CYLC_SUITE_INITIAL_CYCLE_TIME': str(ict),  # may be "None"
-        'CYLC_SUITE_FINAL_CYCLE_TIME': str(fct),  # may be "None"
-        'CYLC_SUITE_LOG_DIR': suite_log_dir  # needed by the test battery
-    }
+        'CYLC_CYCLING_MODE': str(cylc.flags.cycling_mode),
+        'CYLC_SUITE_INITIAL_CYCLE_POINT': str(
+            config.cfg['scheduling']['initial cycle point']),
+        'CYLC_SUITE_FINAL_CYCLE_POINT': str(
+            config.cfg['scheduling']['final cycle point']),
+    })
 
-    # Note: a suite contact env file is not written by this command (it
-    # would overwrite the real one if the suite is running).
-
-    # Set local values of variables that are potenitally task-specific
-    # due to different directory paths on different task hosts. These
-    # are overridden by tasks prior to job submission, but in
-    # principle they could be needed locally by event handlers:
-    suite_task_env = {
-        'CYLC_SUITE_RUN_DIR': GLOBAL_CFG.get_derived_host_item(
-            suite, 'suite run directory'),
-        'CYLC_SUITE_WORK_DIR': GLOBAL_CFG.get_derived_host_item(
-            suite, 'suite work directory'),
-        'CYLC_SUITE_SHARE_DIR': GLOBAL_CFG.get_derived_host_item(
-            suite, 'suite share directory'),
-        'CYLC_SUITE_DEF_PATH': suite_dir
-    }
-    # (GLOBAL_CFG automatically expands environment variables in local paths)
-
-    JobFile.get_inst().set_suite_env(suite_env)
-
+    task_name, point_string = TaskID.split(task_id)
     point = get_point(point_string).standardise()
     # Try to get a graphed task of the given name.
-    itask = get_task_proxy(task_name, point.standardise(), is_startup=True)
+    itask = get_task_proxy(task_name, point, is_startup=True)
 
-    if not options.dry_run:
-        proc_pool = SuiteProcPool.get_inst(pool_size=1)
-
+    if itask.prep_submit(dry_run=options.dry_run) is None:
+        sys.exit(1)
     if options.dry_run:
-        itask.prep_submit(dry_run=True)
         print "JOB SCRIPT=%s" % itask.get_job_log_path(
             itask.HEAD_MODE_LOCAL, tail=itask.JOB_FILE_BASE)
     else:
-        if itask.prep_submit() is None:
-            sys.exit(1)
+        proc_pool = SuiteProcPool.get_inst(pool_size=1)
         itask.submit()
         while proc_pool.results:
             proc_pool.handle_results_async()

@@ -1,7 +1,7 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2017 NIWA
-#
+# 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -15,30 +15,33 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test that global config is used search for poll
+# Test "cylc jobscript" when we have bad syntax in "script" value.
 . "$(dirname "${0}")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 4
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+set_test_number 5
 #-------------------------------------------------------------------------------
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-create_test_globalrc '
-[task messaging]
-   connection timeout = PT20S
-   retry interval = PT9S
-[hosts]
-   [[localhost]]
-        task communication method = poll
-        execution polling intervals = PT0.2M, PT0.1M
-        submission polling intervals = PT0.2M, PT0.1M'
+init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
+[scheduling]
+    [[dependencies]]
+        graph = foo
+[runtime]
+    [[foo]]
+        script = fi
+__SUITE_RC__
 
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug "${SUITE_NAME}"
+TEST_NAME="${TEST_NAME_BASE}"-simple
+run_fail "${TEST_NAME}" cylc jobscript "${SUITE_NAME}" 'foo.1'
+cmp_ok "${TEST_NAME}.stdout" <'/dev/null'
+contains_ok "${TEST_NAME}.stderr" <<__ERR__
+ERROR: no jobscript generated
+__ERR__
+purge_suite "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}"
-LOG_FILE="${SUITE_RUN_DIR}/log/suite/log"
-run_ok "log" grep -Fq '[bar.1] -next job poll' "${LOG_FILE}"
-run_ok "log" grep -Fq '[foo.1] -next job poll' "${LOG_FILE}"
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+TEST_NAME="${TEST_NAME_BASE}-advanced-validate"
+run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+TEST_NAME="${TEST_NAME_BASE}-advanced-run"
+run_ok "${TEST_NAME}" cylc run "${SUITE_NAME}" --reference-test --debug
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
 exit

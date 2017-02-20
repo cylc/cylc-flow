@@ -63,8 +63,7 @@ datasets very quickly, to show parallel processing streams."""
         pre-command scripting = mkdir -p {{DATA_IN_DIR}}
         command scripting = """
 COUNT=0
-while true; do
-    ((COUNT == {{N_DATASETS}})) && break
+while ((COUNT < {{N_DATASETS}})); do
     # sleep $((RANDOM % 20))
     # Generate datasets very quickly to test parallel processing.
     DATA_ID=$(date +%s).$((RANDOM % 100))

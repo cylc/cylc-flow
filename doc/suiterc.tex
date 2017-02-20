@@ -1115,14 +1115,14 @@ suite URLs (\ref{SuiteURL}).
 
 \paragraph[init-script]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow init-script}
 
-This is written to the top of the task job script before the task execution
+This is invoked by the task job script before the task execution
 environment is configured, so it does not have access to any suite or task
 environment variables. It can be a single command or multiple lines of
 scripting. The original intention was to allow remote tasks to
 source login scripts to configure their access to cylc, but this should no
 longer be necessary (see~\ref{HowTasksGetAccessToCylc}). See also
-\lstinline=env-script=, \lstinline=pre-script=, \lstinline=script=, and
-\lstinline=post-script=.
+\lstinline=env-script=, \lstinline=err-script=, \lstinline=pre-script=,
+\lstinline=script=, and \lstinline=post-script=.
 
 \begin{myitemize}
 \item {\em type:} string
@@ -1132,12 +1132,13 @@ longer be necessary (see~\ref{HowTasksGetAccessToCylc}). See also
 
 \paragraph[env-script]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow env-script}
 
-This is written to the task job script between the cylc-defined environment
+This is invoked by the task job script between the cylc-defined environment
 (suite and task identity, etc.) and the user-defined task runtime environment -
 i.e.\ it has access to the cylc environment, and the task environment has
 access to variables defined by this scripting. It can be a single command or
 multiple lines of scripting.  See also \lstinline=init-script=,
-\lstinline=pre-script=, \lstinline=script=, and \lstinline=post-script=.
+\lstinline=err-script=, \lstinline=pre-script=, \lstinline=script=, and
+\lstinline=post-script=.
 
 \begin{myitemize}
 \item {\em type:} string
@@ -1145,12 +1146,29 @@ multiple lines of scripting.  See also \lstinline=init-script=,
 \item {\em example:} \lstinline@env-script = "echo Hello World"@
 \end{myitemize}
 
+\paragraph[err-script]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow err-script}
+
+This is any custom script to be invoked at the end of the error trap, (if the
+error trap is triggered due to failure of a command in the task job). The
+output of this will always be sent to STDERR and \lstinline=$1= is set to the
+name of the signal caught by the error trap. The script should be fast and use
+very little system resource to ensure that the error trap can return quickly.
+It can be a single command or multiple lines of scripting. See also
+\lstinline=init-script=, \lstinline=env-script=, \lstinline=pre-script=,
+\lstinline=script=, and \lstinline=post-script=.
+
+\begin{myitemize}
+\item {\em type:} string
+\item {\em default:} (none)
+\item {\em example:} \lstinline@err-script = "printenv FOO"@
+\end{myitemize}
+
 \paragraph[pre-script]{ [runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow pre-script}
 
-This is written to the task job script immediately before the \lstinline=script=
+This is invoked by the task job script immediately before the \lstinline=script=
 item (just below). It can be a single command or multiple lines of scripting.
-See also \lstinline=init-script=, \lstinline=env-script=, \lstinline=script=, and
-\lstinline=post-script=.
+See also \lstinline=init-script=, \lstinline=env-script=, \lstinline=err-script=,
+\lstinline=script=, and \lstinline=post-script=.
 
 \begin{myitemize}
 \item {\em type:} string
@@ -1168,7 +1186,8 @@ See also \lstinline=init-script=, \lstinline=env-script=, \lstinline=script=, an
 
 The is the main user-defined scripting to run when the task is ready. It can be a
 single command or multiple lines of scripting. See also \lstinline=init-script=,
-\lstinline=env-script=, \lstinline=pre-script=, and \lstinline=post-script=.
+\lstinline=env-script=, \lstinline=err-script=, \lstinline=pre-script=, and
+\lstinline=post-script=.
 
 \begin{myitemize}
 \item {\em type:} string
@@ -1177,10 +1196,11 @@ single command or multiple lines of scripting. See also \lstinline=init-script=,
 
 \paragraph[post-script]{ [runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow post-script}
 
-This is written to the task job script immediately after the \lstinline=script=
-item (just above).  It can be a single command or multiple lines of scripting.  See also
-\lstinline=init-script=, \lstinline=env-script=, \lstinline=pre-script=, and
-\lstinline=script=.
+This is invoked by the task job script immediately after the \lstinline=script=
+item (just above).  It can be a single command or multiple lines of scripting.
+See also
+\lstinline=init-script=, \lstinline=env-script=, \lstinline=err-script=,
+\lstinline=pre-script=, and \lstinline=script=.
 
 \begin{myitemize}
 \item {\em type:} string
@@ -1331,14 +1351,15 @@ job file path.
 \subparagraph[shell]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[job]]] \textrightarrow shell}
 \label{JobSubShell}
 
-This is the shell used to interpret the job script submitted by the suite
-daemon when a task is ready to run.  {\em It has no bearing on the shell used
-in task implementations.} Scripting and suite environment
-variable assignment expressions must be valid for this shell. The
-latter is currently hardwired into cylc as
-\lstinline@export item=value@ - valid for both bash and ksh
-because \lstinline=value= is entirely user-defined - but cylc would have
-to be modified slightly to allow use of the C shell.
+Location of the command used to interpret the job script submitted by the
+suite daemon when a task is ready to run. This can be set to the location of
+\lstinline=bash= in the job host if the shell is not installed in the standard
+location.
+{\em Note: It has no bearing on any sub-shells that may be called by the job script.}
+
+Setting this to the path of a ksh93 interpreter is deprecated. Support of which
+will be withdrawn in a future cylc release. Setting this to any other shell is
+not supported.
 
 \begin{myitemize}
 \item {\em type:} string

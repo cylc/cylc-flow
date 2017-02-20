@@ -24,6 +24,8 @@ from cylc.remote import remrun
 from cylc.wallclock import get_current_time_string
 import cylc.flags
 
+from cylc.suite_srv_files_mgr import (
+    SuiteSrvFilesManager, SuiteServiceFileError)
 from cylc.task_outputs import (
     TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED)
 
@@ -46,17 +48,9 @@ class TaskMessage(object):
     CRITICAL = "CRITICAL"
     PRIORITIES = (NORMAL, WARNING, CRITICAL)
 
-    ATTRS = (
-        ('suite', 'CYLC_SUITE_NAME', '(CYLC_SUITE_NAME)'),
-        ('task_id', 'CYLC_TASK_ID', '(CYLC_TASK_ID)'),
-        ('retry_seconds', 'CYLC_TASK_MSG_RETRY_INTVL',
-         '(CYLC_TASK_MSG_RETRY_INTVL)'),
-        ('max_tries', 'CYLC_TASK_MSG_MAX_TRIES', '(CYLC_TASK_MSG_MAX_TRIES)'),
-        ('try_timeout', 'CYLC_TASK_MSG_TIMEOUT', '(CYLC_TASK_MSG_TIMEOUT)'),
-        ('owner', 'CYLC_SUITE_OWNER', None),
-        ('host', 'CYLC_SUITE_HOST', '(CYLC_SUITE_HOST)'),
-        ('port', 'CYLC_SUITE_PORT', '(CYLC_SUITE_PORT)'),
-    )
+    MSG_RETRY_INTVL = 5.0
+    MSG_MAX_TRIES = 7
+    MSG_TIMEOUT = 30.0
 
     def __init__(self, priority=NORMAL):
         if priority in self.PRIORITIES:
@@ -68,128 +62,96 @@ class TaskMessage(object):
         self.env_map = dict(os.environ)
 
         # set some instance variables
-        self.suite = None
-        self.task_id = None
-        self.retry_seconds = None
-        self.max_tries = None
-        self.try_timeout = None
-        self.owner = None
-        self.host = None
-        self.port = None
-        for attr, key, default in self.ATTRS:
-            value = self.env_map.get(key, default)
-            setattr(self, attr, value)
+        self.suite = self.env_map.get(SuiteSrvFilesManager.KEY_NAME)
+        self.task_id = self.env_map.get('CYLC_TASK_ID')
 
-        # conversions from string:
-        if self.try_timeout == 'None':
-            self.try_timeout = None
-        try:
-            self.retry_seconds = float(self.retry_seconds)
-            self.max_tries = int(self.max_tries)
-        except ValueError:
-            pass
-
-        # 'scheduler' or 'submit', (or 'raw' if job script run manually)
-        self.mode = self.env_map.get('CYLC_MODE', 'raw')
-
-        self.suite_run_dir = self.env_map.get('CYLC_SUITE_RUN_DIR', '.')
-
-        self.utc = self.env_map.get('CYLC_UTC') == 'True'
         # Record the time the messaging system was called and append it
         # to the message, in case the message is delayed in some way.
         self.true_event_time = get_current_time_string(
-            override_use_utc=self.utc)
-
-        self.ssh_messaging = (
-            self.env_map.get('CYLC_TASK_COMMS_METHOD') == 'ssh')
-
-        self.polling = (
-            self.env_map.get('CYLC_TASK_COMMS_METHOD') == 'poll')
-
-        self.ssh_login_shell = (
-            self.env_map.get('CYLC_TASK_SSH_LOGIN_SHELL') != 'False')
+            override_use_utc=self.env_map.get('CYLC_UTC') == 'True')
 
     def send(self, messages):
         """Send messages back to the suite."""
+        self._print_messages(messages)
         self._update_job_status_file(messages)
-        if self.mode != 'scheduler' or self.polling:
-            # no suite to communicate with, just print to stdout.
-            self._print_messages(messages)
+        try:
+            self.env_map.update(
+                SuiteSrvFilesManager().load_contact_file(self.suite))
+        except (IOError, ValueError, SuiteServiceFileError) as exc:
+            # No suite to communicate with, just print to stdout.
+            if cylc.flags.debug:
+                print >> sys.stderr, exc
             return
-
-        if self.ssh_messaging and self._send_by_ssh():
+        if (self.env_map.get('CYLC_TASK_COMMS_METHOD') == 'ssh' and
+                self._send_by_ssh()):
             return
-
         self._send_by_remote_port(messages)
-
-    def _load_suite_contact_file(self):
-        """Load contact environment file."""
-        from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
-        srv_files_mgr = SuiteSrvFilesManager()
-        contact_data = srv_files_mgr.load_contact_file(self.suite)
-        for attr, key in (
-                ('owner', srv_files_mgr.KEY_OWNER),
-                ('host', srv_files_mgr.KEY_HOST),
-                ('port', srv_files_mgr.KEY_PORT)):
-            try:
-                self.env_map[key] = contact_data[key]
-                setattr(self, attr, contact_data[key])
-            except KeyError:
-                pass
 
     def _print_messages(self, messages):
         """Print message to send."""
-        prefix = 'cylc (%s - %s): ' % (self.mode, self.true_event_time)
+        if self.priority == self.NORMAL:
+            handle = sys.stdout
+        else:
+            handle = sys.stderr
         for message in messages:
-            if self.priority == self.NORMAL:
-                print prefix + message
-            else:
-                print >> sys.stderr, "%s%s %s" % (
-                    prefix, self.priority, message)
+            handle.write('%s %s - %s\n' % (
+                self.true_event_time, self.priority, message))
+        handle.flush()
 
     def _send_by_remote_port(self, messages):
         """Send message by talking to the daemon (remote?) port."""
         from cylc.network import ConnectionError, ConnectionInfoError
         from cylc.network.task_msg_client import TaskMessageClient
-        self._print_messages(messages)
-        sent = False
-        i_try = 0
-        while not sent and i_try < self.max_tries:
-            i_try += 1
+
+        # Convert time/duration into appropriate units
+        retry_intvl = float(self.env_map.get(
+            SuiteSrvFilesManager.KEY_TASK_MSG_RETRY_INTVL,
+            self.MSG_RETRY_INTVL))
+        max_tries = int(self.env_map.get(
+            SuiteSrvFilesManager.KEY_TASK_MSG_MAX_TRIES,
+            self.MSG_MAX_TRIES))
+
+        client = TaskMessageClient(
+            self.suite,
+            owner=self.env_map.get(SuiteSrvFilesManager.KEY_OWNER),
+            host=self.env_map.get(SuiteSrvFilesManager.KEY_HOST),
+            port=self.env_map.get(SuiteSrvFilesManager.KEY_PORT),
+            timeout=float(self.env_map.get(
+                SuiteSrvFilesManager.KEY_TASK_MSG_TIMEOUT, self.MSG_TIMEOUT)))
+        for i in range(1, max_tries + 1):  # 1..max_tries inclusive
             try:
-                # Get a proxy for the remote object and send the message.
-                client = TaskMessageClient(self.suite, self.try_timeout)
                 for message in messages:
                     client.put(self.task_id, self.priority, message)
             except ConnectionError as exc:
                 sys.stderr.write("Send message: try %s of %s failed: %s\n" % (
-                    i_try, self.max_tries, exc))
+                    i, max_tries, exc))
                 # Break if:
                 # * Exhausted number of tries.
                 # * Contact info file not found, suite probably not running.
                 #   Don't bother with retry, suite restart will poll any way.
-                if (i_try >= self.max_tries or
-                        isinstance(exc, ConnectionInfoError)):
-                    break
-                sys.stderr.write("   retry in %s seconds, timeout is %s\n" % (
-                    self.retry_seconds, self.try_timeout))
-                sleep(self.retry_seconds)
+                if i >= max_tries or isinstance(exc, ConnectionInfoError):
+                    # Issue a warning and let the task carry on
+                    sys.stderr.write("WARNING: MESSAGE SEND FAILED\n")
+                else:
+                    sys.stderr.write(
+                        "   retry in %s seconds, timeout is %s\n" % (
+                            retry_intvl, client.timeout))
+                    sleep(retry_intvl)
+                    # Reset in case contact info or passphrase change
+                    client.host = None
+                    client.port = None
+                    client.auth = None
             else:
-                if i_try > 1:
+                if i > 1:
                     # Continue to write to STDERR, so users can easily see that
                     # it has recovered from previous failures.
                     sys.stderr.write(
                         "Send message: try %s of %s succeeded\n" % (
-                            i_try, self.max_tries))
-                sent = True
-        if not sent:
-            # issue a warning and let the task carry on
-            sys.stderr.write("WARNING: MESSAGE SEND FAILED\n")
+                            i, max_tries))
+                break
 
     def _send_by_ssh(self):
         """Send message via SSH."""
-        self._load_suite_contact_file()
-
         # The suite definition specified that this task should
         # communicate back to the suite by means of using
         # non-interactive ssh to re-invoke the messaging command on the
@@ -197,15 +159,17 @@ class TaskMessage(object):
 
         # The remote_run() function expects command line options
         # to identify the target user and host names:
-        sys.argv.append('--user=' + self.owner)
-        sys.argv.append('--host=' + self.host)
+        sys.argv.append(
+            '--user=' + self.env_map[SuiteSrvFilesManager.KEY_OWNER])
+        sys.argv.append(
+            '--host=' + self.env_map[SuiteSrvFilesManager.KEY_HOST])
         if cylc.flags.verbose:
             sys.argv.append('-v')
 
-        if self.ssh_login_shell:
-            sys.argv.append('--login')
-        else:
+        if self.env_map.get('CYLC_TASK_SSH_LOGIN_SHELL') == 'False':
             sys.argv.append('--no-login')
+        else:
+            sys.argv.append('--login')
 
         # Some variables from the task execution environment are
         # also required by the re-invoked remote command: Note that
@@ -250,11 +214,14 @@ class TaskMessage(object):
         for i, message in enumerate(messages):
             if job_status_file:
                 if message == TASK_OUTPUT_STARTED:
-                    job_status_file.write(
-                        ("%s=%s\n" % (
-                            self.CYLC_JOB_PID, os.getenv(self.CYLC_JOB_PID))) +
-                        ("%s=%s\n" % (
-                            self.CYLC_JOB_INIT_TIME, self.true_event_time)))
+                    job_id = os.getppid()
+                    if job_id > 1:
+                        # If os.getppid() returns 1, the original job process
+                        # is likely killed already
+                        job_status_file.write("%s=%s\n" % (
+                            self.CYLC_JOB_PID, job_id))
+                    job_status_file.write("%s=%s\n" % (
+                        self.CYLC_JOB_INIT_TIME, self.true_event_time))
                 elif message == TASK_OUTPUT_SUCCEEDED:
                     job_status_file.write(
                         ("%s=%s\n" % (self.CYLC_JOB_EXIT,

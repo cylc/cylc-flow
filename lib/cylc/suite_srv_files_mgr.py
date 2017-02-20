@@ -47,11 +47,16 @@ class SuiteSrvFilesManager(object):
     FILE_BASE_SSL_CERT = 'ssl.cert'
     FILE_BASE_SSL_PEM = 'ssl.pem'
     FILE_BASE_SUITE_RC = "suite.rc"
+    KEY_DIR_ON_SUITE_HOST = "CYLC_DIR_ON_SUITE_HOST"
     KEY_HOST = "CYLC_SUITE_HOST"
     KEY_NAME = "CYLC_SUITE_NAME"
     KEY_OWNER = "CYLC_SUITE_OWNER"
     KEY_PROCESS = "CYLC_SUITE_PROCESS"
     KEY_PORT = "CYLC_SUITE_PORT"
+    KEY_SUITE_RUN_DIR_ON_SUITE_HOST = "CYLC_SUITE_RUN_DIR_ON_SUITE_HOST"
+    KEY_TASK_MSG_MAX_TRIES = "CYLC_TASK_MSG_MAX_TRIES"
+    KEY_TASK_MSG_RETRY_INTVL = "CYLC_TASK_MSG_RETRY_INTVL"
+    KEY_TASK_MSG_TIMEOUT = "CYLC_TASK_MSG_TIMEOUT"
     KEY_VERSION = "CYLC_VERSION"
     PASSPHRASE_CHARSET = ascii_letters + digits
     PASSPHRASE_LEN = 20
@@ -210,17 +215,12 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
         suite_owner = os.getenv('CYLC_SUITE_OWNER')
         if reg == os.getenv('CYLC_SUITE_NAME'):
             env_keys = []
-            if is_remote_host(suite_host) or is_remote_user(suite_owner):
-                # 1(a)/ Task messaging call on a remote account.
-                # Look in the remote suite run directory:
-                env_keys = ['CYLC_SUITE_RUN_DIR']
-            elif suite_host or suite_owner:
-                # 1(b)/ Task messaging call on the suite host account.
-
-                # Could be a local task or a remote task with 'ssh
-                # messaging = True'. In either case use
-                # $CYLC_SUITE_RUN_DIR_ON_SUITE_HOST which never changes.
-                env_keys = ['CYLC_SUITE_RUN_DIR_ON_SUITE_HOST']
+            if 'CYLC_SUITE_RUN_DIR' in os.environ:
+                # 1(a)/ Task messaging call.
+                env_keys.append('CYLC_SUITE_RUN_DIR')
+            elif self.KEY_SUITE_RUN_DIR_ON_SUITE_HOST in os.environ:
+                # 1(b)/ Task messaging call via ssh messaging.
+                env_keys.append(self.SUITE_RUN_DIR_ON_SUITE_HOST)
             for key in env_keys:
                 path = os.path.join(os.environ[key], self.DIR_BASE_SRV)
                 if content:
@@ -254,8 +254,6 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
                 return value
 
         # 4/ Disk cache for remote suites
-        if host is None:
-            host = suite_host
         if owner is not None and host is not None:
             paths = [self._get_cache_dir(reg, owner, host)]
             short_host = host.split('.', 1)[0]

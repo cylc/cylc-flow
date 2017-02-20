@@ -30,6 +30,6 @@ suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-foo-jobscript-match
 run_ok $TEST_NAME cylc jobscript $SUITE_NAME foo.20140203T00+13
-sed -n '/_POINT=/p' $TEST_NAME.stdout > jobfile
+sed -n '/_POINT=/p;/CYLC_TASK_JOB/p' $TEST_NAME.stdout > jobfile
 cmp_ok jobfile $TEST_SOURCE_DIR/cycling/foo.ref-jobfile
 purge_suite $SUITE_NAME

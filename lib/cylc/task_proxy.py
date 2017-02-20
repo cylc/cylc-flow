@@ -440,8 +440,7 @@ class TaskProxy(object):
             with open(job_activity_log, "ab") as handle:
                 handle.write(ctx_str + '\n')
         except IOError as exc:
-            LOG.warning(
-                "%s: write failed\n%s" % (job_activity_log, exc))
+            LOG.warning("%s: write failed\n%s" % (job_activity_log, exc))
         if ctx.cmd and ctx.ret_code:
             LOG.error(ctx_str)
         elif ctx.cmd:
@@ -1058,14 +1057,15 @@ class TaskProxy(object):
             self.command_log(SuiteProcContext(
                 self.JOB_SUBMIT, '(prepare job file)', err=exc,
                 ret_code=1))
-            self.job_submission_failed()
+            if not dry_run:
+                self.job_submission_failed()
             return
         self.local_job_file_path = local_job_file_path
 
         if dry_run:
             # This will be shown next to submit num in gcylc:
-            self.summary['latest_message'] = 'job file written for edit-run'
-            self.log(WARNING, self.summary['latest_message'])
+            self.summary['latest_message'] = 'job file written (edit/dry-run)'
+            self.log(DEBUG, self.summary['latest_message'])
 
         # Return value used by "cylc submit" and "cylc jobscript":
         return self
@@ -1146,34 +1146,32 @@ class TaskProxy(object):
         self._create_job_log_path()
 
         return {
-            'batch system name': rtconfig['job']['batch system'],
-            'batch submit command template': (
+            'batch_system_name': rtconfig['job']['batch system'],
+            'batch_submit_command_template': (
                 rtconfig['job']['batch submit command template']),
-            'batch system conf': batch_sys_conf,
+            'batch_system_conf': batch_sys_conf,
             'directives': rtconfig['directives'],
-            'execution time limit': execution_time_limit,
+            'environment': rtconfig['environment'],
+            'execution_time_limit': execution_time_limit,
             'env-script': rtconfig['env-script'],
+            'err-script': rtconfig['err-script'],
             'host': self.task_host,
             'init-script': rtconfig['init-script'],
-            'job file path': self.get_job_log_path(
+            'job_file_path': self.get_job_log_path(
                 self.HEAD_MODE_REMOTE, tail=self.JOB_FILE_BASE),
-            'job log dir': self.get_job_log_path(),
-            'job script shell': rtconfig['job']['shell'],
-            'local job file path': self.get_job_log_path(
-                self.HEAD_MODE_LOCAL, tail=self.JOB_FILE_BASE),
-            'namespace hierarchy': self.tdef.namespace_hierarchy,
+            'job_d': self.get_job_log_path(),
+            'namespace_hierarchy': self.tdef.namespace_hierarchy,
             'owner': self.task_owner,
             'post-script': post_script,
             'pre-script': pre_script,
-            'remote suite path': (
-                rtconfig['remote']['suite definition directory']),
-            'runtime environment': rtconfig['environment'],
+            'remote_suite_d': rtconfig['remote']['suite definition directory'],
             'script': script,
-            'submit num': self.submit_num,
-            'suite name': self.suite_name,
-            'task id': self.identity,
-            'try number': self.try_timers[self.KEY_EXECUTE].num + 1,
-            'work sub-directory': rtconfig['work sub-directory'],
+            'shell': rtconfig['job']['shell'],
+            'submit_num': self.submit_num,
+            'suite_name': self.suite_name,
+            'task_id': self.identity,
+            'try_num': self.try_timers[self.KEY_EXECUTE].num + 1,
+            'work_d': rtconfig['work sub-directory'],
         }
 
     def _get_job_scripts(self, rtconfig):

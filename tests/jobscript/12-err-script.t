@@ -1,8 +1,7 @@
-#!/usr/bin/env python
-
+#!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2017 NIWA
-#
+# 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -15,22 +14,17 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#-------------------------------------------------------------------------------
+# Test err-script.
+. "$(dirname "${0}")/test_header"
+set_test_number 4
 
-import os
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --reference-test --debug
+grep_ok 'ERR foo bar baz qux' "${SUITE_RUN_DIR}/log/job/1/foo/01/job.err"
+run_fail "${TEST_NAME_BASE}-grep-02" \
+    grep -q -F 'ERR foo bar baz qux' "${SUITE_RUN_DIR}/log/job/1/foo/02/job.err"
 
-
-class mode(object):
-    def __init__(self):
-        self.mode = 'raw'
-        if 'CYLC_MODE' in os.environ:
-            self.mode = os.environ['CYLC_MODE']
-            # 'scheduler' or 'submit'
-
-    def is_raw(self):
-        return self.mode == 'raw'
-
-    def is_scheduler(self):
-        return self.mode == 'scheduler'
-
-    def is_submit(self):
-        return self.mode == 'submit'
+purge_suite "${SUITE_NAME}"
+exit

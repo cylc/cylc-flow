@@ -15,29 +15,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test for "cylc jobscript --icp=CYCLE_POINT".
+# Test job script OK with ksh. If ksh installed, assume ksh93.
 . "$(dirname "${0}")/test_header"
+if ! KSH="$(which ksh)" 2>'/dev/null'; then
+    skip_all 'ksh not installed'
+fi
+set_test_number 5
 
-set_test_number 3
-init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
-[cylc]
-    UTC mode = True
-[scheduling]
-    [[dependencies]]
-        [[[R1]]]
-            graph = foo
-[runtime]
-    [[foo]]
-        script = true
-__SUITE_RC__
-
-run_ok "${TEST_NAME_BASE}" \
-    cylc jobscript --icp=20200101T0000Z "${SUITE_NAME}" 'foo.20200101T0000Z'
-contains_ok "${TEST_NAME_BASE}.stdout" <<__OUT__
-    export CYLC_SUITE_INITIAL_CYCLE_POINT="20200101T0000Z"
-__OUT__
-cmp_ok "${TEST_NAME_BASE}.stderr" <<__ERR__
-Task Job Script Generated: ${SUITE_RUN_DIR}/log/job/20200101T0000Z/foo/01/job
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+run_ok "${TEST_NAME_BASE}-validate" \
+    cylc validate "${SUITE_NAME}" --set=KSH="${KSH}"
+sed -in 's/^.* WARNING - //p' "${TEST_NAME_BASE}-validate.stderr"
+contains_ok "${TEST_NAME_BASE}-validate.stderr" <<__ERR__
+deprecated: [runtime][foo][job]shell=${KSH}: use of ksh to run cylc task job file
 __ERR__
+run_ok "${TEST_NAME_BASE}-run" \
+    cylc run "${SUITE_NAME}" --reference-test --debug --set=KSH="${KSH}"
+head -1 "${SUITE_RUN_DIR}/log/job/1/foo/NN/job" >'job-head.out'
+cmp_ok 'job-head.out' <<<"#!${KSH}"
+grep_ok 'Kornflakes' "${SUITE_RUN_DIR}/log/job/1/foo/NN/job.out"
+
 purge_suite "${SUITE_NAME}"
 exit

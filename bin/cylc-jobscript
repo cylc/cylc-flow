@@ -50,11 +50,12 @@ for arg in "${@}"; do
     fi
 done
 
-JOBSCRIPT=$(cylc submit --dry-run "${@}" | awk -F= '$1 == "JOB SCRIPT" {print $2}')
-if [[ -z "${JOBSCRIPT}" ]]; then
+if CYLC_SUBMIT_OUT="$(cylc submit --dry-run "${@}")"; then
+    JOBSCRIPT="$(sed -n 's/^JOB SCRIPT=//p' <<<"${CYLC_SUBMIT_OUT}")"
+    echo "Task Job Script Generated: ${JOBSCRIPT}" >&2
+    exec less "${JOBSCRIPT}"
+else
+    echo "${CYLC_SUBMIT_OUT}" >&2
     echo "ERROR: no jobscript generated" >&2
     exit 1
 fi
-# (only send script contents to stdout)
-echo "Task Job Script Generated: ${JOBSCRIPT}" >&2
-exec less "${JOBSCRIPT}"
