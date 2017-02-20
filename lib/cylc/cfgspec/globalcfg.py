@@ -59,7 +59,7 @@ SPEC = {
     },
 
     'cylc': {
-        'UTC mode': vdr(vtype='boolean', default=False),
+        'UTC mode': vdr(vtype='boolean', default=True),
         'health check interval': vdr(
             vtype='interval', default=DurationFloat(600)),
         'task event mail interval': vdr(

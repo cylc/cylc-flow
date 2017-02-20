@@ -68,6 +68,7 @@ export CYLC_SUITE_PORT=
 export CYLC_SUITE_RUN_DIR_ON_SUITE_HOST=
 export CYLC_UTC=
 export CYLC_VERBOSE=
+export TZ=UTC
 
 export CYLC_SUITE_DEF_PATH=
 export CYLC_SUITE_RUN_DIR=
