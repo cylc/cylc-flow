@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-#-----------------------------------------------------------------------------
-# (C) British Crown Copyright 2013-2014 Met Office.
+# ----------------------------------------------------------------------------
+# (C) British Crown Copyright 2013-2017 Met Office.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 
 """This provides data model dumping functionality."""
 
@@ -127,17 +127,16 @@ class TimePointDumper(object):
     def _dump_expression_with_properties(self, timepoint, expression,
                                          properties, custom_time_zone=None):
         if not timepoint.truncated:
-            if ("week_of_year" in properties or
-                    "day_of_week" in properties):
+            if "week_of_year" in properties or "day_of_week" in properties:
                 if not ("month_of_year" in properties or
-                            "day_of_month" in properties or
-                            "day_of_year" in properties):
+                        "day_of_month" in properties or
+                        "day_of_year" in properties):
                     # We need the year to be in week years.
                     timepoint = timepoint.copy().to_week_date()
-            elif (timepoint.get_is_week_date() and
-                      ("month_of_year" in properties or
-                       "day_of_month" in properties or
-                       "day_of_year" in properties)):
+            elif (timepoint.get_is_week_date() and (
+                    "month_of_year" in properties or
+                    "day_of_month" in properties or
+                    "day_of_year" in properties)):
                 # We need the year to be in standard calendar years.
                 timepoint = timepoint.copy().to_calendar_date()
 
