@@ -440,31 +440,34 @@ def determine_action(schedule, versions, experiments, non_interactive=False):
                     other_versions.append(version)
 
     # Check for potential incompatability with PROFILE_MODE_CYLC.
-    temp = []
     for experiment in experiments:
-        for mode in experiment['config']['profile modes']:
-            if prof.PROFILE_MODES[mode] != prof.PROFILE_MODE_CYLC:
-                continue
+        if prof.PROFILE_MODE_CYLC in experiment['config']['profile modes']:
+            # Check suitability of profile-mode cylc with this schedule.
+            temp = []
             for version_id in schedule:
                 if not git.is_ancestor_commit(prof.CYLC_PROFILING_COMMIT,
                                               version_id):
                     for version in versions:
                         if version['id'] == version_id:
                             temp.append(version)
-        if temp and not non_interactive:
-            print('WARNING: You are trying to use the "cylc" profile mode with'
-                  ' versions of cylc which predate the profiling module '
-                  'namely:')
-            print '\t', ' '.join([version['name'] for version in temp])
-            print('\nTo profile these versions you will need to back port the '
-                  'profiling module as well as some of the memory '
-                  'checkpointing in the main loop.\n')
-            usr = None
-            while usr not in ['y', 'n']:
-                usr = raw_input('proceed? (y/n): ')
-            if usr == 'n':
-                sys.exit('Profiling aborted by user.')
-            print
+            if temp and not non_interactive:
+                # Profile-mode cylc might not be suitible, warn user.
+                print('WARNING: You are trying to use the "cylc" profile mode '
+                      'with versions of cylc which predate the profiling '
+                      'module namely:\n'
+                      '\t' + ' '.join([version['name'] for version in temp]) +
+                      '\n\nTo profile these versions you will need to back '
+                      'port the profiling module as well as some of the memory'
+                      ' checkpointing in the main loop.\n')
+                usr = None
+                while usr not in ['y', 'n']:
+                    usr = raw_input('proceed? (y/n): ')
+                if usr == 'n':
+                    sys.exit('Profiling aborted by user.')
+                print
+            elif temp:
+                print >> sys.stderr, ('WARNING: You are using profile-mode '
+                                      '"cylc" with older versions of cylc.')
 
     # Prompt user over using automated checkout.
     to_checkout = []

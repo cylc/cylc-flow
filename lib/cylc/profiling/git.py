@@ -93,8 +93,5 @@ def has_changes_to_be_committed():
 
 def is_git_repo():
     """Returns true if we are currently within a git repository."""
-    proc = Popen('[ -d .git ] || git rev-parse --git-dir > /dev/null 2>&1',
-                 stdout=PIPE, stderr=PIPE, shell=True)
-    if proc.wait() != 0:
-        return False
-    return True
+    proc = Popen(['git', 'rev-parse', '--git-dir'], stdout=PIPE, stderr=PIPE,)
+    return proc.wait() == 0

@@ -197,9 +197,12 @@ def run_suite(reg, options, out_file, profile_modes, mode='live'):
     return None
 
 
-def run_experiment(exp, version_id):
-    """Run the provided experiment on the currently checked-out version of
-    cylc. Return a dictionary of result files by run name."""
+def run_experiment(exp):
+    """Run the provided experiment with the currently checked-out cylc version.
+
+    Return a dictionary of result files by run name.
+
+    """
     profile_modes = [PROFILE_MODES[mode] for mode in exp['profile modes']]
     cylc_maj_version = cylc_major_version()
     result_files = {}
@@ -240,9 +243,10 @@ def run_experiment(exp, version_id):
                 to_purge.remove(reg)
 
         if to_purge:
-            print ('ERROR: The following suite(s) run directories could not be'
-                   ' deleted:')
-            print '\t', ' '.join(to_purge)
+            print >> sys.stderr, ('ERROR: The following suite(s) run '
+                                  'directories could not be deleted:\n'
+                                  '\t' + ' '.join(to_purge)
+                                  )
 
     return result_files
 
@@ -291,7 +295,7 @@ def profile(schedule):
         # Run Experiment.
         for experiment in experiments:
             try:
-                result_files = run_experiment(experiment['config'], version_id)
+                result_files = run_experiment(experiment['config'])
             except SuiteFailedException as exc:
                 # Experiment failed to run, move onto the next one.
                 print >> sys.stderr, ('Experiment "%s" failed at version "%s"'
@@ -311,13 +315,23 @@ def profile(schedule):
                 except:
                     # Analysis failed, move onto the next experiment.
                     traceback.print_exc()
-                    print ('Analysis failed on results from experiment "%s"'
-                           'running at version "%s"' % (experiment['name'],
-                                                        version_id))
+                    exp_files = []
+                    try:
+                        for run in result_files:
+                            exp_files.extend(result_files[run])
+                        print >> sys.stderr, (
+                            'Analysis failed on results from experiment "%s" '
+                            'running at version "%s".\n\tProfile files: %s' % (
+                                experiment['name'],
+                                version_id,
+                                ' '.join(exp_files)))
+                    except:
+                        print >> sys.stderr, 'HERE'
                     if any([PROFILE_MODES[mode] == PROFILE_MODE_CYLC for mode
                             in experiment['config']['profile modes']]):
-                        print ('Are you trying to use profile mode "cylc" '
-                               'with an older version of cylc?')
+                        print >> sys.stderr, (
+                            'Are you trying to use profile mode "cylc" '
+                            'with an older version of cylc?')
                     success = False
                     continue
                 else:

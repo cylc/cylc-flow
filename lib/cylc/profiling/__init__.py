@@ -70,13 +70,17 @@ PROFILE_FILES = {
 
 
 # ------------- REGEXES ---------------
-# Cylc profiling REGEXES.
+# Matches the summary line from the cylc <cmd> --profile output.
 SUMMARY_LINE_REGEX = re.compile('([\d]+) function calls \(([\d]+) primitive'
                                 ' calls\) in ([\d.]+) CPU seconds')
+# Matches the memory checkpoints in the cylc <cmd> --profile output
 MEMORY_LINE_REGEX = re.compile('PROFILE: Memory: ([\d]+) KiB: ([\w.]+): (.*)')
+# Matches main-loop memory checkpoints in cylc <cmd> --profile output.
 LOOP_MEMORY_LINE_REGEX = re.compile('(?:loop #|end main loop \(total loops )'
                                     '([\d]+)(?:: |\): )(.*)')
+# Matches the sleep function line in cylc <cmd> --profile output.
 SLEEP_FUNCTION_REGEX = re.compile('([\d.]+)[\s]+[\d.]+[\s]+\{time.sleep\}')
+# The string prefixing the suite-startup timestamp (unix time).
 SUITE_STARTUP_STRING = 'SUITE STARTUP: '
 
 
@@ -85,7 +89,7 @@ METRIC_TITLE = 0  # For display purposes.
 METRIC_UNIT = 1  # For display purposes.
 METRIC_FILENAME = 2  # For output plots (no extension).
 METRIC_FIELDS = 3  # Fields metrics can be derived from in order of preference.
-METRICS = {
+METRICS = {  # Dict of all metrics measured by profile-battery.
     '001': ('Elapsed Time', 's', 'elapsed-time', [
             'real', 'Elapsed (wall clock) time (h:mm:ss or m:ss)',
             'cpu time'],),
@@ -109,11 +113,14 @@ METRICS = {
     '011': ('Elapsed Time - time.sleep()', 's', 'awake-time', [
             'awake cpu time'],)
 }
+# Metrics used if --full is not set.
+QUICK_ANALYSIS_METRICS = set(['001', '002', '005'])
+# Reverse lookup of METRICS, dict of fields stored with their metric codes.
 METRICS_BY_FIELD = {}
 for metric in METRICS:
     for field in METRICS[metric][METRIC_FIELDS]:
         METRICS_BY_FIELD[field] = metric
-QUICK_ANALYSIS_METRICS = set(['001', '002', '005'])
 
 
+# The profile mode(s) to use if un-specified.
 DEFAULT_PROFILE_MODES = ['time']

@@ -37,6 +37,7 @@ cmp_ok "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" "hello-world"
 #-------------------------------------------------------------------------------
 # Check that the suites located in $CYLC_DIR/dev/suites are still valid.
 TEST_NAME="${TEST_NAME_BASE}-dev-suites-validate"
+mkdir "${TEST_LOG_DIR}/${TEST_NAME}" -p
 broken=
 for suite in $(find "${CYLC_DIR}/dev/suites" -name suite.rc)
 do
@@ -57,16 +58,33 @@ fi
 #-------------------------------------------------------------------------------
 # Run the test experiment.
 TEST_NAME="${TEST_NAME_BASE}-run-test-experiment"
-cylc profile-battery -e test -v HEAD --test
-if [[ $? == 0 ]]
+LOG_DIR="${TEST_LOG_DIR}/${TEST_NAME}"
+mkdir "${LOG_DIR}" -p
+RET_CODE=0
+cylc profile-battery -e 'test' -v 'HEAD' --test \
+    >"${LOG_DIR}.log" \
+    2>"${LOG_DIR}.stderr" \
+    || RET_CODE=$?
+if [[ ${RET_CODE} == 0 ]]
 then
     ok "${TEST_NAME}"
-elif [[ $? == 2 ]]
+elif [[ ${RET_CODE} == 2 ]]
 then
-    1>&2 echo "Test requires git repository."
+    echo "Test requires git repository." >&2
     skip 1
 else
-    1>&2 echo "Failed to run experiment" > "${TEST_NAME}.stderr"
-    cp "${TEST_NAME}.stderr" "${TEST_LOG_DIR}/${TEST_NAME}.stderr"
     fail "${TEST_NAME}"
+    # Move/rename profiling files so they will be cat'ed out by travis-ci.
+    PROF_FILES=($(sed 's/Profile files:\(.*\)/\1/' <<< \
+        $(cat "${LOG_DIR}.stderr" | grep 'Profile files:')))
+    for file_path in ${PROF_FILES[@]}; do
+        file_prefix=$(basename ${file_path})
+        profile_dir=$(dirname ${file_path})
+        profile_files=($(find "${profile_dir}" -type f -name "${file_prefix}*" \
+                2>/dev/null))
+        for profile_file in ${profile_files[@]}; do
+            mv "${profile_file}" "${LOG_DIR}/$(basename ${profile_file})-err"
+        done
+    done
+    mv "${LOG_DIR}.log" "${LOG_DIR}.profile-battery-log-err"
 fi
