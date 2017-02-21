@@ -72,7 +72,7 @@ PROFILE_FILES = {
 # ------------- REGEXES ---------------
 # Matches the summary line from the cylc <cmd> --profile output.
 SUMMARY_LINE_REGEX = re.compile('([\d]+) function calls \(([\d]+) primitive'
-                                ' calls\) in ([\d.]+) CPU seconds')
+                                ' calls\) in ([\d.]+)(?: CPU)? seconds')
 # Matches the memory checkpoints in the cylc <cmd> --profile output
 MEMORY_LINE_REGEX = re.compile('PROFILE: Memory: ([\d]+) KiB: ([\w.]+): (.*)')
 # Matches main-loop memory checkpoints in cylc <cmd> --profile output.
