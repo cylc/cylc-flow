@@ -183,7 +183,7 @@ class BatchSysManager(object):
     CYLC_BATCH_SYS_JOB_SUBMIT_TIME = "CYLC_BATCH_SYS_JOB_SUBMIT_TIME"
     CYLC_BATCH_SYS_EXIT_POLLED = "CYLC_BATCH_SYS_EXIT_POLLED"
     JOB_FILE_BASE = "job"
-    LINE_PREFIX_CYLC_DIR = "    export CYLC_DIR="
+    LINE_PREFIX_CYLC_DIR = "export CYLC_DIR="
     LINE_PREFIX_BATCH_SYS_NAME = "# Job submit method: "
     LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL = "# Job submit command template: "
     LINE_PREFIX_EXECUTION_TIME_LIMIT = "# Execution time limit: "
@@ -224,20 +224,20 @@ class BatchSysManager(object):
 
     def format_directives(self, job_conf):
         """Format the job directives for a job file, if relevant."""
-        batch_sys = self.get_inst(job_conf['batch system name'])
+        batch_sys = self.get_inst(job_conf['batch_system_name'])
         if hasattr(batch_sys, "format_directives"):
             return batch_sys.format_directives(job_conf)
 
     def get_fail_signals(self, job_conf):
         """Return a list of failure signal names to trap in the job file."""
-        batch_sys = self.get_inst(job_conf['batch system name'])
+        batch_sys = self.get_inst(job_conf['batch_system_name'])
         if hasattr(batch_sys, "get_fail_signals"):
             return batch_sys.get_fail_signals(job_conf)
         return ["EXIT", "ERR", "TERM", "XCPU"]
 
     def get_vacation_signal(self, job_conf):
         """Return the vacation signal name for a job file."""
-        batch_sys = self.get_inst(job_conf['batch system name'])
+        batch_sys = self.get_inst(job_conf['batch_system_name'])
         if hasattr(batch_sys, "get_vacation_signal"):
             return batch_sys.get_vacation_signal(job_conf)
 

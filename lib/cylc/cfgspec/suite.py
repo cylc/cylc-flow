@@ -307,6 +307,7 @@ SPEC = {
             'URL': vdr(vtype='string', default=""),
             'init-script': vdr(vtype='string'),
             'env-script': vdr(vtype='string'),
+            'err-script': vdr(vtype='string'),
             'pre-script': vdr(vtype='string'),
             'script': vdr(
                 vtype='string',
@@ -314,9 +315,7 @@ SPEC = {
             'post-script': vdr(vtype='string'),
             'extra log files': vdr(vtype='string_list', default=[]),
             'enable resurrection': vdr(vtype='boolean', default=False),
-            'work sub-directory': vdr(
-                vtype='string',
-                default='$CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME'),
+            'work sub-directory': vdr(vtype='string'),
             'environment filter': {
                 'include': vdr(vtype='string_list'),
                 'exclude': vdr(vtype='string_list'),

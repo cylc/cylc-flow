@@ -17,14 +17,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Cylc scheduler server."""
 
-from copy import copy, deepcopy
+from copy import deepcopy
 import logging
 import os
 import pickle
 from pipes import quote
 from Queue import Empty
 import shlex
-from shutil import copy as copyfile, copytree, rmtree
+from shutil import copy, copytree, rmtree
 from subprocess import call, Popen, PIPE
 import sys
 from tempfile import mkstemp
@@ -148,9 +148,10 @@ class Scheduler(object):
         self.suite_dir = self.suite_srv_files_mgr.get_suite_source_dir(
             self.suite)
         self.suiterc = self.suite_srv_files_mgr.get_suite_rc(self.suite)
-        # For user-defined job submission methods:
+        # For user-defined batch system handlers
         sys.path.append(os.path.join(self.suite_dir, 'python'))
-
+        self.suite_run_dir = GLOBAL_CFG.get_derived_host_item(
+            self.suite, 'suite run directory')
         self.config = None
 
         self.is_restart = is_restart
@@ -181,8 +182,6 @@ class Scheduler(object):
 
         self.graph_warned = {}
 
-        self.suite_env = {}
-        self.suite_task_env = {}
         self.task_event_handler_env = {}
         self.contact_data = None
 
@@ -264,19 +263,19 @@ class Scheduler(object):
         except KeyboardInterrupt as exc:
             try:
                 self.shutdown(str(exc))
-            except Exception as exc1:
+            except Exception:
                 # In case of exceptions in the shutdown method itself.
-                traceback.print_exc(exc1)
+                ERR.warning(traceback.format_exc())
                 sys.exit(1)
 
         except Exception as exc:
-            traceback.print_exc()
+            ERR.critical(traceback.format_exc())
             ERR.error("error caught: cleaning up before exit")
             try:
                 self.shutdown('ERROR: ' + str(exc))
-            except Exception, exc1:
+            except Exception:
                 # In case of exceptions in the shutdown method itself
-                traceback.print_exc(exc1)
+                ERR.warning(traceback.format_exc())
             if cylc.flags.debug:
                 raise
             else:
@@ -325,33 +324,34 @@ conditions; see `cylc conditions`.
             CylcSuiteDAO.DB_FILE_BASE_NAME)
 
         # Backward compat, upgrade database with state file if necessary
-        run_dir = GLOBAL_CFG.get_derived_host_item(
-            self.suite, 'suite run directory')
         old_pri_db_path = os.path.join(
-            run_dir, 'state', CylcSuiteDAO.OLD_DB_FILE_BASE_NAME)
+            self.suite_run_dir, 'state', CylcSuiteDAO.OLD_DB_FILE_BASE_NAME)
         old_pri_db_path_611 = os.path.join(
-            run_dir, CylcSuiteDAO.OLD_DB_FILE_BASE_NAME_611[0])
-        old_state_file_path = os.path.join(run_dir, "state", "state")
+            self.suite_run_dir, CylcSuiteDAO.OLD_DB_FILE_BASE_NAME_611[0])
+        old_state_file_path = os.path.join(
+            self.suite_run_dir, "state", "state")
         if (os.path.exists(old_pri_db_path) and
                 os.path.exists(old_state_file_path) and
                 not os.path.exists(pri_db_path)):
             # Upgrade pre-6.11.X runtime database + state file
-            copyfile(old_pri_db_path, pri_db_path)
+            copy(old_pri_db_path, pri_db_path)
             pri_dao = CylcSuiteDAO(pri_db_path)
             pri_dao.upgrade_with_state_file(old_state_file_path)
-            target = os.path.join(run_dir, "state.tar.gz")
-            cmd = ["tar", "-C", run_dir, "-czf", target, "state"]
+            target = os.path.join(self.suite_run_dir, "state.tar.gz")
+            cmd = ["tar", "-C", self.suite_run_dir, "-czf", target, "state"]
             if call(cmd) == 0:
-                rmtree(os.path.join(run_dir, "state"), ignore_errors=True)
+                rmtree(
+                    os.path.join(self.suite_run_dir, "state"),
+                    ignore_errors=True)
             else:
                 try:
-                    os.unlink(os.path.join(run_dir, "state.tar.gz"))
+                    os.unlink(os.path.join(self.suite_run_dir, "state.tar.gz"))
                 except OSError:
                     pass
                 ERR.error("cannot tar-gzip + remove old state/ directory")
             # Remove old files as well
             try:
-                os.unlink(os.path.join(run_dir, "cylc-suite-env"))
+                os.unlink(os.path.join(self.suite_run_dir, "cylc-suite-env"))
             except OSError:
                 pass
         elif os.path.exists(old_pri_db_path_611):
@@ -364,7 +364,7 @@ conditions; see `cylc conditions`.
                     CylcSuiteDAO.OLD_DB_FILE_BASE_NAME_611[1],
                     "cylc-suite-env"]:
                 try:
-                    os.unlink(os.path.join(run_dir, name))
+                    os.unlink(os.path.join(self.suite_run_dir, name))
                 except OSError:
                     pass
         else:
@@ -415,22 +415,21 @@ conditions; see `cylc conditions`.
             self.load_tasks_for_run()
         self.profiler.log_memory("scheduler.py: after load_tasks")
 
-        self.pool.put_rundb_suite_params(self.initial_point, self.final_point)
+        self.pool.put_rundb_suite_params(
+            self.initial_point,
+            self.final_point,
+            self.config.cfg['cylc']['cycle point format'])
         self.pool.put_rundb_suite_template_vars(self.template_vars)
         self.configure_suite_environment()
-
-        # Write suite contact environment file
-        suite_run_dir = GLOBAL_CFG.get_derived_host_item(
-            self.suite, 'suite run directory')
 
         # Copy local python modules from source to run directory
         for sub_dir in ["python", os.path.join("lib", "python")]:
             # TODO - eventually drop the deprecated "python" sub-dir.
             suite_py = os.path.join(self.suite_dir, sub_dir)
             if (os.path.realpath(self.suite_dir) !=
-                    os.path.realpath(suite_run_dir) and
+                    os.path.realpath(self.suite_run_dir) and
                     os.path.isdir(suite_py)):
-                suite_run_py = os.path.join(suite_run_dir, sub_dir)
+                suite_run_py = os.path.join(self.suite_run_dir, sub_dir)
                 try:
                     rmtree(suite_run_py)
                 except OSError:
@@ -602,7 +601,7 @@ conditions; see `cylc conditions`.
                 message_queue=self.pool.message_queue)
         except TaskNotDefinedError as exc:
             if cylc.flags.debug:
-                traceback.print_exc()
+                ERR.error(traceback.format_exc())
             else:
                 ERR.error(str(exc))
             ERR.warning((
@@ -610,7 +609,7 @@ conditions; see `cylc conditions`.
                 "(the task definition has probably been deleted from the "
                 "suite).") % name)
         except Exception:
-            traceback.print_exc()
+            ERR.error(traceback.format_exc())
             ERR.error("could not load task %s" % name)
         else:
             if status in (TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING):
@@ -665,23 +664,18 @@ conditions; see `cylc conditions`.
             ctx_key = pickle.loads(str(ctx_key_pickle))
             ctx = pickle.loads(str(ctx_pickle))
             delays = pickle.loads(str(delays_pickle))
-            num = int(num)
-            if delay is not None:
-                delay = float(delay)
-            if timeout is not None:
-                timeout = float(timeout)
-        except (EOFError, TypeError, LookupError):
+            if ctx_key and ctx_key[0] in ["poll_timers", "try_timers"]:
+                getattr(itask, ctx_key[0])[ctx_key[1]] = TaskActionTimer(
+                    ctx, delays, num, delay, timeout)
+            else:
+                itask.event_handler_try_timers[ctx_key] = TaskActionTimer(
+                    ctx, delays, num, delay, timeout)
+        except (EOFError, TypeError, LookupError, ValueError):
             ERR.warning(
                 "%(id)s: skip action timer %(ctx_key)s" %
                 {"id": id_, "ctx_key": ctx_key})
             ERR.warning(traceback.format_exc())
             return
-        if ctx_key and ctx_key[0] in ["poll_timers", "try_timers"]:
-            getattr(itask, ctx_key[0])[ctx_key[1]] = TaskActionTimer(
-                ctx, delays, num, delay, timeout)
-        else:
-            itask.event_handler_try_timers[ctx_key] = TaskActionTimer(
-                ctx, delays, num, delay, timeout)
         OUT.info("+ %s.%s %s" % (name, cycle, ctx_key))
 
     def process_command_queue(self):
@@ -943,7 +937,10 @@ conditions; see `cylc conditions`.
         self.configure_suite_environment()
         if self.gen_reference_log or self.reference_test_mode:
             self.configure_reftest(recon=True)
-        self.pool.put_rundb_suite_params(self.initial_point, self.final_point)
+        self.pool.put_rundb_suite_params(
+            self.initial_point,
+            self.final_point,
+            self.config.cfg['cylc']['cycle point format'])
         self.do_update_state_summary = True
 
     def command_set_runahead(self, interval=None):
@@ -996,20 +993,28 @@ conditions; see `cylc conditions`.
                 'ERROR, cannot get process "args" from "ps": %s' % err)
         # Write suite contact file.
         # Preserve contact data in memory, for regular health check.
+        mgr = self.suite_srv_files_mgr
         contact_data = {
-            self.suite_srv_files_mgr.KEY_NAME: self.suite,
-            self.suite_srv_files_mgr.KEY_HOST: self.host,
-            self.suite_srv_files_mgr.KEY_PROCESS: process_str,
-            self.suite_srv_files_mgr.KEY_PORT: str(self.port),
-            self.suite_srv_files_mgr.KEY_OWNER: self.owner,
-            self.suite_srv_files_mgr.KEY_VERSION: CYLC_VERSION}
+            mgr.KEY_DIR_ON_SUITE_HOST: os.environ['CYLC_DIR'],
+            mgr.KEY_NAME: self.suite,
+            mgr.KEY_HOST: self.host,
+            mgr.KEY_PROCESS: process_str,
+            mgr.KEY_PORT: str(self.port),
+            mgr.KEY_OWNER: self.owner,
+            mgr.KEY_SUITE_RUN_DIR_ON_SUITE_HOST: self.suite_run_dir,
+            mgr.KEY_TASK_MSG_MAX_TRIES: str(GLOBAL_CFG.get(
+                ['task messaging', 'maximum number of tries'])),
+            mgr.KEY_TASK_MSG_RETRY_INTVL: str(float(GLOBAL_CFG.get(
+                ['task messaging', 'retry interval']))),
+            mgr.KEY_TASK_MSG_TIMEOUT: str(float(GLOBAL_CFG.get(
+                ['task messaging', 'connection timeout']))),
+            mgr.KEY_VERSION: CYLC_VERSION}
         try:
-            self.suite_srv_files_mgr.dump_contact_file(
-                self.suite, contact_data)
+            mgr.dump_contact_file(self.suite, contact_data)
         except IOError as exc:
             raise SchedulerError(
                 'ERROR, cannot write suite contact file: %s: %s' %
-                (self.suite_srv_files_mgr.get_contact_file(self.suite), exc))
+                (mgr.get_contact_file(self.suite), exc))
         else:
             self.contact_data = contact_data
 
@@ -1024,8 +1029,7 @@ conditions; see `cylc conditions`.
             is_reload=reconfigure,
             mem_log_func=self.profiler.log_memory,
             output_fname=os.path.join(
-                GLOBAL_CFG.get_derived_host_item(
-                    self.suite, 'suite run directory'),
+                self.suite_run_dir,
                 self.suite_srv_files_mgr.FILE_BASE_SUITE_RC + '.processed'),
         )
         # Dump the loaded suiterc for future reference.
@@ -1114,13 +1118,11 @@ conditions; see `cylc conditions`.
                 self.config.get_linearized_ancestors())
         else:
             # Things that can't change on suite reload.
-            run_dir = GLOBAL_CFG.get_derived_host_item(
-                self.suite, 'suite run directory')
             pri_db_path = os.path.join(
                 self.suite_srv_files_mgr.get_suite_srv_dir(self.suite),
                 CylcSuiteDAO.DB_FILE_BASE_NAME)
             pub_db_path = os.path.join(
-                run_dir, 'log', CylcSuiteDAO.DB_FILE_BASE_NAME)
+                self.suite_run_dir, 'log', CylcSuiteDAO.DB_FILE_BASE_NAME)
             if not self.is_restart:
                 # Remove database created by previous runs
                 try:
@@ -1136,7 +1138,7 @@ conditions; see `cylc conditions`.
             self.pub_dao = CylcSuiteDAO(pub_db_path, is_public=True)
             self._copy_pri_db_to_pub_db()
             pub_db_path_symlink = os.path.join(
-                run_dir, CylcSuiteDAO.OLD_DB_FILE_BASE_NAME)
+                self.suite_run_dir, CylcSuiteDAO.OLD_DB_FILE_BASE_NAME)
             try:
                 orig_source = os.readlink(pub_db_path_symlink)
             except OSError:
@@ -1190,60 +1192,36 @@ conditions; see `cylc conditions`.
 
     def configure_suite_environment(self):
         """Configure suite environment."""
-        # static cylc and suite-specific variables:
-        self.suite_env = {
+        # Pass static cylc and suite variables to job script generation code
+        JobFile.get_inst().set_suite_env({
             'CYLC_UTC': str(cylc.flags.utc),
-            'CYLC_CYCLING_MODE': str(cylc.flags.cycling_mode),
-            'CYLC_MODE': 'scheduler',
             'CYLC_DEBUG': str(cylc.flags.debug),
             'CYLC_VERBOSE': str(cylc.flags.verbose),
-            'CYLC_DIR_ON_SUITE_HOST': os.environ['CYLC_DIR'],
             'CYLC_SUITE_NAME': self.suite,
-            'CYLC_SUITE_HOST': str(self.host),
-            'CYLC_SUITE_OWNER': self.owner,
-            'CYLC_SUITE_PORT': str(self.comms_daemon.get_port()),
-            'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST': self.suite_dir,
-            'CYLC_SUITE_RUN_DIR_ON_SUITE_HOST': (
-                GLOBAL_CFG.get_derived_host_item(
-                    self.suite, 'suite run directory')),
-            # may be "None"
+            'CYLC_CYCLING_MODE': str(cylc.flags.cycling_mode),
             'CYLC_SUITE_INITIAL_CYCLE_POINT': str(self.initial_point),
-            # may be "None"
             'CYLC_SUITE_FINAL_CYCLE_POINT': str(self.final_point),
-            # may be "None"
-            'CYLC_SUITE_INITIAL_CYCLE_TIME': str(self.initial_point),
-            # may be "None"
-            'CYLC_SUITE_FINAL_CYCLE_TIME': str(self.final_point),
-            # needed by the test battery
-            'CYLC_SUITE_LOG_DIR': self.suite_log.get_dir(),
-        }
+        })
 
+        # Make suite vars available to [cylc][environment]:
+        for var, val in JobFile.get_inst().suite_env.items():
+            os.environ[var] = val
         # Set local values of variables that are potenitally task-specific
         # due to different directory paths on different task hosts. These
         # are overridden by tasks prior to job submission, but in
         # principle they could be needed locally by event handlers:
-        self.suite_task_env = {
-            'CYLC_SUITE_RUN_DIR': GLOBAL_CFG.get_derived_host_item(
-                self.suite, 'suite run directory'),
-            'CYLC_SUITE_WORK_DIR': GLOBAL_CFG.get_derived_host_item(
-                self.suite, 'suite work directory'),
-            'CYLC_SUITE_SHARE_DIR': GLOBAL_CFG.get_derived_host_item(
-                self.suite, 'suite share directory'),
-            'CYLC_SUITE_SHARE_PATH': '$CYLC_SUITE_SHARE_DIR',  # DEPRECATED
-            'CYLC_SUITE_DEF_PATH': self.suite_dir
-        }
+        for var, val in [
+                ('CYLC_SUITE_RUN_DIR', self.suite_run_dir),
+                ('CYLC_SUITE_LOG_DIR', self.suite_log.get_dir()),
+                ('CYLC_SUITE_WORK_DIR', GLOBAL_CFG.get_derived_host_item(
+                    self.suite, 'suite work directory')),
+                ('CYLC_SUITE_SHARE_DIR', GLOBAL_CFG.get_derived_host_item(
+                    self.suite, 'suite share directory')),
+                ('CYLC_SUITE_DEF_PATH', self.suite_dir)]:
+            os.environ[var] = val
+
         # (global config auto expands environment variables in local paths)
-
-        # Pass these to the job script generation code.
-        JobFile.get_inst().set_suite_env(self.suite_env)
-        # And pass contact env to the task module
-
-        # make suite vars available to [cylc][environment]:
-        for var, val in self.suite_env.items():
-            os.environ[var] = val
-        for var, val in self.suite_task_env.items():
-            os.environ[var] = val
-        cenv = copy(self.config.cfg['cylc']['environment'])
+        cenv = self.config.cfg['cylc']['environment'].copy()
         for var, val in cenv.items():
             cenv[var] = os.path.expandvars(val)
         # path to suite bin directory for suite and task event handlers
@@ -1431,8 +1409,6 @@ conditions; see `cylc conditions`.
         proc_pool = SuiteProcPool.get_inst()
 
         time_next_fs_check = None
-        suite_run_dir = GLOBAL_CFG.get_derived_host_item(
-            self.suite, 'suite run directory')
 
         if self.options.profile_mode:
             previous_profile_point = 0
@@ -1579,16 +1555,17 @@ conditions; see `cylc conditions`.
                 self.check_suite_stalled()
             now = time()
             if time_next_fs_check is None or now > time_next_fs_check:
-                if not os.path.exists(suite_run_dir):
+                if not os.path.exists(self.suite_run_dir):
                     raise SchedulerError(
-                        "%s: suite run directory not found" % (suite_run_dir))
+                        "%s: suite run directory not found" %
+                        self.suite_run_dir)
                 try:
                     contact_data = self.suite_srv_files_mgr.load_contact_file(
                         self.suite)
                     assert contact_data == self.contact_data
                 except (AssertionError, IOError, ValueError,
                         SuiteServiceFileError):
-                    traceback.print_exc()
+                    ERR.critical(traceback.format_exc())
                     exc = SchedulerError(
                         ("%s: suite contact file corrupted/modified and" +
                          " may be left") %
@@ -1881,7 +1858,7 @@ conditions; see `cylc conditions`.
                     try_timers[(key1, submit_num)].unset_waiting()
             except KeyError:
                 if cylc.flags.debug:
-                    traceback.print_exc()
+                    ERR.debug(traceback.format_exc())
 
     def _process_task_job_logs_retrieval(self, ctx, id_keys):
         """Process retrieval of task job logs from remote user@host."""
@@ -1943,7 +1920,7 @@ conditions; see `cylc conditions`.
                     try_timers[(key1, submit_num)].unset_waiting()
             except KeyError:
                 if cylc.flags.debug:
-                    traceback.print_exc()
+                    ERR.debug(traceback.format_exc())
 
     def shutdown(self, reason=None):
         """Shutdown the suite."""
@@ -2169,8 +2146,7 @@ conditions; see `cylc conditions`.
             temp_pub_db_file_name = mkstemp(
                 prefix=self.pub_dao.DB_FILE_BASE_NAME,
                 dir=os.path.dirname(self.pub_dao.db_file_name))[1]
-            copyfile(
-                self.pri_dao.db_file_name, temp_pub_db_file_name)
+            copy(self.pri_dao.db_file_name, temp_pub_db_file_name)
             os.rename(temp_pub_db_file_name, self.pub_dao.db_file_name)
             os.chmod(self.pub_dao.db_file_name, st_mode)
         except (IOError, OSError):

@@ -40,14 +40,14 @@ class LSFHandler(object):
     @classmethod
     def format_directives(cls, job_conf):
         """Format the job directives for a job file."""
-        job_file_path = re.sub(r"\$HOME/", "", job_conf["job file path"])
+        job_file_path = re.sub(r"\$HOME/", "", job_conf["job_file_path"])
         directives = job_conf["directives"].__class__()
-        directives["-J"] = job_conf["suite name"] + "." + job_conf["task id"]
+        directives["-J"] = job_conf["suite_name"] + "." + job_conf["task_id"]
         directives["-o"] = job_file_path + ".out"
         directives["-e"] = job_file_path + ".err"
-        if (job_conf["execution time limit"] and
+        if (job_conf["execution_time_limit"] and
                 directives.get("-W") is None):
-            directives["-W"] = "%d" % (job_conf["execution time limit"] / 60)
+            directives["-W"] = "%d" % (job_conf["execution_time_limit"] / 60)
         for key, value in job_conf["directives"].items():
             directives[key] = value
         lines = []

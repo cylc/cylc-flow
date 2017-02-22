@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-#-----------------------------------------------------------------------------
-# (C) British Crown Copyright 2013-2014 Met Office.
+# ----------------------------------------------------------------------------
+# (C) British Crown Copyright 2013-2017 Met Office.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 
 """This tests the ISO 8601 parsing and data model functionality."""
 
@@ -178,7 +178,8 @@ def get_timepoint_dumper_tests():
              (u"+XCCYY-MM-DDThh:mm:ss+hh:mm",
               "+500200-07-28T00:26:08-08:30"),
              (u"+XCCYY-MM-DDThh:mm:ssZ", "+500200-07-28T08:56:08Z"),
-             ("DD/MM/+XCCYY is a silly format", "28/07/+500200 is a silly format"),
+             ("DD/MM/+XCCYY is a silly format",
+              "28/07/+500200 is a silly format"),
              ("ThhmmZ", "T0856Z"),
              ("%m-%dT%H:%M", "07-28T00:26")]
         ),
@@ -203,7 +204,8 @@ def get_timepoint_dumper_tests():
              (u"+XCCYY-MM-DDThh:mm:ss+hh:mm",
               "-000056-11-13T05:01:00+06:00"),
              (u"+XCCYY-MM-DDThh:mm:ssZ", "-000056-11-12T23:01:00Z"),
-             ("DD/MM/+XCCYY is a silly format", "13/11/-000056 is a silly format"),
+             ("DD/MM/+XCCYY is a silly format",
+              "13/11/-000056 is a silly format"),
              ("ThhmmZ", "T2301Z"),
              ("%m-%dT%H:%M", "11-13T05:01")]
         ),
@@ -574,7 +576,7 @@ def get_timepointparser_tests(allow_only_basic=False,
                             tz_expr = combo_expr + time_zone_expr
                             tz_info = {}
                             for key, value in (combo_info.items() +
-                                                time_zone_info.items()):
+                                               time_zone_info.items()):
                                 tz_info[key] = value
                             yield tz_expr, tz_info
         if not allow_truncated:
@@ -598,7 +600,7 @@ def get_timepointparser_tests(allow_only_basic=False,
                     tz_expr = combo_expr + time_zone_expr
                     tz_info = {}
                     for key, value in (combo_info.items() +
-                                        time_zone_info.items()):
+                                       time_zone_info.items()):
                         tz_info[key] = value
                     yield tz_expr, tz_info
 
@@ -687,7 +689,6 @@ def get_timepoint_subtract_tests():
     ]
 
 
-
 def get_timerecurrence_expansion_tests():
     """Return test expansion expressions for data.TimeRecurrence."""
     return [
@@ -728,10 +729,12 @@ def get_timerecurrence_expansion_tests_360():
     """Return test expansion expressions for data.TimeRecurrence."""
     return [
         ("R13/1984-01-30T00Z/P1M",
-         ["1984-01-30T00:00:00Z", "1984-02-30T00:00:00Z", "1984-03-30T00:00:00Z", 
-          "1984-04-30T00:00:00Z", "1984-05-30T00:00:00Z", "1984-06-30T00:00:00Z",
-          "1984-07-30T00:00:00Z", "1984-08-30T00:00:00Z", "1984-09-30T00:00:00Z",
-          "1984-10-30T00:00:00Z", "1984-11-30T00:00:00Z", "1984-12-30T00:00:00Z",
+         ["1984-01-30T00:00:00Z", "1984-02-30T00:00:00Z",
+          "1984-03-30T00:00:00Z", "1984-04-30T00:00:00Z",
+          "1984-05-30T00:00:00Z", "1984-06-30T00:00:00Z",
+          "1984-07-30T00:00:00Z", "1984-08-30T00:00:00Z",
+          "1984-09-30T00:00:00Z", "1984-10-30T00:00:00Z",
+          "1984-11-30T00:00:00Z", "1984-12-30T00:00:00Z",
           "1985-01-30T00:00:00Z"]),
         ("R2/1984-01-30T00Z/P1D",
          ["1984-01-30T00:00:00Z", "1984-02-01T00:00:00Z"]),
@@ -750,9 +753,11 @@ def get_timerecurrence_expansion_tests_360():
         ("R2/2004-12-30T00Z/P1D",
          ["2004-12-30T00:00:00Z", "2005-01-01T00:00:00Z"]),
         ("R3/P1Y/2005-02-30T00Z",
-         ["2003-02-30T00:00:00Z", "2004-02-30T00:00:00Z", "2005-02-30T00:00:00Z"]),
+         ["2003-02-30T00:00:00Z", "2004-02-30T00:00:00Z",
+          "2005-02-30T00:00:00Z"]),
         ("R3/2003-02-30T00Z/P1Y",
-         ["2003-02-30T00:00:00Z", "2004-02-30T00:00:00Z", "2005-02-30T00:00:00Z"]),
+         ["2003-02-30T00:00:00Z", "2004-02-30T00:00:00Z",
+          "2005-02-30T00:00:00Z"]),
     ]
 
 
@@ -875,28 +880,31 @@ def get_timerecurrenceparser_tests():
                 end_point = start_point + duration
                 if reps is not None:
                     expr_1 = ("R" + reps_string + "/" + str(start_point) +
-                                "/" + str(end_point))
+                              "/" + str(end_point))
                     yield expr_1, {"repetitions": reps,
-                                    "start_point": start_point,
-                                    "end_point": end_point}
+                                   "start_point": start_point,
+                                   "end_point": end_point}
                 expr_3 = ("R" + reps_string + "/" + str(start_point) +
-                            "/" + str(duration))
+                          "/" + str(duration))
                 yield expr_3, {"repetitions": reps,
-                                "start_point": start_point,
-                                "duration": duration}
+                               "start_point": start_point,
+                               "duration": duration}
                 expr_4 = ("R" + reps_string + "/" + str(duration) + "/" +
-                            str(end_point))
+                          str(end_point))
                 yield expr_4, {"repetitions": reps, "duration": duration,
-                                "end_point": end_point}
+                               "end_point": end_point}
 
 
 def get_local_time_zone_hours_minutes():
     """Provide an independent method of getting the local time zone."""
     import datetime
     utc_offset = datetime.datetime.now() - datetime.datetime.utcnow()
-    utc_offset_hours = (utc_offset.seconds + 1800) // 3600
+    # datetime.timedelta represents -21 microseconds as -1 day,
+    # +86399 seconds, +999979 microseconds. This is not nice.
+    utc_offset_seconds = utc_offset.seconds + 86400 * utc_offset.days
+    utc_offset_hours = (utc_offset_seconds + 1800) // 3600
     utc_offset_minutes = (
-        ((utc_offset.seconds - 3600 * utc_offset_hours) + 30) // 60
+        ((utc_offset_seconds - 3600 * utc_offset_hours) + 30) // 60
     )
     return utc_offset_hours, utc_offset_minutes
 
@@ -918,15 +926,15 @@ class TestSuite(unittest.TestCase):
         """Test the summing-over-days-in-year-range shortcut code."""
         for start_year in range(-401, 2):
             for end_year in range(start_year, 2):
-               test_days = data.get_days_in_year_range(
-                   start_year, end_year)
-               control_days = 0
-               for year in xrange(start_year, end_year + 1):
-                   control_days += data.get_days_in_year(year)
-               self.assertEqual(
-                   control_days, test_days, "days in %s to %s" % (
-                       start_year, end_year)
-               )
+                test_days = data.get_days_in_year_range(
+                    start_year, end_year)
+                control_days = 0
+                for year in xrange(start_year, end_year + 1):
+                    control_days += data.get_days_in_year(year)
+                self.assertEqual(
+                    control_days, test_days, "days in %s to %s" % (
+                        start_year, end_year)
+                )
 
     def test_timeduration(self):
         """Test the duration class methods."""
@@ -960,6 +968,12 @@ class TestSuite(unittest.TestCase):
             test_expression = str(duration)
             self.assertEqual(test_expression, ctrl_expression,
                              str(test_props))
+
+    def test_timeduration_add_week(self):
+        """Test the duration not in weeks add duration in weeks."""
+        self.assertEqual(
+            str(data.Duration(days=7) + data.Duration(weeks=1)),
+            "P14D")
 
     def test_timepoint(self):
         """Test the time point data model (takes a while)."""
@@ -1011,12 +1025,12 @@ class TestSuite(unittest.TestCase):
                 test_dates[1].set_time_zone_to_local()
                 self.assertEqual(test_dates[1].time_zone.hours,
                                  utc_offset_hours, test_dates[1])
-                
+
                 self.assertEqual(test_dates[1].time_zone.minutes,
                                  utc_offset_minutes, test_dates[1])
                 test_dates[2].set_time_zone(
                     data.TimeZone(hours=-13, minutes=-45))
-                
+
                 test_dates[3].set_time_zone(
                     data.TimeZone(hours=8, minutes=30))
                 for i in range(len(test_dates)):
@@ -1026,7 +1040,7 @@ class TestSuite(unittest.TestCase):
 
                     # TODO: https://github.com/metomi/isodatetime/issues/34.
                     if (test_dates[i].time_zone.hours >= 0 or
-                        test_dates[i].time_zone.minutes >= 0):
+                            test_dates[i].time_zone.minutes >= 0):
                         utc_offset = date_no_tz - test_dates[i]
                     else:
                         utc_offset = (test_dates[i] - date_no_tz) * -1
@@ -1036,7 +1050,7 @@ class TestSuite(unittest.TestCase):
                                      i_date_str + " utc offset (hrs)")
                     self.assertEqual(utc_offset.minutes,
                                      test_dates[i].time_zone.minutes,
-                                     i_date_str + " utc offset (mins)")       
+                                     i_date_str + " utc offset (mins)")
                     for j in range(len(test_dates)):
                         j_date_str = str(test_dates[j])
                         self.assertEqual(
@@ -1095,7 +1109,7 @@ class TestSuite(unittest.TestCase):
                 test_data = str(parser.parse(expression))
             except parsers.ISO8601SyntaxError as syn_exc:
                 raise ValueError("Parsing failed for {0}: {1}".format(
-                   expression, syn_exc))
+                    expression, syn_exc))
             ctrl_data = str(data.TimePoint(**timepoint_kwargs))
             self.assertEqual(test_data, ctrl_data, expression)
             ctrl_data = expression
@@ -1114,7 +1128,7 @@ class TestSuite(unittest.TestCase):
                 test_timepoint = parser.parse(expression)
             except parsers.ISO8601SyntaxError as syn_exc:
                 raise ValueError("Parsing failed for {0}: {1}".format(
-                   expression, syn_exc))
+                    expression, syn_exc))
             test_data = (test_timepoint.time_zone.hours,
                          test_timepoint.time_zone.minutes)
             ctrl_data = (utc_offset_hours, utc_offset_minutes)
@@ -1143,7 +1157,7 @@ class TestSuite(unittest.TestCase):
                 test_timepoint = parser.parse(expression)
             except parsers.ISO8601SyntaxError as syn_exc:
                 raise ValueError("Parsing failed for {0}: {1}".format(
-                   expression, syn_exc))
+                    expression, syn_exc))
             test_data = (test_timepoint.time_zone.hours,
                          test_timepoint.time_zone.minutes)
             ctrl_data = given_time_zone_hours_minutes
@@ -1162,7 +1176,7 @@ class TestSuite(unittest.TestCase):
                 test_timepoint = parser.parse(expression)
             except parsers.ISO8601SyntaxError as syn_exc:
                 raise ValueError("Parsing failed for {0}: {1}".format(
-                   expression, syn_exc))
+                    expression, syn_exc))
             test_data = (test_timepoint.time_zone.hours,
                          test_timepoint.time_zone.minutes)
             ctrl_data = (0, 0)
@@ -1217,7 +1231,7 @@ class TestSuite(unittest.TestCase):
                     ctrl_string += "%02d%02d" % (hour, minute)
                     self.assertEqual(test_date.strftime("%z"),
                                      ctrl_string,
-                                     "%z for " + str(test_date))       
+                                     "%z for " + str(test_date))
 
         test_date = data.TimePoint(
             year=ctrl_date.year,
@@ -1243,7 +1257,7 @@ class TestSuite(unittest.TestCase):
                     ctrl_data = datetime.datetime.strptime(
                         ctrl_dump, strptime_string)
                 test_data = parser.strptime(test_dump, strptime_string)
-                
+
                 ctrl_data = (
                     ctrl_data.year, ctrl_data.month, ctrl_data.day,
                     ctrl_data.hour, ctrl_data.minute, ctrl_data.second
@@ -1325,7 +1339,7 @@ class TestSuite(unittest.TestCase):
             test_points.reverse()
             test_results = [str(point) for point in test_points]
             self.assertEqual(test_results, ctrl_results, expression)
-            
+
         for expression, results in get_timerecurrence_membership_tests():
             try:
                 test_recurrence = parser.parse(expression)
@@ -1367,7 +1381,7 @@ def test_timepoint_at_year(test_year):
     test_duration_attributes = [
         ("weeks", 110),
         ("days", 770),
-        ("hours", 770*24),
+        ("hours", 770 * 24),
         ("minutes", 770 * 24 * 60),
         ("seconds", 770 * 24 * 60 * 60)
     ]
@@ -1420,17 +1434,17 @@ def test_timepoint_at_year(test_year):
         ctrl_data = test_date
         assert_equal(test_data, ctrl_data)
         ctrl_data = (my_date + datetime.timedelta(minutes=450) +
-                        datetime.timedelta(hours=5) -
-                        datetime.timedelta(seconds=500, weeks=5))
+                     datetime.timedelta(hours=5) -
+                     datetime.timedelta(seconds=500, weeks=5))
         ctrl_data = [(ctrl_data.year, ctrl_data.month, ctrl_data.day),
-                        (ctrl_data.hour, ctrl_data.minute, ctrl_data.second)]
+                     (ctrl_data.hour, ctrl_data.minute, ctrl_data.second)]
         test_data = (
             test_date + data.Duration(minutes=450) +
             data.Duration(hours=5) -
             data.Duration(weeks=5, seconds=500)
         )
         test_data = [test_data.get_calendar_date(),
-                        test_data.get_hour_minute_second()]
+                     test_data.get_hour_minute_second()]
         assert_equal(test_data, ctrl_data)
         timedelta = datetime.timedelta(days=1)
         my_date += timedelta

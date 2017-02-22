@@ -1193,7 +1193,7 @@ as in \lstinline=tut/oneoff/jobsub=:
 Run the suite again after checking that \lstinline=atd= is running on your
 system.
 
-Cylc supports a number of different job submission methods. Tasks
+Cylc supports a number of different batch systems. Tasks
 submitted to external batch queuing systems like \lstinline=at=,
 \lstinline=PBS=, \lstinline=SLURM=, \lstinline=Moab=, or
 \lstinline=LoadLeveler=, are displayed as {\em submitted} in the cylc GUI until
@@ -1201,7 +1201,7 @@ they start executing.
 
 \begin{myitemize}
 \item For more on task job scripts, see~\ref{JobScripts}.
-\item For more on job submission methods, see~\ref{AvailableMethods}.
+\item For more on batch systems, see~\ref{AvailableMethods}.
 \end{myitemize}
 
 \subsection{Locating Suite And Task Output}
@@ -1331,7 +1331,7 @@ file can be configured for username translation.
 If you configure a task host according to the requirements cylc will
 create remote log directories, source login scripts on the remote host
 to ensure cylc is visible there, send the task job script over, and submit it
-to run there by the configured job submission method:
+to run there by the configured batch system:
 
 Remote task job logs are saved to the suite run directory on the task host, not
 on the suite host. They can be retrieved by right-clicking on the task
@@ -2334,7 +2334,7 @@ show an inlined copy of the suite with correct line numbers
 (you can also edit suites in a temporarily inlined state with
 \lstinline=cylc edit --inline=).
 
-Validation does not check the validity of chosen job submission methods.
+Validation does not check the validity of chosen batch systems.
 %this is to allow users to extend cylc with their own job submission
 %methods, which are by definition unknown to the suite.rc spec.
 
@@ -4116,32 +4116,75 @@ must use a different name for the parent variable:
             COLOR = dark-$FOO_COLOR  # OK
 \end{lstlisting}
 
-\paragraph{Suite And Task Identity Variables}
+\paragraph{Task Job Script Variables}
 
-The task identity variables provided to tasks by the suite daemon include:
+These are variables that can be referenced (but should not be modified) in a
+task job script.
+
+The task job script may export the following environment variables:
+
 \lstset{language=bash}
 \begin{lstlisting}
-$CYLC_TASK_ID                    # X.20110511T1800Z (e.g.)
-$CYLC_TASK_NAME                  # X
-$CYLC_TASK_CYCLE_POINT           # 20110511T1800Z
-$CYLC_TASK_LOG_ROOT              # ~/cylc-run/foo.bar.baz/log/job/20110511T1800Z/X/01/job
-$CYLC_TASK_NAMESPACE_HIERARCHY   # "root postproc X" (e.g.)
-$CYLC_TASK_SUBMIT_NUMBER         # increments with every submit
-$CYLC_TASK_TRY_NUMBER            # increments with automatic retry-on-fail
-$CYLC_TASK_WORK_DIR              # task work directory (see below)
-$CYLC_SUITE_SHARE_DIR            # suite (or task!) shared directory (see below)
+CYLC_DEBUG                      # Debug mode, true or not defined
+CYLC_DIR                        # Location of cylc installation used
+CYLC_VERSION                    # Version of cylc installation used
+
+CYLC_CYCLING_MODE               # Cycling mode, e.g. gregorian
+CYLC_SUITE_FINAL_CYCLE_POINT    # Final cycle point
+CYLC_SUITE_INITIAL_CYCLE_POINT  # Initial cycle point
+CYLC_SUITE_NAME                 # Suite name
+CYLC_UTC                        # UTC mode, True or False
+CYLC_VERBOSE                    # Verbose mode, True or False
+TZ                              # Set to "UTC" in UTC mode or not defined
+
+CYLC_SUITE_RUN_DIR              # Location of the suite run directory in
+                                # job host, e.g. ~/cylc-run/foo
+CYLC_SUITE_DEF_PATH             # Location of the suite definition directory in
+                                # job host, e.g. ~/cylc-run/foo
+CYLC_SUITE_HOST                 # Host running the suite process
+CYLC_SUITE_OWNER                # User ID running the suite process
+CYLC_SUITE_DEF_PATH_ON_SUITE_HOST
+                                # Location of the suite definition directory in
+                                # suite host, e.g. ~/cylc-run/foo
+CYLC_SUITE_SHARE_DIR            # Suite (or task!) shared directory (see below)
+CYLC_SUITE_WORK_DIR             # Suite work directory (see below)
+
+CYLC_TASK_JOB                   # Task job identifier expressed as
+                                # CYCLE-POINT/TASK-NAME/SUBMIT-NUM
+                                # e.g. 20110511T1800Z/t1/01
+CYLC_TASK_CYCLE_POINT           # Cycle point, e.g. 20110511T1800Z
+CYLC_TASK_NAME                  # Job's task name, e.g. t1
+CYLC_TASK_SUBMIT_NUMBER         # Job's submit number, e.g. 1,
+                                # increments with every submit
+CYLC_TASK_TRY_NUMBER            # Number of execution tries, e.g. 1
+                                # increments with automatic retry-on-fail
+CYLC_TASK_ID                    # Task instance identifier expressed as
+                                # TASK-NAME.CYCLE-POINT
+                                # e.g. t1.20110511T1800Z
+CYLC_TASK_LOG_ROOT              # Location of the job file
+                                # e.g. ~/cylc-run/foo/log/job/20110511T1800Z/t1/01/job
+CYLC_TASK_WORK_DIR              # Location of task work directory (see below)
+                                # e.g. ~/cylc-run/foo/work/20110511T1800Z/t1
+CYLC_TASK_NAMESPACE_HIERARCHY   # Linearised family namespace of the task,
+                                # e.g. root postproc t1
+
+CYLC_TASK_COMMS_METHOD          # Set to "ssh" if communication method is "ssh"
+CYLC_TASK_SSH_LOGIN_SHELL       # With "ssh" communication, if set to "True",
+                                # use login shell on suite host
 \end{lstlisting}
-And the suite identity variables are:
+
+There are also some global shell variables that may be defined in the task job
+script (but not exported to the environment). These include:
+\lstset{language=bash}
 \begin{lstlisting}
-$CYLC_SUITE_DEF_PATH   # $HOME/mysuites/baz (e.g.)
-$CYLC_SUITE_NAME       # foo.bar.baz (e.g.)
-$CYLC_SUITE_REG_PATH   # name translate to path: foo/bar/baz
-$CYLC_SUITE_HOST       # orca.niwa.co.nz (e.g.)
-$CYLC_SUITE_PORT       # 43001 (e.g.)
-$CYLC_SUITE_OWNER      # oliverh (e.g.)
+CYLC_FAIL_SIGNALS               # List of signals trapped by the error trap
+CYLC_VACATION_SIGNALS           # List of signals trapped by the vacation trap
+CYLC_SUITE_WORK_DIR_ROOT        # Root directory above the suite work directory
+                                # in the job host
+CYLC_TASK_MESSAGE_STARTED_PID   # PID of "cylc task message started" command
+CYLC_TASK_WORK_DIR_BASE         # Alternate task work directory,
+                                # relative to the suite work directory
 \end{lstlisting}
-Some of these variables are also used by cylc task messaging commands in
-order to target the right task proxy object in the right suite.
 
 \paragraph{Suite Share Directories}
 
@@ -4168,20 +4211,6 @@ however, to get several tasks to share the same work directory
 The top level work and share directory (above) location can be changed
 (e.g.\ to a large data area) by a global config setting
 (see~\ref{workdirectory}).
-
-
-\paragraph{Other Cylc-Defined Environment Variables}
-
-Initial and final cycle points, if supplied via the suite.rc file or the
-command line, are passed to task execution environments as:
-\begin{lstlisting}
-$CYLC_SUITE_INITIAL_CYCLE_POINT
-$CYLC_SUITE_FINAL_CYCLE_POINT
-\end{lstlisting}
-Tasks can use these to determine whether or not they are running
-in the first or final cycles. Note however that \lstinline=R1= graph
-sections are now the preferred way to get different behaviour at suite
-start-up or shutdown.
 
 \lstset{language=transcript}
 
@@ -4210,7 +4239,7 @@ evaluation on the task host.
 If a task declares an owner other than the suite owner and/or
 a host other than the suite host, cylc will use non-interactive ssh to
 execute the task on the \lstinline=owner@host= account by the configured
-job submission method:
+batch system:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
@@ -4911,8 +4940,12 @@ locations:
 
 In the filter function argument list, the first argument is the variable
 value to be ``filtered'', and subsequent arguments can be whatever is
-needed. Currently there is one custom filter called ``pad'' in the
-central cylc Jinja2 filter directory, for padding string values to some
+needed. Currently there are two custom filters:
+
+
+\paragraph{pad}
+
+The ``pad'' filter is for padding string values to some
 constant length with a fill character - useful for generating task names
 and related values in ensemble suites:
 
@@ -4923,6 +4956,26 @@ and related values in ensemble suites:
     A_{{j}}          # A_00, A_01, ..., A_99
 {% endfor %}
 \end{lstlisting}
+
+\paragraph{strftime}
+
+The ``strftime'' filter can be used to format ISO8601 date-time strings using
+an strftime string.
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+{% set START_CYCLE = '10661004T08+01' %}
+{{ START_CYCLE | strftime('%H') }}  # 00
+\end{lstlisting}
+
+Examples:
+
+\begin{myitemize}
+    \item \lstinline={{START_CYCLE | strftime('%Y')}}= - 1066
+    \item \lstinline={{START_CYCLE | strftime('%m')}}= - 10
+    \item \lstinline={{START_CYCLE | strftime('%d')}}= - 14
+    \item \lstinline={{START_CYCLE | strftime('%H:%M:%S %z')}}= - 08:00:00 +01
+\end{myitemize}
 
 \subsubsection{Associative Arrays In Jinja2}
 
@@ -5114,30 +5167,57 @@ tasks are detected.
 \label{TaskImplementation}
 
 Existing scripts or executables can be used as cylc tasks without any
-modification so long as they return standard exit status on success or
-failure, and do not internally spawn detaching processes
-(see~\ref{DetachingJobs}).
+modification so long as they return standard exit status, i.e. zero on
+success and non-zero for failure, and do not internally spawn detaching
+processes (see~\ref{DetachingJobs}).
+
+\subsection{Task Job Scripts}
+\label{JobScripts}
+
+When a task is ready cylc generates a {\em task job script} that encapsulates
+the runtime settings (environment and scripts) defined for it in the suite.rc
+file. The job script is submitted to run by the {\em batch system}
+chosen for the task (see~\ref{TaskJobSubmission}). A task job script also
+exports a set of environment variables prior to executing the task
+\lstinline=script= (see ~\ref{TaskExecutionEnvironment}).
+
+As shown in the Tutorial (\ref{RunningSuitesCLI}) job scripts are
+saved to the suite run directory; the commands used to submit them are
+printed to stdout by cylc in debug mode; and they can be printed with the
+\lstinline=cylc cat-log= command or new ones generated and printed with the
+\lstinline=cylc jobscript= command. Take a look at one to see exactly
+how cylc wraps and runs your tasks.
 
 \subsection{Inlined Tasks}
 
-Simple tasks can be entirely implemented within the suite.rc file,
-as the task {\em script} items can be multi-line strings.
+Tasks that can be performed by simple commands written in \lstinline=bash= can
+be entirely implemented within the suite.rc file, as the task {\em script}
+items can be multi-line strings.
 
 \subsection{Returning Proper Error Status}
 
-Tasks should abort with non-zero exit status if a fatal error occurs
-(this is just good coding practice anyway). This allows cylc's task
-job scripts to automatically trap errors and send
-\lstinline=cylc task message "failed"= back to the suite. The shell
-\lstinline=set -e= option can be used in lieu of explicit error
-checks for every command:
+A task job script in cylc automatically traps ERR (for errors) and EXIT (for
+unexpected exits). When the trap is triggered, the task job script will send a
+failed message back to the suite before aborting.
+
+Therefore, commands in user scripts should abort with non-zero exit status if a
+fatal error occurs (this is just good coding practice anyway). To prevent a
+command that expects a non-zero return code from triggering a trap, you can use
+a control statement such as:
+
 \lstset{language=bash}
 \begin{lstlisting}
-#!/bin/bash
-set -e  # abort on error
-mkdir /illegal/dir  # this will abort the script with error status
+if cmp FILE1 FILE2; then
+    :  # do stuff
+else
+    :  # do alternate stuff
+fi
 \end{lstlisting}
 
+In addition, the task job script has \lstinline=set -u= and
+\lstinline=set -o pipefail= turned on explicitly to ensure that any variable
+must be defined on reference (which is very useful for picking typos) and that
+a command fails if any part of a pipe fails.
 
 \subsection{Other Task Messages}
 
@@ -5178,15 +5258,12 @@ But not this:
 \begin{lstlisting}
 #!/bin/bash
 set -e
-mkdir /illegal/dir  # aborted via 'set -e'
+mkdir /illegal/dir  # aborted via ERR trap
 if [[ $? != 0 ]]; then  # so this will never be reached.
     cylc task message -p CRITICAL "Failed to create directory /illegal/dir"
     exit 1
 fi
 \end{lstlisting}
-If critical errors are not reported in this way task failures will still
-be detected and logged by the suite daemon, but you may have to examine task
-logs to determine what the problem was.
 
 \subsection{Avoid Detaching Processes}
 \label{DetachingJobs}
@@ -5227,17 +5304,13 @@ task to repeatedly poll for the results of the detached processes:
 For the requirements a command, script, or program, must fulfill in order
 to function as a cylc task, see~\ref{TaskImplementation}.
 This section explains how tasks are submitted by the suite daemon when they are
-ready to run, and how to define new task job submission methods.
+ready to run, and how to define new batch system handlers.
 
-\subsection{Task Job Scripts}
-\label{JobScripts}
-
-When a task is ready cylc generates a {\em task job script} that encapsulates
-the runtime settings (environment and scripting) defined for it in the suite.rc
-file. The job script is submitted to run by the {\em job submission method}
-chosen for the task. Different tasks can have different job submission methods.
-Like other runtime properties, you can set a suite default job submission
-method and override it for specific tasks or families:
+When a task is ready cylc generates a job script (see~\ref{JobScripts}). The
+job script is submitted to run by the {\em batch system} chosen for
+the task. Different tasks can use different batch systems.  Like
+other runtime properties, you can set a suite default batch system and
+override it for specific tasks or families:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
@@ -5249,30 +5322,23 @@ method and override it for specific tasks or families:
             batch system = at
 \end{lstlisting}
 
-As shown in the Tutorial (\ref{RunningSuitesCLI}) job scripts are
-saved to the suite run directory; the commands used to submit them are
-printed to stdout by cylc in debug mode; and they can be printed with the
-\lstinline=cylc cat-log= command or new ones generated and printed with the
-\lstinline=cylc jobscript= command. Take a look at one to see exactly
-how cylc wraps and runs your tasks.
-
 \subsection{Supported Job Submission Methods}
 \label{AvailableMethods}
 
-Cylc supports a number of commonly used job submission methods.
+Cylc supports a number of commonly used batch systems.
 See~\ref{CustomJobSubmissionMethods} for how to add new job
 submission methods.
 
 \subsubsection{background}
 
-Runs tasks as Unix background processes.
+Runs task job scripts as Unix background processes.
 
 If an execution time limit is specified for a task, its job will be wrapped
 by the \lstinline=timeout= command.
 
 \subsubsection{at}
 
-Submits tasks to the rudimentary Unix \lstinline=at= scheduler. The
+Submits task job scripts to the rudimentary Unix \lstinline=at= scheduler. The
 \lstinline=atd= daemon must be running.
 
 If an execution time limit is specified for a task, its job will be wrapped
@@ -5280,7 +5346,7 @@ by the \lstinline=timeout= command.
 
 \subsubsection{loadleveler}
 
-Submits tasks to loadleveler by the \lstinline=llsubmit= command.
+Submits task job scripts to loadleveler by the \lstinline=llsubmit= command.
 Loadleveler directives can be provided in the suite.rc file:
 
 \lstset{language=suiterc}
@@ -5321,7 +5387,7 @@ system.
 
 \subsubsection{lsf}
 
-Submits tasks to IBM Platform LSF by the \lstinline=bsub= command.
+Submits task job scripts to IBM Platform LSF by the \lstinline=bsub= command.
 LSF directives can be provided in the suite.rc file:
 
 \lstset{language=suiterc}
@@ -5351,8 +5417,8 @@ submitted to the batch system.
 
 \subsubsection{pbs}
 
-Submits tasks to PBS (or Torque) by the \lstinline=qsub= command. PBS
-directives can be provided in the suite.rc file:
+Submits task job scripts to PBS (or Torque) by the \lstinline=qsub= command.
+PBS directives can be provided in the suite.rc file:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
@@ -5384,9 +5450,9 @@ what is submitted to the batch system.
 
 \subsubsection{moab}
 
-Submits tasks to the Moab workload manager by the \lstinline=msub= command.
-Moab directives can be provided in the suite.rc file; the syntax is very
-similar to PBS:
+Submits task job scripts to the Moab workload manager by the \lstinline=msub=
+command.  Moab directives can be provided in the suite.rc file; the syntax is
+very similar to PBS:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
@@ -5419,8 +5485,8 @@ what is submitted to the batch system.
 
 \subsubsection{sge}
 
-Submits tasks to Sun/Oracle Grid Engine by the \lstinline=qsub= command.
-SGE directives can be provided in the suite.rc file:
+Submits task job scripts to Sun/Oracle Grid Engine by the \lstinline=qsub=
+command.  SGE directives can be provided in the suite.rc file:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
@@ -5453,10 +5519,10 @@ what is submitted to the batch system.
 
 \subsubsection{slurm}
 
-Submits tasks to Simple Linux Utility for Resource Management by the
-\lstinline=sbatch= command. SLURM directives can be provided in the
-suite.rc file (note that since not all SLURM commands have a short form,
-cylc requires the long form directives):
+Submits task job scripts to Simple Linux Utility for Resource Management by the
+\lstinline=sbatch= command. SLURM directives can be provided in the suite.rc
+file (note that since not all SLURM commands have a short form, cylc requires
+the long form directives):
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
@@ -5485,7 +5551,7 @@ what is submitted to the batch system.
 
 \subsubsection{Default Directives Provided}
 
-For job submission methods that use job file directives (PBS, Loadleveler,
+For batch systems that use job file directives (PBS, Loadleveler,
 etc.) default directives are provided to set the job name, stdout and stderr
 file paths, and the execution time limit (if specified).
 
@@ -5555,7 +5621,7 @@ re-triggered multiple times:
 \end{lstlisting}
 
 How the stdout and stderr streams are directed into these files depends
-on the job submission method. The \lstinline=background= method just uses
+on the batch system. The \lstinline=background= method just uses
 appropriate output redirection on the command line, as shown above. The
 \lstinline=loadleveler= method writes appropriate directives to the job
 script that is submitted to loadleveler.
@@ -5566,12 +5632,12 @@ that submit internal jobs and direct the associated output to other
 files). For less internally complex tasks, however, the files referred
 to here will be complete task job logs.
 
-Some job submission methods, such as \lstinline=pbs=, redirect a job's stdout
+Some batch systems, such as \lstinline=pbs=, redirect a job's stdout
 and stderr streams to a separate cache area while the job is running. The
 contents are only copied to the normal locations when the job completes. This
 means that \lstinline=cylc cat-log= or the gcylc GUI will be unable to find the
 job's stdout and stderr streams while the job is running. Some sites with these
-job submission methods are known to provide commands for viewing and/or
+batch systems are known to provide commands for viewing and/or
 tail-follow a job's stdout and stderr streams that are redirected to these
 cache areas. If this is the case at your site, you can configure cylc to make
 use of the provided commands by adding some settings to the global site/user
@@ -5593,7 +5659,7 @@ config. E.g.:
 
 \lstset{language=suiterc}
 To change the form of the actual command used to submit a job you do not
-need to define a new job submission method; just override the
+need to define a new batch system handler; just override the
 \lstinline=command template= in the relevant job submission sections of
 your suite.rc file:
 \begin{lstlisting}
@@ -5610,7 +5676,7 @@ the template's \%(job)s will be substituted by the job file path.
 
 \subsection{Job Polling}
 
-For supported job submission methods, one-way polling can be used to determine
+For supported batch systems, one-way polling can be used to determine
 actual job status: the suite daemon executes a process on the task host, by
 non-interactive ssh, to interrogate the batch queueing system there, and to
 read a {\em status file} that is automatically generated by the task job script
@@ -5663,9 +5729,9 @@ are returned by the \lstinline=qsub= command.
 
 \subsection{Job Killing}
 
-For supported job submission methods, the suite daemon can execute a process on
+For supported batch systems, the suite daemon can execute a process on
 the task host, by non-interactive ssh, to kill a submitted or running job
-according to its job submission method.
+according to its batch system.
 
 Tasks can be killed on demand by right-clicking on them in gcylc or using the
 \lstinline=cylc kill= command.
@@ -5718,7 +5784,7 @@ ignored.
 \subsection{Custom Job Submission Methods}
 \label{CustomJobSubmissionMethods}
 
-Defining a new job submission method requires a little Python programming. You
+Defining a new batch system handler requires a little Python programming. You
 can use one of the built-in methods as an example, and read the documentation
 in the header of the \lstinline=cylc.batch_sys_manager= module.
 
@@ -6742,7 +6808,7 @@ a cylc upgrade will not break your own complex
 suites - the triggering check will catch any bug that causes a task to
 run when it shouldn't, for instance; even in a dummy mode reference
 test the full task job script (sans \lstinline=script= items) executes on the
-proper task host by the proper job submission method.
+proper task host by the proper batch system.
 
 Reference tests can be configured with the following settings:
 \lstset{language=suiterc}
@@ -7244,7 +7310,7 @@ Effective visualization can make complex suites easier to understand.
 Collapsible task families for visualization are defined by the {\em first
 parents} in the runtime namespace hierarchy. Tasks should generally be grouped
 into visualization families that reflect their purpose within the structure of
-the suite rather than technical detail such as common job submission method or
+the suite rather than technical detail such as common batch system or
 task host. This often coincides nicely with common configuration inheritance
 requirements, but if it doesn't you can use an empty namespace as a first
 parent for visualization:

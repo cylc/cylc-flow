@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-#-----------------------------------------------------------------------------
-# (C) British Crown Copyright 2013-2014 Met Office.
+# ----------------------------------------------------------------------------
+# (C) British Crown Copyright 2013-2017 Met Office.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 
 """This provides ISO 8601 data model functionality."""
 
@@ -195,8 +195,8 @@ class TimeRecurrence(object):
                 diff_days = int(diff_days_float)
                 diff_seconds_float += (
                     diff_days_float - diff_days) * CALENDAR.SECONDS_IN_DAY
-                self.duration = Duration(days=diff_days,
-                                             seconds=diff_seconds_float)
+                self.duration = Duration(
+                    days=diff_days, seconds=diff_seconds_float)
         elif self.end_point is None:
             # Third form.
             self.format_number = 3
@@ -399,10 +399,10 @@ class Duration(object):
 
     def copy(self):
         """Return an unlinked copy of this instance."""
-        return Duration(years=self.years, months=self.months,
-                            weeks=self.weeks,
-                            days=self.days, hours=self.hours,
-                            minutes=self.minutes, seconds=self.seconds)
+        return Duration(
+            years=self.years, months=self.months, weeks=self.weeks,
+            days=self.days, hours=self.hours, minutes=self.minutes,
+            seconds=self.seconds)
 
     def get_days_and_seconds(self):
         """Return a roughly-converted duration in days and seconds.
@@ -479,7 +479,8 @@ class Duration(object):
                     return new
                 new.to_days()
             elif other.get_is_in_weeks():
-                other = other.copy().to_days()
+                other = other.copy()
+                other.to_days()
             new.years += other.years
             new.months += other.months
             new.days += other.days
@@ -591,13 +592,13 @@ class Duration(object):
                     content_string += str(prop_val) + unit
             if prop_ == "days":
                 content_string += "T"
-        
+
         if content_string == "T":
             # No content, zero duration.
             content_string = "0Y"
         elif content_string.endswith("T"):
             # No time unit information, so strip the delimiter.
-            content_string = content_string[:-1]  
+            content_string = content_string[:-1]
 
         total_string = start_string + content_string
         return total_string.replace(".", ",")
@@ -1342,7 +1343,8 @@ class TimePoint(object):
             if diff_day < 0:
                 return -1 * (other - self)
             my_hour, my_minute, my_second = self.get_hour_minute_second()
-            other_hour, other_minute, other_second = other.get_hour_minute_second()
+            other_hour, other_minute, other_second = (
+                other.get_hour_minute_second())
             diff_hour = my_hour - other_hour
             diff_minute = my_minute - other_minute
             diff_second = my_second - other_second
@@ -1355,9 +1357,9 @@ class TimePoint(object):
             if diff_hour < 0:
                 diff_day -= 1
                 diff_hour += CALENDAR.HOURS_IN_DAY
-            return Duration(days=diff_day,
-                                hours=diff_hour, minutes=diff_minute,
-                                seconds=diff_second)
+            return Duration(
+                days=diff_day, hours=diff_hour, minutes=diff_minute,
+                seconds=diff_second)
         if not isinstance(other, Duration):
             raise TypeError(
                 "Invalid subtraction type " +
@@ -1566,7 +1568,7 @@ class TimePoint(object):
             )
         elif self.year is not None:
             year_string = year_string % self.year
-        
+
         if self.get_is_calendar_date():
             date_string = year_string + "-MM-DD"
         if self.get_is_ordinal_date():
@@ -1597,8 +1599,7 @@ class TimePoint(object):
         if self.truncated_property == "year_of_decade":
             year_string = "-" + "z"
         elif self.truncated_property == "year_of_century":
-            if (self.day_of_month is None and
-                self.month_of_year is not None):
+            if self.day_of_month is None and self.month_of_year is not None:
                 year_string = "-YY"
             else:
                 year_string = "YY"
@@ -1636,14 +1637,14 @@ class TimePoint(object):
                  self.second_of_minute is not None)):
             time_string = "T-"
         elif (self.hour_of_day is not None and
-                  int(self.hour_of_day) != self.hour_of_day):
+                int(self.hour_of_day) != self.hour_of_day):
             time_string = "Thh,ii"
         elif self.hour_of_day is not None:
             time_string = "Thh"
         if self.minute_of_hour is None and self.second_of_minute is not None:
             time_string += "-"
         elif (self.minute_of_hour is not None and
-                  int(self.minute_of_hour) != self.minute_of_hour):
+                int(self.minute_of_hour) != self.minute_of_hour):
             if self.hour_of_day is not None:
                 time_string += ":"
             time_string += "mm,nn"
@@ -1688,13 +1689,14 @@ def get_is_leap_year(year):
     for factor, is_leap_factor in CALENDAR.LEAP_YEAR_FACTOR_TRUTHS:
         if year % factor == 0:
             year_is_leap = is_leap_factor
-    return year_is_leap 
+    return year_is_leap
 
 
 def get_days_in_year_range(start_year, end_year):
     """Return the number of days within this year range (inclusive)."""
     return _get_days_in_year_range(start_year, end_year,
                                    calendar_mode=CALENDAR.mode)
+
 
 @util.cache_results
 def _get_days_in_year_range(start_year, end_year, calendar_mode=None):
@@ -1735,7 +1737,6 @@ def _get_days_in_year_range(start_year, end_year, calendar_mode=None):
         else:
             days -= num_corrections * diff_days_leap
     return days
-    
 
 
 def get_days_in_year(year):
@@ -1970,7 +1971,7 @@ def _get_calendar_date_week_date_start(year, calendar_mode=None):
     elif ref_year > year:
         days_diff = ref_ordinal_day - 2
         days_diff += get_days_in_year_range(year, ref_year - 1)
-   
+
     weekdays_diff = (days_diff) % CALENDAR.DAYS_IN_WEEK
     if year > ref_year:
         day_of_week_start_year = weekdays_diff + 1
@@ -2122,7 +2123,7 @@ def _int_caster(number, name="number", allow_none=False):
         raise BadInputError(
             BadInputError.INT_REMAINDER, name, number)
     return int_number
-        
+
 
 def _type_checker(*objects):
     for type_info in objects:

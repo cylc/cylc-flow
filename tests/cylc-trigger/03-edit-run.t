@@ -36,18 +36,18 @@ DIFF_LOG=$(cylc cat-log -dl $SUITE_NAME broken-task.1)
 # Python 2.6 difflib adds an extra space after the filename,
 # but Python 2.7 does not. Remove it if it exists.
 sed -i 's/^--- original $/--- original/; s/^+++ edited $/+++ edited/' $DIFF_LOG
-cmp_ok $DIFF_LOG - <<__END__
+cmp_ok "${DIFF_LOG}" - <<'__END__'
 --- original
 +++ edited
-@@ -124,7 +124,7 @@
- echo
+@@ -30,7 +30,7 @@
  
+ cylc__job__inst__script() {
  # SCRIPT:
 -/bin/false
 +/bin/true
+ }
  
- # EMPTY WORK DIRECTORY REMOVE:
- cd
+ . "${CYLC_DIR}/lib/cylc/job.sh"
 __END__
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"

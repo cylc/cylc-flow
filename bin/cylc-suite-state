@@ -64,6 +64,7 @@ from cylc.dbstatecheck import (
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.command_polling import Poller
 from cylc.task_state import TASK_STATUSES_ORDERED
+from cylc.cycling.loader import get_point
 
 from isodatetime.parsers import TimePointParser, DurationParser
 
@@ -105,7 +106,16 @@ class SuitePoller(Poller):
                 sleep(self.interval)
         if cylc.flags.verbose:
             sys.stdout.write('\n')
-        return connected
+
+        if connected and self.args['cycle']:
+            fmt = self.args['template']
+            if not fmt:
+                fmt = self.checker.get_remote_point_format()
+            if fmt:
+                my_parser = TimePointParser()
+                my_point = my_parser.parse(self.args['cycle'], dump_format=fmt)
+                self.args['cycle'] = str(my_point)
+        return connected, self.args['cycle']
 
     def check(self):
         # return True if desired suite state achieved, else False
@@ -211,7 +221,7 @@ def main():
             except ValueError:
                 sys.exit("ERROR: Cannot parse offset: %s" % options.offset)
             if oper == "-":
-                my_target_point -= my_shift
+                my_target_point -= my_shiftcycle_point_format
             else:
                 my_target_point += my_shift
         else:
@@ -233,14 +243,8 @@ def main():
         sys.exit("ERROR: invalid status '" + options.status + "'")
 
     # Reformat cycle point for querying targeted suite
-    if options.template:
-        if options.cycle:
-            my_parser = TimePointParser()
-            my_target_point = my_parser.parse(options.cycle,
-                                              dump_format=options.template)
-            options.cycle = str(my_target_point)
-        else:
-            sys.exit("ERROR: No cycle point to reformat using template")
+    if options.template and not options.cycle:
+        sys.exit("ERROR: No cycle point to reformat using template")
 
     # this only runs locally (use of --host or --user results in remote
     # re-invocation).
@@ -253,7 +257,8 @@ def main():
                 'task': options.task,
                 'cycle': options.cycle,
                 'status': options.status,
-                'message': options.msg
+                'message': options.msg,
+                'template': options.template
                 }
 
     spoller = SuitePoller("requested state",
@@ -261,7 +266,9 @@ def main():
                           options.max_polls,
                           args=pollargs)
 
-    if not spoller.connect():
+    connected, formatted_pt = spoller.connect()
+
+    if not connected:
         sys.exit("ERROR: cannot connect to the suite DB")
 
     if options.status and options.task and options.cycle:
@@ -279,7 +286,7 @@ def main():
         spoller.checker.display_maps(
             spoller.checker.suite_state_query(
                 task=options.task,
-                cycle=options.cycle,
+                cycle=formatted_pt,
                 status=options.status))
 
 

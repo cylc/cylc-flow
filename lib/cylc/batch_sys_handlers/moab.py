@@ -35,17 +35,17 @@ class MoabHandler(object):
 
     def format_directives(self, job_conf):
         """Format the job directives for a job file."""
-        job_file_path = job_conf["job file path"].replace(r"$HOME/", "")
+        job_file_path = job_conf["job_file_path"].replace(r"$HOME/", "")
         directives = job_conf["directives"].__class__()  # an ordereddict
 
         directives["-N"] = (
-            job_conf["task id"] + "." + job_conf["suite name"])
+            job_conf["task_id"] + "." + job_conf["suite_name"])
 
         directives["-o"] = job_file_path + ".out"
         directives["-e"] = job_file_path + ".err"
-        if (job_conf["execution time limit"] and
+        if (job_conf["execution_time_limit"] and
                 directives.get("-l walltime") is None):
-            directives["-l walltime"] = "%d" % job_conf["execution time limit"]
+            directives["-l walltime"] = "%d" % job_conf["execution_time_limit"]
         # restartable?
         directives.update(job_conf["directives"])
         lines = []

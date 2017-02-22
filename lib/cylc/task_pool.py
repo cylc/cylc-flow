@@ -1272,12 +1272,12 @@ class TaskPool(object):
         n_warnings = len(bad_items)
         if len(itasks) > 1:
             self.log.warning("Unique task match not found: %s" % items)
-            n_warnings += 1
+            return n_warnings + 1
+        overrides = BroadcastServer.get_inst().get(itasks[0].identity)
+        if itasks[0].prep_submit(overrides=overrides, dry_run=True) is None:
+            return n_warnings + 1
         else:
-            itasks[0].prep_submit(
-                overrides=BroadcastServer.get_inst().get(itasks[0].identity),
-                dry_run=True)
-        return n_warnings
+            return n_warnings
 
     def check_task_timers(self):
         """Check submission and execution timeout timers for current tasks.
@@ -1420,7 +1420,7 @@ class TaskPool(object):
             if itask.state.external_triggers:
                 ets.retrieve(itask)
 
-    def put_rundb_suite_params(self, initial_point, final_point):
+    def put_rundb_suite_params(self, initial_point, final_point, format=None):
         """Put run mode, initial/final cycle point in runtime database.
 
         This method queues the relevant insert statements.
@@ -1430,6 +1430,10 @@ class TaskPool(object):
             {"key": "initial_point", "value": str(initial_point)},
             {"key": "final_point", "value": str(final_point)},
         ])
+        if format:
+            self.db_inserts_map[self.TABLE_SUITE_PARAMS].extend([
+                {"key": "cycle_point_format", "value": str(format)}
+            ])
         if self.is_held:
             self.db_inserts_map[self.TABLE_SUITE_PARAMS].append(
                 {"key": "is_held", "value": 1})

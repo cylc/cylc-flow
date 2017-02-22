@@ -20,13 +20,11 @@
 import os
 import re
 import stat
+from subprocess import Popen, PIPE
+
 from cylc.batch_sys_manager import BATCH_SYS_MANAGER
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
-from cylc.task_id import TaskID
-from cylc.task_message import TaskMessage
-from cylc.task_outputs import (
-    TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED)
 
 
 class JobFile(object):
@@ -64,51 +62,75 @@ class JobFile(object):
         # that cylc commands can be used in defining user environment
         # variables: NEXT_CYCLE=$( cylc cycle-point --offset-hours=6 )
 
-        handle = open(local_job_file_path, 'wb')
-        self._write_header(handle, job_conf)
-        self._write_directives(handle, job_conf)
-        self._write_prelude(handle, job_conf)
-        self._write_err_trap(handle, job_conf)
-        self._write_init_script(handle, job_conf)
-        self._write_environment_1(handle, job_conf)
-        self._write_env_script(handle, job_conf)
-        # suite bin access must be before runtime environment
-        # because suite bin commands may be used in variable
-        # assignment expressions: FOO=$(command args).
-        self._write_suite_bin_access(handle, job_conf)
-        self._write_environment_2(handle, job_conf)
-        self._write_task_started(handle, job_conf)
-        self._write_identity_script(handle, job_conf)
-        self._write_script(handle, job_conf)
-        self._write_epilogue(handle, job_conf)
-        handle.close()
-        # make it executable
-        mode = (
-            os.stat(local_job_file_path).st_mode |
-            stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-        os.chmod(local_job_file_path, mode)
+        tmp_name = local_job_file_path + '.tmp'
+        try:
+            with open(tmp_name, 'wb') as handle:
+                self._write_header(handle, job_conf)
+                self._write_directives(handle, job_conf)
+                self._write_prelude(handle, job_conf)
+                self._write_environment_1(handle, job_conf)
+                self._write_global_init_script(handle, job_conf)
+                # suite bin access must be before runtime environment
+                # because suite bin commands may be used in variable
+                # assignment expressions: FOO=$(command args).
+                self._write_environment_2(handle, job_conf)
+                self._write_script(handle, job_conf)
+                self._write_epilogue(handle, job_conf)
+            # check syntax
+            try:
+                proc = Popen([job_conf['shell'], '-n', tmp_name], stderr=PIPE)
+            except OSError as exc:
+                if exc.filename is None:
+                    exc.filename = job_conf['shell']
+                raise
+            else:
+                if proc.wait():
+                    raise RuntimeError(proc.communicate()[1])
+            # make it executable
+            mode = (
+                os.stat(tmp_name).st_mode |
+                stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+            os.chmod(tmp_name, mode)
+            os.rename(tmp_name, local_job_file_path)
+        finally:
+            # don't leave behind any bad file
+            try:
+                os.unlink(tmp_name)
+            except OSError:
+                pass
 
-    @classmethod
-    def _write_header(cls, handle, job_conf):
+    @staticmethod
+    def _get_derived_host_item(job_conf, key):
+        """Return derived host item from GLOBAL_CFG."""
+        return GLOBAL_CFG.get_derived_host_item(
+            job_conf['suite_name'], key, job_conf["host"], job_conf["owner"])
+
+    @staticmethod
+    def _get_host_item(job_conf, key):
+        """Return host item from GLOBAL_CFG."""
+        return GLOBAL_CFG.get_host_item(
+            key, job_conf["host"], job_conf["owner"])
+
+    @staticmethod
+    def _write_header(handle, job_conf):
         """Write job script header."""
-        handle.write("#!" + job_conf['job script shell'])
+        handle.write("#!" + job_conf['shell'])
         handle.write("\n#\n# ++++ THIS IS A CYLC TASK JOB SCRIPT ++++")
         for prefix, value in [
-                ("# Suite: ", job_conf['suite name']),
-                ("# Task: ", job_conf['task id']),
-                (BATCH_SYS_MANAGER.LINE_PREFIX_JOB_LOG_DIR,
-                 job_conf['job log dir']),
+                ("# Suite: ", job_conf['suite_name']),
+                ("# Task: ", job_conf['task_id']),
+                (BATCH_SYS_MANAGER.LINE_PREFIX_JOB_LOG_DIR, job_conf['job_d']),
                 (BATCH_SYS_MANAGER.LINE_PREFIX_BATCH_SYS_NAME,
-                 job_conf['batch system name']),
+                 job_conf['batch_system_name']),
                 (BATCH_SYS_MANAGER.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL,
-                 job_conf['batch submit command template']),
+                 job_conf['batch_submit_command_template']),
                 (BATCH_SYS_MANAGER.LINE_PREFIX_EXECUTION_TIME_LIMIT,
-                 job_conf['execution time limit'])]:
+                 job_conf['execution_time_limit'])]:
             if value:
                 handle.write("\n%s%s" % (prefix, value))
 
-    @classmethod
-    def _write_directives(cls, handle, job_conf):
+    @staticmethod
+    def _write_directives(handle, job_conf):
         """Job directives."""
         lines = BATCH_SYS_MANAGER.format_directives(job_conf)
         if lines:
@@ -119,336 +141,154 @@ class JobFile(object):
     @classmethod
     def _write_prelude(cls, handle, job_conf):
         """Job script prelude."""
+        # Environment variables for prelude
+        handle.write("\nexport CYLC_DIR='%s'" % (os.environ['CYLC_DIR']))
         if cylc.flags.debug:
-            if 'bash' in job_conf['job script shell']:
-                handle.write("\n\nPS4='+[\D{%Y%m%dT%H%M%S%z}]\u@\h '")
-            handle.write('\n\nset -x')
-        handle.write('\n\necho "JOB SCRIPT STARTING"')
-        # set cylc version and source profile scripts before turning on
-        # error trapping so that profile errors do not abort the job
-        handle.write('\n\nprelude() {')
-        keys = GLOBAL_CFG.get_host_item(
-            'copyable environment variables',
-            job_conf['host'], job_conf['owner'])
-        for key in keys + ['CYLC_DIR', 'CYLC_VERSION']:
+            handle.write("\nexport CYLC_DEBUG='true'")
+        for key in ['CYLC_VERSION'] + cls._get_host_item(
+                job_conf, 'copyable environment variables'):
             if key in os.environ:
-                handle.write("\n    export %s='%s'" % (key, os.environ[key]))
-        handle.write(
-            r'''
-    for FILE_NAME in \
-        "${HOME}/.cylc/job-init-env.sh" \
-        "${CYLC_DIR}/conf/job-init-env.sh" \
-        "${CYLC_DIR}/conf/job-init-env-default.sh"
-    do
-        if [[ -f "${FILE_NAME}" ]]; then
-            . "${FILE_NAME}" 1>/dev/null 2>&1
-            break
-        fi
-    done
-}
-prelude''')
-
-    @classmethod
-    def _write_err_trap(cls, handle, job_conf):
-        """Write error trap.
-
-        Note that the job script must be bash- and ksh-compatible, hence use of
-        "typeset" below instead of the more sensible but bash-specific "local".
-
-        """
-        args = {
-            "signals_str": " ".join(
-                BATCH_SYS_MANAGER.get_fail_signals(job_conf)),
-            "priority": TaskMessage.CRITICAL,
-            "message1": TASK_OUTPUT_FAILED,
-            "message2": TaskMessage.FAIL_MESSAGE_PREFIX}
-        handle.write(r"""
-
-# TRAP ERROR SIGNALS:
-set -u # Fail when using an undefined variable
-FAIL_SIGNALS='%(signals_str)s'
-TRAP_FAIL_SIGNAL() {
-    typeset SIGNAL=$1
-    echo "Received signal $SIGNAL" >&2
-    typeset S=
-    for S in ${VACATION_SIGNALS:-} $FAIL_SIGNALS; do
-        trap "" $S
-    done
-    if [[ -n "${CYLC_TASK_MESSAGE_STARTED_PID:-}" ]]; then
-        wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
-    fi
-    cylc task message -p '%(priority)s' "%(message2)s$SIGNAL" '%(message1)s'
-    exit 1
-}
-for S in $FAIL_SIGNALS; do
-    trap "TRAP_FAIL_SIGNAL $S" $S
-done
-unset S""" % args)
-
-        vacation_signal = BATCH_SYS_MANAGER.get_vacation_signal(job_conf)
-        if vacation_signal:
-            args = {
-                "signals_str": vacation_signal,
-                "priority": TaskMessage.WARNING,
-                "message": TaskMessage.VACATION_MESSAGE_PREFIX}
-            handle.write(r"""
-
-# TRAP VACATION SIGNALS:
-VACATION_SIGNALS='%(signals_str)s'
-TRAP_VACATION_SIGNAL() {
-    typeset SIGNAL=$1
-    echo "Received signal $SIGNAL" >&2
-    typeset S=
-    for S in $VACATION_SIGNALS $FAIL_SIGNALS; do
-        trap "" $S
-    done
-    if [[ -n "${CYLC_TASK_MESSAGE_STARTED_PID:-}" ]]; then
-        wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
-    fi
-    cylc task message -p '%(priority)s' "%(message)s$SIGNAL"
-    exit 1
-}
-S=
-for S in $VACATION_SIGNALS; do
-    trap "TRAP_VACATION_SIGNAL $S" $S
-done
-unset S""" % args)
-        if 'bash' in job_conf['job script shell']:
-            handle.write("\nset -o pipefail")
-
-    @classmethod
-    def _write_init_script(cls, handle, job_conf):
-        """Init-script."""
-        global_init_script = GLOBAL_CFG.get_host_item(
-            'global init-script', job_conf["host"], job_conf["owner"])
-        if global_init_script:
-            handle.write("\n\n# GLOBAL INIT-SCRIPT:\n")
-            handle.write(global_init_script)
-        if not job_conf['init-script']:
-            return
-        handle.write("\n\n# INIT-SCRIPT:\n")
-        handle.write(job_conf['init-script'])
+                handle.write("\nexport %s='%s'" % (key, os.environ[key]))
+        # Variables for traps
+        handle.write("\nCYLC_FAIL_SIGNALS='%s'" % " ".join(
+            BATCH_SYS_MANAGER.get_fail_signals(job_conf)))
+        vacation_signals_str = BATCH_SYS_MANAGER.get_vacation_signal(job_conf)
+        if vacation_signals_str:
+            handle.write("\nCYLC_VACATION_SIGNALS='%s'" % vacation_signals_str)
 
     def _write_environment_1(self, handle, job_conf):
         """Suite and task environment."""
-        handle.write("\n\n# CYLC SUITE ENVIRONMENT:")
-
+        handle.write("\n\ncylc__job__inst__cylc_env() {")
+        handle.write("\n    # CYLC SUITE ENVIRONMENT:")
         # write the static suite variables
         for var, val in sorted(self.suite_env.items()):
-            handle.write("\nexport " + var + "=" + str(val))
+            if var != 'CYLC_DEBUG':
+                handle.write('\n    export %s="%s"' % (var, val))
 
         if str(self.suite_env.get('CYLC_UTC')) == 'True':
-            handle.write("\nexport TZ=UTC")
+            handle.write('\n    export TZ="UTC"')
 
-        handle.write("\n")
+        handle.write('\n')
         # override and write task-host-specific suite variables
-        suite_work_dir = GLOBAL_CFG.get_derived_host_item(
-            job_conf['suite name'], 'suite work directory',
-            job_conf['host'], job_conf['owner'])
-        st_env = {}
-        st_env['CYLC_SUITE_RUN_DIR'] = GLOBAL_CFG.get_derived_host_item(
-            job_conf['suite name'], 'suite run directory',
-            job_conf['host'], job_conf['owner'])
-        st_env['CYLC_SUITE_WORK_DIR'] = suite_work_dir
-        st_env['CYLC_SUITE_SHARE_DIR'] = GLOBAL_CFG.get_derived_host_item(
-            job_conf['suite name'], 'suite share directory',
-            job_conf['host'], job_conf['owner'])
-        # DEPRECATED
-        st_env['CYLC_SUITE_SHARE_PATH'] = '$CYLC_SUITE_SHARE_DIR'
-        rsp = job_conf['remote suite path']
-        if rsp:
-            st_env['CYLC_SUITE_DEF_PATH'] = rsp
+        run_d = self._get_derived_host_item(job_conf, 'suite run directory')
+        work_d = self._get_derived_host_item(job_conf, 'suite work root')
+        handle.write('\n    export CYLC_SUITE_RUN_DIR="%s"' % run_d)
+        if work_d != run_d:
+            # Note: not an environment variable, but used by job.sh
+            handle.write('\n    CYLC_SUITE_WORK_DIR_ROOT="%s"' % work_d)
+        if job_conf['remote_suite_d']:
+            handle.write(
+                '\n    export CYLC_SUITE_DEF_PATH="%s"' %
+                job_conf['remote_suite_d'])
         else:
             # replace home dir with '$HOME' for evaluation on the task host
-            st_env['CYLC_SUITE_DEF_PATH'] = re.sub(
-                os.environ['HOME'], '$HOME',
-                self.suite_env['CYLC_SUITE_DEF_PATH_ON_SUITE_HOST'])
-        for var, val in sorted(st_env.items()):
-            handle.write("\nexport " + var + "=" + str(val))
+            handle.write(
+                '\n    export CYLC_SUITE_DEF_PATH="%s"' %
+                os.environ['CYLC_SUITE_DEF_PATH'].replace(
+                    os.environ['HOME'], '${HOME}'))
+        handle.write(
+            '\n    export CYLC_SUITE_DEF_PATH_ON_SUITE_HOST="%s"' %
+            os.environ['CYLC_SUITE_DEF_PATH'])
 
-        task_work_dir = os.path.join(
-            suite_work_dir, job_conf['work sub-directory'])
+        handle.write("\n\n    # CYLC TASK ENVIRONMENT:")
+        handle.write('\n    export CYLC_TASK_JOB="%s"' % job_conf['job_d'])
+        handle.write(
+            '\n    export CYLC_TASK_NAMESPACE_HIERARCHY="%s"' %
+            ' '.join(job_conf['namespace_hierarchy']))
+        handle.write(
+            '\n    export CYLC_TASK_TRY_NUMBER=%s' % job_conf['try_num'])
+        if job_conf['work_d']:
+            # Note: not an environment variable, but used by job.sh
+            handle.write(
+                "\n    CYLC_TASK_WORK_DIR_BASE='%s'" % job_conf['work_d'])
+        handle.write("\n}")
 
-        use_login_shell = GLOBAL_CFG.get_host_item(
-            'use login shell', job_conf['host'], job_conf['owner'])
-        comms = GLOBAL_CFG.get_host_item(
-            'task communication method', job_conf['host'], job_conf['owner'])
-
-        task_name, point_string = TaskID.split(job_conf['task id'])
-        handle.write("\n\n# CYLC TASK ENVIRONMENT:")
-        handle.write("\nexport CYLC_TASK_COMMS_METHOD=" + comms)
-        handle.write("\nexport CYLC_TASK_CYCLE_POINT=" + point_string)
-        handle.write("\nexport CYLC_TASK_CYCLE_TIME=" + point_string)
-        handle.write("\nexport CYLC_TASK_ID=" + job_conf['task id'])
-        handle.write(
-            "\nexport CYLC_TASK_LOG_ROOT=" + job_conf['job file path'])
-        handle.write(
-            "\nexport CYLC_TASK_MSG_MAX_TRIES=" +
-            str(GLOBAL_CFG.get(['task messaging', 'maximum number of tries'])))
-        handle.write(
-            "\nexport CYLC_TASK_MSG_RETRY_INTVL=%f" %
-            GLOBAL_CFG.get(['task messaging', 'retry interval']))
-        handle.write(
-            "\nexport CYLC_TASK_MSG_TIMEOUT=%f" %
-            GLOBAL_CFG.get(['task messaging', 'connection timeout']))
-        handle.write("\nexport CYLC_TASK_NAME=" + task_name)
-        handle.write(
-            '\nexport CYLC_TASK_NAMESPACE_HIERARCHY="' +
-            ' '.join(job_conf['namespace hierarchy']) + '"')
-        handle.write(
-            "\nexport CYLC_TASK_SSH_LOGIN_SHELL=" + str(use_login_shell))
-        handle.write(
-            "\nexport CYLC_TASK_SUBMIT_NUMBER=" + str(job_conf['submit num']))
-        handle.write(
-            "\nexport CYLC_TASK_TRY_NUMBER=" +
-            str(job_conf['try number']))
-        handle.write("\nexport CYLC_TASK_WORK_DIR=" + task_work_dir)
-        # DEPRECATED
-        handle.write("\nexport CYLC_TASK_WORK_PATH=$CYLC_TASK_WORK_DIR")
-        handle.write("\nexport %s=$$" % (TaskMessage.CYLC_JOB_PID))
-
-    @classmethod
-    def _write_env_script(cls, handle, job_conf):
-        """Env-script."""
-        if not job_conf['env-script']:
-            return
-        handle.write("\n\n# ENV-SCRIPT:\n")
-        handle.write(job_conf['env-script'])
-
-    @classmethod
-    def _write_suite_bin_access(cls, handle, _):
-        """Suite bin/ directory access."""
-        handle.write(
-            "\n\n# ACCESS TO THE SUITE BIN DIRECTORY:" +
-            "\nexport PATH=$CYLC_SUITE_DEF_PATH/bin:$PATH")
+        # SSH comms variables. Note:
+        # For "poll", contact file will not be installed, and job will not
+        # attempt to communicate back.
+        # Otherwise, job will attempt to communicate back via HTTP(S).
+        comms = self._get_host_item(job_conf, 'task communication method')
+        if comms == 'ssh':
+            handle.write("\n\n    # CYLC MESSAGE ENVIRONMENT:")
+            handle.write('\n    export CYLC_TASK_COMMS_METHOD="%s"' % comms)
+            handle.write(
+                '\n    export CYLC_TASK_SSH_LOGIN_SHELL="%s"' %
+                self._get_host_item(job_conf, 'use login shell'))
 
     def _write_environment_2(self, handle, job_conf):
         """Run time environment part 2."""
-        env = job_conf['runtime environment']
-        if not env:
-            return
+        if job_conf['environment']:
+            handle.write("\n\ncylc__job__inst__user_env() {")
+            # Generate variable assignment expressions
+            handle.write("\n    # TASK RUNTIME ENVIRONMENT:")
+            for var, val in job_conf['environment'].items():
+                value = str(val)  # (needed?)
+                match = re.match(r"^(~[^/\s]*/)(.*)$", value)
+                if match:
+                    # ~foo/bar or ~/bar
+                    # write as ~foo/"bar" or ~/"bar"
+                    head, tail = match.groups()
+                    handle.write('\n    %s=%s"%s"' % (var, head, tail))
+                elif re.match(r"^~[^\s]*$", value):
+                    # plain ~foo or just ~
+                    # just leave unquoted as subsequent spaces don't
+                    # make sense in this case anyway
+                    handle.write('\n    %s=%s' % (var, value))
+                else:
+                    # Non tilde values - quote the lot.
+                    # This gets values like "~one ~two" too, but these
+                    # (in variable values) aren't expanded by the shell
+                    # anyway so it doesn't matter.
+                    handle.write('\n    %s="%s"' % (var, value))
 
-        # generate variable assignment expressions
-        handle.write("\n\n# TASK RUNTIME ENVIRONMENT:")
-        for var, val in env.items():
-            handle.write(self._get_var_assign(var, val))
+                # NOTE ON TILDE EXPANSION:
+                # The code above handles the following correctly:
+                # | ~foo/bar
+                # | ~/bar
+                # | ~/filename with spaces
+                # | ~foo
+                # | ~
 
-        # export them all now (see note)
-        handle.write("\nexport")
-        for var in env:
-            handle.write(" " + var)
+            # NOTE: the reason for separate export of user-specified
+            # variables is this: inline export does not activate the
+            # error trap if sub-expressions fail, e.g. (note typo in
+            # 'echo' command name):
+            # export FOO=$( ecko foo )  # error not trapped!
+            # FOO=$( ecko foo )  # error trapped
+            handle.write("\n    export")
+            for var in job_conf['environment']:
+                handle.write(" " + var)
+            handle.write("\n}")
 
     @classmethod
-    def _get_var_assign(cls, var, value):
-        """Generate an environment variable assignment expression 'var=value'.
+    def _write_global_init_script(cls, handle, job_conf):
+        """Global Init-script."""
+        global_init_script = cls._get_host_item(
+            job_conf, 'global init-script')
+        if global_init_script:
+            handle.write("\n\ncylc__job__inst__global_init_script() {")
+            handle.write("\n# GLOBAL-INIT-SCRIPT:\n")
+            handle.write(global_init_script)
+            handle.write("\n}")
 
-        Values are quoted to handle internal spaces, but escape initial tilde
-        (quoting disables tilde expansion).
+    @staticmethod
+    def _write_script(handle, job_conf):
+        """Write (*-)script in functions.
 
+        init-script, env-script, err-script, pre-script, script, post-script
         """
-        value = str(value)  # (needed?)
-        match = re.match(r"^(~[^/\s]*/)(.*)$", value)
-        if match:
-            # ~foo/bar or ~/bar
-            # write as ~foo/"bar" or ~/"bar"
-            head, tail = match.groups()
-            expr = '\n%s=%s"%s"' % (var, head, tail)
-        elif re.match(r"^~[^\s]*$", value):
-            # plain ~foo or just ~
-            # just leave unquoted as subsequent spaces don't
-            # make sense in this case anyway
-            expr = '\n%s=%s' % (var, value)
-        else:
-            # Non tilde values - quote the lot.
-            # This gets values like "~one ~two" too, but these
-            # (in variable values) aren't expanded by the shell
-            # anyway so it doesn't matter.
-            expr = '\n%s="%s"' % (var, value)
-
-        # NOTE ON TILDE EXPANSION:
-        # The code above handles the following correctly:
-        # | ~foo/bar
-        # | ~/bar
-        # | ~/filename with spaces
-        # | ~foo
-        # | ~
-
-        # NOTE: the reason for separate export of user-specified
-        # variables is this: inline export does not activate the
-        # error trap if sub-expressions fail, e.g. (note typo in
-        # 'echo' command name):
-        # export FOO=$( ecko foo )  # error not trapped!
-        # FOO=$( ecko foo )  # error trapped
-
-        return expr
-
-    @classmethod
-    def _write_task_started(cls, handle, _):
-        """Script to send start message and create work directory."""
-        handle.write(r"""
-
-# SEND TASK STARTED MESSAGE:
-cylc task message '%(message)s' &
-CYLC_TASK_MESSAGE_STARTED_PID=$!
-
-# SHARE DIRECTORY CREATE:
-mkdir -p $CYLC_SUITE_SHARE_DIR || true
-
-# WORK DIRECTORY CREATE:
-mkdir -p $(dirname $CYLC_TASK_WORK_DIR) || true
-mkdir -p $CYLC_TASK_WORK_DIR
-cd $CYLC_TASK_WORK_DIR""" % {"message": TASK_OUTPUT_STARTED})
-
-    @classmethod
-    def _write_identity_script(cls, handle, _):
-        """Write script for suite and task identity."""
-        handle.write(r"""
-
-# TASK SELF-IDENTIFY:
-echo "cylc Suite and Task Identity:"
-echo "  Suite Name  : $CYLC_SUITE_NAME"
-echo "  Suite Host  : $CYLC_SUITE_HOST"
-echo "  Suite Port  : $CYLC_SUITE_PORT"
-echo "  Suite Owner : $CYLC_SUITE_OWNER"
-echo "  Task ID     : $CYLC_TASK_ID"
-if [[ $(uname) == AIX ]]; then
-    # on AIX the hostname command has no '-f' option
-    __TMP_DOMAIN=$(namerslv -sn 2>/dev/null | awk '{print $2}')
-    echo "  Task Host   : $(hostname).${__TMP_DOMAIN}"
-else
-    echo "  Task Host   : $(hostname -f)"
-fi
-echo "  Task Owner  : $USER"
-echo "  Task Submit No.: $CYLC_TASK_SUBMIT_NUMBER"
-echo "  Task Try No.: $CYLC_TASK_TRY_NUMBER"
-echo""")
-
-    @classmethod
-    def _write_script(cls, handle, job_conf):
-        """Write pre-script, script, and post-script."""
-        for prefix in ['pre-', '', 'post-']:
+        for prefix in ['init-', 'env-', 'err-', 'pre-', '', 'post-']:
             value = job_conf[prefix + 'script']
             if value:
-                handle.write("\n\n# %sSCRIPT:\n%s" % (
+                handle.write("\n\ncylc__job__inst__%sscript() {" % (
+                    prefix.replace("-", "_")))
+                handle.write("\n# %sSCRIPT:\n%s" % (
                     prefix.upper(), value))
+                handle.write("\n}")
 
-    @classmethod
-    def _write_epilogue(cls, handle, job_conf):
+    @staticmethod
+    def _write_epilogue(handle, job_conf):
         """Write epilogue."""
-        handle.write(r"""
-
-# EMPTY WORK DIRECTORY REMOVE:
-cd
-rmdir $CYLC_TASK_WORK_DIR 2>/dev/null || true
-
-# SEND TASK SUCCEEDED MESSAGE:
-wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
-cylc task message '%(message)s'
-
-echo 'JOB SCRIPT EXITING (TASK SUCCEEDED)'
-trap '' EXIT
-
-""" % {"message": TASK_OUTPUT_SUCCEEDED})
-
-        handle.write("%s%s\n" % (
-            BATCH_SYS_MANAGER.LINE_PREFIX_EOF, job_conf['job log dir']))
+        handle.write('\n\n. "${CYLC_DIR}/lib/cylc/job.sh"\ncylc__job__main')
+        handle.write("\n\n%s%s\n" % (
+            BATCH_SYS_MANAGER.LINE_PREFIX_EOF, job_conf['job_d']))

@@ -34,7 +34,7 @@ __SUITE_RC__
 run_ok "${TEST_NAME_BASE}" \
     cylc jobscript --icp=20200101T0000Z "${SUITE_NAME}" 'foo.20200101T0000Z'
 contains_ok "${TEST_NAME_BASE}.stdout" <<__OUT__
-export CYLC_SUITE_INITIAL_CYCLE_POINT=20200101T0000Z
+    export CYLC_SUITE_INITIAL_CYCLE_POINT="20200101T0000Z"
 __OUT__
 cmp_ok "${TEST_NAME_BASE}.stderr" <<__ERR__
 Task Job Script Generated: ${SUITE_RUN_DIR}/log/job/20200101T0000Z/foo/01/job

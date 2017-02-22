@@ -22,6 +22,9 @@ import os
 from cylc.run_get_stdout import run_get_stdout
 
 
+UNKNOWN = "UNKNOWN"
+
+
 def _get_cylc_version():
     """Determine and return cylc version string."""
 
@@ -36,7 +39,7 @@ def _get_cylc_version():
         if is_ok and outlines:
             return outlines[0]
         else:
-            raise SystemExit("Failed to get version number!")
+            return UNKNOWN
 
     else:
         # We're running in a raw cylc source tree, so read the version
@@ -45,12 +48,7 @@ def _get_cylc_version():
             for line in open(os.path.join(cylc_dir, 'VERSION')):
                 return line.rstrip()
         except IOError:
-            raise SystemExit(
-                "*** ERROR, failed to read the cylc VERSION file.***\n" +
-                "Please inform your cylc admin user.\n" +
-                "This file should have been created by running 'make' or\n" +
-                "'make version' after unpacking the cylc release tarball.\n" +
-                "ABORTING")
+            return UNKNOWN
 
 
 CYLC_VERSION = _get_cylc_version()

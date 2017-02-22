@@ -96,9 +96,15 @@ class SuiteInfoServer(BaseCommsServer):
                       ungroup_recursive=False, group_all=False,
                       ungroup_all=False):
         if isinstance(group_nodes, basestring):
-            group_nodes = ast.literal_eval(group_nodes)
+            try:
+                group_nodes = ast.literal_eval(group_nodes)
+            except ValueError:
+                group_nodes = [group_nodes]
         if isinstance(ungroup_nodes, basestring):
-            ungroup_nodes = ast.literal_eval(ungroup_nodes)
+            try:
+                ungroup_nodes = ast.literal_eval(ungroup_nodes)
+            except ValueError:
+                ungroup_nodes = [ungroup_nodes]
         if isinstance(ungroup_recursive, basestring):
             ungroup_recursive = ast.literal_eval(ungroup_recursive)
         if isinstance(group_all, basestring):
