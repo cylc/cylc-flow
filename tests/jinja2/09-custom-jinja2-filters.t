@@ -35,4 +35,6 @@ done
 # Run Jinja2 custom filters suite.
 TEST_NAME="${TEST_NAME_BASE}"-run-filters
 install_suite "${TEST_NAME_BASE}-install-filter-suite" "${TEST_NAME_BASE}"
-run_ok "${TEST_NAME}" cylc run "${SUITE_NAME}" --reference-test
+run_ok "${TEST_NAME}" cylc run "${SUITE_NAME}" --reference-test --debug
+#-------------------------------------------------------------------------------
+purge_suite "${SUITE_NAME}"

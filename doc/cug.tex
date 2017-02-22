@@ -4977,6 +4977,16 @@ Examples:
     \item \lstinline={{START_CYCLE | strftime('%H:%M:%S %z')}}= - 08:00:00 +01
 \end{myitemize}
 
+It is also possible to parse non-standard date-time strings by passing a
+strptime string as the second argument.
+
+Examples:
+
+\begin{myitemize}
+    \item \lstinline={{'12,30,2000' | strftime('%m', '%m,%d,%Y')}}= - 12
+    \item \lstinline={{'1066/10/14 08:00:00' | strftime('%Y%m%dT%H', '%Y/%m/%d %H:%M:%S')}}= - 10661014T08
+\end{myitemize}
+
 \subsubsection{Associative Arrays In Jinja2}
 
 Associative arrays ({\em dicts} in Python) can be very useful.
