@@ -193,8 +193,9 @@ Dependency graph suite control interface.
                 if task_id not in self.t.state_summary:
                     return False
                 t_state = self.t.state_summary[task_id]['state']
-            default_menu = self.get_right_click_menu(
-                [task_id], [t_state], task_is_family=[is_fam])
+            default_menu = self.get_right_click_menu([task_id], [t_state],
+                                                     task_is_family=[is_fam],
+                                                     is_graph_view=True)
             dm_kids = default_menu.get_children()
             for item in reversed(dm_kids[:2]):
                 # Put task name and URL at the top.
