@@ -1243,21 +1243,21 @@ been defined for this suite""").inform()
             self._popup_logview(task_id, task_state_summary, choice)
         return False
 
+    def connect_right_click_sub_menu(self, is_graph_view, item, x, y, z):
+        """Handle right-clicks in sub-menus"""
+        if is_graph_view:
+            item.connect('button-release-event', x, y, z)
+        else:
+            item.connect('activate', x, None, y, z)
+
     def get_right_click_menu(self, task_ids, t_states, task_is_family=False,
                              is_graph_view=False):
         """Return the default menu for a list of tasks."""
 
         # NOTE: we have to respond to 'button-release-event' rather than
         # 'activate' in order for sub-menus to work in the graph-view.
-        # sub_menu_connect should be used in preference to item.connect
-        # to handle this
-
-        if is_graph_view:
-            sub_menu_connect = lambda item, x, y, z: \
-                item.connect('button-release-event', x, y, z)
-        else:
-            sub_menu_connect = lambda item, x, y, z: \
-                item.connect('activate', x, None, y, z)
+        # connect_right_click_sub_menu should be used in preference to
+        # item.connect to handle this
 
         if type(task_is_family) is bool:
             task_is_family = [task_is_family] * len(task_ids)
@@ -1309,7 +1309,8 @@ been defined for this suite""").inform()
 
                 # NOTE: we have to respond to 'button-release-event' rather
                 # than 'activate' in order for sub-menus to work in the
-                # graph-view so use sub_menu_connect instead of item.connect
+                # graph-view so use connect_right_click_sub_menu instead of
+                # item.connect
 
                 for key, filename in [
                         ('job script', 'job'),
@@ -1319,8 +1320,9 @@ been defined for this suite""").inform()
                     item.set_image(gtk.image_new_from_stock(
                         gtk.STOCK_DND, gtk.ICON_SIZE_MENU))
                     view_menu.append(item)
-                    sub_menu_connect(item, self.view_task_info,
-                                     task_ids[0], filename)
+                    self.connect_right_click_sub_menu(is_graph_view, item,
+                                                      self.view_task_info,
+                                                      task_ids[0], filename)
                     item.set_sensitive(
                         t_states[0] in TASK_STATUSES_WITH_JOB_SCRIPT)
 
@@ -1331,13 +1333,9 @@ been defined for this suite""").inform()
                     item.set_image(gtk.image_new_from_stock(
                         gtk.STOCK_DND, gtk.ICON_SIZE_MENU))
                     view_menu.append(item)
-                    if is_graph_view:
-                        item.connect('button-release-event',
-                                     self.view_task_info,
-                                     task_ids[0], filename)
-                    else:
-                        item.connect('activate', self.view_task_info, None,
-                                     task_ids[0], filename)
+                    self.connect_right_click_sub_menu(is_graph_view, item,
+                                                      self.view_task_info,
+                                                      task_ids[0], filename)
                     item.set_sensitive(
                         t_states[0] in TASK_STATUSES_WITH_JOB_LOGS)
 
@@ -1432,23 +1430,26 @@ been defined for this suite""").inform()
 
         # NOTE: we have to respond to 'button-release-event' rather
         # than 'activate' in order for sub-menus to work in the
-        # graph-view so use sub_menu_connect instead of item.connect
+        # graph-view so use connect_right_click_sub_menu instead of
+        # item.connect
 
         reset_ready_item = gtk.ImageMenuItem('"%s"' % TASK_STATUS_READY)
         reset_img = gtk.image_new_from_stock(
             gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU)
         reset_ready_item.set_image(reset_img)
         reset_menu.append(reset_ready_item)
-        sub_menu_connect(reset_ready_item, self.reset_task_state,
-                         task_ids, TASK_STATUS_READY)
+        self.connect_right_click_sub_menu(is_graph_view, reset_ready_item,
+                                          self.reset_task_state, task_ids,
+                                          TASK_STATUS_READY)
 
         reset_waiting_item = gtk.ImageMenuItem('"%s"' % TASK_STATUS_WAITING)
         reset_img = gtk.image_new_from_stock(
             gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU)
         reset_waiting_item.set_image(reset_img)
         reset_menu.append(reset_waiting_item)
-        sub_menu_connect(reset_waiting_item, self.reset_task_state,
-                         task_ids, TASK_STATUS_WAITING)
+        self.connect_right_click_sub_menu(is_graph_view, reset_waiting_item,
+                                          self.reset_task_state, task_ids,
+                                          TASK_STATUS_WAITING)
 
         reset_succeeded_item = gtk.ImageMenuItem(
             '"%s"' % TASK_STATUS_SUCCEEDED)
@@ -1456,16 +1457,18 @@ been defined for this suite""").inform()
                                              gtk.ICON_SIZE_MENU)
         reset_succeeded_item.set_image(reset_img)
         reset_menu.append(reset_succeeded_item)
-        sub_menu_connect(reset_succeeded_item, self.reset_task_state,
-                         task_ids, TASK_STATUS_SUCCEEDED)
+        self.connect_right_click_sub_menu(is_graph_view, reset_succeeded_item,
+                                          self.reset_task_state, task_ids,
+                                          TASK_STATUS_SUCCEEDED)
 
         reset_failed_item = gtk.ImageMenuItem('"%s"' % TASK_STATUS_FAILED)
         reset_img = gtk.image_new_from_stock(gtk.STOCK_CONVERT,
                                              gtk.ICON_SIZE_MENU)
         reset_failed_item.set_image(reset_img)
         reset_menu.append(reset_failed_item)
-        sub_menu_connect(reset_failed_item, self.reset_task_state,
-                         task_ids, TASK_STATUS_FAILED)
+        self.connect_right_click_sub_menu(is_graph_view, reset_failed_item,
+                                          self.reset_task_state, task_ids,
+                                          TASK_STATUS_FAILED)
 
         spawn_item = gtk.ImageMenuItem('Force spawn')
         img = gtk.image_new_from_stock(gtk.STOCK_ADD, gtk.ICON_SIZE_MENU)
