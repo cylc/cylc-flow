@@ -7,12 +7,11 @@
             graph = strftime => pad => end
 [runtime]
     [[strftime]]
-        pre-script = if [[ $TEST_1 != '00' ]]; then fail; fi
-        script = if [[ $TEST_2 != '30' ]]; then fail; fi
+        script = test $TEST_1 == '00'; test $TEST_2 == '30'
         [[[environment]]]
             TEST_1 = {{ '2000' | strftime('%H') }}
             TEST_2 = {{ '12-30-2000' | strftime('%d', '%m-%d-%Y') }}
     [[pad]]
-        script = if [[ {{ 42 | pad(3, 0) }} != '042' ]]; then fail; fi
+        script = test {{ 42 | pad(3, 0) }} == '042'
     [[end]]
         script = true

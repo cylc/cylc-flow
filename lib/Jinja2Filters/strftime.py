@@ -18,14 +18,15 @@
 from isodatetime.parsers import TimePointParser
 
 
-def strftime(iso8601_datetime, strftime, strptime=None):
+def strftime(iso8601_datetime, strftime_str, strptime_str=None):
     """Format an iso8601 datetime string using an strftime string.
 
     Args:
         iso8601_datetime (str): Any valid ISO8601 datetime as a string.
-        strftime (str): A valid strftime string to format the output datetime.
-        strptime (str - optional): A valid strptime string defining the format
-            of the provided iso8601_datetime.
+        strftime_str (str): A valid strftime string to format the output
+            datetime.
+        strptime_str (str - optional): A valid strptime string defining the
+            format of the provided iso8601_datetime.
 
     Return:
         The result of applying the strftime to the iso8601_datetime as parsed
@@ -71,7 +72,7 @@ def strftime(iso8601_datetime, strftime, strptime=None):
         ...     print type(exc)
         <class 'isodatetime.parser_spec.StrftimeSyntaxError'>
     """
-    if not strptime:
-        return TimePointParser().parse(iso8601_datetime).strftime(strftime)
-    return TimePointParser().strptime(iso8601_datetime, strptime).strftime(
-        strftime)
+    if not strptime_str:
+        return TimePointParser().parse(iso8601_datetime).strftime(strftime_str)
+    return TimePointParser().strptime(iso8601_datetime, strptime_str).strftime(
+        strftime_str)
