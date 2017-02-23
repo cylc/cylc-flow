@@ -423,47 +423,78 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
             self._dump_item(srv_d, self.FILE_BASE_PASSPHRASE, ''.join(
                 random.sample(self.PASSPHRASE_CHARSET, self.PASSPHRASE_LEN)))
 
-        # Create a new certificate/private key for the suite if necessary.
-        if not (self._locate_item(self.FILE_BASE_SSL_PEM, srv_d) and
-                self._locate_item(self.FILE_BASE_SSL_CERT, srv_d)):
-            self._create_ssl_pem_and_cert(srv_d, reg)
+        # Load or create SSL private key for the suite.
+        pkey_obj = self._get_ssl_pem(srv_d, reg)
 
-    def _create_ssl_pem_and_cert(self, path, reg):
-        """Create ssl.pem and ssl.cert files for suite in path."""
+        # Load or create SSL certificate for the suite.
+        self._get_ssl_cert(srv_d, reg, pkey_obj)
+
+    def _get_ssl_pem(self, path, reg):
+        """Load or create ssl.pem file for suite in path.
+
+        Key for signing the SSL certificate file.
+        """
         try:
             from OpenSSL import crypto
         except ImportError:
             # OpenSSL not installed, so we can't use HTTPS anyway.
             return
-        host = get_hostname()
-        altnames = [
-            "DNS:*", "DNS:%s" % host,
-            "IP:%s" % get_local_ip_address(host),
-            # See https://github.com/kennethreitz/requests/issues/2621
-            "DNS:%s" % get_local_ip_address(host)]
+        file_name = self._locate_item(self.FILE_BASE_SSL_PEM, path)
+        if file_name:
+            return crypto.load_privatekey(
+                crypto.FILETYPE_PEM, open(file_name).read())
+        else:
+            # Create a private key.
+            pkey_obj = crypto.PKey()
+            pkey_obj.generate_key(crypto.TYPE_RSA, 2048)
+            self._dump_item(
+                path, self.FILE_BASE_SSL_PEM,
+                crypto.dump_privatekey(crypto.FILETYPE_PEM, pkey_obj))
+            return pkey_obj
 
+    def _get_ssl_cert(self, path, reg, pkey_obj):
+        """Load or create ssl.cert file for suite in path.
+
+        Self-signed SSL certificate file.
+        """
+        try:
+            from OpenSSL import crypto
+        except ImportError:
+            # OpenSSL not installed, so we can't use HTTPS anyway.
+            return
         # Use suite name as the 'common name', but no more than 64 chars.
-        cert_common_name = reg
+        common_name = reg
         if len(reg) > 64:
-            cert_common_name = reg[:61] + "..."
-
-        # Create a private key.
-        pkey_obj = crypto.PKey()
-        pkey_obj.generate_key(crypto.TYPE_RSA, 2048)
-        self._dump_item(
-            path, self.FILE_BASE_SSL_PEM,
-            crypto.dump_privatekey(crypto.FILETYPE_PEM, pkey_obj))
-
-        # Create a self-signed certificate.
+            common_name = reg[:61] + "..."
+        # See https://github.com/kennethreitz/requests/issues/2621
+        host = get_hostname()
+        ext = crypto.X509Extension(
+            "subjectAltName",
+            False,
+            "DNS:*, DNS:%(dns)s, IP:%(ip)s, DNS:%(ip)s" % {
+                "dns": host, "ip": get_local_ip_address(host)})
+        file_name = self._locate_item(self.FILE_BASE_SSL_CERT, path)
+        if file_name:
+            cert_obj = crypto.load_certificate(
+                crypto.FILETYPE_PEM, open(file_name).read())
+            try:
+                prev_ext = cert_obj.get_extension(0)
+            except (AttributeError, IndexError):
+                pass
+            else:
+                if (cert_obj.get_subject().CN == common_name and
+                        not cert_obj.has_expired() and
+                        str(prev_ext) == str(ext)):
+                    return  # certificate good for the same suite and host
+        # Generate a new certificate
         cert_obj = crypto.X509()
         cert_obj.get_subject().O = "Cylc"
-        cert_obj.get_subject().CN = cert_common_name
+        cert_obj.get_subject().CN = common_name
         cert_obj.gmtime_adj_notBefore(0)
         cert_obj.gmtime_adj_notAfter(10 * 365 * 24 * 60 * 60)  # 10 years.
         cert_obj.set_issuer(cert_obj.get_subject())
         cert_obj.set_pubkey(pkey_obj)
-        cert_obj.add_extensions([crypto.X509Extension(
-            "subjectAltName", False, ", ".join(altnames))])
+        cert_obj.add_extensions([ext])
         cert_obj.sign(pkey_obj, 'sha256')
         self._dump_item(
             path, self.FILE_BASE_SSL_CERT,
