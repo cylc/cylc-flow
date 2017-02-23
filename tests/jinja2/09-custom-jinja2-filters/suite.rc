@@ -1,5 +1,8 @@
 #!Jinja2
 
+[cylc]
+    UTC mode = True
+
 [scheduling]
     initial cycle point = 01231212T1212
     [[dependencies]]
