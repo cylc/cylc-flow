@@ -1511,12 +1511,15 @@ class TaskProxy(object):
         self.summary['state'] = self.state.status
         self.summary['spawned'] = str(self.has_spawned)
         count = len(self.tdef.elapsed_times)
-        if count == 0:
-            self.summary['mean_elapsed_time'] = \
-                max(self.summary['execution_time_limit'], 1)
-        else:
+        if count:
             self.summary['mean_elapsed_time'] = (
                 float(sum(self.tdef.elapsed_times)) / count)
+        elif self.summary['execution_time_limit']:
+            self.summary['mean_elapsed_time'] = \
+                self.summary['execution_time_limit']
+        else:
+            self.summary['mean_elapsed_time'] = None
+
         return self.summary
 
     def next_point(self):
