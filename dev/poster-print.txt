@@ -1,0 +1,14 @@
+How to print large graphs across multiple pages (23 Feb 2017).
+--------------------------------------------------------------
+
+The graphviz dot format has a 'page' section that can apparently split a graph
+over pages, but it's not well documented and difficult to use (it requires
+dimension in inches etc., not simply page and array size such as '3x3 A4').
+
+pdfposter: get latest version from github.  The official one in Ubuntu
+generates blank pages.  This can generate a multi-page pdf.  Unfortunately the
+evince viewer doesn't seem to be able to print them properly - some page edges
+get cropped.
+
+Adobe Reader on Windows can print a single-page PDF over multiple pages. This
+works well.
