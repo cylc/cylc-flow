@@ -1591,13 +1591,15 @@ conditions; see `cylc conditions`.
 
     def update_state_summary(self):
         """Update state summary, e.g. for GUI."""
+        # TODO - why are we using config and self.config here?
+        config = SuiteConfig.get_inst()
         self.suite_state.update(
             self.pool.get_tasks(), self.pool.get_rh_tasks(),
             self.pool.get_min_point(), self.pool.get_max_point(),
             self.pool.get_max_point_runahead(), self.paused(),
             self.will_pause_at(), self.stop_mode is not None,
             self.will_stop_at(), self.config.ns_defn_order,
-            self.pool.do_reload)
+            self.pool.do_reload, config.vis_node_colors)
 
     def check_suite_timer(self):
         """Check if suite has timed out or not."""

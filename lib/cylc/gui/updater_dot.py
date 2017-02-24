@@ -57,6 +57,7 @@ class DotUpdater(threading.Thread):
         self.info_bar = info_bar
         self.last_update_time = None
         self.state_summary = {}
+        self.global_summary = {}
         self.fam_state_summary = {}
         self.ancestors_pruned = {}
         self.descendants = []
@@ -80,8 +81,8 @@ class DotUpdater(threading.Thread):
         self.expanded_rows = []
 
         # generate task state icons
-        dotm = DotMaker(theme, size=dot_size)
-        self.dots = dotm.get_dots()
+        self.dots = DotMaker(theme, size=dot_size)
+        self.current_show_vis_tags = self.updater.show_vis_tags
 
     def _set_tooltip(self, widget, tip_text):
         tip = gtk.Tooltips()
@@ -101,6 +102,10 @@ class DotUpdater(threading.Thread):
             return False
         self.cleared = False
 
+        if self.current_show_vis_tags != self.updater.show_vis_tags:
+            self.action_required = True
+            self.current_show_vis_tags = self.updater.show_vis_tags
+
         if not self.action_required and (
                 self.last_update_time is not None and
                 self.last_update_time >= self.updater.last_update_time):
@@ -109,6 +114,7 @@ class DotUpdater(threading.Thread):
         self.last_update_time = self.updater.last_update_time
         self.updater.set_update(False)
 
+        self.global_summary = deepcopy(self.updater.global_summary)
         self.state_summary = deepcopy(self.updater.state_summary)
         self.fam_state_summary = deepcopy(self.updater.fam_state_summary)
         self.ancestors_pruned = deepcopy(self.updater.ancestors_pruned)
@@ -454,6 +460,11 @@ class DotUpdater(threading.Thread):
         names = tasks_by_name.keys()
         names.sort()
 
+        if self.state_summary:
+            self.dots.regenerate_task_icons(
+                self.state_summary, self.fam_state_summary,
+                self.updater.show_vis_tags, self.global_summary)
+
         if not self.is_transposed:
             self._update_gui_regular(tasks_by_name, state_summary)
         else:
@@ -468,16 +479,12 @@ class DotUpdater(threading.Thread):
             tasks_at_point_string = tasks_by_point_string[point_string]
             state_list = []
             for name in self.task_list:
-                task_id = TaskID.get(name, point_string)
-                if task_id in self.fam_state_summary:
-                    dot_type = 'family'
+                if name not in tasks_at_point_string:
+                    icon = self.dots.empty
                 else:
-                    dot_type = 'task'
-                if name in tasks_at_point_string:
-                    state = state_summary[task_id]['state']
-                    state_list.append(self.dots[dot_type][state])
-                else:
-                    state_list.append(self.dots[dot_type]['empty'])
+                    task_id = TaskID.get(name, point_string)
+                    icon = self.dots.icons[task_id]
+                state_list.append(icon)
             try:
                 self.led_treestore.append(
                     None, row=[point_string] + state_list + [point_string])
@@ -496,16 +503,12 @@ class DotUpdater(threading.Thread):
                 continue
             state_list = []
             for point_string in self.point_strings:
-                if point_string in point_strings_for_tasks:
-                    task_id = TaskID.get(name, point_string)
-                    state = state_summary[task_id]['state']
-                    if task_id in self.fam_state_summary:
-                        dot_type = 'family'
-                    else:
-                        dot_type = 'task'
-                    state_list.append(self.dots[dot_type][state])
+                if point_string not in point_strings_for_tasks:
+                    icon = self.dots.empty
                 else:
-                    state_list.append(self.dots['task']['empty'])
+                    task_id = TaskID.get(name, point_string)
+                    icon = self.dots.icons[task_id]
+                state_list.append(icon)
             try:
                 if name in self.family_tree:
                     # Task is a family.

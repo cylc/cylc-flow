@@ -56,6 +56,8 @@ class TreeUpdater(threading.Thread):
         self.last_update_time = None
         self.ancestors = {}
         self.descendants = []
+        self.state_summary = {}
+        self.global_summary = {}
         self.fam_state_summary = {}
         self._prev_id_named_paths = {}
         self._prev_data = {}
@@ -82,8 +84,8 @@ class TreeUpdater(threading.Thread):
         self._id_tetc_cache = {}
 
         # Generate task state icons.
-        dotm = DotMaker(theme, size=dot_size)
-        self.dots = dotm.get_dots()
+        self.dots = DotMaker(theme, size=dot_size)
+        self.current_show_vis_tags = self.updater.show_vis_tags
 
     def clear_tree(self):
         self.ttreestore.clear()
@@ -98,6 +100,10 @@ class TreeUpdater(threading.Thread):
             return False
         self.cleared = False
 
+        if self.current_show_vis_tags != self.updater.show_vis_tags:
+            self.action_required = True
+            self.current_show_vis_tags = self.updater.show_vis_tags
+
         if not self.action_required and (
                 self.last_update_time is not None and
                 self.last_update_time >= self.updater.last_update_time):
@@ -106,6 +112,7 @@ class TreeUpdater(threading.Thread):
         self.last_update_time = self.updater.last_update_time
 
         self.updater.set_update(False)
+        self.global_summary = deepcopy(self.updater.global_summary)
         self.state_summary = deepcopy(self.updater.state_summary)
         self.fam_state_summary = deepcopy(self.updater.fam_state_summary)
         self.ancestors = deepcopy(self.updater.ancestors)
@@ -179,6 +186,10 @@ class TreeUpdater(threading.Thread):
 
         """
         self.action_required = False
+        if self.state_summary:
+            self.dots.regenerate_task_icons(
+                self.state_summary, self.fam_state_summary,
+                self.updater.show_vis_tags, self.global_summary)
 
         # We've a view -> sort model -> filter model -> base model hierarchy.
         model = self.ttreeview.get_model()
@@ -186,7 +197,7 @@ class TreeUpdater(threading.Thread):
         # Retrieve any user-expanded rows so that we can expand them later.
         # This is only really necessary for edge cases in tree reconstruction.
         expand_me = self._get_user_expanded_row_ids()
-        daemon_time_zone_info = self.updater.global_summary.get(
+        daemon_time_zone_info = self.global_summary.get(
             "daemon time zone info")
 
         # Store the state, times, messages, etc for tasks and families.
@@ -344,15 +355,13 @@ class TreeUpdater(threading.Thread):
                     host = host or "*"
                     message = message or "*"
 
-                icon = self.dots[dot_type][state]
-
                 new_info = [
                     state, host, batch_sys_name, job_id,
                     t_info['submitted_time_string'],
                     t_info['started_time_string'],
                     t_info['finished_time_string'],
                     t_info['mean_elapsed_time_string'],
-                    message, icon, t_info['progress']
+                    message, self.dots.icons[id], t_info['progress']
                 ]
                 dest[point_string][name] = new_info
 

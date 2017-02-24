@@ -66,6 +66,8 @@ class CGraphPlain(pygraphviz.AGraph):
                 node.attr['label'] = u'\u2702'
                 return
             raise
+        node.attr['name'] = name
+        node.attr['point'] = point_string
         label = name
         if name in self.suite_polling_tasks:
             label += "\\n" + self.suite_polling_tasks[name][3]
