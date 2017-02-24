@@ -164,7 +164,7 @@ class TaskState(object):
 
     # Memory optimization - constrain possible attributes to this list.
     __slots__ = ["_STATUS_MAP", "status", "identity", "db_events_insert",
-                 "db_update_status", "log", "_recalc_satisfied",
+                 "db_update_status", "log",
                  "_is_satisfied", "_suicide_is_satisfied", "prerequisites",
                  "suicide_prerequisites", "external_triggers", "outputs",
                  "kill_failed", "hold_swap", "run_mode",
@@ -249,7 +249,6 @@ class TaskState(object):
         self.db_update_status = db_update_status
         self.log = log
 
-        self._recalc_satisfied = True
         self._is_satisfied = False
         self._suicide_is_satisfied = False
 
@@ -287,29 +286,27 @@ class TaskState(object):
 
     def satisfy_me(self, task_output_msgs, task_outputs):
         """Attempt to get my prerequisites satisfied."""
-        self._recalc_satisfied = False
         for preqs in [self.prerequisites, self.suicide_prerequisites]:
             for preq in preqs:
                 if preq.satisfy_me(task_output_msgs, task_outputs):
-                    self._recalc_satisfied = True
+                    self._is_satisfied = None
+                    self._suicide_is_satisfied = None
 
     def prerequisites_are_all_satisfied(self):
         """Return True if (non-suicide) prerequisites are fully satisfied."""
-        if self._recalc_satisfied:
+        if self._is_satisfied is None:
             self._is_satisfied = all(
                 preq.is_satisfied() for preq in self.prerequisites)
         return self._is_satisfied
 
     def prerequisites_are_not_all_satisfied(self):
         """Return True if (any) prerequisites are not fully satisfied."""
-        if self._recalc_satisfied:
-            return (not self.prerequisites_are_all_satisfied() or
-                    not self.suicide_prerequisites_are_all_satisfied())
-        return (not self._is_satisfied or not self._suicide_is_satisfied)
+        return (not self.prerequisites_are_all_satisfied() or
+                not self.suicide_prerequisites_are_all_satisfied())
 
     def suicide_prerequisites_are_all_satisfied(self):
         """Return True if all suicide prerequisites are satisfied."""
-        if self._recalc_satisfied:
+        if self._suicide_is_satisfied is None:
             self._suicide_is_satisfied = all(
                 preq.is_satisfied() for preq in self.suicide_prerequisites)
         return self._suicide_is_satisfied
@@ -332,13 +329,13 @@ class TaskState(object):
         """Set prerequisites to all satisfied."""
         for prereq in self.prerequisites:
             prereq.set_satisfied()
-        self._recalc_satisfied = True
+        self._is_satisfied = None
 
     def set_prerequisites_not_satisfied(self):
         """Reset prerequisites."""
         for prereq in self.prerequisites:
             prereq.set_not_satisfied()
-        self._recalc_satisfied = True
+        self._is_satisfied = None
 
     def prerequisites_dump(self):
         """Dump prerequisites."""
@@ -563,7 +560,8 @@ class TaskState(object):
         # self.triggers[sequence] = [triggers for sequence]
         # Triggers for sequence_i only used if my cycle point is a
         # valid member of sequence_i's sequence of cycle points.
-        self._recalc_satisfied = True
+        self._is_satisfied = None
+        self._suicide_is_satisfied = None
 
         for sequence, exps in tdef.triggers.items():
             for ctrig, exp in exps:
