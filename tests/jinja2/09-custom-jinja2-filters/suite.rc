@@ -1,28 +1,20 @@
 #!Jinja2
 
-{% set START_CYCLE = '01231212T1212' %}
+[cylc]
+    UTC mode = True
 
 [scheduling]
-    initial cycle point = {{START_CYCLE}}
+    initial cycle point = 01231212T1212
     [[dependencies]]
         [[[R1]]]
             graph = strftime => pad => end
 [runtime]
     [[strftime]]
-        script = """
-if [[ "$HOURS:$MINUTES:$SECONDS" != '12:12:0' ]]; then
-    exit 1
-fi
-"""
+        script = test $TEST_1 == '00'; test $TEST_2 == '30'
         [[[environment]]]
-            HOURS = {{ START_CYCLE | strftime('%H') }}
-            MINUTES = {{ START_CYCLE | strftime('%M') }}
-            SECONDS = {{ START_CYCLE | strftime('%S') }}
+            TEST_1 = {{ '2000' | strftime('%H') }}
+            TEST_2 = {{ '12-30-2000' | strftime('%d', '%m-%d-%Y') }}
     [[pad]]
-        script = """
-if [[ {{ 42 | pad(3, 0) }} != '042' ]]; then
-    exit 1
-fi 
-"""
+        script = test {{ 42 | pad(3, 0) }} == '042'
     [[end]]
         script = true
