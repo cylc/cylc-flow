@@ -249,8 +249,8 @@ class TaskState(object):
         self.db_update_status = db_update_status
         self.log = log
 
-        self._is_satisfied = False
-        self._suicide_is_satisfied = False
+        self._is_satisfied = None
+        self._suicide_is_satisfied = None
 
         # Prerequisites.
         self.prerequisites = []
