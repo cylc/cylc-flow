@@ -111,6 +111,11 @@ class SuiteInfoServer(BaseCommsServer):
             group_all = ast.literal_eval(group_all)
         if isinstance(ungroup_all, basestring):
             ungroup_all = ast.literal_eval(ungroup_all)
+        if isinstance(stop_point_string, basestring):
+            try:
+                stop_point_string = ast.literal_eval(stop_point_string)
+            except ValueError:
+                pass
         return self._put(
             "get_graph_raw", (start_point_string, stop_point_string),
             {"group_nodes": group_nodes,
