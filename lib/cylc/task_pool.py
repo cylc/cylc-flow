@@ -795,63 +795,71 @@ class TaskPool(object):
                     self.log.warning("%s: incomplete task event handler %s" % (
                         itask.identity, key))
 
-    def pool_is_stalled(self):
-        """Return True if no active, queued or clock trigger awaiting tasks"""
+    def is_stalled(self):
+        """Return True if the suite is stalled.
+
+        A suite is stalled when:
+        * It has no active tasks.
+        * It has waiting tasks with unmet prerequisites
+          (ignoring clock triggers).
+        """
         can_be_stalled = False
         for itask in self.get_tasks():
-            if itask.point > self.stop_point:
-                # Don't consider task beyond stop point
-                continue
-            if itask.state.status in [
+            if itask.point > self.stop_point or itask.state.status in [
                     TASK_STATUS_SUCCEEDED, TASK_STATUS_EXPIRED]:
-                # Succeeded and expired tasks don't stall the suite
+                # Ignore: Task beyond stop point.
+                # Ignore: Succeeded and expired tasks.
                 continue
             if itask.state.status in TASK_STATUSES_NOT_STALLED or (
-                    not itask.start_time_reached() and
-                    itask.state.status not in TASK_STATUSES_FINAL):
+                    itask.state.status in TASK_STATUS_HELD and
+                    itask.state.hold_swap in TASK_STATUSES_NOT_STALLED):
+                # Pool contains active tasks (or held active tasks)
+                # Return "not stalled" immediately.
                 return False
+            if ((itask.state.status == TASK_STATUS_WAITING or
+                    itask.state.hold_swap == TASK_STATUS_WAITING) and
+                    itask.state.prerequisites_are_all_satisfied()):
+                # Waiting tasks with all prerequisites satisfied,
+                # probably waiting for clock trigger only.
+                # This task can be considered active.
+                # Return "not stalled" immediately.
+                return False
+            # We should be left with (submission) failed tasks and
+            # waiting tasks with unsatisfied prerequisites.
             can_be_stalled = True
         return can_be_stalled
 
     def report_stalled_task_deps(self):
         """Return a set of unmet dependencies"""
-        identities = []
-        prereq_tree = {}
+        prereqs_map = {}
         for itask in self.get_tasks():
-            identities.append(itask.identity)
-            if (itask.start_time_reached() and
-                    itask.state.status == TASK_STATUS_WAITING):
-                prereq_tree[itask.identity] = {'prereqs': []}
-                for prereq in itask.state.prerequisites_dump():
-                    if not prereq[1]:
-                        prereq_tree[itask.identity]['prereqs'].append(
-                            prereq[0])
+            if ((itask.state.status == TASK_STATUS_WAITING or
+                    itask.state.hold_swap == TASK_STATUS_WAITING) and
+                    itask.state.prerequisites_are_not_all_satisfied()):
+                prereqs_map[itask.identity] = []
+                for prereq_str, is_met in itask.state.prerequisites_dump():
+                    if not is_met:
+                        prereqs_map[itask.identity].append(prereq_str)
 
         # prune tree to ignore items that are elsewhere in it
-        clean_keys = []
-        for item in prereq_tree:
-            if item in clean_keys:
-                continue
-            for unsatisfied in prereq_tree[item]['prereqs']:
-                splt_unsatisfied = unsatisfied.split()
-                if splt_unsatisfied[0] == "LABEL:":
-                    unsatisfied_id = splt_unsatisfied[3]
-                elif splt_unsatisfied[0] == "CONDITION:":
+        for id_, prereqs in prereqs_map.copy().items():
+            for prereq in prereqs:
+                prereq_strs = prereq.split()
+                if prereq_strs[0] == "LABEL:":
+                    unsatisfied_id = prereq_strs[3]
+                elif prereq_strs[0] == "CONDITION:":
                     continue
                 else:
-                    unsatisfied_id = splt_unsatisfied[0]
+                    unsatisfied_id = prereq_strs[0]
                 # Clear out tasks with dependencies on other waiting tasks
-                if unsatisfied_id in prereq_tree:
-                    clean_keys.append(item)
+                if unsatisfied_id in prereqs_map:
+                    del prereqs_map[id_]
                     break
 
-        for key in clean_keys:
-            del prereq_tree[key]
-
-        for item, prereqs in prereq_tree.items():
-            self.log.warning("Unmet prerequisites for %s:" % item)
-            for unsatisfied in prereqs['prereqs']:
-                self.log.warning(" * %s" % unsatisfied)
+        for id_, prereqs in prereqs_map.items():
+            self.log.warning("Unmet prerequisites for %s:" % id_)
+            for prereq in prereqs:
+                self.log.warning(" * %s" % prereq)
 
     def poll_task_jobs(self, items=None):
         """Poll jobs of active tasks.
