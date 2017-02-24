@@ -1907,17 +1907,28 @@ conditions; see `cylc conditions`.
             try:
                 itask = tasks[(point, name)]
                 try_timers = itask.event_handler_try_timers
-                job_out = itask.get_job_log_path(
-                    itask.HEAD_MODE_LOCAL, submit_num, "job.out")
-                job_err = itask.get_job_log_path(
-                    itask.HEAD_MODE_LOCAL, submit_num, "job.err")
-                if os.path.exists(job_out) or os.path.exists(job_err):
-                    log_ctx = SuiteProcContext((key1, submit_num), None)
+                # All completed jobs are expected to have a "job.out".
+                names = ["job.out"]
+                # Failed jobs are expected to have a "job.err".
+                if itask.state.status != TASK_STATUS_SUCCEEDED:
+                    names.append("job.err")
+                name_oks = {}
+                for name in names:
+                    name_oks[name] = os.path.exists(itask.get_job_log_path(
+                        itask.HEAD_MODE_LOCAL, submit_num, name))
+                # All expected paths must exist to record a good attempt
+                log_ctx = SuiteProcContext((key1, submit_num), None)
+                if all(name_oks.values()):
                     log_ctx.ret_code = 0
-                    itask.command_log(log_ctx)
                     del try_timers[(key1, submit_num)]
                 else:
+                    log_ctx.ret_code = 1
+                    log_ctx.err = "File(s) not retrieved:"
+                    for name, exist_ok in sorted(name_oks.items()):
+                        if not exist_ok:
+                            log_ctx.err += " %s" % name
                     try_timers[(key1, submit_num)].unset_waiting()
+                itask.command_log(log_ctx)
             except KeyError:
                 if cylc.flags.debug:
                     ERR.debug(traceback.format_exc())
