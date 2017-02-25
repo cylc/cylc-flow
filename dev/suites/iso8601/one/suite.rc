@@ -11,17 +11,17 @@
 
         # TESTED:
         #[[[ PT6H ]]]
-        #    graph = "foo[T-PT6H] => foo => bar"
+        #    graph = "foo[-PT6H] => foo => bar"
 
         [[[ R1 ]]]
             graph = "cold_foo => foo"
 
         # TESTED:
         [[[ PT1H30M ]]]
-            graph = "foo[T-PT1H30M] => foo => bar"
+            graph = "foo[-PT1H30M] => foo => bar"
 
         [[[ PT5H ]]]
-            graph = "qux[T-PT5H] => qux"
+            graph = "qux[-PT5H] => qux"
 
         [[[ T06 ]]]
             graph = "foo => wibble"

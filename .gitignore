@@ -37,3 +37,5 @@ conf/*/*.rc.processed
 # suite passphrases
 passphrase
 
+# profiling
+.profiling
