@@ -954,9 +954,6 @@ class SuiteConfig(object):
                 if name not in self.runtime['first-parent descendants'][p]:
                     self.runtime['first-parent descendants'][p].append(name)
 
-        # for name in self.cfg['runtime']:
-        #     print name, self.runtime['linearized ancestors'][name]
-
     def compute_inheritance(self, use_simple_method=True):
         if cylc.flags.verbose:
             OUT.info("Parsing the runtime namespace hierarchy")

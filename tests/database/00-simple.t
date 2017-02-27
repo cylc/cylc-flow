@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Suite database content, a basic non-cycling suite of 3 tasks
 . "$(dirname "$0")/test_header"
-set_test_number 8
+set_test_number 9
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
@@ -63,6 +63,11 @@ cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
 
 NAME='select-task-states.out'
 sqlite3 "${DB_FILE}" 'SELECT name, cycle, status FROM task_states ORDER BY name' \
+    >"${NAME}"
+cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
+
+NAME='select-linearization.out'
+sqlite3 "${DB_FILE}" 'SELECT namespace, linearization FROM linearization ORDER BY namespace' \
     >"${NAME}"
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
 
