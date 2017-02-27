@@ -3893,6 +3893,121 @@ be finished first:
             graph = "A[-PT24H] | A[-PT18H] | A[-PT12H] | A[-PT6H] => A"
 \end{lstlisting}
 
+\subsubsection{How The Graph Determines Task Instantiation}
+
+A graph trigger pair like \lstinline@foo => bar@ determines the existence and
+prerequisites (dependencies) of the downstream task \lstinline=bar=, for
+the cycle points defined by the associated graph section heading. In general it
+does not say anything about the dependencies or existence of the upstream task
+\lstinline=foo=. However {\em if the trigger has no cycle point offset} Cylc
+will infer that \lstinline=bar= must exist at the same cycle points as
+\lstinline=foo=. This is a convenience to allow this:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+graph = "foo => bar"
+\end{lstlisting}
+
+to be written as shorthand for this:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+graph = """foo
+           foo => bar"""
+\end{lstlisting}
+
+(where \lstinline=foo= by itself means \lstinline@<nothing> => foo@, i.e.\ the
+task exists at these cycle points but has no prerequisites - although other
+prerequisites may be defined for it in other parts of the graph).
+
+{\em Cylc does not infer the existence of the upstream task in offset
+triggers} like \lstinline@foo[-P1D] => bar@ because, as explained in
+Section~\ref{cylc-6-migration-implicit-cycling}, a typo in the offset interval
+should generate an error rather than silently creating tasks on an erroneous
+cycling sequence.
+
+As a result you need to be careful not to define inter-cycle dependencies that
+cannot be satisfied at run time. Suite validation catches this kind of error if
+the existence of the cycle offset task is not defined anywhere at all:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    initial cycle point = 2020
+    [[dependencies]]
+        [[[P1Y]]]
+            # ERROR
+            graph = "foo[-P1Y] => bar"
+\end{lstlisting}
+
+\lstset{language=transcript}
+\begin{lstlisting}
+$ cylc validate SUITE
+'ERROR: No cycling sequences defined for foo'
+\end{lstlisting}
+
+To fix this, use another line in the graph to tell Cylc to define
+\lstinline=foo= at each cycle point:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    initial cycle point = 2020
+    [[dependencies]]
+        [[[P1Y]]]
+            graph = """
+                foo
+                foo[-P1Y] => bar"""
+\end{lstlisting}
+
+But validation does not catch this kind of error if the offset task
+is defined only on a different cycling sequence:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    initial cycle point = 2020
+    [[dependencies]]
+        [[[P2Y]]]
+            graph = """foo
+                # ERROR
+                foo[-P1Y] => bar"""
+\end{lstlisting}
+
+This suite will validate OK, but it will stall at runtime with \lstinline=bar=
+waiting on \lstinline=foo[-P1Y]= at the intermediate years where it does not
+exist. The offset \lstinline=[-P1Y]= is presumably an error (it should be
+\lstinline=[-P2Y]=), or else another graph line is needed to generate
+\lstinline=foo= instances on the yearly sequence:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    initial cycle point = 2020
+    [[dependencies]]
+        [[[P1Y]]]
+            graph = "foo"
+        [[[P2Y]]]
+            graph = "foo[-P1Y] => bar"
+\end{lstlisting}
+
+Similarly the following suite will validate OK, but it will stall at
+runtime with \lstinline=bar= waiting on \lstinline=foo[-P1Y]= in
+every cycle point, when only a single instance of it exists, at the initial
+cycle point:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    initial cycle point = 2020
+    [[dependencies]]
+        [[[R1]]]
+            graph = foo
+        [[[P1Y]]]
+            # ERROR
+            graph = foo[-P1Y] => bar
+\end{lstlisting}
+
 \subsection{Runtime - Task Configuration}
 \label{NIORP}
 
@@ -7639,6 +7754,9 @@ mitigate any jumping layout problems:
     workflows via the ISO8601 date-times, durations, and recurrence
     expressions; integer cycling; a multi-process pool to execute job
     submissions, event handlers, and poll and kill commands.
+
+    \item {\bf cylc-7} - Replaced the Pyro communications layer with
+     RESTful HTTPS. Removed deprecated pre cylc-6 syntax and features.
 
 \end{myitemize}
 
