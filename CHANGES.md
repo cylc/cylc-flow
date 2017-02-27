@@ -4,6 +4,73 @@ For the full list of all changes for each release see [closed
 milestones](https://github.com/cylc/cylc/milestones?state=closed).
 
 -------------------------------------------------------------------------------
+## __cylc-7.1.1 (2017-02-27)__
+
+Minor enhancements and fixes.
+
+### Highlighted Changes
+
+[#2141](https://github.com/cylc/cylc/pull/2141): Tidier task job files:
+hide error trap and messaging code, etc., in external shell functions.
+
+[#2134](https://github.com/cylc/cylc/pull/2134): Suite-state polling (e.g. for
+inter-suite triggering) now automatically detects and uses the remote suite
+cycle point format.
+
+[#2128](https://github.com/cylc/cylc/pull/2128): Suite-state polling
+(e.g. for inter-suite triggering) now works with custom task messages.
+
+[#2172](https://github.com/cylc/cylc/pull/2172): Added a built-in Jinja2 filter
+for formatting ISO8601 date-time strings.
+
+[#2164](https://github.com/cylc/cylc/pull/2164): Fixed support for Jinja2 in
+site/user config files, broken at 6.11.0.
+
+[#2153](https://github.com/cylc/cylc/pull/2153): `cylc gui` - use task
+`execution time limit` as the default mean elapsed time, to compute a progress
+bar for the first instance of a cycling task.
+
+[#2154](https://github.com/cylc/cylc/pull/2154): `cylc gui` graph view - fixed
+right-click sub-menu activation, broken at 7.1.0.
+
+[#2158](https://github.com/cylc/cylc/pull/2158): `cylc gui` graph view: fix
+right-click family ungroup, broken since 7.0.0.
+
+### Other Changes
+
+[#2142](https://github.com/cylc/cylc/pull/2142): New "select all" and "select
+none" buttons in the `cylc gui` task filter dialog.
+
+[#2163](https://github.com/cylc/cylc/pull/2163): (Development) New automated
+profiling test framework for comparing performance between Cylc versions.
+
+[#2160](https://github.com/cylc/cylc/pull/2160): Better suite stall detection
+in the presence of clock-triggered tasks.
+
+[#2156](https://github.com/cylc/cylc/pull/2156): Fix potential division-by-zero
+error in `cylc gscan`.
+
+[#2149](https://github.com/cylc/cylc/pull/2149): Fix handling of cycle point
+offsets in weeks (e.g. "P1W").
+
+[#2146](https://github.com/cylc/cylc/pull/2146): Documented how to set multiple 
+`-l VALUE` directives in jobs submitted to PBS.
+
+[#2129](https://github.com/cylc/cylc/pull/2129): Allow initial cycle point to be
+specified on the command line for all relevant commands, if not specified in the
+suite definition.
+
+[#2139](https://github.com/cylc/cylc/pull/2139): Fixed error in use of
+`execution time limit` in jobs submitted to Platform LSF.
+
+[#2176](https://github.com/cylc/cylc/pull/2176): `cylc gui` graph view - fixed
+a bug that could cause a blank graph view window, since 7.0.0. 
+
+[#2161](https://github.com/cylc/cylc/pull/2161): `gcylc gui`- disallow
+insertion at cycle points that are not valid for the task (unless overridden
+with `--no-check`).
+
+-------------------------------------------------------------------------------
 ## __cylc-7.1.0 (2017-01-26)__
 
 Minor enhancements and fixes.
@@ -52,7 +119,7 @@ continuation in suite graph configuration.
 side-effect of manual task-state reset.
 
 [#2107](https://github.com/cylc/cylc/pull/2107): `cylc insert` - disallow
-insertion at cycle points that are not valid for the task (but can override
+insertion at cycle points that are not valid for the task (unless overridden
 with `--no-check`).
 
 [#2106](https://github.com/cylc/cylc/pull/2106): fixed `cylc get-config
