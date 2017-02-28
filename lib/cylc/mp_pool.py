@@ -187,13 +187,14 @@ class SuiteProcPool(object):
 
     def handle_results_async(self):
         """Pass any available results to their associated callback."""
-        for result_id, item in self.results.items():
-            result, callback = item
+        for key, (result, callback, callback_args) in self.results.items():
             if result.ready():
-                self.results.pop(result_id)
+                self.results.pop(key)
                 value = result.get()
                 if callable(callback):
-                    callback(value)
+                    if not callback_args:
+                        callback_args = []
+                    callback(value, *callback_args)
 
     def is_closed(self):
         """Is the pool closed?"""
@@ -213,7 +214,7 @@ class SuiteProcPool(object):
         self.log.debug("Joining process pool")
         self.pool.join()
 
-    def put_command(self, ctx, callback):
+    def put_command(self, ctx, callback, callback_args=None):
         """Queue a new shell command to execute."""
         try:
             result = self.pool.apply_async(_run_command, [ctx])
@@ -223,7 +224,7 @@ class SuiteProcPool(object):
                 "Rejecting command (pool closed)",
                 ctx.cmd))
         else:
-            self.results[id(result)] = (result, callback)
+            self.results[id(result)] = (result, callback, callback_args)
 
     @staticmethod
     def run_command(ctx):

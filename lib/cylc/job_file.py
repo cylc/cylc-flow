@@ -27,18 +27,9 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
 
 
-class JobFile(object):
+class JobFileWriter(object):
 
     """Write task job files."""
-
-    _INSTANCE = None
-
-    @classmethod
-    def get_inst(cls):
-        """Return a unique instance of this class."""
-        if cls._INSTANCE is None:
-            cls._INSTANCE = cls()
-        return cls._INSTANCE
 
     def __init__(self):
         self.suite_env = {}

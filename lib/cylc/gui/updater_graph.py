@@ -100,10 +100,6 @@ class GraphUpdater(threading.Thread):
         # empty graphw object:
         self.graphw = CGraphPlain(self.cfg.suite)
 
-        # TODO - handle failure to get a remote proxy in reconnect()
-
-        self.graph_warned = {}
-
         # lists of nodes to newly group or ungroup (not of all currently
         # grouped and ungrouped nodes - still held server side)
         self.group = []

@@ -26,7 +26,7 @@
 set -x
 # Test that the original command is printed
 A_LOG="$(dirname "$0")/../../bad-submitter/01/job-activity.log"
-grep '\[job-submit cmd\] cylc jobs-submit.* --host={{CYLC_TEST_HOST}}' \
+grep '\[jobs-submit cmd\] cylc jobs-submit.* --host={{CYLC_TEST_HOST}}' \
     "${A_LOG}"
 # Test that some STDERR is printed, with the host name as prefix
 grep '({{CYLC_TEST_HOST}}) .* \[STDERR\] ' "${A_LOG}"

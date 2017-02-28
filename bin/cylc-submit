@@ -40,12 +40,12 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.config import SuiteConfig
 from cylc.cycling.loader import get_point
 import cylc.flags
-from cylc.job_file import JobFile
 from cylc.job_host import RemoteJobHostManager
 from cylc.mp_pool import SuiteProcPool
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.task_id import TaskID
+from cylc.task_job_mgr import TaskJobManager
 from cylc.task_proxy import TaskProxy
 from cylc.task_state import TASK_STATUS_SUBMIT_FAILED
 from cylc.templatevars import load_template_vars
@@ -92,7 +92,8 @@ def main():
     GLOBAL_CFG.create_cylc_run_tree(suite)
 
     RemoteJobHostManager.get_inst().single_task_mode = True
-    JobFile.get_inst().set_suite_env({
+    task_job_mgr = TaskJobManager()
+    task_job_mgr.job_file_writer.set_suite_env({
         'CYLC_UTC': str(config.cfg['cylc']['UTC mode']),
         'CYLC_DEBUG': str(cylc.flags.debug),
         'CYLC_VERBOSE': str(cylc.flags.verbose),
@@ -109,14 +110,15 @@ def main():
         config.get_taskdef(task_name),
         get_point(point_string).standardise(),
         is_startup=True)
-    if itask.prep_submit(dry_run=options.dry_run) is None:
-        sys.exit(1)
     if options.dry_run:
+        if not task_job_mgr.prep_submit_task_jobs(
+                suite, [itask], dry_run=True):
+            sys.exit(1)
         print "JOB SCRIPT=%s" % itask.get_job_log_path(
             itask.HEAD_MODE_LOCAL, tail=itask.JOB_FILE_BASE)
     else:
-        proc_pool = SuiteProcPool.get_inst(pool_size=1)
-        itask.submit()
+        task_job_mgr.submit_task_jobs(suite, [itask], proc_pool_size=1)
+        proc_pool = SuiteProcPool.get_inst()
         while proc_pool.results:
             proc_pool.handle_results_async()
         proc_pool.close()

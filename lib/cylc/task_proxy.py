@@ -19,19 +19,15 @@
 """Provide a class to represent a task proxy in a running suite."""
 
 from collections import namedtuple
-from copy import copy
 from logging import (
-    getLevelName, getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG)
+    getLevelName, CRITICAL, ERROR, WARNING, INFO, DEBUG)
 import os
 from pipes import quote
 import re
-from shutil import rmtree
 import time
-import traceback
 
 from isodatetime.timezone import get_local_time_zone
 
-from cylc.mkdir_p import mkdir_p
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.cycling.iso8601
 from cylc.envvar import expandvars
@@ -43,24 +39,20 @@ from cylc.wallclock import (
     get_unix_time_from_time_string,
     RE_DATE_TIME_FORMAT_EXTENDED,
 )
-from cylc.host_select import get_task_host
-from cylc.job_file import JobFile
-from cylc.job_host import RemoteJobHostManager
 from cylc.batch_sys_manager import BATCH_SYS_MANAGER
-from cylc.owner import is_remote_user, USER
-from cylc.suite_host import is_remote_host, get_suite_host
-from parsec.OrderedDict import OrderedDictWithDefaults
-from cylc.mp_pool import SuiteProcPool, SuiteProcContext
+from cylc.owner import USER
+from cylc.suite_host import get_suite_host
 from cylc.network.suite_broadcast_server import BroadcastServer
 from cylc.rundb import CylcSuiteDAO
 from cylc.task_id import TaskID
 from cylc.task_message import TaskMessage
 from parsec.util import pdeepcopy, poverride
 from parsec.config import ItemNotFoundError
+from cylc.task_action_timer import TaskActionTimer
 from cylc.task_state import (
     TaskState, TASK_STATUSES_ACTIVE, TASK_STATUS_WAITING,
     TASK_STATUS_READY, TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_FAILED,
-    TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED)
+    TASK_STATUS_RUNNING, TASK_STATUS_FAILED)
 from cylc.task_outputs import (
     TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED)
 from cylc.suite_logging import LOG
@@ -79,82 +71,6 @@ TaskEventMailContext = namedtuple(
 TaskJobLogsRetrieveContext = namedtuple(
     "TaskJobLogsRetrieveContext",
     ["key", "ctx_type", "user_at_host", "max_size"])
-
-
-class TaskActionTimer(object):
-    """A timer with delays for task actions."""
-
-    # Memory optimization - constrain possible attributes to this list.
-    __slots__ = ["ctx", "delays", "num", "delay", "timeout", "is_waiting"]
-
-    def __init__(self, ctx=None, delays=None, num=0, delay=None, timeout=None):
-        self.ctx = ctx
-        if delays is None:
-            self.delays = [float(0)]
-        else:
-            self.delays = [float(delay) for delay in delays]
-        self.num = int(num)
-        if delay is not None:
-            delay = float(delay)
-        self.delay = delay
-        if timeout is not None:
-            timeout = float(timeout)
-        self.timeout = timeout
-        self.is_waiting = False
-
-    def delay_as_seconds(self):
-        """Return the delay as PTnS, where n is number of seconds."""
-        return get_seconds_as_interval_string(self.delay)
-
-    def is_delay_done(self, now=None):
-        """Is timeout done?"""
-        if self.timeout is None:
-            return False
-        if now is None:
-            now = time.time()
-        return now > self.timeout
-
-    def is_timeout_set(self):
-        """Return True if timeout is set."""
-        return self.timeout is not None
-
-    def next(self, no_exhaust=False):
-        """Return the next retry delay.
-
-        When delay list has no more item:
-        * Return None if no_exhaust is False
-        * Return the final delay if no_exhaust is True.
-        """
-        try:
-            self.delay = self.delays[self.num]
-        except IndexError:
-            if not no_exhaust:
-                self.delay = None
-        if self.delay is not None:
-            self.timeout = time.time() + self.delay
-            self.num += 1
-        return self.delay
-
-    def reset(self):
-        """Reset num, delay, timeout and is_waiting."""
-        self.num = 0
-        self.delay = None
-        self.timeout = None
-        self.is_waiting = False
-
-    def set_waiting(self):
-        """Set waiting flag, while waiting for action to complete."""
-        self.delay = None
-        self.is_waiting = True
-        self.timeout = None
-
-    def unset_waiting(self):
-        """Unset waiting flag after an action has completed."""
-        self.is_waiting = False
-
-    def timeout_as_str(self):
-        """Return the timeout as an ISO8601 date-time string."""
-        return get_time_string_from_unix_time(self.timeout)
 
 
 class TaskProxySequenceBoundsError(ValueError):
@@ -180,10 +96,10 @@ class TaskProxy(object):
     # environments to allow changed behaviour after previous failures.
 
     # Memory optimization - constrain possible attributes to this list.
-    __slots__ = ["JOB_LOG_FMT_1", "JOB_LOG_FMT_M", "CUSTOM_EVENT_HANDLER",
+    __slots__ = ["CUSTOM_EVENT_HANDLER",
                  "EVENT_MAIL", "HEAD_MODE_LOCAL", "HEAD_MODE_REMOTE",
-                 "JOB_FILE_BASE", "JOB_KILL", "JOB_LOGS_RETRIEVE", "JOB_POLL",
-                 "JOB_SUBMIT", "KEY_EXECUTE", "KEY_SUBMIT",
+                 "JOB_FILE_BASE", "JOB_LOGS_RETRIEVE",
+                 "KEY_EXECUTE", "KEY_SUBMIT",
                  "MANAGE_JOB_LOGS_TRY_DELAYS", "NN",
                  "LOGGING_LVL_OF", "RE_MESSAGE_TIME", "TABLE_TASK_JOBS",
                  "TABLE_TASK_EVENTS", "TABLE_TASK_STATES", "POLLED_INDICATOR",
@@ -196,20 +112,12 @@ class TaskProxy(object):
                  "job_vacated", "poll_timers", "events_conf",
                  "delayed_start", "expire_time", "state"]
 
-    # Format string for single line output
-    JOB_LOG_FMT_1 = "%(timestamp)s [%(cmd_key)s %(attr)s] %(mesg)s"
-    # Format string for multi-line output
-    JOB_LOG_FMT_M = "%(timestamp)s [%(cmd_key)s %(attr)s]\n\n%(mesg)s\n"
-
     CUSTOM_EVENT_HANDLER = "event-handler"
     EVENT_MAIL = "event-mail"
     HEAD_MODE_LOCAL = "local"
     HEAD_MODE_REMOTE = "remote"
     JOB_FILE_BASE = BATCH_SYS_MANAGER.JOB_FILE_BASE
-    JOB_KILL = "job-kill"
     JOB_LOGS_RETRIEVE = "job-logs-retrieve"
-    JOB_POLL = "job-poll"
-    JOB_SUBMIT = "job-submit"
     KEY_EXECUTE = "execution"
     KEY_EXECUTE_TIME_LIMIT = "execution_time_limit"
     KEY_SUBMIT = "submission"
@@ -354,7 +262,7 @@ class TaskProxy(object):
                 rtconfig['job']['submission retry delays'])
         self.poll_timers = {}
         for key in self.KEY_SUBMIT, self.KEY_EXECUTE:
-            values = self._get_host_conf(
+            values = self.get_host_conf(
                 key + ' polling intervals', skey='job')
             if values:
                 self.poll_timers[key] = TaskActionTimer(delays=values)
@@ -420,7 +328,7 @@ class TaskProxy(object):
                 pass
         return default
 
-    def _get_host_conf(self, key, default=None, skey="remote"):
+    def get_host_conf(self, key, default=None, skey="remote"):
         """Return a host setting from suite then global configuration."""
         overrides = BroadcastServer.get_inst().get(self.identity)
         if skey in overrides and overrides[skey].get(key) is not None:
@@ -537,186 +445,6 @@ class TaskProxy(object):
                 self.get_offset_as_seconds(self.tdef.expiration_offset))
         return time.time() > self.expire_time
 
-    def job_submission_callback(self, result):
-        """Callback on job submission."""
-        if result.out is not None:
-            out = ""
-            for line in result.out.splitlines(True):
-                if line.startswith(
-                        BATCH_SYS_MANAGER.CYLC_BATCH_SYS_JOB_ID + "="):
-                    self.summary['submit_method_id'] = line.strip().replace(
-                        BATCH_SYS_MANAGER.CYLC_BATCH_SYS_JOB_ID + "=", "")
-                else:
-                    out += line
-            result.out = out
-        self.command_log(result)
-
-        if result.ret_code == SuiteProcPool.JOB_SKIPPED_FLAG:
-            return
-
-        if self.summary['submit_method_id'] and result.ret_code == 0:
-            self.job_submission_succeeded()
-        else:
-            self.job_submission_failed()
-
-    def job_poll_callback(self, cmd_ctx, line):
-        """Callback on job poll."""
-        ctx = SuiteProcContext(self.JOB_POLL, None)
-        ctx.out = line
-        ctx.ret_code = 0
-
-        items = line.split("|")
-        # See cylc.batch_sys_manager.JobPollContext
-        try:
-            (
-                batch_sys_exit_polled, run_status, run_signal,
-                time_submit_exit, time_run, time_run_exit
-            ) = items[4:10]
-        except IndexError:
-            self.summary['latest_message'] = 'poll failed'
-            flags.iflag = True
-            ctx.cmd = cmd_ctx.cmd  # print original command on failure
-            return
-        finally:
-            self.command_log(ctx)
-        if run_status == "1" and run_signal in ["ERR", "EXIT"]:
-            # Failed normally
-            self.process_incoming_message(
-                INFO, TASK_OUTPUT_FAILED, time_run_exit)
-        elif run_status == "1" and batch_sys_exit_polled == "1":
-            # Failed by a signal, and no longer in batch system
-            self.process_incoming_message(
-                INFO, TASK_OUTPUT_FAILED, time_run_exit)
-            self.process_incoming_message(
-                INFO, TaskMessage.FAIL_MESSAGE_PREFIX + run_signal,
-                time_run_exit)
-        elif run_status == "1":
-            # The job has terminated, but is still managed by batch system.
-            # Some batch system may restart a job in this state, so don't
-            # mark as failed yet.
-            self.process_incoming_message(INFO, TASK_OUTPUT_STARTED, time_run)
-        elif run_status == "0":
-            # The job succeeded
-            self.process_incoming_message(
-                INFO, TASK_OUTPUT_SUCCEEDED, time_run_exit)
-        elif time_run and batch_sys_exit_polled == "1":
-            # The job has terminated without executing the error trap
-            self.process_incoming_message(
-                INFO, TASK_OUTPUT_FAILED, "")
-        elif time_run:
-            # The job has started, and is still managed by batch system
-            self.process_incoming_message(INFO, TASK_OUTPUT_STARTED, time_run)
-        elif batch_sys_exit_polled == "1":
-            # The job never ran, and no longer in batch system
-            self.process_incoming_message(
-                INFO, "submission failed", time_submit_exit)
-        else:
-            # The job never ran, and is in batch system
-            self.process_incoming_message(
-                INFO, TASK_STATUS_SUBMITTED, time_submit_exit)
-
-    def job_poll_message_callback(self, cmd_ctx, line):
-        """Callback on job poll message."""
-        ctx = SuiteProcContext(self.JOB_POLL, None)
-        ctx.out = line
-        try:
-            event_time, priority, message = line.split("|")[2:5]
-        except ValueError:
-            ctx.ret_code = 1
-            ctx.cmd = cmd_ctx.cmd  # print original command on failure
-        else:
-            ctx.ret_code = 0
-            self.process_incoming_message(priority, message, event_time)
-        self.command_log(ctx)
-
-    def job_kill_callback(self, cmd_ctx, line):
-        """Callback on job kill."""
-        ctx = SuiteProcContext(self.JOB_KILL, None)
-        ctx.out = line
-        try:
-            ctx.timestamp, _, ctx.ret_code = line.split("|", 2)
-        except ValueError:
-            ctx.ret_code = 1
-            ctx.cmd = cmd_ctx.cmd  # print original command on failure
-        else:
-            ctx.ret_code = int(ctx.ret_code)
-            if ctx.ret_code:
-                ctx.cmd = cmd_ctx.cmd  # print original command on failure
-        self.command_log(ctx)
-        log_lvl = INFO
-        log_msg = 'killed'
-        if ctx.ret_code:  # non-zero exit status
-            log_lvl = WARNING
-            log_msg = 'kill failed'
-            self.state.kill_failed = True
-        elif self.state.status == TASK_STATUS_SUBMITTED:
-            self.job_submission_failed()
-            flags.iflag = True
-        elif self.state.status == TASK_STATUS_RUNNING:
-            self.job_execution_failed()
-            flags.iflag = True
-        else:
-            log_lvl = WARNING
-            log_msg = (
-                'ignoring job kill result, unexpected task state: %s' %
-                self.state.status)
-        self.summary['latest_message'] = log_msg
-        self.log(log_lvl, "job(%02d) %s" % (self.submit_num, log_msg))
-
-    def job_submit_callback(self, cmd_ctx, line):
-        """Callback on job submit."""
-        ctx = SuiteProcContext(self.JOB_SUBMIT, None)
-        ctx.out = line
-        items = line.split("|")
-        try:
-            ctx.timestamp, _, ctx.ret_code = items[0:3]
-        except ValueError:
-            ctx.ret_code = 1
-            ctx.cmd = cmd_ctx.cmd  # print original command on failure
-        else:
-            ctx.ret_code = int(ctx.ret_code)
-            if ctx.ret_code:
-                ctx.cmd = cmd_ctx.cmd  # print original command on failure
-        self.command_log(ctx)
-
-        if ctx.ret_code == SuiteProcPool.JOB_SKIPPED_FLAG:
-            return
-
-        try:
-            self.summary['submit_method_id'] = items[3]
-        except IndexError:
-            self.summary['submit_method_id'] = None
-        if self.summary['submit_method_id'] and ctx.ret_code == 0:
-            self.job_submission_succeeded()
-        else:
-            self.job_submission_failed()
-
-    def job_cmd_out_callback(self, cmd_ctx, line):
-        """Callback on job command STDOUT/STDERR."""
-        job_activity_log = self.get_job_log_path(
-            self.HEAD_MODE_LOCAL, self.NN, "job-activity.log")
-        if cmd_ctx.cmd_kwargs.get("host") and cmd_ctx.cmd_kwargs.get("user"):
-            user_at_host = "(%(user)s@%(host)s) " % cmd_ctx.cmd_kwargs
-        elif cmd_ctx.cmd_kwargs.get("host"):
-            user_at_host = "(%(host)s) " % cmd_ctx.cmd_kwargs
-        elif cmd_ctx.cmd_kwargs.get("user"):
-            user_at_host = "(%(user)s@localhost) " % cmd_ctx.cmd_kwargs
-        else:
-            user_at_host = ""
-        try:
-            timestamp, _, content = line.split("|")
-        except ValueError:
-            pass
-        else:
-            line = "%s %s" % (timestamp, content)
-        try:
-            with open(job_activity_log, "ab") as handle:
-                if not line.endswith("\n"):
-                    line += "\n"
-                handle.write(user_at_host + line)
-        except IOError as exc:
-            self.log(WARNING, "%s: write failed\n%s" % (job_activity_log, exc))
-
     def setup_event_handlers(
             self, event, message, db_update=True, db_event=None, db_msg=None):
         """Set up event handlers."""
@@ -744,10 +472,10 @@ class TaskProxy(object):
             user_at_host = self.task_host
         if (event not in ['failed', 'retry', 'succeeded'] or
                 user_at_host in [USER + '@localhost', 'localhost'] or
-                not self._get_host_conf("retrieve job logs") or
+                not self.get_host_conf("retrieve job logs") or
                 key2 in self.event_handler_try_timers):
             return
-        retry_delays = self._get_host_conf("retrieve job logs retry delays")
+        retry_delays = self.get_host_conf("retrieve job logs retry delays")
         if not retry_delays:
             retry_delays = [0]
         self.event_handler_try_timers[key2] = TaskActionTimer(
@@ -755,7 +483,7 @@ class TaskProxy(object):
                 self.JOB_LOGS_RETRIEVE,  # key
                 self.JOB_LOGS_RETRIEVE,  # ctx_type
                 user_at_host,
-                self._get_host_conf("retrieve job logs max size"),  # max_size
+                self.get_host_conf("retrieve job logs max size"),  # max_size
             ),
             retry_delays)
 
@@ -791,7 +519,7 @@ class TaskProxy(object):
             return
         retry_delays = self._get_events_conf(
             'handler retry delays',
-            self._get_host_conf("task event handler retry delays"))
+            self.get_host_conf("task event handler retry delays"))
         if not retry_delays:
             retry_delays = [0]
         for i, handler in enumerate(handlers):
@@ -962,238 +690,6 @@ class TaskProxy(object):
             # unset any retry delay timers
             self.try_timers[self.KEY_EXECUTE].timeout = None
             self.try_timers[self.KEY_SUBMIT].timeout = None
-
-    def submit(self):
-        """For "cylc submit". See also "TaskPool.submit_task_jobs"."""
-
-        self.state.set_ready_to_submit()
-
-        # Reset flag so any re-triggering will generate a new job file.
-        self.local_job_file_path = None
-
-        cmd_key = self.JOB_SUBMIT
-        args = [self.get_job_log_path(
-            self.HEAD_MODE_REMOTE, tail=self.JOB_FILE_BASE)]
-        stdin_file_paths = [self.get_job_log_path(
-            self.HEAD_MODE_LOCAL, tail=self.JOB_FILE_BASE)]
-
-        cmd = ["cylc", cmd_key]
-        if cylc.flags.debug:
-            cmd.append("--debug")
-        remote_mode = False
-        for key, value, test_func in [
-                ('host', self.task_host, is_remote_host),
-                ('user', self.task_owner, is_remote_user)]:
-            if test_func(value):
-                cmd.append('--%s=%s' % (key, value))
-                remote_mode = True
-        if remote_mode:
-            cmd.append('--remote-mode')
-        cmd.append("--")
-        cmd += list(args)
-
-        self.log(INFO, "job(%02d) initiate %s" % (self.submit_num, cmd_key))
-        ctx = SuiteProcContext(
-            cmd_key, cmd, stdin_file_paths=stdin_file_paths)
-        return SuiteProcPool.get_inst().put_command(
-            ctx, self.job_submission_callback)
-
-    def prep_submit(self, dry_run=False):
-        """Prepare job submission.
-
-        Return self on a good preparation.
-
-        """
-        if self.local_job_file_path and not dry_run:
-            return self
-        try:
-            local_job_file_path = self.get_job_log_path(
-                self.HEAD_MODE_LOCAL, tail=self.JOB_FILE_BASE)
-            JobFile.get_inst().write(local_job_file_path, job_conf)
-        except Exception, exc:
-            #  Could be a bad command template.
-            if flags.debug:
-                traceback.print_exc()
-            self.command_log(SuiteProcContext(
-                self.JOB_SUBMIT, '(prepare job file)', err=exc,
-                ret_code=1))
-            if not dry_run:
-                self.job_submission_failed()
-            return
-        self.local_job_file_path = local_job_file_path
-
-        if dry_run:
-            # This will be shown next to submit num in gcylc:
-            self.summary['latest_message'] = 'job file written (edit/dry-run)'
-            self.log(DEBUG, self.summary['latest_message'])
-
-        # Return value used by "cylc submit" and "cylc jobscript":
-        return self
-
-    def _prep_submit_impl(self):
-        """Helper for self.prep_submit."""
-        overrides = BroadcastServer.get_inst().get(self.identity)
-        if overrides:
-            rtconfig = pdeepcopy(self.tdef.rtconfig)
-            poverride(rtconfig, overrides)
-        else:
-            rtconfig = self.tdef.rtconfig
-        self.log(DEBUG, "incrementing submit number")
-        self.submit_num += 1
-        self.summary['submit_num'] = self.submit_num
-        self.local_job_file_path = None
-        self.db_events_insert(event="incrementing submit number")
-        self.db_inserts_map[self.TABLE_TASK_JOBS].append({
-            "is_manual_submit": self.is_manual_submit,
-            "try_num": self.try_timers[self.KEY_EXECUTE].num + 1,
-            "time_submit": get_current_time_string(),
-        })
-
-        self.events_conf = rtconfig['events']
-
-        # construct the job_sub_method here so that a new one is used if
-        # the task is re-triggered by the suite operator - so it will
-        # get new stdout/stderr logfiles and not overwrite the old ones.
-
-        if self.tdef.run_mode == 'simulation':
-            self.summary['batch_sys_name'] = 'SIMULATION'
-        else:
-            self.summary['batch_sys_name'] = rtconfig['job']['batch system']
-
-        if self.tdef.run_mode == 'live':
-            self.summary['execution_time_limit'] = (
-                rtconfig['job']['execution time limit'])
-        else:
-            # In dummy mode the execution time limit is padded so use the
-            # simulated run length here (for gcylc progress bar extent).
-            self.summary['execution_time_limit'] = (
-                rtconfig['job']['simulated run length'])
-
-        # Determine task host settings now, just before job submission,
-        # because dynamic host selection may be used.
-
-        # host may be None (= run task on suite host)
-        if self.tdef.run_mode == 'simulation':
-            self.task_host = 'SIMULATION'
-            self.task_owner = 'SIMULATION'
-            user_at_host = 'SIMULATION'
-        else:
-            self.task_host = get_task_host(rtconfig['remote']['host'])
-            if not self.task_host:
-                self.task_host = 'localhost'
-            elif self.task_host != "localhost":
-                self.log(INFO, "Task host: " + self.task_host)
-            self.task_owner = rtconfig['remote']['owner']
-            if self.task_owner:
-                user_at_host = self.task_owner + "@" + self.task_host
-            else:
-                user_at_host = self.task_host
-        self.summary['host'] = user_at_host
-        self.summary['job_hosts'][self.submit_num] = user_at_host
-        try:
-            batch_sys_conf = self._get_host_conf('batch systems')[
-                rtconfig['job']['batch system']]
-        except (TypeError, KeyError):
-            batch_sys_conf = OrderedDictWithDefaults()
-        if self.summary['execution_time_limit']:
-            # Default = 1, 2 and 7 minutes intervals, roughly 1, 3 and 10
-            # minutes after time limit exceeded
-            self.poll_timers[self.KEY_EXECUTE_TIME_LIMIT] = (
-                TaskActionTimer(delays=batch_sys_conf.get(
-                    'execution time limit polling intervals', [60, 120, 420])))
-        for key in self.KEY_SUBMIT, self.KEY_EXECUTE:
-            try:
-                self.poll_timers[key].reset()
-            except (AttributeError, KeyError):
-                pass
-
-        if self.tdef.run_mode != 'simulation':
-            RemoteJobHostManager.get_inst().init_suite_run_dir(
-                self.__class__.suite_name, self.task_host, self.task_owner)
-        self.db_updates_map[self.TABLE_TASK_JOBS].append({
-            "user_at_host": user_at_host,
-            "batch_sys_name": self.summary['batch_sys_name'],
-        })
-        self.is_manual_submit = False
-
-        execution_time_limit = rtconfig['job']['execution time limit']
-        if execution_time_limit:
-            execution_time_limit = float(execution_time_limit)
-
-        # Location of job file, etc
-        self._create_job_log_path()
-
-        return {
-            'batch_system_name': rtconfig['job']['batch system'],
-            'batch_submit_command_template': (
-                rtconfig['job']['batch submit command template']),
-            'batch_system_conf': batch_sys_conf,
-            'directives': rtconfig['directives'],
-            'environment': rtconfig['environment'],
-            'execution_time_limit': execution_time_limit,
-            'init-script': rtconfig['init-script'],
-            'env-script': rtconfig['env-script'],
-            'pre-script': rtconfig['pre-script'],
-            'script': rtconfig['script'],
-            'post-script': rtconfig['post-script'],
-            'err-script': rtconfig['err-script'],
-            'host': self.task_host,
-            'job_file_path': self.get_job_log_path(
-                self.HEAD_MODE_REMOTE, tail=self.JOB_FILE_BASE),
-            'job_d': self.get_job_log_path(),
-            'namespace_hierarchy': self.tdef.namespace_hierarchy,
-            'owner': self.task_owner,
-            'remote_suite_d': rtconfig['remote']['suite definition directory'],
-            'shell': rtconfig['job']['shell'],
-            'submit_num': self.submit_num,
-            'suite_name': self.__class__.suite_name,
-            'task_id': self.identity,
-            'try_num': self.try_timers[self.KEY_EXECUTE].num + 1,
-            'work_d': rtconfig['work sub-directory'],
-        }
-
-    def _create_job_log_path(self):
-        """Create job log directory, etc.
-
-        Create local job directory, and NN symbolic link.
-        If NN => 01, remove numbered directories with submit numbers greater
-        than 01.
-        Return a string in the form "POINT/NAME/SUBMIT_NUM".
-
-        """
-        job_file_dir = self.get_job_log_path(self.HEAD_MODE_LOCAL)
-        task_log_dir = os.path.dirname(job_file_dir)
-        if self.submit_num == 1:
-            try:
-                names = os.listdir(task_log_dir)
-            except OSError:
-                pass
-            else:
-                for name in names:
-                    if name not in ["01", self.NN]:
-                        rmtree(
-                            os.path.join(task_log_dir, name),
-                            ignore_errors=True)
-        else:
-            rmtree(job_file_dir, ignore_errors=True)
-
-        mkdir_p(job_file_dir)
-        target = os.path.join(task_log_dir, self.NN)
-        source = os.path.basename(job_file_dir)
-        try:
-            prev_source = os.readlink(target)
-        except OSError:
-            prev_source = None
-        if prev_source == source:
-            return
-        try:
-            if prev_source:
-                os.unlink(target)
-            os.symlink(source, target)
-        except OSError as exc:
-            if not exc.filename:
-                exc.filename = target
-            raise exc
 
     def check_submission_timeout(self, now):
         """Check/handle submission timeout, called if TASK_STATUS_SUBMITTED."""

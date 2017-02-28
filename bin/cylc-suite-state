@@ -188,7 +188,7 @@ def main():
         action="store", dest="msg", default=None)
 
     SuitePoller.add_to_cmd_options(parser)
-    (options, args) = parser.parse_args(remove_opts=["--db", "--debug"])
+    (options, args) = parser.parse_args(remove_opts=["--db"])
 
     suite = args[0]
 

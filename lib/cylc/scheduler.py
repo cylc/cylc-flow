@@ -18,7 +18,7 @@
 """Cylc scheduler server."""
 
 from copy import deepcopy
-import logging
+from logging import DEBUG, INFO, WARNING
 import os
 import pickle
 from pipes import quote
@@ -45,14 +45,13 @@ from cylc.cycling.loader import get_point, standardise_point_string
 from cylc.daemonize import daemonize
 from cylc.exceptions import CylcError
 import cylc.flags
-from cylc.job_file import JobFile
 from cylc.job_host import RemoteJobHostManager, RemoteJobHostInitError
 from cylc.log_diagnosis import LogSpec
 from cylc.mp_pool import SuiteProcContext, SuiteProcPool
 from cylc.network import (
     COMMS_SUITEID_OBJ_NAME, COMMS_STATE_OBJ_NAME,
     COMMS_CMD_OBJ_NAME, COMMS_BCAST_OBJ_NAME, COMMS_EXT_TRIG_OBJ_NAME,
-    COMMS_INFO_OBJ_NAME, COMMS_LOG_OBJ_NAME)
+    COMMS_INFO_OBJ_NAME, COMMS_LOG_OBJ_NAME, COMMS_TASK_MESSAGE_OBJ_NAME)
 from cylc.network.ext_trigger_server import ExtTriggerServer
 from cylc.network.daemon import CommsDaemon
 from cylc.network.suite_broadcast_server import BroadcastServer
@@ -61,20 +60,21 @@ from cylc.network.suite_identifier_server import SuiteIdServer
 from cylc.network.suite_info_server import SuiteInfoServer
 from cylc.network.suite_log_server import SuiteLogServer
 from cylc.network.suite_state_server import StateSummaryServer
+from cylc.network.task_msg_server import TaskMessageServer
 from cylc.owner import USER
-from cylc.suite_host import is_remote_host
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
 from cylc.rundb import CylcSuiteDAO
 from cylc.suite_host import get_suite_host
 from cylc.suite_logging import SuiteLog, OUT, ERR, LOG
 from cylc.taskdef import TaskDef
+from cylc.task_action_timer import TaskActionTimer
 from cylc.task_id import TaskID
+from cylc.task_job_mgr import TaskJobManager
 from cylc.task_pool import TaskPool
-from cylc.task_proxy import (
-    TaskProxy, TaskProxySequenceBoundsError, TaskActionTimer)
+from cylc.task_proxy import TaskProxy, TaskProxySequenceBoundsError
 from cylc.task_state import (
-    TASK_STATUS_HELD, TASK_STATUS_WAITING,
+    TASK_STATUSES_ACTIVE, TASK_STATUS_WAITING,
     TASK_STATUS_QUEUED, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_SUBMIT_RETRYING,
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
@@ -178,8 +178,6 @@ class Scheduler(object):
 
         self.is_stalled = False
 
-        self.graph_warned = {}
-
         self.task_event_handler_env = {}
         self.contact_data = None
 
@@ -191,9 +189,10 @@ class Scheduler(object):
         self.suite_state = None
         self.command_queue = None
         self.pool = None
-        self.request_handler = None
+        self.task_job_mgr = None
+        self.message_queue = None
         self.comms_daemon = None
-        self.info_interface = None
+        self.info_server = None
 
         self._profile_amounts = {}
         self._profile_update_times = {}
@@ -242,7 +241,7 @@ class Scheduler(object):
 
             slog = SuiteLog.get_inst(self.suite)
             if cylc.flags.debug:
-                slog.pimp(logging.DEBUG)
+                slog.pimp(DEBUG)
             else:
                 slog.pimp()
 
@@ -402,9 +401,11 @@ conditions; see `cylc conditions`.
             self.log.info('Start point: ' + str(self.start_point))
         self.log.info('Final point: ' + str(self.final_point))
 
-        self.pool = TaskPool(
-            self.suite, self.pri_dao, self.pub_dao, self.final_point,
-            self.comms_daemon, self.log, self.run_mode)
+        self.pool = TaskPool(self.final_point, self.pri_dao, self.pub_dao)
+        self.message_queue = TaskMessageServer(self.suite)
+        self.comms_daemon.connect(
+            self.message_queue, COMMS_TASK_MESSAGE_OBJ_NAME)
+        self.task_job_mgr = TaskJobManager()
 
         self.profiler.log_memory("scheduler.py: before load_tasks")
         if self.is_restart:
@@ -414,6 +415,7 @@ conditions; see `cylc conditions`.
         self.profiler.log_memory("scheduler.py: after load_tasks")
 
         self.pool.put_rundb_suite_params(
+            self.run_mode,
             self.initial_point,
             self.final_point,
             self.config.cfg['cylc']['cycle point format'])
@@ -491,7 +493,7 @@ conditions; see `cylc conditions`.
                         self.suite, itask.task_host, itask.task_owner)
                 except RemoteJobHostInitError as exc:
                     self.log.error(str(exc))
-        self.pool.poll_task_jobs()
+        self.command_poll_tasks()
 
     def _load_broadcast_states(self, row_idx, row):
         """Load a setting in the previous broadcast states."""
@@ -583,7 +585,7 @@ conditions; see `cylc conditions`.
         """
         if row_idx == 0:
             OUT.info("LOADING task proxies")
-        (cycle, name, spawned, status, hold_swap, submit_num, try_num,
+        (cycle, name, spawned, status, hold_swap, submit_num, _,
          user_at_host) = row
         try:
             itask = TaskProxy(
@@ -763,8 +765,14 @@ conditions; see `cylc conditions`.
 
     def info_get_task_jobfile_path(self, task_id):
         """Return task job file path."""
-        task_id = self.get_standardised_taskid(task_id)
-        return self.pool.get_task_jobfile_path(task_id)
+        itask = self.pool.get_task_by_id(task_id)
+        if itask is None:
+            return False, "task not found"
+        path = itask.get_job_log_path(
+            head_mode=itask.HEAD_MODE_LOCAL, submit_num=itask.NN,
+            tail=itask.JOB_FILE_BASE)
+        # Note: 2nd value for back compat
+        return path, os.path.dirname(os.path.dirname(path))
 
     def info_get_suite_info(self):
         """Return a dict containing the suite title and description."""
@@ -864,13 +872,24 @@ conditions; see `cylc conditions`.
         """Release tasks."""
         return self.pool.release_tasks(items)
 
-    def command_poll_tasks(self, items):
+    def command_poll_tasks(self, items=None):
         """Poll all tasks or a task/family if options are provided."""
-        return self.pool.poll_task_jobs(items)
+        if self.run_mode == 'simulation':
+            return
+        itasks, bad_items = self.pool.filter_task_proxies(items)
+        self.task_job_mgr.poll_task_jobs(self.suite, itasks, items is not None)
+        return len(bad_items)
 
-    def command_kill_tasks(self, items):
+    def command_kill_tasks(self, items=None):
         """Kill all tasks or a task/family if options are provided."""
-        return self.pool.kill_task_jobs(items)
+        itasks, bad_items = self.pool.filter_task_proxies(items)
+        if self.run_mode == 'simulation':
+            for itask in itasks:
+                if itask.state.status in TASK_STATUSES_ACTIVE:
+                    itask.state.reset_state(TASK_STATUS_FAILED)
+            return len(bad_items)
+        self.task_job_mgr.kill_task_jobs(self.suite, itasks, items is not None)
+        return len(bad_items)
 
     def command_release_suite(self):
         """Release all task proxies in the suite."""
@@ -894,7 +913,7 @@ conditions; see `cylc conditions`.
     def command_set_verbosity(self, lvl):
         """Remove suite verbosity."""
         self.log.logger.setLevel(lvl)
-        cylc.flags.debug = (lvl == logging.DEBUG)
+        cylc.flags.debug = (lvl == DEBUG)
         return True, 'OK'
 
     def command_remove_cycle(self, point_string, spawn=False):
@@ -931,6 +950,7 @@ conditions; see `cylc conditions`.
         if self.gen_reference_log or self.reference_test_mode:
             self.configure_reftest(recon=True)
         self.pool.put_rundb_suite_params(
+            self.run_mode,
             self.initial_point,
             self.final_point,
             self.config.cfg['cylc']['cycle point format'])
@@ -1173,8 +1193,8 @@ conditions; see `cylc conditions`.
                 attr = getattr(self, attr_name)
                 if callable(attr) and attr_name.startswith('info_'):
                     info_commands[attr_name.replace('info_', '')] = attr
-            self.info_interface = SuiteInfoServer(info_commands)
-            self.comms_daemon.connect(self.info_interface, COMMS_INFO_OBJ_NAME)
+            self.info_server = SuiteInfoServer(info_commands)
+            self.comms_daemon.connect(self.info_server, COMMS_INFO_OBJ_NAME)
 
             self.suite_log = SuiteLog.get_inst(self.suite)
             log_interface = SuiteLogServer(self.suite_log)
@@ -1194,7 +1214,7 @@ conditions; see `cylc conditions`.
     def configure_suite_environment(self):
         """Configure suite environment."""
         # Pass static cylc and suite variables to job script generation code
-        JobFile.get_inst().set_suite_env({
+        self.task_job_mgr.job_file_writer.set_suite_env({
             'CYLC_UTC': str(cylc.flags.utc),
             'CYLC_DEBUG': str(cylc.flags.debug),
             'CYLC_VERBOSE': str(cylc.flags.verbose),
@@ -1205,7 +1225,7 @@ conditions; see `cylc conditions`.
         })
 
         # Make suite vars available to [cylc][environment]:
-        for var, val in JobFile.get_inst().suite_env.items():
+        for var, val in self.task_job_mgr.job_file_writer.suite_env.items():
             os.environ[var] = val
         # Set local values of variables that are potenitally task-specific
         # due to different directory paths on different task hosts. These
@@ -1442,8 +1462,20 @@ conditions; see `cylc conditions`.
                     time0 = time()
 
                 self.pool.match_dependencies()
-                if self.stop_mode is None and self.pool.submit_tasks():
-                    self.do_update_state_summary = True
+                if self.stop_mode is None:
+                    itasks = self.pool.get_ready_tasks()
+                    if itasks:
+                        self.do_update_state_summary = True
+                    if self.config.cfg['cylc']['log resolved dependencies']:
+                        for itask in itasks:
+                            if not itask.local_job_file_path:
+                                itask.log(INFO, 'triggered off %s' % (
+                                    itask.state.get_resolved_dependencies()))
+                    if self.run_mode == 'simulation':
+                        for itask in itasks:
+                            itask.job_submission_succeeded()
+                    else:
+                        self.task_job_mgr.submit_task_jobs(self.suite, itasks)
                 for meth in [
                         self.pool.spawn_all_tasks,
                         self.pool.remove_spent_tasks,
@@ -1458,8 +1490,8 @@ conditions; see `cylc conditions`.
                         "END TASK PROCESSING (took %s seconds)" %
                         (time() - time0))
 
-            self.pool.process_queued_task_messages()
-            self.process_queued_task_event_handlers()
+            self.pool.process_queued_task_messages(self.message_queue)
+            self.process_task_event_handlers()
             self.process_command_queue()
             has_changes = cylc.flags.iflag or self.do_update_state_summary
             if has_changes:
@@ -1490,7 +1522,12 @@ conditions; see `cylc conditions`.
                 self.check_suite_inactive()
             # check submission and execution timeout and polling timers
             if self.run_mode != 'simulation':
-                self.pool.check_task_timers()
+                now = time()
+                itasks = set()
+                for itask in self.pool.get_tasks():
+                    if itask.check_poll_ready(now):
+                        itasks.add(itask)
+                self.task_job_mgr.poll_task_jobs(self.suite, itasks)
 
             # Does the suite need to shutdown on task failure?
             if (self.config.cfg['cylc']['abort if any task fails'] and
@@ -1544,8 +1581,8 @@ conditions; see `cylc conditions`.
                     raise SchedulerStop(self.stop_mode)
             elif (self.time_next_kill is not None and
                     time() > self.time_next_kill):
-                self.pool.poll_task_jobs()
-                self.pool.kill_task_jobs()
+                self.command_poll_tasks()
+                self.command_kill_tasks()
                 self.time_next_kill = time() + self.INTERVAL_STOP_KILL
 
             # Suite health checks
@@ -1674,7 +1711,8 @@ conditions; see `cylc conditions`.
         if self.pool.waiting_tasks_ready():
             process = True
 
-        if self.run_mode == 'simulation' and self.pool.sim_time_check():
+        if self.run_mode == 'simulation' and self.pool.sim_time_check(
+                self.message_queue):
             process = True
 
         # if not process:
@@ -1701,7 +1739,7 @@ conditions; see `cylc conditions`.
 
         return process
 
-    def process_queued_task_event_handlers(self):
+    def process_task_event_handlers(self):
         """Process task event handlers."""
         ctx_groups = {}
         env = None
@@ -1717,7 +1755,7 @@ conditions; see `cylc conditions`.
                 # Set timer if timeout is None.
                 if not try_timer.is_timeout_set():
                     if try_timer.next() is None:
-                        itask.log(logging.WARNING, "%s failed" % str(key))
+                        itask.log(WARNING, "%s failed" % str(key))
                         del itask.event_handler_try_timers[key]
                         continue
                     # Report retries and delayed 1st try
@@ -1727,7 +1765,7 @@ conditions; see `cylc conditions`.
                     elif try_timer.delay:
                         tmpl = "%s will run after %s (after %s)"
                     if tmpl:
-                        itask.log(logging.DEBUG, tmpl % (
+                        itask.log(DEBUG, tmpl % (
                             str(key),
                             try_timer.delay_as_seconds(),
                             try_timer.timeout_as_str()))
@@ -1970,7 +2008,7 @@ conditions; see `cylc conditions`.
                       SuiteIdServer.get_inst(), StateSummaryServer.get_inst(),
                       ExtTriggerServer.get_inst(), BroadcastServer.get_inst()]
             if self.pool is not None:
-                ifaces.append(self.pool.message_queue)
+                ifaces.append(self.message_queue)
             for iface in ifaces:
                 try:
                     self.comms_daemon.disconnect(iface)
@@ -2085,7 +2123,16 @@ conditions; see `cylc conditions`.
 
     def command_dry_run_tasks(self, items):
         """Dry-run tasks, e.g. edit run."""
-        return self.pool.dry_run_task(items)
+        itasks, bad_items = self.pool.filter_task_proxies(items)
+        n_warnings = len(bad_items)
+        if len(itasks) > 1:
+            LOG.warning("Unique task match not found: %s" % items)
+            return n_warnings + 1
+        if self.task_job_mgr.prep_submit_task_jobs(
+                self.suite, [itasks[0]], dry_run=True):
+            return n_warnings
+        else:
+            return n_warnings + 1
 
     def command_reset_task_states(self, items, state=None):
         """Reset the state of tasks."""
