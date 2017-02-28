@@ -31,16 +31,16 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 # Suite reloads+inserts new task to mess up prerequisites - suite should stall
 suite_run_ok "${TEST_NAME_BASE}-run" \
     timeout 120 cylc run --debug --reference-test "${SUITE_NAME}"
-cylc ls-checkpoints "${SUITE_NAME}" | date-remove >'cylc-ls-checkpoints.out'
-contains_ok 'cylc-ls-checkpoints.out' <<'__OUT__'
+cylc get-checkpoints "${SUITE_NAME}" | date-remove >'cylc-get-checkpoints.out'
+contains_ok 'cylc-get-checkpoints.out' <<'__OUT__'
 #######################################################################
 # CHECKPOINT ID (ID|TIME|EVENT)
 1|DATE|snappy
 0|DATE|latest
 __OUT__
 
-cylc ls-checkpoints "${SUITE_NAME}" 1 | date-remove >'cylc-ls-checkpoints-1.out'
-contains_ok 'cylc-ls-checkpoints-1.out' <<'__OUT__'
+cylc get-checkpoints "${SUITE_NAME}" 1 | date-remove >'cylc-get-checkpoints-1.out'
+contains_ok 'cylc-get-checkpoints-1.out' <<'__OUT__'
 #######################################################################
 # CHECKPOINT ID (ID|TIME|EVENT)
 1|DATE|snappy

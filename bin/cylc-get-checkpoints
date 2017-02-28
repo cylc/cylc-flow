@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [info] ls-checkpoints [OPTIONS] ARGS
+"""cylc [info] get-checkpoints [OPTIONS] ARGS
 
 In the absence of arguments and the --all option, list checkpoint IDs, their
 time and events. Otherwise, display the latest and/or the checkpoints of suite

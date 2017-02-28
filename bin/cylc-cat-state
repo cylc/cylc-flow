@@ -19,7 +19,7 @@
 """cylc [info] cat-state [OPTIONS] REG
 
 Print the suite state in the old state dump file format to stdout.
-This command is deprecated; use "cylc ls-checkpoints" instead."""
+This command is deprecated; use "cylc get-checkpoints" instead."""
 
 import sys
 from cylc.remote import remrun
