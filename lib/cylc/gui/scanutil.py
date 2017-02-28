@@ -345,7 +345,7 @@ def update_suites_info(
 def _update_stopped_suite_info(key):
     """Return a map like cylc scan --raw for states and last update time."""
     host, owner, suite = key
-    cmd = ["cylc", "ls-checkpoint"]
+    cmd = ["cylc", "ls-checkpoints"]
     if host:
         cmd.append("--host=" + host)
     if owner:

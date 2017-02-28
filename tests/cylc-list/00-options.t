@@ -34,7 +34,7 @@ manny
 __DONE__
 #------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-opt-a
-cylc list -a $SUITE_NAME > list-a.out
+cylc ls -a $SUITE_NAME > list-a.out
 cmp_ok list-a.out << __DONE__
 cujo
 fido
@@ -57,7 +57,7 @@ root
 __DONE__
 #------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-opt-nw
-cylc list -nw $SUITE_NAME > list-nw.out
+cylc ls -nw $SUITE_NAME > list-nw.out
 cmp_ok list-nw.out << __DONE__
 DOG        a canid that is known as man's best friend
 FICTIONAL  something made-up
@@ -85,7 +85,7 @@ root       root
 __DONE__
 #------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-opt-p
-cylc list -p 20140808T00,20140812T00 $SUITE_NAME > list-p.out
+cylc ls -p 20140808T00,20140812T00 $SUITE_NAME > list-p.out
 cmp_ok list-p.out << __DONE__
 cujo.20140808T0000Z
 cujo.20140809T0000Z
