@@ -65,38 +65,36 @@ class CommandNotUniqueError(CommandError):
     pass
 
 
-def is_help(str):
-    if (str == '-h' or str == '--help' or str == '--hlep' or str == 'help' or
-            str == 'hlep' or str == '?'):
-        return True
-    else:
-        return False
+def is_help(arg):
+    """Return True if arg looks like a "help" command."""
+    return (arg in ('-h', '--help', '--hlep', 'help', 'hlep', '?'))
 
 
 def match_dict(abbrev, categories, title):
-    # allow any unique abbreviation to cylc categories
-    matches = []
-    for cat in categories.keys():
-        for alias in categories[cat]:
-            if re.match('^' + abbrev + '.*', alias):
-                if cat not in matches:
-                    matches.append(cat)
-    if len(matches) == 0:
+    """Allow any unique abbreviation to cylc categories"""
+    matches = set()
+    for cat, aliases in categories.items():
+        if any([alias == abbrev for alias in aliases]):
+            # Exact match, don't look for more
+            matches.clear()
+            matches.add(cat)
+            break
+        if any([alias.startswith(abbrev) for alias in aliases]):
+            # Partial match
+            matches.add(cat)
+    if not matches:
         raise CommandNotFoundError(title + ' not found: ' + abbrev)
-    elif len(matches) > 1:
+    if len(matches) > 1:
         # multiple matches
-        res = ''
-        for cat in matches:
-            res += ' ' + '|'.join(categories[cat])
-        raise CommandNotUniqueError(
-            title + ' "' + abbrev + '" not unique:' + res)
-    else:
-        return matches[0]
+        raise CommandNotUniqueError('%s "%s" not unique: %s' % (
+            title, abbrev,
+            ' '.join(['|'.join(categories[cat]) for cat in matches])))
+    return matches.pop()
 
 
 def match_command(abbrev):
-    # allow any unique abbreviation to commands when no category is specified
-    matches = []
+    """Allow any unique abbrev to commands when no category is specified"""
+    matches = set()
     finished_matching = False
     for dct in [admin_commands,
                 license_commands,
@@ -107,28 +105,24 @@ def match_command(abbrev):
                 utility_commands,
                 hook_commands,
                 task_commands]:
-        for com in dct.keys():
-            if com == abbrev:
-                matches = [com]
+        for com, aliases in dct.items():
+            if any([alias == abbrev for alias in aliases]):
+                matches.clear()
+                matches.add(com)
                 finished_matching = True
                 break
-            for alias in dct[com]:
-                if re.match('^' + abbrev + '.*', alias):
-                    if com not in matches:
-                        matches.append(com)
-            if finished_matching:
-                break
-    if len(matches) == 0:
+            if any([alias.startswith(abbrev) for alias in aliases]):
+                matches.add(com)
+        if finished_matching:
+            break
+    if not matches:
         raise CommandNotFoundError('COMMAND not found: ' + abbrev)
-    elif len(matches) > 1:
+    if len(matches) > 1:
         # multiple matches
-        res = ''
-        for com in matches:
-            res += ' ' + '|'.join(all_commands[com])
-        raise CommandNotUniqueError(
-            'COMMAND "' + abbrev + '" not unique:' + res)
-    else:
-        return matches[0]
+        raise CommandNotUniqueError('COMMAND "%s" not unique: %s' % (
+            abbrev,
+            ' '.join(['|'.join(all_commands[com]) for com in matches])))
+    return matches.pop()
 
 
 def pretty_print(incom, choose_dict, indent=True, numbered=False, sort=False):
