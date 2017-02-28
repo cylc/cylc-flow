@@ -26,7 +26,7 @@ TEST_NAME=$TEST_NAME_BASE-val
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-basic
-cylc list $SUITE_NAME > list.out
+cylc ls $SUITE_NAME > list.out
 cmp_ok list.out << __DONE__
 cujo
 fido
@@ -43,7 +43,7 @@ not-used
 __DONE__
 #------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-opt-n
-cylc list -n $SUITE_NAME > list-n.out
+cylc ls -n $SUITE_NAME > list-n.out
 cmp_ok list-n.out << __DONE__
 DOG
 FICTIONAL
@@ -71,7 +71,7 @@ root
 __DONE__
 #------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-opt-nm
-cylc list -nm $SUITE_NAME > list-nm.out
+cylc ls -nm $SUITE_NAME > list-nm.out
 cmp_ok list-nm.out << __DONE__
 DOG        DOG MAMMAL root
 FICTIONAL  FICTIONAL root

@@ -32,8 +32,8 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 # Suite reloads+inserts new task to mess up prerequisites - suite should stall
 suite_run_fail "${TEST_NAME_BASE}-run" \
     timeout 120 cylc run "${SUITE_NAME}" --debug
-cylc ls-checkpoints "${SUITE_NAME}" | date-remove >'cylc-ls-checkpoints.out'
-contains_ok 'cylc-ls-checkpoints.out' <<'__OUT__'
+cylc get-checkpoints "${SUITE_NAME}" | date-remove >'cylc-get-checkpoints.out'
+contains_ok 'cylc-get-checkpoints.out' <<'__OUT__'
 #######################################################################
 # CHECKPOINT ID (ID|TIME|EVENT)
 1|DATE|reload-init
@@ -41,8 +41,8 @@ contains_ok 'cylc-ls-checkpoints.out' <<'__OUT__'
 0|DATE|latest
 __OUT__
 
-cylc ls-checkpoints "${SUITE_NAME}" 1 | date-remove >'cylc-ls-checkpoints-1.out'
-contains_ok 'cylc-ls-checkpoints-1.out' <<'__OUT__'
+cylc get-checkpoints "${SUITE_NAME}" 1 | date-remove >'cylc-get-checkpoints-1.out'
+contains_ok 'cylc-get-checkpoints-1.out' <<'__OUT__'
 #######################################################################
 # CHECKPOINT ID (ID|TIME|EVENT)
 1|DATE|reload-init
@@ -60,8 +60,8 @@ run_mode|live
 2017|t1|1|running|held
 2018|t1|0|held|waiting
 __OUT__
-cylc ls-checkpoints "${SUITE_NAME}" 2 | date-remove >'cylc-ls-checkpoints-2.out'
-contains_ok 'cylc-ls-checkpoints-2.out' <<'__OUT__'
+cylc get-checkpoints "${SUITE_NAME}" 2 | date-remove >'cylc-get-checkpoints-2.out'
+contains_ok 'cylc-get-checkpoints-2.out' <<'__OUT__'
 #######################################################################
 # CHECKPOINT ID (ID|TIME|EVENT)
 2|DATE|reload-done
@@ -79,8 +79,8 @@ run_mode|live
 2017|t1|1|running|held
 2018|t1|0|held|waiting
 __OUT__
-cylc ls-checkpoints "${SUITE_NAME}" 0 | date-remove >'cylc-ls-checkpoints-0.out'
-contains_ok 'cylc-ls-checkpoints-0.out' <<'__OUT__'
+cylc get-checkpoints "${SUITE_NAME}" 0 | date-remove >'cylc-get-checkpoints-0.out'
+contains_ok 'cylc-get-checkpoints-0.out' <<'__OUT__'
 #######################################################################
 # CHECKPOINT ID (ID|TIME|EVENT)
 0|DATE|latest
