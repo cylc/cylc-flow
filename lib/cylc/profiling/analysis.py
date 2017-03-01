@@ -301,8 +301,8 @@ def make_table(results, versions, experiment, quick_analysis=False):
                              [data[run_name][metric] for metric in
                               sorted(metrics)])
     except ValueError:
-        print ('ERROR: Data is not complete. Try removing results and '
-               're-running any experiments')
+        print('ERROR: Data is not complete. Try removing results and '
+              're-running any experiments')
 
     return table
 
@@ -390,8 +390,8 @@ def plot_scale(results, run_names, versions, metric, experiment,
         # Compute and plot line of best fit.
         if lobf_order >= 1:
             if lobf_order > 8:
-                print ('WARNING: Line of best fit order too high (' +
-                       lobf_order + '). Order has been set to 3.')
+                print('WARNING: Line of best fit order too high (' +
+                      lobf_order + '). Order has been set to 3.')
                 lobf_order = 3
             lobf = numpy.polyfit(x_data, y_data, lobf_order)
             line = numpy.linspace(x_data[0], x_data[-1], 100)
@@ -426,8 +426,8 @@ def plot_results(results, versions, experiment, plt_dir=None,
     """
     # Are we able to plot?
     if not CAN_PLOT:
-        print ('\nWarning: Plotting requires numpy and maplotlib so cannot be '
-               'run.')
+        print('\nWarning: Plotting requires numpy and maplotlib so cannot be '
+              'run.')
         return
 
     versions = remove_profile_from_versions(versions)

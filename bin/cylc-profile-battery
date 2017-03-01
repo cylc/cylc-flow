@@ -419,8 +419,8 @@ def print_manual_scheme(versions, experiments, all_versions=None):
     for version in versions:
         print '\t$ git checkout ' + version['id']
         print '\t$ cylc profile-battery --experiments ' + exp
-    print ('\t$ cylc profile-battery --versions {versions} --experiments '
-           '{experiments}'.format(versions=ver, experiments=exp))
+    print('\t$ cylc profile-battery --versions {versions} --experiments '
+          '{experiments}'.format(versions=ver, experiments=exp))
 
 
 def determine_action(schedule, versions, experiments, non_interactive=False):
@@ -480,25 +480,25 @@ def determine_action(schedule, versions, experiments, non_interactive=False):
             else:
                 automatic_only_versions.append(version)
 
-        print ('To perform profiling different cylc versions will need to be '
-               'checked out. I can checkout and profile versions '
-               'automatically.')
-        print ('If using the automatic checkout system ensure that there are '
-               'no un-commited changes before proceeding and do not make '
-               'any changes to the local repository whist the profiling is '
-               'running\n')
+        print('To perform profiling different cylc versions will need to be '
+              'checked out. I can checkout and profile versions '
+              'automatically.')
+        print('If using the automatic checkout system ensure that there are '
+              'no un-commited changes before proceeding and do not make '
+              'any changes to the local repository whist the profiling is '
+              'running\n')
 
         if automatic_only_versions:
-            print ('These versions can only be profiled '
-                   'automatically:\n\t{0}'.format(
-                       ' '.join([version['name'] for version in
-                                 automatic_only_versions])
-                   ))
+            print('These versions can only be profiled '
+                  'automatically:\n\t{0}'.format(
+                      ' '.join([version['name'] for version in
+                               automatic_only_versions])
+                  ))
         if manual_versions:
-            print ('These versions you can profile manually if you '
-                   'prefer:\n\t{0}'.format(
-                       ' '.join([version['name'] for version in
-                                 manual_versions])))
+            print('These versions you can profile manually if you '
+                  'prefer:\n\t{0}'.format(
+                      ' '.join([version['name'] for version in
+                                manual_versions])))
 
         print
 
@@ -508,8 +508,8 @@ def determine_action(schedule, versions, experiments, non_interactive=False):
                 response = raw_input('Do you want to checkout these versions '
                                      'automatically? (y/n): ')
             if response == 'n':
-                print ('You can perform this profiling manually by doing '
-                       'something like:')
+                print('You can perform this profiling manually by doing '
+                      'something like:')
                 print_manual_scheme(manual_versions, experiments,
                                     all_versions=versions)
                 sys.exit('Profiling aborted by user.')
@@ -529,8 +529,8 @@ def determine_action(schedule, versions, experiments, non_interactive=False):
                                     all_versions=versions)
                 to_checkout = automatic_only_versions
             if response == 'none':
-                print ('Some versions can be profiled manually by doing '
-                       'something like:')
+                print('Some versions can be profiled manually by doing '
+                      'something like:')
                 print_manual_scheme(manual_versions, experiments,
                                     all_versions=manual_versions)
                 sys.exit('Profiling aborted by user.')
@@ -701,13 +701,13 @@ def run_schedule(schedule, experiments, versions, exps_to_run,
                 raise GitCheckoutError()
             checkout(r'@{-%d}' % checkout_count, delete_pyc=True)
         except GitCheckoutError:
-            print ('ERROR: Could not checkout git repo to original location. '
-                   r'\n\t$ git checkout @{-%d}' % checkout_count)
+            print('ERROR: Could not checkout git repo to original location. '
+                  r'\n\t$ git checkout @{-%d}' % checkout_count)
 
     # Stop here if profiling was un-successfull.
     if not success:
-        print ('ERROR: Some experiments failed to run, no plotting will be '
-               'attempted.')
+        print('ERROR: Some experiments failed to run, no plotting will be '
+              'attempted.')
 
     return success
 
@@ -760,8 +760,8 @@ def run_analysis(experiments, versions, interactive=False,
         plot_results(full_results, versions, experiment, plt_dir,
                      quick_analysis=quick_analysis, lobf_order=lobf_order)
         if plt_dir:
-            print ('Results for experiment "{exp}" have been written out to '
-                   '"{dir}"'.format(exp=experiment['name'], dir=plt_dir))
+            print('Results for experiment "{exp}" have been written out to '
+                  '"{dir}"'.format(exp=experiment['name'], dir=plt_dir))
 
 
 def ls(exp_names, ver_names, delete=False):
@@ -869,17 +869,17 @@ def promote(experiment_id, yes=False):
         candidate_versions = [version for version in candidate_versions if
                               version not in target_versions]
         print
-        print ('Only the results for cylc versions not already profiled in '
-               'the current experiment version will be promoted.')
+        print('Only the results for cylc versions not already profiled in '
+              'the current experiment version will be promoted.')
     git.order_identifiers_by_date(candidate_versions)
 
     print
-    print ('Promote the following results for experiment "{name}" at version '
-           '"{candidate}" to the current version "{target}":'.format(
-               name=experiment_name,
-               candidate=experiment_version,
-               target=cur_exp_id.rsplit('@', 1)[1]
-           ))
+    print('Promote the following results for experiment "{name}" at version '
+          '"{candidate}" to the current version "{target}":'.format(
+              name=experiment_name,
+              candidate=experiment_version,
+              target=cur_exp_id.rsplit('@', 1)[1]
+          ))
     print '\t', ' '.join(candidate_versions)
 
     if not yes:
