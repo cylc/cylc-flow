@@ -27,7 +27,8 @@ import sys
 import cylc.flags
 from cylc.mkdir_p import mkdir_p
 from cylc.owner import USER, is_remote_user
-from cylc.suite_host import get_hostname, is_remote_host, get_local_ip_address
+from cylc.suite_host import (
+    get_local_ip_address, get_suite_host, is_remote_host)
 
 
 class SuiteServiceFileError(Exception):
@@ -77,7 +78,7 @@ class SuiteSrvFilesManager(object):
         if owner is None:
             owner = USER
         if host is None:
-            host = get_hostname()
+            host = get_suite_host()
         path = self._get_cache_dir(reg, owner, host)
         self.cache[self.FILE_BASE_PASSPHRASE][(reg, owner, host)] = value
         # Dump to a file only for remote suites loaded via SSH.
@@ -237,7 +238,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
             if my_owner is None:
                 my_owner = USER
             if my_host is None:
-                my_host = get_hostname()
+                my_host = get_suite_host()
             try:
                 return self.cache[item][(reg, my_owner, my_host)]
             except KeyError:
@@ -467,7 +468,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
         if len(reg) > 64:
             common_name = reg[:61] + "..."
         # See https://github.com/kennethreitz/requests/issues/2621
-        host = get_hostname()
+        host = get_suite_host()
         ext = crypto.X509Extension(
             "subjectAltName",
             False,
@@ -566,7 +567,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
                     if owner is None:
                         owner = USER
                     if host is None:
-                        host = get_hostname()
+                        host = get_suite_host()
                     host_value = data.get(self.KEY_HOST, "")
                     self.can_use_load_auths[(reg, owner, host)] = (
                         reg == data.get(self.KEY_NAME) and

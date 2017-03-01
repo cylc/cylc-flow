@@ -33,7 +33,7 @@ create_test_globalrc '' '
 [suite host self-identification]
     method = address'
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug "${SUITE_NAME}" \
+    timeout 60 cylc run --reference-test --debug "${SUITE_NAME}" \
     "--set=MY_HOST_IP=${MY_HOST_IP}"
 #-------------------------------------------------------------------------------
 
