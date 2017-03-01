@@ -34,10 +34,10 @@ def main():
         ("JOB-LOG-ROOT", "The log/job sub-directory for the suite"),
         ("[JOB-LOG-DIR ...]", "A point/name/submit_num sub-directory")])
     args = parser.parse_args()[1]
-    BATCH_SYS_MANAGER.jobs_poll(args[0], args[1:])
+    BatchSysManager().jobs_poll(args[0], args[1:])
 
 
 if __name__ == "__main__" and not remrun().execute():
     from cylc.option_parsers import CylcOptionParser as COP
-    from cylc.batch_sys_manager import BATCH_SYS_MANAGER
+    from cylc.batch_sys_manager import BatchSysManager
     main()

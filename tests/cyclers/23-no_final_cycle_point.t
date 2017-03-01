@@ -34,8 +34,8 @@ TEST_NAME=$TEST_NAME_BASE-run
 run_fail $TEST_NAME cylc run --debug $SUITE_NAME
 grep_ok "This suite requires a final cycle point\." \
     $TEST_NAME.stderr
-contains_ok "$TEST_NAME.stderr" <<'__ERR__'
-cylc.config.SuiteConfigError: 'ERROR: Invalid/unsupported recurrence representation: R1/P0D'
-__ERR__
+grep_ok \
+    "SuiteConfigError: 'ERROR: Invalid/unsupported recurrence representation: R1/P0D'" \
+    "$TEST_NAME.stderr"
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

@@ -40,7 +40,6 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.config import SuiteConfig
 from cylc.cycling.loader import get_point
 import cylc.flags
-from cylc.job_host import RemoteJobHostManager
 from cylc.mp_pool import SuiteProcPool
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
@@ -91,8 +90,8 @@ def main():
 
     GLOBAL_CFG.create_cylc_run_tree(suite)
 
-    RemoteJobHostManager.get_inst().single_task_mode = True
-    task_job_mgr = TaskJobManager()
+    task_job_mgr = TaskJobManager(proc_pool=SuiteProcPool())
+    task_job_mgr.single_task_mode = True
     task_job_mgr.job_file_writer.set_suite_env({
         'CYLC_UTC': str(config.cfg['cylc']['UTC mode']),
         'CYLC_DEBUG': str(cylc.flags.debug),
@@ -117,12 +116,11 @@ def main():
         print "JOB SCRIPT=%s" % itask.get_job_log_path(
             itask.HEAD_MODE_LOCAL, tail=itask.JOB_FILE_BASE)
     else:
-        task_job_mgr.submit_task_jobs(suite, [itask], proc_pool_size=1)
-        proc_pool = SuiteProcPool.get_inst()
-        while proc_pool.results:
-            proc_pool.handle_results_async()
-        proc_pool.close()
-        proc_pool.join()
+        task_job_mgr.submit_task_jobs(suite, [itask])
+        while task_job_mgr.proc_pool.results:
+            task_job_mgr.proc_pool.handle_results_async()
+        task_job_mgr.proc_pool.close()
+        task_job_mgr.proc_pool.join()
         if itask.summary['submit_method_id'] is not None:
             print 'Job ID:', itask.summary['submit_method_id']
 

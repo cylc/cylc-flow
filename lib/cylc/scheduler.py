@@ -21,7 +21,6 @@ from copy import deepcopy
 from logging import DEBUG, INFO, WARNING
 import os
 import pickle
-from pipes import quote
 from Queue import Empty
 import shlex
 from shutil import copy, copytree, rmtree
@@ -45,7 +44,6 @@ from cylc.cycling.loader import get_point, standardise_point_string
 from cylc.daemonize import daemonize
 from cylc.exceptions import CylcError
 import cylc.flags
-from cylc.job_host import RemoteJobHostManager, RemoteJobHostInitError
 from cylc.log_diagnosis import LogSpec
 from cylc.mp_pool import SuiteProcContext, SuiteProcPool
 from cylc.network import (
@@ -65,12 +63,14 @@ from cylc.owner import USER
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
 from cylc.rundb import CylcSuiteDAO
+from cylc.suite_events import (
+    SuiteEventContext, SuiteEventError, SuiteEventHandler)
 from cylc.suite_host import get_suite_host
 from cylc.suite_logging import SuiteLog, OUT, ERR, LOG
 from cylc.taskdef import TaskDef
 from cylc.task_action_timer import TaskActionTimer
 from cylc.task_id import TaskID
-from cylc.task_job_mgr import TaskJobManager
+from cylc.task_job_mgr import TaskJobManager, RemoteJobHostInitError
 from cylc.task_pool import TaskPool
 from cylc.task_proxy import TaskProxy, TaskProxySequenceBoundsError
 from cylc.task_state import (
@@ -99,19 +99,16 @@ class SchedulerStop(CylcError):
 class Scheduler(object):
     """Cylc scheduler server."""
 
-    EVENT_STARTUP = 'startup'
-    EVENT_SHUTDOWN = 'shutdown'
-    EVENT_TIMEOUT = 'timeout'
-    EVENT_INACTIVITY_TIMEOUT = 'inactivity'
-    EVENT_STALLED = 'stalled'
+    EVENT_STARTUP = SuiteEventHandler.EVENT_STARTUP
+    EVENT_SHUTDOWN = SuiteEventHandler.EVENT_SHUTDOWN
+    EVENT_TIMEOUT = SuiteEventHandler.EVENT_TIMEOUT
+    EVENT_INACTIVITY_TIMEOUT = SuiteEventHandler.EVENT_INACTIVITY_TIMEOUT
+    EVENT_STALLED = SuiteEventHandler.EVENT_STALLED
 
     # Intervals in seconds
     INTERVAL_MAIN_LOOP = 1.0
     INTERVAL_STOP_KILL = 10.0
     INTERVAL_STOP_PROCESS_POOL_EMPTY = 0.5
-
-    SUITE_EVENT_HANDLER = 'suite-event-handler'
-    SUITE_EVENT_MAIL = 'suite-event-mail'
 
     START_MESSAGE_PREFIX = 'Suite starting: '
     START_MESSAGE_TMPL = (
@@ -168,10 +165,6 @@ class Scheduler(object):
 
         self.run_mode = self.options.run_mode
 
-        # For persistence of reference test settings across reloads:
-        self.reference_test_mode = self.options.reftest
-        self.gen_reference_log = self.options.genref
-
         self.owner = USER
         self.host = get_suite_host()
         self.port = None
@@ -189,7 +182,9 @@ class Scheduler(object):
         self.suite_state = None
         self.command_queue = None
         self.pool = None
+        self.proc_pool = None
         self.task_job_mgr = None
+        self.suite_event_handler = None
         self.message_queue = None
         self.comms_daemon = None
         self.info_server = None
@@ -245,7 +240,7 @@ class Scheduler(object):
             else:
                 slog.pimp()
 
-            SuiteProcPool.get_inst()
+            self.proc_pool = SuiteProcPool()
             self.configure_comms_daemon()
             self.configure()
             self.profiler.start()
@@ -377,7 +372,6 @@ conditions; see `cylc conditions`.
     def configure(self):
         """Configure suite daemon."""
         self.profiler.log_memory("scheduler.py: start configure")
-
         self.profiler.log_memory("scheduler.py: before configure_suite")
         self.configure_suite()
         self.profiler.log_memory("scheduler.py: after configure_suite")
@@ -388,7 +382,9 @@ conditions; see `cylc conditions`.
                 raise SchedulerError(
                     'ERROR: this suite requires the %s run mode' % reqmode)
 
-        if self.gen_reference_log or self.reference_test_mode:
+        self.task_job_mgr = TaskJobManager(self.proc_pool)
+        self.suite_event_handler = SuiteEventHandler(self.proc_pool)
+        if self.options.genref or self.options.reftest:
             self.configure_reftest()
 
         self.log.info(self.START_MESSAGE_TMPL % {
@@ -405,7 +401,6 @@ conditions; see `cylc conditions`.
         self.message_queue = TaskMessageServer(self.suite)
         self.comms_daemon.connect(
             self.message_queue, COMMS_TASK_MESSAGE_OBJ_NAME)
-        self.task_job_mgr = TaskJobManager()
 
         self.profiler.log_memory("scheduler.py: before load_tasks")
         if self.is_restart:
@@ -489,7 +484,7 @@ conditions; see `cylc conditions`.
             if itask.state.status in [
                     TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING]:
                 try:
-                    RemoteJobHostManager.get_inst().init_suite_run_dir(
+                    self.task_job_mgr.init_host(
                         self.suite, itask.task_host, itask.task_owner)
                 except RemoteJobHostInitError as exc:
                     self.log.error(str(exc))
@@ -648,7 +643,7 @@ conditions; see `cylc conditions`.
             OUT.info("LOADING task action timers")
         (
             cycle, name, ctx_key_pickle, ctx_pickle, delays_pickle, num, delay,
-            timeout,
+            timeout
         ) = row
         id_ = TaskID.get(name, cycle)
         itask = self.pool.get_task_by_id(id_)
@@ -836,7 +831,7 @@ conditions; see `cylc conditions`.
 
     def _set_stop(self, stop_mode=None):
         """Set shutdown mode."""
-        SuiteProcPool.get_inst().stop_job_submission()
+        self.proc_pool.stop_job_submission()
         if stop_mode is None:
             stop_mode = TaskPool.STOP_REQUEST_CLEAN
         self.stop_mode = stop_mode
@@ -947,7 +942,7 @@ conditions; see `cylc conditions`.
             LOG.warning("Added task: '%s'" % (task,))
 
         self.configure_suite_environment()
-        if self.gen_reference_log or self.reference_test_mode:
+        if self.options.genref or self.options.reftest:
             self.configure_reftest(recon=True)
         self.pool.put_rundb_suite_params(
             self.run_mode,
@@ -1258,10 +1253,10 @@ conditions; see `cylc conditions`.
 
     def configure_reftest(self, recon=False):
         """Configure the reference test."""
-        if self.gen_reference_log:
+        if self.options.genref:
             self.config.cfg['cylc']['log resolved dependencies'] = True
 
-        elif self.reference_test_mode:
+        elif self.options.reftest:
             rtc = self.config.cfg['cylc']['reference test']
             req = rtc['required run mode']
             if req and req != self.run_mode:
@@ -1295,124 +1290,28 @@ conditions; see `cylc conditions`.
                 timeout)
             self.config.cfg['cylc']['events']['reset timer'] = False
 
-    def run_event_handlers(self, event, message):
-        """Run a suite event handler."""
-        if (self.run_mode in ['simulation', 'dummy'] and
-            self.config.cfg['cylc']['simulation'][
-                'disable suite event handlers']):
-            return
-        self._run_event_mail(event, message)
-        self._run_event_custom_handlers(event, message)
+    def run_event_handlers(self, event, reason):
+        """Run a suite event handler.
 
-    def _run_event_mail(self, event, message):
-        """Helper for "run_event_handlers", do mail notification."""
-        if event in self._get_events_conf('mail events', []):
-            # SMTP server
-            env = dict(os.environ)
-            mail_smtp = self._get_events_conf('mail smtp')
-            if mail_smtp:
-                env['smtp'] = mail_smtp
-            subject = '[suite %(event)s] %(suite)s' % {
-                'suite': self.suite, 'event': event}
-            stdin_str = ''
-            for name, value in [
-                    ('suite event', event),
-                    ('reason', message),
-                    ('suite', self.suite),
-                    ('host', self.host),
-                    ('port', self.port),
-                    ('owner', self.owner)]:
-                if value:
-                    stdin_str += '%s: %s\n' % (name, value)
-            mail_footer_tmpl = self._get_events_conf('mail footer')
-            if mail_footer_tmpl:
-                stdin_str += (mail_footer_tmpl + '\n') % {
-                    'host': self.host,
-                    'port': self.port,
-                    'owner': self.owner,
-                    'suite': self.suite}
-            ctx = SuiteProcContext(
-                (self.SUITE_EVENT_HANDLER, event),
-                [
-                    'mail',
-                    '-s', subject,
-                    '-r', self._get_events_conf(
-                        'mail from', 'notifications@' + get_suite_host()),
-                    self._get_events_conf('mail to', USER),
-                ],
-                env=env,
-                stdin_str=stdin_str)
-            if SuiteProcPool.get_inst().is_closed():
-                # Run command in foreground if process pool is closed
-                SuiteProcPool.get_inst().run_command(ctx)
-                self._run_event_handlers_callback(ctx)
-            else:
-                # Run command using process pool otherwise
-                SuiteProcPool.get_inst().put_command(
-                    ctx, self._run_event_mail_callback)
-
-    def _run_event_custom_handlers(self, event, message):
-        """Helper for "run_event_handlers", custom event handlers."""
-        # Look for event handlers
-        # 1. Handlers for specific event
-        # 2. General handlers
-        handlers = self._get_events_conf('%s handler' % event)
-        if (not handlers and
-                event in self._get_events_conf('handler events', [])):
-            handlers = self._get_events_conf('handlers')
-        if not handlers:
-            return
-
-        for i, handler in enumerate(handlers):
-            cmd_key = ('%s-%02d' % (self.SUITE_EVENT_HANDLER, i), event)
-            # Handler command may be a string for substitution
-            cmd = handler % {
-                'event': quote(event),
-                'suite': quote(self.suite),
-                'message': quote(message),
-                'suite_url': quote(self.config.cfg['URL'])
-            }
-            if cmd == handler:
-                # Nothing substituted, assume classic interface
-                cmd = "%s '%s' '%s' '%s'" % (
-                    handler, event, self.suite, message)
-            ctx = SuiteProcContext(
-                cmd_key, cmd, env=dict(os.environ), shell=True)
-            abort_on_error = self._get_events_conf(
-                'abort if %s handler fails' % event)
-            if abort_on_error or SuiteProcPool.get_inst().is_closed():
-                # Run command in foreground if abort on failure is set or if
-                # process pool is closed
-                SuiteProcPool.get_inst().run_command(ctx)
-                self._run_event_handlers_callback(
-                    ctx, abort_on_error=abort_on_error)
-            else:
-                # Run command using process pool otherwise
-                SuiteProcPool.get_inst().put_command(
-                    ctx, self._run_event_handlers_callback)
-
-    def _run_event_handlers_callback(self, ctx, abort_on_error=False):
-        """Callback on completion of a suite event handler."""
-        if ctx.ret_code:
-            self.log.warning(str(ctx))
-            ERR.error('%s EVENT HANDLER FAILED' % ctx.cmd_key[1])
-            if (ctx.cmd_key[1] == self.EVENT_SHUTDOWN and
-                    self.reference_test_mode):
+        Run suite event hooks in simulation and dummy mode ONLY if enabled.
+        """
+        try:
+            if (self.run_mode in ['simulation', 'dummy'] and
+                self.config.cfg['cylc']['simulation'][
+                    'disable suite event handlers']):
+                return
+        except KeyError:
+            pass
+        try:
+            self.suite_event_handler.handle(self.config, SuiteEventContext(
+                event, reason, self.suite, self.owner, self.host, self.port))
+        except SuiteEventError as exc:
+            if event == self.EVENT_SHUTDOWN and self.options.reftest:
                 ERR.error('SUITE REFERENCE TEST FAILED')
-            if abort_on_error:
-                raise SchedulerError(ctx.err)
+            raise SchedulerError(exc.args[0])
         else:
-            self.log.info(str(ctx))
-            if (ctx.cmd_key[1] == self.EVENT_SHUTDOWN and
-                    self.reference_test_mode):
-                OUT.info('SUITE REFERENCE TEST PASSED\n')
-
-    def _run_event_mail_callback(self, ctx):
-        """Callback the mail command for notification of a suite event."""
-        if ctx.ret_code:
-            self.log.warning(str(ctx))
-        else:
-            self.log.info(str(ctx))
+            if event == self.EVENT_SHUTDOWN and self.options.reftest:
+                OUT.info('SUITE REFERENCE TEST PASSED')
 
     def run(self):
         """Main loop."""
@@ -1426,7 +1325,6 @@ conditions; see `cylc conditions`.
         self.run_event_handlers(self.EVENT_STARTUP, 'suite starting')
 
         self.profiler.log_memory("scheduler.py: begin run while loop")
-        proc_pool = SuiteProcPool.get_inst()
 
         time_next_fs_check = None
 
@@ -1448,7 +1346,7 @@ conditions; see `cylc conditions`.
             self.process_command_queue()
             if self.pool.release_runahead_tasks():
                 self.do_update_state_summary = True
-            proc_pool.handle_results_async()
+            self.proc_pool.handle_results_async()
 
             # External triggers must be matched now. If any are matched pflag
             # is set to tell process_tasks() that task processing is required.
@@ -1534,7 +1432,7 @@ conditions; see `cylc conditions`.
                     self.pool.any_task_failed()):
                 # Task failure + abort if any task fails
                 self._set_stop(TaskPool.STOP_AUTO_ON_TASK_FAILURE)
-            elif self.reference_test_mode and self.ref_test_allowed_failures:
+            elif self.options.reftest and self.ref_test_allowed_failures:
                 # In reference test mode and unexpected failures occured
                 bad_tasks = []
                 for itask in self.pool.get_failed_tasks():
@@ -1556,20 +1454,20 @@ conditions; see `cylc conditions`.
             # Is the suite ready to shut down now?
             if self.pool.can_stop(self.stop_mode):
                 self.update_state_summary()
-                proc_pool.close()
+                self.proc_pool.close()
                 if self.stop_mode != TaskPool.STOP_REQUEST_NOW_NOW:
                     # Wait for process pool to complete,
                     # unless --now --now is requested
                     stop_process_pool_empty_msg = (
                         "Waiting for the command process pool to empty" +
                         " for shutdown")
-                    while not proc_pool.is_dead():
+                    while not self.proc_pool.is_dead():
                         sleep(self.INTERVAL_STOP_PROCESS_POOL_EMPTY)
                         if stop_process_pool_empty_msg:
                             self.log.info(stop_process_pool_empty_msg)
                             OUT.info(stop_process_pool_empty_msg)
                             stop_process_pool_empty_msg = None
-                        proc_pool.handle_results_async()
+                        self.proc_pool.handle_results_async()
                         self.process_command_queue()
                 if self.options.profile_mode:
                     self.profiler.log_memory(
@@ -1715,28 +1613,6 @@ conditions; see `cylc conditions`.
                 self.message_queue):
             process = True
 
-        # if not process:
-        #    # If we neglect to set cylc.flags.pflag on some event that
-        #    # makes re-negotiation of dependencies necessary then if
-        #    # that event ever happens in isolation the suite could stall
-        #    # unless manually nudged ("cylc nudge SUITE").  If this
-        #    # happens turn on debug logging to see what happens
-        #    # immediately before the stall,
-        #    # then set cylc.flags.pflag = True in
-        #    # the corresponding code section. Alternatively,
-        #    # for an undiagnosed stall you can uncomment this section to
-        #    # stimulate task processing every few seconds even during
-        #    # lulls in activity.  THIS SHOULD NOT BE NECESSARY, HOWEVER.
-        #    if not self.nudge_timer_on:
-        #        self.nudge_timer_start = now()
-        #        self.nudge_timer_on = True
-        #    else:
-        #        timeout = self.nudge_timer_start + \
-        #              datetime.timedelta(seconds=self.auto_nudge_interval)
-        #      if now() > timeout:
-        #          process = True
-        #          self.nudge_timer_on = False
-
         return process
 
     def process_task_event_handlers(self):
@@ -1788,7 +1664,7 @@ conditions; see `cylc conditions`.
                         env = dict(os.environ)
                         if self.task_event_handler_env:
                             env.update(self.task_event_handler_env)
-                    SuiteProcPool.get_inst().put_command(
+                    self.proc_pool.put_command(
                         SuiteProcContext(
                             key, try_timer.ctx.cmd, env=env, shell=True,
                         ),
@@ -1859,7 +1735,7 @@ conditions; see `cylc conditions`.
         mail_smtp = ctx.mail_smtp
         if mail_smtp:
             env["smtp"] = mail_smtp
-        SuiteProcPool.get_inst().put_command(
+        self.proc_pool.put_command(
             SuiteProcContext(
                 ctx, cmd, env=env, stdin_str=stdin_str, id_keys=id_keys,
             ),
@@ -1918,7 +1794,7 @@ conditions; see `cylc conditions`.
         # Local target
         cmd.append(GLOBAL_CFG.get_derived_host_item(
             self.suite, "suite job log directory") + "/")
-        SuiteProcPool.get_inst().put_command(
+        self.proc_pool.put_command(
             SuiteProcContext(ctx, cmd, env=dict(os.environ), id_keys=id_keys),
             self._task_job_logs_retrieval_callback)
 
@@ -1976,7 +1852,7 @@ conditions; see `cylc conditions`.
         if getattr(self, "log", None) is not None:
             self.log.info(msg)
 
-        if self.gen_reference_log:
+        if self.options.genref:
             try:
                 handle = open(
                     os.path.join(self.config.fdir, 'reference.log'), 'wb')
@@ -1995,13 +1871,12 @@ conditions; see `cylc conditions`.
             except Exception as exc:
                 ERR.error(str(exc))
 
-        proc_pool = SuiteProcPool.get_inst()
-        if proc_pool:
-            if not proc_pool.is_dead():
+        if self.proc_pool:
+            if not self.proc_pool.is_dead():
                 # e.g. KeyboardInterrupt
-                proc_pool.terminate()
-            proc_pool.join()
-            proc_pool.handle_results_async()
+                self.proc_pool.terminate()
+            self.proc_pool.join()
+            self.proc_pool.handle_results_async()
 
         if self.comms_daemon:
             ifaces = [self.command_queue,
@@ -2028,7 +1903,8 @@ conditions; see `cylc conditions`.
             except OSError as exc:
                 ERR.warning("failed to remove suite contact file: %s\n%s\n" % (
                     fname, exc))
-        RemoteJobHostManager.get_inst().unlink_suite_contact_files(self.suite)
+            if self.task_job_mgr:
+                self.task_job_mgr.unlink_hosts_contacts(self.suite)
 
         # disconnect from suite-db, stop db queue
         if getattr(self, "db", None) is not None:
@@ -2251,14 +2127,5 @@ conditions; see `cylc conditions`.
 
     def _get_events_conf(self, key, default=None):
         """Return a named [cylc][[events]] configuration."""
-        for getter in [
-                self.config.cfg['cylc']['events'],
-                GLOBAL_CFG.get(['cylc', 'events'])]:
-            try:
-                value = getter[key]
-            except KeyError:
-                pass
-            else:
-                if value is not None:
-                    return value
-        return default
+        return self.suite_event_handler.get_events_conf(
+            self.config, key, default)

@@ -39,7 +39,7 @@ from cylc.wallclock import (
     get_unix_time_from_time_string,
     RE_DATE_TIME_FORMAT_EXTENDED,
 )
-from cylc.batch_sys_manager import BATCH_SYS_MANAGER
+from cylc.batch_sys_manager import BatchSysManager
 from cylc.owner import USER
 from cylc.suite_host import get_suite_host
 from cylc.network.suite_broadcast_server import BroadcastServer
@@ -116,7 +116,7 @@ class TaskProxy(object):
     EVENT_MAIL = "event-mail"
     HEAD_MODE_LOCAL = "local"
     HEAD_MODE_REMOTE = "remote"
-    JOB_FILE_BASE = BATCH_SYS_MANAGER.JOB_FILE_BASE
+    JOB_FILE_BASE = BatchSysManager.JOB_FILE_BASE
     JOB_LOGS_RETRIEVE = "job-logs-retrieve"
     KEY_EXECUTE = "execution"
     KEY_EXECUTE_TIME_LIMIT = "execution_time_limit"

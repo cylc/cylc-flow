@@ -18,8 +18,7 @@
 
 """Manage submission, poll and kill of a job to the batch systems.
 
-Export the symbol BATCH_SYS_MANAGER, which is the singleton object for the
-BatchSysManager class.
+Export the BatchSysManager class.
 
 Batch system handler (a.k.a. job submission method) modules should be placed
 under the "cylc.batch_sys_handlers" package. Each module should export the
@@ -842,6 +841,3 @@ class BatchSysManager(object):
             os.stat(job_file_path).st_mode |
             stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH))
         return batch_sys_name, submit_opts
-
-
-BATCH_SYS_MANAGER = BatchSysManager()

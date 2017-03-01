@@ -1,0 +1,182 @@
+#!/usr/bin/env python
+
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) 2008-2017 NIWA
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Suite event handler."""
+
+from collections import namedtuple
+import os
+from pipes import quote
+
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.mp_pool import SuiteProcContext
+from cylc.owner import USER
+from cylc.suite_host import get_suite_host
+from cylc.suite_logging import OUT, ERR, LOG
+
+
+class SuiteEventError(Exception):
+    """Suite event error."""
+    pass
+
+
+SuiteEventContext = namedtuple(
+    "SuiteEventContext",
+    ["event", "reason", "suite", "owner", "host", "port"])
+
+
+class SuiteEventHandler(object):
+    """Suite event handler."""
+
+    EVENT_STARTUP = 'startup'
+    EVENT_SHUTDOWN = 'shutdown'
+    EVENT_TIMEOUT = 'timeout'
+    EVENT_INACTIVITY_TIMEOUT = 'inactivity'
+    EVENT_STALLED = 'stalled'
+
+    SUITE_EVENT_HANDLER = 'suite-event-handler'
+    SUITE_EVENT_MAIL = 'suite-event-mail'
+
+    def __init__(self, proc_pool):
+        self.proc_pool = proc_pool
+
+    @staticmethod
+    def get_events_conf(config, key, default=None):
+        """Return a named [cylc][[events]] configuration."""
+        for getter in [
+                config.cfg['cylc']['events'],
+                GLOBAL_CFG.get(['cylc', 'events'])]:
+            try:
+                value = getter[key]
+            except KeyError:
+                pass
+            else:
+                if value is not None:
+                    return value
+        return default
+
+    def handle(self, config, ctx):
+        """Handle a suite event."""
+        self._run_event_mail(config, ctx)
+        self._run_event_custom_handlers(config, ctx)
+
+    def _run_event_mail(self, config, ctx):
+        """Helper for "run_event_handlers", do mail notification."""
+        if ctx.event in self.get_events_conf(config, 'mail events', []):
+            # SMTP server
+            env = dict(os.environ)
+            mail_smtp = self.get_events_conf(config, 'mail smtp')
+            if mail_smtp:
+                env['smtp'] = mail_smtp
+            subject = '[suite %(event)s] %(suite)s' % {
+                'suite': ctx.suite, 'event': ctx.event}
+            stdin_str = ''
+            for name, value in [
+                    ('suite event', ctx.event),
+                    ('reason', ctx.reason),
+                    ('suite', ctx.suite),
+                    ('host', ctx.host),
+                    ('port', ctx.port),
+                    ('owner', ctx.owner)]:
+                if value:
+                    stdin_str += '%s: %s\n' % (name, value)
+            mail_footer_tmpl = self.get_events_conf(config, 'mail footer')
+            if mail_footer_tmpl:
+                stdin_str += (mail_footer_tmpl + '\n') % {
+                    'host': ctx.host,
+                    'port': ctx.port,
+                    'owner': ctx.owner,
+                    'suite': ctx.suite}
+            proc_ctx = SuiteProcContext(
+                (self.SUITE_EVENT_HANDLER, ctx.event),
+                [
+                    'mail',
+                    '-s', subject,
+                    '-r', self.get_events_conf(
+                        config,
+                        'mail from', 'notifications@' + get_suite_host()),
+                    self.get_events_conf(config, 'mail to', USER),
+                ],
+                env=env,
+                stdin_str=stdin_str)
+            if self.proc_pool.is_closed():
+                # Run command in foreground if process pool is closed
+                self.proc_pool.run_command(proc_ctx)
+                self._run_event_handlers_callback(proc_ctx)
+            else:
+                # Run command using process pool otherwise
+                self.proc_pool.put_command(
+                    proc_ctx, self._run_event_mail_callback)
+
+    def _run_event_custom_handlers(self, config, ctx):
+        """Helper for "run_event_handlers", custom event handlers."""
+        # Look for event handlers
+        # 1. Handlers for specific event
+        # 2. General handlers
+        handlers = self.get_events_conf(config, '%s handler' % ctx.event)
+        if not handlers and (
+                ctx.event in
+                self.get_events_conf(config, 'handler events', [])):
+            handlers = self.get_events_conf(config, 'handlers')
+        if not handlers:
+            return
+
+        for i, handler in enumerate(handlers):
+            cmd_key = ('%s-%02d' % (self.SUITE_EVENT_HANDLER, i), ctx.event)
+            # Handler command may be a string for substitution
+            cmd = handler % {
+                'event': quote(ctx.event),
+                'suite': quote(ctx.suite),
+                'message': quote(ctx.reason),
+                'suite_url': quote(config.cfg['URL']),
+            }
+            if cmd == handler:
+                # Nothing substituted, assume classic interface
+                cmd = "%s '%s' '%s' '%s'" % (
+                    handler, ctx.event, ctx.suite, ctx.reason)
+            proc_ctx = SuiteProcContext(
+                cmd_key, cmd, env=dict(os.environ), shell=True)
+            abort_on_error = self.get_events_conf(
+                config, 'abort if %s handler fails' % ctx.event)
+            if abort_on_error or self.proc_pool.is_closed():
+                # Run command in foreground if abort on failure is set or if
+                # process pool is closed
+                self.proc_pool.run_command(proc_ctx)
+                self._run_event_handlers_callback(
+                    proc_ctx, abort_on_error=abort_on_error)
+            else:
+                # Run command using process pool otherwise
+                self.proc_pool.put_command(
+                    proc_ctx, self._run_event_handlers_callback)
+
+    def _run_event_handlers_callback(self, proc_ctx, abort_on_error=False):
+        """Callback on completion of a suite event handler."""
+        if proc_ctx.ret_code:
+            msg = '%s EVENT HANDLER FAILED' % proc_ctx.cmd_key[1]
+            LOG.error(str(proc_ctx))
+            ERR.error(msg)
+            if abort_on_error:
+                raise SuiteEventError(msg)
+        else:
+            LOG.info(str(proc_ctx))
+
+    @staticmethod
+    def _run_event_mail_callback(proc_ctx):
+        """Callback the mail command for notification of a suite event."""
+        if proc_ctx.ret_code:
+            LOG.warning(str(proc_ctx))
+        else:
+            LOG.info(str(proc_ctx))

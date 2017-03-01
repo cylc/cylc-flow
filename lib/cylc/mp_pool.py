@@ -39,7 +39,6 @@ from tempfile import TemporaryFile
 import time
 import traceback
 
-from cylc.batch_sys_manager import BATCH_SYS_MANAGER
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
 from cylc.suite_logging import LOG, OUT
@@ -151,20 +150,6 @@ class SuiteProcPool(object):
     JOB_SKIPPED_FLAG = 999
     # Shared memory flag.
     STOP_JOB_SUBMISSION = multiprocessing.Value('i', 0)
-
-    _INSTANCE = None
-
-    @classmethod
-    def get_inst(cls, pool_size=None):
-        """Return a singleton instance.
-
-        On 1st call, instantiate the singleton. The argument "pool_size" is
-        only relevant on 1st call.
-
-        """
-        if cls._INSTANCE is None:
-            cls._INSTANCE = cls(pool_size)
-        return cls._INSTANCE
 
     def __init__(self, pool_size=None):
         self.pool_size = (

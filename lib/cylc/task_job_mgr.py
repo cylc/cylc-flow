@@ -19,23 +19,28 @@
 
 from logging import INFO, WARNING
 import os
+from pipes import quote
+import shlex
 from shutil import rmtree
+from subprocess import Popen, PIPE
+from time import time
 import traceback
+from uuid import uuid4
 
 from parsec.util import pdeepcopy, poverride
 
-from cylc.batch_sys_manager import BATCH_SYS_MANAGER
+from cylc.batch_sys_manager import BatchSysManager
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
 from cylc.host_select import get_task_host
 from cylc.job_file import JobFileWriter
-from cylc.job_host import RemoteJobHostManager
 from cylc.mkdir_p import mkdir_p
 from cylc.mp_pool import SuiteProcPool, SuiteProcContext
 from cylc.network.suite_broadcast_server import BroadcastServer
-from cylc.owner import is_remote_user
+from cylc.owner import is_remote_user, USER
 from cylc.suite_host import is_remote_host
-from cylc.suite_logging import LOG
+from cylc.suite_logging import ERR, LOG
+from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.task_message import TaskMessage
 from cylc.task_outputs import (
     TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED)
@@ -46,6 +51,23 @@ from cylc.task_state import (
 from cylc.wallclock import get_current_time_string
 
 
+class RemoteJobHostInitError(Exception):
+    """Cannot initialise suite run directory of remote job host."""
+
+    MSG_INIT = "%s: initialisation did not complete:\n"  # %s user_at_host
+    MSG_TIDY = "%s: clean up did not complete:\n"  # %s user_at_host
+
+    def __str__(self):
+        msg, user_at_host, cmd_str, ret_code, out, err = self.args
+        ret = (msg + "COMMAND FAILED (%d): %s\n") % (
+            user_at_host, ret_code, cmd_str)
+        for label, item in ("STDOUT", out), ("STDERR", err):
+            if item:
+                for line in item.splitlines(True):  # keep newline chars
+                    ret += "COMMAND %s: %s" % (label, line)
+        return ret
+
+
 class TaskJobManager(object):
     """Manage task job submit, poll and kill."""
 
@@ -53,8 +75,102 @@ class TaskJobManager(object):
     JOBS_POLL = "jobs-poll"
     JOBS_SUBMIT = SuiteProcPool.JOBS_SUBMIT
 
-    def __init__(self):
+    def __init__(self, proc_pool):
+        self.proc_pool = proc_pool
         self.job_file_writer = JobFileWriter()
+        self.suite_srv_files_mgr = SuiteSrvFilesManager()
+        self.init_host_map = {}  # {(user, host): should_unlink, ...}
+        self.single_task_mode = False
+
+    def init_host(self, reg, host, owner):
+        """Initialise suite run dir on a user@host.
+
+        Create SUITE_RUN_DIR/log/job/ if necessary.
+        Install suite contact environment file.
+        Install suite python modules.
+
+        Raise RemoteJobHostInitError if initialisation cannot complete.
+
+        """
+        if host is None:
+            host = 'localhost'
+        if ((host, owner) in [('localhost', None), ('localhost', USER)] or
+                (host, owner) in self.init_host_map or self.single_task_mode):
+            return
+        user_at_host = host
+        if owner:
+            user_at_host = owner + '@' + host
+
+        r_suite_run_dir = GLOBAL_CFG.get_derived_host_item(
+            reg, 'suite run directory', host, owner)
+        r_log_job_dir = GLOBAL_CFG.get_derived_host_item(
+            reg, 'suite job log directory', host, owner)
+        r_suite_srv_dir = os.path.join(
+            r_suite_run_dir, self.suite_srv_files_mgr.DIR_BASE_SRV)
+
+        # Create a UUID file in the service directory.
+        # If remote host has the file in its service directory, we can assume
+        # that the remote host has a shared file system with the suite host.
+        ssh_tmpl = GLOBAL_CFG.get_host_item('ssh command', host, owner)
+        uuid_str = str(uuid4())
+        uuid_fname = os.path.join(
+            self.suite_srv_files_mgr.get_suite_srv_dir(reg), uuid_str)
+        try:
+            open(uuid_fname, 'wb').close()
+            proc = Popen(
+                shlex.split(ssh_tmpl) + [
+                    '-n', user_at_host,
+                    'test', '-e', os.path.join(r_suite_srv_dir, uuid_str)],
+                stdout=PIPE, stderr=PIPE)
+            if proc.wait() == 0:
+                # Initialised, but no need to tidy up
+                self.init_host_map[(host, owner)] = False
+                return
+        finally:
+            try:
+                os.unlink(uuid_fname)
+            except OSError:
+                pass
+
+        cmds = []
+        # Command to create suite directory structure on remote host.
+        cmds.append(shlex.split(ssh_tmpl) + [
+            '-n', user_at_host,
+            'mkdir', '-p',
+            r_suite_run_dir, r_log_job_dir, r_suite_srv_dir])
+        # Command to copy contact and authentication files to remote host.
+        # Note: no need to do this if task communication method is "poll".
+        should_unlink = GLOBAL_CFG.get_host_item(
+            'task communication method', host, owner) != "poll"
+        if should_unlink:
+            scp_tmpl = GLOBAL_CFG.get_host_item('scp command', host, owner)
+            cmds.append(shlex.split(scp_tmpl) + [
+                '-p',
+                self.suite_srv_files_mgr.get_contact_file(reg),
+                self.suite_srv_files_mgr.get_auth_item(
+                    self.suite_srv_files_mgr.FILE_BASE_PASSPHRASE, reg),
+                self.suite_srv_files_mgr.get_auth_item(
+                    self.suite_srv_files_mgr.FILE_BASE_SSL_CERT, reg),
+                user_at_host + ':' + r_suite_srv_dir + '/'])
+        # Command to copy python library to remote host.
+        suite_run_py = os.path.join(
+            GLOBAL_CFG.get_derived_host_item(reg, 'suite run directory'),
+            'python')
+        if os.path.isdir(suite_run_py):
+            cmds.append(shlex.split(scp_tmpl) + [
+                '-pr',
+                suite_run_py, user_at_host + ':' + r_suite_run_dir + '/'])
+        # Run commands in sequence.
+        for cmd in cmds:
+            proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
+            out, err = proc.communicate()
+            if proc.wait():
+                raise RemoteJobHostInitError(
+                    RemoteJobHostInitError.MSG_INIT,
+                    user_at_host, ' '.join([quote(item) for item in cmd]),
+                    proc.returncode, out, err)
+        self.init_host_map[(host, owner)] = should_unlink
+        LOG.info('Initialised %s:%s' % (user_at_host, r_suite_run_dir))
 
     def kill_task_jobs(self, suite, itasks, warn_skips=False):
         """Kill jobs of active tasks, and hold the tasks.
@@ -97,7 +213,7 @@ class TaskJobManager(object):
                 prepared_tasks.append(itask)
         return prepared_tasks
 
-    def submit_task_jobs(self, suite, itasks, proc_pool_size=None):
+    def submit_task_jobs(self, suite, itasks):
         """Prepare and submit task jobs."""
         # Prepare tasks for job submission
         prepared_tasks = self.prep_submit_task_jobs(suite, itasks)
@@ -139,10 +255,10 @@ class TaskJobManager(object):
                 if remote_mode:
                     stdin_file_paths.append(itask.get_job_log_path(
                         itask.HEAD_MODE_LOCAL,
-                        tail=BATCH_SYS_MANAGER.JOB_FILE_BASE))
+                        tail=BatchSysManager.JOB_FILE_BASE))
                 job_log_dirs.append(itask.get_job_log_path())
             cmd += job_log_dirs
-            SuiteProcPool.get_inst(pool_size=proc_pool_size).put_command(
+            self.proc_pool.put_command(
                 SuiteProcContext(
                     self.JOBS_SUBMIT,
                     cmd,
@@ -151,6 +267,55 @@ class TaskJobManager(object):
                     **kwargs
                 ),
                 self._submit_task_jobs_callback, [itasks])
+
+    def unlink_hosts_contacts(self, reg):
+        """Remove suite contact files from initialised hosts.
+
+        This is called on shutdown, so we don't want anything to hang.
+        Terminate any incomplete SSH commands after 10 seconds.
+        """
+        # Issue all SSH commands in parallel
+        procs = {}
+        for (host, owner), should_unlink in self.init_host_map.items():
+            if not should_unlink:
+                continue
+            user_at_host = host
+            if owner:
+                user_at_host = owner + '@' + host
+            ssh_tmpl = GLOBAL_CFG.get_host_item('ssh command', host, owner)
+            r_suite_contact_file = os.path.join(
+                GLOBAL_CFG.get_derived_host_item(
+                    reg, 'suite run directory', host, owner),
+                SuiteSrvFilesManager.DIR_BASE_SRV,
+                SuiteSrvFilesManager.FILE_BASE_CONTACT)
+            cmd = shlex.split(ssh_tmpl) + [
+                '-n', user_at_host, 'rm', '-f', r_suite_contact_file]
+            procs[user_at_host] = (cmd, Popen(cmd, stdout=PIPE, stderr=PIPE))
+        # Wait for commands to complete for a max of 10 seconds
+        timeout = time() + 10.0
+        while procs and time() < timeout:
+            for user_at_host, (cmd, proc) in procs.copy().items():
+                if proc.poll() is None:
+                    continue
+                del procs[user_at_host]
+                out, err = proc.communicate()
+                if proc.wait():
+                    ERR.warning(RemoteJobHostInitError(
+                        RemoteJobHostInitError.MSG_TIDY,
+                        user_at_host, ' '.join([quote(item) for item in cmd]),
+                        proc.returncode, out, err))
+        # Terminate any remaining commands
+        for user_at_host, (cmd, proc) in procs.items():
+            try:
+                proc.terminate()
+            except OSError:
+                pass
+            out, err = proc.communicate()
+            if proc.wait():
+                ERR.warning(RemoteJobHostInitError(
+                    RemoteJobHostInitError.MSG_TIDY,
+                    user_at_host, ' '.join([quote(item) for item in cmd]),
+                    proc.returncode, out, err))
 
     @staticmethod
     def _create_job_log_path(itask):
@@ -263,7 +428,7 @@ class TaskJobManager(object):
             ctx,
             itasks,
             self._kill_task_job_callback,
-            {BATCH_SYS_MANAGER.OUT_PREFIX_COMMAND: self._job_cmd_out_callback})
+            {BatchSysManager.OUT_PREFIX_COMMAND: self._job_cmd_out_callback})
 
     def _kill_task_job_callback(self, itask, cmd_ctx, line):
         """Helper for _kill_task_jobs_callback, on one task job."""
@@ -297,7 +462,8 @@ class TaskJobManager(object):
                 'ignoring job kill result, unexpected task state: %s' %
                 itask.state.status)
         itask.summary['latest_message'] = log_msg
-        LOG.log(log_lvl, "job(%02d) %s" % (itask.submit_num, log_msg))
+        LOG.log(log_lvl, "[%s] -job(%02d) %s" % (
+            itask.identity, itask.submit_num, log_msg))
 
     @staticmethod
     def _manip_task_jobs_callback(
@@ -316,7 +482,7 @@ class TaskJobManager(object):
             if itask.point is not None and itask.submit_num:
                 submit_num = "%02d" % (itask.submit_num)
                 tasks[(str(itask.point), itask.tdef.name, submit_num)] = itask
-        handlers = [(BATCH_SYS_MANAGER.OUT_PREFIX_SUMMARY, summary_callback)]
+        handlers = [(BatchSysManager.OUT_PREFIX_SUMMARY, summary_callback)]
         if more_callbacks:
             for prefix, callback in more_callbacks.items():
                 handlers.append((prefix, callback))
@@ -329,7 +495,7 @@ class TaskJobManager(object):
             for job_log_dir in job_log_dirs:
                 point, name, submit_num = job_log_dir.split(os.sep, 2)
                 itask = tasks[(point, name, submit_num)]
-                out += (BATCH_SYS_MANAGER.OUT_PREFIX_SUMMARY +
+                out += (BatchSysManager.OUT_PREFIX_SUMMARY +
                         "|".join([ctx.timestamp, job_log_dir, "1"]) + "\n")
         for line in out.splitlines(True):
             for prefix, callback in handlers:
@@ -352,7 +518,7 @@ class TaskJobManager(object):
             ctx,
             itasks,
             self._poll_task_job_callback,
-            {BATCH_SYS_MANAGER.OUT_PREFIX_MESSAGE:
+            {BatchSysManager.OUT_PREFIX_MESSAGE:
              self._poll_task_job_message_callback})
 
     def _poll_task_job_callback(self, itask, cmd_ctx, line):
@@ -459,7 +625,7 @@ class TaskJobManager(object):
             for itask in sorted(itasks, key=lambda itask: itask.identity):
                 job_log_dirs.append(itask.get_job_log_path())
             cmd += job_log_dirs
-            SuiteProcPool.get_inst().put_command(
+            self.proc_pool.put_command(
                 SuiteProcContext(cmd_key, cmd), callback, [itasks])
 
     def _submit_task_jobs_callback(self, ctx, itasks):
@@ -468,7 +634,7 @@ class TaskJobManager(object):
             ctx,
             itasks,
             self._submit_task_job_callback,
-            {BATCH_SYS_MANAGER.OUT_PREFIX_COMMAND: self._job_cmd_out_callback})
+            {BatchSysManager.OUT_PREFIX_COMMAND: self._job_cmd_out_callback})
 
     def _submit_task_job_callback(self, itask, cmd_ctx, line):
         """Helper for _submit_task_jobs_callback, on one task job."""
@@ -510,12 +676,12 @@ class TaskJobManager(object):
         try:
             job_conf = self._prep_submit_task_job_impl(suite, itask)
             local_job_file_path = itask.get_job_log_path(
-                itask.HEAD_MODE_LOCAL, tail=BATCH_SYS_MANAGER.JOB_FILE_BASE)
+                itask.HEAD_MODE_LOCAL, tail=BatchSysManager.JOB_FILE_BASE)
             self.job_file_writer.write(local_job_file_path, job_conf)
         except Exception, exc:
             # Could be a bad command template.
-            if cylc.flags.debug:
-                LOG.debug(traceback.format_exc())
+            ERR.error(traceback.format_exc())
+            LOG.error(traceback.format_exc())
             itask.command_log(SuiteProcContext(
                 self.JOBS_SUBMIT, '(prepare job file)', err=exc, ret_code=1))
             if not dry_run:
@@ -526,7 +692,8 @@ class TaskJobManager(object):
         if dry_run:
             # This will be shown next to submit num in gcylc:
             itask.summary['latest_message'] = 'job file written (edit/dry-run)'
-            LOG.debug(itask.summary['latest_message'])
+            LOG.debug("[%s] -%s" % (
+                itask.identity, itask.summary['latest_message']))
 
         # Return value used by "cylc submit" and "cylc jobscript":
         return itask
@@ -539,7 +706,7 @@ class TaskJobManager(object):
             poverride(rtconfig, overrides)
         else:
             rtconfig = itask.tdef.rtconfig
-        LOG.debug("incrementing submit number")
+        LOG.debug("[%s] -incrementing submit number" % (itask.identity,))
         itask.submit_num += 1
         itask.summary['submit_num'] = itask.submit_num
         itask.local_job_file_path = None
@@ -569,7 +736,8 @@ class TaskJobManager(object):
         if not itask.task_host:
             itask.task_host = 'localhost'
         elif itask.task_host != "localhost":
-            LOG.info("Task host: " + itask.task_host)
+            LOG.info("[%s] -Task host: %s" % (
+                itask.identity, itask.task_host))
 
         itask.task_owner = rtconfig['remote']['owner']
 
@@ -596,8 +764,7 @@ class TaskJobManager(object):
             except (AttributeError, KeyError):
                 pass
 
-        RemoteJobHostManager.get_inst().init_suite_run_dir(
-            suite, itask.task_host, itask.task_owner)
+        self.init_host(suite, itask.task_host, itask.task_owner)
         itask.db_updates_map[itask.TABLE_TASK_JOBS].append({
             "user_at_host": user_at_host,
             "batch_sys_name": itask.summary['batch_sys_name'],
@@ -625,7 +792,7 @@ class TaskJobManager(object):
             'host': itask.task_host,
             'init-script': rtconfig['init-script'],
             'job_file_path': itask.get_job_log_path(
-                itask.HEAD_MODE_REMOTE, tail=BATCH_SYS_MANAGER.JOB_FILE_BASE),
+                itask.HEAD_MODE_REMOTE, tail=BatchSysManager.JOB_FILE_BASE),
             'job_d': itask.get_job_log_path(),
             'namespace_hierarchy': itask.tdef.namespace_hierarchy,
             'owner': itask.task_owner,

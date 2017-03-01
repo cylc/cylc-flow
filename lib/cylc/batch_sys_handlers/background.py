@@ -22,7 +22,6 @@ import os
 import re
 from subprocess import Popen, STDOUT
 import sys
-from cylc.batch_sys_manager import BATCH_SYS_MANAGER
 
 
 class BgCommandHandler(object):
