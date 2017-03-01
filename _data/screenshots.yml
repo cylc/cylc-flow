@@ -14,6 +14,11 @@
     desc: The gscan GUI shows a minimal state summary view of all your running
         suites. Click on a suite to open a gcylc suite control GUI for it.
 
- -  title: static suite visualization
+ -  title: static visualization 1
     url: screenshots/ecox.png
     desc: This shows a moderately large operational cycling workflow.
+
+ -  title: static visualization 2
+    url: screenshots/cylc-tn-si.png
+    desc: Another suite with families partially collapsed (inset) and fully
+        expanded.
