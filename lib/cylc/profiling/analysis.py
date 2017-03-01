@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Module for performing analysis on profiling results and generating plots."""
 
-from collections import OrderedDict
 import os
 import re
 import sys
@@ -171,7 +170,7 @@ def process_out_file(file_name, suite_start_time, validate=False):
                 lines[0][len(SUITE_STARTUP_STRING):])
 
         # Scan through log entries.
-        ret['memory'] = OrderedDict()
+        ret['memory'] = []
         loop_mem_entries = []
         for line in lines:
             # Profile summary.
@@ -186,7 +185,7 @@ def process_out_file(file_name, suite_start_time, validate=False):
             match = MEMORY_LINE_REGEX.search(line)
             if match:
                 memory, module, checkpoint = tuple(match.groups())
-                ret['memory'][(module, checkpoint,)] = int(memory)
+                ret['memory'].append((module, checkpoint, int(memory),))
 
                 # Main loop memory info.
                 if not validate:
@@ -213,7 +212,7 @@ def process_out_file(file_name, suite_start_time, validate=False):
                                     loop_mem_entries[-1][0])
 
         # Maximum memory usage.
-        ret['mxmem'] = max([ret['memory'][key] for key in ret['memory']])
+        ret['mxmem'] = max([entry[2] for entry in ret['memory']])
 
         # Startup time (time from running cmd to reaching the end of the first
         # loop).
