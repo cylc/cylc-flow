@@ -906,6 +906,11 @@ def main():
     """cylc profile-battery"""
     opts = parse_args()
 
+    if not prof.IS_GIT_REPO:
+        print >> sys.stderr, ('ERROR: profiling requires cylc to be a git '
+                              'repository.')
+        sys.exit(2)
+
     # Promote mode.
     if opts.promote:
         promote(opts.promote, opts.yes)
