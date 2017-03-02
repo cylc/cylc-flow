@@ -31,14 +31,14 @@ cylc__job__main() {
         set -x
     fi
     # Prelude
-    typeset NAME=
-    for NAME in \
+    typeset file_name=
+    for file_name in \
         "${HOME}/.cylc/job-init-env.sh" \
         "${CYLC_DIR}/conf/job-init-env.sh" \
         "${CYLC_DIR}/conf/job-init-env-default.sh"
     do
-        if [[ -f "${NAME}" ]]; then
-            . "${NAME}" 1>'/dev/null' 2>&1
+        if [[ -f "${file_name}" ]]; then
+            . "${file_name}" 1>'/dev/null' 2>&1
             break
         fi
     done
@@ -46,12 +46,12 @@ cylc__job__main() {
     cylc__job__run_inst_func 'global_init_script'
     cylc__job__run_inst_func 'init_script'
     # Start error and vacation traps
-    typeset S=
-    for S in ${CYLC_FAIL_SIGNALS}; do
-        trap "cylc__job__trap_err ${S}" "${S}"
+    typeset signal_name=
+    for signal_name in ${CYLC_FAIL_SIGNALS}; do
+        trap "cylc__job__trap_err ${signal_name}" "${signal_name}"
     done
-    for S in ${CYLC_VACATION_SIGNALS:-}; do
-        trap "cylc__job__trap_vacation ${S}" "${S}"
+    for signal_name in ${CYLC_VACATION_SIGNALS:-}; do
+        trap "cylc__job__trap_vacation ${signal_name}" "${signal_name}"
     done
     set -u
     set -o pipefail
@@ -59,16 +59,19 @@ cylc__job__main() {
     cylc__job__inst__cylc_env
     # Write task job self-identify
     USER="${USER:-$(whoami)}"
-    if [[ "$(uname)" == 'AIX' ]]; then
-        # On AIX the hostname command has no '-f' option
-        typeset HOSTNAME="$(hostname).$(namerslv -sn 2>'/dev/null' | awk '{print $2}')"
-    else
-        typeset HOSTNAME="$(hostname -f)"
+    typeset host="${HOSTNAME:-}"
+    if [[ -z "${host}" ]]; then
+        if [[ "$(uname)" == 'AIX' ]]; then
+            # On AIX the hostname command has no '-f' option
+            typeset host="$(hostname).$(namerslv -sn 2>'/dev/null' | awk '{print $2}')"
+        else
+            typeset host="$(hostname -f)"
+        fi
     fi
     cat <<__OUT__
 Suite    : ${CYLC_SUITE_NAME}
 Task Job : ${CYLC_TASK_JOB} (try ${CYLC_TASK_TRY_NUMBER})
-User@Host: ${USER}@${HOSTNAME}
+User@Host: ${USER}@${host}
 
 __OUT__
     # Derived environment variables
@@ -92,10 +95,10 @@ __OUT__
         CYLC_TASK_WORK_DIR_BASE="${CYLC_TASK_CYCLE_POINT}/${CYLC_TASK_NAME}"
     fi
     export CYLC_TASK_WORK_DIR="${CYLC_SUITE_WORK_DIR}/${CYLC_TASK_WORK_DIR_BASE}"
-    typeset CONTACT="${CYLC_SUITE_RUN_DIR}/.service/contact"
-    if [[ -f "${CONTACT}" ]]; then
-        export CYLC_SUITE_HOST="$(sed -n 's/^CYLC_SUITE_HOST=//p' "${CONTACT}")"
-        export CYLC_SUITE_OWNER="$(sed -n 's/^CYLC_SUITE_OWNER=//p' "${CONTACT}")"
+    typeset contact="${CYLC_SUITE_RUN_DIR}/.service/contact"
+    if [[ -f "${contact}" ]]; then
+        export CYLC_SUITE_HOST="$(sed -n 's/^CYLC_SUITE_HOST=//p' "${contact}")"
+        export CYLC_SUITE_OWNER="$(sed -n 's/^CYLC_SUITE_OWNER=//p' "${contact}")"
     fi
     # DEPRECATED environment variables
     export CYLC_SUITE_SHARE_PATH="${CYLC_SUITE_SHARE_DIR}"
@@ -119,8 +122,9 @@ __OUT__
     mkdir -p "${CYLC_TASK_WORK_DIR}"
     cd "${CYLC_TASK_WORK_DIR}"
     # User Environment, Pre-Script, Script and Post-Script
-    for NAME in 'user_env' 'pre_script' 'script' 'post_script'; do
-        cylc__job__run_inst_func "${NAME}"
+    typeset func_name=
+    for func_name in 'user_env' 'pre_script' 'script' 'post_script'; do
+        cylc__job__run_inst_func "${func_name}"
     done
     # Empty work directory remove
     cd
@@ -135,14 +139,14 @@ __OUT__
 ###############################################################################
 # Run a function in the task job instance file, if possible.
 # Arguments:
-#   NAME - name of function without the "cylc__job__inst__" prefix
+#   func_name - name of function without the "cylc__job__inst__" prefix
 # Returns:
 #   return 0, or the return code of the function if called
 cylc__job__run_inst_func() {
-    typeset NAME="$1"
+    typeset func_name="$1"
     shift 1
-    if typeset -f "cylc__job__inst__${NAME}" 1>'/dev/null' 2>&1; then
-        "cylc__job__inst__${NAME}" "$@"
+    if typeset -f "cylc__job__inst__${func_name}" 1>'/dev/null' 2>&1; then
+        "cylc__job__inst__${func_name}" "$@"
     fi
 }
 
@@ -153,22 +157,22 @@ cylc__job__run_inst_func() {
 #   CYLC_TASK_MESSAGE_STARTED_PID
 #   CYLC_VACATION_SIGNALS
 # Arguments:
-#   SIGNAL - trapped signal
+#   trapped_signal - trapped signal
 # Returns:
 #   exit 1
 cylc__job__trap_err() {
-    typeset SIGNAL="$1"
-    echo "Received signal ${SIGNAL}" >&2
-    typeset S=
-    for S in ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}; do
-        trap '' "${S}"
+    typeset trapped_signal="$1"
+    echo "Received signal ${trapped_signal}" >&2
+    typeset signal_name=
+    for signal_name in ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}; do
+        trap '' "${signal_name}"
     done
     if [[ -n "${CYLC_TASK_MESSAGE_STARTED_PID:-}" ]]; then
         wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
     fi
     cylc task message -p 'CRITICAL' \
-        "Task job script received signal ${SIGNAL}" 'failed' || true
-    cylc__job__run_inst_func 'err_script' "${SIGNAL}" >&2
+        "Task job script received signal ${trapped_signal}" 'failed' || true
+    cylc__job__run_inst_func 'err_script' "${trapped_signal}" >&2
     exit 1
 }
 
@@ -179,20 +183,20 @@ cylc__job__trap_err() {
 #   CYLC_TASK_MESSAGE_STARTED_PID
 #   CYLC_VACATION_SIGNALS
 # Arguments:
-#   SIGNAL - trapped signal
+#   trapped_signal - trapped signal
 # Returns:
 #   exit 1
 cylc__job__trap_vacation() {
-    typeset SIGNAL="$1"
-    echo "Received signal ${SIGNAL}" >&2
-    typeset S=
-    for S in ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}; do
-        trap '' "${S}"
+    typeset trapped_signal="$1"
+    echo "Received signal ${trapped_signal}" >&2
+    typeset signal_name=
+    for signal_name in ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}; do
+        trap '' "${signal_name}"
     done
     if [[ -n "${CYLC_TASK_MESSAGE_STARTED_PID:-}" ]]; then
         wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2'>/dev/null' || true
     fi
     cylc task message -p 'WARNING' \
-        "Task job script vacated by signal ${SIGNAL}" || true
+        "Task job script vacated by signal ${trapped_signal}" || true
     exit 1
 }
