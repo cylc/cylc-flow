@@ -36,9 +36,7 @@ def get_cylc_directory():
 # Ensure that the cylc directory is a git repository.
 CYLC_DIR = get_cylc_directory()
 os.chdir(CYLC_DIR)
-if not is_git_repo():
-    print 'ERROR: profiling requires cylc to be a git repository.'
-    sys.exit(2)
+IS_GIT_REPO = is_git_repo()
 
 # Files and directories
 PROFILE_DIR_NAME = '.profiling'  # Path to profiling directory.

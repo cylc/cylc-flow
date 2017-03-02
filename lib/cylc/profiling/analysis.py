@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Module for performing analysis on profiling results and generating plots."""
 
-from collections import OrderedDict
 import os
 import re
 import sys
@@ -171,7 +170,7 @@ def process_out_file(file_name, suite_start_time, validate=False):
                 lines[0][len(SUITE_STARTUP_STRING):])
 
         # Scan through log entries.
-        ret['memory'] = OrderedDict()
+        ret['memory'] = []
         loop_mem_entries = []
         for line in lines:
             # Profile summary.
@@ -186,7 +185,7 @@ def process_out_file(file_name, suite_start_time, validate=False):
             match = MEMORY_LINE_REGEX.search(line)
             if match:
                 memory, module, checkpoint = tuple(match.groups())
-                ret['memory'][(module, checkpoint,)] = int(memory)
+                ret['memory'].append((module, checkpoint, int(memory),))
 
                 # Main loop memory info.
                 if not validate:
@@ -213,7 +212,7 @@ def process_out_file(file_name, suite_start_time, validate=False):
                                     loop_mem_entries[-1][0])
 
         # Maximum memory usage.
-        ret['mxmem'] = max([ret['memory'][key] for key in ret['memory']])
+        ret['mxmem'] = max([entry[2] for entry in ret['memory']])
 
         # Startup time (time from running cmd to reaching the end of the first
         # loop).
@@ -302,8 +301,8 @@ def make_table(results, versions, experiment, quick_analysis=False):
                              [data[run_name][metric] for metric in
                               sorted(metrics)])
     except ValueError:
-        print ('ERROR: Data is not complete. Try removing results and '
-               're-running any experiments')
+        print('ERROR: Data is not complete. Try removing results and '
+              're-running any experiments')
 
     return table
 
@@ -391,8 +390,8 @@ def plot_scale(results, run_names, versions, metric, experiment,
         # Compute and plot line of best fit.
         if lobf_order >= 1:
             if lobf_order > 8:
-                print ('WARNING: Line of best fit order too high (' +
-                       lobf_order + '). Order has been set to 3.')
+                print('WARNING: Line of best fit order too high (' +
+                      lobf_order + '). Order has been set to 3.')
                 lobf_order = 3
             lobf = numpy.polyfit(x_data, y_data, lobf_order)
             line = numpy.linspace(x_data[0], x_data[-1], 100)
@@ -427,8 +426,8 @@ def plot_results(results, versions, experiment, plt_dir=None,
     """
     # Are we able to plot?
     if not CAN_PLOT:
-        print ('\nWarning: Plotting requires numpy and maplotlib so cannot be '
-               'run.')
+        print('\nWarning: Plotting requires numpy and maplotlib so cannot be '
+              'run.')
         return
 
     versions = remove_profile_from_versions(versions)
