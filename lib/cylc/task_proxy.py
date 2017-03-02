@@ -900,11 +900,11 @@ class TaskProxy(object):
                                   db_event='submission succeeded')
 
         if self.state.set_submit_succeeded():
-            submit_timeout = self._get_events_conf('submission timeout')
-            if submit_timeout:
+            try:
                 self.state.submission_timer_timeout = (
-                    self.summary['submitted_time'] + submit_timeout)
-            else:
+                    self.summary['submitted_time'] +
+                    float(self._get_events_conf('submission timeout')))
+            except (TypeError, ValueError):
                 self.state.submission_timer_timeout = None
             self._set_next_poll_time(self.KEY_SUBMIT)
 
@@ -1397,10 +1397,10 @@ class TaskProxy(object):
                 execution_timeout = self.summary['execution_time_limit']
             else:
                 execution_timeout = self._get_events_conf('execution timeout')
-            if execution_timeout:
+            try:
                 self.state.execution_timer_timeout = (
-                    self.summary['started_time'] + execution_timeout)
-            else:
+                    self.summary['started_time'] + float(execution_timeout))
+            except (TypeError, ValueError):
                 self.state.execution_timer_timeout = None
 
             # submission was successful so reset submission try number
