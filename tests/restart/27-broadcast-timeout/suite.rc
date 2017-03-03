@@ -1,0 +1,14 @@
+[cylc]
+    UTC mode = True
+    cycle point format = %Y
+[scheduling]
+    [[dependencies]]
+        graph = foo => bar
+[runtime]
+    [[foo]]
+        script="""
+cylc broadcast "${CYLC_SUITE_NAME}" --set='[events]submission timeout=PT1M'
+cylc stop "${CYLC_SUITE_NAME}"
+"""
+    [[bar]]
+        script=true
