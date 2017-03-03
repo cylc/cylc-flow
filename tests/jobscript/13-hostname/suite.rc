@@ -1,0 +1,12 @@
+[cylc]
+    [[events]]
+        abort on stalled = True
+[scheduling]
+    [[dependencies]]
+        graph = foo
+[runtime]
+    [[foo]]
+        init-script = """
+CYLC_TEST_HOSTNAME="${HOSTNAME:-}"
+"""
+        script = test "${CYLC_TEST_HOSTNAME}" = "${HOSTNAME:-}"
