@@ -33,7 +33,6 @@ tasks against the new stop cycle.
 
 from fnmatch import fnmatchcase
 from logging import DEBUG, INFO, WARNING
-import os
 import pickle
 import Queue
 from random import randrange
@@ -78,10 +77,11 @@ class TaskPool(object):
     TABLE_TASK_ACTION_TIMERS = CylcSuiteDAO.TABLE_TASK_ACTION_TIMERS
     TABLE_CHECKPOINT_ID = CylcSuiteDAO.TABLE_CHECKPOINT_ID
 
-    def __init__(self, stop_point, pri_dao, pub_dao):
+    def __init__(self, stop_point, pri_dao, pub_dao, task_events_mgr):
         self.stop_point = stop_point
         self.pri_dao = pri_dao
         self.pub_dao = pub_dao
+        self.task_events_mgr = task_events_mgr
 
         self.do_reload = False
         config = SuiteConfig.get_inst()
@@ -673,9 +673,9 @@ class TaskPool(object):
             return False
         if stop_mode == self.STOP_REQUEST_NOW_NOW:
             return True
+        if self.task_events_mgr.event_timers:
+            return False
         for itask in self.get_tasks():
-            if itask.event_handler_try_timers:
-                return False
             if (stop_mode == self.STOP_REQUEST_CLEAN and
                     itask.state.status in TASK_STATUSES_ACTIVE and
                     not itask.state.kill_failed):
@@ -692,10 +692,9 @@ class TaskPool(object):
             elif itask.state.status in TASK_STATUSES_ACTIVE:
                 LOG.warning("%s: orphaned task (%s)" % (
                     itask.identity, itask.state.status))
-            elif itask.event_handler_try_timers:
-                for key in itask.event_handler_try_timers:
-                    LOG.warning("%s: incomplete task event handler %s" % (
-                        itask.identity, key))
+        for key1, point, name, submit_num in self.task_events_mgr.event_timers:
+            LOG.warning("%s/%s/%s: incomplete task event handler %s" % (
+                point, name, submit_num, key1))
 
     def is_stalled(self):
         """Return True if the suite is stalled.
@@ -1004,7 +1003,6 @@ class TaskPool(object):
             if (itask.state.status in [TASK_STATUS_SUCCEEDED,
                                        TASK_STATUS_EXPIRED] and
                     itask.has_spawned and
-                    not itask.event_handler_try_timers and
                     itask.cleanup_cutoff is not None and
                     cutoff > itask.cleanup_cutoff):
                 spent.append(itask)
@@ -1073,9 +1071,8 @@ class TaskPool(object):
         for itask in self.get_all_tasks():
             if self.stop_point is None:
                 # Don't if any unsucceeded task exists.
-                if (itask.state.status not in [TASK_STATUS_SUCCEEDED,
-                                               TASK_STATUS_EXPIRED] or
-                        itask.event_handler_try_timers):
+                if itask.state.status not in [
+                        TASK_STATUS_SUCCEEDED, TASK_STATUS_EXPIRED]:
                     shutdown = False
                     break
             elif (itask.point <= self.stop_point and
@@ -1258,16 +1255,17 @@ class TaskPool(object):
                         "num": timer.num,
                         "delay": timer.delay,
                         "timeout": timer.timeout})
-            for ctx_key, timer in itask.event_handler_try_timers.items():
-                self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
-                    "name": itask.tdef.name,
-                    "cycle": str(itask.point),
-                    "ctx_key_pickle": pickle.dumps(ctx_key),
-                    "ctx_pickle": pickle.dumps(timer.ctx),
-                    "delays_pickle": pickle.dumps(timer.delays),
-                    "num": timer.num,
-                    "delay": timer.delay,
-                    "timeout": timer.timeout})
+        for key, (itask, timer) in self.task_events_mgr.event_timers.items():
+            key1, point, name, submit_num = key
+            self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
+                "name": name,
+                "cycle": point,
+                "ctx_key_pickle": pickle.dumps((key1, submit_num,)),
+                "ctx_pickle": pickle.dumps(timer.ctx),
+                "delays_pickle": pickle.dumps(timer.delays),
+                "num": timer.num,
+                "delay": timer.delay,
+                "timeout": timer.timeout})
         self.db_inserts_map[self.TABLE_CHECKPOINT_ID].append({
             # id = -1 for latest
             "id": CylcSuiteDAO.CHECKPOINT_LATEST_ID,

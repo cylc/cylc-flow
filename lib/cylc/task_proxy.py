@@ -553,17 +553,6 @@ class TaskProxy(object):
                     ),
                     retry_delays))
 
-    def custom_event_handler_callback(self, result):
-        """Callback when a custom event handler is done."""
-        self.command_log(result)
-        try:
-            if result.ret_code == 0:
-                del self.event_handler_try_timers[result.cmd_key]
-            else:
-                self.event_handler_try_timers[result.cmd_key].unset_waiting()
-        except KeyError:
-            pass
-
     def job_submission_failed(self, event_time=None):
         """Handle job submission failure."""
         self.log(ERROR, 'submission failed')
