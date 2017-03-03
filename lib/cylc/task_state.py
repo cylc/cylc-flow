@@ -337,11 +337,16 @@ class TaskState(object):
             prereq.set_not_satisfied()
         self._is_satisfied = None
 
-    def prerequisites_dump(self):
+    def prerequisites_dump(self, list_prereqs=False):
         """Dump prerequisites."""
         res = []
-        for preq in self.prerequisites:
-            res += preq.dump()
+        if list_prereqs:
+            for prereq in self.prerequisites:
+                for task in sorted(prereq.labels):
+                    res.append(task)
+        else:
+            for preq in self.prerequisites:
+                res += preq.dump()
         return res
 
     def get_resolved_dependencies(self):

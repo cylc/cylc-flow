@@ -127,10 +127,11 @@ class SuiteInfoServer(BaseCommsServer):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def get_task_requisites(self, items):
+    def get_task_requisites(self, items=None, list_prereqs=False):
         if not isinstance(items, list):
             items = [items]
-        return self._put("get_task_requisites", (items,))
+        return self._put("get_task_requisites", (items,),
+                         {"list_prereqs": list_prereqs in [True, 'True']})
 
     def _put(self, command, command_args, command_kwargs=None):
         if command_args is None:

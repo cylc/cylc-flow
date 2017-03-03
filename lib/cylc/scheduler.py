@@ -814,9 +814,9 @@ conditions; see `cylc conditions`.
             rgraph, self.config.suite_polling_tasks, self.config.leaves,
             self.config.feet)
 
-    def info_get_task_requisites(self, items):
+    def info_get_task_requisites(self, items, list_prereqs=False):
         """Return prerequisites of a task."""
-        return self.pool.get_task_requisites(items)
+        return self.pool.get_task_requisites(items, list_prereqs=list_prereqs)
 
     def command_set_stop_cleanly(self, kill_active_tasks=False):
         """Stop job submission and set the flag for clean shutdown."""

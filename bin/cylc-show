@@ -43,6 +43,9 @@ def main():
             ('REG', 'Suite name'),
             ('[TASKID ...]', 'Task names or identifiers')])
 
+    parser.add_option('--list-prereqs', action="store_true", default=False,
+                      help="Print a task's pre-requisites as a list.")
+
     options, args = parser.parse_args()
     suite = args[0]
     task_args = args[1:]
@@ -73,29 +76,34 @@ def main():
 
     if task_ids:
         results, bad_items = pclient.get_info(
-            'get_task_requisites', items=task_ids)
+            'get_task_requisites', items=task_ids,
+            list_prereqs=options.list_prereqs)
         for task_id, result in sorted(results.items()):
             if len(results) > 1:
                 print "----\nTASK ID: %s" % task_id
-            for key, value in sorted(
-                    result["descriptions"].items(), reverse=True):
-                print "%s: %s" % (key, value or "(not given)")
+            if options.list_prereqs:
+                for prereq in result["prerequisites"]:
+                    print prereq
+            else:
+                for key, value in sorted(
+                        result["descriptions"].items(), reverse=True):
+                    print "%s: %s" % (key, value or "(not given)")
 
-            for name, done in [
-                    ("prerequisites", "satisfied"), ("outputs", "completed")]:
-                print '\n%s (- => not %s):' % (name, done)
-                if not result[name]:
-                    print '  (None)'
-                for msg, state in result[name]:
-                    if state:
-                        print '  + ' + msg
-                    else:
-                        print '  - ' + msg
+                for name, done in [("prerequisites", "satisfied"),
+                                   ("outputs", "completed")]:
+                    print '\n%s (- => not %s):' % (name, done)
+                    if not result[name]:
+                        print '  (None)'
+                    for msg, state in result[name]:
+                        if state:
+                            print '  + ' + msg
+                        else:
+                            print '  - ' + msg
 
-            if result["extras"]:
-                print '\nother:'
-                for key, value in result["extras"].items():
-                    print '  o  %s ... %s' % (key, value)
+                if result["extras"]:
+                    print '\nother:'
+                    for key, value in result["extras"].items():
+                        print '  o  %s ... %s' % (key, value)
         for bad_item in bad_items:
             sys.stderr.write("No matching tasks found: %s\n" % bad_item)
         if bad_items:

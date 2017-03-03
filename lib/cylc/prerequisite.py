@@ -192,11 +192,14 @@ class Prerequisite(object):
         # return an array of strings representing each message and its state
         res = []
         if self.raw_conditional_expression:
-            for label, val in self.satisfied.items():
-                res.append(['    LABEL: %s = %s' %
-                            (label, self.messages[label]), val])
-            res.append(['CONDITION: %s' %
-                        self.raw_conditional_expression, self.is_satisfied()])
+            temp = self.raw_conditional_expression
+            for ind, (task, label,) in enumerate(sorted(self.labels.items())):
+                char = chr(ind + 65)  # Gen character starting with A.
+                res.append(['\t%s = %s' % (char, task), self.satisfied[label]])
+                temp = temp.replace(label, char)
+            temp = temp.replace('|', ' | ')
+            temp = temp.replace('&', ' & ')
+            res.append([temp, self.is_satisfied()])
         elif self.satisfied:
             for label, val in self.satisfied.items():
                 res.append([self.messages[label], val])

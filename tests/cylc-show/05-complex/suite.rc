@@ -1,0 +1,13 @@
+[cylc]
+    UTC mode = True
+[scheduling]
+    initial cycle point = 2000
+    spawn to max active cycle points = True
+    max active cycle points = 2
+    [[dependencies]]
+        [[[T00]]]
+            graph = a & b & (c | (d & e)) & f[-P1D] => f
+[runtime]
+    [[root]]
+        script = sleep 1
+    [[a, b, c, d, e, f]]
