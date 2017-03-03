@@ -32,6 +32,17 @@ from jinja2 import (
 import cylc.flags
 
 
+def raise_helper(message, error_type='Error'):
+    """Provides a Jinja2 function for raising exceptions."""
+    raise Exception('Jinja2 %s: %s' % (error_type, message))
+
+
+def assert_helper(logical, message):
+    """Provides a Jinja2 function for asserting logical expressions."""
+    if not logical:
+        raise_helper(message, 'Assertation Error')
+
+
 def jinja2process(flines, dir_, template_vars=None):
     """Pass configure file through Jinja2 processor."""
     env = Environment(
@@ -60,6 +71,8 @@ def jinja2process(flines, dir_, template_vars=None):
     # Import SUITE HOST USER ENVIRONMENT into template:
     # (usage e.g.: {{environ['HOME']}}).
     env.globals['environ'] = os.environ
+    env.globals['raise'] = raise_helper
+    env.globals['assert'] = assert_helper
 
     # load file lines into a template, excluding '#!jinja2' so
     # that '#!cylc-x.y.z' rises to the top.

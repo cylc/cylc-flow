@@ -5237,6 +5237,37 @@ so the following will print \lstinline=# FOO is 0=, not \lstinline=# FOO is 9=:
 # FOO is {{FOO}}
 \end{lstlisting}
 
+\subsubsection{Raising Exceptions}
+
+Cylc provides two functions for raising exceptions using Jinja2. These
+exceptions are raised when the suite.rc file is loaded and will prevent a suite
+from running.
+
+Note: These functions must be contained within \lstinline={{= Jinja2
+blocks as opposed to \lstinline={%= blocks.
+
+\paragraph{Raise}
+
+The ``raise'' function will result in an error containing the provided text.
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+{% if not VARIABLE is defined %}
+    {{ raise('VARIABLE must be defined for this suite.') }}
+{% endif %}
+\end{lstlisting}
+
+\paragraph{Assert}
+
+The ``assert'' function will raise an exception containing the text provided in
+the second argument providing that the first argument evaluates as False. The
+following example is equivalent to the ``raise'' example above.
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+{{ assert(VARIABLE is defined, 'VARIABLE must be defined for this suite.') }}
+\end{lstlisting}
+
 \subsection{Omitting Tasks At Runtime}
 
 It is sometimes convenient to omit certain tasks from the suite at
