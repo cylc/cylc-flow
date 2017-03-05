@@ -30,10 +30,10 @@ good thing)." %}
 notation, and task runtime properties in an efficient inheritance hierarchy
 (to factor out all commonality)." %}
 
-{% include feature.html content="In Cycling systems Cylc dynamically generates
-new workflow without being constrained by a global time loop. Successive cycles
-interleave as dependencies allow; suites flow around failed or delayed tasks;
-and they adapt to insertion and removal of tasks." %}
+{% include feature.html content="Cylc dynamically generates new workflow
+without being constrained by a global cycle loop. Cycles interleave
+naturally; suites flow around failed or delayed tasks; and they adapt to
+insertion and removal of tasks." %}
 
 {% include feature.html content="Cylc has low admin overhead and a small
 security footprint, because there is no central server process to manage
