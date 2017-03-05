@@ -83,18 +83,18 @@ Cylc stores the job standard output and error from each task. The default locati
 
 ## Suite Management
 
-### How do I version control my suites?
+### How do I store and version control my suites?
 
 Collaborative development of complex workflow definitions requires proper
-branch-and-merge revision control, just like program source code. Cylc does
-not have built-in version control or suite database for the same reason that
-the Python programming language (say) does not have built-in revision control
-or a program database. Revision control is the job of specialist power tools
+branch-and-merge version control, just like program source code. Cylc does
+not have built-in version control or suite databases for the same reason that
+the Python programming language (say) does not have built-in version control
+or program databases. Version control is the job of specialist power tools
 like git and subversion, and storage and discovery requirements are very much
 user, site, and project dependent.
 
 The [Rose](https://github.com/metomi/rose) suite management framework provides
-a nice solution suite storaage, discovery, and revision control (via Subversion).
+a nice solution suite storage, discovery, and version control (via Subversion).
 
 ### How do I install task scripts etc. to task hosts?
 
