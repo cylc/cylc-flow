@@ -1,0 +1,9 @@
+#!Jinja2
+
+{% if not ANSWER is defined %}
+    {% set ANSWER = 42 %}
+{% endif %}
+
+{{ assert(ANSWER == 42, 'Reality check needed') }}
+
+{{ raise('Some Exception') }}
