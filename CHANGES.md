@@ -4,9 +4,35 @@ For the full list of all changes for each release see [closed
 milestones](https://github.com/cylc/cylc/milestones?state=closed).
 
 -------------------------------------------------------------------------------
+## __cylc-7.2.0 (2017-03-06)__
+
+Minor enhancements and fixes (note mid-level version number bumped up to
+reflect significant changes included in 7.1.1 - esp. job file refactoring).
+
+### Highlighted Changes
+
+[#2189](https://github.com/cylc/cylc/pull/2184): New `assert` and
+`raise` functions for handling Jinja2 errors in suites.
+
+### Other Changes
+
+[#2186](https://github.com/cylc/cylc/pull/2186): Use lowercase local shell
+variable names in new job script shell functions introduced in 7.1.1, to avoid
+overriding shell built-ins such as `$HOSTNAME`.
+
+[#2187](https://github.com/cylc/cylc/pull/2187): Fixed a bug causing restart
+failure in the presence of an active broadcast of a submission timeout value.
+
+[#2183](https://github.com/cylc/cylc/pull/2183): Use site-configured suite host
+self-identification, if present, as hostname in the SSL certificate.
+
+[#2182](https://github.com/cylc/cylc/pull/2182): Fixed failed User Guide build
+in 7.1.1.
+
+-------------------------------------------------------------------------------
 ## __cylc-7.1.1 (2017-02-27)__
 
-Minor enhancements and fixes.
+Minor enhancements and fixes (plus a significant change: task job file refactoring).
 
 ### Highlighted Changes
 
