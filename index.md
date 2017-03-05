@@ -10,9 +10,8 @@ There are several reasons why tasks might need to be cycled:
  * In real time environmental forecasting systems, a new forecast may be
  initiated at regular intervals as new real time data comes in.
 
- * Batch scheduler queue limits may require that single long jobs be split into
- many smaller runs with incremental processing of associated inputs and
- outputs.
+ * You may want to split single long model runs into many smaller runs, with
+   incremental processing of associated inputs and outputs.
 
 Cylc was originally developed for operational environmental forecasting at
 [NIWA](http://www.niwa.co.nz) by [Dr Hilary
@@ -31,10 +30,10 @@ good thing)." %}
 notation, and task runtime properties in an efficient inheritance hierarchy
 (to factor out all commonality)." %}
 
-{% include feature.html content="Scheduling of cycling systems is not restricted
-by a global time loop (cycles can interleave as dependencies allow); suites
-flow around failed or delayed tasks; and they adapt to insertion and removal of
-tasks." %}
+{% include feature.html content="In Cycling systems Cylc dynamically generates
+new workflow without being constrained by a global time loop. Successive cycles
+interleave as dependencies allow; suites flow around failed or delayed tasks;
+and they adapt to insertion and removal of tasks." %}
 
 {% include feature.html content="Cylc has low admin overhead and a small
 security footprint, because there is no central server process to manage
