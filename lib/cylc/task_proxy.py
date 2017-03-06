@@ -898,37 +898,6 @@ class TaskProxy(object):
             self.db_events_insert(
                 event=("message %s" % str(priority).lower()), message=message)
 
-    def spawn(self, state):
-        """Spawn the successor of this task proxy."""
-        self.has_spawned = True
-        next_point = self.next_point()
-        if next_point:
-            return TaskProxy(
-                self.tdef, next_point, state, None, False, self.stop_point)
-        else:
-            # next_point instance is out of the sequence bounds
-            return None
-
-    def ready_to_spawn(self):
-        """Return True if ready to spawn my next-cycle successor.
-
-        A task proxy is never ready to spawn if:
-           * it has spawned already
-           * its state is submit-failed (avoid running multiple instances
-             of a task with bad job submission config).
-        Otherwise a task proxy is ready to spawn if either:
-           * self.tdef.spawn ahead is True (results in spawning out to max
-             active cycle points), OR
-           * its state is >= submitted (allows successive instances
-             to run concurrently, but not out of order).
-        """
-        if (self.has_spawned or
-                self.state.status == TASK_STATUS_SUBMIT_FAILED):
-            return False
-        else:
-            return (self.tdef.spawn_ahead or
-                    self.state.is_greater_than(TASK_STATUS_READY))
-
     def get_state_summary(self):
         """Return a dict containing the state summary of this task proxy."""
         self.summary['state'] = self.state.status

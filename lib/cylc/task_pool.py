@@ -922,8 +922,12 @@ class TaskPool(object):
             return None
         itask.has_spawned = True
         itask.log(DEBUG, 'forced spawning')
-        new_task = itask.spawn(TASK_STATUS_WAITING)
-        if new_task and self.add_to_runahead_pool(new_task):
+        next_point = itask.next_point()
+        if next_point is None:
+            return
+        new_task = TaskProxy(
+            itask.tdef, start_point=next_point, stop_point=itask.stop_point)
+        if self.add_to_runahead_pool(new_task):
             return new_task
         else:
             return None
@@ -933,12 +937,28 @@ class TaskPool(object):
 
         Return the number of spawned tasks.
         """
-        spawned_tasks = 0
+        n_spawned = 0
         for itask in self.get_tasks():
-            if itask.ready_to_spawn():
-                self.force_spawn(itask)
-                spawned_tasks += 1
-        return spawned_tasks
+            # A task proxy is never ready to spawn if:
+            #    * it has spawned already
+            #    * its state is submit-failed (avoid running multiple instances
+            #      of a task with bad job submission config).
+            # Otherwise a task proxy is ready to spawn if either:
+            #    * self.tdef.spawn ahead is True (results in spawning out to
+            #      max active cycle points), OR
+            #    * its state is >= submitted (allows successive instances
+            #      to run concurrently, but not out of order).
+            if (
+                not itask.has_spawned and
+                itask.state.status != TASK_STATUS_SUBMIT_FAILED and
+                (
+                    itask.tdef.spawn_ahead or
+                    itask.state.is_greater_than(TASK_STATUS_READY)
+                )
+            ):
+                if self.force_spawn(itask) is not None:
+                    n_spawned += 1
+        return n_spawned
 
     def remove_suiciding_tasks(self):
         """Remove any tasks that have suicide-triggered.
