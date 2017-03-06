@@ -36,7 +36,7 @@ sed "/'job-logs-retrieve'/!d" \
     "${SUITE_RUN_DIR}/log/job/1/t1/01/job-activity.log" \
     >'edited-activities.log'
 cmp_ok 'edited-activities.log' <<'__LOG__'
-[('job-logs-retrieve', 1) ret_code] 0
+[(('job-logs-retrieve', 'succeeded'), 1) ret_code] 0
 __LOG__
 exists_ok "${SUITE_RUN_DIR}/log/job/1/t1/01/job.out"
 exists_fail "${SUITE_RUN_DIR}/log/job/1/t1/01/job.err"

@@ -54,10 +54,10 @@ cmp_ok 'edited-job-activity.log' <<'__LOG__'
 __LOG__
 
 grep 'event-handler-00.*will run after' "${SUITE_RUN_DIR}/log/suite/log" \
-    | cut -d' ' -f 4-11 >'edited-log'
+    | cut -d' ' -f 4-10 >'edited-log'
 # Note: P0Y delays are not displayed
 cmp_ok 'edited-log' <<'__LOG__'
-[t1.1] -(('event-handler-00', 'succeeded'), 1) will run after PT1S
+1/t1/01 ('event-handler-00', 'succeeded') will run after PT1S
 __LOG__
 
 purge_suite_remote "${HOST}" "${SUITE_NAME}"

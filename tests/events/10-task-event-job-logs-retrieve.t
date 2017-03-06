@@ -47,18 +47,18 @@ sed "/'job-logs-retrieve'/!d" \
     "${SUITE_RUN_DIR}/log/job/1/t1/"{01,02,03}"/job-activity.log" \
     >'edited-activities.log'
 cmp_ok 'edited-activities.log' <<'__LOG__'
-[('job-logs-retrieve', 1) ret_code] 0
-[('job-logs-retrieve', 2) ret_code] 0
-[('job-logs-retrieve', 3) ret_code] 0
+[(('job-logs-retrieve', 'retry'), 1) ret_code] 0
+[(('job-logs-retrieve', 'retry'), 2) ret_code] 0
+[(('job-logs-retrieve', 'succeeded'), 3) ret_code] 0
 __LOG__
 
 grep -F 'will run after' "${SUITE_RUN_DIR}/log/suite/log" \
     | cut -d' ' -f 4-10 | sort >"edited-log"
 if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
     cmp_ok 'edited-log' <<'__LOG__'
-[t1.1] -('job-logs-retrieve', 1) will run after PT5S
-[t1.1] -('job-logs-retrieve', 2) will run after PT5S
-[t1.1] -('job-logs-retrieve', 3) will run after PT5S
+1/t1/01 ('job-logs-retrieve', 'retry') will run after PT5S
+1/t1/02 ('job-logs-retrieve', 'retry') will run after PT5S
+1/t1/03 ('job-logs-retrieve', 'succeeded') will run after PT5S
 __LOG__
 else
     cmp_ok 'edited-log' <'/dev/null'  # P0Y not displayed

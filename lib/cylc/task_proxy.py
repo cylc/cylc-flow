@@ -96,11 +96,8 @@ class TaskProxy(object):
     # environments to allow changed behaviour after previous failures.
 
     # Memory optimization - constrain possible attributes to this list.
-    __slots__ = ["CUSTOM_EVENT_HANDLER",
-                 "EVENT_MAIL", "HEAD_MODE_LOCAL", "HEAD_MODE_REMOTE",
-                 "JOB_FILE_BASE", "JOB_LOGS_RETRIEVE",
-                 "KEY_EXECUTE", "KEY_SUBMIT",
-                 "MANAGE_JOB_LOGS_TRY_DELAYS", "NN",
+    __slots__ = ["CUSTOM_EVENT_HANDLER", "EVENT_MAIL", "JOB_LOGS_RETRIEVE",
+                 "KEY_EXECUTE", "KEY_SUBMIT", "NN",
                  "LOGGING_LVL_OF", "RE_MESSAGE_TIME", "TABLE_TASK_JOBS",
                  "TABLE_TASK_EVENTS", "TABLE_TASK_STATES", "POLLED_INDICATOR",
                  "tdef", "submit_num",
@@ -114,14 +111,10 @@ class TaskProxy(object):
 
     CUSTOM_EVENT_HANDLER = "event-handler"
     EVENT_MAIL = "event-mail"
-    HEAD_MODE_LOCAL = "local"
-    HEAD_MODE_REMOTE = "remote"
-    JOB_FILE_BASE = BatchSysManager.JOB_FILE_BASE
     JOB_LOGS_RETRIEVE = "job-logs-retrieve"
     KEY_EXECUTE = "execution"
     KEY_EXECUTE_TIME_LIMIT = "execution_time_limit"
     KEY_SUBMIT = "submission"
-    MANAGE_JOB_LOGS_TRY_DELAYS = (0, 30, 180)  # PT0S, PT30S, PT3M
     NN = "NN"
 
     LOGGING_LVL_OF = {
@@ -348,26 +341,6 @@ class TaskProxy(object):
         msg = "[%s] -%s" % (self.identity, msg)
         LOG.log(lvl, msg)
 
-    def command_log(self, ctx):
-        """Log an activity for a job of this task proxy."""
-        ctx_str = str(ctx)
-        if not ctx_str:
-            return
-        submit_num = self.NN
-        if isinstance(ctx.cmd_key, tuple):  # An event handler
-            submit_num = ctx.cmd_key[-1]
-        job_activity_log = self.get_job_log_path(
-            self.HEAD_MODE_LOCAL, submit_num, "job-activity.log")
-        try:
-            with open(job_activity_log, "ab") as handle:
-                handle.write(ctx_str + '\n')
-        except IOError as exc:
-            LOG.warning("%s: write failed\n%s" % (job_activity_log, exc))
-        if ctx.cmd and ctx.ret_code:
-            LOG.error(ctx_str)
-        elif ctx.cmd:
-            LOG.debug(ctx_str)
-
     def db_events_insert(self, event="", message=""):
         """Record an event to the DB."""
         self.db_inserts_map[self.TABLE_TASK_EVENTS].append({
@@ -464,12 +437,12 @@ class TaskProxy(object):
 
     def setup_job_logs_retrieval(self, event, _=None):
         """Set up remote job logs retrieval."""
-        # TODO - use string constants for event names.
-        key2 = (self.JOB_LOGS_RETRIEVE, self.submit_num)
+        key2 = ((self.JOB_LOGS_RETRIEVE, event), self.submit_num)
         if self.task_owner:
             user_at_host = self.task_owner + "@" + self.task_host
         else:
             user_at_host = self.task_host
+        # TODO - use string constants for event names.
         if (event not in ['failed', 'retry', 'succeeded'] or
                 user_at_host in [USER + '@localhost', 'localhost'] or
                 not self.get_host_conf("retrieve job logs") or
@@ -926,28 +899,6 @@ class TaskProxy(object):
         if adjusted:
             p_next = min(adjusted)
         return p_next
-
-    def get_job_log_path(self, head_mode=None, submit_num=None, tail=None):
-        """Return the job log path."""
-        args = [str(self.point), self.tdef.name]
-        if submit_num is None:
-            submit_num = self.submit_num
-        try:
-            submit_num = "%02d" % submit_num
-        except TypeError:
-            pass
-        if submit_num:
-            args.append(submit_num)
-        if head_mode == self.HEAD_MODE_LOCAL:
-            args.insert(0, GLOBAL_CFG.get_derived_host_item(
-                self.__class__.suite_name, "suite job log directory"))
-        elif head_mode == self.HEAD_MODE_REMOTE:
-            args.insert(0, GLOBAL_CFG.get_derived_host_item(
-                self.__class__.suite_name, 'suite job log directory',
-                self.task_host, self.task_owner))
-        if tail:
-            args.append(tail)
-        return os.path.join(*args)
 
     def check_poll_ready(self, now=None):
         """Check if it is the next poll time."""

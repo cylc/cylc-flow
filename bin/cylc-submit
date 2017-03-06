@@ -104,17 +104,16 @@ def main():
             config.cfg['scheduling']['final cycle point']),
     })
 
-    task_name, point_string = TaskID.split(task_id)
+    task_name, point_str = TaskID.split(task_id)
     itask = TaskProxy(
         config.get_taskdef(task_name),
-        get_point(point_string).standardise(),
+        get_point(point_str).standardise(),
         is_startup=True)
     if options.dry_run:
         if not task_job_mgr.prep_submit_task_jobs(
                 suite, [itask], dry_run=True):
             sys.exit(1)
-        print "JOB SCRIPT=%s" % itask.get_job_log_path(
-            itask.HEAD_MODE_LOCAL, tail=itask.JOB_FILE_BASE)
+        print('JOB SCRIPT=%s' % itask.local_job_file_path)
     else:
         task_job_mgr.submit_task_jobs(suite, [itask])
         while task_job_mgr.proc_pool.results:
@@ -122,7 +121,7 @@ def main():
         task_job_mgr.proc_pool.close()
         task_job_mgr.proc_pool.join()
         if itask.summary['submit_method_id'] is not None:
-            print 'Job ID:', itask.summary['submit_method_id']
+            print('Job ID: %s' % itask.summary['submit_method_id'])
 
     sys.exit(itask.state.status == TASK_STATUS_SUBMIT_FAILED)
 

@@ -1275,7 +1275,7 @@ class TaskPool(object):
                         "num": timer.num,
                         "delay": timer.delay,
                         "timeout": timer.timeout})
-        for key, (itask, timer) in self.task_events_mgr.event_timers.items():
+        for key, timer in self.task_events_mgr.event_timers.items():
             key1, point, name, submit_num = key
             self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
                 "name": name,

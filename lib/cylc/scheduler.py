@@ -382,11 +382,12 @@ conditions; see `cylc conditions`.
                     'ERROR: this suite requires the %s run mode' % reqmode)
 
         self.suite_event_handler = SuiteEventHandler(self.proc_pool)
-        self.task_job_mgr = TaskJobManager(self.proc_pool)
-        self.task_events_mgr = TaskEventsManager(
-            self.proc_pool,
-            self._get_cylc_conf("task event mail interval"),
-            self._get_events_conf("mail footer"))
+        self.task_events_mgr = TaskEventsManager(self.proc_pool)
+        self.task_events_mgr.mail_interval = self._get_cylc_conf(
+            "task event mail interval")
+        self.task_events_mgr.mail_footer = self._get_events_conf("mail footer")
+        self.task_job_mgr = TaskJobManager(
+            self.proc_pool, self.task_events_mgr)
         if self.options.genref or self.options.reftest:
             self.configure_reftest()
 
@@ -766,14 +767,9 @@ conditions; see `cylc conditions`.
 
     def info_get_task_jobfile_path(self, task_id):
         """Return task job file path."""
-        itask = self.pool.get_task_by_id(task_id)
-        if itask is None:
-            return False, "task not found"
-        path = itask.get_job_log_path(
-            head_mode=itask.HEAD_MODE_LOCAL, submit_num=itask.NN,
-            tail=itask.JOB_FILE_BASE)
-        # Note: 2nd value for back compat
-        return path, os.path.dirname(os.path.dirname(path))
+        name, point = TaskID.split(task_id)
+        return self.task_events_mgr.get_task_job_log(
+            self.suite, point, name, tail=self.task_job_mgr.JOB_FILE_BASE)
 
     def info_get_suite_info(self):
         """Return a dict containing the suite title and description."""
@@ -1396,7 +1392,7 @@ conditions; see `cylc conditions`.
 
             self.pool.process_queued_task_messages(self.message_queue)
             self.process_command_queue()
-            self.task_events_mgr.add_event_timers(self.pool.get_tasks())
+            self.task_events_mgr.event_timers_from_tasks(self.pool.get_tasks())
             self.task_events_mgr.process_events(self)
             has_changes = cylc.flags.iflag or self.do_update_state_summary
             if has_changes:
