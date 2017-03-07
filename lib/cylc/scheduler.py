@@ -22,10 +22,9 @@ from logging import DEBUG, INFO
 import os
 import pickle
 from Queue import Empty
-from shutil import copy, copytree, rmtree
-from subprocess import call, Popen, PIPE
+from shutil import copytree, rmtree
+from subprocess import Popen, PIPE
 import sys
-from tempfile import mkstemp
 from time import sleep, time
 import traceback
 
@@ -59,13 +58,13 @@ from cylc.network.suite_log_server import SuiteLogServer
 from cylc.network.suite_state_server import StateSummaryServer
 from cylc.network.task_msg_server import TaskMessageServer
 from cylc.owner import USER
-from cylc.suite_srv_files_mgr import (
-    SuiteSrvFilesManager, SuiteServiceFileError)
-from cylc.rundb import CylcSuiteDAO
+from cylc.suite_db_mgr import SuiteDatabaseManager
 from cylc.suite_events import (
     SuiteEventContext, SuiteEventError, SuiteEventHandler)
 from cylc.suite_host import get_suite_host
 from cylc.suite_logging import SuiteLog, OUT, ERR, LOG
+from cylc.suite_srv_files_mgr import (
+    SuiteSrvFilesManager, SuiteServiceFileError)
 from cylc.taskdef import TaskDef
 from cylc.task_action_timer import TaskActionTimer
 from cylc.task_events_mgr import TaskEventsManager
@@ -212,8 +211,9 @@ class Scheduler(object):
         self.time_next_kill = None
         self.already_timed_out = False
 
-        self.pri_dao = None
-        self.pub_dao = None
+        self.suite_db_mgr = SuiteDatabaseManager(
+            self.suite_srv_files_mgr.get_suite_srv_dir(self.suite),  # pri_d
+            os.path.join(self.suite_run_dir, 'log'))                 # pub_d
 
         self.suite_log = None
         self.log = LOG
@@ -227,7 +227,7 @@ class Scheduler(object):
         GLOBAL_CFG.create_cylc_run_tree(self.suite)
 
         if self.is_restart:
-            self._start_db_upgrade()
+            self.suite_db_mgr.restart_upgrade()
 
         try:
             if not self.options.no_detach and not cylc.flags.debug:
@@ -309,65 +309,6 @@ conditions; see `cylc conditions`.
         for i in range(len(logo_lines)):
             print logo_lines[i], ('{0: ^%s}' % lmax).format(license_lines[i])
 
-    def _start_db_upgrade(self):
-        """Vacuum/upgrade runtime DB on restart."""
-        pri_db_path = os.path.join(
-            self.suite_srv_files_mgr.get_suite_srv_dir(self.suite),
-            CylcSuiteDAO.DB_FILE_BASE_NAME)
-
-        # Backward compat, upgrade database with state file if necessary
-        old_pri_db_path = os.path.join(
-            self.suite_run_dir, 'state', CylcSuiteDAO.OLD_DB_FILE_BASE_NAME)
-        old_pri_db_path_611 = os.path.join(
-            self.suite_run_dir, CylcSuiteDAO.OLD_DB_FILE_BASE_NAME_611[0])
-        old_state_file_path = os.path.join(
-            self.suite_run_dir, "state", "state")
-        if (os.path.exists(old_pri_db_path) and
-                os.path.exists(old_state_file_path) and
-                not os.path.exists(pri_db_path)):
-            # Upgrade pre-6.11.X runtime database + state file
-            copy(old_pri_db_path, pri_db_path)
-            pri_dao = CylcSuiteDAO(pri_db_path)
-            pri_dao.upgrade_with_state_file(old_state_file_path)
-            target = os.path.join(self.suite_run_dir, "state.tar.gz")
-            cmd = ["tar", "-C", self.suite_run_dir, "-czf", target, "state"]
-            if call(cmd) == 0:
-                rmtree(
-                    os.path.join(self.suite_run_dir, "state"),
-                    ignore_errors=True)
-            else:
-                try:
-                    os.unlink(os.path.join(self.suite_run_dir, "state.tar.gz"))
-                except OSError:
-                    pass
-                ERR.error("cannot tar-gzip + remove old state/ directory")
-            # Remove old files as well
-            try:
-                os.unlink(os.path.join(self.suite_run_dir, "cylc-suite-env"))
-            except OSError:
-                pass
-        elif os.path.exists(old_pri_db_path_611):
-            # Upgrade 6.11.X runtime database
-            os.rename(old_pri_db_path_611, pri_db_path)
-            pri_dao = CylcSuiteDAO(pri_db_path)
-            pri_dao.upgrade_from_611()
-            # Remove old files as well
-            for name in [
-                    CylcSuiteDAO.OLD_DB_FILE_BASE_NAME_611[1],
-                    "cylc-suite-env"]:
-                try:
-                    os.unlink(os.path.join(self.suite_run_dir, name))
-                except OSError:
-                    pass
-        else:
-            pri_dao = CylcSuiteDAO(pri_db_path)
-
-        # Vacuum the primary/private database file
-        OUT.info("Vacuuming the suite db ...")
-        pri_dao.vacuum()
-        OUT.info("...done")
-        pri_dao.close()
-
     def configure(self):
         """Configure suite daemon."""
         self.profiler.log_memory("scheduler.py: start configure")
@@ -402,7 +343,7 @@ conditions; see `cylc conditions`.
         self.log.info('Final point: ' + str(self.final_point))
 
         self.pool = TaskPool(
-            self.final_point, self.pri_dao, self.pub_dao, self.task_events_mgr)
+            self.final_point, self.suite_db_mgr, self.task_events_mgr)
         self.message_queue = TaskMessageServer(self.suite)
         self.comms_daemon.connect(
             self.message_queue, COMMS_TASK_MESSAGE_OBJ_NAME)
@@ -414,12 +355,13 @@ conditions; see `cylc conditions`.
             self.load_tasks_for_run()
         self.profiler.log_memory("scheduler.py: after load_tasks")
 
-        self.pool.put_rundb_suite_params(
+        self.suite_db_mgr.put_suite_params(
             self.run_mode,
             self.initial_point,
             self.final_point,
+            self.pool.is_held,
             self.config.cfg['cylc']['cycle point format'])
-        self.pool.put_rundb_suite_template_vars(self.template_vars)
+        self.suite_db_mgr.put_suite_template_vars(self.template_vars)
         self.configure_suite_environment()
 
         # Copy local python modules from source to run directory
@@ -474,14 +416,16 @@ conditions; see `cylc conditions`.
 
     def load_tasks_for_restart(self):
         """Load tasks for restart."""
-        self.pri_dao.select_suite_params(
+        self.suite_db_mgr.pri_dao.select_suite_params(
             self._load_suite_params, self.options.checkpoint)
-        self.pri_dao.select_broadcast_states(
+        self.suite_db_mgr.pri_dao.select_broadcast_states(
             self._load_broadcast_states, self.options.checkpoint)
-        self.pri_dao.select_task_job_run_times(self._load_task_run_times)
-        self.pri_dao.select_task_pool_for_restart(
+        self.suite_db_mgr.pri_dao.select_task_job_run_times(
+            self._load_task_run_times)
+        self.suite_db_mgr.pri_dao.select_task_pool_for_restart(
             self._load_task_pool, self.options.checkpoint)
-        self.pri_dao.select_task_action_timers(self._load_task_action_timers)
+        self.suite_db_mgr.pri_dao.select_task_action_timers(
+            self._load_task_action_timers)
         # Re-initialise run directory for user@host for each submitted and
         # running tasks.
         # Note: tasks should all be in the runahead pool at this point.
@@ -949,10 +893,11 @@ conditions; see `cylc conditions`.
         self.configure_suite_environment()
         if self.options.genref or self.options.reftest:
             self.configure_reftest(recon=True)
-        self.pool.put_rundb_suite_params(
+        self.suite_db_mgr.put_suite_params(
             self.run_mode,
             self.initial_point,
             self.final_point,
+            self.pool.is_held,
             self.config.cfg['cylc']['cycle point format'])
         self.do_update_state_summary = True
 
@@ -1090,21 +1035,17 @@ conditions; see `cylc conditions`.
         """Load and process the suite definition."""
 
         if reconfigure:
-            self.pri_dao.take_checkpoints(
-                "reload-init", other_daos=[self.pub_dao])
+            self.suite_db_mgr.checkpoint("reload-init")
         elif self.is_restart:
             # This logic handles the lack of initial cycle point in "suite.rc".
             # Things that can't change on suite reload.
-            pri_db_path = os.path.join(
-                self.suite_srv_files_mgr.get_suite_srv_dir(self.suite),
-                CylcSuiteDAO.DB_FILE_BASE_NAME)
-            self.pri_dao = CylcSuiteDAO(pri_db_path)
-            self.pri_dao.select_suite_params(self._load_initial_cycle_point)
-            self.pri_dao.select_suite_template_vars(self._load_template_vars)
+            pri_dao = self.suite_db_mgr.get_pri_dao()
+            pri_dao.select_suite_params(self._load_initial_cycle_point)
+            pri_dao.select_suite_template_vars(self._load_template_vars)
             # Take checkpoint and commit immediately so that checkpoint can be
             # copied to the public database.
-            self.pri_dao.take_checkpoints("restart")
-            self.pri_dao.execute_queued_items()
+            pri_dao.take_checkpoints("restart")
+            pri_dao.execute_queued_items()
 
         self.load_suiterc(reconfigure)
 
@@ -1127,43 +1068,11 @@ conditions; see `cylc conditions`.
             self.run_mode = self.config.run_mode
 
         if reconfigure:
+            # Things that can't change on suite reload.
             BroadcastServer.get_inst().linearized_ancestors = (
                 self.config.get_linearized_ancestors())
         else:
-            # Things that can't change on suite reload.
-            pri_db_path = os.path.join(
-                self.suite_srv_files_mgr.get_suite_srv_dir(self.suite),
-                CylcSuiteDAO.DB_FILE_BASE_NAME)
-            pub_db_path = os.path.join(
-                self.suite_run_dir, 'log', CylcSuiteDAO.DB_FILE_BASE_NAME)
-            if not self.is_restart:
-                # Remove database created by previous runs
-                try:
-                    os.unlink(pri_db_path)
-                except OSError:
-                    # Just in case the path is a directory!
-                    rmtree(pri_db_path, ignore_errors=True)
-            # Ensure that:
-            # * public database is in sync with private database
-            # * private database file is private
-            self.pri_dao = CylcSuiteDAO(pri_db_path)
-            os.chmod(pri_db_path, 0600)
-            self.pub_dao = CylcSuiteDAO(pub_db_path, is_public=True)
-            self._copy_pri_db_to_pub_db()
-            pub_db_path_symlink = os.path.join(
-                self.suite_run_dir, CylcSuiteDAO.OLD_DB_FILE_BASE_NAME)
-            try:
-                orig_source = os.readlink(pub_db_path_symlink)
-            except OSError:
-                orig_source = None
-            source = os.path.join('log', CylcSuiteDAO.DB_FILE_BASE_NAME)
-            if orig_source != source:
-                try:
-                    os.unlink(pub_db_path_symlink)
-                except OSError:
-                    pass
-                os.symlink(source, pub_db_path_symlink)
-
+            self.suite_db_mgr.on_suite_start(self.is_restart)
             if self.config.cfg['scheduling']['hold after point']:
                 self.pool_hold_point = get_point(
                     self.config.cfg['scheduling']['hold after point'])
@@ -1343,6 +1252,7 @@ conditions; see `cylc conditions`.
 
             if self.pool.do_reload:
                 self.pool.reload_taskdefs()
+                self.suite_db_mgr.checkpoint("reload-done")
                 self.do_update_state_summary = True
 
             self.process_command_queue()
@@ -1396,28 +1306,21 @@ conditions; see `cylc conditions`.
             self.task_events_mgr.process_events(self)
             has_changes = cylc.flags.iflag or self.do_update_state_summary
             if has_changes:
-                self.pool.put_rundb_task_pool()
+                self.suite_db_mgr.put_task_pool(
+                    self.pool.get_all_tasks(),
+                    self.task_events_mgr.event_timers)
                 self.update_state_summary()
             try:
-                self.pool.process_queued_db_ops()
+                self.suite_db_mgr.process_queued_ops(self.pool.get_all_tasks())
             except OSError as err:
                 raise SchedulerError(str(err))
             # If public database is stuck, blast it away by copying the content
             # of the private database into it.
-            if self.pub_dao.n_tries >= self.pub_dao.MAX_TRIES:
-                try:
-                    self._copy_pri_db_to_pub_db()
-                except (IOError, OSError) as exc:
-                    # Something has to be very wrong here, so stop the suite
-                    raise SchedulerError(str(exc))
-                else:
-                    # No longer stuck
-                    self.log.warning(
-                        "%(pub_db_name)s: recovered from %(pri_db_name)s" % {
-                            "pub_db_name": self.pub_dao.db_file_name,
-                            "pri_db_name": self.pri_dao.db_file_name})
-                    self.pub_dao.n_tries = 0
-
+            try:
+                self.suite_db_mgr.recover_pub_from_pri()
+            except (IOError, OSError) as exc:
+                # Something has to be very wrong here, so stop the suite
+                raise SchedulerError(str(exc))
             self.check_suite_timer()
             if self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT):
                 self.check_suite_inactive()
@@ -1649,8 +1552,11 @@ conditions; see `cylc conditions`.
         if self.pool is not None:
             self.pool.warn_stop_orphans()
             try:
-                self.pool.put_rundb_task_pool()
-                self.pool.process_queued_db_ops()
+                itasks = self.pool.get_all_tasks()
+                self.task_events_mgr.event_timers_from_tasks(itasks)
+                self.suite_db_mgr.put_task_pool(
+                    itasks, self.task_events_mgr.event_timers)
+                self.suite_db_mgr.process_queued_ops(itasks)
             except Exception as exc:
                 ERR.error(str(exc))
 
@@ -1690,9 +1596,8 @@ conditions; see `cylc conditions`.
                 self.task_job_mgr.unlink_hosts_contacts(self.suite)
 
         # disconnect from suite-db, stop db queue
-        if getattr(self, "db", None) is not None:
-            self.pri_dao.close()
-            self.pub_dao.close()
+        if getattr(self, "suite_db_mgr", None) is not None:
+            self.suite_db_mgr.on_suite_shutdown()
 
         if getattr(self, "config", None) is not None:
             # run shutdown handlers
@@ -1737,6 +1642,9 @@ conditions; see `cylc conditions`.
         """Hold all tasks in suite."""
         if point is None:
             self.pool.hold_all_tasks()
+            sdm = self.suite_db_mgr
+            sdm.db_inserts_map[sdm.TABLE_SUITE_PARAMS].append(
+                {"key": "is_held", "value": 1})
         else:
             self.log.info("Setting suite hold cycle point: " + str(point))
             self.pool.set_hold_point(point)
@@ -1747,6 +1655,8 @@ conditions; see `cylc conditions`.
             self.log.info("RELEASE: new tasks will be queued when ready")
         self.pool.set_hold_point(None)
         self.pool.release_all_tasks()
+        sdm = self.suite_db_mgr
+        sdm.db_deletes_map[sdm.TABLE_SUITE_PARAMS].append({"key": "is_held"})
 
     def will_stop_at(self):
         """Return stop point, if set."""
@@ -1803,8 +1713,7 @@ conditions; see `cylc conditions`.
 
     def command_take_checkpoints(self, items):
         """Insert current task_pool, etc to checkpoints tables."""
-        return self.pri_dao.take_checkpoints(
-            items[0], other_daos=[self.pub_dao])
+        return self.suite_db_mgr.checkpoint(items[0])
 
     def filter_initial_task_list(self, inlist):
         """Return list of initial tasks after applying a filter."""
@@ -1835,29 +1744,6 @@ conditions; see `cylc conditions`.
             return True
         else:
             return False
-
-    def _copy_pri_db_to_pub_db(self):
-        """Copy content of primary database file to public database file.
-
-        Use temporary file to ensure that we do not end up with a partial file.
-
-        """
-        temp_pub_db_file_name = None
-        self.pub_dao.close()
-        try:
-            self.pub_dao.conn = None  # reset connection
-            open(self.pub_dao.db_file_name, "a").close()  # touch
-            st_mode = os.stat(self.pub_dao.db_file_name).st_mode
-            temp_pub_db_file_name = mkstemp(
-                prefix=self.pub_dao.DB_FILE_BASE_NAME,
-                dir=os.path.dirname(self.pub_dao.db_file_name))[1]
-            copy(self.pri_dao.db_file_name, temp_pub_db_file_name)
-            os.rename(temp_pub_db_file_name, self.pub_dao.db_file_name)
-            os.chmod(self.pub_dao.db_file_name, st_mode)
-        except (IOError, OSError):
-            if temp_pub_db_file_name:
-                os.unlink(temp_pub_db_file_name)
-            raise
 
     def _update_profile_info(self, category, amount, amount_format="%s"):
         """Update the 1, 5, 15 minute dt averages for a given category."""

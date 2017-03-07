@@ -33,7 +33,6 @@ tasks against the new stop cycle.
 
 from fnmatch import fnmatchcase
 from logging import DEBUG, INFO, WARNING
-import pickle
 import Queue
 from random import randrange
 from time import time
@@ -44,8 +43,6 @@ from cylc.cycling.loader import (
     standardise_point_string)
 import cylc.flags
 from cylc.network.ext_trigger_server import ExtTriggerServer
-from cylc.network.suite_broadcast_server import BroadcastServer
-from cylc.rundb import CylcSuiteDAO
 from cylc.suite_logging import LOG
 from cylc.task_proxy import TaskProxy
 from cylc.task_state import (
@@ -55,8 +52,7 @@ from cylc.task_state import (
     TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_SUBMIT_RETRYING,
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
     TASK_STATUS_RETRYING)
-from cylc.wallclock import (
-    get_current_time_string, get_time_string_from_unix_time)
+from cylc.wallclock import get_time_string_from_unix_time
 
 
 class TaskPool(object):
@@ -71,16 +67,9 @@ class TaskPool(object):
     STOP_REQUEST_NOW = 'REQUEST(NOW)'
     STOP_REQUEST_NOW_NOW = 'REQUEST(NOW-NOW)'
 
-    TABLE_SUITE_PARAMS = CylcSuiteDAO.TABLE_SUITE_PARAMS
-    TABLE_SUITE_TEMPLATE_VARS = CylcSuiteDAO.TABLE_SUITE_TEMPLATE_VARS
-    TABLE_TASK_POOL = CylcSuiteDAO.TABLE_TASK_POOL
-    TABLE_TASK_ACTION_TIMERS = CylcSuiteDAO.TABLE_TASK_ACTION_TIMERS
-    TABLE_CHECKPOINT_ID = CylcSuiteDAO.TABLE_CHECKPOINT_ID
-
-    def __init__(self, stop_point, pri_dao, pub_dao, task_events_mgr):
+    def __init__(self, stop_point, suite_db_mgr, task_events_mgr):
         self.stop_point = stop_point
-        self.pri_dao = pri_dao
-        self.pub_dao = pub_dao
+        self.suite_db_mgr = suite_db_mgr
         self.task_events_mgr = task_events_mgr
 
         self.do_reload = False
@@ -109,17 +98,6 @@ class TaskPool(object):
 
         self.orphans = []
         self.task_name_list = config.get_task_name_list()
-
-        self.db_deletes_map = {
-            self.TABLE_SUITE_PARAMS: [],
-            self.TABLE_TASK_POOL: [],
-            self.TABLE_TASK_ACTION_TIMERS: []}
-        self.db_inserts_map = {
-            self.TABLE_SUITE_PARAMS: [],
-            self.TABLE_SUITE_TEMPLATE_VARS: [],
-            self.TABLE_CHECKPOINT_ID: [],
-            self.TABLE_TASK_POOL: [],
-            self.TABLE_TASK_ACTION_TIMERS: []}
 
     def assign_queues(self):
         """self.myq[taskname] = qfoo"""
@@ -186,8 +164,9 @@ class TaskPool(object):
                     stop_point_str, exc))
                 n_warnings += 1
                 return n_warnings
-        task_states_data = self.pri_dao.select_task_states_by_task_ids(
-            ["submit_num"], task_ids)
+        task_states_data = (
+            self.suite_db_mgr.pri_dao.select_task_states_by_task_ids(
+                ["submit_num"], task_ids))
         for name_str, point_str in task_ids:
             # TODO - insertion of start-up tasks? (startup=False assumed here)
 
@@ -647,7 +626,6 @@ class TaskPool(object):
                 self.add_to_runahead_pool(new_task)
         LOG.info("Reload completed.")
         self.do_reload = False
-        self.pri_dao.take_checkpoints("reload-done", other_daos=[self.pub_dao])
 
     def set_stop_point(self, stop_point):
         """Set the global suite stop point."""
@@ -794,14 +772,11 @@ class TaskPool(object):
         self.is_held = True
         for itask in self.get_all_tasks():
             itask.state.reset_state(TASK_STATUS_HELD)
-        self.db_inserts_map[self.TABLE_SUITE_PARAMS].append(
-            {"key": "is_held", "value": 1})
 
     def release_all_tasks(self):
         """Release all held tasks."""
         self.is_held = False
         self.release_tasks(None)
-        self.db_deletes_map[self.TABLE_SUITE_PARAMS].append({"key": "is_held"})
 
     def get_failed_tasks(self):
         """Return failed and submission failed tasks."""
@@ -852,69 +827,6 @@ class TaskPool(object):
             if itask.identity in task_id_messages:
                 for priority, message in task_id_messages[itask.identity]:
                     itask.process_incoming_message(priority, message)
-
-    def process_queued_db_ops(self):
-        """Handle queued db operations for each task proxy."""
-        for itask in self.get_all_tasks():
-            # (runahead pool tasks too, to get new state recorders).
-            if any(itask.db_inserts_map.values()):
-                for table_name, db_inserts in sorted(
-                        itask.db_inserts_map.items()):
-                    while db_inserts:
-                        db_insert = db_inserts.pop(0)
-                        db_insert.update({
-                            "name": itask.tdef.name,
-                            "cycle": str(itask.point),
-                        })
-                        if "submit_num" not in db_insert:
-                            db_insert["submit_num"] = itask.submit_num
-                        self.pri_dao.add_insert_item(table_name, db_insert)
-                        self.pub_dao.add_insert_item(table_name, db_insert)
-
-            if any(itask.db_updates_map.values()):
-                for table_name, db_updates in sorted(
-                        itask.db_updates_map.items()):
-                    while db_updates:
-                        set_args = db_updates.pop(0)
-                        where_args = {
-                            "cycle": str(itask.point),
-                            "name": itask.tdef.name
-                        }
-                        if "submit_num" not in set_args:
-                            where_args["submit_num"] = itask.submit_num
-                        self.pri_dao.add_update_item(
-                            table_name, set_args, where_args)
-                        self.pub_dao.add_update_item(
-                            table_name, set_args, where_args)
-
-        # Record suite parameters and tasks in pool
-        # Record any broadcast settings to be dumped out
-        for obj in self, BroadcastServer.get_inst():
-            if any(obj.db_deletes_map.values()):
-                for table_name, db_deletes in sorted(
-                        obj.db_deletes_map.items()):
-                    while db_deletes:
-                        where_args = db_deletes.pop(0)
-                        self.pri_dao.add_delete_item(table_name, where_args)
-                        self.pub_dao.add_delete_item(table_name, where_args)
-            if any(obj.db_inserts_map.values()):
-                for table_name, db_inserts in sorted(
-                        obj.db_inserts_map.items()):
-                    while db_inserts:
-                        db_insert = db_inserts.pop(0)
-                        self.pri_dao.add_insert_item(table_name, db_insert)
-                        self.pub_dao.add_insert_item(table_name, db_insert)
-
-        # Previously, we used a separate thread for database writes. This has
-        # now been removed. For the private database, there is no real
-        # advantage in using a separate thread as it needs to be always in sync
-        # with what is current. For the public database, which does not need to
-        # be fully in sync, there is some advantage of using a separate
-        # thread/process, if writing to it becomes a bottleneck. At the moment,
-        # there is no evidence that this is a bottleneck, so it is better to
-        # keep the logic simple.
-        self.pri_dao.execute_queued_items()
-        self.pub_dao.execute_queued_items()
 
     def force_spawn(self, itask):
         """Spawn successor of itask."""
@@ -1216,81 +1128,6 @@ class TaskPool(object):
         for itask in self.get_tasks():
             if itask.state.external_triggers:
                 ets.retrieve(itask)
-
-    def put_rundb_suite_params(
-            self, run_mode, initial_point, final_point,
-            cycle_point_format=None):
-        """Put run mode, initial/final cycle point in runtime database.
-
-        This method queues the relevant insert statements.
-        """
-        self.db_inserts_map[self.TABLE_SUITE_PARAMS].extend([
-            {"key": "run_mode", "value": run_mode},
-            {"key": "initial_point", "value": str(initial_point)},
-            {"key": "final_point", "value": str(final_point)},
-        ])
-        if cycle_point_format:
-            self.db_inserts_map[self.TABLE_SUITE_PARAMS].extend([
-                {"key": "cycle_point_format", "value": str(cycle_point_format)}
-            ])
-        if self.is_held:
-            self.db_inserts_map[self.TABLE_SUITE_PARAMS].append(
-                {"key": "is_held", "value": 1})
-
-    def put_rundb_suite_template_vars(self, template_vars):
-        """Put template_vars in runtime database.
-
-        This method queues the relevant insert statements.
-        """
-        for key, value in template_vars.items():
-            self.db_inserts_map[self.TABLE_SUITE_TEMPLATE_VARS].append(
-                {"key": key, "value": value})
-
-    def put_rundb_task_pool(self):
-        """Put statements to update the task_pool table in runtime database.
-
-        Update the task_pool table and the task_action_timers table.
-        Queue delete (everything) statements to wipe the tables, and queue the
-        relevant insert statements for the current tasks in the pool.
-        """
-        self.db_deletes_map[self.TABLE_TASK_POOL].append({})
-        self.db_deletes_map[self.TABLE_TASK_ACTION_TIMERS].append({})
-        for itask in self.get_all_tasks():
-            self.db_inserts_map[self.TABLE_TASK_POOL].append({
-                "name": itask.tdef.name,
-                "cycle": str(itask.point),
-                "spawned": int(itask.has_spawned),
-                "status": itask.state.status,
-                "hold_swap": itask.state.hold_swap})
-            for ctx_key_0 in ["poll_timers", "try_timers"]:
-                for ctx_key_1, timer in getattr(itask, ctx_key_0).items():
-                    if timer is None:
-                        continue
-                    self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
-                        "name": itask.tdef.name,
-                        "cycle": str(itask.point),
-                        "ctx_key_pickle": pickle.dumps((ctx_key_0, ctx_key_1)),
-                        "ctx_pickle": pickle.dumps(timer.ctx),
-                        "delays_pickle": pickle.dumps(timer.delays),
-                        "num": timer.num,
-                        "delay": timer.delay,
-                        "timeout": timer.timeout})
-        for key, timer in self.task_events_mgr.event_timers.items():
-            key1, point, name, submit_num = key
-            self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
-                "name": name,
-                "cycle": point,
-                "ctx_key_pickle": pickle.dumps((key1, submit_num,)),
-                "ctx_pickle": pickle.dumps(timer.ctx),
-                "delays_pickle": pickle.dumps(timer.delays),
-                "num": timer.num,
-                "delay": timer.delay,
-                "timeout": timer.timeout})
-        self.db_inserts_map[self.TABLE_CHECKPOINT_ID].append({
-            # id = -1 for latest
-            "id": CylcSuiteDAO.CHECKPOINT_LATEST_ID,
-            "time": get_current_time_string(),
-            "event": CylcSuiteDAO.CHECKPOINT_LATEST_EVENT})
 
     def filter_task_proxies(self, items):
         """Return task proxies that match names, points, states in items.
