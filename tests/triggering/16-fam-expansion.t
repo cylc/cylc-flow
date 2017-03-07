@@ -32,12 +32,13 @@ TEST_NAME=$TEST_NAME_BASE-show
 run_ok $TEST_NAME cylc show $SUITE_NAME bar.1
 #-------------------------------------------------------------------------------
 contains_ok $TEST_NAME.stdout <<'__SHOW_DUMP__'
-  -     LABEL: foo3_colon_succeed = foo3.1 succeeded
-  -     LABEL: foo1_colon_succeed = foo1.1 succeeded
-  -     LABEL: foo2_colon_succeed = foo2.1 succeeded
-  -     LABEL: foo3_colon_fail = foo3.1 failed
-  -     LABEL: foo2_colon_fail = foo2.1 failed
-  -     LABEL: foo1_colon_fail = foo1.1 failed
+  - (((1 | 0) & (3 | 2) & (5 | 4)) & (0 | 2 | 4))
+  - 	0 = foo1.1 failed
+  - 	1 = foo1.1 succeeded
+  - 	2 = foo2.1 failed
+  - 	3 = foo2.1 succeeded
+  - 	4 = foo3.1 failed
+  - 	5 = foo3.1 succeeded
 __SHOW_DUMP__
 #-------------------------------------------------------------------------------
 cylc stop $SUITE_NAME
