@@ -16,8 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import math
 import re
 import sys
+
 from cylc.conditional_simplifier import ConditionalSimplifier
 from cylc.cycling.loader import get_point
 from cylc.suite_logging import ERR
@@ -193,13 +195,17 @@ class Prerequisite(object):
         res = []
         if self.raw_conditional_expression:
             temp = self.raw_conditional_expression
+            labels = []
+            num_length = int(math.ceil(float(len(self.labels)) / float(10)))
             for ind, (task, label,) in enumerate(sorted(self.labels.items())):
-                char = chr(ind + 65)  # Gen character starting with A.
-                res.append(['\t%s = %s' % (char, task), self.satisfied[label]])
+                char = '%.{0}d'.format(num_length) % ind
+                labels.append(['\t%s = %s' % (char, task),
+                               self.satisfied[label]])
                 temp = temp.replace(label, char)
             temp = temp.replace('|', ' | ')
             temp = temp.replace('&', ' & ')
             res.append([temp, self.is_satisfied()])
+            res.extend(labels)
         elif self.satisfied:
             for label, val in self.satisfied.items():
                 res.append([self.messages[label], val])

@@ -35,13 +35,13 @@ title: (not given)
 description: (not given)
 
 prerequisites (- => not satisfied):
-  - 	A = a.20000102T0000Z succeeded
-  - 	B = b.20000102T0000Z succeeded
-  - 	C = c.20000102T0000Z succeeded
-  - 	D = d.20000102T0000Z succeeded
-  - 	E = e.20000102T0000Z succeeded
-  - 	F = f.20000101T0000Z succeeded
-  - A & B & (C | (D & E)) & F
+  - 0 & 1 & (2 | (3 & 4)) & 5
+  - 	0 = a.20000102T0000Z succeeded
+  - 	1 = b.20000102T0000Z succeeded
+  - 	2 = c.20000102T0000Z succeeded
+  - 	3 = d.20000102T0000Z succeeded
+  - 	4 = e.20000102T0000Z succeeded
+  - 	5 = f.20000101T0000Z succeeded
 
 outputs (- => not completed):
   - f.20000102T0000Z submitted
