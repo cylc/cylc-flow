@@ -195,7 +195,7 @@ class ScanApp(object):
                     raise ValueError("Invalid %s pattern: %s" % (label, items))
 
         self.updater = ScanAppUpdater(
-            self.hosts, suite_treemodel, self.suite_treeview,
+            self.window, self.hosts, suite_treemodel, self.suite_treeview,
             comms_timeout=comms_timeout, poll_interval=poll_interval,
             group_column_id=self.GROUP_COLUMN,
             name_pattern=patterns["name"], owner_pattern=patterns["owner"])
@@ -541,9 +541,10 @@ class ScanAppUpdater(threading.Thread):
 
     POLL_INTERVAL = 60
 
-    def __init__(self, hosts, suite_treemodel, suite_treeview,
+    def __init__(self, window, hosts, suite_treemodel, suite_treeview,
                  comms_timeout=None, poll_interval=None, group_column_id=0,
                  name_pattern=None, owner_pattern=None):
+        self.window = window
         self.hosts = hosts
         self.comms_timeout = comms_timeout
         if poll_interval is None:
@@ -665,10 +666,13 @@ class ScanAppUpdater(threading.Thread):
                 continue
             if self._should_force_update:
                 self._should_force_update = False
+            title = self.window.get_title()
+            gobject.idle_add(self.window.set_title, title + " (updating)")
             self.suite_info_map = update_suites_info(
                 self.hosts, self.comms_timeout, self.owner_pattern,
                 self.name_pattern, self.suite_info_map)
             self.last_update_time = time.time()
+            gobject.idle_add(self.window.set_title, title)
             gobject.idle_add(self.update)
             time.sleep(1)
 
