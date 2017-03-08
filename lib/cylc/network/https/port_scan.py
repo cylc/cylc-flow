@@ -174,13 +174,23 @@ def scan_all(hosts=None, timeout=None):
         # Create some child processes where necessary
         while len(proc_items) < max_procs and todo_set:
             my_conn, conn = Pipe()
-            proc = Process(target=_scan1_impl, args=(conn, timeout, my_uuid))
-            proc.start()
-            host, port = todo_set.pop()
-            wait_set.add((host, port))
-            my_conn.send((host, port))
-            proc_items.append((proc, my_conn, time() + INACTIVITY_TIMEOUT))
-            no_action = False
+            try:
+                proc = Process(
+                    target=_scan1_impl, args=(conn, timeout, my_uuid))
+            except OSError:
+                # Die if unable to start any worker process.
+                # OK to wait and see if any worker process already running.
+                if not proc_items:
+                    raise
+                if cylc.flags.debug:
+                    traceback.print_exc()
+            else:
+                proc.start()
+                host, port = todo_set.pop()
+                wait_set.add((host, port))
+                my_conn.send((host, port))
+                proc_items.append((proc, my_conn, time() + INACTIVITY_TIMEOUT))
+                no_action = False
         if no_action:
             sleep(SLEEP_INTERVAL)
     # Report host:port with no results
