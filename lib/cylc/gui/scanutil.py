@@ -383,8 +383,8 @@ def _update_stopped_suite_info(key):
             result = {
                 KEY_UPDATE_TIME: timestr_to_seconds(line.split("|")[1]),
                 KEY_STATES: ({}, {})}
-        elif cur == "# TASK POOL (CYCLE|NAME|SPAWNED|STATUS)":
-            point, _, _, state = line.split("|")
+        elif cur == "# TASK POOL (CYCLE|NAME|SPAWNED|STATUS|HOLD_SWAP)":
+            point, _, _, state, _ = line.split("|")
             # Total count of a state
             result[KEY_STATES][0].setdefault(state, 0)
             result[KEY_STATES][0][state] += 1
