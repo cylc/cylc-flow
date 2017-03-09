@@ -32,11 +32,12 @@ from cylc.wallclock import get_current_time_string
 class SuiteDatabaseManager(object):
     """Manage the suite runtime private and public databases."""
 
+    TABLE_CHECKPOINT_ID = CylcSuiteDAO.TABLE_CHECKPOINT_ID
     TABLE_SUITE_PARAMS = CylcSuiteDAO.TABLE_SUITE_PARAMS
     TABLE_SUITE_TEMPLATE_VARS = CylcSuiteDAO.TABLE_SUITE_TEMPLATE_VARS
-    TABLE_TASK_POOL = CylcSuiteDAO.TABLE_TASK_POOL
     TABLE_TASK_ACTION_TIMERS = CylcSuiteDAO.TABLE_TASK_ACTION_TIMERS
-    TABLE_CHECKPOINT_ID = CylcSuiteDAO.TABLE_CHECKPOINT_ID
+    TABLE_TASK_POOL = CylcSuiteDAO.TABLE_TASK_POOL
+    TABLE_TASK_STATES = CylcSuiteDAO.TABLE_TASK_STATES
 
     def __init__(self, pri_d, pub_d):
         self.pri_path = os.path.join(pri_d, CylcSuiteDAO.DB_FILE_BASE_NAME)
@@ -54,6 +55,7 @@ class SuiteDatabaseManager(object):
             self.TABLE_CHECKPOINT_ID: [],
             self.TABLE_TASK_POOL: [],
             self.TABLE_TASK_ACTION_TIMERS: []}
+        self.db_updates_map = {}
 
     def checkpoint(self, name):
         """Checkpoint the task pool, etc."""
@@ -127,40 +129,8 @@ class SuiteDatabaseManager(object):
             self.pub_dao.close()
             self.pub_dao = None
 
-    def process_queued_ops(self, itasks):
+    def process_queued_ops(self):
         """Handle queued db operations for each task proxy."""
-        for itask in itasks:
-            # (runahead pool tasks too, to get new state recorders).
-            if any(itask.db_inserts_map.values()):
-                for table_name, db_inserts in sorted(
-                        itask.db_inserts_map.items()):
-                    while db_inserts:
-                        db_insert = db_inserts.pop(0)
-                        db_insert.update({
-                            "name": itask.tdef.name,
-                            "cycle": str(itask.point),
-                        })
-                        if "submit_num" not in db_insert:
-                            db_insert["submit_num"] = itask.submit_num
-                        self.pri_dao.add_insert_item(table_name, db_insert)
-                        self.pub_dao.add_insert_item(table_name, db_insert)
-
-            if any(itask.db_updates_map.values()):
-                for table_name, db_updates in sorted(
-                        itask.db_updates_map.items()):
-                    while db_updates:
-                        set_args = db_updates.pop(0)
-                        where_args = {
-                            "cycle": str(itask.point),
-                            "name": itask.tdef.name
-                        }
-                        if "submit_num" not in set_args:
-                            where_args["submit_num"] = itask.submit_num
-                        self.pri_dao.add_update_item(
-                            table_name, set_args, where_args)
-                        self.pub_dao.add_update_item(
-                            table_name, set_args, where_args)
-
         # Record suite parameters and tasks in pool
         # Record any broadcast settings to be dumped out
         for obj in self, BroadcastServer.get_inst():
@@ -178,6 +148,16 @@ class SuiteDatabaseManager(object):
                         db_insert = db_inserts.pop(0)
                         self.pri_dao.add_insert_item(table_name, db_insert)
                         self.pub_dao.add_insert_item(table_name, db_insert)
+            if (hasattr(obj, 'db_updates_map') and
+                    any(obj.db_updates_map.values())):
+                for table_name, db_updates in sorted(
+                        obj.db_updates_map.items()):
+                    while db_updates:
+                        set_args, where_args = db_updates.pop(0)
+                        self.pri_dao.add_update_item(
+                            table_name, set_args, where_args)
+                        self.pub_dao.add_update_item(
+                            table_name, set_args, where_args)
 
         # Previously, we used a separate thread for database writes. This has
         # now been removed. For the private database, there is no real
@@ -203,9 +183,9 @@ class SuiteDatabaseManager(object):
             {"key": "final_point", "value": str(final_point)},
         ])
         if cycle_point_format:
-            self.db_inserts_map[self.TABLE_SUITE_PARAMS].extend([
+            self.db_inserts_map[self.TABLE_SUITE_PARAMS].append(
                 {"key": "cycle_point_format", "value": str(cycle_point_format)}
-            ])
+            )
         if is_held:
             self.db_inserts_map[self.TABLE_SUITE_PARAMS].append(
                 {"key": "is_held", "value": 1})
@@ -219,7 +199,23 @@ class SuiteDatabaseManager(object):
             self.db_inserts_map[self.TABLE_SUITE_TEMPLATE_VARS].append(
                 {"key": key, "value": value})
 
-    def put_task_pool(self, itasks, event_timers):
+    def put_task_event_timers(self, task_events_mgr):
+        """Put statements to update the task_action_timers table."""
+        if task_events_mgr.event_timers:
+            self.db_deletes_map[self.TABLE_TASK_ACTION_TIMERS].append({})
+            for key, timer in task_events_mgr.event_timers.items():
+                key1, point, name, submit_num = key
+                self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
+                    "name": name,
+                    "cycle": point,
+                    "ctx_key_pickle": pickle.dumps((key1, submit_num,)),
+                    "ctx_pickle": pickle.dumps(timer.ctx),
+                    "delays_pickle": pickle.dumps(timer.delays),
+                    "num": timer.num,
+                    "delay": timer.delay,
+                    "timeout": timer.timeout})
+
+    def put_task_pool(self, pool):
         """Put statements to update the task_pool table in runtime database.
 
         Update the task_pool table and the task_action_timers table.
@@ -227,8 +223,7 @@ class SuiteDatabaseManager(object):
         relevant insert statements for the current tasks in the pool.
         """
         self.db_deletes_map[self.TABLE_TASK_POOL].append({})
-        self.db_deletes_map[self.TABLE_TASK_ACTION_TIMERS].append({})
-        for itask in itasks:
+        for itask in pool.get_all_tasks():
             self.db_inserts_map[self.TABLE_TASK_POOL].append({
                 "name": itask.tdef.name,
                 "cycle": str(itask.point),
@@ -248,17 +243,48 @@ class SuiteDatabaseManager(object):
                         "num": timer.num,
                         "delay": timer.delay,
                         "timeout": timer.timeout})
-        for key, timer in event_timers.items():
-            key1, point, name, submit_num = key
-            self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
-                "name": name,
-                "cycle": point,
-                "ctx_key_pickle": pickle.dumps((key1, submit_num,)),
-                "ctx_pickle": pickle.dumps(timer.ctx),
-                "delays_pickle": pickle.dumps(timer.delays),
-                "num": timer.num,
-                "delay": timer.delay,
-                "timeout": timer.timeout})
+            if any(itask.db_inserts_map.values()):
+                for table_name, db_inserts in sorted(
+                        itask.db_inserts_map.items()):
+                    while db_inserts:
+                        db_insert = db_inserts.pop(0)
+                        db_insert.update({
+                            "name": itask.tdef.name,
+                            "cycle": str(itask.point),
+                        })
+                        if "submit_num" not in db_insert:
+                            db_insert["submit_num"] = itask.submit_num
+                        self.db_inserts_map.setdefault(table_name, [])
+                        self.db_inserts_map[table_name].append(db_insert)
+            if itask.state.time_updated:
+                set_args = {
+                    "time_updated": itask.state.time_updated,
+                    "submit_num": itask.submit_num,
+                    "try_num": itask.try_timers[itask.KEY_EXECUTE].num + 1,
+                    "status": itask.state.status}
+                where_args = {
+                    "cycle": str(itask.point),
+                    "name": itask.tdef.name,
+                }
+                self.db_updates_map.setdefault(itask.TABLE_TASK_STATES, [])
+                self.db_updates_map[itask.TABLE_TASK_STATES].append(
+                    (set_args, where_args))
+                itask.state.time_updated = None
+            if any(itask.db_updates_map.values()):
+                for table_name, db_updates in sorted(
+                        itask.db_updates_map.items()):
+                    while db_updates:
+                        set_args = db_updates.pop(0)
+                        where_args = {
+                            "cycle": str(itask.point),
+                            "name": itask.tdef.name,
+                        }
+                        if "submit_num" not in set_args:
+                            where_args["submit_num"] = itask.submit_num
+                        self.db_updates_map.setdefault(table_name, [])
+                        self.db_updates_map[table_name].append(
+                            (set_args, where_args))
+
         self.db_inserts_map[self.TABLE_CHECKPOINT_ID].append({
             # id = -1 for latest
             "id": CylcSuiteDAO.CHECKPOINT_LATEST_ID,

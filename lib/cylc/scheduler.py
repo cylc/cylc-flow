@@ -173,7 +173,6 @@ class Scheduler(object):
         self.contact_data = None
 
         self.do_process_tasks = False
-        self.do_update_state_summary = True
 
         # initialize some items in case of early shutdown
         # (required in the shutdown() method)
@@ -620,6 +619,23 @@ conditions; see `cylc conditions`.
             return
         OUT.info("+ %s.%s %s" % (name, cycle, ctx_key))
 
+    def process_queued_task_messages(self):
+        """Handle incoming task messages for each task proxy."""
+        queue = self.message_queue.get_queue()
+        task_id_messages = {}
+        while queue.qsize():
+            try:
+                task_id, priority, message = queue.get(block=False)
+            except Queue.Empty:
+                break
+            queue.task_done()
+            task_id_messages.setdefault(task_id, [])
+            task_id_messages[task_id].append((priority, message))
+        for itask in self.pool.get_tasks():
+            if itask.identity in task_id_messages:
+                for priority, message in task_id_messages[itask.identity]:
+                    itask.process_incoming_message(priority, message)
+
     def process_command_queue(self):
         """Process queued commands."""
         queue = self.command_queue.get_queue()
@@ -660,7 +676,7 @@ conditions; see `cylc conditions`.
                         (n_warnings, cmdstr))
                 else:
                     self.log.info('Command succeeded: ' + cmdstr)
-                self.do_update_state_summary = True
+                cylc.flags.iflag = True
                 if name in self.PROC_CMDS:
                     self.do_process_tasks = True
             queue.task_done()
@@ -899,7 +915,7 @@ conditions; see `cylc conditions`.
             self.final_point,
             self.pool.is_held,
             self.config.cfg['cylc']['cycle point format'])
-        self.do_update_state_summary = True
+        cylc.flags.iflag = True
 
     def command_set_runahead(self, interval=None):
         """Set runahead limit."""
@@ -1238,6 +1254,7 @@ conditions; see `cylc conditions`.
         self.profiler.log_memory("scheduler.py: begin run while loop")
 
         time_next_fs_check = None
+        cylc.flags.iflag = True
 
         if self.options.profile_mode:
             previous_profile_point = 0
@@ -1253,11 +1270,11 @@ conditions; see `cylc conditions`.
             if self.pool.do_reload:
                 self.pool.reload_taskdefs()
                 self.suite_db_mgr.checkpoint("reload-done")
-                self.do_update_state_summary = True
+                cylc.flags.iflag = True
 
             self.process_command_queue()
             if self.pool.release_runahead_tasks():
-                self.do_update_state_summary = True
+                cylc.flags.iflag = True
             self.proc_pool.handle_results_async()
 
             # External triggers must be matched now. If any are matched pflag
@@ -1275,7 +1292,7 @@ conditions; see `cylc conditions`.
                 if self.stop_mode is None:
                     itasks = self.pool.get_ready_tasks()
                     if itasks:
-                        self.do_update_state_summary = True
+                        cylc.flags.iflag = True
                     if self.config.cfg['cylc']['log resolved dependencies']:
                         for itask in itasks:
                             if not itask.local_job_file_path:
@@ -1291,7 +1308,7 @@ conditions; see `cylc conditions`.
                         self.pool.remove_spent_tasks,
                         self.pool.remove_suiciding_tasks]:
                     if meth():
-                        self.do_update_state_summary = True
+                        cylc.flags.iflag = True
 
                 BroadcastServer.get_inst().expire(self.pool.get_min_point())
 
@@ -1300,19 +1317,20 @@ conditions; see `cylc conditions`.
                         "END TASK PROCESSING (took %s seconds)" %
                         (time() - time0))
 
-            self.pool.process_queued_task_messages(self.message_queue)
+            self.process_queued_task_messages()
             self.process_command_queue()
-            self.task_events_mgr.event_timers_from_tasks(self.pool.get_tasks())
+            self.task_events_mgr.events_from_tasks(self.pool)
             self.task_events_mgr.process_events(self)
-            has_changes = cylc.flags.iflag or self.do_update_state_summary
-            if has_changes:
-                self.suite_db_mgr.put_task_pool(
-                    self.pool.get_all_tasks(),
-                    self.task_events_mgr.event_timers)
-                self.update_state_summary()
+            self.suite_db_mgr.put_task_event_timers(self.task_events_mgr)
+            has_changes = cylc.flags.iflag
+            if cylc.flags.iflag:
+                self.suite_db_mgr.put_task_pool(self.pool)
+                self.update_state_summary()  # Will reset cylc.flags.iflag
             try:
-                self.suite_db_mgr.process_queued_ops(self.pool.get_all_tasks())
+                self.suite_db_mgr.process_queued_ops()
             except OSError as err:
+                if cylc.flags.debug:
+                    ERR.debug(traceback.format_exc())
                 raise SchedulerError(str(err))
             # If public database is stuck, blast it away by copying the content
             # of the private database into it.
@@ -1438,7 +1456,6 @@ conditions; see `cylc conditions`.
             self.will_stop_at(), self.config.ns_defn_order,
             self.pool.do_reload)
         cylc.flags.iflag = False
-        self.do_update_state_summary = False
         self.is_stalled = False
         if self.suite_timer_active:
             self.suite_timer_active = False
@@ -1552,11 +1569,10 @@ conditions; see `cylc conditions`.
         if self.pool is not None:
             self.pool.warn_stop_orphans()
             try:
-                itasks = self.pool.get_all_tasks()
-                self.task_events_mgr.event_timers_from_tasks(itasks)
-                self.suite_db_mgr.put_task_pool(
-                    itasks, self.task_events_mgr.event_timers)
-                self.suite_db_mgr.process_queued_ops(itasks)
+                self.task_events_mgr.events_from_tasks(self.pool)
+                self.suite_db_mgr.put_task_event_timers(self.task_events_mgr)
+                self.suite_db_mgr.put_task_pool(self.pool)
+                self.suite_db_mgr.process_queued_ops()
             except Exception as exc:
                 ERR.error(str(exc))
 

@@ -263,9 +263,7 @@ class TaskProxy(object):
         self.delayed_start = None
         self.expire_time = None
 
-        self.state = TaskState(
-            status, hold_swap, self.point, self.identity, tdef,
-            self.db_events_insert, self.db_update_status, self.log)
+        self.state = TaskState(tdef, self.point, status, hold_swap)
 
         if tdef.sequential:
             # Adjust clean-up cutoff.
@@ -347,14 +345,6 @@ class TaskProxy(object):
             "time": get_current_time_string(),
             "event": event,
             "message": message})
-
-    def db_update_status(self):
-        """Update suite runtime DB task states table."""
-        self.db_updates_map[self.TABLE_TASK_STATES].append({
-            "time_updated": get_current_time_string(),
-            "submit_num": self.submit_num,
-            "try_num": self.try_timers[self.KEY_EXECUTE].num + 1,
-            "status": self.state.status})
 
     def retry_delay_done(self):
         """Is retry delay done? Can I retry now?"""
@@ -582,6 +572,14 @@ class TaskProxy(object):
             "submit_status": 0,
             "batch_sys_job_id": self.summary.get('submit_method_id')})
 
+        if self.tdef.run_mode == 'simulation':
+            # Simulate job execution at this point.
+            self.summary['started_time'] = now
+            self.summary['started_time_string'] = now_string
+            self.state.set_state(TASK_STATUS_RUNNING)
+            self.state.outputs.set_completed(TASK_OUTPUT_STARTED)
+            return
+
         self.summary['started_time'] = None
         self.summary['started_time_string'] = None
         self.summary['finished_time'] = None
@@ -601,15 +599,6 @@ class TaskProxy(object):
             except (TypeError, ValueError):
                 self.state.submission_timer_timeout = None
             self._set_next_poll_time(self.KEY_SUBMIT)
-
-        if self.tdef.run_mode == 'simulation':
-            # Simulate job execution at this point.
-            if self.__class__.stop_sim_mode_job_submission:
-                self.state.set_ready_to_submit()
-            else:
-                self.summary['started_time'] = now
-                self.summary['started_time_string'] = now_string
-                self.state.set_executing()
 
     def job_execution_failed(self, event_time=None):
         """Handle a job failure."""
@@ -762,9 +751,18 @@ class TaskProxy(object):
             return
 
         # Check registered outputs.
-        if not self.state.record_output(message, is_polled):
-            self.log(WARNING, (
-                "Unexpected output (already completed):\n  " + message))
+        if self.state.outputs.exists(message):
+            if not self.state.outputs.is_completed(message):
+                flags.pflag = True
+                self.state.outputs.set_completed(message)
+                self.db_events_insert(
+                    event="output completed", message=message)
+            elif not is_polled:
+                # This output has already been reported complete. Not an error
+                # condition - maybe the network was down for a bit. Ok for
+                # polling as multiple polls *should* produce the same result.
+                self.log(WARNING, (
+                    "Unexpected output (already completed):\n  %s" % message))
 
         if is_polled and self.state.status not in TASK_STATUSES_ACTIVE:
             # A poll result can come in after a task finishes.
@@ -782,7 +780,7 @@ class TaskProxy(object):
                 self.log(WARNING, "Vacated job restarted: " + message)
             # Received a 'task started' message
             flags.pflag = True
-            self.state.set_executing()
+            self.state.set_state(TASK_STATUS_RUNNING)
             self.summary['started_time'] = float(
                 get_unix_time_from_time_string(event_time))
             self.summary['started_time_string'] = event_time

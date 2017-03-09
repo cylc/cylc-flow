@@ -41,9 +41,12 @@ class TaskEventsManager(object):
         self.next_mail_time = None
         self.event_timers = {}
 
-    def event_timers_from_tasks(self, itasks):
-        """Add event timers by removing them from itasks."""
-        for itask in itasks:
+    def events_from_tasks(self, pool):
+        """Get task events from all tasks in pool.
+
+        Strip event timers from tasks to self.event_timers.
+        """
+        for itask in pool.get_all_tasks():
             while itask.event_handler_try_timers:
                 key, timer = itask.event_handler_try_timers.popitem()
                 if timer.ctx is not None:

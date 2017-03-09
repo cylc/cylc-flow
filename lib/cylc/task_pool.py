@@ -811,23 +811,6 @@ class TaskPool(object):
             if itask.state.prerequisites_are_not_all_satisfied():
                 itask.state.satisfy_me(all_output_msgs, all_outputs)
 
-    def process_queued_task_messages(self, message_queue):
-        """Handle incoming task messages for each task proxy."""
-        queue = message_queue.get_queue()
-        task_id_messages = {}
-        while queue.qsize():
-            try:
-                task_id, priority, message = queue.get(block=False)
-            except Queue.Empty:
-                break
-            queue.task_done()
-            task_id_messages.setdefault(task_id, [])
-            task_id_messages[task_id].append((priority, message))
-        for itask in self.get_tasks():
-            if itask.identity in task_id_messages:
-                for priority, message in task_id_messages[itask.identity]:
-                    itask.process_incoming_message(priority, message)
-
     def force_spawn(self, itask):
         """Spawn successor of itask."""
         if itask.has_spawned:
