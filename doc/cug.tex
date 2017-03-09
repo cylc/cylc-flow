@@ -450,19 +450,6 @@ dependency MarkupSafe 0.23, both BSD licensed.
 \newline \url{http://jinja.pocoo.org/}
 \newline \url{http://www.pocoo.org/projects/markupsafe/}
 
-Finally, cylc makes heavy use of Python {\em ordered dictionary}
-data structures. Significant speedup in parsing large suites can be had
-by installing the
-fast C-coded \lstinline=ordereddict= module by Anthon van der Neut:
-\begin{myitemize}
-    \item {\bf ordereddict} (latest tested 0.4.5) \newline
-        \url{https://anthon.home.xs4all.nl/Python/ordereddict/}
-\end{myitemize}
-{\em This module is currently included with cylc} under
-\lstinline=$CYLC_DIR/ext=, and is built by the top level cylc Makefile.
-If you install the resulting library appropriately cylc will
-automatically use it in place of a slower Python implementation of
-the ordered dictionary structure.
 
 \subsection{Known Version Compatibility Issues}
 
