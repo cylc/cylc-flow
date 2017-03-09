@@ -20,19 +20,11 @@
 
 
 try:
-    # first try the fast ordereddict C implementation.
-    # DOWNLOAD: http://anthon.home.xs4all.nl/Python/ordereddict/
-    # According to the ordereddict home page, this is much faster than
-    # collections.OrderedDict.
-    from _ordereddict import ordereddict as OrderedDict
+    # Python 2.7+ native.
+    from collections import OrderedDict
 except ImportError:
-    try:
-        # then try Python 2.7+ native module
-        from collections import OrderedDict
-    except ImportError:
-        # then try the pre-2.7 backport from ActiveState
-        # (packaged with cylc)
-        from OrderedDictCompat import OrderedDict
+    # Pre-2.7 backport from ActiveState, packaged with Parsec.
+    from OrderedDictCompat import OrderedDict
 
 
 class OrderedDictWithDefaults(OrderedDict):

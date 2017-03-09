@@ -43,10 +43,6 @@ When you type `make`:
   * The Cylc User Guide will be generated from LaTeX source files (in PDF if
   `pdflatex` is installed, and HTML if `tex4ht` and *ImageMagick* are
   installed).
-  * A Python *fast ordered dictionary* module called *orrdereddict*  will be
-  built from C source in `ext/ordereddict-0.4.5`.  This may give enhanced
-  performance over the Python standard library, but it is optional.  To use it,
-  install it manually into your `$PYTHONPATH`.
 
 ### Cloning The Cylc Repository
 

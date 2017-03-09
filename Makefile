@@ -14,16 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-all: version docs ordereddict
+all: version docs
 
 version:
 	admin/create-version-file
 
 docs:
 	cd doc && $(MAKE)
-
-ordereddict:
-	cd ext/ordereddict-0.4.5 && python setup.py build
 
 clean:
 	cd doc && $(MAKE) clean
