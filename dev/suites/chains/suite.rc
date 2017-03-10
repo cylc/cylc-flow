@@ -14,6 +14,11 @@
 {% if not tasks_per_chain is defined %}
     {% set tasks_per_chain = 1 %}
 {% endif %}
+{% if not sleep_time is defined %}
+    {% set script = 'true' %}
+{% else %}
+    {% set script = 'sleep ' + sleep_time %}
+{% endif %}
 
 [scheduling]
     cycling mode = integer
@@ -34,11 +39,11 @@
 [runtime]
     [[root]]
     {% if cylc_compat_mode is defined and cylc_compat_mode == '6' %}
-        command scripting = true
+        command scripting = {{ script }}
         [[[job submission]]]
             method = {{ batch_system }}
     {% else %}
-        script = true
+        script = {{ script }}
         [[[job]]]
             batch system = {{ batch_system }}
     {% endif %}
