@@ -24,6 +24,7 @@ import json
 import optparse
 import os
 import random
+import re
 import shutil
 import sys
 import tempfile
@@ -374,6 +375,38 @@ def install_experiments(experiment_ids, experiments, install_dir,
             print 'installing suite "%s" => "%s"' % (
                 sdir, suite_dirs[key]['install dir'])
             run['suite dir'] = suite_dirs[key]['install dir']
+
+    # Global config sourcing.
+    os.mkdir(os.path.join(install_sdir, 'globalrc'))
+    for experiment in experiments:
+        for run in experiment['config']['runs']:
+            if 'globalrc' in run:
+                string = ''
+                for setting in run['globalrc']:
+                    indent = 0
+                    setting = re.split('[\[\]]+', setting.strip())
+                    for part in setting[:-1]:  # Key hierarchy.
+                        if not part:
+                            continue
+                        string += '%s%s%s%s\n' % (
+                            '    ' * indent,
+                            '[' * (indent + 1),
+                            part,
+                            ']' * (indent + 1)
+                        )
+                        indent += 1
+                    string += '%s%s\n' % ('    ' * indent, setting[-1])
+                hash_ = hashlib.sha256()
+                hash_.update(string)
+                dirname = os.path.join(install_sdir, 'globalrc',
+                                       hash_.hexdigest()[:10])
+                if not os.path.exists(dirname):
+                    # If an identical globalrc has been written do nothing.
+                    os.mkdir(dirname)
+                    with open(os.path.join(dirname, 'global.rc'),
+                              'w+') as globalrc_file:
+                        globalrc_file.write(string)
+                run['globalrc'] = dirname
 
 
 def get_experiments(experiment_names):
