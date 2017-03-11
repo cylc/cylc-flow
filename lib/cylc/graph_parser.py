@@ -296,6 +296,9 @@ class GraphParser(object):
 
         # Split right side on AND.
         rights = right.split(self.__class__.OP_AND)
+        if right and not all(rights):
+            raise GraphParseError(
+                "ERROR, null task name in graph: %s=>%s" % (left, right))
 
         if self.__class__.OP_OR in left or '(' in left:
             # Treat conditional or bracketed expressions as a single entity.
@@ -303,6 +306,9 @@ class GraphParser(object):
         else:
             # Split non-conditional left-side expressions on AND.
             lefts = left.split(self.__class__.OP_AND)
+        if left and not all(lefts):
+            raise GraphParseError(
+                "ERROR, null task name in graph: %s=>%s" % (left, right))
 
         for left in lefts:
             # Extract infomation about all nodes on the left.
