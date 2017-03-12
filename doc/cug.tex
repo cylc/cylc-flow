@@ -6961,7 +6961,6 @@ you wish:
         abort on timeout = True
 \end{lstlisting}
 
-
 \subsection{Inter-suite Dependence: Triggering Off Task States In Other Suites}
 \label{SuiteStatePolling}
 
@@ -7042,39 +7041,34 @@ Note that the remote suite does not have to be running when polling commences
 because the command interrogates the suite run database, not the suite server
 process.
 
-\section{Other Topics In Brief}
+\subsection{Suite Run Databases}
+\label{Suite Run Databases}
 
-The following topics have yet to be documented in detail.
+Suites maintain \lstinline=sqlite= databases to record run history and restart
+checkpoints etc.:
 
-\begin{myitemize}
-    \item Intervening in suites, e.g.\ stopping, removing, inserting tasks:
-        see \lstinline=cylc control help=.
-
-    \item Interrogating suites and tasks:
-        see \lstinline=cylc info help=, \lstinline=cylc show help=,
-        and \lstinline=cylc discovery help=.
-
-    \item Understanding suite evolution, particularly in delayed/catchup
-        operation: the Tutorial helps here (\ref{Tutorial}),
-        along with running the example suites.
-
-    \item Task insertion (add a new task proxy instance to a running suite):
-        see \lstinline=cylc insert --help=.
-
-    \item Sub-suites: to run another suite inside a task, just invoke the
-        sub-suite, with appropriate start and end cycle points (probably a
-        single cycle point), via the host task's \lstinline=script= item:
-
-\lstset{language=suiterc}
+\lstset{language=transcript}
 \begin{lstlisting}
-[runtime]
-    [[foo]]
-        script = \
- "cylc run SUITE $CYLC_TASK_CYCLE_POINT --until=$CYLC_TASK_CYCLE_POINT"
+$HOME/cylc-run/<SUITE-NAME>/log/db
 \end{lstlisting}
 
-\end{myitemize}
-\lstset{language=transcript}
+You can use any standard sqlite interface to read these databases, such as the
+Python standard library \lstinline=sqlite3= module, and a command line tool of
+the same name:
+
+\begin{lstlisting}
+$ sqlite3 ~/cylc-run/foo/log/db << _END_
+> .headers on
+> select * from task_events where name is "foo";
+> _END_
+name|cycle|time|submit_num|event|message
+foo|1|2017-03-12T11:06:08Z|1|incrementing submit number|
+foo|1|2017-03-12T11:06:09Z|1|submission succeeded|
+foo|1|2017-03-12T11:06:09Z|1|output completed|started
+foo|1|2017-03-12T11:06:09Z|1|started|
+foo|1|2017-03-12T11:06:19Z|1|output completed|succeeded
+foo|1|2017-03-12T11:06:19Z|1|succeeded|
+\end{lstlisting}
 
 \section{Suite Storage, Discovery, Revision Control, and Deployment}
 \label{SuiteStorageEtc}
