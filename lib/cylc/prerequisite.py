@@ -16,8 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import math
 import re
 import sys
+
 from cylc.conditional_simplifier import ConditionalSimplifier
 from cylc.cycling.loader import get_point
 from cylc.suite_logging import ERR
@@ -192,11 +194,18 @@ class Prerequisite(object):
         # return an array of strings representing each message and its state
         res = []
         if self.raw_conditional_expression:
-            for label, val in self.satisfied.items():
-                res.append(['    LABEL: %s = %s' %
-                            (label, self.messages[label]), val])
-            res.append(['CONDITION: %s' %
-                        self.raw_conditional_expression, self.is_satisfied()])
+            temp = self.raw_conditional_expression
+            labels = []
+            num_length = int(math.ceil(float(len(self.labels)) / float(10)))
+            for ind, (task, label,) in enumerate(sorted(self.labels.items())):
+                char = '%.{0}d'.format(num_length) % ind
+                labels.append(['\t%s = %s' % (char, task),
+                               self.satisfied[label]])
+                temp = temp.replace(label, char)
+            temp = temp.replace('|', ' | ')
+            temp = temp.replace('&', ' & ')
+            res.append([temp, self.is_satisfied()])
+            res.extend(labels)
         elif self.satisfied:
             for label, val in self.satisfied.items():
                 res.append([self.messages[label], val])

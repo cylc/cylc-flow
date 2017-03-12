@@ -1385,7 +1385,7 @@ class TaskPool(object):
                 return path, os.path.dirname(os.path.dirname(path))
         return False, "task not found"
 
-    def get_task_requisites(self, items):
+    def get_task_requisites(self, items, list_prereqs=False):
         """Return task prerequisites.
 
         Result in a dict of a dict:
@@ -1402,6 +1402,12 @@ class TaskPool(object):
         itasks, bad_items = self._filter_task_proxies(items)
         results = {}
         for itask in itasks:
+            if list_prereqs:
+                results[itask.identity] = {
+                    'prerequisites': itask.state.prerequisites_dump(
+                        list_prereqs=True)}
+                continue
+
             extras = {}
             if itask.tdef.clocktrigger_offset is not None:
                 extras['Clock trigger time reached'] = (
