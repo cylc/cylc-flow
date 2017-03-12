@@ -30,13 +30,17 @@ TEST_NAME=$TEST_NAME_BASE-run
 run_fail $TEST_NAME cylc run --debug --set=FUTURE_TRIGGER_START_POINT=T04 \
     $SUITE_NAME
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-max-cycle
-DB="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/db"
-run_ok $TEST_NAME sqlite3 $DB "select max(cycle) from task_states where name \
-is 'foo' and status is 'failed'"
-cmp_ok "$TEST_NAME.stdout" <<'__OUT__'
+if ! which sqlite3 > /dev/null; then
+    skip 2 "sqlite3 not installed?"
+else
+    TEST_NAME=$TEST_NAME_BASE-max-cycle
+    DB="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/db"
+    run_ok $TEST_NAME sqlite3 $DB "select max(cycle) from task_states where name \
+    is 'foo' and status is 'failed'"
+    cmp_ok "$TEST_NAME.stdout" <<'__OUT__'
 20100101T0200Z
 __OUT__
+fi
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-check-timeout
 LOG=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/log/suite/log

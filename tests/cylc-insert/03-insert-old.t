@@ -35,6 +35,11 @@ sed '/WARNING: deprecated items were automatically upgraded/d; /^ \* (/d' \
     "${RUN_DIR}/${SUITE_NAME}/log/suite/err" >"${TEST_NAME}"
 cmp_ok $TEST_NAME </dev/null
 #-------------------------------------------------------------------------------
+if ! which sqlite3 > /dev/null; then
+    skip 3 "sqlite3 not installed?"
+    purge_suite $SUITE_NAME
+    exit 0
+fi
 TEST_NAME=$TEST_NAME_BASE-db-end
 RUN_DIR=$(cylc get-global-config --print-run-dir)
 run_ok "$TEST_NAME" sqlite3 "${RUN_DIR}/${SUITE_NAME}/log/db" \

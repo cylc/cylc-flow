@@ -49,34 +49,39 @@ run_tests() {
         sleep 1
     done
     TIMEOUT=$(($(date +%s) + 10))
-    while ! sqlite3 "${SUITE_RUN_DIR}/log/db" \
-                'SELECT status FROM task_states WHERE name=="t1";' \
-                >"$TEST_NAME-db-t1" 2>/dev/null \
-            && (($TIMEOUT > $(date +%s)))
-    do
-        sleep 1
-    done
-    grep_ok "^\(submitted\|running\)$" "$TEST_NAME-db-t1"
-    # Start the job again and see what happens
-    mkdir -p $SUITE_RUN_DIR/work/1/t1/
-    touch $SUITE_RUN_DIR/work/1/t1/file # Allow t1 to complete
-    $SUITE_RUN_DIR/log/job/1/t1/01/job </dev/null >/dev/null 2>&1 &
-    # Wait for suite to complete
-    TIMEOUT=$(($(date +%s) + 120))
-    while [[ -f "${SUITE_RUN_DIR}/.service/contact" ]] && (($TIMEOUT > $(date +%s))); do
-        sleep 1
-    done
-    # Test t1 status in DB
-    sqlite3 "${SUITE_RUN_DIR}/log/db" \
-        'SELECT status FROM task_states WHERE name=="t1";' >"$TEST_NAME-db-t1"
-    cmp_ok "$TEST_NAME-db-t1" - <<<'succeeded'
-    # Test reference
-    TIMEOUT=$(($(date +%s) + 120))
-    while ! grep -q 'DONE' $SUITE_RUN_DIR/log/suite/out \
-            && (($TIMEOUT > $(date +%s)))
-    do
-        sleep 1
-    done
+
+    if ! which sqlite3 > /dev/null; then
+        skip 2 "sqlite3 not installed?"
+    else
+        while ! sqlite3 "${SUITE_RUN_DIR}/log/db" \
+                    'SELECT status FROM task_states WHERE name=="t1";' \
+                    >"$TEST_NAME-db-t1" 2>/dev/null \
+                && (($TIMEOUT > $(date +%s)))
+        do
+            sleep 1
+        done
+        grep_ok "^\(submitted\|running\)$" "$TEST_NAME-db-t1"
+        # Start the job again and see what happens
+        mkdir -p $SUITE_RUN_DIR/work/1/t1/
+        touch $SUITE_RUN_DIR/work/1/t1/file # Allow t1 to complete
+        $SUITE_RUN_DIR/log/job/1/t1/01/job </dev/null >/dev/null 2>&1 &
+        # Wait for suite to complete
+        TIMEOUT=$(($(date +%s) + 120))
+        while [[ -f "${SUITE_RUN_DIR}/.service/contact" ]] && (($TIMEOUT > $(date +%s))); do
+            sleep 1
+        done
+        # Test t1 status in DB
+        sqlite3 "${SUITE_RUN_DIR}/log/db" \
+            'SELECT status FROM task_states WHERE name=="t1";' >"$TEST_NAME-db-t1"
+        cmp_ok "$TEST_NAME-db-t1" - <<<'succeeded'
+        # Test reference
+        TIMEOUT=$(($(date +%s) + 120))
+        while ! grep -q 'DONE' $SUITE_RUN_DIR/log/suite/out \
+                && (($TIMEOUT > $(date +%s)))
+        do
+            sleep 1
+        done
+    fi
     grep_ok 'SUITE REFERENCE TEST PASSED' $SUITE_RUN_DIR/log/suite/out
     purge_suite $SUITE_NAME
     exit

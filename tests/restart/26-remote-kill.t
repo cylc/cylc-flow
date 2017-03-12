@@ -28,20 +28,29 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --debug
-sqlite3 "${SUITE_RUN_DIR}/log/db" \
-    'SELECT status FROM task_pool WHERE cycle=="1" AND NAME=="t1"' \
-    >'t1-status.out'
-cmp_ok 't1-status.out' <<<'running'
+if ! which sqlite3 > /dev/null; then
+    skip 1 "sqlite3 not installed?"
+else
+    sqlite3 "${SUITE_RUN_DIR}/log/db" \
+        'SELECT status FROM task_pool WHERE cycle=="1" AND NAME=="t1"' \
+            >'t1-status.out'
+    cmp_ok 't1-status.out' <<<'running'
+fi
 run_ok "${TEST_NAME_BASE}-restart" cylc restart "${SUITE_NAME}"
 # Ensure suite has started
 poll ! test -f "${SUITE_RUN_DIR}/.service/contact"
 cylc kill "${SUITE_NAME}" 't1.1'
 # Ensure suite has completed
 poll test -f "${SUITE_RUN_DIR}/.service/contact"
-sqlite3 "${SUITE_RUN_DIR}/log/db" \
-    'SELECT status FROM task_pool WHERE cycle=="1" AND NAME=="t1"' \
-    >'t1-status.out'
-cmp_ok 't1-status.out' <<<'failed'
+
+if ! which sqlite3 > /dev/null; then
+    skip 1 "sqlite3 not installed?"
+else
+    sqlite3 "${SUITE_RUN_DIR}/log/db" \
+        'SELECT status FROM task_pool WHERE cycle=="1" AND NAME=="t1"' \
+            >'t1-status.out'
+    cmp_ok 't1-status.out' <<<'failed'
+fi
 purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

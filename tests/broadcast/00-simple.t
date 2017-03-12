@@ -17,12 +17,18 @@
 #-------------------------------------------------------------------------------
 # Test broadcasts
 . "$(dirname "$0")/test_header"
+
 set_test_number 4
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --reference-test "${SUITE_NAME}"
+
+if ! which sqlite3 > /dev/null; then
+    skip 2 "sqlite3 not installed?"
+    exit 0
+fi
 
 DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/log/db"
 NAME='select-broadcast-events.out'

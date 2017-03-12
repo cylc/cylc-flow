@@ -37,6 +37,11 @@ sleep 10
 TEST_NAME=$TEST_NAME_BASE-restart-run
 suite_run_ok $TEST_NAME cylc restart --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
+if ! which sqlite3 > /dev/null; then
+    skip 3 "sqlite3 not installed?"
+    purge_suite "${SUITE_NAME}"
+    exit 0
+fi
 grep_ok "running_task|20130923T0000Z|1|1|running" \
     $TEST_DIR/pre-restart-db
 contains_ok $TEST_DIR/post-restart-db <<'__DB_DUMP__'
