@@ -29,6 +29,11 @@ TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 cmp_ok "$TEST_NAME.stderr" </dev/null
 #-------------------------------------------------------------------------------
+if ! which sqlite3 > /dev/null; then
+    skip 5 "sqlite3 not installed?"
+    purge_suite "${SUITE_NAME}"
+    exit 0
+fi
 TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --debug $SUITE_NAME
 #-------------------------------------------------------------------------------

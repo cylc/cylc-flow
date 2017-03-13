@@ -28,6 +28,11 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
+if ! which sqlite3 > /dev/null; then
+    skip 2 "sqlite3 not installed?"
+    purge_suite "${SUITE_NAME}"
+    exit 0
+fi
 TEST_NAME=$TEST_NAME_BASE-userathost
 sqlite3 "${SUITE_RUN_DIR}/log/db" \
     'select user_at_host from task_jobs where name=="foo"' >'foo-host.txt'

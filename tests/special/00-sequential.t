@@ -25,6 +25,13 @@ install_suite $TEST_NAME_BASE sequential
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
+if ! which sqlite3 > /dev/null; then
+    skip 1 "sqlite3 not installed?"
+    purge_suite "${SUITE_NAME}"
+    exit 0
+fi
+
+# Suite uses sqlite3 CLI.
 TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------

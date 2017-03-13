@@ -25,6 +25,12 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}" \
     cylc run --reference-test --debug "${SUITE_NAME}"
 
+if ! which sqlite3 > /dev/null; then
+    skip 1 "sqlite3 not installed?"
+    purge_suite "${SUITE_NAME}"
+    exit 0
+fi
+
 RUND="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
 sed -n 's/CYLC_JOB_EXIT_TIME=//p' "${RUND}/log/job/1/w1/NN/job.status" >'st-time.txt'
 sqlite3 "${RUND}/log/db" '

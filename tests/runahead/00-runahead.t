@@ -28,15 +28,19 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 TEST_NAME=$TEST_NAME_BASE-run
 run_fail $TEST_NAME cylc run --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-check-fail
-DB="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/db"
-TASKS=$(sqlite3 $DB 'select count(*) from task_states where status is "failed"')
-# manual comparison for the test
-if (($TASKS==4)); then
-    ok $TEST_NAME
-else 
-    fail $TEST_NAME
-fi 
+if ! which sqlite3 > /dev/null; then
+    skip 1 "sqlite3 not installed?"
+else
+    TEST_NAME=$TEST_NAME_BASE-check-fail
+    DB="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/db"
+    TASKS=$(sqlite3 $DB 'select count(*) from task_states where status is "failed"')
+    # manual comparison for the test
+    if (($TASKS==4)); then
+        ok $TEST_NAME
+    else 
+        fail $TEST_NAME
+    fi 
+fi
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-check-timeout
 LOG=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/log/suite/log

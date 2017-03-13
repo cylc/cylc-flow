@@ -26,6 +26,12 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 
 DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/log/db"
 
+if ! which sqlite3 > /dev/null; then
+    skip 3 "sqlite3 not installed?"
+    purge_suite "${SUITE_NAME}"
+    exit 0
+fi
+
 NAME='select-broadcast-events.out'
 sqlite3 "${DB_FILE}" \
     'SELECT change, point, namespace, key, value FROM broadcast_events' >"${NAME}"

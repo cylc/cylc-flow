@@ -387,12 +387,6 @@ previous section, emerges naturally at run time.
     \item {\bf OS: A Linux or Unix variant (including, reportedly, Apple OS X).}
     \item {\bf The Python Language, version 2.6 or later, but not 3.x yet}.
         \newline \url{https://python.org}
-    \item {\bf sqlite (a server-less, zero-configuration, SQL database
-        engine}). The Python API to sqlite is part of the Python standard
-        library. The command line interface is likely included in your Linux
-        distribution already. Cylc generates an sqlite database for each suite
-        as it runs, to record task events and status.
-        \newline \url{http://sqlite.org}
 \end{myitemize}
 
 The following packages are technically optional as you can construct
@@ -517,7 +511,6 @@ $ yum install ImageMagick
 # Python packages:
 $ easy_install pygraphviz
 
-# (sqlite 3.7.13 already installed on the system)
 \end{lstlisting}
 
 If you do not have root access on your intended cylc host machine and
@@ -529,10 +522,9 @@ installed properly:
 \lstset{language=transcript}
 \begin{lstlisting}
 $ cylc check-software
-Checking for Python >= 2.6 ... found 2.7.3 ... ok
+Checking for Python >= 2.6 ... found 2.7.6 ... ok
 Checking for non-Python packages:
  + Graphviz ... ok
- + sqlite ... ok
 Checking for Python packages:
  + pygraphviz ... ok
  + pygtk ... ok
@@ -639,7 +631,6 @@ $ cylc check-software
 Checking for Python >= 2.6 ... found 2.7.3 ... ok
 Checking for non-Python packages:
  + Graphviz ... ok
- + sqlite ... ok
 Checking for Python packages:
  + pygraphviz ... ok
  + pygtk ... ok
@@ -6898,24 +6889,9 @@ to expose the default scripting.
 \subsubsection{Restarting Suites With A Different Run Mode?}
 
 The run mode is recorded in the suite run database files. Cylc will not let
-you {\em restart} a non-live mode suite in live mode, or vice versa -
-any attempt to do the former would certainly be a mistake (because the
-simulation mode dummy tasks do not generate any of the real outputs
-depended on by downstream live tasks), and the latter, while feasible,
-would corrupt the task pool by turning it over to simulation mode.
-The easiest way to test a live suite in simulation mode, if you don't want to
-obliterate the current suite run database files by doing a cold or warm start
-(as opposed to a restart from the previous state) is to take a quick copy of
-the suite and run the copy in simulation mode. However, if you really want to
-run a live suite forward in simulation mode without copying it, do this:
-\begin{myenumerate}
-    \item Back up the live mode suite database files.
-    \item Using the \lstinline=sqlite3= command or otherwise,
-          update the value of \lstinline=run_mode= in the
-          \lstinline=suite_params= table in the
-          \lstinline=cylc-suite-private.db= file.
-    \item Later, restart the live suite from the restored back up.
-\end{myenumerate}
+you {\em restart} a non-live mode suite in live mode, or vice versa. To
+test a live suite in simulation mode just take a quick copy of it and run the
+the copy in simulation mode.
 
 \subsection{Automated Reference Test Suites}
 \label{AutoRefTests}
@@ -6984,7 +6960,6 @@ you wish:
         abort if shutdown handler fails = True
         abort on timeout = True
 \end{lstlisting}
-
 
 \subsection{Inter-suite Dependence: Triggering Off Task States In Other Suites}
 \label{SuiteStatePolling}
@@ -7066,39 +7041,34 @@ Note that the remote suite does not have to be running when polling commences
 because the command interrogates the suite run database, not the suite server
 process.
 
-\section{Other Topics In Brief}
+\subsection{Suite Run Databases}
+\label{Suite Run Databases}
 
-The following topics have yet to be documented in detail.
+Suites maintain \lstinline=sqlite= databases to record run history and restart
+checkpoints etc.:
 
-\begin{myitemize}
-    \item Intervening in suites, e.g.\ stopping, removing, inserting tasks:
-        see \lstinline=cylc control help=.
-
-    \item Interrogating suites and tasks:
-        see \lstinline=cylc info help=, \lstinline=cylc show help=,
-        and \lstinline=cylc discovery help=.
-
-    \item Understanding suite evolution, particularly in delayed/catchup
-        operation: the Tutorial helps here (\ref{Tutorial}),
-        along with running the example suites.
-
-    \item Task insertion (add a new task proxy instance to a running suite):
-        see \lstinline=cylc insert --help=.
-
-    \item Sub-suites: to run another suite inside a task, just invoke the
-        sub-suite, with appropriate start and end cycle points (probably a
-        single cycle point), via the host task's \lstinline=script= item:
-
-\lstset{language=suiterc}
+\lstset{language=transcript}
 \begin{lstlisting}
-[runtime]
-    [[foo]]
-        script = \
- "cylc run SUITE $CYLC_TASK_CYCLE_POINT --until=$CYLC_TASK_CYCLE_POINT"
+$HOME/cylc-run/<SUITE-NAME>/log/db
 \end{lstlisting}
 
-\end{myitemize}
-\lstset{language=transcript}
+You can use any standard sqlite interface to read these databases, such as the
+Python standard library \lstinline=sqlite3= module, and a command line tool of
+the same name:
+
+\begin{lstlisting}
+$ sqlite3 ~/cylc-run/foo/log/db << _END_
+> .headers on
+> select * from task_events where name is "foo";
+> _END_
+name|cycle|time|submit_num|event|message
+foo|1|2017-03-12T11:06:08Z|1|incrementing submit number|
+foo|1|2017-03-12T11:06:09Z|1|submission succeeded|
+foo|1|2017-03-12T11:06:09Z|1|output completed|started
+foo|1|2017-03-12T11:06:09Z|1|started|
+foo|1|2017-03-12T11:06:19Z|1|output completed|succeeded
+foo|1|2017-03-12T11:06:19Z|1|succeeded|
+\end{lstlisting}
 
 \section{Suite Storage, Discovery, Revision Control, and Deployment}
 \label{SuiteStorageEtc}

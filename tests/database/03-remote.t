@@ -30,6 +30,12 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --reference-test "${SUITE_NAME}"
 
+if ! which sqlite3 > /dev/null; then
+    skip 1 "sqlite3 not installed?"
+    purge_suite "${SUITE_NAME}"
+    exit 0
+fi
+
 DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/log/db"
 
 NAME='select-task-jobs.out'

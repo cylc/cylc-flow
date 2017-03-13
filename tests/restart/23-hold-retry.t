@@ -23,22 +23,30 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run "${SUITE_NAME}" --debug --until=2016
-sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT * FROM task_pool ORDER BY cycle, name' \
-    >'task-pool.out'
-contains_ok 'task-pool.out' <<__OUT__
+if ! which sqlite3 > /dev/null; then
+    skip 1 "sqlite3 not installed?"
+else
+    sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT * FROM task_pool ORDER BY cycle, name' \
+        >'task-pool.out'
+    contains_ok 'task-pool.out' <<__OUT__
 2016|t2|1|held|retrying
 2017|t1|0|waiting|
 2017|t2|0|waiting|
 __OUT__
+fi
 suite_run_ok "${TEST_NAME_BASE}-restart" \
     cylc restart "${SUITE_NAME}" --debug --until=2017
 grep_ok 'INFO - + t2\.2016 held (retrying)' "${SUITE_RUN_DIR}/log/suite/out"
-sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT * FROM task_pool ORDER BY cycle, name' \
-    >'task-pool.out'
-contains_ok 'task-pool.out' <<__OUT__
+if ! which sqlite3 > /dev/null; then
+    skip 1 "sqlite3 not installed?"
+else
+    sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT * FROM task_pool ORDER BY cycle, name' \
+        >'task-pool.out'
+    contains_ok 'task-pool.out' <<__OUT__
 2016|t2|1|succeeded|
 2018|t1|0|waiting|
 2018|t2|0|waiting|
 __OUT__
+fi
 purge_suite "${SUITE_NAME}"
 exit

@@ -18,8 +18,9 @@
 # Test upgrade of 6.10.X database + state on restart.
 . "$(dirname "$0")/test_header"
 
-set_test_number 18
+which sqlite3 > /dev/null || skip_all
 
+set_test_number 18
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 mkdir -p "${SUITE_RUN_DIR}/state"

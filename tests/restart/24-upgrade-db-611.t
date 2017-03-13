@@ -18,6 +18,7 @@
 # Test upgrade of 6.11.X database on restart.
 . "$(dirname "$0")/test_header"
 
+which sqlite3 > /dev/null || skip_all "sqlite3 not installed?"
 set_test_number 8
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

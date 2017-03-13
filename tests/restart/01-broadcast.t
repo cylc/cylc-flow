@@ -36,6 +36,11 @@ suite_run_ok $TEST_NAME cylc run --no-detach $SUITE_NAME
 TEST_NAME=$TEST_NAME_BASE-restart-run
 suite_run_ok $TEST_NAME cylc restart --no-detach $SUITE_NAME
 #-------------------------------------------------------------------------------
+if ! which sqlite3 > /dev/null; then
+    skip 5 "sqlite3 not installed?"
+    purge_suite "${SUITE_NAME}"
+    exit 0
+fi
 grep_ok "broadcast_task|20130923T0000Z|0||waiting" \
     $TEST_DIR/pre-restart-db
 grep_ok "send_a_broadcast_task|20130923T0000Z|1|1|succeeded" \

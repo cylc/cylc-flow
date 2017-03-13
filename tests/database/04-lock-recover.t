@@ -42,6 +42,12 @@ grep_ok "stmt=DELETE FROM task_pool" \
 grep_ok "stmt_args\[0\]=\[\]" \
     "${TEST_NAME_BASE}-run.stderr.grep"
 
+if ! which sqlite3 > /dev/null; then
+    skip 1 "sqlite3 not installed?"
+    purge_suite "${SUITE_NAME}"
+    exit 0
+fi
+
 DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/log/db"
 
 NAME='select-task-states.out'

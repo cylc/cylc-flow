@@ -32,6 +32,11 @@ suite_run_fail "${TEST_NAME_BASE}-run" \
     cylc run --debug --reference-test \
     --set="CYLC_TEST_HOST=${TEST_HOST}" \
      "${SUITE_NAME}"
+if ! which sqlite3 > /dev/null; then
+    skip 1 "sqlite3 not installed?"
+    purge_suite "${SUITE_NAME}"
+    exit 0
+fi
 sqlite3 "${SUITE_RUN_DIR}/.service/db" \
     'SELECT cycle,name,run_status FROM task_jobs' >'db.out'
 cmp_ok 'db.out' <<'__OUT__'

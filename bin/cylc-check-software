@@ -68,15 +68,8 @@ if ! which dot > /dev/null 2>&1; then
 else
     echo "ok"
 fi
-echo -n " + sqlite ... "
-if ! which sqlite3 > /dev/null 2>&1; then
-    echo "NOT FOUND"
-else
-    echo "ok"
-fi
 
 # Python packages
-# sqlite3 is part of the standard library since Python 2.5
 PKGS="pygraphviz:pygraphviz \
 pygtk:pygtk"
 
