@@ -949,10 +949,7 @@ class TaskPool(object):
                 itask.state.outputs.set_all_incomplete()
             elif status in [TASK_STATUS_FAILED, TASK_STATUS_SUBMIT_FAILED]:
                 itask.state.reset_state(status)
-                time_ = time()
-                itask.summary['finished_time'] = time_
-                itask.summary['finished_time_string'] = (
-                    get_time_string_from_unix_time(time_))
+                itask.set_event_time('finished', time())
             else:
                 itask.state.reset_state(status)
         return len(bad_items)

@@ -634,7 +634,8 @@ conditions; see `cylc conditions`.
         for itask in self.pool.get_tasks():
             if itask.identity in task_id_messages:
                 for priority, message in task_id_messages[itask.identity]:
-                    itask.process_incoming_message(priority, message)
+                    self.task_events_mgr.process_message(
+                        itask, priority, message, is_incoming=True)
 
     def process_command_queue(self):
         """Process queued commands."""
@@ -1300,7 +1301,8 @@ conditions; see `cylc conditions`.
                                     itask.state.get_resolved_dependencies()))
                     if self.run_mode == 'simulation':
                         for itask in itasks:
-                            itask.job_submission_succeeded()
+                            self.task_events_mgr.process_message(
+                                itask, INFO, 'submission succeeded')
                     else:
                         self.task_job_mgr.submit_task_jobs(self.suite, itasks)
                 for meth in [

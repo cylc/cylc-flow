@@ -42,7 +42,7 @@ __SUITERC__
 cylc run --no-detach "${NAME1}" 1>'1.out' 2>&1 &
 poll '!' test -e "${SUITE1_RUND}/.service/contact"
 run_ok "${TEST_NAME_BASE}" cylc run --no-detach "${NAME2}"
-cylc shutdown "${NAME1}" --max-polls=10 --interval=1 1>'/dev/null' 2>&1 || true
+cylc shutdown "${NAME1}" --max-polls=20 --interval=1 1>'/dev/null' 2>&1 || true
 purge_suite "${NAME1}"
 purge_suite "${NAME2}"
 exit

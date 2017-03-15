@@ -73,7 +73,7 @@ from cylc.task_state import (
     TASK_STATUSES_TRIGGERABLE, TASK_STATUSES_ACTIVE,
     TASK_STATUS_WAITING, TASK_STATUS_HELD, TASK_STATUS_READY,
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED)
-from cylc.task_state import get_status_prop
+from cylc.task_state_prop import get_status_prop
 
 
 def run_get_stdout(command, filter=False):

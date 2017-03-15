@@ -9,6 +9,9 @@ trigger, and the suite to shut down successfully."""
 
 [cylc]
    UTC mode = True
+   [[events]]
+       abort on inactivity = True
+       inactivity = PT2M
    [[reference test]]
        required run mode = live
        live mode suite timeout = PT2M # minutes
@@ -16,7 +19,7 @@ trigger, and the suite to shut down successfully."""
                                 run_kill.20141208T0000Z,\
                                 submit_hold.20141207T0000Z,\
                                 submit_hold.20141208T0000Z
-       
+
 [scheduling]
     initial cycle point = 20141207T0000Z
     final cycle point   = 20141208T0000Z
@@ -33,31 +36,26 @@ trigger, and the suite to shut down successfully."""
 [runtime]
     [[run_kill]]
         script = """
-trap '' EXIT # die silently 
-exit 0"""
+trap '' EXIT
+exit 0
+"""
     [[poll_check_kill]]
         script = """
-            cylc poll $CYLC_SUITE_NAME
+cylc poll "${CYLC_SUITE_NAME}"
 
-            while test $(grep "\[submit_hold.${CYLC_TASK_CYCLE_POINT}\] -submission succeeded
-\[run_kill.${CYLC_TASK_CYCLE_POINT}\] -suiciding" ${CYLC_SUITE_LOG_DIR%suite}suite/log -c) -ne 2 ; do
-                sleep 2
-            done
+pat1="[submit_hold.${CYLC_TASK_CYCLE_POINT}] -ready => submitted"
+pat2="[run_kill.${CYLC_TASK_CYCLE_POINT}] -suiciding"
+log="${CYLC_SUITE_LOG_DIR}/log"
+while (($(grep -c -F -e "${pat1}" -e "${pat2}" "${log}") != 2))
+do
+    sleep 2
+done
 
-            eval $(grep "^CYLC_BATCH_SYS_JOB_ID="\
- ${CYLC_SUITE_LOG_DIR%suite}job/$CYLC_TASK_CYCLE_POINT/submit_hold/NN/job.status)
-            echo $CYLC_BATCH_SYS_JOB_ID
-            atrm  $CYLC_BATCH_SYS_JOB_ID
-
-        """
+st_file="${CYLC_SUITE_RUN_DIR}/log/job/${CYLC_TASK_CYCLE_POINT}/submit_hold/NN/job.status"
+pkill -g "$(awk -F= '$1 == "CYLC_BATCH_SYS_JOB_ID" {print $2}' "${st_file}")"
+"""
     [[poll_now]]
-        script = """ 
-            cylc poll $CYLC_SUITE_NAME
-       """
-        [[[job]]]
-            batch system = at
-            
+        script = cylc poll "${CYLC_SUITE_NAME}"
+
     [[submit_hold]]
-        [[[job]]]
-            batch system = at
-            batch submit command template = at now + 2 minutes
+        init-script = sleep 120

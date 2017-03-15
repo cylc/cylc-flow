@@ -19,43 +19,31 @@
 """Provide a class to represent a task proxy in a running suite."""
 
 from collections import namedtuple
-from logging import (
-    getLevelName, CRITICAL, ERROR, WARNING, INFO, DEBUG)
+from logging import WARNING, INFO, DEBUG
 import os
 from pipes import quote
-import re
 import time
 
 from isodatetime.timezone import get_local_time_zone
+from parsec.config import ItemNotFoundError
+from parsec.util import pdeepcopy, poverride
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.cycling.iso8601
 from cylc.envvar import expandvars
-import cylc.flags as flags
-from cylc.wallclock import (
-    get_current_time_string,
-    get_seconds_as_interval_string,
-    get_time_string_from_unix_time,
-    get_unix_time_from_time_string,
-    RE_DATE_TIME_FORMAT_EXTENDED,
-)
-from cylc.batch_sys_manager import BatchSysManager
-from cylc.owner import USER
-from cylc.suite_host import get_suite_host
 from cylc.network.suite_broadcast_server import BroadcastServer
+from cylc.owner import USER
 from cylc.rundb import CylcSuiteDAO
+from cylc.suite_host import get_suite_host
+from cylc.suite_logging import LOG
 from cylc.task_id import TaskID
-from cylc.task_message import TaskMessage
-from parsec.util import pdeepcopy, poverride
-from parsec.config import ItemNotFoundError
 from cylc.task_action_timer import TaskActionTimer
 from cylc.task_state import (
     TaskState, TASK_STATUSES_ACTIVE, TASK_STATUS_WAITING,
-    TASK_STATUS_READY, TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_FAILED,
-    TASK_STATUS_RUNNING, TASK_STATUS_FAILED)
-from cylc.task_outputs import (
-    TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED)
-from cylc.suite_logging import LOG
+    TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING)
+from cylc.wallclock import (
+    get_current_time_string, get_seconds_as_interval_string,
+    get_unix_time_from_time_string)
 
 
 CustomTaskEventHandlerContext = namedtuple(
@@ -98,8 +86,8 @@ class TaskProxy(object):
     # Memory optimization - constrain possible attributes to this list.
     __slots__ = ["CUSTOM_EVENT_HANDLER", "EVENT_MAIL", "JOB_LOGS_RETRIEVE",
                  "KEY_EXECUTE", "KEY_SUBMIT", "NN",
-                 "LOGGING_LVL_OF", "RE_MESSAGE_TIME", "TABLE_TASK_JOBS",
-                 "TABLE_TASK_EVENTS", "TABLE_TASK_STATES", "POLLED_INDICATOR",
+                 "TABLE_TASK_JOBS",
+                 "TABLE_TASK_EVENTS", "TABLE_TASK_STATES",
                  "tdef", "submit_num",
                  "point", "cleanup_cutoff", "identity", "has_spawned",
                  "point_as_seconds", "stop_point", "manual_trigger",
@@ -117,22 +105,9 @@ class TaskProxy(object):
     KEY_SUBMIT = "submission"
     NN = "NN"
 
-    LOGGING_LVL_OF = {
-        "INFO": INFO,
-        "NORMAL": INFO,
-        "WARNING": WARNING,
-        "ERROR": ERROR,
-        "CRITICAL": CRITICAL,
-        "DEBUG": DEBUG,
-    }
-    RE_MESSAGE_TIME = re.compile(
-        '\A(.+) at (' + RE_DATE_TIME_FORMAT_EXTENDED + ')\Z')
-
     TABLE_TASK_JOBS = CylcSuiteDAO.TABLE_TASK_JOBS
     TABLE_TASK_EVENTS = CylcSuiteDAO.TABLE_TASK_EVENTS
     TABLE_TASK_STATES = CylcSuiteDAO.TABLE_TASK_STATES
-
-    POLLED_INDICATOR = "(polled)"
 
     def __init__(
             self, tdef, start_point, status=TASK_STATUS_WAITING,
@@ -516,123 +491,6 @@ class TaskProxy(object):
                     ),
                     retry_delays))
 
-    def job_submission_failed(self, event_time=None):
-        """Handle job submission failure."""
-        self.log(ERROR, 'submission failed')
-        if event_time is None:
-            event_time = get_current_time_string()
-        self.db_updates_map[self.TABLE_TASK_JOBS].append({
-            "time_submit_exit": get_current_time_string(),
-            "submit_status": 1,
-        })
-        try:
-            del self.summary['submit_method_id']
-        except KeyError:
-            pass
-        if self.try_timers[self.KEY_SUBMIT].next() is None:
-            # No submission retry lined up: definitive failure.
-            self.summary['finished_time'] = float(
-                get_unix_time_from_time_string(event_time))
-            self.summary['finished_time_string'] = event_time
-            flags.pflag = True
-            # See github #476.
-            self.setup_event_handlers(
-                'submission failed', 'job submission failed')
-            self.state.set_submit_failed()
-        else:
-            # There is a submission retry lined up.
-            timeout_str = self.try_timers[self.KEY_SUBMIT].timeout_as_str()
-
-            delay_msg = "submit-retrying in %s" % (
-                self.try_timers[self.KEY_SUBMIT].delay_as_seconds())
-            msg = "submission failed, %s (after %s)" % (delay_msg, timeout_str)
-            self.log(INFO, "job(%02d) " % self.submit_num + msg)
-            self.summary['latest_message'] = msg
-            self.db_events_insert(
-                event="submission failed", message=delay_msg)
-            # TODO - is this insert redundant with setup_event_handlers?
-            self.db_events_insert(
-                event="submission failed",
-                message="submit-retrying in " + str(
-                    self.try_timers[self.KEY_SUBMIT].delay))
-            self.setup_event_handlers(
-                "submission retry", "job submission failed, " + delay_msg)
-            self.state.set_submit_retry()
-
-    def job_submission_succeeded(self):
-        """Handle job submission succeeded."""
-        if self.summary.get('submit_method_id') is not None:
-            self.log(
-                INFO, 'submit_method_id=' + self.summary['submit_method_id'])
-        self.log(INFO, 'submission succeeded')
-        now = time.time()
-        now_string = get_time_string_from_unix_time(now)
-        self.db_updates_map[self.TABLE_TASK_JOBS].append({
-            "time_submit_exit": now,
-            "submit_status": 0,
-            "batch_sys_job_id": self.summary.get('submit_method_id')})
-
-        if self.tdef.run_mode == 'simulation':
-            # Simulate job execution at this point.
-            self.summary['started_time'] = now
-            self.summary['started_time_string'] = now_string
-            self.state.set_state(TASK_STATUS_RUNNING)
-            self.state.outputs.set_completed(TASK_OUTPUT_STARTED)
-            return
-
-        self.summary['started_time'] = None
-        self.summary['started_time_string'] = None
-        self.summary['finished_time'] = None
-        self.summary['finished_time_string'] = None
-
-        self.summary['submitted_time'] = now
-        self.summary['submitted_time_string'] = now_string
-        self.summary['latest_message'] = TASK_STATUS_SUBMITTED
-        self.setup_event_handlers("submitted", 'job submitted',
-                                  db_event='submission succeeded')
-
-        if self.state.set_submit_succeeded():
-            try:
-                self.state.submission_timer_timeout = (
-                    self.summary['submitted_time'] +
-                    float(self._get_events_conf('submission timeout')))
-            except (TypeError, ValueError):
-                self.state.submission_timer_timeout = None
-            self._set_next_poll_time(self.KEY_SUBMIT)
-
-    def job_execution_failed(self, event_time=None):
-        """Handle a job failure."""
-        if event_time is None:
-            self.summary['finished_time'] = time.time()
-            self.summary['finished_time_string'] = (
-                get_time_string_from_unix_time(self.summary['finished_time']))
-        else:
-            self.summary['finished_time'] = float(
-                get_unix_time_from_time_string(event_time))
-            self.summary['finished_time_string'] = event_time
-        self.db_updates_map[self.TABLE_TASK_JOBS].append({
-            "run_status": 1,
-            "time_run_exit": self.summary['finished_time_string'],
-        })
-        self.state.execution_timer_timeout = None
-        if self.try_timers[self.KEY_EXECUTE].next() is None:
-            # No retry lined up: definitive failure.
-            # Note the TASK_STATUS_FAILED output is only added if needed.
-            flags.pflag = True
-            self.state.set_execution_failed()
-            self.setup_event_handlers("failed", 'job failed')
-        else:
-            # There is a retry lined up
-            timeout_str = self.try_timers[self.KEY_EXECUTE].timeout_as_str()
-            delay_msg = "retrying in %s" % (
-                self.try_timers[self.KEY_EXECUTE].delay_as_seconds())
-            msg = "failed, %s (after %s)" % (delay_msg, timeout_str)
-            self.log(INFO, "job(%02d) " % self.submit_num + msg)
-            self.summary['latest_message'] = msg
-            self.setup_event_handlers(
-                "retry", "job failed, " + delay_msg, db_msg=delay_msg)
-            self.state.set_execution_retry()
-
     def reset_manual_trigger(self):
         """This is called immediately after manual trigger flag used."""
         if self.manual_trigger:
@@ -681,194 +539,6 @@ class TaskProxy(object):
         self.setup_event_handlers('execution timeout', msg)
         return True
 
-    def sim_job_fail(self):
-        """Should this task instance simulate job failure?"""
-        if (self.tdef.rtconfig['simulation']['fail try 1 only'] and
-                self.try_timers[self.KEY_EXECUTE].num != 0):
-            return False
-        fail_pts = self.tdef.rtconfig['simulation']['fail cycle points']
-        return fail_pts is None or self.point in fail_pts
-
-    def reject_if_failed(self, message):
-        """Reject a message if in the failed state.
-
-        Handle 'enable resurrection' mode.
-
-        """
-        if self.state.status == TASK_STATUS_FAILED:
-            if self.tdef.rtconfig['enable resurrection']:
-                self.log(
-                    WARNING,
-                    'message receive while failed:' +
-                    ' I am returning from the dead!'
-                )
-                return False
-            else:
-                self.log(
-                    WARNING,
-                    'rejecting a message received while in the failed state:'
-                )
-                self.log(WARNING, '  ' + message)
-            return True
-        else:
-            return False
-
-    def process_incoming_message(
-            self, priority, message, polled_event_time=None):
-        """Parse an incoming task message and update task state.
-
-        Incoming is e.g. "succeeded at <TIME>".
-
-        Correctly handle late (out of order) message which would otherwise set
-        the state backward in the natural order of events.
-
-        """
-        is_polled = polled_event_time is not None
-
-        # Log incoming messages with '>' to distinguish non-message log entries
-        log_message = '(current:%s)> %s' % (self.state.status, message)
-        if polled_event_time is not None:
-            log_message += ' %s' % self.POLLED_INDICATOR
-        self.log(self.LOGGING_LVL_OF.get(priority, INFO), log_message)
-
-        # Strip the "at TIME" suffix.
-        event_time = polled_event_time
-        if not event_time:
-            match = self.RE_MESSAGE_TIME.match(message)
-            if match:
-                message, event_time = match.groups()
-        if not event_time:
-            event_time = get_current_time_string()
-
-        # always update the suite state summary for latest message
-        self.summary['latest_message'] = message
-        if is_polled:
-            self.summary['latest_message'] += " %s" % self.POLLED_INDICATOR
-        flags.iflag = True
-
-        if self.reject_if_failed(message):
-            # Failed tasks do not send messages unless declared resurrectable
-            return
-
-        # Check registered outputs.
-        if self.state.outputs.exists(message):
-            if not self.state.outputs.is_completed(message):
-                flags.pflag = True
-                self.state.outputs.set_completed(message)
-                self.db_events_insert(
-                    event="output completed", message=message)
-            elif not is_polled:
-                # This output has already been reported complete. Not an error
-                # condition - maybe the network was down for a bit. Ok for
-                # polling as multiple polls *should* produce the same result.
-                self.log(WARNING, (
-                    "Unexpected output (already completed):\n  %s" % message))
-
-        if is_polled and self.state.status not in TASK_STATUSES_ACTIVE:
-            # A poll result can come in after a task finishes.
-            self.log(WARNING, "Ignoring late poll result: task is not active")
-            return
-
-        if priority == TaskMessage.WARNING:
-            self.setup_event_handlers('warning', message, db_update=False)
-
-        if (message == TASK_OUTPUT_STARTED and
-                self.state.status in [TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
-                                      TASK_STATUS_SUBMIT_FAILED]):
-            if self.job_vacated:
-                self.job_vacated = False
-                self.log(WARNING, "Vacated job restarted: " + message)
-            # Received a 'task started' message
-            flags.pflag = True
-            self.state.set_state(TASK_STATUS_RUNNING)
-            self.summary['started_time'] = float(
-                get_unix_time_from_time_string(event_time))
-            self.summary['started_time_string'] = event_time
-            self.db_updates_map[self.TABLE_TASK_JOBS].append({
-                "time_run": self.summary['started_time_string']})
-            if self.summary['execution_time_limit']:
-                execution_timeout = self.summary['execution_time_limit']
-            else:
-                execution_timeout = self._get_events_conf('execution timeout')
-            try:
-                self.state.execution_timer_timeout = (
-                    self.summary['started_time'] + float(execution_timeout))
-            except (TypeError, ValueError):
-                self.state.execution_timer_timeout = None
-
-            # submission was successful so reset submission try number
-            self.try_timers[self.KEY_SUBMIT].num = 0
-            self.setup_event_handlers('started', 'job started')
-            self._set_next_poll_time(self.KEY_EXECUTE)
-
-        elif (message == TASK_OUTPUT_SUCCEEDED and
-                self.state.status in [
-                    TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
-                    TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_RUNNING,
-                    TASK_STATUS_FAILED]):
-            # Received a 'task succeeded' message
-            self.state.execution_timer_timeout = None
-            flags.pflag = True
-            self.summary['finished_time'] = float(
-                get_unix_time_from_time_string(event_time))
-            self.summary['finished_time_string'] = event_time
-            self.db_updates_map[self.TABLE_TASK_JOBS].append({
-                "run_status": 0,
-                "time_run_exit": self.summary['finished_time_string'],
-            })
-            # Update mean elapsed time only on task succeeded.
-            if self.summary['started_time'] is not None:
-                self.tdef.elapsed_times.append(
-                    self.summary['finished_time'] -
-                    self.summary['started_time'])
-            self.setup_event_handlers("succeeded", "job succeeded")
-            warnings = self.state.set_execution_succeeded(is_polled)
-            for warning in warnings:
-                self.log(WARNING, warning)
-
-        elif (message == TASK_OUTPUT_FAILED and
-                self.state.status in [
-                    TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
-                    TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_RUNNING]):
-            # (submit- states in case of very fast submission and execution).
-            self.job_execution_failed(event_time)
-
-        elif message.startswith(TaskMessage.FAIL_MESSAGE_PREFIX):
-            # capture and record signals sent to task proxy
-            self.db_events_insert(event="signaled", message=message)
-            signal = message.replace(TaskMessage.FAIL_MESSAGE_PREFIX, "")
-            self.db_updates_map[self.TABLE_TASK_JOBS].append(
-                {"run_signal": signal})
-
-        elif message.startswith(TaskMessage.VACATION_MESSAGE_PREFIX):
-            flags.pflag = True
-            self.state.set_state(TASK_STATUS_SUBMITTED)
-            self.db_events_insert(event="vacated", message=message)
-            self.state.execution_timer_timeout = None
-            self.summary['started_time'] = None
-            self.summary['started_time_string'] = None
-            self.try_timers[self.KEY_SUBMIT].num = 0
-            self.job_vacated = True
-
-        elif message == "submission failed":
-            # This can arrive via a poll.
-            self.state.submission_timer_timeout = None
-            self.job_submission_failed(event_time)
-
-        else:
-            # Unhandled messages. These include:
-            #  * general non-output/progress messages
-            #  * poll messages that repeat previous results
-            # Note that all messages are logged already at the top.
-
-            # TODO - custom outputs shouldn't drop through to here.
-            self.log(DEBUG, '(current:%s) unhandled: %s' % (
-                self.state.status, message))
-            if priority in [CRITICAL, ERROR, WARNING, INFO, DEBUG]:
-                priority = getLevelName(priority)
-            self.db_events_insert(
-                event=("message %s" % str(priority).lower()), message=message)
-
     def get_state_summary(self):
         """Return a dict containing the state summary of this task proxy."""
         self.summary['state'] = self.state.status
@@ -912,16 +582,28 @@ class TaskProxy(object):
             )
         )
 
+    def set_event_time(self, event_key, time_str=None):
+        """Set event time in self.summary
+
+        Set values of both event_key + "_time" and event_key + "_time_string".
+        """
+        if time_str is None:
+            self.summary[event_key + '_time'] = None
+        else:
+            self.summary[event_key + '_time'] = float(
+                get_unix_time_from_time_string(time_str))
+        self.summary[event_key + '_time_string'] = time_str
+
     def _check_poll_timer(self, key, now=None):
         """Set the next execution/submission poll time."""
         timer = self.poll_timers.get(key)
         if timer is not None and timer.is_delay_done(now):
-            self._set_next_poll_time(key)
+            self.set_next_poll_time(key)
             return True
         else:
             return False
 
-    def _set_next_poll_time(self, key):
+    def set_next_poll_time(self, key):
         """Set the next execution/submission poll time."""
         timer = self.poll_timers.get(key)
         if timer is not None:
