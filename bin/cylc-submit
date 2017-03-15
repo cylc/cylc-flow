@@ -79,8 +79,6 @@ def main():
     suite_dir = os.path.dirname(suiterc)
     # For user-defined batch system handlers
     sys.path.append(os.path.join(suite_dir, 'python'))
-    suite_run_dir = GLOBAL_CFG.get_derived_host_item(
-        suite, 'suite run directory')
 
     # load suite config
     config = SuiteConfig.get_inst(
@@ -90,7 +88,7 @@ def main():
 
     GLOBAL_CFG.create_cylc_run_tree(suite)
 
-    task_job_mgr = TaskJobManager(proc_pool=SuiteProcPool())
+    task_job_mgr = TaskJobManager(suite, proc_pool=SuiteProcPool())
     task_job_mgr.single_task_mode = True
     task_job_mgr.job_file_writer.set_suite_env({
         'CYLC_UTC': str(config.cfg['cylc']['UTC mode']),

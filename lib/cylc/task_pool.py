@@ -33,7 +33,6 @@ tasks against the new stop cycle.
 
 from fnmatch import fnmatchcase
 from logging import DEBUG, INFO, WARNING
-import Queue
 from random import randrange
 from time import time
 
@@ -454,10 +453,11 @@ class TaskPool(object):
         """
 
         # 1) queue unqueued tasks that are ready to run or manually forced
+        now = time()
         for itask in self.get_tasks():
             if itask.state.status != TASK_STATUS_QUEUED:
                 # only need to check that unqueued tasks are ready
-                if itask.manual_trigger or itask.ready_to_run():
+                if itask.manual_trigger or itask.ready_to_run(now):
                     # queue the task
                     itask.state.set_state(TASK_STATUS_QUEUED)
                     itask.reset_manual_trigger()
@@ -1019,15 +1019,37 @@ class TaskPool(object):
                 sim_task_state_changed = True
         return sim_task_state_changed
 
+    def set_expired_tasks(self):
+        """Check if any waiting tasks expired.
+
+        Set their status accordingly.
+        """
+        now = time()
+        for itask in self.get_tasks():
+            if (itask.state.status != TASK_STATUS_WAITING or
+                    itask.tdef.expiration_offset is None):
+                continue
+            if itask.expire_time is None:
+                itask.expire_time = (
+                    itask.get_point_as_seconds() +
+                    itask.get_offset_as_seconds(itask.tdef.expiration_offset))
+            if now > itask.expire_time:
+                msg = 'Task expired (skipping job).'
+                itask.log(WARNING, msg)
+                self.task_events_mgr.setup_event_handlers(
+                    itask, "expired", msg)
+                itask.state.set_expired()
+
     def waiting_tasks_ready(self):
         """Waiting tasks can become ready for internal reasons.
 
         Namely clock-triggers or retry-delay timers
 
         """
+        now = time()
         result = False
         for itask in self.get_tasks():
-            if itask.ready_to_run():
+            if itask.ready_to_run(now):
                 result = True
                 break
         return result
@@ -1075,6 +1097,7 @@ class TaskPool(object):
         """
         itasks, bad_items = self.filter_task_proxies(items)
         results = {}
+        now = time()
         for itask in itasks:
             if list_prereqs:
                 results[itask.identity] = {
@@ -1085,7 +1108,7 @@ class TaskPool(object):
             extras = {}
             if itask.tdef.clocktrigger_offset is not None:
                 extras['Clock trigger time reached'] = (
-                    itask.start_time_reached())
+                    itask.start_time_reached(now))
                 extras['Triggers at'] = get_time_string_from_unix_time(
                     itask.delayed_start)
             for trig, satisfied in itask.state.external_triggers.items():

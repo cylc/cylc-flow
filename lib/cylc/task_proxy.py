@@ -18,11 +18,7 @@
 
 """Provide a class to represent a task proxy in a running suite."""
 
-from collections import namedtuple
-from logging import WARNING, INFO, DEBUG
-import os
-from pipes import quote
-import time
+from logging import WARNING, INFO
 
 from isodatetime.timezone import get_local_time_zone
 from parsec.config import ItemNotFoundError
@@ -32,33 +28,14 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.cycling.iso8601
 from cylc.envvar import expandvars
 from cylc.network.suite_broadcast_server import BroadcastServer
-from cylc.owner import USER
 from cylc.rundb import CylcSuiteDAO
-from cylc.suite_host import get_suite_host
 from cylc.suite_logging import LOG
 from cylc.task_id import TaskID
 from cylc.task_action_timer import TaskActionTimer
 from cylc.task_state import (
-    TaskState, TASK_STATUSES_ACTIVE, TASK_STATUS_WAITING,
-    TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING)
+    TaskState, TASK_STATUSES_ACTIVE, TASK_STATUS_WAITING)
 from cylc.wallclock import (
-    get_current_time_string, get_seconds_as_interval_string,
-    get_unix_time_from_time_string)
-
-
-CustomTaskEventHandlerContext = namedtuple(
-    "CustomTaskEventHandlerContext",
-    ["key", "ctx_type", "cmd"])
-
-
-TaskEventMailContext = namedtuple(
-    "TaskEventMailContext",
-    ["key", "ctx_type", "mail_from", "mail_to", "mail_smtp"])
-
-
-TaskJobLogsRetrieveContext = namedtuple(
-    "TaskJobLogsRetrieveContext",
-    ["key", "ctx_type", "user_at_host", "max_size"])
+    get_current_time_string, get_unix_time_from_time_string)
 
 
 class TaskProxySequenceBoundsError(ValueError):
@@ -84,22 +61,18 @@ class TaskProxy(object):
     # environments to allow changed behaviour after previous failures.
 
     # Memory optimization - constrain possible attributes to this list.
-    __slots__ = ["CUSTOM_EVENT_HANDLER", "EVENT_MAIL", "JOB_LOGS_RETRIEVE",
-                 "KEY_EXECUTE", "KEY_SUBMIT", "NN",
+    __slots__ = ["KEY_EXECUTE", "KEY_SUBMIT", "NN",
                  "TABLE_TASK_JOBS",
                  "TABLE_TASK_EVENTS", "TABLE_TASK_STATES",
                  "tdef", "submit_num",
                  "point", "cleanup_cutoff", "identity", "has_spawned",
                  "point_as_seconds", "stop_point", "manual_trigger",
                  "is_manual_submit", "summary", "local_job_file_path",
-                 "try_timers", "event_handler_try_timers", "db_inserts_map",
-                 "db_updates_map", "suite_name", "task_host", "task_owner",
+                 "try_timers", "db_inserts_map",
+                 "db_updates_map", "task_host", "task_owner",
                  "job_vacated", "poll_timers", "events_conf",
                  "delayed_start", "expire_time", "state"]
 
-    CUSTOM_EVENT_HANDLER = "event-handler"
-    EVENT_MAIL = "event-mail"
-    JOB_LOGS_RETRIEVE = "job-logs-retrieve"
     KEY_EXECUTE = "execution"
     KEY_EXECUTE_TIME_LIMIT = "execution_time_limit"
     KEY_SUBMIT = "submission"
@@ -183,7 +156,6 @@ class TaskProxy(object):
         self.try_timers = {
             self.KEY_EXECUTE: TaskActionTimer(delays=[]),
             self.KEY_SUBMIT: TaskActionTimer(delays=[])}
-        self.event_handler_try_timers = {}
 
         self.db_inserts_map = {
             self.TABLE_TASK_JOBS: [],
@@ -267,8 +239,6 @@ class TaskProxy(object):
             self.summary = pre_reload_inst.summary
             self.local_job_file_path = pre_reload_inst.local_job_file_path
             self.try_timers = pre_reload_inst.try_timers
-            self.event_handler_try_timers = (
-                pre_reload_inst.event_handler_try_timers)
             self.db_inserts_map = pre_reload_inst.db_inserts_map
             self.db_updates_map = pre_reload_inst.db_updates_map
             self.task_host = pre_reload_inst.task_host
@@ -282,17 +252,6 @@ class TaskProxy(object):
                     del self.state.outputs.not_completed[msg]
                 except KeyError:
                     pass
-
-    def _get_events_conf(self, key, default=None):
-        """Return an events setting from suite then global configuration."""
-        for getter in [self.events_conf, GLOBAL_CFG.get()["task events"]]:
-            try:
-                value = getter.get(key)
-                if value is not None:
-                    return value
-            except (ItemNotFoundError, KeyError):
-                pass
-        return default
 
     def get_host_conf(self, key, default=None, skey="remote"):
         """Return a host setting from suite then global configuration."""
@@ -321,27 +280,17 @@ class TaskProxy(object):
             "event": event,
             "message": message})
 
-    def retry_delay_done(self):
-        """Is retry delay done? Can I retry now?"""
-        now = time.time()
-        return (self.try_timers[self.KEY_EXECUTE].is_delay_done(now) or
-                self.try_timers[self.KEY_SUBMIT].is_delay_done(now))
-
-    def ready_to_run(self):
+    def ready_to_run(self, now):
         """Am I in a pre-run state but ready to run?
 
         Queued tasks are not counted as they've already been deemed ready.
 
         """
-        ready = self.state.is_ready_to_run(self.retry_delay_done(),
-                                           self.start_time_reached())
-        if ready and self._has_expired():
-            self.log(WARNING, 'Task expired (skipping job).')
-            self.setup_event_handlers(
-                "expired", 'Task expired (skipping job).')
-            self.state.set_expired()
-            return False
-        return ready
+        retry_delay_done = (
+            self.try_timers[self.KEY_EXECUTE].is_delay_done(now) or
+            self.try_timers[self.KEY_SUBMIT].is_delay_done(now))
+        return self.state.is_ready_to_run(
+            retry_delay_done, self.start_time_reached(now))
 
     def get_point_as_seconds(self):
         """Compute and store my cycle point as seconds."""
@@ -363,7 +312,7 @@ class TaskProxy(object):
         iso_offset = cylc.cycling.iso8601.interval_parse(str(offset))
         return int(iso_offset.get_seconds())
 
-    def start_time_reached(self):
+    def start_time_reached(self, now):
         """Has this task reached its clock trigger time?"""
         if self.tdef.clocktrigger_offset is None:
             return True
@@ -371,125 +320,6 @@ class TaskProxy(object):
             self.delayed_start = (
                 self.get_point_as_seconds() +
                 self.get_offset_as_seconds(self.tdef.clocktrigger_offset))
-        return time.time() > self.delayed_start
-
-    def _has_expired(self):
-        """Is this task past its use-by date?"""
-        if self.tdef.expiration_offset is None:
-            return False
-        if self.expire_time is None:
-            self.expire_time = (
-                self.get_point_as_seconds() +
-                self.get_offset_as_seconds(self.tdef.expiration_offset))
-        return time.time() > self.expire_time
-
-    def setup_event_handlers(
-            self, event, message, db_update=True, db_event=None, db_msg=None):
-        """Set up event handlers."""
-        # extra args for inconsistent use between events, logging, and db
-        # updates
-        db_event = db_event or event
-        if db_update:
-            self.db_events_insert(event=db_event, message=db_msg)
-        if (self.tdef.run_mode in ['simulation', 'dummy', 'dummy-local'] and
-            self.tdef.rtconfig[
-                'simulation']['disable task event handlers']):
-            return
-        if self.tdef.run_mode != 'simulation':
-            self.setup_job_logs_retrieval(event, message)
-        self.setup_event_mail(event, message)
-        self.setup_custom_event_handlers(event, message)
-
-    def setup_job_logs_retrieval(self, event, _=None):
-        """Set up remote job logs retrieval."""
-        key2 = ((self.JOB_LOGS_RETRIEVE, event), self.submit_num)
-        if self.task_owner:
-            user_at_host = self.task_owner + "@" + self.task_host
-        else:
-            user_at_host = self.task_host
-        # TODO - use string constants for event names.
-        if (event not in ['failed', 'retry', 'succeeded'] or
-                user_at_host in [USER + '@localhost', 'localhost'] or
-                not self.get_host_conf("retrieve job logs") or
-                key2 in self.event_handler_try_timers):
-            return
-        retry_delays = self.get_host_conf("retrieve job logs retry delays")
-        if not retry_delays:
-            retry_delays = [0]
-        self.event_handler_try_timers[key2] = TaskActionTimer(
-            TaskJobLogsRetrieveContext(
-                self.JOB_LOGS_RETRIEVE,  # key
-                self.JOB_LOGS_RETRIEVE,  # ctx_type
-                user_at_host,
-                self.get_host_conf("retrieve job logs max size"),  # max_size
-            ),
-            retry_delays)
-
-    def setup_event_mail(self, event, _):
-        """Event notification, by email."""
-        key2 = ((self.EVENT_MAIL, event), self.submit_num)
-        if (key2 in self.event_handler_try_timers or
-                event not in self._get_events_conf("mail events", [])):
-            return
-        retry_delays = self._get_events_conf("mail retry delays")
-        if not retry_delays:
-            retry_delays = [0]
-        self.event_handler_try_timers[key2] = TaskActionTimer(
-            TaskEventMailContext(
-                self.EVENT_MAIL,  # key
-                self.EVENT_MAIL,  # ctx_type
-                self._get_events_conf(  # mail_from
-                    "mail from",
-                    "notifications@" + get_suite_host(),
-                ),
-                self._get_events_conf("mail to", USER),  # mail_to
-                self._get_events_conf("mail smtp"),  # mail_smtp
-            ),
-            retry_delays)
-
-    def setup_custom_event_handlers(self, event, message, only_list=None):
-        """Call custom event handlers."""
-        handlers = self._get_events_conf(event + ' handler')
-        if (handlers is None and
-                event in self._get_events_conf('handler events', [])):
-            handlers = self._get_events_conf('handlers')
-        if handlers is None:
-            return
-        retry_delays = self._get_events_conf(
-            'handler retry delays',
-            self.get_host_conf("task event handler retry delays"))
-        if not retry_delays:
-            retry_delays = [0]
-        for i, handler in enumerate(handlers):
-            key1 = ("%s-%02d" % (self.CUSTOM_EVENT_HANDLER, i), event)
-            if (key1, self.submit_num) in self.event_handler_try_timers or (
-                    only_list and i not in only_list):
-                continue
-            cmd = handler % {
-                "event": quote(event),
-                "suite": quote(self.__class__.suite_name),
-                "point": quote(str(self.point)),
-                "name": quote(self.tdef.name),
-                "submit_num": self.submit_num,
-                "id": quote(self.identity),
-                "task_url": quote(self.tdef.rtconfig['URL']),
-                "suite_url": quote(self.__class__.suite_url),
-                "message": quote(message),
-            }
-            if cmd == handler:
-                # Nothing substituted, assume classic interface
-                cmd = "%s '%s' '%s' '%s' '%s'" % (
-                    handler, event, self.__class__.suite_name,
-                    self.identity, message)
-            self.log(DEBUG, "Queueing %s handler: %s" % (event, cmd))
-            self.event_handler_try_timers[(key1, self.submit_num)] = (
-                TaskActionTimer(
-                    CustomTaskEventHandlerContext(
-                        key1,
-                        self.CUSTOM_EVENT_HANDLER,
-                        cmd,
-                    ),
-                    retry_delays))
 
     def reset_manual_trigger(self):
         """This is called immediately after manual trigger flag used."""

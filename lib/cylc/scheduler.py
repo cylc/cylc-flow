@@ -21,7 +21,7 @@ from copy import deepcopy
 from logging import DEBUG, INFO
 import os
 import pickle
-from Queue import Empty
+import Queue
 from shutil import copytree, rmtree
 from subprocess import Popen, PIPE
 import sys
@@ -322,12 +322,12 @@ conditions; see `cylc conditions`.
                     'ERROR: this suite requires the %s run mode' % reqmode)
 
         self.suite_event_handler = SuiteEventHandler(self.proc_pool)
-        self.task_events_mgr = TaskEventsManager(self.proc_pool)
+        self.task_events_mgr = TaskEventsManager(self.suite, self.proc_pool)
         self.task_events_mgr.mail_interval = self._get_cylc_conf(
             "task event mail interval")
         self.task_events_mgr.mail_footer = self._get_events_conf("mail footer")
         self.task_job_mgr = TaskJobManager(
-            self.proc_pool, self.task_events_mgr)
+            self.suite, self.proc_pool, self.task_events_mgr)
         if self.options.genref or self.options.reftest:
             self.configure_reftest()
 
@@ -649,7 +649,7 @@ conditions; see `cylc conditions`.
         while True:
             try:
                 name, args, kwargs = queue.get(False)
-            except Empty:
+            except Queue.Empty:
                 break
             args_string = ', '.join([str(a) for a in args])
             cmdstr = name + '(' + args_string
@@ -1321,7 +1321,6 @@ conditions; see `cylc conditions`.
 
             self.process_queued_task_messages()
             self.process_command_queue()
-            self.task_events_mgr.events_from_tasks(self.pool)
             self.task_events_mgr.process_events(self)
             self.suite_db_mgr.put_task_event_timers(self.task_events_mgr)
             has_changes = cylc.flags.iflag
@@ -1526,6 +1525,7 @@ conditions; see `cylc conditions`.
                     self._get_events_conf('reset inactivity timer')):
                 self.set_suite_inactivity_timer()
 
+        self.pool.set_expired_tasks()
         if self.pool.waiting_tasks_ready():
             process = True
 
@@ -1566,7 +1566,6 @@ conditions; see `cylc conditions`.
         if self.pool is not None:
             self.pool.warn_stop_orphans()
             try:
-                self.task_events_mgr.events_from_tasks(self.pool)
                 self.suite_db_mgr.put_task_event_timers(self.task_events_mgr)
                 self.suite_db_mgr.put_task_pool(self.pool)
                 self.suite_db_mgr.process_queued_ops()

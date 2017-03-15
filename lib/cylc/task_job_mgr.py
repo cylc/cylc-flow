@@ -49,7 +49,8 @@ from cylc.task_action_timer import TaskActionTimer
 from cylc.task_state import (
     TASK_STATUSES_ACTIVE, TASK_STATUS_HELD, TASK_STATUS_READY,
     TASK_STATUS_RUNNING, TASK_STATUS_SUBMITTED)
-from cylc.wallclock import get_current_time_string
+from cylc.wallclock import (
+    get_current_time_string, get_seconds_as_interval_string)
 
 
 class RemoteJobHostInitError(Exception):
@@ -77,10 +78,11 @@ class TaskJobManager(object):
     JOBS_POLL = "jobs-poll"
     JOBS_SUBMIT = SuiteProcPool.JOBS_SUBMIT
 
-    def __init__(self, proc_pool, task_events_mgr=None):
+    def __init__(self, suite, proc_pool, task_events_mgr=None):
+        self.suite = suite
         self.proc_pool = proc_pool
         if task_events_mgr is None:
-            task_events_mgr = TaskEventsManager(proc_pool)
+            task_events_mgr = TaskEventsManager(suite, proc_pool)
         self.task_events_mgr = task_events_mgr
         self.job_file_writer = JobFileWriter()
         self.suite_srv_files_mgr = SuiteSrvFilesManager()
@@ -96,8 +98,8 @@ class TaskJobManager(object):
         poll_tasks = set()
         for itask in task_pool.get_tasks():
             if (self._check_timeout_submission(itask, now) or
-                   self._check_timeout_execution(itask, now) or
-                   self._check_poll_timer(itask, now)):
+                    self._check_timeout_execution(itask, now) or
+                    self._check_poll_timer(itask, now)):
                 poll_tasks.add(itask)
         self.poll_task_jobs(suite, poll_tasks)
 
@@ -354,8 +356,7 @@ class TaskJobManager(object):
         else:
             return False
 
-    @staticmethod
-    def _check_timeout_execution(itask, now):
+    def _check_timeout_execution(self, itask, now):
         """Check/handle execution timeout, called if TASK_STATUS_RUNNING."""
         if itask.state.status != TASK_STATUS_RUNNING:
             return False
@@ -378,11 +379,11 @@ class TaskJobManager(object):
                 timeout - itask.summary['started_time']))
         itask.state.execution_timer_timeout = None
         itask.log(WARNING, msg)
-        itask.setup_event_handlers('execution timeout', msg)
+        self.task_events_mgr.setup_event_handlers(
+            itask, 'execution timeout', msg)
         return True
 
-    @staticmethod
-    def _check_timeout_submission(itask, now):
+    def _check_timeout_submission(self, itask, now):
         """Check/handle submission timeout, called if TASK_STATUS_SUBMITTED."""
         if itask.state.status != TASK_STATUS_SUBMITTED:
             return False
@@ -396,7 +397,8 @@ class TaskJobManager(object):
                 timeout - itask.summary['submitted_time']))
         itask.state.submission_timer_timeout = None
         itask.log(WARNING, msg)
-        itask.setup_event_handlers('submission timeout', msg)
+        self.task_events_mgr.setup_event_handlers(
+            itask, 'submission timeout', msg)
         return True
 
     def _create_job_log_path(self, suite, itask):
