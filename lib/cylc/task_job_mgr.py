@@ -87,6 +87,20 @@ class TaskJobManager(object):
         self.init_host_map = {}  # {(user, host): should_unlink, ...}
         self.single_task_mode = False
 
+    def check_task_jobs(self, suite, task_pool):
+        """Check submission and execution timeout and polling timers.
+
+        Poll tasks that have timed out and/or have reached next polling time.
+        """
+        now = time()
+        poll_tasks = set()
+        for itask in task_pool.get_tasks():
+            if (self._check_timeout_submission(itask, now) or
+                   self._check_timeout_execution(itask, now) or
+                   self._check_poll_timer(itask, now)):
+                poll_tasks.add(itask)
+        self.poll_task_jobs(suite, poll_tasks)
+
     def init_host(self, reg, host, owner):
         """Initialise suite run dir on a user@host.
 
@@ -323,6 +337,67 @@ class TaskJobManager(object):
                     RemoteJobHostInitError.MSG_TIDY,
                     user_at_host, ' '.join([quote(item) for item in cmd]),
                     proc.returncode, out, err))
+
+    @staticmethod
+    def _check_poll_timer(itask, now=None):
+        """Set the next execution/submission poll time."""
+        if itask.state.status == TASK_STATUS_SUBMITTED:
+            key = itask.KEY_SUBMIT
+        elif itask.state.status == TASK_STATUS_RUNNING:
+            key = itask.KEY_EXECUTE
+        else:
+            return False
+        timer = itask.poll_timers.get(key)
+        if timer is not None and timer.is_delay_done(now):
+            itask.set_next_poll_time(key)
+            return True
+        else:
+            return False
+
+    @staticmethod
+    def _check_timeout_execution(itask, now):
+        """Check/handle execution timeout, called if TASK_STATUS_RUNNING."""
+        if itask.state.status != TASK_STATUS_RUNNING:
+            return False
+        timeout = itask.state.execution_timer_timeout
+        if timeout is None or now <= timeout:
+            return False
+        if itask.summary['execution_time_limit']:
+            timer = itask.poll_timers[itask.KEY_EXECUTE_TIME_LIMIT]
+            if not timer.is_timeout_set():
+                timer.next()
+            if not timer.is_delay_done():
+                # Don't poll
+                return False
+            if timer.next() is not None:
+                # Poll now, and more retries lined up
+                return True
+        # No more retry lined up, issue execution timeout event
+        msg = 'job started %s ago, but has not finished' % (
+            get_seconds_as_interval_string(
+                timeout - itask.summary['started_time']))
+        itask.state.execution_timer_timeout = None
+        itask.log(WARNING, msg)
+        itask.setup_event_handlers('execution timeout', msg)
+        return True
+
+    @staticmethod
+    def _check_timeout_submission(itask, now):
+        """Check/handle submission timeout, called if TASK_STATUS_SUBMITTED."""
+        if itask.state.status != TASK_STATUS_SUBMITTED:
+            return False
+        timeout = itask.state.submission_timer_timeout
+        if timeout is None or now <= timeout:
+            return False
+        # Extend timeout so the job can be polled again at next timeout
+        # just in case the job is still stuck in a queue
+        msg = 'job submitted %s ago, but has not started' % (
+            get_seconds_as_interval_string(
+                timeout - itask.summary['submitted_time']))
+        itask.state.submission_timer_timeout = None
+        itask.log(WARNING, msg)
+        itask.setup_event_handlers('submission timeout', msg)
+        return True
 
     def _create_job_log_path(self, suite, itask):
         """Create job log directory for a task job, etc.

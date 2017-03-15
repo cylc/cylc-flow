@@ -500,45 +500,6 @@ class TaskProxy(object):
             self.try_timers[self.KEY_EXECUTE].timeout = None
             self.try_timers[self.KEY_SUBMIT].timeout = None
 
-    def check_submission_timeout(self, now):
-        """Check/handle submission timeout, called if TASK_STATUS_SUBMITTED."""
-        timeout = self.state.submission_timer_timeout
-        if timeout is None or now <= timeout:
-            return False
-        # Extend timeout so the job can be polled again at next timeout
-        # just in case the job is still stuck in a queue
-        msg = 'job submitted %s ago, but has not started' % (
-            get_seconds_as_interval_string(
-                timeout - self.summary['submitted_time']))
-        self.state.submission_timer_timeout = None
-        self.log(WARNING, msg)
-        self.setup_event_handlers('submission timeout', msg)
-        return True
-
-    def check_execution_timeout(self, now):
-        """Check/handle execution timeout, called if TASK_STATUS_RUNNING."""
-        timeout = self.state.execution_timer_timeout
-        if timeout is None or now <= timeout:
-            return False
-        if self.summary['execution_time_limit']:
-            timer = self.poll_timers[self.KEY_EXECUTE_TIME_LIMIT]
-            if not timer.is_timeout_set():
-                timer.next()
-            if not timer.is_delay_done():
-                # Don't poll
-                return False
-            if timer.next() is not None:
-                # Poll now, and more retries lined up
-                return True
-        # No more retry lined up, issue execution timeout event
-        msg = 'job started %s ago, but has not finished' % (
-            get_seconds_as_interval_string(
-                timeout - self.summary['started_time']))
-        self.state.execution_timer_timeout = None
-        self.log(WARNING, msg)
-        self.setup_event_handlers('execution timeout', msg)
-        return True
-
     def get_state_summary(self):
         """Return a dict containing the state summary of this task proxy."""
         self.summary['state'] = self.state.status
@@ -568,20 +529,6 @@ class TaskProxy(object):
             p_next = min(adjusted)
         return p_next
 
-    def check_poll_ready(self, now=None):
-        """Check if it is the next poll time."""
-        return (
-            self.state.status == TASK_STATUS_SUBMITTED and (
-                self.check_submission_timeout(now) or
-                self._check_poll_timer(self.KEY_SUBMIT, now)
-            )
-        ) or (
-            self.state.status == TASK_STATUS_RUNNING and (
-                self.check_execution_timeout(now) or
-                self._check_poll_timer(self.KEY_EXECUTE, now)
-            )
-        )
-
     def set_event_time(self, event_key, time_str=None):
         """Set event time in self.summary
 
@@ -593,15 +540,6 @@ class TaskProxy(object):
             self.summary[event_key + '_time'] = float(
                 get_unix_time_from_time_string(time_str))
         self.summary[event_key + '_time_string'] = time_str
-
-    def _check_poll_timer(self, key, now=None):
-        """Set the next execution/submission poll time."""
-        timer = self.poll_timers.get(key)
-        if timer is not None and timer.is_delay_done(now):
-            self.set_next_poll_time(key)
-            return True
-        else:
-            return False
 
     def set_next_poll_time(self, key):
         """Set the next execution/submission poll time."""

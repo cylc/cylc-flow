@@ -1346,12 +1346,7 @@ conditions; see `cylc conditions`.
                 self.check_suite_inactive()
             # check submission and execution timeout and polling timers
             if self.run_mode != 'simulation':
-                now = time()
-                itasks = set()
-                for itask in self.pool.get_tasks():
-                    if itask.check_poll_ready(now):
-                        itasks.add(itask)
-                self.task_job_mgr.poll_task_jobs(self.suite, itasks)
+                self.task_job_mgr.check_task_jobs(self.suite, self.pool)
 
             # Does the suite need to shutdown on task failure?
             if (self.config.cfg['cylc']['abort if any task fails'] and
