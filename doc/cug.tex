@@ -378,147 +378,53 @@ previous section, emerges naturally at run time.
 
 %\pagebreak
 
-\section{Required Software}
+\section{Installation}
 \label{Requirements}
 
-\begin{myitemize}
-    \item {\bf Cylc}, the version associated with this document is: \input{cylc-version.txt}. % generated each time by doc/process
-        \newline Cylc can be downloaded from from GitHub: \url{https://cylc.github.com/cylc}
-    \item {\bf OS: A Linux or Unix variant (including, reportedly, Apple OS X).}
-    \item {\bf The Python Language, version 2.6 or later, but not 3.x yet}.
-        \newline \url{https://python.org}
-\end{myitemize}
+Cylc runs on Unix variants, usually Linux, and including Apple OS X.
 
-The following packages are technically optional as you can construct
-and run cylc suites without dependency graphing and the gcylc GUI:
+\subsection{External Software Packages}
 
-\begin{myitemize}
-    \item {\bf PyGTK}, a Python wrapper for the GTK+ GUI toolkit,
-        required for the gcylc GUI.
-        PyGTK is included in most Linux Distributions.
-        \newline \url{http://www.pygtk.org}
-    \item {\bf Graphviz} (latest tested 2.28.0) and {\bf Pygraphviz}
-        (latest tested 1.1), a graph layout engine and a Python
-        interface to it.
-        \newline \url{http://www.graphviz.org}
-        \newline \url{http://pygraphviz.github.io/}
-\end{myitemize}
+{\bf Python \lstinline@>=@ 2.6} is required (but not yet Python 3). Python
+should already be installed in your Linux system. \url{https://python.org}.
 
-If you use a binary package manager to install graphviz you may also
-need a couple of {\em devel} packages for the pygraphviz build:
+The following packages are highly recommended, but are technically optional as
+you can construct and run suites without dependency graph visualisation or
+the Cylc GUIs:
 
 \begin{myitemize}
-    \item python-devel
-    \item graphviz-devel
+  \item {\bf PyGTK} - GUI toolkit (should be in your system Python):
+    \url{http://www.pygtk.org}.
+    \item {\bf Graphviz} - graph layout engine (tested 2.36.0):
+      \url{http://www.graphviz.org}.
+    \item {\bf Pygraphviz} - Python Graphviz interface (tested 1.2):
+       \url{http://pygraphviz.github.io/}. To build this you may need some {\em
+       devel} packages too:
+          \begin{myitemize}
+              \item python-devel
+              \item graphviz-devel
+          \end{myitemize}
 \end{myitemize}
 
-This user guide can be generated from the \LaTeX source by
-running \lstinline=make= in the top level cylc directory after download.
-The following \TeX packages are required (but note that the exact
-packages required may be somewhat OS or distribution-dependent):
+The User Guide is generated from \LaTeX source files by running
+\lstinline=make= in the top level Cylc directory. The specific packages
+required may vary by distribution, e.g.:
 
 \begin{myitemize}
     \item texlive
     \item texlive-tocloft
     \item texlive-framed
-    \item texlive-preprint (for fullpage.sty, formerly in tetex)
-\end{myitemize}
-And for HTML versions of the User Guide:
-
-\begin{myitemize}
+    \item texlive-preprint (for \lstinline=fullpage.sty=)
     \item texlive-tex4ht
-    \item ImageMagick (for image scaling)
 \end{myitemize}
 
-Cylc includes a slightly modified version of cherrypy 6.0.2, a pure Python
-HTTP framework that we use as a web server for communication
-between server processes (cylc suites) and client programs (running tasks,
-the gcylc GUI, user commands). Client communication is done via the
-Python requests library if available (recommended) or via pure Python via
-urllib2.
-\newline \url{http://www.cherrypy.org/}
-\newline \url{http://docs.python-requests.org/}
+To generate the HTML User Guide {\bf ImageMagick} is also needed.
 
-Cylc includes Jinja2 2.8, a full featured template engine for Python and its
-dependency MarkupSafe 0.23, both BSD licensed.
-\newline \url{http://jinja.pocoo.org/}
-\newline \url{http://www.pocoo.org/projects/markupsafe/}
+In most modern Linux distributions all of the software above can be installed
+via the system package manager. Otherwise download packages manually and follow
+their native installation instructions. To check that all (non \LaTeX packages)
+are installed properly:
 
-
-\subsection{Known Version Compatibility Issues}
-
-Cylc should run ``out of the box'' on recent Linux distributions.
-
-\subsubsection{Apple Mac OSX}
-
-It has been reported that cylc runs fine on OSX 10.6 SnowLeopard, but on
-OSX 10.7 Lion there is an issue with constructing proper FQDNs (Fully
-Qualified Domain Names) that requires a change to the DNS service.
-Here's how to solve the problem:
-
-\begin{myitemize}
-    \item Edit \lstinline=/System/Library/LaunchDaemons/com.apple.mDNSResponder.plist= \newline
-        by adding \lstinline=<string>-AlwaysAppendSearchDomains</string>= after line 16:
-\begin{lstlisting}
-<key>ProgramArguments</key>
-  <array>
-    <string>/usr/sbin/mDNSResponder</string>
-    <string>-launchd</string>
-        <string>-AlwaysAppendSearchDomains</string>
-  </array>
-\end{lstlisting}
-    \item Now unload and reload the mDNSResponder service:
-\begin{lstlisting}
-% sudo launchctl unload -w
-/System/Library/LaunchDaemons/com.apple.mDNSResponder.plist
-% sudo launchctl load -w
-/System/Library/LaunchDaemons/com.apple.mDNSResponder.plist
-\end{lstlisting}
-\end{myitemize}
-
-
-\subsection{Other Software Used Internally By Cylc}
-
-Cylc has incorporated a custom-modified version the {\em xdot} graph
-viewer (\url{https://github.com/jrfonseca/xdot.py}, LGPL license).
-
-
-\section{Installation}
-\label{Installation}
-
-\subsection{Install The External Dependencies}
-
-First install graphviz, Pygraphviz, \TeX, and ImageMagick
-using the package manager on your system if possible; otherwise download
-the packages manually and follow their native installation documentation.
-On a modern Linux system, this is very easy. For example, to install
-cylc-5.1.0 on the Fedora 18 Linux distribution:
-
-\lstset{language=transcript}
-\begin{lstlisting}
-$ yum install graphviz       # (2.28)
-$ yum install graphviz-devel # (for pgraphviz build)
-$ yum install python-devel   # (ditto)
-
-# TeX packages, and ImageMagick, for generating the Cylc User Guide:
-$ yum install texlive
-$ yum install texlive-tex4ht
-$ yum install texlive-tocloft
-$ yum install texlive-framed
-$ yum install texlive-preprint
-$ yum install ImageMagick
-
-# Python packages:
-$ easy_install pygraphviz
-
-\end{lstlisting}
-
-If you do not have root access on your intended cylc host machine and
-cannot get a sysadmin to do this at system level, see~\ref{LocalInstall} for
-tips on installing everything to a local user account.
-
-Now check that everything other than the \LaTeX packages is
-installed properly:
 \lstset{language=transcript}
 \begin{lstlisting}
 $ cylc check-software
@@ -529,16 +435,63 @@ Checking for Python packages:
  + pygraphviz ... ok
  + pygtk ... ok
 \end{lstlisting}
-If this command reports any errors then the packages concerned are not
-installed, not in the system Python search path, or (for a local
-install) not present in your \lstinline=$PYTHONPATH= variable.
 
-\subsection{Install Cylc}
+If errors are reported then the packages concerned are either not installed or
+not in your Python search path. (Note that \lstinline=cylc check-software= has
+become quite trivial as we've removed or bundled some former dependencies, but
+in future we intend to make it print a comprehensive list of library versions
+etc.\ to include in with bug reports.)
+
+\subsection{Software Bundled With Cylc}
+
+Cylc bundles several third party packages which do not need to be installed
+separately.
+
+\begin{myitemize}
+  \item {\bf cherrypy 6.0.2} (slightly modified): a pure Python HTTP framework
+    that we use as a web server for communication between server processes
+    (suite daemons) and client programs (running tasks, GUIs, CLI commands).
+    Client communication is via the Python {\bf requests} library if available
+    (recommended) or else pure Python via {\bf urllib2}.
+\newline \url{http://www.cherrypy.org/}
+\newline \url{http://docs.python-requests.org/}
+  \item {\bf Jinja2 2.8}: a full featured template engine for Python, and its
+    dependency {\bf MarkupSafe 0.23}; both BSD licensed.
+\newline \url{http://jinja.pocoo.org/}
+\newline \url{http://www.pocoo.org/projects/markupsafe/}
+  \item the {\bf xdot} graph viewer (modified), LGPL licensed:
+    \newline \url{https://github.com/jrfonseca/xdot.py}
+\end{myitemize}
+
+\subsection{Installing Cylc Itself}
 \label{InstallCylc}
 
-Cylc installs into a normal user account, as an unpacked release tarball
-or a git repository clone. See the \lstinline=INSTALL= file in the source
-tree for instructions (also listed in~\ref{INSTALL}).
+Cylc releases can be downloaded from from \url{https://cylc.github.io/cylc}.
+
+The wrapper script \lstinline=admin/cylc-wrapper= should be installed as
+\lstinline=cylc= somewhere in the system executable search path (e.g.\
+\lstinline=/usr/local/bin/=) and modified slightly to point to a location
+such as \lstinline=/opt/cylc/= where successive Cylc releases will be unpacked
+side by side.
+
+To install Cylc for the first time simply unpack the release tarball in that
+location, type \lstinline=make= in it, and set your site defaults in a
+site config file (below).
+
+Installing subsequent releases is just a matter of unpacking the new tarballs
+next to the previous releases, running \lstinline=make= in them, and copying
+in (possibly with modifications) the previous site config file.
+
+\subsubsection{Local User Installation}
+\label{LocalInstall}
+
+It is easy to install Cylc under your own user account if you don't have
+root or sudo access to the system: just put the central Cylc wrapper in
+\lstinline=$HOME/bin/= (making sure that is in your \lstinline=$PATH=) and
+modify it to point to a directory such as \lstinline=$HOME/cylc/= where you
+will unpack and install release tarballs. Local installation of third party
+dependencies like Graphviz is also possible, but that depends on the particular
+installation methods used and is outside of the scope of this document.
 
 \subsubsection{Create A Site Config File}
 
@@ -576,74 +529,6 @@ changes to the source code don't break existing functionality. Note that
 some test failures can be expected to result from suites timing out,
 even if nothing is wrong, if you run too many tests in parallel. See
 \lstinline=cylc test-battery --help=.
-
-\subsection{Local User Installation}
-\label{LocalInstall}
-
-It is possible to install cylc and all of its software prerequisites
-under your own user account. Cylc itself is already designed to be
-installed into a normal user account, just follow the instructions above
-in~\ref{InstallCylc}. For the other packages, depending on the
-installation method used for each, it is just a matter of learning
-how to change the default install path prefix from, for example,
-\lstinline=/usr/local= to \lstinline=$HOME/installed/usr/local= and
-then ensuring that the resulting local package paths are set properly
-in your \lstinline=PYTHONPATH= environment variable.
-
-\subsubsection{Some Guidelines}
-
-\lstset{language=transcript}
-
-\begin{myitemize}
-\item For \lstinline=python setup.py install= installation:
-\begin{lstlisting}
-$ python setup.py install --prefix=/my/local/install/path
-\end{lstlisting}
-\item For building graphviz from source:
-\begin{lstlisting}
-$ ./configure --prefix=/my/local/install/path --with-qt=no
-$ make
-$ make install
-\end{lstlisting}
-The graphviz build reportedly may fail on systems that do not have QT
-installed, hence the \lstinline@./configure --with-qt=no@ option above.
-The graphviz lib and include locations are required when installing
-Pygraphviz.
-\item The pygraphviz \lstinline=setup.py= file may need to be edited
-to point at your local graphviz library and include directories:
-\begin{lstlisting}
-# setup.py lines 31 and 32
-library_path='/path/to/local/graphviz/lib'
-include_path='/path/to/local/graphviz/include'
-\end{lstlisting}
-\item Note that when using \lstinline=python setup.py= or
-\lstinline=easy_install= the local install location may need to exist
-and it may be need to be present in \lstinline=PYTHONPATH= {\em before}
-you initiate the install process.
-\end{myitemize}
-
-Finally, check that everything (other than \LaTeX for document
-processing) is installed:
-
-\lstset{language=transcript}
-\begin{lstlisting}
-$ cylc check-software
-Checking for Python >= 2.6 ... found 2.7.3 ... ok
-Checking for non-Python packages:
- + Graphviz ... ok
-Checking for Python packages:
- + pygraphviz ... ok
- + pygtk ... ok
-\end{lstlisting}
-If this command reports any errors then the packages concerned are not
-installed, not in the system Python search path, or (for a local
-install) not present in your \lstinline=$PYTHONPATH= variable.
-
-\subsection{Upgrading To New Cylc Versions}
-
-Upgrading is just a matter of unpacking the new cylc release. Successive
-cylc releases can be installed in parallel as suggested in the
-\lstinline=INSTALL= file (\ref{INSTALL}).
 
 \section{Cylc Terminology}
 
