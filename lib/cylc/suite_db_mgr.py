@@ -39,9 +39,13 @@ class SuiteDatabaseManager(object):
     TABLE_TASK_POOL = CylcSuiteDAO.TABLE_TASK_POOL
     TABLE_TASK_STATES = CylcSuiteDAO.TABLE_TASK_STATES
 
-    def __init__(self, pri_d, pub_d):
-        self.pri_path = os.path.join(pri_d, CylcSuiteDAO.DB_FILE_BASE_NAME)
-        self.pub_path = os.path.join(pub_d, CylcSuiteDAO.DB_FILE_BASE_NAME)
+    def __init__(self, pri_d=None, pub_d=None):
+        self.pri_path = None
+        if pri_d:
+            self.pri_path = os.path.join(pri_d, CylcSuiteDAO.DB_FILE_BASE_NAME)
+        self.pub_path = None
+        if pub_d:
+            self.pub_path = os.path.join(pub_d, CylcSuiteDAO.DB_FILE_BASE_NAME)
         self.pri_dao = None
         self.pub_dao = None
 
@@ -243,19 +247,6 @@ class SuiteDatabaseManager(object):
                         "num": timer.num,
                         "delay": timer.delay,
                         "timeout": timer.timeout})
-            if any(itask.db_inserts_map.values()):
-                for table_name, db_inserts in sorted(
-                        itask.db_inserts_map.items()):
-                    while db_inserts:
-                        db_insert = db_inserts.pop(0)
-                        db_insert.update({
-                            "name": itask.tdef.name,
-                            "cycle": str(itask.point),
-                        })
-                        if "submit_num" not in db_insert:
-                            db_insert["submit_num"] = itask.submit_num
-                        self.db_inserts_map.setdefault(table_name, [])
-                        self.db_inserts_map[table_name].append(db_insert)
             if itask.state.time_updated:
                 set_args = {
                     "time_updated": itask.state.time_updated,
@@ -266,30 +257,58 @@ class SuiteDatabaseManager(object):
                     "cycle": str(itask.point),
                     "name": itask.tdef.name,
                 }
-                self.db_updates_map.setdefault(itask.TABLE_TASK_STATES, [])
-                self.db_updates_map[itask.TABLE_TASK_STATES].append(
+                self.db_updates_map.setdefault(self.TABLE_TASK_STATES, [])
+                self.db_updates_map[self.TABLE_TASK_STATES].append(
                     (set_args, where_args))
                 itask.state.time_updated = None
-            if any(itask.db_updates_map.values()):
-                for table_name, db_updates in sorted(
-                        itask.db_updates_map.items()):
-                    while db_updates:
-                        set_args = db_updates.pop(0)
-                        where_args = {
-                            "cycle": str(itask.point),
-                            "name": itask.tdef.name,
-                        }
-                        if "submit_num" not in set_args:
-                            where_args["submit_num"] = itask.submit_num
-                        self.db_updates_map.setdefault(table_name, [])
-                        self.db_updates_map[table_name].append(
-                            (set_args, where_args))
 
         self.db_inserts_map[self.TABLE_CHECKPOINT_ID].append({
             # id = -1 for latest
             "id": CylcSuiteDAO.CHECKPOINT_LATEST_ID,
             "time": get_current_time_string(),
             "event": CylcSuiteDAO.CHECKPOINT_LATEST_EVENT})
+
+    def put_insert_task_events(self, itask, args):
+        """Put INSERT statement for task_events table."""
+        self._put_insert_task_x(CylcSuiteDAO.TABLE_TASK_EVENTS, itask, args)
+
+    def put_insert_task_jobs(self, itask, args):
+        """Put INSERT statement for task_jobs table."""
+        self._put_insert_task_x(CylcSuiteDAO.TABLE_TASK_JOBS, itask, args)
+
+    def put_insert_task_states(self, itask, args):
+        """Put INSERT statement for task_states table."""
+        self._put_insert_task_x(CylcSuiteDAO.TABLE_TASK_STATES, itask, args)
+
+    def _put_insert_task_x(self, table_name, itask, args):
+        """Put INSERT statement for a task_* table."""
+        args.update({
+            "name": itask.tdef.name,
+            "cycle": str(itask.point)})
+        if "submit_num" not in args:
+            args["submit_num"] = itask.submit_num
+        self.db_inserts_map.setdefault(table_name, [])
+        self.db_inserts_map[table_name].append(args)
+
+    def put_update_task_jobs(self, itask, set_args):
+        """Put UPDATE statement for task_jobs table."""
+        self._put_update_task_x(
+            CylcSuiteDAO.TABLE_TASK_JOBS, itask, set_args)
+
+    def put_update_task_states(self, itask, set_args):
+        """Put UPDATE statement for task_states table."""
+        self._put_update_task_x(
+            CylcSuiteDAO.TABLE_TASK_STATES, itask, set_args)
+
+    def _put_update_task_x(self, table_name, itask, set_args):
+        """Put UPDATE statement for a task_* table."""
+        where_args = {
+            "cycle": str(itask.point),
+            "name": itask.tdef.name}
+        if "submit_num" not in set_args:
+            where_args["submit_num"] = itask.submit_num
+        self.db_updates_map.setdefault(table_name, [])
+        self.db_updates_map[table_name].append((set_args, where_args))
 
     def recover_pub_from_pri(self):
         """Recover public database from private database."""

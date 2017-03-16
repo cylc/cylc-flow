@@ -42,7 +42,7 @@ from cylc.profiler import Profiler
 
 
 def main():
-
+    """cylc validate CLI."""
     parser = COP(__doc__, jset=True, prep=True, icp=True)
 
     parser.add_option(
@@ -90,19 +90,15 @@ def main():
     for name in cfg.taskdefs.keys():
         try:
             itask = TaskProxy(
-                cfg.taskdefs[name],
-                cfg.start_point,
-                is_startup=True,
-                validate_mode=True)
+                cfg.taskdefs[name], cfg.start_point, is_startup=True)
         except Exception as exc:
             print >> sys.stderr, str(exc)
             raise SuiteConfigError(
                 'ERROR, failed to instantiate task %s' % name)
         if itask.point is None:
             if cylc.flags.verbose:
-                print >> sys.stderr, (
-                    " + Task out of bounds for " + str(cfg.start_point) +
-                    ": " + itask.name)
+                print >> sys.stderr, (" + Task out of bounds for %s: %s" % (
+                    cfg.start_point, itask.tdef.name))
             continue
 
         # Warn for purely-implicit-cycling tasks (these are deprecated).

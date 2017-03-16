@@ -23,10 +23,8 @@ structures.
 
 
 from copy import deepcopy, copy
-import re
 import os
 import re
-import sys
 import traceback
 
 from cylc.c3mro import C3
@@ -46,7 +44,6 @@ from cylc.message_output import MessageOutput
 from cylc.print_tree import print_tree
 from cylc.taskdef import TaskDef, TaskDefError
 from cylc.task_id import TaskID
-from cylc.task_proxy import TaskProxy
 from cylc.task_trigger import TaskTrigger
 from cylc.wallclock import get_current_time_string
 from isodatetime.data import Calendar

@@ -28,14 +28,12 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.cycling.iso8601
 from cylc.envvar import expandvars
 from cylc.network.suite_broadcast_server import BroadcastServer
-from cylc.rundb import CylcSuiteDAO
 from cylc.suite_logging import LOG
 from cylc.task_id import TaskID
 from cylc.task_action_timer import TaskActionTimer
 from cylc.task_state import (
     TaskState, TASK_STATUSES_ACTIVE, TASK_STATUS_WAITING)
-from cylc.wallclock import (
-    get_current_time_string, get_unix_time_from_time_string)
+from cylc.wallclock import get_unix_time_from_time_string
 
 
 class TaskProxySequenceBoundsError(ValueError):
@@ -61,32 +59,22 @@ class TaskProxy(object):
     # environments to allow changed behaviour after previous failures.
 
     # Memory optimization - constrain possible attributes to this list.
-    __slots__ = ["KEY_EXECUTE", "KEY_SUBMIT", "NN",
-                 "TABLE_TASK_JOBS",
-                 "TABLE_TASK_EVENTS", "TABLE_TASK_STATES",
+    __slots__ = ["KEY_EXECUTE", "KEY_SUBMIT",
                  "tdef", "submit_num",
                  "point", "cleanup_cutoff", "identity", "has_spawned",
                  "point_as_seconds", "stop_point", "manual_trigger",
                  "is_manual_submit", "summary", "local_job_file_path",
-                 "try_timers", "db_inserts_map",
-                 "db_updates_map", "task_host", "task_owner",
+                 "try_timers", "task_host", "task_owner",
                  "job_vacated", "poll_timers", "events_conf",
                  "delayed_start", "expire_time", "state"]
 
     KEY_EXECUTE = "execution"
-    KEY_EXECUTE_TIME_LIMIT = "execution_time_limit"
     KEY_SUBMIT = "submission"
-    NN = "NN"
-
-    TABLE_TASK_JOBS = CylcSuiteDAO.TABLE_TASK_JOBS
-    TABLE_TASK_EVENTS = CylcSuiteDAO.TABLE_TASK_EVENTS
-    TABLE_TASK_STATES = CylcSuiteDAO.TABLE_TASK_STATES
 
     def __init__(
             self, tdef, start_point, status=TASK_STATUS_WAITING,
             hold_swap=None, has_spawned=False, stop_point=None,
-            is_startup=False, validate_mode=False, submit_num=0,
-            is_reload_or_restart=False, pre_reload_inst=None):
+            is_startup=False, submit_num=0, pre_reload_inst=None):
         self.tdef = tdef
         if submit_num is None:
             self.submit_num = 0
@@ -105,14 +93,11 @@ class TaskProxy(object):
                 # This task is out of sequence bounds
                 raise TaskProxySequenceBoundsError(self.tdef.name)
             self.point = min(adjusted)
-            self.cleanup_cutoff = self.tdef.get_cleanup_cutoff_point(
-                self.point, self.tdef.intercycle_offsets)
-            self.identity = TaskID.get(self.tdef.name, self.point)
         else:
             self.point = start_point
-            self.cleanup_cutoff = self.tdef.get_cleanup_cutoff_point(
-                self.point, self.tdef.intercycle_offsets)
-            self.identity = TaskID.get(self.tdef.name, self.point)
+        self.cleanup_cutoff = self.tdef.get_cleanup_cutoff_point(
+            self.point, self.tdef.intercycle_offsets)
+        self.identity = TaskID.get(self.tdef.name, self.point)
 
         self.has_spawned = has_spawned
 
@@ -157,38 +142,10 @@ class TaskProxy(object):
             self.KEY_EXECUTE: TaskActionTimer(delays=[]),
             self.KEY_SUBMIT: TaskActionTimer(delays=[])}
 
-        self.db_inserts_map = {
-            self.TABLE_TASK_JOBS: [],
-            self.TABLE_TASK_STATES: [],
-            self.TABLE_TASK_EVENTS: [],
-        }
-        self.db_updates_map = {
-            self.TABLE_TASK_JOBS: [],
-            self.TABLE_TASK_STATES: [],
-        }
-
-        # In case task owner and host are needed by db_events_insert()
-        # for pre-submission events, set their initial values as if
-        # local (we can't know the correct host prior to this because
-        # dynamic host selection could be used).
         self.task_host = 'localhost'
         self.task_owner = None
 
         self.job_vacated = False
-
-        # An initial db state entry is created at task proxy init. On reloading
-        # or restarting the suite, the task proxies already have this db entry.
-        if (not validate_mode and not is_reload_or_restart and
-                self.submit_num == 0):
-            self.db_inserts_map[self.TABLE_TASK_STATES].append({
-                "time_created": get_current_time_string(),
-                "time_updated": get_current_time_string(),
-                "status": status})
-
-        if not validate_mode and self.submit_num > 0:
-            self.db_updates_map[self.TABLE_TASK_STATES].append({
-                "time_updated": get_current_time_string(),
-                "status": status})
 
         self.events_conf = rtconfig['events']
         # configure retry delays before the first try
@@ -227,7 +184,7 @@ class TaskProxy(object):
                         self.cleanup_cutoff < p_next):
                     self.cleanup_cutoff = p_next
 
-        if is_reload_or_restart and pre_reload_inst is not None:
+        if pre_reload_inst is not None:
             self.log(INFO, 'reloaded task definition')
             if pre_reload_inst.state.status in TASK_STATUSES_ACTIVE:
                 self.log(WARNING, "job is active with pre-reload settings")
@@ -239,8 +196,6 @@ class TaskProxy(object):
             self.summary = pre_reload_inst.summary
             self.local_job_file_path = pre_reload_inst.local_job_file_path
             self.try_timers = pre_reload_inst.try_timers
-            self.db_inserts_map = pre_reload_inst.db_inserts_map
-            self.db_updates_map = pre_reload_inst.db_updates_map
             self.task_host = pre_reload_inst.task_host
             self.task_owner = pre_reload_inst.task_owner
             self.job_vacated = pre_reload_inst.job_vacated
@@ -272,13 +227,6 @@ class TaskProxy(object):
         """Log a message of this task proxy."""
         msg = "[%s] -%s" % (self.identity, msg)
         LOG.log(lvl, msg)
-
-    def db_events_insert(self, event="", message=""):
-        """Record an event to the DB."""
-        self.db_inserts_map[self.TABLE_TASK_EVENTS].append({
-            "time": get_current_time_string(),
-            "event": event,
-            "message": message})
 
     def ready_to_run(self, now):
         """Am I in a pre-run state but ready to run?

@@ -51,7 +51,8 @@ from cylc.task_state import (
     TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_SUBMIT_RETRYING,
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
     TASK_STATUS_RETRYING)
-from cylc.wallclock import get_time_string_from_unix_time
+from cylc.wallclock import (
+    get_current_time_string, get_time_string_from_unix_time)
 
 
 class TaskPool(object):
@@ -187,14 +188,12 @@ class TaskPool(object):
             if (name_str, point_str) in task_states_data:
                 submit_num = task_states_data[(name_str, point_str)].get(
                     "submit_num")
-            new_task = TaskProxy(
+            self.add_to_runahead_pool(TaskProxy(
                 config.get_taskdef(name_str), get_point(point_str),
-                stop_point=stop_point, submit_num=submit_num)
-            if new_task:
-                self.add_to_runahead_pool(new_task)
+                stop_point=stop_point, submit_num=submit_num))
         return n_warnings
 
-    def add_to_runahead_pool(self, itask):
+    def add_to_runahead_pool(self, itask, is_restart=False):
         """Add a new task to the runahead pool if possible.
 
         Tasks whose recurrences allow them to spawn beyond the suite
@@ -222,8 +221,7 @@ class TaskPool(object):
         # add in held state if beyond the suite hold point
         if self.hold_point and itask.point > self.hold_point:
             itask.log(
-                INFO,
-                "holding (beyond suite hold point) " + str(self.hold_point))
+                INFO, "holding (beyond suite hold point) %s" % self.hold_point)
             itask.state.reset_state(TASK_STATUS_HELD)
         elif (itask.point <= self.stop_point and
                 self.task_has_future_trigger_overrun(itask)):
@@ -239,6 +237,20 @@ class TaskPool(object):
         self.runahead_pool.setdefault(itask.point, {})
         self.runahead_pool[itask.point][itask.identity] = itask
         self.rhpool_changed = True
+
+        if is_restart:
+            return True
+
+        # store in persistent
+        if itask.submit_num > 0:
+            self.suite_db_mgr.put_update_task_states(itask, {
+                "time_updated": get_current_time_string(),
+                "status": itask.state.status})
+        else:
+            self.suite_db_mgr.put_insert_task_states(itask, {
+                "time_created": get_current_time_string(),
+                "time_updated": get_current_time_string(),
+                "status": itask.state.status})
         return True
 
     def release_runahead_tasks(self):
@@ -617,13 +629,11 @@ class TaskPool(object):
                     itask.has_spawned = True
                     itask.log(WARNING, "last instance (orphaned by reload)")
             else:
-                new_task = TaskProxy(
+                self.remove(itask, '(suite definition reload)')
+                self.add_to_runahead_pool(TaskProxy(
                     config.get_taskdef(itask.tdef.name), itask.point,
                     itask.state.status, stop_point=itask.stop_point,
-                    submit_num=itask.submit_num, is_reload_or_restart=True,
-                    pre_reload_inst=itask)
-                self.remove(itask, '(suite definition reload)')
-                self.add_to_runahead_pool(new_task)
+                    submit_num=itask.submit_num, pre_reload_inst=itask))
         LOG.info("Reload completed.")
         self.do_reload = False
 

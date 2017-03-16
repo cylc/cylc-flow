@@ -32,6 +32,7 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
 from cylc.mp_pool import SuiteProcContext
 from cylc.owner import USER
+from cylc.rundb import CylcSuiteDAO
 from cylc.suite_logging import ERR, LOG
 from cylc.suite_host import get_suite_host
 from cylc.task_action_timer import TaskActionTimer
@@ -41,7 +42,8 @@ from cylc.task_state import (
     TASK_STATUS_READY, TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_RUNNING, TASK_STATUS_FAILED)
 from cylc.task_outputs import (
-    TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED)
+    TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED,
+    TASK_OUTPUT_FAILED)
 from cylc.wallclock import (
     get_current_time_string,
     get_unix_time_from_time_string,
@@ -66,9 +68,16 @@ TaskJobLogsRetrieveContext = namedtuple(
 class TaskEventsManager(object):
     """Task events manager."""
 
-    CUSTOM_EVENT_HANDLER = "event-handler"
-    EVENT_MAIL = "event-mail"
-    JOB_LOGS_RETRIEVE = "job-logs-retrieve"
+    EVENT_FAILED = TASK_OUTPUT_FAILED
+    EVENT_RETRY = "retry"
+    EVENT_STARTED = TASK_OUTPUT_STARTED
+    EVENT_SUBMITTED = TASK_OUTPUT_SUBMITTED
+    EVENT_SUBMIT_FAILED = "submission failed"
+    EVENT_SUBMIT_RETRY = "submission retry"
+    EVENT_SUCCEEDED = TASK_OUTPUT_SUCCEEDED
+    HANDLER_CUSTOM = "event-handler"
+    HANDLER_MAIL = "event-mail"
+    HANDLER_JOB_LOGS_RETRIEVE = "job-logs-retrieve"
     INCOMING_FLAG = ">"
     LOGGING_LVL_OF = {
         "INFO": INFO,
@@ -83,9 +92,10 @@ class TaskEventsManager(object):
     RE_MESSAGE_TIME = re.compile(
         '\A(.+) at (' + RE_DATE_TIME_FORMAT_EXTENDED + ')\Z')
 
-    def __init__(self, suite, proc_pool):
+    def __init__(self, suite, proc_pool, suite_db_mgr):
         self.suite = suite
         self.proc_pool = proc_pool
+        self.suite_db_mgr = suite_db_mgr
         self.mail_interval = 0.0
         self.mail_footer = None
         self.next_mail_time = None
@@ -165,7 +175,7 @@ class TaskEventsManager(object):
                 # Avoid flooding user's mail box with mail notification.
                 # Group together as many notifications as possible within a
                 # given interval.
-                timer.ctx.ctx_type == self.EVENT_MAIL and
+                timer.ctx.ctx_type == self.HANDLER_MAIL and
                 not schd_ctx.stop_mode and
                 self.next_mail_time is not None and
                 self.next_mail_time > now
@@ -173,7 +183,7 @@ class TaskEventsManager(object):
                 continue
 
             timer.set_waiting()
-            if timer.ctx.ctx_type == self.CUSTOM_EVENT_HANDLER:
+            if timer.ctx.ctx_type == self.HANDLER_CUSTOM:
                 # Run custom event handlers on their own
                 self.proc_pool.put_command(
                     SuiteProcContext(
@@ -189,11 +199,11 @@ class TaskEventsManager(object):
 
         next_mail_time = now + self.mail_interval
         for ctx, id_keys in ctx_groups.items():
-            if ctx.ctx_type == self.EVENT_MAIL:
+            if ctx.ctx_type == self.HANDLER_MAIL:
                 # Set next_mail_time if any mail sent
                 self.next_mail_time = next_mail_time
                 self._process_event_email(schd_ctx, ctx, id_keys)
-            elif ctx.ctx_type == self.JOB_LOGS_RETRIEVE:
+            elif ctx.ctx_type == self.HANDLER_JOB_LOGS_RETRIEVE:
                 self._process_job_logs_retrieval(schd_ctx, ctx, id_keys)
 
     def process_message(self, itask, priority, message, poll_event_time=None,
@@ -252,8 +262,7 @@ class TaskEventsManager(object):
             if not itask.state.outputs.is_completed(message):
                 cylc.flags.pflag = True
                 itask.state.outputs.set_completed(message)
-                itask.db_events_insert(
-                    event="output completed", message=message)
+                self._db_events_insert(itask, "output completed", message)
             elif not is_polled:
                 # This output has already been reported complete. Not an error
                 # condition - maybe the network was down for a bit. Ok for
@@ -267,8 +276,7 @@ class TaskEventsManager(object):
             return
 
         if priority == TaskMessage.WARNING:
-            self.setup_event_handlers(
-                itask, "warning", message, db_update=False)
+            self.setup_event_handlers(itask, "warning", message)
 
         if (message == TASK_OUTPUT_STARTED and
                 itask.state.status in [
@@ -287,20 +295,20 @@ class TaskEventsManager(object):
                     TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_RUNNING]):
             # (submit- states in case of very fast submission and execution).
             self._process_message_failed(itask, event_time)
-        elif message == "submission failed":
+        elif message == self.EVENT_SUBMIT_FAILED:
             self._process_message_submit_failed(itask, event_time)
-        elif message == "submission succeeded":
+        elif message == TASK_OUTPUT_SUBMITTED:
             self._process_message_submitted(itask, event_time)
         elif message.startswith(TaskMessage.FAIL_MESSAGE_PREFIX):
             # capture and record signals sent to task proxy
-            itask.db_events_insert(event="signaled", message=message)
+            self._db_events_insert(itask, "signaled", message)
             signal = message.replace(TaskMessage.FAIL_MESSAGE_PREFIX, "")
-            itask.db_updates_map[itask.TABLE_TASK_JOBS].append(
-                {"run_signal": signal})
+            self.suite_db_mgr.put_update_task_jobs(itask, {
+                "run_signal": signal})
         elif message.startswith(TaskMessage.VACATION_MESSAGE_PREFIX):
             cylc.flags.pflag = True
             itask.state.set_state(TASK_STATUS_SUBMITTED)
-            itask.db_events_insert(event="vacated", message=message)
+            self._db_events_insert(itask, "vacated", message)
             itask.state.execution_timer_timeout = None
             itask.set_event_time('started')
             itask.try_timers[itask.KEY_SUBMIT].num = 0
@@ -314,22 +322,18 @@ class TaskEventsManager(object):
                 itask.state.status, message))
             if priority in [CRITICAL, ERROR, WARNING, INFO, DEBUG]:
                 priority = getLevelName(priority)
-            itask.db_events_insert(
-                event=("message %s" % str(priority).lower()), message=message)
+            self._db_events_insert(
+                itask, ("message %s" % str(priority).lower()), message)
 
     def setup_event_handlers(
-            self, itask, event, message, db_update=True, db_event=None,
-            db_msg=None):
+            self, itask, event, message):
         """Set up event handlers."""
-        # extra args for inconsistent use between events, logging, and db
-        # updates
-        db_event = db_event or event
-        if db_update:
-            itask.db_events_insert(event=db_event, message=db_msg)
-
         if itask.tdef.run_mode != 'live':
             return
-
+        msg = ""
+        if message != "job %s" % event:
+            msg = message
+        self._db_events_insert(itask, event, msg)
         self._setup_job_logs_retrieval(itask, event, message)
         self._setup_event_mail(itask, event, message)
         self._setup_custom_event_handlers(itask, event, message)
@@ -343,6 +347,13 @@ class TaskEventsManager(object):
             del self.event_timers[id_key]
         else:
             self.event_timers[id_key].unset_waiting()
+
+    def _db_events_insert(self, itask, event="", message=""):
+        """Record an event to the DB."""
+        self.suite_db_mgr.put_insert_task_events(itask, {
+            "time": get_current_time_string(),
+            "event": event,
+            "message": message})
 
     def _process_event_email(self, schd_ctx, ctx, id_keys):
         """Process event notification, by email."""
@@ -500,7 +511,7 @@ class TaskEventsManager(object):
         if event_time is None:
             event_time = get_current_time_string()
         itask.set_event_time('finished', event_time)
-        itask.db_updates_map[itask.TABLE_TASK_JOBS].append({
+        self.suite_db_mgr.put_update_task_jobs(itask, {
             "run_status": 1,
             "time_run_exit": itask.summary['finished_time_string'],
         })
@@ -520,7 +531,7 @@ class TaskEventsManager(object):
             itask.log(INFO, "job(%02d) " % itask.submit_num + msg)
             itask.summary['latest_message'] = msg
             self.setup_event_handlers(
-                itask, "retry", "job failed, " + delay_msg, db_msg=delay_msg)
+                itask, "retry", "job failed, %s" % delay_msg)
             itask.state.set_execution_retry()
 
     def _process_message_started(self, itask, event_time):
@@ -531,7 +542,7 @@ class TaskEventsManager(object):
         cylc.flags.pflag = True
         itask.state.set_state(TASK_STATUS_RUNNING)
         itask.set_event_time('started', event_time)
-        itask.db_updates_map[itask.TABLE_TASK_JOBS].append({
+        self.suite_db_mgr.put_update_task_jobs(itask, {
             "time_run": itask.summary['started_time_string']})
         if itask.summary['execution_time_limit']:
             execution_timeout = itask.summary['execution_time_limit']
@@ -554,7 +565,7 @@ class TaskEventsManager(object):
         itask.state.execution_timer_timeout = None
         cylc.flags.pflag = True
         itask.set_event_time('finished', event_time)
-        itask.db_updates_map[itask.TABLE_TASK_JOBS].append({
+        self.suite_db_mgr.put_update_task_jobs(itask, {
             "run_status": 0,
             "time_run_exit": itask.summary['finished_time_string'],
         })
@@ -571,10 +582,10 @@ class TaskEventsManager(object):
     def _process_message_submit_failed(self, itask, event_time):
         """Helper for process_message, handle a submit-failed message."""
         itask.state.submission_timer_timeout = None
-        itask.log(ERROR, 'submission failed')
+        itask.log(ERROR, self.EVENT_SUBMIT_FAILED)
         if event_time is None:
             event_time = get_current_time_string()
-        itask.db_updates_map[itask.TABLE_TASK_JOBS].append({
+        self.suite_db_mgr.put_update_task_jobs(itask, {
             "time_submit_exit": get_current_time_string(),
             "submit_status": 1,
         })
@@ -588,7 +599,8 @@ class TaskEventsManager(object):
             cylc.flags.pflag = True
             # See github #476.
             self.setup_event_handlers(
-                itask, 'submission failed', 'job submission failed')
+                itask, self.EVENT_SUBMIT_FAILED,
+                'job %s' % self.EVENT_SUBMIT_FAILED)
             itask.state.set_submit_failed()
         else:
             # There is a submission retry lined up.
@@ -596,14 +608,13 @@ class TaskEventsManager(object):
 
             delay_msg = "submit-retrying in %s" % (
                 itask.try_timers[itask.KEY_SUBMIT].delay_as_seconds())
-            msg = "submission failed, %s (after %s)" % (delay_msg, timeout_str)
+            msg = "%s, %s (after %s)" % (
+                self.EVENT_SUBMIT_FAILED, delay_msg, timeout_str)
             itask.log(INFO, "job(%02d) " % itask.submit_num + msg)
             itask.summary['latest_message'] = msg
-            itask.db_events_insert(
-                event="submission failed", message=delay_msg)
             self.setup_event_handlers(
-                itask, "submission retry",
-                "job submission failed, " + delay_msg)
+                itask, self.EVENT_SUBMIT_RETRY,
+                "job %s, %s" % (self.EVENT_SUBMIT_FAILED, delay_msg))
             itask.state.set_submit_retry()
 
     def _process_message_submitted(self, itask, event_time):
@@ -611,7 +622,7 @@ class TaskEventsManager(object):
         if itask.summary.get('submit_method_id') is not None:
             itask.log(
                 INFO, 'submit_method_id=' + itask.summary['submit_method_id'])
-        itask.db_updates_map[itask.TABLE_TASK_JOBS].append({
+        self.suite_db_mgr.put_update_task_jobs(itask, {
             "time_submit_exit": get_unix_time_from_time_string(event_time),
             "submit_status": 0,
             "batch_sys_job_id": itask.summary.get('submit_method_id')})
@@ -626,10 +637,9 @@ class TaskEventsManager(object):
         itask.set_event_time('submitted', event_time)
         itask.set_event_time('started')
         itask.set_event_time('finished')
-        itask.summary['latest_message'] = TASK_STATUS_SUBMITTED
+        itask.summary['latest_message'] = TASK_OUTPUT_SUBMITTED
         self.setup_event_handlers(
-            itask, "submitted", 'job submitted',
-            db_event='submission succeeded')
+            itask, TASK_OUTPUT_SUBMITTED, 'job submitted')
 
         if itask.state.set_submit_succeeded():
             try:
@@ -643,14 +653,14 @@ class TaskEventsManager(object):
     def _setup_job_logs_retrieval(self, itask, event, _=None):
         """Set up remote job logs retrieval."""
         id_key = (
-            (self.JOB_LOGS_RETRIEVE, event),
+            (self.HANDLER_JOB_LOGS_RETRIEVE, event),
             str(itask.point), itask.tdef.name, itask.submit_num)
         if itask.task_owner:
             user_at_host = itask.task_owner + "@" + itask.task_host
         else:
             user_at_host = itask.task_host
-        # TODO - use string constants for event names.
-        if (event not in ['failed', 'retry', 'succeeded'] or
+        events = (self.EVENT_FAILED, self.EVENT_RETRY, self.EVENT_SUCCEEDED)
+        if (event not in events or
                 user_at_host in [USER + '@localhost', 'localhost'] or
                 not itask.get_host_conf("retrieve job logs") or
                 id_key in self.event_timers):
@@ -660,8 +670,8 @@ class TaskEventsManager(object):
             retry_delays = [0]
         self.event_timers[id_key] = TaskActionTimer(
             TaskJobLogsRetrieveContext(
-                self.JOB_LOGS_RETRIEVE,  # key
-                self.JOB_LOGS_RETRIEVE,  # ctx_type
+                self.HANDLER_JOB_LOGS_RETRIEVE,  # key
+                self.HANDLER_JOB_LOGS_RETRIEVE,  # ctx_type
                 user_at_host,
                 itask.get_host_conf("retrieve job logs max size"),  # max_size
             ),
@@ -670,7 +680,7 @@ class TaskEventsManager(object):
     def _setup_event_mail(self, itask, event, _):
         """Event notification, by email."""
         id_key = (
-            (self.EVENT_MAIL, event),
+            (self.HANDLER_MAIL, event),
             str(itask.point), itask.tdef.name, itask.submit_num)
         if (id_key in self.event_timers or
                 event not in self._get_events_conf(itask, "mail events", [])):
@@ -680,8 +690,8 @@ class TaskEventsManager(object):
             retry_delays = [0]
         self.event_timers[id_key] = TaskActionTimer(
             TaskEventMailContext(
-                self.EVENT_MAIL,  # key
-                self.EVENT_MAIL,  # ctx_type
+                self.HANDLER_MAIL,  # key
+                self.HANDLER_MAIL,  # ctx_type
                 self._get_events_conf(  # mail_from
                     itask,
                     "mail from",
@@ -708,7 +718,7 @@ class TaskEventsManager(object):
         if not retry_delays:
             retry_delays = [0]
         for i, handler in enumerate(handlers):
-            key1 = ("%s-%02d" % (self.CUSTOM_EVENT_HANDLER, i), event)
+            key1 = ("%s-%02d" % (self.HANDLER_CUSTOM, i), event)
             id_key = (
                 key1, str(itask.point), itask.tdef.name, itask.submit_num)
             if id_key in self.event_timers or only_list and i not in only_list:
@@ -731,7 +741,7 @@ class TaskEventsManager(object):
                 TaskActionTimer(
                     CustomTaskEventHandlerContext(
                         key1,
-                        self.CUSTOM_EVENT_HANDLER,
+                        self.HANDLER_CUSTOM,
                         cmd,
                     ),
                     retry_delays))

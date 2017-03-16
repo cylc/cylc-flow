@@ -42,6 +42,7 @@ from cylc.cycling.loader import get_point
 import cylc.flags
 from cylc.mp_pool import SuiteProcPool
 from cylc.option_parsers import CylcOptionParser as COP
+from cylc.suite_db_mgr import SuiteDatabaseManager
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.task_id import TaskID
 from cylc.task_job_mgr import TaskJobManager
@@ -75,7 +76,8 @@ def main():
     suite, task_id = args
     if not TaskID.is_valid_id(task_id):
         sys.exit("Invalid task ID " + task_id)
-    suiterc = SuiteSrvFilesManager().get_suite_rc(suite)
+    suite_srv_mgr = SuiteSrvFilesManager()
+    suiterc = suite_srv_mgr.get_suite_rc(suite)
     suite_dir = os.path.dirname(suiterc)
     # For user-defined batch system handlers
     sys.path.append(os.path.join(suite_dir, 'python'))
@@ -88,7 +90,8 @@ def main():
 
     GLOBAL_CFG.create_cylc_run_tree(suite)
 
-    task_job_mgr = TaskJobManager(suite, proc_pool=SuiteProcPool())
+    task_job_mgr = TaskJobManager(
+        suite, SuiteProcPool(), SuiteDatabaseManager(), suite_srv_mgr)
     task_job_mgr.single_task_mode = True
     task_job_mgr.job_file_writer.set_suite_env({
         'CYLC_UTC': str(config.cfg['cylc']['UTC mode']),

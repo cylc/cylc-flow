@@ -67,9 +67,9 @@ from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
 from cylc.taskdef import TaskDef
 from cylc.task_action_timer import TaskActionTimer
-from cylc.task_events_mgr import TaskEventsManager
 from cylc.task_id import TaskID
 from cylc.task_job_mgr import TaskJobManager, RemoteJobHostInitError
+from cylc.task_outputs import TASK_OUTPUT_SUBMITTED
 from cylc.task_pool import TaskPool
 from cylc.task_proxy import TaskProxy, TaskProxySequenceBoundsError
 from cylc.task_state import (
@@ -322,12 +322,13 @@ conditions; see `cylc conditions`.
                     'ERROR: this suite requires the %s run mode' % reqmode)
 
         self.suite_event_handler = SuiteEventHandler(self.proc_pool)
-        self.task_events_mgr = TaskEventsManager(self.suite, self.proc_pool)
+        self.task_job_mgr = TaskJobManager(
+            self.suite, self.proc_pool, self.suite_db_mgr,
+            self.suite_srv_files_mgr)
+        self.task_events_mgr = self.task_job_mgr.task_events_mgr
         self.task_events_mgr.mail_interval = self._get_cylc_conf(
             "task event mail interval")
         self.task_events_mgr.mail_footer = self._get_events_conf("mail footer")
-        self.task_job_mgr = TaskJobManager(
-            self.suite, self.proc_pool, self.task_events_mgr)
         if self.options.genref or self.options.reftest:
             self.configure_reftest()
 
@@ -537,8 +538,7 @@ conditions; see `cylc conditions`.
                 status=status,
                 hold_swap=hold_swap,
                 has_spawned=bool(spawned),
-                submit_num=submit_num,
-                is_reload_or_restart=True)
+                submit_num=submit_num)
         except SuiteConfigError as exc:
             if cylc.flags.debug:
                 ERR.error(traceback.format_exc())
@@ -583,7 +583,7 @@ conditions; see `cylc conditions`.
                 OUT.info("+ %s.%s %s (%s)" % (name, cycle, status, hold_swap))
             else:
                 OUT.info("+ %s.%s %s" % (name, cycle, status))
-            self.pool.add_to_runahead_pool(itask)
+            self.pool.add_to_runahead_pool(itask, is_restart=True)
 
     def _load_task_action_timers(self, row_idx, row):
         """Load a task action timer, e.g. event handlers, retry states."""
@@ -1302,7 +1302,7 @@ conditions; see `cylc conditions`.
                     if self.run_mode == 'simulation':
                         for itask in itasks:
                             self.task_events_mgr.process_message(
-                                itask, INFO, 'submission succeeded')
+                                itask, INFO, TASK_OUTPUT_SUBMITTED)
                     else:
                         self.task_job_mgr.submit_task_jobs(self.suite, itasks)
                 for meth in [

@@ -38,13 +38,14 @@ from cylc.mkdir_p import mkdir_p
 from cylc.mp_pool import SuiteProcPool, SuiteProcContext
 from cylc.network.suite_broadcast_server import BroadcastServer
 from cylc.owner import is_remote_user, USER
+from cylc.rundb import CylcSuiteDAO
 from cylc.suite_host import is_remote_host
 from cylc.suite_logging import ERR, LOG
-from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.task_events_mgr import TaskEventsManager
 from cylc.task_message import TaskMessage
 from cylc.task_outputs import (
-    TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED)
+    TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED,
+    TASK_OUTPUT_FAILED)
 from cylc.task_action_timer import TaskActionTimer
 from cylc.task_state import (
     TASK_STATUSES_ACTIVE, TASK_STATUS_HELD, TASK_STATUS_READY,
@@ -77,15 +78,17 @@ class TaskJobManager(object):
     JOBS_KILL = "jobs-kill"
     JOBS_POLL = "jobs-poll"
     JOBS_SUBMIT = SuiteProcPool.JOBS_SUBMIT
+    KEY_EXECUTE_TIME_LIMIT = "execution_time_limit"
 
-    def __init__(self, suite, proc_pool, task_events_mgr=None):
+    def __init__(
+            self, suite, proc_pool, suite_db_mgr, suite_srv_files_mgr):
         self.suite = suite
         self.proc_pool = proc_pool
-        if task_events_mgr is None:
-            task_events_mgr = TaskEventsManager(suite, proc_pool)
-        self.task_events_mgr = task_events_mgr
+        self.suite_db_mgr = suite_db_mgr
+        self.task_events_mgr = TaskEventsManager(
+            suite, proc_pool, suite_db_mgr)
         self.job_file_writer = JobFileWriter()
-        self.suite_srv_files_mgr = SuiteSrvFilesManager()
+        self.suite_srv_files_mgr = suite_srv_files_mgr
         self.init_host_map = {}  # {(user, host): should_unlink, ...}
         self.single_task_mode = False
 
@@ -309,8 +312,8 @@ class TaskJobManager(object):
             r_suite_contact_file = os.path.join(
                 GLOBAL_CFG.get_derived_host_item(
                     reg, 'suite run directory', host, owner),
-                SuiteSrvFilesManager.DIR_BASE_SRV,
-                SuiteSrvFilesManager.FILE_BASE_CONTACT)
+                self.suite_srv_files_mgr.DIR_BASE_SRV,
+                self.suite_srv_files_mgr.FILE_BASE_CONTACT)
             cmd = shlex.split(ssh_tmpl) + [
                 '-n', user_at_host, 'rm', '-f', r_suite_contact_file]
             procs[user_at_host] = (cmd, Popen(cmd, stdout=PIPE, stderr=PIPE))
@@ -364,7 +367,7 @@ class TaskJobManager(object):
         if timeout is None or now <= timeout:
             return False
         if itask.summary['execution_time_limit']:
-            timer = itask.poll_timers[itask.KEY_EXECUTE_TIME_LIMIT]
+            timer = itask.poll_timers[self.KEY_EXECUTE_TIME_LIMIT]
             if not timer.is_timeout_set():
                 timer.next()
             if not timer.is_delay_done():
@@ -420,7 +423,7 @@ class TaskJobManager(object):
                 pass
             else:
                 for name in names:
-                    if name not in ["01", itask.NN]:
+                    if name not in ["01", self.task_events_mgr.NN]:
                         rmtree(
                             os.path.join(task_log_dir, name),
                             ignore_errors=True)
@@ -428,7 +431,7 @@ class TaskJobManager(object):
             rmtree(job_file_dir, ignore_errors=True)
 
         mkdir_p(job_file_dir)
-        target = os.path.join(task_log_dir, itask.NN)
+        target = os.path.join(task_log_dir, self.task_events_mgr.NN)
         source = os.path.basename(job_file_dir)
         try:
             prev_source = os.readlink(target)
@@ -537,10 +540,12 @@ class TaskJobManager(object):
             itask.state.kill_failed = True
         elif itask.state.status == TASK_STATUS_SUBMITTED:
             self.task_events_mgr.process_message(
-                itask, CRITICAL, 'submission failed', ctx.timestamp)
+                itask, CRITICAL, "%s at %s" % (
+                    self.task_events_mgr.EVENT_SUBMIT_FAILED, ctx.timestamp))
             cylc.flags.iflag = True
         elif itask.state.status == TASK_STATUS_RUNNING:
-            self.task_events_mgr.process_message(itask, CRITICAL, 'failed')
+            self.task_events_mgr.process_message(
+                itask, CRITICAL, TASK_OUTPUT_FAILED)
             cylc.flags.iflag = True
         else:
             log_lvl = WARNING
@@ -661,7 +666,8 @@ class TaskJobManager(object):
         elif batch_sys_exit_polled == "1":
             # The job never ran, and no longer in batch system
             self.task_events_mgr.process_message(
-                itask, INFO, "submission failed", time_submit_exit)
+                itask, INFO, self.task_events_mgr.EVENT_SUBMIT_FAILED,
+                time_submit_exit)
         else:
             # The job never ran, and is in batch system
             self.task_events_mgr.process_message(
@@ -758,10 +764,12 @@ class TaskJobManager(object):
             itask.summary['submit_method_id'] = None
         if itask.summary['submit_method_id'] and ctx.ret_code == 0:
             self.task_events_mgr.process_message(
-                itask, INFO, 'submission succeeded at %s' % ctx.timestamp)
+                itask, INFO, '%s at %s' % (
+                    TASK_OUTPUT_SUBMITTED, ctx.timestamp))
         else:
             self.task_events_mgr.process_message(
-                itask, CRITICAL, 'submission failed at %s' % ctx.timestamp)
+                itask, CRITICAL, '%s at %s' % (
+                    self.task_events_mgr.EVENT_SUBMIT_FAILED, ctx.timestamp))
 
     def _prep_submit_task_job(self, suite, itask, dry_run):
         """Prepare a task job submission.
@@ -789,7 +797,7 @@ class TaskJobManager(object):
                 suite, itask.point, itask.tdef.name)
             if not dry_run:
                 self.task_events_mgr.process_message(
-                    itask, CRITICAL, 'submission failed')
+                    itask, CRITICAL, self.task_events_mgr.EVENT_SUBMIT_FAILED)
             return
         itask.local_job_file_path = local_job_file_path
 
@@ -814,8 +822,7 @@ class TaskJobManager(object):
         itask.submit_num += 1
         itask.summary['submit_num'] = itask.submit_num
         itask.local_job_file_path = None
-        itask.db_events_insert(event="incrementing submit number")
-        itask.db_inserts_map[itask.TABLE_TASK_JOBS].append({
+        self.suite_db_mgr.put_insert_task_jobs(itask, {
             "is_manual_submit": itask.is_manual_submit,
             "try_num": itask.try_timers[itask.KEY_EXECUTE].num + 1,
             "time_submit": get_current_time_string(),
@@ -859,7 +866,7 @@ class TaskJobManager(object):
         if itask.summary['execution_time_limit']:
             # Default = 1, 2 and 7 minutes intervals, roughly 1, 3 and 10
             # minutes after time limit exceeded
-            itask.poll_timers[itask.KEY_EXECUTE_TIME_LIMIT] = (
+            itask.poll_timers[self.KEY_EXECUTE_TIME_LIMIT] = (
                 TaskActionTimer(delays=batch_sys_conf.get(
                     'execution time limit polling intervals', [60, 120, 420])))
         for key in itask.KEY_SUBMIT, itask.KEY_EXECUTE:
@@ -869,7 +876,7 @@ class TaskJobManager(object):
                 pass
 
         self.init_host(suite, itask.task_host, itask.task_owner)
-        itask.db_updates_map[itask.TABLE_TASK_JOBS].append({
+        self.suite_db_mgr.put_update_task_jobs(itask, {
             "user_at_host": user_at_host,
             "batch_sys_name": itask.summary['batch_sys_name'],
         })
