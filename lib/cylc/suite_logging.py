@@ -439,6 +439,16 @@ class STDLogger(object):
         self.logger = logging.getLogger(log)
 
     def log(self, level, *args, **kwargs):
+        try:
+            itask = kwargs.pop("itask")
+        except KeyError:
+            pass
+        else:
+            try:
+                args = ("[%s] -%s" % (itask.identity, args[0]),) + args[1:]
+            except AttributeError:
+                args = ("[%s] -%s" % (itask, args[0]),) + args[1:]
+            args = tuple(args)
         if self.logger.handlers:
             # If this logger has file handlers write out to it.
             self.logger.log(level, *args, **kwargs)

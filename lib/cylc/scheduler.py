@@ -1296,9 +1296,10 @@ conditions; see `cylc conditions`.
                         cylc.flags.iflag = True
                     if self.config.cfg['cylc']['log resolved dependencies']:
                         for itask in itasks:
-                            if not itask.local_job_file_path:
-                                itask.log(INFO, 'triggered off %s' % (
-                                    itask.state.get_resolved_dependencies()))
+                            if itask.local_job_file_path:
+                                continue
+                            deps = itask.state.get_resolved_dependencies()
+                            LOG.info('triggered off %s' % deps, itask=itask)
                     if self.run_mode == 'simulation':
                         for itask in itasks:
                             self.task_events_mgr.process_message(

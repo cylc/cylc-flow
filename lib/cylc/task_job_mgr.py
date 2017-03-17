@@ -38,7 +38,6 @@ from cylc.mkdir_p import mkdir_p
 from cylc.mp_pool import SuiteProcPool, SuiteProcContext
 from cylc.network.suite_broadcast_server import BroadcastServer
 from cylc.owner import is_remote_user, USER
-from cylc.rundb import CylcSuiteDAO
 from cylc.suite_host import is_remote_host
 from cylc.suite_logging import ERR, LOG
 from cylc.task_events_mgr import TaskEventsManager
@@ -102,7 +101,7 @@ class TaskJobManager(object):
         for itask in task_pool.get_tasks():
             if (self._check_timeout_submission(itask, now) or
                     self._check_timeout_execution(itask, now) or
-                    self._check_poll_timer(itask, now)):
+                    self.task_events_mgr.set_poll_time(itask, now)):
                 poll_tasks.add(itask)
         self.poll_task_jobs(suite, poll_tasks)
 
@@ -343,22 +342,6 @@ class TaskJobManager(object):
                     user_at_host, ' '.join([quote(item) for item in cmd]),
                     proc.returncode, out, err))
 
-    @staticmethod
-    def _check_poll_timer(itask, now=None):
-        """Set the next execution/submission poll time."""
-        if itask.state.status == TASK_STATUS_SUBMITTED:
-            key = itask.KEY_SUBMIT
-        elif itask.state.status == TASK_STATUS_RUNNING:
-            key = itask.KEY_EXECUTE
-        else:
-            return False
-        timer = itask.poll_timers.get(key)
-        if timer is not None and timer.is_delay_done(now):
-            itask.set_next_poll_time(key)
-            return True
-        else:
-            return False
-
     def _check_timeout_execution(self, itask, now):
         """Check/handle execution timeout, called if TASK_STATUS_RUNNING."""
         if itask.state.status != TASK_STATUS_RUNNING:
@@ -381,7 +364,7 @@ class TaskJobManager(object):
             get_seconds_as_interval_string(
                 timeout - itask.summary['started_time']))
         itask.state.execution_timer_timeout = None
-        itask.log(WARNING, msg)
+        LOG.warning(msg, itask=itask)
         self.task_events_mgr.setup_event_handlers(
             itask, 'execution timeout', msg)
         return True
@@ -399,7 +382,7 @@ class TaskJobManager(object):
             get_seconds_as_interval_string(
                 timeout - itask.summary['submitted_time']))
         itask.state.submission_timer_timeout = None
-        itask.log(WARNING, msg)
+        LOG.warning(msg, itask=itask)
         self.task_events_mgr.setup_event_handlers(
             itask, 'submission timeout', msg)
         return True

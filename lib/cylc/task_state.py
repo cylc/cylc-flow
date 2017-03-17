@@ -165,7 +165,6 @@ class TaskState(object):
                  "submission_timer_timeout", "execution_timer_timeout"]
 
     def __init__(self, tdef, point, status, hold_swap):
-
         self.identity = TaskID.get(tdef.name, str(point))
         self.status = status
         self.hold_swap = hold_swap
@@ -331,7 +330,7 @@ class TaskState(object):
         message += " => %s" % self.status
         if self.hold_swap:
             message += " (%s)" % self.hold_swap
-        LOG.debug("[%s] -%s" % (self.identity, message))
+        LOG.debug(message, itask=self.identity)
 
     def reset_state(self, status):
         """Reset status of task."""

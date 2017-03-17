@@ -32,7 +32,6 @@ tasks against the new stop cycle.
 """
 
 from fnmatch import fnmatchcase
-from logging import DEBUG, INFO, WARNING
 from random import randrange
 from time import time
 
@@ -208,7 +207,7 @@ class TaskPool(object):
             LOG.warning(
                 '%s cannot be added to pool: task ID already exists' %
                 itask.identity)
-            return False
+            return
 
         # do not add if an inserted task is beyond its own stop point
         # (note this is not the same as recurrence bounds)
@@ -216,16 +215,17 @@ class TaskPool(object):
             LOG.info(
                 '%s not adding to pool: beyond task stop cycle' %
                 itask.identity)
-            return False
+            return
 
         # add in held state if beyond the suite hold point
         if self.hold_point and itask.point > self.hold_point:
-            itask.log(
-                INFO, "holding (beyond suite hold point) %s" % self.hold_point)
+            LOG.info(
+                "holding (beyond suite hold point) %s" % self.hold_point,
+                itask=itask)
             itask.state.reset_state(TASK_STATUS_HELD)
         elif (itask.point <= self.stop_point and
                 self.task_has_future_trigger_overrun(itask)):
-            itask.log(INFO, "holding (future trigger beyond stop point)")
+            LOG.info("holding (future trigger beyond stop point)", itask=itask)
             self.held_future_tasks.append(itask.identity)
             itask.state.reset_state(TASK_STATUS_HELD)
         elif self.is_held and itask.state.status == TASK_STATUS_WAITING:
@@ -239,7 +239,7 @@ class TaskPool(object):
         self.rhpool_changed = True
 
         if is_restart:
-            return True
+            return itask
 
         # store in persistent
         if itask.submit_num > 0:
@@ -251,7 +251,7 @@ class TaskPool(object):
                 "time_created": get_current_time_string(),
                 "time_updated": get_current_time_string(),
                 "status": itask.state.status})
-        return True
+        return itask
 
     def release_runahead_tasks(self):
         """Release tasks from the runahead pool to the main pool.
@@ -361,7 +361,7 @@ class TaskPool(object):
         self.pool[itask.point][itask.identity] = itask
         self.pool_changed = True
         cylc.flags.pflag = True
-        itask.log(DEBUG, "released to the task pool")
+        LOG.debug("released to the task pool", itask=itask)
         del self.runahead_pool[itask.point][itask.identity]
         if not self.runahead_pool[itask.point]:
             del self.runahead_pool[itask.point]
@@ -390,8 +390,8 @@ class TaskPool(object):
         self.pool_changed = True
         msg = "task proxy removed"
         if reason:
-            msg += " (" + reason + ")"
-        itask.log(DEBUG, msg)
+            msg += " (%s)" % reason
+        LOG.debug(msg, itask=itask)
         if itask.tdef.max_future_prereq_offset is not None:
             self.set_max_future_offset()
         del itask
@@ -622,18 +622,25 @@ class TaskPool(object):
                         TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING,
                         TASK_STATUS_HELD]:
                     # Remove orphaned task if it hasn't started running yet.
-                    itask.log(WARNING, "(task orphaned by suite reload)")
+                    LOG.warning("(task orphaned by suite reload)", itask=itask)
                     self.remove(itask)
                 else:
                     # Keep active orphaned task, but stop it from spawning.
                     itask.has_spawned = True
-                    itask.log(WARNING, "last instance (orphaned by reload)")
+                    LOG.warning(
+                        "last instance (orphaned by reload)", itask=itask)
             else:
                 self.remove(itask, '(suite definition reload)')
                 self.add_to_runahead_pool(TaskProxy(
                     config.get_taskdef(itask.tdef.name), itask.point,
                     itask.state.status, stop_point=itask.stop_point,
                     submit_num=itask.submit_num, pre_reload_inst=itask))
+                LOG.info('reloaded task definition', itask=itask)
+                if itask.state.status in TASK_STATUSES_ACTIVE:
+                    LOG.warning(
+                        "job(%0d2) active with pre-reload settings" %
+                        itask.submit_num,
+                        itask=itask)
         LOG.info("Reload completed.")
         self.do_reload = False
 
@@ -645,9 +652,10 @@ class TaskPool(object):
             if (self.stop_point and itask.point > self.stop_point and
                     itask.state.status in [TASK_STATUS_WAITING,
                                            TASK_STATUS_QUEUED]):
-                itask.log(WARNING,
-                          "not running (beyond suite stop cycle) " +
-                          str(self.stop_point))
+                LOG.warning(
+                    "not running (beyond suite stop cycle) %s" %
+                    self.stop_point,
+                    itask=itask)
                 itask.state.reset_state(TASK_STATUS_HELD)
 
     def can_stop(self, stop_mode):
@@ -826,16 +834,13 @@ class TaskPool(object):
         if itask.has_spawned:
             return None
         itask.has_spawned = True
-        itask.log(DEBUG, 'forced spawning')
+        LOG.debug('forced spawning', itask=itask)
         next_point = itask.next_point()
         if next_point is None:
             return
         new_task = TaskProxy(
             itask.tdef, start_point=next_point, stop_point=itask.stop_point)
-        if self.add_to_runahead_pool(new_task):
-            return new_task
-        else:
-            return None
+        return self.add_to_runahead_pool(new_task)
 
     def spawn_all_tasks(self):
         """Spawn successors of tasks in pool, if they're ready.
@@ -877,9 +882,9 @@ class TaskPool(object):
                     if itask.state.status in [TASK_STATUS_READY,
                                               TASK_STATUS_SUBMITTED,
                                               TASK_STATUS_RUNNING]:
-                        itask.log(WARNING, 'suiciding while active')
+                        LOG.warning('suiciding while active', itask=itask)
                     else:
-                        itask.log(INFO, 'suiciding')
+                        LOG.info('suiciding', itask=itask)
                     self.force_spawn(itask)
                     self.remove(itask, 'suicide')
                     num_removed += 1
@@ -942,7 +947,7 @@ class TaskPool(object):
         itasks, bad_items = self.filter_task_proxies(items)
         for itask in itasks:
             if not itask.has_spawned:
-                itask.log(INFO, "forced spawning")
+                LOG.info("forced spawning", itask=itask)
                 self.force_spawn(itask)
         return len(bad_items)
 
@@ -950,7 +955,7 @@ class TaskPool(object):
         """Reset task states."""
         itasks, bad_items = self.filter_task_proxies(items)
         for itask in itasks:
-            itask.log(INFO, "resetting state to %s" % status)
+            LOG.info("resetting state to %s" % status, itask=itask)
             if status == TASK_STATUS_READY:
                 # Pseudo state (in this context) - set waiting and satisified.
                 itask.state.reset_state(TASK_STATUS_WAITING)
@@ -1045,7 +1050,7 @@ class TaskPool(object):
                     itask.get_offset_as_seconds(itask.tdef.expiration_offset))
             if now > itask.expire_time:
                 msg = 'Task expired (skipping job).'
-                itask.log(WARNING, msg)
+                LOG.warning(msg, itask=itask)
                 self.task_events_mgr.setup_event_handlers(
                     itask, "expired", msg)
                 itask.state.set_expired()

@@ -18,8 +18,6 @@
 
 """Provide a class to represent a task proxy in a running suite."""
 
-from logging import WARNING, INFO
-
 from isodatetime.timezone import get_local_time_zone
 from parsec.config import ItemNotFoundError
 from parsec.util import pdeepcopy, poverride
@@ -28,11 +26,9 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.cycling.iso8601
 from cylc.envvar import expandvars
 from cylc.network.suite_broadcast_server import BroadcastServer
-from cylc.suite_logging import LOG
 from cylc.task_id import TaskID
 from cylc.task_action_timer import TaskActionTimer
-from cylc.task_state import (
-    TaskState, TASK_STATUSES_ACTIVE, TASK_STATUS_WAITING)
+from cylc.task_state import TaskState, TASK_STATUS_WAITING
 from cylc.wallclock import get_unix_time_from_time_string
 
 
@@ -185,9 +181,6 @@ class TaskProxy(object):
                     self.cleanup_cutoff = p_next
 
         if pre_reload_inst is not None:
-            self.log(INFO, 'reloaded task definition')
-            if pre_reload_inst.state.status in TASK_STATUSES_ACTIVE:
-                self.log(WARNING, "job is active with pre-reload settings")
             # Retain some state from my pre suite-reload predecessor.
             self.submit_num = pre_reload_inst.submit_num
             self.has_spawned = pre_reload_inst.has_spawned
@@ -222,11 +215,6 @@ class TaskProxy(object):
             except (KeyError, ItemNotFoundError):
                 pass
         return default
-
-    def log(self, lvl=INFO, msg=""):
-        """Log a message of this task proxy."""
-        msg = "[%s] -%s" % (self.identity, msg)
-        LOG.log(lvl, msg)
 
     def ready_to_run(self, now):
         """Am I in a pre-run state but ready to run?
@@ -318,14 +306,3 @@ class TaskProxy(object):
             self.summary[event_key + '_time'] = float(
                 get_unix_time_from_time_string(time_str))
         self.summary[event_key + '_time_string'] = time_str
-
-    def set_next_poll_time(self, key):
-        """Set the next execution/submission poll time."""
-        timer = self.poll_timers.get(key)
-        if timer is not None:
-            if timer.num is None:
-                timer.num = 0
-            delay = timer.next(no_exhaust=True)
-            if delay is not None:
-                self.log(INFO, 'next job poll in %s (after %s)' % (
-                    timer.delay_as_seconds(), timer.timeout_as_str()))
