@@ -116,6 +116,9 @@ class SuiteInfoServer(BaseCommsServer):
                 stop_point_string = ast.literal_eval(stop_point_string)
             except ValueError:
                 pass
+            else:
+                if stop_point_string is not None:
+                    stop_point_string = str(stop_point_string)
         return self._put(
             "get_graph_raw", (start_point_string, stop_point_string),
             {"group_nodes": group_nodes,
