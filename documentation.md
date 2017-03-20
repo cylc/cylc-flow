@@ -74,8 +74,10 @@ read the User Guide!
 
 ### Create A New Suite
 
-    $ mkdir -p /home/bob/suites/test/
-    $ vim /home/bob/suites/test/suite.rc
+    $ mkdir -p ~/suites/test/
+    $ vim ~/suites/test/suite.rc
+
+    title = A first Cylc suite.
 
     [cylc]
         cycle point format = %Y
@@ -109,11 +111,11 @@ read the User Guide!
 
 ### Register It
 
-    $ cylc register my.suite /home/bob/suites/test
+    $ cylc register my.suite ~/suites/test
     REGISTER my.suite: /home/bob/suites/test
 
-    $ cylc db print my.suite
-    my.suite | No title provided | ~/suites/test
+    $ cylc print my.suite
+    my.suite | A first test suite | ~/suites/test
 
     $ cylc edit my.suite  # Open the suite in your editor again.
 
@@ -144,20 +146,11 @@ read the User Guide!
 
     $ cylc log -o my.suite model.2021
 
-    JOB SCRIPT STARTING
-    cylc Suite and Task Identity:
-    Suite Name  : my.suite
-    Suite Host  : niwa-34403.niwa.local
-    Suite Port  : 7766
-    Suite Owner : oliverh
-    Task ID     : model.2021
-    Task Host   : niwa-34403.niwa.local
-    Task Owner  : oliverh
-    Task Submit No.: 1
-    Task Try No.: 1
+    Suite    : my.suite
+    Task Job : 2021/model/01 (try 1)
+    User@Host: bob@hpc-1.niwa.co.nz
 
     my FOOD is icecream
 
-    cylc (scheduler - 2016-05-18T17:25:18+12): started at 2016-05-18T17:25:18+12
-    cylc (scheduler - 2016-05-18T17:25:28+12): succeeded at 2016-05-18T17:25:28+12
-    JOB SCRIPT EXITING (TASK SUCCEEDED)
+    2017-03-20T19:37:49Z NORMAL - started
+    2017-03-20T19:37:59Z NORMAL - succeeded
