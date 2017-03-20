@@ -46,6 +46,24 @@ The Cylc developers plan to write a reference paper in 2017.
 In the meantime Cylc releases have a citable DOI:
 [![DOI](https://zenodo.org/badge/1836229.svg)](https://zenodo.org/badge/latestdoi/1836229) 
 
+#### Cylc Response to "Assessment Report on Autosubmit, Cylc and ecFlow"
+
+*The Cylc developers would like to respond to a recent comparison paper,
+__Assessment report on Autosubmit, Cylc and ecFlow (2016, Domingo Manubens-Gil
+et. al.)__ and another that references it, __Seamless Management of Ensemble
+Climate Prediction Experiments on HPC Platforms (2016, Domingo Manubens-Gil et.
+al.)__.  Two of us are listed as contributors to the first paper but it should
+be noted that the contribution was limited by time and workload constraints to
+major corrections relating to Cylc (all of which were addressed by the lead
+author).*
+
+*The lead author of both papers is also the lead developer of Autosubmit.
+Perhaps inevitably as the developers of Cylc we have a rather different view on
+the strengths and weaknesses of the different systems.  In particular we would
+like to address the following points.*
+
+...[CLICK HERE FOR THE FULL RESPONSE](doc/cylc-autosub-response.pdf) (PDF)
+
 ---
 
 ## A Cycling Workflow Example
