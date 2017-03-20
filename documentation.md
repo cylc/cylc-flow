@@ -49,10 +49,10 @@ In the meantime Cylc releases have a citable DOI:
 #### Cylc Response to "Assessment Report on Autosubmit, Cylc and ecFlow"
 
 *The Cylc developers would like to respond to a recent comparison paper,
-__Assessment report on Autosubmit, Cylc and ecFlow (2016, Domingo Manubens-Gil
-et. al.)__ and another that references it, __Seamless Management of Ensemble
-Climate Prediction Experiments on HPC Platforms (2016, Domingo Manubens-Gil et.
-al.)__.  Two of us are listed as contributors to the first paper but it should
+__Assessment report on Autosubmit, Cylc and ecFlow__ (2016, Domingo Manubens-Gil
+et. al.) and another that references it, __Seamless Management of Ensemble
+Climate Prediction Experiments on HPC Platforms__ (2016, Domingo Manubens-Gil
+et. al.).  Two of us are listed as contributors to the first paper but it should
 be noted that the contribution was limited by time and workload constraints to
 major corrections relating to Cylc (all of which were addressed by the lead
 author).*
