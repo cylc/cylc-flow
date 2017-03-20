@@ -19,9 +19,12 @@
 import re
 import sys
 
-from cylc.task_id import TaskID
 from cylc.cycling.loader import (
     get_interval, get_interval_cls, get_point_relative)
+from cylc.task_id import TaskID
+from cylc.task_outputs import (
+    TASK_OUTPUT_EXPIRED, TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_SUBMIT_FAILED,
+    TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED)
 
 
 warned = False
@@ -30,21 +33,14 @@ BCOMPAT_MSG_RE_C6 = re.compile('^(.*)\[\s*(([+-])?\s*(.*))?\s*\](.*)$')
 DEPRECN_WARN_TMPL = "WARNING: message trigger offsets are deprecated\n  %s"
 
 # Task trigger names (e.g. foo:fail => bar).
-TASK_TRIGGER_EXPIRED = "expired"
-TASK_TRIGGER_SUBMITTED = "submitted"
-TASK_TRIGGER_SUBMIT_FAILED = "submit-failed"
-TASK_TRIGGER_STARTED = "started"
-TASK_TRIGGER_SUCCEEDED = "succeeded"
-TASK_TRIGGER_FAILED = "failed"
-
 # Can use "foo:fail => bar" or "foo:failed => bar", etc.
 _ALT_TRIGGER_NAMES = {
-    TASK_TRIGGER_EXPIRED: ["expire"],
-    TASK_TRIGGER_SUBMITTED: ["submit"],
-    TASK_TRIGGER_SUBMIT_FAILED: ["submit-fail"],
-    TASK_TRIGGER_STARTED: ["start"],
-    TASK_TRIGGER_SUCCEEDED: ["succeed"],
-    TASK_TRIGGER_FAILED: ["fail"],
+    TASK_OUTPUT_EXPIRED: ["expire"],
+    TASK_OUTPUT_SUBMITTED: ["submit"],
+    TASK_OUTPUT_SUBMIT_FAILED: ["submit-fail"],
+    TASK_OUTPUT_STARTED: ["start"],
+    TASK_OUTPUT_SUCCEEDED: ["succeed"],
+    TASK_OUTPUT_FAILED: ["fail"],
 }
 
 
@@ -126,7 +122,7 @@ It generates a concrete prerequisite string given a task's cycle point value.
         self.message = None
         self.message_offset = None
         self.builtin = None
-        qualifier = qualifier or TASK_TRIGGER_SUCCEEDED
+        qualifier = qualifier or TASK_OUTPUT_SUCCEEDED
 
         try:
             # Message trigger?

@@ -215,7 +215,6 @@ class Scheduler(object):
             os.path.join(self.suite_run_dir, 'log'))                 # pub_d
 
         self.suite_log = None
-        self.log = LOG
 
         self.ref_test_allowed_failures = []
 
@@ -332,15 +331,15 @@ conditions; see `cylc conditions`.
         if self.options.genref or self.options.reftest:
             self.configure_reftest()
 
-        self.log.info(self.START_MESSAGE_TMPL % {
+        LOG.info(self.START_MESSAGE_TMPL % {
             'host': self.host, 'port': self.port, 'pid': os.getpid()})
         # Note that the following lines must be present at the top of
         # the suite log file for use in reference test runs:
-        self.log.info('Run mode: ' + self.run_mode)
-        self.log.info('Initial point: ' + str(self.initial_point))
+        LOG.info('Run mode: ' + self.run_mode)
+        LOG.info('Initial point: ' + str(self.initial_point))
         if self.start_point != self.initial_point:
-            self.log.info('Start point: ' + str(self.start_point))
-        self.log.info('Final point: ' + str(self.final_point))
+            LOG.info('Start point: ' + str(self.start_point))
+        LOG.info('Final point: ' + str(self.final_point))
 
         self.pool = TaskPool(
             self.final_point, self.suite_db_mgr, self.task_events_mgr)
@@ -395,9 +394,9 @@ conditions; see `cylc conditions`.
         """Load tasks for a new run."""
         if self.start_point is not None:
             if self.options.warm:
-                self.log.info('Warm Start %s' % self.start_point)
+                LOG.info('Warm Start %s' % self.start_point)
             else:
-                self.log.info('Cold Start %s' % self.start_point)
+                LOG.info('Cold Start %s' % self.start_point)
 
         task_list = self.filter_initial_task_list(
             self.config.get_task_name_list())
@@ -411,7 +410,7 @@ conditions; see `cylc conditions`.
                     self.config.get_taskdef(name), self.start_point,
                     is_startup=True))
             except TaskProxySequenceBoundsError as exc:
-                self.log.debug(str(exc))
+                LOG.debug(str(exc))
                 continue
 
     def load_tasks_for_restart(self):
@@ -436,7 +435,7 @@ conditions; see `cylc conditions`.
                     self.task_job_mgr.init_host(
                         self.suite, itask.task_host, itask.task_owner)
                 except RemoteJobHostInitError as exc:
-                    self.log.error(str(exc))
+                    LOG.error(str(exc))
         self.command_poll_tasks()
 
     def _load_broadcast_states(self, row_idx, row):
@@ -565,9 +564,9 @@ conditions; see `cylc conditions`.
                 itask.state.set_prerequisites_all_satisfied()
 
             elif status in (TASK_STATUS_QUEUED, TASK_STATUS_READY):
-                itask.state.set_prerequisites_all_satisfied()
                 # reset to waiting as these had not been submitted yet.
-                itask.state.set_state(TASK_STATUS_WAITING)
+                itask.state.reset_state(TASK_STATUS_WAITING)
+                itask.state.set_prerequisites_all_satisfied()
 
             elif status in (TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING):
                 itask.state.set_prerequisites_all_satisfied()
@@ -663,20 +662,20 @@ conditions; see `cylc conditions`.
                 n_warnings = getattr(self, "command_%s" % name)(
                     *args, **kwargs)
             except SchedulerStop:
-                self.log.info('Command succeeded: ' + cmdstr)
+                LOG.info('Command succeeded: ' + cmdstr)
                 raise
             except Exception as exc:
                 # Don't let a bad command bring the suite down.
-                self.log.warning(traceback.format_exc())
-                self.log.warning(str(exc))
-                self.log.warning('Command failed: ' + cmdstr)
+                LOG.warning(traceback.format_exc())
+                LOG.warning(str(exc))
+                LOG.warning('Command failed: ' + cmdstr)
             else:
                 if n_warnings:
-                    self.log.info(
+                    LOG.info(
                         'Command succeeded with %s warning(s): %s' %
                         (n_warnings, cmdstr))
                 else:
-                    self.log.info('Command succeeded: ' + cmdstr)
+                    LOG.info('Command succeeded: ' + cmdstr)
                 cylc.flags.iflag = True
                 if name in self.PROC_CMDS:
                     self.do_process_tasks = True
@@ -865,12 +864,12 @@ conditions; see `cylc conditions`.
         """Hold tasks AFTER this point (itask.point > point)."""
         point = self.get_standardised_point(point_string)
         self.hold_suite(point)
-        self.log.info(
+        LOG.info(
             "The suite will pause when all tasks have passed %s" % point)
 
     def command_set_verbosity(self, lvl):
         """Remove suite verbosity."""
-        self.log.logger.setLevel(lvl)
+        LOG.logger.setLevel(lvl)
         cylc.flags.debug = (lvl == DEBUG)
         return True, 'OK'
 
@@ -893,7 +892,7 @@ conditions; see `cylc conditions`.
 
     def command_reload_suite(self):
         """Reload suite configuration."""
-        self.log.info("Reloading the suite definition.")
+        LOG.info("Reloading the suite definition.")
         old_tasks = set(self.config.get_task_name_list())
         self.configure_suite(reconfigure=True)
         self.pool.reconfigure(self.final_point)
@@ -1247,7 +1246,7 @@ conditions; see `cylc conditions`.
             self.hold_suite(self.pool_hold_point)
 
         if self.options.start_held:
-            self.log.info("Held on start-up (no tasks will be submitted)")
+            LOG.info("Held on start-up (no tasks will be submitted)")
             self.hold_suite()
 
         self.run_event_handlers(self.EVENT_STARTUP, 'suite starting')
@@ -1286,7 +1285,7 @@ conditions; see `cylc conditions`.
             # require renegotiation of dependencies, etc.
             if self.process_tasks():
                 if cylc.flags.debug:
-                    self.log.debug("BEGIN TASK PROCESSING")
+                    LOG.debug("BEGIN TASK PROCESSING")
                     time0 = time()
 
                 self.pool.match_dependencies()
@@ -1316,7 +1315,7 @@ conditions; see `cylc conditions`.
                 BroadcastServer.get_inst().expire(self.pool.get_min_point())
 
                 if cylc.flags.debug:
-                    self.log.debug(
+                    LOG.debug(
                         "END TASK PROCESSING (took %s seconds)" %
                         (time() - time0))
 
@@ -1385,7 +1384,7 @@ conditions; see `cylc conditions`.
                     while not self.proc_pool.is_dead():
                         sleep(self.INTERVAL_STOP_PROCESS_POOL_EMPTY)
                         if stop_process_pool_empty_msg:
-                            self.log.info(stop_process_pool_empty_msg)
+                            LOG.info(stop_process_pool_empty_msg)
                             OUT.info(stop_process_pool_empty_msg)
                             stop_process_pool_empty_msg = None
                         self.proc_pool.handle_results_async()
@@ -1473,7 +1472,7 @@ conditions; see `cylc conditions`.
                 get_seconds_as_interval_string(
                     self._get_events_conf(self.EVENT_TIMEOUT))
             )
-            self.log.warning(message)
+            LOG.warning(message)
             self.run_event_handlers(self.EVENT_TIMEOUT, message)
             if self._get_events_conf('abort on timeout'):
                 raise SchedulerError('Abort on suite timeout is set')
@@ -1487,7 +1486,7 @@ conditions; see `cylc conditions`.
             message = 'suite timed out after inactivity for %s' % (
                 get_seconds_as_interval_string(
                     self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT)))
-            self.log.warning(message)
+            LOG.warning(message)
             self.run_event_handlers(self.EVENT_INACTIVITY_TIMEOUT, message)
             if self._get_events_conf('abort on inactivity'):
                 raise SchedulerError('Abort on suite inactivity is set')
@@ -1499,7 +1498,7 @@ conditions; see `cylc conditions`.
         self.is_stalled = self.pool.is_stalled()
         if self.is_stalled:
             message = 'suite stalled'
-            self.log.warning(message)
+            LOG.warning(message)
             self.run_event_handlers(self.EVENT_STALLED, message)
             self.pool.report_stalled_task_deps()
             if self._get_events_conf('abort on stalled'):
@@ -1550,8 +1549,7 @@ conditions; see `cylc conditions`.
 
         # The getattr() calls and if tests below are used in case the
         # suite is not fully configured before the shutdown is called.
-        if getattr(self, "log", None) is not None:
-            self.log.info(msg)
+        LOG.info(msg)
 
         if self.options.genref:
             try:
@@ -1622,12 +1620,12 @@ conditions; see `cylc conditions`.
         """Set stop point."""
         stop_point = get_point(stop_point_string)
         self.stop_point = stop_point
-        self.log.info("Setting stop cycle point: %s" % stop_point_string)
+        LOG.info("Setting stop cycle point: %s" % stop_point_string)
         self.pool.set_stop_point(self.stop_point)
 
     def set_stop_clock(self, unix_time, date_time_string):
         """Set stop clock time."""
-        self.log.info("Setting stop clock time: %s (unix time: %s)" % (
+        LOG.info("Setting stop clock time: %s (unix time: %s)" % (
             date_time_string, unix_time))
         self.stop_clock_time = unix_time
         self.stop_clock_time_string = date_time_string
@@ -1637,19 +1635,18 @@ conditions; see `cylc conditions`.
         name = TaskID.split(task_id)[0]
         if name in self.config.get_task_name_list():
             task_id = self.get_standardised_taskid(task_id)
-            self.log.info("Setting stop task: " + task_id)
+            LOG.info("Setting stop task: " + task_id)
             self.stop_task = task_id
         else:
-            self.log.warning(
-                "Requested stop task name does not exist: %s" % name)
+            LOG.warning("Requested stop task name does not exist: %s" % name)
 
     def stop_task_done(self):
         """Return True if stop task has succeeded."""
-        id_ = self.stop_task
-        if (id_ is None or not self.pool.task_succeeded(id_)):
+        if self.stop_task and self.pool.task_succeeded(self.stop_task):
+            LOG.info("Stop task %s finished" % self.stop_task)
+            return True
+        else:
             return False
-        self.log.info("Stop task " + id_ + " finished")
-        return True
 
     def hold_suite(self, point=None):
         """Hold all tasks in suite."""
@@ -1659,13 +1656,13 @@ conditions; see `cylc conditions`.
             sdm.db_inserts_map[sdm.TABLE_SUITE_PARAMS].append(
                 {"key": "is_held", "value": 1})
         else:
-            self.log.info("Setting suite hold cycle point: " + str(point))
+            LOG.info("Setting suite hold cycle point: " + str(point))
             self.pool.set_hold_point(point)
 
     def release_suite(self):
         """Release (un-hold) all tasks in suite."""
         if self.pool.is_held:
-            self.log.info("RELEASE: new tasks will be queued when ready")
+            LOG.info("RELEASE: new tasks will be queued when ready")
         self.pool.set_hold_point(None)
         self.pool.release_all_tasks()
         sdm = self.suite_db_mgr
@@ -1716,9 +1713,9 @@ conditions; see `cylc conditions`.
         else:
             return n_warnings + 1
 
-    def command_reset_task_states(self, items, state=None):
+    def command_reset_task_states(self, items, state=None, outputs=None):
         """Reset the state of tasks."""
-        return self.pool.reset_task_states(items, state)
+        return self.pool.reset_task_states(items, state, outputs)
 
     def command_spawn_tasks(self, items):
         """Force spawn task successors."""
@@ -1752,7 +1749,7 @@ conditions; see `cylc conditions`.
                     self.stop_clock_time
                 )
             )
-            self.log.info("Wall clock stop time reached: " + str(time_point))
+            LOG.info("Wall clock stop time reached: %s" % time_point)
             self.stop_clock_time = None
             return True
         else:
@@ -1783,7 +1780,7 @@ conditions; see `cylc conditions`.
             averages[minute_num] = sum(minute_amounts) / len(minute_amounts)
             output_text += (" %d: " + amount_format) % (
                 minute_num, averages[minute_num])
-        self.log.info(output_text)
+        LOG.info(output_text)
 
     def _update_cpu_usage(self):
         """Obtain CPU usage statistics."""
@@ -1791,7 +1788,7 @@ conditions; see `cylc conditions`.
         try:
             cpu_frac = float(proc.communicate()[0])
         except (TypeError, OSError, IOError, ValueError) as exc:
-            self.log.warning("Cannot get CPU % statistics: %s" % exc)
+            LOG.warning("Cannot get CPU % statistics: %s" % exc)
             return
         self._update_profile_info("CPU %", cpu_frac, amount_format="%.1f")
 

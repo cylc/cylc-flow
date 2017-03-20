@@ -65,7 +65,6 @@ class BroadcastServer(BaseCommsServer):
 
     def __init__(self, linearized_ancestors):
         super(BroadcastServer, self).__init__()
-        self.log = LOG
         self.settings = {}
         self.db_inserts_map = {
             self.TABLE_BROADCAST_EVENTS: [],
@@ -168,7 +167,7 @@ class BroadcastServer(BaseCommsServer):
 
         # Log the broadcast
         self._append_db_queue(modified_settings)
-        self.log.info(get_broadcast_change_report(modified_settings))
+        LOG.info(get_broadcast_change_report(modified_settings))
 
         bad_options = {}
         if bad_point_strings:
@@ -286,10 +285,10 @@ class BroadcastServer(BaseCommsServer):
 
         # Log the broadcast
         self._append_db_queue(modified_settings, is_cancel=True)
-        self.log.info(
+        LOG.info(
             get_broadcast_change_report(modified_settings, is_cancel=True))
         if bad_options:
-            self.log.error(get_broadcast_bad_options_report(bad_options))
+            LOG.error(get_broadcast_bad_options_report(bad_options))
 
         return (modified_settings, bad_options)
 

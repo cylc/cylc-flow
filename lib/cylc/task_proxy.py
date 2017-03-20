@@ -28,7 +28,8 @@ from cylc.envvar import expandvars
 from cylc.network.suite_broadcast_server import BroadcastServer
 from cylc.task_id import TaskID
 from cylc.task_action_timer import TaskActionTimer
-from cylc.task_state import TaskState, TASK_STATUS_WAITING
+from cylc.task_state import (
+    TaskState, TASK_STATUS_WAITING, TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING)
 from cylc.wallclock import get_unix_time_from_time_string
 
 
@@ -55,17 +56,13 @@ class TaskProxy(object):
     # environments to allow changed behaviour after previous failures.
 
     # Memory optimization - constrain possible attributes to this list.
-    __slots__ = ["KEY_EXECUTE", "KEY_SUBMIT",
-                 "tdef", "submit_num",
+    __slots__ = ["tdef", "submit_num",
                  "point", "cleanup_cutoff", "identity", "has_spawned",
                  "point_as_seconds", "stop_point", "manual_trigger",
                  "is_manual_submit", "summary", "local_job_file_path",
                  "try_timers", "task_host", "task_owner",
-                 "job_vacated", "poll_timers", "events_conf",
+                 "job_vacated", "poll_timers", "timeout_timers",
                  "delayed_start", "expire_time", "state"]
-
-    KEY_EXECUTE = "execution"
-    KEY_SUBMIT = "submission"
 
     def __init__(
             self, tdef, start_point, status=TASK_STATUS_WAITING,
@@ -135,30 +132,32 @@ class TaskProxy(object):
         self.local_job_file_path = None
 
         self.try_timers = {
-            self.KEY_EXECUTE: TaskActionTimer(delays=[]),
-            self.KEY_SUBMIT: TaskActionTimer(delays=[])}
+            TASK_STATUS_RUNNING: TaskActionTimer(delays=[]),
+            TASK_STATUS_SUBMITTED: TaskActionTimer(delays=[])}
 
         self.task_host = 'localhost'
         self.task_owner = None
 
         self.job_vacated = False
 
-        self.events_conf = rtconfig['events']
         # configure retry delays before the first try
         if self.tdef.run_mode == 'live':
             # note that a *copy* of the retry delays list is needed
             # so that all instances of the same task don't pop off
             # the same deque
-            self.try_timers[self.KEY_EXECUTE].delays = list(
+            self.try_timers[TASK_STATUS_RUNNING].delays = list(
                 rtconfig['job']['execution retry delays'])
-            self.try_timers[self.KEY_SUBMIT].delays = list(
+            self.try_timers[TASK_STATUS_SUBMITTED].delays = list(
                 rtconfig['job']['submission retry delays'])
         self.poll_timers = {}
-        for key in self.KEY_SUBMIT, self.KEY_EXECUTE:
-            values = self.get_host_conf(
-                key + ' polling intervals', skey='job')
+        for label, key in [
+                ('submission polling intervals', TASK_STATUS_SUBMITTED),
+                ('execution polling intervals', TASK_STATUS_RUNNING)]:
+            values = self.get_host_conf(label, skey='job')
             if values:
                 self.poll_timers[key] = TaskActionTimer(delays=values)
+        self.timeout_timers = {
+            TASK_STATUS_SUBMITTED: None, TASK_STATUS_RUNNING: None}
 
         self.delayed_start = None
         self.expire_time = None
@@ -193,13 +192,8 @@ class TaskProxy(object):
             self.task_owner = pre_reload_inst.task_owner
             self.job_vacated = pre_reload_inst.job_vacated
             self.poll_timers = pre_reload_inst.poll_timers
-            # Retain status of outputs.
-            for msg, oid in pre_reload_inst.state.outputs.completed.items():
-                self.state.outputs.completed[msg] = oid
-                try:
-                    del self.state.outputs.not_completed[msg]
-                except KeyError:
-                    pass
+            self.timeout_timers = pre_reload_inst.timeout_timers
+            self.state.outputs = pre_reload_inst.state.outputs
 
     def get_host_conf(self, key, default=None, skey="remote"):
         """Return a host setting from suite then global configuration."""
@@ -216,17 +210,11 @@ class TaskProxy(object):
                 pass
         return default
 
-    def ready_to_run(self, now):
-        """Am I in a pre-run state but ready to run?
-
-        Queued tasks are not counted as they've already been deemed ready.
-
-        """
-        retry_delay_done = (
-            self.try_timers[self.KEY_EXECUTE].is_delay_done(now) or
-            self.try_timers[self.KEY_SUBMIT].is_delay_done(now))
-        return self.state.is_ready_to_run(
-            retry_delay_done, self.start_time_reached(now))
+    @staticmethod
+    def get_offset_as_seconds(offset):
+        """Return an ISO interval as seconds."""
+        iso_offset = cylc.cycling.iso8601.interval_parse(str(offset))
+        return int(iso_offset.get_seconds())
 
     def get_point_as_seconds(self):
         """Compute and store my cycle point as seconds."""
@@ -241,30 +229,6 @@ class TaskProxy(object):
                     3600 * utc_offset_hours + 60 * utc_offset_minutes)
                 self.point_as_seconds += utc_offset_in_seconds
         return self.point_as_seconds
-
-    @staticmethod
-    def get_offset_as_seconds(offset):
-        """Return an ISO interval as seconds."""
-        iso_offset = cylc.cycling.iso8601.interval_parse(str(offset))
-        return int(iso_offset.get_seconds())
-
-    def start_time_reached(self, now):
-        """Has this task reached its clock trigger time?"""
-        if self.tdef.clocktrigger_offset is None:
-            return True
-        if self.delayed_start is None:
-            self.delayed_start = (
-                self.get_point_as_seconds() +
-                self.get_offset_as_seconds(self.tdef.clocktrigger_offset))
-
-    def reset_manual_trigger(self):
-        """This is called immediately after manual trigger flag used."""
-        if self.manual_trigger:
-            self.manual_trigger = False
-            self.is_manual_submit = True
-            # unset any retry delay timers
-            self.try_timers[self.KEY_EXECUTE].timeout = None
-            self.try_timers[self.KEY_SUBMIT].timeout = None
 
     def get_state_summary(self):
         """Return a dict containing the state summary of this task proxy."""
@@ -282,6 +246,10 @@ class TaskProxy(object):
 
         return self.summary
 
+    def get_try_num(self):
+        """Return the number of automatic tries (try number)."""
+        return self.try_timers[TASK_STATUS_RUNNING].num + 1
+
     def next_point(self):
         """Return the next cycle point."""
         p_next = None
@@ -295,6 +263,27 @@ class TaskProxy(object):
             p_next = min(adjusted)
         return p_next
 
+    def ready_to_run(self, now):
+        """Am I in a pre-run state but ready to run?
+
+        Queued tasks are not counted as they've already been deemed ready.
+
+        """
+        retry_delay_done = (
+            self.try_timers[TASK_STATUS_RUNNING].is_delay_done(now) or
+            self.try_timers[TASK_STATUS_SUBMITTED].is_delay_done(now))
+        return self.state.is_ready_to_run(
+            retry_delay_done, self.start_time_reached(now))
+
+    def reset_manual_trigger(self):
+        """This is called immediately after manual trigger flag used."""
+        if self.manual_trigger:
+            self.manual_trigger = False
+            self.is_manual_submit = True
+            # unset any retry delay timers
+            self.try_timers[TASK_STATUS_RUNNING].timeout = None
+            self.try_timers[TASK_STATUS_SUBMITTED].timeout = None
+
     def set_event_time(self, event_key, time_str=None):
         """Set event time in self.summary
 
@@ -306,3 +295,13 @@ class TaskProxy(object):
             self.summary[event_key + '_time'] = float(
                 get_unix_time_from_time_string(time_str))
         self.summary[event_key + '_time_string'] = time_str
+
+    def start_time_reached(self, now):
+        """Has this task reached its clock trigger time?"""
+        if self.tdef.clocktrigger_offset is None:
+            return True
+        if self.delayed_start is None:
+            self.delayed_start = (
+                self.get_point_as_seconds() +
+                self.get_offset_as_seconds(self.tdef.clocktrigger_offset))
+        return now > self.delayed_start

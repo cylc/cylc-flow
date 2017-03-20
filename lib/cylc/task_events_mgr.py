@@ -31,15 +31,17 @@ from parsec.config import ItemNotFoundError
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
 from cylc.mp_pool import SuiteProcContext
+from cylc.network.suite_broadcast_server import BroadcastServer
 from cylc.owner import USER
 from cylc.suite_logging import ERR, LOG
 from cylc.suite_host import get_suite_host
 from cylc.task_action_timer import TaskActionTimer
 from cylc.task_message import TaskMessage
 from cylc.task_state import (
-    TASK_STATUSES_ACTIVE,
-    TASK_STATUS_READY, TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_FAILED,
-    TASK_STATUS_RUNNING, TASK_STATUS_FAILED)
+    TASK_STATUSES_ACTIVE, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
+    TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_SUBMIT_FAILED,
+    TASK_STATUS_RUNNING, TASK_STATUS_RETRYING, TASK_STATUS_FAILED,
+    TASK_STATUS_SUCCEEDED)
 from cylc.task_outputs import (
     TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED)
@@ -309,12 +311,17 @@ class TaskEventsManager(object):
                 "run_signal": signal})
         elif message.startswith(TaskMessage.VACATION_MESSAGE_PREFIX):
             cylc.flags.pflag = True
-            itask.state.set_state(TASK_STATUS_SUBMITTED)
+            itask.state.reset_state(TASK_STATUS_SUBMITTED)
             self._db_events_insert(itask, "vacated", message)
-            itask.state.execution_timer_timeout = None
-            itask.set_event_time('started')
-            itask.try_timers[itask.KEY_SUBMIT].num = 0
+            itask.set_event_time('started')  # reset
+            itask.try_timers[TASK_STATUS_SUBMITTED].num = 0
             itask.job_vacated = True
+            try:
+                itask.timeout_timers[TASK_STATUS_SUBMITTED] = (
+                    itask.summary['submitted_time'] +
+                    float(self._get_events_conf(itask, 'submission timeout')))
+            except (TypeError, ValueError):
+                itask.timeout_timers[TASK_STATUS_SUBMITTED] = None
         else:
             # Unhandled messages. These include:
             #  * general non-output/progress messages
@@ -347,12 +354,7 @@ class TaskEventsManager(object):
         If now is set, set the timer only if the previous delay is done.
         Return the next delay.
         """
-        if itask.state.status == TASK_STATUS_SUBMITTED:
-            key = itask.KEY_SUBMIT
-        elif itask.state.status == TASK_STATUS_RUNNING:
-            key = itask.KEY_EXECUTE
-        else:
-            return
+        key = itask.state.status
         timer = itask.poll_timers.get(key)
         if timer is None:
             return
@@ -458,13 +460,17 @@ class TaskEventsManager(object):
     @staticmethod
     def _get_events_conf(itask, key, default=None):
         """Return an events setting from suite then global configuration."""
-        for getter in [itask.events_conf, GLOBAL_CFG.get()["task events"]]:
+        for getter in [
+                BroadcastServer.get_inst().get(itask.identity).get("events"),
+                itask.tdef.rtconfig["events"],
+                GLOBAL_CFG.get()["task events"]]:
             try:
                 value = getter.get(key)
+            except (AttributeError, ItemNotFoundError, KeyError):
+                pass
+            else:
                 if value is not None:
                     return value
-            except (ItemNotFoundError, KeyError):
-                pass
         return default
 
     def _process_job_logs_retrieval(self, schd_ctx, ctx, id_keys):
@@ -545,24 +551,24 @@ class TaskEventsManager(object):
             "run_status": 1,
             "time_run_exit": itask.summary['finished_time_string'],
         })
-        itask.state.execution_timer_timeout = None
-        if itask.try_timers[itask.KEY_EXECUTE].next() is None:
+        if itask.try_timers[TASK_STATUS_RUNNING].next() is None:
             # No retry lined up: definitive failure.
             # Note the TASK_STATUS_FAILED output is only added if needed.
             cylc.flags.pflag = True
-            itask.state.set_execution_failed()
+            itask.state.reset_state(TASK_STATUS_FAILED)
             self.setup_event_handlers(itask, "failed", 'job failed')
         else:
             # There is a retry lined up
-            timeout_str = itask.try_timers[itask.KEY_EXECUTE].timeout_as_str()
+            timeout_str = (
+                itask.try_timers[TASK_STATUS_RUNNING].timeout_as_str())
             delay_msg = "retrying in %s" % (
-                itask.try_timers[itask.KEY_EXECUTE].delay_as_seconds())
+                itask.try_timers[TASK_STATUS_RUNNING].delay_as_seconds())
             msg = "failed, %s (after %s)" % (delay_msg, timeout_str)
             LOG.info("job(%02d) %s" % (itask.submit_num, msg), itask=itask)
             itask.summary['latest_message'] = msg
             self.setup_event_handlers(
                 itask, "retry", "job failed, %s" % delay_msg)
-            itask.state.set_execution_retry()
+            itask.state.reset_state(TASK_STATUS_RETRYING)
 
     def _process_message_started(self, itask, event_time):
         """Helper for process_message, handle a started message."""
@@ -570,7 +576,7 @@ class TaskEventsManager(object):
             itask.job_vacated = False
             LOG.warning("Vacated job restarted", itask=itask)
         cylc.flags.pflag = True
-        itask.state.set_state(TASK_STATUS_RUNNING)
+        itask.state.reset_state(TASK_STATUS_RUNNING)
         itask.set_event_time('started', event_time)
         self.suite_db_mgr.put_update_task_jobs(itask, {
             "time_run": itask.summary['started_time_string']})
@@ -580,19 +586,18 @@ class TaskEventsManager(object):
             execution_timeout = self._get_events_conf(
                 itask, 'execution timeout')
         try:
-            itask.state.execution_timer_timeout = (
+            itask.timeout_timers[TASK_STATUS_RUNNING] = (
                 itask.summary['started_time'] + float(execution_timeout))
         except (TypeError, ValueError):
-            itask.state.execution_timer_timeout = None
+            itask.timeout_timers[TASK_STATUS_RUNNING] = None
 
         # submission was successful so reset submission try number
-        itask.try_timers[itask.KEY_SUBMIT].num = 0
+        itask.try_timers[TASK_STATUS_SUBMITTED].num = 0
         self.setup_event_handlers(itask, 'started', 'job started')
         self.set_poll_time(itask)
 
     def _process_message_succeeded(self, itask, event_time, is_polled=False):
         """Helper for process_message, handle a succeeded message."""
-        itask.state.execution_timer_timeout = None
         cylc.flags.pflag = True
         itask.set_event_time('finished', event_time)
         self.suite_db_mgr.put_update_task_jobs(itask, {
@@ -604,14 +609,24 @@ class TaskEventsManager(object):
             itask.tdef.elapsed_times.append(
                 itask.summary['finished_time'] -
                 itask.summary['started_time'])
+        if not itask.state.outputs.all_completed():
+            err = "Succeeded with unreported outputs:"
+            for msg in itask.state.outputs.get_not_completed():
+                err += "\n  " + msg
+            LOG.warning(err, itask=itask)
+            if not is_polled:
+                # A succeeded task MUST have submitted and started.
+                # TODO - just poll for outputs in the job status file?
+                for output in [TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED]:
+                    if not itask.state.outputs.is_completed(output):
+                        LOG.warning(
+                            "Assuming output completed:  \n %s" % output,
+                            itask=itask)
+        itask.state.reset_state(TASK_STATUS_SUCCEEDED)
         self.setup_event_handlers(itask, "succeeded", "job succeeded")
-        warnings = itask.state.set_execution_succeeded(is_polled)
-        for warning in warnings:
-            LOG.warning(warning, itask=itask)
 
     def _process_message_submit_failed(self, itask, event_time):
         """Helper for process_message, handle a submit-failed message."""
-        itask.state.submission_timer_timeout = None
         LOG.error(self.EVENT_SUBMIT_FAILED, itask=itask)
         if event_time is None:
             event_time = get_current_time_string()
@@ -623,7 +638,7 @@ class TaskEventsManager(object):
             del itask.summary['submit_method_id']
         except KeyError:
             pass
-        if itask.try_timers[itask.KEY_SUBMIT].next() is None:
+        if itask.try_timers[TASK_STATUS_SUBMITTED].next() is None:
             # No submission retry lined up: definitive failure.
             itask.set_event_time('finished', event_time)
             cylc.flags.pflag = True
@@ -631,13 +646,14 @@ class TaskEventsManager(object):
             self.setup_event_handlers(
                 itask, self.EVENT_SUBMIT_FAILED,
                 'job %s' % self.EVENT_SUBMIT_FAILED)
-            itask.state.set_submit_failed()
+            itask.state.reset_state(TASK_STATUS_SUBMIT_FAILED)
         else:
             # There is a submission retry lined up.
-            timeout_str = itask.try_timers[itask.KEY_SUBMIT].timeout_as_str()
+            timeout_str = (
+                itask.try_timers[TASK_STATUS_SUBMITTED].timeout_as_str())
 
             delay_msg = "submit-retrying in %s" % (
-                itask.try_timers[itask.KEY_SUBMIT].delay_as_seconds())
+                itask.try_timers[TASK_STATUS_SUBMITTED].delay_as_seconds())
             msg = "%s, %s (after %s)" % (
                 self.EVENT_SUBMIT_FAILED, delay_msg, timeout_str)
             LOG.info("job(%02d) %s" % (itask.submit_num, msg), itask=itask)
@@ -645,7 +661,7 @@ class TaskEventsManager(object):
             self.setup_event_handlers(
                 itask, self.EVENT_SUBMIT_RETRY,
                 "job %s, %s" % (self.EVENT_SUBMIT_FAILED, delay_msg))
-            itask.state.set_submit_retry()
+            itask.state.reset_state(TASK_STATUS_SUBMIT_RETRYING)
 
     def _process_message_submitted(self, itask, event_time):
         """Helper for process_message, handle a submit-succeeded message."""
@@ -661,7 +677,7 @@ class TaskEventsManager(object):
         if itask.tdef.run_mode == 'simulation':
             # Simulate job execution at this point.
             itask.set_event_time('started', event_time)
-            itask.state.set_state(TASK_STATUS_RUNNING)
+            itask.state.reset_state(TASK_STATUS_RUNNING)
             itask.state.outputs.set_completed(TASK_OUTPUT_STARTED)
             return
 
@@ -672,13 +688,18 @@ class TaskEventsManager(object):
         self.setup_event_handlers(
             itask, TASK_OUTPUT_SUBMITTED, 'job submitted')
 
-        if itask.state.set_submit_succeeded():
+        cylc.flags.pflag = True
+        if itask.state.status == TASK_STATUS_READY:
+            # In rare occassions, the submit command of a batch system has sent
+            # the job to its server, and the server has started the job before
+            # the job submit command returns.
+            itask.state.reset_state(TASK_STATUS_SUBMITTED)
             try:
-                itask.state.submission_timer_timeout = (
+                itask.timeout_timers[TASK_STATUS_SUBMITTED] = (
                     itask.summary['submitted_time'] +
                     float(self._get_events_conf(itask, 'submission timeout')))
             except (TypeError, ValueError):
-                itask.state.submission_timer_timeout = None
+                itask.timeout_timers[TASK_STATUS_SUBMITTED] = None
             self.set_poll_time(itask)
 
     def _setup_job_logs_retrieval(self, itask, event, _=None):

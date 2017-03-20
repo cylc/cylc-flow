@@ -15,11 +15,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Task output message manager and constants."""
 
-"""Task output messages and associated logic."""
-
-
-import sys
 
 # Standard task output strings, used for triggering.
 TASK_OUTPUT_EXPIRED = "expired"
@@ -29,91 +26,145 @@ TASK_OUTPUT_STARTED = "started"
 TASK_OUTPUT_SUCCEEDED = "succeeded"
 TASK_OUTPUT_FAILED = "failed"
 
+_SORT_ORDERS = (
+    TASK_OUTPUT_EXPIRED,
+    TASK_OUTPUT_SUBMITTED,
+    TASK_OUTPUT_SUBMIT_FAILED,
+    TASK_OUTPUT_STARTED,
+    TASK_OUTPUT_SUCCEEDED,
+    TASK_OUTPUT_FAILED)
+
+_TRIGGER = 0
+_MESSAGE = 1
+_IS_COMPLETED = 2
+
 
 class TaskOutputs(object):
+    """Task output message manager.
+
+    Manage standard task outputs and custom outputs, e.g.:
+    [scheduling]
+        [[dependencies]]
+            graph = t1:trigger1 => t2
+    [runtime]
+        [[t1]]
+            [[[outputs]]]
+                trigger1 = message 1
+
+    Can search item by message string or by trigger string.
+    """
 
     # Memory optimization - constrain possible attributes to this list.
-    __slots__ = ["owner_id", "completed", "not_completed"]
+    __slots__ = ["_by_message", "_by_trigger"]
 
-    def __init__(self, owner_id):
+    def __init__(self, tdef, point):
+        self._by_message = {}
+        self._by_trigger = {}
+        for trigger, message in tdef.get_outputs(point):
+            self.add(message, trigger)
 
-        self.owner_id = owner_id
-        # Store completed and not-completed outputs in separate
-        # dicts to allow quick passing of completed to the broker.
-
-        # Using rhs of dict as a cheap way to get owner ID to receiving
-        # tasks via the dependency broker object:
-        # self.(not)completed[message] = owner_id
-
-        self.completed = {}
-        self.not_completed = {}
-
-    def count(self):
-        return len(self.completed) + len(self.not_completed)
-
-    def count_completed(self):
-        return len(self.completed)
-
-    def dump(self):
-        # return a list of strings representing each message and its state
-        res = []
-        for key in self.not_completed:
-            res.append([key, False])
-        for key in self.completed:
-            res.append([key, True])
-        return res
+    def add(self, message, trigger=None, is_completed=False):
+        """Add a new output message"""
+        if trigger is None:
+            trigger = message
+        self._by_message[message] = [trigger, message, is_completed]
+        self._by_trigger[trigger] = self._by_message[message]
 
     def all_completed(self):
-        return len(self.not_completed) == 0
+        """Return True if all all outputs completed."""
+        return all([val[_IS_COMPLETED] for val in self._by_message.values()])
 
-    def is_completed(self, msg):
-        return self._qualify(msg) in self.completed
-
-    def _qualify(self, msg):
-        # Prefix a message string with task ID.
-        return "%s %s" % (self.owner_id, msg)
-
-    def set_completed(self, msg):
-        message = self._qualify(msg)
+    def exists(self, message=None, trigger=None):
+        """Return True if message/trigger is identified as an output."""
         try:
-            del self.not_completed[message]
-        except:
+            return self._get_item(message, trigger) is not None
+        except KeyError:
+            return False
+
+    def get_all(self):
+        """Return an iterator for all outputs."""
+        return sorted(self._by_message.values(), cmp=self._sort_by_message)
+
+    def get_completed(self):
+        """Return all completed output messages."""
+        ret = []
+        for value in self.get_all():
+            if value[_IS_COMPLETED]:
+                ret.append(value[_MESSAGE])
+        return ret
+
+    def get_not_completed(self):
+        """Return all not-completed output messages."""
+        ret = []
+        for value in self.get_all():
+            if not value[_IS_COMPLETED]:
+                ret.append(value[_MESSAGE])
+        return ret
+
+    def is_completed(self, message=None, trigger=None):
+        """Return True if output of message is completed."""
+        try:
+            return self._get_item(message, trigger)[_IS_COMPLETED]
+        except KeyError:
+            return False
+
+    def remove(self, message=None, trigger=None):
+        """Remove an output by message, if it exists."""
+        try:
+            trigger, message, _ = self._get_item(message, trigger)
+        except KeyError:
             pass
-        self.completed[message] = self.owner_id
-
-    def exists(self, msg):
-        message = self._qualify(msg)
-        return message in self.completed or message in self.not_completed
-
-    def set_all_incomplete(self):
-        for message in self.completed.keys():
-            del self.completed[message]
-            self.not_completed[message] = self.owner_id
+        else:
+            del self._by_message[message]
+            del self._by_trigger[trigger]
 
     def set_all_completed(self):
-        for message in self.not_completed.keys():
-            del self.not_completed[message]
-            self.completed[message] = self.owner_id
+        """Set all outputs to complete."""
+        for value in self._by_message.values():
+            value[_IS_COMPLETED] = True
 
-    def add(self, msg, completed=False):
-        # Add a new output message, prepend my task ID.
-        message = self._qualify(msg)
-        if message in self.completed or message in self.not_completed:
-            # duplicate output messages are an error.
-            print >> sys.stderr, (
-                'WARNING: output already registered: ' + message)
-        if not completed:
-            self.not_completed[message] = self.owner_id
-        else:
-            self.completed[message] = self.owner_id
+    def set_all_incomplete(self):
+        """Set all outputs to incomplete."""
+        for value in self._by_message.values():
+            value[_IS_COMPLETED] = False
 
-    def remove(self, msg):
-        """Remove an output, if it exists."""
-        message = self._qualify(msg)
+    def set_completed(self, message=None, trigger=None, is_completed=True):
+        """Set the output identified by message/trigger as completed."""
         try:
-            del self.completed[message]
-        except:
-            try:
-                del self.not_completed[message]
-            except:
-                pass
+            item = self._get_item(message, trigger)
+            old_is_completed = item[_IS_COMPLETED]
+            item[_IS_COMPLETED] = is_completed
+        except KeyError:
+            pass
+        else:
+            return bool(old_is_completed) != bool(is_completed)
+
+    def _get_item(self, message, trigger):
+        """Return self._by_trigger[trigger] or self._by_message[message].
+
+        whichever is relevant.
+        """
+        if message is None:
+            return self._by_trigger[trigger]
+        else:
+            return self._by_message[message]
+
+    @staticmethod
+    def _sort_by_message(item1, item2):
+        """Compare by _MESSAGE."""
+        try:
+            idx1 = _SORT_ORDERS.index(item1[_MESSAGE])
+        except ValueError:
+            idx1 = None
+        try:
+            idx2 = _SORT_ORDERS.index(item2[_MESSAGE])
+        except ValueError:
+            idx2 = None
+        if idx1 is None and idx2 is None:
+            return cmp(item1[_MESSAGE], item2[_MESSAGE])
+        elif idx1 is None:
+            return 1
+        elif idx2 is None:
+            return -1
+        else:
+            return cmp(idx1, idx2)

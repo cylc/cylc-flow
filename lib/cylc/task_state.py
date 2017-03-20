@@ -161,8 +161,7 @@ class TaskState(object):
     __slots__ = ["identity", "status", "hold_swap",
                  "_is_satisfied", "_suicide_is_satisfied", "prerequisites",
                  "suicide_prerequisites", "external_triggers", "outputs",
-                 "kill_failed", "time_updated",
-                 "submission_timer_timeout", "execution_timer_timeout"]
+                 "kill_failed", "time_updated"]
 
     def __init__(self, tdef, point, status, hold_swap):
         self.identity = TaskID.get(tdef.name, str(point))
@@ -188,9 +187,7 @@ class TaskState(object):
             self.external_triggers[ext] = False
 
         # Message outputs.
-        self.outputs = TaskOutputs(TaskID.get(tdef.name, str(point)))
-        for outp in tdef.outputs:
-            self.outputs.add(outp.get_string(point))
+        self.outputs = TaskOutputs(tdef, point)
 
         # Standard outputs.
         self.outputs.add(TASK_OUTPUT_SUBMITTED)
@@ -198,11 +195,6 @@ class TaskState(object):
         self.outputs.add(TASK_OUTPUT_SUCCEEDED)
 
         self.kill_failed = False
-
-        # TODO - these are here because current use in reset_state(); should be
-        # disentangled and put in the task_proxy module.
-        self.submission_timer_timeout = None
-        self.execution_timer_timeout = None
 
     def satisfy_me(self, task_output_msgs, task_outputs):
         """Attempt to get my prerequisites satisfied."""
@@ -291,7 +283,22 @@ class TaskState(object):
         self.outputs.remove(TASK_OUTPUT_SUBMIT_FAILED)
         self.outputs.remove(TASK_OUTPUT_FAILED)
 
-    def release(self):
+    def set_held(self):
+        """Set state to TASK_STATUS_HELD, if possible.
+
+        If state can be held, set hold_swap to current state.
+        If state is active, set hold_swap to TASK_STATUS_HELD.
+        If state cannot be held, do nothing.
+        """
+        if self.status in TASK_STATUSES_ACTIVE:
+            self.hold_swap = TASK_STATUS_HELD
+            return
+        elif self.status in [
+                TASK_STATUS_WAITING, TASK_STATUS_QUEUED,
+                TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING]:
+            return self._set_state(TASK_STATUS_HELD)
+
+    def unset_held(self):
         """Reset to my pre-held state, if not beyond the stop point."""
         if self.status != TASK_STATUS_HELD:
             return
@@ -300,11 +307,51 @@ class TaskState(object):
         elif self.hold_swap == TASK_STATUS_HELD:
             self.hold_swap = None
         else:
-            self.submission_timer_timeout = None
-            self.execution_timer_timeout = None
             self.reset_state(self.hold_swap)
 
-    def set_state(self, status):
+    def reset_state(self, status):
+        """Reset status of task."""
+        if status == TASK_STATUS_EXPIRED:
+            self.set_prerequisites_all_satisfied()
+            self.unset_special_outputs()
+            self.outputs.set_all_incomplete()
+            self.outputs.add(TASK_OUTPUT_EXPIRED, is_completed=True)
+        elif status == TASK_STATUS_WAITING:
+            self.set_prerequisites_not_satisfied()
+            self.unset_special_outputs()
+            self.outputs.set_all_incomplete()
+        elif status == TASK_STATUS_READY:
+            self.set_prerequisites_all_satisfied()
+            self.unset_special_outputs()
+            self.outputs.set_all_incomplete()
+        elif status == TASK_STATUS_SUBMITTED:
+            self.set_prerequisites_all_satisfied()
+            self.outputs.set_completed(TASK_OUTPUT_SUBMITTED)
+        elif status == TASK_STATUS_SUBMIT_RETRYING:
+            self.set_prerequisites_all_satisfied()
+            self.outputs.remove(TASK_OUTPUT_SUBMITTED)
+        elif status == TASK_STATUS_SUBMIT_FAILED:
+            self.set_prerequisites_all_satisfied()
+            self.outputs.remove(TASK_OUTPUT_SUBMITTED)
+            self.outputs.add(TASK_OUTPUT_SUBMIT_FAILED, is_completed=True)
+        elif status == TASK_STATUS_SUCCEEDED:
+            self.set_prerequisites_all_satisfied()
+            self.unset_special_outputs()
+            self.outputs.set_completed(TASK_OUTPUT_SUBMITTED)
+            self.outputs.set_completed(TASK_OUTPUT_STARTED)
+            self.outputs.set_completed(TASK_OUTPUT_SUCCEEDED)
+        elif status == TASK_STATUS_RETRYING:
+            self.set_prerequisites_all_satisfied()
+            self.outputs.set_all_incomplete()
+        elif status == TASK_STATUS_FAILED:
+            self.set_prerequisites_all_satisfied()
+            self.outputs.set_all_incomplete()
+            # Set a new failed output just as if a failure message came in
+            self.outputs.add(TASK_OUTPUT_FAILED, is_completed=True)
+
+        return self._set_state(status)
+
+    def _set_state(self, status):
         """Set, log and record task status (normal change, not forced - don't
         update task_events table)."""
         if self.status == self.hold_swap:
@@ -332,44 +379,6 @@ class TaskState(object):
             message += " (%s)" % self.hold_swap
         LOG.debug(message, itask=self.identity)
 
-    def reset_state(self, status):
-        """Reset status of task."""
-        if status == TASK_STATUS_HELD:
-            if self.status in TASK_STATUSES_ACTIVE:
-                self.hold_swap = TASK_STATUS_HELD
-                return
-            if self.status not in [
-                    TASK_STATUS_WAITING, TASK_STATUS_QUEUED,
-                    TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING]:
-                return
-        elif status == TASK_STATUS_EXPIRED:
-            self.set_prerequisites_all_satisfied()
-            self.unset_special_outputs()
-            self.outputs.set_all_incomplete()
-            self.outputs.add(TASK_OUTPUT_EXPIRED, True)
-        elif status == TASK_STATUS_WAITING:
-            self.set_prerequisites_not_satisfied()
-            self.unset_special_outputs()
-            self.outputs.set_all_incomplete()
-        elif status == TASK_STATUS_READY:
-            self.set_prerequisites_all_satisfied()
-            self.unset_special_outputs()
-            self.outputs.set_all_incomplete()
-        elif status == TASK_STATUS_SUCCEEDED:
-            self.set_prerequisites_all_satisfied()
-            self.unset_special_outputs()
-            # TODO - for message outputs this should be optional (see #1551):
-            self.outputs.set_all_completed()
-        elif status == TASK_STATUS_FAILED:
-            self.set_prerequisites_all_satisfied()
-            self.outputs.set_all_incomplete()
-            # Set a new failed output just as if a failure message came in
-            self.outputs.add(TASK_OUTPUT_FAILED, True)
-
-        self.submission_timer_timeout = None
-        self.execution_timer_timeout = None
-        return self.set_state(status)
-
     def is_ready_to_run(self, retry_delay_done, start_time_reached):
         """With current status, is the task ready to run?"""
         return (
@@ -391,74 +400,6 @@ class TaskState(object):
         """"Return True if self.status > status."""
         return (TASK_STATUSES_ORDERED.index(self.status) >
                 TASK_STATUSES_ORDERED.index(status))
-
-    def set_expired(self):
-        """Manipulate state for task expired."""
-        self.reset_state(TASK_STATUS_EXPIRED)
-
-    def set_ready_to_submit(self):
-        """Manipulate state just prior to job submission."""
-        self.set_state(TASK_STATUS_READY)
-
-    def set_submit_failed(self):
-        """Manipulate state after job submission failure."""
-        self.set_state(TASK_STATUS_SUBMIT_FAILED)
-        self.outputs.remove(TASK_OUTPUT_SUBMITTED)
-        self.outputs.add(TASK_OUTPUT_SUBMIT_FAILED, True)
-
-    def set_submit_retry(self):
-        """Manipulate state for job submission retry."""
-        self.outputs.remove(TASK_OUTPUT_SUBMITTED)
-        self.set_state(TASK_STATUS_SUBMIT_RETRYING)
-        self.set_prerequisites_all_satisfied()
-
-    def set_submit_succeeded(self):
-        """Set status to submitted."""
-        if not self.outputs.is_completed(TASK_OUTPUT_SUBMITTED):
-            self.outputs.set_completed(TASK_OUTPUT_SUBMITTED)
-            # Allow submitted tasks to spawn even if nothing else is happening.
-            flags.pflag = True
-        if self.status == TASK_STATUS_READY:
-            # In rare occassions, the submit command of a batch system has sent
-            # the job to its server, and the server has started the job before
-            # the job submit command returns.
-            self.set_state(TASK_STATUS_SUBMITTED)
-            return True
-        else:
-            return False
-
-    def set_execution_succeeded(self, msg_was_polled):
-        """Manipulate state for job execution success."""
-        self.set_state(TASK_STATUS_SUCCEEDED)
-        warnings = []
-        if not self.outputs.all_completed():
-            err = "Succeeded with unreported outputs:"
-            for key in self.outputs.not_completed:
-                err += "\n  " + key
-            warnings.append(err)
-            if msg_was_polled:
-                # Assume all outputs complete (e.g. poll at restart).
-                # TODO - just poll for outputs in the job status file.
-                warnings.append("Assuming ALL outputs completed.")
-                self.outputs.set_all_completed()
-            else:
-                # A succeeded task MUST have submitted and started.
-                # TODO - just poll for outputs in the job status file?
-                for output in [TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED]:
-                    if not self.outputs.is_completed(output):
-                        warnings.append(
-                            "Assuming output completed:  \n %s" % output)
-                        self.outputs.set_completed(output)
-        return warnings
-
-    def set_execution_failed(self):
-        """Manipulate state for job execution failure."""
-        self.reset_state(TASK_STATUS_FAILED)
-
-    def set_execution_retry(self):
-        """Manipulate state for job execution retry."""
-        self.set_state(TASK_STATUS_RETRYING)
-        self.set_prerequisites_all_satisfied()
 
     def _add_prerequisites(self, point, tdef):
         """Add task prerequisites."""

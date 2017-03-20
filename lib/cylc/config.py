@@ -40,7 +40,6 @@ from cylc.cycling import IntervalParsingError
 from cylc.envvar import check_varnames
 import cylc.flags
 from cylc.graphnode import graphnode, GraphNodeError
-from cylc.message_output import MessageOutput
 from cylc.print_tree import print_tree
 from cylc.taskdef import TaskDef, TaskDefError
 from cylc.task_id import TaskID
@@ -1506,10 +1505,9 @@ class SuiteConfig(object):
                     self.taskdefs[name].add_sequence(seq)
 
             # Record custom message outputs.
-            for msg in self.cfg['runtime'][name]['outputs'].values():
-                outp = MessageOutput(msg, base_interval)
-                if outp not in self.taskdefs[name].outputs:
-                    self.taskdefs[name].outputs.append(outp)
+            for item in self.cfg['runtime'][name]['outputs'].items():
+                if (item, base_interval) not in self.taskdefs[name].outputs:
+                    self.taskdefs[name].outputs.append((item, base_interval))
 
     def generate_triggers(self, lexpression, left_nodes,
                           right, seq, suicide, base_interval):

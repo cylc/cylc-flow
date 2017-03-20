@@ -54,7 +54,17 @@ def main():
         "-s", "--state", metavar="STATE",
         help="Reset task state to STATE, can be %s" % (
             ', '.join(TASK_STATUSES_CAN_RESET_TO)),
+        choices=list(TASK_STATUSES_CAN_RESET_TO),
         action="store", default=None, dest="state")
+
+    parser.add_option(
+        "--output", "-O",
+        metavar="MESSAGE|TRIGGER",
+        help=("Find task output by message string or trigger string, " +
+              "set complete or incomplete with !MESSAGE or !TRIGGER, " +
+              "'*' to set all complete, '!*' to set all incomplete. " +
+              "Can be used more than once to reset multiple task outputs."),
+        action="append", default=[], dest="outputs")
 
     options, args = parser.parse_args()
 
@@ -82,7 +92,8 @@ def main():
         print_uuid=options.print_uuid)
     items = parser.parse_multitask_compat(options, args)
     pclient.put_command(
-        'reset_task_states', items=items, state=options.state)
+        'reset_task_states', items=items, state=options.state,
+        outputs=options.outputs)
 
 
 if __name__ == "__main__":

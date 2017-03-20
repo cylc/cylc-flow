@@ -17,11 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import ast
-import sys
-import os
 from Queue import Queue
 
-import cylc.flags
 from cylc.network.https.base_server import BaseCommsServer
 from cylc.network import check_access_priv
 
@@ -121,10 +118,12 @@ class SuiteCommandServer(BaseCommsServer):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def reset_task_states(self, items, state=None):
+    def reset_task_states(self, items, state=None, outputs=None):
         if not isinstance(items, list):
             items = [items]
-        return self._put("reset_task_states", (items,), {"state": state})
+        return self._put(
+            "reset_task_states",
+            (items,), {"state": state, "outputs": outputs})
 
     @cherrypy.expose
     @cherrypy.tools.json_out()

@@ -222,16 +222,16 @@ class TaskPool(object):
             LOG.info(
                 "holding (beyond suite hold point) %s" % self.hold_point,
                 itask=itask)
-            itask.state.reset_state(TASK_STATUS_HELD)
+            itask.state.set_held()
         elif (itask.point <= self.stop_point and
                 self.task_has_future_trigger_overrun(itask)):
             LOG.info("holding (future trigger beyond stop point)", itask=itask)
             self.held_future_tasks.append(itask.identity)
-            itask.state.reset_state(TASK_STATUS_HELD)
+            itask.state.set_held()
         elif self.is_held and itask.state.status == TASK_STATUS_WAITING:
             # Hold newly-spawned tasks in a held suite (e.g. due to manual
             # triggering of a held task).
-            itask.state.reset_state(TASK_STATUS_HELD)
+            itask.state.set_held()
 
         # add to the runahead pool
         self.runahead_pool.setdefault(itask.point, {})
@@ -471,7 +471,7 @@ class TaskPool(object):
                 # only need to check that unqueued tasks are ready
                 if itask.manual_trigger or itask.ready_to_run(now):
                     # queue the task
-                    itask.state.set_state(TASK_STATUS_QUEUED)
+                    itask.state.reset_state(TASK_STATUS_QUEUED)
                     itask.reset_manual_trigger()
 
         # 2) submit queued tasks if manually forced or not queue-limited
@@ -656,7 +656,7 @@ class TaskPool(object):
                     "not running (beyond suite stop cycle) %s" %
                     self.stop_point,
                     itask=itask)
-                itask.state.reset_state(TASK_STATUS_HELD)
+                itask.state.set_held()
 
     def can_stop(self, stop_mode):
         """Return True if suite can stop.
@@ -768,20 +768,20 @@ class TaskPool(object):
         if point is not None:
             for itask in self.get_all_tasks():
                 if itask.point > point:
-                    itask.state.reset_state(TASK_STATUS_HELD)
+                    itask.state.set_held()
 
     def hold_tasks(self, items):
         """Hold tasks with IDs matching any item in "ids"."""
         itasks, bad_items = self.filter_task_proxies(items)
         for itask in itasks:
-            itask.state.reset_state(TASK_STATUS_HELD)
+            itask.state.set_held()
         return len(bad_items)
 
     def release_tasks(self, items):
         """Release held tasks with IDs matching any item in "ids"."""
         itasks, bad_items = self.filter_task_proxies(items)
         for itask in itasks:
-            itask.state.release()
+            itask.state.unset_held()
         return len(bad_items)
 
     def hold_all_tasks(self):
@@ -789,7 +789,7 @@ class TaskPool(object):
         LOG.info("Holding all waiting or queued tasks now")
         self.is_held = True
         for itask in self.get_all_tasks():
-            itask.state.reset_state(TASK_STATUS_HELD)
+            itask.state.set_held()
 
     def release_all_tasks(self):
         """Release all held tasks."""
@@ -822,7 +822,9 @@ class TaskPool(object):
         """
         all_outputs = {}   # all_outputs[message] = taskid
         for itask in self.get_tasks():
-            all_outputs.update(itask.state.outputs.completed)
+            for message in itask.state.outputs.get_completed():
+                all_outputs["%s %s" % (itask.identity, message)] = (
+                    itask.identity)
         all_output_msgs = set(all_outputs)
         for itask in self.get_tasks():
             # Try to satisfy itask if not already satisfied.
@@ -951,22 +953,53 @@ class TaskPool(object):
                 self.force_spawn(itask)
         return len(bad_items)
 
-    def reset_task_states(self, items, status):
+    def reset_task_states(self, items, status, outputs):
         """Reset task states."""
         itasks, bad_items = self.filter_task_proxies(items)
         for itask in itasks:
-            LOG.info("resetting state to %s" % status, itask=itask)
-            if status == TASK_STATUS_READY:
-                # Pseudo state (in this context) - set waiting and satisified.
-                itask.state.reset_state(TASK_STATUS_WAITING)
-                itask.state.set_prerequisites_all_satisfied()
-                itask.state.unset_special_outputs()
-                itask.state.outputs.set_all_incomplete()
-            elif status in [TASK_STATUS_FAILED, TASK_STATUS_SUBMIT_FAILED]:
-                itask.state.reset_state(status)
-                itask.set_event_time('finished', time())
-            else:
-                itask.state.reset_state(status)
+            if status and status != itask.state.status:
+                LOG.info("resetting state to %s" % status, itask=itask)
+                if status == TASK_STATUS_READY:
+                    # Pseudo state (in this context) -
+                    # set waiting and satisified.
+                    itask.state.reset_state(TASK_STATUS_WAITING)
+                    itask.state.set_prerequisites_all_satisfied()
+                    itask.state.unset_special_outputs()
+                    itask.state.outputs.set_all_incomplete()
+                else:
+                    itask.state.reset_state(status)
+                    if status in [
+                            TASK_STATUS_FAILED, TASK_STATUS_SUBMIT_FAILED]:
+                        itask.set_event_time('finished', time())
+            if outputs:
+                for output in outputs:
+                    is_completed = True
+                    if output.startswith('!'):
+                        is_completed = False
+                        output = output[1:]
+                    if output == '*' and is_completed:
+                        itask.state.outputs.set_all_completed()
+                        LOG.info("reset all output to completed", itask=itask)
+                    elif output == '*':
+                        itask.state.outputs.set_all_incomplete()
+                        LOG.info("reset all output to incomplete", itask=itask)
+                    else:
+                        ret = itask.state.outputs.set_completed(
+                            message=output, is_completed=is_completed)
+                        if ret is None:
+                            itask.state.outputs.set_completed(
+                                trigger=output, is_completed=is_completed)
+                        if ret is None:
+                            LOG.warning(
+                                "cannot reset output %s" % output, itask=itask)
+                        elif ret and is_completed:
+                            LOG.info(
+                                "reset output to complete %s" % output,
+                                itask=itask)
+                        elif ret:
+                            LOG.info(
+                                "reset output to incomplete %s" % output,
+                                itask=itask)
         return len(bad_items)
 
     def remove_tasks(self, items, spawn=False):
@@ -1053,7 +1086,7 @@ class TaskPool(object):
                 LOG.warning(msg, itask=itask)
                 self.task_events_mgr.setup_event_handlers(
                     itask, "expired", msg)
-                itask.state.set_expired()
+                itask.state.reset_state(TASK_STATUS_EXPIRED)
 
     def waiting_tasks_ready(self):
         """Waiting tasks can become ready for internal reasons.
@@ -1133,10 +1166,13 @@ class TaskPool(object):
                     state = 'NOT satisfied'
                 extras['External trigger "%s"' % trig] = state
 
+            outputs = []
+            for _, msg, is_completed in itask.state.outputs.get_all():
+                outputs.append(["%s %s" % (itask.identity, msg), is_completed])
             results[itask.identity] = {
                 "descriptions": itask.tdef.describe(),
                 "prerequisites": itask.state.prerequisites_dump(),
-                "outputs": itask.state.outputs.dump(),
+                "outputs": outputs,
                 "extras": extras}
         return results, bad_items
 

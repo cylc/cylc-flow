@@ -251,7 +251,7 @@ class SuiteDatabaseManager(object):
                 set_args = {
                     "time_updated": itask.state.time_updated,
                     "submit_num": itask.submit_num,
-                    "try_num": itask.try_timers[itask.KEY_EXECUTE].num + 1,
+                    "try_num": itask.get_try_num(),
                     "status": itask.state.status}
                 where_args = {
                     "cycle": str(itask.point),
