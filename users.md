@@ -22,6 +22,7 @@ Known users include:
   * [Korean Meteorological Administration](http://web.kma.go.kr/)
   * [Centre of Excellence in Simulation of Weather and Climate in
       Europe](https://verc.enes.org/esiwace/services/sup_cylc)
+  * [NCAR](https://ncar.ucar.edu)
 
 Many of these centers use cylc with [Rose](https://github.com/metomi/rose), a
 framework for managing and running meteorological suites.
