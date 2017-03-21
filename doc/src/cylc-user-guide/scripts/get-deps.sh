@@ -7,7 +7,7 @@ CONVERT=$(  which convert  2> /dev/null )
 WARNED=false
 
 if [[ -z $PDFLATEX ]]; then
-    echo "*** WARNING: to generate the PDF User Guide install LaTeX pdflatex ***" >&2
+    echo "*** WARNING: to generate PDF Cylc documentation install LaTeX pdflatex ***" >&2
     WARNED=true
 else
     DEPS="pdf"
@@ -15,12 +15,12 @@ fi
 
 if [[ -z $HTLATEX ]]; then
     echo
-    echo "*** WARNING: to generate the HTML User Guides install LaTeX tex4ht ***" >&2
+    echo "*** WARNING: to generate HTML Cylc documentation install LaTeX tex4ht ***" >&2
     WARNED=true
 fi
 
 if [[ -z $CONVERT ]]; then
-    echo "*** WARNING: to generate the HTML User Guides install ImageMagick convert ***" >&2
+    echo "*** WARNING: to generate HTML Cylc documentation install ImageMagick convert ***" >&2
     WARNED=true
 fi
 
@@ -34,4 +34,3 @@ if $WARNED; then
 fi
 
 echo $DEPS
-

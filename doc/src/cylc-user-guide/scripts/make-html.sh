@@ -18,7 +18,7 @@
 
 set -e
 
-CYLC=$(dirname $0)/../../bin/cylc
+CYLC=$(dirname $0)/../../../../bin/cylc
 
 function usage {
     echo "USAGE make-html.sh [multi|single]"
@@ -59,4 +59,3 @@ if [[ $TYPE == multi ]]; then
 else
     htlatex cug-html.tex "cug-html.cfg,html,1,fn-in" "" "" "-halt-on-error"
 fi
-

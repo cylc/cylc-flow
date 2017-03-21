@@ -12,6 +12,11 @@ doc/html/
 doc/pdf/
 doc/index.html
 doc/cylc-version.txt
+*.aux
+*.out
+*.pdf
+*.log
+*.toc
 
 # VERSION FILE
 VERSION

@@ -1,5 +1,5 @@
 \lstset{language=transcript}
-
+ 
 \section{Introduction: How Cylc Works}
 \label{HowCylcWorks}
 
@@ -856,7 +856,7 @@ $ echo $?
 Here's the traditional {\em Hello World} program rendered as a cylc
 suite:
 \lstset{language=suiterc}
-\lstinputlisting{../examples/tutorial/oneoff/basic/suite.rc}
+\lstinputlisting{../../../examples/tutorial/oneoff/basic/suite.rc}
 \lstset{language=transcript}
 
 Cylc suites feature a clean separation of scheduling configuration,
@@ -877,7 +877,7 @@ prototyping of new suites, it is submitted to run as a background job on
 the suite host. In fact cylc even provides a default task implementation
 that makes the entire \lstinline=[runtime]= section technically optional:
 \lstset{language=suiterc}
-\lstinputlisting{../examples/tutorial/oneoff/minimal/suite.rc}
+\lstinputlisting{../../../examples/tutorial/oneoff/minimal/suite.rc}
 \lstset{language=transcript}
 (the resulting {\em dummy task} just prints out some identifying
 information and exits).
@@ -1386,7 +1386,7 @@ represents a task, or if it is inherited by other namespaces, a {\em
 family}. This allows common configuration to be factored out of related
 tasks very efficiently.
 \lstset{language=suiterc}
-\lstinputlisting{../examples/tutorial/oneoff/inherit/suite.rc}
+\lstinputlisting{../../../examples/tutorial/oneoff/inherit/suite.rc}
 The \lstinline=[root]= namespace provides defaults for all tasks in the suite.
 Here both tasks inherit \lstinline=script= from \lstinline=root=, which they
 customize with different values of the environment variable
@@ -1425,7 +1425,7 @@ i.e.\ if \lstinline=foo= succeeds, trigger all members of
 \lstinline=GREETERS= at once. Here's the full suite with runtime
 hierarchy shown:
 \lstset{language=suiterc}
-\lstinputlisting{../examples/tutorial/oneoff/ftrigger1/suite.rc}
+\lstinputlisting{../../../examples/tutorial/oneoff/ftrigger1/suite.rc}
 
 (Note that we recommend given ALL-CAPS names to task families to help
 distinguish them from task names. However, this is just a convention).
@@ -1557,11 +1557,11 @@ basic Hello World suite and cut the implementation of the task
 \lstinline=hello= out to a file \lstinline=hello.sh= in the suite
 bin directory:
 \lstset{language=bash}
-\lstinputlisting{../examples/tutorial/oneoff/external/bin/hello.sh}
+\lstinputlisting{../../../examples/tutorial/oneoff/external/bin/hello.sh}
 Make the task script executable, and change the \lstinline=hello= task
 runtime section to invoke it:
 \lstset{language=suiterc}
-\lstinputlisting{../examples/tutorial/oneoff/external/suite.rc}
+\lstinputlisting{../../../examples/tutorial/oneoff/external/suite.rc}
 
 If you run the suite now the new greeting from the external task script
 should appear in the \lstinline=hello= task stdout log. This works
@@ -1598,7 +1598,7 @@ belonging to that sequence may only run once.
 
 Open the \lstinline=tut/cycling/one= suite:
 \lstset{language=suiterc}
-\lstinputlisting{../examples/tutorial/cycling/one/suite.rc}
+\lstinputlisting{../../../examples/tutorial/cycling/one/suite.rc}
 The difference between cycling and non-cycling suites is all in the
 \lstinline=[scheduling]= section, so we will leave the
 \lstinline=[runtime]= section alone for now (this will result in
@@ -1800,7 +1800,7 @@ date-time based.
 Open the \lstinline=tut/cycling/integer= suite, which is plotted in
 Figure~\ref{fig-tut-int}.
 \lstset{language=suiterc}
-\lstinputlisting{../examples/tutorial/cycling/integer/suite.rc}
+\lstinputlisting{../../../examples/tutorial/cycling/integer/suite.rc}
 
 \begin{figure}
     \begin{center}
@@ -1840,7 +1840,7 @@ uses of Jinja2: changing suite content or structure based on the value
 of a logical switch; and iteratively generating dependencies and runtime
 configuration for groups of related tasks:
 \lstset{language=suiterc}
-\lstinputlisting{../examples/tutorial/oneoff/jinja2/suite.rc}
+\lstinputlisting{../../../examples/tutorial/oneoff/jinja2/suite.rc}
 
 To view the result of Jinja2 processing with the Jinja2 flag
 \lstinline@MULTI@ set to \lstinline=False=:
@@ -1893,7 +1893,7 @@ An environment variable \lstinline=$CYLC_TASK_TRY_NUMBER= increments
 from $1$ on each successive try, and is passed to the task to allow
 different behaviour on the retry:
 \lstset{language=suiterc}
-\lstinputlisting{../examples/tutorial/oneoff/retry/suite.rc}
+\lstinputlisting{../../../examples/tutorial/oneoff/retry/suite.rc}
 
 When a task with configured retries fails, its cylc task proxy goes
 into the {\em retrying} state until the next retry delay is up, then it
@@ -3070,7 +3070,7 @@ The example suite \lstinline=$CYLC_DIR/examples/message-triggers= illustrates
 message triggering.
 
 \lstset{language=suiterc}
-\lstinputlisting{../examples/message-triggers/suite.rc}
+\lstinputlisting{../../../examples/message-triggers/suite.rc}
 
 \paragraph{Job Submission Triggers}
 
@@ -3948,7 +3948,7 @@ The following listing of the {\em inherit.single.one} example suite
 illustrates basic runtime inheritance with single parents.
 
 \lstset{language=suiterc}
-\lstinputlisting{../examples/inherit/single/one/suite.rc}
+\lstinputlisting{../../../examples/inherit/single/one/suite.rc}
 \lstset{language=transcript}
 
 \subsubsection{Runtime Inheritance - Multiple}
@@ -3967,7 +3967,7 @@ The {\em inherit.multi.one} example suite, listed here, makes use of
 multiple inheritance:
 
 \lstset{language=suiterc}
-\lstinputlisting{../examples/inherit/multi/one/suite.rc}
+\lstinputlisting{../../../examples/inherit/multi/one/suite.rc}
 \lstset{language=transcript}
 
 \lstinline=cylc get-suite-config= provides an easy way to check the result of
@@ -4863,7 +4863,7 @@ with the New York City task family expanded, in
 Figure~\ref{fig-jinja2-cities}.
 
 \lstset{language=suiterc}
-\lstinputlisting{../examples/jinja2/cities/suite.rc}
+\lstinputlisting{../../../examples/jinja2/cities/suite.rc}
 \lstset{language=transcript}
 
 \begin{figure}
@@ -6409,7 +6409,7 @@ queue. The {\em queues} example suite illustrates how queues work by
 running two task trees side by side (as seen in the graph GUI) each
 limited to 2 and 3 tasks respectively:
 \lstset{language=suiterc}
-\lstinputlisting{../examples/queues/suite.rc}
+\lstinputlisting{../../../examples/queues/suite.rc}
 
 \subsection{Automatic Task Retry On Failure}
 \label{TaskRetries}
@@ -7587,12 +7587,12 @@ mitigate any jumping layout problems:
 
 \section{Cylc README File}
 
-\lstinputlisting{../README.md}
+\lstinputlisting{../../../README.md}
 
 \section{Cylc INSTALL File}
 \label{INSTALL}
 
-\lstinputlisting{../INSTALL.md}
+\lstinputlisting{../../../INSTALL.md}
 
 \section{Cylc Development History - Major Changes}
 

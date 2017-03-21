@@ -18,7 +18,7 @@
 
 set -e
 
-CYLC=$(dirname $0)/../../bin/cylc
+CYLC=$(dirname $0)/../../../../bin/cylc
 
 function usage {
     echo "USAGE make.sh"
@@ -49,4 +49,3 @@ perl -pi -e 's@\.\./INSTALL@../../INSTALL@g' cug.tex
 pdflatex -halt-on-error cug-pdf.tex
 pdflatex -halt-on-error cug-pdf.tex
 pdflatex -halt-on-error cug-pdf.tex
-

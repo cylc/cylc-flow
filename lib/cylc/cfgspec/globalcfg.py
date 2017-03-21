@@ -95,19 +95,19 @@ SPEC = {
     'documentation': {
         'files': {
             'html index': vdr(
-                vtype='string', default="$CYLC_DIR/doc/index.html"),
+                vtype='string', default="$CYLC_DIR/doc/install/index.html"),
             'pdf user guide': vdr(
-                vtype='string', default="$CYLC_DIR/doc/pdf/cug-pdf.pdf"),
+                vtype='string', default="$CYLC_DIR/doc/install/cylc-user-guide.pdf"),
             'multi-page html user guide': vdr(
                 vtype='string',
-                default="$CYLC_DIR/doc/html/multi/cug-html.html"),
+                default="$CYLC_DIR/doc/install/html/multi/cug-html.html"),
             'single-page html user guide': vdr(
                 vtype='string',
-                default="$CYLC_DIR/doc/html/single/cug-html.html"),
+                default="$CYLC_DIR/doc/install/html/single/cug-html.html"),
         },
         'urls': {
             'internet homepage': vdr(
-                vtype='string', default="http://cylc.github.com/cylc/"),
+                vtype='string', default="http://cylc.github.io/cylc/"),
             'local index': vdr(vtype='string', default=None),
         },
     },
