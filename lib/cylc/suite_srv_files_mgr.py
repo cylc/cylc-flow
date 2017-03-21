@@ -425,12 +425,12 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
                 random.sample(self.PASSPHRASE_CHARSET, self.PASSPHRASE_LEN)))
 
         # Load or create SSL private key for the suite.
-        pkey_obj = self._get_ssl_pem(srv_d, reg)
+        pkey_obj = self._get_ssl_pem(srv_d)
 
         # Load or create SSL certificate for the suite.
-        self._get_ssl_cert(srv_d, reg, pkey_obj)
+        self._get_ssl_cert(srv_d, pkey_obj)
 
-    def _get_ssl_pem(self, path, reg):
+    def _get_ssl_pem(self, path):
         """Load or create ssl.pem file for suite in path.
 
         Key for signing the SSL certificate file.
@@ -453,7 +453,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
                 crypto.dump_privatekey(crypto.FILETYPE_PEM, pkey_obj))
             return pkey_obj
 
-    def _get_ssl_cert(self, path, reg, pkey_obj):
+    def _get_ssl_cert(self, path, pkey_obj):
         """Load or create ssl.cert file for suite in path.
 
         Self-signed SSL certificate file.
@@ -463,12 +463,12 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
         except ImportError:
             # OpenSSL not installed, so we can't use HTTPS anyway.
             return
-        # Use suite name as the 'common name', but no more than 64 chars.
-        common_name = reg
-        if len(reg) > 64:
-            common_name = reg[:61] + "..."
-        # See https://github.com/kennethreitz/requests/issues/2621
+        # Use suite host as the 'common name', but no more than 64 chars.
         host = get_suite_host()
+        common_name = host
+        if len(common_name) > 64:
+            common_name = common_name[:61] + "..."
+        # See https://github.com/kennethreitz/requests/issues/2621
         ext = crypto.X509Extension(
             "subjectAltName",
             False,
