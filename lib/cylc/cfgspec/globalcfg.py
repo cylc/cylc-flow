@@ -97,7 +97,8 @@ SPEC = {
             'html index': vdr(
                 vtype='string', default="$CYLC_DIR/doc/install/index.html"),
             'pdf user guide': vdr(
-                vtype='string', default="$CYLC_DIR/doc/install/cylc-user-guide.pdf"),
+                vtype='string',
+                default="$CYLC_DIR/doc/install/cylc-user-guide.pdf"),
             'multi-page html user guide': vdr(
                 vtype='string',
                 default="$CYLC_DIR/doc/install/html/multi/cug-html.html"),
