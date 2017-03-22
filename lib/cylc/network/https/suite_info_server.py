@@ -114,7 +114,7 @@ class SuiteInfoServer(BaseCommsServer):
         if isinstance(stop_point_string, basestring):
             try:
                 stop_point_string = ast.literal_eval(stop_point_string)
-            except ValueError:
+            except (SyntaxError, ValueError):
                 pass
             else:
                 if stop_point_string is not None:

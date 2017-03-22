@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test suite info API, get_graph_raw, simple usage
+# Test suite info API, get_graph_raw, simple usage, non-digit ICP
 . "$(dirname "$0")/test_header"
 set_test_number 3
 
@@ -28,15 +28,15 @@ cmp_ok "${SUITE_RUN_DIR}/ctb-get-graph-raw.out" <<'__OUT__'
 [
     [
         [
-            "t1.2020", 
+            "t1.20200202T0000Z", 
             null, 
             null, 
             false, 
             false
         ], 
         [
-            "t1.2020", 
-            "t1.2021", 
+            "t1.20200202T0000Z", 
+            "t1.20200203T0000Z", 
             null, 
             false, 
             false
