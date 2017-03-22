@@ -1,0 +1,4 @@
+2013/09/30 16:48:11 INFO - Initial point: 2020
+2013/09/30 16:48:11 INFO - Final point: 2021
+2013/09/30 16:48:11 INFO - [t1.2020] -triggered off []
+2013/09/30 16:48:11 INFO - [t1.2021] -triggered off ['t1.2020']
