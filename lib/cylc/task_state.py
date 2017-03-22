@@ -379,23 +379,6 @@ class TaskState(object):
             message += " (%s)" % self.hold_swap
         LOG.debug(message, itask=self.identity)
 
-    def is_ready_to_run(self, retry_delay_done, start_time_reached):
-        """With current status, is the task ready to run?"""
-        return (
-            (
-                (
-                    self.status == TASK_STATUS_WAITING and
-                    self.prerequisites_are_all_satisfied() and
-                    all(self.external_triggers.values())
-                ) or
-                (
-                    self.status in [TASK_STATUS_SUBMIT_RETRYING,
-                                    TASK_STATUS_RETRYING] and
-                    retry_delay_done
-                )
-            ) and start_time_reached
-        )
-
     def is_greater_than(self, status):
         """"Return True if self.status > status."""
         return (TASK_STATUSES_ORDERED.index(self.status) >

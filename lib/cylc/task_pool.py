@@ -32,16 +32,20 @@ tasks against the new stop cycle.
 """
 
 from fnmatch import fnmatchcase
+import pickle
 from random import randrange
 from time import time
+import traceback
 
-from cylc.config import SuiteConfig
+from cylc.config import SuiteConfigError
 from cylc.cycling.loader import (
     get_interval, get_interval_cls, get_point, ISO8601_CYCLING_TYPE,
     standardise_point_string)
 import cylc.flags
 from cylc.network.ext_trigger_server import ExtTriggerServer
-from cylc.suite_logging import LOG
+from cylc.suite_logging import ERR, LOG, OUT
+from cylc.task_action_timer import TaskActionTimer
+from cylc.task_id import TaskID
 from cylc.task_proxy import TaskProxy
 from cylc.task_state import (
     TASK_STATUSES_ACTIVE, TASK_STATUSES_NOT_STALLED,
@@ -66,18 +70,18 @@ class TaskPool(object):
     STOP_REQUEST_NOW = 'REQUEST(NOW)'
     STOP_REQUEST_NOW_NOW = 'REQUEST(NOW-NOW)'
 
-    def __init__(self, stop_point, suite_db_mgr, task_events_mgr):
+    def __init__(self, config, stop_point, suite_db_mgr, task_events_mgr):
+        self.config = config
         self.stop_point = stop_point
         self.suite_db_mgr = suite_db_mgr
         self.task_events_mgr = task_events_mgr
 
         self.do_reload = False
-        config = SuiteConfig.get_inst()
-        self.custom_runahead_limit = config.get_custom_runahead_limit()
+        self.custom_runahead_limit = self.config.get_custom_runahead_limit()
         self.max_future_offset = None
         self._prev_runahead_base_point = None
         self.max_num_active_cycle_points = (
-            config.get_max_num_active_cycle_points())
+            self.config.get_max_num_active_cycle_points())
         self._prev_runahead_sequence_points = None
 
         self.pool = {}
@@ -96,12 +100,11 @@ class TaskPool(object):
         self.held_future_tasks = []
 
         self.orphans = []
-        self.task_name_list = config.get_task_name_list()
+        self.task_name_list = self.config.get_task_name_list()
 
     def assign_queues(self):
         """self.myq[taskname] = qfoo"""
-        config = SuiteConfig.get_inst()
-        qconfig = config.cfg['scheduling']['queues']
+        qconfig = self.config.cfg['scheduling']['queues']
         self.myq = {}
         for queue in qconfig:
             for taskname in qconfig[queue]['members']:
@@ -110,9 +113,8 @@ class TaskPool(object):
     def insert_tasks(self, items, stop_point_str, no_check=False):
         """Insert tasks."""
         n_warnings = 0
-        config = SuiteConfig.get_inst()
-        names = config.get_task_name_list()
-        fams = config.runtime['first-parent descendants']
+        names = self.config.get_task_name_list()
+        fams = self.config.runtime['first-parent descendants']
         task_ids = []
         for item in items:
             point_str, name_str, _ = self._parse_task_item(item)
@@ -173,7 +175,7 @@ class TaskPool(object):
             on_sequence = False
             point = get_point(point_str)
             if not no_check:  # Check if cycle point is on the tasks sequence.
-                for sequence in config.taskdefs[name_str].sequences:
+                for sequence in self.config.taskdefs[name_str].sequences:
                     if sequence.is_on_sequence(point):
                         on_sequence = True
                         break
@@ -188,7 +190,7 @@ class TaskPool(object):
                 submit_num = task_states_data[(name_str, point_str)].get(
                     "submit_num")
             self.add_to_runahead_pool(TaskProxy(
-                config.get_taskdef(name_str), get_point(point_str),
+                self.config.get_taskdef(name_str), get_point(point_str),
                 stop_point=stop_point, submit_num=submit_num))
         return n_warnings
 
@@ -302,8 +304,7 @@ class TaskPool(object):
             sequence_points = self._prev_runahead_sequence_points
         else:
             sequence_points = []
-            config = SuiteConfig.get_inst()
-            for sequence in config.sequences:
+            for sequence in self.config.sequences:
                 point = runahead_base_point
                 for _ in range(limit):
                     point = sequence.get_next_point(point)
@@ -350,6 +351,117 @@ class TaskPool(object):
                     self.release_runahead_task(itask)
                     released = True
         return released
+
+    def load_db_task_pool_for_restart(self, row_idx, row):
+        """Load a task from previous task pool.
+
+        The state of task prerequisites (satisfied or not) and outputs
+        (completed or not) is determined by the recorded TASK_STATUS:
+
+        TASK_STATUS_WAITING    - prerequisites and outputs unsatisified
+        TASK_STATUS_HELD       - ditto (only waiting tasks can be held)
+        TASK_STATUS_QUEUED     - prereqs satisfied, outputs not completed
+                                 (only tasks ready to run can get queued)
+        TASK_STATUS_READY      - ditto
+        TASK_STATUS_SUBMITTED  - ditto (but see *)
+        TASK_STATUS_SUBMIT_RETRYING - ditto
+        TASK_STATUS_RUNNING    - ditto (but see *)
+        TASK_STATUS_FAILED     - ditto (tasks must run in order to fail)
+        TASK_STATUS_RETRYING   - ditto (tasks must fail in order to retry)
+        TASK_STATUS_SUCCEEDED  - prerequisites satisfied, outputs completed
+
+        (*) tasks reloaded with TASK_STATUS_SUBMITTED or TASK_STATUS_RUNNING
+        are polled to determine what their true status is.
+        """
+        if row_idx == 0:
+            OUT.info("LOADING task proxies")
+        (cycle, name, spawned, status, hold_swap, submit_num, _,
+         user_at_host) = row
+        try:
+            itask = TaskProxy(
+                self.config.get_taskdef(name),
+                get_point(cycle),
+                status=status,
+                hold_swap=hold_swap,
+                has_spawned=bool(spawned),
+                submit_num=submit_num)
+        except SuiteConfigError as exc:
+            if cylc.flags.debug:
+                ERR.error(traceback.format_exc())
+            else:
+                ERR.error(str(exc))
+            ERR.warning((
+                "ignoring task %s from the suite run database\n"
+                "(its task definition has probably been deleted).") % name)
+        except Exception:
+            ERR.error(traceback.format_exc())
+            ERR.error("could not load task %s" % name)
+        else:
+            if status in (TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING):
+                itask.state.set_prerequisites_all_satisfied()
+                # update the task proxy with user@host
+                try:
+                    itask.task_owner, itask.task_host = user_at_host.split(
+                        "@", 1)
+                except ValueError:
+                    itask.task_owner = None
+                    itask.task_host = user_at_host
+
+            elif status in (TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_FAILED):
+                itask.state.set_prerequisites_all_satisfied()
+
+            elif status in (TASK_STATUS_QUEUED, TASK_STATUS_READY):
+                # reset to waiting as these had not been submitted yet.
+                itask.state.reset_state(TASK_STATUS_WAITING)
+                itask.state.set_prerequisites_all_satisfied()
+
+            elif status in (TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING):
+                itask.state.set_prerequisites_all_satisfied()
+
+            elif status == TASK_STATUS_SUCCEEDED:
+                itask.state.set_prerequisites_all_satisfied()
+                # TODO - just poll for outputs in the job status file.
+                itask.state.outputs.set_all_completed()
+
+            if user_at_host:
+                itask.summary['job_hosts'][int(submit_num)] = user_at_host
+            if hold_swap:
+                OUT.info("+ %s.%s %s (%s)" % (name, cycle, status, hold_swap))
+            else:
+                OUT.info("+ %s.%s %s" % (name, cycle, status))
+            self.add_to_runahead_pool(itask, is_restart=True)
+
+    def load_db_task_action_timers(self, row_idx, row):
+        """Load a task action timer, e.g. event handlers, retry states."""
+        if row_idx == 0:
+            OUT.info("LOADING task action timers")
+        (cycle, name, ctx_key_pickle, ctx_pickle, delays_pickle, num, delay,
+         timeout) = row
+        id_ = TaskID.get(name, cycle)
+        ctx_key = "?"
+        try:
+            ctx_key = pickle.loads(str(ctx_key_pickle))
+            ctx = pickle.loads(str(ctx_pickle))
+            delays = pickle.loads(str(delays_pickle))
+            if ctx_key and ctx_key[0] in ["poll_timers", "try_timers"]:
+                itask = self.get_task_by_id(id_)
+                if itask is None:
+                    ERR.warning("%(id)s: task not found, skip" % {"id": id_})
+                    return
+                getattr(itask, ctx_key[0])[ctx_key[1]] = TaskActionTimer(
+                    ctx, delays, num, delay, timeout)
+            else:
+                key1, submit_num = ctx_key
+                key = (key1, cycle, name, submit_num)
+                self.task_events_mgr.event_timers[key] = TaskActionTimer(
+                    ctx, delays, num, delay, timeout)
+        except (EOFError, TypeError, LookupError, ValueError):
+            ERR.warning(
+                "%(id)s: skip action timer %(ctx_key)s" %
+                {"id": id_, "ctx_key": ctx_key})
+            ERR.warning(traceback.format_exc())
+            return
+        OUT.info("+ %s.%s %s" % (name, cycle, ctx_key))
 
     def release_runahead_task(self, itask):
         """Release itask to the appropriate queue in the active pool."""
@@ -476,8 +588,7 @@ class TaskPool(object):
 
         # 2) submit queued tasks if manually forced or not queue-limited
         ready_tasks = []
-        config = SuiteConfig.get_inst()
-        qconfig = config.cfg['scheduling']['queues']
+        qconfig = self.config.cfg['scheduling']['queues']
         for queue in self.queues:
             # 2.1) count active tasks and compare to queue limit
             n_active = 0
@@ -571,14 +682,14 @@ class TaskPool(object):
                 max_offset = itask.tdef.max_future_prereq_offset
         self.max_future_offset = max_offset
 
-    def reconfigure(self, stop_point):
+    def reconfigure(self, config, stop_point):
         """Set the task pool to reload mode."""
+        self.config = config
         self.do_reload = True
 
-        config = SuiteConfig.get_inst()
-        self.custom_runahead_limit = config.get_custom_runahead_limit()
+        self.custom_runahead_limit = self.config.get_custom_runahead_limit()
         self.max_num_active_cycle_points = (
-            config.get_max_num_active_cycle_points())
+            self.config.get_max_num_active_cycle_points())
         self.stop_point = stop_point
 
         # reassign live tasks from the old queues to the new.
@@ -597,7 +708,7 @@ class TaskPool(object):
 
         # find any old tasks that have been removed from the suite
         old_task_name_list = self.task_name_list
-        self.task_name_list = config.get_task_name_list()
+        self.task_name_list = self.config.get_task_name_list()
         for name in old_task_name_list:
             if name not in self.task_name_list:
                 self.orphans.append(name)
@@ -605,7 +716,7 @@ class TaskPool(object):
             if name in self.orphans:
                 self.orphans.remove(name)
         # adjust the new suite config to handle the orphans
-        config.adopt_orphans(self.orphans)
+        self.config.adopt_orphans(self.orphans)
 
     def reload_taskdefs(self):
         """Reload task definitions."""
@@ -614,7 +725,6 @@ class TaskPool(object):
         for task in self.orphans:
             if task not in [tsk.tdef.name for tsk in self.get_all_tasks()]:
                 LOG.warning("Removed task: '%s'" % (task,))
-        config = SuiteConfig.get_inst()
         for itask in self.get_all_tasks():
             if itask.tdef.name in self.orphans:
                 if itask.state.status in [
@@ -631,10 +741,11 @@ class TaskPool(object):
                         "last instance (orphaned by reload)", itask=itask)
             else:
                 self.remove(itask, '(suite definition reload)')
-                self.add_to_runahead_pool(TaskProxy(
-                    config.get_taskdef(itask.tdef.name), itask.point,
+                new_task = self.add_to_runahead_pool(TaskProxy(
+                    self.config.get_taskdef(itask.tdef.name), itask.point,
                     itask.state.status, stop_point=itask.stop_point,
-                    submit_num=itask.submit_num, pre_reload_inst=itask))
+                    submit_num=itask.submit_num))
+                new_task.copy_pre_reload(itask)
                 LOG.info('reloaded task definition', itask=itask)
                 if itask.state.status in TASK_STATUSES_ACTIVE:
                     LOG.warning(

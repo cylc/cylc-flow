@@ -32,10 +32,8 @@ class TaskActionTimer(object):
 
     def __init__(self, ctx=None, delays=None, num=0, delay=None, timeout=None):
         self.ctx = ctx
-        if delays is None:
-            self.delays = [float(0)]
-        else:
-            self.delays = [float(delay) for delay in delays]
+        self.delays = None
+        self.set_delays(delays)
         self.num = int(num)
         if delay is not None:
             delay = float(delay)
@@ -84,6 +82,13 @@ class TaskActionTimer(object):
         self.delay = None
         self.timeout = None
         self.is_waiting = False
+
+    def set_delays(self, delays=None):
+        """Set delays, ensuring that the values are floats."""
+        if delays is None:
+            self.delays = [float(0)]
+        else:
+            self.delays = [float(delay) for delay in delays]
 
     def set_waiting(self):
         """Set waiting flag, while waiting for action to complete."""

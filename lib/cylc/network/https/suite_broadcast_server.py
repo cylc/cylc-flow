@@ -15,22 +15,22 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Server-side suite broadcast interface."""
 
-import json
 import re
 import threading
 
 from cylc.broadcast_report import (
+    CHANGE_FMT, CHANGE_PREFIX_SET,
     get_broadcast_change_iter,
     get_broadcast_change_report,
     get_broadcast_bad_options_report)
 from cylc.cycling.loader import get_point, standardise_point_string
 from cylc.wallclock import get_current_time_string
-from cylc.network import COMMS_BCAST_OBJ_NAME
 from cylc.network.https.base_server import BaseCommsServer
 from cylc.network.https.util import unicode_encode
 from cylc.network import check_access_priv
-from cylc.suite_logging import LOG
+from cylc.suite_logging import LOG, OUT
 from cylc.task_id import TaskID
 from cylc.rundb import CylcSuiteDAO
 
@@ -147,7 +147,7 @@ class BroadcastServer(BaseCommsServer):
                     bad_point = False
                     try:
                         point_string = standardise_point_string(point_string)
-                    except Exception as exc:
+                    except Exception:
                         if point_string != '*':
                             bad_point_strings.append(point_string)
                             bad_point = True
@@ -316,12 +316,16 @@ class BroadcastServer(BaseCommsServer):
                             keys_list.append(keys + [key])
         return keys_list
 
-    def load_state(self, point, namespace, key, value):
+    def load_db_broadcast_states(self, row_idx, row):
         """Load broadcast variables from runtime DB broadcast states row."""
+        if row_idx == 0:
+            OUT.info("LOADING broadcast states")
+        point, namespace, key, value = row
         sections = []
-        if "]" in key:
-            sections = self.REC_SECTION.findall(key)
-            key = key.rsplit(r"]", 1)[-1]
+        cur_key = key
+        if "]" in cur_key:
+            sections = self.REC_SECTION.findall(cur_key)
+            cur_key = cur_key.rsplit(r"]", 1)[-1]
         with self.lock:
             self.settings.setdefault(point, {})
             self.settings[point].setdefault(namespace, {})
@@ -329,7 +333,13 @@ class BroadcastServer(BaseCommsServer):
             for section in sections:
                 dict_.setdefault(section, {})
                 dict_ = dict_[section]
-            dict_[key] = value
+            dict_[cur_key] = value
+        OUT.info(CHANGE_FMT.strip() % {
+            "change": CHANGE_PREFIX_SET,
+            "point": point,
+            "namespace": namespace,
+            "key": key,
+            "value": value})
 
     @classmethod
     def _get_bad_options(

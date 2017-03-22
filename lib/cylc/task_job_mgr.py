@@ -31,6 +31,7 @@ from parsec.util import pdeepcopy, poverride
 
 from cylc.batch_sys_manager import BatchSysManager
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.envvar import expandvars
 import cylc.flags
 from cylc.host_select import get_task_host
 from cylc.job_file import JobFileWriter
@@ -47,8 +48,8 @@ from cylc.task_outputs import (
     TASK_OUTPUT_FAILED)
 from cylc.task_action_timer import TaskActionTimer
 from cylc.task_state import (
-    TASK_STATUSES_ACTIVE, TASK_STATUS_READY,
-    TASK_STATUS_RUNNING, TASK_STATUS_SUBMITTED)
+    TASK_STATUSES_ACTIVE, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
+    TASK_STATUS_RUNNING, TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING)
 from cylc.wallclock import (
     get_current_time_string, get_seconds_as_interval_string)
 
@@ -235,8 +236,11 @@ class TaskJobManager(object):
                 prepared_tasks.append(itask)
         return prepared_tasks
 
-    def submit_task_jobs(self, suite, itasks):
+    def submit_task_jobs(self, suite, itasks, is_simulation=False):
         """Prepare and submit task jobs."""
+        if is_simulation:
+            return self._simulation_submit_task_jobs(itasks)
+
         # Prepare tasks for job submission
         prepared_tasks = self.prep_submit_task_jobs(suite, itasks)
         if not prepared_tasks:
@@ -343,18 +347,18 @@ class TaskJobManager(object):
 
     def _check_timeout(self, itask, now):
         """Check/handle submission/execution timeouts."""
-        if (itask.state.status == TASK_STATUS_RUNNING and
-                itask.summary['execution_time_limit']):
-            timer = itask.poll_timers[self.KEY_EXECUTE_TIME_LIMIT]
-            if not timer.is_timeout_set():
-                timer.next()
-            if not timer.is_delay_done():
-                # Don't poll
-                return False
-            if timer.next() is not None:
-                # Poll now, and more retries lined up
-                return True
-            # No more retry lined up, issue execution timeout event
+        if itask.state.status == TASK_STATUS_RUNNING:
+            timer = itask.poll_timers.get(self.KEY_EXECUTE_TIME_LIMIT)
+            if timer is not None:
+                if not timer.is_timeout_set():
+                    timer.next()
+                if not timer.is_delay_done():
+                    # Don't poll
+                    return False
+                if timer.next() is not None:
+                    # Poll now, and more retries lined up
+                    return True
+                # No more retry lined up, can issue execution timeout event
         if itask.state.status in itask.timeout_timers:
             timeout = itask.timeout_timers[itask.state.status]
             if timeout is None or now <= timeout:
@@ -697,6 +701,33 @@ class TaskJobManager(object):
             self.proc_pool.put_command(
                 SuiteProcContext(cmd_key, cmd), callback, [suite, itasks])
 
+    @staticmethod
+    def _set_retry_timers(itask, rtconfig=None):
+        """Set try number and retry delays."""
+        if rtconfig is None:
+            rtconfig = itask.tdef.rtconfig
+        try:
+            no_retry = (
+                rtconfig[itask.tdef.run_mode + ' mode']['disable retries'])
+        except KeyError:
+            no_retry = False
+        if not no_retry:
+            for key, cfg_key in [
+                    (TASK_STATUS_SUBMIT_RETRYING, 'submission retry delays'),
+                    (TASK_STATUS_RETRYING, 'execution retry delays')]:
+                delays = rtconfig['job'][cfg_key]
+                try:
+                    itask.try_timers[key].set_delays(delays)
+                except KeyError:
+                    itask.try_timers[key] = TaskActionTimer(delays=delays)
+
+    def _simulation_submit_task_jobs(self, itasks):
+        """Simulation mode task jobs submission."""
+        for itask in itasks:
+            self._set_retry_timers(itask)
+            self.task_events_mgr.process_message(
+                itask, INFO, TASK_OUTPUT_SUBMITTED)
+
     def _submit_task_jobs_callback(self, ctx, suite, itasks):
         """Callback when submit task jobs command exits."""
         self._manip_task_jobs_callback(
@@ -788,6 +819,11 @@ class TaskJobManager(object):
             poverride(rtconfig, overrides)
         else:
             rtconfig = itask.tdef.rtconfig
+
+        # Retry delays, needed for the try_num
+        self._set_retry_timers(itask, rtconfig)
+
+        # Submit number and try number
         LOG.debug("[%s] -incrementing submit number" % (itask.identity,))
         itask.submit_num += 1
         itask.summary['submit_num'] = itask.submit_num
@@ -798,14 +834,11 @@ class TaskJobManager(object):
             "time_submit": get_current_time_string(),
         })
 
-        # construct the job_sub_method here so that a new one is used if
-        # the task is re-triggered by the suite operator - so it will
-        # get new stdout/stderr logfiles and not overwrite the old ones.
-
-        # dynamic instantiation - don't know job sub method till run time.
         itask.summary['batch_sys_name'] = rtconfig['job']['batch system']
         itask.summary['execution_time_limit'] = (
             rtconfig['job']['execution time limit'])
+        for name in rtconfig['extra log files']:
+            itask.summary['logfiles'].append(expandvars(name))
 
         # Determine task host settings now, just before job submission,
         # because dynamic host selection may be used.
@@ -827,8 +860,8 @@ class TaskJobManager(object):
         itask.summary['host'] = user_at_host
         itask.summary['job_hosts'][itask.submit_num] = user_at_host
         try:
-            batch_sys_conf = itask.get_host_conf('batch systems')[
-                rtconfig['job']['batch system']]
+            batch_sys_conf = self.task_events_mgr.get_host_conf(
+                itask, 'batch systems')[rtconfig['job']['batch system']]
         except (TypeError, KeyError):
             batch_sys_conf = {}
         if itask.summary['execution_time_limit']:
@@ -837,11 +870,16 @@ class TaskJobManager(object):
             itask.poll_timers[self.KEY_EXECUTE_TIME_LIMIT] = (
                 TaskActionTimer(delays=batch_sys_conf.get(
                     'execution time limit polling intervals', [60, 120, 420])))
-        for key in TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING:
-            try:
+        for label, key in [
+                ('submission polling intervals', TASK_STATUS_SUBMITTED),
+                ('execution polling intervals', TASK_STATUS_RUNNING)]:
+            if key in itask.poll_timers:
                 itask.poll_timers[key].reset()
-            except (AttributeError, KeyError):
-                pass
+            else:
+                values = self.task_events_mgr.get_host_conf(
+                    itask, label, skey='job')
+                if values:
+                    itask.poll_timers[key] = TaskActionTimer(delays=values)
 
         self.init_host(suite, itask.task_host, itask.task_owner)
         self.suite_db_mgr.put_update_task_jobs(itask, {

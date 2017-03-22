@@ -19,17 +19,11 @@
 """Provide a class to represent a task proxy in a running suite."""
 
 from isodatetime.timezone import get_local_time_zone
-from parsec.config import ItemNotFoundError
-from parsec.util import pdeepcopy, poverride
 
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.cycling.iso8601
-from cylc.envvar import expandvars
-from cylc.network.suite_broadcast_server import BroadcastServer
 from cylc.task_id import TaskID
-from cylc.task_action_timer import TaskActionTimer
 from cylc.task_state import (
-    TaskState, TASK_STATUS_WAITING, TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING)
+    TaskState, TASK_STATUS_WAITING, TASK_STATUS_RETRYING)
 from cylc.wallclock import get_unix_time_from_time_string
 
 
@@ -67,12 +61,11 @@ class TaskProxy(object):
     def __init__(
             self, tdef, start_point, status=TASK_STATUS_WAITING,
             hold_swap=None, has_spawned=False, stop_point=None,
-            is_startup=False, submit_num=0, pre_reload_inst=None):
+            is_startup=False, submit_num=0):
         self.tdef = tdef
         if submit_num is None:
-            self.submit_num = 0
-        else:
-            self.submit_num = submit_num
+            submit_num = 0
+        self.submit_num = submit_num
 
         if is_startup:
             # adjust up to the first on-sequence cycle point
@@ -102,13 +95,6 @@ class TaskProxy(object):
         self.manual_trigger = False
         self.is_manual_submit = False
 
-        overrides = BroadcastServer.get_inst().get(self.identity)
-        if overrides:
-            rtconfig = pdeepcopy(self.tdef.rtconfig)
-            poverride(rtconfig, overrides)
-        else:
-            rtconfig = self.tdef.rtconfig
-
         self.summary = {
             'latest_message': "",
             'submitted_time': None,
@@ -119,45 +105,23 @@ class TaskProxy(object):
             'finished_time': None,
             'finished_time_string': None,
             'name': self.tdef.name,
-            'description': rtconfig['description'],
-            'title': rtconfig['title'],
+            'description': self.tdef.rtconfig['description'],
+            'title': self.tdef.rtconfig['title'],
             'label': str(self.point),
             'logfiles': [],
             'job_hosts': {},
             'execution_time_limit': None,
         }
-        for lfile in rtconfig['extra log files']:
-            self.summary['logfiles'].append(expandvars(lfile))
 
         self.local_job_file_path = None
-
-        self.try_timers = {
-            TASK_STATUS_RUNNING: TaskActionTimer(delays=[]),
-            TASK_STATUS_SUBMITTED: TaskActionTimer(delays=[])}
 
         self.task_host = 'localhost'
         self.task_owner = None
 
         self.job_vacated = False
-
-        # configure retry delays before the first try
-        if self.tdef.run_mode == 'live':
-            # note that a *copy* of the retry delays list is needed
-            # so that all instances of the same task don't pop off
-            # the same deque
-            self.try_timers[TASK_STATUS_RUNNING].delays = list(
-                rtconfig['job']['execution retry delays'])
-            self.try_timers[TASK_STATUS_SUBMITTED].delays = list(
-                rtconfig['job']['submission retry delays'])
         self.poll_timers = {}
-        for label, key in [
-                ('submission polling intervals', TASK_STATUS_SUBMITTED),
-                ('execution polling intervals', TASK_STATUS_RUNNING)]:
-            values = self.get_host_conf(label, skey='job')
-            if values:
-                self.poll_timers[key] = TaskActionTimer(delays=values)
-        self.timeout_timers = {
-            TASK_STATUS_SUBMITTED: None, TASK_STATUS_RUNNING: None}
+        self.timeout_timers = {}
+        self.try_timers = {}
 
         self.delayed_start = None
         self.expire_time = None
@@ -179,36 +143,21 @@ class TaskProxy(object):
                         self.cleanup_cutoff < p_next):
                     self.cleanup_cutoff = p_next
 
-        if pre_reload_inst is not None:
-            # Retain some state from my pre suite-reload predecessor.
-            self.submit_num = pre_reload_inst.submit_num
-            self.has_spawned = pre_reload_inst.has_spawned
-            self.manual_trigger = pre_reload_inst.manual_trigger
-            self.is_manual_submit = pre_reload_inst.is_manual_submit
-            self.summary = pre_reload_inst.summary
-            self.local_job_file_path = pre_reload_inst.local_job_file_path
-            self.try_timers = pre_reload_inst.try_timers
-            self.task_host = pre_reload_inst.task_host
-            self.task_owner = pre_reload_inst.task_owner
-            self.job_vacated = pre_reload_inst.job_vacated
-            self.poll_timers = pre_reload_inst.poll_timers
-            self.timeout_timers = pre_reload_inst.timeout_timers
-            self.state.outputs = pre_reload_inst.state.outputs
-
-    def get_host_conf(self, key, default=None, skey="remote"):
-        """Return a host setting from suite then global configuration."""
-        overrides = BroadcastServer.get_inst().get(self.identity)
-        if skey in overrides and overrides[skey].get(key) is not None:
-            return overrides[skey][key]
-        elif self.tdef.rtconfig[skey].get(key) is not None:
-            return self.tdef.rtconfig[skey][key]
-        else:
-            try:
-                return GLOBAL_CFG.get_host_item(
-                    key, self.task_host, self.task_owner)
-            except (KeyError, ItemNotFoundError):
-                pass
-        return default
+    def copy_pre_reload(self, pre_reload_inst):
+        """Copy attributes from pre-reload instant."""
+        self.submit_num = pre_reload_inst.submit_num
+        self.has_spawned = pre_reload_inst.has_spawned
+        self.manual_trigger = pre_reload_inst.manual_trigger
+        self.is_manual_submit = pre_reload_inst.is_manual_submit
+        self.summary = pre_reload_inst.summary
+        self.local_job_file_path = pre_reload_inst.local_job_file_path
+        self.try_timers = pre_reload_inst.try_timers
+        self.task_host = pre_reload_inst.task_host
+        self.task_owner = pre_reload_inst.task_owner
+        self.job_vacated = pre_reload_inst.job_vacated
+        self.poll_timers = pre_reload_inst.poll_timers
+        self.timeout_timers = pre_reload_inst.timeout_timers
+        self.state.outputs = pre_reload_inst.state.outputs
 
     @staticmethod
     def get_offset_as_seconds(offset):
@@ -248,7 +197,10 @@ class TaskProxy(object):
 
     def get_try_num(self):
         """Return the number of automatic tries (try number)."""
-        return self.try_timers[TASK_STATUS_RUNNING].num + 1
+        try:
+            return self.try_timers[TASK_STATUS_RETRYING].num + 1
+        except (AttributeError, KeyError):
+            return 0
 
     def next_point(self):
         """Return the next cycle point."""
@@ -269,11 +221,17 @@ class TaskProxy(object):
         Queued tasks are not counted as they've already been deemed ready.
 
         """
-        retry_delay_done = (
-            self.try_timers[TASK_STATUS_RUNNING].is_delay_done(now) or
-            self.try_timers[TASK_STATUS_SUBMITTED].is_delay_done(now))
-        return self.state.is_ready_to_run(
-            retry_delay_done, self.start_time_reached(now))
+        return self.start_time_reached(now) and (
+            (
+                self.state.status == TASK_STATUS_WAITING and
+                self.state.prerequisites_are_all_satisfied() and
+                all(self.state.external_triggers.values())
+            ) or
+            (
+                self.state.status in self.try_timers and
+                self.try_timers[self.state.status].is_delay_done(now)
+            )
+        )
 
     def reset_manual_trigger(self):
         """This is called immediately after manual trigger flag used."""
@@ -281,8 +239,8 @@ class TaskProxy(object):
             self.manual_trigger = False
             self.is_manual_submit = True
             # unset any retry delay timers
-            self.try_timers[TASK_STATUS_RUNNING].timeout = None
-            self.try_timers[TASK_STATUS_SUBMITTED].timeout = None
+            for timer in self.try_timers.values():
+                timer.timeout = None
 
     def set_event_time(self, event_key, time_str=None):
         """Set event time in self.summary

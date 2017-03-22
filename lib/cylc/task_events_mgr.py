@@ -102,6 +102,22 @@ class TaskEventsManager(object):
         self.next_mail_time = None
         self.event_timers = {}
 
+    @staticmethod
+    def get_host_conf(itask, key, default=None, skey="remote"):
+        """Return a host setting from suite then global configuration."""
+        overrides = BroadcastServer.get_inst().get(itask.identity)
+        if skey in overrides and overrides[skey].get(key) is not None:
+            return overrides[skey][key]
+        elif itask.tdef.rtconfig[skey].get(key) is not None:
+            return itask.tdef.rtconfig[skey][key]
+        else:
+            try:
+                return GLOBAL_CFG.get_host_item(
+                    key, itask.task_host, itask.task_owner)
+            except (KeyError, ItemNotFoundError):
+                pass
+        return default
+
     def get_task_job_activity_log(
             self, suite, point, name, submit_num=None):
         """Shorthand for get_task_job_log(..., tail="job-activity.log")."""
@@ -314,7 +330,8 @@ class TaskEventsManager(object):
             itask.state.reset_state(TASK_STATUS_SUBMITTED)
             self._db_events_insert(itask, "vacated", message)
             itask.set_event_time('started')  # reset
-            itask.try_timers[TASK_STATUS_SUBMITTED].num = 0
+            if TASK_STATUS_SUBMIT_RETRYING in itask.try_timers:
+                itask.try_timers[TASK_STATUS_SUBMIT_RETRYING].num = 0
             itask.job_vacated = True
             try:
                 itask.timeout_timers[TASK_STATUS_SUBMITTED] = (
@@ -551,7 +568,8 @@ class TaskEventsManager(object):
             "run_status": 1,
             "time_run_exit": itask.summary['finished_time_string'],
         })
-        if itask.try_timers[TASK_STATUS_RUNNING].next() is None:
+        if (TASK_STATUS_RETRYING not in itask.try_timers or
+                itask.try_timers[TASK_STATUS_RETRYING].next() is None):
             # No retry lined up: definitive failure.
             # Note the TASK_STATUS_FAILED output is only added if needed.
             cylc.flags.pflag = True
@@ -560,9 +578,9 @@ class TaskEventsManager(object):
         else:
             # There is a retry lined up
             timeout_str = (
-                itask.try_timers[TASK_STATUS_RUNNING].timeout_as_str())
+                itask.try_timers[TASK_STATUS_RETRYING].timeout_as_str())
             delay_msg = "retrying in %s" % (
-                itask.try_timers[TASK_STATUS_RUNNING].delay_as_seconds())
+                itask.try_timers[TASK_STATUS_RETRYING].delay_as_seconds())
             msg = "failed, %s (after %s)" % (delay_msg, timeout_str)
             LOG.info("job(%02d) %s" % (itask.submit_num, msg), itask=itask)
             itask.summary['latest_message'] = msg
@@ -592,7 +610,8 @@ class TaskEventsManager(object):
             itask.timeout_timers[TASK_STATUS_RUNNING] = None
 
         # submission was successful so reset submission try number
-        itask.try_timers[TASK_STATUS_SUBMITTED].num = 0
+        if TASK_STATUS_SUBMIT_RETRYING in itask.try_timers:
+            itask.try_timers[TASK_STATUS_SUBMIT_RETRYING].num = 0
         self.setup_event_handlers(itask, 'started', 'job started')
         self.set_poll_time(itask)
 
@@ -638,7 +657,8 @@ class TaskEventsManager(object):
             del itask.summary['submit_method_id']
         except KeyError:
             pass
-        if itask.try_timers[TASK_STATUS_SUBMITTED].next() is None:
+        if (TASK_STATUS_SUBMIT_RETRYING not in itask.try_timers or
+                itask.try_timers[TASK_STATUS_SUBMIT_RETRYING].next() is None):
             # No submission retry lined up: definitive failure.
             itask.set_event_time('finished', event_time)
             cylc.flags.pflag = True
@@ -649,11 +669,9 @@ class TaskEventsManager(object):
             itask.state.reset_state(TASK_STATUS_SUBMIT_FAILED)
         else:
             # There is a submission retry lined up.
-            timeout_str = (
-                itask.try_timers[TASK_STATUS_SUBMITTED].timeout_as_str())
-
-            delay_msg = "submit-retrying in %s" % (
-                itask.try_timers[TASK_STATUS_SUBMITTED].delay_as_seconds())
+            timer = itask.try_timers[TASK_STATUS_SUBMIT_RETRYING]
+            timeout_str = timer.timeout_as_str()
+            delay_msg = "submit-retrying in %s" % timer.delay_as_seconds()
             msg = "%s, %s (after %s)" % (
                 self.EVENT_SUBMIT_FAILED, delay_msg, timeout_str)
             LOG.info("job(%02d) %s" % (itask.submit_num, msg), itask=itask)
@@ -714,10 +732,11 @@ class TaskEventsManager(object):
         events = (self.EVENT_FAILED, self.EVENT_RETRY, self.EVENT_SUCCEEDED)
         if (event not in events or
                 user_at_host in [USER + '@localhost', 'localhost'] or
-                not itask.get_host_conf("retrieve job logs") or
+                not self.get_host_conf(itask, "retrieve job logs") or
                 id_key in self.event_timers):
             return
-        retry_delays = itask.get_host_conf("retrieve job logs retry delays")
+        retry_delays = self.get_host_conf(
+            itask, "retrieve job logs retry delays")
         if not retry_delays:
             retry_delays = [0]
         self.event_timers[id_key] = TaskActionTimer(
@@ -725,7 +744,7 @@ class TaskEventsManager(object):
                 self.HANDLER_JOB_LOGS_RETRIEVE,  # key
                 self.HANDLER_JOB_LOGS_RETRIEVE,  # ctx_type
                 user_at_host,
-                itask.get_host_conf("retrieve job logs max size"),  # max_size
+                self.get_host_conf(itask, "retrieve job logs max size"),
             ),
             retry_delays)
 
@@ -766,7 +785,7 @@ class TaskEventsManager(object):
         retry_delays = self._get_events_conf(
             itask,
             'handler retry delays',
-            itask.get_host_conf("task event handler retry delays"))
+            self.get_host_conf(itask, "task event handler retry delays"))
         if not retry_delays:
             retry_delays = [0]
         for i, handler in enumerate(handlers):
