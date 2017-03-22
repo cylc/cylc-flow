@@ -8,7 +8,7 @@
 body { 
     font-family:courier;
     font-weight:bold;
-    background:#00b3fd;
+    background:LightSteelBlue;
 }
 
 div.uberpage {
@@ -46,7 +46,7 @@ div.page {
 }
 
 a:link, a:visited { 
-    color: #eebb00;
+    color: SteelBlue;
 }
 
 h1 {

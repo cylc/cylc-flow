@@ -19,6 +19,7 @@
 .PHONY: all pdf html html-multi html-single clean
 
 DEPS := $(shell ./scripts/get-deps.sh)
+CYLC = ../../../bin/cylc
 
 all: $(DEPS)
 
@@ -30,24 +31,7 @@ html-multi: html/multi/cug-html.html
 
 html-single: html/single/cug-html.html
 
-cylc.txt: ../../../bin/cylc
-	$< --help > $@
-
-cats = $(shell ../../../bin/cylc categories) 
-catx = $(cats:%=categories/%.txt)
-
-cmds = $(shell ../../../bin/cylc commands)
-cmdx = $(cmds:%=commands/%.txt)
-
-$(cmdx): commands/%.txt: ../../../bin/cylc-%
-	if test ! -d commands; then mkdir -p commands/; fi
-	$(patsubst ../../../bin/cylc-%,../../../bin/cylc %,$<) --help > $@
-
-$(catx): categories/%.txt: ../../../bin/cylc
-	if test ! -d categories; then mkdir -p categories/; fi
-	../../../bin/cylc $(subst .txt,,$(subst categories/,,$@)) --help > $@
-
-commands.tex: $(cmdx) $(catx) cylc.txt
+commands.tex: $(CYLC)-*
 	./scripts/make-commands.sh
 
 html/multi/cug-html.html: commands.tex cug-html.tex cug.tex suiterc.tex siterc.tex gcylcrc.tex cug-html.cfg
@@ -60,10 +44,4 @@ pdf/cug-pdf.pdf: commands.tex cug-pdf.tex cug.tex suiterc.tex siterc.tex gcylcrc
 	- ./scripts/make-pdf.sh
 
 clean:
-	rm -r pdf \
-	html \
-	cylc.txt \
-	commands \
-	categories \
-	commands.tex \
-	cylc-version.txt
+	rm -rf pdf html commands.tex cylc-version.txt

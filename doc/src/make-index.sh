@@ -52,14 +52,14 @@ cat > $INDEX <<__END__
 <p>cylc-${CYLC_VERSION}</p>
 
 <div class="rbox">
-<h3 style="margin:10px">Command Help</h3>
+<h3 style="margin:10px; margin-top:0">Command Help</h3>
 <pre class="code">
 cylc --help
 cylc COMMAND --help
 </pre>
-<h3 style="margin:10px">Misc</h3>
+<h3 style="margin:10px">Misc.</h3>
 <ul>
-<li><a href="https://github.com/cylc/cylc/blob/master/CHANGES.md">changes</a></li>
+<li><a href="https://github.com/cylc/cylc/blob/master/CHANGES.md">change log</a></li>
 </ul>
 </div>
 
@@ -127,8 +127,7 @@ cat >> $INDEX <<__END__
 </div>
 
 <div class="lbox">
-<h3 style="margin:10px">Internet</h3>
-<p>For the latest cylc release</p>
+<h3 style="margin:10px">Online Resources</h3>
 <ul>
 <li> <a href="http://cylc.github.io/cylc/">Cylc Web Site</a> </li>
 <ul>

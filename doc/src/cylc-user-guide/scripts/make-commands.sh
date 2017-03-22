@@ -16,19 +16,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-CYLC=../../bin/cylc
+# Create cylc-version.txt and commands.tex for inclusion in LaTeX doc.
+
+CYLC=$(dirname $0)/../../../../bin/cylc
+
+$CYLC --version > cylc-version.txt
 
 cat > commands.tex <<END
 \label{help}
-\lstinputlisting{cylc.txt}
+\begin{lstlisting}
+$($CYLC --help)
+\end{lstlisting}
 \subsection{Command Categories}
 END
 
-for CAT in $( $CYLC categories ); do
+for CAT in $($CYLC categories); do
 	cat >> commands.tex <<END
 \subsubsection{$CAT}
 \label{$CAT}
-\lstinputlisting{categories/${CAT}.txt}
+\begin{lstlisting}
+$($CYLC $CAT --help)
+\end{lstlisting}
 END
 done
 
@@ -36,11 +44,12 @@ cat >> commands.tex <<END
 \subsection{Commands}
 END
 
-for COMMAND in $( $CYLC commands ); do
+for COM in $($CYLC commands); do
 	cat >> commands.tex <<END
-\subsubsection{$COMMAND}
-\label{$COMMAND}
-\lstinputlisting{commands/${COMMAND}.txt}
+\subsubsection{$COM}
+\label{$COM}
+\begin{lstlisting}
+$($CYLC $COM --help)
+\end{lstlisting}
 END
 done
-

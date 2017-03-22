@@ -2,21 +2,20 @@
 # python bytecode
 *.pyc
 
-# generated documentation
-doc/commands/
-doc/categories/
-doc/cylc.txt
-doc/commands.tex
-doc/graphics/png-scaled/
-doc/html/
-doc/pdf/
-doc/index.html
-doc/cylc-version.txt
+# Generated documentation files.
+# - User Guide.
+doc/src/cylc-user-guide/pdf
+doc/src/cylc-user-guide/html
+doc/src/cylc-user-guide/commands.tex
+doc/src/cylc-user-guide/cylc-version.txt
+# - Suite Design Guide.
 *.aux
 *.out
 *.pdf
 *.log
 *.toc
+# Installed docs.
+doc/install/
 
 # VERSION FILE
 VERSION
