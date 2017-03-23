@@ -651,4 +651,32 @@ path from the workflow:
 %\end{minipage}
 %\end{figure}
 
+\subsection{Include Files}
+
+Include-files should not be overused, but they can sometimes be useful
+(e.g.\ see Portable Suites~\ref{Portable Suites}):
+
+\begin{lstlisting}
+#...
+{% include 'inc/foo.rc' %}
+\end{lstlisting}
+
+(Technically this inserts a Jinja2-rendered file template). Cylc also has a
+native include mechanism that pre-dates Jinja2 support and literally inlines
+the include-file:
+
+\begin{lstlisting}
+#...
+%include 'inc/foo.rc'
+\end{lstlisting}
+
+The two methods normally produce the same result, but use the Jinja2 version if
+you need to construct an include-file name from a variable (because Cylc
+include-files get inlined before Jinja2 processing is done):
+
+\begin{lstlisting}
+#...
+{% include 'inc/' ~ SITE ~ '.rc' %}
+\end{lstlisting}
+
 
