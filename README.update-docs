@@ -15,4 +15,6 @@ done
 
 Finally:
 
+git checkout -- doc/cylc-autosub-response.pdf
+
 git add any new files under html/

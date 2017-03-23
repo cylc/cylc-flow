@@ -1,13 +1,13 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"  
   "http://www.w3.org/TR/html4/loose.dtd">  
 <html > 
-<head><title>Required Software</title> 
+<head><title>Installation</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"> 
 <meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2017-03-13 20:42:00"> 
+<meta name="date" content="2017-03-23 15:30:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -18,72 +18,58 @@ href="cug-htmlse2.html#tailcug-htmlse2.html" >prev-tail</a>] [<a
 href="#tailcug-htmlse3.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse3.html" >up</a>] </p></div>
 <!--l. 381--><p class="noindent" > <h3 id="3" class="sectionHead"><span class="titlemark"> <a href="#3">3</a>  <a 
- id="x4-90003"></a>Required Software </span></h3> <div class="sectionTOCS">
+ id="x4-90003"></a>Installation </span></h3> <div class="sectionTOCS">
 &#x00A0;<span class="subsectionToc" >3.1 <a 
-href="#x4-100003.1">Known Version Compatibility Issues</a></span>
+href="#x4-100003.1">External Software Packages</a></span>
 <br />&#x00A0;<span class="subsectionToc" >3.2 <a 
-href="#x4-120003.2">Other Software Used Internally By Cylc</a></span>
+href="#x4-110003.2">Software Bundled With Cylc</a></span>
+<br />&#x00A0;<span class="subsectionToc" >3.3 <a 
+href="#x4-120003.3">Installing Cylc Itself</a></span>
+<br />&#x00A0;<span class="subsectionToc" >3.4 <a 
+href="#x4-160003.4">Automated Tests</a></span>
 </div>
-     <ul class="itemize1">
-     <li class="itemize"><span 
-class="cmbx-10">Cylc</span>, the version associated with this document is: 7.2.0 . <br 
-class="newline" />Cylc can be downloaded from from GitHub: <a 
-href="https://cylc.github.com/cylc" class="url" ><span 
-class="pcrr7t-">https://cylc.github.com/cylc</span></a>
-     </li>
-     <li class="itemize"><span 
-class="cmbx-10">OS: A Linux or Unix variant (including, reportedly, Apple OS X).</span>
-     </li>
-     <li class="itemize"><span 
-class="cmbx-10">The Python Language, version 2.6 or later, but not 3.x yet</span>. <br 
-class="newline" /><a 
+<!--l. 384--><p class="noindent" >Cylc runs on Unix variants, usually Linux, and including Apple OS X.
+<!--l. 386--><p class="noindent" >
+<!--l. 386--><p class="noindent" > <h4 id="3.1" class="subsectionHead"> <span class="titlemark"> <a href="#3.1"> 3.1</a>  <a 
+ id="x4-100003.1"></a>External Software Packages </span></h4>
+<!--l. 388--><p class="noindent" ><span 
+class="cmbx-10">Python </span><span class="lstinline"><span 
+class="pcrb7t-">&#x003E;=</span></span> <span 
+class="cmbx-10">2.6 </span>is required (but not yet Python 3). Python should already be installed in your Linux system.
+<a 
 href="https://python.org" class="url" ><span 
-class="pcrr7t-">https://python.org</span></a>
-     </li>
-     <li class="itemize"><span 
-class="cmbx-10">sqlite (a server-less, zero-configuration, SQL database engine</span>). The Python API to sqlite
-     is part of the Python standard library. The command line interface is likely included in your Linux
-     distribution already. Cylc generates an sqlite database for each suite as it runs, to record task events
-     and status. <br 
-class="newline" /><a 
-href="http://sqlite.org" class="url" ><span 
-class="pcrr7t-">http://sqlite.org</span></a></li></ul>
-<!--l. 398--><p class="noindent" >The following packages are technically optional as you can construct and run cylc suites without dependency
-graphing and the gcylc GUI:
+class="pcrr7t-">https://python.org</span></a>.
+<!--l. 391--><p class="noindent" >The following packages are highly recommended, but are technically optional as you can construct and run suites
+without dependency graph visualisation or the Cylc GUIs:
      <ul class="itemize1">
      <li class="itemize"><span 
-class="cmbx-10">PyGTK</span>, a Python wrapper for the GTK+ GUI toolkit, required for the gcylc GUI. PyGTK is included
-     in most Linux Distributions. <br 
-class="newline" /><a 
+class="cmbx-10">PyGTK </span>- GUI toolkit (should be in your system Python): <a 
 href="http://www.pygtk.org" class="url" ><span 
-class="pcrr7t-">http://www.pygtk.org</span></a>
+class="pcrr7t-">http://www.pygtk.org</span></a>.
      </li>
      <li class="itemize"><span 
-class="cmbx-10">Graphviz </span>(latest tested 2.28.0) and <span 
-class="cmbx-10">Pygraphviz </span>(latest tested 1.1), a graph layout engine and a
-     Python interface to it. <br 
-class="newline" /><a 
+class="cmbx-10">Graphviz </span>- graph layout engine (tested 2.36.0): <a 
 href="http://www.graphviz.org" class="url" ><span 
-class="pcrr7t-">http://www.graphviz.org</span></a> <br 
-class="newline" /><a 
+class="pcrr7t-">http://www.graphviz.org</span></a>.
+     </li>
+     <li class="itemize"><span 
+class="cmbx-10">Pygraphviz </span>- Python Graphviz interface (tested 1.2): <a 
 href="http://pygraphviz.github.io/" class="url" ><span 
-class="pcrr7t-">http://pygraphviz.github.io/</span></a></li></ul>
-<!--l. 413--><p class="noindent" >If you use a binary package manager to install graphviz you may also need a couple of <span 
-class="cmti-10">devel </span>packages for the
-pygraphviz build:
+class="pcrr7t-">http://pygraphviz.github.io/</span></a>. To build this
+     you may need some <span 
+class="cmti-10">devel </span>packages too:
+         <ul class="itemize2">
+         <li class="itemize">python-devel
+         </li>
+         <li class="itemize">graphviz-devel</li></ul>
+     </li></ul>
+<!--l. 409--><p class="noindent" >The User Guide is generated from <span class="LATEX">L<span class="A">A</span><span class="TEX">T<span 
+class="E">E</span>X</span></span>source files by running <span class="lstinline"><span 
+class="pcrr7t-">make</span></span> in the top level Cylc directory. The specific
+packages required may vary by distribution, e.g.:
                                                                                          
 
                                                                                          
-     <ul class="itemize1">
-     <li class="itemize">python-devel
-     </li>
-     <li class="itemize">graphviz-devel</li></ul>
-<!--l. 421--><p class="noindent" >This user guide can be generated from the <span class="LATEX">L<span class="A">A</span><span class="TEX">T<span 
-class="E">E</span>X</span></span>source by running <span class="lstinline"><span 
-class="pcrr7t-">make</span></span> in the top level cylc directory after
-download. The following <span class="TEX">T<span 
-class="E">E</span>X</span>packages are required (but note that the exact packages required may be somewhat
-OS or distribution-dependent):
      <ul class="itemize1">
      <li class="itemize">texlive
      </li>
@@ -91,236 +77,332 @@ OS or distribution-dependent):
      </li>
      <li class="itemize">texlive-framed
      </li>
-     <li class="itemize">texlive-preprint (for fullpage.sty, formerly in tetex)</li></ul>
-<!--l. 432--><p class="noindent" >And for HTML versions of the User Guide:
-     <ul class="itemize1">
-     <li class="itemize">texlive-tex4ht
+     <li class="itemize">texlive-preprint (for <span class="lstinline"><span 
+class="pcrr7t-">fullpage</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">sty</span></span>)
      </li>
-     <li class="itemize">ImageMagick (for image scaling)</li></ul>
-<!--l. 439--><p class="noindent" >Cylc includes a slightly modified version of cherrypy 6.0.2, a pure Python HTTP framework that we use as a web
-server for communication between server processes (cylc suites) and client programs (running tasks, the gcylc GUI,
-user commands). Client communication is done via the Python requests library if available (recommended) or via
-pure Python via urllib2. <br 
+     <li class="itemize">texlive-tex4ht</li></ul>
+<!--l. 421--><p class="noindent" >To generate the HTML User Guide <span 
+class="cmbx-10">ImageMagick </span>is also needed.
+<!--l. 423--><p class="noindent" >In most modern Linux distributions all of the software above can be installed via the system package manager.
+Otherwise download packages manually and follow their native installation instructions. To check that all (non
+<span class="LATEX">L<span class="A">A</span><span class="TEX">T<span 
+class="E">E</span>X</span></span>packages) are installed properly:
+<!--l. 429-->
+<div class="lstlisting" id="listing-1"><span class="label"><a 
+ id="x4-10001r1"></a></span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">check</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">software</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x4-10002r2"></a></span><span 
+class="pcrr7t-">Checking</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">for</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">Python</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x003E;=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">2.6</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">...</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">found</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">2.7.6</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">...</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">ok</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x4-10003r3"></a></span><span 
+class="pcrr7t-">Checking</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">for</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">non</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">Python</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">packages</span><span 
+class="pcrr7t-">:</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x4-10004r4"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">+</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">Graphviz</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">...</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">ok</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x4-10005r5"></a></span><span 
+class="pcrr7t-">Checking</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">for</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">Python</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">packages</span><span 
+class="pcrr7t-">:</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x4-10006r6"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">+</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">pygraphviz</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">...</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">ok</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x4-10007r7"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">+</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">pygtk</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">...</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">ok</span>
+</div>
+<!--l. 439--><p class="noindent" >If errors are reported then the packages concerned are either not installed or not in your Python search path. (Note
+that <span class="lstinline"><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">check</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">software</span></span> has become quite trivial as we&#8217;ve removed or bundled some former dependencies, but
+in future we intend to make it print a comprehensive list of library versions etc.&#x00A0;to include in with bug
+reports.)
+<!--l. 445--><p class="noindent" >
+<!--l. 445--><p class="noindent" > <h4 id="3.2" class="subsectionHead"> <span class="titlemark"> <a href="#3.2"> 3.2</a>  <a 
+ id="x4-110003.2"></a>Software Bundled With Cylc </span></h4>
+<!--l. 447--><p class="noindent" >Cylc bundles several third party packages which do not need to be installed separately.
+     <ul class="itemize1">
+     <li class="itemize"><span 
+class="cmbx-10">cherrypy 6.0.2 </span>(slightly modified): a pure Python HTTP framework that we use as a web server for
+     communication between server processes (suite daemons) and client programs (running tasks, GUIs,
+     CLI commands). Client communication is via the Python <span 
+class="cmbx-10">requests </span>library if available (recommended)
+     or else pure Python via <span 
+class="cmbx-10">urllib2</span>. <br 
 class="newline" /><a 
 href="http://www.cherrypy.org/" class="url" ><span 
 class="pcrr7t-">http://www.cherrypy.org/</span></a> <br 
 class="newline" /><a 
 href="http://docs.python-requests.org/" class="url" ><span 
-class="pcrr7t-">http://docs.python-_requests.org/</span></a>
-<!--l. 448--><p class="noindent" >Cylc includes Jinja2 2.8, a full featured template engine for Python and its dependency MarkupSafe 0.23, both BSD
-licensed. <br 
+class="pcrr7t-">http://docs.python-requests.org/</span></a>
+     </li>
+     <li class="itemize"><span 
+class="cmbx-10">Jinja2 2.8</span>: a full featured template engine for Python, and its dependency <span 
+class="cmbx-10">MarkupSafe 0.23</span>; both
+     BSD licensed. <br 
 class="newline" /><a 
 href="http://jinja.pocoo.org/" class="url" ><span 
 class="pcrr7t-">http://jinja.pocoo.org/</span></a> <br 
 class="newline" /><a 
 href="http://www.pocoo.org/projects/markupsafe/" class="url" ><span 
 class="pcrr7t-">http://www.pocoo.org/projects/markupsafe/</span></a>
-<!--l. 453--><p class="noindent" >Finally, cylc makes heavy use of Python <span 
-class="cmti-10">ordered dictionary </span>data structures. Significant speedup in
-parsing large suites can be had by installing the fast C-coded <span class="lstinline"><span 
-class="pcrr7t-">ordereddict</span></span> module by Anthon van der
-Neut:
-     <ul class="itemize1">
-     <li class="itemize"><span 
-class="cmbx-10">ordereddict </span>(latest tested 0.4.5) <br 
+     </li>
+     <li class="itemize">the <span 
+class="cmbx-10">xdot </span>graph viewer (modified), LGPL licensed: <br 
 class="newline" /><a 
-href="https://anthon.home.xs4all.nl/Python/ordereddict/" class="url" ><span 
-class="pcrr7t-">https://anthon.home.xs4all.nl/Python/ordereddict/</span></a></li></ul>
-<!--l. 461--><p class="noindent" ><span 
-class="cmti-10">This module is currently included with cylc </span>under <span class="lstinline"><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">CYLC_DIR</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">ext</span></span>, and is built by the top level cylc Makefile. If
-you install the resulting library appropriately cylc will automatically use it in place of a slower Python
-implementation of the ordered dictionary structure.
-<!--l. 467--><p class="noindent" >
+href="https://github.com/jrfonseca/xdot.py" class="url" ><span 
+class="pcrr7t-">https://github.com/jrfonseca/xdot.py</span></a></li></ul>
                                                                                          
 
                                                                                          
-<!--l. 467--><p class="noindent" > <h4 id="3.1" class="subsectionHead"> <span class="titlemark"> <a href="#3.1"> 3.1</a>  <a 
- id="x4-100003.1"></a>Known Version Compatibility Issues </span></h4>
-<!--l. 469--><p class="noindent" >Cylc should run &#8220;out of the box&#8221; on recent Linux distributions.
-<!--l. 471--><p class="noindent" >
-<!--l. 471--><p class="noindent" > <h4 id="3.1.1" class="subsubsectionHead"><span class="titlemark"> <a href="#3.1.1"> 3.1.1</a>  <a 
- id="x4-110003.1.1"></a>Apple Mac OSX </span></h4>
-<!--l. 473--><p class="noindent" >It has been reported that cylc runs fine on OSX 10.6 SnowLeopard, but on OSX 10.7 Lion there is an issue with
-constructing proper FQDNs (Fully Qualified Domain Names) that requires a change to the DNS service. Here&#8217;s how
-to solve the problem:
-     <ul class="itemize1">
-     <li class="itemize">Edit <span class="lstinline"><span 
+<!--l. 466--><p class="noindent" >
+<!--l. 466--><p class="noindent" > <h4 id="3.3" class="subsectionHead"> <span class="titlemark"> <a href="#3.3"> 3.3</a>  <a 
+ id="x4-120003.3"></a>Installing Cylc Itself </span></h4>
+<!--l. 469--><p class="noindent" >Cylc releases can be downloaded from from <a 
+href="https://cylc.github.io/cylc" class="url" ><span 
+class="pcrr7t-">https://cylc.github.io/cylc</span></a>.
+<!--l. 471--><p class="noindent" >The wrapper script <span class="lstinline"><span 
+class="pcrr7t-">admin</span><span 
 class="pcrr7t-">/</span><span 
-class="pcrr7t-">System</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">wrapper</span></span> should be installed as <span class="lstinline"><span 
+class="pcrr7t-">cylc</span></span> somewhere in the system executable
+search path (e.g.&#x00A0;<span class="lstinline"><span 
 class="pcrr7t-">/</span><span 
-class="pcrr7t-">Library</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">LaunchDaemons</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">com</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">apple</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">mDNSResponder</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">plist</span></span> <br 
-class="newline" />by adding <span class="lstinline"><span 
-class="pcrr7t-">&#x003C;</span><span 
-class="pcrr7t-">string</span><span 
-class="pcrr7t-">&#x003E;-</span><span 
-class="pcrr7t-">AlwaysAppendSearchDomains</span><span 
-class="pcrr7t-">&#x003C;/</span><span 
-class="pcrr7t-">string</span><span 
-class="pcrr7t-">&#x003E;</span></span> after line 16: <!--l. 481-->
-     <div class="lstlisting" id="listing-1"><span class="label"><a 
- id="x4-11001r1"></a></span><span 
-class="pcrr7t-">&#x003C;</span><span 
-class="pcrr7t-">key</span><span 
-class="pcrr7t-">&#x003E;</span><span 
-class="pcrr7t-">ProgramArguments</span><span 
-class="pcrr7t-">&#x003C;/</span><span 
-class="pcrr7t-">key</span><span 
-class="pcrr7t-">&#x003E;</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-11002r2"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x003C;</span><span 
-class="pcrr7t-">array</span><span 
-class="pcrr7t-">&#x003E;</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-11003r3"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x003C;</span><span 
-class="pcrr7t-">string</span><span 
-class="pcrr7t-">&#x003E;/</span><span 
 class="pcrr7t-">usr</span><span 
 class="pcrr7t-">/</span><span 
-class="pcrr7t-">sbin</span><span 
+class="pcrr7t-">local</span><span 
 class="pcrr7t-">/</span><span 
-class="pcrr7t-">mDNSResponder</span><span 
-class="pcrr7t-">&#x003C;/</span><span 
-class="pcrr7t-">string</span><span 
-class="pcrr7t-">&#x003E;</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-11004r4"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x003C;</span><span 
-class="pcrr7t-">string</span><span 
-class="pcrr7t-">&#x003E;-</span><span 
-class="pcrr7t-">launchd</span><span 
-class="pcrr7t-">&#x003C;/</span><span 
-class="pcrr7t-">string</span><span 
-class="pcrr7t-">&#x003E;</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-11005r5"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x003C;</span><span 
-class="pcrr7t-">string</span><span 
-class="pcrr7t-">&#x003E;-</span><span 
-class="pcrr7t-">AlwaysAppendSearchDomains</span><span 
-class="pcrr7t-">&#x003C;/</span><span 
-class="pcrr7t-">string</span><span 
-class="pcrr7t-">&#x003E;</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-11006r6"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x003C;/</span><span 
-class="pcrr7t-">array</span><span 
-class="pcrr7t-">&#x003E;</span>
-     
-     </div>
+class="pcrr7t-">bin</span><span 
+class="pcrr7t-">/</span></span>) and modified slightly to point to a location such as <span class="lstinline"><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">opt</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">/</span></span> where
+successive Cylc releases will be unpacked side by side.
+<!--l. 477--><p class="noindent" >To install Cylc for the first time simply unpack the release tarball in that location, type <span class="lstinline"><span 
+class="pcrr7t-">make</span></span> in it, and set your site
+defaults in a site config file (below).
+<!--l. 481--><p class="noindent" >Installing subsequent releases is just a matter of unpacking the new tarballs next to the previous releases, running
+<span class="lstinline"><span 
+class="pcrr7t-">make</span></span> in them, and copying in (possibly with modifications) the previous site config file.
+<!--l. 485--><p class="noindent" >
+<!--l. 485--><p class="noindent" > <h4 id="3.3.1" class="subsubsectionHead"><span class="titlemark"> <a href="#3.3.1"> 3.3.1</a>  <a 
+ id="x4-130003.3.1"></a>Local User Installation </span></h4>
+<!--l. 488--><p class="noindent" >It is easy to install Cylc under your own user account if you don&#8217;t have root or sudo access to the system: just put
+the central Cylc wrapper in <span class="lstinline"><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">HOME</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">bin</span><span 
+class="pcrr7t-">/</span></span> (making sure that is in your <span class="lstinline"><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">PATH</span></span>) and modify it to point to a directory
+such as <span class="lstinline"><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">HOME</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">/</span></span> where you will unpack and install release tarballs. Local installation of third party
+dependencies like Graphviz is also possible, but that depends on the particular installation methods used and is
+outside of the scope of this document.
+<!--l. 496--><p class="noindent" >
+<!--l. 496--><p class="noindent" > <h4 id="3.3.2" class="subsubsectionHead"><span class="titlemark"> <a href="#3.3.2"> 3.3.2</a>  <a 
+ id="x4-140003.3.2"></a>Create A Site Config File </span></h4>
+<!--l. 498--><p class="noindent" >Site and user global config files define some important parameters that affect all suites, some of which may need to
+be customized for your site. See&#x00A0;<a 
+href="cug-htmlse6.html#x7-240006">6<!--tex4ht:ref: SiteAndUserConfiguration --></a> for how to generate an initial site file and where to install it. All legal site and
+user global config items are defined in&#x00A0;<a 
+href="cug-htmlse17.html#x18-402000B">B<!--tex4ht:ref: SiteRCReference --></a>.
+<!--l. 504--><p class="noindent" >
+<!--l. 504--><p class="noindent" > <h4 id="3.3.3" class="subsubsectionHead"><span class="titlemark"> <a href="#3.3.3"> 3.3.3</a>  <a 
+ id="x4-150003.3.3"></a>Configure Site Environment on Job Hosts </span></h4>
+<!--l. 506--><p class="noindent" >If your users submit task jobs to hosts other than the hosts they use to run their suites, you should ensure that
+the job hosts have the correct environment for running cylc. A cylc suite generates task job scripts
+that normally invoke <span class="lstinline"><span 
+class="pcrr7t-">bash</span></span>. The job will attempt to source the first of these files it finds to set up its
+environment:
+     <ul class="itemize1">
+     <li class="itemize"><span class="lstinline"><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">{</span><span 
+class="pcrr7t-">HOME</span><span 
+class="pcrr7t-">}/.</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">job</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">init</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">env</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">sh</span></span>
      </li>
-     <li class="itemize">Now unload and reload the mDNSResponder service: <!--l. 490-->
-     <div class="lstlisting" id="listing-2"><span class="label"><a 
- id="x4-11007r1"></a></span><span 
-class="pcrr7t-">%</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">sudo</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">launchctl</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">unload</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
+     <li class="itemize"><span class="lstinline"><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">{</span><span 
+class="pcrr7t-">CYLC_DIR</span><span 
+class="pcrr7t-">}/</span><span 
+class="pcrr7t-">conf</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">job</span><span 
 class="pcrr7t-">-</span><span 
-class="pcrr7t-">w</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-11008r2"></a></span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">System</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">Library</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">LaunchDaemons</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">com</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">apple</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">mDNSResponder</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">plist</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-11009r3"></a></span><span 
-class="pcrr7t-">%</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">sudo</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">launchctl</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">load</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">init</span><span 
 class="pcrr7t-">-</span><span 
-class="pcrr7t-">w</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-11010r4"></a></span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">System</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">Library</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">LaunchDaemons</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">com</span><span 
+class="pcrr7t-">env</span><span 
 class="pcrr7t-">.</span><span 
-class="pcrr7t-">apple</span><span 
+class="pcrr7t-">sh</span></span>
+     </li>
+     <li class="itemize"><span class="lstinline"><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">{</span><span 
+class="pcrr7t-">CYLC_DIR</span><span 
+class="pcrr7t-">}/</span><span 
+class="pcrr7t-">conf</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">job</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">init</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">env</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">default</span><span 
 class="pcrr7t-">.</span><span 
-class="pcrr7t-">mDNSResponder</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">plist</span>
-     
-     </div>
-     </li></ul>
-<!--l. 499--><p class="noindent" >
-<!--l. 499--><p class="noindent" > <h4 id="3.2" class="subsectionHead"> <span class="titlemark"> <a href="#3.2"> 3.2</a>  <a 
- id="x4-120003.2"></a>Other Software Used Internally By Cylc </span></h4>
-<!--l. 501--><p class="noindent" >Cylc has incorporated a custom-modified version the <span 
-class="cmti-10">xdot </span>graph viewer (<a 
-href="https://github.com/jrfonseca/xdot.py" class="url" ><span 
-class="pcrr7t-">https://github.com/jrfonseca/xdot.py</span></a>,
-LGPL license).
+class="pcrr7t-">sh</span></span></li></ul>
                                                                                          
 
                                                                                          
-<!--l. 505--><div class="crosslinks"><p class="noindent">[<a 
+<!--l. 518--><p class="noindent" >The <span class="lstinline"><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">{</span><span 
+class="pcrr7t-">CYLC_DIR</span><span 
+class="pcrr7t-">}/</span><span 
+class="pcrr7t-">conf</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">job</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">init</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">env</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">default</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">sh</span></span> file is provided in the cylc distribution, and will attempt
+to source <span class="lstinline"><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">etc</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">profile</span></span> and <span class="lstinline"><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">{</span><span 
+class="pcrr7t-">HOME</span><span 
+class="pcrr7t-">}/.</span><span 
+class="pcrr7t-">profile</span></span>. If this behaviour is not desirable, you should override it
+by adding a <span class="lstinline"><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">{</span><span 
+class="pcrr7t-">CYLC_DIR</span><span 
+class="pcrr7t-">}/</span><span 
+class="pcrr7t-">conf</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">job</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">init</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">env</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">sh</span></span> file and populate it with the appropriate
+contents.
+<!--l. 524--><p class="noindent" >
+<!--l. 524--><p class="noindent" > <h4 id="3.4" class="subsectionHead"> <span class="titlemark"> <a href="#3.4"> 3.4</a>  <a 
+ id="x4-160003.4"></a>Automated Tests </span></h4>
+<!--l. 527--><p class="noindent" >The cylc test battery is primarily intended for developers to check that changes to the source code don&#8217;t break
+existing functionality. Note that some test failures can be expected to result from suites timing out, even if nothing
+is wrong, if you run too many tests in parallel. See <span class="lstinline"><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">test</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">battery</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">--</span><span 
+class="pcrr7t-">help</span></span>.
+                                                                                         
+
+                                                                                         
+<!--l. 533--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse4.html" >next</a>] [<a 
 href="cug-htmlse2.html" >prev</a>] [<a 
 href="cug-htmlse2.html#tailcug-htmlse2.html" >prev-tail</a>] [<a 
 href="cug-htmlse3.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse3.html" >up</a>] </p></div>
-<!--l. 505--><p class="noindent" ><a 
+<!--l. 533--><p class="noindent" ><a 
  id="tailcug-htmlse3.html"></a>  
 </body></html> 

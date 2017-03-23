@@ -1,139 +1,182 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"  
   "http://www.w3.org/TR/html4/loose.dtd">  
 <html > 
-<head><title>Workflows For Cycling Systems</title> 
+<head><title>Global (Site, User) Configuration Files</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"> 
 <meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2017-03-13 20:42:00"> 
+<meta name="date" content="2017-03-23 15:30:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-<!--l. 689--><div class="crosslinks"><p class="noindent">[<a 
+<!--l. 623--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse7.html" >next</a>] [<a 
 href="cug-htmlse5.html" >prev</a>] [<a 
 href="cug-htmlse5.html#tailcug-htmlse5.html" >prev-tail</a>] [<a 
 href="#tailcug-htmlse6.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse6.html" >up</a>] </p></div>
-<!--l. 689--><p class="noindent" > <h3 id="6" class="sectionHead"><span class="titlemark"> <a href="#6">6</a>  <a 
- id="x7-250006"></a>Workflows For Cycling Systems </span></h3> <div class="sectionTOCS">
-&#x00A0;<span class="subsectionToc" >6.1 <a 
-href="#x7-260006.1">Cycling Workflows</a></span>
-<br />&#x00A0;<span class="subsectionToc" >6.2 <a 
-href="#x7-270006.2">Parameterized Tasks as a Proxy for Cycling</a></span>
-<br />&#x00A0;<span class="subsectionToc" >6.3 <a 
-href="#x7-280006.3">Mixed Cycling Workflows</a></span>
+<!--l. 623--><p class="noindent" > <h3 id="6" class="sectionHead"><span class="titlemark"> <a href="#6">6</a>  <a 
+ id="x7-240006"></a>Global (Site, User) Configuration Files </span></h3> <div class="sectionTOCS">
 </div>
-<!--l. 692--><p class="noindent" >A model run and associated processing may need to be cycled for the following reasons:
-     <ul class="itemize1">
-     <li class="itemize">In real time forecasting systems, a new forecast may be initiated at regular intervals when new real
-     time data comes in.
-     </li>
-     <li class="itemize">Batch scheduler queue limits may require that long single runs be split into many smaller runs with
-     incremental processing of associated inputs and outputs.</li></ul>
-<!--l. 703--><p class="noindent" >Cylc provides two ways of constructing workflows for cycling systems: <span 
-class="cmti-10">cycling workflows </span>and <span 
-class="cmti-10">parameterized</span>
-<span 
-class="cmti-10">tasks</span>.
-<!--l. 706--><p class="noindent" >
-<!--l. 706--><p class="noindent" > <h4 id="6.1" class="subsectionHead"> <span class="titlemark"> <a href="#6.1"> 6.1</a>  <a 
- id="x7-260006.1"></a>Cycling Workflows </span></h4>
-<!--l. 709--><p class="noindent" >This is cylc&#8217;s classic cycling mode as described in the Introduction. Each instance of a cycling job is represented by a
-new instance of <span 
-class="cmti-10">the same task</span>, with a new cycle point. The suite configuration defines patterns for extending the
-workflow on the fly, so it can keep running indefinitely if necessary. For example, to cycle <span class="lstinline"><span 
-class="pcrr7t-">model</span><span 
+<!--l. 626--><p class="noindent" >Cylc site and user global configuration files contain settings that affect all suites. Some of these, such as the range of
+network ports used by cylc, should be set at site level,  <!--l. 630-->
+<div class="lstlisting" id="listing-2"><span class="label"><a 
+ id="x7-24001r1"></a></span><span 
+class="pcrr7t-">#</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">site</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">global</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">config</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">file</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x7-24002r2"></a></span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">path</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">to</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">conf</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">global</span><span 
 class="pcrr7t-">.</span><span 
-class="pcrr7t-">exe</span></span> on a monthly
-sequence we could define a single task <span class="lstinline"><span 
-class="pcrr7t-">model</span></span>, an initial cycle point, and a monthly sequence. Cylc then
-generates the date-time sequence and creates a new task instance for each cycle point as it comes up.
-Workflow dependencies are defined generically with respect to the &#8220;current cycle point&#8221; of the tasks
-involved.
-<!--l. 720--><p class="noindent" >This is the only sensible way to run very large suites or operational suites that need to continue cycling indefinitely.
-The cycling is configured with standards-based ISO 8601 date-time <span 
-class="cmti-10">recurrence expressions</span>. Multiple cycling
-sequences can be used at once in the same suite. See Section&#x00A0;<a 
-href="cug-htmlse10.html#x11-7900010.3">10.3<!--tex4ht:ref: ConfiguringScheduling --></a>.
+class="pcrr7t-">rc</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x7-24003r3"></a></span><span 
+class="pcrr7t-">#</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">Deprecated</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">path</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">to</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">site</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">global</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">config</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">file</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x7-24004r4"></a></span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">path</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">to</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">conf</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">siterc</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">site</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">rc</span>
+</div>
+<!--l. 636--><p class="noindent" >Others, such as the preferred text editor for suite definitions, can be overridden by users,  <!--l. 639-->
+<div class="lstlisting" id="listing-3"><span class="label"><a 
+ id="x7-24005r1"></a></span><span 
+class="pcrr7t-">#</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">user</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">global</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">config</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">file</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x7-24006r2"></a></span><span 
+class="pcrr7t-">~/.</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">global</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">rc</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x7-24007r3"></a></span><span 
+class="pcrr7t-">#</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">Deprecated</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">user</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">global</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">config</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">file</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x7-24008r4"></a></span><span 
+class="pcrr7t-">~/.</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">user</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">rc</span>
+</div>
+<!--l. 646--><p class="noindent" >The <span class="lstinline"><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">get</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">site</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">config</span></span> command retrieves current global settings consisting of cylc defaults overridden by
+site settings, if any, overridden by user settings, if any. To generate an initial site or user global config file:
+<!--l. 651-->
+<div class="lstlisting" id="listing-4"><span class="label"><a 
+ id="x7-24009r1"></a></span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">get</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">site</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">config</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x003E;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">HOME</span><span 
+class="pcrr7t-">/.</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">global</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">rc</span>
+</div>
+<!--l. 654--><p class="noindent" >Settings that do not need to be changed should be deleted or commented out of user global config files so that they
+don&#8217;t override future changes to the site file.
+<!--l. 658--><p class="noindent" >Legal items, values, and system defaults are documented in (<a 
+href="cug-htmlse17.html#x18-402000B">B<!--tex4ht:ref: SiteRCReference --></a>).
                                                                                          
 
                                                                                          
-<!--l. 726--><p class="noindent" >
-<!--l. 726--><p class="noindent" > <h4 id="6.2" class="subsectionHead"> <span class="titlemark"> <a href="#6.2"> 6.2</a>  <a 
- id="x7-270006.2"></a>Parameterized Tasks as a Proxy for Cycling </span></h4>
-<!--l. 729--><p class="noindent" >It is also possible to run cycling jobs with a pre-defined static workflow in which each instance of a cycling job is
-represented by <span 
-class="cmti-10">a different task</span>: as far as the abstract workflow is concerned there is no cycling. The sequence of
-tasks can be constructed efficiently, however, using cylc&#8217;s built-in suite parameters (<a 
-href="cug-htmlse10.html#x11-14400010.6.7">10.6.7<!--tex4ht:ref: Parameterized Cycling --></a>) or explicit Jinja2 loops
-(<a 
-href="cug-htmlse10.html#x11-14600010.7">10.7<!--tex4ht:ref: Jinja2 --></a>).
-<!--l. 736--><p class="noindent" >For example, to run <span class="lstinline"><span 
-class="pcrr7t-">model</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">exe</span></span> 12 times on a monthly cycle we could loop over an integer parameter
-<span class="lstinline"><span 
-class="pcrr7t-">R</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">0,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">1,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">2,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">...,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">11</span></span> to define tasks <span class="lstinline"><span 
-class="pcrr7t-">model</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">R0</span><span 
-class="pcrr7t-">,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">model</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">R1</span><span 
-class="pcrr7t-">,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">model</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">R2</span><span 
-class="pcrr7t-">,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">...</span><span 
-class="pcrr7t-">model</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">R11</span></span>, and the
-parameter values could be multiplied by the interval <span class="lstinline"><span 
-class="pcrr7t-">P1M</span></span> (one month) to get the start point point for the
-corresponding model run.
-<!--l. 742--><p class="noindent" >This method is only good for smaller workflows of finite duration because every single task has to be mapped out in
-advance, and cylc has to be aware of all of them throughout the entire run. Additionally Cylc&#8217;s <span 
-class="cmti-10">cycling workflow</span>
-capabilities (above) are more powerful, more flexible, and generally easier to use (Cylc will do the
-date-time arithmetic for you, for instance), so that is the recommended way to drive most cycling
-systems.
-<!--l. 749--><p class="noindent" >The primary use for parameterized tasks in cylc is to generate ensembles and other groups of related tasks at the
-same cycle point, not as a proxy for cycling.
-<!--l. 753--><p class="noindent" >
-<!--l. 753--><p class="noindent" > <h4 id="6.3" class="subsectionHead"> <span class="titlemark"> <a href="#6.3"> 6.3</a>  <a 
- id="x7-280006.3"></a>Mixed Cycling Workflows </span></h4>
-<!--l. 755--><p class="noindent" >For completeness we note that parameterized cycling can be used within a cycling workflow. For example, in a daily
-cycling workflow long (daily) model runs could be split into four shorter runs by parameterized cycling. A simpler
-six-hourly cycling workflow should be considered first, however.
-                                                                                         
-
-                                                                                         
-<!--l. 760--><div class="crosslinks"><p class="noindent">[<a 
+<!--l. 662--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse7.html" >next</a>] [<a 
 href="cug-htmlse5.html" >prev</a>] [<a 
 href="cug-htmlse5.html#tailcug-htmlse5.html" >prev-tail</a>] [<a 
 href="cug-htmlse6.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse6.html" >up</a>] </p></div>
-<!--l. 760--><p class="noindent" ><a 
+<!--l. 662--><p class="noindent" ><a 
  id="tailcug-htmlse6.html"></a>  
 </body></html> 
