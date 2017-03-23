@@ -1192,9 +1192,9 @@ conditions; see `cylc conditions`.
         for namespace in self.config.cfg['runtime']:
             ancestors = (' ').join(
                 self.config.runtime['linearized ancestors'][namespace])
-            self.pri_dao.add_insert_item(CylcSuiteDAO.TABLE_LINEARIZATION,
+            self.pri_dao.add_insert_item(CylcSuiteDAO.TABLE_INHERITANCE,
                                          [namespace, ancestors])
-            self.pub_dao.add_insert_item(CylcSuiteDAO.TABLE_LINEARIZATION,
+            self.pub_dao.add_insert_item(CylcSuiteDAO.TABLE_INHERITANCE,
                                          [namespace, ancestors])
 
     def configure_suite_environment(self):

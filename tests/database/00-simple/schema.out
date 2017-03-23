@@ -2,7 +2,7 @@ CREATE TABLE broadcast_events(time TEXT, change TEXT, point TEXT, namespace TEXT
 CREATE TABLE broadcast_states(point TEXT, namespace TEXT, key TEXT, value TEXT, PRIMARY KEY(point, namespace, key));
 CREATE TABLE broadcast_states_checkpoints(id INTEGER, point TEXT, namespace TEXT, key TEXT, value TEXT, PRIMARY KEY(id, point, namespace, key));
 CREATE TABLE checkpoint_id(id INTEGER, time TEXT, event TEXT, PRIMARY KEY(id));
-CREATE TABLE linearization(namespace TEXT, linearization TEXT, PRIMARY KEY(namespace));
+CREATE TABLE inheritance(namespace TEXT, inheritance TEXT, PRIMARY KEY(namespace));
 CREATE TABLE suite_params(key TEXT, value TEXT, PRIMARY KEY(key));
 CREATE TABLE suite_params_checkpoints(id INTEGER, key TEXT, value TEXT, PRIMARY KEY(id, key));
 CREATE TABLE suite_template_vars(key TEXT, value TEXT, PRIMARY KEY(key));

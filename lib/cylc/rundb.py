@@ -173,7 +173,7 @@ class CylcSuiteDAO(object):
     TABLE_BROADCAST_EVENTS = "broadcast_events"
     TABLE_BROADCAST_STATES = "broadcast_states"
     TABLE_BROADCAST_STATES_CHECKPOINTS = "broadcast_states_checkpoints"
-    TABLE_LINEARIZATION = "linearization"
+    TABLE_INHERITANCE = "inheritance"
     TABLE_SUITE_PARAMS = "suite_params"
     TABLE_SUITE_PARAMS_CHECKPOINTS = "suite_params_checkpoints"
     TABLE_SUITE_TEMPLATE_VARS = "suite_template_vars"
@@ -212,9 +212,9 @@ class CylcSuiteDAO(object):
             ["time"],
             ["event"],
         ],
-        TABLE_LINEARIZATION: [
+        TABLE_INHERITANCE: [
             ["namespace", {"is_primary_key": True}],
-            ["linearization"],
+            ["inheritance"],
         ],
         TABLE_SUITE_PARAMS: [
             ["key", {"is_primary_key": True}],

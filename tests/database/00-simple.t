@@ -24,7 +24,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug "${SUITE_NAME}"
 
 if ! which sqlite3 > /dev/null; then
-    skip 6 "sqlite3 not installed?"
+    skip 7 "sqlite3 not installed?"
     purge_suite "${SUITE_NAME}"
     exit 0
 fi
@@ -66,8 +66,8 @@ sqlite3 "${DB_FILE}" 'SELECT name, cycle, status FROM task_states ORDER BY name'
     >"${NAME}"
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
 
-NAME='select-linearization.out'
-sqlite3 "${DB_FILE}" 'SELECT namespace, linearization FROM linearization ORDER BY namespace' \
+NAME='select-inheritance.out'
+sqlite3 "${DB_FILE}" 'SELECT namespace, inheritance FROM inheritance ORDER BY namespace' \
     >"${NAME}"
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
 
