@@ -37,18 +37,6 @@ class TaskProxySequenceBoundsError(ValueError):
 class TaskProxy(object):
     """The task proxy."""
 
-    # RETRY LOGIC:
-    #  1) ABSOLUTE SUBMIT NUMBER increments every time a task is
-    #  submitted, manually or automatically by (submission or execution)
-    # retries; whether or not the task actually begins executing, and is
-    # appended to the task log root filename.
-    #  2) SUBMISSION TRY NUMBER increments when task job submission
-    # fails, if submission retries are configured, but resets to 1 if
-    # the task begins executing; and is used for accounting purposes.
-    #  3) EXECUTION TRY NUMBER increments only when task execution fails,
-    # if execution retries are configured; and is passed to task
-    # environments to allow changed behaviour after previous failures.
-
     # Memory optimization - constrain possible attributes to this list.
     __slots__ = ["tdef", "submit_num",
                  "point", "cleanup_cutoff", "identity", "has_spawned",

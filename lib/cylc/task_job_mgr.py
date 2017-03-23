@@ -72,7 +72,16 @@ class RemoteJobHostInitError(Exception):
 
 
 class TaskJobManager(object):
-    """Manage task job submit, poll and kill."""
+    """Manage task job submit, poll and kill.
+
+    This class provides logic to:
+    * Submit task jobs.
+    * Poll task jobs.
+    * Kill task jobs.
+    * Set up the directory structure on job hosts.
+    * Install suite communicate client files on job hosts.
+    * Remove suite contact files on job hosts.
+    """
 
     JOB_FILE_BASE = BatchSysManager.JOB_FILE_BASE
     JOBS_KILL = "jobs-kill"

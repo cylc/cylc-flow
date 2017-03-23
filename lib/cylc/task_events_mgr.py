@@ -67,7 +67,13 @@ TaskJobLogsRetrieveContext = namedtuple(
 
 
 class TaskEventsManager(object):
-    """Task events manager."""
+    """Task events manager.
+
+    This class does the following:
+    * Manage task messages (incoming or otherwise).
+    * Set up task (submission) retries on job (submission) failures.
+    * Generate and manage task event handlers.
+    """
 
     EVENT_FAILED = TASK_OUTPUT_FAILED
     EVENT_RETRY = "retry"
