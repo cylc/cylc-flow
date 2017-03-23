@@ -25,13 +25,13 @@ installation section.
 
 ### Other Notable Changes
 
-[#2191](https://github.com/cylc/cylc/pull/)2191: Clearer task prerequisites
+[#2191](https://github.com/cylc/cylc/pull/2191): Clearer task prerequisites
 print-out.
 
 [#2196](https://github.com/cylc/cylc/pull/2196): Removed the bundled external
 OrderedDict package.
 
-[#2914](https://github.com/cylc/cylc/pull/2914): `cylc gscan` - better handling
+[#2194](https://github.com/cylc/cylc/pull/2194): `cylc gscan` - better handling
 of suites that are still initializing.
 
 -------------------------------------------------------------------------------
