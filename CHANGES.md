@@ -4,6 +4,37 @@ For the full list of all changes for each release see [closed
 milestones](https://github.com/cylc/cylc/milestones?state=closed).
 
 -------------------------------------------------------------------------------
+## __cylc-7.2.1 (2017-03-23)__
+
+Minor enhancements and fixes.
+
+### Highlighted Changes
+
+[#2209](https://github.com/cylc/cylc/pull/2209): Fixed the `cylc gui` graph
+view, broken at cylc-7.2.0.
+
+[#2193](https://github.com/cylc/cylc/pull/2193): Restored `cylc gscan`
+suite-stopped status checkerboard icons, lost at cylc-7.1.1.
+
+
+[#2208](https://github.com/cylc/cylc/pull/2208): Use suite host name instead
+of suite name in the SSL certificate "common name".
+
+[#2206](https://github.com/cylc/cylc/pull/2206): Updated User Guide
+installation section.
+
+### Other Notable Changes
+
+[#2191](https://github.com/cylc/cylc/pull/)2191: Clearer task prerequisites
+print-out.
+
+[#2196](https://github.com/cylc/cylc/pull/2196): Removed the bundled external
+OrderedDict package.
+
+[#2914](https://github.com/cylc/cylc/pull/2914): `cylc gscan` - better handling
+of suites that are still initializing.
+
+-------------------------------------------------------------------------------
 ## __cylc-7.2.0 (2017-03-06)__
 
 Minor enhancements and fixes (note mid-level version number bumped up to
