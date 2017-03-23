@@ -512,11 +512,13 @@ effect delete the work directories of tasks other than its intended target.
 \begin{lstlisting}
 # Shared work directory: tasks can read and write in $PWD - use with caution!
 [scheduling]
+    initial cycle point = 2018
     [[dependencies]]
-        graph = write_data => read_data
+        [[[P1Y]]]
+            graph = write_data => read_data
 [runtime]
     [[WORKSPACE]]
-        work sub-directory = datadir
+        work sub-directory = $CYLC_TASK_CYCLE_POINT/datadir
     [[write_data]]
         inherit = WORKSPACE
         script = write-data.exe
