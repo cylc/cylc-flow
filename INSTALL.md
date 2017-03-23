@@ -3,23 +3,24 @@
 **See [The Cylc User Guide](https://cylc.github.io/cylc/documentation.html) for
 detailed instructions.**
 
-Note: *to run distributed suites Cylc must be installed on task hosts as well
-as suite hosts.*
+Cylc must be installed on task job hosts as well as suite hosts.
 
-### External Software Packages.
+### Required External Software Packages
 
-Several external packages required on suite hosts are not needed on task hosts:
-*graphviz*, and *pygraphviz*.  These should only need to be installed
-once, and then updated infrequently.
+These are only needed on suite hosts (not job hosts). They can be installed
+once and updated infrequently.
+
+ * graphviz
+ * pygraphviz
 
 ### Installing Cylc
 
-Download the latest release tarball from https://github.com/cylc/cylc/releases.
+Download the latest tarball from https://github.com/cylc/cylc/releases.
 
 ```bash
 cd /home/admin/cylc/
 tar xzf ~/Downloads/cylc-7.2.1.tar.gz
-# DO NOT CHANGE THE NAME OF THE UNPACKED SOURCE DIRECTORY.
+# DO NOT CHANGE THE NAME OF THE UNPACKED CYLC SOURCE DIRECTORY.
 cd cylc-7.2.1
 export PATH=$PWD/bin:$PATH
 make  # (see below)
@@ -38,8 +39,10 @@ cp admin/cylc-wrapper /usr/local/bin/cylc
 ```
 
 When you type `make`:
-  * A file called VERSION is created from the name of the sourc directory.
-  * The Cylc documentation is generated from source, in doc/install/.
+  * A file called VERSION is created, containing the Cylc version number
+    * The version number is taken from the name of the parent directory: DO NOT
+      CHANGE THE NAME OF THE UNPACKED CYLC SOURCE DIRECTORY
+  * The Cylc documentation is generated from source and put in doc/install/
 
 ### Installing The Documentation
 
