@@ -16,63 +16,37 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-CYLC=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))../bin/cylc
+.PHONY: all cug sdg cug-pdf cug-html clean install installclean
 
-.PHONY: all index clean html html-multi html-single pdf
+all: sdg cug install
 
-DEPS := $(shell ./scripts/get-deps.sh)
+sdg: src/suite-design-guide/document.pdf
 
-all: index
+cug: cug-pdf cug-html
+	
+cug-pdf: src/cylc-user-guide/pdf/cug-pdf.pdf
 
-index: $(DEPS)
-	./scripts/make-index.sh
+cug-html: src/cylc-user-guide/html/single/cug-html.html \
+          src/cylc-user-guide/html/multi/cug-html.html
 
-html: html-multi html-single
+src/suite-design-guide/document.pdf:
+	cd src/suite-design-guide && $(MAKE)
 
-html-multi: html/multi/cug-html.html
+src/cylc-user-guide/pdf/cug-pdf.pdf:
+	cd src/cylc-user-guide && $(MAKE) pdf
 
-html-single: html/single/cug-html.html
+src/cylc-user-guide/html/single/cug-html.html:
+	cd src/cylc-user-guide && $(MAKE) html-single
 
-pdf: pdf/cug-pdf.pdf
+src/cylc-user-guide/html/multi/cug-html.html:
+	cd src/cylc-user-guide && $(MAKE) html-multi
 
+install:
+	./src/make-index.sh
 
-cylc.txt: ../bin/cylc
-	$< --help > $@
-
-cats = $(shell ../bin/cylc categories) 
-catx = $(cats:%=categories/%.txt)
-
-cmds = $(shell ../bin/cylc commands)
-cmdx = $(cmds:%=commands/%.txt)
-
-$(cmdx): commands/%.txt: ../bin/cylc-%
-	if test ! -d commands; then mkdir -p commands/; fi
-	$(patsubst ../bin/cylc-%,../bin/cylc %,$<) --help > $@
-
-$(catx): categories/%.txt: ../bin/cylc
-	if test ! -d categories; then mkdir -p categories/; fi
-	cylc $(subst .txt,,$(subst categories/,,$@)) --help > $@
-
-commands.tex: $(cmdx) $(catx) cylc.txt
-	./scripts/make-commands.sh
-
-html/multi/cug-html.html: commands.tex cug-html.tex cug.tex suiterc.tex siterc.tex gcylcrc.tex cug-html.cfg
-	./scripts/make-html.sh multi
-
-html/single/cug-html.html: commands.tex cug-html.tex cug.tex suiterc.tex siterc.tex gcylcrc.tex cug-html.cfg
-	./scripts/make-html.sh single
-
-pdf/cug-pdf.pdf: commands.tex cug-pdf.tex cug.tex suiterc.tex siterc.tex gcylcrc.tex
-	./scripts/make-pdf.sh
-
-# delete all generated files:
 clean:
-	rm -r pdf \
-	html \
-	cylc.txt \
-	commands \
-	categories \
-	commands.tex \
-	index.html \
-	cylc-version.txt
+	cd src/suite-design-guide && $(MAKE) clean
+	cd src/cylc-user-guide && $(MAKE) clean
 
+installclean:
+	rm -r install

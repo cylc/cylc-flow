@@ -1,15 +1,23 @@
+------------------------------------------
+Cylc document generation from LaTeX source
+------------------------------------------
 
-To generate pdf and html (single and multi-page) Cylc User Guides:
+cug = Cylc User Guide
+sdg = Suite Design Guide
 
- | cd $CYLC_DIR/doc
- | make
+make all - create cug and sdg, and install to 'doc/install/'
 
-The following make targets are also avaialable:
- | make pdf
- | make html
- | make html-single
- | make html-multi
+make sdg - just create sdg (PDF)
 
-This will generate the documents under pdf/ and html/ sub-directories,
-and an index.html file at the top level that links to them.
+make cug - just create cug (PDF and HTML)
+make cug-pdf - just create cug-pdf
+make cug-html - just create cug-html (single and multi-page versions)
 
+make install - install created docs to 'doc/install/', create index.html
+make clean - remove all generated files (except those in 'doc/install/')
+make installclean - remove the 'doc/install/' directory
+
+-----------------------------------------------------------------------
+NOTE 'doc/install/' can be moved wholesale to another location (add the
+new location to your global.rc so that 'cylc doc' works properly).
+-----------------------------------------------------------------------

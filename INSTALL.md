@@ -3,51 +3,57 @@
 **See [The Cylc User Guide](https://cylc.github.io/cylc/documentation.html) for
 detailed instructions.**
 
-Note: *to run distributed suites cylc must be installed on task hosts as well as suite
-hosts.*
+Cylc must be installed on task job hosts as well as suite hosts.
 
-### External Software Packages.
+### Required External Software Packages
 
-Several external packages required on suite hosts are not needed on task hosts:
-*graphviz*, and *pygraphviz*.  These should only need to be installed
-once, and then updated infrequently.
+These are only needed on suite hosts (not job hosts). They can be installed
+once and updated infrequently.
 
-### Installing Cylc Releases
+ * graphviz
+ * pygraphviz
 
-Download the latest release tarball from https://github.com/cylc/cylc/releases.
+### Installing Cylc
 
-Cylc releases should be installed in parallel under a top level `cylc`
-directory such as `/opt/cylc/` or `/home/admin/cylc/`.
+Download the latest tarball from https://github.com/cylc/cylc/releases.
 
 ```bash
 cd /home/admin/cylc/
-tar xzf ~/Downloads/cylc-6.10.0.tar.gz
-cd cylc-6.10.0
+tar xzf ~/Downloads/cylc-7.2.1.tar.gz
+# DO NOT CHANGE THE NAME OF THE UNPACKED CYLC SOURCE DIRECTORY.
+cd cylc-7.2.1
 export PATH=$PWD/bin:$PATH
 make  # (see below)
 ```
 
-Cylc is accessed via a central wrapper script can select between installed
-versions. This allows long-running suites to stick with older cylc versions
-if necessary. The wrapper should be modified slightly to point to your
-local installation (see comments in-script) and then installed (once) in
-`$PATH` for users, e.g.:
+Successive Cylc versions should be installed side-by-side under a location such
+as `/opt/cylc/` and invoked via a central wrapper that selects between the
+available versions. This allows long-running suites (and their task jobs) to
+stick with older Cylc versions if necessary. The wrapper should be edited to
+point to your Cylc install location made available to users, e.g. if
+`/usr/local/bin/` is in `$PATH`:
+
 ```bash
 cp admin/cylc-wrapper /usr/local/bin/cylc
+# (now edit 'cylc' as per in-file instructions...)
 ```
 
-When you type `make`: 
-  * A file called VERSION will be created to hold the cylc version string,
-  e.g. "6.10.0".  This is taken from the name of the parent directory: *do not
-  change the name of the unpacked cylc source directory*.
-  * The Cylc User Guide will be generated from LaTeX source files (in PDF if
-  `pdflatex` is installed, and HTML if `tex4ht` and *ImageMagick* are
-  installed).
+When you type `make`:
+  * A file called VERSION is created, containing the Cylc version number
+    * The version number is taken from the name of the parent directory: DO NOT
+      CHANGE THE NAME OF THE UNPACKED CYLC SOURCE DIRECTORY
+  * The Cylc documentation is generated from source and put in doc/install/
+
+### Installing The Documentation
+
+After running `make` you can copy the entire `doc/install` directory to a
+convenient location such as `/var/www/html/`, and update your Cylc site config 
+file to point to the intranet location.
 
 ### Cloning The Cylc Repository
 
-To get the latest bleeding-edge cylc version and participate in cylc
-development, fork [cylc on GitHub](https://github.com/cylc/cylc), clone your
-fork locally, develop changes locally in a new branch, then push the branch to
-your fork and issue a Pull Request to the cylc development team.  Please
-discuss proposed changes before you begin work, however.
+To participate in Cylc development fork [Cylc on
+GitHub](https://github.com/cylc/cylc) and clone it locally.  Changes should be
+developed in feature branches then pushed to your GitHub fork before issuing a
+Pull Request to the team. Please discuss proposed changes before you begin
+work.

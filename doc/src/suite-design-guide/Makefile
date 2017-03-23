@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/make -f
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2017 NIWA
@@ -16,31 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-CYLC=../bin/cylc
+.PHONY: all clean
 
-cat > commands.tex <<END
-\label{help}
-\lstinputlisting{cylc.txt}
-\subsection{Command Categories}
-END
+all: document.pdf
 
-for CAT in $( $CYLC categories ); do
-	cat >> commands.tex <<END
-\subsubsection{$CAT}
-\label{$CAT}
-\lstinputlisting{categories/${CAT}.txt}
-END
-done
+document.pdf: *.tex
+	- pdflatex document.tex
+	- pdflatex document.tex
+	- pdflatex document.tex
 
-cat >> commands.tex <<END
-\subsection{Commands}
-END
-
-for COMMAND in $( $CYLC commands ); do
-	cat >> commands.tex <<END
-\subsubsection{$COMMAND}
-\label{$COMMAND}
-\lstinputlisting{commands/${COMMAND}.txt}
-END
-done
-
+clean:
+	rm -f *.aux *.out *.toc *.log *.pdf

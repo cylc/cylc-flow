@@ -16,25 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# Make PDF Cylc User Guide (called from Makefile).
+
 set -e
-
-CYLC=$(dirname $0)/../../bin/cylc
-
-function usage {
-    echo "USAGE make.sh"
-}
-
-if [[ $# != 0 ]]; then
-    usage
-    exit 1
-fi
 
 DEST=pdf
 rm -rf $DEST; mkdir -p $DEST
 
-$CYLC -v > cylc-version.txt
-
 cp -r *.tex cylc-version.txt titlepic.sty $DEST
+
 cd $DEST
 ls *.tex | xargs -n 1 perl -pi -e 's@graphics/png/orig@../graphics/png/orig@g'
 ls *.tex | xargs -n 1 perl -pi -e 's@\.\./examples/@../../examples/@g'
@@ -49,4 +39,3 @@ perl -pi -e 's@\.\./INSTALL@../../INSTALL@g' cug.tex
 pdflatex -halt-on-error cug-pdf.tex
 pdflatex -halt-on-error cug-pdf.tex
 pdflatex -halt-on-error cug-pdf.tex
-

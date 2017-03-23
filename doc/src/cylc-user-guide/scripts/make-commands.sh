@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2017 NIWA
 # 
@@ -14,13 +16,40 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-all: version documentation
+# Create cylc-version.txt and commands.tex for inclusion in LaTeX doc.
 
-version:
-	admin/create-version-file
+CYLC=$(dirname $0)/../../../../bin/cylc
 
-documentation:
-	cd doc && $(MAKE)
+$CYLC --version > cylc-version.txt
 
-clean:
-	cd doc && $(MAKE) clean
+cat > commands.tex <<END
+\label{help}
+\begin{lstlisting}
+$($CYLC --help)
+\end{lstlisting}
+\subsection{Command Categories}
+END
+
+for CAT in $($CYLC categories); do
+	cat >> commands.tex <<END
+\subsubsection{$CAT}
+\label{$CAT}
+\begin{lstlisting}
+$($CYLC $CAT --help)
+\end{lstlisting}
+END
+done
+
+cat >> commands.tex <<END
+\subsection{Commands}
+END
+
+for COM in $($CYLC commands); do
+	cat >> commands.tex <<END
+\subsubsection{$COM}
+\label{$COM}
+\begin{lstlisting}
+$($CYLC $COM --help)
+\end{lstlisting}
+END
+done

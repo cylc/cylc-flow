@@ -16,31 +16,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# Make HTML Cylc User Guide (called from Makefile).
+
 set -e
 
-CYLC=$(dirname $0)/../../bin/cylc
-
-function usage {
-    echo "USAGE make-html.sh [multi|single]"
-}
-
-if [[ $# != 1 ]]; then
-    usage
-    exit 1
-fi
-
-TYPE=$1
-if [[ $TYPE != multi ]] && [[ $TYPE != single ]]; then
-    usage
-    exit 1
-fi
+TYPE=$1  # "multi" or "single"
 
 DEST=html/$TYPE
 rm -rf $DEST; mkdir -p $DEST
 
-$CYLC -v > cylc-version.txt
-
 cp -r *.tex cug-html.cfg cylc-version.txt titlepic.sty $DEST
+
 cd $DEST
 ls *.tex | xargs -n 1 perl -pi -e 's@graphics/png/orig@../../graphics/png/scaled@g'
 ls *.tex | xargs -n 1 perl -pi -e 's@\.\./examples/@../../../examples/@g'
@@ -59,4 +45,3 @@ if [[ $TYPE == multi ]]; then
 else
     htlatex cug-html.tex "cug-html.cfg,html,1,fn-in" "" "" "-halt-on-error"
 fi
-
