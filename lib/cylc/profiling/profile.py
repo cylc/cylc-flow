@@ -101,7 +101,8 @@ def purge_suite(reg):
         return True
 
 
-def run_suite(reg, options, out_file, profile_modes, mode='live', conf_path=''):
+def run_suite(reg, options, out_file, profile_modes, mode='live',
+              conf_path=''):
     """Runs cylc run / cylc validate on the provided suite with the requested
     profiling options.
 
