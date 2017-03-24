@@ -113,9 +113,7 @@ class TaskPool(object):
     def insert_tasks(self, items, stop_point_str, no_check=False):
         """Insert tasks."""
         n_warnings = 0
-        names = self.config.get_task_name_list()
-        fams = self.config.runtime['first-parent descendants']
-        task_ids = []
+        task_items = []
         for item in items:
             point_str, name_str, _ = self._parse_task_item(item)
             if point_str is None:
@@ -130,30 +128,13 @@ class TaskPool(object):
                     self.ERR_PREFIX_TASKID_MATCH + ("%s (%s)" % (item, exc)))
                 n_warnings += 1
                 continue
-            i_names = []
-            if name_str in names:
-                i_names.append(name_str)
-            elif name_str in fams:
-                for name in fams[name_str]:
-                    if name in names:
-                        i_names.append(name)
-            else:
-                for name in names:
-                    if fnmatchcase(name, name_str):
-                        i_names.append(name)
-                for fam, fam_names in fams.items():
-                    if not fnmatchcase(fam, name_str):
-                        continue
-                    for name in fam_names:
-                        if name in names:
-                            i_names.append(name)
-            if i_names:
-                for name in i_names:
-                    task_ids.append((name, point_str))
-            else:
+            taskdefs = self.config.find_taskdefs(name_str)
+            if not taskdefs:
                 LOG.warning(self.ERR_PREFIX_TASKID_MATCH + item)
                 n_warnings += 1
                 continue
+            for taskdef in taskdefs:
+                task_items.append([(taskdef.name, point_str), taskdef])
         if stop_point_str is None:
             stop_point = None
         else:
@@ -167,30 +148,28 @@ class TaskPool(object):
                 return n_warnings
         task_states_data = (
             self.suite_db_mgr.pri_dao.select_task_states_by_task_ids(
-                ["submit_num"], task_ids))
-        for name_str, point_str in task_ids:
+                ["submit_num"], [task_item[0] for task_item in task_items]))
+        for key, taskdef in task_items:
             # TODO - insertion of start-up tasks? (startup=False assumed here)
 
             # Check that the cycle point is on one of the tasks sequences.
-            on_sequence = False
+            point_str = key[1]
             point = get_point(point_str)
             if not no_check:  # Check if cycle point is on the tasks sequence.
-                for sequence in self.config.taskdefs[name_str].sequences:
+                for sequence in taskdef.sequences:
                     if sequence.is_on_sequence(point):
-                        on_sequence = True
                         break
-                if not on_sequence:
+                else:
                     LOG.warning("%s%s, %s" % (
-                        self.ERR_PREFIX_TASK_NOT_ON_SEQUENCE, name_str,
+                        self.ERR_PREFIX_TASK_NOT_ON_SEQUENCE, taskdef.name,
                         point_str))
                     continue
 
             submit_num = None
-            if (name_str, point_str) in task_states_data:
-                submit_num = task_states_data[(name_str, point_str)].get(
-                    "submit_num")
+            if key in task_states_data:
+                submit_num = task_states_data[key].get("submit_num")
             self.add_to_runahead_pool(TaskProxy(
-                self.config.get_taskdef(name_str), get_point(point_str),
+                taskdef, get_point(point_str),
                 stop_point=stop_point, submit_num=submit_num))
         return n_warnings
 

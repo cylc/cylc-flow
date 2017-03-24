@@ -23,6 +23,7 @@ structures.
 
 
 from copy import deepcopy, copy
+from fnmatch import fnmatchcase
 import os
 import re
 import traceback
@@ -1932,6 +1933,37 @@ class SuiteConfig(object):
                     orig_expr, lefts, right, section, seq, base_interval)
                 self.generate_triggers(
                     expr, lefts, right, seq, suicide, base_interval)
+
+    def find_taskdefs(self, name):
+        """Find TaskDef objects in family "name" or matching "name".
+
+        Return a list of TaskDef objects which:
+        * have names that glob matches "name".
+        * are in a family that glob matches "name".
+        """
+        ret = []
+        if name in self.taskdefs:
+            # Match a task name
+            ret.append(self.taskdefs[name])
+        else:
+            fams = self.get_first_parent_descendants()
+            # Match a family name
+            if name in fams:
+                for member in fams[name]:
+                    if member in self.taskdefs:
+                        ret.append(self.taskdefs[member])
+            else:
+                # Glob match task names
+                for key, taskdef in self.taskdefs.items():
+                    if fnmatchcase(key, name):
+                        ret.append(taskdef)
+                # Glob match family names
+                for key, members in fams.items():
+                    if fnmatchcase(key, name):
+                        for member in members:
+                            if member in self.taskdefs:
+                                ret.append(self.taskdefs[member])
+        return ret
 
     def get_taskdef(self, name, orig_expr=None):
         """Return an instance of TaskDef for task name."""
