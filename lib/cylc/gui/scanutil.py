@@ -313,8 +313,8 @@ def update_suites_info(
             continue
         try:
             result[KEY_PORT] = port
-            result[KEY_UPDATE_TIME] = int(float(result[KEY_UPDATE_TIME]))
             results[(host, result[KEY_OWNER], result[KEY_NAME])] = result
+            result[KEY_UPDATE_TIME] = int(float(result[KEY_UPDATE_TIME]))
         except (KeyError, TypeError, ValueError):
             pass
     expire_threshold = time() - DURATION_EXPIRE_STOPPED
