@@ -988,13 +988,7 @@ conditions; see `cylc conditions`.
             self.suite_state = StateSummaryServer.get_inst(self.run_mode)
             self.comms_daemon.connect(self.suite_state, COMMS_STATE_OBJ_NAME)
 
-        for namespace in self.config.cfg['runtime']:
-            ancestors = (' ').join(
-                self.config.runtime['linearized ancestors'][namespace])
-            self.pri_dao.add_insert_item(CylcSuiteDAO.TABLE_INHERITANCE,
-                                         [namespace, ancestors])
-            self.pub_dao.add_insert_item(CylcSuiteDAO.TABLE_INHERITANCE,
-                                         [namespace, ancestors])
+        self.suite_db_mgr.put_runtime_inheritance(self.config)
 
     def configure_suite_environment(self):
         """Configure suite environment."""

@@ -33,6 +33,7 @@ class SuiteDatabaseManager(object):
     """Manage the suite runtime private and public databases."""
 
     TABLE_CHECKPOINT_ID = CylcSuiteDAO.TABLE_CHECKPOINT_ID
+    TABLE_INHERITANCE = CylcSuiteDAO.TABLE_INHERITANCE
     TABLE_SUITE_PARAMS = CylcSuiteDAO.TABLE_SUITE_PARAMS
     TABLE_SUITE_TEMPLATE_VARS = CylcSuiteDAO.TABLE_SUITE_TEMPLATE_VARS
     TABLE_TASK_ACTION_TIMERS = CylcSuiteDAO.TABLE_TASK_ACTION_TIMERS
@@ -54,6 +55,7 @@ class SuiteDatabaseManager(object):
             self.TABLE_TASK_POOL: [],
             self.TABLE_TASK_ACTION_TIMERS: []}
         self.db_inserts_map = {
+            self.TABLE_INHERITANCE: [],
             self.TABLE_SUITE_PARAMS: [],
             self.TABLE_SUITE_TEMPLATE_VARS: [],
             self.TABLE_CHECKPOINT_ID: [],
@@ -173,6 +175,14 @@ class SuiteDatabaseManager(object):
         # keep the logic simple.
         self.pri_dao.execute_queued_items()
         self.pub_dao.execute_queued_items()
+
+    def put_runtime_inheritance(self, config):
+        """Put task/family inheritance in runtime database."""
+        for namespace in config.cfg['runtime']:
+            value = ' '.join(config.runtime['linearized ancestors'][namespace])
+            self.db_inserts_map[self.TABLE_INHERITANCE].append({
+                "namespace": namespace,
+                "inheritance": value})
 
     def put_suite_params(
             self, run_mode, initial_point, final_point, is_held,
