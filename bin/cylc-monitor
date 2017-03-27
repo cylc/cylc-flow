@@ -50,7 +50,9 @@ class SuiteMonitor(object):
             """cylc [info] monitor [OPTIONS] ARGS
 
 A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
-            comms=True, noforce=True)
+            argdoc=[('REG', 'Suite name'),
+                    ('[USER_AT_HOST]', 'user@host:port, shorthand for --user, '
+                     '--host & --port.')], comms=True, noforce=True)
 
         self.parser.add_option(
             "-a", "--align",
@@ -94,6 +96,15 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
     def run(self):
         (options, args) = self.parser.parse_args()
         suite = args[0]
+
+        if len(args) > 1:
+            try:
+                user_at_host, options.port = args[1].split(':')
+                options.owner, options.host = user_at_host.split('@')
+            except ValueError:
+                print >> sys.stderr, ('USER_AT_HOST must take the form '
+                                      '"user@host:port"')
+                sys.exit(1)
 
         client_name = os.path.basename(sys.argv[0])
         if options.restricted:
