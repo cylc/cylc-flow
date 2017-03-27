@@ -12,8 +12,8 @@ of tabs and spaces in the same file can render to a mess.
 Use \lstinline=grep -InPr "\t" *= to find tabs recursively in files in
 a directory.
 
-In {\em vim} use \lstinline=%retab= to convert existing tabs to spaces, 
-and set \lstinline=expandtab= to automatically convert new tabs. 
+In {\em vim} use \lstinline=%retab= to convert existing tabs to spaces,
+and set \lstinline=expandtab= to automatically convert new tabs.
 
 In {\em emacs} use {\em whitespace-cleanup}.
 
@@ -38,7 +38,7 @@ $ sed --in-place 's/[[:space:]]\+$//' path/to/file
 Or do a similar search-and-replace operation in your editor. Editors like {\em
 vim} and {\em emacs} can also be configured to highlight or automatically
 remove trailing whitespace on the fly.
-    
+
 \subsection{Indentation}
 
 Consistent indentation makes a suite definition more readable, it shows section
@@ -85,14 +85,14 @@ to, and trailing comments should be preceded by two spaces, as shown above.
 
 \subsubsection{Script String Lines}
 
-Script strings are written verbatim to task job scripts and interpreted by the
-job shell. They are subject to shell, not suite.rc, syntax rules and do not
-have to be indented:
+Script strings are written verbatim to task job scripts so they should really
+be indented from the left margin:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
     [[foo]]
+        # Recommended.
         post-script = """
 if [[ $RESULT == "bad" ]]; then
     echo Goodbye World!
@@ -100,15 +100,15 @@ if [[ $RESULT == "bad" ]]; then
 fi"""
 \end{lstlisting}
 
-Indentation is ignored by the shell, however, so script lines can be indented
-as if part of the suite.rc syntax, or even out to the triple quotes, if you
-feel it aids readability (but watch line length with large indents;
-see~\ref{Line Length}):
+Indentation is {\em mostly} ignored by the bash interpreter, however, so if you
+feel it aids readability it is {\em mostly} harmless to indent internal script
+lines as if part of the Cylc syntax, or even out to the triple quotes:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
     [[foo]]
+        # OK, but...
         post-script = """
             if [[ $RESULT == "bad" ]]; then
                 echo Goodbye World!
@@ -116,7 +116,24 @@ see~\ref{Line Length}):
             fi"""
 \end{lstlisting}
 
-Both styles are acceptable; choose one and use it consistently.
+But if you do this, watch your line length (see~\ref{Line Length}) and {\em do not
+indent here documents}:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[runtime]
+    [[foo]]
+        # ... this is an error!
+        script = """
+        cat >> log.txt <<_EOF_
+            The quick brown fox jumped
+            over the lazy dog.
+        _EOF_
+                 """
+\end{lstlisting}
+
+(The leading whitespace would end up in \lstinline=log.txt=, and indenting the
+\lstinline=_EOF_= marker is actually an error).
 
 \subsubsection{Graph String Lines}
 
@@ -130,7 +147,7 @@ Multiline \lstinline@graph@ strings can be entirely free-form:
      # Main workflow:
   FAMILY:succeed-all => bar & baz => qux
 
-     # Housekeeping: 
+     # Housekeeping:
   qux => rose_arch => rose_prune"""
 \end{lstlisting}
 
@@ -147,7 +164,7 @@ indents; see~\ref{Line Length}):
            # Main workflow:
            FAMILY:succeed-all => bar & baz => qux
 
-           # Housekeeping: 
+           # Housekeeping:
            qux => rose_arch => rose_prune"""
 \end{lstlisting}
 

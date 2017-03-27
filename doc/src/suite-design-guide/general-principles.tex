@@ -512,11 +512,13 @@ effect delete the work directories of tasks other than its intended target.
 \begin{lstlisting}
 # Shared work directory: tasks can read and write in $PWD - use with caution!
 [scheduling]
+    initial cycle point = 2018
     [[dependencies]]
-        graph = write_data => read_data
+        [[[P1Y]]]
+            graph = write_data => read_data
 [runtime]
     [[WORKSPACE]]
-        work sub-directory = datadir
+        work sub-directory = $CYLC_TASK_CYCLE_POINT/datadir
     [[write_data]]
         inherit = WORKSPACE
         script = write-data.exe
@@ -648,5 +650,33 @@ path from the workflow:
   \includegraphics[width=0.18\textwidth]{resources/png/failure-recovery.png}
 %\end{minipage}
 %\end{figure}
+
+\subsection{Include Files}
+
+Include-files should not be overused, but they can sometimes be useful
+(e.g.\ see Portable Suites~\ref{Portable Suites}):
+
+\begin{lstlisting}
+#...
+{% include 'inc/foo.rc' %}
+\end{lstlisting}
+
+(Technically this inserts a Jinja2-rendered file template). Cylc also has a
+native include mechanism that pre-dates Jinja2 support and literally inlines
+the include-file:
+
+\begin{lstlisting}
+#...
+%include 'inc/foo.rc'
+\end{lstlisting}
+
+The two methods normally produce the same result, but use the Jinja2 version if
+you need to construct an include-file name from a variable (because Cylc
+include-files get inlined before Jinja2 processing is done):
+
+\begin{lstlisting}
+#...
+{% include 'inc/' ~ SITE ~ '.rc' %}
+\end{lstlisting}
 
 

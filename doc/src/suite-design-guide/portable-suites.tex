@@ -109,8 +109,8 @@ where the site include-file \lstinline=site/niwa.rc= contains:
 \subsection{Site-Specific Graphs}
 
 Repeated \lstinline=graph= strings under the same graph section headings are
-always additive (graph strings are the only exception to the normal overriding
-of repeated items). So, for instance, this graph:
+always additive (graph strings are the only exception to the normal repeat item
+override semantics). So, for instance, this graph:
 
 \begin{lstlisting}
 [scheduling]
@@ -180,6 +180,7 @@ mess) and it exposes all site configuration to all users:
 [runtime]
     [[model]]
         script = run-model.sh
+{# Site switch blocks not recommended:#}
 {% if SITE == 'niwa' %}
         [[[job]]]
             batch system = loadleveler
@@ -231,7 +232,6 @@ where IDL is available. The IDL-dependence switch can be set per site like this:
 \lstset{language=suiterc}
 \begin{lstlisting}
 #...
-{% set HAVE_IDL = False %}  {# Default. #}
 {% from SITE ~ '-vars.rc' import HAVE_IDL, OTHER_VAR %}
 graph = """
   pre => model => post
@@ -246,10 +246,11 @@ where for \lstinline@SITE = niwa@ the file \lstinline=niwa-vars.rc= contains:
 \begin{lstlisting}
 {# niwa-vars.rc #}
 {% set HAVE_IDL = True %}
+{% set OTHER_VAR = "the quick brown fox" %}
 \end{lstlisting}
 
-Note this really assumes a significantly smaller number of options (IDL or not,
-in this case) than sites, otherwise the IDL workflow should just go in the site
+Note we are assuming there are significantly fewer options (IDL or not, in this
+case) than sites, otherwise the IDL workflow should just go in the site
 include-files of the sites that need it.
 
 \subsection{Site-Specific Optional Suite Configs}
