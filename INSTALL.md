@@ -3,12 +3,12 @@
 **See [The Cylc User Guide](https://cylc.github.io/cylc/documentation.html) for
 detailed instructions.**
 
-Cylc must be installed on task job hosts as well as suite hosts.
+Cylc must be installed on suite and task job hosts, although the external
+software packages (below) are not required on job hosts.
 
 ### Required External Software Packages
 
-These are only needed on suite hosts (not job hosts). They can be installed
-once and updated infrequently.
+These can be installed once on suite hosts updated infrequently.
 
  * graphviz
  * pygraphviz
@@ -17,25 +17,16 @@ once and updated infrequently.
 
 Download the latest tarball from https://github.com/cylc/cylc/releases.
 
+Successive Cylc releases should be installed side-by-side under a location such
+as `/opt/cylc/`:
+
 ```bash
-cd /home/admin/cylc/
-tar xzf ~/Downloads/cylc-7.2.1.tar.gz
+cd /opt/cylc/
+tar xzf cylc-7.2.1.tar.gz
 # DO NOT CHANGE THE NAME OF THE UNPACKED CYLC SOURCE DIRECTORY.
 cd cylc-7.2.1
 export PATH=$PWD/bin:$PATH
-make  # (see below)
-```
-
-Successive Cylc versions should be installed side-by-side under a location such
-as `/opt/cylc/` and invoked via a central wrapper that selects between the
-available versions. This allows long-running suites (and their task jobs) to
-stick with older Cylc versions if necessary. The wrapper should be edited to
-point to your Cylc install location made available to users, e.g. if
-`/usr/local/bin/` is in `$PATH`:
-
-```bash
-cp admin/cylc-wrapper /usr/local/bin/cylc
-# (now edit 'cylc' as per in-file instructions...)
+make
 ```
 
 When you type `make`:
@@ -43,6 +34,16 @@ When you type `make`:
     * The version number is taken from the name of the parent directory: DO NOT
       CHANGE THE NAME OF THE UNPACKED CYLC SOURCE DIRECTORY
   * The Cylc documentation is generated from source and put in doc/install/
+
+Once installed, Cylc commands should be invoked via the supplied central
+wrapper script that selects between the available versions. This allows
+long-running suites (and their task jobs) to stick with older versions if
+necessary. The wrapper should be edited to point to the Cylc install location:
+
+```bash
+cp /opt/cylc/cylc-7.2.1/admin/cylc-wrapper /usr/local/bin/cylc
+# (now edit '/usr/local/bin/cylc' as per in-file instructions...)
+```
 
 ### Installing The Documentation
 
