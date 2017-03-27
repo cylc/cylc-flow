@@ -50,9 +50,14 @@ class SGEHandler(object):
             directives[key] = value
         lines = []
         for key, value in directives.items():
-            if value:
+            if value and " " in key:
+                # E.g. -l h_rt=3:00:00
+                lines.append("%s%s=%s" % (self.DIRECTIVE_PREFIX, key, value))
+            elif value:
+                # E.g. -q queue_name
                 lines.append("%s%s %s" % (self.DIRECTIVE_PREFIX, key, value))
             else:
+                # E.g. -V
                 lines.append("%s%s" % (self.DIRECTIVE_PREFIX, key))
         return lines
 
