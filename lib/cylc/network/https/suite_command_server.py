@@ -121,6 +121,8 @@ class SuiteCommandServer(BaseCommsServer):
     def reset_task_states(self, items, state=None, outputs=None):
         if not isinstance(items, list):
             items = [items]
+        if outputs and not isinstance(outputs, list):
+            outputs = [outputs]
         return self._put(
             "reset_task_states",
             (items,), {"state": state, "outputs": outputs})

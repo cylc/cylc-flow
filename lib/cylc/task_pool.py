@@ -1077,18 +1077,19 @@ class TaskPool(object):
                         ret = itask.state.outputs.set_completed(
                             message=output, is_completed=is_completed)
                         if ret is None:
-                            itask.state.outputs.set_completed(
+                            ret = itask.state.outputs.set_completed(
                                 trigger=output, is_completed=is_completed)
                         if ret is None:
                             LOG.warning(
-                                "cannot reset output %s" % output, itask=itask)
-                        elif ret and is_completed:
-                            LOG.info(
-                                "reset output to complete %s" % output,
+                                "cannot reset output: %s" % output,
                                 itask=itask)
                         elif ret:
                             LOG.info(
-                                "reset output to incomplete %s" % output,
+                                "reset output to complete: %s" % output,
+                                itask=itask)
+                        else:
+                            LOG.info(
+                                "reset output to incomplete: %s" % output,
                                 itask=itask)
         return len(bad_items)
 

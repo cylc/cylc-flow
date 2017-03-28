@@ -55,13 +55,13 @@ def main():
         help="Reset task state to STATE, can be %s" % (
             ', '.join(TASK_STATUSES_CAN_RESET_TO)),
         choices=list(TASK_STATUSES_CAN_RESET_TO),
-        action="store", default=None, dest="state")
+        action="store", dest="state")
 
     parser.add_option(
         "--output", "-O",
-        metavar="MESSAGE|TRIGGER",
+        metavar="OUTPUT",
         help=("Find task output by message string or trigger string, " +
-              "set complete or incomplete with !MESSAGE or !TRIGGER, " +
+              "set complete or incomplete with !OUTPUT, " +
               "'*' to set all complete, '!*' to set all incomplete. " +
               "Can be used more than once to reset multiple task outputs."),
         action="append", default=[], dest="outputs")
@@ -69,6 +69,9 @@ def main():
     options, args = parser.parse_args()
 
     suite = args.pop(0)
+
+    if not options.state and not options.outputs:
+        parser.error("Neither --state=STATE nor --output=OUTPUT is set")
 
     if options.state == "spawn":
         # Back compat.
@@ -82,8 +85,8 @@ def main():
                 exc.filename = cmd
             raise SystemExit(exc)
 
-    if options.state not in TASK_STATUSES_CAN_RESET_TO:
-        parser.error("Illegal STATE value: " + options.state)
+    if not options.state:
+        options.state = ''
 
     prompt('Reset task(s) %s in %s' % (args, suite), options.force)
     pclient = SuiteCommandClient(

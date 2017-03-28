@@ -34,15 +34,21 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 [runtime]
     [[FOO]]
         script = echo "${CYLC_TASK_ID}"
-    [[foo1, foo2, foo3]]
+    [[FOO1, FOO2, FOO3]]
         inherit = FOO
+    [[food]]
+        inherit = FOO1
+    [[fool]]
+        inherit = FOO2
+    [[foot]]
+        inherit = FOO3
     [[bar]]
         script = echo "${CYLC_TASK_ID}"
 __SUITE_RC__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}" cylc submit "${SUITE_NAME}" 'FOO.2020' 'bar.2021'
-for TASK_ID in 'foo1.2020' 'foo2.2020' 'foo3.2020' 'bar.2021'; do
+for TASK_ID in 'food.2020' 'fool.2020' 'foot.2020' 'bar.2021'; do
     POINT="${TASK_ID#*.}"
     NAME="${TASK_ID%.*}"
     ST_FILE="${SUITE_RUN_DIR}/log/job/${POINT}/${NAME}/01/job.status"
