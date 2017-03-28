@@ -1,7 +1,7 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2017 NIWA
-#
+# 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -15,22 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test pipefail cylc/cylc#1783
-. "$(dirname "$0")/test_header"
+# Test error trapping in cmd1; cmd2 syntax. If cmd1 fails, the error trap
+# should trigger.
+. "$(dirname "${0}")/test_header"
+set_test_number 2
 
-set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok "${TEST_NAME}-validate" cylc validate "${SUITE_NAME}"
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_fail "${TEST_NAME_BASE}-run" \
-    cylc run --no-detach --reference-test "${SUITE_NAME}"
-
-# Make sure t1.1.1's status file is in place
-T1_STATUS_FILE="${SUITE_RUN_DIR}/log/job/1/t1/01/job.status"
-contains_ok "${T1_STATUS_FILE}" <<'__STATUS__'
-CYLC_JOB_EXIT=EXIT
-__STATUS__
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --reference-test --debug
 
 purge_suite "${SUITE_NAME}"
 exit
