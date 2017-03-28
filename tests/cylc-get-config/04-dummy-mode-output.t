@@ -25,13 +25,14 @@ init_suite "${TEST_NAME_BASE}" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/suite.rc"
 run_ok "${TEST_NAME_BASE}-bar" \
     cylc get-config "${SUITE_NAME}" -i '[runtime][bar][dummy mode]script'
 cmp_ok "${TEST_NAME_BASE}-bar.stdout" <<'__OUT__'
-echo Dummy task; sleep $(cylc rnd 1 16)
+
 sleep 2; cylc message 'greet'
 __OUT__
 run_ok "${TEST_NAME_BASE}-foo" \
     cylc get-config "${SUITE_NAME}" -i '[runtime][foo][dummy mode]script'
 cmp_ok "${TEST_NAME_BASE}-foo.stdout" <<'__OUT__'
-echo Dummy task; sleep $(cylc rnd 1 16)
+
+sleep 2; cylc message 'meet'
 __OUT__
 purge_suite "${SUITE_NAME}"
 exit

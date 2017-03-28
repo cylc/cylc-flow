@@ -14,3 +14,5 @@
             greet = greet
     [[foo]]
         script = true
+        [[[outputs]]]
+            greet = meet
