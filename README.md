@@ -1,18 +1,15 @@
-# The Cylc Suite Engine
+# The Cylc Workflow Engine
 
 [![Build Status](https://travis-ci.org/cylc/cylc.svg?branch=master)](https://travis-ci.org/cylc/cylc)
 [![DOI](https://zenodo.org/badge/1836229.svg)](https://zenodo.org/badge/latestdoi/1836229)
 
-
-## A Workflow Engine and Meta-Scheduler
-
-Cylc specialises in continuous workflows of cycling (repeating) tasks such as
-those used in weather and climate forecasting and research, but it can also be
-used for non-cycling systems.
+Cylc (“silk”) orchestrates complex distributed suites of interdependent cycling
+tasks. It was originally designed for environmental forecasting systems at
+[NIWA](https://www.niwa.co.nz).
 
 ### Copyright and Terms of Use
 
-Copyright (C) 2008-2017 [NIWA](https://www.niwa.co.nz)
+Copyright (C) 2008-2017 NIWA
  
 Cylc is free software: you can redistribute it and/or modify it under the terms
 of the GNU General Public License as published by the Free Software Foundation,
