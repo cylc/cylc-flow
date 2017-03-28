@@ -65,6 +65,10 @@ class SuiteIdServer(BaseCommsServer):
         if access_priv_ok(self, "state-totals"):
             summary_server = StateSummaryServer.get_inst()
             result[KEY_STATES] = summary_server.get_state_totals()
-            result[KEY_UPDATE_TIME] = summary_server.get_summary_update_time()
             result[KEY_TASKS_BY_STATE] = summary_server.get_tasks_by_state()
+            try:
+                result[KEY_UPDATE_TIME] = (
+                    summary_server.get_summary_update_time())
+            except SuiteStillInitialisingError:
+                pass
         return result
