@@ -22,7 +22,7 @@ set_test_number 4
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --reference-test --debug
-grep_ok 'ERR foo bar baz qux' "${SUITE_RUN_DIR}/log/job/1/foo/01/job.err"
+grep_ok 'EXIT foo bar baz qux' "${SUITE_RUN_DIR}/log/job/1/foo/01/job.err"
 run_fail "${TEST_NAME_BASE}-grep-02" \
     grep -q -F 'ERR foo bar baz qux' "${SUITE_RUN_DIR}/log/job/1/foo/02/job.err"
 

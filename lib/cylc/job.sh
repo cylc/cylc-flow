@@ -53,8 +53,7 @@ cylc__job__main() {
     for signal_name in ${CYLC_VACATION_SIGNALS:-}; do
         trap "cylc__job__trap_vacation ${signal_name}" "${signal_name}"
     done
-    set -u
-    set -o pipefail
+    set -euo pipefail
     # Export CYLC_ suite and task environment variables
     cylc__job__inst__cylc_env
     # Write task job self-identify
