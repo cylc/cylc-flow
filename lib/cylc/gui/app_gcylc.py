@@ -1223,7 +1223,7 @@ been defined for this suite""").inform()
         about.run()
         about.destroy()
 
-    def view_task_descr(self, w, task_id):
+    def view_task_descr(self, w, e, task_id, *args):
         command = ("cylc show" + self.get_remote_run_opts() + " " +
                    self.cfg.suite + " " + task_id)
         foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 600, 400)
@@ -1344,16 +1344,18 @@ been defined for this suite""").inform()
                     gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU)
                 info_item.set_image(img)
                 view_menu.append(info_item)
-                info_item.connect(
-                    'activate', self.popup_requisites, task_ids[0])
+                self.connect_right_click_sub_menu(is_graph_view, info_item,
+                                                  self.popup_requisites,
+                                                  task_ids[0], None)
 
                 js0_item = gtk.ImageMenuItem('run "cylc show"')
                 img = gtk.image_new_from_stock(
                     gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU)
                 js0_item.set_image(img)
                 view_menu.append(js0_item)
-                js0_item.connect(
-                    'activate', self.view_task_descr, task_ids[0])
+                self.connect_right_click_sub_menu(is_graph_view, js0_item,
+                                                  self.view_task_descr,
+                                                  task_ids[0], None)
 
                 # PDF user guide.
                 # This method of setting a custom menu item is not supported
@@ -1589,7 +1591,7 @@ been defined for this suite""").inform()
         else:
             tb.insert(tb.get_end_iter(), line)
 
-    def popup_requisites(self, w, task_id):
+    def popup_requisites(self, w, e, task_id, *args):
         """Show prerequisites of task_id in a pop up window."""
         name, point_string = TaskID.split(task_id)
         results, bad_items = self.get_comms_info(
