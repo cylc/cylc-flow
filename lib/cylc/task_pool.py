@@ -552,10 +552,12 @@ class TaskPool(object):
                           'triggered off %s' % (
                               itask.state.get_resolved_dependencies()))
             overrides = bcast.get(itask.identity)
-            if self.run_mode == 'simulation':
-                itask.job_submission_succeeded()
-            elif itask.prep_submit(overrides=overrides) is not None:
-                prepared_tasks.append(itask)
+            if itask.prep_submit(overrides=overrides) is not None:
+                if self.run_mode == 'simulation':
+                    itask.state.set_ready_to_submit()
+                    itask.job_submission_succeeded()
+                else:
+                    prepared_tasks.append(itask)
 
         if not prepared_tasks:
             return
@@ -1323,14 +1325,12 @@ class TaskPool(object):
         return shutdown
 
     def sim_time_check(self):
-        sim_task_succeeded = False
+        sim_task_state_changed = False
         for itask in self.get_tasks():
             if itask.state.status == TASK_STATUS_RUNNING:
-                # Automatically set sim-mode tasks to TASK_STATUS_SUCCEEDED
-                # after their alotted run time.
                 if itask.sim_time_check():
-                    sim_task_succeeded = True
-        return sim_task_succeeded
+                    sim_task_state_changed = True
+        return sim_task_state_changed
 
     def waiting_tasks_ready(self):
         """Waiting tasks can become ready for internal reasons.

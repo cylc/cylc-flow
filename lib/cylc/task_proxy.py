@@ -188,8 +188,7 @@ class TaskProxy(object):
                  "retries_configured", "try_timers",
                  "event_handler_try_timers", "db_inserts_map",
                  "db_updates_map", "suite_name", "task_host", "task_owner",
-                 "job_vacated", "poll_timers",
-                 "event_hooks", "sim_mode_run_length",
+                 "job_vacated", "poll_timers", "event_hooks",
                  "delayed_start_str", "delayed_start", "expire_time_str",
                  "expire_time", "state"]
 
@@ -344,7 +343,6 @@ class TaskProxy(object):
                 "status": status})
 
         self.event_hooks = None
-        self.sim_mode_run_length = None
         self.set_from_rtconfig()
         self.delayed_start_str = None
         self.delayed_start = None
@@ -715,11 +713,12 @@ class TaskProxy(object):
         db_event = db_event or event
         if db_update:
             self.db_events_insert(event=db_event, message=db_msg)
-
-        if self.tdef.run_mode != 'live':
+        if (self.tdef.run_mode in ['simulation', 'dummy', 'dummy-local'] and
+            self.tdef.rtconfig[
+                'simulation']['disable task event handlers']):
             return
-
-        self.setup_job_logs_retrieval(event, message)
+        if self.tdef.run_mode != 'simulation':
+            self.setup_job_logs_retrieval(event, message)
         self.setup_event_mail(event, message)
         self.setup_custom_event_handlers(event, message)
 
@@ -878,16 +877,6 @@ class TaskProxy(object):
             "submit_status": 0,
             "batch_sys_job_id": self.summary.get('submit_method_id')})
 
-        if self.tdef.run_mode == 'simulation':
-            # Simulate job execution at this point.
-            if self.__class__.stop_sim_mode_job_submission:
-                self.state.set_ready_to_submit()
-            else:
-                self.summary['started_time'] = now
-                self.summary['started_time_string'] = now_string
-                self.state.set_executing()
-            return
-
         self.summary['started_time'] = None
         self.summary['started_time_string'] = None
         self.summary['finished_time'] = None
@@ -907,6 +896,15 @@ class TaskProxy(object):
             except (TypeError, ValueError):
                 self.state.submission_timer_timeout = None
             self._set_next_poll_time(self.KEY_SUBMIT)
+
+        if self.tdef.run_mode == 'simulation':
+            # Simulate job execution at this point.
+            if self.__class__.stop_sim_mode_job_submission:
+                self.state.set_ready_to_submit()
+            else:
+                self.summary['started_time'] = now
+                self.summary['started_time_string'] = now_string
+                self.state.set_executing()
 
     def job_execution_failed(self, event_time=None):
         """Handle a job failure."""
@@ -968,29 +966,10 @@ class TaskProxy(object):
             self.retries_configured = True
             # TODO - saving the retry delay lists here is not necessary
             # (it can be handled like the polling interval lists).
-            if (self.tdef.run_mode == 'live' or
-                    (self.tdef.run_mode == 'simulation' and
-                        not rtconfig['simulation mode']['disable retries']) or
-                    (self.tdef.run_mode == 'dummy' and
-                        not rtconfig['dummy mode']['disable retries'])):
-                # note that a *copy* of the retry delays list is needed
-                # so that all instances of the same task don't pop off
-                # the same deque (but copy of rtconfig above solves this).
-                self.try_timers[self.KEY_EXECUTE].delays = list(
-                    rtconfig['job']['execution retry delays'])
-                self.try_timers[self.KEY_SUBMIT].delays = list(
-                    rtconfig['job']['submission retry delays'])
-
-        rrange = rtconfig['simulation mode']['run time range']
-        if len(rrange) != 2:
-            raise Exception("ERROR, " + self.tdef.name + ": simulation mode " +
-                            "run time range should be ISO 8601-compatible")
-        try:
-            self.sim_mode_run_length = randrange(rrange[0], rrange[1])
-        except Exception, exc:
-            traceback.print_exc(exc)
-            raise Exception(
-                "ERROR: simulation mode task run time range must be [MIN,MAX)")
+            self.try_timers[self.KEY_EXECUTE].delays = list(
+                rtconfig['job']['execution retry delays'])
+            self.try_timers[self.KEY_SUBMIT].delays = list(
+                rtconfig['job']['submission retry delays'])
 
         self.event_hooks = rtconfig['events']
 
@@ -1041,17 +1020,17 @@ class TaskProxy(object):
         Return self on a good preparation.
 
         """
-        if self.tdef.run_mode == 'simulation' or (
-                self.local_job_file_path and not dry_run):
+        if self.local_job_file_path and not dry_run:
             return self
-
         try:
             job_conf = self._prep_submit_impl(overrides)
+            if self.tdef.run_mode == 'simulation':
+                return self
             local_job_file_path = self.get_job_log_path(
                 self.HEAD_MODE_LOCAL, tail=self.JOB_FILE_BASE)
             JobFile.get_inst().write(local_job_file_path, job_conf)
         except Exception, exc:
-            # Could be a bad command template.
+            #  Could be a bad command template.
             if flags.debug:
                 traceback.print_exc()
             self.command_log(SuiteProcContext(
@@ -1087,34 +1066,45 @@ class TaskProxy(object):
             poverride(rtconfig, overrides)
         else:
             rtconfig = self.tdef.rtconfig
-
         self.set_from_rtconfig(rtconfig)
 
         # construct the job_sub_method here so that a new one is used if
         # the task is re-triggered by the suite operator - so it will
         # get new stdout/stderr logfiles and not overwrite the old ones.
 
-        # dynamic instantiation - don't know job sub method till run time.
-        self.summary['batch_sys_name'] = rtconfig['job']['batch system']
-        self.summary['execution_time_limit'] = (
-            rtconfig['job']['execution time limit'])
+        if self.tdef.run_mode == 'simulation':
+            self.summary['batch_sys_name'] = 'SIMULATION'
+        else:
+            self.summary['batch_sys_name'] = rtconfig['job']['batch system']
+
+        if self.tdef.run_mode == 'live':
+            self.summary['execution_time_limit'] = (
+                rtconfig['job']['execution time limit'])
+        else:
+            # In dummy mode the execution time limit is padded so use the
+            # simulated run length here (for gcylc progress bar extent).
+            self.summary['execution_time_limit'] = (
+                rtconfig['job']['simulated run length'])
 
         # Determine task host settings now, just before job submission,
         # because dynamic host selection may be used.
 
         # host may be None (= run task on suite host)
-        self.task_host = get_task_host(rtconfig['remote']['host'])
-        if not self.task_host:
-            self.task_host = 'localhost'
-        elif self.task_host != "localhost":
-            self.log(INFO, "Task host: " + self.task_host)
-
-        self.task_owner = rtconfig['remote']['owner']
-
-        if self.task_owner:
-            user_at_host = self.task_owner + "@" + self.task_host
+        if self.tdef.run_mode == 'simulation':
+            self.task_host = 'SIMULATION'
+            self.task_owner = 'SIMULATION'
+            user_at_host = 'SIMULATION'
         else:
-            user_at_host = self.task_host
+            self.task_host = get_task_host(rtconfig['remote']['host'])
+            if not self.task_host:
+                self.task_host = 'localhost'
+            elif self.task_host != "localhost":
+                self.log(INFO, "Task host: " + self.task_host)
+            self.task_owner = rtconfig['remote']['owner']
+            if self.task_owner:
+                user_at_host = self.task_owner + "@" + self.task_host
+            else:
+                user_at_host = self.task_host
         self.summary['host'] = user_at_host
         self.summary['job_hosts'][self.submit_num] = user_at_host
         try:
@@ -1129,15 +1119,15 @@ class TaskProxy(object):
                 TaskActionTimer(delays=batch_sys_conf.get(
                     'execution time limit polling intervals', [60, 120, 420])))
 
-        RemoteJobHostManager.get_inst().init_suite_run_dir(
-            self.suite_name, self.task_host, self.task_owner)
+        if self.tdef.run_mode != 'simulation':
+            RemoteJobHostManager.get_inst().init_suite_run_dir(
+                self.suite_name, self.task_host, self.task_owner)
         self.db_updates_map[self.TABLE_TASK_JOBS].append({
             "user_at_host": user_at_host,
             "batch_sys_name": self.summary['batch_sys_name'],
         })
         self.is_manual_submit = False
 
-        script, pre_script, post_script = self._get_job_scripts(rtconfig)
         execution_time_limit = rtconfig['job']['execution time limit']
         if execution_time_limit:
             execution_time_limit = float(execution_time_limit)
@@ -1153,19 +1143,19 @@ class TaskProxy(object):
             'directives': rtconfig['directives'],
             'environment': rtconfig['environment'],
             'execution_time_limit': execution_time_limit,
+            'init-script': rtconfig['init-script'],
             'env-script': rtconfig['env-script'],
+            'pre-script': rtconfig['pre-script'],
+            'script': rtconfig['script'],
+            'post-script': rtconfig['post-script'],
             'err-script': rtconfig['err-script'],
             'host': self.task_host,
-            'init-script': rtconfig['init-script'],
             'job_file_path': self.get_job_log_path(
                 self.HEAD_MODE_REMOTE, tail=self.JOB_FILE_BASE),
             'job_d': self.get_job_log_path(),
             'namespace_hierarchy': self.tdef.namespace_hierarchy,
             'owner': self.task_owner,
-            'post-script': post_script,
-            'pre-script': pre_script,
             'remote_suite_d': rtconfig['remote']['suite definition directory'],
-            'script': script,
             'shell': rtconfig['job']['shell'],
             'submit_num': self.submit_num,
             'suite_name': self.suite_name,
@@ -1173,37 +1163,6 @@ class TaskProxy(object):
             'try_num': self.try_timers[self.KEY_EXECUTE].num + 1,
             'work_d': rtconfig['work sub-directory'],
         }
-
-    def _get_job_scripts(self, rtconfig):
-        """Return script, pre-script, post-script for a job."""
-        script = rtconfig['script']
-        pre_script = rtconfig['pre-script']
-        post_script = rtconfig['post-script']
-        if self.tdef.run_mode == 'dummy':
-            # Use dummy script items in dummy mode.
-            script = rtconfig['dummy mode']['script']
-            if rtconfig['dummy mode']['disable pre-script']:
-                pre_script = None
-            if rtconfig['dummy mode']['disable post-script']:
-                post_script = None
-        elif self.tdef.suite_polling_cfg:
-            # Automatic suite state polling script
-            comstr = "cylc suite-state " + \
-                     " --task=" + self.tdef.suite_polling_cfg['task'] + \
-                     " --point=" + str(self.point) + \
-                     " --status=" + self.tdef.suite_polling_cfg['status']
-            for key, fmt in [
-                    ('user', ' --%s=%s'),
-                    ('host', ' --%s=%s'),
-                    ('interval', ' --%s=%d'),
-                    ('max-polls', ' --%s=%s'),
-                    ('run-dir', ' --%s=%s'),
-                    ('template', ' --%s=%s')]:
-                if rtconfig['suite state polling'][key]:
-                    comstr += fmt % (key, rtconfig['suite state polling'][key])
-            comstr += " " + self.tdef.suite_polling_cfg['suite']
-            script = "echo " + comstr + "\n" + comstr
-        return script, pre_script, post_script
 
     def _create_job_log_path(self):
         """Create job log directory, etc.
@@ -1287,22 +1246,35 @@ class TaskProxy(object):
         self.setup_event_handlers('execution timeout', msg)
         return True
 
+    def sim_job_fail(self):
+        """Should this task instance simulate job failure?"""
+        if (self.tdef.rtconfig['simulation']['fail try 1 only'] and
+                self.try_timers[self.KEY_EXECUTE].num != 0):
+            return False
+        fail_pts = self.tdef.rtconfig['simulation']['fail cycle points']
+        if fail_pts is None or self.point in fail_pts:
+            return True
+        return False
+
     def sim_time_check(self):
-        """Check simulation time."""
-        timeout = self.summary['started_time'] + self.sim_mode_run_length
-        if time.time() > timeout:
-            if self.tdef.rtconfig['simulation mode']['simulate failure']:
-                self.message_queue.put(
-                    self.identity, 'NORMAL', TASK_STATUS_SUBMITTED)
+        """Check simulated run time."""
+        if (time.time() >
+            self.summary['started_time'] +
+                self.tdef.rtconfig['job']['simulated run length']):
+            # Time up.
+            if self.sim_job_fail():
                 self.message_queue.put(
                     self.identity, 'CRITICAL', TASK_STATUS_FAILED)
             else:
-                self.message_queue.put(
-                    self.identity, 'NORMAL', TASK_STATUS_SUBMITTED)
+                # Simulate message outputs.
+                for msg in self.tdef.rtconfig['outputs'].values():
+                    self.message_queue.put(
+                        self.identity, 'NORMAL', msg)
                 self.message_queue.put(
                     self.identity, 'NORMAL', TASK_STATUS_SUCCEEDED)
             return True
         else:
+            # Still simulated-running.
             return False
 
     def reject_if_failed(self, message):
@@ -1467,7 +1439,9 @@ class TaskProxy(object):
             #  * general non-output/progress messages
             #  * poll messages that repeat previous results
             # Note that all messages are logged already at the top.
-            self.log(DEBUG, '(current: %s) unhandled: %s' % (
+
+            # TODO - custom outputs shouldn't drop through to here.
+            self.log(DEBUG, '(current:%s) unhandled: %s' % (
                 self.state.status, message))
             if priority in [CRITICAL, ERROR, WARNING, INFO, DEBUG]:
                 priority = getLevelName(priority)

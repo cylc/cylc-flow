@@ -1283,12 +1283,10 @@ conditions; see `cylc conditions`.
 
     def run_event_handlers(self, event, message):
         """Run a suite event handler."""
-        # Run suite event hooks in simulation and dummy mode ONLY if enabled
-        for mode_name in ['simulation', 'dummy']:
-            key = mode_name + ' mode'
-            if (self.run_mode == mode_name and
-                    self.config.cfg['cylc'][key]['disable suite event hooks']):
-                return
+        if (self.run_mode in ['simulation', 'dummy'] and
+            self.config.cfg['cylc']['simulation'][
+                'disable suite event handlers']):
+            return
         self._run_event_mail(event, message)
         self._run_event_custom_handlers(event, message)
 

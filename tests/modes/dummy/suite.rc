@@ -10,5 +10,5 @@
             c:fail => !a & !b & !c"""
 [runtime]
     [[a, b, c]]
-        [[[dummy mode]]]
-            script = false
+        [[[simulation]]]
+            fail cycle points = all

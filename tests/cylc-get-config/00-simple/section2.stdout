@@ -41,18 +41,14 @@
     [[[environment filter]]]
         exclude = 
         include = 
-    [[[dummy mode]]]
-        disable pre-script = True
-        disable post-script = True
-        disable retries = True
-        script = 
-        disable task event hooks = True
     [[[outputs]]]
-    [[[simulation mode]]]
-        run time range = PT1S, PT16S
-        simulate failure = False
-        disable retries = True
-        disable task event hooks = True
+    [[[simulation]]]
+        fail try 1 only = True
+        fail cycle points = 
+        speedup factor = 
+        disable task event handlers = True
+        default run length = PT10S
+        time limit buffer = PT10S
     [[[suite state polling]]]
         interval = 
         host = 
@@ -119,18 +115,14 @@
     [[[environment filter]]]
         exclude = 
         include = 
-    [[[dummy mode]]]
-        disable pre-script = True
-        disable post-script = True
-        disable retries = True
-        script = 
-        disable task event hooks = True
     [[[outputs]]]
-    [[[simulation mode]]]
-        run time range = PT1S, PT16S
-        simulate failure = False
-        disable retries = True
-        disable task event hooks = True
+    [[[simulation]]]
+        fail try 1 only = True
+        fail cycle points = 
+        speedup factor = 
+        disable task event handlers = True
+        default run length = PT10S
+        time limit buffer = PT10S
     [[[suite state polling]]]
         interval = 
         host = 
@@ -198,18 +190,14 @@
     [[[environment filter]]]
         exclude = 
         include = 
-    [[[dummy mode]]]
-        disable pre-script = True
-        disable post-script = True
-        disable retries = True
-        script = 
-        disable task event hooks = True
     [[[outputs]]]
-    [[[simulation mode]]]
-        run time range = PT1S, PT16S
-        simulate failure = False
-        disable retries = True
-        disable task event hooks = True
+    [[[simulation]]]
+        fail try 1 only = True
+        fail cycle points = 
+        speedup factor = 
+        disable task event handlers = True
+        default run length = PT10S
+        time limit buffer = PT10S
     [[[suite state polling]]]
         interval = 
         host = 
@@ -277,18 +265,14 @@
     [[[environment filter]]]
         exclude = 
         include = 
-    [[[dummy mode]]]
-        disable pre-script = True
-        disable post-script = True
-        disable retries = True
-        script = 
-        disable task event hooks = True
     [[[outputs]]]
-    [[[simulation mode]]]
-        run time range = PT1S, PT16S
-        simulate failure = False
-        disable retries = True
-        disable task event hooks = True
+    [[[simulation]]]
+        fail try 1 only = True
+        fail cycle points = 
+        speedup factor = 
+        disable task event handlers = True
+        default run length = PT10S
+        time limit buffer = PT10S
     [[[suite state polling]]]
         interval = 
         host = 
@@ -356,18 +340,14 @@
     [[[environment filter]]]
         exclude = 
         include = 
-    [[[dummy mode]]]
-        disable pre-script = True
-        disable post-script = True
-        disable retries = True
-        script = 
-        disable task event hooks = True
     [[[outputs]]]
-    [[[simulation mode]]]
-        run time range = PT1S, PT16S
-        simulate failure = False
-        disable retries = True
-        disable task event hooks = True
+    [[[simulation]]]
+        fail try 1 only = True
+        fail cycle points = 
+        speedup factor = 
+        disable task event handlers = True
+        default run length = PT10S
+        time limit buffer = PT10S
     [[[suite state polling]]]
         interval = 
         host = 
@@ -435,18 +415,14 @@
     [[[environment filter]]]
         exclude = 
         include = 
-    [[[dummy mode]]]
-        disable pre-script = True
-        disable post-script = True
-        disable retries = True
-        script = 
-        disable task event hooks = True
     [[[outputs]]]
-    [[[simulation mode]]]
-        run time range = PT1S, PT16S
-        simulate failure = False
-        disable retries = True
-        disable task event hooks = True
+    [[[simulation]]]
+        fail try 1 only = True
+        fail cycle points = 
+        speedup factor = 
+        disable task event handlers = True
+        default run length = PT10S
+        time limit buffer = PT10S
     [[[suite state polling]]]
         interval = 
         host = 
@@ -514,18 +490,14 @@
     [[[environment filter]]]
         exclude = 
         include = 
-    [[[dummy mode]]]
-        disable pre-script = True
-        disable post-script = True
-        disable retries = True
-        script = 
-        disable task event hooks = True
     [[[outputs]]]
-    [[[simulation mode]]]
-        run time range = PT1S, PT16S
-        simulate failure = False
-        disable retries = True
-        disable task event hooks = True
+    [[[simulation]]]
+        fail try 1 only = True
+        fail cycle points = 
+        speedup factor = 
+        disable task event handlers = True
+        default run length = PT10S
+        time limit buffer = PT10S
     [[[suite state polling]]]
         interval = 
         host = 
@@ -592,18 +564,14 @@
     [[[environment filter]]]
         exclude = 
         include = 
-    [[[dummy mode]]]
-        disable pre-script = True
-        disable post-script = True
-        disable retries = True
-        script = 
-        disable task event hooks = True
     [[[outputs]]]
-    [[[simulation mode]]]
-        run time range = PT1S, PT16S
-        simulate failure = False
-        disable retries = True
-        disable task event hooks = True
+    [[[simulation]]]
+        fail try 1 only = True
+        fail cycle points = 
+        speedup factor = 
+        disable task event handlers = True
+        default run length = PT10S
+        time limit buffer = PT10S
     [[[suite state polling]]]
         interval = 
         host = 
@@ -671,18 +639,14 @@
     [[[environment filter]]]
         exclude = 
         include = 
-    [[[dummy mode]]]
-        disable pre-script = True
-        disable post-script = True
-        disable retries = True
-        script = 
-        disable task event hooks = True
     [[[outputs]]]
-    [[[simulation mode]]]
-        run time range = PT1S, PT16S
-        simulate failure = False
-        disable retries = True
-        disable task event hooks = True
+    [[[simulation]]]
+        fail try 1 only = True
+        fail cycle points = 
+        speedup factor = 
+        disable task event handlers = True
+        default run length = PT10S
+        time limit buffer = PT10S
     [[[suite state polling]]]
         interval = 
         host = 
@@ -750,18 +714,14 @@
     [[[environment filter]]]
         exclude = 
         include = 
-    [[[dummy mode]]]
-        disable pre-script = True
-        disable post-script = True
-        disable retries = True
-        script = 
-        disable task event hooks = True
     [[[outputs]]]
-    [[[simulation mode]]]
-        run time range = PT1S, PT16S
-        simulate failure = False
-        disable retries = True
-        disable task event hooks = True
+    [[[simulation]]]
+        fail try 1 only = True
+        fail cycle points = 
+        speedup factor = 
+        disable task event handlers = True
+        default run length = PT10S
+        time limit buffer = PT10S
     [[[suite state polling]]]
         interval = 
         host = 
@@ -828,18 +788,14 @@
     [[[environment filter]]]
         exclude = 
         include = 
-    [[[dummy mode]]]
-        disable pre-script = True
-        disable post-script = True
-        disable retries = True
-        script = 
-        disable task event hooks = True
     [[[outputs]]]
-    [[[simulation mode]]]
-        run time range = PT1S, PT16S
-        simulate failure = False
-        disable retries = True
-        disable task event hooks = True
+    [[[simulation]]]
+        fail try 1 only = True
+        fail cycle points = 
+        speedup factor = 
+        disable task event handlers = True
+        default run length = PT10S
+        time limit buffer = PT10S
     [[[suite state polling]]]
         interval = 
         host = 
@@ -907,18 +863,14 @@
     [[[environment filter]]]
         exclude = 
         include = 
-    [[[dummy mode]]]
-        disable pre-script = True
-        disable post-script = True
-        disable retries = True
-        script = 
-        disable task event hooks = True
     [[[outputs]]]
-    [[[simulation mode]]]
-        run time range = PT1S, PT16S
-        simulate failure = False
-        disable retries = True
-        disable task event hooks = True
+    [[[simulation]]]
+        fail try 1 only = True
+        fail cycle points = 
+        speedup factor = 
+        disable task event handlers = True
+        default run length = PT10S
+        time limit buffer = PT10S
     [[[suite state polling]]]
         interval = 
         host = 
@@ -986,18 +938,14 @@
     [[[environment filter]]]
         exclude = 
         include = 
-    [[[dummy mode]]]
-        disable pre-script = True
-        disable post-script = True
-        disable retries = True
-        script = 
-        disable task event hooks = True
     [[[outputs]]]
-    [[[simulation mode]]]
-        run time range = PT1S, PT16S
-        simulate failure = False
-        disable retries = True
-        disable task event hooks = True
+    [[[simulation]]]
+        fail try 1 only = True
+        fail cycle points = 
+        speedup factor = 
+        disable task event handlers = True
+        default run length = PT10S
+        time limit buffer = PT10S
     [[[suite state polling]]]
         interval = 
         host = 

@@ -502,6 +502,7 @@ where to install it. All legal site and user global config items are defined
 in~\ref{SiteRCReference}.
 
 \subsubsection{Configure Site Environment on Job Hosts}
+\label{Configure Site Environment on Job Hosts}
 
 If your users submit task jobs to hosts other than the hosts they use to run
 their suites, you should ensure that the job hosts have the correct environment
@@ -6697,79 +6698,60 @@ different behaviour may be required, or in a normal mid-run cycle point.
 Note however that an initial \lstinline=R1= graph section is now the preferred
 way to get different behaviour at suite start-up.
 
-\subsection{The Simulation And Dummy Run Modes}
+\subsection{Simulating Suite Behaviour}
 \label{SimulationMode}
 
-Since cylc-4.6.0 any cylc suite can run in {\em live}, {\em simulation},
-or {\em dummy} mode. Prior to that release simulation mode was a
-hybrid mode that replaced real tasks with local dummy tasks. This
-allowed local simulation testing of any suite, to get the scheduling
-right without running real tasks, but running dummy tasks locally does
-not add much value over a pure simulation (in which no tasks are
-submitted at all) because all job submission configuration has to be
-ignored and most task job script sections have to be cut out to avoid
-any code that could potentially be specific to the intended task host.
-So at 4.6.0 we replaced this with a pure simulation mode (task proxies
-go through the {\em running} state automatically within cylc, and no
-dummy tasks are submitted to run) and a new dummy mode in which only the
-real task scripting  is dummied out - each dummy task is
-submitted exactly as the task it represents on the correct host and in
-the same execution environment. A successful dummy run confirms not only
-that the scheduling works correctly but also tests real job submission,
-communication from remote task hosts, and the real task job scripts (in
-which errors such as use of undefined variables will cause a task to
-fail).
+Several suite run modes allow you to simulate suite behaviour quickly without
+running the suite's real jobs - which may be long-running and resource-hungry:
 
-The run mode, which defaults to {\em live}, is set on the command line
-(for run and restart):
+\begin{myitemize}
+  \item {\em dummy mode} - runs dummy tasks as background jobs on configured
+    job hosts.
+    \begin{myitemize}
+      \item simulates scheduling, job host connectivity, and
+        generates all job files on suite and job hosts.
+    \end{myitemize}
+  \item {\em dummy-local mode} - runs real dummy tasks as background jobs on
+    the suite host, which allows dummy-running suites from other sites.
+    \begin{myitemize}
+      \item simulates scheduling and generates all job files on the
+        suite host.
+    \end{myitemize}
+  \item {\em simulation mode} - does not run any real tasks.
+    \begin{myitemize}
+      \item simulates scheduling without generating any job files.
+    \end{myitemize}
+\end{myitemize}
+ 
+Set the run mode (default {\em live}) in the GUI suite start dialog box, or on
+the command line:
 \lstset{language=transcript}
 \begin{lstlisting}
 $ cylc run --mode=dummy SUITE
-\end{lstlisting}
-but you can configure the suite to force a particular run mode:
-\lstset{language=suiterc}
-\begin{lstlisting}
-[cylc]
-    force run mode = simulation
-\end{lstlisting}
-This can be used, for example, for demo suites that necessarily run out
-of their original context; or to temporarily prevent accidental
-execution of expensive real tasks during suite development.
-
-Dummy mode task scripting just prints a message and sleeps for ten
-seconds by default, but you can override this behaviour for particular
-tasks or task groups if you like. Here's how to make a task sleep for
-twenty seconds and then fail in dummy mode:
-\lstset{language=suiterc}
-\begin{lstlisting}
-[runtime]
-    [[foo]]
-        script = "run-real-task.sh"
-        [[[dummy mode]]]
-            script = """
-echo "hello from dummy task $CYLC_TASK_ID"
-sleep 20
-echo "ABORTING"
-/bin/false"""
+$ cylc restart --mode=dummy SUITE
 \end{lstlisting}
 
-Finally, in simulation mode each task takes between 1 and 15 seconds to
-``run'' by default, but you can also alter this for particular tasks or
-groups of tasks:
-\lstset{language=suiterc}
-\begin{lstlisting}
-[runtime]
-    [[foo]]
-       [[[simulation mode]]]
-        run time range = PT20S,PT31S # (between 20 and 30 seconds)
-\end{lstlisting}
-Note that to get a failed simulation or dummy mode task to succeed on
-re-triggering, just change the suite.rc file appropriately and reload
-the suite definition at run time with \lstinline=cylc reload SUITE=
-before re-triggering the task.
+You can get specified tasks to fail in these modes, for more flexible suite
+testing. See Section~\ref{suiterc-sim-config} for simulation configuration.
 
-Dummy mode is equivalent to removing all user-defined task scripting
-to expose the default scripting.
+\subsubsection{Proportional Simulated Run Length}
+
+If task \lstinline=[job]execution time limit= is set, Cylc divides it by
+\lstinline=[simulation]speedup factor= (default \lstinline=10.0=) to compute
+simulated task run lengths (default 10 seconds).
+
+\subsubsection{Limitations Of Suite Simulation}
+
+Dummy mode ignores batch scheduler settings because Cylc does not know which
+job resource directives (requested memory, number of compute nodes, etc.) would
+need to be changed for the dummy jobs.  If you need to dummy-run jobs on a
+batch scheduler manually comment out \lstinline=script= items and modify 
+directives in your live suite, or else use a custom live mode test suite.
+
+Note that the dummy modes ignore all configured task \lstinline=script= items
+including \lstinline=init-script=. If your \lstinline=init-script= is required
+to run even dummy tasks on a job host, note that host environment setup should
+be done elsewhere - see~\ref{Configure Site Environment on Job Hosts}.
 
 \subsubsection{Restarting Suites With A Different Run Mode?}
 

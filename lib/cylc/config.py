@@ -34,11 +34,10 @@ from cylc.exceptions import CylcError
 from cylc.graph_parser import GraphParser
 from cylc.param_expand import NameExpander
 from cylc.cfgspec.suite import RawSuiteConfig
-from cylc.cycling.loader import (get_point, get_point_relative,
-                                 get_interval, get_interval_cls,
-                                 get_sequence, get_sequence_cls,
-                                 init_cyclers, INTEGER_CYCLING_TYPE,
-                                 ISO8601_CYCLING_TYPE)
+from cylc.cycling.loader import (
+    get_point, get_point_relative, get_interval, get_interval_cls,
+    get_sequence, get_sequence_cls, init_cyclers, INTEGER_CYCLING_TYPE,
+    ISO8601_CYCLING_TYPE)
 from cylc.cycling import IntervalParsingError
 from cylc.envvar import check_varnames
 import cylc.flags
@@ -49,8 +48,8 @@ from cylc.taskdef import TaskDef, TaskDefError
 from cylc.task_id import TaskID
 from cylc.task_trigger import TaskTrigger
 from cylc.wallclock import get_current_time_string
-
 from isodatetime.data import Calendar
+from isodatetime.parsers import DurationParser
 from parsec.OrderedDict import OrderedDictWithDefaults
 from parsec.util import replicate
 from cylc.suite_logging import OUT, ERR
@@ -453,32 +452,32 @@ class SuiteConfig(object):
         # Parse special task cycle point offsets, and replace family names.
         if cylc.flags.verbose:
             OUT.info("Parsing [special tasks]")
-        for type in self.cfg['scheduling']['special tasks']:
-            result = copy(self.cfg['scheduling']['special tasks'][type])
+        for s_type in self.cfg['scheduling']['special tasks']:
+            result = copy(self.cfg['scheduling']['special tasks'][s_type])
             extn = ''
-            for item in self.cfg['scheduling']['special tasks'][type]:
+            for item in self.cfg['scheduling']['special tasks'][s_type]:
                 name = item
-                if type == 'external-trigger':
+                if s_type == 'external-trigger':
                     m = re.match(EXT_TRIGGER_RE, item)
                     if m is None:
                         raise SuiteConfigError(
-                            "ERROR: Illegal %s spec: %s" % (type, item)
+                            "ERROR: Illegal %s spec: %s" % (s_type, item)
                         )
                     name, ext_trigger_msg = m.groups()
                     extn = "(" + ext_trigger_msg + ")"
 
-                elif type in ['clock-trigger', 'clock-expire']:
+                elif s_type in ['clock-trigger', 'clock-expire']:
                     m = re.match(CLOCK_OFFSET_RE, item)
                     if m is None:
                         raise SuiteConfigError(
-                            "ERROR: Illegal %s spec: %s" % (type, item)
+                            "ERROR: Illegal %s spec: %s" % (s_type, item)
                         )
                     if (self.cfg['scheduling']['cycling mode'] !=
                             Calendar.MODE_GREGORIAN):
                         raise SuiteConfigError(
                             "ERROR: %s tasks require "
                             "[scheduling]cycling mode=%s" % (
-                                type, Calendar.MODE_GREGORIAN)
+                                s_type, Calendar.MODE_GREGORIAN)
                         )
                     name, offset_string = m.groups()
                     if not offset_string:
@@ -487,14 +486,14 @@ class SuiteConfig(object):
                         if offset_string.startswith("-"):
                             ERR.warning(
                                 "%s offsets are normally positive: %s" % (
-                                    type, item))
+                                    s_type, item))
                     try:
                         offset_interval = (
                             get_interval(offset_string).standardise())
                     except IntervalParsingError as exc:
                         raise SuiteConfigError(
                             "ERROR: Illegal %s spec: %s" % (
-                                type, offset_string))
+                                s_type, offset_string))
                     extn = "(" + offset_string + ")"
 
                 # Replace family names with members.
@@ -505,20 +504,20 @@ class SuiteConfig(object):
                             # (sub-family)
                             continue
                         result.append(member + extn)
-                        if type == 'clock-trigger':
+                        if s_type == 'clock-trigger':
                             self.clock_offsets[member] = offset_interval
-                        if type == 'clock-expire':
+                        if s_type == 'clock-expire':
                             self.expiration_offsets[member] = offset_interval
-                        if type == 'external-trigger':
+                        if s_type == 'external-trigger':
                             self.ext_triggers[member] = ext_trigger_msg
-                elif type == 'clock-trigger':
+                elif s_type == 'clock-trigger':
                     self.clock_offsets[name] = offset_interval
-                elif type == 'clock-expire':
+                elif s_type == 'clock-expire':
                     self.expiration_offsets[name] = offset_interval
-                elif type == 'external-trigger':
+                elif s_type == 'external-trigger':
                     self.ext_triggers[name] = self.dequote(ext_trigger_msg)
 
-            self.cfg['scheduling']['special tasks'][type] = result
+            self.cfg['scheduling']['special tasks'][s_type] = result
 
         self.collapsed_families_rc = (
             self.cfg['visualization']['collapsed families'])
@@ -549,6 +548,11 @@ class SuiteConfig(object):
         self.compute_runahead_limits()
 
         self.configure_queues()
+
+        if self.run_mode in ['simulation', 'dummy', 'dummy-local']:
+            self.configure_sim_modes()
+
+        self.configure_suite_state_polling_tasks()
 
         # Warn or abort (if --strict) if naked dummy tasks (no runtime
         # section) are found in graph or queue config.
@@ -1149,6 +1153,101 @@ class SuiteConfig(object):
                 log_msg += "\n+ %s: %s" % (key, ', '.join(queue['members']))
             OUT.info(log_msg)
 
+    def configure_suite_state_polling_tasks(self):
+        # Check custom script is not defined for automatic suite polling tasks.
+        for l_task in self.suite_polling_tasks:
+            try:
+                cs = self.pcfg.getcfg(sparse=True)['runtime'][l_task]['script']
+            except:
+                pass
+            else:
+                if cs:
+                    OUT.info(cs)
+                    # (allow explicit blanking of inherited script)
+                    raise SuiteConfigError(
+                        "ERROR: script cannot be defined for automatic" +
+                        " suite polling task " + l_task)
+        # Generate the automatic scripting.
+        for name, tdef in self.taskdefs.items():
+            if name not in self.suite_polling_tasks:
+                continue
+            rtc = tdef.rtconfig
+            comstr = "cylc suite-state " + \
+                     " --task=" + tdef.suite_polling_cfg['task'] + \
+                     " --point=$CYLC_TASK_CYCLE_POINT" + \
+                     " --status=" + tdef.suite_polling_cfg['status']
+            for key, fmt in [
+                    ('user', ' --%s=%s'),
+                    ('host', ' --%s=%s'),
+                    ('interval', ' --%s=%d'),
+                    ('max-polls', ' --%s=%s'),
+                    ('run-dir', ' --%s=%s'),
+                    ('template', ' --%s=%s')]:
+                if rtc['suite state polling'][key]:
+                    comstr += fmt % (key, rtc['suite state polling'][key])
+            comstr += " " + tdef.suite_polling_cfg['suite']
+            script = "echo " + comstr + "\n" + comstr
+
+    def configure_sim_modes(self):
+        # Adjust task defs for simulation mode and dummy modes.
+        for name, tdef in self.taskdefs.items():
+            # Compute simulated run time by scaling the execution limit.
+            rtc = tdef.rtconfig
+            limit = rtc['job']['execution time limit']
+            speedup = rtc['simulation']['speedup factor']
+            if limit and speedup:
+                sleep_sec = (DurationParser().parse(
+                    str(limit)).get_seconds() / speedup)
+            else:
+                sleep_sec = DurationParser().parse(
+                    str(rtc['simulation']['default run length'])
+                ).get_seconds()
+            rtc['job']['execution time limit'] = (
+                sleep_sec + DurationParser().parse(str(
+                    rtc['simulation']['time limit buffer'])
+                ).get_seconds())
+            rtc['job']['simulated run length'] = sleep_sec
+
+            # Generate dummy scripting.
+            rtc['init-script'] = ""
+            rtc['env-script'] = ""
+            rtc['pre-script'] = ""
+            rtc['post-script'] = ""
+            scr = "sleep %d" % sleep_sec
+            # Dummy message outputs.
+            for msg in rtc['outputs'].values():
+                scr += "\ncylc message '%s'" % msg
+            if rtc['simulation']['fail try 1 only']:
+                arg1 = "true"
+            else:
+                arg1 = "false"
+            arg2 = " ".join(rtc['simulation']['fail cycle points'])
+            scr += "\ncylc__job__dummy_result %s %s || exit 1" % (arg1, arg2)
+            rtc['script'] = scr
+
+            # Disable batch scheduler in dummy modes.
+            # TODO - to use batch schedulers in dummy mode we need to
+            # identify which resource directives to disable or modify.
+            # (Only execution time limit is automatic at the moment.)
+            rtc['job']['batch system'] = 'background'
+
+            if tdef.run_mode == 'dummy-local':
+                # Run all dummy tasks on the suite host.
+                rtc['remote']['host'] = None
+                rtc['remote']['owner'] = None
+
+            # Simulation mode tasks should fail in which cycle points?
+            f_pts = []
+            f_pts_orig = rtc['simulation']['fail cycle points']
+            if 'all' in f_pts_orig:
+                # None for "fail all points".
+                f_pts = None
+            else:
+                # (And [] for "fail no points".)
+                for point_str in f_pts_orig:
+                    f_pts.append(get_point(point_str).standardise())
+            rtc['simulation']['fail cycle points'] = f_pts
+
     def get_parent_lists(self):
         return self.runtime['parents']
 
@@ -1307,20 +1406,6 @@ class SuiteConfig(object):
                     else:
                         ERR.warning(msg)
 
-        # Check custom script is not defined for automatic suite polling tasks
-        for l_task in self.suite_polling_tasks:
-            try:
-                cs = self.pcfg.getcfg(sparse=True)['runtime'][l_task]['script']
-            except:
-                pass
-            else:
-                if cs:
-                    OUT.info(cs)
-                    # (allow explicit blanking of inherited script)
-                    raise SuiteConfigError(
-                        "ERROR: script cannot be defined for automatic" +
-                        " suite polling task " + l_task)
-
     def get_task_name_list(self):
         # return a list of all tasks used in the dependency graph
         return self.taskdefs.keys()
@@ -1421,18 +1506,11 @@ class SuiteConfig(object):
                 else:
                     self.taskdefs[name].add_sequence(seq)
 
-            # Record custom message outputs, and generate scripting to fake
-            # their completion in dummy mode.
-            rtconfig = self.taskdefs[name].rtconfig
-            dm_scrpt = rtconfig['dummy mode']['script']
+            # Record custom message outputs.
             for msg in self.cfg['runtime'][name]['outputs'].values():
                 outp = MessageOutput(msg, base_interval)
                 if outp not in self.taskdefs[name].outputs:
                     self.taskdefs[name].outputs.append(outp)
-                    dm_scrpt += "\nsleep 2; cylc message '%s'" % msg
-            if rtconfig['dummy mode']['script'] != dm_scrpt:
-                rtconfig['dummy mode'] = copy(rtconfig['dummy mode'])
-                rtconfig['dummy mode']['script'] = dm_scrpt
 
     def generate_triggers(self, lexpression, left_nodes,
                           right, seq, suicide, base_interval):

@@ -49,6 +49,10 @@ cmp_ok val.out <<__END__
  * (6.11.0) [runtime][foo, cat, dog][retry delays] -> [runtime][foo, cat, dog][job][execution retry delays] - value unchanged
  * (6.11.0) [runtime][foo, cat, dog][submission polling intervals] -> [runtime][foo, cat, dog][job][submission polling intervals] - value unchanged
  * (6.11.0) [runtime][foo, cat, dog][execution polling intervals] -> [runtime][foo, cat, dog][job][execution polling intervals] - value unchanged
+ * (7.2.2) [cylc][dummy mode] - DELETED (OBSOLETE)
+ * (7.2.2) [cylc][simulation mode] - DELETED (OBSOLETE)
+ * (7.2.2) [runtime][foo, cat, dog][dummy mode] - DELETED (OBSOLETE)
+ * (7.2.2) [runtime][foo, cat, dog][simulation mode] - DELETED (OBSOLETE)
 __END__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

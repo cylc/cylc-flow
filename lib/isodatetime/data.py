@@ -2153,5 +2153,5 @@ def _type_checker(*objects):
 
 PARSE_PROPERTY_TRANSLATORS = {
     "seconds_since_unix_epoch":
-        get_timepoint_properties_from_seconds_since_unix_epoch
+    get_timepoint_properties_from_seconds_since_unix_epoch
 }

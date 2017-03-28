@@ -72,7 +72,7 @@ echo VAR_CS is $VAR_CS
 export VAR_PostCS=postcs"""
         [[[environment]]]
             # path to cylc must be available:
-            E_ONE = $( cylc util rnd 1 10 )
+            E_ONE = $(( RANDOM % 10 ))
             # init-script must be done:
             E_TWO = $VAR_IS
             # cylc-defined variables must be done:

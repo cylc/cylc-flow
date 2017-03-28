@@ -2,6 +2,9 @@
 # Test automatic deprecation and deletion of config items as specified
 # in lib/cylc/cfgspec/suite.py.
 
+[cylc]
+    [[dummy mode]]
+    [[simulation mode]]
 [scheduling]
     initial cycle point = 20150808T00
     final cycle point = 20150808T00
@@ -21,8 +24,10 @@
         retry delays = 6*PT1H # deprecate
         submission polling intervals = PT1H, PT2H
         execution polling intervals = 10*PT30M
+        [[[simulation mode]]]
+            command scripting = "echo script" # deprecate
         [[[dummy mode]]]
-        command scripting = "echo script" # deprecate
+            command scripting = "echo script" # deprecate
         [[[job submission]]] # deprecate all these
             command template = qsub something something
             method = pbs
