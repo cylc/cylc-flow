@@ -1,0 +1,10 @@
+[cylc]
+    abort if any task fails = True
+[scheduling]
+    [[dependencies]]
+        graph = foo
+[runtime]
+    [[foo]]
+        script = true
+        [[[environment]]]
+            FOO=$(this is an error)
