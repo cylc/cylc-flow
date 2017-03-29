@@ -199,7 +199,11 @@ class NameExpander(object):
         if not param_list:
             # Inner loop.
             current_values = copy(spec_vals)
-            results.append((str_tmpl % current_values, current_values))
+            try:
+                results.append((str_tmpl % current_values, current_values))
+            except KeyError as exc:
+                raise ParamExpandError('ERROR: parameter %s is not '
+                                       'defined.' % str(exc.args[0]))
         else:
             for param_val in param_list[0][1]:
                 spec_vals[param_list[0][0]] = param_val
@@ -342,7 +346,11 @@ class GraphExpander(object):
                         param_values[pname] = offval
                 for pname in param_values:
                     tmpl += self.param_tmpl_cfg[pname]
-                repl = tmpl % param_values
+                try:
+                    repl = tmpl % param_values
+                except KeyError as exc:
+                    raise ParamExpandError('ERROR: parameter %s is not '
+                                           'defined.' % str(exc.args[0]))
                 line = re.sub('<' + p_group + '>', repl, line)
                 # Remove out-of-range nodes to first arrow.
                 line = re.sub('^.*--<REMOVE>--.*?=>\s*?', '', line)
