@@ -22,6 +22,10 @@
             #  - `sleep_time`: User for [task]script = sleep _
             "options": ["setting=value", "foo=bar"],
 
+            # Config items for the global.rc file this suite is run with.
+            # --- optional, default=[] ---
+           "globalrc": ['[cylc][events]mail events=timeout'],
+
             # Number of REPEATS to perform, if zero the suite will run once,
             # if one it will run twice!
             # --- optional, default=0 ---

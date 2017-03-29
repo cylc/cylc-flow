@@ -33,9 +33,14 @@ from .analysis import extract_results
 from .git import (checkout, describe, GitCheckoutError,)
 
 
-# Environment for executing cylc commands in.
-CYLC_ENV = os.environ.copy()
-CYLC_ENV['CYLC_CONF_PATH'] = ''
+def cylc_env(cylc_conf_path=''):
+    """Provide an environment for executing cylc commands in."""
+    cylc_env = os.environ.copy()
+    cylc_env['CYLC_CONF_PATH'] = cylc_conf_path
+    return cylc_env
+
+
+CLEAN_ENV = cylc_env()
 
 
 class SuiteFailedException(Exception):
@@ -64,7 +69,7 @@ class ProfilingKilledException(SuiteFailedException):
 
 def cylc_major_version():
     """Return the first character of the cylc version e.g. '7'."""
-    return Popen(['cylc', '--version'], env=CYLC_ENV, stdout=PIPE
+    return Popen(['cylc', '--version'], env=CLEAN_ENV, stdout=PIPE
                  ).communicate()[0].strip()[0]
 
 
@@ -72,7 +77,7 @@ def register_suite(reg, sdir):
     """Registers the suite located in sdir with the registration name reg."""
     cmd = ['cylc', 'register', reg, sdir]
     print '$ ' + ' '.join(cmd)
-    if not subprocess_call(cmd, stdout=PIPE, env=CYLC_ENV):
+    if not subprocess_call(cmd, stdout=PIPE, env=CLEAN_ENV):
         return True
     print '\tFailed'
     return False
@@ -82,7 +87,7 @@ def unregister_suite(reg):
     """Unregisters the suite reg."""
     cmd = ['cylc', 'unregister', reg]
     print '$ ' + ' '.join(cmd)
-    subprocess_call(cmd, stdout=PIPE, env=CYLC_ENV)
+    subprocess_call(cmd, stdout=PIPE, env=CLEAN_ENV)
 
 
 def purge_suite(reg):
@@ -96,7 +101,8 @@ def purge_suite(reg):
         return True
 
 
-def run_suite(reg, options, out_file, profile_modes, mode='live'):
+def run_suite(reg, options, out_file, profile_modes, mode='live',
+              conf_path=''):
     """Runs cylc run / cylc validate on the provided suite with the requested
     profiling options.
 
@@ -114,6 +120,7 @@ def run_suite(reg, options, out_file, profile_modes, mode='live'):
 
     """
     cmds = []
+    env = cylc_env(cylc_conf_path=conf_path)
 
     # Cylc profiling, echo command start time.
     if PROFILE_MODE_CYLC in profile_modes:
@@ -149,7 +156,7 @@ def run_suite(reg, options, out_file, profile_modes, mode='live'):
         tmp = ['-s namespaces=root']
         namespaces = Popen(
             ['cylc', 'list', reg] + jinja2_params + tmp, stdout=PIPE,
-            env=CYLC_ENV).communicate()[0].split() + ['root']
+            env=env).communicate()[0].split() + ['root']
         jinja2_params.append(
             '-s namespaces={0}'.format(','.join(namespaces)))
     cmds.extend(jinja2_params)
@@ -179,13 +186,13 @@ def run_suite(reg, options, out_file, profile_modes, mode='live'):
     print '$ ' + ' '.join(cmds)
     try:
         proc = Popen(' '.join(cmds), shell=True, stderr=open(time_err, 'w+'),
-                     stdout=open(startup_file, 'w+'), env=CYLC_ENV)
+                     stdout=open(startup_file, 'w+'), env=env)
         if proc.wait():
             raise SuiteFailedException(run_cmds, cmd_out, cmd_err)
     except KeyboardInterrupt:
         kill_cmd = ['cylc', 'stop', '--kill', reg]
         print '$ ' + ' '.join(kill_cmd)
-        subprocess_call(kill_cmd, env=CYLC_ENV)
+        subprocess_call(kill_cmd, env=env)
         raise ProfilingKilledException(run_cmds, cmd_out, cmd_err)
 
     # Return cylc stderr if present.
@@ -222,7 +229,8 @@ def run_experiment(exp):
                 run['options'] + ['cylc_compat_mode=%s' % cylc_maj_version],
                 out_file,
                 profile_modes,
-                exp.get('mode', 'live'))
+                exp.get('mode', 'live'),
+                conf_path=run.get('globalrc', ''))
             # Handle errors.
             if err_file:
                 print >> sys.stderr, ('WARNING: non-empty suite error log: ' +
