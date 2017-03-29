@@ -318,20 +318,29 @@ class DotUpdater(threading.Thread):
         for path in selected_paths:
             self.selected_rows.append(model.get_value(model.get_iter(path), 0))
 
+    @staticmethod
+    def _reselect_row(model, _, iter_, (selection, selected_rows,)):
+        """Select rows if they are referenced by selected_rows.
+
+        If the value of the first column of a row matches a value in
+        `selected_rows` then `selection` will be updated to include this row.
+
+        Warning: This method has not been tested with multiple selection.
+
+        """
+        if model.get_value(iter_, 0) in selected_rows:
+            selection.select_iter(iter_)
+
     def _set_selected_rows(self):
         """Re-Selects previously selected rows where possible.
 
         Uses self.selected_rows to determine which rows to select.
-        Warning: This method has not been tested with multiple selection.
 
         """
-        def should_select_row(model, path, iter_, selection):
-            if model.get_value(iter_, 0) in self.selected_rows:
-                selection.select_iter(iter_)
-
         selection = self.led_treeview.get_selection()
+        selection.unselect_all()
         model = self.led_treeview.get_model()
-        model.foreach(should_select_row, selection)
+        model.foreach(self._reselect_row, (selection, self.selected_rows,))
 
     def ledview_widgets(self):
         self._get_expanded_rows()  # Make a note of expanded rows.
