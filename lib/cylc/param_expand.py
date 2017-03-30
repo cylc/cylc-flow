@@ -537,6 +537,18 @@ class TestParamExpand(unittest.TestCase):
                           self.graph_expander.expand,
                           'foo<i=4,j><i,j>')
 
+    def test_template_fail_missing_param(self):
+        """Test a template string specifying a non-existent parameter."""
+        kvals = [str(k) for k in range(2)]
+        params_map = {'k': kvals}
+        templates = {'k': '_%(z)s'}
+        self.assertRaises(ParamExpandError,
+                          NameExpander((params_map, templates,)).expand,
+                          'foo<k>')
+        self.assertRaises(ParamExpandError,
+                          GraphExpander((params_map, templates,)).expand,
+                          'foo<k>')
+
 
 if __name__ == "__main__":
     unittest.main()
