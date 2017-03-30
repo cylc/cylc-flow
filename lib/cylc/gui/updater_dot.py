@@ -78,6 +78,7 @@ class DotUpdater(threading.Thread):
         self.task_list = []
         self.family_tree = {}
         self.expanded_rows = []
+        self.selected_rows = []
 
         # generate task state icons
         dotm = DotMaker(theme, size=dot_size)
@@ -303,9 +304,47 @@ class DotUpdater(threading.Thread):
                 self.expanded_rows.append(self.led_treestore.get_value(
                     self.led_treestore.get_iter(row), 0))
 
+    def _get_selected_rows(self):
+        """Make a note of currently selected rows.
+
+        Populates self.selected_rows with the value of the first column of all
+        selected rows.
+
+        """
+        self.selected_rows = []
+        _, selected_paths = self.led_treeview.get_selection(
+        ).get_selected_rows()
+        model = self.led_treeview.get_model()
+        for path in selected_paths:
+            self.selected_rows.append(model.get_value(model.get_iter(path), 0))
+
+    @staticmethod
+    def _reselect_row(model, _, iter_, (selection, selected_rows,)):
+        """Select rows if they are referenced by selected_rows.
+
+        If the value of the first column of a row matches a value in
+        `selected_rows` then `selection` will be updated to include this row.
+
+        Warning: This method has not been tested with multiple selection.
+
+        """
+        if model.get_value(iter_, 0) in selected_rows:
+            selection.select_iter(iter_)
+
+    def _set_selected_rows(self):
+        """Re-Selects previously selected rows where possible.
+
+        Uses self.selected_rows to determine which rows to select.
+
+        """
+        selection = self.led_treeview.get_selection()
+        selection.unselect_all()
+        model = self.led_treeview.get_model()
+        model.foreach(self._reselect_row, (selection, self.selected_rows,))
+
     def ledview_widgets(self):
-        # Make note of expanded rows.
-        self._get_expanded_rows()
+        self._get_expanded_rows()  # Make a note of expanded rows.
+        self._get_selected_rows()  # Make a note of selected rows.
 
         if not self.should_transpose_view:
             types = [str] + [gtk.gdk.Pixbuf] * len(self.point_strings)
@@ -460,6 +499,11 @@ class DotUpdater(threading.Thread):
             self._update_gui_transpose(tasks_by_point_string, state_summary)
 
         self.led_treeview.columns_autosize()
+
+        if self.is_transposed == self.should_transpose_view:
+            # Only select rows if we have not changed view mode.
+            self._set_selected_rows()
+
         return False
 
     def _update_gui_transpose(self, tasks_by_point_string, state_summary):
