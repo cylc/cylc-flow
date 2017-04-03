@@ -1,16 +1,16 @@
 [[var_p2]]
     script = echo "RUN: run-var.sh"
     enable resurrection = False
-    env-script = 
-    err-script = 
+    env-script = echo "(no env-script defined)"
+    err-script = echo "(no err-script defined)"
     title = 
     URL = 
     extra log files = 
     work sub-directory = 
     description = 
-    init-script = 
-    pre-script = 
-    post-script = 
+    init-script = echo "(no init-script defined)"
+    pre-script = echo "(no pre-script defined)"
+    post-script = echo "(no post-script defined)"
     inherit = VAR, PARALLEL
     [[[events]]]
         submission timeout handler = 
@@ -76,16 +76,16 @@
 [[OPS]]
     script = echo "RUN: run-ops.sh"
     enable resurrection = False
-    env-script = 
-    err-script = 
+    env-script = echo "(no env-script defined)"
+    err-script = echo "(no err-script defined)"
     title = 
     URL = 
     extra log files = 
     work sub-directory = 
     description = 
-    init-script = 
-    pre-script = 
-    post-script = 
+    init-script = echo "(no init-script defined)"
+    pre-script = echo "(no pre-script defined)"
+    post-script = echo "(no post-script defined)"
     inherit = 
     [[[events]]]
         submission timeout handler = 
@@ -150,16 +150,16 @@
 [[ops_s1]]
     script = echo "RUN: run-ops.sh"
     enable resurrection = False
-    env-script = 
-    err-script = 
+    env-script = echo "(no env-script defined)"
+    err-script = echo "(no err-script defined)"
     title = 
     URL = 
     extra log files = 
     work sub-directory = 
     description = 
-    init-script = 
-    pre-script = 
-    post-script = 
+    init-script = echo "(no init-script defined)"
+    pre-script = echo "(no pre-script defined)"
+    post-script = echo "(no post-script defined)"
     inherit = OPS, SERIAL
     [[[events]]]
         submission timeout handler = 
@@ -225,16 +225,16 @@
 [[ops_s2]]
     script = echo "RUN: run-ops.sh"
     enable resurrection = False
-    env-script = 
-    err-script = 
+    env-script = echo "(no env-script defined)"
+    err-script = echo "(no err-script defined)"
     title = 
     URL = 
     extra log files = 
     work sub-directory = 
     description = 
-    init-script = 
-    pre-script = 
-    post-script = 
+    init-script = echo "(no init-script defined)"
+    pre-script = echo "(no pre-script defined)"
+    post-script = echo "(no post-script defined)"
     inherit = OPS, SERIAL
     [[[events]]]
         submission timeout handler = 
@@ -300,16 +300,16 @@
 [[ops_p1]]
     script = echo "RUN: run-ops.sh"
     enable resurrection = False
-    env-script = 
-    err-script = 
+    env-script = echo "(no env-script defined)"
+    err-script = echo "(no err-script defined)"
     title = 
     URL = 
     extra log files = 
     work sub-directory = 
     description = 
-    init-script = 
-    pre-script = 
-    post-script = 
+    init-script = echo "(no init-script defined)"
+    pre-script = echo "(no pre-script defined)"
+    post-script = echo "(no post-script defined)"
     inherit = OPS, PARALLEL
     [[[events]]]
         submission timeout handler = 
@@ -375,16 +375,16 @@
 [[ops_p2]]
     script = echo "RUN: run-ops.sh"
     enable resurrection = False
-    env-script = 
-    err-script = 
+    env-script = echo "(no env-script defined)"
+    err-script = echo "(no err-script defined)"
     title = 
     URL = 
     extra log files = 
     work sub-directory = 
     description = 
-    init-script = 
-    pre-script = 
-    post-script = 
+    init-script = echo "(no init-script defined)"
+    pre-script = echo "(no pre-script defined)"
+    post-script = echo "(no post-script defined)"
     inherit = OPS, PARALLEL
     [[[events]]]
         handler events = 
@@ -450,16 +450,16 @@
 [[var_p1]]
     script = echo "RUN: run-var.sh"
     enable resurrection = False
-    env-script = 
-    err-script = 
+    env-script = echo "(no env-script defined)"
+    err-script = echo "(no err-script defined)"
     title = 
     URL = 
     extra log files = 
     work sub-directory = 
     description = 
-    init-script = 
-    pre-script = 
-    post-script = 
+    init-script = echo "(no init-script defined)"
+    pre-script = echo "(no pre-script defined)"
+    post-script = echo "(no post-script defined)"
     inherit = VAR, PARALLEL
     [[[events]]]
         handler events = 
@@ -525,16 +525,16 @@
 [[VAR]]
     script = echo "RUN: run-var.sh"
     enable resurrection = False
-    env-script = 
-    err-script = 
+    env-script = echo "(no env-script defined)"
+    err-script = echo "(no err-script defined)"
     title = 
     URL = 
     extra log files = 
     work sub-directory = 
     description = 
-    init-script = 
-    pre-script = 
-    post-script = 
+    init-script = echo "(no init-script defined)"
+    pre-script = echo "(no pre-script defined)"
+    post-script = echo "(no post-script defined)"
     inherit = 
     [[[events]]]
         handler events = 
@@ -599,16 +599,16 @@
 [[var_s1]]
     script = echo "RUN: run-var.sh"
     enable resurrection = False
-    env-script = 
-    err-script = 
+    env-script = echo "(no env-script defined)"
+    err-script = echo "(no err-script defined)"
     title = 
     URL = 
     extra log files = 
     work sub-directory = 
     description = 
-    init-script = 
-    pre-script = 
-    post-script = 
+    init-script = echo "(no init-script defined)"
+    pre-script = echo "(no pre-script defined)"
+    post-script = echo "(no post-script defined)"
     inherit = VAR, SERIAL
     [[[events]]]
         handler events = 
@@ -672,18 +672,18 @@
         execution polling intervals = 
         execution time limit = 
 [[SERIAL]]
-    script = 
     enable resurrection = False
-    env-script = 
-    err-script = 
+    env-script = echo "(no env-script defined)"
+    err-script = echo "(no err-script defined)"
+    script = echo "(no script defined)"
     title = 
     URL = 
     extra log files = 
     work sub-directory = 
     description = 
-    init-script = 
-    pre-script = 
-    post-script = 
+    init-script = echo "(no init-script defined)"
+    pre-script = echo "(no pre-script defined)"
+    post-script = echo "(no post-script defined)"
     inherit = 
     [[[events]]]
         handler events = 
@@ -747,18 +747,18 @@
         execution polling intervals = 
         execution time limit = 
 [[root]]
-    script = 
     enable resurrection = False
-    env-script = 
-    err-script = 
+    env-script = echo "(no env-script defined)"
+    err-script = echo "(no err-script defined)"
+    script = echo "(no script defined)"
     title = 
     URL = 
     extra log files = 
     work sub-directory = 
     description = 
-    init-script = 
-    pre-script = 
-    post-script = 
+    init-script = echo "(no init-script defined)"
+    pre-script = echo "(no pre-script defined)"
+    post-script = echo "(no post-script defined)"
     inherit = 
     [[[events]]]
         handler events = 
@@ -821,18 +821,18 @@
         execution polling intervals = 
         execution time limit = 
 [[PARALLEL]]
-    script = 
     enable resurrection = False
-    env-script = 
-    err-script = 
+    env-script = echo "(no env-script defined)"
+    err-script = echo "(no err-script defined)"
+    script = echo "(no script defined)"
     title = 
     URL = 
     extra log files = 
     work sub-directory = 
     description = 
-    init-script = 
-    pre-script = 
-    post-script = 
+    init-script = echo "(no init-script defined)"
+    pre-script = echo "(no pre-script defined)"
+    post-script = echo "(no post-script defined)"
     inherit = 
     [[[events]]]
         handler events = 
@@ -898,16 +898,16 @@
 [[var_s2]]
     script = echo "RUN: run-var.sh"
     enable resurrection = False
-    env-script = 
-    err-script = 
+    env-script = echo "(no env-script defined)"
+    err-script = echo "(no err-script defined)"
     title = 
     URL = 
     extra log files = 
     work sub-directory = 
     description = 
-    init-script = 
-    pre-script = 
-    post-script = 
+    init-script = echo "(no init-script defined)"
+    pre-script = echo "(no pre-script defined)"
+    post-script = echo "(no post-script defined)"
     inherit = VAR, SERIAL
     [[[events]]]
         handler events = 
