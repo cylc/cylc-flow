@@ -201,53 +201,50 @@ cylc__job__trap_vacation() {
 }
 
 ###############################################################################
-# Handle dummy task cycle point failure.
+# Handle dummy job cycle point specific success or failure.
 # Globals:
 #   CYLC_TASK_TRY_NUMBER
 #   CYLC_TASK_CYCLE_POINT
 #   CYLC_CYCLING_MODE
 # Arguments:
-#   Fail try 1 only (T/F) 
+#   Fail try 1 only (T/F)
 #   Fail cycle points:
 #     'all' - fail all cycle points
 #     'P1 P2 P3 ...' - fail these cycle points
 # Returns:
-#   0 - fail
-#   1 - succeed
+#   0 - dummy job succeed
+#   1 - dummy job fail
 cylc__job__dummy_result() {
     typeset fail_try_1_only="$1"; shift
     typeset fail_cycle_points="$@"
-    typeset fail_me=false
-    if $fail_try_1_only && (( CYLC_TASK_TRY_NUMBER > 1 )); then
-        fail_me=false
-    elif [[ "${fail_cycle_points}" == *'all'* ]]; then
-        fail_me=true
+    typeset fail_this_point=false
+    if [[ "${fail_cycle_points}" == *all* ]]; then
+        # Fail all points.
+        fail_this_point=true
     else
+        # Fail some or no points.
         if [[ "${CYLC_CYCLING_MODE}" == "integer" ]]; then
             for POINT in ${fail_cycle_points}; do
-                if [[ "${CYLC_TASK_CYCLE_POINT}" == "${POINT}" ]]; then
-                    fail_me=true
+                if ((CYLC_TASK_CYCLE_POINT == POINT)); then
+                    fail_this_point=true
                     break
-                else
-                    fail_me=false
                 fi
             done
-        else 
+        else
             for POINT in ${fail_cycle_points}; do
                 if $(cylc cyclepoint --equal="$POINT"); then
-                    fail_me=true
+                    fail_this_point=true
                     break
-                else
-                    fail_me=false
                 fi
             done
         fi
     fi
-    if $fail_me; then
-        >&2 echo "(fail)"
-        return 1
-    else
-        echo "(succeed)"
+    if ! $fail_this_point || \
+            ($fail_try_1_only && ((CYLC_TASK_TRY_NUMBER > 1)) ); then
+        echo "(dummy job succeed)"
         return 0
+    else
+        >&2 echo "(dummy job fail)"
+        return 1
     fi
 }
