@@ -2253,7 +2253,7 @@ shown here in the state they were in at the time of triggering.''')
                 name,
             )
             for submit_num, job_user_at_host in sorted(
-                    job_hosts.items(), reverse=True):
+                    job_hosts.items(), reverse=True, key=lambda x: int(x[0])):
                 submit_num_str = "%02d" % int(submit_num)
                 local_job_log_dir = os.path.join(itask_log_dir, submit_num_str)
                 for filename in ["job", "job-activity.log"]:
