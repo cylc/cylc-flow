@@ -245,6 +245,8 @@ SPEC = {
                 vtype='interval', default=DurationFloat(60)),
             'dummy mode suite timeout': vdr(
                 vtype='interval', default=DurationFloat(60)),
+            'dummy-local mode suite timeout': vdr(
+                vtype='interval', default=DurationFloat(60)),
             'simulation mode suite timeout': vdr(
                 vtype='interval', default=DurationFloat(60)),
         },
