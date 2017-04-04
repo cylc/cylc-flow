@@ -9,11 +9,11 @@ doc/src/cylc-user-guide/html
 doc/src/cylc-user-guide/commands.tex
 doc/src/cylc-user-guide/cylc-version.txt
 # - Suite Design Guide.
-*.aux
-*.out
-*.pdf
-*.log
-*.toc
+doc/src/suite-design-guide/*.aux
+doc/src/suite-design-guide/*.out
+doc/src/suite-design-guide/*.pdf
+doc/src/suite-design-guide/*.log
+doc/src/suite-design-guide/*.toc
 # Installed docs.
 doc/install/
 
