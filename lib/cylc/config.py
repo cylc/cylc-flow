@@ -1231,6 +1231,9 @@ class SuiteConfig(object):
             # (Only execution time limit is automatic at the moment.)
             rtc['job']['batch system'] = 'background'
 
+            # Disable environment, in case it depends on env-script.
+            rtc['environment'] = {}
+
             if tdef.run_mode == 'dummy-local':
                 # Run all dummy tasks on the suite host.
                 rtc['remote']['host'] = None
