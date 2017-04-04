@@ -1,0 +1,18 @@
+[cylc]
+    force run mode = dummy-local
+    [[reference test]]
+        dummy-local mode suite timeout = PT30S
+[scheduling]
+    [[dependencies]]
+        graph = oxygas
+[runtime]
+    [[root]]
+        script = sleep 1
+        [[[simulation]]]
+            default run length = PT1S
+    [[oxygas]]
+        env-script = ELSE=foo
+        [[[remote]]]
+            host = els055
+        [[[environment]]]
+            SOMETHING = "some-modification-$ELSE"
