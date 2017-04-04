@@ -6274,7 +6274,7 @@ As a suite runs its task proxies may pass through the following states:
     (could be waiting in an external batch scheduler queue).
 
     \item {\bf submit-failed} - job submission failed {\em or}
-    submitted job killed before commencing execution.
+    submitted job killed (cancelled) before commencing execution.
 
     \item {\bf submit-retrying} - job submission failed, but a submission retry
     was configured. Will only enter the {\em submit-failed} state if all
