@@ -1433,7 +1433,7 @@ distinguish them from task names. However, this is just a convention).
 Experiment with the \lstinline=tut/oneoff/ftrigger1= suite to see
 how this works.
 
-\subsection{Triggering Off Families}
+\subsection{Triggering Off Of Families}
 
 \hilight{ suite: \lstinline=tut/oneoff/ftrigger2= }
 \vspace{3mm}
@@ -6644,7 +6644,7 @@ With \lstinline=cylc trigger --edit= (also in the gcylc right-click task menu)
 you can edit the generated task job script to make one-off changes before the
 task submits.
 
-\subsection{Runtime Settings Broadcast and Communication Between Tasks}
+\subsection{Cylc Broadcast}
 \label{cylc-broadcast}
 
 The \lstinline=cylc broadcast= command overrides \lstinline=[runtime]=
@@ -6845,7 +6845,7 @@ you wish:
         abort on timeout = True
 \end{lstlisting}
 
-\subsection{Inter-suite Dependence: Triggering Off Task States In Other Suites}
+\subsection{Triggering Off Of Tasks In Other Suites}
 \label{SuiteStatePolling}
 
 The \lstinline=cylc suite-state= command interrogates suite run databases. It
@@ -6924,6 +6924,93 @@ or in-suite:
 Note that the remote suite does not have to be running when polling commences
 because the command interrogates the suite run database, not the suite server
 process.
+
+\subsection{Suite Server Logs}
+\label{Suite Server Logs}
+
+Each suite maintains its own log of time-stamped events under the {\em suite
+server log directory}:
+
+\begin{lstlisting}
+$HOME/cylc-run/<SUITE-NAME>/log/suite/
+\end{lstlisting}
+
+By way of example, we will show the complete server log generated (at
+cylc-7.2.0) by a small suite that runs two 30-second dummy tasks
+\lstinline=foo= and \lstinline=bar= for a single cycle point
+\lstinline=2017-01-01T00Z= before shutting down:
+
+\lstset{language=suiterc,breaklines=true}
+\begin{lstlisting}
+[cylc]
+    cycle point format = %Y-%m-%dT%HZ
+[scheduling]
+    initial cycle point = 2017-01-01T00Z
+    final cycle point = 2017-01-01T00Z
+    [[dependencies]]
+        graph = "foo => bar"
+[runtime]
+    [[foo]]
+        script = sleep 30; /bin/false
+    [[bar]]
+        script = sleep 30; /bin/true
+\end{lstlisting}
+
+By the task scripting defined above, this suite will stall when \lstinline=foo=
+fails. Then, the suite owner {\em vagrant@cylon} manually resets the failed
+task's state to {\em succeeded}, allowing \lstinline=bar= to trigger and the
+suite to finish and shut down.  Here's the complete suite log for this run:
+
+\lstset{language=transcript}
+\begin{lstlisting}
+$ cylc log SUITE-NAME
+2017-03-30T09:46:10Z INFO - Suite starting: server=localhost:43086 pid=3483
+2017-03-30T09:46:10Z INFO - Run mode: live
+2017-03-30T09:46:10Z INFO - Initial point: 2017-01-01T00Z
+2017-03-30T09:46:10Z INFO - Final point: 2017-01-01T00Z
+2017-03-30T09:46:10Z INFO - Cold Start 2017-01-01T00Z
+2017-03-30T09:46:11Z INFO - [foo.2017-01-01T00Z] -submit_method_id=3507
+2017-03-30T09:46:11Z INFO - [foo.2017-01-01T00Z] -submission succeeded
+2017-03-30T09:46:11Z INFO - [foo.2017-01-01T00Z] -(current:submitted)> started at 2017-03-30T09:46:10Z
+2017-03-30T09:46:41Z CRITICAL - [foo.2017-01-01T00Z] -(current:running)> Task job script received signal EXIT at 2017-03-30T09:46:40Z
+2017-03-30T09:46:41Z CRITICAL - [foo.2017-01-01T00Z] -(current:running)> failed at 2017-03-30T09:46:40Z
+2017-03-30T09:46:42Z WARNING - suite stalled
+2017-03-30T09:46:42Z WARNING - Unmet prerequisites for bar.2017-01-01T00Z:
+2017-03-30T09:46:42Z WARNING -  * foo.2017-01-01T00Z succeeded
+2017-03-30T09:47:58Z INFO - [client-command] reset_task_states vagrant@cylon:cylc-reset 1e0d8e9f-2833-4dc9-a0c8-9cf263c4c8c3
+2017-03-30T09:47:58Z INFO - [foo.2017-01-01T00Z] -resetting state to succeeded
+2017-03-30T09:47:58Z INFO - Command succeeded: reset_task_states([u'foo.2017'], state=succeeded)
+2017-03-30T09:47:59Z INFO - [bar.2017-01-01T00Z] -submit_method_id=3565
+2017-03-30T09:47:59Z INFO - [bar.2017-01-01T00Z] -submission succeeded
+2017-03-30T09:47:59Z INFO - [bar.2017-01-01T00Z] -(current:submitted)> started at 2017-03-30T09:47:58Z
+2017-03-30T09:48:29Z INFO - [bar.2017-01-01T00Z] -(current:running)> succeeded at 2017-03-30T09:48:28Z
+2017-03-30T09:48:30Z INFO - Waiting for the command process pool to empty for shutdown
+2017-03-30T09:48:30Z INFO - Suite shutting down - AUTOMATIC
+\end{lstlisting}
+
+The information logged here includes:
+
+\begin{myitemize}
+  \item event timestamps, at the start of each line
+  \item suite server host, port and process ID
+  \item suite initial and final cycle points
+  \item suite start type (cold start in this case)
+  \item task events (task started, succeeded, failed, etc.)
+  \item suite stalled warning (in this suite nothing else can run when
+    \lstinline=foo= fails)
+  \item the client command issued by {\em vagrant@cylon} to reset
+    \lstinline=foo= to {\em succeeded}
+  \item job IDs  - in this case process IDs for background jobs (or PBS job IDs
+    etc.)
+  \item state changes due to incoming task progress message  ("started at ..."
+    etc.) suite shutdown time and reasons (AUTOMATIC means "all tasks finished
+    and nothing else to do")
+\end{myitemize}
+
+Note that suite log files are primarily intended for human eyes. If you need
+to have an external system to monitor suite events automatically, interrogate
+the sqlite {\em suite run database} (see~\ref{Suite Run
+Databases}) rather than parse the log files.
 
 \subsection{Suite Run Databases}
 \label{Suite Run Databases}
