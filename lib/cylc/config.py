@@ -522,6 +522,12 @@ class SuiteConfig(object):
 
         self.collapsed_families_rc = (
             self.cfg['visualization']['collapsed families'])
+        for fam in self.collapsed_families_rc:
+            if fam not in self.runtime['first-parent descendants']:
+                raise SuiteConfigError(
+                    'ERROR [visualization]collapsed families: '
+                    '%s is not a first parent' % fam)
+
         if is_reload:
             # on suite reload retain an existing state of collapse
             # (used by the "cylc graph" viewer)
