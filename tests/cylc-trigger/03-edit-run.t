@@ -39,7 +39,7 @@ sed -i 's/^--- original $/--- original/; s/^+++ edited $/+++ edited/' $DIFF_LOG
 cmp_ok "${DIFF_LOG}" - <<'__END__'
 --- original
 +++ edited
-@@ -50,7 +50,7 @@
+@@ -30,7 +30,7 @@
  
  cylc__job__inst__script() {
  # SCRIPT:
@@ -47,7 +47,7 @@ cmp_ok "${DIFF_LOG}" - <<'__END__'
 +/bin/true
  }
  
- cylc__job__inst__post_script() {
+ . "${CYLC_DIR}/lib/cylc/job.sh"
 __END__
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
