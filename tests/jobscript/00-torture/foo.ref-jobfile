@@ -45,16 +45,6 @@ echo "HELLO FROM INIT-SCRIPT"
 export VAR_IS=is
 }
 
-cylc__job__inst__env_script() {
-# ENV-SCRIPT:
-echo "(no env-script defined)"
-}
-
-cylc__job__inst__err_script() {
-# ERR-SCRIPT:
-echo "(no err-script defined)"
-}
-
 cylc__job__inst__pre_script() {
 # PRE-SCRIPT:
 echo "HELLO FROM PRE-SCRIPT"
