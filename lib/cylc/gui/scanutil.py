@@ -87,8 +87,8 @@ def get_scan_menu(suite_keys,
     for host, owner, suite in suite_keys:
         gcylc_item = gtk.ImageMenuItem("Launch gcylc: %s - %s@%s" % (
             suite.replace('_', '__'), owner, host))
-        img = gtk.image_new_from_stock("gcylc", gtk.ICON_SIZE_MENU)
-        gcylc_item.set_image(img)
+        img_gcylc = gtk.image_new_from_stock("gcylc", gtk.ICON_SIZE_MENU)
+        gcylc_item.set_image(img_gcylc)
         gcylc_item._connect_args = (host, owner, suite)
         gcylc_item.connect(
             "button-press-event",
@@ -106,6 +106,59 @@ def get_scan_menu(suite_keys,
         sep_item = gtk.SeparatorMenuItem()
         sep_item.show()
         menu.append(sep_item)
+
+    # Construct a cylc stop item to stop a suite
+    if len(suite_keys) > 1:
+        stoptask_item = gtk.ImageMenuItem('Stop all')
+    else:
+        stoptask_item = gtk.ImageMenuItem('Stop')
+
+    img_stop = gtk.image_new_from_stock(gtk.STOCK_MEDIA_STOP,
+                                        gtk.ICON_SIZE_MENU)
+    stoptask_item.set_image(img_stop)
+    stoptask_item._connect_args = suite_keys, 'stop'
+    stoptask_item.connect("button-press-event",
+                          lambda b, e: call_cylc_command(b._connect_args[0],
+                                                         b._connect_args[1]))
+    stoptask_item.show()
+    menu.append(stoptask_item)
+
+    # Construct a cylc hold item to hold (pause) a suite
+    if len(suite_keys) > 1:
+        holdtask_item = gtk.ImageMenuItem('Hold all')
+    else:
+        holdtask_item = gtk.ImageMenuItem('Hold')
+
+    img_hold = gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,
+                                        gtk.ICON_SIZE_MENU)
+    holdtask_item.set_image(img_hold)
+    holdtask_item._connect_args = suite_keys, 'hold'
+    holdtask_item.connect("button-press-event",
+                          lambda b, e: call_cylc_command(b._connect_args[0],
+                                                         b._connect_args[1]))
+    menu.append(holdtask_item)
+    holdtask_item.show()
+
+    # Construct a cylc release item to release a paused/stopped suite
+    if len(suite_keys) > 1:
+        unstoptask_item = gtk.ImageMenuItem('Release all')
+    else:
+        unstoptask_item = gtk.ImageMenuItem('Release')
+
+    img_release = gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,
+                                           gtk.ICON_SIZE_MENU)
+    unstoptask_item.set_image(img_release)
+    unstoptask_item._connect_args = suite_keys, 'release'
+    unstoptask_item.connect("button-press-event",
+                            lambda b, e: call_cylc_command(b._connect_args[0],
+                                                           b._connect_args[1]))
+    unstoptask_item.show()
+    menu.append(unstoptask_item)
+
+    # Add another separator
+    sep_item = gtk.SeparatorMenuItem()
+    sep_item.show()
+    menu.append(sep_item)
 
     # Construct theme chooser items (same as cylc.gui.app_main).
     theme_item = gtk.ImageMenuItem('Theme')
@@ -249,12 +302,8 @@ def _launch_hosts_dialog(existing_hosts, change_hosts_func):
     dialog.destroy()
 
 
-def launch_gcylc(key):
-    """Launch gcylc for a given suite and host."""
-    host, owner, suite = key
-    args = ["--host=" + host, "--user=" + owner, suite]
-
-    # Get version of suite
+def get_suite_version(args):
+    """Gets the suite version given the host, owner, and suite arguments"""
     f_null = open(os.devnull, "w")
     if cylc.flags.debug:
         stderr = sys.stderr
@@ -265,6 +314,18 @@ def launch_gcylc(key):
     proc = Popen(command, stdout=PIPE, stderr=stderr)
     suite_version = proc.communicate()[0].strip()
     proc.wait()
+
+    return suite_version
+
+
+def launch_gcylc(key):
+    """Launch gcylc for a given suite and host."""
+    host, owner, suite = key
+    args = ["--host=" + host, "--user=" + owner, suite]
+
+    # Get version of suite - now separate method get_suite_version()
+    f_null = open(os.devnull, "w")
+    suite_version = get_suite_version(args)
 
     # Run correct version of "cylc gui", provided that "admin/cylc-wrapper" is
     # installed.
@@ -283,6 +344,52 @@ def launch_gcylc(key):
         Popen(["nohup"] + command, env=env, stdout=stdout, stderr=stderr)
 
 
+def call_cylc_command(keys, command_id):
+    """Calls one of the Cylc commands (such as 'stop', 'hold', etc...).
+
+    Will accept either a single tuple for a key, or a list of keys.
+    See the examples below. If you pass it a list of keys, it will
+    iterate and call the command_id on each suite (key) it is given.
+
+    Args:
+        keys (tuple): The key containing host, owner, and suite
+        command_id (str): A string giving the Cylc command.
+
+    Example:
+        call_cylc_command(keys, "stop")
+        call_cylc_command((host, owner, suite), "hold")
+        call_cylc_command([(host, owner, suite),
+                           (host, owner, suite),
+                           (host, owner, suite)], "hold")
+    """
+
+    if not isinstance(keys, list):
+        keys = [keys]
+
+    for key in keys:
+        host, owner, suite = key
+        args = ["--host=" + host, "--user=" + owner, suite]
+
+        # Get version of suite
+        f_null = open(os.devnull, "w")
+        suite_version = get_suite_version(args)
+
+        env = None
+        if suite_version != CYLC_VERSION:
+            env = dict(os.environ)
+            env["CYLC_VERSION"] = suite_version
+        command = ["cylc", command_id] + args
+
+        if cylc.flags.debug:
+            stdout = sys.stdout
+            stderr = sys.stderr
+            Popen(command, env=env, stdout=stdout, stderr=stderr)
+        else:
+            stdout = f_null
+            stderr = stdout
+            Popen(["nohup"] + command, env=env, stdout=stdout, stderr=stderr)
+
+
 def update_suites_info(
         hosts=None, timeout=None, owner_pattern=None, name_pattern=None,
         prev_results=None):
@@ -299,7 +406,7 @@ def update_suites_info(
     where each "suite_info" is a dict with keys:
         KEY_GROUP - group name of suite
         KEY_OWNER - suite owner name
-        KEY_PORT - suite port, for runninig suites only
+        KEY_PORT - suite port, for running suites only
         KEY_STATES - suite state
         KEY_STATES:cycle - states by cycle
         KEY_TASKS_BY_STATE - tasks by state

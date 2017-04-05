@@ -35,6 +35,11 @@ import gtk
 import warnings
 warnings.filterwarnings('ignore', 'use the new', Warning)
 
+gtk.settings_get_default().set_long_property(
+    "gtk-button-images", True, "main")
+gtk.settings_get_default().set_long_property(
+    "gtk-menu-images", True, "main")
+
 from cylc.gui.gscan import ScanApp
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.owner import USER
