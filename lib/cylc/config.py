@@ -523,7 +523,7 @@ class SuiteConfig(object):
         self.collapsed_families_rc = (
             self.cfg['visualization']['collapsed families'])
         for fam in self.collapsed_families_rc:
-            if fam not in self.runtime['first-parent descendants'].keys():
+            if fam not in self.runtime['first-parent descendants']:
                 raise SuiteConfigError(
                     'ERROR [visualization]collapsed families: '
                     '%s is not a first parent' % fam)
