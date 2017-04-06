@@ -437,14 +437,7 @@ class TaskJobManager(object):
         script = rtconfig['script']
         pre_script = rtconfig['pre-script']
         post_script = rtconfig['post-script']
-        if itask.tdef.run_mode == 'dummy':
-            # Use dummy script items in dummy mode.
-            script = rtconfig['dummy mode']['script']
-            if rtconfig['dummy mode']['disable pre-script']:
-                pre_script = None
-            if rtconfig['dummy mode']['disable post-script']:
-                post_script = None
-        elif itask.tdef.suite_polling_cfg:
+        if itask.tdef.suite_polling_cfg:
             # Automatic suite state polling script
             comstr = "cylc suite-state " + \
                      " --task=" + itask.tdef.suite_polling_cfg['task'] + \
@@ -734,6 +727,11 @@ class TaskJobManager(object):
         """Simulation mode task jobs submission."""
         for itask in itasks:
             self._set_retry_timers(itask)
+            itask.task_host = 'SIMULATION'
+            itask.task_owner = 'SIMULATION'
+            itask.summary['batch_sys_name'] = 'SIMULATION'
+            itask.summary['execution_time_limit'] = (
+                itask.tdef.rtconfig['job']['simulated run length'])
             self.task_events_mgr.process_message(
                 itask, INFO, TASK_OUTPUT_SUBMITTED)
 

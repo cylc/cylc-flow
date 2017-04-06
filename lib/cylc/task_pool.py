@@ -1144,9 +1144,11 @@ class TaskPool(object):
                 continue
             timeout = (itask.summary['started_time'] +
                        itask.tdef.rtconfig['job']['simulated run length'])
-            if time.time() > timeout:
-                # Time up.
-                if itask.sim_job_fail():
+            if time() > timeout:
+                conf = itask.tdef.rtconfig['simulation']
+                if (itask.point in conf['fail cycle points'] and
+                        (itask.get_try_num() == 1 or
+                         not conf['fail try 1 only'])):
                     message_queue.put(
                         itask.identity, 'CRITICAL', TASK_STATUS_FAILED)
                 else:
