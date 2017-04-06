@@ -64,8 +64,5 @@ generated with 'cylc jobscript'."""
         inherit = OPS
         description = "OPS ATOVS postprocessing"
 
-    [[prepobs]]
-        description = "obs preprocessing"
-
 [visualization]
     collapsed families = OPS, VAR, BAZ

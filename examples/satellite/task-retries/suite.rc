@@ -39,15 +39,15 @@ automatically until they succeed."""
 [runtime]
     [[prep]]
         title = clean the suite output directories
-        command scripting = \
+        script = \
 rm -rf $CYLC_SUITE_SHARE_DIR $CYLC_SUITE_WORK_DIR
 
     [[satsim]]
         title = simulate a satellite data feed
         description = """Generates {{N_DATASETS}} arbitrarily labelled
 datasets after random durations."""
-        pre-command scripting = mkdir -p {{DATA_IN_DIR}}
-        command scripting = """
+        pre-script = mkdir -p {{DATA_IN_DIR}}
+        script = """
 COUNT=0
 while true; do
     ((COUNT == {{N_DATASETS}})) && break
@@ -63,36 +63,37 @@ done"""
         # Define a common cycle-point-specific work-directory for all
         # processing tasks so that they all work on the same dataset.
         work sub-directory = proc-$CYLC_TASK_CYCLE_POINT
-        post-command scripting = sleep 5
+        post-script = sleep 5
 
     [[get_data]]
         inherit = WORKDIR
         title = retreive next dataset
         description = grab ONE new dataset if available else retry
-        retry delays = 10*PT2S
-        command scripting = """
+        script = """
 DATASET=$( ls {{DATA_IN_DIR}}/dataset-*.raw 2>/dev/null | head -n 1 )
 [[ -z $DATASET ]] && exit 1
 mv $DATASET $PWD"""
+        [[[job]]]
+            execution retry delays = 10*PT2S
 
     [[proc1]]
         inherit = WORKDIR
         title = convert .raw dataset to .proc1 form
-        command scripting = """
+        script = """
 DATASET=$(ls dataset-*.raw)
 mv $DATASET ${DATASET%raw}proc1"""
 
     [[proc2]]
         inherit = WORKDIR
         title = convert .proc1 dataset to .proc2 form
-        command scripting = """
+        script = """
 DATASET=$(ls dataset-*.proc1)
 mv $DATASET ${DATASET%proc1}proc2"""
 
     [[products]]
         inherit = WORKDIR
         title = generate products from .proc2 processed dataset
-        command scripting = """
+        script = """
 mkdir -p {{PRODUCT_DIR}}
 DATASET=$( ls dataset-*.proc2 )
 mv $DATASET {{PRODUCT_DIR}}/${DATASET%proc2}prod"""
@@ -101,7 +102,7 @@ mv $DATASET {{PRODUCT_DIR}}/${DATASET%proc2}prod"""
         title = collate all products from the suite run
         # Note you might want to use "cylc suite-state" to check that
         # _all_ product tasks have finished before collating results.
-        command scripting = """
+        script = """
 echo PRODUCTS:
 ls {{PRODUCT_DIR}}
 sleep 20"""

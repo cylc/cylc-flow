@@ -18,7 +18,7 @@
 # Ensure that any changes to cylc haven't broken the profile-battery command
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 5
+set_test_number 4
 #-------------------------------------------------------------------------------
 # Check the format of `cylc version --long`.
 run_ok "${TEST_NAME_BASE}-cylc-version" python -c "
@@ -34,27 +34,6 @@ if get_cylc_directory() != '${CYLC_DIR}':
 TEST_NAME="${TEST_NAME_BASE}-cylc-list-hello-world-suite"
 run_ok "${TEST_NAME}" cylc list "${CYLC_DIR}/dev/suites/hello-world"
 cmp_ok "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" "hello-world"
-#-------------------------------------------------------------------------------
-# Check that the suites located in $CYLC_DIR/dev/suites are still valid.
-TEST_NAME="${TEST_NAME_BASE}-dev-suites-validate"
-mkdir "${TEST_LOG_DIR}/${TEST_NAME}" -p
-broken=
-for suite in $(find "${CYLC_DIR}/dev/suites" -name suite.rc)
-do
-    if ! cylc validate "${suite}" 2>&1 >/dev/null
-    then
-        broken="${suite}\n${broken}"
-    fi
-done
-if [[ -z "${broken}" ]]
-then
-    ok "${TEST_NAME}"
-else
-    echo -en "The following suites failed validation:\n${broken}" \
-        > "${TEST_NAME}.stderr"
-    cp "${TEST_NAME}.stderr" "${TEST_LOG_DIR}/${TEST_NAME}.stderr"
-    fail "${TEST_NAME}"
-fi
 #-------------------------------------------------------------------------------
 # Run the test experiment.
 TEST_NAME="${TEST_NAME_BASE}-run-test-experiment"
