@@ -7,5 +7,3 @@
         graph = "a => b => c"
 [runtime]
     [[a, b, c]]
-        [[[simulation mode]]]
-            run time range = PT1S,PT2S

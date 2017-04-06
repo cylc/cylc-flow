@@ -110,14 +110,19 @@
         <keyword>started handler</keyword>
         <keyword>stalled handler</keyword>
         <keyword>simulation mode suite timeout</keyword>
-        <keyword>simulate failure</keyword>
+        <keyword>disable suite event handlers</keyword>
+        <keyword>default run length</keyword>
+        <keyword>speedup factor</keyword>
+        <keyword>time limit buffer</keyword>
+        <keyword>fail cycle points</keyword>
+        <keyword>fail try 1 only</keyword>
+        <keyword>disable task event handlers</keyword>
         <keyword>shutdown handler</keyword>
         <keyword>shell</keyword>
         <keyword>sequential</keyword>
         <keyword>script</keyword>
         <keyword>runahead limit</keyword>
         <keyword>run-dir</keyword>
-        <keyword>run time range</keyword>
         <keyword>root</keyword>
         <keyword>retry handler</keyword>
         <keyword>retrieve job logs retry delays</keyword>
@@ -174,12 +179,6 @@
         <keyword>exclude</keyword>
         <keyword>env-script</keyword>
         <keyword>enable resurrection</keyword>
-        <keyword>dummy mode suite timeout</keyword>
-        <keyword>disable task event hooks</keyword>
-        <keyword>disable suite event hooks</keyword>
-        <keyword>disable retries</keyword>
-        <keyword>disable pre-script</keyword>
-        <keyword>disable post-script</keyword>
         <keyword>disable automatic shutdown</keyword>
         <keyword>description</keyword>
         <keyword>default node attributes</keyword>

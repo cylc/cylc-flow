@@ -15,23 +15,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test for https://github.com/cylc/cylc/issues/2064
+# Test for completion of custom outputs in dummy and sim modes.
+# And no duplication dummy outputs (GitHub #2064)
 . "$(dirname "$0")/test_header"
 
-set_test_number 4
+set_test_number 6
 
-init_suite "${TEST_NAME_BASE}" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/suite.rc"
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-bar" \
-    cylc get-config "${SUITE_NAME}" -i '[runtime][bar][dummy mode]script'
-cmp_ok "${TEST_NAME_BASE}-bar.stdout" <<'__OUT__'
-echo Dummy task; sleep $(cylc rnd 1 16)
-sleep 2; cylc message 'greet'
-__OUT__
-run_ok "${TEST_NAME_BASE}-foo" \
-    cylc get-config "${SUITE_NAME}" -i '[runtime][foo][dummy mode]script'
-cmp_ok "${TEST_NAME_BASE}-foo.stdout" <<'__OUT__'
-echo Dummy task; sleep $(cylc rnd 1 16)
-__OUT__
+run_ok "${TEST_NAME_BASE}-validate" \
+    cylc validate --debug ${SUITE_NAME}
+
+suite_run_fail "${TEST_NAME_BASE}-run-live" \
+    cylc run --reference-test --debug ${SUITE_NAME}
+
+suite_run_ok "${TEST_NAME_BASE}-run-simulation" \
+    cylc run -m 'dummy' --reference-test --debug ${SUITE_NAME}
+
+suite_run_ok "${TEST_NAME_BASE}-run-dummy" \
+    cylc run -m 'simulation' --reference-test --debug ${SUITE_NAME}
+
+LOG=$(cylc log --location $SUITE_NAME)
+count_ok '> meet' ${LOG} 1
+count_ok '> greet' ${LOG} 1
+
 purge_suite "${SUITE_NAME}"
-exit

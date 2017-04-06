@@ -72,7 +72,7 @@ their normal operational context; or to prevent accidental submission of
 expensive real tasks during suite development.
 \begin{myitemize}
     \item {\em type:} string
-    \item {\em legal values:} live, dummy, simulation
+    \item {\em legal values:} live, dummy, dummy-local, simulation
     \item {\em default:} None
 \end{myitemize}
 
@@ -581,7 +581,7 @@ in another run mode.
 
 \begin{myitemize}
     \item {\em type:} string
-    \item {\em legal values:} live, dummy, simulation
+    \item {\em legal values:} live, dummy, dummy-local, simulation
     \item {\em default:} None
 \end{myitemize}
 
@@ -661,6 +661,21 @@ See~\ref{GlobalAuth} for more information.
 
 The client privilege level granted for public access - i.e.\ no suite passphrase
 required.  See~\ref{GlobalAuth} for legal values.
+
+\subsubsection[{[[}simulation{]]} ]{[cylc] \textrightarrow [[simulation]]}
+
+Suite-level configuration for the {\em simulation} and {\em dummy} run modes
+described in Section~\ref{SimulationMode}.
+
+\paragraph[disable suite event handlers]{[cylc] \textrightarrow [[simulation]] \textrightarrow disable suite event handlers}
+
+If this is set to \lstinline=True= configured suite event handlers will not be
+called in simulation or dummy modes.
+
+\begin{myitemize}
+    \item {\em type:} boolean
+    \item {\em default:} \lstinline=True=
+\end{myitemize}
 
 \subsection{[scheduling]}
 
@@ -1190,7 +1205,7 @@ single command or multiple lines of scripting. See also \lstinline=init-script=,
 
 \begin{myitemize}
 \item {\em type:} string
-\item {\em root default:} \lstinline=echo "Dummy task"; $(cylc rnd 1 16)=
+\item {\em root default:} (none)
 \end{myitemize}
 
 \paragraph[post-script]{ [runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow post-script}
@@ -1245,57 +1260,6 @@ for a job with higher immediate priority. See also~\ref{PreemptionHPC}
 \begin{myitemize}
 \item {\em type:} boolean
 \item {\em default:} False
-\end{myitemize}
-
-
-\paragraph[{[[[}dummy mode{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[dummy mode]]]}
-
-Dummy mode configuration.
-
-\subparagraph[script]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[dummy mode]]] \textrightarrow script}
-
-The main \lstinline=script= item for tasks in {\em dummy mode}.
-See~\ref{ScriptItem} for documentation.
-
-\begin{myitemize}
-\item {\em type:} string
-\item {\em root default:} \lstinline=echo "Dummy task"; sleep $(cylc rnd 1 16)=
-\end{myitemize}
-
-\subparagraph[disable pre-script]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[dummy mode]]] \textrightarrow disable pre-script}
-
-This disables the task pre-script in dummy mode.
-
-\begin{myitemize}
-\item {\em type:} boolean
-\item {\em root default:} True
-\end{myitemize}
-
-\subparagraph[disable post-script]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[dummy mode]]] \textrightarrow disable post-script}
-
-This disables the task post-script in dummy mode.
-
-\begin{myitemize}
-\item {\em type:} boolean
-\item {\em root default:} True
-\end{myitemize}
-
-\paragraph[{[[[}simulation mode{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[simulation mode]]]}
-
-Simulation mode configuration.
-
-\paragraph[run time range]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[simulation mode]]] \textrightarrow run time range}
-
-This defines a minimum and a maximum duration (expressed as ISO 8601
-duration/intervals) which define a range from which the simulation mode task
-run length will be randomly chosen.
-
-\begin{myitemize}
-    \item {\em type:} Comma-separated list containing two ISO 8601
-        duration/interval representations.
-    \item {\em example:} \lstinline=PT1S,PT20S= - a range of 1 second to 20
-    seconds
-    \item {\em default:} (1, 16)
 \end{myitemize}
 
 \paragraph[{[[[}job{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[job]]]}
@@ -1946,6 +1910,83 @@ Run the polling \lstinline=cylc suite-state= command in verbose output mode.
 \begin{myitemize}
     \item {\em type:} boolean
     \item {\em default:} False
+\end{myitemize}
+
+\paragraph[{[[[}simulation{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[simulation]]]}
+\label{suiterc-sim-config}
+
+\lstset{language=transcript}
+
+Task configuration for the suite {\em simulation} and {\em dummy} run modes
+described in Section~\ref{SimulationMode}.
+
+\subparagraph[default run length]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[simulation]]] \textrightarrow default run length}
+
+The default simulated job run length, if \lstinline=[job]execution time limit=
+and \lstinline=[simulation]speedup factor= are not set.
+
+\begin{myitemize}
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.
+ \lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
+    \item {\em default:} \lstinline=PT10S=
+\end{myitemize}
+
+\subparagraph[speedup factor]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[simulation]]] \textrightarrow speedup factor}
+
+If \lstinline=[job]execution time limit= is set, the task simulated run length
+is computed by dividing it by this factor.
+
+\begin{myitemize}
+    \item {\em type:} float
+    \item {\em default:} (none) - i.e.\ do not use proportional run length
+    \item {\em example:} \lstinline=10.0=
+\end{myitemize}
+
+\subparagraph[time limit buffer]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[simulation]]] \textrightarrow time limit buffer}
+
+For dummy jobs, a new \lstinline=[job]execution time limit= is set to the
+simulated task run length plus this buffer interval, to avoid job kill due to
+exceeding the time limit.
+
+\begin{myitemize}
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.
+ \lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
+    \item {\em default:} PT10S
+\end{myitemize}
+
+\subparagraph[fail cycle points]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[simulation]]] \textrightarrow fail cycle points}
+
+Configure simulated or dummy jobs to fail at certain cycle points.
+
+\begin{myitemize}
+    \item {\em type:} list of strings (cycle points), or {\em all}
+    \item {\em default:} (none) - no instances of the task will fail
+    \item {\em examples:}
+    \begin{myitemize}
+        \item \lstinline=all= - all instance of the task will fail
+        \item \lstinline=2017-08-12T06, 2017-08-12T18= - these instances of the
+        task will fail
+    \end{myitemize}
+\end{myitemize}
+
+\subparagraph[fail try 1 only]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[simulation]]] \textrightarrow fail try 1 only}
+
+If this is set to \lstinline=True= only the first run of the task instance will
+fail, otherwise retries will fail too.
+
+\begin{myitemize}
+    \item {\em type:} boolean
+    \item {\em default:} \lstinline=True=
+\end{myitemize}
+
+\subparagraph[disable task event handlers]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[simulation]]] \textrightarrow disable task event handlers}
+
+If this is set to \lstinline=True= configured task event handlers will not be called
+in simulation or dummy modes.
+
+\begin{myitemize}
+    \item {\em type:} boolean
+    \item {\em default:} \lstinline=True=
 \end{myitemize}
 
 \subsection{[visualization]}

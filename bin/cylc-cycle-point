@@ -97,6 +97,11 @@ def main():
         action="store", dest="offset")
 
     parser.add_option(
+        "--equal", metavar="POINT2",
+        help="Succeed if POINT2 is equal to POINT (format agnostic).",
+        action="store", dest="point2")
+
+    parser.add_option(
         "--template", metavar="TEMPLATE",
         help="Filename template string or variable",
         action="store", dest="template")
@@ -197,6 +202,17 @@ def main():
             cycle_point_string, dump_as_parsed=(template is None))
     except ValueError as exc:
         parser.error('ERROR: invalid cycle: %s' % exc)
+
+    if options.point2:
+        try:
+            cycle_point2 = iso_point_parser.parse(
+                options.point2, dump_as_parsed=(template is None))
+        except ValueError as exc:
+            parser.error('ERROR: invalid cycle: %s' % exc)
+        if cycle_point2 == cycle_point:
+            sys.exit(0)
+        else:
+            sys.exit(1)
 
     offset_props = {}
 

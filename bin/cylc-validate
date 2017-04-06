@@ -62,6 +62,11 @@ def main():
         "--profile", help="Output profiling (performance) information",
         action="store_true", default=False, dest="profile_mode")
 
+    parser.add_option(
+        "-u", "--run-mode", help="Validate for run mode.", action="store",
+        default="live", dest="run_mode",
+        choices=['live', 'dummy', 'dummy-local', 'simulation'])
+
     (options, args) = parser.parse_args()
 
     profiler = Profiler(options.profile_mode)
@@ -73,7 +78,7 @@ def main():
         suite, suiterc,
         load_template_vars(options.templatevars, options.templatevars_file),
         cli_initial_point_string=options.icp,
-        validation=True, strict=options.strict,
+        validation=True, strict=options.strict, run_mode=options.run_mode,
         output_fname=options.output,
         mem_log_func=profiler.log_memory)
 

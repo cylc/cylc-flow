@@ -180,14 +180,19 @@ SPEC = {
         'cycle point time zone': vdr(
             vtype='cycletime_time_zone', default=None),
         'required run mode': vdr(
-            vtype='string', options=['live', 'dummy', 'simulation', '']),
+            vtype='string',
+            options=['live', 'dummy', 'dummy-local', 'simulation', '']),
         'force run mode': vdr(
-            vtype='string', options=['live', 'dummy', 'simulation', '']),
+            vtype='string',
+            options=['live', 'dummy', 'dummy-local', 'simulation', '']),
         'abort if any task fails': vdr(vtype='boolean', default=False),
         'health check interval': vdr(vtype='interval', default=None),
         'task event mail interval': vdr(vtype='interval', default=None),
         'log resolved dependencies': vdr(vtype='boolean', default=False),
         'disable automatic shutdown': vdr(vtype='boolean', default=False),
+        'simulation': {
+            'disable suite event handlers': vdr(vtype='boolean', default=True),
+        },
         'environment': {
             '__MANY__': vdr(vtype='string'),
         },
@@ -228,22 +233,19 @@ SPEC = {
             'mail to': vdr(vtype='string'),
             'mail footer': vdr(vtype='string'),
         },
-        'simulation mode': {
-            'disable suite event hooks': vdr(vtype='boolean', default=True),
-        },
-        'dummy mode': {
-            'disable suite event hooks': vdr(vtype='boolean', default=True),
-        },
         'reference test': {
             'suite shutdown event handler': vdr(
                 vtype='string', default='cylc hook check-triggering'),
             'required run mode': vdr(
-                vtype='string', options=['live', 'simulation', 'dummy', '']),
+                vtype='string',
+                options=['live', 'simulation', 'dummy-local', 'dummy', '']),
             'allow task failures': vdr(vtype='boolean', default=False),
             'expected task failures': vdr(vtype='string_list', default=[]),
             'live mode suite timeout': vdr(
                 vtype='interval', default=DurationFloat(60)),
             'dummy mode suite timeout': vdr(
+                vtype='interval', default=DurationFloat(60)),
+            'dummy-local mode suite timeout': vdr(
                 vtype='interval', default=DurationFloat(60)),
             'simulation mode suite timeout': vdr(
                 vtype='interval', default=DurationFloat(60)),
@@ -305,37 +307,27 @@ SPEC = {
             'title': vdr(vtype='string', default=""),
             'description': vdr(vtype='string', default=""),
             'URL': vdr(vtype='string', default=""),
-            'init-script': vdr(vtype='string'),
-            'env-script': vdr(vtype='string'),
-            'err-script': vdr(vtype='string'),
-            'pre-script': vdr(vtype='string'),
-            'script': vdr(
-                vtype='string',
-                default='echo Dummy task; sleep $(cylc rnd 1 16)'),
-            'post-script': vdr(vtype='string'),
+            'init-script': vdr(vtype='string', default=""),
+            'env-script': vdr(vtype='string', default=""),
+            'err-script': vdr(vtype='string', default=""),
+            'pre-script': vdr(vtype='string', default=""),
+            'script': vdr(vtype='string', default=""),
+            'post-script': vdr(vtype='string', default=""),
             'extra log files': vdr(vtype='string_list', default=[]),
             'enable resurrection': vdr(vtype='boolean', default=False),
             'work sub-directory': vdr(vtype='string'),
+            'simulation': {
+                'default run length': vdr(vtype='interval', default='PT10S'),
+                'speedup factor': vdr(vtype='float', default=None),
+                'time limit buffer': vdr(vtype='interval', default='PT10S'),
+                'fail cycle points': vdr(vtype='string_list', default=[]),
+                'fail try 1 only': vdr(vtype='boolean', default=True),
+                'disable task event handlers': vdr(
+                    vtype='boolean', default=True),
+            },
             'environment filter': {
                 'include': vdr(vtype='string_list'),
                 'exclude': vdr(vtype='string_list'),
-            },
-            'simulation mode': {
-                'run time range': vdr(
-                    vtype='interval_list',
-                    default=[DurationFloat(1), DurationFloat(16)]),
-                'simulate failure': vdr(vtype='boolean', default=False),
-                'disable task event hooks': vdr(vtype='boolean', default=True),
-                'disable retries': vdr(vtype='boolean', default=True),
-            },
-            'dummy mode': {
-                'script': vdr(
-                    vtype='string',
-                    default='echo Dummy task; sleep $(cylc rnd 1 16)'),
-                'disable pre-script': vdr(vtype='boolean', default=True),
-                'disable post-script': vdr(vtype='boolean', default=True),
-                'disable task event hooks': vdr(vtype='boolean', default=True),
-                'disable retries': vdr(vtype='boolean', default=True),
             },
             'job': {
                 'batch system': vdr(vtype='string', default='background'),
@@ -498,6 +490,10 @@ def upg(cfg, descr):
         '6.11.0',
         ['runtime', '__MANY__', 'execution polling intervals'],
         ['runtime', '__MANY__', 'job', 'execution polling intervals'])
+    u.obsolete('7.2.2', ['cylc', 'dummy mode'])
+    u.obsolete('7.2.2', ['cylc', 'simulation mode'])
+    u.obsolete('7.2.2', ['runtime', '__MANY__', 'dummy mode'])
+    u.obsolete('7.2.2', ['runtime', '__MANY__', 'simulation mode'])
     u.upgrade()
 
 

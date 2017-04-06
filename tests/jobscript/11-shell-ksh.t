@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test job script OK with ksh. If ksh installed, assume ksh93.
 . "$(dirname "${0}")/test_header"
-if ! KSH="$(which ksh)" 2>'/dev/null'; then
+if ! KSH="$(which ksh 2>/dev/null)"; then
     skip_all 'ksh not installed'
 fi
 set_test_number 5

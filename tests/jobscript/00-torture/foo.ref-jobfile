@@ -30,7 +30,7 @@ cylc__job__inst__cylc_env() {
 
 cylc__job__inst__user_env() {
     # TASK RUNTIME ENVIRONMENT:
-    E_ONE="$( cylc util rnd 1 10 )"
+    E_ONE="$(( RANDOM % 10 ))"
     E_TWO="$VAR_IS"
     E_THR="$CYLC_SUITE_SHARE_PATH"
     E_FOU="$CYLC_TASK_NAME"

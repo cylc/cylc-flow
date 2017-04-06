@@ -37,14 +37,19 @@
         <RegExpr attribute='Keyword' String=' started handler '/>
         <RegExpr attribute='Keyword' String=' stalled handler '/>
         <RegExpr attribute='Keyword' String=' simulation mode suite timeout '/>
-        <RegExpr attribute='Keyword' String=' simulate failure '/>
+        <RegExpr attribute='Keyword' String=' disable suite event handlers '/>
+        <RegExpr attribute='Keyword' String=' default run length '/>
+        <RegExpr attribute='Keyword' String=' speedup factor '/>
+        <RegExpr attribute='Keyword' String=' time limit buffer '/>
+        <RegExpr attribute='Keyword' String=' fail cycle points '/>
+        <RegExpr attribute='Keyword' String=' fail try 1 only '/>
+        <RegExpr attribute='Keyword' String=' disable task event handlers '/>
         <RegExpr attribute='Keyword' String=' shutdown handler '/>
         <RegExpr attribute='Keyword' String=' shell '/>
         <RegExpr attribute='Keyword' String=' sequential '/>
         <RegExpr attribute='Keyword' String=' script '/>
         <RegExpr attribute='Keyword' String=' runahead limit '/>
         <RegExpr attribute='Keyword' String=' run-dir '/>
-        <RegExpr attribute='Keyword' String=' run time range '/>
         <RegExpr attribute='Keyword' String=' root '/>
         <RegExpr attribute='Keyword' String=' retry handler '/>
         <RegExpr attribute='Keyword' String=' retrieve job logs retry delays '/>
@@ -102,11 +107,6 @@
         <RegExpr attribute='Keyword' String=' env-script '/>
         <RegExpr attribute='Keyword' String=' enable resurrection '/>
         <RegExpr attribute='Keyword' String=' dummy mode suite timeout '/>
-        <RegExpr attribute='Keyword' String=' disable task event hooks '/>
-        <RegExpr attribute='Keyword' String=' disable suite event hooks '/>
-        <RegExpr attribute='Keyword' String=' disable retries '/>
-        <RegExpr attribute='Keyword' String=' disable pre-script '/>
-        <RegExpr attribute='Keyword' String=' disable post-script '/>
         <RegExpr attribute='Keyword' String=' disable automatic shutdown '/>
         <RegExpr attribute='Keyword' String=' description '/>
         <RegExpr attribute='Keyword' String=' default node attributes '/>
