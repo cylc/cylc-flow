@@ -12,7 +12,7 @@ with a manual check-and-wait loop, until they detect new data."""
 # $ watch -n 1 \
 #    "find ~/cylc-run/<SUITE>/share; find ~/cylc-run/<SUITE>/work"
 
-{% set N_DATASETS = 5 %}
+{% set N_DATASETS = 55555 %}
 
 # define shared directories (could use runtime namespaces for this)
 {% set DATA_IN_DIR = "$CYLC_SUITE_SHARE_DIR/incoming" %}

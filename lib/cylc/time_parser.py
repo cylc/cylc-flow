@@ -184,7 +184,7 @@ class CylcTimeParser(object):
                          context_start_point=None,
                          context_end_point=None):
         """Parse an expression in abbrev. or full ISO recurrence format."""
-        expression, exclusion = parse_exclusion(expression)
+        expression, exclusions = parse_exclusion(expression)
         if context_start_point is None:
             context_start_point = self.context_start_point
         if context_end_point is None:
@@ -193,6 +193,7 @@ class CylcTimeParser(object):
             result = rec_object.search(expression)
             if not result:
                 continue
+            
             props = {}
             repetitions = result.groupdict().get("reps")
             if repetitions is not None:
@@ -216,13 +217,19 @@ class CylcTimeParser(object):
                 raise CylcMissingFinalCyclePointError(
                     "This suite requires a final cycle point."
                 )
+                
             exclusion_point = None
-            if exclusion:
-                exclusion_point, excl_off = self._get_point_from_expression(
-                    exclusion, None, is_required=False, allow_truncated=False
-                )
-                if excl_off:
-                    exclusion_point += excl_off
+            exclusion_points = []
+            # Convert the exclusion strings to ISO8601 points
+            if exclusions is not None:
+                for exclusion in exclusions:
+                    exclusion_point, excl_off = self._get_point_from_expression(
+                        exclusion, None, is_required=False, allow_truncated=False
+                    )
+                    if excl_off:
+                        exclusion_point += excl_off
+                    exclusion_points.append(exclusion_point)
+                    
             intv = result.groupdict().get("intv")
             intv_context_truncated_point = None
             if start_point is not None and start_point.truncated:
@@ -265,7 +272,7 @@ class CylcTimeParser(object):
                 start_point=start_point,
                 duration=interval,
                 end_point=end_point
-            ), exclusion_point
+            ), exclusion_points
 
         raise CylcTimeSyntaxError("Could not parse %s" % expression)
 
@@ -313,8 +320,10 @@ class CylcTimeParser(object):
                 min_entry = point
         return min_entry
 
+
     def _get_point_from_expression(self, expr, context, is_required=False,
                                    allow_truncated=False):
+        """Gets a TimePoint from an expression"""
         if expr is None:
             if is_required and allow_truncated:
                 if context is None:
