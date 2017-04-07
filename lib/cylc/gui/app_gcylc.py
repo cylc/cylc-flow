@@ -1144,7 +1144,7 @@ been defined for this suite""").inform()
     def startsuite(self, bt, window, coldstart_rb, warmstart_rb, restart_rb,
                    entry_point_string, stop_point_string_entry,
                    checkpoint_entry, optgroups, mode_live_rb, mode_sim_rb,
-                   mode_dum_rb, hold_cb, holdpoint_entry):
+                   mode_dum_rb, mode_dum_loc_rb, hold_cb, holdpoint_entry):
         """Call back for "Run Suite" dialog box.
 
         Build "cylc run/restart" command from dialog box options and entries,
@@ -1171,6 +1171,8 @@ been defined for this suite""").inform()
             command += ' --mode=simulation'
         elif mode_dum_rb.get_active():
             command += ' --mode=dummy'
+        elif mode_dum_loc_rb.get_active():
+            command += ' --mode=dummy-local'
 
         if method == 'restart' and checkpoint_entry.get_text():
             command += ' --checkpoint=' + checkpoint_entry.get_text()
@@ -1984,10 +1986,12 @@ shown here in the state they were in at the time of triggering.''')
         box.pack_start(gtk.Label('Mode'), True)
         mode_live_rb = gtk.RadioButton(None, "live")
         box.pack_start(mode_live_rb, True)
-        mode_sim_rb = gtk.RadioButton(mode_live_rb, "simulation")
-        box.pack_start(mode_sim_rb, True)
         mode_dum_rb = gtk.RadioButton(mode_live_rb, "dummy")
         box.pack_start(mode_dum_rb, True)
+        mode_dum_loc_rb = gtk.RadioButton(mode_live_rb, "dummy-local")
+        box.pack_start(mode_dum_loc_rb, True)
+        mode_sim_rb = gtk.RadioButton(mode_live_rb, "simulation")
+        box.pack_start(mode_sim_rb, True)
 
         mode_live_rb.set_active(True)
         vbox.pack_start(box)
@@ -2085,7 +2089,8 @@ shown here in the state they were in at the time of triggering.''')
                              warmstart_rb, restart_rb, point_string_entry,
                              stop_point_string_entry, checkpoint_entry,
                              optgroups, mode_live_rb, mode_sim_rb,
-                             mode_dum_rb, hold_cb, holdpoint_entry)
+                             mode_dum_rb, mode_dum_loc_rb, hold_cb,
+                             holdpoint_entry)
 
         help_run_button = gtk.Button("_Help Run")
         help_run_button.connect("clicked", self.command_help, "control", "run")
