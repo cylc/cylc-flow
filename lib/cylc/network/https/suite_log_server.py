@@ -15,13 +15,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-import os
-from cylc.network.https.base_server import BaseCommsServer
-from cylc.network import check_access_priv
-from cylc.suite_logging import SuiteLog
+"""Server-side suite log interface."""
 
 import cherrypy
+import os
+
+from cylc.network.https.base_server import BaseCommsServer
+from cylc.network import check_access_priv
 
 
 class SuiteLogServer(BaseCommsServer):
@@ -30,7 +30,7 @@ class SuiteLogServer(BaseCommsServer):
     def __init__(self, log):
         super(SuiteLogServer, self).__init__()
         self.log = log
-        self.err_file = log.get_log_path(SuiteLog.ERR)
+        self.err_file = log.get_log_path(log.ERR)
 
     def _get_err_has_changed(self, prev_err_size):
         """Return True if the file has changed size compared to prev_size."""
@@ -42,9 +42,15 @@ class SuiteLogServer(BaseCommsServer):
         try:
             size = os.path.getsize(self.err_file)
         except (IOError, OSError) as exc:
-            self.log.warn("Could not read suite err log file: %s" % exc)
+            self._warn_read_err(exc)
             return 0
         return size
+
+    def _warn_read_err(self, exc):
+        """Issue warning on failure to read/stat the ERR log file."""
+        my_log = self.log.get_log(self.log.LOG)
+        if my_log is not None:
+            my_log.warning("Could not read suite err log file: %s" % exc)
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
@@ -57,13 +63,13 @@ class SuiteLogServer(BaseCommsServer):
         if not self._get_err_has_changed(prev_size):
             return [], prev_size
         try:
-            f = open(self.err_file, "r")
-            f.seek(prev_size)
-            new_content = f.read()
-            f.close()
+            handle = open(self.err_file, "r")
+            handle.seek(prev_size)
+            new_content = handle.read()
+            handle.close()
             size = self._get_err_size()
-        except (IOError, OSError) as e:
-            self.log.warning("Could not read suite err log file: %s" % e)
+        except (IOError, OSError) as exc:
+            self._warn_read_err(exc)
             return "", prev_size
         new_content_lines = new_content.splitlines()[-max_lines:]
         return "\n".join(new_content_lines), size

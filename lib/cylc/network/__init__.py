@@ -132,7 +132,7 @@ def check_access_priv(server_obj, required_privilege_level):
             priv_level, required_privilege_level,
             user, host, prog_name, uuid
         )
-        getLogger("log").warn(err)
+        getLogger("log").warning(err)
         # Raise an exception to be sent back to the client.
         raise Exception(err)
 

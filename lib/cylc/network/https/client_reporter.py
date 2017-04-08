@@ -110,14 +110,14 @@ class CommsClientReporter(object):
             (auth_user, prog_name, user, host, uuid,
              priv_level) = get_client_info()
         except Exception:
-            LOG.warn(
+            LOG.warning(
                 self.__class__.LOG_CONNECT_DENIED_TMPL % (
                     "unknown", "unknown", "unknown", "unknown")
             )
             return
         connection_denied = get_client_connection_denied()
         if connection_denied:
-            LOG.warn(
+            LOG.warning(
                 self.__class__.LOG_CONNECT_DENIED_TMPL % (
                     user, host, prog_name, uuid)
             )
