@@ -251,14 +251,36 @@ class ScanApp(object):
             path = pth[0]
 
             iter_ = treemodel.get_iter(path)
+
             host, owner, suite = treemodel.get(
                 iter_, self.HOST_COLUMN, self.OWNER_COLUMN, self.SUITE_COLUMN)
-            if suite is None:
+            if suite is not None:
+                suite_keys.append((host, owner, suite))
+
+            elif suite is None:
                 # On an expanded cycle point row, so get from parent.
-                host, owner, suite = treemodel.get(
-                    treemodel.iter_parent(iter_),
-                    self.HOST_COLUMN, self.OWNER_COLUMN, self.SUITE_COLUMN)
-            suite_keys.append((host, owner, suite))
+                try:
+                    host, owner, suite = treemodel.get(
+                        treemodel.iter_parent(iter_),
+                        self.HOST_COLUMN, self.OWNER_COLUMN, self.SUITE_COLUMN)
+                    suite_keys.append((host, owner, suite))
+
+                except:
+                    # Now iterate over the children instead.
+                    # We need to iterate over the children as there can be more
+                    # than one suite in a group of suites.
+                    # Get a TreeIter pointing to the first child of parent iter
+                    suite_iter = treemodel.iter_children(iter_)
+
+                    # Iterate over the children until you get to end
+                    while suite_iter is not None:
+                        host, owner, suite = treemodel.get(suite_iter,
+                                                           self.HOST_COLUMN,
+                                                           self.OWNER_COLUMN,
+                                                           self.SUITE_COLUMN)
+                        suite_keys.append((host, owner, suite))
+                        # Advance to the next pointer in the treemodel
+                        suite_iter = treemodel.iter_next(suite_iter)
 
         if event.type == gtk.gdk._2BUTTON_PRESS:
             if suite_keys:
