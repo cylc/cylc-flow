@@ -32,19 +32,21 @@ to show what they look like live in gcylc."""
     [[m_x]]
         inherit = FAMILY
         title = "this task succeeds on the second try "
-        retry delays = PT18S
         script = """
 sleep 10
 if [[ $CYLC_TASK_TRY_NUMBER < 2 ]]; then
     cylc task message -p WARNING ABORTING
     exit 1
 fi"""
+        [[[job]]]
+            execution retry delays = PT18S
     [[bad]]
         title = "A task that tries and fails twice"
         description = """Failed instances of this task are removed from the suite
 at the end of each cycle by a suicide trigger."""
-        retry delays = PT12S
         script = "sleep 10; exit 1"
+        [[[job]]]
+            execution retry delays = PT12S
     [[bad2]]
         title = "A task that fails to submit twice"
         [[[job]]]
@@ -59,7 +61,7 @@ submission method for the retry."""
             submission retry delays = PT18S
         [[[events]]]
             submission retry handler = change-my-job-sub-method.sh
- 
+
 [visualization]
     use node color for labels = True
     [[node attributes]]

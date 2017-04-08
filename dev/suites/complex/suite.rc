@@ -14,7 +14,7 @@ title = "Complex Suite Demo"
 description = "This is a super-elaborate obfuscated version of a suite with no Jinja2 to condense it down."
 [cylc]
     UTC mode = True
-    [[event hooks]]
+    [[events]]
         timeout handler = rose suite-hook --mail --shutdown
         timeout = P1D                       # 1 day.
 [scheduling]
@@ -22,7 +22,7 @@ description = "This is a super-elaborate obfuscated version of a suite with no J
     final cycle point = 20150220T00
     runahead limit = PT6H
     [[special tasks]]
-        clock-triggered = \
+        clock-trigger = \
                           long_start_00(PT2H40M), brief_start_00(PT6H15M), \
                           long_start_06(PT2H40M), brief_start_06(PT6H15M), \
                           long_start_12(PT2H40M), brief_start_12(PT6H15M), \
@@ -1137,8 +1137,6 @@ description = "This is a super-elaborate obfuscated version of a suite with no J
         inherit = LONG_OBS_PROCESS_LOOK_AT, OBS_PARALLEL, RETRY_TASK
     [[brief_observations_db_stuff_wagtail]]
         inherit = BRIEF_OBS_DB_STUFF, OBS_SHARED
-    [[brief_observations_db_stuff_wagtail]]
-        inherit = BRIEF_OBS_DB_STUFF, OBS_SHARED
     [[long_observations_db_stuff_wagtail]]
         inherit = LONG_OBS_DB_STUFF, OBS_SHARED
     [[brief_observations_process_screen]]
@@ -1216,10 +1214,8 @@ description = "This is a super-elaborate obfuscated version of a suite with no J
         inherit = BRIEF, HPC, BRIEF_HPC, CORETYPE_SHARED
     [[long_local_preflight_checks, long_local]]
         inherit = LONG, HPC, LONG_HPC, CORETYPE_SHARED
-        inherit = LONG, HPC, LONG_HPC
     [[long_bigleftright]]
         inherit = LONG, HPC, LONG_HPC, CORETYPE_SHARED
-        inherit = LONG, HPC, LONG_HPC
     [[long_happyland_ingest]]
         inherit = LONG, HPC, LONG_HPC, CORETYPE_SHARED
     [[long_bogus_listing]]
@@ -1342,8 +1338,6 @@ description = "This is a super-elaborate obfuscated version of a suite with no J
         inherit = LONG_FORECAST_TRIGGER, LONG_HPC
     [[long_forecast_tD]]
         inherit = LONG_FORECAST_TRIGGER, LONG_HPC
-    [[long_forecast_tD]]
-        inherit = LONG_FORECAST_TRIGGER, LONG_HPC
     [[long_forecast_tE]]
         inherit = LONG_FORECAST_TRIGGER, LONG_HPC
     [[long_forecast_tF]]
@@ -1414,14 +1408,6 @@ description = "This is a super-elaborate obfuscated version of a suite with no J
         inherit = LONG_FORECAST_TRIGGER, LONG_HPC
     [[long_forecast_tZE]]
         inherit = LONG_FORECAST_TRIGGER, LONG_HPC
-    [[long_forecast_tL]]
-        inherit = LONG_FORECAST_TRIGGER, LONG_HPC
-    [[long_forecast_tZF]]
-        inherit = LONG_FORECAST_TRIGGER, LONG_HPC
-    [[long_forecast_tZG]]
-        inherit = LONG_FORECAST_TRIGGER, LONG_HPC
-    [[long_forecast_tZH]]
-        inherit = LONG_FORECAST_TRIGGER, LONG_HPC
     [[long_forecast_tN]]
         inherit = LONG_FORECAST_TRIGGER, LONG_HPC
     [[long_forecast_tZI]]
@@ -1465,8 +1451,6 @@ description = "This is a super-elaborate obfuscated version of a suite with no J
     [[long_forecast_subjob_tB]]
         inherit = LONG_SUBJOB
     [[long_forecast_subjob_tC]]
-        inherit = LONG_SUBJOB
-    [[long_forecast_subjob_tD]]
         inherit = LONG_SUBJOB
     [[long_forecast_subjob_tD]]
         inherit = LONG_SUBJOB
@@ -1520,13 +1504,7 @@ description = "This is a super-elaborate obfuscated version of a suite with no J
         inherit = LONG_SUBJOB
     [[long_forecast_subjob_tKF]]
         inherit = LONG_SUBJOB
-    [[long_forecast_subjob_tL]]
-        inherit = LONG_SUBJOB
     [[long_forecast_subjob_tZF]]
-        inherit = LONG_SUBJOB
-    [[long_forecast_subjob_tZG]]
-        inherit = LONG_SUBJOB
-    [[long_forecast_subjob_tZH]]
         inherit = LONG_SUBJOB
     [[long_forecast_subjob_tZA]]
         inherit = LONG_SUBJOB
@@ -1541,8 +1519,6 @@ description = "This is a super-elaborate obfuscated version of a suite with no J
     [[long_forecast_subjob_tZE]]
         inherit = LONG_SUBJOB
     [[long_forecast_subjob_tL]]
-        inherit = LONG_SUBJOB
-    [[long_forecast_subjob_tZF]]
         inherit = LONG_SUBJOB
     [[long_forecast_subjob_tZG]]
         inherit = LONG_SUBJOB
@@ -3106,8 +3082,6 @@ description = "This is a super-elaborate obfuscated version of a suite with no J
             """
 [runtime]
     [[recover1, recover2, recover3]]
-        environment scripting = sleep 1
-[runtime]
     [[ENSEMBLE]]
     [[ENCOLD_START]]
         inherit = ENSEMBLE
@@ -4460,10 +4434,8 @@ description = "This is a super-elaborate obfuscated version of a suite with no J
         inherit = ENSEMBLE_THUNDERBIRDS_ARE_GO
     [[ensemble_local]]
         inherit = ENSEMBLE, HPC, ENSEMBLE_HPC, CORETYPE_SHARED
-        inherit = ENSEMBLE, HPC, ENSEMBLE_HPC
     [[ensemble_downscale]]
         inherit = ENSEMBLE, HPC, ENSEMBLE_HPC, CORETYPE_SHARED
-        inherit = ENSEMBLE, HPC, ENSEMBLE_HPC
     [[ensemble_subjob_hook]]
         inherit = ENSEMBLE, HPC, ENSEMBLE_HPC, CORETYPE_SHARED
 [scheduling]

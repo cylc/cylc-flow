@@ -3,7 +3,7 @@ description = """
 Skip a daily post-processing workflow if the 'copy' task has expired."""
 
 [cylc]
-   cycle point format = %Y-%m-%dT%H
+    cycle point format = %Y-%m-%dT%H
 [scheduling]
     initial cycle point = now
     final cycle point = +P3D
@@ -16,5 +16,6 @@ Skip a daily post-processing workflow if the 'copy' task has expired."""
     [[dependencies]]
         [[[P1D]]]
             graph = """
-        model[-P1D] => model => copy => proc
-              copy:expired => !proc"""
+                model[-P1D] => model => copy => proc
+                copy:expired => !proc
+            """
