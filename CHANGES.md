@@ -4,6 +4,56 @@ For the full list of all changes for each release see [closed
 milestones](https://github.com/cylc/cylc/milestones?state=closed).
 
 -------------------------------------------------------------------------------
+## __cylc-7.3.0 (2017-04-10)__
+
+New Suite Design Guide, plus other enhancements and fixes.
+
+### Highlighted Changes
+
+[#2211](https://github.com/cylc/cylc/pull/2211): New comprehensive Suite Design
+Guide document to replace the outdated Suite Design section in the User Guide.
+
+[#2232](https://github.com/cylc/cylc/pull/2232): `cylc gscan` GUI: stop, hold,
+and release suites or groups of suites.
+
+[#2220](https://github.com/cylc/cylc/pull/2220): dummy and simulation mode improvements:
+ * new `dummy-local` mode runs dummy tasks as local background jobs (allows
+   dummy running other-site suites).
+ * proportional run length, if tasks configure an `execution time limit`
+ * single common `[simulation]` configuration section for dummy, dummy-local, and
+   simulation modes.
+ * dummy or simulated tasks can be made to fail at specific cycle points, and
+   for first-try only, or all tries.
+ * custom message outputs now work in simulation mode as well as the dummy modes.
+
+[#2218](https://github.com/cylc/cylc/pull/2218): fix error trapping in job
+scripts (degraded since job file refactoring in 7.1.1)
+
+[#2215](https://github.com/cylc/cylc/pull/2215): SGE batch system support -
+fixed formatting of directives with a space in the name.
+
+### Other Notable Changes
+
+[#2233](https://github.com/cylc/cylc/pull/2233): Upgraded the built-in example
+suites to cylc-7 syntax.
+
+[#2221](https://github.com/cylc/cylc/pull/2221): `cylc gui` GUI dot view - maintain
+user selection during update.
+
+[#2217](https://github.com/cylc/cylc/pull/2217): `cylc gscan` GUI - fix
+tracebacks emitted during suite initialization.
+
+[#2219](https://github.com/cylc/cylc/pull/2219): add `user@host` option to
+`cylc monitor` an `cylc gui`. Allows suite selection at startup using `cylc
+scan` output.
+
+[#2222](https://github.com/cylc/cylc/pull/2222): `cylc gui` GUI graph view -
+fixed right-click "view prerequisites" sub-menu.
+
+[#2213](https://github.com/cylc/cylc/pull/2213): Record family inheritance
+structure in the run database.
+
+-------------------------------------------------------------------------------
 ## __cylc-7.2.1 (2017-03-23)__
 
 Minor enhancements and fixes.
