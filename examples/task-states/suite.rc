@@ -3,6 +3,10 @@ title = "gcylc task state color theme demo"
 description = """Generate a lot of possible task states,
 to show what they look like live in gcylc."""
 
+[cylc]
+    UTC mode = True
+    cycle point format = %Y-%m-%dT%HZ
+
 [scheduling]
     initial cycle point = 20120808T00
     final cycle point = 20120812T00
