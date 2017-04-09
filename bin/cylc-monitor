@@ -49,7 +49,11 @@ class SuiteMonitor(object):
         self.parser = COP(
             """cylc [info] monitor [OPTIONS] ARGS
 
-A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
+A terminal-based live suite monitor.  Exit with 'Ctrl-C'.
+
+The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
+  cylc monitor $(cylc scan | grep <suite_name>)
+""",
             argdoc=[('REG', 'Suite name'),
                     ('[USER_AT_HOST]', 'user@host:port, shorthand for --user, '
                      '--host & --port.')], comms=True, noforce=True)

@@ -16,10 +16,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc gui [OPTIONS] [REG]
-gcylc [OPTIONS] [REG]
+"""cylc gui [OPTIONS] [REG] [USER_AT_HOST]
+gcylc [OPTIONS] [REG] [USER_AT_HOST]
 
 This is the cylc Graphical User Interface.
+
+The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
+  cylc gui $(cylc scan | grep <suite_name>)
 
 Local suites can be opened and switched between from within gcylc. To connect
 to running remote suites (whose passphrase you have installed) you must
