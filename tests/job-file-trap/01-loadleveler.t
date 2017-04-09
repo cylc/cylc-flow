@@ -22,15 +22,15 @@
 CYLC_TEST_IS_GENERIC=false
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-RC_PREV="[test battery][batch systems][loadleveler]"
-export CYLC_TEST_HOST=$( \
-    cylc get-global-config -i "${RC_PREV}host" 2>'/dev/null')
-if [[ -z $CYLC_TEST_HOST ]]; then
+RC_PREF="[test battery][batch systems][loadleveler]"
+export CYLC_TEST_BATCH_TASK_HOST=$( \
+    cylc get-global-config -i "${RC_PREF}host" 2>'/dev/null')
+if [[ -z $CYLC_TEST_BATCH_TASK_HOST ]]; then
     skip_all '"[test battery][batch systems][loadleveler]host": not defined'
 fi
 set_test_number 6
 export CYLC_TEST_DIRECTIVES=$( \
-    cylc get-global-config -i "${RC_PREV}[directives]" 2>'/dev/null')
+    cylc get-global-config -i "${RC_PREF}[directives]" 2>'/dev/null')
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
@@ -38,18 +38,19 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
 run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
+sleep 5
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-t1.1
 T1_JOB_FILE=$SUITE_RUN_DIR/log/job/1/t1/01/job
 exists_ok $T1_JOB_FILE
-run_fail $TEST_NAME grep -q -e '^# TRAP VACATION SIGNALS:' $T1_JOB_FILE
+run_fail $TEST_NAME grep -q -e '^CYLC_VACATION_SIGNALS' $T1_JOB_FILE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-t2.1
 T2_JOB_FILE=$SUITE_RUN_DIR/log/job/1/t2/01/job
 exists_ok $T2_JOB_FILE
-grep_ok '^# TRAP VACATION SIGNALS:' $T2_JOB_FILE
+grep_ok '^CYLC_VACATION_SIGNALS' $T2_JOB_FILE
 #-------------------------------------------------------------------------------
-if [[ $CYLC_TEST_HOST != 'localhost' ]]; then
+if [[ $CYLC_TEST_BATCH_TASK_HOST != 'localhost' ]]; then
     purge_suite_remote "${CYLC_TEST_BATCH_TASK_HOST}" "${SUITE_NAME}"
 fi
 purge_suite $SUITE_NAME
