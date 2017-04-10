@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import time
+import cherrypy
+from time import time
 
 import cylc.flags
 from cylc.task_id import TaskID
@@ -24,13 +25,9 @@ from cylc.wallclock import TIME_ZONE_LOCAL_INFO, TIME_ZONE_UTC_INFO
 from cylc.config import SuiteConfig
 from cylc.network.https.base_server import BaseCommsServer
 from cylc.network.https.suite_state_client import (
-    get_suite_status_string, SuiteStillInitialisingError,
-    extract_group_state
-)
+    get_suite_status_string, extract_group_state)
 from cylc.network import check_access_priv
 from cylc.task_state import TASK_STATUS_RUNAHEAD
-
-import cherrypy
 
 
 class StateSummaryServer(BaseCommsServer):
@@ -52,8 +49,7 @@ class StateSummaryServer(BaseCommsServer):
         self.global_summary = {}
         self.family_summary = {}
         self.run_mode = run_mode
-        self.first_update_completed = False
-        self._summary_update_time = None
+        self.summary_update_time = None
 
         self.state_count_totals = {}
         self.state_count_cycles = {}
@@ -61,6 +57,7 @@ class StateSummaryServer(BaseCommsServer):
     def update(self, tasks, tasks_rh, min_point, max_point, max_point_rh,
                paused, will_pause_at, stopping, will_stop_at, ns_defn_order,
                reloading):
+        self.summary_update_time = time()
         global_summary = {}
         family_summary = {}
 
@@ -136,7 +133,7 @@ class StateSummaryServer(BaseCommsServer):
             global_summary['daemon time zone info'] = TIME_ZONE_UTC_INFO
         else:
             global_summary['daemon time zone info'] = TIME_ZONE_LOCAL_INFO
-        global_summary['last_updated'] = time.time()
+        global_summary['last_updated'] = self.summary_update_time
         global_summary['run_mode'] = self.run_mode
         global_summary['states'] = all_states
         global_summary['namespace definition order'] = ns_defn_order
@@ -147,13 +144,10 @@ class StateSummaryServer(BaseCommsServer):
         global_summary['status_string'] = get_suite_status_string(
             paused, stopping, will_pause_at, will_stop_at)
 
-        self._summary_update_time = time.time()
-
         # Replace the originals (atomic update, for access from other threads).
         self.task_summary = task_summary
         self.global_summary = global_summary
         self.family_summary = family_summary
-        self.first_update_completed = True
         self.state_count_totals = state_count_totals
         self.state_count_cycles = state_count_cycles
 
@@ -196,8 +190,6 @@ class StateSummaryServer(BaseCommsServer):
         """Return the global, task, and family summary data structures."""
         check_access_priv(self, 'full-read')
         self.report('get_state_summary')
-        if not self.first_update_completed:
-            raise SuiteStillInitialisingError()
         return (self.global_summary, self.task_summary, self.family_summary)
 
     @cherrypy.expose
@@ -206,9 +198,7 @@ class StateSummaryServer(BaseCommsServer):
         """Return the last time the summaries were changed (Unix time)."""
         check_access_priv(self, 'state-totals')
         self.report('get_state_summary_update_time')
-        if not self.first_update_completed:
-            raise SuiteStillInitialisingError()
-        return self._summary_update_time
+        return self.summary_update_time
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
@@ -216,8 +206,6 @@ class StateSummaryServer(BaseCommsServer):
         """Returns a dictionary containing lists of tasks by state in the form:
         {state: [(most_recent_time_string, task_name, point_string), ...]}."""
         check_access_priv(self, 'state-totals')
-        if not self.first_update_completed:
-            raise SuiteStillInitialisingError()
 
         # Get tasks.
         ret = {}

@@ -30,7 +30,7 @@ from cylc.dump import get_stop_state_summary
 from cylc.gui.cat_state import cat_state
 from cylc.network import ConnectionError, ConnectionDeniedError
 from cylc.network.suite_state_client import (
-    StateSummaryClient, SuiteStillInitialisingError, get_suite_status_string,
+    StateSummaryClient, get_suite_status_string,
     SUITE_STATUS_NOT_CONNECTED, SUITE_STATUS_CONNECTED,
     SUITE_STATUS_INITIALISING, SUITE_STATUS_STOPPED, SUITE_STATUS_STOPPING
 )
@@ -136,7 +136,7 @@ class Updater(threading.Thread):
         self.cfg = app.cfg
         self.info_bar = app.info_bar
 
-        self._summary_update_time = None
+        self.summary_update_time = None
         self.err_log_lines = []
         self._err_num_log_lines = 10
         self.err_log_size = 0
@@ -195,7 +195,16 @@ class Updater(threading.Thread):
         try:
             self.daemon_version = self.suite_info_client.get_info(
                 'get_cylc_version')
-        except (ConnectionError) as exc:
+        except ConnectionDeniedError as exc:
+            if cylc.flags.debug:
+                traceback.print_exc()
+            if not self.connect_fail_warned:
+                self.connect_fail_warned = True
+                gobject.idle_add(
+                    self.warn,
+                    "ERROR: %s\n\nIncorrect suite passphrase?" % exc)
+            return
+        except ConnectionError as exc:
             # Failed to (re)connect
             # Suite not running, starting up or just stopped.
             if cylc.flags.debug:
@@ -219,15 +228,6 @@ class Updater(threading.Thread):
             gobject.idle_add(
                 self.info_bar.set_update_time,
                 update_time_str, self.info_bar.DISCONNECTED_TEXT)
-            return
-        except ConnectionDeniedError as exc:
-            if cylc.flags.debug:
-                traceback.print_exc()
-            if not self.connect_fail_warned:
-                self.connect_fail_warned = True
-                gobject.idle_add(
-                    self.warn,
-                    "ERROR: %s\n\nIncorrect suite passphrase?" % exc)
             return
         except Exception as exc:
             if cylc.flags.debug:
@@ -291,15 +291,14 @@ class Updater(threading.Thread):
 
     def retrieve_summary_update_time(self):
         """Retrieve suite summary update time; return True if changed."""
-        summary_update_time = float(
-            self.state_summary_client.get_suite_state_summary_update_time()
-        )
-        if (summary_update_time is None or
-                self._summary_update_time is None or
-                summary_update_time != self._summary_update_time):
-            self._summary_update_time = summary_update_time
-            return True
-        return False
+        prev_summary_update_time = self.summary_update_time
+        self.summary_update_time = (
+            self.state_summary_client.get_suite_state_summary_update_time())
+        if self.summary_update_time is None:
+            self.set_status(SUITE_STATUS_INITIALISING)
+        else:
+            self.summary_update_time = float(self.summary_update_time)
+        return prev_summary_update_time != self.summary_update_time
 
     def retrieve_state_summaries(self):
         """Retrieve suite summary."""
@@ -341,7 +340,7 @@ class Updater(threading.Thread):
         self.connected = False
         self.set_status(SUITE_STATUS_STOPPED)
         self.connect_schd.start()
-        self._summary_update_time = None
+        self.summary_update_time = None
         self.state_summary = {}
         self.full_state_summary = {}
         self.fam_state_summary = {}
@@ -401,18 +400,8 @@ class Updater(threading.Thread):
         try:
             err_log_changed = self.retrieve_err_log()
             summaries_changed = self.retrieve_summary_update_time()
-            if summaries_changed:
+            if self.summary_update_time is not None:
                 self.retrieve_state_summaries()
-        except SuiteStillInitialisingError:
-            # Connection achieved but state summary data not available yet.
-            if cylc.flags.debug:
-                print >> sys.stderr, "  connected, suite initializing ..."
-            self.set_status(SUITE_STATUS_INITIALISING)
-            if self.info_bar.prog_bar_can_start():
-                gobject.idle_add(
-                    self.info_bar.prog_bar_start, SUITE_STATUS_INITIALISING)
-                self.info_bar.set_state([])
-            return False
         except Exception as exc:
             if self.status == SUITE_STATUS_STOPPING:
                 # Expected stop: prevent the reconnection warning dialog.
@@ -427,23 +416,17 @@ class Updater(threading.Thread):
         else:
             # Got suite data.
             self.version_mismatch_warned = False
-            if (self.status == SUITE_STATUS_STOPPING and
-                    self.info_bar.prog_bar_can_start()):
-                gobject.idle_add(
-                    self.info_bar.prog_bar_start, self.status)
-            if (self.is_reloading and
-                    self.info_bar.prog_bar_can_start()):
-                gobject.idle_add(
-                    self.info_bar.prog_bar_start, "reloading")
-            if (self.info_bar.prog_bar_active() and
-                    not self.is_reloading and
-                    self.status not in [SUITE_STATUS_STOPPING,
-                                        SUITE_STATUS_INITIALISING]):
+            status_str = None
+            if self.status in [SUITE_STATUS_INITIALISING,
+                               SUITE_STATUS_STOPPING]:
+                status_str = self.status
+            elif self.is_reloading:
+                status_str = "reloading"
+            if status_str is None:
                 gobject.idle_add(self.info_bar.prog_bar_stop)
-            if summaries_changed or err_log_changed:
-                return True
-            else:
-                return False
+            elif self.info_bar.prog_bar_can_start():
+                gobject.idle_add(self.info_bar.prog_bar_start, status_str)
+            return summaries_changed or err_log_changed
 
     def filter_by_name(self, states):
         """Filter by name string."""
@@ -509,8 +492,7 @@ class Updater(threading.Thread):
         self.info_bar.set_mode(self.mode)
         self.info_bar.set_update_time(self.update_time_str)
         self.info_bar.set_status(self.status)
-        self.info_bar.set_log("\n".join(self.err_log_lines),
-                              self.err_log_size)
+        self.info_bar.set_log("\n".join(self.err_log_lines), self.err_log_size)
         return False
 
     def stop(self):

@@ -19,7 +19,7 @@
 
 import re
 import threading
-import time
+from time import sleep, time
 
 import gtk
 import gobject
@@ -526,8 +526,7 @@ class ScanApp(object):
         suite_update_time = model.get_value(iter_, self.UPDATE_TIME_COLUMN)
         time_point = timepoint_from_epoch(suite_update_time)
         time_point.set_time_zone_to_local()
-        current_time = time.time()
-        current_point = timepoint_from_epoch(current_time)
+        current_point = timepoint_from_epoch(time())
         if str(time_point).split("T")[0] == str(current_point).split("T")[0]:
             time_string = str(time_point).split("T")[1]
         else:
@@ -635,7 +634,7 @@ class ScanAppUpdater(threading.Thread):
 
     def clear_warnings(self, host, owner, suite):
         """Marks all presently issued warnings for a suite as read."""
-        self.warning_times[(host, owner, suite)] = time.time()
+        self.warning_times[(host, owner, suite)] = time()
 
     def get_last_n_tasks(self, host, owner, suite, task_state, point_string):
         """Returns a list of the last 'n' tasks with the provided state for
@@ -681,10 +680,10 @@ class ScanAppUpdater(threading.Thread):
         while not self.quit:
             time_for_update = (
                 self.last_update_time is None or
-                time.time() >= self.last_update_time + self.poll_interval
+                time() >= self.last_update_time + self.poll_interval
             )
             if not self._should_force_update and not time_for_update:
-                time.sleep(1)
+                sleep(1)
                 continue
             if self._should_force_update:
                 self._should_force_update = False
@@ -693,10 +692,10 @@ class ScanAppUpdater(threading.Thread):
             self.suite_info_map = update_suites_info(
                 self.hosts, self.comms_timeout, self.owner_pattern,
                 self.name_pattern, self.suite_info_map)
-            self.last_update_time = time.time()
+            self.last_update_time = time()
             gobject.idle_add(self.window.set_title, title)
             gobject.idle_add(self.update)
-            time.sleep(1)
+            sleep(1)
 
     def set_hosts(self, new_hosts):
         """Set new hosts."""
@@ -714,8 +713,9 @@ class ScanAppUpdater(threading.Thread):
         group_iters = {}
         for key, suite_info in sorted(self.suite_info_map.items()):
             host, owner, suite = key
-            suite_updated_time = suite_info.get(
-                KEY_UPDATE_TIME, int(time.time()))
+            suite_updated_time = suite_info.get(KEY_UPDATE_TIME)
+            if suite_updated_time is None:
+                suite_updated_time = int(time())
             title = suite_info.get(KEY_TITLE)
             group = suite_info.get(KEY_GROUP)
 
