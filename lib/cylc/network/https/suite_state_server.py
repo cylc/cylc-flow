@@ -216,6 +216,8 @@ class StateSummaryServer(BaseCommsServer):
         """Returns a dictionary containing lists of tasks by state in the form:
         {state: [(most_recent_time_string, task_name, point_string), ...]}."""
         check_access_priv(self, 'state-totals')
+        if not self.first_update_completed:
+            raise SuiteStillInitialisingError()
 
         # Get tasks.
         ret = {}
