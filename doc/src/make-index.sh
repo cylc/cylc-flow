@@ -92,7 +92,7 @@ __END__
 fi
 
 if [[ -f $CUG_HTML_MULTI/cug-html.html ]]; then
-  cp -r $CUG_HTML_SINGLE $OUT/html/multi
+  cp -r $CUG_HTML_MULTI $OUT/html/multi
   cat >> $INDEX <<__END__
   <li><a href="html/multi/cug-html.html">HTML (multi page)</a></li>
 __END__
