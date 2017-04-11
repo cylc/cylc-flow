@@ -23,14 +23,12 @@
 import cherrypy
 
 from cylc.config import SuiteConfig
-import cylc.flags
 from cylc.network import (
     KEY_DESCRIPTION, KEY_GROUP, KEY_NAME, KEY_OWNER, KEY_STATES,
     KEY_TASKS_BY_STATE, KEY_TITLE, KEY_UPDATE_TIME)
 from cylc.network.https.base_server import BaseCommsServer
 from cylc.network.https.suite_state_server import StateSummaryServer
 from cylc.network import access_priv_ok
-from cylc.network.https.suite_state_client import SuiteStillInitialisingError
 
 
 class SuiteIdServer(BaseCommsServer):
@@ -65,12 +63,7 @@ class SuiteIdServer(BaseCommsServer):
             result[KEY_GROUP] = config.cfg[KEY_GROUP]
         if access_priv_ok(self, "state-totals"):
             summary_server = StateSummaryServer.get_inst()
-            try:
-                result[KEY_STATES] = summary_server.get_state_totals()
-                result[KEY_TASKS_BY_STATE] = (
-                    summary_server.get_tasks_by_state())
-                result[KEY_UPDATE_TIME] = (
-                    summary_server.get_summary_update_time())
-            except SuiteStillInitialisingError:
-                pass
+            result[KEY_UPDATE_TIME] = summary_server.get_summary_update_time()
+            result[KEY_STATES] = summary_server.get_state_totals()
+            result[KEY_TASKS_BY_STATE] = summary_server.get_tasks_by_state()
         return result

@@ -69,16 +69,6 @@ def get_suite_status_string(paused, stopping, will_pause_at, will_stop_at):
         return SUITE_STATUS_RUNNING
 
 
-class SuiteStillInitialisingError(Exception):
-    """Exception raised if a summary is requested before the first update.
-
-    This can happen if client connects during start-up for large suites.
-
-    """
-    def __str__(self):
-        return "Suite initializing..."
-
-
 class StateSummaryClient(BaseCommsClient):
     """Client-side suite state summary interface."""
 

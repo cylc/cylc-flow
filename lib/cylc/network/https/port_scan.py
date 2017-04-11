@@ -26,7 +26,6 @@ from uuid import uuid4
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
 from cylc.network import ConnectionError, ConnectionTimeout
-from cylc.network.https.suite_state_client import SuiteStillInitialisingError
 from cylc.network.https.suite_identifier_client import (
     SuiteIdClientAnon, SuiteIdClient)
 from cylc.suite_srv_files_mgr import (
@@ -60,7 +59,7 @@ def _scan1_impl(conn, timeout, my_uuid):
             result = client.identify()
         except ConnectionTimeout as exc:
             conn.send((host, port, MSG_TIMEOUT))
-        except (ConnectionError, SuiteStillInitialisingError) as exc:
+        except ConnectionError as exc:
             conn.send((host, port, None))
         else:
             owner = result.get('owner')
@@ -84,11 +83,6 @@ def _scan1_impl(conn, timeout, my_uuid):
                             my_uuid=my_uuid, timeout=timeout)
                         try:
                             result = client.identify()
-                        except SuiteStillInitialisingError as exc:
-                            if cylc.flags.debug:
-                                print >> sys.stderr, (
-                                    '    (connected with passphrase,' +
-                                    ' suite initialising)')
                         except ConnectionError as exc:
                             # Nope (private suite, wrong passphrase).
                             if cylc.flags.debug:
