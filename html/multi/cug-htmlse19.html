@@ -1,114 +1,50 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"  
   "http://www.w3.org/TR/html4/loose.dtd">  
 <html > 
-<head><title>Cylc Gscan Config File Reference</title> 
+<head><title>The gcylc Graph View</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"> 
 <meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2017-03-23 15:30:00"> 
+<meta name="date" content="2017-04-11 23:53:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-<!--l. 2--><div class="crosslinks"><p class="noindent">[<a 
+<!--l. 7079--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse20.html" >next</a>] [<a 
 href="cug-htmlse18.html" >prev</a>] [<a 
 href="cug-htmlse18.html#tailcug-htmlse18.html" >prev-tail</a>] [<a 
 href="#tailcug-htmlse19.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse19.html" >up</a>] </p></div>
-<!--l. 2--><p class="noindent" > <h3 id="D" class="sectionHead"><span class="titlemark"> <a href="#D">D</a>  <a 
- id="x20-528000D"></a>Cylc Gscan Config File Reference </span></h3> <div class="sectionTOCS">
-&#x00A0;<span class="subsectionToc" >D.1 <a 
-href="#x20-529000D.1">Top Level Items</a></span>
+<!--l. 7079--><p class="noindent" > <h3 id="F" class="sectionHead"><span class="titlemark"> <a href="#F">F</a>  <a 
+ id="x20-595000F"></a>The gcylc Graph View </span></h3> <div class="sectionTOCS">
 </div>
-<!--l. 7--><p class="noindent" >This section defines all legal items and values for the gscan config file which should be located in
-<span class="lstinline"><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">HOME</span><span 
-class="pcrr7t-">/.</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">gscan</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">rc</span></span>.
-<!--l. 11--><p class="noindent" >
-<!--l. 11--><p class="noindent" > <h4 id="D.1" class="subsectionHead"> <span class="titlemark"> <a href="#D.1"> D.1</a>  <a 
- id="x20-529000D.1"></a>Top Level Items </span></h4>
-<!--l. 14--><p class="noindent" >
-<!--l. 14--><p class="noindent" > <h4 id="D.1.1" class="subsubsectionHead"><span class="titlemark"> <a href="#D.1.1"> D.1.1</a>  <a 
- id="x20-530000D.1.1"></a>activate on startup </span></h4>  Set whether <span class="lstinline"><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">gpanel</span></span> will activate automatically when the gui is loaded or
-not.
+<!--l. 7082--><p class="noindent" >The graph view in the gcylc GUI shows the structure of the suite as it evolves. It can work well even for large suites,
+but be aware that the graphviz layout engine has to do a new global layout every time a task proxy
+appears in or disappears from the task pool. The following may help mitigate any jumping layout
+problems:
      <ul class="itemize1">
-     <li class="itemize"><span 
-class="cmti-10">type: </span>boolean (True or False)
+     <li class="itemize">The disconnect button can be used to temporarily prevent the graph from changing as the suite evolves.
      </li>
-     <li class="itemize"><span 
-class="cmti-10">legal values: </span>&#8220;True&#8221;, &#8220;False&#8221;
+     <li class="itemize">The greyed-out base nodes, which are only present to fill out the graph structure, can be toggled off
+     (but this will split the graph into disconnected sub-trees).
      </li>
-     <li class="itemize"><span 
-class="cmti-10">default: </span>&#8220;False&#8221;
+     <li class="itemize">Right-click on a task and choose the &#8220;Focus&#8221; option to restrict the graph display to that task&#8217;s cycle
+     point. Anything interesting happening in other cycle points will show up as disconnected rectangular
+     nodes to the right of the graph (and you can click on those to instantly refocus to their cycle points).
      </li>
-     <li class="itemize"><span 
-class="cmti-10">example: </span><span class="lstinline"><span 
-class="pcrr7t-">activate</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">on</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">startup</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">True</span></span></li></ul>
-<!--l. 27--><p class="noindent" >
-<!--l. 27--><p class="noindent" > <h4 id="D.1.2" class="subsubsectionHead"><span class="titlemark"> <a href="#D.1.2"> D.1.2</a>  <a 
- id="x20-531000D.1.2"></a>columns </span></h4>  Set the data fields displayed initially when the <span class="lstinline"><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">gscan</span></span> GUI starts. This can be changed later using
-the right click context menu. <br 
-class="newline" />Note that the order in which the fields are specified does not affect the order in which they are displayed.
-     <ul class="itemize1">
-     <li class="itemize"><span 
-class="cmti-10">type: </span>string (a list of one or more view names)
+     <li class="itemize">Task filtering is the ultimate quick route to focusing on just the tasks you&#8217;re interested in, but this will
+     destroy the graph structure.</li></ul>
                                                                                          
 
                                                                                          
-     </li>
-     <li class="itemize"><span 
-class="cmti-10">legal values: </span>&#8220;host&#8221;, &#8220;owner&#8221;, &#8220;status&#8221;, &#8220;suite&#8221;, &#8220;title&#8221;, &#8220;updated&#8221;
-     </li>
-     <li class="itemize"><span 
-class="cmti-10">default: </span>&#8220;status&#8221;, &#8220;suite&#8221;
-     </li>
-     <li class="itemize"><span 
-class="cmti-10">example: </span><span class="lstinline"><span 
-class="pcrr7t-">columns</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">suite</span><span 
-class="pcrr7t-">,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">title</span><span 
-class="pcrr7t-">,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">status</span></span></li></ul>
-                                                                                         
-
-                                                                                         
-                                                                                         
-
-                                                                                         
-<!--l. 7554--><div class="crosslinks"><p class="noindent">[<a 
+<!--l. 7104--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse20.html" >next</a>] [<a 
 href="cug-htmlse18.html" >prev</a>] [<a 
 href="cug-htmlse18.html#tailcug-htmlse18.html" >prev-tail</a>] [<a 
 href="cug-htmlse19.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse19.html" >up</a>] </p></div>
-<!--l. 7554--><p class="noindent" ><a 
- id="tailcug-htmlse19.html"></a>   
+<!--l. 7104--><p class="noindent" ><a 
+ id="tailcug-htmlse19.html"></a>  
 </body></html> 
