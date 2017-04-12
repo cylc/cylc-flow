@@ -4,14 +4,16 @@ title: a workflow engine
 ---
 
 **Cylc (*"silk"*) is a workflow engine for cycling systems** - it orchestrates
-complex distributed **suites** of interdependent **cycling tasks**.
+complex distributed **suites** of interdependent **cycling tasks** that may
+continue indefinitely (Cylc dynamically generates ongoing workflows).
+
 There are several reasons why tasks might need to be cycled:
 
- * In real time environmental forecasting systems, a new forecast may be
- initiated at regular intervals as new real time data comes in.
+ * In real time environmental forecasting systems, new forecasts are initiated
+   at regular intervals as new driving data comes in.
 
- * You may want to split single long model runs into many smaller runs, with
-   incremental processing of associated inputs and outputs.
+ * You may need to split long model runs into many smaller runs, with
+   associated processing tasks for each smaller run.
 
 Cylc was originally developed for operational environmental forecasting at
 [NIWA](http://www.niwa.co.nz) by [Dr Hilary
@@ -20,24 +22,24 @@ Source collaboration involving NIWA, [Met Office](http://www.metoffice.gov.uk),
 and [others](./users.html). It is [available under the GPL v3
 license](./license.html).
 
-{% include feature.html content="Suites are defined in a human-readable text
-format - so you can use standard software development power tools for suite
+{% include feature.html content="Suites are defined in a human-readable config
+file format - so you can use software development power tools for suite
 development (see <a
 href='./faq.html#how-do-i-version-control-my-suites'>here</a> for why this is a
 good thing)." %}
 
 {% include feature.html content="Configure scheduling with an efficient graph
-notation, and task runtime properties in an efficient inheritance hierarchy
-(to factor out all commonality)." %}
+description notation, and task runtime properties in an efficient inheritance
+hierarchy (to factor out all commonality)." %}
 
 {% include feature.html content="Cylc dynamically generates new workflow
 without being constrained by a global cycle loop. Cycles interleave
-naturally; suites flow around failed or delayed tasks; and they adapt to
+naturally, suites flow around failed or delayed tasks, and they adapt to
 insertion and removal of tasks." %}
 
 {% include feature.html content="Cylc has low admin overhead and a small
-security footprint, because there is no central server process to manage
-workflows for all users." %}
+security footprint, because - as a distributed system - there is no central
+server process to manage workflows for all users." %}
 
 {% include feature.html content="Plus <a href='features.html'>many other
 features</a> to support both clock-triggered real time and free-flow
