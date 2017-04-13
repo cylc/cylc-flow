@@ -38,6 +38,8 @@
             graph = baz
         [[[ R/P4!8 ]]]
             graph = ning
+        [[[ R/P4!(4,12) ]]]    # Multiple exclusion points
+            graph = quux
         [[[ R1/^ ]]]
             graph = nang
         [[[ R/+P1/P6!14 ]]]
@@ -67,3 +69,4 @@ touch typing
         wibble = "fillcolor=violet"
         wobble = "fillcolor=darkviolet"
         wubble = "fillcolor=mediumvioletred"
+        quux = "fillcolor=yellow"
