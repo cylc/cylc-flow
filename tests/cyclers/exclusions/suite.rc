@@ -23,6 +23,11 @@
         # Don't run at a datetime with an offset
         [[[ R/PT6H!20000101T05Z+PT1H ]]]
             graph = nip
+
+        # Don't run a multiple specific datetimes
+        [[[ PT5H!(20000101T05Z,20000102T05Z) ]]]
+            graph = quux
+
 [runtime]
     [[root]]
         script = echo success
