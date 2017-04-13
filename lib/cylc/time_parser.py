@@ -193,7 +193,7 @@ class CylcTimeParser(object):
             result = rec_object.search(expression)
             if not result:
                 continue
-            
+
             props = {}
             repetitions = result.groupdict().get("reps")
             if repetitions is not None:
@@ -217,19 +217,20 @@ class CylcTimeParser(object):
                 raise CylcMissingFinalCyclePointError(
                     "This suite requires a final cycle point."
                 )
-                
+
             exclusion_point = None
             exclusion_points = []
             # Convert the exclusion strings to ISO8601 points
             if exclusions is not None:
                 for exclusion in exclusions:
-                    exclusion_point, excl_off = self._get_point_from_expression(
-                        exclusion, None, is_required=False, allow_truncated=False
-                    )
+                    exclusion_point, excl_off = (
+                        self._get_point_from_expression(
+                            exclusion, None, is_required=False,
+                            allow_truncated=False))
                     if excl_off:
                         exclusion_point += excl_off
                     exclusion_points.append(exclusion_point)
-                    
+
             intv = result.groupdict().get("intv")
             intv_context_truncated_point = None
             if start_point is not None and start_point.truncated:
@@ -319,7 +320,6 @@ class CylcTimeParser(object):
             if cpoint == min(ptslist):
                 min_entry = point
         return min_entry
-
 
     def _get_point_from_expression(self, expr, context, is_required=False,
                                    allow_truncated=False):

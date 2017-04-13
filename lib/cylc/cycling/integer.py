@@ -245,7 +245,6 @@ class IntegerSequence(SequenceBase):
         might not be. If computed start and stop points are out of bounds,
         they will be set to None. Context is used only initially to define
         the sequence bounds."""
-        #import pdb
 
         # start context always exists
         self.p_context_start = IntegerPoint(p_context_start)
@@ -264,16 +263,15 @@ class IntegerSequence(SequenceBase):
         self.i_offset = IntegerInterval('P0')
 
         matched_recurrence = False
-        #pdb.set_trace()
         expression, excl_points = parse_exclusion(dep_section)
         # Create a list of multiple exclusion points, if there are any.
         if excl_points:
             self.exclusions = set()
             for excl in excl_points:
                 self.exclusions.add(get_point_from_expression(
-                                            excl,
-                                            None,
-                                            is_required=False))
+                    excl,
+                    None,
+                    is_required=False))
         else:
             self.exclusions = None
 
@@ -301,8 +299,7 @@ class IntegerSequence(SequenceBase):
         if not matched_recurrence:
             raise ValueError(
                 "ERROR, bad integer cycling format: %s" % expression)
-            
-        
+
         self.p_start = get_point_from_expression(
             start, self.p_context_start, is_required=start_required)
         self.p_stop = get_point_from_expression(
@@ -533,8 +530,6 @@ class IntegerSequence(SequenceBase):
 
     def __eq__(self, other):
         # Return True if other (sequence) is equal to self.
-        #import pdb
-        #pdb.set_trace()
         if self.i_step and not other.i_step or \
                 not self.i_step and other.i_step:
             return False
@@ -543,8 +538,6 @@ class IntegerSequence(SequenceBase):
                 self.p_start == other.p_start and \
                 self.p_stop == other.p_stop and \
                 self.exclusions == other.exclusions
-                # Convert to set to check equality ignoring duplicates.
-                # (Duplicate exclusions would produce the same sequence)
 
 
 def init_from_cfg(cfg):
@@ -554,8 +547,6 @@ def init_from_cfg(cfg):
 
 def get_point_relative(point_expr, context_point):
     """Create a point from relative_string applied to base_point."""
-    #import pdb
-    #pdb.set_trace()
     if REC_RELATIVE_POINT.search(point_expr):
         # This is a relative point expression e.g. '+P2' or '-P12'.
         return context_point + IntegerInterval(point_expr)
@@ -595,7 +586,6 @@ class TestIntegerSequence(unittest.TestCase):
             point = sequence.get_next_point(point)
         self.assertEqual([int(out) for out in output], [1, 2, 4, 5])
 
-
     def test_multiple_exclusions_simple(self):
         """Tests the multiple exclusion syntax for integer notation"""
         sequence = IntegerSequence('R/P1!(2,3,7)', 1, 10)
@@ -604,12 +594,11 @@ class TestIntegerSequence(unittest.TestCase):
         while point:
             output.append(point)
             point = sequence.get_next_point(point)
-        self.assertEqual([int(out) for out in output], [1,4,5,6,8,9,10])
-
+        self.assertEqual([int(out) for out in output], [1, 4, 5, 6, 8, 9, 10])
 
     def test_multiple_exclusions_extensive(self):
         """Tests IntegerSequence methods for sequences with multi-exclusions"""
-        points = [IntegerPoint(i) for i in range(10)]      
+        points = [IntegerPoint(i) for i in range(10)]
         sequence = IntegerSequence('R/P1!(2,3,7)', 1, 10)
         self.assertFalse(sequence.is_on_sequence(points[3]))
         self.assertFalse(sequence.is_valid(points[3]))
@@ -619,8 +608,12 @@ class TestIntegerSequence(unittest.TestCase):
         self.assertEqual(sequence.get_nearest_prev_point(points[4]), points[1])
         self.assertEqual(sequence.get_next_point(points[3]), points[4])
         self.assertEqual(sequence.get_next_point(points[2]), points[4])
-        self.assertEqual(sequence.get_next_point_on_sequence(points[3]), points[4])
-        self.assertEqual(sequence.get_next_point_on_sequence(points[6]), points[8])
+        self.assertEqual(sequence.get_next_point_on_sequence(
+            points[3]),
+            points[4])
+        self.assertEqual(sequence.get_next_point_on_sequence(
+            points[6]),
+            points[8])
 
         sequence = IntegerSequence('R/P1!(1,3,4)', 1, 10)
         self.assertEqual(sequence.get_first_point(points[1]), points[2])
@@ -628,7 +621,7 @@ class TestIntegerSequence(unittest.TestCase):
         self.assertEqual(sequence.get_start_point(), points[2])
 
         sequence = IntegerSequence('R/P1!(8,9,10)', 1, 10)
-        self.assertEqual(sequence.get_stop_point(), points[7])       
+        self.assertEqual(sequence.get_stop_point(), points[7])
 
     def test_exclusions_extensive(self):
         """Test IntegerSequence methods for sequences with exclusions."""
