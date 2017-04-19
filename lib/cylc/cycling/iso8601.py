@@ -738,6 +738,50 @@ class TestISO8601Sequence(unittest.TestCase):
         self.assertEqual(output, ['20000101T0000Z', '20000101T0100Z',
                                   '20000101T0300Z', '20000101T0400Z'])
 
+    def test_multiple_exclusions_complex1(self):
+        """Tests sequences that have multiple exclusions and a more
+        complicated format"""
+
+        # A sequence that specifies a dep start time
+        sequence = ISO8601Sequence('20000101T01Z/PT1H!20000101T02Z',
+                                   '20000101T01Z')
+
+        output = []
+        point = sequence.get_start_point()
+        count = 0
+        # We are going to make four sequence points
+        while point and count < 4:
+            output.append(point)
+            point = sequence.get_next_point(point)
+            count += 1
+        output = [str(out) for out in output]
+        # We should expect one of the hours to be excluded: T02
+        self.assertEqual(output, ['20000101T0100Z', '20000101T0300Z',
+                                  '20000101T0400Z', '20000101T0500Z'])
+
+    def test_multiple_exclusions_complex2(self):
+        """Tests sequences that have multiple exclusions and a more
+        complicated format"""
+
+        # A sequence that specifies a dep start time
+        sequence = ISO8601Sequence('20000101T01Z/PT1H!'
+                                   '(20000101T02Z,20000101T03Z)',
+                                   '20000101T00Z',
+                                   '20000101T05Z')
+
+        output = []
+        point = sequence.get_start_point()
+        count = 0
+        # We are going to make four sequence points
+        while point and count < 3:
+            output.append(point)
+            point = sequence.get_next_point(point)
+            count += 1
+        output = [str(out) for out in output]
+        # We should expect two of the hours to be excluded: T02, T03
+        self.assertEqual(output, ['20000101T0100Z', '20000101T0400Z',
+                                  '20000101T0500Z'])
+
     def test_multiple_exclusions_simple(self):
         """Tests the generation of points for sequences with multiple exclusions
         """
@@ -817,6 +861,7 @@ class TestISO8601Sequence(unittest.TestCase):
 
         # Check a longer list of exclusions
         # Also note you can change the format of the exclusion list
+        # (removing the parentheses)
         sequence = ISO8601Sequence('PT1H! 20000101T02Z, 20000101T03Z,'
                                    '20000101T04Z',
                                    '20000101T00Z',

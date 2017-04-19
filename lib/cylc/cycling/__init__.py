@@ -24,7 +24,7 @@ def parse_exclusion(expr):
     if count == 0:
         return expr, None
     elif count > 1:
-        raise Exception("'%s': only one exclusion per expression "
+        raise Exception("'%s': only one set of exclusions per expression "
                         "permitted" % expr)
     else:
         remainder, exclusions = expr.split('!')
