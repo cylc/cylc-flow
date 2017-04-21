@@ -18,7 +18,7 @@
 # Test authentication - privilege 'identity'.
 
 . $(dirname $0)/test_header
-set_test_number 6
+set_test_number 10
 
 install_suite "${TEST_NAME_BASE}" basic
 
@@ -32,16 +32,28 @@ create_test_globalrc '' '
 cylc run "${SUITE_NAME}"
 unset CYLC_CONF_PATH
 
+SRV_D="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/.service"
+HOST="$(sed -n 's/^CYLC_SUITE_HOST=//p' "${SRV_D}/contact")"
+PORT="$(sed -n 's/^CYLC_SUITE_PORT=//p' "${SRV_D}/contact")"
+run_ok "${TEST_NAME_BASE}-curl-anon" \
+    env no_proxy=* curl -k --digest -u 'anon:the quick brown fox' \
+    "https://${HOST}:${PORT}/id/identify"
+run_ok "${TEST_NAME_BASE}-curl-anon.stdout" \
+    grep -qF "\"name\": \"${SUITE_NAME}\"" "${TEST_NAME_BASE}-curl-anon.stdout"
+run_ok "${TEST_NAME_BASE}-curl-cylc" \
+    env no_proxy=* curl -k --digest -u "cylc:$(<"${SRV_D}/passphrase")" \
+    "https://${HOST}:${PORT}/id/identify"
+run_ok "${TEST_NAME_BASE}-curl-cylc.stdout" \
+    grep -qF "\"name\": \"${SUITE_NAME}\"" "${TEST_NAME_BASE}-curl-anon.stdout"
+
 # Wait for first task 'foo' to fail.
 cylc suite-state "${SUITE_NAME}" --task=foo --status=failed --point=1 \
     --interval=1 --max-polls=10 || exit 1
 
 # Disable the suite passphrase (to leave us with public access privilege).
-SRV_D="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/.service"
 mv "${SRV_D}/passphrase" "${SRV_D}/passphrase.DIS"
 
 # Check scan output.
-PORT=$(cylc ping -v "${SUITE_NAME}" | cut -d':' -f 2)
 cylc scan --comms-timeout=5 -fb -n "${SUITE_NAME}" 'localhost' \
     >'scan.out' 2>'/dev/null'
 cmp_ok scan.out << __END__

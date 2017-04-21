@@ -38,7 +38,8 @@ cylc suite-state "${SUITE_NAME}" --task=foo --status=failed --point=1 \
     --interval=1 --max-polls=10 || exit 1
 
 # Check scan output.
-PORT=$(cylc ping -v "${SUITE_NAME}" | cut -d':' -f 2)
+SRV_D="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/.service"
+PORT="$(sed -n 's/^CYLC_SUITE_PORT=//p' "${SRV_D}/contact")"
 cylc scan --comms-timeout=5 -fb -n "${SUITE_NAME}" 'localhost' \
     >'scan.out' 2>'/dev/null'
 cmp_ok scan.out << __END__
