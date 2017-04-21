@@ -6384,27 +6384,27 @@ assigned by task or family name.
 Queue configuration is done under the [scheduling] section of the suite.rc file
 (like dependencies, internal queues constrain {\em when} a task runs).
 
-By default every task is assigned to the {\em default} queue, which by default
+By default every task is assigned to the {\em root} queue, which by default
 has a zero limit (interpreted by cylc as no limit). To use a single queue for
-the whole suite just set the default queue limit:
+the whole suite just set the root queue limit:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
-    [[ queues]]
+    [[queues]]
         # limit the entire suite to 5 active tasks at once
-        [[[default]]]
+        [[[root]]]
             limit = 5
 \end{lstlisting}
 To use additional queues just name each one, set their limits, and assign
 members:
 \begin{lstlisting}
 [scheduling]
-    [[ queues]]
+    [[queues]]
         [[[q_foo]]]
             limit = 5
             members = foo, bar, baz
 \end{lstlisting}
-Any tasks not assigned to a particular queue will remain in the default
+Any tasks not assigned to a particular queue will remain in the root
 queue. The {\em queues} example suite illustrates how queues work by
 running two task trees side by side (as seen in the graph GUI) each
 limited to 2 and 3 tasks respectively:

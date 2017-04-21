@@ -829,9 +829,9 @@ predecessor had been submitted.
 
 Configuration of internal queues, by which the number of simultaneously
 active tasks (submitted or running) can be limited, per queue. By
-default a single queue called {\em default} is defined, with all tasks
+default a single queue called {\em root} is defined, with all tasks
 assigned to it and no limit. To use a single queue for the whole suite
-just set the limit on the {\em default} queue as required.
+just set the limit on the {\em root} queue as required.
 See also~\ref{InternalQueues}.
 
 \paragraph[{[[[}\_\_QUEUE\_\_{]]]}]{[scheduling] \textrightarrow [[queues]] \textrightarrow [[[\_\_QUEUE\_\_]]]}
@@ -841,7 +841,7 @@ Section heading for configuration of a single queue. Replace
 
 \begin{myitemize}
 \item {\em type:} string
-\item {\em default:} ``default''
+\item {\em default:} ``root''
 \end{myitemize}
 
 \paragraph[limit]{[scheduling] \textrightarrow [[queues]] \textrightarrow [[[\_\_QUEUE\_\_]]] \textrightarrow limit}
@@ -858,7 +858,7 @@ A list of member tasks, or task family names, to assign to this queue
 (assigned tasks will automatically be removed from the default queue).
 \begin{myitemize}
 \item {\em type:} Comma-separated list of strings (task or family names).
-\item {\em default:} none for user-defined queues; all tasks for the ``default'' queue
+\item {\em default:} none for user-defined queues; all tasks for the ``root'' queue
 \end{myitemize}
 
 \subsubsection[{[[}special tasks{]]}]{[scheduling] \textrightarrow [[special tasks]]}

@@ -276,7 +276,7 @@ SPEC = {
         'spawn to max active cycle points': vdr(
             vtype='boolean', default=False),
         'queues': {
-            'default': {
+            'root': {
                 'limit': vdr(vtype='integer', default=0),
                 'members': vdr(vtype='string_list', default=[]),
             },
@@ -494,6 +494,10 @@ def upg(cfg, descr):
     u.obsolete('7.2.2', ['cylc', 'simulation mode'])
     u.obsolete('7.2.2', ['runtime', '__MANY__', 'dummy mode'])
     u.obsolete('7.2.2', ['runtime', '__MANY__', 'simulation mode'])
+    u.deprecate(
+        '7.3.0',
+        ['scheduling', 'queues', 'default'],
+        ['scheduling', 'queues', 'root'])
     u.upgrade()
 
 

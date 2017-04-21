@@ -1086,7 +1086,7 @@ class SuiteConfig(object):
 
         # First add all tasks to the default queue.
         all_task_names = self.get_task_name_list()
-        queues['default']['members'] = all_task_names
+        queues['root']['members'] = all_task_names
 
         # Then reassign to other queues as requested.
         warnings = []
@@ -1106,7 +1106,7 @@ class SuiteConfig(object):
                         # This includes sub-families.
                         if qmember not in qmembers:
                             try:
-                                queues['default']['members'].remove(fmem)
+                                queues['root']['members'].remove(fmem)
                             except ValueError:
                                 if fmem in requeued:
                                     msg = "%s: ignoring %s from %s (%s)" % (
@@ -1123,7 +1123,7 @@ class SuiteConfig(object):
                     # Is a task.
                     if qmember not in qmembers:
                         try:
-                            queues['default']['members'].remove(qmember)
+                            queues['root']['members'].remove(qmember)
                         except ValueError:
                             if qmember in requeued:
                                 msg = "%s: ignoring '%s' (%s)" % (
