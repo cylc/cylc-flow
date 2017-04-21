@@ -36,15 +36,17 @@ SRV_D="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/.service"
 HOST="$(sed -n 's/^CYLC_SUITE_HOST=//p' "${SRV_D}/contact")"
 PORT="$(sed -n 's/^CYLC_SUITE_PORT=//p' "${SRV_D}/contact")"
 run_ok "${TEST_NAME_BASE}-curl-anon" \
-    env no_proxy=* curl -k --digest -u 'anon:the quick brown fox' \
+    env no_proxy=* curl -v --cacert "${SRV_D}/ssl.cert" \
+    --digest -u 'anon:the quick brown fox' \
     "https://${HOST}:${PORT}/id/identify"
 run_ok "${TEST_NAME_BASE}-curl-anon.stdout" \
     grep -qF "\"name\": \"${SUITE_NAME}\"" "${TEST_NAME_BASE}-curl-anon.stdout"
 run_ok "${TEST_NAME_BASE}-curl-cylc" \
-    env no_proxy=* curl -k --digest -u "cylc:$(<"${SRV_D}/passphrase")" \
+    env no_proxy=* curl -v --cacert "${SRV_D}/ssl.cert" \
+    --digest -u "cylc:$(<"${SRV_D}/passphrase")" \
     "https://${HOST}:${PORT}/id/identify"
 run_ok "${TEST_NAME_BASE}-curl-cylc.stdout" \
-    grep -qF "\"name\": \"${SUITE_NAME}\"" "${TEST_NAME_BASE}-curl-anon.stdout"
+    grep -qF "\"name\": \"${SUITE_NAME}\"" "${TEST_NAME_BASE}-curl-cylc.stdout"
 
 # Wait for first task 'foo' to fail.
 cylc suite-state "${SUITE_NAME}" --task=foo --status=failed --point=1 \
