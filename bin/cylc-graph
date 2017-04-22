@@ -76,9 +76,12 @@ try:
     from xdot import DotWindow
     from cylc.cylc_xdot import (
         MyDotWindow, MyDotWindow2, get_reference_from_plain_format)
-except ImportError as exc:
+except (ImportError, RuntimeError) as exc:
     # Allow command help generation without a graphical environment.
     print >> sys.stderr, 'WARNING: no X environment? %s' % exc
+    no_x = True
+else:
+    no_x = False
 
 if remrun().execute():
     sys.exit(0)
@@ -203,6 +206,9 @@ def main():
         action="store_true", default=False, dest="show_suicide")
 
     (options, args) = parser.parse_args()
+
+    if no_x:
+        sys.exit(1)
 
     if options.filename:
         if len(args) != 0:
