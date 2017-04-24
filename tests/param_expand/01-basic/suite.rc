@@ -1,0 +1,18 @@
+[cylc]
+    [[parameters]]
+        i = cat, dog, fish
+	j = 1..5
+	k = 1..10^4
+[scheduling]
+    [[dependencies]]
+        graph = """
+            foo<i> => bar<j>
+	    qux<j> => waz<k>
+	"""
+[runtime]
+    [[root]]
+	script = true
+    [[foo<i>]]
+    [[bar<j>]]
+    [[qux<j>]]
+    [[waz<k>]]
