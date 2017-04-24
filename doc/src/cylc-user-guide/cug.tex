@@ -2624,8 +2624,11 @@ Datetimes can be excluded from a recurrence by an exclamation mark for example
 \lstinline=[[[ PT1D!20000101 ]]]= means run daily except on the
 first of January 2000.
 
-This syntax can only be used to exclude one datetime from a recurrence. Note
-that the \lstinline=^= and \lstinline=$= symbols (shorthand for the initial
+This syntax can be used to exclude one or multiple datetimes from a recurrence.
+Multiple datetimes are excluded using the syntax 
+\lstinline=[[[ PT1D!(20000101,20000102,...) ]]]=. All datetimes listed within
+the parentheses after the exclamation mark will be excluded. Note that the 
+\lstinline=^= and \lstinline=$= symbols (shorthand for the initial
 and final cycle points) are both datetimes so \lstinline=[[[ T12!$-PT1D ]]]=
 is valid.
 

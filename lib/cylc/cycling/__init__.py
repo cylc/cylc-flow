@@ -24,14 +24,16 @@ def parse_exclusion(expr):
     if count == 0:
         return expr, None
     elif count > 1:
-        raise Exception("'%s': only one exclusion per expression "
+        raise Exception("'%s': only one set of exclusions per expression "
                         "permitted" % expr)
     else:
-        remainder, exclusion = expr.split('!')
-        if '/' in exclusion:
+        remainder, exclusions = expr.split('!')
+        if '/' in exclusions:
             raise Exception("'%s': exclusion must be at the end of the "
                             "expression" % expr)
-        return remainder.strip(), exclusion.strip()
+        exclusions = exclusions.translate(None, ' ()')
+        exclusions = exclusions.split(',')
+        return remainder.strip(), exclusions
 
 
 class CyclerTypeError(TypeError):

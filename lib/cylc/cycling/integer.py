@@ -263,8 +263,17 @@ class IntegerSequence(SequenceBase):
         self.i_offset = IntegerInterval('P0')
 
         matched_recurrence = False
-
-        expression, exclusion = parse_exclusion(dep_section)
+        expression, excl_points = parse_exclusion(dep_section)
+        # Create a list of multiple exclusion points, if there are any.
+        if excl_points:
+            self.exclusions = set()
+            for excl in excl_points:
+                self.exclusions.add(get_point_from_expression(
+                    excl,
+                    None,
+                    is_required=False))
+        else:
+            self.exclusions = None
 
         for rec, format_num in RECURRENCE_FORMAT_RECS:
             results = rec.match(expression)
@@ -297,12 +306,6 @@ class IntegerSequence(SequenceBase):
             stop, self.p_context_stop, is_required=end_required)
         if intv:
             self.i_step = IntegerInterval(intv)
-        if exclusion:
-            self.exclusion = get_point_from_expression(exclusion, None,
-                                                       is_required=False)
-        else:
-            self.exclusion = None
-
         if format_num == 3:
             # REPEAT/START/PERIOD
             if not intv or reps is not None and reps <= 1:
@@ -417,7 +420,7 @@ class IntegerSequence(SequenceBase):
 
     def is_on_sequence(self, point):
         """Is point on-sequence, disregarding bounds?"""
-        if self.exclusion and point == self.exclusion:
+        if self.exclusions and point in self.exclusions:
             return False
         if self.i_step:
             return int(point - self.p_start) % int(self.i_step) == 0
@@ -452,7 +455,7 @@ class IntegerSequence(SequenceBase):
         else:
             prev_point = point - self.i_step
         ret = self._get_point_in_bounds(prev_point)
-        if self.exclusion and ret == self.exclusion:
+        if self.exclusions and ret in self.exclusions:
             return self.get_prev_point(ret)
         return ret
 
@@ -468,7 +471,7 @@ class IntegerSequence(SequenceBase):
                 break
             prev_point = sequence_point
             sequence_point = self.get_next_point(sequence_point)
-        if self.exclusion and prev_point == self.exclusion:
+        if self.exclusions and prev_point in self.exclusions:
             return self.get_nearest_prev_point(prev_point)
         return prev_point
 
@@ -484,7 +487,7 @@ class IntegerSequence(SequenceBase):
         i = int(point - self.p_start) % int(self.i_step)
         next_point = point + self.i_step - IntegerInterval.from_integer(i)
         ret = self._get_point_in_bounds(next_point)
-        if self.exclusion and ret and ret == self.exclusion:
+        if self.exclusions and ret and ret in self.exclusions:
             return self.get_next_point(ret)
         return ret
 
@@ -496,7 +499,7 @@ class IntegerSequence(SequenceBase):
             return None
         next_point = point + self.i_step
         ret = self._get_point_in_bounds(next_point)
-        if self.exclusion and ret and ret == self.exclusion:
+        if self.exclusions and ret and ret in self.exclusions:
             return self.get_next_point_on_sequence(ret)
         return ret
 
@@ -509,19 +512,19 @@ class IntegerSequence(SequenceBase):
             point = self._get_point_in_bounds(point)
         else:
             point = self.get_next_point(point)
-        if self.exclusion and point == self.exclusion:
+        if self.exclusions and point in self.exclusions:
             return self.get_next_point_on_sequence(point)
         return point
 
     def get_start_point(self):
         """Return the first point in this sequence, or None."""
-        if self.exclusion and self.p_start == self.exclusion:
+        if self.exclusions and self.p_start in self.exclusions:
             return self.get_next_point_on_sequence(self.p_start)
         return self.p_start
 
     def get_stop_point(self):
         """Return the last point in this sequence, or None if unbounded."""
-        if self.exclusion and self.p_stop == self.exclusion:
+        if self.exclusions and self.p_stop in self.exclusions:
             return self.get_prev_point(self.p_stop)
         return self.p_stop
 
@@ -534,7 +537,7 @@ class IntegerSequence(SequenceBase):
             return self.i_step == other.i_step and \
                 self.p_start == other.p_start and \
                 self.p_stop == other.p_stop and \
-                self.exclusion == other.exclusion
+                self.exclusions == other.exclusions
 
 
 def init_from_cfg(cfg):
@@ -582,6 +585,43 @@ class TestIntegerSequence(unittest.TestCase):
             output.append(point)
             point = sequence.get_next_point(point)
         self.assertEqual([int(out) for out in output], [1, 2, 4, 5])
+
+    def test_multiple_exclusions_simple(self):
+        """Tests the multiple exclusion syntax for integer notation"""
+        sequence = IntegerSequence('R/P1!(2,3,7)', 1, 10)
+        output = []
+        point = sequence.get_start_point()
+        while point:
+            output.append(point)
+            point = sequence.get_next_point(point)
+        self.assertEqual([int(out) for out in output], [1, 4, 5, 6, 8, 9, 10])
+
+    def test_multiple_exclusions_extensive(self):
+        """Tests IntegerSequence methods for sequences with multi-exclusions"""
+        points = [IntegerPoint(i) for i in range(10)]
+        sequence = IntegerSequence('R/P1!(2,3,7)', 1, 10)
+        self.assertFalse(sequence.is_on_sequence(points[3]))
+        self.assertFalse(sequence.is_valid(points[3]))
+        self.assertEqual(sequence.get_prev_point(points[3]), points[1])
+        self.assertEqual(sequence.get_prev_point(points[4]), points[1])
+        self.assertEqual(sequence.get_nearest_prev_point(points[3]), points[1])
+        self.assertEqual(sequence.get_nearest_prev_point(points[4]), points[1])
+        self.assertEqual(sequence.get_next_point(points[3]), points[4])
+        self.assertEqual(sequence.get_next_point(points[2]), points[4])
+        self.assertEqual(sequence.get_next_point_on_sequence(
+            points[3]),
+            points[4])
+        self.assertEqual(sequence.get_next_point_on_sequence(
+            points[6]),
+            points[8])
+
+        sequence = IntegerSequence('R/P1!(1,3,4)', 1, 10)
+        self.assertEqual(sequence.get_first_point(points[1]), points[2])
+        self.assertEqual(sequence.get_first_point(points[0]), points[2])
+        self.assertEqual(sequence.get_start_point(), points[2])
+
+        sequence = IntegerSequence('R/P1!(8,9,10)', 1, 10)
+        self.assertEqual(sequence.get_stop_point(), points[7])
 
     def test_exclusions_extensive(self):
         """Test IntegerSequence methods for sequences with exclusions."""

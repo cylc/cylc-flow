@@ -298,7 +298,6 @@ class ISO8601Sequence(SequenceBase):
 
     def __init__(self, dep_section, context_start_point=None,
                  context_end_point=None):
-
         self.dep_section = dep_section
 
         if context_start_point is None:
@@ -326,14 +325,30 @@ class ISO8601Sequence(SequenceBase):
             dump_format=SuiteSpecifics.DUMP_FORMAT,
             assumed_time_zone=SuiteSpecifics.ASSUMED_TIME_ZONE
         )
-        self.recurrence, excl_point = self.abbrev_util.parse_recurrence(
-            dep_section)
-        self.exclusion = ISO8601Point.from_nonstandard_string(
-            str(excl_point)) if excl_point else None
+
+        # Parse_recurrence returns an isodatetime TimeRecurrence object
+        # and a list of exclusion strings.
+        self.recurrence, excl_points = self.abbrev_util.parse_recurrence(
+            dep_section)  # should this be self.dep_section??
+
+        # Convert (potentially) non-standard strings to ISO8601Point objects.
+        self.exclusions = []
+        for point in excl_points:
+            exclusion = ISO8601Point.from_nonstandard_string(
+                str(point)) if point else None
+            self.exclusions.append(exclusion)
+
+        # Convert the exclusion ISO8601Points to TimePoints so they can
+        # be compared with the TimeRecurrence object later.
+        self.p_iso_exclusions = []
+        for timepoint in self.exclusions:
+            self.p_iso_exclusions.append(point_parse(str(timepoint)))
+
         self.step = ISO8601Interval(str(self.recurrence.duration))
         self.value = str(self.recurrence)
-        if self.exclusion:
-            self.value += '!' + str(self.exclusion)
+        # Concatenate the strings in exclusion list
+        if self.exclusions:
+            self.value += '!' + str(self.exclusions)
 
     def get_interval(self):
         """Return the interval between points in this sequence."""
@@ -353,14 +368,14 @@ class ISO8601Sequence(SequenceBase):
         self._cached_next_point_values = {}
         self._cached_valid_point_booleans = {}
         self._cached_recent_valid_points = []
-        self.value = str(self.recurrence) + '!' + str(self.exclusion)
-        if self.exclusion:
-            self.value += '!' + str(self.exclusion)
+        self.value = str(self.recurrence) + '!' + str(self.exclusions)
+        if self.exclusions:
+            self.value += '!' + str(self.exclusions)
 
     def is_on_sequence(self, point):
         """Return True if point is on-sequence."""
         # Iterate starting at recent valid points, for speed.
-        if self.exclusion and point == self.exclusion:
+        if self.exclusions and point in self.exclusions:
             return False
         for valid_point in reversed(self._cached_recent_valid_points):
             if valid_point == point:
@@ -399,7 +414,11 @@ class ISO8601Sequence(SequenceBase):
                 raise SequenceDegenerateError(self.recurrence,
                                               SuiteSpecifics.DUMP_FORMAT,
                                               res, point)
-            if self.exclusion and res == self.exclusion:
+            # Check if res point is in the list of exclusions
+            # If so, check the previous point by recursion.
+            # Once you have found a point that is *not* in the exclusion
+            # list, you can return it.
+            if self.exclusions and res in self.exclusions:
                 return self.get_prev_point(res)
         return res
 
@@ -408,14 +427,12 @@ class ISO8601Sequence(SequenceBase):
         if self.is_on_sequence(point):
             return self.get_prev_point(point)
         p_iso_point = point_parse(point.value)
-        p_iso_excl = None
-        if self.exclusion:
-            p_iso_excl = point_parse(self.exclusion.value)
         prev_iso_point = None
+
         for recurrence_iso_point in self.recurrence:
+            # Is recurrence point greater than aribitrary point?
             if (recurrence_iso_point > p_iso_point or
-                    (p_iso_excl and recurrence_iso_point == p_iso_excl)):
-                # Technically, >=, but we already test for this above.
+                    (recurrence_iso_point in self.p_iso_exclusions)):
                 break
             prev_iso_point = recurrence_iso_point
         if prev_iso_point is None:
@@ -426,7 +443,8 @@ class ISO8601Sequence(SequenceBase):
                 self.recurrence, SuiteSpecifics.DUMP_FORMAT,
                 nearest_point, point
             )
-        if self.exclusion and nearest_point == self.exclusion:
+        # Check all exclusions
+        if self.exclusions and nearest_point in self.exclusions:
             return self.get_prev_point(nearest_point)
         return nearest_point
 
@@ -445,7 +463,7 @@ class ISO8601Sequence(SequenceBase):
             while next_point is not None and (next_point <= point or excluded):
                 excluded = False
                 next_point = self.get_next_point_on_sequence(next_point)
-                if next_point and next_point == self.exclusion:
+                if next_point and next_point in self.exclusions:
                     excluded = True
             if next_point is not None:
                 self._check_and_cache_next_point(point, next_point)
@@ -455,7 +473,7 @@ class ISO8601Sequence(SequenceBase):
         for recurrence_iso_point in self.recurrence:
             if recurrence_iso_point > p_iso_point:
                 next_point = ISO8601Point(str(recurrence_iso_point))
-                if next_point and next_point == self.exclusion:
+                if next_point and next_point in self.exclusions:
                     continue
                 self._check_and_cache_next_point(point, next_point)
                 return next_point
@@ -494,7 +512,8 @@ class ISO8601Sequence(SequenceBase):
                     self.recurrence, SuiteSpecifics.DUMP_FORMAT,
                     point, result
                 )
-        if result and result == self.exclusion:
+        # Check it is in the exclusions list now
+        if result and result in self.exclusions:
             return self.get_next_point_on_sequence(result)
         return result
 
@@ -509,7 +528,8 @@ class ISO8601Sequence(SequenceBase):
             if recurrence_iso_point >= p_iso_point:
                 first_point_value = str(recurrence_iso_point)
                 ret = ISO8601Point(first_point_value)
-                if ret and ret == self.exclusion:
+                # Check multiple exclusions
+                if ret and ret in self.exclusions:
                     return self.get_next_point_on_sequence(ret)
                 if (len(self._cached_first_point_values) >
                         self._MAX_CACHED_POINTS):
@@ -523,7 +543,8 @@ class ISO8601Sequence(SequenceBase):
         """Return the first point in this sequence, or None."""
         for recurrence_iso_point in self.recurrence:
             point = ISO8601Point(str(recurrence_iso_point))
-            if not self.exclusion or point != self.exclusion:
+            # Check for multiple exclusions
+            if not self.exclusions or point not in self.exclusions:
                 return point
         return None
 
@@ -540,7 +561,7 @@ class ISO8601Sequence(SequenceBase):
                 prev = curr
                 curr = recurrence_iso_point
             ret = ISO8601Point(str(recurrence_iso_point))
-            if self.exclusion and ret == self.exclusion:
+            if self.exclusions and ret in self.exclusions:
                 return ISO8601Point(str(prev))
             return ret
         return None
@@ -717,6 +738,70 @@ class TestISO8601Sequence(unittest.TestCase):
         self.assertEqual(output, ['20000101T0000Z', '20000101T0100Z',
                                   '20000101T0300Z', '20000101T0400Z'])
 
+    def test_multiple_exclusions_complex1(self):
+        """Tests sequences that have multiple exclusions and a more
+        complicated format"""
+
+        # A sequence that specifies a dep start time
+        sequence = ISO8601Sequence('20000101T01Z/PT1H!20000101T02Z',
+                                   '20000101T01Z')
+
+        output = []
+        point = sequence.get_start_point()
+        count = 0
+        # We are going to make four sequence points
+        while point and count < 4:
+            output.append(point)
+            point = sequence.get_next_point(point)
+            count += 1
+        output = [str(out) for out in output]
+        # We should expect one of the hours to be excluded: T02
+        self.assertEqual(output, ['20000101T0100Z', '20000101T0300Z',
+                                  '20000101T0400Z', '20000101T0500Z'])
+
+    def test_multiple_exclusions_complex2(self):
+        """Tests sequences that have multiple exclusions and a more
+        complicated format"""
+
+        # A sequence that specifies a dep start time
+        sequence = ISO8601Sequence('20000101T01Z/PT1H!'
+                                   '(20000101T02Z,20000101T03Z)',
+                                   '20000101T00Z',
+                                   '20000101T05Z')
+
+        output = []
+        point = sequence.get_start_point()
+        count = 0
+        # We are going to make four sequence points
+        while point and count < 3:
+            output.append(point)
+            point = sequence.get_next_point(point)
+            count += 1
+        output = [str(out) for out in output]
+        # We should expect two of the hours to be excluded: T02, T03
+        self.assertEqual(output, ['20000101T0100Z', '20000101T0400Z',
+                                  '20000101T0500Z'])
+
+    def test_multiple_exclusions_simple(self):
+        """Tests the generation of points for sequences with multiple exclusions
+        """
+        init(time_zone='Z')
+        sequence = ISO8601Sequence('PT1H!(20000101T02Z,20000101T03Z)',
+                                   '20000101T00Z')
+
+        output = []
+        point = sequence.get_start_point()
+        count = 0
+        # We are going to make four sequence points
+        while point and count < 4:
+            output.append(point)
+            point = sequence.get_next_point(point)
+            count += 1
+        output = [str(out) for out in output]
+        # We should expect two of the hours to be excluded: T02 and T03
+        self.assertEqual(output, ['20000101T0000Z', '20000101T0100Z',
+                                  '20000101T0400Z', '20000101T0500Z'])
+
     def test_exclusions_extensive(self):
         """Test ISO8601Sequence methods for sequences with exclusions"""
         init(time_zone='+05')
@@ -740,6 +825,49 @@ class TestISO8601Sequence(unittest.TestCase):
         sequence = ISO8601Sequence('PT1H!20000101T00Z', '20000101T00Z')
         self.assertEqual(sequence.get_first_point(point_0), point_1)
         self.assertEqual(sequence.get_start_point(), point_1)
+
+    def test_multiple_exclusions_extensive(self):
+        """Test ISO8601Sequence methods for sequences with multiple exclusions
+        """
+        init(time_zone='+05')
+        sequence = ISO8601Sequence('PT1H!(20000101T02Z,20000101T03Z)',
+                                   '20000101T00Z',
+                                   '20000101T06Z')
+
+        point_0 = ISO8601Point('20000101T00Z')
+        point_1 = ISO8601Point('20000101T01Z')
+        point_2 = ISO8601Point('20000101T02Z')  # First excluded point
+        point_3 = ISO8601Point('20000101T03Z')  # Second excluded point
+        point_4 = ISO8601Point('20000101T04Z')
+
+        # Check the excluded points are not on the sequence
+        self.assertFalse(sequence.is_on_sequence(point_2))
+        self.assertFalse(sequence.is_on_sequence(point_3))
+        self.assertFalse(sequence.is_valid(point_2))  # Should be excluded
+        self.assertFalse(sequence.is_valid(point_3))  # Should be excluded
+        # Check that we can correctly retrieve previous points
+        self.assertEqual(sequence.get_prev_point(point_2), point_1)
+        # Should skip two excluded points
+        self.assertEqual(sequence.get_prev_point(point_4), point_1)
+        self.assertEqual(sequence.get_nearest_prev_point(point_2), point_1)
+        self.assertEqual(sequence.get_nearest_prev_point(point_4), point_1)
+        self.assertEqual(sequence.get_next_point(point_1), point_4)
+        self.assertEqual(sequence.get_next_point(point_3), point_4)
+
+        sequence = ISO8601Sequence('PT1H!20000101T00Z', '20000101T00Z')
+        # Check that the first point is after 00.
+        self.assertEqual(sequence.get_first_point(point_0), point_1)
+        self.assertEqual(sequence.get_start_point(), point_1)
+
+        # Check a longer list of exclusions
+        # Also note you can change the format of the exclusion list
+        # (removing the parentheses)
+        sequence = ISO8601Sequence('PT1H! 20000101T02Z, 20000101T03Z,'
+                                   '20000101T04Z',
+                                   '20000101T00Z',
+                                   '20000101T06Z')
+        self.assertEqual(sequence.get_nearest_prev_point(point_3), point_1)
+        self.assertEqual(sequence.get_nearest_prev_point(point_4), point_1)
 
     def test_simple(self):
         """Run some simple tests for date-time cycling."""
