@@ -265,7 +265,8 @@ def main():
             if options.output_filename == "-":
                 sys.stdout.write(output_text)
             else:
-                open(options.output_filename).write(output_text)
+                with open(options.output_filename, 'w') as f:
+                    f.write(output_text)
         else:
             if options.output_filename == "-":
                 window.graph.draw(sys.stdout, format="plain", prog="dot")
