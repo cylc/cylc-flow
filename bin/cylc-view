@@ -33,12 +33,12 @@ See also 'cylc [prep] edit'."""
 
 import sys
 from cylc.remote import remrun
-if remrun().execute():
+if remrun().execute(forward_x11=True):
     sys.exit(0)
 
 import os
-import re
 from tempfile import NamedTemporaryFile
+import shlex
 import subprocess
 
 import cylc.flags
@@ -148,7 +148,7 @@ def main():
     modtime1 = os.stat(viewfile.name).st_mtime
 
     # in case editor has options, e.g. 'emacs -nw':
-    command_list = re.split(' ', editor)
+    command_list = shlex.split(editor)
     command_list.append(viewfile.name)
     command = ' '.join(command_list)
     # THIS BLOCKS UNTIL THE COMMAND COMPLETES

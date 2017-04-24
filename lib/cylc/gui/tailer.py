@@ -79,8 +79,7 @@ class Tailer(threading.Thread):
                 owner, host = user_at_host.split("@", 1)
             else:
                 owner, host = (None, user_at_host)
-            ssh = str(GLOBAL_CFG.get_host_item(
-                "remote shell template", host, owner))
+            ssh = str(GLOBAL_CFG.get_host_item("ssh command", host, owner))
             command = shlex.split(ssh) + ["-n", user_at_host]
             cmd_tmpl = str(GLOBAL_CFG.get_host_item(
                 "remote tail command template", host, owner))

@@ -491,7 +491,7 @@ value is probably sufficient for job submission polling.
 \item {\em example:} (see the execution polling example above)
 \end{myitemize}
 
-\paragraph[remote copy template]{[hosts] \textrightarrow [[HOST]] \textrightarrow remote copy template }
+\paragraph[scp command]{[hosts] \textrightarrow [[HOST]] \textrightarrow scp command }
 
 A string for the command used to copy files to a remote host. This is not used
 on the suite host unless you run local tasks under another user account. The
@@ -504,7 +504,7 @@ that implements a similar interface to \lstinline=scp=.
 \item {\em localhost default:} \lstinline@scp -oBatchMode=yes -oConnectTimeout=10@
 \end{myitemize}
 
-\paragraph[remote shell template]{[hosts] \textrightarrow [[HOST]] \textrightarrow remote shell template }
+\paragraph[ssh command]{[hosts] \textrightarrow [[HOST]] \textrightarrow ssh command }
 
 A string for the command used to invoke commands on this host. This is not
 used on the suite host unless you run local tasks under another user account.

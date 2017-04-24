@@ -73,7 +73,7 @@ class remrun(object):
                 is_remote_user(self.owner) or is_remote_host(self.host))
 
     def execute(self, force_required=False, env=None, path=None,
-                dry_run=False):
+                dry_run=False, forward_x11=False):
         """Execute command on remote host.
 
         Returns False if remote re-invocation is not needed, True if it is
@@ -88,20 +88,20 @@ class remrun(object):
 
         name = os.path.basename(self.argv[0])[5:]  # /path/to/cylc-foo => foo
 
-        user_at_host = ''
+        # Build the remote command
+        command = shlex.split(GLOBAL_CFG.get_host_item(
+            "ssh command", self.host, self.owner))
+        if forward_x11:
+            command.append("-Y")
+
+        user_at_host = ""
         if self.owner:
-            user_at_host = self.owner + '@'
+            user_at_host = self.owner + "@"
         if self.host:
             user_at_host += self.host
         else:
-            user_at_host += 'localhost'
-
-        # Build the remote command
-
-        # ssh command and options (X forwarding)
-        ssh_tmpl = str(GLOBAL_CFG.get_host_item(
-            "remote shell template", self.host, self.owner))
-        command = shlex.split(ssh_tmpl) + ["-Y", user_at_host]
+            user_at_host += "localhost"
+        command.append(user_at_host)
 
         # Use bash -l?
         ssh_login_shell = self.ssh_login_shell

@@ -148,10 +148,10 @@ SPEC = {
                 vtype='interval_list', default=[]),
             'execution polling intervals': vdr(
                 vtype='interval_list', default=[]),
-            'remote copy template': vdr(
+            'scp command': vdr(
                 vtype='string',
                 default='scp -oBatchMode=yes -oConnectTimeout=10'),
-            'remote shell template': vdr(
+            'ssh command': vdr(
                 vtype='string',
                 default='ssh -oBatchMode=yes -oConnectTimeout=10'),
             'use login shell': vdr(vtype='boolean', default=True),
@@ -204,8 +204,8 @@ SPEC = {
                 vtype='interval_list', default=[]),
             'execution polling intervals': vdr(
                 vtype='interval_list', default=[]),
-            'remote copy template': vdr(vtype='string'),
-            'remote shell template': vdr(vtype='string'),
+            'scp command': vdr(vtype='string'),
+            'ssh command': vdr(vtype='string'),
             'use login shell': vdr(vtype='boolean', default=None),
             'cylc executable': vdr(vtype='string'),
             'global init-script': vdr(vtype='string'),
@@ -371,6 +371,14 @@ def upg(cfg, descr):
         '7.0.0',
         ['submission polling intervals'],
         ['hosts', 'localhost', 'submission polling intervals'])
+    u.deprecate(
+        '7.3.1',
+        ['hosts', '__MANY__', 'remote shell template'],
+        ['hosts', '__MANY__', 'ssh command'])
+    u.deprecate(
+        '7.3.1',
+        ['hosts', '__MANY__', 'remote copy template'],
+        ['hosts', '__MANY__', 'scp command'])
     u.upgrade()
 
 

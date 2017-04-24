@@ -116,9 +116,8 @@ class SuiteSrvFilesManager(object):
         if is_remote_host(old_host):
             import shlex
             from cylc.cfgspec.globalcfg import GLOBAL_CFG
-            ssh_tmpl = str(GLOBAL_CFG.get_host_item(
-                "remote shell template", old_host))
-            cmd = shlex.split(ssh_tmpl) + ["-n", old_host] + cmd
+            ssh_str = str(GLOBAL_CFG.get_host_item("ssh command", old_host))
+            cmd = shlex.split(ssh_str) + ["-n", old_host] + cmd
         from subprocess import Popen, PIPE
         from time import sleep, time
         proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
@@ -610,7 +609,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
         }
         import shlex
         command = shlex.split(
-            GLOBAL_CFG.get_host_item('remote shell template', host, owner))
+            GLOBAL_CFG.get_host_item('ssh command', host, owner))
         command += ['-n', owner + '@' + host, script]
         from subprocess import Popen, PIPE
         try:
