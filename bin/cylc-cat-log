@@ -29,10 +29,12 @@ if remrun().execute():
     sys.exit(0)
 
 import os
+from tempfile import NamedTemporaryFile
 from pipes import quote
 import shlex
 from subprocess import Popen, PIPE
 import traceback
+import pdb
 
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.owner import is_remote_user
@@ -41,6 +43,7 @@ from cylc.suite_host import is_remote_host
 from cylc.suite_logging import get_logs
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.task_id import TaskID
+from parsec.fileparse import read_and_proc
 
 
 NAME_DEFAULT = "log"
@@ -122,6 +125,11 @@ def get_option_parser():
         "-y", "--list-remote",
         help="Task job log only: List log directory on the job host",
         action="store_const", const=LIST_MODE_REMOTE, dest="list_mode")
+
+    parser.add_option(
+	"-g", "--geditor",
+	help="force use of the configured GUI editor.",
+	action="store_true", default=False, dest="geditor")
 
     return parser
 
@@ -236,6 +244,7 @@ def get_task_job_attrs(options, suite, point, task, submit_num):
 
 def main():
     """Implement cylc cat-log CLI."""
+    pdb.set_trace()
     parser = get_option_parser()
     options, args = parser.parse_args()
     suite = args[0]
@@ -271,6 +280,39 @@ def main():
         else:
             owner, host = (None, user_at_host)
 
+    cylc_tmpdir = GLOBAL_CFG.get_tmpdir()
+    if options.geditor:
+            editor = GLOBAL_CFG.get(['editors', 'gui'])
+    else:
+            editor = GLOBAL_CFG.get(['editors', 'terminal'])
+       
+    lines = read_and_proc(filename)
+
+    if options.filename == "out" :
+	viewfile = NamedTemporaryFile(
+			suffix=".job.out", prefix=suite + '.', dir=cylc_tmpdir)
+    elif options.filename == "job-activity.log" :
+	viewfile = NamedTemporaryFile(
+			suffix=".job-activity.log", prefix=suite + '.', dir=cylc_tmpdir)
+    elif options.filename == "err" :
+       	viewfile = NamedTemporaryFile(
+			suffix=".job.err", prefix=suite + '.', dir=cylc_tmpdir)
+    elif options.filename == "job-edit.diff" :
+       	viewfile = NamedTemporaryFile(
+			suffix=".job-edit.diff", prefix=suite + '.', dir=cylc_tmpdir)
+    elif options.filename == "job.status" :
+       	viewfile = NamedTemporaryFile(
+			suffix=".job.status", prefix=suite + '.', dir=cylc_tmpdir)
+
+    for line in lines:
+	viewfile.write(line + '\n')
+    viewfile.seek(0, 0)
+
+    os.chmod(viewfile.name, 0400)
+
+    modtime1 = os.stat(viewfile.name).st_mtime
+
+
     # Construct the shell command
     commands = []
     if options.location_mode:
@@ -297,7 +339,7 @@ def main():
                 "local tail command template"))
             commands.append(shlex.split(cmd_tmpl % {"filename": filename}))
     else:
-        commands.append(["cat", filename])
+        commands.append([editor, viewfile.name])
 
     # Deal with remote [user@]host
     if user_at_host:
@@ -308,6 +350,7 @@ def main():
     err = None
     for command in commands:
         stderr = PIPE
+
         if options.debug:
             sys.stderr.write(
                 " ".join([quote(item) for item in command]) + "\n")
