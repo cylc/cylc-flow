@@ -1233,6 +1233,33 @@ been defined for this suite""").inform()
         self.gcapture_windows.append(foo)
         foo.run()
 
+    def view_in_editor(self, w, e, task_id, choice):
+        try:
+            task_state_summary = self.updater.full_state_summary[task_id]
+        except KeyError:
+            warning_dialog(task_id + ' is not live', self.window).warn()
+            return False
+        if (not task_state_summary['logfiles'] and
+                not task_state_summary.get('job_hosts')):
+            warning_dialog('%s has no log files' % task_id, self.window).warn()
+        else:
+	    if choice == 'job-activity.log':
+            	command = ("cylc cat-log --activity --geditor" + " " +
+			  self.cfg.suite + " " + task_id)
+	    elif choice == 'job.status'
+            	command = ("cylc cat-log --status --geditor%" + " " +
+			  self.cfg.suite + " " + task_id)
+	    elif choice == 'job.out'
+            	command = ("cylc cat-log --stdout --geditor" + " " +
+			  self.cfg.suite + " " + task_id)
+	    elif choice == 'job.err'
+            	command = ("cylc cat-log --stderr --geditor" + " " +
+			  self.cfg.suite + " " + task_id)
+	
+	    foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 400, 400)
+	    self.gcapture_windows.append(foo)
+	    foo.run()
+
     def view_task_info(self, w, e, task_id, choice):
         try:
             task_state_summary = self.updater.full_state_summary[task_id]
@@ -1370,6 +1397,49 @@ been defined for this suite""").inform()
 
         # Separator.
         menu.append(gtk.SeparatorMenuItem())
+
+        # View In Editor.
+                view_editor_menu = gtk.Menu()
+                view_editor_item = gtk.ImageMenuItem("View In Editor")
+                img = gtk.image_new_from_stock(gtk.STOCK_DIALOG_INFO,
+                                               gtk.ICON_SIZE_MENU)
+                view_editor_item.set_image(img)
+                view_editor_item.set_submenu(view_editor_menu)
+                menu.append(view_editor_item)
+
+                # NOTE: we have to respond to 'button-release-event' rather
+                # than 'activate' in order for sub-menus to work in the
+                # graph-view so use connect_right_click_sub_menu instead of
+                # item.connect
+
+                for key, filename in [
+                        ('job activity log', 'job-activity.log'),
+                        ('job status file', 'job.status')]:
+                    item = gtk.ImageMenuItem(key)
+                    item.set_image(gtk.image_new_from_stock(
+                        gtk.STOCK_DND, gtk.ICON_SIZE_MENU))
+                    view_editor_menu.append(item)
+                    self.connect_right_click_sub_menu(is_graph_view, item,
+                                                      self.view_in_editor,
+                                                      task_ids[0], filename)
+                    item.set_sensitive(
+                        t_states[0] in TASK_STATUSES_WITH_JOB_SCRIPT)
+
+                for key, filename in [
+                        ('job stdout', 'job.out'),
+                        ('job stderr', 'job.err')]:
+                    item = gtk.ImageMenuItem(key)
+                    item.set_image(gtk.image_new_from_stock(
+                        gtk.STOCK_DND, gtk.ICON_SIZE_MENU))
+                    view_editor_menu.append(item)
+                    self.connect_right_click_sub_menu(is_graph_view, item,
+                                                      self.view_in_editor,
+                                                      task_ids[0], filename)
+                    item.set_sensitive(
+                        t_states[0] in TASK_STATUSES_WITH_JOB_LOGS)
+
+	# Separator
+	menu.append(gtk.SeparatorMenuItem())
 
         # Trigger (run now).
         trigger_now_item = gtk.ImageMenuItem('Trigger (run now)')

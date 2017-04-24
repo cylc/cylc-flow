@@ -34,7 +34,6 @@ from pipes import quote
 import shlex
 from subprocess import Popen, PIPE
 import traceback
-import pdb
 
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.owner import is_remote_user
@@ -244,7 +243,6 @@ def get_task_job_attrs(options, suite, point, task, submit_num):
 
 def main():
     """Implement cylc cat-log CLI."""
-    pdb.set_trace()
     parser = get_option_parser()
     options, args = parser.parse_args()
     suite = args[0]
