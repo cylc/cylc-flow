@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from pprint import _type
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2017 NIWA
@@ -18,6 +17,8 @@ from pprint import _type
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """This module provides base classes for cycling data objects."""
+
+import unittest
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 
@@ -118,7 +119,6 @@ class PointBase(object):
         """Add other (interval) to self, returning a point."""
         pass
 
-    @abstractmethod
     def cmp_(self, other):
         """Compare self to other point, returning a 'cmp'-like result."""
         pass
@@ -363,10 +363,9 @@ class SequenceBase(object):
         """Is point on-sequence, disregarding bounds?"""
         pass
 
-    @abstractmethod
     def _get_point_in_bounds(self, point):
         """Return point, or None if out of bounds."""
-        pass
+        raise NotImplementedError("Not implemented yet")
 
     @abstractmethod
     def is_valid(self, point):
@@ -408,3 +407,21 @@ class SequenceBase(object):
     def __eq__(self, other):
         # Return True if other (sequence) is equal to self.
         pass
+
+
+class TestBaseClasses(unittest.TestCase):
+    """Test the abstract base classes cannot be instantiated on their own
+    """
+    def test_simple_abstract_class_test(self):
+        """Cannot instantiate abstract classes, they must be defined in
+        the subclasses"""
+        with self.assertRaises(TypeError):
+            SequenceBase("sequence-string", "context_string")
+        with self.assertRaises(TypeError):
+            IntervalBase("value")
+        with self.assertRaises(TypeError):
+            PointBase("value")
+
+
+if __name__ == '__main__':
+    unittest.main()
