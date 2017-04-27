@@ -85,13 +85,17 @@ def main():
         options.patterns_owner = [r".*"]
     elif not options.patterns_owner:
         options.patterns_owner = [USER]
-    ScanApp(
+    scan_app = ScanApp(
         hosts=args,
         patterns_name=options.patterns_name,
         patterns_owner=options.patterns_owner,
         comms_timeout=options.comms_timeout,
         poll_interval=options.interval)
-    gtk.main()
+    try:
+        gtk.main()
+    except KeyboardInterrupt:
+        scan_app.window.destroy()
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

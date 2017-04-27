@@ -40,62 +40,72 @@ MSG_TIMEOUT = "TIMEOUT"
 SLEEP_INTERVAL = 0.01
 
 
-def _scan1_impl(conn, timeout, my_uuid):
-    """Connect to host:port to get suite identify."""
+def _scan_worker(conn, timeout, my_uuid):
+    """Port scan worker."""
     srv_files_mgr = SuiteSrvFilesManager()
     while True:
-        if not conn.poll(SLEEP_INTERVAL):
-            continue
-        item = conn.recv()
-        if item == MSG_QUIT:
-            break
-        host, port = item
-        host_anon = host
-        if is_remote_host(host):
-            host_anon = get_host_ip_by_name(host)  # IP reduces DNS traffic
-        client = SuiteIdClientAnon(
-            None, host=host_anon, port=port, my_uuid=my_uuid, timeout=timeout)
         try:
-            result = client.identify()
-        except ConnectionTimeout as exc:
-            conn.send((host, port, MSG_TIMEOUT))
-        except ConnectionError as exc:
-            conn.send((host, port, None))
-        else:
-            owner = result.get('owner')
-            name = result.get('name')
-            states = result.get('states', None)
-            if cylc.flags.debug:
-                print >> sys.stderr, '   suite:', name, owner
-            if states is None:
-                # This suite keeps its state info private.
-                # Try again with the passphrase if I have it.
-                try:
-                    pphrase = srv_files_mgr.get_auth_item(
-                        srv_files_mgr.FILE_BASE_PASSPHRASE, name, owner, host,
-                        content=True)
-                except SuiteServiceFileError:
-                    pass
-                else:
-                    if pphrase:
-                        client = SuiteIdClient(
-                            name, owner=owner, host=host, port=port,
-                            my_uuid=my_uuid, timeout=timeout)
-                        try:
-                            result = client.identify()
-                        except ConnectionError as exc:
-                            # Nope (private suite, wrong passphrase).
-                            if cylc.flags.debug:
-                                print >> sys.stderr, '    (wrong passphrase)'
-                        else:
-                            if cylc.flags.debug:
-                                print >> sys.stderr, (
-                                    '    (got states with passphrase)')
-            conn.send((host, port, result))
+            if not conn.poll(SLEEP_INTERVAL):
+                continue
+            item = conn.recv()
+            if item == MSG_QUIT:
+                break
+            conn.send(_scan_item(timeout, my_uuid, srv_files_mgr, item))
+        except KeyboardInterrupt:
+            break
     conn.close()
 
 
-def scan_all(hosts=None, timeout=None):
+def _scan_item(timeout, my_uuid, srv_files_mgr, item):
+    """Connect to item host:port (item) to get suite identify."""
+    host, port = item
+    host_anon = host
+    if is_remote_host(host):
+        host_anon = get_host_ip_by_name(host)  # IP reduces DNS traffic
+    client = SuiteIdClientAnon(
+        None, host=host_anon, port=port, my_uuid=my_uuid,
+        timeout=timeout)
+    try:
+        result = client.identify()
+    except ConnectionTimeout as exc:
+        return (host, port, MSG_TIMEOUT)
+    except ConnectionError as exc:
+        return (host, port, None)
+    else:
+        owner = result.get('owner')
+        name = result.get('name')
+        states = result.get('states', None)
+        if cylc.flags.debug:
+            print >> sys.stderr, '   suite:', name, owner
+        if states is None:
+            # This suite keeps its state info private.
+            # Try again with the passphrase if I have it.
+            try:
+                pphrase = srv_files_mgr.get_auth_item(
+                    srv_files_mgr.FILE_BASE_PASSPHRASE,
+                    name, owner, host, content=True)
+            except SuiteServiceFileError:
+                pass
+            else:
+                if pphrase:
+                    client = SuiteIdClient(
+                        name, owner=owner, host=host, port=port,
+                        my_uuid=my_uuid, timeout=timeout)
+                    try:
+                        result = client.identify()
+                    except ConnectionError as exc:
+                        # Nope (private suite, wrong passphrase).
+                        if cylc.flags.debug:
+                            print >> sys.stderr, (
+                                '    (wrong passphrase)')
+                    else:
+                        if cylc.flags.debug:
+                            print >> sys.stderr, (
+                                '    (got states with passphrase)')
+        return (host, port, result)
+
+
+def scan_all(hosts=None, timeout=None, updater=None):
     """Scan all hosts."""
     try:
         timeout = float(timeout)
@@ -126,67 +136,75 @@ def scan_all(hosts=None, timeout=None):
             todo_set.add((host, port))
     proc_items = []
     results = []
-    while todo_set or proc_items:
-        no_action = True
-        # Get results back from child processes where possible
-        busy_proc_items = []
-        while proc_items:
-            proc, my_conn, terminate_time = proc_items.pop()
-            if my_conn.poll():
-                host, port, result = my_conn.recv()
-                if result is None:
-                    # Can't connect, ignore
-                    wait_set.remove((host, port))
-                elif result == MSG_TIMEOUT:
-                    # Connection timeout, leave in "wait_set"
-                    pass
+    try:
+        while todo_set or proc_items:
+            no_action = True
+            # Get results back from child processes where possible
+            busy_proc_items = []
+            while proc_items:
+                if updater and updater.quit:
+                    raise KeyboardInterrupt()
+                proc, my_conn, terminate_time = proc_items.pop()
+                if my_conn.poll():
+                    host, port, result = my_conn.recv()
+                    if result is None:
+                        # Can't connect, ignore
+                        wait_set.remove((host, port))
+                    elif result == MSG_TIMEOUT:
+                        # Connection timeout, leave in "wait_set"
+                        pass
+                    else:
+                        # Connection success
+                        results.append((host, port, result))
+                        wait_set.remove((host, port))
+                    if todo_set:
+                        # Immediately give the child process something to do
+                        host, port = todo_set.pop()
+                        wait_set.add((host, port))
+                        my_conn.send((host, port))
+                        busy_proc_items.append(
+                            (proc, my_conn, time() + INACTIVITY_TIMEOUT))
+                    else:
+                        # Or quit if there is nothing left to do
+                        my_conn.send(MSG_QUIT)
+                        my_conn.close()
+                        proc.join()
+                    no_action = False
+                elif time() > terminate_time:
+                    # Terminate child process if it is taking too long
+                    proc.terminate()
+                    proc.join()
+                    no_action = False
                 else:
-                    # Connection success
-                    results.append((host, port, result))
-                    wait_set.remove((host, port))
-                if todo_set:
-                    # Immediately give the child process something to do
+                    busy_proc_items.append((proc, my_conn, terminate_time))
+            proc_items += busy_proc_items
+            # Create some child processes where necessary
+            while len(proc_items) < max_procs and todo_set:
+                if updater and updater.quit:
+                    raise KeyboardInterrupt()
+                my_conn, conn = Pipe()
+                try:
+                    proc = Process(
+                        target=_scan_worker, args=(conn, timeout, my_uuid))
+                except OSError:
+                    # Die if unable to start any worker process.
+                    # OK to wait and see if any worker process already running.
+                    if not proc_items:
+                        raise
+                    if cylc.flags.debug:
+                        traceback.print_exc()
+                else:
+                    proc.start()
                     host, port = todo_set.pop()
                     wait_set.add((host, port))
                     my_conn.send((host, port))
-                    busy_proc_items.append(
+                    proc_items.append(
                         (proc, my_conn, time() + INACTIVITY_TIMEOUT))
-                else:
-                    # Or quit if there is nothing left to do
-                    my_conn.send(MSG_QUIT)
-                    my_conn.close()
-                    proc.join()
-                no_action = False
-            elif time() > terminate_time:
-                # Terminate child process if it is taking too long
-                proc.terminate()
-                proc.join()
-                no_action = False
-            else:
-                busy_proc_items.append((proc, my_conn, terminate_time))
-        proc_items += busy_proc_items
-        # Create some child processes where necessary
-        while len(proc_items) < max_procs and todo_set:
-            my_conn, conn = Pipe()
-            try:
-                proc = Process(
-                    target=_scan1_impl, args=(conn, timeout, my_uuid))
-            except OSError:
-                # Die if unable to start any worker process.
-                # OK to wait and see if any worker process already running.
-                if not proc_items:
-                    raise
-                if cylc.flags.debug:
-                    traceback.print_exc()
-            else:
-                proc.start()
-                host, port = todo_set.pop()
-                wait_set.add((host, port))
-                my_conn.send((host, port))
-                proc_items.append((proc, my_conn, time() + INACTIVITY_TIMEOUT))
-                no_action = False
-        if no_action:
-            sleep(SLEEP_INTERVAL)
+                    no_action = False
+            if no_action:
+                sleep(SLEEP_INTERVAL)
+    except KeyboardInterrupt:
+        return []
     # Report host:port with no results
     if wait_set:
         print >> sys.stderr, (

@@ -321,8 +321,11 @@ class ScanApp(object):
 
     def _on_destroy_event(self, _):
         """Callback on destroy of main window."""
-        self.updater.quit = True
-        gtk.main_quit()
+        try:
+            self.updater.quit = True
+            gtk.main_quit()
+        except RuntimeError:
+            pass
         return False
 
     def _on_query_tooltip(self, _, x, y, kbd_ctx, tooltip):
@@ -689,9 +692,7 @@ class ScanAppUpdater(threading.Thread):
                 self._should_force_update = False
             title = self.window.get_title()
             gobject.idle_add(self.window.set_title, title + " (updating)")
-            self.suite_info_map = update_suites_info(
-                self.hosts, self.comms_timeout, self.owner_pattern,
-                self.name_pattern, self.suite_info_map)
+            self.suite_info_map = update_suites_info(self)
             self.last_update_time = time()
             gobject.idle_add(self.window.set_title, title)
             gobject.idle_add(self.update)
