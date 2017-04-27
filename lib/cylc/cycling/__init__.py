@@ -32,9 +32,6 @@ def parse_exclusion(expr):
                         "permitted" % expr)
     else:
         remainder, exclusions = expr.split('!')
-        if '/' in exclusions:
-            raise Exception("'%s': exclusion must be at the end of the "
-                            "expression" % expr)
         exclusions = exclusions.translate(None, ' ()')
         exclusions = exclusions.split(',')
         return remainder.strip(), exclusions

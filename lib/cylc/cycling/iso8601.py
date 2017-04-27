@@ -282,7 +282,11 @@ class ISO8601Interval(IntervalBase):
 
 
 class ISO8601ExclusionSeq(SequenceBase):
-    """ A sequence class holding exclusions """
+    """ A sequence class representing a sequence of recurrent exclusions
+
+        Todo: A lot of the code here is duplicated in ISO8601Sequence.
+            it could be refactored/subclassed to avoid duplication
+    """
     TYPE = CYCLER_TYPE_ISO8601
     TYPE_SORT_KEY = CYCLER_TYPE_SORT_KEY_ISO8601
     _MAX_CACHED_POINTS = 100
@@ -324,10 +328,6 @@ class ISO8601ExclusionSeq(SequenceBase):
 
         self.step = ISO8601Interval(str(self.exclusion_seq.duration))
         self.value = str(self.exclusion_seq)
-        # Concatenate the strings in exclusion list
-        # Remove (Exclusions can't have exclusions...yet)
-        # if self.exclusions:
-        #    self.value += '!' + str(self.exclusions)
 
     def get_interval(self):
         """Return the interval between points in this sequence."""
@@ -498,10 +498,12 @@ class ISO8601ExclusionSeq(SequenceBase):
 
     def get_start_point(self):
         """Return the first point in this sequence, or None."""
-        for exclusion_seq_iso_point in self.exclusion_seq:
-            point = ISO8601Point(str(exclusion_seq_iso_point))
-            return point
-        return None  # Necessary?
+        try:
+            for exclusion_seq_iso_point in self.exclusion_seq:
+                point = ISO8601Point(str(exclusion_seq_iso_point))
+                return point
+        except:
+            return None
 
     def get_stop_point(self):
         """Return the last point in this sequence, or None if unbounded."""
@@ -517,7 +519,7 @@ class ISO8601ExclusionSeq(SequenceBase):
                 curr = exclusion_seq_iso_point
             ret = ISO8601Point(str(exclusion_seq_iso_point))
             return ret
-        return None  # Necessary?
+        return None
 
     def is_on_exclusion_sequence(self, timepoint):
         """Should try to reuse sequence code"""
@@ -536,7 +538,9 @@ class ISO8601ExclusionSeq(SequenceBase):
 
 
 class ISO8601Exclusions(object):
-    """A group of ISO8601ExclusionSeq-uences"""
+    """A group of ISO8601ExclusionSequences. The object is able
+    to determine if points are within any of its grouped exclusion
+    sequences"""
     def __init__(self, excl_points, context_start_point, context_end_point):
 
         self.items = []
@@ -545,8 +549,6 @@ class ISO8601Exclusions(object):
                                             context_start_point,
                                             context_end_point)
             self.items.append(exclusion)
-            # Not necessary? Is it an ISO exclusion (Test)
-            # self.p_iso_exclusions.append(exclusion)
 
     def __contains__(self, point):
         """Checks to see if the Exclusions object contains a point
@@ -555,6 +557,7 @@ class ISO8601Exclusions(object):
             return True
 
     def __getitem__(self, key):
+        """Allows indexing of the exclusion object"""
         return self.items[key]
 
 
@@ -624,7 +627,7 @@ class ISO8601Sequence(SequenceBase):
                 except:
                     self.p_iso_exclusions.append(exclusion)  # Then same?
         except:
-            # Try creating an exclusions object
+            # Creating an exclusions object instead
             if excl_points is not None:
                 self.exclusions = ISO8601Exclusions(
                                     excl_points,
@@ -1269,7 +1272,7 @@ class TestISO8601Sequence(unittest.TestCase):
         '!T06' or similar"""
         init(time_zone='Z')
         # Run daily at 12:00 except every 3rd day
-        sequence = ISO8601Sequence('T12!T12/P15D', '20000101T00Z')
+        sequence = ISO8601Sequence('T12!T12/P3D', '20000101T12Z')
 
         output = []
         point = sequence.get_start_point()
@@ -1281,9 +1284,9 @@ class TestISO8601Sequence(unittest.TestCase):
             count += 1
         output = [str(out) for out in output]
 
-        self.assertEqual(output, ['20000101T1200Z', '20000102T1200Z',
-                                  '20000104T1200Z', '20000105T1200Z',
-                                  '20000107T1200Z', '20000108T1200Z'])
+        self.assertEqual(output, ['20000102T1200Z', '20000103T1200Z',
+                                  '20000105T1200Z', '20000106T1200Z',
+                                  '20000108T1200Z', '20000109T1200Z'])
 
     def test_exclusions_extensive(self):
         """Test ISO8601Sequence methods for sequences with exclusions"""
