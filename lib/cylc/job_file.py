@@ -76,28 +76,47 @@ class JobFile(object):
                 self._write_environment_2(handle, job_conf)
                 self._write_script(handle, job_conf)
                 self._write_epilogue(handle, job_conf)
-            # check syntax
-            try:
-                proc = Popen([job_conf['shell'], '-n', tmp_name], stderr=PIPE)
-            except OSError as exc:
-                if exc.filename is None:
-                    exc.filename = job_conf['shell']
-                raise
-            else:
-                if proc.wait():
-                    raise RuntimeError(proc.communicate()[1])
-            # make it executable
-            mode = (
-                os.stat(tmp_name).st_mode |
-                stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-            os.chmod(tmp_name, mode)
-            os.rename(tmp_name, local_job_file_path)
-        finally:
-            # don't leave behind any bad file
+        except IOError as exc:
+            # Remove temporary file
             try:
                 os.unlink(tmp_name)
             except OSError:
                 pass
+            raise exc
+        # check syntax
+        try:
+            proc = Popen([job_conf['shell'], '-n', tmp_name], stderr=PIPE)
+        except OSError as exc:
+            # Popen has a bad habit of not telling you anything if it fails
+            # to run the executable.
+            if exc.filename is None:
+                exc.filename = job_conf['shell']
+            # Remove temporary file
+            try:
+                os.unlink(tmp_name)
+            except OSError:
+                pass
+            raise exc
+        else:
+            if proc.wait():
+                # This will leave behind the temporary file,
+                # which is useful for debugging syntax errors, etc.
+                raise RuntimeError(proc.communicate()[1])
+        # Make job file executable
+        mode = (
+            os.stat(tmp_name).st_mode |
+            stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+        os.chmod(tmp_name, mode)
+        os.rename(tmp_name, local_job_file_path)
+
+    @staticmethod
+    def _check_script_value(value):
+        """Return True if script has any executable statements."""
+        for line in value.splitlines():
+            line = line.strip()
+            if line and not line.startswith("#"):
+                return True
+        return False
 
     @staticmethod
     def _get_derived_host_item(job_conf, key):
@@ -265,21 +284,21 @@ class JobFile(object):
         """Global Init-script."""
         global_init_script = cls._get_host_item(
             job_conf, 'global init-script')
-        if global_init_script:
+        if cls._check_script_value(global_init_script):
             handle.write("\n\ncylc__job__inst__global_init_script() {")
             handle.write("\n# GLOBAL-INIT-SCRIPT:\n")
             handle.write(global_init_script)
             handle.write("\n}")
 
-    @staticmethod
-    def _write_script(handle, job_conf):
+    @classmethod
+    def _write_script(cls, handle, job_conf):
         """Write (*-)script in functions.
 
         init-script, env-script, err-script, pre-script, script, post-script
         """
         for prefix in ['init-', 'env-', 'err-', 'pre-', '', 'post-']:
             value = job_conf[prefix + 'script']
-            if value:
+            if cls._check_script_value(value):
                 handle.write("\n\ncylc__job__inst__%sscript() {" % (
                     prefix.replace("-", "_")))
                 handle.write("\n# %sSCRIPT:\n%s" % (
