@@ -1246,15 +1246,18 @@ been defined for this suite""").inform()
 	    if choice == 'job-activity.log':
             	command = ("cylc cat-log --activity --geditor" + " " +
 			  self.cfg.suite + " " + task_id)
-	    elif choice == 'job.status'
-            	command = ("cylc cat-log --status --geditor%" + " " +
+	    elif choice == 'job.status':
+            	command = ("cylc cat-log --status --geditor" + " " +
 			  self.cfg.suite + " " + task_id)
-	    elif choice == 'job.out'
+	    elif choice == 'job.out':
             	command = ("cylc cat-log --stdout --geditor" + " " +
 			  self.cfg.suite + " " + task_id)
-	    elif choice == 'job.err'
+	    elif choice == 'job.err':
             	command = ("cylc cat-log --stderr --geditor" + " " +
 			  self.cfg.suite + " " + task_id)
+            elif choice == 'job':
+           	command = ("cylc cat-log --geditor" + " " +
+			  self.cfg.suite + " " + task_id)	
 	
 	    foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 400, 400)
 	    self.gcapture_windows.append(foo)
@@ -1395,10 +1398,7 @@ been defined for this suite""").inform()
                 # help_menu.append(cug_pdf_item)
                 # cug_pdf_item.connect('activate', self.browse, '--pdf')
 
-        # Separator.
-        menu.append(gtk.SeparatorMenuItem())
-
-        # View In Editor.
+                # View In Editor.
                 view_editor_menu = gtk.Menu()
                 view_editor_item = gtk.ImageMenuItem("View In Editor")
                 img = gtk.image_new_from_stock(gtk.STOCK_DIALOG_INFO,
@@ -1413,6 +1413,7 @@ been defined for this suite""").inform()
                 # item.connect
 
                 for key, filename in [
+                        ('job script', 'job'),
                         ('job activity log', 'job-activity.log'),
                         ('job status file', 'job.status')]:
                     item = gtk.ImageMenuItem(key)

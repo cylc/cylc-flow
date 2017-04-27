@@ -29,6 +29,7 @@ if remrun().execute():
     sys.exit(0)
 
 import os
+import re
 from tempfile import NamedTemporaryFile
 from pipes import quote
 import shlex
@@ -129,6 +130,12 @@ def get_option_parser():
 	"-g", "--geditor",
 	help="force use of the configured GUI editor.",
 	action="store_true", default=False, dest="geditor")
+
+    parser.add_option(
+	"-b", "--teditor",
+	help="force use of the configured Non-GUI editor.",
+	action="store_true", default=False, dest="editor")
+
 
     return parser
 
@@ -281,26 +288,21 @@ def main():
     cylc_tmpdir = GLOBAL_CFG.get_tmpdir()
     if options.geditor:
             editor = GLOBAL_CFG.get(['editors', 'gui'])
-    else:
+    elif options.editor:
             editor = GLOBAL_CFG.get(['editors', 'terminal'])
        
-    lines = read_and_proc(filename)
+    if os.path.exists(filename):
+         lines = read_and_proc(filename)
+    else:
+        print
+        print >> sys.stderr, (
+            'No such file or directory: ')
+        print >> sys.stderr, filename
+        print
+        sys.exit(1)
 
-    if options.filename == "out" :
-	viewfile = NamedTemporaryFile(
-			suffix=".job.out", prefix=suite + '.', dir=cylc_tmpdir)
-    elif options.filename == "job-activity.log" :
-	viewfile = NamedTemporaryFile(
-			suffix=".job-activity.log", prefix=suite + '.', dir=cylc_tmpdir)
-    elif options.filename == "err" :
-       	viewfile = NamedTemporaryFile(
-			suffix=".job.err", prefix=suite + '.', dir=cylc_tmpdir)
-    elif options.filename == "job-edit.diff" :
-       	viewfile = NamedTemporaryFile(
-			suffix=".job-edit.diff", prefix=suite + '.', dir=cylc_tmpdir)
-    elif options.filename == "job.status" :
-       	viewfile = NamedTemporaryFile(
-			suffix=".job.status", prefix=suite + '.', dir=cylc_tmpdir)
+    viewfile = NamedTemporaryFile(
+	 	suffix='.' + os.path.basename(filename), prefix=suite + '.', dir=cylc_tmpdir)
 
     for line in lines:
 	viewfile.write(line + '\n')
@@ -336,8 +338,12 @@ def main():
             cmd_tmpl = str(GLOBAL_CFG.get_host_item(
                 "local tail command template"))
             commands.append(shlex.split(cmd_tmpl % {"filename": filename}))
+    elif options.geditor or options.editor:
+        command_list = re.split(' ', editor)
+        command_list.append(viewfile.name)
+        commands.append(command_list)
     else:
-        commands.append([editor, viewfile.name])
+        commands.append([ 'cat', filename])
 
     # Deal with remote [user@]host
     if user_at_host:
@@ -356,6 +362,27 @@ def main():
         proc = Popen(command, stderr=stderr)
         err = proc.communicate()[1]
         ret_code = proc.wait()
+	if ret_code != 0:
+            print >>sys.stderr, command, 'failed:', ret_code
+            sys.exit(1)
+
+        modtime2 = os.stat(viewfile.name).st_mtime
+   
+        if modtime2 > modtime1:
+            print
+            print >> sys.stderr, (
+                'WARNING: YOU HAVE EDITED A TEMPORARY READ_ONLY LOG/JOB COPY:')
+            print >> sys.stderr, viewfile.name
+            print
+        else:
+            print
+            print >> sys.stderr, (
+                'NO CHANGES MADE TO:')
+            print >> sys.stderr, viewfile.name
+            print
+
+        viewfile.close()
+
         if ret_code == 0:
             break
     if ret_code and err:
