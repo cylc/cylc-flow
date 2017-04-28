@@ -364,10 +364,10 @@ class CylcTimeParser(object):
 
             # Return the exclusion in the form of a time recurrence object
             return isodatetime.data.TimeRecurrence(
-                    repetitions=repetitions,
-                    start_point=start_point,
-                    duration=interval,
-                    end_point=end_point)
+                repetitions=repetitions,
+                start_point=start_point,
+                duration=interval,
+                end_point=end_point)
 
         raise CylcTimeSyntaxError("Could not parse %s" % expression)
 

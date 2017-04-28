@@ -312,10 +312,9 @@ class ISO8601ExclusionSeq(SequenceBase):
             self.excl_start_point, self.excl_end_point,
             num_expanded_year_digits=SuiteSpecifics.NUM_EXPANDED_YEAR_DIGITS,
             dump_format=SuiteSpecifics.DUMP_FORMAT,
-            assumed_time_zone=SuiteSpecifics.ASSUMED_TIME_ZONE
-            )
+            assumed_time_zone=SuiteSpecifics.ASSUMED_TIME_ZONE)
         self.exclusion_seq = self.abbrev_util.parse_exclusion_recurrence(
-                str(excl_sequence_str))
+            str(excl_sequence_str))
 
         self.offset = ISO8601Interval.get_null()
 
@@ -630,9 +629,9 @@ class ISO8601Sequence(SequenceBase):
             # Creating an exclusions object instead
             if excl_points is not None:
                 self.exclusions = ISO8601Exclusions(
-                                    excl_points,
-                                    self.context_start_point,
-                                    self.context_end_point)
+                    excl_points,
+                    self.context_start_point,
+                    self.context_end_point)
 
         self.step = ISO8601Interval(str(self.recurrence.duration))
         self.value = str(self.recurrence)
