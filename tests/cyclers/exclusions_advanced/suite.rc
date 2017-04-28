@@ -1,0 +1,44 @@
+[cylc]
+    UTC mode = True
+[scheduling]
+    initial cycle point = 20000101T00Z
+    final cycle point = 20000102T12Z
+    [[dependencies]]
+        [[[ R1 ]]]
+            graph = start => foo
+
+        # Don't run at the initial cycle point
+        # Also test whitespace tolerance
+        [[[ T00 ! ^ ]]]
+            graph = bar
+
+        # Run 3-hourly but not 6 hourly.
+        [[[ PT3H!PT6H ]]]
+            graph = baz
+
+        # Run 4 hourly but not at 0800 from ICP
+        [[[ PT3H!T08 ]]]
+            graph = qux
+
+        # Run hourly but not at 00:00, 06:00, 12:00, 18:00
+        [[[ T-00!(T00, T06, T12, T18) ]]]
+            graph = nip
+
+        # Run half-hourly but not on the hour from ICP
+        [[[ PT30M!T-00 ]]]
+            graph = quux
+
+        # Run hourly on the hour, but not 6 hourly on the hour
+        [[[ T-00!PT6H ]]]
+            graph = wibble
+
+        # Run hourly at 15 minutes past except every 3rd hour
+        [[[ T-15!T-15/PT3H ]]]
+            graph = bob
+
+[runtime]
+    [[root]]
+        script = echo success
+[visualization]
+    initial cycle point = 20000101T00Z
+    final cycle point = 20000102T12Z
