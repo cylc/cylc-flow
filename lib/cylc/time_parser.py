@@ -224,6 +224,7 @@ class CylcTimeParser(object):
             if exclusions is not None:
                 for exclusion in exclusions:
                     try:
+                        # Attempt to convert to TimePoint
                         exclusion_point, excl_off = (
                             self._get_point_from_expression(
                                 exclusion, None, is_required=False,
@@ -232,7 +233,7 @@ class CylcTimeParser(object):
                             exclusion_point += excl_off
                         exclusion_points.append(exclusion_point)
                     except:
-                        # no change, parse it as recurrence later
+                        # Not a point, parse it as recurrence later
                         exclusion_points.append(exclusion)
 
             intv = result.groupdict().get("intv")
@@ -284,9 +285,11 @@ class CylcTimeParser(object):
     def parse_exclusion_recurrence(self, expression,
                                    context_start_point=None,
                                    context_end_point=None):
-        """Parses an exclusion recurrence. I.e. a more complicated
-        exclusion recurrence than just a single TimePoint used for
-        excluding specific times"""
+        """Parses an exclusion recurrence.
+
+        I.e. a more complicated exclusion recurrence than just a single
+        TimePoint used for excluding specific times.
+        """
         if context_start_point is None:
             context_start_point = self.context_start_point
         if context_end_point is None:

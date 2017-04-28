@@ -2661,6 +2661,47 @@ suite \lstinline=foo= will only run once as its second run has been excluded.
 \end{lstlisting}
 \lstset{language=transcript}
 
+\paragraph{Advanced exclusion syntax}
+In addition to excluding isolated datetime points or lists of datetime points
+from recurrences, exclusions themselves may be datetime recurrence sequences.
+Any partial datetime or sequence given after the exclamation mark will be 
+excluded from the main sequence. 
+
+For example, partial datetimes can be excluded using the syntax:
+\lstset{language=suiterc}
+\begin{lstlisting}
+[[[ PT1H ! T12 ]]]          # Run hourly but not at 12:00 from the inital
+                            # cycle point.
+[[[ T-00 ! (T00, T06, T12, T18) ]]]   # Run hourly but not at 00:00, 06:00,
+                                      # 12:00, 18:00.
+[[[ PT5M ! T-15 ]]]         # Run 5-minutely but not at 15 minutes past the
+                            # hour from the initial cycle point.
+[[[ T00 ! W-1T00 ]]]        # Run daily at 00:00 except on Mondays.
+\end{lstlisting}
+\lstset{language=transcript}
+
+It is also valid to use sequences for exclusions. For example:
+\lstset{language=suiterc}
+\begin{lstlisting}
+[[[ PT1H ! PT6H ]]]         # Run hourly from the initial cycle point but
+                            # not 6-hourly from the intial cycle point.
+[[[ T-00 ! PT6H ]]]         # Run hourly on the hour but not 6-hourly
+                            # on the hour.
+    # Same as [[[ T-00 ! T-00/PT6H ]]] (T-00 context is implied)
+    # Same as [[[ T-00 ! (T00, T06, T12, T18) ]]]
+    # Same as [[[ PT1H ! (T00, T06, T12, T18) ]]] Initial cycle point dependent
+
+[[[ T12 ! T12/P15D ]]]      # Run daily at 12:00 except every 15th day.
+
+[[[ R/^/P1H ! R5/20000101T00/P1D ]]]    # Any valid recurrence may be used to
+                                        # determine exclusions. This example
+                                        # translates to: Repeat every hour from
+                                        # the initial cycle point, but exclude
+                                        # 00:00 for 5 days from the 1st January
+                                        # 2000.
+\end{lstlisting}
+\lstset{language=transcript}
+
 \paragraph{How Multiple Graph Strings Combine}
 \label{HowMultipleGraphStringsCombine}
 

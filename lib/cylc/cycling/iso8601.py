@@ -511,13 +511,7 @@ class ISO8601ExclusionSeq(SequenceBase):
                  self.exclusion_seq.min_point is not None) and
                 (self.exclusion_seq.end_point is not None or
                  self.exclusion_seq.max_point is not None))):
-            curr = None
-            prev = None
-            for exclusion_seq_iso_point in self.exclusion_seq:
-                prev = curr
-                curr = exclusion_seq_iso_point
-            ret = ISO8601Point(str(exclusion_seq_iso_point))
-            return ret
+            return ISO8601Point(str(self.exclusion_seq[-1]))
         return None
 
     def is_on_exclusion_sequence(self, timepoint):
@@ -537,9 +531,12 @@ class ISO8601ExclusionSeq(SequenceBase):
 
 
 class ISO8601Exclusions(object):
-    """A group of ISO8601ExclusionSequences. The object is able
-    to determine if points are within any of its grouped exclusion
-    sequences"""
+    """A collection of ISO8601ExclusionSequences.
+
+    The object is able to determine if points are within any of its
+    grouped exclusion sequences. The Python ``in`` and ``not in`` operators
+    may be used on this object to determine if a point is in the collection
+    of exclusion sequences."""
     def __init__(self, excl_points, context_start_point, context_end_point):
 
         self.items = []
@@ -551,7 +548,12 @@ class ISO8601Exclusions(object):
 
     def __contains__(self, point):
         """Checks to see if the Exclusions object contains a point
-        in any of the exclusion sequences"""
+        in any of the exclusion sequences.
+
+        Args:
+            point (str): The iso timepoint to check lies in the
+                ISO8601Exclusions object.
+        """
         if any(seq.is_on_sequence(point) for seq in self.items):
             return True
 
@@ -609,7 +611,7 @@ class ISO8601Sequence(SequenceBase):
         # Parse_recurrence returns an isodatetime TimeRecurrence object
         # and a list of exclusion strings.
         self.recurrence, excl_points = self.abbrev_util.parse_recurrence(
-            dep_section)  # should this be self.dep_section??
+            dep_section)
 
         self.exclusions = []
         self.p_iso_exclusions = []
@@ -624,7 +626,7 @@ class ISO8601Sequence(SequenceBase):
                     self.p_iso_exclusions.append(
                         point_parse(str(exclusion)))
                 except:
-                    self.p_iso_exclusions.append(exclusion)  # Then same?
+                    self.p_iso_exclusions.append(exclusion)
         except:
             # Creating an exclusions object instead
             if excl_points is not None:
