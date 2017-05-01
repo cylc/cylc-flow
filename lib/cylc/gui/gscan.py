@@ -30,9 +30,11 @@ from isodatetime.data import (
 from cylc.cfgspec.gcylc import gcfg
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gscan import gsfg
+from cylc.gui.legend import ThemeLegendWindow
 from cylc.gui.dot_maker import DotMaker
 from cylc.gui.scanutil import (
-    KEY_PORT, get_scan_menu, launch_gcylc, update_suites_info)
+    KEY_PORT, get_scan_menu, launch_gcylc, update_suites_info,
+    launch_hosts_dialog, launch_about_dialog)
 from cylc.gui.util import get_icon, setup_icons, set_exception_hook_dialog
 from cylc.network import (
     KEY_GROUP, KEY_STATES, KEY_TASKS_BY_STATE, KEY_TITLE, KEY_UPDATE_TIME)
@@ -87,7 +89,6 @@ class ScanApp(object):
         self.theme_name = gcfg.get(['use theme'])
         self.theme = gcfg.get(['themes', self.theme_name])
 
-        self.dots = DotMaker(self.theme)
         suite_treemodel = gtk.TreeStore(
             str,  # group
             str,  # host
@@ -177,12 +178,6 @@ class ScanApp(object):
                 pass
         self.suite_treeview.connect("button-press-event",
                                     self._on_button_press_event)
-        scrolled_window = gtk.ScrolledWindow()
-        scrolled_window.set_policy(gtk.POLICY_AUTOMATIC,
-                                   gtk.POLICY_AUTOMATIC)
-        scrolled_window.add(self.suite_treeview)
-        scrolled_window.show()
-        self.vbox.pack_start(scrolled_window, expand=True, fill=True)
 
         patterns = {"name": None, "owner": None}
         for label, items in [
@@ -199,14 +194,266 @@ class ScanApp(object):
             comms_timeout=comms_timeout, poll_interval=poll_interval,
             group_column_id=self.GROUP_COLUMN,
             name_pattern=patterns["name"], owner_pattern=patterns["owner"])
+
         self.updater.start()
+
+        self.dot_size = gcfg.get(['dot icon size'])
+        self._set_dots()
+
+        self.create_main_menu()
+        self.create_tool_bar()
+        self.vbox.pack_start(self.menu_bar, False)
+
+        scrolled_window = gtk.ScrolledWindow()
+        scrolled_window.set_policy(gtk.POLICY_AUTOMATIC,
+                                   gtk.POLICY_AUTOMATIC)
+        scrolled_window.add(self.suite_treeview)
+        scrolled_window.show()
+
+        self.vbox.pack_start(self.tool_bar, False)
+        self.vbox.pack_start(scrolled_window, expand=True, fill=True)
+ 
         self.window.add(self.vbox)
         self.window.connect("destroy", self._on_destroy_event)
-        self.window.set_default_size(300, 150)
+        self.window.set_default_size(700, 300)
         self.suite_treeview.grab_focus()
         self.window.show()
 
+        self.theme_legend_window = None
         self.warning_icon_shown = []
+
+    def popup_theme_legend(self, widget=None):
+        """Popup a theme legend window."""
+        # TODO - consolidate with app_gcylc.
+        if self.theme_legend_window is None:
+            self.theme_legend_window = ThemeLegendWindow(
+                self.window, self.theme)
+            self.theme_legend_window.connect(
+                "destroy", self.destroy_theme_legend)
+        else:
+            self.theme_legend_window.present()
+
+    def update_theme_legend(self):
+        """Update the theme legend window, if it exists."""
+        if self.theme_legend_window is not None:
+            self.theme_legend_window.update(self.theme)
+
+    def destroy_theme_legend(self, widget):
+        """Handle a destroy of the theme legend window."""
+        self.theme_legend_window = None
+
+    def create_main_menu(self):
+        """Create the main menu."""
+        self.menu_bar = gtk.MenuBar()
+
+        file_menu = gtk.Menu()
+        file_menu_root = gtk.MenuItem('_File')
+        file_menu_root.set_submenu(file_menu)
+
+        exit_item = gtk.ImageMenuItem('E_xit')
+        img = gtk.image_new_from_stock(gtk.STOCK_QUIT, gtk.ICON_SIZE_MENU)
+        exit_item.set_image(img)
+        exit_item.show()
+        exit_item.connect("activate", self._on_destroy_event)
+        file_menu.append(exit_item)
+
+        view_menu = gtk.Menu()
+        view_menu_root = gtk.MenuItem('_View')
+        view_menu_root.set_submenu(view_menu)
+
+        col_item = gtk.ImageMenuItem("_Columns...")
+        img = gtk.image_new_from_stock(gtk.STOCK_INDEX, gtk.ICON_SIZE_MENU)
+        col_item.set_image(img)
+        col_item.show()
+        col_menu = gtk.Menu()
+        for column_index, column in enumerate(self.suite_treeview.get_columns()):
+            name = column.get_title()
+            is_visible = column.get_visible()
+            column_item = gtk.CheckMenuItem(name.replace("_", "__"))
+            column_item._connect_args = column_index
+            column_item.set_active(is_visible)
+            column_item.connect("toggled", self._on_toggle_column_visible)
+            column_item.show()
+            col_menu.append(column_item)
+
+        col_item.set_submenu(col_menu)
+        col_item.show_all()
+        view_menu.append(col_item)
+
+        view_menu.append(gtk.SeparatorMenuItem())
+
+        # Construct theme chooser items (same as cylc.gui.app_main).
+        theme_item = gtk.ImageMenuItem('Theme...')
+        img = gtk.image_new_from_stock(gtk.STOCK_SELECT_COLOR, gtk.ICON_SIZE_MENU)
+        theme_item.set_image(img)
+        #theme_item.set_sensitive(not is_stopped)
+        thememenu = gtk.Menu()
+        theme_item.set_submenu(thememenu)
+        theme_item.show()
+
+        theme_items = {}
+        theme = "default"
+        theme_items[theme] = gtk.RadioMenuItem(label=theme)
+        thememenu.append(theme_items[theme])
+        theme_items[theme].theme_name = theme
+        for theme in gcfg.get(['themes']):
+            if theme == "default":
+                continue
+            theme_items[theme] = gtk.RadioMenuItem(
+                group=theme_items['default'], label=theme)
+            thememenu.append(theme_items[theme])
+            theme_items[theme].theme_name = theme
+
+        # set_active then connect, to avoid causing an unnecessary toggle now.
+        theme_items[self.theme_name].set_active(True)
+        for theme in gcfg.get(['themes']):
+            theme_items[theme].show()
+            theme_items[theme].connect(
+                'toggled',
+                lambda i: (i.get_active() and self._set_theme(i.theme_name)))
+
+        view_menu.append(theme_item)
+
+        dot_size_item = gtk.ImageMenuItem('State Icon _Size')
+        img = gtk.image_new_from_stock(
+            gtk.STOCK_ZOOM_FIT, gtk.ICON_SIZE_MENU)
+        dot_size_item.set_image(img)
+        view_menu.append(dot_size_item)
+        dot_sizemenu = gtk.Menu()
+        dot_size_item.set_submenu(dot_sizemenu)
+
+        dot_sizes = ['small', 'medium', 'large', 'extra large']
+        dot_size_items = {}
+        dot_size_items[self.dot_size] = gtk.RadioMenuItem(
+            label='_' + self.dot_size)
+        dot_sizemenu.append(dot_size_items[self.dot_size])
+        self._set_tooltip(
+            dot_size_items[self.dot_size],
+            self.dot_size + " state icon dot size")
+        for dsize in dot_sizes:
+            if dsize == self.dot_size:
+                continue
+            dot_size_items[dsize] = gtk.RadioMenuItem(
+                group=dot_size_items[self.dot_size], label='_' + dsize)
+            dot_sizemenu.append(dot_size_items[dsize])
+            self._set_tooltip(
+                dot_size_items[dsize], dsize + " state icon size")
+
+        # set_active then connect, to avoid causing an unnecessary toggle now.
+        dot_size_items[self.dot_size].set_active(True)
+        for dot_size in dot_sizes:
+            dot_size_items[dot_size].connect(
+                'toggled', self.set_dot_size, dot_size)
+
+        theme_legend_item = gtk.ImageMenuItem("Show task state key")
+        img = gtk.image_new_from_stock(gtk.STOCK_SELECT_COLOR, gtk.ICON_SIZE_MENU)
+        theme_legend_item.set_image(img)
+        theme_legend_item.show()
+        theme_legend_item.connect("activate", self.popup_theme_legend)
+        view_menu.append(theme_legend_item)
+
+        view_menu.append(gtk.SeparatorMenuItem())
+
+        # Construct a configure scanned hosts item.
+        hosts_item = gtk.ImageMenuItem("Configure Hosts")
+        img = gtk.image_new_from_stock(gtk.STOCK_PREFERENCES, gtk.ICON_SIZE_MENU)
+        hosts_item.set_image(img)
+        hosts_item.show()
+        hosts_item.connect(
+            "button-press-event",
+            lambda b, e: launch_hosts_dialog(self.hosts, self.updater.set_hosts))
+        view_menu.append(hosts_item)
+
+        sep_item = gtk.SeparatorMenuItem()
+        sep_item.show()
+
+        help_menu = gtk.Menu()
+        help_menu_root = gtk.MenuItem('_Help')
+        help_menu_root.set_submenu(help_menu)
+        help_menu_root.set_right_justified(True)
+
+        self.menu_bar.append(file_menu_root)
+        self.menu_bar.append(view_menu_root)
+        self.menu_bar.append(help_menu_root)
+
+        # Construct an about dialog item.
+        info_item = gtk.ImageMenuItem("About")
+        img = gtk.image_new_from_stock(gtk.STOCK_ABOUT, gtk.ICON_SIZE_MENU)
+        info_item.set_image(img)
+        info_item.show()
+        info_item.connect(
+            "button-press-event",
+            lambda b, e: launch_about_dialog("cylc gscan", self.hosts)
+        )
+        help_menu.append(info_item)
+
+        self.menu_bar.show_all()
+
+    def set_dot_size(self, item, dsize):
+        """Change self.dot_size and replace icons."""
+        # TODO - consolidate with app_gcylc.
+        if not item.get_active():
+            return False
+        self.dot_size = dsize
+        self._set_dots()
+        self.updater.update()
+
+    def _set_dots(self):
+        self.dots = DotMaker(self.theme, size=self.dot_size)
+
+    def create_tool_bar(self):
+        """Create the tool bar for the GUI."""
+        self.tool_bar = gtk.Toolbar()
+
+        update_now_button = gtk.ToolButton(
+            icon_widget=gtk.image_new_from_stock(
+                gtk.STOCK_REFRESH, gtk.ICON_SIZE_SMALL_TOOLBAR))
+        update_now_button.set_label("Update")
+        tooltip = gtk.Tooltips()
+        tooltip.enable()
+        tooltip.set_tip(update_now_button, "Update now")
+        update_now_button.connect("clicked",
+                                  self.updater.update_now)
+
+        clear_stopped_button = gtk.ToolButton(
+            icon_widget=gtk.image_new_from_stock(
+                gtk.STOCK_CLEAR, gtk.ICON_SIZE_SMALL_TOOLBAR))
+        clear_stopped_button.set_label("Clear")
+        tooltip = gtk.Tooltips()
+        tooltip.enable()
+        tooltip.set_tip(clear_stopped_button, "Clear stopped suites")
+        clear_stopped_button.connect("clicked",
+                                  self.updater.clear_stopped_suites)
+
+        expand_button = gtk.ToolButton(
+            icon_widget=gtk.image_new_from_stock(
+                gtk.STOCK_ADD, gtk.ICON_SIZE_SMALL_TOOLBAR))
+        expand_button.set_label("Expand all")
+        tooltip = gtk.Tooltips()
+        tooltip.enable()
+        tooltip.set_tip(expand_button, "Expand all rows")
+        expand_button.connect("clicked",
+                lambda e: self.suite_treeview.expand_all())
+
+        collapse_button = gtk.ToolButton(
+            icon_widget=gtk.image_new_from_stock(
+                gtk.STOCK_REMOVE, gtk.ICON_SIZE_SMALL_TOOLBAR))
+        collapse_button.set_label("Expand all")
+        tooltip = gtk.Tooltips()
+        tooltip.enable()
+        tooltip.set_tip(collapse_button, "Collapse all rows")
+        collapse_button.connect("clicked",
+                lambda e: self.suite_treeview.collapse_all())
+
+        self.tool_bar.insert(update_now_button, 0)
+        self.tool_bar.insert(clear_stopped_button, 0)
+        self.tool_bar.insert(collapse_button, 0)
+        self.tool_bar.insert(expand_button, 0)
+        separator = gtk.SeparatorToolItem()
+        separator.set_expand(True)
+        self.tool_bar.insert(separator, 0)
+
+        self.tool_bar.show_all()
 
     def _on_button_press_event(self, treeview, event):
         """Tree view button press callback."""
@@ -287,34 +534,10 @@ class ScanApp(object):
                 launch_gcylc(suite_keys[0])
             return False
 
-        view_item = gtk.ImageMenuItem("View Column...")
-        img = gtk.image_new_from_stock(gtk.STOCK_INDEX, gtk.ICON_SIZE_MENU)
-        view_item.set_image(img)
-        view_item.show()
-        view_menu = gtk.Menu()
-        view_item.set_submenu(view_menu)
-        for column_index, column in enumerate(treeview.get_columns()):
-            name = column.get_title()
-            is_visible = column.get_visible()
-            column_item = gtk.CheckMenuItem(name.replace("_", "__"))
-            column_item._connect_args = (column_index, is_visible)
-            column_item.set_active(is_visible)
-            column_item.connect("toggled", self._on_toggle_column_visible)
-            column_item.show()
-            view_menu.append(column_item)
-
         menu = get_scan_menu(
             suite_keys,
-            self.theme_name,
-            self._set_theme,
-            self.updater.has_stopped_suites(),
-            self.updater.clear_stopped_suites,
             self.hosts,
-            self.updater.set_hosts,
-            self.updater.update_now,
             self.updater.start,
-            program_name="cylc gscan",
-            extra_items=[view_item],
         )
         menu.popup(None, None, None, event.button, event.time)
         return False
@@ -442,8 +665,9 @@ class ScanApp(object):
 
     def _on_toggle_column_visible(self, menu_item):
         """Toggle column visibility callback."""
-        column_index, is_visible = menu_item._connect_args
+        column_index = menu_item._connect_args
         column = self.suite_treeview.get_columns()[column_index]
+        is_visible = column.get_visible()
         column.set_visible(not is_visible)
         self.updater.update()
         return False
@@ -546,7 +770,9 @@ class ScanApp(object):
         """Set GUI theme."""
         self.theme_name = new_theme_name
         self.theme = gcfg.get(['themes', self.theme_name])
-        self.dots = DotMaker(self.theme)
+        self._set_dots()
+        self.updater.update()
+        self.update_theme_legend()
 
     @staticmethod
     def _set_tooltip(widget, text):
@@ -625,7 +851,7 @@ class ScanAppUpdater(threading.Thread):
         warnings.sort()
         return warnings[-5:]
 
-    def clear_stopped_suites(self):
+    def clear_stopped_suites(self, _=None):
         """Clear stopped suite information that may have built up."""
         for key, result in self.suite_info_map.copy().items():
             if KEY_PORT not in result:
@@ -801,6 +1027,6 @@ class ScanAppUpdater(threading.Thread):
                 states_text += '%s %d ' % (state, number)
         return states_text.rstrip()
 
-    def update_now(self):
+    def update_now(self, _=None):
         """Force an update as soon as possible."""
         self._should_force_update = True
