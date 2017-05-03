@@ -94,6 +94,7 @@ def main():
     try:
         gtk.main()
     except KeyboardInterrupt:
+        print >> sys.stderr, "Stopping..."
         scan_app.window.destroy()
         raise SystemExit(1)
 
