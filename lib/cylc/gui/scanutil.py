@@ -390,16 +390,10 @@ def call_cylc_command(keys, command_id):
             Popen(["nohup"] + command, env=env, stdout=stdout, stderr=stderr)
 
 
-def update_suites_info(
-        hosts=None, timeout=None, owner_pattern=None, name_pattern=None,
-        prev_results=None):
+def update_suites_info(updater):
     """Return mapping of suite info by host, owner and suite name.
 
-    hosts - hosts to scan, or the default set in the site/user global.rc
-    timeout - communication timeout
-    owner_pattern - return only suites with owners matching this compiled re
-    name_pattern - return only suites with names matching this compiled re
-    prev_results - previous results returned by this function
+    updater - gscan or gpanel updater.
 
     Return a dict of the form: {(host, owner, name): suite_info, ...}
 
@@ -413,8 +407,24 @@ def update_suites_info(
         KEY_TITLE - suite title
         KEY_UPDATE_TIME - last update time of suite
     """
+    # Compulsory attributes from updater
+    # hosts - hosts to scan, or the default set in the site/user global.rc
+    # owner_pattern - return only suites with owners matching this compiled re
+    # prev_results - previous results returned by this function
+    hosts = updater.hosts
+    owner_pattern = updater.owner_pattern
+    prev_results = updater.suite_info_map
+    # Optional attributes from updater
+    # timeout - communication timeout
+    # name_pattern - return only suites with names matching this compiled re
+    timeout = getattr(updater, "comms_timeout")
+    name_pattern = getattr(updater, "name_pattern")
+    # Scan
     results = {}
-    for host, port, result in scan_all(hosts=hosts, timeout=timeout):
+    for host, port, result in scan_all(
+            hosts=hosts, timeout=timeout, updater=updater):
+        if updater.quit:
+            break
         if (name_pattern and not name_pattern.match(result[KEY_NAME]) or
                 owner_pattern and not owner_pattern.match(result[KEY_OWNER])):
             continue
@@ -426,6 +436,8 @@ def update_suites_info(
             pass
     expire_threshold = time() - DURATION_EXPIRE_STOPPED
     for (host, owner, name), prev_result in prev_results.items():
+        if updater.quit:
+            break
         if ((host, owner, name) in results or
                 host not in hosts or
                 owner_pattern and not owner_pattern.match(owner) or

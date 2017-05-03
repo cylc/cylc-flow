@@ -158,9 +158,7 @@ class ScanPanelAppletUpdater(object):
             self._should_force_update = False
 
         # Get new information.
-        self.suite_info_map = update_suites_info(
-            self.hosts, owner_pattern=self.owner_pattern,
-            prev_results=self.suite_info_map)
+        self.suite_info_map = update_suites_info(self)
         self.last_update_time = time.time()
         if self.suite_info_map:
             self._last_running_time = None
