@@ -22,9 +22,6 @@ import sys
 from uuid import uuid4
 import warnings
 
-# Ignore incorrect SSL certificate warning from urllib3 via requests.
-warnings.filterwarnings("ignore", "Certificate has no `subjectAltName`")
-
 import cylc.flags
 from cylc.network import (
     ConnectionError, ConnectionDeniedError, ConnectionInfoError,
@@ -106,6 +103,8 @@ class BaseCommsClient(object):
 
     def _get_data_from_url_with_requests(self, url, json_data, method=None):
         import requests
+        from requests.packages.urllib3.exceptions import InsecureRequestWarning
+        warnings.simplefilter("ignore", InsecureRequestWarning)
         username, password = self._get_auth()
         auth = requests.auth.HTTPDigestAuth(username, password)
         if not hasattr(self, "session"):
