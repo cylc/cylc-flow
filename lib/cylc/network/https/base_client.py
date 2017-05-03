@@ -103,7 +103,7 @@ class BaseCommsClient(object):
 
     def _get_data_from_url_with_requests(self, url, json_data, method=None):
         import requests
-        from urllib3.exceptions import InsecureRequestWarning
+        from requests.packages.urllib3.exceptions import InsecureRequestWarning
         warnings.simplefilter("ignore", InsecureRequestWarning)
         username, password = self._get_auth()
         auth = requests.auth.HTTPDigestAuth(username, password)
