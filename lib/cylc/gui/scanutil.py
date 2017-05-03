@@ -68,7 +68,8 @@ def get_scan_menu(suite_keys, start_func, owner=None,
 
     if not suite_keys:
         null_item = gtk.ImageMenuItem("Click on a suite or group")
-        img = gtk.image_new_from_stock(gtk.STOCK_DIALOG_WARNING, gtk.ICON_SIZE_MENU)
+        img = gtk.image_new_from_stock(
+            gtk.STOCK_DIALOG_WARNING, gtk.ICON_SIZE_MENU)
         null_item.set_image(img)
         null_item.show()
         menu.append(null_item)
@@ -110,9 +111,10 @@ def get_scan_menu(suite_keys, start_func, owner=None,
         item.set_image(img_stop)
         stop_menu.append(item)
         item._connect_args = suite_keys, 'stop %s' % stop_type
-        item.connect("button-press-event",
-                          lambda b, e: call_cylc_command(b._connect_args[0],
-                                                         b._connect_args[1]))
+        item.connect(
+            "button-press-event",
+            lambda b, e: call_cylc_command(b._connect_args[0],
+                                           b._connect_args[1]))
         item.show()
 
     stoptask_item.show()
