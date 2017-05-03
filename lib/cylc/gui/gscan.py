@@ -200,9 +200,14 @@ class ScanApp(object):
         self.dot_size = gcfg.get(['dot icon size'])
         self._set_dots()
 
-        self.create_main_menu()
+        self.create_menubar()
         self.create_tool_bar()
-        self.vbox.pack_start(self.menu_bar, False)
+
+        self.menu_hbox = gtk.HBox()
+        self.menu_hbox.pack_start(self.menu_bar, expand=True, fill=True)
+        self.menu_hbox.pack_start(self.tool_bar, expand=True, fill=True)
+        self.menu_hbox.show_all()
+        self.menu_hbox.hide_all()
 
         scrolled_window = gtk.ScrolledWindow()
         scrolled_window.set_policy(gtk.POLICY_AUTOMATIC,
@@ -210,7 +215,7 @@ class ScanApp(object):
         scrolled_window.add(self.suite_treeview)
         scrolled_window.show()
 
-        self.vbox.pack_start(self.tool_bar, False)
+        self.vbox.pack_start(self.menu_hbox, expand=False)
         self.vbox.pack_start(scrolled_window, expand=True, fill=True)
  
         self.window.add(self.vbox)
@@ -242,7 +247,7 @@ class ScanApp(object):
         """Handle a destroy of the theme legend window."""
         self.theme_legend_window = None
 
-    def create_main_menu(self):
+    def create_menubar(self):
         """Create the main menu."""
         self.menu_bar = gtk.MenuBar()
 
@@ -370,7 +375,6 @@ class ScanApp(object):
         help_menu = gtk.Menu()
         help_menu_root = gtk.MenuItem('_Help')
         help_menu_root.set_submenu(help_menu)
-        help_menu_root.set_right_justified(True)
 
         self.menu_bar.append(file_menu_root)
         self.menu_bar.append(view_menu_root)
@@ -550,6 +554,12 @@ class ScanApp(object):
 
     def _on_query_tooltip(self, _, x, y, kbd_ctx, tooltip):
         """Handle a tooltip creation request."""
+        if y < 27:  # You may need to fiddle with this parameter!
+            self.menu_hbox.show_all()
+            return False
+        else:
+            self.menu_hbox.hide_all()
+            return False
         tip_context = self.suite_treeview.get_tooltip_context(x, y, kbd_ctx)
         if tip_context is None:
             self._prev_tooltip_location_id = None
