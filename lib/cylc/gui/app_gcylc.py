@@ -1243,25 +1243,25 @@ been defined for this suite""").inform()
                 not task_state_summary.get('job_hosts')):
             warning_dialog('%s has no log files' % task_id, self.window).warn()
         else:
-	    if choice == 'job-activity.log':
-            	command = ("cylc cat-log --activity --geditor" + " " +
-			  self.cfg.suite + " " + task_id)
-	    elif choice == 'job.status':
-            	command = ("cylc cat-log --status --geditor" + " " +
-			  self.cfg.suite + " " + task_id)
-	    elif choice == 'job.out':
-            	command = ("cylc cat-log --stdout --geditor" + " " +
-			  self.cfg.suite + " " + task_id)
-	    elif choice == 'job.err':
-            	command = ("cylc cat-log --stderr --geditor" + " " +
-			  self.cfg.suite + " " + task_id)
+            if choice == 'job-activity.log':
+                command = ("cylc cat-log --activity --geditor" + " " +
+                          self.cfg.suite + " " + task_id)
+            elif choice == 'job.status':
+                command = ("cylc cat-log --status --geditor" + " " +
+                          self.cfg.suite + " " + task_id)
+            elif choice == 'job.out':
+                command = ("cylc cat-log --stdout --geditor" + " " +
+                          self.cfg.suite + " " + task_id)
+            elif choice == 'job.err':
+                command = ("cylc cat-log --stderr --geditor" + " " +
+                          self.cfg.suite + " " + task_id)
             elif choice == 'job':
-           	command = ("cylc cat-log --geditor" + " " +
-			  self.cfg.suite + " " + task_id)	
-	
-	    foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 400, 400)
-	    self.gcapture_windows.append(foo)
-	    foo.run()
+                command = ("cylc cat-log --geditor" + " " +
+                          self.cfg.suite + " " + task_id)
+
+            foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 400, 400)
+            self.gcapture_windows.append(foo)
+            foo.run()
 
     def view_task_info(self, w, e, task_id, choice):
         try:
@@ -1439,8 +1439,8 @@ been defined for this suite""").inform()
                     item.set_sensitive(
                         t_states[0] in TASK_STATUSES_WITH_JOB_LOGS)
 
-	# Separator
-	menu.append(gtk.SeparatorMenuItem())
+        # Separator
+        menu.append(gtk.SeparatorMenuItem())
 
         # Trigger (run now).
         trigger_now_item = gtk.ImageMenuItem('Trigger (run now)')

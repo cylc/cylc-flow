@@ -127,15 +127,14 @@ def get_option_parser():
         action="store_const", const=LIST_MODE_REMOTE, dest="list_mode")
 
     parser.add_option(
-	"-g", "--geditor",
-	help="force use of the configured GUI editor.",
-	action="store_true", default=False, dest="geditor")
+        "-g", "--geditor",
+        help="force use of the configured GUI editor.",
+        action="store_true", default=False, dest="geditor")
 
     parser.add_option(
-	"-b", "--teditor",
-	help="force use of the configured Non-GUI editor.",
-	action="store_true", default=False, dest="editor")
-
+        "-b", "--teditor",
+        help="force use of the configured Non-GUI editor.",
+        action="store_true", default=False, dest="editor")
 
     return parser
 
@@ -290,28 +289,28 @@ def main():
             editor = GLOBAL_CFG.get(['editors', 'gui'])
     elif options.editor:
             editor = GLOBAL_CFG.get(['editors', 'terminal'])
-       
-    if os.path.exists(filename):
-         lines = read_and_proc(filename)
-    else:
-        print
-        print >> sys.stderr, (
-            'No such file or directory: ')
-        print >> sys.stderr, filename
-        print
-        sys.exit(1)
 
-    viewfile = NamedTemporaryFile(
-	 	suffix='.' + os.path.basename(filename), prefix=suite + '.', dir=cylc_tmpdir)
+    if options.editor or options.geditor:
+        if os.path.exists(filename):
+            lines = read_and_proc(filename)
+        else:
+            print
+            print >> sys.stderr, (
+               'No such file or directory: ')
+            print >> sys.stderr, filename
+            print
+            sys.exit(1)
 
-    for line in lines:
-	viewfile.write(line + '\n')
-    viewfile.seek(0, 0)
+        viewfile = NamedTemporaryFile(
+                suffix='.' + os.path.basename(filename), prefix=suite + '.', dir=cylc_tmpdir)
 
-    os.chmod(viewfile.name, 0400)
+        for line in lines:
+            viewfile.write(line + '\n')
+            viewfile.seek(0, 0)
 
-    modtime1 = os.stat(viewfile.name).st_mtime
+        os.chmod(viewfile.name, 0400)
 
+        modtime1 = os.stat(viewfile.name).st_mtime
 
     # Construct the shell command
     commands = []
@@ -343,7 +342,7 @@ def main():
         command_list.append(viewfile.name)
         commands.append(command_list)
     else:
-        commands.append([ 'cat', filename])
+        commands.append(['cat', filename])
 
     # Deal with remote [user@]host
     if user_at_host:
@@ -362,26 +361,28 @@ def main():
         proc = Popen(command, stderr=stderr)
         err = proc.communicate()[1]
         ret_code = proc.wait()
-	if ret_code != 0:
-            print >>sys.stderr, command, 'failed:', ret_code
-            sys.exit(1)
 
-        modtime2 = os.stat(viewfile.name).st_mtime
-   
-        if modtime2 > modtime1:
-            print
-            print >> sys.stderr, (
-                'WARNING: YOU HAVE EDITED A TEMPORARY READ_ONLY LOG/JOB COPY:')
-            print >> sys.stderr, viewfile.name
-            print
-        else:
-            print
-            print >> sys.stderr, (
-                'NO CHANGES MADE TO:')
-            print >> sys.stderr, viewfile.name
-            print
+        if options.editor or options.geditor:
+            if ret_code != 0:
+                print >>sys.stderr, command, 'failed:', ret_code
+                sys.exit(1)
 
-        viewfile.close()
+            modtime2 = os.stat(viewfile.name).st_mtime
+
+            if modtime2 > modtime1:
+                print
+                print >> sys.stderr, (
+                    'WARNING: YOU HAVE EDITED A TEMPORARY READ_ONLY LOG/JOB COPY:')
+                print >> sys.stderr, filename
+                print
+            else:
+                print
+                print >> sys.stderr, (
+                    'NO CHANGES MADE TO:')
+                print >> sys.stderr, viewfile.name
+                print
+
+            viewfile.close()
 
         if ret_code == 0:
             break
