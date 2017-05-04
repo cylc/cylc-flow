@@ -1237,27 +1237,27 @@ been defined for this suite""").inform()
         try:
             task_state_summary = self.updater.full_state_summary[task_id]
         except KeyError:
-            warning_dialog(task_id + ' is not live', self.window).warn()
+            warning_dialog('%s is not live' % task_id, self.window).warn()
             return False
         if (not task_state_summary['logfiles'] and
                 not task_state_summary.get('job_hosts')):
             warning_dialog('%s has no log files' % task_id, self.window).warn()
         else:
             if choice == 'job-activity.log':
-                command = ("cylc cat-log --activity --geditor" + " " +
-                          self.cfg.suite + " " + task_id)
+                command_opt = "--activity"
             elif choice == 'job.status':
-                command = ("cylc cat-log --status --geditor" + " " +
-                          self.cfg.suite + " " + task_id)
+                command_opt = "--status"
             elif choice == 'job.out':
-                command = ("cylc cat-log --stdout --geditor" + " " +
-                          self.cfg.suite + " " + task_id)
+                command_opt = "--stdout"
             elif choice == 'job.err':
-                command = ("cylc cat-log --stderr --geditor" + " " +
-                          self.cfg.suite + " " + task_id)
+                command_opt = "--stderr"
             elif choice == 'job':
-                command = ("cylc cat-log --geditor" + " " +
-                          self.cfg.suite + " " + task_id)
+                command_opt = ""
+
+            command = (
+                "cylc cat-log %s --geditor %s %s" % (
+                    command_opt, self.cfg.suite, task_id)
+            )
 
             foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 400, 400)
             self.gcapture_windows.append(foo)

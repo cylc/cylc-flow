@@ -294,15 +294,12 @@ def main():
         if os.path.exists(filename):
             lines = read_and_proc(filename)
         else:
-            print
-            print >> sys.stderr, (
-               'No such file or directory: ')
-            print >> sys.stderr, filename
-            print
+            print >> sys.stderr, 'No such file or directory: %s' % filename
             sys.exit(1)
 
         viewfile = NamedTemporaryFile(
-                suffix='.' + os.path.basename(filename), prefix=suite + '.', dir=cylc_tmpdir)
+                suffix='.' + os.path.basename(filename),
+                prefix=suite + '.', dir=cylc_tmpdir)
 
         for line in lines:
             viewfile.write(line + '\n')
@@ -338,11 +335,11 @@ def main():
                 "local tail command template"))
             commands.append(shlex.split(cmd_tmpl % {"filename": filename}))
     elif options.geditor or options.editor:
-        command_list = re.split(' ', editor)
+        command_list = editor.split()
         command_list.append(viewfile.name)
         commands.append(command_list)
     else:
-        commands.append(['cat', filename])
+        commands.append(["cat", filename])
 
     # Deal with remote [user@]host
     if user_at_host:
@@ -370,17 +367,11 @@ def main():
             modtime2 = os.stat(viewfile.name).st_mtime
 
             if modtime2 > modtime1:
-                print
                 print >> sys.stderr, (
-                    'WARNING: YOU HAVE EDITED A TEMPORARY READ_ONLY LOG/JOB COPY:')
+                    'WARNING: YOU HAVE EDITED A TEMPORARY READ_ONLY COPY OF: ')
                 print >> sys.stderr, filename
-                print
             else:
-                print
-                print >> sys.stderr, (
-                    'NO CHANGES MADE TO:')
-                print >> sys.stderr, viewfile.name
-                print
+                print >> sys.stderr, 'NO CHANGES MADE TO: %s' % viewfile.name
 
             viewfile.close()
 
