@@ -220,7 +220,8 @@ class ScanApp(object):
 
         self.window.add(self.vbox)
         self.window.connect("destroy", self._on_destroy_event)
-        self.window.set_default_size(700, 300)
+        wsize = gsfg.get(['window size'])
+        self.window.set_default_size(*wsize)
         self.treeview.grab_focus()
         self.window.show()
 
@@ -229,7 +230,6 @@ class ScanApp(object):
 
     def popup_theme_legend(self, widget=None):
         """Popup a theme legend window."""
-        # TODO - consolidate with app_gcylc.
         if self.theme_legend_window is None:
             self.theme_legend_window = ThemeLegendWindow(
                 self.window, self.theme)
@@ -320,37 +320,6 @@ class ScanApp(object):
 
         view_menu.append(theme_item)
 
-        dot_size_item = gtk.ImageMenuItem('State Icon _Size')
-        img = gtk.image_new_from_stock(
-            gtk.STOCK_ZOOM_FIT, gtk.ICON_SIZE_MENU)
-        dot_size_item.set_image(img)
-        view_menu.append(dot_size_item)
-        dot_sizemenu = gtk.Menu()
-        dot_size_item.set_submenu(dot_sizemenu)
-
-        dot_sizes = ['small', 'medium', 'large', 'extra large']
-        dot_size_items = {}
-        dot_size_items[self.dot_size] = gtk.RadioMenuItem(
-            label='_' + self.dot_size)
-        dot_sizemenu.append(dot_size_items[self.dot_size])
-        self._set_tooltip(
-            dot_size_items[self.dot_size],
-            self.dot_size + " state icon dot size")
-        for dsize in dot_sizes:
-            if dsize == self.dot_size:
-                continue
-            dot_size_items[dsize] = gtk.RadioMenuItem(
-                group=dot_size_items[self.dot_size], label='_' + dsize)
-            dot_sizemenu.append(dot_size_items[dsize])
-            self._set_tooltip(
-                dot_size_items[dsize], dsize + " state icon size")
-
-        # set_active then connect, to avoid causing an unnecessary toggle now.
-        dot_size_items[self.dot_size].set_active(True)
-        for dot_size in dot_sizes:
-            dot_size_items[dot_size].connect(
-                'toggled', self.set_dot_size, dot_size)
-
         theme_legend_item = gtk.ImageMenuItem("Show task state key")
         img = gtk.image_new_from_stock(
             gtk.STOCK_SELECT_COLOR, gtk.ICON_SIZE_MENU)
@@ -396,15 +365,6 @@ class ScanApp(object):
         help_menu.append(info_item)
 
         self.menu_bar.show_all()
-
-    def set_dot_size(self, item, dsize):
-        """Change self.dot_size and replace icons."""
-        # TODO - consolidate with app_gcylc.
-        if not item.get_active():
-            return False
-        self.dot_size = dsize
-        self._set_dots()
-        self.updater.update()
 
     def _set_dots(self):
         self.dots = DotMaker(self.theme, size=self.dot_size)
@@ -542,11 +502,8 @@ class ScanApp(object):
                 launch_gcylc(suite_keys[0])
             return False
 
-        menu = get_scan_menu(
-            suite_keys,
-            self.hosts,
-            self.updater.start,
-        )
+        # TODO - only suite_keys needed?:
+        menu = get_scan_menu(suite_keys, self.hosts, self.updater.start)
         menu.popup(None, None, None, event.button, event.time)
         return False
 
@@ -558,7 +515,8 @@ class ScanApp(object):
 
     def _on_query_tooltip(self, _, x, y, kbd_ctx, tooltip):
         """Handle a tooltip creation request."""
-        if y < 27:  # You may need to fiddle with this parameter!
+        y_0 = self.treeview.convert_widget_to_tree_coords(0, 0)[1] * - 1
+        if y < y_0:
             self.menu_hbox.show_all()
             return False
         else:
