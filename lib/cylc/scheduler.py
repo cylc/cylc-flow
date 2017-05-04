@@ -174,7 +174,6 @@ class Scheduler(object):
         self.suite_event_handler = None
         self.message_queue = None
         self.comms_daemon = None
-        self.info_server = None
 
         self._profile_amounts = {}
         self._profile_update_times = {}
@@ -978,8 +977,8 @@ conditions; see `cylc conditions`.
                 attr = getattr(self, attr_name)
                 if callable(attr) and attr_name.startswith('info_'):
                     info_commands[attr_name.replace('info_', '')] = attr
-            self.info_server = SuiteInfoServer(info_commands)
-            self.comms_daemon.connect(self.info_server, COMMS_INFO_OBJ_NAME)
+            self.comms_daemon.connect(
+                SuiteInfoServer(info_commands), COMMS_INFO_OBJ_NAME)
 
             self.suite_log = SuiteLog.get_inst(self.suite)
             log_interface = SuiteLogServer(self.suite_log)
@@ -1457,8 +1456,7 @@ conditions; see `cylc conditions`.
                 self.task_job_mgr.unlink_hosts_contacts(self.suite)
 
         # disconnect from suite-db, stop db queue
-        if getattr(self, "suite_db_mgr", None) is not None:
-            self.suite_db_mgr.on_suite_shutdown()
+        self.suite_db_mgr.on_suite_shutdown()
 
         if getattr(self, "config", None) is not None:
             # run shutdown handlers
