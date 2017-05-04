@@ -298,8 +298,9 @@ def main():
             sys.exit(1)
 
         viewfile = NamedTemporaryFile(
-                suffix='.' + os.path.basename(filename),
-                prefix=suite + '.', dir=cylc_tmpdir)
+            suffix='.' + os.path.basename(filename),
+            prefix=suite + '.', dir=cylc_tmpdiir
+       )
 
         for line in lines:
             viewfile.write(line + '\n')
