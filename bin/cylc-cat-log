@@ -299,12 +299,12 @@ def main():
 
         viewfile = NamedTemporaryFile(
             suffix='.' + os.path.basename(filename),
-            prefix=suite + '.', dir=cylc_tmpdiir
+            prefix=suite + '.', dir=cylc_tmpdir
         )
 
         for line in lines:
             viewfile.write(line + '\n')
-            viewfile.seek(0, 0)
+        viewfile.seek(0, 0)
 
         os.chmod(viewfile.name, 0400)
 
@@ -369,15 +369,14 @@ def main():
 
             if modtime2 > modtime1:
                 print >> sys.stderr, (
-                    'WARNING: YOU HAVE EDITED A TEMPORARY READ_ONLY COPY OF: ')
-                print >> sys.stderr, filename
-            else:
-                print >> sys.stderr, 'NO CHANGES MADE TO: %s' % viewfile.name
+                    'WARNING: YOU HAVE EDITED A TEMPORARY READ_ONLY COPY : ')
+                print >> sys.stderr, viewfile.name
 
             viewfile.close()
 
         if ret_code == 0:
             break
+
     if ret_code and err:
         sys.stderr.write(err)
     sys.exit(ret_code)
