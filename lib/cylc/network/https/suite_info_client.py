@@ -26,8 +26,8 @@ class SuiteInfoClient(BaseCommsClient):
 
     METHOD = BaseCommsClient.METHOD_GET
 
-    def get_info(self, command, **arg_dict):
-        return self.call_server_func(COMMS_INFO_OBJ_NAME, command, **arg_dict)
+    def get_info(self, *command, **arg_dict):
+        return self.call_server_func(COMMS_INFO_OBJ_NAME, *command, **arg_dict)
 
 
 class SuiteInfoClientAnon(BaseCommsClientAnon):
@@ -35,5 +35,5 @@ class SuiteInfoClientAnon(BaseCommsClientAnon):
 
     METHOD = BaseCommsClient.METHOD_GET
 
-    def get_info(self, command, **arg_dict):
-        return self.call_server_func(COMMS_INFO_OBJ_NAME, command, **arg_dict)
+    def get_info(self, *command, **arg_dict):
+        return self.call_server_func(COMMS_INFO_OBJ_NAME, *command, **arg_dict)

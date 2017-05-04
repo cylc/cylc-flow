@@ -302,16 +302,15 @@ class Updater(threading.Thread):
 
     def retrieve_state_summaries(self):
         """Retrieve suite summary."""
-        ret = self.state_summary_client.get_suite_state_summary()
         glbl, states, fam_states = (
             self.state_summary_client.get_suite_state_summary())
-        self.ancestors = self.suite_info_client.get_info(
-            'get_first_parent_ancestors')
-        self.ancestors_pruned = self.suite_info_client.get_info(
-            'get_first_parent_ancestors', pruned=True)
-        self.descendants = self.suite_info_client.get_info(
-            'get_first_parent_descendants')
-        self.all_families = self.suite_info_client.get_info('get_all_families')
+
+        (self.ancestors, self.ancestors_pruned, self.descendants,
+            self.all_families) = self.suite_info_client.get_info(
+                {'function': 'get_first_parent_ancestors'},
+                {'function': 'get_first_parent_ancestors', 'pruned': True},
+                {'function': 'get_first_parent_descendants'},
+                {'function': 'get_all_families'})
 
         self.mode = glbl['run_mode']
 
@@ -400,7 +399,7 @@ class Updater(threading.Thread):
         try:
             err_log_changed = self.retrieve_err_log()
             summaries_changed = self.retrieve_summary_update_time()
-            if self.summary_update_time is not None:
+            if self.summary_update_time is not None and summaries_changed:
                 self.retrieve_state_summaries()
         except Exception as exc:
             if self.status == SUITE_STATUS_STOPPING:

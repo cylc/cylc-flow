@@ -21,6 +21,7 @@ import os
 import sys
 from uuid import uuid4
 import warnings
+import unittest
 
 import cylc.flags
 from cylc.network import (
@@ -64,8 +65,38 @@ class BaseCommsClient(object):
         self.server_cert = None
         self.auth = None
 
-    def call_server_func(self, category, fname, **fargs):
-        """Call server_object.fname(*fargs, **fargs)."""
+    def _compile_url(self, category, func_dict, host):
+        payload = func_dict.pop("payload", None)
+        method = func_dict.pop("method", self.METHOD)
+        function = func_dict.pop("function", None)
+        url = 'https://%s:%s/%s/%s' % (host, self.port, category, function)
+        # If there are any parameters left in the dict after popping,
+        # append them to the url.
+        if func_dict:
+            import urllib
+            params = urllib.urlencode(func_dict, doseq=True)
+            url += "?" + params
+        request = {"url": url, "payload": payload, "method": method}
+        return request
+
+    def call_server_func(self, category, *func_dicts, **fargs):
+        """func_dict is a dictionary of command names (fnames)
+        and arguments to that command"""
+        # Deal with the case of one func_dict/function name passed
+        # by converting them to the generic case: a dictionary of
+        # a single function and its function arguments.
+        if isinstance(func_dicts[0], str):
+            function = func_dicts[0]
+            func_dict = {"function": function}
+            func_dict.update(fargs)
+
+        # I.e. if we haven't passed multiple dictionaries
+        # if len(func_dicts) == 1 and fargs is not None:
+        #     func_dicts.update(fargs)
+        # if len(func_dicts) == 1:
+        #     func_dicts = list(func_dicts)
+        # Error check here? Multiple dicts and fargs not allowed?
+
         if self.host is None and self.port is not None:
             self.host = get_hostname()
         try:
@@ -73,19 +104,28 @@ class BaseCommsClient(object):
         except (IOError, ValueError, SuiteServiceFileError):
             raise ConnectionInfoError(self.suite)
         handle_proxies()
-        payload = fargs.pop("payload", None)
-        method = fargs.pop("method", self.METHOD)
+        # each func could have a different method and payload
+        # payload = fargs.pop("payload", None)
+        # method = fargs.pop("method", self.METHOD)
+        #
         host = self.host
         if host == "localhost":
             host = get_hostname().split(".")[0]
-        url = 'https://%s:%s/%s/%s' % (host, self.port, category, fname)
-        if fargs:
-            import urllib
-            params = urllib.urlencode(fargs, doseq=True)
-            url += "?" + params
-        return self._get_data_from_url(url, payload, method=method)
 
-    def _get_data_from_url(self, url, json_data, method=None):
+        http_requests = []
+        try:
+            # dictionary containing: url, payload, method
+            request = self._compile_url(category, func_dict, host)
+            http_requests.append(request)
+        except:
+            for f_dict in func_dicts:
+                request = self._compile_url(category, f_dict, host)
+                http_requests.append(request)
+        # returns a list of http returns from the requests
+        return self._get_data_from_url(http_requests)
+
+    # def _get_data_from_url(self, url, json_data, method=None):
+    def _get_data_from_url(self, http_requests):
         requests_ok = True
         try:
             import requests
@@ -96,12 +136,10 @@ class BaseCommsClient(object):
             if version < [2, 4, 2]:
                 requests_ok = False
         if requests_ok:
-            return self._get_data_from_url_with_requests(
-                url, json_data, method=method)
-        return self._get_data_from_url_with_urllib2(
-            url, json_data, method=method)
+            return self._get_data_from_url_with_requests(http_requests)
+        return self._get_data_from_url_with_urllib2(http_requests)
 
-    def _get_data_from_url_with_requests(self, url, json_data, method=None):
+    def _get_data_from_url_with_requests(self, http_requests):
         import requests
         from requests.packages.urllib3.exceptions import InsecureRequestWarning
         warnings.simplefilter("ignore", InsecureRequestWarning)
@@ -109,66 +147,76 @@ class BaseCommsClient(object):
         auth = requests.auth.HTTPDigestAuth(username, password)
         if not hasattr(self, "session"):
             self.session = requests.Session()
-        if method is None:
-            method = self.METHOD
-        if method == self.METHOD_POST:
-            session_method = self.session.post
-        else:
-            session_method = self.session.get
-        try:
-            ret = session_method(
-                url,
-                json=json_data,
-                verify=self._get_verify(),
-                proxies={},
-                headers=self._get_headers(),
-                auth=auth,
-                timeout=self.timeout
-            )
-        except requests.exceptions.SSLError as exc:
-            if "unknown protocol" in str(exc) and url.startswith("https:"):
-                # Server is using http rather than https, for some reason.
-                sys.stderr.write(WARNING_NO_HTTPS_SUPPORT.format(exc))
-                return self._get_data_from_url_with_requests(
-                    url.replace("https:", "http:", 1), json_data)
-            if cylc.flags.debug:
-                import traceback
-                traceback.print_exc()
-            raise ConnectionError(url, exc)
-        except requests.exceptions.Timeout as exc:
-            if cylc.flags.debug:
-                import traceback
-                traceback.print_exc()
-            raise ConnectionTimeout(url, exc)
-        except requests.exceptions.RequestException as exc:
-            if cylc.flags.debug:
-                import traceback
-                traceback.print_exc()
-            raise ConnectionError(url, exc)
-        if ret.status_code == 401:
-            raise ConnectionDeniedError(url, self.prog_name,
-                                        self.ACCESS_DESCRIPTION)
-        if ret.status_code >= 400:
-            from cylc.network.https.util import get_exception_from_html
-            exception_text = get_exception_from_html(ret.text)
-            if exception_text:
-                sys.stderr.write(exception_text)
+
+        http_returns = []
+        for r in http_requests:
+            method = r['method']
+            url = r['url']
+            json_data = r['payload']
+            if method is None:
+                method = self.METHOD
+            if method == self.METHOD_POST:
+                session_method = self.session.post
             else:
-                sys.stderr.write(ret.text)
-        try:
-            ret.raise_for_status()
-        except requests.exceptions.HTTPError as exc:
-            if cylc.flags.debug:
-                import traceback
-                traceback.print_exc()
-            raise ConnectionError(url, exc)
-        if self.auth and self.auth[1] != NO_PASSPHRASE:
-            self.srv_files_mgr.cache_passphrase(
-                self.suite, self.owner, self.host, self.auth[1])
-        try:
-            return ret.json()
-        except ValueError:
-            return ret.text
+                session_method = self.session.get
+            try:
+                ret = session_method(
+                    url,
+                    json=json_data,
+                    verify=self._get_verify(),
+                    proxies={},
+                    headers=self._get_headers(),
+                    auth=auth,
+                    timeout=self.timeout
+                )
+            except requests.exceptions.SSLError as exc:
+                if "unknown protocol" in str(exc) and url.startswith("https:"):
+                    # Server is using http rather than https, for some reason.
+                    sys.stderr.write(WARNING_NO_HTTPS_SUPPORT.format(exc))
+                    return self._get_data_from_url_with_requests(
+                        url.replace("https:", "http:", 1), json_data)
+                if cylc.flags.debug:
+                    import traceback
+                    traceback.print_exc()
+                raise ConnectionError(url, exc)
+            except requests.exceptions.Timeout as exc:
+                if cylc.flags.debug:
+                    import traceback
+                    traceback.print_exc()
+                raise ConnectionTimeout(url, exc)
+            except requests.exceptions.RequestException as exc:
+                if cylc.flags.debug:
+                    import traceback
+                    traceback.print_exc()
+                raise ConnectionError(url, exc)
+            if ret.status_code == 401:
+                raise ConnectionDeniedError(url, self.prog_name,
+                                            self.ACCESS_DESCRIPTION)
+            if ret.status_code >= 400:
+                from cylc.network.https.util import get_exception_from_html
+                exception_text = get_exception_from_html(ret.text)
+                if exception_text:
+                    sys.stderr.write(exception_text)
+                else:
+                    sys.stderr.write(ret.text)
+            try:
+                ret.raise_for_status()
+            except requests.exceptions.HTTPError as exc:
+                if cylc.flags.debug:
+                    import traceback
+                    traceback.print_exc()
+                raise ConnectionError(url, exc)
+            if self.auth and self.auth[1] != NO_PASSPHRASE:
+                self.srv_files_mgr.cache_passphrase(
+                    self.suite, self.owner, self.host, self.auth[1])
+            try:
+                ret = ret.json()
+                http_returns.append(ret)
+            except ValueError:
+                ret = ret.text
+                http_returns.append(ret)
+        # Return a single http return or a list of them if multiple
+        return http_returns if len(http_returns) > 1 else http_returns[0]
 
     def _get_data_from_url_with_urllib2(self, url, json_data, method=None):
         import json
@@ -322,3 +370,56 @@ class BaseCommsClientAnon(BaseCommsClient):
     def _get_verify(self):
         """Other suites' certificates may not be accessible."""
         return False
+
+
+class TestBaseCommsClient(unittest.TestCase):
+    """Unit testing class to test the methods in BaseCommsClient
+    """
+    def test_url_compiler(self):
+        """Tests that the url parser works for a single url and command"""
+        category = 'info'  # Could be any from cylc/network/__init__.py
+        host = "localhost"
+        func_dict = {"function": "test_command",
+                     "apples": "False",
+                     "oranges": "True",
+                     "method": "GET",
+                     "payload": "None"}
+
+        myCommsClient = BaseCommsClient("test-suite", port=80)
+        request = myCommsClient._compile_url(category, func_dict, host)
+        test_url = ('https://localhost:80/info/test_command'
+                    '?apples=False&oranges=True')
+
+        self.assertEqual(request['url'], test_url)
+        self.assertEqual(request['payload'], "None")
+        self.assertEqual(request['method'], "GET")
+
+    def test_get_data_from_url_single(self):
+        """Test the get data from _get_data_from_url() function"""
+        myCommsClient = BaseCommsClient("dummy-suite")
+        url = "http://httpbin.org/get"
+        payload = None
+        method = "GET"
+        request = [{"url": url, "payload": payload, "method": method}]
+        ret = myCommsClient._get_data_from_url(request)
+        self.assertEqual(ret['url'], "http://httpbin.org/get")
+
+    def test_get_data_from_url_multiple(self):
+        myCommsClient = BaseCommsClient("dummy-suite")
+        payload = None
+        method = "GET"
+        request1 = {"url": "http://httpbin.org/get#1",
+                    "payload": payload, "method": method}
+        request2 = {"url": "http://httpbin.org/get#2",
+                    "payload": payload, "method": method}
+        request3 = {"url": "http://httpbin.org/get#3",
+                    "payload": payload, "method": method}
+
+        rets = myCommsClient._get_data_from_url([request1, request2, request3])
+
+        for i in range(2):
+            self.assertEqual(rets[i]['url'], "http://httpbin.org/get")
+
+
+if __name__ == '__main__':
+    unittest.main()
