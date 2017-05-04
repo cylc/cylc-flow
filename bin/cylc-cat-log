@@ -300,7 +300,7 @@ def main():
         viewfile = NamedTemporaryFile(
             suffix='.' + os.path.basename(filename),
             prefix=suite + '.', dir=cylc_tmpdiir
-       )
+        )
 
         for line in lines:
             viewfile.write(line + '\n')
