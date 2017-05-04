@@ -176,8 +176,8 @@ class TaskProxy(object):
             self.summary['mean_elapsed_time'] = (
                 float(sum(self.tdef.elapsed_times)) / count)
         elif self.summary['execution_time_limit']:
-            self.summary['mean_elapsed_time'] = \
-                self.summary['execution_time_limit']
+            self.summary['mean_elapsed_time'] = float(
+                self.summary['execution_time_limit'])
         else:
             self.summary['mean_elapsed_time'] = None
 

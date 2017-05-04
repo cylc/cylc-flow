@@ -730,7 +730,7 @@ class TaskJobManager(object):
             itask.task_host = 'SIMULATION'
             itask.task_owner = 'SIMULATION'
             itask.summary['batch_sys_name'] = 'SIMULATION'
-            itask.summary['execution_time_limit'] = (
+            itask.summary[self.KEY_EXECUTE_TIME_LIMIT] = (
                 itask.tdef.rtconfig['job']['simulated run length'])
             self.task_events_mgr.process_message(
                 itask, INFO, TASK_OUTPUT_SUBMITTED)
@@ -842,8 +842,6 @@ class TaskJobManager(object):
         })
 
         itask.summary['batch_sys_name'] = rtconfig['job']['batch system']
-        itask.summary['execution_time_limit'] = (
-            rtconfig['job']['execution time limit'])
         for name in rtconfig['extra log files']:
             itask.summary['logfiles'].append(expandvars(name))
 
@@ -871,7 +869,12 @@ class TaskJobManager(object):
                 itask, 'batch systems')[rtconfig['job']['batch system']]
         except (TypeError, KeyError):
             batch_sys_conf = {}
-        if itask.summary['execution_time_limit']:
+        try:
+            itask.summary[self.KEY_EXECUTE_TIME_LIMIT] = float(
+                rtconfig['job']['execution time limit'])
+        except TypeError:
+            pass
+        if itask.summary[self.KEY_EXECUTE_TIME_LIMIT]:
             # Default = 1, 2 and 7 minutes intervals, roughly 1, 3 and 10
             # minutes after time limit exceeded
             itask.poll_timers[self.KEY_EXECUTE_TIME_LIMIT] = (
@@ -896,9 +899,6 @@ class TaskJobManager(object):
         itask.is_manual_submit = False
 
         scripts = self._get_job_scripts(itask, rtconfig)
-        execution_time_limit = rtconfig['job']['execution time limit']
-        if execution_time_limit:
-            execution_time_limit = float(execution_time_limit)
 
         # Location of job file, etc
         self._create_job_log_path(suite, itask)
@@ -917,7 +917,7 @@ class TaskJobManager(object):
             'batch_system_conf': batch_sys_conf,
             'directives': rtconfig['directives'],
             'environment': rtconfig['environment'],
-            'execution_time_limit': execution_time_limit,
+            'execution_time_limit': itask.summary[self.KEY_EXECUTE_TIME_LIMIT],
             'env-script': rtconfig['env-script'],
             'err-script': rtconfig['err-script'],
             'host': itask.task_host,
