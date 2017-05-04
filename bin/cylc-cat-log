@@ -299,7 +299,7 @@ def main():
 
         viewfile = NamedTemporaryFile(
             suffix='.' + os.path.basename(filename),
-            prefix=suite + '.', dir=cylc_tmpdir
+            prefix=suite.replace('/', '_') + '.', dir=cylc_tmpdir
         )
 
         for line in lines:

@@ -135,7 +135,9 @@ def main():
 
     # write to a temporary file
     viewfile = NamedTemporaryFile(
-        suffix=".suite.rc", prefix=suite + '.', dir=cylc_tmpdir)
+        suffix=".suite.rc", prefix=suite.replace('/', '_') + '.',
+        dir=cylc_tmpdir
+    )
     for line in lines:
         viewfile.write(line + '\n')
     viewfile.seek(0, 0)
