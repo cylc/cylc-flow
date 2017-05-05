@@ -36,7 +36,7 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.network import PRIVILEGE_LEVELS
 
 
-REC_PARAM_INT_RANGE = re.compile('(\d+)\.\.(\d+)(\^(\d+))?')
+REC_PARAM_INT_RANGE = re.compile('(\d+)\.\.(\d+)(?:\^(\d+))?')
 
 
 def _coerce_cycleinterval(value, keys, _):
@@ -143,7 +143,7 @@ def _coerce_parameter_list(value, keys, _):
     value = _strip_and_unquote_list(keys, value)
     # May be an integer range with step e.g. '1..6^2' (bounds inclusive).
     try:
-        lower, upper, junk, step = REC_PARAM_INT_RANGE.match(value[0]).groups()
+        lower, upper, step = REC_PARAM_INT_RANGE.match(value[0]).groups()
         step = step or 1
     except AttributeError:
         if '.' in value[0]:
