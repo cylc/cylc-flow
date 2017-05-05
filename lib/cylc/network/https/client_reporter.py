@@ -131,7 +131,7 @@ class CommsClientReporter(object):
                 caller.user, caller.host, caller.prog_name, caller.uuid))
         try:
             del self.clients[caller.uuid]
-        except:
+        except KeyError:
             # Already forgotten.
             pass
         self._housekeep()
@@ -139,11 +139,13 @@ class CommsClientReporter(object):
     def _housekeep(self):
         """Forget inactive clients."""
 
-        for uuid in self.clients.keys():
-            dtime = self.clients[uuid]
+        for uuid, dtime in self.clients.copy().items():
             if (self._total_seconds(datetime.datetime.utcnow() - dtime) >
                     self.__class__.CLIENT_FORGET_SEC):
-                del self.clients[uuid]
+                try:
+                    del self.clients[uuid]
+                except KeyError:
+                    pass
                 LOG.debug(
                     self.__class__.LOG_FORGET_TMPL % uuid)
 
