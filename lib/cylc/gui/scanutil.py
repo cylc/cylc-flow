@@ -40,13 +40,11 @@ DURATION_EXPIRE_STOPPED = 600.0
 KEY_PORT = "port"
 
 
-def get_gpanel_scan_menu(suite_keys,
-                  theme_name, set_theme_func,
-                  has_stopped_suites, clear_stopped_suites_func,
-                  scanned_hosts, change_hosts_func,
-                  update_now_func, start_func,
-                  program_name, extra_items=None, owner=None,
-                  is_stopped=False):
+def get_gpanel_scan_menu(
+        suite_keys, theme_name, set_theme_func, has_stopped_suites,
+        clear_stopped_suites_func, scanned_hosts, change_hosts_func,
+        update_now_func, start_func, program_name, extra_items=None,
+        owner=None, is_stopped=False):
     """Return a right click menu for the gpanel GUI.
 
     TODO this used to be for gscan too; simplify now it's only for gpanel?
