@@ -269,9 +269,10 @@ class JobFileWriter(object):
                 handle.write(" " + var)
             handle.write("\n}")
 
-    def _write_global_init_script(self, handle, job_conf):
+    @classmethod
+    def _write_global_init_script(cls, handle, job_conf):
         """Global Init-script."""
-        global_init_script = self._get_host_item(
+        global_init_script = cls._get_host_item(
             job_conf, 'global init-script')
         if cls._check_script_value(global_init_script):
             handle.write("\n\ncylc__job__inst__global_init_script() {")
