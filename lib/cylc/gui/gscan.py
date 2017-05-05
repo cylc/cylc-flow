@@ -502,8 +502,7 @@ class ScanApp(object):
                 launch_gcylc(suite_keys[0])
             return False
 
-        # TODO - only suite_keys needed?:
-        menu = get_scan_menu(suite_keys, self.hosts, self.updater.start)
+        menu = get_scan_menu(suite_keys)
         menu.popup(None, None, None, event.button, event.time)
         return False
 
