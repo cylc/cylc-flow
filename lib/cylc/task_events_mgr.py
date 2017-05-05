@@ -15,7 +15,17 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Task events manager."""
+"""Task events manager.
+
+This module provides logic to:
+* Manage task messages (incoming or internal).
+* Set up retries on task job failures (submission or execution).
+* Generate task event handlers.
+  * Retrieval of log files for completed remote jobs.
+  * Email notification.
+  * Custom event handlers.
+* Manage invoking and retrying of task event handlers.
+"""
 
 from collections import namedtuple
 from logging import getLevelName, CRITICAL, ERROR, WARNING, INFO, DEBUG
@@ -168,7 +178,10 @@ class TaskEventsManager(object):
             LOG.debug(ctx_str)
 
     def process_events(self, schd_ctx):
-        """Process task events."""
+        """Process task events that were created by "setup_event_handlers".
+
+        schd_ctx is an instance of "Schduler" in "cylc.scheduler".
+        """
         ctx_groups = {}
         now = time()
         for id_key, timer in self.event_timers.copy().items():
@@ -358,17 +371,16 @@ class TaskEventsManager(object):
             self._db_events_insert(
                 itask, ("message %s" % str(priority).lower()), message)
 
-    def setup_event_handlers(
-            self, itask, event, message):
-        """Set up event handlers."""
+    def setup_event_handlers(self, itask, event, message):
+        """Set up handlers for a task event."""
         if itask.tdef.run_mode != 'live':
             return
         msg = ""
         if message != "job %s" % event:
             msg = message
         self._db_events_insert(itask, event, msg)
-        self._setup_job_logs_retrieval(itask, event, message)
-        self._setup_event_mail(itask, event, message)
+        self._setup_job_logs_retrieval(itask, event)
+        self._setup_event_mail(itask, event)
         self._setup_custom_event_handlers(itask, event, message)
 
     def set_poll_time(self, itask, now=None):
@@ -726,8 +738,12 @@ class TaskEventsManager(object):
                 itask.timeout_timers[TASK_STATUS_SUBMITTED] = None
             self.set_poll_time(itask)
 
-    def _setup_job_logs_retrieval(self, itask, event, _=None):
-        """Set up remote job logs retrieval."""
+    def _setup_job_logs_retrieval(self, itask, event):
+        """Set up remote job logs retrieval.
+
+        For a task with a job completion event, i.e. succeeded, failed,
+        (execution) retry.
+        """
         id_key = (
             (self.HANDLER_JOB_LOGS_RETRIEVE, event),
             str(itask.point), itask.tdef.name, itask.submit_num)
@@ -754,8 +770,8 @@ class TaskEventsManager(object):
             ),
             retry_delays)
 
-    def _setup_event_mail(self, itask, event, _):
-        """Event notification, by email."""
+    def _setup_event_mail(self, itask, event):
+        """Set up task event notification, by email."""
         id_key = (
             (self.HANDLER_MAIL, event),
             str(itask.point), itask.tdef.name, itask.submit_num)
@@ -779,9 +795,8 @@ class TaskEventsManager(object):
             ),
             retry_delays)
 
-    def _setup_custom_event_handlers(
-            self, itask, event, message, only_list=None):
-        """Call custom event handlers."""
+    def _setup_custom_event_handlers(self, itask, event, message):
+        """Set up custom task event handlers."""
         handlers = self._get_events_conf(itask, event + ' handler')
         if (handlers is None and
                 event in self._get_events_conf(itask, 'handler events', [])):
@@ -794,12 +809,15 @@ class TaskEventsManager(object):
             self.get_host_conf(itask, "task event handler retry delays"))
         if not retry_delays:
             retry_delays = [0]
+        # There can be multiple custom event handlers
         for i, handler in enumerate(handlers):
             key1 = ("%s-%02d" % (self.HANDLER_CUSTOM, i), event)
             id_key = (
                 key1, str(itask.point), itask.tdef.name, itask.submit_num)
-            if id_key in self.event_timers or only_list and i not in only_list:
+            if id_key in self.event_timers:
                 continue
+            # Custom event handler can be a command template string
+            # or a command that takes 4 arguments (classic interface)
             cmd = handler % {
                 "event": quote(event),
                 "suite": quote(self.suite),

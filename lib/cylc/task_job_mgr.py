@@ -15,7 +15,16 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Manage submit, poll, kill of task jobs."""
+"""Manage task jobs.
+
+This module provides logic to:
+* Set up the directory structure on remote job hosts.
+  * Copy suite service files to remote job hosts for communication clients.
+  * Clean up of service files on suite shutdown.
+* Prepare task job files.
+* Prepare task jobs submission, and manage the callbacks.
+* Prepare task jobs poll/kill, and manage the callbacks.
+"""
 
 from logging import CRITICAL, INFO, WARNING
 import os

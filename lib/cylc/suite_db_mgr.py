@@ -15,7 +15,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Manage the suite runtime private and public databases."""
+"""Manage the suite runtime private and public databases.
+
+This module provides the logic to:
+* Create or initialise database file on start up.
+* Queue database operations.
+* Hide logic that is relevant for database operations.
+* Recover public run database file lock.
+* Manage existing run database files on restart.
+"""
 
 import os
 import pickle
