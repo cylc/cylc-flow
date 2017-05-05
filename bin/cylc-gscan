@@ -28,7 +28,7 @@ import sys
 if "--use-ssh" in sys.argv[1:]:
     sys.argv.remove("--use-ssh")
     from cylc.remote import remrun
-    if remrun().execute():
+    if remrun().execute(forward_x11=True):
         sys.exit(0)
 
 import gtk

@@ -1860,12 +1860,11 @@ conditions; see `cylc conditions`.
             s_user, s_host = ctx.user_at_host.split("@", 1)
         else:
             s_user, s_host = (None, ctx.user_at_host)
-        ssh_tmpl = str(GLOBAL_CFG.get_host_item(
-            "remote shell template", s_host, s_user))
+        ssh_str = str(GLOBAL_CFG.get_host_item("ssh command", s_host, s_user))
         rsync_str = str(GLOBAL_CFG.get_host_item(
             "retrieve job logs command", s_host, s_user))
 
-        cmd = shlex.split(rsync_str) + ["--rsh=" + ssh_tmpl]
+        cmd = shlex.split(rsync_str) + ["--rsh=" + ssh_str]
         if cylc.flags.debug:
             cmd.append("-v")
         if ctx.max_size:

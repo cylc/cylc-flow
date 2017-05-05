@@ -301,8 +301,7 @@ def main():
 
     # Deal with remote [user@]host
     if user_at_host:
-        ssh = str(GLOBAL_CFG.get_host_item(
-            "remote shell template", host, owner))
+        ssh = str(GLOBAL_CFG.get_host_item("ssh command", host, owner))
         for i, command in enumerate(commands):
             commands[i] = shlex.split(ssh) + ["-n", user_at_host] + command
 

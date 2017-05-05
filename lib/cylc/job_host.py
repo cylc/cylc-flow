@@ -93,15 +93,14 @@ class RemoteJobHostManager(object):
         # Create a UUID file in the service directory.
         # If remote host has the file in its service directory, we can assume
         # that the remote host has a shared file system with the suite host.
-        ssh_tmpl = GLOBAL_CFG.get_host_item(
-            'remote shell template', host, owner)
+        ssh_str = GLOBAL_CFG.get_host_item('ssh command', host, owner)
         uuid_str = str(uuid4())
         uuid_fname = os.path.join(
             self.suite_srv_files_mgr.get_suite_srv_dir(reg), uuid_str)
         try:
             open(uuid_fname, 'wb').close()
             proc = Popen(
-                shlex.split(ssh_tmpl) + [
+                shlex.split(ssh_str) + [
                     '-n', user_at_host,
                     'test', '-e', os.path.join(r_suite_srv_dir, uuid_str)],
                 stdout=PIPE, stderr=PIPE)
@@ -117,7 +116,7 @@ class RemoteJobHostManager(object):
 
         cmds = []
         # Command to create suite directory structure on remote host.
-        cmds.append(shlex.split(ssh_tmpl) + [
+        cmds.append(shlex.split(ssh_str) + [
             '-n', user_at_host,
             'mkdir', '-p',
             r_suite_run_dir, r_log_job_dir, r_suite_srv_dir])
@@ -126,9 +125,8 @@ class RemoteJobHostManager(object):
         should_unlink = GLOBAL_CFG.get_host_item(
             'task communication method', host, owner) != "poll"
         if should_unlink:
-            scp_tmpl = GLOBAL_CFG.get_host_item(
-                'remote copy template', host, owner)
-            cmds.append(shlex.split(scp_tmpl) + [
+            scp_str = GLOBAL_CFG.get_host_item('scp command', host, owner)
+            cmds.append(shlex.split(scp_str) + [
                 '-p',
                 self.suite_srv_files_mgr.get_contact_file(reg),
                 self.suite_srv_files_mgr.get_auth_item(
@@ -141,7 +139,7 @@ class RemoteJobHostManager(object):
             GLOBAL_CFG.get_derived_host_item(reg, 'suite run directory'),
             'python')
         if os.path.isdir(suite_run_py):
-            cmds.append(shlex.split(scp_tmpl) + [
+            cmds.append(shlex.split(scp_str) + [
                 '-pr',
                 suite_run_py, user_at_host + ':' + r_suite_run_dir + '/'])
         # Run commands in sequence.
@@ -170,14 +168,13 @@ class RemoteJobHostManager(object):
             user_at_host = host
             if owner:
                 user_at_host = owner + '@' + host
-            ssh_tmpl = GLOBAL_CFG.get_host_item(
-                'remote shell template', host, owner)
+            ssh_str = GLOBAL_CFG.get_host_item('ssh command', host, owner)
             r_suite_contact_file = os.path.join(
                 GLOBAL_CFG.get_derived_host_item(
                     reg, 'suite run directory', host, owner),
                 SuiteSrvFilesManager.DIR_BASE_SRV,
                 SuiteSrvFilesManager.FILE_BASE_CONTACT)
-            cmd = shlex.split(ssh_tmpl) + [
+            cmd = shlex.split(ssh_str) + [
                 '-n', user_at_host, 'rm', '-f', r_suite_contact_file]
             procs[user_at_host] = (cmd, Popen(cmd, stdout=PIPE, stderr=PIPE))
         # Wait for commands to complete for a max of 10 seconds
