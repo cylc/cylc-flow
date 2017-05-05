@@ -18,7 +18,7 @@
 # Test "cylc jobscript" when we have bad syntax in "script" value.
 . "$(dirname "${0}")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 5
+set_test_number 8
 #-------------------------------------------------------------------------------
 init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 [scheduling]
@@ -35,6 +35,27 @@ cmp_ok "${TEST_NAME}.stdout" <'/dev/null'
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
 ERROR: no jobscript generated
 __ERR__
+purge_suite "${SUITE_NAME}"
+#-------------------------------------------------------------------------------
+init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
+[scheduling]
+    [[dependencies]]
+        graph = foo
+[runtime]
+    [[foo]]
+        script = true
+        pre-script = """
+# stuff 1
+# stuff 2
+# stuff 3
+"""
+__SUITE_RC__
+
+TEST_NAME="${TEST_NAME_BASE}"-comment-only
+run_ok "${TEST_NAME}" cylc jobscript "${SUITE_NAME}" 'foo.1'
+grep_ok 'cylc__job__inst__script' "${TEST_NAME}.stdout"
+run_fail "${TEST_NAME}.stdout.pre_script" \
+    grep -F -q 'cylc__job__inst__pre_script' "${TEST_NAME}.stdout"
 purge_suite "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
