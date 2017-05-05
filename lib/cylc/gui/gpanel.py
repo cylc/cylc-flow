@@ -226,7 +226,8 @@ class ScanPanelAppletUpdater(object):
             len(self.suite_info_map) > self.MAX_INDIVIDUAL_SUITES)
         suite_statuses = {}
         compact_suite_statuses = []
-        for key, suite_info in sorted(self.suite_info_map.items()):
+        for key, suite_info in sorted(self.suite_info_map.items(),
+                                      key=lambda details: details[0][2]):
             if KEY_STATES not in suite_info:
                 continue
             host, _, suite = key
