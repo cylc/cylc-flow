@@ -416,9 +416,9 @@ def update_suites_info(updater):
     prev_results = updater.suite_info_map
     # Optional attributes from updater
     # timeout - communication timeout
+    timeout = getattr(updater, "comms_timeout", None)
     # name_pattern - return only suites with names matching this compiled re
-    timeout = getattr(updater, "comms_timeout")
-    name_pattern = getattr(updater, "name_pattern")
+    name_pattern = getattr(updater, "name_pattern", None)
     # Scan
     results = {}
     for host, port, result in scan_all(
