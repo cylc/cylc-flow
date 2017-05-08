@@ -1193,6 +1193,7 @@ class SuiteConfig(object):
                     comstr += fmt % (key, rtc['suite state polling'][key])
             comstr += " " + tdef.suite_polling_cfg['suite']
             script = "echo " + comstr + "\n" + comstr
+            rtc['script'] = script
 
     def configure_sim_modes(self):
         # Adjust task defs for simulation mode and dummy modes.
