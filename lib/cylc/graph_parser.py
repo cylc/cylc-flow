@@ -255,7 +255,7 @@ class GraphParser(object):
             # Auto-trigger lone nodes and initial nodes in a chain.
             for name, offset, _ in self.__class__.REC_NODES.findall(chain[0]):
                 if not offset:
-                    pairs.add(('', name))
+                    pairs.add((None, name))
             for i in range(0, len(chain) - 1):
                 pairs.add((chain[i], chain[i + 1]))
 
@@ -275,48 +275,61 @@ class GraphParser(object):
         Trigger qualifiers, but not cycle offsets, are ignored on the right to
         allow chaining.
         """
-        if self.__class__.OP_OR in right:
+        # Raise error for right-hand-side OR operators.
+        if right and self.__class__.OP_OR in right:
             raise GraphParseError("ERROR, illegal OR on RHS: %s" % right)
-        # Remove aualifiers from right-side nodes.
-        for qual in self.__class__.REC_TRIG_QUAL.findall(right):
-            right = right.replace(qual, '')
-        if self.__class__.SUICIDE_MARK in left:
+
+        # Remove qualifiers from right-side nodes.
+        if right:
+            for qual in self.__class__.REC_TRIG_QUAL.findall(right):
+                right = right.replace(qual, '')
+
+        # Raise error if suicide triggers on the left of the trigger.
+        if left and self.__class__.SUICIDE_MARK in left:
             raise GraphParseError(
                 "ERROR, suicide markers must be"
                 " on the right of a trigger: %s" % left)
+
         # Cycle point offsets are not allowed on the right side (yet).
-        if '[' in right:
+        if right and '[' in right:
             raise GraphParseError(
                 "ERROR, illegal cycle point offset on the right: %s => %s" % (
                     left, right))
+
         # Check that parentheses match.
-        if left.count("(") != left.count(")"):
+        if left and left.count("(") != left.count(")"):
             raise GraphParseError(
                 "ERROR, parenthesis mismatch in: \"" + left + "\"")
 
         # Split right side on AND.
         rights = right.split(self.__class__.OP_AND)
-        if right and not all(rights):
+        if '' in rights or right and not all(rights):
             raise GraphParseError(
                 "ERROR, null task name in graph: %s=>%s" % (left, right))
 
-        if self.__class__.OP_OR in left or '(' in left:
+        if not left or (self.__class__.OP_OR in left or '(' in left):
             # Treat conditional or bracketed expressions as a single entity.
             lefts = [left]
         else:
             # Split non-conditional left-side expressions on AND.
             lefts = left.split(self.__class__.OP_AND)
-        if left and not all(lefts):
+        if '' in lefts or left and not all(lefts):
             raise GraphParseError(
                 "ERROR, null task name in graph: %s=>%s" % (left, right))
 
         for left in lefts:
-            # Extract infomation about all nodes on the left.
-            info = self.__class__.REC_NODES.findall(left)
+            # Extract information about all nodes on the left.
+
+            if left:
+                info = self.__class__.REC_NODES.findall(left)
+                expr = left
+            else:
+                # There is no left-hand-side task.
+                info = []
+                expr = ''
 
             # Make success triggers explicit.
             n_info = []
-            expr = left
             for name, offset, trig in info:
                 if not trig:
                     trig = self.__class__.TRIG_SUCCEED

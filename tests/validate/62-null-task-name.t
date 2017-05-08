@@ -19,9 +19,10 @@
 
 . "$(dirname "$0")/test_header"
 
-set_test_number 8
+set_test_number 10
 
-for GRAPH in 't1 => & t2' 't1 => t2 &' '& t1 => t2' 't1 & => t2'; do
+for GRAPH in 't1 => & t2' 't1 => t2 &' '& t1 => t2' 't1 & => t2' 't1 => => t2'
+do
     cat >'suite.rc' <<__SUITE_RC__
 [scheduling]
     [[dependencies]]
