@@ -415,12 +415,10 @@ class TestBaseClasses(unittest.TestCase):
     def test_simple_abstract_class_test(self):
         """Cannot instantiate abstract classes, they must be defined in
         the subclasses"""
-        with self.assertRaises(TypeError):
-            SequenceBase("sequence-string", "context_string")
-        with self.assertRaises(TypeError):
-            IntervalBase("value")
-        with self.assertRaises(TypeError):
-            PointBase("value")
+        self.assertRaises(TypeError, SequenceBase, "sequence-string",
+                          "context_string")
+        self.assertRaises(TypeError, IntervalBase, "value")
+        self.assertRaises(TypeError, PointBase, "value")
 
 
 if __name__ == '__main__':
