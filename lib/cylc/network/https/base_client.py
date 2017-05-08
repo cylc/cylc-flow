@@ -21,7 +21,6 @@ import os
 import sys
 from uuid import uuid4
 import warnings
-import unittest
 
 import cylc.flags
 from cylc.network import (
@@ -371,54 +370,56 @@ class BaseCommsClientAnon(BaseCommsClient):
         return False
 
 
-class TestBaseCommsClient(unittest.TestCase):
-    """Unit testing class to test the methods in BaseCommsClient
-    """
-    def test_url_compiler(self):
-        """Tests that the url parser works for a single url and command"""
-        category = 'info'  # Could be any from cylc/network/__init__.py
-        host = "localhost"
-        func_dict = {"function": "test_command",
-                     "apples": "False",
-                     "oranges": "True",
-                     "method": "GET",
-                     "payload": "None"}
-
-        myCommsClient = BaseCommsClient("test-suite", port=80)
-        request = myCommsClient._compile_url(category, func_dict, host)
-        test_url = ('https://localhost:80/info/test_command'
-                    '?apples=False&oranges=True')
-
-        self.assertEqual(request['url'], test_url)
-        self.assertEqual(request['payload'], "None")
-        self.assertEqual(request['method'], "GET")
-
-    def test_get_data_from_url_single(self):
-        """Test the get data from _get_data_from_url() function"""
-        myCommsClient = BaseCommsClient("dummy-suite")
-        url = "http://httpbin.org/get"
-        payload = None
-        method = "GET"
-        request = [{"url": url, "payload": payload, "method": method}]
-        ret = myCommsClient._get_data_from_url(request)
-        self.assertEqual(ret['url'], "http://httpbin.org/get")
-
-    def test_get_data_from_url_multiple(self):
-        myCommsClient = BaseCommsClient("dummy-suite")
-        payload = None
-        method = "GET"
-        request1 = {"url": "http://httpbin.org/get#1",
-                    "payload": payload, "method": method}
-        request2 = {"url": "http://httpbin.org/get#2",
-                    "payload": payload, "method": method}
-        request3 = {"url": "http://httpbin.org/get#3",
-                    "payload": payload, "method": method}
-
-        rets = myCommsClient._get_data_from_url([request1, request2, request3])
-
-        for i in range(2):
-            self.assertEqual(rets[i]['url'], "http://httpbin.org/get")
-
-
 if __name__ == '__main__':
+    import unittest
+
+    class TestBaseCommsClient(unittest.TestCase):
+        """Unit testing class to test the methods in BaseCommsClient
+        """
+        def test_url_compiler(self):
+            """Tests that the url parser works for a single url and command"""
+            category = 'info'  # Could be any from cylc/network/__init__.py
+            host = "localhost"
+            func_dict = {"function": "test_command",
+                         "apples": "False",
+                         "oranges": "True",
+                         "method": "GET",
+                         "payload": "None"}
+
+            myCommsClient = BaseCommsClient("test-suite", port=80)
+            request = myCommsClient._compile_url(category, func_dict, host)
+            test_url = ('https://localhost:80/info/test_command'
+                        '?apples=False&oranges=True')
+
+            self.assertEqual(request['url'], test_url)
+            self.assertEqual(request['payload'], "None")
+            self.assertEqual(request['method'], "GET")
+
+        def test_get_data_from_url_single(self):
+            """Test the get data from _get_data_from_url() function"""
+            myCommsClient = BaseCommsClient("dummy-suite")
+            url = "http://httpbin.org/get"
+            payload = None
+            method = "GET"
+            request = [{"url": url, "payload": payload, "method": method}]
+            ret = myCommsClient._get_data_from_url(request)
+            self.assertEqual(ret['url'], "http://httpbin.org/get")
+
+        def test_get_data_from_url_multiple(self):
+            myCommsClient = BaseCommsClient("dummy-suite")
+            payload = None
+            method = "GET"
+            request1 = {"url": "http://httpbin.org/get#1",
+                        "payload": payload, "method": method}
+            request2 = {"url": "http://httpbin.org/get#2",
+                        "payload": payload, "method": method}
+            request3 = {"url": "http://httpbin.org/get#3",
+                        "payload": payload, "method": method}
+
+            rets = myCommsClient._get_data_from_url([request1,
+                                                     request2, request3])
+
+            for i in range(2):
+                self.assertEqual(rets[i]['url'], "http://httpbin.org/get")
+
     unittest.main()
