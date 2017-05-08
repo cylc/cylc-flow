@@ -247,6 +247,7 @@ class Scheduler(object):
             else:
                 slog.pimp()
 
+            SuiteProcPool.get_inst()
             self.configure_comms_daemon()
             self.configure()
             self.profiler.start()
@@ -378,7 +379,6 @@ conditions; see `cylc conditions`.
     def configure(self):
         """Configure suite daemon."""
         self.profiler.log_memory("scheduler.py: start configure")
-        SuiteProcPool.get_inst()
 
         self.profiler.log_memory("scheduler.py: before configure_suite")
         self.configure_suite()
