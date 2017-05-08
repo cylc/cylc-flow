@@ -90,13 +90,6 @@ class BaseCommsClient(object):
             func_dict = {"function": function}
             func_dict.update(fargs)
 
-        # I.e. if we haven't passed multiple dictionaries
-        # if len(func_dicts) == 1 and fargs is not None:
-        #     func_dicts.update(fargs)
-        # if len(func_dicts) == 1:
-        #     func_dicts = list(func_dicts)
-        # Error check here? Multiple dicts and fargs not allowed?
-
         if self.host is None and self.port is not None:
             self.host = get_hostname()
         try:
@@ -104,10 +97,6 @@ class BaseCommsClient(object):
         except (IOError, ValueError, SuiteServiceFileError):
             raise ConnectionInfoError(self.suite)
         handle_proxies()
-        # each func could have a different method and payload
-        # payload = fargs.pop("payload", None)
-        # method = fargs.pop("method", self.METHOD)
-        #
         host = self.host
         if host == "localhost":
             host = get_hostname().split(".")[0]
@@ -117,14 +106,13 @@ class BaseCommsClient(object):
             # dictionary containing: url, payload, method
             request = self._compile_url(category, func_dict, host)
             http_requests.append(request)
-        except:
+        except (IndexError, ValueError, AttributeError):
             for f_dict in func_dicts:
                 request = self._compile_url(category, f_dict, host)
                 http_requests.append(request)
         # returns a list of http returns from the requests
         return self._get_data_from_url(http_requests)
 
-    # def _get_data_from_url(self, url, json_data, method=None):
     def _get_data_from_url(self, http_requests):
         requests_ok = True
         try:
