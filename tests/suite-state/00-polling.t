@@ -20,7 +20,7 @@
 
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 3
+set_test_number 5
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE polling
 #-------------------------------------------------------------------------------
@@ -40,6 +40,21 @@ run_ok $TEST_NAME cylc val --debug --set UPSTREAM=$UPSTREAM $SUITE_NAME
 #-------------------------------------------------------------------------------
 # run the upstream suite and detach (not a test)
 cylc run $UPSTREAM
+
+#-------------------------------------------------------------------------------
+# check auto-generated task script for lbad
+cylc get-config --set UPSTREAM=$UPSTREAM -i '[runtime][lbad]script' $SUITE_NAME > lbad.script
+cmp_ok lbad.script << __END__
+echo cylc suite-state --task=bad --point=\$CYLC_TASK_CYCLE_POINT --status=fail --interval=2 --max-polls=20 $UPSTREAM
+cylc suite-state --task=bad --point=\$CYLC_TASK_CYCLE_POINT --status=fail --interval=2 --max-polls=20 $UPSTREAM
+__END__
+
+# check auto-generated task script for lgood
+cylc get-config --set UPSTREAM=$UPSTREAM -i '[runtime][lgood]script' $SUITE_NAME > lgood.script
+cmp_ok lgood.script << __END__
+echo cylc suite-state --task=good --point=\$CYLC_TASK_CYCLE_POINT --status=succeed --interval=2 --max-polls=20 $UPSTREAM
+cylc suite-state --task=good --point=\$CYLC_TASK_CYCLE_POINT --status=succeed --interval=2 --max-polls=20 $UPSTREAM
+__END__
 
 #-------------------------------------------------------------------------------
 # run the suite-state polling test suite

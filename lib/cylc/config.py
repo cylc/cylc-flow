@@ -1178,7 +1178,7 @@ class SuiteConfig(object):
             if name not in self.suite_polling_tasks:
                 continue
             rtc = tdef.rtconfig
-            comstr = "cylc suite-state " + \
+            comstr = "cylc suite-state" + \
                      " --task=" + tdef.suite_polling_cfg['task'] + \
                      " --point=$CYLC_TASK_CYCLE_POINT" + \
                      " --status=" + tdef.suite_polling_cfg['status']
