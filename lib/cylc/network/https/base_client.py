@@ -218,78 +218,89 @@ class BaseCommsClient(object):
         # Return a single http return or a list of them if multiple
         return http_returns if len(http_returns) > 1 else http_returns[0]
 
-    def _get_data_from_url_with_urllib2(self, url, json_data, method=None):
+    def _get_data_from_url_with_urllib2(self, http_requests):
         import json
         import urllib2
         import ssl
         if hasattr(ssl, '_create_unverified_context'):
             ssl._create_default_https_context = ssl._create_unverified_context
-        if method is None:
-            method = self.METHOD
-        orig_json_data = json_data
-        username, password = self._get_auth()
-        auth_manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
-        auth_manager.add_password(None, url, username, password)
-        auth = urllib2.HTTPDigestAuthHandler(auth_manager)
-        opener = urllib2.build_opener(auth, urllib2.HTTPSHandler())
-        headers_list = self._get_headers().items()
-        if json_data:
-            json_data = json.dumps(json_data)
-            headers_list.append(('Accept', 'application/json'))
-            json_headers = {'Content-Type': 'application/json',
-                            'Content-Length': len(json_data)}
-        else:
-            json_data = None
-            json_headers = {'Content-Length': 0}
-        opener.addheaders = headers_list
-        req = urllib2.Request(url, json_data, json_headers)
 
-        # This is an unpleasant monkey patch, but there isn't an alternative.
-        # urllib2 uses POST if there is a data payload, but that is not the
-        # correct criterion. The difference is basically that POST changes
-        # server state and GET doesn't.
-        req.get_method = lambda: method
-        try:
-            response = opener.open(req, timeout=self.timeout)
-        except urllib2.URLError as exc:
-            if "unknown protocol" in str(exc) and url.startswith("https:"):
-                # Server is using http rather than https, for some reason.
-                sys.stderr.write(WARNING_NO_HTTPS_SUPPORT.format(exc))
-                return self._get_data_from_url_with_urllib2(
-                    url.replace("https:", "http:", 1), orig_json_data)
-            if cylc.flags.debug:
-                import traceback
-                traceback.print_exc()
-            if "timed out" in str(exc):
-                raise ConnectionTimeout(url, exc)
+        http_returns = []
+        for r in http_requests:
+            method = r['method']
+            url = r['url']
+            json_data = r['payload']
+            if method is None:
+                method = self.METHOD
+            orig_json_data = json_data
+            username, password = self._get_auth()
+            auth_manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
+            auth_manager.add_password(None, url, username, password)
+            auth = urllib2.HTTPDigestAuthHandler(auth_manager)
+            opener = urllib2.build_opener(auth, urllib2.HTTPSHandler())
+            headers_list = self._get_headers().items()
+            if json_data:
+                json_data = json.dumps(json_data)
+                headers_list.append(('Accept', 'application/json'))
+                json_headers = {'Content-Type': 'application/json',
+                                'Content-Length': len(json_data)}
             else:
+                json_data = None
+                json_headers = {'Content-Length': 0}
+            opener.addheaders = headers_list
+            req = urllib2.Request(url, json_data, json_headers)
+
+            # This is an unpleasant monkey patch, but there isn't an
+            # alternative. urllib2 uses POST if there is a data payload
+            # but that is not the correct criterion.
+            # The difference is basically that POST changes
+            # server state and GET doesn't.
+            req.get_method = lambda: method
+            try:
+                response = opener.open(req, timeout=self.timeout)
+            except urllib2.URLError as exc:
+                if "unknown protocol" in str(exc) and url.startswith("https:"):
+                    # Server is using http rather than https, for some reason.
+                    sys.stderr.write(WARNING_NO_HTTPS_SUPPORT.format(exc))
+                    return self._get_data_from_url_with_urllib2(
+                        url.replace("https:", "http:", 1), orig_json_data)
+                if cylc.flags.debug:
+                    import traceback
+                    traceback.print_exc()
+                if "timed out" in str(exc):
+                    raise ConnectionTimeout(url, exc)
+                else:
+                    raise ConnectionError(url, exc)
+            except Exception as exc:
+                if cylc.flags.debug:
+                    import traceback
+                    traceback.print_exc()
                 raise ConnectionError(url, exc)
-        except Exception as exc:
-            if cylc.flags.debug:
-                import traceback
-                traceback.print_exc()
-            raise ConnectionError(url, exc)
 
-        if response.getcode() == 401:
-            raise ConnectionDeniedError(url, self.prog_name,
-                                        self.ACCESS_DESCRIPTION)
-        response_text = response.read()
-        if response.getcode() >= 400:
-            from cylc.network.https.util import get_exception_from_html
-            exception_text = get_exception_from_html(response_text)
-            if exception_text:
-                sys.stderr.write(exception_text)
-            else:
-                sys.stderr.write(response_text)
-            raise ConnectionError(url,
-                                  "%s HTTP return code" % response.getcode())
-        if self.auth and self.auth[1] != NO_PASSPHRASE:
-            self.srv_files_mgr.cache_passphrase(
-                self.suite, self.owner, self.host, self.auth[1])
-        try:
-            return json.loads(response_text)
-        except ValueError:
-            return response_text
+            if response.getcode() == 401:
+                raise ConnectionDeniedError(url, self.prog_name,
+                                            self.ACCESS_DESCRIPTION)
+            response_text = response.read()
+            if response.getcode() >= 400:
+                from cylc.network.https.util import get_exception_from_html
+                exception_text = get_exception_from_html(response_text)
+                if exception_text:
+                    sys.stderr.write(exception_text)
+                else:
+                    sys.stderr.write(response_text)
+                raise ConnectionError(
+                    url,
+                    "%s HTTP return code" % response.getcode())
+            if self.auth and self.auth[1] != NO_PASSPHRASE:
+                self.srv_files_mgr.cache_passphrase(
+                    self.suite, self.owner, self.host, self.auth[1])
+
+            try:
+                http_returns.append(json.loads(response_text))
+            except ValueError:
+                http_returns.append(response_text)
+        # Return a single http return or a list of them if multiple
+        return http_returns if len(http_returns) > 1 else http_returns[0]
 
     def _get_auth(self):
         """Return a user/password Digest Auth."""
