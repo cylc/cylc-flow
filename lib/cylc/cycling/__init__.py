@@ -18,8 +18,6 @@
 
 """This module provides base classes for cycling data objects."""
 
-import unittest
-
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 
@@ -32,6 +30,11 @@ def parse_exclusion(expr):
                         "permitted" % expr)
     else:
         remainder, exclusions = expr.split('!')
+        if ',' in exclusions:
+            if not exclusions.startswith('(') or not exclusions.endswith(')'):
+                raise Exception("'%s': a list of exclusion must be enclosed "
+                                " in parentheses." % exclusions)
+
         exclusions = exclusions.translate(None, ' ()')
         exclusions = exclusions.split(',')
         return remainder.strip(), exclusions
@@ -405,18 +408,48 @@ class SequenceBase(object):
         # Return True if other (sequence) is equal to self.
         pass
 
+if __name__ == "__main__":
+    import unittest
 
-class TestBaseClasses(unittest.TestCase):
-    """Test the abstract base classes cannot be instantiated on their own
-    """
-    def test_simple_abstract_class_test(self):
-        """Cannot instantiate abstract classes, they must be defined in
-        the subclasses"""
-        self.assertRaises(TypeError, SequenceBase, "sequence-string",
-                          "context_string")
-        self.assertRaises(TypeError, IntervalBase, "value")
-        self.assertRaises(TypeError, PointBase, "value")
+    class TestBaseClasses(unittest.TestCase):
+        """Test the abstract base classes cannot be instantiated on their own
+        """
+        def test_simple_abstract_class_test(self):
+            """Cannot instantiate abstract classes, they must be defined in
+            the subclasses"""
+            self.assertRaises(TypeError, SequenceBase, "sequence-string",
+                              "context_string")
+            self.assertRaises(TypeError, IntervalBase, "value")
+            self.assertRaises(TypeError, PointBase, "value")
 
+    class TestParseExclusion(unittest.TestCase):
+        """Test cases for the parser function"""
+        def test_parse_exclusion_simple(self):
+            """Tests the simple case of exclusion parsing"""
+            expression = "PT1H!20000101T02Z"
+            sequence, exclusion = parse_exclusion(expression)
 
-if __name__ == '__main__':
+            self.assertEqual(sequence, "PT1H")
+            self.assertEqual(exclusion, ['20000101T02Z'])
+
+        def test_parse_exclusions_list(self):
+            """Tests the simple case of exclusion parsing"""
+            expression = "PT1H!(T03, T06, T09)"
+            sequence, exclusion = parse_exclusion(expression)
+
+            self.assertEqual(sequence, "PT1H")
+            self.assertEqual(exclusion, ['T03', 'T06', 'T09'])
+
+        def test_parse_bad_exclusion(self):
+            """Tests incorrectly formatted exclusions"""
+            expression1 = "T01/PT1H!(T06, T09), PT5M"
+            expression2 = "T01/PT1H!T03, PT17H, (T06, T09), PT5M"
+            expression3 = "T01/PT1H! PT8H, (T06, T09)"
+            expression4 = "T01/PT1H! T03, T06, T09"
+
+            self.assertRaises(Exception, parse_exclusion, expression1)
+            self.assertRaises(Exception, parse_exclusion, expression2)
+            self.assertRaises(Exception, parse_exclusion, expression3)
+            self.assertRaises(Exception, parse_exclusion, expression4)
+
     unittest.main()

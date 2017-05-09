@@ -184,7 +184,8 @@ class CylcTimeParser(object):
                          context_start_point=None,
                          context_end_point=None):
         """Parse an expression in abbrev. or full ISO recurrence format."""
-        expression, exclusions = parse_exclusion(expression)
+        expression, exclusions = parse_exclusion(str(expression))
+
         if context_start_point is None:
             context_start_point = self.context_start_point
         if context_end_point is None:
