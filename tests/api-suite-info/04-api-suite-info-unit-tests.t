@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-
+#!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2017 NIWA
 #
@@ -16,24 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.network import COMMS_INFO_OBJ_NAME
-from cylc.network.https.base_client import (
-    BaseCommsClient, BaseCommsClientAnon)
+# Run suite info API unit tests.
+. $(dirname $0)/test_header
 
+set_test_number 1
 
-class SuiteInfoClient(BaseCommsClient):
-    """Client-side suite information interface."""
-
-    METHOD = BaseCommsClient.METHOD_GET
-
-    def get_info(self, *command, **arg_dict):
-        return self.call_server_func(COMMS_INFO_OBJ_NAME, *command, **arg_dict)
-
-
-class SuiteInfoClientAnon(BaseCommsClientAnon):
-    """Anonymous client-side suite information interface."""
-
-    METHOD = BaseCommsClient.METHOD_GET
-
-    def get_info(self, *command, **arg_dict):
-        return self.call_server_func(COMMS_INFO_OBJ_NAME, *command, **arg_dict)
+TEST_NAME=$TEST_NAME_BASE-unit-tests
+run_ok $TEST_NAME python $CYLC_DIR/lib/cylc/network/https/base_client.py
