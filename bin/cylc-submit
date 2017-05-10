@@ -118,7 +118,6 @@ def main():
     ret_code = 0
     if options.dry_run:
         task_job_mgr.prep_submit_task_jobs(suite, itasks, dry_run=True)
-        ret_code = 0
         for itask in itasks:
             if itask.local_job_file_path:
                 print('JOB SCRIPT=%s' % itask.local_job_file_path)
