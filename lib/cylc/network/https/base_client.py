@@ -100,19 +100,19 @@ class BaseCommsClient(object):
         if host == "localhost":
             host = get_hostname().split(".")[0]
 
-        http_requests = []
+        http_request_items = []
         try:
             # dictionary containing: url, payload, method
-            request = self._compile_url(category, func_dict, host)
-            http_requests.append(request)
+            http_request_item = self._compile_url(category, func_dict, host)
+            http_request_items.append(http_request_item)
         except (IndexError, ValueError, AttributeError):
             for f_dict in func_dicts:
-                request = self._compile_url(category, f_dict, host)
-                http_requests.append(request)
+                http_request_item = self._compile_url(category, f_dict, host)
+                http_request_items.append(http_request_item)
         # returns a list of http returns from the requests
-        return self._get_data_from_url(http_requests)
+        return self._get_data_from_url(http_request_items)
 
-    def _get_data_from_url(self, http_requests):
+    def _get_data_from_url(self, http_request_items):
         requests_ok = True
         try:
             import requests
@@ -123,10 +123,10 @@ class BaseCommsClient(object):
             if version < [2, 4, 2]:
                 requests_ok = False
         if requests_ok:
-            return self._get_data_from_url_with_requests(http_requests)
-        return self._get_data_from_url_with_urllib2(http_requests)
+            return self._get_data_from_url_with_requests(http_request_items)
+        return self._get_data_from_url_with_urllib2(http_request_items)
 
-    def _get_data_from_url_with_requests(self, http_requests):
+    def _get_data_from_url_with_requests(self, http_request_items):
         import requests
         from requests.packages.urllib3.exceptions import InsecureRequestWarning
         warnings.simplefilter("ignore", InsecureRequestWarning)
@@ -135,11 +135,11 @@ class BaseCommsClient(object):
         if not hasattr(self, "session"):
             self.session = requests.Session()
 
-        http_returns = []
-        for r in http_requests:
-            method = r['method']
-            url = r['url']
-            json_data = r['payload']
+        http_return_items = []
+        for http_request_item in http_request_items:
+            method = http_request_item['method']
+            url = http_request_item['url']
+            json_data = http_request_item['payload']
             if method is None:
                 method = self.METHOD
             if method == self.METHOD_POST:
@@ -198,25 +198,26 @@ class BaseCommsClient(object):
                     self.suite, self.owner, self.host, self.auth[1])
             try:
                 ret = ret.json()
-                http_returns.append(ret)
+                http_return_items.append(ret)
             except ValueError:
                 ret = ret.text
-                http_returns.append(ret)
+                http_return_items.append(ret)
         # Return a single http return or a list of them if multiple
-        return http_returns if len(http_returns) > 1 else http_returns[0]
+        return (http_return_items if len(http_return_items) > 1
+                else http_return_items[0])
 
-    def _get_data_from_url_with_urllib2(self, http_requests):
+    def _get_data_from_url_with_urllib2(self, http_request_items):
         import json
         import urllib2
         import ssl
         if hasattr(ssl, '_create_unverified_context'):
             ssl._create_default_https_context = ssl._create_unverified_context
 
-        http_returns = []
-        for r in http_requests:
-            method = r['method']
-            url = r['url']
-            json_data = r['payload']
+        http_return_items = []
+        for http_request_item in http_request_items:
+            method = http_request_item['method']
+            url = http_request_item['url']
+            json_data = http_request_item['payload']
             if method is None:
                 method = self.METHOD
             orig_json_data = json_data
@@ -283,11 +284,12 @@ class BaseCommsClient(object):
                     self.suite, self.owner, self.host, self.auth[1])
 
             try:
-                http_returns.append(json.loads(response_text))
+                http_return_items.append(json.loads(response_text))
             except ValueError:
-                http_returns.append(response_text)
+                http_return_items.append(response_text)
         # Return a single http return or a list of them if multiple
-        return http_returns if len(http_returns) > 1 else http_returns[0]
+        return (http_return_items if len(http_return_items) > 1
+                else http_return_items[0])
 
     def _get_auth(self):
         """Return a user/password Digest Auth."""
@@ -406,6 +408,8 @@ if __name__ == '__main__':
             self.assertEqual(ret['url'], "http://httpbin.org/get")
 
         def test_get_data_from_url_multiple(self):
+            """Tests that the _get_data_from_url() method can
+            handle multiple requests in call to the method."""
             myCommsClient = BaseCommsClient("dummy-suite")
             payload = None
             method = "GET"
