@@ -187,7 +187,7 @@ class TaskProxy(object):
                  "is_manual_submit", "summary", "local_job_file_path",
                  "retries_configured", "try_timers",
                  "event_handler_try_timers", "db_inserts_map",
-                 "db_updates_map", "suite_name", "task_host", "task_owner",
+                 "db_updates_map", "task_host", "task_owner",
                  "job_vacated", "poll_timers", "event_hooks",
                  "delayed_start_str", "delayed_start", "expire_time_str",
                  "expire_time", "state"]
@@ -230,6 +230,10 @@ class TaskProxy(object):
     POLLED_INDICATOR = "(polled)"
 
     stop_sim_mode_job_submission = False
+
+    # Updated during config parsing:
+    suite_name = None
+    suite_url = None
 
     def __init__(
             self, tdef, start_point, status=TASK_STATUS_WAITING,
@@ -315,9 +319,6 @@ class TaskProxy(object):
             self.TABLE_TASK_JOBS: [],
             self.TABLE_TASK_STATES: [],
         }
-
-        # TODO - should take suite name from config!
-        self.suite_name = os.environ['CYLC_SUITE_NAME']
 
         # In case task owner and host are needed by db_events_insert()
         # for pre-submission events, set their initial values as if
@@ -789,17 +790,19 @@ class TaskProxy(object):
                 continue
             cmd = handler % {
                 "event": quote(event),
-                "suite": quote(self.suite_name),
+                "suite": quote(self.__class__.suite_name),
                 "point": quote(str(self.point)),
                 "name": quote(self.tdef.name),
                 "submit_num": self.submit_num,
                 "id": quote(self.identity),
+                "task_url": quote(self.tdef.rtconfig['URL']),
+                "suite_url": quote(self.__class__.suite_url),
                 "message": quote(message),
             }
             if cmd == handler:
                 # Nothing substituted, assume classic interface
                 cmd = "%s '%s' '%s' '%s' '%s'" % (
-                    handler, event, self.suite_name, self.identity, message)
+                    handler, event, self.__class__.suite_name, self.identity, message)
             self.log(DEBUG, "Queueing %s handler: %s" % (event, cmd))
             self.event_handler_try_timers[(key1, self.submit_num)] = (
                 TaskActionTimer(
@@ -1121,7 +1124,7 @@ class TaskProxy(object):
 
         if self.tdef.run_mode != 'simulation':
             RemoteJobHostManager.get_inst().init_suite_run_dir(
-                self.suite_name, self.task_host, self.task_owner)
+                self.__class__.suite_name, self.task_host, self.task_owner)
         self.db_updates_map[self.TABLE_TASK_JOBS].append({
             "user_at_host": user_at_host,
             "batch_sys_name": self.summary['batch_sys_name'],
@@ -1158,7 +1161,7 @@ class TaskProxy(object):
             'remote_suite_d': rtconfig['remote']['suite definition directory'],
             'shell': rtconfig['job']['shell'],
             'submit_num': self.submit_num,
-            'suite_name': self.suite_name,
+            'suite_name': self.__class__.suite_name,
             'task_id': self.identity,
             'try_num': self.try_timers[self.KEY_EXECUTE].num + 1,
             'work_d': rtconfig['work sub-directory'],
@@ -1522,10 +1525,10 @@ class TaskProxy(object):
             args.append(submit_num)
         if head_mode == self.HEAD_MODE_LOCAL:
             args.insert(0, GLOBAL_CFG.get_derived_host_item(
-                self.suite_name, "suite job log directory"))
+                self.__class__.suite_name, "suite job log directory"))
         elif head_mode == self.HEAD_MODE_REMOTE:
             args.insert(0, GLOBAL_CFG.get_derived_host_item(
-                self.suite_name, 'suite job log directory',
+                self.__class__.suite_name, 'suite job log directory',
                 self.task_host, self.task_owner))
         if tail:
             args.append(tail)

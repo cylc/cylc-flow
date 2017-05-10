@@ -1356,6 +1356,7 @@ conditions; see `cylc conditions`.
                 'event': quote(event),
                 'suite': quote(self.suite),
                 'message': quote(message),
+                'suite_url': quote(self.config.cfg['URL'])
             }
             if cmd == handler:
                 # Nothing substituted, assume classic interface

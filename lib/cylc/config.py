@@ -53,6 +53,7 @@ from isodatetime.parsers import DurationParser
 from parsec.OrderedDict import OrderedDictWithDefaults
 from parsec.util import replicate
 from cylc.suite_logging import OUT, ERR
+from cylc.task_proxy import TaskProxy
 
 
 RE_SUITE_NAME_VAR = re.compile('\${?CYLC_SUITE_(REG_)?NAME}?')
@@ -757,6 +758,8 @@ class SuiteConfig(object):
                         '(graph the suite to see back-edges).')
 
         self.mem_log("config.py: end init config")
+        TaskProxy.suite_name = self.suite
+        TaskProxy.suite_url = self.cfg['URL']
 
     def _expand_name_list(self, orig_names):
         """Expand any parameters in lists of names."""
