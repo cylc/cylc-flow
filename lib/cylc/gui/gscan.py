@@ -201,6 +201,13 @@ class ScanApp(object):
         self._set_dots()
 
         self.create_menubar()
+
+        accelgroup = gtk.AccelGroup()
+        self.window.add_accel_group(accelgroup)
+        key, modifier = gtk.accelerator_parse('<Alt>m')
+        accelgroup.connect_group(
+            key, modifier, gtk.ACCEL_VISIBLE, self._toggle_hide_menu_bar)
+
         self.create_tool_bar()
 
         self.menu_hbox = gtk.HBox()
@@ -502,7 +509,7 @@ class ScanApp(object):
                 launch_gcylc(suite_keys[0])
             return False
 
-        menu = get_scan_menu(suite_keys)
+        menu = get_scan_menu(suite_keys, self._toggle_hide_menu_bar)
         menu.popup(None, None, None, event.button, event.time)
         return False
 
@@ -512,15 +519,14 @@ class ScanApp(object):
         gtk.main_quit()
         return False
 
+    def _toggle_hide_menu_bar(self, *args):
+        if self.menu_hbox.get_property("visible"):
+            self.menu_hbox.hide_all()
+        else:
+            self.menu_hbox.show_all()
+
     def _on_query_tooltip(self, _, x, y, kbd_ctx, tooltip):
         """Handle a tooltip creation request."""
-        y_0 = self.treeview.convert_widget_to_tree_coords(0, 0)[1] * - 1
-        if y < y_0:
-            self.menu_hbox.show_all()
-            return False
-        else:
-            self.menu_hbox.hide_all()
-            return False
         tip_context = self.treeview.get_tooltip_context(x, y, kbd_ctx)
         if tip_context is None:
             self._prev_tooltip_location_id = None

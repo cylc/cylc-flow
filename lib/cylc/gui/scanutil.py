@@ -250,12 +250,25 @@ def get_gpanel_scan_menu(
     return menu
 
 
-def get_scan_menu(suite_keys):
+def get_scan_menu(suite_keys, toggle_hide_menu_bar):
     """Return a right click menu for the gscan GUI.
 
     suite_keys should be a list of (host, owner, suite) tuples (if any).
+    toggle_hide_menu_bar - function to show/hide main menu bar
 
     """
+    def _add_main_menu_item(menu):
+        sep_item = gtk.SeparatorMenuItem()
+        sep_item.show()
+        menu.append(sep_item)
+        main_menu_item = gtk.ImageMenuItem("toggle main menu (<Alt>m)")
+        img = gtk.image_new_from_stock(gtk.STOCK_INDEX, gtk.ICON_SIZE_MENU)
+        main_menu_item.set_image(img)
+        main_menu_item.connect("button-press-event",
+                               lambda b, e: toggle_hide_menu_bar())
+        main_menu_item.show()
+        menu.append(main_menu_item)
+
     menu = gtk.Menu()
 
     if not suite_keys:
@@ -265,6 +278,7 @@ def get_scan_menu(suite_keys):
         null_item.set_image(img)
         null_item.show()
         menu.append(null_item)
+        _add_main_menu_item(menu)
         return menu
 
     # Construct gcylc launcher items for each relevant suite.
@@ -343,6 +357,7 @@ def get_scan_menu(suite_keys):
                                                            b._connect_args[1]))
     unstoptask_item.show()
     menu.append(unstoptask_item)
+    _add_main_menu_item(menu)
 
     return menu
 
