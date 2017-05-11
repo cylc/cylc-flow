@@ -431,12 +431,6 @@ class ISO8601Sequence(SequenceBase):
         # Iterate starting at recent valid points, for speed.
         if self.exclusions and point in self.exclusions:
             return False
-        # TODO
-        # Exclusion sequence start points should not be exclusions themselves. OR SHOULD THEY....
-        """
-        if self.is_exclusion_seq and (point == self.context_start_point or point == self.context_end_point):
-            return False
-        """
 
         for valid_point in reversed(self._cached_recent_valid_points):
             if valid_point == point:
@@ -1160,8 +1154,8 @@ class TestISO8601Sequence(unittest.TestCase):
         # Check a longer list of exclusions
         # Also note you can change the format of the exclusion list
         # (removing the parentheses)
-        sequence = ISO8601Sequence('PT1H! 20000101T02Z, 20000101T03Z,'
-                                   '20000101T04Z',
+        sequence = ISO8601Sequence('PT1H!(20000101T02Z, 20000101T03Z,'
+                                   '20000101T04Z)',
                                    '20000101T00Z',
                                    '20000101T06Z')
         self.assertEqual(sequence.get_nearest_prev_point(point_3), point_1)

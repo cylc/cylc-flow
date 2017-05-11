@@ -36,6 +36,9 @@
         [[[ T-15!T-15/PT3H ]]]
             graph = bob
 
+        # Stacked sequences
+        [[[ T0230, PT3H!(T09,T12), T1945 ]]]
+            graph = dibble
 [runtime]
     [[root]]
         script = echo success
