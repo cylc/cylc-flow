@@ -111,6 +111,7 @@ class TaskEventsManager(object):
 
     def __init__(self, suite, proc_pool, suite_db_mgr):
         self.suite = suite
+        self.suite_url = None
         self.proc_pool = proc_pool
         self.suite_db_mgr = suite_db_mgr
         self.mail_interval = 0.0
@@ -826,6 +827,8 @@ class TaskEventsManager(object):
                 "submit_num": itask.submit_num,
                 "id": quote(itask.identity),
                 "message": quote(message),
+                "task_url": quote(itask.tdef.rtconfig['URL']),
+                "suite_url": quote(self.suite_url),
             }
             if cmd == handler:
                 # Nothing substituted, assume classic interface

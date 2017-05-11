@@ -316,6 +316,7 @@ conditions; see `cylc conditions`.
         self.task_events_mgr.mail_interval = self._get_cylc_conf(
             "task event mail interval")
         self.task_events_mgr.mail_footer = self._get_events_conf("mail footer")
+        self.task_events_mgr.suite_url = self.config.cfg['URL']
         if self.options.genref or self.options.reftest:
             self.configure_reftest()
 
