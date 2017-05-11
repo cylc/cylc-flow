@@ -336,7 +336,7 @@ def main():
                 "local tail command template"))
             commands.append(shlex.split(cmd_tmpl % {"filename": filename}))
     elif options.geditor or options.editor:
-        command_list = editor.split()
+        command_list = shlex.split(editor)
         command_list.append(viewfile.name)
         commands.append(command_list)
     else:
