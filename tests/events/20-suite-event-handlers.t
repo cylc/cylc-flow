@@ -23,7 +23,7 @@ if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
     create_test_globalrc "" "
 [cylc]
     [[events]]
-        handlers = echo 'Your %(suite)s suite has a %(event)s event.'
+        handlers = echo 'Your %(suite)s suite has a %(event)s event and URL %(suite_url)s.'
         handler events = startup"
     OPT_SET='-s GLOBALCFG=True'
 fi
@@ -36,7 +36,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 
 LOG_FILE="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/suite/log"
 grep_ok "\\[('suite-event-handler-00', 'startup') ret_code\\] 0" "${LOG_FILE}"
-grep_ok "\\[('suite-event-handler-00', 'startup') out\\] Your ${SUITE_NAME} suite has a startup event." "${LOG_FILE}"
+grep_ok "\\[('suite-event-handler-00', 'startup') out\\] Your ${SUITE_NAME} suite has a startup event and URL http://mysuites.com/${SUITE_NAME}.html." "${LOG_FILE}"
 
 purge_suite "${SUITE_NAME}"
 exit
