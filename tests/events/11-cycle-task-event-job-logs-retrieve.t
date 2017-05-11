@@ -39,9 +39,9 @@ sed "/'job-logs-retrieve'/!d" \
     "${SUITE_RUN_DIR}/log/job/2020-02-02T02:02Z/t"{1,2}'/'{01,02,03}'/job-activity.log' \
     >'edited-activities.log'
 cmp_ok 'edited-activities.log' <<__LOG__
-[('job-logs-retrieve', 1) ret_code] 0
-[('job-logs-retrieve', 2) ret_code] 0
-[('job-logs-retrieve', 3) ret_code] 0
+[(('job-logs-retrieve', 'retry'), 1) ret_code] 0
+[(('job-logs-retrieve', 'retry'), 2) ret_code] 0
+[(('job-logs-retrieve', 'succeeded'), 3) ret_code] 0
 __LOG__
 
 purge_suite_remote "${HOST}" "${SUITE_NAME}"

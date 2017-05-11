@@ -28,10 +28,10 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 
 T1_ACTIVITY_LOG="${SUITE_RUN_DIR}/log/job/1/t1/NN/job-activity.log"
 
-grep_ok '\[job-submit ret_code\] 0' "${T1_ACTIVITY_LOG}"
-grep_ok '\[job-kill ret_code\] 1' "${T1_ACTIVITY_LOG}"
-grep_ok '\[job-kill out\] [^|]*\|1/t1/01\|1' "${T1_ACTIVITY_LOG}"
-grep_ok '\[job-poll out\] [^|]*\|1/t1/01\|background\|[^|]*\|1\|\|\|\|[^|]*\|' \
+grep_ok '\[jobs-submit ret_code\] 0' "${T1_ACTIVITY_LOG}"
+grep_ok '\[jobs-kill ret_code\] 1' "${T1_ACTIVITY_LOG}"
+grep_ok '\[jobs-kill out\] [^|]*\|1/t1/01\|1' "${T1_ACTIVITY_LOG}"
+grep_ok '\[jobs-poll out\] [^|]*\|1/t1/01\|background\|[^|]*\|1\|\|\|\|[^|]*\|' \
     "${T1_ACTIVITY_LOG}"
 grep_ok \
     "\\[(('event-handler-00', 'failed'), 1) out\\] failed ${SUITE_NAME} t1\\.1 job failed" \

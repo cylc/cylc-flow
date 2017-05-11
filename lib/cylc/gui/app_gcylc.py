@@ -68,11 +68,12 @@ from cylc.cfgspec.gcylc import gcfg
 from cylc.wallclock import (
     get_current_time_string, get_time_string_from_unix_time)
 from cylc.task_state import (
-    TaskState, TASK_STATUSES_ALL, TASK_STATUSES_RESTRICTED,
+    TASK_STATUSES_ALL, TASK_STATUSES_RESTRICTED,
     TASK_STATUSES_WITH_JOB_SCRIPT, TASK_STATUSES_WITH_JOB_LOGS,
     TASK_STATUSES_TRIGGERABLE, TASK_STATUSES_ACTIVE,
     TASK_STATUS_WAITING, TASK_STATUS_HELD, TASK_STATUS_READY,
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED)
+from cylc.task_state_prop import get_status_prop
 
 
 def run_get_stdout(command, filter=False):
@@ -3137,8 +3138,7 @@ This is what my suite does:..."""
                     pass
                 else:
                     icon = dotm.get_image(st)
-                    cb = gtk.CheckButton(
-                        TaskState.get_status_prop(st, 'gtk_label'))
+                    cb = gtk.CheckButton(get_status_prop(st, 'gtk_label'))
                     cb.set_active(st not in self.filter_states_excl)
                     cb.connect('toggled', self.check_task_filter_buttons)
                     tooltip = gtk.Tooltips()

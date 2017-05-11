@@ -66,7 +66,7 @@ grep_ok "CYLC_BATCH_SYS_NAME=background" $TEST_NAME.out
 # local
 TEST_NAME=$TEST_NAME_BASE-task-activity
 cylc cat-log -a $SUITE_NAME a-task.1 >$TEST_NAME.out
-grep_ok '\[job-submit ret_code\] 0' $TEST_NAME.out
+grep_ok '\[jobs-submit ret_code\] 0' $TEST_NAME.out
 #-------------------------------------------------------------------------------
 # remote
 TEST_NAME=$TEST_NAME_BASE-task-custom

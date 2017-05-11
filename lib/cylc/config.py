@@ -23,10 +23,9 @@ structures.
 
 
 from copy import deepcopy, copy
-import re
+from fnmatch import fnmatchcase
 import os
 import re
-import sys
 import traceback
 
 from cylc.c3mro import C3
@@ -42,7 +41,6 @@ from cylc.cycling import IntervalParsingError
 from cylc.envvar import check_varnames
 import cylc.flags
 from cylc.graphnode import graphnode, GraphNodeError
-from cylc.message_output import MessageOutput
 from cylc.print_tree import print_tree
 from cylc.taskdef import TaskDef, TaskDefError
 from cylc.task_id import TaskID
@@ -53,7 +51,6 @@ from isodatetime.parsers import DurationParser
 from parsec.OrderedDict import OrderedDictWithDefaults
 from parsec.util import replicate
 from cylc.suite_logging import OUT, ERR
-from cylc.task_proxy import TaskProxy
 
 
 RE_SUITE_NAME_VAR = re.compile('\${?CYLC_SUITE_(REG_)?NAME}?')
@@ -91,13 +88,6 @@ class SuiteConfigError(Exception):
 
     def __str__(self):
         return repr(self.msg)
-
-
-class TaskNotDefinedError(SuiteConfigError):
-    """A named task not defined."""
-
-    def __str__(self):
-        return "Task not defined: %s" % self.msg
 
 # TODO: separate config for run and non-run purposes?
 
@@ -758,8 +748,6 @@ class SuiteConfig(object):
                         '(graph the suite to see back-edges).')
 
         self.mem_log("config.py: end init config")
-        TaskProxy.suite_name = self.suite
-        TaskProxy.suite_url = self.cfg['URL']
 
     def _expand_name_list(self, orig_names):
         """Expand any parameters in lists of names."""
@@ -1500,12 +1488,7 @@ class SuiteConfig(object):
                 self.ns_defn_order.append(name)
 
             # check task name legality and create the taskdef
-            if name not in self.taskdefs:
-                try:
-                    self.taskdefs[name] = self.get_taskdef(name)
-                except TaskDefError as exc:
-                    ERR.error(orig_expr)
-                    raise SuiteConfigError(str(exc))
+            self.get_taskdef(name, orig_expr)
 
             if name in self.suite_polling_tasks:
                 self.taskdefs[name].suite_polling_cfg = {
@@ -1520,10 +1503,9 @@ class SuiteConfig(object):
                     self.taskdefs[name].add_sequence(seq)
 
             # Record custom message outputs.
-            for msg in self.cfg['runtime'][name]['outputs'].values():
-                outp = MessageOutput(msg, base_interval)
-                if outp not in self.taskdefs[name].outputs:
-                    self.taskdefs[name].outputs.append(outp)
+            for item in self.cfg['runtime'][name]['outputs'].items():
+                if (item, base_interval) not in self.taskdefs[name].outputs:
+                    self.taskdefs[name].outputs.append((item, base_interval))
 
     def generate_triggers(self, lexpression, left_nodes,
                           right, seq, suicide, base_interval):
@@ -1949,13 +1931,55 @@ class SuiteConfig(object):
                 self.generate_triggers(
                     expr, lefts, right, seq, suicide, base_interval)
 
-    def get_taskdef(self, name):
+    def find_taskdefs(self, name):
+        """Find TaskDef objects in family "name" or matching "name".
+
+        Return a list of TaskDef objects which:
+        * have names that glob matches "name".
+        * are in a family that glob matches "name".
+        """
+        ret = []
+        if name in self.taskdefs:
+            # Match a task name
+            ret.append(self.taskdefs[name])
+        else:
+            fams = self.get_first_parent_descendants()
+            # Match a family name
+            if name in fams:
+                for member in fams[name]:
+                    if member in self.taskdefs:
+                        ret.append(self.taskdefs[member])
+            else:
+                # Glob match task names
+                for key, taskdef in self.taskdefs.items():
+                    if fnmatchcase(key, name):
+                        ret.append(taskdef)
+                # Glob match family names
+                for key, members in fams.items():
+                    if fnmatchcase(key, name):
+                        for member in members:
+                            if member in self.taskdefs:
+                                ret.append(self.taskdefs[member])
+        return ret
+
+    def get_taskdef(self, name, orig_expr=None):
+        """Return an instance of TaskDef for task name."""
+        if name not in self.taskdefs:
+            try:
+                self.taskdefs[name] = self._get_taskdef(name)
+            except TaskDefError as exc:
+                if orig_expr:
+                    ERR.error(orig_expr)
+                raise SuiteConfigError(str(exc))
+        return self.taskdefs[name]
+
+    def _get_taskdef(self, name):
         """Get the dense task runtime."""
         # (TaskDefError caught above)
         try:
             rtcfg = self.cfg['runtime'][name]
         except KeyError:
-            raise TaskNotDefinedError(name)
+            raise SuiteConfigError("Task not defined: %s" % name)
         # We may want to put in some handling for cases of changing the
         # initial cycle via restart (accidentally or otherwise).
 

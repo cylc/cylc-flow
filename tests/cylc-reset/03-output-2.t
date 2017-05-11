@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-
+#!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2017 NIWA
 #
@@ -15,16 +14,28 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#-------------------------------------------------------------------------------
+# Test "cylc reset --output='!OUTPUT' 'SUITE' 'TASK.ID'".
+. "$(dirname "$0")/test_header"
 
-from cylc.task_proxy import TaskProxy
-from cylc.config import SuiteConfig, TaskNotDefinedError
+set_test_number 3
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}" cylc run --reference-test --debug "${SUITE_NAME}"
+cmp_ok "${SUITE_RUN_DIR}/cylc-show.out" <<'__OUT__'
+title: (not given)
+description: (not given)
 
-def get_task_proxy(name, *args, **kwargs):
-    config = SuiteConfig.get_inst()
-    """Return a task proxy for a named task."""
-    try:
-        tdef = config.taskdefs[name]
-    except KeyError:
-        raise TaskNotDefinedError(name)
-    return TaskProxy(tdef, *args, **kwargs)
+prerequisites (- => not satisfied):
+  (None)
+
+outputs (- => not completed):
+  + t1.1 submitted
+  + t1.1 started
+  + t1.1 succeeded
+  - t1.1 Greet World
+  - t1.1 Hello World
+__OUT__
+purge_suite "${SUITE_NAME}"
+exit

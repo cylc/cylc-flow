@@ -38,8 +38,9 @@ from cylc.network.suite_state_client import (
 from cylc.wallclock import get_time_string_from_unix_time
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.task_state import (
-    TaskState, TASK_STATUS_RUNAHEAD, TASK_STATUSES_ORDERED,
+    TASK_STATUS_RUNAHEAD, TASK_STATUSES_ORDERED,
     TASK_STATUSES_RESTRICTED)
+from cylc.task_state_prop import get_status_prop
 
 
 class SuiteMonitor(object):
@@ -115,7 +116,7 @@ The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
 
         legend = ''
         for state in TASK_STATUSES_ORDERED:
-            legend += TaskState.get_status_prop(state, 'ascii_ctrl')
+            legend += get_status_prop(state, 'ascii_ctrl')
         legend = legend.rstrip()
 
         len_header = sum(len(s) for s in TASK_STATUSES_ORDERED)
@@ -183,7 +184,7 @@ The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
                     name_list.add(name)
                     if point_string not in task_info:
                         task_info[point_string] = {}
-                    task_info[point_string][name] = TaskState.get_status_prop(
+                    task_info[point_string][name] = get_status_prop(
                         state, 'ascii_ctrl', subst=name)
 
                 # Sort the tasks in each cycle point.
@@ -229,8 +230,7 @@ The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
                         state_totals[state] += 1
                 for state, tot in state_totals.items():
                     subst = " %d " % tot
-                    summary += TaskState.get_status_prop(state,
-                                                         'ascii_ctrl', subst)
+                    summary += get_status_prop(state, 'ascii_ctrl', subst)
                 blit.append(summary)
 
                 # Print a divider line containing the suite status string.

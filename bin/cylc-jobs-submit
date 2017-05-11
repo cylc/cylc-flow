@@ -38,11 +38,11 @@ def main():
         help="Is this being run on a remote job host?",
         action="store_true", dest="remote_mode", default=False)
     opts, args = parser.parse_args()
-    BATCH_SYS_MANAGER.jobs_submit(
+    BatchSysManager().jobs_submit(
         args[0], args[1:], remote_mode=opts.remote_mode)
 
 
 if __name__ == "__main__" and not remrun().execute():
     from cylc.option_parsers import CylcOptionParser as COP
-    from cylc.batch_sys_manager import BATCH_SYS_MANAGER
+    from cylc.batch_sys_manager import BatchSysManager
     main()

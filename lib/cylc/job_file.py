@@ -22,26 +22,18 @@ import re
 import stat
 from subprocess import Popen, PIPE
 
-from cylc.batch_sys_manager import BATCH_SYS_MANAGER
+from cylc.batch_sys_manager import BatchSysManager
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
 
 
-class JobFile(object):
+class JobFileWriter(object):
 
     """Write task job files."""
 
-    _INSTANCE = None
-
-    @classmethod
-    def get_inst(cls):
-        """Return a unique instance of this class."""
-        if cls._INSTANCE is None:
-            cls._INSTANCE = cls()
-        return cls._INSTANCE
-
     def __init__(self):
         self.suite_env = {}
+        self.batch_sys_mgr = BatchSysManager()
 
     def set_suite_env(self, suite_env):
         """Configure suite environment for all job files."""
@@ -138,40 +130,38 @@ class JobFile(object):
         for prefix, value in [
                 ("# Suite: ", job_conf['suite_name']),
                 ("# Task: ", job_conf['task_id']),
-                (BATCH_SYS_MANAGER.LINE_PREFIX_JOB_LOG_DIR, job_conf['job_d']),
-                (BATCH_SYS_MANAGER.LINE_PREFIX_BATCH_SYS_NAME,
+                (BatchSysManager.LINE_PREFIX_JOB_LOG_DIR, job_conf['job_d']),
+                (BatchSysManager.LINE_PREFIX_BATCH_SYS_NAME,
                  job_conf['batch_system_name']),
-                (BATCH_SYS_MANAGER.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL,
+                (BatchSysManager.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL,
                  job_conf['batch_submit_command_template']),
-                (BATCH_SYS_MANAGER.LINE_PREFIX_EXECUTION_TIME_LIMIT,
+                (BatchSysManager.LINE_PREFIX_EXECUTION_TIME_LIMIT,
                  job_conf['execution_time_limit'])]:
             if value:
                 handle.write("\n%s%s" % (prefix, value))
 
-    @staticmethod
-    def _write_directives(handle, job_conf):
+    def _write_directives(self, handle, job_conf):
         """Job directives."""
-        lines = BATCH_SYS_MANAGER.format_directives(job_conf)
+        lines = self.batch_sys_mgr.format_directives(job_conf)
         if lines:
             handle.write('\n\n# DIRECTIVES:')
             for line in lines:
                 handle.write('\n' + line)
 
-    @classmethod
-    def _write_prelude(cls, handle, job_conf):
+    def _write_prelude(self, handle, job_conf):
         """Job script prelude."""
         # Environment variables for prelude
         handle.write("\nexport CYLC_DIR='%s'" % (os.environ['CYLC_DIR']))
         if cylc.flags.debug:
             handle.write("\nexport CYLC_DEBUG='true'")
-        for key in ['CYLC_VERSION'] + cls._get_host_item(
+        for key in ['CYLC_VERSION'] + self._get_host_item(
                 job_conf, 'copyable environment variables'):
             if key in os.environ:
                 handle.write("\nexport %s='%s'" % (key, os.environ[key]))
         # Variables for traps
         handle.write("\nCYLC_FAIL_SIGNALS='%s'" % " ".join(
-            BATCH_SYS_MANAGER.get_fail_signals(job_conf)))
-        vacation_signals_str = BATCH_SYS_MANAGER.get_vacation_signal(job_conf)
+            self.batch_sys_mgr.get_fail_signals(job_conf)))
+        vacation_signals_str = self.batch_sys_mgr.get_vacation_signal(job_conf)
         if vacation_signals_str:
             handle.write("\nCYLC_VACATION_SIGNALS='%s'" % vacation_signals_str)
 
@@ -310,4 +300,4 @@ class JobFile(object):
         """Write epilogue."""
         handle.write('\n\n. "${CYLC_DIR}/lib/cylc/job.sh"\ncylc__job__main')
         handle.write("\n\n%s%s\n" % (
-            BATCH_SYS_MANAGER.LINE_PREFIX_EOF, job_conf['job_d']))
+            BatchSysManager.LINE_PREFIX_EOF, job_conf['job_d']))

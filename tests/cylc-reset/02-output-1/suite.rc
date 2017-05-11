@@ -1,0 +1,39 @@
+[cylc]
+   UTC mode = True
+   [[events]]
+       abort on stalled = True
+   [[reference test]]
+       live mode suite timeout = PT1M
+       required run mode = live
+[scheduling]
+    [[dependencies]]
+        graph = """
+t1 => t3
+t2 => t3
+t1:hello & t2:greet => t4
+"""
+[runtime]
+    [[t1]]
+        script=true
+        [[[outputs]]]
+            hello = Hello World
+    [[t2]]
+        script=true
+        [[[outputs]]]
+            greet = Greet World
+    [[t3]]
+        script = """
+LOG="${CYLC_SUITE_LOG_DIR}/log"
+cylc reset --debug --output=hello "${CYLC_SUITE_NAME}" 't1.1'
+while ! grep -qF '[t1.1] -reset output to complete: hello' "${LOG}"; do
+    sleep 1  # make sure reset completes
+done
+cylc reset --debug --output='Greet World' "${CYLC_SUITE_NAME}" 't2.1'
+while ! grep -qF '[t2.1] -reset output to complete: Greet World' "${LOG}"; do
+    sleep 1  # make sure reset completes
+done
+"""
+        [[[job]]]
+            execution time limit = PT30S
+    [[t4]]
+        script = true

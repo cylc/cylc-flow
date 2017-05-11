@@ -29,7 +29,6 @@ Some notes:
   (early versions of this module gave a choice of process or thread).
 """
 
-import fileinput
 import logging
 import multiprocessing
 from pipes import quote
@@ -39,7 +38,6 @@ from tempfile import TemporaryFile
 import time
 import traceback
 
-from cylc.batch_sys_manager import BATCH_SYS_MANAGER
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
 from cylc.suite_logging import LOG, OUT
@@ -152,20 +150,6 @@ class SuiteProcPool(object):
     # Shared memory flag.
     STOP_JOB_SUBMISSION = multiprocessing.Value('i', 0)
 
-    _INSTANCE = None
-
-    @classmethod
-    def get_inst(cls, pool_size=None):
-        """Return a singleton instance.
-
-        On 1st call, instantiate the singleton. The argument "pool_size" is
-        only relevant on 1st call.
-
-        """
-        if cls._INSTANCE is None:
-            cls._INSTANCE = cls(pool_size)
-        return cls._INSTANCE
-
     def __init__(self, pool_size=None):
         self.pool_size = (
             pool_size or
@@ -173,8 +157,7 @@ class SuiteProcPool(object):
             multiprocessing.cpu_count())
         # (The Pool class defaults to cpu_count anyway, but does not
         # expose the result via its public interface).
-        self.log = LOG
-        self.log.debug(
+        LOG.debug(
             "Initializing process pool, size %d" % self.pool_size)
         self.pool = multiprocessing.Pool(processes=self.pool_size)
         self.results = {}
@@ -182,18 +165,19 @@ class SuiteProcPool(object):
     def close(self):
         """Close the pool to new commands."""
         if not (self.is_dead() or self.is_closed()):
-            self.log.debug("Closing process pool")
+            LOG.debug("Closing process pool")
             self.pool.close()
 
     def handle_results_async(self):
         """Pass any available results to their associated callback."""
-        for result_id, item in self.results.items():
-            result, callback = item
+        for key, (result, callback, callback_args) in self.results.items():
             if result.ready():
-                self.results.pop(result_id)
+                self.results.pop(key)
                 value = result.get()
                 if callable(callback):
-                    callback(value)
+                    if not callback_args:
+                        callback_args = []
+                    callback(value, *callback_args)
 
     def is_closed(self):
         """Is the pool closed?"""
@@ -210,20 +194,20 @@ class SuiteProcPool(object):
 
     def join(self):
         """Join after workers have exited. Close or terminate first."""
-        self.log.debug("Joining process pool")
+        LOG.debug("Joining process pool")
         self.pool.join()
 
-    def put_command(self, ctx, callback):
+    def put_command(self, ctx, callback, callback_args=None):
         """Queue a new shell command to execute."""
         try:
             result = self.pool.apply_async(_run_command, [ctx])
         except AssertionError as exc:
-            self.log.warning("%s\n  %s\n %s" % (
+            LOG.warning("%s\n  %s\n %s" % (
                 str(exc),
                 "Rejecting command (pool closed)",
                 ctx.cmd))
         else:
-            self.results[id(result)] = (result, callback)
+            self.results[id(result)] = (result, callback, callback_args)
 
     @staticmethod
     def run_command(ctx):
@@ -238,17 +222,18 @@ class SuiteProcPool(object):
     def terminate(self):
         """Kill all worker processes immediately."""
         if not self.is_dead():
-            self.log.debug("Terminating process pool")
+            LOG.debug("Terminating process pool")
             self.pool.terminate()
 
 
 def main():
     """Manual test playground."""
 
-    LOG.setLevel(logging.INFO)  # or logging.DEBUG
+    log = logging.getLogger(LOG)
+    log.setLevel(logging.INFO)  # or logging.DEBUG
     handler = logging.StreamHandler(sys.stdout)
     handler.setLevel(logging.DEBUG)
-    LOG.addHandler(handler)
+    log.addHandler(handler)
 
     def print_result(result):
         """Print result"""
@@ -258,7 +243,7 @@ def main():
             LOG.info('FAILED> ' + result['CMD'])
             LOG.info(result['ERR'].strip())
 
-    pool = mp_pool(3)
+    pool = SuiteProcPool(3)
 
     for i in range(3):
         com = "sleep 5 && echo Hello from JOB " + str(i)

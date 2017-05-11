@@ -36,10 +36,10 @@ sed "/'job-logs-retrieve'/!d" \
     "${SUITE_RUN_DIR}/log/job/1/t1/01/job-activity.log" \
     >'edited-activities.log'
 cmp_ok 'edited-activities.log' <<'__LOG__'
-[('job-logs-retrieve', 1) ret_code] 1
-[('job-logs-retrieve', 1) err] File(s) not retrieved: job.err
-[('job-logs-retrieve', 1) ret_code] 1
-[('job-logs-retrieve', 1) err] File(s) not retrieved: job.err
+[(('job-logs-retrieve', 'failed'), 1) ret_code] 1
+[(('job-logs-retrieve', 'failed'), 1) err] File(s) not retrieved: job.err
+[(('job-logs-retrieve', 'failed'), 1) ret_code] 1
+[(('job-logs-retrieve', 'failed'), 1) err] File(s) not retrieved: job.err
 __LOG__
 exists_ok "${SUITE_RUN_DIR}/log/job/1/t1/01/job.out"
 exists_fail "${SUITE_RUN_DIR}/log/job/1/t1/01/job.err"

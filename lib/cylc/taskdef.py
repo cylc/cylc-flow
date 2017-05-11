@@ -19,10 +19,12 @@
 """Task definition."""
 
 from collections import deque
+import re
 
 from cylc.cycling.loader import (
     get_point_relative, get_interval, is_offset_absolute)
 from cylc.task_id import TaskID
+from cylc.task_trigger import get_message_offset
 
 
 class TaskDefError(Exception):
@@ -165,3 +167,12 @@ class TaskDef(object):
             return max_cutoff_point
         # There aren't any dependent tasks in other cycles for my_point.
         return my_point
+
+    def get_outputs(self, point):
+        """Return task message outputs for initialisation of TaskOutputs."""
+        for (key, msg), base_interval in self.outputs:
+            new_point = point
+            msg_offset = get_message_offset(msg, base_interval)
+            if msg_offset:
+                new_point = point + msg_offset
+            yield (key, re.sub('\[.*\]', str(new_point), msg))

@@ -19,16 +19,16 @@
 """Task state related logic."""
 
 
-from logging import WARNING, INFO, DEBUG
-
-import cylc.flags as flags
-from cylc.task_outputs import TaskOutputs
-from cylc.prerequisite import Prerequisite
 from cylc.cycling.loader import get_point_relative
+import cylc.flags as flags
+from cylc.prerequisite import Prerequisite
+from cylc.suite_logging import LOG
 from cylc.task_id import TaskID
 from cylc.task_outputs import (
+    TaskOutputs,
     TASK_OUTPUT_EXPIRED, TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_SUBMIT_FAILED,
     TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED)
+from cylc.wallclock import get_current_time_string
 
 
 # Task status names.
@@ -154,100 +154,20 @@ TASK_STATUSES_AUTO_EXPAND = set([
 ])
 
 
-class TaskStateError(ValueError):
-    """Illegal task state."""
-    pass
-
-
 class TaskState(object):
     """Task status and utilities."""
 
     # Memory optimization - constrain possible attributes to this list.
-    __slots__ = ["_STATUS_MAP", "status", "identity", "db_events_insert",
-                 "db_update_status", "log",
+    __slots__ = ["identity", "status", "hold_swap",
                  "_is_satisfied", "_suicide_is_satisfied", "prerequisites",
                  "suicide_prerequisites", "external_triggers", "outputs",
-                 "kill_failed", "hold_swap", "run_mode",
-                 "submission_timer_timeout", "execution_timer_timeout"]
+                 "kill_failed", "time_updated"]
 
-    # Associate status names with other properties.
-    _STATUS_MAP = {
-        TASK_STATUS_RUNAHEAD: {
-            "gtk_label": "r_unahead",  # GTK widget labels.
-            "ascii_ctrl": "\033[1;37;44m"  # Terminal color control codes.
-        },
-        TASK_STATUS_WAITING: {
-            "gtk_label": "_waiting",
-            "ascii_ctrl": "\033[1;36m"
-        },
-        TASK_STATUS_HELD: {
-            "gtk_label": "_held",
-            "ascii_ctrl": "\033[1;37;43m"
-        },
-        TASK_STATUS_QUEUED: {
-            "gtk_label": "_queued",
-            "ascii_ctrl": "\033[1;38;44m"
-        },
-        TASK_STATUS_READY: {
-            "gtk_label": "rea_dy",
-            "ascii_ctrl": "\033[1;32m"
-        },
-        TASK_STATUS_EXPIRED: {
-            "gtk_label": "e_xpired",
-            "ascii_ctrl": "\033[1;37;40m"
-        },
-        TASK_STATUS_SUBMITTED: {
-            "gtk_label": "sub_mitted",
-            "ascii_ctrl": "\033[1;33m"
-        },
-        TASK_STATUS_SUBMIT_FAILED: {
-            "gtk_label": "submit-f_ailed",
-            "ascii_ctrl": "\033[1;34m"
-        },
-        TASK_STATUS_SUBMIT_RETRYING: {
-            "gtk_label": "submit-retryin_g",
-            "ascii_ctrl": "\033[1;31m"
-        },
-        TASK_STATUS_RUNNING: {
-            "gtk_label": "_running",
-            "ascii_ctrl": "\033[1;37;42m"
-        },
-        TASK_STATUS_SUCCEEDED: {
-            "gtk_label": "_succeeded",
-            "ascii_ctrl": "\033[0m"
-        },
-        TASK_STATUS_FAILED: {
-            "gtk_label": "_failed",
-            "ascii_ctrl": "\033[1;37;41m"
-        },
-        TASK_STATUS_RETRYING: {
-            "gtk_label": "retr_ying",
-            "ascii_ctrl": "\033[1;35m"
-        }
-    }
-
-    @classmethod
-    def get_status_prop(cls, status, key, subst=None):
-        """Return property for a task status."""
-        if key == "ascii_ctrl":
-            if subst is not None:
-                return "%s%s\033[0m" % (cls._STATUS_MAP[status][key], subst)
-            else:
-                return "%s%s\033[0m" % (cls._STATUS_MAP[status][key], status)
-        try:
-            return cls._STATUS_MAP[status][key]
-        except KeyError:
-            raise TaskStateError("Bad task status (%s, %s)" % (status, key))
-
-    def __init__(self, status, hold_swap, point, identity, tdef,
-                 db_events_insert, db_update_status, log):
-
+    def __init__(self, tdef, point, status, hold_swap):
+        self.identity = TaskID.get(tdef.name, str(point))
         self.status = status
         self.hold_swap = hold_swap
-        self.identity = identity
-        self.db_events_insert = db_events_insert
-        self.db_update_status = db_update_status
-        self.log = log
+        self.time_updated = None
 
         self._is_satisfied = None
         self._suicide_is_satisfied = None
@@ -255,7 +175,7 @@ class TaskState(object):
         # Prerequisites.
         self.prerequisites = []
         self.suicide_prerequisites = []
-        self._add_prerequisites(point, identity, tdef)
+        self._add_prerequisites(point, tdef)
 
         # External Triggers.
         self.external_triggers = {}
@@ -267,9 +187,7 @@ class TaskState(object):
             self.external_triggers[ext] = False
 
         # Message outputs.
-        self.outputs = TaskOutputs(identity)
-        for outp in tdef.outputs:
-            self.outputs.add(outp.get_string(point))
+        self.outputs = TaskOutputs(tdef, point)
 
         # Standard outputs.
         self.outputs.add(TASK_OUTPUT_SUBMITTED)
@@ -277,12 +195,6 @@ class TaskState(object):
         self.outputs.add(TASK_OUTPUT_SUCCEEDED)
 
         self.kill_failed = False
-        self.run_mode = tdef.run_mode
-
-        # TODO - these are here because current use in reset_state(); should be
-        # disentangled and put in the task_proxy module.
-        self.submission_timer_timeout = None
-        self.execution_timer_timeout = None
 
     def satisfy_me(self, task_output_msgs, task_outputs):
         """Attempt to get my prerequisites satisfied."""
@@ -371,7 +283,22 @@ class TaskState(object):
         self.outputs.remove(TASK_OUTPUT_SUBMIT_FAILED)
         self.outputs.remove(TASK_OUTPUT_FAILED)
 
-    def release(self):
+    def set_held(self):
+        """Set state to TASK_STATUS_HELD, if possible.
+
+        If state can be held, set hold_swap to current state.
+        If state is active, set hold_swap to TASK_STATUS_HELD.
+        If state cannot be held, do nothing.
+        """
+        if self.status in TASK_STATUSES_ACTIVE:
+            self.hold_swap = TASK_STATUS_HELD
+            return
+        elif self.status in [
+                TASK_STATUS_WAITING, TASK_STATUS_QUEUED,
+                TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING]:
+            return self._set_state(TASK_STATUS_HELD)
+
+    def unset_held(self):
         """Reset to my pre-held state, if not beyond the stop point."""
         if self.status != TASK_STATUS_HELD:
             return
@@ -380,53 +307,15 @@ class TaskState(object):
         elif self.hold_swap == TASK_STATUS_HELD:
             self.hold_swap = None
         else:
-            self.submission_timer_timeout = None
-            self.execution_timer_timeout = None
             self.reset_state(self.hold_swap)
-
-    def set_state(self, status, loglvl=DEBUG):
-        """Set, log and record task status (normal change, not forced - don't
-        update task_events table)."""
-        if self.status == self.hold_swap:
-            self.hold_swap = None
-        if status == self.status and self.hold_swap is None:
-            return
-        if status == TASK_STATUS_HELD:
-            self.log(loglvl, '%s => %s (%s)' % (
-                self.status, status, self.status))
-            self.hold_swap = self.status
-        elif (self.hold_swap == TASK_STATUS_HELD and
-                status not in TASK_STATUSES_FINAL):
-            self.log(loglvl, '%s (%s) => %s (%s)' % (
-                self.status, TASK_STATUS_HELD,
-                TASK_STATUS_HELD, status))
-            self.hold_swap = status
-            status = TASK_STATUS_HELD
-        elif self.hold_swap:
-            self.log(loglvl, '%s (%s) => %s' % (
-                self.status, self.hold_swap, status))
-            self.hold_swap = None
-        else:
-            self.log(loglvl, '%s => %s' % (self.status, status))
-        self.status = status
-        flags.iflag = True
-        self.db_update_status()
 
     def reset_state(self, status):
         """Reset status of task."""
-        if status == TASK_STATUS_HELD:
-            if self.status in TASK_STATUSES_ACTIVE:
-                self.hold_swap = TASK_STATUS_HELD
-                return
-            if self.status not in [
-                    TASK_STATUS_WAITING, TASK_STATUS_QUEUED,
-                    TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING]:
-                return
-        elif status == TASK_STATUS_EXPIRED:
+        if status == TASK_STATUS_EXPIRED:
             self.set_prerequisites_all_satisfied()
             self.unset_special_outputs()
             self.outputs.set_all_incomplete()
-            self.outputs.add(TASK_OUTPUT_EXPIRED, True)
+            self.outputs.add(TASK_OUTPUT_EXPIRED, is_completed=True)
         elif status == TASK_STATUS_WAITING:
             self.set_prerequisites_not_satisfied()
             self.unset_special_outputs()
@@ -435,138 +324,74 @@ class TaskState(object):
             self.set_prerequisites_all_satisfied()
             self.unset_special_outputs()
             self.outputs.set_all_incomplete()
+        elif status == TASK_STATUS_SUBMITTED:
+            self.set_prerequisites_all_satisfied()
+            self.outputs.set_completed(TASK_OUTPUT_SUBMITTED)
+        elif status == TASK_STATUS_SUBMIT_RETRYING:
+            self.set_prerequisites_all_satisfied()
+            self.outputs.remove(TASK_OUTPUT_SUBMITTED)
+        elif status == TASK_STATUS_SUBMIT_FAILED:
+            self.set_prerequisites_all_satisfied()
+            self.outputs.remove(TASK_OUTPUT_SUBMITTED)
+            self.outputs.add(TASK_OUTPUT_SUBMIT_FAILED, is_completed=True)
         elif status == TASK_STATUS_SUCCEEDED:
             self.set_prerequisites_all_satisfied()
             self.unset_special_outputs()
-            # TODO - for message outputs this should be optional (see #1551):
-            self.outputs.set_all_completed()
+            self.outputs.set_completed(TASK_OUTPUT_SUBMITTED)
+            self.outputs.set_completed(TASK_OUTPUT_STARTED)
+            self.outputs.set_completed(TASK_OUTPUT_SUCCEEDED)
+        elif status == TASK_STATUS_RETRYING:
+            self.set_prerequisites_all_satisfied()
+            self.outputs.set_all_incomplete()
         elif status == TASK_STATUS_FAILED:
             self.set_prerequisites_all_satisfied()
             self.outputs.set_all_incomplete()
             # Set a new failed output just as if a failure message came in
-            self.outputs.add(TASK_OUTPUT_FAILED, True)
+            self.outputs.add(TASK_OUTPUT_FAILED, is_completed=True)
 
-        self.submission_timer_timeout = None
-        self.execution_timer_timeout = None
-        return self.set_state(status)
+        return self._set_state(status)
 
-    def is_ready_to_run(self, retry_delay_done, start_time_reached):
-        """With current status, is the task ready to run?"""
-        return (
-            (
-                (
-                    self.status == TASK_STATUS_WAITING and
-                    self.prerequisites_are_all_satisfied() and
-                    all(self.external_triggers.values())
-                ) or
-                (
-                    self.status in [TASK_STATUS_SUBMIT_RETRYING,
-                                    TASK_STATUS_RETRYING] and
-                    retry_delay_done
-                )
-            ) and start_time_reached
-        )
+    def _set_state(self, status):
+        """Set, log and record task status (normal change, not forced - don't
+        update task_events table)."""
+        if self.status == self.hold_swap:
+            self.hold_swap = None
+        if status == self.status and self.hold_swap is None:
+            return
+        o_status, o_hold_swap = self.status, self.hold_swap
+        if status == TASK_STATUS_HELD:
+            self.hold_swap = self.status
+        elif (self.hold_swap == TASK_STATUS_HELD and
+                status not in TASK_STATUSES_FINAL):
+            self.hold_swap = status
+            status = TASK_STATUS_HELD
+        elif self.hold_swap:
+            self.hold_swap = None
+        self.status = status
+        self.time_updated = get_current_time_string()
+        flags.iflag = True
+        # Log
+        message = str(o_status)
+        if o_hold_swap:
+            message += " (%s)" % o_hold_swap
+        message += " => %s" % self.status
+        if self.hold_swap:
+            message += " (%s)" % self.hold_swap
+        LOG.debug(message, itask=self.identity)
 
     def is_greater_than(self, status):
         """"Return True if self.status > status."""
         return (TASK_STATUSES_ORDERED.index(self.status) >
                 TASK_STATUSES_ORDERED.index(status))
 
-    def set_expired(self):
-        """Manipulate state for task expired."""
-        self.reset_state(TASK_STATUS_EXPIRED)
-
-    def set_ready_to_submit(self):
-        """Manipulate state just prior to job submission."""
-        self.set_state(TASK_STATUS_READY)
-
-    def set_submit_failed(self):
-        """Manipulate state after job submission failure."""
-        self.set_state(TASK_STATUS_SUBMIT_FAILED)
-        self.outputs.remove(TASK_OUTPUT_SUBMITTED)
-        self.outputs.add(TASK_OUTPUT_SUBMIT_FAILED, True)
-
-    def set_submit_retry(self):
-        """Manipulate state for job submission retry."""
-        self.outputs.remove(TASK_OUTPUT_SUBMITTED)
-        self.set_state(TASK_STATUS_SUBMIT_RETRYING)
-        self.set_prerequisites_all_satisfied()
-
-    def set_submit_succeeded(self):
-        """Set status to submitted."""
-        if not self.outputs.is_completed(TASK_OUTPUT_SUBMITTED):
-            self.outputs.set_completed(TASK_OUTPUT_SUBMITTED)
-            # Allow submitted tasks to spawn even if nothing else is happening.
-            flags.pflag = True
-        if self.status == TASK_STATUS_READY:
-            # In rare occassions, the submit command of a batch system has sent
-            # the job to its server, and the server has started the job before
-            # the job submit command returns.
-            self.set_state(TASK_STATUS_SUBMITTED)
-            return True
-        else:
-            return False
-
-    def set_executing(self):
-        """Manipulate state for job execution."""
-        self.set_state(TASK_STATUS_RUNNING)
-        if self.run_mode == 'simulation':
-            self.outputs.set_completed(TASK_OUTPUT_STARTED)
-
-    def set_execution_succeeded(self, msg_was_polled):
-        """Manipulate state for job execution success."""
-        self.set_state(TASK_STATUS_SUCCEEDED)
-        warnings = []
-        if not self.outputs.all_completed():
-            err = "Succeeded with unreported outputs:"
-            for key in self.outputs.not_completed:
-                err += "\n  " + key
-            warnings.append(err)
-            if msg_was_polled:
-                # Assume all outputs complete (e.g. poll at restart).
-                # TODO - just poll for outputs in the job status file.
-                warnings.append("Assuming ALL outputs completed.")
-                self.outputs.set_all_completed()
-            else:
-                # A succeeded task MUST have submitted and started.
-                # TODO - just poll for outputs in the job status file?
-                for output in [TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED]:
-                    if not self.outputs.is_completed(output):
-                        warnings.append(
-                            "Assuming output completed:  \n %s" % output)
-                        self.outputs.set_completed(output)
-        return warnings
-
-    def set_execution_failed(self):
-        """Manipulate state for job execution failure."""
-        self.reset_state(TASK_STATUS_FAILED)
-
-    def set_execution_retry(self):
-        """Manipulate state for job execution retry."""
-        self.set_state(TASK_STATUS_RETRYING)
-        self.set_prerequisites_all_satisfied()
-
-    def record_output(self, msg, msg_was_polled):
-        """Record a completed output."""
-        if self.outputs.exists(msg):
-            if not self.outputs.is_completed(msg):
-                flags.pflag = True
-                self.outputs.set_completed(msg)
-                self.db_events_insert(event="output completed", message=msg)
-            elif not msg_was_polled:
-                # This output has already been reported complete. Not an error
-                # condition - maybe the network was down for a bit. Ok for
-                # polling as multiple polls *should* produce the same result.
-                return False
-        return True
-
-    def _add_prerequisites(self, point, identity, tdef):
+    def _add_prerequisites(self, point, tdef):
         """Add task prerequisites."""
         # self.triggers[sequence] = [triggers for sequence]
         # Triggers for sequence_i only used if my cycle point is a
         # valid member of sequence_i's sequence of cycle points.
         self._is_satisfied = None
         self._suicide_is_satisfied = None
+        identity = TaskID.get(tdef.name, str(point))
 
         for sequence, exps in tdef.triggers.items():
             for ctrig, exp in exps:

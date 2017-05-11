@@ -162,8 +162,10 @@ class BaseCommsClient(object):
                 if "unknown protocol" in str(exc) and url.startswith("https:"):
                     # Server is using http rather than https, for some reason.
                     sys.stderr.write(WARNING_NO_HTTPS_SUPPORT.format(exc))
+                    for item in http_request_items:
+                        item['url'] = item['url'].replace("https:", "http:", 1)
                     return self._get_data_from_url_with_requests(
-                        url.replace("https:", "http:", 1), json_data)
+                        http_request_items)
                 if cylc.flags.debug:
                     import traceback
                     traceback.print_exc()
@@ -252,8 +254,10 @@ class BaseCommsClient(object):
                 if "unknown protocol" in str(exc) and url.startswith("https:"):
                     # Server is using http rather than https, for some reason.
                     sys.stderr.write(WARNING_NO_HTTPS_SUPPORT.format(exc))
+                    for item in http_request_items:
+                        item['url'] = item['url'].replace("https:", "http:", 1)
                     return self._get_data_from_url_with_urllib2(
-                        url.replace("https:", "http:", 1), orig_json_data)
+                        http_request_items)
                 if cylc.flags.debug:
                     import traceback
                     traceback.print_exc()

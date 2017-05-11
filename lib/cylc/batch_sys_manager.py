@@ -18,8 +18,7 @@
 
 """Manage submission, poll and kill of a job to the batch systems.
 
-Export the symbol BATCH_SYS_MANAGER, which is the singleton object for the
-BatchSysManager class.
+Export the BatchSysManager class.
 
 Batch system handler (a.k.a. job submission method) modules should be placed
 under the "cylc.batch_sys_handlers" package. Each module should export the
@@ -104,7 +103,7 @@ batch_sys.SUBMIT_CMD_TMPL
     * A Python string template for getting the batch system command to submit a
       job file. The command is formed using the logic:
           batch_sys.SUBMIT_CMD_TMPL % {"job": job_file_path}
-      See also "batch_sys.job_submit".
+      See also "batch_sys._job_submit_impl".
 
 """
 
@@ -206,7 +205,7 @@ class BatchSysManager(object):
             if os.path.isdir(suite_py) and suite_py not in sys.path:
                 sys.path.append(suite_py)
 
-    def get_inst(self, batch_sys_name):
+    def _get_sys(self, batch_sys_name):
         """Return an instance of the class for "batch_sys_name"."""
         if batch_sys_name in self._INSTANCES:
             return self._INSTANCES[batch_sys_name]
@@ -224,20 +223,20 @@ class BatchSysManager(object):
 
     def format_directives(self, job_conf):
         """Format the job directives for a job file, if relevant."""
-        batch_sys = self.get_inst(job_conf['batch_system_name'])
+        batch_sys = self._get_sys(job_conf['batch_system_name'])
         if hasattr(batch_sys, "format_directives"):
             return batch_sys.format_directives(job_conf)
 
     def get_fail_signals(self, job_conf):
         """Return a list of failure signal names to trap in the job file."""
-        batch_sys = self.get_inst(job_conf['batch_system_name'])
+        batch_sys = self._get_sys(job_conf['batch_system_name'])
         if hasattr(batch_sys, "get_fail_signals"):
             return batch_sys.get_fail_signals(job_conf)
         return ["EXIT", "ERR", "TERM", "XCPU"]
 
     def get_vacation_signal(self, job_conf):
         """Return the vacation signal name for a job file."""
-        batch_sys = self.get_inst(job_conf['batch_system_name'])
+        batch_sys = self._get_sys(job_conf['batch_system_name'])
         if hasattr(batch_sys, "get_vacation_signal"):
             return batch_sys.get_vacation_signal(job_conf)
 
@@ -372,7 +371,7 @@ class BatchSysManager(object):
             st_file = open(st_file_path)
             for line in st_file:
                 if line.startswith(self.CYLC_BATCH_SYS_NAME + "="):
-                    batch_sys = self.get_inst(line.strip().split("=", 1)[1])
+                    batch_sys = self._get_sys(line.strip().split("=", 1)[1])
                     break
             else:
                 return (
@@ -412,54 +411,13 @@ class BatchSysManager(object):
         except IOError as exc:
             return (1, str(exc))
 
-    def job_submit(self, job_file_path, remote_mode):
-        """Submit a job file.
-
-        "job_file_path" is a string containing the path to the job file.
-        "remote_mode" is a boolean to indicate if submit is being initiated on
-        a remote job host.
-
-        Return a 4-element tuple (ret_code, out, err, job_id) where:
-        "ret_code" is the integer return code of the job submit command.
-        "out" is a string containing the standard output of the job submit
-        command.
-        "err" is a string containing the standard error output of the job
-        submit command.
-        "job_id" is a string containing the ID of the job submitted.
-
-        """
-        # SUITE_RUN_DIR/log/job/CYCLE/TASK/SUBMIT/job
-        if "$" in job_file_path:
-            job_file_path = os.path.expandvars(job_file_path)
-        self.configure_suite_run_dir(job_file_path.rsplit(os.sep, 6)[0])
-
-        if remote_mode:
-            batch_sys_name, submit_opts = (
-                self._job_submit_prepare_remote(job_file_path))
-        else:  # local mode
-            batch_sys_name = None
-            submit_opts = {}
-            for line in open(job_file_path):
-                if line.startswith(self.LINE_PREFIX_BATCH_SYS_NAME):
-                    batch_sys_name = line.replace(
-                        self.LINE_PREFIX_BATCH_SYS_NAME, "").strip()
-                elif line.startswith(self.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL):
-                    submit_opts["batch_submit_cmd_tmpl"] = line.replace(
-                        self.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL, "").strip()
-                elif line.startswith(self.LINE_PREFIX_EXECUTION_TIME_LIMIT):
-                    submit_opts["execution_time_limit"] = float(line.replace(
-                        self.LINE_PREFIX_EXECUTION_TIME_LIMIT, "").strip())
-
-        return self._job_submit_impl(
-            job_file_path, batch_sys_name, submit_opts)
-
     @classmethod
     def _create_nn(cls, job_file_path):
         """Create NN symbolic link, if necessary.
 
         If NN => 01, remove numbered directories with submit numbers greater
         than 01.
-        Helper for "self.submit".
+        Helper for "self._job_submit_impl".
 
         """
         job_file_dir = os.path.dirname(job_file_path)
@@ -554,11 +512,11 @@ class BatchSysManager(object):
         bad_job_ids = list(exp_job_ids)
         exp_pids = []
         bad_pids = []
-        items = [[self.get_inst(batch_sys_name), exp_job_ids, bad_job_ids]]
+        items = [[self._get_sys(batch_sys_name), exp_job_ids, bad_job_ids]]
         if getattr(items[0][0], "SHOULD_POLL_PROC_GROUP", False):
             exp_pids = [ctx.pid for ctx in my_ctx_list if ctx.pid is not None]
             bad_pids.extend(exp_pids)
-            items.append([self.get_inst("background"), exp_pids, bad_pids])
+            items.append([self._get_sys("background"), exp_pids, bad_pids])
         for batch_sys, exp_ids, bad_ids in items:
             if hasattr(batch_sys, "get_poll_many_cmd"):
                 # Some poll commands may not be as simple
@@ -639,7 +597,7 @@ class BatchSysManager(object):
         job_status_file.close()
 
         # Submit job
-        batch_sys = self.get_inst(batch_sys_name)
+        batch_sys = self._get_sys(batch_sys_name)
         proc_stdin_arg = None
         proc_stdin_value = None
         if hasattr(batch_sys, "get_submit_stdin"):
@@ -800,48 +758,3 @@ class BatchSysManager(object):
                     batch_sys_name = None
                     submit_opts = {}
         return items
-
-    def _job_submit_prepare_remote(self, job_file_path):
-        """Prepare a remote job file.
-
-        On remote mode, write job file, content from STDIN Modify job
-        script's CYLC_DIR for this host. Extract job submission method
-        and job submission command template.
-
-        Return (batch_sys_name, batch_sys_submit)
-
-        """
-        batch_sys_name = None
-        submit_opts = {}
-        mkdir_p(os.path.dirname(job_file_path))
-        job_file = open(job_file_path + ".tmp", "w")
-        while True:  # Note: "for line in sys.stdin:" may hang
-            line = sys.stdin.readline()
-            if not line:
-                sys.stdin.close()
-                break
-            if line.startswith(self.LINE_PREFIX_CYLC_DIR):
-                old_line = line
-                line = "%s'%s'\n" % (
-                    self.LINE_PREFIX_CYLC_DIR, os.environ["CYLC_DIR"])
-                if old_line != line:
-                    job_file.write(self.LINE_UPDATE_CYLC_DIR)
-            elif line.startswith(self.LINE_PREFIX_BATCH_SYS_NAME):
-                batch_sys_name = line.replace(
-                    self.LINE_PREFIX_BATCH_SYS_NAME, "").strip()
-            elif line.startswith(self.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL):
-                submit_opts["batch_submit_cmd_tmpl"] = line.replace(
-                    self.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL, "").strip()
-            elif line.startswith(self.LINE_PREFIX_EXECUTION_TIME_LIMIT):
-                submit_opts["execution_time_limit"] = float(line.replace(
-                    self.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL, "").strip())
-            job_file.write(line)
-        job_file.close()
-        os.rename(job_file_path + ".tmp", job_file_path)
-        os.chmod(job_file_path, (
-            os.stat(job_file_path).st_mode |
-            stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH))
-        return batch_sys_name, submit_opts
-
-
-BATCH_SYS_MANAGER = BatchSysManager()

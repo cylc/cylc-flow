@@ -37,7 +37,9 @@ cp "$TEST_SOURCE_DIR/graphing-change/suite-1.rc" "$TEST_DIR/$SUITE_NAME/suite.rc
 # reload suite
 TEST_NAME=$TEST_NAME_BASE-add-reload
 run_ok $TEST_NAME cylc reload $SUITE_NAME
-sleep 5
+while (($(grep -c 'Reload completed' "${LOG_FILE}" || true) < 1)); do
+    sleep 1  # make sure reload 1 completes
+done
 
 # check suite log
 grep_ok "Added task: 'one'" $LOG_FILE
@@ -50,7 +52,9 @@ cp "$TEST_SOURCE_DIR/graphing-change/suite.rc" "$TEST_DIR/$SUITE_NAME/suite.rc"
 # reload suite
 TEST_NAME=$TEST_NAME_BASE-remove-reload
 run_ok $TEST_NAME cylc reload $SUITE_NAME
-sleep 5
+while (($(grep -c 'Reload completed' "${LOG_FILE}" || true) < 2)); do
+    sleep 1  # make sure reload 2 completes
+done
 
 # check suite log
 grep_ok "Removed task: 'one'" $LOG_FILE
@@ -67,7 +71,9 @@ cp "$TEST_SOURCE_DIR/graphing-change/suite-2.rc" "$TEST_DIR/$SUITE_NAME/suite.rc
 # reload suite
 TEST_NAME=$TEST_NAME_BASE-swap-reload
 run_ok $TEST_NAME cylc reload $SUITE_NAME
-sleep 5
+while (($(grep -c 'Reload completed' "${LOG_FILE}" || true) < 3)); do
+    sleep 1  # make sure reload 3 completes
+done
 
 # check suite log
 TEST_NAME=$TEST_NAME_BASE-swap-log
