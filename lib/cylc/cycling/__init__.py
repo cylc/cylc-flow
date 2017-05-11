@@ -18,6 +18,10 @@
 
 """This module provides base classes for cycling data objects."""
 
+import unittest
+
+from abc import ABCMeta, abstractmethod, abstractproperty
+
 
 def parse_exclusion(expr):
     count = expr.count('!')
@@ -79,7 +83,7 @@ class SequenceDegenerateError(Exception):
 
 class PointBase(object):
 
-    """The base class for single points in a cycler sequence.
+    """The abstract base class for single points in a cycler sequence.
 
     Points should be based around a string value.
 
@@ -92,27 +96,38 @@ class PointBase(object):
     method to reprocess their value into a standard form.
 
     """
+    __metaclass__ = ABCMeta
 
-    TYPE = None
-    TYPE_SORT_KEY = None
+    _TYPE = None
+    _TYPE_SORT_KEY = None
+
+    @abstractproperty
+    def TYPE(self):
+        return self._TYPE
+
+    @abstractproperty
+    def TYPE_SORT_KEY(self):
+        return self._TYPE_SORT_KEY
 
     def __init__(self, value):
         if not isinstance(value, basestring):
             raise TypeError(type(value))
         self.value = value
 
+    @abstractmethod
     def add(self, other):
         """Add other (interval) to self, returning a point."""
-        raise NotImplementedError()
+        pass
 
     def cmp_(self, other):
         """Compare self to other point, returning a 'cmp'-like result."""
-        raise NotImplementedError()
+        pass
 
     def standardise(self):
         """Format self.value into a standard representation and check it."""
         return self
 
+    @abstractmethod
     def sub(self, other):
         """Subtract other (interval or point), returning a point or interval.
 
@@ -123,7 +138,7 @@ class PointBase(object):
          IntervalBase-derived object)
 
         """
-        raise NotImplementedError()
+        pass
 
     def __str__(self):
         # Stringify.
@@ -180,36 +195,51 @@ class IntervalBase(object):
     method to reprocess their value into a standard form.
 
     """
+    __metaclass__ = ABCMeta
 
-    TYPE = None
-    TYPE_SORT_KEY = None
+    _TYPE = None
+    _TYPE_SORT_KEY = None
+
+    @abstractproperty
+    def TYPE(self):
+        return self._TYPE
+
+    @abstractproperty
+    def TYPE_SORT_KEY(self):
+        return self._TYPE_SORT_KEY
 
     @classmethod
+    @abstractmethod
     def get_null(cls):
         """Return a null interval."""
-        raise NotImplementedError()
+        pass
 
+    @abstractmethod
     def get_inferred_child(self, string):
         """For a given string, infer the offset given my instance units."""
-        raise NotImplementedError()
+        pass
 
+    @abstractmethod
     def __abs__(self):
         # Return an interval with absolute values for all properties.
-        raise NotImplementedError()
+        pass
 
+    @abstractmethod
     def __mul__(self, factor):
         # Return an interval with all properties multiplied by factor.
-        raise NotImplementedError()
+        pass
 
+    @abstractmethod
     def __nonzero__(self):
         # Return True if the interval has any non-zero properties.
-        raise NotImplementedError()
+        pass
 
     def __init__(self, value):
         if not isinstance(value, basestring):
             raise TypeError(type(value))
         self.value = value
 
+    @abstractmethod
     def add(self, other):
         """Add other to self, returning a Point or Interval.
 
@@ -220,19 +250,21 @@ class IntervalBase(object):
          IntervalBase-derived object)
 
         """
-        raise NotImplementedError()
+        pass
 
+    @abstractmethod
     def cmp_(self, other):
         """Compare self to other (interval), returning a 'cmp'-like result."""
-        raise NotImplementedError()
+        pass
 
     def standardise(self):
         """Format self.value into a standard representation."""
         return self
 
+    @abstractmethod
     def sub(self, other):
         """Subtract other (interval) from self; return an interval."""
-        raise NotImplementedError()
+        pass
 
     def is_null(self):
         return (self == self.get_null())
@@ -268,7 +300,7 @@ class IntervalBase(object):
 
 class SequenceBase(object):
 
-    """The base class for cycler sequences.
+    """The abstract base class for cycler sequences.
 
     Subclasses should accept a sequence-specific string, a
     start context string, and a stop context string as
@@ -287,68 +319,107 @@ class SequenceBase(object):
     is equal to another (represents the same set of points).
 
     """
+    __metaclass__ = ABCMeta
 
-    TYPE = None
-    TYPE_SORT_KEY = None
+    _TYPE = None
+    _TYPE_SORT_KEY = None
+
+    @abstractproperty
+    def TYPE(self):
+        return self._TYPE
+
+    @abstractproperty
+    def TYPE_SORT_KEY(self):
+        return self._TYPE_SORT_KEY
 
     @classmethod
+    @abstractmethod  # Note: stacked decorator not strictly enforced in Py2.x
     def get_async_expr(cls, start_point=0):
         """Express a one-off sequence at the initial cycle point."""
-        raise NotImplementedError()
+        pass
 
+    @abstractmethod
     def __init__(self, sequence_string, context_start, context_stop=None):
         """Parse sequence string according to context point strings."""
         pass
 
+    @abstractmethod
     def get_interval(self):
         """Return the cycling interval of this sequence."""
-        raise NotImplementedError()
+        pass
 
+    @abstractmethod
     def get_offset(self):
         """Deprecated: return the offset used for this sequence."""
-        raise NotImplementedError()
+        pass
 
+    @abstractmethod
     def set_offset(self, i_offset):
         """Deprecated: alter state to offset the entire sequence."""
-        raise NotImplementedError()
+        pass
 
+    @abstractmethod
     def is_on_sequence(self, point):
         """Is point on-sequence, disregarding bounds?"""
-        raise NotImplementedError()
+        pass
 
     def _get_point_in_bounds(self, point):
         """Return point, or None if out of bounds."""
-        raise NotImplementedError()
+        raise NotImplementedError("Not implemented yet")
 
+    @abstractmethod
     def is_valid(self, point):
         """Is point on-sequence and in-bounds?"""
-        raise NotImplementedError()
+        pass
 
+    @abstractmethod
     def get_prev_point(self, point):
         """Return the previous point < point, or None if out of bounds."""
-        raise NotImplementedError()
+        pass
 
+    @abstractmethod
     def get_nearest_prev_point(self, point):
         """Return the largest point < some arbitrary point."""
-        raise NotImplementedError()
+        pass
 
+    @abstractmethod
     def get_next_point(self, point):
         """Return the next point > point, or None if out of bounds."""
-        raise NotImplementedError()
+        pass
 
+    @abstractmethod
     def get_next_point_on_sequence(self, point):
         """Return the next point > point assuming that point is on-sequence,
         or None if out of bounds."""
-        raise NotImplementedError()
+        pass
 
+    @abstractmethod
     def get_first_point(self, point):
         """Return the first point >= to point, or None if out of bounds."""
-        raise NotImplementedError()
+        pass
 
+    @abstractmethod
     def get_stop_point(self):
         """Return the last point in this sequence, or None if unbounded."""
-        raise NotImplementedError()
+        pass
 
+    @abstractmethod
     def __eq__(self, other):
         # Return True if other (sequence) is equal to self.
-        raise NotImplementedError()
+        pass
+
+
+class TestBaseClasses(unittest.TestCase):
+    """Test the abstract base classes cannot be instantiated on their own
+    """
+    def test_simple_abstract_class_test(self):
+        """Cannot instantiate abstract classes, they must be defined in
+        the subclasses"""
+        self.assertRaises(TypeError, SequenceBase, "sequence-string",
+                          "context_string")
+        self.assertRaises(TypeError, IntervalBase, "value")
+        self.assertRaises(TypeError, PointBase, "value")
+
+
+if __name__ == '__main__':
+    unittest.main()
