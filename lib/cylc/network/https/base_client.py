@@ -88,6 +88,8 @@ class BaseCommsClient(object):
             function = func_dicts[0]
             func_dict = {"function": function}
             func_dict.update(fargs)
+        else:
+            func_dict = None
 
         if self.host is None and self.port is not None:
             self.host = get_hostname()
