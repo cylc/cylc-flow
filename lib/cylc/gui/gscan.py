@@ -519,7 +519,7 @@ class ScanApp(object):
         gtk.main_quit()
         return False
 
-    def _toggle_hide_menu_bar(self, *args):
+    def _toggle_hide_menu_bar(self, *_):
         if self.menu_hbox.get_property("visible"):
             self.menu_hbox.hide_all()
         else:
