@@ -802,7 +802,8 @@ class TaskProxy(object):
             if cmd == handler:
                 # Nothing substituted, assume classic interface
                 cmd = "%s '%s' '%s' '%s' '%s'" % (
-                    handler, event, self.__class__.suite_name, self.identity, message)
+                    handler, event, self.__class__.suite_name,
+                    self.identity, message)
             self.log(DEBUG, "Queueing %s handler: %s" % (event, cmd))
             self.event_handler_try_timers[(key1, self.submit_num)] = (
                 TaskActionTimer(
