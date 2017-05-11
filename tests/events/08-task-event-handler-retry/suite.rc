@@ -1,6 +1,7 @@
 #!jinja2
 
 title=Task Event Handler Retry
+URL = http://my-suites.com/${CYLC_SUITE_NAME}.html
 
 [cylc]
     [[reference test]]
@@ -12,6 +13,7 @@ title=Task Event Handler Retry
 
 [runtime]
     [[t1]]
+        URL = http://my-suites.com/${CYLC_SUITE_NAME}/${CYLC_TASK_NAME}.html
         script=true
 {% if HOST is defined %}
         [[[remote]]]
@@ -19,7 +21,7 @@ title=Task Event Handler Retry
 {% endif %}
 {% if GLOBALCFG is not defined %}
         [[[events]]]
-            handlers=hello-event-handler '%(name)s' '%(event)s'
+            handlers = hello-event-handler %(name)s %(event)s %(suite_url)s %(task_url)s %(message)s %(point)s %(submit_num)s %(id)s
             handler events=succeeded, failed
             handler retry delays=PT0S, 2*PT1S
 {% endif %}{# not GLOBALCFG is not defined #}
