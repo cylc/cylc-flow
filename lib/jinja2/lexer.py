@@ -11,17 +11,17 @@
     operators we don't allow in templates. On the other hand it separates
     template code and python code in expressions.
 
-    :copyright: (c) 2010 by the Jinja Team.
+    :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
 import re
+import sys
 
 from operator import itemgetter
 from collections import deque
 from jinja2.exceptions import TemplateSyntaxError
 from jinja2.utils import LRUCache
-from jinja2._compat import iteritems, implements_iterator, text_type, \
-     intern, PY2
+from jinja2._compat import iteritems, implements_iterator, text_type, intern
 
 
 # cache for the lexers. Exists in order to be able to have multiple
@@ -34,16 +34,28 @@ string_re = re.compile(r"('([^'\\]*(?:\\.[^'\\]*)*)'"
                        r'|"([^"\\]*(?:\\.[^"\\]*)*)")', re.S)
 integer_re = re.compile(r'\d+')
 
-# we use the unicode identifier rule if this python version is able
-# to handle unicode identifiers, otherwise the standard ASCII one.
-try:
-    compile('föö', '<unknown>', 'eval')
-except SyntaxError:
-    name_re = re.compile(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b')
-else:
+def _make_name_re():
+    try:
+        compile('föö', '<unknown>', 'eval')
+    except SyntaxError:
+        return re.compile(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b')
+
+    import jinja2
     from jinja2 import _stringdefs
     name_re = re.compile(r'[%s][%s]*' % (_stringdefs.xid_start,
                                          _stringdefs.xid_continue))
+
+    # Save some memory here
+    sys.modules.pop('jinja2._stringdefs')
+    del _stringdefs
+    del jinja2._stringdefs
+
+    return name_re
+
+# we use the unicode identifier rule if this python version is able
+# to handle unicode identifiers, otherwise the standard ASCII one.
+name_re = _make_name_re()
+del _make_name_re
 
 float_re = re.compile(r'(?<!\.)\d+\.\d+')
 newline_re = re.compile(r'(\r\n|\r|\n)')
@@ -288,7 +300,7 @@ class TokenStreamIterator(object):
 
 @implements_iterator
 class TokenStream(object):
-    """A token stream is an iterable that yields :class:`Token`\s.  The
+    """A token stream is an iterable that yields :class:`Token`\\s.  The
     parser however does not iterate over it but calls :meth:`next` to go
     one token ahead.  The current active token is stored as :attr:`current`.
     """
@@ -500,7 +512,7 @@ class Lexer(object):
             ],
             # blocks
             TOKEN_BLOCK_BEGIN: [
-                (c('(?:\-%s\s*|%s)%s' % (
+                (c(r'(?:\-%s\s*|%s)%s' % (
                     e(environment.block_end_string),
                     e(environment.block_end_string),
                     block_suffix_re
@@ -508,14 +520,14 @@ class Lexer(object):
             ] + tag_rules,
             # variables
             TOKEN_VARIABLE_BEGIN: [
-                (c('\-%s\s*|%s' % (
+                (c(r'\-%s\s*|%s' % (
                     e(environment.variable_end_string),
                     e(environment.variable_end_string)
                 )), TOKEN_VARIABLE_END, '#pop')
             ] + tag_rules,
             # raw block
             TOKEN_RAW_BEGIN: [
-                (c('(.*?)((?:\s*%s\-|%s)\s*endraw\s*(?:\-%s\s*|%s%s))' % (
+                (c(r'(.*?)((?:\s*%s\-|%s)\s*endraw\s*(?:\-%s\s*|%s%s))' % (
                     e(environment.block_start_string),
                     block_prefix_re,
                     e(environment.block_end_string),
@@ -574,15 +586,6 @@ class Lexer(object):
                 except Exception as e:
                     msg = str(e).split(':')[-1].strip()
                     raise TemplateSyntaxError(msg, lineno, name, filename)
-                # if we can express it as bytestring (ascii only)
-                # we do that for support of semi broken APIs
-                # as datetime.datetime.strftime.  On python 3 this
-                # call becomes a noop thanks to 2to3
-                if PY2:
-                    try:
-                        value = value.encode('ascii')
-                    except UnicodeError:
-                        pass
             elif token == 'integer':
                 value = int(value)
             elif token == 'float':
