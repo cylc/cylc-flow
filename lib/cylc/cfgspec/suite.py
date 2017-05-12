@@ -36,7 +36,7 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.network import PRIVILEGE_LEVELS
 
 
-REC_PARAM_INT_RANGE = re.compile('(\d+)\.\.(\d+)')
+REC_PARAM_INT_RANGE = re.compile('(\d+)\.\.(\d+)(?:\.\.(\d+))?')
 
 
 def _coerce_cycleinterval(value, keys, _):
@@ -141,19 +141,19 @@ def _coerce_final_cycletime(value, keys, _):
 def _coerce_parameter_list(value, keys, _):
     """Coerce parameter list."""
     value = _strip_and_unquote_list(keys, value)
-    if len(value) == 1:
-        # May be a range e.g. '1..5' (bounds inclusive)
-        try:
-            lower, upper = REC_PARAM_INT_RANGE.match(value[0]).groups()
-        except AttributeError:
-            if '.' in value[0]:
-                # Dot is illegal in node names, probably bad range syntax.
-                raise IllegalValueError("parameter", keys, value)
-        else:
-            n_dig = len(upper)
-            return [
-                str(i).zfill(n_dig) for i in range(int(lower), int(upper) + 1)]
-    return value
+    # May be an integer range with step e.g. '1..6..2' (bounds inclusive).
+    try:
+        lower, upper, step = REC_PARAM_INT_RANGE.match(value[0]).groups()
+        step = step or 1
+    except AttributeError:
+        if '.' in value[0]:
+            # Dot is illegal in node names, probably bad range syntax.
+            raise IllegalValueError("parameter", keys, value)
+        return value
+    else:
+        n_dig = len(upper)
+        return [str(i).zfill(n_dig) for i in
+                range(int(lower), int(upper) + 1, int(step))]
 
 coercers['cycletime'] = _coerce_cycletime
 coercers['cycletime_format'] = _coerce_cycletime_format

@@ -234,13 +234,13 @@ used for cylc testing and development.
     \item {\em default:} False
 \end{myitemize}
 
-\subsubsection[parameters]{[cylc] \textrightarrow parameters}
+\subsubsection[{[[}parameters{]]}]{[cylc] \textrightarrow [[parameters]]}
 
 Define parameter values here for use in expanding {\em parameterized tasks} -
 see Section~\ref{Parameterized Tasks}.
 \begin{myitemize}
     \item {\em type:} list of strings, or an integer range
-        \lstinline=LOWER..UPPER= (two dots, inclusive bounds)
+        \lstinline=LOWER..UPPER..STEP= (two dots, inclusive bounds, STEP optional)
     \item {\em default:} (none)
     \item {\em examples:}
         \begin{myitemize}
@@ -249,7 +249,7 @@ see Section~\ref{Parameterized Tasks}.
         \end{myitemize}
 \end{myitemize}
 
-\subsubsection[parameter templates]{[cylc] \textrightarrow parameter templates}
+\subsubsection[{[[}parameter templates{]]}]{[cylc] \textrightarrow [[parameter templates]]}
 \label{RefParameterTemplates}
 
 Parameterized task names (see previous item, and Section~\ref{Parameterized
