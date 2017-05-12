@@ -2,7 +2,7 @@
     [[parameters]]
         i = cat, dog, fish
 	j = 1..5
-	k = 1..10^4
+	k = 1..10..4
 [scheduling]
     [[dependencies]]
         graph = """
