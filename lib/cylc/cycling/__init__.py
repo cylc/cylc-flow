@@ -31,9 +31,10 @@ def parse_exclusion(expr):
     else:
         remainder, exclusions = expr.split('!')
         if ',' in exclusions:
-            if not exclusions.startswith('(') or not exclusions.endswith(')'):
-                raise Exception("'%s': a list of exclusion must be enclosed "
-                                " in parentheses." % exclusions)
+            if (not exclusions.strip().startswith('(') or not
+                    exclusions.strip().endswith(')')):
+                raise Exception("'%s': a list of exclusions must be "
+                                "enclosed in parentheses." % exclusions)
 
         exclusions = exclusions.translate(None, ' ()')
         exclusions = exclusions.split(',')
@@ -435,6 +436,14 @@ if __name__ == "__main__":
         def test_parse_exclusions_list(self):
             """Tests the simple case of exclusion parsing"""
             expression = "PT1H!(T03, T06, T09)"
+            sequence, exclusion = parse_exclusion(expression)
+
+            self.assertEqual(sequence, "PT1H")
+            self.assertEqual(exclusion, ['T03', 'T06', 'T09'])
+
+        def test_parse_exclusions_list_spaces(self):
+            """Tests the simple case of exclusion parsing"""
+            expression = "PT1H!    (T03, T06,   T09)   "
             sequence, exclusion = parse_exclusion(expression)
 
             self.assertEqual(sequence, "PT1H")
