@@ -296,8 +296,7 @@ class ISO8601Exclusions(object):
         for point in excl_points:
             exclusion = ISO8601Sequence(point,
                                         context_start_point,
-                                        context_end_point,
-                                        is_exclusion_seq=True)
+                                        context_end_point)
             self.items.append(exclusion)
 
     def __contains__(self, point):
@@ -335,10 +334,8 @@ class ISO8601Sequence(SequenceBase):
         return "R1/" + str(start_point)
 
     def __init__(self, dep_section, context_start_point=None,
-                 context_end_point=None, is_exclusion_seq=False):
+                 context_end_point=None):
         self.dep_section = dep_section
-
-        self.is_exclusion_seq = is_exclusion_seq
 
         if context_start_point is None:
             self.context_start_point = context_start_point
@@ -632,15 +629,6 @@ class ISO8601Sequence(SequenceBase):
                 return ISO8601Point(str(prev))
             return ret
         return None
-
-    def point_in_exclusions(self, timepoint):
-        """Determines whether an ISO point is in the list of exclusion
-        sequences. Checks each sequence in the list to for matches"""
-        for exclusion_seq in self.exclusions:
-            if exclusion_seq.is_on_sequence(timepoint):
-                return True
-
-        # 'if timepoint in exclusion_seq' would be nice
 
     def __eq__(self, other):
         # Return True if other (sequence) is equal to self.
