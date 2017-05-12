@@ -16,12 +16,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Ensure that any changes to cylc haven't broken the profile-battery command
-. $(dirname $0)/test_header
-#-------------------------------------------------------------------------------
-PATHS=('examples' 'dev/suites')      # Directories to search for suites in.
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 # Generate a list of suites.
-SUITES=($(find "${CYLC_DIR}/${PATHS[@]}" -name 'suite.rc'))
+SUITES=($(find "${CYLC_DIR}/"{examples,dev/suites} -name 'suite.rc'))
 ABS_PATH_LENGTH=${#CYLC_DIR}
 #-------------------------------------------------------------------------------
 # Filter out certain warnings to prevent tests being failed by them.
