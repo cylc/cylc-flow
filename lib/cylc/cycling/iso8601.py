@@ -783,7 +783,7 @@ class TestISO8601Sequence(unittest.TestCase):
                                   '20000101T0500Z'])
 
     def test_multiple_exclusions_simple(self):
-        """Tests the generation of points for sequences with multiple exclusions
+        """Tests generation of points for sequences with multiple exclusions
         """
         init(time_zone='Z')
         sequence = ISO8601Sequence('PT1H!(20000101T02Z,20000101T03Z)',

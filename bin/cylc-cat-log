@@ -29,6 +29,8 @@ if remrun().execute():
     sys.exit(0)
 
 import os
+import re
+from tempfile import NamedTemporaryFile
 from pipes import quote
 import shlex
 from subprocess import Popen, PIPE
@@ -41,6 +43,7 @@ from cylc.suite_host import is_remote_host
 from cylc.suite_logging import get_logs
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.task_id import TaskID
+from parsec.fileparse import read_and_proc
 
 
 NAME_DEFAULT = "log"
@@ -122,6 +125,16 @@ def get_option_parser():
         "-y", "--list-remote",
         help="Task job log only: List log directory on the job host",
         action="store_const", const=LIST_MODE_REMOTE, dest="list_mode")
+
+    parser.add_option(
+        "-g", "--geditor",
+        help="force use of the configured GUI editor.",
+        action="store_true", default=False, dest="geditor")
+
+    parser.add_option(
+        "-b", "--teditor",
+        help="force use of the configured Non-GUI editor.",
+        action="store_true", default=False, dest="editor")
 
     return parser
 
@@ -271,6 +284,32 @@ def main():
         else:
             owner, host = (None, user_at_host)
 
+    cylc_tmpdir = GLOBAL_CFG.get_tmpdir()
+    if options.geditor:
+            editor = GLOBAL_CFG.get(['editors', 'gui'])
+    elif options.editor:
+            editor = GLOBAL_CFG.get(['editors', 'terminal'])
+
+    if options.editor or options.geditor:
+        if os.path.exists(filename):
+            lines = read_and_proc(filename)
+        else:
+            print >> sys.stderr, 'No such file or directory: %s' % filename
+            sys.exit(1)
+
+        viewfile = NamedTemporaryFile(
+            suffix='.' + os.path.basename(filename),
+            prefix=suite.replace('/', '_') + '.', dir=cylc_tmpdir
+        )
+
+        for line in lines:
+            viewfile.write(line + '\n')
+        viewfile.seek(0, 0)
+
+        os.chmod(viewfile.name, 0400)
+
+        modtime1 = os.stat(viewfile.name).st_mtime
+
     # Construct the shell command
     commands = []
     if options.location_mode:
@@ -296,6 +335,10 @@ def main():
             cmd_tmpl = str(GLOBAL_CFG.get_host_item(
                 "local tail command template"))
             commands.append(shlex.split(cmd_tmpl % {"filename": filename}))
+    elif options.geditor or options.editor:
+        command_list = shlex.split(editor)
+        command_list.append(viewfile.name)
+        commands.append(command_list)
     else:
         commands.append(["cat", filename])
 
@@ -308,6 +351,7 @@ def main():
     err = None
     for command in commands:
         stderr = PIPE
+
         if options.debug:
             sys.stderr.write(
                 " ".join([quote(item) for item in command]) + "\n")
@@ -315,8 +359,24 @@ def main():
         proc = Popen(command, stderr=stderr)
         err = proc.communicate()[1]
         ret_code = proc.wait()
+
+        if options.editor or options.geditor:
+            if ret_code != 0:
+                print >>sys.stderr, command, 'failed:', ret_code
+                sys.exit(1)
+
+            modtime2 = os.stat(viewfile.name).st_mtime
+
+            if modtime2 > modtime1:
+                print >> sys.stderr, (
+                    'WARNING: YOU HAVE EDITED A TEMPORARY READ_ONLY COPY : ')
+                print >> sys.stderr, viewfile.name
+
+            viewfile.close()
+
         if ret_code == 0:
             break
+
     if ret_code and err:
         sys.stderr.write(err)
     sys.exit(ret_code)
