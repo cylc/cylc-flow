@@ -291,13 +291,29 @@ class ISO8601Exclusions(object):
     def __init__(self, excl_points, context_start_point, context_end_point):
 
         self.items = []
+        self.exclusion_points = []
+        self.p_iso_exclusions = []
         self.exclusion_start_point = context_start_point
         self.exclusion_end_point = context_end_point
         for point in excl_points:
-            exclusion = ISO8601Sequence(point,
-                                        context_start_point,
-                                        context_end_point)
-            self.items.append(exclusion)
+            try:
+                # Try making an ISO8601Point
+                exclusion_point = ISO8601Point.from_nonstandard_string(
+                    str(point)) if point else None
+                self.exclusion_points.append(exclusion_point)
+
+                try:
+                    self.p_iso_exclusions.append(
+                        point_parse(str(exclusion_point)))
+                except (TypeError, ValueError):
+                    self.p_iso_exclusions.append(exclusion_point)
+
+            except (AttributeError, TypeError, ValueError):
+                # Try making an ISO8601Sequence
+                exclusion = ISO8601Sequence(point,
+                                            context_start_point,
+                                            context_end_point)
+                self.items.append(exclusion)
 
     def __contains__(self, point):
         """Checks to see if the Exclusions object contains a point
@@ -307,6 +323,8 @@ class ISO8601Exclusions(object):
             point (str): The iso timepoint to check lies in the
                 ISO8601Sequence object.
         """
+        if point in self.exclusion_points:
+            return True
         if any(seq.is_valid(point) for seq in self.items):
             return True
         return False
@@ -386,26 +404,16 @@ class ISO8601Sequence(SequenceBase):
             self.exclusion_end_point = self.context_end_point
 
         self.exclusions = []
-        self.p_iso_exclusions = []
-        try:
-            for point in excl_points:
-                # Try making a list of exclusion points
-                exclusion = ISO8601Point.from_nonstandard_string(
-                    str(point)) if point else None
-                self.exclusions.append(exclusion)
 
-                try:
-                    self.p_iso_exclusions.append(
-                        point_parse(str(exclusion)))
-                except (TypeError, ValueError):
-                    self.p_iso_exclusions.append(exclusion)
-        except (AttributeError, TypeError, ValueError):
-            # Creating an exclusions object instead
-            if excl_points is not None:
+        # Creating an exclusions object instead
+        if excl_points is not None:
+            try:
                 self.exclusions = ISO8601Exclusions(
                     excl_points,
-                    self.exclusion_start_point,  # self.context_start_point,
-                    self.exclusion_end_point)  # self.context_end_point)
+                    self.exclusion_start_point,
+                    self.exclusion_end_point)
+            except AttributeError:
+                pass
 
         self.step = ISO8601Interval(str(self.recurrence.duration))
         self.value = str(self.recurrence)
@@ -496,7 +504,8 @@ class ISO8601Sequence(SequenceBase):
         for recurrence_iso_point in self.recurrence:
             # Is recurrence point greater than aribitrary point?
             if (recurrence_iso_point > p_iso_point or
-                    (recurrence_iso_point in self.p_iso_exclusions)):
+                    (recurrence_iso_point in
+                     self.exclusions.p_iso_exclusions)):
                 break
             prev_iso_point = recurrence_iso_point
         if prev_iso_point is None:
@@ -1074,6 +1083,50 @@ class TestISO8601Sequence(unittest.TestCase):
         self.assertEqual(output, ['20000101T0100Z', '20000101T0200Z',
                                   '20000101T0300Z', '20000101T0500Z',
                                   '20000101T0600Z', '20000101T0800Z'])
+
+    def test_advanced_exclusions_sequences5(self):
+        """Advanced exclusions refers to exclusions that are not just
+        simple points but could be time periods or recurrences such as
+        '!T06' or similar"""
+        init(time_zone='Z')
+        # Run every hour from 01:00 excluding every 3rd hour.
+        sequence = ISO8601Sequence('T-00 ! 2000', '20000101T00Z')
+
+        output = []
+        point = sequence.get_start_point()
+        count = 0
+        # We are going to make six sequence points
+        while point and count < 6:
+            output.append(point)
+            point = sequence.get_next_point(point)
+            count += 1
+        output = [str(out) for out in output]
+
+        self.assertEqual(output, ['20000101T0100Z', '20000101T0200Z',
+                                  '20000101T0300Z', '20000101T0400Z',
+                                  '20000101T0500Z', '20000101T0600Z'])
+
+    def test_advanced_exclusions_sequences_mix_points_sequences(self):
+        """Advanced exclusions refers to exclusions that are not just
+        simple points but could be time periods or recurrences such as
+        '!T06' or similar"""
+        init(time_zone='Z')
+        # Run every hour from 01:00 excluding every 3rd hour.
+        sequence = ISO8601Sequence('T-00 ! (2000, PT2H)', '20000101T00Z')
+
+        output = []
+        point = sequence.get_start_point()
+        count = 0
+        # We are going to make six sequence points
+        while point and count < 6:
+            output.append(point)
+            point = sequence.get_next_point(point)
+            count += 1
+        output = [str(out) for out in output]
+
+        self.assertEqual(output, ['20000101T0100Z', '20000101T0300Z',
+                                  '20000101T0500Z', '20000101T0700Z',
+                                  '20000101T0900Z', '20000101T1100Z'])
 
     def test_advanced_exclusions_sequences_implied_start_point(self):
         """Advanced exclusions refers to exclusions that are not just
