@@ -375,6 +375,19 @@ class ISO8601Sequence(SequenceBase):
         self.recurrence, excl_points = self.abbrev_util.parse_recurrence(
             dep_section)
 
+        # Determine the exclusion start point and end point
+        try:
+            self.exclusion_start_point = ISO8601Point.from_nonstandard_string(
+                str(self.recurrence.start_point))
+        except ValueError:
+            self.exclusion_start_point = self.context_start_point
+
+        try:
+            self.exclusion_end_point = ISO8601Point.from_nonstandard_string(
+                str(self.recurrence.end_point))
+        except ValueError:
+            self.exclusion_end_point = self.context_end_point
+
         self.exclusions = []
         self.p_iso_exclusions = []
         try:
@@ -394,8 +407,8 @@ class ISO8601Sequence(SequenceBase):
             if excl_points is not None:
                 self.exclusions = ISO8601Exclusions(
                     excl_points,
-                    self.context_start_point,
-                    self.context_end_point)
+                    self.exclusion_start_point,  # self.context_start_point,
+                    self.exclusion_end_point)  # self.context_end_point)
 
         self.step = ISO8601Interval(str(self.recurrence.duration))
         self.value = str(self.recurrence)
@@ -1073,6 +1086,28 @@ class TestISO8601Sequence(unittest.TestCase):
         self.assertEqual(output, ['20000101T0100Z', '20000101T0200Z',
                                   '20000101T0300Z', '20000101T0500Z',
                                   '20000101T0600Z', '20000101T0800Z'])
+
+    def test_advanced_exclusions_sequences_implied_start_point(self):
+        """Advanced exclusions refers to exclusions that are not just
+        simple points but could be time periods or recurrences such as
+        '!T06' or similar"""
+        init(time_zone='Z')
+        # Run every hour from 01:00 excluding every 3rd hour.
+        sequence = ISO8601Sequence('T05/PT1H!PT3H', '20000101T00Z')
+
+        output = []
+        point = sequence.get_start_point()
+        count = 0
+        # We are going to make six sequence points
+        while point and count < 6:
+            output.append(point)
+            point = sequence.get_next_point(point)
+            count += 1
+        output = [str(out) for out in output]
+
+        self.assertEqual(output, ['20000101T0600Z', '20000101T0700Z',
+                                  '20000101T0900Z', '20000101T1000Z',
+                                  '20000101T1200Z', '20000101T1300Z'])
 
     def test_exclusions_sequences_points(self):
         """Test ISO8601Sequence methods for sequences with exclusions"""
