@@ -233,7 +233,7 @@ class CylcTimeParser(object):
                         if excl_off:
                             exclusion_point += excl_off
                         exclusion_points.append(exclusion_point)
-                    except:
+                    except (CylcTimeSyntaxError, IndexError):
                         # Not a point, parse it as recurrence later
                         exclusion_points.append(exclusion)
 
@@ -280,98 +280,6 @@ class CylcTimeParser(object):
                 duration=interval,
                 end_point=end_point
             ), exclusion_points
-
-        raise CylcTimeSyntaxError("Could not parse %s" % expression)
-
-    def parse_exclusion_recurrence(self, expression,
-                                   context_start_point=None,
-                                   context_end_point=None):
-        """Parses an exclusion recurrence.
-
-        I.e. a more complicated exclusion recurrence than just a single
-        TimePoint used for excluding specific times.
-        """
-        if context_start_point is None:
-            context_start_point = self.context_start_point
-        if context_end_point is None:
-            context_end_point = self.context_end_point
-        # Match the exclusion expression to the recurrence regexes
-        for rec_object, format_num in self._recur_format_recs:
-            result = rec_object.search(expression)
-            if not result:
-                continue
-
-            props = {}
-            # Find the repetitions
-            repetitions = result.groupdict().get("reps")
-            if repetitions is not None:
-                repetitions = int(repetitions)
-            start = result.groupdict().get("start")
-            end = result.groupdict().get("end")
-            # Are start/ends required for exclusions
-            start_required = (format_num in [1, 3])
-            end_required = (format_num in [1, 4])
-            start_point, start_offset = self._get_point_from_expression(
-                start, context_start_point,
-                is_required=start_required,
-                allow_truncated=True
-            )
-            try:
-                end_point, end_offset = self._get_point_from_expression(
-                    end, context_end_point,
-                    is_required=end_required,
-                    allow_truncated=True
-                )
-            # Not sure about this for exclusions??
-            except CylcMissingContextPointError:
-                raise CylcMissingFinalCyclePointError(
-                    "This suite requires a final cycle point."
-                )
-
-            # get the intervals
-            intv = result.groupdict().get("intv")
-            intv_context_truncated_point = None
-            if start_point is not None and start_point.truncated:
-                intv_context_truncated_point = start_point
-            if end_point is not None and end_point.truncated:
-                intv_context_truncated_point = end_point
-            interval = self._get_interval_from_expression(
-                intv, context=intv_context_truncated_point)
-            if format_num == 1:
-                interval = None
-            if repetitions == 1:
-                # Set arbitrary interval (does not matter).
-                interval = self.duration_parser.parse("P0Y")
-            if start_point is not None:
-                if start_point.truncated:
-                    start_point += context_start_point
-                if start_offset is not None:
-                    start_point += start_offset
-            if end_point is not None:
-                if end_point.truncated:
-                    end_point += context_end_point
-                if end_offset is not None:
-                    end_point += end_offset
-
-            if (start_point is None and repetitions is None and
-                    interval is not None and
-                    context_start_point is not None):
-                # isodatetime only reverses bounded end-point recurrences.
-                # This is unbounded, and will come back in reverse order.
-                # We need to reverse it.
-                start_point = end_point
-                repetitions = 1
-                while start_point > context_start_point:
-                    start_point -= interval
-                    repetitions += 1
-                end_point = None
-
-            # Return the exclusion in the form of a time recurrence object
-            return isodatetime.data.TimeRecurrence(
-                repetitions=repetitions,
-                start_point=start_point,
-                duration=interval,
-                end_point=end_point)
 
         raise CylcTimeSyntaxError("Could not parse %s" % expression)
 

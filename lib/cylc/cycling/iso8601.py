@@ -389,9 +389,8 @@ class ISO8601Sequence(SequenceBase):
                         point_parse(str(exclusion)))
                 except (TypeError, ValueError):
                     self.p_iso_exclusions.append(exclusion)
-        except:
+        except (AttributeError, TypeError, ValueError):
             # Creating an exclusions object instead
-            # Where should it inherit start or end points from?
             if excl_points is not None:
                 self.exclusions = ISO8601Exclusions(
                     excl_points,
