@@ -23,11 +23,11 @@
         {% endblock %}
 
 
-    :copyright: (c) 2010 by the Jinja Team.
+    :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
 __docformat__ = 'restructuredtext en'
-__version__ = '2.8'
+__version__ = '2.9.6'
 
 # high level interface
 from jinja2.environment import Environment, Template
@@ -55,7 +55,7 @@ from jinja2.filters import environmentfilter, contextfilter, \
      evalcontextfilter
 from jinja2.utils import Markup, escape, clear_caches, \
      environmentfunction, evalcontextfunction, contextfunction, \
-     is_undefined
+     is_undefined, select_autoescape
 
 __all__ = [
     'Environment', 'Template', 'BaseLoader', 'FileSystemLoader',
@@ -67,4 +67,16 @@ __all__ = [
     'ModuleLoader', 'environmentfilter', 'contextfilter', 'Markup', 'escape',
     'environmentfunction', 'contextfunction', 'clear_caches', 'is_undefined',
     'evalcontextfilter', 'evalcontextfunction', 'make_logging_undefined',
+    'select_autoescape',
 ]
+
+
+def _patch_async():
+    from jinja2.utils import have_async_gen
+    if have_async_gen:
+        from jinja2.asyncsupport import patch_all
+        patch_all()
+
+
+_patch_async()
+del _patch_async

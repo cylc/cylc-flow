@@ -5,7 +5,7 @@
 
     Jinja default filters and tags.
 
-    :copyright: (c) 2010 by the Jinja Team.
+    :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
 from jinja2._compat import range_type
@@ -36,6 +36,17 @@ DEFAULT_NAMESPACE = {
     'lipsum':       generate_lorem_ipsum,
     'cycler':       Cycler,
     'joiner':       Joiner
+}
+
+
+# default policies
+DEFAULT_POLICIES = {
+    'compiler.ascii_str':   True,
+    'urlize.rel':           'noopener',
+    'urlize.target':        None,
+    'truncate.leeway':      5,
+    'json.dumps_function':  None,
+    'json.dumps_kwargs':    {'sort_keys': True},
 }
 
 
