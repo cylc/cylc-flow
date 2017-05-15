@@ -2699,8 +2699,21 @@ It is also valid to use sequences for exclusions. For example:
                                         # the initial cycle point, but exclude
                                         # 00:00 for 5 days from the 1st January
                                         # 2000.
+                                      
 \end{lstlisting}
 \lstset{language=transcript}
+
+You can combine exclusion sequences and single point exclusions within a 
+comma separated list enclosed in parentheses:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[[[ T-00 ! (20000101T07, PT2H) ]]]      # Run hourly on the hour but not at 07:00
+                                        # on the 1st Jan, 2000 and not 2-hourly 
+                                        # on the hour. 
+\end{lstlisting}
+\lstset{language=transcript}
+
 
 \paragraph{How Multiple Graph Strings Combine}
 \label{HowMultipleGraphStringsCombine}
@@ -3021,7 +3034,7 @@ shown in Figure~\ref{fig-satellite}.
 \subparagraph{Advanced Integer Cycling Syntax}
 
 The same syntax used to reference the initial and final cycle points
-introduced in~\ref{referencing-the-initial-and-final-cycle-points}) for
+(introduced in~\ref{referencing-the-initial-and-final-cycle-points}) for
 use with datetime cycling can also be used for integer cycling. For
 example you can write:
 
@@ -3046,6 +3059,26 @@ example:
                      # point 5
 [[[ R/+P1/P6!14 ]]]  # Run with step 6 from 1 step after the
                      # initial cycle point but not at point 14
+\end{lstlisting}
+\lstset{language=transcript}
+
+Multiple integer exclusions are also valid in the same way as the syntax
+in~\ref{excluding-dates}. Integer exclusions may be a list of single 
+integer points, an integer sequence, or a combination of both:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[[[ R/P1!(2,3,7) ]]]  # Run with step 1 to the final cycle point, 
+                      # but not at points 2, 3, or 7.
+[[[ P1 ! P2 ]]]       # Run with step 1 from the initial to final
+                      # cycle point, skipping every other step from
+                      # the initial cycle point.
+[[[ P1 ! +P1/P2 ]]]   # Run with step 1 from the initial cycle point,
+                      # excluding every other step beginning one step 
+                      # after the initial cycle point.
+[[[ P1 !(P2,6,8) ]]]  # Run with step 1 from the intial cycle point,
+                      # excluding every other step, and also excluding
+                      # steps 6 and 8.
 \end{lstlisting}
 \lstset{language=transcript}
 

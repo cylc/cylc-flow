@@ -1,0 +1,31 @@
+[cylc]
+    [[reference test]]
+        live mode suite timeout = PT3M
+[scheduling]
+    initial cycle point = 1
+    final cycle point = +P15  # = 16
+    runahead limit = P12
+    cycling mode = integer
+    [[dependencies]]
+        [[[ R/P1!(2,3,7) ]]]
+            graph = foo
+        [[[ P1 ! P2 ]]]
+            graph = woo
+        [[[ P1 ! +P1/P2 ]]]
+            graph = bar
+        [[[ P1 !(P2,6,8) ]]]
+            graph = qux
+[runtime]
+    [[foo]]
+        script = """
+sleep 5
+cylc task message "the cheese is ready"
+sleep 5
+touch typing
+                            """
+        [[[outputs]]]
+            out1 = "the cheese is ready"
+
+[visualization]
+    initial cycle point = 1
+    final cycle point = 16
