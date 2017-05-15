@@ -69,7 +69,7 @@ class TaskDef(object):
 
         # some defaults
         self.max_future_prereq_offset = None
-        self.intercycle_offsets = []
+        self.intercycle_offsets = set([])
         self.sequential = False
         self.suite_polling_cfg = {}
 

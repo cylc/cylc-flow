@@ -1527,10 +1527,10 @@ class SuiteConfig(object):
                 last_point = seq.get_stop_point()
                 if last_point is None:
                     # This dependency persists for the whole suite run.
-                    ltaskdef.intercycle_offsets.append(
+                    ltaskdef.intercycle_offsets.add(
                         (None, seq))
                 else:
-                    ltaskdef.intercycle_offsets.append(
+                    ltaskdef.intercycle_offsets.add(
                         (str(-(last_point - first_point)), seq))
                 cycle_point = first_point
             elif lnode.intercycle:
@@ -1538,7 +1538,7 @@ class SuiteConfig(object):
                     offset_tuple = (lnode.offset_string, seq)
                 else:
                     offset_tuple = (lnode.offset_string, None)
-                ltaskdef.intercycle_offsets.append(offset_tuple)
+                ltaskdef.intercycle_offsets.add(offset_tuple)
 
             trig = TaskTrigger(
                 lnode.name, lnode.output, lnode.offset_string, cycle_point,
