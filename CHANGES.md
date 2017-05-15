@@ -71,6 +71,8 @@ suite daemons.
 [#2265](https://github.com/cylc/cylc/pull/2265): `cylc gpanel` - restored
 sorting of items by suite name.
 
+[#2250](https://github.com/cylc/cylc/issues/2250): Updated installation docs
+for HTTPS-related requirements.
 
 -------------------------------------------------------------------------------
 ## __cylc-7.3.0 (2017-04-10)__

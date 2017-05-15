@@ -388,13 +388,22 @@ Cylc runs on Unix variants, usually Linux, and including Apple OS X.
 {\bf Python \lstinline@>=@ 2.6} is required (but not yet Python 3). Python
 should already be installed in your Linux system. \url{https://python.org}.
 
+For Cylc's HTTPS communications layer:
+\begin{myitemize}
+  \item {\bf OpenSSL} - \url{https://www.openssl.org/}
+  \item {\bf pyOpenSSL} - \url{http://www.pyopenssl.org/}
+  \item {\bf python-requests} - \url{http://docs.python-requests.org/}
+  \item ({\bf python-urllib3} - should be bundled with python-requests)
+\end{myitemize}
+
 The following packages are highly recommended, but are technically optional as
 you can construct and run suites without dependency graph visualisation or
 the Cylc GUIs:
 
 \begin{myitemize}
-  \item {\bf PyGTK} - GUI toolkit (should be in your system Python):
-    \url{http://www.pygtk.org}.
+  \item {\bf PyGTK} - GUI toolkit \url{http://www.pygtk.org}.  {\em Note PyGTK
+    typically comes with your system Python. It is alledgedly quite
+    difficult to install if you need to do so for another Python version.}
     \item {\bf Graphviz} - graph layout engine (tested 2.36.0):
       \url{http://www.graphviz.org}.
     \item {\bf Pygraphviz} - Python Graphviz interface (tested 1.2):
@@ -455,7 +464,7 @@ separately.
     (recommended) or else pure Python via {\bf urllib2}.
 \newline \url{http://www.cherrypy.org/}
 \newline \url{http://docs.python-requests.org/}
-  \item {\bf Jinja2 2.8}: a full featured template engine for Python, and its
+  \item {\bf Jinja2 2.9.6}: a full featured template engine for Python, and its
     dependency {\bf MarkupSafe 0.23}; both BSD licensed.
 \newline \url{http://jinja.pocoo.org/}
 \newline \url{http://www.pocoo.org/projects/markupsafe/}
@@ -469,18 +478,24 @@ separately.
 Cylc releases can be downloaded from from \url{https://cylc.github.io/cylc}.
 
 The wrapper script \lstinline=admin/cylc-wrapper= should be installed as
-\lstinline=cylc= somewhere in the system executable search path (e.g.\
+\lstinline=cylc= in the system executable search path (e.g.\
 \lstinline=/usr/local/bin/=) and modified slightly to point to a location
-such as \lstinline=/opt/cylc/= where successive Cylc releases will be unpacked
+such as \lstinline=/opt= where successive Cylc releases will be unpacked
 side by side.
 
 To install Cylc for the first time simply unpack the release tarball in that
-location, type \lstinline=make= in it, and set your site defaults in a
-site config file (below).
+location, e.g.\ \lstinline=/opt/cylc-7.4.0=, type \lstinline=make= inside
+the unpacked release directory, and set site defaults - if necessary - in a
+site global config file (below).
+
+In the installed location, make a symbolic link from \lstinline=cylc= to the
+latest installed version: \lstinline=ln -s /opt/cylc-7.4.0 cylc=. This is the
+version of Cylc that will be invoked by the central wrapper if a specific
+version is not requested e.g.\ by \lstinline@CYLC_VERSION=7.4.0@.
 
 Installing subsequent releases is just a matter of unpacking the new tarballs
 next to the previous releases, running \lstinline=make= in them, and copying
-in (possibly with modifications) the previous site config file.
+in (possibly with modifications) the previous site global config file.
 
 \subsubsection{Local User Installation}
 \label{LocalInstall}

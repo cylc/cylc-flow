@@ -18,13 +18,13 @@ These can be installed once on suite hosts updated infrequently.
 Download the latest tarball from https://github.com/cylc/cylc/releases.
 
 Successive Cylc releases should be installed side-by-side under a location such
-as `/opt/cylc/`:
+as `/opt`:
 
 ```bash
-cd /opt/cylc/
-tar xzf cylc-7.2.1.tar.gz
+cd /opt
+tar xzf cylc-7.4.0.tar.gz
 # DO NOT CHANGE THE NAME OF THE UNPACKED CYLC SOURCE DIRECTORY.
-cd cylc-7.2.1
+cd cylc-7.4.0
 export PATH=$PWD/bin:$PATH
 make
 ```
@@ -41,9 +41,15 @@ long-running suites (and their task jobs) to stick with older versions if
 necessary. The wrapper should be edited to point to the Cylc install location:
 
 ```bash
-cp /opt/cylc/cylc-7.2.1/admin/cylc-wrapper /usr/local/bin/cylc
+cp /opt/cylc-7.4.0/admin/cylc-wrapper /usr/local/bin/cylc
 # (now edit '/usr/local/bin/cylc' as per in-file instructions...)
 ```
+
+Finally, make a symlink to the latest installed version:
+```bash
+ln -s /opt/cylc-7.4.0 /opt/cylc
+```
+(This will be the default version invoked by the wrapper if a specific version is not requested via \lstinline=$CYLC_VERSION=.
 
 ### Installing The Documentation
 
