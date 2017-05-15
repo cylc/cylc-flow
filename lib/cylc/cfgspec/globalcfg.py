@@ -621,7 +621,10 @@ class GlobalConfig(config):
             if host == 'localhost':
                 continue
             for item, value in cfg['hosts'][host].items():
-                newvalue = value or cfg['hosts']['localhost'][item]
+                if value is None:
+                    newvalue = cfg['hosts']['localhost'][item]
+                else:
+                    newvalue = value
                 if newvalue and 'directory' in item:
                     # replace local home dir with $HOME for evaluation on other
                     # host
