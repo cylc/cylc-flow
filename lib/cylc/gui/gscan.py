@@ -299,7 +299,6 @@ class ScanApp(object):
         img = gtk.image_new_from_stock(
             gtk.STOCK_SELECT_COLOR, gtk.ICON_SIZE_MENU)
         theme_item.set_image(img)
-        # theme_item.set_sensitive(not is_stopped)
         thememenu = gtk.Menu()
         theme_item.set_submenu(thememenu)
         theme_item.show()
