@@ -301,7 +301,7 @@ substituted with actual values:
 \begin{myitemize}
     \item \%(event)s: event name (see below)
     \item \%(suite)s: suite name
-    \item \%(suite_url)s: suite URL
+    \item \%(suite\_url)s: suite URL
     \item \%(message)s: event message, if any
 \end{myitemize}
 
@@ -928,8 +928,7 @@ trigger message string and pass the cycle point to the \lstinline=cylc ext-trigg
 Sequential tasks are automatically given dependence on their own
 predecessor. This is equivalent to use of explicit inter-cycle triggers
 in the graph, except that the automatic version does not show in suite
-graph visualization. For more on sequential tasks see~\ref{SequentialTasks}
-and~\ref{LimitPID}.
+graph visualization. For more on sequential tasks see~\ref{SequentialTasks}.
 
 \begin{myitemize}
     \item {\em type:} Comma-separated list of task or family names.
@@ -1547,8 +1546,8 @@ substituted with actual values:
     \item \%(suite)s: suite name
     \item \%(point)s: cycle point
     \item \%(name)s: task name
-    \item \%(suite_url)s: suite URL
-    \item \%(task_url)s: task URL
+    \item \%(suite\_url)s: suite URL
+    \item \%(task\_url)s: task URL
     \item \%(submit\_num)s: submit number
     \item \%(id)s: task ID (i.e. \%(name)s.\%(point)s)
     \item \%(message)s: event message, if any
