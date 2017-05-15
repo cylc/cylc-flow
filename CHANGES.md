@@ -4,6 +4,75 @@ For the full list of all changes for each release see [closed
 milestones](https://github.com/cylc/cylc/milestones?state=closed).
 
 -------------------------------------------------------------------------------
+## __cylc-7.4.0 (2017-05-16)__
+
+Enhancements and fixes.
+
+### Highlighted Changes
+
+[#2260](https://github.com/cylc/cylc/pull/2260): Open job logs in your text
+editor, from CLI (`cylc cat-log`) or GUI.
+
+[#2259](https://github.com/cylc/cylc/pull/2259): `cylc gscan` - various
+improvements: right-click menu is now for suite operations only; other items
+moved to a main menubar and toolbar (which can be hidden to retain gscan's
+popular minimalist look); added all suite stop options (was just the default
+clean stop); task-state colour-key popup updates in-place if theme changed; new
+collapse/expand-all toobar buttons.
+
+[#2275](https://github.com/cylc/cylc/pull/2275): Pass suite and task URLs to
+event handlers.
+
+[#2272](https://github.com/cylc/cylc/pull/2272): Efficiency - reduce memory
+footprint.
+
+[#2157](https://github.com/cylc/cylc/pull/2157): 
+  * internal efficiency improvements
+  * allow reset of individual message outputs
+  * "cylc submit" can now submit families
+
+[#2244](https://github.com/cylc/cylc/pull/2244): Graph cycling configuration:
+multiple exclusion points.
+
+[#2240](https://github.com/cylc/cylc/pull/2240): Stepped integer parameters.
+
+### Fixes
+
+[#2269](https://github.com/cylc/cylc/pull/2269): Fix auto suite-polling tasks
+(i.e. inter-suite dependence graph syntax) - Broken in 7.3.0.
+
+[#2282](https://github.com/cylc/cylc/pull/2282): Fix global config processing
+of boolean settings - users could not override a site True setting to False.
+
+[#2279](https://github.com/cylc/cylc/pull/2279): Bundle Jinja2 2.9.6. (up from
+2.8) - fixes a known issue with Jinja2 "import with context".
+
+[#2255](https://github.com/cylc/cylc/pull/2255): Fix handling of suite script
+items that contain nothing but comments.
+
+[#2247](https://github.com/cylc/cylc/pull/2247): Allow `cylc graph --help`
+in the absence of an X environment.
+
+### Other Changes
+
+[#2270](https://github.com/cylc/cylc/pull/2270): Detect and fail null tasks in
+graph.
+
+[#2257](https://github.com/cylc/cylc/pull/2257): `cylc gscan` - graceful exit
+via Ctrl-C.
+
+[#2252](https://github.com/cylc/cylc/pull/2252): `ssh`: add `-Y` (X Forwarding)
+only if necessary.
+
+[#2245](https://github.com/cylc/cylc/pull/2245): SSL certficate: add serial
+number (issue number). This allows curl, browsers, etc. to connect to
+suite daemons.
+
+[#2265](https://github.com/cylc/cylc/pull/2265): `cylc gpanel` - restored
+sorting of items by suite name.
+
+
+-------------------------------------------------------------------------------
 ## __cylc-7.3.0 (2017-04-10)__
 
 New Suite Design Guide, plus other enhancements and fixes.
