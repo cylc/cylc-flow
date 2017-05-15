@@ -230,7 +230,7 @@ def get_gpanel_scan_menu(
     hosts_item.show()
     hosts_item.connect(
         "button-press-event",
-        lambda b, e: _launch_hosts_dialog(scanned_hosts, change_hosts_func))
+        lambda b, e: launch_hosts_dialog(scanned_hosts, change_hosts_func))
     menu.append(hosts_item)
 
     sep_item = gtk.SeparatorMenuItem()
@@ -244,7 +244,7 @@ def get_gpanel_scan_menu(
     info_item.show()
     info_item.connect(
         "button-press-event",
-        lambda b, e: _launch_about_dialog(program_name, scanned_hosts)
+        lambda b, e: launch_about_dialog(program_name, scanned_hosts)
     )
     menu.append(info_item)
     return menu
