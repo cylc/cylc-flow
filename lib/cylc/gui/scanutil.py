@@ -40,14 +40,14 @@ DURATION_EXPIRE_STOPPED = 600.0
 KEY_PORT = "port"
 
 
-def get_scan_menu(suite_keys,
-                  theme_name, set_theme_func,
-                  has_stopped_suites, clear_stopped_suites_func,
-                  scanned_hosts, change_hosts_func,
-                  update_now_func, start_func,
-                  program_name, extra_items=None, owner=None,
-                  is_stopped=False):
-    """Return a right click menu for scan GUIs.
+def get_gpanel_scan_menu(
+        suite_keys, theme_name, set_theme_func, has_stopped_suites,
+        clear_stopped_suites_func, scanned_hosts, change_hosts_func,
+        update_now_func, start_func, program_name, extra_items=None,
+        owner=None, is_stopped=False):
+    """Return a right click menu for the gpanel GUI.
+
+    TODO this used to be for gscan too; simplify now it's only for gpanel?
 
     suite_keys should be a list of (host, owner, suite) tuples (if any).
     theme_name should be the name of the current theme.
@@ -230,7 +230,7 @@ def get_scan_menu(suite_keys,
     hosts_item.show()
     hosts_item.connect(
         "button-press-event",
-        lambda b, e: _launch_hosts_dialog(scanned_hosts, change_hosts_func))
+        lambda b, e: launch_hosts_dialog(scanned_hosts, change_hosts_func))
     menu.append(hosts_item)
 
     sep_item = gtk.SeparatorMenuItem()
@@ -244,13 +244,125 @@ def get_scan_menu(suite_keys,
     info_item.show()
     info_item.connect(
         "button-press-event",
-        lambda b, e: _launch_about_dialog(program_name, scanned_hosts)
+        lambda b, e: launch_about_dialog(program_name, scanned_hosts)
     )
     menu.append(info_item)
     return menu
 
 
-def _launch_about_dialog(program_name, hosts):
+def get_scan_menu(suite_keys, toggle_hide_menu_bar):
+    """Return a right click menu for the gscan GUI.
+
+    suite_keys should be a list of (host, owner, suite) tuples (if any).
+    toggle_hide_menu_bar - function to show/hide main menu bar
+
+    """
+    def _add_main_menu_item(menu):
+        sep_item = gtk.SeparatorMenuItem()
+        sep_item.show()
+        menu.append(sep_item)
+        main_menu_item = gtk.ImageMenuItem("toggle main menu (<Alt>m)")
+        img = gtk.image_new_from_stock(gtk.STOCK_INDEX, gtk.ICON_SIZE_MENU)
+        main_menu_item.set_image(img)
+        main_menu_item.connect("button-press-event",
+                               lambda b, e: toggle_hide_menu_bar())
+        main_menu_item.show()
+        menu.append(main_menu_item)
+
+    menu = gtk.Menu()
+
+    if not suite_keys:
+        null_item = gtk.ImageMenuItem("Click on a suite or group")
+        img = gtk.image_new_from_stock(
+            gtk.STOCK_DIALOG_WARNING, gtk.ICON_SIZE_MENU)
+        null_item.set_image(img)
+        null_item.show()
+        menu.append(null_item)
+        _add_main_menu_item(menu)
+        return menu
+
+    # Construct gcylc launcher items for each relevant suite.
+    for host, owner, suite in suite_keys:
+        gcylc_item = gtk.ImageMenuItem("Launch gcylc: %s - %s@%s" % (
+            suite.replace('_', '__'), owner, host))
+        img_gcylc = gtk.image_new_from_stock("gcylc", gtk.ICON_SIZE_MENU)
+        gcylc_item.set_image(img_gcylc)
+        gcylc_item._connect_args = (host, owner, suite)
+        gcylc_item.connect(
+            "button-press-event",
+            lambda b, e: launch_gcylc(b._connect_args))
+        gcylc_item.show()
+        menu.append(gcylc_item)
+
+    sep_item = gtk.SeparatorMenuItem()
+    sep_item.show()
+    menu.append(sep_item)
+
+    # Construct a cylc stop item to stop a suite
+    if len(suite_keys) > 1:
+        stoptask_item = gtk.ImageMenuItem('Stop all...')
+    else:
+        stoptask_item = gtk.ImageMenuItem('Stop...')
+
+    stop_menu = gtk.Menu()
+    stoptask_item.set_submenu(stop_menu)
+    img_stop = gtk.image_new_from_stock(gtk.STOCK_MEDIA_STOP,
+                                        gtk.ICON_SIZE_MENU)
+    stoptask_item.set_image(img_stop)
+
+    for stop_type in ['', '--kill', '--now', '--now --now']:
+        item = gtk.ImageMenuItem('stop %s' % stop_type)
+        img_stop = gtk.image_new_from_stock(gtk.STOCK_MEDIA_STOP,
+                                            gtk.ICON_SIZE_MENU)
+        item.set_image(img_stop)
+        stop_menu.append(item)
+        item._connect_args = suite_keys, 'stop %s' % stop_type
+        item.connect(
+            "button-press-event",
+            lambda b, e: call_cylc_command(b._connect_args[0],
+                                           b._connect_args[1]))
+        item.show()
+
+    stoptask_item.show()
+    menu.append(stoptask_item)
+
+    # Construct a cylc hold item to hold (pause) a suite
+    if len(suite_keys) > 1:
+        holdtask_item = gtk.ImageMenuItem('Hold all')
+    else:
+        holdtask_item = gtk.ImageMenuItem('Hold')
+
+    img_hold = gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,
+                                        gtk.ICON_SIZE_MENU)
+    holdtask_item.set_image(img_hold)
+    holdtask_item._connect_args = suite_keys, 'hold'
+    holdtask_item.connect("button-press-event",
+                          lambda b, e: call_cylc_command(b._connect_args[0],
+                                                         b._connect_args[1]))
+    menu.append(holdtask_item)
+    holdtask_item.show()
+
+    # Construct a cylc release item to release a paused/stopped suite
+    if len(suite_keys) > 1:
+        unstoptask_item = gtk.ImageMenuItem('Release all')
+    else:
+        unstoptask_item = gtk.ImageMenuItem('Release')
+
+    img_release = gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,
+                                           gtk.ICON_SIZE_MENU)
+    unstoptask_item.set_image(img_release)
+    unstoptask_item._connect_args = suite_keys, 'release'
+    unstoptask_item.connect("button-press-event",
+                            lambda b, e: call_cylc_command(b._connect_args[0],
+                                                           b._connect_args[1]))
+    unstoptask_item.show()
+    menu.append(unstoptask_item)
+    _add_main_menu_item(menu)
+
+    return menu
+
+
+def launch_about_dialog(program_name, hosts):
     """Launch a modified version of the app_main.py About dialog."""
     hosts_text = "Hosts monitored: " + ", ".join(hosts)
     comments_text = hosts_text
@@ -269,7 +381,7 @@ def _launch_about_dialog(program_name, hosts):
     about.destroy()
 
 
-def _launch_hosts_dialog(existing_hosts, change_hosts_func):
+def launch_hosts_dialog(existing_hosts, change_hosts_func):
     """Launch a dialog for configuring the suite hosts to scan.
 
     Arguments:
@@ -378,7 +490,7 @@ def call_cylc_command(keys, command_id):
         if suite_version != CYLC_VERSION:
             env = dict(os.environ)
             env["CYLC_VERSION"] = suite_version
-        command = ["cylc", command_id] + args
+        command = ["cylc"] + command_id.split() + args
 
         if cylc.flags.debug:
             stdout = sys.stdout

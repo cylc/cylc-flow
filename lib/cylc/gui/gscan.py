@@ -30,9 +30,11 @@ from isodatetime.data import (
 from cylc.cfgspec.gcylc import gcfg
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gscan import gsfg
+from cylc.gui.legend import ThemeLegendWindow
 from cylc.gui.dot_maker import DotMaker
 from cylc.gui.scanutil import (
-    KEY_PORT, get_scan_menu, launch_gcylc, update_suites_info)
+    KEY_PORT, get_scan_menu, launch_gcylc, update_suites_info,
+    launch_hosts_dialog, launch_about_dialog)
 from cylc.gui.util import get_icon, setup_icons, set_exception_hook_dialog
 from cylc.network import (
     KEY_GROUP, KEY_STATES, KEY_TASKS_BY_STATE, KEY_TITLE, KEY_UPDATE_TIME)
@@ -87,7 +89,6 @@ class ScanApp(object):
         self.theme_name = gcfg.get(['use theme'])
         self.theme = gcfg.get(['themes', self.theme_name])
 
-        self.dots = DotMaker(self.theme)
         suite_treemodel = gtk.TreeStore(
             str,  # group
             str,  # host
@@ -100,7 +101,7 @@ class ScanApp(object):
             str,  # states_text
             str)  # warning_text
         self._prev_tooltip_location_id = None
-        self.suite_treeview = gtk.TreeView(suite_treemodel)
+        self.treeview = gtk.TreeView(suite_treemodel)
 
         # Visibility of columns
         vis_cols = gsfg.get(["columns"])
@@ -130,7 +131,7 @@ class ScanApp(object):
             column.set_sort_column_id(col_id)
             column.set_visible(col_title.lower() in vis_cols)
             column.set_resizable(True)
-            self.suite_treeview.append_column(column)
+            self.treeview.append_column(column)
 
         # Construct the status column.
         status_column = gtk.TreeViewColumn(gsfg.COL_STATUS)
@@ -141,7 +142,7 @@ class ScanApp(object):
         status_column.pack_start(cell_text_cycle, expand=False)
         status_column.set_cell_data_func(
             cell_text_cycle, self._set_cell_text_cycle, self.CYCLE_COLUMN)
-        self.suite_treeview.append_column(status_column)
+        self.treeview.append_column(status_column)
 
         # Warning icon.
         warn_icon = gtk.CellRendererPixbuf()
@@ -166,23 +167,17 @@ class ScanApp(object):
             status_column.set_cell_data_func(
                 cell_pixbuf_state, self._set_cell_pixbuf_state, i)
 
-        self.suite_treeview.show()
-        if hasattr(self.suite_treeview, "set_has_tooltip"):
-            self.suite_treeview.set_has_tooltip(True)
+        self.treeview.show()
+        if hasattr(self.treeview, "set_has_tooltip"):
+            self.treeview.set_has_tooltip(True)
             try:
-                self.suite_treeview.connect('query-tooltip',
-                                            self._on_query_tooltip)
+                self.treeview.connect('query-tooltip',
+                                      self._on_query_tooltip)
             except TypeError:
                 # Lower PyGTK version.
                 pass
-        self.suite_treeview.connect("button-press-event",
-                                    self._on_button_press_event)
-        scrolled_window = gtk.ScrolledWindow()
-        scrolled_window.set_policy(gtk.POLICY_AUTOMATIC,
-                                   gtk.POLICY_AUTOMATIC)
-        scrolled_window.add(self.suite_treeview)
-        scrolled_window.show()
-        self.vbox.pack_start(scrolled_window, expand=True, fill=True)
+        self.treeview.connect("button-press-event",
+                              self._on_button_press_event)
 
         patterns = {"name": None, "owner": None}
         for label, items in [
@@ -195,18 +190,244 @@ class ScanApp(object):
                     raise ValueError("Invalid %s pattern: %s" % (label, items))
 
         self.updater = ScanAppUpdater(
-            self.window, self.hosts, suite_treemodel, self.suite_treeview,
+            self.window, self.hosts, suite_treemodel, self.treeview,
             comms_timeout=comms_timeout, poll_interval=poll_interval,
             group_column_id=self.GROUP_COLUMN,
             name_pattern=patterns["name"], owner_pattern=patterns["owner"])
+
         self.updater.start()
+
+        self.dot_size = gcfg.get(['dot icon size'])
+        self._set_dots()
+
+        self.create_menubar()
+
+        accelgroup = gtk.AccelGroup()
+        self.window.add_accel_group(accelgroup)
+        key, modifier = gtk.accelerator_parse('<Alt>m')
+        accelgroup.connect_group(
+            key, modifier, gtk.ACCEL_VISIBLE, self._toggle_hide_menu_bar)
+
+        self.create_tool_bar()
+
+        self.menu_hbox = gtk.HBox()
+        self.menu_hbox.pack_start(self.menu_bar, expand=True, fill=True)
+        self.menu_hbox.pack_start(self.tool_bar, expand=True, fill=True)
+        self.menu_hbox.show_all()
+        self.menu_hbox.hide_all()
+
+        scrolled_window = gtk.ScrolledWindow()
+        scrolled_window.set_policy(gtk.POLICY_AUTOMATIC,
+                                   gtk.POLICY_AUTOMATIC)
+        scrolled_window.add(self.treeview)
+        scrolled_window.show()
+
+        self.vbox.pack_start(self.menu_hbox, expand=False)
+        self.vbox.pack_start(scrolled_window, expand=True, fill=True)
+
         self.window.add(self.vbox)
         self.window.connect("destroy", self._on_destroy_event)
-        self.window.set_default_size(300, 150)
-        self.suite_treeview.grab_focus()
+        wsize = gsfg.get(['window size'])
+        self.window.set_default_size(*wsize)
+        self.treeview.grab_focus()
         self.window.show()
 
+        self.theme_legend_window = None
         self.warning_icon_shown = []
+
+    def popup_theme_legend(self, widget=None):
+        """Popup a theme legend window."""
+        if self.theme_legend_window is None:
+            self.theme_legend_window = ThemeLegendWindow(
+                self.window, self.theme)
+            self.theme_legend_window.connect(
+                "destroy", self.destroy_theme_legend)
+        else:
+            self.theme_legend_window.present()
+
+    def update_theme_legend(self):
+        """Update the theme legend window, if it exists."""
+        if self.theme_legend_window is not None:
+            self.theme_legend_window.update(self.theme)
+
+    def destroy_theme_legend(self, widget):
+        """Handle a destroy of the theme legend window."""
+        self.theme_legend_window = None
+
+    def create_menubar(self):
+        """Create the main menu."""
+        self.menu_bar = gtk.MenuBar()
+
+        file_menu = gtk.Menu()
+        file_menu_root = gtk.MenuItem('_File')
+        file_menu_root.set_submenu(file_menu)
+
+        exit_item = gtk.ImageMenuItem('E_xit')
+        img = gtk.image_new_from_stock(gtk.STOCK_QUIT, gtk.ICON_SIZE_MENU)
+        exit_item.set_image(img)
+        exit_item.show()
+        exit_item.connect("activate", self._on_destroy_event)
+        file_menu.append(exit_item)
+
+        view_menu = gtk.Menu()
+        view_menu_root = gtk.MenuItem('_View')
+        view_menu_root.set_submenu(view_menu)
+
+        col_item = gtk.ImageMenuItem("_Columns...")
+        img = gtk.image_new_from_stock(gtk.STOCK_INDEX, gtk.ICON_SIZE_MENU)
+        col_item.set_image(img)
+        col_item.show()
+        col_menu = gtk.Menu()
+        for column_index, column in enumerate(self.treeview.get_columns()):
+            name = column.get_title()
+            is_visible = column.get_visible()
+            column_item = gtk.CheckMenuItem(name.replace("_", "__"))
+            column_item._connect_args = column_index
+            column_item.set_active(is_visible)
+            column_item.connect("toggled", self._on_toggle_column_visible)
+            column_item.show()
+            col_menu.append(column_item)
+
+        col_item.set_submenu(col_menu)
+        col_item.show_all()
+        view_menu.append(col_item)
+
+        view_menu.append(gtk.SeparatorMenuItem())
+
+        # Construct theme chooser items (same as cylc.gui.app_main).
+        theme_item = gtk.ImageMenuItem('Theme...')
+        img = gtk.image_new_from_stock(
+            gtk.STOCK_SELECT_COLOR, gtk.ICON_SIZE_MENU)
+        theme_item.set_image(img)
+        thememenu = gtk.Menu()
+        theme_item.set_submenu(thememenu)
+        theme_item.show()
+
+        theme_items = {}
+        theme = "default"
+        theme_items[theme] = gtk.RadioMenuItem(label=theme)
+        thememenu.append(theme_items[theme])
+        theme_items[theme].theme_name = theme
+        for theme in gcfg.get(['themes']):
+            if theme == "default":
+                continue
+            theme_items[theme] = gtk.RadioMenuItem(
+                group=theme_items['default'], label=theme)
+            thememenu.append(theme_items[theme])
+            theme_items[theme].theme_name = theme
+
+        # set_active then connect, to avoid causing an unnecessary toggle now.
+        theme_items[self.theme_name].set_active(True)
+        for theme in gcfg.get(['themes']):
+            theme_items[theme].show()
+            theme_items[theme].connect(
+                'toggled',
+                lambda i: (i.get_active() and self._set_theme(i.theme_name)))
+
+        view_menu.append(theme_item)
+
+        theme_legend_item = gtk.ImageMenuItem("Show task state key")
+        img = gtk.image_new_from_stock(
+            gtk.STOCK_SELECT_COLOR, gtk.ICON_SIZE_MENU)
+        theme_legend_item.set_image(img)
+        theme_legend_item.show()
+        theme_legend_item.connect("activate", self.popup_theme_legend)
+        view_menu.append(theme_legend_item)
+
+        view_menu.append(gtk.SeparatorMenuItem())
+
+        # Construct a configure scanned hosts item.
+        hosts_item = gtk.ImageMenuItem("Configure Hosts")
+        img = gtk.image_new_from_stock(
+            gtk.STOCK_PREFERENCES, gtk.ICON_SIZE_MENU)
+        hosts_item.set_image(img)
+        hosts_item.show()
+        hosts_item.connect(
+            "button-press-event",
+            lambda b, e: launch_hosts_dialog(
+                self.hosts, self.updater.set_hosts))
+        view_menu.append(hosts_item)
+
+        sep_item = gtk.SeparatorMenuItem()
+        sep_item.show()
+
+        help_menu = gtk.Menu()
+        help_menu_root = gtk.MenuItem('_Help')
+        help_menu_root.set_submenu(help_menu)
+
+        self.menu_bar.append(file_menu_root)
+        self.menu_bar.append(view_menu_root)
+        self.menu_bar.append(help_menu_root)
+
+        # Construct an about dialog item.
+        info_item = gtk.ImageMenuItem("About")
+        img = gtk.image_new_from_stock(gtk.STOCK_ABOUT, gtk.ICON_SIZE_MENU)
+        info_item.set_image(img)
+        info_item.show()
+        info_item.connect(
+            "button-press-event",
+            lambda b, e: launch_about_dialog("cylc gscan", self.hosts)
+        )
+        help_menu.append(info_item)
+
+        self.menu_bar.show_all()
+
+    def _set_dots(self):
+        self.dots = DotMaker(self.theme, size=self.dot_size)
+
+    def create_tool_bar(self):
+        """Create the tool bar for the GUI."""
+        self.tool_bar = gtk.Toolbar()
+
+        update_now_button = gtk.ToolButton(
+            icon_widget=gtk.image_new_from_stock(
+                gtk.STOCK_REFRESH, gtk.ICON_SIZE_SMALL_TOOLBAR))
+        update_now_button.set_label("Update")
+        tooltip = gtk.Tooltips()
+        tooltip.enable()
+        tooltip.set_tip(update_now_button, "Update now")
+        update_now_button.connect("clicked",
+                                  self.updater.update_now)
+
+        clear_stopped_button = gtk.ToolButton(
+            icon_widget=gtk.image_new_from_stock(
+                gtk.STOCK_CLEAR, gtk.ICON_SIZE_SMALL_TOOLBAR))
+        clear_stopped_button.set_label("Clear")
+        tooltip = gtk.Tooltips()
+        tooltip.enable()
+        tooltip.set_tip(clear_stopped_button, "Clear stopped suites")
+        clear_stopped_button.connect("clicked",
+                                     self.updater.clear_stopped_suites)
+
+        expand_button = gtk.ToolButton(
+            icon_widget=gtk.image_new_from_stock(
+                gtk.STOCK_ADD, gtk.ICON_SIZE_SMALL_TOOLBAR))
+        expand_button.set_label("Expand all")
+        tooltip = gtk.Tooltips()
+        tooltip.enable()
+        tooltip.set_tip(expand_button, "Expand all rows")
+        expand_button.connect(
+            "clicked", lambda e: self.treeview.expand_all())
+
+        collapse_button = gtk.ToolButton(
+            icon_widget=gtk.image_new_from_stock(
+                gtk.STOCK_REMOVE, gtk.ICON_SIZE_SMALL_TOOLBAR))
+        collapse_button.set_label("Expand all")
+        tooltip = gtk.Tooltips()
+        tooltip.enable()
+        tooltip.set_tip(collapse_button, "Collapse all rows")
+        collapse_button.connect(
+            "clicked", lambda e: self.treeview.collapse_all())
+
+        self.tool_bar.insert(update_now_button, 0)
+        self.tool_bar.insert(clear_stopped_button, 0)
+        self.tool_bar.insert(collapse_button, 0)
+        self.tool_bar.insert(expand_button, 0)
+        separator = gtk.SeparatorToolItem()
+        separator.set_expand(True)
+        self.tool_bar.insert(separator, 0)
+
+        self.tool_bar.show_all()
 
     def _on_button_press_event(self, treeview, event):
         """Tree view button press callback."""
@@ -287,35 +508,7 @@ class ScanApp(object):
                 launch_gcylc(suite_keys[0])
             return False
 
-        view_item = gtk.ImageMenuItem("View Column...")
-        img = gtk.image_new_from_stock(gtk.STOCK_INDEX, gtk.ICON_SIZE_MENU)
-        view_item.set_image(img)
-        view_item.show()
-        view_menu = gtk.Menu()
-        view_item.set_submenu(view_menu)
-        for column_index, column in enumerate(treeview.get_columns()):
-            name = column.get_title()
-            is_visible = column.get_visible()
-            column_item = gtk.CheckMenuItem(name.replace("_", "__"))
-            column_item._connect_args = (column_index, is_visible)
-            column_item.set_active(is_visible)
-            column_item.connect("toggled", self._on_toggle_column_visible)
-            column_item.show()
-            view_menu.append(column_item)
-
-        menu = get_scan_menu(
-            suite_keys,
-            self.theme_name,
-            self._set_theme,
-            self.updater.has_stopped_suites(),
-            self.updater.clear_stopped_suites,
-            self.hosts,
-            self.updater.set_hosts,
-            self.updater.update_now,
-            self.updater.start,
-            program_name="cylc gscan",
-            extra_items=[view_item],
-        )
+        menu = get_scan_menu(suite_keys, self._toggle_hide_menu_bar)
         menu.popup(None, None, None, event.button, event.time)
         return False
 
@@ -328,16 +521,22 @@ class ScanApp(object):
             pass
         return False
 
+    def _toggle_hide_menu_bar(self, *_):
+        if self.menu_hbox.get_property("visible"):
+            self.menu_hbox.hide_all()
+        else:
+            self.menu_hbox.show_all()
+
     def _on_query_tooltip(self, _, x, y, kbd_ctx, tooltip):
         """Handle a tooltip creation request."""
-        tip_context = self.suite_treeview.get_tooltip_context(x, y, kbd_ctx)
+        tip_context = self.treeview.get_tooltip_context(x, y, kbd_ctx)
         if tip_context is None:
             self._prev_tooltip_location_id = None
             return False
-        x, y = self.suite_treeview.convert_widget_to_bin_window_coords(x, y)
+        x, y = self.treeview.convert_widget_to_bin_window_coords(x, y)
         path, column, cell_x, _ = (
-            self.suite_treeview.get_path_at_pos(x, y))
-        model = self.suite_treeview.get_model()
+            self.treeview.get_path_at_pos(x, y))
+        model = self.treeview.get_model()
         iter_ = model.get_iter(path)
         parent_iter = model.iter_parent(iter_)
         if parent_iter is None or parent_iter and model.iter_has_child(iter_):
@@ -445,8 +644,9 @@ class ScanApp(object):
 
     def _on_toggle_column_visible(self, menu_item):
         """Toggle column visibility callback."""
-        column_index, is_visible = menu_item._connect_args
-        column = self.suite_treeview.get_columns()[column_index]
+        column_index = menu_item._connect_args
+        column = self.treeview.get_columns()[column_index]
+        is_visible = column.get_visible()
         column.set_visible(not is_visible)
         self.updater.update()
         return False
@@ -549,7 +749,9 @@ class ScanApp(object):
         """Set GUI theme."""
         self.theme_name = new_theme_name
         self.theme = gcfg.get(['themes', self.theme_name])
-        self.dots = DotMaker(self.theme)
+        self._set_dots()
+        self.updater.update()
+        self.update_theme_legend()
 
     @staticmethod
     def _set_tooltip(widget, text):
@@ -579,7 +781,7 @@ class ScanAppUpdater(threading.Thread):
         self._should_force_update = False
         self.quit = False
         self.suite_treemodel = suite_treemodel
-        self.suite_treeview = suite_treeview
+        self.treeview = suite_treeview
         self.group_column_id = group_column_id
         self.tasks_by_state = {}
         self.warning_times = {}
@@ -601,16 +803,16 @@ class ScanAppUpdater(threading.Thread):
         """Expand a row if it matches rose_ids suite and host."""
         point_string_name_tuple = model.get(row_iter, 0, 1)
         if point_string_name_tuple in row_ids:
-            self.suite_treeview.expand_to_path(rpath)
+            self.treeview.expand_to_path(rpath)
         return False
 
     def _get_user_expanded_row_ids(self):
         """Return a list of user-expanded row point_strings and names."""
         names = []
-        model = self.suite_treeview.get_model()
+        model = self.treeview.get_model()
         if model is None or model.get_iter_first() is None:
             return names
-        self.suite_treeview.map_expanded_rows(self._add_expanded_row, names)
+        self.treeview.map_expanded_rows(self._add_expanded_row, names)
         return names
 
     def _get_warnings(self, key):
@@ -628,7 +830,7 @@ class ScanAppUpdater(threading.Thread):
         warnings.sort()
         return warnings[-5:]
 
-    def clear_stopped_suites(self):
+    def clear_stopped_suites(self, _=None):
         """Clear stopped suite information that may have built up."""
         for key, result in self.suite_info_map.copy().items():
             if KEY_PORT not in result:
@@ -727,7 +929,7 @@ class ScanAppUpdater(threading.Thread):
 
             # Build up and assign group iters across the various suites
             if (group_iters.get(group) is None and
-                    self.suite_treeview.get_column(
+                    self.treeview.get_column(
                         self.group_column_id).get_visible()):
                 states_text = ""
                 for state, number in sorted(group_counts[group].items()):
@@ -802,6 +1004,6 @@ class ScanAppUpdater(threading.Thread):
                 states_text += '%s %d ' % (state, number)
         return states_text.rstrip()
 
-    def update_now(self):
+    def update_now(self, _=None):
         """Force an update as soon as possible."""
         self._should_force_update = True

@@ -29,7 +29,8 @@ USER_FILE = os.path.join(os.environ['HOME'], '.cylc', 'gscan.rc')
 
 SPEC = {
     'columns': vdr(vtype='string_list', default=['suite', 'status']),
-    'activate on startup': vdr(vtype='boolean', default=False)
+    'activate on startup': vdr(vtype='boolean', default=False),
+    'window size': vdr(vtype='integer_list', default=[300, 200]),
 }
 
 

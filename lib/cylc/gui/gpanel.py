@@ -33,7 +33,8 @@ from cylc.cfgspec.gscan import gsfg
 import cylc.flags
 from cylc.gui.app_gcylc import run_get_stdout
 from cylc.gui.dot_maker import DotMaker
-from cylc.gui.scanutil import KEY_PORT, get_scan_menu, update_suites_info
+from cylc.gui.scanutil import (KEY_PORT, get_gpanel_scan_menu,
+                               update_suites_info)
 from cylc.gui.util import get_icon, setup_icons
 from cylc.network import KEY_STATES
 from cylc.network.suite_state_client import extract_group_state
@@ -201,17 +202,17 @@ class ScanPanelAppletUpdater(object):
 
         extra_items.append(gscan_item)
 
-        menu = get_scan_menu(suite_keys,
-                             self.theme_name, self._set_theme,
-                             self.has_stopped_suites(),
-                             self.clear_stopped_suites,
-                             self.hosts,
-                             self.set_hosts,
-                             self.update_now,
-                             self.start,
-                             program_name="cylc gpanel",
-                             extra_items=extra_items,
-                             is_stopped=self.quit)
+        menu = get_gpanel_scan_menu(suite_keys,
+                                    self.theme_name, self._set_theme,
+                                    self.has_stopped_suites(),
+                                    self.clear_stopped_suites,
+                                    self.hosts,
+                                    self.set_hosts,
+                                    self.update_now,
+                                    self.start,
+                                    program_name="cylc gpanel",
+                                    extra_items=extra_items,
+                                    is_stopped=self.quit)
         menu.popup(None, None, None, event.button, event.time)
         return False
 
