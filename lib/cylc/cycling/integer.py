@@ -124,7 +124,7 @@ class IntegerPoint(PointBase):
     def __init__(self, value):
         if isinstance(value, int):
             value = str(value)
-        super(IntegerPoint, self).__init__(value)
+        super(IntegerPoint, self).__init__(str(value))
 
     def add(self, other):
         """Add other.value to self.value as integers."""
@@ -239,13 +239,22 @@ class IntegerExclusions():
         self.exclusion_end_point = p_end
 
         for excl in excl_points:
-            self.exclusion_points.add(get_point_from_expression(
-                excl,
-                None,
-                is_required=False))
+            try:
+                integer_point = get_point_from_expression(
+                    excl,
+                    None,
+                    is_required=False)
+                self.exclusion_points.add(integer_point.standardise())
+            except PointParsingError:
+                integer_exclusion_sequence = (IntegerSequence(
+                    excl, self.exclusion_start_point,
+                    self.exclusion_end_point))
+                self.exclusion_sequences.append(integer_exclusion_sequence)
 
     def __contains__(self, point):
         if point in self.exclusion_points:
+            return True
+        if any(seq.is_valid(point) for seq in self.exclusion_sequences):
             return True
         return False
 
@@ -404,7 +413,6 @@ class IntegerSequence(SequenceBase):
             # self.exclusions = set()
             self.exclusions = IntegerExclusions(excl_points,
                                                 self.p_start, self.p_stop)
-
         else:
             self.exclusions = None
 
@@ -574,7 +582,6 @@ def get_point_relative(point_expr, context_point):
     """Create a point from relative_string applied to base_point."""
     if REC_RELATIVE_POINT.search(point_expr):
         # This is a relative point expression e.g. '+P2' or '-P12'.
-        print "Relative point: ", point_expr
         return context_point + IntegerInterval(point_expr)
     # This is an absolute point expression e.g. '4'.
     return IntegerPoint(point_expr)
@@ -624,14 +631,48 @@ class TestIntegerSequence(unittest.TestCase):
 
     def test_multiple_exclusions_integer_sequence(self):
         """Tests the multiple exclusion syntax for integer notation"""
-        sequence = IntegerSequence('R/P1 ! 6', 1, 10)
-        print type(sequence.exclusions)
+        sequence = IntegerSequence('P1 ! P2', 1, 10)
         output = []
         point = sequence.get_start_point()
         while point:
             output.append(point)
             point = sequence.get_next_point(point)
         self.assertEqual([int(out) for out in output], [2, 4, 6, 8, 10])
+
+    def test_multiple_exclusions_integer_sequence2(self):
+        """Tests the multiple exclusion syntax for integer notation"""
+        sequence = IntegerSequence('P1 ! +P1/P2', 1, 10)
+        output = []
+        point = sequence.get_start_point()
+        while point:
+            output.append(point)
+            point = sequence.get_next_point(point)
+        self.assertEqual([int(out) for out in output], [1, 3, 5, 7, 9])
+
+    def test_multiple_exclusions_integer_sequence3(self):
+        """Tests the multiple exclusion syntax for integer notation"""
+        sequence = IntegerSequence('P1 ! (P2, 6, 8) ', 1, 10)
+        output = []
+        point = sequence.get_start_point()
+        while point:
+            output.append(point)
+            point = sequence.get_next_point(point)
+        self.assertEqual([int(out) for out in output], [2, 4, 10])
+
+    def test_multiple_exclusions_integer_sequence_weird_valid_formatting(self):
+        """Tests the multiple exclusion syntax for integer notation"""
+        sequence = IntegerSequence('P1 !(P2,     6,8) ', 1, 10)
+        output = []
+        point = sequence.get_start_point()
+        while point:
+            output.append(point)
+            point = sequence.get_next_point(point)
+        self.assertEqual([int(out) for out in output], [2, 4, 10])
+
+    def test_multiple_exclusions_integer_sequence_invalid_formatting(self):
+        """Tests the multiple exclusion syntax for integer notation"""
+        sequence = 'P1 !(6,8), P2 '
+        self.assertRaises(Exception, IntegerSequence, sequence, 1, 10)
 
     def test_multiple_exclusions_extensive(self):
         """Tests IntegerSequence methods for sequences with multi-exclusions"""
