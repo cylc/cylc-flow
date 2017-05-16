@@ -44,49 +44,49 @@ class TriggerExpressionError(Exception):
 class Prerequisite(object):
 
     # Memory optimization - constrain possible attributes to this list.
-    __slots__ = ["CYCLE_POINT_RE", "owner_id", "labels", "messages",
-                 "messages_set", "satisfied", "all_satisfied", "satisfied_by",
+    __slots__ = ["CYCLE_POINT_RE", "SATISFIED_TEMPLATE", "messages",
+                 "satisfied", "all_satisfied", "satisfied_by",
                  "target_point_strings", "start_point",
-                 "pre_initial_messages", "conditional_expression",
-                 "raw_conditional_expression", "point"]
+                 "pre_initial_messages", "conditional_expression", "point"]
 
     # Extracts T from "foo.T succeeded" etc.
     CYCLE_POINT_RE = re.compile('^\w+\.(\S+) .*$')
+    SATISFIED_TEMPLATE = 'self.satisfied["%s"]'
 
-    def __init__(self, owner_id, point, start_point=None):
+    def __init__(self, point, start_point=None):
         self.point = point
-        self.owner_id = owner_id
-        self.labels = {}   # labels[ message ] = label
-        self.messages = {}   # messages[ label ] = message
-        self.messages_set = set()  # = set(self.messages.values())
+        self.messages = set([])
         self.satisfied = {}    # satisfied[ label ] = True/False
         self.satisfied_by = {}   # self.satisfied_by[ label ] = task_id
         self.target_point_strings = []   # list of target cycle points
         self.start_point = start_point
         self.pre_initial_messages = []
         self.conditional_expression = None
-        self.raw_conditional_expression = None
 
-    def add(self, message, label, pre_initial=False):
+    def add(self, message, pre_initial=False):
         # Add a new prerequisite message in an UNSATISFIED state.
-        self.messages[label] = message
-        self.messages_set.add(message)
-        self.labels[message] = label
-        self.satisfied[label] = False
+        self.messages.add(message)
+        self.satisfied[message] = False
         if hasattr(self, 'all_satisfied'):
             self.all_satisfied = False
-        m = re.match(self.__class__.CYCLE_POINT_RE, message)
-        if m:
-            self.target_point_strings.append(m.groups()[0])
+        match = re.match(self.__class__.CYCLE_POINT_RE, message)
+        if match:
+            self.target_point_strings.append(match.groups()[0])
         if pre_initial:
-            self.pre_initial_messages.append(label)
+            self.pre_initial_messages.append(message)
 
     def get_not_satisfied_list(self):
         not_satisfied = []
-        for label in self.satisfied:
-            if not self.satisfied[label]:
-                not_satisfied.append(label)
+        for message in self.satisfied:
+            if not self.satisfied[message]:
+                not_satisfied.append(message)
         return not_satisfied
+
+    def get_raw_conditional_expression(self):
+        expr = self.conditional_expression
+        for message in self.messages:
+            expr = expr.replace(self.SATISFIED_TEMPLATE % message, message)
+        return expr
 
     def set_condition(self, expr):
         # 'foo | bar & baz'
@@ -98,44 +98,35 @@ class Prerequisite(object):
             delattr(self, 'all_satisfied')
 
         if self.pre_initial_messages:
-            for k in self.pre_initial_messages:
-                drop_these.append(k)
+            for message in self.pre_initial_messages:
+                drop_these.append(message)
 
         # Needed to drop pre warm-start dependence:
-        for k in self.messages:
-            if k in drop_these:
+        for message in self.messages:
+            if message in drop_these:
                 continue
             if self.start_point:
-                m = re.search(
-                    r'(' + TaskID.NAME_RE + ')\.(' +
-                    TaskID.POINT_RE + ') ', self.messages[k])
-                if m:
-                    try:
-                        foo = m.group().split(".")[1].rstrip()
-                        if (get_point(foo) < self.start_point and
-                           self.point >= self.start_point):
-                            drop_these.append(k)
-                    except IndexError:
-                        pass
+                # Extract the cycle point from the message.
+                match = self.CYCLE_POINT_RE.search(message)
+                if match:
+                    # Get cycle point
+                    if (get_point(match.groups()[0]) < self.start_point and
+                            self.point >= self.start_point):
+                        # Drop if outside of relevant point range.
+                        drop_these.append(message)
 
-        for label in drop_these:
-            if self.messages.get(label):
-                msg = self.messages[label]
-                self.messages.pop(label)
-                self.messages_set.remove(msg)
-                self.satisfied.pop(label)
-                self.labels.pop(msg)
+        for message in drop_these:
+            if message in self.messages:
+                self.messages.remove(message)
+                self.satisfied.pop(message)
 
         if '|' in expr:
             if drop_these:
                 simpler = ConditionalSimplifier(expr, drop_these)
                 expr = simpler.get_cleaned()
             # Make a Python expression so we can eval() the logic.
-            self.raw_conditional_expression = expr
-            for label in self.messages:
-                expr = re.sub(
-                    r'\b' + label + r'\b', 'self.satisfied[\'' + label + '\']',
-                    expr)
+            for message in self.messages:
+                expr = expr.replace(message, self.SATISFIED_TEMPLATE % message)
             self.conditional_expression = expr
 
     def is_satisfied(self):
@@ -163,7 +154,7 @@ class Prerequisite(object):
                             "string?)")
             ERR.error(err_msg)
             raise TriggerExpressionError(
-                '"' + self.raw_conditional_expression + '"')
+                '"' + self.get_raw_conditional_expression() + '"')
         return res
 
     def satisfy_me(self, output_msgs, outputs):
@@ -177,12 +168,12 @@ class Prerequisite(object):
         slow.
 
         """
-        relevant_msgs = output_msgs & self.messages_set
+        relevant_msgs = output_msgs & self.messages
         for msg in relevant_msgs:
-            for label in self.satisfied:
-                if self.messages[label] == msg:
-                    self.satisfied[label] = True
-                    self.satisfied_by[label] = outputs[msg]  # owner_id
+            for message in self.satisfied:
+                if message == msg:
+                    self.satisfied[message] = True
+                    self.satisfied_by[message] = outputs[msg]
             if self.conditional_expression is None:
                 self.all_satisfied = all(self.satisfied.values())
             else:
@@ -190,39 +181,39 @@ class Prerequisite(object):
         return relevant_msgs
 
     def dump(self):
-        # TODO - CHECK THIS WORKS NOW
-        # return an array of strings representing each message and its state
+        """ Return an array of strings representing each message and its state.
+        """
         res = []
-        if self.raw_conditional_expression:
-            temp = self.raw_conditional_expression
-            labels = []
-            num_length = int(math.ceil(float(len(self.labels)) / float(10)))
-            for ind, (task, label,) in enumerate(sorted(self.labels.items())):
+        if self.conditional_expression:
+            temp = self.get_raw_conditional_expression()
+            messages = []
+            num_length = int(math.ceil(float(len(self.messages)) / float(10)))
+            for ind, message in enumerate(sorted(self.messages)):
                 char = '%.{0}d'.format(num_length) % ind
-                labels.append(['\t%s = %s' % (char, task),
-                               self.satisfied[label]])
-                temp = temp.replace(label, char)
+                messages.append(['\t%s = %s' % (char, message),
+                                self.satisfied[message]])
+                temp = temp.replace(message, char)
             temp = temp.replace('|', ' | ')
             temp = temp.replace('&', ' & ')
             res.append([temp, self.is_satisfied()])
-            res.extend(labels)
+            res.extend(messages)
         elif self.satisfied:
-            for label, val in self.satisfied.items():
-                res.append([self.messages[label], val])
+            for message, val in self.satisfied.items():
+                res.append([message, val])
         # (Else trigger wiped out by pre-initial simplification.)
         return res
 
     def set_satisfied(self):
-        for label in self.messages:
-            self.satisfied[label] = True
+        for message in self.messages:
+            self.satisfied[message] = True
         if self.conditional_expression is None:
             self.all_satisfied = True
         else:
             self.all_satisfied = self._conditional_is_satisfied()
 
     def set_not_satisfied(self):
-        for label in self.messages:
-            self.satisfied[label] = False
+        for message in self.messages:
+            self.satisfied[message] = False
         if not self.satisfied:
             self.all_satisfied = True
         elif self.conditional_expression is None:

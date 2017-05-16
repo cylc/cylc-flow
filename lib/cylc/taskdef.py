@@ -24,7 +24,6 @@ import re
 from cylc.cycling.loader import (
     get_point_relative, get_interval, is_offset_absolute)
 from cylc.task_id import TaskID
-from cylc.task_trigger import get_message_offset
 
 
 class TaskDefError(Exception):
@@ -48,7 +47,7 @@ class TaskDef(object):
         "used_in_offset_trigger", "max_future_prereq_offset",
         "intercycle_offsets", "sequential", "is_coldstart",
         "suite_polling_cfg", "clocktrigger_offset", "expiration_offset",
-        "namespace_hierarchy", "triggers", "outputs", "external_triggers",
+        "namespace_hierarchy", "dependencies", "outputs", "external_triggers",
         "name", "elapsed_times"]
 
     # Store the elapsed times for a maximum of 10 cycles
@@ -76,7 +75,7 @@ class TaskDef(object):
         self.clocktrigger_offset = None
         self.expiration_offset = None
         self.namespace_hierarchy = []
-        self.triggers = {}
+        self.dependencies = {}
         self.outputs = []
 
         self.external_triggers = []
@@ -84,11 +83,18 @@ class TaskDef(object):
         self.name = name
         self.elapsed_times = deque(maxlen=self.MAX_LEN_ELAPSED_TIMES)
 
-    def add_trigger(self, triggers, expression, sequence):
-        """Add triggers to a named sequence."""
-        if sequence not in self.triggers:
-            self.triggers[sequence] = []
-        self.triggers[sequence].append([triggers, expression])
+    def add_dependency(self, dependency, sequence):
+        """Add a dependency to a named sequence.
+
+        Args:
+            dependency (cylc.task_trigger.Dependency): The dependency to add.
+            sequence (cylc.cycling.SequenceBase): The sequence for which this
+                dependency applies.
+
+        """
+        if sequence not in self.dependencies:
+            self.dependencies[sequence] = []
+        self.dependencies[sequence].append(dependency)
 
     def add_sequence(self, sequence, is_implicit=False):
         """Add a sequence."""
@@ -169,10 +175,6 @@ class TaskDef(object):
         return my_point
 
     def get_outputs(self, point):
-        """Return task message outputs for initialisation of TaskOutputs."""
-        for (key, msg), base_interval in self.outputs:
-            new_point = point
-            msg_offset = get_message_offset(msg, base_interval)
-            if msg_offset:
-                new_point = point + msg_offset
-            yield (key, re.sub('\[.*\]', str(new_point), msg))
+        """Yield task message outputs for initialisation of TaskOutputs."""
+        for key, msg in self.outputs:
+            yield (key, re.sub('\[.*\]', str(point), msg))

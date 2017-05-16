@@ -254,7 +254,7 @@ class TaskState(object):
         res = []
         if list_prereqs:
             for prereq in self.prerequisites:
-                for task in sorted(prereq.labels):
+                for task in sorted(prereq.messages):
                     res.append(task)
         else:
             for preq in self.prerequisites:
@@ -386,42 +386,18 @@ class TaskState(object):
 
     def _add_prerequisites(self, point, tdef):
         """Add task prerequisites."""
-        # self.triggers[sequence] = [triggers for sequence]
         # Triggers for sequence_i only used if my cycle point is a
         # valid member of sequence_i's sequence of cycle points.
         self._is_satisfied = None
         self._suicide_is_satisfied = None
         identity = TaskID.get(tdef.name, str(point))
 
-        for sequence, exps in tdef.triggers.items():
-            for ctrig, exp in exps:
-                key = ctrig.keys()[0]
-                if not sequence.is_valid(point):
-                    # This trigger is not valid for current cycle (see NOTE
-                    # just above)
-                    continue
-
-                cpre = Prerequisite(identity, point, tdef.start_point)
-
-                for label in ctrig:
-                    trig = ctrig[label]
-                    if trig.graph_offset_string is not None:
-                        prereq_offset_point = get_point_relative(
-                            trig.graph_offset_string, point)
-                        if prereq_offset_point > point:
-                            prereq_offset = prereq_offset_point - point
-                            if (tdef.max_future_prereq_offset is None or
-                                    (prereq_offset >
-                                     tdef.max_future_prereq_offset)):
-                                tdef.max_future_prereq_offset = (
-                                    prereq_offset)
-                        cpre.add(trig.get_prereq(point), label,
-                                 ((prereq_offset_point < tdef.start_point) &
-                                  (point >= tdef.start_point)))
-                    else:
-                        cpre.add(trig.get_prereq(point), label)
-                cpre.set_condition(exp)
-                if ctrig[key].suicide:
+        for sequence, dependencies in tdef.dependencies.items():
+            if not sequence.is_valid(point):
+                continue
+            for dependency in dependencies:
+                cpre = dependency.get_prerequisite(point, tdef)
+                if dependency.suicide:
                     self.suicide_prerequisites.append(cpre)
                 else:
                     self.prerequisites.append(cpre)
@@ -437,10 +413,9 @@ class TaskState(object):
                     adjusted.append(prv)
             if adjusted:
                 p_prev = max(adjusted)
-                cpre = Prerequisite(identity, point, tdef.start_point)
+                cpre = Prerequisite(point, tdef.start_point)
                 prereq = "%s %s" % (TaskID.get(tdef.name, p_prev),
                                     TASK_STATUS_SUCCEEDED)
-                label = tdef.name
-                cpre.add(prereq, label, p_prev < tdef.start_point)
-                cpre.set_condition(label)
+                cpre.add(prereq, p_prev < tdef.start_point)
+                cpre.set_condition(tdef.name)
                 self.prerequisites.append(cpre)
