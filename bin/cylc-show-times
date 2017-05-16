@@ -1,0 +1,102 @@
+#!/usr/bin/env python
+
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) 2008-2017 NIWA
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""cylc [util] show-times [OPTIONS] REG
+
+Retrieve timing information for the given cylc suite that can be
+used for fine-grain diagnostics for wait time and run time performance
+analysis:
+    1. Time of successful submission
+    2. Time of task start
+    3. Time of task successful completion
+
+Timings are shown only for succeeded tasks, and includes information
+about the batch system and remote host to permit stratification/grouping
+if desired (e.g. a typical metric for batch systems like PBS is how
+long the job waited in the queue, which can be obtained by subtracting
+the submit time from the start time - however, this metric is less
+meaningful for background jobs where no batch system is involved).
+
+For long-running and/or large suites (i.e. for suites with many task events),
+the database query to obtain the timing information may take some time.
+
+"""
+
+import sys
+from cylc.remote import remrun
+if remrun().execute():
+    sys.exit(0)
+
+import os
+
+import cylc.flags
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.option_parsers import CylcOptionParser as COP
+from cylc.rundb import CylcSuiteDAO
+
+
+def main():
+    parser = COP(
+        __doc__,
+        argdoc=[('REG', 'Suite name')]
+    )
+    options, args  = parser.parse_args()
+    suite = args.pop(0)
+    run_db = _get_dao(suite)
+    pretty_print_rows(*run_db.select_task_events_for_timing())
+
+
+def pretty_print_rows(header, rows):
+    """Pretty-print the row data to sys.stdout
+
+    Ensure that each column is wide enough to contain the widest data
+    value and the widest header value.
+
+    """
+    max_lengths = [
+        max(data_len, head_len)
+        for data_len, head_len in zip(
+            [max([len(r[i]) for r in rows]) for i in range(len(header))],
+            [len(h) for h in header]
+        )
+    ]
+    formatter = ' '.join(['%%-%ds' % l for l in max_lengths]) + '\n'
+    sys.stdout.write(formatter % header)
+    for r in rows:
+        sys.stdout.write(formatter % r)
+
+
+def _get_dao(suite):
+    """Return the DAO (public) for suite."""
+    suite_log_dir = GLOBAL_CFG.get_derived_host_item(
+        suite, 'suite log directory'
+    )
+    pub_db_path = os.path.join(
+        os.path.dirname(suite_log_dir),
+        CylcSuiteDAO.DB_FILE_BASE_NAME
+    )
+    return CylcSuiteDAO(pub_db_path, is_public=True)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(str(exc))

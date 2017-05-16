@@ -686,6 +686,60 @@ class CylcSuiteDAO(object):
         for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
             callback(row_idx, list(row))
 
+    def select_task_events_for_timing(self):
+        """Select submit/start/stop times to compute job timings.
+
+        To make data interpretation easier, choose the most recent succeeded
+        task to sample timings from.
+        """
+        q = """
+            SELECT
+                e.name,
+                e.cycle,
+                tj.user_at_host,
+                tj.batch_sys_name,
+                MAX(CASE WHEN e.event = '%(submitted)s' THEN e.time END),
+                MAX(CASE WHEN e.event = '%(started)s'   THEN e.time END),
+                MAX(CASE WHEN e.event = '%(succeeded)s' THEN e.time END)
+            FROM
+                %(task_events)s as e
+                INNER JOIN
+                (
+                    SELECT
+                        s.name AS name,
+                        s.cycle AS cycle,
+                        MAX(s.submit_num) AS max_retry
+                    FROM
+                        %(task_events)s as s
+                    WHERE
+                        s.event='%(succeeded)s'
+                    GROUP BY
+                        s.name, s.cycle
+                ) AS succeeded_tasks
+                ON
+                    e.name = succeeded_tasks.name
+                    AND e.cycle = succeeded_tasks.cycle
+                    AND e.submit_num = succeeded_tasks.max_retry
+                INNER JOIN
+                %(task_jobs)s as tj
+                ON
+                    tj.name = e.name
+                    AND
+                    tj.cycle = e.cycle
+                    AND
+                    tj.submit_num = succeeded_tasks.max_retry
+            GROUP BY
+                e.name, e.cycle, e.submit_num
+        """ % {
+            'task_events': self.TABLE_TASK_EVENTS,
+            'task_jobs':   self.TABLE_TASK_JOBS,
+            'submitted':   'submitted',
+            'started':     'started',
+            'succeeded':   'succeeded',
+        }
+        columns = ('name', 'cycle', 'host', 'batch_system', 'submit_time', 'start_time', 'succeed_time')
+        return columns, [r for r in self.connect().execute(q)]
+
     def take_checkpoints(self, event, other_daos=None):
         """Add insert items to *_checkpoints tables.
 
