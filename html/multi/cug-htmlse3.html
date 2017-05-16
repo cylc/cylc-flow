@@ -7,7 +7,7 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2017-04-11 23:53:00"> 
+<meta name="date" content="2017-05-16 10:59:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -39,18 +39,43 @@ class="cmbx-10">2.6 </span>is required (but not yet Python 3). Python should alr
 <a 
 href="https://python.org" class="url" ><span 
 class="pcrr7t-">https://python.org</span></a>.
-<!--l. 391--><p class="noindent" >The following packages are highly recommended, but are technically optional as you can construct and run suites
+<!--l. 391--><p class="noindent" >For Cylc&#8217;s HTTPS communications layer:
+     <ul class="itemize1">
+     <li class="itemize"><span 
+class="cmbx-10">OpenSSL </span>- <a 
+href="https://www.openssl.org/" class="url" ><span 
+class="pcrr7t-">https://www.openssl.org/</span></a>
+     </li>
+     <li class="itemize"><span 
+class="cmbx-10">pyOpenSSL </span>- <a 
+href="http://www.pyopenssl.org/" class="url" ><span 
+class="pcrr7t-">http://www.pyopenssl.org/</span></a>
+     </li>
+     <li class="itemize"><span 
+class="cmbx-10">python-requests </span>- <a 
+href="http://docs.python-requests.org/" class="url" ><span 
+class="pcrr7t-">http://docs.python-_requests.org/</span></a>
+     </li>
+     <li class="itemize">(<span 
+class="cmbx-10">python-urllib3 </span>- should be bundled with python-requests)</li></ul>
+<!--l. 399--><p class="noindent" >The following packages are highly recommended, but are technically optional as you can construct and run suites
 without dependency graph visualisation or the Cylc GUIs:
      <ul class="itemize1">
      <li class="itemize"><span 
-class="cmbx-10">PyGTK </span>- GUI toolkit (should be in your system Python): <a 
+class="cmbx-10">PyGTK </span>- GUI toolkit <a 
 href="http://www.pygtk.org" class="url" ><span 
-class="pcrr7t-">http://www.pygtk.org</span></a>.
+class="pcrr7t-">http://www.pygtk.org</span></a>. <span 
+class="cmti-10">Note PyGTK typically comes with your system</span>
+     <span 
+class="cmti-10">Python. It is alledgedly quite difficult to install if you need to do so for another Python version.</span>
      </li>
      <li class="itemize"><span 
 class="cmbx-10">Graphviz </span>- graph layout engine (tested 2.36.0): <a 
 href="http://www.graphviz.org" class="url" ><span 
 class="pcrr7t-">http://www.graphviz.org</span></a>.
+                                                                                         
+
+                                                                                         
      </li>
      <li class="itemize"><span 
 class="cmbx-10">Pygraphviz </span>- Python Graphviz interface (tested 1.2): <a 
@@ -63,13 +88,10 @@ class="cmti-10">devel </span>packages too:
          </li>
          <li class="itemize">graphviz-devel</li></ul>
      </li></ul>
-<!--l. 409--><p class="noindent" >The User Guide is generated from <span class="LATEX">L<span class="A">A</span><span class="TEX">T<span 
+<!--l. 418--><p class="noindent" >The User Guide is generated from <span class="LATEX">L<span class="A">A</span><span class="TEX">T<span 
 class="E">E</span>X</span></span>source files by running <span class="lstinline"><span 
 class="pcrr7t-">make</span></span> in the top level Cylc directory. The specific
 packages required may vary by distribution, e.g.:
-                                                                                         
-
-                                                                                         
      <ul class="itemize1">
      <li class="itemize">texlive
      </li>
@@ -83,13 +105,13 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">sty</span></span>)
      </li>
      <li class="itemize">texlive-tex4ht</li></ul>
-<!--l. 421--><p class="noindent" >To generate the HTML User Guide <span 
+<!--l. 430--><p class="noindent" >To generate the HTML User Guide <span 
 class="cmbx-10">ImageMagick </span>is also needed.
-<!--l. 423--><p class="noindent" >In most modern Linux distributions all of the software above can be installed via the system package manager.
+<!--l. 432--><p class="noindent" >In most modern Linux distributions all of the software above can be installed via the system package manager.
 Otherwise download packages manually and follow their native installation instructions. To check that all (non
 <span class="LATEX">L<span class="A">A</span><span class="TEX">T<span 
 class="E">E</span>X</span></span>packages) are installed properly:
-<!--l. 429-->
+<!--l. 438-->
 <div class="lstlisting" id="listing-1"><span class="label"><a 
  id="x4-10001r1"></a></span><span 
 class="pcrr8c-">$</span><span 
@@ -173,7 +195,7 @@ class="pcrr7t-">...</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">ok</span>
 </div>
-<!--l. 439--><p class="noindent" >If errors are reported then the packages concerned are either not installed or not in your Python search path. (Note
+<!--l. 448--><p class="noindent" >If errors are reported then the packages concerned are either not installed or not in your Python search path. (Note
 that <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -182,16 +204,19 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">software</span></span> has become quite trivial as we&#8217;ve removed or bundled some former dependencies, but
 in future we intend to make it print a comprehensive list of library versions etc.&#x00A0;to include in with bug
 reports.)
-<!--l. 445--><p class="noindent" >
-<!--l. 445--><p class="noindent" > <h4 id="3.2" class="subsectionHead"> <span class="titlemark"> <a href="#3.2"> 3.2</a>  <a 
+<!--l. 454--><p class="noindent" >
+<!--l. 454--><p class="noindent" > <h4 id="3.2" class="subsectionHead"> <span class="titlemark"> <a href="#3.2"> 3.2</a>  <a 
  id="x4-110003.2"></a>Software Bundled With Cylc </span></h4>
-<!--l. 447--><p class="noindent" >Cylc bundles several third party packages which do not need to be installed separately.
+<!--l. 456--><p class="noindent" >Cylc bundles several third party packages which do not need to be installed separately.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmbx-10">cherrypy 6.0.2 </span>(slightly modified): a pure Python HTTP framework that we use as a web server for
      communication between server processes (suite daemons) and client programs (running tasks, GUIs,
      CLI commands). Client communication is via the Python <span 
 class="cmbx-10">requests </span>library if available (recommended)
+                                                                                         
+
+                                                                                         
      or else pure Python via <span 
 class="cmbx-10">urllib2</span>. <br 
 class="newline" /><a 
@@ -202,7 +227,7 @@ href="http://docs.python-requests.org/" class="url" ><span
 class="pcrr7t-">http://docs.python-_requests.org/</span></a>
      </li>
      <li class="itemize"><span 
-class="cmbx-10">Jinja2 2.8</span>: a full featured template engine for Python, and its dependency <span 
+class="cmbx-10">Jinja2 2.9.6</span>: a full featured template engine for Python, and its dependency <span 
 class="cmbx-10">MarkupSafe 0.23</span>; both
      BSD licensed. <br 
 class="newline" /><a 
@@ -217,23 +242,20 @@ class="cmbx-10">xdot </span>graph viewer (modified), LGPL licensed: <br
 class="newline" /><a 
 href="https://github.com/jrfonseca/xdot.py" class="url" ><span 
 class="pcrr7t-">https://github.com/jrfonseca/xdot.py</span></a></li></ul>
-                                                                                         
-
-                                                                                         
-<!--l. 466--><p class="noindent" >
-<!--l. 466--><p class="noindent" > <h4 id="3.3" class="subsectionHead"> <span class="titlemark"> <a href="#3.3"> 3.3</a>  <a 
+<!--l. 475--><p class="noindent" >
+<!--l. 475--><p class="noindent" > <h4 id="3.3" class="subsectionHead"> <span class="titlemark"> <a href="#3.3"> 3.3</a>  <a 
  id="x4-120003.3"></a>Installing Cylc Itself </span></h4>
-<!--l. 469--><p class="noindent" >Cylc releases can be downloaded from from <a 
+<!--l. 478--><p class="noindent" >Cylc releases can be downloaded from from <a 
 href="https://cylc.github.io/cylc" class="url" ><span 
 class="pcrr7t-">https://cylc.github.io/cylc</span></a>.
-<!--l. 471--><p class="noindent" >The wrapper script <span class="lstinline"><span 
+<!--l. 480--><p class="noindent" >The wrapper script <span class="lstinline"><span 
 class="pcrr7t-">admin</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">wrapper</span></span> should be installed as <span class="lstinline"><span 
-class="pcrr7t-">cylc</span></span> somewhere in the system executable
-search path (e.g.&#x00A0;<span class="lstinline"><span 
+class="pcrr7t-">cylc</span></span> in the system executable search path
+(e.g.&#x00A0;<span class="lstinline"><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">usr</span><span 
 class="pcrr7t-">/</span><span 
@@ -242,21 +264,43 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">bin</span><span 
 class="pcrr7t-">/</span></span>) and modified slightly to point to a location such as <span class="lstinline"><span 
 class="pcrr7t-">/</span><span 
+class="pcrr7t-">opt</span></span> where successive Cylc releases
+will be unpacked side by side.
+<!--l. 486--><p class="noindent" >To install Cylc for the first time simply unpack the release tarball in that location, e.g.&#x00A0;<span class="lstinline"><span 
+class="pcrr7t-">/</span><span 
 class="pcrr7t-">opt</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">/</span></span> where
-successive Cylc releases will be unpacked side by side.
-<!--l. 477--><p class="noindent" >To install Cylc for the first time simply unpack the release tarball in that location, type <span class="lstinline"><span 
-class="pcrr7t-">make</span></span> in it, and set your site
-defaults in a site config file (below).
-<!--l. 481--><p class="noindent" >Installing subsequent releases is just a matter of unpacking the new tarballs next to the previous releases, running
+class="pcrr7t-">-7.4.0</span></span>, type
 <span class="lstinline"><span 
-class="pcrr7t-">make</span></span> in them, and copying in (possibly with modifications) the previous site config file.
-<!--l. 485--><p class="noindent" >
-<!--l. 485--><p class="noindent" > <h4 id="3.3.1" class="subsubsectionHead"><span class="titlemark"> <a href="#3.3.1"> 3.3.1</a>  <a 
+class="pcrr7t-">make</span></span> inside the unpacked release directory, and set site defaults - if necessary - in a site global config file
+(below).
+<!--l. 491--><p class="noindent" >In the installed location, make a symbolic link from <span class="lstinline"><span 
+class="pcrr7t-">cylc</span></span> to the latest installed version: <span class="lstinline"><span 
+class="pcrr7t-">ln</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">s</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">opt</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">-7.4.0</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span></span>.
+This is the version of Cylc that will be invoked by the central wrapper if a specific version is not requested e.g.&#x00A0;by
+<span class="lstinline"><span 
+class="pcrr7t-">CYLC_VERSION</span><span 
+class="pcrr7t-">=7.4.0</span></span>.
+<!--l. 496--><p class="noindent" >Installing subsequent releases is just a matter of unpacking the new tarballs next to the previous releases,
+running <span class="lstinline"><span 
+class="pcrr7t-">make</span></span> in them, and copying in (possibly with modifications) the previous site global config
+file.
+<!--l. 500--><p class="noindent" >
+<!--l. 500--><p class="noindent" > <h4 id="3.3.1" class="subsubsectionHead"><span class="titlemark"> <a href="#3.3.1"> 3.3.1</a>  <a 
  id="x4-130003.3.1"></a>Local User Installation </span></h4>
-<!--l. 488--><p class="noindent" >It is easy to install Cylc under your own user account if you don&#8217;t have root or sudo access to the system: just put
+<!--l. 503--><p class="noindent" >It is easy to install Cylc under your own user account if you don&#8217;t have root or sudo access to the system: just put
 the central Cylc wrapper in <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">HOME</span><span 
@@ -273,18 +317,21 @@ class="pcrr7t-">cylc</span><span
 class="pcrr7t-">/</span></span> where you will unpack and install release tarballs. Local installation of third party
 dependencies like Graphviz is also possible, but that depends on the particular installation methods used and is
 outside of the scope of this document.
-<!--l. 496--><p class="noindent" >
-<!--l. 496--><p class="noindent" > <h4 id="3.3.2" class="subsubsectionHead"><span class="titlemark"> <a href="#3.3.2"> 3.3.2</a>  <a 
+<!--l. 511--><p class="noindent" >
+<!--l. 511--><p class="noindent" > <h4 id="3.3.2" class="subsubsectionHead"><span class="titlemark"> <a href="#3.3.2"> 3.3.2</a>  <a 
  id="x4-140003.3.2"></a>Create A Site Config File </span></h4>
-<!--l. 498--><p class="noindent" >Site and user global config files define some important parameters that affect all suites, some of which may need to
+                                                                                         
+
+                                                                                         
+<!--l. 513--><p class="noindent" >Site and user global config files define some important parameters that affect all suites, some of which may need to
 be customized for your site. See&#x00A0;<a 
 href="cug-htmlse6.html#x7-240006">6<!--tex4ht:ref: SiteAndUserConfiguration --></a> for how to generate an initial site file and where to install it. All legal site and
 user global config items are defined in&#x00A0;<a 
 href="cug-htmlse15.html#x16-381000B">B<!--tex4ht:ref: SiteRCReference --></a>.
-<!--l. 504--><p class="noindent" >
-<!--l. 504--><p class="noindent" > <h4 id="3.3.3" class="subsubsectionHead"><span class="titlemark"> <a href="#3.3.3"> 3.3.3</a>  <a 
+<!--l. 519--><p class="noindent" >
+<!--l. 519--><p class="noindent" > <h4 id="3.3.3" class="subsubsectionHead"><span class="titlemark"> <a href="#3.3.3"> 3.3.3</a>  <a 
  id="x4-150003.3.3"></a>Configure Site Environment on Job Hosts </span></h4>
-<!--l. 507--><p class="noindent" >If your users submit task jobs to hosts other than the hosts they use to run their suites, you should ensure that
+<!--l. 522--><p class="noindent" >If your users submit task jobs to hosts other than the hosts they use to run their suites, you should ensure that
 the job hosts have the correct environment for running cylc. A cylc suite generates task job scripts
 that normally invoke <span class="lstinline"><span 
 class="pcrr7t-">bash</span></span>. The job will attempt to source the first of these files it finds to set up its
@@ -336,10 +383,7 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">default</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">sh</span></span></li></ul>
-                                                                                         
-
-                                                                                         
-<!--l. 519--><p class="noindent" >The <span class="lstinline"><span 
+<!--l. 534--><p class="noindent" >The <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">{</span><span 
 class="pcrr7t-">CYLC_DIR</span><span 
@@ -380,10 +424,10 @@ class="pcrr7t-">env</span><span
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">sh</span></span> file and populate it with the appropriate
 contents.
-<!--l. 525--><p class="noindent" >
-<!--l. 525--><p class="noindent" > <h4 id="3.4" class="subsectionHead"> <span class="titlemark"> <a href="#3.4"> 3.4</a>  <a 
+<!--l. 540--><p class="noindent" >
+<!--l. 540--><p class="noindent" > <h4 id="3.4" class="subsectionHead"> <span class="titlemark"> <a href="#3.4"> 3.4</a>  <a 
  id="x4-160003.4"></a>Automated Tests </span></h4>
-<!--l. 528--><p class="noindent" >The cylc test battery is primarily intended for developers to check that changes to the source code don&#8217;t break
+<!--l. 543--><p class="noindent" >The cylc test battery is primarily intended for developers to check that changes to the source code don&#8217;t break
 existing functionality. Note that some test failures can be expected to result from suites timing out, even if nothing
 is wrong, if you run too many tests in parallel. See <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
@@ -397,12 +441,12 @@ class="pcrr7t-">help</span></span>.
                                                                                          
 
                                                                                          
-<!--l. 534--><div class="crosslinks"><p class="noindent">[<a 
+<!--l. 549--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse4.html" >next</a>] [<a 
 href="cug-htmlse2.html" >prev</a>] [<a 
 href="cug-htmlse2.html#tailcug-htmlse2.html" >prev-tail</a>] [<a 
 href="cug-htmlse3.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse3.html" >up</a>] </p></div>
-<!--l. 534--><p class="noindent" ><a 
+<!--l. 549--><p class="noindent" ><a 
  id="tailcug-htmlse3.html"></a>  
 </body></html> 

@@ -7,7 +7,7 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2017-04-11 23:53:00"> 
+<meta name="date" content="2017-05-16 10:59:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -31,17 +31,29 @@ class="pcrr7t-">cylc</span><span
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">gscan</span><span 
 class="pcrr7t-">.</span><span 
+class="pcrr7t-">rc</span></span>. Some items also affect the gpanel panel app.
+<!--l. 11--><p class="noindent" >The main menubar and toolbar appear when the mouse pointer is moved toward the top of the gscan window. The
+View menu allows you to change which columns are displayed, which hosts to scan for running suites, and the task
+state icon theme.
+<!--l. 16--><p class="noindent" >At startup, the task state icon theme and icon size are taken from the gcylc config file <span class="lstinline"><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">HOME</span><span 
+class="pcrr7t-">/.</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">gcylc</span><span 
+class="pcrr7t-">.</span><span 
 class="pcrr7t-">rc</span></span>.
-<!--l. 11--><p class="noindent" >
-<!--l. 11--><p class="noindent" > <h4 id="D.1" class="subsectionHead"> <span class="titlemark"> <a href="#D.1"> D.1</a>  <a 
+<!--l. 20--><p class="noindent" >
+<!--l. 20--><p class="noindent" > <h4 id="D.1" class="subsectionHead"> <span class="titlemark"> <a href="#D.1"> D.1</a>  <a 
  id="x18-508000D.1"></a>Top Level Items </span></h4>
-<!--l. 14--><p class="noindent" >
-<!--l. 14--><p class="noindent" > <h4 id="D.1.1" class="subsubsectionHead"><span class="titlemark"> <a href="#D.1.1"> D.1.1</a>  <a 
- id="x18-509000D.1.1"></a>activate on startup </span></h4>  Set whether <span class="lstinline"><span 
+<!--l. 22--><p class="noindent" >
+<!--l. 22--><p class="noindent" > <h4 id="D.1.1" class="subsubsectionHead"><span class="titlemark"> <a href="#D.1.1"> D.1.1</a>  <a 
+ id="x18-509000D.1.1"></a>activate on startup </span></h4>
+<!--l. 24--><p class="noindent" >Set whether <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">gpanel</span></span> will activate automatically when the gui is loaded or
-not.
+class="pcrr7t-">gpanel</span></span> will activate automatically when the gui is loaded or not.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>boolean (True or False)
@@ -63,20 +75,20 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">True</span></span></li></ul>
-<!--l. 27--><p class="noindent" >
-<!--l. 27--><p class="noindent" > <h4 id="D.1.2" class="subsubsectionHead"><span class="titlemark"> <a href="#D.1.2"> D.1.2</a>  <a 
- id="x18-510000D.1.2"></a>columns </span></h4>  Set the data fields displayed initially when the <span class="lstinline"><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">gscan</span></span> GUI starts. This can be changed later using
-the right click context menu. <br 
-class="newline" />Note that the order in which the fields are specified does not affect the order in which they are displayed.
-     <ul class="itemize1">
-     <li class="itemize"><span 
-class="cmti-10">type: </span>string (a list of one or more view names)
                                                                                          
 
                                                                                          
+<!--l. 34--><p class="noindent" >
+<!--l. 34--><p class="noindent" > <h4 id="D.1.2" class="subsubsectionHead"><span class="titlemark"> <a href="#D.1.2"> D.1.2</a>  <a 
+ id="x18-510000D.1.2"></a>columns </span></h4>
+<!--l. 36--><p class="noindent" >Set the columns to display when the <span class="lstinline"><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">gscan</span></span> GUI starts. This can be changed later with the View menu. The
+order in which the columns are specified here does not affect the display order.
+     <ul class="itemize1">
+     <li class="itemize"><span 
+class="cmti-10">type: </span>string (a list of one or more view names)
      </li>
      <li class="itemize"><span 
 class="cmti-10">legal values: </span>&#8220;host&#8221;, &#8220;owner&#8221;, &#8220;status&#8221;, &#8220;suite&#8221;, &#8220;title&#8221;, &#8220;updated&#8221;
@@ -97,18 +109,46 @@ class="pcrr7t-">title</span><span
 class="pcrr7t-">,</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">status</span></span></li></ul>
+<!--l. 48--><p class="noindent" >
+<!--l. 48--><p class="noindent" > <h4 id="D.1.3" class="subsubsectionHead"><span class="titlemark"> <a href="#D.1.3"> D.1.3</a>  <a 
+ id="x18-511000D.1.3"></a>window size </span></h4>
+<!--l. 50--><p class="noindent" >Sets the size in pixels of the <span class="lstinline"><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">gscan</span></span> GUI at startup.
+     <ul class="itemize1">
+     <li class="itemize"><span 
+class="cmti-10">type: </span>integer list: x, y
+     </li>
+     <li class="itemize"><span 
+class="cmti-10">legal values: </span>positive integers
+     </li>
+     <li class="itemize"><span 
+class="cmti-10">default: </span>300, 200
+     </li>
+     <li class="itemize"><span 
+class="cmti-10">example: </span><span class="lstinline"><span 
+class="pcrr7t-">window</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">size</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">1000,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">700</span></span></li></ul>
                                                                                          
 
                                                                                          
                                                                                          
 
                                                                                          
-<!--l. 7070--><div class="crosslinks"><p class="noindent">[<a 
+<!--l. 7088--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse18.html" >next</a>] [<a 
 href="cug-htmlse16.html" >prev</a>] [<a 
 href="cug-htmlse16.html#tailcug-htmlse16.html" >prev-tail</a>] [<a 
 href="cug-htmlse17.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse17.html" >up</a>] </p></div>
-<!--l. 7070--><p class="noindent" ><a 
+<!--l. 7088--><p class="noindent" ><a 
  id="tailcug-htmlse17.html"></a>   
 </body></html> 
