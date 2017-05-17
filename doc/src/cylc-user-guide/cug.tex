@@ -6488,12 +6488,6 @@ By default, a cylc suite will send you no more than one task event email every
 large group of tasks all fail at similar time.
 See ~\ref{task-event-mail-interval} for details.
 
-(It is worth noting that while mail events are accumulating the succeeded task
-proxies do not get cleaned up - which would be bad in a large, active suite
-with a long mail event interval. If you do configure mail notifications for
-succeeded tasks, you should ensure that you don't have an excessively long task
-mail event interval.)
-
 Event handler commands can be located in the suite \lstinline=bin/= directory,
 otherwise it is up to you to ensure their location is in \lstinline=$PATH= (in
 the shell in which cylc runs, on the suite host). The commands should require
