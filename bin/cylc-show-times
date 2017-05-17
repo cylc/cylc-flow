@@ -55,7 +55,7 @@ def main():
         __doc__,
         argdoc=[('REG', 'Suite name')]
     )
-    options, args  = parser.parse_args()
+    options, args = parser.parse_args()
     suite = args.pop(0)
     run_db = _get_dao(suite)
     pretty_print_rows(*run_db.select_task_events_for_timing())

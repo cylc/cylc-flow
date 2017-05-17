@@ -732,12 +732,15 @@ class CylcSuiteDAO(object):
                 e.name, e.cycle, e.submit_num
         """ % {
             'task_events': self.TABLE_TASK_EVENTS,
-            'task_jobs':   self.TABLE_TASK_JOBS,
-            'submitted':   'submitted',
-            'started':     'started',
-            'succeeded':   'succeeded',
+            'task_jobs': self.TABLE_TASK_JOBS,
+            'submitted': 'submitted',
+            'started': 'started',
+            'succeeded': 'succeeded',
         }
-        columns = ('name', 'cycle', 'host', 'batch_system', 'submit_time', 'start_time', 'succeed_time')
+        columns = (
+            'name', 'cycle', 'host', 'batch_system',
+            'submit_time', 'start_time', 'succeed_time'
+        )
         return columns, [r for r in self.connect().execute(q)]
 
     def take_checkpoints(self, event, other_daos=None):
