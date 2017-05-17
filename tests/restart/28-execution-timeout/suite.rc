@@ -1,0 +1,20 @@
+[cylc]
+    UTC mode = True
+    cycle point format = %Y
+[scheduling]
+    [[dependencies]]
+        graph = foo => bar
+[runtime]
+    [[foo]]
+        script="""
+wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2'>/dev/null' || true
+sleep 1
+cylc stop --now --now "${CYLC_SUITE_NAME}"
+sleep 60
+"""
+        [[[events]]]
+            execution timeout = PT10S
+            handlers = echo %(id)s %(event)s
+            handler events = execution timeout
+    [[bar]]
+        script=true

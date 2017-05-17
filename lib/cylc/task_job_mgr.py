@@ -382,16 +382,20 @@ class TaskJobManager(object):
             if timeout is None or now <= timeout:
                 return False
             itask.timeout_timers[itask.state.status] = None
-            if itask.state.status == TASK_STATUS_RUNNING:
+            if (itask.state.status == TASK_STATUS_RUNNING and
+                    itask.summary['started_time'] is not None):
                 msg = 'job started %s ago, but has not finished' % (
                     get_seconds_as_interval_string(
                         timeout - itask.summary['started_time']))
                 event = 'execution timeout'
-            else:  # if itask.state.status == TASK_STATUS_SUBMITTED:
+            elif (itask.state.status == TASK_STATUS_SUBMITTED and
+                    itask.summary['submitted_time'] is not None):
                 msg = 'job submitted %s ago, but has not started' % (
                     get_seconds_as_interval_string(
                         timeout - itask.summary['submitted_time']))
                 event = 'submission timeout'
+            else:
+                return False
             LOG.warning(msg, itask=itask)
             self.task_events_mgr.setup_event_handlers(itask, event, msg)
             return True
