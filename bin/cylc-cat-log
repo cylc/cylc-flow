@@ -30,7 +30,7 @@ if remrun().execute():
 
 import os
 import re
-from tempfile import NamedTemporaryFile
+from tempfile import mkstemp
 from pipes import quote
 import shlex
 from subprocess import Popen, PIPE
@@ -285,33 +285,10 @@ def main():
             owner, host = (None, user_at_host)
 
     cylc_tmpdir = GLOBAL_CFG.get_tmpdir()
-    if options.geditor:
-            editor = GLOBAL_CFG.get(['editors', 'gui'])
-    elif options.editor:
-            editor = GLOBAL_CFG.get(['editors', 'terminal'])
-
-    if options.editor or options.geditor:
-        if os.path.exists(filename):
-            lines = read_and_proc(filename)
-        else:
-            print >> sys.stderr, 'No such file or directory: %s' % filename
-            sys.exit(1)
-
-        viewfile = NamedTemporaryFile(
-            suffix='.' + os.path.basename(filename),
-            prefix=suite.replace('/', '_') + '.', dir=cylc_tmpdir
-        )
-
-        for line in lines:
-            viewfile.write(line + '\n')
-        viewfile.seek(0, 0)
-
-        os.chmod(viewfile.name, 0400)
-
-        modtime1 = os.stat(viewfile.name).st_mtime
 
     # Construct the shell command
     commands = []
+    editor = None
     if options.location_mode:
         if user_at_host is not None:
             sys.stdout.write("%s:" % user_at_host)
@@ -336,14 +313,35 @@ def main():
                 "local tail command template"))
             commands.append(shlex.split(cmd_tmpl % {"filename": filename}))
     elif options.geditor or options.editor:
+        # Copy local or remote job file to a local temp file.
+        viewfile = mkstemp(dir=cylc_tmpdir)[1]
+        if user_at_host:
+            cp = 'scp %s:%s %s' % (user_at_host, filename, viewfile)
+        else:
+            cp = 'cp %s %s' % (filename, viewfile)
+        proc = Popen(shlex.split(cp), stderr=PIPE, stdout=PIPE)
+        err = proc.communicate()[1]
+        ret_code = proc.wait()
+        if ret_code:
+            if err:
+                sys.stderr.write(err)
+            sys.exit(ret_code)
+        if options.geditor:
+            editor = GLOBAL_CFG.get(['editors', 'gui'])
+        elif options.editor:
+            editor = GLOBAL_CFG.get(['editors', 'terminal'])
+
         command_list = shlex.split(editor)
-        command_list.append(viewfile.name)
+        command_list.append(viewfile)
         commands.append(command_list)
+
+        os.chmod(viewfile, 0400)
+        modtime1 = os.stat(viewfile).st_mtime
     else:
         commands.append(["cat", filename])
 
-    # Deal with remote [user@]host
-    if user_at_host:
+    # Deal with [user@]host.
+    if user_at_host and editor is None:
         ssh = str(GLOBAL_CFG.get_host_item("ssh command", host, owner))
         for i, command in enumerate(commands):
             commands[i] = shlex.split(ssh) + ["-n", user_at_host] + command
@@ -351,7 +349,6 @@ def main():
     err = None
     for command in commands:
         stderr = PIPE
-
         if options.debug:
             sys.stderr.write(
                 " ".join([quote(item) for item in command]) + "\n")
@@ -359,24 +356,13 @@ def main():
         proc = Popen(command, stderr=stderr)
         err = proc.communicate()[1]
         ret_code = proc.wait()
-
-        if options.editor or options.geditor:
-            if ret_code != 0:
-                print >>sys.stderr, command, 'failed:', ret_code
-                sys.exit(1)
-
-            modtime2 = os.stat(viewfile.name).st_mtime
-
-            if modtime2 > modtime1:
-                print >> sys.stderr, (
-                    'WARNING: YOU HAVE EDITED A TEMPORARY READ_ONLY COPY : ')
-                print >> sys.stderr, viewfile.name
-
-            viewfile.close()
-
         if ret_code == 0:
+            if editor is not None and os.stat(viewfile).st_mtime > modtime1:
+                sys.stderr.write(
+                    'WARNING: you edited a temporary job file copy: %s\n' % (
+                        viewfile)
+                    )
             break
-
     if ret_code and err:
         sys.stderr.write(err)
     sys.exit(ret_code)
