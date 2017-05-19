@@ -197,7 +197,7 @@ class SuiteDatabaseManager(object):
 
     def put_suite_params(
             self, run_mode, initial_point, final_point, is_held,
-            cycle_point_format=None):
+            cycle_point_format=None, warm_point=None):
         """Put run mode, initial/final cycle point in runtime database.
 
         This method queues the relevant insert statements.
@@ -214,6 +214,10 @@ class SuiteDatabaseManager(object):
         if is_held:
             self.db_inserts_map[self.TABLE_SUITE_PARAMS].append(
                 {"key": "is_held", "value": 1})
+        if warm_point:
+            self.db_inserts_map[self.TABLE_SUITE_PARAMS].append(
+                {"key": "warm_point", "value": str(warm_point)}
+            )
 
     def put_suite_template_vars(self, template_vars):
         """Put template_vars in runtime database.

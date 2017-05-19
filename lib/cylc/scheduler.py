@@ -139,6 +139,8 @@ class Scheduler(object):
         self.config = None
 
         self.is_restart = is_restart
+        if self.is_restart:
+            self.restart_warm_point = None
         self._cli_initial_point_string = None
         self._cli_start_point_string = None
         start_point_str = None
@@ -349,7 +351,8 @@ conditions; see `cylc conditions`.
             self.initial_point,
             self.final_point,
             self.pool.is_held,
-            self.config.cfg['cylc']['cycle point format'])
+            self.config.cfg['cylc']['cycle point format'],
+            self._cli_start_point_string)
         self.suite_db_mgr.put_suite_template_vars(self.template_vars)
         self.configure_suite_environment()
 
@@ -403,6 +406,8 @@ conditions; see `cylc conditions`.
         """Load tasks for restart."""
         self.suite_db_mgr.pri_dao.select_suite_params(
             self._load_suite_params, self.options.checkpoint)
+        if self.restart_warm_point:
+            self.start_point = self.restart_warm_point
         self.suite_db_mgr.pri_dao.select_broadcast_states(
             BroadcastServer.get_inst().load_db_broadcast_states,
             self.options.checkpoint)
@@ -900,6 +905,13 @@ conditions; see `cylc conditions`.
             self._cli_initial_point_string = value
             self.do_process_tasks = True
 
+    def _load_warm_cycle_point(self, _, row):
+        """Load previous warm start point on restart"""
+        key, value = row
+        if key == "warm_point":
+            self._cli_start_point_string = value
+            self.restart_warm_point = value
+
     def _load_template_vars(self, _, row):
         """Load suite start up template variables."""
         key, value = row
@@ -918,6 +930,7 @@ conditions; see `cylc conditions`.
             pri_dao = self.suite_db_mgr.get_pri_dao()
             pri_dao.select_suite_params(self._load_initial_cycle_point)
             pri_dao.select_suite_template_vars(self._load_template_vars)
+            pri_dao.select_suite_params(self._load_warm_cycle_point)
             # Take checkpoint and commit immediately so that checkpoint can be
             # copied to the public database.
             pri_dao.take_checkpoints("restart")
