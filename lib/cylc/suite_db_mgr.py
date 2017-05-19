@@ -47,6 +47,7 @@ class SuiteDatabaseManager(object):
     TABLE_TASK_ACTION_TIMERS = CylcSuiteDAO.TABLE_TASK_ACTION_TIMERS
     TABLE_TASK_POOL = CylcSuiteDAO.TABLE_TASK_POOL
     TABLE_TASK_STATES = CylcSuiteDAO.TABLE_TASK_STATES
+    TABLE_TASK_TIMEOUT_TIMERS = CylcSuiteDAO.TABLE_TASK_TIMEOUT_TIMERS
 
     def __init__(self, pri_d=None, pub_d=None):
         self.pri_path = None
@@ -61,14 +62,16 @@ class SuiteDatabaseManager(object):
         self.db_deletes_map = {
             self.TABLE_SUITE_PARAMS: [],
             self.TABLE_TASK_POOL: [],
-            self.TABLE_TASK_ACTION_TIMERS: []}
+            self.TABLE_TASK_ACTION_TIMERS: [],
+            self.TABLE_TASK_TIMEOUT_TIMERS: []}
         self.db_inserts_map = {
             self.TABLE_INHERITANCE: [],
             self.TABLE_SUITE_PARAMS: [],
             self.TABLE_SUITE_TEMPLATE_VARS: [],
             self.TABLE_CHECKPOINT_ID: [],
             self.TABLE_TASK_POOL: [],
-            self.TABLE_TASK_ACTION_TIMERS: []}
+            self.TABLE_TASK_ACTION_TIMERS: [],
+            self.TABLE_TASK_TIMEOUT_TIMERS: []}
         self.db_updates_map = {}
 
     def checkpoint(self, name):
@@ -245,6 +248,10 @@ class SuiteDatabaseManager(object):
         relevant insert statements for the current tasks in the pool.
         """
         self.db_deletes_map[self.TABLE_TASK_POOL].append({})
+        # No need to do:
+        # self.db_deletes_map[self.TABLE_TASK_ACTION_TIMERS].append({})
+        # Should already be done by self.put_task_event_timers above.
+        self.db_deletes_map[self.TABLE_TASK_TIMEOUT_TIMERS].append({})
         for itask in pool.get_all_tasks():
             self.db_inserts_map[self.TABLE_TASK_POOL].append({
                 "name": itask.tdef.name,
@@ -252,6 +259,11 @@ class SuiteDatabaseManager(object):
                 "spawned": int(itask.has_spawned),
                 "status": itask.state.status,
                 "hold_swap": itask.state.hold_swap})
+            if itask.state.status in itask.timeout_timers:
+                self.db_inserts_map[self.TABLE_TASK_TIMEOUT_TIMERS].append({
+                    "name": itask.tdef.name,
+                    "cycle": str(itask.point),
+                    "timeout": itask.timeout_timers[itask.state.status]})
             for ctx_key_0 in ["poll_timers", "try_timers"]:
                 for ctx_key_1, timer in getattr(itask, ctx_key_0).items():
                     if timer is None:

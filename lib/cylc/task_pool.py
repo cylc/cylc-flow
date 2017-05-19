@@ -355,7 +355,7 @@ class TaskPool(object):
         if row_idx == 0:
             OUT.info("LOADING task proxies")
         (cycle, name, spawned, status, hold_swap, submit_num, _,
-         user_at_host) = row
+         user_at_host, time_submit, time_run, timeout) = row
         try:
             itask = TaskProxy(
                 self.config.get_taskdef(name),
@@ -385,6 +385,12 @@ class TaskPool(object):
                 except ValueError:
                     itask.task_owner = None
                     itask.task_host = user_at_host
+                if time_submit:
+                    itask.set_event_time('submitted', time_submit)
+                if time_run:
+                    itask.set_event_time('started', time_run)
+                if timeout is not None:
+                    itask.timeout_timers[status] = timeout
 
             elif status in (TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_FAILED):
                 itask.state.set_prerequisites_all_satisfied()

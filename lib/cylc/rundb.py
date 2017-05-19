@@ -184,6 +184,7 @@ class CylcSuiteDAO(object):
     TABLE_TASK_POOL = "task_pool"
     TABLE_TASK_POOL_CHECKPOINTS = "task_pool_checkpoints"
     TABLE_TASK_STATES = "task_states"
+    TABLE_TASK_TIMEOUT_TIMERS = "task_timeout_timers"
 
     TABLES_ATTRS = {
         TABLE_BROADCAST_EVENTS: [
@@ -286,6 +287,11 @@ class CylcSuiteDAO(object):
             ["time_updated"],
             ["submit_num", {"datatype": "INTEGER"}],
             ["status"],
+        ],
+        TABLE_TASK_TIMEOUT_TIMERS: [
+            ["cycle", {"is_primary_key": True}],
+            ["name", {"is_primary_key": True}],
+            ["timeout", {"datatype": "REAL"}],
         ],
     }
 
@@ -644,7 +650,7 @@ class CylcSuiteDAO(object):
 
         Invoke callback(row_idx, row) on each row, where each row contains:
             [cycle, name, spawned, status, hold_swap, submit_num, try_num,
-             user_at_host]
+             user_at_host, time_submit, time_run, timeout]
 
         If id_key is specified,
         select from task_pool table if id_key == CHECKPOINT_LATEST_ID.
@@ -659,7 +665,10 @@ class CylcSuiteDAO(object):
             r"    %(task_pool)s.hold_swap," +
             r"    %(task_states)s.submit_num," +
             r"    %(task_jobs)s.try_num," +
-            r"    %(task_jobs)s.user_at_host " +
+            r"    %(task_jobs)s.user_at_host," +
+            r"    %(task_jobs)s.time_submit," +
+            r"    %(task_jobs)s.time_run," +
+            r"    %(task_timeout_timers)s.timeout " +
             r"FROM " +
             r"    %(task_pool)s " +
             r"JOIN " +
@@ -670,10 +679,15 @@ class CylcSuiteDAO(object):
             r"    %(task_jobs)s " +
             r"ON  %(task_pool)s.cycle == %(task_jobs)s.cycle AND " +
             r"    %(task_pool)s.name == %(task_jobs)s.name AND " +
-            r"    %(task_states)s.submit_num == %(task_jobs)s.submit_num")
+            r"    %(task_states)s.submit_num == %(task_jobs)s.submit_num " +
+            r"LEFT OUTER JOIN " +
+            r"    %(task_timeout_timers)s " +
+            r"ON  %(task_pool)s.cycle == %(task_timeout_timers)s.cycle AND " +
+            r"    %(task_pool)s.name == %(task_timeout_timers)s.name")
         form_data = {
             "task_pool": self.TABLE_TASK_POOL,
             "task_states": self.TABLE_TASK_STATES,
+            "task_timeout_timers": self.TABLE_TASK_TIMEOUT_TIMERS,
             "task_jobs": self.TABLE_TASK_JOBS,
         }
         if id_key is None or id_key == self.CHECKPOINT_LATEST_ID:
