@@ -409,6 +409,44 @@ class SequenceBase(object):
         # Return True if other (sequence) is equal to self.
         pass
 
+
+class ExclusionBase(object):
+    """A collection of points or sequences that are treated in an
+    exclusionary manner"""
+    __metaclass__ = ABCMeta
+
+    def __init__(self, start_point, end_point=None):
+        """creates an exclusions object that can contain integer points
+        or integer sequences to be used as excluded points."""
+        self.exclusion_sequences = []
+        self.exclusion_points = set()
+        self.exclusion_start_point = start_point
+        self.exclusion_end_point = end_point
+
+    @abstractmethod
+    def build_exclusions(self):
+        """Constructs the set of exclusion sequences or points"""
+        pass
+
+    def __contains__(self, point):
+        """Checks to see if the Exclusions object contains a point
+        in any of the exclusion sequences.
+
+        Args:
+            point (str): The time point to check lies in the
+                ISO8601Sequence object.
+        """
+        if point in self.exclusion_points:
+            return True
+        if any(seq.is_valid(point) for seq in self.exclusion_sequences):
+            return True
+        return False
+
+    def __getitem__(self, key):
+        """Allows indexing of the exclusion object"""
+        return self.exclusion_sequences[key]
+
+
 if __name__ == "__main__":
     import unittest
 

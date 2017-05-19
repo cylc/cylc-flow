@@ -23,7 +23,7 @@ import re
 import unittest
 
 from cylc.cycling import (
-    PointBase, IntervalBase, SequenceBase, PointParsingError,
+    PointBase, IntervalBase, SequenceBase, ExclusionBase, PointParsingError,
     IntervalParsingError, parse_exclusion
 )
 from cylc.time_parser import CylcMissingContextPointError
@@ -226,37 +226,32 @@ class IntegerInterval(IntervalBase):
         return bool(int(self))
 
 
-class IntegerExclusions():
+class IntegerExclusions(ExclusionBase):
     """A collection of integer exclusion points, or sequences of
     integers that are treated in an exclusionary manner."""
 
-    def __init__(self, excl_points, p_start, p_end=None):
+    def __init__(self, excl_points, start_point, end_point=None):
         """creates an exclusions object that can contain integer points
         or integer sequences to be used as excluded points."""
-        self.exclusion_sequences = []
-        self.exclusion_points = set()
-        self.exclusion_start_point = p_start
-        self.exclusion_end_point = p_end
+        super(IntegerExclusions, self).__init__(start_point, end_point)
 
-        for excl in excl_points:
+        self.build_exclusions(excl_points)
+
+    def build_exclusions(self, excl_points):
+        for point in excl_points:
             try:
+                # Try making an integer point
                 integer_point = get_point_from_expression(
-                    excl,
+                    point,
                     None,
                     is_required=False)
                 self.exclusion_points.add(integer_point.standardise())
             except PointParsingError:
+                # Try making an integer sequence
                 integer_exclusion_sequence = (IntegerSequence(
-                    excl, self.exclusion_start_point,
+                    point, self.exclusion_start_point,
                     self.exclusion_end_point))
                 self.exclusion_sequences.append(integer_exclusion_sequence)
-
-    def __contains__(self, point):
-        if point in self.exclusion_points:
-            return True
-        if any(seq.is_valid(point) for seq in self.exclusion_sequences):
-            return True
-        return False
 
 
 class IntegerSequence(SequenceBase):
@@ -410,7 +405,6 @@ class IntegerSequence(SequenceBase):
 
         # Create a list of multiple exclusion points, if there are any.
         if excl_points:
-            # self.exclusions = set()
             self.exclusions = IntegerExclusions(excl_points,
                                                 self.p_start, self.p_stop)
         else:
