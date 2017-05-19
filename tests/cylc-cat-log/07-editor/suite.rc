@@ -1,0 +1,13 @@
+[cylc]
+    [[events]]
+        abort on timeout = True
+        timeout = PT20S
+[scheduling]
+    [[dependencies]]
+        graph = foo
+[runtime]
+    [[foo]]
+        script = """
+echo 'Hello to stdout'
+>&2 echo 'Hello to stderr'
+"""
