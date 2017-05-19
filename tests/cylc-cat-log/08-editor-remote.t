@@ -18,9 +18,16 @@
 # Test "cylc cat-log" open local logs in editor.
 
 . "$(dirname $0)"/test_header
+
+HOST="$( \
+    cylc get-global-config -i '[test battery]remote host' 2>'/dev/null')"
+if [[ -z "${HOST}" ]]; then
+    skip_all '"[test battery]remote host": not defined'
+fi
+
 . "${TEST_SOURCE_DIR}"/editor/bin/run_tests.sh
 export PATH="${TEST_SOURCE_DIR}/editor/bin/":"${PATH}"
 
 install_suite "${TEST_NAME_BASE}" "editor"
-run_tests localhost
+run_tests $HOST
 purge_suite "${SUITE_NAME}"

@@ -1,0 +1,22 @@
+#!jinja2
+[cylc]
+    [[events]]
+        abort on timeout = True
+        timeout = PT30S
+[scheduling]
+    [[dependencies]]
+        graph = foo
+[runtime]
+    [[foo]]
+        script = """
+echo 'Hello to stdout'
+>&2 echo 'Hello to stderr'
+cat >> ${CYLC_TASK_LOG_ROOT}.custom <<__END__
+the quick brown fox
+jumped over
+the lazy dog
+__END__
+"""
+        [[[remote]]]
+            host = {{HOST | default("localhost")}}
+            retrieve job logs = True

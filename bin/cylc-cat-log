@@ -359,9 +359,7 @@ def main():
         if ret_code == 0:
             if editor is not None and os.stat(viewfile).st_mtime > modtime1:
                 sys.stderr.write(
-                    'WARNING: you edited a temporary job file copy: %s\n' % (
-                        viewfile)
-                    )
+                    'WARNING: you edited a temporary job file copy!')
             break
     if ret_code and err:
         sys.stderr.write(err)
