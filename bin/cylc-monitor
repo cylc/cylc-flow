@@ -34,7 +34,7 @@ from time import sleep, time
 from parsec.OrderedDict import OrderedDict
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.network.suite_state_client import (
-    SUITE_STATUS_SPLIT_REC, get_suite_status_string, StateSummaryClient)
+    SUITE_STATUS_SPLIT_REC, StateSummaryClient)
 from cylc.wallclock import get_time_string_from_unix_time
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.task_state import (
@@ -166,13 +166,7 @@ The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
 
                 run_mode = glbl['run_mode']
                 ns_defn_order = glbl['namespace definition order']
-                try:
-                    status_string = glbl['status_string']
-                except KeyError:
-                    # Back compat for suite daemons <= 6.9.1.
-                    status_string = get_suite_status_string(
-                        glbl['paused'], glbl['stopping'],
-                        glbl['will_pause_at'], glbl['will_stop_at'])
+                status_string = glbl['status_string']
 
                 task_info = {}
                 name_list = set()
@@ -220,14 +214,7 @@ The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
                 blit.append(updated_str)
 
                 summary = 'state summary:'
-                try:
-                    state_totals = glbl['state totals']
-                except KeyError:
-                    # Back-compat for suite daemons <= 6.4.1.
-                    state_totals = {}
-                    for state in states:
-                        state_totals.setdefault(state, 0)
-                        state_totals[state] += 1
+                state_totals = glbl['state totals']
                 for state, tot in state_totals.items():
                     subst = " %d " % tot
                     summary += get_status_prop(state, 'ascii_ctrl', subst)

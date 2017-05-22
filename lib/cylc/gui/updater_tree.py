@@ -240,24 +240,7 @@ class TreeUpdater(threading.Thread):
                     tetc_string = None
 
                     for dt in tkeys:
-                        try:
-                            t_info[dt] = summary[id][dt]
-                        except KeyError:
-                            # Pre cylc-6 back compat: no special "_string"
-                            # items, and the data was in string form already.
-                            odt = dt.replace("_string", "")
-                            try:
-                                t_info[dt] = summary[id][odt]
-                            except KeyError:
-                                if dt == 'finished_time_string':
-                                    # Was succeeded_time.
-                                    t_info[dt] = summary[id].get(
-                                        'succeeded_time')
-                                else:
-                                    t_info[dt] = None
-                            if isinstance(t_info[dt], str):
-                                # Remove decimal fraction seconds.
-                                t_info[dt] = t_info[dt].split('.')[0]
+                        t_info[dt] = summary[id][dt]
 
                     # Compute percent progress.
                     if (isinstance(tstart, float) and (
@@ -318,8 +301,7 @@ class TreeUpdater(threading.Thread):
                         t_info['finished_time_string'] = "%s?" % (
                             t_info['finished_time_string'])
 
-                # Use "*" (or "" for family rows) until slot is populated
-                # and for pre cylc-6 back compat for host and job ID cols.
+                # Use "*" (or "" for family rows) until slot is populated.
                 job_id = summary[id].get('submit_method_id')
                 batch_sys_name = summary[id].get('batch_sys_name')
                 host = summary[id].get('host')

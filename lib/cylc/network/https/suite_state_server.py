@@ -25,7 +25,9 @@ from cylc.wallclock import TIME_ZONE_LOCAL_INFO, TIME_ZONE_UTC_INFO
 from cylc.config import SuiteConfig
 from cylc.network.https.base_server import BaseCommsServer
 from cylc.network.https.suite_state_client import (
-    get_suite_status_string, extract_group_state)
+    extract_group_state, SUITE_STATUS_HELD, SUITE_STATUS_STOPPING,
+    SUITE_STATUS_RUNNING, SUITE_STATUS_RUNNING_TO_STOP,
+    SUITE_STATUS_RUNNING_TO_HOLD)
 from cylc.network import check_access_priv
 from cylc.task_state import TASK_STATUS_RUNAHEAD
 
@@ -141,8 +143,18 @@ class StateSummaryServer(BaseCommsServer):
         global_summary['state totals'] = state_count_totals
 
         # Construct a suite status string for use by monitoring clients.
-        global_summary['status_string'] = get_suite_status_string(
-            paused, stopping, will_pause_at, will_stop_at)
+        if paused:
+            global_summary['status_string'] = SUITE_STATUS_HELD
+        elif stopping:
+            global_summary['status_string'] = SUITE_STATUS_STOPPING
+        elif will_pause_at:
+            global_summary['status_string'] = (
+                SUITE_STATUS_RUNNING_TO_HOLD % will_pause_at)
+        elif will_stop_at:
+            global_summary['status_string'] = (
+                SUITE_STATUS_RUNNING_TO_STOP % will_stop_at)
+        else:
+            global_summary['status_string'] = SUITE_STATUS_RUNNING
 
         # Replace the originals (atomic update, for access from other threads).
         self.task_summary = task_summary

@@ -30,8 +30,7 @@ from cylc.dump import get_stop_state_summary
 from cylc.gui.cat_state import cat_state
 from cylc.network import ConnectionError, ConnectionDeniedError
 from cylc.network.suite_state_client import (
-    StateSummaryClient, get_suite_status_string,
-    SUITE_STATUS_NOT_CONNECTED, SUITE_STATUS_CONNECTED,
+    StateSummaryClient, SUITE_STATUS_NOT_CONNECTED, SUITE_STATUS_CONNECTED,
     SUITE_STATUS_INITIALISING, SUITE_STATUS_STOPPED, SUITE_STATUS_STOPPING
 )
 from cylc.network.suite_info_client import SuiteInfoClient

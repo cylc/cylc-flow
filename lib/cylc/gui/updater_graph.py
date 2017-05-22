@@ -268,26 +268,15 @@ class GraphUpdater(threading.Thread):
         # (adding new ones, and nodes, if necessary)
 
         self.action_required = False
-        try:
-            self.oldest_point_string = (
-                self.global_summary['oldest cycle point string'])
+        self.oldest_point_string = (
+            self.global_summary['oldest cycle point string'])
+        self.newest_point_string = (
+            self.global_summary['newest cycle point string'])
+        if TASK_STATUS_RUNAHEAD not in self.updater.filter_states_excl:
+            # Get a graph out to the max runahead point.
             self.newest_point_string = (
-                self.global_summary['newest cycle point string'])
-            if TASK_STATUS_RUNAHEAD not in self.updater.filter_states_excl:
-                # Get a graph out to the max runahead point.
-                try:
-                    self.newest_point_string = (
-                        self.global_summary[
-                            'newest runahead cycle point string'])
-                except KeyError:
-                    # back compat <= 6.2.0
-                    pass
-        except KeyError:
-            # Pre cylc-6 back compat.
-            self.oldest_point_string = (
-                self.global_summary['oldest cycle time'])
-            self.newest_point_string = (
-                self.global_summary['newest cycle time'])
+                self.global_summary[
+                    'newest runahead cycle point string'])
 
         if self.focus_start_point_string:
             oldest = self.focus_start_point_string
