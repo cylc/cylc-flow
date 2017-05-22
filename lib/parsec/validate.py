@@ -349,13 +349,13 @@ coercers = {
 
 class validator(object):
 
+    __slots__ = ['coercer', 'args']
+
     def __init__(self, vtype='string', default=None, options=[],
-                 vmin=None, vmax=None, allow_zeroes=True, compulsory=False):
+                 allow_zeroes=True, compulsory=False):
         self.coercer = coercers[vtype]
         self.args = {
             'options': options,
-            'vmin': vmin,
-            'vmax': vmax,
             'default': default,
             'allow zeroes': allow_zeroes,
             'compulsory': compulsory}

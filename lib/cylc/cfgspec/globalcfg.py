@@ -43,17 +43,17 @@ SPEC = {
     'process pool size': vdr(vtype='integer', default=4),
     'temporary directory': vdr(vtype='string'),
     'state dump rolling archive length': vdr(
-        vtype='integer', vmin=1, default=10),
+        vtype='integer', default=10),
     'disable interactive command prompts': vdr(vtype='boolean', default=True),
     'enable run directory housekeeping': vdr(vtype='boolean', default=False),
     'run directory rolling archive length': vdr(
-        vtype='integer', vmin=0, default=2),
+        vtype='integer', default=2),
     'task host select command timeout': vdr(
         vtype='interval', default=DurationFloat(10)),
     'task messaging': {
         'retry interval': vdr(
             vtype='interval', default=DurationFloat(5)),
-        'maximum number of tries': vdr(vtype='integer', vmin=1, default=7),
+        'maximum number of tries': vdr(vtype='integer', default=7),
         'connection timeout': vdr(
             vtype='interval', default=DurationFloat(30)),
     },
@@ -87,9 +87,8 @@ SPEC = {
 
     'suite logging': {
         'roll over at start-up': vdr(vtype='boolean', default=True),
-        'rolling archive length': vdr(vtype='integer', vmin=1, default=5),
-        'maximum size in bytes': vdr(
-            vtype='integer', vmin=1000, default=1000000),
+        'rolling archive length': vdr(vtype='integer', default=5),
+        'maximum size in bytes': vdr(vtype='integer', default=1000000),
     },
 
     'documentation': {
