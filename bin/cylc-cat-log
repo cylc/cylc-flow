@@ -316,10 +316,12 @@ def main():
         # Copy local or remote job file to a local temp file.
         viewfile = mkstemp(dir=cylc_tmpdir)[1]
         if user_at_host:
-            cp = 'scp %s:%s %s' % (user_at_host, filename, viewfile)
+            cp = shlex.split(
+                GLOBAL_CFG.get_host_item('scp command', host, owner)) + [
+                '%s:%s' % (user_at_host, filename), viewfile]
         else:
-            cp = 'cp %s %s' % (filename, viewfile)
-        proc = Popen(shlex.split(cp), stderr=PIPE, stdout=PIPE)
+            cp = ['cp', filename, viewfile]
+        proc = Popen(cp, stderr=PIPE, stdout=PIPE)
         err = proc.communicate()[1]
         ret_code = proc.wait()
         if ret_code:
