@@ -18,10 +18,14 @@
 
 """cylc [info] cat-log|log [OPTIONS] ARGS
 
-Print the location or content of any suite or task log file, or a listing of a
-task log directory on the suite or task host.  By default the suite event log
-or task job script is printed. For task logs you must use the same cycle
-point format as the suite (list the log directory to see what it is)."""
+Print or view suite and task job logs, or their locations (with no options
+suite logs or task job scripts are printed). For all task job logs, use the
+same cycle point format as the suite (list a job log directory to see it).
+
+By default this prints the target file to stdout. With '--tail' it tails the
+file in real time, or with '-g' or '-b' it opens a temporary copy of it in your
+text editor. In the GUI, right-click 'View' tails the file in a pop-up text
+window, or 'View in Editor' opens a temporary copy of it in your editor."""
 
 import sys
 from cylc.remote import remrun
