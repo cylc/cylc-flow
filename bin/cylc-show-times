@@ -20,17 +20,27 @@
 
 Retrieve timing information for the given cylc suite that can be
 used for fine-grain diagnostics for wait time and run time performance
-analysis:
+analysis.  Two main categories of output are available:
+
+Summary Output (the default):
+Tabular data stratified by host and batch system that provides a statistical
+summary of
+    1. Queue wait time (duration between task submission and start times)
+    2. Task run time (duration between start and succeed times)
+    3. Total run time (duration between task submission and succeed times)
+This statistical summary requires the Pandas library for data analysis and
+will print an error message if summary output is invoked without this library
+being available.
+
+Raw Output:
+A flat list of tabular data that provides (for each task and cycle) the
     1. Time of successful submission
     2. Time of task start
     3. Time of task successful completion
+as well as information about the batch system and remote host to permit
+stratification/grouping if desired by downstream processors.
 
-Timings are shown only for succeeded tasks, and includes information
-about the batch system and remote host to permit stratification/grouping
-if desired (e.g. a typical metric for batch systems like PBS is how
-long the job waited in the queue, which can be obtained by subtracting
-the submit time from the start time - however, this metric is less
-meaningful for background jobs where no batch system is involved).
+Timings are shown only for succeeded tasks.
 
 For long-running and/or large suites (i.e. for suites with many task events),
 the database query to obtain the timing information may take some time.
@@ -42,6 +52,7 @@ from cylc.remote import remrun
 if remrun().execute():
     sys.exit(0)
 
+import cStringIO as StringIO
 import os
 
 import cylc.flags
@@ -55,19 +66,42 @@ def main():
         __doc__,
         argdoc=[('REG', 'Suite name')]
     )
+    parser.add_option(
+        "-r", "--raw",
+        help="Show raw timing output for downstream processing.",
+        action="store_true", default=False, dest="show_raw"
+    )
+    parser.add_option(
+        "-s", "--summary",
+        help="Show summary timing output for tasks.",
+        action="store_true", default=False, dest="show_summary"
+    )
     options, args = parser.parse_args()
+
+    if options.show_raw and options.show_summary:
+        parser.error('Cannot combine summary and raw output (choose one)')
+    elif not (options.show_raw or options.show_summary):
+        # Neither one specified - choose summary by default
+        options.show_summary = True
+
     suite = args.pop(0)
     run_db = _get_dao(suite)
-    pretty_print_rows(*run_db.select_task_events_for_timing())
+    buf = format_rows(*run_db.select_task_events_for_timing())
+
+    if options.show_raw:
+        _raw_output(buf)
+    elif options.show_summary:
+        _summary_output(buf)
 
 
-def pretty_print_rows(header, rows):
-    """Pretty-print the row data to sys.stdout
+def format_rows(header, rows):
+    """Write the rows in tabular format to a string buffer.
 
     Ensure that each column is wide enough to contain the widest data
     value and the widest header value.
 
     """
+    sio = StringIO.StringIO()
     max_lengths = [
         max(data_len, head_len)
         for data_len, head_len in zip(
@@ -76,9 +110,11 @@ def pretty_print_rows(header, rows):
         )
     ]
     formatter = ' '.join(['%%-%ds' % l for l in max_lengths]) + '\n'
-    sys.stdout.write(formatter % header)
+    sio.write(formatter % header)
     for r in rows:
-        sys.stdout.write(formatter % r)
+        sio.write(formatter % r)
+    sio.seek(0)
+    return sio
 
 
 def _get_dao(suite):
@@ -91,6 +127,67 @@ def _get_dao(suite):
         CylcSuiteDAO.DB_FILE_BASE_NAME
     )
     return CylcSuiteDAO(pub_db_path, is_public=True)
+
+
+def _raw_output(buf):
+    """Print raw tabular output to the screen."""
+    sys.stdout.write(buf.getvalue())
+
+
+def _summary_output(buf):
+    """
+    Print summary tabular output (stratified by host and batch system)
+    to the screen.
+
+    """
+    try:
+        import pandas as pd
+    except ImportError:
+        sys.stderr.write(
+            "Error importing pandas - summary output not available.\n"
+        )
+        sys.exit(1)
+    df = pd.read_csv(
+        buf, delim_whitespace=True, index_col=[0,1,2,3], parse_dates=[4,5,6]
+    )
+    df_dt = pd.DataFrame({
+        'queue_time': (df['start_time']-df['submit_time']).apply(_dt_to_s),
+        'run_time': (df['succeed_time']-df['start_time']).apply(_dt_to_s),
+        'total_time': (df['succeed_time']-df['submit_time']).apply(_dt_to_s),
+    })
+    for group, df_g in df_dt.groupby(level=['host', 'batch_system']):
+        _print_h1_title('Host: %s\tBatch System: %s' % group)
+        df_summary = df_g.groupby(level='name').describe()
+        if df_summary.index.nlevels > 1:
+            df_summary = df_summary.unstack()   # for pandas < 0.20.0
+        for category in sorted(set(df_summary.columns.get_level_values(0))):
+            _print_h2_title(category)
+            print df_summary[category].to_string()
+            print ''
+
+
+def _dt_to_s(dt):
+    """Convert timedelta duration to seconds."""
+    try:
+        return dt.total_seconds()
+    except AttributeError:
+        # Older versions of pandas have the timedelta as a Numpy timedelta64
+        # type, which didn't support total_seconds
+        import pandas as pd
+        return pd.Timedelta(dt).total_seconds()
+
+
+def _print_h1_title(title, linewidth=80):
+    """Display a level-1 header."""
+    print '='*linewidth
+    print title.center(linewidth)
+    print '='*linewidth
+
+
+def _print_h2_title(title, linewidth=80):
+    """Display a level-2 header."""
+    print title.center(linewidth)
+    print ('-'*len(title)).center(linewidth)
 
 
 if __name__ == "__main__":
