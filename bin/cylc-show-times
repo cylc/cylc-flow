@@ -148,12 +148,13 @@ def _summary_output(buf):
         )
         sys.exit(1)
     df = pd.read_csv(
-        buf, delim_whitespace=True, index_col=[0,1,2,3], parse_dates=[4,5,6]
+        buf, delim_whitespace=True, index_col=[0, 1, 2, 3],
+        parse_dates=[4, 5, 6]
     )
     df_dt = pd.DataFrame({
-        'queue_time': (df['start_time']-df['submit_time']).apply(_dt_to_s),
-        'run_time': (df['succeed_time']-df['start_time']).apply(_dt_to_s),
-        'total_time': (df['succeed_time']-df['submit_time']).apply(_dt_to_s),
+        'queue_time': (df['start_time'] - df['submit_time']).apply(_dt_to_s),
+        'run_time': (df['succeed_time'] - df['start_time']).apply(_dt_to_s),
+        'total_time': (df['succeed_time'] - df['submit_time']).apply(_dt_to_s),
     })
     for group, df_g in df_dt.groupby(level=['host', 'batch_system']):
         _print_h1_title('Host: %s\tBatch System: %s' % group)
@@ -179,15 +180,15 @@ def _dt_to_s(dt):
 
 def _print_h1_title(title, linewidth=80):
     """Display a level-1 header."""
-    print '='*linewidth
+    print '=' * linewidth
     print title.center(linewidth)
-    print '='*linewidth
+    print '=' * linewidth
 
 
 def _print_h2_title(title, linewidth=80):
     """Display a level-2 header."""
     print title.center(linewidth)
-    print ('-'*len(title)).center(linewidth)
+    print ('-' * len(title)).center(linewidth)
 
 
 if __name__ == "__main__":
