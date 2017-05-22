@@ -496,6 +496,7 @@ class TaskJobManager(object):
                 handle.write(user_at_host + line)
         except IOError as exc:
             LOG.warning("%s: write failed\n%s" % (job_activity_log, exc))
+            LOG.warning(user_at_host + line, itask=itask)
 
     def _kill_task_jobs_callback(self, ctx, suite, itasks):
         """Callback when kill tasks command exits."""
