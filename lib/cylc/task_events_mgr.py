@@ -318,6 +318,9 @@ class TaskEventsManager(object):
         if priority == TaskMessage.WARNING:
             self.setup_event_handlers(itask, "warning", message)
 
+        elif priority == TaskMessage.CRITICAL:
+            self.setup_event_handlers(itask, "critical", message)
+
         if (message == TASK_OUTPUT_STARTED and
                 itask.state.status in [
                     TASK_STATUS_READY, TASK_STATUS_SUBMITTED,

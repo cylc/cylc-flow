@@ -21,6 +21,7 @@
         submission failed handler = 
         submission retry handler = 
         warning handler = 
+        critical handler = 
         succeeded handler = 
         retry handler = 
         failed handler = 
@@ -96,6 +97,7 @@
         submission failed handler = 
         submission retry handler = 
         warning handler = 
+        critical handler = 
         succeeded handler = 
         retry handler = 
         failed handler = 
@@ -170,6 +172,7 @@
         submission failed handler = 
         submission retry handler = 
         warning handler = 
+        critical handler = 
         succeeded handler = 
         retry handler = 
         failed handler = 
@@ -245,6 +248,7 @@
         submission failed handler = 
         submission retry handler = 
         warning handler = 
+        critical handler = 
         succeeded handler = 
         retry handler = 
         failed handler = 
@@ -320,6 +324,7 @@
         submission failed handler = 
         submission retry handler = 
         warning handler = 
+        critical handler = 
         succeeded handler = 
         retry handler = 
         failed handler = 
@@ -406,6 +411,7 @@
         submission failed handler = 
         submission retry handler = 
         warning handler = 
+        critical handler = 
         succeeded handler = 
         retry handler = 
         failed handler = 
@@ -481,6 +487,7 @@
         submission failed handler = 
         submission retry handler = 
         warning handler = 
+        critical handler = 
         succeeded handler = 
         retry handler = 
         failed handler = 
@@ -556,6 +563,7 @@
         submission failed handler = 
         submission retry handler = 
         warning handler = 
+        critical handler = 
         succeeded handler = 
         retry handler = 
         failed handler = 
@@ -630,6 +638,7 @@
         submission failed handler = 
         submission retry handler = 
         warning handler = 
+        critical handler = 
         succeeded handler = 
         retry handler = 
         failed handler = 
@@ -705,6 +714,7 @@
         submission failed handler = 
         submission retry handler = 
         warning handler = 
+        critical handler = 
         succeeded handler = 
         retry handler = 
         failed handler = 
@@ -780,6 +790,7 @@
         submission failed handler = 
         submission retry handler = 
         warning handler = 
+        critical handler = 
         succeeded handler = 
         retry handler = 
         failed handler = 
@@ -854,6 +865,7 @@
         submission failed handler = 
         submission retry handler = 
         warning handler = 
+        critical handler = 
         succeeded handler = 
         retry handler = 
         failed handler = 
@@ -929,6 +941,7 @@
         submission failed handler = 
         submission retry handler = 
         warning handler = 
+        critical handler = 
         succeeded handler = 
         retry handler = 
         failed handler = 
