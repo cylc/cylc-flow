@@ -7,6 +7,11 @@ node "bar.9" "bar\n9" unfilled box black
 node "bar.11" "bar\n11" unfilled box black
 node "bar.13" "bar\n13" unfilled box black
 node "bar.15" "bar\n15" unfilled box black
+node "cthulhu.3" "cthulhu\n3" unfilled box black
+node "cthulhu.5" "cthulhu\n5" unfilled box black
+node "cthulhu.9" "cthulhu\n9" unfilled box black
+node "cthulhu.11" "cthulhu\n11" unfilled box black
+node "cthulhu.15" "cthulhu\n15" unfilled box black
 node "foo.1" "foo\n1" unfilled box black
 node "foo.4" "foo\n4" unfilled box black
 node "foo.5" "foo\n5" unfilled box black

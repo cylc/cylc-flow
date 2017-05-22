@@ -35,9 +35,12 @@
         # Run hourly at 15 minutes past except every 3rd hour
         [[[ T-15!T-15/PT3H ]]]
             graph = bob
-
+        # Run hourly at 15 minutes past except every 3rd hour
+        # Implicit start point
+        [[[ T-15!PT3H ]]]
+            graph = toot
         # Stacked sequences
-        [[[ T0230, PT3H!(T09,T12), T1945 ]]]
+        [[[ T0230, PT3H!     (T09,    T12  ) , T1945 ]]]
             graph = dibble
 [runtime]
     [[root]]

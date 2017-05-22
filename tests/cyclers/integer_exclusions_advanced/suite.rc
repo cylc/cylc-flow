@@ -15,6 +15,8 @@
             graph = bar
         [[[ P1 !(P2,6,8) ]]]
             graph = qux
+        [[[ R/1/P2!P3 ]]]
+            graph = cthulhu
 [runtime]
     [[foo]]
         script = """
