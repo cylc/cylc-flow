@@ -50,25 +50,6 @@ SUITE_STATUS_STOPPED = "stopped"
 SUITE_STATUS_STOPPED_WITH = "stopped with '%s'"
 
 
-def get_suite_status_string(paused, stopping, will_pause_at, will_stop_at):
-    """Construct a suite status summary string for client programs.
-
-    This is in a function for re-use in monitor and GUI back-compat code
-    (clients at cylc version <= 6.9.1 construct their own status string).
-
-    """
-    if paused:
-        return SUITE_STATUS_HELD
-    elif stopping:
-        return SUITE_STATUS_STOPPING
-    elif will_pause_at:
-        return SUITE_STATUS_RUNNING_TO_HOLD % will_pause_at
-    elif will_stop_at:
-        return SUITE_STATUS_RUNNING_TO_STOP % will_stop_at
-    else:
-        return SUITE_STATUS_RUNNING
-
-
 class StateSummaryClient(BaseCommsClient):
     """Client-side suite state summary interface."""
 

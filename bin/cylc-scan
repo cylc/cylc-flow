@@ -27,14 +27,10 @@ same on all scanned hosts). Use -a/--all-suites to see all suites on all hosts,
 or restrict suites displayed with the -o/--owner and -n/--name options (with
 --name the default owner restriction (i.e. just your own suites) is disabled.
 
-Suite passphrases are not needed to get identity information (name and owner)
-from suites running cylc >= 6.6.0.  Titles, descriptions, state totals, and
-cycle point state totals may also be revealed publicly, depending on global
-and sutie authentication settings. Suite passphrases still grant full access
-regardless of what is revealed publicly.
-
-Passphrases are still required to get identity information from older suites
-(cylc <= 6.5.0), otherwise you'll see "connection denied (security reasons)".
+Suite passphrases are not needed to get identity information (name and owner).
+Titles, descriptions, state totals, and cycle point state totals may also be
+revealed publicly, depending on global and sutie authentication settings. Suite
+passphrases still grant full access regardless of what is revealed publicly.
 
 WARNING: a suite suspended with Ctrl-Z will cause port scans to hang until the
 connection times out (see --comms-timeout)."""

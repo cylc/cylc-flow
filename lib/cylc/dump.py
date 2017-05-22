@@ -33,22 +33,13 @@ def get_stop_state_summary(lines):
         if line.startswith('Remote command'):
             lines.remove(line)
     line0 = lines.pop(0)
-    if line0.startswith('suite time') or \
-            line0.startswith('simulation time'):
-        # backward compatibility with pre-5.4.11 state dumps
-        global_summary["last_updated"] = time.time()
-    else:
-        # (line0 is run mode)
+    # (line0 is run mode)
+    line1 = lines.pop(0)
+    while not line1.startswith("time :"):
         line1 = lines.pop(0)
-        while not line1.startswith("time :"):
-            line1 = lines.pop(0)
-        try:
-            time_string = line1.rstrip().split(' : ')[1]
-            unix_time_string = time_string.rsplit('(', 1)[1].rstrip(")")
-            global_summary["last_updated"] = int(unix_time_string)
-        except (TypeError, ValueError, IndexError):
-            # back compat pre cylc-6
-            global_summary["last_updated"] = time.time()
+    time_string = line1.rstrip().split(' : ')[1]
+    unix_time_string = time_string.rsplit('(', 1)[1].rstrip(")")
+    global_summary["last_updated"] = int(unix_time_string)
 
     # Skip initial and final cycle points.
     lines[0:2] = []

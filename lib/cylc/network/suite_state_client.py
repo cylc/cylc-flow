@@ -23,7 +23,6 @@ if METHOD == "https":
     from cylc.network.https.suite_state_client import (
         StateSummaryClient, extract_group_state,
         get_id_summary, SUITE_STATUS_SPLIT_REC,
-        get_suite_status_string,
         SUITE_STATUS_NOT_CONNECTED, SUITE_STATUS_CONNECTED,
         SUITE_STATUS_INITIALISING, SUITE_STATUS_STOPPED, SUITE_STATUS_STOPPING,
         SUITE_STATUS_STOPPED_WITH
