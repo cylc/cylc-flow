@@ -2,80 +2,39 @@
 # 
 # This is an experimental bash script to replace the python 'cylc' command
 #
-CATEGORIES=('control' 'information' 'all' 'task' 'license|GPL' 'admin' \
-                'preparation' 'hook' 'discovery' 'utility')
-
-if ${CYLC_DEBUG:-false}; then
-    set -x
-fi
-
 function print_version() {
-    #echo "Cylc $CYLC_VERSION ($CYLC_HOME)"
-    CYLC_VERSION=$($CYLC_HOME_BIN/cylc-new-version)
-    echo "Cylc $CYLC_VERSION ($CYLC_HOME)"
+    echo "Placeholder for calling the cylc.version script (python)"
 }
 
 function init_dirs() {
-    set -eu
-    CYLC_HOME_BIN="$(dirname "$(readlink -f "$0")")"
-    echo $CYLC_HOME_BIN
+    #CYLC_NS=$(basename $0)
+    cylc_dir_lib="$(dirname "$dir")"
+    CYLC_DIR=$cylc_dir_lib # wrong
+    CYLC_HOME_BIN=$(cd $(dirname $0) && pwd)
     # Rose has a 'canonicalize link' step here,
     # is this needed for cylc? 
-    CYLC_HOME="$(dirname "$CYLC_HOME_BIN")"
-    echo $CYLC_HOME
+    CYLC_HOME=$(dirname $CYLC_HOME_BIN)
     
     # TODO
     # This would actually be CYLC_NS=$(basename $0) in the final version
-    CYLC_NS=$(basename $0)
+    CYLC_NS="cylc"
     
     PATH=$(path_lead "${PATH:-}" "$CYLC_HOME_BIN")
     PYTHONPATH=$(path_lead "${PYTHONPATH:-}" "$CYLC_HOME/lib/")
     
     export PATH PYTHONPATH
-    
-    #exec $CYLC_HOME/lib/cylc/version.py
 }
 
-
-function help_usage() {
-    # Call the python help script with no arguments
-    # You should get the deafult help/usage text
-    exec cylc-old
-}
-
-function help_categ() {       
-    # If category name is used, call the help func with the category
-    if [[ " ${CATEGORIES[*]} " == *" $1 "* ]]; then
-        echo "$1 is a known cylc command category."
-        local COMMAND=$CYLC_HOME_BIN/$CYLC_NS-old
-        echo "$COMMAND, $1, $@"
-        exec $COMMAND $1
-        exit
-    fi
+function cylc_usage() {
+    echo "Placeholder for calling and printing the main help script."
 }
 
 function help_util() {
-    # Calls the 
-    echo $UTIL
     echo "Call help function for: $UTIL"
-    # Call the python help function for the given command
-    #$UTIL
-
-    local NAME=$UTIL
-    #local COMMAND=$CYLC_HOME_BIN/$CYLC_NS $NAME
-    
-    # If category name is used, call the help func with the category
-    if [[ " ${CATEGORIES[*]} " == *" $UTIL "* || " ${CATEGORIES[*]} " == *" $1 "* ]]; then
-        local COMMAND=$CYLC_HOME_BIN/cylc-old
-        echo "$COMMAND, $1, $@"
-        exec $COMMAND $1
-        exit
-    fi
-    
-    # If not a category or not an actaul command in the bin dir, exit
-    if [[ ! -r $COMMAND ]] ; then
-        echo "$1: unknown utility. Abort." >&2
-        echo "Type 'cylc help' for a list of utilities."
+    local NAME=$1
+    local COMMAND=$CYLC_HOME_BIN/$CYLC_NS-$NAME
+    if [[ ! -r $COMMAND ]]; then
+        echo "$1: utility not found." >&2
         return 1
     fi
     local ALIAS=$(get_alias $NAME)
@@ -83,6 +42,9 @@ function help_util() {
         COMMAND=$CYLC_HOME_BIN/$CYLC_NS-$ALIAS
         COMMAND=${COMMAND%% *}
     fi
+    
+    #exec $COMMAND --help
+    
     
     case $(head -1 -- $COMMAND) in
     *bash*)
@@ -131,6 +93,7 @@ function path_lead() {
         echo "$PATH_STR"
     fi
 }
+
 init_dirs
 
 UTIL="help"
@@ -144,47 +107,61 @@ help|h|?|--help|-h)
     if (($# == 0)); then
         {
             print_version
-            #cylc_usage
-            
-            # Call the basic usage help
-            help_usage
+            cylc_usage
+            echo
+            echo "$CYLC_NS provides the following commands:"
+            for U in $(cd $CYLC_HOME_BIN && ls $CYLC_NS-*); do
+                # echo $U
+                NAME=$(sed "s/^$CYLC_NS-\\(.*\\)\$/\1/" <<<$U)
+                ALIAS=$(get_alias $NAME)
+                if [[ -n $ALIAS ]]; then
+                    echo "    $NAME"
+                    echo "        (=$ALIAS)"
+                else
+                    echo "    $NAME"
+                    # COPY THE SUMMARY INTO EACH SUB COMMAND?
+                    # ()This is how it is done in rose - so there is no
+                    # central file containing all the summaries..)
+                    #sed 's/^"""\(.*\)""".*/\1/' a $CYLC_HOME_BIN/$U
+                    sed '1,/^# DESCRIPTION$/d;{s/^# /    /;q;}' \
+                        $CYLC_HOME_BIN/$U
+                fi
+            done
         } | ${PAGER:-less}
         exit 0
     fi
-#    RC=0
-#    for U in "$@"; do
-#        if [[ $U == 'help' || $U == 'version' ]]; then
-#            continue
-#        fi
-#        help_util $U || RC=$?
-#    done
-#    exit $RC
+    RC=0
+    for U in "$@"; do
+        if [[ $U == 'help' || $U == 'version' ]]; then
+            continue
+        fi
+        help_util $U || RC=$?
+    done
+    exit $RC
     :;;
 version|--version|-V)
     print_version
     exit
     :;;
-control|information|all|task|license|GPL|admin|preparation|hook|discovery|utility)
-    echo "CATEGORIES HAVE BEEN CALLED"
-    echo "Util: $UTIL, Args: $@"
-    help_util $UTIL $@
-    exit
-    :;;
 esac
 
+#echo $CYLC_NS
+#echo $UTIL
+
 COMMAND=$(dirname $0)/$CYLC_NS-$UTIL
-echo $COMMAND
 if [[ ! -f $COMMAND || ! -x $COMMAND ]]; then
     echo "$CYLC_NS: $UTIL: unknown utility. Abort." >&2
     echo "Type \"$CYLC_NS help\" for a list of utilities." >&2
     exit 1
 fi
-#if (($# > 0)) && [[ $1 == '--help' || $1 == '-h' ]]; then
-#    help_util
-#    exit
-#fi
+if (($# > 0)) && [[ $1 == '--help' || $1 == '-h' ]]; then
+    help_util $UTIL
+    exit
+fi
 
 CYLC_UTIL=$UTIL
 export CYLC_UTIL
 
+#echo "Command: $COMMAND"
+#echo "Args: $@"
 exec $COMMAND "$@"
