@@ -184,7 +184,8 @@ class CylcTimeParser(object):
                          context_start_point=None,
                          context_end_point=None):
         """Parse an expression in abbrev. or full ISO recurrence format."""
-        expression, exclusions = parse_exclusion(expression)
+        expression, exclusions = parse_exclusion(str(expression))
+
         if context_start_point is None:
             context_start_point = self.context_start_point
         if context_end_point is None:
@@ -223,13 +224,18 @@ class CylcTimeParser(object):
             # Convert the exclusion strings to ISO8601 points
             if exclusions is not None:
                 for exclusion in exclusions:
-                    exclusion_point, excl_off = (
-                        self._get_point_from_expression(
-                            exclusion, None, is_required=False,
-                            allow_truncated=False))
-                    if excl_off:
-                        exclusion_point += excl_off
-                    exclusion_points.append(exclusion_point)
+                    try:
+                        # Attempt to convert to TimePoint
+                        exclusion_point, excl_off = (
+                            self._get_point_from_expression(
+                                exclusion, None, is_required=False,
+                                allow_truncated=False))
+                        if excl_off:
+                            exclusion_point += excl_off
+                        exclusion_points.append(exclusion_point)
+                    except (CylcTimeSyntaxError, IndexError):
+                        # Not a point, parse it as recurrence later
+                        exclusion_points.append(exclusion)
 
             intv = result.groupdict().get("intv")
             intv_context_truncated_point = None

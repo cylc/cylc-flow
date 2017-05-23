@@ -23,7 +23,7 @@ import re
 import unittest
 
 from cylc.cycling import (
-    PointBase, IntervalBase, SequenceBase, PointParsingError,
+    PointBase, IntervalBase, SequenceBase, ExclusionBase, PointParsingError,
     IntervalParsingError, parse_exclusion
 )
 from cylc.time_parser import CylcMissingContextPointError
@@ -124,7 +124,7 @@ class IntegerPoint(PointBase):
     def __init__(self, value):
         if isinstance(value, int):
             value = str(value)
-        super(IntegerPoint, self).__init__(value)
+        super(IntegerPoint, self).__init__(str(value))
 
     def add(self, other):
         """Add other.value to self.value as integers."""
@@ -226,6 +226,34 @@ class IntegerInterval(IntervalBase):
         return bool(int(self))
 
 
+class IntegerExclusions(ExclusionBase):
+    """A collection of integer exclusion points, or sequences of
+    integers that are treated in an exclusionary manner."""
+
+    def __init__(self, excl_points, start_point, end_point=None):
+        """creates an exclusions object that can contain integer points
+        or integer sequences to be used as excluded points."""
+        super(IntegerExclusions, self).__init__(start_point, end_point)
+
+        self.build_exclusions(excl_points)
+
+    def build_exclusions(self, excl_points):
+        for point in excl_points:
+            try:
+                # Try making an integer point
+                integer_point = get_point_from_expression(
+                    point,
+                    None,
+                    is_required=False)
+                self.exclusion_points.add(integer_point.standardise())
+            except PointParsingError:
+                # Try making an integer sequence
+                integer_exclusion_sequence = (IntegerSequence(
+                    point, self.exclusion_start_point,
+                    self.exclusion_end_point))
+                self.exclusion_sequences.append(integer_exclusion_sequence)
+
+
 class IntegerSequence(SequenceBase):
     """Integer points at a regular interval."""
 
@@ -262,18 +290,10 @@ class IntegerSequence(SequenceBase):
         # offset must be stored to compute the runahead limit
         self.i_offset = IntegerInterval('P0')
 
+        self.exclusions = None
+
         matched_recurrence = False
         expression, excl_points = parse_exclusion(dep_section)
-        # Create a list of multiple exclusion points, if there are any.
-        if excl_points:
-            self.exclusions = set()
-            for excl in excl_points:
-                self.exclusions.add(get_point_from_expression(
-                    excl,
-                    None,
-                    is_required=False))
-        else:
-            self.exclusions = None
 
         for rec, format_num in RECURRENCE_FORMAT_RECS:
             results = rec.match(expression)
@@ -382,6 +402,13 @@ class IntegerSequence(SequenceBase):
                 IntegerInterval.from_interval(remainder)
             )
             # if i_step is None here, points will just be None (out of bounds)
+
+        # Create a list of multiple exclusion points, if there are any.
+        if excl_points:
+            self.exclusions = IntegerExclusions(excl_points,
+                                                self.p_start, self.p_stop)
+        else:
+            self.exclusions = None
 
     def get_interval(self):
         """Return the cycling interval of this sequence."""
@@ -595,6 +622,51 @@ class TestIntegerSequence(unittest.TestCase):
             output.append(point)
             point = sequence.get_next_point(point)
         self.assertEqual([int(out) for out in output], [1, 4, 5, 6, 8, 9, 10])
+
+    def test_multiple_exclusions_integer_sequence(self):
+        """Tests the multiple exclusion syntax for integer notation"""
+        sequence = IntegerSequence('P1 ! P2', 1, 10)
+        output = []
+        point = sequence.get_start_point()
+        while point:
+            output.append(point)
+            point = sequence.get_next_point(point)
+        self.assertEqual([int(out) for out in output], [2, 4, 6, 8, 10])
+
+    def test_multiple_exclusions_integer_sequence2(self):
+        """Tests the multiple exclusion syntax for integer notation"""
+        sequence = IntegerSequence('P1 ! +P1/P2', 1, 10)
+        output = []
+        point = sequence.get_start_point()
+        while point:
+            output.append(point)
+            point = sequence.get_next_point(point)
+        self.assertEqual([int(out) for out in output], [1, 3, 5, 7, 9])
+
+    def test_multiple_exclusions_integer_sequence3(self):
+        """Tests the multiple exclusion syntax for integer notation"""
+        sequence = IntegerSequence('P1 ! (P2, 6, 8) ', 1, 10)
+        output = []
+        point = sequence.get_start_point()
+        while point:
+            output.append(point)
+            point = sequence.get_next_point(point)
+        self.assertEqual([int(out) for out in output], [2, 4, 10])
+
+    def test_multiple_exclusions_integer_sequence_weird_valid_formatting(self):
+        """Tests the multiple exclusion syntax for integer notation"""
+        sequence = IntegerSequence('P1 !(P2,     6,8) ', 1, 10)
+        output = []
+        point = sequence.get_start_point()
+        while point:
+            output.append(point)
+            point = sequence.get_next_point(point)
+        self.assertEqual([int(out) for out in output], [2, 4, 10])
+
+    def test_multiple_exclusions_integer_sequence_invalid_formatting(self):
+        """Tests the multiple exclusion syntax for integer notation"""
+        sequence = 'P1 !(6,8), P2 '
+        self.assertRaises(Exception, IntegerSequence, sequence, 1, 10)
 
     def test_multiple_exclusions_extensive(self):
         """Tests IntegerSequence methods for sequences with multi-exclusions"""
