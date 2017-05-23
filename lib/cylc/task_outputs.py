@@ -60,7 +60,7 @@ class TaskOutputs(object):
     def __init__(self, tdef, point):
         self._by_message = {}
         self._by_trigger = {}
-        for trigger, message in tdef.get_outputs(point):
+        for trigger, message in tdef.outputs:
             self.add(message, trigger)
 
     def add(self, message, trigger=None, is_completed=False):

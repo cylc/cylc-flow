@@ -173,8 +173,3 @@ class TaskDef(object):
             return max_cutoff_point
         # There aren't any dependent tasks in other cycles for my_point.
         return my_point
-
-    def get_outputs(self, point):
-        """Yield task message outputs for initialisation of TaskOutputs."""
-        for key, msg in self.outputs:
-            yield (key, re.sub('\[.*\]', str(point), msg))

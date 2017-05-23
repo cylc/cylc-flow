@@ -1568,11 +1568,11 @@ class SuiteConfig(object):
 
             # Check for message trigger offsets.
             outputs = self.cfg['runtime'][lnode.name]['outputs']
-            for regex in [BCOMPAT_MSG_RE_C5, BCOMPAT_MSG_RE_C6]:
-                for message in outputs.values():
-                    if regex.match(message):
-                        raise SuiteConfigError(
-                            'ERROR: Message trigger offsets are obsolete.')
+            for message in outputs.values():
+                if (BCOMPAT_MSG_RE_C5.match(message) or
+                        BCOMPAT_MSG_RE_C6.match(message)):
+                    raise SuiteConfigError(
+                        'ERROR: Message trigger offsets are obsolete.')
 
             # Qualifier.
             if outputs and lnode.output in outputs:

@@ -69,7 +69,7 @@ class Prerequisite(object):
         self.satisfied[message] = False
         if hasattr(self, 'all_satisfied'):
             self.all_satisfied = False
-        match = re.match(self.__class__.CYCLE_POINT_RE, message)
+        match = self.__class__.CYCLE_POINT_RE.match(message)
         if match:
             self.target_point_strings.append(match.groups()[0])
         if pre_initial:

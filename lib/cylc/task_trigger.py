@@ -137,22 +137,31 @@ class Dependency(object):
             cylc.prerequisite.Prerequisite
 
         """
+        # Create Prerequisite.
         cpre = Prerequisite(point, tdef.start_point)
+
+        # Loop over TaskTrigger instances.
         for task_trigger in self.task_triggers:
             if task_trigger.cycle_point_offset is not None:
+                # Inter-cycle trigger - compute the trigger's cycle point from
+                # its offset.
                 prereq_offset_point = get_point_relative(
                     task_trigger.cycle_point_offset, point)
                 if prereq_offset_point > point:
+                    # Update tdef.max_future_prereq_offset.
                     prereq_offset = prereq_offset_point - point
                     if (tdef.max_future_prereq_offset is None or
                             (prereq_offset >
                              tdef.max_future_prereq_offset)):
                         tdef.max_future_prereq_offset = (
                             prereq_offset)
+                # Register task message with Prerequisite object.
                 cpre.add(task_trigger.get_message(point),
                          ((prereq_offset_point < tdef.start_point) &
                           (point >= tdef.start_point)))
             else:
+                # Trigger is within the same cycle point.
+                # Register task message with Prerequisite object.
                 cpre.add(task_trigger.get_message(point))
         cpre.set_condition(self.get_expression(point))
         return cpre
