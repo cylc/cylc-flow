@@ -5897,53 +5897,48 @@ ignored.
 \subsection{Custom Job Submission Methods}
 \label{CustomJobSubmissionMethods}
 
-Defining a new batch system handler requires a little Python programming. You
-can use one of the built-in methods as an example, and read the documentation
-in the header of the \lstinline=cylc.batch_sys_manager= module.
+Defining a new batch system handler requires a little Python programming. Use
+the built-in handlers as examples, and read the documentation in
+\lstinline=lib/cylc/batch_sys_manager.py=.
 
 \lstset{language=Python}
 
 \subsubsection{An Example}
 
-The following user-defined job submission class, called {\em qsub},
-overrides the built-in {\em pbs} class to change the directive
-prefix from \lstinline=#PBS= to \lstinline=#QSUB=:
+The following \lstinline=qsub.py= module overrides the built-in {\em pbs}
+batch system handler to to change the directive prefix from \lstinline=#PBS= to
+\lstinline=#QSUB=:
 
 \begin{lstlisting}
 #!/usr/bin/env python
 
 from cylc.batch_sys_handlers.pbs import PBSHandler
 
-
 class QSUBHandler(PBSHandler):
-    """A user defined batch system handler."""
     DIRECTIVE_PREFIX = "#QSUB "
-
 
 BATCH_SYSTEM_HANDLER = QSUBHandler()
 \end{lstlisting}
 
-To check that this works correctly save the new source file to
-\lstinline=qsub.py= in one of the allowed locations (see just below),
-use it in a suite definition:
+If this is in the Python search path (see~\ref{Where To Put Batch System
+Handler Modules} below) you can use it by name in suite definitions:
 \lstset{language=suiterc}
 \begin{lstlisting}
-# SUITE.rc
-# $HOME/test/suite.rc
 [scheduling]
     [[dependencies]]
         graph = "a"
 [runtime]
     [[root]]
         [[[job]]]
-            batch system = qsub
+            batch system = qsub  # <---!
             execution time limit = PT1M
         [[[directives]]]
             -l nodes = 1
             -q = long
             -V =
 \end{lstlisting}
-and generate a job script to see the resulting directives:
+
+Generate a job script to see the resulting directives:
 \lstset{language=transcript}
 \begin{lstlisting}
 $ cylc register test $HOME/test
@@ -5957,23 +5952,23 @@ $ cylc jobscript test a.1 | grep QSUB
 #QSUB -V
 \end{lstlisting}
 
-\subsubsection{Where To Put New Job Submission Modules}
+(Of course this suite will fail at run time because we only changed the
+directive format, and PBS does not accept \lstinline=#QSUB= directives in
+reality).
 
-You new job submission class code should be saved to a file with
-the same name as the class (plus ``.py'' extension). It can reside
-in any of the following locations, depending on how generally useful
-the new method is and whether or not you have write-access to the cylc
-source tree:
+\subsubsection{Where To Put Batch System Handler Modules}
+\label{Where To Put Batch System Handler Modules}
+
+{\em Custom batch system handlers must be installed on suite and job
+hosts} in one of these locations:
 \begin{myitemize}
-    \item a \lstinline=lib/python= sub-directory of your suite definition
-        directory.
-    \item any directory in your \lstinline=$PYTHONPATH=.
-    \item in the \lstinline=lib/cylc/batch_sys_handlers= directory of
-        the cylc source tree.
+    \item under \lstinline=<suite-def-path>/lib/python/= 
+    \item under \lstinline=<cylc-path>/lib/cylc/batch_sys_handlers/=
+    \item or anywhere in \lstinline=$PYTHONPATH=
 \end{myitemize}
 
-%\pagebreak
-
+(A note for Rose users: \lstinline=rose suite-run= automatically installs
+\lstinline=<suite-def-path>/lib/python/= to job hosts).
 
 \section{Running Suites}
 \label{RunningSuites}
