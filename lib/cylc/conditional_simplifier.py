@@ -177,8 +177,7 @@ class ConditionalSimplifier(object):
         flattened = copy.deepcopy(expr)
         for i in range(len(flattened)):
             if isinstance(flattened[i], list):
-                flattened[i] = cls.flatten_nested_expr(
-                    flattened[i])
+                flattened[i] = cls.flatten_nested_expr(flattened[i])
         if isinstance(flattened, list):
             flattened = (" ").join(flattened)
         flattened = "(" + flattened
