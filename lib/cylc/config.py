@@ -60,8 +60,7 @@ CLOCK_OFFSET_RE = re.compile(r'(' + TaskID.NAME_RE + r')(?:\(\s*(.+)\s*\))?')
 EXT_TRIGGER_RE = re.compile('(.*)\s*\(\s*(.+)\s*\)\s*')
 NUM_RUNAHEAD_SEQ_POINTS = 5  # Number of cycle points to look at per sequence.
 
-# Message trigger offset regex(es).
-BCOMPAT_MSG_RE_C5 = re.compile(r'^(.*)\[\s*T\s*(([+-])\s*(\d+))?\s*\](.*)$')
+# Message trigger offset regex.
 BCOMPAT_MSG_RE_C6 = re.compile(r'^(.*)\[\s*(([+-])?\s*(.*))?\s*\](.*)$')
 
 try:
@@ -1569,8 +1568,7 @@ class SuiteConfig(object):
             # Check for message trigger offsets.
             outputs = self.cfg['runtime'][lnode.name]['outputs']
             for message in outputs.values():
-                if (BCOMPAT_MSG_RE_C5.match(message) or
-                        BCOMPAT_MSG_RE_C6.match(message)):
+                if BCOMPAT_MSG_RE_C6.match(message):
                     raise SuiteConfigError(
                         'ERROR: Message trigger offsets are obsolete.')
 
