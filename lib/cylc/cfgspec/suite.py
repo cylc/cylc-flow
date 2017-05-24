@@ -372,6 +372,7 @@ SPEC = {
                 'failed handler': vdr(vtype='string_list'),
                 'submission failed handler': vdr(vtype='string_list'),
                 'warning handler': vdr(vtype='string_list'),
+                'critical handler': vdr(vtype='string_list'),
                 'retry handler': vdr(vtype='string_list'),
                 'submission retry handler': vdr(vtype='string_list'),
                 'execution timeout handler': vdr(vtype='string_list'),
