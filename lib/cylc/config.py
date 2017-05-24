@@ -1500,6 +1500,10 @@ class SuiteConfig(object):
             for item in self.cfg['runtime'][name]['outputs'].items():
                 if item not in self.taskdefs[name].outputs:
                     self.taskdefs[name].outputs.append(item)
+                # Check for obsolete task message offsets.
+                if BCOMPAT_MSG_RE_C6.match(item[1]):
+                    raise SuiteConfigError(
+                        'ERROR: Message trigger offsets are obsolete.')
 
     def generate_triggers(self, lexpression, left_nodes, right, seq,
                           suicide, base_interval, task_triggers):
@@ -1565,14 +1569,8 @@ class SuiteConfig(object):
                 ltaskdef.intercycle_offsets.add(offset_tuple)
                 cycle_point_offset = lnode.offset_string
 
-            # Check for message trigger offsets.
-            outputs = self.cfg['runtime'][lnode.name]['outputs']
-            for message in outputs.values():
-                if BCOMPAT_MSG_RE_C6.match(message):
-                    raise SuiteConfigError(
-                        'ERROR: Message trigger offsets are obsolete.')
-
             # Qualifier.
+            outputs = self.cfg['runtime'][lnode.name]['outputs']
             if outputs and lnode.output in outputs:
                 # Task message.
                 qualifier = outputs[lnode.output]
