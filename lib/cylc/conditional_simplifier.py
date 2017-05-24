@@ -23,7 +23,7 @@ import copy
 
 class ConditionalSimplifier(object):
     """A class to simplify logical expressions"""
-    RE_CONDITIONALS = re.compile("(&|\||\(|\))")
+    RE_CONDITIONALS = re.compile("([&|()])")
 
     def __init__(self, expr, clean):
         self.raw_expression = expr
@@ -65,11 +65,12 @@ class ConditionalSimplifier(object):
         tokenised = cls.RE_CONDITIONALS.split(message)
         listified = ["["]
         for item in tokenised:
-            if item.strip() != "" and item.strip() not in ["(", ")"]:
-                listified.append("'" + item.strip() + "',")
-            elif item.strip() == "(":
+            item = item.strip()
+            if item != "" and item not in ["(", ")"]:
+                listified.append("'" + item + "',")
+            elif item == "(":
                 listified.append("[")
-            elif item.strip() == ")":
+            elif item == ")":
                 if listified[-1].endswith(","):
                     listified[-1] = listified[-1][0:-1]
                 listified.append("],")

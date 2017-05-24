@@ -1572,14 +1572,14 @@ class SuiteConfig(object):
             # Qualifier.
             outputs = self.cfg['runtime'][lnode.name]['outputs']
             if outputs and lnode.output in outputs:
-                # Task message.
+                # Qualifier is a task message.
                 qualifier = outputs[lnode.output]
+            elif lnode.output:
+                # Qualifier specified => standardise.
+                qualifier = TaskTrigger.get_trigger_name(lnode.output)
             else:
-                # Built-in qualifier.
-                if lnode.output:
-                    qualifier = TaskTrigger.get_trigger_name(lnode.output)
-                else:
-                    qualifier = TASK_OUTPUT_SUCCEEDED
+                # No qualifier specified => use "succeeded".
+                qualifier = TASK_OUTPUT_SUCCEEDED
 
             # Generate TaskTrigger if not already done.
             key = (lnode.name, abs_cycle_point, cycle_point_offset, qualifier)
