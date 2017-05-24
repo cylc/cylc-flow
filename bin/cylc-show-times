@@ -20,17 +20,23 @@
 
 Retrieve timing information for the given cylc suite that can be
 used for fine-grain diagnostics for wait time and run time performance
-analysis.  Two main categories of output are available:
+analysis.  Two main categories of output are available: summary output
+(in text or web format) and raw output.  If an output filename is
+supplied, output is redirected there otherwise both summary and raw
+outputs are printed to standard output.
 
 Summary Output (the default):
-Tabular data stratified by host and batch system that provides a statistical
+Data stratified by host and batch system that provides a statistical
 summary of
     1. Queue wait time (duration between task submission and start times)
     2. Task run time (duration between start and succeed times)
     3. Total run time (duration between task submission and succeed times)
-This statistical summary requires the Pandas library for data analysis and
-will print an error message if summary output is invoked without this library
-being available.
+Text output will show summary tables in text only.  Web output generates
+HTML that contains boxplots as well as summary tables suitable for viewing
+in a browser.  Both summary options require the use of the Pandas library,
+and the web summary output requires the Matplotlib plotting library.  If
+these libraries are not available, an error message will be printed and the
+summary will not be generated.
 
 Raw Output:
 A flat list of tabular data that provides (for each task and cycle) the
@@ -53,12 +59,34 @@ if remrun().execute():
     sys.exit(0)
 
 import cStringIO as StringIO
+import contextlib
 import os
 
 import cylc.flags
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.rundb import CylcSuiteDAO
+
+
+@contextlib.contextmanager
+def smart_open(filename=None):
+    """
+    Allow context management for output to either a file or
+    to standard output transparently.
+
+    See https://stackoverflow.com/a/17603000
+
+
+    """
+    if filename and filename != '-':
+        fh = open(filename, 'w')
+    else:
+        fh = sys.stdout
+    try:
+        yield fh
+    finally:
+        if fh is not sys.stdout:
+            fh.close()
 
 
 def main():
@@ -73,25 +101,42 @@ def main():
     )
     parser.add_option(
         "-s", "--summary",
-        help="Show summary timing output for tasks.",
+        help="Show textual summary timing output for tasks.",
         action="store_true", default=False, dest="show_summary"
     )
+    parser.add_option(
+        "-w", "--web-summary",
+        help="Show HTML summary timing output for tasks.",
+        action="store_true", default=False, dest="html_summary"
+    )
+    parser.add_option(
+        "-O", "--output-file",
+        help="Output to a specific file",
+        action="store", default=None, dest="output_filename")
     options, args = parser.parse_args()
 
-    if options.show_raw and options.show_summary:
-        parser.error('Cannot combine summary and raw output (choose one)')
-    elif not (options.show_raw or options.show_summary):
-        # Neither one specified - choose summary by default
+    output_options = [
+        options.show_raw, options.show_summary, options.html_summary
+    ]
+    if output_options.count(True) > 1:
+        parser.error('Cannot combine output formats (choose one)')
+    if output_options.count(True) == 0:
+        # No output specified - choose summary by default
         options.show_summary = True
 
     suite = args.pop(0)
     run_db = _get_dao(suite)
-    buf = format_rows(*run_db.select_task_events_for_timing())
+    row_buf = format_rows(*run_db.select_task_events_for_timing())
 
-    if options.show_raw:
-        _raw_output(buf)
-    elif options.show_summary:
-        _summary_output(buf)
+    with smart_open(options.output_filename) as output:
+        if options.show_raw:
+            output.write(row_buf.getvalue())
+        else:
+            if options.show_summary:
+                summary = TextTimingSummary(row_buf)
+            elif options.html_summary:
+                summary = HTMLTimingSummary(row_buf)
+            summary.write_summary(output)
 
 
 def format_rows(header, rows):
@@ -129,66 +174,193 @@ def _get_dao(suite):
     return CylcSuiteDAO(pub_db_path, is_public=True)
 
 
-def _raw_output(buf):
-    """Print raw tabular output to the screen."""
-    sys.stdout.write(buf.getvalue())
+class TimingSummary(object):
+    """Base class for summarizing timing output from cylc run database."""
 
+    def __init__(self, filepath_or_buffer=None):
+        """Set up internal dataframe storage for time durations."""
 
-def _summary_output(buf):
-    """
-    Print summary tabular output (stratified by host and batch system)
-    to the screen.
+        self._check_imports()
+        if filepath_or_buffer is not None:
+            self.read_timings(filepath_or_buffer)
+        else:
+            self.df = None
+            self.by_host_and_batch = None
 
-    """
-    try:
+    def read_timings(self, filepath_or_buffer):
+        """
+        Set up time duration dataframe storage based on start/stop/succeed
+        times from flat database output.
+
+        """
         import pandas as pd
-    except ImportError:
-        sys.stderr.write(
-            "Error importing pandas - summary output not available.\n"
+        df = pd.read_csv(
+            filepath_or_buffer, delim_whitespace=True, index_col=[0, 1, 2, 3],
+            parse_dates=[4, 5, 6]
         )
-        sys.exit(1)
-    df = pd.read_csv(
-        buf, delim_whitespace=True, index_col=[0, 1, 2, 3],
-        parse_dates=[4, 5, 6]
-    )
-    df_dt = pd.DataFrame({
-        'queue_time': (df['start_time'] - df['submit_time']).apply(_dt_to_s),
-        'run_time': (df['succeed_time'] - df['start_time']).apply(_dt_to_s),
-        'total_time': (df['succeed_time'] - df['submit_time']).apply(_dt_to_s),
-    })
-    for group, df_g in df_dt.groupby(level=['host', 'batch_system']):
-        _print_h1_title('Host: %s\tBatch System: %s' % group)
-        df_summary = df_g.groupby(level='name').describe()
-        if df_summary.index.nlevels > 1:
-            df_summary = df_summary.unstack()   # for pandas < 0.20.0
-        for category in sorted(set(df_summary.columns.get_level_values(0))):
-            _print_h2_title(category)
-            print df_summary[category].to_string()
-            print ''
+        self.df = pd.DataFrame({
+            'queue_time': (
+                df['start_time'] - df['submit_time']).apply(self._dt_to_s),
+            'run_time':  (
+                df['succeed_time'] - df['start_time']).apply(self._dt_to_s),
+            'total_time': (
+                df['succeed_time'] - df['submit_time']).apply(self._dt_to_s),
+        })
+        self.by_host_and_batch = self.df.groupby(
+            level=['host', 'batch_system']
+        )
 
+    def write_summary(self, buf=None):
+        """Using the stored timings dataframe, output the data summary."""
 
-def _dt_to_s(dt):
-    """Convert timedelta duration to seconds."""
-    try:
-        return dt.total_seconds()
-    except AttributeError:
-        # Older versions of pandas have the timedelta as a Numpy timedelta64
-        # type, which didn't support total_seconds
+        if buf is None:
+            buf = sys.stdout
+        self.write_summary_header(buf)
+        for group, df in self.by_host_and_batch:
+            self.write_group_header(buf, group)
+            df_reshape = df.unstack('name').stack(level=0)
+            df_describe = df.groupby(level='name').describe()
+            if df_describe.index.nlevels > 1:
+                df_describe = df_describe.unstack()  # for pandas < 0.20.0
+            df_describe.index.rename(None, inplace=True)
+            for timing_category in self.df.columns:
+                self.write_category(
+                    buf, timing_category, df_reshape, df_describe
+                )
+        self.write_summary_footer(buf)
+
+    def write_summary_header(self, buf):
+        pass
+
+    def write_summary_footer(self, buf):
+        pass
+
+    def write_group_header(self, buf, group):
+        pass
+
+    def write_category(self, buf, category, df_reshape, df_describe):
+        pass
+
+    def _check_imports(self):
+        try:
+            import pandas as pd
+        except ImportError:
+            msg = 'Cannot import pandas - summary unavailable.'
+            sys.stderr.write(msg)
+            raise Exception(msg)
+
+    @staticmethod
+    def _dt_to_s(dt):
         import pandas as pd
-        return pd.Timedelta(dt).total_seconds()
+        try:
+            return dt.total_seconds()
+        except AttributeError:
+            # Older versions of pandas have the timedelta as a numpy
+            # timedelta64 type, which didn't support total_seconds
+            return pd.Timedelta(dt).total_seconds()
 
 
-def _print_h1_title(title, linewidth=80):
-    """Display a level-1 header."""
-    print '=' * linewidth
-    print title.center(linewidth)
-    print '=' * linewidth
+class TextTimingSummary(TimingSummary):
+    """Timing summary in text form."""
+
+    line_width = 80
+
+    def write_group_header(self, buf, group):
+        title = 'Host: %s\tBatch System: %s' % group
+        buf.write('=' * self.line_width + '\n')
+        buf.write(title.center(self.line_width-1) + '\n')
+        buf.write('=' * self.line_width + '\n')
+
+    def write_category(self, buf, category, df_reshape, df_describe):
+        buf.write(category.center(self.line_width) + '\n')
+        buf.write(('-'*len(category)).center(self.line_width) + '\n')
+        buf.write(df_describe[category].to_string())
+        buf.write('\n\n')
 
 
-def _print_h2_title(title, linewidth=80):
-    """Display a level-2 header."""
-    print title.center(linewidth)
-    print ('-' * len(title)).center(linewidth)
+class HTMLTimingSummary(TimingSummary):
+    """Timing summary in HTML form."""
+
+    def write_summary_header(self, buf):
+        css = """
+            body {
+                font-family: Sans-Serif;
+                text-align: center;
+            }
+            h1 {
+                background-color: grey;
+            }
+            h2 {
+                width: 85%;
+                background-color: #f0f0f0;
+                margin: auto;
+            }
+            table {
+                width: 75%;
+                margin: auto;
+                border-collapse: collapse;
+            }
+            tr:nth-child(even) {
+                background-color: #f2f2f2;
+            }
+            td {
+                text-align: right;
+            }
+            th, td {
+                border-bottom: 1px solid grey;
+            }
+            svg {
+                width: 65%;
+                height: auto;
+                margin: auto;
+                display: block;
+            }
+            .timing {
+                padding-bottom: 40px;
+            }
+        """
+
+        buf.write('<html><head><style>%s</style></head><body>' % css)
+
+    def write_summary_footer(self, buf):
+        buf.write('</body></html>')
+
+    def write_group_header(self, buf, group):
+        buf.write('<h1>Timings for host %s using batch system %s</h1>' % group)
+
+    def write_category(self, buf, category, df_reshape, df_describe):
+        import matplotlib.pyplot as plt
+        buf.write('<div class="timing" id=%s>' % category)
+        buf.write('<h2>%s</h2>\n' % (category.replace('_', ' ').title()))
+        ax = df_reshape.xs(category, level=3).plot(kind='box', vert=False)
+        ax.invert_yaxis()
+        ax.set_xlabel('Seconds')
+        plt.tight_layout()
+        plt.gcf().savefig(buf, format='svg')
+        try:
+            table = df_describe[category].to_html(
+                classes="summary", index_names=False, border=0
+            )
+        except TypeError:
+            # older pandas don't support the "border" argument
+            # so explicitly remove it
+            table = df_describe[category].to_html(
+                classes="summary", index_names=False
+            )
+            table = table.replace('border="1"', '')
+        buf.write(table)
+        buf.write('</div>')
+        pass
+
+    def _check_imports(self):
+        try:
+            import matplotlib
+            matplotlib.use('Agg')
+        except ImportError:
+            msg = 'Cannot import pandas - summary unavailable.'
+            sys.stderr.write(msg)
+            raise Exception(msg)
+        super(HTMLTimingSummary, self)._check_imports()
 
 
 if __name__ == "__main__":
