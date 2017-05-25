@@ -702,29 +702,18 @@ class CylcSuiteDAO(object):
                 %(task_jobs)s.time_run,
                 %(task_jobs)s.time_run_exit
             FROM
-                %(task_jobs)s
-                INNER JOIN
-                (
-                    SELECT
-                        name,
-                        cycle,
-                        MAX(submit_num) AS max_retry
-                    FROM
-                        %(task_events)s
-                    WHERE
-                        event = '%(succeeded)s'
-                    GROUP BY
-                        name, cycle
-                ) AS succeeded_tasks
-                ON
-                    %(task_jobs)s.name = succeeded_tasks.name
-                    AND
-                    %(task_jobs)s.cycle = succeeded_tasks.cycle
-                    AND
-                    %(task_jobs)s.submit_num = succeeded_tasks.max_retry
+                %(task_jobs)s INNER JOIN %(task_states)s
+            ON
+                %(task_jobs)s.name = %(task_states)s.name
+                AND
+                %(task_jobs)s.cycle = %(task_states)s.cycle
+                AND
+                %(task_jobs)s.submit_num = %(task_states)s.submit_num
+            WHERE
+                %(task_states)s.status = '%(succeeded)s'
         """ % {
-            'task_events': self.TABLE_TASK_EVENTS,
             'task_jobs': self.TABLE_TASK_JOBS,
+            'task_states': self.TABLE_TASK_STATES,
             'succeeded': 'succeeded',
         }
         columns = (
