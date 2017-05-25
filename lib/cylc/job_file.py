@@ -206,12 +206,33 @@ class JobFileWriter(object):
             ' '.join(job_conf['namespace_hierarchy']))
         handle.write(
             '\n    export CYLC_TASK_TRY_NUMBER=%s' % job_conf['try_num'])
+        if job_conf['param_var']:
+                for var, val in job_conf['param_var'].items():
+                    value = str(val)  # (needed?)
+                    match = re.match(r"^(~[^/\s]*/)(.*)$", value)
+                    if match:
+                        # ~foo/bar or ~/bar
+                        # write as ~foo/"bar" or ~/"bar"
+                        head, tail = match.groups()
+                        handle.write('\n    export %s=%s"%s"' % (var, head, tail))
+                    elif re.match(r"^~[^\s]*$", value):
+                        # plain ~foo or just ~
+                        # just leave unquoted as subsequent spaces don't
+                        # make sense in this case anyway
+                        handle.write('\n    export %s=%s' % (var, value))
+                    else:
+                        # Non tilde values - quote the lot.
+                        # This gets values like "~one ~two" too, but these
+                        # (in variable values) aren't expanded by the shell
+                        # anyway so it doesn't matter.
+                        handle.write('\n    export %s="%s"' % (var, value))
         if job_conf['work_d']:
             # Note: not an environment variable, but used by job.sh
             handle.write(
                 "\n    CYLC_TASK_WORK_DIR_BASE='%s'" % job_conf['work_d'])
         handle.write("\n}")
-
+        
+ 
         # SSH comms variables. Note:
         # For "poll", contact file will not be installed, and job will not
         # attempt to communicate back.

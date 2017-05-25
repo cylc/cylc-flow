@@ -155,6 +155,7 @@ class SuiteConfig(object):
         self.actual_first_point = None
         self._start_point_for_actual_first_point = None
 
+        self.task_param = {}
         self.custom_runahead_limit = None
         self.max_num_active_cycle_points = None
 
@@ -764,7 +765,6 @@ class SuiteConfig(object):
         with a lot of runtime config. We should consider ditching OrderedDict
         and instead using an ordinary dict with a separate list of keys.
         """
-
         if (not self.parameters[0] and
                 not any(',' in ns for ns in self.cfg['runtime'])):
             # No parameters, no namespace lists: no expansion needed.
@@ -782,7 +782,9 @@ class SuiteConfig(object):
                     new_environ = OrderedDictWithDefaults()
                     for p_name, p_val in indices.items():
                         p_var_name = 'CYLC_TASK_PARAM_%s' % p_name
-                        new_environ[p_var_name] = p_val
+                        new_param = OrderedDictWithDefaults()
+                        new_param[p_var_name] = p_val
+                        self.task_param[name] = new_param
                     if 'environment' in newruntime[name]:
                         for k, v in newruntime[name]['environment'].items():
                             new_environ[k] = v
@@ -955,7 +957,6 @@ class SuiteConfig(object):
 
         results = OrderedDictWithDefaults()
         n_reps = 0
-
         already_done = {}  # to store already computed namespaces by mro
 
         # Loop through runtime members, 'root' first.
@@ -1997,6 +1998,7 @@ class SuiteConfig(object):
     def _get_taskdef(self, name):
         """Get the dense task runtime."""
         # (TaskDefError caught above)
+ 
         try:
             rtcfg = self.cfg['runtime'][name]
         except KeyError:
@@ -2024,6 +2026,9 @@ class SuiteConfig(object):
         foo = copy(self.runtime['linearized ancestors'][name])
         foo.reverse()
         taskd.namespace_hierarchy = foo
+       
+        if self.task_param.has_key(name): 
+            taskd.param_var = copy(self.task_param[name])
 
         return taskd
 

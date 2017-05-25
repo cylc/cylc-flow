@@ -922,7 +922,6 @@ class TaskJobManager(object):
                 suite, "suite job log directory",
                 itask.task_host, itask.task_owner),
             job_d, self.JOB_FILE_BASE)
-
         return {
             'batch_system_name': rtconfig['job']['batch system'],
             'batch_submit_command_template': (
@@ -949,4 +948,5 @@ class TaskJobManager(object):
             'task_id': itask.identity,
             'try_num': itask.get_try_num(),
             'work_d': rtconfig['work sub-directory'],
+            'param_var':itask.tdef.param_var,
         }
