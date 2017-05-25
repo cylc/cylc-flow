@@ -44,6 +44,7 @@ def is_help(arg):
     """Return True if arg looks like a "help" command."""
     return (arg in ('-h', '--help', '--hlep', 'help', 'hlep', '?'))
 
+
 def match_dict(abbrev, categories, title):
     """Allow any unique abbreviation to cylc categories"""
     matches = set()
@@ -64,6 +65,7 @@ def match_dict(abbrev, categories, title):
             title, abbrev,
             ' '.join(['|'.join(categories[cat]) for cat in matches])))
     return matches.pop()
+
 
 def match_command(abbrev):
     """Allow any unique abbrev to commands when no category is specified"""
@@ -96,6 +98,7 @@ def match_command(abbrev):
             abbrev,
             ' '.join(['|'.join(all_commands[com]) for com in matches])))
     return matches.pop()
+
 
 def pretty_print(incom, choose_dict, indent=True, numbered=False, sort=False):
     # pretty print commands or topics from a dict:
@@ -140,6 +143,7 @@ def pretty_print(incom, choose_dict, indent=True, numbered=False, sort=False):
             '.' * (longest - len(label[item])) + '...',
             incom[item])
 
+
 def category_help(category):
     coms = eval(category + '_commands')
     alts = '|'.join(categories[category])
@@ -152,11 +156,13 @@ def category_help(category):
     print 'COMMANDS:'
     pretty_print(comsum, coms, sort=True)
 
+
 def typo(str):
     corrected = str
     if str == 'gcycl':
         corrected = 'gcylc'
     return corrected
+
 
 # BEGIN MAIN
 general_usage = """
@@ -189,7 +195,7 @@ the abbreviated command:
   % cylc trigger SUITE TASK             # trigger TASK in SUITE
   % cylc tri SUITE TASK                 # ditto
   % cylc t SUITE TASK                   # ditto
-  
+
   % cylc get                            # Error: ambiguous command
 
 TASK IDENTIFICATION IN CYLC SUITES
@@ -432,14 +438,15 @@ comsum['job-logs-retrieve'] = (
     '(Internal) Retrieve logs from a remote host for a task job')
 comsum['check-triggering'] = 'A suite shutdown event hook for cylc testing'
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     # no arguments: print help and exit
     if len(sys.argv) == 1:
         from cylc.version import CYLC_VERSION
         print usage.replace("__CYLC_VERSION__", CYLC_VERSION)
         pretty_print(catsum, categories)
         sys.exit(1)
-    
+
     args = sys.argv[1:]
 
     if len(args) == 1:
@@ -474,7 +481,7 @@ if __name__=="__main__":
             from cylc.version import CYLC_VERSION
             print CYLC_VERSION
             sys.exit(0)
-    
+
         # cylc CATEGORY with no args => category help
         try:
             category = match_dict(args[0], categories, 'CATEGORY')
@@ -486,9 +493,9 @@ if __name__=="__main__":
         else:
             category_help(category)
             sys.exit(0)
-    
+
     command_args = []
-    
+
     if len(args) == 2 and (is_help(args[0]) or is_help(args[1])):
         # TWO ARGUMENTS, one help
         # cylc help CATEGORY
@@ -515,4 +522,3 @@ if __name__=="__main__":
             # cylc help CATEGORY
             category_help(category)
             sys.exit(0)
-
