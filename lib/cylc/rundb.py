@@ -694,47 +694,37 @@ class CylcSuiteDAO(object):
         """
         q = """
             SELECT
-                e.name,
-                e.cycle,
-                tj.user_at_host,
-                tj.batch_sys_name,
-                MAX(CASE WHEN e.event = '%(submitted)s' THEN e.time END),
-                MAX(CASE WHEN e.event = '%(started)s'   THEN e.time END),
-                MAX(CASE WHEN e.event = '%(succeeded)s' THEN e.time END)
+                %(task_jobs)s.name,
+                %(task_jobs)s.cycle,
+                %(task_jobs)s.user_at_host,
+                %(task_jobs)s.batch_sys_name,
+                %(task_jobs)s.time_submit,
+                %(task_jobs)s.time_run,
+                %(task_jobs)s.time_run_exit
             FROM
-                %(task_events)s as e
+                %(task_jobs)s
                 INNER JOIN
                 (
                     SELECT
-                        s.name AS name,
-                        s.cycle AS cycle,
-                        MAX(s.submit_num) AS max_retry
+                        name,
+                        cycle,
+                        MAX(submit_num) AS max_retry
                     FROM
-                        %(task_events)s as s
+                        %(task_events)s
                     WHERE
-                        s.event='%(succeeded)s'
+                        event = '%(succeeded)s'
                     GROUP BY
-                        s.name, s.cycle
+                        name, cycle
                 ) AS succeeded_tasks
                 ON
-                    e.name = succeeded_tasks.name
-                    AND e.cycle = succeeded_tasks.cycle
-                    AND e.submit_num = succeeded_tasks.max_retry
-                INNER JOIN
-                %(task_jobs)s as tj
-                ON
-                    tj.name = e.name
+                    %(task_jobs)s.name = succeeded_tasks.name
                     AND
-                    tj.cycle = e.cycle
+                    %(task_jobs)s.cycle = succeeded_tasks.cycle
                     AND
-                    tj.submit_num = succeeded_tasks.max_retry
-            GROUP BY
-                e.name, e.cycle, e.submit_num
+                    %(task_jobs)s.submit_num = succeeded_tasks.max_retry
         """ % {
             'task_events': self.TABLE_TASK_EVENTS,
             'task_jobs': self.TABLE_TASK_JOBS,
-            'submitted': 'submitted',
-            'started': 'started',
             'succeeded': 'succeeded',
         }
         columns = (

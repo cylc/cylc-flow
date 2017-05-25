@@ -16,14 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [util] show-times [OPTIONS] REG
+"""cylc [util] report-timings [OPTIONS] REG
 
-Retrieve timing information for the given cylc suite that can be
-used for fine-grain diagnostics for wait time and run time performance
-analysis.  Two main categories of output are available: summary output
-(in text or web format) and raw output.  If an output filename is
-supplied, output is redirected there otherwise both summary and raw
-outputs are printed to standard output.
+Retrieve suite timing information for wait and run time performance analysis.
+Raw output and summary output (in text or HTML format) are available.  Output
+is sent to standard output, unless an output filename is supplied.
 
 Summary Output (the default):
 Data stratified by host and batch system that provides a statistical
@@ -31,12 +28,9 @@ summary of
     1. Queue wait time (duration between task submission and start times)
     2. Task run time (duration between start and succeed times)
     3. Total run time (duration between task submission and succeed times)
-Text output will show summary tables in text only.  Web output generates
-HTML that contains boxplots as well as summary tables suitable for viewing
-in a browser.  Both summary options require the use of the Pandas library,
-and the web summary output requires the Matplotlib plotting library.  If
-these libraries are not available, an error message will be printed and the
-summary will not be generated.
+Summary tables can be output in plain text format, or HTML with embedded SVG
+boxplots.  Both summary options require the Pandas library, and the HTML
+summary option requires the Matplotlib library.
 
 Raw Output:
 A flat list of tabular data that provides (for each task and cycle) the
@@ -76,7 +70,6 @@ def smart_open(filename=None):
 
     See https://stackoverflow.com/a/17603000
 
-
     """
     if filename and filename != '-':
         fh = open(filename, 'w')
@@ -96,7 +89,7 @@ def main():
     )
     parser.add_option(
         "-r", "--raw",
-        help="Show raw timing output for downstream processing.",
+        help="Show raw timing output suitable for custom diagnostics.",
         action="store_true", default=False, dest="show_raw"
     )
     parser.add_option(
@@ -120,7 +113,7 @@ def main():
     ]
     if output_options.count(True) > 1:
         parser.error('Cannot combine output formats (choose one)')
-    if output_options.count(True) == 0:
+    if not any(output_options):
         # No output specified - choose summary by default
         options.show_summary = True
 
@@ -201,7 +194,7 @@ class TimingSummary(object):
         self.df = pd.DataFrame({
             'queue_time': (
                 df['start_time'] - df['submit_time']).apply(self._dt_to_s),
-            'run_time':  (
+            'run_time': (
                 df['succeed_time'] - df['start_time']).apply(self._dt_to_s),
             'total_time': (
                 df['succeed_time'] - df['submit_time']).apply(self._dt_to_s),
@@ -245,9 +238,7 @@ class TimingSummary(object):
         try:
             import pandas as pd
         except ImportError:
-            msg = 'Cannot import pandas - summary unavailable.'
-            sys.stderr.write(msg)
-            raise Exception(msg)
+            raise Exception('Cannot import pandas - summary unavailable.')
 
     @staticmethod
     def _dt_to_s(dt):
@@ -273,7 +264,7 @@ class TextTimingSummary(TimingSummary):
 
     def write_category(self, buf, category, df_reshape, df_describe):
         buf.write(category.center(self.line_width) + '\n')
-        buf.write(('-'*len(category)).center(self.line_width) + '\n')
+        buf.write(('-' * len(category)).center(self.line_width) + '\n')
         buf.write(df_describe[category].to_string())
         buf.write('\n\n')
 
@@ -357,9 +348,9 @@ class HTMLTimingSummary(TimingSummary):
             import matplotlib
             matplotlib.use('Agg')
         except ImportError:
-            msg = 'Cannot import pandas - summary unavailable.'
-            sys.stderr.write(msg)
-            raise Exception(msg)
+            raise Exception(
+                'Cannot import matplotlib - HTML summary unavailable.'
+            )
         super(HTMLTimingSummary, self)._check_imports()
 
 
