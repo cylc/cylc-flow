@@ -102,7 +102,6 @@ def replicate(target, source):
     common elements in target and otherwise adds elements to it.
     """
     if not source:
-        target = OrderedDictWithDefaults()
         return
     if hasattr(source, "defaults_"):
         target.defaults_ = pdeepcopy(source.defaults_)
