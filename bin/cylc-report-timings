@@ -259,7 +259,7 @@ class TextTimingSummary(TimingSummary):
     def write_group_header(self, buf, group):
         title = 'Host: %s\tBatch System: %s' % group
         buf.write('=' * self.line_width + '\n')
-        buf.write(title.center(self.line_width-1) + '\n')
+        buf.write(title.center(self.line_width - 1) + '\n')
         buf.write('=' * self.line_width + '\n')
 
     def write_category(self, buf, category, df_reshape, df_describe):
