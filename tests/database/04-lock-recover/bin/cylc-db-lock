@@ -10,9 +10,7 @@ def main():
         os.path.join(os.getenv("CYLC_SUITE_RUN_DIR"), "log", "db"))
     lockf(handle, LOCK_SH)
     call([
-        "cylc", "task", "message",
-        "%s I have locked the public database file" % (
-            os.getenv("CYLC_TASK_CYCLE_POINT"))])
+        "cylc", "task", "message", "I have locked the public database file"])
     suite_log_dir = os.getenv("CYLC_SUITE_LOG_DIR")
     while True:
         for line in open(os.path.join(suite_log_dir, "log")):

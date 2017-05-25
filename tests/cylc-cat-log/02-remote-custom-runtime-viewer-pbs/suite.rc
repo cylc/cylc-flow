@@ -11,7 +11,7 @@
         script = """
 echo rubbish
 echo garbage >&2
-cylc message '1 echo done'
+cylc message 'echo done'
 sleep 60
 """
         [[[remote]]]
@@ -23,7 +23,7 @@ sleep 60
             {{environ["CYLC_TEST_DIRECTIVES"]}}
 {% endif %}
         [[[outputs]]]
-            echo = "[] echo done"
+            echo = "echo done"
 
     [[b-task]]
         script = """

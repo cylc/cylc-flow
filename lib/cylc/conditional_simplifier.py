@@ -19,29 +19,58 @@
 import re
 import ast
 import copy
-import sys
 
 
 class ConditionalSimplifier(object):
     """A class to simplify logical expressions"""
+    RE_CONDITIONALS = re.compile("([&|()])")
 
     def __init__(self, expr, clean):
         self.raw_expression = expr
         self.clean_list = clean
         self.nested_expr = self.format_expr(self.raw_expression)
 
-    def listify(self, message):
-        """Convert a string containing a logical expression to a list"""
+    def get_cleaned(self):
+        """Return the simplified logical expression"""
+        cleaned = self.nested_expr
+        for item in self.clean_list:
+            cleaned = self.clean_expr(cleaned, item)
+        cleaned = self.flatten_nested_expr(cleaned)
+        return cleaned
+
+    @classmethod
+    def listify(cls, message):
+        """Convert a string containing a logical expression to a list
+
+        Examples:
+            >>> ConditionalSimplifier.listify('(foo)')
+            [['foo']]
+
+            >>> ConditionalSimplifier.listify('foo & (bar | baz)')
+            ['foo', '&', ['bar', '|', 'baz']]
+
+            >>> ConditionalSimplifier.listify('(a&b)|(c|d)&(e|f)')
+            [['a', '&', 'b'], '|', ['c', '|', 'd'], '&', ['e', '|', 'f']]
+
+            >>> ConditionalSimplifier.listify('a & (b, c,)')
+            ['a', '&', ['b, c,']]
+
+            >>> ConditionalSimplifier.listify('((foo)')
+            Traceback (most recent call last):
+            SyntaxError: unexpected EOF while parsing
+
+        """
         message = message.replace("'", "\"")
-        RE_CONDITIONALS = "(&|\||\(|\))"
-        tokenised = re.split("(&|\||\(|\))", message)
+
+        tokenised = cls.RE_CONDITIONALS.split(message)
         listified = ["["]
         for item in tokenised:
-            if item.strip() != "" and item.strip() not in ["(", ")"]:
-                listified.append("'" + item.strip() + "',")
-            elif item.strip() == "(":
+            item = item.strip()
+            if item != "" and item not in ["(", ")"]:
+                listified.append("'" + item + "',")
+            elif item == "(":
                 listified.append("[")
-            elif item.strip() == ")":
+            elif item == ")":
                 if listified[-1].endswith(","):
                     listified[-1] = listified[-1][0:-1]
                 listified.append("],")
@@ -52,7 +81,8 @@ class ConditionalSimplifier(object):
         listified = ast.literal_eval(listified)
         return listified
 
-    def get_bracketed(self, nest_me):
+    @classmethod
+    def get_bracketed(cls, nest_me):
         """Nest a list according to any brackets in it"""
         start = 0
         finish = len(nest_me)
@@ -69,24 +99,17 @@ class ConditionalSimplifier(object):
                 finish = i
                 break
         bracket_nested = nest_me[0:start + 1]
-        bracket_nested.append(self.get_bracketed(nest_me[start + 1:finish]))
+        bracket_nested.append(cls.get_bracketed(nest_me[start + 1:finish]))
         bracket_nested.extend(nest_me[finish:len(nest_me)])
         return bracket_nested
 
-    def get_cleaned(self):
-        """Return the simplified logical expression"""
-        cleaned = self.nested_expr
-        for item in self.clean_list:
-            cleaned = self.clean_expr(cleaned, item)
-        cleaned = self.flatten_nested_expr(cleaned)
-        return cleaned
-
-    def nest_by_oper(self, nest_me, oper):
+    @classmethod
+    def nest_by_oper(cls, nest_me, oper):
         """Nest a list based on a specified logical operation"""
         found = False
         for i in range(len(nest_me)):
             if isinstance(nest_me[i], list):
-                nest_me[i] = self.nest_by_oper(nest_me[i], oper)
+                nest_me[i] = cls.nest_by_oper(nest_me[i], oper)
             if nest_me[i] == oper:
                 found = i
                 break
@@ -97,11 +120,12 @@ class ConditionalSimplifier(object):
             nested += [nest_me[found - 1:found + 2]]
             if (found + 2) < len(nest_me):
                 nested += nest_me[found + 2:]
-            return self.nest_by_oper(nested, oper)
+            return cls.nest_by_oper(nested, oper)
         else:
             return nest_me
 
-    def clean_expr(self, nested_list, criterion):
+    @classmethod
+    def clean_expr(cls, nested_list, criterion):
         """Return a list with entries specified by 'criterion' removed"""
         cleaned = copy.deepcopy(nested_list)
 
@@ -123,7 +147,7 @@ class ConditionalSimplifier(object):
         found = None
         for i in range(0, len(cleaned)):
             if isinstance(cleaned[i], list):
-                cleaned[i] = self.clean_expr(cleaned[i], criterion)
+                cleaned[i] = cls.clean_expr(cleaned[i], criterion)
             if cleaned[i] in [criterion, '']:
                 found = i
                 break
@@ -134,25 +158,27 @@ class ConditionalSimplifier(object):
                 cleaned = cleaned[2:]
             else:
                 del cleaned[found - 1:found + 1]
-            return self.clean_expr(cleaned, criterion)
+            return cls.clean_expr(cleaned, criterion)
         else:
             return cleaned
 
-    def format_expr(self, expr):
+    @classmethod
+    def format_expr(cls, expr):
         """Carry out list conversion and nesting of a logical expression in
         the correct order."""
-        listified = self.listify(expr)
-        bracketed = self.get_bracketed(listified)
-        nested_by_and = self.nest_by_oper(bracketed, "&")
-        nested_by_or = self.nest_by_oper(nested_by_and, "|")
+        listified = cls.listify(expr)
+        bracketed = cls.get_bracketed(listified)
+        nested_by_and = cls.nest_by_oper(bracketed, "&")
+        nested_by_or = cls.nest_by_oper(nested_by_and, "|")
         return nested_by_or
 
-    def flatten_nested_expr(self, expr):
+    @classmethod
+    def flatten_nested_expr(cls, expr):
         """Convert a logical expression in a nested list back to a string"""
         flattened = copy.deepcopy(expr)
         for i in range(len(flattened)):
             if isinstance(flattened[i], list):
-                flattened[i] = self.flatten_nested_expr(flattened[i])
+                flattened[i] = cls.flatten_nested_expr(flattened[i])
         if isinstance(flattened, list):
             flattened = (" ").join(flattened)
         flattened = "(" + flattened

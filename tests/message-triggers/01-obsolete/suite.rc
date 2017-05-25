@@ -1,0 +1,7 @@
+[scheduling]
+    [[dependencies]]
+        graph = foo:bar
+[runtime]
+    [[foo]]
+        [[[outputs]]]
+            bar = 'message with obsolete message offset []'

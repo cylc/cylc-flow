@@ -13,7 +13,7 @@
     [[foo]]
         script = """
 sleep 1
-cylc message "restart files ready for $(cylc cycle-point --offset-hours=24 )"
+cylc message "restart files ready"
 sleep 1"""
         [[[outputs]]]
-            restart1 = "restart files ready for [+PT24H]"
+            restart1 = "restart files ready"

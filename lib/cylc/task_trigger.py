@@ -16,21 +16,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
-import sys
-
-from cylc.cycling.loader import (
-    get_interval, get_interval_cls, get_point_relative)
-from cylc.task_id import TaskID
+from cylc.conditional_simplifier import ConditionalSimplifier
+from cylc.cycling.loader import get_point_relative
+from cylc.prerequisite import Prerequisite
 from cylc.task_outputs import (
     TASK_OUTPUT_EXPIRED, TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_SUBMIT_FAILED,
     TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED)
 
-
-warned = False
-BCOMPAT_MSG_RE_C5 = re.compile('^(.*)\[\s*T\s*(([+-])\s*(\d+))?\s*\](.*)$')
-BCOMPAT_MSG_RE_C6 = re.compile('^(.*)\[\s*(([+-])?\s*(.*))?\s*\](.*)$')
-DEPRECN_WARN_TMPL = "WARNING: message trigger offsets are deprecated\n  %s"
 
 # Task trigger names (e.g. foo:fail => bar).
 # Can use "foo:fail => bar" or "foo:failed => bar", etc.
@@ -54,111 +46,145 @@ class TaskTriggerError(ValueError):
         return repr(self.msg)
 
 
-def get_message_offset(msg, base_interval=None):
-    """Return deprecated message offset, or None.
-
-    TODO - this function can be deleted once the deprecated cycle point offset
-    placeholders are removed from cylc (see GitHub #1761).
-
-    """
-
-    offset = None
-    global warned
-
-    # cylc-5 [T+n] message offset - DEPRECATED
-    m = BCOMPAT_MSG_RE_C5.match(msg)
-    if m:
-        if not warned:
-            print >> sys.stderr, DEPRECN_WARN_TMPL % msg
-            warned = True
-        prefix, signed_offset, sign, offset, suffix = m.groups()
-        if signed_offset is not None:
-            offset = base_interval.get_inferred_child(
-                signed_offset)
-    else:
-        # cylc-6 [<interval>] message offset - DEPRECATED
-        n = BCOMPAT_MSG_RE_C6.match(msg)
-        if n:
-            if not warned:
-                print >> sys.stderr, DEPRECN_WARN_TMPL % msg
-                warned = True
-            prefix, signed_offset, sign, offset, suffix = n.groups()
-            if offset:
-                offset = get_interval(signed_offset)
-            else:
-                offset = get_interval_cls().get_null()
-        # else: Plain message, no offset.
-    return offset
-
-
 class TaskTrigger(object):
-    """
-A task trigger is a prerequisite in the abstract, defined by the suite graph.
+    """Class representing an upstream dependency.
 
-It generates a concrete prerequisite string given a task's cycle point value.
+    Args:
+        task_name (str): The name of the upstream task.
+        abs_cycle_point (cylc.cycling.PointBase): The cycle point of the
+            upstream dependency if it is an absolute dependency.
+            e.g. foo[^] => ...). Else `None`.
+        cycle_point_offset (str): String representing the offset of the
+            upstream task (e.g. -P1D) if this dependency is not an absolute
+            one. Else None.
+        qualifier (str): The task state / message for this trigger e.g.
+            succeeded.
+
     """
 
-    # Memory optimization - constrain possible attributes to this list.
-    __slots__ = ["task_name", "suicide", "graph_offset_string", "cycle_point",
-                 "message", "message_offset", "builtin"]
+    __slots__ = ['task_name', 'abs_cycle_point', 'cycle_point_offset',
+                 'qualifier']
+
+    def __init__(self, task_name, abs_cycle_point, cycle_point_offset,
+                 qualifier):
+        self.task_name = task_name
+        self.abs_cycle_point = abs_cycle_point
+        self.cycle_point_offset = cycle_point_offset
+        self.qualifier = qualifier
+
+    def get_message(self, point):
+        """Return a string used to identify this trigger internally.
+
+        Args:
+            point (cylc.cycling.PointBase): The cycle point of the dependent
+                task to which this trigger applies.
+
+        Returns:
+            str
+
+        """
+        if self.abs_cycle_point:
+            point = self.abs_cycle_point
+        elif self.cycle_point_offset:
+            point = get_point_relative(
+                self.cycle_point_offset, point)
+        return '%s.%s %s' % (self.task_name, point, self.qualifier)
 
     @staticmethod
     def get_trigger_name(trigger_name):
-        """Standardise trigger qualifiers: 'foo:fail' to 'foo:failed' etc."""
+        """Standardise a trigger name.
+
+        E.g. 'foo:fail' becomes 'foo:failed' etc.
+
+        """
         for standard_name, alt_names in _ALT_TRIGGER_NAMES.items():
             if trigger_name == standard_name or trigger_name in alt_names:
                 return standard_name
         raise TaskTriggerError("Illegal task trigger name: %s" % trigger_name)
 
-    def __init__(
-            self, task_name, qualifier=None, graph_offset_string=None,
-            cycle_point=None, suicide=False, outputs={}, base_interval=None):
 
-        self.task_name = task_name
+class Dependency(object):
+    """A graph dependency in its abstract form.
+
+    Used to generate cylc.prerequisite.Prerequisite objects.
+
+    Args:
+        exp (list): A (nested) list of TaskTrigger objects and conditional
+            characters representing the dependency. E.G: "foo & bar" would be
+            [<TaskTrigger("foo")>, "&", <TaskTrigger("Bar")>].
+        task_triggers (set): A set of TaskTrigger objects contained in the
+            expression (exp).
+        suicide (bool): True if this is a suicide trigger else False.
+
+    """
+
+    __slots__ = ['_exp', 'task_triggers', 'suicide']
+
+    def __init__(self, exp, task_triggers, suicide):
+        self._exp = exp
+        self.task_triggers = tuple(task_triggers)  # More memory efficient.
         self.suicide = suicide
-        self.graph_offset_string = graph_offset_string
-        self.cycle_point = cycle_point
 
-        self.message = None
-        self.message_offset = None
-        self.builtin = None
-        qualifier = qualifier or TASK_OUTPUT_SUCCEEDED
+    def get_prerequisite(self, point, tdef):
+        """Generate a Prerequisite object from this dependency.
 
-        try:
-            # Message trigger?
-            self.message = outputs[qualifier]
-        except KeyError:
-            # Built-in trigger? (raises TaskStateError if not)
-            self.builtin = self.__class__.get_trigger_name(qualifier)
-        else:
-            self.message_offset = get_message_offset(self.message,
-                                                     base_interval)
+        Args:
+            point (cylc.cycling.PointBase): The cycle point at which to
+                generate the Prerequisite for.
+            tdef (cylc.taskdef.TaskDef): The TaskDef of the dependent task.
 
-    def get_prereq(self, point):
-        """Return a prerequisite string."""
-        if self.message:
-            # Message trigger
-            preq = self.message
-            msg_point = point
-            if self.cycle_point:
-                point = self.cycle_point
-                msg_point = self.cycle_point
+        Returns:
+            cylc.prerequisite.Prerequisite
+
+        """
+        # Create Prerequisite.
+        cpre = Prerequisite(point, tdef.start_point)
+
+        # Loop over TaskTrigger instances.
+        for task_trigger in self.task_triggers:
+            if task_trigger.cycle_point_offset is not None:
+                # Inter-cycle trigger - compute the trigger's cycle point from
+                # its offset.
+                prereq_offset_point = get_point_relative(
+                    task_trigger.cycle_point_offset, point)
+                if prereq_offset_point > point:
+                    # Update tdef.max_future_prereq_offset.
+                    prereq_offset = prereq_offset_point - point
+                    if (tdef.max_future_prereq_offset is None or
+                            (prereq_offset >
+                             tdef.max_future_prereq_offset)):
+                        tdef.max_future_prereq_offset = (
+                            prereq_offset)
+                # Register task message with Prerequisite object.
+                cpre.add(task_trigger.get_message(point),
+                         ((prereq_offset_point < tdef.start_point) &
+                          (point >= tdef.start_point)))
             else:
-                if self.message_offset:
-                    msg_point = point + self.message_offset
-                if self.graph_offset_string:
-                    msg_point = get_point_relative(
-                        self.graph_offset_string, msg_point)
-                    point = get_point_relative(self.graph_offset_string, point)
-            preq = "%s %s" % (
-                TaskID.get(self.task_name, point),
-                re.sub('\[.*\]', str(msg_point), preq))
-        else:
-            # Built-in trigger
-            if self.cycle_point:
-                point = self.cycle_point
-            elif self.graph_offset_string:
-                point = get_point_relative(
-                    self.graph_offset_string, point)
-            preq = TaskID.get(self.task_name, point) + ' ' + self.builtin
-        return preq
+                # Trigger is within the same cycle point.
+                # Register task message with Prerequisite object.
+                cpre.add(task_trigger.get_message(point))
+        cpre.set_condition(self.get_expression(point))
+        return cpre
+
+    def get_expression(self, point):
+        """Return the expression as a string.
+
+        Args:
+            point (cylc.cycling.PointBase): The cycle point at which to
+                generate the expression string for.
+
+        """
+        return ''.join(self._stringify_list(self._exp, point))
+
+    @classmethod
+    def _stringify_list(cls, nested_expr, point):
+        """Stringify a nested list of TaskTrigger objects."""
+        ret = []
+        for item in nested_expr:
+            if isinstance(item, TaskTrigger):
+                ret.append(item.get_message(point))
+            elif type(item) is list:
+                ret.extend(['('] + cls._stringify_list(item, point) + [')'])
+            else:
+                ret.append(item)
+        return ret
