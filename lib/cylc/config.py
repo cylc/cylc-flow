@@ -1998,7 +1998,7 @@ class SuiteConfig(object):
     def _get_taskdef(self, name):
         """Get the dense task runtime."""
         # (TaskDefError caught above)
- 
+
         try:
             rtcfg = self.cfg['runtime'][name]
         except KeyError:
@@ -2026,8 +2026,8 @@ class SuiteConfig(object):
         foo = copy(self.runtime['linearized ancestors'][name])
         foo.reverse()
         taskd.namespace_hierarchy = foo
-       
-        if self.task_param.has_key(name): 
+
+        if name in self.task_param:
             taskd.param_var = copy(self.task_param[name])
 
         return taskd

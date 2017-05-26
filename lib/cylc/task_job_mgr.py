@@ -948,5 +948,5 @@ class TaskJobManager(object):
             'task_id': itask.identity,
             'try_num': itask.get_try_num(),
             'work_d': rtconfig['work sub-directory'],
-            'param_var':itask.tdef.param_var,
+            'param_var': itask.tdef.param_var,
         }

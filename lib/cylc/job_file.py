@@ -214,7 +214,9 @@ class JobFileWriter(object):
                         # ~foo/bar or ~/bar
                         # write as ~foo/"bar" or ~/"bar"
                         head, tail = match.groups()
-                        handle.write('\n    export %s=%s"%s"' % (var, head, tail))
+                        handle.write(
+                            '\n    export %s=%s"%s"' %
+                            (var, head, tail))
                     elif re.match(r"^~[^\s]*$", value):
                         # plain ~foo or just ~
                         # just leave unquoted as subsequent spaces don't
@@ -231,8 +233,7 @@ class JobFileWriter(object):
             handle.write(
                 "\n    CYLC_TASK_WORK_DIR_BASE='%s'" % job_conf['work_d'])
         handle.write("\n}")
-        
- 
+
         # SSH comms variables. Note:
         # For "poll", contact file will not be installed, and job will not
         # attempt to communicate back.

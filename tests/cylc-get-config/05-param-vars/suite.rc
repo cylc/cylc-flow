@@ -1,0 +1,14 @@
+[cylc]
+    [[parameters]]
+         t = 1..5
+[scheduling]
+    [[dependencies]]
+        graph = foo<t>
+[runtime]
+    [[root]]
+        script = sleep 1
+        [[[environment]]]
+            PARAM = 'something'
+    [[foo<t>]]
+        [[[environment]]]
+            PARAM = $CYLC_TASK_PARAM_t
