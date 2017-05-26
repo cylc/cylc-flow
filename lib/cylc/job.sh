@@ -42,6 +42,11 @@ cylc__job__main() {
             break
         fi
     done
+    # Ensure that the "cylc" command is in PATH. It may not be set up correctly
+    # in Prelude above, and also not inherited from the job submit environment.
+    if ! which cylc 1>'/dev/null' 2>&1; then
+        PATH="${CYLC_DIR}/bin:${PATH}"
+    fi
     # Init-Script
     cylc__job__run_inst_func 'global_init_script'
     cylc__job__run_inst_func 'init_script'
