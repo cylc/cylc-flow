@@ -686,7 +686,7 @@ class CylcSuiteDAO(object):
         for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
             callback(row_idx, list(row))
 
-    def select_task_events_for_timing(self):
+    def select_task_times(self):
         """Select submit/start/stop times to compute job timings.
 
         To make data interpretation easier, choose the most recent succeeded
@@ -694,27 +694,20 @@ class CylcSuiteDAO(object):
         """
         q = """
             SELECT
-                %(task_jobs)s.name,
-                %(task_jobs)s.cycle,
-                %(task_jobs)s.user_at_host,
-                %(task_jobs)s.batch_sys_name,
-                %(task_jobs)s.time_submit,
-                %(task_jobs)s.time_run,
-                %(task_jobs)s.time_run_exit
+                name,
+                cycle,
+                user_at_host,
+                batch_sys_name,
+                time_submit,
+                time_run,
+                time_run_exit
             FROM
-                %(task_jobs)s INNER JOIN %(task_states)s
-            ON
-                %(task_jobs)s.name = %(task_states)s.name
-                AND
-                %(task_jobs)s.cycle = %(task_states)s.cycle
-                AND
-                %(task_jobs)s.submit_num = %(task_states)s.submit_num
+                %(task_jobs)s
             WHERE
-                %(task_states)s.status = '%(succeeded)s'
+                run_status = %(succeeded)d
         """ % {
             'task_jobs': self.TABLE_TASK_JOBS,
-            'task_states': self.TABLE_TASK_STATES,
-            'succeeded': 'succeeded',
+            'succeeded': 0,
         }
         columns = (
             'name', 'cycle', 'host', 'batch_system',

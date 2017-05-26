@@ -119,7 +119,7 @@ def main():
 
     suite = args.pop(0)
     run_db = _get_dao(suite)
-    row_buf = format_rows(*run_db.select_task_events_for_timing())
+    row_buf = format_rows(*run_db.select_task_times())
 
     with smart_open(options.output_filename) as output:
         if options.show_raw:
