@@ -4,7 +4,7 @@
         abort on timeout = True
 [scheduling]
     [[queues]]
-        [[[default]]]
+        [[[root]]]
             limit = 1
     [[dependencies]]
         graph = m1 & m2

@@ -71,7 +71,7 @@ Suite definitions ${SUITE_NAME1} and ${SUITE_NAME2} differ
 
 3 common items differ ${SUITE_NAME1}(<) ${SUITE_NAME2}(>)
 
-   [scheduling] [[queues]] [[[default]]]
+   [scheduling] [[queues]] [[[root]]]
  <   members = ['foo', 'bar']
  >   members = ['food', 'barley']
 
