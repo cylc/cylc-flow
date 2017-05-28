@@ -77,7 +77,7 @@ class TaskDef(object):
         self.namespace_hierarchy = []
         self.dependencies = {}
         self.outputs = []
-        self.param_var = []
+        self.param_var = {}
         self.external_triggers = []
 
         self.name = name

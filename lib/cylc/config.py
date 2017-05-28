@@ -155,7 +155,7 @@ class SuiteConfig(object):
         self.actual_first_point = None
         self._start_point_for_actual_first_point = None
 
-        self.task_param = {}
+        self.task_param_vars = {}
         self.custom_runahead_limit = None
         self.max_num_active_cycle_points = None
 
@@ -780,11 +780,10 @@ class SuiteConfig(object):
                 replicate(newruntime[name], namespace_dict)
                 if indices:
                     new_environ = OrderedDictWithDefaults()
+                    self.task_param_vars[name] = {}
                     for p_name, p_val in indices.items():
                         p_var_name = 'CYLC_TASK_PARAM_%s' % p_name
-                        new_param = OrderedDictWithDefaults()
-                        new_param[p_var_name] = p_val
-                        self.task_param[name] = new_param
+                        self.task_param_vars[name][p_var_name] = p_val
                     if 'environment' in newruntime[name]:
                         for k, v in newruntime[name]['environment'].items():
                             new_environ[k] = v
@@ -2027,8 +2026,8 @@ class SuiteConfig(object):
         foo.reverse()
         taskd.namespace_hierarchy = foo
 
-        if name in self.task_param:
-            taskd.param_var = copy(self.task_param[name])
+        if name in self.task_param_vars:
+            taskd.param_var = self.task_param_vars[name]
 
         return taskd
 

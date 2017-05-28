@@ -31,6 +31,9 @@ class JobFileWriter(object):
 
     """Write task job files."""
 
+    env_match1 = re.compile(r"^(~[^/\s]*/)(.*)$")
+    env_match2 = re.compile(r"^~[^\s]*$")
+
     def __init__(self):
         self.suite_env = {}
         self.batch_sys_mgr = BatchSysManager()
@@ -209,7 +212,7 @@ class JobFileWriter(object):
         if job_conf['param_var']:
                 for var, val in job_conf['param_var'].items():
                     value = str(val)  # (needed?)
-                    match = re.match(r"^(~[^/\s]*/)(.*)$", value)
+                    match = self.env_match1.match(value)
                     if match:
                         # ~foo/bar or ~/bar
                         # write as ~foo/"bar" or ~/"bar"
@@ -217,7 +220,7 @@ class JobFileWriter(object):
                         handle.write(
                             '\n    export %s=%s"%s"' %
                             (var, head, tail))
-                    elif re.match(r"^~[^\s]*$", value):
+                    elif self.env_match2.match(value):
                         # plain ~foo or just ~
                         # just leave unquoted as subsequent spaces don't
                         # make sense in this case anyway
@@ -254,13 +257,13 @@ class JobFileWriter(object):
             handle.write("\n    # TASK RUNTIME ENVIRONMENT:")
             for var, val in job_conf['environment'].items():
                 value = str(val)  # (needed?)
-                match = re.match(r"^(~[^/\s]*/)(.*)$", value)
+                match = self.env_match1.match(value)
                 if match:
                     # ~foo/bar or ~/bar
                     # write as ~foo/"bar" or ~/"bar"
                     head, tail = match.groups()
                     handle.write('\n    %s=%s"%s"' % (var, head, tail))
-                elif re.match(r"^~[^\s]*$", value):
+                elif self.env_match2.match(value):
                     # plain ~foo or just ~
                     # just leave unquoted as subsequent spaces don't
                     # make sense in this case anyway
