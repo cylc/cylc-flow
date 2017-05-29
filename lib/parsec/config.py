@@ -20,7 +20,7 @@ import re
 from parsec import ParsecError
 from parsec.fileparse import parse
 from parsec.util import printcfg
-from parsec.validate import validate, check_compulsory, expand, validator
+from parsec.validate import validate, expand, validator
 from parsec.OrderedDict import OrderedDictWithDefaults
 from parsec.util import replicate, itemstr
 from parsec.upgrade import UpgradeError
@@ -67,23 +67,19 @@ class config(object):
         validate it against the spec, and if this is not the first load,
         combine/override with the existing loaded config."""
 
-        sparse = parse(rcfile, self.output_fname, self.tvars)
+        sparse, modules = parse(rcfile, self.output_fname, self.tvars)
+        self.modules = modules
 
         if self.upgrader is not None:
             self.upgrader(sparse, title)
 
-        self.validate(sparse)
+        validate(rcfile, sparse, self.spec)
 
         if not self.sparse:
             self.sparse = sparse
         else:
             # Already loaded, override with new items.
             replicate(self.sparse, sparse)
-
-    def validate(self, sparse):
-        "Validate sparse config against the file spec."
-        validate(sparse, self.spec)
-        check_compulsory(sparse, self.spec)
 
     def expand(self):
         "Flesh out undefined items with defaults, if any, from the spec."

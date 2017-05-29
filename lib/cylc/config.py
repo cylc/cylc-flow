@@ -33,7 +33,7 @@ from cylc.conditional_simplifier import ConditionalSimplifier
 from cylc.exceptions import CylcError
 from cylc.graph_parser import GraphParser
 from cylc.param_expand import NameExpander
-from cylc.cfgspec.suite import RawSuiteConfig
+from cylc.cfgspec.suite import RawSuiteConfig, RawSuiteModuleConfig
 from cylc.cycling.loader import (
     get_point, get_point_relative, get_interval, get_interval_cls,
     get_sequence, get_sequence_cls, init_cyclers, INTEGER_CYCLING_TYPE,
@@ -69,6 +69,22 @@ except ImportError:
     graphing_disabled = True
 else:
     graphing_disabled = False
+
+
+def find_module(modname, suite_dir):
+    """Find 'modname'.rc in <suite_dir>lib/cylc or $CYLC_MODULE_PATH.
+
+    """
+
+    search_dirs = [os.path.join(suite_dir, 'lib', 'cylc')]
+    for d in os.environ.get('CYLC_MODULE_PATH', '').split(':'):
+        if d != '':
+            search_dirs.append(d)
+    for d in search_dirs:
+        modpath = os.path.join(d, '%s.rc' % modname)
+        if os.path.isfile(modpath):
+            return modpath
+    raise SuiteConfigError("ERROR: module %s not found" % modname)
 
 
 class SuiteConfigError(Exception):
@@ -179,8 +195,7 @@ class SuiteConfig(object):
         # one up from root
         self.feet = []
 
-        # parse, upgrade, validate the suite, but don't expand with default
-        # items
+        # Parse, upgrade, validate suite, but don't expand with default items.
         self.mem_log("config.py: before RawSuiteConfig.get_inst")
         self.pcfg = RawSuiteConfig.get_inst(
             fpath, is_reload=is_reload, tvars=template_vars,
@@ -190,7 +205,18 @@ class SuiteConfig(object):
         self.cfg = self.pcfg.get(sparse=True)
         self.mem_log("config.py: after get(sparse=True)")
 
-        # First check for the essential scheduling section.
+        self.mem_log("config.py: before loading modules")
+        for mod_name_as, mod_name in self.pcfg.modules.items():
+            modpath = find_module(mod_name, os.path.dirname(fpath))
+            try:
+                t_vars = self.cfg['module interface'][mod_name_as]
+            except KeyError:
+                t_vars = {}
+            pcfg = RawSuiteModuleConfig.get_inst(
+                modpath, is_reload=is_reload, tvars=t_vars)
+            self._load_module(mod_name_as, pcfg.get(sparse=True))
+        self.mem_log("config.py: after loading modules")
+
         if 'scheduling' not in self.cfg:
             raise SuiteConfigError("ERROR: missing [scheduling] section.")
         if 'dependencies' not in self.cfg['scheduling']:
@@ -743,6 +769,67 @@ class SuiteConfig(object):
 
         self.mem_log("config.py: end init config")
 
+    def _load_module(self, mod_name, mod_cfg):
+        """Combine a parsed suite module with main suite definition.
+
+        Module task names are prefixed with "<module-name>__" and enclosed in a
+        family called "<module-name>".
+        Module parameters are taken to the main suite.
+        The module graph is inserted into main suite graph strings that refer
+        to module family or its tasks.
+        """
+        deps = self.cfg['scheduling']['dependencies']
+        # Incorporate suite parameters.
+        for sec in ['parameters', 'parameter templates']:
+            try:
+                params = mod_cfg['cylc'][sec]
+            except KeyError:
+                pass
+            else:
+                if 'cylc' not in self.cfg:
+                    self.cfg['cylc'] = {}
+                if sec in self.cfg['cylc']:
+                    replicate(self.cfg['cylc'][sec], mod_cfg['cylc'][sec])
+                else:
+                    self.cfg['cylc'][sec] = mod_cfg['cylc'][sec]
+        # Incorporate module graph.
+        mod_graph = mod_cfg['scheduling']['dependencies']['graph']
+        mgraph = re.sub('[=>&|()]', '', mod_graph)
+        for item in mgraph.split():
+            if re.match('\w', item):
+                mod_graph = re.sub(r'\b%s\b' % item,
+                                   "%s__%s" % (mod_name, item), mod_graph)
+        # Can't use '\b%s\b' in case specific tasks referenced, e.g. NCM__foo.
+        if 'graph' in deps:
+            if re.match(r'\b%s' % mod_name, deps['graph']):
+                deps['graph'] += '\n%s' % mod_graph
+        else:
+            for section in deps:
+                if re.search(r'\b%s' % mod_name, deps[section]['graph']):
+                    deps[section]['graph'] += '\n%s' % mod_graph
+        # Incorporate module runtime.
+        for namespace, cfg in mod_cfg['runtime'].items():
+            if namespace in ['MODULE', 'root']:
+                # Translate these to module import name.
+                new_namespace = mod_name
+            else:
+                new_namespace = '%s__%s' % (mod_name, namespace)
+            try:
+                parents = cfg['inherit']
+            except KeyError:
+                parents = []
+            new_parents = []
+            for p in parents:
+                if p != 'MODULE':
+                    new_parents.append('%s__%s' % (mod_name, p))
+            if new_namespace != mod_name:
+                new_parents.insert(0, mod_name)
+            cfg['inherit'] = new_parents
+            if new_namespace in self.cfg['runtime']:
+                replicate(self.cfg['runtime'][new_namespace], cfg)
+            else:
+                self.cfg['runtime'][new_namespace] = cfg
+
     def _expand_name_list(self, orig_names):
         """Expand any parameters in lists of names."""
         name_expander = NameExpander(self.parameters)
@@ -891,6 +978,7 @@ class SuiteConfig(object):
                 continue
             # get declared parents, with implicit inheritance from root.
             pts = self.cfg['runtime'][name].get('inherit', ['root'])
+            # TODO: redundant
             if not pts:
                 pts = ['root']
             for p in pts:

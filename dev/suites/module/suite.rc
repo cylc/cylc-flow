@@ -1,0 +1,26 @@
+%import ncmovie as NCM
+[cylc]
+    cycle point format = %Y
+[scheduling]
+    initial cycle point = 2010
+    [[dependencies]]
+        [[[R1]]]
+            graph = start => model
+        [[[R/+P1Y/P1Y]]]
+            # (Or use  module family: NCM:succeed-all.)
+            graph = """model[-P1Y] => model => NCM__select
+                       NCM__movie => upload"""
+[runtime]
+    [[model]]
+    [[upload]]
+    [[NCM]]
+        script = echo tea
+[module interface]
+    [[NCM]]
+        FIELDS = "1 2 3"
+        FILE_IN = $CYLC_SUITE_SHARE_PATH/forecast.um
+        FILE_OUT = $CYLC_SUITE_SHARE_PATH/forecast.webm
+        NF_JOBS = 3
+[visualization]
+    [[node attributes]]
+        NCM = "color=red"

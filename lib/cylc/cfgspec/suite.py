@@ -398,6 +398,11 @@ SPEC = {
             },
         },
     },
+    'module interface': {
+        '__MANY__': {
+            '__MANY__': vdr(vtype='string'),
+        },
+    },
     'visualization': {
         'initial cycle point': vdr(vtype='cycletime'),
         'final cycle point': vdr(vtype='final_cycletime'),
@@ -418,6 +423,85 @@ SPEC = {
         },
         'node attributes': {
             '__MANY__': vdr(vtype='string_list', default=[]),
+        },
+    },
+}
+
+# Module spec is a subset of the full suite spec.
+MODULE_SPEC = {
+    'cylc': {
+        'parameters': {
+            '__MANY__': vdr(vtype='parameter_list'),
+        },
+        'parameter templates': {
+            '__MANY__': vdr(vtype='string'),
+        },
+    },
+    'scheduling': {
+        'dependencies': {
+            'graph': vdr(vtype='string'),
+        },
+    },
+    'runtime': {
+        '__MANY__': {
+            'inherit': vdr(vtype='string_list', default=[]),
+            'title': vdr(vtype='string', default=""),
+            'description': vdr(vtype='string', default=""),
+            'URL': vdr(vtype='string', default=""),
+            'init-script': vdr(vtype='string', default=""),
+            'env-script': vdr(vtype='string', default=""),
+            'err-script': vdr(vtype='string', default=""),
+            'pre-script': vdr(vtype='string', default=""),
+            'script': vdr(vtype='string', default=""),
+            'post-script': vdr(vtype='string', default=""),
+            'extra log files': vdr(vtype='string_list', default=[]),
+            'enable resurrection': vdr(vtype='boolean', default=False),
+            'work sub-directory': vdr(vtype='string'),
+            'simulation': {
+                'default run length': vdr(vtype='interval', default='PT10S'),
+                'speedup factor': vdr(vtype='float', default=None),
+                'time limit buffer': vdr(vtype='interval', default='PT10S'),
+                'fail cycle points': vdr(vtype='string_list', default=[]),
+                'fail try 1 only': vdr(vtype='boolean', default=True),
+                'disable task event handlers': vdr(
+                    vtype='boolean', default=True),
+            },
+            'environment filter': {
+                'include': vdr(vtype='string_list'),
+                'exclude': vdr(vtype='string_list'),
+            },
+            'job': {
+                'batch system': vdr(vtype='string', default='background'),
+                'batch submit command template': vdr(vtype='string'),
+                'execution polling intervals': vdr(
+                    vtype='interval_list'),
+                'execution retry delays': vdr(
+                    vtype='interval_list', default=[]),
+                'execution time limit': vdr(vtype='interval'),
+                'shell': vdr(vtype='string', default='/bin/bash'),
+                'submission polling intervals': vdr(
+                    vtype='interval_list'),
+                'submission retry delays': vdr(
+                    vtype='interval_list', default=[]),
+            },
+            'remote': {
+                'host': vdr(vtype='string'),
+                'owner': vdr(vtype='string'),
+                'suite definition directory': vdr(vtype='string'),
+                'retrieve job logs': vdr(vtype='boolean', default=None),
+                'retrieve job logs max size': vdr(vtype='string'),
+                'retrieve job logs retry delays': vdr(
+                    vtype='interval_list'),
+            },
+            'environment': {
+                '__MANY__': vdr(vtype='string'),
+            },
+            'directives': {
+                '__MANY__': vdr(vtype='string'),
+            },
+            'outputs': {
+                '__MANY__': vdr(vtype='string'),
+            },
         },
     },
 }
@@ -508,4 +592,20 @@ class RawSuiteConfig(config):
             cls._INSTANCES[fpath] = cls(
                 SPEC, upg, tvars=tvars, output_fname=output_fname)
             cls._INSTANCES[fpath].loadcfg(fpath, "suite definition")
+        return cls._INSTANCES[fpath]
+
+
+class RawSuiteModuleConfig(config):
+    """Raw module configuration."""
+    _INSTANCES = {}
+
+    @classmethod
+    def get_inst(cls, fpath, is_reload=False, tvars=None, output_fname=None):
+        """Return the default instance."""
+        if fpath not in cls._INSTANCES or is_reload:
+            if tvars is None:
+                tvars = []
+            cls._INSTANCES[fpath] = cls(
+                MODULE_SPEC, upg, tvars=tvars, output_fname=output_fname)
+            cls._INSTANCES[fpath].loadcfg(fpath, "suite module definition")
         return cls._INSTANCES[fpath]

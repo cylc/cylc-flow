@@ -78,6 +78,9 @@ _KEY_VALUE = re.compile(
 _LINECOMMENT = re.compile('^\s*#')
 _BLANKLINE = re.compile('^\s*$')
 
+# '%import module' or '%import module as MODULE':
+_IMPORT = re.compile('^%import\s*(\w+)(?:\s+as\s*(\w+)\s*)?$')
+
 # triple quoted values on one line
 _SINGLE_LINE_SINGLE = re.compile(r"^'''(.*?)'''\s*(#.*)?$")
 _SINGLE_LINE_DOUBLE = re.compile(r'^"""(.*?)"""\s*(#.*)?$')
@@ -325,9 +328,18 @@ def parse(fpath, output_fname=None, template_vars=None):
     maxline = len(flines) - 1
     index = -1
 
+    modules = {}
     while index < maxline:
         index += 1
         line = flines[index]
+
+        m = re.match(_IMPORT, line)
+        if m:
+            mod_name, as_name = m.groups()
+            if as_name is None:
+                as_name = mod_name
+            modules[as_name] = mod_name
+            continue
 
         if re.match(_LINECOMMENT, line):
             # skip full-line comments
@@ -375,4 +387,4 @@ def parse(fpath, output_fname=None, template_vars=None):
                 raise FileParseError(
                     'Invalid line ' + str(index + 1) + ': ' + line)
 
-    return config
+    return (config, modules)

@@ -135,7 +135,7 @@ def get_rdict(left, right=None):
             cur_dict[tail.strip()] = right
             tail = None
     upg({'runtime': {'__MANY__': rdict}}, 'test')
-    validate(rdict, SPEC['runtime']['__MANY__'])
+    validate('broadcast', rdict, SPEC['runtime']['__MANY__'])
     return rdict
 
 

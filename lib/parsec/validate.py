@@ -71,16 +71,16 @@ class IllegalValueError(ValidationError):
 
 
 class IllegalItemError(ValidationError):
-    def __init__(self, keys, key):
-        self.msg = 'Illegal item: %s' % itemstr(keys, key)
+    def __init__(self, rcfile, keys, key):
+        self.msg = 'Illegal item: %s\n(%s)' % (itemstr(keys, key), rcfile)
 
 
-def validate(cfig, spec, keys=[]):
+def validate(rcfile, cfig, spec, keys=[]):
     """Validate and coerce a nested dict against a parsec spec."""
     for key, val in cfig.items():
         if key not in spec:
             if '__MANY__' not in spec:
-                raise IllegalItemError(keys, key)
+                raise IllegalItemError(rcfile, keys, key)
             else:
                 # only accept the item if it's value is of the same type
                 # as that of the __MANY__  item, i.e. dict or not-dict.
@@ -90,38 +90,21 @@ def validate(cfig, spec, keys=[]):
                         (not val_is_dict and not spc_is_dict):
                     speckey = '__MANY__'
                 else:
-                    raise IllegalItemError(keys, key)
+                    raise IllegalItemError(rcfile, keys, key)
         else:
             speckey = key
         specval = spec[speckey]
         if isinstance(val, dict) and isinstance(specval, dict):
-            validate(val, spec[speckey], keys + [key])
+            validate(rcfile, val, spec[speckey], keys + [key])
         elif val is not None and not isinstance(specval, dict):
             # (if val is null we're only checking item validity)
             cfig[key] = spec[speckey].check(val, keys + [key])
         else:
-            # raise IllegalItemError(keys, key)
+            # raise IllegalItemError(rcfile, keys, key)
             # THIS IS OK: blank value
             # TODO - ANY OTHER POSSIBILITIES?
             # print 'VAL:', val, '::', keys + [key]
             pass
-
-
-def check_compulsory(cfig, spec, keys=[]):
-    """Check compulsory items are defined in cfig."""
-    for key, val in spec.items():
-        if isinstance(val, dict):
-            check_compulsory(cfig, spec[key], keys + [key])
-        else:
-            if val.args['compulsory']:
-                cfg = cfig
-                try:
-                    for k in keys + [key]:
-                        cfg = cfg[k]
-                except KeyError:
-                    # TODO - raise an exception
-                    print >> sys.stderr, (
-                        "COMPULSORY ITEM MISSING", keys + [key])
 
 
 def _populate_spec_defaults(defs, spec):
@@ -352,13 +335,12 @@ class validator(object):
     __slots__ = ['coercer', 'args']
 
     def __init__(self, vtype='string', default=None, options=[],
-                 allow_zeroes=True, compulsory=False):
+                 allow_zeroes=True):
         self.coercer = coercers[vtype]
         self.args = {
             'options': options,
             'default': default,
-            'allow zeroes': allow_zeroes,
-            'compulsory': compulsory}
+            'allow zeroes': allow_zeroes}
 
     def check(self, value, keys):
         value = self.coercer(value, keys, self.args)
