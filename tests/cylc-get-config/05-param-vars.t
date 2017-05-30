@@ -20,10 +20,10 @@
 
 . "$(dirname "$0")/test_header"
 
-set_test_number 2
+set_test_number 5
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-
+#------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-config"
 run_ok "${TEST_NAME}" \
     cylc get-config -i "[runtime][foo_t1_right]environment" "${SUITE_NAME}"
@@ -31,5 +31,10 @@ cmp_ok "${TEST_NAME}.stdout" - <<__END__
 PARAM1 = \$CYLC_TASK_PARAM_t
 PARAM2 = \$CYLC_TASK_PARAM_u
 __END__
-
+#------------------------------------------------------------------------------
+TEST_NAME="${TEST_NAME_BASE}-jobscript"
+run_ok "${TEST_NAME}" cylc jobscript "${SUITE_NAME}" foo_t1_right.1
+grep_ok 'export CYLC_TASK_PARAM_u="right"' "${TEST_NAME}.stdout"
+grep_ok 'export CYLC_TASK_PARAM_t="1"' "${TEST_NAME}.stdout"
+#------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"

@@ -31,9 +31,6 @@ class JobFileWriter(object):
 
     """Write task job files."""
 
-    env_match1 = re.compile(r"^(~[^/\s]*/)(.*)$")
-    env_match2 = re.compile(r"^~[^\s]*$")
-
     def __init__(self):
         self.suite_env = {}
         self.batch_sys_mgr = BatchSysManager()
@@ -210,27 +207,9 @@ class JobFileWriter(object):
         handle.write(
             '\n    export CYLC_TASK_TRY_NUMBER=%s' % job_conf['try_num'])
         if job_conf['param_var']:
-                for var, val in job_conf['param_var'].items():
-                    value = str(val)  # (needed?)
-                    match = self.env_match1.match(value)
-                    if match:
-                        # ~foo/bar or ~/bar
-                        # write as ~foo/"bar" or ~/"bar"
-                        head, tail = match.groups()
-                        handle.write(
-                            '\n    export %s=%s"%s"' %
-                            (var, head, tail))
-                    elif self.env_match2.match(value):
-                        # plain ~foo or just ~
-                        # just leave unquoted as subsequent spaces don't
-                        # make sense in this case anyway
-                        handle.write('\n    export %s=%s' % (var, value))
-                    else:
-                        # Non tilde values - quote the lot.
-                        # This gets values like "~one ~two" too, but these
-                        # (in variable values) aren't expanded by the shell
-                        # anyway so it doesn't matter.
-                        handle.write('\n    export %s="%s"' % (var, value))
+            for var, val in job_conf['param_var'].items():
+                value = str(val)  # (needed?)
+                handle.write('\n    export %s="%s"' % (var, value))
         if job_conf['work_d']:
             # Note: not an environment variable, but used by job.sh
             handle.write(
@@ -257,23 +236,7 @@ class JobFileWriter(object):
             handle.write("\n    # TASK RUNTIME ENVIRONMENT:")
             for var, val in job_conf['environment'].items():
                 value = str(val)  # (needed?)
-                match = self.env_match1.match(value)
-                if match:
-                    # ~foo/bar or ~/bar
-                    # write as ~foo/"bar" or ~/"bar"
-                    head, tail = match.groups()
-                    handle.write('\n    %s=%s"%s"' % (var, head, tail))
-                elif self.env_match2.match(value):
-                    # plain ~foo or just ~
-                    # just leave unquoted as subsequent spaces don't
-                    # make sense in this case anyway
-                    handle.write('\n    %s=%s' % (var, value))
-                else:
-                    # Non tilde values - quote the lot.
-                    # This gets values like "~one ~two" too, but these
-                    # (in variable values) aren't expanded by the shell
-                    # anyway so it doesn't matter.
-                    handle.write('\n    %s="%s"' % (var, value))
+                handle.write('\n    %s="%s"' % (var, value))
 
                 # NOTE ON TILDE EXPANSION:
                 # The code above handles the following correctly:
