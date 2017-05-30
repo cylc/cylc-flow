@@ -392,7 +392,7 @@ class ISO8601Sequence(SequenceBase):
         self.step = ISO8601Interval(str(self.recurrence.duration))
         self.value = str(self.recurrence)
         # Concatenate the strings in exclusion list
-        if self.exclusions:
+        if str(self.exclusions):
             self.value += '!' + str(self.exclusions)
 
     def get_interval(self):
