@@ -94,6 +94,7 @@ class TaskEventsManager(object):
     EVENT_SUCCEEDED = TASK_OUTPUT_SUCCEEDED
     HANDLER_CUSTOM = "event-handler"
     HANDLER_MAIL = "event-mail"
+    JOB_FAILED = "job failed"
     HANDLER_JOB_LOGS_RETRIEVE = "job-logs-retrieve"
     INCOMING_FLAG = ">"
     LEVELS = {
@@ -336,8 +337,9 @@ class TaskEventsManager(object):
                 itask.state.status in [
                     TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
                     TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_RUNNING]):
+            # Generic fail message, via polling.
             # (submit- states in case of very fast submission and execution).
-            self._process_message_failed(itask, event_time)
+            self._process_message_failed(itask, event_time, self.JOB_FAILED)
         elif message == self.EVENT_SUBMIT_FAILED:
             self._process_message_submit_failed(itask, event_time)
         elif message == TASK_OUTPUT_SUBMITTED:
@@ -348,6 +350,12 @@ class TaskEventsManager(object):
             signal = message.replace(TaskMessage.FAIL_MESSAGE_PREFIX, "")
             self.suite_db_mgr.put_update_task_jobs(itask, {
                 "run_signal": signal})
+            self._process_message_failed(itask, event_time, self.JOB_FAILED)
+        elif message.startswith(TaskMessage.ABORT_MESSAGE_PREFIX):
+            # Abort with message.
+            self._process_message_failed(
+                itask, event_time,
+                message.replace(TaskMessage.ABORT_MESSAGE_PREFIX, ''))
         elif message.startswith(TaskMessage.VACATION_MESSAGE_PREFIX):
             cylc.flags.pflag = True
             itask.state.reset_state(TASK_STATUS_SUBMITTED)
@@ -581,7 +589,7 @@ class TaskEventsManager(object):
                 if cylc.flags.debug:
                     ERR.debug(traceback.format_exc())
 
-    def _process_message_failed(self, itask, event_time):
+    def _process_message_failed(self, itask, event_time, message):
         """Helper for process_message, handle a failed message."""
         if event_time is None:
             event_time = get_current_time_string()
@@ -593,10 +601,11 @@ class TaskEventsManager(object):
         if (TASK_STATUS_RETRYING not in itask.try_timers or
                 itask.try_timers[TASK_STATUS_RETRYING].next() is None):
             # No retry lined up: definitive failure.
-            # Note the TASK_STATUS_FAILED output is only added if needed.
             cylc.flags.pflag = True
             itask.state.reset_state(TASK_STATUS_FAILED)
-            self.setup_event_handlers(itask, "failed", 'job failed')
+            self.setup_event_handlers(itask, "failed", message)
+            LOG.critical("job(%02d) %s" % (
+                itask.submit_num, "failed"), itask=itask)
         else:
             # There is a retry lined up
             timeout_str = (
@@ -607,7 +616,7 @@ class TaskEventsManager(object):
             LOG.info("job(%02d) %s" % (itask.submit_num, msg), itask=itask)
             itask.summary['latest_message'] = msg
             self.setup_event_handlers(
-                itask, "retry", "job failed, %s" % delay_msg)
+                itask, "retry", "%s, %s" % (self.JOB_FAILED, delay_msg))
             itask.state.reset_state(TASK_STATUS_RETRYING)
 
     def _process_message_started(self, itask, event_time):

@@ -48,10 +48,10 @@ cylc__job__main() {
     # Start error and vacation traps
     typeset signal_name=
     for signal_name in ${CYLC_FAIL_SIGNALS}; do
-        trap "cylc__job__trap_err ${signal_name}" "${signal_name}"
+        trap "cylc__job_err ${signal_name}" "${signal_name}"
     done
     for signal_name in ${CYLC_VACATION_SIGNALS:-}; do
-        trap "cylc__job__trap_vacation ${signal_name}" "${signal_name}"
+        trap "cylc__job_vacation ${signal_name}" "${signal_name}"
     done
     set -euo pipefail
     # Export CYLC_ suite and task environment variables
@@ -150,18 +150,23 @@ cylc__job__run_inst_func() {
 }
 
 ###############################################################################
-# Trap error signals.
+# Send message (and possibly run err script) before job exit.
 # Globals:
 #   CYLC_FAIL_SIGNALS
 #   CYLC_TASK_MESSAGE_STARTED_PID
 #   CYLC_VACATION_SIGNALS
 # Arguments:
-#   trapped_signal - trapped signal
+#   signal - trapped or given signal
+#   message- to send back to the suite daemon
+#   priority - message priority
+#   run_err_script - boolean, run job err script or not
 # Returns:
 #   exit 1
-cylc__job__trap_err() {
-    typeset trapped_signal="$1"
-    echo "Received signal ${trapped_signal}" >&2
+cylc__job_finish() {
+    typeset signal="$1"
+    typeset message="$2"
+    typeset priority="$3"
+    typeset run_err_script="$4"
     typeset signal_name=
     for signal_name in ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}; do
         trap '' "${signal_name}"
@@ -169,35 +174,32 @@ cylc__job__trap_err() {
     if [[ -n "${CYLC_TASK_MESSAGE_STARTED_PID:-}" ]]; then
         wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
     fi
-    cylc task message -p 'CRITICAL' \
-        "Task job script received signal ${trapped_signal}" 'failed' || true
-    cylc__job__run_inst_func 'err_script' "${trapped_signal}" >&2
+    cylc task message -p "${priority}" "${message}" || true
+    if $run_err_script; then
+        cylc__job__run_inst_func 'err_script' "${signal}" >&2
+    fi
     exit 1
 }
 
 ###############################################################################
-# Trap preempt/vacation signals.
-# Globals:
-#   CYLC_FAIL_SIGNALS
-#   CYLC_TASK_MESSAGE_STARTED_PID
-#   CYLC_VACATION_SIGNALS
-# Arguments:
-#   trapped_signal - trapped signal
-# Returns:
-#   exit 1
-cylc__job__trap_vacation() {
-    typeset trapped_signal="$1"
-    echo "Received signal ${trapped_signal}" >&2
-    typeset signal_name=
-    for signal_name in ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}; do
-        trap '' "${signal_name}"
-    done
-    if [[ -n "${CYLC_TASK_MESSAGE_STARTED_PID:-}" ]]; then
-        wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2'>/dev/null' || true
-    fi
-    cylc task message -p 'WARNING' \
-        "Task job script vacated by signal ${trapped_signal}" || true
-    exit 1
+# Wrap cylc__job_finish to abort with a user-defined error message.
+cylc__job_abort() {
+    cylc__job_finish \
+        "EXIT" "Task job script aborted with \"${1}\"" "CRITICAL" true
+}
+
+###############################################################################
+# Wrap cylc__job_finish for job preempt/vacation signal trap.
+cylc__job_vacation() {
+    cylc__job_finish \
+        "${1}" "Task job script vacated by signal ${1}" "WARNING" false
+}
+
+###############################################################################
+# Wrap cylc__job_finish for automatic job exit signal trap.
+cylc__job_err() {
+    cylc__job_finish \
+        "${1}" "Task job script received signal ${1}" "CRITICAL" true
 }
 
 ###############################################################################

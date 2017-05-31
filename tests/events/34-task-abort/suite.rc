@@ -1,0 +1,18 @@
+title = "Test job abort with retries and failed handler"
+[cylc]
+    [[events]]
+        inactivity = PT20S
+        abort on inactivity = True
+[scheduling]
+    [[dependencies]]
+        graph = "foo:fail => !foo"
+[runtime]
+    [[foo]]
+        script = """
+echo ONE
+cylc__job_abort "ERROR: rust never sleeps"
+echo TWO"""
+        [[[job]]]
+            execution retry delays = PT5S
+        [[[events]]]
+            failed handler = echo "!!!FAILED!!!" %(event)s %(id)s %(submit_num)s %(message)s

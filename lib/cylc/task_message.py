@@ -40,6 +40,7 @@ class TaskMessage(object):
     CYLC_JOB_EXIT_TIME = "CYLC_JOB_EXIT_TIME"
     CYLC_MESSAGE = "CYLC_MESSAGE"
 
+    ABORT_MESSAGE_PREFIX = "Task job script aborted with "
     FAIL_MESSAGE_PREFIX = "Task job script received signal "
     VACATION_MESSAGE_PREFIX = "Task job script vacated by signal "
 
@@ -235,6 +236,10 @@ class TaskMessage(object):
                     job_status_file.write("%s=%s\n" % (
                         self.CYLC_JOB_EXIT,
                         message.replace(self.FAIL_MESSAGE_PREFIX, "")))
+                elif message.startswith(self.ABORT_MESSAGE_PREFIX):
+                    job_status_file.write("%s=%s\n" % (
+                        self.CYLC_JOB_EXIT,
+                        message.replace(self.ABORT_MESSAGE_PREFIX, "")))
                 elif message.startswith(self.VACATION_MESSAGE_PREFIX):
                     # Job vacated, remove entries related to current job
                     job_status_file_name = job_status_file.name
