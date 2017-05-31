@@ -236,7 +236,23 @@ class JobFileWriter(object):
             handle.write("\n    # TASK RUNTIME ENVIRONMENT:")
             for var, val in job_conf['environment'].items():
                 value = str(val)  # (needed?)
-                handle.write('\n    %s="%s"' % (var, value))
+                match = re.match(r"^(~[^/\s]*/)(.*)$", value)
+                if match:
+                    # ~foo/bar or ~/bar
+                    # write as ~foo/"bar" or ~/"bar"
+                    head, tail = match.groups()
+                    handle.write('\n    %s=%s"%s"' % (var, head, tail))
+                elif re.match(r"^~[^\s]*$", value):
+                    # plain ~foo or just ~
+                    # just leave unquoted as subsequent spaces don't
+                    # make sense in this case anyway
+                    handle.write('\n    %s=%s' % (var, value))
+                else:
+                    # Non tilde values - quote the lot.
+                    # This gets values like "~one ~two" too, but these
+                    # (in variable values) aren't expanded by the shell
+                    # anyway so it doesn't matter.
+                    handle.write('\n    %s="%s"' % (var, value))
 
                 # NOTE ON TILDE EXPANSION:
                 # The code above handles the following correctly:
