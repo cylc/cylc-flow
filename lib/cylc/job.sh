@@ -27,6 +27,11 @@ cylc__job__main() {
     if "${CYLC_DEBUG:-false}"; then
         if [[ -n "${BASH:-}" ]]; then
             PS4='+[\D{%Y%m%dT%H%M%S%z}]\u@\h '
+            # Export CYLC_ suite and task environment variables
+            cylc__job__inst__cylc_env
+            exec 19>>"${CYLC_SUITE_RUN_DIR}/log/job/${CYLC_TASK_JOB}/job.debug"
+            export BASH_XTRACEFD=19
+            >&2 echo "Sending DEBUG MODE xtrace to job.debug"
         fi
         set -x
     fi
@@ -54,8 +59,6 @@ cylc__job__main() {
         trap "cylc__job_vacation ${signal_name}" "${signal_name}"
     done
     set -euo pipefail
-    # Export CYLC_ suite and task environment variables
-    cylc__job__inst__cylc_env
     # Write task job self-identify
     USER="${USER:-$(whoami)}"
     typeset host="${HOSTNAME:-}"
