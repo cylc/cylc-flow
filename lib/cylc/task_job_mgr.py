@@ -938,6 +938,7 @@ class TaskJobManager(object):
             'job_d': job_d,
             'namespace_hierarchy': itask.tdef.namespace_hierarchy,
             'owner': itask.task_owner,
+            'param_var': itask.tdef.param_var,
             'post-script': scripts[2],
             'pre-script': scripts[0],
             'remote_suite_d': rtconfig['remote']['suite definition directory'],
@@ -948,5 +949,4 @@ class TaskJobManager(object):
             'task_id': itask.identity,
             'try_num': itask.get_try_num(),
             'work_d': rtconfig['work sub-directory'],
-            'param_var': itask.tdef.param_var,
         }

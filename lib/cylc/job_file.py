@@ -208,8 +208,7 @@ class JobFileWriter(object):
             '\n    export CYLC_TASK_TRY_NUMBER=%s' % job_conf['try_num'])
         if job_conf['param_var']:
             for var, val in job_conf['param_var'].items():
-                value = str(val)  # (needed?)
-                handle.write('\n    export %s="%s"' % (var, value))
+                handle.write('\n    export %s="%s"' % (var, val))
         if job_conf['work_d']:
             # Note: not an environment variable, but used by job.sh
             handle.write(
