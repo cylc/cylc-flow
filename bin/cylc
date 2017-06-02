@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2017 NIWA
@@ -29,7 +29,7 @@ HELP_OPTS=('help' '--help' '-h' 'h' '?')
 #alias log="cat-log"
 
 #if ${CYLC_DEBUG:-false}; then
-#    set -x
+#   set -x
 #fi
 
 get_version() {
@@ -48,7 +48,12 @@ print_version() {
     get_version
     # Old way using the python script
     #CYLC_VERSION="$($CYLC_HOME_BIN/cylc-new-version)"
-    echo "Cylc $CYLC_VERSION ($CYLC_HOME)"
+    
+    # Used to be more verbose like this, but shortened to match
+    # internal python method to get version of running suite. 
+    # For test compatibility.
+    #echo "Cylc $CYLC_VERSION ($CYLC_HOME)"
+    echo "$CYLC_VERSION"
 }
 
 init_cylc() {
@@ -64,8 +69,9 @@ init_cylc() {
     
     PATH=$(path_lead "${PATH:-}" "$CYLC_HOME_BIN")
     PYTHONPATH=$(path_lead "${PYTHONPATH:-}" "$CYLC_HOME/lib/")
+    PYTHONUNBUFFERED=true
     
-    export PATH PYTHONPATH CYLC_DIR CYLC_VERSION
+    export PATH PYTHONPATH PYTHONUNBUFFERED CYLC_DIR CYLC_VERSION
 }
 
 help_util() {
@@ -163,7 +169,7 @@ run_cylc_command_matched() {
     export CYLC_UTIL
     #echo "$COMMAND" "$@"
     exec "$COMMAND" "$@"
-    exit
+    exit 0
 }
 
 run_cylc_command() {
@@ -179,7 +185,7 @@ run_cylc_command() {
     export CYLC_UTIL
     #echo "$COMMAND" "$@"
     exec "$COMMAND" "$@"
-    exit
+    exit 0
 }
 
 init_cylc
@@ -190,15 +196,19 @@ if (($# > 0)); then
     shift 1
 fi
 
+if [[ -f $CYLC_HOME_BIN/cylc-${UTIL} ]]; then
+    run_cylc_command "$@" 
+    exit
+fi
 
 case $UTIL in
 help|h|?|--help|-h)
     help_util $@
-    exit
+    exit 0
     :;;
 version|--version|-V)
     print_version
-    exit
+    exit 0
     :;;
 # Deal with categories
 control|information|all|task|license|GPL|admin|preparation|hook|discovery|utility)
@@ -207,7 +217,7 @@ control|information|all|task|license|GPL|admin|preparation|hook|discovery|utilit
         exit
     elif (($# > 0)); then
         UTIL=$1
-        echo "UTIL $UTIL"
+        #echo "UTIL $UTIL"
         # Discard the category qualifier argument by shifting the arguments along by 1.
         shift 1
     fi
@@ -218,13 +228,13 @@ esac
 # i.e. dont ls to start with
 
 # Abort if no matches to command abbrev, list matches if multiple matches
-test "$(ls "$CYLC_HOME_BIN/cylc-${UTIL}"* 2>/dev/null)" || { abort_bad_command; exit; }
+test "$(ls "$CYLC_HOME_BIN/cylc-${UTIL}"* 2>/dev/null)" || { abort_bad_command; exit 1; }
 # Check if command (singular) exists first. Needed for handling "graph" and "graph-diff"
-test "$(ls "$CYLC_HOME_BIN/cylc-${UTIL}" 2>/dev/null | wc -l )" -eq 1 && { run_cylc_command "$@"; exit; }
+test "$(ls "$CYLC_HOME_BIN/cylc-${UTIL}" 2>/dev/null | wc -l )" -eq 1 && { run_cylc_command "$@"; exit 1; }
 # Now try and match abbreviated commands.
-test "$(ls "$CYLC_HOME_BIN/cylc-${UTIL}"* 2>/dev/null | wc -l )" -eq 1 && { run_cylc_command_matched "$@"; exit; }
+test "$(ls "$CYLC_HOME_BIN/cylc-${UTIL}"* 2>/dev/null | wc -l )" -eq 1 && { run_cylc_command_matched "$@"; exit 0; }
 # Now try and match abbreviated commands.
-test "$(ls "$CYLC_HOME_BIN/cylc-${UTIL}"* 2>/dev/null | wc -l )" -gt 1 && { abort_ambiguous_command; exit; }
+test "$(ls "$CYLC_HOME_BIN/cylc-${UTIL}"* 2>/dev/null | wc -l )" -gt 1 && { abort_ambiguous_command; exit 1; }
 
 
 

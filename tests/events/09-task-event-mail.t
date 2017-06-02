@@ -42,6 +42,7 @@ run_ok "${TEST_NAME_BASE}-validate" \
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug ${OPT_SET} "${SUITE_NAME}"
 
+#cat "${TEST_SMTPD_LOG}" >&2 
 contains_ok "${TEST_SMTPD_LOG}" <<__LOG__
 retry: 1/t1/01
 succeeded: 1/t1/02
