@@ -23,15 +23,15 @@
 ###############################################################################
 # The main function for a cylc task job.
 cylc__job__main() {
+    # Export CYLC_ suite and task environment variables
+    cylc__job__inst__cylc_env
     # Turn on xtrace in debug mode
     if "${CYLC_DEBUG:-false}"; then
         if [[ -n "${BASH:-}" ]]; then
             PS4='+[\D{%Y%m%dT%H%M%S%z}]\u@\h '
-            # Export CYLC_ suite and task environment variables
-            cylc__job__inst__cylc_env
-            exec 19>>"${CYLC_SUITE_RUN_DIR}/log/job/${CYLC_TASK_JOB}/job.debug"
+            exec 19>>"${CYLC_SUITE_RUN_DIR}/log/job/${CYLC_TASK_JOB}/job.xtrace"
             export BASH_XTRACEFD=19
-            >&2 echo "Sending DEBUG MODE xtrace to job.debug"
+            >&2 echo "Sending DEBUG MODE xtrace to job.xtrace"
         fi
         set -x
     fi

@@ -56,6 +56,7 @@ NAME_OUT = "out"
 NAME_JOB_ACTIVITY_LOG = "job-activity.log"
 NAME_JOB_EDIT_DIFF = "job-edit.diff"
 NAME_JOB_STATUS = "job.status"
+NAME_JOB_XTRACE = "job.xtrace"
 JOB_LOG_DEST_MAP = {
     NAME_DEFAULT: "job", NAME_ERR: "job.err", NAME_OUT: "job.out"}
 JOB_LOG_LOCAL_ALWAYS = (NAME_JOB_EDIT_DIFF, NAME_JOB_ACTIVITY_LOG)
@@ -101,6 +102,12 @@ def get_option_parser():
         action="store_const", const=NAME_JOB_EDIT_DIFF, dest="filename")
 
     parser.add_option(
+        "-x", "--xtrace",
+        help=("Task job log only: Short for --filename=job.xtrace" +
+              " (file present after a debug run)."),
+        action="store_const", const=NAME_JOB_XTRACE, dest="filename")
+
+    parser.add_option(
         "-u", "--status",
         help="Task job log only: Short for --filename=job.status",
         action="store_const", const=NAME_JOB_STATUS, dest="filename")
@@ -121,7 +128,7 @@ def get_option_parser():
         action="store", dest="submit_num")
 
     parser.add_option(
-        "-x", "--list-local",
+        "-i", "--list-local",
         help="List a log directory on the suite host",
         action="store_const", const=LIST_MODE_LOCAL, dest="list_mode")
 
