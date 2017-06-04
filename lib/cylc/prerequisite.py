@@ -18,12 +18,10 @@
 
 import math
 import re
-import sys
 
 from cylc.conditional_simplifier import ConditionalSimplifier
 from cylc.cycling.loader import get_point
 from cylc.suite_logging import ERR
-from cylc.task_id import TaskID
 
 
 """A task prerequisite.

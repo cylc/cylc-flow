@@ -125,7 +125,7 @@ def check_access_priv(server_obj, required_privilege_level):
     if threading.current_thread().__class__.__name__ == '_MainThread':
         # Server methods may be called internally as well as by clients.
         return
-    auth_user, prog_name, user, host, uuid, priv_level = get_client_info()
+    prog_name, user, host, uuid, priv_level = get_client_info()[1:]
     if not (PRIVILEGE_LEVELS.index(priv_level) >=
             PRIVILEGE_LEVELS.index(required_privilege_level)):
         err = CONNECT_DENIED_PRIV_TMPL % (

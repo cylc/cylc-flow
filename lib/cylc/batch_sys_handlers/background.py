@@ -21,7 +21,6 @@ import errno
 import os
 import re
 from subprocess import Popen, STDOUT
-import sys
 
 
 class BgCommandHandler(object):

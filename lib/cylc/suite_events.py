@@ -25,7 +25,7 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.mp_pool import SuiteProcContext
 from cylc.owner import USER
 from cylc.suite_host import get_suite_host
-from cylc.suite_logging import OUT, ERR, LOG
+from cylc.suite_logging import ERR, LOG
 
 
 class SuiteEventError(Exception):

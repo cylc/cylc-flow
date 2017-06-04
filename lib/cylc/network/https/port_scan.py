@@ -67,9 +67,9 @@ def _scan_item(timeout, my_uuid, srv_files_mgr, item):
         timeout=timeout)
     try:
         result = client.identify()
-    except ConnectionTimeout as exc:
+    except ConnectionTimeout:
         return (host, port, MSG_TIMEOUT)
-    except ConnectionError as exc:
+    except ConnectionError:
         return (host, port, None)
     else:
         owner = result.get('owner')
@@ -93,7 +93,7 @@ def _scan_item(timeout, my_uuid, srv_files_mgr, item):
                         my_uuid=my_uuid, timeout=timeout)
                     try:
                         result = client.identify()
-                    except ConnectionError as exc:
+                    except ConnectionError:
                         # Nope (private suite, wrong passphrase).
                         if cylc.flags.debug:
                             print >> sys.stderr, (

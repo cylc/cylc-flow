@@ -62,7 +62,7 @@ class CommsClientReporter(object):
         if threading.current_thread().__class__.__name__ == '_MainThread':
             # Server methods may be called internally as well as by clients.
             return
-        auth_user, prog_name, user, host, uuid, priv_level = get_client_info()
+        prog_name, user, host, uuid, priv_level = get_client_info()[1:]
         name = server_obj.__class__.__name__
         log_me = (
             cylc.flags.debug or
@@ -107,8 +107,7 @@ class CommsClientReporter(object):
     def report_connection_if_denied(self):
         """Log an (un?)successful connection attempt."""
         try:
-            (auth_user, prog_name, user, host, uuid,
-             priv_level) = get_client_info()
+            prog_name, user, host, uuid, _ = get_client_info()[1:]
         except Exception:
             LOG.warning(
                 self.__class__.LOG_CONNECT_DENIED_TMPL % (

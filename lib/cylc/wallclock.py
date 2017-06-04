@@ -234,9 +234,9 @@ def get_unix_time_from_time_string(datetime_string):
         time_zone_minute = int(time_zone_info.get("time_zone_minute", 0))
         offset_seconds = 3600 * time_zone_hour + 60 * time_zone_minute
         if "+" in datetime_string:
-            datetime_string, time_zone_string = datetime_string.split("+")
+            datetime_string = datetime_string.split("+")[0]
         else:
-            datetime_string, time_zone_string = datetime_string.rsplit("-", 1)
+            datetime_string = datetime_string.rsplit("-", 1)[0]
         date_time = datetime.strptime(
             datetime_string, DATE_TIME_FORMAT_EXTENDED)
         date_time_utc = date_time - timedelta(seconds=offset_seconds)

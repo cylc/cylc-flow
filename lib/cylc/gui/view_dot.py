@@ -17,13 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import gtk
-import os
-import gobject
 from updater_dot import DotUpdater
-from gcapture import gcapture_tmpfile
 from cylc.task_id import TaskID
-from util import EntryTempText
-from warning_dialog import warning_dialog
 
 
 class ControlLED(object):
@@ -76,13 +71,12 @@ LED suite control interface.
         # right click):
         x = int(event.x)
         y = int(event.y)
-        time = event.time
         pth = treeview.get_path_at_pos(x, y)
 
         if pth is None:
             return False
 
-        path, col, cellx, celly = pth
+        path, col = pth[0:2]
         r_iter = treeview.get_model().get_iter(path)
 
         column_index = treeview.get_columns().index(col)

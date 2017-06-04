@@ -23,7 +23,6 @@ import os
 import re
 import threading
 
-import cylc.flags
 from cylc.gui.warning_dialog import warning_dialog, info_dialog
 from cylc.gui.util import get_icon, EntryTempText, EntryDialog
 from cylc.network.port_scan import scan_all
@@ -68,7 +67,7 @@ class db_updater(threading.Thread):
                     descr, suite_dir = (None, None)
                 else:
                     # local suite
-                    _, suite_dir, descr = regd_choices[suite]
+                    suite_dir, descr = regd_choices[suite][1:3]
                     del regd_choices[suite]
             nest2 = self.newtree
             regp = suite.split(SuiteSrvFilesManager.DELIM)
@@ -156,11 +155,10 @@ class db_updater(threading.Thread):
         # new items at this level
         new_items = new.keys()
         old_items = []
-        prune = []
 
         while iter_:
             # iterate through old items at this level
-            item, state, descr, dir = ts.get(iter_, 0, 1, 2, 3)
+            item, state = ts.get(iter_, 0, 1, 2, 3)[0:2]
             if item not in new_items:
                 # old item is not in new - prune it
                 res = ts.remove(iter_)
@@ -173,7 +171,7 @@ class db_updater(threading.Thread):
                 chiter = ts.iter_children(iter_)
                 if not isinstance(new[item], dict):
                     # new item is not a group - update title etc.
-                    state, descr, dir = new[item]
+                    state = new[item][0]
                     sc = self.statecol(state)
                     ni = new[item]
                     ts.set(iter_, 0, item, 1, ni[0], 2, ni[1], 3, ni[2],
@@ -220,8 +218,8 @@ class db_updater(threading.Thread):
                         piter, [item] + [None, None, None, None, None, None])
                     self.build_treestore(new[key], xiter)
                 else:
-                    state, descr, dir = new[key]
-                    yiter = ts.append(
+                    state, descr = new[key][0:2]
+                    ts.append(
                         piter, [item] + new[key] + list(self.statecol(state)))
             else:
                 # new data was already in old
@@ -455,7 +453,7 @@ class dbchooser(object):
                 keyname = gtk.gdk.keyval_name(event.keyval)
                 if keyname != 'Return':
                     return False
-                path, focus_col = treeview.get_cursor()
+                path = treeview.get_cursor()[0]
                 if not path:
                     # no selection (prob treeview heading selected)
                     return False
@@ -481,18 +479,12 @@ class dbchooser(object):
             if pth is None:
                 return False
             treeview.grab_focus()
-            path, col, cellx, celly = pth
+            path, col = pth[0:2]
             treeview.set_cursor(path, col, 0)
 
         selection = treeview.get_selection()
-
         model, iter_ = selection.get_selected()
-
-        item, auth, descr, suite_dir = model.get(iter_, 0, 1, 2, 3)
-        if not suite_dir:
-            group_clicked = True
-        else:
-            group_clicked = False
+        item, auth, _, suite_dir = model.get(iter_, 0, 1, 2, 3)
 
         def get_reg(item, iter_):
             reg = item

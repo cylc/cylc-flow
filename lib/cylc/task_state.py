@@ -19,7 +19,6 @@
 """Task state related logic."""
 
 
-from cylc.cycling.loader import get_point_relative
 import cylc.flags as flags
 from cylc.prerequisite import Prerequisite
 from cylc.suite_logging import LOG
@@ -390,7 +389,6 @@ class TaskState(object):
         # valid member of sequence_i's sequence of cycle points.
         self._is_satisfied = None
         self._suicide_is_satisfied = None
-        identity = TaskID.get(tdef.name, str(point))
 
         for sequence, dependencies in tdef.dependencies.items():
             if not sequence.is_valid(point):

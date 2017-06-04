@@ -22,13 +22,11 @@ import re
 from parsec.validate import validator as vdr
 from parsec.validate import (
     coercers, _strip_and_unquote, _strip_and_unquote_list, IllegalValueError)
-from parsec.util import itemstr
-from parsec.upgrade import upgrader, converter
+from parsec.upgrade import upgrader
 from parsec.config import config
 from isodatetime.dumpers import TimePointDumper
 from isodatetime.data import Calendar, TimePoint
 from isodatetime.parsers import TimePointParser, DurationParser
-from cylc.cycling.integer import REC_INTERVAL as REC_INTEGER_INTERVAL
 
 from cylc.cfgspec.utils import (
     coerce_interval, coerce_interval_list, DurationFloat)

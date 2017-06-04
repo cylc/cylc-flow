@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Utility for "cylc cat-state" and "cylc dump"."""
 
-import time
 from cylc.task_id import TaskID
 from cylc.network.suite_state_client import SUITE_STATUS_STOPPED
 from cylc.task_state import TASK_STATUS_READY
@@ -32,8 +31,6 @@ def get_stop_state_summary(lines):
     for line in list(lines):
         if line.startswith('Remote command'):
             lines.remove(line)
-    line0 = lines.pop(0)
-    # (line0 is run mode)
     line1 = lines.pop(0)
     while not line1.startswith("time :"):
         line1 = lines.pop(0)

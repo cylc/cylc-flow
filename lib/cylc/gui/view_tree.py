@@ -22,8 +22,6 @@ from updater_tree import TreeUpdater
 from cylc.task_id import TaskID
 from isodatetime.parsers import DurationParser
 
-from collections import defaultdict
-
 
 class ControlTree(object):
     """Text Treeview suite control interface."""

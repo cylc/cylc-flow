@@ -209,7 +209,6 @@ class CylcTimeParser(object):
             if not result:
                 continue
 
-            props = {}
             repetitions = result.groupdict().get("reps")
             if repetitions is not None:
                 repetitions = int(repetitions)
@@ -459,7 +458,7 @@ class TestRecurrenceSuite(unittest.TestCase):
                 expression, num_expanded_year_digits, ctrl_data = test[:3]
                 ctrl_results = test[3]
             parser = self._parsers[num_expanded_year_digits]
-            recurrence, exclusion = parser.parse_recurrence(expression)
+            recurrence = parser.parse_recurrence(expression)[0]
             test_data = str(recurrence)
             self.assertEqual(test_data, ctrl_data)
             if ctrl_results is None:
@@ -511,8 +510,7 @@ class TestRecurrenceSuite(unittest.TestCase):
                 ctrl_results = None
             else:
                 expression, ctrl_data, ctrl_results = test
-            recurrence, exclusion = self._parsers[0].parse_recurrence(
-                expression)
+            recurrence = (self._parsers[0].parse_recurrence(expression))[0]
             test_data = str(recurrence)
             self.assertEqual(test_data, ctrl_data)
             if ctrl_results is None:
@@ -548,8 +546,8 @@ class TestRecurrenceSuite(unittest.TestCase):
                 ctrl_results = None
             else:
                 expression, ctrl_data, ctrl_results = test
-            recurrence, exclusion = self._parsers[0].parse_recurrence(
-                expression)
+            recurrence = (self._parsers[0].parse_recurrence(
+                expression))[0]
             test_data = str(recurrence)
             self.assertEqual(test_data, ctrl_data)
             if ctrl_results is None:

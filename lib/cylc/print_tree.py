@@ -69,7 +69,7 @@ def print_tree(tree, padding, use_unicode=False, prefix='', labels=None,
         else:
             if labels:
                 if item in labels:
-                    tf, reason = labels[item]
+                    reason = labels[item][1]
                     print line, '...', reason
                 else:
                     print line

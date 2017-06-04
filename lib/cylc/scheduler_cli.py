@@ -20,7 +20,6 @@
 import sys
 
 from cylc.option_parsers import CylcOptionParser as COP
-import cylc.flags
 from cylc.scheduler import Scheduler
 
 RUN_DOC = r"""cylc [control] run|start [OPTIONS] ARGS

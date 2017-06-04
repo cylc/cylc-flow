@@ -227,8 +227,8 @@ class gconfig(config):
             if key == 'color' or key == 'fontcolor':
                 try:
                     gtk.gdk.color_parse(val)
-                except ValueError, x:
-                    print >> sys.stderr, 'ERROR', x
+                except ValueError as exc:
+                    print >> sys.stderr, 'ERROR', exc
                     sys.exit('ERROR, gcylc.rc, illegal color: ' + theme +
                              ': ' + name + '="' + item + '"')
             cfg[key] = val
@@ -262,7 +262,7 @@ class gconfig(config):
         for key in keys:
             try:
                 cfg = cfg[key]
-            except KeyError, x:
+            except KeyError:
                 raise ItemNotFoundError(itemstr(parents, key))
             else:
                 parents.append(key)

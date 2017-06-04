@@ -19,7 +19,6 @@
 
 from isodatetime.data import Calendar
 from isodatetime.parsers import DurationParser
-from parsec.util import itemstr
 from parsec.validate import (
     _strip_and_unquote, _strip_and_unquote_list, _expand_list,
     IllegalValueError

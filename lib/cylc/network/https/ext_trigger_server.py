@@ -76,7 +76,7 @@ class ExtTriggerServer(BaseCommsServer):
             for qmsg, qid in queued:
                 if trig == qmsg:
                     # Matched.
-                    name, point_string = TaskID.split(itask.identity)
+                    point_string = TaskID.split(itask.identity)[1]
                     # Set trigger satisfied.
                     itask.state.external_triggers[trig] = True
                     cylc.flags.pflag = True

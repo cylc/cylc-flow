@@ -148,7 +148,7 @@ def inline(lines, dir, file, for_grep=False, for_edit=False, viewcfg={},
 
 def cleanup(suitedir):
     print 'CLEANUP REQUESTED, deleting:'
-    for root, dirs, files in os.walk(suitedir):
+    for root, _, files in os.walk(suitedir):
         for file in files:
             if re.search('\.EDIT\..*$', file):
                 print ' + ' + re.sub(suitedir + '/', '', file)

@@ -16,10 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import gobject
 import gtk
 
-from gcapture import gcapture, gcapture_tmpfile
+from gcapture import gcapture_tmpfile
 from warning_dialog import warning_dialog
 
 

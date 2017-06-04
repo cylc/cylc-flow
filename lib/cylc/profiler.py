@@ -18,11 +18,10 @@
 """Cylc memory and performance profiling."""
 
 import os
-import sys
 import cProfile
 import StringIO
 import pstats
-from subprocess import call, Popen, PIPE
+from subprocess import Popen, PIPE
 
 
 class Profiler(object):

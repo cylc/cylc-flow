@@ -65,7 +65,6 @@ class StateSummaryServer(BaseCommsServer):
 
         task_summary, task_states = self._get_tasks_info(tasks, tasks_rh)
 
-        fam_states = {}
         all_states = []
         config = SuiteConfig.get_inst()
         ancestors_dict = config.get_first_parent_ancestors()

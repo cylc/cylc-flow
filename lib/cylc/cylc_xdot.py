@@ -19,13 +19,11 @@
 import gtk
 import os
 import re
-import sys
 import xdot
 from cylc.config import SuiteConfig
 from cylc.graphing import CGraphPlain
 from cylc.gui import util
 from cylc.task_id import TaskID
-from cylc.templatevars import load_template_vars
 from cylc.suite_logging import ERR
 
 """
@@ -389,7 +387,6 @@ class MyDotWindow(CylcDotViewerCommon):
         if not self.suiterc:
             return
         family_nodes = self.suiterc.get_first_parent_descendants().keys()
-        suite_polling_tasks = self.suiterc.suite_polling_tasks
         # Note this is used by "cylc graph" but not gcylc.
         # self.start_ and self.stop_point_string come from CLI.
         graph = self.suiterc.get_graph(
@@ -403,7 +400,7 @@ class MyDotWindow(CylcDotViewerCommon):
         graph.graph_attr['rankdir'] = self.orientation
 
         for node in graph.nodes():
-            name, point_string = TaskID.split(node.get_name())
+            name = TaskID.split(node.get_name())[0]
             if name in family_nodes:
                 node.attr['shape'] = 'doubleoctagon'
 
