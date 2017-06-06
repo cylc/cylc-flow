@@ -29,7 +29,7 @@ cmp_ok "${SUITE_RUN_DIR}/ctb-get-graph-raw.out" <<'__OUT__'
     [
         [
             "t1.1", 
-            "T.1", 
+            null, 
             null, 
             false, 
             false
@@ -43,7 +43,7 @@ cmp_ok "${SUITE_RUN_DIR}/ctb-get-graph-raw.out" <<'__OUT__'
         ], 
         [
             "t1.1", 
-            null, 
+            "T.1", 
             null, 
             false, 
             false

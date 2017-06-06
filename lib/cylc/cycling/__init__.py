@@ -446,6 +446,17 @@ class ExclusionBase(object):
         """Allows indexing of the exclusion object"""
         return self.exclusion_sequences[key]
 
+    def __str__(self):
+        returns = []
+        for point in sorted(self.exclusion_points):
+            returns.append(str(point))
+        for sequence in self.exclusion_sequences:
+            returns.append(str(sequence))
+        ret = ','.join(returns)
+        if ',' in ret:
+            ret = '(' + ret + ')'
+        return ret
+
 
 if __name__ == "__main__":
     import unittest

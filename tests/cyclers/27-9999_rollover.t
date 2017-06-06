@@ -23,7 +23,7 @@ set_test_number 3
 install_suite $TEST_NAME_BASE 9999_rollover
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+run_ok $TEST_NAME cylc validate --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
 suite_run_fail $TEST_NAME cylc run --debug $SUITE_NAME
