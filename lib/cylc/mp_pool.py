@@ -40,19 +40,14 @@ import traceback
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
-from cylc.suite_logging import LOG, OUT
+from cylc.suite_logging import LOG
 from cylc.wallclock import get_current_time_string
 
 
 def _run_command(ctx):
     """Execute a shell command and capture its output and exit status."""
 
-    if cylc.flags.debug:
-        if ctx.cmd_kwargs.get('shell'):
-            OUT.debug(ctx.cmd)
-        else:
-            OUT.debug(
-                "%s\n" % ' '.join([quote(cmd_str) for cmd_str in ctx.cmd]))
+    LOG.debug(ctx)
 
     if (SuiteProcPool.STOP_JOB_SUBMISSION.value and
             ctx.cmd_key == SuiteProcPool.JOBS_SUBMIT):
