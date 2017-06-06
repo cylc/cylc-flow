@@ -445,17 +445,17 @@ class SuiteConfig(object):
             for item in self.cfg['scheduling']['special tasks'][s_type]:
                 name = item
                 if s_type == 'external-trigger':
-                    m = RE_EXT_TRIGGER.match(item)
-                    if m is None:
+                    match = RE_EXT_TRIGGER.match(item)
+                    if match is None:
                         raise SuiteConfigError(
                             "ERROR: Illegal %s spec: %s" % (s_type, item)
                         )
-                    name, ext_trigger_msg = m.groups()
+                    name, ext_trigger_msg = match.groups()
                     extn = "(" + ext_trigger_msg + ")"
 
                 elif s_type in ['clock-trigger', 'clock-expire']:
-                    m = RE_CLOCK_OFFSET.match(item)
-                    if m is None:
+                    match = RE_CLOCK_OFFSET.match(item)
+                    if match is None:
                         raise SuiteConfigError(
                             "ERROR: Illegal %s spec: %s" % (s_type, item)
                         )
@@ -466,7 +466,7 @@ class SuiteConfig(object):
                             "[scheduling]cycling mode=%s" % (
                                 s_type, Calendar.MODE_GREGORIAN)
                         )
-                    name, offset_string = m.groups()
+                    name, offset_string = match.groups()
                     if not offset_string:
                         offset_string = "PT0M"
                     if cylc.flags.verbose:
@@ -607,9 +607,9 @@ class SuiteConfig(object):
             bad = {}
             for ng, mems in ngs.items():
                 n_bad = []
-                for m in mems:
-                    if m not in nspaces:
-                        n_bad.append(m)
+                for mem in mems:
+                    if mem not in nspaces:
+                        n_bad.append(mem)
                 if n_bad:
                     bad[ng] = n_bad
             if bad:
@@ -1013,13 +1013,13 @@ class SuiteConfig(object):
         # uncomment this to compare the simple and efficient methods
         # print '  Number of namespace replications:', n_reps
 
-    def print_inheritance(self):
-        # (use for debugging)
-        for foo in self.runtime:
-            log_msg = '\t' + foo
-            for item, val in self.runtime[foo].items():
-                log_msg += '\t\t' + item + '\t' + val
-            OUT.info(log_msg)
+    # def print_inheritance(self):
+    #     # (use for debugging)
+    #     for foo in self.runtime:
+    #         log_msg = '\t' + foo
+    #         for item, val in self.runtime[foo].items():
+    #             log_msg += '\t\t' + item + '\t' + val
+    #         OUT.info(log_msg)
 
     def compute_runahead_limits(self):
         """Extract the runahead limits information."""
@@ -1271,11 +1271,11 @@ class SuiteConfig(object):
         for rt in hierarchy:
             hier = copy(hierarchy[rt])
             hier.reverse()
-            foo = tree
+            cur_tree = tree
             for item in hier:
-                if item not in foo:
-                    foo[item] = {}
-                foo = foo[item]
+                if item not in cur_tree:
+                    cur_tree[item] = {}
+                cur_tree = cur_tree[item]
 
     def add_tree_titles(self, tree):
         for key, val in tree.items():
@@ -1351,19 +1351,21 @@ class SuiteConfig(object):
         os.environ['CYLC_SUITE_DEF_PATH'] = self.fdir
 
     def check_tasks(self):
-        # Call after all tasks are defined.
-        # ONLY IF VALIDATING THE SUITE
-        # because checking conditional triggers below may be slow for
-        # huge suites (several thousand tasks).
-        # Note:
-        #   (a) self.cfg['runtime'][name]
-        #       contains the task definition sections of the suite.rc file.
-        #   (b) self.taskdefs[name]
-        #       contains tasks that will be used, defined by the graph.
-        # Tasks (a) may be defined but not used (e.g. commented out of the
-        # graph)
-        # Tasks (b) may not be defined in (a), in which case they are dummied
-        # out.
+        """Call after all tasks are defined.
+
+        ONLY IF VALIDATING THE SUITE
+        because checking conditional triggers below may be slow for
+        huge suites (several thousand tasks).
+        Note:
+          (a) self.cfg['runtime'][name]
+              contains the task definition sections of the suite.rc file.
+          (b) self.taskdefs[name]
+              contains tasks that will be used, defined by the graph.
+        Tasks (a) may be defined but not used (e.g. commented out of the
+        graph)
+        Tasks (b) may not be defined in (a), in which case they are dummied
+        out.
+        """
 
         for taskdef in self.taskdefs.values():
             try:
@@ -1540,8 +1542,6 @@ class SuiteConfig(object):
                 else:
                     ltaskdef.intercycle_offsets.add(
                         (str(first_point - last_point), seq))
-            elif offset_is_from_icp:
-                abs_cycle_point = offset
             elif offset:
                 if offset_is_irregular:
                     offset_tuple = (offset, seq)
@@ -1572,6 +1572,8 @@ class SuiteConfig(object):
 
             triggers[left] = task_trigger
 
+        # Walk down "expr_list" depth first, and replace any items matching a
+        # key in "triggers" ("left" values) with the trigger.
         stack = [expr_list]
         while stack:
             item_list = stack.pop()
@@ -1585,8 +1587,10 @@ class SuiteConfig(object):
         self.taskdefs[right].add_dependency(dependency, seq)
 
     def get_actual_first_point(self, start_point):
-        # Get actual first cycle point for the suite (get all
-        # sequences to adjust the putative start time upward)
+        """Get actual first cycle point for the suite
+
+        Get all sequences to adjust the putative start time upward.
+        """
         if (self._start_point_for_actual_first_point is not None and
                 self._start_point_for_actual_first_point == start_point and
                 self.actual_first_point is not None):
@@ -1594,9 +1598,9 @@ class SuiteConfig(object):
         self._start_point_for_actual_first_point = start_point
         adjusted = []
         for seq in self.sequences:
-            foo = seq.get_first_point(start_point)
-            if foo:
-                adjusted.append(foo)
+            point = seq.get_first_point(start_point)
+            if point:
+                adjusted.append(point)
         if len(adjusted) > 0:
             adjusted.sort()
             self.actual_first_point = adjusted[0]
@@ -1692,7 +1696,6 @@ class SuiteConfig(object):
                         clf.remove(i)
 
         gr_edges = {}
-        node_cache = {}
         start_point_offset_cache = {}
         for sequence, edges in self.edges.items():
             # Get initial cycle point for this sequence
@@ -1716,12 +1719,8 @@ class SuiteConfig(object):
                         r_id = (right, point)
                     else:
                         r_id = None
-                    try:
-                        name, offset_is_from_icp, offset = node_cache[left]
-                    except KeyError:
-                        name, offset_is_from_icp, _, offset, _ = (
-                            GraphNodeParser.get_inst().parse(left))
-                        node_cache[left] = (name, offset_is_from_icp, offset)
+                    name, offset_is_from_icp, _, offset, _ = (
+                        GraphNodeParser.get_inst().parse(left))
                     if offset:
                         if offset_is_from_icp:
                             cache = start_point_offset_cache
@@ -1756,10 +1755,11 @@ class SuiteConfig(object):
                                 r_id = None
                                 action = True
                     if action:
-                        nl, nr = self._close_families(clf, l_id, r_id)
+                        l_str, r_str = self._close_families(clf, l_id, r_id)
                         if point not in gr_edges:
                             gr_edges[point] = []
-                        gr_edges[point].append((nl, nr, None, suicide, cond))
+                        gr_edges[point].append(
+                            (l_str, r_str, None, suicide, cond))
                 # Increment the cycle point.
                 point = sequence.get_next_point_on_sequence(point)
 
@@ -1777,10 +1777,11 @@ class SuiteConfig(object):
         self._last_graph_raw_edges = graph_raw_edges
         return graph_raw_edges
 
-    def get_graph(self, start_point_string=None, stop_point_string=None,
-                  group_nodes=[], ungroup_nodes=[], ungroup_recursive=False,
-                  group_all=False, ungroup_all=False, ignore_suicide=False,
-                  subgraphs_on=False, is_validate=False):
+    def get_graph(
+            self, start_point_string=None, stop_point_string=None,
+            group_nodes=None, ungroup_nodes=None, ungroup_recursive=False,
+            group_all=False, ungroup_all=False, ignore_suicide=False,
+            subgraphs_on=False, is_validate=False):
 
         # If graph extent is not given, use visualization settings.
         if start_point_string is None:
@@ -1836,27 +1837,28 @@ class SuiteConfig(object):
         if n_id:
             rname, rpoint = n_id
 
-        nl, nr = None, None
+        l_str, r_str = None, None
         for family_name in clf:
             family = self.runtime['first-parent descendants'][family_name]
             if lname in family and rname in family:
                 # this makes 'the graph disappear if grouping 'root'
-                nl = TaskID.get(family_name, lpoint)
-                nr = TaskID.get(family_name, rpoint)
+                l_str = TaskID.get(family_name, lpoint)
+                r_str = TaskID.get(family_name, rpoint)
                 break
             elif lname in family:
-                nl = TaskID.get(family_name, lpoint)
+                l_str = TaskID.get(family_name, lpoint)
             elif rname in family:
-                nr = TaskID.get(family_name, rpoint)
+                r_str = TaskID.get(family_name, rpoint)
 
-        if l_id and nl is None:
-            nl = TaskID.get(lname, lpoint)
-        if n_id and nr is None:
-            nr = TaskID.get(rname, rpoint)
+        if l_id and l_str is None:
+            l_str = TaskID.get(lname, lpoint)
+        if n_id and r_str is None:
+            r_str = TaskID.get(rname, rpoint)
 
-        return nl, nr
+        return l_str, r_str
 
     def load_graph(self):
+        """Parse and load dependency graph."""
         if cylc.flags.verbose:
             OUT.info("Parsing the dependency graph")
 
@@ -1927,13 +1929,13 @@ class SuiteConfig(object):
                     "ERROR: Invalid/unsupported recurrence representation: " +
                     str(section))
             self.sequences.append(seq)
-            gp = GraphParser(family_map, self.parameters)
-            gp.parse_graph(graph)
-            self.suite_polling_tasks.update(gp.suite_state_polling_tasks)
-            self._proc_triggers(gp.triggers, gp.original, section, seq,
-                                task_triggers)
+            parser = GraphParser(family_map, self.parameters)
+            parser.parse_graph(graph)
+            self.suite_polling_tasks.update(parser.suite_state_polling_tasks)
+            self._proc_triggers(
+                parser.triggers, parser.original, seq, task_triggers)
 
-    def _proc_triggers(self, triggers, original, section, seq, task_triggers):
+    def _proc_triggers(self, triggers, original, seq, task_triggers):
         """Define graph edges, taskdefs, and triggers, from graph sections."""
         for right, val in triggers.items():
             for expr, trigs in val.items():
@@ -2017,9 +2019,8 @@ class SuiteConfig(object):
         taskd.sequential = (
             name in self.cfg['scheduling']['special tasks']['sequential'])
 
-        foo = copy(self.runtime['linearized ancestors'][name])
-        foo.reverse()
-        taskd.namespace_hierarchy = foo
+        taskd.namespace_hierarchy = list(
+            reversed(self.runtime['linearized ancestors'][name]))
 
         if name in self.task_param_vars:
             taskd.param_var = self.task_param_vars[name]

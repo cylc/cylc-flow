@@ -15,6 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Provide graph node parsing and caching service"""
 
 from cylc.cycling.loader import get_interval, get_interval_cls
 from cylc.task_id import TaskID
@@ -27,8 +28,9 @@ class GraphNodeError(Exception):
 
 
 class GraphNodeParser(object):
-    """Graph node and offset parser."""
+    """Provide graph node parsing and caching service"""
 
+    # Match a graph node string.
     REC_NODE = re.compile(
         r"^" +
         r"(" + TaskID.NAME_RE + r")" +
@@ -42,8 +44,8 @@ class GraphNodeParser(object):
             (?::([\w-]+))? # Optional type (e.g. :succeed)
             $
          """, re.X)
-    """Match a graph node string"""
 
+    # A potentially non-regular offset, such as foo[01T+P1W].
     REC_IRREGULAR_OFFSET = re.compile(
         r"""^            # Start of string
             (            # Begin group
@@ -55,23 +57,24 @@ class GraphNodeParser(object):
             )            # End group
             $            # End of string
         """, re.X)
-    """A potentially non-regular offset, such as foo[01T+P1W]."""
 
     _INSTANCE = None
 
     @classmethod
     def get_inst(cls):
+        """Return the singleton instance."""
         if cls._INSTANCE is None:
             cls._INSTANCE = cls()
         return cls._INSTANCE
 
     def __init__(self):
-        self.clear()
+        self._offsets = {}
+        self._nodes = {}
 
     def clear(self):
         """Clear caches."""
-        self._offsets = {}
-        self._nodes = {}
+        self._offsets.clear()
+        self._nodes.clear()
 
     def _get_offset(self, offset=None):
         """Return and cache the standardised offset string."""

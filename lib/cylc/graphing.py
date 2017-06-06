@@ -36,7 +36,7 @@ class CGraphPlain(pygraphviz.AGraph):
 
     def node_attr_by_taskname(self, node_string):
         try:
-            name, point_string = TaskID.split(node_string)
+            name = TaskID.split(node_string)[0]
         except ValueError:
             # Special node?
             if node_string.startswith("__remove_"):
@@ -171,7 +171,7 @@ class CGraphPlain(pygraphviz.AGraph):
         # Create a new node name for the group.
         names = set()
         index = -1
-        for group, group_nodes in sorted(groups.items()):
+        for group in sorted(groups):
             index += 1
             name = "__remove_%s__" % index
             while name in existing_nodes or name in names:
