@@ -700,6 +700,35 @@ class CylcSuiteDAO(object):
         for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
             callback(row_idx, list(row))
 
+    def select_task_times(self):
+        """Select submit/start/stop times to compute job timings.
+
+        To make data interpretation easier, choose the most recent succeeded
+        task to sample timings from.
+        """
+        q = """
+            SELECT
+                name,
+                cycle,
+                user_at_host,
+                batch_sys_name,
+                time_submit,
+                time_run,
+                time_run_exit
+            FROM
+                %(task_jobs)s
+            WHERE
+                run_status = %(succeeded)d
+        """ % {
+            'task_jobs': self.TABLE_TASK_JOBS,
+            'succeeded': 0,
+        }
+        columns = (
+            'name', 'cycle', 'host', 'batch_system',
+            'submit_time', 'start_time', 'succeed_time'
+        )
+        return columns, [r for r in self.connect().execute(q)]
+
     def take_checkpoints(self, event, other_daos=None):
         """Add insert items to *_checkpoints tables.
 
