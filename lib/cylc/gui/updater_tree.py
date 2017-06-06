@@ -228,7 +228,7 @@ class TreeUpdater(threading.Thread):
                 tkeys = ['submitted_time_string', 'started_time_string',
                          'finished_time_string']
 
-                if id in self.fam_state_summary:
+                if is_fam:
                     # Family timing currently left empty.
                     for dt in tkeys:
                         t_info[dt] = ""
