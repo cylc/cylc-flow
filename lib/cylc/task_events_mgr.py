@@ -84,7 +84,6 @@ class TaskEventsManager(object):
     * Set up task (submission) retries on job (submission) failures.
     * Generate and manage task event handlers.
     """
-
     EVENT_FAILED = TASK_OUTPUT_FAILED
     EVENT_RETRY = "retry"
     EVENT_STARTED = TASK_OUTPUT_STARTED
@@ -255,7 +254,6 @@ class TaskEventsManager(object):
 
         """
         is_polled = poll_event_time is not None
-
         # Log incoming messages with '>' to distinguish non-message log entries
         message_flag = ""
         if is_incoming:
@@ -839,6 +837,7 @@ class TaskEventsManager(object):
                 "submit_num": itask.submit_num,
                 "id": quote(itask.identity),
                 "message": quote(message),
+                "importance":quote(itask.tdef.rtconfig['importance']),
                 "task_url": quote(itask.tdef.rtconfig['URL']),
                 "suite_url": quote(self.suite_url),
             }
