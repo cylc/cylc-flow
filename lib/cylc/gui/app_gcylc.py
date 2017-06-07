@@ -1247,8 +1247,12 @@ been defined for this suite""").inform()
                 command_opt = "--activity"
             elif choice == 'job.status':
                 command_opt = "--status"
+            elif choice == 'job.xtrace':
+                command_opt = "--xtrace"
             elif choice == 'job.out':
                 command_opt = "--stdout"
+            elif choice == 'job-edit.diff':
+                command_opt = "--diff"
             elif choice == 'job.err':
                 command_opt = "--stderr"
             elif choice == 'job':
@@ -1348,7 +1352,9 @@ been defined for this suite""").inform()
                 for key, filename in [
                         ('job script', 'job'),
                         ('job activity log', 'job-activity.log'),
-                        ('job status file', 'job.status')]:
+                        ('job status file', 'job.status'),
+                        ('job edit diff', 'job-edit.diff'),
+                        ('job debug xtrace', 'job.xtrace')]:
                     item = gtk.ImageMenuItem(key)
                     item.set_image(gtk.image_new_from_stock(
                         gtk.STOCK_DND, gtk.ICON_SIZE_MENU))
@@ -1415,7 +1421,9 @@ been defined for this suite""").inform()
                 for key, filename in [
                         ('job script', 'job'),
                         ('job activity log', 'job-activity.log'),
-                        ('job status file', 'job.status')]:
+                        ('job status file', 'job.status'),
+                        ('job edit diff', 'job-edit.diff'),
+                        ('job debug xtrace', 'job.xtrace')]:
                     item = gtk.ImageMenuItem(key)
                     item.set_image(gtk.image_new_from_stock(
                         gtk.STOCK_DND, gtk.ICON_SIZE_MENU))
@@ -2351,7 +2359,8 @@ shown here in the state they were in at the time of triggering.''')
                     )
                 else:
                     job_log_dir = local_job_log_dir
-                for filename in ["job.out", "job.err", "job.status"]:
+                for filename in ["job.out", "job.err", "job.status",
+                                 "job-edit.diff", "job.xtrace"]:
                     filenames.append(os.path.join(job_log_dir, filename))
 
         for filename in sorted(list(task_state_summary['logfiles'])):
