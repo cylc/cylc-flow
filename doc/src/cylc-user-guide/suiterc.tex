@@ -1127,6 +1127,24 @@ suite URLs (\ref{SuiteURL}).
 (Note that URLs containing the suite comment delimiter
 \lstinline=#= must be protected by quotes).
 
+\paragraph[importance]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow importance}
+
+This configuration item allows suite writers to give a custom "importance" 
+rating to tasks.  The ratings could be, for instance, integers between 1 and 5,
+where 1 indicates the most critical tasks in the suite and 5 the least
+critical; or string values such as "HIGH", "MEDIUM", and "LOW".   This
+information can be passed to event handlers, to allow them to react differently
+to an event according to the "importance" of the task involved.  For example, a
+task failure event handler configured in a suite's root namespace will be
+called if any task fails, but the event handler script might need to trigger an
+alerting system only if the failed task is sufficiently important.
+
+\begin{myitemize}
+\item {\em type:} string or integer
+\item {\em default:} (none)
+\item {\em example:} \lstinline@importance = "low"@
+\end{myitemize}
+
 \paragraph[init-script]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow init-script}
 
 This is invoked by the task job script before the task execution
@@ -1548,6 +1566,7 @@ substituted with actual values:
     \item \%(name)s: task name
     \item \%(suite\_url)s: suite URL
     \item \%(task\_url)s: task URL
+    \item \%(importance)s: importance value (priority of task)
     \item \%(submit\_num)s: submit number
     \item \%(id)s: task ID (i.e. \%(name)s.\%(point)s)
     \item \%(message)s: event message, if any

@@ -307,6 +307,7 @@ SPEC = {
             'title': vdr(vtype='string', default=""),
             'description': vdr(vtype='string', default=""),
             'URL': vdr(vtype='string', default=""),
+            'importance': vdr(vtype='string', default=""),
             'init-script': vdr(vtype='string', default=""),
             'env-script': vdr(vtype='string', default=""),
             'err-script': vdr(vtype='string', default=""),

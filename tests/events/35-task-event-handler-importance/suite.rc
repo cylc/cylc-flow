@@ -1,0 +1,12 @@
+[scheduling]
+    [[dependencies]]
+        graph = t1:fail => dummy => !t1
+[runtime]
+    [[dummy]]
+        script = sleep 5
+    [[t1]]
+        URL = http://example.com
+        importance = 3
+        script = false
+        [[[events]]]
+            failed handler = echo 'NAME =' %(name)s 'POINT =' %(point)s 'IMPORTANCE =' %(importance)s
