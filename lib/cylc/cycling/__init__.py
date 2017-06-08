@@ -102,6 +102,8 @@ class PointBase(object):
     _TYPE = None
     _TYPE_SORT_KEY = None
 
+    __slots__ = ('value')
+
     @abstractproperty
     def TYPE(self):
         return self._TYPE
@@ -200,6 +202,8 @@ class IntervalBase(object):
 
     _TYPE = None
     _TYPE_SORT_KEY = None
+
+    __slots__ = ('value')
 
     @abstractproperty
     def TYPE(self):
@@ -325,6 +329,8 @@ class SequenceBase(object):
     _TYPE = None
     _TYPE_SORT_KEY = None
 
+    __slots__ = ()
+
     @abstractproperty
     def TYPE(self):
         return self._TYPE
@@ -413,7 +419,10 @@ class SequenceBase(object):
 class ExclusionBase(object):
     """A collection of points or sequences that are treated in an
     exclusionary manner"""
+
     __metaclass__ = ABCMeta
+    __slots__ = ('exclusion_sequences', 'exclusion_points',
+                 'exclusion_start_point', 'exclusion_end_point')
 
     def __init__(self, start_point, end_point=None):
         """creates an exclusions object that can contain integer points

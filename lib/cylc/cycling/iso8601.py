@@ -90,6 +90,8 @@ class ISO8601Point(PointBase):
     TYPE = CYCLER_TYPE_ISO8601
     TYPE_SORT_KEY = CYCLER_TYPE_SORT_KEY_ISO8601
 
+    __slots__ = ('value')
+
     @classmethod
     def from_nonstandard_string(cls, point_string):
         """Standardise a date-time string."""
@@ -173,6 +175,8 @@ class ISO8601Interval(IntervalBase):
     NULL_INTERVAL_STRING = "P0Y"
     TYPE = CYCLER_TYPE_ISO8601
     TYPE_SORT_KEY = CYCLER_TYPE_SORT_KEY_ISO8601
+
+    __slots__ = ('value')
 
     @classmethod
     def get_null(cls):
@@ -289,6 +293,9 @@ class ISO8601Exclusions(ExclusionBase):
     grouped exclusion sequences. The Python ``in`` and ``not in`` operators
     may be used on this object to determine if a point is in the collection
     of exclusion sequences."""
+
+    __slots__ = ExclusionBase.__slots__ + ('p_iso_exclusions',)
+
     def __init__(self, excl_points, start_point, end_point=None):
         super(ISO8601Exclusions, self).__init__(start_point, end_point)
         self.p_iso_exclusions = set()
@@ -318,6 +325,12 @@ class ISO8601Sequence(SequenceBase):
     TYPE = CYCLER_TYPE_ISO8601
     TYPE_SORT_KEY = CYCLER_TYPE_SORT_KEY_ISO8601
     _MAX_CACHED_POINTS = 100
+
+    __slots__ = ('dep_section', 'context_start_point', 'context_end_point',
+                 'offset', '_cached_first_point_values',
+                 '_cached_next_point_values', '_cached_valid_point_booleans',
+                 '_cached_recent_valid_points', 'spec', 'abbrev_util',
+                 'recurrence', 'exclusions', 'step', 'value')
 
     @classmethod
     def get_async_expr(cls, start_point=None):
@@ -364,16 +377,16 @@ class ISO8601Sequence(SequenceBase):
 
         # Determine the exclusion start point and end point
         try:
-            self.exclusion_start_point = ISO8601Point.from_nonstandard_string(
+            exclusion_start_point = ISO8601Point.from_nonstandard_string(
                 str(self.recurrence.start_point))
         except ValueError:
-            self.exclusion_start_point = self.context_start_point
+            exclusion_start_point = self.context_start_point
 
         try:
-            self.exclusion_end_point = ISO8601Point.from_nonstandard_string(
+            exclusion_end_point = ISO8601Point.from_nonstandard_string(
                 str(self.recurrence.end_point))
         except ValueError:
-            self.exclusion_end_point = self.context_end_point
+            exclusion_end_point = self.context_end_point
 
         self.exclusions = []
 
@@ -382,8 +395,8 @@ class ISO8601Sequence(SequenceBase):
             try:
                 self.exclusions = ISO8601Exclusions(
                     excl_points,
-                    self.exclusion_start_point,
-                    self.exclusion_end_point)
+                    exclusion_start_point,
+                    exclusion_end_point)
             except AttributeError:
                 pass
 

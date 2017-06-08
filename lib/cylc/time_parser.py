@@ -112,6 +112,9 @@ class CylcTimeParser(object):
                                re.compile("W-\dT"),
                                re.compile("W-\d")]}
 
+    __slots__ = ('timepoint_parser', 'duration_parser', 'recurrence_parser',
+                 'context_start_point', 'context_end_point')
+
     def __init__(self, context_start_point, context_end_point, parsers):
         if context_start_point is not None:
             context_start_point = str(context_start_point)
