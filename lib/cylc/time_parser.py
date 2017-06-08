@@ -108,28 +108,14 @@ class CylcTimeParser(object):
                                re.compile("W-\dT"),
                                re.compile("W-\d")]}
 
-    def __init__(self, context_start_point,
-                 context_end_point, num_expanded_year_digits=0,
-                 dump_format=None,
-                 assumed_time_zone=None):
+    def __init__(self, context_start_point, context_end_point, parsers):
         if context_start_point is not None:
             context_start_point = str(context_start_point)
         if context_end_point is not None:
             context_end_point = str(context_end_point)
-        self.num_expanded_year_digits = num_expanded_year_digits
-        if dump_format is None:
-            if num_expanded_year_digits:
-                dump_format = u"+XCCYYMMDDThhmmZ"
-            else:
-                dump_format = "CCYYMMDDThhmmZ"
+        self.timepoint_parser, self.duration_parser, self.recurrence_parser = (
+            parsers)
 
-        self.timepoint_parser = isodatetime.parsers.TimePointParser(
-            allow_only_basic=False,  # TODO - Ben: why was this set True
-            allow_truncated=True,
-            num_expanded_year_digits=num_expanded_year_digits,
-            dump_format=dump_format,
-            assumed_time_zone=assumed_time_zone
-        )
         self._recur_format_recs = []
         for regex, format_num in self.RECURRENCE_FORMAT_REGEXES:
             self._recur_format_recs.append((re.compile(regex), format_num))
@@ -139,16 +125,45 @@ class CylcTimeParser(object):
             self.POINT_INVALID_FOR_CYLC_REGEXES
         ]
         if isinstance(context_start_point, basestring):
-            context_start_point, offset = self._get_point_from_expression(
+            context_start_point, _ = self._get_point_from_expression(
                 context_start_point, None)
         self.context_start_point = context_start_point
         if isinstance(context_end_point, basestring):
-            context_end_point, offset = self._get_point_from_expression(
+            context_end_point, _ = self._get_point_from_expression(
                 context_end_point, None)
         self.context_end_point = context_end_point
-        self.duration_parser = isodatetime.parsers.DurationParser()
-        self.recurrence_parser = isodatetime.parsers.TimeRecurrenceParser(
-            timepoint_parser=self.timepoint_parser)
+
+    @staticmethod
+    def initiate_parsers(num_expanded_year_digits=0, dump_format=None,
+                         assumed_time_zone=None):
+        """Initiate datetime parsers required to initiate this class.
+
+        Returns:
+            tuple: (timepoint_parser, duration_parser, time_recurrence_parser)
+                - timepoint_parser - isodatetime.parsers.TimePointParser obj.
+                - duration_parser - isodatetime.parsers.DurationParser obj.
+                - time_recurrence_parser -
+                  isodatetime.parsers.TimeRecurrenceParser obj
+        """
+
+        if dump_format is None:
+            if num_expanded_year_digits:
+                dump_format = u"+XCCYYMMDDThhmmZ"
+            else:
+                dump_format = "CCYYMMDDThhmmZ"
+
+        timepoint_parser = isodatetime.parsers.TimePointParser(
+            allow_only_basic=False,
+            allow_truncated=True,
+            num_expanded_year_digits=num_expanded_year_digits,
+            dump_format=dump_format,
+            assumed_time_zone=assumed_time_zone
+        )
+
+        return (timepoint_parser,
+                isodatetime.parsers.DurationParser(),
+                isodatetime.parsers.TimeRecurrenceParser()
+               )
 
     def parse_interval(self, expr):
         """Parse an interval (duration) in full ISO date/time format."""
@@ -404,12 +419,16 @@ class TestRecurrenceSuite(unittest.TestCase):
         self._parsers = {
             0: CylcTimeParser(
                 self._start_point, self._end_point,
-                assumed_time_zone=UTC_UTC_OFFSET_HOURS_MINUTES
+                CylcTimeParser.initiate_parsers(
+                    assumed_time_zone=UTC_UTC_OFFSET_HOURS_MINUTES
+                )
             ),
             2: CylcTimeParser(
                 self._start_point, self._end_point,
-                num_expanded_year_digits=2,
-                assumed_time_zone=UTC_UTC_OFFSET_HOURS_MINUTES
+                CylcTimeParser.initiate_parsers(
+                    num_expanded_year_digits=2,
+                    assumed_time_zone=UTC_UTC_OFFSET_HOURS_MINUTES
+                )
             )
         }
 

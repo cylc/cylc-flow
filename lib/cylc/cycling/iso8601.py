@@ -54,6 +54,7 @@ class SuiteSpecifics(object):
     abbrev_util = None
     interval_parser = None
     point_parser = None
+    iso8601_parsers = None
 
 
 def memoize(function):
@@ -353,12 +354,9 @@ class ISO8601Sequence(SequenceBase):
         self._cached_recent_valid_points = []
 
         self.spec = dep_section
-        self.abbrev_util = CylcTimeParser(
-            self.context_start_point, self.context_end_point,
-            num_expanded_year_digits=SuiteSpecifics.NUM_EXPANDED_YEAR_DIGITS,
-            dump_format=SuiteSpecifics.DUMP_FORMAT,
-            assumed_time_zone=SuiteSpecifics.ASSUMED_TIME_ZONE
-        )
+        self.abbrev_util = CylcTimeParser(self.context_start_point,
+                                         self.context_end_point,
+                                         SuiteSpecifics.iso8601_parsers)
         # Parse_recurrence returns an isodatetime TimeRecurrence object
         # and a list of exclusion strings.
         self.recurrence, excl_points = self.abbrev_util.parse_recurrence(
@@ -695,11 +693,15 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
         dump_format=SuiteSpecifics.DUMP_FORMAT,
         assumed_time_zone=time_zone_hours_minutes
     )
-    SuiteSpecifics.abbrev_util = CylcTimeParser(
-        None, None,
-        num_expanded_year_digits=SuiteSpecifics.NUM_EXPANDED_YEAR_DIGITS,
-        dump_format=SuiteSpecifics.DUMP_FORMAT,
+
+    SuiteSpecifics.iso8601_parsers = CylcTimeParser.initiate_parsers(
+        dump_format = SuiteSpecifics.DUMP_FORMAT,
+        num_expanded_year_digits=num_expanded_year_digits,
         assumed_time_zone=SuiteSpecifics.ASSUMED_TIME_ZONE
+    )
+
+    SuiteSpecifics.abbrev_util = CylcTimeParser(
+        None, None, SuiteSpecifics.iso8601_parsers
     )
 
 
