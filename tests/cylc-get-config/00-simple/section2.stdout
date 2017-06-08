@@ -5,6 +5,7 @@
     err-script = 
     title = 
     URL = 
+    importance = 
     extra log files = 
     work sub-directory = 
     description = 
@@ -81,6 +82,7 @@
     err-script = 
     title = 
     URL = 
+    importance = 
     extra log files = 
     work sub-directory = 
     description = 
@@ -156,6 +158,7 @@
     err-script = 
     title = 
     URL = 
+    importance = 
     extra log files = 
     work sub-directory = 
     description = 
@@ -232,6 +235,7 @@
     err-script = 
     title = 
     URL = 
+    importance = 
     extra log files = 
     work sub-directory = 
     description = 
@@ -308,6 +312,7 @@
     err-script = 
     title = 
     URL = 
+    importance = 
     extra log files = 
     work sub-directory = 
     description = 
@@ -384,6 +389,7 @@
     err-script = 
     title = 
     URL = 
+    importance = 
     extra log files = 
     work sub-directory = 
     description = 
@@ -460,6 +466,7 @@
     err-script = 
     title = 
     URL = 
+    importance = 
     extra log files = 
     work sub-directory = 
     description = 
@@ -536,6 +543,7 @@
     err-script = 
     title = 
     URL = 
+    importance = 
     extra log files = 
     work sub-directory = 
     description = 
@@ -611,6 +619,7 @@
     err-script = 
     title = 
     URL = 
+    importance = 
     extra log files = 
     work sub-directory = 
     description = 
@@ -687,6 +696,7 @@
     script = 
     title = 
     URL = 
+    importance = 
     extra log files = 
     work sub-directory = 
     description = 
@@ -763,6 +773,7 @@
     script = 
     title = 
     URL = 
+    importance = 
     extra log files = 
     work sub-directory = 
     description = 
@@ -838,6 +849,7 @@
     script = 
     title = 
     URL = 
+    importance = 
     extra log files = 
     work sub-directory = 
     description = 
@@ -914,6 +926,7 @@
     err-script = 
     title = 
     URL = 
+    importance = 
     extra log files = 
     work sub-directory = 
     description = 
