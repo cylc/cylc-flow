@@ -74,31 +74,35 @@ class CylcTimeParser(object):
     """
 
     POINT_INVALID_FOR_CYLC_REGEXES = [
-        (r"^\d\d$", ("2 digit centuries not allowed. " +
-                     "Did you mean T-digit-digit e.g. 'T00'?"))
+        (re.compile(r"^\d\d$"),
+         ("2 digit centuries not allowed. Did you mean T-digit-digit e.g. "
+          "'T00'?"))
     ]
 
     RECURRENCE_FORMAT_REGEXES = [
-        (r"^(?P<start>[^PR/][^/]*)$", 3),
-        (r"^R(?P<reps>\d+)/(?P<start>[^PR/][^/]*)/(?P<end>[^PR/][^/]*)$", 1),
-        (r"^(?P<start>[^PR/][^/]*)/(?P<intv>P[^/]*)/?$", 3),
-        (r"^(?P<intv>P[^/]*)$", 3),
-        (r"^(?P<intv>P[^/]*)/(?P<end>[^PR/][^/]*)$", 4),
-        (r"^R(?P<reps>\d+)?/(?P<start>[^PR/][^/]*)/?$", 3),
-        (r"^R(?P<reps>\d+)?/(?P<start>[^PR/][^/]*)/(?P<intv>P[^/]*)$", 3),
-        (r"^R(?P<reps>\d+)?/(?P<start>)/(?P<intv>P[^/]*)$", 3),
-        (r"^R(?P<reps>\d+)?/(?P<intv>P[^/]*)/(?P<end>[^PR/][^/]*)$", 4),
-        (r"^R(?P<reps>\d+)?/(?P<intv>P[^/]*)/?$", 4),
-        (r"^R(?P<reps>\d+)?//(?P<end>[^PR/][^/]*)$", 4),
-        (r"^R(?P<reps>1)/?(?P<start>$)", 3),
-        (r"^R(?P<reps>1)//(?P<end>[^PR/][^/]*)$", 4)
+        (re.compile(r"^(?P<start>[^PR/][^/]*)$"), 3),
+        (re.compile(r"^R(?P<reps>\d+)/(?P<start>[^PR/][^/]*)/(?P<end>[^PR/]"
+                    "[^/]*)$"), 1),
+        (re.compile(r"^(?P<start>[^PR/][^/]*)/(?P<intv>P[^/]*)/?$"), 3),
+        (re.compile(r"^(?P<intv>P[^/]*)$"), 3),
+        (re.compile(r"^(?P<intv>P[^/]*)/(?P<end>[^PR/][^/]*)$"), 4),
+        (re.compile(r"^R(?P<reps>\d+)?/(?P<start>[^PR/][^/]*)/?$"), 3),
+        (re.compile(r"^R(?P<reps>\d+)?/(?P<start>[^PR/][^/]*)/(?P<intv>P[^/]"
+                    "*)$"), 3),
+        (re.compile(r"^R(?P<reps>\d+)?/(?P<start>)/(?P<intv>P[^/]*)$"), 3),
+        (re.compile(r"^R(?P<reps>\d+)?/(?P<intv>P[^/]*)/(?P<end>[^PR/][^/]*)"
+                    "$"), 4),
+        (re.compile(r"^R(?P<reps>\d+)?/(?P<intv>P[^/]*)/?$"), 4),
+        (re.compile(r"^R(?P<reps>\d+)?//(?P<end>[^PR/][^/]*)$"), 4),
+        (re.compile(r"^R(?P<reps>1)/?(?P<start>$)"), 3),
+        (re.compile(r"^R(?P<reps>1)//(?P<end>[^PR/][^/]*)$"), 4)
     ]
 
-    CHAIN_REGEX = '((?:[+-P]|[\dT])[\d\w]*)'
+    CHAIN_REGEX = re.compile('((?:[+-P]|[\dT])[\d\w]*)')
 
-    MIN_REGEX = 'min\(([^\)]+)\)'
+    MIN_REGEX = re.compile('min\(([^\)]+)\)')
 
-    OFFSET_REGEX = r"(?P<sign>[+-])(?P<intv>P.+)$"
+    OFFSET_REGEX = re.compile(r"(?P<sign>[+-])(?P<intv>P.+)$")
 
     TRUNCATED_REC_MAP = {"---": [re.compile("^\d\dT")],
                          "--": [re.compile("^\d\d\d\dT")],
@@ -116,14 +120,6 @@ class CylcTimeParser(object):
         self.timepoint_parser, self.duration_parser, self.recurrence_parser = (
             parsers)
 
-        self._recur_format_recs = []
-        for regex, format_num in self.RECURRENCE_FORMAT_REGEXES:
-            self._recur_format_recs.append((re.compile(regex), format_num))
-        self._offset_rec = re.compile(self.OFFSET_REGEX)
-        self._invalid_point_recs = [
-            (re.compile(regex), msg) for (regex, msg) in
-            self.POINT_INVALID_FOR_CYLC_REGEXES
-        ]
         if isinstance(context_start_point, basestring):
             context_start_point, _ = self._get_point_from_expression(
                 context_start_point, None)
@@ -205,7 +201,7 @@ class CylcTimeParser(object):
             context_start_point = self.context_start_point
         if context_end_point is None:
             context_end_point = self.context_end_point
-        for rec_object, format_num in self._recur_format_recs:
+        for rec_object, format_num in self.RECURRENCE_FORMAT_REGEXES:
             result = rec_object.search(expression)
             if not result:
                 continue
@@ -359,14 +355,14 @@ class CylcTimeParser(object):
         if expr.startswith("min("):
             expr = self._get_min_from_expression(expr, context)
 
-        if self._offset_rec.search(expr):
-            chain_expr = re.findall(self.CHAIN_REGEX, expr)
+        if self.OFFSET_REGEX.search(expr):
+            chain_expr = self.CHAIN_REGEX.findall(expr)
             expr = ""
             for item in chain_expr:
                 if "P" not in item:
                     expr += item
                     continue
-                split_expr = self._offset_rec.split(item)
+                split_expr = self.OFFSET_REGEX.split(item)
                 expr += split_expr.pop(0)
                 if split_expr[1] == "+":
                     split_expr.pop(1)
@@ -380,7 +376,7 @@ class CylcTimeParser(object):
                     expr_offset = expr_offset + expr_offset_item
         if not expr and allow_truncated:
             return context.copy(), expr_offset
-        for invalid_rec, msg in self._invalid_point_recs:
+        for invalid_rec, msg in self.POINT_INVALID_FOR_CYLC_REGEXES:
             if invalid_rec.search(expr):
                 raise CylcTimeSyntaxError("'%s': %s" % (expr, msg))
         expr_to_parse = expr
