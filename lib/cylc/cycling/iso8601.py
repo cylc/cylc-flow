@@ -489,9 +489,11 @@ class ISO8601Sequence(SequenceBase):
 
         for recurrence_iso_point in self.recurrence:
             # Is recurrence point greater than aribitrary point?
-            if (recurrence_iso_point > p_iso_point or
-                    (recurrence_iso_point in
-                     self.exclusions.p_iso_exclusions)):
+            if (
+                    recurrence_iso_point > p_iso_point or
+                    (self.exclusions and
+                     recurrence_iso_point in self.exclusions.p_iso_exclusions)
+            ):
                 break
             prev_iso_point = recurrence_iso_point
         if prev_iso_point is None:
