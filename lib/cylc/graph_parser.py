@@ -17,9 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-import sys
 import unittest
-from copy import copy
 from cylc.param_expand import GraphExpander
 
 """Module for parsing cylc graph strings."""
@@ -390,7 +388,6 @@ class GraphParser(object):
             else:
                 n_info += [(name, offset, trig)]
         self._add_trigger(expr, rights, n_expr, n_info)
-        # self._tidy_triggers()
 
     def _add_trigger(self, orig_expr, rights, expr, info):
         """Store trigger info from "expr => right".
@@ -426,24 +423,6 @@ class GraphParser(object):
                 self.original.setdefault(member, {})
                 self.triggers[member][expr] = (trigs, suicide)
                 self.original[member][expr] = orig_expr
-
-    # def _tidy_triggers(self):
-    #    """Remove any null triggers for tasks that also have non-null triggers
-
-    #    (Null triggers are only needed for initial or lone nodes.)
-    #    NOT USED, but leaving this here for reference.
-    #    Extra null triggers have no adverse effect, but this method has a big
-    #    negative performance impact on the dev/suites/busy.
-    #    """
-
-    #    clean_me = set()
-    #    for right, val in self.triggers.items():
-    #        exprs = val.keys()
-    #        if len(exprs) > 1:
-    #            if '' in exprs:
-    #                clean_me.add(right)
-    #    for right in clean_me:
-    #        del self.triggers[right]['']
 
     def print_triggers(self):
         for right, val in self.triggers.items():
