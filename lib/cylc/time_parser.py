@@ -162,7 +162,7 @@ class CylcTimeParser(object):
         return (timepoint_parser,
                 isodatetime.parsers.DurationParser(),
                 isodatetime.parsers.TimeRecurrenceParser()
-               )
+                )
 
     def parse_interval(self, expr):
         """Parse an interval (duration) in full ISO date/time format."""
