@@ -392,7 +392,7 @@ class ISO8601Sequence(SequenceBase):
         self.exclusions = []
 
         # Creating an exclusions object instead
-        if excl_points is not None:
+        if excl_points:
             try:
                 self.exclusions = ISO8601Exclusions(
                     excl_points,
