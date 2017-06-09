@@ -428,7 +428,7 @@ class ExclusionBase(object):
         """creates an exclusions object that can contain integer points
         or integer sequences to be used as excluded points."""
         self.exclusion_sequences = []
-        self.exclusion_points = set()
+        self.exclusion_points = []
         self.exclusion_start_point = start_point
         self.exclusion_end_point = end_point
 

@@ -298,7 +298,7 @@ class ISO8601Exclusions(ExclusionBase):
 
     def __init__(self, excl_points, start_point, end_point=None):
         super(ISO8601Exclusions, self).__init__(start_point, end_point)
-        self.p_iso_exclusions = set()
+        self.p_iso_exclusions = []
         self.build_exclusions(excl_points)
 
     def build_exclusions(self, excl_points):
@@ -307,8 +307,9 @@ class ISO8601Exclusions(ExclusionBase):
                 # Try making an ISO8601Point
                 exclusion_point = ISO8601Point.from_nonstandard_string(
                     str(point)) if point else None
-                self.exclusion_points.add(exclusion_point)
-                self.p_iso_exclusions.add(str(exclusion_point))
+                if exclusion_point not in self.exclusion_points:
+                    self.exclusion_points.append(exclusion_point)
+                    self.p_iso_exclusions.append(str(exclusion_point))
             except (AttributeError, TypeError, ValueError):
                 # Try making an ISO8601Sequence
                 exclusion = ISO8601Sequence(point, self.exclusion_start_point,

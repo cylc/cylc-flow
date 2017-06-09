@@ -250,8 +250,9 @@ class IntegerExclusions(ExclusionBase):
                 integer_point = get_point_from_expression(
                     point,
                     None,
-                    is_required=False)
-                self.exclusion_points.add(integer_point.standardise())
+                    is_required=False).standardise()
+                if integer_point not in self.exclusion_points:
+                    self.exclusion_points.append(integer_point)
             except PointParsingError:
                 # Try making an integer sequence
                 integer_exclusion_sequence = (IntegerSequence(
