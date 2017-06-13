@@ -121,6 +121,8 @@ class IntegerPoint(PointBase):
     TYPE = CYCLER_TYPE_INTEGER
     TYPE_SORT_KEY = CYCLER_TYPE_SORT_KEY_INTEGER
 
+    __slots__ = ('value')
+
     def __init__(self, value):
         if isinstance(value, int):
             value = str(value)
@@ -162,6 +164,8 @@ class IntegerInterval(IntervalBase):
 
     TYPE = CYCLER_TYPE_INTEGER
     TYPE_SORT_KEY = CYCLER_TYPE_SORT_KEY_INTEGER
+
+    __slots__ = ('value')
 
     @classmethod
     def from_integer(cls, integer):
@@ -230,6 +234,8 @@ class IntegerExclusions(ExclusionBase):
     """A collection of integer exclusion points, or sequences of
     integers that are treated in an exclusionary manner."""
 
+    __slots__ = ExclusionBase.__slots__
+
     def __init__(self, excl_points, start_point, end_point=None):
         """creates an exclusions object that can contain integer points
         or integer sequences to be used as excluded points."""
@@ -244,8 +250,9 @@ class IntegerExclusions(ExclusionBase):
                 integer_point = get_point_from_expression(
                     point,
                     None,
-                    is_required=False)
-                self.exclusion_points.add(integer_point.standardise())
+                    is_required=False).standardise()
+                if integer_point not in self.exclusion_points:
+                    self.exclusion_points.append(integer_point)
             except PointParsingError:
                 # Try making an integer sequence
                 integer_exclusion_sequence = (IntegerSequence(
@@ -259,6 +266,9 @@ class IntegerSequence(SequenceBase):
 
     TYPE = CYCLER_TYPE_INTEGER
     TYPE_SORT_KEY = CYCLER_TYPE_SORT_KEY_INTEGER
+
+    __slots__ = ('p_context_start', 'p_context_stop', 'p_start', 'p_stop',
+                 'i_step', 'i_offset', 'exclusions')
 
     @classmethod
     def get_async_expr(cls, start_point=None):

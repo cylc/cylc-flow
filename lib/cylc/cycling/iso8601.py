@@ -54,6 +54,7 @@ class SuiteSpecifics(object):
     abbrev_util = None
     interval_parser = None
     point_parser = None
+    iso8601_parsers = None
 
 
 def memoize(function):
@@ -88,6 +89,8 @@ class ISO8601Point(PointBase):
 
     TYPE = CYCLER_TYPE_ISO8601
     TYPE_SORT_KEY = CYCLER_TYPE_SORT_KEY_ISO8601
+
+    __slots__ = ('value')
 
     @classmethod
     def from_nonstandard_string(cls, point_string):
@@ -172,6 +175,8 @@ class ISO8601Interval(IntervalBase):
     NULL_INTERVAL_STRING = "P0Y"
     TYPE = CYCLER_TYPE_ISO8601
     TYPE_SORT_KEY = CYCLER_TYPE_SORT_KEY_ISO8601
+
+    __slots__ = ('value')
 
     @classmethod
     def get_null(cls):
@@ -288,9 +293,12 @@ class ISO8601Exclusions(ExclusionBase):
     grouped exclusion sequences. The Python ``in`` and ``not in`` operators
     may be used on this object to determine if a point is in the collection
     of exclusion sequences."""
+
+    __slots__ = ExclusionBase.__slots__ + ('p_iso_exclusions',)
+
     def __init__(self, excl_points, start_point, end_point=None):
         super(ISO8601Exclusions, self).__init__(start_point, end_point)
-        self.p_iso_exclusions = set()
+        self.p_iso_exclusions = []
         self.build_exclusions(excl_points)
 
     def build_exclusions(self, excl_points):
@@ -299,8 +307,9 @@ class ISO8601Exclusions(ExclusionBase):
                 # Try making an ISO8601Point
                 exclusion_point = ISO8601Point.from_nonstandard_string(
                     str(point)) if point else None
-                self.exclusion_points.add(exclusion_point)
-                self.p_iso_exclusions.add(str(exclusion_point))
+                if exclusion_point not in self.exclusion_points:
+                    self.exclusion_points.append(exclusion_point)
+                    self.p_iso_exclusions.append(str(exclusion_point))
             except (AttributeError, TypeError, ValueError):
                 # Try making an ISO8601Sequence
                 exclusion = ISO8601Sequence(point, self.exclusion_start_point,
@@ -317,6 +326,12 @@ class ISO8601Sequence(SequenceBase):
     TYPE = CYCLER_TYPE_ISO8601
     TYPE_SORT_KEY = CYCLER_TYPE_SORT_KEY_ISO8601
     _MAX_CACHED_POINTS = 100
+
+    __slots__ = ('dep_section', 'context_start_point', 'context_end_point',
+                 'offset', '_cached_first_point_values',
+                 '_cached_next_point_values', '_cached_valid_point_booleans',
+                 '_cached_recent_valid_points', 'spec', 'abbrev_util',
+                 'recurrence', 'exclusions', 'step', 'value')
 
     @classmethod
     def get_async_expr(cls, start_point=None):
@@ -353,12 +368,9 @@ class ISO8601Sequence(SequenceBase):
         self._cached_recent_valid_points = []
 
         self.spec = dep_section
-        self.abbrev_util = CylcTimeParser(
-            self.context_start_point, self.context_end_point,
-            num_expanded_year_digits=SuiteSpecifics.NUM_EXPANDED_YEAR_DIGITS,
-            dump_format=SuiteSpecifics.DUMP_FORMAT,
-            assumed_time_zone=SuiteSpecifics.ASSUMED_TIME_ZONE
-        )
+        self.abbrev_util = CylcTimeParser(self.context_start_point,
+                                          self.context_end_point,
+                                          SuiteSpecifics.iso8601_parsers)
         # Parse_recurrence returns an isodatetime TimeRecurrence object
         # and a list of exclusion strings.
         self.recurrence, excl_points = self.abbrev_util.parse_recurrence(
@@ -366,26 +378,26 @@ class ISO8601Sequence(SequenceBase):
 
         # Determine the exclusion start point and end point
         try:
-            self.exclusion_start_point = ISO8601Point.from_nonstandard_string(
+            exclusion_start_point = ISO8601Point.from_nonstandard_string(
                 str(self.recurrence.start_point))
         except ValueError:
-            self.exclusion_start_point = self.context_start_point
+            exclusion_start_point = self.context_start_point
 
         try:
-            self.exclusion_end_point = ISO8601Point.from_nonstandard_string(
+            exclusion_end_point = ISO8601Point.from_nonstandard_string(
                 str(self.recurrence.end_point))
         except ValueError:
-            self.exclusion_end_point = self.context_end_point
+            exclusion_end_point = self.context_end_point
 
         self.exclusions = []
 
         # Creating an exclusions object instead
-        if excl_points is not None:
+        if excl_points:
             try:
                 self.exclusions = ISO8601Exclusions(
                     excl_points,
-                    self.exclusion_start_point,
-                    self.exclusion_end_point)
+                    exclusion_start_point,
+                    exclusion_end_point)
             except AttributeError:
                 pass
 
@@ -477,9 +489,11 @@ class ISO8601Sequence(SequenceBase):
 
         for recurrence_iso_point in self.recurrence:
             # Is recurrence point greater than aribitrary point?
-            if (recurrence_iso_point > p_iso_point or
-                    (recurrence_iso_point in
-                     self.exclusions.p_iso_exclusions)):
+            if (
+                    recurrence_iso_point > p_iso_point or
+                    (self.exclusions and
+                     recurrence_iso_point in self.exclusions.p_iso_exclusions)
+            ):
                 break
             prev_iso_point = recurrence_iso_point
         if prev_iso_point is None:
@@ -695,11 +709,15 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
         dump_format=SuiteSpecifics.DUMP_FORMAT,
         assumed_time_zone=time_zone_hours_minutes
     )
-    SuiteSpecifics.abbrev_util = CylcTimeParser(
-        None, None,
-        num_expanded_year_digits=SuiteSpecifics.NUM_EXPANDED_YEAR_DIGITS,
+
+    SuiteSpecifics.iso8601_parsers = CylcTimeParser.initiate_parsers(
         dump_format=SuiteSpecifics.DUMP_FORMAT,
+        num_expanded_year_digits=num_expanded_year_digits,
         assumed_time_zone=SuiteSpecifics.ASSUMED_TIME_ZONE
+    )
+
+    SuiteSpecifics.abbrev_util = CylcTimeParser(
+        None, None, SuiteSpecifics.iso8601_parsers
     )
 
 
