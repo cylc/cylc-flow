@@ -17,9 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-import sys
 import unittest
-from copy import copy
 from cylc.param_expand import GraphExpander
 
 """Module for parsing cylc graph strings."""
@@ -389,70 +387,42 @@ class GraphParser(object):
                 n_info += m_info
             else:
                 n_info += [(name, offset, trig)]
-        info = n_info
+        self._add_trigger(expr, rights, n_expr, n_info)
 
-        for right in rights:
-            if right.startswith(self.__class__.SUICIDE_MARK):
-                right = right[1:]
-                suicide = True
-            else:
-                suicide = False
-            if right in self.family_map:
-                for mem in self.family_map[right]:
-                    self._add_trigger(expr, mem, n_expr, info, suicide)
-            else:
-                self._add_trigger(expr, right, n_expr, info, suicide)
-
-        self._tidy_triggers()
-
-    def _add_trigger(self, orig_expr, right, expr, info, suicide):
-        """Store trigger info from "expr => right" for a single task ('right').
+    def _add_trigger(self, orig_expr, rights, expr, info):
+        """Store trigger info from "expr => right".
 
         Arg info is [(name, offset, trigger_type)] for each name in expr.
-
         """
         trigs = []
         for name, offset, trigger in info:
             # Replace finish triggers (must be done after member substn).
             if trigger == self.__class__.TRIG_FINISH:
-                this = "%s%s%s" % (name, re.escape(offset), trigger)
+                this = "%s%s%s" % (name, offset, trigger)
                 that = "(%s%s%s%s%s%s%s)" % (
                     name, offset, self.__class__.TRIG_SUCCEED,
                     self.__class__.OP_OR,
                     name, offset, self.__class__.TRIG_FAIL)
-                expr = re.sub(this, that, expr)
+                expr = expr.replace(this, that)
                 trigs += [
                     "%s%s%s" % (name, offset, self.__class__.TRIG_SUCCEED),
                     "%s%s%s" % (name, offset, self.__class__.TRIG_FAIL)]
             else:
-                this = "%s%s%s" % (name, re.escape(offset), trigger)
-                that = "%s%s%s" % (name, offset, trigger)
-                expr = re.sub(this, that, expr)
                 trigs += ["%s%s%s" % (name, offset, trigger)]
-        if right not in self.triggers:
-            self.triggers[right] = {}
-            self.original[right] = {}
-        self.triggers[right][expr] = (trigs, suicide)
-        self.original[right][expr] = orig_expr
 
-    def _tidy_triggers(self):
-        """Remove any null triggers for tasks that also have non-null triggers.
-
-        (Null triggers are only needed for initial or lone nodes.)
-        """
-        # NOT USED, but leaving this here for reference.
-        # Extra null triggers have no adverse effect, but this method has a big
-        # negative performance impact on the dev/suites/busy.
-        return
-
-        clean_me = set()
-        for right, val in self.triggers.items():
-            exprs = val.keys()
-            if len(exprs) > 1:
-                if '' in exprs:
-                    clean_me.add(right)
-        for right in clean_me:
-            del self.triggers[right]['']
+        for right in rights:
+            suicide = right.startswith(self.__class__.SUICIDE_MARK)
+            if suicide:
+                right = right[1:]
+            if right in self.family_map:
+                members = self.family_map[right]
+            else:
+                members = [right]
+            for member in members:
+                self.triggers.setdefault(member, {})
+                self.original.setdefault(member, {})
+                self.triggers[member][expr] = (trigs, suicide)
+                self.original[member][expr] = orig_expr
 
     def print_triggers(self):
         for right, val in self.triggers.items():
