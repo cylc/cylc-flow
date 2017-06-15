@@ -38,8 +38,12 @@ get_version() {
         CYLC_VERSION="$(cat $CYLC_HOME/VERSION)"
     else
         local DESC=
-        DESC=$(cd $CYLC_HOME && git describe 2>/dev/null)
+        DESC=$(cd $CYLC_HOME && git describe --abbrev=4 2>/dev/null)
         CYLC_VERSION=$DESC
+    fi
+    # Append "-dirty" if there are uncommitted changes.
+    if [[ -n "$(cd $CYLC_HOME && git status --untracked-files=no --porcelain)" ]]; then
+        CYLC_VERSION="$CYLC_VERSION-dirty"
     fi
 }
 
@@ -53,7 +57,13 @@ print_version() {
     # internal python method to get version of running suite. 
     # For test compatibility.
     #echo "Cylc $CYLC_VERSION ($CYLC_HOME)"
-    echo "$CYLC_VERSION"
+    if [[ $# == 0 ]]; then
+        echo "$CYLC_VERSION"
+    fi
+    if [[ $@ == 'long' ]]; then
+        echo "Cylc $CYLC_VERSION ($CYLC_HOME)"
+    fi
+
 }
 
 init_cylc() {
@@ -207,7 +217,7 @@ help|h|?|--help|-h)
     exit 0
     :;;
 version|--version|-V)
-    print_version
+    print_version $@
     exit 0
     :;;
 # Deal with categories
