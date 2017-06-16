@@ -125,7 +125,6 @@ if [[ "$PWD" != "$CYLC_DIR" ]]; then
     cd "$CYLC_DIR"
 fi
 
-( set -o posix ; set ) > envlog.txt
 # Recompile *.pyc files to ensure we are running the current code.
 if [[ -w "$CYLC_DIR/lib" ]]; then
     find "$CYLC_DIR/lib" -name '*.pyc' -type 'f' -delete
