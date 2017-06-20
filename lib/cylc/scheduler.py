@@ -1107,30 +1107,33 @@ conditions; see `cylc conditions`.
             if event == self.EVENT_SHUTDOWN and self.options.reftest:
                 OUT.info('SUITE REFERENCE TEST PASSED')
 
-    def run(self):
-        """Main loop."""
+    def initialise_scheduler(self):
+        """Prelude to the main scheduler loop.
+
+        Determines whether suite is held or should be held.
+        Determines whether suite can be auto shutdown.
+        Begins profile logs if needed.
+        """
         if self.pool_hold_point is not None:
             self.hold_suite(self.pool_hold_point)
-
         if self.options.start_held:
             LOG.info("Held on start-up (no tasks will be submitted)")
             self.hold_suite()
-
         self.run_event_handlers(self.EVENT_STARTUP, 'suite starting')
-
         self.profiler.log_memory("scheduler.py: begin run while loop")
-
-        time_next_fs_check = None
+        self.time_next_fs_check = None
         cylc.flags.iflag = True
-
         if self.options.profile_mode:
-            previous_profile_point = 0
-            count = 0
-
-        can_auto_stop = (
-            not self.config.cfg['cylc']['disable automatic shutdown'] and
+            self.previous_profile_point = 0
+            self.count = 0
+        self.can_auto_stop = (
+            self.config.cfg['cylc']['disable automatic shutdown'] and
             not self.options.no_auto_shutdown)
 
+    def run(self):
+        """Main loop."""
+
+        self.initialise_scheduler()
         while True:  # MAIN LOOP
             tinit = time()
 
@@ -1231,7 +1234,7 @@ conditions; see `cylc conditions`.
             # Can suite shut down automatically?
             if self.stop_mode is None and (
                     self.stop_clock_done() or self.stop_task_done() or
-                    can_auto_stop and self.pool.check_auto_shutdown()):
+                    self.can_auto_stop and self.pool.check_auto_shutdown()):
                 self._set_stop(TaskPool.STOP_AUTO)
 
             # Is the suite ready to shut down now?
@@ -1255,7 +1258,7 @@ conditions; see `cylc conditions`.
                 if self.options.profile_mode:
                     self.profiler.log_memory(
                         "scheduler.py: end main loop (total loops %d): %s" %
-                        (count, get_current_time_string()))
+                        (self.count, get_current_time_string()))
                 if self.stop_mode == TaskPool.STOP_AUTO_ON_TASK_FAILURE:
                     raise SchedulerError(self.stop_mode)
                 else:
@@ -1270,7 +1273,7 @@ conditions; see `cylc conditions`.
             if self.stop_mode is None and not has_changes:
                 self.check_suite_stalled()
             now = time()
-            if time_next_fs_check is None or now > time_next_fs_check:
+            if self.time_next_fs_check is None or now > self.time_next_fs_check:
                 if not os.path.exists(self.suite_run_dir):
                     raise SchedulerError(
                         "%s: suite run directory not found" %
@@ -1287,7 +1290,7 @@ conditions; see `cylc conditions`.
                          " may be left") %
                         self.suite_srv_files_mgr.get_contact_file(self.suite))
                     raise exc
-                time_next_fs_check = (
+                self.time_next_fs_check = (
                     now + self._get_cylc_conf('health check interval'))
 
             if self.options.profile_mode:
@@ -1295,12 +1298,12 @@ conditions; see `cylc conditions`.
                 self._update_profile_info("scheduler loop dt (s)", now - tinit,
                                           amount_format="%.3f")
                 self._update_cpu_usage()
-                if now - previous_profile_point >= 60:
+                if now - self.previous_profile_point >= 60:
                     # Only get this every minute.
-                    previous_profile_point = now
+                    self.previous_profile_point = now
                     self.profiler.log_memory("scheduler.py: loop #%d: %s" % (
-                        count, get_current_time_string()))
-                count += 1
+                        self.count, get_current_time_string()))
+                self.count += 1
 
             sleep(self.INTERVAL_MAIN_LOOP)
             # END MAIN LOOP
