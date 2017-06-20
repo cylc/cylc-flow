@@ -1248,6 +1248,7 @@ conditions; see `cylc conditions`.
         if self.stop_mode is None and not has_changes:
             self.check_suite_stalled()
         now = time()
+
         if self.time_next_fs_check is None or now > self.time_next_fs_check:
             if not os.path.exists(self.suite_run_dir):
                 raise SchedulerError(
@@ -1267,9 +1268,9 @@ conditions; see `cylc conditions`.
             self.time_next_fs_check = (
                 now + self._get_cylc_conf('health check interval'))
 
-    def update_profiler_logs(self):
+    def update_profiler_logs(self, tinit):
         now = time()
-        self._update_profile_info("scheduler loop dt (s)", now - self.tinit,
+        self._update_profile_info("scheduler loop dt (s)", now - tinit,
                                   amount_format="%.3f")
         self._update_cpu_usage()
         if now - self.previous_profile_point >= 60:
@@ -1284,7 +1285,7 @@ conditions; see `cylc conditions`.
 
         self.initialise_scheduler()
         while True:  # MAIN LOOP
-            self.tinit = time()
+            tinit = time()
 
             if self.pool.do_reload:
                 self.pool.reload_taskdefs()
@@ -1308,6 +1309,8 @@ conditions; see `cylc conditions`.
             self.process_queued_task_messages()
             self.process_command_queue()
             self.task_events_mgr.process_events(self)
+
+            # Update database
             self.suite_db_mgr.put_task_event_timers(self.task_events_mgr)
             has_changes = cylc.flags.iflag
             if cylc.flags.iflag:
@@ -1331,7 +1334,7 @@ conditions; see `cylc conditions`.
             self.suite_health_check(has_changes)
 
             if self.options.profile_mode:
-                self.update_profiler_logs()
+                self.update_profiler_logs(tinit)
 
             sleep(self.INTERVAL_MAIN_LOOP)
             # END MAIN LOOP
