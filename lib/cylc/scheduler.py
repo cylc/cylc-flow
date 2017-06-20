@@ -1127,7 +1127,7 @@ conditions; see `cylc conditions`.
             self.previous_profile_point = 0
             self.count = 0
         self.can_auto_stop = (
-            self.config.cfg['cylc']['disable automatic shutdown'] and
+            not self.config.cfg['cylc']['disable automatic shutdown'] and
             not self.options.no_auto_shutdown)
 
     def process_task_pool(self):
