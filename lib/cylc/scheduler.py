@@ -1130,6 +1130,36 @@ conditions; see `cylc conditions`.
             self.config.cfg['cylc']['disable automatic shutdown'] and
             not self.options.no_auto_shutdown)
 
+    def process_task_pool(self):
+        """Process ALL TASKS whenever something has changed that might
+        require renegotiation of dependencies, etc"""
+        if cylc.flags.debug:
+            LOG.debug("BEGIN TASK PROCESSING")
+            time0 = time()
+        self.pool.match_dependencies()
+        if self.stop_mode is None:
+            itasks = self.pool.get_ready_tasks()
+            if itasks:
+                cylc.flags.iflag = True
+            if self.config.cfg['cylc']['log resolved dependencies']:
+                for itask in itasks:
+                    if itask.local_job_file_path:
+                        continue
+                    deps = itask.state.get_resolved_dependencies()
+                    LOG.info('triggered off %s' % deps, itask=itask)
+
+            self.task_job_mgr.submit_task_jobs(self.suite, itasks, self.run_mode == 'simulation')
+        for meth in [
+                self.pool.spawn_all_tasks,
+                self.pool.remove_spent_tasks,
+                self.pool.remove_suiciding_tasks]:
+            if meth():
+                cylc.flags.iflag = True
+
+        BroadcastServer.get_inst().expire(self.pool.get_min_point())
+        if cylc.flags.debug:
+            LOG.debug("END TASK PROCESSING (took %s seconds)" % (time() - time0))
+
     def run(self):
         """Main loop."""
 
@@ -1154,36 +1184,7 @@ conditions; see `cylc conditions`.
             # PROCESS ALL TASKS whenever something has changed that might
             # require renegotiation of dependencies, etc.
             if self.process_tasks():
-                if cylc.flags.debug:
-                    LOG.debug("BEGIN TASK PROCESSING")
-                    time0 = time()
-
-                self.pool.match_dependencies()
-                if self.stop_mode is None:
-                    itasks = self.pool.get_ready_tasks()
-                    if itasks:
-                        cylc.flags.iflag = True
-                    if self.config.cfg['cylc']['log resolved dependencies']:
-                        for itask in itasks:
-                            if itask.local_job_file_path:
-                                continue
-                            deps = itask.state.get_resolved_dependencies()
-                            LOG.info('triggered off %s' % deps, itask=itask)
-                    self.task_job_mgr.submit_task_jobs(
-                        self.suite, itasks, self.run_mode == 'simulation')
-                for meth in [
-                        self.pool.spawn_all_tasks,
-                        self.pool.remove_spent_tasks,
-                        self.pool.remove_suiciding_tasks]:
-                    if meth():
-                        cylc.flags.iflag = True
-
-                BroadcastServer.get_inst().expire(self.pool.get_min_point())
-
-                if cylc.flags.debug:
-                    LOG.debug(
-                        "END TASK PROCESSING (took %s seconds)" %
-                        (time() - time0))
+                self.process_task_pool()
 
             self.process_queued_task_messages()
             self.process_command_queue()
