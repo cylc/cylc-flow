@@ -35,7 +35,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 
 RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
 LOG="${RUN_DIR}/log/suite/log"
-sed -n 's/^.*\(cylc jobs-submit\)/\1/p' "${LOG}" | sort >'edited-suite-log'
+sed -n 's/^.*\(cylc jobs-submit\)/\1/p' "${LOG}" | sort -u >'edited-suite-log'
 
 sort >'edited-suite-log-ref' <<__LOG__
 cylc jobs-submit --debug -- ${RUN_DIR}/log/job 20200101T0000Z/t0/01 20200101T0000Z/t1/01 20200101T0000Z/t2/01 20200101T0000Z/t3/01
