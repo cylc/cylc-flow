@@ -55,7 +55,7 @@ print_version() {
 }
 
 init_cylc() {
-    set -eu
+    #set -eu
     CYLC_HOME_BIN="$(dirname "$(readlink -f "$0")")"
     CYLC_HOME="$(dirname "${CYLC_HOME_BIN}")"
     CYLC_NS="$(basename $0)"
@@ -151,26 +151,27 @@ abort_bad_command() {
 abort_ambiguous_command() {
     echo "\"${UTIL}\" is too ambiguous to be a valid Cylc command abbreviation."
     echo "These commands match the abbreviation \"${UTIL}\":"
-    ls "${CYLC_HOME_BIN}/cylc-${UTIL}"* 2>/dev/null \
-        | sed -r "s,${CYLC_HOME_BIN}/cylc-,,"
+    sed -r "s,${CYLC_HOME_BIN}/cylc-,," <<<"${commands_match}"
+#    ls "${CYLC_HOME_BIN}/cylc-${UTIL}"* 2>/dev/null \
+#       | sed -r "s,${CYLC_HOME_BIN}/cylc-,,"
     exit 1
 }
 
 run_cylc_command_matched() {
-    COMMAND=$(ls "${CYLC_HOME_BIN}/cylc-${UTIL}"*)
-    if [[ ! -f "${COMMAND}" || ! -x "${COMMAND}" ]]; then
-        abort_bad_command
-    fi
-    CYLC_UTIL="$(sed -r "s,${CYLC_HOME_BIN}/cylc-,," <<<"${COMMAND}")"
+#    COMMAND=$(ls "${CYLC_HOME_BIN}/cylc-${UTIL}"*)
+#    if [[ ! -f "${COMMAND}" || ! -x "${COMMAND}" ]]; then
+#        abort_bad_command
+#    fi
+    CYLC_UTIL="$(sed -r "s,${CYLC_HOME_BIN}/cylc-,," <<<"${commands_match}")"
     export CYLC_UTIL
-    exec "${COMMAND}" "$@"
+    exec "${commands_match}" "$@"
 }
 
 run_cylc_command() {
-    COMMAND=$(ls "${CYLC_HOME_BIN}/cylc-${UTIL}")
-    if [[ ! -f "${COMMAND}" || ! -x "${COMMAND}" ]]; then
-        abort_bad_command
-    fi
+    COMMAND="${commands_match}"
+#    if [[ ! -f "${COMMAND}" || ! -x "${COMMAND}" ]]; then
+#        abort_bad_command
+#    fi
     CYLC_UTIL="${UTIL}"
     export CYLC_UTIL
     exec "${COMMAND}" "$@"
@@ -183,15 +184,12 @@ if (( "$#" > 0 )); then
     UTIL="$1"
     shift 1
 fi
-# Test if the user has provided a valid cylc command, if so, run it.
-if [[ -f "${CYLC_HOME_BIN}/cylc-${UTIL}" && "${UTIL}" != 'help'  ]]; then
-    run_cylc_command "$@" 
-fi
 
+# Check for help or version options.
 case "${UTIL}" in
 # Deal with categories
 control|information|all|task|license|GPL|admin|preparation|hook|discovery\
-        |utility|util|prep)
+        |utility|util|prep|con|info)
     if (( "$#" == 0 )); then
         help_util "${UTIL}"
     elif (( "$#" > 0 )); then
@@ -215,29 +213,31 @@ categories)
     :;;
 esac
 
-# User has not given an exact cylc command, or a help, category, or version
-# command.
+# User has not given a help, category, or version option.
 # So now deal with matching commands and disambiguation.
 
 # Store any matching file glob as a number for later use
 # Minimises re-running ls
-num_commands_match="$(ls "${CYLC_HOME_BIN}/cylc-${UTIL}"* 2>/dev/null | wc -l)"
+commands_match="$(ls "${CYLC_HOME_BIN}/cylc-${UTIL}"* 2>/dev/null)"
+
+if [[ -z $commands_match ]]; then
+    num_commands_match=0
+else
+    num_commands_match="$(wc -l <<<"${commands_match}")"
+fi
 
 # Abort if no matches to command abbrev, list matches if multiple matches
 if (( "$num_commands_match" == 0 )); then
     abort_bad_command
-
-# Check if command (singular) exists first.
-# Needed for handling "graph" and "graph-diff"
-# This is now handled above - TODO remove after testing 
-#if [[ "$(ls "${CYLC_HOME_BIN}/cylc-${UTIL}" 2>/dev/null | wc -l )" \
-#    -eq 1 && { run_cylc_command "$@"; }
 # Now try and match abbreviated commands.
-
 elif (( "$num_commands_match" == 1 )); then
     run_cylc_command_matched "$@"
-# Now try and match abbreviated commands.
-elif (( "$num_commands_match" > 1 )); then
+# Abort if the command wildcard match is ambiguous, unless it is itself a 
+# command, e.g. "cylc graph" matches "cylc-graph" and "cylc-graph-diff",
+# but the command should not abort in this case.  
+elif [[ (("$num_commands_match" > 1)) && -f "${CYLC_HOME_BIN}/cylc-${UTIL}" ]] ; then
+    exec "${CYLC_HOME_BIN}/cylc-${UTIL}" "@"
+else
     abort_ambiguous_command 
 fi
 
