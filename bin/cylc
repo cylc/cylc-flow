@@ -40,7 +40,8 @@ get_version() {
     # TODO what if the user has just run git init? That would not be a proper
     # git clone of the cylc repo...
     else
-        echo "No version is set, cylc must be built first"
+        echo "No version is set, cylc must be built first. Aborting..."
+        exit 1
     fi
 }
 
@@ -168,13 +169,13 @@ run_cylc_command_matched() {
 }
 
 run_cylc_command() {
-    COMMAND="${commands_match}"
+#    COMMAND="${commands_match}"
 #    if [[ ! -f "${COMMAND}" || ! -x "${COMMAND}" ]]; then
 #        abort_bad_command
 #    fi
     CYLC_UTIL="${UTIL}"
     export CYLC_UTIL
-    exec "${COMMAND}" "$@"
+    exec "${CYLC_HOME_BIN}/cylc-${UTIL}" "$@"
 }
 
 init_cylc
@@ -184,6 +185,12 @@ if (( "$#" > 0 )); then
     UTIL="$1"
     shift 1
 fi
+# For speed, assume a correct command has been provided first of all. 
+if [[ -f "${CYLC_HOME_BIN}/cylc-${UTIL}" && "${UTIL}" != 'help'  ]]; then
+    run_cylc_command "$@" 
+fi
+
+# Now process help and command matching.
 
 # Check for help or version options.
 case "${UTIL}" in
