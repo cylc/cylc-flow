@@ -385,7 +385,8 @@ class SuiteDatabaseManager(object):
                 os.unlink(os.path.join(suite_run_d, "cylc-suite-env"))
             except OSError:
                 pass
-        elif os.path.exists(old_pri_db_path_611):
+        elif (os.path.exists(old_pri_db_path_611) and
+                not os.path.exists(self.pri_path)):
             # Upgrade 6.11.X runtime database
             os.rename(old_pri_db_path_611, self.pri_path)
             pri_dao = self.get_pri_dao()
