@@ -124,12 +124,12 @@ class CylcTimeParser(object):
             parsers)
 
         if isinstance(context_start_point, basestring):
-            context_start_point, _ = self._get_point_from_expression(
-                context_start_point, None)
+            context_start_point = self._get_point_from_expression(
+                context_start_point, None)[0]
         self.context_start_point = context_start_point
         if isinstance(context_end_point, basestring):
-            context_end_point, _ = self._get_point_from_expression(
-                context_end_point, None)
+            context_end_point = self._get_point_from_expression(
+                context_end_point, None)[0]
         self.context_end_point = context_end_point
 
     @staticmethod

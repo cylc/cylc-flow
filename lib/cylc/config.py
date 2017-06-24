@@ -811,7 +811,7 @@ class SuiteConfig(object):
             self.cfg['visualization']['node attributes'] = (
                 OrderedDictWithDefaults())
         for node, val in self.cfg['visualization']['node attributes'].items():
-            for name, _ in name_expander.expand(node):
+            for name in name_expander.expand(node)[0]:
                 expanded_node_attrs[name] = val
         self.cfg['visualization']['node attributes'] = expanded_node_attrs
 

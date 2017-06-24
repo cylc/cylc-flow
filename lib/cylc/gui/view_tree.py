@@ -156,7 +156,7 @@ class ControlTree(object):
             return False
 
         treeview.grab_focus()
-        path, col, _, _ = pth
+        path, col = pth[:2]
         tvte = TreeViewTaskExtractor(treeview)
         selected_paths = [row[0] for row in tvte.get_selected_rows()]
         if path not in selected_paths:

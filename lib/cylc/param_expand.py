@@ -214,7 +214,7 @@ class NameExpander(object):
 
         Note this is "expansion" for specific values, not all values.
         """
-        name, p_tmpl, _ = REC_P_NAME.match(name_in).groups()
+        name, p_tmpl = REC_P_NAME.match(name_in).groups()[:2]
         if not p_tmpl:
             # name_in is not parameterized.
             return name_in

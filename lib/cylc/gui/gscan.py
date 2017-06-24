@@ -440,7 +440,7 @@ class ScanApp(object):
         if event.button == 1:
             if not pth:
                 return False
-            path, column, cell_x, _ = pth
+            path, column, cell_x = pth[:3]
             if column.get_title() == gsfg.COL_STATUS:
                 dot_offset, dot_width = tuple(column.cell_get_position(
                     column.get_cell_renderers()[1]))
@@ -534,8 +534,7 @@ class ScanApp(object):
             self._prev_tooltip_location_id = None
             return False
         x, y = self.treeview.convert_widget_to_bin_window_coords(x, y)
-        path, column, cell_x, _ = (
-            self.treeview.get_path_at_pos(x, y))
+        path, column, cell_x = (self.treeview.get_path_at_pos(x, y))[:3]
         model = self.treeview.get_model()
         iter_ = model.get_iter(path)
         parent_iter = model.iter_parent(iter_)

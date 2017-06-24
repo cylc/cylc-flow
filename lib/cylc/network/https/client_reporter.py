@@ -107,7 +107,7 @@ class CommsClientReporter(object):
     def report_connection_if_denied(self):
         """Log an (un?)successful connection attempt."""
         try:
-            prog_name, user, host, uuid, _ = get_client_info()[1:]
+            prog_name, user, host, uuid = get_client_info()[1:5]
         except Exception:
             LOG.warning(
                 self.__class__.LOG_CONNECT_DENIED_TMPL % (
