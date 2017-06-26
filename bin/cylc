@@ -54,6 +54,7 @@ print_version() {
 }
 
 init_cylc() {
+    set -eu
     CYLC_HOME_BIN="$(dirname "$(readlink -f "$0")")"
     CYLC_HOME="$(dirname "${CYLC_HOME_BIN}")"
     CYLC_NS="$(basename $0)"
@@ -71,32 +72,42 @@ init_cylc() {
 help_util() {
     # Deals with form 'cylc [COMMAND] --help'
     cd "${CYLC_HOME_BIN}"
-    echo $UTIL
+    echo "Util: $UTIL Args: $@"
     # deal with graph which is a weird edge case...
     if [[ "$@" == "graph" ]]; then
         local COMMAND="${CYLC_HOME_BIN}/cylc-graph"
         exec "${COMMAND}" "--help"
     fi
+
+    if [[ $# == 0 && "${HELP_OPTS[*]} " == *"$UTIL"* ]]; then
+        exec "${CYLC_HOME_BIN}"/cylc-help
+    fi
+
+    # for cases 'cylc --help CATEGORY COMMAND'
+    if [[ (( $# > 1 )) &&  "${HELP_OPTS[*]} " == *"$UTIL"* &&  "${CATEGORIES[*]} " == *" $1 "* ]]; then
+        echo "whaddup" $1
+        local COMMAND="${CYLC_HOME_BIN}/cylc-$2"
+        echo $COMMAND
+        exec "${COMMAND}" "--help"  
+    fi
     # Check if this is a help command, not containing a category qualifier
-    if [[ (( "$#" -gt 1 )) && "${HELP_OPTS[*]} " == *" ${UTIL} "* && 
+    if [[ $# > 1  && "${HELP_OPTS[*]} " == *"${UTIL}"* && 
           "${CATEGORIES[*]} " != *" $1 "* &&
           "${CATEGORIES[*]} " != *" $2 "* ]]; then
+        echo "Hi1"
         local COMMAND="${CYLC_HOME_BIN}/cylc-${UTIL}"
         exec "${COMMAND}" "--help"
     fi
     # If category name is used, call the help func with the category
-    if [[ " ${CATEGORIES[*]} " == *" ${UTIL} "* 
-            || " ${HELP_OPTS[*]} " == *" ${UTIL} "* ]]; then
+    # make this deal with 'cylc help CATEGORY' only
+    if [[ " ${CATEGORIES[*]} " == *" ${UTIL} "* || " ${HELP_OPTS[*]} " == *" ${UTIL} "* 
+            && $# > 0 && ( "${CATEGORIES[*]} " == *" $1 "* || " ${HELP_OPTS[*]} " == *" $1 "* ) ]]; then
+        echo "Hi2"
         local COMMAND="${CYLC_HOME_BIN}/cylc-help"
-        exec "${COMMAND}" "${UTIL}"
-    fi
-
-    # If category name is used as second arg, call the help func with the category
-    if [[ (( "$#" -gt 1 )) &&  "${CATEGORIES[*]} " == *" ${1} "* 
-            || " ${HELP_OPTS[*]} " == *" ${1} "* ]]; then
-        local COMMAND="${CYLC_HOME_BIN}/cylc-help"
+        echo $COMMAND $@
         exec "${COMMAND}" "$@"
     fi
+
     # Deal with cases like 'cylc --help [COMMAND/CATEGORY] or cylc [CATEGORY]'   
     if (( "$#" >= 1 )); then
         if [[  -f "$(ls cylc-${1}* 2>/dev/null)" ]]; then
@@ -108,8 +119,15 @@ help_util() {
             abort_bad_command "$1"
         fi
     fi
+    # If category name is used as second arg, call the help func with the category
+    if [[ $# > 1  &&  ( "${CATEGORIES[*]} " == *" $1 "* 
+            || " ${HELP_OPTS[*]} " == *" $1 "* ) ]]; then
+        echo "Hi3"
+        local COMMAND="${CYLC_HOME_BIN}/cylc-help"
+        exec "${COMMAND}" "$@"
+    fi
     # Deal with cases like 'cylc --help [COMMAND/CATEGORY]'
-    if [[ (( "$#" -gt 1 )) && -f "$(ls cylc-${2}* 2>/dev/null)" ]]; then
+    if [[ (( $# -gt 1 )) && -f "$(ls cylc-${2}* 2>/dev/null)" ]]; then
         local COMMAND="${CYLC_HOME_BIN}/$(ls "cylc-$2"*)"
         exec "${COMMAND}" "--help"
     fi
@@ -190,16 +208,15 @@ if [[ -f "${CYLC_HOME_BIN}/cylc-${UTIL}" && "${UTIL}" != 'help'  ]]; then
 fi
 
 # Now process help and command matching.
-
 # Check for help or version options.
 case "${UTIL}" in
 # Deal with categories
 control|information|all|task|license|GPL|admin|preparation|hook|discovery\
         |utility|util|prep|con|info)
-    if (( "$#" == 0 )); then
+    if (( $# == 0 )); then
         help_util "${UTIL}"
     fi
-    if [[ (( "$#" > 0 )) && "${HELP_OPTS[*]} " == *"${2}"* ]]; then
+    if [[ $# -ge 1 && "${HELP_OPTS[*]} " == *"$1"* || $# -ge 2 && "${HELP_OPTS[*]} " == *"$2"* ]]; then
         help_util "${UTIL}"
     fi
     UTIL="$1"
@@ -226,8 +243,7 @@ esac
 
 # Store any matching file glob as a number for later use
 # Minimises re-running ls
-commands_match="$(ls "${CYLC_HOME_BIN}/cylc-${UTIL}"* 2>/dev/null)"
-
+commands_match="$(ls "${CYLC_HOME_BIN}/cylc-${UTIL}"* 2>/dev/null || true )"
 if [[ -z $commands_match ]]; then
     num_commands_match=0
 else
