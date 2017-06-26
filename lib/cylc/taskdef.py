@@ -19,7 +19,6 @@
 """Task definition."""
 
 from collections import deque
-import re
 
 from cylc.cycling.loader import (
     get_point_relative, get_interval, is_offset_absolute)

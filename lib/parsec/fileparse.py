@@ -40,7 +40,8 @@ import traceback
 from parsec import ParsecError
 from parsec.OrderedDict import OrderedDictWithDefaults
 from parsec.include import inline, IncludeFileNotFoundError
-from parsec.jinja2support import jinja2process, TemplateError, UndefinedError
+from parsec.jinja2support import jinja2process
+from jinja2 import TemplateError, UndefinedError
 from parsec.util import itemstr
 import cylc.flags
 
@@ -190,7 +191,6 @@ def multiline(flines, value, index, maxline):
     multi_line = _TRIPLE_QUOTE[quot][1]
     mat = single_line.match(value)
     if mat:
-        val, comment = list(mat.groups())
         return value, index
     elif newvalue.find(quot) != -1:
         # TODO - this should be handled by validation?:
@@ -340,7 +340,7 @@ def parse(fpath, output_fname=None, template_vars=None):
         m = re.match(_HEADING, line)
         if m:
             # matched a section heading
-            indent, s_open, sect_name, s_close, comment = m.groups()
+            s_open, sect_name, s_close = m.groups()[1:-1]
             nb = len(s_open)
 
             if nb != len(s_close):
@@ -365,7 +365,7 @@ def parse(fpath, output_fname=None, template_vars=None):
             m = re.match(_KEY_VALUE, line)
             if m:
                 # matched a key=value item
-                indent, key, _, val = m.groups()
+                key, _, val = m.groups()[1:]
                 if val.startswith('"""') or val.startswith("'''"):
                     # triple quoted - may be a multiline value
                     val, index = multiline(flines, val, index, maxline)

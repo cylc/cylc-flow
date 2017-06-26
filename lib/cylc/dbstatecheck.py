@@ -21,7 +21,7 @@ import sqlite3
 import sys
 from cylc.rundb import CylcSuiteDAO
 from cylc.task_state import (
-    TASK_STATUS_HELD, TASK_STATUS_WAITING, TASK_STATUS_EXPIRED,
+    TASK_STATUS_WAITING, TASK_STATUS_EXPIRED,
     TASK_STATUS_QUEUED, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED,
     TASK_STATUS_FAILED, TASK_STATUS_RETRYING)
@@ -119,7 +119,6 @@ class CylcSuiteDBChecker(object):
 
         if status is not None:
             if check_message:
-                message_type = "message {0}".format(status)
                 additionals.append("event LIKE ?")
                 vals.append("message %")
                 additionals.append("message==?")

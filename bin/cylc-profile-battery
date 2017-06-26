@@ -149,7 +149,7 @@ def parse_args():
     parser.add_option('--test', action='store_true', default=False,
                       help='For development purposes, run experiment without '
                       'saving results and regardless of any prior runs.')
-    opts, _ = parser.parse_args()
+    opts = parser.parse_args()[0]
 
     # Defaults for experiments and versions if we are not in list mode.
     if not (opts.ls or opts.delete):

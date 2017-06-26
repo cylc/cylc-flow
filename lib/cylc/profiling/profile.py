@@ -28,7 +28,7 @@ import time
 import traceback
 
 from . import (PROFILE_MODE_TIME, PROFILE_MODE_CYLC, PROFILE_MODES,
-               PROFILE_FILES, CYLC_DIR, SUITE_STARTUP_STRING)
+               PROFILE_FILES, SUITE_STARTUP_STRING)
 from .analysis import extract_results
 from .git import (checkout, describe, GitCheckoutError,)
 

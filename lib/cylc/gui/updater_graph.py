@@ -216,7 +216,6 @@ class GraphUpdater(threading.Thread):
             return False
 
     def run(self):
-        glbl = None
         while not self.quit:
             if self.update():
                 if self.global_summary:

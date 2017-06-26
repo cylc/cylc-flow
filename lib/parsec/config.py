@@ -23,8 +23,6 @@ from parsec.util import printcfg
 from parsec.validate import validate, check_compulsory, expand, validator
 from parsec.OrderedDict import OrderedDictWithDefaults
 from parsec.util import replicate, itemstr
-from parsec.upgrade import UpgradeError
-import cylc.flags
 
 
 class ItemNotFoundError(ParsecError):
@@ -108,7 +106,7 @@ class config(object):
         for key in keys:
             try:
                 cfg = cfg[key]
-            except KeyError, x:
+            except KeyError:
                 raise ItemNotFoundError(itemstr(parents, key))
             else:
                 parents.append(key)

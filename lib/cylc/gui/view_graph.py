@@ -16,16 +16,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import re
 import gtk
 import gobject
 from updater_graph import GraphUpdater
-from warning_dialog import warning_dialog, info_dialog
 
 from cylc.cylc_xdot import xdot_widgets
 from cylc.task_id import TaskID
-from gcapture import gcapture_tmpfile
 
 
 class ControlGraph(object):

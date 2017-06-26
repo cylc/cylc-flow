@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 
-import os, sys, re
+import os
+import sys
 
 fpath = os.path.dirname(os.path.abspath(__file__))
 
 # spec
-sys.path.append( fpath + '/../lib/python' )
+sys.path.append(fpath + '/../lib/python')
 # parsec
-sys.path.append( fpath + '/../../..' )
+sys.path.append(fpath + '/../../..')
 
 from cfgspec import SPEC
 from config import config
@@ -15,25 +16,25 @@ from config import config
 rcname = sys.argv[1]
 rcfile = rcname + '.rc'
 
-cfg = config( SPEC )
+cfg = config(SPEC)
 
-cfg.loadcfg( rcfile )
+cfg.loadcfg(rcfile)
 
-res = cfg.get( sparse=True)
+res = cfg.get(sparse=True)
 
 for expected in res[rcname].keys():
 
-    vals = cfg.get( [rcname, expected], sparse=True ).values()
+    vals = cfg.get([rcname, expected], sparse=True).values()
     expected = expected.replace('COMMA', ',').replace('NULL', '')
 
     if rcname == 'boolean':
-        expected = ( expected == 'True' ) or False
+        expected = (expected == 'True') or False
 
     elif rcname == 'integer':
-        expected = int( expected )
+        expected = int(expected)
 
     elif rcname == 'float':
-        expected = float( expected )
+        expected = float(expected)
 
     elif rcname == 'integer_list':
         expected = [int(i) for i in expected.split('_')]
@@ -47,8 +48,8 @@ for expected in res[rcname].keys():
         else:
             expected = []
 
-    if vals.count(expected) != len( vals ):
+    if vals.count(expected) != len(vals):
         print >> sys.stderr, vals, ' is not all ', expected
-        sys.exit( "FAIL" )
+        sys.exit("FAIL")
     else:
         print "OK"

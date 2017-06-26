@@ -31,7 +31,6 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gcylc import gcfg
 from cylc.cfgspec.gscan import gsfg
 import cylc.flags
-from cylc.gui.app_gcylc import run_get_stdout
 from cylc.gui.dot_maker import DotMaker
 from cylc.gui.scanutil import (KEY_PORT, get_gpanel_scan_menu,
                                update_suites_info)
@@ -275,12 +274,11 @@ class ScanPanelAppletUpdater(object):
     def _add_image_box(self, suite_host_info_tuples):
         image_eb = gtk.EventBox()
         image_eb.show()
-        is_all_stopped = False
         running_status_list = []
         status_list = []
         suite_keys = []
         for info_tuple in suite_host_info_tuples:
-            suite, host, status, task_states, is_stopped = info_tuple
+            suite, host, status, _, is_stopped = info_tuple
             suite_keys.append((host, USER, suite))
             if not is_stopped:
                 running_status_list.append(status)

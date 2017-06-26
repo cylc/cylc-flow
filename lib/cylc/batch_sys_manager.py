@@ -116,7 +116,6 @@ from subprocess import Popen, PIPE
 import sys
 import traceback
 from cylc.mkdir_p import mkdir_p
-from cylc.task_id import TaskID
 from cylc.task_message import TaskMessage
 from cylc.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.wallclock import get_current_time_string
