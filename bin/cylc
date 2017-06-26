@@ -72,44 +72,40 @@ init_cylc() {
 help_util() {
     # Deals with form 'cylc [COMMAND] --help'
     cd "${CYLC_HOME_BIN}"
-    echo "Util: $UTIL Args: $@"
     # deal with graph which is a weird edge case...
     if [[ "$@" == "graph" ]]; then
         local COMMAND="${CYLC_HOME_BIN}/cylc-graph"
         exec "${COMMAND}" "--help"
     fi
-
+    # For help command/option with no args
     if [[ $# == 0 && "${HELP_OPTS[*]} " == *"$UTIL"* ]]; then
         exec "${CYLC_HOME_BIN}"/cylc-help
     fi
-
     # for cases 'cylc --help CATEGORY COMMAND'
-    if [[ (( $# > 1 )) &&  "${HELP_OPTS[*]} " == *"$UTIL"* &&  "${CATEGORIES[*]} " == *" $1 "* ]]; then
-        echo "whaddup" $1
+    if [[ (( $# > 1 )) &&  "${HELP_OPTS[*]} " == *"$UTIL"* && \
+          "${CATEGORIES[*]} " == *" $1 "* ]]; then
         local COMMAND="${CYLC_HOME_BIN}/cylc-$2"
-        echo $COMMAND
         exec "${COMMAND}" "--help"  
     fi
     # Check if this is a help command, not containing a category qualifier
     if [[ $# > 1  && "${HELP_OPTS[*]} " == *"${UTIL}"* && 
           "${CATEGORIES[*]} " != *" $1 "* &&
           "${CATEGORIES[*]} " != *" $2 "* ]]; then
-        echo "Hi1"
         local COMMAND="${CYLC_HOME_BIN}/cylc-${UTIL}"
         exec "${COMMAND}" "--help"
     fi
     # If category name is used, call the help func with the category
     # make this deal with 'cylc help CATEGORY' only
-    if [[ " ${CATEGORIES[*]} " == *" ${UTIL} "* || " ${HELP_OPTS[*]} " == *" ${UTIL} "* 
-            && $# > 0 && ( "${CATEGORIES[*]} " == *" $1 "* || " ${HELP_OPTS[*]} " == *" $1 "* ) ]]; then
-        echo "Hi2"
+    if [[ " ${CATEGORIES[*]} " == *" ${UTIL} "* \
+          || " ${HELP_OPTS[*]} " == *" ${UTIL} "* \
+          && $# > 0 && ( "${CATEGORIES[*]} " == *" $1 "* \
+          || " ${HELP_OPTS[*]} " == *" $1 "* ) ]]; then
         local COMMAND="${CYLC_HOME_BIN}/cylc-help"
-        echo $COMMAND $@
         exec "${COMMAND}" "$@"
     fi
 
     # Deal with cases like 'cylc --help [COMMAND/CATEGORY] or cylc [CATEGORY]'   
-    if (( "$#" >= 1 )); then
+    if (( $# >= 1 )); then
         if [[  -f "$(ls cylc-${1}* 2>/dev/null)" ]]; then
         local COMMAND="${CYLC_HOME_BIN}/$(ls "cylc-$1"*)"
         exec "${COMMAND}" "--help"
@@ -119,10 +115,9 @@ help_util() {
             abort_bad_command "$1"
         fi
     fi
-    # If category name is used as second arg, call the help func with the category
+    # If category name is used as arg, call the help func with the category
     if [[ $# > 1  &&  ( "${CATEGORIES[*]} " == *" $1 "* 
             || " ${HELP_OPTS[*]} " == *" $1 "* ) ]]; then
-        echo "Hi3"
         local COMMAND="${CYLC_HOME_BIN}/cylc-help"
         exec "${COMMAND}" "$@"
     fi
@@ -179,7 +174,8 @@ abort_bad_command() {
 abort_ambiguous_command() {
     echo "\"$1\" is ambiguous."
     echo "These commands match the abbreviation \"$1\":"
-    sed -r "s,${CYLC_HOME_BIN}/cylc-,," <<<"$(ls "${CYLC_HOME_BIN}/cylc-$1"* 2>/dev/null)"
+    sed -r "s,${CYLC_HOME_BIN}/cylc-,," \
+        <<<"$(ls "${CYLC_HOME_BIN}/cylc-$1"* 2>/dev/null)"
     exit 1
 }
 
@@ -198,7 +194,7 @@ run_cylc_command() {
 init_cylc
 
 UTIL="help"
-if (( "$#" > 0 )); then
+if (( $# > 0 )); then
     UTIL="$1"
     shift 1
 fi
@@ -216,7 +212,8 @@ control|information|all|task|license|GPL|admin|preparation|hook|discovery\
     if (( $# == 0 )); then
         help_util "${UTIL}"
     fi
-    if [[ $# -ge 1 && "${HELP_OPTS[*]} " == *"$1"* || $# -ge 2 && "${HELP_OPTS[*]} " == *"$2"* ]]; then
+    if [[ $# -ge 1 && "${HELP_OPTS[*]} " == *"$1"* \
+            || $# -ge 2 && "${HELP_OPTS[*]} " == *"$2"* ]]; then
         help_util "${UTIL}"
     fi
     UTIL="$1"
@@ -259,7 +256,8 @@ elif (( "$num_commands_match" == 1 )); then
 # Abort if the command wildcard match is ambiguous, unless it is itself a 
 # command, e.g. "cylc graph" matches "cylc-graph" and "cylc-graph-diff",
 # but the command should not abort in this case.  
-elif [[ (("$num_commands_match" > 1)) && -f "${CYLC_HOME_BIN}/cylc-${UTIL}" ]] ; then
+elif [[ (("$num_commands_match" > 1)) \
+        && -f "${CYLC_HOME_BIN}/cylc-${UTIL}" ]] ; then
     exec "${CYLC_HOME_BIN}/cylc-${UTIL}" "@"
 else
     abort_ambiguous_command "${UTIL}"
