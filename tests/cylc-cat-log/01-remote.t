@@ -98,6 +98,7 @@ job.custom-log
 job.err
 job.out
 job.status
+job.xtrace
 __END__
 #-------------------------------------------------------------------------------
 # remote

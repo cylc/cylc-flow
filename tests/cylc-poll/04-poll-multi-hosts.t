@@ -38,7 +38,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 
 RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
 LOG="${RUN_DIR}/log/suite/log"
-sed -n 's/^.*\(cylc jobs-poll\)/\1/p' "${LOG}" | sort >'edited-suite-log'
+sed -n 's/^.*\(cylc jobs-poll\)/\1/p' "${LOG}" | sort -u >'edited-suite-log'
 
 sort >'edited-suite-log-ref' <<__LOG__
 cylc jobs-poll --debug --host=${CYLC_TEST_HOST} -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 1/remote-fail-1/01 1/remote-success-1/01 1/remote-success-2/01

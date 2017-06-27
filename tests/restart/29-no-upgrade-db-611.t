@@ -1,8 +1,7 @@
-#!/usr/bin/env python
-
+#!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2017 NIWA
-#
+# 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -15,24 +14,19 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#-------------------------------------------------------------------------------
+# Test ignore 6.11.X database if a 7.X database exists
+. "$(dirname "$0")/test_header"
 
-# python implementation of the unix 'which' command
+which sqlite3 > /dev/null || skip_all "sqlite3 not installed?"
+set_test_number 3
 
-import os
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-
-def which(program):
-    def is_exe(fpath):
-        return os.path.exists(fpath) and os.access(fpath, os.X_OK)
-
-    fpath, fname = os.path.split(program)
-    if fpath:
-        if is_exe(program):
-            return program
-    else:
-        for path in os.environ["PATH"].split(os.pathsep):
-            exe_file = os.path.join(path, program)
-            if is_exe(exe_file):
-                return exe_file
-
-    return None
+sqlite3 "${SUITE_RUN_DIR}/cylc-suite-private.db" <"cylc-suite-db.dump"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug --until=2011 "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-restart" \
+    cylc restart --debug --reference-test "${SUITE_NAME}"
+purge_suite "${SUITE_NAME}"
+exit

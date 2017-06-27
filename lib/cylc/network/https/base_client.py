@@ -26,10 +26,10 @@ import cylc.flags
 from cylc.network import (
     ConnectionError, ConnectionDeniedError, ConnectionInfoError,
     ConnectionTimeout, NO_PASSPHRASE, handle_proxies)
-from cylc.owner import is_remote_user, USER
+from cylc.owner import USER
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
-from cylc.suite_host import get_hostname, is_remote_host
+from cylc.suite_host import get_hostname
 from cylc.version import CYLC_VERSION
 
 
@@ -224,7 +224,6 @@ class BaseCommsClient(object):
             json_data = http_request_item['payload']
             if method is None:
                 method = self.METHOD
-            orig_json_data = json_data
             username, password = self._get_auth()
             auth_manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
             auth_manager.add_password(None, url, username, password)

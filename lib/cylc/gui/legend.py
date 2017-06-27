@@ -37,8 +37,6 @@ class ThemeLegendWindow(gtk.Window):
             self.set_transient_for(parent_window)
         self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DIALOG)
 
-        vbox = gtk.VBox()
-
         self._theme = theme_map
         self._dot_size = dot_size
         self._key_liststore = gtk.ListStore(str, gtk.gdk.Pixbuf)

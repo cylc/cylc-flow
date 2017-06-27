@@ -33,7 +33,6 @@ tasks against the new stop cycle.
 
 from fnmatch import fnmatchcase
 import pickle
-from random import randrange
 from time import time
 import traceback
 
@@ -115,7 +114,7 @@ class TaskPool(object):
         n_warnings = 0
         task_items = []
         for item in items:
-            point_str, name_str, _ = self._parse_task_item(item)
+            point_str, name_str = self._parse_task_item(item)[:2]
             if point_str is None:
                 LOG.warning(
                     "%s: task ID for insert must contain cycle point" % (item))

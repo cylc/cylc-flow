@@ -634,7 +634,8 @@ class SuiteConfig(object):
         for node, attrs in (
                 self.cfg['visualization']['node attributes'].items()):
             for attr in attrs:
-                if '=' not in attr:
+                # Check form is 'name = attr'.
+                if attr.count('=') != 1:
                     fail = True
                     ERR.error(
                         "[visualization][node attributes]%s = %s" % (
@@ -1456,9 +1457,9 @@ class SuiteConfig(object):
             try:
                 name, offset_is_from_icp, _, offset, _ = (
                     GraphNodeParser.get_inst().parse(node))
-            except GraphNodeError, x:
+            except GraphNodeError as exc:
                 ERR.error(orig_expr)
-                raise SuiteConfigError(str(x))
+                raise SuiteConfigError(str(exc))
 
             if name not in self.cfg['runtime']:
                 # naked dummy task, implicit inheritance from root

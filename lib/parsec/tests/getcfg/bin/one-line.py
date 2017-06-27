@@ -12,7 +12,6 @@ Check that single-line config print works
 
 from parsec.config import config
 from parsec.validate import validator as vdr
-from parsec.OrderedDict import OrderedDict
 
 SPEC = { 'foo' : { 'bar' : { '__MANY__' : vdr( vtype="string" ) } } }
 cfg = config( SPEC )

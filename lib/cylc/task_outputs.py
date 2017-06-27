@@ -111,7 +111,7 @@ class TaskOutputs(object):
     def remove(self, message=None, trigger=None):
         """Remove an output by message, if it exists."""
         try:
-            trigger, message, _ = self._get_item(message, trigger)
+            trigger, message = self._get_item(message, trigger)[:2]
         except KeyError:
             pass
         else:

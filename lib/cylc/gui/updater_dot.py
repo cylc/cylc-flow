@@ -119,7 +119,7 @@ class DotUpdater(threading.Thread):
 
         self.point_strings = []
         for id_ in self.state_summary:
-            name, point_string = TaskID.split(id_)
+            point_string = TaskID.split(id_)[1]
             if point_string not in self.point_strings:
                 self.point_strings.append(point_string)
         try:
@@ -220,7 +220,7 @@ class DotUpdater(threading.Thread):
 
         max_pixel_length = -1
         for label in labels:
-            x, y = label.get_layout().get_size()
+            x = (label.get_layout().get_size())[0]
             if x > max_pixel_length:
                 max_pixel_length = x
         for label in labels:
@@ -433,7 +433,7 @@ class DotUpdater(threading.Thread):
             self._prev_tooltip_task_id = None
             return False
         x, y = self.led_treeview.convert_widget_to_bin_window_coords(x, y)
-        path, column, cell_x, cell_y = self.led_treeview.get_path_at_pos(x, y)
+        path, column = self.led_treeview.get_path_at_pos(x, y)[0:2]
         col_index = self.led_treeview.get_columns().index(column)
         if not self.is_transposed:
             iter_ = self.led_treeview.get_model().get_iter(path)

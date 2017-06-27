@@ -65,8 +65,7 @@ from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.suite_logging import SuiteLog
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gcylc import gcfg
-from cylc.wallclock import (
-    get_current_time_string, get_time_string_from_unix_time)
+from cylc.wallclock import get_current_time_string
 from cylc.task_state import (
     TASK_STATUSES_ALL, TASK_STATUSES_RESTRICTED,
     TASK_STATUSES_WITH_JOB_SCRIPT, TASK_STATUSES_WITH_JOB_LOGS,
@@ -91,9 +90,9 @@ def run_get_stdout(command, filter=False):
             warning_dialog(
                 "ERROR: command failed %d\n%s" % (res, err)).warn()
             return (False, [])
-    except OSError, e:
+    except OSError as exc:
         warning_dialog(
-            "ERROR: command invocation failed %s\n%s" % (str(e), err)).warn()
+            "ERROR: command invocation failed %s\n%s" % (exc, err)).warn()
         return (False, [])
     else:
         # output is a single string with newlines; but we return a list of
@@ -311,15 +310,6 @@ Use (Re-)connect button to reconnect immediately.""")
         self._mode = mode
         gobject.idle_add(self.mode_widget.set_markup, " %s " % self._mode)
 
-    def set_runahead(self, runahead):
-        """Set runahead limit."""
-        if runahead == self._runahead:
-            return False
-        self._runahead = runahead
-        text = "runahead:" + str(runahead) + "h  "
-        if runahead is None:
-            text = ""
-
     def set_state(self, suite_states, is_suite_stopped=None):
         """Set state text."""
         if (suite_states == self._suite_states and
@@ -406,7 +396,7 @@ Use (Re-)connect button to reconnect immediately.""")
 
     def set_stop_summary(self, summary_maps):
         """Set various summary info."""
-        global_summary, task_summary = summary_maps
+        task_summary = summary_maps[1]
         states = [t["state"] for t in task_summary.values() if "state" in t]
 
         self.set_state(states, is_suite_stopped=True)
@@ -652,14 +642,10 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.refresh_views()
 
     def setup_views(self):
-        """Create our view containers."""
-        num_views = 2
-        self.view_containers = []
-        self.current_view_toolitems = []
-        for i in range(num_views):
-            self.current_views.append(None)
-            self.view_containers.append(gtk.HBox())
-            self.current_view_toolitems.append([])
+        """Create two view containers."""
+        self.view_containers = [gtk.HBox(), gtk.HBox()]
+        self.current_view_toolitems = [[], []]
+        self.current_views += [None, None]
         self.views_parent.pack_start(self.view_containers[0],
                                      expand=True, fill=True)
 
@@ -1001,7 +987,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             # process can detach as a process group leader and not subjected to
             # SIGHUP from the current process.
             # See also "cylc.batch_sys_handlers.background".
-            proc = Popen(
+            Popen(
                 [
                     "nohup",
                     "bash",
@@ -1064,7 +1050,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                 return
             try:
                 parser = TimePointParser()
-                timepoint = parser.parse(stopclock_time)
+                parser.parse(stopclock_time)
             except ValueError:
                 warning_dialog(
                     "ERROR: Bad ISO 8601 date-time: %s" % stopclock_time,
@@ -1204,11 +1190,9 @@ been defined for this suite""").inform()
 
         try:
             Popen([command], shell=True)
-        except OSError, e:
+        except OSError:
             warning_dialog('Error: failed to start ' + self.cfg.suite,
                            self.window).warn()
-            success = False
-
         self.reset_connect(None)
 
     def about(self, bt):
@@ -1326,7 +1310,7 @@ been defined for this suite""").inform()
         if len(task_ids) == 1:
             # Browse task URL.
             url_item = gtk.MenuItem('_Browse task URL')
-            name, point_string = TaskID.split(task_ids[0])
+            name = TaskID.split(task_ids[0])[0]
             url_item.connect('activate', self.browse, "-t", name,
                              self.cfg.suite)
             menu.append(url_item)
@@ -1675,7 +1659,7 @@ been defined for this suite""").inform()
 
     def popup_requisites(self, w, e, task_id, *args):
         """Show prerequisites of task_id in a pop up window."""
-        name, point_string = TaskID.split(task_id)
+        name = TaskID.split(task_id)[0]
         results, bad_items = self.get_comms_info(
             'get_task_requisites', items=[task_id])
         if not results or task_id in bad_items:
@@ -3078,7 +3062,7 @@ This is what my suite does:..."""
         window.destroy()
         if suite:
             command = "cylc register " + suite + ' ' + dir
-            res, stdout = run_get_stdout(command)
+            res = run_get_stdout(command)[0]
             if res:
                 self.reset(suite)
 
@@ -3122,7 +3106,7 @@ This is what my suite does:..."""
                 box = ebox.get_children()[0]
                 try:
                     icon, cb = box.get_children()
-                except (ValueError, AttributeError) as exc:
+                except (ValueError, AttributeError):
                     # ValueError: an empty box to line things up.
                     # AttributeError: the name filter entry box.
                     pass
@@ -3149,7 +3133,7 @@ This is what my suite does:..."""
                 box = ebox.get_children()[0]
                 try:
                     icon, cb = box.get_children()
-                except (ValueError, AttributeError) as exc:
+                except (ValueError, AttributeError):
                     # ValueError: an empty box to line things up.
                     # AttributeError: the name filter entry box.
                     pass
@@ -3259,7 +3243,6 @@ This is what my suite does:..."""
         self.tool_bar_view1 = gtk.ComboBox()
         pixlist0 = gtk.ListStore(gtk.gdk.Pixbuf, str)
         pixlist1 = gtk.ListStore(gtk.gdk.Pixbuf, str, bool, bool)
-        view_items = []
         for v in views:
             pixbuf = gtk.gdk.pixbuf_new_from_file(self.cfg.imagedir +
                                                   self.VIEW_ICON_PATHS[v])

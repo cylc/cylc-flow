@@ -34,12 +34,12 @@ class controlled_option_group(object):
     def greyout(self, data=None):
         if self.checkbutton.get_active():
             for name in self.entries:
-                entry, label, option = self.entries[name]
+                entry, label = self.entries[name][0:2]
                 entry.set_sensitive(True)
                 label.set_sensitive(True)
         else:
             for name in self.entries:
-                entry, label, option = self.entries[name]
+                entry, label = self.entries[name][0:2]
                 entry.set_sensitive(False)
                 label.set_sensitive(False)
 
@@ -66,13 +66,13 @@ class controlled_option_group(object):
     def pack(self, vbox):
         vbox.pack_start(self.checkbutton)
         for name in self.entries:
-            (entry, label, option) = self.entries[name]
+            entry, label = self.entries[name][0:2]
             box = gtk.HBox()
             box.pack_start(label, True)
             box.pack_start(entry, True)
             vbox.pack_start(box)
         for name in self.arg_entries:
-            (entry, label) = self.entries[name]
+            entry, label = self.entries[name]
             box = gtk.HBox()
             box.pack_start(label, True)
             box.pack_start(entry, True)

@@ -17,9 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import ast
-import sys
 
-import cylc.flags
 from cylc.network.https.base_server import BaseCommsServer
 from cylc.network import check_access_priv
 

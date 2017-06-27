@@ -26,8 +26,6 @@ import sys
 from jinja2 import (
     Environment,
     FileSystemLoader,
-    TemplateError,
-    UndefinedError,
     StrictUndefined)
 import cylc.flags
 
@@ -74,14 +72,9 @@ def jinja2process(flines, dir_, template_vars=None):
     env.globals['raise'] = raise_helper
     env.globals['assert'] = assert_helper
 
-    # load file lines into a template, excluding '#!jinja2' so
-    # that '#!cylc-x.y.z' rises to the top.
-    # CALLERS SHOULD HANDLE JINJA2 TEMPLATESYNTAXERROR AND TEMPLATEERROR
-    # try:
-    # except Exception as exc:
-    #     # This happens if we use an unknown Jinja2 filter, for example.
-    #     # TODO - THIS IS CAUGHT BY VALIDATE BUT NOT BY VIEW COMMAND...
-    #     raise TemplateError(exc)
+    # Load file lines into a template, excluding '#!jinja2' so that
+    # '#!cylc-x.y.z' rises to the top. Callers should handle jinja2
+    # TemplateSyntaxerror and TemplateError.
     if cylc.flags.verbose and template_vars:
         print 'Setting Jinja2 template variables:'
         for item in sorted(template_vars.items()):

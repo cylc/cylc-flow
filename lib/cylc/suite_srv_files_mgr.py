@@ -211,8 +211,6 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
         if item == self.FILE_BASE_PASSPHRASE:
             self.can_disk_cache_passphrases[(reg, owner, host)] = False
 
-        suite_host = os.getenv('CYLC_SUITE_HOST')
-        suite_owner = os.getenv('CYLC_SUITE_OWNER')
         if reg == os.getenv('CYLC_SUITE_NAME'):
             env_keys = []
             if 'CYLC_SUITE_RUN_DIR' in os.environ:
@@ -559,7 +557,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
                         key, value = (
                             [item.strip() for item in line.split("=", 1)])
                         data[key] = value
-                except IOError, ValueError:
+                except (IOError, ValueError):
                     # No contact file
                     self.can_use_load_auths[(reg, owner, host)] = False
                 else:

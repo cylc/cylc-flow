@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.conditional_simplifier import ConditionalSimplifier
 from cylc.cycling.loader import get_point_relative
 from cylc.prerequisite import Prerequisite
 from cylc.task_outputs import (

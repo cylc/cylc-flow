@@ -486,13 +486,12 @@ class TreeUpdater(threading.Thread):
                 row_id_iters = {}
                 self.ttreestore.foreach(
                     self._cache_row_id_iters, row_id_iters)
-            for delete_row_id, prev_location in delete_items:
+            for delete_row_id, _ in delete_items:
                 real_location = row_id_iters.get(delete_row_id)
                 if real_location is None:
                     continue
-                delete_iter, delete_path = real_location
+                delete_iter = real_location[0]
                 if self.ttreestore.iter_is_valid(delete_iter):
-                    path = self.ttreestore.get_path(delete_iter)
                     self.ttreestore.remove(delete_iter)
         else:  # not should_rebuild_tree
             # Update the tree in place - no row has been added or deleted.
@@ -604,7 +603,6 @@ class TreeUpdater(threading.Thread):
     def _add_expanded_row(self, view, rpath, expand_me):
         """Add user-expanded rows to a list of rows to be expanded."""
         model = view.get_model()
-        row_iter = model.get_iter(rpath)
         row_id = self._get_row_id(model, rpath)
         if not self.autoexpand or row_id not in self._last_autoexpand_me:
             expand_me.append(row_id)
@@ -687,8 +685,6 @@ class TreeUpdater(threading.Thread):
         return False
 
     def run(self):
-        glbl = None
-        states = {}
         while not self.quit:
             if self.update():
                 gobject.idle_add(self.update_gui)
