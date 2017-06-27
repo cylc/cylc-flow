@@ -1695,9 +1695,15 @@ class SuiteConfig(object):
                     if i in clf:
                         clf.remove(i)
 
+        clf_map = {}
+        for family_name in clf:
+            clf_map[family_name] = (
+                self.runtime['first-parent descendants'][family_name])
+
         gr_edges = {}
         start_point_offset_cache = {}
         point_offset_cache = None
+        id2str_cache = {}
         for sequence, edges in self.edges.items():
             # Get initial cycle point for this sequence
             point = sequence.get_first_point(start_point)
@@ -1756,7 +1762,16 @@ class SuiteConfig(object):
                                 r_id = None
                                 action = True
                     if action:
-                        l_str, r_str = self._close_families(clf, l_id, r_id)
+                        if l_id in id2str_cache:
+                            l_str = id2str_cache[l_id]
+                        else:
+                            l_str = self._close_families(l_id, clf_map)
+                            id2str_cache[l_id] = l_str
+                        if r_id in id2str_cache:
+                            r_str = id2str_cache[r_id]
+                        else:
+                            r_str = self._close_families(r_id, clf_map)
+                            id2str_cache[r_id] = r_str
                         if point not in gr_edges:
                             gr_edges[point] = []
                         gr_edges[point].append(
@@ -1764,8 +1779,10 @@ class SuiteConfig(object):
                 # Increment the cycle point.
                 point = sequence.get_next_point_on_sequence(point)
 
+        del clf_map
         del start_point_offset_cache
         del point_offset_cache
+        del id2str_cache
         GraphNodeParser.get_inst().clear()
         self._last_graph_raw_id = graph_raw_id
         if stop_point is None:
@@ -1828,38 +1845,18 @@ class SuiteConfig(object):
                                ungroup_all=True)
         return [i.attr['label'].replace('\\n', '.') for i in graph.nodes()]
 
-    def _close_families(self, clf, l_id, n_id):
+    def _close_families(self, id_, clf_map):
         """Generate final node names.
 
         Replacing family members with family nodes if requested.
         """
-
-        lname, lpoint = None, None
-        if l_id:
-            lname, lpoint = l_id
-        rname, rpoint = None, None
-        if n_id:
-            rname, rpoint = n_id
-
-        l_str, r_str = None, None
-        for family_name in clf:
-            family = self.runtime['first-parent descendants'][family_name]
-            if lname in family and rname in family:
-                # this makes 'the graph disappear if grouping 'root'
-                l_str = TaskID.get(family_name, lpoint)
-                r_str = TaskID.get(family_name, rpoint)
-                break
-            elif lname in family:
-                l_str = TaskID.get(family_name, lpoint)
-            elif rname in family:
-                r_str = TaskID.get(family_name, rpoint)
-
-        if l_id and l_str is None:
-            l_str = TaskID.get(lname, lpoint)
-        if n_id and r_str is None:
-            r_str = TaskID.get(rname, rpoint)
-
-        return l_str, r_str
+        if id_ is None:
+            return None
+        name, point = id_
+        for family_name, family in clf_map.items():
+            if name in family:
+                return TaskID.get(family_name, point)
+        return TaskID.get(name, point)
 
     def load_graph(self):
         """Parse and load dependency graph."""
