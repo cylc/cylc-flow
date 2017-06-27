@@ -723,7 +723,6 @@ class SuiteConfig(object):
                 #    "foo:fail => bar => !foo" looks like "foo => bar => foo").
                 graph = self.get_graph(ungroup_all=True, ignore_suicide=True,
                                        is_validate=True)
-                GraphNodeParser.get_inst().clear()
                 # Original edges.
                 o_edges = graph.edges()
                 # Reverse any back edges using graphviz 'acyclic'.
@@ -1698,6 +1697,7 @@ class SuiteConfig(object):
 
         gr_edges = {}
         start_point_offset_cache = {}
+        point_offset_cache = None
         for sequence, edges in self.edges.items():
             # Get initial cycle point for this sequence
             point = sequence.get_first_point(start_point)
@@ -1764,10 +1764,13 @@ class SuiteConfig(object):
                 # Increment the cycle point.
                 point = sequence.get_next_point_on_sequence(point)
 
+        del start_point_offset_cache
+        del point_offset_cache
+        GraphNodeParser.get_inst().clear()
         self._last_graph_raw_id = graph_raw_id
-        graph_raw_edges = []
         if stop_point is None:
             # Prune to n_points points in total.
+            graph_raw_edges = []
             for point in sorted(gr_edges)[:n_points]:
                 graph_raw_edges.extend(gr_edges[point])
         else:
