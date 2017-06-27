@@ -17,13 +17,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-import ast
 import copy
 
 
 class ConditionalSimplifier(object):
     """A class to simplify logical expressions"""
-    RE_CONDITIONALS = re.compile("([&|()])")
+    REC_CONDITIONALS = re.compile("([&|()])")
 
     def __init__(self, expr, clean):
         self.raw_expression = expr
@@ -57,29 +56,31 @@ class ConditionalSimplifier(object):
 
             >>> ConditionalSimplifier.listify('((foo)')
             Traceback (most recent call last):
-            SyntaxError: unexpected EOF while parsing
+            ValueError: ((foo)
+
+            >>> ConditionalSimplifier.listify('(foo))')
+            Traceback (most recent call last):
+            ValueError: (foo))
 
         """
         message = message.replace("'", "\"")
 
-        tokenised = cls.RE_CONDITIONALS.split(message)
-        listified = ["["]
-        for item in tokenised:
+        ret_list = []
+        stack = [ret_list]
+        for item in cls.REC_CONDITIONALS.split(message):
             item = item.strip()
-            if item != "" and item not in ["(", ")"]:
-                listified.append("'" + item + "',")
+            if item and item not in ["(", ")"]:
+                stack[-1].append(item)
             elif item == "(":
-                listified.append("[")
+                stack[-1].append([])
+                stack.append(stack[-1][-1])
             elif item == ")":
-                if listified[-1].endswith(","):
-                    listified[-1] = listified[-1][0:-1]
-                listified.append("],")
-        if listified[-1] == "],":
-            listified[-1] = "]"
-        listified.append("]")
-        listified = (" ").join(listified)
-        listified = ast.literal_eval(listified)
-        return listified
+                stack.pop()
+                if not stack:
+                    raise ValueError(message)
+        if len(stack) > 1:
+            raise ValueError(message)
+        return ret_list
 
     @classmethod
     def get_bracketed(cls, nest_me):
@@ -166,11 +167,9 @@ class ConditionalSimplifier(object):
     def format_expr(cls, expr):
         """Carry out list conversion and nesting of a logical expression in
         the correct order."""
-        listified = cls.listify(expr)
-        bracketed = cls.get_bracketed(listified)
-        nested_by_and = cls.nest_by_oper(bracketed, "&")
-        nested_by_or = cls.nest_by_oper(nested_by_and, "|")
-        return nested_by_or
+        return cls.nest_by_oper(
+            cls.nest_by_oper(cls.get_bracketed(cls.listify(expr)), "&"),
+            "|")
 
     @classmethod
     def flatten_nested_expr(cls, expr):
