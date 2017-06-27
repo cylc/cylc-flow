@@ -23,15 +23,15 @@ HELP_OPTS=('help' '--help' '-h' 'h' '?')
 
 get_version() {
     # If there is a version file present, use that
-    if [[ -f "${CYLC_HOME}/VERSION" ]]; then
-        CYLC_VERSION="$(cat ${CYLC_HOME}/VERSION)"
+    if [[ -f "${CYLC_DIR}/VERSION" ]]; then
+        CYLC_VERSION="$(cat ${CYLC_DIR}/VERSION)"
     # Otherwise, use git (if in a git repo) to determine version
-    elif [[ -d "${CYLC_HOME}/.git" ]]; then
+    elif [[ -d "${CYLC_DIR}/.git" ]]; then
         local DESC=
-        DESC="$(cd ${CYLC_HOME} && git describe --abbrev=4 2>/dev/null)"
+        DESC="$(cd ${CYLC_DIR} && git describe --abbrev=4 2>/dev/null)"
         CYLC_VERSION="${DESC}"
         # Append "-dirty" if there are uncommitted changes.
-        if [[ -n "$(cd ${CYLC_HOME} && git status \
+        if [[ -n "$(cd ${CYLC_DIR} && git status \
                 --untracked-files=no --porcelain)" ]]; then
             CYLC_VERSION="${CYLC_VERSION}-dirty"
         fi
@@ -49,24 +49,21 @@ print_version() {
         echo "$CYLC_VERSION"
     fi
     if [[ "$@" == 'long' ]]; then
-        echo "Cylc ${CYLC_VERSION} (${CYLC_HOME})"
+    echo "Cylc ${CYLC_VERSION} (${CYLC_DIR})"    
     fi
 }
 
 init_cylc() {
     set -eu
-    CYLC_HOME_BIN="$(dirname "$(readlink -f "$0")")"
-    CYLC_HOME="$(dirname "${CYLC_HOME_BIN}")"
-    CYLC_NS="$(basename $0)"
-    CYLC_DIR="${CYLC_HOME}"
-    
-    get_version
-    
+
+    CYLC_HOME_BIN=$(cd "$(dirname "$0")" && pwd -P)
+    CYLC_DIR="$(dirname "${CYLC_HOME_BIN}")"
+
     PATH="$(path_lead "${PATH:-}" "${CYLC_HOME_BIN}")"
-    PYTHONPATH="$(path_lead "${PYTHONPATH:-}" "${CYLC_HOME}/lib/")"
+    PYTHONPATH="$(path_lead "${PYTHONPATH:-}" "${CYLC_DIR}/lib/")"
     PYTHONUNBUFFERED='true'
     
-    export PATH PYTHONPATH PYTHONUNBUFFERED CYLC_DIR CYLC_VERSION
+    export PATH PYTHONPATH PYTHONUNBUFFERED CYLC_DIR
 }
 
 help_util() {
@@ -166,6 +163,7 @@ path_lead() {
 }
 
 abort_bad_command() {
+    CYLC_NS="$(basename $0)"
     echo "${CYLC_NS}: $1: unknown utility. Abort." >&2
     echo "Type \"${CYLC_NS} help all\" for a list of utilities." >&2
     exit 1
