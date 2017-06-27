@@ -312,11 +312,13 @@ class DotUpdater(threading.Thread):
 
         """
         self.selected_rows = []
-        _, selected_paths = self.led_treeview.get_selection(
-        ).get_selected_rows()
-        model = self.led_treeview.get_model()
-        for path in selected_paths:
-            self.selected_rows.append(model.get_value(model.get_iter(path), 0))
+        selection = self.led_treeview.get_selection()
+        if selection:
+            _, selected_paths = selection.get_selected_rows()
+            model = self.led_treeview.get_model()
+            for path in selected_paths:
+                self.selected_rows.append(
+                    model.get_value(model.get_iter(path), 0))
 
     @staticmethod
     def _reselect_row(model, _, iter_, (selection, selected_rows,)):
@@ -338,9 +340,10 @@ class DotUpdater(threading.Thread):
 
         """
         selection = self.led_treeview.get_selection()
-        selection.unselect_all()
-        model = self.led_treeview.get_model()
-        model.foreach(self._reselect_row, (selection, self.selected_rows,))
+        if selection:
+            selection.unselect_all()
+            model = self.led_treeview.get_model()
+            model.foreach(self._reselect_row, (selection, self.selected_rows,))
 
     def ledview_widgets(self):
         self._get_expanded_rows()  # Make a note of expanded rows.
