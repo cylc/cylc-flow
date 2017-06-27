@@ -302,10 +302,6 @@ SPEC = {
     'runtime': {
         '__MANY__': {
             'inherit': vdr(vtype='string_list', default=[]),
-            'title': vdr(vtype='string', default=""),
-            'description': vdr(vtype='string', default=""),
-            'URL': vdr(vtype='string', default=""),
-            'importance': vdr(vtype='string', default=""),
             'init-script': vdr(vtype='string', default=""),
             'env-script': vdr(vtype='string', default=""),
             'err-script': vdr(vtype='string', default=""),
@@ -315,6 +311,12 @@ SPEC = {
             'extra log files': vdr(vtype='string_list', default=[]),
             'enable resurrection': vdr(vtype='boolean', default=False),
             'work sub-directory': vdr(vtype='string'),
+            'meta': {
+                'title': vdr(vtype='string', default=""),
+                'description': vdr(vtype='string', default=""),
+                'URL': vdr(vtype='string', default=""),
+                '__MANY__': vdr(vtype='string', default=""),
+            },
             'simulation': {
                 'default run length': vdr(vtype='interval', default='PT10S'),
                 'speedup factor': vdr(vtype='float', default=None),
@@ -486,6 +488,22 @@ def upg(cfg, descr):
         '6.11.0',
         ['runtime', '__MANY__', 'execution polling intervals'],
         ['runtime', '__MANY__', 'job', 'execution polling intervals'])
+    u.deprecate(
+        '6.11.0',
+        ['runtime', '__MANY__', 'title'],
+        ['runtime', '__MANY__', 'meta', 'title'])
+    u.deprecate(
+        '6.11.0',
+        ['runtime', '__MANY__', 'description'],
+        ['runtime', '__MANY__', 'meta', 'description'])
+    u.deprecate(
+        '6.11.0',
+        ['runtime', '__MANY__', 'URL'],
+        ['runtime', '__MANY__', 'meta', 'URL'])
+    u.deprecate(
+        '6.11.0',
+        ['runtime', '__MANY__', 'importance'],
+        ['runtime', '__MANY__', 'meta', '__MANY__'])
     u.obsolete('7.2.2', ['cylc', 'dummy mode'])
     u.obsolete('7.2.2', ['cylc', 'simulation mode'])
     u.obsolete('7.2.2', ['runtime', '__MANY__', 'dummy mode'])

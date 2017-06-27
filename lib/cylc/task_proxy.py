@@ -82,7 +82,6 @@ class TaskProxy(object):
 
         self.manual_trigger = False
         self.is_manual_submit = False
-
         self.summary = {
             'latest_message': "",
             'submitted_time': None,
@@ -93,8 +92,8 @@ class TaskProxy(object):
             'finished_time': None,
             'finished_time_string': None,
             'name': self.tdef.name,
-            'description': self.tdef.rtconfig['description'],
-            'title': self.tdef.rtconfig['title'],
+            'description': self.tdef.rtconfig['meta']['description'],
+            'title': self.tdef.rtconfig['meta']['title'],
             'label': str(self.point),
             'logfiles': [],
             'job_hosts': {},

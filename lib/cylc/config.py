@@ -693,7 +693,6 @@ class SuiteConfig(object):
             if vfcp > final_point:
                 self.cfg['visualization']['final cycle point'] = str(
                     final_point)
-
         # Replace suite name in suite  URL.
         url = self.cfg['URL']
         if url is not '':
@@ -701,9 +700,11 @@ class SuiteConfig(object):
 
         # Replace suite and task name in task URLs.
         for name, cfg in self.cfg['runtime'].items():
-            if cfg['URL']:
-                cfg['URL'] = RE_TASK_NAME_VAR.sub(name, cfg['URL'])
-                cfg['URL'] = RE_SUITE_NAME_VAR.sub(self.suite, cfg['URL'])
+            if cfg['meta']['URL']:
+                cfg['meta']['URL'] = RE_TASK_NAME_VAR.sub(name,
+                     cfg['meta']['URL'])
+                cfg['meta']['URL'] = RE_SUITE_NAME_VAR.sub(self.suite,
+                     cfg['meta']['URL'])
 
         if is_validate:
             self.mem_log("config.py: before _check_circular()")

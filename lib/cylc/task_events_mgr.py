@@ -837,8 +837,8 @@ class TaskEventsManager(object):
                 "submit_num": itask.submit_num,
                 "id": quote(itask.identity),
                 "message": quote(message),
-                "importance": quote(itask.tdef.rtconfig['importance']),
-                "task_url": quote(itask.tdef.rtconfig['URL']),
+                "importance": quote(itask.tdef.rtconfig['meta']['importance']),
+                "task_url": quote(itask.tdef.rtconfig['meta']['URL']),
                 "suite_url": quote(self.suite_url),
             }
             if cmd == handler:
