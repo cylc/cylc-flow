@@ -1690,7 +1690,7 @@ class SuiteConfig(object):
         # For nested families, only consider the outermost one
         clf_map = {}
         for name in self.closed_families:
-            if any([name not in members[i] for i in self.closed_families]):
+            if any(name not in members[i] for i in self.closed_families):
                 clf_map[name] = members[name]
 
         gr_edges = {}
