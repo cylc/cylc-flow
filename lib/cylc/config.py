@@ -1828,7 +1828,7 @@ class SuiteConfig(object):
         )
         graph = cylc.graphing.CGraph(
             self.suite, self.suite_polling_tasks, self.cfg['visualization'])
-        graph.add_edges(gr_edges, ignore_suicide)
+        graph.add_edges(gr_edges, ignore_suicide, is_validate)
         if subgraphs_on:
             graph.add_cycle_point_subgraphs(gr_edges)
         return graph
@@ -1838,10 +1838,11 @@ class SuiteConfig(object):
                                ungroup_all=True)
         return [i.attr['label'].replace('\\n', '.') for i in graph.nodes()]
 
-    def _close_families(self, id_, clf_map):
-        """Generate final node names.
+    @staticmethod
+    def _close_families(id_, clf_map):
+        """Turn (name, point) to 'name.point'.
 
-        Replacing family members with family nodes if requested.
+        Replace close family members with family nodes if relevant.
         """
         if id_ is None:
             return None
