@@ -1688,17 +1688,10 @@ class SuiteConfig(object):
             stop_point = None
 
         # For nested families, only consider the outermost one
-        clf = copy(self.closed_families)
-        for i in self.closed_families:
-            for j in self.closed_families:
-                if i in members[j]:
-                    if i in clf:
-                        clf.remove(i)
-
         clf_map = {}
-        for family_name in clf:
-            clf_map[family_name] = (
-                self.runtime['first-parent descendants'][family_name])
+        for name in self.closed_families:
+            if any([name not in members[i] for i in self.closed_families]):
+                clf_map[name] = members[name]
 
         gr_edges = {}
         start_point_offset_cache = {}
@@ -1762,14 +1755,14 @@ class SuiteConfig(object):
                                 r_id = None
                                 action = True
                     if action:
-                        if l_id in id2str_cache:
+                        try:
                             l_str = id2str_cache[l_id]
-                        else:
+                        except KeyError:
                             l_str = self._close_families(l_id, clf_map)
                             id2str_cache[l_id] = l_str
-                        if r_id in id2str_cache:
+                        try:
                             r_str = id2str_cache[r_id]
-                        else:
+                        except KeyError:
                             r_str = self._close_families(r_id, clf_map)
                             id2str_cache[r_id] = r_str
                         if point not in gr_edges:
