@@ -666,7 +666,7 @@ class TreeUpdater(threading.Thread):
         sub_st = self.ttree_paths.get(path, {}).get('states', [])
         point_string = self.ttreestore.get_value(row_iter, 0)
         name = self.ttreestore.get_value(row_iter, 1)
-        if any([s in TASK_STATUSES_AUTO_EXPAND for s in sub_st]):
+        if any(s in TASK_STATUSES_AUTO_EXPAND for s in sub_st):
             # return True  # TODO: Option for different expansion rules?
             if point_string == name:
                 # Expand cycle points if any child states comply.
@@ -675,8 +675,7 @@ class TreeUpdater(threading.Thread):
             while child_iter is not None:
                 c_path = self.ttreestore.get_path(child_iter)
                 c_sub_st = self.ttree_paths.get(c_path, {}).get('states', [])
-                if any([s in TASK_STATUSES_AUTO_EXPAND for
-                        s in c_sub_st]):
+                if any(s in TASK_STATUSES_AUTO_EXPAND for s in c_sub_st):
                     # Expand if there are sub-families with valid states.
                     # Do not expand if it's just tasks with valid states.
                     return True

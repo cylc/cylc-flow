@@ -407,8 +407,8 @@ class BroadcastServer(BaseCommsServer):
                 # concern.)
                 inserts = []
                 for insert in self.db_inserts_map[self.TABLE_BROADCAST_STATES]:
-                    if any([insert[key] != broadcast_change[key] for key in
-                            ["point", "namespace", "key"]]):
+                    if any(insert[key] != broadcast_change[key]
+                            for key in ["point", "namespace", "key"]):
                         inserts.append(insert)
                 self.db_inserts_map[self.TABLE_BROADCAST_STATES] = inserts
             else:

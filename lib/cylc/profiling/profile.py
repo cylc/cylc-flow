@@ -335,8 +335,8 @@ def profile(schedule):
                                 ' '.join(exp_files)))
                     except:
                         print >> sys.stderr, 'HERE'
-                    if any([PROFILE_MODES[mode] == PROFILE_MODE_CYLC for mode
-                            in experiment['config']['profile modes']]):
+                    if any(PROFILE_MODES[mode] == PROFILE_MODE_CYLC
+                            for mode in experiment['config']['profile modes']):
                         print >> sys.stderr, (
                             'Are you trying to use profile mode "cylc" '
                             'with an older version of cylc?')

@@ -41,7 +41,7 @@ def listjoin(lst, none_str=''):
     for item in lst:
         if item is None:
             items.append(none_str)
-        elif any([char in str(item) for char in ',#"\'']):
+        elif any(char in str(item) for char in ',#"\''):
             items.append(repr(item))  # will be quoted
         else:
             items.append(str(item))
