@@ -3074,6 +3074,8 @@ This is what my suite does:..."""
         self.updater.connect_schd.stop()
 
     def construct_command_menu(self, menu):
+        """Constructs the top bar help menu in gcylc that lists all
+        of the commands by categories."""
         cat_menu = gtk.Menu()
         menu.set_submenu(cat_menu)
 
@@ -3088,14 +3090,14 @@ This is what my suite does:..."""
             cat_menu.append(foo_item)
             com_menu = gtk.Menu()
             foo_item.set_submenu(com_menu)
-            proc = Popen(["cylc", "category=" + category], stdout=PIPE)
+            proc = Popen(["cylc-help", "category=" + category], stdout=PIPE)
             cout = proc.communicate()[0]
             commands = cout.rstrip().split()
             for command in commands:
                 bar_item = gtk.MenuItem(command)
                 com_menu.append(bar_item)
                 bar_item.connect('activate', self.command_help, category,
-                                 command)
+                                 command + " --help")
 
     def check_task_filter_buttons(self, tb=None):
         task_states = []
@@ -3584,7 +3586,7 @@ For more Stop options use the Control menu.""")
         foo.run()
 
     def command_help(self, w, cat='', com=''):
-        command = "cylc " + cat + " " + com + " help"
+        command = "cylc " + cat + " " + com
         foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 700, 600)
         self.gcapture_windows.append(foo)
         foo.run()

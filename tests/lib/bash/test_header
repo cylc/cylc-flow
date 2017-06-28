@@ -369,6 +369,8 @@ ssh_install_cylc() {
     local RHOST_CYLC_DIR=$(_ssh_mkdtemp_cylc_dir "${RHOST}")
     TEST_RHOST_CYLC_DIR="${RHOST}:${RHOST_CYLC_DIR}"
     rsync -a '--exclude=*.pyc' "${CYLC_DIR}"/* "${RHOST}:${RHOST_CYLC_DIR}/"
+    ssh -n -oBatchMode=yes -oConnectTimeout=5 "${RHOST}" \
+        "make -C '${RHOST_CYLC_DIR}' 'version'" 1>'/dev/null' 2>&1
 }
 
 _ssh_mkdtemp_cylc_dir() {

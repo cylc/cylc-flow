@@ -141,3 +141,4 @@ else
     echo "WARNING: cannot run tests in parallel (Test::Harness < 3.00)" >&2
     exec prove -s -r ${@:-tests}
 fi
+
