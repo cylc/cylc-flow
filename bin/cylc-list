@@ -119,7 +119,8 @@ def main():
         config.print_first_parent_tree(
             pretty=options.box, titles=options.titles)
     elif options.crange:
-        node_labels = config.get_node_labels(tr_start, tr_stop)
+        from cylc.graphing import CGraph
+        node_labels = CGraph.get_node_labels(config, tr_start, tr_stop)
         node_labels.sort()
         for nl in node_labels:
             print nl

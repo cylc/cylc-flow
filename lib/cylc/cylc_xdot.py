@@ -21,7 +21,7 @@ import os
 import re
 import xdot
 from cylc.config import SuiteConfig
-from cylc.graphing import CGraphPlain
+from cylc.graphing import CGraphPlain, CGraph
 from cylc.gui import util
 from cylc.task_id import TaskID
 from cylc.suite_logging import ERR
@@ -389,7 +389,8 @@ class MyDotWindow(CylcDotViewerCommon):
         family_nodes = self.suiterc.get_first_parent_descendants().keys()
         # Note this is used by "cylc graph" but not gcylc.
         # self.start_ and self.stop_point_string come from CLI.
-        graph = self.suiterc.get_graph(
+        graph = CGraph.get_graph(
+            self.suiterc,
             group_nodes=group_nodes,
             ungroup_nodes=ungroup_nodes,
             ungroup_recursive=ungroup_recursive,

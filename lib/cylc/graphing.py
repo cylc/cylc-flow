@@ -20,6 +20,8 @@
 ImportError due to pygraphviz/graphviz not being installed."""
 
 import pygraphviz
+
+from cylc.cycling.loader import get_point, get_point_relative
 from cylc.task_id import TaskID
 
 
@@ -337,3 +339,58 @@ class CGraph(CGraphPlain):
             if left_node.attr['style'] == 'filled':
                 edge.attr['color'] = left_node.attr['fillcolor']
         edge.attr['penwidth'] = self.vizconfig['edge penwidth']
+
+    @classmethod
+    def get_graph(
+            cls, suiterc, start_point_string=None, stop_point_string=None,
+            group_nodes=None, ungroup_nodes=None, ungroup_recursive=False,
+            group_all=False, ungroup_all=False, ignore_suicide=False,
+            subgraphs_on=False, is_validate=False):
+        """Return dependency graph."""
+        # If graph extent is not given, use visualization settings.
+        if start_point_string is None:
+            start_point_string = (
+                suiterc.cfg['visualization']['initial cycle point'])
+
+        # Use visualization settings in absence of final cycle point definition
+        # when not validating (stops slowdown of validation due to vis
+        # settings)
+        if stop_point_string is None and not is_validate:
+            vfcp = suiterc.cfg['visualization']['final cycle point']
+            if vfcp:
+                try:
+                    stop_point_string = str(get_point_relative(
+                        vfcp,
+                        get_point(start_point_string)).standardise())
+                except ValueError:
+                    stop_point_string = str(get_point(
+                        vfcp).standardise())
+
+        if stop_point_string is not None:
+            if get_point(stop_point_string) < get_point(start_point_string):
+                # Avoid a null graph.
+                stop_point_string = start_point_string
+
+        gr_edges = suiterc.get_graph_raw(
+            start_point_string, stop_point_string,
+            group_nodes, ungroup_nodes, ungroup_recursive,
+            group_all, ungroup_all
+        )
+        graph = cls(
+            suiterc.suite,
+            suiterc.suite_polling_tasks,
+            suiterc.cfg['visualization'])
+        graph.add_edges(gr_edges, ignore_suicide, is_validate)
+        if subgraphs_on:
+            graph.add_cycle_point_subgraphs(gr_edges)
+        return graph
+
+    @classmethod
+    def get_node_labels(cls, suiterc, start_point_string, stop_point_string):
+        """Return dependency graph node labels."""
+        ret = []
+        for node in cls.get_graph(
+                suiterc, start_point_string, stop_point_string,
+                ungroup_all=True):
+            ret.append(node.attr['label'].replace('\\n', '.'))
+        return ret

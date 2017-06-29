@@ -78,7 +78,7 @@ def main():
         suite, suiterc,
         load_template_vars(options.templatevars, options.templatevars_file),
         cli_initial_point_string=options.icp,
-        validation=True, strict=options.strict, run_mode=options.run_mode,
+        is_validate=True, strict=options.strict, run_mode=options.run_mode,
         output_fname=options.output,
         mem_log_func=profiler.log_memory)
 
