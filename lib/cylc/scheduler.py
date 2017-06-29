@@ -1419,7 +1419,7 @@ conditions; see `cylc conditions`.
                 handle = open(
                     os.path.join(self.config.fdir, 'reference.log'), 'wb')
                 for line in open(self.suite_log.get_log_path(SuiteLog.LOG)):
-                    if any([text in line for text in self.REF_LOG_TEXTS]):
+                    if any(text in line for text in self.REF_LOG_TEXTS):
                         handle.write(line)
                 handle.close()
             except IOError as exc:

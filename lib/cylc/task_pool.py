@@ -1313,7 +1313,7 @@ class TaskPool(object):
                     if (fnmatchcase(str(itask.point), point_str) and
                             (not status or itask.state.status == status) and
                             (fnmatchcase(itask.tdef.name, name_str) or
-                             any([fnmatchcase(ns, name_str) for ns in nss]))):
+                             any(fnmatchcase(ns, name_str) for ns in nss))):
                         itasks.append(itask)
                         tasks_found = True
                 if not tasks_found:

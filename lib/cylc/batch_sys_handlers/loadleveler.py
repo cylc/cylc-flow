@@ -72,7 +72,7 @@ class LoadlevelerHandler(object):
         new_err = ""
         if err:
             for line in err.splitlines():
-                if any([rec.match(line) for rec in self.REC_ERR_FILTERS]):
+                if any(rec.match(line) for rec in self.REC_ERR_FILTERS):
                     continue
                 new_err += line + "\n"
         return out, new_err

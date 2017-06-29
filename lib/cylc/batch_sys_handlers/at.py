@@ -90,7 +90,7 @@ class AtCommandHandler(object):
             for line in err.splitlines(True):
                 if self.REC_ID_FROM_SUBMIT_ERR.match(line):
                     out += line
-                elif any([rec.match(line) for rec in self.REC_ERR_FILTERS]):
+                elif any(rec.match(line) for rec in self.REC_ERR_FILTERS):
                     continue
                 elif line.strip() in self.ERR_NO_ATD_STRS:
                     raise OSError(

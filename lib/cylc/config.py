@@ -723,7 +723,6 @@ class SuiteConfig(object):
                 #    "foo:fail => bar => !foo" looks like "foo => bar => foo").
                 graph = self.get_graph(ungroup_all=True, ignore_suicide=True,
                                        is_validate=True)
-                GraphNodeParser.get_inst().clear()
                 # Original edges.
                 o_edges = graph.edges()
                 # Reverse any back edges using graphviz 'acyclic'.
@@ -1689,15 +1688,15 @@ class SuiteConfig(object):
             stop_point = None
 
         # For nested families, only consider the outermost one
-        clf = copy(self.closed_families)
-        for i in self.closed_families:
-            for j in self.closed_families:
-                if i in members[j]:
-                    if i in clf:
-                        clf.remove(i)
+        clf_map = {}
+        for name in self.closed_families:
+            if any(name not in members[i] for i in self.closed_families):
+                clf_map[name] = members[name]
 
         gr_edges = {}
         start_point_offset_cache = {}
+        point_offset_cache = None
+        id2str_cache = {}
         for sequence, edges in self.edges.items():
             # Get initial cycle point for this sequence
             point = sequence.get_first_point(start_point)
@@ -1756,7 +1755,16 @@ class SuiteConfig(object):
                                 r_id = None
                                 action = True
                     if action:
-                        l_str, r_str = self._close_families(clf, l_id, r_id)
+                        try:
+                            l_str = id2str_cache[l_id]
+                        except KeyError:
+                            l_str = self._close_families(l_id, clf_map)
+                            id2str_cache[l_id] = l_str
+                        try:
+                            r_str = id2str_cache[r_id]
+                        except KeyError:
+                            r_str = self._close_families(r_id, clf_map)
+                            id2str_cache[r_id] = r_str
                         if point not in gr_edges:
                             gr_edges[point] = []
                         gr_edges[point].append(
@@ -1764,10 +1772,15 @@ class SuiteConfig(object):
                 # Increment the cycle point.
                 point = sequence.get_next_point_on_sequence(point)
 
+        del clf_map
+        del start_point_offset_cache
+        del point_offset_cache
+        del id2str_cache
+        GraphNodeParser.get_inst().clear()
         self._last_graph_raw_id = graph_raw_id
-        graph_raw_edges = []
         if stop_point is None:
             # Prune to n_points points in total.
+            graph_raw_edges = []
             for point in sorted(gr_edges)[:n_points]:
                 graph_raw_edges.extend(gr_edges[point])
         else:
@@ -1815,7 +1828,7 @@ class SuiteConfig(object):
         )
         graph = cylc.graphing.CGraph(
             self.suite, self.suite_polling_tasks, self.cfg['visualization'])
-        graph.add_edges(gr_edges, ignore_suicide)
+        graph.add_edges(gr_edges, ignore_suicide, is_validate)
         if subgraphs_on:
             graph.add_cycle_point_subgraphs(gr_edges)
         return graph
@@ -1825,38 +1838,19 @@ class SuiteConfig(object):
                                ungroup_all=True)
         return [i.attr['label'].replace('\\n', '.') for i in graph.nodes()]
 
-    def _close_families(self, clf, l_id, n_id):
-        """Generate final node names.
+    @staticmethod
+    def _close_families(id_, clf_map):
+        """Turn (name, point) to 'name.point'.
 
-        Replacing family members with family nodes if requested.
+        Replace close family members with family nodes if relevant.
         """
-
-        lname, lpoint = None, None
-        if l_id:
-            lname, lpoint = l_id
-        rname, rpoint = None, None
-        if n_id:
-            rname, rpoint = n_id
-
-        l_str, r_str = None, None
-        for family_name in clf:
-            family = self.runtime['first-parent descendants'][family_name]
-            if lname in family and rname in family:
-                # this makes 'the graph disappear if grouping 'root'
-                l_str = TaskID.get(family_name, lpoint)
-                r_str = TaskID.get(family_name, rpoint)
-                break
-            elif lname in family:
-                l_str = TaskID.get(family_name, lpoint)
-            elif rname in family:
-                r_str = TaskID.get(family_name, rpoint)
-
-        if l_id and l_str is None:
-            l_str = TaskID.get(lname, lpoint)
-        if n_id and r_str is None:
-            r_str = TaskID.get(rname, rpoint)
-
-        return l_str, r_str
+        if id_ is None:
+            return None
+        name, point = id_
+        for family_name, family in clf_map.items():
+            if name in family:
+                return TaskID.get(family_name, point)
+        return TaskID.get(name, point)
 
     def load_graph(self):
         """Parse and load dependency graph."""

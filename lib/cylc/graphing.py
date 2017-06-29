@@ -199,7 +199,7 @@ class CGraphPlain(pygraphviz.AGraph):
         self.remove_nodes_from(nodes)
         self.add_edges(sorted(new_edges))
 
-    def add_edges(self, edges, ignore_suicide=False):
+    def add_edges(self, edges, ignore_suicide=False, is_validate=False):
         """Add edges and nodes connected by the edges."""
         for edge in edges:
             left, right, skipped, suicide, conditional = edge
@@ -207,10 +207,12 @@ class CGraphPlain(pygraphviz.AGraph):
                 continue
             if left is None:
                 pygraphviz.AGraph.add_node(self, right)
-                self.style_node(right)
+                if not is_validate:
+                    self.style_node(right)
             elif right is None:
                 pygraphviz.AGraph.add_node(self, left)
-                self.style_node(left)
+                if not is_validate:
+                    self.style_node(left)
             else:
                 attrs = {'penwidth': 2}
                 if skipped:
@@ -224,9 +226,10 @@ class CGraphPlain(pygraphviz.AGraph):
                 else:
                     attrs.update({'style': 'solid', 'arrowhead': 'normal'})
                 pygraphviz.AGraph.add_edge(self, left, right, **attrs)
-                self.style_node(left, base=True)
-                self.style_node(right, base=True)
-                self.style_edge(left, right)
+                if not is_validate:
+                    self.style_node(left, base=True)
+                    self.style_node(right, base=True)
+                    self.style_edge(left, right)
 
     def add_cycle_point_subgraphs(self, edges):
         """Draw nodes within cycle point groups (subgraphs)."""

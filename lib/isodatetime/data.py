@@ -2140,7 +2140,7 @@ def _type_checker(*objects):
             break
         if int in allowed_types and float not in allowed_types:
             value = _int_caster(value, name=name, allow_none=none_is_allowed)
-        if any([isinstance(value, type_) for type_ in allowed_types]):
+        if any(isinstance(value, type_) for type_ in allowed_types):
             break
         values_string = ""
         if allowed_types:

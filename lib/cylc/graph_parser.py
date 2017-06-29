@@ -138,9 +138,8 @@ class GraphParser(object):
         self.triggers = {}
         self.original = {}
         self.suite_state_polling_tasks = {}
-        self.r1_point = None
 
-    def parse_graph(self, graph_string, r1_point=None):
+    def parse_graph(self, graph_string):
         """Parse the graph string for a single graph section.
 
         (Assumes any general line-continuation markers have been processed).
@@ -153,8 +152,6 @@ class GraphParser(object):
               i. Replace families with members (any or all semantics).
              ii. Record parsed dependency information for each right-side node.
         """
-        self.r1_point = r1_point
-
         # Strip comments, whitespace, and blank lines.
         non_blank_lines = []
         for line in graph_string.split('\n'):

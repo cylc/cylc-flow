@@ -259,7 +259,7 @@ def main():
     else:
         dump_string = iso_point_dumper.dump(cycle_point, template)
         if (dump_string == template and
-                not any([_ in template for _ in ["CCYY", "MM", "DD", "%"]])):
+                not any(_ in template for _ in ["CCYY", "MM", "DD", "%"])):
             # A pure time string, no date - not well handled in isodatetime.
             print iso_point_dumper.dump(cycle_point, "T" + template)[1:]
         else:
