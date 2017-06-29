@@ -233,7 +233,7 @@ def get_schedule(versions, experiments, test=False):
             if experiment_id == experiment['id']:
                 ret[version_id].append(experiment)
                 break
-    return ret, set([item[1] for item in experiments_to_run])
+    return ret, set(item[1] for item in experiments_to_run)
 
 
 def get_versions(version_names):
@@ -450,10 +450,10 @@ def print_manual_scheme(versions, experiments, all_versions=None):
     without automation of checkout out cylc versions."""
     # TODO: Generate from schedule.
     if all_versions:
-        ver = ' '.join([version['id'] for version in all_versions])
+        ver = ' '.join(version['id'] for version in all_versions)
     else:
-        ver = ' '.join([version['id'] for version in versions])
-    exp = ' '.join([experiment['name'] for experiment in experiments])
+        ver = ' '.join(version['id'] for version in versions)
+    exp = ' '.join(experiment['name'] for experiment in experiments)
     for version in versions:
         print '\t$ git checkout ' + version['id']
         print '\t$ cylc profile-battery --experiments ' + exp
@@ -493,7 +493,7 @@ def determine_action(schedule, versions, experiments, non_interactive=False):
                 print('WARNING: You are trying to use the "cylc" profile mode '
                       'with versions of cylc which predate the profiling '
                       'module namely:\n'
-                      '\t' + ' '.join([version['name'] for version in temp]) +
+                      '\t' + ' '.join(version['name'] for version in temp) +
                       '\n\nTo profile these versions you will need to back '
                       'port the profiling module as well as some of the memory'
                       ' checkpointing in the main loop.\n')
@@ -529,14 +529,14 @@ def determine_action(schedule, versions, experiments, non_interactive=False):
         if automatic_only_versions:
             print('These versions can only be profiled '
                   'automatically:\n\t{0}'.format(
-                      ' '.join([version['name'] for version in
-                               automatic_only_versions])
+                      ' '.join(version['name'] for version in
+                               automatic_only_versions)
                   ))
         if manual_versions:
             print('These versions you can profile manually if you '
                   'prefer:\n\t{0}'.format(
-                      ' '.join([version['name'] for version in
-                                manual_versions])))
+                      ' '.join(version['name'] for version in
+                               manual_versions)))
 
         print
 
@@ -832,7 +832,7 @@ def ls(exp_names, ver_names, delete=False):
     else:
         # List only specified experiments and versions.
         version_ids = map(git.describe, ver_names)
-        experiment_ids = set([name for name in exp_names if '@' in name])
+        experiment_ids = set(name for name in exp_names if '@' in name)
         experiment_names = set(exp_names) - experiment_ids
 
         for version_id in results:
@@ -967,7 +967,7 @@ def main():
     git.order_versions_by_date(versions)
 
     # Fail in the event that an experiment file cannot be found.
-    if not all([experiment['file'] for experiment in experiments]):
+    if not all(experiment['file'] for experiment in experiments):
         sys.exit('Experiment file(s) could not be loaded, profiling aborted.')
 
     # Run experiments as necessary.

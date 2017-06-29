@@ -449,7 +449,7 @@ class TaskEventsManager(object):
             subject = "[%s/%s/%02d %s] %s" % (
                 point, name, submit_num, event, schd_ctx.suite)
         else:
-            event_set = set([id_key[0][1] for id_key in id_keys])
+            event_set = set(id_key[0][1] for id_key in id_keys)
             if len(event_set) == 1:
                 # 1 event from n tasks
                 subject = "[%d tasks %s] %s" % (

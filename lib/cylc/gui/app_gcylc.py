@@ -1442,7 +1442,7 @@ been defined for this suite""").inform()
         trigger_now_item.connect(
             'activate', self.trigger_task_now, task_ids)
         trigger_now_item.set_sensitive(
-            all([t_state in TASK_STATUSES_TRIGGERABLE for t_state in t_states])
+            all(t_state in TASK_STATUSES_TRIGGERABLE for t_state in t_states)
         )
 
         if len(task_ids) == 1 and not task_is_family[0]:
@@ -1468,7 +1468,7 @@ been defined for this suite""").inform()
         menu.append(poll_item)
         poll_item.connect('activate', self.poll_task, task_ids)
         poll_item.set_sensitive(
-            all([t_state in TASK_STATUSES_ACTIVE for t_state in t_states])
+            all(t_state in TASK_STATUSES_ACTIVE for t_state in t_states)
         )
 
         menu.append(gtk.SeparatorMenuItem())
@@ -1480,7 +1480,7 @@ been defined for this suite""").inform()
         menu.append(kill_item)
         kill_item.connect('activate', self.kill_task, task_ids)
         kill_item.set_sensitive(
-            all([t_state in TASK_STATUSES_ACTIVE for t_state in t_states])
+            all(t_state in TASK_STATUSES_ACTIVE for t_state in t_states)
         )
 
         # Separator.

@@ -473,7 +473,7 @@ class Updater(threading.Thread):
             self.filt_task_ids = set()
             self.kept_task_ids = set(self.state_summary.keys())
         self.task_list = list(
-            set([t['name'] for t in self.state_summary.values()]))
+            set(t['name'] for t in self.state_summary.values()))
         self.task_list.sort()
 
     def update_globals(self):

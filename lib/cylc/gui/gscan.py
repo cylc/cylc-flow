@@ -826,8 +826,7 @@ class ScanAppUpdater(threading.Thread):
         failed_tasks = []
         for state in (TASK_STATUS_FAILED, TASK_STATUS_SUBMIT_FAILED):
             failed_tasks += self.tasks_by_state[key].get(state, [])
-        warnings = [warn for warn in failed_tasks if warn[0] > warn_time]
-        warnings.sort()
+        warnings = sorted(warn for warn in failed_tasks if warn[0] > warn_time)
         return warnings[-5:]
 
     def clear_stopped_suites(self, _=None):
@@ -944,7 +943,7 @@ class ScanAppUpdater(threading.Thread):
 
             tasks = sorted(self._get_warnings(key), reverse=True)
             warning_text = '\n'.join(
-                [warn[1] + '.' + warn[2] for warn in tasks[0:6]])
+                (warn[1] + '.' + warn[2] for warn in tasks[0:6]))
 
             is_stopped = KEY_PORT not in suite_info
             if KEY_STATES in suite_info:

@@ -541,10 +541,10 @@ conditions; see `cylc conditions`.
                 name, args, kwargs = self.command_queue.get(False)
             except Empty:
                 break
-            args_string = ', '.join([str(a) for a in args])
+            args_string = ', '.join(str(a) for a in args)
             cmdstr = name + '(' + args_string
             kwargs_string = ', '.join(
-                [key + '=' + str(value) for key, value in kwargs.items()])
+                ('%s=%s' % (key, str(value)) for key, value in kwargs.items()))
             if kwargs_string and args_string:
                 cmdstr += ', '
             cmdstr += kwargs_string + ')'

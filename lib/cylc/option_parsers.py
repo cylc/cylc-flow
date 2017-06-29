@@ -295,7 +295,7 @@ Arguments:"""
 
         """
         if (options.multitask_compat and len(mtask_args) == 2 and
-                all(["/" not in mtask_arg for mtask_arg in mtask_args]) and
+                all("/" not in mtask_arg for mtask_arg in mtask_args) and
                 "." not in mtask_args[1]):
             # For backward compat, argument list should have 2 elements.
             # Element 1 may be a regular expression, so it may contain "." but

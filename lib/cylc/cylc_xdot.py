@@ -598,4 +598,4 @@ def get_reference_from_plain_format(plain_text):
                 pass
         indexed_lines.append((line_items, line))
     indexed_lines.sort()
-    return "".join([l[1] for l in indexed_lines])
+    return "".join(l[1] for l in indexed_lines)

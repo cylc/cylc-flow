@@ -87,7 +87,7 @@ def item_in_list(item, lst):
         int(item)
     except ValueError:
         return False
-    return int(item) in [int(i) for i in lst]
+    return int(item) in (int(i) for i in lst)
 
 
 class ParamExpandError(Exception):

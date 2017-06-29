@@ -53,7 +53,7 @@ def get_stop_state_summary(lines):
         task_summary.setdefault(task_id, {"name": name, "point": point_string,
                                           "label": point_string})
         # reconstruct state from a dumped state string
-        items = dict([p.split("=") for p in info.split(', ')])
+        items = dict(p.split("=") for p in info.split(', '))
         state = items.get("status")
         if state == 'submitting':
             # backward compabitility for state dumps generated prior to #787

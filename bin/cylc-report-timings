@@ -143,11 +143,11 @@ def format_rows(header, rows):
     max_lengths = [
         max(data_len, head_len)
         for data_len, head_len in zip(
-            [max([len(r[i]) for r in rows]) for i in range(len(header))],
-            [len(h) for h in header]
+            (max(len(r[i]) for r in rows) for i in range(len(header))),
+            (len(h) for h in header)
         )
     ]
-    formatter = ' '.join(['%%-%ds' % l for l in max_lengths]) + '\n'
+    formatter = ' '.join('%%-%ds' % l for l in max_lengths) + '\n'
     sio.write(formatter % header)
     for r in rows:
         sio.write(formatter % r)

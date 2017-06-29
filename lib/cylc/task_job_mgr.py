@@ -213,7 +213,7 @@ class TaskJobManager(object):
             if proc.wait():
                 raise RemoteJobHostInitError(
                     RemoteJobHostInitError.MSG_INIT,
-                    user_at_host, ' '.join([quote(item) for item in cmd]),
+                    user_at_host, ' '.join(quote(item) for item in cmd),
                     proc.returncode, out, err)
         self.init_host_map[(host, owner)] = should_unlink
         LOG.info('Initialised %s:%s' % (user_at_host, r_suite_run_dir))
@@ -353,7 +353,7 @@ class TaskJobManager(object):
                 if proc.wait():
                     ERR.warning(RemoteJobHostInitError(
                         RemoteJobHostInitError.MSG_TIDY,
-                        user_at_host, ' '.join([quote(item) for item in cmd]),
+                        user_at_host, ' '.join(quote(item) for item in cmd),
                         proc.returncode, out, err))
         # Terminate any remaining commands
         for user_at_host, (cmd, proc) in procs.items():
@@ -365,7 +365,7 @@ class TaskJobManager(object):
             if proc.wait():
                 ERR.warning(RemoteJobHostInitError(
                     RemoteJobHostInitError.MSG_TIDY,
-                    user_at_host, ' '.join([quote(item) for item in cmd]),
+                    user_at_host, ' '.join(quote(item) for item in cmd),
                     proc.returncode, out, err))
 
     def _check_timeout(self, itask, now):

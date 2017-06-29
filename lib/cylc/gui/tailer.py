@@ -97,7 +97,7 @@ class Tailer(threading.Thread):
         except OSError as exc:
             # E.g. ssh command not found
             dialog = warning_dialog("%s: %s" % (
-                exc, " ".join([quote(item) for item in command])))
+                exc, " ".join(quote(item) for item in command)))
             gobject.idle_add(dialog.warn)
             return
         poller = select.poll()
@@ -119,7 +119,7 @@ class Tailer(threading.Thread):
                 data = os.read(self.proc.stdout.fileno(), self.READ_SIZE)
             except (IOError, OSError) as exc:
                 dialog = warning_dialog("%s: %s" % (
-                    exc, " ".join([quote(item) for item in command])))
+                    exc, " ".join(quote(item) for item in command)))
                 gobject.idle_add(dialog.warn)
                 break
             if data:
@@ -133,7 +133,7 @@ class Tailer(threading.Thread):
                         line = buf + line
                         buf = ""
                     if (not self.filters or
-                            all([re.search(f, line) for f in self.filters])):
+                            all(re.search(f, line) for f in self.filters)):
                         gobject.idle_add(self.update_gui, line)
             sleep(0.01)
         self.stop()

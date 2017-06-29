@@ -138,7 +138,7 @@ class remrun(object):
         if cylc.flags.verbose:
             # Wordwrap the command, quoting arguments so they can be run
             # properly from the command line
-            command_str = ' '.join([quote(arg) for arg in command])
+            command_str = ' '.join(quote(arg) for arg in command)
             print '\n'.join(
                 TextWrapper(subsequent_indent='\t').wrap(command_str))
 

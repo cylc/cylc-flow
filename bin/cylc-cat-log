@@ -363,7 +363,7 @@ def main():
         stderr = PIPE
         if options.debug:
             sys.stderr.write(
-                " ".join([quote(item) for item in command]) + "\n")
+                " ".join(quote(item) for item in command) + "\n")
             stderr = None
         proc = Popen(command, stderr=stderr)
         err = proc.communicate()[1]

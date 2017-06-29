@@ -212,7 +212,7 @@ def process_out_file(file_name, suite_start_time, validate=False):
                                     loop_mem_entries[-1][0])
 
         # Maximum memory usage.
-        ret['mxmem'] = max([entry[2] for entry in ret['memory']])
+        ret['mxmem'] = max(entry[2] for entry in ret['memory'])
 
         # Startup time (time from running cmd to reaching the end of the first
         # loop).
@@ -327,7 +327,7 @@ def print_table(table, transpose=False):
     col_widths = []
     for col_no in range(len(table[0])):
         col_widths.append(
-            max([len(table[row_no][col_no]) for row_no in range(len(table))]))
+            max(len(table[row_no][col_no]) for row_no in range(len(table))))
 
     for row_no in range(len(table)):
         for col_no in range(len(table[row_no])):
@@ -358,8 +358,7 @@ def plot_single(results, run_names, versions, metric, experiment,
                  color=colours[bar_no])
 
     axis.set_xticks(ind + ((width * n_bars) / 2.))
-    axis.set_xticklabels([version['name'] for
-                          version in versions])
+    axis.set_xticklabels([version['name'] for version in versions])
     axis.set_xlabel('Cylc Version')
     axis.set_xlim([0, (1. * n_groups) - spacing])
     if len(run_names) > 1:

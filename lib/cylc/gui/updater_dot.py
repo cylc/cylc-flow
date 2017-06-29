@@ -160,7 +160,7 @@ class DotUpdater(threading.Thread):
 
             for heading, tasks in self.family_tree.iteritems():
                 # Place associated tasks after headers.
-                ind = min([self.task_list.index(task) for task in tasks])
+                ind = min(self.task_list.index(task) for task in tasks)
                 for task in tasks:
                     if task in self.task_list:
                         self.task_list.remove(task)
@@ -181,7 +181,7 @@ class DotUpdater(threading.Thread):
         if len(self.family_tree) > 0:
             all_sub_tasks = reduce(
                 lambda x, y: x + y,
-                [self.family_tree[key] for key in self.family_tree]
+                (self.family_tree[key] for key in self.family_tree)
             )
         else:
             all_sub_tasks = []
