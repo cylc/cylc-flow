@@ -738,7 +738,8 @@ class SuiteConfig(object):
                 raise SuiteConfigError(
                     'ERROR: circular edges detected:' + err_msg)
 
-    def _check_circular_helper(self, x2ys, y2xs):
+    @staticmethod
+    def _check_circular_helper(x2ys, y2xs):
         """Topological elimination.
 
         An implementation of Kahn's algorithm for topological sorting, but
