@@ -1849,13 +1849,10 @@ class SuiteConfig(object):
         # Note we could exclude 'root' from this and disallow use of 'root' in
         # the graph (which would probably be quite reasonable).
         family_map = {}
-        runtime_families = self.runtime['descendants'].keys()
-        runtime_tasks = [
-            t for t in self.runtime['parents'].keys()
-            if t not in runtime_families]
-        for fam in runtime_families:
-            desc = self.runtime['descendants'][fam]
-            family_map[fam] = [t for t in desc if t in runtime_tasks]
+        for family, tasks in self.runtime['descendants'].iteritems():
+            family_map[family] = [t for t in tasks if (
+                t in self.runtime['parents']
+                and t not in self.runtime['descendants'])]
 
         # Move a cylc-5 non-cycling graph to an R1 section.
         non_cycling_graph = self.cfg['scheduling']['dependencies']['graph']
