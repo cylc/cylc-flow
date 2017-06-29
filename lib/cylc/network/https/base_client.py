@@ -64,6 +64,9 @@ class BaseCommsClient(object):
         self.server_cert = None
         self.auth = None
 
+        # Add attributes for the comms type (http/https)
+        self.comms_method = None
+
     def _compile_url(self, category, func_dict, host):
         payload = func_dict.pop("payload", None)
         method = func_dict.pop("method", self.METHOD)

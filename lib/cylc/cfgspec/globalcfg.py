@@ -123,7 +123,7 @@ SPEC = {
 
     'communication': {
         'method': vdr(vtype='string', default="https",
-                      options=["https"]),
+                      options=["https", "http"]),
         'base port': vdr(vtype='integer', default=43001),
         'maximum number of ports': vdr(vtype='integer', default=100),
         'proxies on': vdr(vtype='boolean', default=False),

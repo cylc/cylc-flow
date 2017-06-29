@@ -55,6 +55,17 @@ class CommsDaemon(object):
             # Note 'SHA' rather than 'SHA1'.
             self.hash_algorithm = "SHA"
 
+        # Set the comms method
+        if "https" in comms_options:
+            self.comms_method = "https"
+        elif "http" in comms_options:
+            self.comms_method = "http"
+        else:
+            self.comms_method = None
+#             self.comms_method = "https"
+        #self.comms_method = comms_options[0]
+        print "COMMS METHOD", self.comms_method
+
         self.srv_files_mgr = SuiteSrvFilesManager()
         self.get_ha1 = cherrypy.lib.auth_digest.get_ha1_dict_plain(
             {
@@ -103,13 +114,30 @@ class CommsDaemon(object):
         # cherrypy.config["tools.encode.encoding"] = "utf-8"
         cherrypy.config["server.socket_host"] = '0.0.0.0'
         cherrypy.config["engine.autoreload.on"] = False
-        try:
-            from OpenSSL import SSL, crypto
-            cherrypy.config['server.ssl_module'] = 'pyopenSSL'
-            cherrypy.config['server.ssl_certificate'] = self.cert
-            cherrypy.config['server.ssl_private_key'] = self.pkey
-        except ImportError:
-            ERR.warning("no HTTPS/OpenSSL support")
+
+        if self.comms_method is None:
+            # assume https if not config'd
+            self.comms_method = "https"
+
+        if self.comms_method == "https":
+            # Setup SSL etc. Otherwise fail and exit.
+            # Require connection method to be the same e.g HTTP/HTTPS matching.
+            try:
+                from OpenSSL import SSL, crypto
+                cherrypy.config['server.ssl_module'] = 'pyopenSSL'
+                cherrypy.config['server.ssl_certificate'] = self.cert
+                cherrypy.config['server.ssl_private_key'] = self.pkey
+            except ImportError:
+                ERR.error("no HTTPS/OpenSSL support. Configure to run with "
+                          "HTTP first.")
+                exit(1)
+        elif self.comms_method== "http":
+            # Do what you need to do for HTTP setup.
+            print "Running under HTTP. (unsecured)"
+            pass
+        print "The comms method is :", self.comms_method
+
+        # this also for https?
         cherrypy.config['log.screen'] = None
         key = binascii.hexlify(os.urandom(16))
         cherrypy.config.update({
