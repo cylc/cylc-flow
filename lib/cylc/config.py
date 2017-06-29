@@ -724,34 +724,47 @@ class SuiteConfig(object):
             lhs2rhss[lhs].add(rhs)
             rhs2lhss.setdefault(rhs, set())
             rhs2lhss[rhs].add(lhs)
-        # An implementation of Kahn's algorithm for topological sorting, but
-        # only use the part for pulling out starter nodes with no incoming
-        # edges. See https://en.wikipedia.org/wiki/Topological_sorting
-        # Starter left hand side nodes are those with no incoming, i.e.
-        # left nodes that never appear on the right hand side of an edge.
-        slhss = set(lhs for lhs in lhs2rhss if lhs not in rhs2lhss)
-        while slhss:
-            slhs = slhss.pop()
-            for rhs in lhs2rhss[slhs]:
-                rhs2lhss[rhs].remove(slhs)
-                if not rhs2lhss[rhs]:
-                    if rhs in lhs2rhss:
+        self._check_circular_helper(lhs2rhss, rhs2lhss)
+        if rhs2lhss:
+            # Before reporting circular dependence, pick out all the edges with
+            # no outgoings.
+            self._check_circular_helper(rhs2lhss, lhs2rhss)
+            err_msg = ''
+            for rhs, lhss in sorted(rhs2lhss.items()):
+                for lhs in sorted(lhss):
+                    err_msg += '  %s => %s' % (
+                        TaskID.get(*lhs), TaskID.get(*rhs))
+            if err_msg:
+                raise SuiteConfigError(
+                    'ERROR: circular edges detected:' + err_msg)
+
+    def _check_circular_helper(self, x2ys, y2xs):
+        """Topological elimination.
+
+        An implementation of Kahn's algorithm for topological sorting, but
+        only use the part for pulling out starter nodes with no incoming
+        edges. See https://en.wikipedia.org/wiki/Topological_sorting
+
+        x2ys is a map of {x1: [y1, y2, ...], ...}
+        to map edges using x's as keys, such as x1 => y1, x1 => y2, etc
+
+        y2xs is a map of {y3: [x4, x5, ...], ...}
+        to map edges using y's as keys, such as x4 => y3, x5 => y3, etc
+        """
+        # Starter x nodes are those with no incoming, i.e.
+        # x nodes that never appear as a y.
+        sxs = set(x01 for x01 in x2ys if x01 not in y2xs)
+        while sxs:
+            sx01 = sxs.pop()
+            for y01 in x2ys[sx01]:
+                y2xs[y01].remove(sx01)
+                if not y2xs[y01]:
+                    if y01 in x2ys:
                         # No need to look at this again if it does not have any
                         # outgoing.
-                        slhss.add(rhs)
-                    del rhs2lhss[rhs]
-            del lhs2rhss[slhs]
-        err_msg = None
-        for rhs, lhss in rhs2lhss.items():
-            for lhs in sorted(lhss):
-                if not err_msg:
-                    err_msg = 'Back-edges:'
-                err_msg += '  %s => %s' % (TaskID.get(*lhs), TaskID.get(*rhs))
-        if err_msg:
-            ERR.error(err_msg)
-            raise SuiteConfigError(
-                'ERROR: cyclic dependence detected '
-                '(graph the suite to see back-edges).')
+                        sxs.add(y01)
+                    del y2xs[y01]
+            del x2ys[sx01]
 
     def _expand_name_list(self, orig_names):
         """Expand any parameters in lists of names."""
