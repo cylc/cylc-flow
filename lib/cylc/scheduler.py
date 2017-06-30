@@ -1107,30 +1107,183 @@ conditions; see `cylc conditions`.
             if event == self.EVENT_SHUTDOWN and self.options.reftest:
                 OUT.info('SUITE REFERENCE TEST PASSED')
 
-    def run(self):
-        """Main loop."""
+    def initialise_scheduler(self):
+        """Prelude to the main scheduler loop.
+
+        Determines whether suite is held or should be held.
+        Determines whether suite can be auto shutdown.
+        Begins profile logs if needed.
+        """
         if self.pool_hold_point is not None:
             self.hold_suite(self.pool_hold_point)
-
         if self.options.start_held:
             LOG.info("Held on start-up (no tasks will be submitted)")
             self.hold_suite()
-
         self.run_event_handlers(self.EVENT_STARTUP, 'suite starting')
-
         self.profiler.log_memory("scheduler.py: begin run while loop")
-
-        time_next_fs_check = None
+        self.time_next_fs_check = None
         cylc.flags.iflag = True
-
         if self.options.profile_mode:
-            previous_profile_point = 0
-            count = 0
-
-        can_auto_stop = (
+            self.previous_profile_point = 0
+            self.count = 0
+        self.can_auto_stop = (
             not self.config.cfg['cylc']['disable automatic shutdown'] and
             not self.options.no_auto_shutdown)
 
+    def process_task_pool(self):
+        """Process ALL TASKS whenever something has changed that might
+        require renegotiation of dependencies, etc"""
+        if cylc.flags.debug:
+            LOG.debug("BEGIN TASK PROCESSING")
+            time0 = time()
+        self.pool.match_dependencies()
+        if self.stop_mode is None:
+            itasks = self.pool.get_ready_tasks()
+            if itasks:
+                cylc.flags.iflag = True
+            if self.config.cfg['cylc']['log resolved dependencies']:
+                for itask in itasks:
+                    if itask.local_job_file_path:
+                        continue
+                    deps = itask.state.get_resolved_dependencies()
+                    LOG.info('triggered off %s' % deps, itask=itask)
+
+            self.task_job_mgr.submit_task_jobs(
+                self.suite, itasks, self.run_mode == 'simulation')
+        for meth in [
+                self.pool.spawn_all_tasks,
+                self.pool.remove_spent_tasks,
+                self.pool.remove_suiciding_tasks]:
+            if meth():
+                cylc.flags.iflag = True
+
+        BroadcastServer.get_inst().expire(self.pool.get_min_point())
+        if cylc.flags.debug:
+            LOG.debug("END TASK PROCESSING (took %s seconds)" %
+                      (time() - time0))
+
+    def process_queued_task_operations(self):
+        try:
+            self.suite_db_mgr.process_queued_ops()
+        except OSError as err:
+            if cylc.flags.debug:
+                ERR.debug(traceback.format_exc())
+            raise SchedulerError(str(err))
+
+    def database_health_check(self):
+        """If public database is stuck, blast it away by copying the content
+        of the private database into it."""
+        try:
+            self.suite_db_mgr.recover_pub_from_pri()
+        except (IOError, OSError) as exc:
+            # Something has to be very wrong here, so stop the suite
+            raise SchedulerError(str(exc))
+
+    def timeout_check(self):
+        self.check_suite_timer()
+        if self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT):
+            self.check_suite_inactive()
+        # check submission and execution timeout and polling timers
+        if self.run_mode != 'simulation':
+            self.task_job_mgr.check_task_jobs(self.suite, self.pool)
+
+    def suite_shutdown(self):
+        """Determines if the suite can be shutdown yet."""
+        if (self.config.cfg['cylc']['abort if any task fails'] and
+                self.pool.any_task_failed()):
+            # Task failure + abort if any task fails
+            self._set_stop(TaskPool.STOP_AUTO_ON_TASK_FAILURE)
+        elif self.options.reftest and self.ref_test_allowed_failures:
+            # In reference test mode and unexpected failures occured
+            bad_tasks = []
+            for itask in self.pool.get_failed_tasks():
+                if itask.identity not in self.ref_test_allowed_failures:
+                    bad_tasks.append(itask)
+            if bad_tasks:
+                sys.stderr.write(
+                    'Failed task(s) not in allowed failures list:\n')
+                for itask in bad_tasks:
+                    sys.stderr.write("\t%s\n" % itask.identity)
+                self._set_stop(TaskPool.STOP_AUTO_ON_TASK_FAILURE)
+
+        # Can suite shut down automatically?
+        if self.stop_mode is None and (
+                self.stop_clock_done() or self.stop_task_done() or
+                self.can_auto_stop and self.pool.check_auto_shutdown()):
+            self._set_stop(TaskPool.STOP_AUTO)
+
+        # Is the suite ready to shut down now?
+        if self.pool.can_stop(self.stop_mode):
+            self.update_state_summary()
+            self.proc_pool.close()
+            if self.stop_mode != TaskPool.STOP_REQUEST_NOW_NOW:
+                # Wait for process pool to complete,
+                # unless --now --now is requested
+                stop_process_pool_empty_msg = (
+                    "Waiting for the command process pool to empty" +
+                    " for shutdown")
+                while not self.proc_pool.is_dead():
+                    sleep(self.INTERVAL_STOP_PROCESS_POOL_EMPTY)
+                    if stop_process_pool_empty_msg:
+                        LOG.info(stop_process_pool_empty_msg)
+                        OUT.info(stop_process_pool_empty_msg)
+                        stop_process_pool_empty_msg = None
+                    self.proc_pool.handle_results_async()
+                    self.process_command_queue()
+            if self.options.profile_mode:
+                self.profiler.log_memory(
+                    "scheduler.py: end main loop (total loops %d): %s" %
+                    (self.count, get_current_time_string()))
+            if self.stop_mode == TaskPool.STOP_AUTO_ON_TASK_FAILURE:
+                raise SchedulerError(self.stop_mode)
+            else:
+                raise SchedulerStop(self.stop_mode)
+        elif (self.time_next_kill is not None and
+                time() > self.time_next_kill):
+            self.command_poll_tasks()
+            self.command_kill_tasks()
+            self.time_next_kill = time() + self.INTERVAL_STOP_KILL
+
+    def suite_health_check(self, has_changes):
+        if self.stop_mode is None and not has_changes:
+            self.check_suite_stalled()
+        now = time()
+
+        if self.time_next_fs_check is None or now > self.time_next_fs_check:
+            if not os.path.exists(self.suite_run_dir):
+                raise SchedulerError(
+                    "%s: suite run directory not found" % self.suite_run_dir)
+            try:
+                contact_data = self.suite_srv_files_mgr.load_contact_file(
+                    self.suite)
+                assert contact_data == self.contact_data
+            except (AssertionError, IOError, ValueError,
+                    SuiteServiceFileError):
+                ERR.critical(traceback.format_exc())
+                exc = SchedulerError(
+                    ("%s: suite contact file corrupted/modified and" +
+                     " may be left") %
+                    self.suite_srv_files_mgr.get_contact_file(self.suite))
+                raise exc
+            self.time_next_fs_check = (
+                now + self._get_cylc_conf('health check interval'))
+
+    def update_profiler_logs(self, tinit):
+        now = time()
+        self._update_profile_info("scheduler loop dt (s)", now - tinit,
+                                  amount_format="%.3f")
+        self._update_cpu_usage()
+        if now - self.previous_profile_point >= 60:
+            # Only get this every minute.
+            self.previous_profile_point = now
+            self.profiler.log_memory("scheduler.py: loop #%d: %s" % (
+                self.count, get_current_time_string()))
+        self.count += 1
+
+    def run(self):
+        """Main loop."""
+
+        self.initialise_scheduler()
         while True:  # MAIN LOOP
             tinit = time()
 
@@ -1151,156 +1304,37 @@ conditions; see `cylc conditions`.
             # PROCESS ALL TASKS whenever something has changed that might
             # require renegotiation of dependencies, etc.
             if self.process_tasks():
-                if cylc.flags.debug:
-                    LOG.debug("BEGIN TASK PROCESSING")
-                    time0 = time()
-
-                self.pool.match_dependencies()
-                if self.stop_mode is None:
-                    itasks = self.pool.get_ready_tasks()
-                    if itasks:
-                        cylc.flags.iflag = True
-                    if self.config.cfg['cylc']['log resolved dependencies']:
-                        for itask in itasks:
-                            if itask.local_job_file_path:
-                                continue
-                            deps = itask.state.get_resolved_dependencies()
-                            LOG.info('triggered off %s' % deps, itask=itask)
-                    self.task_job_mgr.submit_task_jobs(
-                        self.suite, itasks, self.run_mode == 'simulation')
-                for meth in [
-                        self.pool.spawn_all_tasks,
-                        self.pool.remove_spent_tasks,
-                        self.pool.remove_suiciding_tasks]:
-                    if meth():
-                        cylc.flags.iflag = True
-
-                BroadcastServer.get_inst().expire(self.pool.get_min_point())
-
-                if cylc.flags.debug:
-                    LOG.debug(
-                        "END TASK PROCESSING (took %s seconds)" %
-                        (time() - time0))
+                self.process_task_pool()
 
             self.process_queued_task_messages()
             self.process_command_queue()
             self.task_events_mgr.process_events(self)
+
+            # Update database
             self.suite_db_mgr.put_task_event_timers(self.task_events_mgr)
             has_changes = cylc.flags.iflag
             if cylc.flags.iflag:
                 self.suite_db_mgr.put_task_pool(self.pool)
                 self.update_state_summary()  # Will reset cylc.flags.iflag
-            try:
-                self.suite_db_mgr.process_queued_ops()
-            except OSError as err:
-                if cylc.flags.debug:
-                    ERR.debug(traceback.format_exc())
-                raise SchedulerError(str(err))
+
+            # Process queued operations for each task proxy
+            self.process_queued_task_operations()
+
             # If public database is stuck, blast it away by copying the content
             # of the private database into it.
-            try:
-                self.suite_db_mgr.recover_pub_from_pri()
-            except (IOError, OSError) as exc:
-                # Something has to be very wrong here, so stop the suite
-                raise SchedulerError(str(exc))
-            self.check_suite_timer()
-            if self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT):
-                self.check_suite_inactive()
-            # check submission and execution timeout and polling timers
-            if self.run_mode != 'simulation':
-                self.task_job_mgr.check_task_jobs(self.suite, self.pool)
+            self.database_health_check()
+
+            # Shutdown suite if timeouts have occurred
+            self.timeout_check()
 
             # Does the suite need to shutdown on task failure?
-            if (self.config.cfg['cylc']['abort if any task fails'] and
-                    self.pool.any_task_failed()):
-                # Task failure + abort if any task fails
-                self._set_stop(TaskPool.STOP_AUTO_ON_TASK_FAILURE)
-            elif self.options.reftest and self.ref_test_allowed_failures:
-                # In reference test mode and unexpected failures occured
-                bad_tasks = []
-                for itask in self.pool.get_failed_tasks():
-                    if itask.identity not in self.ref_test_allowed_failures:
-                        bad_tasks.append(itask)
-                if bad_tasks:
-                    sys.stderr.write(
-                        'Failed task(s) not in allowed failures list:\n')
-                    for itask in bad_tasks:
-                        sys.stderr.write("\t%s\n" % itask.identity)
-                    self._set_stop(TaskPool.STOP_AUTO_ON_TASK_FAILURE)
-
-            # Can suite shut down automatically?
-            if self.stop_mode is None and (
-                    self.stop_clock_done() or self.stop_task_done() or
-                    can_auto_stop and self.pool.check_auto_shutdown()):
-                self._set_stop(TaskPool.STOP_AUTO)
-
-            # Is the suite ready to shut down now?
-            if self.pool.can_stop(self.stop_mode):
-                self.update_state_summary()
-                self.proc_pool.close()
-                if self.stop_mode != TaskPool.STOP_REQUEST_NOW_NOW:
-                    # Wait for process pool to complete,
-                    # unless --now --now is requested
-                    stop_process_pool_empty_msg = (
-                        "Waiting for the command process pool to empty" +
-                        " for shutdown")
-                    while not self.proc_pool.is_dead():
-                        sleep(self.INTERVAL_STOP_PROCESS_POOL_EMPTY)
-                        if stop_process_pool_empty_msg:
-                            LOG.info(stop_process_pool_empty_msg)
-                            OUT.info(stop_process_pool_empty_msg)
-                            stop_process_pool_empty_msg = None
-                        self.proc_pool.handle_results_async()
-                        self.process_command_queue()
-                if self.options.profile_mode:
-                    self.profiler.log_memory(
-                        "scheduler.py: end main loop (total loops %d): %s" %
-                        (count, get_current_time_string()))
-                if self.stop_mode == TaskPool.STOP_AUTO_ON_TASK_FAILURE:
-                    raise SchedulerError(self.stop_mode)
-                else:
-                    raise SchedulerStop(self.stop_mode)
-            elif (self.time_next_kill is not None and
-                    time() > self.time_next_kill):
-                self.command_poll_tasks()
-                self.command_kill_tasks()
-                self.time_next_kill = time() + self.INTERVAL_STOP_KILL
+            self.suite_shutdown()
 
             # Suite health checks
-            if self.stop_mode is None and not has_changes:
-                self.check_suite_stalled()
-            now = time()
-            if time_next_fs_check is None or now > time_next_fs_check:
-                if not os.path.exists(self.suite_run_dir):
-                    raise SchedulerError(
-                        "%s: suite run directory not found" %
-                        self.suite_run_dir)
-                try:
-                    contact_data = self.suite_srv_files_mgr.load_contact_file(
-                        self.suite)
-                    assert contact_data == self.contact_data
-                except (AssertionError, IOError, ValueError,
-                        SuiteServiceFileError):
-                    ERR.critical(traceback.format_exc())
-                    exc = SchedulerError(
-                        ("%s: suite contact file corrupted/modified and" +
-                         " may be left") %
-                        self.suite_srv_files_mgr.get_contact_file(self.suite))
-                    raise exc
-                time_next_fs_check = (
-                    now + self._get_cylc_conf('health check interval'))
+            self.suite_health_check(has_changes)
 
             if self.options.profile_mode:
-                now = time()
-                self._update_profile_info("scheduler loop dt (s)", now - tinit,
-                                          amount_format="%.3f")
-                self._update_cpu_usage()
-                if now - previous_profile_point >= 60:
-                    # Only get this every minute.
-                    previous_profile_point = now
-                    self.profiler.log_memory("scheduler.py: loop #%d: %s" % (
-                        count, get_current_time_string()))
-                count += 1
+                self.update_profiler_logs(tinit)
 
             sleep(self.INTERVAL_MAIN_LOOP)
             # END MAIN LOOP
