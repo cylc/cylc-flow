@@ -39,7 +39,6 @@ SPEC = {
             'string lists' :
             {
                 '__MANY__'   : vdr( vtype="string_list"  ),
-                'compulsory' : vdr( vtype="string_list", default=["jumped","over","the"], compulsory=True )
                 },
             'integer lists' : { '__MANY__' : vdr( vtype="integer_list", allow_zeroes=False ) },
             'float lists'   : { '__MANY__' : vdr( vtype="float_list", allow_zeroes=False   ) },

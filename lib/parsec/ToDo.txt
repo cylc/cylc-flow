@@ -17,4 +17,3 @@ EXTENSION:
     - move inheritance from cylc suite config into parsec?
     - test repeated section and item add-or-override)
     - test site/user style add-or-override
-    - abort if compulsory items not found (currently prints a warning)

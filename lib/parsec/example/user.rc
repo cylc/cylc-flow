@@ -59,7 +59,6 @@ brown fox # or lazy dog"""
         fou = "the, quick", "brown , fox",  # double quotes, internal commas
         fiv = 'the #quick', 'brown #fox' # single quotes, internal comments
         fiv = "the #quick", "brown #fox" # double quotes, internal comments
-        compulsory = "one", "two"
     [[integer lists]]
         foo = 1,2,3,3,3,4,4
         bar = 1,2,3*3,2*4, # multipliers and trailing comma

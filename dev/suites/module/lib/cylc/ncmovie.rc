@@ -1,0 +1,30 @@
+#!Jinja2
+
+# INPUTS:
+#   {{FILE_IN}} - input UM file
+#   {{FIELDS}} - list of STASH codes to use
+#   {{NF_JOBS}} - no. of jobs to generate PNG frames concurrently
+#   {{FILE_OUT}} - output .webm movie file
+
+[cylc]
+    [[parameters]]
+         n = 1..{{NF_JOBS}}
+    [[parameter templates]]
+         n = -R%(n)s
+[scheduling]
+    [[dependencies]]
+        graph = select => frames<n> => movie
+[runtime]
+    [[root]]
+        [[[environment]]]
+            FOO = foo
+    [[MODULE]]  # (Modules don't know their 'import as' name.)
+        [[[environment]]]
+            FRAMESDIR = $CYLC_SUITE_SHARE_DIR/frames
+    [[select]]
+        inherit = MODULE  # optional
+        script = "echo select.sh {{FILE_IN}} \"{{FIELDS}}\" fields.nc"
+    [[frames<n>]]
+        script = "echo frames.sh fields.nc frames-dir"
+    [[movie]]
+        script = "echo MOVIE frames-dir {{FILE_OUT}}"
