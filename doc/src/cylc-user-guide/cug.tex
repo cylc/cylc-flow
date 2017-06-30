@@ -7416,7 +7416,7 @@ Pre-Cylc-6 & Cylc-6+ \\
 \subsection{No Implicit Creation of Tasks by Offset Triggers}
 \label{cylc-6-migration-implicit-cycling}
 
-Prior to cylc-6 inter-cycle triggers implicitly created task instances at
+Prior to cylc-6 intercycle offset triggers implicitly created task instances at
 the offset cycle points. For example, this pre cylc-6 suite automatically
 creates instances of task \lstinline=foo= at the offset hours
 \lstinline=3,9,15,21= each day, for task \lstinline=bar= to trigger off at
@@ -7431,9 +7431,8 @@ creates instances of task \lstinline=foo= at the offset hours
          # This creates foo instances at 03,09,15,21:
          graph = foo[T-3] => bar
 \end{lstlisting}
-You can run this suite to see how it works (cylc-6+ is backward-compatible: it
-generates the old-style behaviour when it detects an old-style suite
-definition). Here's the direct translation of this suite to cylc-6+ format:
+
+Here's the direct translation to cylc-6+ format:
 \lstset{language=suiterc}
 \begin{lstlisting}
 # In cylc-6+ this suite will stall.
@@ -7444,17 +7443,16 @@ definition). Here's the direct translation of this suite to cylc-6+ format:
          # This does NOT create foo instances at 03,09,15,21:
          graph = foo[-PT3H] => bar
 \end{lstlisting}
-If you run this suite, \lstinline=bar.20140808T00= will execute at start-up
-because dependence on tasks prior to the initial cycle point is ignored, but
-the suite will then stall with \lstinline=bar.20140808T06= waiting on
-\lstinline=foo.20140808T03= (right-click on the task in the GUI to see its
-prerequisites), which does not exist because the offset \lstinline=foo=
-instances have not been created. Note that if you graph the suite the offset
-\lstinline=foo= instances do appear. That's because the graph expresses
-dependence, and \lstinline=bar= really does depend on these instances of
-\lstinline=foo=. The problem is just that the tasks don't get created at run
-time, which is why the suite stalls. Here's the correct way to get the desired
-behaviour in cylc-6+:
+
+This suite fails validation with
+\lstinline=ERROR: No cycling sequences defined for foo=,
+and at runtime it would stall with \lstinline=bar= instances waiting on
+non-existent offset \lstinline=foo= instances (note that these
+do appear in graph visualisations though - because the graph
+expresses {\em dependence} as written).
+
+To fix this, explicitly define the cycling of with an offset cycling sequence:
+\lstinline=foo=:
 \lstset{language=suiterc}
 \begin{lstlisting}
 # Cylc-6+ requires explicit task instance creation.
@@ -7466,9 +7464,11 @@ behaviour in cylc-6+:
       [[[T00,T06,T12,T18]]]
          graph = foo[-PT3H] => bar
 \end{lstlisting}
-Implicit creation of task instances by offset triggers has been disabled
-because it is error prone: if a trigger offset is wrong it should cause a
-triggering failure rather than create task instances at incorrect cycle points.
+
+Implicit task creation by offset triggers is no longer allowed because it is
+error prone: a mistaken task cycle point offset should cause a failure
+rather than automatically creating task instances on the wrong cycling
+sequence.
 
 \section{Known Issues}
 \label{KnownIssues}
