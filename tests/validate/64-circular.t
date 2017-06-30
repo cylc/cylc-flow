@@ -18,7 +18,7 @@
 # Test validation of a suite with self-edges fails.
 . "$(dirname "$0")/test_header"
 
-set_test_number 8
+set_test_number 13
 
 cat >'suite.rc' <<'__SUITE_RC__'
 [scheduling]
@@ -75,5 +75,51 @@ run_fail "${TEST_NAME_BASE}-intercycle-1" cylc validate 'suite.rc'
 contains_ok "${TEST_NAME_BASE}-intercycle-1.stderr" <<'__ERR__'
 'ERROR: circular edges detected:  a.2002 => a.2001  a.2001 => a.2002  a.2003 => a.2002  a.2002 => a.2003'
 __ERR__
+
+cat >'suite.rc' <<'__SUITE_RC__'
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    [[dependencies]]
+        [[[2/P3]]]
+            graph = foo => bar => baz
+        [[[8/P1]]]
+           graph = baz => foo
+__SUITE_RC__
+
+run_fail "${TEST_NAME_BASE}-intercycle-2" cylc validate 'suite.rc'
+contains_ok "${TEST_NAME_BASE}-intercycle-2.stderr" <<'__ERR__'
+'ERROR: circular edges detected:  foo.8 => bar.8  bar.8 => baz.8  baz.8 => foo.8'
+__ERR__
+
+cat >'suite.rc' <<'__SUITE_RC__'
+[cylc]
+    [[parameters]]
+        foo = 1..5
+[scheduling]
+    [[dependencies]]
+        graph = """
+            fool<foo-1> => fool<foo>
+            fool<foo=2> => fool<foo=1>
+        """
+__SUITE_RC__
+
+run_fail "${TEST_NAME_BASE}-param-1" cylc validate 'suite.rc'
+contains_ok "${TEST_NAME_BASE}-param-1.stderr" <<'__ERR__'
+'ERROR: circular edges detected:  fool_foo2.1 => fool_foo1.1  fool_foo1.1 => fool_foo2.1'
+__ERR__
+
+cat >'suite.rc' <<'__SUITE_RC__'
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    [[dependencies]]
+        [[[1/P3]]]
+            graph = foo => bar
+        [[[2/P3]]]
+           graph = bar => foo
+__SUITE_RC__
+
+run_ok "${TEST_NAME_BASE}-param-2" cylc validate 'suite.rc'
 
 exit
