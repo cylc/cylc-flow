@@ -1819,6 +1819,34 @@ class SuiteConfig(object):
         self._last_graph_raw_edges = graph_raw_edges
         return graph_raw_edges
 
+    def get_node_labels(self, start_point_string, stop_point_string=None):
+        """Return dependency graph node labels."""
+        stop_point = None
+        if stop_point_string is None:
+            vfcp = self.cfg['visualization']['final cycle point']
+            if vfcp:
+                try:
+                    stop_point = get_point_relative(
+                        vfcp, get_point(start_point_string)).standardise()
+                except ValueError:
+                    stop_point = get_point(vfcp).standardise()
+
+        if stop_point is not None:
+            if stop_point < get_point(start_point_string):
+                # Avoid a null graph.
+                stop_point_string = start_point_string
+            else:
+                stop_point_string = str(stop_point)
+        ret = set()
+        for edge in self.get_graph_raw(
+                start_point_string, stop_point_string, ungroup_all=True):
+            left, right = edge[0:2]
+            if left:
+                ret.add(left)
+            if right:
+                ret.add(right)
+        return ret
+
     @staticmethod
     def _close_families(id_, clf_map):
         """Turn (name, point) to 'name.point'.
