@@ -1,4 +1,0 @@
-title = A suite with cyclic dependence.
-[scheduling]
-    [[dependencies]]
-        graph = a => b => c => d => a => z

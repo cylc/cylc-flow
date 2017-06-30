@@ -1,8 +1,0 @@
-title = A suite with self-edges.
-[scheduling]
-    [[dependencies]]
-        graph = FAM:succeed-all => f & g => z
-[runtime]
-    [[FAM]]
-    [[f,g,h]]
-       inherit = FAM

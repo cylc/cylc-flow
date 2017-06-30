@@ -119,10 +119,8 @@ def main():
         config.print_first_parent_tree(
             pretty=options.box, titles=options.titles)
     elif options.crange:
-        node_labels = config.get_node_labels(tr_start, tr_stop)
-        node_labels.sort()
-        for nl in node_labels:
-            print nl
+        for node in sorted(config.get_node_labels(tr_start, tr_stop)):
+            print node
     else:
         result = config.get_namespace_list(which)
         namespaces = result.keys()

@@ -20,6 +20,8 @@
 ImportError due to pygraphviz/graphviz not being installed."""
 
 import pygraphviz
+
+from cylc.cycling.loader import get_point, get_point_relative
 from cylc.task_id import TaskID
 
 
@@ -199,7 +201,7 @@ class CGraphPlain(pygraphviz.AGraph):
         self.remove_nodes_from(nodes)
         self.add_edges(sorted(new_edges))
 
-    def add_edges(self, edges, ignore_suicide=False, is_validate=False):
+    def add_edges(self, edges, ignore_suicide=False):
         """Add edges and nodes connected by the edges."""
         for edge in edges:
             left, right, skipped, suicide, conditional = edge
@@ -207,12 +209,10 @@ class CGraphPlain(pygraphviz.AGraph):
                 continue
             if left is None:
                 pygraphviz.AGraph.add_node(self, right)
-                if not is_validate:
-                    self.style_node(right)
+                self.style_node(right)
             elif right is None:
                 pygraphviz.AGraph.add_node(self, left)
-                if not is_validate:
-                    self.style_node(left)
+                self.style_node(left)
             else:
                 attrs = {'penwidth': 2}
                 if skipped:
@@ -226,10 +226,9 @@ class CGraphPlain(pygraphviz.AGraph):
                 else:
                     attrs.update({'style': 'solid', 'arrowhead': 'normal'})
                 pygraphviz.AGraph.add_edge(self, left, right, **attrs)
-                if not is_validate:
-                    self.style_node(left, base=True)
-                    self.style_node(right, base=True)
-                    self.style_edge(left, right)
+                self.style_node(left, base=True)
+                self.style_node(right, base=True)
+                self.style_edge(left, right)
 
     def add_cycle_point_subgraphs(self, edges):
         """Draw nodes within cycle point groups (subgraphs)."""
@@ -337,3 +336,47 @@ class CGraph(CGraphPlain):
             if left_node.attr['style'] == 'filled':
                 edge.attr['color'] = left_node.attr['fillcolor']
         edge.attr['penwidth'] = self.vizconfig['edge penwidth']
+
+    @classmethod
+    def get_graph(
+            cls, suiterc, group_nodes=None, ungroup_nodes=None,
+            ungroup_recursive=False, group_all=False, ungroup_all=False,
+            ignore_suicide=False, subgraphs_on=False):
+        """Return dependency graph."""
+        # Use visualization settings.
+        start_point_string = (
+            suiterc.cfg['visualization']['initial cycle point'])
+
+        # Use visualization settings in absence of final cycle point definition
+        # when not validating (stops slowdown of validation due to vis
+        # settings)
+        stop_point = None
+        vfcp = suiterc.cfg['visualization']['final cycle point']
+        if vfcp:
+            try:
+                stop_point = get_point_relative(
+                    vfcp, get_point(start_point_string)).standardise()
+            except ValueError:
+                stop_point = get_point(vfcp).standardise()
+
+        if stop_point is not None:
+            if stop_point < get_point(start_point_string):
+                # Avoid a null graph.
+                stop_point_string = start_point_string
+            else:
+                stop_point_string = str(stop_point)
+        else:
+            stop_point_string = None
+
+        graph = cls(
+            suiterc.suite,
+            suiterc.suite_polling_tasks,
+            suiterc.cfg['visualization'])
+        gr_edges = suiterc.get_graph_raw(
+            start_point_string, stop_point_string,
+            group_nodes, ungroup_nodes, ungroup_recursive,
+            group_all, ungroup_all)
+        graph.add_edges(gr_edges, ignore_suicide)
+        if subgraphs_on:
+            graph.add_cycle_point_subgraphs(gr_edges)
+        return graph

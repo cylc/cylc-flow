@@ -64,13 +64,6 @@ NUM_RUNAHEAD_SEQ_POINTS = 5  # Number of cycle points to look at per sequence.
 # Message trigger offset regex.
 BCOMPAT_MSG_RE_C6 = re.compile(r'^(.*)\[\s*(([+-])?\s*(.*))?\s*\](.*)$')
 
-try:
-    import cylc.graphing
-except ImportError:
-    graphing_disabled = True
-else:
-    graphing_disabled = False
-
 
 class SuiteConfigError(Exception):
     """
@@ -94,7 +87,7 @@ class SuiteConfig(object):
 
     @classmethod
     def get_inst(cls, suite=None, fpath=None, template_vars=None,
-                 owner=None, run_mode='live', validation=False, strict=False,
+                 owner=None, run_mode='live', is_validate=False, strict=False,
                  collapsed=[], cli_initial_point_string=None,
                  cli_start_point_string=None, cli_final_point_string=None,
                  is_reload=False, output_fname=None,
@@ -109,7 +102,7 @@ class SuiteConfig(object):
         if suite not in cls._INSTANCES or is_reload:
             cls._INSTANCES[suite] = cls(
                 suite, fpath, template_vars, owner,
-                run_mode, validation, strict, collapsed,
+                run_mode, is_validate, strict, collapsed,
                 cli_initial_point_string, cli_start_point_string,
                 cli_final_point_string, is_reload, output_fname,
                 vis_start_string, vis_stop_string, mem_log_func)
@@ -119,7 +112,7 @@ class SuiteConfig(object):
         return cls._INSTANCES[suite]
 
     def __init__(self, suite, fpath, template_vars=None,
-                 owner=None, run_mode='live', validation=False, strict=False,
+                 owner=None, run_mode='live', is_validate=False, strict=False,
                  collapsed=[], cli_initial_point_string=None,
                  cli_start_point_string=None, cli_final_point_string=None,
                  is_reload=False, output_fname=None,
@@ -139,7 +132,6 @@ class SuiteConfig(object):
         self.naked_dummy_tasks = []
         self.edges = {}
         self.taskdefs = {}
-        self.validation = validation
         self.initial_point = None
         self.start_point = None
         self.first_graph = True
@@ -536,7 +528,7 @@ class SuiteConfig(object):
 
         self.mem_log("config.py: before load_graph()")
         self.load_graph()
-        if not validation or graphing_disabled:
+        if not is_validate:
             GraphNodeParser.get_inst().clear()
         self.mem_log("config.py: after load_graph()")
 
@@ -562,7 +554,7 @@ class SuiteConfig(object):
                 raise SuiteConfigError(
                     'ERROR: strict validation fails naked dummy tasks')
 
-        if self.validation:
+        if is_validate:
             self.check_tasks()
 
         # Check that external trigger messages are only used once (they have to
@@ -713,38 +705,67 @@ class SuiteConfig(object):
                 cfg['URL'] = RE_TASK_NAME_VAR.sub(name, cfg['URL'])
                 cfg['URL'] = RE_SUITE_NAME_VAR.sub(self.suite, cfg['URL'])
 
-        if self.validation:
-            if graphing_disabled:
-                ERR.warning("skipping cyclic dependence check (could "
-                            "not import graphviz library)")
-            else:
-                # Detect cyclic dependence.
-                # (ignore suicide triggers as they look like cyclic dependence:
-                #    "foo:fail => bar => !foo" looks like "foo => bar => foo").
-                graph = self.get_graph(ungroup_all=True, ignore_suicide=True,
-                                       is_validate=True)
-                # Original edges.
-                o_edges = graph.edges()
-                # Reverse any back edges using graphviz 'acyclic'.
-                # (Note: use of acyclic(copy=True) reveals our CGraph class
-                # init should have the same arg list as its parent,
-                # pygraphviz.AGraph).
-                graph.acyclic()
-                # Look for reversed edges (note this does not detect
-                # self-edges).
-                n_edges = set(graph.edges())
-
-                back_edges = [x for x in o_edges if x not in n_edges]
-                if len(back_edges) > 0:
-                    err_msg = "Back-edges:"
-                    for edg in back_edges:
-                        err_msg += '  %s => %s' % edg
-                    ERR.error(err_msg)
-                    raise SuiteConfigError(
-                        'ERROR: cyclic dependence detected '
-                        '(graph the suite to see back-edges).')
+        if is_validate:
+            self.mem_log("config.py: before _check_circular()")
+            self._check_circular()
+            self.mem_log("config.py: after _check_circular()")
 
         self.mem_log("config.py: end init config")
+
+    def _check_circular(self):
+        """Check for circular dependence in graph."""
+        start_point_string = (
+            self.cfg['visualization']['initial cycle point'])
+        lhs2rhss = {}  # left hand side to right hand sides
+        rhs2lhss = {}  # right hand side to left hand sides
+        for lhs, rhs in self.get_graph_raw(
+                start_point_string, stop_point_string=None, is_validate=True):
+            lhs2rhss.setdefault(lhs, set())
+            lhs2rhss[lhs].add(rhs)
+            rhs2lhss.setdefault(rhs, set())
+            rhs2lhss[rhs].add(lhs)
+        self._check_circular_helper(lhs2rhss, rhs2lhss)
+        if rhs2lhss:
+            # Before reporting circular dependence, pick out all the edges with
+            # no outgoings.
+            self._check_circular_helper(rhs2lhss, lhs2rhss)
+            err_msg = ''
+            for rhs, lhss in sorted(rhs2lhss.items()):
+                for lhs in sorted(lhss):
+                    err_msg += '  %s => %s' % (
+                        TaskID.get(*lhs), TaskID.get(*rhs))
+            if err_msg:
+                raise SuiteConfigError(
+                    'ERROR: circular edges detected:' + err_msg)
+
+    @staticmethod
+    def _check_circular_helper(x2ys, y2xs):
+        """Topological elimination.
+
+        An implementation of Kahn's algorithm for topological sorting, but
+        only use the part for pulling out starter nodes with no incoming
+        edges. See https://en.wikipedia.org/wiki/Topological_sorting
+
+        x2ys is a map of {x1: [y1, y2, ...], ...}
+        to map edges using x's as keys, such as x1 => y1, x1 => y2, etc
+
+        y2xs is a map of {y3: [x4, x5, ...], ...}
+        to map edges using y's as keys, such as x4 => y3, x5 => y3, etc
+        """
+        # Starter x nodes are those with no incoming, i.e.
+        # x nodes that never appear as a y.
+        sxs = set(x01 for x01 in x2ys if x01 not in y2xs)
+        while sxs:
+            sx01 = sxs.pop()
+            for y01 in x2ys[sx01]:
+                y2xs[y01].remove(sx01)
+                if not y2xs[y01]:
+                    if y01 in x2ys:
+                        # No need to look at this again if it does not have any
+                        # outgoing.
+                        sxs.add(y01)
+                    del y2xs[y01]
+            del x2ys[sx01]
 
     def _expand_name_list(self, orig_names):
         """Expand any parameters in lists of names."""
@@ -1611,9 +1632,16 @@ class SuiteConfig(object):
     def get_graph_raw(self, start_point_string, stop_point_string,
                       group_nodes=None, ungroup_nodes=None,
                       ungroup_recursive=False, group_all=False,
-                      ungroup_all=False):
-        """Convert the abstract graph edges held in self.edges (etc.) to
-        actual edges for a concrete range of cycle points."""
+                      ungroup_all=False, is_validate=False):
+        """Convert the abstract graph edges (self.edges, etc) to actual edges
+
+        Actual edges have concrete ranges of cycle points.
+
+        In validate mode, set ungroup_all to True, and only return non-suicide
+        edges with left and right nodes.
+        """
+        if is_validate:
+            ungroup_all = True
         if group_nodes is None:
             group_nodes = []
         if ungroup_nodes is None:
@@ -1715,6 +1743,8 @@ class SuiteConfig(object):
                     break
                 point_offset_cache = {}
                 for left, right, suicide, cond in edges:
+                    if is_validate and (not right or suicide):
+                        continue
                     if right:
                         r_id = (right, point)
                     else:
@@ -1737,24 +1767,24 @@ class SuiteConfig(object):
                         l_point = point
                     l_id = (name, l_point)
 
-                    action = True
                     if l_id is None and r_id is None:
-                        # Nothing to add to the graph.
-                        action = False
-                    if l_id is not None:
+                        continue
+                    if l_id is not None and actual_first_point > l_id[1]:
                         # Check that l_id is not earlier than start time.
                         # NOTE BUG GITHUB #919
                         # sct = start_point
-                        if actual_first_point > l_id[1]:
-                            action = False
-                            if (r_id is not None and
-                                    r_id[1] >= actual_first_point):
-                                # Pre-initial dependency;
-                                # keep right hand node.
-                                l_id = r_id
-                                r_id = None
-                                action = True
-                    if action:
+                        if (r_id is None or r_id[1] < actual_first_point or
+                                is_validate):
+                            continue
+                        # Pre-initial dependency;
+                        # keep right hand node.
+                        l_id = r_id
+                        r_id = None
+                    if point not in gr_edges:
+                        gr_edges[point] = []
+                    if is_validate:
+                        gr_edges[point].append((l_id, r_id))
+                    else:
                         try:
                             l_str = id2str_cache[l_id]
                         except KeyError:
@@ -1765,8 +1795,6 @@ class SuiteConfig(object):
                         except KeyError:
                             r_str = self._close_families(r_id, clf_map)
                             id2str_cache[r_id] = r_str
-                        if point not in gr_edges:
-                            gr_edges[point] = []
                         gr_edges[point].append(
                             (l_str, r_str, None, suicide, cond))
                 # Increment the cycle point.
@@ -1791,52 +1819,33 @@ class SuiteConfig(object):
         self._last_graph_raw_edges = graph_raw_edges
         return graph_raw_edges
 
-    def get_graph(
-            self, start_point_string=None, stop_point_string=None,
-            group_nodes=None, ungroup_nodes=None, ungroup_recursive=False,
-            group_all=False, ungroup_all=False, ignore_suicide=False,
-            subgraphs_on=False, is_validate=False):
-
-        # If graph extent is not given, use visualization settings.
-        if start_point_string is None:
-            start_point_string = (
-                self.cfg['visualization']['initial cycle point'])
-
-        # Use visualization settings in absence of final cycle point definition
-        # when not validating (stops slowdown of validation due to vis
-        # settings)
-        if stop_point_string is None and not is_validate:
+    def get_node_labels(self, start_point_string, stop_point_string=None):
+        """Return dependency graph node labels."""
+        stop_point = None
+        if stop_point_string is None:
             vfcp = self.cfg['visualization']['final cycle point']
             if vfcp:
                 try:
-                    stop_point_string = str(get_point_relative(
-                        vfcp,
-                        get_point(start_point_string)).standardise())
+                    stop_point = get_point_relative(
+                        vfcp, get_point(start_point_string)).standardise()
                 except ValueError:
-                    stop_point_string = str(get_point(
-                        vfcp).standardise())
+                    stop_point = get_point(vfcp).standardise()
 
-        if stop_point_string is not None:
-            if get_point(stop_point_string) < get_point(start_point_string):
+        if stop_point is not None:
+            if stop_point < get_point(start_point_string):
                 # Avoid a null graph.
                 stop_point_string = start_point_string
-
-        gr_edges = self.get_graph_raw(
-            start_point_string, stop_point_string,
-            group_nodes, ungroup_nodes, ungroup_recursive,
-            group_all, ungroup_all
-        )
-        graph = cylc.graphing.CGraph(
-            self.suite, self.suite_polling_tasks, self.cfg['visualization'])
-        graph.add_edges(gr_edges, ignore_suicide, is_validate)
-        if subgraphs_on:
-            graph.add_cycle_point_subgraphs(gr_edges)
-        return graph
-
-    def get_node_labels(self, start_point_string, stop_point_string):
-        graph = self.get_graph(start_point_string, stop_point_string,
-                               ungroup_all=True)
-        return [i.attr['label'].replace('\\n', '.') for i in graph.nodes()]
+            else:
+                stop_point_string = str(stop_point)
+        ret = set()
+        for edge in self.get_graph_raw(
+                start_point_string, stop_point_string, ungroup_all=True):
+            left, right = edge[0:2]
+            if left:
+                ret.add(left)
+            if right:
+                ret.add(right)
+        return ret
 
     @staticmethod
     def _close_families(id_, clf_map):
@@ -1935,12 +1944,9 @@ class SuiteConfig(object):
         for right, val in triggers.items():
             for expr, trigs in val.items():
                 lefts, suicide = trigs
-                orig_expr = original[right][expr]
-                if not graphing_disabled:
-                    self.generate_edges(expr, orig_expr, lefts,
-                                        right, seq, suicide)
-                self.generate_taskdefs(
-                    orig_expr, lefts, right, seq)
+                orig = original[right][expr]
+                self.generate_edges(expr, orig, lefts, right, seq, suicide)
+                self.generate_taskdefs(orig, lefts, right, seq)
                 self.generate_triggers(
                     expr, lefts, right, seq, suicide, task_triggers)
 
