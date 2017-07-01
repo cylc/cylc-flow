@@ -64,8 +64,9 @@ from cylc.dbstatecheck import CylcSuiteDBChecker
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.command_polling import Poller
 from cylc.task_state import TASK_STATUSES_ORDERED
+from cylc.cycling.util import add_offset
 
-from isodatetime.parsers import TimePointParser, DurationParser
+from isodatetime.parsers import TimePointParser
 
 
 class SuitePoller(Poller):
@@ -200,27 +201,10 @@ def main():
 
     # Attempt to apply specified offset to the targeted cycle
     if options.offset:
-        my_parser = TimePointParser()
-        my_target_point = my_parser.parse(options.cycle, dump_as_parsed=True)
-        my_offset_parser = DurationParser()
-
-        oper = "+"
-        if options.offset.startswith("-") or options.offset.startswith("+"):
-            oper = options.offset[0]
-            options.offset = options.offset[1:]
-        if options.offset.startswith("P"):
-            try:
-                my_shift = my_offset_parser.parse(options.offset)
-            except ValueError:
-                sys.exit("ERROR: Cannot parse offset: %s" % options.offset)
-            if oper == "-":
-                my_target_point -= my_shift
-            else:
-                my_target_point += my_shift
-        else:
-            sys.exit("ERROR: Unrecognised offset: %s" % options.offset)
-
-        options.cycle = str(my_target_point)
+        try:
+            options.cycle = str(add_offset(options.cycle, options.offset))
+        except ValueError as exc:
+            sys.exit(exc)
 
     # Exit if both task state and message are to being polled
     if options.status and options.msg:

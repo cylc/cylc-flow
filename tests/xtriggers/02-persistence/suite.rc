@@ -1,0 +1,17 @@
+[cylc]
+    cycle point format = %Y
+[scheduling]
+    initial cycle point = 2010
+    final cycle point = 2011
+    [[xtriggers]]
+        x1 = faker(name="bob")
+    [[dependencies]]
+        [[[R1]]]
+            graph = "@x1 => foo => shutdown"
+        [[[P1Y]]]
+            graph = "@x1 => foo"
+[runtime]
+    [[foo]]
+        script = "echo NAME is $x1_name"
+    [[shutdown]]
+        script = "cylc shutdown $CYLC_SUITE_NAME"

@@ -33,6 +33,7 @@ from cylc.conditional_simplifier import ConditionalSimplifier
 from cylc.exceptions import CylcError
 from cylc.graph_parser import GraphParser
 from cylc.param_expand import NameExpander
+from cylc.xtrigger_mgr import XtriggerManager
 from cylc.cfgspec.suite import RawSuiteConfig
 from cylc.cycling.loader import (
     get_point, get_point_relative, get_interval, get_interval_cls,
@@ -96,7 +97,7 @@ class SuiteConfig(object):
                  cli_start_point_string=None, cli_final_point_string=None,
                  is_reload=False, output_fname=None,
                  vis_start_string=None, vis_stop_string=None,
-                 mem_log_func=None):
+                 xtrigger_mgr=None, mem_log_func=None):
 
         self.mem_log = mem_log_func
         if mem_log_func is None:
@@ -116,7 +117,14 @@ class SuiteConfig(object):
         self.first_graph = True
         self.clock_offsets = {}
         self.expiration_offsets = {}
+        # Old external triggers (client/server)
         self.ext_triggers = {}
+        if xtrigger_mgr is None:
+            # For validation and graph etc.
+            self.xtrigger_mgr = XtriggerManager(self.suite, self.owner)
+        else:
+            self.xtrigger_mgr = xtrigger_mgr
+        self.xtriggers = {}
         self.suite_polling_tasks = {}
         self.vis_start_point_string = vis_start_string
         self.vis_stop_point_string = vis_stop_string
@@ -1511,7 +1519,7 @@ class SuiteConfig(object):
         """Generate task definitions for all nodes in orig_expr."""
 
         for node in left_nodes + [right]:
-            if not node:
+            if not node or node.startswith('@'):
                 # if right is None, lefts are lone nodes
                 # for which we still define the taskdefs
                 continue
@@ -1585,7 +1593,11 @@ class SuiteConfig(object):
             raise SuiteConfigError('Error in expression "%s"' % lexpression)
 
         triggers = {}
+        xtrig_labels = set()
         for left in left_nodes:
+            if left.startswith('@'):
+                xtrig_labels.add(left[1:])
+                continue
             # (GraphNodeError checked above)
             name, offset_is_from_icp, offset_is_irregular, offset, output = (
                 GraphNodeParser.get_inst().parse(left))
@@ -1645,8 +1657,15 @@ class SuiteConfig(object):
                 elif item in triggers:
                     item_list[i] = triggers[item]
 
-        dependency = Dependency(expr_list, set(triggers.values()), suicide)
-        self.taskdefs[right].add_dependency(dependency, seq)
+        if triggers:
+            dependency = Dependency(expr_list, set(triggers.values()), suicide)
+            self.taskdefs[right].add_dependency(dependency, seq)
+
+        # Record xtrigger labels for each task name.
+        if right not in self.xtriggers:
+            self.xtriggers[right] = xtrig_labels
+        else:
+            self.xtriggers[right] = self.xtriggers[right].union(xtrig_labels)
 
     def get_actual_first_point(self, start_point):
         """Get actual first cycle point for the suite
@@ -1788,8 +1807,14 @@ class SuiteConfig(object):
                         r_id = (right, point)
                     else:
                         r_id = None
-                    name, offset_is_from_icp, _, offset, _ = (
-                        GraphNodeParser.get_inst().parse(left))
+                    if left.startswith('@'):
+                        # @trigger node.
+                        name = left
+                        offset_is_from_icp = False
+                        offset = None
+                    else:
+                        name, offset_is_from_icp, _, offset, _ = (
+                            GraphNodeParser.get_inst().parse(left))
                     if offset:
                         if offset_is_from_icp:
                             cache = start_point_offset_cache
@@ -1980,6 +2005,30 @@ class SuiteConfig(object):
             self.suite_polling_tasks.update(parser.suite_state_polling_tasks)
             self._proc_triggers(
                 parser.triggers, parser.original, seq, task_triggers)
+
+        xtcfg = self.cfg['scheduling']['xtriggers']
+        # Taskdefs just know xtrigger labels.
+        for task_name, xt_labels in self.xtriggers.items():
+            for label in xt_labels:
+                try:
+                    xtrig = xtcfg[label]
+                except KeyError:
+                    raise SuiteConfigError(
+                        "ERROR, xtrigger label not defined: %s" % label)
+                if xtrig.func_name.startswith('wall_clock'):
+                    self.taskdefs[task_name].add_xclock(
+                        label, xtrig.func_kwargs['offset'])
+                    self.xtrigger_mgr.add_clock(label, xtrig)
+                else:
+                    self.taskdefs[task_name].xtrig_labels.add(label)
+                    self.xtrigger_mgr.add_trig(label, xtrig)
+
+        # Detect use of xtrigger names with '@' prefix (creates a task).
+        overlap = set(self.taskdefs.keys()).intersection(
+            self.cfg['scheduling']['xtriggers'].keys())
+        if overlap:
+            ERR.error(', '.join(overlap))
+            raise SuiteConfigError('task and @xtrigger names clash')
 
     def _proc_triggers(self, triggers, original, seq, task_triggers):
         """Define graph edges, taskdefs, and triggers, from graph sections."""

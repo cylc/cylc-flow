@@ -80,12 +80,12 @@ class TaskJobManager(object):
     REMOTE_INIT_MSG = 'remote host initialising'
     KEY_EXECUTE_TIME_LIMIT = TaskEventsManager.KEY_EXECUTE_TIME_LIMIT
 
-    def __init__(self, suite, proc_pool, suite_db_mgr, suite_srv_files_mgr):
+    def __init__(self, suite, proc_pool, suite_db_mgr, suite_srv_files_mgr,
+                 task_events_mgr):
         self.suite = suite
         self.proc_pool = proc_pool
         self.suite_db_mgr = suite_db_mgr
-        self.task_events_mgr = TaskEventsManager(
-            suite, proc_pool, suite_db_mgr)
+        self.task_events_mgr = task_events_mgr
         self.job_file_writer = JobFileWriter()
         self.suite_srv_files_mgr = suite_srv_files_mgr
         self.task_remote_mgr = TaskRemoteMgr(

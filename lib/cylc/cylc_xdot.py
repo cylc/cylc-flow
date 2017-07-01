@@ -432,7 +432,10 @@ class MyDotWindow(CylcDotViewerCommon):
         cache = {}  # For caching is_on_sequence() calls.
         for node in graph.iternodes():
             name, point = TaskID.split(node.get_name())
-            if name in family_nodes:
+            if name.startswith('@'):
+                # Style action trigger nodes.
+                node.attr['shape'] = 'none'
+            elif name in family_nodes:
                 # Style family nodes.
                 node.attr['shape'] = 'doubleoctagon'
                 # Detecting ghost families would involve analysing triggers

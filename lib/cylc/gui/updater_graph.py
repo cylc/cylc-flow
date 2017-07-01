@@ -251,7 +251,6 @@ class GraphUpdater(threading.Thread):
             state = self.state_summary[id_]['state']
         else:
             state = self.fam_state_summary[id_]['state']
-
         try:
             node.attr['style'] = 'bold,' + self.theme[state]['style']
             node.attr['fillcolor'] = self.theme[state]['color']
@@ -400,6 +399,8 @@ class GraphUpdater(threading.Thread):
                     continue
                 if name in self.all_families:
                     node.attr['shape'] = 'doubleoctagon'
+                elif name.startswith('@'):
+                    node.attr['shape'] = 'none'
 
             if self.subgraphs_on:
                 self.graphw.add_cycle_point_subgraphs(gr_edges)

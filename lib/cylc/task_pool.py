@@ -69,11 +69,14 @@ class TaskPool(object):
     STOP_REQUEST_NOW = 'REQUEST(NOW)'
     STOP_REQUEST_NOW_NOW = 'REQUEST(NOW-NOW)'
 
-    def __init__(self, config, stop_point, suite_db_mgr, task_events_mgr):
+    def __init__(self, config, stop_point, suite_db_mgr, task_events_mgr,
+                 proc_pool, xtrigger_mgr):
         self.config = config
         self.stop_point = stop_point
         self.suite_db_mgr = suite_db_mgr
         self.task_events_mgr = task_events_mgr
+        self.proc_pool = proc_pool
+        self.xtrigger_mgr = xtrigger_mgr
 
         self.do_reload = False
         self.custom_runahead_limit = self.config.get_custom_runahead_limit()
@@ -1267,10 +1270,20 @@ class TaskPool(object):
                     itask.clock_trigger_time)
             for trig, satisfied in itask.state.external_triggers.items():
                 if satisfied:
-                    state = 'satisfied'
+                    extras['External trigger "%s"' % trig] = 'satisfied'
                 else:
-                    state = 'NOT satisfied'
-                extras['External trigger "%s"' % trig] = state
+                    extras['External trigger "%s"' % trig] = 'NOT satisfied'
+            for label, satisfied in itask.state.xtriggers.items():
+                if satisfied:
+                    extras['xtrigger "%s"' % label] = 'satisfied'
+                else:
+                    extras['xtrigger "%s"' % label] = 'NOT satisfied'
+            if itask.state.xclock is not None:
+                label, satisfied = itask.state.xclock
+                if satisfied:
+                    extras['xclock "%s"' % label] = 'satisfied'
+                else:
+                    extras['xclock "%s"' % label] = 'NOT satisfied'
 
             outputs = []
             for _, msg, is_completed in itask.state.outputs.get_all():
@@ -1281,6 +1294,16 @@ class TaskPool(object):
                 "outputs": outputs,
                 "extras": extras}
         return results, bad_items
+
+    def check_xtriggers(self):
+        """See if any xtriggers are satisfied."""
+        itasks = self.get_tasks()
+        self.xtrigger_mgr.collate(itasks)
+        for itask in itasks:
+            if itask.state.xclock is not None:
+                self.xtrigger_mgr.satisfy_xclock(itask)
+            if itask.state.xtriggers:
+                self.xtrigger_mgr.satisfy_xtriggers(itask, self.proc_pool)
 
     def filter_task_proxies(self, items):
         """Return task proxies that match names, points, states in items.

@@ -17,18 +17,28 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Manage queueing and pooling of subprocesses for the suite server program."""
 
-from collections import deque
 import os
 import time
 from pipes import quote
 from signal import SIGKILL
 from subprocess import Popen, PIPE
 from tempfile import TemporaryFile
+from collections import deque
 from threading import RLock
-
 from cylc.cfgspec.glbl_cfg import glbl_cfg
+import time
+import json
+import traceback
+from signal import signal, alarm, SIGALRM
 from cylc.suite_logging import LOG
 from cylc.wallclock import get_current_time_string
+
+
+# Possible xtrigger function results.
+FUNC_RES_TRUE = True
+FUNC_RES_FALSE = False
+FUNC_RES_FAILED = 2
+FUNC_RES_TIMEDOUT = 3
 
 
 class SuiteProcContext(object):
@@ -83,6 +93,9 @@ class SuiteProcContext(object):
         self.ret_code = cmd_kwargs.get('ret_code')
         self.out = cmd_kwargs.get('out')
 
+    def update_cmd(self):
+        pass
+
     def __str__(self):
         ret = ''
         for attr in 'cmd', 'ret_code', 'out', 'err':
@@ -111,6 +124,34 @@ class SuiteProcContext(object):
                     'attr': attr,
                     'mesg': mesg}
         return ret.rstrip()
+
+
+class SuiteFuncContext(SuiteProcContext):
+    """Represent the context of a function to run in the process pool."""
+
+    def __init__(self, label, func_name, func_kwargs, intvl):
+        self.label = label
+        self.func_name = func_name
+        self.func_kwargs = func_kwargs
+        self.intvl = float(intvl)
+        self.ret_val = (False, None)  # (satisfied, broadcast)
+        # TODO - ALLOW ARGS as well as kwargs
+        super(SuiteFuncContext, self).__init__(
+            'xtrigger-func', cmd=[], shell=False)
+
+    def update_command(self):
+        # call this after string formatting for point etc.
+        func_args = []
+        self.cmd = ['run_func.py', self.func_name,
+                    json.dumps(func_args),
+                    json.dumps(self.func_kwargs)]
+
+    def get_signature(self):
+        """Return a string representation of the func call signature."""
+        skeys = sorted(self.func_kwargs.keys())
+        return "%s(%s)" % (
+            self.func_name,
+            ", ".join("%s=%s" % (i, self.func_kwargs[i]) for i in skeys))
 
 
 class SuiteProcPool(object):

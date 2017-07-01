@@ -55,7 +55,8 @@ class CGraphPlain(pygraphviz.AGraph):
         label = name
         if name in self.suite_polling_tasks:
             label += "\\n" + self.suite_polling_tasks[name][3]
-        label += "\\n" + point_string
+        if not label.startswith('@'):
+            label += "\\n" + point_string
         node.attr['label'] = label
         node.attr['URL'] = node_string
 

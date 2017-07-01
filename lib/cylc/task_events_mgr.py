@@ -37,7 +37,6 @@ import traceback
 
 from parsec.config import ItemNotFoundError
 
-from cylc.broadcast_mgr import BroadcastMgr
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
 from cylc.mp_pool import SuiteProcContext
@@ -132,14 +131,12 @@ class TaskEventsManager(object):
     }
     POLLED_FLAG = "(polled)"
 
-    def __init__(self, suite, proc_pool, suite_db_mgr, broadcast_mgr=None):
+    def __init__(self, suite, proc_pool, suite_db_mgr, broadcast_mgr):
         self.suite = suite
         self.suite_url = None
         self.suite_cfg = {}
         self.proc_pool = proc_pool
         self.suite_db_mgr = suite_db_mgr
-        if broadcast_mgr is None:
-            broadcast_mgr = BroadcastMgr(self.suite_db_mgr)
         self.broadcast_mgr = broadcast_mgr
         self.mail_interval = 0.0
         self.mail_footer = None

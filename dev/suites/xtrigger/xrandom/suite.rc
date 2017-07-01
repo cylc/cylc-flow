@@ -1,0 +1,33 @@
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    final cycle point = 5
+    max active cycle points = 5
+    spawn to max active cycle points = True
+    [[xtriggers]]
+        # Called once for all dependent tasks (all cycles).
+        x1 = xrandom(percent=25, secs=2):PT5S
+        # Called once per dependent task name (all cycles).
+        x2 = xrandom(percent=25, secs=2, _=%(name)s):PT5S
+        # Called once per cycle for all dependent tasks.
+        x3 = xrandom(percent=25, secs=2, _=%(point)s):PT5S
+    [[dependencies]]
+        [[[P1]]]
+            graph = """
+# all instances of foo and bar should trigger at once, together
+                @x1 => foo & bar
+# all instances of cat should trigger at once, and separately, all instances of
+# baz should trigger at once.
+                @x2 => cat & dog
+# each instance of qux should trigger separately
+                @x3 => qux
+# Result:
+# - x1 should return True once, and not be called again.
+# - x2 should return True twice, and not be called again.
+# - x3 should return True five times, and not be called again.
+# i.e. 8 True returns in the 5-cycle suite run.
+                    """
+[runtime]
+    [[root]]
+        script = sleep 5
+    [[foo, bar, cat, dog, qux]]

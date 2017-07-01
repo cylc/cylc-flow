@@ -10,6 +10,7 @@ final cycle point = 1
 [[dependencies]]
     [[[R1]]]
         graph = OPS:finish-all => VAR
+[[xtriggers]]
 [[queues]]
     [[[default]]]
         limit = 0

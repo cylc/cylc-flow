@@ -99,6 +99,8 @@ class GraphParser(object):
 
     _RE_SUICIDE = r'(?:!)?'
     _RE_NODE = _RE_SUICIDE + TaskID.NAME_RE
+    _RE_NODE_OR_ACTION = r'(?:[!@])?' + TaskID.NAME_RE
+
     _RE_PARAMS = r'<[\w,=\-+]+>'
     _RE_OFFSET = r'\[[\w\-\+\^:]+\]'
     _RE_TRIG = r':[\w\-]+'
@@ -112,6 +114,9 @@ class GraphParser(object):
         \s+                    # do not allow 'task<space>task'
         ''' + TaskID.NAME_SUFFIX_RE, re.X)
 
+    # Match @actions.
+    REC_ACTION = re.compile(r'@[\w\-+%]+')
+
     # Match fully qualified parameterized single nodes.
     REC_NODE_FULL = re.compile(
         _RE_SUICIDE +
@@ -124,9 +129,9 @@ class GraphParser(object):
         (?:''' + _RE_TRIG + r''')?       # optional trigger type
         ''', re.X)                       # end of string
 
-    # Extract node info from a left-side expression, after parameter expansion.
+    # Extract node or action from left-side expressions after param expansion.
     REC_NODES = re.compile(r'''
-        (''' + _RE_NODE + r''')      # node name
+        (''' + _RE_NODE_OR_ACTION + r''')      # node name
         (''' + _RE_OFFSET + r''')?   # optional cycle point offset
         (''' + _RE_TRIG + r''')?     # optional trigger type
     ''', re.X)
@@ -251,6 +256,11 @@ class GraphParser(object):
             node_str = line
             for s in ['=>', '|', '&', '(', ')', '!']:
                 node_str = node_str.replace(s, ' ')
+            # Drop all valid @triggers, longest first to avoid sub-strings.
+            nodes = self.__class__.REC_ACTION.findall(node_str)
+            nodes.sort(key=len, reverse=True)
+            for node in nodes:
+                node_str = node_str.replace(node, '')
             # Then drop all valid nodes, longest first to avoid sub-strings.
             bad_lines = [node_str for node in node_str.split()
                          if self.__class__.REC_NODE_FULL.sub('', node, 1)]
@@ -278,7 +288,7 @@ class GraphParser(object):
             chain = line.split(ARROW)
             # Auto-trigger lone nodes and initial nodes in a chain.
             for name, offset, _ in self.__class__.REC_NODES.findall(chain[0]):
-                if not offset:
+                if not offset and not name.startswith('@'):
                     pairs.add((None, name))
             for i in range(0, len(chain) - 1):
                 pairs.add((chain[i], chain[i + 1]))
@@ -308,6 +318,7 @@ class GraphParser(object):
             "ERROR, bad graph node format:\n"
             "  " + "\n  ".join(lines) + "\n"
             "Correct format is:\n"
+            " @ACTION or "
             " NAME(<PARAMS>)([CYCLE-POINT-OFFSET])(:TRIGGER-TYPE)\n"
             " {NAME(<PARAMS>) can also be: "
             "<PARAMS>NAME or NAME<PARAMS>NAME_CONTINUED}\n"
@@ -319,7 +330,7 @@ class GraphParser(object):
 
         'left' can be a logical expression of qualified node names.
         'right' can be one or more node names joined by AND.
-        A node name is a task name or a family name.
+        A node is a trigger, or a task a family name.
         A qualified name is NAME([CYCLE-POINT-OFFSET])(:TRIGGER-TYPE).
         Trigger qualifiers, but not cycle offsets, are ignored on the right to
         allow chaining.
@@ -368,7 +379,6 @@ class GraphParser(object):
 
         for left in lefts:
             # Extract information about all nodes on the left.
-
             if left:
                 info = self.__class__.REC_NODES.findall(left)
                 expr = left
@@ -380,7 +390,8 @@ class GraphParser(object):
             # Make success triggers explicit.
             n_info = []
             for name, offset, trig in info:
-                if not trig:
+                if not trig and not name.startswith('@'):
+                    # (Avoiding @trigger nodes.)
                     trig = self.__class__.TRIG_SUCCEED
                     if offset:
                         this = r'\b%s\b%s(?!:)' % (
@@ -396,6 +407,9 @@ class GraphParser(object):
             # Determine semantics of all family triggers present.
             family_trig_map = {}
             for name, offset, trig in info:
+                if name.startswith('@'):
+                    # (Avoiding @trigger nodes.)
+                    continue
                 if name in self.family_map:
                     if trig.endswith(self.__class__.FAM_TRIG_EXT_ANY):
                         ttype = trig[:-self.__class__.LEN_FAM_TRIG_EXT_ANY]

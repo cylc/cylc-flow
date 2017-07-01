@@ -27,6 +27,7 @@ This module provides the logic to:
 
 import os
 import json
+import pickle  # TODO - REMOVE PICKLE (xtriggers only)
 from shutil import copy, rmtree
 from subprocess import call
 from tempfile import mkstemp
@@ -53,6 +54,7 @@ class SuiteDatabaseManager(object):
     TABLE_TASK_OUTPUTS = CylcSuiteDAO.TABLE_TASK_OUTPUTS
     TABLE_TASK_STATES = CylcSuiteDAO.TABLE_TASK_STATES
     TABLE_TASK_TIMEOUT_TIMERS = CylcSuiteDAO.TABLE_TASK_TIMEOUT_TIMERS
+    TABLE_XTRIGGERS = CylcSuiteDAO.TABLE_XTRIGGERS
 
     def __init__(self, pri_d=None, pub_d=None):
         self.pri_path = None
@@ -70,7 +72,8 @@ class SuiteDatabaseManager(object):
             self.TABLE_TASK_POOL: [],
             self.TABLE_TASK_ACTION_TIMERS: [],
             self.TABLE_TASK_OUTPUTS: [],
-            self.TABLE_TASK_TIMEOUT_TIMERS: []}
+            self.TABLE_TASK_TIMEOUT_TIMERS: [],
+            self.TABLE_XTRIGGERS: []}
         self.db_inserts_map = {
             self.TABLE_BROADCAST_EVENTS: [],
             self.TABLE_BROADCAST_STATES: [],
@@ -81,7 +84,8 @@ class SuiteDatabaseManager(object):
             self.TABLE_TASK_POOL: [],
             self.TABLE_TASK_ACTION_TIMERS: [],
             self.TABLE_TASK_OUTPUTS: [],
-            self.TABLE_TASK_TIMEOUT_TIMERS: []}
+            self.TABLE_TASK_TIMEOUT_TIMERS: [],
+            self.TABLE_XTRIGGERS: []}
         self.db_updates_map = {}
 
     def checkpoint(self, name):
@@ -305,6 +309,13 @@ class SuiteDatabaseManager(object):
                     "num": timer.num,
                     "delay": timer.delay,
                     "timeout": timer.timeout})
+
+    def put_xtriggers(self, sat_xtrig):
+        self.db_deletes_map[self.TABLE_XTRIGGERS].append({})
+        for sig, res in sat_xtrig.items():
+            self.db_inserts_map[self.TABLE_XTRIGGERS].append({
+                "signature": sig,
+                "results_pickle": pickle.dumps(res)})
 
     def put_task_pool(self, pool):
         """Put statements to update the task_pool table in runtime database.

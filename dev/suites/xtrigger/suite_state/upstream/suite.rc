@@ -1,0 +1,15 @@
+[cylc]
+    cycle point format = %Y
+[scheduling]
+    initial cycle point = 2005
+    final cycle point = 2015
+   [[dependencies]]
+      [[[P1Y]]]
+          graph = "foo => bar"
+[runtime]
+   [[bar]]
+      script = sleep 10
+   [[foo]]
+      script = sleep 5; cylc message "data ready"
+      [[[outputs]]]
+          x = "data ready"
