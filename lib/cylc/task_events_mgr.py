@@ -402,7 +402,8 @@ class TaskEventsManager(object):
         self._setup_event_mail(itask, event)
         self._setup_custom_event_handlers(itask, event, message)
 
-    def set_poll_time(self, itask, now=None):
+    @staticmethod
+    def set_poll_time(itask, now=None):
         """Set the next task execution/submission poll time.
 
         If now is set, set the timer only if the previous delay is done.

@@ -580,6 +580,7 @@ conditions; see `cylc conditions`.
             name = TaskID.split(name_or_id)[0]
         return name in self.config.get_task_name_list()
 
+    @staticmethod
     def get_standardised_point_string(self, point_string):
         """Return a standardised point string.
 
@@ -781,7 +782,8 @@ conditions; see `cylc conditions`.
         LOG.info(
             "The suite will pause when all tasks have passed %s" % point)
 
-    def command_set_verbosity(self, lvl):
+    @staticmethod
+    def command_set_verbosity(lvl):
         """Remove suite verbosity."""
         LOG.logger.setLevel(lvl)
         cylc.flags.debug = (lvl == DEBUG)

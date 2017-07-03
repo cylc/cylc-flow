@@ -51,7 +51,8 @@ class CylcSuiteDBChecker(object):
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), db_path)
         self.conn = sqlite3.connect(db_path, timeout=10.0)
 
-    def display_maps(self, res):
+    @staticmethod
+    def display_maps(res):
         if not res:
             sys.stderr.write("INFO: No results to display.\n")
         else:
@@ -127,7 +128,8 @@ class CylcSuiteDBChecker(object):
                         return True
             return False
 
-    def validate_mask(self, mask):
+    @staticmethod
+    def validate_mask(mask):
         fieldnames = ["name", "status", "cycle"]  # extract from rundb.py?
         for term in mask.split(","):
             if term.strip(" ") not in fieldnames:

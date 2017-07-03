@@ -227,7 +227,8 @@ class JobFileWriter(object):
                 '\n    export CYLC_TASK_SSH_LOGIN_SHELL="%s"' %
                 self._get_host_item(job_conf, 'use login shell'))
 
-    def _write_environment_2(self, handle, job_conf):
+    @staticmethod
+    def _write_environment_2(handle, job_conf):
         """Run time environment part 2."""
         if job_conf['environment']:
             handle.write("\n\ncylc__job__inst__user_env() {")

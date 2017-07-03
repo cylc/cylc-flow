@@ -808,7 +808,8 @@ class SuiteConfig(object):
                 expanded_node_attrs[name] = val
         self.cfg['visualization']['node attributes'] = expanded_node_attrs
 
-    def is_graph_defined(self, dependency_map):
+    @staticmethod
+    def is_graph_defined(dependency_map):
         for item, value in dependency_map.items():
             if item == 'graph':
                 # Async graph.
@@ -822,7 +823,8 @@ class SuiteConfig(object):
                             return True
         return False
 
-    def dequote(self, s):
+    @staticmethod
+    def dequote(s):
         """Strip quotes off a string."""
         if (s[0] == s[-1]) and s.startswith(("'", '"')):
             return s[1:-1]
@@ -1260,10 +1262,11 @@ class SuiteConfig(object):
     def get_first_parent_descendants(self):
         return self.runtime['first-parent descendants']
 
-    def define_inheritance_tree(self, tree, hierarchy):
+    @staticmethod
+    def define_inheritance_tree(tree, hierarchy):
         """Combine inheritance hierarchies into a tree structure."""
-        for rt in hierarchy:
-            hier = copy(hierarchy[rt])
+        for rt_ in hierarchy:
+            hier = copy(hierarchy[rt_])
             hier.reverse()
             cur_tree = tree
             for item in hier:

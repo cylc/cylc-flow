@@ -236,13 +236,14 @@ class db_updater(threading.Thread):
             gobject.idle_add(self.update)
             sleep(0.1)
 
-    def statecol(self, state):
-        bg = '#19ae0a'
-        fg = '#030'
+    @staticmethod
+    def statecol(state):
+        bg_ = '#19ae0a'
+        fg_ = '#030'
         if state == '-':
             return (None, None, None)
         else:
-            return (fg, bg, bg)
+            return (fg_, bg_, bg_)
 
     def search_level(self, model, iter_, func, data):
         while iter_:
