@@ -3104,17 +3104,17 @@ This is what my suite does:..."""
             for ebox in subbox.get_children():
                 box = ebox.get_children()[0]
                 try:
-                    icon, cb = box.get_children()
+                    cb_ = box.get_children()[1]
                 except (ValueError, AttributeError):
                     # ValueError: an empty box to line things up.
                     # AttributeError: the name filter entry box.
                     pass
                 else:
-                    if cb.get_active():
+                    if cb_.get_active():
                         ebox.modify_bg(gtk.STATE_NORMAL, None)
                     else:
                         # Remove '_' (keyboard mnemonics) from state name.
-                        task_states.append(cb.get_label().replace('_', ''))
+                        task_states.append(cb_.get_label().replace('_', ''))
                         ebox.modify_bg(gtk.STATE_NORMAL,
                                        self.filter_highlight_color)
 
@@ -3131,13 +3131,13 @@ This is what my suite does:..."""
             for ebox in subbox.get_children():
                 box = ebox.get_children()[0]
                 try:
-                    icon, cb = box.get_children()
+                    chb = box.get_children()[1]
                 except (ValueError, AttributeError):
                     # ValueError: an empty box to line things up.
                     # AttributeError: the name filter entry box.
                     pass
                 else:
-                    cb.set_active(arg)
+                    chb.set_active(arg)
         self.check_task_filter_buttons()
 
     def reset_filter_entry(self, w):

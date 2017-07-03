@@ -655,8 +655,6 @@ def init_from_cfg(cfg):
         'cycle point num expanded year digits']
     time_zone = cfg['cylc']['cycle point time zone']
     custom_dump_format = cfg['cylc']['cycle point format']
-    initial_cycle_point = cfg['scheduling']['initial cycle point']
-    final_cycle_point = cfg['scheduling']['final cycle point']
     assume_utc = cfg['cylc']['UTC mode']
     cycling_mode = cfg['scheduling']['cycling mode']
 

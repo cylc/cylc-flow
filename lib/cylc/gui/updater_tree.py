@@ -142,7 +142,7 @@ class TreeUpdater(threading.Thread):
             self._prev_tooltip_task_id = None
             return False
         x, y = self.ttreeview.convert_widget_to_bin_window_coords(x, y)
-        path, column, cell_x, cell_y = self.ttreeview.get_path_at_pos(x, y)
+        path = self.ttreeview.get_path_at_pos(x, y)[0]
         if not path:
             return False
         model = self.ttreeview.get_model()
@@ -504,7 +504,7 @@ class TreeUpdater(threading.Thread):
                         data = new_fam_data[point_string][name]
                     else:
                         data = new_data[point_string][name]
-                    iter_, path = row_id_iters_left[(point_string, name)]
+                    iter_ = row_id_iters_left[(point_string, name)][0]
                 except KeyError:
                     if not is_fam:
                         raise

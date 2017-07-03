@@ -217,7 +217,7 @@ class db_updater(threading.Thread):
                         piter, [item] + [None, None, None, None, None, None])
                     self.build_treestore(new[key], xiter)
                 else:
-                    state, descr = new[key][0:2]
+                    state = new[key][0]
                     ts.append(
                         piter, [item] + new[key] + list(self.statecol(state)))
             else:
