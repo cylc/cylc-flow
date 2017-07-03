@@ -19,7 +19,7 @@
 
 from cylc.network.method import METHOD
 
-if METHOD == "https":
+if METHOD == "https" or "http":
     from cylc.network.https.suite_state_client import (
         StateSummaryClient, extract_group_state,
         get_id_summary, SUITE_STATUS_SPLIT_REC,

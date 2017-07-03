@@ -61,6 +61,7 @@ class SuiteSrvFilesManager(object):
     KEY_VERSION = "CYLC_VERSION"
     PASSPHRASE_CHARSET = ascii_letters + digits
     PASSPHRASE_LEN = 20
+    COMMS_PROTOCOL = "https"  # default (or none?)
 
     def __init__(self):
         self.local_passphrases = set()
@@ -176,6 +177,9 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
         """Return name of contact file."""
         return os.path.join(
             self.get_suite_srv_dir(reg), self.FILE_BASE_CONTACT)
+
+    def get_comms_protocol(self):
+        pass
 
     def get_auth_item(self, item, reg, owner=None, host=None, content=False):
         """Locate/load passphrase, SSL private key, SSL certificate, etc.

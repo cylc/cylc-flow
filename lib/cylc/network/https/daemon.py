@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from cylc.exceptions import CylcError
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2017 NIWA
@@ -47,6 +48,8 @@ class CommsDaemon(object):
         random.shuffle(self.ok_ports)
 
         comms_options = GLOBAL_CFG.get(['communication', 'options'])
+        comms_methods = GLOBAL_CFG.get(['communication', 'method'])
+        print comms_options
         # HTTP Digest Auth uses MD5 - pretty secure in this use case.
         # Extending it with extra algorithms is allowed, but won't be
         # supported by most browsers. requests and urllib2 are OK though.
@@ -56,9 +59,9 @@ class CommsDaemon(object):
             self.hash_algorithm = "SHA"
 
         # Set the comms method
-        if "https" in comms_options:
+        if "https" in comms_methods:
             self.comms_method = "https"
-        elif "http" in comms_options:
+        elif "http" in comms_methods:
             self.comms_method = "http"
         else:
             self.comms_method = None
@@ -115,6 +118,7 @@ class CommsDaemon(object):
         cherrypy.config["server.socket_host"] = '0.0.0.0'
         cherrypy.config["engine.autoreload.on"] = False
 
+        print self.comms_method
         if self.comms_method is None:
             # assume https if not config'd
             self.comms_method = "https"
@@ -128,13 +132,12 @@ class CommsDaemon(object):
                 cherrypy.config['server.ssl_certificate'] = self.cert
                 cherrypy.config['server.ssl_private_key'] = self.pkey
             except ImportError:
-                ERR.error("no HTTPS/OpenSSL support. Configure to run with "
-                          "HTTP first.")
-                exit(1)
+                ERR.error("no HTTPS/OpenSSL support. Aborting...")
+                raise CylcError("No HTTPS support. Configure suite to run in HTTP mode")
+
         elif self.comms_method== "http":
             # Do what you need to do for HTTP setup.
             print "Running under HTTP. (unsecured)"
-            pass
         print "The comms method is :", self.comms_method
 
         # this also for https?

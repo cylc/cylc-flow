@@ -48,11 +48,12 @@ class BaseCommsClient(object):
     METHOD_GET = 'GET'
 
     def __init__(self, suite, owner=USER, host=None, port=None, timeout=None,
-                 my_uuid=None, print_uuid=False):
+                 my_uuid=None, print_uuid=False, comms_protocol=None):
         self.suite = suite
         self.owner = owner
         self.host = host
         self.port = port
+        self._set_comms_protocol(comms_protocol)
         if timeout is not None:
             timeout = float(timeout)
         self.timeout = timeout
@@ -64,14 +65,51 @@ class BaseCommsClient(object):
         self.server_cert = None
         self.auth = None
 
-        # Add attributes for the comms type (http/https)
-        self.comms_method = None
+        # TODO Debugging only - remove later
+        if self.comms_protocol is None:
+            raise AttributeError("Comms protocol is still NONE!")
+            exit(1)
+
+    # Add attributes for the comms type (http/https)
+    # Where to read this from? From global-cfg? (Expensive?)
+    # passed in as argument?
+    def _set_comms_protocol(self, comms_protocol=None):
+        if comms_protocol is None:
+            try:
+                self._get_comms_from_suite_contact_file()
+                #comms_protocol = self.srv_files_mgr.
+                # get from suite contact file
+            except (KeyError, NotImplementedError): # No comm method set in suite contact
+                self._get_comms_from_global_config()
+                # read from global config file
+                # Else default to https.
+            finally:
+                print "Setting comms protocol to:", self.comms_protocol
+        # Fail if still none or some other weird setting.
+        # write to suite contact file?
+
+    def _get_comms_from_suite_contact_file(self):
+        raise NotImplementedError
+
+    def _get_comms_from_global_config(self):
+        from cylc.cfgspec.globalcfg import GLOBAL_CFG
+        comms_methods = GLOBAL_CFG.get(['communication', 'method'])
+        # Set the comms method
+        if "https" in comms_methods:
+            self.comms_protocol = "https"
+        elif "http" in comms_methods:
+            self.comms_protocol = "http"
+        print "Setting comms protocol from CONFIG to: ", self.comms_protocol
 
     def _compile_url(self, category, func_dict, host):
         payload = func_dict.pop("payload", None)
         method = func_dict.pop("method", self.METHOD)
         function = func_dict.pop("function", None)
-        url = 'https://%s:%s/%s/%s' % (host, self.port, category, function)
+
+        # This needs to be changed to use https or http
+        protocol_prefix = self.comms_protocol
+        url = protocol_prefix + '://%s:%s/%s/%s' % (host, self.port, category,
+                                                    function)
         # If there are any parameters left in the dict after popping,
         # append them to the url.
         if func_dict:

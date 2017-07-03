@@ -20,5 +20,5 @@
 from cylc.network.method import METHOD
 
 
-if METHOD == "https":
+if METHOD == "https" or "http":
     from cylc.network.https.suite_log_server import SuiteLogServer
