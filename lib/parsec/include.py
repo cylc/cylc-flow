@@ -52,16 +52,16 @@ flist = []
 include_re = re.compile('\s*%include\s+([\'"]?)(.*?)([\'"]?)\s*$')
 
 
-def inline(lines, dir, file, for_grep=False, for_edit=False, viewcfg={},
+def inline(lines, dir_, filename, for_grep=False, for_edit=False, viewcfg={},
            level=None):
     """Recursive inlining of parsec include-files"""
 
     global flist
     if level is None:
         # avoid being affected by multiple *different* calls to this function
-        flist = [file]
+        flist = [filename]
     else:
-        flist.append(file)
+        flist.append(filename)
     single = False
     mark = False
     label = False
@@ -108,7 +108,7 @@ def inline(lines, dir, file, for_grep=False, for_edit=False, viewcfg={},
             q1, match, q2 = m.groups()
             if q1 and (q1 != q2):
                 raise ParsecError("ERROR, mismatched quotes: " + line)
-            inc = os.path.join(dir, match)
+            inc = os.path.join(dir_, match)
             if inc not in done:
                 if single or for_edit:
                     done.append(inc)
@@ -125,7 +125,7 @@ def inline(lines, dir, file, for_grep=False, for_edit=False, viewcfg={},
                     h.close()
                     # recursive inclusion
                     outf.extend(inline(
-                        finc, dir, inc, for_grep, for_edit, viewcfg, level))
+                        finc, dir_, inc, for_grep, for_edit, viewcfg, level))
                     if for_grep or single or label or for_edit:
                         outf.append(
                             '#++++ END INLINED INCLUDE FILE ' + match + msg)
@@ -149,10 +149,10 @@ def inline(lines, dir, file, for_grep=False, for_edit=False, viewcfg={},
 def cleanup(suitedir):
     print 'CLEANUP REQUESTED, deleting:'
     for root, _, files in os.walk(suitedir):
-        for file in files:
-            if re.search('\.EDIT\..*$', file):
-                print ' + ' + re.sub(suitedir + '/', '', file)
-                os.unlink(os.path.join(root, file))
+        for filename in files:
+            if re.search('\.EDIT\..*$', filename):
+                print ' + ' + re.sub(suitedir + '/', '', filename)
+                os.unlink(os.path.join(root, filename))
 
 
 def backup(src, tag=''):
@@ -164,7 +164,7 @@ def backup(src, tag=''):
     backups[src] = bkp
 
 
-def split_file(dir, lines, file, recovery=False, level=None):
+def split_file(dir_, lines, filename, recovery=False, level=None):
     global modtimes
     global newfiles
 
@@ -175,15 +175,15 @@ def split_file(dir, lines, file, recovery=False, level=None):
         level += ' > '
         # check mod time on the target file
         if not recovery:
-            mtime = os.stat(file).st_mtime
-            if mtime != modtimes[file]:
+            mtime = os.stat(filename).st_mtime
+            if mtime != modtimes[filename]:
                 # oops - original file has changed on disk since we started
                 # editing
-                file += '.EDIT.NEW.' + datetime.datetime.now().isoformat()
-        newfiles.append(file)
+                filename += '.EDIT.NEW.' + datetime.datetime.now().isoformat()
+        newfiles.append(filename)
 
     inclines = []
-    fnew = open(file, 'wb')
+    fnew = open(filename, 'wb')
     match_on = False
     for line in lines:
         if re.match('^# !WARNING!', line):
@@ -195,7 +195,7 @@ def split_file(dir, lines, file, recovery=False, level=None):
             if m:
                 match_on = True
                 inc_filename = m.groups()[0]
-                inc_file = os.path.join(dir, m.groups()[0])
+                inc_file = os.path.join(dir_, m.groups()[0])
                 fnew.write('%include ' + inc_filename + '\n')
             else:
                 fnew.write(line)
@@ -207,7 +207,7 @@ def split_file(dir, lines, file, recovery=False, level=None):
             if m:
                 match_on = False
                 # now split this lot, in case of nested inclusions
-                split_file(dir, inclines, inc_file, recovery, level)
+                split_file(dir_, inclines, inc_file, recovery, level)
                 # now empty the inclines list ready for the next inclusion in
                 # this file
                 inclines = []

@@ -300,7 +300,7 @@ def _coerce_str_list(value, keys, args):
     return _strip_and_unquote_list(keys, value)
 
 
-def _expand_list(values, keys, type, allow_zeroes):
+def _expand_list(values, keys, type_, allow_zeroes):
     lvalues = []
     for item in values:
         try:
@@ -308,18 +308,18 @@ def _expand_list(values, keys, type, allow_zeroes):
         except ValueError:
             # too few values to unpack: no multiplier
             try:
-                lvalues.append(type(item))
+                lvalues.append(type_(item))
             except ValueError as exc:
                 raise IllegalValueError("list", keys, item, exc)
         else:
             # mult * val
             try:
-                lvalues += int(mult) * [type(val)]
+                lvalues += int(mult) * [type_(val)]
             except ValueError as exc:
                 raise IllegalValueError("list", keys, item, exc)
 
     if not allow_zeroes:
-        if type(0.0) in lvalues:
+        if type_(0.0) in lvalues:
             raise IllegalValueError("no-zero list", keys, values)
 
     return lvalues
