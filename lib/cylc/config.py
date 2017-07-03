@@ -1330,12 +1330,12 @@ class SuiteConfig(object):
             self.add_tree_titles(tree)
             # compute pre-title padding
             maxlen = 0
-            for ns in pruned_ancestors:
-                items = copy(pruned_ancestors[ns])
+            for namespace in pruned_ancestors:
+                items = copy(pruned_ancestors[namespace])
                 items.reverse()
-                for i in range(len(items)):
-                    tmp = 2 * i + 1 + len(items[i])
-                    if i == 0:
+                for itt, item in enumerate(items):
+                    tmp = 2 * itt + 1 + len(item)
+                    if itt == 0:
                         tmp -= 1
                     if tmp > maxlen:
                         maxlen = tmp
