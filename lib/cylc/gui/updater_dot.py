@@ -314,7 +314,7 @@ class DotUpdater(threading.Thread):
         self.selected_rows = []
         selection = self.led_treeview.get_selection()
         if selection:
-            _, selected_paths = selection.get_selected_rows()
+            selected_paths = selection.get_selected_rows()[1]
             model = self.led_treeview.get_model()
             for path in selected_paths:
                 self.selected_rows.append(
