@@ -6,9 +6,9 @@ title = "polls for success and failure tasks in another suite"
         live mode suite timeout = PT1M
 [scheduling]
     [[dependencies]]
-        graph = "lgood<{{UPSTREAM}}::good-stuff> & lbad<{{UPSTREAM}}::bad:fail>"
+        graph = "l-good<{{UPSTREAM}}::good-stuff> & lbad<{{UPSTREAM}}::bad:fail>"
 [runtime]
-    [[lgood,lbad]]
+    [[l-good,lbad]]
         [[[suite state polling]]]
             interval = PT2S
             max-polls = 20
