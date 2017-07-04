@@ -135,7 +135,7 @@ class CommsDaemon(object):
                 ERR.error("no HTTPS/OpenSSL support. Aborting...")
                 raise CylcError("No HTTPS support. Configure suite to run in HTTP mode")
 
-        elif self.comms_method== "http":
+        elif self.comms_method == "http":
             # Do what you need to do for HTTP setup.
             print "Running under HTTP. (unsecured)"
         print "The comms method is :", self.comms_method

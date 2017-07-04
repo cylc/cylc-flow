@@ -61,13 +61,29 @@ class SuiteSrvFilesManager(object):
     KEY_VERSION = "CYLC_VERSION"
     PASSPHRASE_CHARSET = ascii_letters + digits
     PASSPHRASE_LEN = 20
-    COMMS_PROTOCOL = "https"  # default (or none?)
+    KEY_COMMS_PROTOCOL = "CYLC_COMMS_PROTOCOL"  # default (or none?)
 
     def __init__(self):
         self.local_passphrases = set()
         self.cache = {self.FILE_BASE_PASSPHRASE: {}}
         self.can_disk_cache_passphrases = {}
         self.can_use_load_auths = {}
+
+    def store_comms_protocol(self, reg, owner, host, commsprotocol):
+        """Caches and writes the comms protocol to a a file"""
+        if owner is None:
+            owner = USER
+        if host is None:
+            host = get_suite_host()
+        path = self._get_cache_dir(reg, owner, host)
+        self.cache[self.KEY_COMMS_PROTOCOL][(reg, owner, host)] = commsprotocol
+        if self.can_disk_cache_passphrases.get((reg, owner, host)):
+            try:
+                self._dump_item(path, self.FILE_BASE_PASSPHRASE, commsprotocol)
+            except (IOError, OSError):
+                if cylc.flags.debug:
+                    import traceback
+                    traceback.print_exc()
 
     def cache_passphrase(self, reg, owner, host, value):
         """Cache and dump passphrase for a remote suite in standard location.
@@ -508,7 +524,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
 
         1. File permission should already be user-read-write-only on
            creation by mkstemp.
-        2. The combination of os.fsync and os.rename should guarentee
+        2. The combination of os.fsync and os.rename should guarantee
            that we don't end up with an incomplete file.
         """
         mkdir_p(path)
