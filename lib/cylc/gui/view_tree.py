@@ -104,7 +104,8 @@ class ControlTree(object):
         # multiple selection
         ts = self.ttreeview.get_selection()
         self.ttreeview.set_rubber_banding(True)
-        ts.set_mode(gtk.SELECTION_MULTIPLE)
+        if ts:
+            ts.set_mode(gtk.SELECTION_MULTIPLE)
 
         self.ttreeview.connect(
             'button_press_event', self.on_treeview_button_pressed)
@@ -396,14 +397,17 @@ class TreeViewTaskExtractor(object):
     def get_selected_rows(self):
         """Returns a list of rows that are currently selected in the provided
         treeview. Rows are returned in the form (path, col1, col2)"""
-        model, rows = self.treeview.get_selection().get_selected_rows()
-        rows.sort()
         ret = []
-        for row in rows:
-            _iter = model.get_iter(row)
-            path = model.get_path(_iter)
-            ret.append((
-                path, model.get_value(_iter, 0), model.get_value(_iter, 1)))
+        selection = self.treeview.get_selection()
+        if selection:
+            model, rows = selection.get_selected_rows()
+            rows.sort()
+            for row in rows:
+                _iter = model.get_iter(row)
+                path = model.get_path(_iter)
+                ret.append((
+                    path, model.get_value(_iter, 0),
+                    model.get_value(_iter, 1)))
         return ret
 
     def _make_tree_from_rows(self, rows):
