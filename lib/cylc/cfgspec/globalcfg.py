@@ -521,10 +521,10 @@ class GlobalConfig(config):
             modify_dirs = True
         if value is not None and 'directory' in item:
             if replace_home and (modify_dirs or owner != USER):
-                # replace local home dir with $HOME for evaluation on other host
+                # replace local home dir with $HOME for eval'n on other host
                 value = value.replace(os.environ['HOME'], '$HOME')
             elif owner != USER:
-                # replace USER with owner for direct access via local filesystem
+                # replace USER with owner for direct access via local filesys
                 value = value.replace('/%s/' % USER, '/%s/' % owner)
         return value
 
