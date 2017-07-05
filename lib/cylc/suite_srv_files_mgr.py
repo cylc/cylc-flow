@@ -593,10 +593,22 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
             host = 'localhost'
         if not is_remote_host(host) and not is_remote_user(owner):
             return
+        from cylc.cfgspec.globalcfg import GLOBAL_CFG
+        if item == 'contact' and not is_remote_host(host):
+            # Attempt to read suite contact file via the local filesystem.
+            path = r'%(run_d)s/%(srv_base)s' % {
+                'run_d': GLOBAL_CFG.get_derived_host_item(
+                    reg, 'suite run directory', host, owner,
+                    replace_home=False),
+                'srv_base': self.DIR_BASE_SRV,
+            }
+            content = self._load_local_item(item, path)
+            if content is not None:
+                return content
+            # Else drop through and attempt via ssh to the suite account.
         # Prefix STDOUT to ensure returned content is relevant
         prefix = r'[CYLC-AUTH] %(suite)s' % {'suite': reg}
         # Attempt to cat passphrase file under suite service directory
-        from cylc.cfgspec.globalcfg import GLOBAL_CFG
         script = (
             r"""echo '%(prefix)s'; """
             r'''cat "%(run_d)s/%(srv_base)s/%(item)s"'''
