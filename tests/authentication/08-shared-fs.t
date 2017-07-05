@@ -40,21 +40,31 @@ cylc register "${SUITE_NAME}" 2>'/dev/null'
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
 cylc run --debug --reference-test --host="${CYLC_TEST_HOST}" "${SUITE_NAME}" \
-    1>'/dev/null' 2>&1 &
+    1>'out' 2>&1 &
 SUITE_PID="$!"
 
 # Poll for job to fail
 SUITE_LOG="${SUITE_RUN_DIR}/log/suite/log"
-poll '!' test -e "${SUITE_LOG}"
-poll '!' grep -q -F 't1.19700101T0000Z failed' "${SUITE_LOG}" 2>'/dev/null'
+# Note: double poll existence of suite log on suite host and then localhost to
+# avoid any issues with unstable mounting of the shared file system.
+poll "! ssh -oBatchMode=yes -n '${CYLC_TEST_HOST}' \"test -e '${SUITE_LOG}'\""
+poll "! test -e '${SUITE_LOG}'"
+poll "! grep -qF '[t1.19700101T0000Z] -submitted => running' '${SUITE_LOG}'" \
+    2>'/dev/null'
+poll "! grep -qF '[t1.19700101T0000Z] -running => failed' '${SUITE_LOG}'" \
+    2>'/dev/null'
 
 run_ok "${TEST_NAME_BASE}-broadcast" \
     cylc broadcast -n 't1' -s '[environment]CYLC_TEST_VAR_FOO=foo' "${SUITE_NAME}"
-sleep 1
 run_ok "${TEST_NAME_BASE}-trigger" \
     cylc trigger "${SUITE_NAME}" 't1' '19700101T0000Z'
 
-run_ok "${TEST_NAME_BASE}-run" wait "${SUITE_PID}"
+if wait "${SUITE_PID}"; then
+    ok "${TEST_NAME_BASE}-run"
+else
+    fail "${TEST_NAME_BASE}-run"
+    cat 'out' >&2
+fi
 
 purge_suite "${SUITE_NAME}"
 exit
