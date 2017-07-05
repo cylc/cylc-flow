@@ -589,6 +589,8 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
 
     def _load_remote_item(self, item, reg, owner, host):
         """Load content of service item from remote [owner@]host via SSH."""
+        if host is None:
+            host = 'localhost'
         if not is_remote_host(host) and not is_remote_user(owner):
             return
         # Prefix STDOUT to ensure returned content is relevant
