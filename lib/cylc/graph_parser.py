@@ -19,6 +19,7 @@
 import re
 import unittest
 from cylc.param_expand import GraphExpander
+from cylc.task_id import TaskID
 
 """Module for parsing cylc graph strings."""
 
@@ -95,35 +96,42 @@ class GraphParser(object):
     LEN_FAM_TRIG_EXT_ALL = len(FAM_TRIG_EXT_ALL)
     LEN_FAM_TRIG_EXT_ANY = len(FAM_TRIG_EXT_ANY)
 
+    _RE_NODE = r'(?:!)?' + TaskID.NAME_RE
+    _RE_PARAMS = r'<[\w,=\-+]+>'
+    _RE_OFFSET = r'\[[\w\-\+\^:]+\]'
+    _RE_TRIG = r':[\w\-]+'
+
     # Match fully qualified parameterized single nodes.
     REC_NODE_FULL = re.compile(r'''
         (
-        (?:(?:!)?\w[\w\-+%@]*)  # node name
-        (?:<[\w,=\-+]+>)?       # optional parameter list
-        (?:\[[\w\-\+\^:]+\])?   # optional cycle point offset
-        (?::[\w\-]+)?           # optional trigger type
+        (?:''' + _RE_NODE + r''')    # node name
+        (?:''' + _RE_PARAMS + r''')? # optional parameter list
+        (?:''' + _RE_OFFSET + r''')? # optional cycle point offset
+        (?:''' + _RE_TRIG + r''')?   # optional trigger type
         )
     ''', re.X)           # end of string
 
     # Extract node info from a left-side expression, after parameter expansion.
     REC_NODES = re.compile(r'''
-        ((?:!)?\w[\w\-+%@]*)  # node name
-        (\[[\w\-\+\^:]+\])?   # optional cycle point offset
-        (:[\w\-]+)?           # optional trigger type
+        (''' + _RE_NODE + r''')      # node name
+        (''' + _RE_OFFSET + r''')?   # optional cycle point offset
+        (''' + _RE_TRIG + r''')?     # optional trigger type
     ''', re.X)
 
     REC_TRIG_QUAL = re.compile(r'''
-        (?:(?:!)?\w[\w\-+%@]*)   # node name (ignore)
-        (:[\w\-]+)?              # optional trigger type
+        (?:''' + _RE_NODE + r''')    # node name (ignore)
+        (''' + _RE_TRIG + r''')?     # optional trigger type
     ''', re.X)
 
     REC_COMMENT = re.compile('#.*$')
 
     # Detect presence of expansion parameters in a graph line.
-    REC_PARAMETERS = re.compile(r'<[\w,=\-+]+>')
+    REC_PARAMS = re.compile(_RE_PARAMS)
 
     # Detect and extract suite state polling task info.
-    REC_SUITE_STATE = re.compile('(\w+)(<([\w\.\-/]+)::(\w+)(:\w+)?>)')
+    REC_SUITE_STATE = re.compile(
+        r'(' + TaskID.NAME_RE + ')(<([\w\.\-/]+)::(' + TaskID.NAME_RE + ')(' +
+        _RE_TRIG + ')?>)')
 
     def __init__(self, family_map=None, parameters=None):
         """Initializing the graph string parser.
@@ -235,7 +243,7 @@ class GraphParser(object):
         line_set = set()
         graph_expander = GraphExpander(self.parameters)
         for line in full_lines:
-            if not self.__class__.REC_PARAMETERS.search(line):
+            if not self.__class__.REC_PARAMS.search(line):
                 line_set.add(line)
                 continue
             for l in graph_expander.expand(line):

@@ -49,11 +49,11 @@ echo cylc suite-state --task=bad --point=\$CYLC_TASK_CYCLE_POINT --status=fail -
 cylc suite-state --task=bad --point=\$CYLC_TASK_CYCLE_POINT --status=fail --interval=2 --max-polls=20 $UPSTREAM
 __END__
 
-# check auto-generated task script for lgood
-cylc get-config --set UPSTREAM=$UPSTREAM -i '[runtime][lgood]script' $SUITE_NAME > lgood.script
-cmp_ok lgood.script << __END__
-echo cylc suite-state --task=good --point=\$CYLC_TASK_CYCLE_POINT --status=succeed --interval=2 --max-polls=20 $UPSTREAM
-cylc suite-state --task=good --point=\$CYLC_TASK_CYCLE_POINT --status=succeed --interval=2 --max-polls=20 $UPSTREAM
+# check auto-generated task script for l-good
+cylc get-config --set UPSTREAM=$UPSTREAM -i '[runtime][l-good]script' $SUITE_NAME > l-good.script
+cmp_ok l-good.script << __END__
+echo cylc suite-state --task=good-stuff --point=\$CYLC_TASK_CYCLE_POINT --status=succeed --interval=2 --max-polls=20 $UPSTREAM
+cylc suite-state --task=good-stuff --point=\$CYLC_TASK_CYCLE_POINT --status=succeed --interval=2 --max-polls=20 $UPSTREAM
 __END__
 
 #-------------------------------------------------------------------------------

@@ -5,11 +5,11 @@ title = "One task takes 20 sec to succeed, another to fail."
 [scheduling]
     [[dependencies]]
         graph = """
-             good & bad
+             good-stuff & bad
           bad:fail => !bad
                 """
 [runtime]
-    [[good]]
+    [[good-stuff]]
         script = "sleep 20"
     [[bad]]
         script = "sleep 20; /bin/false"
