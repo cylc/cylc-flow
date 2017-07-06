@@ -112,27 +112,27 @@ class TreeUpdater(threading.Thread):
         self.updater.set_update(True)
         return True
 
-    def search_level(self, model, iter, func, data):
-        while iter:
-            if func(model, iter, data):
-                return iter
-            iter = model.iter_next(iter)
+    def search_level(self, model, iter_, func, data):
+        while iter_:
+            if func(model, iter_, data):
+                return iter_
+            iter_ = model.iter_next(iter_)
         return None
 
-    def search_treemodel(self, model, iter, func, data):
-        while iter:
-            if func(model, iter, data):
-                return iter
+    def search_treemodel(self, model, iter_, func, data):
+        while iter_:
+            if func(model, iter_, data):
+                return iter_
             result = self.search_treemodel(
-                model, model.iter_children(iter), func, data)
+                model, model.iter_children(iter_), func, data)
             if result:
                 return result
-            iter = model.iter_next(iter)
+            iter_ = model.iter_next(iter_)
         return None
 
-    def match_func(self, model, iter, data):
+    def match_func(self, model, iter_, data):
         column, key = data
-        value = model.get_value(iter, column)
+        value = model.get_value(iter_, column)
         return value == key
 
     def on_query_tooltip(self, widget, x, y, kbd_ctx, tooltip):
@@ -217,11 +217,11 @@ class TreeUpdater(threading.Thread):
                 (self.updater.fam_state_summary, new_fam_data,
                  self._prev_fam_data, True)]:
             # Populate new_data and new_fam_data.
-            for id in summary:
-                name, point_string = TaskID.split(id)
+            for id_ in summary:
+                name, point_string = TaskID.split(id_)
                 if point_string not in dest:
                     dest[point_string] = {}
-                state = summary[id].get('state')
+                state = summary[id_].get('state')
 
                 # Populate task timing slots.
                 t_info = {}
@@ -235,12 +235,12 @@ class TreeUpdater(threading.Thread):
                         t_info['mean_elapsed_time_string'] = ""
                         t_info['progress'] = 0
                 else:
-                    meant = summary[id].get('mean_elapsed_time')
-                    tstart = summary[id].get('started_time')
+                    meant = summary[id_].get('mean_elapsed_time')
+                    tstart = summary[id_].get('started_time')
                     tetc_string = None
 
                     for dt in tkeys:
-                        t_info[dt] = summary[id][dt]
+                        t_info[dt] = summary[id_][dt]
 
                     # Compute percent progress.
                     if (isinstance(tstart, float) and (
@@ -263,13 +263,13 @@ class TreeUpdater(threading.Thread):
                         # Task not finished, but has started and has a meant;
                         # so we can compute an expected time of completion.
                         tetc_string = (
-                            self._id_tetc_cache.get(id, {}).get(tetc_unix))
+                            self._id_tetc_cache.get(id_, {}).get(tetc_unix))
                         if tetc_string is None:
                             # We have to calculate it.
                             tetc_string = get_time_string_from_unix_time(
                                 tetc_unix,
                                 custom_time_zone_info=daemon_time_zone_info)
-                            self._id_tetc_cache[id] = {tetc_unix: tetc_string}
+                            self._id_tetc_cache[id_] = {tetc_unix: tetc_string}
                         t_info['finished_time_string'] = tetc_string
                         estimated_t_finish = True
                     else:
@@ -302,15 +302,15 @@ class TreeUpdater(threading.Thread):
                             t_info['finished_time_string'])
 
                 # Use "*" (or "" for family rows) until slot is populated.
-                job_id = summary[id].get('submit_method_id')
-                batch_sys_name = summary[id].get('batch_sys_name')
-                host = summary[id].get('host')
-                message = summary[id].get('latest_message')
+                job_id = summary[id_].get('submit_method_id')
+                batch_sys_name = summary[id_].get('batch_sys_name')
+                host = summary[id_].get('host')
+                message = summary[id_].get('latest_message')
                 if message is not None:
                     if last_update_date is not None:
                         message = message.replace(
                             last_update_date + "T", "", 1)
-                    submit_num = summary[id].get('submit_num')
+                    submit_num = summary[id_].get('submit_num')
                     if submit_num:
                         message = "job(%02d) " % submit_num + message
                 if is_fam:
@@ -374,9 +374,9 @@ class TreeUpdater(threading.Thread):
             # Some previous task ids need deleting, so rebuild the tree.
             should_rebuild_tree = True
 
-        for id in tetc_cached_ids_left:
+        for id_ in tetc_cached_ids_left:
             # These ids were not present in the summary - so clear them.
-            self._id_tetc_cache.pop(id)
+            self._id_tetc_cache.pop(id_)
 
         # Cache the current row point-string and names.
         row_id_iters_left = {}

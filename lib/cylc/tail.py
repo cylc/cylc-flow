@@ -19,13 +19,13 @@
 import time
 
 
-def tail(file):
+def tail(file_):
     while True:
-        where = file.tell()
-        line = file.readline()
+        where = file_.tell()
+        line = file_.readline()
         if not line:
             time.sleep(1)
-            file.seek(where)
+            file_.seek(where)
             # return even if no new line so the host thread doesn't hang when
             # the gui exits.
             yield None

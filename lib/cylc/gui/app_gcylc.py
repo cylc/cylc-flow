@@ -74,7 +74,7 @@ from cylc.task_state import (
 from cylc.task_state_prop import get_status_prop
 
 
-def run_get_stdout(command, filter=False):
+def run_get_stdout(command, filter_=False):
     try:
         popen = Popen(command, shell=True, stderr=PIPE, stdout=PIPE)
         out = popen.stdout.read()
@@ -99,7 +99,7 @@ def run_get_stdout(command, filter=False):
         res = []
         for line in out.split('\n'):
             line.strip()
-            if filter:
+            if filter_:
                 if line.startswith('!cylc!'):
                     res.append(line[6:])
             else:
@@ -1104,7 +1104,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             "cylc get-suite-config --mark-up" + self.get_remote_run_opts() +
             " " + self.cfg.template_vars_opts + " --one-line" + item1 +
             item2 + " " + self.cfg.suite)
-        res = run_get_stdout(command, filter=True)  # (T/F, ['ct ct'])
+        res = run_get_stdout(command, filter_=True)  # (T/F, ['ct ct'])
 
         if res[0]:
             out1, out2 = res[1][0].split()
@@ -2995,10 +2995,10 @@ to reduce network traffic.""")
             buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
                      gtk.STOCK_OPEN, gtk.RESPONSE_OK)
         )
-        filter = gtk.FileFilter()
-        filter.set_name("Cylc Suite Definition Files")
-        filter.add_pattern(SuiteSrvFilesManager.FILE_BASE_SUITE_RC)
-        dialog.add_filter(filter)
+        filter_ = gtk.FileFilter()
+        filter_.set_name("Cylc Suite Definition Files")
+        filter_.add_pattern(SuiteSrvFilesManager.FILE_BASE_SUITE_RC)
+        dialog.add_filter(filter_)
 
         response = dialog.run()
         if response != gtk.RESPONSE_OK:
@@ -3009,7 +3009,7 @@ to reduce network traffic.""")
 
         dialog.destroy()
 
-        dir = os.path.dirname(res)
+        directory = os.path.dirname(res)
         fil = os.path.basename(res)
 
         if fil != SuiteSrvFilesManager.FILE_BASE_SUITE_RC:
@@ -3029,9 +3029,9 @@ to reduce network traffic.""")
         # return the "real" path that really should be hidden:
         home_real = os.path.realpath(home)
         # so let's restore it to the familiar form (/home/oliver):
-        dir = re.sub('^' + home_real, home, dir)
+        directory = re.sub('^' + home_real, home, directory)
 
-        suiterc = os.path.join(dir, fil)
+        suiterc = os.path.join(directory, fil)
 
         if not os.path.isfile(suiterc):
             info_dialog(
@@ -3055,12 +3055,12 @@ This is what my suite does:..."""
         window = EntryDialog(parent=self.window, flags=0,
                              type=gtk.MESSAGE_QUESTION,
                              buttons=gtk.BUTTONS_OK_CANCEL,
-                             message_format="Suite name for " + dir)
+                             message_format="Suite name for " + directory)
 
         suite = window.run()
         window.destroy()
         if suite:
-            command = "cylc register " + suite + ' ' + dir
+            command = "cylc register " + suite + ' ' + directory
             res = run_get_stdout(command)[0]
             if res:
                 self.reset(suite)
@@ -3408,7 +3408,7 @@ For more Stop options use the Control menu.""")
             self.filter_states_excl,
             self.popup_filter_dialog,
             self._alter_status_toolbar_menu,
-            lambda: self.run_suite_log(None, type="err"))
+            lambda: self.run_suite_log(None, type_="err"))
         self._set_info_bar()
 
     def popup_uuid_dialog(self, w):
@@ -3531,11 +3531,11 @@ For more Stop options use the Control menu.""")
         self.gcapture_windows.append(foo)
         foo.run()
 
-    def run_suite_log(self, w, type='log'):
+    def run_suite_log(self, w, type_='log'):
         if is_remote(self.cfg.host, self.cfg.owner):
-            if type == 'out':
+            if type_ == 'out':
                 xopts = ' --stdout '
-            elif type == 'err':
+            elif type_ == 'err':
                 xopts = ' --stderr '
             else:
                 xopts = ' '
@@ -3544,14 +3544,14 @@ For more Stop options use the Control menu.""")
                        self.get_remote_run_opts() +
                        xopts + self.cfg.suite)
             foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 800, 400,
-                                   title="%s %s" % (self.cfg.suite, type))
+                                   title="%s %s" % (self.cfg.suite, type_))
             self.gcapture_windows.append(foo)
             foo.run()
             return
 
         task_name_list = []  # TODO
         # assumes suite out, err, and log are in the same location:
-        foo = cylc_logviewer(type, self.cfg.logdir, task_name_list)
+        foo = cylc_logviewer(type_, self.cfg.logdir, task_name_list)
         self.quitters.append(foo)
 
     def run_suite_view(self, w, method):

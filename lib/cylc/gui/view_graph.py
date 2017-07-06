@@ -82,10 +82,10 @@ Dependency graph suite control interface.
         if m:
             # base graph node
             task_id = m.groups()[0]
-            self.right_click_menu(event, task_id, type='base graph task')
+            self.right_click_menu(event, task_id, type_='base graph task')
             return
 
-        self.right_click_menu(event, url, type='live task')
+        self.right_click_menu(event, url, type_='live task')
 
     def on_motion_notify(self, widget, event):
         """Add a new tooltip when the cursor moves in the graph."""
@@ -114,7 +114,7 @@ Dependency graph suite control interface.
     def stop(self):
         self.t.quit = True
 
-    def right_click_menu(self, event, task_id, type='live task'):
+    def right_click_menu(self, event, task_id, type_='live task'):
         name, point_string = TaskID.split(task_id)
 
         menu = gtk.Menu()

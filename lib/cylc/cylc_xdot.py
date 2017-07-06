@@ -550,8 +550,8 @@ class xdot_widgets(object):
     def get(self):
         return self.vbox
 
-    def set_filter(self, filter):
-        self.widget.set_filter(filter)
+    def set_filter(self, filter_):
+        self.widget.set_filter(filter_)
 
     def set_dotcode(self, dotcode, filename='<stdin>', no_zoom=False):
         if no_zoom:

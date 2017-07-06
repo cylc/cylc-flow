@@ -95,11 +95,11 @@ class cylc_logviewer(logviewer):
 
         task = model[index][0]
         if task == 'all':
-            filter = None
+            filter_ = None
         else:
-            filter = '\\[' + task + '%\d+\\]'
+            filter_ = '\\[' + task + '%\d+\\]'
 
-        self.task_filter = filter
+        self.task_filter = filter_
         self.update_view()
 
         # TODO - CHECK ALL BOOLEAN RETURN VALUES THROUGHOUT THE GUI
@@ -108,11 +108,11 @@ class cylc_logviewer(logviewer):
     def custom_filter_log(self, e):
         txt = e.get_text()
         if txt == '':
-            filter = None
+            filter_ = None
         else:
-            filter = txt
+            filter_ = txt
 
-        self.custom_filter = filter
+        self.custom_filter = filter_
         self.update_view()
 
         return False
