@@ -829,7 +829,8 @@ class TaskEventsManager(object):
                 continue
             # Custom event handler can be a command template string
             # or a command that takes 4 arguments (classic interface)
-            cmd = handler % {
+
+            handler_data = {
                 "event": quote(event),
                 "suite": quote(self.suite),
                 "point": quote(str(itask.point)),
@@ -837,10 +838,15 @@ class TaskEventsManager(object):
                 "submit_num": itask.submit_num,
                 "id": quote(itask.identity),
                 "message": quote(message),
-                "importance": quote(itask.tdef.rtconfig['meta']['importance']),
-                "task_url": quote(itask.tdef.rtconfig['meta']['URL']),
                 "suite_url": quote(self.suite_url),
             }
+
+            if itask.tdef.rtconfig['meta']:
+                for key, value in itask.tdef.rtconfig['meta'].items():
+                    handler_data[key] = quote(value)
+
+            cmd = handler % (handler_data)
+
             if cmd == handler:
                 # Nothing substituted, assume classic interface
                 cmd = "%s '%s' '%s' '%s' '%s'" % (

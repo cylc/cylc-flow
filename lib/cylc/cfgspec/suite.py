@@ -489,21 +489,17 @@ def upg(cfg, descr):
         ['runtime', '__MANY__', 'execution polling intervals'],
         ['runtime', '__MANY__', 'job', 'execution polling intervals'])
     u.deprecate(
-        '6.11.0',
+        '7.5.0',
         ['runtime', '__MANY__', 'title'],
         ['runtime', '__MANY__', 'meta', 'title'])
     u.deprecate(
-        '6.11.0',
+        '7.5.0',
         ['runtime', '__MANY__', 'description'],
         ['runtime', '__MANY__', 'meta', 'description'])
     u.deprecate(
-        '6.11.0',
+        '7.5.0',
         ['runtime', '__MANY__', 'URL'],
         ['runtime', '__MANY__', 'meta', 'URL'])
-    u.deprecate(
-        '6.11.0',
-        ['runtime', '__MANY__', 'importance'],
-        ['runtime', '__MANY__', 'meta', '__MANY__'])
     u.obsolete('7.2.2', ['cylc', 'dummy mode'])
     u.obsolete('7.2.2', ['cylc', 'simulation mode'])
     u.obsolete('7.2.2', ['runtime', '__MANY__', 'dummy mode'])

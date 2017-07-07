@@ -11,4 +11,4 @@
             importance = 3
             color = red
         [[[events]]]
-            failed handler = echo 'NAME =' %(name)s 'POINT =' %(point)s 'IMPORTANCE =' %(importance)s
+            failed handler = echo 'NAME =' %(name)s 'POINT =' %(point)s 'IMPORTANCE =' %(importance)s 'COLOR =' %(color)s

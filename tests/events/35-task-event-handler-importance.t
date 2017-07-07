@@ -28,7 +28,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 T1_ACTIVITY_LOG="${SUITE_RUN_DIR}/log/job/1/t1/NN/job-activity.log"
 
 grep_ok \
-    "\\[(('event-handler-00', 'failed'), 1) out\\] NAME = t1 POINT = 1 IMPORTANCE = 3" \
+    "\\[(('event-handler-00', 'failed'), 1) out\\] NAME = t1 POINT = 1 IMPORTANCE = 3 COLOR = red" \
     "${T1_ACTIVITY_LOG}"    
 #------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
