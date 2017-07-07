@@ -404,7 +404,7 @@ class ISO8601Sequence(SequenceBase):
         self.step = ISO8601Interval(str(self.recurrence.duration))
         self.value = str(self.recurrence)
         # Concatenate the strings in exclusion list
-        if str(self.exclusions):
+        if self.exclusions:
             self.value += '!' + str(self.exclusions)
 
     def get_interval(self):
@@ -987,6 +987,17 @@ class TestISO8601Sequence(unittest.TestCase):
                                   '20170427T0000Z', '20170428T0000Z',
                                   '20170429T0000Z', '20170430T0000Z',
                                   '20170502T0000Z'])
+
+    def test_exclusions_to_string(self):
+        init(time_zone='Z')
+        # Chack that exclusions are not included where they should not be.
+        basic = ISO8601Sequence('PT1H', '2000', '2001')
+        self.assertFalse('!' in str(basic))
+
+        # Check that exclusions are parsable.
+        sequence = ISO8601Sequence('PT1H!(20000101T10Z, PT6H)', '2000', '2001')
+        sequence2 = ISO8601Sequence(str(sequence), '2000', '2001')
+        self.assertEqual(sequence, sequence2)
 
     def test_advanced_exclusions_sequences1(self):
         """Advanced exclusions refers to exclusions that are not just
