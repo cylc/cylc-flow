@@ -21,6 +21,7 @@ import os
 import re
 import xdot
 from cylc.config import SuiteConfig
+from cylc.cycling.loader import get_point
 from cylc.graphing import CGraphPlain, CGraph
 from cylc.gui import util
 from cylc.task_id import TaskID
@@ -30,6 +31,13 @@ from cylc.suite_logging import ERR
 Cylc-modified xdot windows for the "cylc graph" command.
 TODO - factor more commonality out of MyDotWindow, MyDotWindow2
 """
+
+
+def style_ghost_node(node):
+    """Apply default style to a ghost node."""
+    node.attr['color'] = '#888888'
+    node.attr['fontcolor'] = '#888888'
+    node.attr['fillcolor'] = '#eeeeee'  # Used when style=filled.
 
 
 class CylcDotViewerCommon(xdot.DotWindow):
@@ -382,10 +390,27 @@ class MyDotWindow(CylcDotViewerCommon):
     def ungroup_all(self, w):
         self.get_graph(ungroup_all=True)
 
+    def check_ghost_node(self, name, point, cache=None):
+        """Returns True if the task <name> at cycle point <point> is a ghost.
+        """
+        for sequence in self.suiterc.taskdefs[name].sequences:
+            p_str = str(point)
+            if (cache and sequence in cache and p_str in cache[sequence] and
+                    cache[sequence][p_str]):
+                return False
+            else:
+                temp = sequence.is_on_sequence(get_point(point))
+                if cache:
+                    cache.setdefault(sequence, {})[p_str] = temp
+                if temp:
+                    return False
+        return True
+
     def get_graph(self, group_nodes=None, ungroup_nodes=None,
                   ungroup_recursive=False, ungroup_all=False, group_all=False):
         if not self.suiterc:
             return
+        family_nodes = self.suiterc.get_first_parent_descendants()
         # Note this is used by "cylc graph" but not gcylc.
         # self.start_ and self.stop_point_string come from CLI.
         graph = CGraph.get_graph(
@@ -399,10 +424,20 @@ class MyDotWindow(CylcDotViewerCommon):
 
         graph.graph_attr['rankdir'] = self.orientation
 
-        for node in graph.nodes():
-            name = TaskID.split(node.get_name())[0]
-            if name in self.suiterc.get_first_parent_descendants():
+        # Style nodes.
+        cache = {}  # For caching is_on_sequence() calls.
+        for node in graph.iternodes():
+            name, point = TaskID.split(node.get_name())
+            if name in family_nodes:
+                # Style family nodes.
                 node.attr['shape'] = 'doubleoctagon'
+                # Style ghost family nodes.
+                if any(self.check_ghost_node(child, point, cache=cache) for
+                       child in family_nodes[name]):
+                    style_ghost_node(node)
+            elif self.check_ghost_node(name, point, cache=cache):
+                # Style ghost nodes.
+                style_ghost_node(node)
 
         self.graph = graph
         self.filter_graph()
