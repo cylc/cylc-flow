@@ -69,19 +69,6 @@ class SuiteSrvFilesManager(object):
         self.can_disk_cache_passphrases = {}
         self.can_use_load_auths = {}
 
-#     def store_comms_protocol(self, commsprotocol):
-#         """Caches and writes the comms protocol to a a file"""
-#         #path = self._get_cache_dir(reg, owner, host)
-#         #self.cache[self.KEY_COMMS_PROTOCOL][(reg, owner, host)] = commsprotocol
-#         #if self.can_disk_cache_passphrases.get((reg, owner, host)):
-#         pass
-# #         try:
-# #             self._dump_item(path, self.FILE_BASE_PASSPHRASE, commsprotocol)
-# #         except (IOError, OSError):
-# #             if cylc.flags.debug:
-# #                 import traceback
-# #                 traceback.print_exc()
-
     def cache_passphrase(self, reg, owner, host, value):
         """Cache and dump passphrase for a remote suite in standard location.
 
@@ -191,10 +178,6 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
         return os.path.join(
             self.get_suite_srv_dir(reg), self.FILE_BASE_CONTACT)
 
-    def get_comms_protocol(self, reg, owner=None, host=None):
-        """Grab the the comms protocol from the contact file"""
-        print "You are not supposed to be here"
-
     def get_auth_item(self, item, reg, owner=None, host=None, content=False):
         """Locate/load passphrase, SSL private key, SSL certificate, etc.
 
@@ -224,7 +207,8 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
         """
         if item not in [
                 self.FILE_BASE_SSL_CERT, self.FILE_BASE_SSL_PEM,
-                self.FILE_BASE_PASSPHRASE, self.FILE_BASE_CONTACT, self.KEY_COMMS_PROTOCOL]:
+                self.FILE_BASE_PASSPHRASE, self.FILE_BASE_CONTACT,
+                self.KEY_COMMS_PROTOCOL]:
             raise ValueError("%s: item not recognised" % item)
         if item == self.FILE_BASE_PASSPHRASE:
             self.can_disk_cache_passphrases[(reg, owner, host)] = False
