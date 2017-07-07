@@ -314,6 +314,7 @@ class CGraph(CGraphPlain):
     def style_node(self, node_string):
         super(self.__class__, self).style_node(node_string)
         node = self.get_node(node_string)
+        node.attr['shape'] = 'ellipse'  # Default shape.
         for item in self.node_attr_by_taskname(node_string):
             attr, value = [val.strip() for val in item.split('=', 1)]
             node.attr[attr] = value

@@ -1,5 +1,5 @@
 graph
-node "foo.20100104T0000Z" "foo\n20100104T0000Z" unfilled box black
-node "foo.20100111T0000Z" "foo\n20100111T0000Z" unfilled box black
-node "foo.20100118T0000Z" "foo\n20100118T0000Z" unfilled box black
+node "foo.20100104T0000Z" "foo\n20100104T0000Z" unfilled ellipse black
+node "foo.20100111T0000Z" "foo\n20100111T0000Z" unfilled ellipse black
+node "foo.20100118T0000Z" "foo\n20100118T0000Z" unfilled ellipse black
 stop

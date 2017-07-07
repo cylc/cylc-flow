@@ -33,10 +33,10 @@ edge "foo.1" "bar.1" solid
 edge "foo.1" "qux.1" solid
 edge "qux.1" "baz.1" solid
 graph
-node "bar.1" "bar\n1" unfilled box black
-node "baz.1" "baz\n1" unfilled box black
-node "foo.1" "foo\n1" unfilled box black
-node "qux.1" "qux\n1" unfilled box black
+node "bar.1" "bar\n1" unfilled ellipse black
+node "baz.1" "baz\n1" unfilled ellipse black
+node "foo.1" "foo\n1" unfilled ellipse black
+node "qux.1" "qux\n1" unfilled ellipse black
 stop
 __OUT__
 #-------------------------------------------------------------------------------
