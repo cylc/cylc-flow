@@ -53,6 +53,8 @@ class BaseCommsClient(object):
         self.owner = owner
         self.host = host
         self.port = port
+        self.srv_files_mgr = SuiteSrvFilesManager()
+        self.comms_protocol = comms_protocol
         self._set_comms_protocol(comms_protocol)
         if timeout is not None:
             timeout = float(timeout)
@@ -60,7 +62,7 @@ class BaseCommsClient(object):
         self.my_uuid = my_uuid or uuid4()
         if print_uuid:
             print >> sys.stderr, '%s' % self.my_uuid
-        self.srv_files_mgr = SuiteSrvFilesManager()
+
         self.prog_name = os.path.basename(sys.argv[0])
         self.server_cert = None
         self.auth = None
@@ -76,30 +78,45 @@ class BaseCommsClient(object):
     def _set_comms_protocol(self, comms_protocol=None):
         if comms_protocol is None:
             try:
-                self._get_comms_from_suite_contact_file()
-                #comms_protocol = self.srv_files_mgr.
+                self.comms_protocol = self._get_comms_from_suite_contact_file()
+                if self.comms_protocol is None:
+                    raise TypeError
                 # get from suite contact file
-            except (KeyError, NotImplementedError): # No comm method set in suite contact
-                self._get_comms_from_global_config()
+            except (KeyError, TypeError, ValueError, SuiteServiceFileError):
+                self.comms_protocol = self._get_comms_from_global_config()
                 # read from global config file
                 # Else default to https.
-            finally:
-                print "Setting comms protocol to:", self.comms_protocol
-        # Fail if still none or some other weird setting.
-        # write to suite contact file?
+#             finally:
+#                 print "BASE CLIENT: Setting comms protocol to:", self.comms_protocol
+        else:
+            # This should never really happend as GLOBAL_CFG has a default value
+            raise ValueError("No communications protocol has been set.")
 
     def _get_comms_from_suite_contact_file(self):
-        raise NotImplementedError
+        """Find out the communications protocol (http/https) from the
+        suite contact file."""
+        try:
+            comms_prtcl = self.srv_files_mgr.get_auth_item(
+                self.srv_files_mgr.KEY_COMMS_PROTOCOL,
+                self.suite, content=True)
+            if comms_prtcl is None or comms_prtcl == "":
+                raise TypeError("Comms protocol is not in suite contact file")
+            else:
+                return comms_prtcl
+        except (AttributeError, KeyError, TypeError, ValueError):
+            raise KeyError("No suite contact info for comms protocol found")
 
     def _get_comms_from_global_config(self):
+        """Find out the communications protocol (http/https) from the
+        user' global config file."""
         from cylc.cfgspec.globalcfg import GLOBAL_CFG
         comms_methods = GLOBAL_CFG.get(['communication', 'method'])
         # Set the comms method
         if "https" in comms_methods:
-            self.comms_protocol = "https"
+            return "https"
         elif "http" in comms_methods:
-            self.comms_protocol = "http"
-        print "Setting comms protocol from CONFIG to: ", self.comms_protocol
+            return "http"
+        # TODO if fail then?
 
     def _compile_url(self, category, func_dict, host):
         payload = func_dict.pop("payload", None)

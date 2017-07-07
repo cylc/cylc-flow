@@ -49,7 +49,7 @@ class CommsDaemon(object):
 
         comms_options = GLOBAL_CFG.get(['communication', 'options'])
         comms_methods = GLOBAL_CFG.get(['communication', 'method'])
-        print comms_options
+
         # HTTP Digest Auth uses MD5 - pretty secure in this use case.
         # Extending it with extra algorithms is allowed, but won't be
         # supported by most browsers. requests and urllib2 are OK though.
@@ -64,12 +64,17 @@ class CommsDaemon(object):
         elif "http" in comms_methods:
             self.comms_method = "http"
         else:
+            # This shouldn't happen really since GLOBAL_CFG has a default value
             self.comms_method = None
-#             self.comms_method = "https"
-        #self.comms_method = comms_options[0]
-        print "COMMS METHOD", self.comms_method
+        #print "DAEMON PRINT COMMS METHOD", self.comms_method
 
         self.srv_files_mgr = SuiteSrvFilesManager()
+        # Save the comms protocol to the contact file for future reference
+#         self.srv_files_mgr.dump_contact_file(
+#             self.suite,
+#             {self.srv_files_mgr.KEY_COMMS_PROTOCOL:
+#                 GLOBAL_CFG.get(['communication', 'method'])})
+
         self.get_ha1 = cherrypy.lib.auth_digest.get_ha1_dict_plain(
             {
                 'cylc': self.srv_files_mgr.get_auth_item(
@@ -118,9 +123,12 @@ class CommsDaemon(object):
         cherrypy.config["server.socket_host"] = '0.0.0.0'
         cherrypy.config["engine.autoreload.on"] = False
 
-        print self.comms_method
+        # TODO - remove later
+        #print "DAEMON START PRINT COMMS METHOD:", self.comms_method
+
         if self.comms_method is None:
-            # assume https if not config'd
+            # assume https if not config'd (although this should be default from 
+            # globalcfg so is it really necessary here?)
             self.comms_method = "https"
 
         if self.comms_method == "https":
@@ -136,9 +144,12 @@ class CommsDaemon(object):
                 raise CylcError("No HTTPS support. Configure suite to run in HTTP mode")
 
         elif self.comms_method == "http":
+            pass
             # Do what you need to do for HTTP setup.
-            print "Running under HTTP. (unsecured)"
+            #print "DAEMON SAYS: Running under HTTP. (unsecured)"
+
         print "The comms method is :", self.comms_method
+        #self.srv_files_mgr.d(self.comms_method)
 
         # this also for https?
         cherrypy.config['log.screen'] = None
