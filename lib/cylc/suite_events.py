@@ -149,7 +149,6 @@ class SuiteEventHandler(object):
             except KeyError as exc:
                 message = "%s bad template: %s" % (cmd_key, exc)
                 LOG.error(message)
-                ERR.error(message)
                 if abort_on_error:
                     raise SuiteEventError(message)
                 continue

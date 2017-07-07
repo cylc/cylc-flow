@@ -846,7 +846,6 @@ class TaskEventsManager(object):
                 message = "%s/%s/%02d %s bad template: %s" % (
                     itask.point, itask.tdef.name, itask.submit_num, key1, exc)
                 LOG.error(message)
-                ERR.error(message)
                 continue
             if cmd == handler:
                 # Nothing substituted, assume classic interface
