@@ -440,8 +440,9 @@ if __name__ == '__main__':
     class TestBaseCommsClient(unittest.TestCase):
         """Unit testing class to test the methods in BaseCommsClient
         """
-        def test_url_compiler(self):
-            """Tests that the url parser works for a single url and command"""
+        def test_url_compiler_https(self):
+            """Tests that the url parser works for a single url and command
+            using https"""
             category = 'info'  # Could be any from cylc/network/__init__.py
             host = "localhost"
             func_dict = {"function": "test_command",
@@ -451,16 +452,61 @@ if __name__ == '__main__':
                          "payload": "None"}
 
             myCommsClient = BaseCommsClient("test-suite", port=80)
-            request = myCommsClient._compile_url(
+            request_https = myCommsClient._compile_url(
                 category, func_dict, host, "https")
-            test_url = ('https://localhost:80/info/test_command'
-                        '?apples=False&oranges=True')
 
-            self.assertEqual(request['url'], test_url)
-            self.assertEqual(request['payload'], "None")
-            self.assertEqual(request['method'], "GET")
+            test_url_https = (
+                'https://localhost:80/info/test_command'
+                '?apples=False&oranges=True')
 
-        def test_get_data_from_url_single(self):
+            self.assertEqual(request_https['url'], test_url_https)
+            self.assertEqual(request_https['payload'], "None")
+            self.assertEqual(request_https['method'], "GET")
+
+        def test_compile_url_compiler_http(self):
+            """Test that the url compiler produces a http request when
+            http is specified."""
+            category = 'info'  # Could be any from cylc/network/__init__.py
+            host = "localhost"
+            func_dict = {"function": "test_command",
+                         "apples": "False",
+                         "oranges": "True",
+                         "method": "GET",
+                         "payload": "None"}
+
+            myCommsClient = BaseCommsClient("test-suite", port=80)
+            request_http = myCommsClient._compile_url(
+                category, func_dict, host, "http")
+            test_url_http = (
+                'http://localhost:80/info/test_command'
+                '?apples=False&oranges=True')
+
+            self.assertEqual(request_http['url'], test_url_http)
+            self.assertEqual(request_http['payload'], "None")
+            self.assertEqual(request_http['method'], "GET")
+
+        def test_compile_url_compiler_none_specified(self):
+            """Test that the url compiler produces a http request when
+            none is specified. This should retrieve it from the
+            global config."""
+            category = 'info'  # Could be any from cylc/network/__init__.py
+            host = "localhost"
+            func_dict = {"function": "test_command",
+                         "apples": "False",
+                         "oranges": "True",
+                         "method": "GET",
+                         "payload": "None"}
+
+            myCommsClient = BaseCommsClient("test-suite", port=80)
+            request_http = myCommsClient._compile_url(
+                category, func_dict, host)
+
+            # Check that the url has had http (or https) appended
+            # to it. (If it does not start with "http*" then something
+            # has gone wrong.)
+            self.assertTrue(request_http['url'].startswith("http"))
+
+        def test_get_data_from_url_single_http(self):
             """Test the get data from _get_data_from_url() function"""
             myCommsClient = BaseCommsClient("dummy-suite")
             url = "http://httpbin.org/get"
