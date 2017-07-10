@@ -137,20 +137,27 @@ class SuiteEventHandler(object):
         for i, handler in enumerate(handlers):
             cmd_key = ('%s-%02d' % (self.SUITE_EVENT_HANDLER, i), ctx.event)
             # Handler command may be a string for substitution
-            cmd = handler % {
-                'event': quote(ctx.event),
-                'suite': quote(ctx.suite),
-                'message': quote(ctx.reason),
-                'suite_url': quote(config.cfg['URL']),
-            }
+            abort_on_error = self.get_events_conf(
+                config, 'abort if %s handler fails' % ctx.event)
+            try:
+                cmd = handler % {
+                    'event': quote(ctx.event),
+                    'suite': quote(ctx.suite),
+                    'message': quote(ctx.reason),
+                    'suite_url': quote(config.cfg['URL']),
+                }
+            except KeyError as exc:
+                message = "%s bad template: %s" % (cmd_key, exc)
+                LOG.error(message)
+                if abort_on_error:
+                    raise SuiteEventError(message)
+                continue
             if cmd == handler:
                 # Nothing substituted, assume classic interface
                 cmd = "%s '%s' '%s' '%s'" % (
                     handler, ctx.event, ctx.suite, ctx.reason)
             proc_ctx = SuiteProcContext(
                 cmd_key, cmd, env=dict(os.environ), shell=True)
-            abort_on_error = self.get_events_conf(
-                config, 'abort if %s handler fails' % ctx.event)
             if abort_on_error or self.proc_pool.is_closed():
                 # Run command in foreground if abort on failure is set or if
                 # process pool is closed

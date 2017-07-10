@@ -829,18 +829,24 @@ class TaskEventsManager(object):
                 continue
             # Custom event handler can be a command template string
             # or a command that takes 4 arguments (classic interface)
-            cmd = handler % {
-                "event": quote(event),
-                "suite": quote(self.suite),
-                "point": quote(str(itask.point)),
-                "name": quote(itask.tdef.name),
-                "submit_num": itask.submit_num,
-                "id": quote(itask.identity),
-                "message": quote(message),
-                "importance": quote(itask.tdef.rtconfig['importance']),
-                "task_url": quote(itask.tdef.rtconfig['URL']),
-                "suite_url": quote(self.suite_url),
-            }
+            try:
+                cmd = handler % {
+                    "event": quote(event),
+                    "suite": quote(self.suite),
+                    "point": quote(str(itask.point)),
+                    "name": quote(itask.tdef.name),
+                    "submit_num": itask.submit_num,
+                    "id": quote(itask.identity),
+                    "message": quote(message),
+                    "importance": quote(itask.tdef.rtconfig['importance']),
+                    "task_url": quote(itask.tdef.rtconfig['URL']),
+                    "suite_url": quote(self.suite_url),
+                }
+            except KeyError as exc:
+                message = "%s/%s/%02d %s bad template: %s" % (
+                    itask.point, itask.tdef.name, itask.submit_num, key1, exc)
+                LOG.error(message)
+                continue
             if cmd == handler:
                 # Nothing substituted, assume classic interface
                 cmd = "%s '%s' '%s' '%s' '%s'" % (

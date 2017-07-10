@@ -1,0 +1,18 @@
+#!jinja2
+[cylc]
+    [[events]]
+        handlers = echo %(rubbish)s
+        handler events = startup
+{% if ABORT is defined %}
+        abort if startup handler fails = True
+{% endif %}
+    [[reference test]]
+        live mode suite timeout=PT1M
+
+[scheduling]
+    [[dependencies]]
+        graph=t1
+
+[runtime]
+    [[t1]]
+        script=true
