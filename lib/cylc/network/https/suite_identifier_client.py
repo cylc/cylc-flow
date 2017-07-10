@@ -37,11 +37,5 @@ class SuiteIdClientAnon(BaseCommsClientAnon):
 
     METHOD = BaseCommsClient.METHOD_GET
 
-# TODO - think this can be removed now
-#     def __init__(self, *args, **kwargs):
-#         super(SuiteIdClientAnon, self).__init__(*args, **kwargs)
-
     def identify(self):
         return self.call_server_func(COMMS_SUITEID_OBJ_NAME, "identify")
-
-

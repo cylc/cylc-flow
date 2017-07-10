@@ -215,10 +215,6 @@ class BaseCommsClient(object):
                     raise CylcError("Cannot issue a https command"
                                     " over unsecured http.")
                     sys.stderr.write(ERROR_NO_HTTPS_SUPPORT.format(exc))
-                    # for item in http_request_items:
-                    #     item['url'] = item['url'].replace("https:", "http:", 1)
-                    # return self._get_data_from_url_with_requests(
-                    #     http_request_items)
                 if cylc.flags.debug:
                     import traceback
                     traceback.print_exc()
@@ -308,10 +304,6 @@ class BaseCommsClient(object):
                     sys.stderr.write(ERROR_NO_HTTPS_SUPPORT.format(exc))
                     raise CylcError("Cannot issue a https command"
                                     " over unsecured http.")
-                    # for item in http_request_items:
-                    #     item['url'] = item['url'].replace("https:", "http:", 1)
-                    # return self._get_data_from_url_with_urllib2(
-                    #     http_request_items)
                 if cylc.flags.debug:
                     import traceback
                     traceback.print_exc()
@@ -405,7 +397,8 @@ class BaseCommsClient(object):
         if not self.owner:
             self.owner = data.get(self.srv_files_mgr.KEY_OWNER)
         if not self.comms_protocol:
-            self.comms_protocol = data.get(self.srv_files_mgr.KEY_COMMS_PROTOCOL)
+            self.comms_protocol = data.get(
+                self.srv_files_mgr.KEY_COMMS_PROTOCOL)
 
     def reset(self, *args, **kwargs):
         pass

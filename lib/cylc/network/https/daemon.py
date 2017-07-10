@@ -124,8 +124,8 @@ class CommsDaemon(object):
         cherrypy.config["engine.autoreload.on"] = False
 
         if self.comms_method is None:
-            # assume https if not config'd (although this should be default from 
-            # globalcfg so is it really necessary here?)
+            # assume https if not config'd (although this should be default
+            # from globalcfg so is it really necessary here?)
             self.comms_method = "https"
 
         if self.comms_method == "https":
@@ -140,10 +140,6 @@ class CommsDaemon(object):
                 ERR.error("no HTTPS/OpenSSL support. Aborting...")
                 raise CylcError("No HTTPS support. "
                                 "Configure user's global.rc to use HTTP.")
-
-        elif self.comms_method == "http":
-            pass
-            # Do what you need to do for HTTP setup.
 
         cherrypy.config['log.screen'] = None
         key = binascii.hexlify(os.urandom(16))
