@@ -109,7 +109,7 @@ class ScanApp(object):
         if gsfg.COL_SUITE not in vis_cols:
             vis_cols.append(gsfg.COL_SUITE.lower())
         # In multiple host environment, add host column by default
-        if hosts:
+        if hosts != ['localhost']:
             vis_cols.append(gsfg.COL_HOST.lower())
         # In multiple owner environment, add owner column by default
         if patterns_owner != [USER]:
