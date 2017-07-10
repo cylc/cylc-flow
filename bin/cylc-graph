@@ -70,19 +70,6 @@ from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.task_id import TaskID
 from cylc.templatevars import load_template_vars
 
-try:
-    import gtk
-    import gobject
-    from xdot import DotWindow
-    from cylc.cylc_xdot import (
-        MyDotWindow, MyDotWindow2, get_reference_from_plain_format)
-except (ImportError, RuntimeError) as exc:
-    # Allow command help generation without a graphical environment.
-    print >> sys.stderr, 'WARNING: no X environment? %s' % exc
-    no_x = True
-else:
-    no_x = False
-
 if remrun().execute(forward_x11=True):
     sys.exit(0)
 
@@ -97,16 +84,14 @@ from cylc.option_parsers import CylcOptionParser as COP
 # or in-suite) outside of the defined suite initial and final cycle points.
 
 
-def on_url_clicked(widget, url, event, window):
+def on_url_clicked(_, task_id, event, window):
+    """Display right click menu for a graph node."""
     if event.button != 3:
         return False
     # URL is node ID
-    right_click_menu(event, url, type='live task', window=window)
+    name = TaskID.split(task_id)[0]
 
-
-def right_click_menu(event, task_id, type='live task', window=None):
-    name, point_string = TaskID.split(task_id)
-
+    import gtk
     menu = gtk.Menu()
     menu_root = gtk.MenuItem(task_id)
     menu_root.set_submenu(menu)
@@ -139,17 +124,16 @@ def right_click_menu(event, task_id, type='live task', window=None):
     return True
 
 
-def grouping(w, name, window, un, recursive):
-    if not un:
-        window.get_graph(group_nodes=[name])
+def grouping(_, name, window, ungroup, recursive):
+    """Control graph grouping."""
+    if ungroup:
+        window.get_graph(ungroup_nodes=[name], ungroup_recursive=recursive)
     else:
-        if recursive:
-            window.get_graph(ungroup_nodes=[name], ungroup_recursive=True)
-        else:
-            window.get_graph(ungroup_nodes=[name], ungroup_recursive=False)
+        window.get_graph(group_nodes=[name])
 
 
 def main():
+    """CLI."""
     parser = COP(
         __doc__, jset=True, prep=True,
         argdoc=[
@@ -207,29 +191,34 @@ def main():
 
     (options, args) = parser.parse_args()
 
-    if no_x:
-        sys.exit(1)
+    try:
+        import gtk
+        import gobject
+        from xdot import DotWindow
+        from cylc.cylc_xdot import (
+            MyDotWindow, MyDotWindow2, get_reference_from_plain_format)
+    except (ImportError, RuntimeError) as error:
+        # Allow command help generation without a graphical environment.
+        sys.exit('ERROR: no X environment? %s' % error)
 
     if options.filename:
         if len(args) != 0:
             parser.error(
                 "file graphing arguments: '-f FILE' or '--file=FILE'")
             sys.exit(1)
-        file = options.filename
-        from xdot import DotWindow
         if options.output_filename:
-            raise SystemExit("ERROR: output-file not supported for "
-                             "dot files. Use 'dot' command instead.")
+            sys.exit("ERROR: output-file not supported for dot files."
+                     " Use 'dot' command instead.")
         window = DotWindow()
-        window.update(file)
+        window.update(options.filename)
         window.connect('destroy', gtk.main_quit)
         # checking periodically for file changed
-        gobject.timeout_add(1000, window.update, file)
+        gobject.timeout_add(1000, window.update, options.filename)
         gtk.main()
         sys.exit(0)
 
-    should_hide_gtk_window = (options.output_filename is not None)
-
+    if not args:
+        parser.error('Argument 1 SUITE is required except for usage 2.')
     suite, suiterc = SuiteSrvFilesManager().parse_suite_arg(options, args[0])
 
     start_point_string = stop_point_string = None
@@ -240,6 +229,7 @@ def main():
 
     template_vars = load_template_vars(
         options.templatevars, options.templatevars_file)
+    should_hide_gtk_window = (options.output_filename is not None)
     if options.namespaces:
         window = MyDotWindow2(suite, suiterc, template_vars,
                               should_hide=should_hide_gtk_window)
@@ -255,7 +245,6 @@ def main():
 
     window.widget.connect('clicked', on_url_clicked, window)
     if options.filter_patterns:
-        filter_patterns = set(options.filter_patterns)
         window.set_filter_graph_patterns(options.filter_patterns)
     window.get_graph()
 
@@ -271,8 +260,8 @@ def main():
             if options.output_filename == "-":
                 sys.stdout.write(output_text)
             else:
-                with open(options.output_filename, 'w') as f:
-                    f.write(output_text)
+                with open(options.output_filename, 'w') as handle:
+                    handle.write(output_text)
         else:
             if options.output_filename == "-":
                 window.graph.draw(sys.stdout, format="plain", prog="dot")

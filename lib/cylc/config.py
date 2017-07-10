@@ -1669,14 +1669,14 @@ class SuiteConfig(object):
         elif ungroup_all:
             # Ungroup all family nodes
             self.closed_families = []
-        elif len(group_nodes) > 0:
+        elif group_nodes:
             # Group chosen family nodes
             for node in group_nodes:
                 parent = hierarchy[node][1]
                 if parent not in self.closed_families:
                     if parent != 'root':
                         self.closed_families.append(parent)
-        elif len(ungroup_nodes) > 0:
+        elif ungroup_nodes:
             # Ungroup chosen family nodes
             for node in ungroup_nodes:
                 if node not in self.runtime['descendants']:
@@ -1724,7 +1724,6 @@ class SuiteConfig(object):
         gr_edges = {}
         start_point_offset_cache = {}
         point_offset_cache = None
-        id2str_cache = {}
         for sequence, edges in self.edges.items():
             # Get initial cycle point for this sequence
             point = sequence.get_first_point(start_point)
@@ -1785,25 +1784,15 @@ class SuiteConfig(object):
                     if is_validate:
                         gr_edges[point].append((l_id, r_id))
                     else:
-                        try:
-                            l_str = id2str_cache[l_id]
-                        except KeyError:
-                            l_str = self._close_families(l_id, clf_map)
-                            id2str_cache[l_id] = l_str
-                        try:
-                            r_str = id2str_cache[r_id]
-                        except KeyError:
-                            r_str = self._close_families(r_id, clf_map)
-                            id2str_cache[r_id] = r_str
+                        lstr, rstr = self._close_families(l_id, r_id, clf_map)
                         gr_edges[point].append(
-                            (l_str, r_str, None, suicide, cond))
+                            (lstr, rstr, None, suicide, cond))
                 # Increment the cycle point.
                 point = sequence.get_next_point_on_sequence(point)
 
         del clf_map
         del start_point_offset_cache
         del point_offset_cache
-        del id2str_cache
         GraphNodeParser.get_inst().clear()
         self._last_graph_raw_id = graph_raw_id
         if stop_point is None:
@@ -1848,18 +1837,36 @@ class SuiteConfig(object):
         return ret
 
     @staticmethod
-    def _close_families(id_, clf_map):
-        """Turn (name, point) to 'name.point'.
+    def _close_families(l_id, r_id, clf_map):
+        """Turn (name, point) to 'name.point' for edge.
 
         Replace close family members with family nodes if relevant.
         """
-        if id_ is None:
-            return None
-        name, point = id_
-        for family_name, family in clf_map.items():
-            if name in family:
-                return TaskID.get(family_name, point)
-        return TaskID.get(name, point)
+        lret = None
+        lname, lpoint = None, None
+        if l_id:
+            lname, lpoint = l_id
+            lret = TaskID.get(lname, lpoint)
+        rret = None
+        rname, rpoint = None, None
+        if r_id:
+            rname, rpoint = r_id
+            rret = TaskID.get(rname, rpoint)
+
+        for fam_name, fam_members in clf_map.items():
+            if lname in fam_members and rname in fam_members:
+                # l and r are both members
+                lret = TaskID.get(fam_name, lpoint)
+                rret = TaskID.get(fam_name, rpoint)
+                break
+            elif lname in fam_members:
+                # l is a member
+                lret = TaskID.get(fam_name, lpoint)
+            elif rname in fam_members:
+                # r is a member
+                rret = TaskID.get(fam_name, rpoint)
+
+        return lret, rret
 
     def load_graph(self):
         """Parse and load dependency graph."""

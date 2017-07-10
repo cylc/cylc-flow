@@ -382,11 +382,10 @@ class MyDotWindow(CylcDotViewerCommon):
     def ungroup_all(self, w):
         self.get_graph(ungroup_all=True)
 
-    def get_graph(self, group_nodes=[], ungroup_nodes=[],
+    def get_graph(self, group_nodes=None, ungroup_nodes=None,
                   ungroup_recursive=False, ungroup_all=False, group_all=False):
         if not self.suiterc:
             return
-        family_nodes = self.suiterc.get_first_parent_descendants().keys()
         # Note this is used by "cylc graph" but not gcylc.
         # self.start_ and self.stop_point_string come from CLI.
         graph = CGraph.get_graph(
@@ -402,7 +401,7 @@ class MyDotWindow(CylcDotViewerCommon):
 
         for node in graph.nodes():
             name = TaskID.split(node.get_name())[0]
-            if name in family_nodes:
+            if name in self.suiterc.get_first_parent_descendants():
                 node.attr['shape'] = 'doubleoctagon'
 
         self.graph = graph

@@ -52,7 +52,7 @@ class CGraphPlain(pygraphviz.AGraph):
     def style_edge(self, left, right):
         pass
 
-    def style_node(self, node_string, base=False):
+    def style_node(self, node_string):
         node = self.get_node(node_string)
         try:
             name, point_string = TaskID.split(node_string)
@@ -68,12 +68,7 @@ class CGraphPlain(pygraphviz.AGraph):
             label += "\\n" + self.suite_polling_tasks[name][3]
         label += "\\n" + point_string
         node.attr['label'] = label
-        if base:
-            # TODO - This is only called from add_edges in this
-            # base class ... should it also be called from add_node?
-            node.attr['URL'] = 'base:' + node_string
-        else:
-            node.attr['URL'] = node_string
+        node.attr['URL'] = node_string
 
     def cylc_remove_nodes_from(self, nodes):
         """Remove nodes, returning extra edge structure if possible.
@@ -203,7 +198,7 @@ class CGraphPlain(pygraphviz.AGraph):
 
     def add_edges(self, edges, ignore_suicide=False):
         """Add edges and nodes connected by the edges."""
-        for edge in edges:
+        for edge in sorted(edges):
             left, right, skipped, suicide, conditional = edge
             if left is None and right is None or suicide and ignore_suicide:
                 continue
@@ -226,8 +221,8 @@ class CGraphPlain(pygraphviz.AGraph):
                 else:
                     attrs.update({'style': 'solid', 'arrowhead': 'normal'})
                 pygraphviz.AGraph.add_edge(self, left, right, **attrs)
-                self.style_node(left, base=True)
-                self.style_node(right, base=True)
+                self.style_node(left)
+                self.style_node(right)
                 self.style_edge(left, right)
 
     def add_cycle_point_subgraphs(self, edges):
@@ -316,8 +311,8 @@ class CGraph(CGraphPlain):
                         self.task_attr[item] = []
                     self.task_attr[item].append(attr)
 
-    def style_node(self, node_string, base=False):
-        super(self.__class__, self).style_node(node_string, base)
+    def style_node(self, node_string):
+        super(self.__class__, self).style_node(node_string)
         node = self.get_node(node_string)
         for item in self.node_attr_by_taskname(node_string):
             attr, value = [val.strip() for val in item.split('=', 1)]

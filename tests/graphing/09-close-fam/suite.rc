@@ -1,0 +1,11 @@
+[scheduling]
+    [[dependencies]]
+         graph = foo => FAM:succeed-all => bar
+[runtime]
+    [[FAM]]
+    [[BAM]]
+        inherit = FAM
+    [[wam]]
+        inherit = FAM
+    [[x, y]]
+        inherit = BAM
