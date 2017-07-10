@@ -112,7 +112,8 @@ class TaskPool(object):
     def insert_tasks(self, items, stop_point_str, no_check=False):
         """Insert tasks."""
         n_warnings = 0
-        task_items = []
+        task_items = {}
+        select_args = []
         for item in items:
             point_str, name_str = self._parse_task_item(item)[:2]
             if point_str is None:
@@ -133,7 +134,8 @@ class TaskPool(object):
                 n_warnings += 1
                 continue
             for taskdef in taskdefs:
-                task_items.append([(taskdef.name, point_str), taskdef])
+                task_items[(taskdef.name, point_str)] = taskdef
+            select_args.append((name_str, point_str))
         if stop_point_str is None:
             stop_point = None
         else:
@@ -145,15 +147,13 @@ class TaskPool(object):
                     stop_point_str, exc))
                 n_warnings += 1
                 return n_warnings
-        task_states_data = (
-            self.suite_db_mgr.pri_dao.select_task_states_by_task_ids(
-                ["submit_num"], [task_item[0] for task_item in task_items]))
-        for key, taskdef in task_items:
+        submit_nums = self.suite_db_mgr.pri_dao.select_submit_nums_for_insert(
+            select_args)
+        for key, taskdef in sorted(task_items.items()):
             # TODO - insertion of start-up tasks? (startup=False assumed here)
 
             # Check that the cycle point is on one of the tasks sequences.
-            point_str = key[1]
-            point = get_point(point_str)
+            point = get_point(key[1])
             if not no_check:  # Check if cycle point is on the tasks sequence.
                 for sequence in taskdef.sequences:
                     if sequence.is_on_sequence(point):
@@ -161,15 +161,12 @@ class TaskPool(object):
                 else:
                     LOG.warning("%s%s, %s" % (
                         self.ERR_PREFIX_TASK_NOT_ON_SEQUENCE, taskdef.name,
-                        point_str))
+                        key[1]))
                     continue
 
-            submit_num = None
-            if key in task_states_data:
-                submit_num = task_states_data[key].get("submit_num")
+            submit_num = submit_nums.get(key)
             self.add_to_runahead_pool(TaskProxy(
-                taskdef, get_point(point_str),
-                stop_point=stop_point, submit_num=submit_num))
+                taskdef, point, stop_point=stop_point, submit_num=submit_num))
         return n_warnings
 
     def add_to_runahead_pool(self, itask, is_restart=False):
@@ -216,6 +213,7 @@ class TaskPool(object):
         # add to the runahead pool
         self.runahead_pool.setdefault(itask.point, {})
         self.runahead_pool[itask.point][itask.identity] = itask
+        LOG.info("inserted", itask=itask)
         self.rhpool_changed = True
 
         if is_restart:
