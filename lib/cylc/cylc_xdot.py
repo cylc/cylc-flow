@@ -395,12 +395,11 @@ class MyDotWindow(CylcDotViewerCommon):
         """
         for sequence in self.suiterc.taskdefs[name].sequences:
             p_str = str(point)
-            if (cache and sequence in cache and p_str in cache[sequence] and
-                    cache[sequence][p_str]):
-                return False
+            if (cache and sequence in cache and p_str in cache[sequence]):
+                return not cache[sequence][p_str]
             else:
                 temp = sequence.is_on_sequence(get_point(point))
-                if cache:
+                if cache is not None:
                     cache.setdefault(sequence, {})[p_str] = temp
                 if temp:
                     return False
