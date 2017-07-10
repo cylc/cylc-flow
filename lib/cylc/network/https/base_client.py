@@ -86,7 +86,8 @@ class BaseCommsClient(object):
         except (AttributeError, KeyError, TypeError, ValueError):
             raise KeyError("No suite contact info for comms protocol found")
 
-    def _get_comms_from_global_config(self):
+    @staticmethod
+    def _get_comms_from_global_config():
         """Find out the communications protocol (http/https) from the
         user' global config file."""
         from cylc.cfgspec.globalcfg import GLOBAL_CFG
@@ -101,8 +102,8 @@ class BaseCommsClient(object):
             # possibly user set bad value in global config
             raise CylcError(
                 "Communications protocol "
-                "\"{0}\" invalid.".format(comms_methods),
-                " (protocol set in global config.)")
+                "\"{0}\" invalid."
+                " (protocol set in global config.)".format(comms_methods))
 
     def _compile_url(self, category, func_dict, host, comms_protocol=None):
         payload = func_dict.pop("payload", None)
@@ -212,9 +213,9 @@ class BaseCommsClient(object):
             except requests.exceptions.SSLError as exc:
                 if "unknown protocol" in str(exc) and url.startswith("https:"):
                     # Server is using http rather than https, for some reason.
+                    sys.stderr.write(ERROR_NO_HTTPS_SUPPORT.format(exc))
                     raise CylcError("Cannot issue a https command"
                                     " over unsecured http.")
-                    sys.stderr.write(ERROR_NO_HTTPS_SUPPORT.format(exc))
                 if cylc.flags.debug:
                     import traceback
                     traceback.print_exc()
