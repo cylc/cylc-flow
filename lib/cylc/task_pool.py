@@ -165,8 +165,10 @@ class TaskPool(object):
                     continue
 
             submit_num = submit_nums.get(key)
-            self.add_to_runahead_pool(TaskProxy(
+            itask = self.add_to_runahead_pool(TaskProxy(
                 taskdef, point, stop_point=stop_point, submit_num=submit_num))
+            if itask:
+                LOG.info("inserted", itask=itask)
         return n_warnings
 
     def add_to_runahead_pool(self, itask, is_restart=False):
@@ -213,7 +215,6 @@ class TaskPool(object):
         # add to the runahead pool
         self.runahead_pool.setdefault(itask.point, {})
         self.runahead_pool[itask.point][itask.identity] = itask
-        LOG.info("inserted", itask=itask)
         self.rhpool_changed = True
 
         if is_restart:
