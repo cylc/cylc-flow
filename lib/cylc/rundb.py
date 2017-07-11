@@ -588,40 +588,33 @@ class CylcSuiteDAO(object):
         for row_idx, row in enumerate(self.connect().execute(stmt)):
             callback(row_idx, list(row))
 
-    def select_task_states_by_task_ids(self, keys, task_ids=None):
-        """Select items from task_states by task IDs.
+    def select_submit_nums_for_insert(self, task_ids):
+        """Select name,cycle,submit_num from task_states.
 
+        Fetch submit numbers for tasks on insert.
         Return a data structure like this:
 
         {
-            (name1, point1): {key1: "value 1", ...},
+            (name1, point1): submit_num,
             ...,
         }
 
-        task_ids should be specified as [[name, cycle], ...]
+        task_ids should be specified as [(name-glob, cycle), ...]
 
         """
-        if keys is None:
-            keys = []
-            for column in self.tables[self.TABLE_TASK_STATES].columns[2:]:
-                keys.append(column.name)
-        stmt = r"SELECT name,cycle,%(keys_str)s FROM %(name)s" % {
-            "keys_str": ",".join(keys),
+        stmt = r"SELECT name,cycle,submit_num FROM %(name)s" % {
             "name": self.TABLE_TASK_STATES}
         stmt_args = []
         if task_ids:
             stmt += (
                 " WHERE (" +
-                ") OR (".join(["name==? AND cycle==?"] * len(task_ids)) +
+                ") OR (".join(["name GLOB ? AND cycle==?"] * len(task_ids)) +
                 ")")
             for name, cycle in task_ids:
                 stmt_args += [name, cycle]
         ret = {}
-        for row in self.connect().execute(stmt, stmt_args):
-            name, cycle = row[0:2]
-            ret[(name, cycle)] = {}
-            for key, value in zip(keys, row[2:]):
-                ret[(name, cycle)][key] = value
+        for name, cycle, submit_num in self.connect().execute(stmt, stmt_args):
+            ret[(name, cycle)] = submit_num
         return ret
 
     def select_task_pool(self, callback, id_key=None):
