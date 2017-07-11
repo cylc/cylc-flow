@@ -6148,10 +6148,11 @@ tracking (see these with \lstinline=cylc get-site-config=):
 # suite-connecting commands and guis, and running suite server processes).
 [communication]
 
-    # Configure the choice of communication method. Only https is supported
-    # at the moment.
+    # Configure the choice of communication method. Https is configured by
+    # default, and this requires the Python OpenSSL package to be installed.
+    # Http can be configured to override the default setting.
 # SITE ONLY
-    method = https
+    method = http
 
     # Each suite listens on a dedicated network port. The port to bind to is
     # selected randomly from the allowed range of ports.
@@ -6188,8 +6189,8 @@ between direct communication across network sockets (HTTPS) and
 re-invocation of commands on the suite host using non-interactive ssh
 (there is a \lstinline=--use-ssh= command option for this purpose).
 
-The gcylc GUI requires direct HTTPS connections to its target suite. If
-that is not possible, run gcylc on the suite host.
+%The gcylc GUI requires direct HTTPS connections to its target suite. If
+%that is not possible, run gcylc on the suite host.
 
 
 \subsection{Client Authentication and Passphrases}

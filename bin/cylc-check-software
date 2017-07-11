@@ -89,7 +89,7 @@ for ITEM in ${PKGS}; do
 done
 
 HTTPS_MODL="OpenSSL"
-if ! grep -Pq "^(?=[\s]*+[^#])[^#]*(\bmethod=http\b)" ${HOME}/.cylc/global.rc; then
+if ! grep -Pq "^(?=[\s]*+[^#])[^#]*(\bmethod=http\b)|(\bmethod = http\b)" ${HOME}/.cylc/global.rc; then
 #if ! grep -q "\bmethod=http\b" ${HOME}/.cylc/global.rc; then
     echo -n " + ${HTTPS_MODL} ... "
     if ! python -c "import ${HTTPS_MODL}" > /dev/null 2>&1; then
@@ -98,10 +98,3 @@ if ! grep -Pq "^(?=[\s]*+[^#])[^#]*(\bmethod=http\b)" ${HOME}/.cylc/global.rc; t
         echo "ok"
     fi
 fi
-
-
-
-
-
-
-
