@@ -432,7 +432,8 @@ class MyDotWindow(CylcDotViewerCommon):
                 node.attr['shape'] = 'doubleoctagon'
                 # Style ghost family nodes.
                 if any(self.check_ghost_node(child, point, cache=cache) for
-                       child in family_nodes[name]):
+                       child in family_nodes[name]
+                       if child not in family_nodes):
                     style_ghost_node(node)
             elif self.check_ghost_node(name, point, cache=cache):
                 # Style ghost nodes.

@@ -17,13 +17,13 @@
 #-------------------------------------------------------------------------------
 # Test that ungrouped graphing works without having to use the viewer GUI.
 . "$(dirname "$0")/test_header"
-set_test_number 3
+set_test_number 4
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 SRCD="${TEST_SOURCE_DIR}/${TEST_NAME_BASE}"
-graph_suite "${SUITE_NAME}" 'graph.plain'
+run_ok "${TEST_NAME_BASE}-graph" graph_suite "${SUITE_NAME}" 'graph.plain'
 cmp_ok 'graph.plain' "${SRCD}/graph.plain.ref"
 graph_suite "${SUITE_NAME}" 'graph.plain.ungrouped' --ungrouped
 cmp_ok 'graph.plain.ungrouped' "${SRCD}/graph.plain.ungrouped.ref"
