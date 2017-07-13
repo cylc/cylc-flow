@@ -20,5 +20,5 @@
 from cylc.network.method import METHOD
 
 
-if METHOD == "https" or "http":
+if METHOD in ["https", "http"]:
     from cylc.network.https.suite_broadcast_client import BroadcastClient

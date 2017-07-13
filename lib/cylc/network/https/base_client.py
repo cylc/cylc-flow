@@ -110,9 +110,11 @@ class BaseCommsClient(object):
         method = func_dict.pop("method", self.METHOD)
         function = func_dict.pop("function", None)
 
-        # This needs to be changed to use https or http
         if comms_protocol is None:
-            protocol_prefix = self._get_comms_from_global_config()
+            try:
+                protocol_prefix = self._get_comms_from_suite_contact_file()
+            except (KeyError, TypeError, SuiteServiceFileError):
+                protocol_prefix = self._get_comms_from_global_config()
         elif comms_protocol is not None:
             protocol_prefix = comms_protocol
         else:

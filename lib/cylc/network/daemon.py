@@ -19,5 +19,5 @@
 
 from cylc.network.method import METHOD
 
-if METHOD == "https" or "http":
+if METHOD in ["https", "http"]:
     from cylc.network.https.daemon import CommsDaemon
