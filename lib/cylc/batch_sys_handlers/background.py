@@ -32,7 +32,6 @@ class BgCommandHandler(object):
 
     SHOULD_KILL_PROC_GROUP = True
     POLL_CMD = "ps"
-    POLL_CMD_TMPL = POLL_CMD + " '%(job_id)s'"
     REC_ID_FROM_SUBMIT_OUT = re.compile(r"""\A(?P<id>\d+)\Z""")
 
     @classmethod

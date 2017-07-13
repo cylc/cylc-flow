@@ -47,7 +47,6 @@ class AtCommandHandler(object):
     SHOULD_POLL_PROC_GROUP = True
     KILL_CMD_TMPL = "atrm '%(job_id)s'"
     POLL_CMD = "atq"
-    POLL_CMD_TMPL = POLL_CMD
     REC_ERR_FILTERS = [
         re.compile("warning: commands will be executed using /bin/sh")]
     REC_ID_FROM_SUBMIT_ERR = re.compile(r"\Ajob\s(?P<id>\S+)\sat")
