@@ -29,8 +29,7 @@ from subprocess import Popen, PIPE, STDOUT
 from uuid import uuid4
 from isodatetime.parsers import TimePointParser
 
-from cylc.suite_host import is_remote_host
-from cylc.owner import is_remote_user
+from cylc.suite_host import is_remote, is_remote_host, is_remote_user
 from cylc.gui.dbchooser import dbchooser
 from cylc.gui.combo_logviewer import ComboLogViewer
 from cylc.gui.warning_dialog import warning_dialog, info_dialog
@@ -2333,7 +2332,7 @@ shown here in the state they were in at the time of triggering.''')
                     job_user, job_host = job_user_at_host.split('@', 1)
                 else:
                     job_user, job_host = (None, job_user_at_host)
-                if is_remote_host(job_host) or is_remote_user(job_user):
+                if is_remote(job_host, job_user):
                     job_log_dir = job_user_at_host + ':' + os.path.join(
                         GLOBAL_CFG.get_derived_host_item(
                             self.cfg.suite, 'suite job log directory',
@@ -3533,7 +3532,7 @@ For more Stop options use the Control menu.""")
         foo.run()
 
     def run_suite_log(self, w, type='log'):
-        if is_remote_host(self.cfg.host) or is_remote_user(self.cfg.owner):
+        if is_remote(self.cfg.host, self.cfg.owner):
             if type == 'out':
                 xopts = ' --stdout '
             elif type == 'err':
