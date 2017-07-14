@@ -390,7 +390,7 @@ class MyDotWindow(CylcDotViewerCommon):
     def ungroup_all(self, w):
         self.get_graph(ungroup_all=True)
 
-    def check_ghost_node(self, name, point, cache=None):
+    def is_ghost_task(self, name, point, cache=None):
         """Returns True if the task <name> at cycle point <point> is a ghost.
         """
         for sequence in self.suiterc.taskdefs[name].sequences:
@@ -404,6 +404,14 @@ class MyDotWindow(CylcDotViewerCommon):
                 if temp:
                     return False
         return True
+
+    def is_ghost_family(self, fam_name, point, family_nodes, cache=None):
+        for child in family_nodes[fam_name]:
+            if child in family_nodes:
+                return self.is_ghost_family(child, point, family_nodes, cache)
+            else:
+                if self.is_ghost_task(child, point, cache=cache):
+                    return True
 
     def get_graph(self, group_nodes=None, ungroup_nodes=None,
                   ungroup_recursive=False, ungroup_all=False, group_all=False):
@@ -431,11 +439,9 @@ class MyDotWindow(CylcDotViewerCommon):
                 # Style family nodes.
                 node.attr['shape'] = 'doubleoctagon'
                 # Style ghost family nodes.
-                if any(self.check_ghost_node(child, point, cache=cache) for
-                       child in family_nodes[name]
-                       if child not in family_nodes):
+                if self.is_ghost_family(name, point, family_nodes, cache):
                     style_ghost_node(node)
-            elif self.check_ghost_node(name, point, cache=cache):
+            elif self.is_ghost_task(name, point, cache=cache):
                 # Style ghost nodes.
                 style_ghost_node(node)
 
