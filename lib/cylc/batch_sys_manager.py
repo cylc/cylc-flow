@@ -32,7 +32,7 @@ batch_sys.filter_poll_output(out, job_id) => boolean
     * If this method is available, it will be called after the batch system's
       poll command is called and returns zero. The method should read the
       output to see if job_id is still alive in the batch system, and return
-      True if so. See also "batch_sys.POLL_CMD_TMPL".
+      True if so.
 
 batch_sys.filter_poll_many_output(out) => job_ids
     * Called after the batch system's poll many command. The method should read
@@ -81,13 +81,6 @@ batch_sys.KILL_CMD_TMPL
     *  A Python string template for getting the batch system command to remove
        and terminate a job ID. The command is formed using the logic:
            batch_sys.KILL_CMD_TMPL % {"job_id": job_id}
-
-batch_sys.POLL_CMD_TMPL
-    * A Python string template for getting the batch system command to
-      determine whether a job is alive, or to list jobs. The command is formed
-      using the logic:
-           batch_sys.POLL_CMD_TMPL % {"job_id": job_id}
-      See also "batch_sys.filter_poll_output".
 
 batch_sys.REC_ID_FROM_SUBMIT_ERR
 batch_sys.REC_ID_FROM_SUBMIT_OUT
