@@ -104,8 +104,6 @@ class TaskDef(object):
 
     def describe(self):
         """Return title and description of the current task."""
-        import pdb
-        pdb.set_trace()
         info = {}
         for item in 'title', 'description':
             info[item] = self.rtconfig[meta][item]

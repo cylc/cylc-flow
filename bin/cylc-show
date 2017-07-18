@@ -49,7 +49,6 @@ def main():
     options, args = parser.parse_args()
     suite = args[0]
     task_args = args[1:]
-
     pclient = SuiteInfoClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout, my_uuid=options.set_uuid,
