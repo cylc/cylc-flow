@@ -30,12 +30,16 @@ else
         'SELECT value FROM suite_params WHERE key=="is_held"' >'suite-is-held.out'
     cmp_ok 'suite-is-held.out' <<<'1'
 fi
-run_ok "${TEST_NAME_BASE}-restart" cylc restart "${SUITE_NAME}"
+T1_2016_PID="$(sed -n 's/CYLC_JOB_PID=//p' "${SUITE_RUN_DIR}/log/job/2016/t1/01/job.status")"
+poll ! ps "${T1_2016_PID}" 2>'/dev/null'
+cylc restart "${SUITE_NAME}" --debug 1>"${TEST_NAME_BASE}-restart.out" 2>&1 &
+CYLC_RESTART_PID=$!
 # Ensure suite has started
 poll ! test -f "${SUITE_RUN_DIR}/.service/contact"
 cylc trigger "${SUITE_NAME}" 't2.2016'
 poll ! test -f "${SUITE_RUN_DIR}/log/job/2016/t2/01/job.status"
 poll ! grep -q 'CYLC_JOB_EXIT' "${SUITE_RUN_DIR}/log/job/2016/t2/01/job.status"
+sleep 1
 
 if ! which sqlite3 > /dev/null; then
     skip 1 "sqlite3 not installed?"
@@ -48,7 +52,7 @@ fi
 cylc release "${SUITE_NAME}"
 cylc poll "${SUITE_NAME}"
 # Ensure suite has completed
-poll test -f "${SUITE_RUN_DIR}/.service/contact"
+run_ok "${TEST_NAME_BASE}-restart" wait "${CYLC_RESTART_PID}"
 
 if ! which sqlite3 > /dev/null; then
     skip 2 "sqlite3 not installed?"

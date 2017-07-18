@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import errno
 import os
 import sqlite3
 import sys
@@ -27,47 +28,28 @@ from cylc.task_state import (
     TASK_STATUS_FAILED, TASK_STATUS_RETRYING)
 
 
-class DBOperationError(Exception):
-
-    """An exception raised on db operation failure, typically due to a lock."""
-
-    def __str__(self):
-        return "Suite database operation failed: %s" % self.args
-
-
-class DBNotFoundError(Exception):
-
-    """An exception raised when a suite database is not found."""
-
-    def __str__(self):
-        return "Suite database not found at: %s" % self.args
-
-
 class CylcSuiteDBChecker(object):
     """Object for querying a suite database"""
-    STATE_ALIASES = {}
-    STATE_ALIASES['finish'] = [TASK_STATUS_FAILED, TASK_STATUS_SUCCEEDED]
-    STATE_ALIASES['start'] = [TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED,
-                              TASK_STATUS_FAILED, TASK_STATUS_RETRYING]
-    STATE_ALIASES['submit'] = [TASK_STATUS_SUBMITTED,
-                               TASK_STATUS_SUBMIT_RETRYING,
-                               TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED,
-                               TASK_STATUS_FAILED, TASK_STATUS_RETRYING]
-    STATE_ALIASES['fail'] = [TASK_STATUS_FAILED]
-    STATE_ALIASES['succeed'] = [TASK_STATUS_SUCCEEDED]
+    STATE_ALIASES = {
+        'finish': [TASK_STATUS_FAILED, TASK_STATUS_SUCCEEDED],
+        'start': [
+            TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
+            TASK_STATUS_RETRYING],
+        'submit': [
+            TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_RETRYING,
+            TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
+            TASK_STATUS_RETRYING],
+        'fail': [TASK_STATUS_FAILED],
+        'succeed': [TASK_STATUS_SUCCEEDED],
+    }
 
-    TABLE_TASK_STATES = "task_states"
-    TABLE_TASK_EVENTS = "task_events"
-
-    def __init__(self, suite_dir, suite):
-        # possible to set suite_dir to system default cylc-run dir?
-        suite_dir = os.path.expanduser(suite_dir)
-        self.db_address = os.path.join(
-            suite_dir, suite, "log", CylcSuiteDAO.DB_FILE_BASE_NAME)
-        if not os.path.exists(self.db_address):
-            raise DBNotFoundError(self.db_address)
-        self.conn = sqlite3.connect(self.db_address, timeout=10.0)
-        self.c = self.conn.cursor()
+    def __init__(self, rund, suite):
+        db_path = os.path.join(
+            os.path.expanduser(rund), suite, "log",
+            CylcSuiteDAO.DB_FILE_BASE_NAME)
+        if not os.path.exists(db_path):
+            raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), db_path)
+        self.conn = sqlite3.connect(db_path, timeout=10.0)
 
     def display_maps(self, res):
         if not res:
@@ -78,91 +60,72 @@ class CylcSuiteDBChecker(object):
 
     def get_remote_point_format(self):
         """Query a remote suite database for a 'cycle point format' entry"""
-        q = "select value from suite_params where key==?"
-        vals = ['cycle_point_format']
-        self.c.execute(q, vals)
-        res = self.c.fetchone()
-        if res:
-            return res[0]
-        return None
+        for row in self.conn.execute(
+                r"SELECT value FROM " + CylcSuiteDAO.TABLE_SUITE_PARAMS +
+                r" WHERE key==?",
+                ['cycle_point_format']):
+            return row[0]
 
     def state_lookup(self, state):
         """allows for multiple states to be searched via a status alias"""
         if state in self.STATE_ALIASES:
             return self.STATE_ALIASES[state]
         else:
-            return state
+            return [state]
 
-    def suite_state_query(self, task=None, cycle=None, status=None, mask=None,
-                          check_message=False):
+    def suite_state_query(
+            self, task, cycle, status=None, message=None, mask=None):
         """run a query on the suite database"""
-        vals = []
-        additionals = []
-        res = []
+        stmt_args = []
+        stmt_wheres = []
 
         if mask is None:
             mask = "name, cycle, status"
 
-        if check_message:
-            target_table = self.TABLE_TASK_EVENTS
-            mask = "name"
+        if message:
+            target_table = CylcSuiteDAO.TABLE_TASK_OUTPUTS
+            mask = "outputs"
         else:
-            target_table = self.TABLE_TASK_STATES
+            target_table = CylcSuiteDAO.TABLE_TASK_STATES
 
-        q_base = "select {0} from {1}".format(mask, target_table)
+        stmt = "select {0} from {1}".format(mask, target_table)
         if task is not None:
-            additionals.append("name==?")
-            vals.append(task)
+            stmt_wheres.append("name==?")
+            stmt_args.append(task)
         if cycle is not None:
-            additionals.append("cycle==?")
-            vals.append(cycle)
+            stmt_wheres.append("cycle==?")
+            stmt_args.append(cycle)
 
-        if status is not None:
-            if check_message:
-                additionals.append("event LIKE ?")
-                vals.append("message %")
-                additionals.append("message==?")
-                vals.append(status)
-            else:
-                st = self.state_lookup(status)
-                if type(st) is list:
-                    add = []
-                    for s in st:
-                        vals.append(s)
-                        add.append("status==?")
-                    additionals.append("(" + (" OR ").join(add) + ")")
-                else:
-                    additionals.append("status==?")
-                    vals.append(status)
-        if additionals:
-            q = q_base + " where " + (" AND ").join(additionals)
-        else:
-            q = q_base
+        if status:
+            stmt_frags = []
+            for state in self.state_lookup(status):
+                stmt_args.append(state)
+                stmt_frags.append("status==?")
+            stmt_wheres.append("(" + (" OR ").join(stmt_frags) + ")")
+        if stmt_wheres:
+            stmt += " where " + (" AND ").join(stmt_wheres)
 
-        try:
-            self.c.execute(q, vals)
-            next = self.c.fetchmany()
-            while next:
-                res.append(next[0])
-                next = self.c.fetchmany()
-        except sqlite3.OperationalError as err:
-            raise DBOperationError(str(err))
-        except Exception as err:
-            sys.stderr.write("unable to query suite database: " + str(err))
-            sys.exit(1)
+        res = []
+        for row in self.conn.execute(stmt, stmt_args):
+            res.append(list(row))
 
         return res
 
     def task_state_getter(self, task, cycle):
         """used to get the state of a particular task at a particular cycle"""
-        res = self.suite_state_query(task, cycle, mask="status")
-        return res[0]
+        return self.suite_state_query(task, cycle, mask="status")[0]
 
-    def task_state_met(self, task, cycle, status, check_message=False):
+    def task_state_met(self, task, cycle, status=None, message=None):
         """used to check if a task is in a particular state"""
-        res = self.suite_state_query(task, cycle, status,
-                                     check_message=check_message)
-        return len(res) > 0
+        res = self.suite_state_query(task, cycle, status, message)
+        if status:
+            return bool(res)
+        elif message:
+            for outputs_str, in res:
+                for line in outputs_str.splitlines():
+                    if message in line.split("=", 1):
+                        return True
+            return False
 
     def validate_mask(self, mask):
         fieldnames = ["name", "status", "cycle"]  # extract from rundb.py?

@@ -181,6 +181,7 @@ class CylcSuiteDAO(object):
     TABLE_TASK_EVENTS = "task_events"
     TABLE_TASK_ACTION_TIMERS = "task_action_timers"
     TABLE_CHECKPOINT_ID = "checkpoint_id"
+    TABLE_TASK_OUTPUTS = "task_outputs"
     TABLE_TASK_POOL = "task_pool"
     TABLE_TASK_POOL_CHECKPOINTS = "task_pool_checkpoints"
     TABLE_TASK_STATES = "task_states"
@@ -264,6 +265,11 @@ class CylcSuiteDAO(object):
             ["submit_num", {"datatype": "INTEGER"}],
             ["event"],
             ["message"],
+        ],
+        TABLE_TASK_OUTPUTS: [
+            ["cycle", {"is_primary_key": True}],
+            ["name", {"is_primary_key": True}],
+            ["outputs"],
         ],
         TABLE_TASK_POOL: [
             ["cycle", {"is_primary_key": True}],
@@ -661,7 +667,8 @@ class CylcSuiteDAO(object):
             r"    %(task_jobs)s.user_at_host," +
             r"    %(task_jobs)s.time_submit," +
             r"    %(task_jobs)s.time_run," +
-            r"    %(task_timeout_timers)s.timeout " +
+            r"    %(task_timeout_timers)s.timeout, " +
+            r"    %(task_outputs)s.outputs " +
             r"FROM " +
             r"    %(task_pool)s " +
             r"JOIN " +
@@ -676,12 +683,17 @@ class CylcSuiteDAO(object):
             r"LEFT OUTER JOIN " +
             r"    %(task_timeout_timers)s " +
             r"ON  %(task_pool)s.cycle == %(task_timeout_timers)s.cycle AND " +
-            r"    %(task_pool)s.name == %(task_timeout_timers)s.name")
+            r"    %(task_pool)s.name == %(task_timeout_timers)s.name " +
+            r"LEFT OUTER JOIN " +
+            r"    %(task_outputs)s " +
+            r"ON  %(task_pool)s.cycle == %(task_outputs)s.cycle AND " +
+            r"    %(task_pool)s.name == %(task_outputs)s.name")
         form_data = {
             "task_pool": self.TABLE_TASK_POOL,
             "task_states": self.TABLE_TASK_STATES,
             "task_timeout_timers": self.TABLE_TASK_TIMEOUT_TIMERS,
             "task_jobs": self.TABLE_TASK_JOBS,
+            "task_outputs": self.TABLE_TASK_OUTPUTS,
         }
         if id_key is None or id_key == self.CHECKPOINT_LATEST_ID:
             stmt = form_stmt % form_data

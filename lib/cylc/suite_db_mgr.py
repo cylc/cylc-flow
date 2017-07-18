@@ -46,6 +46,7 @@ class SuiteDatabaseManager(object):
     TABLE_SUITE_TEMPLATE_VARS = CylcSuiteDAO.TABLE_SUITE_TEMPLATE_VARS
     TABLE_TASK_ACTION_TIMERS = CylcSuiteDAO.TABLE_TASK_ACTION_TIMERS
     TABLE_TASK_POOL = CylcSuiteDAO.TABLE_TASK_POOL
+    TABLE_TASK_OUTPUTS = CylcSuiteDAO.TABLE_TASK_OUTPUTS
     TABLE_TASK_STATES = CylcSuiteDAO.TABLE_TASK_STATES
     TABLE_TASK_TIMEOUT_TIMERS = CylcSuiteDAO.TABLE_TASK_TIMEOUT_TIMERS
 
@@ -63,6 +64,7 @@ class SuiteDatabaseManager(object):
             self.TABLE_SUITE_PARAMS: [],
             self.TABLE_TASK_POOL: [],
             self.TABLE_TASK_ACTION_TIMERS: [],
+            self.TABLE_TASK_OUTPUTS: [],
             self.TABLE_TASK_TIMEOUT_TIMERS: []}
         self.db_inserts_map = {
             self.TABLE_INHERITANCE: [],
@@ -71,6 +73,7 @@ class SuiteDatabaseManager(object):
             self.TABLE_CHECKPOINT_ID: [],
             self.TABLE_TASK_POOL: [],
             self.TABLE_TASK_ACTION_TIMERS: [],
+            self.TABLE_TASK_OUTPUTS: [],
             self.TABLE_TASK_TIMEOUT_TIMERS: []}
         self.db_updates_map = {}
 
@@ -314,6 +317,10 @@ class SuiteDatabaseManager(object):
         """Put INSERT statement for task_states table."""
         self._put_insert_task_x(CylcSuiteDAO.TABLE_TASK_STATES, itask, args)
 
+    def put_insert_task_outputs(self, itask):
+        """Reset custom outputs for a task."""
+        self._put_insert_task_x(CylcSuiteDAO.TABLE_TASK_OUTPUTS, itask, {})
+
     def _put_insert_task_x(self, table_name, itask, args):
         """Put INSERT statement for a task_* table."""
         args.update({
@@ -328,6 +335,15 @@ class SuiteDatabaseManager(object):
         """Put UPDATE statement for task_jobs table."""
         self._put_update_task_x(
             CylcSuiteDAO.TABLE_TASK_JOBS, itask, set_args)
+
+    def put_update_task_outputs(self, itask):
+        """Put UPDATE statement for task_outputs table."""
+        items = []
+        for item in sorted(itask.state.outputs.get_completed_customs()):
+            items.append("%s=%s" % item)
+        self._put_update_task_x(
+            CylcSuiteDAO.TABLE_TASK_OUTPUTS,
+            itask, {"outputs": "\n".join(items)})
 
     def put_update_task_states(self, itask, set_args):
         """Put UPDATE statement for task_states table."""

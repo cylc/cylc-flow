@@ -913,6 +913,8 @@ class TaskJobManager(object):
                     itask.poll_timers[key] = TaskActionTimer(delays=values)
 
         self.init_host(suite, itask.task_host, itask.task_owner)
+        if itask.state.outputs.has_custom_triggers():
+            self.suite_db_mgr.put_update_task_outputs(itask)
         self.suite_db_mgr.put_update_task_jobs(itask, {
             "user_at_host": user_at_host,
             "batch_sys_name": itask.summary['batch_sys_name'],
