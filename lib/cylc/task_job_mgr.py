@@ -189,8 +189,8 @@ class TaskJobManager(object):
             # Handle not having SSL certs installed.
             try:
                 ssl_cert = self.suite_srv_files_mgr.get_auth_item(
-                        self.suite_srv_files_mgr.FILE_BASE_SSL_CERT, reg)
-            except Exception as exc:
+                    self.suite_srv_files_mgr.FILE_BASE_SSL_CERT, reg)
+            except (SuiteServiceFileError, ValueError):
                 ssl_cert = None
             cmds.append(shlex.split(scp_tmpl) + [
                 '-p',
