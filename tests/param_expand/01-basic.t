@@ -162,9 +162,8 @@ foo<i> => bar<i>
     [[bar<i>]]
 __SUITE__
 
-run_fail "${TEST_NAME_BASE}-7" cylc validate "suite.rc"
-cmp_ok "${TEST_NAME_BASE}-7.stderr" <<'__ERR__'
-Illegal parameter value: [cylc][parameters]i = a, b #, c, d, e  # comment: b #: bad value
-__ERR__
+run_ok "${TEST_NAME_BASE}-7" cylc validate "suite.rc"
+cylc graph --reference 'suite.rc' >'7.graph'
+cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/7.graph.ref" '7.graph'
 
 exit
