@@ -34,14 +34,9 @@ from cylc.suite_host import get_hostname
 from cylc.version import CYLC_VERSION
 
 
-WARNING_NO_HTTPS_SUPPORT = (
-    "WARNING: server has no HTTPS support," +
-    " falling back to HTTP: {0}\n"
-)
-
 ERROR_NO_HTTPS_SUPPORT = (
     "ERROR: server has no HTTPS support," +
-    " configure user's global.rc file to use HTTPS : {0}\n"
+    " configure your global.rc file to use HTTP : {0}\n"
 )
 
 
@@ -216,7 +211,7 @@ class BaseCommsClient(object):
                 if "unknown protocol" in str(exc) and url.startswith("https:"):
                     # Server is using http rather than https, for some reason.
                     sys.stderr.write(ERROR_NO_HTTPS_SUPPORT.format(exc))
-                    raise CylcError("Cannot issue a https command"
+                    raise CylcError("Cannot issue commands"
                                     " over unsecured http.")
                 if cylc.flags.debug:
                     import traceback
@@ -305,7 +300,7 @@ class BaseCommsClient(object):
                 if "unknown protocol" in str(exc) and url.startswith("https:"):
                     # Server is using http rather than https, for some reason.
                     sys.stderr.write(ERROR_NO_HTTPS_SUPPORT.format(exc))
-                    raise CylcError("Cannot issue a https command"
+                    raise CylcError("Cannot issue commands"
                                     " over unsecured http.")
                 if cylc.flags.debug:
                     import traceback
