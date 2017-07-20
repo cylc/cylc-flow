@@ -44,7 +44,7 @@ if [[ $# = 1 ]]; then
     fi
 fi
 
-if [[ $# < 4 ]]; then
+if [[ $# -lt 4 ]]; then
     usage
     exit 1
 fi
