@@ -1647,9 +1647,6 @@ class SuiteConfig(object):
         if ungroup_nodes is None:
             ungroup_nodes = []
 
-        members = self.runtime['first-parent descendants']
-        hierarchy = self.runtime['first-parent ancestors']
-
         if self.first_graph:
             self.first_graph = False
             if not self.collapsed_families_rc and not ungroup_all:
@@ -1657,12 +1654,13 @@ class SuiteConfig(object):
                 # "[visualization]collapsed families" not defined
                 group_all = True
 
+        first_parent_descendants = self.runtime['first-parent descendants']
         if group_all:
             # Group all family nodes
             if self.collapsed_families_rc:
                 self.closed_families = copy(self.collapsed_families_rc)
             else:
-                for fam in members:
+                for fam in first_parent_descendants:
                     if fam != 'root':
                         if fam not in self.closed_families:
                             self.closed_families.append(fam)
@@ -1671,11 +1669,11 @@ class SuiteConfig(object):
             self.closed_families = []
         elif group_nodes:
             # Group chosen family nodes
+            first_parent_ancestors = self.runtime['first-parent ancestors']
             for node in group_nodes:
-                parent = hierarchy[node][1]
-                if parent not in self.closed_families:
-                    if parent != 'root':
-                        self.closed_families.append(parent)
+                parent = first_parent_ancestors[node][1]
+                if parent not in self.closed_families and parent != 'root':
+                    self.closed_families.append(parent)
         elif ungroup_nodes:
             # Ungroup chosen family nodes
             for node in ungroup_nodes:
@@ -1686,7 +1684,7 @@ class SuiteConfig(object):
                     self.closed_families.remove(node)
                 if ungroup_recursive:
                     for fam in copy(self.closed_families):
-                        if fam in members[node]:
+                        if fam in first_parent_descendants[node]:
                             self.closed_families.remove(fam)
 
         n_points = self.cfg['visualization']['number of cycle points']
@@ -1718,8 +1716,9 @@ class SuiteConfig(object):
         # For nested families, only consider the outermost one
         clf_map = {}
         for name in self.closed_families:
-            if any(name not in members[i] for i in self.closed_families):
-                clf_map[name] = members[name]
+            if all(name not in first_parent_descendants[i]
+                   for i in self.closed_families):
+                clf_map[name] = first_parent_descendants[name]
 
         gr_edges = {}
         start_point_offset_cache = {}
