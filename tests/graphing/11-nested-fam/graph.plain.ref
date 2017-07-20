@@ -1,0 +1,4 @@
+edge "TOP.1" "TOP.1" solid
+graph
+node "TOP.1" "TOP\n1" unfilled doubleoctagon black
+stop
