@@ -1,0 +1,265 @@
+#!/usr/bin/env python
+
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) 2008-2017 NIWA
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Manage task remotes.
+
+This module provides logic to:
+- Set up the directory structure on remote job hosts.
+  - Copy suite service files to remote job hosts for communication clients.
+  - Clean up of service files on suite shutdown.
+- Implement basic host select functionality.
+"""
+
+import os
+from pipes import quote
+from subprocess import Popen, PIPE
+import tarfile
+from tempfile import NamedTemporaryFile
+from time import time
+from uuid import uuid4
+
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
+import cylc.flags
+from cylc.hostuserutil import is_remote, is_remote_host, is_remote_user
+from cylc.mp_pool import SuiteProcContext
+from cylc.suite_logging import LOG
+from cylc.task_remote_cmd import REMOTE_INIT_DONE, REMOTE_INIT_NOT_REQUIRED
+
+
+REMOTE_INIT_FAILED = 'REMOTE INIT FAILED'
+
+
+class TaskRemoteMgmtError(Exception):
+    """Cannot initialise suite run directory of remote job host."""
+
+    MSG_INIT = "%s: initialisation did not complete:\n"  # %s owner_at_host
+    MSG_TIDY = "%s: clean up did not complete:\n"  # %s owner_at_host
+
+    def __str__(self):
+        msg, (host, owner), cmd_str, ret_code, out, err = self.args
+        if owner:
+            owner_at_host = owner + '@' + host
+        else:
+            owner_at_host = host
+        ret = (msg + "COMMAND FAILED (%d): %s\n") % (
+            owner_at_host, ret_code, cmd_str)
+        for label, item in ("STDOUT", out), ("STDERR", err):
+            if item:
+                for line in item.splitlines(True):  # keep newline chars
+                    ret += "COMMAND %s: %s" % (label, line)
+        return ret
+
+
+class TaskRemoteMgr(object):
+    """Manage task job remote initialisation, tidy, selection."""
+
+    def __init__(self, suite, proc_pool, suite_srv_files_mgr):
+        self.suite = suite
+        self.proc_pool = proc_pool
+        self.suite_srv_files_mgr = suite_srv_files_mgr
+        # self.remote_init_map = {(host, owner): status, ...}
+        self.remote_init_map = {}
+        self.single_task_mode = False
+        self.uuid = uuid4()
+        self.ready = False
+
+    def remote_init(self, host, owner):
+        """Initialise a remote [owner@]host if necessary.
+
+        Create UUID file on suite host ".service/uuid" for remotes to identify
+        shared file system with suite host.
+
+        Call "cylc remote-init" to install suite items to remote:
+            ".service/contact": HTTP(S) and SSH+HTTP(S) task comm
+            ".service/passphrase": HTTP(S) task comm
+            ".service/ssl.cert": HTTPS task comm
+            "python/": if source exists
+
+        Return:
+            REMOTE_INIT_NOT_REQUIRED:
+                If remote init is not required, e.g. not remote
+            REMOTE_INIT_DONE:
+                If remote init done.
+            REMOTE_INIT_FAILED:
+                If init of the remote failed.
+                Note: this will reset to None to allow retry.
+            None:
+                If waiting for remote init command to complete
+
+        """
+        if self.single_task_mode or not is_remote(host, owner):
+            return REMOTE_INIT_NOT_REQUIRED
+        try:
+            status = self.remote_init_map[(host, owner)]
+        except KeyError:
+            pass  # Not yet initialised
+        else:
+            if status == REMOTE_INIT_FAILED:
+                del self.remote_init_map[(host, owner)]  # reset to allow retry
+            return status
+
+        # Determine what items to install
+        items = self._remote_init_items(host, owner)
+        # No item to install
+        if not items:
+            self.remote_init_map[(host, owner)] = REMOTE_INIT_NOT_REQUIRED
+            return self.remote_init_map[(host, owner)]
+
+        # Create "stdin_file_paths" file, with "items" in it.
+        tmphandle = NamedTemporaryFile()
+        tarhandle = tarfile.open(fileobj=tmphandle, mode='w')
+        for path, arcname in items:
+            tarhandle.add(path, arcname=arcname)
+        tarhandle.close()
+        tmphandle.seek(0)
+        # UUID file - for remote to identify shared file system with suite host
+        uuid_fname = os.path.join(
+            self.suite_srv_files_mgr.get_suite_srv_dir(self.suite), 'uuid')
+        if not os.path.exists(uuid_fname):
+            open(uuid_fname, 'wb').write(str(self.uuid))
+        # Build the command
+        cmd = ['cylc', 'remote-init']
+        if is_remote_host(host):
+            cmd.append('--host=%s' % host)
+        if is_remote_user(owner):
+            cmd.append('--user=%s' % owner)
+        if cylc.flags.debug:
+            cmd.append('--debug')
+        cmd.append(str(self.uuid))
+        cmd.append(GLOBAL_CFG.get_derived_host_item(
+            self.suite, 'suite run directory', host, owner))
+        self.proc_pool.put_command(
+            SuiteProcContext(
+                'remote-init', cmd, stdin_file_paths=[tmphandle.name]),
+            self._remote_init_callback,
+            [host, owner, tmphandle])
+        # None status: Waiting for command to finish
+        self.remote_init_map[(host, owner)] = None
+        return self.remote_init_map[(host, owner)]
+
+    def remote_tidy(self):
+        """Remove suite contact files from initialised remotes.
+
+        Call "cylc remote-tidy".
+        This method is called on suite shutdown, so we want nothing to hang.
+        Timeout any incomplete commands after 10 seconds.
+
+        Also remove UUID file on suite host ".service/uuid".
+        """
+        # Remove UUID file
+        uuid_fname = os.path.join(
+            self.suite_srv_files_mgr.get_suite_srv_dir(self.suite), 'uuid')
+        try:
+            os.unlink(uuid_fname)
+        except OSError:
+            pass
+        # Issue all SSH commands in parallel
+        procs = {}
+        for (host, owner), init_with_contact in self.remote_init_map.items():
+            if init_with_contact != REMOTE_INIT_DONE:
+                continue
+            cmd = ['timeout', '10', 'cylc', 'remote-tidy']
+            if is_remote_host(host):
+                cmd.append('--host=%s' % host)
+            if is_remote_user(owner):
+                cmd.append('--user=%s' % owner)
+            if cylc.flags.debug:
+                cmd.append('--debug')
+            cmd.append(os.path.join(GLOBAL_CFG.get_derived_host_item(
+                self.suite, 'suite run directory', host, owner)))
+            procs[(host, owner)] = (cmd, Popen(cmd, stdout=PIPE, stderr=PIPE))
+        # Wait for commands to complete for a max of 10 seconds
+        timeout = time() + 10.0
+        while procs and time() < timeout:
+            for (host, owner), (cmd, proc) in procs.copy().items():
+                if proc.poll() is None:
+                    continue
+                del procs[(host, owner)]
+                out, err = proc.communicate()
+                if proc.wait():
+                    LOG.warning(TaskRemoteMgmtError(
+                        TaskRemoteMgmtError.MSG_TIDY,
+                        (host, owner), ' '.join(quote(item) for item in cmd),
+                        proc.ret_code, out, err))
+        # Terminate any remaining commands
+        for (host, owner), (cmd, proc) in procs.items():
+            try:
+                proc.terminate()
+            except OSError:
+                pass
+            out, err = proc.communicate()
+            if proc.wait():
+                LOG.warning(TaskRemoteMgmtError(
+                    TaskRemoteMgmtError.MSG_TIDY,
+                    (host, owner), ' '.join(quote(item) for item in cmd),
+                    proc.ret_code, out, err))
+
+    def _remote_init_callback(self, proc_ctx, host, owner, tmphandle):
+        """Callback when init_host_exec_commands has exited"""
+        self.ready = True
+        tmphandle.close()
+        if proc_ctx.ret_code == 0:
+            for status in (REMOTE_INIT_DONE, REMOTE_INIT_NOT_REQUIRED):
+                if status in proc_ctx.out:
+                    # Good status
+                    LOG.debug(proc_ctx)
+                    self.remote_init_map[(host, owner)] = status
+                    return
+        # Bad status
+        LOG.error(TaskRemoteMgmtError(
+            TaskRemoteMgmtError.MSG_INIT,
+            (host, owner), ' '.join(quote(item) for item in proc_ctx.cmd),
+            proc_ctx.ret_code, proc_ctx.out, proc_ctx.err))
+        LOG.error(proc_ctx)
+        self.remote_init_map[(host, owner)] = REMOTE_INIT_FAILED
+
+    def _remote_init_items(self, host, owner):
+        """Return list of items that should be installed on task remote.
+
+        Each item is (path, name),
+        where name is relative path under suite run directory.
+        """
+        items = []
+        comm_meth = GLOBAL_CFG.get_host_item(
+            'task communication method', host, owner)
+        LOG.debug('comm_meth=%s' % comm_meth)
+        if comm_meth in ['ssh', 'http', 'https']:
+            # Contact file
+            items.append((
+                self.suite_srv_files_mgr.get_contact_file(self.suite),
+                os.path.join(
+                    self.suite_srv_files_mgr.DIR_BASE_SRV,
+                    self.suite_srv_files_mgr.FILE_BASE_CONTACT)))
+            if comm_meth in ['http', 'https']:
+                # Passphrase file
+                items.append((
+                    self.suite_srv_files_mgr.get_auth_item(
+                        self.suite_srv_files_mgr.FILE_BASE_PASSPHRASE,
+                        self.suite),
+                    os.path.join(
+                        self.suite_srv_files_mgr.DIR_BASE_SRV,
+                        self.suite_srv_files_mgr.FILE_BASE_PASSPHRASE)))
+            if comm_meth in ['https']:
+                # SSL cert file
+                items.append((
+                    self.suite_srv_files_mgr.get_auth_item(
+                        self.suite_srv_files_mgr.FILE_BASE_SSL_CERT,
+                        self.suite),
+                    os.path.join(
+                        self.suite_srv_files_mgr.DIR_BASE_SRV,
+                        self.suite_srv_files_mgr.FILE_BASE_SSL_CERT)))
+        return items

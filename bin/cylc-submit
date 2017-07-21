@@ -102,7 +102,7 @@ def main():
     GLOBAL_CFG.create_cylc_run_tree(suite)
     task_job_mgr = TaskJobManager(
         suite, SuiteProcPool(), SuiteDatabaseManager(), suite_srv_mgr)
-    task_job_mgr.single_task_mode = True
+    task_job_mgr.task_remote_mgr.single_task_mode = True
     task_job_mgr.job_file_writer.set_suite_env({
         'CYLC_UTC': str(config.cfg['cylc']['UTC mode']),
         'CYLC_DEBUG': str(cylc.flags.debug),
