@@ -4465,13 +4465,21 @@ the clarity of a suite definition).}
 
 \subsubsection{Parameter Expansion}
 
-Parameter values can be lists of strings, or integer ranges (with inclusive bounds):
+Parameter values can be lists of strings, or lists of positive integers and
+integer ranges (with inclusive bounds). Numeric values in a list of strings are
+considered strings. It is not possible to mix strings with integer ranges.
+
+For example:
+
 \begin{lstlisting}
 [cylc]
     [[parameters]]
         obs = ship, buoy, plane
         run = 1..5  # 1, 2, 3, 4, 5
         idx = 1..9..2  # 1, 3, 5, 7, 9
+        i = 1..5..2, 10, 11..13   # 1, 3, 5, 10, 11, 12, 13
+        item = 0, 1, e, pi, i  # "0", "1", "e", "pi", "i"
+        p = one, two, 3..5  # ERROR
 \end{lstlisting}
 Then angle brackets denote use of these parameters throughout the suite
 definition. For the values above, this parameterized name:

@@ -35,7 +35,7 @@ from cylc.network import PRIVILEGE_LEVELS
 from cylc.task_id import TaskID
 
 
-REC_PARAM_INT_RANGE = re.compile('(\d+)\.\.(\d+)(?:\.\.(\d+))?')
+REC_PARAM_INT_RANGE = re.compile(r'\A(\d+)\.\.(\d+)(?:\.\.(\d+))?\Z')
 
 
 def _coerce_cycleinterval(value, keys, _):
