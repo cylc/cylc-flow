@@ -79,7 +79,7 @@ help_util() {
         exec "${CYLC_HOME_BIN}"/cylc-help
     fi
     # for cases 'cylc --help CATEGORY COMMAND'
-    if [[ (( $# -gt 1 )) &&  "${HELP_OPTS[*]} " == *"$UTIL"* && \
+    if [[ $# -gt 1 &&  "${HELP_OPTS[*]} " == *"$UTIL"* && \
           "${CATEGORIES[*]} " == *" $1 "* ]]; then
         local COMMAND="${CYLC_HOME_BIN}/cylc-$2"
         exec "${COMMAND}" "--help"  
@@ -119,7 +119,7 @@ help_util() {
         exec "${COMMAND}" "$@"
     fi
     # Deal with cases like 'cylc --help [COMMAND/CATEGORY]'
-    if [[ (( $# -gt 1 )) && -f "$(ls cylc-${2}* 2>/dev/null)" ]]; then
+    if [[ $# -gt 1 && -f "$(ls cylc-${2}* 2>/dev/null)" ]]; then
         local COMMAND="${CYLC_HOME_BIN}/$(ls "cylc-$2"*)"
         exec "${COMMAND}" "--help"
     fi
@@ -254,7 +254,7 @@ elif (( "$num_commands_match" == 1 )); then
 # Abort if the command wildcard match is ambiguous, unless it is itself a 
 # command, e.g. "cylc graph" matches "cylc-graph" and "cylc-graph-diff",
 # but the command should not abort in this case.  
-elif [[ (("$num_commands_match" -gt 1)) \
+elif [[ "$num_commands_match" -gt 1 \
         && -f "${CYLC_HOME_BIN}/cylc-${UTIL}" ]] ; then
     exec "${CYLC_HOME_BIN}/cylc-${UTIL}" "@"
 else
