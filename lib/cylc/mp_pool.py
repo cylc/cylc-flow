@@ -141,6 +141,7 @@ class SuiteProcPool(object):
     """Use a process pool to execute shell commands."""
 
     JOBS_SUBMIT = "jobs-submit"
+    JOB_INIT_HOST = "job-init-host"
     JOB_SKIPPED_FLAG = 999
     # Shared memory flag.
     STOP_JOB_SUBMISSION = multiprocessing.Value('i', 0)

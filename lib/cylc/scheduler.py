@@ -334,6 +334,9 @@ conditions; see `cylc conditions`.
 
         if self.pool_hold_point:
             OUT.info("Suite will hold after %s" % self.pool_hold_point)
+        self.profiler.log_memory("scheduler.py: before configure_suite")
+        self.configure_suite()
+        self.profiler.log_memory("scheduler.py: after configure_suite")
 
         reqmode = self.config.cfg['cylc']['required run mode']
         if reqmode:
