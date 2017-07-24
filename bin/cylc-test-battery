@@ -136,9 +136,9 @@ if perl -e 'use Test::Harness 3.00' 2>/dev/null; then
     if [[ -z "${NPROC}" ]]; then
         NPROC=$(python -c 'import multiprocessing as mp; print mp.cpu_count()')
     fi
-    exec prove -j "$NPROC" -s -r ${@:-tests}
+    exec prove -j "$NPROC" -s -r "${@:-tests}"
 else
     echo "WARNING: cannot run tests in parallel (Test::Harness < 3.00)" >&2
-    exec prove -s -r ${@:-tests}
+    exec prove -s -r "${@:-tests}"
 fi
 

@@ -41,7 +41,7 @@ if [[ -z $CYLC_DIR ]]; then
     exit 1
 fi
 
-if [[ $# > 2 ]] || [[ $# < 1 ]]; then
+if [[ $# -gt 2 ]] || [[ $# -lt 1 ]]; then
     usage >&2
     exit 1
 fi
