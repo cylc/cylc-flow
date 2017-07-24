@@ -829,7 +829,6 @@ class TaskEventsManager(object):
                 continue
             # Custom event handler can be a command template string
             # or a command that takes 4 arguments (classic interface)
-
             handler_data = {
                 "event": quote(event),
                 "suite": quote(self.suite),
@@ -844,7 +843,7 @@ class TaskEventsManager(object):
             if itask.tdef.rtconfig['meta']:
                 for key, value in itask.tdef.rtconfig['meta'].items():
                     if key == "URL":
-                        handler_data["task_urls"] = quote(value)
+                        handler_data["task_url"] = quote(value)
                     else:
                         handler_data[key] = quote(value)
 

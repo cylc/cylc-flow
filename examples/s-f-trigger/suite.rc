@@ -16,7 +16,6 @@ A:finish => B: means B triggers after A finishes, by success or failure.
                    """
 [runtime]
     [[foo]]
-        description = "A task that alternately succeeds (0 hours) and fails (12 hours)"
         script = """
 echo "HELLO"
 sleep 10
@@ -27,3 +26,5 @@ else
     cylc task message -p CRITICAL "Failing now!"
     exit 1
 fi"""
+        [[[meta]]]
+            description = "A task that alternately succeeds (0 hours) and fails (12 hours)"

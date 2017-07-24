@@ -1081,70 +1081,6 @@ parents are listed \lstinline=root= is assumed.
 \item {\em default:} \lstinline=root=
 \end{myitemize}
 
-\paragraph[title]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow title}
-
-A single line description of this namespace. It is displayed by the
-\lstinline=cylc list= command and can be retrieved from running tasks
-with the \lstinline=cylc show= command.
-
-\begin{myitemize}
-\item {\em type:} single line string
-\item {\em root default:} (none)
-\end{myitemize}
-
-\paragraph[description]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow description}
-
-A multi-line description of this namespace, retrievable from running tasks with the
-\lstinline=cylc show= command.
-
-\begin{myitemize}
-\item {\em type:} multi-line string
-\item {\em root default:} (none)
-\end{myitemize}
-
-\paragraph[URL]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow URL}
-\label{TaskURL}
-
-A web URL to task documentation for this suite.  If present it can be browsed
-with the \lstinline=cylc doc= command, or by right-clicking on the task in
-gcylc.  The variables \lstinline=${CYLC_SUITE_NAME}= and
-\lstinline=${CYLC_TASK_NAME}= will be replaced with the actual suite and task
-names (note that these are not environment variables in this context). See also
-suite URLs (\ref{SuiteURL}).
-
-\begin{myitemize}
-\item {\em type:} string (URL)
-\item {\em default:} (none)
-\item {\em example:} you can set URLs to all tasks in a suite by putting
-    something like the following in the root namespace:
-    \begin{lstlisting}
-[runtime]
-    [[root]]
-        URL = http://suites/${CYLC_SUITE_NAME}/${CYLC_TASK_NAME}.html
-    \end{lstlisting}
-\end{myitemize}
-
-(Note that URLs containing the suite comment delimiter
-\lstinline=#= must be protected by quotes).
-
-\paragraph[importance]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow importance}
-
-This configuration item allows suite writers to give a custom "importance" 
-rating to tasks.  The ratings could be, for instance, integers between 1 and 5,
-where 1 indicates the most critical tasks in the suite and 5 the least
-critical; or string values such as "HIGH", "MEDIUM", and "LOW".   This
-information can be passed to event handlers, to allow them to react differently
-to an event according to the "importance" of the task involved.  For example, a
-task failure event handler configured in a suite's root namespace will be
-called if any task fails, but the event handler script might need to trigger an
-alerting system only if the failed task is sufficiently important.
-
-\begin{myitemize}
-\item {\em type:} string or integer
-\item {\em default:} (none)
-\item {\em example:} \lstinline@importance = "low"@
-\end{myitemize}
-
 \paragraph[init-script]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow init-script}
 
 This is invoked by the task job script before the task execution
@@ -1278,6 +1214,71 @@ for a job with higher immediate priority. See also~\ref{PreemptionHPC}
 \begin{myitemize}
 \item {\em type:} boolean
 \item {\em default:} False
+\end{myitemize}
+
+\paragraph[{[[[}meta{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[meta]]]}
+
+A list of the user-defined metadata items of the task.
+
+\paragraph[title]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[meta]]] \textrightarrow title}
+
+A single line description of this namespace. It is displayed by the
+\lstinline=cylc list= command and can be retrieved from running tasks
+with the \lstinline=cylc show= command.
+
+\begin{myitemize}
+\item {\em type:} single line string
+\item {\em root default:} (none)
+\end{myitemize}
+
+\paragraph[description]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[meta]]] \textrightarrow description}
+
+A multi-line description of this namespace, retrievable from running tasks with the
+\lstinline=cylc show= command.
+
+\begin{myitemize}
+\item {\em type:} multi-line string
+\item {\em root default:} (none)
+\end{myitemize}
+
+\paragraph[URL]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[meta]]] \textrightarrow URL}
+\label{TaskURL}
+
+A web URL to task documentation for this suite.  If present it can be browsed
+with the \lstinline=cylc doc= command, or by right-clicking on the task in
+gcylc.  The variables \lstinline=${CYLC_SUITE_NAME}= and
+\lstinline=${CYLC_TASK_NAME}= will be replaced with the actual suite and task
+names (note that these are not environment variables in this context). See also
+suite URLs (\ref{SuiteURL}).
+
+\begin{myitemize}
+\item {\em type:} string (URL)
+\item {\em default:} (none)
+\item {\em example:} you can set URLs to all tasks in a suite by putting
+    something like the following in the root namespace:
+    \begin{lstlisting}
+[runtime]
+    [[root]]
+        URL = http://suites/${CYLC_SUITE_NAME}/${CYLC_TASK_NAME}.html
+    \end{lstlisting}
+\end{myitemize}
+
+(Note that URLs containing the suite comment delimiter
+\lstinline=#= must be protected by quotes).
+
+\paragraph[\_\_MANY\_\_]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[meta]]] \textrightarrow \_\_MANY\_\_}
+
+Replace \_\_MANY\_\_ with namespace name and value, and repeat as needed to define all the user-defined metadata items of the task.
+Names may contain letters, digits, underscores and hyphens and values may contain letters and digits.
+
+\begin{myitemize}
+\item {\em type:} String or integer
+\item {\em default:} (none)
+\item {\em example:}
+    \begin{lstlisting}
+importance = high
+color = red
+    \end{lstlisting}
 \end{myitemize}
 
 \paragraph[{[[[}job{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[job]]]}
@@ -1566,7 +1567,6 @@ substituted with actual values:
     \item \%(name)s: task name
     \item \%(suite\_url)s: suite URL
     \item \%(task\_url)s: task URL
-    \item \%(importance)s: importance value (priority of task)
     \item \%(submit\_num)s: submit number
     \item \%(id)s: task ID (i.e. \%(name)s.\%(point)s)
     \item \%(message)s: event message, if any

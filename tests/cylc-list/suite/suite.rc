@@ -9,23 +9,31 @@
       fido => cujo & manny"""
 [runtime]
    [[not-used]]
-      title = "an unused namespace"
+       [[[meta]]]
+           title = "an unused namespace"
    [[MAMMAL]]
-      title = "a clade of endothermic amniotes"
+       [[[meta]]]
+           title = "a clade of endothermic amniotes"
    [[FICTIONAL]]
-      title = "something made-up"
+       [[[meta]]]
+           title = "something made-up"
    [[DOG]]
-      title = "a canid that is known as man's best friend"
-      inherit = MAMMAL
+       inherit = MAMMAL
+       [[[meta]]]
+           title = "a canid that is known as man's best friend"
    [[POODLE]]
-      title = "a ridiculous-looking dog owned by idiots"
-      inherit = DOG
+       inherit = DOG
+       [[[meta]]]
+           title = "a ridiculous-looking dog owned by idiots"
    [[fido]]
-      title = "a large black and white spotted dog"
-      inherit = DOG
+       inherit = DOG
+       [[[meta]]]
+           title = "a large black and white spotted dog"
    [[cujo]]
-      title = "a fearsome man-eating poodle"
-      inherit = POODLE, FICTIONAL
+       inherit = POODLE, FICTIONAL
+       [[[meta]]]
+           title = "a fearsome man-eating poodle"
    [[manny]]
-      title = "a large hairy mammoth"
-      inherit = MAMMAL, FICTIONAL
+       inherit = MAMMAL, FICTIONAL
+       [[[meta]]]
+           title = "a large hairy mammoth"

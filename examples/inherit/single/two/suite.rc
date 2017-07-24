@@ -35,34 +35,40 @@ generated with 'cylc jobscript'."""
         [[[environment]]]
             GEN_B = var_b
     [[atovs]]
-        description = "OPS ATOVS obs processing"
         inherit = OPS
+        [[[meta]]]
+            description = "OPS ATOVS obs processing"
         [[[environment]]]
             OPS_DATA = atovs
     [[aircraft]]
-        description = "OPS aircraft obs processing"
         inherit = OPS
         script = "echo HELLO from $CYLC_TASK_ID; sleep 5; echo ABORT; /bin/false"
+        [[[meta]]]
+            description = "OPS aircraft obs processing"
         [[[environment]]]
             OPS_DATA = aircraft
     [[ConLS]]
-        description = "runs VAR ConfigureLS"
         inherit = VAR
+        [[[meta]]]
+            description = "runs VAR ConfigureLS"
         [[[environment]]]
             VAR_PROG = ConfigureLS
     [[AnPF]]
-        description = "runs VAR AnalysePF"
         inherit = VAR
         script = "echo run-VAR.sh --apf; sleep 10"
+        [[[meta]]]
+            description = "runs VAR AnalysePF"
         [[[environment]]]
             VAR_PROG = AnalysePF
     [[BAZ]]
     [[bar1,bar2]]
         inherit = BAZ
-        description = "member of BAZ"
+        [[[meta]]]
+            description = "member of BAZ"
     [[atovs_post]]
         inherit = OPS
-        description = "OPS ATOVS postprocessing"
+        [[[meta]]]
+            description = "OPS ATOVS postprocessing"
 
 [visualization]
     collapsed families = OPS, VAR, BAZ

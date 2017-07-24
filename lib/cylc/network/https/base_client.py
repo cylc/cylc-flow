@@ -216,7 +216,6 @@ class BaseCommsClient(object):
         import ssl
         if hasattr(ssl, '_create_unverified_context'):
             ssl._create_default_https_context = ssl._create_unverified_context
-
         http_return_items = []
         for http_request_item in http_request_items:
             method = http_request_item['method']
@@ -265,7 +264,7 @@ class BaseCommsClient(object):
                 else:
                     raise ConnectionError(url, exc)
             except Exception as exc:
-                if cylc.flags.debug:
+                if not cylc.flags.debug:
                     import traceback
                     traceback.print_exc()
                 raise ConnectionError(url, exc)

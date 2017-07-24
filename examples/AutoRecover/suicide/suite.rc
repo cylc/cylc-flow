@@ -19,7 +19,6 @@ post => !model # take out failed models if recovery succeeds
                     """
 [runtime]
     [[model]]
-        description = "A task that succeeds at T00 and fails at T12"
         script = """
 echo Hello from $CYLC_TASK_ID
 sleep 10
@@ -30,3 +29,6 @@ else
     echo "Succeeded"
     /bin/true
 fi"""
+        [[[meta]]]
+            description = "A task that succeeds at T00 and fails at T12"
+

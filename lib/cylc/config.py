@@ -1302,8 +1302,8 @@ class SuiteConfig(object):
     def add_tree_titles(self, tree):
         for key, val in tree.items():
             if val == {}:
-                if 'title' in self.cfg['runtime'][key]:
-                    tree[key] = self.cfg['runtime'][key]['title']
+                if 'title' in self.cfg['runtime'][key]['meta']:
+                    tree[key] = self.cfg['runtime'][key]['meta']['title']
                 else:
                     tree[key] = 'No title provided'
             elif isinstance(val, dict):
@@ -1324,9 +1324,9 @@ class SuiteConfig(object):
                     names.append(ns)
         result = {}
         for ns in names:
-            if 'title' in self.cfg['runtime'][ns]:
+            if 'title' in self.cfg['runtime'][ns]['meta']:
                 # the runtime dict is sparse at this stage.
-                result[ns] = self.cfg['runtime'][ns]['title']
+                result[ns] = self.cfg['runtime'][ns]['meta']['title']
             else:
                 # no need to flesh out the full runtime just for title
                 result[ns] = "No title provided"
