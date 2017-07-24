@@ -51,8 +51,7 @@ import subprocess
 import cylc.flags
 from cylc.prompt import prompt
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.suite_command_client import SuiteCommandClient
-from cylc.network.suite_info_client import SuiteInfoClient
+from cylc.network.client import SuiteRuntimeServiceClient
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.task_id import TaskID
 
@@ -83,7 +82,7 @@ def main():
     msg = 'Trigger task(s) %s in %s' % (args, suite)
     prompt(msg, options.force)
 
-    cmd_client = SuiteCommandClient(
+    pclient = SuiteRuntimeServiceClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
@@ -92,17 +91,14 @@ def main():
         items = parser.parse_multitask_compat(options, args)
         task_id = items[0]
         # Check that TASK is a unique task.
-        info_client = SuiteInfoClient(
-            suite, options.owner, options.host, options.port,
-            options.comms_timeout, my_uuid=cmd_client.my_uuid)
-        success, msg = info_client.get_info(
+        success, msg = pclient.get_info(
             'ping_task', task_id=task_id, exists_only=True)
         if not success:
             sys.exit('ERROR: %s' % msg)
 
         # Get the job filename from the suite daemon - the task cycle point may
         # need standardising to the suite cycle point format.
-        jobfile_path = info_client.get_info(
+        jobfile_path = pclient.get_info(
             'get_task_jobfile_path', task_id=task_id)
         if not jobfile_path:
             sys.exit('ERROR: task not found')
@@ -119,7 +115,7 @@ def main():
             old_mtime = None
 
         # Tell the suite daemon to generate the job file.
-        cmd_client.put_command('dry_run_tasks', items=[task_id])
+        pclient.put_command('dry_run_tasks', items=[task_id])
 
         # Wait for the new job file to be written. Use mtime because the same
         # file could potentially exist already, left from a previous run.
@@ -190,7 +186,7 @@ def main():
 
     # Trigger the task proxy(s).
     items = parser.parse_multitask_compat(options, args)
-    cmd_client.put_command('trigger_tasks', items=items)
+    pclient.put_command('trigger_tasks', items=items)
 
 
 if __name__ == "__main__":

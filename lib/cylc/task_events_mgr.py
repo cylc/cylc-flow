@@ -38,10 +38,10 @@ import traceback
 
 from parsec.config import ItemNotFoundError
 
+from cylc.broadcast_mgr import BroadcastMgr
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
 from cylc.mp_pool import SuiteProcContext
-from cylc.network.suite_broadcast_server import BroadcastServer
 from cylc.suite_logging import ERR, LOG
 from cylc.suite_host import get_suite_host, get_user
 from cylc.task_action_timer import TaskActionTimer
@@ -108,21 +108,29 @@ class TaskEventsManager(object):
     RE_MESSAGE_TIME = re.compile(
         '\A(.+) at (' + RE_DATE_TIME_FORMAT_EXTENDED + ')\Z')
 
-    def __init__(self, suite, proc_pool, suite_db_mgr):
+    def __init__(self, suite, proc_pool, suite_db_mgr, broadcast_mgr=None):
         self.suite = suite
         self.suite_url = None
         self.suite_cfg = []
         self.proc_pool = proc_pool
         self.suite_db_mgr = suite_db_mgr
+        if broadcast_mgr is None:
+            broadcast_mgr = BroadcastMgr(self.suite_db_mgr)
+        self.broadcast_mgr = broadcast_mgr
         self.mail_interval = 0.0
         self.mail_footer = None
         self.next_mail_time = None
         self.event_timers = {}
+        # Set pflag = True to stimulate task dependency negotiation whenever a
+        # task changes state in such a way that others could be affected. The
+        # flag should only be turned off again after use in
+        # Scheduler.process_tasks, to ensure that dependency negotation occurs
+        # when required.
+        self.pflag = False
 
-    @staticmethod
-    def get_host_conf(itask, key, default=None, skey="remote"):
+    def get_host_conf(self, itask, key, default=None, skey="remote"):
         """Return a host setting from suite then global configuration."""
-        overrides = BroadcastServer.get_inst().get(itask.identity)
+        overrides = self.broadcast_mgr.get_broadcast(itask.identity)
         if skey in overrides and overrides[skey].get(key) is not None:
             return overrides[skey][key]
         elif itask.tdef.rtconfig[skey].get(key) is not None:
@@ -348,8 +356,7 @@ class TaskEventsManager(object):
                 itask, {"run_signal": signal})
             self._process_message_failed(itask, event_time, signal)
         elif message.startswith(TaskMessage.VACATION_MESSAGE_PREFIX):
-            # Task job pre-empted into a vacation state
-            cylc.flags.pflag = True
+            self.pflag = True
             itask.state.reset_state(TASK_STATUS_SUBMITTED)
             self._db_events_insert(itask, "vacated", message)
             itask.set_event_time('started')  # reset
@@ -503,11 +510,10 @@ class TaskEventsManager(object):
                 if cylc.flags.debug:
                     ERR.debug(traceback.format_exc())
 
-    @staticmethod
-    def _get_events_conf(itask, key, default=None):
+    def _get_events_conf(self, itask, key, default=None):
         """Return an events setting from suite then global configuration."""
         for getter in [
-                BroadcastServer.get_inst().get(itask.identity).get("events"),
+                self.broadcast_mgr.get_broadcast(itask.identity).get("events"),
                 itask.tdef.rtconfig["events"],
                 GLOBAL_CFG.get()["task events"]]:
             try:
@@ -600,7 +606,7 @@ class TaskEventsManager(object):
         if (TASK_STATUS_RETRYING not in itask.try_timers or
                 itask.try_timers[TASK_STATUS_RETRYING].next() is None):
             # No retry lined up: definitive failure.
-            cylc.flags.pflag = True
+            self.pflag = True
             itask.state.reset_state(TASK_STATUS_FAILED)
             self.setup_event_handlers(itask, "failed", message)
             LOG.critical("job(%02d) %s" % (
@@ -623,7 +629,7 @@ class TaskEventsManager(object):
         if itask.job_vacated:
             itask.job_vacated = False
             LOG.warning("Vacated job restarted", itask=itask)
-        cylc.flags.pflag = True
+        self.pflag = True
         itask.state.reset_state(TASK_STATUS_RUNNING)
         itask.set_event_time('started', event_time)
         self.suite_db_mgr.put_update_task_jobs(itask, {
@@ -647,7 +653,7 @@ class TaskEventsManager(object):
 
     def _process_message_succeeded(self, itask, event_time):
         """Helper for process_message, handle a succeeded message."""
-        cylc.flags.pflag = True
+        self.pflag = True
         itask.set_event_time('finished', event_time)
         self.suite_db_mgr.put_update_task_jobs(itask, {
             "run_status": 0,
@@ -683,7 +689,7 @@ class TaskEventsManager(object):
                 itask.try_timers[TASK_STATUS_SUBMIT_RETRYING].next() is None):
             # No submission retry lined up: definitive failure.
             itask.set_event_time('finished', event_time)
-            cylc.flags.pflag = True
+            self.pflag = True
             # See github #476.
             self.setup_event_handlers(
                 itask, self.EVENT_SUBMIT_FAILED,
@@ -732,7 +738,7 @@ class TaskEventsManager(object):
         self.setup_event_handlers(
             itask, TASK_OUTPUT_SUBMITTED, 'job submitted')
 
-        cylc.flags.pflag = True
+        self.pflag = True
         if itask.state.status == TASK_STATUS_READY:
             # In rare occassions, the submit command of a batch system has sent
             # the job to its server, and the server has started the job before

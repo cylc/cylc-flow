@@ -85,7 +85,7 @@ import cylc.flags
 from cylc.broadcast_report import (
     get_broadcast_change_report, get_broadcast_bad_options_report)
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.suite_broadcast_client import BroadcastClient
+from cylc.network.client import SuiteRuntimeServiceClient
 from cylc.print_tree import print_tree
 from cylc.task_id import TaskID
 from cylc.cfgspec.suite import SPEC, upg
@@ -247,7 +247,7 @@ def main():
     options, args = parser.parse_args()
     suite = args[0]
 
-    pclient = BroadcastClient(
+    pclient = SuiteRuntimeServiceClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
@@ -258,7 +258,7 @@ def main():
                 TaskID.split(options.showtask)
             except ValueError:
                 parser.error("TASKID must be " + TaskID.SYNTAX)
-        settings = pclient.broadcast('get', task_id=options.showtask)
+        settings = pclient.get_broadcast(task_id=options.showtask)
         padding = get_padding(settings) * ' '
         if options.raw:
             print str(settings)
@@ -267,18 +267,16 @@ def main():
         sys.exit(0)
 
     if options.clear:
-        modified_settings, bad_options = pclient.broadcast(
-            'clear', point_strings=options.point_strings,
-            namespaces=options.namespaces
-        )
+        modified_settings, bad_options = pclient.clear_broadcast(
+            point_strings=options.point_strings, namespaces=options.namespaces)
         if modified_settings:
             print get_broadcast_change_report(
                 modified_settings, is_cancel=True)
         sys.exit(get_broadcast_bad_options_report(bad_options))
 
     if options.expire:
-        modified_settings, bad_options = pclient.broadcast(
-            'expire', cutoff=options.expire)
+        modified_settings, bad_options = pclient.expire_broadcast(
+            cutoff=options.expire)
         if modified_settings:
             print get_broadcast_change_report(
                 modified_settings, is_cancel=True)
@@ -302,10 +300,9 @@ def main():
             setting = get_rdict(option_item)
             settings.append(setting)
         files_to_settings(settings, options.cancel_files, options.cancel)
-        modified_settings, bad_options = pclient.broadcast(
-            'clear', point_strings=point_strings,
-            namespaces=namespaces, cancel_settings=settings
-        )
+        modified_settings, bad_options = pclient.clear_broadcast(
+            point_strings=point_strings, namespaces=namespaces,
+            cancel_settings=settings)
         if modified_settings:
             print get_broadcast_change_report(
                 modified_settings, is_cancel=True)
@@ -321,10 +318,9 @@ def main():
             setting = get_rdict(lhs, rhs)
             settings.append(setting)
         files_to_settings(settings, options.setting_files)
-        modified_settings, bad_options = pclient.broadcast(
-            'put', point_strings=point_strings,
-            namespaces=namespaces, settings=settings
-        )
+        modified_settings, bad_options = pclient.put_broadcast(
+            point_strings=point_strings, namespaces=namespaces,
+            settings=settings)
         print get_broadcast_change_report(modified_settings)
         sys.exit(get_broadcast_bad_options_report(bad_options, is_set=True))
 

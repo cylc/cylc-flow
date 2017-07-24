@@ -37,7 +37,7 @@ cmp_ok log1.txt << __END__
 [client-connect] ${USER_AT_HOST}:cylc-show privilege='full-control' $UUID
 [client-command] get_suite_info ${USER_AT_HOST}:cylc-show $UUID
 [client-connect] ${USER_AT_HOST}:cylc-broadcast privilege='full-control' $UUID
-[client-command] broadcast_get ${USER_AT_HOST}:cylc-broadcast $UUID
+[client-command] get_broadcast ${USER_AT_HOST}:cylc-broadcast $UUID
 [client-connect] ${USER_AT_HOST}:cylc-release privilege='full-control' $UUID
 [client-command] release_suite ${USER_AT_HOST}:cylc-release $UUID
 __END__
@@ -47,9 +47,9 @@ cylc cat-log $SUITE_NAME | grep "\[client-.*cylc-message" | awk '{print $4,$5,$6
 USER_AT_HOST=${USER}@$(hostname -f)
 cmp_ok log2.txt << __END__
 [client-connect] ${USER_AT_HOST}:cylc-message privilege='full-control'
-[client-command] task_message ${USER_AT_HOST}:cylc-message
+[client-command] put_message ${USER_AT_HOST}:cylc-message
 [client-connect] ${USER_AT_HOST}:cylc-message privilege='full-control'
-[client-command] task_message ${USER_AT_HOST}:cylc-message
+[client-command] put_message ${USER_AT_HOST}:cylc-message
 __END__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

@@ -25,7 +25,7 @@ import logging
 import logging.handlers
 import os
 import sys
-import time
+from time import time
 
 try:
     # Permits use of module by standalone utilities that aren't part of a
@@ -94,12 +94,14 @@ class RollingFileHandler(logging.handlers.BaseRotatingHandler):
         self.maxBytes = maxBytes
         self.archive_length = archive_length
         self.syncronised_group = None
+        self.file_stamp_fcn = file_stamp_fcn
 
-        if file_stamp_fcn:
-            self._gen_file_stamp = file_stamp_fcn
+    def _gen_file_stamp(self):
+        """Use time or self.file_stamp_fcn to generate file name."""
+        if callable(self.file_stamp_fcn):
+            return self.file_stamp_fcn()
         else:
-            self._gen_file_stamp = lambda: ('%f' % time.time()).replace('.',
-                                                                        '')
+            return ('%f' % time()).replace('.', '')
 
     def notifyRollover(self):
         """Notify this RollingFilehandler that its log file has been rolled.
@@ -308,6 +310,26 @@ class SuiteLog(object):
         suite logging."""
         return GLOBAL_CFG.get_derived_host_item(suite, 'suite log directory')
 
+    def get_lines(self, log, prev_size, max_lines):
+        """Read content from log file up to max_lines from prev_size."""
+        prev_size = int(prev_size)
+        path = self.get_log_path(log)
+        try:
+            size = os.path.getsize(path)
+        except (IOError, OSError) as exc:
+            size = 0
+        if size == prev_size:
+            return [], prev_size
+        try:
+            handle = open(path, "r")
+            handle.seek(prev_size)
+            new_content = handle.read()
+            handle.close()
+        except (IOError, OSError) as exc:
+            return "", prev_size
+        new_content_lines = new_content.splitlines()[-int(max_lines):]
+        return "\n".join(new_content_lines), size
+
     def get_log(self, log):
         """Return the requested logger."""
         if log in self.loggers:
@@ -479,6 +501,7 @@ class STDLogger(object):
             raise Exception('Unknown logger provided "{0}"'.format(log))
         self.log_ = log
         self.logger = logging.getLogger(log)
+        self.update_time = time()
 
     def log(self, level, *args, **kwargs):
         try:
@@ -491,6 +514,7 @@ class STDLogger(object):
             except AttributeError:
                 args = ("[%s] -%s" % (itask, args[0]),) + args[1:]
             args = tuple(args)
+        self.update_time = time()
         if self.logger.handlers:
             # If this logger has file handlers write out to it.
             self.logger.log(level, *args, **kwargs)

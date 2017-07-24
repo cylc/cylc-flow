@@ -28,23 +28,21 @@ import traceback
 import cylc.flags
 from cylc.dump import get_stop_state_summary
 from cylc.gui.cat_state import cat_state
-from cylc.network import ConnectionError, ConnectionDeniedError
-from cylc.network.suite_state_client import (
-    StateSummaryClient, SUITE_STATUS_NOT_CONNECTED, SUITE_STATUS_CONNECTED,
+from cylc.gui.warning_dialog import warning_dialog
+from cylc.network.client import (
+    SuiteRuntimeServiceClient, ConnectionError, ConnectionDeniedError)
+from cylc.suite_status import (
+    SUITE_STATUS_NOT_CONNECTED, SUITE_STATUS_CONNECTED,
     SUITE_STATUS_INITIALISING, SUITE_STATUS_STOPPED, SUITE_STATUS_STOPPING
 )
-from cylc.network.suite_info_client import SuiteInfoClient
-from cylc.network.suite_log_client import SuiteLogClient
-from cylc.network.suite_command_client import SuiteCommandClient
+from cylc.task_id import TaskID
+from cylc.task_state import TASK_STATUSES_RESTRICTED
+from cylc.version import CYLC_VERSION
 from cylc.wallclock import (
     get_current_time_string,
     get_seconds_as_interval_string,
     get_time_string_from_unix_time
 )
-from cylc.task_id import TaskID
-from cylc.version import CYLC_VERSION
-from cylc.gui.warning_dialog import warning_dialog
-from cylc.task_state import TASK_STATUSES_RESTRICTED
 
 
 class ConnectSchd(object):
@@ -136,6 +134,7 @@ class Updater(threading.Thread):
         self.info_bar = app.info_bar
 
         self.summary_update_time = None
+        self.err_update_time = None
         self.err_log_lines = []
         self._err_num_log_lines = 10
         self.err_log_size = 0
@@ -173,27 +172,18 @@ class Updater(threading.Thread):
         self.connect_fail_warned = False
         self.version_mismatch_warned = False
 
-        client_args = (self.cfg.suite, self.cfg.owner, self.cfg.host,
-                       self.cfg.port, self.cfg.comms_timeout, self.cfg.my_uuid)
-        self.state_summary_client = StateSummaryClient(*client_args)
-        self.suite_info_client = SuiteInfoClient(*client_args)
-        self.suite_log_client = SuiteLogClient(*client_args)
-        self.suite_command_client = SuiteCommandClient(*client_args)
+        self.client = SuiteRuntimeServiceClient(
+            self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port,
+            self.cfg.comms_timeout, self.cfg.my_uuid)
         # Report sign-out on exit.
-        atexit.register(self.state_summary_client.signout)
+        atexit.register(self.client.signout)
 
     def reconnect(self):
         """Try to reconnect to the suite daemon."""
         if cylc.flags.debug:
             print >> sys.stderr, "  reconnection...",
-        # Reset comms clients.
-        self.suite_log_client.reset()
-        self.state_summary_client.reset()
-        self.suite_info_client.reset()
-        self.suite_command_client.reset()
         try:
-            self.daemon_version = self.suite_info_client.get_info(
-                'get_cylc_version')
+            self.daemon_version = self.client.get_info('get_cylc_version')
         except ConnectionDeniedError as exc:
             if cylc.flags.debug:
                 traceback.print_exc()
@@ -238,8 +228,7 @@ class Updater(threading.Thread):
 
         gobject.idle_add(
             self.app_window.set_title, "%s - %s:%s" % (
-                self.cfg.suite, self.suite_info_client.host,
-                self.suite_info_client.port))
+                self.cfg.suite, self.client.host, self.client.port))
         if cylc.flags.debug:
             print >> sys.stderr, "succeeded"
         # Connected.
@@ -278,7 +267,7 @@ class Updater(threading.Thread):
     def retrieve_err_log(self):
         """Retrieve suite err log; return True if it has changed."""
         new_err_content, new_err_size = (
-            self.suite_log_client.get_err_content(
+            self.client.get_err_content(
                 self.err_log_size, self._err_num_log_lines)
         )
         err_log_changed = (new_err_size != self.err_log_size)
@@ -288,24 +277,28 @@ class Updater(threading.Thread):
             self.err_log_size = new_err_size
         return err_log_changed
 
-    def retrieve_summary_update_time(self):
+    def get_update_times(self):
         """Retrieve suite summary update time; return True if changed."""
         prev_summary_update_time = self.summary_update_time
-        self.summary_update_time = (
-            self.state_summary_client.get_suite_state_summary_update_time())
+        prev_err_update_time = self.err_update_time
+        self.summary_update_time, self.err_update_time = (
+            self.client.get_update_times())
         if self.summary_update_time is None:
             self.set_status(SUITE_STATUS_INITIALISING)
         else:
             self.summary_update_time = float(self.summary_update_time)
-        return prev_summary_update_time != self.summary_update_time
+        if self.err_update_time is not None:
+            self.err_update_time = float(self.err_update_time)
+        return (
+            prev_summary_update_time != self.summary_update_time,
+            prev_err_update_time != self.err_update_time)
 
     def retrieve_state_summaries(self):
         """Retrieve suite summary."""
-        glbl, states, fam_states = (
-            self.state_summary_client.get_suite_state_summary())
+        glbl, states, fam_states = self.client.get_suite_state_summary()
 
         (self.ancestors, self.ancestors_pruned, self.descendants,
-            self.all_families) = self.suite_info_client.get_info(
+            self.all_families) = self.client.get_info(
                 {'function': 'get_first_parent_ancestors'},
                 {'function': 'get_first_parent_ancestors', 'pruned': True},
                 {'function': 'get_first_parent_descendants'},
@@ -346,11 +339,9 @@ class Updater(threading.Thread):
         self.all_families = {}
         self.global_summary = {}
         self.cfg.port = None
-        for client in [self.state_summary_client, self.suite_info_client,
-                       self.suite_log_client, self.suite_command_client]:
-            if self.cfg.host is None:
-                client.host = None
-            client.port = None
+        if self.cfg.host is None:
+            self.client.host = None
+        self.client.port = None
 
         if self.cfg.host:
             gobject.idle_add(
@@ -396,10 +387,11 @@ class Updater(threading.Thread):
         if cylc.flags.debug:
             print >> sys.stderr, "(connected)"
         try:
-            err_log_changed = self.retrieve_err_log()
-            summaries_changed = self.retrieve_summary_update_time()
+            summaries_changed, err_log_changed = self.get_update_times()
             if self.summary_update_time is not None and summaries_changed:
                 self.retrieve_state_summaries()
+            if self.err_update_time is not None and err_log_changed:
+                self.retrieve_err_log()
         except Exception as exc:
             if self.status == SUITE_STATUS_STOPPING:
                 # Expected stop: prevent the reconnection warning dialog.
@@ -504,3 +496,58 @@ class Updater(threading.Thread):
                 self.last_update_time = time()
                 gobject.idle_add(self.update_globals)
             sleep(1)
+
+    @staticmethod
+    def get_id_summary(
+            id_, task_state_summary, fam_state_summary, id_family_map):
+        """Return some state information about a task or family id."""
+        prefix_text = ""
+        meta_text = ""
+        sub_text = ""
+        sub_states = {}
+        stack = [(id_, 0)]
+        done_ids = []
+        for summary in [task_state_summary, fam_state_summary]:
+            if id_ in summary:
+                title = summary[id_].get('title')
+                if title:
+                    meta_text += "\n" + title.strip()
+                description = summary[id_].get('description')
+                if description:
+                    meta_text += "\n" + description.strip()
+        while stack:
+            this_id, depth = stack.pop(0)
+            if this_id in done_ids:  # family dive down will give duplicates
+                continue
+            done_ids.append(this_id)
+            prefix = "\n" + " " * 4 * depth + this_id
+            if this_id in task_state_summary:
+                submit_num = task_state_summary[this_id].get('submit_num')
+                if submit_num:
+                    prefix += "(%02d)" % submit_num
+                state = task_state_summary[this_id]['state']
+                sub_text += prefix + " " + state
+                sub_states.setdefault(state, 0)
+                sub_states[state] += 1
+            elif this_id in fam_state_summary:
+                name, point_string = TaskID.split(this_id)
+                sub_text += prefix + " " + fam_state_summary[this_id]['state']
+                for child in reversed(sorted(id_family_map[name])):
+                    child_id = TaskID.get(child, point_string)
+                    stack.insert(0, (child_id, depth + 1))
+            if not prefix_text:
+                prefix_text = sub_text.strip()
+                sub_text = ""
+        if len(sub_text.splitlines()) > 10:
+            state_items = sub_states.items()
+            state_items.sort()
+            state_items.sort(lambda x, y: cmp(y[1], x[1]))
+            sub_text = ""
+            for state, number in state_items:
+                sub_text += "\n    {0} tasks {1}".format(number, state)
+        if sub_text and meta_text:
+            sub_text = "\n" + sub_text
+        text = prefix_text + meta_text + sub_text
+        if not text:
+            return id_
+        return text

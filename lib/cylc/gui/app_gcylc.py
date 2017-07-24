@@ -52,9 +52,9 @@ from cylc.gui.updater import Updater
 from cylc.gui.util import (
     get_icon, get_image_dir, get_logo, EntryTempText,
     EntryDialog, setup_icons, set_exception_hook_dialog)
-from cylc.network.suite_state_client import (
-    extract_group_state, SUITE_STATUS_STOPPED_WITH)
+from cylc.suite_status import SUITE_STATUS_STOPPED_WITH
 from cylc.task_id import TaskID
+from cylc.task_state_prop import extract_group_state
 from cylc.version import CYLC_VERSION
 from cylc.gui.option_group import controlled_option_group
 from cylc.gui.color_rotator import rotator
@@ -3461,7 +3461,7 @@ For more Stop options use the Control menu.""")
 
     def put_comms_command(self, command, **kwargs):
         try:
-            success, msg = self.updater.suite_command_client.put_command(
+            success, msg = self.updater.client.put_command(
                 command, **kwargs)
         except Exception, x:
             warning_dialog(x.__str__(), self.window).warn()
@@ -3471,7 +3471,7 @@ For more Stop options use the Control menu.""")
 
     def get_comms_info(self, command, **kwargs):
         try:
-            return self.updater.suite_info_client.get_info(command, **kwargs)
+            return self.updater.client.get_info(command, **kwargs)
         except Exception as exc:
             warning_dialog(str(exc), self.window).warn()
 

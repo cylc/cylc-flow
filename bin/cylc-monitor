@@ -29,18 +29,21 @@ if '--use-ssh' in sys.argv[1:]:
     sys.exit("No '--use-ssh': this command requires a local terminal.")
 
 import os
+import re
 from time import sleep, time
 
 from parsec.OrderedDict import OrderedDict
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.suite_state_client import (
-    SUITE_STATUS_SPLIT_REC, StateSummaryClient)
+from cylc.network.client import SuiteRuntimeServiceClient
 from cylc.wallclock import get_time_string_from_unix_time
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.task_state import (
     TASK_STATUS_RUNAHEAD, TASK_STATUSES_ORDERED,
     TASK_STATUSES_RESTRICTED)
 from cylc.task_state_prop import get_status_prop
+
+
+SUITE_STATUS_SPLIT_REC = re.compile('^([a-z ]+ at )(.*)$')
 
 
 class SuiteMonitor(object):
@@ -121,7 +124,7 @@ The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
 
         len_header = sum(len(s) for s in TASK_STATUSES_ORDERED)
 
-        self.pclient = StateSummaryClient(
+        self.pclient = SuiteRuntimeServiceClient(
             suite, options.owner, options.host, options.port,
             options.comms_timeout)
 
@@ -138,7 +141,6 @@ The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
                     self.pclient.get_suite_state_summary())
             except Exception as exc:
                 print >> sys.stderr, "\033[1;37;41mERROR\033[0m", str(exc)
-                self.pclient.reset()
             else:
                 if not glbl:
                     print >> sys.stderr, (
@@ -259,8 +261,4 @@ The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
 
 
 if __name__ == "__main__":
-    monitor = SuiteMonitor()
-    try:
-        monitor.run()
-    except KeyboardInterrupt:
-        monitor.pclient.signout()
+    SuiteMonitor().run()

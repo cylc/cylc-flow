@@ -134,12 +134,11 @@ def main():
     print "Parsing %s (%s)" % (suite1, suite1rc)
     template_vars = load_template_vars(
         options.templatevars, options.templatevars_file)
-    config1 = SuiteConfig.get_inst(
+    config1 = SuiteConfig(
         suite1, suite1rc, template_vars,
         cli_initial_point_string=options.icp).cfg
-    SuiteConfig._FORCE = True
     print "Parsing %s (%s)" % (suite2, suite2rc)
-    config2 = SuiteConfig.get_inst(
+    config2 = SuiteConfig(
         suite2, suite2rc, template_vars,
         cli_initial_point_string=options.icp, is_reload=True).cfg
 

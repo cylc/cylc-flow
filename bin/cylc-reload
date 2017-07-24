@@ -48,7 +48,7 @@ if '--use-ssh' in sys.argv[1:]:
 
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.suite_command_client import SuiteCommandClient
+from cylc.network.client import SuiteRuntimeServiceClient
 from cylc.prompt import prompt
 
 
@@ -58,7 +58,7 @@ def main():
     suite = args[0]
 
     prompt('Reload %s' % suite, options.force)
-    pclient = SuiteCommandClient(
+    pclient = SuiteRuntimeServiceClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)

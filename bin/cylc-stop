@@ -49,25 +49,22 @@ import cylc.flags
 from cylc.prompt import prompt
 from cylc.task_id import TaskID
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.suite_command_client import SuiteCommandClient
-from cylc.network.suite_info_client import SuiteInfoClient
+from cylc.network.client import ConnectionError, SuiteRuntimeServiceClient
 from cylc.command_polling import Poller
 
 
 class StopPoller(Poller):
     """A polling object that checks if a suite has stopped yet."""
 
-    def load(self):
-        self.pclient = SuiteInfoClient(
-            self.args['suite'], owner=self.args['owner'],
-            host=self.args['host'], timeout=self.args['comms_timeout'],
-            port=self.args['port'])
+    def __init__(self, pclient, condition, interval, max_polls):
+        Poller.__init__(self, condition, interval, max_polls, None)
+        self.pclient = pclient
 
     def check(self):
-        # return True if suite has stopped (success) else False
+        """Return True if suite has stopped (success) else False"""
         try:
             self.pclient.get_info('ping_suite')
-        except:
+        except ConnectionError:
             # failed to ping - suite stopped
             return True
         else:
@@ -117,7 +114,7 @@ def main():
     if options.kill and options.now:
         parser.error("ERROR: --kill is not compatible with --now")
 
-    pclient = SuiteCommandClient(
+    pclient = SuiteRuntimeServiceClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
@@ -125,15 +122,7 @@ def main():
     if int(options.max_polls) > 0:
         # (test to avoid the "nothing to do" warning for # --max-polls=0)
         spoller = StopPoller(
-            "suite stopped", options.interval, options.max_polls,
-            args={
-                'suite': suite,
-                'owner': options.owner,
-                'host': options.host,
-                'comms_timeout': options.comms_timeout,
-                'port': options.port,
-            }
-        )
+            pclient, "suite stopped", options.interval, options.max_polls)
 
     if options.wall_clock:
         prompt(
@@ -167,7 +156,6 @@ def main():
 
     if int(options.max_polls) > 0:
         # (test to avoid the "nothing to do" warning for # --max-polls=0)
-        spoller.load()
         if not spoller.poll():
             sys.exit(1)
 

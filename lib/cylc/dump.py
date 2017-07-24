@@ -17,8 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Utility for "cylc cat-state" and "cylc dump"."""
 
+from cylc.suite_status import SUITE_STATUS_STOPPED
 from cylc.task_id import TaskID
-from cylc.network.suite_state_client import SUITE_STATUS_STOPPED
 from cylc.task_state import TASK_STATUS_READY
 
 

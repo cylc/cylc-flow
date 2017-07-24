@@ -23,7 +23,6 @@ from time import sleep
 
 from cylc.task_id import TaskID
 from cylc.gui.dot_maker import DotMaker
-from cylc.network.suite_state_client import get_id_summary
 from copy import deepcopy
 
 import warnings
@@ -470,8 +469,9 @@ class DotUpdater(threading.Thread):
         if col_index == 0:
             tooltip.set_text(task_id)
             return True
-        text = get_id_summary(task_id, self.state_summary,
-                              self.fam_state_summary, self.descendants)
+        text = self.updater.get_id_summary(
+            task_id, self.state_summary, self.fam_state_summary,
+            self.descendants)
         if text == task_id:
             return False
         tooltip.set_text(text)

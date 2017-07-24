@@ -37,10 +37,20 @@ Note: to manually trigger a task use 'cylc trigger', not this command."""
 
 import os
 import sys
+from time import sleep
 
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.ext_trigger_client import ExtTriggerClient
+from cylc.network.client import SuiteRuntimeServiceClient
+from cylc.suite_logging import OUT, ERR
+
+
+MAX_N_TRIES = 5
+RETRY_INTVL_SECS = 10.0
+
+MSG_SEND_FAILED = "Send message: try %s of %s failed"
+MSG_SEND_RETRY = "Retrying in %s seconds, timeout is %s"
+MSG_SEND_SUCCEED = "Send message: try %s of %s succeeded"
 
 
 def main():
@@ -52,13 +62,13 @@ def main():
 
     parser.add_option(
         "--max-tries", help="Maximum number of send attempts "
-        "(default %s)." % ExtTriggerClient.MAX_N_TRIES, metavar="INT",
-        action="store", default=None, dest="max_n_tries")
+        "(default %s)." % MAX_N_TRIES, metavar="INT",
+        action="store", default=MAX_N_TRIES, dest="max_n_tries")
 
     parser.add_option(
         "--retry-interval", help="Delay in seconds before retrying "
-        "(default %s)." % ExtTriggerClient.RETRY_INTVL_SECS, metavar="SEC",
-        action="store", default=None, dest="retry_intvl_secs")
+        "(default %s)." % RETRY_INTVL_SECS, metavar="SEC",
+        action="store", default=RETRY_INTVL_SECS, dest="retry_intvl_secs")
 
     (options, args) = parser.parse_args()
     suite = args[0]
@@ -69,13 +79,35 @@ def main():
 
     print 'Send to suite %s: "%s" (%s)' % (suite, event_msg, event_id)
 
-    pclient = ExtTriggerClient(
+    pclient = SuiteRuntimeServiceClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
 
-    pclient.send_retry(
-        event_msg, event_id, options.max_n_tries, options.retry_intvl_secs)
+    max_n_tries = int(options.max_n_tries)
+    retry_intvl_secs = float(options.retry_intvl_secs)
+
+    sent = False
+    i_try = 0
+    while not sent and i_try < max_n_tries:
+        i_try += 1
+        try:
+            pclient.put_ext_trigger(event_msg, event_id)
+        except Exception as exc:
+            ERR.error(exc)
+            OUT.info(MSG_SEND_FAILED % (i_try, max_n_tries))
+            if i_try >= max_n_tries:
+                break
+            OUT.info(MSG_SEND_RETRY % (retry_intvl_secs, pclient.timeout))
+            sleep(retry_intvl_secs)
+        else:
+            if i_try > 1:
+                OUT.info(MSG_SEND_SUCCEED % (i_try, max_n_tries))
+            sent = True
+            break
+    if not sent:
+        sys.exit('ERROR: send failed')
+
 
 if __name__ == "__main__":
     try:

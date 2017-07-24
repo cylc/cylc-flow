@@ -38,13 +38,13 @@ PORT="$(sed -n 's/^CYLC_SUITE_PORT=//p' "${SRV_D}/contact")"
 run_ok "${TEST_NAME_BASE}-curl-anon" \
     env no_proxy=* curl -v --cacert "${SRV_D}/ssl.cert" \
     --digest -u 'anon:the quick brown fox' \
-    "https://${HOST}:${PORT}/id/identify"
+    "https://${HOST}:${PORT}/identify"
 run_ok "${TEST_NAME_BASE}-curl-anon.stdout" \
     grep -qF "\"name\": \"${SUITE_NAME}\"" "${TEST_NAME_BASE}-curl-anon.stdout"
 run_ok "${TEST_NAME_BASE}-curl-cylc" \
     env no_proxy=* curl -v --cacert "${SRV_D}/ssl.cert" \
     --digest -u "cylc:$(<"${SRV_D}/passphrase")" \
-    "https://${HOST}:${PORT}/id/identify"
+    "https://${HOST}:${PORT}/identify"
 run_ok "${TEST_NAME_BASE}-curl-cylc.stdout" \
     grep -qF "\"name\": \"${SUITE_NAME}\"" "${TEST_NAME_BASE}-curl-cylc.stdout"
 

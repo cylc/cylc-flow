@@ -41,7 +41,6 @@ from cylc.cycling.loader import (
     get_interval, get_interval_cls, get_point, ISO8601_CYCLING_TYPE,
     standardise_point_string)
 import cylc.flags
-from cylc.network.ext_trigger_server import ExtTriggerServer
 from cylc.suite_logging import ERR, LOG, OUT
 from cylc.task_action_timer import TaskActionTimer
 from cylc.task_id import TaskID
@@ -237,9 +236,9 @@ class TaskPool(object):
 
         Return True if any tasks are released, else False.
         """
-
+        released = False
         if not self.runahead_pool:
-            return False
+            return released
 
         # Any finished tasks can be released immediately (this can happen at
         # restart when all tasks are initially loaded into the runahead pool).
@@ -249,7 +248,7 @@ class TaskPool(object):
                                           TASK_STATUS_SUCCEEDED,
                                           TASK_STATUS_EXPIRED]:
                     self.release_runahead_task(itask)
-                    self.rhpool_changed = True
+                    released = True
 
         limit = self.max_num_active_cycle_points
 
@@ -321,7 +320,6 @@ class TaskPool(object):
         if latest_allowed_point > self.stop_point:
             latest_allowed_point = self.stop_point
 
-        released = False
         for point, itask_id_map in self.runahead_pool.copy().items():
             if point <= latest_allowed_point:
                 for itask in itask_id_map.copy().values():
@@ -469,7 +467,6 @@ class TaskPool(object):
         self.pool.setdefault(itask.point, {})
         self.pool[itask.point][itask.identity] = itask
         self.pool_changed = True
-        cylc.flags.pflag = True
         LOG.debug("released to the task pool", itask=itask)
         del self.runahead_pool[itask.point][itask.identity]
         if not self.runahead_pool[itask.point]:
@@ -643,7 +640,7 @@ class TaskPool(object):
         else:
             LOG.info("setting custom runahead limit to %s" % interval)
             self.custom_runahead_limit = interval
-        self.release_runahead_tasks()
+        return self.release_runahead_tasks()
 
     def get_min_point(self):
         """Return the minimum cycle point currently in the pool."""
@@ -679,7 +676,7 @@ class TaskPool(object):
                 max_offset = itask.tdef.max_future_prereq_offset
         self.max_future_offset = max_offset
 
-    def reconfigure(self, config, stop_point):
+    def set_do_reload(self, config, stop_point):
         """Set the task pool to reload mode."""
         self.config = config
         self.do_reload = True
@@ -804,10 +801,13 @@ class TaskPool(object):
         """Return True if the suite is stalled.
 
         A suite is stalled when:
+        * It is not held.
         * It has no active tasks.
         * It has waiting tasks with unmet prerequisites
           (ignoring clock triggers).
         """
+        if self.is_held:
+            return False
         can_be_stalled = False
         for itask in self.get_tasks():
             if itask.point > self.stop_point or itask.state.status in [
@@ -865,10 +865,6 @@ class TaskPool(object):
             LOG.warning("Unmet prerequisites for %s:" % id_)
             for prereq in prereqs:
                 LOG.warning(" * %s" % prereq)
-
-    def get_hold_point(self):
-        """Return the point after which tasks must be held."""
-        return self.hold_point
 
     def set_hold_point(self, point):
         """Set the point after which tasks must be held."""
@@ -1170,13 +1166,13 @@ class TaskPool(object):
                         (itask.get_try_num() == 1 or
                          not conf['fail try 1 only'])):
                     message_queue.put(
-                        itask.identity, 'CRITICAL', TASK_STATUS_FAILED)
+                        (itask.identity, 'CRITICAL', TASK_STATUS_FAILED))
                 else:
                     # Simulate message outputs.
                     for msg in itask.tdef.rtconfig['outputs'].values():
-                        message_queue.put(itask.identity, 'NORMAL', msg)
+                        message_queue.put((itask.identity, 'NORMAL', msg))
                     message_queue.put(
-                        itask.identity, 'NORMAL', TASK_STATUS_SUCCEEDED)
+                        (itask.identity, 'NORMAL', TASK_STATUS_SUCCEEDED))
                 sim_task_state_changed = True
         return sim_task_state_changed
 
@@ -1288,13 +1284,6 @@ class TaskPool(object):
                 "outputs": outputs,
                 "extras": extras}
         return results, bad_items
-
-    def match_ext_triggers(self):
-        """See if any queued external event messages can trigger tasks."""
-        ets = ExtTriggerServer.get_inst()
-        for itask in self.get_tasks():
-            if itask.state.external_triggers:
-                ets.retrieve(itask)
 
     def filter_task_proxies(self, items):
         """Return task proxies that match names, points, states in items.

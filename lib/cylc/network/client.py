@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from cylc.exceptions import CylcError
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2017 NIWA
@@ -16,39 +15,78 @@ from cylc.exceptions import CylcError
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Base classes for web clients."""
+"""Wrap communications daemon for a suite."""
 
 import os
 import sys
 from uuid import uuid4
 import warnings
 
+from cylc.exceptions import CylcError
 import cylc.flags
-from cylc.network import (
-    ConnectionError, ConnectionDeniedError, ConnectionInfoError,
-    ConnectionTimeout, NO_PASSPHRASE, handle_proxies)
+from cylc.network import NO_PASSPHRASE
+from cylc.suite_host import get_suite_host, get_user
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
-from cylc.suite_host import get_suite_host, get_user
+from cylc.unicode_util import unicode_encode
 from cylc.version import CYLC_VERSION
 
 
-ERROR_NO_HTTPS_SUPPORT = (
-    "ERROR: server has no HTTPS support," +
-    " configure your global.rc file to use HTTP : {0}\n"
-)
+class ConnectionError(Exception):
+
+    """An error raised when the client cannot connect."""
+
+    MESSAGE = "Cannot connect: %s: %s"
+
+    def __str__(self):
+        return self.MESSAGE % (self.args[0], self.args[1])
 
 
-class BaseCommsClient(object):
-    """Base class for client-side suite object interfaces."""
+class ConnectionDeniedError(ConnectionError):
 
-    ACCESS_DESCRIPTION = 'private'
+    """An error raised when the client is not permitted to connect."""
+
+    MESSAGE = "Not authorized: %s: %s: access type '%s'"
+
+    def __str__(self):
+        return self.MESSAGE % (self.args[0], self.args[1], self.args[2])
+
+
+class ConnectionInfoError(ConnectionError):
+
+    """An error raised when the client is unable to load the contact info."""
+
+    MESSAGE = "Contact info not found for suite \"%s\", suite not running?"
+
+    def __str__(self):
+        return self.MESSAGE % (self.args[0])
+
+
+class ConnectionTimeout(ConnectionError):
+
+    """An error raised on connection timeout."""
+
+    MESSAGE = "Connection timeout: %s: %s"
+
+    def __str__(self):
+        return self.MESSAGE % (self.args[0], self.args[1])
+
+
+class SuiteRuntimeServiceClient(object):
+    """Client logic for invoking the HTTP(S) API of running suites."""
+
+    ANON_AUTH = ('anon', NO_PASSPHRASE, False)
+    ERROR_NO_HTTPS_SUPPORT = (
+        "ERROR: server has no HTTPS support," +
+        " configure your global.rc file to use HTTP : {0}\n"
+    )
     METHOD = 'POST'
     METHOD_POST = 'POST'
     METHOD_GET = 'GET'
 
-    def __init__(self, suite, owner=None, host=None, port=None, timeout=None,
-                 my_uuid=None, print_uuid=False, comms_protocol=None):
+    def __init__(
+            self, suite, owner=None, host=None, port=None, timeout=None,
+            my_uuid=None, print_uuid=False, comms_protocol=None, auth=None):
         self.suite = suite
         if not owner:
             owner = get_user()
@@ -65,8 +103,81 @@ class BaseCommsClient(object):
             print >> sys.stderr, '%s' % self.my_uuid
 
         self.prog_name = os.path.basename(sys.argv[0])
-        self.server_cert = None
-        self.auth = None
+        self.auth = auth
+
+    def clear_broadcast(self, **kwargs):
+        """Clear broadcast runtime task settings."""
+        return self._call_server_func('clear_broadcast', payload=kwargs)
+
+    def expire_broadcast(self, **kwargs):
+        """Expire broadcast runtime task settings."""
+        return self._call_server_func('expire_broadcast', **kwargs)
+
+    def get_broadcast(self, **kwargs):
+        """Return broadcast settings."""
+        return self._call_server_func(
+            'get_broadcast', method=self.METHOD_GET, **kwargs)
+
+    def get_err_content(self, prev_size, max_lines):
+        """Return the content and new size of the suite's err file."""
+        return self._call_server_func(
+            'get_err_content',
+            method=self.METHOD_GET,
+            prev_size=prev_size, max_lines=max_lines)
+
+    def get_suite_state_summary(self):
+        """Return the global, task, and family summary data structures."""
+        return unicode_encode(self._call_server_func(
+            'get_state_summary', method=self.METHOD_GET))
+
+    def get_tasks_by_state(self):
+        """Returns a dict containing lists of tasks by state.
+
+        Result in the form:
+        {state: [(most_recent_time_string, task_name, point_string), ...]}
+        """
+        return self._call_server_func(
+            'get_tasks_by_state', method=self.METHOD_GET)
+
+    def get_update_times(self):
+        """Return the update times for (state summary, err_content)."""
+        return self._call_server_func(
+            'get_update_times', method=self.METHOD_GET)
+
+    def get_info(self, command, *args, **kwargs):
+        """Return suite info."""
+        kwargs['method'] = self.METHOD_GET
+        return self._call_server_func(command, *args, **kwargs)
+
+    def identify(self):
+        """Return suite identity."""
+        return self._call_server_func('identify', method=self.METHOD_GET)
+
+    def put_broadcast(self, **kwargs):
+        """Put/set broadcast runtime task settings."""
+        return self._call_server_func('put_broadcast', payload=kwargs)
+
+    def put_command(self, command, **kwargs):
+        """Invoke suite command."""
+        return self._call_server_func(command, **kwargs)
+
+    def put_ext_trigger(self, event_message, event_id):
+        """Put external trigger."""
+        return self._call_server_func(
+            'put_ext_trigger', event_message=event_message, event_id=event_id)
+
+    def put_message(self, task_id, priority, message):
+        """Send task message."""
+        return self._call_server_func(
+            'put_message', task_id=task_id, priority=priority, message=message)
+
+    def reset(self, *args, **kwargs):
+        """Compat method, does nothing."""
+        pass
+
+    def signout(self, *args, **kwargs):
+        """Compat method, does nothing."""
+        pass
 
     def _get_comms_from_suite_contact_file(self):
         """Find out the communications protocol (http/https) from the
@@ -101,7 +212,8 @@ class BaseCommsClient(object):
                 "\"{0}\" invalid."
                 " (protocol set in global config.)".format(comms_methods))
 
-    def _compile_url(self, category, func_dict, host, comms_protocol=None):
+    def _compile_url(self, func_dict, host, comms_protocol=None):
+        """Build request URL."""
         payload = func_dict.pop("payload", None)
         method = func_dict.pop("method", self.METHOD)
         function = func_dict.pop("function", None)
@@ -115,26 +227,23 @@ class BaseCommsClient(object):
             protocol_prefix = comms_protocol
         else:
             raise CylcError("Unable to detect suite communication protocol")
-        url = protocol_prefix + '://%s:%s/%s/%s' % (host, self.port, category,
-                                                    function)
+        url = protocol_prefix + '://%s:%s/%s' % (host, self.port, function)
         # If there are any parameters left in the dict after popping,
         # append them to the url.
         if func_dict:
             import urllib
             params = urllib.urlencode(func_dict, doseq=True)
             url += "?" + params
-        request = {"url": url, "payload": payload, "method": method}
-        return request
+        return {"url": url, "payload": payload, "method": method}
 
-    def call_server_func(self, category, *func_dicts, **fargs):
+    def _call_server_func(self, *func_dicts, **fargs):
         """func_dict is a dictionary of command names (fnames)
         and arguments to that command"""
         # Deal with the case of one func_dict/function name passed
         # by converting them to the generic case: a dictionary of
         # a single function and its function arguments.
         if isinstance(func_dicts[0], str):
-            function = func_dicts[0]
-            func_dict = {"function": function}
+            func_dict = {"function": func_dicts[0]}
             func_dict.update(fargs)
         else:
             func_dict = None
@@ -143,7 +252,6 @@ class BaseCommsClient(object):
             self._load_contact_info()
         except (IOError, ValueError, SuiteServiceFileError):
             raise ConnectionInfoError(self.suite)
-        handle_proxies()
         host = self.host
         if host == 'localhost':
             host = get_suite_host()
@@ -152,13 +260,22 @@ class BaseCommsClient(object):
         try:
             # dictionary containing: url, payload, method
             http_request_items.append(self._compile_url(
-                category, func_dict, host, self.comms_protocol))
+                func_dict, host, self.comms_protocol))
         except (IndexError, ValueError, AttributeError):
             for f_dict in func_dicts:
                 http_request_items.append(self._compile_url(
-                    category, f_dict, host, self.comms_protocol))
-        # returns a list of http returns from the requests
-        return self._get_data_from_url(http_request_items)
+                    f_dict, host, self.comms_protocol))
+        # Remove proxy settings from environment for now
+        environ = {}
+        for key in ("http_proxy", "https_proxy"):
+            val = os.environ.pop("http_proxy", None)
+            if val:
+                environ[key] = val
+        # Returns a list of http returns from the requests
+        try:
+            return self._get_data_from_url(http_request_items)
+        finally:
+            os.environ.update(environ)
 
     def _get_data_from_url(self, http_request_items):
         requests_ok = True
@@ -178,7 +295,7 @@ class BaseCommsClient(object):
         import requests
         from requests.packages.urllib3.exceptions import InsecureRequestWarning
         warnings.simplefilter("ignore", InsecureRequestWarning)
-        username, password = self._get_auth()
+        username, password, verify = self._get_auth()
         auth = requests.auth.HTTPDigestAuth(username, password)
         if not hasattr(self, "session"):
             self.session = requests.Session()
@@ -198,7 +315,7 @@ class BaseCommsClient(object):
                 ret = session_method(
                     url,
                     json=json_data,
-                    verify=self._get_verify(),
+                    verify=verify,
                     proxies={},
                     headers=self._get_headers(),
                     auth=auth,
@@ -207,9 +324,9 @@ class BaseCommsClient(object):
             except requests.exceptions.SSLError as exc:
                 if "unknown protocol" in str(exc) and url.startswith("https:"):
                     # Server is using http rather than https, for some reason.
-                    sys.stderr.write(ERROR_NO_HTTPS_SUPPORT.format(exc))
-                    raise CylcError("Cannot issue commands"
-                                    " over unsecured http.")
+                    sys.stderr.write(self.ERROR_NO_HTTPS_SUPPORT.format(exc))
+                    raise CylcError(
+                        "Cannot issue commands over unsecured http.")
                 if cylc.flags.debug:
                     import traceback
                     traceback.print_exc()
@@ -225,10 +342,11 @@ class BaseCommsClient(object):
                     traceback.print_exc()
                 raise ConnectionError(url, exc)
             if ret.status_code == 401:
-                raise ConnectionDeniedError(url, self.prog_name,
-                                            self.ACCESS_DESCRIPTION)
+                access_desc = 'private'
+                if self.auth == self.ANON_AUTH:
+                    access_desc = 'public'
+                raise ConnectionDeniedError(url, self.prog_name, access_desc)
             if ret.status_code >= 400:
-                from cylc.network.https.util import get_exception_from_html
                 exception_text = get_exception_from_html(ret.text)
                 if exception_text:
                     sys.stderr.write(exception_text)
@@ -260,6 +378,7 @@ class BaseCommsClient(object):
         import ssl
         if hasattr(ssl, '_create_unverified_context'):
             ssl._create_default_https_context = ssl._create_unverified_context
+
         http_return_items = []
         for http_request_item in http_request_items:
             method = http_request_item['method']
@@ -267,7 +386,7 @@ class BaseCommsClient(object):
             json_data = http_request_item['payload']
             if method is None:
                 method = self.METHOD
-            username, password = self._get_auth()
+            username, password = self._get_auth()[0:2]
             auth_manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
             auth_manager.add_password(None, url, username, password)
             auth = urllib2.HTTPDigestAuthHandler(auth_manager)
@@ -295,9 +414,9 @@ class BaseCommsClient(object):
             except urllib2.URLError as exc:
                 if "unknown protocol" in str(exc) and url.startswith("https:"):
                     # Server is using http rather than https, for some reason.
-                    sys.stderr.write(ERROR_NO_HTTPS_SUPPORT.format(exc))
-                    raise CylcError("Cannot issue commands"
-                                    " over unsecured http.")
+                    sys.stderr.write(self.ERROR_NO_HTTPS_SUPPORT.format(exc))
+                    raise CylcError(
+                        "Cannot issue commands over unsecured http.")
                 if cylc.flags.debug:
                     import traceback
                     traceback.print_exc()
@@ -312,11 +431,12 @@ class BaseCommsClient(object):
                 raise ConnectionError(url, exc)
 
             if response.getcode() == 401:
-                raise ConnectionDeniedError(url, self.prog_name,
-                                            self.ACCESS_DESCRIPTION)
+                access_desc = 'private'
+                if self.auth == self.ANON_AUTH:
+                    access_desc = 'public'
+                raise ConnectionDeniedError(url, self.prog_name, access_desc)
             response_text = response.read()
             if response.getcode() >= 400:
-                from cylc.network.https.util import get_exception_from_html
                 exception_text = get_exception_from_html(response_text)
                 if exception_text:
                     sys.stderr.write(exception_text)
@@ -340,16 +460,19 @@ class BaseCommsClient(object):
     def _get_auth(self):
         """Return a user/password Digest Auth."""
         if self.auth is None:
-            self.auth = ('anon', NO_PASSPHRASE)
+            self.auth = self.ANON_AUTH
             try:
                 pphrase = self.srv_files_mgr.get_auth_item(
                     self.srv_files_mgr.FILE_BASE_PASSPHRASE,
                     self.suite, self.owner, self.host, content=True)
+                server_cert = self.srv_files_mgr.get_auth_item(
+                    self.srv_files_mgr.FILE_BASE_SSL_CERT,
+                    self.suite, self.owner, self.host)
             except SuiteServiceFileError:
                 pass
             else:
                 if pphrase and pphrase != NO_PASSPHRASE:
-                    self.auth = ('cylc', pphrase)
+                    self.auth = ('cylc', pphrase, server_cert)
         return self.auth
 
     def _get_headers(self):
@@ -362,17 +485,6 @@ class BaseCommsClient(object):
         auth_info = "%s@%s" % (get_user(), get_suite_host())
         return {"User-Agent": user_agent_string,
                 "From": auth_info}
-
-    def _get_verify(self):
-        """Return the server certificate if possible."""
-        if self.server_cert is None:
-            try:
-                self.server_cert = self.srv_files_mgr.get_auth_item(
-                    self.srv_files_mgr.FILE_BASE_SSL_CERT,
-                    self.suite, self.owner, self.host)
-            except SuiteServiceFileError:
-                self.server_cert = False
-        return self.server_cert
 
     def _load_contact_info(self):
         """Obtain suite owner, host, port info.
@@ -398,43 +510,59 @@ class BaseCommsClient(object):
             self.comms_protocol = data.get(
                 self.srv_files_mgr.KEY_COMMS_PROTOCOL)
 
-    def reset(self, *args, **kwargs):
-        pass
 
-    def signout(self, *args, **kwargs):
-        pass
+def get_exception_from_html(html_text):
+    """Return any content inside a <pre> block with id 'traceback', or None.
 
+    Return e.g. 'abcdef' for text like '<body><pre id="traceback">
+    abcdef
+    </pre></body>'.
 
-class BaseCommsClientAnon(BaseCommsClient):
+    """
+    from HTMLParser import HTMLParser, HTMLParseError
 
-    """Anonymous access class for clients."""
+    class ExceptionPreReader(HTMLParser):
+        """Read exception from <pre id="traceback">...</pre> element."""
+        def __init__(self):
+            HTMLParser.__init__(self)
+            self.is_in_traceback_pre = False
+            self.exception_text = None
 
-    ACCESS_DESCRIPTION = 'public'
+        def handle_starttag(self, tag, attrs):
+            """Set is_in_traceback_pre to True if in <pre id="traceback">."""
+            self.is_in_traceback_pre = (
+                tag == 'pre' and
+                any(attr == ('id', 'traceback') for attr in attrs))
 
-    def __init__(self, *args, **kwargs):
-        # We don't necessarily have certificate access for anon suites.
-        warnings.filterwarnings("ignore", "Unverified HTTPS request")
-        super(BaseCommsClientAnon, self).__init__(*args, **kwargs)
+        def handle_endtag(self, tag):
+            """Set is_in_traceback_pre to False."""
+            self.is_in_traceback_pre = False
 
-    def _get_auth(self):
-        """Return a user/password Digest Auth."""
-        return 'anon', NO_PASSPHRASE
+        def handle_data(self, data):
+            """Get text data in traceback "pre"."""
+            if self.is_in_traceback_pre:
+                if self.exception_text is None:
+                    self.exception_text = ''
+                self.exception_text += data
 
-    def _get_verify(self):
-        """Other suites' certificates may not be accessible."""
-        return False
+    parser = ExceptionPreReader()
+    try:
+        parser.feed(parser.unescape(html_text))
+        parser.close()
+    except HTMLParseError:
+        return None
+    return parser.exception_text
 
 
 if __name__ == '__main__':
     import unittest
 
-    class TestBaseCommsClient(unittest.TestCase):
-        """Unit testing class to test the methods in BaseCommsClient
+    class TestSuiteRuntimeServiceClient(unittest.TestCase):
+        """Unit testing class to test the methods in SuiteRuntimeServiceClient
         """
         def test_url_compiler_https(self):
             """Tests that the url parser works for a single url and command
             using https"""
-            category = 'info'  # Could be any from cylc/network/__init__.py
             host = "localhost"
             func_dict = {"function": "test_command",
                          "apples": "False",
@@ -442,12 +570,11 @@ if __name__ == '__main__':
                          "method": "GET",
                          "payload": "None"}
 
-            myCommsClient = BaseCommsClient("test-suite", port=80)
-            request_https = myCommsClient._compile_url(
-                category, func_dict, host, "https")
+            myclient = SuiteRuntimeServiceClient("test-suite", port=80)
+            request_https = myclient._compile_url(func_dict, host, "https")
 
             test_url_https = (
-                'https://localhost:80/info/test_command'
+                'https://localhost:80/test_command'
                 '?apples=False&oranges=True')
 
             self.assertEqual(request_https['url'], test_url_https)
@@ -457,7 +584,6 @@ if __name__ == '__main__':
         def test_compile_url_compiler_http(self):
             """Test that the url compiler produces a http request when
             http is specified."""
-            category = 'info'  # Could be any from cylc/network/__init__.py
             host = "localhost"
             func_dict = {"function": "test_command",
                          "apples": "False",
@@ -465,11 +591,10 @@ if __name__ == '__main__':
                          "method": "GET",
                          "payload": "None"}
 
-            myCommsClient = BaseCommsClient("test-suite", port=80)
-            request_http = myCommsClient._compile_url(
-                category, func_dict, host, "http")
+            myclient = SuiteRuntimeServiceClient("test-suite", port=80)
+            request_http = myclient._compile_url(func_dict, host, "http")
             test_url_http = (
-                'http://localhost:80/info/test_command'
+                'http://localhost:80/test_command'
                 '?apples=False&oranges=True')
 
             self.assertEqual(request_http['url'], test_url_http)
@@ -480,7 +605,6 @@ if __name__ == '__main__':
             """Test that the url compiler produces a http request when
             none is specified. This should retrieve it from the
             global config."""
-            category = 'info'  # Could be any from cylc/network/__init__.py
             host = "localhost"
             func_dict = {"function": "test_command",
                          "apples": "False",
@@ -488,9 +612,8 @@ if __name__ == '__main__':
                          "method": "GET",
                          "payload": "None"}
 
-            myCommsClient = BaseCommsClient("test-suite", port=80)
-            request_http = myCommsClient._compile_url(
-                category, func_dict, host)
+            myclient = SuiteRuntimeServiceClient("test-suite", port=80)
+            request_http = myclient._compile_url(func_dict, host)
 
             # Check that the url has had http (or https) appended
             # to it. (If it does not start with "http*" then something
@@ -499,18 +622,18 @@ if __name__ == '__main__':
 
         def test_get_data_from_url_single_http(self):
             """Test the get data from _get_data_from_url() function"""
-            myCommsClient = BaseCommsClient("dummy-suite")
+            myclient = SuiteRuntimeServiceClient("dummy-suite")
             url = "http://httpbin.org/get"
             payload = None
             method = "GET"
             request = [{"url": url, "payload": payload, "method": method}]
-            ret = myCommsClient._get_data_from_url(request)
+            ret = myclient._get_data_from_url(request)
             self.assertEqual(ret['url'], "http://httpbin.org/get")
 
         def test_get_data_from_url_multiple(self):
             """Tests that the _get_data_from_url() method can
             handle multiple requests in call to the method."""
-            myCommsClient = BaseCommsClient("dummy-suite")
+            myclient = SuiteRuntimeServiceClient("dummy-suite")
             payload = None
             method = "GET"
             request1 = {"url": "http://httpbin.org/get#1",
@@ -520,8 +643,7 @@ if __name__ == '__main__':
             request3 = {"url": "http://httpbin.org/get#3",
                         "payload": payload, "method": method}
 
-            rets = myCommsClient._get_data_from_url([request1,
-                                                     request2, request3])
+            rets = myclient._get_data_from_url([request1, request2, request3])
 
             for i in range(2):
                 self.assertEqual(rets[i]['url'], "http://httpbin.org/get")

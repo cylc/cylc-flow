@@ -31,7 +31,7 @@ from shutil import copy, rmtree
 from subprocess import call
 from tempfile import mkstemp
 
-from cylc.network.suite_broadcast_server import BroadcastServer
+from cylc.broadcast_report import get_broadcast_change_iter
 from cylc.rundb import CylcSuiteDAO
 from cylc.suite_logging import ERR, LOG, OUT
 from cylc.wallclock import get_current_time_string
@@ -40,6 +40,8 @@ from cylc.wallclock import get_current_time_string
 class SuiteDatabaseManager(object):
     """Manage the suite runtime private and public databases."""
 
+    TABLE_BROADCAST_EVENTS = CylcSuiteDAO.TABLE_BROADCAST_EVENTS
+    TABLE_BROADCAST_STATES = CylcSuiteDAO.TABLE_BROADCAST_STATES
     TABLE_CHECKPOINT_ID = CylcSuiteDAO.TABLE_CHECKPOINT_ID
     TABLE_INHERITANCE = CylcSuiteDAO.TABLE_INHERITANCE
     TABLE_SUITE_PARAMS = CylcSuiteDAO.TABLE_SUITE_PARAMS
@@ -61,12 +63,15 @@ class SuiteDatabaseManager(object):
         self.pub_dao = None
 
         self.db_deletes_map = {
+            self.TABLE_BROADCAST_STATES: [],
             self.TABLE_SUITE_PARAMS: [],
             self.TABLE_TASK_POOL: [],
             self.TABLE_TASK_ACTION_TIMERS: [],
             self.TABLE_TASK_OUTPUTS: [],
             self.TABLE_TASK_TIMEOUT_TIMERS: []}
         self.db_inserts_map = {
+            self.TABLE_BROADCAST_EVENTS: [],
+            self.TABLE_BROADCAST_STATES: [],
             self.TABLE_INHERITANCE: [],
             self.TABLE_SUITE_PARAMS: [],
             self.TABLE_SUITE_TEMPLATE_VARS: [],
@@ -155,31 +160,30 @@ class SuiteDatabaseManager(object):
             return
         # Record suite parameters and tasks in pool
         # Record any broadcast settings to be dumped out
-        for obj in self, BroadcastServer.get_inst():
-            if any(obj.db_deletes_map.values()):
-                for table_name, db_deletes in sorted(
-                        obj.db_deletes_map.items()):
-                    while db_deletes:
-                        where_args = db_deletes.pop(0)
-                        self.pri_dao.add_delete_item(table_name, where_args)
-                        self.pub_dao.add_delete_item(table_name, where_args)
-            if any(obj.db_inserts_map.values()):
-                for table_name, db_inserts in sorted(
-                        obj.db_inserts_map.items()):
-                    while db_inserts:
-                        db_insert = db_inserts.pop(0)
-                        self.pri_dao.add_insert_item(table_name, db_insert)
-                        self.pub_dao.add_insert_item(table_name, db_insert)
-            if (hasattr(obj, 'db_updates_map') and
-                    any(obj.db_updates_map.values())):
-                for table_name, db_updates in sorted(
-                        obj.db_updates_map.items()):
-                    while db_updates:
-                        set_args, where_args = db_updates.pop(0)
-                        self.pri_dao.add_update_item(
-                            table_name, set_args, where_args)
-                        self.pub_dao.add_update_item(
-                            table_name, set_args, where_args)
+        if any(self.db_deletes_map.values()):
+            for table_name, db_deletes in sorted(
+                    self.db_deletes_map.items()):
+                while db_deletes:
+                    where_args = db_deletes.pop(0)
+                    self.pri_dao.add_delete_item(table_name, where_args)
+                    self.pub_dao.add_delete_item(table_name, where_args)
+        if any(self.db_inserts_map.values()):
+            for table_name, db_inserts in sorted(
+                    self.db_inserts_map.items()):
+                while db_inserts:
+                    db_insert = db_inserts.pop(0)
+                    self.pri_dao.add_insert_item(table_name, db_insert)
+                    self.pub_dao.add_insert_item(table_name, db_insert)
+        if (hasattr(self, 'db_updates_map') and
+                any(self.db_updates_map.values())):
+            for table_name, db_updates in sorted(
+                    self.db_updates_map.items()):
+                while db_updates:
+                    set_args, where_args = db_updates.pop(0)
+                    self.pri_dao.add_update_item(
+                        table_name, set_args, where_args)
+                    self.pub_dao.add_update_item(
+                        table_name, set_args, where_args)
 
         # Previously, we used a separate thread for database writes. This has
         # now been removed. For the private database, there is no real
@@ -191,6 +195,38 @@ class SuiteDatabaseManager(object):
         # keep the logic simple.
         self.pri_dao.execute_queued_items()
         self.pub_dao.execute_queued_items()
+
+    def put_broadcast(self, modified_settings, is_cancel=False):
+        """Put or clear broadcasts in runtime database."""
+        now = get_current_time_string(display_sub_seconds=True)
+        for broadcast_change in (
+                get_broadcast_change_iter(modified_settings, is_cancel)):
+            broadcast_change["time"] = now
+            self.db_inserts_map[self.TABLE_BROADCAST_EVENTS].append(
+                broadcast_change)
+            if is_cancel:
+                self.db_deletes_map[self.TABLE_BROADCAST_STATES].append({
+                    "point": broadcast_change["point"],
+                    "namespace": broadcast_change["namespace"],
+                    "key": broadcast_change["key"]})
+                # Delete statements are currently executed before insert
+                # statements, so we should clear out any insert statements that
+                # are deleted here.
+                # (Not the most efficient logic here, but unless we have a
+                # large number of inserts, then this should not be a big
+                # concern.)
+                inserts = []
+                for insert in self.db_inserts_map[self.TABLE_BROADCAST_STATES]:
+                    if any(insert[key] != broadcast_change[key]
+                            for key in ["point", "namespace", "key"]):
+                        inserts.append(insert)
+                self.db_inserts_map[self.TABLE_BROADCAST_STATES] = inserts
+            else:
+                self.db_inserts_map[self.TABLE_BROADCAST_STATES].append({
+                    "point": broadcast_change["point"],
+                    "namespace": broadcast_change["namespace"],
+                    "key": broadcast_change["key"],
+                    "value": broadcast_change["value"]})
 
     def put_runtime_inheritance(self, config):
         """Put task/family inheritance in runtime database."""

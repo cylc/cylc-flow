@@ -74,7 +74,7 @@ def main():
 
     suite, suiterc = SuiteSrvFilesManager().parse_suite_arg(options, args[0])
 
-    cfg = SuiteConfig.get_inst(
+    cfg = SuiteConfig(
         suite, suiterc,
         load_template_vars(options.templatevars, options.templatevars_file),
         cli_initial_point_string=options.icp,
@@ -86,19 +86,18 @@ def main():
     # (Taken from config.py to avoid circular import problems.)
     # TODO - This is not exhaustive, it only uses the initial cycle point.
     if cylc.flags.verbose:
-        print "Instantiating tasks to check trigger expressions"
-    for name in cfg.taskdefs.keys():
+        print 'Instantiating tasks to check trigger expressions'
+    for name, taskdef in cfg.taskdefs.items():
         try:
-            itask = TaskProxy(
-                cfg.taskdefs[name], cfg.start_point, is_startup=True)
+            itask = TaskProxy(taskdef, cfg.start_point, is_startup=True)
         except Exception as exc:
             print >> sys.stderr, str(exc)
             raise SuiteConfigError(
                 'ERROR, failed to instantiate task %s' % name)
         if itask.point is None:
             if cylc.flags.verbose:
-                print >> sys.stderr, (" + Task out of bounds for %s: %s" % (
-                    cfg.start_point, itask.tdef.name))
+                print >> sys.stderr, (' + Task out of bounds for %s: %s' % (
+                    cfg.start_point, name))
             continue
 
         # force trigger evaluation now
@@ -107,15 +106,15 @@ def main():
         except TriggerExpressionError as exc:
             print >> sys.stderr, str(exc)
             raise SuiteConfigError(
-                "ERROR, " + name + ": invalid trigger expression.")
+                'ERROR, %s: invalid trigger expression.' % name)
         except Exception as exc:
             print >> sys.stderr, str(exc)
             raise SuiteConfigError(
-                'ERROR, ' + name + ': failed to evaluate triggers.')
+                'ERROR, %s: failed to evaluate triggers.' % name)
         if cylc.flags.verbose:
-            print "  + " + itask.identity + " ok"
+            print '  + %s ok' % itask.identity
 
-    print "Valid for cylc-" + CYLC_VERSION
+    print 'Valid for cylc-%s' % CYLC_VERSION
     profiler.stop()
 
 

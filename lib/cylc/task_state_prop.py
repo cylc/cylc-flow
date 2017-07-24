@@ -89,6 +89,29 @@ _STATUS_MAP = {
 }
 
 
+def extract_group_state(child_states, is_stopped=False):
+    """Summarise child states as a group."""
+    ordered_states = [TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_FAILED,
+                      TASK_STATUS_EXPIRED, TASK_STATUS_SUBMIT_RETRYING,
+                      TASK_STATUS_RETRYING, TASK_STATUS_RUNNING,
+                      TASK_STATUS_SUBMITTED, TASK_STATUS_READY,
+                      TASK_STATUS_QUEUED, TASK_STATUS_WAITING,
+                      TASK_STATUS_HELD, TASK_STATUS_SUCCEEDED,
+                      TASK_STATUS_RUNAHEAD]
+    if is_stopped:
+        ordered_states = [TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_FAILED,
+                          TASK_STATUS_RUNNING, TASK_STATUS_SUBMITTED,
+                          TASK_STATUS_EXPIRED, TASK_STATUS_READY,
+                          TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING,
+                          TASK_STATUS_SUCCEEDED, TASK_STATUS_QUEUED,
+                          TASK_STATUS_WAITING, TASK_STATUS_HELD,
+                          TASK_STATUS_RUNAHEAD]
+    for state in ordered_states:
+        if state in child_states:
+            return state
+    return None
+
+
 def get_status_prop(status, key, subst=None):
     """Return property for a task status."""
     if key == "ascii_ctrl" and subst is not None:

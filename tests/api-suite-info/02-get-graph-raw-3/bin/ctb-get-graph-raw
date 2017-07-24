@@ -21,7 +21,7 @@ import json
 import os
 import sys
 
-from cylc.network.suite_info_client import SuiteInfoClient
+from cylc.network.client import SuiteRuntimeServiceClient
 
 
 def main():
@@ -36,7 +36,7 @@ def main():
     for item in sys.argv[1:]:
         key, value = item.split('=', 1)
         kwargs[key] = value
-    client = SuiteInfoClient(os.environ['CYLC_SUITE_NAME'])
+    client = SuiteRuntimeServiceClient(os.environ['CYLC_SUITE_NAME'])
     print json.dumps(client.get_info('get_graph_raw', **kwargs), indent=4)
 
 

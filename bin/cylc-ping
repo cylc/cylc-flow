@@ -31,7 +31,7 @@ if '--use-ssh' in sys.argv[1:]:
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.task_id import TaskID
-from cylc.network.suite_info_client import SuiteInfoClientAnon
+from cylc.network.client import SuiteRuntimeServiceClient
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 
 
@@ -55,10 +55,11 @@ def main():
 
     suite = args[0]
 
-    pclient = SuiteInfoClientAnon(
+    pclient = SuiteRuntimeServiceClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout, my_uuid=options.set_uuid,
-        print_uuid=options.print_uuid)
+        print_uuid=options.print_uuid,
+        auth=SuiteRuntimeServiceClient.ANON_AUTH)
 
     # cylc ping SUITE
     pclient.get_info('ping_suite')  # (no need to check the result)
