@@ -284,7 +284,6 @@ utility_commands['ls-checkpoints'] = ['ls-checkpoints']
 hook_commands = {}
 hook_commands['email-suite'] = ['email-suite']
 hook_commands['email-task'] = ['email-task']
-hook_commands['job-logs-retrieve'] = ['job-logs-retrieve']
 hook_commands['check-triggering'] = ['check-triggering']
 
 admin_commands = {}
@@ -434,8 +433,6 @@ comsum['ls-checkpoints'] = 'Display task pool etc at given events'
 # hook
 comsum['email-task'] = 'A task event hook script that sends email alerts'
 comsum['email-suite'] = 'A suite event hook script that sends email alerts'
-comsum['job-logs-retrieve'] = (
-    '(Internal) Retrieve logs from a remote host for a task job')
 comsum['check-triggering'] = 'A suite shutdown event hook for cylc testing'
 
 
