@@ -3964,6 +3964,20 @@ cycle point:
             graph = foo[-P1Y] => bar
 \end{lstlisting}
 
+Note that \lstinline=cylc graph= will display un-satisfiable inter-cycle
+dependencies as ``ghost nodes''. Figure \ref{ghost-node-screenshot} is a
+screenshot of cylc graph displaying the above example with the un-satisfiable
+task (foo) displayed as a ``ghost node''.
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=0.6\textwidth]{graphics/png/orig/ghost-node-example.png}
+    \end{center}
+    \caption{Screenshot of \lstinline=cylc graph= showing one task as a
+    ``ghost node''}
+    \label{ghost-node-screenshot}
+\end{figure}
+
 \subsection{Runtime - Task Configuration}
 \label{NIORP}
 

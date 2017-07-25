@@ -51,10 +51,10 @@ contains_ok "${TEST_NAME_BASE}.stdout" <<__OUT__
 -edge "foo.20200101T0000Z" "bar.20200101T0000Z" solid
 +edge "food.20200101T0000Z" "barley.20200101T0000Z" solid
  graph
--node "bar.20200101T0000Z" "bar\n20200101T0000Z" unfilled box black
--node "foo.20200101T0000Z" "foo\n20200101T0000Z" unfilled box black
-+node "barley.20200101T0000Z" "barley\n20200101T0000Z" unfilled box black
-+node "food.20200101T0000Z" "food\n20200101T0000Z" unfilled box black
+-node "bar.20200101T0000Z" "bar\n20200101T0000Z" unfilled ellipse black
+-node "foo.20200101T0000Z" "foo\n20200101T0000Z" unfilled ellipse black
++node "barley.20200101T0000Z" "barley\n20200101T0000Z" unfilled ellipse black
++node "food.20200101T0000Z" "food\n20200101T0000Z" unfilled ellipse black
 __OUT__
 cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'
 

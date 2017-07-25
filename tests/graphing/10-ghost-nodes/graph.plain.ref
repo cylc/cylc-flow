@@ -1,0 +1,18 @@
+edge "BAR.1" "BAR.2" solid
+edge "BAR.3" "BAR.4" solid
+edge "BAR.4" "BAR.5" solid
+edge "foo.1" "foo.2" solid
+edge "foo.3" "foo.4" solid
+edge "foo.4" "foo.5" solid
+graph
+node "BAR.1" "BAR\n1" unfilled doubleoctagon black
+node "BAR.2" "BAR\n2" unfilled doubleoctagon black
+node "BAR.3" "BAR\n3" unfilled #888888 #eeeeee
+node "BAR.4" "BAR\n4" unfilled doubleoctagon black
+node "BAR.5" "BAR\n5" unfilled doubleoctagon black
+node "foo.1" "foo\n1" unfilled ellipse black
+node "foo.2" "foo\n2" unfilled ellipse black
+node "foo.3" "foo\n3" unfilled #888888 #eeeeee
+node "foo.4" "foo\n4" unfilled ellipse black
+node "foo.5" "foo\n5" unfilled ellipse black
+stop

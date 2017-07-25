@@ -90,8 +90,8 @@ cmp_ok "$TEST_NAME.stdout" <<'__OUT__'
  edge "foo.20140810T0000Z" "bar.20140810T0000Z" solid
 +edge "foo.20140810T0000Z" "baz.20140810T0000Z" solid
  graph
- node "bar.20140808T0000Z" "bar\n20140808T0000Z" unfilled box black
- node "bar.20140809T0000Z" "bar\n20140809T0000Z" unfilled box black
+ node "bar.20140808T0000Z" "bar\n20140808T0000Z" unfilled ellipse black
+ node "bar.20140809T0000Z" "bar\n20140809T0000Z" unfilled ellipse black
 __OUT__
 cmp_ok "$TEST_NAME.stderr" </dev/null
 #-------------------------------------------------------------------------------
@@ -128,16 +128,16 @@ edge "foo.20140808T0000Z" "bar.20140808T0000Z" solid
 edge "foo.20140809T0000Z" "bar.20140809T0000Z" solid
 edge "foo.20140810T0000Z" "bar.20140810T0000Z" solid
 graph
-node "bar.20140808T0000Z" "bar\n20140808T0000Z" unfilled box black
-node "bar.20140809T0000Z" "bar\n20140809T0000Z" unfilled box black
-node "bar.20140810T0000Z" "bar\n20140810T0000Z" unfilled box black
-node "baz.20140808T0000Z" "baz\n20140808T0000Z" unfilled box black
-node "baz.20140809T0000Z" "baz\n20140809T0000Z" unfilled box black
-node "baz.20140810T0000Z" "baz\n20140810T0000Z" unfilled box black
-node "cold_foo.20140808T0000Z" "cold_foo\n20140808T0000Z" unfilled box black
-node "foo.20140808T0000Z" "foo\n20140808T0000Z" unfilled box black
-node "foo.20140809T0000Z" "foo\n20140809T0000Z" unfilled box black
-node "foo.20140810T0000Z" "foo\n20140810T0000Z" unfilled box black
+node "bar.20140808T0000Z" "bar\n20140808T0000Z" unfilled ellipse black
+node "bar.20140809T0000Z" "bar\n20140809T0000Z" unfilled ellipse black
+node "bar.20140810T0000Z" "bar\n20140810T0000Z" unfilled ellipse black
+node "baz.20140808T0000Z" "baz\n20140808T0000Z" unfilled ellipse black
+node "baz.20140809T0000Z" "baz\n20140809T0000Z" unfilled ellipse black
+node "baz.20140810T0000Z" "baz\n20140810T0000Z" unfilled ellipse black
+node "cold_foo.20140808T0000Z" "cold_foo\n20140808T0000Z" unfilled ellipse black
+node "foo.20140808T0000Z" "foo\n20140808T0000Z" unfilled ellipse black
+node "foo.20140809T0000Z" "foo\n20140809T0000Z" unfilled ellipse black
+node "foo.20140810T0000Z" "foo\n20140810T0000Z" unfilled ellipse black
 stop
 edge "cold_foo.20140808T0000Z" "foo.20140808T0000Z" solid
 edge "foo.20140808T0000Z" "bar.20140808T0000Z" solid
@@ -147,16 +147,16 @@ edge "foo.20140809T0000Z" "baz.20140809T0000Z" solid
 edge "foo.20140810T0000Z" "bar.20140810T0000Z" solid
 edge "foo.20140810T0000Z" "baz.20140810T0000Z" solid
 graph
-node "bar.20140808T0000Z" "bar\n20140808T0000Z" unfilled box black
-node "bar.20140809T0000Z" "bar\n20140809T0000Z" unfilled box black
-node "bar.20140810T0000Z" "bar\n20140810T0000Z" unfilled box black
-node "baz.20140808T0000Z" "baz\n20140808T0000Z" unfilled box black
-node "baz.20140809T0000Z" "baz\n20140809T0000Z" unfilled box black
-node "baz.20140810T0000Z" "baz\n20140810T0000Z" unfilled box black
-node "cold_foo.20140808T0000Z" "cold_foo\n20140808T0000Z" unfilled box black
-node "foo.20140808T0000Z" "foo\n20140808T0000Z" unfilled box black
-node "foo.20140809T0000Z" "foo\n20140809T0000Z" unfilled box black
-node "foo.20140810T0000Z" "foo\n20140810T0000Z" unfilled box black
+node "bar.20140808T0000Z" "bar\n20140808T0000Z" unfilled ellipse black
+node "bar.20140809T0000Z" "bar\n20140809T0000Z" unfilled ellipse black
+node "bar.20140810T0000Z" "bar\n20140810T0000Z" unfilled ellipse black
+node "baz.20140808T0000Z" "baz\n20140808T0000Z" unfilled ellipse black
+node "baz.20140809T0000Z" "baz\n20140809T0000Z" unfilled ellipse black
+node "baz.20140810T0000Z" "baz\n20140810T0000Z" unfilled ellipse black
+node "cold_foo.20140808T0000Z" "cold_foo\n20140808T0000Z" unfilled ellipse black
+node "foo.20140808T0000Z" "foo\n20140808T0000Z" unfilled ellipse black
+node "foo.20140809T0000Z" "foo\n20140809T0000Z" unfilled ellipse black
+node "foo.20140810T0000Z" "foo\n20140810T0000Z" unfilled ellipse black
 stop
 __OUT__
 cmp_ok "$TEST_NAME.stderr" </dev/null

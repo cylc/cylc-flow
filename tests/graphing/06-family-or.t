@@ -55,9 +55,9 @@ node "A.20000103T0000Z" "A\n20000103T0000Z" unfilled doubleoctagon black
 node "B.20000101T0000Z" "B\n20000101T0000Z" unfilled doubleoctagon black
 node "B.20000102T0000Z" "B\n20000102T0000Z" unfilled doubleoctagon black
 node "B.20000103T0000Z" "B\n20000103T0000Z" unfilled doubleoctagon black
-node "c.20000101T0000Z" "c\n20000101T0000Z" unfilled box black
-node "c.20000102T0000Z" "c\n20000102T0000Z" unfilled box black
-node "c.20000103T0000Z" "c\n20000103T0000Z" unfilled box black
+node "c.20000101T0000Z" "c\n20000101T0000Z" unfilled ellipse black
+node "c.20000102T0000Z" "c\n20000102T0000Z" unfilled ellipse black
+node "c.20000103T0000Z" "c\n20000103T0000Z" unfilled ellipse black
 stop
 __GRAPH__
 

@@ -15,29 +15,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test strict validation of suite for tasks with inherit = [blank]
+# Test that the cylc-graph gui displays ghost nodes where appropriate.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 3
+set_test_number 2
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-val
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+TEST_NAME=$TEST_NAME_BASE-validate
+run_ok $TEST_NAME cylc validate "$SUITE_NAME"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-graph-check
-run_ok $TEST_NAME cylc graph --reference $SUITE_NAME
-cmp_ok "$TEST_NAME.stdout" <<'__OUT__'
-edge "bar.1" "baz.1" solid
-edge "foo.1" "bar.1" solid
-edge "foo.1" "qux.1" solid
-edge "qux.1" "baz.1" solid
-graph
-node "bar.1" "bar\n1" unfilled ellipse black
-node "baz.1" "baz\n1" unfilled ellipse black
-node "foo.1" "foo\n1" unfilled ellipse black
-node "qux.1" "qux\n1" unfilled ellipse black
-stop
-__OUT__
+graph_suite $SUITE_NAME graph.plain
+cmp_ok graph.plain $TEST_SOURCE_DIR/$TEST_NAME_BASE/graph.plain.ref
+#-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
+
