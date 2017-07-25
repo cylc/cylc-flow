@@ -95,7 +95,10 @@ install tasks to copy files to the self-contained suite run directory at
 start-up.  Install tasks are preferred for time-consuming installations because
 they don't slow the suite start-up process, they can be monitored in the GUI,
 they can run directly on target platforms, and you can rerun them later without
-restarting the suite. 
+restarting the suite. If you are using symbolic links to install files under
+your suite directory it is recommended that the linking should be set up to
+fail if the source is missing e.g. by using {\em mode=symlink+} for file
+installation in a rose app.
 
 \subsubsection{Confining Ouput To The Run Directory}
 
@@ -286,7 +289,8 @@ queues}, respectively.
 \subsubsection{Runahead Limiting}
 \label{Runahead Limiting}
 
-By default Cylc allows a maximum of three cycle points to be active at the same time, but this value is configurable:
+By default Cylc allows a maximum of three cycle points to be active at the same
+time, but this value is configurable:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
