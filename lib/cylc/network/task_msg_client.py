@@ -20,5 +20,5 @@
 from cylc.network.method import METHOD
 
 
-if METHOD == "https":
+if METHOD in ["https", "http"]:
     from cylc.network.https.task_msg_client import TaskMessageClient

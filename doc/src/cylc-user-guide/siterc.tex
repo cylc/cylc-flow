@@ -288,19 +288,22 @@ Each suite listens on a dedicated network port, binding on the first
 available starting at the configured base port.
 
 By default, the communication method is HTTPS secured with HTTP Digest
-Authentication. If the system does not support SSL, it will fall back
-to HTTP.
+Authentication. If the system does not support SSL, you should configure
+this section to use HTTP. Cylc will not automatically fall back to HTTP
+if HTTPS is not available.
 
 \subsubsection[method]{[communication] \textrightarrow method }
 
 The choice of client-server communication method - currently only HTTPS
-is supported, although others could be developed and plugged in.
+and HTTP are supported, although others could be developed and plugged in.
+Cylc defaults to HTTPS if this setting is not explicitly configured.
 
 \begin{myitemize}
 \item {\em type:} string
 \item {\em options:}
     \begin{myitemize}
     \item {\bf https}
+    \item {\bf http}
     \end{myitemize}
 \item {\em default:} https
 \end{myitemize}

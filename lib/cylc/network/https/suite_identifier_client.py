@@ -24,7 +24,7 @@ from cylc.network.https.base_client import BaseCommsClient, BaseCommsClientAnon
 
 
 class SuiteIdClient(BaseCommsClient):
-    """Client-side suite identity nterface."""
+    """Client-side suite identity interface."""
 
     METHOD = BaseCommsClient.METHOD_GET
 
@@ -33,7 +33,7 @@ class SuiteIdClient(BaseCommsClient):
 
 
 class SuiteIdClientAnon(BaseCommsClientAnon):
-    """Client-side suite identity nterface."""
+    """Client-side suite identity interface."""
 
     METHOD = BaseCommsClient.METHOD_GET
 
