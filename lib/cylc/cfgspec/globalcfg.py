@@ -521,11 +521,13 @@ class GlobalConfig(config):
             modify_dirs = True
         if value is not None and 'directory' in item:
             if replace_home and (modify_dirs or owner != USER):
-                # replace local home dir with $HOME for eval'n on other host
+                # Replace local home dir with $HOME for eval'n on other host.
                 value = value.replace(os.environ['HOME'], '$HOME')
             elif owner != USER:
-                # replace USER with owner for direct access via local filesys
-                value = value.replace('/%s/' % USER, '/%s/' % owner)
+                # Replace USER with owner for direct access via local filesys
+                # (works for standard cylc-run directory location).
+                value = value.replace(
+                    os.environ['HOME'], os.path.expanduser('~%s' % owner))
         return value
 
     def roll_directory(self, d, name, archlen=0):
