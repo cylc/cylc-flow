@@ -19,7 +19,9 @@
 usage() {
     echo "Usage: cylc [hook] email-task EVENT SUITE TASKID MESSAGE"
     echo ""
-    echo "This is a simple task event hook handler script that sends an email."
+    echo "THIS COMMAND IS OBSOLETE - use built-in email event hooks."
+    echo ""
+    echo "A simple task event hook handler script that sends an email."
     echo "The command line arguments are supplied automatically by cylc."
     echo ""
     echo "For example, to get an email alert whenever any task fails:"
