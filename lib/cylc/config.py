@@ -84,6 +84,7 @@ class SuiteConfig(object):
     """Class for suite configuration items and derived quantities."""
 
     _INSTANCES = {}
+    Q_DEFAULT = 'default'
 
     @classmethod
     def get_inst(cls, suite=None, fpath=None, template_vars=None,
@@ -1082,7 +1083,7 @@ class SuiteConfig(object):
         queues = self.cfg['scheduling']['queues']
         for orphan in orphans:
             self.runtime['linearized ancestors'][orphan] = [orphan, 'root']
-            queues['default']['members'].append(orphan)
+            queues[self.Q_DEFAULT]['members'].append(orphan)
 
     def configure_queues(self):
         """Assign tasks to internal queues."""
@@ -1094,7 +1095,7 @@ class SuiteConfig(object):
 
         # First add all tasks to the default queue.
         all_task_names = self.get_task_name_list()
-        queues['default']['members'] = all_task_names
+        queues[self.Q_DEFAULT]['members'] = all_task_names
 
         # Then reassign to other queues as requested.
         warnings = []
@@ -1102,7 +1103,7 @@ class SuiteConfig(object):
         for key, queue in queues.copy().items():
             # queues.copy() is essential here to allow items to be removed from
             # the queues dict.
-            if key == 'default':
+            if key == self.Q_DEFAULT:
                 continue
             # Assign tasks to queue and remove them from default.
             qmembers = []
@@ -1114,7 +1115,7 @@ class SuiteConfig(object):
                         # This includes sub-families.
                         if qmember not in qmembers:
                             try:
-                                queues['default']['members'].remove(fmem)
+                                queues[self.Q_DEFAULT]['members'].remove(fmem)
                             except ValueError:
                                 if fmem in requeued:
                                     msg = "%s: ignoring %s from %s (%s)" % (
@@ -1131,7 +1132,7 @@ class SuiteConfig(object):
                     # Is a task.
                     if qmember not in qmembers:
                         try:
-                            queues['default']['members'].remove(qmember)
+                            queues[self.Q_DEFAULT]['members'].remove(qmember)
                         except ValueError:
                             if qmember in requeued:
                                 msg = "%s: ignoring '%s' (%s)" % (
@@ -1162,7 +1163,7 @@ class SuiteConfig(object):
         if cylc.flags.verbose and len(queues) > 1:
             log_msg = "Internal queues created:"
             for key, queue in queues.items():
-                if key == 'default':
+                if key == self.Q_DEFAULT:
                     continue
                 log_msg += "\n+ %s: %s" % (key, ', '.join(queue['members']))
             OUT.info(log_msg)

@@ -103,11 +103,9 @@ class TaskPool(object):
 
     def assign_queues(self):
         """self.myq[taskname] = qfoo"""
-        qconfig = self.config.cfg['scheduling']['queues']
-        self.myq = {}
-        for queue in qconfig:
-            for taskname in qconfig[queue]['members']:
-                self.myq[taskname] = queue
+        self.myq.clear()
+        for queue, qconfig in self.config.cfg['scheduling']['queues'].items():
+            self.myq.update((name, queue) for name in qconfig['members'])
 
     def insert_tasks(self, items, stop_point_str, no_check=False):
         """Insert tasks."""
@@ -243,8 +241,8 @@ class TaskPool(object):
 
         # Any finished tasks can be released immediately (this can happen at
         # restart when all tasks are initially loaded into the runahead pool).
-        for itask_id_maps in self.runahead_pool.values():
-            for itask in itask_id_maps.values():
+        for itask_id_maps in self.runahead_pool.copy().values():
+            for itask in itask_id_maps.copy().values():
                 if itask.state.status in [TASK_STATUS_FAILED,
                                           TASK_STATUS_SUCCEEDED,
                                           TASK_STATUS_EXPIRED]:
@@ -322,9 +320,9 @@ class TaskPool(object):
             latest_allowed_point = self.stop_point
 
         released = False
-        for point, itask_id_map in self.runahead_pool.items():
+        for point, itask_id_map in self.runahead_pool.copy().items():
             if point <= latest_allowed_point:
-                for itask in itask_id_map.values():
+                for itask in itask_id_map.copy().values():
                     self.release_runahead_task(itask)
                     released = True
         return released
@@ -448,9 +446,11 @@ class TaskPool(object):
 
     def release_runahead_task(self, itask):
         """Release itask to the appropriate queue in the active pool."""
-        queue = self.myq[itask.tdef.name]
-        if queue not in self.queues:
-            self.queues[queue] = {}
+        try:
+            queue = self.myq[itask.tdef.name]
+        except KeyError:
+            queue = self.config.Q_DEFAULT
+        self.queues.setdefault(queue, {})
         self.queues[queue][itask.identity] = itask
         self.pool.setdefault(itask.point, {})
         self.pool[itask.point][itask.identity] = itask
