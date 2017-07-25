@@ -173,21 +173,21 @@ def _strip_and_unquote(keys, value):
             raise IllegalValueError("string", keys, value)
 
     elif value.startswith('"'):
-        m = re.match(_DQ_VALUE, value)
+        m = _DQ_VALUE.match(value)
         if m:
             value = m.groups()[0]
         else:
             raise IllegalValueError("string", keys, value)
 
     elif value.startswith("'"):
-        m = re.match(_SQ_VALUE, value)
+        m = _SQ_VALUE.match(value)
         if m:
             value = m.groups()[0]
         else:
             raise IllegalValueError("string", keys, value)
     else:
         # unquoted
-        value = re.sub('\s*#.*$', '', value)
+        value = value.split(r'#', 1)[0]
 
     # Note strip() removes leading and trailing whitespace, including
     # initial newlines on a multiline string:
@@ -220,25 +220,25 @@ def _strip_and_unquote_list(keys, value):
         m = _DQV.match(value)
         if m:
             value = m.groups()[0]
-        values = re.findall(_DQ_L_VALUE, value)
+        values = _DQ_L_VALUE.findall(value)
     elif value.startswith("'"):
         # single-quoted values
         m = _SQV.match(value)
         if m:
             value = m.groups()[0]
 
-        values = re.findall(_SQ_L_VALUE, value)
+        values = _SQ_L_VALUE.findall(value)
     else:
         # unquoted values (may contain internal quoted strings with list
         # delimiters inside 'em!)
-        m = _DQV.match(value)
-        if m:
-            value = m.groups()[0]
+        for quote, rec in (('"', _DQV), ("'", _SQV)):
+            if quote in value:
+                match = rec.match(value)
+                if match:
+                    value = match.groups()[0]
+                    break
         else:
-            n = _SQV.match(value)
-            if n:
-                value = n.groups()[0]
-
+            value = value.split(r'#', 1)[0].strip()
         values = list(_unquoted_list_parse(keys, value))
         # allow trailing commas
         if values[-1] == '':

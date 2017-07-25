@@ -1,0 +1,41 @@
+edge "foo_i001.1" "bar_i001.1" solid
+edge "foo_i002.1" "bar_i002.1" solid
+edge "foo_i003.1" "bar_i003.1" solid
+edge "foo_i004.1" "bar_i004.1" solid
+edge "foo_i005.1" "bar_i005.1" solid
+edge "foo_i025.1" "bar_i025.1" solid
+edge "foo_i030.1" "bar_i030.1" solid
+edge "foo_i031.1" "bar_i031.1" solid
+edge "foo_i032.1" "bar_i032.1" solid
+edge "foo_i033.1" "bar_i033.1" solid
+edge "foo_i034.1" "bar_i034.1" solid
+edge "foo_i035.1" "bar_i035.1" solid
+edge "foo_i110.1" "bar_i110.1" solid
+graph
+node "bar_i001.1" "bar_i001\n1" unfilled box black
+node "bar_i002.1" "bar_i002\n1" unfilled box black
+node "bar_i003.1" "bar_i003\n1" unfilled box black
+node "bar_i004.1" "bar_i004\n1" unfilled box black
+node "bar_i005.1" "bar_i005\n1" unfilled box black
+node "bar_i025.1" "bar_i025\n1" unfilled box black
+node "bar_i030.1" "bar_i030\n1" unfilled box black
+node "bar_i031.1" "bar_i031\n1" unfilled box black
+node "bar_i032.1" "bar_i032\n1" unfilled box black
+node "bar_i033.1" "bar_i033\n1" unfilled box black
+node "bar_i034.1" "bar_i034\n1" unfilled box black
+node "bar_i035.1" "bar_i035\n1" unfilled box black
+node "bar_i110.1" "bar_i110\n1" unfilled box black
+node "foo_i001.1" "foo_i001\n1" unfilled box black
+node "foo_i002.1" "foo_i002\n1" unfilled box black
+node "foo_i003.1" "foo_i003\n1" unfilled box black
+node "foo_i004.1" "foo_i004\n1" unfilled box black
+node "foo_i005.1" "foo_i005\n1" unfilled box black
+node "foo_i025.1" "foo_i025\n1" unfilled box black
+node "foo_i030.1" "foo_i030\n1" unfilled box black
+node "foo_i031.1" "foo_i031\n1" unfilled box black
+node "foo_i032.1" "foo_i032\n1" unfilled box black
+node "foo_i033.1" "foo_i033\n1" unfilled box black
+node "foo_i034.1" "foo_i034\n1" unfilled box black
+node "foo_i035.1" "foo_i035\n1" unfilled box black
+node "foo_i110.1" "foo_i110\n1" unfilled box black
+stop

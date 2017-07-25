@@ -8,6 +8,7 @@
         item 4 = "the", "quick"  , "brown", "fox",   # comment
         item 5 = "the", "quick"  , "brown",\
     "fox",   # comment
+        item 6 = the, quick, brown, fox  # jumps, over # the lazy
 
     [[the#c1_quick # c2_brown#c3_fox#c4]]
         # internal comments should be preserved

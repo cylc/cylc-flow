@@ -16,9 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Run graph parser unit tests.
-. $(dirname $0)/test_header
-
+. "$(dirname "$0")/test_header"
 set_test_number 1
 
-TEST_NAME=$TEST_NAME_BASE-unit-tests
-run_ok $TEST_NAME python $CYLC_DIR/lib/cylc/param_expand.py
+run_ok "${TEST_NAME_BASE}" python -m 'cylc.param_expand'
+exit

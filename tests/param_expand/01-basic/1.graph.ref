@@ -13,21 +13,21 @@ edge "foo_fish.1" "bar_j2.1" solid
 edge "foo_fish.1" "bar_j3.1" solid
 edge "foo_fish.1" "bar_j4.1" solid
 edge "foo_fish.1" "bar_j5.1" solid
-edge "qux_j1.1" "waz_k01.1" solid
-edge "qux_j1.1" "waz_k05.1" solid
-edge "qux_j1.1" "waz_k09.1" solid
-edge "qux_j2.1" "waz_k01.1" solid
-edge "qux_j2.1" "waz_k05.1" solid
-edge "qux_j2.1" "waz_k09.1" solid
-edge "qux_j3.1" "waz_k01.1" solid
-edge "qux_j3.1" "waz_k05.1" solid
-edge "qux_j3.1" "waz_k09.1" solid
-edge "qux_j4.1" "waz_k01.1" solid
-edge "qux_j4.1" "waz_k05.1" solid
-edge "qux_j4.1" "waz_k09.1" solid
-edge "qux_j5.1" "waz_k01.1" solid
-edge "qux_j5.1" "waz_k05.1" solid
-edge "qux_j5.1" "waz_k09.1" solid
+edge "qux_j1.1" "waz_k1.1" solid
+edge "qux_j1.1" "waz_k5.1" solid
+edge "qux_j1.1" "waz_k9.1" solid
+edge "qux_j2.1" "waz_k1.1" solid
+edge "qux_j2.1" "waz_k5.1" solid
+edge "qux_j2.1" "waz_k9.1" solid
+edge "qux_j3.1" "waz_k1.1" solid
+edge "qux_j3.1" "waz_k5.1" solid
+edge "qux_j3.1" "waz_k9.1" solid
+edge "qux_j4.1" "waz_k1.1" solid
+edge "qux_j4.1" "waz_k5.1" solid
+edge "qux_j4.1" "waz_k9.1" solid
+edge "qux_j5.1" "waz_k1.1" solid
+edge "qux_j5.1" "waz_k5.1" solid
+edge "qux_j5.1" "waz_k9.1" solid
 graph
 node "bar_j1.1" "bar_j1\n1" unfilled box black
 node "bar_j2.1" "bar_j2\n1" unfilled box black
@@ -42,7 +42,7 @@ node "qux_j2.1" "qux_j2\n1" unfilled box black
 node "qux_j3.1" "qux_j3\n1" unfilled box black
 node "qux_j4.1" "qux_j4\n1" unfilled box black
 node "qux_j5.1" "qux_j5\n1" unfilled box black
-node "waz_k01.1" "waz_k01\n1" unfilled box black
-node "waz_k05.1" "waz_k05\n1" unfilled box black
-node "waz_k09.1" "waz_k09\n1" unfilled box black
+node "waz_k1.1" "waz_k1\n1" unfilled box black
+node "waz_k5.1" "waz_k5\n1" unfilled box black
+node "waz_k9.1" "waz_k9\n1" unfilled box black
 stop
