@@ -201,7 +201,7 @@ class TaskJobManager(object):
                     reg, owner, host),
                 user_at_host + ':' + r_suite_srv_dir + '/'])
             if ssl_cert is not None:
-                cmds.insert(-2, ssl_cert)
+                cmds.insert(-1, ssl_cert)
         # Command to copy python library to remote host.
         suite_run_py = os.path.join(
             GLOBAL_CFG.get_derived_host_item(reg, 'suite run directory'),
