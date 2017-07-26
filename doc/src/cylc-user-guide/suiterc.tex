@@ -116,7 +116,7 @@ negative sign, thereafter following the ISO 8601 standard example notation
 except for fractional digits, which are represented as \lstinline=,ii= for
 \lstinline=hh=, \lstinline=,nn= for \lstinline=mm=, etc. For example, to write
 date-times as week dates with fractional hours, set cycle point format to
-\lstinline=CCYYWwwDThh,iiZ= e.g. \lstinline=1987W041T08,5Z= for 08:30 UTC on
+\lstinline=CCYYWwwDThh,iiZ= e.g.\  \lstinline=1987W041T08,5Z= for 08:30 UTC on
 Monday on the fourth ISO week of 1987.
 
 You can also use a subset of the strptime/strftime POSIX standard - supported
@@ -125,10 +125,12 @@ tokens are \lstinline=%F=, \lstinline=%H=, \lstinline=%M=, \lstinline=%S=,
 \lstinline=%s=, \lstinline=%z=.
 
 The pre cylc-6 legacy 10-digit date-time format YYYYMMDDHH is not ISO8601
-compliant and can no longer be used as the cycle point format. For job scripts
-that still require the old format use the \lstinline=cylc cyclepoint= utility
-to translate it from ISO8601 inside job scripts, like this:
+compliant and can no longer be used as the cycle point format. For job
+scripts that still require the old format, use the
+\lstinline=cylc cyclepoint= utility to translate the ISO8601 cycle point
+inside job scripts, e.g.:
 
+\lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
    [[root]]
@@ -167,12 +169,13 @@ zone offsets from UTC, such as \lstinline=+13=, \lstinline=+1300=,
 special \lstinline=+0000= case. Cycle points will be converted to the time
 zone you give and will be represented with this string at the end.
 
-Cycle points that are input without time zones (e.g. as an initial cycle point
+Cycle points that are input without time zones (e.g.\ as an initial cycle
+point
 setting) will use this time zone if set. If this isn't set (and UTC mode is
 also not set), then they will default to the current local time zone.
 
 Note that the ISO standard also allows writing the hour and minute separated
-by a ":" (e.g. \lstinline=+13:00=) - however, this is not recommended, given
+by a ":" (e.g.\ \lstinline=+13:00=) - however, this is not recommended, given
 that the time zone is used as part of task output filenames.
 
 \subsubsection[abort if any task fails]{[cylc] \textrightarrow abort if any task fails}
@@ -193,7 +196,7 @@ directory exists and that its contact file contains the expected information.
 If not, the suite will shut itself down automatically.
 
 \begin{myitemize}
-    \item {\em type:} ISO 8601 duration/interval representation (e.g.
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.\ 
  \lstinline=PT5M=, 5 minutes (note: by contrast, \lstinline=P5M= means 5
  months, so remember the \lstinline=T=!)).
     \item {\em default:} PT10M
@@ -207,7 +210,7 @@ a given interval. This is useful to prevent flooding users' mail boxes when
 many task events occur within a short period of time.
 
 \begin{myitemize}
-  \item {\em type:} ISO 8601 duration/interval representation (e.g. \lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
+  \item {\em type:} ISO 8601 duration/interval representation (e.g.\ \lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
   \item {\em default: PT5M}
 \end{myitemize}
 
@@ -429,7 +432,7 @@ of time. The timer is set initially at suite start up. It is possible to set a
 default for this at the site level (see ~\ref{SiteCylcHooks}).
 
 \begin{myitemize}
-    \item {\em type:} ISO 8601 duration/interval representation (e.g.
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.\ 
  \lstinline=PT5S=, 5 seconds, \lstinline=PT1S=, 1 second) - minimum 0 seconds.
     \item {\em default:} (none), unless set at the site level.
 \end{myitemize}
@@ -442,7 +445,7 @@ of time. The timer is set initially at suite start up. It is possible to set a
 default for this at the site level (see ~\ref{SiteCylcHooks}).
 
 \begin{myitemize}
-    \item {\em type:} ISO 8601 duration/interval representation (e.g.
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.\  
  \lstinline=PT5S=, 5 seconds, \lstinline=PT1S=, 1 second) - minimum 0 seconds.
     \item {\em default:} (none), unless set at the site level.
 \end{myitemize}
@@ -620,7 +623,7 @@ cannot be done in live mode unless you define a value for this item, because
 it is not possible to arrive at a sensible default for all suites.
 
 \begin{myitemize}
-    \item {\em type:} ISO 8601 duration/interval representation, e.g.
+    \item {\em type:} ISO 8601 duration/interval representation, e.g.\ 
         \lstinline=PT5M= is 5 minutes (note: by contrast \lstinline=P5M= means 5
          months, so remember the \lstinline=T=!).
     \item {\em default:} PT1M (1 minute)
@@ -634,7 +637,7 @@ simulation mode unless you define a value for this item, because it is
 not possible to arrive at a sensible default for all suites.
 
 \begin{myitemize}
-    \item {\em type:} ISO 8601 duration/interval representation (e.g.
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.\ 
  \lstinline=PT5M=, 5 minutes (note: by contrast, \lstinline=P5M= means 5
  months, so remember the \lstinline=T=!)).
     \item {\em default:} PT1M (1 minute)
@@ -648,7 +651,7 @@ cannot be done in dummy mode unless you define a value for this item, because
 it is not possible to arrive at a sensible default for all suites.
 
 \begin{myitemize}
-    \item {\em type:} ISO 8601 duration/interval representation (e.g.
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.\ 
  \lstinline=PT5M=, 5 minutes (note: by contrast, \lstinline=P5M= means 5
  months, so remember the \lstinline=T=!)).
     \item {\em default:} PT1M (1 minute)
@@ -712,7 +715,7 @@ it will be assumed to be local time, or in UTC if~\ref{UTC-mode} is set, or in
 the time zone determined by \ref{cycle-point-time-zone} if that is set.
 
 \begin{myitemize}
-    \item {\em type:} ISO 8601 date-time point representation (e.g.
+    \item {\em type:} ISO 8601 date-time point representation (e.g.\ 
  \lstinline=CCYYMMDDThhmm=, 19951231T0630) or ``now''.
     \item {\em default:} (none)
 \end{myitemize}
@@ -734,9 +737,9 @@ it will be assumed to be local time, or in UTC if \ref{UTC-mode} is set, or in
 the \ref{cycle-point-time-zone} if that is set.
 
 \begin{myitemize}
-    \item {\em type:} ISO 8601 date-time point representation (e.g.
+    \item {\em type:} ISO 8601 date-time point representation (e.g.\ 
  \lstinline=CCYYMMDDThhmm=, 19951231T1230) or ISO 8601 date-time offset
-    (e.g. +P1D+PT6H)
+    (e.g.\  +P1D+PT6H)
     \item {\em default:} (none)
 \end{myitemize}
 
@@ -749,7 +752,7 @@ constraints.
 
 \begin{myitemize}
     \item {\em type:} Comma-separated list of ISO 8601 truncated time point
-        representations (e.g. T00, T06, T-30).
+        representations (e.g.\  T00, T06, T-30).
     \item {\em default:} (none)
 \end{myitemize}
 
@@ -762,7 +765,7 @@ constraints.
 
 \begin{myitemize}
     \item {\em type:} Comma-separated list of ISO 8601 truncated time point
-        representations (e.g. T00, T06, T-30).
+        representations (e.g.\  T00, T06, T-30).
     \item {\em default:} (none)
 \end{myitemize}
 
@@ -784,7 +787,7 @@ slowest and fastest tasks. It is deprecated in favour of the newer default
 limiting by \lstinline=max active cycle points= (\ref{max active cycle points}).
 
 \begin{myitemize}
-    \item {\em type:} Cycle interval string e.g. \lstinline=PT12H=
+    \item {\em type:} Cycle interval string e.g.\  \lstinline=PT12H=
     for a 12 hour limit under ISO 8601 cycling.
     \item {\em default:} (none)
 \end{myitemize}
@@ -819,7 +822,7 @@ additional task proxies both in terms of memory and cpu for the cylc daemon as
 well as overheads in rendering all the additional tasks in gcylc. Also, use
 of the setting may highlight any issues with suite design relying on the
 default behaviour where downstream tasks would otherwise be waiting on ones
-upstream submitting and the suite would have stalled e.g. a housekeeping task
+upstream submitting and the suite would have stalled e.g.\  a housekeeping task
 at a later cycle deleting an earlier cycle's data before that cycle has had
 chance to run where previously the task would not have been spawned until its
 predecessor had been submitted.
@@ -878,7 +881,7 @@ specified as an offset from their own cycle point.
 \begin{myitemize}
     \item {\em type:} Comma-separated list of task or family names with
         associated date-time offsets expressed as ISO8601 interval strings,
-        positive or negative, e.g. \lstinline=PT1H= for 1 hour.  The offset
+        positive or negative, e.g.\  \lstinline=PT1H= for 1 hour.  The offset
         specification may be omitted to trigger right on the cycle point.
     \item {\em default:} (none)
     \item {\em example:}
@@ -898,7 +901,7 @@ see~\ref{ClockExpireTasks}.
 \begin{myitemize}
     \item {\em type:} Comma-separated list of task or family names with
         associated date-time offsets expressed as ISO8601 interval strings,
-        positive or negative, e.g. \lstinline=PT1H= for 1 hour.  The offset
+        positive or negative, e.g.\  \lstinline=PT1H= for 1 hour.  The offset
         may be omitted if it is zero.
     \item {\em default:} (none)
     \item {\em example:}
@@ -1621,7 +1624,7 @@ Item details:
 If a task has not started after the specified ISO 8601 duration/interval, the
 {\em submission timeout} event handler(s) will be called.
 \begin{myitemize}
-    \item {\em type:} ISO 8601 duration/interval representation (e.g.
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.\ 
  \lstinline=PT30M=, 30 minutes or \lstinline=P1D=, 1 day).
     \item {\em default:} (none)
 \end{myitemize}
@@ -1632,7 +1635,7 @@ If a task has not started after the specified ISO 8601 duration/interval, the
 If a task has not finished after the specified ISO 8601 duration/interval, the
 {\em execution timeout} event handler(s) will be called.
 \begin{myitemize}
-    \item {\em type:} ISO 8601 duration/interval representation (e.g.
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.\ 
  \lstinline=PT4H=, 4 hours or \lstinline=P1D=, 1 day).
     \item {\em default:} (none)
 \end{myitemize}
@@ -1824,7 +1827,7 @@ individually overridden at lower levels of the runtime namespace hierarchy.
 
 \subparagraph[\_\_DIRECTIVE\_\_ ]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[directives]]] \textrightarrow \_\_DIRECTIVE\_\_}
 
-Replace \_\_DIRECTIVE\_\_ with each directive assignment, e.g.
+Replace \_\_DIRECTIVE\_\_ with each directive assignment, e.g.\ 
 \lstinline@class = parallel@
 
 \begin{myitemize}
@@ -1868,7 +1871,7 @@ taken from the graph notation.
 \subparagraph[run-dir]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[suite state polling]]] \textrightarrow run-dir}
 
 For your own suites the run database location is determined by your
-site/user config. For other suites, e.g. those owned by others, or
+site/user config. For other suites, e.g.\  those owned by others, or
 mirrored suite databases, use this item to specify the location
 of the top level cylc run directory (the database should be a
 suite-name sub-directory of this location).
@@ -1892,7 +1895,7 @@ Cycle point template of the target suite, if different from that of the polling 
 
 Polling interval expressed as an ISO 8601 duration/interval.
 \begin{myitemize}
-    \item {\em type:} ISO 8601 duration/interval representation (e.g.
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.\ 
  \lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
     \item {\em default:} PT1M
 \end{myitemize}
@@ -1950,7 +1953,7 @@ The default simulated job run length, if \lstinline=[job]execution time limit=
 and \lstinline=[simulation]speedup factor= are not set.
 
 \begin{myitemize}
-    \item {\em type:} ISO 8601 duration/interval representation (e.g.
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.\ 
  \lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
     \item {\em default:} \lstinline=PT10S=
 \end{myitemize}
@@ -1973,7 +1976,7 @@ simulated task run length plus this buffer interval, to avoid job kill due to
 exceeding the time limit.
 
 \begin{myitemize}
-    \item {\em type:} ISO 8601 duration/interval representation (e.g.
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.\ 
  \lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
     \item {\em default:} PT10S
 \end{myitemize}
@@ -2024,7 +2027,7 @@ and so on can be found at http://www.graphviz.org/Documentation.php.
 
 The initial cycle point for graph plotting.
 \begin{myitemize}
-    \item {\em type:} ISO 8601 date-time representation (e.g. CCYYMMDDThhmm)
+    \item {\em type:} ISO 8601 date-time representation (e.g.\  CCYYMMDDThhmm)
     \item {\em default:} the suite initial cycle point
 \end{myitemize}
 The visualization initial cycle point gets adjusted up if necessary to the
@@ -2035,7 +2038,7 @@ suite initial cycling point.
 An explicit final cycle point for graph plotting. If used, this overrides the
 preferred {\em number of cycle points} (below).
 \begin{myitemize}
-    \item {\em type:} ISO 8601 date-time representation (e.g. CCYYMMDDThhmm)
+    \item {\em type:} ISO 8601 date-time representation (e.g.\  CCYYMMDDThhmm)
     \item {\em default:} (none)
 \end{myitemize}
 The visualization final cycle point gets adjusted down if necessary to the
