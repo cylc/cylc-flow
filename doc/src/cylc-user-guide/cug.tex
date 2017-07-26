@@ -2635,16 +2635,16 @@ the following all run once at the final cycle point:
 \label{excluding-dates}
 \lstset{language=suiterc}
 
-Datetimes can be excluded from a recurrence by an exclamation mark for example
+Date-times can be excluded from a recurrence by an exclamation mark for example
 \lstinline=[[[ PT1D!20000101 ]]]= means run daily except on the
 first of January 2000.
 
-This syntax can be used to exclude one or multiple datetimes from a recurrence.
-Multiple datetimes are excluded using the syntax 
-\lstinline=[[[ PT1D!(20000101,20000102,...) ]]]=. All datetimes listed within
+This syntax can be used to exclude one or multiple date-times from a recurrence.
+Multiple date-times are excluded using the syntax 
+\lstinline=[[[ PT1D!(20000101,20000102,...) ]]]=. All date-times listed within
 the parentheses after the exclamation mark will be excluded. Note that the 
 \lstinline=^= and \lstinline=$= symbols (shorthand for the initial
-and final cycle points) are both datetimes so \lstinline=[[[ T12!$-PT1D ]]]=
+and final cycle points) are both date-times so \lstinline=[[[ T12!$-PT1D ]]]=
 is valid.
 
 If using a run limit in combination with an exclusion, the heading might not
@@ -2662,12 +2662,12 @@ suite \lstinline=foo= will only run once as its second run has been excluded.
 \lstset{language=transcript}
 
 \paragraph{Advanced exclusion syntax}
-In addition to excluding isolated datetime points or lists of datetime points
-from recurrences, exclusions themselves may be datetime recurrence sequences.
-Any partial datetime or sequence given after the exclamation mark will be 
+In addition to excluding isolated date-time points or lists of date-time points
+from recurrences, exclusions themselves may be date-time recurrence sequences.
+Any partial date-time or sequence given after the exclamation mark will be 
 excluded from the main sequence. 
 
-For example, partial datetimes can be excluded using the syntax:
+For example, partial date-times can be excluded using the syntax:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [[[ PT1H ! T12 ]]]          # Run hourly but not at 12:00 from the inital
@@ -3035,7 +3035,7 @@ shown in Figure~\ref{fig-satellite}.
 
 The same syntax used to reference the initial and final cycle points
 (introduced in~\ref{referencing-the-initial-and-final-cycle-points}) for
-use with datetime cycling can also be used for integer cycling. For
+use with date-time cycling can also be used for integer cycling. For
 example you can write:
 
 \lstset{language=suiterc}

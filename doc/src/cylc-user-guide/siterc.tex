@@ -82,7 +82,7 @@ cause the suite to hang while waiting for the command to finish. This setting
 sets a timeout for such a command to ensure that the suite can continue.
 
 \begin{myitemize}
-\item {\em type:} ISO 8601 duration/interval representation (e.g.
+\item {\em type:} ISO 8601 duration/interval representation (e.g.\ 
 \lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
 \item {\em default: PT10S}
 \end{myitemize}
@@ -98,7 +98,7 @@ If a send fails, the messaging code will retry after a configured
 delay interval.
 
 \begin{myitemize}
-\item {\em type:} ISO 8601 duration/interval representation (e.g.
+\item {\em type:} ISO 8601 duration/interval representation (e.g.\ 
 \lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
 \item {\em default:} PT5S
 \end{myitemize}
@@ -121,7 +121,7 @@ commands. Without a timeout remote connections to unresponsive
 suites can hang indefinitely (suites suspended with Ctrl-Z for instance).
 
 \begin{myitemize}
-\item {\em type:} ISO 8601 duration/interval representation (e.g.
+\item {\em type:} ISO 8601 duration/interval representation (e.g.\ 
 \lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
 \item {\em default:} PT30S
 \end{myitemize}
@@ -343,7 +343,7 @@ supported for HTTPS, which alters HTTP Digest Auth to use the SHA1 hash
 algorithm rather than the standard MD5. This is more secure but is also
 less well supported by third party web clients including web browsers.
 You may need to add the 'SHA1' option if you are running on platforms
-where MD5 is discouraged (e.g. under FIPS).
+where MD5 is discouraged (e.g.\  under FIPS).
 
 \begin{myitemize}
 \item {\em type:} string\_list
@@ -469,7 +469,7 @@ polling near the beginning and end of the anticipated task run time.
 Multipliers can be used as shorthand as in the example below.
 
 \begin{myitemize}
-\item {\em type:} ISO 8601 duration/interval representation (e.g.
+\item {\em type:} ISO 8601 duration/interval representation (e.g.\ 
 \lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
 \item {\em default:}
 \item {\em example:} \lstinline@execution polling intervals = 5*PT1M, 10*PT5M, 5*PT1M@
@@ -488,7 +488,7 @@ values can be specified as for execution polling (above) but a single
 value is probably sufficient for job submission polling.
 
 \begin{myitemize}
-\item {\em type:} ISO 8601 duration/interval representation (e.g.
+\item {\em type:} ISO 8601 duration/interval representation (e.g.\ 
 \lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
 \item {\em default:}
 \item {\em example:} (see the execution polling example above)
