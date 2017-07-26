@@ -124,6 +124,10 @@ tokens are \lstinline=%F=, \lstinline=%H=, \lstinline=%M=, \lstinline=%S=,
 \lstinline=%Y=, \lstinline=%d=, \lstinline=%j=, \lstinline=%m=,
 \lstinline=%s=, \lstinline=%z=.
 
+The ISO8601 extended date-time format can be used
+(\lstinline=%Y-%m-%dT%H:%M=) but
+note that the `-' and `:' characters end up in job log directory paths.
+
 The pre cylc-6 legacy 10-digit date-time format YYYYMMDDHH is not ISO8601
 compliant and can no longer be used as the cycle point format. For job
 scripts that still require the old format, use the
