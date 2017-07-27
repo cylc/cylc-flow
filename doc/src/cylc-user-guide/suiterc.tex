@@ -1259,7 +1259,8 @@ suite URLs (\ref{SuiteURL}).
     \begin{lstlisting}
 [runtime]
     [[root]]
-        URL = http://suites/${CYLC_SUITE_NAME}/${CYLC_TASK_NAME}.html
+        [[[meta]]]
+            URL = http://suites/${CYLC_SUITE_NAME}/${CYLC_TASK_NAME}.html
     \end{lstlisting}
 \end{myitemize}
 
@@ -1276,8 +1277,11 @@ Names may contain letters, digits, underscores and hyphens and values may contai
 \item {\em default:} (none)
 \item {\em example:}
     \begin{lstlisting}
-importance = high
-color = red
+[runtime]
+    [[root]]
+        [[[meta]]]
+            importance = high
+            color = red
     \end{lstlisting}
 \end{myitemize}
 
@@ -1571,6 +1575,12 @@ substituted with actual values:
     \item \%(id)s: task ID (i.e. \%(name)s.\%(point)s)
     \item \%(message)s: event message, if any
 \end{myitemize}
+
+Can also include the patterns from [[[meta]]] section of the task, for example:
+\begin{myitemsize}
+    \item \%(importance)s: task priority
+    \item \%(color)s: task color
+\end{myitemsize}
 
 Otherwise, the command line will be called with the following arguments:
 \begin{lstlisting}

@@ -264,7 +264,7 @@ class BaseCommsClient(object):
                 else:
                     raise ConnectionError(url, exc)
             except Exception as exc:
-                if not cylc.flags.debug:
+                if cylc.flags.debug:
                     import traceback
                     traceback.print_exc()
                 raise ConnectionError(url, exc)

@@ -701,10 +701,10 @@ class SuiteConfig(object):
         # Replace suite and task name in task URLs.
         for name, cfg in self.cfg['runtime'].items():
             if cfg['meta']['URL']:
-                cfg['meta']['URL'] = RE_TASK_NAME_VAR.sub(name,
-                     cfg['meta']['URL'])
-                cfg['meta']['URL'] = RE_SUITE_NAME_VAR.sub(self.suite,
-                     cfg['meta']['URL'])
+                cfg['meta']['URL'] = RE_TASK_NAME_VAR.sub(
+                    name, cfg['meta']['URL'])
+                cfg['meta']['URL'] = RE_SUITE_NAME_VAR.sub(
+                    self.suite, cfg['meta']['URL'])
 
         if is_validate:
             self.mem_log("config.py: before _check_circular()")
