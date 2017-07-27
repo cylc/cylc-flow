@@ -472,7 +472,7 @@ separately.
     \newline \url{https://github.com/jrfonseca/xdot.py}
 \end{myitemize}
 
-\subsection{Installing Cylc Itself}
+\subsection{Installing Cylc}
 \label{InstallCylc}
 
 Cylc releases can be downloaded from from \url{https://cylc.github.io/cylc}.
@@ -483,15 +483,19 @@ The wrapper script \lstinline=admin/cylc-wrapper= should be installed as
 such as \lstinline=/opt= where successive Cylc releases will be unpacked
 side by side.
 
-To install Cylc for the first time simply unpack the release tarball in that
-location, e.g.\ \lstinline=/opt/cylc-7.4.0=, type \lstinline=make= inside
-the unpacked release directory, and set site defaults - if necessary - in a
-site global config file (below).
+To install Cylc, unpack the release tarball in the right location, e.g.\
+\lstinline=/opt/cylc-7.4.0=, type \lstinline=make= inside the release
+directory, and set site defaults - if necessary - in a site global config file
+(below).
 
-In the installed location, make a symbolic link from \lstinline=cylc= to the
-latest installed version: \lstinline=ln -s /opt/cylc-7.4.0 cylc=. This is the
-version of Cylc that will be invoked by the central wrapper if a specific
-version is not requested e.g.\ by \lstinline@CYLC_VERSION=7.4.0@.
+Make a symbolic link from \lstinline=cylc= to the latest installed version:
+\lstinline=ln -s /opt/cylc-7.4.0 /opt/cylc=. This will be invoked by the
+central wrapper if a specific version is not requested. Otherwise, the
+wrapper will attempt to invoke the Cylc version specified in
+\lstinline@$CYLC_VERSION@, e.g. \lstinline@CYLC_VERSION=7.4.0@. This variable
+is automatically set in task job scripts to ensure that jobs use the same Cylc
+version as their parent suite daemon.  It can also be set by users, manually or
+in login scripts, to fix the Cylc version in their environment.
 
 Installing subsequent releases is just a matter of unpacking the new tarballs
 next to the previous releases, running \lstinline=make= in them, and copying
@@ -574,13 +578,12 @@ reasons:
 \begin{myitemize}
     \item In real time forecasting systems, a new forecast may be initiated
         at regular intervals when new real time data comes in.
-    \item Batch scheduler queue limits may require that long single runs
-      be split into many smaller runs with incremental processing of associated
-      inputs and outputs.
+    \item It may be convenient (or necessary, e.g.\ due to batch scheduler
+        queue limits) to split single long model runs into many smaller chunks,
+        each with associated pre- and post-processing workflows.
 \end{myitemize}
 
-Cylc provides two ways of constructing workflows for cycling systems: {\em
-cycling workflows} and {\em parameterized tasks}.
+Cylc provides two ways of constructing workflows for cycling systems: {\em cycling workflows} and {\em parameterized tasks}.
 
 \subsection{Cycling Workflows}
 \label{Cycling Workflows}
@@ -622,8 +625,8 @@ This method is only good for smaller workflows of finite duration because every
 single task has to be mapped out in advance, and cylc has to be aware of all of
 them throughout the entire run. Additionally Cylc's {\em cycling workflow}
 capabilities (above) are more powerful, more flexible, and generally easier to
-use (Cylc will do the date-time arithmetic for you, for instance), so that is
-the recommended way to drive most cycling systems.
+use (Cylc will generate the cycle point date-times for you, for instance), so
+that is the recommended way to drive most cycling systems.
 
 The primary use for parameterized tasks in cylc is to generate ensembles and
 other groups of related tasks at the same cycle point, not as a proxy for
@@ -2640,9 +2643,9 @@ Date-times can be excluded from a recurrence by an exclamation mark for example
 first of January 2000.
 
 This syntax can be used to exclude one or multiple date-times from a recurrence.
-Multiple date-times are excluded using the syntax 
+Multiple date-times are excluded using the syntax
 \lstinline=[[[ PT1D!(20000101,20000102,...) ]]]=. All date-times listed within
-the parentheses after the exclamation mark will be excluded. Note that the 
+the parentheses after the exclamation mark will be excluded. Note that the
 \lstinline=^= and \lstinline=$= symbols (shorthand for the initial
 and final cycle points) are both date-times so \lstinline=[[[ T12!$-PT1D ]]]=
 is valid.
@@ -2662,10 +2665,11 @@ suite \lstinline=foo= will only run once as its second run has been excluded.
 \lstset{language=transcript}
 
 \paragraph{Advanced exclusion syntax}
+
 In addition to excluding isolated date-time points or lists of date-time points
 from recurrences, exclusions themselves may be date-time recurrence sequences.
-Any partial date-time or sequence given after the exclamation mark will be 
-excluded from the main sequence. 
+Any partial date-time or sequence given after the exclamation mark will be
+excluded from the main sequence.
 
 For example, partial date-times can be excluded using the syntax:
 \lstset{language=suiterc}
@@ -2699,18 +2703,18 @@ It is also valid to use sequences for exclusions. For example:
                                         # the initial cycle point, but exclude
                                         # 00:00 for 5 days from the 1st January
                                         # 2000.
-                                      
+
 \end{lstlisting}
 \lstset{language=transcript}
 
-You can combine exclusion sequences and single point exclusions within a 
+You can combine exclusion sequences and single point exclusions within a
 comma separated list enclosed in parentheses:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
 [[[ T-00 ! (20000101T07, PT2H) ]]]      # Run hourly on the hour but not at 07:00
-                                        # on the 1st Jan, 2000 and not 2-hourly 
-                                        # on the hour. 
+                                        # on the 1st Jan, 2000 and not 2-hourly
+                                        # on the hour.
 \end{lstlisting}
 \lstset{language=transcript}
 
@@ -3063,18 +3067,18 @@ example:
 \lstset{language=transcript}
 
 Multiple integer exclusions are also valid in the same way as the syntax
-in~\ref{excluding-dates}. Integer exclusions may be a list of single 
+in~\ref{excluding-dates}. Integer exclusions may be a list of single
 integer points, an integer sequence, or a combination of both:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
-[[[ R/P1!(2,3,7) ]]]  # Run with step 1 to the final cycle point, 
+[[[ R/P1!(2,3,7) ]]]  # Run with step 1 to the final cycle point,
                       # but not at points 2, 3, or 7.
 [[[ P1 ! P2 ]]]       # Run with step 1 from the initial to final
                       # cycle point, skipping every other step from
                       # the initial cycle point.
 [[[ P1 ! +P1/P2 ]]]   # Run with step 1 from the initial cycle point,
-                      # excluding every other step beginning one step 
+                      # excluding every other step beginning one step
                       # after the initial cycle point.
 [[[ P1 !(P2,6,8) ]]]  # Run with step 1 from the intial cycle point,
                       # excluding every other step, and also excluding
@@ -5984,7 +5988,7 @@ reality).
 {\em Custom batch system handlers must be installed on suite and job
 hosts} in one of these locations:
 \begin{myitemize}
-    \item under \lstinline=<suite-def-path>/lib/python/= 
+    \item under \lstinline=<suite-def-path>/lib/python/=
     \item under \lstinline=<cylc-path>/lib/cylc/batch_sys_handlers/=
     \item or anywhere in \lstinline=$PYTHONPATH=
 \end{myitemize}
@@ -6000,18 +6004,18 @@ to running suites. Please also see the Tutorial (\ref{Tutorial}) and
 command documentation (\ref{CommandReference}), and experiment with
 plenty of examples.
 
-\subsection{Suite Start-up}
+\subsection{Startup: Cold-start, Warm-start, and Restart}
 \label{SuiteStartUp}
 
 There are three ways to start a suite running: {\em cold start} and {\em warm
-start}, which start from scratch; and {\em restart}, which loads a prior suite
-state. There is no difference between cold and warm start, except that the
-latter starts from a point beyond the suite initial cycle point.
+start}, which start from scratch; and {\em restart}, which starts from a prior
+suite state checkpoint. The only difference between cold starts and warm starts
+is that warm starts start from a point beyond the suite initial cycle point.
 
 Once a suite is up and running it is typically a restart that is needed most
-often (but see also \lstinline=cylc reload=). Be aware that cold and warm
-starts wipe out any prior suite state, which prevents returning to a restart
-if you decide that's what you really intended.
+often (but see also \lstinline=cylc reload=). {\em Be aware that cold and warm
+starts wipe out prior suite state, so you can't go back to a restart if you
+decide you made a mistake.}
 
 \subsubsection{Cold Start}
 
@@ -6024,37 +6028,21 @@ The initial cycle point may be specified on the command line or in the suite.rc
 file. The scheduler starts by loading the first instance of each task at the
 suite initial cycle point, or at the next valid point for the task.
 
-\subsubsection{Restart}
-
-A restart starts a suite run from the state recorded at a checkpoint, which is
-normally the end of a previous run. This allows restarting a suite that was
-shut down or killed, without rerunning tasks that were already completed, or
-which were already submitted or running when the suite went down.
-\lstset{language=transcript}
-\begin{lstlisting}
-$ cylc restart SUITE
-\end{lstlisting}
-For a restart, the scheduler starts by loading each task in its recorded state.
-Any tasks recorded as `submitted' or `running' will be polled automatically to
-determine what happened to them while the suite was down.
-
-See Section~\ref{RestartingSuites} for more detail.
-
 \subsubsection{Warm Start}
 
-A warm start runs a suite from scratch like a cold start, but from a given
-cycle point that is later than the suite's initial cycle point. All tasks from
-the given cycle point will run. It can be considered an inferior alternative
-to a restart because it may result in some tasks rerunning. A warm start may
-be required if a restart is not possible because the suite run databases were
-accidentally deleted (for instance). The warm start cycle point must be given
-on the command line:
+A warm start runs a suite from scratch like a cold start, but from the
+beginning of a given cycle point that is beyond the suite initial cycle point.
+This is generally inferior to a {\em restart} (which loads a previously
+recorded suite state - see~\ref{RestartingSuites}) because it may result in
+some tasks rerunning. However, a warm start may be required if a restart is not
+possible, e.g.\ because the suite run database was accidentally deleted. The
+warm start cycle point must be given on the command line:
 \lstset{language=transcript}
 \begin{lstlisting}
 $ cylc run --warm SUITE [START_CYCLE_POINT]
 \end{lstlisting}
 The original suite initial cycle point is preserved, but all tasks and
-dependencies before the given start cycle point are ignored.
+dependencies before the given warm start cycle point are ignored.
 
 The scheduler starts by loading a first instance of each task at the warm
 start cycle point, or at the next valid point for the task.
@@ -6062,39 +6050,197 @@ start cycle point, or at the next valid point for the task.
 cycle point is at or later than the given start cycle point, they will run; if
 not, they will be ignored.
 
-\subsection{How Tasks Interact With Running Suites}
+\subsubsection{Restart}
+\label{RestartingSuites}
+
+A restarted suite (see \lstinline=cylc restart --help=) is initialized from a
+previous recorded state checkpoint (normally the end of a previous run) so that
+it can carry on from wherever it got to before being shut down or killed,
+without resubmitting any tasks that were already submitted, running, or
+completed.
+
+\lstset{language=transcript}
+\begin{lstlisting}
+$ cylc restart SUITE
+\end{lstlisting}
+
+The scheduler starts by loading each task proxy in its recorded state, and
+polling any recorded as `submitted' or `running' to determine what happened to
+them while the daemon was down.
+
+\paragraph{Restart From Latest Checkpoint}
+
+To restart from the latest checkpoint simply invoke the \lstinline=cylc restart=
+command with the suite name (or select `restart' in the GUI suite start dialog
+window):
+
+\lstset{language=transcript}
+\begin{lstlisting}
+$ cylc restart SUITE
+\end{lstlisting}
+
+\paragraph{Restart From Another Checkpoint}
+
+Use the \lstinline=cylc ls-checkpoints= command to identify the right
+checkpoint (see \lstinline=cylc ls-checkpoints --help=).
+
+The checkpoint ID 0 (zero) is always used for latest state of the suite, which
+is updated continuously as the suite progresses. The checkpoint IDs of
+earlier states are positive integers starting from 1, incremented each
+time a new checkpoint is stored. Currently suites automatically store
+checkpoints before and after reloads, and on restarts (using the latest
+checkpoints before the restarts).
+
+Once you have identified the right checkpoint, restart the suite like this
+(or select `restart' in the GUI suite start dialog window, and enter the
+checkpoint ID in the space provided):
+\lstset{language=transcript}
+\begin{lstlisting}
+$ cylc restart --checkpoint=CHECKPOINT-ID SUITE
+\end{lstlisting}
+
+\paragraph{Manual Checkpoints}
+
+Use the \lstinline=cylc checkpoint= command to tell a suite daemon to
+checkpoint its current state:
+
+\lstset{language=transcript}
+\begin{lstlisting}
+$ cylc checkpoint SUITE CHECKPOINT-NAME
+\end{lstlisting}
+
+The 2nd argument is a name you give to the checkpoint so you can easily
+identify it later (see also \lstinline=cylc checkpoint --help=).
+
+\paragraph{Behaviour of Tasks on Restart}
+
+All tasks are reloaded in exactly their checkpointed states. Failed tasks are
+not automatically resubmitted at restart in case the underlying problem has not
+been addressed yet.
+
+Tasks recorded in the submitted or running states are automatically polled on
+restart, to see if they are still waiting in a batch queue, still running, or
+if they succeeded or failed while the suite was down. The suite state will be
+updated automatically according to the poll results.
+
+Existing instances of tasks removed from the suite definition before restart
+are not removed from the task pool automatically, but they will not spawn new
+instances. They can be removed manually if necessary,
+with~\lstinline=cylc remove=.
+
+Similarly, instances of new tasks added to the suite definition before
+restart are not inserted into the task pool automatically. The first
+instance of each can be inserted manually at the right cycle point,
+with~\lstinline=cylc insert=.
+
+\subsection{Reloading The Suite Definition At Runtime}
+
+The \lstinline=cylc reload= command tells a suite daemon to reload its
+suite definition at run time. This is an alternative to shutting a suite down
+and restarting it after making changes.
+
+As for a restart, existing instances of tasks removed from the suite definition
+before reload are not removed from the task pool automatically, but they
+will not spawn new instances. They can be removed manually if necessary,
+with~\lstinline=cylc remove=.
+
+Similarly, instances of new tasks added to the suite definition before
+reload are not inserted into the pool automatically. The first instance of each
+must be inserted manually at the right cycle point, with~\lstinline=cylc insert=.
+
+\subsection{Task Job Access To Cylc}
+\label{HowTasksGetAccessToCylc}
+
+Task jobs need access to Cylc on the job host, primarily for task messaging,
+but also to allow user-defined task scripting to run other Cylc commands.
+
+Cylc should be installed on job hosts as on suite hosts, with different releases
+installed side-by-side and invoked via the central Cylc wrapper according to
+the value of \lstinline=$CYLC_VERSION= - see Section~\ref{InstallCylc}. Task
+job scripts set \lstinline=$CYLC_VERSION= to the version of the parent suite
+daemon, so that the right Cylc will be invoked by jobs on the job host.
+
+Access to the Cylc executable (preferably the central wrapper as just
+described) for different job hosts can be configured using site and user
+global configuration files (on the suite host). If the environment for running
+the Cylc executable is only set up correctly in a login shell for a given host,
+you can set \lstinline@[hosts][HOST]use login shell = True@ for the relevant
+host (this is the default, to cover more sites automatically). If the
+environment is already correct without the login shell, but the Cylc executable
+is not in \lstinline=$PATH=, then \lstinline=[hosts][HOST]cylc executable= can
+be used to specify the direct path to the executable.
+
+To customize the environment more generally for Cylc on jobs hosts,
+use of \lstinline=job-init-env.sh= is described in Section~\ref{Configure
+Environment on Job Hosts}.
+
+\subsection{The Suite Contact File}
+\label{The Suite Contact File}
+
+At start-up, suite daemons write a {\em suite contact file}
+\lstinline=$HOME/cylc-run/<SUITE>/.service/contact= that records suite host,
+user, port number, process ID, Cylc version, and other information. Client
+commands can read this file, if they have access to it, to find the target
+suite daemon.
+
+\subsection{Tracking Task State}
 \label{TaskComms}
 
-Cylc has three ways of tracking the progress of tasks, configured per
-task host in the site and user global config files
-(\ref{SiteAndUserConfiguration}).
-All three methods can be used on different task hosts within the same
-suite if necessary.
-\begin{myenumerate}
-\item {\bf task-to-suite messaging:} cylc job scripts encapsulate task
-scripting in a wrapper that automatically invokes messaging commands to
-report progress back to the suite. The messaging commands can be
-configured to work in two different ways:
-    \begin{myenumerate}
-        \item {\bf default:} direct messaging via network sockets using
-        HTTPS.
-        \item {\bf ssh:} for tasks hosts that block access to the
-        network ports required, cylc can use non-interactive ssh to
-        re-invoke task messaging commands on the suite host (where
-        ultimately HTTPS is still used to connect to the server process).
-    \end{myenumerate}
-\item {\bf polling:} for task hosts that do not allow return routing to
-the suite host or ssh, cylc can poll tasks at configurable
-intervals, using non-interactive ssh.
-\end{myenumerate}
+Cylc supports three ways of tracking task state on job hosts:
+\begin{myitemize}
+    \item task-to-suite messaging via HTTPS
+    \item task-to-suite messaging via non-interactive ssh to the suite host, then local HTTPS
+    \item regular polling by the suite daemon
+\end{myitemize}
 
-The remote HTTPS communication method is the default because it is the most
-direct and efficient; the ssh method inserts an extra step in the
-process (command re-invocation on the suite host); and task polling is
-the least efficient because results are checked at predetermined
-intervals, not when task events actually occur.
+These are explained in the following sections. All three can be used, on
+different job hosts, in the same suite if necessary.
 
-\subsubsection{Task Polling}
+If your site prohibits HTTPS and ssh back from job hosts to suite hosts, before resorting
+to the polling method you should consider installing dedicated Cylc servers or
+VMs inside the HPC trust zone (where HTTPS and ssh should be allowed).
+
+It is also possible to run Cylc suite daemons on HPC login nodes, but this is
+not recommended for load, run duration, and GUI reasons.
+
+Finally, it has been suggested that {\em port forwarding} may provide another
+solution - but that is beyond the scope of this document.
+
+\subsubsection{HTTPS Task Messaging}
+
+Task job wrappers automatically invoke \lstinline=cylc message= to report
+progress back to the suite daemon when they begin executing, at normal exit
+(success) and abnormal exit (failure).
+
+By default the messaging occurs via an authenticated, HTTPS connection to the
+suite daemon. This is the preferred task communications method - it is
+efficient and direct.
+
+Suite daemons automatically install suite contact information and credentials
+on job hosts.  Users only need to do this manually for remote access to
+suites on other hosts, or suites owned by other users - see~\ref{RemoteControl}.
+
+\subsubsection{Ssh Task Messaging}
+
+Cylc can be configured to re-invoke task messaging commands on the suite host via
+non-interactive ssh (from job host to suite host). Then a local HTTPS
+connection is made to the suite daemon.
+
+(User-invoked client commands (aside from the GUI, which requires HTTPS) can do
+the same thing with the \lstinline=--use-ssh= command option).
+
+This is less efficient than direct HTTPS messaging, but it may be useful at
+sites where the HTTPS ports are blocked but non-interactive ssh is allowed.
+
+\subsubsection{Task Job Polling}
+
+Finally, suite daemons can actively poll task jobs at configurable intervals,
+via non-interactive ssh to the job host.
+
+Polling is the least efficient task communications method because task state is
+updated only at intervals, not when task events actually occur.  However, it
+may be needed at sites that do not allow HTTPS or non-interactive ssh from job
+host to suite host.
 
 Be careful to avoid spamming task hosts with polling commands. Each poll
 opens (and then closes) a new ssh connection.
@@ -6125,26 +6271,7 @@ task communication method; polling is not done by default under the
 other task communications methods (but it can still be used if you
 like).
 
-Polling is also done automatically once on job submission timeout, and multiple
-times on exceeding the execution time limit, to see if the timed-out task has
-failed or not; and on suite restarts, to see what happened to any tasks that
-were orphaned when the suite went down.
-
-\subsection{Alternatives To Polling When Routing Is Blocked}
-
-If remote ports are blocked and non-interactive ssh doesn't work, but you
-don't want to use polling from the suite host:
-\begin{myitemize}
-\item it has been suggested that network {\em port forwarding} may
-provide a solution;
-\item you may be able to persuade system administrators to provide
-network routing to one or more dedicated cylc servers;
-\item it is possible to run cylc itself on HPC login nodes, but
-depending on what software is installed there this may preclude use
-of the gcylc GUI and suite visualization tools.
-\end{myitemize}
-
-\subsection{Task Host Communications Configuration}
+\subsubsection{Task Communications Configuration}
 
 Here are the default site and user global config items relevant to task state
 tracking (see these with \lstinline=cylc get-site-config=):
@@ -6204,55 +6331,33 @@ tracking (see these with \lstinline=cylc get-site-config=):
         default polling interval in minutes = 1.0
 \end{lstlisting}
 
-\subsection{How Commands Interact With Running Suites}
 
-User-invoked commands that connect to running suites can also choose
-between direct communication across network sockets (HTTPS) and
-re-invocation of commands on the suite host using non-interactive ssh
-(there is a \lstinline=--use-ssh= command option for this purpose).
-
-%The gcylc GUI requires direct HTTPS connections to its target suite. If
-%that is not possible, run gcylc on the suite host.
-
-
-\subsection{Client Authentication and Passphrases}
+\subsection{Client-Server Interaction}
 \label{ConnectionAuthentication}
 
-Suite daemons listen on dedicated network ports for incoming client requests -
-task messages and user-invoked commands (CLI or GUI). The \lstinline=cylc scan=
-command reveals which suites are running on scanned hosts, and what ports they
-are listening on.
+Cylc servers (suite daemons) listen on dedicated network ports for
+HTTPS communications from Cylc clients (task jobs, and user-invoked commands
+and GUIs).
 
-Client programs have to authenticate with the target suite daemon before
-issuing commands or requesting information. Cylc has two authentication
-levels: full control via a suite-specific passphrase (see~\ref{passphrases});
-and configurable free ``public'' access (see~\ref{PublicAccess}).
+Use \lstinline=cylc scan= to see which suites are listening on which ports on
+scanned hosts (this lists your own suites, by default, but it can show others
+too).
 
-\subsubsection{Full Control - Suite Passphrases}
-\label{passphrases}
+Cylc currently supports two kinds of access to suite daemons:
+\begin{myitemize}
+    \item {\em public} (non-authenticated) - the amount of information
+      revealed is configurable, see~\ref{PublicAccess}
+    \item {\em control} (authenticated) - full control, suite passphrase
+      required, see~\ref{passphrases}
+\end{myitemize}
 
-A file called \lstinline=passphrase= with owner-only permissions is generated
-under \lstinline=.server/= in the suite run directory at registration time. It
-is loaded by the suite daemon at start-up and used to authenticate connections
-from client programs. Suite passphrases are used in an encrypted
-challenge-response scheme; they are never sent raw over the network.
-
-On submission of the first job on another task host cylc will attempt to
-install the passphrase to the run directory there to enable task jobs to
-connect to the suite, using non-interactive ssh.
-
-Client programs on other accounts will attempt to read the passphrase via
-non-interactive SSH and install it to
-\lstinline=$HOME/.cylc/auth/OWNER@HOST/SUITE/passphrase=.
-Alternatively, if the suite owner gives you the passphrase you can install it
-yourself to the same location.
-
+{\em Note in both cases the suite {\em SSL certificate} is required to
+establish the HTTPS connection.}
 
 \subsubsection{Public Access - No Passphrase}
 \label{PublicAccess}
 
-Possession of a suite passphrase gives full read and control access to the
-suite. Without the passphrase the amount of information revealed by a suite
+Without a suite passphrase the amount of information revealed by a suite
 daemon is determined by the public access privilege level set in global
 site/user config (\ref{GlobalAuth}) and optionally overidden in suites
 (\ref{SuiteAuth}):
@@ -6270,104 +6375,76 @@ in addition to basic suite identity, if you have the right passphrases or if
 the requested information is revealed publicly.
 
 
-\subsection{How Tasks Get Access To Cylc}
-\label{HowTasksGetAccessToCylc}
+\subsubsection{Full Control - With Passphrase}
+\label{passphrases}
 
-Running tasks need access to cylc via \lstinline=$PATH=, principally for
-the task messaging commands. To allow this, the first thing a task job
-script does is set \lstinline=$CYLC_VERSION= to the cylc version number of the
-running suite. If you need to run several suites at once under different
-incompatible versions of cylc, check that your site is using the cylc
-version wrapper (see \lstinline=INSTALL= and \lstinline=admin/cylc-wrapper= in
-a cylc installation) then set \lstinline=$CYLC_VERSION= to the desired
-version. In the case of developers wishing to run their own copy
-of cylc rather than a centrally installed one, set \lstinline=$CYLC_HOME=
-to point to your cylc copy.
+Suite passphrases, which give full control over a suite, are loaded by the
+suite daemon at start-up and used to authenticate connections from client
+programs. They are used in a secure encrypted challenge-response scheme, never
+sent in plain text over the network.
 
-Access to the cylc executable for different hosts can be configured using
-the site and user global configuration files. If the environment for running
-the cylc executable is only set up correctly in a login shell for a given host,
-you can set \lstinline@[hosts][HOST]use login shell = True@ for the relevant
-host (this is the default behaviour). If the environment is already correct
-without the login shell, but the cylc executable is not in \lstinline=$PATH=,
-then \lstinline=[hosts][HOST]cylc executable= can be used to specify the path
-to the cylc executable.
+A random passphrase file (called \lstinline=passphrase=) and SSL certificate
+(\lstinline=ssl.cert=) are generated automatically with owner-only permissions
+at suite registration time, in the suite service directory
+\lstinline=$HOME/cylc-run/<SUITE>/.service/=.
 
-To customize the environment more generally for cylc on jobs hosts,
-use of \lstinline=job-init-env.sh= is described in~\ref{Configure Environment
-on Job Hosts}.
+On submission of the first job to another host a suite daemon automatically
+install these and the {\em suite contact file} (see~\ref{The Suite Contact File})
+to the remote suite run directory, via scp, to enable task jobs to connect to
+the suite.
 
+Client programs invoked by the user on the suite host will load this
+information too, from the suite service directory, to allow automatic
+connection to suites.
 
-\subsection{Restarting Suites}
-\label{RestartingSuites}
+\subsubsection{Remote Control}
+\label{RemoteControl}
 
-A restarted suite (see \lstinline=cylc restart --help=) is initialized from a
-previous recorded checkpoint, which is normally the end of a previous run, so
-that it can carry on from wherever it got to before being shut down or killed.
-
-\subsubsection{Restart From Latest}
-
-A normal restart is easy. Simply invoke the \lstinline=cylc restart= command
-with the suite name:
-
+To interact with suite daemons running under other user accounts or on other
+hosts, the suite SSL certificate and passphrase must be installed under your
+\lstinline=$HOME/.cylc/= directory:
 \lstset{language=transcript}
 \begin{lstlisting}
-$ cylc restart SUITE
+$HOME/.cylc/auth/OWNER@HOST/SUITE/
+      ssl.cert
+      passphrase
 \end{lstlisting}
-
-It will restart the suite from the latest checkpoint.
-
-\subsubsection{Restart From Checkpoint}
-
-You can use the \lstinline=cylc ls-checkpoints= command to identify the
-checkpoint to use to restart a suite. (See also
-\lstinline=cylc ls-checkpoints --help=.)
-
-The checkpoint ID 0 (zero) is always used for latest state of the suite, which
-is updated continuously as the suite progresses. The checkpoint IDs of
-earlier states are positive integers starting from 1, and incremented each
-time a new checkpoint is stored. Currently suites automatically store
-checkpoints before and after reloads, and on restarts (using the latest
-checkpoints before the restarts).
-
-Once you have identified the checkpoint to restart from, invoke the
-\lstinline=cylc restart= command with the suite name and the
-\lstinline@--checkpoint=CHECKPOINT@ option:
-
+where \lstinline=OWNER@HOST= is the suite daemon account and \lstinline=SUITE=
+is the suite name. Then invoke client commands with the \lstinline=--user=
+and \lstinline=--host= options:
 \lstset{language=transcript}
 \begin{lstlisting}
-$ cylc restart --checkpoint=CHECKPOINT-ID SUITE
+$ cylc monitor --user=OWNER --host=HOST SUITE
 \end{lstlisting}
 
-\subsubsection{Manual Checkpoints}
-
-You can use the \lstinline=cylc checkpoint= command to tell a running suite to
-record a checkpoint at any time:
-
+The suite contact file (see~\ref{The Suite Contact File}) can also be
+installed in the same place:
 \lstset{language=transcript}
 \begin{lstlisting}
-$ cylc checkpoint SUITE CHECKPOINT-NAME
+$HOME/.cylc/auth/OWNER@HOST/SUITE/
+      contact
 \end{lstlisting}
+but note this is not necessary if the remote suite run directory is in the
+standard location and you have read access to the contact file via the local
+filesystem, or via non-interactive ssh to the suite host - client commands
+will automatically read it.
 
-The 2nd argument is a name you give to the checkpoint so you can easily
-identify it when you need to use it.
+If you do not have access to these files the suite owner must give you the
+SSL certificate (for any connection) and the passphrase (for control). The
+contact file would also be useful, but note that without it you can still
+determine the port number with \lstinline=cylc scan= and then use it with
+\lstinline=--port= on the client command line.
 
-(See also \lstinline=cylc checkpoint --help=.)
+{\em WARNING: possession of a suite passphrase gives full control over the
+target suite, including {\em edit run} functionality - which lets you run
+arbitrary scripting on job hosts as the suite owner. Further,
+non-interactive ssh gives full access to the target user account, so we
+recommended that this is only used to interact with suites running on
+accounts to which you already have full access. }
 
-\subsubsection{Behaviour of Tasks on Restart}
+\subsection{Task States Explained}
 
-All tasks are reloaded in exactly their former states as recorded in
-checkpoint. Failed tasks, for instance, are not automatically resubmitted at
-restart in case the underlying problem has not been addressed yet.
-
-Tasks recorded in the submitted or running states are automatically polled on
-restart, to see if they are still waiting in a batch queue, still running, or
-if they succeeded or failed while the suite was down.
-
-
-\subsection{Task States}
-
-As a suite runs its task proxies may pass through the following states:
+As a suite runs, its task proxies may pass through the following states:
 
 \begin{myitemize}
     \item {\bf waiting} - prerequisites not satisfied yet
@@ -6407,49 +6484,22 @@ As a suite runs its task proxies may pass through the following states:
 
 \end{myitemize}
 
-Note that greyed-out ``base graph nodes'' in the gcylc graph view do not
-represent task states; they are displayed to fill out the graph
-structure where corresponding task proxies do not currently exist
-in the live task pool.
+\subsection{What The Suite Control GUI Shows}
 
-For manual task state reset purposes {\bf ready} is a pseudo-state that means
-{\em waiting} with all prerequisites satisfied.
+The GUI Text-tree and Dot Views display the state of every task proxy present
+in the task pool. Once a task has succeeded and Cylc has determined that it can
+no longer be needed to satisfy the prerequisites of other tasks, its proxy will
+be cleaned up (removed from the pool) and it will disappear from the GUI. To
+rerun a task that has disappeared from the pool, you need to re-insert its task
+proxy and then re-trigger it.
 
-
-\subsection{Remote Control - Passphrases and Network Ports}
-\label{RemoteControl}
-
-Connecting to a running suite requires knowing the {\em network port} it
-is listening on, and the {\em suite passphrase} to authenticate with once
-a connection is made to the port.
-
-A suite writes its contact information to
-\lstinline=$HOME/cylc-run/<SUITE>/.service/contact= at start-up. Client
-commands that connect to the suite read this file to obtain the necessary
-information on how to connect to the suite.
-
-To connect to a suite running on another account you must install the suite
-passphrase (\ref{passphrases}), and configure non-interactive ssh so that the
-contact information can be retrieved from the remote contact file. Then use the
-\lstinline=--user= and \lstinline=--host= command options to connect:
-\lstset{language=transcript}
-\begin{lstlisting}
-$ cylc monitor --user=USER --host=HOST SUITE
-\end{lstlisting}
-
-Alternatively, you can determine suite contact information using
-\lstinline=cylc scan=, and use them explicitly on the command line:
-\lstset{language=transcript}
-\begin{lstlisting}
-$ cylc monitor --user=USER --host=HOST --port=PORT SUITE
-\end{lstlisting}
-
-Possession of a suite passphrase gives full control over the suite, and ssh
-access to the contact file also implies full access to the suite host account,
-so it is recommended that this only be used to interact with suites running on
-accounts that you already have full access.
-(See also~\ref{PublicAccess}.)
-
+The Graph View is slightly different: it displays the complete dependency graph
+over the range of cycle points currently present in the task pool. This often
+includes some greyed-out {\em base} or {\em ghost nodes} that are empty - i.e.\
+there are no corresponding task proxies currently present in the pool. Base
+nodes just flesh out the graph structure. Groups of them may be cut out and
+replaced by single {\em scissor nodes} in sections of the graph that are
+currently inactive.
 
 
 \subsection{Network Connection Timeouts}
@@ -6480,7 +6530,7 @@ see~\ref{max active cycle points}. Alternatively the interval between the
 slowest and fastest tasks can be specified as hard limit;
 see~\ref{runahead limit}.
 
-\subsection{Limiting Active Tasks With Internal Queues}
+\subsection{Limiting Activity With Internal Queues}
 \label{InternalQueues}
 
 Large suites can potentially overwhelm task hosts by submitting too many
@@ -6521,6 +6571,13 @@ running two task trees side by side (as seen in the graph GUI) each
 limited to 2 and 3 tasks respectively:
 \lstset{language=suiterc}
 \lstinputlisting{../../../examples/queues/suite.rc}
+
+\subsection{Routine Job Polling}
+
+Task jobs are automatically polled by suite daemons, once on job submission timeout,
+and several times on exceeding the job execution time limit, to check if they
+failed or not; and on suite restarts, to see what happened to any tasks that
+were orphaned when the suite went down.
 
 \subsection{Automatic Task Retry On Failure}
 \label{TaskRetries}
@@ -6677,28 +6734,6 @@ Note: The handler command is called like this:
 echo '!!!!!EVENT!!!!!' %(event)s %(suite)s %(id)s %(message)s
 \end{lstlisting}
 
-\subsection{Reloading The Suite Definition At Runtime}
-
-The \lstinline=cylc reload= command reloads the suite definition at run
-time. This allows:
- (a) changing task config items such as script or environment;
- (b) adding tasks to, or removing them from, the suite definition,
-at run time - without shutting the suite down and restarting it. (It is
-easy to shut down and restart cylc suites, but reloading may be useful
-if you don't want to wait for long-running tasks to finish first).
-
-Note that {\em defined tasks} can be already be added to or removed from
-a running suite with the \lstinline=cylc insert= and \lstinline=cylc remove=
-commands; the
-reload command allows addition and removal of {\em task definitions}.
-If a new task is definition is added (and used in the graph) you will
-still need to manually insert an instance of it (with a particular cycle
-point) into the running suite. If a task definition (and its use in the graph)
-is deleted, existing task proxies of the of the deleted type will run their
-course after the reload but new instances will not be spawned. Changes to a
-task definition will only take effect when the next task instance is spawned
-(existing instances will not be affected).
-
 
 \subsection{Handling Job Preemption}
 \label{PreemptionHPC}
@@ -6826,7 +6861,7 @@ running the suite's real jobs - which may be long-running and resource-hungry:
       \item simulates scheduling without generating any job files.
     \end{myitemize}
 \end{myitemize}
- 
+
 Set the run mode (default {\em live}) in the GUI suite start dialog box, or on
 the command line:
 \lstset{language=transcript}
@@ -6849,7 +6884,7 @@ simulated task run lengths (default 10 seconds).
 Dummy mode ignores batch scheduler settings because Cylc does not know which
 job resource directives (requested memory, number of compute nodes, etc.) would
 need to be changed for the dummy jobs.  If you need to dummy-run jobs on a
-batch scheduler manually comment out \lstinline=script= items and modify 
+batch scheduler manually comment out \lstinline=script= items and modify
 directives in your live suite, or else use a custom live mode test suite.
 
 Note that the dummy modes ignore all configured task \lstinline=script= items
