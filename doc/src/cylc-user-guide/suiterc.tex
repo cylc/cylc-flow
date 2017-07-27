@@ -1218,7 +1218,11 @@ for a job with higher immediate priority. See also~\ref{PreemptionHPC}
 
 \paragraph[{[[[}meta{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[meta]]]}
 
-A list of the user-defined metadata items of the task.
+Section containing metadata items for this task or family namespace. Several items
+(title, description, URL) are pre-defined and are used by the GUI. Others can be 
+user-defined and passed to task event handlers to be interpreted according to your 
+needs. For example, the value of an "importance" item could determine how an event 
+handler responds to task failure events.
 
 \paragraph[title]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[meta]]] \textrightarrow title}
 
@@ -1269,8 +1273,9 @@ suite URLs (\ref{SuiteURL}).
 
 \paragraph[\_\_MANY\_\_]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[meta]]] \textrightarrow \_\_MANY\_\_}
 
-Replace \_\_MANY\_\_ with namespace name and value, and repeat as needed to define all the user-defined metadata items of the task.
-Names may contain letters, digits, underscores and hyphens and values may contain letters and digits.
+Replace \_\_MANY\_\_ with any user-defined metadata item. These, like title, URL, etc. can be passed
+to task event handlers to be interpreted according to your needs. For example, the value of an
+"importance" item could determine how an event handler responds to task failure events.
 
 \begin{myitemize}
 \item {\em type:} String or integer
@@ -1577,10 +1582,10 @@ substituted with actual values:
 \end{myitemize}
 
 Can also include the patterns from [[[meta]]] section of the task, for example:
-\begin{myitemsize}
+\begin{myitemize}
     \item \%(importance)s: task priority
     \item \%(color)s: task color
-\end{myitemsize}
+\end{myitemize}
 
 Otherwise, the command line will be called with the following arguments:
 \begin{lstlisting}
