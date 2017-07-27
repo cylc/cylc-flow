@@ -6400,38 +6400,47 @@ connection to suites.
 \subsubsection{Remote Control}
 \label{RemoteControl}
 
-To control suites from other hosts or user accounts, the suite SSL certificate,
-passphrase, and contact file must be installed under your \lstinline=.cylc=
-directory:
+To interact with suite daemons running under other user accounts or on other
+hosts, the suite SSL certificate and passphrase must be installed under your
+\lstinline=$HOME/.cylc/= directory:
 \lstset{language=transcript}
 \begin{lstlisting}
 $HOME/.cylc/auth/OWNER@HOST/SUITE/
       ssl.cert
       passphrase
-      contact
 \end{lstlisting}
-where \lstinline=OWNER@HOST= is the suite account, and \lstinline=SUITE=
-is the suite name. Then invoke clients like this:
+where \lstinline=OWNER@HOST= is the suite daemon account and \lstinline=SUITE=
+is the suite name. Then invoke client commands with the \lstinline=--user=
+and \lstinline=--host= options:
 \lstset{language=transcript}
 \begin{lstlisting}
 $ cylc monitor --user=OWNER --host=HOST SUITE
 \end{lstlisting}
 
-If you have non-interactive ssh configured to the suite account, client commands
-invoked as above will automatically read the suite credentials and contact file
-from the suite's service directory and install them to your account.
+The suite contact file (see~\ref{The Suite Contact File}) can also be
+installed in the same place:
+\lstset{language=transcript}
+\begin{lstlisting}
+$HOME/.cylc/auth/OWNER@HOST/SUITE/
+      contact
+\end{lstlisting}
+but note this is not necessary if the remote suite run directory is in the
+standard location and you have read access to the contact file via the local
+filesystem, or via non-interactive ssh to the suite host - client commands
+will automatically read it.
 
-If you do not have ssh access to the target account, the suite owner must
-give you the SSL certificate (for any connection), the passphrase
-(for control), and the contact file (for the port number).\footnote{However,
-without the suite contact file you can determine the port with
-\lstinline=cylc scan= and then use it with \lstinline=--port= on the client
-command line.}
+If you do not have access to these files the suite owner must give you the
+SSL certificate (for any connection) and the passphrase (for control). The
+contact file would also be useful, but note that without it you can still
+determine the port number with \lstinline=cylc scan= and then use it with
+\lstinline=--port= on the client command line.
 
 {\em WARNING: possession of a suite passphrase gives full control over the
-suite, and non-interactive ssh to another user account gives full access to
-that account, so it is recommended that this is only used to interact with
-suites running on accounts to which you already have full access.}
+target suite, including {\em edit run} functionality - which lets you run
+arbitrary scripting on job hosts as the suite owner. Further,
+non-interactive ssh gives full access to the target user account, so we
+recommended that this is only used to interact with suites running on
+accounts to which you already have full access. }
 
 \subsection{Task States Explained}
 
