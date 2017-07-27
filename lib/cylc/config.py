@@ -84,6 +84,7 @@ class SuiteConfig(object):
     """Class for suite configuration items and derived quantities."""
 
     _INSTANCES = {}
+    Q_DEFAULT = 'default'
 
     @classmethod
     def get_inst(cls, suite=None, fpath=None, template_vars=None,
@@ -1083,7 +1084,7 @@ class SuiteConfig(object):
         queues = self.cfg['scheduling']['queues']
         for orphan in orphans:
             self.runtime['linearized ancestors'][orphan] = [orphan, 'root']
-            queues['default']['members'].append(orphan)
+            queues[self.Q_DEFAULT]['members'].append(orphan)
 
     def configure_queues(self):
         """Assign tasks to internal queues."""
@@ -1095,7 +1096,7 @@ class SuiteConfig(object):
 
         # First add all tasks to the default queue.
         all_task_names = self.get_task_name_list()
-        queues['default']['members'] = all_task_names
+        queues[self.Q_DEFAULT]['members'] = all_task_names
 
         # Then reassign to other queues as requested.
         warnings = []
@@ -1103,7 +1104,7 @@ class SuiteConfig(object):
         for key, queue in queues.copy().items():
             # queues.copy() is essential here to allow items to be removed from
             # the queues dict.
-            if key == 'default':
+            if key == self.Q_DEFAULT:
                 continue
             # Assign tasks to queue and remove them from default.
             qmembers = []
@@ -1115,7 +1116,7 @@ class SuiteConfig(object):
                         # This includes sub-families.
                         if qmember not in qmembers:
                             try:
-                                queues['default']['members'].remove(fmem)
+                                queues[self.Q_DEFAULT]['members'].remove(fmem)
                             except ValueError:
                                 if fmem in requeued:
                                     msg = "%s: ignoring %s from %s (%s)" % (
@@ -1132,7 +1133,7 @@ class SuiteConfig(object):
                     # Is a task.
                     if qmember not in qmembers:
                         try:
-                            queues['default']['members'].remove(qmember)
+                            queues[self.Q_DEFAULT]['members'].remove(qmember)
                         except ValueError:
                             if qmember in requeued:
                                 msg = "%s: ignoring '%s' (%s)" % (
@@ -1163,7 +1164,7 @@ class SuiteConfig(object):
         if cylc.flags.verbose and len(queues) > 1:
             log_msg = "Internal queues created:"
             for key, queue in queues.items():
-                if key == 'default':
+                if key == self.Q_DEFAULT:
                     continue
                 log_msg += "\n+ %s: %s" % (key, ', '.join(queue['members']))
             OUT.info(log_msg)
@@ -1648,9 +1649,6 @@ class SuiteConfig(object):
         if ungroup_nodes is None:
             ungroup_nodes = []
 
-        members = self.runtime['first-parent descendants']
-        hierarchy = self.runtime['first-parent ancestors']
-
         if self.first_graph:
             self.first_graph = False
             if not self.collapsed_families_rc and not ungroup_all:
@@ -1658,26 +1656,27 @@ class SuiteConfig(object):
                 # "[visualization]collapsed families" not defined
                 group_all = True
 
+        first_parent_descendants = self.runtime['first-parent descendants']
         if group_all:
             # Group all family nodes
             if self.collapsed_families_rc:
                 self.closed_families = copy(self.collapsed_families_rc)
             else:
-                for fam in members:
+                for fam in first_parent_descendants:
                     if fam != 'root':
                         if fam not in self.closed_families:
                             self.closed_families.append(fam)
         elif ungroup_all:
             # Ungroup all family nodes
             self.closed_families = []
-        elif len(group_nodes) > 0:
+        elif group_nodes:
             # Group chosen family nodes
+            first_parent_ancestors = self.runtime['first-parent ancestors']
             for node in group_nodes:
-                parent = hierarchy[node][1]
-                if parent not in self.closed_families:
-                    if parent != 'root':
-                        self.closed_families.append(parent)
-        elif len(ungroup_nodes) > 0:
+                parent = first_parent_ancestors[node][1]
+                if parent not in self.closed_families and parent != 'root':
+                    self.closed_families.append(parent)
+        elif ungroup_nodes:
             # Ungroup chosen family nodes
             for node in ungroup_nodes:
                 if node not in self.runtime['descendants']:
@@ -1687,7 +1686,7 @@ class SuiteConfig(object):
                     self.closed_families.remove(node)
                 if ungroup_recursive:
                     for fam in copy(self.closed_families):
-                        if fam in members[node]:
+                        if fam in first_parent_descendants[node]:
                             self.closed_families.remove(fam)
 
         n_points = self.cfg['visualization']['number of cycle points']
@@ -1719,13 +1718,13 @@ class SuiteConfig(object):
         # For nested families, only consider the outermost one
         clf_map = {}
         for name in self.closed_families:
-            if any(name not in members[i] for i in self.closed_families):
-                clf_map[name] = members[name]
+            if all(name not in first_parent_descendants[i]
+                   for i in self.closed_families):
+                clf_map[name] = first_parent_descendants[name]
 
         gr_edges = {}
         start_point_offset_cache = {}
         point_offset_cache = None
-        id2str_cache = {}
         for sequence, edges in self.edges.items():
             # Get initial cycle point for this sequence
             point = sequence.get_first_point(start_point)
@@ -1786,25 +1785,15 @@ class SuiteConfig(object):
                     if is_validate:
                         gr_edges[point].append((l_id, r_id))
                     else:
-                        try:
-                            l_str = id2str_cache[l_id]
-                        except KeyError:
-                            l_str = self._close_families(l_id, clf_map)
-                            id2str_cache[l_id] = l_str
-                        try:
-                            r_str = id2str_cache[r_id]
-                        except KeyError:
-                            r_str = self._close_families(r_id, clf_map)
-                            id2str_cache[r_id] = r_str
+                        lstr, rstr = self._close_families(l_id, r_id, clf_map)
                         gr_edges[point].append(
-                            (l_str, r_str, None, suicide, cond))
+                            (lstr, rstr, None, suicide, cond))
                 # Increment the cycle point.
                 point = sequence.get_next_point_on_sequence(point)
 
         del clf_map
         del start_point_offset_cache
         del point_offset_cache
-        del id2str_cache
         GraphNodeParser.get_inst().clear()
         self._last_graph_raw_id = graph_raw_id
         if stop_point is None:
@@ -1849,18 +1838,36 @@ class SuiteConfig(object):
         return ret
 
     @staticmethod
-    def _close_families(id_, clf_map):
-        """Turn (name, point) to 'name.point'.
+    def _close_families(l_id, r_id, clf_map):
+        """Turn (name, point) to 'name.point' for edge.
 
         Replace close family members with family nodes if relevant.
         """
-        if id_ is None:
-            return None
-        name, point = id_
-        for family_name, family in clf_map.items():
-            if name in family:
-                return TaskID.get(family_name, point)
-        return TaskID.get(name, point)
+        lret = None
+        lname, lpoint = None, None
+        if l_id:
+            lname, lpoint = l_id
+            lret = TaskID.get(lname, lpoint)
+        rret = None
+        rname, rpoint = None, None
+        if r_id:
+            rname, rpoint = r_id
+            rret = TaskID.get(rname, rpoint)
+
+        for fam_name, fam_members in clf_map.items():
+            if lname in fam_members and rname in fam_members:
+                # l and r are both members
+                lret = TaskID.get(fam_name, lpoint)
+                rret = TaskID.get(fam_name, rpoint)
+                break
+            elif lname in fam_members:
+                # l is a member
+                lret = TaskID.get(fam_name, lpoint)
+            elif rname in fam_members:
+                # r is a member
+                rret = TaskID.get(fam_name, rpoint)
+
+        return lret, rret
 
     def load_graph(self):
         """Parse and load dependency graph."""

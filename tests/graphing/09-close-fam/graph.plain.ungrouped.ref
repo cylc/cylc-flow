@@ -1,0 +1,13 @@
+edge "foo.1" "wam.1" solid
+edge "foo.1" "x.1" solid
+edge "foo.1" "y.1" solid
+edge "wam.1" "bar.1" solid
+edge "x.1" "bar.1" solid
+edge "y.1" "bar.1" solid
+graph
+node "bar.1" "bar\n1" unfilled ellipse black
+node "foo.1" "foo\n1" unfilled ellipse black
+node "wam.1" "wam\n1" unfilled ellipse black
+node "x.1" "x\n1" unfilled ellipse black
+node "y.1" "y\n1" unfilled ellipse black
+stop

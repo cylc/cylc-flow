@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from cylc.exceptions import CylcError
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2017 NIWA
@@ -47,6 +48,8 @@ class CommsDaemon(object):
         random.shuffle(self.ok_ports)
 
         comms_options = GLOBAL_CFG.get(['communication', 'options'])
+        comms_methods = GLOBAL_CFG.get(['communication', 'method'])
+
         # HTTP Digest Auth uses MD5 - pretty secure in this use case.
         # Extending it with extra algorithms is allowed, but won't be
         # supported by most browsers. requests and urllib2 are OK though.
@@ -56,6 +59,22 @@ class CommsDaemon(object):
             self.hash_algorithm = "SHA"
 
         self.srv_files_mgr = SuiteSrvFilesManager()
+        try:
+            # Set the comms protocol from the suite contact file.
+            self.comms_method = self.srv_files_mgr.get_auth_item(
+                self.srv_files_mgr.KEY_COMMS_PROTOCOL,
+                self.suite, content=True)
+        except (SuiteServiceFileError, KeyError, ValueError):
+            # Set the comms protocol from the global config
+            if "https" in comms_methods:
+                self.comms_method = "https"
+            elif "http" in comms_methods:
+                self.comms_method = "http"
+            else:
+                # This shouldn't happen really since global config has a
+                # default value of https.
+                self.comms_method = None
+
         self.get_ha1 = cherrypy.lib.auth_digest.get_ha1_dict_plain(
             {
                 'cylc': self.srv_files_mgr.get_auth_item(
@@ -103,13 +122,25 @@ class CommsDaemon(object):
         # cherrypy.config["tools.encode.encoding"] = "utf-8"
         cherrypy.config["server.socket_host"] = '0.0.0.0'
         cherrypy.config["engine.autoreload.on"] = False
-        try:
-            from OpenSSL import SSL, crypto
-            cherrypy.config['server.ssl_module'] = 'pyopenSSL'
-            cherrypy.config['server.ssl_certificate'] = self.cert
-            cherrypy.config['server.ssl_private_key'] = self.pkey
-        except ImportError:
-            ERR.warning("no HTTPS/OpenSSL support")
+
+        if self.comms_method is None:
+            # assume https if not config'd (although this should be default
+            # from globalcfg so is it really necessary here?)
+            self.comms_method = "https"
+
+        if self.comms_method == "https":
+            # Setup SSL etc. Otherwise fail and exit.
+            # Require connection method to be the same e.g HTTP/HTTPS matching.
+            try:
+                from OpenSSL import SSL, crypto
+                cherrypy.config['server.ssl_module'] = 'pyopenSSL'
+                cherrypy.config['server.ssl_certificate'] = self.cert
+                cherrypy.config['server.ssl_private_key'] = self.pkey
+            except ImportError:
+                ERR.error("no HTTPS/OpenSSL support. Aborting...")
+                raise CylcError("No HTTPS support. "
+                                "Configure user's global.rc to use HTTP.")
+
         cherrypy.config['log.screen'] = None
         key = binascii.hexlify(os.urandom(16))
         cherrypy.config.update({

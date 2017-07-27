@@ -61,6 +61,7 @@ class SuiteSrvFilesManager(object):
     KEY_VERSION = "CYLC_VERSION"
     PASSPHRASE_CHARSET = ascii_letters + digits
     PASSPHRASE_LEN = 20
+    KEY_COMMS_PROTOCOL = "CYLC_COMMS_PROTOCOL"  # default (or none?)
 
     def __init__(self):
         self.local_passphrases = set()
@@ -206,7 +207,8 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
         """
         if item not in [
                 self.FILE_BASE_SSL_CERT, self.FILE_BASE_SSL_PEM,
-                self.FILE_BASE_PASSPHRASE, self.FILE_BASE_CONTACT]:
+                self.FILE_BASE_PASSPHRASE, self.FILE_BASE_CONTACT,
+                self.KEY_COMMS_PROTOCOL]:
             raise ValueError("%s: item not recognised" % item)
         if item == self.FILE_BASE_PASSPHRASE:
             self.can_disk_cache_passphrases[(reg, owner, host)] = False
@@ -227,7 +229,6 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
                     value = self._locate_item(item, path)
                 if value:
                     return value
-
         # 2/ From memory cache
         if item in self.cache:
             my_owner = owner
@@ -240,7 +241,6 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
                 return self.cache[item][(reg, my_owner, my_host)]
             except KeyError:
                 pass
-
         # 3/ Local suite service directory
         if self._is_local_auth_ok(reg, owner, host):
             path = self.get_suite_srv_dir(reg)
@@ -250,7 +250,6 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
                 value = self._locate_item(item, path)
             if value:
                 return value
-
         # 4/ Disk cache for remote suites
         if owner is not None and host is not None:
             paths = [self._get_cache_dir(reg, owner, host)]
@@ -504,7 +503,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
 
         1. File permission should already be user-read-write-only on
            creation by mkstemp.
-        2. The combination of os.fsync and os.rename should guarentee
+        2. The combination of os.fsync and os.rename should guarantee
            that we don't end up with an incomplete file.
         """
         mkdir_p(path)
@@ -589,12 +588,26 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
 
     def _load_remote_item(self, item, reg, owner, host):
         """Load content of service item from remote [owner@]host via SSH."""
+        if host is None:
+            host = 'localhost'
         if not is_remote_host(host) and not is_remote_user(owner):
             return
+        from cylc.cfgspec.globalcfg import GLOBAL_CFG
+        if item == 'contact' and not is_remote_host(host):
+            # Attempt to read suite contact file via the local filesystem.
+            path = r'%(run_d)s/%(srv_base)s' % {
+                'run_d': GLOBAL_CFG.get_derived_host_item(
+                    reg, 'suite run directory', host, owner,
+                    replace_home=False),
+                'srv_base': self.DIR_BASE_SRV,
+            }
+            content = self._load_local_item(item, path)
+            if content is not None:
+                return content
+            # Else drop through and attempt via ssh to the suite account.
         # Prefix STDOUT to ensure returned content is relevant
         prefix = r'[CYLC-AUTH] %(suite)s' % {'suite': reg}
         # Attempt to cat passphrase file under suite service directory
-        from cylc.cfgspec.globalcfg import GLOBAL_CFG
         script = (
             r"""echo '%(prefix)s'; """
             r'''cat "%(run_d)s/%(srv_base)s/%(item)s"'''

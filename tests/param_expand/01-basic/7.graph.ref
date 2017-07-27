@@ -1,0 +1,8 @@
+edge "foo_a.1" "bar_a.1" solid
+edge "foo_b.1" "bar_b.1" solid
+graph
+node "bar_a.1" "bar_a\n1" unfilled ellipse black
+node "bar_b.1" "bar_b\n1" unfilled ellipse black
+node "foo_a.1" "foo_a\n1" unfilled ellipse black
+node "foo_b.1" "foo_b\n1" unfilled ellipse black
+stop

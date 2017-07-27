@@ -19,6 +19,8 @@
 usage() {
     echo "Usage: cylc [hook] email-suite EVENT SUITE MESSAGE"
     echo ""
+    echo "THIS COMMAND IS OBSOLETE - use built-in email event hooks."
+    echo ""
     echo "This is a simple suite event hook script that sends an email."
     echo "The command line arguments are supplied automatically by cylc."
     echo ""
@@ -42,7 +44,7 @@ if [[ $# = 1 ]]; then
     fi
 fi
 
-if [[ $# < 3 ]]; then
+if [[ $# -lt 3 ]]; then
     usage
     exit 1
 fi

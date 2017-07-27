@@ -1,0 +1,17 @@
+[scheduling]
+    initial cycle point = 1
+    cycling mode = integer
+    [[dependencies]]
+        [[[P1!3]]]
+            graph = foo[-P1] => foo
+        [[[P1!3]]]
+            graph = BAR[-P1]:succeed-all => BAR
+        [[[R1/3]]]
+            graph = pub
+[runtime]
+    [[foo]]
+    [[BAR]]
+    [[bar, pub]]
+        inherit = BAR
+[visualization]
+    number of cycle points = 5

@@ -39,7 +39,6 @@ class PBSHandler(object):
     # N.B. The "qstat JOB_ID" command returns 1 if JOB_ID is no longer in the
     # system, so there is no need to filter its output.
     POLL_CMD = "qstat"
-    POLL_CMD_TMPL = POLL_CMD + " '%(job_id)s'"
     REC_ID_FROM_SUBMIT_OUT = re.compile(r"""\A\s*(?P<id>\S+)\s*\Z""")
     SUBMIT_CMD_TMPL = "qsub '%(job)s'"
 

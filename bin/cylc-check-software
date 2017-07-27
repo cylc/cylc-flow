@@ -73,16 +73,28 @@ fi
 PKGS="pygraphviz:pygraphviz \
 pygtk:pygtk"
 
+
 echo "Checking for Python packages:"
 
-for ITEM in $PKGS; do
+for ITEM in ${PKGS}; do
     NAME=${ITEM%:*}
     MODL=${ITEM#*:}
 
-    echo -n " + $NAME ... "
-    if ! python -c "import $MODL" > /dev/null 2>&1; then
+    echo -n " + ${NAME} ... "
+    if ! python -c "import ${MODL}" > /dev/null 2>&1; then
         echo "NOT FOUND"
     else
         echo "ok"
     fi
 done
+
+HTTPS_MODL="OpenSSL"
+if ! grep -Pq "^(?=[\s]*+[^#])[^#]*(\bmethod=http\b)|(\bmethod = http\b)" ${HOME}/.cylc/global.rc; then
+#if ! grep -q "\bmethod=http\b" ${HOME}/.cylc/global.rc; then
+    echo -n " + ${HTTPS_MODL} ... "
+    if ! python -c "import ${HTTPS_MODL}" > /dev/null 2>&1; then
+        echo "NOT FOUND...Configure cylc to run in http mode."
+    else
+        echo "ok"
+    fi
+fi

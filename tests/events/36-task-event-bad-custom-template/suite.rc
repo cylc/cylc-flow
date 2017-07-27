@@ -1,0 +1,15 @@
+#!jinja2
+[cylc]
+    [[reference test]]
+        live mode suite timeout=PT1M
+
+[scheduling]
+    [[dependencies]]
+        graph=t1
+
+[runtime]
+    [[t1]]
+        script=true
+        [[[events]]]
+            handlers = echo %(rubbish)s
+            handler events=succeeded

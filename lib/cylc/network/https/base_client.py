@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from cylc.exceptions import CylcError
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2017 NIWA
@@ -33,9 +34,9 @@ from cylc.suite_host import get_hostname
 from cylc.version import CYLC_VERSION
 
 
-WARNING_NO_HTTPS_SUPPORT = (
-    "WARNING: server has no HTTPS support," +
-    " falling back to HTTP: {0}\n"
+ERROR_NO_HTTPS_SUPPORT = (
+    "ERROR: server has no HTTPS support," +
+    " configure your global.rc file to use HTTP : {0}\n"
 )
 
 
@@ -48,27 +49,73 @@ class BaseCommsClient(object):
     METHOD_GET = 'GET'
 
     def __init__(self, suite, owner=USER, host=None, port=None, timeout=None,
-                 my_uuid=None, print_uuid=False):
+                 my_uuid=None, print_uuid=False, comms_protocol=None):
         self.suite = suite
         self.owner = owner
         self.host = host
         self.port = port
+        self.srv_files_mgr = SuiteSrvFilesManager()
+        self.comms_protocol = comms_protocol
         if timeout is not None:
             timeout = float(timeout)
         self.timeout = timeout
         self.my_uuid = my_uuid or uuid4()
         if print_uuid:
             print >> sys.stderr, '%s' % self.my_uuid
-        self.srv_files_mgr = SuiteSrvFilesManager()
+
         self.prog_name = os.path.basename(sys.argv[0])
         self.server_cert = None
         self.auth = None
 
-    def _compile_url(self, category, func_dict, host):
+    def _get_comms_from_suite_contact_file(self):
+        """Find out the communications protocol (http/https) from the
+        suite contact file."""
+        try:
+            comms_prtcl = self.srv_files_mgr.get_auth_item(
+                self.srv_files_mgr.KEY_COMMS_PROTOCOL,
+                self.suite, content=True)
+            if comms_prtcl is None or comms_prtcl == "":
+                raise TypeError("Comms protocol is not in suite contact file")
+            else:
+                return comms_prtcl
+        except (AttributeError, KeyError, TypeError, ValueError):
+            raise KeyError("No suite contact info for comms protocol found")
+
+    @staticmethod
+    def _get_comms_from_global_config():
+        """Find out the communications protocol (http/https) from the
+        user' global config file."""
+        from cylc.cfgspec.globalcfg import GLOBAL_CFG
+        comms_methods = GLOBAL_CFG.get(['communication', 'method'])
+        # Set the comms method
+        if "https" in comms_methods:
+            return "https"
+        elif "http" in comms_methods:
+            return "http"
+        else:
+            # Something has gone very wrong here
+            # possibly user set bad value in global config
+            raise CylcError(
+                "Communications protocol "
+                "\"{0}\" invalid."
+                " (protocol set in global config.)".format(comms_methods))
+
+    def _compile_url(self, category, func_dict, host, comms_protocol=None):
         payload = func_dict.pop("payload", None)
         method = func_dict.pop("method", self.METHOD)
         function = func_dict.pop("function", None)
-        url = 'https://%s:%s/%s/%s' % (host, self.port, category, function)
+
+        if comms_protocol is None:
+            try:
+                protocol_prefix = self._get_comms_from_suite_contact_file()
+            except (KeyError, TypeError, SuiteServiceFileError):
+                protocol_prefix = self._get_comms_from_global_config()
+        elif comms_protocol is not None:
+            protocol_prefix = comms_protocol
+        else:
+            raise CylcError("Unable to detect suite communication protocol")
+        url = protocol_prefix + '://%s:%s/%s/%s' % (host, self.port, category,
+                                                    function)
         # If there are any parameters left in the dict after popping,
         # append them to the url.
         if func_dict:
@@ -105,11 +152,13 @@ class BaseCommsClient(object):
         http_request_items = []
         try:
             # dictionary containing: url, payload, method
-            http_request_item = self._compile_url(category, func_dict, host)
+            http_request_item = self._compile_url(
+                category, func_dict, host, self.comms_protocol)
             http_request_items.append(http_request_item)
         except (IndexError, ValueError, AttributeError):
             for f_dict in func_dicts:
-                http_request_item = self._compile_url(category, f_dict, host)
+                http_request_item = self._compile_url(
+                    category, f_dict, host, self.comms_protocol)
                 http_request_items.append(http_request_item)
         # returns a list of http returns from the requests
         return self._get_data_from_url(http_request_items)
@@ -161,11 +210,9 @@ class BaseCommsClient(object):
             except requests.exceptions.SSLError as exc:
                 if "unknown protocol" in str(exc) and url.startswith("https:"):
                     # Server is using http rather than https, for some reason.
-                    sys.stderr.write(WARNING_NO_HTTPS_SUPPORT.format(exc))
-                    for item in http_request_items:
-                        item['url'] = item['url'].replace("https:", "http:", 1)
-                    return self._get_data_from_url_with_requests(
-                        http_request_items)
+                    sys.stderr.write(ERROR_NO_HTTPS_SUPPORT.format(exc))
+                    raise CylcError("Cannot issue commands"
+                                    " over unsecured http.")
                 if cylc.flags.debug:
                     import traceback
                     traceback.print_exc()
@@ -251,11 +298,9 @@ class BaseCommsClient(object):
             except urllib2.URLError as exc:
                 if "unknown protocol" in str(exc) and url.startswith("https:"):
                     # Server is using http rather than https, for some reason.
-                    sys.stderr.write(WARNING_NO_HTTPS_SUPPORT.format(exc))
-                    for item in http_request_items:
-                        item['url'] = item['url'].replace("https:", "http:", 1)
-                    return self._get_data_from_url_with_urllib2(
-                        http_request_items)
+                    sys.stderr.write(ERROR_NO_HTTPS_SUPPORT.format(exc))
+                    raise CylcError("Cannot issue commands"
+                                    " over unsecured http.")
                 if cylc.flags.debug:
                     import traceback
                     traceback.print_exc()
@@ -348,6 +393,9 @@ class BaseCommsClient(object):
             self.port = int(data.get(self.srv_files_mgr.KEY_PORT))
         if not self.owner:
             self.owner = data.get(self.srv_files_mgr.KEY_OWNER)
+        if not self.comms_protocol:
+            self.comms_protocol = data.get(
+                self.srv_files_mgr.KEY_COMMS_PROTOCOL)
 
     def reset(self, *args, **kwargs):
         pass
@@ -382,8 +430,9 @@ if __name__ == '__main__':
     class TestBaseCommsClient(unittest.TestCase):
         """Unit testing class to test the methods in BaseCommsClient
         """
-        def test_url_compiler(self):
-            """Tests that the url parser works for a single url and command"""
+        def test_url_compiler_https(self):
+            """Tests that the url parser works for a single url and command
+            using https"""
             category = 'info'  # Could be any from cylc/network/__init__.py
             host = "localhost"
             func_dict = {"function": "test_command",
@@ -393,15 +442,61 @@ if __name__ == '__main__':
                          "payload": "None"}
 
             myCommsClient = BaseCommsClient("test-suite", port=80)
-            request = myCommsClient._compile_url(category, func_dict, host)
-            test_url = ('https://localhost:80/info/test_command'
-                        '?apples=False&oranges=True')
+            request_https = myCommsClient._compile_url(
+                category, func_dict, host, "https")
 
-            self.assertEqual(request['url'], test_url)
-            self.assertEqual(request['payload'], "None")
-            self.assertEqual(request['method'], "GET")
+            test_url_https = (
+                'https://localhost:80/info/test_command'
+                '?apples=False&oranges=True')
 
-        def test_get_data_from_url_single(self):
+            self.assertEqual(request_https['url'], test_url_https)
+            self.assertEqual(request_https['payload'], "None")
+            self.assertEqual(request_https['method'], "GET")
+
+        def test_compile_url_compiler_http(self):
+            """Test that the url compiler produces a http request when
+            http is specified."""
+            category = 'info'  # Could be any from cylc/network/__init__.py
+            host = "localhost"
+            func_dict = {"function": "test_command",
+                         "apples": "False",
+                         "oranges": "True",
+                         "method": "GET",
+                         "payload": "None"}
+
+            myCommsClient = BaseCommsClient("test-suite", port=80)
+            request_http = myCommsClient._compile_url(
+                category, func_dict, host, "http")
+            test_url_http = (
+                'http://localhost:80/info/test_command'
+                '?apples=False&oranges=True')
+
+            self.assertEqual(request_http['url'], test_url_http)
+            self.assertEqual(request_http['payload'], "None")
+            self.assertEqual(request_http['method'], "GET")
+
+        def test_compile_url_compiler_none_specified(self):
+            """Test that the url compiler produces a http request when
+            none is specified. This should retrieve it from the
+            global config."""
+            category = 'info'  # Could be any from cylc/network/__init__.py
+            host = "localhost"
+            func_dict = {"function": "test_command",
+                         "apples": "False",
+                         "oranges": "True",
+                         "method": "GET",
+                         "payload": "None"}
+
+            myCommsClient = BaseCommsClient("test-suite", port=80)
+            request_http = myCommsClient._compile_url(
+                category, func_dict, host)
+
+            # Check that the url has had http (or https) appended
+            # to it. (If it does not start with "http*" then something
+            # has gone wrong.)
+            self.assertTrue(request_http['url'].startswith("http"))
+
+        def test_get_data_from_url_single_http(self):
             """Test the get data from _get_data_from_url() function"""
             myCommsClient = BaseCommsClient("dummy-suite")
             url = "http://httpbin.org/get"

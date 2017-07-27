@@ -24,6 +24,8 @@ The recommended way to do this, which we expand on below, is:
   \item Use ``optional optional'' app config files for site-specific variations
     in the core suite's Rose apps.
   \item (Make minimal use of inlined site switches too, if necessary).
+  \item When referencing files, reference them within the suite structure and
+  use an install task to link external files in.
 \end{itemize}
 
 The result should actually be tidier than the original in one respect: all
@@ -262,6 +264,16 @@ version. The site switch itself has to be set of course, but there may be other
 settings too such as model parameters for a standard local test domain. Just
 put these settings in \lstinline=opt/rose-suite-niwa.conf= (for site ``niwa'')
 and run the suite with \lstinline=rose suite-run -O niwa=.
+
+\subsection{Site-Agnostic File Paths in App Configs}
+
+Where possible apps should be configured to reference files within the suite
+structure itself rather than outside of it. This makes the apps themselves
+portable and it becomes the job of the install task to ensure all required
+source files are available within the suite structure e.g. via symlink into
+the share directory. Additionally, by moving the responsibility of linking
+files into the suite to an install task you gain the added benefit of knowing
+if a file is missing at the start of a suite rather than part way into a run.
 
 \subsection{Site-Specific Optional App Configs}
 

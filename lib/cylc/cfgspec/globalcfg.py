@@ -123,7 +123,7 @@ SPEC = {
 
     'communication': {
         'method': vdr(vtype='string', default="https",
-                      options=["https"]),
+                      options=["https", "http"]),
         'base port': vdr(vtype='integer', default=43001),
         'maximum number of ports': vdr(vtype='integer', default=100),
         'proxies on': vdr(vtype='boolean', default=False),
@@ -446,15 +446,17 @@ class GlobalConfig(config):
         return cls._DEFAULT
 
     def get_derived_host_item(
-            self, suite, item, host=None, owner=None, replace=False):
+            self, suite, item, host=None, owner=None, replace_home=False):
         """Compute hardwired paths relative to the configurable top dirs."""
 
         # suite run dir
         srdir = os.path.join(
-            self.get_host_item('run directory', host, owner, replace), suite)
+            self.get_host_item('run directory', host, owner, replace_home),
+            suite)
         # suite workspace
         swdir = os.path.join(
-            self.get_host_item('work directory', host, owner, replace), suite)
+            self.get_host_item('work directory', host, owner, replace_home),
+            suite)
 
         if item == 'suite run directory':
             value = srdir
@@ -482,7 +484,7 @@ class GlobalConfig(config):
 
         return value
 
-    def get_host_item(self, item, host=None, owner=None, replace=False):
+    def get_host_item(self, item, host=None, owner=None, replace_home=False):
         """This allows hosts with no matching entry in the config file
         to default to appropriately modified localhost settings."""
 
@@ -509,7 +511,7 @@ class GlobalConfig(config):
                         host_key = cfg_host
                         break
         modify_dirs = False
-        if host_key:
+        if host_key is not None:
             # entry exists, any unset items under it have already
             # defaulted to modified localhost values (see site cfgspec)
             value = cfg['hosts'][host_key][item]
@@ -517,12 +519,15 @@ class GlobalConfig(config):
             # no entry so default to localhost and modify appropriately
             value = cfg['hosts']['localhost'][item]
             modify_dirs = True
-
-        if value and ('directory' in item) and (
-                modify_dirs or owner != USER or replace):
-            # replace local home dir with $HOME for evaluation on other host
-            value = value.replace(os.environ['HOME'], '$HOME')
-
+        if value is not None and 'directory' in item:
+            if replace_home and (modify_dirs or owner != USER):
+                # Replace local home dir with $HOME for eval'n on other host.
+                value = value.replace(os.environ['HOME'], '$HOME')
+            elif owner != USER:
+                # Replace USER with owner for direct access via local filesys
+                # (works for standard cylc-run directory location).
+                value = value.replace(
+                    os.environ['HOME'], os.path.expanduser('~%s' % owner))
         return value
 
     def roll_directory(self, d, name, archlen=0):

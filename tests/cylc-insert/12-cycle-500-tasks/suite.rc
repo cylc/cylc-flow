@@ -1,0 +1,13 @@
+[cylc]
+    cycle point format = %Y
+    [[parameters]]
+        i = 1..500
+[scheduling]
+    initial cycle point = 2000
+    final cycle point = 2010
+    [[dependencies]]
+        [[[P1Y]]]
+            graph="""v<i>[-P1Y] => v<i>"""
+[runtime]
+    [[v<i>]]
+        script=true

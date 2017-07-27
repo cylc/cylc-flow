@@ -103,16 +103,15 @@ class TaskPool(object):
 
     def assign_queues(self):
         """self.myq[taskname] = qfoo"""
-        qconfig = self.config.cfg['scheduling']['queues']
-        self.myq = {}
-        for queue in qconfig:
-            for taskname in qconfig[queue]['members']:
-                self.myq[taskname] = queue
+        self.myq.clear()
+        for queue, qconfig in self.config.cfg['scheduling']['queues'].items():
+            self.myq.update((name, queue) for name in qconfig['members'])
 
     def insert_tasks(self, items, stop_point_str, no_check=False):
         """Insert tasks."""
         n_warnings = 0
-        task_items = []
+        task_items = {}
+        select_args = []
         for item in items:
             point_str, name_str = self._parse_task_item(item)[:2]
             if point_str is None:
@@ -133,7 +132,8 @@ class TaskPool(object):
                 n_warnings += 1
                 continue
             for taskdef in taskdefs:
-                task_items.append([(taskdef.name, point_str), taskdef])
+                task_items[(taskdef.name, point_str)] = taskdef
+            select_args.append((name_str, point_str))
         if stop_point_str is None:
             stop_point = None
         else:
@@ -145,15 +145,13 @@ class TaskPool(object):
                     stop_point_str, exc))
                 n_warnings += 1
                 return n_warnings
-        task_states_data = (
-            self.suite_db_mgr.pri_dao.select_task_states_by_task_ids(
-                ["submit_num"], [task_item[0] for task_item in task_items]))
-        for key, taskdef in task_items:
+        submit_nums = self.suite_db_mgr.pri_dao.select_submit_nums_for_insert(
+            select_args)
+        for key, taskdef in sorted(task_items.items()):
             # TODO - insertion of start-up tasks? (startup=False assumed here)
 
             # Check that the cycle point is on one of the tasks sequences.
-            point_str = key[1]
-            point = get_point(point_str)
+            point = get_point(key[1])
             if not no_check:  # Check if cycle point is on the tasks sequence.
                 for sequence in taskdef.sequences:
                     if sequence.is_on_sequence(point):
@@ -161,15 +159,14 @@ class TaskPool(object):
                 else:
                     LOG.warning("%s%s, %s" % (
                         self.ERR_PREFIX_TASK_NOT_ON_SEQUENCE, taskdef.name,
-                        point_str))
+                        key[1]))
                     continue
 
-            submit_num = None
-            if key in task_states_data:
-                submit_num = task_states_data[key].get("submit_num")
-            self.add_to_runahead_pool(TaskProxy(
-                taskdef, get_point(point_str),
-                stop_point=stop_point, submit_num=submit_num))
+            submit_num = submit_nums.get(key)
+            itask = self.add_to_runahead_pool(TaskProxy(
+                taskdef, point, stop_point=stop_point, submit_num=submit_num))
+            if itask:
+                LOG.info("inserted", itask=itask)
         return n_warnings
 
     def add_to_runahead_pool(self, itask, is_restart=False):
@@ -244,8 +241,8 @@ class TaskPool(object):
 
         # Any finished tasks can be released immediately (this can happen at
         # restart when all tasks are initially loaded into the runahead pool).
-        for itask_id_maps in self.runahead_pool.values():
-            for itask in itask_id_maps.values():
+        for itask_id_maps in self.runahead_pool.copy().values():
+            for itask in itask_id_maps.copy().values():
                 if itask.state.status in [TASK_STATUS_FAILED,
                                           TASK_STATUS_SUCCEEDED,
                                           TASK_STATUS_EXPIRED]:
@@ -323,9 +320,9 @@ class TaskPool(object):
             latest_allowed_point = self.stop_point
 
         released = False
-        for point, itask_id_map in self.runahead_pool.items():
+        for point, itask_id_map in self.runahead_pool.copy().items():
             if point <= latest_allowed_point:
-                for itask in itask_id_map.values():
+                for itask in itask_id_map.copy().values():
                     self.release_runahead_task(itask)
                     released = True
         return released
@@ -449,9 +446,11 @@ class TaskPool(object):
 
     def release_runahead_task(self, itask):
         """Release itask to the appropriate queue in the active pool."""
-        queue = self.myq[itask.tdef.name]
-        if queue not in self.queues:
-            self.queues[queue] = {}
+        try:
+            queue = self.myq[itask.tdef.name]
+        except KeyError:
+            queue = self.config.Q_DEFAULT
+        self.queues.setdefault(queue, {})
         self.queues[queue][itask.identity] = itask
         self.pool.setdefault(itask.point, {})
         self.pool[itask.point][itask.identity] = itask

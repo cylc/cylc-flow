@@ -847,7 +847,9 @@ conditions; see `cylc conditions`.
                 ['task messaging', 'retry interval']))),
             mgr.KEY_TASK_MSG_TIMEOUT: str(float(GLOBAL_CFG.get(
                 ['task messaging', 'connection timeout']))),
-            mgr.KEY_VERSION: CYLC_VERSION}
+            mgr.KEY_VERSION: CYLC_VERSION,
+            mgr.KEY_COMMS_PROTOCOL: GLOBAL_CFG.get(
+                ['communication', 'method'])}
         try:
             mgr.dump_contact_file(self.suite, contact_data)
         except IOError as exc:

@@ -32,9 +32,10 @@ from cylc.cfgspec.utils import (
     coerce_interval, coerce_interval_list, DurationFloat)
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.network import PRIVILEGE_LEVELS
+from cylc.task_id import TaskID
 
 
-REC_PARAM_INT_RANGE = re.compile('(\d+)\.\.(\d+)(?:\.\.(\d+))?')
+REC_PARAM_INT_RANGE = re.compile(r'\A(\d+)\.\.(\d+)(?:\.\.(\d+))?\Z')
 
 
 def _coerce_cycleinterval(value, keys, _):
@@ -137,21 +138,47 @@ def _coerce_final_cycletime(value, keys, _):
 
 
 def _coerce_parameter_list(value, keys, _):
-    """Coerce parameter list."""
-    value = _strip_and_unquote_list(keys, value)
-    # May be an integer range with step e.g. '1..6..2' (bounds inclusive).
-    try:
-        lower, upper, step = REC_PARAM_INT_RANGE.match(value[0]).groups()
-        step = step or 1
-    except AttributeError:
-        if '.' in value[0]:
-            # Dot is illegal in node names, probably bad range syntax.
-            raise IllegalValueError("parameter", keys, value)
-        return value
+    """Coerce parameter list
+
+    Can be:
+    * A list of str values. Each str value must conform to the same restriction
+      as a task name. Return list of str values.
+    * A mixture of int ranges and int values. Return list of str values
+      containing the sorted int list, zero-padded to the same width.
+
+    Raise IllegalValueError if:
+    * Mixing str and int range.
+    * A str value breaks the task name restriction.
+    """
+    items = []
+    can_only_be = None   # A flag to prevent mixing str and int range
+    for item in _strip_and_unquote_list(keys, value):
+        match = REC_PARAM_INT_RANGE.match(item)
+        if match:
+            if can_only_be == str:
+                raise IllegalValueError(
+                    'parameter', keys, value, 'mixing int range and str')
+            can_only_be = int
+            lower, upper, step = match.groups()
+            if not step:
+                step = 1
+            items.extend(range(int(lower), int(upper) + 1, int(step)))
+        elif TaskID.NAME_REC.match(item):
+            if not item.isdigit():
+                if can_only_be == int:
+                    raise IllegalValueError(
+                        'parameter', keys, value, 'mixing int range and str')
+                can_only_be = str
+            items.append(item)
+        else:
+            raise IllegalValueError(
+                'parameter', keys, value, '%s: bad value' % item)
+    if can_only_be == str or any(not str(item).isdigit() for item in items):
+        return items
     else:
-        n_dig = len(upper)
-        return [str(i).zfill(n_dig) for i in
-                range(int(lower), int(upper) + 1, int(step))]
+        items = [int(item) for item in items]
+        n_digits = len(str(max(items)))
+        return [str(item).zfill(n_digits) for item in sorted(items)]
 
 coercers['cycletime'] = _coerce_cycletime
 coercers['cycletime_format'] = _coerce_cycletime_format

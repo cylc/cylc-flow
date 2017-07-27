@@ -79,13 +79,13 @@ help_util() {
         exec "${CYLC_HOME_BIN}"/cylc-help
     fi
     # for cases 'cylc --help CATEGORY COMMAND'
-    if [[ (( $# > 1 )) &&  "${HELP_OPTS[*]} " == *"$UTIL"* && \
+    if [[ $# -gt 1 &&  "${HELP_OPTS[*]} " == *"$UTIL"* && \
           "${CATEGORIES[*]} " == *" $1 "* ]]; then
         local COMMAND="${CYLC_HOME_BIN}/cylc-$2"
         exec "${COMMAND}" "--help"  
     fi
     # Check if this is a help command, not containing a category qualifier
-    if [[ $# > 1  && "${HELP_OPTS[*]} " == *"${UTIL}"* && 
+    if [[ $# -gt 1  && "${HELP_OPTS[*]} " == *"${UTIL}"* && 
           "${CATEGORIES[*]} " != *" $1 "* &&
           "${CATEGORIES[*]} " != *" $2 "* ]]; then
         local COMMAND="${CYLC_HOME_BIN}/cylc-${UTIL}"
@@ -95,7 +95,7 @@ help_util() {
     # make this deal with 'cylc help CATEGORY' only
     if [[ " ${CATEGORIES[*]} " == *" ${UTIL} "* \
           || " ${HELP_OPTS[*]} " == *" ${UTIL} "* \
-          && $# > 0 && ( "${CATEGORIES[*]} " == *" $1 "* \
+          && $# -gt 0 && ( "${CATEGORIES[*]} " == *" $1 "* \
           || " ${HELP_OPTS[*]} " == *" $1 "* ) ]]; then
         local COMMAND="${CYLC_HOME_BIN}/cylc-help"
         exec "${COMMAND}" "$@"
@@ -113,13 +113,13 @@ help_util() {
         fi
     fi
     # If category name is used as arg, call the help func with the category
-    if [[ $# > 1  &&  ( "${CATEGORIES[*]} " == *" $1 "* 
+    if [[ $# -gt 1  &&  ( "${CATEGORIES[*]} " == *" $1 "* 
             || " ${HELP_OPTS[*]} " == *" $1 "* ) ]]; then
         local COMMAND="${CYLC_HOME_BIN}/cylc-help"
         exec "${COMMAND}" "$@"
     fi
     # Deal with cases like 'cylc --help [COMMAND/CATEGORY]'
-    if [[ (( $# -gt 1 )) && -f "$(ls cylc-${2}* 2>/dev/null)" ]]; then
+    if [[ $# -gt 1 && -f "$(ls cylc-${2}* 2>/dev/null)" ]]; then
         local COMMAND="${CYLC_HOME_BIN}/$(ls "cylc-$2"*)"
         exec "${COMMAND}" "--help"
     fi
@@ -138,6 +138,12 @@ category_help_command() {
 # Special case for printing categories and the gcylc gui
     local COMMAND="${CYLC_HOME_BIN}/cylc-help"
     exec "${COMMAND}" "categories"
+}
+
+command_help_command() {
+# Special case for printing all commands (used in CUG Makefile)
+    local COMMAND="${CYLC_HOME_BIN}/cylc-help"
+    exec "${COMMAND}" "commands"
 }
 
 path_lead() {
@@ -231,6 +237,10 @@ categories)
     category_help_command "$@"
     exit 0
     :;;
+commands)
+    command_help_command "$@"
+    exit 0
+    :;;
 esac
 
 # User has not given a help, category, or version option.
@@ -254,7 +264,7 @@ elif (( "$num_commands_match" == 1 )); then
 # Abort if the command wildcard match is ambiguous, unless it is itself a 
 # command, e.g. "cylc graph" matches "cylc-graph" and "cylc-graph-diff",
 # but the command should not abort in this case.  
-elif [[ (("$num_commands_match" > 1)) \
+elif [[ "$num_commands_match" -gt 1 \
         && -f "${CYLC_HOME_BIN}/cylc-${UTIL}" ]] ; then
     exec "${CYLC_HOME_BIN}/cylc-${UTIL}" "@"
 else

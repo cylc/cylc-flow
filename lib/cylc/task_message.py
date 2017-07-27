@@ -118,7 +118,9 @@ class TaskMessage(object):
             host=self.env_map.get(SuiteSrvFilesManager.KEY_HOST),
             port=self.env_map.get(SuiteSrvFilesManager.KEY_PORT),
             timeout=float(self.env_map.get(
-                SuiteSrvFilesManager.KEY_TASK_MSG_TIMEOUT, self.MSG_TIMEOUT)))
+                SuiteSrvFilesManager.KEY_TASK_MSG_TIMEOUT, self.MSG_TIMEOUT)),
+            comms_protocol=self.env_map.get(
+                SuiteSrvFilesManager.KEY_COMMS_PROTOCOL))
         for i in range(1, max_tries + 1):  # 1..max_tries inclusive
             try:
                 for message in messages:

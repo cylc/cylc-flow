@@ -1,0 +1,48 @@
+edge "foo_cat.1" "bar_j1.1" solid
+edge "foo_cat.1" "bar_j2.1" solid
+edge "foo_cat.1" "bar_j3.1" solid
+edge "foo_cat.1" "bar_j4.1" solid
+edge "foo_cat.1" "bar_j5.1" solid
+edge "foo_dog.1" "bar_j1.1" solid
+edge "foo_dog.1" "bar_j2.1" solid
+edge "foo_dog.1" "bar_j3.1" solid
+edge "foo_dog.1" "bar_j4.1" solid
+edge "foo_dog.1" "bar_j5.1" solid
+edge "foo_fish.1" "bar_j1.1" solid
+edge "foo_fish.1" "bar_j2.1" solid
+edge "foo_fish.1" "bar_j3.1" solid
+edge "foo_fish.1" "bar_j4.1" solid
+edge "foo_fish.1" "bar_j5.1" solid
+edge "qux_j1.1" "waz_k1.1" solid
+edge "qux_j1.1" "waz_k5.1" solid
+edge "qux_j1.1" "waz_k9.1" solid
+edge "qux_j2.1" "waz_k1.1" solid
+edge "qux_j2.1" "waz_k5.1" solid
+edge "qux_j2.1" "waz_k9.1" solid
+edge "qux_j3.1" "waz_k1.1" solid
+edge "qux_j3.1" "waz_k5.1" solid
+edge "qux_j3.1" "waz_k9.1" solid
+edge "qux_j4.1" "waz_k1.1" solid
+edge "qux_j4.1" "waz_k5.1" solid
+edge "qux_j4.1" "waz_k9.1" solid
+edge "qux_j5.1" "waz_k1.1" solid
+edge "qux_j5.1" "waz_k5.1" solid
+edge "qux_j5.1" "waz_k9.1" solid
+graph
+node "bar_j1.1" "bar_j1\n1" unfilled ellipse black
+node "bar_j2.1" "bar_j2\n1" unfilled ellipse black
+node "bar_j3.1" "bar_j3\n1" unfilled ellipse black
+node "bar_j4.1" "bar_j4\n1" unfilled ellipse black
+node "bar_j5.1" "bar_j5\n1" unfilled ellipse black
+node "foo_cat.1" "foo_cat\n1" unfilled ellipse black
+node "foo_dog.1" "foo_dog\n1" unfilled ellipse black
+node "foo_fish.1" "foo_fish\n1" unfilled ellipse black
+node "qux_j1.1" "qux_j1\n1" unfilled ellipse black
+node "qux_j2.1" "qux_j2\n1" unfilled ellipse black
+node "qux_j3.1" "qux_j3\n1" unfilled ellipse black
+node "qux_j4.1" "qux_j4\n1" unfilled ellipse black
+node "qux_j5.1" "qux_j5\n1" unfilled ellipse black
+node "waz_k1.1" "waz_k1\n1" unfilled ellipse black
+node "waz_k5.1" "waz_k5\n1" unfilled ellipse black
+node "waz_k9.1" "waz_k9\n1" unfilled ellipse black
+stop

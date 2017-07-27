@@ -8,10 +8,10 @@ edge "banana.1" "carrot.1" solid
 edge "blackberry.1" "carrot.1" solid
 edge "blueberry.1" "carrot.1" solid
 graph
-node "artichoke.1" "artichoke\n1" unfilled box black
-node "azuki.1" "azuki\n1" unfilled box black
-node "banana.1" "banana\n1" unfilled box black
-node "blackberry.1" "blackberry\n1" unfilled box black
-node "blueberry.1" "blueberry\n1" unfilled box black
-node "carrot.1" "carrot\n1" unfilled box black
+node "artichoke.1" "artichoke\n1" unfilled ellipse black
+node "azuki.1" "azuki\n1" unfilled ellipse black
+node "banana.1" "banana\n1" unfilled ellipse black
+node "blackberry.1" "blackberry\n1" unfilled ellipse black
+node "blueberry.1" "blueberry\n1" unfilled ellipse black
+node "carrot.1" "carrot\n1" unfilled ellipse black
 stop
