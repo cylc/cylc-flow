@@ -21,10 +21,12 @@ title = "User Guide [runtime] example."
             RUNNING_DIR = $HOME/running/$CYLC_TASK_NAME
     [[land]] # a task (a leaf on the inheritance tree) in the OBS family
         inherit = OBS
-        description = land obs processing
+        [[[meta]]]
+            description = land obs processing
     [[ship]] # a task (a leaf on the inheritance tree) in the OBS family
         inherit = OBS
-        description = ship obs processing
+        [[[meta]]]
+            description = ship obs processing
         [[[job]]]
             batch system = loadleveler
         [[[environment]]]

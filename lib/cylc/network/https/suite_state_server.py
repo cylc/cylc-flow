@@ -105,7 +105,7 @@ class StateSummaryServer(BaseCommsServer):
                 if state is None:
                     continue
                 try:
-                    famcfg = config.cfg['runtime'][fam]
+                    famcfg = config.cfg['runtime']['meta'][fam]
                 except KeyError:
                     famcfg = {}
                 description = famcfg.get('description')

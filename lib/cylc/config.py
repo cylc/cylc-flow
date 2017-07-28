@@ -694,7 +694,6 @@ class SuiteConfig(object):
             if vfcp > final_point:
                 self.cfg['visualization']['final cycle point'] = str(
                     final_point)
-
         # Replace suite name in suite  URL.
         url = self.cfg['URL']
         if url is not '':
@@ -702,9 +701,11 @@ class SuiteConfig(object):
 
         # Replace suite and task name in task URLs.
         for name, cfg in self.cfg['runtime'].items():
-            if cfg['URL']:
-                cfg['URL'] = RE_TASK_NAME_VAR.sub(name, cfg['URL'])
-                cfg['URL'] = RE_SUITE_NAME_VAR.sub(self.suite, cfg['URL'])
+            if cfg['meta']['URL']:
+                cfg['meta']['URL'] = RE_TASK_NAME_VAR.sub(
+                    name, cfg['meta']['URL'])
+                cfg['meta']['URL'] = RE_SUITE_NAME_VAR.sub(
+                    self.suite, cfg['meta']['URL'])
 
         if is_validate:
             self.mem_log("config.py: before _check_circular()")
@@ -1302,8 +1303,8 @@ class SuiteConfig(object):
     def add_tree_titles(self, tree):
         for key, val in tree.items():
             if val == {}:
-                if 'title' in self.cfg['runtime'][key]:
-                    tree[key] = self.cfg['runtime'][key]['title']
+                if 'title' in self.cfg['runtime'][key]['meta']:
+                    tree[key] = self.cfg['runtime'][key]['meta']['title']
                 else:
                     tree[key] = 'No title provided'
             elif isinstance(val, dict):
@@ -1324,9 +1325,9 @@ class SuiteConfig(object):
                     names.append(ns)
         result = {}
         for ns in names:
-            if 'title' in self.cfg['runtime'][ns]:
+            if 'title' in self.cfg['runtime'][ns]['meta']:
                 # the runtime dict is sparse at this stage.
-                result[ns] = self.cfg['runtime'][ns]['title']
+                result[ns] = self.cfg['runtime'][ns]['meta']['title']
             else:
                 # no need to flesh out the full runtime just for title
                 result[ns] = "No title provided"

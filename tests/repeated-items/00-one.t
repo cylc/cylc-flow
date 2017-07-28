@@ -50,13 +50,13 @@ dbar => dbaz
 __END
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-d
-cylc get-config -i '[runtime][FOO]title' $SUITE_NAME >d.txt 2>/dev/null
+cylc get-config -i '[runtime][FOO][meta]title' $SUITE_NAME >d.txt 2>/dev/null
 cmp_ok d.txt <<'__END'
 the quick brown fox
 __END
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-e
-cylc get-config -i '[runtime][FOO]description' $SUITE_NAME >e.txt 2>/dev/null
+cylc get-config -i '[runtime][FOO][meta]description' $SUITE_NAME >e.txt 2>/dev/null
 cmp_ok e.txt <<'__END'
 jumped over the lazy dog
 __END

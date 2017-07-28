@@ -106,7 +106,7 @@ class TaskDef(object):
         """Return title and description of the current task."""
         info = {}
         for item in 'title', 'description':
-            info[item] = self.rtconfig[item]
+            info[item] = self.rtconfig['meta'][item]
         return info
 
     def check_for_explicit_cycling(self):

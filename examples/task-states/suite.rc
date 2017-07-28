@@ -35,30 +35,34 @@ to show what they look like live in gcylc."""
         inherit = FAMILY
     [[m_x]]
         inherit = FAMILY
-        title = "this task succeeds on the second try "
         script = """
 sleep 10
 if [[ $CYLC_TASK_TRY_NUMBER < 2 ]]; then
     cylc task message -p WARNING ABORTING
     exit 1
 fi"""
+        [[[meta]]]
+            title = "this task succeeds on the second try "
         [[[job]]]
             execution retry delays = PT18S
     [[bad]]
-        title = "A task that tries and fails twice"
-        description = """Failed instances of this task are removed from the suite
-at the end of each cycle by a suicide trigger."""
         script = "sleep 10; exit 1"
+        [[[meta]]]
+            title = "A task that tries and fails twice"
+            description = """Failed instances of this task are removed from the suite
+at the end of each cycle by a suicide trigger."""
         [[[job]]]
             execution retry delays = PT12S
     [[bad2]]
-        title = "A task that fails to submit twice"
+        [[[meta]]]
+            title = "A task that fails to submit twice"
         [[[job]]]
             batch system = fail
             submission retry delays = PT18S
     [[bad_good]]
-        title = "A task successfully submits on the second try "
-        description = """Uses a retry event handler to broadcast a new job
+        [[[meta]]]
+            title = "A task successfully submits on the second try "
+            description = """Uses a retry event handler to broadcast a new job
 submission method for the retry."""
         [[[job]]]
             batch system = fail

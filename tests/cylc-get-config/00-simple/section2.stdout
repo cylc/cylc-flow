@@ -3,16 +3,16 @@
     enable resurrection = False
     env-script = 
     err-script = 
-    title = 
-    URL = 
-    importance = 
     extra log files = 
     work sub-directory = 
-    description = 
     init-script = 
     pre-script = 
     post-script = 
     inherit = VAR, PARALLEL
+    [[[meta]]]
+        title = 
+        description = 
+        URL = 
     [[[events]]]
         submission timeout handler = 
         submitted handler = 
@@ -80,16 +80,16 @@
     enable resurrection = False
     env-script = 
     err-script = 
-    title = 
-    URL = 
-    importance = 
     extra log files = 
     work sub-directory = 
-    description = 
     init-script = 
     pre-script = 
     post-script = 
     inherit = 
+    [[[meta]]]
+        title = 
+        description = 
+        URL = 
     [[[events]]]
         submission timeout handler = 
         submitted handler = 
@@ -156,16 +156,16 @@
     enable resurrection = False
     env-script = 
     err-script = 
-    title = 
-    URL = 
-    importance = 
     extra log files = 
     work sub-directory = 
-    description = 
     init-script = 
     pre-script = 
     post-script = 
     inherit = OPS, SERIAL
+    [[[meta]]]
+        title = 
+        description = 
+        URL = 
     [[[events]]]
         submission timeout handler = 
         submitted handler = 
@@ -233,16 +233,16 @@
     enable resurrection = False
     env-script = 
     err-script = 
-    title = 
-    URL = 
-    importance = 
     extra log files = 
     work sub-directory = 
-    description = 
     init-script = 
     pre-script = 
     post-script = 
     inherit = OPS, SERIAL
+    [[[meta]]]
+        title = 
+        description = 
+        URL = 
     [[[events]]]
         submission timeout handler = 
         submitted handler = 
@@ -310,16 +310,16 @@
     enable resurrection = False
     env-script = 
     err-script = 
-    title = 
-    URL = 
-    importance = 
     extra log files = 
     work sub-directory = 
-    description = 
     init-script = 
     pre-script = 
     post-script = 
     inherit = OPS, PARALLEL
+    [[[meta]]]
+        title = 
+        description = 
+        URL = 
     [[[events]]]
         submission timeout handler = 
         submitted handler = 
@@ -387,16 +387,16 @@
     enable resurrection = False
     env-script = 
     err-script = 
-    title = 
-    URL = 
-    importance = 
     extra log files = 
     work sub-directory = 
-    description = 
     init-script = 
     pre-script = 
     post-script = 
     inherit = OPS, PARALLEL
+    [[[meta]]]
+        title = 
+        description = 
+        URL = 
     [[[events]]]
         handler events = 
         mail smtp = 
@@ -464,16 +464,16 @@
     enable resurrection = False
     env-script = 
     err-script = 
-    title = 
-    URL = 
-    importance = 
     extra log files = 
     work sub-directory = 
-    description = 
     init-script = 
     pre-script = 
     post-script = 
     inherit = VAR, PARALLEL
+    [[[meta]]]
+        title = 
+        description = 
+        URL = 
     [[[events]]]
         handler events = 
         mail smtp = 
@@ -541,16 +541,16 @@
     enable resurrection = False
     env-script = 
     err-script = 
-    title = 
-    URL = 
-    importance = 
     extra log files = 
     work sub-directory = 
-    description = 
     init-script = 
     pre-script = 
     post-script = 
     inherit = 
+    [[[meta]]]
+        title = 
+        description = 
+        URL = 
     [[[events]]]
         handler events = 
         mail smtp = 
@@ -617,16 +617,16 @@
     enable resurrection = False
     env-script = 
     err-script = 
-    title = 
-    URL = 
-    importance = 
     extra log files = 
     work sub-directory = 
-    description = 
     init-script = 
     pre-script = 
     post-script = 
     inherit = VAR, SERIAL
+    [[[meta]]]
+        title = 
+        description = 
+        URL = 
     [[[events]]]
         handler events = 
         mail smtp = 
@@ -694,16 +694,16 @@
     env-script = 
     err-script = 
     script = 
-    title = 
-    URL = 
-    importance = 
     extra log files = 
     work sub-directory = 
-    description = 
     init-script = 
     pre-script = 
     post-script = 
     inherit = 
+    [[[meta]]]
+        title = 
+        description = 
+        URL = 
     [[[events]]]
         handler events = 
         mail smtp = 
@@ -771,16 +771,16 @@
     env-script = 
     err-script = 
     script = 
-    title = 
-    URL = 
-    importance = 
     extra log files = 
     work sub-directory = 
-    description = 
     init-script = 
     pre-script = 
     post-script = 
     inherit = 
+    [[[meta]]]
+        title = 
+        description = 
+        URL = 
     [[[events]]]
         handler events = 
         mail smtp = 
@@ -847,16 +847,16 @@
     env-script = 
     err-script = 
     script = 
-    title = 
-    URL = 
-    importance = 
     extra log files = 
     work sub-directory = 
-    description = 
     init-script = 
     pre-script = 
     post-script = 
     inherit = 
+    [[[meta]]]
+        title = 
+        description = 
+        URL = 
     [[[events]]]
         handler events = 
         mail smtp = 
@@ -924,16 +924,16 @@
     enable resurrection = False
     env-script = 
     err-script = 
-    title = 
-    URL = 
-    importance = 
     extra log files = 
     work sub-directory = 
-    description = 
     init-script = 
     pre-script = 
     post-script = 
     inherit = VAR, SERIAL
+    [[[meta]]]
+        title = 
+        description = 
+        URL = 
     [[[events]]]
         handler events = 
         mail smtp = 

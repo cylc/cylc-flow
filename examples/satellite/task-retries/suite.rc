@@ -38,14 +38,12 @@ automatically until they succeed."""
 
 [runtime]
     [[prep]]
-        title = clean the suite output directories
         script = \
 rm -rf $CYLC_SUITE_SHARE_DIR $CYLC_SUITE_WORK_DIR
+        [[[meta]]]
+            title = clean the suite output directories
 
     [[satsim]]
-        title = simulate a satellite data feed
-        description = """Generates {{N_DATASETS}} arbitrarily labelled
-datasets after random durations."""
         pre-script = mkdir -p {{DATA_IN_DIR}}
         script = """
 COUNT=0
@@ -58,6 +56,10 @@ while true; do
     cylc task message "$DATA_FILE ready for processing"
     ((COUNT += 1))
 done"""
+        [[[meta]]]
+            title = simulate a satellite data feed
+            description = """Generates {{N_DATASETS}} arbitrarily labelled
+datasets after random durations."""
 
     [[WORKDIR]]
         # Define a common cycle-point-specific work-directory for all
@@ -67,47 +69,51 @@ done"""
 
     [[get_data]]
         inherit = WORKDIR
-        title = retreive next dataset
-        description = grab ONE new dataset if available else retry
         script = """
 DATASET=$( ls {{DATA_IN_DIR}}/dataset-*.raw 2>/dev/null | head -n 1 )
 [[ -z $DATASET ]] && exit 1
 mv $DATASET $PWD"""
+        [[[meta]]]
+            title = retreive next dataset
+            description = grab ONE new dataset if available else retry
+
         [[[job]]]
             execution retry delays = 10*PT2S
 
     [[proc1]]
         inherit = WORKDIR
-        title = convert .raw dataset to .proc1 form
         script = """
 DATASET=$(ls dataset-*.raw)
 mv $DATASET ${DATASET%raw}proc1"""
+        [[[meta]]]
+            title = convert .raw dataset to .proc1 form
 
     [[proc2]]
         inherit = WORKDIR
-        title = convert .proc1 dataset to .proc2 form
         script = """
 DATASET=$(ls dataset-*.proc1)
 mv $DATASET ${DATASET%proc1}proc2"""
+        [[[meta]]]
+            title = convert .proc1 dataset to .proc2 form
 
     [[products]]
         inherit = WORKDIR
-        title = generate products from .proc2 processed dataset
         script = """
 mkdir -p {{PRODUCT_DIR}}
 DATASET=$( ls dataset-*.proc2 )
 mv $DATASET {{PRODUCT_DIR}}/${DATASET%proc2}prod"""
+        [[[meta]]]
+            title = generate products from .proc2 processed dataset
 
     [[collate]]
-        title = collate all products from the suite run
         # Note you might want to use "cylc suite-state" to check that
         # _all_ product tasks have finished before collating results.
         script = """
 echo PRODUCTS:
 ls {{PRODUCT_DIR}}
 sleep 20"""
-
-
+        [[[meta]]]
+            title = collate all products from the suite run
 [visualization]
     default node attributes = "style=filled", "shape=box"
     [[node attributes]]

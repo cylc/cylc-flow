@@ -39,5 +39,7 @@ $COMMAND"""
         inherit = FAM
         script = sleep 10
     [[fam_cleanup]]
-        description = "this is a family failed task cleanup task"
         script = fam_cleanup.sh
+        [[[meta]]]
+            description = "this is a family failed task cleanup task"
+

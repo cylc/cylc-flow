@@ -110,7 +110,6 @@ def main():
     if options.tree and any(
             [options.all_tasks, options.all_namespaces, options.mro]):
         print >> sys.stderr, "WARNING: -t chosen, ignoring non-tree options."
-
     config = SuiteConfig(
         suite, suiterc,
         load_template_vars(options.templatevars, options.templatevars_file),
