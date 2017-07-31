@@ -18,13 +18,13 @@
 """Manage broadcast (and external trigger broadcast)."""
 
 import re
-from Queue import Empty
 from threading import RLock
 
 from cylc.broadcast_report import (
     CHANGE_FMT, CHANGE_PREFIX_SET,
     get_broadcast_change_report,
     get_broadcast_bad_options_report)
+from cylc.cycling import PointParsingError
 from cylc.cycling.loader import get_point, standardise_point_string
 from cylc.suite_logging import LOG, OUT
 from cylc.task_id import TaskID
@@ -32,7 +32,6 @@ from cylc.task_id import TaskID
 
 class BroadcastMgr(object):
     """Manage broadcast.
-
 
     Broadcast settings are stored in the form:
         self.broadcasts['*']['root'] = {'environment': {'FOO': 'bar'}}
@@ -226,7 +225,7 @@ class BroadcastMgr(object):
                     bad_point = False
                     try:
                         point_string = standardise_point_string(point_string)
-                    except Exception:
+                    except PointParsingError:
                         if point_string != '*':
                             bad_point_strings.append(point_string)
                             bad_point = True

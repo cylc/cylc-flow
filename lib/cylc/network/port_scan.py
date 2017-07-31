@@ -26,7 +26,7 @@ from uuid import uuid4
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
 from cylc.network.client import (
-    SuiteRuntimeServiceClient, ConnectionError, ConnectionTimeout)
+    SuiteRuntimeServiceClient, ClientError, ClientTimeout)
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
 from cylc.suite_host import is_remote_host, get_host_ip_by_name
@@ -66,16 +66,16 @@ def _scan_item(timeout, my_uuid, srv_files_mgr, item):
         timeout=timeout, auth=SuiteRuntimeServiceClient.ANON_AUTH)
     try:
         result = client.identify()
-    except ConnectionTimeout:
+    except ClientTimeout:
         return (host, port, MSG_TIMEOUT)
-    except ConnectionError:
+    except ClientError:
         return (host, port, None)
     else:
         owner = result.get('owner')
         name = result.get('name')
         states = result.get('states', None)
         if cylc.flags.debug:
-            print >> sys.stderr, '   suite:', name, owner
+            sys.stderr.write('   suite: %s %s\n' % (name, owner))
         if states is None:
             # This suite keeps its state info private.
             # Try again with the passphrase if I have it.
@@ -93,15 +93,14 @@ def _scan_item(timeout, my_uuid, srv_files_mgr, item):
                     client.auth = None
                     try:
                         result = client.identify()
-                    except ConnectionError:
+                    except ClientError:
                         # Nope (private suite, wrong passphrase).
                         if cylc.flags.debug:
-                            print >> sys.stderr, (
-                                '    (wrong passphrase)')
+                            sys.stderr.write('    (wrong passphrase)\n')
                     else:
                         if cylc.flags.debug:
-                            print >> sys.stderr, (
-                                '    (got states with passphrase)')
+                            sys.stderr.write(
+                                '    (got states with passphrase)\n')
         return (host, port, result)
 
 
@@ -109,7 +108,7 @@ def scan_all(hosts=None, timeout=None, updater=None):
     """Scan all hosts."""
     try:
         timeout = float(timeout)
-    except:
+    except (TypeError, ValueError):
         timeout = CONNECT_TIMEOUT
     my_uuid = uuid4()
     # Determine hosts to scan
@@ -207,8 +206,8 @@ def scan_all(hosts=None, timeout=None, updater=None):
         return []
     # Report host:port with no results
     if wait_set:
-        print >> sys.stderr, (
-            'WARNING, scan timed out, no result for the following:')
+        sys.stderr.write(
+            'WARNING, scan timed out, no result for the following:\n')
         for key in sorted(wait_set):
-            print >> sys.stderr, '  %s:%s' % key
+            sys.stderr.write('  %s:%s\n' % key)
     return results

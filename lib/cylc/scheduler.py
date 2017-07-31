@@ -40,7 +40,7 @@ import cylc.flags
 from cylc.log_diagnosis import LogSpec
 from cylc.mp_pool import SuiteProcPool
 from cylc.network import PRIVILEGE_LEVELS
-from cylc.network.daemon import CommsDaemon
+from cylc.network.httpserver import HTTPServer
 from cylc.state_summary_mgr import StateSummaryMgr
 from cylc.suite_db_mgr import SuiteDatabaseManager
 from cylc.suite_events import (
@@ -162,7 +162,7 @@ class Scheduler(object):
         self.task_job_mgr = None
         self.task_events_mgr = None
         self.suite_event_handler = None
-        self.comms_daemon = None
+        self.httpserver = None
         self.command_queue = None
         self.message_queue = None
         self.ext_trigger_queue = None
@@ -305,7 +305,7 @@ conditions; see `cylc conditions`.
             self.suite, self.proc_pool, self.suite_db_mgr,
             self.suite_srv_files_mgr)
         self.task_events_mgr = self.task_job_mgr.task_events_mgr
-        self.comms_daemon.connect(self)
+        self.httpserver.connect(self)
 
         if self.is_restart:
             # This logic handles the lack of initial cycle point in "suite.rc".
@@ -861,8 +861,8 @@ conditions; see `cylc conditions`.
 
     def configure_comms_daemon(self):
         """Create and configure daemon."""
-        self.comms_daemon = CommsDaemon(self.suite)
-        self.port = self.comms_daemon.get_port()
+        self.httpserver = HTTPServer(self.suite)
+        self.port = self.httpserver.get_port()
         # Make sure another suite of the same name has not started while this
         # one is starting
         self.suite_srv_files_mgr.detect_old_contact_file(self.suite)
@@ -1458,8 +1458,8 @@ conditions; see `cylc conditions`.
             except Exception as exc:
                 ERR.error(str(exc))
 
-        if self.comms_daemon:
-            self.comms_daemon.shutdown()
+        if self.httpserver:
+            self.httpserver.shutdown()
 
         # Flush errors and info before removing suite contact file
         sys.stdout.flush()

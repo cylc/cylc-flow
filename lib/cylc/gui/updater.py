@@ -30,7 +30,7 @@ from cylc.dump import get_stop_state_summary
 from cylc.gui.cat_state import cat_state
 from cylc.gui.warning_dialog import warning_dialog
 from cylc.network.client import (
-    SuiteRuntimeServiceClient, ConnectionError, ConnectionDeniedError)
+    SuiteRuntimeServiceClient, ClientError, ClientDeniedError)
 from cylc.suite_status import (
     SUITE_STATUS_NOT_CONNECTED, SUITE_STATUS_CONNECTED,
     SUITE_STATUS_INITIALISING, SUITE_STATUS_STOPPED, SUITE_STATUS_STOPPING
@@ -184,7 +184,7 @@ class Updater(threading.Thread):
             print >> sys.stderr, "  reconnection...",
         try:
             self.daemon_version = self.client.get_info('get_cylc_version')
-        except ConnectionDeniedError as exc:
+        except ClientDeniedError as exc:
             if cylc.flags.debug:
                 traceback.print_exc()
             if not self.connect_fail_warned:
@@ -193,7 +193,7 @@ class Updater(threading.Thread):
                     self.warn,
                     "ERROR: %s\n\nIncorrect suite passphrase?" % exc)
             return
-        except ConnectionError as exc:
+        except ClientError as exc:
             # Failed to (re)connect
             # Suite not running, starting up or just stopped.
             if cylc.flags.debug:

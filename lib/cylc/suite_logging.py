@@ -31,7 +31,7 @@ try:
     # Permits use of module by standalone utilities that aren't part of a
     # suite.
     from cylc.cfgspec.globalcfg import GLOBAL_CFG
-except:
+except ImportError:
     pass
 from cylc.wallclock import (get_time_string_from_unix_time,
                             get_current_time_string)
@@ -316,7 +316,7 @@ class SuiteLog(object):
         path = self.get_log_path(log)
         try:
             size = os.path.getsize(path)
-        except (IOError, OSError) as exc:
+        except (IOError, OSError):
             size = 0
         if size == prev_size:
             return [], prev_size
@@ -325,7 +325,7 @@ class SuiteLog(object):
             handle.seek(prev_size)
             new_content = handle.read()
             handle.close()
-        except (IOError, OSError) as exc:
+        except (IOError, OSError):
             return "", prev_size
         new_content_lines = new_content.splitlines()[-int(max_lines):]
         return "\n".join(new_content_lines), size

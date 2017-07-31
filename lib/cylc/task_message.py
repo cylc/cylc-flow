@@ -103,7 +103,7 @@ class TaskMessage(object):
     def _send_by_remote_port(self, messages):
         """Send message by talking to the daemon (remote?) port."""
         from cylc.network.client import (
-            SuiteRuntimeServiceClient, ConnectionError, ConnectionInfoError)
+            SuiteRuntimeServiceClient, ClientError, ClientInfoError)
 
         # Convert time/duration into appropriate units
         retry_intvl = float(self.env_map.get(
@@ -126,14 +126,14 @@ class TaskMessage(object):
             try:
                 for message in messages:
                     client.put_message(self.task_id, self.priority, message)
-            except ConnectionError as exc:
+            except ClientError as exc:
                 sys.stderr.write("Send message: try %s of %s failed: %s\n" % (
                     i, max_tries, exc))
                 # Break if:
                 # * Exhausted number of tries.
                 # * Contact info file not found, suite probably not running.
                 #   Don't bother with retry, suite restart will poll any way.
-                if i >= max_tries or isinstance(exc, ConnectionInfoError):
+                if i >= max_tries or isinstance(exc, ClientInfoError):
                     # Issue a warning and let the task carry on
                     sys.stderr.write("WARNING: MESSAGE SEND FAILED\n")
                 else:

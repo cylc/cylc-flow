@@ -18,24 +18,25 @@
 """Wrap HTTPS daemon for a suite."""
 
 import binascii
-import cherrypy
 import os
 import random
 import traceback
 
+import cherrypy
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.exceptions import CylcError
 import cylc.flags
 from cylc.network import NO_PASSPHRASE
 from cylc.network.server import SuiteRuntimeService
 from cylc.network.server_util import get_client_info
+from cylc.suite_host import get_suite_host
+from cylc.suite_logging import ERR, LOG
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
-from cylc.suite_logging import ERR, LOG
 
 
-class CommsDaemon(object):
-    """Wrap HTTPS daemon for a suite."""
+class HTTPServer(object):
+    """HTTP(S) server for suite runtime services."""
 
     LOG_CONNECT_DENIED_TMPL = "[client-connect] DENIED %s@%s:%s %s"
 
@@ -51,7 +52,6 @@ class CommsDaemon(object):
         random.shuffle(self.ok_ports)
 
         comms_options = GLOBAL_CFG.get(['communication', 'options'])
-        comms_methods = GLOBAL_CFG.get(['communication', 'method'])
 
         # HTTP Digest Auth uses MD5 - pretty secure in this use case.
         # Extending it with extra algorithms is allowed, but won't be
@@ -62,22 +62,7 @@ class CommsDaemon(object):
             self.hash_algorithm = "SHA"
 
         self.srv_files_mgr = SuiteSrvFilesManager()
-        try:
-            # Set the comms protocol from the suite contact file.
-            self.comms_method = self.srv_files_mgr.get_auth_item(
-                self.srv_files_mgr.KEY_COMMS_PROTOCOL,
-                self.suite, content=True)
-        except (SuiteServiceFileError, KeyError, ValueError):
-            # Set the comms protocol from the global config
-            if "https" in comms_methods:
-                self.comms_method = "https"
-            elif "http" in comms_methods:
-                self.comms_method = "http"
-            else:
-                # This shouldn't happen really since global config has a
-                # default value of https.
-                self.comms_method = None
-
+        self.comms_method = GLOBAL_CFG.get(['communication', 'method'])
         self.get_ha1 = cherrypy.lib.auth_digest.get_ha1_dict_plain(
             {
                 'cylc': self.srv_files_mgr.get_auth_item(
@@ -86,14 +71,19 @@ class CommsDaemon(object):
                 'anon': NO_PASSPHRASE
             },
             algorithm=self.hash_algorithm)
-        try:
-            self.cert = self.srv_files_mgr.get_auth_item(
-                self.srv_files_mgr.FILE_BASE_SSL_CERT, suite)
-            self.pkey = self.srv_files_mgr.get_auth_item(
-                self.srv_files_mgr.FILE_BASE_SSL_PEM, suite)
-        except SuiteServiceFileError:
+        if self.comms_method == 'http':
             self.cert = None
             self.pkey = None
+        else:  # if self.comms_method in [None, 'https']:
+            try:
+                self.cert = self.srv_files_mgr.get_auth_item(
+                    self.srv_files_mgr.FILE_BASE_SSL_CERT, suite)
+                self.pkey = self.srv_files_mgr.get_auth_item(
+                    self.srv_files_mgr.FILE_BASE_SSL_PEM, suite)
+            except SuiteServiceFileError:
+                ERR.error("no HTTPS/OpenSSL support. Aborting...")
+                raise CylcError("No HTTPS support. "
+                                "Configure user's global.rc to use HTTP.")
         self.start()
 
     def shutdown(self):
@@ -102,13 +92,15 @@ class CommsDaemon(object):
             self.engine.exit()
             self.engine.block()
 
-    def connect(self, schd):
+    @staticmethod
+    def connect(schd):
         """Connect suite schedular object to the daemon."""
         cherrypy.tree.mount(SuiteRuntimeService(schd), '/')
         # For back-compat with "scan"
         cherrypy.tree.mount(SuiteRuntimeService(schd), '/id')
 
-    def disconnect(self, schd):
+    @staticmethod
+    def disconnect(schd):
         """Disconnect obj from the daemon."""
         del cherrypy.tree.apps['/%s/%s' % (schd.owner, schd.suite)]
 
@@ -120,26 +112,15 @@ class CommsDaemon(object):
         """Start quick web service."""
         # cherrypy.config["tools.encode.on"] = True
         # cherrypy.config["tools.encode.encoding"] = "utf-8"
-        cherrypy.config["server.socket_host"] = '0.0.0.0'
+        cherrypy.config["server.socket_host"] = get_suite_host()
         cherrypy.config["engine.autoreload.on"] = False
-
-        if self.comms_method is None:
-            # assume https if not config'd (although this should be default
-            # from globalcfg so is it really necessary here?)
-            self.comms_method = "https"
 
         if self.comms_method == "https":
             # Setup SSL etc. Otherwise fail and exit.
             # Require connection method to be the same e.g HTTP/HTTPS matching.
-            try:
-                from OpenSSL import SSL, crypto
-                cherrypy.config['server.ssl_module'] = 'pyopenSSL'
-                cherrypy.config['server.ssl_certificate'] = self.cert
-                cherrypy.config['server.ssl_private_key'] = self.pkey
-            except ImportError:
-                ERR.error("no HTTPS/OpenSSL support. Aborting...")
-                raise CylcError("No HTTPS support. "
-                                "Configure user's global.rc to use HTTP.")
+            cherrypy.config['server.ssl_module'] = 'pyopenSSL'
+            cherrypy.config['server.ssl_certificate'] = self.cert
+            cherrypy.config['server.ssl_private_key'] = self.pkey
 
         cherrypy.config['log.screen'] = None
         key = binascii.hexlify(os.urandom(16))
@@ -159,7 +140,7 @@ class CommsDaemon(object):
             try:
                 cherrypy.engine.start()
                 cherrypy.engine.wait(cherrypy.engine.states.STARTED)
-            except Exception:
+            except cherrypy.process.wspbus.ChannelFailures:
                 if cylc.flags.debug:
                     traceback.print_exc()
                 # We need to reinitialise the httpserver for each port attempt.
@@ -183,12 +164,7 @@ class CommsDaemon(object):
 
     def _report_connection_if_denied(self):
         """Log an (un?)successful connection attempt."""
-        try:
-            prog_name, user, host, uuid = get_client_info()[1:]
-        except Exception:
-            LOG.warning(self.__class__.LOG_CONNECT_DENIED_TMPL % (
-                "unknown", "unknown", "unknown", "unknown"))
-            return
+        prog_name, user, host, uuid = get_client_info()[1:]
         connection_denied = self._get_client_connection_denied()
         if connection_denied:
             LOG.warning(self.__class__.LOG_CONNECT_DENIED_TMPL % (

@@ -32,7 +32,9 @@ from cylc.unicode_util import unicode_encode
 from cylc.version import CYLC_VERSION
 
 
-class ConnectionError(Exception):
+# Note: This was renamed from ConnectionError to ClientError. ConnectionError
+# is a built-in exception in Python 3.
+class ClientError(Exception):
 
     """An error raised when the client cannot connect."""
 
@@ -42,7 +44,7 @@ class ConnectionError(Exception):
         return self.MESSAGE % (self.args[0], self.args[1])
 
 
-class ConnectionDeniedError(ConnectionError):
+class ClientDeniedError(ClientError):
 
     """An error raised when the client is not permitted to connect."""
 
@@ -52,7 +54,7 @@ class ConnectionDeniedError(ConnectionError):
         return self.MESSAGE % (self.args[0], self.args[1], self.args[2])
 
 
-class ConnectionInfoError(ConnectionError):
+class ClientInfoError(ClientError):
 
     """An error raised when the client is unable to load the contact info."""
 
@@ -62,7 +64,7 @@ class ConnectionInfoError(ConnectionError):
         return self.MESSAGE % (self.args[0])
 
 
-class ConnectionTimeout(ConnectionError):
+class ClientTimeout(ClientError):
 
     """An error raised on connection timeout."""
 
@@ -251,7 +253,7 @@ class SuiteRuntimeServiceClient(object):
         try:
             self._load_contact_info()
         except (IOError, ValueError, SuiteServiceFileError):
-            raise ConnectionInfoError(self.suite)
+            raise ClientInfoError(self.suite)
         host = self.host
         if host == 'localhost':
             host = get_suite_host()
@@ -330,22 +332,22 @@ class SuiteRuntimeServiceClient(object):
                 if cylc.flags.debug:
                     import traceback
                     traceback.print_exc()
-                raise ConnectionError(url, exc)
+                raise ClientError(url, exc)
             except requests.exceptions.Timeout as exc:
                 if cylc.flags.debug:
                     import traceback
                     traceback.print_exc()
-                raise ConnectionTimeout(url, exc)
+                raise ClientTimeout(url, exc)
             except requests.exceptions.RequestException as exc:
                 if cylc.flags.debug:
                     import traceback
                     traceback.print_exc()
-                raise ConnectionError(url, exc)
+                raise ClientError(url, exc)
             if ret.status_code == 401:
                 access_desc = 'private'
                 if self.auth == self.ANON_AUTH:
                     access_desc = 'public'
-                raise ConnectionDeniedError(url, self.prog_name, access_desc)
+                raise ClientDeniedError(url, self.prog_name, access_desc)
             if ret.status_code >= 400:
                 exception_text = get_exception_from_html(ret.text)
                 if exception_text:
@@ -358,7 +360,7 @@ class SuiteRuntimeServiceClient(object):
                 if cylc.flags.debug:
                     import traceback
                     traceback.print_exc()
-                raise ConnectionError(url, exc)
+                raise ClientError(url, exc)
             if self.auth and self.auth[1] != NO_PASSPHRASE:
                 self.srv_files_mgr.cache_passphrase(
                     self.suite, self.owner, self.host, self.auth[1])
@@ -421,20 +423,20 @@ class SuiteRuntimeServiceClient(object):
                     import traceback
                     traceback.print_exc()
                 if "timed out" in str(exc):
-                    raise ConnectionTimeout(url, exc)
+                    raise ClientTimeout(url, exc)
                 else:
-                    raise ConnectionError(url, exc)
+                    raise ClientError(url, exc)
             except Exception as exc:
                 if cylc.flags.debug:
                     import traceback
                     traceback.print_exc()
-                raise ConnectionError(url, exc)
+                raise ClientError(url, exc)
 
             if response.getcode() == 401:
                 access_desc = 'private'
                 if self.auth == self.ANON_AUTH:
                     access_desc = 'public'
-                raise ConnectionDeniedError(url, self.prog_name, access_desc)
+                raise ClientDeniedError(url, self.prog_name, access_desc)
             response_text = response.read()
             if response.getcode() >= 400:
                 exception_text = get_exception_from_html(response_text)
@@ -442,7 +444,7 @@ class SuiteRuntimeServiceClient(object):
                     sys.stderr.write(exception_text)
                 else:
                     sys.stderr.write(response_text)
-                raise ConnectionError(
+                raise ClientError(
                     url,
                     "%s HTTP return code" % response.getcode())
             if self.auth and self.auth[1] != NO_PASSPHRASE:
