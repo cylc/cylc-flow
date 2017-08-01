@@ -144,16 +144,19 @@ class BaseCommsClient(object):
         except (IOError, ValueError, SuiteServiceFileError):
             raise ConnectionInfoError(self.suite)
         handle_proxies()
+        host = self.host
+        if host == 'localhost':
+            host = get_suite_host()
 
         http_request_items = []
         try:
             # dictionary containing: url, payload, method
             http_request_items.append(self._compile_url(
-                category, func_dict, self.host, self.comms_protocol))
+                category, func_dict, host, self.comms_protocol))
         except (IndexError, ValueError, AttributeError):
             for f_dict in func_dicts:
                 http_request_items.append(self._compile_url(
-                    category, f_dict, self.host, self.comms_protocol))
+                    category, f_dict, host, self.comms_protocol))
         # returns a list of http returns from the requests
         return self._get_data_from_url(http_request_items)
 

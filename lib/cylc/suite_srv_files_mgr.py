@@ -467,7 +467,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
         ext = crypto.X509Extension(
             "subjectAltName",
             False,
-            "DNS:*, DNS:%(dns)s, IP:%(ip)s, DNS:%(ip)s" % {
+            "DNS:%(dns)s, IP:%(ip)s, DNS:%(ip)s" % {
                 "dns": host, "ip": get_local_ip_address(host)})
         file_name = self._locate_item(self.FILE_BASE_SSL_CERT, path)
         if file_name:
