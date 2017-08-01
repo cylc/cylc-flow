@@ -400,7 +400,7 @@ class SuiteRuntimeService(object):
     @cherrypy.tools.json_out()
     def put_message(self, task_id, priority, message):
         self._check_access_priv('full-control')
-        self._report()
+        self._report(log_info=False)
         self.schd.message_queue.put((task_id, priority, str(message)))
         return (True, 'Message queued')
 
@@ -627,7 +627,7 @@ class SuiteRuntimeService(object):
             raise cherrypy.HTTPError(403, err)
         return True
 
-    def _report(self):
+    def _report(self, log_info=True):
         """Log client requests with identifying information.
 
         In debug mode log all requests including task messages. Otherwise log
@@ -639,8 +639,9 @@ class SuiteRuntimeService(object):
         priv_level = self._get_priv_level(auth_user)
         LOG.debug(self.__class__.LOG_CONNECT_ALLOWED_TMPL % (
             user, host, prog_name, priv_level, uuid))
-        LOG.info(self.__class__.LOG_COMMAND_TMPL % (
-            command, user, host, prog_name, uuid))
+        if uuid not in self.clients and log_info:
+            LOG.info(self.__class__.LOG_COMMAND_TMPL % (
+                command, user, host, prog_name, uuid))
         self.clients[uuid] = time()
         self._housekeep()
 
@@ -651,12 +652,14 @@ class SuiteRuntimeService(object):
         interval = now - self._id_start_time
         if interval > self.CLIENT_ID_REPORT_SECONDS:
             rate = float(self._num_id_requests) / interval
+            log = None
             if rate > self.CLIENT_ID_MIN_REPORT_RATE:
                 log = LOG.warning
             elif cylc.flags.debug:
                 log = LOG.info
-            log(self.__class__.LOG_IDENTIFY_TMPL % (
-                self._num_id_requests, interval))
+            if log:
+                log(self.__class__.LOG_IDENTIFY_TMPL % (
+                    self._num_id_requests, interval))
             self._id_start_time = now
             self._num_id_requests = 0
         self.clients[get_client_info()[4]] = now

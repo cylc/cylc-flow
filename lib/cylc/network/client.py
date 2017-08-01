@@ -270,7 +270,7 @@ class SuiteRuntimeServiceClient(object):
         # Remove proxy settings from environment for now
         environ = {}
         for key in ("http_proxy", "https_proxy"):
-            val = os.environ.pop("http_proxy", None)
+            val = os.environ.pop(key, None)
             if val:
                 environ[key] = val
         # Returns a list of http returns from the requests

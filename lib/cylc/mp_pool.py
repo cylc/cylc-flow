@@ -190,7 +190,10 @@ class SuiteProcPool(object):
     def join(self):
         """Join after workers have exited. Close or terminate first."""
         LOG.debug("Joining process pool")
-        self.pool.join()
+        try:
+            self.pool.join()
+        except AssertionError:
+            pass
 
     def put_command(self, ctx, callback, callback_args=None):
         """Queue a new shell command to execute."""
