@@ -639,7 +639,7 @@ class SuiteRuntimeService(object):
         priv_level = self._get_priv_level(auth_user)
         LOG.debug(self.__class__.LOG_CONNECT_ALLOWED_TMPL % (
             user, host, prog_name, priv_level, uuid))
-        if uuid not in self.clients and log_info:
+        if cylc.flags.debug or uuid not in self.clients and log_info:
             LOG.info(self.__class__.LOG_COMMAND_TMPL % (
                 command, user, host, prog_name, uuid))
         self.clients[uuid] = time()
