@@ -1508,7 +1508,7 @@ conditions; see `cylc conditions`.
         try:
             self.suite_db_mgr.process_queued_ops()
             self.suite_db_mgr.on_suite_shutdown()
-        except StandardError:
+        except StandardError as exc:
             ERR.error(str(exc))
 
         if getattr(self, "config", None) is not None:
