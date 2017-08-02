@@ -49,7 +49,7 @@ import cylc.flags
 from cylc.prompt import prompt
 from cylc.task_id import TaskID
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.client import ClientError, SuiteRuntimeServiceClient
+from cylc.network.httpclient import ClientError, SuiteRuntimeServiceClient
 from cylc.command_polling import Poller
 
 

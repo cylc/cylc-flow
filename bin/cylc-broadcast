@@ -85,7 +85,7 @@ import cylc.flags
 from cylc.broadcast_report import (
     get_broadcast_change_report, get_broadcast_bad_options_report)
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.client import SuiteRuntimeServiceClient
+from cylc.network.httpclient import SuiteRuntimeServiceClient
 from cylc.print_tree import print_tree
 from cylc.task_id import TaskID
 from cylc.cfgspec.suite import SPEC, upg

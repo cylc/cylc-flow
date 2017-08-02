@@ -29,7 +29,7 @@ import cylc.flags
 from cylc.dump import get_stop_state_summary
 from cylc.gui.cat_state import cat_state
 from cylc.gui.warning_dialog import warning_dialog
-from cylc.network.client import (
+from cylc.network.httpclient import (
     SuiteRuntimeServiceClient, ClientError, ClientDeniedError)
 from cylc.suite_status import (
     SUITE_STATUS_NOT_CONNECTED, SUITE_STATUS_CONNECTED,

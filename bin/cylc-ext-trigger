@@ -41,7 +41,7 @@ from time import sleep
 
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.client import SuiteRuntimeServiceClient
+from cylc.network.httpclient import SuiteRuntimeServiceClient
 from cylc.suite_logging import OUT, ERR
 
 

@@ -34,7 +34,7 @@ from time import sleep, time
 
 from parsec.OrderedDict import OrderedDict
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.client import SuiteRuntimeServiceClient
+from cylc.network.httpclient import SuiteRuntimeServiceClient
 from cylc.wallclock import get_time_string_from_unix_time
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.task_state import (

@@ -15,7 +15,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Wrap communications daemon for a suite."""
+"""HTTP(S) client for suite runtime API.
+
+Implementation currently via requests (urllib3) or urllib2.
+"""
 
 import os
 import sys
@@ -75,7 +78,7 @@ class ClientTimeout(ClientError):
 
 
 class SuiteRuntimeServiceClient(object):
-    """Client logic for invoking the HTTP(S) API of running suites."""
+    """Client for calling the HTTP(S) API of running suites."""
 
     ANON_AUTH = ('anon', NO_PASSPHRASE, False)
     ERROR_NO_HTTPS_SUPPORT = (

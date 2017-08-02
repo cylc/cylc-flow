@@ -19,6 +19,6 @@
 . "$(dirname "$0")/test_header"
 set_test_number 1
 
-run_ok "${TEST_NAME_BASE}-unit-tests" python -m 'cylc.network.client'
+run_ok "${TEST_NAME_BASE}-unit-tests" python -m 'cylc.network.httpclient'
 
 exit

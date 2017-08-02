@@ -25,7 +25,7 @@ from uuid import uuid4
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
-from cylc.network.client import (
+from cylc.network.httpclient import (
     SuiteRuntimeServiceClient, ClientError, ClientTimeout)
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)

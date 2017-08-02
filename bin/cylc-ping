@@ -31,7 +31,7 @@ if '--use-ssh' in sys.argv[1:]:
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.task_id import TaskID
-from cylc.network.client import SuiteRuntimeServiceClient
+from cylc.network.httpclient import SuiteRuntimeServiceClient
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 
 
