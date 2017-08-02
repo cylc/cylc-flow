@@ -1461,21 +1461,20 @@ conditions; see `cylc conditions`.
             except IOError as exc:
                 ERR.error(str(exc))
 
-        if self.pool is not None:
-            self.pool.warn_stop_orphans()
-            try:
-                self.suite_db_mgr.put_task_event_timers(self.task_events_mgr)
-                self.suite_db_mgr.put_task_pool(self.pool)
-                self.suite_db_mgr.process_queued_ops()
-            except Exception as exc:
-                ERR.error(str(exc))
-
         if self.proc_pool:
             if not self.proc_pool.is_dead():
                 # e.g. KeyboardInterrupt
                 self.proc_pool.terminate()
             self.proc_pool.join()
             self.proc_pool.handle_results_async()
+
+        if self.pool is not None:
+            self.pool.warn_stop_orphans()
+            try:
+                self.suite_db_mgr.put_task_event_timers(self.task_events_mgr)
+                self.suite_db_mgr.put_task_pool(self.pool)
+            except Exception as exc:
+                ERR.error(str(exc))
 
         if self.comms_daemon:
             ifaces = [self.command_queue,
@@ -1506,7 +1505,11 @@ conditions; see `cylc conditions`.
                 self.task_job_mgr.unlink_hosts_contacts(self.suite)
 
         # disconnect from suite-db, stop db queue
-        self.suite_db_mgr.on_suite_shutdown()
+        try:
+            self.suite_db_mgr.process_queued_ops()
+            self.suite_db_mgr.on_suite_shutdown()
+        except StandardError:
+            ERR.error(str(exc))
 
         if getattr(self, "config", None) is not None:
             # run shutdown handlers

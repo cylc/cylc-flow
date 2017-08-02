@@ -326,6 +326,10 @@ class TaskState(object):
         elif status == TASK_STATUS_SUBMITTED:
             self.set_prerequisites_all_satisfied()
             self.outputs.set_completed(TASK_OUTPUT_SUBMITTED)
+        elif status == TASK_STATUS_RUNNING:
+            self.set_prerequisites_all_satisfied()
+            self.outputs.set_completed(TASK_OUTPUT_SUBMITTED)
+            self.outputs.set_completed(TASK_OUTPUT_STARTED)
         elif status == TASK_STATUS_SUBMIT_RETRYING:
             self.set_prerequisites_all_satisfied()
             self.outputs.remove(TASK_OUTPUT_SUBMITTED)
@@ -360,6 +364,9 @@ class TaskState(object):
         o_status, o_hold_swap = self.status, self.hold_swap
         if status == TASK_STATUS_HELD:
             self.hold_swap = self.status
+        elif status in TASK_STATUSES_ACTIVE:
+            if self.status == TASK_STATUS_HELD:
+                self.hold_swap = TASK_STATUS_HELD
         elif (self.hold_swap == TASK_STATUS_HELD and
                 status not in TASK_STATUSES_FINAL):
             self.hold_swap = status
