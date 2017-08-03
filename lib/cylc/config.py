@@ -1854,8 +1854,8 @@ class SuiteConfig(object):
         family_map = {}
         for family, tasks in self.runtime['descendants'].iteritems():
             family_map[family] = [t for t in tasks if (
-                t in self.runtime['parents']
-                and t not in self.runtime['descendants'])]
+                t in self.runtime['parents'] and
+                t not in self.runtime['descendants'])]
 
         # Move a cylc-5 non-cycling graph to an R1 section.
         non_cycling_graph = self.cfg['scheduling']['dependencies']['graph']
