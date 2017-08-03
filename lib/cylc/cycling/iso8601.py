@@ -621,7 +621,7 @@ class ISO8601Sequence(SequenceBase):
             for recurrence_iso_point in self.recurrence:
                 prev = curr
                 curr = recurrence_iso_point
-            ret = ISO8601Point(str(recurrence_iso_point))
+            ret = ISO8601Point(str(curr))
             if self.exclusions and ret in self.exclusions:
                 return ISO8601Point(str(prev))
             return ret
