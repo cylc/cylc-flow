@@ -293,7 +293,7 @@ def make_table(results, versions, experiment, quick_analysis=False):
             data = results[version['id']][experiment['id']]
             run_names = data.keys()
             try:
-                run_names.sort(key=lambda x: int(x))
+                run_names.sort(key=int)
             except ValueError:
                 run_names.sort()
             for run_name in run_names:
