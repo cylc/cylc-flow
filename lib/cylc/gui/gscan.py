@@ -343,8 +343,8 @@ class ScanApp(object):
         hosts_item.set_image(img)
         hosts_item.show()
         hosts_item.connect(
-            "button-press-event",
-            lambda b, e: launch_hosts_dialog(
+            "activate",
+            lambda w: launch_hosts_dialog(
                 self.hosts, self.updater.set_hosts))
         view_menu.append(hosts_item)
 
