@@ -121,7 +121,7 @@ def main():
     else:
         print "WARNING: failed to invoke cylc-%s on %d accounts:" % (
             CYLC_VERSION, len(warn.keys()))
-        m = max(len(ac) for ac in warn.keys())
+        m = max(len(ac) for ac in warn)
         for ac, warning in warn.items():
             print ' ', ac.ljust(m), warning
         if options.error:

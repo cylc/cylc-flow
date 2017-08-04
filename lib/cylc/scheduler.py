@@ -544,7 +544,7 @@ conditions; see `cylc conditions`.
             args_string = ', '.join(str(a) for a in args)
             cmdstr = name + '(' + args_string
             kwargs_string = ', '.join(
-                ('%s=%s' % (key, str(value)) for key, value in kwargs.items()))
+                ('%s=%s' % (key, value) for key, value in kwargs.items()))
             if kwargs_string and args_string:
                 cmdstr += ', '
             cmdstr += kwargs_string + ')'

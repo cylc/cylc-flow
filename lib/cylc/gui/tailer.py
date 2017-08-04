@@ -56,7 +56,7 @@ class Tailer(threading.Thread):
         self.filename = filename
         self.cmd_tmpl = cmd_tmpl
         self.pollable = pollable
-        self.filters = filters
+        self.filters = [re.compile(f) for f in filters]
 
         self.logbuffer = logview.get_buffer()
         self.quit = False
@@ -133,7 +133,7 @@ class Tailer(threading.Thread):
                         line = buf + line
                         buf = ""
                     if (not self.filters or
-                            all(re.search(f, line) for f in self.filters)):
+                            all(f.search(line) for f in self.filters)):
                         gobject.idle_add(self.update_gui, line)
             sleep(0.01)
         self.stop()

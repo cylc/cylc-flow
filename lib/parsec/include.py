@@ -150,8 +150,8 @@ def cleanup(suitedir):
     print 'CLEANUP REQUESTED, deleting:'
     for root, _, files in os.walk(suitedir):
         for filename in files:
-            if re.search('\.EDIT\..*$', filename):
-                print ' + ' + re.sub(suitedir + '/', '', filename)
+            if '.EDIT.' in filename:
+                print ' + %s' % filename.replace(suitedir + '/', '')
                 os.unlink(os.path.join(root, filename))
 
 
