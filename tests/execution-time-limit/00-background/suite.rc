@@ -1,5 +1,9 @@
 #!jinja2
 [cylc]
+   abort if any task fails = True
+   [[events]]
+       abort on inactivity = True
+       inactivity = PT2M
    [[reference test]]
        required run mode = live
        live mode suite timeout = PT30S

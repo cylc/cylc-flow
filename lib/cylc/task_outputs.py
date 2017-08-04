@@ -93,6 +93,21 @@ class TaskOutputs(object):
                 ret.append(value[_MESSAGE])
         return ret
 
+    def get_completed_customs(self):
+        """Return all completed custom outputs.
+
+        Return a list in this form: [(trigger1, message1), ...]
+        """
+        ret = []
+        for value in self.get_all():
+            if value[_IS_COMPLETED] and value[_TRIGGER] not in _SORT_ORDERS:
+                ret.append((value[_TRIGGER], value[_MESSAGE]))
+        return ret
+
+    def has_custom_triggers(self):
+        """Return True if it has any custom triggers."""
+        return any(key not in _SORT_ORDERS for key in self._by_trigger)
+
     def get_not_completed(self):
         """Return all not-completed output messages."""
         ret = []
@@ -129,7 +144,11 @@ class TaskOutputs(object):
             value[_IS_COMPLETED] = False
 
     def set_completed(self, message=None, trigger=None, is_completed=True):
-        """Set the output identified by message/trigger as completed."""
+        """Set the output identified by message/trigger as completed.
+
+        Return True if completion flag is changed, False if completion is
+        unchanged, or None if message/trigger is not found.
+        """
         try:
             item = self._get_item(message, trigger)
             old_is_completed = item[_IS_COMPLETED]

@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Suite database content, a basic non-cycling suite of 3 tasks
 . "$(dirname "$0")/test_header"
-set_test_number 9
+set_test_number 21
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
@@ -55,6 +55,16 @@ sqlite3 "${DB_FILE}" \
      FROM task_jobs ORDER BY name' \
     >"${NAME}"
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
+
+NAME='select-task-jobs-times.out'
+sqlite3 "${DB_FILE}" \
+    'SELECT time_submit,time_submit_exit,time_run,time_run_exit FROM task_jobs' \
+    >"${NAME}"
+for DATE_TIME_STR in $(sed 's/[|]/ /g' "${NAME}"); do
+    # Parse each string with "date --date=..." without the T
+    run_ok "${NAME}-${DATE_TIME_STR}" \
+        date --date="$(sed 's/T/ /' <<<"${DATE_TIME_STR}")"
+done
 
 NAME='select-task-pool.out'
 sqlite3 "${DB_FILE}" 'SELECT name, cycle, spawned FROM task_pool ORDER BY name' \

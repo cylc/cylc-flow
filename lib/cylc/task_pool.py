@@ -228,6 +228,8 @@ class TaskPool(object):
                 "time_created": get_current_time_string(),
                 "time_updated": get_current_time_string(),
                 "status": itask.state.status})
+            if itask.state.outputs.has_custom_triggers():
+                self.suite_db_mgr.put_insert_task_outputs(itask)
         return itask
 
     def release_runahead_tasks(self):
@@ -351,12 +353,12 @@ class TaskPool(object):
         if row_idx == 0:
             OUT.info("LOADING task proxies")
         (cycle, name, spawned, status, hold_swap, submit_num, _,
-         user_at_host, time_submit, time_run, timeout) = row
+         user_at_host, time_submit, time_run, timeout,
+         outputs_str) = row
         try:
             itask = TaskProxy(
                 self.config.get_taskdef(name),
                 get_point(cycle),
-                status=status,
                 hold_swap=hold_swap,
                 has_spawned=bool(spawned),
                 submit_num=submit_num)
@@ -393,7 +395,7 @@ class TaskPool(object):
 
             elif status in (TASK_STATUS_QUEUED, TASK_STATUS_READY):
                 # reset to waiting as these had not been submitted yet.
-                itask.state.reset_state(TASK_STATUS_WAITING)
+                status = TASK_STATUS_WAITING
                 itask.state.set_prerequisites_all_satisfied()
 
             elif status in (TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING):
@@ -401,8 +403,20 @@ class TaskPool(object):
 
             elif status == TASK_STATUS_SUCCEEDED:
                 itask.state.set_prerequisites_all_satisfied()
-                # TODO - just poll for outputs in the job status file.
-                itask.state.outputs.set_all_completed()
+
+            itask.state.reset_state(status)
+
+            # Tasks that are running or finished can have completed custom
+            # outputs
+            if status in [
+                    TASK_STATUS_RUNNING, TASK_STATUS_FAILED,
+                    TASK_STATUS_SUCCEEDED]:
+                try:
+                    for output in outputs_str.splitlines():
+                        itask.state.outputs.set_completed(
+                            message=output.split("=", 1)[1])
+                except AttributeError:
+                    pass
 
             if user_at_host:
                 itask.summary['job_hosts'][int(submit_num)] = user_at_host
@@ -1095,6 +1109,7 @@ class TaskPool(object):
                             LOG.info(
                                 "reset output to incomplete: %s" % output,
                                 itask=itask)
+                self.suite_db_mgr.put_update_task_outputs(itask)
         return len(bad_items)
 
     def remove_tasks(self, items, spawn=False):

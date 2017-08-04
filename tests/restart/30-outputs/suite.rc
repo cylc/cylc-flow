@@ -1,0 +1,18 @@
+[cylc]
+    [[events]]
+        abort on stalled = True
+        #startup handler = cylc reset '%(suite)s' -O greet 't1.1'
+[scheduling]
+    [[dependencies]]
+        graph = """
+t1:hello => t2
+t1:greet => t3
+"""
+[runtime]
+    [[t1]]
+        script = cylc message 'hello'
+        [[[outputs]]]
+            hello = hello
+            greet = greeting
+    [[t2, t3]]
+        script = true

@@ -26,8 +26,7 @@ import cylc.flags
 
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
-from cylc.task_outputs import (
-    TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED)
+from cylc.task_outputs import TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED
 
 
 class TaskMessage(object):
@@ -75,13 +74,15 @@ class TaskMessage(object):
         """Send messages back to the suite."""
         self._print_messages(messages)
         self._update_job_status_file(messages)
+        messages = [msg + ' at ' + self.true_event_time for msg in messages]
         try:
             self.env_map.update(
                 SuiteSrvFilesManager().load_contact_file(self.suite))
-        except (IOError, ValueError, SuiteServiceFileError) as exc:
+        except (IOError, ValueError, SuiteServiceFileError):
             # No suite to communicate with, just print to stdout.
             if cylc.flags.debug:
-                print >> sys.stderr, exc
+                import traceback
+                traceback.print_exc()
             return
         if (self.env_map.get('CYLC_TASK_COMMS_METHOD') == 'ssh' and
                 self._send_by_ssh()):
@@ -207,63 +208,67 @@ class TaskMessage(object):
     def _update_job_status_file(self, messages):
         """Write messages to job status file."""
         job_log_name = os.getenv("CYLC_TASK_LOG_ROOT")
+        if not job_log_name:
+            return
         job_status_file = None
-        if job_log_name:
-            try:
-                job_status_file = open(job_log_name + ".status", "ab")
-            except IOError as exc:
-                if cylc.flags.debug:
-                    print >> sys.stderr, exc
-        for i, message in enumerate(messages):
-            if job_status_file:
-                if message == TASK_OUTPUT_STARTED:
-                    job_id = os.getppid()
-                    if job_id > 1:
-                        # If os.getppid() returns 1, the original job process
-                        # is likely killed already
-                        job_status_file.write("%s=%s\n" % (
-                            self.CYLC_JOB_PID, job_id))
+        try:
+            job_status_file = open(job_log_name + ".status", "ab")
+        except IOError:
+            if cylc.flags.debug:
+                import traceback
+                traceback.print_exc()
+            return
+        for message in messages:
+            if message == TASK_OUTPUT_STARTED:
+                job_id = os.getppid()
+                if job_id > 1:
+                    # If os.getppid() returns 1, the original job process
+                    # is likely killed already
                     job_status_file.write("%s=%s\n" % (
-                        self.CYLC_JOB_INIT_TIME, self.true_event_time))
-                elif message == TASK_OUTPUT_SUCCEEDED:
-                    job_status_file.write(
-                        ("%s=%s\n" % (self.CYLC_JOB_EXIT,
-                                      TASK_OUTPUT_SUCCEEDED.upper())) +
-                        ("%s=%s\n" % (
-                            self.CYLC_JOB_EXIT_TIME, self.true_event_time)))
-                elif message == TASK_OUTPUT_FAILED:
-                    job_status_file.write("%s=%s\n" % (
-                        self.CYLC_JOB_EXIT_TIME, self.true_event_time))
-                elif message.startswith(self.FAIL_MESSAGE_PREFIX):
-                    job_status_file.write("%s=%s\n" % (
+                        self.CYLC_JOB_PID, job_id))
+                job_status_file.write("%s=%s\n" % (
+                    self.CYLC_JOB_INIT_TIME, self.true_event_time))
+            elif message == TASK_OUTPUT_SUCCEEDED:
+                job_status_file.write(
+                    ("%s=%s\n" % (self.CYLC_JOB_EXIT,
+                                  TASK_OUTPUT_SUCCEEDED.upper())) +
+                    ("%s=%s\n" % (
+                        self.CYLC_JOB_EXIT_TIME, self.true_event_time)))
+            elif message.startswith(self.FAIL_MESSAGE_PREFIX):
+                job_status_file.write(
+                    ("%s=%s\n" % (
                         self.CYLC_JOB_EXIT,
-                        message.replace(self.FAIL_MESSAGE_PREFIX, "")))
-                elif message.startswith(self.ABORT_MESSAGE_PREFIX):
-                    job_status_file.write("%s=%s\n" % (
+                        message[len(self.FAIL_MESSAGE_PREFIX):])) +
+                    ("%s=%s\n" % (
+                        self.CYLC_JOB_EXIT_TIME, self.true_event_time)))
+            elif message.startswith(self.ABORT_MESSAGE_PREFIX):
+                job_status_file.write(
+                    ("%s=%s\n" % (
                         self.CYLC_JOB_EXIT,
-                        message.replace(self.ABORT_MESSAGE_PREFIX, "")))
-                elif message.startswith(self.VACATION_MESSAGE_PREFIX):
-                    # Job vacated, remove entries related to current job
-                    job_status_file_name = job_status_file.name
-                    job_status_file.close()
-                    lines = []
-                    for line in open(job_status_file_name):
-                        if not line.startswith("CYLC_JOB_"):
-                            lines.append(line)
-                    job_status_file = open(job_status_file_name, "wb")
-                    for line in lines:
-                        job_status_file.write(line)
-                    job_status_file.write("%s=%s|%s|%s\n" % (
-                        self.CYLC_MESSAGE, self.true_event_time, self.priority,
-                        message))
-                else:
-                    job_status_file.write("%s=%s|%s|%s\n" % (
-                        self.CYLC_MESSAGE, self.true_event_time, self.priority,
-                        message))
-            messages[i] += ' at ' + self.true_event_time
-        if job_status_file:
-            try:
+                        message[len(self.ABORT_MESSAGE_PREFIX):])) +
+                    ("%s=%s\n" % (
+                        self.CYLC_JOB_EXIT_TIME, self.true_event_time)))
+            elif message.startswith(self.VACATION_MESSAGE_PREFIX):
+                # Job vacated, remove entries related to current job
+                job_status_file_name = job_status_file.name
                 job_status_file.close()
-            except IOError as exc:
-                if cylc.flags.debug:
-                    print >> sys.stderr, exc
+                lines = []
+                for line in open(job_status_file_name):
+                    if not line.startswith("CYLC_JOB_"):
+                        lines.append(line)
+                job_status_file = open(job_status_file_name, "wb")
+                for line in lines:
+                    job_status_file.write(line)
+                job_status_file.write("%s=%s|%s|%s\n" % (
+                    self.CYLC_MESSAGE, self.true_event_time, self.priority,
+                    message))
+            else:
+                job_status_file.write("%s=%s|%s|%s\n" % (
+                    self.CYLC_MESSAGE, self.true_event_time, self.priority,
+                    message))
+        try:
+            job_status_file.close()
+        except IOError:
+            if cylc.flags.debug:
+                import traceback
+                traceback.print_exc()

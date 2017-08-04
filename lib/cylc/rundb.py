@@ -181,6 +181,7 @@ class CylcSuiteDAO(object):
     TABLE_TASK_EVENTS = "task_events"
     TABLE_TASK_ACTION_TIMERS = "task_action_timers"
     TABLE_CHECKPOINT_ID = "checkpoint_id"
+    TABLE_TASK_OUTPUTS = "task_outputs"
     TABLE_TASK_POOL = "task_pool"
     TABLE_TASK_POOL_CHECKPOINTS = "task_pool_checkpoints"
     TABLE_TASK_STATES = "task_states"
@@ -264,6 +265,11 @@ class CylcSuiteDAO(object):
             ["submit_num", {"datatype": "INTEGER"}],
             ["event"],
             ["message"],
+        ],
+        TABLE_TASK_OUTPUTS: [
+            ["cycle", {"is_primary_key": True}],
+            ["name", {"is_primary_key": True}],
+            ["outputs"],
         ],
         TABLE_TASK_POOL: [
             ["cycle", {"is_primary_key": True}],
@@ -444,7 +450,7 @@ class CylcSuiteDAO(object):
             if cylc.flags.debug:
                 traceback.print_exc()
             err_log = (
-                "cannot execute database statement:\n" +
+                "cannot execute database statement:\n"
                 "file=%(file)s:\nstmt=%(stmt)s"
             ) % {"file": self.db_file_name, "stmt": stmt}
             for i, stmt_args in enumerate(stmt_args_list):
@@ -546,14 +552,14 @@ class CylcSuiteDAO(object):
             for column in self.tables[self.TABLE_TASK_JOBS].columns[3:]:
                 keys.append(column.name)
         if submit_num in [None, "NN"]:
-            stmt = (r"SELECT %(keys_str)s FROM %(table)s" +
-                    r" WHERE cycle==? AND name==?" +
+            stmt = (r"SELECT %(keys_str)s FROM %(table)s"
+                    r" WHERE cycle==? AND name==?"
                     r" ORDER BY submit_num DESC LIMIT 1") % {
                 "keys_str": ",".join(keys),
                 "table": self.TABLE_TASK_JOBS}
             stmt_args = [cycle, name]
         else:
-            stmt = (r"SELECT %(keys_str)s FROM %(table)s" +
+            stmt = (r"SELECT %(keys_str)s FROM %(table)s"
                     r" WHERE cycle==? AND name==? AND submit_num==?") % {
                 "keys_str": ",".join(keys),
                 "table": self.TABLE_TASK_JOBS}
@@ -578,12 +584,12 @@ class CylcSuiteDAO(object):
         of each task on restart.
         """
         stmt = (
-            r"SELECT" +
-            r" name," +
-            r" GROUP_CONCAT(" +
-            r"     CAST(strftime('%s', time_run_exit) AS NUMERIC) -" +
-            r"     CAST(strftime('%s', time_run) AS NUMERIC))" +
-            r" FROM task_jobs" +
+            r"SELECT"
+            r" name,"
+            r" GROUP_CONCAT("
+            r"     CAST(strftime('%s', time_run_exit) AS NUMERIC) -"
+            r"     CAST(strftime('%s', time_run) AS NUMERIC))"
+            r" FROM task_jobs"
             r" WHERE run_status==0 GROUP BY name ORDER BY time_run_exit")
         for row_idx, row in enumerate(self.connect().execute(stmt)):
             callback(row_idx, list(row))
@@ -649,39 +655,46 @@ class CylcSuiteDAO(object):
         select from task_pool table if id_key == CHECKPOINT_LATEST_ID.
         Otherwise select from task_pool_checkpoints where id == id_key.
         """
-        form_stmt = (
-            r"SELECT " +
-            r"    %(task_pool)s.cycle," +
-            r"    %(task_pool)s.name," +
-            r"    %(task_pool)s.spawned,"
-            r"    %(task_pool)s.status," +
-            r"    %(task_pool)s.hold_swap," +
-            r"    %(task_states)s.submit_num," +
-            r"    %(task_jobs)s.try_num," +
-            r"    %(task_jobs)s.user_at_host," +
-            r"    %(task_jobs)s.time_submit," +
-            r"    %(task_jobs)s.time_run," +
-            r"    %(task_timeout_timers)s.timeout " +
-            r"FROM " +
-            r"    %(task_pool)s " +
-            r"JOIN " +
-            r"    %(task_states)s " +
-            r"ON  %(task_pool)s.cycle == %(task_states)s.cycle AND " +
-            r"    %(task_pool)s.name == %(task_states)s.name " +
-            r"LEFT OUTER JOIN " +
-            r"    %(task_jobs)s " +
-            r"ON  %(task_pool)s.cycle == %(task_jobs)s.cycle AND " +
-            r"    %(task_pool)s.name == %(task_jobs)s.name AND " +
-            r"    %(task_states)s.submit_num == %(task_jobs)s.submit_num " +
-            r"LEFT OUTER JOIN " +
-            r"    %(task_timeout_timers)s " +
-            r"ON  %(task_pool)s.cycle == %(task_timeout_timers)s.cycle AND " +
-            r"    %(task_pool)s.name == %(task_timeout_timers)s.name")
+        form_stmt = r"""
+            SELECT
+                %(task_pool)s.cycle,
+                %(task_pool)s.name,
+                %(task_pool)s.spawned,
+                %(task_pool)s.status,
+                %(task_pool)s.hold_swap,
+                %(task_states)s.submit_num,
+                %(task_jobs)s.try_num,
+                %(task_jobs)s.user_at_host,
+                %(task_jobs)s.time_submit,
+                %(task_jobs)s.time_run,
+                %(task_timeout_timers)s.timeout,
+                %(task_outputs)s.outputs
+            FROM
+                %(task_pool)s
+            JOIN
+                %(task_states)s
+            ON  %(task_pool)s.cycle == %(task_states)s.cycle AND
+                %(task_pool)s.name == %(task_states)s.name
+            LEFT OUTER JOIN
+                %(task_jobs)s
+            ON  %(task_pool)s.cycle == %(task_jobs)s.cycle AND
+                %(task_pool)s.name == %(task_jobs)s.name AND
+                %(task_states)s.submit_num == %(task_jobs)s.submit_num
+            LEFT OUTER JOIN
+                %(task_timeout_timers)s
+            ON  %(task_pool)s.cycle == %(task_timeout_timers)s.cycle AND
+                %(task_pool)s.name == %(task_timeout_timers)s.name
+            LEFT OUTER JOIN
+                %(task_outputs)s
+            ON  %(task_pool)s.cycle == %(task_outputs)s.cycle AND
+                %(task_pool)s.name == %(task_outputs)s.name
+        """
         form_data = {
             "task_pool": self.TABLE_TASK_POOL,
             "task_states": self.TABLE_TASK_STATES,
             "task_timeout_timers": self.TABLE_TASK_TIMEOUT_TIMERS,
             "task_jobs": self.TABLE_TASK_JOBS,
+            "task_outputs": self.TABLE_TASK_OUTPUTS,
         }
         if id_key is None or id_key == self.CHECKPOINT_LATEST_ID:
             stmt = form_stmt % form_data
