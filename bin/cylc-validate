@@ -101,13 +101,6 @@ def main():
                     cfg.start_point, itask.tdef.name))
             continue
 
-        # Warn for purely-implicit-cycling tasks (these are deprecated).
-        if itask.tdef.sequences == itask.tdef.implicit_sequences:
-            print >> sys.stderr, (
-                "WARNING, " + name + ": not explicitly defined in " +
-                "dependency graphs (deprecated)"
-            )
-
         # force trigger evaluation now
         try:
             itask.state.prerequisites_eval_all()

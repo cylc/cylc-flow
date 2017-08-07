@@ -42,7 +42,7 @@ class TaskDef(object):
     # Memory optimization - constrain possible attributes to this list.
     __slots__ = [
         "MAX_LEN_ELAPSED_TIMES", "run_mode", "rtconfig", "start_point",
-        "spawn_ahead", "sequences", "implicit_sequences",
+        "spawn_ahead", "sequences",
         "used_in_offset_trigger", "max_future_prereq_offset",
         "intercycle_offsets", "sequential", "is_coldstart",
         "suite_polling_cfg", "clocktrigger_offset", "expiration_offset",
@@ -62,7 +62,6 @@ class TaskDef(object):
         self.spawn_ahead = spawn_ahead
 
         self.sequences = []
-        self.implicit_sequences = []  # Implicit sequences are deprecated.
         self.used_in_offset_trigger = False
 
         # some defaults
@@ -95,12 +94,10 @@ class TaskDef(object):
             self.dependencies[sequence] = []
         self.dependencies[sequence].append(dependency)
 
-    def add_sequence(self, sequence, is_implicit=False):
+    def add_sequence(self, sequence):
         """Add a sequence."""
         if sequence not in self.sequences:
             self.sequences.append(sequence)
-            if is_implicit:
-                self.implicit_sequences.append(sequence)
 
     def describe(self):
         """Return title and description of the current task."""
