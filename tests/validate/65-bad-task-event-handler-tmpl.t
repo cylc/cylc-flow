@@ -1,7 +1,7 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2017 NIWA
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -15,23 +15,41 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test custom task event handler bad template
+# Test validation fails on bad task event handler templates.
 . "$(dirname "$0")/test_header"
+
 set_test_number 4
 
-OPT_SET=
-if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
-    create_test_globalrc '' ''
-fi
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-run_fail "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-cmp_ok "${TEST_NAME_BASE}-validate.stderr" <<'__ERR__'
+TEST_NAME="${TEST_NAME_BASE}-bad-key"
+cat >'suite.rc' <<'__SUITE_RC__'
+[scheduling]
+    [[dependencies]]
+        graph=t1
+[runtime]
+    [[t1]]
+        script=true
+        [[[events]]]
+            failed handler = echo %(id)s, echo %(rubbish)s
+__SUITE_RC__
+run_fail "${TEST_NAME}" cylc validate 'suite.rc'
+cmp_ok "${TEST_NAME}.stderr" <<'__ERR__'
 "ERROR: bad task event handler template t1: echo %(rubbish)s: KeyError('rubbish',)"
 __ERR__
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug "${SUITE_NAME}"
-LOG="${SUITE_RUN_DIR}/log/suite/log"
-run_ok "${TEST_NAME_BASE}-log" grep -q -F "ERROR - 1/t1/01 ('event-handler-00', 'succeeded') bad template: 'rubbish'" "${LOG}"
 
-purge_suite "${SUITE_NAME}"
+TEST_NAME="${TEST_NAME_BASE}-bad-value"
+cat >'suite.rc' <<'__SUITE_RC__'
+[scheduling]
+    [[dependencies]]
+        graph=t1
+[runtime]
+    [[t1]]
+        script=true
+        [[[events]]]
+            failed handler = echo %(ids
+__SUITE_RC__
+run_fail "${TEST_NAME}" cylc validate 'suite.rc'
+cmp_ok "${TEST_NAME}.stderr" <<'__ERR__'
+"ERROR: bad task event handler template t1: echo %(ids: ValueError('incomplete format key',)"
+__ERR__
+
 exit
