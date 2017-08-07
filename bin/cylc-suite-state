@@ -215,7 +215,7 @@ def main():
             except ValueError:
                 sys.exit("ERROR: Cannot parse offset: %s" % options.offset)
             if oper == "-":
-                my_target_point -= my_shiftcycle_point_format
+                my_target_point -= my_shift
             else:
                 my_target_point += my_shift
         else:
