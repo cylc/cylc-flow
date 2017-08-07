@@ -29,6 +29,8 @@ from cylc.suite_logging import LOG, ERR
 class CylcSuiteDAOTableColumn(object):
     """Represent a column in a table."""
 
+    __slots__ = ('name', 'datatype', 'is_primary_key')
+
     def __init__(self, name, datatype, is_primary_key):
         self.name = name
         self.datatype = datatype
@@ -42,6 +44,9 @@ class CylcSuiteDAOTable(object):
     FMT_DELETE = "DELETE FROM %(name)s%(where_str)s"
     FMT_INSERT = "INSERT OR REPLACE INTO %(name)s VALUES(%(values_str)s)"
     FMT_UPDATE = "UPDATE %(name)s SET %(set_str)s%(where_str)s"
+
+    __slots__ = ('name', 'columns', 'delete_queues', 'insert_queue',
+                 'update_queues')
 
     def __init__(self, name, column_items):
         self.name = name
