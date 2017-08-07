@@ -41,9 +41,8 @@ from subprocess import Popen, PIPE
 import traceback
 
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.owner import is_remote_user
 from cylc.rundb import CylcSuiteDAO
-from cylc.suite_host import is_remote_host
+from cylc.suite_host import is_remote
 from cylc.suite_logging import get_logs
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.task_id import TaskID
@@ -220,7 +219,7 @@ def get_task_job_attrs(options, suite, point, task, submit_num):
     else:
         owner, host = (None, str(task_job_data["user_at_host"]))
     user_at_host = None
-    if is_remote_host(host) or is_remote_user(owner):
+    if is_remote(host, owner):
         if host and owner:
             user_at_host = owner + "@" + host
         elif host:

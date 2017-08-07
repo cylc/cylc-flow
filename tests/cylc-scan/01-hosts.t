@@ -68,8 +68,10 @@ for ITEM in $(<'host-work-dirs.list'); do
             1>'/dev/null' 2>&1
         rm -fr "$(cylc get-global-config '--print-run-dir')/${PREFIX}-${HOST}"
     else
+        SUITE_HOST="$(${SSH} -n "${HOST}" \
+            "sed -n 's/^CYLC_SUITE_HOST=//p' 'cylc-run/${PREFIX}-${HOST}/.service/contact'")"
         cylc shutdown --now --max-polls=30 --interval=2 \
-            "--host=${HOST}" "${PREFIX}-${HOST}"
+            "--host=${SUITE_HOST}" "${PREFIX}-${HOST}"
         purge_suite_remote "${HOST}" "${PREFIX}-${HOST}"
         rm -fr "${HOME}/.cylc/auth/${USER}@${HOST}/${PREFIX}-${HOST}/"
         (cd "${HOME}/.cylc/auth/" \

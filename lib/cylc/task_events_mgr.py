@@ -42,9 +42,8 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
 from cylc.mp_pool import SuiteProcContext
 from cylc.network.suite_broadcast_server import BroadcastServer
-from cylc.owner import USER
 from cylc.suite_logging import ERR, LOG
-from cylc.suite_host import get_suite_host
+from cylc.suite_host import get_suite_host, get_user
 from cylc.task_action_timer import TaskActionTimer
 from cylc.task_message import TaskMessage
 from cylc.task_state import (
@@ -757,7 +756,7 @@ class TaskEventsManager(object):
             user_at_host = itask.task_host
         events = (self.EVENT_FAILED, self.EVENT_RETRY, self.EVENT_SUCCEEDED)
         if (event not in events or
-                user_at_host in [USER + '@localhost', 'localhost'] or
+                user_at_host in [get_user() + '@localhost', 'localhost'] or
                 not self.get_host_conf(itask, "retrieve job logs") or
                 id_key in self.event_timers):
             return
@@ -794,7 +793,7 @@ class TaskEventsManager(object):
                     "mail from",
                     "notifications@" + get_suite_host(),
                 ),
-                self._get_events_conf(itask, "mail to", USER),  # mail_to
+                self._get_events_conf(itask, "mail to", get_user()),  # mail_to
                 self._get_events_conf(itask, "mail smtp"),  # mail_smtp
             ),
             retry_delays)

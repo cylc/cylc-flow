@@ -46,13 +46,15 @@ returning the IP address associated with this socket.
 
 """
 
+import os
+import pwd
 import sys
 import socket
 from time import time
 
 
-class SuiteHostUtil(object):
-    """(Suite) host utility."""
+class HostUtil(object):
+    """host and user ID utility."""
 
     EXPIRE = 3600.0  # singleton expires in 1 hour by default
     _instance = None
@@ -80,6 +82,8 @@ class SuiteHostUtil(object):
         self._host_ip_address = None
         self._host_name_pref = None
         self._remote_hosts = {}  # host: is_remote, ...
+        self.user_pwent = None
+        self.remote_users = {}
 
     @staticmethod
     def get_local_ip_address(target):
@@ -147,11 +151,26 @@ class SuiteHostUtil(object):
                 self._host_name_pref = self.get_hostname()
         return self._host_name_pref
 
+    def get_user(self):
+        """Return name of current user."""
+        return self._get_user_pwent().pw_name
+
+    def _get_user_pwent(self):
+        """Ensure self.user_pwent is set to current user's password entry."""
+        if self.user_pwent is None:
+            my_user_name = os.environ.get('USER')
+            if my_user_name:
+                self.user_pwent = pwd.getpwnam(my_user_name)
+            else:
+                self.user_pwent = pwd.getpwuid(os.getuid())
+            self.remote_users.update(((self.user_pwent.pw_name, False),))
+        return self.user_pwent
+
     def is_remote_host(self, name):
         """Return True if name has different IP address than the current host.
 
         Return False if name is None.
-        Raise IOError if host is unknown.
+        Return True if host is unknown.
 
         """
         if name not in self._remote_hosts:
@@ -161,41 +180,75 @@ class SuiteHostUtil(object):
             else:
                 try:
                     ipa = socket.gethostbyname(name)
-                except IOError as exc:
-                    if exc.filename is None:
-                        exc.filename = str(name)
-                    raise
-                host_ip_address = self._get_host_ip_address()
-                # local IP address of the suite host (e.g. 127.0.0.1)
-                local_ip_address = socket.gethostbyname(self.get_hostname())
-                self._remote_hosts[name] = (
-                    ipa not in [host_ip_address, local_ip_address])
+                except IOError:
+                    self._remote_hosts[name] = True
+                else:
+                    host_ip_address = self._get_host_ip_address()
+                    # local IP address of the suite host (e.g. 127.0.0.1)
+                    my_ip_address = socket.gethostbyname(self.get_hostname())
+                    self._remote_hosts[name] = (
+                        ipa not in [host_ip_address, my_ip_address])
         return self._remote_hosts[name]
+
+    def is_remote_user(self, name):
+        """Return True if name is not a name of the current user.
+
+        Return False if name is None.
+        Return True if name is not in the password database.
+        """
+        if not name:
+            return False
+        if name not in self.remote_users:
+            try:
+                self.remote_users[name] = (
+                    pwd.getpwnam(name) == self._get_user_pwent())
+            except KeyError:
+                self.remote_users[name] = True
+        return self.remote_users[name]
+
+    def is_remote(self, host, owner):
+        """Shorthand: is_remote_host(host) or is_remote_user(owner)."""
+        return self.is_remote_host(host) or self.is_remote_user(owner)
 
 
 def get_hostname():
-    """Shorthand for SuiteHostUtil.get_inst().get_hostname()."""
-    return SuiteHostUtil.get_inst().get_hostname()
+    """Shorthand for HostUtil.get_inst().get_hostname()."""
+    return HostUtil.get_inst().get_hostname()
 
 
 def get_local_ip_address(target):
-    """Shorthand for SuiteHostUtil.get_inst().get_local_ip_address(target)."""
-    return SuiteHostUtil.get_inst().get_local_ip_address(target)
+    """Shorthand for HostUtil.get_inst().get_local_ip_address(target)."""
+    return HostUtil.get_inst().get_local_ip_address(target)
 
 
 def get_host_ip_by_name(target):
-    """Shorthand for SuiteHostUtil.get_inst().get_host_ip_by_name(target)."""
-    return SuiteHostUtil.get_inst().get_host_ip_by_name(target)
+    """Shorthand for HostUtil.get_inst().get_host_ip_by_name(target)."""
+    return HostUtil.get_inst().get_host_ip_by_name(target)
 
 
 def get_suite_host():
-    """Shorthand for SuiteHostUtil.get_inst().get_suite_host()."""
-    return SuiteHostUtil.get_inst().get_suite_host()
+    """Shorthand for HostUtil.get_inst().get_suite_host()."""
+    return HostUtil.get_inst().get_suite_host()
+
+
+def get_user():
+    """Shorthand for HostUtil.get_inst().get_user()."""
+    return HostUtil.get_inst().get_user()
+
+
+def is_remote(host, owner):
+    """Shorthand for HostUtil.get_inst().is_remote(host, owner)."""
+    return HostUtil.get_inst().is_remote(host, owner)
 
 
 def is_remote_host(name):
-    """Shorthand for SuiteHostUtil.get_inst().is_remote_host(name)."""
-    return SuiteHostUtil.get_inst().is_remote_host(name)
+    """Shorthand for HostUtil.get_inst().is_remote_host(name)."""
+    return HostUtil.get_inst().is_remote_host(name)
+
+
+def is_remote_user(name):
+    """Return True if name is not a name of the current user."""
+    return HostUtil.get_inst().is_remote_user(name)
 
 
 if __name__ == "__main__":

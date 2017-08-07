@@ -53,11 +53,10 @@ from cylc.network.suite_info_server import SuiteInfoServer
 from cylc.network.suite_log_server import SuiteLogServer
 from cylc.network.suite_state_server import StateSummaryServer
 from cylc.network.task_msg_server import TaskMessageServer
-from cylc.owner import USER
 from cylc.suite_db_mgr import SuiteDatabaseManager
 from cylc.suite_events import (
     SuiteEventContext, SuiteEventError, SuiteEventHandler)
-from cylc.suite_host import get_suite_host
+from cylc.suite_host import get_suite_host, get_user
 from cylc.suite_logging import SuiteLog, OUT, ERR, LOG
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
@@ -155,7 +154,7 @@ class Scheduler(object):
 
         self.run_mode = self.options.run_mode
 
-        self.owner = USER
+        self.owner = get_user()
         self.host = get_suite_host()
         self.port = None
 

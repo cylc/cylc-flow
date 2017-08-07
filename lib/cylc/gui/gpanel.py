@@ -37,7 +37,7 @@ from cylc.gui.scanutil import (KEY_PORT, get_gpanel_scan_menu,
 from cylc.gui.util import get_icon, setup_icons
 from cylc.network import KEY_STATES
 from cylc.network.suite_state_client import extract_group_state
-from cylc.owner import USER
+from cylc.suite_host import get_user
 
 
 class ScanPanelApplet(object):
@@ -124,7 +124,7 @@ class ScanPanelAppletUpdater(object):
         self.dots = DotMaker(self.theme)
         self.suite_info_map = {}
         self._set_exception_hook()
-        self.owner_pattern = re.compile(r'\A%s\Z' % USER)
+        self.owner_pattern = re.compile(r'\A%s\Z' % get_user())
 
     def clear_stopped_suites(self):
         """Clear stopped suite information that may have built up."""
@@ -279,7 +279,7 @@ class ScanPanelAppletUpdater(object):
         suite_keys = []
         for info_tuple in suite_host_info_tuples:
             suite, host, status, _, is_stopped = info_tuple
-            suite_keys.append((host, USER, suite))
+            suite_keys.append((host, get_user(), suite))
             if not is_stopped:
                 running_status_list.append(status)
             status_list.append(status)

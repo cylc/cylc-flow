@@ -27,10 +27,9 @@ import cylc.flags
 from cylc.network import (
     ConnectionError, ConnectionDeniedError, ConnectionInfoError,
     ConnectionTimeout, NO_PASSPHRASE, handle_proxies)
-from cylc.owner import USER
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
-from cylc.suite_host import get_hostname
+from cylc.suite_host import get_suite_host, get_user
 from cylc.version import CYLC_VERSION
 
 
@@ -48,9 +47,11 @@ class BaseCommsClient(object):
     METHOD_POST = 'POST'
     METHOD_GET = 'GET'
 
-    def __init__(self, suite, owner=USER, host=None, port=None, timeout=None,
+    def __init__(self, suite, owner=None, host=None, port=None, timeout=None,
                  my_uuid=None, print_uuid=False, comms_protocol=None):
         self.suite = suite
+        if not owner:
+            owner = get_user()
         self.owner = owner
         self.host = host
         self.port = port
@@ -138,28 +139,24 @@ class BaseCommsClient(object):
         else:
             func_dict = None
 
-        if self.host is None and self.port is not None:
-            self.host = get_hostname()
         try:
             self._load_contact_info()
         except (IOError, ValueError, SuiteServiceFileError):
             raise ConnectionInfoError(self.suite)
         handle_proxies()
         host = self.host
-        if host == "localhost":
-            host = get_hostname().split(".")[0]
+        if host == 'localhost':
+            host = get_suite_host()
 
         http_request_items = []
         try:
             # dictionary containing: url, payload, method
-            http_request_item = self._compile_url(
-                category, func_dict, host, self.comms_protocol)
-            http_request_items.append(http_request_item)
+            http_request_items.append(self._compile_url(
+                category, func_dict, host, self.comms_protocol))
         except (IndexError, ValueError, AttributeError):
             for f_dict in func_dicts:
-                http_request_item = self._compile_url(
-                    category, f_dict, host, self.comms_protocol)
-                http_request_items.append(http_request_item)
+                http_request_items.append(self._compile_url(
+                    category, f_dict, host, self.comms_protocol))
         # returns a list of http returns from the requests
         return self._get_data_from_url(http_request_items)
 
@@ -362,7 +359,7 @@ class BaseCommsClient(object):
                 CYLC_VERSION, self.prog_name, self.my_uuid
             )
         )
-        auth_info = "%s@%s" % (USER, get_hostname())
+        auth_info = "%s@%s" % (get_user(), get_suite_host())
         return {"User-Agent": user_agent_string,
                 "From": auth_info}
 
@@ -384,6 +381,10 @@ class BaseCommsClient(object):
         specified.
         """
         if self.host and self.port:
+            return
+        if self.port:
+            # In case the contact file is corrupted, user can specify the port.
+            self.host = get_suite_host()
             return
         data = self.srv_files_mgr.load_contact_file(
             self.suite, self.owner, self.host)

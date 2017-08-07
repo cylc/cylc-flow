@@ -28,7 +28,7 @@ from parsec.validate import validator as vdr
 from parsec.validate import coercers
 from parsec import ParsecError
 from parsec.upgrade import upgrader, converter
-from cylc.owner import USER
+from cylc.suite_host import get_user
 from cylc.envvar import expandvars
 from cylc.mkdir_p import mkdir_p
 import cylc.flags
@@ -496,7 +496,7 @@ class GlobalConfig(config):
             # if no host is given the caller is asking about localhost
             host = 'localhost'
         if not owner:
-            owner = USER
+            owner = get_user()
 
         # is there a matching host section?
         host_key = None
@@ -520,11 +520,11 @@ class GlobalConfig(config):
             value = cfg['hosts']['localhost'][item]
             modify_dirs = True
         if value is not None and 'directory' in item:
-            if replace_home and (modify_dirs or owner != USER):
+            if replace_home or modify_dirs:
                 # Replace local home dir with $HOME for eval'n on other host.
                 value = value.replace(os.environ['HOME'], '$HOME')
-            elif owner != USER:
-                # Replace USER with owner for direct access via local filesys
+            elif owner != get_user():
+                # Replace with ~owner for direct access via local filesys
                 # (works for standard cylc-run directory location).
                 value = value.replace(
                     os.environ['HOME'], os.path.expanduser('~%s' % owner))

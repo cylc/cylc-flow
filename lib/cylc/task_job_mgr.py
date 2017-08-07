@@ -48,8 +48,7 @@ from cylc.job_file import JobFileWriter
 from cylc.mkdir_p import mkdir_p
 from cylc.mp_pool import SuiteProcPool, SuiteProcContext
 from cylc.network.suite_broadcast_server import BroadcastServer
-from cylc.owner import is_remote_user, USER
-from cylc.suite_host import is_remote_host
+from cylc.suite_host import is_remote, is_remote_host, is_remote_user
 from cylc.suite_logging import ERR, LOG
 from cylc.task_events_mgr import TaskEventsManager
 from cylc.task_message import TaskMessage
@@ -136,8 +135,9 @@ class TaskJobManager(object):
         """
         if host is None:
             host = 'localhost'
-        if ((host, owner) in [('localhost', None), ('localhost', USER)] or
-                (host, owner) in self.init_host_map or self.single_task_mode):
+        if (self.single_task_mode or
+                (host, owner) in self.init_host_map or
+                not is_remote(host, owner)):
             return
         user_at_host = host
         if owner:
@@ -704,12 +704,7 @@ class TaskJobManager(object):
             cmd = ["cylc", cmd_key]
             if cylc.flags.debug:
                 cmd.append("--debug")
-            try:
-                if is_remote_host(host):
-                    cmd.append("--host=%s" % (host))
-            except IOError:
-                # Bad host, run the command any way, command will fail and
-                # callback will deal with it
+            if is_remote_host(host):
                 cmd.append("--host=%s" % (host))
             if is_remote_user(owner):
                 cmd.append("--user=%s" % (owner))
