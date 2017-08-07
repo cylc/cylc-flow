@@ -151,6 +151,8 @@ class SuiteDatabaseManager(object):
 
     def process_queued_ops(self):
         """Handle queued db operations for each task proxy."""
+        if self.pri_dao is None:
+            return
         # Record suite parameters and tasks in pool
         # Record any broadcast settings to be dumped out
         for obj in self, BroadcastServer.get_inst():

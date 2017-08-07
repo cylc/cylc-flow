@@ -1929,17 +1929,15 @@ class SuiteConfig(object):
         for section, graph in sections:
             try:
                 seq = get_sequence(section, icp, fcp)
-            except CylcError as exc:
-                ERR.error(str(exc))
-                raise SuiteConfigError(
-                    "ERROR: Invalid/unsupported recurrence representation: " +
-                    str(section))
-            except (AttributeError, TypeError, ValueError):
+            except (AttributeError, TypeError, ValueError, CylcError) as exc:
                 if cylc.flags.debug:
                     traceback.print_exc()
-                raise SuiteConfigError(
-                    "ERROR: Invalid/unsupported recurrence representation: " +
-                    str(section))
+                msg = 'ERROR: Cannot process recurrence %s' % section
+                msg += ' (initial cycle point=%s)' % icp
+                msg += ' (final cycle point=%s)' % fcp
+                if isinstance(exc, CylcError):
+                    msg += ' %s' % str(exc)
+                raise SuiteConfigError(msg)
             self.sequences.append(seq)
             parser = GraphParser(family_map, self.parameters)
             parser.parse_graph(graph)
