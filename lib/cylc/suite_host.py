@@ -48,7 +48,6 @@ returning the IP address associated with this socket.
 
 import os
 import pwd
-import sys
 import socket
 from time import time
 
@@ -201,7 +200,7 @@ class HostUtil(object):
         if name not in self.remote_users:
             try:
                 self.remote_users[name] = (
-                    pwd.getpwnam(name) == self._get_user_pwent())
+                    pwd.getpwnam(name) != self._get_user_pwent())
             except KeyError:
                 self.remote_users[name] = True
         return self.remote_users[name]
@@ -252,4 +251,22 @@ def is_remote_user(name):
 
 
 if __name__ == "__main__":
-    sys.stdout.write("%s\n" % get_local_ip_address(sys.argv[1]))
+    import unittest
+
+    class TestLocal(unittest.TestCase):
+        """Test is_remote* behaves with local host and user."""
+
+        def test_users(self):
+            """is_remote_user with local users."""
+            self.assertFalse(is_remote_user(None))
+            self.assertFalse(is_remote_user(os.getenv('USER')))
+
+        def test_hosts(self):
+            """is_remote_host with local hosts."""
+            self.assertFalse(is_remote_host(None))
+            self.assertFalse(is_remote_host('localhost'))
+            self.assertFalse(is_remote_host(os.getenv('HOSTNAME')))
+            self.assertFalse(is_remote_host(get_hostname()))
+            self.assertFalse(is_remote_host(get_suite_host()))
+
+    unittest.main()
