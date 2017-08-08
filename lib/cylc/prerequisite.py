@@ -43,18 +43,21 @@ class Prerequisite(object):
 
     # Memory optimization - constrain possible attributes to this list.
     __slots__ = ["CYCLE_POINT_RE", "SATISFIED_TEMPLATE",
-                 "satisfied", "all_satisfied", "satisfied_by",
+                 "satisfied", "all_satisfied",
                  "target_point_strings", "start_point",
                  "pre_initial_messages", "conditional_expression", "point"]
 
     # Extracts T from "foo.T succeeded" etc.
     CYCLE_POINT_RE = re.compile('^\w+\.(\S+) .*$')
-    SATISFIED_TEMPLATE = 'self.satisfied["%s"]'
+    SATISFIED_TEMPLATE = 'bool(self.satisfied["%s"])'
+
+    DEP_STATE_SATISFIED = 'satisfied naturally'
+    DEP_STATE_OVERRIDDEN = 'force satisfied'
+    DEP_STATE_UNSATISFIED = False
 
     def __init__(self, point, start_point=None):
         self.point = point
-        self.satisfied = {}    # satisfied[ label ] = True/False
-        self.satisfied_by = {}   # self.satisfied_by[ label ] = task_id
+        self.satisfied = {}    # satisfied[ label ] = DEP_STATE_X
         self.target_point_strings = []   # list of target cycle points
         self.start_point = start_point
         self.pre_initial_messages = []
@@ -62,7 +65,7 @@ class Prerequisite(object):
 
     def add(self, message, pre_initial=False):
         # Add a new prerequisite message in an UNSATISFIED state.
-        self.satisfied[message] = False
+        self.satisfied[message] = self.DEP_STATE_UNSATISFIED
         if hasattr(self, 'all_satisfied'):
             self.all_satisfied = False
         match = self.__class__.CYCLE_POINT_RE.match(message)
@@ -167,8 +170,7 @@ class Prerequisite(object):
         for msg in relevant_msgs:
             for message in self.satisfied:
                 if message == msg:
-                    self.satisfied[message] = True
-                    self.satisfied_by[message] = outputs[msg]
+                    self.satisfied[message] = self.DEP_STATE_SATISFIED
             if self.conditional_expression is None:
                 self.all_satisfied = all(self.satisfied.values())
             else:
@@ -200,7 +202,8 @@ class Prerequisite(object):
 
     def set_satisfied(self):
         for message in self.satisfied:
-            self.satisfied[message] = True
+            if not self.satisfied[message]:
+                self.satisfied[message] = self.DEP_STATE_OVERRIDDEN
         if self.conditional_expression is None:
             self.all_satisfied = True
         else:
@@ -208,7 +211,7 @@ class Prerequisite(object):
 
     def set_not_satisfied(self):
         for message in self.satisfied:
-            self.satisfied[message] = False
+            self.satisfied[message] = self.DEP_STATE_UNSATISFIED
         if not self.satisfied:
             self.all_satisfied = True
         elif self.conditional_expression is None:

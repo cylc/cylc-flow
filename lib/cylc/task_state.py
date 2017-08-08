@@ -262,14 +262,16 @@ class TaskState(object):
 
     def get_resolved_dependencies(self):
         """Report who I triggered off."""
-        satby = {}
-        for req in self.prerequisites:
-            satby.update(req.satisfied_by)
-        dep = satby.values()
+        deps = []
+        for prereq in self.prerequisites:
+            for message, satisfied in prereq.satisfied.items():
+                if satisfied == Prerequisite.DEP_STATE_SATISFIED:
+                    if message not in deps:
+                        deps.append(message.split(' ', 1)[0])
         # order does not matter here; sort to allow comparison with
         # reference run task with lots of near-simultaneous triggers.
-        dep.sort()
-        return dep
+        deps.sort()
+        return deps
 
     def unset_special_outputs(self):
         """Remove special outputs added for triggering purposes.
