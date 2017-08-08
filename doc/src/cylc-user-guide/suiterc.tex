@@ -318,8 +318,11 @@ substituted with actual values:
 Otherwise, the command line will be called with the following command line
 arguments:
 \begin{lstlisting}
-<suite-event-handler> %(event)s %(suite)s '%(message)s'
+<suite-event-handler> %(event)s %(suite)s %(message)s
 \end{lstlisting}
+
+Note: The substitution patterns should not be quoted in the template strings.
+Where required, the values will be quoted automatically on substitution.
 
 Additional information can be passed to event handlers via
 [cylc] \textrightarrow [[environment]].
@@ -1601,6 +1604,9 @@ Otherwise, the command line will be called with the following arguments:
 \begin{lstlisting}
 <task-event-handler> %(event)s %(suite)s %(id)s %(message)s
 \end{lstlisting}
+
+Note: The substitution patterns should not be quoted in the template strings.
+Where required, the values will be quoted automatically on substitution.
 
 For an explanation of the substitution syntax, see String Formatting Operations
 in the Python documentation:
