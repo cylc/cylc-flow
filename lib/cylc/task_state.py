@@ -253,7 +253,7 @@ class TaskState(object):
         res = []
         if list_prereqs:
             for prereq in self.prerequisites:
-                for task in sorted(prereq.messages):
+                for task in sorted(prereq.satisfied):
                     res.append(task)
         else:
             for preq in self.prerequisites:

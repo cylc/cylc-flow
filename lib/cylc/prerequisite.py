@@ -42,7 +42,7 @@ class TriggerExpressionError(Exception):
 class Prerequisite(object):
 
     # Memory optimization - constrain possible attributes to this list.
-    __slots__ = ["CYCLE_POINT_RE", "SATISFIED_TEMPLATE", "messages",
+    __slots__ = ["CYCLE_POINT_RE", "SATISFIED_TEMPLATE",
                  "satisfied", "all_satisfied", "satisfied_by",
                  "target_point_strings", "start_point",
                  "pre_initial_messages", "conditional_expression", "point"]
@@ -53,7 +53,6 @@ class Prerequisite(object):
 
     def __init__(self, point, start_point=None):
         self.point = point
-        self.messages = set([])
         self.satisfied = {}    # satisfied[ label ] = True/False
         self.satisfied_by = {}   # self.satisfied_by[ label ] = task_id
         self.target_point_strings = []   # list of target cycle points
@@ -63,7 +62,6 @@ class Prerequisite(object):
 
     def add(self, message, pre_initial=False):
         # Add a new prerequisite message in an UNSATISFIED state.
-        self.messages.add(message)
         self.satisfied[message] = False
         if hasattr(self, 'all_satisfied'):
             self.all_satisfied = False
@@ -82,7 +80,7 @@ class Prerequisite(object):
 
     def get_raw_conditional_expression(self):
         expr = self.conditional_expression
-        for message in self.messages:
+        for message in self.satisfied:
             expr = expr.replace(self.SATISFIED_TEMPLATE % message, message)
         return expr
 
@@ -100,7 +98,7 @@ class Prerequisite(object):
                 drop_these.append(message)
 
         # Needed to drop pre warm-start dependence:
-        for message in self.messages:
+        for message in self.satisfied:
             if message in drop_these:
                 continue
             if self.start_point:
@@ -114,8 +112,7 @@ class Prerequisite(object):
                         drop_these.append(message)
 
         for message in drop_these:
-            if message in self.messages:
-                self.messages.remove(message)
+            if message in self.satisfied:
                 self.satisfied.pop(message)
 
         if '|' in expr:
@@ -123,7 +120,7 @@ class Prerequisite(object):
                 simpler = ConditionalSimplifier(expr, drop_these)
                 expr = simpler.get_cleaned()
             # Make a Python expression so we can eval() the logic.
-            for message in self.messages:
+            for message in self.satisfied:
                 expr = expr.replace(message, self.SATISFIED_TEMPLATE % message)
             self.conditional_expression = expr
 
@@ -166,7 +163,7 @@ class Prerequisite(object):
         slow.
 
         """
-        relevant_msgs = output_msgs & self.messages
+        relevant_msgs = output_msgs & set(self.satisfied)
         for msg in relevant_msgs:
             for message in self.satisfied:
                 if message == msg:
@@ -185,8 +182,8 @@ class Prerequisite(object):
         if self.conditional_expression:
             temp = self.get_raw_conditional_expression()
             messages = []
-            num_length = int(math.ceil(float(len(self.messages)) / float(10)))
-            for ind, message in enumerate(sorted(self.messages)):
+            num_length = int(math.ceil(float(len(self.satisfied)) / float(10)))
+            for ind, message in enumerate(sorted(self.satisfied)):
                 char = '%.{0}d'.format(num_length) % ind
                 messages.append(['\t%s = %s' % (char, message),
                                 self.satisfied[message]])
@@ -202,7 +199,7 @@ class Prerequisite(object):
         return res
 
     def set_satisfied(self):
-        for message in self.messages:
+        for message in self.satisfied:
             self.satisfied[message] = True
         if self.conditional_expression is None:
             self.all_satisfied = True
@@ -210,7 +207,7 @@ class Prerequisite(object):
             self.all_satisfied = self._conditional_is_satisfied()
 
     def set_not_satisfied(self):
-        for message in self.messages:
+        for message in self.satisfied:
             self.satisfied[message] = False
         if not self.satisfied:
             self.all_satisfied = True
