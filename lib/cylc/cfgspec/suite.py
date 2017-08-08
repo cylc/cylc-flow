@@ -173,7 +173,8 @@ def _coerce_parameter_list(value, keys, _):
         else:
             raise IllegalValueError(
                 'parameter', keys, value, '%s: bad value' % item)
-    if can_only_be == str or any(not str(item).isdigit() for item in items):
+    if not items or can_only_be == str or any(
+            not str(item).isdigit() for item in items):
         return items
     else:
         items = [int(item) for item in items]
