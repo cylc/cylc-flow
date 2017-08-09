@@ -49,6 +49,7 @@ to poll. This is useful when you want to use cylc suite-state in a cylc task.
 """
 
 import os
+import sqlite3
 import sys
 from time import sleep, time
 
@@ -59,8 +60,7 @@ if remrun().execute():
 
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.dbstatecheck import (
-    CylcSuiteDBChecker, DBNotFoundError, DBOperationError)
+from cylc.dbstatecheck import CylcSuiteDBChecker
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.command_polling import Poller
 from cylc.task_state import TASK_STATUSES_ORDERED
@@ -98,7 +98,7 @@ class SuitePoller(Poller):
                 connected = True
                 # ... but ensure at least one poll after connection:
                 self.n_polls -= 1
-            except (DBOperationError, DBNotFoundError):
+            except (OSError, sqlite3.Error):
                 if self.n_polls >= max_polls:
                     raise
                 if cylc.flags.verbose:
@@ -108,9 +108,7 @@ class SuitePoller(Poller):
             sys.stdout.write('\n')
 
         if connected and self.args['cycle']:
-            fmt = self.args['template']
-            if not fmt:
-                fmt = self.checker.get_remote_point_format()
+            fmt = self.checker.get_remote_point_format()
             if fmt:
                 my_parser = TimePointParser()
                 my_point = my_parser.parse(self.args['cycle'], dump_format=fmt)
@@ -118,16 +116,10 @@ class SuitePoller(Poller):
         return connected, self.args['cycle']
 
     def check(self):
-        # return True if desired suite state achieved, else False
-        if self.args['message']:
-            return self.checker.task_state_met(self.args['task'],
-                                               self.args['cycle'],
-                                               self.args['message'],
-                                               True)
-        else:
-            return self.checker.task_state_met(self.args['task'],
-                                               self.args['cycle'],
-                                               self.args['status'])
+        """Return True if desired suite state achieved, else False"""
+        return self.checker.task_state_met(
+            self.args['task'], self.args['cycle'],
+            self.args['status'], self.args['message'])
 
 
 def main():
@@ -151,9 +143,8 @@ def main():
 
     parser.add_option(
         "--template", metavar="TEMPLATE",
-        help="Cyclepoint template string, used to reformat cyclepoints for "
-             "querying suites",
-        action="store", dest="template")
+        help="Remote cyclepoint template (IGNORED - this is now determined "
+             "automatically).", action="store", dest="template")
 
     parser.add_option(
         "-d", "--run-dir",
@@ -183,8 +174,8 @@ def main():
         action="store", dest="status", default=None)
 
     parser.add_option(
-        "-m", "--message",
-        help="Specify a particular message to check for.",
+        "-O", "--output", "-m", "--message",
+        help="Check custom task output by message string or trigger string.",
         action="store", dest="msg", default=None)
 
     SuitePoller.add_to_cmd_options(parser)
@@ -205,6 +196,9 @@ def main():
     if options.offset and not options.cycle:
         sys.exit("ERROR: You must target a cycle point to use an offset")
 
+    if options.template:
+        print >> sys.stderr, "WARNING: ignoring --template (no longer needed)"
+
     # Attempt to apply specified offset to the targeted cycle
     if options.offset:
         my_parser = TimePointParser()
@@ -221,7 +215,7 @@ def main():
             except ValueError:
                 sys.exit("ERROR: Cannot parse offset: %s" % options.offset)
             if oper == "-":
-                my_target_point -= my_shiftcycle_point_format
+                my_target_point -= my_shift
             else:
                 my_target_point += my_shift
         else:
@@ -231,7 +225,7 @@ def main():
 
     # Exit if both task state and message are to being polled
     if options.status and options.msg:
-        sys.exit("ERROR: cannot poll both status and message")
+        sys.exit("ERROR: cannot poll both status and custom output")
 
     if options.msg and not options.task and not options.cycle:
         sys.exit("ERROR: need a taskname and cyclepoint")
@@ -241,10 +235,6 @@ def main():
             options.status not in TASK_STATUSES_ORDERED and
             options.status not in CylcSuiteDBChecker.STATE_ALIASES):
         sys.exit("ERROR: invalid status '" + options.status + "'")
-
-    # Reformat cycle point for querying targeted suite
-    if options.template and not options.cycle:
-        sys.exit("ERROR: No cycle point to reformat using template")
 
     # this only runs locally (use of --host or --user results in remote
     # re-invocation).
@@ -258,7 +248,6 @@ def main():
                 'cycle': options.cycle,
                 'status': options.status,
                 'message': options.msg,
-                'template': options.template
                 }
 
     spoller = SuitePoller("requested state",
@@ -277,8 +266,8 @@ def main():
         if not spoller.poll():
             sys.exit(1)
     elif options.msg:
-        """Check for a task message"""
-        spoller.condition = "message: %s" % options.msg
+        """Check for a custom task output"""
+        spoller.condition = "output: %s" % options.msg
         if not spoller.poll():
             sys.exit(1)
     else:

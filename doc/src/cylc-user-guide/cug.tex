@@ -7506,8 +7506,7 @@ This suite fails validation with
 \lstinline=ERROR: No cycling sequences defined for foo=,
 and at runtime it would stall with \lstinline=bar= instances waiting on
 non-existent offset \lstinline=foo= instances (note that these
-do appear in graph visualisations though - because the graph
-expresses {\em dependence} as written).
+appear as ghost nodes in graph visualisations).
 
 To fix this, explicitly define the cycling of with an offset cycling sequence:
 \lstinline=foo=:

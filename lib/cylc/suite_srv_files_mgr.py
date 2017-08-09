@@ -26,9 +26,8 @@ import sys
 
 import cylc.flags
 from cylc.mkdir_p import mkdir_p
-from cylc.owner import USER, is_remote_user
 from cylc.suite_host import (
-    get_local_ip_address, get_suite_host, is_remote_host)
+    get_local_ip_address, get_suite_host, get_user, is_remote, is_remote_host)
 
 
 class SuiteServiceFileError(Exception):
@@ -77,7 +76,7 @@ class SuiteSrvFilesManager(object):
         the remote passphrase in memory as well.
         """
         if owner is None:
-            owner = USER
+            owner = get_user()
         if host is None:
             host = get_suite_host()
         path = self._get_cache_dir(reg, owner, host)
@@ -234,7 +233,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
             my_owner = owner
             my_host = host
             if my_owner is None:
-                my_owner = USER
+                my_owner = get_user()
             if my_host is None:
                 my_host = get_suite_host()
             try:
@@ -300,7 +299,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
     def get_suite_srv_dir(self, reg, suite_owner=None):
         """Return service directory of a suite."""
         if not suite_owner:
-            suite_owner = USER
+            suite_owner = get_user()
         run_d = os.getenv("CYLC_SUITE_RUN_DIR")
         if (not run_d or os.getenv("CYLC_SUITE_NAME") != reg or
                 os.getenv("CYLC_SUITE_OWNER") != suite_owner):
@@ -468,7 +467,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
         ext = crypto.X509Extension(
             "subjectAltName",
             False,
-            "DNS:*, DNS:%(dns)s, IP:%(ip)s, DNS:%(ip)s" % {
+            "DNS:%(dns)s, IP:%(ip)s, DNS:%(ip)s" % {
                 "dns": host, "ip": get_local_ip_address(host)})
         file_name = self._locate_item(self.FILE_BASE_SSL_CERT, path)
         if file_name:
@@ -553,7 +552,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
         Cache results in self.can_use_load_auths.
         """
         if (reg, owner, host) not in self.can_use_load_auths:
-            if is_remote_user(owner) or is_remote_host(host):
+            if is_remote(host, owner):
                 fname = os.path.join(
                     self.get_suite_srv_dir(reg), self.FILE_BASE_CONTACT)
                 data = {}
@@ -568,7 +567,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
                 else:
                     # Contact file exists, check values match
                     if owner is None:
-                        owner = USER
+                        owner = get_user()
                     if host is None:
                         host = get_suite_host()
                     host_value = data.get(self.KEY_HOST, "")
@@ -594,10 +593,12 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
 
     def _load_remote_item(self, item, reg, owner, host):
         """Load content of service item from remote [owner@]host via SSH."""
+        if not is_remote(host, owner):
+            return
         if host is None:
             host = 'localhost'
-        if not is_remote_host(host) and not is_remote_user(owner):
-            return
+        if owner is None:
+            owner = get_user()
         from cylc.cfgspec.globalcfg import GLOBAL_CFG
         if item == 'contact' and not is_remote_host(host):
             # Attempt to read suite contact file via the local filesystem.

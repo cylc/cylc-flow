@@ -42,7 +42,7 @@ gtk.settings_get_default().set_long_property(
 
 from cylc.gui.gscan import ScanApp
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.owner import USER
+from cylc.suite_host import get_user
 
 
 def main():
@@ -84,7 +84,7 @@ def main():
     if options.all_suites:
         options.patterns_owner = [r".*"]
     elif not options.patterns_owner:
-        options.patterns_owner = [USER]
+        options.patterns_owner = [get_user()]
     scan_app = ScanApp(
         hosts=args,
         patterns_name=options.patterns_name,

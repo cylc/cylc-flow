@@ -23,8 +23,7 @@ from pipes import quote
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.mp_pool import SuiteProcContext
-from cylc.owner import USER
-from cylc.suite_host import get_suite_host
+from cylc.suite_host import get_suite_host, get_user
 from cylc.suite_logging import ERR, LOG
 
 
@@ -108,7 +107,7 @@ class SuiteEventHandler(object):
                     '-r', self.get_events_conf(
                         config,
                         'mail from', 'notifications@' + get_suite_host()),
-                    self.get_events_conf(config, 'mail to', USER),
+                    self.get_events_conf(config, 'mail to', get_user()),
                 ],
                 env=env,
                 stdin_str=stdin_str)

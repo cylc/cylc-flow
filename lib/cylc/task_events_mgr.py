@@ -42,9 +42,8 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
 from cylc.mp_pool import SuiteProcContext
 from cylc.network.suite_broadcast_server import BroadcastServer
-from cylc.owner import USER
 from cylc.suite_logging import ERR, LOG
-from cylc.suite_host import get_suite_host
+from cylc.suite_host import get_suite_host, get_user
 from cylc.task_action_timer import TaskActionTimer
 from cylc.task_message import TaskMessage
 from cylc.task_state import (
@@ -293,32 +292,23 @@ class TaskEventsManager(object):
                     itask=itask)
                 return
 
-        # Check registered outputs.
-        if itask.state.outputs.exists(message):
-            if not itask.state.outputs.is_completed(message):
-                cylc.flags.pflag = True
-                itask.state.outputs.set_completed(message)
-                self._db_events_insert(itask, "output completed", message)
-            elif not is_polled:
-                # This output has already been reported complete. Not an error
-                # condition - maybe the network was down for a bit. Ok for
-                # polling as multiple polls *should* produce the same result.
-                LOG.warning(
-                    "Unexpected output (already completed):\n  %s" % message,
-                    itask=itask)
-
         if is_polled and itask.state.status not in TASK_STATUSES_ACTIVE:
             # A poll result can come in after a task finishes.
             LOG.warning(
-                "Ignoring late poll result: task is not active",
-                itask=itask)
+                "Ignoring late poll result: task is not active", itask=itask)
             return
 
-        if priority == TaskMessage.WARNING:
-            self.setup_event_handlers(itask, "warning", message)
-
-        elif priority == TaskMessage.CRITICAL:
-            self.setup_event_handlers(itask, "critical", message)
+        # Check registered outputs
+        output_has_changed = itask.state.outputs.set_completed(message)
+        if output_has_changed is False:  # Not True or None
+            # This output has already been reported complete. Not an error
+            # condition - maybe the network was down for a bit. Ok for
+            # polling as multiple polls *should* produce the same result.
+            if not is_polled:
+                LOG.debug(
+                    "ignore - output already completed:\n  %s" % message,
+                    itask=itask)
+            return
 
         if (message == TASK_OUTPUT_STARTED and
                 itask.state.status in [
@@ -330,7 +320,7 @@ class TaskEventsManager(object):
                     TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
                     TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_RUNNING,
                     TASK_STATUS_FAILED]):
-            self._process_message_succeeded(itask, event_time, is_polled)
+            self._process_message_succeeded(itask, event_time)
         elif (message == TASK_OUTPUT_FAILED and
                 itask.state.status in [
                     TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
@@ -343,18 +333,21 @@ class TaskEventsManager(object):
         elif message == TASK_OUTPUT_SUBMITTED:
             self._process_message_submitted(itask, event_time)
         elif message.startswith(TaskMessage.FAIL_MESSAGE_PREFIX):
-            # capture and record signals sent to task proxy
-            self._db_events_insert(itask, "signaled", message)
-            signal = message.replace(TaskMessage.FAIL_MESSAGE_PREFIX, "")
-            self.suite_db_mgr.put_update_task_jobs(itask, {
-                "run_signal": signal})
+            # Task failed message
+            signal = message[len(TaskMessage.FAIL_MESSAGE_PREFIX):]
+            self._db_events_insert(itask, "signaled", signal)
+            self.suite_db_mgr.put_update_task_jobs(
+                itask, {"run_signal": signal})
             self._process_message_failed(itask, event_time, self.JOB_FAILED)
         elif message.startswith(TaskMessage.ABORT_MESSAGE_PREFIX):
-            # Abort with message.
-            self._process_message_failed(
-                itask, event_time,
-                message.replace(TaskMessage.ABORT_MESSAGE_PREFIX, ''))
+            # Task aborted with message
+            signal = message[len(TaskMessage.ABORT_MESSAGE_PREFIX):]
+            self._db_events_insert(itask, "aborted", message)
+            self.suite_db_mgr.put_update_task_jobs(
+                itask, {"run_signal": signal})
+            self._process_message_failed(itask, event_time, signal)
         elif message.startswith(TaskMessage.VACATION_MESSAGE_PREFIX):
+            # Task job pre-empted into a vacation state
             cylc.flags.pflag = True
             itask.state.reset_state(TASK_STATUS_SUBMITTED)
             self._db_events_insert(itask, "vacated", message)
@@ -368,6 +361,10 @@ class TaskEventsManager(object):
                     float(self._get_events_conf(itask, 'submission timeout')))
             except (TypeError, ValueError):
                 itask.timeout_timers[TASK_STATUS_SUBMITTED] = None
+        elif output_has_changed:
+            # Message of a custom task output
+            cylc.flags.pflag = True
+            self.suite_db_mgr.put_update_task_outputs(itask)
         else:
             # Unhandled messages. These include:
             #  * general non-output/progress messages
@@ -380,6 +377,9 @@ class TaskEventsManager(object):
                 priority = getLevelName(priority)
             self._db_events_insert(
                 itask, ("message %s" % str(priority).lower()), message)
+
+        if priority in [TaskMessage.WARNING, TaskMessage.CRITICAL]:
+            self.setup_event_handlers(itask, priority.lower(), message)
 
     def setup_event_handlers(self, itask, event, message):
         """Set up handlers for a task event."""
@@ -594,7 +594,7 @@ class TaskEventsManager(object):
         itask.set_event_time('finished', event_time)
         self.suite_db_mgr.put_update_task_jobs(itask, {
             "run_status": 1,
-            "time_run_exit": itask.summary['finished_time_string'],
+            "time_run_exit": event_time,
         })
         if (TASK_STATUS_RETRYING not in itask.try_timers or
                 itask.try_timers[TASK_STATUS_RETRYING].next() is None):
@@ -644,13 +644,13 @@ class TaskEventsManager(object):
         self.setup_event_handlers(itask, 'started', 'job started')
         self.set_poll_time(itask)
 
-    def _process_message_succeeded(self, itask, event_time, is_polled=False):
+    def _process_message_succeeded(self, itask, event_time):
         """Helper for process_message, handle a succeeded message."""
         cylc.flags.pflag = True
         itask.set_event_time('finished', event_time)
         self.suite_db_mgr.put_update_task_jobs(itask, {
             "run_status": 0,
-            "time_run_exit": itask.summary['finished_time_string'],
+            "time_run_exit": event_time,
         })
         # Update mean elapsed time only on task succeeded.
         if itask.summary['started_time'] is not None:
@@ -658,18 +658,10 @@ class TaskEventsManager(object):
                 itask.summary['finished_time'] -
                 itask.summary['started_time'])
         if not itask.state.outputs.all_completed():
-            err = "Succeeded with unreported outputs:"
-            for msg in itask.state.outputs.get_not_completed():
-                err += "\n  " + msg
-            LOG.warning(err, itask=itask)
-            if not is_polled:
-                # A succeeded task MUST have submitted and started.
-                # TODO - just poll for outputs in the job status file?
-                for output in [TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED]:
-                    if not itask.state.outputs.is_completed(output):
-                        LOG.warning(
-                            "Assuming output completed:  \n %s" % output,
-                            itask=itask)
+            message = "Succeeded with unreported outputs:"
+            for output in itask.state.outputs.get_not_completed():
+                message += "\n  " + output
+            LOG.info(message, itask=itask)
         itask.state.reset_state(TASK_STATUS_SUCCEEDED)
         self.setup_event_handlers(itask, "succeeded", "job succeeded")
 
@@ -717,7 +709,7 @@ class TaskEventsManager(object):
                 'submit_method_id=%s' % itask.summary['submit_method_id'],
                 itask=itask)
         self.suite_db_mgr.put_update_task_jobs(itask, {
-            "time_submit_exit": get_unix_time_from_time_string(event_time),
+            "time_submit_exit": event_time,
             "submit_status": 0,
             "batch_sys_job_id": itask.summary.get('submit_method_id')})
 
@@ -764,7 +756,7 @@ class TaskEventsManager(object):
             user_at_host = itask.task_host
         events = (self.EVENT_FAILED, self.EVENT_RETRY, self.EVENT_SUCCEEDED)
         if (event not in events or
-                user_at_host in [USER + '@localhost', 'localhost'] or
+                user_at_host in [get_user() + '@localhost', 'localhost'] or
                 not self.get_host_conf(itask, "retrieve job logs") or
                 id_key in self.event_timers):
             return
@@ -801,7 +793,7 @@ class TaskEventsManager(object):
                     "mail from",
                     "notifications@" + get_suite_host(),
                 ),
-                self._get_events_conf(itask, "mail to", USER),  # mail_to
+                self._get_events_conf(itask, "mail to", get_user()),  # mail_to
                 self._get_events_conf(itask, "mail smtp"),  # mail_smtp
             ),
             retry_delays)

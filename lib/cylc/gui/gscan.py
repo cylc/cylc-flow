@@ -38,7 +38,7 @@ from cylc.gui.scanutil import (
 from cylc.gui.util import get_icon, setup_icons, set_exception_hook_dialog
 from cylc.network import (
     KEY_GROUP, KEY_STATES, KEY_TASKS_BY_STATE, KEY_TITLE, KEY_UPDATE_TIME)
-from cylc.owner import USER
+from cylc.suite_host import get_user
 from cylc.task_state import (
     TASK_STATUSES_ORDERED, TASK_STATUS_RUNAHEAD, TASK_STATUS_FAILED,
     TASK_STATUS_SUBMIT_FAILED)
@@ -74,7 +74,8 @@ class ScanApp(object):
         self.window = gtk.Window()
         title = "cylc gscan"
         for opt, items, skip in [
-                ("-n", patterns_name, None), ("-o", patterns_owner, USER)]:
+                ("-n", patterns_name, None),
+                ("-o", patterns_owner, get_user())]:
             if items:
                 for pattern in items:
                     if pattern != skip:
@@ -112,7 +113,7 @@ class ScanApp(object):
         if hosts != ['localhost']:
             vis_cols.append(gsfg.COL_HOST.lower())
         # In multiple owner environment, add owner column by default
-        if patterns_owner != [USER]:
+        if patterns_owner != [get_user()]:
             vis_cols.append(gsfg.COL_OWNER.lower())
         # Construct the group, host, owner, suite, title, update time column.
         for col_title, col_id, col_cell_text_setter in [
@@ -343,8 +344,8 @@ class ScanApp(object):
         hosts_item.set_image(img)
         hosts_item.show()
         hosts_item.connect(
-            "button-press-event",
-            lambda b, e: launch_hosts_dialog(
+            "activate",
+            lambda w: launch_hosts_dialog(
                 self.hosts, self.updater.set_hosts))
         view_menu.append(hosts_item)
 

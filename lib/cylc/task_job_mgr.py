@@ -48,8 +48,7 @@ from cylc.job_file import JobFileWriter
 from cylc.mkdir_p import mkdir_p
 from cylc.mp_pool import SuiteProcPool, SuiteProcContext
 from cylc.network.suite_broadcast_server import BroadcastServer
-from cylc.owner import is_remote_user, USER
-from cylc.suite_host import is_remote_host
+from cylc.suite_host import is_remote, is_remote_host, is_remote_user
 from cylc.suite_logging import ERR, LOG
 from cylc.task_events_mgr import TaskEventsManager
 from cylc.task_message import TaskMessage
@@ -136,8 +135,9 @@ class TaskJobManager(object):
         """
         if host is None:
             host = 'localhost'
-        if ((host, owner) in [('localhost', None), ('localhost', USER)] or
-                (host, owner) in self.init_host_map or self.single_task_mode):
+        if (self.single_task_mode or
+                (host, owner) in self.init_host_map or
+                not is_remote(host, owner)):
             return
         user_at_host = host
         if owner:
@@ -199,7 +199,7 @@ class TaskJobManager(object):
                     self.suite_srv_files_mgr.FILE_BASE_PASSPHRASE, reg),
                 user_at_host + ':' + r_suite_srv_dir + '/'])
             if ssl_cert is not None:
-                cmds.insert(-2, ssl_cert)
+                cmds[-1].insert(-1, ssl_cert)
         # Command to copy python library to remote host.
         suite_run_py = os.path.join(
             GLOBAL_CFG.get_derived_host_item(reg, 'suite run directory'),
@@ -704,12 +704,7 @@ class TaskJobManager(object):
             cmd = ["cylc", cmd_key]
             if cylc.flags.debug:
                 cmd.append("--debug")
-            try:
-                if is_remote_host(host):
-                    cmd.append("--host=%s" % (host))
-            except IOError:
-                # Bad host, run the command any way, command will fail and
-                # callback will deal with it
+            if is_remote_host(host):
                 cmd.append("--host=%s" % (host))
             if is_remote_user(owner):
                 cmd.append("--user=%s" % (owner))
@@ -913,6 +908,8 @@ class TaskJobManager(object):
                     itask.poll_timers[key] = TaskActionTimer(delays=values)
 
         self.init_host(suite, itask.task_host, itask.task_owner)
+        if itask.state.outputs.has_custom_triggers():
+            self.suite_db_mgr.put_update_task_outputs(itask)
         self.suite_db_mgr.put_update_task_jobs(itask, {
             "user_at_host": user_at_host,
             "batch_sys_name": itask.summary['batch_sys_name'],
