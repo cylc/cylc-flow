@@ -1,5 +1,5 @@
-
-title = "A test with nested include-files"
+[meta]
+    title = "A test with nested include-files"
 
 [scheduling]
     initial cycle point = 20130101T00

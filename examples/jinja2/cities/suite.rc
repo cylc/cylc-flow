@@ -1,7 +1,7 @@
 #!Jinja2
-
-title = "Jinja2 city suite example."
-description = """
+[meta]
+    title = "Jinja2 city suite example."
+    description = """
 Illustrates use of variables and math expressions, and programmatic
 generation of groups of related dependencies and runtime properties."""
 

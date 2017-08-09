@@ -1,4 +1,5 @@
-title = "test suite for cylc-6 message triggers"
+[meta]
+    title = "test suite for cylc-6 message triggers"
 
 [scheduling]
     initial cycle point = 20140801T00

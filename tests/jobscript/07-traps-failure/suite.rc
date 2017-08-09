@@ -1,5 +1,6 @@
 #!jinja2
-title = "Job script: test different failure traps based on batch system"
+[meta]
+    title = "Job script: test different failure traps based on batch system"
 [cylc]
 [scheduling]
     [[dependencies]]

@@ -1,4 +1,5 @@
-title = "Hello, Goodbye, Suicide"
+[meta]
+    title = "Hello, Goodbye, Suicide"
 [cylc]
     [[reference test]]
         required run mode = live

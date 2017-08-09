@@ -1,4 +1,5 @@
-title = "The cylc Hello World! suite"
+[meta]
+    title = "The cylc Hello World! suite"
 [scheduling]
     [[dependencies]]
         graph = "hello"

@@ -1,5 +1,6 @@
-title = A suite to test 'cylc trigger --edit'.
-description = """
+[meta]
+    title = A suite to test 'cylc trigger --edit'.
+    description = """
 A broken task will fail and cause the suite to abort on timeout, unless a
 second task fixes and retriggers it with an edit-run."""
 [cylc]

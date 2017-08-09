@@ -1,5 +1,6 @@
 # SUITE.RC
-title = "User Guide [runtime] example."
+[meta]
+    title = "User Guide [runtime] example."
 [cylc]
     required run mode = simulation # (no task implementations)
 [scheduling]

@@ -1,4 +1,5 @@
-title = "Trigger *off* a family of tasks"
+[meta]
+    title = "Trigger *off* a family of tasks"
 [scheduling]
     [[dependencies]]
         graph = """foo => GREETERS

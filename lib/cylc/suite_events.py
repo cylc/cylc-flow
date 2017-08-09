@@ -133,19 +133,26 @@ class SuiteEventHandler(object):
             handlers = self.get_events_conf(config, 'handlers')
         if not handlers:
             return
-
+        import pdb
+        pdb.set_trace()
         for i, handler in enumerate(handlers):
             cmd_key = ('%s-%02d' % (self.SUITE_EVENT_HANDLER, i), ctx.event)
             # Handler command may be a string for substitution
             abort_on_error = self.get_events_conf(
                 config, 'abort if %s handler fails' % ctx.event)
             try:
-                cmd = handler % {
+                handler_data = {
                     'event': quote(ctx.event),
                     'suite': quote(ctx.suite),
                     'message': quote(ctx.reason),
-                    'suite_url': quote(config.cfg['URL']),
                 }
+                if config.cfg['meta']:
+                    for key, value in config.cfg['meta'].items():
+                        if key == "URL":
+                            handler_data["suite_url"] = quote(value)
+                        else:
+                            handler_data[key] = quote(value)
+                cmd = handler % (handler_data)
             except KeyError as exc:
                 message = "%s bad template: %s" % (cmd_key, exc)
                 LOG.error(message)

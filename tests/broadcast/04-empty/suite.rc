@@ -1,5 +1,6 @@
-title=broadcast empty
-description=Test broadcast of an empty string
+[meta]
+    title=broadcast empty
+    description=Test broadcast of an empty string
 [cylc]
     [[reference test]]
         required run mode=live

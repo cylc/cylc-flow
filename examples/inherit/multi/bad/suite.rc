@@ -1,6 +1,7 @@
-title = "A suite that can be modified to get a bad inheritance hierarchy"
+[meta]
+    title = "A suite that can be modified to get a bad inheritance hierarchy"
 
-description = """Uncomment '#BAD' for an inheritance structure that the C3
+    description = """Uncomment '#BAD' for an inheritance structure that the C3
 linearization algorithm fails. It follows an example in the Python
 object MRI reference document. For a detailed explanation, see:
   http://www.python.org/download/releases/2.3/mro/

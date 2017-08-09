@@ -1,7 +1,7 @@
 #!jinja2
-
-title=Task Event Handler Retry
-URL = http://my-suites.com/${CYLC_SUITE_NAME}.html
+[meta]
+    title=Task Event Handler Retry
+    URL = http://my-suites.com/${CYLC_SUITE_NAME}.html
 
 [cylc]
     [[reference test]]

@@ -1,6 +1,7 @@
 
-title = "Suite to test that restart after reload works."
-description = """First task reloads and stops the suite,
+[meta]
+    title = "Suite to test that restart after reload works."
+    description = """First task reloads and stops the suite,
 which should run to completion on restarting."""
 
 # The restart can be run as a reference test.

@@ -1,7 +1,7 @@
+[meta]
+    title = "cylc run --hold-after"
 
-title = "cylc run --hold-after"
-
-description = """Test running with a hold-after cycle point."""
+    description = """Test running with a hold-after cycle point."""
 
 [cylc]
     UTC mode = True

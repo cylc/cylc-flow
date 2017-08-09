@@ -1,6 +1,7 @@
-title = a minimal self-contained remote task suite
+[meta]
+    title = a minimal self-contained remote task suite
 
-description = """
+    description = """
 This runs one task on a remote host. To use it, install cylc on the
 remote host specified under [[[remote]]] below.  Remote cylc
 location, and ssh messaging, can be set in host-specific sections of

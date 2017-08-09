@@ -1,5 +1,6 @@
-title = Authentication test suite.
-description = """Stalls when the first task fails.
+[meta]
+    title = Authentication test suite.
+    description = """Stalls when the first task fails.
 Suite overrides global authentication settings."""
 [cylc]
     [[events]]

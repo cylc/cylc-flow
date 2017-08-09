@@ -9,9 +9,9 @@
 {% if not sleep_time is defined %}
     {% set sleep_time = 1 %}
 {% endif %}
-
-title = "Complex Suite Demo"
-description = "This is a super-elaborate obfuscated version of a suite with no Jinja2 to condense it down."
+[meta]
+    title = "Complex Suite Demo"
+    description = "This is a super-elaborate obfuscated version of a suite with no Jinja2 to condense it down."
 [cylc]
     UTC mode = True
     [[events]]

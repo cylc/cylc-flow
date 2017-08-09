@@ -3,7 +3,8 @@
 {% set MULTI = True %}
 {% set N_GOODBYES = 3 %}
 
-title = "A Jinja2 Hello World! suite"
+[meta]
+    title = "A Jinja2 Hello World! suite"
 [scheduling]
     [[dependencies]]
 {% if MULTI %}

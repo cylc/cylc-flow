@@ -1,4 +1,5 @@
-title = "Inter-cycle dependence + an initial R1 task"
+[meta]
+    title = "Inter-cycle dependence + an initial R1 task"
 [cylc]
     cycle point time zone = +13
 [scheduling]

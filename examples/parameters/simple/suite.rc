@@ -1,4 +1,5 @@
-title = "Task parameterisation example, two parameters."
+[meta]
+    title = "Task parameterisation example, two parameters."
 [cylc]
     [[parameters]]
         r = 0..2

@@ -1,7 +1,7 @@
+[meta]
+    title = "job script cycling test"
 
-title = "job script cycling test"
-
-description = """Test the output of cycling environment variables"""
+    description = """Test the output of cycling environment variables"""
 
 [cylc]
     cycle point time zone = +13

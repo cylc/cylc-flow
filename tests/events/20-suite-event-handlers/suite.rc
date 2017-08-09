@@ -1,7 +1,7 @@
 #!jinja2
-
-title=Suite Event Mail
-URL = http://mysuites.com/${CYLC_SUITE_NAME}.html
+[meta]
+    title=Suite Event Mail
+    URL = http://mysuites.com/${CYLC_SUITE_NAME}.html
 
 [cylc]
     [[events]]

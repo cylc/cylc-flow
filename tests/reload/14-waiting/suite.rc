@@ -1,4 +1,5 @@
-title = Test reload waiting task integrity error
+[meta]
+    title = Test reload waiting task integrity error
 
 [cylc]
     [[reference test]]

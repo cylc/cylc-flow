@@ -1,5 +1,6 @@
-title = queue size reload test
-description = """change the size of a queue via a reload."""
+[meta]
+    title = queue size reload test
+    description = """change the size of a queue via a reload."""
 
 [cylc]
    [[reference test]]

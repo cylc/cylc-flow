@@ -1,5 +1,6 @@
-title = final cycle reload test
-description = """change final cycle."""
+[meta]
+    title = final cycle reload test
+    description = """change final cycle."""
 
 [cylc]
    UTC mode = True

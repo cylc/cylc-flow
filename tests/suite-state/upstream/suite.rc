@@ -1,4 +1,5 @@
-title = "One task takes 20 sec to succeed, another to fail."
+[meta]
+    title = "One task takes 20 sec to succeed, another to fail."
 [cylc]
     [[reference test]]
         live mode suite timeout = PT10M

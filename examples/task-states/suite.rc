@@ -1,6 +1,6 @@
-
-title = "gcylc task state color theme demo"
-description = """Generate a lot of possible task states,
+[meta]
+    title = "gcylc task state color theme demo"
+    description = """Generate a lot of possible task states,
 to show what they look like live in gcylc."""
 
 [cylc]

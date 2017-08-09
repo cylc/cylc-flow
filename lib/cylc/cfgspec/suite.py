@@ -191,10 +191,13 @@ coercers['parameter_list'] = _coerce_parameter_list
 
 
 SPEC = {
-    'title': vdr(vtype='string', default=""),
-    'description': vdr(vtype='string', default=""),
     'group': vdr(vtype='string', default="(ungrouped)"),
-    'URL': vdr(vtype='string', default=""),
+    'meta': {
+        'title': vdr(vtype='string', default=""),
+        'description': vdr(vtype='string', default=""),
+        'URL': vdr(vtype='string', default=""),
+        '__MANY__': vdr(vtype='string', default=""),
+        },
     'cylc': {
         'UTC mode': vdr(
             vtype='boolean', default=GLOBAL_CFG.get(['cylc', 'UTC mode'])),

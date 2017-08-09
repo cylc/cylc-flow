@@ -1,7 +1,7 @@
+[meta]
+    title = "hold/release test suite"
 
-title = "hold/release test suite"
-
-description = """One task that holds then releases the suite, with
+    description = """One task that holds then releases the suite, with
 short sleeps to make the effect on the downstream task obvious in the
 GUI (waiting to held to waiting)"""
 

@@ -1,8 +1,8 @@
 #!jinja2
+[meta]
+    title = "release family test suite"
 
-title = "release family test suite"
-
-description = """One task that holds then selectively releases a family in the
+    description = """One task that holds then selectively releases a family in the
 first cycle point of the suite.."""
 
 [cylc]

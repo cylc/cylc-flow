@@ -1,4 +1,5 @@
-title = "Job script: directives test for SGE"
+[meta]
+    title = "Job script: directives test for SGE"
 [scheduling]
     [[dependencies]]
         graph = foo

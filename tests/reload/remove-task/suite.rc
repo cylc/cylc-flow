@@ -1,4 +1,5 @@
-title = "test reloading after manually removing a task."
+[meta]
+    title = "test reloading after manually removing a task."
 
 [cylc]
    [[reference test]]

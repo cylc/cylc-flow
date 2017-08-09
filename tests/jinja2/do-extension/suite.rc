@@ -1,6 +1,6 @@
 #!Jinja2
-
-title = "Jinja2 'do' extension test"
+[meta]
+    title = "Jinja2 'do' extension test"
 
 {% set N_TASKS = N_TASKS | default(3) %}
 

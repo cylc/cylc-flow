@@ -1,7 +1,7 @@
+[meta]
+    title = "cylc hold after point suite.rc test"
 
-title = "cylc hold after point suite.rc test"
-
-description = """Define a hold after point in the suite.rc"""
+    description = """Define a hold after point in the suite.rc"""
 
 [cylc]
     UTC mode = True

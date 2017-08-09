@@ -1,7 +1,7 @@
+[meta]
+    title = "test insertion with and without a stop cycle on inserted tasks"
 
-title = "test insertion with and without a stop cycle on inserted tasks"
-
-description = """A cycling suite that runs for 3 cycles. Two of its
+    description = """A cycling suite that runs for 3 cycles. Two of its
 three tasks are excluded at start-up but are inserted manually by the 
 initital prep task. One is inserted with no stop cycle, to run for the
 duration of the suite; and the other is set to stop after two cycles."""

@@ -1,5 +1,6 @@
-title = "Example combining static chunking and dynamic cycling."
-description = """A yearly dynamic cycle within which we split a model run into
+[meta]
+    title = "Example combining static chunking and dynamic cycling."
+    description = """A yearly dynamic cycle within which we split a model run into
 three 4-month chunks, triggering the first chunk of the year of the last chunk
 of the previous year."""
 # NOTE: we'd normally recommend simply using a 4-monthly dynamic cycle for this!

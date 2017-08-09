@@ -1,7 +1,7 @@
 #!Jinja2
-
-title = Test suite based on the satellite data processing example
-description = """
+[meta]
+    title = Test suite based on the satellite data processing example
+    description = """
 Each successive integer cycle retrieves and processes the next
 arbitrarily timed and arbitrarily labelled dataset, in parallel
 with previous cycles if the data comes in quickly."""

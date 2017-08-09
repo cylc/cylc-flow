@@ -1,4 +1,5 @@
-title = "Test insertion of a task added by a reload."
+[meta]
+    title = "Test insertion of a task added by a reload."
 # Don't run this suite in-place: it modifies itself.
 
 [cylc]

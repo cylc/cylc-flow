@@ -1,4 +1,5 @@
-title = "A task with automatic retry on failure"
+[meta]
+    title = "A task with automatic retry on failure"
 [scheduling]
     [[dependencies]]
         graph = "hello"

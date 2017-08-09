@@ -1,4 +1,5 @@
-title = "Test job abort with retries and failed handler"
+[meta]
+    title = "Test job abort with retries and failed handler"
 [cylc]
     [[events]]
         inactivity = PT20S

@@ -1,5 +1,5 @@
-
-description = """
+[meta]
+    description = """
 A triple check-and-retry suite. This could be use of the main task VAR
 sometimes fails to do its job without actually reporting failure. Of
 course it would be better to fix VAR (get it to report failure properly)

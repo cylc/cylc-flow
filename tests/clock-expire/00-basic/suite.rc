@@ -1,5 +1,6 @@
-title = task expire example suite
-description = """
+[meta]
+    title = task expire example suite
+    description = """
 Skip a daily post-processing workflow if the 'copy' task has expired."""
 
 [cylc]

@@ -14,7 +14,11 @@ from parsec.config import config
 from parsec.validate import validator as vdr
 from parsec.OrderedDict import OrderedDict
 
-SPEC = { 'title' : vdr( vtype="string" ) }
+SPEC = {
+    'meta': {
+        'title' : vdr( vtype="string" )
+        }
+    }
 cfg = config( SPEC )
 cfg.loadcfg( "empty.rc" )
 

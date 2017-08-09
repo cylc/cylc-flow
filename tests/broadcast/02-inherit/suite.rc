@@ -1,6 +1,7 @@
 #!jinja2
-title=broadcast
-description=Test Broadcast Inheritance
+[meta]
+    title=broadcast
+    description=Test Broadcast Inheritance
 [cylc]
     cycle point format = %Y%m%dT%H
     [[reference test]]

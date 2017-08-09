@@ -1,6 +1,6 @@
-
-title = content reload test
-description = """two tasks: the second will fail, causing the test to
+[meta]
+    title = content reload test
+    description = """two tasks: the second will fail, causing the test to
 fail, unless the first reloads the suite definition after modifying it."""
 
 [cylc]

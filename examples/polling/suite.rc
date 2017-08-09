@@ -1,6 +1,7 @@
-title = "Task polling example suite."
+[meta]
+    title = "Task polling example suite."
 
-description = """
+    description = """
 Demos job submission and execution polling, for the poll task
 communication method, and more generally. View the suite event log 
 as the suite runs, filtering for the word 'poll'.

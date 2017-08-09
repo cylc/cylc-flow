@@ -1,5 +1,6 @@
-title=broadcast bad point
-description=Test broadcast to an invalid cycle point fails.
+[meta]
+    title=broadcast bad point
+    description=Test broadcast to an invalid cycle point fails.
 # And see github #1415 - it did cause the suite daemon to abort.
 [cylc]
     abort if any task fails = True

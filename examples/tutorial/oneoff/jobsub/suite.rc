@@ -1,4 +1,5 @@
-title = "Hello World! by 'at' job submission"
+[meta]
+    title = "Hello World! by 'at' job submission"
 [scheduling]
     [[dependencies]]
         graph = "hello"

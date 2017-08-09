@@ -1,4 +1,5 @@
-title = "Hello and Goodbye World!"
+[meta]
+    title = "Hello and Goodbye World!"
 [scheduling]
     [[dependencies]]
         graph = "hello => goodbye"

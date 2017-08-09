@@ -1,4 +1,5 @@
-title = "Job script: no directives test for SLURM"
+[meta]
+    title = "Job script: no directives test for SLURM"
 
 [cylc]
 

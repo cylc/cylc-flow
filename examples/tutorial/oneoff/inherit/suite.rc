@@ -1,4 +1,5 @@
-title = "Simple runtime inheritance example"
+[meta]
+    title = "Simple runtime inheritance example"
 [scheduling]
     [[dependencies]]
         graph = "hello => goodbye"

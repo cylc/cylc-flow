@@ -1,5 +1,5 @@
-
-title = "Test list of task event handlers"
+[meta]
+    title = "Test list of task event handlers"
 # suite will time out unless both event handlers are executed.
 
 [cylc]

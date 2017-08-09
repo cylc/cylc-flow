@@ -1,4 +1,5 @@
-title = Job script: suite to environment test
+[meta]
+    title = Job script: suite to environment test
 
 [cylc]
     [[reference test]]

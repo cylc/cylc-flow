@@ -1,5 +1,6 @@
-title = "Test suite for initial cycle point less than final."
-description = """Task are not important here but the cycl points are.
+[meta]
+     title = "Test suite for initial cycle point less than final."
+     description = """Task are not important here but the cycl points are.
 Initial is set to greater than the final and the suite should report the
 error."""
 

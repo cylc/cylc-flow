@@ -1,5 +1,6 @@
-title = "Test for Github Issue 1893"
-description = """Cycle-point specific external triggering in a date-time
+[meta]
+    title = "Test for Github Issue 1893"
+    description = """Cycle-point specific external triggering in a date-time
 cycling suite.  The suite will time out and abort if the ext trigger fails."""
 
 [cylc]

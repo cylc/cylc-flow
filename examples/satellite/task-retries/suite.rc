@@ -1,8 +1,8 @@
 #!Jinja2
+[meta]
+    title = Real time satellite processing demo, variant 2 of 3
 
-title = Real time satellite processing demo, variant 2 of 3
-
-description = """
+    description = """
 Successive cycle points retrieve and process the next arbitrarily timed and
 labelled dataset, in parallel if the data comes in quickly.  This variant of
 the suite has initial get_data tasks that trigger immediately and simply report
