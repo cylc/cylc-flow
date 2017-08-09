@@ -71,7 +71,7 @@ class Prerequisite(object):
         match = self.__class__.CYCLE_POINT_RE.match(message)
         if match:
             self.target_point_strings.append(match.groups()[0])
-        if pre_initial:
+        if pre_initial and message not in pre_initial:
             self.pre_initial_messages.append(message)
 
     def get_not_satisfied_list(self):
