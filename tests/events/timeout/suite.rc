@@ -1,5 +1,5 @@
-
-description = This suite is supposed to time out
+[meta]
+    description = This suite is supposed to time out
 
 [cylc]
     [[events]]
