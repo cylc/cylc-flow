@@ -56,30 +56,29 @@ class TaskTrigger(object):
         cycle_point_offset (str): String representing the offset of the
             upstream task (e.g. -P1D) if this dependency is not an absolute
             one. Else None.
-        qualifier (str): The task state / message for this trigger e.g.
-            succeeded.
+        output (str): The task state / output for this trigger e.g. succeeded.
 
     """
 
     __slots__ = ['task_name', 'abs_cycle_point', 'cycle_point_offset',
-                 'qualifier']
+                 'output']
 
     def __init__(self, task_name, abs_cycle_point, cycle_point_offset,
-                 qualifier):
+                 output):
         self.task_name = task_name
         self.abs_cycle_point = abs_cycle_point
         self.cycle_point_offset = cycle_point_offset
-        self.qualifier = qualifier
+        self.output = output
 
-    def get_message(self, point):
-        """Return a string used to identify this trigger internally.
+    def get_point(self, point):
+        """Return the point of the output to which this TaskTrigger pertains.
 
         Args:
             point (cylc.cycling.PointBase): The cycle point of the dependent
-                task to which this trigger applies.
+                task.
 
         Returns:
-            str
+            cylc.cycling.PointBase: The cycle point of the dependency.
 
         """
         if self.abs_cycle_point:
@@ -87,7 +86,7 @@ class TaskTrigger(object):
         elif self.cycle_point_offset:
             point = get_point_relative(
                 self.cycle_point_offset, point)
-        return '%s.%s %s' % (self.task_name, point, self.qualifier)
+        return point
 
     @staticmethod
     def get_trigger_name(trigger_name):
@@ -154,14 +153,18 @@ class Dependency(object):
                              tdef.max_future_prereq_offset)):
                         tdef.max_future_prereq_offset = (
                             prereq_offset)
-                # Register task message with Prerequisite object.
-                cpre.add(task_trigger.get_message(point),
-                         ((prereq_offset_point < tdef.start_point) &
-                          (point >= tdef.start_point)))
+                pre_initial = ((prereq_offset_point < tdef.start_point) &
+                               (point >= tdef.start_point))
+                cpre.add(task_trigger.task_name,
+                         task_trigger.get_point(point),
+                         task_trigger.output,
+                         pre_initial)
             else:
                 # Trigger is within the same cycle point.
                 # Register task message with Prerequisite object.
-                cpre.add(task_trigger.get_message(point))
+                cpre.add(task_trigger.task_name,
+                         task_trigger.get_point(point),
+                         task_trigger.output)
         cpre.set_condition(self.get_expression(point))
         return cpre
 
@@ -172,6 +175,10 @@ class Dependency(object):
             point (cylc.cycling.PointBase): The cycle point at which to
                 generate the expression string for.
 
+        Return:
+            string: The expression as a parsable string in the cylc graph
+            format.
+
         """
         return ''.join(self._stringify_list(self._exp, point))
 
@@ -181,7 +188,8 @@ class Dependency(object):
         ret = []
         for item in nested_expr:
             if isinstance(item, TaskTrigger):
-                ret.append(item.get_message(point))
+                ret.append(Prerequisite.MESSAGE_TEMPLATE % (
+                    item.task_name, item.get_point(point), item.output))
             elif type(item) is list:
                 ret.extend(['('] + cls._stringify_list(item, point) + [')'])
             else:

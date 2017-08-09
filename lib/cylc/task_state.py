@@ -195,11 +195,11 @@ class TaskState(object):
 
         self.kill_failed = False
 
-    def satisfy_me(self, task_output_msgs, task_outputs):
+    def satisfy_me(self, all_task_outputs):
         """Attempt to get my prerequisites satisfied."""
-        for preqs in [self.prerequisites, self.suicide_prerequisites]:
-            for preq in preqs:
-                if preq.satisfy_me(task_output_msgs, task_outputs):
+        for prereqs in [self.prerequisites, self.suicide_prerequisites]:
+            for prereq in prereqs:
+                if prereq.satisfy_me(all_task_outputs):
                     self._is_satisfied = None
                     self._suicide_is_satisfied = None
 
@@ -224,10 +224,8 @@ class TaskState(object):
 
     def prerequisites_get_target_points(self):
         """Return a list of cycle points targeted by each prerequisite."""
-        points = []
-        for preq in self.prerequisites:
-            points += preq.get_target_points()
-        return points
+        return set(point for prerequisite in self.prerequisites for
+                   point in prerequisite.get_target_points())
 
     def prerequisites_eval_all(self):
         """Set all prerequisites to satisfied."""
@@ -250,28 +248,23 @@ class TaskState(object):
 
     def prerequisites_dump(self, list_prereqs=False):
         """Dump prerequisites."""
-        res = []
         if list_prereqs:
-            for prereq in self.prerequisites:
-                for task in sorted(prereq.satisfied):
-                    res.append(task)
+            return [Prerequisite.MESSAGE_TEMPLATE % msg for prereq in
+                    self.prerequisites for msg in sorted(prereq.satisfied)]
         else:
-            for preq in self.prerequisites:
-                res += preq.dump()
-        return res
+            return [x for prereq in self.prerequisites for x in prereq.dump()]
 
     def get_resolved_dependencies(self):
-        """Report who I triggered off."""
-        deps = []
-        for prereq in self.prerequisites:
-            for message, satisfied in prereq.satisfied.items():
-                if satisfied == Prerequisite.DEP_STATE_SATISFIED:
-                    if message not in deps:
-                        deps.append(message.split(' ', 1)[0])
-        # order does not matter here; sort to allow comparison with
-        # reference run task with lots of near-simultaneous triggers.
-        deps.sort()
-        return deps
+        """Return a list of dependencies which have been met for this task.
+
+        E.G: ['foo.1', 'bar.2']
+
+        The returned list is sorted to allow comparison with reference run
+        task with lots of near-simultaneous triggers.
+
+        """
+        return list(sorted(dep for prereq in self.prerequisites for dep in
+                           prereq.get_resolved_dependencies()))
 
     def unset_special_outputs(self):
         """Remove special outputs added for triggering purposes.
@@ -421,8 +414,7 @@ class TaskState(object):
             if adjusted:
                 p_prev = max(adjusted)
                 cpre = Prerequisite(point, tdef.start_point)
-                prereq = "%s %s" % (TaskID.get(tdef.name, p_prev),
-                                    TASK_STATUS_SUCCEEDED)
-                cpre.add(prereq, p_prev < tdef.start_point)
+                cpre.add(tdef.name, p_prev, TASK_STATUS_SUCCEEDED,
+                         p_prev < tdef.start_point)
                 cpre.set_condition(tdef.name)
                 self.prerequisites.append(cpre)
