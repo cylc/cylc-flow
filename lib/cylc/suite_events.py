@@ -133,8 +133,6 @@ class SuiteEventHandler(object):
             handlers = self.get_events_conf(config, 'handlers')
         if not handlers:
             return
-        import pdb
-        pdb.set_trace()
         for i, handler in enumerate(handlers):
             cmd_key = ('%s-%02d' % (self.SUITE_EVENT_HANDLER, i), ctx.event)
             # Handler command may be a string for substitution
