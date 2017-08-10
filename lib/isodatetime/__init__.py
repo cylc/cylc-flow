@@ -16,4 +16,4 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # ----------------------------------------------------------------------------
 
-__version__ = "2017.02.1"
+__version__ = "2017.08.0"

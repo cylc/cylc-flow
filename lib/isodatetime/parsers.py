@@ -41,7 +41,7 @@ class StrptimeConversionError(ValueError):
 
     """An error denoting bad conversion from a strftime/strptime format."""
 
-    BAD_CONVERSION = "Bad conversion for strftime/strptime input {0}: {1}."""
+    BAD_CONVERSION = "Bad conversion for strftime/strptime input {0}: {1}."
 
     def __str__(self):
         return self.BAD_CONVERSION.format(*self.args)
