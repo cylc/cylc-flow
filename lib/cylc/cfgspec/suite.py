@@ -197,7 +197,7 @@ SPEC = {
         'description': vdr(vtype='string', default=""),
         'URL': vdr(vtype='string', default=""),
         '__MANY__': vdr(vtype='string', default=""),
-        },
+    },
     'cylc': {
         'UTC mode': vdr(
             vtype='boolean', default=GLOBAL_CFG.get(['cylc', 'UTC mode'])),

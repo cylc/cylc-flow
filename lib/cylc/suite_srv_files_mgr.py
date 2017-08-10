@@ -537,8 +537,6 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
             elif line.lstrip().startswith("["):
                 # abort: title comes before first [section]
                 break
-            else:
-                continue
             match = re.match('^\s*title\s*=\s*(.*)\s*$', line)
             if match:
                 title = match.groups()[0].strip('"\'')
