@@ -1,5 +1,5 @@
 [meta]
-     title = "Test validation of initial cycle point against constraints"
+    title = "Test validation of initial cycle point against constraints"
 
 [cylc]
 [scheduling]

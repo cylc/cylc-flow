@@ -1,7 +1,7 @@
 [meta]
-     title = "Test Suite"
-     description="Testing grouping options"
-     group="test group 1"
+    title = "Test Suite"
+    description="Testing grouping options"
+group="test group 1"
 
 [scheduling]
     max active cycle points = 3
