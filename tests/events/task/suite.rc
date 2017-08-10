@@ -57,7 +57,7 @@ fi"""
         [[[job]]]
             submission retry delays = PT3S
         [[[remote]]]
-            host = NOHOST
+            host = NOHOST.NODOMAIN
 
      [[baz]]
         # submitted, submission timeout, started, failed
