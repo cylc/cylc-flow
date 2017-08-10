@@ -393,10 +393,18 @@ class MyDotWindow(CylcDotViewerCommon):
     def is_ghost_task(self, name, point, cache=None):
         """Returns True if the task <name> at cycle point <point> is a ghost.
         """
-        for sequence in self.suiterc.taskdefs[name].sequences:
+        try:
+            sequences = self.suiterc.taskdefs[name].sequences
+        except KeyError:
+            # Handle tasks not used in the graph.
+            return False
+        if not sequences:
+            return False
+        for sequence in sequences:
             p_str = str(point)
             if (cache and sequence in cache and p_str in cache[sequence]):
-                return not cache[sequence][p_str]
+                if cache[sequence][p_str]:
+                    return False
             else:
                 temp = sequence.is_on_sequence(get_point(point))
                 if cache is not None:
@@ -404,14 +412,6 @@ class MyDotWindow(CylcDotViewerCommon):
                 if temp:
                     return False
         return True
-
-    def is_ghost_family(self, fam_name, point, family_nodes, cache=None):
-        for child in family_nodes[fam_name]:
-            if child in family_nodes:
-                return self.is_ghost_family(child, point, family_nodes, cache)
-            else:
-                if self.is_ghost_task(child, point, cache=cache):
-                    return True
 
     def get_graph(self, group_nodes=None, ungroup_nodes=None,
                   ungroup_recursive=False, ungroup_all=False, group_all=False):
@@ -438,9 +438,8 @@ class MyDotWindow(CylcDotViewerCommon):
             if name in family_nodes:
                 # Style family nodes.
                 node.attr['shape'] = 'doubleoctagon'
-                # Style ghost family nodes.
-                if self.is_ghost_family(name, point, family_nodes, cache):
-                    style_ghost_node(node)
+                # Detecting ghost families would involve analysing triggers
+                # in the suite's graphing.
             elif self.is_ghost_task(name, point, cache=cache):
                 # Style ghost nodes.
                 style_ghost_node(node)
