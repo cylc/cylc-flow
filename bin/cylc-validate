@@ -124,5 +124,7 @@ if __name__ == "__main__":
         main()
     except Exception as exc:
         if cylc.flags.debug:
+            import traceback
+            traceback.print_exc()
             raise
         sys.exit(str(exc))
