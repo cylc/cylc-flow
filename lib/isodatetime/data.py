@@ -148,6 +148,9 @@ class TimeRecurrence(object):
 
     """Represent a recurring duration."""
 
+    __slots__ = ("repetitions", "start_point", "duration", "end_point",
+                 "min_point", "max_point", "format_number")
+
     def __init__(self, repetitions=None, start_point=None,
                  duration=None, end_point=None, min_point=None,
                  max_point=None):
@@ -347,6 +350,8 @@ class Duration(object):
 
     DATA_ATTRIBUTES = [
         "years", "months", "weeks", "days", "hours", "minutes", "seconds"]
+
+    __slots__ = DATA_ATTRIBUTES
 
     def __init__(self, years=0, months=0, weeks=0, days=0,
                  hours=0.0, minutes=0.0, seconds=0.0, standardize=False):
@@ -618,6 +623,8 @@ class TimeZone(Duration):
 
     """
 
+    __slots__ = ['unknown'] + Duration.__slots__
+
     def __init__(self, hours=0, minutes=0, unknown=False):
         self.unknown = unknown
         super(TimeZone, self).__init__(hours=hours, minutes=minutes)
@@ -727,6 +734,8 @@ class TimePoint(object):
         "second_of_minute", "truncated", "truncated_property",
         "dump_format", "time_zone"
     ]
+
+    __slots__ = DATA_ATTRIBUTES + ["truncated_dump_format"]
 
     def __init__(self, expanded_year_digits=0, year=None, month_of_year=None,
                  week_of_year=None, day_of_year=None, day_of_month=None,
@@ -1085,7 +1094,7 @@ class TimePoint(object):
         hour, minute, second = self.get_hour_minute_second()
         self.hour_of_day = hour
         self.minute_of_hour = minute
-        self.second_of_day = second
+        self.second_of_minute = second
 
     def to_week_date(self):
         """Reformat the date in years, week-of-year, day-of-week."""
