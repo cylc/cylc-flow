@@ -340,7 +340,6 @@ SPEC = {
             'script': vdr(vtype='string', default=""),
             'post-script': vdr(vtype='string', default=""),
             'extra log files': vdr(vtype='string_list', default=[]),
-            'enable resurrection': vdr(vtype='boolean', default=False),
             'work sub-directory': vdr(vtype='string'),
             'meta': {
                 'title': vdr(vtype='string', default=""),
@@ -548,6 +547,7 @@ def upg(cfg, descr):
     u.obsolete('7.2.2', ['cylc', 'simulation mode'])
     u.obsolete('7.2.2', ['runtime', '__MANY__', 'dummy mode'])
     u.obsolete('7.2.2', ['runtime', '__MANY__', 'simulation mode'])
+    u.obsolete('7.5.0', ['runtime', '__MANY__', 'enable resurrection'])
     u.upgrade()
 
 

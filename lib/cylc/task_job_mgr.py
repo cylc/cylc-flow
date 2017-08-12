@@ -57,7 +57,8 @@ from cylc.task_outputs import (
 from cylc.task_action_timer import TaskActionTimer
 from cylc.task_state import (
     TASK_STATUSES_ACTIVE, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
-    TASK_STATUS_RUNNING, TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING)
+    TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
+    TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING)
 from cylc.wallclock import (
     get_current_time_string, get_seconds_as_interval_string)
 
@@ -103,6 +104,7 @@ class TaskJobManager(object):
         self.suite_db_mgr = suite_db_mgr
         self.task_events_mgr = TaskEventsManager(
             suite, proc_pool, suite_db_mgr)
+        self.task_events_mgr.job_poll = self.poll_task_jobs
         self.job_file_writer = JobFileWriter()
         self.suite_srv_files_mgr = suite_srv_files_mgr
         self.init_host_map = {}  # {(user, host): should_unlink, ...}
@@ -119,7 +121,8 @@ class TaskJobManager(object):
             if (self._check_timeout(itask, now) or
                     self.task_events_mgr.set_poll_time(itask, now)):
                 poll_tasks.add(itask)
-        self.poll_task_jobs(suite, poll_tasks)
+        if poll_tasks:
+            self.poll_task_jobs(suite, poll_tasks)
 
     def init_host(self, reg, host, owner):
         """Initialise suite run dir on a user@host.
@@ -236,18 +239,31 @@ class TaskJobManager(object):
             self.JOBS_KILL, suite, active_itasks,
             self._kill_task_jobs_callback)
 
-    def poll_task_jobs(self, suite, itasks, warn_skips=False):
-        """Poll jobs of specified tasks."""
-        active_itasks = []
+    def poll_task_jobs(self, suite, itasks, warn_skips=False,
+                       poll_all=True, msg=None):
+        """Poll jobs of specified tasks.
+
+        Any job that is or was submitted or running can be polled, except for
+        retrying tasks - which would poll (correctly) as failed.
+
+        """
+        poll_me = []
+        pollable = [TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING,
+                    TASK_STATUS_FAILED]
+        if poll_all:
+            pollable.append(TASK_STATUS_SUCCEEDED)
         for itask in itasks:
-            if itask.state.status in TASK_STATUSES_ACTIVE:
-                active_itasks.append(itask)
-            elif warn_skips:  # and not active
+            if itask.state.status in pollable:
+                poll_me.append(itask)
+            elif warn_skips:
                 LOG.warning(
-                    '%s: skip poll, task not pollable' % itask.identity)
-        self._run_job_cmd(
-            self.JOBS_POLL, suite, active_itasks,
-            self._poll_task_jobs_callback)
+                    '%s: skip poll, task not pollable (no job ID)' % (
+                        itask.identity))
+        if poll_me:
+            if msg is not None:
+                LOG.info(msg)
+            self._run_job_cmd(
+                self.JOBS_POLL, suite, poll_me, self._poll_task_jobs_callback)
 
     def prep_submit_task_jobs(self, suite, itasks, dry_run=False):
         """Prepare task jobs for submit."""
@@ -536,11 +552,12 @@ class TaskJobManager(object):
         elif itask.state.status == TASK_STATUS_SUBMITTED:
             self.task_events_mgr.process_message(
                 itask, CRITICAL, "%s at %s" % (
-                    self.task_events_mgr.EVENT_SUBMIT_FAILED, ctx.timestamp))
+                    self.task_events_mgr.EVENT_SUBMIT_FAILED, ctx.timestamp),
+                self.poll_task_jobs)
             cylc.flags.iflag = True
         elif itask.state.status == TASK_STATUS_RUNNING:
             self.task_events_mgr.process_message(
-                itask, CRITICAL, TASK_OUTPUT_FAILED)
+                itask, CRITICAL, TASK_OUTPUT_FAILED, self.poll_task_jobs)
             cylc.flags.iflag = True
         else:
             log_lvl = WARNING
@@ -632,41 +649,47 @@ class TaskJobManager(object):
         if run_status == "1" and run_signal in ["ERR", "EXIT"]:
             # Failed normally
             self.task_events_mgr.process_message(
-                itask, INFO, TASK_OUTPUT_FAILED, time_run_exit)
+                itask, INFO, TASK_OUTPUT_FAILED, self.poll_task_jobs,
+                time_run_exit)
         elif run_status == "1" and batch_sys_exit_polled == "1":
             # Failed by a signal, and no longer in batch system
             self.task_events_mgr.process_message(
-                itask, INFO, TASK_OUTPUT_FAILED, time_run_exit)
+                itask, INFO, TASK_OUTPUT_FAILED, self.poll_task_jobs,
+                time_run_exit)
             self.task_events_mgr.process_message(
                 itask, INFO, TaskMessage.FAIL_MESSAGE_PREFIX + run_signal,
-                time_run_exit)
+                self.poll_task_jobs, time_run_exit)
         elif run_status == "1":
             # The job has terminated, but is still managed by batch system.
             # Some batch system may restart a job in this state, so don't
             # mark as failed yet.
             self.task_events_mgr.process_message(
-                itask, INFO, TASK_OUTPUT_STARTED, time_run)
+                itask, INFO, TASK_OUTPUT_STARTED, self.poll_task_jobs,
+                time_run)
         elif run_status == "0":
             # The job succeeded
             self.task_events_mgr.process_message(
-                itask, INFO, TASK_OUTPUT_SUCCEEDED, time_run_exit)
+                itask, INFO, TASK_OUTPUT_SUCCEEDED, self.poll_task_jobs,
+                time_run_exit)
         elif time_run and batch_sys_exit_polled == "1":
             # The job has terminated without executing the error trap
             self.task_events_mgr.process_message(
-                itask, INFO, TASK_OUTPUT_FAILED, "")
+                itask, INFO, TASK_OUTPUT_FAILED, self.poll_task_jobs, "")
         elif time_run:
             # The job has started, and is still managed by batch system
             self.task_events_mgr.process_message(
-                itask, INFO, TASK_OUTPUT_STARTED, time_run)
+                itask, INFO, TASK_OUTPUT_STARTED, self.poll_task_jobs,
+                time_run)
         elif batch_sys_exit_polled == "1":
             # The job never ran, and no longer in batch system
             self.task_events_mgr.process_message(
                 itask, INFO, self.task_events_mgr.EVENT_SUBMIT_FAILED,
-                time_submit_exit)
+                self.poll_task_jobs, time_submit_exit)
         else:
             # The job never ran, and is in batch system
             self.task_events_mgr.process_message(
-                itask, INFO, TASK_STATUS_SUBMITTED, time_submit_exit)
+                itask, INFO, TASK_STATUS_SUBMITTED, self.poll_task_jobs,
+                time_submit_exit)
 
     def _poll_task_job_message_callback(self, suite, itask, cmd_ctx, line):
         """Helper for _poll_task_jobs_callback, on message of one task job."""
@@ -680,7 +703,7 @@ class TaskJobManager(object):
         else:
             ctx.ret_code = 0
             self.task_events_mgr.process_message(
-                itask, priority, message, event_time)
+                itask, priority, message, self.poll_task_jobs, event_time)
         self.task_events_mgr.log_task_job_activity(
             ctx, suite, itask.point, itask.tdef.name)
 
@@ -747,7 +770,7 @@ class TaskJobManager(object):
             itask.summary[self.KEY_EXECUTE_TIME_LIMIT] = (
                 itask.tdef.rtconfig['job']['simulated run length'])
             self.task_events_mgr.process_message(
-                itask, INFO, TASK_OUTPUT_SUBMITTED)
+                itask, INFO, TASK_OUTPUT_SUBMITTED, self.poll_task_jobs)
 
     def _submit_task_jobs_callback(self, ctx, suite, itasks):
         """Callback when submit task jobs command exits."""
@@ -787,11 +810,13 @@ class TaskJobManager(object):
         if itask.summary['submit_method_id'] and ctx.ret_code == 0:
             self.task_events_mgr.process_message(
                 itask, INFO, '%s at %s' % (
-                    TASK_OUTPUT_SUBMITTED, ctx.timestamp))
+                    TASK_OUTPUT_SUBMITTED, ctx.timestamp),
+                self.poll_task_jobs)
         else:
             self.task_events_mgr.process_message(
                 itask, CRITICAL, '%s at %s' % (
-                    self.task_events_mgr.EVENT_SUBMIT_FAILED, ctx.timestamp))
+                    self.task_events_mgr.EVENT_SUBMIT_FAILED, ctx.timestamp),
+                self.poll_task_jobs)
 
     def _prep_submit_task_job(self, suite, itask, dry_run):
         """Prepare a task job submission.
@@ -819,7 +844,8 @@ class TaskJobManager(object):
                 suite, itask.point, itask.tdef.name)
             if not dry_run:
                 self.task_events_mgr.process_message(
-                    itask, CRITICAL, self.task_events_mgr.EVENT_SUBMIT_FAILED)
+                    itask, CRITICAL, self.task_events_mgr.EVENT_SUBMIT_FAILED,
+                    self.poll_task_jobs)
             return
         itask.local_job_file_path = local_job_file_path
 

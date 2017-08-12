@@ -77,6 +77,9 @@ TASK_STATUSES_RESTRICTED = set([
 
 # Task statuses we can manually reset a task TO.
 TASK_STATUSES_CAN_RESET_TO = set([
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_SUBMIT_FAILED,
+    TASK_STATUS_RUNNING,
     TASK_STATUS_WAITING,
     TASK_STATUS_HELD,
     TASK_STATUS_READY,
@@ -101,7 +104,7 @@ TASK_STATUSES_TO_BE_ACTIVE = set([
     TASK_STATUS_RETRYING,
 ])
 
-# Task statuses that are externally active, i.e. pollable and killable
+# Task statuses that are externally active
 TASK_STATUSES_ACTIVE = set([
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_RUNNING,
@@ -160,7 +163,7 @@ class TaskState(object):
     __slots__ = ["identity", "status", "hold_swap",
                  "_is_satisfied", "_suicide_is_satisfied", "prerequisites",
                  "suicide_prerequisites", "external_triggers", "outputs",
-                 "kill_failed", "time_updated"]
+                 "kill_failed", "time_updated", "confirming_with_poll"]
 
     def __init__(self, tdef, point, status, hold_swap):
         self.identity = TaskID.get(tdef.name, str(point))
@@ -194,6 +197,7 @@ class TaskState(object):
         self.outputs.add(TASK_OUTPUT_SUCCEEDED)
 
         self.kill_failed = False
+        self.confirming_with_poll = False
 
     def satisfy_me(self, all_task_outputs):
         """Attempt to get my prerequisites satisfied."""
@@ -321,10 +325,18 @@ class TaskState(object):
         elif status == TASK_STATUS_SUBMITTED:
             self.set_prerequisites_all_satisfied()
             self.outputs.set_completed(TASK_OUTPUT_SUBMITTED)
+            # In case of manual reset, set final outputs incomplete (but assume
+            # completed message outputs remain completed).
+            self.outputs.set_incomplete(TASK_OUTPUT_SUCCEEDED)
+            self.outputs.set_incomplete(TASK_OUTPUT_FAILED)
         elif status == TASK_STATUS_RUNNING:
             self.set_prerequisites_all_satisfied()
             self.outputs.set_completed(TASK_OUTPUT_SUBMITTED)
             self.outputs.set_completed(TASK_OUTPUT_STARTED)
+            # In case of manual reset, set final outputs incomplete (but assume
+            # completed message outputs remain completed).
+            self.outputs.set_incomplete(TASK_OUTPUT_SUCCEEDED)
+            self.outputs.set_incomplete(TASK_OUTPUT_FAILED)
         elif status == TASK_STATUS_SUBMIT_RETRYING:
             self.set_prerequisites_all_satisfied()
             self.outputs.remove(TASK_OUTPUT_SUBMITTED)

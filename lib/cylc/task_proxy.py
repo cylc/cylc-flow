@@ -74,7 +74,6 @@ class TaskProxy(object):
         self.identity = TaskID.get(self.tdef.name, self.point)
 
         self.has_spawned = has_spawned
-
         self.point_as_seconds = None
 
         # Manually inserted tasks may have a final cycle point set.
@@ -84,6 +83,7 @@ class TaskProxy(object):
         self.is_manual_submit = False
         self.summary = {
             'latest_message': "",
+            'submit_method_id': None,
             'submitted_time': None,
             'submitted_time_string': None,
             'submit_num': self.submit_num,

@@ -138,6 +138,11 @@ class TaskOutputs(object):
         for value in self._by_message.values():
             value[_IS_COMPLETED] = True
 
+    def set_incomplete(self, message):
+        """Set output message to incomplete."""
+        if message in self._by_message:
+            self._by_message[message][_IS_COMPLETED] = False
+
     def set_all_incomplete(self):
         """Set all outputs to incomplete."""
         for value in self._by_message.values():

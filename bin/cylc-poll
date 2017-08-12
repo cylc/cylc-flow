@@ -51,6 +51,10 @@ def main():
             ('REG', 'Suite name'),
             ('[TASKID ...]', 'Task identifiers')])
 
+    parser.add_option(
+        "-s", "--succeeded", help="Allow polling of succeeded tasks.",
+        action="store_true", default=False, dest="poll_all")
+
     options, args = parser.parse_args()
 
     suite = args.pop(0)
@@ -63,7 +67,7 @@ def main():
         options.comms_timeout, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
     items = parser.parse_multitask_compat(options, args)
-    pclient.put_command('poll_tasks', items=items)
+    pclient.put_command('poll_tasks', items=items, poll_all=options.poll_all)
 
 
 if __name__ == "__main__":
