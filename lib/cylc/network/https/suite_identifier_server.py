@@ -58,8 +58,8 @@ class SuiteIdServer(BaseCommsServer):
             result[KEY_OWNER] = self.owner
         if access_priv_ok(self, "description"):
             config = SuiteConfig.get_inst()
-            result[KEY_TITLE] = config.cfg[KEY_TITLE]
-            result[KEY_DESCRIPTION] = config.cfg[KEY_DESCRIPTION]
+            result[KEY_TITLE] = config.cfg['meta'][KEY_TITLE]
+            result[KEY_DESCRIPTION] = config.cfg['meta'][KEY_DESCRIPTION]
             result[KEY_GROUP] = config.cfg[KEY_GROUP]
         if access_priv_ok(self, "state-totals"):
             summary_server = StateSummaryServer.get_inst()
