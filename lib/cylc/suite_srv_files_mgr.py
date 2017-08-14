@@ -540,7 +540,6 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
             match = re.match('^\s*title\s*=\s*(.*)\s*$', line)
             if match:
                 title = match.groups()[0].strip('"\'')
-                break
         return title
 
     def _is_local_auth_ok(self, reg, owner, host):

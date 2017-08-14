@@ -36,7 +36,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 
 LOG_FILE="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/suite/log"
 grep_ok "\\[('suite-event-handler-00', 'startup') ret_code\\] 0" "${LOG_FILE}"
-grep_ok "\\[('suite-event-handler-00', 'startup') out\\] Your ${SUITE_NAME} suite has a startup event and URL http://mysuites.com/${SUITE_NAME}.html." "${LOG_FILE}"
+grep_ok "\\[('suite-event-handler-00', 'startup') out\\] Your ${SUITE_NAME} suite has a startup event and URL http://mysuites.com/${SUITE_NAME}.html and suite-priority as HIGH." "${LOG_FILE}"
 
 purge_suite "${SUITE_NAME}"
 exit
