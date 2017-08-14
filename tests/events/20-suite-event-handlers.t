@@ -23,7 +23,7 @@ if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
     create_test_globalrc "" "
 [cylc]
     [[events]]
-        handlers = echo 'Your %(suite)s suite has a %(event)s event and URL %(suite_url)s.'
+        handlers = echo 'Your %(suite)s suite has a %(event)s event and URL %(suite_url)s and suite-priority as %(suite-priority)s.'
         handler events = startup"
     OPT_SET='-s GLOBALCFG=True'
 fi
