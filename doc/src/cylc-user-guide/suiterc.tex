@@ -13,27 +13,6 @@ overview of suite.rc files, including syntax (\ref{Syntax}).
 The only top level configuration items at present are the suite title
 and description.
 
-\subsubsection{title}
-
-A single line description of the suite. It is displayed in the db viewer
-window and can be retrieved at run time with the
-\lstinline=cylc show= command.
-
-\begin{myitemize}
-\item {\em type:} single line string
-\item {\em default:} (none)
-\end{myitemize}
-
-\subsubsection{description}
-
-A multi-line description of the suite. It can be retrieved by the db viewer
-right-click menu, or at run time with the \lstinline=cylc show= command.
-
-\begin{myitemize}
-\item {\em type:} multi-line string
-\item {\em default:} (none)
-\end{myitemize}
-
 \subsubsection{group}
 
 A single line group name for a suite. It is displayed in the gscan
@@ -45,7 +24,39 @@ window and can be used as a way of grouping related suites together.
 \item {\em default:} (none)
 \end{myitemize}
 
-\subsubsection{URL} \label{SuiteURL}
+
+\subsection{[meta]}
+
+Section containing metadata items for this suite. Several items
+(title, description, URL) are pre-defined and are used by the GUI. Others can be 
+user-defined and passed to suite event handlers to be interpreted according to your 
+needs. For example, the value of an "suite-priority" item could determine how an event 
+handler responds to failure events.
+
+
+\subsubsection[title]{ [meta] \textrightarrow title}
+
+A single line description of the suite. It is displayed in the db viewer
+window and can be retrieved at run time with the
+\lstinline=cylc show= command.
+
+\begin{myitemize}
+\item {\em type:} single line string
+\item {\em default:} (none)
+\end{myitemize}
+
+\subsubsection[description]{ [meta] \textrightarrow description}
+
+A multi-line description of the suite. It can be retrieved by the db viewer
+right-click menu, or at run time with the \lstinline=cylc show= command.
+
+\begin{myitemize}
+\item {\em type:} multi-line string
+\item {\em default:} (none)
+\end{myitemize}
+
+\subsubsection[URL]{ [meta] \textrightarrow URL}
+\label{SuiteURL}
 
 A web URL to suite documentation.  If present it can be browsed with the
 \lstinline=cylc doc= command, or from the gcylc Suite menu.  The variable
@@ -58,6 +69,22 @@ task URLs (\ref{TaskURL}).
 \item {\em default:} (none)
 \item {\em example:} \lstinline=http://suites/${CYLC_SUITE_NAME}/index.html=
 \end{myitemize}
+
+\subsection[\_\_MANY\_\_]{ [meta] \textrightarrow \_\_MANY\_\_}
+
+Replace \_\_MANY\_\_ with any user-defined metadata item. These, like title, URL, etc. can be passed
+to suite event handlers to be interpreted according to your needs. For example, "suite-priority".
+
+\begin{myitemize}
+\item {\em type:} String or integer
+\item {\em default:} (none)
+\item {\em example:}
+    \begin{lstlisting}
+[meta]
+    suite-priority = high
+    \end{lstlisting}
+\end{myitemize}
+
 
 \subsection{[cylc]}
 
@@ -313,6 +340,12 @@ substituted with actual values:
     \item \%(suite)s: suite name
     \item \%(suite\_url)s: suite URL
     \item \%(message)s: event message, if any
+\end{myitemize}
+
+Can also include the patterns from [meta] section of the suite, for example:
+\begin{myitemize}
+    \item \%(suite-priority)s: suite priority
+    \item \%(color)s: suite color
 \end{myitemize}
 
 Otherwise, the command line will be called with the following command line
