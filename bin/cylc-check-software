@@ -92,7 +92,7 @@ done
 HTTPS_MODL="OpenSSL"
 echo -n " + ${HTTPS_MODL} ... "
 if ! python -c "import ${HTTPS_MODL}" > /dev/null 2>&1; then
-    echo "NOT FOUND...Configure cylc to run in http mode."
+    echo "NOT FOUND...Cylc must be configured to run in http mode."
 else
     echo "ok"
 fi
