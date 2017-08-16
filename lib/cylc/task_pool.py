@@ -1078,7 +1078,8 @@ class TaskPool(object):
                     itask.state.reset_state(status)
                     if status in [
                             TASK_STATUS_FAILED, TASK_STATUS_SUBMIT_FAILED]:
-                        itask.set_event_time('finished', time())
+                        itask.set_event_time('finished',
+                                             get_current_time_string())
             if outputs:
                 for output in outputs:
                     is_completed = True
