@@ -45,8 +45,6 @@ def cat_state(suite, host=None, owner=None):
     else:
         out, err = proc.communicate()
         if proc.wait():  # non-zero return code
-            if cylc.flags.debug:
-                sys.stderr.write(err)
             return []
         return out.splitlines()
     finally:

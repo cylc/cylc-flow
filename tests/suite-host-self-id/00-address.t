@@ -21,10 +21,18 @@
 set_test_number 2
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
+get_local_ip_address() {
+    python - "$1" <<'__PYTHON__'
+import sys
+from cylc.suite_host import get_local_ip_address
+sys.stdout.write("%s\n" % get_local_ip_address(sys.argv[1]))
+__PYTHON__
+}
+
 #-------------------------------------------------------------------------------
 MY_INET_TARGET=$( \
     cylc get-global-config '--item=[suite host self-identification]target')
-MY_HOST_IP=$(python -m cylc.suite_host "${MY_INET_TARGET}")
+MY_HOST_IP="$(get_local_ip_address "${MY_INET_TARGET}")"
 
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${SUITE_NAME}" "--set=MY_HOST_IP=${MY_HOST_IP}"

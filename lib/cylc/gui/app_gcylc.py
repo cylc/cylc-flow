@@ -3570,10 +3570,15 @@ For more Stop options use the Control menu.""")
         return False
 
     def get_remote_run_opts(self):
+        """Return a string containing the remote run options.
+
+        If to run as remote host, return string will contain " --host=HOST"
+        If to run as remote user, return string will contain " --user=OWNER"
+        """
         ret = ""
-        if self.cfg.host is not None:
+        if is_remote_host(self.cfg.host):
             ret += " --host=" + self.cfg.host
-        if self.cfg.owner is not None:
+        if is_remote_user(self.cfg.owner):
             ret += " --user=" + self.cfg.owner
         return ret
 
