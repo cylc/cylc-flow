@@ -704,10 +704,14 @@ class TaskEventsManager(object):
 
     def _process_message_submitted(self, itask, event_time):
         """Helper for process_message, handle a submit-succeeded message."""
-        if itask.summary.get('submit_method_id') is not None:
+        try:
             LOG.info(
-                'submit_method_id=%s' % itask.summary['submit_method_id'],
+                ('job[%(submit_num)02d] submitted to'
+                 ' %(host)s:%(batch_sys_name)s[%(submit_method_id)s]') %
+                itask.summary,
                 itask=itask)
+        except KeyError:
+            pass
         self.suite_db_mgr.put_update_task_jobs(itask, {
             "time_submit_exit": event_time,
             "submit_status": 0,
