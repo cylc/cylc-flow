@@ -245,7 +245,7 @@ class GraphExpander(object):
         """
         try:
             self.param_cfg, self.param_tmpl_cfg = parameters
-        except TypeError:
+        except (TypeError, ValueError):
             self.param_cfg, self.param_tmpl_cfg = ({}, {})
 
     def expand(self, line):
