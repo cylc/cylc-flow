@@ -98,16 +98,14 @@ class ParamExpandError(Exception):
 class NameExpander(object):
     """Handle parameter expansion in runtime namespace headings."""
 
-    def __init__(self, parameters=None):
+    def __init__(self, parameters):
         """Initialize the parameterized task name expander.
 
-        parameters (None if no parameters are defined) is:
+        parameters is:
             ({param_name: [param_values],  # list of strings
              {param_name: param_template}) # e.g. "_m%(m)s"
         """
-        self.parameters = parameters or ({}, {})
-        self.param_cfg = self.parameters[0]
-        self.param_tmpl_cfg = self.parameters[1]
+        self.param_cfg, self.param_tmpl_cfg = parameters
 
     def expand(self, runtime_heading):
         """Expand runtime namespace names for a subset of suite parameters.
@@ -143,7 +141,7 @@ class NameExpander(object):
             spec_vals = {}
             for item in p_tmpl[1:-1].split(','):
                 pname, sval = REC_P_OFFS.match(item.strip()).groups()
-                if pname not in self.param_cfg:
+                if not self.param_cfg.get(pname, None):
                     raise ParamExpandError(
                         "ERROR, parameter %s is not defined in %s" % (
                             pname, runtime_heading))
@@ -238,16 +236,17 @@ class NameExpander(object):
 class GraphExpander(object):
     """Handle parameter expansion of graph string lines."""
 
-    def __init__(self, parameters=None):
+    def __init__(self, parameters):
         """Initialize the parameterized task name expander.
 
-        parameters (None if no parameters are defined) is:
+        parameters is:
             ({param_name: [param_values],  # list of strings
              {param_name: param_template}) # e.g. "_m%(m)s"
         """
-        self.parameters = parameters or ({}, {})
-        self.param_cfg = self.parameters[0]
-        self.param_tmpl_cfg = self.parameters[1]
+        try:
+            self.param_cfg, self.param_tmpl_cfg = parameters
+        except (TypeError, ValueError):
+            self.param_cfg, self.param_tmpl_cfg = ({}, {})
 
     def expand(self, line):
         """Expand a graph line for subset of suite parameters.
@@ -279,7 +278,7 @@ class GraphExpander(object):
         for p_group in set(REC_P_GROUP.findall(line)):
             for item in p_group.split(','):
                 pname, offs = REC_P_OFFS.match(item).groups()
-                if pname not in self.param_cfg:
+                if not self.param_cfg.get(pname, None):
                     raise ParamExpandError(
                         "ERROR, parameter %s is not defined in <%s>: %s" % (
                             pname, p_group, line))
