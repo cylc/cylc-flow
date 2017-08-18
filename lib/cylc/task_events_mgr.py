@@ -837,8 +837,7 @@ class TaskEventsManager(object):
                     for key, value in itask.tdef.rtconfig['meta'].items():
                         if key == "URL":
                             handler_data["task_url"] = quote(value)
-                        else:
-                            handler_data[key] = quote(value)
+                        handler_data[key] = quote(value)
 
                 cmd = handler % (handler_data)
             except KeyError as exc:

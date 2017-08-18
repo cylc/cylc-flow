@@ -147,8 +147,7 @@ class SuiteEventHandler(object):
                     for key, value in config.cfg['meta'].items():
                         if key == "URL":
                             handler_data["suite_url"] = quote(value)
-                        else:
-                            handler_data[key] = quote(value)
+                        handler_data[key] = quote(value)
                 cmd = handler % (handler_data)
             except KeyError as exc:
                 message = "%s bad template: %s" % (cmd_key, exc)
