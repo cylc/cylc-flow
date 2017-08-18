@@ -43,7 +43,11 @@ cylc__job__main() {
         "${CYLC_DIR}/conf/job-init-env-default.sh"
     do
         if [[ -f "${file_name}" ]]; then
-            . "${file_name}" 1>'/dev/null' 2>&1
+            if "${CYLC_DEBUG:-false}"; then
+                . "${file_name}"
+            else
+                . "${file_name}" 1>'/dev/null' 2>&1
+            fi
             break
         fi
     done
