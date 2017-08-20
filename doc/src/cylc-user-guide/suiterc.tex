@@ -1624,10 +1624,16 @@ substituted with actual values:
     \item \%(message)s: event message, if any
 \end{myitemize}
 
-Can also include the patterns from [[[meta]]] section of the task, for example:
+Can include the patterns from [[[meta]]] section of the task, for example:
 \begin{myitemize}
     \item \%(importance)s: task priority
     \item \%(color)s: task color
+\end{myitemize}
+
+Also able to include patterns from [meta] section of the suite, for example:
+\begin{myitemize}
+    \item \%(suite\_priority)s: suite priority
+    \item \%(suite\_color)s: suite color
 \end{myitemize}
 
 Otherwise, the command line will be called with the following arguments:

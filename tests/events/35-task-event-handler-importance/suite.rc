@@ -1,3 +1,5 @@
+[meta]
+    priority = HIGH
 [scheduling]
     [[dependencies]]
         graph = t1:fail => dummy => !t1
@@ -11,4 +13,4 @@
             importance = 3
             color = red
         [[[events]]]
-            failed handler = echo 'NAME =' %(name)s 'POINT =' %(point)s 'IMPORTANCE =' %(importance)s 'COLOR =' %(color)s
+            failed handler = echo 'NAME =' %(name)s 'POINT =' %(point)s 'IMPORTANCE =' %(importance)s 'COLOR =' %(color)s 'SUITE-PRIORITY =' %(suite_priority)s

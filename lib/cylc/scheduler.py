@@ -308,7 +308,6 @@ conditions; see `cylc conditions`.
             if reqmode != self.run_mode:
                 raise SchedulerError(
                     'ERROR: this suite requires the %s run mode' % reqmode)
-
         self.suite_event_handler = SuiteEventHandler(self.proc_pool)
         self.task_job_mgr = TaskJobManager(
             self.suite, self.proc_pool, self.suite_db_mgr,
@@ -318,6 +317,7 @@ conditions; see `cylc conditions`.
             "task event mail interval")
         self.task_events_mgr.mail_footer = self._get_events_conf("mail footer")
         self.task_events_mgr.suite_url = self.config.cfg['meta']['URL']
+        self.task_events_mgr.suite_cfg = self.config.cfg['meta']
         if self.options.genref or self.options.reftest:
             self.configure_reftest()
 
