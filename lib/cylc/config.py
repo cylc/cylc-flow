@@ -52,6 +52,7 @@ from isodatetime.parsers import DurationParser
 from parsec.OrderedDict import OrderedDictWithDefaults
 from parsec.util import replicate
 from cylc.suite_logging import OUT, ERR
+from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.task_outputs import TASK_OUTPUT_SUCCEEDED
 
 RE_CLOCK_OFFSET = re.compile(r'(' + TaskID.NAME_RE + r')(?:\(\s*(.+)\s*\))?')
@@ -1282,7 +1283,7 @@ class SuiteConfig(object):
                 if 'title' in self.cfg['runtime'][key]['meta']:
                     tree[key] = self.cfg['runtime'][key]['meta']['title']
                 else:
-                    tree[key] = 'No title provided'
+                    tree[key] = SuiteSrvFilesManager.NO_TITLE
             elif isinstance(val, dict):
                 self.add_tree_titles(val)
 
@@ -1306,7 +1307,7 @@ class SuiteConfig(object):
                 result[ns] = self.cfg['runtime'][ns]['meta']['title']
             else:
                 # no need to flesh out the full runtime just for title
-                result[ns] = "No title provided"
+                result[ns] = SuiteSrvFilesManager.NO_TITLE
 
         return result
 

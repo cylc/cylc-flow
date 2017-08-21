@@ -26,10 +26,13 @@ from time import time
 import gtk
 
 from cylc.cfgspec.gcylc import gcfg
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
 from cylc.gui.legend import ThemeLegendWindow
 from cylc.gui.util import get_icon
-from cylc.network.port_scan import scan_all
+from cylc.network.port_scan import scan_many
+from cylc.suite_srv_files_mgr import (
+    SuiteSrvFilesManager, SuiteServiceFileError)
 from cylc.suite_status import (
     KEY_NAME, KEY_OWNER, KEY_STATES, KEY_UPDATE_TIME)
 from cylc.version import CYLC_VERSION
@@ -501,41 +504,87 @@ def call_cylc_command(keys, command_id):
             Popen(["nohup"] + command, env=env, stdout=stdout, stderr=stderr)
 
 
-def update_suites_info(updater):
+def update_suites_info(updater, full_mode=False):
     """Return mapping of suite info by host, owner and suite name.
 
-    updater - gscan or gpanel updater.
+    Args:
+        updater (object): gscan or gpanel updater:
+            Compulsory attributes from updater:
+                hosts: hosts to scan
+                owner_pattern: re to filter results by owners
+                suite_info_map: previous results returned by this function
+            Optional attributes from updater:
+                timeout: communication timeout
+        full_mode (boolean): update in full mode?
 
-    Return a dict of the form: {(host, owner, name): suite_info, ...}
-
-    where each "suite_info" is a dict with keys:
-        KEY_GROUP - group name of suite
-        KEY_OWNER - suite owner name
-        KEY_PORT - suite port, for running suites only
-        KEY_STATES - suite state
-        KEY_STATES:cycle - states by cycle
-        KEY_TASKS_BY_STATE - tasks by state
-        KEY_TITLE - suite title
-        KEY_UPDATE_TIME - last update time of suite
+    Return:
+        dict: {(host, owner, name): suite_info, ...}
+        where each "suite_info" is a dict with keys:
+            KEY_GROUP: group name of suite
+            KEY_OWNER: suite owner name
+            KEY_PORT: suite port, for running suites only
+            KEY_STATES: suite state
+            KEY_TASKS_BY_STATE: tasks by state
+            KEY_TITLE: suite title
+            KEY_UPDATE_TIME: last update time of suite
     """
     # Compulsory attributes from updater
     # hosts - hosts to scan, or the default set in the site/user global.rc
     # owner_pattern - return only suites with owners matching this compiled re
-    # prev_results - previous results returned by this function
-    hosts = updater.hosts
-    owner_pattern = updater.owner_pattern
-    prev_results = updater.suite_info_map
+    # suite_info_map - previous results returned by this function
     # Optional attributes from updater
     # timeout - communication timeout
+    owner_pattern = updater.owner_pattern
     timeout = getattr(updater, "comms_timeout", None)
     # name_pattern - return only suites with names matching this compiled re
     name_pattern = getattr(updater, "name_pattern", None)
-    # Scan
+    # Determine items to scan
     results = {}
-    for host, port, result in scan_all(
-            hosts=hosts, timeout=timeout, updater=updater):
+    items = []
+    if full_mode and owner_pattern is None and not updater.hosts:
+        # Scan user suites. Walk "~/cylc-run/" to get (host, port) from
+        # ".service/contact" for active suites
+        suite_srv_files_mgr = SuiteSrvFilesManager()
+        run_d = GLOBAL_CFG.get_host_item('run directory')
+        for dirpath, dnames, fnames in os.walk(run_d, followlinks=True):
+            if updater.quit:
+                return
+            # Always descend for top directory, but
+            # don't descend further if it has a:
+            # * .service/
+            # * cylc-suite.db: (pre-cylc-7 suites don't have ".service/").
+            if dirpath != run_d and (
+                    suite_srv_files_mgr.DIR_BASE_SRV in dnames or
+                    "cylc-suite.db" in fnames):
+                dnames[:] = []
+            # Choose only suites with .service and matching filter
+            reg = os.path.relpath(dirpath, run_d)
+            try:
+                contact_data = suite_srv_files_mgr.load_contact_file(reg)
+            except (SuiteServiceFileError, IOError, TypeError, ValueError):
+                continue
+            else:
+                items.append((
+                    contact_data[suite_srv_files_mgr.KEY_HOST],
+                    contact_data[suite_srv_files_mgr.KEY_PORT]))
+    elif full_mode:
+        # Scan full port range on all hosts
+        items.extend(updater.hosts)
+    else:
+        # Scan suites in previous results only
+        for (host, owner, name), prev_result in updater.suite_info_map.items():
+            port = prev_result.get(KEY_PORT)
+            if port:
+                items.append((host, port))
+            else:
+                results[(host, owner, name)] = prev_result
+        if not items:
+            return results
+    # Scan
+    for host, port, result in scan_many(
+            items, timeout=timeout, updater=updater):
         if updater.quit:
-            break
+            return
         if (name_pattern and not name_pattern.match(result[KEY_NAME]) or
                 owner_pattern and not owner_pattern.match(result[KEY_OWNER])):
             continue
@@ -546,16 +595,14 @@ def update_suites_info(updater):
         except (KeyError, TypeError, ValueError):
             pass
     expire_threshold = time() - DURATION_EXPIRE_STOPPED
-    for (host, owner, name), prev_result in prev_results.items():
+    for (host, owner, name), prev_result in updater.suite_info_map.items():
         if updater.quit:
-            break
+            return
         if ((host, owner, name) in results or
-                host not in hosts or
                 owner_pattern and not owner_pattern.match(owner) or
                 name_pattern and not name_pattern.match(name)):
             # OK if suite already in current results set.
             # Don't bother if:
-            # * previous host not in current hosts list
             # * previous owner does not match current owner pattern
             # * previous suite name does not match current name pattern
             continue
@@ -573,7 +620,7 @@ def update_suites_info(updater):
 
 
 def _update_stopped_suite_info(key):
-    """Return a map like cylc scan --raw for states and last update time."""
+    """Use "cylc ls-checkpoints" to obtain info of stopped suite."""
     host, owner, suite = key
     cmd = ["cylc", "ls-checkpoints"]
     if host:

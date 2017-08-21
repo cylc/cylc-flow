@@ -39,14 +39,15 @@ class SuiteSrvFilesManager(object):
     """Suite service files management."""
 
     DELIM = "/"
-    DIR_BASE_AUTH = 'auth'
+    DIR_BASE_AUTH = "auth"
     DIR_BASE_SRV = ".service"
     FILE_BASE_CONTACT = "contact"
-    FILE_BASE_PASSPHRASE = 'passphrase'
+    FILE_BASE_PASSPHRASE = "passphrase"
     FILE_BASE_SOURCE = "source"
-    FILE_BASE_SSL_CERT = 'ssl.cert'
-    FILE_BASE_SSL_PEM = 'ssl.pem'
+    FILE_BASE_SSL_CERT = "ssl.cert"
+    FILE_BASE_SSL_PEM = "ssl.pem"
     FILE_BASE_SUITE_RC = "suite.rc"
+    KEY_COMMS_PROTOCOL = "CYLC_COMMS_PROTOCOL"  # default (or none?)
     KEY_DIR_ON_SUITE_HOST = "CYLC_DIR_ON_SUITE_HOST"
     KEY_HOST = "CYLC_SUITE_HOST"
     KEY_NAME = "CYLC_SUITE_NAME"
@@ -58,9 +59,10 @@ class SuiteSrvFilesManager(object):
     KEY_TASK_MSG_RETRY_INTVL = "CYLC_TASK_MSG_RETRY_INTVL"
     KEY_TASK_MSG_TIMEOUT = "CYLC_TASK_MSG_TIMEOUT"
     KEY_VERSION = "CYLC_VERSION"
+    NO_TITLE = "No title provided"
     PASSPHRASE_CHARSET = ascii_letters + digits
     PASSPHRASE_LEN = 20
-    KEY_COMMS_PROTOCOL = "CYLC_COMMS_PROTOCOL"  # default (or none?)
+    REC_TITLE = r"^\s*title\s*=\s*(.*)\s*$"
 
     def __init__(self):
         self.local_passphrases = set()
@@ -337,7 +339,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
                 results.append([
                     reg,
                     self.get_suite_source_dir(reg),
-                    self._get_suite_title(reg)])
+                    self.get_suite_title(reg)])
             except (IOError, SuiteServiceFileError) as exc:
                 print >> sys.stderr, str(exc)
         return results
@@ -523,14 +525,14 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
             os.path.expanduser("~"), ".cylc", self.DIR_BASE_AUTH,
             "%s@%s" % (owner, host), reg)
 
-    def _get_suite_title(self, reg):
+    def get_suite_title(self, reg):
         """Return the the suite title without a full file parse
 
         Limitations:
         * 1st line of title only.
         * Assume title is not in an include-file.
         """
-        title = "No title provided"
+        title = self.NO_TITLE
         for line in open(self.get_suite_rc(reg), 'rb'):
             if line.lstrip().startswith("[meta]"):
                 # continue : title comes inside [meta] section
@@ -538,7 +540,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
             elif line.lstrip().startswith("["):
                 # abort: title comes before first [section]
                 break
-            match = re.match('^\s*title\s*=\s*(.*)\s*$', line)
+            match = self.REC_TITLE.match(line)
             if match:
                 title = match.groups()[0].strip('"\'')
         return title

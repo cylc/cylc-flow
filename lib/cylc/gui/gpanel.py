@@ -20,7 +20,7 @@ import os
 import re
 from subprocess import Popen, STDOUT
 import sys
-import time
+from time import time
 import traceback
 
 import gtk
@@ -44,17 +44,11 @@ class ScanPanelApplet(object):
 
     """Panel Applet (GNOME 2) to summarise running suite statuses."""
 
-    def __init__(self, hosts=None, poll_interval=None, is_compact=False):
+    def __init__(self, is_compact=False):
         # We can't use gobject.threads_init() for panel applets.
         warnings.filterwarnings('ignore', 'use the new', Warning)
         setup_icons()
-        if not hosts:
-            try:
-                hosts = GLOBAL_CFG.get(["suite host scanning", "hosts"])
-            except KeyError:
-                hosts = ["localhost"]
         self.is_compact = is_compact
-        self.hosts = hosts
         dot_hbox = gtk.HBox()
         dot_hbox.show()
         dot_eb = gtk.EventBox()
@@ -70,9 +64,7 @@ class ScanPanelApplet(object):
         self.top_hbox.pack_start(image_eb, expand=False, fill=False)
         self.top_hbox.pack_start(dot_eb, expand=False, fill=False, padding=2)
         self.top_hbox.show()
-        self.updater = ScanPanelAppletUpdater(hosts, dot_hbox, image,
-                                              self.is_compact,
-                                              poll_interval=poll_interval)
+        self.updater = ScanPanelAppletUpdater(dot_hbox, image, self.is_compact)
         self.top_hbox.connect("destroy", self.stop)
         if gsfg.get(["activate on startup"]):
             self.updater.start()
@@ -102,21 +94,18 @@ class ScanPanelAppletUpdater(object):
 
     IDLE_STOPPED_TIME = 3600  # 1 hour.
     MAX_INDIVIDUAL_SUITES = 5
-    POLL_INTERVAL = 60
 
-    def __init__(self, hosts, dot_hbox, gcylc_image, is_compact,
-                 poll_interval=None):
-        self.hosts = hosts
+    INTERVAL_NORM = 15
+    INTERVAL_FULL = 300
+
+    def __init__(self, dot_hbox, gcylc_image, is_compact):
+        self.hosts = []
         self.dot_hbox = dot_hbox
         self.gcylc_image = gcylc_image
         self.is_compact = is_compact
-        if poll_interval is None:
-            poll_interval = self.POLL_INTERVAL
-        self.poll_interval = poll_interval
-        self._should_force_update = False
-        self._last_running_time = None
+        self.prev_full_update = None
+        self.prev_norm_update = None
         self.quit = True
-        self.last_update_time = None
         self._set_gcylc_image_tooltip()
         self.gcylc_image.set_sensitive(False)
         self.theme_name = gcfg.get(['use theme'])
@@ -124,7 +113,7 @@ class ScanPanelAppletUpdater(object):
         self.dots = DotMaker(self.theme)
         self.suite_info_map = {}
         self._set_exception_hook()
-        self.owner_pattern = re.compile(r'\A%s\Z' % get_user())
+        self.owner_pattern = None
 
     def clear_stopped_suites(self):
         """Clear stopped suite information that may have built up."""
@@ -144,38 +133,36 @@ class ScanPanelAppletUpdater(object):
         """Extract running suite information at particular intervals."""
         if self.quit:
             return False
-        now = time.time()
-        if (self._last_running_time is not None and
+        now = time()
+        if (self.prev_norm_update is not None and
                 self.IDLE_STOPPED_TIME is not None and
-                now > self._last_running_time + self.IDLE_STOPPED_TIME):
+                now > self.prev_norm_update + self.IDLE_STOPPED_TIME):
             self.stop()
             return True
-        if (not self._should_force_update and
-                self.last_update_time is not None and
-                now < self.last_update_time + self.poll_interval):
-            return True
-        if self._should_force_update:
-            self._should_force_update = False
-
-        # Get new information.
-        self.suite_info_map = update_suites_info(self)
-        self.last_update_time = time.time()
-        if self.suite_info_map:
-            self._last_running_time = None
-        else:
-            self._last_running_time = self.last_update_time
-        gobject.idle_add(self.update)
+        full_mode = (
+            self.prev_full_update is None or
+            now >= self.prev_full_update + self.INTERVAL_FULL)
+        if (full_mode or
+                self.prev_norm_update is None or
+                now >= self.prev_norm_update + self.INTERVAL_NORM):
+            # Get new information.
+            self.suite_info_map = update_suites_info(self, full_mode=True)
+            self.prev_norm_update = time()
+            if full_mode:
+                self.prev_full_update = self.prev_norm_update
+            gobject.idle_add(self.update)
         return True
 
     def set_hosts(self, new_hosts):
         del self.hosts[:]
-        self.hosts.extend(new_hosts)
+        self.hosts.extend(gethostbyname_ex(host)[0] for host in new_hosts)
         self.update_now()
 
     def start(self):
         self.gcylc_image.set_sensitive(True)
         self.quit = False
-        self._last_running_time = None
+        self.prev_full_update = None
+        self.prev_norm_update = None
         gobject.timeout_add(1000, self.run)
         self._set_gcylc_image_tooltip()
 
@@ -269,7 +256,8 @@ class ScanPanelAppletUpdater(object):
 
     def update_now(self):
         """Force an update as soon as possible."""
-        self._should_force_update = True
+        self.prev_full_update = None
+        self.prev_norm_update = None
 
     def _add_image_box(self, suite_host_info_tuples):
         image_eb = gtk.EventBox()

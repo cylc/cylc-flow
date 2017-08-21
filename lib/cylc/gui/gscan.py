@@ -18,6 +18,7 @@
 """Implement "cylc gscan"."""
 
 import re
+from socket import gethostbyname_ex
 import threading
 from time import sleep, time
 
@@ -36,7 +37,6 @@ from cylc.gui.scanutil import (
     KEY_PORT, get_scan_menu, launch_gcylc, update_suites_info,
     launch_hosts_dialog, launch_about_dialog)
 from cylc.gui.util import get_icon, setup_icons, set_exception_hook_dialog
-from cylc.suite_host import get_user
 from cylc.suite_status import (
     KEY_GROUP, KEY_META, KEY_STATES, KEY_TASKS_BY_STATE, KEY_TITLE,
     KEY_UPDATE_TIME)
@@ -64,22 +64,17 @@ class ScanApp(object):
 
     def __init__(
             self, hosts=None, patterns_name=None, patterns_owner=None,
-            comms_timeout=None, poll_interval=None):
+            comms_timeout=None, interval=None):
         gobject.threads_init()
         set_exception_hook_dialog("cylc gscan")
         setup_icons()
-        if not hosts:
-            hosts = GLOBAL_CFG.get(["suite host scanning", "hosts"])
-        self.hosts = hosts
 
         self.window = gtk.Window()
         title = "cylc gscan"
-        for opt, items, skip in [
-                ("-n", patterns_name, None),
-                ("-o", patterns_owner, get_user())]:
+        for opt, items in [("-n", patterns_name), ("-o", patterns_owner)]:
             if items:
                 for pattern in items:
-                    if pattern != skip:
+                    if pattern is not None:
                         title += " %s %s" % (opt, pattern)
         self.window.set_title(title)
         self.window.set_icon(get_icon())
@@ -110,12 +105,6 @@ class ScanApp(object):
         # Doesn't make any sense without suite name column
         if gsfg.COL_SUITE not in vis_cols:
             vis_cols.append(gsfg.COL_SUITE.lower())
-        # In multiple host environment, add host column by default
-        if hosts != ['localhost']:
-            vis_cols.append(gsfg.COL_HOST.lower())
-        # In multiple owner environment, add owner column by default
-        if patterns_owner != [get_user()]:
-            vis_cols.append(gsfg.COL_OWNER.lower())
         # Construct the group, host, owner, suite, title, update time column.
         for col_title, col_id, col_cell_text_setter in [
                 (gsfg.COL_GROUP, self.GROUP_COLUMN, self._set_cell_text_group),
@@ -192,8 +181,8 @@ class ScanApp(object):
                     raise ValueError("Invalid %s pattern: %s" % (label, items))
 
         self.updater = ScanAppUpdater(
-            self.window, self.hosts, suite_treemodel, self.treeview,
-            comms_timeout=comms_timeout, poll_interval=poll_interval,
+            self.window, hosts, suite_treemodel, self.treeview,
+            comms_timeout=comms_timeout, interval=interval,
             group_column_id=self.GROUP_COLUMN,
             name_pattern=patterns["name"], owner_pattern=patterns["owner"])
 
@@ -347,7 +336,7 @@ class ScanApp(object):
         hosts_item.connect(
             "activate",
             lambda w: launch_hosts_dialog(
-                self.hosts, self.updater.set_hosts))
+                self.updater.hosts, self.updater.set_hosts))
         view_menu.append(hosts_item)
 
         sep_item = gtk.SeparatorMenuItem()
@@ -368,7 +357,7 @@ class ScanApp(object):
         info_item.show()
         info_item.connect(
             "activate",
-            lambda w: launch_about_dialog("cylc gscan", self.hosts)
+            lambda w: launch_about_dialog("cylc gscan", self.updater.hosts)
         )
         help_menu.append(info_item)
 
@@ -384,12 +373,11 @@ class ScanApp(object):
         update_now_button = gtk.ToolButton(
             icon_widget=gtk.image_new_from_stock(
                 gtk.STOCK_REFRESH, gtk.ICON_SIZE_SMALL_TOOLBAR))
-        update_now_button.set_label("Update")
+        update_now_button.set_label("Update Listing")
         tooltip = gtk.Tooltips()
         tooltip.enable()
-        tooltip.set_tip(update_now_button, "Update now")
-        update_now_button.connect("clicked",
-                                  self.updater.update_now)
+        tooltip.set_tip(update_now_button, "Update Suite Listing Now")
+        update_now_button.connect("clicked", self.updater.set_update_listing)
 
         clear_stopped_button = gtk.ToolButton(
             icon_widget=gtk.image_new_from_stock(
@@ -408,8 +396,7 @@ class ScanApp(object):
         tooltip = gtk.Tooltips()
         tooltip.enable()
         tooltip.set_tip(expand_button, "Expand all rows")
-        expand_button.connect(
-            "clicked", lambda e: self.treeview.expand_all())
+        expand_button.connect("clicked", lambda e: self.treeview.expand_all())
 
         collapse_button = gtk.ToolButton(
             icon_widget=gtk.image_new_from_stock(
@@ -564,12 +551,11 @@ class ScanApp(object):
             return True
         if column.get_title() == gsfg.COL_UPDATED:
             suite_update_point = timepoint_from_epoch(suite_update_time)
-            if (self.updater.last_update_time is not None and
-                    suite_update_time != int(self.updater.last_update_time)):
-                retrieval_point = timepoint_from_epoch(
-                    int(self.updater.last_update_time))
+            if (self.updater.prev_norm_update is not None and
+                    suite_update_time != int(self.updater.prev_norm_update)):
                 text = "Last changed at %s\n" % suite_update_point
-                text += "Last scanned at %s" % retrieval_point
+                text += "Last scanned at %s" % timepoint_from_epoch(
+                    int(self.updater.prev_norm_update))
             else:
                 # An older suite (or before any updates are made?)
                 text = "Last scanned at %s" % suite_update_point
@@ -766,22 +752,29 @@ class ScanAppUpdater(threading.Thread):
 
     """Update the scan app."""
 
-    POLL_INTERVAL = 60
+    INTERVAL_NORM = 15
+    INTERVAL_FULL = 300
 
     UNGROUPED = "(ungrouped)"
 
     def __init__(self, window, hosts, suite_treemodel, suite_treeview,
-                 comms_timeout=None, poll_interval=None, group_column_id=0,
+                 comms_timeout=None, interval=None, group_column_id=0,
                  name_pattern=None, owner_pattern=None):
         self.window = window
-        self.hosts = hosts
+        if hosts:
+            self.hosts = [gethostbyname_ex(host)[0] for host in hosts]
+        elif owner_pattern is not None:
+            hosts = GLOBAL_CFG.get(["suite host scanning", "hosts"])
+            self.hosts = [gethostbyname_ex(host)[0] for host in hosts]
+        else:
+            self.hosts = []
         self.comms_timeout = comms_timeout
-        if poll_interval is None:
-            poll_interval = self.POLL_INTERVAL
-        self.poll_interval = poll_interval
+        if interval is None:
+            interval = self.INTERVAL_FULL
+        self.interval_full = interval
         self.suite_info_map = {}
-        self.last_update_time = None
-        self._should_force_update = False
+        self.prev_full_update = None
+        self.prev_norm_update = None
         self.quit = False
         self.suite_treemodel = suite_treemodel
         self.treeview = suite_treeview
@@ -877,36 +870,39 @@ class ScanAppUpdater(threading.Thread):
 
     def has_stopped_suites(self):
         """Return True if we have any stopped suite information."""
-        for result in self.suite_info_map.copy().values():
-            if KEY_PORT not in result:
-                return True
-        return False
+        return any(
+            KEY_PORT not in result for result in self.suite_info_map.values())
 
     def run(self):
         """Execute the main loop of the thread."""
         while not self.quit:
-            time_for_update = (
-                self.last_update_time is None or
-                time() >= self.last_update_time + self.poll_interval
-            )
-            if not self._should_force_update and not time_for_update:
-                sleep(1)
-                continue
-            if self._should_force_update:
-                self._should_force_update = False
-            title = self.window.get_title()
-            gobject.idle_add(self.window.set_title, title + " (updating)")
-            self.suite_info_map = update_suites_info(self)
-            self.last_update_time = time()
-            gobject.idle_add(self.window.set_title, title)
-            gobject.idle_add(self.update)
+            now = time()
+            full_mode = (
+                self.prev_full_update is None or
+                now >= self.prev_full_update + self.interval_full)
+            if (full_mode or
+                    self.prev_norm_update is None or
+                    now >= self.prev_norm_update + self.INTERVAL_NORM):
+                title = self.window.get_title()
+                if full_mode:
+                    gobject.idle_add(
+                        self.window.set_title, title + " (listing + updating)")
+                else:
+                    gobject.idle_add(
+                        self.window.set_title, title + " (updating)")
+                self.suite_info_map = update_suites_info(self, full_mode)
+                self.prev_norm_update = time()
+                if full_mode:
+                    self.prev_full_update = self.prev_norm_update
+                gobject.idle_add(self.window.set_title, title)
+                gobject.idle_add(self.update)
             sleep(1)
 
     def set_hosts(self, new_hosts):
         """Set new hosts."""
         del self.hosts[:]
-        self.hosts.extend(new_hosts)
-        self.update_now()
+        self.hosts.extend(gethostbyname_ex(host)[0] for host in new_hosts)
+        self.set_update_listing()
 
     def update(self):
         """Update the Applet."""
@@ -916,8 +912,12 @@ class ScanAppUpdater(threading.Thread):
         group_counts = self._update_group_counts()
         self.suite_treemodel.clear()
         group_iters = {}
+        hosts = set()
+        owners = set()
         for key, suite_info in sorted(self.suite_info_map.items()):
             host, owner, suite = key
+            hosts.add(host)
+            owners.add(owner)
             suite_updated_time = suite_info.get(KEY_UPDATE_TIME)
             if suite_updated_time is None:
                 suite_updated_time = int(time())
@@ -985,6 +985,10 @@ class ScanAppUpdater(threading.Thread):
                     suite_updated_time, None, None, warning_text])
 
         self.suite_treemodel.foreach(self._expand_row, row_ids)
+        if len(hosts) > 1:
+            self.treeview.get_column(ScanApp.HOST_COLUMN).set_visible(True)
+        if len(owners) > 1:
+            self.treeview.get_column(ScanApp.OWNER_COLUMN).set_visible(True)
         return False
 
     def _update_group_counts(self):
@@ -1023,6 +1027,7 @@ class ScanAppUpdater(threading.Thread):
                 states_text += '%s %d ' % (state, number)
         return states_text.rstrip()
 
-    def update_now(self, _=None):
-        """Force an update as soon as possible."""
-        self._should_force_update = True
+    def set_update_listing(self, _=None):
+        """Force an update of suite listing as soon as possible."""
+        self.prev_full_update = None
+        self.prev_norm_update = None

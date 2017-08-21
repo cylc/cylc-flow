@@ -76,21 +76,19 @@ def main():
              "to each running suite. The default is 5 seconds.",
         action="store", default=None, dest="comms_timeout")
     parser.add_option(
-        "--poll-interval",
-        help="Polling interval (time between updates) in seconds",
+        "--interval",
+        help="Time interval (in seconds) betwen full updates",
         type="int", metavar="SECONDS", dest="interval")
     options, args = parser.parse_args()
 
     if options.all_suites:
         options.patterns_owner = [r".*"]
-    elif not options.patterns_owner:
-        options.patterns_owner = [get_user()]
     scan_app = ScanApp(
         hosts=args,
         patterns_name=options.patterns_name,
         patterns_owner=options.patterns_owner,
         comms_timeout=options.comms_timeout,
-        poll_interval=options.interval)
+        interval=options.interval)
     try:
         gtk.main()
     except KeyboardInterrupt:

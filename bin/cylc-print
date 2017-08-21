@@ -86,38 +86,36 @@ def main():
 
     (options, args) = parser.parse_args()
 
-    if len(args) == 0:
-        regfilter = None
-    elif len(args) == 1:
+    regfilter = None
+    if args:
         regfilter = args[0]
-    else:
-        parser.error("Wrong number of arguments.")
 
-    allsuites = SuiteSrvFilesManager().list_suites(regfilter)
-    if options.fail and len(allsuites) == 0:
+    suite_src_files_mgr = SuiteSrvFilesManager()
+    allsuites = suite_src_files_mgr.list_suites(regfilter)
+    if options.fail and not allsuites:
         raise SystemExit('ERROR: no suites matched.')
     if not options.tree:
         if options.align:
             maxlen_suite = 0
             maxlen_title = 0
-            for suite, dir, title in allsuites:
+            for suite, dir_, title in allsuites:
                 if len(suite) > maxlen_suite:
                     maxlen_suite = len(suite)
                 if len(title) > maxlen_title:
                     maxlen_title = len(title)
             spacer_suite = maxlen_suite * ' '
             spacer_title = maxlen_title * ' '
-        for suite, dir, title in allsuites:
-            dir = re.sub('^' + os.environ['HOME'], '~', dir)
+        for suite, dir_, title in allsuites:
+            dir_ = re.sub('^' + os.environ['HOME'], '~', dir_)
             if options.align:
                 suite = suite + spacer_suite[len(suite):]
                 title = title + spacer_title[len(title):]
             if not options.x and not options.y:
-                line = suite + ' | ' + title + ' | ' + dir
+                line = suite + ' | ' + title + ' | ' + dir_
             elif not options.y:
                 line = suite + ' | ' + title
             elif not options.x:
-                line = suite + ' | ' + dir
+                line = suite + ' | ' + dir_
             else:
                 line = suite
             print line
@@ -125,13 +123,13 @@ def main():
         tree = {}
         if options.align:
             maxlen_title = 0
-            for suite, dir, title in allsuites:
+            for suite, dir_, title in allsuites:
                 if len(title) > maxlen_title:
                     maxlen_title = len(title)
             spacer_title = maxlen_title * ' '
 
-        for suite, dir, title in allsuites:
-            dir = re.sub('^' + os.environ['HOME'], '~', dir)
+        for suite, dir_, title in allsuites:
+            dir_ = re.sub('^' + os.environ['HOME'], '~', dir_)
             if options.align:
                 title = title + spacer_title[len(title):]
             regpath = suite.split(SuiteSrvFilesManager.DELIM)
@@ -141,11 +139,11 @@ def main():
                     sub[key] = {}
                 sub = sub[key]
             if not options.x and not options.y:
-                line = title + ' | ' + dir
+                line = title + ' | ' + dir_
             elif not options.y:
                 line = ' ' + title
             elif not options.x:
-                line = ' ' + dir
+                line = ' ' + dir_
             else:
                 line = ''
             sub[regpath[-1]] = line
