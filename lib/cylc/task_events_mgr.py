@@ -838,7 +838,7 @@ class TaskEventsManager(object):
                         if key == "URL":
                             handler_data["suite_url"] = quote(value)
                         else:
-                            handler_data["suite_"+key] = quote(value)
+                            handler_data["suite_" + key] = quote(value)
 
                 if itask.tdef.rtconfig['meta']:
                     for key, value in itask.tdef.rtconfig['meta'].items():
