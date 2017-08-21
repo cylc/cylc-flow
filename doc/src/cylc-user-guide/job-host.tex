@@ -1,0 +1,88 @@
+\section{Remote Job Host Interaction}
+
+\lstset{language=jobhosts}
+
+This appendix shows transcripts of all \lstinline=ssh=, \lstinline=scp=, and
+\lstinline=rsync= invocations from a Cylc suite called \lstinline=test= started by
+\lstinline=rose suite-run= on \lstinline=vagrant@localhost=. The suite
+submits a single task called \lstinline=foo= to \lstinline=hobo@otherhost=.
+The operator polls then kills the task, then shuts the suite down.
+
+Note that Cylc has been configured (site/global config) not to use a bash login
+shell on the remote host, but \lstinline=rose suite-run= is executing
+\lstinline=bash --login -c= (this may be optional in the future).
+
+The transcripts were obtained by wrapping \lstinline=ssh=, \lstinline=scp=, and
+\lstinline=rsync= with scripts that log the command line before invoking the
+command.
+
+\lstset{breaklines=true}
+\begin{lstlisting}
+# (ROSE) vagrant@locahost: test for shared filesystem and create share/cycle etc.
+ssh -oBatchMode=yes -oConnectTimeout=10 hobo@otherhost bash --login -c 'ROSE_VERSION=2016.12.0 rose suite-run -v -v --name=test --run=run --remote=uuid=78f99c51-fd82-4c4e-b666-944a7f5454a7'
+
+# (ROSE) vagrant@locahost: copy suite source files to job host
+rsync -a --exclude=.* --timeout=1800 --rsh=ssh -oBatchMode=yes -oConnectTimeout=10 --exclude=78f99c51-fd82-4c4e-b666-944a7f5454a7 --exclude=log/78f99c51-fd82-4c4e-b666-944a7f5454a7 --exclude=share/78f99c51-fd82-4c4e-b666-944a7f5454a7 --exclude=share/cycle/78f99c51-fd82-4c4e-b666-944a7f5454a7 --exclude=work/78f99c51-fd82-4c4e-b666-944a7f5454a7 --exclude=/.* --exclude=/cylc-suite.db --exclude=/log --exclude=/log.* --exclude=/state --exclude=/share --exclude=/work ./ hobo@otherhost:cylc-run/test
+
+# (RSYNC INTERNAL COMMAND) vagrant@locahost
+ssh -oBatchMode=yes -oConnectTimeout=10 -l hobo otherhost rsync --server -logDtpre.iLs --timeout=1800 . cylc-run/test
+
+# (RSYNC INTERNAL COMMAND) vagrant@localhost 
+rsync --server -logDtpre.iLs --timeout=1800 . cylc-run/test
+
+# vagrant@locahost: test for shared FS on suite and job host
+ssh -oBatchMode=yes -oConnectTimeout=10 -n hobo@otherhost test -e $HOME/cylc-run/test/.service/87a8ff0a-dbc7-4ec2-a0f5-7ffd44f8e99c
+
+# vagrant@localhost: create log and service directories on job host
+ssh -oBatchMode=yes -oConnectTimeout=10 -n hobo@otherhost mkdir -p $HOME/cylc-run/test $HOME/cylc-run/test/log/job $HOME/cylc-run/test/.service
+
+# vagrant@localhost: copy suite service and contact files to job host
+scp -oBatchMode=yes -oConnectTimeout=10 -p /home/vagrant/cylc-run/test/.service/contact /home/vagrant/cylc-run/test/.service/passphrase /home/vagrant/cylc-run/test/.service/ssl.cert hobo@otherhost:$HOME/cylc-run/test/.service/
+
+# (SCP INTERNAL COMMAND) vagrant@locahost 
+ssh -x -oForwardAgent=no -oPermitLocalCommand=no -oClearAllForwardings=yes -o BatchMode=yes -o ConnectTimeout=10 -l hobo -- otherhost scp -p -d -t $HOME/cylc-run/test/.service/
+
+# (SCP INTERNAL COMMAND) hobo@otherhost
+scp -p -d -t /home/hobo/cylc-run/test/.service/
+
+# vagrant@localhost: submit job foo.1 (cycle point 1, try 01) on job host
+ssh -oBatchMode=yes -oConnectTimeout=10 hobo@otherhost env CYLC_VERSION=7.3.0 cylc jobs-submit '--remote-mode' '--' '$HOME/cylc-run/test/log/job' '1/foo/01'
+
+# vagrant@localhost: poll job foo.1 (cycle point 1, try 01) on job host
+ssh -oBatchMode=yes -oConnectTimeout=10 hobo@otherhost env CYLC_VERSION=7.3.0 cylc jobs-poll '--' '$HOME/cylc-run/test/log/job' '1/foo/01'
+
+# vagrant@localhost: kill job foo.1 (cycle point 1, try 01) on job host
+ssh -oBatchMode=yes -oConnectTimeout=10 hobo@otherhost env CYLC_VERSION=7.3.0 cylc jobs-kill '--' '$HOME/cylc-run/test/log/job' '1/foo/01'
+
+# vagrant@localhost: retrieve job logs from job host
+rsync -a --rsh=ssh -oBatchMode=yes -oConnectTimeout=10 --include=/1 --include=/1/foo --include=/1/foo/01 --include=/1/foo/01/** --exclude=/** hobo@otherhost:$HOME/cylc-run/test/log/job/ /home/vagrant/cylc-run/test/log/job/
+
+# (INTERNAL RSYNC COMMAND) vagrant@locahost
+ssh -oBatchMode=yes -oConnectTimeout=10 -l hobo otherhost rsync --server --sender -logDtpre.iLs . $HOME/cylc-run/test/log/job/
+
+# (INTERNAL RSYNC COMMAND) hobo@otherhost
+rsync --server --sender -logDtpre.iLs . /home/hobo/cylc-run/test/log/job/
+
+# vagrant@localhost: remove suite contact file from job host
+ssh -oBatchMode=yes -oConnectTimeout=10 -n hobo@otherhost rm -f $HOME/cylc-run/test/.service/contact
+
+# vagrant@localhost  CLI: cylc cat-log --list-remote test foo.1
+ssh -oBatchMode=yes -oConnectTimeout=10 -n hobo@otherhost ls $HOME/cylc-run/foo/log/job/1/foo/NN
+
+# vagrant@localhost CLI: cylc cat-log <OPT> test foo.1
+ssh -oBatchMode=yes -oConnectTimeout=10 -n hobo@otherhost cat $HOME/cylc-run/foo/log/job/1/foo/NN/<LOG>
+# where <LOG> (depending on <OPT>, see "cylc cat-log --help") can be:
+#  * job
+#  * job.out
+#  * job.err
+#  * job.status
+#  * job.activity.log
+#  * job-edit.diff
+#  * job.xtrace
+
+# vagrant@localhost: live tail remote job log, via:
+#   GUI: View -> job stdout, etc.
+#   CLI: cylc cat-log --tail <OPT> test foo.1
+ssh -oBatchMode=yes -oConnectTimeout=10 -n hobo@otherhost tail --pid=`ps h -o ppid $$ | sed -e s/[[:space:]]//g` -n +1 -F $HOME/cylc-run/test/log/job/1/foo/01/<LOG>
+# (where <LOG> and <OPT> are as described above)
+\end{lstlisting}

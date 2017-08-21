@@ -73,6 +73,14 @@ numbers=left,
 %%numberstyle=\color{Gray}
 }
 
+\lstdefinelanguage{jobhosts}
+{
+string=[b]{'},
+sensitive=true,
+comment=[l]{\#},
+keywords={ssh, rm, mkdir, bash, scp, rsync, hobo@otherhost, vagrant@localhost},
+}
+
 \lstdefinelanguage{transcript}
 {
 showstringspaces=false,
