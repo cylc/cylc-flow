@@ -70,10 +70,10 @@ task URLs (\ref{TaskURL}).
 \item {\em example:} \lstinline=http://suites/${CYLC_SUITE_NAME}/index.html=
 \end{myitemize}
 
-\subsection[\_\_MANY\_\_]{ [meta] \textrightarrow \_\_MANY\_\_}
+\subsubsection[\_\_MANY\_\_]{ [meta] \textrightarrow \_\_MANY\_\_}
 
 Replace \_\_MANY\_\_ with any user-defined metadata item. These, like title, URL, etc. can be passed
-to suite event handlers to be interpreted according to your needs. For example, "suite-priority".
+to suite event handlers to be interpreted according to your needs. For example, ``suite-priority''.
 
 \begin{myitemize}
 \item {\em type:} String or integer
@@ -1264,7 +1264,7 @@ for a job with higher immediate priority. See also~\ref{PreemptionHPC}
 Section containing metadata items for this task or family namespace. Several items
 (title, description, URL) are pre-defined and are used by the GUI. Others can be 
 user-defined and passed to task event handlers to be interpreted according to your 
-needs. For example, the value of an "importance" item could determine how an event 
+needs. For example, the value of an ``importance'' item could determine how an event 
 handler responds to task failure events.
 
 Any suite meta item can now be passed to task event handlers by prefixing the
@@ -1274,7 +1274,7 @@ string template item name with ``suite\_'', for example :
 [runtime]
     [[root]]
         [[[events]]]
-            failed handler = send-help.sh %(suite\_title)s %(suite\_importance)s %(title)s
+            failed handler = send-help.sh %(suite_title)s %(suite_importance)s %(title)s
 \end{lstlisting}
 
 \subparagraph[title]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[meta]]] \textrightarrow title}
