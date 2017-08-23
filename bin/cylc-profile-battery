@@ -92,7 +92,11 @@ def create_profile_directory():
     os.mkdir(profile_dir)
     os.mkdir(os.path.join(profile_dir, prof.PROFILE_PLOT_DIR_NAME))
     os.mkdir(os.path.join(profile_dir, prof.USER_EXPERIMENT_DIR_NAME))
-    print 'creating', os.path.join(profile_dir, prof.PROFILE_FILE_NAME)
+
+
+def create_profile_file():
+    """Creates file for storing profiling results in."""
+    profile_dir = os.path.join(prof.CYLC_DIR, prof.PROFILE_DIR_NAME)
     with open(os.path.join(profile_dir, prof.PROFILE_FILE_NAME),
               'w+') as profile_file:
         profile_file.write('{}')
@@ -168,10 +172,11 @@ def parse_args():
 
 def get_results():
     """Return data from the results file."""
+    if not os.path.exists(os.path.join(prof.CYLC_DIR, prof.PROFILE_DIR_NAME)):
+        create_profile_directory()
     if not os.path.exists(os.path.join(prof.CYLC_DIR, prof.PROFILE_DIR_NAME,
                                        prof.PROFILE_FILE_NAME)):
-        # Profile file does not exist, create it.
-        create_profile_directory()
+        create_profile_file()
         return {}
     else:
         # Profile file exists, git list of results contained.
