@@ -378,6 +378,7 @@ class TaskEventsManager(object):
                 priority = getLevelName(priority)
             self._db_events_insert(
                 itask, ("message %s" % str(priority).lower()), message)
+            self.setup_event_handlers(itask, "custom", message)
 
         if priority in [TaskMessage.WARNING, TaskMessage.CRITICAL]:
             self.setup_event_handlers(itask, priority.lower(), message)

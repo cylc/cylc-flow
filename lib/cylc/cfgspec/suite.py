@@ -409,6 +409,7 @@ SPEC = {
                 'submission retry handler': vdr(vtype='string_list'),
                 'execution timeout handler': vdr(vtype='string_list'),
                 'submission timeout handler': vdr(vtype='string_list'),
+                'custom handler': vdr(vtype='string_list'),
             },
             'suite state polling': {
                 'user': vdr(vtype='string'),
