@@ -1,4 +1,5 @@
-title = "test insertion with a cycle point not on the tasks sequence"
+[meta]
+    title = "test insertion with a cycle point not on the tasks sequence"
 [scheduling]
     cycling mode = integer
     initial cycle point = 0

@@ -1,6 +1,6 @@
 #!Jinja2
-
-title = Test: task should be held from retrying after a job kill
+[meta]
+    title = Test: task should be held from retrying after a job kill
 
 [cylc]
     [[reference test]]

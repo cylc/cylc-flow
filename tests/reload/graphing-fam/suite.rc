@@ -1,5 +1,6 @@
-title = queue size reload test
-description = """change family triggering order via a reload."""
+[meta]
+    title = queue size reload test
+    description = """change family triggering order via a reload."""
 
 [cylc]
    [[reference test]]

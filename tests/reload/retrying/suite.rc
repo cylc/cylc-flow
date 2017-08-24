@@ -1,6 +1,6 @@
-
-title = "test that a reloaded retrying task does retry"
-description = """this requires some state vars to be carried over to the
+[meta]
+    title = "test that a reloaded retrying task does retry"
+    description = """this requires some state vars to be carried over to the
 new task proxy; ref github #945"""
 
 [cylc]

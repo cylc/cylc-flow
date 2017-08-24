@@ -1,7 +1,7 @@
+[meta]
+    title = "multiple inheritance example"
 
-title = "multiple inheritance example"
-
-description = """To see how multiple inheritance works:
+    description = """To see how multiple inheritance works:
 
  % cylc list -tb[m] SUITE # list namespaces
  % cylc graph -n SUITE # graph namespaces

@@ -1,4 +1,5 @@
-title = Generate log messages for various suite connection types.
+[meta]
+    title = Generate log messages for various suite connection types.
 [scheduling]
     [[dependencies]]
         graph = foo

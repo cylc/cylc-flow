@@ -1,5 +1,6 @@
-title = Test removal and insertion of task familes.
-description = """Two families are removed, then one is re-inserted.
+[meta]
+    title = Test removal and insertion of task familes.
+    description = """Two families are removed, then one is re-inserted.
 The ref test will fail if either operation fails to work properly."""
 
 [cylc]

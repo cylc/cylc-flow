@@ -1,10 +1,10 @@
 #!jinja2
-
-title = "test all event hooks"
-
 # simple generic handler in the suite bin dir:
 {% set HANDLER = "handler.sh" %}
 {% set EVNTLOG = "$CYLC_SUITE_LOG_DIR/events.log" %}
+
+[meta]
+    title = "test all event hooks"
 
 [cylc]
     [[environment]]

@@ -1,6 +1,7 @@
-title = "Test validation of simple multiple inheritance"
- 
-description = """Bug identified at 5.1.1-314-g4960684."""
+[meta]
+    title = "Test validation of simple multiple inheritance"
+
+    description = """Bug identified at 5.1.1-314-g4960684."""
 
 [cylc]
 [[reference test]]

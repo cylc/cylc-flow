@@ -1,6 +1,6 @@
 #!jinja2
-
-title=Task Event Mail
+[meta]
+    title=Task Event Mail
 
 [cylc]
 {% if GLOBALCFG is not defined %}

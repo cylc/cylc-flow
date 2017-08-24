@@ -1,4 +1,5 @@
-title = "Test validation of final cycle point against constraints"
+[meta]
+    title = "Test validation of final cycle point against constraints"
 
 [cylc]
 [scheduling]

@@ -30,9 +30,9 @@ TEST_NAME=$TEST_NAME_BASE-inline
 cylc view -i --stdout $SUITE_NAME > tmp.stdout
 cmp_ok tmp.stdout << EOF
 #!jinja2
-
-title = "Jinja2 simple ensemble example"
-description = "Auto-generation of dependencies for related tasks."
+[meta]
+    title = "Jinja2 simple ensemble example"
+    description = "Auto-generation of dependencies for related tasks."
 
 # Note that depending on the structure of the suite you may be able to
 # SIMPLY use a task family name in the graph to represent the entire
@@ -55,8 +55,9 @@ EOF
 TEST_NAME=$TEST_NAME_BASE-jinja2
 cylc view -j --stdout $SUITE_NAME > tmp.stdout
 cmp_ok tmp.stdout << EOF
-title = "Jinja2 simple ensemble example"
-description = "Auto-generation of dependencies for related tasks."
+[meta]
+    title = "Jinja2 simple ensemble example"
+    description = "Auto-generation of dependencies for related tasks."
 # Note that depending on the structure of the suite you may be able to
 # SIMPLY use a task family name in the graph to represent the entire
 # ensemble (which would be defined by inheritance under [runtime]).
@@ -77,9 +78,9 @@ TEST_NAME=$TEST_NAME_BASE-continuation
 cylc view -c --stdout $SUITE_NAME > tmp.stdout
 cmp_ok tmp.stdout << EOF
 #!jinja2
-
-title = "Jinja2 simple ensemble example"
-description = "Auto-generation of dependencies for related tasks."
+[meta]
+    title = "Jinja2 simple ensemble example"
+    description = "Auto-generation of dependencies for related tasks."
 
 # Note that depending on the structure of the suite you may be able to
 # SIMPLY use a task family name in the graph to represent the entire
@@ -101,8 +102,9 @@ EOF
 TEST_NAME=$TEST_NAME_BASE-process
 cylc view -p --stdout $SUITE_NAME > tmp.stdout
 cmp_ok tmp.stdout << EOF
-title = "Jinja2 simple ensemble example"
-description = "Auto-generation of dependencies for related tasks."
+[meta]
+    title = "Jinja2 simple ensemble example"
+    description = "Auto-generation of dependencies for related tasks."
 # Note that depending on the structure of the suite you may be able to
 # SIMPLY use a task family name in the graph to represent the entire
 # ensemble (which would be defined by inheritance under [runtime]).

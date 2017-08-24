@@ -1,6 +1,7 @@
-title = "family triggering test suite"
+[meta]
+    title = "family triggering test suite"
 
-description = """
+    description = """
 For manual testing of new-style family triggers. Play around
 with script true/false to get different outcomes."""
 

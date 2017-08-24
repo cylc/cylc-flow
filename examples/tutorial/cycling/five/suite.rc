@@ -1,4 +1,5 @@
-title = "Inter-cycle dependence + a cold-start task"
+[meta]
+    title = "Inter-cycle dependence + a cold-start task"
 [cylc]
     UTC mode = True
 [scheduling]

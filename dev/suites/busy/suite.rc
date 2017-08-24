@@ -1,8 +1,9 @@
 #!jinja2
-title = Suite-1000-x3
-description = A suite of 1000 tasks per cycle
+[meta]
+    title = Suite-1000-x3
+    description = A suite of 1000 tasks per cycle
 [cylc]
-    UTC mode = True # Ignore DST
+    UTC mode = True  # Ignore DST
 [scheduling]
     initial cycle point = 20130101T00
     final cycle point = 20130103T00

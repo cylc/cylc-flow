@@ -57,8 +57,8 @@ run_ok "${TEST_NAME_BASE}-validate-restart-rc" cylc validate "${RES_LOG}"
 TEST_NAME=$TEST_NAME_BASE-comp1
 sort $RUN_LOG $RES_LOG | uniq -u > diff.txt
 cmp_ok diff.txt <<__END__
-description = the weather is bad
-description = the weather is good
+    description = the weather is bad
+    description = the weather is good
 __END__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

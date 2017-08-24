@@ -1,5 +1,6 @@
-description = Simple cylc 5 suite using start-up tasks.
-title = Simple start-up suite.
+[meta]
+    description = Simple cylc 5 suite using start-up tasks.
+    title = Simple start-up suite.
 [cylc]
     abort if any task fails = False
     log resolved dependencies = False

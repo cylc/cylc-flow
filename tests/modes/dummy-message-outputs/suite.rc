@@ -1,4 +1,5 @@
-title = A suite that should only succeed in dummy mode.
+[meta]
+    title = A suite that should only succeed in dummy mode.
 [cylc]
     [[events]]
         abort on timeout = true

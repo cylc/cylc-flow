@@ -1,7 +1,7 @@
+[meta]
+    title = "test suite for broadcast functionality"
 
-title = "test suite for broadcast functionality"
-
-description = """
+    description = """
 The initial prep task in this suite broadcasts an environment variable
 "BCAST" to various cycles and namespaces, then each task writes its cycle
 time, name, and its value of BCAST to a special log file. Finally, the

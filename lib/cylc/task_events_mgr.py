@@ -111,6 +111,7 @@ class TaskEventsManager(object):
     def __init__(self, suite, proc_pool, suite_db_mgr):
         self.suite = suite
         self.suite_url = None
+        self.suite_cfg = []
         self.proc_pool = proc_pool
         self.suite_db_mgr = suite_db_mgr
         self.mail_interval = 0.0
@@ -834,15 +835,20 @@ class TaskEventsManager(object):
                     "submit_num": itask.submit_num,
                     "id": quote(itask.identity),
                     "message": quote(message),
-                    "suite_url": quote(self.suite_url),
                 }
+
+                if self.suite_cfg:
+                    for key, value in self.suite_cfg.items():
+                        if key == "URL":
+                            handler_data["suite_url"] = quote(value)
+                        else:
+                            handler_data["suite_" + key] = quote(value)
 
                 if itask.tdef.rtconfig['meta']:
                     for key, value in itask.tdef.rtconfig['meta'].items():
                         if key == "URL":
                             handler_data["task_url"] = quote(value)
-                        else:
-                            handler_data[key] = quote(value)
+                        handler_data[key] = quote(value)
 
                 cmd = handler % (handler_data)
             except KeyError as exc:

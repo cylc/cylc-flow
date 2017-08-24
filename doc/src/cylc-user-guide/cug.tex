@@ -1869,7 +1869,8 @@ $ cylc view --jinja2 --stdout tut/oneoff/jinja2
 \end{lstlisting}
 \lstset{language=suiterc}
 \begin{lstlisting}
-title = "A Jinja2 Hello World! suite"
+[meta]
+    title = "A Jinja2 Hello World! suite"
 [scheduling]
     [[dependencies]]
         graph = "hello"
@@ -1885,7 +1886,8 @@ $ cylc view --jinja2 --stdout tut/oneoff/jinja2
 \end{lstlisting}
 \lstset{language=suiterc}
 \begin{lstlisting}
-title = "A Jinja2 Hello World! suite"
+[meta]
+    title = "A Jinja2 Hello World! suite"
 [scheduling]
     [[dependencies]]
         graph = "hello => BYE"
@@ -2256,7 +2258,8 @@ task runtime properties such as \lstinline=script=).
 \begin{minipage}[b]{0.5\textwidth}
 \lstset{language=suiterc}
 \begin{lstlisting}
-title = "Dependency Example 1"
+[meta]
+    title = "Dependency Example 1"
 [cylc]
     UTC mode = True
 [scheduling]
@@ -2445,7 +2448,8 @@ successors (once they're all finished the suite just exits). The integer
 \begin{minipage}[b]{0.5\textwidth}
 \lstset{language=suiterc}
 \begin{lstlisting}
-title = some one-off tasks
+[meta]
+    title = some one-off tasks
 [scheduling]
     [[dependencies]]
         graph = "foo => bar & baz => qux"
@@ -2471,7 +2475,8 @@ a small suite of cycling tasks.
 \begin{minipage}[b]{0.5\textwidth}
 \lstset{language=suiterc}
 \begin{lstlisting}
-title = some cycling tasks
+[meta]
+    title = some cycling tasks
 # (no dependence between cycle points)
 [scheduling]
     [[dependencies]]
@@ -3266,8 +3271,9 @@ as usual. Suicide triggers are ignored by default in the graph view, unless you 
 \begin{minipage}[b]{0.5\textwidth}
 \lstset{language=suiterc}
 \begin{lstlisting}
-title = automated failure recovery
-description = """
+[meta]
+    title = automated failure recovery
+    description = """
 Model task failure triggers diagnosis
 and recovery tasks, which take themselves
 out of the suite if model succeeds. Model
@@ -5130,9 +5136,11 @@ Here's an example, from \\*
 \begin{lstlisting}
 #!Jinja2
 
-title = "Jinja2 example: use of defaults and external input"
+[meta]
 
-description = """
+    title = "Jinja2 example: use of defaults and external input"
+
+    description = """
 The template variable FIRST_TASK must be given on the cylc command line
 using --set or --set-file=FILE; two other variables, LAST_TASK and
 N_MEMBERS can be set similarly, but if not they have default values."""

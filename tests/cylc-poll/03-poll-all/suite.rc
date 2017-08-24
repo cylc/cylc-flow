@@ -1,5 +1,6 @@
-title = "Test suite for task state change on poll result."
-description = """Task run_kill fails silently - it will be stuck in 'running'
+[meta]
+    title = "Test suite for task state change on poll result."
+    description = """Task run_kill fails silently - it will be stuck in 'running'
 unless polled. Task run_kill goes to Task submit_hold. Task poll_check_kill 
 then polls all to find if any tasks have failed, allowing run_kill to suicide
 via a :fail trigger. Task submit_hold is an idle task which is killed after

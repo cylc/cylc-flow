@@ -1,7 +1,7 @@
 #!Jinja2
-
-title = a suite that logs run, reload, and restart configs
-description = the weather is {{WEATHER | default("bad")}}
+[meta]
+    title = a suite that logs run, reload, and restart configs
+    description = the weather is {{WEATHER | default("bad")}}
 
 [cylc]
    [[events]]

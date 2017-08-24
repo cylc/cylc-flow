@@ -308,7 +308,6 @@ conditions; see `cylc conditions`.
             if reqmode != self.run_mode:
                 raise SchedulerError(
                     'ERROR: this suite requires the %s run mode' % reqmode)
-
         self.suite_event_handler = SuiteEventHandler(self.proc_pool)
         self.task_job_mgr = TaskJobManager(
             self.suite, self.proc_pool, self.suite_db_mgr,
@@ -317,7 +316,8 @@ conditions; see `cylc conditions`.
         self.task_events_mgr.mail_interval = self._get_cylc_conf(
             "task event mail interval")
         self.task_events_mgr.mail_footer = self._get_events_conf("mail footer")
-        self.task_events_mgr.suite_url = self.config.cfg['URL']
+        self.task_events_mgr.suite_url = self.config.cfg['meta']['URL']
+        self.task_events_mgr.suite_cfg = self.config.cfg['meta']
         if self.options.genref or self.options.reftest:
             self.configure_reftest()
 
@@ -597,8 +597,8 @@ conditions; see `cylc conditions`.
 
     def info_get_suite_info(self):
         """Return a dict containing the suite title and description."""
-        return {'title': self.config.cfg['title'],
-                'description': self.config.cfg['description']}
+        return {'title': self.config.cfg['meta']['title'],
+                'description': self.config.cfg['meta']['description']}
 
     def info_get_task_info(self, names):
         """Return info of a task."""

@@ -21,7 +21,8 @@
 set_test_number 3
 
 init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
-title = the quick brown fox
+[meta]
+    title = the quick brown fox
 [scheduling]
     [[dependencies]]
         graph = a => b => c

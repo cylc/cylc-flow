@@ -1,6 +1,7 @@
 #!jinja2
-title = a test suite
-description = the quick brown fox
+[meta]
+    title = a test suite
+    description = the quick brown fox
 [cylc]
     UTC mode = True
 [scheduling]

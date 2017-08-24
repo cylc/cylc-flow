@@ -1,5 +1,6 @@
-title = "Test Suite"
-description="Testing grouping options"
+[meta]
+    title = "Test Suite"
+    description="Testing grouping options"
 group="test group 1"
 
 [scheduling]

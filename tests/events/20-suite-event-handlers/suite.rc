@@ -1,12 +1,13 @@
 #!jinja2
-
-title=Suite Event Mail
-URL = http://mysuites.com/${CYLC_SUITE_NAME}.html
+[meta]
+    title=Suite Event Mail
+    URL = http://mysuites.com/${CYLC_SUITE_NAME}.html
+    suite-priority = HIGH
 
 [cylc]
     [[events]]
 {% if GLOBALCFG is not defined %}
-        handlers = echo 'Your %(suite)s suite has a %(event)s event and URL %(suite_url)s.'
+        handlers = echo 'Your %(suite)s suite has a %(event)s event and URL %(suite_url)s and suite-priority as %(suite-priority)s.'
         handler events = startup
 {% endif %}{# not GLOBALCFG is not defined #}
     [[reference test]]

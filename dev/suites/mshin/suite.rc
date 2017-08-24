@@ -1,8 +1,8 @@
 #!jinja2
+[meta]
+    title = "Matt Shin's 1000 task example with slow parsing"
 
-title = "Matt Shin's 1000 task example with slow parsing"
-
-description = """This suite motivated some optimization of config
+    description = """This suite motivated some optimization of config
 parsing and task proxy definition, resulting in a speed up factor 
 of 2 to 3 for suite validation."""
 

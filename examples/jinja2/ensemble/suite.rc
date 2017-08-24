@@ -1,7 +1,7 @@
 #!jinja2
-
-title = "Jinja2 simple ensemble example"
-description = "Auto-generation of dependencies for related tasks."
+[meta]
+    title = "Jinja2 simple ensemble example"
+    description = "Auto-generation of dependencies for related tasks."
 
 # Note that depending on the structure of the suite you may be able to
 # simply use a task family name in the graph to represent the entire

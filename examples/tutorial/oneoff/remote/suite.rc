@@ -1,4 +1,5 @@
-title = "Hello World! on a remote host"
+[meta]
+    title = "Hello World! on a remote host"
 [scheduling]
     [[dependencies]]
         graph = "hello"

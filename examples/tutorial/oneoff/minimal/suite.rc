@@ -1,4 +1,5 @@
-title = "The minimal complete runnable cylc suite"
+[meta]
+    title = "The minimal complete runnable cylc suite"
 [scheduling]
     [[dependencies]]
         graph = "foo"

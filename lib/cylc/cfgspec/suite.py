@@ -192,10 +192,13 @@ coercers['parameter_list'] = _coerce_parameter_list
 
 
 SPEC = {
-    'title': vdr(vtype='string', default=""),
-    'description': vdr(vtype='string', default=""),
     'group': vdr(vtype='string', default="(ungrouped)"),
-    'URL': vdr(vtype='string', default=""),
+    'meta': {
+        'title': vdr(vtype='string', default=""),
+        'description': vdr(vtype='string', default=""),
+        'URL': vdr(vtype='string', default=""),
+        '__MANY__': vdr(vtype='string', default=""),
+    },
     'cylc': {
         'UTC mode': vdr(
             vtype='boolean', default=GLOBAL_CFG.get(['cylc', 'UTC mode'])),
@@ -528,6 +531,18 @@ def upg(cfg, descr):
         '7.5.0',
         ['runtime', '__MANY__', 'URL'],
         ['runtime', '__MANY__', 'meta', 'URL'])
+    u.deprecate(
+        '7.5.0',
+        ['title'],
+        ['meta', 'title'])
+    u.deprecate(
+        '7.5.0',
+        ['description'],
+        ['meta', 'description'])
+    u.deprecate(
+        '7.5.0',
+        ['URL'],
+        ['meta', 'URL'])
     u.obsolete('7.2.2', ['cylc', 'dummy mode'])
     u.obsolete('7.2.2', ['cylc', 'simulation mode'])
     u.obsolete('7.2.2', ['runtime', '__MANY__', 'dummy mode'])

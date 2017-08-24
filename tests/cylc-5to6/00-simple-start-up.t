@@ -32,8 +32,9 @@ __ERR__
 TEST_NAME=$TEST_NAME_BASE-5to6
 run_ok "$TEST_NAME" cylc 5to6 "$TEST_DIR/$SUITE_NAME/suite.rc"
 cmp_ok "$TEST_NAME.stdout" <<'__OUT__'
-description = Simple cylc 5 suite using start-up tasks.
-title = Simple start-up suite.
+[meta]
+    description = Simple cylc 5 suite using start-up tasks.
+    title = Simple start-up suite.
 [cylc]
     abort if any task fails = False
     log resolved dependencies = False

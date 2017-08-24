@@ -1,7 +1,7 @@
+[meta]
+    title = "hold/release a suite with tasks held beyond suite stop point"
 
-title = "hold/release a suite with tasks held beyond suite stop point"
-
-description = """
+    description = """
 Releasing a held suite should not release tasks that are held because they're
 beyond the suite stop point."""
 

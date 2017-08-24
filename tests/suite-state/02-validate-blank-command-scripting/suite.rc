@@ -1,6 +1,7 @@
 #!jinja2
 
-title=Test validation of blank script in automatic suite polling task
+[meta]
+    title=Test validation of blank script in automatic suite polling task
 [scheduling]
     [[dependencies]]
         graph=eat<food::eat>=>full

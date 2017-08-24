@@ -1,4 +1,5 @@
-title = Test: run task - hold suite - task job retry - release suite
+[meta]
+    title = Test: run task - hold suite - task job retry - release suite
 
 [cylc]
     [[reference test]]

@@ -1,5 +1,6 @@
-title = cycling period change
-description = """change cycle points"""
+[meta]
+    title = cycling period change
+    description = """change cycle points"""
 
 [cylc]
    UTC mode = True

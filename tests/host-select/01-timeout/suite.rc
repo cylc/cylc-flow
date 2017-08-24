@@ -1,6 +1,6 @@
 #!Jinja2
-
-title = Test task host selection with a bad command
+[meta]
+    title = Test task host selection with a bad command
 
 [cylc]
     [[reference test]]

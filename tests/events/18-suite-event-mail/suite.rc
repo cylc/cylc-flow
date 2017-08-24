@@ -1,6 +1,6 @@
 #!jinja2
-
-title=Suite Event Mail
+[meta]
+    title=Suite Event Mail
 
 [cylc]
     [[events]]

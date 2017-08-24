@@ -128,7 +128,7 @@ def main():
         else:
             # Suite documentation.
             res, stdout = run_get_stdout(
-                "cylc get-suite-config -i URL %s" % suite)
+                "cylc get-suite-config -i [meta]URL %s" % suite)
         if not res:
             # (Illegal config item)
             sys.exit(stdout)

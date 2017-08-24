@@ -1,5 +1,5 @@
-
-title = "test suite for broadcast timeout functionality"
+[meta]
+    title = "test suite for broadcast timeout functionality"
 
 [cylc]
     UTC mode = True

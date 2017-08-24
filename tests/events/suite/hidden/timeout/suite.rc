@@ -1,5 +1,5 @@
-
-description = """
+[meta]
+    description = """
 This suite is supposed to time out and abort when the timeout handler
 deliberately fails."""
 

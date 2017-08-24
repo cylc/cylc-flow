@@ -695,9 +695,9 @@ class SuiteConfig(object):
                 self.cfg['visualization']['final cycle point'] = str(
                     final_point)
         # Replace suite name in suite  URL.
-        url = self.cfg['URL']
+        url = self.cfg['meta']['URL']
         if url is not '':
-            self.cfg['URL'] = RE_SUITE_NAME_VAR.sub(self.suite, url)
+            self.cfg['meta']['URL'] = RE_SUITE_NAME_VAR.sub(self.suite, url)
 
         # Replace suite and task name in task URLs.
         for name, cfg in self.cfg['runtime'].items():

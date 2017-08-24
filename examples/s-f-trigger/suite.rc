@@ -1,5 +1,6 @@
-title = "start and finish trigger demo"
-description = """
+[meta]
+    title = "start and finish trigger demo"
+    description = """
 A:start  => B: means B triggers after A starts running.
 A:finish => B: means B triggers after A finishes, by success or failure.
               """

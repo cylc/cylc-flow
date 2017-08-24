@@ -1,5 +1,6 @@
-title = suite with missing explicit definition of foo
-description = should fail validation in cylc-6
+[meta]
+    title = suite with missing explicit definition of foo
+    description = should fail validation in cylc-6
 
 [scheduling]
    initial cycle point = 20140808T00

@@ -1,6 +1,7 @@
-title = 'inheritance example'
+[meta]
+    title = 'inheritance example'
 
-description = """
+    description = """
 This suite illustrates several tiers of task runtime inheritance.
 To see the result, use 'cylc get-config' or examine task job scripts
 generated with 'cylc jobscript'."""

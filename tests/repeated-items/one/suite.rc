@@ -1,5 +1,6 @@
-title = "override this"
-title = "the quick brown fox"
+[meta]
+    title = "override this"
+    title = "the quick brown fox"
 [cylc]
     UTC mode = True
 [scheduling]

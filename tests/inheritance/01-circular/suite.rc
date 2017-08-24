@@ -1,5 +1,6 @@
-title = a suite with circular inheritance
-description = should fail validation
+[meta]
+    title = a suite with circular inheritance
+    description = should fail validation
 
 [scheduling]
    [[dependencies]]

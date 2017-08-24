@@ -1,4 +1,5 @@
-title = Restart with hold, with a task in ready state
+[meta]
+    title = Restart with hold, with a task in ready state
 
 [cylc]
     [[reference test]]

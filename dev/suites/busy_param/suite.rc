@@ -1,7 +1,8 @@
-title = Suite-1000-x3
-description = A suite of 1000 tasks per cycle
+[meta]
+    title = Suite-1000-x3
+    description = A suite of 1000 tasks per cycle
 [cylc]
-    UTC mode = True # Ignore DST
+    UTC mode = True  # Ignore DST
     [[parameters]]
         i = 0..9
         j = 0..9

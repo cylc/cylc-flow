@@ -2,9 +2,10 @@
 
 {% set OWNER = environ['CYLC_TEST_TASK_OWNER'] %}
 
-title = "Test external task host selection"
+[meta]
+    title = "Test external task host selection"
 
-description = """
+    description = """
 Task host is determined by a script in the suite bin directory; for this
 test suite it just returns the value of $CYLC_TEST_TASK_HOST as used 
 by many of the other test suites (see "cylc test-battery --help")."""

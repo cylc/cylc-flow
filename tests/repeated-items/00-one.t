@@ -26,7 +26,7 @@ TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-a
-cylc get-config -i title $SUITE_NAME >a.txt 2>/dev/null
+cylc get-config -i [meta]title $SUITE_NAME >a.txt 2>/dev/null
 cmp_ok a.txt <<'__END'
 the quick brown fox
 __END

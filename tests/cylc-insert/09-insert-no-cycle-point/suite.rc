@@ -1,4 +1,5 @@
-title = "test insertion of a task with no cycle point."
+[meta]
+    title = "test insertion of a task with no cycle point."
 
 [cylc]
     cycle point time zone = +01

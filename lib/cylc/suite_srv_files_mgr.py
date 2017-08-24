@@ -531,7 +531,10 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
         """
         title = "No title provided"
         for line in open(self.get_suite_rc(reg), 'rb'):
-            if line.lstrip().startswith("["):
+            if line.lstrip().startswith("[meta]"):
+                # continue : title comes inside [meta] section
+                continue
+            elif line.lstrip().startswith("["):
                 # abort: title comes before first [section]
                 break
             match = re.match('^\s*title\s*=\s*(.*)\s*$', line)

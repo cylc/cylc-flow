@@ -1,8 +1,8 @@
 #!jinja2
+[meta]
+    title = "hold tasks test suite"
 
-title = "hold tasks test suite"
-
-description = """One task that selectively holds tasks in the first cycle
+    description = """One task that selectively holds tasks in the first cycle
 point of the suite."""
 
 [cylc]

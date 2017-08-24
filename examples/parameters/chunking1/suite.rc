@@ -1,6 +1,7 @@
 #!Jinja2
-title = "Parameterized task example: static model chunking."
-description = "See chunking2 for the same without redundant dependencies."
+[meta]
+    title = "Parameterized task example: static model chunking."
+    description = "See chunking2 for the same without redundant dependencies."
 # NOTE: dynamic date-time cycling would normally be used for cycling a model.
 {% set MODEL_START_DATE = '2001-01' %}
 {% set MODEL_CHUNK_MONTHS = 4 %}

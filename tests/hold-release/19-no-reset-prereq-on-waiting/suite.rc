@@ -1,4 +1,5 @@
-title = Test cylc hold/release remembers satisfied dependencies
+[meta]
+    title = Test cylc hold/release remembers satisfied dependencies
 [cylc]
     UTC mode = True
     [[events]]

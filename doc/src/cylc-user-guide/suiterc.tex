@@ -13,27 +13,6 @@ overview of suite.rc files, including syntax (\ref{Syntax}).
 The only top level configuration items at present are the suite title
 and description.
 
-\subsubsection{title}
-
-A single line description of the suite. It is displayed in the db viewer
-window and can be retrieved at run time with the
-\lstinline=cylc show= command.
-
-\begin{myitemize}
-\item {\em type:} single line string
-\item {\em default:} (none)
-\end{myitemize}
-
-\subsubsection{description}
-
-A multi-line description of the suite. It can be retrieved by the db viewer
-right-click menu, or at run time with the \lstinline=cylc show= command.
-
-\begin{myitemize}
-\item {\em type:} multi-line string
-\item {\em default:} (none)
-\end{myitemize}
-
 \subsubsection{group}
 
 A single line group name for a suite. It is displayed in the gscan
@@ -45,7 +24,39 @@ window and can be used as a way of grouping related suites together.
 \item {\em default:} (none)
 \end{myitemize}
 
-\subsubsection{URL} \label{SuiteURL}
+
+\subsection{[meta]}
+
+Section containing metadata items for this suite. Several items
+(title, description, URL) are pre-defined and are used by the GUI. Others can be 
+user-defined and passed to suite event handlers to be interpreted according to your 
+needs. For example, the value of a ``suite-priority'' item could determine how an event 
+handler responds to failure events.
+
+
+\subsubsection[title]{ [meta] \textrightarrow title}
+
+A single line description of the suite. It is displayed in the GUI ``Open Another Suite''
+window and can be retrieved at run time with the
+\lstinline=cylc show= command.
+
+\begin{myitemize}
+\item {\em type:} single line string
+\item {\em default:} (none)
+\end{myitemize}
+
+\subsubsection[description]{ [meta] \textrightarrow description}
+
+A multi-line description of the suite. It can be retrieved at run time with the
+\lstinline=cylc show= command.
+
+\begin{myitemize}
+\item {\em type:} multi-line string
+\item {\em default:} (none)
+\end{myitemize}
+
+\subsubsection[URL]{ [meta] \textrightarrow URL}
+\label{SuiteURL}
 
 A web URL to suite documentation.  If present it can be browsed with the
 \lstinline=cylc doc= command, or from the gcylc Suite menu.  The variable
@@ -58,6 +69,22 @@ task URLs (\ref{TaskURL}).
 \item {\em default:} (none)
 \item {\em example:} \lstinline=http://suites/${CYLC_SUITE_NAME}/index.html=
 \end{myitemize}
+
+\subsubsection[\_\_MANY\_\_]{ [meta] \textrightarrow \_\_MANY\_\_}
+
+Replace \_\_MANY\_\_ with any user-defined metadata item. These, like title, URL, etc. can be passed
+to suite event handlers to be interpreted according to your needs. For example, ``suite-priority''.
+
+\begin{myitemize}
+\item {\em type:} String or integer
+\item {\em default:} (none)
+\item {\em example:}
+    \begin{lstlisting}
+[meta]
+    suite-priority = high
+    \end{lstlisting}
+\end{myitemize}
+
 
 \subsection{[cylc]}
 
@@ -313,6 +340,12 @@ substituted with actual values:
     \item \%(suite)s: suite name
     \item \%(suite\_url)s: suite URL
     \item \%(message)s: event message, if any
+\end{myitemize}
+
+It can also include the patterns from the [meta] section of the suite, for example:
+\begin{myitemize}
+    \item \%(suite-priority)s: suite priority
+    \item \%(color)s: suite color
 \end{myitemize}
 
 Otherwise, the command line will be called with the following command line
@@ -1234,10 +1267,20 @@ for a job with higher immediate priority. See also~\ref{PreemptionHPC}
 Section containing metadata items for this task or family namespace. Several items
 (title, description, URL) are pre-defined and are used by the GUI. Others can be 
 user-defined and passed to task event handlers to be interpreted according to your 
-needs. For example, the value of an "importance" item could determine how an event 
+needs. For example, the value of an ``importance'' item could determine how an event 
 handler responds to task failure events.
 
-\paragraph[title]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[meta]]] \textrightarrow title}
+Any suite meta item can now be passed to task event handlers by prefixing the
+string template item name with ``suite\_'', for example : 
+
+\begin{lstlisting}
+[runtime]
+    [[root]]
+        [[[events]]]
+            failed handler = send-help.sh %(suite_title)s %(suite_importance)s %(title)s
+\end{lstlisting}
+
+\subparagraph[title]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[meta]]] \textrightarrow title}
 
 A single line description of this namespace. It is displayed by the
 \lstinline=cylc list= command and can be retrieved from running tasks
@@ -1248,7 +1291,7 @@ with the \lstinline=cylc show= command.
 \item {\em root default:} (none)
 \end{myitemize}
 
-\paragraph[description]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[meta]]] \textrightarrow description}
+\subparagraph[description]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[meta]]] \textrightarrow description}
 
 A multi-line description of this namespace, retrievable from running tasks with the
 \lstinline=cylc show= command.
@@ -1258,7 +1301,7 @@ A multi-line description of this namespace, retrievable from running tasks with 
 \item {\em root default:} (none)
 \end{myitemize}
 
-\paragraph[URL]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[meta]]] \textrightarrow URL}
+\subparagraph[URL]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[meta]]] \textrightarrow URL}
 \label{TaskURL}
 
 A web URL to task documentation for this suite.  If present it can be browsed
@@ -1284,7 +1327,7 @@ suite URLs (\ref{SuiteURL}).
 (Note that URLs containing the suite comment delimiter
 \lstinline=#= must be protected by quotes).
 
-\paragraph[\_\_MANY\_\_]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[meta]]] \textrightarrow \_\_MANY\_\_}
+\subparagraph[\_\_MANY\_\_]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[meta]]] \textrightarrow \_\_MANY\_\_}
 
 Replace \_\_MANY\_\_ with any user-defined metadata item. These, like title, URL, etc. can be passed
 to task event handlers to be interpreted according to your needs. For example, the value of an
@@ -1594,10 +1637,16 @@ substituted with actual values:
     \item \%(message)s: event message, if any
 \end{myitemize}
 
-Can also include the patterns from [[[meta]]] section of the task, for example:
+The template can also include the patterns from [[[meta]]] section of the task, for example:
 \begin{myitemize}
     \item \%(importance)s: task priority
     \item \%(color)s: task color
+\end{myitemize}
+
+Patterns from the [meta] section of the suite can also be used, for example:
+\begin{myitemize}
+    \item \%(suite\_priority)s: suite priority
+    \item \%(suite\_color)s: suite color
 \end{myitemize}
 
 Otherwise, the command line will be called with the following arguments:

@@ -1,5 +1,6 @@
-title=broadcast expire
-description=Test broadcast expire option
+[meta]
+    title=broadcast expire
+    description=Test broadcast expire option
 [cylc]
     UTC mode = True
     [[reference test]]

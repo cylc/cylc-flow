@@ -1,7 +1,7 @@
+[meta]
+    title = "cylc hold --after"
 
-title = "cylc hold --after"
-
-description = """One task that holds future cycles after a given cycle."""
+    description = """One task that holds future cycles after a given cycle."""
 
 [cylc]
     UTC mode = True

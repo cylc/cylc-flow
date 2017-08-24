@@ -1,5 +1,6 @@
-title=broadcast bad namespace
-description=Test broadcast to an undefined namespace fails.
+[meta]
+    title=broadcast bad namespace
+    description=Test broadcast to an undefined namespace fails.
 [cylc]
     abort if any task fails = True
     [[events]]

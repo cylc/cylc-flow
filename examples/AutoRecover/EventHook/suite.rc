@@ -1,6 +1,7 @@
-title = "family failure task event hook example"
+[meta]
+    title = "family failure task event hook example"
 
-description = """
+    description = """
 Illustrates use of a task event hook script to clean up failed tasks."""
 
 [scheduling]
