@@ -1,0 +1,49 @@
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    [[dependencies]]
+        [[[R1/1]]]
+            graph = """
+                foo:fail => bar
+                foo & bar => restart
+            """
+        [[[R1/2]]]
+            graph = """
+                restart[-P1] => foo
+                foo:fail => bar
+                foo & bar => pub
+            """
+[runtime]
+    [[foo]]
+        script = false
+    [[bar]]
+        script = """
+cylc reset "${CYLC_SUITE_NAME}" "foo.${CYLC_TASK_CYCLE_POINT}" -s succeeded
+"""
+    [[restart]]
+        script = """
+cylc stop "${CYLC_SUITE_NAME}"
+"""
+    [[pub]]
+        script = """
+# Extract timestamp lines from logs
+for file in $(find "${CYLC_SUITE_RUN_DIR}/log/suite/" -name '*.*'); do
+    if $(grep '.*-.*-.*' "${file}"); then
+        grep '.*-.*-.*' "${file}" | sort -u > $(basename $file)
+    else
+        touch $(basename $file)
+    fi
+done
+
+# Write out duplicate entries to *-duplication files.
+sort $(find . -name 'out*') | uniq -d > out-duplication
+sort $(find . -name 'err*') | uniq -d > err-duplication
+sort $(find . -name 'log*') | uniq -d > log-duplication
+
+# Fail if any of these files contain any content.
+if [[ -s out-duplication || -s err-duplication || -s log-duplication ]]; then
+    touch 'test-failed'
+else
+    touch 'test-succeeded'
+fi
+"""
