@@ -182,7 +182,7 @@ class SuiteCommandServer(BaseCommsServer):
     def spawn_tasks(self, items):
         if not isinstance(items, list):
             items = [items]
-        return self._put("kill_tasks", (items,))
+        return self._put("spawn_tasks", (items,))
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
