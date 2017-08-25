@@ -217,14 +217,17 @@ class Scheduler(object):
             self.suite_db_mgr.restart_upgrade()
 
         try:
-            if not self.options.no_detach and not cylc.flags.debug:
+            detatch = not (self.options.no_detach or cylc.flags.debug)
+
+            if detatch:
                 daemonize(self)
 
+            # Setup the suite log.
             slog = SuiteLog.get_inst(self.suite)
             if cylc.flags.debug:
-                slog.pimp(DEBUG)
+                slog.pimp(detatch, DEBUG)
             else:
-                slog.pimp()
+                slog.pimp(detatch)
 
             self.proc_pool = SuiteProcPool()
             self.configure_comms_daemon()
