@@ -40,7 +40,7 @@ def main():
 
     parser.add_option(
         "-p", "--priority", metavar="PRIORITY", type="choice",
-        choices=['NORMAL', 'WARNING', 'CRITICAL'],
+        choices=['NORMAL', 'WARNING', 'CRITICAL', 'CUSTOM'],
         help="message priority: NORMAL, WARNING, or CRITICAL; default NORMAL.",
         action="store", dest="priority", default="NORMAL")
 
