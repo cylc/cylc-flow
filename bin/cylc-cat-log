@@ -138,12 +138,12 @@ def get_option_parser():
 
     parser.add_option(
         "-g", "--geditor",
-        help="force use of the configured GUI editor.",
+        help="Open the log file in your configured GUI editor.",
         action="store_true", default=False, dest="geditor")
 
     parser.add_option(
         "-b", "--teditor",
-        help="force use of the configured Non-GUI editor.",
+        help="Open the log file in your configured Non-GUI editor.",
         action="store_true", default=False, dest="editor")
 
     return parser

@@ -4,6 +4,134 @@ For the full list of all changes for each release see [closed
 milestones](https://github.com/cylc/cylc/milestones?state=closed).
 
 -------------------------------------------------------------------------------
+## __cylc-7.5.0 (2017-08-29)__
+
+Enhancements and fixes.
+
+### Bug Fixes
+
+[#2409](https://github.com/cylc/cylc/pull/2409): Fixed the `cylc spawn` command
+(it was killing tasks, since cylc-7)
+
+[#2409](https://github.com/cylc/cylc/pull/2409): Fixed the `cylc spawn` command
+(it was killing tasks, since cylc-7)
+
+[#2378](https://github.com/cylc/cylc/pull/2378): Fixed use of negative offsets
+with the `cylc suite-state` command (and therefore inter-suite triggering).
+
+[#2364](https://github.com/cylc/cylc/pull/2364): Correctly load complete custom
+task outputs on restart
+
+[#2350](https://github.com/cylc/cylc/pull/2350): Handle bad event handler
+command line templates gracefully (they would bring the suite down).
+
+[#2308](https://github.com/cylc/cylc/pull/2308): The parameterized task
+environment variable `$CYLC_TASK_PARAM_<param>` is now guaranteed to be defined 
+before any use in the user-defined task environment.
+
+[#2296](https://github.com/cylc/cylc/pull/2296): Fixed restarting just after a
+warm-start, before all tasks have moved on the next cycle points (this could
+previously cause a stall due to failure to ignore dependence on pre warm-start
+points).
+
+[#2295](https://github.com/cylc/cylc/pull/2295): Fixed `cylc cat-log` "open in
+editor" for remote job logs.
+
+
+### Highlighted Changes
+
+[#2387](https://github.com/cylc/cylc/pull/2387),
+[#2330](https://github.com/cylc/cylc/pull/2330): suite and task metadata config
+items (title, description, URL) have been moved to new`[meta]` sections that
+can also contain arbitrary user-defined items, which can be passed to event
+handlers. Example: a site-specific task "priority" or "importance" rating that
+can inform an event-handler's decision on whether or not to escalate task
+failures.
+
+[#2298](https://github.com/cylc/cylc/pull/2298),
+[#2401](https://github.com/cylc/cylc/pull/2401): New shell function
+`cylc__job_abort` to abort task job scripts with a custom message that can be
+passed to task failed event handlers.
+
+[#2204](https://github.com/cylc/cylc/pull/2204): Remove auto-fallback to HTTP
+communications, if HTTPS is not available.  Now HTTP is only used if explicitly
+configured.
+
+[#2332](https://github.com/cylc/cylc/pull/2332),
+[#2325](https://github.com/cylc/cylc/pull/2325),
+[#2321](https://github.com/cylc/cylc/pull/2321),
+[#2312](https://github.com/cylc/cylc/pull/2312),
+[#](https://github.com/cylc/cylc/pull/),
+[#](https://github.com/cylc/cylc/pull/): significant validation efficiency
+improvements.
+
+[#](https://github.com/cylc/cylc/pull/),  
+[#2291](https://github.com/cylc/cylc/pull/2291), 
+[#2303](https://github.com/cylc/cylc/pull/2303),  
+[#2322](https://github.com/cylc/cylc/pull/2322): run time efficiency improvements
+[#](https://github.com/cylc/cylc/pull/),  
+[#2303](https://github.com/cylc/cylc/pull/2303),  
+[#2322](https://github.com/cylc/cylc/pull/2322): run time effiecient improvements
+
+[#2286](https://github.com/cylc/cylc/pull/2286): new command `cylc
+report-timings` to generate a report of task runtime statistics for a suite
+run.
+
+[#2304](https://github.com/cylc/cylc/pull/2304): event handlers for CRITICAL events
+
+[#2244](https://github.com/cylc/cylc/pull/2244), 
+[#2258](https://github.com/cylc/cylc/pull/2258): Advanced syntax for excluding
+multiple points and sequences of points from regular cycling sequences.
+
+
+### Other Changes
+
+[#2407](https://github.com/cylc/cylc/pull/2407): Documented exactly how Cylc
+uses ssh, scp, and rsync to interact with remote job hosts.
+
+[#2346](https://github.com/cylc/cylc/pull/2346), 
+[#2386](https://github.com/cylc/cylc/pull/2386): `cylc graph` now plots
+implicit dependences as grayed-out ghost nodes.
+
+[#2343](https://github.com/cylc/cylc/pull/2343): Overhauled the "Running
+Suites" section of the User Guide, including suite remote control.
+
+[#2344](https://github.com/cylc/cylc/pull/2344): Attempt to access suite
+service files via the filesystem first, before ssh, for other accounts on the
+suite host.
+
+[#2360](https://github.com/cylc/cylc/pull/2360): Better validation of suite
+parameter configuration.
+
+[#2314](https://github.com/cylc/cylc/pull/2314): In debug mode, send bash job
+script xtrace output (from `set -x`) to a separate log file.
+
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+[#](https://github.com/cylc/cylc/pull/):
+
+-------------------------------------------------------------------------------
+
 ## __cylc-7.4.0 (2017-05-16)__
 
 Enhancements and fixes.
