@@ -23,6 +23,7 @@
         submission retry handler = 
         warning handler = 
         critical handler = 
+        custom handler = 
         succeeded handler = 
         retry handler = 
         failed handler = 
@@ -100,6 +101,7 @@
         submission retry handler = 
         warning handler = 
         critical handler = 
+        custom handler = 
         succeeded handler = 
         retry handler = 
         failed handler = 
@@ -176,6 +178,7 @@
         submission retry handler = 
         warning handler = 
         critical handler = 
+        custom handler = 
         succeeded handler = 
         retry handler = 
         failed handler = 
@@ -253,6 +256,7 @@
         submission retry handler = 
         warning handler = 
         critical handler = 
+        custom handler = 
         succeeded handler = 
         retry handler = 
         failed handler = 
@@ -330,6 +334,7 @@
         submission retry handler = 
         warning handler = 
         critical handler = 
+        custom handler = 
         succeeded handler = 
         retry handler = 
         failed handler = 
@@ -418,6 +423,7 @@
         submission retry handler = 
         warning handler = 
         critical handler = 
+        custom handler = 
         succeeded handler = 
         retry handler = 
         failed handler = 
@@ -495,6 +501,7 @@
         submission retry handler = 
         warning handler = 
         critical handler = 
+        custom handler = 
         succeeded handler = 
         retry handler = 
         failed handler = 
@@ -572,6 +579,7 @@
         submission retry handler = 
         warning handler = 
         critical handler = 
+        custom handler = 
         succeeded handler = 
         retry handler = 
         failed handler = 
@@ -648,6 +656,7 @@
         submission retry handler = 
         warning handler = 
         critical handler = 
+        custom handler = 
         succeeded handler = 
         retry handler = 
         failed handler = 
@@ -725,6 +734,7 @@
         submission retry handler = 
         warning handler = 
         critical handler = 
+        custom handler = 
         succeeded handler = 
         retry handler = 
         failed handler = 
@@ -802,6 +812,7 @@
         submission retry handler = 
         warning handler = 
         critical handler = 
+        custom handler = 
         succeeded handler = 
         retry handler = 
         failed handler = 
@@ -878,6 +889,7 @@
         submission retry handler = 
         warning handler = 
         critical handler = 
+        custom handler = 
         succeeded handler = 
         retry handler = 
         failed handler = 
@@ -955,6 +967,7 @@
         submission retry handler = 
         warning handler = 
         critical handler = 
+        custom handler = 
         succeeded handler = 
         retry handler = 
         failed handler = 
