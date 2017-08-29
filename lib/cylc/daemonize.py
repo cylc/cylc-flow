@@ -42,21 +42,6 @@ _INFO_TMPL = r"""
 _TIMEOUT = 300.0  # 5 minutes
 
 
-def redirect(logd):
-    """Redirect standard file descriptors
-
-    Note that simply reassigning the sys streams is not sufficient
-    if we import modules that write to stdin and stdout from C
-    code - evidently the subprocess module is in this category!
-    """
-    sout = file(os.path.join(logd, SuiteLog.OUT), 'a+', 0)  # 0 => unbuffered
-    serr = file(os.path.join(logd, SuiteLog.ERR), 'a+', 0)
-    dvnl = file(os.devnull, 'r')
-    os.dup2(sout.fileno(), sys.stdout.fileno())
-    os.dup2(serr.fileno(), sys.stderr.fileno())
-    os.dup2(dvnl.fileno(), sys.stdin.fileno())
-
-
 def daemonize(server):
     """Turn a cylc scheduler into a Unix daemon.
 
@@ -143,5 +128,9 @@ def daemonize(server):
     # reset umask, octal
     os.umask(022)
 
-    # redirect output to the suite log files
-    redirect(logd)
+    # Redirect /dev/null to stdin.
+    # Note that simply reassigning the sys streams is not sufficient
+    # if we import modules that write to stdin and stdout from C
+    # code - evidently the subprocess module is in this category!
+    dvnl = file(os.devnull, 'r')
+    os.dup2(dvnl.fileno(), sys.stdin.fileno())

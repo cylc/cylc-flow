@@ -61,6 +61,28 @@ def get_logs(directory, basename, absolute_path=True):
         return [os.path.basename(log) for log in new_logs + old_logs]
 
 
+class StreamRedirectRoller(object):
+    """Redirect a stream to a rolling file.
+
+    Note that simply reassigning the sys streams is not sufficient
+    if we import modules that write to stdin and stdout from C
+    code - evidently the subprocess module is in this category!
+
+    Args:
+        stream (file): The stream to redirect.
+        link_path (str): The path to the symlink pointing at the log file.
+
+    """
+
+    def __init__(self, stream, link_path):
+        self.stream = stream
+        self.path = link_path
+
+    def doRollover(self):
+        file_handle = file(self.path, 'a+', 0)  # 0 => unbuffered
+        os.dup2(file_handle.fileno(), self.stream.fileno())
+
+
 class RollingFileHandler(logging.handlers.BaseRotatingHandler):
     """A file handler for log files rotated by symlinking with support for
        synchronised rotating of multiple logs."""
@@ -157,6 +179,7 @@ class RollingFileHandlerGroup(object):
 
     def __init__(self):
         self.handlers = {}
+        self.stream_handlers = []
         self.duplicate_handlers = []
 
     def add(self, log):
@@ -170,6 +193,10 @@ class RollingFileHandlerGroup(object):
                 else:
                     self.duplicate_handlers.append(handler)
 
+    def add_stream(self, stream):
+        """Add a file stream to this group"""
+        self.stream_handlers.append(stream)
+
     def broadcast_roll(self, origin, *args):
         """Roll all other logs in this group, origin should be the
         RollingFileHandler instance that is calling this method."""
@@ -178,6 +205,8 @@ class RollingFileHandlerGroup(object):
                 handler.doRollover(*args)
         for handler in self.duplicate_handlers:
             handler.notifyRollover()
+        for handler in self.stream_handlers:
+            handler.doRollover()
 
     def roll_all(self):
         """Roll all logs in this group. Call with origin = False to roll all
@@ -250,6 +279,9 @@ class SuiteLog(object):
         self.loggers[self.OUT] = None
         self.loggers[self.ERR] = None
 
+        # File streams
+        self.streams = []
+
         # Filename stamp functions.
         if self.is_test:
             self.stamp = lambda: get_current_time_string(True, True, True
@@ -294,17 +326,17 @@ class SuiteLog(object):
         if log in self.loggers:
             return self.log_paths[log]
 
-    def pimp(self, log_logger_level=logging.INFO):
+    def pimp(self, detach=False, log_logger_level=logging.INFO):
         """Initiate the suite logs."""
         if not self.loggers[self.LOG]:
             # Don't initiate logs if they exist already.
-            self._create_logs(log_logger_level=log_logger_level)
+            self._create_logs(detach, log_logger_level=log_logger_level)
             self._register_syncronised_logs()
             self._group.roll_all()
         elif self.roll_at_startup:
             self._group.roll_all()
 
-    def _create_logs(self, log_logger_level=logging.INFO):
+    def _create_logs(self, detach, log_logger_level=logging.INFO):
         """Sets up the log files and their file handlers."""
         # Logging formatters.
         # plain_formatter = logging.Formatter('%(message)s')
@@ -345,12 +377,6 @@ class SuiteLog(object):
         log_err_fh.setFormatter(iso8601_formatter)
         log.addHandler(log_err_fh)
 
-        # Output errors to stderr.
-        log_stderr_fh = logging.StreamHandler(sys.stderr)
-        log_stderr_fh.setLevel(logging.WARNING)
-        log_stderr_fh.setFormatter(iso8601_formatter)
-        log.addHandler(log_stderr_fh)
-
         # --- Create the 'out' logger. ---
         out = logging.getLogger(self.OUT)
         self.loggers[self.OUT] = out
@@ -365,12 +391,6 @@ class SuiteLog(object):
         out_fh.setLevel(logging.INFO)
         out_fh.setFormatter(iso8601_formatter)
         out.addHandler(out_fh)
-
-        # Output to stdout.
-        out_stdout_fh = logging.StreamHandler(sys.stdout)
-        out_stdout_fh.setLevel(logging.INFO)
-        out_stdout_fh.setFormatter(iso8601_formatter)
-        out.addHandler(out_stdout_fh)
 
         # --- Create the 'err' logger. ---
         err = logging.getLogger(self.ERR)
@@ -387,11 +407,31 @@ class SuiteLog(object):
         err_fh.setFormatter(iso8601_formatter)
         err.addHandler(err_fh)
 
-        # Output to stderr.
-        err_stderr_fh = logging.StreamHandler(sys.stderr)
-        err_stderr_fh.setLevel(logging.WARNING)
-        err_stderr_fh.setFormatter(iso8601_formatter)
-        err.addHandler(err_stderr_fh)
+        if detach:
+            # If we are in detached mode redirect stdout/stderr to the logs.
+            self.streams = [
+                StreamRedirectRoller(sys.stdout, self.log_paths[self.OUT]),
+                StreamRedirectRoller(sys.stderr, self.log_paths[self.ERR])
+            ]
+        else:
+            # If we are not in detached mode redirect the logs to
+            # stdout/stderr:
+
+            # LOG: warnings or higher -> stderr
+            log_stderr_fh = logging.StreamHandler(sys.stderr)
+            log_stderr_fh.setLevel(logging.WARNING)
+            log_stderr_fh.setFormatter(iso8601_formatter)
+            log.addHandler(log_stderr_fh)
+            # OUT: info or higher -> stdout
+            out_stdout_fh = logging.StreamHandler(sys.stdout)
+            out_stdout_fh.setLevel(logging.INFO)
+            out_stdout_fh.setFormatter(iso8601_formatter)
+            out.addHandler(out_stdout_fh)
+            # ERR: warnings or higher -> stderr
+            err_stderr_fh = logging.StreamHandler(sys.stderr)
+            err_stderr_fh.setLevel(logging.WARNING)
+            err_stderr_fh.setFormatter(iso8601_formatter)
+            err.addHandler(err_stderr_fh)
 
     def _register_syncronised_logs(self):
         """Establishes synchronisation between the logs."""
@@ -401,6 +441,8 @@ class SuiteLog(object):
             for handler in log.handlers:
                 if isinstance(handler, RollingFileHandler):
                     handler.register_syncronised_group(self._group)
+        for stream in self.streams:
+            self._group.add_stream(stream)
 
 
 class ISO8601DateTimeFormatter(logging.Formatter):
