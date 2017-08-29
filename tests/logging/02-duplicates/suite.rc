@@ -28,7 +28,7 @@ cylc stop "${CYLC_SUITE_NAME}"
         script = """
 # Extract timestamp lines from logs
 for file in $(find "${CYLC_SUITE_RUN_DIR}/log/suite/" -name '*.*'); do
-    if $(grep '.*-.*-.*' "${file}"); then
+    if $(grep -q '.*-.*-.*' "${file}"); then
         grep '.*-.*-.*' "${file}" | sort -u > $(basename $file)
     else
         touch $(basename $file)
