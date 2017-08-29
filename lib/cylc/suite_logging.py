@@ -326,17 +326,17 @@ class SuiteLog(object):
         if log in self.loggers:
             return self.log_paths[log]
 
-    def pimp(self, detatch=False, log_logger_level=logging.INFO):
+    def pimp(self, detach=False, log_logger_level=logging.INFO):
         """Initiate the suite logs."""
         if not self.loggers[self.LOG]:
             # Don't initiate logs if they exist already.
-            self._create_logs(detatch, log_logger_level=log_logger_level)
+            self._create_logs(detach, log_logger_level=log_logger_level)
             self._register_syncronised_logs()
             self._group.roll_all()
         elif self.roll_at_startup:
             self._group.roll_all()
 
-    def _create_logs(self, detatch, log_logger_level=logging.INFO):
+    def _create_logs(self, detach, log_logger_level=logging.INFO):
         """Sets up the log files and their file handlers."""
         # Logging formatters.
         # plain_formatter = logging.Formatter('%(message)s')
@@ -407,14 +407,14 @@ class SuiteLog(object):
         err_fh.setFormatter(iso8601_formatter)
         err.addHandler(err_fh)
 
-        if detatch:
-            # If we are in detatched mode redirect stdout/stderr to the logs.
+        if detach:
+            # If we are in detached mode redirect stdout/stderr to the logs.
             self.streams = [
                 StreamRedirectRoller(sys.stdout, self.log_paths[self.OUT]),
                 StreamRedirectRoller(sys.stderr, self.log_paths[self.ERR])
             ]
         else:
-            # If we are not in detatched mode redirect the logs to
+            # If we are not in detached mode redirect the logs to
             # stdout/stderr:
 
             # LOG: warnings or higher -> stderr
