@@ -1,0 +1,15 @@
+[meta]
+    title = a suite with a task that multiply inherits from the same family
+    description = should fail validation
+
+[scheduling]
+   [[dependencies]]
+      graph = foo
+
+[runtime]
+   [[A]]
+   [[B]]
+      inherit = C, A
+   [[C]]
+   [[foo]]
+      inherit = A, B
