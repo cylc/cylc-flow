@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Check circular inheritance fails validation with the correct error message.
+# Check bad multi inheritance fails validation with the correct error message.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2
