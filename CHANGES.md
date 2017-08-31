@@ -36,7 +36,7 @@ improvements.
 [#2291](https://github.com/cylc/cylc/pull/2291),
 [#2303](https://github.com/cylc/cylc/pull/2303),
 [#2322](https://github.com/cylc/cylc/pull/2322): Runtime efficiency
-improvements
+improvements.
 
 [#2286](https://github.com/cylc/cylc/pull/2286): New command `cylc
 report-timings` generate reports of task runtime statistics.
@@ -73,13 +73,13 @@ script xtrace output (from `set -x`) to a separate log file.
 ### Bug Fixes
 
 [#2409](https://github.com/cylc/cylc/pull/2409): Fixed the `cylc spawn` command
-(it was killing tasks, since cylc-7)
+(it was killing tasks, since cylc-7).
 
 [#2378](https://github.com/cylc/cylc/pull/2378): Fixed use of negative offsets
 with the `cylc suite-state` command (and therefore inter-suite triggering).
 
 [#2364](https://github.com/cylc/cylc/pull/2364): Correctly load completed custom
-task outputs on restart
+task outputs on restart.
 
 [#2350](https://github.com/cylc/cylc/pull/2350): Handle bad event handler
 command line templates gracefully, without bringing the suite down.
