@@ -47,7 +47,6 @@ report-timings` generate reports of task runtime statistics.
 [#2258](https://github.com/cylc/cylc/pull/2258): Advanced syntax for excluding
 multiple points from cycling sequences.
 
-
 ### Other Enhancements
 
 [#2407](https://github.com/cylc/cylc/pull/2407): Documented exactly how Cylc
@@ -95,6 +94,9 @@ points).
 
 [#2295](https://github.com/cylc/cylc/pull/2295): Fixed `cylc cat-log` "open in
 editor" functionality for remote job logs.
+
+[#2412](https://github.com/cylc/cylc/pull/2412): Fixed duplication of log
+messages to the old log after restart.
 
 -------------------------------------------------------------------------------
 
