@@ -6,17 +6,15 @@ milestones](https://github.com/cylc/cylc/milestones?state=closed).
 -------------------------------------------------------------------------------
 ## __cylc-7.5.0 (2017-08-29)__
 
-Enhancements and fixes.
-
-### Highlighted Enhancements
+### Enhancements
 
 [#2387](https://github.com/cylc/cylc/pull/2387),
-[#2330](https://github.com/cylc/cylc/pull/2330): Suite and task metadata config
-items (title, description, URL) have been moved to new`[meta]` sections that
-can also contain arbitrary user-defined items, which can be passed to event
-handlers. Example: a site-specific task "priority" or "importance" rating that
+[#2330](https://github.com/cylc/cylc/pull/2330): New suite.rc `[meta]` sections
+for suite and task metadata. These hold the existing `title`, `description`,
+and `URL` items, plus arbitrary user-defined items. Metadata items can be passed
+to event handlers (e.g. a site-specific task "priority" or "importance" rating
 could inform an event-handler's decision on whether or not to escalate task
-failures.
+failures).
 
 [#2298](https://github.com/cylc/cylc/pull/2298),
 [#2401](https://github.com/cylc/cylc/pull/2401): New shell function
@@ -39,15 +37,14 @@ improvements.
 improvements.
 
 [#2286](https://github.com/cylc/cylc/pull/2286): New command `cylc
-report-timings` generate reports of task runtime statistics.
+report-timings` to generate reports of task runtime statistics.
 
-[#2304](https://github.com/cylc/cylc/pull/2304): Event handlers for CRITICAL events
+[#2304](https://github.com/cylc/cylc/pull/2304): New event handlers for general
+CRITICAL events.
 
 [#2244](https://github.com/cylc/cylc/pull/2244), 
 [#2258](https://github.com/cylc/cylc/pull/2258): Advanced syntax for excluding
 multiple points from cycling sequences.
-
-### Other Enhancements
 
 [#2407](https://github.com/cylc/cylc/pull/2407): Documented exactly how Cylc
 uses ssh, scp, and rsync to interact with remote job hosts.
@@ -56,8 +53,9 @@ uses ssh, scp, and rsync to interact with remote job hosts.
 [#2386](https://github.com/cylc/cylc/pull/2386): `cylc graph` now plots
 implicit dependences as grayed-out ghost nodes.
 
-[#2343](https://github.com/cylc/cylc/pull/2343): Overhauled the "Running
-Suites" section of the User Guide, including suite remote control.
+[#2343](https://github.com/cylc/cylc/pull/2343): Improved the "Running
+Suites" section of the User Guide, including documentation of suite remote
+control.
 
 [#2344](https://github.com/cylc/cylc/pull/2344): Attempt to access suite
 service files via the filesystem first, before ssh, for other accounts on the
@@ -69,28 +67,27 @@ parameter configuration.
 [#2314](https://github.com/cylc/cylc/pull/2314): In debug mode, send bash job
 script xtrace output (from `set -x`) to a separate log file.
 
-### Bug Fixes
+### Fixes
 
 [#2409](https://github.com/cylc/cylc/pull/2409): Fixed the `cylc spawn` command
 (it was killing tasks, since cylc-7).
 
 [#2378](https://github.com/cylc/cylc/pull/2378): Fixed use of negative offsets
-with the `cylc suite-state` command (and therefore inter-suite triggering).
+by the `cylc suite-state` command.
 
 [#2364](https://github.com/cylc/cylc/pull/2364): Correctly load completed custom
 task outputs on restart.
 
 [#2350](https://github.com/cylc/cylc/pull/2350): Handle bad event handler
-command line templates gracefully, without bringing the suite down.
+command line templates gracefully.
 
 [#2308](https://github.com/cylc/cylc/pull/2308): The parameterized task
 environment variable `$CYLC_TASK_PARAM_<param>` is now guaranteed to be defined 
-before any use in the user-defined task environment.
+before any use of it in the user-defined task environment section.
 
-[#2296](https://github.com/cylc/cylc/pull/2296): Fixed restarting just after a
-warm-start, before all tasks have moved on to later cycle points (this could
-previously cause a stall due to failure to ignore dependence on pre warm-start
-points).
+[#2296](https://github.com/cylc/cylc/pull/2296): Prevent suites stalling after
+a restart that closely follows a warm-start (now the restart, like the warm
+start, ignores dependence on tasks from before the warm start point).
 
 [#2295](https://github.com/cylc/cylc/pull/2295): Fixed `cylc cat-log` "open in
 editor" functionality for remote job logs.
