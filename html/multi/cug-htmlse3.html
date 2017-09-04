@@ -7,7 +7,7 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2017-05-16 10:59:00"> 
+<meta name="date" content="2017-09-04 14:16:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -24,7 +24,7 @@ href="#x4-100003.1">External Software Packages</a></span>
 <br />&#x00A0;<span class="subsectionToc" >3.2 <a 
 href="#x4-110003.2">Software Bundled With Cylc</a></span>
 <br />&#x00A0;<span class="subsectionToc" >3.3 <a 
-href="#x4-120003.3">Installing Cylc Itself</a></span>
+href="#x4-120003.3">Installing Cylc</a></span>
 <br />&#x00A0;<span class="subsectionToc" >3.4 <a 
 href="#x4-160003.4">Automated Tests</a></span>
 </div>
@@ -244,7 +244,7 @@ href="https://github.com/jrfonseca/xdot.py" class="url" ><span
 class="pcrr7t-">https://github.com/jrfonseca/xdot.py</span></a></li></ul>
 <!--l. 475--><p class="noindent" >
 <!--l. 475--><p class="noindent" > <h4 id="3.3" class="subsectionHead"> <span class="titlemark"> <a href="#3.3"> 3.3</a>  <a 
- id="x4-120003.3"></a>Installing Cylc Itself </span></h4>
+ id="x4-120003.3"></a>Installing Cylc </span></h4>
 <!--l. 478--><p class="noindent" >Cylc releases can be downloaded from from <a 
 href="https://cylc.github.io/cylc" class="url" ><span 
 class="pcrr7t-">https://cylc.github.io/cylc</span></a>.
@@ -266,16 +266,15 @@ class="pcrr7t-">/</span></span>) and modified slightly to point to a location su
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">opt</span></span> where successive Cylc releases
 will be unpacked side by side.
-<!--l. 486--><p class="noindent" >To install Cylc for the first time simply unpack the release tarball in that location, e.g.&#x00A0;<span class="lstinline"><span 
+<!--l. 486--><p class="noindent" >To install Cylc, unpack the release tarball in the right location, e.g.&#x00A0;<span class="lstinline"><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">opt</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">-7.4.0</span></span>, type
-<span class="lstinline"><span 
-class="pcrr7t-">make</span></span> inside the unpacked release directory, and set site defaults - if necessary - in a site global config file
-(below).
-<!--l. 491--><p class="noindent" >In the installed location, make a symbolic link from <span class="lstinline"><span 
+class="pcrr7t-">-7.4.0</span></span>, type <span class="lstinline"><span 
+class="pcrr7t-">make</span></span> inside the
+release directory, and set site defaults - if necessary - in a site global config file (below).
+<!--l. 491--><p class="noindent" >Make a symbolic link from <span class="lstinline"><span 
 class="pcrr7t-">cylc</span></span> to the latest installed version: <span class="lstinline"><span 
 class="pcrr7t-">ln</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -288,19 +287,27 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">-7.4.0</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cylc</span></span>.
-This is the version of Cylc that will be invoked by the central wrapper if a specific version is not requested e.g.&#x00A0;by
-<span class="lstinline"><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">opt</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">cylc</span></span>. This will
+be invoked by the central wrapper if a specific version is not requested. Otherwise, the wrapper will attempt to
+invoke the Cylc version specified in <span class="lstinline"><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">CYLC_VERSION</span></span>, e.g.&#x00A0;<span class="lstinline"><span 
 class="pcrr7t-">CYLC_VERSION</span><span 
-class="pcrr7t-">=7.4.0</span></span>.
-<!--l. 496--><p class="noindent" >Installing subsequent releases is just a matter of unpacking the new tarballs next to the previous releases,
+class="pcrr7t-">=7.4.0</span></span>. This variable is
+automatically set in task job scripts to ensure that jobs use the same Cylc version as their parent
+suite daemon. It can also be set by users, manually or in login scripts, to fix the Cylc version in their
+environment.
+<!--l. 500--><p class="noindent" >Installing subsequent releases is just a matter of unpacking the new tarballs next to the previous releases,
 running <span class="lstinline"><span 
 class="pcrr7t-">make</span></span> in them, and copying in (possibly with modifications) the previous site global config
 file.
-<!--l. 500--><p class="noindent" >
-<!--l. 500--><p class="noindent" > <h4 id="3.3.1" class="subsubsectionHead"><span class="titlemark"> <a href="#3.3.1"> 3.3.1</a>  <a 
+<!--l. 504--><p class="noindent" >
+<!--l. 504--><p class="noindent" > <h4 id="3.3.1" class="subsubsectionHead"><span class="titlemark"> <a href="#3.3.1"> 3.3.1</a>  <a 
  id="x4-130003.3.1"></a>Local User Installation </span></h4>
-<!--l. 503--><p class="noindent" >It is easy to install Cylc under your own user account if you don&#8217;t have root or sudo access to the system: just put
+<!--l. 507--><p class="noindent" >It is easy to install Cylc under your own user account if you don&#8217;t have root or sudo access to the system: just put
 the central Cylc wrapper in <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">HOME</span><span 
@@ -317,21 +324,21 @@ class="pcrr7t-">cylc</span><span
 class="pcrr7t-">/</span></span> where you will unpack and install release tarballs. Local installation of third party
 dependencies like Graphviz is also possible, but that depends on the particular installation methods used and is
 outside of the scope of this document.
-<!--l. 511--><p class="noindent" >
-<!--l. 511--><p class="noindent" > <h4 id="3.3.2" class="subsubsectionHead"><span class="titlemark"> <a href="#3.3.2"> 3.3.2</a>  <a 
+<!--l. 515--><p class="noindent" >
+<!--l. 515--><p class="noindent" > <h4 id="3.3.2" class="subsubsectionHead"><span class="titlemark"> <a href="#3.3.2"> 3.3.2</a>  <a 
  id="x4-140003.3.2"></a>Create A Site Config File </span></h4>
                                                                                          
 
                                                                                          
-<!--l. 513--><p class="noindent" >Site and user global config files define some important parameters that affect all suites, some of which may need to
+<!--l. 517--><p class="noindent" >Site and user global config files define some important parameters that affect all suites, some of which may need to
 be customized for your site. See&#x00A0;<a 
 href="cug-htmlse6.html#x7-240006">6<!--tex4ht:ref: SiteAndUserConfiguration --></a> for how to generate an initial site file and where to install it. All legal site and
 user global config items are defined in&#x00A0;<a 
-href="cug-htmlse15.html#x16-381000B">B<!--tex4ht:ref: SiteRCReference --></a>.
-<!--l. 519--><p class="noindent" >
-<!--l. 519--><p class="noindent" > <h4 id="3.3.3" class="subsubsectionHead"><span class="titlemark"> <a href="#3.3.3"> 3.3.3</a>  <a 
+href="cug-htmlse15.html#x16-389000B">B<!--tex4ht:ref: SiteRCReference --></a>.
+<!--l. 523--><p class="noindent" >
+<!--l. 523--><p class="noindent" > <h4 id="3.3.3" class="subsubsectionHead"><span class="titlemark"> <a href="#3.3.3"> 3.3.3</a>  <a 
  id="x4-150003.3.3"></a>Configure Site Environment on Job Hosts </span></h4>
-<!--l. 522--><p class="noindent" >If your users submit task jobs to hosts other than the hosts they use to run their suites, you should ensure that
+<!--l. 526--><p class="noindent" >If your users submit task jobs to hosts other than the hosts they use to run their suites, you should ensure that
 the job hosts have the correct environment for running cylc. A cylc suite generates task job scripts
 that normally invoke <span class="lstinline"><span 
 class="pcrr7t-">bash</span></span>. The job will attempt to source the first of these files it finds to set up its
@@ -383,7 +390,7 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">default</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">sh</span></span></li></ul>
-<!--l. 534--><p class="noindent" >The <span class="lstinline"><span 
+<!--l. 538--><p class="noindent" >The <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">{</span><span 
 class="pcrr7t-">CYLC_DIR</span><span 
@@ -424,10 +431,10 @@ class="pcrr7t-">env</span><span
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">sh</span></span> file and populate it with the appropriate
 contents.
-<!--l. 540--><p class="noindent" >
-<!--l. 540--><p class="noindent" > <h4 id="3.4" class="subsectionHead"> <span class="titlemark"> <a href="#3.4"> 3.4</a>  <a 
+<!--l. 544--><p class="noindent" >
+<!--l. 544--><p class="noindent" > <h4 id="3.4" class="subsectionHead"> <span class="titlemark"> <a href="#3.4"> 3.4</a>  <a 
  id="x4-160003.4"></a>Automated Tests </span></h4>
-<!--l. 543--><p class="noindent" >The cylc test battery is primarily intended for developers to check that changes to the source code don&#8217;t break
+<!--l. 547--><p class="noindent" >The cylc test battery is primarily intended for developers to check that changes to the source code don&#8217;t break
 existing functionality. Note that some test failures can be expected to result from suites timing out, even if nothing
 is wrong, if you run too many tests in parallel. See <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
@@ -441,12 +448,12 @@ class="pcrr7t-">help</span></span>.
                                                                                          
 
                                                                                          
-<!--l. 549--><div class="crosslinks"><p class="noindent">[<a 
+<!--l. 553--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse4.html" >next</a>] [<a 
 href="cug-htmlse2.html" >prev</a>] [<a 
 href="cug-htmlse2.html#tailcug-htmlse2.html" >prev-tail</a>] [<a 
 href="cug-htmlse3.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse3.html" >up</a>] </p></div>
-<!--l. 549--><p class="noindent" ><a 
+<!--l. 553--><p class="noindent" ><a 
  id="tailcug-htmlse3.html"></a>  
 </body></html> 

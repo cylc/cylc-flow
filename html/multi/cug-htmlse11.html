@@ -7,49 +7,49 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2017-05-16 10:59:00"> 
+<meta name="date" content="2017-09-04 14:16:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-<!--l. 5340--><div class="crosslinks"><p class="noindent">[<a 
+<!--l. 5450--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse12.html" >next</a>] [<a 
 href="cug-htmlse10.html" >prev</a>] [<a 
 href="cug-htmlse10.html#tailcug-htmlse10.html" >prev-tail</a>] [<a 
 href="#tailcug-htmlse11.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse11.html" >up</a>] </p></div>
-<!--l. 5340--><p class="noindent" > <h3 id="11" class="sectionHead"><span class="titlemark"> <a href="#11">11</a>  <a 
- id="x12-16000011"></a>Task Job Submission and Management </span></h3> <div class="sectionTOCS">
+<!--l. 5450--><p class="noindent" > <h3 id="11" class="sectionHead"><span class="titlemark"> <a href="#11">11</a>  <a 
+ id="x12-16200011"></a>Task Job Submission and Management </span></h3> <div class="sectionTOCS">
 &#x00A0;<span class="subsectionToc" >11.1 <a 
-href="#x12-16100011.1">Supported Job Submission Methods</a></span>
+href="#x12-16300011.1">Supported Job Submission Methods</a></span>
 <br />&#x00A0;<span class="subsectionToc" >11.2 <a 
-href="#x12-17200011.2">Task stdout And stderr Logs</a></span>
+href="#x12-17400011.2">Task stdout And stderr Logs</a></span>
 <br />&#x00A0;<span class="subsectionToc" >11.3 <a 
-href="#x12-17300011.3">Overriding The Job Submission Command</a></span>
+href="#x12-17500011.3">Overriding The Job Submission Command</a></span>
 <br />&#x00A0;<span class="subsectionToc" >11.4 <a 
-href="#x12-17400011.4">Job Polling</a></span>
+href="#x12-17600011.4">Job Polling</a></span>
 <br />&#x00A0;<span class="subsectionToc" >11.5 <a 
-href="#x12-17500011.5">Job Killing</a></span>
+href="#x12-17700011.5">Job Killing</a></span>
 <br />&#x00A0;<span class="subsectionToc" >11.6 <a 
-href="#x12-17600011.6">Execution Time Limit</a></span>
+href="#x12-17800011.6">Execution Time Limit</a></span>
 <br />&#x00A0;<span class="subsectionToc" >11.7 <a 
-href="#x12-17800011.7">Custom Job Submission Methods</a></span>
+href="#x12-18000011.7">Custom Job Submission Methods</a></span>
 </div>
-<!--l. 5343--><p class="noindent" >For the requirements a command, script, or program, must fulfill in order to function as a cylc task, see&#x00A0;<a 
-href="cug-htmlse10.html#x11-15400010">10<!--tex4ht:ref: TaskImplementation --></a>. This
+<!--l. 5453--><p class="noindent" >For the requirements a command, script, or program, must fulfill in order to function as a cylc task, see&#x00A0;<a 
+href="cug-htmlse10.html#x11-15500010">10<!--tex4ht:ref: TaskImplementation --></a>. This
 section explains how tasks are submitted by the suite daemon when they are ready to run, and how to define new
 batch system handlers.
-<!--l. 5348--><p class="noindent" >When a task is ready cylc generates a job script (see&#x00A0;<a 
-href="cug-htmlse10.html#x11-15500010.1">10.1<!--tex4ht:ref: JobScripts --></a>). The job script is submitted to run by the <span 
+<!--l. 5458--><p class="noindent" >When a task is ready cylc generates a job script (see&#x00A0;<a 
+href="cug-htmlse10.html#x11-15600010.1">10.1<!--tex4ht:ref: JobScripts --></a>). The job script is submitted to run by the <span 
 class="cmti-10">batch system</span>
 chosen for the task. Different tasks can use different batch systems. Like other runtime properties, you can set a
-suite default batch system and override it for specific tasks or families:  <!--l. 5354-->
-<div class="lstlisting" id="listing-214"><span class="label"><a 
- id="x12-160001r1"></a></span><span 
+suite default batch system and override it for specific tasks or families:  <!--l. 5464-->
+<div class="lstlisting" id="listing-219"><span class="label"><a 
+ id="x12-162001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-160002r2"></a></span><span 
+ id="x12-162002r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -63,7 +63,7 @@ class="pcrro7t-">suite</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">defaults</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-160003r3"></a></span><span 
+ id="x12-162003r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -76,7 +76,7 @@ class="pcrr7t-">[[[</span><span
 class="pcrr7t-">job</span><span 
 class="pcrr7t-">]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-160004r4"></a></span><span 
+ id="x12-162004r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -97,7 +97,7 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">loadleveler</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-160005r5"></a></span><span 
+ id="x12-162005r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -113,7 +113,7 @@ class="pcrro7t-">task</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">foo</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-160006r6"></a></span><span 
+ id="x12-162006r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -126,7 +126,7 @@ class="pcrr7t-">[[[</span><span
 class="pcrr7t-">job</span><span 
 class="pcrr7t-">]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-160007r7"></a></span><span 
+ id="x12-162007r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -147,409 +147,37 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">at</span>
 </div>
-<!--l. 5364--><p class="noindent" >
-<!--l. 5364--><p class="noindent" > <h4 id="11.1" class="subsectionHead"> <span class="titlemark"> <a href="#11.1"> 11.1</a>  <a 
- id="x12-16100011.1"></a>Supported Job Submission Methods </span></h4>
-<!--l. 5367--><p class="noindent" >Cylc supports a number of commonly used batch systems. See&#x00A0;<a 
-href="#x12-17800011.7">11.7<!--tex4ht:ref: CustomJobSubmissionMethods --></a> for how to add new job submission
+<!--l. 5474--><p class="noindent" >
+<!--l. 5474--><p class="noindent" > <h4 id="11.1" class="subsectionHead"> <span class="titlemark"> <a href="#11.1"> 11.1</a>  <a 
+ id="x12-16300011.1"></a>Supported Job Submission Methods </span></h4>
+<!--l. 5477--><p class="noindent" >Cylc supports a number of commonly used batch systems. See&#x00A0;<a 
+href="#x12-18000011.7">11.7<!--tex4ht:ref: CustomJobSubmissionMethods --></a> for how to add new job submission
 methods.
                                                                                          
 
                                                                                          
-<!--l. 5371--><p class="noindent" >
-<!--l. 5371--><p class="noindent" > <h4 id="11.1.1" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.1"> 11.1.1</a>  <a 
- id="x12-16200011.1.1"></a>background </span></h4>
-<!--l. 5373--><p class="noindent" >Runs task job scripts as Unix background processes.
-<!--l. 5375--><p class="noindent" >If an execution time limit is specified for a task, its job will be wrapped by the <span class="lstinline"><span 
+<!--l. 5481--><p class="noindent" >
+<!--l. 5481--><p class="noindent" > <h4 id="11.1.1" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.1"> 11.1.1</a>  <a 
+ id="x12-16400011.1.1"></a>background </span></h4>
+<!--l. 5483--><p class="noindent" >Runs task job scripts as Unix background processes.
+<!--l. 5485--><p class="noindent" >If an execution time limit is specified for a task, its job will be wrapped by the <span class="lstinline"><span 
 class="pcrr7t-">timeout</span></span> command.
-<!--l. 5378--><p class="noindent" >
-<!--l. 5378--><p class="noindent" > <h4 id="11.1.2" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.2"> 11.1.2</a>  <a 
- id="x12-16300011.1.2"></a>at </span></h4>
-<!--l. 5380--><p class="noindent" >Submits task job scripts to the rudimentary Unix <span class="lstinline"><span 
+<!--l. 5488--><p class="noindent" >
+<!--l. 5488--><p class="noindent" > <h4 id="11.1.2" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.2"> 11.1.2</a>  <a 
+ id="x12-16500011.1.2"></a>at </span></h4>
+<!--l. 5490--><p class="noindent" >Submits task job scripts to the rudimentary Unix <span class="lstinline"><span 
 class="pcrr7t-">at</span></span> scheduler. The <span class="lstinline"><span 
 class="pcrr7t-">atd</span></span> daemon must be running.
-<!--l. 5383--><p class="noindent" >If an execution time limit is specified for a task, its job will be wrapped by the <span class="lstinline"><span 
+<!--l. 5493--><p class="noindent" >If an execution time limit is specified for a task, its job will be wrapped by the <span class="lstinline"><span 
 class="pcrr7t-">timeout</span></span> command.
-<!--l. 5386--><p class="noindent" >
-<!--l. 5386--><p class="noindent" > <h4 id="11.1.3" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.3"> 11.1.3</a>  <a 
- id="x12-16400011.1.3"></a>loadleveler </span></h4>
-<!--l. 5388--><p class="noindent" >Submits task job scripts to loadleveler by the <span class="lstinline"><span 
+<!--l. 5496--><p class="noindent" >
+<!--l. 5496--><p class="noindent" > <h4 id="11.1.3" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.3"> 11.1.3</a>  <a 
+ id="x12-16600011.1.3"></a>loadleveler </span></h4>
+<!--l. 5498--><p class="noindent" >Submits task job scripts to loadleveler by the <span class="lstinline"><span 
 class="pcrr7t-">llsubmit</span></span> command. Loadleveler directives can be provided in the
 suite.rc file:
-<!--l. 5392-->
-<div class="lstlisting" id="listing-215"><span class="label"><a 
- id="x12-164001r1"></a></span><span 
-class="pcrr7t-">[</span><span 
-class="pcrr7t-">runtime</span><span 
-class="pcrr7t-">]</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-164002r2"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">[[</span><span 
-class="pcrr7t-">my_task</span><span 
-class="pcrr7t-">]]</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-164003r3"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">[[[</span><span 
-class="pcrr7t-">job</span><span 
-class="pcrr7t-">]]]</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-164004r4"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">batch</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">system</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">loadleveler</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-164005r5"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">execution</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">time</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">limit</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">PT10M</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-164006r6"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">[[[</span><span 
-class="pcrr7t-">directives</span><span 
-class="pcrr7t-">]]]</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-164007r7"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">foo</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">bar</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-164008r8"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">baz</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">qux</span>
-</div>
-<!--l. 5402--><p class="noindent" >These are written to the top of the task job script like this:  <!--l. 5404-->
-<div class="lstlisting" id="listing-216"><span class="label"><a 
- id="x12-164009r1"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">!/</span><span 
-class="pcrro7t-">bin</span><span 
-class="pcrro7t-">/</span><span 
-class="pcrro7t-">bash</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-164010r2"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">DIRECTIVES</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-164011r3"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">@</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">foo</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">=</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">bar</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-164012r4"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">@</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">baz</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">=</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">qux</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-164013r5"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">@</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">wall_clock_limit</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">=</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">660,600</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-164014r6"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">@</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">queue</span>
-</div>
-<!--l. 5413--><p class="noindent" >If restart=yes is specified as a directive for loadleveler, the job will automatically trap SIGUSR1, which
-loadleveler may use to preempt the job. On trapping SIGUSR1, the job will inform the suite that it
-has been vacated by loadleveler. This will put it back to the submitted state, until it starts running
-again.
-<!--l. 5419--><p class="noindent" >If <span class="lstinline"><span 
-class="pcrr7t-">execution</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">time</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">limit</span></span> is specified, it is used to generate the <span class="lstinline"><span 
-class="pcrr7t-">wall_clock_limit</span></span> directive. The setting is
-assumed to be the soft limit. The hard limit will be set by adding an extra minute to the soft limit. Do not specify
-the <span class="lstinline"><span 
-class="pcrr7t-">wall_clock_limit</span></span> directive explicitly if <span class="lstinline"><span 
-class="pcrr7t-">execution</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">time</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">limit</span></span> is specified. Otherwise,
-the execution time limit known by the suite may be out of sync with what is submitted to the batch
-system.
-                                                                                         
-
-                                                                                         
-<!--l. 5427--><p class="noindent" >
-<!--l. 5427--><p class="noindent" > <h4 id="11.1.4" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.4"> 11.1.4</a>  <a 
- id="x12-16500011.1.4"></a>lsf </span></h4>
-<!--l. 5429--><p class="noindent" >Submits task job scripts to IBM Platform LSF by the <span class="lstinline"><span 
-class="pcrr7t-">bsub</span></span> command. LSF directives can be provided in the
-suite.rc file:
-<!--l. 5433-->
-<div class="lstlisting" id="listing-217"><span class="label"><a 
- id="x12-165001r1"></a></span><span 
-class="pcrr7t-">[</span><span 
-class="pcrr7t-">runtime</span><span 
-class="pcrr7t-">]</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-165002r2"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">[[</span><span 
-class="pcrr7t-">my_task</span><span 
-class="pcrr7t-">]]</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-165003r3"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">[[[</span><span 
-class="pcrr7t-">job</span><span 
-class="pcrr7t-">]]]</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-165004r4"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">batch</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">system</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">lsf</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-165005r5"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">execution</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">time</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">limit</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">PT10M</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-165006r6"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">[[[</span><span 
-class="pcrr7t-">directives</span><span 
-class="pcrr7t-">]]]</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-165007r7"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">q</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">foo</span>
-</div>
-<!--l. 5442--><p class="noindent" >These are written to the top of the task job script like this:  <!--l. 5444-->
-<div class="lstlisting" id="listing-218"><span class="label"><a 
- id="x12-165008r1"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">!/</span><span 
-class="pcrro7t-">bin</span><span 
-class="pcrro7t-">/</span><span 
-class="pcrro7t-">bash</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-165009r2"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">DIRECTIVES</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-165010r3"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">BSUB</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">-</span><span 
-class="pcrro7t-">q</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">=</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">foo</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-165011r4"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">BSUB</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">-</span><span 
-class="pcrro7t-">W</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">=</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">10</span>
-</div>
-<!--l. 5451--><p class="noindent" >If <span class="lstinline"><span 
-class="pcrr7t-">execution</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">time</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">limit</span></span> is specified, it is used to generate the <span class="lstinline"><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">W</span></span> directive. Do not specify the <span class="lstinline"><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">W</span></span> directive
-explicitly if <span class="lstinline"><span 
-class="pcrr7t-">execution</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">time</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">limit</span></span> is specified. Otherwise, the execution time limit known by the suite may be
-out of sync with what is submitted to the batch system.
-<!--l. 5457--><p class="noindent" >
-<!--l. 5457--><p class="noindent" > <h4 id="11.1.5" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.5"> 11.1.5</a>  <a 
- id="x12-16600011.1.5"></a>pbs </span></h4>
-<!--l. 5459--><p class="noindent" >Submits task job scripts to PBS (or Torque) by the <span class="lstinline"><span 
-class="pcrr7t-">qsub</span></span> command. PBS directives can be provided in the suite.rc
-file:  <!--l. 5462-->
-<div class="lstlisting" id="listing-219"><span class="label"><a 
+<!--l. 5502-->
+<div class="lstlisting" id="listing-220"><span class="label"><a 
  id="x12-166001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -596,7 +224,7 @@ class="pcrr7t-">system</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">pbs</span><span 
+class="pcrr7t-">loadleveler</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x12-166005r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -619,7 +247,7 @@ class="pcrr7t-">limit</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">PT1M</span><span 
+class="pcrr7t-">PT10M</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x12-166006r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -647,10 +275,11 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">V</span><span 
+class="pcrr7t-">foo</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">bar</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x12-166008r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -665,100 +294,80 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">q</span><span 
+class="pcrr7t-">baz</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">foo</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-166009r9"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">l</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">nodes</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">1</span>
+class="pcrr7t-">qux</span>
 </div>
-<!--l. 5473--><p class="noindent" >These are written to the top of the task job script like this:  <!--l. 5475-->
-<div class="lstlisting" id="listing-220"><span class="label"><a 
- id="x12-166010r1"></a></span><span 
+<!--l. 5512--><p class="noindent" >These are written to the top of the task job script like this:  <!--l. 5514-->
+<div class="lstlisting" id="listing-221"><span class="label"><a 
+ id="x12-166009r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
 class="pcrro7t-">bin</span><span 
 class="pcrro7t-">/</span><span 
 class="pcrro7t-">bash</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-166011r2"></a></span><span 
+ id="x12-166010r2"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">DIRECTIVES</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-166012r3"></a></span><span 
+ id="x12-166011r3"></a></span><span 
 class="pcrro7t-">#</span><span 
-class="pcrro7t-">PBS</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">-</span><span 
-class="pcrro7t-">V</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-166013r4"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">PBS</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">-</span><span 
-class="pcrro7t-">q</span><span 
+class="pcrro7t-">@</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">foo</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">=</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">bar</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-166014r5"></a></span><span 
+ id="x12-166012r4"></a></span><span 
 class="pcrro7t-">#</span><span 
-class="pcrro7t-">PBS</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">-</span><span 
-class="pcrro7t-">l</span><span 
+class="pcrro7t-">@</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">nodes</span><span 
-class="pcrro7t-">=1</span><span 
+class="pcrro7t-">baz</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">=</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">qux</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-166015r6"></a></span><span 
+ id="x12-166013r5"></a></span><span 
 class="pcrro7t-">#</span><span 
-class="pcrro7t-">PBS</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">-</span><span 
-class="pcrro7t-">l</span><span 
+class="pcrro7t-">@</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">walltime</span><span 
-class="pcrro7t-">=60</span>
+class="pcrro7t-">wall_clock_limit</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">=</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">660,600</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-166014r6"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">@</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">queue</span>
 </div>
-<!--l. 5484--><p class="noindent" >If <span class="lstinline"><span 
+<!--l. 5523--><p class="noindent" >If restart=yes is specified as a directive for loadleveler, the job will automatically trap SIGUSR1, which
+loadleveler may use to preempt the job. On trapping SIGUSR1, the job will inform the suite that it
+has been vacated by loadleveler. This will put it back to the submitted state, until it starts running
+again.
+<!--l. 5529--><p class="noindent" >If <span class="lstinline"><span 
 class="pcrr7t-">execution</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">time</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">limit</span></span> is specified, it is used to generate the <span class="lstinline"><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">l</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">walltime</span></span> directive. Do not
-specify the <span class="lstinline"><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">l</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">walltime</span></span> directive explicitly if <span class="lstinline"><span 
+class="pcrr7t-">wall_clock_limit</span></span> directive. The setting is
+assumed to be the soft limit. The hard limit will be set by adding an extra minute to the soft limit. Do not specify
+the <span class="lstinline"><span 
+class="pcrr7t-">wall_clock_limit</span></span> directive explicitly if <span class="lstinline"><span 
 class="pcrr7t-">execution</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">time</span><span 
@@ -766,16 +375,17 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">limit</span></span> is specified. Otherwise,
 the execution time limit known by the suite may be out of sync with what is submitted to the batch
 system.
-<!--l. 5490--><p class="noindent" >
-<!--l. 5490--><p class="noindent" > <h4 id="11.1.6" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.6"> 11.1.6</a>  <a 
- id="x12-16700011.1.6"></a>moab </span></h4>
-<!--l. 5492--><p class="noindent" >Submits task job scripts to the Moab workload manager by the <span class="lstinline"><span 
-class="pcrr7t-">msub</span></span> command. Moab directives can be provided in
-the suite.rc file; the syntax is very similar to PBS:  <!--l. 5496-->
                                                                                          
 
                                                                                          
-<div class="lstlisting" id="listing-221"><span class="label"><a 
+<!--l. 5537--><p class="noindent" >
+<!--l. 5537--><p class="noindent" > <h4 id="11.1.4" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.4"> 11.1.4</a>  <a 
+ id="x12-16700011.1.4"></a>lsf </span></h4>
+<!--l. 5539--><p class="noindent" >Submits task job scripts to IBM Platform LSF by the <span class="lstinline"><span 
+class="pcrr7t-">bsub</span></span> command. LSF directives can be provided in the
+suite.rc file:
+<!--l. 5543-->
+<div class="lstlisting" id="listing-222"><span class="label"><a 
  id="x12-167001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -822,7 +432,7 @@ class="pcrr7t-">system</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">moab</span><span 
+class="pcrr7t-">lsf</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x12-167005r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -845,7 +455,7 @@ class="pcrr7t-">limit</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">PT1M</span><span 
+class="pcrr7t-">PT10M</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x12-167006r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -874,134 +484,72 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">-</span><span 
-class="pcrr7t-">V</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-167008r8"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
 class="pcrr7t-">q</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">foo</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-167009r9"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">l</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">nodes</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">1</span>
+class="pcrr7t-">foo</span>
 </div>
-<!--l. 5507--><p class="noindent" >These are written to the top of the task job script like this:  <!--l. 5509-->
-<div class="lstlisting" id="listing-222"><span class="label"><a 
- id="x12-167010r1"></a></span><span 
+<!--l. 5552--><p class="noindent" >These are written to the top of the task job script like this:  <!--l. 5554-->
+<div class="lstlisting" id="listing-223"><span class="label"><a 
+ id="x12-167008r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
 class="pcrro7t-">bin</span><span 
 class="pcrro7t-">/</span><span 
 class="pcrro7t-">bash</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-167011r2"></a></span><span 
+ id="x12-167009r2"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">DIRECTIVES</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-167012r3"></a></span><span 
+ id="x12-167010r3"></a></span><span 
 class="pcrro7t-">#</span><span 
-class="pcrro7t-">PBS</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">-</span><span 
-class="pcrro7t-">V</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-167013r4"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">PBS</span><span 
+class="pcrro7t-">BSUB</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">-</span><span 
 class="pcrro7t-">q</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">=</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">foo</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-167014r5"></a></span><span 
+ id="x12-167011r4"></a></span><span 
 class="pcrro7t-">#</span><span 
-class="pcrro7t-">PBS</span><span 
+class="pcrro7t-">BSUB</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">-</span><span 
-class="pcrro7t-">l</span><span 
+class="pcrro7t-">W</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">nodes</span><span 
-class="pcrro7t-">=1</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-167015r6"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">PBS</span><span 
+class="pcrro7t-">=</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">-</span><span 
-class="pcrro7t-">l</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">walltime</span><span 
-class="pcrro7t-">=60</span>
+class="pcrro7t-">10</span>
 </div>
-<!--l. 5517--><p class="noindent" >(Moab understands <span class="lstinline"><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">PBS</span></span> directives).
-<!--l. 5519--><p class="noindent" >If <span class="lstinline"><span 
+<!--l. 5561--><p class="noindent" >If <span class="lstinline"><span 
 class="pcrr7t-">execution</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">time</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">limit</span></span> is specified, it is used to generate the <span class="lstinline"><span 
 class="pcrr7t-">-</span><span 
-class="pcrr7t-">l</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">walltime</span></span> directive. Do not
-specify the <span class="lstinline"><span 
+class="pcrr7t-">W</span></span> directive. Do not specify the <span class="lstinline"><span 
 class="pcrr7t-">-</span><span 
-class="pcrr7t-">l</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">walltime</span></span> directive explicitly if <span class="lstinline"><span 
+class="pcrr7t-">W</span></span> directive
+explicitly if <span class="lstinline"><span 
 class="pcrr7t-">execution</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">time</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">limit</span></span> is specified. Otherwise,
-the execution time limit known by the suite may be out of sync with what is submitted to the batch
-system.
-<!--l. 5525--><p class="noindent" >
-<!--l. 5525--><p class="noindent" > <h4 id="11.1.7" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.7"> 11.1.7</a>  <a 
- id="x12-16800011.1.7"></a>sge </span></h4>
-<!--l. 5527--><p class="noindent" >Submits task job scripts to Sun/Oracle Grid Engine by the <span class="lstinline"><span 
-class="pcrr7t-">qsub</span></span> command. SGE directives can be provided in the
-suite.rc file:  <!--l. 5530-->
-<div class="lstlisting" id="listing-223"><span class="label"><a 
+class="pcrr7t-">limit</span></span> is specified. Otherwise, the execution time limit known by the suite may be
+out of sync with what is submitted to the batch system.
+<!--l. 5567--><p class="noindent" >
+<!--l. 5567--><p class="noindent" > <h4 id="11.1.5" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.5"> 11.1.5</a>  <a 
+ id="x12-16800011.1.5"></a>pbs </span></h4>
+<!--l. 5569--><p class="noindent" >Submits task job scripts to PBS (or Torque) by the <span class="lstinline"><span 
+class="pcrr7t-">qsub</span></span> command. PBS directives can be provided in the suite.rc
+file:  <!--l. 5572-->
+<div class="lstlisting" id="listing-224"><span class="label"><a 
  id="x12-168001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -1048,7 +596,7 @@ class="pcrr7t-">system</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">sge</span><span 
+class="pcrr7t-">pbs</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x12-168005r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1071,7 +619,7 @@ class="pcrr7t-">limit</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">P1D</span><span 
+class="pcrr7t-">PT1M</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x12-168006r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1100,7 +648,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">-</span><span 
-class="pcrr7t-">cwd</span><span 
+class="pcrr7t-">V</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
@@ -1140,87 +688,63 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">l</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">h_data</span><span 
+class="pcrr7t-">nodes</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">1024</span><span 
-class="pcrr7t-">M</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-168010r10"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">l</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">h_rt</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">24:00:00</span>
+class="pcrr7t-">1</span>
 </div>
-<!--l. 5542--><p class="noindent" >These are written to the top of the task job script like this:  <!--l. 5544-->
-<div class="lstlisting" id="listing-224"><span class="label"><a 
- id="x12-168011r1"></a></span><span 
+<!--l. 5583--><p class="noindent" >These are written to the top of the task job script like this:  <!--l. 5585-->
+<div class="lstlisting" id="listing-225"><span class="label"><a 
+ id="x12-168010r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
 class="pcrro7t-">bin</span><span 
 class="pcrro7t-">/</span><span 
 class="pcrro7t-">bash</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-168012r2"></a></span><span 
+ id="x12-168011r2"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">DIRECTIVES</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-168013r3"></a></span><span 
+ id="x12-168012r3"></a></span><span 
 class="pcrro7t-">#</span><span 
-class="pcrro8c-">$</span><span 
+class="pcrro7t-">PBS</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">-</span><span 
-class="pcrro7t-">cwd</span><span 
+class="pcrro7t-">V</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-168014r4"></a></span><span 
+ id="x12-168013r4"></a></span><span 
 class="pcrro7t-">#</span><span 
-class="pcrro8c-">$</span><span 
+class="pcrro7t-">PBS</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">-</span><span 
 class="pcrro7t-">q</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">foo</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-168015r5"></a></span><span 
+ id="x12-168014r5"></a></span><span 
 class="pcrro7t-">#</span><span 
-class="pcrro8c-">$</span><span 
+class="pcrro7t-">PBS</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">-</span><span 
 class="pcrro7t-">l</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">h_data</span><span 
-class="pcrro7t-">=1024</span><span 
-class="pcrro7t-">M</span><span 
+class="pcrro7t-">nodes</span><span 
+class="pcrro7t-">=1</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-168016r6"></a></span><span 
+ id="x12-168015r6"></a></span><span 
 class="pcrro7t-">#</span><span 
-class="pcrro8c-">$</span><span 
+class="pcrro7t-">PBS</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">-</span><span 
 class="pcrro7t-">l</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">h_rt</span><span 
-class="pcrro7t-">=24:00:00</span>
+class="pcrro7t-">walltime</span><span 
+class="pcrro7t-">=60</span>
 </div>
-<!--l. 5553--><p class="noindent" >If <span class="lstinline"><span 
+<!--l. 5594--><p class="noindent" >If <span class="lstinline"><span 
 class="pcrr7t-">execution</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">time</span><span 
@@ -1229,26 +753,29 @@ class="pcrr7t-">limit</span></span> is specified, it is used to generate the <sp
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">l</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">h_rt</span></span> directive. Do not specify the
-<span class="lstinline"><span 
+class="pcrr7t-">walltime</span></span> directive. Do not
+specify the <span class="lstinline"><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">l</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">h_rt</span></span> directive explicitly if <span class="lstinline"><span 
+class="pcrr7t-">walltime</span></span> directive explicitly if <span class="lstinline"><span 
 class="pcrr7t-">execution</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">time</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">limit</span></span> is specified. Otherwise, the execution time limit known
-by the suite may be out of sync with what is submitted to the batch system.
-<!--l. 5559--><p class="noindent" >
-<!--l. 5559--><p class="noindent" > <h4 id="11.1.8" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.8"> 11.1.8</a>  <a 
- id="x12-16900011.1.8"></a>slurm </span></h4>
-<!--l. 5561--><p class="noindent" >Submits task job scripts to Simple Linux Utility for Resource Management by the <span class="lstinline"><span 
-class="pcrr7t-">sbatch</span></span> command. SLURM
-directives can be provided in the suite.rc file (note that since not all SLURM commands have a short form, cylc
-requires the long form directives):  <!--l. 5566-->
-<div class="lstlisting" id="listing-225"><span class="label"><a 
+class="pcrr7t-">limit</span></span> is specified. Otherwise,
+the execution time limit known by the suite may be out of sync with what is submitted to the batch
+system.
+<!--l. 5600--><p class="noindent" >
+<!--l. 5600--><p class="noindent" > <h4 id="11.1.6" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.6"> 11.1.6</a>  <a 
+ id="x12-16900011.1.6"></a>moab </span></h4>
+<!--l. 5602--><p class="noindent" >Submits task job scripts to the Moab workload manager by the <span class="lstinline"><span 
+class="pcrr7t-">msub</span></span> command. Moab directives can be provided in
+the suite.rc file; the syntax is very similar to PBS:  <!--l. 5606-->
+                                                                                         
+
+                                                                                         
+<div class="lstlisting" id="listing-226"><span class="label"><a 
  id="x12-169001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -1295,7 +822,7 @@ class="pcrr7t-">system</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">slurm</span><span 
+class="pcrr7t-">moab</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x12-169005r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1318,7 +845,7 @@ class="pcrr7t-">limit</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">PT1H</span><span 
+class="pcrr7t-">PT1M</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x12-169006r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1346,6 +873,479 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">V</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-169008r8"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">q</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">foo</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-169009r9"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">l</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">nodes</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">1</span>
+</div>
+<!--l. 5617--><p class="noindent" >These are written to the top of the task job script like this:  <!--l. 5619-->
+<div class="lstlisting" id="listing-227"><span class="label"><a 
+ id="x12-169010r1"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">!/</span><span 
+class="pcrro7t-">bin</span><span 
+class="pcrro7t-">/</span><span 
+class="pcrro7t-">bash</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-169011r2"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">DIRECTIVES</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-169012r3"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">PBS</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">-</span><span 
+class="pcrro7t-">V</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-169013r4"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">PBS</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">-</span><span 
+class="pcrro7t-">q</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">foo</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-169014r5"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">PBS</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">-</span><span 
+class="pcrro7t-">l</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">nodes</span><span 
+class="pcrro7t-">=1</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-169015r6"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">PBS</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">-</span><span 
+class="pcrro7t-">l</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">walltime</span><span 
+class="pcrro7t-">=60</span>
+</div>
+<!--l. 5627--><p class="noindent" >(Moab understands <span class="lstinline"><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">PBS</span></span> directives).
+<!--l. 5629--><p class="noindent" >If <span class="lstinline"><span 
+class="pcrr7t-">execution</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">time</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">limit</span></span> is specified, it is used to generate the <span class="lstinline"><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">l</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">walltime</span></span> directive. Do not
+specify the <span class="lstinline"><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">l</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">walltime</span></span> directive explicitly if <span class="lstinline"><span 
+class="pcrr7t-">execution</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">time</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">limit</span></span> is specified. Otherwise,
+the execution time limit known by the suite may be out of sync with what is submitted to the batch
+system.
+<!--l. 5635--><p class="noindent" >
+<!--l. 5635--><p class="noindent" > <h4 id="11.1.7" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.7"> 11.1.7</a>  <a 
+ id="x12-17000011.1.7"></a>sge </span></h4>
+<!--l. 5637--><p class="noindent" >Submits task job scripts to Sun/Oracle Grid Engine by the <span class="lstinline"><span 
+class="pcrr7t-">qsub</span></span> command. SGE directives can be provided in the
+suite.rc file:  <!--l. 5640-->
+<div class="lstlisting" id="listing-228"><span class="label"><a 
+ id="x12-170001r1"></a></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">runtime</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-170002r2"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">my_task</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-170003r3"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[[</span><span 
+class="pcrr7t-">job</span><span 
+class="pcrr7t-">]]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-170004r4"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">batch</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">system</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">sge</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-170005r5"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">execution</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">time</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">limit</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">P1D</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-170006r6"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[[</span><span 
+class="pcrr7t-">directives</span><span 
+class="pcrr7t-">]]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-170007r7"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">cwd</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-170008r8"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">q</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">foo</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-170009r9"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">l</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">h_data</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">1024</span><span 
+class="pcrr7t-">M</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-170010r10"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">l</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">h_rt</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">24:00:00</span>
+</div>
+<!--l. 5652--><p class="noindent" >These are written to the top of the task job script like this:  <!--l. 5654-->
+<div class="lstlisting" id="listing-229"><span class="label"><a 
+ id="x12-170011r1"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">!/</span><span 
+class="pcrro7t-">bin</span><span 
+class="pcrro7t-">/</span><span 
+class="pcrro7t-">bash</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-170012r2"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">DIRECTIVES</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-170013r3"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro8c-">$</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">-</span><span 
+class="pcrro7t-">cwd</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-170014r4"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro8c-">$</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">-</span><span 
+class="pcrro7t-">q</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">foo</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-170015r5"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro8c-">$</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">-</span><span 
+class="pcrro7t-">l</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">h_data</span><span 
+class="pcrro7t-">=1024</span><span 
+class="pcrro7t-">M</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-170016r6"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro8c-">$</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">-</span><span 
+class="pcrro7t-">l</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">h_rt</span><span 
+class="pcrro7t-">=24:00:00</span>
+</div>
+<!--l. 5663--><p class="noindent" >If <span class="lstinline"><span 
+class="pcrr7t-">execution</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">time</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">limit</span></span> is specified, it is used to generate the <span class="lstinline"><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">l</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">h_rt</span></span> directive. Do not specify the
+<span class="lstinline"><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">l</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">h_rt</span></span> directive explicitly if <span class="lstinline"><span 
+class="pcrr7t-">execution</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">time</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">limit</span></span> is specified. Otherwise, the execution time limit known
+by the suite may be out of sync with what is submitted to the batch system.
+<!--l. 5669--><p class="noindent" >
+<!--l. 5669--><p class="noindent" > <h4 id="11.1.8" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.8"> 11.1.8</a>  <a 
+ id="x12-17100011.1.8"></a>slurm </span></h4>
+<!--l. 5671--><p class="noindent" >Submits task job scripts to Simple Linux Utility for Resource Management by the <span class="lstinline"><span 
+class="pcrr7t-">sbatch</span></span> command. SLURM
+directives can be provided in the suite.rc file (note that since not all SLURM commands have a short form, cylc
+requires the long form directives):  <!--l. 5676-->
+<div class="lstlisting" id="listing-230"><span class="label"><a 
+ id="x12-171001r1"></a></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">runtime</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-171002r2"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">my_task</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-171003r3"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[[</span><span 
+class="pcrr7t-">job</span><span 
+class="pcrr7t-">]]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-171004r4"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">batch</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">system</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">slurm</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-171005r5"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">execution</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">time</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">limit</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">PT1H</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-171006r6"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[[</span><span 
+class="pcrr7t-">directives</span><span 
+class="pcrr7t-">]]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-171007r7"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">nodes</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1353,7 +1353,7 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">5</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-169008r8"></a></span><span 
+ id="x12-171008r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1376,16 +1376,16 @@ class="pcrr7t-">QXZ5W2</span>
 
                                                                                          
 </div>
-<!--l. 5576--><p class="noindent" >These are written to the top of the task job script like this:  <!--l. 5578-->
-<div class="lstlisting" id="listing-226"><span class="label"><a 
- id="x12-169009r1"></a></span><span 
+<!--l. 5686--><p class="noindent" >These are written to the top of the task job script like this:  <!--l. 5688-->
+<div class="lstlisting" id="listing-231"><span class="label"><a 
+ id="x12-171009r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
 class="pcrro7t-">bin</span><span 
 class="pcrro7t-">/</span><span 
 class="pcrro7t-">bash</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-169010r2"></a></span><span 
+ id="x12-171010r2"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">SBATCH</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -1393,7 +1393,7 @@ class="pcrro7t-">--</span><span
 class="pcrro7t-">nodes</span><span 
 class="pcrro7t-">=5</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-169011r3"></a></span><span 
+ id="x12-171011r3"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">SBATCH</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -1401,7 +1401,7 @@ class="pcrro7t-">--</span><span
 class="pcrro7t-">time</span><span 
 class="pcrro7t-">=60:00</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-169012r4"></a></span><span 
+ id="x12-171012r4"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">SBATCH</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -1410,7 +1410,7 @@ class="pcrro7t-">account</span><span
 class="pcrro7t-">=</span><span 
 class="pcrro7t-">QXZ5W2</span>
 </div>
-<!--l. 5585--><p class="noindent" >If <span class="lstinline"><span 
+<!--l. 5695--><p class="noindent" >If <span class="lstinline"><span 
 class="pcrr7t-">execution</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">time</span><span 
@@ -1427,12 +1427,12 @@ class="pcrr7t-">time</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">limit</span></span> is specified. Otherwise, the execution time limit known by the suite
 may be out of sync with what is submitted to the batch system.
-<!--l. 5591--><p class="noindent" >
-<!--l. 5591--><p class="noindent" > <h4 id="11.1.9" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.9"> 11.1.9</a>  <a 
- id="x12-17000011.1.9"></a>Default Directives Provided </span></h4>
-<!--l. 5593--><p class="noindent" >For batch systems that use job file directives (PBS, Loadleveler, etc.) default directives are provided to set the job
+<!--l. 5701--><p class="noindent" >
+<!--l. 5701--><p class="noindent" > <h4 id="11.1.9" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.9"> 11.1.9</a>  <a 
+ id="x12-17200011.1.9"></a>Default Directives Provided </span></h4>
+<!--l. 5703--><p class="noindent" >For batch systems that use job file directives (PBS, Loadleveler, etc.) default directives are provided to set the job
 name, stdout and stderr file paths, and the execution time limit (if specified).
-<!--l. 5597--><p class="noindent" >Cylc constructs the job name string using a combination of the task ID and the suite name. PBS fails a job submit
+<!--l. 5707--><p class="noindent" >Cylc constructs the job name string using a combination of the task ID and the suite name. PBS fails a job submit
 if the job name in <span class="lstinline"><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">N</span><span 
@@ -1441,15 +1441,15 @@ class="pcrr7t-">name</span></span> is too long. For version 12 or below, this is
 characters. The default setting will truncate the job name string to 15 characters. If you have PBS 13 at your site,
 you should modify your site&#8217;s global configuration file to allow the job name to be longer. (See also
 Section&#x00A0;<a 
-href="cug-htmlse15.html#x16-445000B.9.1.19.5">B.9.1.19.5<!--tex4ht:ref: JobNameLengthMaximum --></a>.) For example:
-<!--l. 5605-->
-<div class="lstlisting" id="listing-227"><span class="label"><a 
- id="x12-170001r1"></a></span><span 
+href="cug-htmlse15.html#x16-453000B.9.1.19.5">B.9.1.19.5<!--tex4ht:ref: JobNameLengthMaximum --></a>.) For example:
+<!--l. 5715-->
+<div class="lstlisting" id="listing-232"><span class="label"><a 
+ id="x12-172001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">hosts</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-170002r2"></a></span><span 
+ id="x12-172002r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1458,7 +1458,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">myhpc</span><span 
 class="pcrr7t-">&#x22C6;]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-170003r3"></a></span><span 
+ id="x12-172003r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1473,7 +1473,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">systems</span><span 
 class="pcrr7t-">]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-170004r4"></a></span><span 
+ id="x12-172004r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1490,7 +1490,7 @@ class="pcrr7t-">[[[[</span><span
 class="pcrr7t-">pbs</span><span 
 class="pcrr7t-">]]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-170005r5"></a></span><span 
+ id="x12-172005r5"></a></span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -1513,7 +1513,7 @@ class="pcrro7t-">PBS</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">13</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-170006r6"></a></span><span 
+ id="x12-172006r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1542,23 +1542,23 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">236</span>
 </div>
-<!--l. 5614--><p class="noindent" >
-<!--l. 5614--><p class="noindent" > <h4 id="11.1.10" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.10"> 11.1.10</a>  <a 
- id="x12-17100011.1.10"></a>Directives Section Quirks (PBS, SGE, ...)  </span></h4>
-<!--l. 5616--><p class="noindent" >To specify an option with no argument, such as <span class="lstinline"><span 
+<!--l. 5724--><p class="noindent" >
+<!--l. 5724--><p class="noindent" > <h4 id="11.1.10" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.10"> 11.1.10</a>  <a 
+ id="x12-17300011.1.10"></a>Directives Section Quirks (PBS, SGE, ...)  </span></h4>
+<!--l. 5726--><p class="noindent" >To specify an option with no argument, such as <span class="lstinline"><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">V</span></span> in PBS or <span class="lstinline"><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">cwd</span></span> in SGE you must give a null string as the
 directive value in the suite.rc file.
-<!--l. 5620--><p class="noindent" >The left hand side of a setting (i.e. the string before the first equal sign) must be unique. To specify
+<!--l. 5730--><p class="noindent" >The left hand side of a setting (i.e.&#x00A0;the string before the first equal sign) must be unique. To specify
 multiple values using an option such as <span class="lstinline"><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">l</span></span> option in PBS, SGE, etc., either specify all items in a single
 line:
-<!--l. 5625-->
-<div class="lstlisting" id="listing-228"><span class="label"><a 
- id="x12-171001r1"></a></span><span 
+<!--l. 5735-->
+<div class="lstlisting" id="listing-233"><span class="label"><a 
+ id="x12-173001r1"></a></span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">l</span><span 
 class="pcrr7t-">=</span><span 
@@ -1573,56 +1573,56 @@ class="pcrr7t-">=2:</span><span
 class="pcrr7t-">walltime</span><span 
 class="pcrr7t-">=12:00:00</span>
 </div>
-<!--l. 5629--><p class="noindent" >(Left hand side is <span class="lstinline"><span 
+<!--l. 5739--><p class="noindent" >(Left hand side is <span class="lstinline"><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">l</span></span>. A second <span class="lstinline"><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">l</span><span 
 class="pcrr7t-">=...</span></span> line will override the first.)
-<!--l. 5632--><p class="noindent" >Or separate the items (note: no equal sign after <span class="lstinline"><span 
+<!--l. 5742--><p class="noindent" >Or separate the items (note: no equal sign after <span class="lstinline"><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">l</span></span>):
-<!--l. 5634-->
+<!--l. 5744-->
                                                                                          
 
                                                                                          
-<div class="lstlisting" id="listing-229"><span class="label"><a 
- id="x12-171002r1"></a></span><span 
+<div class="lstlisting" id="listing-234"><span class="label"><a 
+ id="x12-173002r1"></a></span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">l</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrb7t-">select</span><span 
 class="pcrr7t-">=28</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-171003r2"></a></span><span 
+ id="x12-173003r2"></a></span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">l</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">ncpus</span><span 
 class="pcrr7t-">=36</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-171004r3"></a></span><span 
+ id="x12-173004r3"></a></span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">l</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">mpiprocs</span><span 
 class="pcrr7t-">=18</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-171005r4"></a></span><span 
+ id="x12-173005r4"></a></span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">l</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">ompthreads</span><span 
 class="pcrr7t-">=2</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-171006r5"></a></span><span 
+ id="x12-173006r5"></a></span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">l</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">walltime</span><span 
 class="pcrr7t-">=12:00:00</span>
 </div>
-<!--l. 5642--><p class="noindent" >(Left hand sides are now <span class="lstinline"><span 
+<!--l. 5752--><p class="noindent" >(Left hand sides are now <span class="lstinline"><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">l</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1631,15 +1631,15 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">l</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">ncpus</span></span>, etc.)
-<!--l. 5644--><p class="noindent" >
-<!--l. 5644--><p class="noindent" > <h4 id="11.2" class="subsectionHead"> <span class="titlemark"> <a href="#11.2"> 11.2</a>  <a 
- id="x12-17200011.2"></a>Task stdout And stderr Logs </span></h4>
-<!--l. 5647--><p class="noindent" >When a task is ready to run cylc generates a filename root to be used for the task job script and log files. The
+<!--l. 5754--><p class="noindent" >
+<!--l. 5754--><p class="noindent" > <h4 id="11.2" class="subsectionHead"> <span class="titlemark"> <a href="#11.2"> 11.2</a>  <a 
+ id="x12-17400011.2"></a>Task stdout And stderr Logs </span></h4>
+<!--l. 5757--><p class="noindent" >When a task is ready to run cylc generates a filename root to be used for the task job script and log files. The
 filename containing the task name, cycle point, and a submit number that increments if the same task is re-triggered
 multiple times:
-<!--l. 5653-->
-<div class="lstlisting" id="listing-230"><span class="label"><a 
- id="x12-172001r1"></a></span><span 
+<!--l. 5763-->
+<div class="lstlisting" id="listing-235"><span class="label"><a 
+ id="x12-174001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">task</span><span 
@@ -1649,7 +1649,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">script</span><span 
 class="pcrro7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-172002r2"></a></span><span 
+ id="x12-174002r2"></a></span><span 
 class="pcrr7t-">~/</span><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">-</span><span 
@@ -1669,7 +1669,7 @@ class="pcrr7t-">hello</span><span
 class="pcrr7t-">/01/</span><span 
 class="pcrr7t-">job</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-172003r3"></a></span><span 
+ id="x12-174003r3"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">task</span><span 
@@ -1677,7 +1677,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">stdout</span><span 
 class="pcrro7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-172004r4"></a></span><span 
+ id="x12-174004r4"></a></span><span 
 class="pcrr7t-">~/</span><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">-</span><span 
@@ -1699,7 +1699,7 @@ class="pcrr7t-">job</span><span
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">out</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-172005r5"></a></span><span 
+ id="x12-174005r5"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">task</span><span 
@@ -1707,7 +1707,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">stderr</span><span 
 class="pcrro7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-172006r6"></a></span><span 
+ id="x12-174006r6"></a></span><span 
 class="pcrr7t-">~/</span><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">-</span><span 
@@ -1729,16 +1729,16 @@ class="pcrr7t-">job</span><span
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">err</span>
 </div>
-<!--l. 5662--><p class="noindent" >How the stdout and stderr streams are directed into these files depends on the batch system. The <span class="lstinline"><span 
+<!--l. 5772--><p class="noindent" >How the stdout and stderr streams are directed into these files depends on the batch system. The <span class="lstinline"><span 
 class="pcrr7t-">background</span></span>
 method just uses appropriate output redirection on the command line, as shown above. The <span class="lstinline"><span 
 class="pcrr7t-">loadleveler</span></span> method
 writes appropriate directives to the job script that is submitted to loadleveler.
-<!--l. 5668--><p class="noindent" >Cylc obviously has no control over the stdout and stderr output from tasks that do their own internal
+<!--l. 5778--><p class="noindent" >Cylc obviously has no control over the stdout and stderr output from tasks that do their own internal
 output management (e.g.&#x00A0;tasks that submit internal jobs and direct the associated output to other
 files). For less internally complex tasks, however, the files referred to here will be complete task job
 logs.
-<!--l. 5674--><p class="noindent" >Some batch systems, such as <span class="lstinline"><span 
+<!--l. 5784--><p class="noindent" >Some batch systems, such as <span class="lstinline"><span 
 class="pcrr7t-">pbs</span></span>, redirect a job&#8217;s stdout and stderr streams to a separate cache area while the job is
 running. The contents are only copied to the normal locations when the job completes. This means that
 <span class="lstinline"><span 
@@ -1751,14 +1751,14 @@ Some sites with these batch systems are known to provide commands for viewing an
 and stderr streams that are redirected to these cache areas. If this is the case at your site, you can configure
 cylc to make use of the provided commands by adding some settings to the global site/user config.
 E.g.:
-<!--l. 5685-->
-<div class="lstlisting" id="listing-231"><span class="label"><a 
- id="x12-172007r1"></a></span><span 
+<!--l. 5795-->
+<div class="lstlisting" id="listing-236"><span class="label"><a 
+ id="x12-174007r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">hosts</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-172008r2"></a></span><span 
+ id="x12-174008r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1786,7 +1786,7 @@ class="pcrro7t-">host</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">name</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-172009r3"></a></span><span 
+ id="x12-174009r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1801,7 +1801,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">systems</span><span 
 class="pcrr7t-">]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-172010r4"></a></span><span 
+ id="x12-174010r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1818,7 +1818,7 @@ class="pcrr7t-">[[[[</span><span
 class="pcrr7t-">pbs</span><span 
 class="pcrr7t-">]]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-172011r5"></a></span><span 
+ id="x12-174011r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1854,7 +1854,7 @@ class="pcrr7t-">job_id</span><span
 class="pcrr7t-">)</span><span 
 class="pcrr7t-">s</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-172012r6"></a></span><span 
+ id="x12-174012r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1890,7 +1890,7 @@ class="pcrr7t-">job_id</span><span
 class="pcrr7t-">)</span><span 
 class="pcrr7t-">s</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-172013r7"></a></span><span 
+ id="x12-174013r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1923,7 +1923,7 @@ class="pcrr7t-">job_id</span><span
 class="pcrr7t-">)</span><span 
 class="pcrr7t-">s</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-172014r8"></a></span><span 
+ id="x12-174014r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1956,25 +1956,25 @@ class="pcrr7t-">job_id</span><span
 class="pcrr7t-">)</span><span 
 class="pcrr7t-">s</span>
 </div>
-<!--l. 5696--><p class="noindent" >
-<!--l. 5696--><p class="noindent" > <h4 id="11.3" class="subsectionHead"> <span class="titlemark"> <a href="#11.3"> 11.3</a>  <a 
- id="x12-17300011.3"></a>Overriding The Job Submission Command </span></h4>
-<!--l. 5700--><p class="noindent" >To change the form of the actual command used to submit a job you do not need to define a new batch system
+<!--l. 5806--><p class="noindent" >
+<!--l. 5806--><p class="noindent" > <h4 id="11.3" class="subsectionHead"> <span class="titlemark"> <a href="#11.3"> 11.3</a>  <a 
+ id="x12-17500011.3"></a>Overriding The Job Submission Command </span></h4>
+<!--l. 5810--><p class="noindent" >To change the form of the actual command used to submit a job you do not need to define a new batch system
 handler; just override the <span class="lstinline"><span 
 class="pcrr7t-">command</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">template</span></span> in the relevant job submission sections of your suite.rc file:
-<!--l. 5704-->
+<!--l. 5814-->
                                                                                          
 
                                                                                          
-<div class="lstlisting" id="listing-232"><span class="label"><a 
- id="x12-173001r1"></a></span><span 
+<div class="lstlisting" id="listing-237"><span class="label"><a 
+ id="x12-175001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-173002r2"></a></span><span 
+ id="x12-175002r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1983,7 +1983,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">root</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-173003r3"></a></span><span 
+ id="x12-175003r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1996,7 +1996,7 @@ class="pcrr7t-">[[[</span><span
 class="pcrr7t-">job</span><span 
 class="pcrr7t-">]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-173004r4"></a></span><span 
+ id="x12-175004r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2017,7 +2017,7 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">loadleveler</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-173005r5"></a></span><span 
+ id="x12-175005r5"></a></span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -2046,7 +2046,7 @@ class="pcrro7t-">llsubmit</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">returning</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-173006r6"></a></span><span 
+ id="x12-175006r6"></a></span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -2074,7 +2074,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">completed</span><span 
 class="pcrro7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-173007r7"></a></span><span 
+ id="x12-175007r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2107,38 +2107,38 @@ class="pcrr7t-">job</span><span
 class="pcrr7t-">)</span><span 
 class="pcrr7t-">s</span>
 </div>
-<!--l. 5713--><p class="noindent" >As explained in&#x00A0;<a 
-href="cug-htmlse14.html#x15-224000A">A<!--tex4ht:ref: SuiteRCReference --></a> the template&#8217;s %(job)s will be substituted by the job file path.
-<!--l. 5716--><p class="noindent" >
-<!--l. 5716--><p class="noindent" > <h4 id="11.4" class="subsectionHead"> <span class="titlemark"> <a href="#11.4"> 11.4</a>  <a 
- id="x12-17400011.4"></a>Job Polling </span></h4>
-<!--l. 5718--><p class="noindent" >For supported batch systems, one-way polling can be used to determine actual job status: the suite
+<!--l. 5823--><p class="noindent" >As explained in&#x00A0;<a 
+href="cug-htmlse14.html#x15-228000A">A<!--tex4ht:ref: SuiteRCReference --></a> the template&#8217;s %(job)s will be substituted by the job file path.
+<!--l. 5826--><p class="noindent" >
+<!--l. 5826--><p class="noindent" > <h4 id="11.4" class="subsectionHead"> <span class="titlemark"> <a href="#11.4"> 11.4</a>  <a 
+ id="x12-17600011.4"></a>Job Polling </span></h4>
+<!--l. 5828--><p class="noindent" >For supported batch systems, one-way polling can be used to determine actual job status: the suite
 daemon executes a process on the task host, by non-interactive ssh, to interrogate the batch queueing
 system there, and to read a <span 
 class="cmti-10">status file </span>that is automatically generated by the task job script as it
 runs.
-<!--l. 5724--><p class="noindent" >Polling may be required to update the suite state correctly after unusual events such as a machine being rebooted
+<!--l. 5834--><p class="noindent" >Polling may be required to update the suite state correctly after unusual events such as a machine being rebooted
 with tasks running on it, or network problems that prevent task messages from getting back to the suite
 host.
-<!--l. 5728--><p class="noindent" >Tasks can be polled on demand by right-clicking on them in gcylc or using the <span class="lstinline"><span 
+<!--l. 5838--><p class="noindent" >Tasks can be polled on demand by right-clicking on them in gcylc or using the <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">poll</span></span> command.
-<!--l. 5731--><p class="noindent" >Tasks are polled automatically, once, if they timeout while queueing in a batch scheduler and submission timeout is
+<!--l. 5841--><p class="noindent" >Tasks are polled automatically, once, if they timeout while queueing in a batch scheduler and submission timeout is
 set. (See&#x00A0;<a 
-href="cug-htmlse14.html#x15-328000A.4.1.15">A.4.1.15<!--tex4ht:ref: TaskEventHandling --></a> for how to configure timeouts).
-<!--l. 5735--><p class="noindent" >Tasks are polled multiple times, where necessary, when they exceed their execution time limits. These are normally
+href="cug-htmlse14.html#x15-336000A.5.1.13">A.5.1.13<!--tex4ht:ref: TaskEventHandling --></a> for how to configure timeouts).
+<!--l. 5845--><p class="noindent" >Tasks are polled multiple times, where necessary, when they exceed their execution time limits. These are normally
 set with some initial delays to allow the batch systems to kill the jobs. (See&#x00A0;<a 
-href="cug-htmlse15.html#x16-446000B.9.1.19.6">B.9.1.19.6<!--tex4ht:ref: ExecutionTimeLimitPollingIntervals --></a> for how to configure the
+href="cug-htmlse15.html#x16-454000B.9.1.19.6">B.9.1.19.6<!--tex4ht:ref: ExecutionTimeLimitPollingIntervals --></a> for how to configure the
 polling intervals).
-<!--l. 5741--><p class="noindent" >Any tasks recorded in the <span 
+<!--l. 5851--><p class="noindent" >Any tasks recorded in the <span 
 class="cmti-10">submitted </span>or <span 
 class="cmti-10">running </span>states at suite restart are automatically polled to determine what
 happened to them while the suite was down.
-<!--l. 5745--><p class="noindent" >Regular polling can also be configured as a health check on tasks submitted to hosts that are known to be flaky, or
+<!--l. 5855--><p class="noindent" >Regular polling can also be configured as a health check on tasks submitted to hosts that are known to be flaky, or
 as the sole method of determining task status on hosts that do not allow task messages to be routed back to the
 suite host.
-<!--l. 5750--><p class="noindent" >To use polling instead of task-to-suite messaging set <span class="lstinline"><span 
+<!--l. 5860--><p class="noindent" >To use polling instead of task-to-suite messaging set <span class="lstinline"><span 
 class="pcrr7t-">task</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">communication</span><span 
@@ -2149,50 +2149,50 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">poll</span></span> in cylc site and
 user global config (see&#x00A0;<a 
-href="cug-htmlse15.html#x16-424000B.9.1.3">B.9.1.3<!--tex4ht:ref: task_comms_method --></a>). The default polling intervals can be overridden for all suites there too (see&#x00A0;<a 
-href="cug-htmlse15.html#x16-426000B.9.1.5">B.9.1.5<!--tex4ht:ref: submission_polling --></a>
+href="cug-htmlse15.html#x16-432000B.9.1.3">B.9.1.3<!--tex4ht:ref: task_comms_method --></a>). The default polling intervals can be overridden for all suites there too (see&#x00A0;<a 
+href="cug-htmlse15.html#x16-434000B.9.1.5">B.9.1.5<!--tex4ht:ref: submission_polling --></a>
 and&#x00A0;<a 
-href="cug-htmlse15.html#x16-425000B.9.1.4">B.9.1.4<!--tex4ht:ref: execution_polling --></a>), or in specific suite definitions (in which case polling will be done regardless of the task communication
+href="cug-htmlse15.html#x16-433000B.9.1.4">B.9.1.4<!--tex4ht:ref: execution_polling --></a>), or in specific suite definitions (in which case polling will be done regardless of the task communication
 method configured for the host; see&#x00A0;<a 
-href="cug-htmlse14.html#x15-319000A.4.1.13.7">A.4.1.13.7<!--tex4ht:ref: SubmissionPollingIntervals --></a> and&#x00A0;<a 
-href="cug-htmlse14.html#x15-320000A.4.1.13.8">A.4.1.13.8<!--tex4ht:ref: ExecutionPollingIntervals --></a>).
-<!--l. 5759--><p class="noindent" >Note that regular polling is not as efficient as task messaging in updating task status, and it should be used
+href="cug-htmlse14.html#x15-327000A.5.1.11.7">A.5.1.11.7<!--tex4ht:ref: SubmissionPollingIntervals --></a> and&#x00A0;<a 
+href="cug-htmlse14.html#x15-328000A.5.1.11.8">A.5.1.11.8<!--tex4ht:ref: ExecutionPollingIntervals --></a>).
+<!--l. 5869--><p class="noindent" >Note that regular polling is not as efficient as task messaging in updating task status, and it should be used
 sparingly in large suites.
-<!--l. 5762--><p class="noindent" >Note that for polling to work correctly, the batch queueing system must have a job listing command for listing your
+<!--l. 5872--><p class="noindent" >Note that for polling to work correctly, the batch queueing system must have a job listing command for listing your
 jobs, and that the job listing must display job IDs as they are returned by the batch queueing system submit
 command. For example, for pbs, moab and sge, the <span class="lstinline"><span 
 class="pcrr7t-">qstat</span></span> command should list jobs with their IDs displayed in
 exactly the same format as they are returned by the <span class="lstinline"><span 
 class="pcrr7t-">qsub</span></span> command.
-<!--l. 5769--><p class="noindent" >
-<!--l. 5769--><p class="noindent" > <h4 id="11.5" class="subsectionHead"> <span class="titlemark"> <a href="#11.5"> 11.5</a>  <a 
- id="x12-17500011.5"></a>Job Killing </span></h4>
+<!--l. 5879--><p class="noindent" >
+<!--l. 5879--><p class="noindent" > <h4 id="11.5" class="subsectionHead"> <span class="titlemark"> <a href="#11.5"> 11.5</a>  <a 
+ id="x12-17700011.5"></a>Job Killing </span></h4>
                                                                                          
 
                                                                                          
-<!--l. 5771--><p class="noindent" >For supported batch systems, the suite daemon can execute a process on the task host, by non-interactive ssh, to kill
+<!--l. 5881--><p class="noindent" >For supported batch systems, the suite daemon can execute a process on the task host, by non-interactive ssh, to kill
 a submitted or running job according to its batch system.
-<!--l. 5775--><p class="noindent" >Tasks can be killed on demand by right-clicking on them in gcylc or using the <span class="lstinline"><span 
+<!--l. 5885--><p class="noindent" >Tasks can be killed on demand by right-clicking on them in gcylc or using the <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">kill</span></span> command.
-<!--l. 5778--><p class="noindent" >
-<!--l. 5778--><p class="noindent" > <h4 id="11.6" class="subsectionHead"> <span class="titlemark"> <a href="#11.6"> 11.6</a>  <a 
- id="x12-17600011.6"></a>Execution Time Limit </span></h4>
-<!--l. 5780--><p class="noindent" >You can specify an <span class="lstinline"><span 
+<!--l. 5888--><p class="noindent" >
+<!--l. 5888--><p class="noindent" > <h4 id="11.6" class="subsectionHead"> <span class="titlemark"> <a href="#11.6"> 11.6</a>  <a 
+ id="x12-17800011.6"></a>Execution Time Limit </span></h4>
+<!--l. 5890--><p class="noindent" >You can specify an <span class="lstinline"><span 
 class="pcrr7t-">execution</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">time</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">limit</span></span> for all supported job submission methods. E.g.:
-<!--l. 5784-->
-<div class="lstlisting" id="listing-233"><span class="label"><a 
- id="x12-176001r1"></a></span><span 
+<!--l. 5894-->
+<div class="lstlisting" id="listing-238"><span class="label"><a 
+ id="x12-178001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-176002r2"></a></span><span 
+ id="x12-178002r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2203,7 +2203,7 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">x</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-176003r3"></a></span><span 
+ id="x12-178003r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2216,7 +2216,7 @@ class="pcrr7t-">[[[</span><span
 class="pcrr7t-">job</span><span 
 class="pcrr7t-">]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-176004r4"></a></span><span 
+ id="x12-178004r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2239,12 +2239,12 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">PT1H</span>
 </div>
-<!--l. 5791--><p class="noindent" >For tasks running with <span class="lstinline"><span 
+<!--l. 5901--><p class="noindent" >For tasks running with <span class="lstinline"><span 
 class="pcrr7t-">background</span></span> or <span class="lstinline"><span 
 class="pcrr7t-">at</span></span>, their jobs will be wrapped using the <span class="lstinline"><span 
 class="pcrr7t-">timeout</span></span> command. For all other
 methods, the relevant time limit directive will be added to their job files.
-<!--l. 5795--><p class="noindent" >The <span class="lstinline"><span 
+<!--l. 5905--><p class="noindent" >The <span class="lstinline"><span 
 class="pcrr7t-">execution</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">time</span><span 
@@ -2254,10 +2254,10 @@ task job has not reported completing within the specified time, the suite will p
 default setting is PT1M, PT2M, PT7M. The accumulated times for these intervals will be roughly 1
 minute, 1 + 2 = 3 minutes and 1 + 2 + 7 = 10 minutes after a task job exceeds its execution time
 limit.)
-<!--l. 5802--><p class="noindent" >
-<!--l. 5802--><p class="noindent" > <h4 id="11.6.1" class="subsubsectionHead"><span class="titlemark"> <a href="#11.6.1"> 11.6.1</a>  <a 
- id="x12-17700011.6.1"></a>Execution Time Limit and Execution Timeout </span></h4>
-<!--l. 5804--><p class="noindent" >If you specify an <span class="lstinline"><span 
+<!--l. 5912--><p class="noindent" >
+<!--l. 5912--><p class="noindent" > <h4 id="11.6.1" class="subsubsectionHead"><span class="titlemark"> <a href="#11.6.1"> 11.6.1</a>  <a 
+ id="x12-17900011.6.1"></a>Execution Time Limit and Execution Timeout </span></h4>
+<!--l. 5914--><p class="noindent" >If you specify an <span class="lstinline"><span 
 class="pcrr7t-">execution</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">time</span><span 
@@ -2273,7 +2273,7 @@ class="pcrr7t-">handler</span></span> will only be called if the
 job has not completed after the final poll (by default, 10 min after the time limit). This should only happen if the
 submission method you are using is not enforcing wallclock limits (unlikely) or you are unable to contact the
 machine to confirm the job status.
-<!--l. 5811--><p class="noindent" >If you specify an <span class="lstinline"><span 
+<!--l. 5921--><p class="noindent" >If you specify an <span class="lstinline"><span 
 class="pcrr7t-">execution</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">timeout</span></span> and not an <span class="lstinline"><span 
@@ -2292,7 +2292,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">handler</span></span> will be called as soon as the specified time is reached. The job will also
 be polled to check its latest status (possibly resulting in an update in its status and the calling of the relevant event
 handler). This behaviour is deprecated, which users should avoid using.
-<!--l. 5819--><p class="noindent" >If you specify an <span class="lstinline"><span 
+<!--l. 5929--><p class="noindent" >If you specify an <span class="lstinline"><span 
 class="pcrr7t-">execution</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">timeout</span></span> and an <span class="lstinline"><span 
@@ -2302,32 +2302,37 @@ class="pcrr7t-">time</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">limit</span></span> then the execution timeout setting will
 be ignored.
-<!--l. 5823--><p class="noindent" >
-<!--l. 5823--><p class="noindent" > <h4 id="11.7" class="subsectionHead"> <span class="titlemark"> <a href="#11.7"> 11.7</a>  <a 
- id="x12-17800011.7"></a>Custom Job Submission Methods </span></h4>
-<!--l. 5826--><p class="noindent" >Defining a new batch system handler requires a little Python programming. You can use one of the built-in
-methods as an example, and read the documentation in the header of the <span class="lstinline"><span 
+<!--l. 5933--><p class="noindent" >
+<!--l. 5933--><p class="noindent" > <h4 id="11.7" class="subsectionHead"> <span class="titlemark"> <a href="#11.7"> 11.7</a>  <a 
+ id="x12-18000011.7"></a>Custom Job Submission Methods </span></h4>
+<!--l. 5936--><p class="noindent" >Defining a new batch system handler requires a little Python programming. Use the built-in handlers as examples,
+and read the documentation in <span class="lstinline"><span 
+class="pcrr7t-">lib</span><span 
+class="pcrr7t-">/</span><span 
 class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">batch_sys_manager</span><span 
 class="pcrr7t-">.</span><span 
-class="pcrr7t-">batch_sys_manager</span></span>
-module.
+class="pcrr7t-">py</span></span>.
                                                                                          
 
                                                                                          
-<!--l. 5832--><p class="noindent" >
-<!--l. 5832--><p class="noindent" > <h4 id="11.7.1" class="subsubsectionHead"><span class="titlemark"> <a href="#11.7.1"> 11.7.1</a>  <a 
- id="x12-17900011.7.1"></a>An Example </span></h4>
-<!--l. 5834--><p class="noindent" >The following user-defined job submission class, called <span 
-class="cmti-10">qsub</span>, overrides the built-in <span 
-class="cmti-10">pbs </span>class to change the directive
-prefix from <span class="lstinline"><span 
+<!--l. 5942--><p class="noindent" >
+<!--l. 5942--><p class="noindent" > <h4 id="11.7.1" class="subsubsectionHead"><span class="titlemark"> <a href="#11.7.1"> 11.7.1</a>  <a 
+ id="x12-18100011.7.1"></a>An Example </span></h4>
+<!--l. 5944--><p class="noindent" >The following <span class="lstinline"><span 
+class="pcrr7t-">qsub</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">py</span></span> module overrides the built-in <span 
+class="cmti-10">pbs </span>batch system handler to to change the directive prefix
+from <span class="lstinline"><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">PBS</span></span> to <span class="lstinline"><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">QSUB</span></span>:
-<!--l. 5838-->
-<div class="lstlisting" id="listing-234"><span class="label"><a 
- id="x12-179001r1"></a></span><span 
+<!--l. 5948-->
+<div class="lstlisting" id="listing-239"><span class="label"><a 
+ id="x12-181001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
 class="pcrro7t-">usr</span><span 
@@ -2338,9 +2343,9 @@ class="pcrro7t-">env</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">python</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179002r2"></a></span><span 
+ id="x12-181002r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179003r3"></a></span><span 
+ id="x12-181003r3"></a></span><span 
 class="pcrb7t-">from</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">cylc</span><span 
@@ -2353,11 +2358,9 @@ class="pcrb7t-">import</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">PBSHandler</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179004r4"></a></span><span 
+ id="x12-181004r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179005r5"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179006r6"></a></span><span 
+ id="x12-181005r5"></a></span><span 
 class="pcrb7t-">class</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">QSUBHandler</span><span 
@@ -2365,27 +2368,7 @@ class="pcrr7t-">(</span><span
 class="pcrr7t-">PBSHandler</span><span 
 class="pcrr7t-">):</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179007r7"></a></span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">"""</span><span 
-class="pcrro7t-">A</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">user</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">defined</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">batch</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">system</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">handler</span><span 
-class="pcrro7t-">.</span><span 
-class="pcrro7t-">"""</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179008r8"></a></span><span 
+ id="x12-181006r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2400,11 +2383,9 @@ class="pcrr7t-">QSUB</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179009r9"></a></span><span 
+ id="x12-181007r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179010r10"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179011r11"></a></span><span 
+ id="x12-181008r8"></a></span><span 
 class="pcrr7t-">BATCH_SYSTEM_HANDLER</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
@@ -2412,37 +2393,16 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">QSUBHandler</span><span 
 class="pcrr7t-">()</span>
 </div>
-<!--l. 5852--><p class="noindent" >To check that this works correctly save the new source file to <span class="lstinline"><span 
-class="pcrr7t-">qsub</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">py</span></span> in one of the allowed locations (see just
-below), use it in a suite definition:  <!--l. 5856-->
-<div class="lstlisting" id="listing-235"><span class="label"><a 
- id="x12-179012r1"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">SUITE</span><span 
-class="pcrro7t-">.</span><span 
-class="pcrro7t-">rc</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179013r2"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro8c-">$</span><span 
-class="pcrro7t-">HOME</span><span 
-class="pcrro7t-">/</span><span 
-class="pcrro7t-">test</span><span 
-class="pcrro7t-">/</span><span 
-class="pcrro7t-">suite</span><span 
-class="pcrro7t-">.</span><span 
-class="pcrro7t-">rc</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179014r3"></a></span><span 
+<!--l. 5959--><p class="noindent" >If this is in the Python search path (see&#x00A0;<a 
+href="#x12-18200011.7.2">11.7.2<!--tex4ht:ref: Where To Put Batch System Handler Modules --></a> below) you can use it by name in suite definitions:
+<!--l. 5962-->
+<div class="lstlisting" id="listing-240"><span class="label"><a 
+ id="x12-181009r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179015r4"></a></span><span 
+ id="x12-181010r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2451,7 +2411,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">dependencies</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179016r5"></a></span><span 
+ id="x12-181011r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2468,12 +2428,12 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">a</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179017r6"></a></span><span 
+ id="x12-181012r4"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179018r7"></a></span><span 
+ id="x12-181013r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2482,7 +2442,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">root</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179019r8"></a></span><span 
+ id="x12-181014r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2495,7 +2455,7 @@ class="pcrr7t-">[[[</span><span
 class="pcrr7t-">job</span><span 
 class="pcrr7t-">]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179020r9"></a></span><span 
+ id="x12-181015r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2515,8 +2475,13 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">qsub</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x003C;---!</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179021r10"></a></span><span 
+ id="x12-181016r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2539,7 +2504,7 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">PT1M</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179022r11"></a></span><span 
+ id="x12-181017r9"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2552,7 +2517,7 @@ class="pcrr7t-">[[[</span><span
 class="pcrr7t-">directives</span><span 
 class="pcrr7t-">]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179023r12"></a></span><span 
+ id="x12-181018r10"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2574,7 +2539,7 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">1</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179024r13"></a></span><span 
+ id="x12-181019r11"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2594,7 +2559,7 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">long</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179025r14"></a></span><span 
+ id="x12-181020r12"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2612,9 +2577,9 @@ class="pcrr7t-">V</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span>
 </div>
-<!--l. 5872--><p class="noindent" >and generate a job script to see the resulting directives:  <!--l. 5874-->
-<div class="lstlisting" id="listing-236"><span class="label"><a 
- id="x12-179026r1"></a></span><span 
+<!--l. 5977--><p class="noindent" >Generate a job script to see the resulting directives:  <!--l. 5979-->
+<div class="lstlisting" id="listing-241"><span class="label"><a 
+ id="x12-181021r1"></a></span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">cylc</span><span 
@@ -2628,7 +2593,7 @@ class="pcrr7t-">HOME</span><span
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">test</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179027r2"></a></span><span 
+ id="x12-181022r2"></a></span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">cylc</span><span 
@@ -2646,7 +2611,7 @@ class="pcrr7t-">grep</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">QSUB</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179028r3"></a></span><span 
+ id="x12-181023r3"></a></span><span 
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">QSUB</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2676,7 +2641,7 @@ class="pcrr7t-">job</span><span
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">err</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179029r4"></a></span><span 
+ id="x12-181024r4"></a></span><span 
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">QSUB</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2686,7 +2651,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">nodes</span><span 
 class="pcrr7t-">=1</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179030r5"></a></span><span 
+ id="x12-181025r5"></a></span><span 
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">QSUB</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2696,7 +2661,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">walltime</span><span 
 class="pcrr7t-">=60</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179031r6"></a></span><span 
+ id="x12-181026r6"></a></span><span 
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">QSUB</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2726,7 +2691,7 @@ class="pcrr7t-">job</span><span
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">out</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179032r7"></a></span><span 
+ id="x12-181027r7"></a></span><span 
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">QSUB</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2736,7 +2701,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">a</span><span 
 class="pcrr7t-">.1</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179033r8"></a></span><span 
+ id="x12-181028r8"></a></span><span 
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">QSUB</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2745,44 +2710,79 @@ class="pcrr7t-">q</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">long</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-179034r9"></a></span><span 
+ id="x12-181029r9"></a></span><span 
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">QSUB</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">V</span>
 </div>
-<!--l. 5886--><p class="noindent" >
-<!--l. 5886--><p class="noindent" > <h4 id="11.7.2" class="subsubsectionHead"><span class="titlemark"> <a href="#11.7.2"> 11.7.2</a>  <a 
- id="x12-18000011.7.2"></a>Where To Put New Job Submission Modules </span></h4>
-<!--l. 5888--><p class="noindent" >You new job submission class code should be saved to a file with the same name as the class (plus &#8220;.py&#8221; extension).
-It can reside in any of the following locations, depending on how generally useful the new method is and whether or
-not you have write-access to the cylc source tree:
+<!--l. 5991--><p class="noindent" >(Of course this suite will fail at run time because we only changed the directive format, and PBS does not accept
+<span class="lstinline"><span 
+class="pcrr7t-">#</span><span 
+class="pcrr7t-">QSUB</span></span> directives in reality).
+<!--l. 5995--><p class="noindent" >
+<!--l. 5995--><p class="noindent" > <h4 id="11.7.2" class="subsubsectionHead"><span class="titlemark"> <a href="#11.7.2"> 11.7.2</a>  <a 
+ id="x12-18200011.7.2"></a>Where To Put Batch System Handler Modules </span></h4>
+<!--l. 5998--><p class="noindent" ><span 
+class="cmti-10">Custom batch system handlers must be installed on suite and job hosts </span>in one of these locations:
      <ul class="itemize1">
-     <li class="itemize">a <span class="lstinline"><span 
+     <li class="itemize">under <span class="lstinline"><span 
+class="pcrr7t-">&#x003C;</span><span 
+class="pcrr7t-">suite</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">def</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">path</span><span 
+class="pcrr7t-">&#x003E;/</span><span 
 class="pcrr7t-">lib</span><span 
 class="pcrr7t-">/</span><span 
-class="pcrr7t-">python</span></span> sub-directory of your suite definition directory.
+class="pcrr7t-">python</span><span 
+class="pcrr7t-">/</span></span>
      </li>
-     <li class="itemize">any directory in your <span class="lstinline"><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">PYTHONPATH</span></span>.
-     </li>
-     <li class="itemize">in the <span class="lstinline"><span 
+     <li class="itemize">under <span class="lstinline"><span 
+class="pcrr7t-">&#x003C;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">path</span><span 
+class="pcrr7t-">&#x003E;/</span><span 
 class="pcrr7t-">lib</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">/</span><span 
-class="pcrr7t-">batch_sys_handlers</span></span> directory of the cylc source tree.</li></ul>
+class="pcrr7t-">batch_sys_handlers</span><span 
+class="pcrr7t-">/</span></span>
+     </li>
+     <li class="itemize">or anywhere in <span class="lstinline"><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">PYTHONPATH</span></span></li></ul>
+<!--l. 6006--><p class="noindent" >(A note for Rose users: <span class="lstinline"><span 
+class="pcrr7t-">rose</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">suite</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">run</span></span> automatically installs <span class="lstinline"><span 
+class="pcrr7t-">&#x003C;</span><span 
+class="pcrr7t-">suite</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">def</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">path</span><span 
+class="pcrr7t-">&#x003E;/</span><span 
+class="pcrr7t-">lib</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">python</span><span 
+class="pcrr7t-">/</span></span> to job
+hosts).
                                                                                          
 
                                                                                          
-<!--l. 5904--><div class="crosslinks"><p class="noindent">[<a 
+<!--l. 6009--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse12.html" >next</a>] [<a 
 href="cug-htmlse10.html" >prev</a>] [<a 
 href="cug-htmlse10.html#tailcug-htmlse10.html" >prev-tail</a>] [<a 
 href="cug-htmlse11.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse11.html" >up</a>] </p></div>
-<!--l. 5904--><p class="noindent" ><a 
+<!--l. 6009--><p class="noindent" ><a 
  id="tailcug-htmlse11.html"></a>   
 </body></html> 
