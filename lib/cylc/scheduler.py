@@ -305,7 +305,6 @@ conditions; see `cylc conditions`.
             self.suite, self.proc_pool, self.suite_db_mgr,
             self.suite_srv_files_mgr)
         self.task_events_mgr = self.task_job_mgr.task_events_mgr
-        self.httpserver.connect(self)
 
         if self.is_restart:
             # This logic handles the lack of initial cycle point in "suite.rc".
@@ -322,6 +321,7 @@ conditions; see `cylc conditions`.
         self.profiler.log_memory("scheduler.py: before load_suiterc")
         self.load_suiterc()
         self.profiler.log_memory("scheduler.py: after load_suiterc")
+        self.httpserver.connect(self)
 
         self.suite_db_mgr.on_suite_start(self.is_restart)
         if self.config.cfg['scheduling']['hold after point']:
@@ -1389,8 +1389,7 @@ conditions; see `cylc conditions`.
         # External triggers must be matched now. If any are matched pflag
         # is set to tell process_tasks() that task processing is required.
         broadcast_mgr = self.task_events_mgr.broadcast_mgr
-        broadcast_mgr.add_ext_triggers(
-            self.ext_trigger_queue)
+        broadcast_mgr.add_ext_triggers(self.ext_trigger_queue)
         for itask in self.pool.get_tasks():
             if (itask.state.external_triggers and
                     broadcast_mgr.match_ext_trigger(itask)):

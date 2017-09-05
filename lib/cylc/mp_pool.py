@@ -193,6 +193,8 @@ class SuiteProcPool(object):
         try:
             self.pool.join()
         except AssertionError:
+            # multiprocessing.Pool.join may raise this error. We want to ignore
+            # this so suite shutdown can continue.
             pass
 
     def put_command(self, ctx, callback, callback_args=None):

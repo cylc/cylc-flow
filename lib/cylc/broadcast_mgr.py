@@ -338,7 +338,7 @@ class BroadcastMgr(object):
 
     @staticmethod
     def _settings_to_keys_list(broadcasts):
-        """Return a list containing each setting dict keys as a list.
+        """Return a list containing each setting dict keys.
 
         E.g. Each setting in broadcasts may look like:
         {"foo": {"bar": {"baz": 1}}}
