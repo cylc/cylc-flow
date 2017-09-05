@@ -20,7 +20,7 @@
         [[[meta]]]
              title = a task
              description = jumped over the lazy dog
-        
+
     [[bar,baz]]
         script = true
     [[show]]

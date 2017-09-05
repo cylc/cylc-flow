@@ -621,7 +621,7 @@ class TaskPool(object):
         """Check for future triggers extending beyond the final cycle."""
         if not self.stop_point:
             return False
-        for pct in set(itask.state.prerequisites_get_target_points()):
+        for pct in itask.state.prerequisites_get_target_points():
             if pct > self.stop_point:
                 return True
         return False
@@ -928,16 +928,16 @@ class TaskPool(object):
         outputs. Brokered negotiation is O(n) in number of tasks.
 
         """
-        all_outputs = {}   # all_outputs[message] = taskid
+        all_task_outputs = set()
         for itask in self.get_tasks():
-            for message in itask.state.outputs.get_completed():
-                all_outputs["%s %s" % (itask.identity, message)] = (
-                    itask.identity)
-        all_output_msgs = set(all_outputs)
+            for output in itask.state.outputs.get_completed():
+                all_task_outputs.add((itask.tdef.name,
+                                      str(itask.point),
+                                      output))
         for itask in self.get_tasks():
             # Try to satisfy itask if not already satisfied.
             if itask.state.prerequisites_are_not_all_satisfied():
-                itask.state.satisfy_me(all_output_msgs, all_outputs)
+                itask.state.satisfy_me(all_task_outputs)
 
     def force_spawn(self, itask):
         """Spawn successor of itask."""
