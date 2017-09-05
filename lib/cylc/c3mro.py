@@ -95,7 +95,7 @@ class C3(object):
     def __init__(self, tree={}):
         self.tree = tree
 
-    def merge(self, seqs):
+    def merge(self, seqs, label=None):
         # print '\n\nCPL[%s]=%s' % (seqs[0][0],seqs),
         res = []
         i = 0
@@ -112,9 +112,14 @@ class C3(object):
                 else:
                     break
             if not cand:
+                prefix = ""
+                if label:
+                    prefix = "{0}: ".format(label)
                 raise Exception(
-                    "ERROR: bad runtime namespace inheritance hierarchy.\n"
-                    "See the cylc documentation on multiple inheritance.")
+                    "ERROR: {0}".format(prefix) +
+                    "bad runtime namespace inheritance hierarchy.\n" +
+                    "See the cylc documentation on multiple inheritance."
+                )
             res.append(cand)
             for seq in nonemptyseqs:  # remove cand
                 if seq[0] == cand:
@@ -124,7 +129,9 @@ class C3(object):
         """Compute the precedence list (mro) according to C3"""
         # copy() required here for tree to remain unchanged
         return self.merge(
-            [[C]] + map(self.mro, self.tree[C]) + [copy(self.tree[C])])
+            [[C]] + map(self.mro, self.tree[C]) + [copy(self.tree[C])],
+            label=C)
+
 
 if __name__ == "__main__":
     parents = {}
