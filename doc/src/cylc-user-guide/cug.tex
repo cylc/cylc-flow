@@ -5337,11 +5337,14 @@ many tasks can be entirely inlined in the suite.rc file. For anything more than
 a few lines of code, however, we recommend using external shell scripts to allow
 independent testing, re-use, and shell mode editing.
 
-\subsection{Custom Task Messages}
+\subsection{Task Messages}
 
-Custom messages can be sent back to the suite daemon to report progress, 
-warnings, or critical events; and to trigger {\em warning} or {\em critical}
-event handlers (see~\ref{EventHandling}).
+Tasks messages can be sent back to the suite daemon to report completed
+outputs and arbitrary messages of different priority levels.
+
+Some types of message - in addition to events like task failure -  can
+optionally trigger execution of event handlers in the suite daemon
+(see~\ref{EventHandling}).
 
 Normal priority messages are printed to \lstinline=job.out= and logged by the
 suite daemon:
@@ -5350,16 +5353,23 @@ suite daemon:
 cylc message "Hello from ${CYLC_TASK_ID}"
 \end{lstlisting}
 
-Warning priority messages are printed to \lstinline=job.err=, logged by the
-suite daemon, and can be passed to {\em warning} event handlers
-(see~\ref{TaskEventHandling}):
+CUSTOM priority messages are printed to \lstinline=job.out=, logged by the
+suite daemon, and can be used to trigger {\em custom} event handlers:
+\lstset{language=bash}
+\begin{lstlisting}
+cylc message -p CUSTOM "data available for ${CYLC_TASK_CYCLE_POINT}"
+\end{lstlisting}
+Task output messages, used for triggering other tasks, can also be sent with
+custom priority if need be
+
+WARNING priority messages are printed to \lstinline=job.err=, logged by the
+suite daemon, and can be passed to {\em warning} event handlers:
 \begin{lstlisting}
 cylc message -p WARNING "Uh-oh, something's not right here."
 \end{lstlisting}
 
-Critical priority messages are printed to \lstinline=job.err=, logged by the
-suite daemon, and can be passed to {\em critical} event handlers
-(see~\ref{TaskEventHandling}):
+CRITICAL priority messages are printed to \lstinline=job.err=, logged by the
+suite daemon, and can be passed to {\em critical} event handlers:
 \begin{lstlisting}
 cylc message -p CRITICAL "ERROR occurred in process X!"
 \end{lstlisting}
@@ -6600,22 +6610,21 @@ ISO 8601 durations, such that if a task fails it will go into a temporary
 the next specified delay period expires. A usage example is shown in the
 suite listed below under~\ref{EventHandling}.
 
-\subsection{Suite And Task Event Handling}
+\subsection{Task Event Handling}
 \label{EventHandling}
 
 See also~\ref{SuiteEventHandling} and~\ref{TaskEventHandling} in the {\em
 Suite.rc Reference}.
 
-Cylc can call nominated event handlers when certain suite or task events occur.
-This is intended to facilitate centralized alerting and automated handling of
-critical events. Event handlers can be used to send a message, call a pager,
-and so on; or intervene in the operation of their own suite using cylc
-commands.
+Cylc can call nominated event handlers - to do whatever you like - when certain
+suite or task events occur. This facilitates centralized alerting and automated
+handling of critical events. Event handlers can be used to send a message, call
+a pager, or whatever; they can even intervene in the operation of their own
+suite using cylc commands.
 
-To send an email, you can use the built-in setting
-\lstinline=[[[events]]]mail events= to specify a list of events for which
-notifications should be sent. E.g.\ to send an email on (submission) failed and
-retry:
+To send an email, use the built-in setting \lstinline=[[[events]]]mail events=
+to specify a list of events for which notifications should be sent. E.g.\ to
+send an email on (submission) failed and retry:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -6647,15 +6656,14 @@ By default, a cylc suite will send you no more than one task event email every
 large group of tasks all fail at similar time.
 See ~\ref{task-event-mail-interval} for details.
 
-Event handler commands can be located in the suite \lstinline=bin/= directory,
+Event handlers can be located in the suite \lstinline=bin/= directory;
 otherwise it is up to you to ensure their location is in \lstinline=$PATH= (in
-the shell in which cylc runs, on the suite host). The commands should require
-very little resource to run and should return quickly. (Each event
-handler is invoked by a child process in a finite process pool that is also
-used to submit, poll and kill jobs. The child process will wait for the event
-handler to complete before moving on to the next item in the queue. If the
-process pool is saturated with long running event handlers, the suite will
-appear to hang.)
+the shell in which the suite daemon runs). They should require little
+resource and return quickly - as each event handler is invoked by a child
+process in a finite process pool that is also used to submit, poll and kill
+jobs. The child process will wait for the event handler to complete before
+moving on to the next item in the queue. If the process pool is saturated with
+long running event handlers, the suite will appear to hang.
 
 Task event handlers can be specified using the
 \lstinline=[[[events]]]<event> handler= settings, where
@@ -6670,6 +6678,7 @@ Task event handlers can be specified using the
     \item `succeeded' - the task reported successful completion
     \item `warning' - the task reported a WARNING priority message
     \item `critical' - the task reported a CRITICAL priority message
+    \item `custom' - the task reported a CUSTOM priority message
     \item `failed' - the task failed
     \item `retry' - the task failed but will retry after a configured delay
     \item `execution timeout' - task execution timed out
@@ -6683,26 +6692,19 @@ Alternatively you can use \lstinline=[[[events]]]handlers= and
 lines or command line templates (see below) and the latter is a list of events
 for which these commands should be invoked.
 
-A command line template may have any or all of these patterns which will be
-substituted with actual values:
-\begin{myitemize}
-    \item \%(event)s: event name
-    \item \%(suite)s: suite name
-    \item \%(point)s: cycle point
-    \item \%(name)s: task name
-    \item \%(submit\_num)s: submit number
-    \item \%(id)s: task ID (i.e.\ \%(name)s.\%(point)s)
-    \item \%(message)s: event message, if any
-\end{myitemize}
+Event handler arguments can be constructed from various templates
+representing suite name; task ID, name, cycle point, message, and submit
+number name; and any suite or task [meta] item. See~\ref{SuiteEventHandling}
+and~\ref{TaskEventHandling} for options.
 
-Otherwise, the command line will be called with the following command line
-arguments:
+If no template arguments are supplied the following default command line
+will be used:
 \begin{lstlisting}
 <task-event-handler> %(event)s %(suite)s %(id)s %(message)s
 \end{lstlisting}
 
-Note: The substitution patterns should not be quoted in the template strings.
-Where required, the values will be quoted automatically on substitution.
+{\em Note: substitution patterns should not be quoted in the template strings.
+This is done automatically where required.}
 
 For an explanation of the substitution syntax, see
 \href{https://docs.python.org/2/library/stdtypes.html#string-formatting}{String Formatting Operations}
@@ -6713,10 +6715,9 @@ configured (see~\ref{TaskRetries}).
 The event handler will be called as soon as the task fails, not after
 the retry delay period when it is resubmitted.
 
-{\em Note that event handlers are called by cylc itself, not by the
-running tasks} so if you wish to pass them additional information via
-the environment you must use [cylc] \textrightarrow [[environment]],
-not task runtime environments.
+{\em Note that event handlers are called by the suite daemon, not by task jobs.}
+If you wish to pass additional information to them use [cylc] \textrightarrow
+[[environment]], not task runtime environment.
 
 The following 2 \lstinline=suite.rc= snippets are examples on how to specify
 event handlers using the alternate methods:
@@ -6742,8 +6743,8 @@ event handlers using the alternate methods:
             handlers = "echo '!!!!!EVENT!!!!!' "
             handler events = retry, failed
 \end{lstlisting}
-
-Note: The handler command is called like this:
+The handler command here - specified with no arguments - is called with the
+default arguments, like this:
 \begin{lstlisting}
 echo '!!!!!EVENT!!!!!' %(event)s %(suite)s %(id)s %(message)s
 \end{lstlisting}
