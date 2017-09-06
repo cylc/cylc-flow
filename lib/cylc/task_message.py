@@ -92,7 +92,7 @@ class TaskMessage(object):
 
     def _print_messages(self, messages):
         """Print message to send."""
-        if self.priority == self.NORMAL:
+        if self.priority in [self.NORMAL, self.CUSTOM]:
             handle = sys.stdout
         else:
             handle = sys.stderr
