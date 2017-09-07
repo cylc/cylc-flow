@@ -18,7 +18,6 @@
 
 from cylc.graphing import CGraphPlain
 from cylc.mkdir_p import mkdir_p
-from cylc.network.suite_state_client import get_id_summary
 from cylc.task_id import TaskID
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.gui.warning_dialog import warning_dialog
@@ -141,8 +140,9 @@ class GraphUpdater(threading.Thread):
         return False
 
     def get_summary(self, task_id):
-        return get_id_summary(task_id, self.state_summary,
-                              self.fam_state_summary, self.descendants)
+        return self.updater.get_id_summary(
+            task_id, self.state_summary, self.fam_state_summary,
+            self.descendants)
 
     def update(self):
         if not self.updater.connected:
@@ -293,7 +293,7 @@ class GraphUpdater(threading.Thread):
             ungroup_for_server = None
 
         try:
-            res = self.updater.suite_info_client.get_info(
+            res = self.updater.client.get_info(
                 'get_graph_raw', start_point_string=oldest,
                 stop_point_string=newest,
                 group_nodes=group_for_server,

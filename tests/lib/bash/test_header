@@ -332,7 +332,8 @@ purge_suite() {
     if (($FAILURES == 0)); then
         local RUND="$(cylc get-global-config --print-run-dir)"
         local SUITE_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
-        while lsof | grep -q "${SUITE_DIR}"; do
+        # Note: lsof can hang, so call with "timeout".
+        while grep -q "${SUITE_DIR}" < <(timeout 5 lsof); do
             sleep 1
         done
         rm -fr "${SUITE_DIR}"

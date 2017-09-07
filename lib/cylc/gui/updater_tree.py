@@ -25,7 +25,6 @@ from time import sleep
 
 from cylc.task_id import TaskID
 from cylc.gui.dot_maker import DotMaker
-from cylc.network.suite_state_client import get_id_summary
 from cylc.wallclock import get_time_string_from_unix_time
 from cylc.task_state import TASK_STATUSES_AUTO_EXPAND
 
@@ -160,8 +159,9 @@ class TreeUpdater(threading.Thread):
             self._prev_tooltip_task_id = task_id
             tooltip.set_text(None)
             return False
-        text = get_id_summary(task_id, self.state_summary,
-                              self.fam_state_summary, self.descendants)
+        text = self.updater.get_id_summary(
+            task_id, self.state_summary, self.fam_state_summary,
+            self.descendants)
         if text == task_id:
             return False
         tooltip.set_text(text)

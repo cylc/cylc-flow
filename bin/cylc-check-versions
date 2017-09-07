@@ -61,7 +61,7 @@ def main():
     suite, suiterc = SuiteSrvFilesManager().parse_suite_arg(options, args[0])
 
     # extract task host accounts from the suite
-    config = SuiteConfig.get_inst(
+    config = SuiteConfig(
         suite, suiterc,
         load_template_vars(options.templatevars, options.templatevars_file))
     result = config.get_namespace_list('all tasks')

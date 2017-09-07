@@ -15,10 +15,20 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Wrap communications daemon for a suite."""
-
-from cylc.network.method import METHOD
+"""Unicode utility."""
 
 
-if METHOD in ["https", "http"]:
-    from cylc.network.https.suite_broadcast_client import BroadcastClient
+def utf8_enforce(data):
+    """Recursively enforce UTF-8 encoding for Unicode strings."""
+    if isinstance(data, unicode):
+        return data.encode('utf-8')
+    if isinstance(data, dict):
+        new_dict = {}
+        for key, value in data.items():
+            new_dict.update(
+                {utf8_enforce(key): utf8_enforce(value)}
+            )
+        return new_dict
+    if isinstance(data, list):
+        return [utf8_enforce(item) for item in data]
+    return data

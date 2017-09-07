@@ -31,7 +31,7 @@ from isodatetime.parsers import TimePointParser, DurationParser
 from cylc.cfgspec.utils import (
     coerce_interval, coerce_interval_list, DurationFloat)
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
-from cylc.network import PRIVILEGE_LEVELS
+from cylc.network import PRIVILEGE_LEVELS, PRIV_SHUTDOWN
 from cylc.task_id import TaskID
 
 
@@ -285,7 +285,7 @@ SPEC = {
             'public': vdr(
                 vtype='string',
                 options=PRIVILEGE_LEVELS[
-                    :PRIVILEGE_LEVELS.index('shutdown') + 1],
+                    :PRIVILEGE_LEVELS.index(PRIV_SHUTDOWN) + 1],
                 default=GLOBAL_CFG.get(['authentication', 'public']))
         },
     },
@@ -552,16 +552,8 @@ def upg(cfg, descr):
 
 class RawSuiteConfig(config):
     """Raw suite configuration."""
-    _INSTANCES = {}
 
-    @classmethod
-    def get_inst(cls, fpath, is_reload=False, tvars=None, output_fname=None):
+    def __init__(self, fpath, output_fname, tvars):
         """Return the default instance."""
-        if fpath not in cls._INSTANCES or is_reload:
-            if tvars is None:
-                tvars = []
-            # TODO - output_fname should be in loadcfg
-            cls._INSTANCES[fpath] = cls(
-                SPEC, upg, tvars=tvars, output_fname=output_fname)
-            cls._INSTANCES[fpath].loadcfg(fpath, "suite definition")
-        return cls._INSTANCES[fpath]
+        config.__init__(self, SPEC, upg, output_fname, tvars)
+        self.loadcfg(fpath, "suite definition")

@@ -18,7 +18,7 @@
 # Test "cylc stop --now --now".
 . "$(dirname "$0")/test_header"
 
-set_test_number 7
+set_test_number 8
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
@@ -38,5 +38,6 @@ run_fail "${TEST_NAME_BASE}-activity-log-started" \
     "${JLOGD}/job-activity.log"
 # Check that t2.1 did not run
 exists_fail "${LOGD}/job/1/t2"
+suite_run_fail "${TEST_NAME_BASE}-run" cylc restart --no-detach "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

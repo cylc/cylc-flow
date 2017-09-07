@@ -83,34 +83,7 @@ class SuiteConfigError(Exception):
 class SuiteConfig(object):
     """Class for suite configuration items and derived quantities."""
 
-    _INSTANCES = {}
     Q_DEFAULT = 'default'
-
-    @classmethod
-    def get_inst(cls, suite=None, fpath=None, template_vars=None,
-                 owner=None, run_mode='live', is_validate=False, strict=False,
-                 collapsed=[], cli_initial_point_string=None,
-                 cli_start_point_string=None, cli_final_point_string=None,
-                 is_reload=False, output_fname=None,
-                 vis_start_string=None, vis_stop_string=None,
-                 mem_log_func=None):
-        """Return a singleton instance.
-
-        On 1st call, instantiate the singleton.
-        Argument list is only relevant on 1st call.
-
-        """
-        if suite not in cls._INSTANCES or is_reload:
-            cls._INSTANCES[suite] = cls(
-                suite, fpath, template_vars, owner,
-                run_mode, is_validate, strict, collapsed,
-                cli_initial_point_string, cli_start_point_string,
-                cli_final_point_string, is_reload, output_fname,
-                vis_start_string, vis_stop_string, mem_log_func)
-            # Default instance
-            if suite is not None:
-                cls._INSTANCES[None] = cls._INSTANCES[suite]
-        return cls._INSTANCES[suite]
 
     def __init__(self, suite, fpath, template_vars=None,
                  owner=None, run_mode='live', is_validate=False, strict=False,
@@ -176,11 +149,9 @@ class SuiteConfig(object):
 
         # parse, upgrade, validate the suite, but don't expand with default
         # items
-        self.mem_log("config.py: before RawSuiteConfig.get_inst")
-        self.pcfg = RawSuiteConfig.get_inst(
-            fpath, is_reload=is_reload, tvars=template_vars,
-            output_fname=output_fname)
-        self.mem_log("config.py: after RawSuiteConfig.get_inst")
+        self.mem_log("config.py: before RawSuiteConfig init")
+        self.pcfg = RawSuiteConfig(fpath, output_fname, template_vars)
+        self.mem_log("config.py: after RawSuiteConfig init")
         self.mem_log("config.py: before get(sparse=True")
         self.cfg = self.pcfg.get(sparse=True)
         self.mem_log("config.py: after get(sparse=True)")

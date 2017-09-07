@@ -29,9 +29,9 @@ from cylc.cfgspec.gcylc import gcfg
 import cylc.flags
 from cylc.gui.legend import ThemeLegendWindow
 from cylc.gui.util import get_icon
-from cylc.network import (
-    KEY_NAME, KEY_OWNER, KEY_STATES, KEY_UPDATE_TIME)
 from cylc.network.port_scan import scan_all
+from cylc.suite_status import (
+    KEY_NAME, KEY_OWNER, KEY_STATES, KEY_UPDATE_TIME)
 from cylc.version import CYLC_VERSION
 from cylc.wallclock import get_unix_time_from_time_string as timestr_to_seconds
 

@@ -190,7 +190,12 @@ class SuiteProcPool(object):
     def join(self):
         """Join after workers have exited. Close or terminate first."""
         LOG.debug("Joining process pool")
-        self.pool.join()
+        try:
+            self.pool.join()
+        except AssertionError:
+            # multiprocessing.Pool.join may raise this error. We want to ignore
+            # this so suite shutdown can continue.
+            pass
 
     def put_command(self, ctx, callback, callback_args=None):
         """Queue a new shell command to execute."""

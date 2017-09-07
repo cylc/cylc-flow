@@ -47,7 +47,6 @@ from cylc.host_select import get_task_host
 from cylc.job_file import JobFileWriter
 from cylc.mkdir_p import mkdir_p
 from cylc.mp_pool import SuiteProcPool, SuiteProcContext
-from cylc.network.suite_broadcast_server import BroadcastServer
 from cylc.suite_host import is_remote, is_remote_host, is_remote_user
 from cylc.suite_logging import ERR, LOG
 from cylc.task_events_mgr import TaskEventsManager
@@ -98,8 +97,7 @@ class TaskJobManager(object):
     JOBS_SUBMIT = SuiteProcPool.JOBS_SUBMIT
     KEY_EXECUTE_TIME_LIMIT = "execution_time_limit"
 
-    def __init__(
-            self, suite, proc_pool, suite_db_mgr, suite_srv_files_mgr):
+    def __init__(self, suite, proc_pool, suite_db_mgr, suite_srv_files_mgr):
         self.suite = suite
         self.proc_pool = proc_pool
         self.suite_db_mgr = suite_db_mgr
@@ -836,7 +834,8 @@ class TaskJobManager(object):
 
     def _prep_submit_task_job_impl(self, suite, itask):
         """Helper for self._prep_submit_task_job."""
-        overrides = BroadcastServer.get_inst().get(itask.identity)
+        overrides = self.task_events_mgr.broadcast_mgr.get_broadcast(
+            itask.identity)
         if overrides:
             rtconfig = pdeepcopy(itask.tdef.rtconfig)
             poverride(rtconfig, overrides)

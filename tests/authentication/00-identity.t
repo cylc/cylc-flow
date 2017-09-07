@@ -18,7 +18,7 @@
 # Test authentication - privilege 'identity'.
 
 . $(dirname $0)/test_header
-set_test_number 10
+set_test_number 14
 
 install_suite "${TEST_NAME_BASE}" basic
 
@@ -38,15 +38,28 @@ PORT="$(sed -n 's/^CYLC_SUITE_PORT=//p' "${SRV_D}/contact")"
 run_ok "${TEST_NAME_BASE}-curl-anon" \
     env no_proxy=* curl -v --cacert "${SRV_D}/ssl.cert" \
     --digest -u 'anon:the quick brown fox' \
-    "https://${HOST}:${PORT}/id/identify"
+    "https://${HOST}:${PORT}/identify"
 run_ok "${TEST_NAME_BASE}-curl-anon.stdout" \
     grep -qF "\"name\": \"${SUITE_NAME}\"" "${TEST_NAME_BASE}-curl-anon.stdout"
 run_ok "${TEST_NAME_BASE}-curl-cylc" \
     env no_proxy=* curl -v --cacert "${SRV_D}/ssl.cert" \
     --digest -u "cylc:$(<"${SRV_D}/passphrase")" \
-    "https://${HOST}:${PORT}/id/identify"
+    "https://${HOST}:${PORT}/identify"
 run_ok "${TEST_NAME_BASE}-curl-cylc.stdout" \
     grep -qF "\"name\": \"${SUITE_NAME}\"" "${TEST_NAME_BASE}-curl-cylc.stdout"
+run_ok "${TEST_NAME_BASE}-curl-cylc-bad-ping-task" \
+    env no_proxy=* curl -v --cacert "${SRV_D}/ssl.cert" \
+    --digest -u "cylc:$(<"${SRV_D}/passphrase")" \
+    "https://${HOST}:${PORT}/ping_task?task_id=foo.1&exists_only=Truer"
+run_ok "${TEST_NAME_BASE}-curl-cylc-bad-ping-task.stdout" \
+    grep -qF "HTTPError: (400, u'Bad argument value: exists_only=Truer')" \
+    "${TEST_NAME_BASE}-curl-cylc-bad-ping-task.stdout"
+run_ok "${TEST_NAME_BASE}-curl-cylc-ping-task" \
+    env no_proxy=* curl -v --cacert "${SRV_D}/ssl.cert" \
+    --digest -u "cylc:$(<"${SRV_D}/passphrase")" \
+    "https://${HOST}:${PORT}/ping_task?task_id=foo.1&exists_only=True"
+echo >>"${TEST_NAME_BASE}-curl-cylc-ping-task.stdout"  # add new line
+cmp_ok "${TEST_NAME_BASE}-curl-cylc-ping-task.stdout" <<<'[true, "task found"]'
 
 # Wait for first task 'foo' to fail.
 cylc suite-state "${SUITE_NAME}" --task=foo --status=failed --point=1 \

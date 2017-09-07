@@ -15,65 +15,50 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Manage suite state summary for client, e.g. GUI."""
 
-import cherrypy
 from time import time
 
 import cylc.flags
 from cylc.task_id import TaskID
 from cylc.wallclock import TIME_ZONE_LOCAL_INFO, TIME_ZONE_UTC_INFO
-from cylc.config import SuiteConfig
-from cylc.network.https.base_server import BaseCommsServer
-from cylc.network.https.suite_state_client import (
-    extract_group_state, SUITE_STATUS_HELD, SUITE_STATUS_STOPPING,
+from cylc.suite_status import (
+    SUITE_STATUS_HELD, SUITE_STATUS_STOPPING,
     SUITE_STATUS_RUNNING, SUITE_STATUS_RUNNING_TO_STOP,
     SUITE_STATUS_RUNNING_TO_HOLD)
-from cylc.network import check_access_priv
 from cylc.task_state import TASK_STATUS_RUNAHEAD
+from cylc.task_state_prop import extract_group_state
 
 
-class StateSummaryServer(BaseCommsServer):
-    """Server-side suite state summary interface."""
+class StateSummaryMgr(object):
+    """Manage suite state summary for client, e.g. GUI."""
 
-    _INSTANCE = None
     TIME_FIELDS = ['submitted_time', 'started_time', 'finished_time']
 
-    @classmethod
-    def get_inst(cls, run_mode=None):
-        """Return a singleton instance."""
-        if cls._INSTANCE is None:
-            cls._INSTANCE = cls(run_mode)
-        return cls._INSTANCE
-
-    def __init__(self, run_mode):
-        super(StateSummaryServer, self).__init__()
+    def __init__(self):
         self.task_summary = {}
         self.global_summary = {}
         self.family_summary = {}
-        self.run_mode = run_mode
         self.summary_update_time = None
-
         self.state_count_totals = {}
         self.state_count_cycles = {}
 
-    def update(self, tasks, tasks_rh, min_point, max_point, max_point_rh,
-               paused, will_pause_at, stopping, will_stop_at, ns_defn_order,
-               reloading):
+    def update(self, schd):
+        """Update."""
         self.summary_update_time = time()
         global_summary = {}
         family_summary = {}
 
-        task_summary, task_states = self._get_tasks_info(tasks, tasks_rh)
+        task_summary, task_states = self._get_tasks_info(schd)
 
         all_states = []
-        config = SuiteConfig.get_inst()
-        ancestors_dict = config.get_first_parent_ancestors()
+        ancestors_dict = schd.config.get_first_parent_ancestors()
 
         # Compute state_counts (total, and per cycle).
         state_count_totals = {}
         state_count_cycles = {}
 
-        for point_string, c_task_states in task_states:
+        for point_string, c_task_states in task_states.items():
             # For each cycle point, construct a family state tree
             # based on the first-parent single-inheritance tree
 
@@ -105,7 +90,7 @@ class StateSummaryServer(BaseCommsServer):
                 if state is None:
                     continue
                 try:
-                    famcfg = config.cfg['runtime']['meta'][fam]
+                    famcfg = schd.config.cfg['runtime']['meta'][fam]
                 except KeyError:
                     famcfg = {}
                 description = famcfg.get('description')
@@ -124,34 +109,47 @@ class StateSummaryServer(BaseCommsServer):
 
         all_states.sort()
 
-        global_summary['oldest cycle point string'] = (
-            self.str_or_None(min_point))
-        global_summary['newest cycle point string'] = (
-            self.str_or_None(max_point))
-        global_summary['newest runahead cycle point string'] = (
-            self.str_or_None(max_point_rh))
+        for key, value in (
+                ('oldest cycle point string', schd.pool.get_min_point()),
+                ('newest cycle point string', schd.pool.get_max_point()),
+                ('newest runahead cycle point string',
+                 schd.pool.get_max_point_runahead())):
+            if value:
+                global_summary[key] = str(value)
+            else:
+                global_summary[key] = None
         if cylc.flags.utc:
             global_summary['daemon time zone info'] = TIME_ZONE_UTC_INFO
         else:
             global_summary['daemon time zone info'] = TIME_ZONE_LOCAL_INFO
         global_summary['last_updated'] = self.summary_update_time
-        global_summary['run_mode'] = self.run_mode
+        global_summary['run_mode'] = schd.run_mode
         global_summary['states'] = all_states
-        global_summary['namespace definition order'] = ns_defn_order
-        global_summary['reloading'] = reloading
+        global_summary['namespace definition order'] = (
+            schd.config.ns_defn_order)
+        global_summary['reloading'] = schd.pool.do_reload
         global_summary['state totals'] = state_count_totals
 
         # Construct a suite status string for use by monitoring clients.
-        if paused:
+        if schd.pool.is_held:
             global_summary['status_string'] = SUITE_STATUS_HELD
-        elif stopping:
+        elif schd.stop_mode is not None:
             global_summary['status_string'] = SUITE_STATUS_STOPPING
-        elif will_pause_at:
+        elif schd.pool.hold_point:
             global_summary['status_string'] = (
-                SUITE_STATUS_RUNNING_TO_HOLD % will_pause_at)
-        elif will_stop_at:
+                SUITE_STATUS_RUNNING_TO_HOLD % schd.pool.hold_point)
+        elif schd.stop_point:
             global_summary['status_string'] = (
-                SUITE_STATUS_RUNNING_TO_STOP % will_stop_at)
+                SUITE_STATUS_RUNNING_TO_STOP % schd.stop_point)
+        elif schd.stop_clock_time is not None:
+            global_summary['status_string'] = (
+                SUITE_STATUS_RUNNING_TO_STOP % schd.stop_clock_time_string)
+        elif schd.stop_task:
+            global_summary['status_string'] = (
+                SUITE_STATUS_RUNNING_TO_STOP % schd.stop_task)
+        elif schd.final_point:
+            global_summary['status_string'] = (
+                SUITE_STATUS_RUNNING_TO_STOP % schd.final_point)
         else:
             global_summary['status_string'] = SUITE_STATUS_RUNNING
 
@@ -162,62 +160,41 @@ class StateSummaryServer(BaseCommsServer):
         self.state_count_totals = state_count_totals
         self.state_count_cycles = state_count_cycles
 
-    def _get_tasks_info(self, tasks, tasks_rh):
+    @staticmethod
+    def _get_tasks_info(schd):
         """Retrieve task summary info and states."""
 
         task_summary = {}
         task_states = {}
 
-        for task in tasks:
+        for task in schd.pool.get_tasks():
             ts = task.get_state_summary()
             task_summary[task.identity] = ts
             name, point_string = TaskID.split(task.identity)
             task_states.setdefault(point_string, {})
             task_states[point_string][name] = ts['state']
 
-        for task in tasks_rh:
+        for task in schd.pool.get_rh_tasks():
             ts = task.get_state_summary()
             ts['state'] = TASK_STATUS_RUNAHEAD
             task_summary[task.identity] = ts
             name, point_string = TaskID.split(task.identity)
             task_states.setdefault(point_string, {})
-            task_states[point_string][name] = TASK_STATUS_RUNAHEAD
+            task_states[point_string][name] = ts['state']
 
-        return task_summary, task_states.items()
+        return task_summary, task_states
 
-    def str_or_None(self, s):
-        if s:
-            return str(s)
-        else:
-            return None
-
-    def get_state_totals(self):
-        # (Access to this is controlled via the suite_identity server.)
-        return (self.state_count_totals, self.state_count_cycles)
-
-    @cherrypy.expose
-    @cherrypy.tools.json_out()
     def get_state_summary(self):
         """Return the global, task, and family summary data structures."""
-        check_access_priv(self, 'full-read')
-        self.report('get_state_summary')
         return (self.global_summary, self.task_summary, self.family_summary)
 
-    @cherrypy.expose
-    @cherrypy.tools.json_out()
-    def get_summary_update_time(self):
-        """Return the last time the summaries were changed (Unix time)."""
-        check_access_priv(self, 'state-totals')
-        self.report('get_state_summary_update_time')
-        return self.summary_update_time
+    def get_state_totals(self):
+        """Return dict of count per state and dict of state count per cycle."""
+        return (self.state_count_totals, self.state_count_cycles)
 
-    @cherrypy.expose
-    @cherrypy.tools.json_out()
     def get_tasks_by_state(self):
         """Returns a dictionary containing lists of tasks by state in the form:
         {state: [(most_recent_time_string, task_name, point_string), ...]}."""
-        check_access_priv(self, 'state-totals')
-
         # Get tasks.
         ret = {}
         for task in self.task_summary:

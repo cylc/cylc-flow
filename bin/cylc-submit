@@ -84,7 +84,7 @@ def main():
     sys.path.append(os.path.join(suite_dir, 'python'))
 
     # Load suite config and tasks
-    config = SuiteConfig.get_inst(
+    config = SuiteConfig(
         suite, suiterc,
         load_template_vars(options.templatevars, options.templatevars_file),
         cli_initial_point_string=options.icp)

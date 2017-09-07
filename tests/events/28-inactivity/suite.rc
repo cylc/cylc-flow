@@ -3,19 +3,17 @@
     [[events]]
         inactivity = PT10S
         abort on inactivity = True
-        timeout handler = cylc stop %(suite)s
+        abort on timeout = True
     [[reference test]]
         live mode suite timeout=PT1M
 
 [scheduling]
-    initial cycle point = 20100101T0000Z
-    final cycle point = +P1D
     [[dependencies]]
-
-        [[[T00]]]
-            graph = foo[-P1D] => foo => bar
+        graph = foo
 
 [runtime]
-    [[root]]
-    [[foo, bar]]
-        script = sleep 30
+    [[foo]]
+        script = """
+trap '' EXIT
+exit
+"""

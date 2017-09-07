@@ -17,16 +17,12 @@
 
 # Test that message outputs are faked in dummy mode.
 
-. $(dirname $0)/test_header
-
+. "$(dirname "$0")/test_header"
 set_test_number 2
 
-install_suite $TEST_NAME_BASE dummy-message-outputs
-
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
-
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --mode=dummy --reference-test $SUITE_NAME
-
-purge_suite $SUITE_NAME
+install_suite "${TEST_NAME_BASE}" 'dummy-message-outputs'
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" \
+    cylc run --no-detach --mode=dummy --reference-test "${SUITE_NAME}"
+purge_suite "${SUITE_NAME}"
+exit

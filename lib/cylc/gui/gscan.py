@@ -36,9 +36,9 @@ from cylc.gui.scanutil import (
     KEY_PORT, get_scan_menu, launch_gcylc, update_suites_info,
     launch_hosts_dialog, launch_about_dialog)
 from cylc.gui.util import get_icon, setup_icons, set_exception_hook_dialog
-from cylc.network import (
-    KEY_GROUP, KEY_STATES, KEY_TASKS_BY_STATE, KEY_TITLE, KEY_UPDATE_TIME)
 from cylc.suite_host import get_user
+from cylc.suite_status import (
+    KEY_GROUP, KEY_STATES, KEY_TASKS_BY_STATE, KEY_TITLE, KEY_UPDATE_TIME)
 from cylc.task_state import (
     TASK_STATUSES_ORDERED, TASK_STATUS_RUNAHEAD, TASK_STATUS_FAILED,
     TASK_STATUS_SUBMIT_FAILED)
