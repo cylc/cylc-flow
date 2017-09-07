@@ -1,0 +1,5 @@
+2017-08-26T13:08:15+12 INFO - Initial point: 1
+2017-08-26T13:08:15+12 INFO - Final point: 1
+2017-08-26T13:08:15+12 INFO - [foo.1] -triggered off []
+2017-08-26T13:08:19+12 INFO - [bar.1] -triggered off ['foo.1']
+2017-08-26T13:08:24+12 INFO - [baz.1] -triggered off ['foo.1']

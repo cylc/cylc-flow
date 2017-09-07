@@ -340,22 +340,21 @@ substituted with actual values:
     \item \%(suite)s: suite name
     \item \%(suite\_url)s: suite URL
     \item \%(message)s: event message, if any
+    \item any suite [meta] item, e.g.:
+    \begin{myitemize}
+      \item \%(title)s: suite title
+      \item \%(importance)s: example custom suite metadata
+    \end{myitemize}
 \end{myitemize}
 
-It can also include the patterns from the [meta] section of the suite, for example:
-\begin{myitemize}
-    \item \%(suite-priority)s: suite priority
-    \item \%(color)s: suite color
-\end{myitemize}
-
-Otherwise, the command line will be called with the following command line
+Otherwise the command line will be called with the following default
 arguments:
 \begin{lstlisting}
 <suite-event-handler> %(event)s %(suite)s %(message)s
 \end{lstlisting}
 
-Note: The substitution patterns should not be quoted in the template strings.
-Where required, the values will be quoted automatically on substitution.
+{\em Note: substitution patterns should not be quoted in the template strings.
+This is done automatically where required.}
 
 Additional information can be passed to event handlers via
 [cylc] \textrightarrow [[environment]].
@@ -1612,50 +1611,47 @@ interpretation on the remote host.
 \label{TaskEventHandling}
 
 Cylc can call nominated event handlers when certain task events occur. This
-section configures specific task event handlers; see~\ref{SuiteEventHandling} for
-suite event hooks.
+section configures specific task event handlers; see~\ref{SuiteEventHandling}
+for suite events.
 
-Event handler commands can be located in the suite \lstinline=bin/= directory,
+Event handlers can be located in the suite \lstinline=bin/= directory,
 otherwise it is up to you to ensure their location is in \lstinline=$PATH= (in
-the shell in which cylc runs, on the suite host). The commands should require
-very little resource to run and should return quickly.
+the shell in which the suite daemon runs). They should require little resource
+to run and return quickly.
 
 Each task event handler can be specified as a list of command lines or command
-line templates.
-
-A command line template may have any or all of these patterns which will be
-substituted with actual values:
+line templates. They can contain any or all of the following patterns, which
+will be substituted with actual values:
 \begin{myitemize}
     \item \%(event)s: event name
     \item \%(suite)s: suite name
     \item \%(point)s: cycle point
     \item \%(name)s: task name
-    \item \%(suite\_url)s: suite URL
-    \item \%(task\_url)s: task URL
     \item \%(submit\_num)s: submit number
     \item \%(id)s: task ID (i.e.\ \%(name)s.\%(point)s)
     \item \%(message)s: event message, if any
+    \item any task [meta] item, e.g.:
+    \begin{myitemize}
+      \item \%(title)s: task title
+      \item \%(URL)s: task URL
+      \item \%(importance)s - example custom task metadata
+    \end{myitemize}
+    \item any suite [meta] item, prefixed with ``suite\_'', e.g.:
+    \begin{myitemize}
+      \item \%(suite\_title)s: suite title
+      \item \%(suite\_URL)s: suite URL
+      \item \%(suite\_rating)s - example custom suite metadata
+    \end{myitemize}
 \end{myitemize}
 
-The template can also include the patterns from [[[meta]]] section of the task, for example:
-\begin{myitemize}
-    \item \%(importance)s: task priority
-    \item \%(color)s: task color
-\end{myitemize}
-
-Patterns from the [meta] section of the suite can also be used, for example:
-\begin{myitemize}
-    \item \%(suite\_priority)s: suite priority
-    \item \%(suite\_color)s: suite color
-\end{myitemize}
-
-Otherwise, the command line will be called with the following arguments:
+Otherwise, the command line will be called with the following default
+arguments:
 \begin{lstlisting}
 <task-event-handler> %(event)s %(suite)s %(id)s %(message)s
 \end{lstlisting}
 
-Note: The substitution patterns should not be quoted in the template strings.
-Where required, the values will be quoted automatically on substitution.
+{\em Note: substitution patterns should not be quoted in the template strings.
+This is done automatically where required.}
 
 For an explanation of the substitution syntax, see String Formatting Operations
 in the Python documentation:
@@ -1684,6 +1680,7 @@ A list of one or more event handlers to call when one of the following EVENTs oc
     \item {\bf execution timeout}        - the task timed out after execution commenced
     \item {\bf warning}        - the task reported a WARNING priority message
     \item {\bf critical}       - the task reported a CRITICAL priority message
+    \item {\bf custom}       - the task reported a CUSTOM priority message
 \end{myitemize}
 
 Item details:

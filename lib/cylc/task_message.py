@@ -46,7 +46,8 @@ class TaskMessage(object):
     NORMAL = "NORMAL"
     WARNING = "WARNING"
     CRITICAL = "CRITICAL"
-    PRIORITIES = (NORMAL, WARNING, CRITICAL)
+    CUSTOM = "CUSTOM"
+    PRIORITIES = (NORMAL, WARNING, CRITICAL, CUSTOM)
 
     MSG_RETRY_INTVL = 5.0
     MSG_MAX_TRIES = 7
@@ -91,7 +92,7 @@ class TaskMessage(object):
 
     def _print_messages(self, messages):
         """Print message to send."""
-        if self.priority == self.NORMAL:
+        if self.priority in [self.NORMAL, self.CUSTOM]:
             handle = sys.stdout
         else:
             handle = sys.stderr
