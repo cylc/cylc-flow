@@ -31,7 +31,7 @@ from isodatetime.parsers import TimePointParser, DurationParser
 from cylc.cfgspec.utils import (
     coerce_interval, coerce_interval_list, DurationFloat)
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
-from cylc.network import PRIVILEGE_LEVELS
+from cylc.network import PRIVILEGE_LEVELS, PRIV_SHUTDOWN
 from cylc.task_id import TaskID
 
 
@@ -285,7 +285,7 @@ SPEC = {
             'public': vdr(
                 vtype='string',
                 options=PRIVILEGE_LEVELS[
-                    :PRIVILEGE_LEVELS.index('shutdown') + 1],
+                    :PRIVILEGE_LEVELS.index(PRIV_SHUTDOWN) + 1],
                 default=GLOBAL_CFG.get(['authentication', 'public']))
         },
     },

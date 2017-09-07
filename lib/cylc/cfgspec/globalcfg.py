@@ -34,7 +34,7 @@ from cylc.mkdir_p import mkdir_p
 import cylc.flags
 from cylc.cfgspec.utils import (
     coerce_interval, coerce_interval_list, DurationFloat)
-from cylc.network import PRIVILEGE_LEVELS
+from cylc.network import PRIVILEGE_LEVELS, PRIV_STATE_TOTALS, PRIV_SHUTDOWN
 
 coercers['interval'] = coerce_interval
 coercers['interval_list'] = coerce_interval_list
@@ -278,8 +278,9 @@ SPEC = {
         # control.
         'public': vdr(
             vtype='string',
-            options=PRIVILEGE_LEVELS[:PRIVILEGE_LEVELS.index('shutdown') + 1],
-            default="state-totals"),
+            options=(
+                PRIVILEGE_LEVELS[:PRIVILEGE_LEVELS.index(PRIV_SHUTDOWN) + 1]),
+            default=PRIV_STATE_TOTALS),
     },
 }
 

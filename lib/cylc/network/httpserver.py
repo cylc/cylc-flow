@@ -33,12 +33,14 @@ import cherrypy
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.exceptions import CylcError
 import cylc.flags
-from cylc.network import NO_PASSPHRASE, PRIVILEGE_LEVELS
+from cylc.network import (
+    NO_PASSPHRASE, PRIVILEGE_LEVELS, PRIV_IDENTITY, PRIV_FULL_READ,
+    PRIV_STATE_TOTALS, PRIV_SHUTDOWN, PRIV_FULL_CONTROL)
 from cylc.suite_host import get_suite_host
 from cylc.suite_logging import ERR, LOG
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
-from cylc.unicode_util import unicode_encode
+from cylc.unicode_util import utf8_enforce
 from cylc.version import CYLC_VERSION
 
 
@@ -216,13 +218,12 @@ class SuiteRuntimeService(object):
           * cancel: a list of tuples. Each tuple contains the keys of a bad
             setting.
         """
-        self._check_access_priv('full-control')
-        self._report()
-        point_strings = unicode_encode(
+        self._check_access_priv_and_report(PRIV_FULL_CONTROL)
+        point_strings = utf8_enforce(
             cherrypy.request.json.get("point_strings", point_strings))
-        namespaces = unicode_encode(
+        namespaces = utf8_enforce(
             cherrypy.request.json.get("namespaces", namespaces))
-        cancel_settings = unicode_encode(
+        cancel_settings = utf8_enforce(
             cherrypy.request.json.get("cancel_settings", cancel_settings))
         return self.schd.task_events_mgr.broadcast_mgr.clear_broadcast(
             point_strings, namespaces, cancel_settings)
@@ -234,8 +235,7 @@ class SuiteRuntimeService(object):
 
         items[0] is an identifier for matching a task proxy.
         """
-        self._check_access_priv('full-control')
-        self._report()
+        self._check_access_priv_and_report(PRIV_FULL_CONTROL)
         if not isinstance(items, list):
             items = [items]
         self.schd.command_queue.put(("dry_run_tasks", (items,), {}))
@@ -245,59 +245,51 @@ class SuiteRuntimeService(object):
     @cherrypy.tools.json_out()
     def expire_broadcast(self, cutoff=None):
         """Clear all settings targeting cycle points earlier than cutoff."""
-        self._check_access_priv('full-control')
-        self._report()
+        self._check_access_priv_and_report(PRIV_FULL_CONTROL)
         return self.schd.task_events_mgr.broadcast_mgr.expire_broadcast(cutoff)
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def get_all_families(self, exclude_root=False):
         """Return info of all families."""
-        self._check_access_priv('full-read')
-        self._report()
-        if isinstance(exclude_root, basestring):
-            exclude_root = ast.literal_eval(exclude_root)
+        self._check_access_priv_and_report(PRIV_FULL_READ)
+        exclude_root = self._literal_eval('exclude_root', exclude_root)
         return self.schd.info_get_all_families(exclude_root=exclude_root)
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def get_broadcast(self, task_id=None):
         """Retrieve all broadcast variables that target a given task ID."""
-        self._check_access_priv('full-read')
-        self._report()
+        self._check_access_priv_and_report(PRIV_FULL_READ)
         return self.schd.task_events_mgr.broadcast_mgr.get_broadcast(task_id)
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def get_cylc_version(self):
         """Return the cylc version running this suite."""
-        self._report()
+        self._check_access_priv_and_report(PRIV_IDENTITY)
         return CYLC_VERSION
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def get_err_content(self, prev_size, max_lines):
         """Return the content and new size of the error file."""
-        self._check_access_priv('full-read')
-        self._report()
+        self._check_access_priv_and_report(PRIV_FULL_READ)
         return self.schd.info_get_err_lines(prev_size, max_lines)
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def get_first_parent_ancestors(self, pruned=None):
         """Single-inheritance hierarchy based on first parents"""
-        self._report()
-        self._check_access_priv('full-read')
-        if isinstance(pruned, basestring):
-            pruned = ast.literal_eval(pruned)
+        self._check_access_priv_and_report(PRIV_FULL_READ)
+        pruned = self._literal_eval('pruned', pruned)
         return self.schd.info_get_first_parent_ancestors(pruned=pruned)
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def get_first_parent_descendants(self):
         """Families for single-inheritance hierarchy based on first parents"""
-        self._report()
-        self._check_access_priv('full-read')
+        self._check_access_priv_and_report(PRIV_FULL_READ)
         return self.schd.info_get_first_parent_descendants()
 
     @cherrypy.expose
@@ -307,32 +299,20 @@ class SuiteRuntimeService(object):
                       ungroup_recursive=False, group_all=False,
                       ungroup_all=False):
         """Return raw suite graph."""
-        self._check_access_priv('full-read')
-        self._report()
-        if isinstance(group_nodes, basestring):
-            try:
-                group_nodes = ast.literal_eval(group_nodes)
-            except ValueError:
-                group_nodes = [group_nodes]
-        if isinstance(ungroup_nodes, basestring):
-            try:
-                ungroup_nodes = ast.literal_eval(ungroup_nodes)
-            except ValueError:
-                ungroup_nodes = [ungroup_nodes]
-        if isinstance(ungroup_recursive, basestring):
-            ungroup_recursive = ast.literal_eval(ungroup_recursive)
-        if isinstance(group_all, basestring):
-            group_all = ast.literal_eval(group_all)
-        if isinstance(ungroup_all, basestring):
-            ungroup_all = ast.literal_eval(ungroup_all)
-        if isinstance(stop_point_string, basestring):
-            try:
-                stop_point_string = ast.literal_eval(stop_point_string)
-            except (SyntaxError, ValueError):
-                pass
-            else:
-                if stop_point_string is not None:
-                    stop_point_string = str(stop_point_string)
+        self._check_access_priv_and_report(PRIV_FULL_READ)
+        group_nodes = self._literal_eval(
+            'group_nodes', group_nodes, [group_nodes])
+        ungroup_nodes = self._literal_eval(
+            'ungroup_nodes', ungroup_nodes, [ungroup_nodes])
+        ungroup_recursive = self._literal_eval(
+            'ungroup_recursive', ungroup_recursive)
+        group_all = self._literal_eval('group_all', group_all)
+        ungroup_all = self._literal_eval('ungroup_all', ungroup_all)
+        # Ensure that a "None" str is converted to the None value.
+        stop_point_string = self._literal_eval(
+            'stop_point_string', stop_point_string, stop_point_string)
+        if stop_point_string is not None:
+            stop_point_string = str(stop_point_string)
         return self.schd.info_get_graph_raw(
             start_point_string, stop_point_string,
             group_nodes=group_nodes,
@@ -345,24 +325,21 @@ class SuiteRuntimeService(object):
     @cherrypy.tools.json_out()
     def get_state_summary(self):
         """Return the global, task, and family summary data structures."""
-        self._check_access_priv('full-read')
-        self._report()
+        self._check_access_priv_and_report(PRIV_FULL_READ)
         return self.schd.info_get_state_summary()
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def get_suite_info(self):
         """Return a dict containing the suite title and description."""
-        self._report()
-        self._check_access_priv('description')
+        self._check_access_priv_and_report('description')
         return self.schd.info_get_suite_info()
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def get_task_info(self, names):
         """Return info of a task."""
-        self._report()
-        self._check_access_priv('full-read')
+        self._check_access_priv_and_report(PRIV_FULL_READ)
         if not isinstance(names, list):
             names = [names]
         return self.schd.info_get_task_info(names)
@@ -371,16 +348,14 @@ class SuiteRuntimeService(object):
     @cherrypy.tools.json_out()
     def get_task_jobfile_path(self, task_id):
         """Return task job file path."""
-        self._report()
-        self._check_access_priv('full-read')
+        self._check_access_priv_and_report(PRIV_FULL_READ)
         return self.schd.info_get_task_jobfile_path(task_id)
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def get_task_requisites(self, items=None, list_prereqs=False):
         """Return prerequisites of a task."""
-        self._report()
-        self._check_access_priv('full-read')
+        self._check_access_priv_and_report(PRIV_FULL_READ)
         if not isinstance(items, list):
             items = [items]
         return self.schd.info_get_task_requisites(
@@ -390,16 +365,14 @@ class SuiteRuntimeService(object):
     @cherrypy.tools.json_out()
     def get_update_times(self):
         """Return the update times for (state summary, err_content)."""
-        self._check_access_priv('state-totals')
-        self._report()
+        self._check_access_priv_and_report(PRIV_STATE_TOTALS)
         return self.schd.info_get_update_times()
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def hold_after_point_string(self, point_string):
         """Set hold point of suite."""
-        self._check_access_priv('full-control')
-        self._report()
+        self._check_access_priv_and_report(PRIV_FULL_CONTROL)
         self.schd.command_queue.put(
             ("hold_after_point_string", (point_string,), {}))
         return (True, 'Command queued')
@@ -408,8 +381,7 @@ class SuiteRuntimeService(object):
     @cherrypy.tools.json_out()
     def hold_suite(self):
         """Hold the suite."""
-        self._check_access_priv('full-control')
-        self._report()
+        self._check_access_priv_and_report(PRIV_FULL_CONTROL)
         self.schd.command_queue.put(("hold_suite", (), {}))
         return (True, 'Command queued')
 
@@ -420,8 +392,7 @@ class SuiteRuntimeService(object):
 
         items is a list of identifiers for matching task proxies.
         """
-        self._check_access_priv('full-control')
-        self._report()
+        self._check_access_priv_and_report(PRIV_FULL_CONTROL)
         if not isinstance(items, list):
             items = [items]
         self.schd.command_queue.put(("hold_tasks", (items,), {}))
@@ -445,8 +416,7 @@ class SuiteRuntimeService(object):
 
         items is a list of identifiers of (families of) task instances.
         """
-        self._check_access_priv('full-control')
-        self._report()
+        self._check_access_priv_and_report(PRIV_FULL_CONTROL)
         if not isinstance(items, list):
             items = [items]
         if stop_point_string == "None":
@@ -465,8 +435,7 @@ class SuiteRuntimeService(object):
 
         items is a list of identifiers for matching task proxies.
         """
-        self._check_access_priv('full-control')
-        self._report()
+        self._check_access_priv_and_report(PRIV_FULL_CONTROL)
         if not isinstance(items, list):
             items = [items]
         self.schd.command_queue.put(("kill_tasks", (items,), {}))
@@ -476,8 +445,7 @@ class SuiteRuntimeService(object):
     @cherrypy.tools.json_out()
     def nudge(self):
         """Tell suite to try task processing."""
-        self._check_access_priv('full-control')
-        self._report()
+        self._check_access_priv_and_report(PRIV_FULL_CONTROL)
         self.schd.command_queue.put(("nudge", (), {}))
         return (True, 'Command queued')
 
@@ -485,17 +453,15 @@ class SuiteRuntimeService(object):
     @cherrypy.tools.json_out()
     def ping_suite(self):
         """Return True."""
-        self._report()
+        self._check_access_priv_and_report(PRIV_IDENTITY)
         return True
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def ping_task(self, task_id, exists_only=False):
         """Return True if task_id exists (and running)."""
-        self._check_access_priv('full-read')
-        self._report()
-        if isinstance(exists_only, basestring):
-            exists_only = ast.literal_eval(exists_only)
+        self._check_access_priv_and_report(PRIV_FULL_READ)
+        exists_only = self._literal_eval('exists_only', exists_only)
         return self.schd.info_ping_task(task_id, exists_only=exists_only)
 
     @cherrypy.expose
@@ -505,8 +471,7 @@ class SuiteRuntimeService(object):
 
         items is a list of identifiers for matching task proxies.
         """
-        self._check_access_priv('full-control')
-        self._report()
+        self._check_access_priv_and_report(PRIV_FULL_CONTROL)
         if items is not None and not isinstance(items, list):
             items = [items]
         self.schd.command_queue.put(("poll_tasks", (items,), {}))
@@ -524,13 +489,12 @@ class SuiteRuntimeService(object):
             [("20200202", "foo", {"command scripting": "true"}, ...]
           bad_options is as described in the docstring for self.clear().
         """
-        self._check_access_priv('full-control')
-        self._report()
-        point_strings = unicode_encode(
+        self._check_access_priv_and_report(PRIV_FULL_CONTROL)
+        point_strings = utf8_enforce(
             cherrypy.request.json.get("point_strings", point_strings))
-        namespaces = unicode_encode(
+        namespaces = utf8_enforce(
             cherrypy.request.json.get("namespaces", namespaces))
-        settings = unicode_encode(
+        settings = utf8_enforce(
             cherrypy.request.json.get("settings", settings))
         return self.schd.task_events_mgr.broadcast_mgr.put_broadcast(
             point_strings, namespaces, settings)
@@ -539,16 +503,14 @@ class SuiteRuntimeService(object):
     @cherrypy.tools.json_out()
     def put_ext_trigger(self, event_message, event_id):
         """Server-side external event trigger interface."""
-        self._check_access_priv('full-control')
-        self._report()
+        self._check_access_priv_and_report(PRIV_FULL_CONTROL)
         self.schd.ext_trigger_queue.put((event_message, event_id))
         return (True, 'Event queued')
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def put_message(self, task_id, priority, message):
-        self._check_access_priv('full-control')
-        self._report(log_info=False)
+        self._check_access_priv_and_report(PRIV_FULL_CONTROL, log_info=False)
         self.schd.message_queue.put((task_id, priority, str(message)))
         return (True, 'Message queued')
 
@@ -556,8 +518,7 @@ class SuiteRuntimeService(object):
     @cherrypy.tools.json_out()
     def reload_suite(self):
         """Tell suite to reload the suite definition."""
-        self._check_access_priv('full-control')
-        self._report()
+        self._check_access_priv_and_report(PRIV_FULL_CONTROL)
         self.schd.command_queue.put(("reload_suite", (), {}))
         return (True, 'Command queued')
 
@@ -565,8 +526,7 @@ class SuiteRuntimeService(object):
     @cherrypy.tools.json_out()
     def release_suite(self):
         """Unhold suite."""
-        self._check_access_priv('full-control')
-        self._report()
+        self._check_access_priv_and_report(PRIV_FULL_CONTROL)
         self.schd.command_queue.put(("release_suite", (), {}))
         return (True, 'Command queued')
 
@@ -577,8 +537,7 @@ class SuiteRuntimeService(object):
 
         items is a list of identifiers for matching task proxies.
         """
-        self._check_access_priv('full-control')
-        self._report()
+        self._check_access_priv_and_report(PRIV_FULL_CONTROL)
         if not isinstance(items, list):
             items = [items]
         self.schd.command_queue.put(("release_tasks", (items,), {}))
@@ -588,9 +547,8 @@ class SuiteRuntimeService(object):
     @cherrypy.tools.json_out()
     def remove_cycle(self, point_string, spawn=False):
         """Remove tasks in a cycle from task pool."""
-        self._check_access_priv('full-control')
-        self._report()
-        spawn = ast.literal_eval(spawn)
+        self._check_access_priv_and_report(PRIV_FULL_CONTROL)
+        spawn = self._literal_eval('spawn', spawn)
         self.schd.command_queue.put(
             ("remove_tasks", ('%s/*' % point_string,), {"spawn": spawn}))
         return (True, 'Command queued')
@@ -602,9 +560,8 @@ class SuiteRuntimeService(object):
 
         items is a list of identifiers for matching task proxies.
         """
-        self._check_access_priv('full-control')
-        self._report()
-        spawn = ast.literal_eval(spawn)
+        self._check_access_priv_and_report(PRIV_FULL_CONTROL)
+        spawn = self._literal_eval('spawn', spawn)
         if not isinstance(items, list):
             items = [items]
         self.schd.command_queue.put(
@@ -618,8 +575,7 @@ class SuiteRuntimeService(object):
 
         items is a list of identifiers for matching task proxies.
         """
-        self._check_access_priv('full-control')
-        self._report()
+        self._check_access_priv_and_report(PRIV_FULL_CONTROL)
         if not isinstance(items, list):
             items = [items]
         if outputs and not isinstance(outputs, list):
@@ -633,9 +589,8 @@ class SuiteRuntimeService(object):
     @cherrypy.tools.json_out()
     def set_runahead(self, interval=None):
         """Set runahead limit to a new interval."""
-        self._check_access_priv('full-control')
-        self._report()
-        interval = ast.literal_eval(interval)
+        self._check_access_priv_and_report(PRIV_FULL_CONTROL)
+        interval = self._literal_eval('interval', interval)
         self.schd.command_queue.put(
             ("set_runahead", (), {"interval": interval}))
         return (True, 'Command queued')
@@ -644,8 +599,7 @@ class SuiteRuntimeService(object):
     @cherrypy.tools.json_out()
     def set_stop_after_clock_time(self, datetime_string):
         """Set suite to stop after wallclock time."""
-        self._check_access_priv('shutdown')
-        self._report()
+        self._check_access_priv_and_report(PRIV_SHUTDOWN)
         self.schd.command_queue.put(
             ("set_stop_after_clock_time", (datetime_string,), {}))
         return (True, 'Command queued')
@@ -654,8 +608,7 @@ class SuiteRuntimeService(object):
     @cherrypy.tools.json_out()
     def set_stop_after_point(self, point_string):
         """Set suite to stop after cycle point."""
-        self._check_access_priv('shutdown')
-        self._report()
+        self._check_access_priv_and_report(PRIV_SHUTDOWN)
         self.schd.command_queue.put(
             ("set_stop_after_point", (point_string,), {}))
         return (True, 'Command queued')
@@ -664,8 +617,7 @@ class SuiteRuntimeService(object):
     @cherrypy.tools.json_out()
     def set_stop_after_task(self, task_id):
         """Set suite to stop after an instance of a task."""
-        self._check_access_priv('shutdown')
-        self._report()
+        self._check_access_priv_and_report(PRIV_SHUTDOWN)
         self.schd.command_queue.put(
             ("set_stop_after_task", (task_id,), {}))
         return (True, 'Command queued')
@@ -674,10 +626,9 @@ class SuiteRuntimeService(object):
     @cherrypy.tools.json_out()
     def set_stop_cleanly(self, kill_active_tasks=False):
         """Set suite to stop cleanly or after kill active tasks."""
-        self._check_access_priv('shutdown')
-        self._report()
-        if isinstance(kill_active_tasks, basestring):
-            kill_active_tasks = ast.literal_eval(kill_active_tasks)
+        self._check_access_priv_and_report(PRIV_SHUTDOWN)
+        kill_active_tasks = self._literal_eval(
+            'kill_active_tasks', kill_active_tasks)
         self.schd.command_queue.put(
             ("set_stop_cleanly", (), {"kill_active_tasks": kill_active_tasks}))
         return (True, 'Command queued')
@@ -686,8 +637,7 @@ class SuiteRuntimeService(object):
     @cherrypy.tools.json_out()
     def set_verbosity(self, level):
         """Set suite verbosity to new level."""
-        self._check_access_priv('full-control')
-        self._report()
+        self._check_access_priv_and_report(PRIV_FULL_CONTROL)
         self.schd.command_queue.put(("set_verbosity", (level,), {}))
         return (True, 'Command queued')
 
@@ -698,8 +648,7 @@ class SuiteRuntimeService(object):
 
         items is a list of identifiers for matching task proxies.
         """
-        self._check_access_priv('full-control')
-        self._report()
+        self._check_access_priv_and_report(PRIV_FULL_CONTROL)
         if not isinstance(items, list):
             items = [items]
         self.schd.command_queue.put(("spawn_tasks", (items,), {}))
@@ -709,10 +658,8 @@ class SuiteRuntimeService(object):
     @cherrypy.tools.json_out()
     def stop_now(self, terminate=False):
         """Stop suite on event handler completion, or terminate right away."""
-        self._check_access_priv('shutdown')
-        self._report()
-        if isinstance(terminate, basestring):
-            terminate = ast.literal_eval(terminate)
+        self._check_access_priv_and_report(PRIV_SHUTDOWN)
+        terminate = self._literal_eval('terminate', terminate)
         self.schd.command_queue.put(("stop_now", (), {"terminate": terminate}))
         return (True, 'Command queued')
 
@@ -723,8 +670,7 @@ class SuiteRuntimeService(object):
 
         items[0] is the name of the checkpoint.
         """
-        self._check_access_priv('full-control')
-        self._report()
+        self._check_access_priv_and_report(PRIV_FULL_CONTROL)
         if not isinstance(items, list):
             items = [items]
         self.schd.command_queue.put(("take_checkpoints", (items,), {}))
@@ -737,8 +683,7 @@ class SuiteRuntimeService(object):
 
         items is a list of identifiers for matching task proxies.
         """
-        self._check_access_priv('full-control')
-        self._report()
+        self._check_access_priv_and_report(PRIV_FULL_CONTROL)
         if not isinstance(items, list):
             items = [items]
         items = [str(item) for item in items]
@@ -775,13 +720,15 @@ class SuiteRuntimeService(object):
             raise cherrypy.HTTPError(403, err)
         return True
 
-    def _report(self, log_info=True):
-        """Log client requests with identifying information.
+    def _check_access_priv_and_report(
+            self, required_privilege_level, log_info=True):
+        """Check access privilege and log requests with identifying info.
 
         In debug mode log all requests including task messages. Otherwise log
         all user commands, and just the first info command from each client.
 
         """
+        self._check_access_priv(required_privilege_level)
         command = inspect.currentframe().f_back.f_code.co_name
         auth_user, prog_name, user, host, uuid = _get_client_info()
         priv_level = self._get_priv_level(auth_user)
@@ -829,6 +776,24 @@ class SuiteRuntimeService(object):
                     pass
                 LOG.debug(
                     self.__class__.LOG_FORGET_TMPL % uuid)
+
+    @staticmethod
+    def _literal_eval(key, value, default=None):
+        """Wrap ast.literal_eval if value is basestring.
+
+        On SyntaxError or ValueError, return default is default is not None.
+        Otherwise, raise HTTPError 400.
+        """
+        if isinstance(value, basestring):
+            try:
+                return ast.literal_eval(value)
+            except (SyntaxError, ValueError):
+                if default is not None:
+                    return default
+                raise cherrypy.HTTPError(
+                    400, r'Bad argument value: %s=%s' % (key, value))
+        else:
+            return value
 
 
 def _get_client_info():

@@ -18,17 +18,17 @@
 """Unicode utility."""
 
 
-def unicode_encode(data):
-    """Recursively encode values in data structure to utf-8"""
+def utf8_enforce(data):
+    """Recursively enforce UTF-8 encoding for Unicode strings."""
     if isinstance(data, unicode):
         return data.encode('utf-8')
     if isinstance(data, dict):
         new_dict = {}
         for key, value in data.items():
             new_dict.update(
-                {unicode_encode(key): unicode_encode(value)}
+                {utf8_enforce(key): utf8_enforce(value)}
             )
         return new_dict
     if isinstance(data, list):
-        return [unicode_encode(item) for item in data]
+        return [utf8_enforce(item) for item in data]
     return data

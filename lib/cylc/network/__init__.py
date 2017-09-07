@@ -18,15 +18,22 @@
 
 """Package for network interfaces to cylc suite server objects."""
 
-# Ordered privilege levels for authenticated users.
-PRIVILEGE_LEVELS = [
-    "identity",
-    "description",
-    "state-totals",
-    "full-read",
-    "shutdown",  # (Not used yet - for the post-passhprase era.)
-    "full-control"
-]
-
 # Dummy passphrase for client access from users without the suite passphrase.
 NO_PASSPHRASE = 'the quick brown fox'
+
+
+# Ordered privilege levels for authenticated users.
+PRIV_IDENTITY = 'identity'
+PRIV_DESCRIPTION = 'description'
+PRIV_STATE_TOTALS = 'state-totals'
+PRIV_FULL_READ = 'full-read'
+PRIV_SHUTDOWN = 'shutdown'
+PRIV_FULL_CONTROL = 'full-control'
+PRIVILEGE_LEVELS = [
+    PRIV_IDENTITY,
+    PRIV_DESCRIPTION,
+    PRIV_STATE_TOTALS,
+    PRIV_FULL_READ,
+    PRIV_SHUTDOWN,  # (Not used yet - for the post-passhprase era.)
+    PRIV_FULL_CONTROL,
+]

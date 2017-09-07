@@ -41,7 +41,7 @@ from time import sleep
 
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.httpclient import SuiteRuntimeServiceClient
+from cylc.network.httpclient import ClientError, SuiteRuntimeServiceClient
 from cylc.suite_logging import OUT, ERR
 
 
@@ -87,26 +87,21 @@ def main():
     max_n_tries = int(options.max_n_tries)
     retry_intvl_secs = float(options.retry_intvl_secs)
 
-    sent = False
-    i_try = 0
-    while not sent and i_try < max_n_tries:
-        i_try += 1
+    for i_try in range(max_n_tries):
         try:
             pclient.put_ext_trigger(event_msg, event_id)
-        except Exception as exc:
+        except ClientError as exc:
             ERR.error(exc)
-            OUT.info(MSG_SEND_FAILED % (i_try, max_n_tries))
-            if i_try >= max_n_tries:
-                break
-            OUT.info(MSG_SEND_RETRY % (retry_intvl_secs, pclient.timeout))
-            sleep(retry_intvl_secs)
+            OUT.info(MSG_SEND_FAILED % (i_try + 1, max_n_tries))
+            if i_try == max_n_tries - 1:  # final attempt
+                sys.exit('ERROR: send failed')
+            else:
+                OUT.info(MSG_SEND_RETRY % (retry_intvl_secs, pclient.timeout))
+                sleep(retry_intvl_secs)
         else:
-            if i_try > 1:
-                OUT.info(MSG_SEND_SUCCEED % (i_try, max_n_tries))
-            sent = True
+            if i_try > 0:
+                OUT.info(MSG_SEND_SUCCEED % (i_try + 1, max_n_tries))
             break
-    if not sent:
-        sys.exit('ERROR: send failed')
 
 
 if __name__ == "__main__":

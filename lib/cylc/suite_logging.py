@@ -319,7 +319,7 @@ class SuiteLog(object):
         except (IOError, OSError):
             size = 0
         if size == prev_size:
-            return [], prev_size
+            return "", prev_size
         try:
             handle = open(path, "r")
             handle.seek(prev_size)

@@ -31,7 +31,7 @@ from cylc.network import NO_PASSPHRASE
 from cylc.suite_host import get_suite_host, get_user
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
-from cylc.unicode_util import unicode_encode
+from cylc.unicode_util import utf8_enforce
 from cylc.version import CYLC_VERSION
 
 
@@ -132,7 +132,7 @@ class SuiteRuntimeServiceClient(object):
 
     def get_suite_state_summary(self):
         """Return the global, task, and family summary data structures."""
-        return unicode_encode(self._call_server_func(
+        return utf8_enforce(self._call_server_func(
             'get_state_summary', method=self.METHOD_GET))
 
     def get_tasks_by_state(self):
