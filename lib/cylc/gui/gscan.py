@@ -366,8 +366,8 @@ class ScanApp(object):
         info_item.set_image(img)
         info_item.show()
         info_item.connect(
-            "button-press-event",
-            lambda b, e: launch_about_dialog("cylc gscan", self.hosts)
+            "activate",
+            lambda w: launch_about_dialog("cylc gscan", self.hosts)
         )
         help_menu.append(info_item)
 
