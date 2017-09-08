@@ -178,13 +178,13 @@ abort_bad_command() {
 abort_ambiguous_command() {
     echo "\"$1\" is ambiguous."
     echo "These commands match the abbreviation \"$1\":"
-    sed -r "s,${CYLC_HOME_BIN}/cylc-,," \
+    sed "s,${CYLC_HOME_BIN}/cylc-,," \
         <<<"$(ls "${CYLC_HOME_BIN}/cylc-$1"* 2>/dev/null)"
     exit 1
 }
 
 run_cylc_command_matched() {
-    CYLC_UTIL="$(sed -r "s,${CYLC_HOME_BIN}/cylc-,," <<<"${commands_match}")"
+    CYLC_UTIL="$(sed "s,${CYLC_HOME_BIN}/cylc-,," <<<"${commands_match}")"
     export CYLC_UTIL
     exec "${commands_match}" "$@"
 }
@@ -270,4 +270,3 @@ elif [[ "$num_commands_match" -gt 1 \
 else
     abort_ambiguous_command "${UTIL}"
 fi
-
