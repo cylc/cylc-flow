@@ -1,18 +1,20 @@
 [cylc]
-   [[reference test]]
-      required run mode = live
-      live mode suite timeout = PT30S
+    [[reference test]]
+        required run mode = live
+        live mode suite timeout = PT30S
 [scheduling]
-   [[dependencies]]
-      graph = """foo:a => bar
-                 foo:b => baz"""
+    [[dependencies]]
+        graph = """foo:a => bar
+                   foo:b => baz"""
 [runtime]
-   [[root]]
-      script = sleep 1
-      [[[events]]]
-         custom handler = echo !!CUSTOM!! %(name)s.%(point)s %(fish)s %(message)s
-   [[foo]]
-      script = """
+    [[root]]
+        script = sleep 1
+        [[[events]]]
+            custom handler = echo !!CUSTOM!! %(name)s.%(point)s %(fish)s %(message)s
+        [[[meta]]]
+            fish = trout
+    [[foo]]
+        script = """
 sleep 2
 # Output message for triggering, and custom event handler.
 cylc message -p CUSTOM "Data ready for barring"
@@ -24,8 +26,8 @@ sleep 2
 cylc message "Data ready for bazzing"
 sleep 2
 """
-     [[[outputs]]]
-        a = "Data ready for barring"
-        b = "Data ready for bazzing"
-     [[[meta]]]
-        fish = fugu
+        [[[outputs]]]
+            a = "Data ready for barring"
+            b = "Data ready for bazzing"
+        [[[meta]]]
+            fish = fugu

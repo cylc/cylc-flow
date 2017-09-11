@@ -84,6 +84,8 @@ class SuiteConfig(object):
     """Class for suite configuration items and derived quantities."""
 
     Q_DEFAULT = 'default'
+    TASK_EVENT_TMPL_KEYS = (
+        'event', 'suite', 'point', 'name', 'submit_num', 'id', 'message')
 
     def __init__(self, suite, fpath, template_vars=None,
                  owner=None, run_mode='live', is_validate=False, strict=False,
@@ -1373,7 +1375,27 @@ class SuiteConfig(object):
                     ('deprecated: [runtime][%s][job]shell=%s: '
                      'use of ksh to run cylc task job file') %
                     (taskdef.name, job_shell))
-
+            # Check custom event handler templates compat with task meta
+            if taskdef.rtconfig['events']:
+                subs = dict((key, key) for key in self.TASK_EVENT_TMPL_KEYS)
+                for key, value in self.cfg['meta'].items():
+                    subs['suite_' + key.lower()] = value
+                subs.update(taskdef.rtconfig['meta'])
+                try:
+                    subs['task_url'] = subs.pop('URL')
+                except KeyError:
+                    pass
+                for key, values in taskdef.rtconfig['events'].items():
+                    if values and (
+                            key == 'handlers' or key.endswith(' handler')):
+                        for value in values:
+                            try:
+                                value % subs
+                            except (KeyError, ValueError) as exc:
+                                raise SuiteConfigError(
+                                    'ERROR: bad task event handler template'
+                                    ' %s: %s: %s' % (
+                                        taskdef.name, value, repr(exc)))
         if cylc.flags.verbose:
             OUT.info("Checking for defined tasks not used in the graph")
             for name in self.cfg['runtime']:
