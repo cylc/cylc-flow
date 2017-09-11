@@ -466,7 +466,7 @@ class SuiteRuntimeService(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def poll_tasks(self, items=None, poll_all=False):
+    def poll_tasks(self, items=None, poll_succ=False):
         """Poll task jobs.
 
         items is a list of identifiers for matching task proxies.
@@ -474,8 +474,10 @@ class SuiteRuntimeService(object):
         self._check_access_priv_and_report(PRIV_FULL_CONTROL)
         if items is not None and not isinstance(items, list):
             items = [items]
-        self.schd.command_queue.put(("poll_tasks", (items,),
-                                    {"poll_all": poll_all in ['True', True]})
+        self.schd.command_queue.put(
+            ("poll_tasks", (items,),
+                {"poll_succ": poll_succ in ['True', True]})
+            )
         return (True, 'Command queued')
 
     @cherrypy.expose

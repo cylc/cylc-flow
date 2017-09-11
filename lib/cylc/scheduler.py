@@ -744,17 +744,17 @@ conditions; see `cylc conditions`.
         """Release tasks."""
         return self.pool.release_tasks(items)
 
-    def command_poll_tasks(self, items=None, poll_all=False):
+    def command_poll_tasks(self, items=None, poll_succ=False):
         """Poll pollable tasks or a task/family if options are provided.
 
-        Don't poll succeeded tasks unless poll_all is True.
+        Don't poll succeeded tasks unless poll_succ is True.
 
         """
         if self.run_mode == 'simulation':
             return
         itasks, bad_items = self.pool.filter_task_proxies(items)
-        self.task_job_mgr.poll_task_jobs(self.suite, itasks, items is not None,
-                                         poll_all=poll_all)
+        self.task_job_mgr.poll_task_jobs(self.suite, itasks,
+                                         poll_succ=poll_succ)
         return len(bad_items)
 
     def command_kill_tasks(self, items=None):

@@ -53,7 +53,7 @@ def main():
 
     parser.add_option(
         "-s", "--succeeded", help="Allow polling of succeeded tasks.",
-        action="store_true", default=False, dest="poll_all")
+        action="store_true", default=False, dest="poll_succ")
 
     options, args = parser.parse_args()
 
@@ -67,7 +67,7 @@ def main():
         options.comms_timeout, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
     items = parser.parse_multitask_compat(options, args)
-    pclient.put_command('poll_tasks', items=items, poll_all=options.poll_all)
+    pclient.put_command('poll_tasks', items=items, poll_succ=options.poll_succ)
 
 
 if __name__ == "__main__":

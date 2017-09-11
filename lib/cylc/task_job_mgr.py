@@ -221,7 +221,7 @@ class TaskJobManager(object):
         self.init_host_map[(host, owner)] = should_unlink
         LOG.info('Initialised %s:%s' % (user_at_host, r_suite_run_dir))
 
-    def kill_task_jobs(self, suite, itasks, warn_skips=False):
+    def kill_task_jobs(self, suite, itasks):
         """Kill jobs of active tasks, and hold the tasks.
 
         If items is specified, kill active tasks matching given IDs.
@@ -232,33 +232,30 @@ class TaskJobManager(object):
             if itask.state.status in TASK_STATUSES_ACTIVE:
                 itask.state.set_held()
                 active_itasks.append(itask)
-            elif warn_skips:  # and not active
-                LOG.warning(
-                    '%s: skip kill, task not killable' % itask.identity)
+            else:
+                LOG.warning('skipping %s: task not killable' % itask.identity)
         self._run_job_cmd(
             self.JOBS_KILL, suite, active_itasks,
             self._kill_task_jobs_callback)
 
-    def poll_task_jobs(self, suite, itasks, warn_skips=False,
-                       poll_all=True, msg=None):
+    def poll_task_jobs(self, suite, itasks, poll_succ=True, msg=None):
         """Poll jobs of specified tasks.
 
         Any job that is or was submitted or running can be polled, except for
-        retrying tasks - which would poll (correctly) as failed.
+        retrying tasks - which would poll (correctly) as failed. And don't poll
+        succeeded tasks by default.
 
         """
         poll_me = []
         pollable = [TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING,
                     TASK_STATUS_FAILED]
-        if poll_all:
-            pollable.append(TASK_STATUS_SUCCEEDED)
         for itask in itasks:
-            if itask.state.status in pollable:
+            if itask.state.status in pollable or (
+                    itask.state.status == TASK_STATUS_SUCCEEDED and poll_succ):
                 poll_me.append(itask)
-            elif warn_skips:
-                LOG.warning(
-                    '%s: skip poll, task not pollable (no job ID)' % (
-                        itask.identity))
+            else:
+                LOG.debug("skipping %s: not pollable, "
+                          "or skipping 'succeeded' tasks" % itask.identity)
         if poll_me:
             if msg is not None:
                 LOG.info(msg)
