@@ -138,28 +138,30 @@ class TaskOutputs(object):
         for value in self._by_message.values():
             value[_IS_COMPLETED] = True
 
-    def set_incomplete(self, message):
-        """Set output message to incomplete."""
-        if message in self._by_message:
-            self._by_message[message][_IS_COMPLETED] = False
-
     def set_all_incomplete(self):
         """Set all outputs to incomplete."""
         for value in self._by_message.values():
             value[_IS_COMPLETED] = False
 
-    def set_completed(self, message=None, trigger=None, is_completed=True):
-        """Set the output identified by message/trigger as completed.
+    def set_completion(self, message, is_completed):
+        """Set output message completion status to is_completed (bool)."""
+        if message in self._by_message:
+            self._by_message[message][_IS_COMPLETED] = is_completed
+
+    def set_msg_trg_completion(self, message=None, trigger=None,
+                               is_completed=True):
+        """Set the output identified by message/trigger to is_completed.
 
         Return True if completion flag is changed, False if completion is
         unchanged, or None if message/trigger is not found.
+
         """
         try:
             item = self._get_item(message, trigger)
             old_is_completed = item[_IS_COMPLETED]
             item[_IS_COMPLETED] = is_completed
         except KeyError:
-            pass
+            return None
         else:
             return bool(old_is_completed) != bool(is_completed)
 

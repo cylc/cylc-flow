@@ -250,6 +250,18 @@ class TaskEventsManager(object):
             elif ctx.ctx_type == self.HANDLER_JOB_LOGS_RETRIEVE:
                 self._process_job_logs_retrieval(schd_ctx, ctx, id_keys)
 
+    def _poll_to_confirm(self, itask, status_gt, poll_func):
+        """Poll itask to confirm an apparent state reversal."""
+        if (itask.state.is_greater_than(status_gt) and not
+                itask.state.confirming_with_poll):
+            poll_func(self.suite, [itask],
+                      msg="polling %s to confirm state" % itask.identity)
+            itask.state.confirming_with_poll = True
+            return True
+        else:
+            itask.state.confirming_with_poll = False
+            return False
+
     def process_message(self, itask, priority, message, poll_func,
                         poll_event_time=None, is_incoming=False):
         """Parse an incoming task message and update task state.
@@ -295,47 +307,29 @@ class TaskEventsManager(object):
         cylc.flags.iflag = True
 
         # Satisfy my output, if possible, and record the result.
-        an_output_was_satisfied = itask.state.outputs.set_completed(message)
+        an_output_was_satisfied = itask.state.outputs.set_completion(
+            message, True)
 
-        poll_msg = "polling %s to confirm state reversal" % itask.identity
         if message == TASK_OUTPUT_STARTED:
-            if (itask.state.is_greater_than(TASK_STATUS_RUNNING) and not
-                    itask.state.confirming_with_poll):
-                itask.state.confirming_with_poll = True
-                poll_func(self.suite, [itask], msg=poll_msg)
-            itask.state.confirming_with_poll = False
+            if self._poll_to_confirm(itask, TASK_STATUS_RUNNING, poll_func):
+                return
             self._process_message_started(itask, event_time)
         elif message == TASK_OUTPUT_SUCCEEDED:
-            if (itask.state.is_greater_than(TASK_STATUS_SUCCEEDED) and not
-                    itask.state.confirming_with_poll):
-                itask.state.confirming_with_poll = True
-                poll_func(self.suite, [itask], msg=poll_msg)
+            if self._poll_to_confirm(itask, TASK_STATUS_SUCCEEDED, poll_func):
                 return
-            itask.state.confirming_with_poll = False
             self._process_message_succeeded(itask, event_time)
         elif message == TASK_OUTPUT_FAILED:
-            if (itask.state.is_greater_than(TASK_STATUS_FAILED) and not
-                    itask.state.confirming_with_poll):
-                itask.state.confirming_with_poll = True
-                poll_func(self.suite, [itask], msg=poll_msg)
+            if self._poll_to_confirm(itask, TASK_STATUS_FAILED, poll_func):
                 return
-            itask.state.confirming_with_poll = False
             self._process_message_failed(itask, event_time, self.JOB_FAILED)
         elif message == self.EVENT_SUBMIT_FAILED:
-            if (itask.state.is_greater_than(TASK_STATUS_SUBMIT_FAILED) and not
-                    itask.state.confirming_with_poll):
-                itask.state.confirming_with_poll = True
-                poll_func(self.suite, [itask], msg=poll_msg)
+            if self._poll_to_confirm(itask,
+                                     TASK_STATUS_SUBMIT_FAILED, poll_func):
                 return
-            itask.state.confirming_with_poll = False
             self._process_message_submit_failed(itask, event_time)
         elif message == TASK_OUTPUT_SUBMITTED:
-            if (itask.state.is_greater_than(TASK_STATUS_SUBMITTED) and not
-                    itask.state.confirming_with_poll):
-                itask.state.confirming_with_poll = True
-                poll_func(self.suite, [itask], msg=poll_msg)
+            if self._poll_to_confirm(itask, TASK_STATUS_SUBMITTED, poll_func):
                 return
-            itask.state.confirming_with_poll = False
             self._process_message_submitted(itask, event_time)
         elif message.startswith(TaskMessage.FAIL_MESSAGE_PREFIX):
             # Task received signal.
@@ -343,12 +337,8 @@ class TaskEventsManager(object):
             self._db_events_insert(itask, "signaled", signal)
             self.suite_db_mgr.put_update_task_jobs(
                 itask, {"run_signal": signal})
-            if (itask.state.is_greater_than(TASK_STATUS_FAILED) and not
-                    itask.state.confirming_with_poll):
-                itask.state.confirming_with_poll = True
-                poll_func(self.suite, [itask], msg=poll_msg)
+            if self._poll_to_confirm(itask, TASK_STATUS_FAILED, poll_func):
                 return
-            itask.state.confirming_with_poll = False
             self._process_message_failed(itask, event_time, self.JOB_FAILED)
         elif message.startswith(TaskMessage.ABORT_MESSAGE_PREFIX):
             # Task aborted with message
@@ -356,12 +346,8 @@ class TaskEventsManager(object):
             self._db_events_insert(itask, "aborted", message)
             self.suite_db_mgr.put_update_task_jobs(
                 itask, {"run_signal": aborted_with})
-            if (itask.state.is_greater_than(TASK_STATUS_FAILED) and not
-                    itask.state.confirming_with_poll):
-                itask.state.confirming_with_poll = True
-                poll_func(self.suite, [itask], msg=poll_msg)
+            if self._poll_to_confirm(itask, TASK_STATUS_FAILED, poll_func):
                 return
-            itask.state.confirming_with_poll = False
             self._process_message_failed(itask, event_time, aborted_with)
         elif message.startswith(TaskMessage.VACATION_MESSAGE_PREFIX):
             # Task job pre-empted into a vacation state
@@ -741,7 +727,7 @@ class TaskEventsManager(object):
             # Simulate job execution at this point.
             itask.set_event_time('started', event_time)
             itask.state.reset_state(TASK_STATUS_RUNNING)
-            itask.state.outputs.set_completed(TASK_OUTPUT_STARTED)
+            itask.state.outputs.set_completion(TASK_OUTPUT_STARTED, True)
             return
 
         itask.set_event_time('submitted', event_time)

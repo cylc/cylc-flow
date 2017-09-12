@@ -324,19 +324,19 @@ class TaskState(object):
             self.outputs.set_all_incomplete()
         elif status == TASK_STATUS_SUBMITTED:
             self.set_prerequisites_all_satisfied()
-            self.outputs.set_completed(TASK_OUTPUT_SUBMITTED)
+            self.outputs.set_completion(TASK_OUTPUT_SUBMITTED, True)
             # In case of manual reset, set final outputs incomplete (but assume
             # completed message outputs remain completed).
-            self.outputs.set_incomplete(TASK_OUTPUT_SUCCEEDED)
-            self.outputs.set_incomplete(TASK_OUTPUT_FAILED)
+            self.outputs.set_completion(TASK_OUTPUT_SUCCEEDED, False)
+            self.outputs.set_completion(TASK_OUTPUT_FAILED, False)
         elif status == TASK_STATUS_RUNNING:
             self.set_prerequisites_all_satisfied()
-            self.outputs.set_completed(TASK_OUTPUT_SUBMITTED)
-            self.outputs.set_completed(TASK_OUTPUT_STARTED)
+            self.outputs.set_completion(TASK_OUTPUT_SUBMITTED, True)
+            self.outputs.set_completion(TASK_OUTPUT_STARTED, True)
             # In case of manual reset, set final outputs incomplete (but assume
             # completed message outputs remain completed).
-            self.outputs.set_incomplete(TASK_OUTPUT_SUCCEEDED)
-            self.outputs.set_incomplete(TASK_OUTPUT_FAILED)
+            self.outputs.set_completion(TASK_OUTPUT_SUCCEEDED, False)
+            self.outputs.set_completion(TASK_OUTPUT_FAILED, False)
         elif status == TASK_STATUS_SUBMIT_RETRYING:
             self.set_prerequisites_all_satisfied()
             self.outputs.remove(TASK_OUTPUT_SUBMITTED)
@@ -347,9 +347,9 @@ class TaskState(object):
         elif status == TASK_STATUS_SUCCEEDED:
             self.set_prerequisites_all_satisfied()
             self.unset_special_outputs()
-            self.outputs.set_completed(TASK_OUTPUT_SUBMITTED)
-            self.outputs.set_completed(TASK_OUTPUT_STARTED)
-            self.outputs.set_completed(TASK_OUTPUT_SUCCEEDED)
+            self.outputs.set_completion(TASK_OUTPUT_SUBMITTED, True)
+            self.outputs.set_completion(TASK_OUTPUT_STARTED, True)
+            self.outputs.set_completion(TASK_OUTPUT_SUCCEEDED, True)
         elif status == TASK_STATUS_RETRYING:
             self.set_prerequisites_all_satisfied()
             self.outputs.set_all_incomplete()
