@@ -476,8 +476,7 @@ class SuiteRuntimeService(object):
             items = [items]
         self.schd.command_queue.put(
             ("poll_tasks", (items,),
-                {"poll_succ": poll_succ in ['True', True]})
-            )
+                {"poll_succ": poll_succ in ['True', True]}))
         return (True, 'Command queued')
 
     @cherrypy.expose
