@@ -85,13 +85,13 @@ def validate(cfig, spec, keys=[]):
             if '__MANY__' not in spec:
                 raise IllegalItemError(keys, key)
             else:
-                # These are arbitrary, but should not contain multiple spaces.
-                if '  ' in key:
-                    raise IllegalItemError(keys, key, 'consecutive spaces')
                 # only accept the item if it's value is of the same type
                 # as that of the __MANY__  item, i.e. dict or not-dict.
                 val_is_dict = isinstance(val, dict)
                 spc_is_dict = isinstance(spec['__MANY__'], dict)
+                if not val_is_dict and '  ' in key:
+                    # Item names shouldn't have consec. spaces (GitHub #2417).
+                    raise IllegalItemError(keys, key, 'consecutive spaces')
                 if (val_is_dict and spc_is_dict) or \
                         (not val_is_dict and not spc_is_dict):
                     speckey = '__MANY__'
