@@ -18,17 +18,10 @@
 
 """cylc [control] poll [OPTIONS] ARGS
 
-Poll jobs of active tasks to verify or update their statuses.
+Poll (query) task jobs to verify and update their statuses.
 
-To poll one or more tasks, "cylc poll REG TASKID"; to poll all active
-tasks: "cylc poll REG".
-
-Note that automatic job polling can used to track task status on task hosts
-that do not allow any communication by HTTPS or ssh back to the suite host
-- see site/user config file documentation.
-
-Polling is also done automatically on restarting a suite, for any tasks that
-were recorded as submitted or running when the suite went down.
+Use "cylc poll REG" to poll all active tasks, or "cylc poll REG TASKID" to poll
+individual tasks or families, or groups of them.
 """
 
 import sys
