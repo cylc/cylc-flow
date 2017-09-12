@@ -71,8 +71,11 @@ class IllegalValueError(ValidationError):
 
 
 class IllegalItemError(ValidationError):
-    def __init__(self, keys, key):
-        self.msg = 'Illegal item: %s' % itemstr(keys, key)
+    def __init__(self, keys, key, msg=None):
+        if msg is not None:
+            self.msg = 'Illegal item (%s): %s' % (msg, itemstr(keys, key))
+        else:
+            self.msg = 'Illegal item: %s' % itemstr(keys, key)
 
 
 def validate(cfig, spec, keys=[]):
@@ -86,6 +89,9 @@ def validate(cfig, spec, keys=[]):
                 # as that of the __MANY__  item, i.e. dict or not-dict.
                 val_is_dict = isinstance(val, dict)
                 spc_is_dict = isinstance(spec['__MANY__'], dict)
+                if not val_is_dict and '  ' in key:
+                    # Item names shouldn't have consec. spaces (GitHub #2417).
+                    raise IllegalItemError(keys, key, 'consecutive spaces')
                 if (val_is_dict and spc_is_dict) or \
                         (not val_is_dict and not spc_is_dict):
                     speckey = '__MANY__'

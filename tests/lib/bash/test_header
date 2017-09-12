@@ -51,7 +51,7 @@
 #         Make sure that each line in FILE_TEST is present in FILE_CONTROL
 #         (stdin if FILE_CONTROL is "-" or missing).
 #     grep_ok PATTERN FILE
-#         Run "grep -q PATTERN FILE".
+#         Run "grep -q -e PATTERN FILE".
 #     count_ok PATTERN FILE COUNT
 #         Test that PATTERN occurs in exactly COUNT lines of FILE.
 #     exists_ok FILE
