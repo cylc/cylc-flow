@@ -765,7 +765,7 @@ conditions; see `cylc conditions`.
                 if itask.state.status in TASK_STATUSES_ACTIVE:
                     itask.state.reset_state(TASK_STATUS_FAILED)
             return len(bad_items)
-        self.task_job_mgr.kill_task_jobs(self.suite, itasks, items is not None)
+        self.task_job_mgr.kill_task_jobs(self.suite, itasks)
         return len(bad_items)
 
     def command_release_suite(self):
