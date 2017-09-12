@@ -11,8 +11,8 @@
 
 [runtime]
     [[t1]]
-        script = cylc task message 'hello'
-        [[[outputs]]] 
+        script = cylc task message "hello"
+        [[[outputs]]]
             out1 = "hello"
     [[t2]]
         script = true

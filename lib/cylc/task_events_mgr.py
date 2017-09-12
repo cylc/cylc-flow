@@ -307,8 +307,8 @@ class TaskEventsManager(object):
         cylc.flags.iflag = True
 
         # Satisfy my output, if possible, and record the result.
-        an_output_was_satisfied = itask.state.outputs.set_completion(
-            message, True)
+        an_output_was_satisfied = itask.state.outputs.set_msg_trg_completion(
+            message=message, is_completed=True)
 
         if message == TASK_OUTPUT_STARTED:
             if self._poll_to_confirm(itask, TASK_STATUS_RUNNING, poll_func):
