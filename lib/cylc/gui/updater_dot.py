@@ -178,10 +178,10 @@ class DotUpdater(threading.Thread):
         self.led_headings = new_headings
 
         # Get a list of tasks belonging to families.
-        if len(self.family_tree) > 0:
+        if self.family_tree:
             all_sub_tasks = reduce(
                 lambda x, y: x + y,
-                (self.family_tree[key] for key in self.family_tree)
+                self.family_tree.values()
             )
         else:
             all_sub_tasks = []

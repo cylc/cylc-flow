@@ -90,10 +90,9 @@ class controlled_option_group(object):
             (entry, _, option) = self.entries[name]
             if entry.get_text():
                 options += ' ' + option + entry.get_text()
-        for name in self.arg_entries:
-            entry = self.arg_entries[name][0]
-            if entry.get_text():
-                options += ' ' + entry.get_text()
+        for entry in self.arg_entries.values():
+            if entry[0].get_text():
+                options += ' ' + entry[0].get_text()
         return options
 
 
@@ -143,8 +142,7 @@ class option_group(object):
             (entry, _, option) = self.entries[name]
             if entry.get_text():
                 options += ' ' + option + entry.get_text()
-        for name in self.arg_entries:
-            entry = self.arg_entries[name][0]
-            if entry.get_text():
-                options += ' ' + entry.get_text()
+        for entry in self.arg_entries.values():
+            if entry[0].get_text():
+                options += ' ' + entry[0].get_text()
         return options
