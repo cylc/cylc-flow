@@ -581,7 +581,7 @@ conditions; see `cylc conditions`.
         return name in self.config.get_task_name_list()
 
     @staticmethod
-    def get_standardised_point_string(self, point_string):
+    def get_standardised_point_string(point_string):
         """Return a standardised point string.
 
         Used to process incoming command arguments.
