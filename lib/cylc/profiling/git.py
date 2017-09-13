@@ -81,7 +81,7 @@ def order_versions_by_date(versions):
 def order_identifiers_by_date(versions):
     """Orders a list of git identifiers by the date of the most recent
     commit."""
-    versions.sort(key=lambda x: get_commit_date(x))
+    versions.sort(key=get_commit_date)
 
 
 def has_changes_to_be_committed():

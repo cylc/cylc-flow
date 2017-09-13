@@ -72,7 +72,7 @@ class TaskOutputs(object):
 
     def all_completed(self):
         """Return True if all all outputs completed."""
-        return all([val[_IS_COMPLETED] for val in self._by_message.values()])
+        return all(val[_IS_COMPLETED] for val in self._by_message.values())
 
     def exists(self, message=None, trigger=None):
         """Return True if message/trigger is identified as an output."""

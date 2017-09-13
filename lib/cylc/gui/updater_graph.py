@@ -240,13 +240,13 @@ class GraphUpdater(threading.Thread):
             self.xdot.widget.zoom_image(1.0, center=True)
             self.normal_fit = False
 
-    def set_live_node_attr(self, node, id, shape=None):
+    def set_live_node_attr(self, node, id_, shape=None):
         # override base graph URL to distinguish live tasks
-        node.attr['URL'] = id
-        if id in self.state_summary:
-            state = self.state_summary[id]['state']
+        node.attr['URL'] = id_
+        if id_ in self.state_summary:
+            state = self.state_summary[id_]['state']
         else:
-            state = self.fam_state_summary[id]['state']
+            state = self.fam_state_summary[id_]['state']
 
         try:
             node.attr['style'] = 'bold,' + self.theme[state]['style']
@@ -325,14 +325,14 @@ class GraphUpdater(threading.Thread):
             if (self.updater.filter_name_string or
                     self.updater.filter_states_excl):
                 for node in self.graphw.nodes():
-                    id = node.get_name()
+                    id_ = node.get_name()
                     # Don't need to guard against special nodes here (yet).
-                    name, point_string = TaskID.split(id)
+                    name, point_string = TaskID.split(id_)
                     if name not in self.all_families:
                         # This node is a task, not a family.
-                        if id in self.updater.filt_task_ids:
+                        if id_ in self.updater.filt_task_ids:
                             nodes_to_remove.add(node)
-                        elif id not in self.updater.kept_task_ids:
+                        elif id_ not in self.updater.kept_task_ids:
                             # A base node - these only appear in the graph.
                             filter_string = self.updater.filter_name_string
                             if (filter_string and
@@ -340,7 +340,7 @@ class GraphUpdater(threading.Thread):
                                     not re.search(filter_string, name)):
                                 # A base node that fails the name filter.
                                 nodes_to_remove.add(node)
-                    elif id in self.fam_state_summary:
+                    elif id_ in self.fam_state_summary:
                         # Remove family nodes if all members filtered out.
                         remove = True
                         for mem in self.descendants[name]:
@@ -350,7 +350,7 @@ class GraphUpdater(threading.Thread):
                                 break
                         if remove:
                             nodes_to_remove.add(node)
-                    elif id in self.updater.full_fam_state_summary:
+                    elif id_ in self.updater.full_fam_state_summary:
                         # An updater-filtered-out family.
                         nodes_to_remove.add(node)
 
@@ -402,19 +402,19 @@ class GraphUpdater(threading.Thread):
             node.attr['fillcolor'] = 'white'
             node.attr['fontcolor'] = '#888888'
 
-        for id in self.state_summary:
+        for id_ in self.state_summary:
             try:
-                node = self.graphw.get_node(id)
+                node = self.graphw.get_node(id_)
             except KeyError:
                 continue
-            self.set_live_node_attr(node, id)
+            self.set_live_node_attr(node, id_)
 
-        for id in self.fam_state_summary:
+        for id_ in self.fam_state_summary:
             try:
-                node = self.graphw.get_node(id)
+                node = self.graphw.get_node(id_)
             except:
                 continue
-            self.set_live_node_attr(node, id)
+            self.set_live_node_attr(node, id_)
 
         self.graphw.graph_attr['rankdir'] = self.orientation
 

@@ -717,7 +717,7 @@ class TaskPool(object):
         LOG.info("Reloading task definitions.")
         # Log tasks orphaned by a reload that were not in the task pool.
         for task in self.orphans:
-            if task not in [tsk.tdef.name for tsk in self.get_all_tasks()]:
+            if task not in (tsk.tdef.name for tsk in self.get_all_tasks()):
                 LOG.warning("Removed task: '%s'" % (task,))
         for itask in self.get_all_tasks():
             if itask.tdef.name in self.orphans:

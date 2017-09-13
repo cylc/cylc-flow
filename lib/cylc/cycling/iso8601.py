@@ -621,7 +621,7 @@ class ISO8601Sequence(SequenceBase):
             for recurrence_iso_point in self.recurrence:
                 prev = curr
                 curr = recurrence_iso_point
-            ret = ISO8601Point(str(recurrence_iso_point))
+            ret = ISO8601Point(str(curr))
             if self.exclusions and ret in self.exclusions:
                 return ISO8601Point(str(prev))
             return ret
@@ -655,8 +655,6 @@ def init_from_cfg(cfg):
         'cycle point num expanded year digits']
     time_zone = cfg['cylc']['cycle point time zone']
     custom_dump_format = cfg['cylc']['cycle point format']
-    initial_cycle_point = cfg['scheduling']['initial cycle point']
-    final_cycle_point = cfg['scheduling']['final cycle point']
     assume_utc = cfg['cylc']['UTC mode']
     cycling_mode = cfg['scheduling']['cycling mode']
 

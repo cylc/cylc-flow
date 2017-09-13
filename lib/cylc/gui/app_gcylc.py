@@ -73,7 +73,7 @@ from cylc.task_state import (
 from cylc.task_state_prop import get_status_prop
 
 
-def run_get_stdout(command, filter=False):
+def run_get_stdout(command, filter_=False):
     try:
         popen = Popen(command, shell=True, stderr=PIPE, stdout=PIPE)
         out = popen.stdout.read()
@@ -98,7 +98,7 @@ def run_get_stdout(command, filter=False):
         res = []
         for line in out.split('\n'):
             line.strip()
-            if filter:
+            if filter_:
                 if line.startswith('!cylc!'):
                     res.append(line[6:])
             else:
@@ -1103,7 +1103,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             "cylc get-suite-config --mark-up" + self.get_remote_run_opts() +
             " " + self.cfg.template_vars_opts + " --one-line" + item1 +
             item2 + " " + self.cfg.suite)
-        res = run_get_stdout(command, filter=True)  # (T/F, ['ct ct'])
+        res = run_get_stdout(command, filter_=True)  # (T/F, ['ct ct'])
 
         if res[0]:
             out1, out2 = res[1][0].split()
@@ -1441,7 +1441,7 @@ been defined for this suite""").inform()
         trigger_now_item.connect(
             'activate', self.trigger_task_now, task_ids)
         trigger_now_item.set_sensitive(
-            all([t_state in TASK_STATUSES_TRIGGERABLE for t_state in t_states])
+            all(t_state in TASK_STATUSES_TRIGGERABLE for t_state in t_states)
         )
 
         if len(task_ids) == 1 and not task_is_family[0]:
@@ -1467,7 +1467,7 @@ been defined for this suite""").inform()
         menu.append(poll_item)
         poll_item.connect('activate', self.poll_task, task_ids)
         poll_item.set_sensitive(
-            all([t_state in TASK_STATUSES_ACTIVE for t_state in t_states])
+            all(t_state in TASK_STATUSES_ACTIVE for t_state in t_states)
         )
 
         menu.append(gtk.SeparatorMenuItem())
@@ -1479,7 +1479,7 @@ been defined for this suite""").inform()
         menu.append(kill_item)
         kill_item.connect('activate', self.kill_task, task_ids)
         kill_item.set_sensitive(
-            all([t_state in TASK_STATUSES_ACTIVE for t_state in t_states])
+            all(t_state in TASK_STATUSES_ACTIVE for t_state in t_states)
         )
 
         # Separator.
@@ -2967,10 +2967,10 @@ to reduce network traffic.""")
             buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
                      gtk.STOCK_OPEN, gtk.RESPONSE_OK)
         )
-        filter = gtk.FileFilter()
-        filter.set_name("Cylc Suite Definition Files")
-        filter.add_pattern(SuiteSrvFilesManager.FILE_BASE_SUITE_RC)
-        dialog.add_filter(filter)
+        filter_ = gtk.FileFilter()
+        filter_.set_name("Cylc Suite Definition Files")
+        filter_.add_pattern(SuiteSrvFilesManager.FILE_BASE_SUITE_RC)
+        dialog.add_filter(filter_)
 
         response = dialog.run()
         if response != gtk.RESPONSE_OK:
@@ -2981,7 +2981,7 @@ to reduce network traffic.""")
 
         dialog.destroy()
 
-        dir = os.path.dirname(res)
+        directory = os.path.dirname(res)
         fil = os.path.basename(res)
 
         if fil != SuiteSrvFilesManager.FILE_BASE_SUITE_RC:
@@ -3001,9 +3001,9 @@ to reduce network traffic.""")
         # return the "real" path that really should be hidden:
         home_real = os.path.realpath(home)
         # so let's restore it to the familiar form (/home/oliver):
-        dir = re.sub('^' + home_real, home, dir)
+        directory = re.sub('^' + home_real, home, directory)
 
-        suiterc = os.path.join(dir, fil)
+        suiterc = os.path.join(directory, fil)
 
         if not os.path.isfile(suiterc):
             info_dialog(
@@ -3027,12 +3027,12 @@ This is what my suite does:..."""
         window = EntryDialog(parent=self.window, flags=0,
                              type=gtk.MESSAGE_QUESTION,
                              buttons=gtk.BUTTONS_OK_CANCEL,
-                             message_format="Suite name for " + dir)
+                             message_format="Suite name for " + directory)
 
         suite = window.run()
         window.destroy()
         if suite:
-            command = "cylc register " + suite + ' ' + dir
+            command = "cylc register " + suite + ' ' + directory
             res = run_get_stdout(command)[0]
             if res:
                 self.reset(suite)
@@ -3076,17 +3076,17 @@ This is what my suite does:..."""
             for ebox in subbox.get_children():
                 box = ebox.get_children()[0]
                 try:
-                    icon, cb = box.get_children()
+                    cb_ = box.get_children()[1]
                 except (ValueError, AttributeError):
                     # ValueError: an empty box to line things up.
                     # AttributeError: the name filter entry box.
                     pass
                 else:
-                    if cb.get_active():
+                    if cb_.get_active():
                         ebox.modify_bg(gtk.STATE_NORMAL, None)
                     else:
                         # Remove '_' (keyboard mnemonics) from state name.
-                        task_states.append(cb.get_label().replace('_', ''))
+                        task_states.append(cb_.get_label().replace('_', ''))
                         ebox.modify_bg(gtk.STATE_NORMAL,
                                        self.filter_highlight_color)
 
@@ -3103,13 +3103,13 @@ This is what my suite does:..."""
             for ebox in subbox.get_children():
                 box = ebox.get_children()[0]
                 try:
-                    icon, cb = box.get_children()
+                    chb = box.get_children()[1]
                 except (ValueError, AttributeError):
                     # ValueError: an empty box to line things up.
                     # AttributeError: the name filter entry box.
                     pass
                 else:
-                    cb.set_active(arg)
+                    chb.set_active(arg)
         self.check_task_filter_buttons()
 
     def reset_filter_entry(self, w):
@@ -3380,7 +3380,7 @@ For more Stop options use the Control menu.""")
             self.filter_states_excl,
             self.popup_filter_dialog,
             self._alter_status_toolbar_menu,
-            lambda: self.run_suite_log(None, type="err"))
+            lambda: self.run_suite_log(None, type_="err"))
         self._set_info_bar()
 
     def popup_uuid_dialog(self, w):
@@ -3503,11 +3503,11 @@ For more Stop options use the Control menu.""")
         self.gcapture_windows.append(foo)
         foo.run()
 
-    def run_suite_log(self, w, type='log'):
+    def run_suite_log(self, w, type_='log'):
         if is_remote(self.cfg.host, self.cfg.owner):
-            if type == 'out':
+            if type_ == 'out':
                 xopts = ' --stdout '
-            elif type == 'err':
+            elif type_ == 'err':
                 xopts = ' --stderr '
             else:
                 xopts = ' '
@@ -3516,14 +3516,14 @@ For more Stop options use the Control menu.""")
                        self.get_remote_run_opts() +
                        xopts + self.cfg.suite)
             foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 800, 400,
-                                   title="%s %s" % (self.cfg.suite, type))
+                                   title="%s %s" % (self.cfg.suite, type_))
             self.gcapture_windows.append(foo)
             foo.run()
             return
 
         task_name_list = []  # TODO
         # assumes suite out, err, and log are in the same location:
-        foo = cylc_logviewer(type, self.cfg.logdir, task_name_list)
+        foo = cylc_logviewer(type_, self.cfg.logdir, task_name_list)
         self.quitters.append(foo)
 
     def run_suite_view(self, w, method):

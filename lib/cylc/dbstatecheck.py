@@ -22,10 +22,9 @@ import sqlite3
 import sys
 from cylc.rundb import CylcSuiteDAO
 from cylc.task_state import (
-    TASK_STATUS_WAITING, TASK_STATUS_EXPIRED,
-    TASK_STATUS_QUEUED, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
-    TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED,
-    TASK_STATUS_FAILED, TASK_STATUS_RETRYING)
+    TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_RETRYING,
+    TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
+    TASK_STATUS_RETRYING)
 
 
 class CylcSuiteDBChecker(object):
@@ -51,7 +50,8 @@ class CylcSuiteDBChecker(object):
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), db_path)
         self.conn = sqlite3.connect(db_path, timeout=10.0)
 
-    def display_maps(self, res):
+    @staticmethod
+    def display_maps(res):
         if not res:
             sys.stderr.write("INFO: No results to display.\n")
         else:
@@ -127,7 +127,8 @@ class CylcSuiteDBChecker(object):
                         return True
             return False
 
-    def validate_mask(self, mask):
+    @staticmethod
+    def validate_mask(mask):
         fieldnames = ["name", "status", "cycle"]  # extract from rundb.py?
         for term in mask.split(","):
             if term.strip(" ") not in fieldnames:

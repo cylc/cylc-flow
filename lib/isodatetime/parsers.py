@@ -214,7 +214,8 @@ class TimePointParser(object):
         expression = "^" + expression + "$"
         return expression
 
-    def parse_time_expression_to_regex(self, expression):
+    @staticmethod
+    def parse_time_expression_to_regex(expression):
         """Construct regular expressions for the time."""
         for expr_regex, substitute, format_, name in (
                 parser_spec.get_time_translate_info()):

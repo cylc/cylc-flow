@@ -80,7 +80,8 @@ class LogAnalyser(object):
         self.ref_loglines = h.readlines()
         h.close()
 
-    def get_triggered(self, lines):
+    @staticmethod
+    def get_triggered(lines):
         res = []
         for line in lines:
             m = re.search('INFO - (\[.* -triggered off .*)$', line)

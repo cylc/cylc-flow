@@ -542,10 +542,10 @@ conditions; see `cylc conditions`.
                 name, args, kwargs = self.command_queue.get(False)
             except Empty:
                 break
-            args_string = ', '.join([str(a) for a in args])
+            args_string = ', '.join(str(a) for a in args)
             cmdstr = name + '(' + args_string
             kwargs_string = ', '.join(
-                [key + '=' + str(value) for key, value in kwargs.items()])
+                ('%s=%s' % (key, value) for key, value in kwargs.items()))
             if kwargs_string and args_string:
                 cmdstr += ', '
             cmdstr += kwargs_string + ')'
@@ -581,7 +581,8 @@ conditions; see `cylc conditions`.
             name = TaskID.split(name_or_id)[0]
         return name in self.config.get_task_name_list()
 
-    def get_standardised_point_string(self, point_string):
+    @staticmethod
+    def get_standardised_point_string(point_string):
         """Return a standardised point string.
 
         Used to process incoming command arguments.
@@ -787,7 +788,8 @@ conditions; see `cylc conditions`.
         LOG.info(
             "The suite will pause when all tasks have passed %s" % point)
 
-    def command_set_verbosity(self, lvl):
+    @staticmethod
+    def command_set_verbosity(lvl):
         """Remove suite verbosity."""
         LOG.logger.setLevel(lvl)
         cylc.flags.debug = (lvl == DEBUG)
