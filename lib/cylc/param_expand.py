@@ -76,18 +76,18 @@ REC_P_GROUP = re.compile(r"<(.*?)>")
 REC_P_OFFS = re.compile(r'(\w+)(?:\s*([-+=]\s*[\w]+))?')
 
 
-def item_in_list(item, lst):
-    """Return True if item is in lst, by string or int comparison.
+def item_in_iterable(item, itt):
+    """Return True if item is in itt, by string or int comparison.
 
     Items may be general strings, or strings of zero-padded integers.
     """
-    if item in lst:
+    if item in itt:
         return True
     try:
         int(item)
     except ValueError:
         return False
-    return int(item) in (int(i) for i in lst)
+    return int(item) in (int(i) for i in itt)
 
 
 class ParamExpandError(Exception):
@@ -161,7 +161,7 @@ class NameExpander(object):
                             nval = val
                         else:
                             nval = val.zfill(len(self.param_cfg[pname][0]))
-                        if not item_in_list(nval, self.param_cfg[pname]):
+                        if not item_in_iterable(nval, self.param_cfg[pname]):
                             raise ParamExpandError(
                                 "ERROR, parameter %s out of range: %s" % (
                                     pname, p_tmpl))
@@ -300,7 +300,7 @@ class GraphExpander(object):
                             if nval != val:
                                 line = re.sub(item,
                                               '%s=%s' % (pname, nval), line)
-                        if not item_in_list(nval, self.param_cfg[pname]):
+                        if not item_in_iterable(nval, self.param_cfg[pname]):
                             raise ParamExpandError(
                                 "ERROR, parameter %s out of range: %s" % (
                                     pname, p_group))
