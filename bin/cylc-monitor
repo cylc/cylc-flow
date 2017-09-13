@@ -100,6 +100,10 @@ The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
             metavar="SECONDS", action="store", default=1,
             dest="update_interval")
 
+    def reset(self, suite, owner, host, port, timeout):
+        self.pclient = SuiteRuntimeServiceClient(
+            suite, owner, host, port, timeout)
+
     def run(self):
         (options, args) = self.parser.parse_args()
         suite = args[0]
@@ -124,9 +128,8 @@ The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
 
         len_header = sum(len(s) for s in TASK_STATUSES_ORDERED)
 
-        self.pclient = SuiteRuntimeServiceClient(
-            suite, options.owner, options.host, options.port,
-            options.comms_timeout)
+        self.reset(suite, options.owner, options.host, options.port,
+                   options.comms_timeout)
 
         is_cont = False
         while True:
@@ -141,6 +144,8 @@ The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
                     self.pclient.get_suite_state_summary())
             except Exception as exc:
                 print >> sys.stderr, "\033[1;37;41mERROR\033[0m", str(exc)
+                self.reset(suite, options.owner, options.host, options.port,
+                           options.comms_timeout)
             else:
                 if not glbl:
                     print >> sys.stderr, (
