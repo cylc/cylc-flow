@@ -15,28 +15,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test for completion of custom outputs in dummy and sim modes.
-# And no duplication dummy outputs (GitHub #2064)
-. "$(dirname "$0")/test_header"
 
-set_test_number 6
+# Run a test suite to check that a seemingly-failed task that is actually still
+# running can be returned to the running state by polling, and other aspects of
+# PR #2396 on GitHub.
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+. $(dirname $0)/test_header
 
-run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate --debug ${SUITE_NAME}
+set_test_number 2
+install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 
-suite_run_fail "${TEST_NAME_BASE}-run-live" \
-    cylc run --reference-test --debug ${SUITE_NAME}
+run_ok ${TEST_NAME_BASE}-validate cylc validate $SUITE_NAME
 
-suite_run_ok "${TEST_NAME_BASE}-run-dummy" \
-    cylc run -m 'dummy' --reference-test --debug ${SUITE_NAME}
+suite_run_ok ${TEST_NAME_BASE}-run cylc run --debug $SUITE_NAME
 
-suite_run_ok "${TEST_NAME_BASE}-run-simulation" \
-    cylc run -m 'simulation' --reference-test --debug ${SUITE_NAME}
-
-LOG=$(cylc log --location $SUITE_NAME)
-count_ok '> meet' ${LOG} 1
-count_ok '> greet' ${LOG} 1
-
-purge_suite "${SUITE_NAME}"
+purge_suite $SUITE_NAME

@@ -66,11 +66,10 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gcylc import gcfg
 from cylc.wallclock import get_current_time_string
 from cylc.task_state import (
-    TASK_STATUSES_ALL, TASK_STATUSES_RESTRICTED,
+    TASK_STATUSES_ALL, TASK_STATUSES_RESTRICTED, TASK_STATUSES_CAN_RESET_TO,
     TASK_STATUSES_WITH_JOB_SCRIPT, TASK_STATUSES_WITH_JOB_LOGS,
-    TASK_STATUSES_TRIGGERABLE, TASK_STATUSES_ACTIVE,
-    TASK_STATUS_WAITING, TASK_STATUS_HELD, TASK_STATUS_READY,
-    TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED)
+    TASK_STATUSES_TRIGGERABLE, TASK_STATUSES_ACTIVE, TASK_STATUS_RUNNING,
+    TASK_STATUS_HELD, TASK_STATUS_FAILED)
 from cylc.task_state_prop import get_status_prop
 
 
@@ -1500,42 +1499,15 @@ been defined for this suite""").inform()
         # graph-view so use connect_right_click_sub_menu instead of
         # item.connect
 
-        reset_ready_item = gtk.ImageMenuItem('"%s"' % TASK_STATUS_READY)
-        reset_img = gtk.image_new_from_stock(
-            gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU)
-        reset_ready_item.set_image(reset_img)
-        reset_menu.append(reset_ready_item)
-        self.connect_right_click_sub_menu(is_graph_view, reset_ready_item,
-                                          self.reset_task_state, task_ids,
-                                          TASK_STATUS_READY)
-
-        reset_waiting_item = gtk.ImageMenuItem('"%s"' % TASK_STATUS_WAITING)
-        reset_img = gtk.image_new_from_stock(
-            gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU)
-        reset_waiting_item.set_image(reset_img)
-        reset_menu.append(reset_waiting_item)
-        self.connect_right_click_sub_menu(is_graph_view, reset_waiting_item,
-                                          self.reset_task_state, task_ids,
-                                          TASK_STATUS_WAITING)
-
-        reset_succeeded_item = gtk.ImageMenuItem(
-            '"%s"' % TASK_STATUS_SUCCEEDED)
-        reset_img = gtk.image_new_from_stock(gtk.STOCK_CONVERT,
-                                             gtk.ICON_SIZE_MENU)
-        reset_succeeded_item.set_image(reset_img)
-        reset_menu.append(reset_succeeded_item)
-        self.connect_right_click_sub_menu(is_graph_view, reset_succeeded_item,
-                                          self.reset_task_state, task_ids,
-                                          TASK_STATUS_SUCCEEDED)
-
-        reset_failed_item = gtk.ImageMenuItem('"%s"' % TASK_STATUS_FAILED)
-        reset_img = gtk.image_new_from_stock(gtk.STOCK_CONVERT,
-                                             gtk.ICON_SIZE_MENU)
-        reset_failed_item.set_image(reset_img)
-        reset_menu.append(reset_failed_item)
-        self.connect_right_click_sub_menu(is_graph_view, reset_failed_item,
-                                          self.reset_task_state, task_ids,
-                                          TASK_STATUS_FAILED)
+        for status in TASK_STATUSES_CAN_RESET_TO:
+            reset_item = gtk.ImageMenuItem('"%s"' % status)
+            reset_img = gtk.image_new_from_stock(
+                gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU)
+            reset_item.set_image(reset_img)
+            reset_menu.append(reset_item)
+            self.connect_right_click_sub_menu(is_graph_view, reset_item,
+                                              self.reset_task_state, task_ids,
+                                              status)
 
         spawn_item = gtk.ImageMenuItem('Force spawn')
         img = gtk.image_new_from_stock(gtk.STOCK_ADD, gtk.ICON_SIZE_MENU)

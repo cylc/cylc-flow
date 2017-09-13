@@ -526,7 +526,8 @@ conditions; see `cylc conditions`.
             if itask.identity in task_id_messages:
                 for priority, message in task_id_messages[itask.identity]:
                     self.task_events_mgr.process_message(
-                        itask, priority, message, is_incoming=True)
+                        itask, priority, message,
+                        self.task_job_mgr.poll_task_jobs, is_incoming=True)
 
     def process_command_queue(self):
         """Process queued commands."""
@@ -743,12 +744,17 @@ conditions; see `cylc conditions`.
         """Release tasks."""
         return self.pool.release_tasks(items)
 
-    def command_poll_tasks(self, items=None):
-        """Poll all tasks or a task/family if options are provided."""
+    def command_poll_tasks(self, items=None, poll_succ=False):
+        """Poll pollable tasks or a task/family if options are provided.
+
+        Don't poll succeeded tasks unless poll_succ is True.
+
+        """
         if self.run_mode == 'simulation':
             return
         itasks, bad_items = self.pool.filter_task_proxies(items)
-        self.task_job_mgr.poll_task_jobs(self.suite, itasks, items is not None)
+        self.task_job_mgr.poll_task_jobs(self.suite, itasks,
+                                         poll_succ=poll_succ)
         return len(bad_items)
 
     def command_kill_tasks(self, items=None):
@@ -759,7 +765,7 @@ conditions; see `cylc conditions`.
                 if itask.state.status in TASK_STATUSES_ACTIVE:
                     itask.state.reset_state(TASK_STATUS_FAILED)
             return len(bad_items)
-        self.task_job_mgr.kill_task_jobs(self.suite, itasks, items is not None)
+        self.task_job_mgr.kill_task_jobs(self.suite, itasks)
         return len(bad_items)
 
     def command_release_suite(self):

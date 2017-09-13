@@ -411,8 +411,8 @@ class TaskPool(object):
                     TASK_STATUS_SUCCEEDED]:
                 try:
                     for output in outputs_str.splitlines():
-                        itask.state.outputs.set_completed(
-                            message=output.split("=", 1)[1])
+                        itask.state.outputs.set_completion(
+                            output.split("=", 1)[1], True)
                 except AttributeError:
                     pass
 
@@ -1089,10 +1089,10 @@ class TaskPool(object):
                         itask.state.outputs.set_all_incomplete()
                         LOG.info("reset all output to incomplete", itask=itask)
                     else:
-                        ret = itask.state.outputs.set_completed(
+                        ret = itask.state.outputs.set_msg_trg_completion(
                             message=output, is_completed=is_completed)
                         if ret is None:
-                            ret = itask.state.outputs.set_completed(
+                            ret = itask.state.outputs.set_msg_trg_completion(
                                 trigger=output, is_completed=is_completed)
                         if ret is None:
                             LOG.warning(

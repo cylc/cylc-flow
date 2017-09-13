@@ -6757,36 +6757,20 @@ Some HPC facilities allow job preemption: the resource manager can kill
 or suspend running low priority jobs in order to make way for high
 priority jobs. The preempted jobs may then be automatically restarted
 by the resource manager, from the same point (if suspended) or requeued
-to run again from the start (if killed). If a running cylc task gets
-suspended or hard-killed
-(\lstinline=kill -9 <PID>= is not a trappable signal so cylc cannot detect
-task failure in this case) and then later restarted, it will just appear
-to cylc as if it takes longer than normal to run. If the job is
-soft-killed the signal will be trapped by the task job script and a
-failure message sent, resulting in cylc putting the task into the failed
-state. When the preempted task restarts and sends its started message
-cylc would normally treat this as an error condition (a dead task is not
-supposed to be sending messages) - a warning will be logged and the task
-will remain in the failed state. However, if you know that preemption is
-possible on your system you can tell cylc that affected tasks should be
-resurrected from the dead, to carry on as normal if progress messages
-start coming in again after a failure:
+to run again from the start (if killed).
 
-\lstset{language=suiterc}
-\begin{lstlisting}
-# ...
-[runtime]
-    [[HPC]]
-        enable resurrection = True
-    [[TaskFoo]]
-        inherit = HPC
-# ...
-\end{lstlisting}
-
-To test this in any suite, manually kill a running task then, after cylc
-registers the task failed, resubmit the killed job manually by
-cutting-and-pasting the original job submission command from the suite
-stdout stream.
+Suspended jobs will poll as still running (their job status file says they
+started running, and they still appear in the resource manager queue).
+Loadleveler jobs that are preempted by kill-and-requeue ("job vacation") are
+automatically returned to the submitted state by Cylc.  This is possible
+because Loadleveler sends the SIGUSR1 signal before SIGKILL for preemption.
+Other batch schedulers just send SIGTERM before SIGKILL as normal, so Cylc
+cannot distinguish a preemption job kill from a normal job kill. After this the
+job will poll as failed (correctly, because it was killed, and the job status
+file records that). To handle this kind of preemption automatically you could
+use a task failed or retry event handler that queries the batch scheduler queue
+(after an appropriate delay if necessary) and then, if the job has been
+requeued, uses \lstinline=cylc reset= to reset the task to the submitted state.
 
 \subsection{Manual Task Triggering and Edit-Run}
 

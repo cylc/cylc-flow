@@ -1,6 +1,5 @@
 [[var_p2]]
     script = echo "RUN: run-var.sh"
-    enable resurrection = False
     env-script = 
     err-script = 
     extra log files = 
@@ -78,7 +77,6 @@
         execution time limit = 
 [[OPS]]
     script = echo "RUN: run-ops.sh"
-    enable resurrection = False
     env-script = 
     err-script = 
     extra log files = 
@@ -155,7 +153,6 @@
         execution time limit = 
 [[ops_s1]]
     script = echo "RUN: run-ops.sh"
-    enable resurrection = False
     env-script = 
     err-script = 
     extra log files = 
@@ -233,7 +230,6 @@
         execution time limit = 
 [[ops_s2]]
     script = echo "RUN: run-ops.sh"
-    enable resurrection = False
     env-script = 
     err-script = 
     extra log files = 
@@ -311,7 +307,6 @@
         execution time limit = 
 [[ops_p1]]
     script = echo "RUN: run-ops.sh"
-    enable resurrection = False
     env-script = 
     err-script = 
     extra log files = 
@@ -389,7 +384,6 @@
         execution time limit = 
 [[ops_p2]]
     script = echo "RUN: run-ops.sh"
-    enable resurrection = False
     env-script = 
     err-script = 
     extra log files = 
@@ -467,7 +461,6 @@
         execution time limit = 
 [[var_p1]]
     script = echo "RUN: run-var.sh"
-    enable resurrection = False
     env-script = 
     err-script = 
     extra log files = 
@@ -545,7 +538,6 @@
         execution time limit = 
 [[VAR]]
     script = echo "RUN: run-var.sh"
-    enable resurrection = False
     env-script = 
     err-script = 
     extra log files = 
@@ -622,7 +614,6 @@
         execution time limit = 
 [[var_s1]]
     script = echo "RUN: run-var.sh"
-    enable resurrection = False
     env-script = 
     err-script = 
     extra log files = 
@@ -699,7 +690,6 @@
         execution polling intervals = 
         execution time limit = 
 [[SERIAL]]
-    enable resurrection = False
     env-script = 
     err-script = 
     script = 
@@ -777,7 +767,6 @@
         execution polling intervals = 
         execution time limit = 
 [[root]]
-    enable resurrection = False
     env-script = 
     err-script = 
     script = 
@@ -854,7 +843,6 @@
         execution polling intervals = 
         execution time limit = 
 [[PARALLEL]]
-    enable resurrection = False
     env-script = 
     err-script = 
     script = 
@@ -933,7 +921,6 @@
         execution time limit = 
 [[var_s2]]
     script = echo "RUN: run-var.sh"
-    enable resurrection = False
     env-script = 
     err-script = 
     extra log files = 
