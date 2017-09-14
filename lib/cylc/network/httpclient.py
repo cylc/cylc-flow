@@ -130,10 +130,15 @@ class SuiteRuntimeServiceClient(object):
             method=self.METHOD_GET,
             prev_size=prev_size, max_lines=max_lines)
 
+    def get_gui_summary(self, full_mode):
+        """Return summary and other info for GUI."""
+        return self._call_server_func(
+            'get_gui_summary', method=self.METHOD_GET, full_mode=full_mode)
+
     def get_suite_state_summary(self):
         """Return the global, task, and family summary data structures."""
         return utf8_enforce(self._call_server_func(
-            'get_state_summary', method=self.METHOD_GET))
+            'get_suite_state_summary', method=self.METHOD_GET))
 
     def get_tasks_by_state(self):
         """Returns a dict containing lists of tasks by state.
@@ -181,8 +186,8 @@ class SuiteRuntimeServiceClient(object):
         pass
 
     def signout(self, *args, **kwargs):
-        """Compat method, does nothing."""
-        pass
+        """Tell server to forget this client."""
+        return self._call_server_func('signout')
 
     def _get_comms_from_suite_contact_file(self):
         """Find out the communications protocol (http/https) from the

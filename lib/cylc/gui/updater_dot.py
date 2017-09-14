@@ -107,14 +107,14 @@ class DotUpdater(threading.Thread):
             return False
 
         self.last_update_time = self.updater.last_update_time
-        self.updater.set_update(False)
+        self.updater.no_update_event.set()
 
         self.state_summary = deepcopy(self.updater.state_summary)
         self.fam_state_summary = deepcopy(self.updater.fam_state_summary)
         self.ancestors_pruned = deepcopy(self.updater.ancestors_pruned)
         self.descendants = deepcopy(self.updater.descendants)
 
-        self.updater.set_update(True)
+        self.updater.no_update_event.clear()
 
         self.point_strings = []
         for id_ in self.state_summary:

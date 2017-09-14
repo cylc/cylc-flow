@@ -158,14 +158,14 @@ class GraphUpdater(threading.Thread):
                 return True
             return False
 
-        self.updater.set_update(False)
+        self.updater.no_update_event.set()
         states_full = deepcopy(self.updater.state_summary)
         fam_states_full = deepcopy(self.updater.fam_state_summary)
         self.ancestors = deepcopy(self.updater.ancestors)
         self.descendants = deepcopy(self.updater.descendants)
         self.all_families = deepcopy(self.updater.all_families)
         self.global_summary = deepcopy(self.updater.global_summary)
-        self.updater.set_update(True)
+        self.updater.no_update_event.clear()
 
         self.first_update = (self.last_update_time is None)
         self.last_update_time = self.updater.last_update_time

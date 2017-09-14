@@ -34,8 +34,8 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.exceptions import CylcError
 import cylc.flags
 from cylc.network import (
-    NO_PASSPHRASE, PRIVILEGE_LEVELS, PRIV_IDENTITY, PRIV_FULL_READ,
-    PRIV_STATE_TOTALS, PRIV_SHUTDOWN, PRIV_FULL_CONTROL)
+    NO_PASSPHRASE, PRIVILEGE_LEVELS, PRIV_IDENTITY, PRIV_DESCRIPTION,
+    PRIV_STATE_TOTALS, PRIV_FULL_READ, PRIV_SHUTDOWN, PRIV_FULL_CONTROL)
 from cylc.suite_host import get_suite_host
 from cylc.suite_logging import ERR, LOG
 from cylc.suite_srv_files_mgr import (
@@ -195,9 +195,14 @@ class SuiteRuntimeService(object):
 
     def __init__(self, schd):
         self.schd = schd
-        self.clients = {}  # {uuid: time-of-last-connect}
-        self._id_start_time = time()  # Start of id requests measurement.
-        self._num_id_requests = 0  # Number of client id requests.
+        # Client sessions, 'time' is time of latest visit.
+        # Some methods may store extra info to the client session dict.
+        # {UUID: {'time': TIME, ...}, ...}
+        self.clients = {}
+        # Start of id requests measurement
+        self._id_start_time = time()
+        # Number of client id requests
+        self._num_id_requests = 0
 
     @cherrypy.expose
     @cherrypy.tools.json_in()
@@ -323,17 +328,25 @@ class SuiteRuntimeService(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def get_state_summary(self):
-        """Return the global, task, and family summary data structures."""
-        self._check_access_priv_and_report(PRIV_FULL_READ)
-        return self.schd.info_get_state_summary()
+    def get_gui_summary(self, full_mode=False):
+        """Return essential info for a "cylc gui" to update itself."""
+        client_info = self._check_access_priv_and_report(PRIV_FULL_READ)
+        full_mode = self._literal_eval('full_mode', full_mode)
+        return self.schd.info_get_gui_summary(client_info, full_mode)
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def get_suite_info(self):
         """Return a dict containing the suite title and description."""
-        self._check_access_priv_and_report('description')
+        self._check_access_priv_and_report(PRIV_DESCRIPTION)
         return self.schd.info_get_suite_info()
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def get_suite_state_summary(self):
+        """Return the global, task, and family summary data structures."""
+        self._check_access_priv_and_report(PRIV_FULL_READ)
+        return self.schd.info_get_suite_state_summary()
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
@@ -645,6 +658,19 @@ class SuiteRuntimeService(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
+    def signout(self):
+        """Forget client, where possible."""
+        uuid = _get_client_info()[4]
+        try:
+            del self.clients[uuid]
+        except KeyError:
+            return False
+        else:
+            LOG.debug(self.LOG_FORGET_TMPL % uuid)
+            return True
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
     def spawn_tasks(self, items):
         """Spawn tasks.
 
@@ -729,6 +755,9 @@ class SuiteRuntimeService(object):
         In debug mode log all requests including task messages. Otherwise log
         all user commands, and just the first info command from each client.
 
+        Return:
+            dict: containing the client session
+
         """
         self._check_access_priv(required_privilege_level)
         command = inspect.currentframe().f_back.f_code.co_name
@@ -739,8 +768,10 @@ class SuiteRuntimeService(object):
         if cylc.flags.debug or uuid not in self.clients and log_info:
             LOG.info(self.__class__.LOG_COMMAND_TMPL % (
                 command, user, host, prog_name, uuid))
-        self.clients[uuid] = time()
+        self.clients.setdefault(uuid, {})
+        self.clients[uuid]['time'] = time()
         self._housekeep()
+        return self.clients[uuid]
 
     def _report_id_requests(self):
         """Report the frequency of identification (scan) requests."""
@@ -759,7 +790,9 @@ class SuiteRuntimeService(object):
                     self._num_id_requests, interval))
             self._id_start_time = now
             self._num_id_requests = 0
-        self.clients[_get_client_info()[4]] = now
+        uuid = _get_client_info()[4]
+        self.clients.setdefault(uuid, {})
+        self.clients[uuid]['time'] = now
         self._housekeep()
 
     def _get_priv_level(self, auth_user):
@@ -770,14 +803,13 @@ class SuiteRuntimeService(object):
 
     def _housekeep(self):
         """Forget inactive clients."""
-        for uuid, dtime in self.clients.copy().items():
-            if time() - dtime > self.CLIENT_FORGET_SEC:
+        for uuid, client_info in self.clients.copy().items():
+            if time() - client_info['time'] > self.CLIENT_FORGET_SEC:
                 try:
                     del self.clients[uuid]
                 except KeyError:
                     pass
-                LOG.debug(
-                    self.__class__.LOG_FORGET_TMPL % uuid)
+                LOG.debug(self.LOG_FORGET_TMPL % uuid)
 
     @staticmethod
     def _literal_eval(key, value, default=None):

@@ -310,9 +310,12 @@ class SuiteLog(object):
         suite logging."""
         return GLOBAL_CFG.get_derived_host_item(suite, 'suite log directory')
 
-    def get_lines(self, log, prev_size, max_lines):
+    def get_lines(self, log, prev_size, max_lines=10):
         """Read content from log file up to max_lines from prev_size."""
-        prev_size = int(prev_size)
+        if prev_size is None:
+            prev_size = 0
+        else:
+            prev_size = int(prev_size)
         path = self.get_log_path(log)
         try:
             size = os.path.getsize(path)

@@ -62,7 +62,7 @@ class SuiteSrvFilesManager(object):
     NO_TITLE = "No title provided"
     PASSPHRASE_CHARSET = ascii_letters + digits
     PASSPHRASE_LEN = 20
-    REC_TITLE = r"^\s*title\s*=\s*(.*)\s*$"
+    REC_TITLE = re.compile(r"^\s*title\s*=\s*(.*)\s*$")
 
     def __init__(self):
         self.local_passphrases = set()

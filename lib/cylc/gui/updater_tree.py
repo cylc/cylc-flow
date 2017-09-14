@@ -104,12 +104,12 @@ class TreeUpdater(threading.Thread):
 
         self.last_update_time = self.updater.last_update_time
 
-        self.updater.set_update(False)
+        self.updater.no_update_event.set()
         self.state_summary = deepcopy(self.updater.state_summary)
         self.fam_state_summary = deepcopy(self.updater.fam_state_summary)
         self.ancestors = deepcopy(self.updater.ancestors)
         self.descendants = deepcopy(self.updater.descendants)
-        self.updater.set_update(True)
+        self.updater.no_update_event.clear()
         return True
 
     def search_level(self, model, iter_, func, data):
@@ -396,7 +396,7 @@ class TreeUpdater(threading.Thread):
                 try:
                     p_data = new_fam_data[point_string]["root"]
                 except KeyError:
-                    p_data = [None] * 7
+                    p_data = [None] * 11
                 p_path = (i,)
                 p_row_id = (point_string, point_string)
                 p_data = list(p_row_id) + p_data

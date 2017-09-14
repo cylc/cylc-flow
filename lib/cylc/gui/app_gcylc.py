@@ -21,6 +21,7 @@
 import os
 import re
 import sys
+from time import time
 import gtk
 import pango
 import gobject
@@ -1001,10 +1002,13 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             self.reset(reg, auth)
 
     def pause_suite(self, bt):
+        """Tell suite to hold (go into "held" status)."""
         self.put_comms_command('hold_suite')
 
     def resume_suite(self, bt):
+        """Tell suite to release "held" status."""
         self.put_comms_command('release_suite')
+        self.reset_connect(None)
 
     def stopsuite_default(self, *args):
         """Try to stop the suite (after currently running tasks...)."""
@@ -3042,6 +3046,7 @@ This is what my suite does:..."""
 
         This is so that the GUI can immediately connect to the started suite.
         """
+        self.updater.next_update_time = time()
         self.updater.connect_schd.stop()
 
     def construct_command_menu(self, menu):

@@ -39,13 +39,13 @@ class StateSummaryMgr(object):
         self.task_summary = {}
         self.global_summary = {}
         self.family_summary = {}
-        self.summary_update_time = None
+        self.update_time = None
         self.state_count_totals = {}
         self.state_count_cycles = {}
 
     def update(self, schd):
         """Update."""
-        self.summary_update_time = time()
+        self.update_time = time()
         global_summary = {}
         family_summary = {}
 
@@ -122,7 +122,7 @@ class StateSummaryMgr(object):
             global_summary['daemon time zone info'] = TIME_ZONE_UTC_INFO
         else:
             global_summary['daemon time zone info'] = TIME_ZONE_LOCAL_INFO
-        global_summary['last_updated'] = self.summary_update_time
+        global_summary['last_updated'] = self.update_time
         global_summary['run_mode'] = schd.run_mode
         global_summary['states'] = all_states
         global_summary['namespace definition order'] = (

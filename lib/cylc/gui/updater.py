@@ -17,10 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Retrieve information about the running or stopped suite for cylc gui."""
 
-import re
-import sys
 import atexit
 import gobject
+import re
+import sys
 import threading
 from time import sleep, time
 import traceback
@@ -29,8 +29,7 @@ import cylc.flags
 from cylc.dump import get_stop_state_summary
 from cylc.gui.cat_state import cat_state
 from cylc.gui.warning_dialog import warning_dialog
-from cylc.network.httpclient import (
-    SuiteRuntimeServiceClient, ClientError, ClientDeniedError)
+from cylc.network.httpclient import SuiteRuntimeServiceClient, ClientError
 from cylc.suite_status import (
     SUITE_STATUS_NOT_CONNECTED, SUITE_STATUS_CONNECTED,
     SUITE_STATUS_INITIALISING, SUITE_STATUS_STOPPED, SUITE_STATUS_STOPPING
@@ -123,6 +122,9 @@ class Updater(threading.Thread):
 
     """Retrieve information about the running or stopped suite."""
 
+    # Maximum and minute update durations (in seconds) for a running suite
+    MAX_UPDATE_DURATION = 15.0
+
     def __init__(self, app):
 
         super(Updater, self).__init__()
@@ -132,12 +134,9 @@ class Updater(threading.Thread):
         self.app_window = app.window
         self.cfg = app.cfg
         self.info_bar = app.info_bar
+        self.full_mode = True
 
-        self.summary_update_time = None
-        self.err_update_time = None
         self.err_log_lines = []
-        self._err_num_log_lines = 10
-        self.err_log_size = 0
         self.task_list = []
 
         self.state_summary = {}
@@ -146,21 +145,20 @@ class Updater(threading.Thread):
         self.full_fam_state_summary = {}
         self.all_families = {}
         self.global_summary = {}
-
-        self.daemon_version = None
-
-        self.stop_summary = None
         self.ancestors = {}
         self.ancestors_pruned = {}
         self.descendants = {}
+        self.stop_summary = None
+
         self.mode = "waiting..."
         self.update_time_str = "waiting..."
+        self.last_update_time = time()
+        self.next_update_time = self.last_update_time
         self.status = SUITE_STATUS_NOT_CONNECTED
         self.is_reloading = False
         self.connected = False
-        self._no_update_event = threading.Event()
+        self.no_update_event = threading.Event()
         self.connect_schd = ConnectSchd()
-        self.last_update_time = time()
         self.ns_defn_order = []
         self.dict_ns_defn_order = {}
         self.restricted_display = app.restricted_display
@@ -169,169 +167,29 @@ class Updater(threading.Thread):
         self.kept_task_ids = set()
         self.filt_task_ids = set()
 
-        self.connect_fail_warned = False
         self.version_mismatch_warned = False
 
         self.client = SuiteRuntimeServiceClient(
             self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port,
             self.cfg.comms_timeout, self.cfg.my_uuid)
         # Report sign-out on exit.
-        atexit.register(self.client.signout)
+        atexit.register(self.signout)
 
-    def reconnect(self):
-        """Try to reconnect to the suite daemon."""
-        if cylc.flags.debug:
-            print >> sys.stderr, "  reconnection...",
+    def signout(self):
+        """Sign out the client, if possible."""
         try:
-            self.daemon_version = self.client.get_info('get_cylc_version')
-        except ClientDeniedError as exc:
-            if cylc.flags.debug:
-                traceback.print_exc()
-            if not self.connect_fail_warned:
-                self.connect_fail_warned = True
-                gobject.idle_add(
-                    self.warn,
-                    "ERROR: %s\n\nIncorrect suite passphrase?" % exc)
-            return
-        except ClientError as exc:
-            # Failed to (re)connect
-            # Suite not running, starting up or just stopped.
-            if cylc.flags.debug:
-                traceback.print_exc()
-            # Use info bar to display stop summary if available.
-            # Otherwise, just display the reconnect count down.
-            if self.cfg.suite and self.stop_summary is None:
-                stop_summary = get_stop_state_summary(
-                    cat_state(self.cfg.suite, self.cfg.host, self.cfg.owner))
-                self.last_update_time = time()
-                if stop_summary != self.stop_summary:
-                    self.stop_summary = stop_summary
-                    self.status = SUITE_STATUS_STOPPED
-                    gobject.idle_add(
-                        self.info_bar.set_stop_summary, stop_summary)
-            try:
-                update_time_str = get_time_string_from_unix_time(
-                    self.stop_summary[0]["last_updated"])
-            except (AttributeError, IndexError, KeyError, TypeError):
-                update_time_str = None
-            gobject.idle_add(
-                self.info_bar.set_update_time,
-                update_time_str, self.info_bar.DISCONNECTED_TEXT)
-            return
-        except Exception as exc:
-            if cylc.flags.debug:
-                traceback.print_exc()
-            if not self.connect_fail_warned:
-                self.connect_fail_warned = True
-                gobject.idle_add(self.warn, str(exc))
-            return
-
-        gobject.idle_add(
-            self.app_window.set_title, "%s - %s:%s" % (
-                self.cfg.suite, self.client.host, self.client.port))
-        if cylc.flags.debug:
-            print >> sys.stderr, "succeeded"
-        # Connected.
-        self.connected = True
-        # This status will be very transient:
-        self.set_status(SUITE_STATUS_CONNECTED)
-        self.connect_fail_warned = False
-
-        self.connect_schd.stop()
-        if cylc.flags.debug:
-            print >> sys.stderr, (
-                "succeeded: daemon v %s" % self.daemon_version)
-        if (self.daemon_version != CYLC_VERSION and
-                not self.version_mismatch_warned):
-            # (warn only once - reconnect() will be called multiple times
-            # during initialisation of daemons at <= 6.4.0 (for which the state
-            # summary object is not connected until all tasks are loaded).
-            gobject.idle_add(
-                self.warn,
-                "Warning: cylc version mismatch!\n\n" +
-                "Suite running with %r.\n" % self.daemon_version +
-                "gcylc at %r.\n" % CYLC_VERSION)
-            self.version_mismatch_warned = True
-        self.stop_summary = None
-        self.err_log_lines = []
-        self.err_log_size = 0
-        self.last_update_time = time()
-
-    def set_update(self, should_update):
-        """Set update flag."""
-        if should_update:
-            self._no_update_event.clear()
-        else:
-            self._no_update_event.set()
-
-    def retrieve_err_log(self):
-        """Retrieve suite err log; return True if it has changed."""
-        new_err_content, new_err_size = (
-            self.client.get_err_content(
-                self.err_log_size, self._err_num_log_lines)
-        )
-        err_log_changed = (new_err_size != self.err_log_size)
-        if err_log_changed:
-            self.err_log_lines += new_err_content.splitlines()
-            self.err_log_lines = self.err_log_lines[-self._err_num_log_lines:]
-            self.err_log_size = new_err_size
-        return err_log_changed
-
-    def get_update_times(self):
-        """Retrieve suite summary update time; return True if changed."""
-        prev_summary_update_time = self.summary_update_time
-        prev_err_update_time = self.err_update_time
-        self.summary_update_time, self.err_update_time = (
-            self.client.get_update_times())
-        if self.summary_update_time is None:
-            self.set_status(SUITE_STATUS_INITIALISING)
-        else:
-            self.summary_update_time = float(self.summary_update_time)
-        if self.err_update_time is not None:
-            self.err_update_time = float(self.err_update_time)
-        return (
-            prev_summary_update_time != self.summary_update_time,
-            prev_err_update_time != self.err_update_time)
-
-    def retrieve_state_summaries(self):
-        """Retrieve suite summary."""
-        glbl, states, fam_states = self.client.get_suite_state_summary()
-
-        (self.ancestors, self.ancestors_pruned, self.descendants,
-            self.all_families) = self.client.get_info(
-                {'function': 'get_first_parent_ancestors'},
-                {'function': 'get_first_parent_ancestors', 'pruned': True},
-                {'function': 'get_first_parent_descendants'},
-                {'function': 'get_all_families'})
-
-        self.mode = glbl['run_mode']
-
-        if self.cfg.use_defn_order:
-            nsdo = glbl['namespace definition order']
-            if self.ns_defn_order != nsdo:
-                self.ns_defn_order = nsdo
-                self.dict_ns_defn_order = dict(zip(nsdo, range(0, len(nsdo))))
-
-        self.update_time_str = get_time_string_from_unix_time(
-            glbl['last_updated'])
-        self.global_summary = glbl
-
-        if self.restricted_display:
-            states = self.filter_for_restricted_display(states)
-
-        self.full_state_summary = states
-        self.full_fam_state_summary = fam_states
-        self.refilter()
-
-        self.status = glbl['status_string']
-        self.is_reloading = glbl['reloading']
+            self.client.signout()
+        except ClientError:
+            pass
 
     def set_stopped(self):
         """Reset data and clients when suite is stopped."""
+        if cylc.flags.debug:
+            sys.stderr.write("%s NOT CONNECTED\n" % get_current_time_string())
+        self.full_mode = True
         self.connected = False
         self.set_status(SUITE_STATUS_STOPPED)
         self.connect_schd.start()
-        self.summary_update_time = None
         self.state_summary = {}
         self.full_state_summary = {}
         self.fam_state_summary = {}
@@ -345,11 +203,32 @@ class Updater(threading.Thread):
 
         if self.cfg.host:
             gobject.idle_add(
-                self.app_window.set_title, "%s - %s" % (
-                    self.cfg.suite, self.cfg.host))
+                self.app_window.set_title,
+                "%s - %s" % (self.cfg.suite, self.cfg.host))
         else:
             gobject.idle_add(
                 self.app_window.set_title, str(self.cfg.suite))
+
+        # Use info bar to display stop summary if available.
+        # Otherwise, just display the reconnect count down.
+        if self.cfg.suite and self.stop_summary is None:
+            stop_summary = get_stop_state_summary(
+                cat_state(self.cfg.suite, self.cfg.host, self.cfg.owner))
+            if stop_summary != self.stop_summary:
+                self.stop_summary = stop_summary
+                self.status = SUITE_STATUS_STOPPED
+                gobject.idle_add(
+                    self.info_bar.set_stop_summary, stop_summary)
+                self.last_update_time = time()
+        try:
+            update_time_str = get_time_string_from_unix_time(
+                self.stop_summary[0]["last_updated"])
+        except (AttributeError, IndexError, KeyError, TypeError):
+            update_time_str = None
+        gobject.idle_add(
+            self.info_bar.set_update_time,
+            update_time_str, self.info_bar.DISCONNECTED_TEXT)
+        gobject.idle_add(self.info_bar.prog_bar_stop)
 
     def set_status(self, status=None):
         """Update status bar."""
@@ -363,60 +242,6 @@ class Updater(threading.Thread):
         """Pop up a warning dialog; call on idle_add!"""
         warning_dialog(msg, self.info_bar.get_toplevel()).warn()
         return False
-
-    def update(self):
-        """Try and connect and do an update."""
-        if self._no_update_event.is_set():
-            return False
-        if not self.connect_schd.ready():
-            self.info_bar.set_update_time(
-                None,
-                get_seconds_as_interval_string(
-                    round(self.connect_schd.dt_next)))
-            return False
-        if cylc.flags.debug:
-            print >> sys.stderr, "UPDATE %s" % get_current_time_string()
-        if not self.connected:
-            # Only reconnect via self.reconnect().
-            self.reconnect()
-        if not self.connected:
-            self.set_stopped()
-            if cylc.flags.debug:
-                print >> sys.stderr, "(not connected)"
-            return False
-        if cylc.flags.debug:
-            print >> sys.stderr, "(connected)"
-        try:
-            summaries_changed, err_log_changed = self.get_update_times()
-            if self.summary_update_time is not None and summaries_changed:
-                self.retrieve_state_summaries()
-            if self.err_update_time is not None and err_log_changed:
-                self.retrieve_err_log()
-        except Exception as exc:
-            if self.status == SUITE_STATUS_STOPPING:
-                # Expected stop: prevent the reconnection warning dialog.
-                self.connect_fail_warned = True
-            if cylc.flags.debug:
-                print >> sys.stderr, "  CONNECTION LOST", str(exc)
-            self.set_stopped()
-            if self.info_bar.prog_bar_active():
-                gobject.idle_add(self.info_bar.prog_bar_stop)
-            self.reconnect()
-            return False
-        else:
-            # Got suite data.
-            self.version_mismatch_warned = False
-            status_str = None
-            if self.status in [SUITE_STATUS_INITIALISING,
-                               SUITE_STATUS_STOPPING]:
-                status_str = self.status
-            elif self.is_reloading:
-                status_str = "reloading"
-            if status_str is None:
-                gobject.idle_add(self.info_bar.prog_bar_stop)
-            elif self.info_bar.prog_bar_can_start():
-                gobject.idle_add(self.info_bar.prog_bar_start, status_str)
-            return summaries_changed or err_log_changed
 
     def filter_by_name(self, states):
         """Filter by name string."""
@@ -433,18 +258,14 @@ class Updater(threading.Thread):
 
     def filter_families(self, families):
         """Remove family summaries if no members are present."""
-        # TODO - IS THERE ANY NEED TO DO THIS?
         fam_states = {}
         for fam_id, summary in families.items():
             name, point_string = TaskID.split(fam_id)
-            remove = True
             for mem in self.descendants[name]:
                 mem_id = TaskID.get(mem, point_string)
                 if mem_id in self.state_summary:
-                    remove = False
+                    fam_states[fam_id] = summary
                     break
-            if not remove:
-                fam_states[fam_id] = summary
         return fam_states
 
     @classmethod
@@ -471,19 +292,10 @@ class Updater(threading.Thread):
             self.state_summary = self.full_state_summary
             self.fam_state_summary = self.full_fam_state_summary
             self.filt_task_ids = set()
-            self.kept_task_ids = set(self.state_summary.keys())
+            self.kept_task_ids = set(self.state_summary)
         self.task_list = list(
             set(t['name'] for t in self.state_summary.values()))
         self.task_list.sort()
-
-    def update_globals(self):
-        """Update common widgets."""
-        self.info_bar.set_state(self.global_summary.get("states", []))
-        self.info_bar.set_mode(self.mode)
-        self.info_bar.set_update_time(self.update_time_str)
-        self.info_bar.set_status(self.status)
-        self.info_bar.set_log("\n".join(self.err_log_lines), self.err_log_size)
-        return False
 
     def stop(self):
         """Tell self.run to exit."""
@@ -492,10 +304,129 @@ class Updater(threading.Thread):
     def run(self):
         """Start the thread."""
         while not self.quit:
-            if self.update():
-                self.last_update_time = time()
-                gobject.idle_add(self.update_globals)
+            if self.no_update_event.is_set():
+                pass
+            elif not self.connect_schd.ready():
+                self.info_bar.set_update_time(
+                    None,
+                    get_seconds_as_interval_string(
+                        round(self.connect_schd.dt_next)))
+            elif time() > self.next_update_time:
+                self.update()
             sleep(1)
+
+    def update(self):
+        """Call suite for an update."""
+        try:
+            gui_summary = self.client.get_gui_summary(full_mode=self.full_mode)
+        except ClientError:
+            # Bad credential, suite not running, starting up or just stopped?
+            if cylc.flags.debug:
+                traceback.print_exc()
+            self.set_stopped()
+            return
+        # OK
+        if cylc.flags.debug:
+            sys.stderr.write("%s CONNECTED - suite cylc version=%s\n" % (
+                get_current_time_string(), gui_summary['cylc_version']))
+        if gui_summary['full_mode']:
+            gobject.idle_add(
+                self.app_window.set_title, "%s - %s:%s" % (
+                    self.cfg.suite, self.client.host, self.client.port))
+            # Connected.
+            self.full_mode = False
+            self.connected = True
+            # This status will be very transient:
+            self.set_status(SUITE_STATUS_CONNECTED)
+
+            self.connect_schd.stop()
+            if gui_summary['cylc_version'] != CYLC_VERSION:
+                gobject.idle_add(self.warn, (
+                    "Warning: cylc version mismatch!\n\n"
+                    "Suite running with %r.\ngcylc at %r.\n"
+                ) % (gui_summary['cylc_version'], CYLC_VERSION))
+            self.stop_summary = None
+            self.err_log_lines[:] = []
+
+        is_updated = False
+        if 'err_content' in gui_summary and 'err_size' in gui_summary:
+            self._update_err_log(gui_summary)
+            is_updated = True
+        if 'ancestors' in gui_summary:
+            self.ancestors = gui_summary['ancestors']
+            is_updated = True
+        if 'ancestors_pruned' in gui_summary:
+            self.ancestors_pruned = gui_summary['ancestors_pruned']
+            is_updated = True
+        if 'descendants' in gui_summary:
+            self.descendants = gui_summary['descendants']
+            self.all_families = list(self.descendants)
+            is_updated = True
+        if 'summary' in gui_summary and gui_summary['summary'][0]:
+            self._update_state_summary(gui_summary)
+            is_updated = True
+        if self.status in [SUITE_STATUS_INITIALISING, SUITE_STATUS_STOPPING]:
+            gobject.idle_add(self.info_bar.prog_bar_start, self.status)
+        elif self.is_reloading:
+            gobject.idle_add(self.info_bar.prog_bar_start, "reloading")
+        else:
+            gobject.idle_add(self.info_bar.prog_bar_stop)
+        # Adjust next update duration:
+        # If there is an update, readjust to 1.0s or the mean duration of the
+        # last 10 main loop. If there is no update, it should be less frequent
+        # than the last update duration.  The maximum duration is
+        # MAX_UPDATE_DURATION seconds.  This should allow the GUI to update
+        # more while the main loop is turning around events quickly, but less
+        # frequently during quiet time or when the main loop is busy.
+        if is_updated:
+            update_duration = 1.0
+            self.last_update_time = time()
+        else:
+            update_duration = time() - self.last_update_time
+        if ('mean_main_loop_duration' in gui_summary and
+                gui_summary['mean_main_loop_duration'] > update_duration):
+            update_duration = gui_summary['mean_main_loop_duration']
+        if update_duration > self.MAX_UPDATE_DURATION:
+            update_duration = self.MAX_UPDATE_DURATION
+        self.next_update_time = time() + update_duration
+
+    def _update_err_log(self, gui_summary):
+        """Update suite err log if necessary."""
+        self.err_log_lines += gui_summary['err_content'].splitlines()
+        self.err_log_lines = self.err_log_lines[-10:]
+        gobject.idle_add(
+            self.info_bar.set_log, "\n".join(self.err_log_lines),
+            gui_summary['err_size'])
+
+    def _update_state_summary(self, gui_summary):
+        """Retrieve suite summary."""
+        glbl, states, fam_states = gui_summary['summary']
+        self.mode = glbl['run_mode']
+
+        if self.cfg.use_defn_order:
+            nsdo = glbl['namespace definition order']
+            if self.ns_defn_order != nsdo:
+                self.ns_defn_order = nsdo
+                self.dict_ns_defn_order = dict(zip(nsdo, range(0, len(nsdo))))
+
+        self.update_time_str = get_time_string_from_unix_time(
+            glbl['last_updated'])
+        self.global_summary = glbl
+
+        if self.restricted_display:
+            states = self.filter_for_restricted_display(states)
+
+        self.full_state_summary = states
+        self.full_fam_state_summary = fam_states
+        self.refilter()
+
+        self.status = glbl['status_string']
+        self.is_reloading = glbl['reloading']
+        gobject.idle_add(
+            self.info_bar.set_state, self.global_summary.get("states", []))
+        gobject.idle_add(self.info_bar.set_mode, self.mode)
+        gobject.idle_add(self.info_bar.set_update_time, self.update_time_str)
+        gobject.idle_add(self.info_bar.set_status, self.status)
 
     @staticmethod
     def get_id_summary(
