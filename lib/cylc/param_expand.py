@@ -214,17 +214,25 @@ class NameExpander(object):
             return name_in
         # List of parameter names used in this name: ['m', 'n']
         used_param_names = [i.strip() for i in p_tmpl[1:-1].split(',')]
+        used_param = []
         for p_name in used_param_names:
             msg = None
             if '=' in p_name:
-                msg = 'values'
+                inherit_param = p_name.split('=')
+                for key in param_values:
+                    if(key == inherit_param[0]):
+                        used_param.append(key)
+                        if (inherit_param[1] != param_values[key]):
+                            msg = 'values'
             elif '-' in p_name or '+' in p_name:
                 msg = 'offsets'
+            else:
+                used_param.append(p_name)
             if msg is not None:
                 raise ParamExpandError("ERROR, parameter %s not supported"
                                        " here: %s" % (msg, origin))
         str_template = name
-        for pname in used_param_names:
+        for pname in used_param:
             str_template += self.param_tmpl_cfg[pname]
         return str_template % param_values
 
