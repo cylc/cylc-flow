@@ -56,7 +56,10 @@ class Tailer(threading.Thread):
         self.filename = filename
         self.cmd_tmpl = cmd_tmpl
         self.pollable = pollable
-        self.filters = [re.compile(f) for f in filters]
+        if filters:
+            self.filters = [re.compile(f) for f in filters]
+        else:
+            self.filters = None
 
         self.logbuffer = logview.get_buffer()
         self.quit = False
