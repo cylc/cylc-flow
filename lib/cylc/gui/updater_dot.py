@@ -16,18 +16,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from copy import deepcopy
 import gobject
 import gtk
 import threading
 from time import sleep
 
-from cylc.task_id import TaskID
-from cylc.gui.dot_maker import DotMaker
-from copy import deepcopy
-
 import warnings
 warnings.filterwarnings('ignore', '^.*was not found when attempting to ' +
                         'remove it', Warning)
+
+from cylc.task_id import TaskID
+from cylc.gui.dot_maker import DotMaker
+from cylc.gui.util import get_id_summary
 
 
 class DotUpdater(threading.Thread):
@@ -88,15 +89,17 @@ class DotUpdater(threading.Thread):
         tip.enable()
         tip.set_tip(widget, tip_text)
 
-    def clear_list(self):
+    def clear_gui(self):
+        """Clear the LED tree store."""
         self.led_treestore.clear()
         # gtk idle functions must return false or will be called multiple times
         return False
 
     def update(self):
+        """Update data using data from self.updater."""
         if not self.updater.connected:
             if not self.cleared:
-                gobject.idle_add(self.clear_list)
+                gobject.idle_add(self.clear_gui)
                 self.cleared = True
             return False
         self.cleared = False
@@ -596,5 +599,3 @@ class DotUpdater(threading.Thread):
             if self.update() or self.action_required:
                 gobject.idle_add(self.update_gui)
             sleep(0.2)
-        else:
-            pass

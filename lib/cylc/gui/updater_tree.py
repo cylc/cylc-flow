@@ -17,22 +17,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from copy import deepcopy
-import time
 import gobject
 import itertools
 import threading
-from time import sleep
+from time import time, sleep
 
-from cylc.task_id import TaskID
 from cylc.gui.dot_maker import DotMaker
-from cylc.wallclock import get_time_string_from_unix_time
+from cylc.gui.util import get_id_summary
+from cylc.task_id import TaskID
 from cylc.task_state import TASK_STATUSES_AUTO_EXPAND
-
-
-def _time_trim(time_value):
-    if time_value is not None:
-        return time_value.rsplit(".", 1)[0]
-    return time_value
+from cylc.wallclock import get_time_string_from_unix_time
 
 
 class TreeUpdater(threading.Thread):
@@ -84,15 +78,17 @@ class TreeUpdater(threading.Thread):
         dotm = DotMaker(theme, size=dot_size)
         self.dots = dotm.get_dots()
 
-    def clear_tree(self):
+    def clear_gui(self):
+        """Clear the tree view tree store."""
         self.ttreestore.clear()
         # gtk idle functions must return false or will be called multiple times
         return False
 
     def update(self):
+        """Update data using data from self.updater."""
         if not self.updater.connected:
             if not self.cleared:
-                gobject.idle_add(self.clear_tree)
+                gobject.idle_add(self.clear_gui)
                 self.cleared = True
             return False
         self.cleared = False
@@ -159,7 +155,7 @@ class TreeUpdater(threading.Thread):
             self._prev_tooltip_task_id = task_id
             tooltip.set_text(None)
             return False
-        text = self.updater.get_id_summary(
+        text = get_id_summary(
             task_id, self.state_summary, self.fam_state_summary,
             self.descendants)
         if text == task_id:
@@ -247,7 +243,7 @@ class TreeUpdater(threading.Thread):
                             isinstance(meant, float) or
                             isinstance(meant, int))):
                         tetc_unix = tstart + meant
-                        tnow = time.time()
+                        tnow = time()
                         if tnow > tetc_unix:
                             t_info['progress'] = 100
                         else:
@@ -688,5 +684,3 @@ class TreeUpdater(threading.Thread):
             if self.update():
                 gobject.idle_add(self.update_gui)
             sleep(0.2)
-        else:
-            pass

@@ -16,18 +16,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.graphing import CGraphPlain
-from cylc.mkdir_p import mkdir_p
-from cylc.task_id import TaskID
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
-from cylc.gui.warning_dialog import warning_dialog
 from copy import deepcopy
 import gobject
 import os
 import re
-import sys
 import threading
 from time import sleep
+
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
+import cylc.flags
+from cylc.graphing import CGraphPlain
+from cylc.gui.warning_dialog import warning_dialog
+from cylc.gui.util import get_id_summary
+from cylc.mkdir_p import mkdir_p
+from cylc.network.httpclient import ClientError
+from cylc.task_id import TaskID
 from cylc.task_state import TASK_STATUS_RUNAHEAD
 
 
@@ -131,7 +134,8 @@ class GraphUpdater(threading.Thread):
                 ).warn)
                 self.write_dot_frames = False
 
-    def clear_graph(self):
+    def clear_gui(self):
+        """Clear the graph GUI."""
         self.prev_graph_id = ()
         self.graphw = CGraphPlain(self.cfg.suite)
         self.normal_fit = True
@@ -140,14 +144,16 @@ class GraphUpdater(threading.Thread):
         return False
 
     def get_summary(self, task_id):
-        return self.updater.get_id_summary(
+        """Return some state information about a task or family."""
+        return get_id_summary(
             task_id, self.state_summary, self.fam_state_summary,
             self.descendants)
 
     def update(self):
+        """Update data using data from self.updater."""
         if not self.updater.connected:
             if not self.cleared:
-                gobject.idle_add(self.clear_graph)
+                gobject.idle_add(self.clear_gui)
                 self.cleared = True
             return False
         self.cleared = False
@@ -218,18 +224,11 @@ class GraphUpdater(threading.Thread):
     def run(self):
         while not self.quit:
             if self.update():
-                if self.global_summary:
-                    needed_no_redraw = self.update_graph()
-                # DO NOT USE gobject.idle_add() HERE - IT DRASTICALLY
-                # AFFECTS PERFORMANCE FOR LARGE SUITES? appears to
-                # be unnecessary anyway (due to xdot internals?)
-                    self.update_xdot(no_zoom=needed_no_redraw)
+                self.update_gui()
             sleep(0.2)
-        else:
-            pass
 
     def update_xdot(self, no_zoom=False):
-        self.xdot.set_dotcode(self.graphw.to_string(), no_zoom=True)
+        self.xdot.set_dotcode(self.graphw.to_string(), no_zoom=no_zoom)
         if self.first_update:
             self.xdot.widget.zoom_to_fit()
             self.first_update = False
@@ -262,11 +261,13 @@ class GraphUpdater(threading.Thread):
         if shape:
             node.attr['shape'] = shape
 
-    def update_graph(self):
+    def update_gui(self):
         # TODO - check edges against resolved ones
         # (adding new ones, and nodes, if necessary)
-
         self.action_required = False
+        if not self.global_summary:
+            return
+
         self.oldest_point_string = (
             self.global_summary['oldest cycle point string'])
         self.newest_point_string = (
@@ -302,8 +303,9 @@ class GraphUpdater(threading.Thread):
                 group_all=self.group_all,
                 ungroup_all=self.ungroup_all
             )
-        except Exception as exc:
-            print >> sys.stderr, str(exc)
+        except ClientError as exc:
+            if cylc.flags.debug:
+                traceback.print_exc()
             return False
 
         self.have_leaves_and_feet = True
@@ -311,9 +313,7 @@ class GraphUpdater(threading.Thread):
         gr_edges = [tuple(edge) for edge in gr_edges]
 
         current_id = self.get_graph_id(gr_edges)
-        needs_redraw = current_id != self.prev_graph_id
-
-        if needs_redraw:
+        if current_id != self.prev_graph_id:
             self.graphw = CGraphPlain(
                 self.cfg.suite, suite_polling_tasks)
             self.graphw.add_edges(
@@ -425,8 +425,8 @@ class GraphUpdater(threading.Thread):
             self.graphw.write(arg)
             self.graph_frame_count += 1
 
+        self.update_xdot(no_zoom=(current_id == self.prev_graph_id))
         self.prev_graph_id = current_id
-        return not needs_redraw
 
     def get_graph_id(self, edges):
         """If any of these quantities change, the graph should be redrawn."""

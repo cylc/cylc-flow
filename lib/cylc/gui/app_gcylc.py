@@ -53,6 +53,7 @@ from cylc.gui.updater import Updater
 from cylc.gui.util import (
     get_icon, get_image_dir, get_logo, EntryTempText,
     EntryDialog, setup_icons, set_exception_hook_dialog)
+from cylc.network.httpclient import ClientError
 from cylc.suite_status import SUITE_STATUS_STOPPED_WITH
 from cylc.task_id import TaskID
 from cylc.task_state_prop import extract_group_state
@@ -1635,8 +1636,11 @@ been defined for this suite""").inform()
     def popup_requisites(self, w, e, task_id, *args):
         """Show prerequisites of task_id in a pop up window."""
         name = TaskID.split(task_id)[0]
-        results, bad_items = self.get_comms_info(
-            'get_task_requisites', items=[task_id])
+        try:
+            results, bad_items = self.updater.client.get_info(
+                'get_task_requisites', items=[task_id])
+        except ClientError as exc:
+            warning_dialog(str(exc), self.window).warn()
         if not results or task_id in bad_items:
             warning_dialog(
                 "Task proxy " + task_id +
@@ -2891,14 +2895,14 @@ to reduce network traffic.""")
         self.menu_bar.append(help_menu_root)
 
     def describe_suite(self, w):
-        # Show suite title and description.
-        if self.updater.connected:
+        """Show suite title and description."""
+        try:
             # Interrogate the suite daemon.
-            info = self.get_comms_info('get_suite_info')
+            info = self.updater.client.get_info('get_suite_info')
             descr = '\n'.join(
                 "%s: %s" % (key, val) for key, val in info.items())
             info_dialog(descr, self.window).inform()
-        else:
+        except ClientError:
             # Parse the suite definition.
             command = ("cylc get-suite-config -i title -i description " +
                        self.get_remote_run_opts() + " " + self.cfg.suite)
@@ -3445,12 +3449,6 @@ For more Stop options use the Control menu.""")
         else:
             if not success:
                 warning_dialog(msg, self.window).warn()
-
-    def get_comms_info(self, command, **kwargs):
-        try:
-            return self.updater.client.get_info(command, **kwargs)
-        except Exception as exc:
-            warning_dialog(str(exc), self.window).warn()
 
     def run_suite_validate(self, w):
         command = ("cylc validate -v " + self.get_remote_run_opts() +
