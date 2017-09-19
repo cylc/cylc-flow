@@ -177,9 +177,7 @@ def _coerce_parameter_list(value, keys, _):
             not str(item).isdigit() for item in items):
         return items
     else:
-        items = [int(item) for item in items]
-        n_digits = len(str(max(items)))
-        return [str(item).zfill(n_digits) for item in sorted(items)]
+        return [int(item) for item in items]
 
 coercers['cycletime'] = _coerce_cycletime
 coercers['cycletime_format'] = _coerce_cycletime_format

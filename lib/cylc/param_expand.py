@@ -15,13 +15,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-import re
-import unittest
-from copy import copy
-from task_id import TaskID
-from parsec.OrderedDict import OrderedDictWithDefaults
-
 """Parameter expansion for runtime namespace names and graph strings.
 
 Uses recursion to achieve nested looping over any number of parameters.  In its
@@ -64,6 +57,12 @@ foo_m1=>bar_m1_n1
 foo_m1=>bar_m1_n2
 #------------------------------------------------------------------------------
 """
+
+import re
+import unittest
+
+from cylc.task_id import TaskID
+from parsec.OrderedDict import OrderedDictWithDefaults
 
 # To split runtime heading name lists.
 REC_NAMES = re.compile(r'(?:[^,<]|\<[^>]*\>)+')
@@ -154,14 +153,11 @@ class NameExpander(object):
                     elif sval.startswith('='):
                         # Check that specific parameter values exist.
                         val = sval[1:].strip()
-                        # Pad integer values here.
                         try:
-                            int(val)
+                            nval = int(val)
                         except ValueError:
                             nval = val
-                        else:
-                            nval = val.zfill(len(self.param_cfg[pname][0]))
-                        if not item_in_iterable(nval, self.param_cfg[pname]):
+                        if not item_in_iterable(val, self.param_cfg[pname]):
                             raise ParamExpandError(
                                 "ERROR, parameter %s out of range: %s" % (
                                     pname, p_tmpl))
@@ -196,7 +192,7 @@ class NameExpander(object):
             spec_vals = {}
         if not param_list:
             # Inner loop.
-            current_values = copy(spec_vals)
+            current_values = dict(spec_vals)
             try:
                 results.append((str_tmpl % current_values, current_values))
             except KeyError as exc:
@@ -235,6 +231,9 @@ class NameExpander(object):
 
 class GraphExpander(object):
     """Handle parameter expansion of graph string lines."""
+
+    _REMOVE = -32768
+    _REMOVE_REC = re.compile(r'^.*' + str(_REMOVE) + r'.*?=>\s*?')
 
     def __init__(self, parameters):
         """Initialize the parameterized task name expander.
@@ -296,7 +295,8 @@ class GraphExpander(object):
                         except ValueError:
                             nval = val
                         else:
-                            nval = val.zfill(len(self.param_cfg[pname][0]))
+                            nval = val.zfill(
+                                len(str(self.param_cfg[pname][0])))
                             if nval != val:
                                 line = re.sub(item,
                                               '%s=%s' % (pname, nval), line)
@@ -332,14 +332,18 @@ class GraphExpander(object):
                         param_values[pname] = values[pname]
                     elif offs.startswith('='):
                         # Specific value.
-                        param_values[pname] = offs[1:]
+                        try:
+                            # Template may require an integer
+                            param_values[pname] = int(offs[1:])
+                        except ValueError:
+                            param_values[pname] = offs[1:]
                     else:
                         # Index offset.
                         plist = all_params[pname]
                         cur_idx = plist.index(values[pname])
                         off_idx = cur_idx + int(offs)
                         if off_idx < 0:
-                            offval = "--<REMOVE>--"
+                            offval = self._REMOVE
                         else:
                             offval = plist[off_idx]
                         param_values[pname] = offval
@@ -352,7 +356,7 @@ class GraphExpander(object):
                                            'defined.' % str(exc.args[0]))
                 line = re.sub('<' + p_group + '>', repl, line)
                 # Remove out-of-range nodes to first arrow.
-                line = re.sub('^.*--<REMOVE>--.*?=>\s*?', '', line)
+                line = self._REMOVE_REC.sub('', line)
             line_set.add(line)
         else:
             # Recurse through index ranges.
@@ -367,9 +371,9 @@ class TestParamExpand(unittest.TestCase):
 
     def setUp(self):
         """Create some parameters and templates for use in tests."""
-        ivals = [str(i) for i in range(2)]
-        jvals = [str(j) for j in range(3)]
-        kvals = [str(k) for k in range(2)]
+        ivals = [i for i in range(2)]
+        jvals = [j for j in range(3)]
+        kvals = [k for k in range(2)]
         params_map = {'i': ivals, 'j': jvals, 'k': kvals}
         templates = {'i': '_i%(i)s',
                      'j': '_j%(j)s',
@@ -381,56 +385,56 @@ class TestParamExpand(unittest.TestCase):
         """Test name expansion and returned value for a single parameter."""
         self.assertEqual(
             self.name_expander.expand('foo<j>'),
-            [('foo_j0', {'j': '0'}),
-             ('foo_j1', {'j': '1'}),
-             ('foo_j2', {'j': '2'})]
+            [('foo_j0', {'j': 0}),
+             ('foo_j1', {'j': 1}),
+             ('foo_j2', {'j': 2})]
         )
 
     def test_name_two_params(self):
         """Test name expansion and returned values for two parameters."""
         self.assertEqual(
             self.name_expander.expand('foo<i,j>'),
-            [('foo_i0_j0', {'i': '0', 'j': '0'}),
-             ('foo_i0_j1', {'i': '0', 'j': '1'}),
-             ('foo_i0_j2', {'i': '0', 'j': '2'}),
-             ('foo_i1_j0', {'i': '1', 'j': '0'}),
-             ('foo_i1_j1', {'i': '1', 'j': '1'}),
-             ('foo_i1_j2', {'i': '1', 'j': '2'})]
+            [('foo_i0_j0', {'i': 0, 'j': 0}),
+             ('foo_i0_j1', {'i': 0, 'j': 1}),
+             ('foo_i0_j2', {'i': 0, 'j': 2}),
+             ('foo_i1_j0', {'i': 1, 'j': 0}),
+             ('foo_i1_j1', {'i': 1, 'j': 1}),
+             ('foo_i1_j2', {'i': 1, 'j': 2})]
         )
 
     def test_name_two_names(self):
         """Test name expansion for two names."""
         self.assertEqual(
             self.name_expander.expand('foo<i>, bar<j>'),
-            [('foo_i0', {'i': '0'}),
-             ('foo_i1', {'i': '1'}),
-             ('bar_j0', {'j': '0'}),
-             ('bar_j1', {'j': '1'}),
-             ('bar_j2', {'j': '2'})]
+            [('foo_i0', {'i': 0}),
+             ('foo_i1', {'i': 1}),
+             ('bar_j0', {'j': 0}),
+             ('bar_j1', {'j': 1}),
+             ('bar_j2', {'j': 2})]
         )
 
     def test_name_specific_val_1(self):
         """Test singling out a specific value, in name expansion."""
         self.assertEqual(
             self.name_expander.expand('foo<i=0>'),
-            [('foo_i0', {'i': '0'})]
+            [('foo_i0', {'i': 0})]
         )
 
     def test_name_specific_val_2(self):
         """Test specific value in the first parameter of a pair."""
         self.assertEqual(
             self.name_expander.expand('foo<i=0,j>'),
-            [('foo_i0_j0', {'i': '0', 'j': '0'}),
-             ('foo_i0_j1', {'i': '0', 'j': '1'}),
-             ('foo_i0_j2', {'i': '0', 'j': '2'})]
+            [('foo_i0_j0', {'i': 0, 'j': 0}),
+             ('foo_i0_j1', {'i': 0, 'j': 1}),
+             ('foo_i0_j2', {'i': 0, 'j': 2})]
         )
 
     def test_name_specific_val_3(self):
         """Test specific value in the second parameter of a pair."""
         self.assertEqual(
             self.name_expander.expand('foo<i,j=1>'),
-            [('foo_i0_j1', {'i': '0', 'j': '1'}),
-             ('foo_i1_j1', {'i': '1', 'j': '1'})]
+            [('foo_i0_j1', {'i': 0, 'j': 1}),
+             ('foo_i1_j1', {'i': 1, 'j': 1})]
         )
 
     def test_name_fail_bare_value(self):
@@ -458,14 +462,14 @@ class TestParamExpand(unittest.TestCase):
         """Test expansion of two names, with one and two parameters."""
         self.assertEqual(
             self.name_expander.expand('foo<i>, bar<i,j>'),
-            [('foo_i0', {'i': '0'}),
-             ('foo_i1', {'i': '1'}),
-             ('bar_i0_j0', {'i': '0', 'j': '0'}),
-             ('bar_i0_j1', {'i': '0', 'j': '1'}),
-             ('bar_i0_j2', {'i': '0', 'j': '2'}),
-             ('bar_i1_j0', {'i': '1', 'j': '0'}),
-             ('bar_i1_j1', {'i': '1', 'j': '1'}),
-             ('bar_i1_j2', {'i': '1', 'j': '2'})]
+            [('foo_i0', {'i': 0}),
+             ('foo_i1', {'i': 1}),
+             ('bar_i0_j0', {'i': 0, 'j': 0}),
+             ('bar_i0_j1', {'i': 0, 'j': 1}),
+             ('bar_i0_j2', {'i': 0, 'j': 2}),
+             ('bar_i1_j0', {'i': 1, 'j': 0}),
+             ('bar_i1_j1', {'i': 1, 'j': 1}),
+             ('bar_i1_j2', {'i': 1, 'j': 2})]
         )
 
     def test_graph_expand_1(self):
