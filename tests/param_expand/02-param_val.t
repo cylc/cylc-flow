@@ -79,7 +79,7 @@ __SUITE__
 
 run_fail "${TEST_NAME_BASE}-3" cylc validate "suite.rc"
 cmp_ok "${TEST_NAME_BASE}-3.stderr" <<'__ERR__'
-ERROR, parameter values not supported here: inherit = foo<i=2, j=fish>
+ERROR, bad parameter value '2' in 'inherit = foo<i=2, j=fish>'
 __ERR__
 
 exit

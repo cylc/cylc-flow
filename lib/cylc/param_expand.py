@@ -206,31 +206,28 @@ class NameExpander(object):
     def replace_params(self, name_in, param_values, origin):
         """Replace parameters in name_in with values in param_values.
 
-        Note this is "expansion" for specific values, not all values.
+        This is "expansion" for specific values, not for all values.
         """
         name, p_tmpl = REC_P_NAME.match(name_in).groups()[:2]
         if not p_tmpl:
             # name_in is not parameterized.
             return name_in
-        # List of parameter names used in this name: ['m', 'n']
-        used_param_names = [i.strip() for i in p_tmpl[1:-1].split(',')]
+        used_params = [i.strip() for i in p_tmpl[1:-1].split(',')]
         used_param = []
-        for p_name in used_param_names:
-            msg = None
-            if '=' in p_name:
-                inherit_param = p_name.split('=')
-                for key in param_values:
-                    if(key == inherit_param[0]):
-                        used_param.append(key)
-                        if (inherit_param[1] != param_values[key]):
-                            msg = 'values'
-            elif '-' in p_name or '+' in p_name:
-                msg = 'offsets'
+        for p_x in used_params:
+            if '=' in p_x:
+                # 'name=value' is legal if value is in param_values.
+                pname, pval = p_x.split('=')
+                if (pname, pval) in param_values.items():
+                    used_param.append(pname)
+                else:
+                    raise ParamExpandError(
+                        "ERROR, bad parameter value '%s' in '%s'" % (pval, origin))
+            elif '-' in p_x or '+' in p_x:
+                raise ParamExpandError(
+                    "ERROR, parameter offsets aren't legal in '%s'" % origin)
             else:
-                used_param.append(p_name)
-            if msg is not None:
-                raise ParamExpandError("ERROR, parameter %s not supported"
-                                       " here: %s" % (msg, origin))
+                used_param.append(p_x)
         str_template = name
         for pname in used_param:
             str_template += self.param_tmpl_cfg[pname]
