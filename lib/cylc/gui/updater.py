@@ -39,83 +39,8 @@ from cylc.task_state import TASK_STATUSES_RESTRICTED
 from cylc.version import CYLC_VERSION
 from cylc.wallclock import (
     get_current_time_string,
-    get_seconds_as_interval_string,
-    get_time_string_from_unix_time
-)
-
-
-class ConnectSchd(object):
-    """Keep information on whether the updater should poll or not.
-
-    Attributes:
-    .t_init - start time
-    .t_prev - previous poll time
-    .dt_next - estimated duration before the next poll
-    """
-
-    DELAYS = {
-        (None, 5.0): 1.0,
-        (5.0, 60.0): 5.0,
-        (60.0, 300.0): 60.0,
-        (300.0, None): 300.0}
-
-    def __init__(self, start=False):
-        """Return a new instance.
-
-        If start is False, the updater can always poll.
-
-        If start is True, the updater should only poll if the ready method
-        returns True.
-
-        """
-
-        self.t_init = None
-        self.t_prev = None
-        self.dt_next = 0.0
-        if start:
-            self.start()
-
-    def ready(self):
-        """Return True if a poll is ready."""
-        self.dt_next = 0.0
-        if self.t_init is None:
-            return True
-        if self.t_prev is None:
-            self.t_prev = time()
-            return True
-        dt_init = time() - self.t_init
-        dt_prev = time() - self.t_prev
-        for key, delay in self.DELAYS.items():
-            lower, upper = key
-            if ((lower is None or dt_init >= lower) and
-                    (upper is None or dt_init < upper)):
-                if dt_prev > delay:
-                    self.t_prev = time()
-                    return True
-                else:
-                    self.dt_next = round(delay - dt_prev, 2)
-                    if cylc.flags.debug:
-                        print >> sys.stderr, (
-                            '  ConnectSchd not ready, next poll in PT%sS' %
-                            self.dt_next)
-                    return False
-        return True
-
-    def start(self):
-        """Start keeping track of latest poll, if not already started."""
-        if self.t_init is None:
-            if cylc.flags.debug:
-                print >> sys.stderr, '  ConnectSchd start'
-            self.t_init = time()
-            self.t_prev = None
-
-    def stop(self):
-        """Stop keeping track of latest poll."""
-        if self.t_init is not None or self.t_prev is not None:
-            if cylc.flags.debug:
-                print >> sys.stderr, '  ConnectSchd stop'
-        self.t_init = None
-        self.t_prev = None
+    get_seconds_as_interval_string as duration2str,
+    get_time_string_from_unix_time as time2str)
 
 
 class Updater(threading.Thread):
@@ -124,6 +49,7 @@ class Updater(threading.Thread):
 
     # Maximum and minute update durations (in seconds) for a running suite
     MAX_UPDATE_DURATION = 15.0
+    MIN_UPDATE_DURATION = 1.0
 
     def __init__(self, app):
 
@@ -153,12 +79,11 @@ class Updater(threading.Thread):
         self.mode = "waiting..."
         self.update_time_str = "waiting..."
         self.last_update_time = time()
-        self.next_update_time = self.last_update_time
+        self.update_duration = self.MIN_UPDATE_DURATION
         self.status = SUITE_STATUS_NOT_CONNECTED
         self.is_reloading = False
         self.connected = False
         self.no_update_event = threading.Event()
-        self.connect_schd = ConnectSchd()
         self.ns_defn_order = []
         self.dict_ns_defn_order = {}
         self.restricted_display = app.restricted_display
@@ -189,7 +114,9 @@ class Updater(threading.Thread):
         self.full_mode = True
         self.connected = False
         self.set_status(SUITE_STATUS_STOPPED)
-        self.connect_schd.start()
+        self.update_duration += 1.0
+        if self.update_duration > self.MAX_UPDATE_DURATION:
+            self.update_duration = self.MAX_UPDATE_DURATION
         self.state_summary = {}
         self.full_state_summary = {}
         self.fam_state_summary = {}
@@ -221,8 +148,7 @@ class Updater(threading.Thread):
                     self.info_bar.set_stop_summary, stop_summary)
                 self.last_update_time = time()
         try:
-            update_time_str = get_time_string_from_unix_time(
-                self.stop_summary[0]["last_updated"])
+            update_time_str = time2str(self.stop_summary[0]["last_updated"])
         except (AttributeError, IndexError, KeyError, TypeError):
             update_time_str = None
         gobject.idle_add(
@@ -303,16 +229,18 @@ class Updater(threading.Thread):
 
     def run(self):
         """Start the thread."""
+        prev_update_time = time()
         while not self.quit:
+            now = time()
             if self.no_update_event.is_set():
                 pass
-            elif not self.connect_schd.ready():
-                self.info_bar.set_update_time(
-                    None,
-                    get_seconds_as_interval_string(
-                        round(self.connect_schd.dt_next)))
-            elif time() > self.next_update_time:
+            elif now > prev_update_time + self.update_duration:
                 self.update()
+                prev_update_time = time()
+            else:
+                duration = round(prev_update_time + self.update_duration - now)
+                if self.update_duration >= self.MAX_UPDATE_DURATION:
+                    self.info_bar.set_update_time(None, duration2str(duration))
             sleep(1)
 
     def update(self):
@@ -329,6 +257,7 @@ class Updater(threading.Thread):
         if cylc.flags.debug:
             sys.stderr.write("%s CONNECTED - suite cylc version=%s\n" % (
                 get_current_time_string(), gui_summary['cylc_version']))
+        self.info_bar.set_update_time(None, None)
         if gui_summary['full_mode']:
             gobject.idle_add(
                 self.app_window.set_title, "%s - %s:%s" % (
@@ -339,7 +268,6 @@ class Updater(threading.Thread):
             # This status will be very transient:
             self.set_status(SUITE_STATUS_CONNECTED)
 
-            self.connect_schd.stop()
             if gui_summary['cylc_version'] != CYLC_VERSION:
                 gobject.idle_add(self.warn, (
                     "Warning: cylc version mismatch!\n\n"
@@ -379,16 +307,15 @@ class Updater(threading.Thread):
         # more while the main loop is turning around events quickly, but less
         # frequently during quiet time or when the main loop is busy.
         if is_updated:
-            update_duration = 1.0
+            self.update_duration = self.MIN_UPDATE_DURATION
             self.last_update_time = time()
-        else:
-            update_duration = time() - self.last_update_time
+        elif time() - self.last_update_time > self.update_duration:
+            self.update_duration += 1.0
         if ('mean_main_loop_duration' in gui_summary and
-                gui_summary['mean_main_loop_duration'] > update_duration):
-            update_duration = gui_summary['mean_main_loop_duration']
-        if update_duration > self.MAX_UPDATE_DURATION:
-            update_duration = self.MAX_UPDATE_DURATION
-        self.next_update_time = time() + update_duration
+                gui_summary['mean_main_loop_duration'] > self.update_duration):
+            self.update_duration = gui_summary['mean_main_loop_duration']
+        if self.update_duration > self.MAX_UPDATE_DURATION:
+            self.update_duration = self.MAX_UPDATE_DURATION
 
     def _update_err_log(self, gui_summary):
         """Update suite err log if necessary."""
@@ -409,8 +336,7 @@ class Updater(threading.Thread):
                 self.ns_defn_order = nsdo
                 self.dict_ns_defn_order = dict(zip(nsdo, range(0, len(nsdo))))
 
-        self.update_time_str = get_time_string_from_unix_time(
-            glbl['last_updated'])
+        self.update_time_str = time2str(glbl['last_updated'])
         self.global_summary = glbl
 
         if self.restricted_display:

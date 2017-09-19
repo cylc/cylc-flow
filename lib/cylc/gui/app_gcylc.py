@@ -239,7 +239,7 @@ class InfoBar(gtk.VBox):
             self.reconnect_duration_widget,
             r"""Duration to next reconnect attempt
 
-Use (Re-)connect button to reconnect immediately.""")
+Use *Connect Now* button to reconnect immediately.""")
 
         hbox = gtk.HBox(spacing=0)
         self.pack_start(hbox, False, False)
@@ -430,7 +430,7 @@ Use (Re-)connect button to reconnect immediately.""")
         else:
             gobject.idle_add(
                 self.reconnect_duration_widget.set_text,
-                " (reconnect in %s) " % next_update_dt_str)
+                " (next connect: %s) " % next_update_dt_str)
 
     def _set_tooltip(self, widget, text):
         tooltip = gtk.Tooltips()
@@ -1009,7 +1009,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
     def resume_suite(self, bt):
         """Tell suite to release "held" status."""
         self.put_comms_command('release_suite')
-        self.reset_connect(None)
+        self.reset_connect()
 
     def stopsuite_default(self, *args):
         """Try to stop the suite (after currently running tasks...)."""
@@ -1196,7 +1196,7 @@ been defined for this suite""").inform()
         except OSError:
             warning_dialog('Error: failed to start ' + self.cfg.suite,
                            self.window).warn()
-        self.reset_connect(None)
+        self.reset_connect()
 
     def about(self, bt):
         about = gtk.AboutDialog()
@@ -2456,15 +2456,15 @@ shown here in the state they were in at the time of triggering.''')
 
         self.view_menu.append(gtk.SeparatorMenuItem())
 
-        self.reset_connect_menuitem = gtk.ImageMenuItem("(_Re-)connect")
+        self.reset_connect_menuitem = gtk.ImageMenuItem("_Connect Now")
         img = gtk.image_new_from_stock(gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU)
         self.reset_connect_menuitem.set_image(img)
         self._set_tooltip(
             self.reset_connect_menuitem,
-            """(Re-)connect to suite immediately.
+            """Connect to suite immediately.
 
-If gcylc is not connected to a running suite
-it tries to reconnect after increasingly long delays,
+If gcylc cannot connect to the suite,
+it retries after increasingly long delays,
 to reduce network traffic.""")
         self.view_menu.append(self.reset_connect_menuitem)
         self.reset_connect_menuitem.connect('activate', self.reset_connect)
@@ -3046,12 +3046,8 @@ This is what my suite does:..."""
                 self.reset(suite)
 
     def reset_connect(self, _=None):
-        """Force the polling schedule to go back to short intervals.
-
-        This is so that the GUI can immediately connect to the started suite.
-        """
-        self.updater.next_update_time = time()
-        self.updater.connect_schd.stop()
+        """Force a suite API call as soon as possible."""
+        self.updater.update_duration = self.updater.MIN_UPDATE_DURATION
 
     def construct_command_menu(self, menu):
         """Constructs the top bar help menu in gcylc that lists all
@@ -3289,15 +3285,15 @@ This is what my suite does:..."""
         self.reset_connect_toolbutton = gtk.ToolButton(
             icon_widget=gtk.image_new_from_stock(
                 gtk.STOCK_REFRESH, gtk.ICON_SIZE_SMALL_TOOLBAR))
-        self.reset_connect_toolbutton.set_label("(Re-)connect")
+        self.reset_connect_toolbutton.set_label("Connect Now")
         tooltip = gtk.Tooltips()
         tooltip.enable()
         tooltip.set_tip(
             self.reset_connect_toolbutton,
-            """(Re-)connect to suite immediately.
+            """Connect to suite immediately.
 
-If gcylc is not connected to a running suite
-it tries to reconnect after increasingly long delays,
+If gcylc cannot connect to the suite
+it retries after increasingly long delays,
 to reduce network traffic.""")
         self.reset_connect_toolbutton.connect("clicked", self.reset_connect)
         self.tool_bars[0].insert(self.reset_connect_toolbutton, 0)

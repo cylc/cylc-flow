@@ -169,6 +169,7 @@ def get_id_summary(id_, task_state_summary, fam_state_summary, id_family_map):
         return id_
     return text
 
+
 def get_logo():
     """Return the gcylc logo as a gtk.gdk.Pixbuf."""
     logo_path = os.path.join(get_image_dir(), "logo.png")
