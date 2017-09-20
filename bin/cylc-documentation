@@ -47,7 +47,6 @@ from optparse import OptionParser
 import cylc.flags
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.run_get_stdout import run_get_stdout
-from cylc.suite_host import get_hostname, get_user
 
 
 def main():
@@ -73,13 +72,13 @@ def main():
         "--user",
         help="Other user account name. This results in "
              "command reinvocation on the remote account.",
-        metavar="USER", default=get_user(), action="store", dest="owner")
+        metavar="USER", action="store", dest="owner")
 
     parser.add_option(
         "--host",
         help="Other host name. This results in "
              "command reinvocation on the remote account.",
-        metavar="HOST", action="store", default=get_hostname(), dest="host")
+        metavar="HOST", action="store", dest="host")
 
     parser.add_option(
         "--debug",

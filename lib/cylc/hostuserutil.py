@@ -77,9 +77,8 @@ class HostUtil(object):
 
     def __init__(self, expire):
         self.expire_time = time() + expire
-        self._host_name = None
-        self._host_ip_address = None
-        self._host_name_pref = None
+        self._host = None  # preferred name of localhost
+        self._host_exs = {}  # host: socket.gethostbyname_ex(host), ...
         self._remote_hosts = {}  # host: is_remote, ...
         self.user_pwent = None
         self.remote_users = {}
@@ -112,18 +111,13 @@ class HostUtil(object):
         """Return internal IP address of target."""
         return socket.gethostbyname(target)
 
-    def get_hostname(self):
-        """Return the fully qualified domain name for current host."""
-        if self._host_name is None:
-            self._host_name = socket.getfqdn()
-        return self._host_name
-
-    def _get_host_ip_address(self):
-        """Return the external IP address for the current host."""
-        if self._host_ip_address is None:
-            self._host_ip_address = self.get_local_ip_address(
-                self._get_identification_cfg('target'))
-        return self._host_ip_address
+    def _get_host_info(self, target=None):
+        """Return the extended info of the current host."""
+        if target not in self._host_exs:
+            if target is None:
+                target = socket.getfqdn()
+            self._host_exs[target] = socket.gethostbyname_ex(target)
+        return self._host_exs[target]
 
     @staticmethod
     def _get_identification_cfg(key):
@@ -131,7 +125,7 @@ class HostUtil(object):
         from cylc.cfgspec.globalcfg import GLOBAL_CFG
         return GLOBAL_CFG.get(['suite host self-identification', key])
 
-    def get_suite_host(self):
+    def get_host(self):
         """Return the preferred identifier for the suite (or current) host.
 
         As specified by the "suite host self-identification" settings in the
@@ -139,16 +133,20 @@ class HostUtil(object):
         identification by task jobs.
 
         """
-        if self._host_name_pref is None:
+        if self._host is None:
             hardwired = self._get_identification_cfg('host')
             method = self._get_identification_cfg('method')
             if method == 'address':
-                self._host_name_pref = self._get_host_ip_address()
+                self._host = self._get_host_info()[2][0]
             elif method == 'hardwired' and hardwired:
-                self._host_name_pref = hardwired
+                self._host = hardwired
             else:  # if method == 'name':
-                self._host_name_pref = self.get_hostname()
-        return self._host_name_pref
+                self._host = self._get_host_info()[0]
+        return self._host
+
+    def get_fqdn_by_host(self, target):
+        """Return the preferred fqdn name of the target host."""
+        return self._get_host_info(target)[0]
 
     def get_user(self):
         """Return name of current user."""
@@ -178,15 +176,12 @@ class HostUtil(object):
                 self._remote_hosts[name] = False
             else:
                 try:
-                    ipa = socket.gethostbyname(name)
+                    host_info = self._get_host_info(name)
                 except IOError:
                     self._remote_hosts[name] = True
                 else:
-                    host_ip_address = self._get_host_ip_address()
-                    # local IP address of the suite host (e.g. 127.0.0.1)
-                    my_ip_address = socket.gethostbyname(self.get_hostname())
                     self._remote_hosts[name] = (
-                        ipa not in [host_ip_address, my_ip_address])
+                        host_info != self._get_host_info())
         return self._remote_hosts[name]
 
     def is_remote_user(self, name):
@@ -210,9 +205,9 @@ class HostUtil(object):
         return self.is_remote_host(host) or self.is_remote_user(owner)
 
 
-def get_hostname():
-    """Shorthand for HostUtil.get_inst().get_hostname()."""
-    return HostUtil.get_inst().get_hostname()
+def get_host_ip_by_name(target):
+    """Shorthand for HostUtil.get_inst().get_host_ip_by_name(target)."""
+    return HostUtil.get_inst().get_host_ip_by_name(target)
 
 
 def get_local_ip_address(target):
@@ -220,14 +215,14 @@ def get_local_ip_address(target):
     return HostUtil.get_inst().get_local_ip_address(target)
 
 
-def get_host_ip_by_name(target):
-    """Shorthand for HostUtil.get_inst().get_host_ip_by_name(target)."""
-    return HostUtil.get_inst().get_host_ip_by_name(target)
+def get_host():
+    """Shorthand for HostUtil.get_inst().get_host()."""
+    return HostUtil.get_inst().get_host()
 
 
-def get_suite_host():
-    """Shorthand for HostUtil.get_inst().get_suite_host()."""
-    return HostUtil.get_inst().get_suite_host()
+def get_fqdn_by_host(target):
+    """Shorthand for HostUtil.get_inst().get_fqdn_by_host(target)."""
+    return HostUtil.get_inst().get_fqdn_by_host(target)
 
 
 def get_user():
@@ -266,7 +261,6 @@ if __name__ == "__main__":
             self.assertFalse(is_remote_host(None))
             self.assertFalse(is_remote_host('localhost'))
             self.assertFalse(is_remote_host(os.getenv('HOSTNAME')))
-            self.assertFalse(is_remote_host(get_hostname()))
-            self.assertFalse(is_remote_host(get_suite_host()))
+            self.assertFalse(is_remote_host(get_host()))
 
     unittest.main()

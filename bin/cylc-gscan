@@ -43,7 +43,7 @@ gtk.settings_get_default().set_long_property(
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.gui.gscan import ScanApp
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.suite_host import get_user
+from cylc.hostuserutil import get_user
 
 
 def main():

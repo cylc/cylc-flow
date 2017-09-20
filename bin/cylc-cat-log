@@ -42,7 +42,7 @@ import traceback
 
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.rundb import CylcSuiteDAO
-from cylc.suite_host import is_remote
+from cylc.hostuserutil import is_remote
 from cylc.suite_logging import get_logs
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.task_id import TaskID

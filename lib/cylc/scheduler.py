@@ -46,7 +46,7 @@ from cylc.state_summary_mgr import StateSummaryMgr
 from cylc.suite_db_mgr import SuiteDatabaseManager
 from cylc.suite_events import (
     SuiteEventContext, SuiteEventError, SuiteEventHandler)
-from cylc.suite_host import get_suite_host, get_user
+from cylc.hostuserutil import get_host, get_user
 from cylc.suite_logging import SuiteLog, ERR, LOG
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
@@ -149,7 +149,7 @@ class Scheduler(object):
         self.run_mode = self.options.run_mode
 
         self.owner = get_user()
-        self.host = get_suite_host()
+        self.host = get_host()
         self.port = None
 
         self.is_stalled = False

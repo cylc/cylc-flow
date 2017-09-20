@@ -28,7 +28,7 @@ import warnings
 from cylc.exceptions import CylcError
 import cylc.flags
 from cylc.network import NO_PASSPHRASE
-from cylc.suite_host import get_suite_host, get_user
+from cylc.hostuserutil import get_host, get_fqdn_by_host, get_user
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
 from cylc.unicode_util import utf8_enforce
@@ -251,8 +251,10 @@ class SuiteRuntimeServiceClient(object):
         except (IOError, ValueError, SuiteServiceFileError):
             raise ClientInfoError(self.suite)
         host = self.host
-        if host == 'localhost':
-            host = get_suite_host()
+        if host.split('.')[0] == 'localhost':
+            host = get_host()
+        elif host and '.' not in host:  # Not IP and no domain
+            host = get_fqdn_by_host(host)
 
         http_request_items = []
         try:
@@ -480,7 +482,7 @@ class SuiteRuntimeServiceClient(object):
                 CYLC_VERSION, self.prog_name, self.my_uuid
             )
         )
-        auth_info = "%s@%s" % (get_user(), get_suite_host())
+        auth_info = "%s@%s" % (get_user(), get_host())
         return {"User-Agent": user_agent_string,
                 "From": auth_info}
 
@@ -494,7 +496,7 @@ class SuiteRuntimeServiceClient(object):
             return
         if self.port:
             # In case the contact file is corrupted, user can specify the port.
-            self.host = get_suite_host()
+            self.host = get_host()
             return
         data = self.srv_files_mgr.load_contact_file(
             self.suite, self.owner, self.host)

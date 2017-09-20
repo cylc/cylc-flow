@@ -29,7 +29,7 @@ from subprocess import Popen, PIPE, STDOUT
 from uuid import uuid4
 from isodatetime.parsers import TimePointParser
 
-from cylc.suite_host import is_remote, is_remote_host, is_remote_user
+from cylc.hostuserutil import is_remote, is_remote_host, is_remote_user
 from cylc.gui.dbchooser import dbchooser
 from cylc.gui.combo_logviewer import ComboLogViewer
 from cylc.gui.warning_dialog import warning_dialog, info_dialog

@@ -44,13 +44,13 @@ if "--use-ssh" in sys.argv[1:]:
 
 import re
 
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.hostuserutil import get_user
 from cylc.network.port_scan import scan_many
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
-from cylc.suite_host import get_user
 from cylc.suite_status import (
     KEY_DESCRIPTION, KEY_META, KEY_NAME, KEY_OWNER, KEY_STATES,
-    KEY_TASKS_BY_STATE, KEY_TITLE, KEY_UPDATE_TIME)
+    KEY_TITLE, KEY_UPDATE_TIME)
 from cylc.task_state import TASK_STATUSES_ORDERED
 from cylc.task_state_prop import get_status_prop
 

@@ -29,7 +29,7 @@ from cylc.network.httpclient import (
     SuiteRuntimeServiceClient, ClientError, ClientTimeout)
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
-from cylc.suite_host import is_remote_host, get_host_ip_by_name
+from cylc.hostuserutil import is_remote_host, get_host_ip_by_name
 
 CONNECT_TIMEOUT = 5.0
 INACTIVITY_TIMEOUT = 10.0

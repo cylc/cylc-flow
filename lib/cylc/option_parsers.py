@@ -20,7 +20,6 @@
 from optparse import OptionParser, OptionConflictError
 import os
 import cylc.flags
-from cylc.suite_host import get_user
 
 
 class CylcOptionParser(OptionParser):
@@ -115,8 +114,7 @@ Arguments:"""
                 "Other user account name. This results in "
                 "command reinvocation on the remote account."
             ),
-            metavar="USER", default=get_user(),
-            action="store", dest="owner")
+            metavar="USER", action="store", dest="owner")
         self.add_std_option(
             "--host",
             help="Other host name. This results in "

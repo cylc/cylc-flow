@@ -28,7 +28,7 @@ from parsec.validate import validator as vdr
 from parsec.validate import coercers
 from parsec import ParsecError
 from parsec.upgrade import upgrader, converter
-from cylc.suite_host import is_remote_user
+from cylc.hostuserutil import is_remote_user
 from cylc.envvar import expandvars
 from cylc.mkdir_p import mkdir_p
 import cylc.flags

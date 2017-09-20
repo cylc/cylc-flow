@@ -28,7 +28,7 @@ from cylc.gui.util import get_icon, EntryTempText, EntryDialog
 from cylc.network.port_scan import scan_many
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.run_get_stdout import run_get_stdout
-from cylc.suite_host import is_remote_host, is_remote_user
+from cylc.hostuserutil import is_remote_host, is_remote_user
 
 
 class db_updater(threading.Thread):

@@ -43,7 +43,7 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
 from cylc.mp_pool import SuiteProcContext
 from cylc.suite_logging import ERR, LOG
-from cylc.suite_host import get_suite_host, get_user
+from cylc.hostuserutil import get_host, get_user
 from cylc.task_action_timer import TaskActionTimer
 from cylc.task_message import TaskMessage
 from cylc.task_state import (
@@ -799,7 +799,7 @@ class TaskEventsManager(object):
                 self._get_events_conf(  # mail_from
                     itask,
                     "mail from",
-                    "notifications@" + get_suite_host(),
+                    "notifications@" + get_host(),
                 ),
                 self._get_events_conf(itask, "mail to", get_user()),  # mail_to
                 self._get_events_conf(itask, "mail smtp"),  # mail_smtp

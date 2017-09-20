@@ -19,5 +19,5 @@
 . "$(dirname "$0")/test_header"
 set_test_number 1
 
-run_ok "${TEST_NAME_BASE}" python -m 'cylc.suite_host'
+run_ok "${TEST_NAME_BASE}" python -m 'cylc.hostuserutil'
 exit
