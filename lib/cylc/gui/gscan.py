@@ -18,7 +18,6 @@
 """Implement "cylc gscan"."""
 
 import re
-from socket import gethostbyname_ex
 import threading
 from time import sleep, time
 
@@ -762,10 +761,9 @@ class ScanAppUpdater(threading.Thread):
                  name_pattern=None, owner_pattern=None):
         self.window = window
         if hosts:
-            self.hosts = [gethostbyname_ex(host)[0] for host in hosts]
+            self.hosts = hosts
         elif owner_pattern is not None:
-            hosts = GLOBAL_CFG.get(["suite host scanning", "hosts"])
-            self.hosts = [gethostbyname_ex(host)[0] for host in hosts]
+            self.hosts = GLOBAL_CFG.get(["suite host scanning", "hosts"])
         else:
             self.hosts = []
         self.comms_timeout = comms_timeout
@@ -901,7 +899,7 @@ class ScanAppUpdater(threading.Thread):
     def set_hosts(self, new_hosts):
         """Set new hosts."""
         del self.hosts[:]
-        self.hosts.extend(gethostbyname_ex(host)[0] for host in new_hosts)
+        self.hosts.extend(new_hosts)
         self.set_update_listing()
 
     def update(self):
