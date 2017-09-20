@@ -48,6 +48,9 @@ from cylc.network.port_scan import scan_all
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.suite_host import get_user
+from cylc.suite_status import (
+    KEY_DESCRIPTION, KEY_META, KEY_NAME, KEY_OWNER, KEY_STATES,
+    KEY_TASKS_BY_STATE, KEY_TITLE, KEY_UPDATE_TIME)
 from cylc.task_state import TASK_STATUSES_ORDERED
 from cylc.task_state_prop import get_status_prop
 
@@ -205,8 +208,8 @@ def main():
 
     skip_one = True
     for host, port, suite_identity in scan_all(args, options.comms_timeout):
-        name = suite_identity['name']
-        owner = suite_identity['owner']
+        name = suite_identity[KEY_NAME]
+        owner = suite_identity[KEY_OWNER]
 
         if not (re.match(pattern_name, name) and
                 re.match(pattern_owner, owner)):
@@ -218,24 +221,26 @@ def main():
 
         if options.raw_format:
             print "%s|%s|%s|port|%s" % (name, owner, host, port)
-            for property in ["title", "description", "update-time"]:
-                value = suite_identity.get(property, None)
+            for key in [KEY_TITLE, KEY_DESCRIPTION, KEY_UPDATE_TIME]:
+                try:
+                    value = suite_identity[KEY_META].get(key)
+                except KeyError:
+                    value = suite_identity.get(key)
                 if value:
                     print "%s|%s|%s|%s|%s" % (
-                        name, owner, host, property,
+                        name, owner, host, key,
                         str(value).replace("\n", " ")
                     )
-            totals = suite_identity.get('states', None)
+            totals = suite_identity.get(KEY_STATES)
             if totals is None:
                 continue
             point_state_lines = get_point_state_count_lines(
                 *totals, use_color=options.color)
             for point, state_line in point_state_lines:
-                property = "states"
+                key = KEY_STATES
                 if point:
-                    property = "states:%s" % point
-                print "%s|%s|%s|%s|%s" % (
-                    name, owner, host, property, state_line)
+                    key = "%s:%s" % (KEY_STATES, point)
+                print "%s|%s|%s|%s|%s" % (name, owner, host, key, state_line)
             continue
 
         line = '%s %s@%s:%s' % (name, owner, host, port)
@@ -251,7 +256,10 @@ def main():
             print line
 
         if options.describe:
-            title = suite_identity.get('title', None)
+            try:
+                title = suite_identity[KEY_META].get(KEY_TITLE)
+            except KeyError:
+                title = suite_identity.get(KEY_TITLE)
             if title is None:
                 print indent + bold("(description and state totals withheld)")
                 continue
@@ -262,7 +270,10 @@ def main():
                 line = '"%s"' % title
             print indent * 2 + line
 
-            description = suite_identity.get('description', None)
+            try:
+                description = suite_identity[KEY_META].get(KEY_DESCRIPTION)
+            except KeyError:
+                description = suite_identity.get(KEY_DESCRIPTION)
             print indent + bold("Description:")
             if description == "":
                 lines = "(no description)"
@@ -277,7 +288,7 @@ def main():
                 line1 = False
                 print indent * 2 + line
 
-        totals = suite_identity.get('states', None)
+        totals = suite_identity.get(KEY_STATES)
         if totals is not None:
             state_count_totals, state_count_cycles = totals
 
@@ -307,9 +318,9 @@ def get_point_state_count_lines(state_count_totals, state_count_cycles,
             line += '%s:%d ' % (state, tot)
     yield ("", line.strip())
 
-    for point_string in sorted(state_count_cycles.keys()):
+    for point_string, state_count_cycle in sorted(state_count_cycles.items()):
         line = ""
-        for state, tot in sorted(state_count_cycles[point_string].items()):
+        for state, tot in sorted(state_count_cycle.items()):
             if use_color:
                 subst = " %d " % tot
                 line += get_status_prop(state, 'ascii_ctrl', subst)

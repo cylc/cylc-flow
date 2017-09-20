@@ -20,6 +20,7 @@
 # Keys for identify API call
 KEY_DESCRIPTION = "description"
 KEY_GROUP = "group"
+KEY_META = "meta"
 KEY_NAME = "name"
 KEY_OWNER = "owner"
 KEY_STATES = "states"

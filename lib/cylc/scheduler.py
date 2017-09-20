@@ -50,7 +50,7 @@ from cylc.suite_logging import SuiteLog, OUT, ERR, LOG
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
 from cylc.suite_status import (
-    KEY_DESCRIPTION, KEY_GROUP, KEY_NAME, KEY_OWNER, KEY_STATES,
+    KEY_DESCRIPTION, KEY_GROUP, KEY_META, KEY_NAME, KEY_OWNER, KEY_STATES,
     KEY_TASKS_BY_STATE, KEY_TITLE, KEY_UPDATE_TIME)
 from cylc.taskdef import TaskDef
 from cylc.task_id import TaskID
@@ -680,9 +680,9 @@ conditions; see `cylc conditions`.
             result[KEY_NAME] = self.suite
             result[KEY_OWNER] = self.owner
         if PRIVILEGE_LEVELS[1] in privileges:
-            result[KEY_TITLE] = self.config.cfg['meta'][KEY_TITLE]
-            result[KEY_DESCRIPTION] = self.config.cfg['meta'][KEY_DESCRIPTION]
-            result[KEY_GROUP] = self.config.cfg[KEY_GROUP]
+            result[KEY_META] = self.config.cfg[KEY_META]
+            for key in (KEY_TITLE, KEY_DESCRIPTION, KEY_GROUP):
+                result[key] = self.config.cfg[KEY_META].get(key)
         if PRIVILEGE_LEVELS[2] in privileges:
             result[KEY_UPDATE_TIME] = self.info_get_update_times()[0]
             result[KEY_STATES] = self.state_summary_mgr.get_state_totals()

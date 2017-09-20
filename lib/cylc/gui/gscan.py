@@ -38,7 +38,8 @@ from cylc.gui.scanutil import (
 from cylc.gui.util import get_icon, setup_icons, set_exception_hook_dialog
 from cylc.suite_host import get_user
 from cylc.suite_status import (
-    KEY_GROUP, KEY_STATES, KEY_TASKS_BY_STATE, KEY_TITLE, KEY_UPDATE_TIME)
+    KEY_GROUP, KEY_META, KEY_STATES, KEY_TASKS_BY_STATE, KEY_TITLE,
+    KEY_UPDATE_TIME)
 from cylc.task_state import (
     TASK_STATUSES_ORDERED, TASK_STATUS_RUNAHEAD, TASK_STATUS_FAILED,
     TASK_STATUS_SUBMIT_FAILED)
@@ -767,6 +768,8 @@ class ScanAppUpdater(threading.Thread):
 
     POLL_INTERVAL = 60
 
+    UNGROUPED = "(ungrouped)"
+
     def __init__(self, window, hosts, suite_treemodel, suite_treeview,
                  comms_timeout=None, poll_interval=None, group_column_id=0,
                  name_pattern=None, owner_pattern=None):
@@ -918,8 +921,17 @@ class ScanAppUpdater(threading.Thread):
             suite_updated_time = suite_info.get(KEY_UPDATE_TIME)
             if suite_updated_time is None:
                 suite_updated_time = int(time())
-            title = suite_info.get(KEY_TITLE)
-            group = suite_info.get(KEY_GROUP)
+            try:
+                title = suite_info[KEY_META].get(KEY_TITLE)
+                group = suite_info[KEY_META].get(KEY_GROUP)
+            except KeyError:
+                # Compat:<=7.5.0
+                title = suite_info.get(KEY_TITLE)
+                group = suite_info.get(KEY_GROUP)
+            # For the purpose of this method, it is OK to handle both
+            # witheld (None) and unset (empty string) together
+            if not group:
+                group = self.UNGROUPED
 
             try:
                 self.tasks_by_state[key] = suite_info[KEY_TASKS_BY_STATE]
@@ -979,7 +991,15 @@ class ScanAppUpdater(threading.Thread):
         """Helper for self.update."""
         group_counts = {"": {'total': 0}}
         for suite_info in self.suite_info_map.values():
-            group_id = suite_info.get(KEY_GROUP)
+            try:
+                group_id = suite_info[KEY_META].get(KEY_GROUP)
+            except KeyError:
+                # Compat:<=7.5.0
+                group_id = suite_info.get(KEY_GROUP)
+            # For the purpose of this method, it is OK to handle both
+            # witheld (None) and unset (empty string) together
+            if not group_id:
+                group_id = self.UNGROUPED
 
             if group_id in group_counts:
                 group_counts[group_id]['total'] += 1
