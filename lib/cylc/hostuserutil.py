@@ -137,7 +137,8 @@ class HostUtil(object):
             hardwired = self._get_identification_cfg('host')
             method = self._get_identification_cfg('method')
             if method == 'address':
-                self._host = self._get_host_info()[2][0]
+                self._host = self.get_local_ip_address(
+                    self._get_identification_cfg('target'))
             elif method == 'hardwired' and hardwired:
                 self._host = hardwired
             else:  # if method == 'name':
