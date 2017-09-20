@@ -609,15 +609,6 @@ conditions; see `cylc conditions`.
         return TaskID.get(
             name, self.get_standardised_point_string(point_string))
 
-    def info_get_err_lines(self, prev_size, max_lines):
-        """Read content from err log file up to max_lines from prev_size."""
-        return self.suite_log.get_lines(
-            self.suite_log.ERR, prev_size, max_lines)
-
-    def info_get_update_times(self):
-        """Return latest update time of ERR."""
-        return (self.state_summary_mgr.update_time, ERR.update_time)
-
     def info_get_task_jobfile_path(self, task_id):
         """Return task job file path."""
         name, point = TaskID.split(task_id)
@@ -642,22 +633,6 @@ conditions; see `cylc conditions`.
             except KeyError:
                 results[name] = {}
         return results
-
-    def info_get_all_families(self, exclude_root=False):
-        """Return info of all families."""
-        fams = self.config.get_first_parent_descendants().keys()
-        if exclude_root:
-            return fams[:-1]
-        else:
-            return fams
-
-    def info_get_first_parent_descendants(self):
-        """Families for single-inheritance hierarchy based on first parents"""
-        return self.config.get_first_parent_descendants()
-
-    def info_get_first_parent_ancestors(self, pruned=False):
-        """Single-inheritance hierarchy based on first parents"""
-        return self.config.get_first_parent_ancestors(pruned)
 
     def info_get_gui_summary(self, client_info, full_mode):
         """Return suite summary suitable for a GUI update.

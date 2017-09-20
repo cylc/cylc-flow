@@ -255,14 +255,6 @@ class SuiteRuntimeService(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def get_all_families(self, exclude_root=False):
-        """Return info of all families."""
-        self._check_access_priv_and_report(PRIV_FULL_READ)
-        exclude_root = self._literal_eval('exclude_root', exclude_root)
-        return self.schd.info_get_all_families(exclude_root=exclude_root)
-
-    @cherrypy.expose
-    @cherrypy.tools.json_out()
     def get_broadcast(self, task_id=None):
         """Retrieve all broadcast variables that target a given task ID."""
         self._check_access_priv_and_report(PRIV_FULL_READ)
@@ -274,28 +266,6 @@ class SuiteRuntimeService(object):
         """Return the cylc version running this suite."""
         self._check_access_priv_and_report(PRIV_IDENTITY)
         return CYLC_VERSION
-
-    @cherrypy.expose
-    @cherrypy.tools.json_out()
-    def get_err_content(self, prev_size, max_lines):
-        """Return the content and new size of the error file."""
-        self._check_access_priv_and_report(PRIV_FULL_READ)
-        return self.schd.info_get_err_lines(prev_size, max_lines)
-
-    @cherrypy.expose
-    @cherrypy.tools.json_out()
-    def get_first_parent_ancestors(self, pruned=None):
-        """Single-inheritance hierarchy based on first parents"""
-        self._check_access_priv_and_report(PRIV_FULL_READ)
-        pruned = self._literal_eval('pruned', pruned)
-        return self.schd.info_get_first_parent_ancestors(pruned=pruned)
-
-    @cherrypy.expose
-    @cherrypy.tools.json_out()
-    def get_first_parent_descendants(self):
-        """Families for single-inheritance hierarchy based on first parents"""
-        self._check_access_priv_and_report(PRIV_FULL_READ)
-        return self.schd.info_get_first_parent_descendants()
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
@@ -373,13 +343,6 @@ class SuiteRuntimeService(object):
             items = [items]
         return self.schd.info_get_task_requisites(
             items, list_prereqs=(list_prereqs in [True, 'True']))
-
-    @cherrypy.expose
-    @cherrypy.tools.json_out()
-    def get_update_times(self):
-        """Return the update times for (state summary, err_content)."""
-        self._check_access_priv_and_report(PRIV_STATE_TOTALS)
-        return self.schd.info_get_update_times()
 
     @cherrypy.expose
     @cherrypy.tools.json_out()

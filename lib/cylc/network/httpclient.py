@@ -123,13 +123,6 @@ class SuiteRuntimeServiceClient(object):
         return self._call_server_func(
             'get_broadcast', method=self.METHOD_GET, **kwargs)
 
-    def get_err_content(self, prev_size, max_lines):
-        """Return the content and new size of the suite's err file."""
-        return self._call_server_func(
-            'get_err_content',
-            method=self.METHOD_GET,
-            prev_size=prev_size, max_lines=max_lines)
-
     def get_gui_summary(self, full_mode):
         """Return summary and other info for GUI."""
         return self._call_server_func(
@@ -148,11 +141,6 @@ class SuiteRuntimeServiceClient(object):
         """
         return self._call_server_func(
             'get_tasks_by_state', method=self.METHOD_GET)
-
-    def get_update_times(self):
-        """Return the update times for (state summary, err_content)."""
-        return self._call_server_func(
-            'get_update_times', method=self.METHOD_GET)
 
     def get_info(self, command, *args, **kwargs):
         """Return suite info."""
