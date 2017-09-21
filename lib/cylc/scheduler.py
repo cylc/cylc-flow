@@ -634,8 +634,8 @@ conditions; see `cylc conditions`.
                 results[name] = {}
         return results
 
-    def info_get_gui_summary(self, client_info, full_mode):
-        """Return suite summary suitable for a GUI update.
+    def info_get_latest_state(self, client_info, full_mode):
+        """Return latest suite state (suitable for a GUI update).
 
         If previous update time is set, return only information since previous
         update time. Otherwise, return full information required to populate
@@ -707,7 +707,7 @@ conditions; see `cylc conditions`.
             for key in (KEY_TITLE, KEY_DESCRIPTION, KEY_GROUP):
                 result[key] = self.config.cfg[KEY_META].get(key)
         if PRIVILEGE_LEVELS[2] in privileges:
-            result[KEY_UPDATE_TIME] = self.info_get_update_times()[0]
+            result[KEY_UPDATE_TIME] = self.state_summary_mgr.update_time
             result[KEY_STATES] = self.state_summary_mgr.get_state_totals()
             result[KEY_TASKS_BY_STATE] = (
                 self.state_summary_mgr.get_tasks_by_state())

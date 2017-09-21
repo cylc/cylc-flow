@@ -298,11 +298,11 @@ class SuiteRuntimeService(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def get_gui_summary(self, full_mode=False):
-        """Return essential info for a "cylc gui" to update itself."""
+    def get_latest_state(self, full_mode=False):
+        """Return latest suite state (suitable for a GUI update)."""
         client_info = self._check_access_priv_and_report(PRIV_FULL_READ)
         full_mode = self._literal_eval('full_mode', full_mode)
-        return self.schd.info_get_gui_summary(client_info, full_mode)
+        return self.schd.info_get_latest_state(client_info, full_mode)
 
     @cherrypy.expose
     @cherrypy.tools.json_out()

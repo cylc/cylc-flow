@@ -123,10 +123,15 @@ class SuiteRuntimeServiceClient(object):
         return self._call_server_func(
             'get_broadcast', method=self.METHOD_GET, **kwargs)
 
-    def get_gui_summary(self, full_mode):
-        """Return summary and other info for GUI."""
+    def get_info(self, command, *args, **kwargs):
+        """Return suite info."""
+        kwargs['method'] = self.METHOD_GET
+        return self._call_server_func(command, *args, **kwargs)
+
+    def get_latest_state(self, full_mode):
+        """Return latest state of the suite (for the GUI)."""
         return self._call_server_func(
-            'get_gui_summary', method=self.METHOD_GET, full_mode=full_mode)
+            'get_latest_state', method=self.METHOD_GET, full_mode=full_mode)
 
     def get_suite_state_summary(self):
         """Return the global, task, and family summary data structures."""
@@ -141,11 +146,6 @@ class SuiteRuntimeServiceClient(object):
         """
         return self._call_server_func(
             'get_tasks_by_state', method=self.METHOD_GET)
-
-    def get_info(self, command, *args, **kwargs):
-        """Return suite info."""
-        kwargs['method'] = self.METHOD_GET
-        return self._call_server_func(command, *args, **kwargs)
 
     def identify(self):
         """Return suite identity."""

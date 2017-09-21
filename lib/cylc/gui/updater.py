@@ -246,7 +246,7 @@ class Updater(threading.Thread):
     def update(self):
         """Call suite for an update."""
         try:
-            gui_summary = self.client.get_gui_summary(full_mode=self.full_mode)
+            my_state = self.client.get_latest_state(full_mode=self.full_mode)
         except ClientError:
             # Bad credential, suite not running, starting up or just stopped?
             if cylc.flags.debug:
@@ -256,9 +256,9 @@ class Updater(threading.Thread):
         # OK
         if cylc.flags.debug:
             sys.stderr.write("%s CONNECTED - suite cylc version=%s\n" % (
-                get_current_time_string(), gui_summary['cylc_version']))
+                get_current_time_string(), my_state['cylc_version']))
         self.info_bar.set_update_time(None, None)
-        if gui_summary['full_mode']:
+        if my_state['full_mode']:
             gobject.idle_add(
                 self.app_window.set_title, "%s - %s:%s" % (
                     self.cfg.suite, self.client.host, self.client.port))
@@ -268,30 +268,30 @@ class Updater(threading.Thread):
             # This status will be very transient:
             self.set_status(SUITE_STATUS_CONNECTED)
 
-            if gui_summary['cylc_version'] != CYLC_VERSION:
+            if my_state['cylc_version'] != CYLC_VERSION:
                 gobject.idle_add(self.warn, (
                     "Warning: cylc version mismatch!\n\n"
                     "Suite running with %r.\ngcylc at %r.\n"
-                ) % (gui_summary['cylc_version'], CYLC_VERSION))
+                ) % (my_state['cylc_version'], CYLC_VERSION))
             self.stop_summary = None
             self.err_log_lines[:] = []
 
         is_updated = False
-        if 'err_content' in gui_summary and 'err_size' in gui_summary:
-            self._update_err_log(gui_summary)
+        if 'err_content' in my_state and 'err_size' in my_state:
+            self._update_err_log(my_state)
             is_updated = True
-        if 'ancestors' in gui_summary:
-            self.ancestors = gui_summary['ancestors']
+        if 'ancestors' in my_state:
+            self.ancestors = my_state['ancestors']
             is_updated = True
-        if 'ancestors_pruned' in gui_summary:
-            self.ancestors_pruned = gui_summary['ancestors_pruned']
+        if 'ancestors_pruned' in my_state:
+            self.ancestors_pruned = my_state['ancestors_pruned']
             is_updated = True
-        if 'descendants' in gui_summary:
-            self.descendants = gui_summary['descendants']
+        if 'descendants' in my_state:
+            self.descendants = my_state['descendants']
             self.all_families = list(self.descendants)
             is_updated = True
-        if 'summary' in gui_summary and gui_summary['summary'][0]:
-            self._update_state_summary(gui_summary)
+        if 'summary' in my_state and my_state['summary'][0]:
+            self._update_state_summary(my_state)
             is_updated = True
         if self.status in [SUITE_STATUS_INITIALISING, SUITE_STATUS_STOPPING]:
             gobject.idle_add(self.info_bar.prog_bar_start, self.status)
@@ -311,23 +311,23 @@ class Updater(threading.Thread):
             self.last_update_time = time()
         elif time() - self.last_update_time > self.update_duration:
             self.update_duration += 1.0
-        if ('mean_main_loop_duration' in gui_summary and
-                gui_summary['mean_main_loop_duration'] > self.update_duration):
-            self.update_duration = gui_summary['mean_main_loop_duration']
+        if ('mean_main_loop_duration' in my_state and
+                my_state['mean_main_loop_duration'] > self.update_duration):
+            self.update_duration = my_state['mean_main_loop_duration']
         if self.update_duration > self.MAX_UPDATE_DURATION:
             self.update_duration = self.MAX_UPDATE_DURATION
 
-    def _update_err_log(self, gui_summary):
+    def _update_err_log(self, my_state):
         """Update suite err log if necessary."""
-        self.err_log_lines += gui_summary['err_content'].splitlines()
+        self.err_log_lines += my_state['err_content'].splitlines()
         self.err_log_lines = self.err_log_lines[-10:]
         gobject.idle_add(
             self.info_bar.set_log, "\n".join(self.err_log_lines),
-            gui_summary['err_size'])
+            my_state['err_size'])
 
-    def _update_state_summary(self, gui_summary):
+    def _update_state_summary(self, my_state):
         """Retrieve suite summary."""
-        glbl, states, fam_states = gui_summary['summary']
+        glbl, states, fam_states = my_state['summary']
         self.mode = glbl['run_mode']
 
         if self.cfg.use_defn_order:
