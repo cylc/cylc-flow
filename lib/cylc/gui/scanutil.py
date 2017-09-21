@@ -18,6 +18,7 @@
 """Scan utilities for "cylc gscan" and "cylc gpanel"."""
 
 import os
+from pwd import getpwall
 import signal
 from subprocess import Popen, PIPE, STDOUT
 import sys
@@ -541,32 +542,46 @@ def update_suites_info(updater, full_mode=False):
     # Determine items to scan
     results = {}
     items = []
-    if full_mode and owner_pattern is None and not updater.hosts:
-        # Scan user suites. Walk "~/cylc-run/" to get (host, port) from
+    if full_mode and not updater.hosts:
+        # Scan users suites. Walk "~/cylc-run/" to get (host, port) from
         # ".service/contact" for active suites
         suite_srv_files_mgr = SuiteSrvFilesManager()
-        run_d = GLOBAL_CFG.get_host_item('run directory')
-        for dirpath, dnames, fnames in os.walk(run_d, followlinks=True):
-            if updater.quit:
-                return
-            # Always descend for top directory, but
-            # don't descend further if it has a:
-            # * .service/
-            # * cylc-suite.db: (pre-cylc-7 suites don't have ".service/").
-            if dirpath != run_d and (
-                    suite_srv_files_mgr.DIR_BASE_SRV in dnames or
-                    "cylc-suite.db" in fnames):
-                dnames[:] = []
-            # Choose only suites with .service and matching filter
-            reg = os.path.relpath(dirpath, run_d)
-            try:
-                contact_data = suite_srv_files_mgr.load_contact_file(reg)
-            except (SuiteServiceFileError, IOError, TypeError, ValueError):
-                continue
-            else:
-                items.append((
-                    contact_data[suite_srv_files_mgr.KEY_HOST],
-                    contact_data[suite_srv_files_mgr.KEY_PORT]))
+        if owner_pattern is None:
+            # Run directory of current user only
+            run_dirs = [GLOBAL_CFG.get_host_item('run directory')]
+        else:
+            # Run directory of all users matching "owner_pattern".
+            # But skip those with /nologin or /false shells
+            run_dirs = []
+            skips = ('/false', '/nologin')
+            for pwent in getpwall():
+                if any(pwent.pw_shell.endswith(s) for s in (skip_shells)):
+                    continue
+                if owner_pattern.match(pwent.pw_name):
+                    run_dirs.append(GLOBAL_CFG.get_host_item(
+                        'run directory', owner=pwent.pw_name))
+        for run_d in run_dirs:
+            for dirpath, dnames, fnames in os.walk(run_d, followlinks=True):
+                if updater.quit:
+                    return
+                # Always descend for top directory, but
+                # don't descend further if it has a:
+                # * .service/
+                # * cylc-suite.db: (pre-cylc-7 suites don't have ".service/").
+                if dirpath != run_d and (
+                        suite_srv_files_mgr.DIR_BASE_SRV in dnames or
+                        "cylc-suite.db" in fnames):
+                    dnames[:] = []
+                # Choose only suites with .service and matching filter
+                reg = os.path.relpath(dirpath, run_d)
+                try:
+                    contact_data = suite_srv_files_mgr.load_contact_file(reg)
+                except (SuiteServiceFileError, IOError, TypeError, ValueError):
+                    continue
+                else:
+                    items.append((
+                        contact_data[suite_srv_files_mgr.KEY_HOST],
+                        contact_data[suite_srv_files_mgr.KEY_PORT]))
     elif full_mode:
         # Scan full port range on all hosts
         items.extend(updater.hosts)

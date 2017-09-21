@@ -233,10 +233,10 @@ class InfoBar(gtk.VBox):
         self.time_widget = gtk.Label()
         self._set_tooltip(self.time_widget, "last update time")
 
-        self.reconnect_duration_widget = gtk.Label()
+        self.reconnect_interval_widget = gtk.Label()
         self._set_tooltip(
-            self.reconnect_duration_widget,
-            r"""Duration to next reconnect attempt
+            self.reconnect_interval_widget,
+            r"""Time interval to next reconnect attempt
 
 Use *Connect Now* button to reconnect immediately.""")
 
@@ -268,7 +268,7 @@ Use *Connect Now* button to reconnect immediately.""")
         # From the right.
         for widget in [
                 self.log_widget, self.time_widget,
-                self.reconnect_duration_widget]:
+                self.reconnect_interval_widget]:
             eb = gtk.EventBox()
             eb.add(widget)
             hbox.pack_end(eb, False)
@@ -422,13 +422,13 @@ Use *Connect Now* button to reconnect immediately.""")
             gobject.idle_add(
                 self.time_widget.set_text, " %s " % update_time_str)
         if next_update_dt_str is None:
-            gobject.idle_add(self.reconnect_duration_widget.set_text, "")
+            gobject.idle_add(self.reconnect_interval_widget.set_text, "")
         elif next_update_dt_str == self.DISCONNECTED_TEXT:
             gobject.idle_add(
-                self.reconnect_duration_widget.set_text, next_update_dt_str)
+                self.reconnect_interval_widget.set_text, next_update_dt_str)
         else:
             gobject.idle_add(
-                self.reconnect_duration_widget.set_text,
+                self.reconnect_interval_widget.set_text,
                 " (next connect: %s) " % next_update_dt_str)
 
     def _set_tooltip(self, widget, text):
@@ -3046,7 +3046,7 @@ This is what my suite does:..."""
 
     def reset_connect(self, _=None):
         """Force a suite API call as soon as possible."""
-        self.updater.update_duration = 1.0
+        self.updater.update_interval = 1.0
 
     def construct_command_menu(self, menu):
         """Constructs the top bar help menu in gcylc that lists all

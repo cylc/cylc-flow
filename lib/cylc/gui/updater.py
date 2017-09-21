@@ -76,8 +76,8 @@ class Updater(threading.Thread):
         self.mode = "waiting..."
         self.update_time_str = "waiting..."
         self.last_update_time = time()
-        self.update_duration = 1.0
-        self.max_update_duration = gcfg.get(['maximum update duration'])
+        self.update_interval = 1.0
+        self.max_update_interval = gcfg.get(['maximum update interval'])
         self.status = SUITE_STATUS_NOT_CONNECTED
         self.is_reloading = False
         self.connected = False
@@ -112,9 +112,9 @@ class Updater(threading.Thread):
         self.full_mode = True
         self.connected = False
         self.set_status(SUITE_STATUS_STOPPED)
-        self.update_duration += 1.0
-        if self.update_duration > self.max_update_duration:
-            self.update_duration = self.max_update_duration
+        self.update_interval += 1.0
+        if self.update_interval > self.max_update_interval:
+            self.update_interval = self.max_update_interval
         self.state_summary = {}
         self.full_state_summary = {}
         self.fam_state_summary = {}
@@ -232,12 +232,12 @@ class Updater(threading.Thread):
             now = time()
             if self.no_update_event.is_set():
                 pass
-            elif now > prev_update_time + self.update_duration:
+            elif now > prev_update_time + self.update_interval:
                 self.update()
                 prev_update_time = time()
             else:
-                duration = round(prev_update_time + self.update_duration - now)
-                if self.update_duration >= self.max_update_duration:
+                duration = round(prev_update_time + self.update_interval - now)
+                if self.update_interval >= self.max_update_interval:
                     self.info_bar.set_update_time(None, duration2str(duration))
             sleep(1)
 
@@ -301,19 +301,19 @@ class Updater(threading.Thread):
         # If there is an update, readjust to 1.0s or the mean duration of the
         # last 10 main loop. If there is no update, it should be less frequent
         # than the last update duration.  The maximum duration is
-        # max_update_duration seconds.  This should allow the GUI to update
+        # max_update_interval seconds.  This should allow the GUI to update
         # more while the main loop is turning around events quickly, but less
         # frequently during quiet time or when the main loop is busy.
         if is_updated:
-            self.update_duration = 1.0
+            self.update_interval = 1.0
             self.last_update_time = time()
-        elif time() - self.last_update_time > self.update_duration:
-            self.update_duration += 1.0
-        if ('mean_main_loop_duration' in my_state and
-                my_state['mean_main_loop_duration'] > self.update_duration):
-            self.update_duration = my_state['mean_main_loop_duration']
-        if self.update_duration > self.max_update_duration:
-            self.update_duration = self.max_update_duration
+        elif time() - self.last_update_time > self.update_interval:
+            self.update_interval += 1.0
+        if ('mean_main_loop_interval' in my_state and
+                my_state['mean_main_loop_interval'] > self.update_interval):
+            self.update_interval = my_state['mean_main_loop_interval']
+        if self.update_interval > self.max_update_interval:
+            self.update_interval = self.max_update_interval
 
     def _update_err_log(self, my_state):
         """Update suite err log if necessary."""

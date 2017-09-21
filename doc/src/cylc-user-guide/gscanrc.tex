@@ -45,6 +45,28 @@ specified here does not affect the display order.
 \item {\em example:} \lstinline@columns = suite, title, status@
 \end{myitemize}
 
+\subsubsection{full update interval}
+
+Set the time interval between refreshing the suite listing (by file system or
+port range scan).
+
+\begin{myitemize}
+\item {\em type:} ISO 8601 duration/interval representation (e.g.\ 
+\lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
+\item {\em default: PT5M}
+\end{myitemize}
+
+\subsubsection{part update interval}
+
+Set the time interval between calls to previous known running suites for data
+updates.
+
+\begin{myitemize}
+\item {\em type:} ISO 8601 duration/interval representation (e.g.\ 
+\lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
+\item {\em default: PT15S}
+\end{myitemize}
+
 \subsubsection{window size}
 
 Sets the size in pixels of the \lstinline=cylc gscan= GUI at startup.

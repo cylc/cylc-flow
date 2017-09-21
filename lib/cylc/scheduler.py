@@ -200,7 +200,7 @@ class Scheduler(object):
 
         self.ref_test_allowed_failures = []
         # Last 10 durations (in seconds) of the main loop
-        self.main_loop_durations = deque(maxlen=10)
+        self.main_loop_intervals = deque(maxlen=10)
 
     def start(self):
         """Start the server."""
@@ -678,9 +678,9 @@ conditions; see `cylc conditions`.
                 self.suite_log.ERR, client_info.get('prev_err_size'))
             client_info['prev_err_size'] = ret['err_size']
         client_info['prev_time'] = client_info['time']
-        if self.main_loop_durations:
-            ret['mean_main_loop_duration'] = (
-                sum(self.main_loop_durations) / len(self.main_loop_durations))
+        if self.main_loop_intervals:
+            ret['mean_main_loop_interval'] = (
+                sum(self.main_loop_intervals) / len(self.main_loop_intervals))
         return ret
 
     def info_get_graph_raw(self, cto, ctn, group_nodes=None,
@@ -1357,7 +1357,7 @@ conditions; see `cylc conditions`.
                 self.update_profiler_logs(tinit)
 
             sleep(self.INTERVAL_MAIN_LOOP)
-            self.main_loop_durations.append(time() - tinit)
+            self.main_loop_intervals.append(time() - tinit)
             # END MAIN LOOP
 
     def update_state_summary(self):

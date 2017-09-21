@@ -36,7 +36,6 @@ This can be changed later using the ``View'' menu ``Toggle views side-by-side''
 \item {\em default:} ``False''
 \end{myitemize}
 
-
 \subsubsection{initial views}
 
 Set the suite view panel(s) displayed initially, when the GUI starts.
@@ -47,6 +46,17 @@ This can be changed later using the tool bar.
 \item {\em legal values:} ``text'', ``dot'',  ``graph''
 \item {\em default:} ``text''
 \item {\em example:} \lstinline@initial views = graph, dot@
+\end{myitemize}
+
+\subsubsection{maximum update interval}
+
+Set the maximum (longest) time interval between calls to the suite for data
+update.
+
+\begin{myitemize}
+\item {\em type:} ISO 8601 duration/interval representation (e.g.\ 
+\lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
+\item {\em default: PT15S}
 \end{myitemize}
 
 \subsubsection{sort by definition order}

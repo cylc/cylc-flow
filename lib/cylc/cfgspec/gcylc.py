@@ -48,7 +48,7 @@ SPEC = {
         options=["small", "medium", "large", "extra large"]),
     'initial side-by-side views': vdr(vtype='boolean', default=False),
     'initial views': vdr(vtype='string_list', default=["text"]),
-    'maximum update duration': vdr(
+    'maximum update interval': vdr(
         vtype='interval', default=DurationFloat(15)),
     'sort by definition order': vdr(vtype='boolean', default=True),
     'sort column': vdr(
