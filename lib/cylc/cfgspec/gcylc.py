@@ -15,6 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"gcylc config file format."
 
 import os
 import sys
@@ -23,7 +24,7 @@ from copy import deepcopy, copy
 
 from parsec import ParsecError
 from parsec.config import config, ItemNotFoundError, itemstr
-from parsec.validate import validator as vdr
+from parsec.validate import coercers, validator as vdr
 from parsec.upgrade import upgrader
 from parsec.util import printcfg
 from cylc.gui.view_tree import ControlTree
@@ -33,14 +34,13 @@ from cylc.task_state import (
     TASK_STATUS_READY, TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED,
     TASK_STATUS_FAILED, TASK_STATUS_RETRYING)
+from cylc.cfgspec.utils import (coerce_interval, DurationFloat)
 
 
-"gcylc config file format."
-
+coercers['interval'] = coerce_interval
 SITE_FILE = os.path.join(
     os.environ['CYLC_DIR'], 'conf', 'gcylcrc', 'themes.rc')
 USER_FILE = os.path.join(os.environ['HOME'], '.cylc', 'gcylc.rc')
-
 SPEC = {
     'dot icon size': vdr(
         vtype='string',
@@ -48,6 +48,8 @@ SPEC = {
         options=["small", "medium", "large", "extra large"]),
     'initial side-by-side views': vdr(vtype='boolean', default=False),
     'initial views': vdr(vtype='string_list', default=["text"]),
+    'maximum update duration': vdr(
+        vtype='interval', default=DurationFloat(15)),
     'sort by definition order': vdr(vtype='boolean', default=True),
     'sort column': vdr(
         vtype='string',

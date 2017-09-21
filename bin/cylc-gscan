@@ -40,6 +40,7 @@ gtk.settings_get_default().set_long_property(
 gtk.settings_get_default().set_long_property(
     "gtk-menu-images", True, "main")
 
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.gui.gscan import ScanApp
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.suite_host import get_user
@@ -54,10 +55,9 @@ def main():
         argdoc=[(
             "[HOSTS ...]", "Hosts to scan instead of the configured hosts.")])
     parser.add_option(
-        "-a", "--all", "--all-suites",
-        help="List all suites found on all scanned hosts (the default is "
-             "just your own suites).",
-        action="store_true", default=False, dest="all_suites")
+        "-a", "--all",
+        help="Scan all port ranges in known hosts.",
+        action="store_true", default=False, dest="all_ports")
     parser.add_option(
         "-n", "--name",
         metavar="PATTERN",
@@ -81,8 +81,8 @@ def main():
         type="int", metavar="SECONDS", dest="interval")
     options, args = parser.parse_args()
 
-    if options.all_suites:
-        options.patterns_owner = [r".*"]
+    if options.all_ports:
+        args = GLOBAL_CFG.get(["suite host scanning", "hosts"])
     scan_app = ScanApp(
         hosts=args,
         patterns_name=options.patterns_name,

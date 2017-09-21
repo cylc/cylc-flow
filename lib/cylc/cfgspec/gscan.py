@@ -15,21 +15,25 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""gscan config file format."""
 
 import os
 import sys
 
 from parsec import ParsecError
-from parsec.validate import validator as vdr
 from parsec.config import config
+from parsec.validate import coercers, validator as vdr
+from cylc.cfgspec.utils import (coerce_interval, DurationFloat)
 
-"""gscan config file format."""
 
+coercers['interval'] = coerce_interval
 USER_FILE = os.path.join(os.environ['HOME'], '.cylc', 'gscan.rc')
 
 SPEC = {
-    'columns': vdr(vtype='string_list', default=['suite', 'status']),
     'activate on startup': vdr(vtype='boolean', default=False),
+    'columns': vdr(vtype='string_list', default=['suite', 'status']),
+    'full update interval': vdr(vtype='interval', default=DurationFloat(300)),
+    'part update interval': vdr(vtype='interval', default=DurationFloat(15)),
     'window size': vdr(vtype='integer_list', default=[300, 200]),
 }
 

@@ -303,7 +303,7 @@ class GraphUpdater(threading.Thread):
                 group_all=self.group_all,
                 ungroup_all=self.ungroup_all
             )
-        except ClientError as exc:
+        except ClientError:
             if cylc.flags.debug:
                 traceback.print_exc()
             return False

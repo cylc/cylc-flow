@@ -472,7 +472,7 @@ class DotUpdater(threading.Thread):
         if col_index == 0:
             tooltip.set_text(task_id)
             return True
-        text = self.updater.get_id_summary(
+        text = get_id_summary(
             task_id, self.state_summary, self.fam_state_summary,
             self.descendants)
         if text == task_id:

@@ -21,7 +21,6 @@
 import os
 import re
 import sys
-from time import time
 import gtk
 import pango
 import gobject
@@ -3047,7 +3046,7 @@ This is what my suite does:..."""
 
     def reset_connect(self, _=None):
         """Force a suite API call as soon as possible."""
-        self.updater.update_duration = self.updater.MIN_UPDATE_DURATION
+        self.updater.update_duration = 1.0
 
     def construct_command_menu(self, menu):
         """Constructs the top bar help menu in gcylc that lists all

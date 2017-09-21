@@ -28,7 +28,6 @@ from isodatetime.data import (
     get_timepoint_from_seconds_since_unix_epoch as timepoint_from_epoch)
 
 from cylc.cfgspec.gcylc import gcfg
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gscan import gsfg
 from cylc.gui.legend import ThemeLegendWindow
 from cylc.gui.dot_maker import DotMaker
@@ -751,9 +750,6 @@ class ScanAppUpdater(threading.Thread):
 
     """Update the scan app."""
 
-    INTERVAL_NORM = 15
-    INTERVAL_FULL = 300
-
     UNGROUPED = "(ungrouped)"
 
     def __init__(self, window, hosts, suite_treemodel, suite_treeview,
@@ -762,14 +758,13 @@ class ScanAppUpdater(threading.Thread):
         self.window = window
         if hosts:
             self.hosts = hosts
-        elif owner_pattern is not None:
-            self.hosts = GLOBAL_CFG.get(["suite host scanning", "hosts"])
         else:
             self.hosts = []
         self.comms_timeout = comms_timeout
         if interval is None:
-            interval = self.INTERVAL_FULL
+            interval = gsfg.get(['full update interval'])
         self.interval_full = interval
+        self.interval_part = gsfg.get(['part update interval'])
         self.suite_info_map = {}
         self.prev_full_update = None
         self.prev_norm_update = None
@@ -880,7 +875,7 @@ class ScanAppUpdater(threading.Thread):
                 now >= self.prev_full_update + self.interval_full)
             if (full_mode or
                     self.prev_norm_update is None or
-                    now >= self.prev_norm_update + self.INTERVAL_NORM):
+                    now >= self.prev_norm_update + self.interval_part):
                 title = self.window.get_title()
                 if full_mode:
                     gobject.idle_add(

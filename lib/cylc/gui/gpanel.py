@@ -95,9 +95,6 @@ class ScanPanelAppletUpdater(object):
     IDLE_STOPPED_TIME = 3600  # 1 hour.
     MAX_INDIVIDUAL_SUITES = 5
 
-    INTERVAL_NORM = 15
-    INTERVAL_FULL = 300
-
     def __init__(self, dot_hbox, gcylc_image, is_compact):
         self.hosts = []
         self.dot_hbox = dot_hbox
@@ -108,6 +105,8 @@ class ScanPanelAppletUpdater(object):
         self.quit = True
         self._set_gcylc_image_tooltip()
         self.gcylc_image.set_sensitive(False)
+        self.interval_full = gcfg.get(['full update interval'])
+        self.interval_part = gcfg.get(['part update interval'])
         self.theme_name = gcfg.get(['use theme'])
         self.theme = gcfg.get(['themes', self.theme_name])
         self.dots = DotMaker(self.theme)
@@ -141,10 +140,10 @@ class ScanPanelAppletUpdater(object):
             return True
         full_mode = (
             self.prev_full_update is None or
-            now >= self.prev_full_update + self.INTERVAL_FULL)
+            now >= self.prev_full_update + self.interval_full)
         if (full_mode or
                 self.prev_norm_update is None or
-                now >= self.prev_norm_update + self.INTERVAL_NORM):
+                now >= self.prev_norm_update + self.interval_part):
             # Get new information.
             self.suite_info_map = update_suites_info(self, full_mode=True)
             self.prev_norm_update = time()

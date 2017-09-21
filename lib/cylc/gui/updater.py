@@ -26,6 +26,7 @@ from time import sleep, time
 import traceback
 
 import cylc.flags
+from cylc.cfgspec.gcylc import gcfg
 from cylc.dump import get_stop_state_summary
 from cylc.gui.cat_state import cat_state
 from cylc.gui.warning_dialog import warning_dialog
@@ -46,10 +47,6 @@ from cylc.wallclock import (
 class Updater(threading.Thread):
 
     """Retrieve information about the running or stopped suite."""
-
-    # Maximum and minute update durations (in seconds) for a running suite
-    MAX_UPDATE_DURATION = 15.0
-    MIN_UPDATE_DURATION = 1.0
 
     def __init__(self, app):
 
@@ -79,7 +76,8 @@ class Updater(threading.Thread):
         self.mode = "waiting..."
         self.update_time_str = "waiting..."
         self.last_update_time = time()
-        self.update_duration = self.MIN_UPDATE_DURATION
+        self.update_duration = 1.0
+        self.max_update_duration = gcfg.get(['maximum update duration'])
         self.status = SUITE_STATUS_NOT_CONNECTED
         self.is_reloading = False
         self.connected = False
@@ -115,8 +113,8 @@ class Updater(threading.Thread):
         self.connected = False
         self.set_status(SUITE_STATUS_STOPPED)
         self.update_duration += 1.0
-        if self.update_duration > self.MAX_UPDATE_DURATION:
-            self.update_duration = self.MAX_UPDATE_DURATION
+        if self.update_duration > self.max_update_duration:
+            self.update_duration = self.max_update_duration
         self.state_summary = {}
         self.full_state_summary = {}
         self.fam_state_summary = {}
@@ -239,7 +237,7 @@ class Updater(threading.Thread):
                 prev_update_time = time()
             else:
                 duration = round(prev_update_time + self.update_duration - now)
-                if self.update_duration >= self.MAX_UPDATE_DURATION:
+                if self.update_duration >= self.max_update_duration:
                     self.info_bar.set_update_time(None, duration2str(duration))
             sleep(1)
 
@@ -303,19 +301,19 @@ class Updater(threading.Thread):
         # If there is an update, readjust to 1.0s or the mean duration of the
         # last 10 main loop. If there is no update, it should be less frequent
         # than the last update duration.  The maximum duration is
-        # MAX_UPDATE_DURATION seconds.  This should allow the GUI to update
+        # max_update_duration seconds.  This should allow the GUI to update
         # more while the main loop is turning around events quickly, but less
         # frequently during quiet time or when the main loop is busy.
         if is_updated:
-            self.update_duration = self.MIN_UPDATE_DURATION
+            self.update_duration = 1.0
             self.last_update_time = time()
         elif time() - self.last_update_time > self.update_duration:
             self.update_duration += 1.0
         if ('mean_main_loop_duration' in my_state and
                 my_state['mean_main_loop_duration'] > self.update_duration):
             self.update_duration = my_state['mean_main_loop_duration']
-        if self.update_duration > self.MAX_UPDATE_DURATION:
-            self.update_duration = self.MAX_UPDATE_DURATION
+        if self.update_duration > self.max_update_duration:
+            self.update_duration = self.max_update_duration
 
     def _update_err_log(self, my_state):
         """Update suite err log if necessary."""
