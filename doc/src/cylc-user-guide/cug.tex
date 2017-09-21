@@ -4604,13 +4604,19 @@ Figure~\ref{fig-params-1} shows the result as visualized by \lstinline=cylc grap
 
 \paragraph{Zero-Padded Integer Values}
 
-Integer parameter values are zero-padded according to the size of their
-largest value, so \lstinline@foo<p>@ for \lstinline@p = 9..10@ expands to
+Integer parameter values are, by default, zero-padded according to the size of
+their largest value, so \lstinline@foo<p>@ for \lstinline@p = 9..10@ expands to
 \lstinline@foo_p09, foo_p10@.
 
-To get thicker padding, prepend extra zeroes to the upper range value:
-\lstinline@foo<p>@ for \lstinline@p = 9..010@ expands to
-\lstinline@foo_p009, foo_p010@.
+To get thicker padding and/or alternate suffixes, use a template. E.g.:
+
+\begin{lstlisting}
+[cylc]
+    [[parameters]]
+        p = 3..14
+    [[parameter templates]]
+        p = %%p%(p)03d  # suffixes = %p003, %p004, ..., %p013, %p014
+\end{lstlisting}
 
 
 \subsubsection{Passing Parameter Values To Tasks}
@@ -4658,11 +4664,11 @@ template as the full-range parameter. For example:
 \begin{lstlisting}
 [cylc]
     [[parameters]]
-        run = 1..10 # 01, 02, ..., 10
-        runx = 1..03  # 01, 02, 03 (note `03' to get correct padding)
+        run = 1..10 # 1, 2, ..., 10
+        runx = 1..3  # 1, 2, 3
     [[parameter templates]]
-        run = _R%(run)s
-        runx = _R%(runx)s
+        run = _R%(run)02d
+        runx = _R%(runx)02d
 [scheduling]
     [[dependencies]]
         graph = """model<run> => post<run>
