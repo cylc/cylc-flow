@@ -13,17 +13,6 @@ overview of suite.rc files, including syntax (\ref{Syntax}).
 The only top level configuration items at present are the suite title
 and description.
 
-\subsubsection{group}
-
-A single line group name for a suite. It is displayed in the gscan
-window and can be used as a way of grouping related suites together.
-\lstinline=cylc show= command.
-
-\begin{myitemize}
-\item {\em type:} single line string
-\item {\em default:} (none)
-\end{myitemize}
-
 
 \subsection{[meta]}
 
@@ -68,6 +57,17 @@ task URLs (\ref{TaskURL}).
 \item {\em type:} string (URL)
 \item {\em default:} (none)
 \item {\em example:} \lstinline=http://suites/${CYLC_SUITE_NAME}/index.html=
+\end{myitemize}
+
+\subsubsection{group}{ [meta] \textrightarrow group}
+
+A single line group name for a suite. It is displayed in the gscan
+window and can be used as a way of grouping related suites together.
+\lstinline=cylc show= command.
+
+\begin{myitemize}
+\item {\em type:} single line string
+\item {\em default:} (none)
 \end{myitemize}
 
 \subsubsection[\_\_MANY\_\_]{ [meta] \textrightarrow \_\_MANY\_\_}
