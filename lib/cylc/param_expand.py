@@ -157,7 +157,7 @@ class NameExpander(object):
                             nval = int(val)
                         except ValueError:
                             nval = val
-                        if not item_in_iterable(val, self.param_cfg[pname]):
+                        if not item_in_iterable(nval, self.param_cfg[pname]):
                             raise ParamExpandError(
                                 "ERROR, parameter %s out of range: %s" % (
                                     pname, p_tmpl))
@@ -289,17 +289,10 @@ class GraphExpander(object):
                     elif offs.startswith('='):
                         # Check that specific parameter values exist.
                         val = offs[1:]
-                        # Pad integer values here.
                         try:
-                            int(val)
+                            nval = int(val)
                         except ValueError:
                             nval = val
-                        else:
-                            nval = val.zfill(
-                                len(str(self.param_cfg[pname][0])))
-                            if nval != val:
-                                line = re.sub(item,
-                                              '%s=%s' % (pname, nval), line)
                         if not item_in_iterable(nval, self.param_cfg[pname]):
                             raise ParamExpandError(
                                 "ERROR, parameter %s out of range: %s" % (
@@ -371,9 +364,9 @@ class TestParamExpand(unittest.TestCase):
 
     def setUp(self):
         """Create some parameters and templates for use in tests."""
-        ivals = [i for i in range(2)]
-        jvals = [j for j in range(3)]
-        kvals = [k for k in range(2)]
+        ivals = list(range(2))
+        jvals = list(range(3))
+        kvals = list(range(2))
         params_map = {'i': ivals, 'j': jvals, 'k': kvals}
         templates = {'i': '_i%(i)s',
                      'j': '_j%(j)s',
