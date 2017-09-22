@@ -159,8 +159,9 @@ class TaskJobManager(object):
         # Create a job host prep manager
         job_host_prepper = JobHostPrep(cmds)
         for cmd in cmds:
+            proc_ctx = SuiteProcContext(self.JOB_INIT_HOST, cmd)
             self.proc_pool.put_command(
-                SuiteProcContext(self.JOB_INIT_HOST, cmd),
+                proc_ctx,
                 self._init_host_command_callback,
                 [cmd, owner, host, user_at_host, r_suite_run_dir,
                  job_host_prepper])
@@ -811,13 +812,19 @@ class TaskJobManager(object):
                     itask.try_timers[key] = TaskActionTimer(delays=delays)
 
     def _init_host_command_callback(
-            self, ctx, cmd, owner, host, user_at_host, r_suite_run_dir,
-            init_host_commander):
+        self, proc_ctx, cmd, owner, host, user_at_host, r_suite_run_dir,
+        init_host_commander):
         """Callback when init_host_exec_commands has exited"""
-        if ctx.ret_code:
-            LOG.error(ctx)
+        #import pdb; pdb.set_trace()
+        if proc_ctx.ret_code:
+            LOG.error(RemoteJobHostInitError.MSG_INIT)
+            LOG.error(proc_ctx)
+            raise RemoteJobHostInitError(
+                RemoteJobHostInitError.MSG_INIT,
+                user_at_host, ' '.join([quote(item) for item in cmd]),
+                proc_ctx.ret_code, proc_ctx.out, proc_ctx.err)
         else:
-            LOG.debug(ctx)
+            LOG.debug(proc_ctx)
         # Do something to log that each init command has run
         init_host_commander.set_cmd_complete(cmd)
         if init_host_commander.complete():
