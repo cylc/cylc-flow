@@ -643,10 +643,21 @@ conditions; see `cylc conditions`.
 
         Args:
             client_info (dict): store 'prev_time', 'prev_err_size'.
-            full_mode (boolean): force full update
+            full_mode (bool): force full update
 
         Return:
-            (dict)
+            (dict):
+                cylc_version (str): version of cylc running this suite
+                full_mode (bool): is this returning a full update?
+                summary (tuple): (global_summary, task_summary, family_summary)
+                ancestors (dict): first parent ancestors
+                ancestors_pruned (dict):
+                    first parent ancestors, without non-task namespaces
+                descendants (dict): first parent descendants
+                err_content (str): new content in error log
+                err_size (int): new size of error log
+                mean_main_loop_interval (float):
+                    average time interval (seconds) of last 10 main loops
 
         See Also:
             info_get_graph_raw
