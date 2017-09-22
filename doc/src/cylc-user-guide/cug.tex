@@ -4498,12 +4498,28 @@ For example:
 \begin{lstlisting}
 [cylc]
     [[parameters]]
+        # parameters: "ship", "buoy", "plane"
+        # default task suffixes: _ship, _buoy, _plane
         obs = ship, buoy, plane
-        run = 1..5  # 1, 2, 3, 4, 5
-        idx = 1..9..2  # 1, 3, 5, 7, 9
-        i = 1..5..2, 10, 11..13   # 1, 3, 5, 10, 11, 12, 13
-        item = 0, 1, e, pi, i  # "0", "1", "e", "pi", "i"
-        p = one, two, 3..5  # ERROR
+
+        # parameters: 1, 2, 3, 4, 5
+        # default task suffixes: _run1, _run2, _run3, _run4, _run5
+        run = 1..5
+
+        # parameters: 1, 3, 5, 7, 9
+        # default task suffixes: _idx1, _idx3, _idx5, _idx7, _idx9
+        idx = 1..9..2
+
+        # parameters: 1, 3, 5, 10, 11, 12, 13
+        # default task suffixes: _i01, _i03, _i05, _i10, _i11, _i12, _i13
+        i = 1..5..2, 10, 11..13
+
+        # parameters: "0", "1", "e", "pi", "i"
+        # default task suffixes: _0, _1, _e, _pi, _i
+        item = 0, 1, e, pi, i
+
+        # ERROR: mix strings with int range
+        p = one, two, 3..5
 \end{lstlisting}
 Then angle brackets denote use of these parameters throughout the suite
 definition. For the values above, this parameterized name:
@@ -4604,8 +4620,10 @@ Figure~\ref{fig-params-1} shows the result as visualized by \lstinline=cylc grap
 
 \paragraph{Zero-Padded Integer Values}
 
-Integer parameter values are, by default, zero-padded according to the size of
-their largest value, so \lstinline@foo<p>@ for \lstinline@p = 9..10@ expands to
+Integer parameter values are given a default template for generating task
+suffixes that are zero-padded according to the size of their largest value.
+For example, the default template for \lstinline@p = 9..10@ would be
+\lstinline@_p%(p)02d@, so that \lstinline@foo<p>@ would become
 \lstinline@foo_p09, foo_p10@.
 
 To get thicker padding and/or alternate suffixes, use a template. E.g.:
@@ -4613,8 +4631,11 @@ To get thicker padding and/or alternate suffixes, use a template. E.g.:
 \begin{lstlisting}
 [cylc]
     [[parameters]]
+        i = 1..9
         p = 3..14
     [[parameter templates]]
+        i = _i%(i)02d  # suffixes = _i01, _i02, ..., _i09
+        # A double-percent gives a literal percent character
         p = %%p%(p)03d  # suffixes = %p003, %p004, ..., %p013, %p014
 \end{lstlisting}
 
@@ -4664,11 +4685,11 @@ template as the full-range parameter. For example:
 \begin{lstlisting}
 [cylc]
     [[parameters]]
-        run = 1..10 # 1, 2, ..., 10
+        run = 1..10  # 1, 2, ..., 10
         runx = 1..3  # 1, 2, 3
     [[parameter templates]]
-        run = _R%(run)02d
-        runx = _R%(runx)02d
+        run = _R%(run)02d   # _R01, _R02, ..., _R10
+        runx = _R%(runx)02d  # _R01, _R02, _R03
 [scheduling]
     [[dependencies]]
         graph = """model<run> => post<run>
