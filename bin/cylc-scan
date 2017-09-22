@@ -225,6 +225,7 @@ def main():
                 try:
                     value = suite_identity[KEY_META].get(key)
                 except KeyError:
+                    # KEY_UPDATE_TIME and Compat:<=7.5.0
                     value = suite_identity.get(key)
                 if value:
                     print "%s|%s|%s|%s|%s" % (
@@ -259,6 +260,7 @@ def main():
             try:
                 title = suite_identity[KEY_META].get(KEY_TITLE)
             except KeyError:
+                # Compat:<=7.5.0
                 title = suite_identity.get(KEY_TITLE)
             if title is None:
                 print indent + bold("(description and state totals withheld)")
@@ -273,6 +275,7 @@ def main():
             try:
                 description = suite_identity[KEY_META].get(KEY_DESCRIPTION)
             except KeyError:
+                # Compat:<=7.5.0
                 description = suite_identity.get(KEY_DESCRIPTION)
             print indent + bold("Description:")
             if description == "":
