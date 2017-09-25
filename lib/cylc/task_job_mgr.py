@@ -169,7 +169,7 @@ class TaskJobManager(object):
     def log_host_init_success(self, owner, host,
                               user_at_host, r_suite_run_dir):
         """Record that the host has been initialised successfully"""
-        self.init_host_map[host, owner] = self.should_unlink(host, owner)
+        self.init_host_map[(host, owner)] = self.should_unlink(host, owner)
         LOG.info('Initialised %s:%s' % (user_at_host, r_suite_run_dir))
 
     def host_is_already_initialised(self, host, owner):
