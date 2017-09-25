@@ -818,10 +818,10 @@ class TaskJobManager(object):
         if proc_ctx.ret_code:
             LOG.error(RemoteJobHostInitError.MSG_INIT, user_at_host)
             LOG.error(proc_ctx)
-            raise RemoteJobHostInitError(
-                RemoteJobHostInitError.MSG_INIT,
-                user_at_host, ' '.join([quote(item) for item in cmd]),
-                proc_ctx.ret_code, proc_ctx.out, proc_ctx.err)
+            #raise RemoteJobHostInitError(
+            #    RemoteJobHostInitError.MSG_INIT,
+            #    user_at_host, ' '.join([quote(item) for item in cmd]),
+            #    proc_ctx.ret_code, proc_ctx.out, proc_ctx.err)
         else:
             LOG.debug(proc_ctx)
         # Do something to log that each init command has run
