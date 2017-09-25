@@ -815,9 +815,8 @@ class TaskJobManager(object):
         self, proc_ctx, cmd, owner, host, user_at_host, r_suite_run_dir,
         init_host_commander):
         """Callback when init_host_exec_commands has exited"""
-        #import pdb; pdb.set_trace()
         if proc_ctx.ret_code:
-            LOG.error(RemoteJobHostInitError.MSG_INIT)
+            LOG.error(RemoteJobHostInitError.MSG_INIT, user_at_host)
             LOG.error(proc_ctx)
             raise RemoteJobHostInitError(
                 RemoteJobHostInitError.MSG_INIT,
