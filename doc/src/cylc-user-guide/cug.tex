@@ -532,14 +532,11 @@ finds to set up its environment:
 \begin{myitemize}
 \item \lstinline=${HOME}/.cylc/job-init-env.sh=
 \item \lstinline=${CYLC_DIR}/conf/job-init-env.sh=
-\item \lstinline=${CYLC_DIR}/conf/job-init-env-default.sh=
 \end{myitemize}
 
-The \lstinline=${CYLC_DIR}/conf/job-init-env-default.sh= file is provided in
-the cylc distribution, and will attempt to source \lstinline=/etc/profile= and
-\lstinline=${HOME}/.profile=. If this behaviour is not desirable, you should
-override it by adding a \lstinline=${CYLC_DIR}/conf/job-init-env.sh= file and
-populate it with the appropriate contents.
+You can override the environment for task jobs by adding a
+lstinline=${CYLC_DIR}/conf/job-init-env.sh= file and populate it with the
+appropriate contents.
 
 \subsection{Automated Tests}
 \label{RTAST}
@@ -715,14 +712,10 @@ environment:
 \begin{myitemize}
 \item \lstinline=${HOME}/.cylc/job-init-env.sh=
 \item \lstinline=${CYLC_DIR}/conf/job-init-env.sh=
-\item \lstinline=${CYLC_DIR}/conf/job-init-env-default.sh=
 \end{myitemize}
 
-The \lstinline=${CYLC_DIR}/conf/job-init-env-default.sh= file is provided in
-the cylc distribution, and will attempt to source \lstinline=/etc/profile= and
-\lstinline=${HOME}/.profile=. If this behaviour is not desirable, your site
-administrator should have overridden it by adding a
-\lstinline=${CYLC_DIR}/conf/job-init-env.sh= file and populate it with the
+Your site administrator may custom the environment for all task jobs by adding
+a \lstinline=${CYLC_DIR}/conf/job-init-env.sh= file and populate it with the
 appropriate contents. If customisation is still required, you can add your own
 \lstinline=${HOME}/.cylc/job-init-env.sh= file and populate it with the
 appropriate contents.
@@ -5444,7 +5437,7 @@ fi
 
 To abort a job script with a custom message that can be passed to a {\em
 failed} task event handler, use the built-in \lstinline=cylc__job_abort= shell
-function: 
+function:
 \begin{lstlisting}
 if ! /bin/false; then
   cylc__job_abort "ERROR: /bin/false failed!"
