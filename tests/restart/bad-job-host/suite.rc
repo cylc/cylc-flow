@@ -15,7 +15,7 @@ t-shutdown => t-check-log
         script = """
 # Hang the task on a remote host for up to 30 seconds
 touch 'file'
-timeout 180 bash -c 'while [[ -e 'file' ]]; do sleep 1; done' || true
+timeout 30 bash -c 'while [[ -e 'file' ]]; do sleep 1; done' || true
 """
         [[[remote]]]
             host = {{environ['CYLC_TEST_HOST']}}

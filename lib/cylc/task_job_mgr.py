@@ -48,7 +48,6 @@ from cylc.mkdir_p import mkdir_p
 from cylc.mp_pool import SuiteProcPool, SuiteProcContext
 from cylc.suite_host import is_remote, is_remote_host, is_remote_user
 from cylc.suite_srv_files_mgr import SuiteServiceFileError
-
 from cylc.suite_logging import ERR, LOG
 from cylc.task_events_mgr import TaskEventsManager
 from cylc.task_message import TaskMessage
