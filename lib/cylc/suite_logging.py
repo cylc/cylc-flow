@@ -458,7 +458,7 @@ class SuiteLog(object):
     def _register_syncronised_logs(self):
         """Establishes synchronisation between the logs."""
         self._group = RollingFileHandlerGroup()
-        for log in [self.loggers[log_name] for log_name in self.ALL_LOGS]:
+        for log in (self.loggers[log_name] for log_name in self.ALL_LOGS):
             self._group.add(log)
             for handler in log.handlers:
                 if isinstance(handler, RollingFileHandler):

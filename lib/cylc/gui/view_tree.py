@@ -159,8 +159,8 @@ class ControlTree(object):
         treeview.grab_focus()
         path, col = pth[:2]
         tvte = TreeViewTaskExtractor(treeview)
-        selected_paths = [row[0] for row in tvte.get_selected_rows()]
-        if path not in selected_paths:
+
+        if path not in (row[0] for row in tvte.get_selected_rows()):
             treeview.set_cursor(path, col, 0)
 
         # Populate lists of task info from the selected tasks.

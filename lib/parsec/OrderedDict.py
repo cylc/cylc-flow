@@ -18,7 +18,6 @@
 
 """Ordered Dictionary data structure used extensively in cylc."""
 
-
 try:
     # Python 2.7+ native.
     from collections import OrderedDict
@@ -74,18 +73,21 @@ class OrderedDictWithDefaults(OrderedDict):
         return [(key, self[key]) for key in self.keys()]
 
     def iterkeys(self):
-        """Include default keys - no memory saving over .keys()."""
-        for k in self.keys():
-            yield k
+        """Include default keys"""
+        for key in OrderedDict.iterkeys(self):
+            yield key
+        for key in getattr(self, 'defaults_', []):
+            if not OrderedDict.__contains__(self, key):
+                yield key
 
     def itervalues(self):
-        """Include default values - no memory saving over .values()."""
-        for k in self.keys():
+        """Include default values."""
+        for k in self.iterkeys():
             yield self[k]
 
     def iteritems(self):
-        """Include default key-value pairs - no memory saving over .items()"""
-        for k in self.keys():
+        """Include default key-value pairs."""
+        for k in self.iterkeys():
             yield (k, self[k])
 
     def __contains__(self, key):

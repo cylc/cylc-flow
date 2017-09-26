@@ -810,7 +810,8 @@ class SuiteConfig(object):
                 expanded_node_attrs[name] = val
         self.cfg['visualization']['node attributes'] = expanded_node_attrs
 
-    def is_graph_defined(self, dependency_map):
+    @staticmethod
+    def is_graph_defined(dependency_map):
         for item, value in dependency_map.items():
             if item == 'graph':
                 # Async graph.
@@ -824,7 +825,8 @@ class SuiteConfig(object):
                             return True
         return False
 
-    def dequote(self, s):
+    @staticmethod
+    def dequote(s):
         """Strip quotes off a string."""
         if (s[0] == s[-1]) and s.startswith(("'", '"')):
             return s[1:-1]
@@ -1262,10 +1264,11 @@ class SuiteConfig(object):
     def get_first_parent_descendants(self):
         return self.runtime['first-parent descendants']
 
-    def define_inheritance_tree(self, tree, hierarchy):
+    @staticmethod
+    def define_inheritance_tree(tree, hierarchy):
         """Combine inheritance hierarchies into a tree structure."""
-        for rt in hierarchy:
-            hier = copy(hierarchy[rt])
+        for rt_ in hierarchy:
+            hier = copy(hierarchy[rt_])
             hier.reverse()
             cur_tree = tree
             for item in hier:
@@ -1329,12 +1332,12 @@ class SuiteConfig(object):
             self.add_tree_titles(tree)
             # compute pre-title padding
             maxlen = 0
-            for ns in pruned_ancestors:
-                items = copy(pruned_ancestors[ns])
+            for namespace in pruned_ancestors:
+                items = copy(pruned_ancestors[namespace])
                 items.reverse()
-                for i in range(len(items)):
-                    tmp = 2 * i + 1 + len(items[i])
-                    if i == 0:
+                for itt, item in enumerate(items):
+                    tmp = 2 * itt + 1 + len(item)
+                    if itt == 0:
                         tmp -= 1
                     if tmp > maxlen:
                         maxlen = tmp
@@ -1871,13 +1874,10 @@ class SuiteConfig(object):
         # Note we could exclude 'root' from this and disallow use of 'root' in
         # the graph (which would probably be quite reasonable).
         family_map = {}
-        runtime_families = self.runtime['descendants'].keys()
-        runtime_tasks = [
-            t for t in self.runtime['parents'].keys()
-            if t not in runtime_families]
-        for fam in runtime_families:
-            desc = self.runtime['descendants'][fam]
-            family_map[fam] = [t for t in desc if t in runtime_tasks]
+        for family, tasks in self.runtime['descendants'].iteritems():
+            family_map[family] = [t for t in tasks if (
+                t in self.runtime['parents'] and
+                t not in self.runtime['descendants'])]
 
         # Move a cylc-5 non-cycling graph to an R1 section.
         non_cycling_graph = self.cfg['scheduling']['dependencies']['graph']

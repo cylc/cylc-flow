@@ -409,8 +409,7 @@ def launch_hosts_dialog(existing_hosts, change_hosts_func):
     dialog.vbox.pack_start(entry, expand=False, fill=False, padding=5)
     response = dialog.run()
     if response == gtk.RESPONSE_OK:
-        new_hosts = [h.strip() for h in entry.get_text().split(",")]
-        change_hosts_func(new_hosts)
+        change_hosts_func([h.strip() for h in entry.get_text().split(",")])
     dialog.destroy()
 
 

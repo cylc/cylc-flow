@@ -28,8 +28,7 @@ class CylcOptionParser(OptionParser):
     """Common options for all cylc CLI commands."""
 
     MULTITASK_USAGE = """
-A TASKID is an identifier for matching individual task proxies and/or families
-of them. It can be written in these syntaxes:
+TASKID is a pattern to match task proxies or task families, or groups of them:
 * [CYCLE-POINT-GLOB/]TASK-NAME-GLOB[:TASK-STATE]
 * [CYCLE-POINT-GLOB/]FAMILY-NAME-GLOB[:TASK-STATE]
 * TASK-NAME-GLOB[.CYCLE-POINT-GLOB][:TASK-STATE]
@@ -295,7 +294,7 @@ Arguments:"""
 
         """
         if (options.multitask_compat and len(mtask_args) == 2 and
-                all(["/" not in mtask_arg for mtask_arg in mtask_args]) and
+                not any("/" in mtask_arg for mtask_arg in mtask_args) and
                 "." not in mtask_args[1]):
             # For backward compat, argument list should have 2 elements.
             # Element 1 may be a regular expression, so it may contain "." but

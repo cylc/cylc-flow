@@ -497,7 +497,8 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
             path, self.FILE_BASE_SSL_CERT,
             crypto.dump_certificate(crypto.FILETYPE_PEM, cert_obj))
 
-    def _dump_item(self, path, item, value):
+    @staticmethod
+    def _dump_item(path, item, value):
         """Dump "value" to a file called "item" in the directory "path".
 
         1. File permission should already be user-read-write-only on

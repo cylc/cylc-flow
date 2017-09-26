@@ -29,10 +29,10 @@ run_ok "${TEST_NAME_BASE}-validate" \
 suite_run_fail "${TEST_NAME_BASE}-run-live" \
     cylc run --reference-test --debug ${SUITE_NAME}
 
-suite_run_ok "${TEST_NAME_BASE}-run-simulation" \
+suite_run_ok "${TEST_NAME_BASE}-run-dummy" \
     cylc run -m 'dummy' --reference-test --debug ${SUITE_NAME}
 
-suite_run_ok "${TEST_NAME_BASE}-run-dummy" \
+suite_run_ok "${TEST_NAME_BASE}-run-simulation" \
     cylc run -m 'simulation' --reference-test --debug ${SUITE_NAME}
 
 LOG=$(cylc log --location $SUITE_NAME)

@@ -90,7 +90,8 @@ class upgrader(object):
             item = item[key]
         del item[keys[-1]]
 
-    def show_keys(self, keys):
+    @staticmethod
+    def show_keys(keys):
         return '[' + ']['.join(keys) + ']'
 
     def expand(self, upg):

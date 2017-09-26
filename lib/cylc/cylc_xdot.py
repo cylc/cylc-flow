@@ -550,8 +550,8 @@ class xdot_widgets(object):
     def get(self):
         return self.vbox
 
-    def set_filter(self, filter):
-        self.widget.set_filter(filter)
+    def set_filter(self, filter_):
+        self.widget.set_filter(filter_)
 
     def set_dotcode(self, dotcode, filename='<stdin>', no_zoom=False):
         if no_zoom:
@@ -598,4 +598,4 @@ def get_reference_from_plain_format(plain_text):
                 pass
         indexed_lines.append((line_items, line))
     indexed_lines.sort()
-    return "".join([l[1] for l in indexed_lines])
+    return "".join(l[1] for l in indexed_lines)

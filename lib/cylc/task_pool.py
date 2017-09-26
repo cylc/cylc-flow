@@ -411,8 +411,8 @@ class TaskPool(object):
                     TASK_STATUS_SUCCEEDED]:
                 try:
                     for output in outputs_str.splitlines():
-                        itask.state.outputs.set_completed(
-                            message=output.split("=", 1)[1])
+                        itask.state.outputs.set_completion(
+                            output.split("=", 1)[1], True)
                 except AttributeError:
                     pass
 
@@ -717,7 +717,7 @@ class TaskPool(object):
         LOG.info("Reloading task definitions.")
         # Log tasks orphaned by a reload that were not in the task pool.
         for task in self.orphans:
-            if task not in [tsk.tdef.name for tsk in self.get_all_tasks()]:
+            if task not in (tsk.tdef.name for tsk in self.get_all_tasks()):
                 LOG.warning("Removed task: '%s'" % (task,))
         for itask in self.get_all_tasks():
             if itask.tdef.name in self.orphans:
@@ -1089,10 +1089,10 @@ class TaskPool(object):
                         itask.state.outputs.set_all_incomplete()
                         LOG.info("reset all output to incomplete", itask=itask)
                     else:
-                        ret = itask.state.outputs.set_completed(
+                        ret = itask.state.outputs.set_msg_trg_completion(
                             message=output, is_completed=is_completed)
                         if ret is None:
-                            ret = itask.state.outputs.set_completed(
+                            ret = itask.state.outputs.set_msg_trg_completion(
                                 trigger=output, is_completed=is_completed)
                         if ret is None:
                             LOG.warning(

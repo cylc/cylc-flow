@@ -106,7 +106,6 @@
         <RegExpr attribute='Keyword' String=' exclude at start-up '/>
         <RegExpr attribute='Keyword' String=' exclude '/>
         <RegExpr attribute='Keyword' String=' env-script '/>
-        <RegExpr attribute='Keyword' String=' enable resurrection '/>
         <RegExpr attribute='Keyword' String=' dummy mode suite timeout '/>
         <RegExpr attribute='Keyword' String=' disable automatic shutdown '/>
         <RegExpr attribute='Keyword' String=' description '/>

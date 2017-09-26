@@ -49,12 +49,12 @@ def match_dict(abbrev, categories, title):
     """Allow any unique abbreviation to cylc categories"""
     matches = set()
     for cat, aliases in categories.items():
-        if any([alias == abbrev for alias in aliases]):
+        if any(alias == abbrev for alias in aliases):
             # Exact match, don't look for more
             matches.clear()
             matches.add(cat)
             break
-        if any([alias.startswith(abbrev) for alias in aliases]):
+        if any(alias.startswith(abbrev) for alias in aliases):
             # Partial match
             matches.add(cat)
     if not matches:
@@ -63,7 +63,7 @@ def match_dict(abbrev, categories, title):
         # multiple matches
         raise CommandNotUniqueError('%s "%s" not unique: %s' % (
             title, abbrev,
-            ' '.join(['|'.join(categories[cat]) for cat in matches])))
+            ' '.join('|'.join(categories[cat]) for cat in matches)))
     return matches.pop()
 
 
@@ -81,12 +81,12 @@ def match_command(abbrev):
                 hook_commands,
                 task_commands]:
         for com, aliases in dct.items():
-            if any([alias == abbrev for alias in aliases]):
+            if any(alias == abbrev for alias in aliases):
                 matches.clear()
                 matches.add(com)
                 finished_matching = True
                 break
-            if any([alias.startswith(abbrev) for alias in aliases]):
+            if any(alias.startswith(abbrev) for alias in aliases):
                 matches.add(com)
         if finished_matching:
             break
@@ -96,7 +96,7 @@ def match_command(abbrev):
         # multiple matches
         raise CommandNotUniqueError('COMMAND "%s" not unique: %s' % (
             abbrev,
-            ' '.join(['|'.join(all_commands[com]) for com in matches])))
+            ' '.join('|'.join(all_commands[com]) for com in matches)))
     return matches.pop()
 
 

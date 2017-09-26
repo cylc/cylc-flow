@@ -90,10 +90,8 @@ def get_broadcast_change_report(modified_settings, is_cancel=False):
     if not modified_settings:
         return ""
     if is_cancel:
-        change = CHANGE_PREFIX_CANCEL
         msg = CHANGE_TITLE_CANCEL
     else:
-        change = CHANGE_PREFIX_SET
         msg = CHANGE_TITLE_SET
     for broadcast_change in get_broadcast_change_iter(
             modified_settings, is_cancel):

@@ -185,10 +185,10 @@ are displayed in red.
                 gtk.RESPONSE_CANCEL,
                 gtk.STOCK_SAVE,
                 gtk.RESPONSE_OK))
-        filter = gtk.FileFilter()
-        filter.set_name("any")
-        filter.add_pattern("*")
-        dialog.add_filter(filter)
+        filter_ = gtk.FileFilter()
+        filter_.set_name("any")
+        filter_.add_pattern("*")
+        dialog.add_filter(filter_)
 
         response = dialog.run()
 

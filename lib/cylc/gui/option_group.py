@@ -87,13 +87,12 @@ class controlled_option_group(object):
         else:
             options = ' '
         for name in self.entries:
-            (entry, label, option) = self.entries[name]
+            (entry, _, option) = self.entries[name]
             if entry.get_text():
                 options += ' ' + option + entry.get_text()
-        for name in self.arg_entries:
-            (entry, label) = self.arg_entries[name]
-            if entry.get_text():
-                options += ' ' + entry.get_text()
+        for entry in self.arg_entries.values():
+            if entry[0].get_text():
+                options += ' ' + entry[0].get_text()
         return options
 
 
@@ -122,7 +121,7 @@ class option_group(object):
 
     def pack(self, vbox):
         for name in self.entries:
-            (entry, label, option) = self.entries[name]
+            (entry, label) = self.entries[name][1:3]
             box = gtk.HBox()
             box.pack_start(label, True)
             box.pack_start(entry, True)
@@ -140,11 +139,10 @@ class option_group(object):
     def get_options(self):
         options = ''
         for name in self.entries:
-            (entry, label, option) = self.entries[name]
+            (entry, _, option) = self.entries[name]
             if entry.get_text():
                 options += ' ' + option + entry.get_text()
-        for name in self.arg_entries:
-            (entry, label) = self.arg_entries[name]
-            if entry.get_text():
-                options += ' ' + entry.get_text()
+        for entry in self.arg_entries.values():
+            if entry[0].get_text():
+                options += ' ' + entry[0].get_text()
         return options

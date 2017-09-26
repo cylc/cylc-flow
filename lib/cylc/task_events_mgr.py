@@ -47,10 +47,9 @@ from cylc.suite_host import get_suite_host, get_user
 from cylc.task_action_timer import TaskActionTimer
 from cylc.task_message import TaskMessage
 from cylc.task_state import (
-    TASK_STATUSES_ACTIVE, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
-    TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_SUBMIT_FAILED,
-    TASK_STATUS_RUNNING, TASK_STATUS_RETRYING, TASK_STATUS_FAILED,
-    TASK_STATUS_SUCCEEDED)
+    TASK_STATUS_READY, TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_RETRYING,
+    TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_RUNNING, TASK_STATUS_RETRYING,
+    TASK_STATUS_FAILED, TASK_STATUS_SUCCEEDED)
 from cylc.task_outputs import (
     TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED)
@@ -251,16 +250,36 @@ class TaskEventsManager(object):
             elif ctx.ctx_type == self.HANDLER_JOB_LOGS_RETRIEVE:
                 self._process_job_logs_retrieval(schd_ctx, ctx, id_keys)
 
-    def process_message(self, itask, priority, message, poll_event_time=None,
-                        is_incoming=False):
+    def _poll_to_confirm(self, itask, status_gt, poll_func):
+        """Poll itask to confirm an apparent state reversal."""
+        if (itask.state.is_greater_than(status_gt) and not
+                itask.state.confirming_with_poll):
+            poll_func(self.suite, [itask],
+                      msg="polling %s to confirm state" % itask.identity)
+            itask.state.confirming_with_poll = True
+            return True
+        else:
+            itask.state.confirming_with_poll = False
+            return False
+
+    def process_message(self, itask, priority, message, poll_func,
+                        poll_event_time=None, is_incoming=False):
         """Parse an incoming task message and update task state.
 
-        Incoming is e.g. "succeeded at <TIME>".
+        Incoming, e.g. "succeeded at <TIME>", may be from task job or polling.
 
-        Correctly handle late (out of order) message which would otherwise set
-        the state backward in the natural order of events.
+        It is possible for my current state to be inconsistent with an incoming
+        message (whether normal or polled) e.g. due to a late poll result, or a
+        network outage, or manual state reset. To handle this, if a message
+        would take the task state backward, issue a poll to confirm instead of
+        changing state - then always believe the next message. Note that the
+        next message might not be the result of this confirmation poll, in the
+        unlikely event that a job emits a succession of messages very quickly,
+        but this is the best we can do without somehow uniquely associating
+        each poll with its result message.
 
         """
+
         is_polled = poll_event_time is not None
         # Log incoming messages with '>' to distinguish non-message log entries
         message_flag = ""
@@ -287,77 +306,51 @@ class TaskEventsManager(object):
             itask.summary['latest_message'] += " %s" % self.POLLED_INDICATOR
         cylc.flags.iflag = True
 
-        # Failed tasks do not send messages unless declared resurrectable
-        if itask.state.status == TASK_STATUS_FAILED:
-            if itask.tdef.rtconfig['enable resurrection']:
-                LOG.warning(
-                    'message received while in the failed state:' +
-                    ' I am returning from the dead!',
-                    itask=itask)
-            else:
-                LOG.warning(
-                    'message rejected while in the failed state:\n  %s' %
-                    message,
-                    itask=itask)
+        # Satisfy my output, if possible, and record the result.
+        an_output_was_satisfied = itask.state.outputs.set_msg_trg_completion(
+            message=message, is_completed=True)
+
+        if message == TASK_OUTPUT_STARTED:
+            if self._poll_to_confirm(itask, TASK_STATUS_RUNNING, poll_func):
                 return
-
-        if is_polled and itask.state.status not in TASK_STATUSES_ACTIVE:
-            # A poll result can come in after a task finishes.
-            LOG.warning(
-                "Ignoring late poll result: task is not active", itask=itask)
-            return
-
-        # Check registered outputs
-        output_has_changed = itask.state.outputs.set_completed(message)
-        if output_has_changed is False:  # Not True or None
-            # This output has already been reported complete. Not an error
-            # condition - maybe the network was down for a bit. Ok for
-            # polling as multiple polls *should* produce the same result.
-            if not is_polled:
-                LOG.debug(
-                    "ignore - output already completed:\n  %s" % message,
-                    itask=itask)
-            return
-
-        if (message == TASK_OUTPUT_STARTED and
-                itask.state.status in [
-                    TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
-                    TASK_STATUS_SUBMIT_FAILED]):
             self._process_message_started(itask, event_time)
-        elif (message == TASK_OUTPUT_SUCCEEDED and
-                itask.state.status in [
-                    TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
-                    TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_RUNNING,
-                    TASK_STATUS_FAILED]):
+        elif message == TASK_OUTPUT_SUCCEEDED:
+            if self._poll_to_confirm(itask, TASK_STATUS_SUCCEEDED, poll_func):
+                return
             self._process_message_succeeded(itask, event_time)
-        elif (message == TASK_OUTPUT_FAILED and
-                itask.state.status in [
-                    TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
-                    TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_RUNNING]):
-            # Generic fail message, via polling.
-            # (submit- states in case of very fast submission and execution).
+        elif message == TASK_OUTPUT_FAILED:
+            if self._poll_to_confirm(itask, TASK_STATUS_FAILED, poll_func):
+                return
             self._process_message_failed(itask, event_time, self.JOB_FAILED)
         elif message == self.EVENT_SUBMIT_FAILED:
+            if self._poll_to_confirm(itask,
+                                     TASK_STATUS_SUBMIT_FAILED, poll_func):
+                return
             self._process_message_submit_failed(itask, event_time)
         elif message == TASK_OUTPUT_SUBMITTED:
+            if self._poll_to_confirm(itask, TASK_STATUS_SUBMITTED, poll_func):
+                return
             self._process_message_submitted(itask, event_time)
         elif message.startswith(TaskMessage.FAIL_MESSAGE_PREFIX):
-            # Task failed message
+            # Task received signal.
             signal = message[len(TaskMessage.FAIL_MESSAGE_PREFIX):]
             self._db_events_insert(itask, "signaled", signal)
             self.suite_db_mgr.put_update_task_jobs(
                 itask, {"run_signal": signal})
+            if self._poll_to_confirm(itask, TASK_STATUS_FAILED, poll_func):
+                return
             self._process_message_failed(itask, event_time, self.JOB_FAILED)
         elif message.startswith(TaskMessage.ABORT_MESSAGE_PREFIX):
             # Task aborted with message
-            signal = message[len(TaskMessage.ABORT_MESSAGE_PREFIX):]
+            aborted_with = message[len(TaskMessage.ABORT_MESSAGE_PREFIX):]
             self._db_events_insert(itask, "aborted", message)
             self.suite_db_mgr.put_update_task_jobs(
-                itask, {"run_signal": signal})
-            self._process_message_failed(itask, event_time, signal)
+                itask, {"run_signal": aborted_with})
+            if self._poll_to_confirm(itask, TASK_STATUS_FAILED, poll_func):
+                return
+            self._process_message_failed(itask, event_time, aborted_with)
         elif message.startswith(TaskMessage.VACATION_MESSAGE_PREFIX):
-            self.pflag = True
-            itask.state.reset_state(TASK_STATUS_SUBMITTED)
+            # Task job pre-empted into a vacation state
             self._db_events_insert(itask, "vacated", message)
             itask.set_event_time('started')  # reset
             if TASK_STATUS_SUBMIT_RETRYING in itask.try_timers:
@@ -369,8 +362,12 @@ class TaskEventsManager(object):
                     float(self._get_events_conf(itask, 'submission timeout')))
             except (TypeError, ValueError):
                 itask.timeout_timers[TASK_STATUS_SUBMITTED] = None
-        elif output_has_changed:
-            # Message of a custom task output
+            # Believe this and change state without polling (could poll?).
+            cylc.flags.pflag = True
+            itask.state.reset_state(TASK_STATUS_SUBMITTED)
+        elif an_output_was_satisfied:
+            # Message of an as-yet unreported custom task output.
+            # No state change.
             cylc.flags.pflag = True
             self.suite_db_mgr.put_update_task_outputs(itask)
         else:
@@ -378,6 +375,7 @@ class TaskEventsManager(object):
             #  * general non-output/progress messages
             #  * poll messages that repeat previous results
             # Note that all messages are logged already at the top.
+            # No state change.
             LOG.debug(
                 '(current: %s) unhandled: %s' % (itask.state.status, message),
                 itask=itask)
@@ -402,7 +400,8 @@ class TaskEventsManager(object):
         self._setup_event_mail(itask, event)
         self._setup_custom_event_handlers(itask, event, message)
 
-    def set_poll_time(self, itask, now=None):
+    @staticmethod
+    def set_poll_time(itask, now=None):
         """Set the next task execution/submission poll time.
 
         If now is set, set the timer only if the previous delay is done.
@@ -449,7 +448,7 @@ class TaskEventsManager(object):
             subject = "[%s/%s/%02d %s] %s" % (
                 point, name, submit_num, event, schd_ctx.suite)
         else:
-            event_set = set([id_key[0][1] for id_key in id_keys])
+            event_set = set(id_key[0][1] for id_key in id_keys)
             if len(event_set) == 1:
                 # 1 event from n tasks
                 subject = "[%d tasks %s] %s" % (
@@ -729,7 +728,7 @@ class TaskEventsManager(object):
             # Simulate job execution at this point.
             itask.set_event_time('started', event_time)
             itask.state.reset_state(TASK_STATUS_RUNNING)
-            itask.state.outputs.set_completed(TASK_OUTPUT_STARTED)
+            itask.state.outputs.set_completion(TASK_OUTPUT_STARTED, True)
             return
 
         itask.set_event_time('submitted', event_time)
