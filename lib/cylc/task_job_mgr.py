@@ -812,22 +812,18 @@ class TaskJobManager(object):
 
     def _init_host_command_callback(
         self, proc_ctx, cmd, owner, host, user_at_host, r_suite_run_dir,
-        init_host_commander):
+            init_host_commander):
         """Callback when init_host_exec_commands has exited"""
         if proc_ctx.ret_code:
             LOG.error(RemoteJobHostInitError.MSG_INIT, user_at_host)
             LOG.error(proc_ctx)
-            #raise RemoteJobHostInitError(
-            #    RemoteJobHostInitError.MSG_INIT,
-            #    user_at_host, ' '.join([quote(item) for item in cmd]),
-            #    proc_ctx.ret_code, proc_ctx.out, proc_ctx.err)
         else:
             LOG.debug(proc_ctx)
         # Do something to log that each init command has run
         init_host_commander.set_cmd_complete(cmd)
         if init_host_commander.complete():
-            self.log_host_init_success(owner, host, user_at_host,
-                                       r_suite_run_dir)
+            self.log_host_init_success(
+                owner, host, user_at_host, r_suite_run_dir)
 
     def _simulation_submit_task_jobs(self, itasks):
         """Simulation mode task jobs submission."""
