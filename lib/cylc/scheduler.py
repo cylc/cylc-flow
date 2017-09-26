@@ -454,8 +454,6 @@ conditions; see `cylc conditions`.
                         self.suite, itask.task_host, itask.task_owner)
                 except RemoteJobHostInitError as exc:
                     LOG.error(str(exc))
-            sleep(30)
-        # sleep(30)
         self.command_poll_tasks()
 
     def _load_suite_params(self, row_idx, row):
