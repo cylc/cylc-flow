@@ -295,11 +295,12 @@ can assign templates to parameter names here, to override the default templates.
 
 \begin{myitemize}
     \item {\em type:} a Python-style string template
-    \item {\em default} for an integer-valued parameter \lstinline=p=:
-        \lstinline=_p%(p)s= \\
+    \item {\em default} for integer parameters \lstinline=p=:
+        \lstinline=_p%(p)0Nd= \\
+        where N is the number of digits of the maximum integer value,
         e.g.\ \lstinline=foo<run>= becomes \lstinline=foo_run3= for
             \lstinline@run@ value \lstinline@3@.
-    \item {\em default} for a non integer-valued parameter \lstinline=p=:
+    \item {\em default} for non-integer parameters \lstinline=p=:
         \lstinline=_%(p)s= \\
         e.g.\ \lstinline=foo<run>= becomes \lstinline=foo_top= for
             \lstinline@run@ value \lstinline@top@.
@@ -309,10 +310,8 @@ can assign templates to parameter names here, to override the default templates.
 \end{myitemize}
 
 Note that the values of a parameter named \lstinline=p= are substituted for
-\lstinline=%(p)s=.  The \lstinline=s= indicates a string value and should
-be used even for integer-valued parameters, because cylc converts integer
-parameter values to strings, with (depending on size) zero-padding. In
-\lstinline=_run%(run)s= the first ``run'' is a string literal, and the second
+\lstinline=%(p)s=.
+In \lstinline=_run%(run)s= the first ``run'' is a string literal, and the second
 gets substituted with each value of the parameter.
 
 \subsubsection[{[[}events{]]}]{[cylc] \textrightarrow [[events]]}

@@ -1,0 +1,17 @@
+edge "foo+%j001.1" "bar+%j001.1" solid
+edge "foo+%j002.1" "bar+%j002.1" solid
+edge "foo+%j003.1" "bar+%j003.1" solid
+edge "foo+%j004.1" "bar+%j004.1" solid
+edge "foo+%j005.1" "bar+%j005.1" solid
+graph
+node "bar+%j001.1" "bar+%j001\n1" unfilled ellipse black
+node "bar+%j002.1" "bar+%j002\n1" unfilled ellipse black
+node "bar+%j003.1" "bar+%j003\n1" unfilled ellipse black
+node "bar+%j004.1" "bar+%j004\n1" unfilled ellipse black
+node "bar+%j005.1" "bar+%j005\n1" unfilled ellipse black
+node "foo+%j001.1" "foo+%j001\n1" unfilled ellipse black
+node "foo+%j002.1" "foo+%j002\n1" unfilled ellipse black
+node "foo+%j003.1" "foo+%j003\n1" unfilled ellipse black
+node "foo+%j004.1" "foo+%j004\n1" unfilled ellipse black
+node "foo+%j005.1" "foo+%j005\n1" unfilled ellipse black
+stop
