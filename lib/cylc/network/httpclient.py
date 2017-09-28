@@ -96,6 +96,10 @@ class SuiteRuntimeServiceClient(object):
         if not owner:
             owner = get_user()
         self.owner = owner
+        if host and host.split('.')[0] == 'localhost':
+            host = get_host()
+        elif host and '.' not in host:  # Not IP and no domain
+            host = get_fqdn_by_host(host)
         self.host = host
         self.port = port
         self.srv_files_mgr = SuiteSrvFilesManager()
@@ -251,11 +255,6 @@ class SuiteRuntimeServiceClient(object):
         except (IOError, ValueError, SuiteServiceFileError):
             raise ClientInfoError(self.suite)
         host = self.host
-        if host.split('.')[0] == 'localhost':
-            host = get_host()
-        elif host and '.' not in host:  # Not IP and no domain
-            host = get_fqdn_by_host(host)
-
         http_request_items = []
         try:
             # dictionary containing: url, payload, method
