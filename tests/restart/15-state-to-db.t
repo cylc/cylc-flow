@@ -28,8 +28,8 @@ sqlite3 "${SUITE_RUN_DIR}/state/cylc-suite.db" <"cylc-suite-db.dump"
 cp -p 'state/state' "${SUITE_RUN_DIR}/state/"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart --debug "${SUITE_NAME}"
-sed -i 's/^.* INFO - //' "${TEST_NAME_BASE}-restart.stdout"
-contains_ok "${TEST_NAME_BASE}-restart.stdout" <<'__OUT__'
+sed 's/^.* INFO - //' "${SUITE_RUN_DIR}/log/suite/log" >'edited.log'
+contains_ok 'edited.log' <<'__OUT__'
 LOADING suite parameters
 + initial cycle point = 20000101T0000Z
 + final cycle point = 20030101T0000Z

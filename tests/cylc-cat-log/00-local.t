@@ -32,15 +32,15 @@ cylc stop --max-polls=10 --interval=2 $SUITE_NAME 2>'/dev/null'
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-suite-log-log
 cylc cat-log $SUITE_NAME >$TEST_NAME.out
-grep_ok 'Suite starting' $TEST_NAME.out
+cmp_ok "${TEST_NAME}.out" "${SUITE_RUN_DIR}/log/suite/log"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-suite-log-out
 cylc cat-log -o $SUITE_NAME >$TEST_NAME.out
-grep_ok 'DONE' $TEST_NAME.out
+cmp_ok "${TEST_NAME}.out" "${SUITE_RUN_DIR}/log/suite/out"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-suite-log-err
 cylc cat-log -e $SUITE_NAME >$TEST_NAME.out
-grep_ok 'marmite and squashed bananas' $TEST_NAME.out
+cmp_ok "${TEST_NAME}.out" "${SUITE_RUN_DIR}/log/suite/err"
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-task-out
 cylc cat-log -o $SUITE_NAME a-task.1 >$TEST_NAME.out

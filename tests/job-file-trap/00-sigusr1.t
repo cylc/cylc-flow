@@ -76,13 +76,13 @@ run_tests() {
         cmp_ok "$TEST_NAME-db-t1" - <<<'succeeded'
         # Test reference
         TIMEOUT=$(($(date +%s) + 120))
-        while ! grep -q 'DONE' $SUITE_RUN_DIR/log/suite/out \
+        while ! grep -q 'DONE' "${SUITE_RUN_DIR}/log/suite/log" \
                 && (($TIMEOUT > $(date +%s)))
         do
             sleep 1
         done
     fi
-    grep_ok 'SUITE REFERENCE TEST PASSED' $SUITE_RUN_DIR/log/suite/out
+    grep_ok 'SUITE REFERENCE TEST PASSED' "${SUITE_RUN_DIR}/log/suite/log"
     purge_suite $SUITE_NAME
     exit
 }

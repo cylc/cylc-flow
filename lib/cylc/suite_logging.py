@@ -27,12 +27,14 @@ import os
 import sys
 from time import time
 
+
 try:
     # Permits use of module by standalone utilities that aren't part of a
     # suite.
     from cylc.cfgspec.globalcfg import GLOBAL_CFG
 except ImportError:
     pass
+import cylc.flags
 from cylc.wallclock import (get_time_string_from_unix_time,
                             get_current_time_string)
 
@@ -284,13 +286,6 @@ class SuiteLog(object):
         # File streams
         self.streams = []
 
-        # Filename stamp functions.
-        if self.is_test:
-            self.stamp = lambda: get_current_time_string(True, True, True
-                                                         ).replace('.', '-')
-        else:
-            self.stamp = lambda: get_current_time_string(False, True, True)
-
         SuiteLog.__INSTANCE = self
 
     @classmethod
@@ -348,7 +343,14 @@ class SuiteLog(object):
         if log in self.loggers:
             return self.log_paths[log]
 
-    def pimp(self, detach=False, log_logger_level=logging.INFO):
+    def get_stamp(self):
+        """Returns the current time stamp for logging."""
+        if self.is_test:
+            return get_current_time_string(True, True, True).replace('.', '-')
+        else:
+            return get_current_time_string(False, True, True)
+
+    def pimp(self, detach=False, log_logger_level=None):
         """Initiate the suite logs."""
         if not self.loggers[self.LOG]:
             # Don't initiate logs if they exist already.
@@ -358,7 +360,7 @@ class SuiteLog(object):
         elif self.roll_at_startup:
             self._group.roll_all()
 
-    def _create_logs(self, detach, log_logger_level=logging.INFO):
+    def _create_logs(self, detach, log_logger_level=None):
         """Sets up the log files and their file handlers."""
         # Logging formatters.
         # plain_formatter = logging.Formatter('%(message)s')
@@ -373,6 +375,14 @@ class SuiteLog(object):
         # Multi-line filters.
         multi_line_indented_filter = MultiLineFilter('\n\t')
 
+        # Level
+        if log_logger_level is None:
+            if cylc.flags.debug:
+                log_logger_level = logging.DEBUG
+            elif cylc.flags.verbose:
+                log_logger_level = logging.VERBOSE
+            else:
+                log_logger_level = logging.INFO
         # --- Create the 'log' logger. ---
         log = logging.getLogger(self.LOG)
         self.loggers[self.LOG] = log
@@ -384,7 +394,7 @@ class SuiteLog(object):
                                     mode='a',
                                     maxBytes=self.max_bytes,
                                     archive_length=self.archive_length,
-                                    file_stamp_fcn=self.stamp)
+                                    file_stamp_fcn=self.get_stamp)
         log_fh.setLevel(log_logger_level)
         log_fh.setFormatter(iso8601_formatter)
         log.addHandler(log_fh)
@@ -394,7 +404,7 @@ class SuiteLog(object):
                                         mode='a',
                                         maxBytes=self.max_bytes,
                                         archive_length=self.archive_length,
-                                        file_stamp_fcn=self.stamp)
+                                        file_stamp_fcn=self.get_stamp)
         log_err_fh.setLevel(logging.WARNING)
         log_err_fh.setFormatter(iso8601_formatter)
         log.addHandler(log_err_fh)
@@ -402,30 +412,30 @@ class SuiteLog(object):
         # --- Create the 'out' logger. ---
         out = logging.getLogger(self.OUT)
         self.loggers[self.OUT] = out
-        out.setLevel(logging.INFO)
+        out.setLevel(log_logger_level)
 
         # Output to the 'out' file.
         out_fh = RollingFileHandler(self.log_paths[self.OUT],
                                     mode='a',
                                     maxBytes=self.max_bytes,
                                     archive_length=self.archive_length,
-                                    file_stamp_fcn=self.stamp)
-        out_fh.setLevel(logging.INFO)
+                                    file_stamp_fcn=self.get_stamp)
+        out_fh.setLevel(log_logger_level)
         out_fh.setFormatter(iso8601_formatter)
         out.addHandler(out_fh)
 
         # --- Create the 'err' logger. ---
         err = logging.getLogger(self.ERR)
         self.loggers[self.ERR] = err
-        err.setLevel(logging.WARNING)
+        err.setLevel(log_logger_level)
         err.addFilter(multi_line_indented_filter)
 
         # Output to the 'err' file.
         err_fh = RollingFileHandler(self.log_paths[self.ERR],
                                     mode='a',
                                     maxBytes=self.max_bytes,
-                                    file_stamp_fcn=self.stamp)
-        err_fh.setLevel(logging.WARNING)
+                                    file_stamp_fcn=self.get_stamp)
+        err_fh.setLevel(log_logger_level)
         err_fh.setFormatter(iso8601_formatter)
         err.addHandler(err_fh)
 
@@ -441,17 +451,17 @@ class SuiteLog(object):
 
             # LOG: warnings or higher -> stderr
             log_stderr_fh = logging.StreamHandler(sys.stderr)
-            log_stderr_fh.setLevel(logging.WARNING)
+            log_stderr_fh.setLevel(log_logger_level)
             log_stderr_fh.setFormatter(iso8601_formatter)
             log.addHandler(log_stderr_fh)
             # OUT: info or higher -> stdout
             out_stdout_fh = logging.StreamHandler(sys.stdout)
-            out_stdout_fh.setLevel(logging.INFO)
+            out_stdout_fh.setLevel(log_logger_level)
             out_stdout_fh.setFormatter(iso8601_formatter)
             out.addHandler(out_stdout_fh)
             # ERR: warnings or higher -> stderr
             err_stderr_fh = logging.StreamHandler(sys.stderr)
-            err_stderr_fh.setLevel(logging.WARNING)
+            err_stderr_fh.setLevel(log_logger_level)
             err_stderr_fh.setFormatter(iso8601_formatter)
             err.addHandler(err_stderr_fh)
 

@@ -457,7 +457,5 @@ class SuiteDatabaseManager(object):
             pri_dao = self.get_pri_dao()
 
         # Vacuum the primary/private database file
-        OUT.info("Vacuuming the suite db ...")
         pri_dao.vacuum()
-        OUT.info("...done")
         pri_dao.close()

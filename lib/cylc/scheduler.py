@@ -46,7 +46,7 @@ from cylc.suite_db_mgr import SuiteDatabaseManager
 from cylc.suite_events import (
     SuiteEventContext, SuiteEventError, SuiteEventHandler)
 from cylc.suite_host import get_suite_host, get_user
-from cylc.suite_logging import SuiteLog, OUT, ERR, LOG
+from cylc.suite_logging import SuiteLog, ERR, LOG
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
 from cylc.suite_status import (
@@ -214,11 +214,7 @@ class Scheduler(object):
                 daemonize(self)
 
             # Setup the suite log.
-            slog = SuiteLog.get_inst(self.suite)
-            if cylc.flags.debug:
-                slog.pimp(detach, DEBUG)
-            else:
-                slog.pimp(detach)
+            SuiteLog.get_inst(self.suite).pimp(detach)
 
             self.proc_pool = SuiteProcPool()
             self.configure_comms_daemon()
@@ -333,7 +329,7 @@ conditions; see `cylc conditions`.
                 self.options.hold_point_string)
 
         if self.pool_hold_point:
-            OUT.info("Suite will hold after %s" % self.pool_hold_point)
+            LOG.info("Suite will hold after %s" % self.pool_hold_point)
 
         reqmode = self.config.cfg['cylc']['required run mode']
         if reqmode:
@@ -355,11 +351,12 @@ conditions; see `cylc conditions`.
             'host': self.host, 'port': self.port, 'pid': os.getpid()})
         # Note that the following lines must be present at the top of
         # the suite log file for use in reference test runs:
-        LOG.info('Run mode: ' + self.run_mode)
-        LOG.info('Initial point: ' + str(self.initial_point))
+        LOG.info('Cylc version: %s' % CYLC_VERSION)
+        LOG.info('Run mode: %s' % self.run_mode)
+        LOG.info('Initial point: %s' % self.initial_point)
         if self.start_point != self.initial_point:
-            LOG.info('Start point: ' + str(self.start_point))
-        LOG.info('Final point: ' + str(self.final_point))
+            LOG.info('Start point: %s' % self.start_point)
+        LOG.info('Final point: %s' % self.final_point)
 
         self.pool = TaskPool(
             self.config, self.final_point, self.suite_db_mgr,
@@ -459,11 +456,11 @@ conditions; see `cylc conditions`.
     def _load_suite_params(self, row_idx, row):
         """Load previous initial/final cycle point."""
         if row_idx == 0:
-            OUT.info("LOADING suite parameters")
+            LOG.info("LOADING suite parameters")
         key, value = row
         if key == "is_held":
             self.pool.is_held = bool(value)
-            OUT.info("+ hold suite = %s" % (bool(value),))
+            LOG.info("+ hold suite = %s" % (bool(value),))
             return
         for key_str, self_attr, option_ignore_attr in [
                 ("initial", "start_point", "ignore_start_point"),
@@ -492,12 +489,12 @@ conditions; see `cylc conditions`.
             else:
                 # reinstate from old
                 setattr(self, self_attr, point)
-            OUT.info("+ %s cycle point = %s" % (key_str, value))
+            LOG.info("+ %s cycle point = %s" % (key_str, value))
 
     def _load_task_run_times(self, row_idx, row):
         """Load run times of previously succeeded task jobs."""
         if row_idx == 0:
-            OUT.info("LOADING task run times")
+            LOG.info("LOADING task run times")
         name, run_times_str = row
         try:
             taskdef = self.config.taskdefs[name]
@@ -505,7 +502,7 @@ conditions; see `cylc conditions`.
             for run_time_str in run_times_str.rsplit(",", maxlen)[-maxlen:]:
                 run_time = int(run_time_str)
                 taskdef.elapsed_times.append(run_time)
-            OUT.info("+ %s: %s" % (
+            LOG.info("+ %s: %s" % (
                 name, ",".join(str(s) for s in taskdef.elapsed_times)))
         except (KeyError, ValueError, AttributeError):
             return
@@ -572,7 +569,7 @@ conditions; see `cylc conditions`.
                 if name in self.PROC_CMDS:
                     self.task_events_mgr.pflag = True
             self.command_queue.task_done()
-        OUT.info(log_msg)
+        LOG.info(log_msg)
 
     def _task_type_exists(self, name_or_id):
         """Does a task name or id match a known task type in this suite?"""
@@ -792,6 +789,7 @@ conditions; see `cylc conditions`.
     def command_set_verbosity(lvl):
         """Remove suite verbosity."""
         LOG.logger.setLevel(lvl)
+        ERR.logger.setLevel(lvl)
         cylc.flags.debug = (lvl == DEBUG)
         return True, 'OK'
 
@@ -851,7 +849,7 @@ conditions; see `cylc conditions`.
             return
         self.suite_timer_timeout = time() + timeout
         if cylc.flags.verbose:
-            OUT.info("%s suite timer starts NOW: %s" % (
+            LOG.info("%s suite timer starts NOW: %s" % (
                 get_seconds_as_interval_string(timeout),
                 get_current_time_string()))
         self.suite_timer_active = True
@@ -862,7 +860,7 @@ conditions; see `cylc conditions`.
             self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT)
         )
         if cylc.flags.verbose:
-            OUT.info("%s suite inactivity timer starts NOW: %s" % (
+            LOG.info("%s suite inactivity timer starts NOW: %s" % (
                 get_seconds_as_interval_string(
                     self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT)),
                 get_current_time_string()))
@@ -1094,11 +1092,11 @@ conditions; see `cylc conditions`.
                 event, reason, self.suite, self.owner, self.host, self.port))
         except SuiteEventError as exc:
             if event == self.EVENT_SHUTDOWN and self.options.reftest:
-                ERR.error('SUITE REFERENCE TEST FAILED')
+                LOG.error('SUITE REFERENCE TEST FAILED')
             raise SchedulerError(exc.args[0])
         else:
             if event == self.EVENT_SHUTDOWN and self.options.reftest:
-                OUT.info('SUITE REFERENCE TEST PASSED')
+                LOG.info('SUITE REFERENCE TEST PASSED')
 
     def initialise_scheduler(self):
         """Prelude to the main scheduler loop.
@@ -1156,7 +1154,8 @@ conditions; see `cylc conditions`.
             LOG.debug("END TASK PROCESSING (took %s seconds)" %
                       (time() - time0))
 
-    def process_queued_task_operations(self):
+    def process_suite_db_queue(self):
+        """Update suite DB."""
         try:
             self.suite_db_mgr.process_queued_ops()
         except OSError as err:
@@ -1174,6 +1173,7 @@ conditions; see `cylc conditions`.
             raise SchedulerError(str(exc))
 
     def timeout_check(self):
+        """Check suite and task timers."""
         self.check_suite_timer()
         if self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT):
             self.check_suite_inactive()
@@ -1220,7 +1220,6 @@ conditions; see `cylc conditions`.
                     sleep(self.INTERVAL_STOP_PROCESS_POOL_EMPTY)
                     if stop_process_pool_empty_msg:
                         LOG.info(stop_process_pool_empty_msg)
-                        OUT.info(stop_process_pool_empty_msg)
                         stop_process_pool_empty_msg = None
                     self.proc_pool.handle_results_async()
                     self.process_command_queue()
@@ -1239,6 +1238,11 @@ conditions; see `cylc conditions`.
             self.time_next_kill = time() + self.INTERVAL_STOP_KILL
 
     def suite_health_check(self, has_changes):
+        """Health check.
+
+        Suite run directory still there.
+        Suite contact file has the right info.
+        """
         if self.stop_mode is None and not has_changes:
             self.check_suite_stalled()
         now = time()
@@ -1263,6 +1267,7 @@ conditions; see `cylc conditions`.
                 now + self._get_cylc_conf('health check interval'))
 
     def update_profiler_logs(self, tinit):
+        """Update info for profiler."""
         now = time()
         self._update_profile_info("scheduler loop dt (s)", now - tinit,
                                   amount_format="%.3f")
@@ -1308,8 +1313,8 @@ conditions; see `cylc conditions`.
                 self.suite_db_mgr.put_task_pool(self.pool)
                 self.update_state_summary()  # Will reset cylc.flags.iflag
 
-            # Process queued operations for each task proxy
-            self.process_queued_task_operations()
+            # Process suite DB queue
+            self.process_suite_db_queue()
 
             # If public database is stuck, blast it away by copying the content
             # of the private database into it.
@@ -1338,7 +1343,7 @@ conditions; see `cylc conditions`.
         if self.suite_timer_active:
             self.suite_timer_active = False
             if cylc.flags.verbose:
-                OUT.info("%s suite timer stopped NOW: %s" % (
+                LOG.info("%s suite timer stopped NOW: %s" % (
                     get_seconds_as_interval_string(
                         self._get_events_conf(self.EVENT_TIMEOUT)),
                     get_current_time_string()))
@@ -1433,10 +1438,7 @@ conditions; see `cylc conditions`.
             reason = reason.args[0]
         elif reason:
             msg += ' - %s' % reason
-        OUT.info(msg)
 
-        # The getattr() calls and if tests below are used in case the
-        # suite is not fully configured before the shutdown is called.
         LOG.info(msg)
 
         if self.options.genref:
@@ -1489,11 +1491,13 @@ conditions; see `cylc conditions`.
         except StandardError as exc:
             ERR.error(str(exc))
 
+        # The getattr() calls and if tests below are used in case the
+        # suite is not fully configured before the shutdown is called.
         if getattr(self, "config", None) is not None:
             # run shutdown handlers
             self.run_event_handlers(self.EVENT_SHUTDOWN, str(reason))
 
-        OUT.info("DONE")  # main thread exit
+        LOG.info("DONE")  # main thread exit
 
     def set_stop_point(self, stop_point_string):
         """Set stop point."""

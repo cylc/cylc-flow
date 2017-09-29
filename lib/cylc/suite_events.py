@@ -24,7 +24,7 @@ from pipes import quote
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.mp_pool import SuiteProcContext
 from cylc.suite_host import get_suite_host, get_user
-from cylc.suite_logging import ERR, LOG
+from cylc.suite_logging import LOG
 
 
 class SuiteEventError(Exception):
@@ -177,7 +177,7 @@ class SuiteEventHandler(object):
         if proc_ctx.ret_code:
             msg = '%s EVENT HANDLER FAILED' % proc_ctx.cmd_key[1]
             LOG.error(str(proc_ctx))
-            ERR.error(msg)
+            LOG.error(msg)
             if abort_on_error:
                 raise SuiteEventError(msg)
         else:

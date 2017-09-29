@@ -155,7 +155,7 @@ class BroadcastMgr(object):
     def load_db_broadcast_states(self, row_idx, row):
         """Load broadcast variables from runtime DB broadcast states row."""
         if row_idx == 0:
-            OUT.info("LOADING broadcast states")
+            LOG.info("LOADING broadcast states")
         point, namespace, key, value = row
         sections = []
         cur_key = key
@@ -170,7 +170,7 @@ class BroadcastMgr(object):
                 dict_.setdefault(section, {})
                 dict_ = dict_[section]
             dict_[cur_key] = value
-        OUT.info(CHANGE_FMT.strip() % {
+        LOG.info(CHANGE_FMT.strip() % {
             "change": CHANGE_PREFIX_SET,
             "point": point,
             "namespace": namespace,

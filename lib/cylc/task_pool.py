@@ -349,7 +349,7 @@ class TaskPool(object):
         are polled to determine what their true status is.
         """
         if row_idx == 0:
-            OUT.info("LOADING task proxies")
+            LOG.info("LOADING task proxies")
         (cycle, name, spawned, status, hold_swap, submit_num, _,
          user_at_host, time_submit, time_run, timeout,
          outputs_str) = row
@@ -419,15 +419,15 @@ class TaskPool(object):
             if user_at_host:
                 itask.summary['job_hosts'][int(submit_num)] = user_at_host
             if hold_swap:
-                OUT.info("+ %s.%s %s (%s)" % (name, cycle, status, hold_swap))
+                LOG.info("+ %s.%s %s (%s)" % (name, cycle, status, hold_swap))
             else:
-                OUT.info("+ %s.%s %s" % (name, cycle, status))
+                LOG.info("+ %s.%s %s" % (name, cycle, status))
             self.add_to_runahead_pool(itask, is_restart=True)
 
     def load_db_task_action_timers(self, row_idx, row):
         """Load a task action timer, e.g. event handlers, retry states."""
         if row_idx == 0:
-            OUT.info("LOADING task action timers")
+            LOG.info("LOADING task action timers")
         (cycle, name, ctx_key_pickle, ctx_pickle, delays_pickle, num, delay,
          timeout) = row
         id_ = TaskID.get(name, cycle)
@@ -454,7 +454,7 @@ class TaskPool(object):
                 {"id": id_, "ctx_key": ctx_key})
             ERR.warning(traceback.format_exc())
             return
-        OUT.info("+ %s.%s %s" % (name, cycle, ctx_key))
+        LOG.info("+ %s.%s %s" % (name, cycle, ctx_key))
 
     def release_runahead_task(self, itask):
         """Release itask to the appropriate queue in the active pool."""
