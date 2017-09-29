@@ -96,10 +96,6 @@ class SuiteRuntimeServiceClient(object):
         if not owner:
             owner = get_user()
         self.owner = owner
-        if host and host.split('.')[0] == 'localhost':
-            host = get_host()
-        elif host and '.' not in host:  # Not IP and no domain
-            host = get_fqdn_by_host(host)
         self.host = host
         self.port = port
         self.srv_files_mgr = SuiteSrvFilesManager()
@@ -254,16 +250,19 @@ class SuiteRuntimeServiceClient(object):
             self._load_contact_info()
         except (IOError, ValueError, SuiteServiceFileError):
             raise ClientInfoError(self.suite)
-        host = self.host
+        if self.host and self.host.split('.')[0] == 'localhost':
+            self.host = get_host()
+        elif self.host and '.' not in self.host:  # Not IP and no domain
+            self.host = get_fqdn_by_host(self.host)
         http_request_items = []
         try:
             # dictionary containing: url, payload, method
             http_request_items.append(self._compile_url(
-                func_dict, host, self.comms_protocol))
+                func_dict, self.host, self.comms_protocol))
         except (IndexError, ValueError, AttributeError):
             for f_dict in func_dicts:
                 http_request_items.append(self._compile_url(
-                    f_dict, host, self.comms_protocol))
+                    f_dict, self.host, self.comms_protocol))
         # Remove proxy settings from environment for now
         environ = {}
         for key in ("http_proxy", "https_proxy"):

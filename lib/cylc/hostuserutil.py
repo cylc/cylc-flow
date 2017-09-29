@@ -146,7 +146,7 @@ class HostUtil(object):
         return self._host
 
     def get_fqdn_by_host(self, target):
-        """Return the preferred fqdn name of the target host."""
+        """Return the fully qualified domain name of the target host."""
         return self._get_host_info(target)[0]
 
     def get_user(self):
