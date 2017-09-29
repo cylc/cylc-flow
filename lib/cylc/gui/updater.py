@@ -121,6 +121,7 @@ class Updater(threading.Thread):
         self.full_fam_state_summary = {}
         self.all_families = {}
         self.global_summary = {}
+        self.cfg.port = None
         self.client = None
         gobject.idle_add(self.app_window.set_title, str(self.cfg.suite))
 
