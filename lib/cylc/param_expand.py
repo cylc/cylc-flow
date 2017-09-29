@@ -66,9 +66,12 @@ from parsec.OrderedDict import OrderedDictWithDefaults
 
 # To split runtime heading name lists.
 REC_NAMES = re.compile(r'(?:[^,<]|\<[^>]*\>)+')
-# To extract 'name', '<parameters>', and 'other' from
-#   'name<parameters>other' (other is used for clock-offsets).
-REC_P_NAME = re.compile(r"(%s)(<.*?>)?(.+)?" % TaskID.NAME_RE)
+# To extract (e.g.) 'name', 'the, quick, brown', and 'other' from
+#   'name<the, quick, brown>other' (other is used for clock-offsets).
+REC_P_ALL = re.compile(r"(%s)(?:<(.*?)>)?(.+)?" % TaskID.NAME_RE)
+# To extract (e.g.) individual parameter names from  'the, quick, brown'.
+#   (Can also have values: 'the, quick=cat, brown').
+REC_P_NAMES = re.compile(r'\s*([^,]+)\s*,?')
 # To extract all parameter lists e.g. 'm,n,o' (from '<m,n,o>').
 REC_P_GROUP = re.compile(r"<(.*?)>")
 # To extract parameter name and optional offset or value e.g. 'm-1'.
@@ -126,8 +129,8 @@ class NameExpander(object):
         expanded = []
         for namespace in REC_NAMES.findall(runtime_heading):
             template = namespace.strip()
-            name, p_tmpl, other = REC_P_NAME.match(template).groups()
-            if not p_tmpl:
+            name, p_str_list, other = REC_P_ALL.match(template).groups()
+            if not p_str_list:
                 # Not parameterized.
                 if other:
                     expanded.append((name + other, {}))
@@ -138,7 +141,7 @@ class NameExpander(object):
             # Get the subset of parameters used in this case.
             used_param_names = []
             spec_vals = {}
-            for item in p_tmpl[1:-1].split(','):
+            for item in re.findall(REC_P_NAMES, p_str_list):
                 pname, sval = REC_P_OFFS.match(item.strip()).groups()
                 if not self.param_cfg.get(pname, None):
                     raise ParamExpandError(
@@ -160,7 +163,7 @@ class NameExpander(object):
                         if not item_in_iterable(nval, self.param_cfg[pname]):
                             raise ParamExpandError(
                                 "ERROR, parameter %s out of range: %s" % (
-                                    pname, p_tmpl))
+                                    pname, p_str_list))
                         spec_vals[pname] = nval
                 else:
                     used_param_names.append(pname)
@@ -206,30 +209,31 @@ class NameExpander(object):
     def replace_params(self, name_in, param_values, origin):
         """Replace parameters in name_in with values in param_values.
 
-        This is "expansion" for specific values, not for all values.
+        This is expansion for specific values, not for all values. Used inside
+        runtime namespaces, e.g. '[foo<m=3,n>]inherit = parent<m=3>'.
         """
-        name, p_tmpl = REC_P_NAME.match(name_in).groups()[:2]
-        if not p_tmpl:
+        name, p_str_list = REC_P_ALL.match(name_in).groups()[:2]
+        if not p_str_list:
             # name_in is not parameterized.
             return name_in
-        used_params = [i.strip() for i in p_tmpl[1:-1].split(',')]
-        used_param = []
-        for p_x in used_params:
-            if '=' in p_x:
-                # 'name=value' is legal if value is in param_values.
-                pname, pval = p_x.split('=')
+        used = []
+        for item in re.findall(REC_P_NAMES, p_str_list):
+            if '=' in item:
+                # 'pname=pvalue' is legal here if it matches param_values.
+                pname, pval = re.split('\s*=\s*', item)
                 if (pname, pval) in param_values.items():
-                    used_param.append(pname)
+                    used.append(pname)
                 else:
                     raise ParamExpandError(
-                        "ERROR, bad parameter value '%s' in '%s'" % (pval, origin))
-            elif '-' in p_x or '+' in p_x:
+                        "ERROR, bad parameter value '%s' in '%s'" % (
+                            pval, origin))
+            elif '-' in item or '+' in item:
                 raise ParamExpandError(
                     "ERROR, parameter offsets aren't legal in '%s'" % origin)
             else:
-                used_param.append(p_x)
+                used.append(item)
         str_template = name
-        for pname in used_param:
+        for pname in used:
             str_template += self.param_tmpl_cfg[pname]
         return str_template % param_values
 
