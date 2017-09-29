@@ -92,18 +92,17 @@ class Updater(threading.Thread):
 
         self.version_mismatch_warned = False
 
-        self.client = SuiteRuntimeServiceClient(
-            self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port,
-            self.cfg.comms_timeout, self.cfg.my_uuid)
+        self.client = None
         # Report sign-out on exit.
         atexit.register(self.signout)
 
     def signout(self):
         """Sign out the client, if possible."""
-        try:
-            self.client.signout()
-        except ClientError:
-            pass
+        if self.client is not None:
+            try:
+                self.client.signout()
+            except ClientError:
+                pass
 
     def set_stopped(self):
         """Reset data and clients when suite is stopped."""
@@ -122,17 +121,9 @@ class Updater(threading.Thread):
         self.all_families = {}
         self.global_summary = {}
         self.cfg.port = None
-        if self.cfg.host is None:
-            self.client.host = None
-        self.client.port = None
+        self.client = None
 
-        if self.cfg.host:
-            gobject.idle_add(
-                self.app_window.set_title,
-                "%s - %s" % (self.cfg.suite, self.cfg.host))
-        else:
-            gobject.idle_add(
-                self.app_window.set_title, str(self.cfg.suite))
+        gobject.idle_add(self.app_window.set_title, str(self.cfg.suite))
 
         # Use info bar to display stop summary if available.
         # Otherwise, just display the reconnect count down.
@@ -243,6 +234,10 @@ class Updater(threading.Thread):
 
     def update(self):
         """Call suite for an update."""
+        if self.client is None:
+            self.client = SuiteRuntimeServiceClient(
+                self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port,
+                self.cfg.comms_timeout, self.cfg.my_uuid)
         try:
             my_state = self.client.get_latest_state(full_mode=self.full_mode)
         except ClientError:
