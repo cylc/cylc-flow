@@ -156,6 +156,7 @@ class NameExpander(object):
                     elif sval.startswith('='):
                         # Check that specific parameter values exist.
                         val = sval[1:].strip()
+                        # Pad integer values here.
                         try:
                             nval = int(val)
                         except ValueError:
@@ -221,6 +222,10 @@ class NameExpander(object):
             if '=' in item:
                 # 'pname=pvalue' is legal here if it matches param_values.
                 pname, pval = re.split('\s*=\s*', item)
+                try:
+                    pval = int(pval)
+                except ValueError:
+                    pass
                 if (pname, pval) in param_values.items():
                     used.append(pname)
                 else:
