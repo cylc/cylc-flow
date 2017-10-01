@@ -69,9 +69,6 @@ REC_NAMES = re.compile(r'(?:[^,<]|\<[^>]*\>)+')
 # To extract (e.g.) 'name', 'the, quick, brown', and 'other' from
 #   'name<the, quick, brown>other' (other is used for clock-offsets).
 REC_P_ALL = re.compile(r"(%s)(?:<(.*?)>)?(.+)?" % TaskID.NAME_RE)
-# To extract (e.g.) individual parameter names from  'the, quick, brown'.
-#   (Can also have values: 'the, quick=cat, brown').
-REC_P_NAMES = re.compile(r'\s*([^,]+)\s*,?')
 # To extract all parameter lists e.g. 'm,n,o' (from '<m,n,o>').
 REC_P_GROUP = re.compile(r"<(.*?)>")
 # To extract parameter name and optional offset or value e.g. 'm-1'.
@@ -141,7 +138,7 @@ class NameExpander(object):
             # Get the subset of parameters used in this case.
             used_param_names = []
             spec_vals = {}
-            for item in re.findall(REC_P_NAMES, p_str_list):
+            for item in (i.strip() for i in p_str_list.split(',')):
                 pname, sval = REC_P_OFFS.match(item.strip()).groups()
                 if not self.param_cfg.get(pname, None):
                     raise ParamExpandError(
@@ -218,7 +215,7 @@ class NameExpander(object):
             # name_in is not parameterized.
             return name_in
         used = []
-        for item in re.findall(REC_P_NAMES, p_str_list):
+        for item in (i.strip() for i in p_str_list.split(',')):
             if '=' in item:
                 # 'pname=pvalue' is legal here if it matches param_values.
                 pname, pval = re.split('\s*=\s*', item)
