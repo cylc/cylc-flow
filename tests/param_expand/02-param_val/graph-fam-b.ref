@@ -1,0 +1,33 @@
+edge "FAM_dog_j1.1" "boo.1" solid
+edge "foo.1" "FAM_cat_j1.1" solid
+edge "foo.1" "FAM_cat_j2.1" solid
+edge "foo.1" "FAM_cat_j4.1" solid
+edge "foo.1" "FAM_cat_j5.1" solid
+edge "foo.1" "FAM_dog_j1.1" solid
+edge "foo.1" "FAM_dog_j2.1" solid
+edge "foo.1" "FAM_dog_j3.1" solid
+edge "foo.1" "FAM_dog_j4.1" solid
+edge "foo.1" "FAM_dog_j5.1" solid
+edge "foo.1" "FAM_fish_j1.1" solid
+edge "foo.1" "FAM_fish_j2.1" solid
+edge "foo.1" "FAM_fish_j3.1" solid
+edge "foo.1" "FAM_fish_j4.1" solid
+edge "foo.1" "FAM_fish_j5.1" solid
+graph
+node "FAM_cat_j1.1" "FAM_cat_j1\n1" unfilled doubleoctagon black
+node "FAM_cat_j2.1" "FAM_cat_j2\n1" unfilled doubleoctagon black
+node "FAM_cat_j4.1" "FAM_cat_j4\n1" unfilled doubleoctagon black
+node "FAM_cat_j5.1" "FAM_cat_j5\n1" unfilled doubleoctagon black
+node "FAM_dog_j1.1" "FAM_dog_j1\n1" unfilled doubleoctagon black
+node "FAM_dog_j2.1" "FAM_dog_j2\n1" unfilled doubleoctagon black
+node "FAM_dog_j3.1" "FAM_dog_j3\n1" unfilled doubleoctagon black
+node "FAM_dog_j4.1" "FAM_dog_j4\n1" unfilled doubleoctagon black
+node "FAM_dog_j5.1" "FAM_dog_j5\n1" unfilled doubleoctagon black
+node "FAM_fish_j1.1" "FAM_fish_j1\n1" unfilled doubleoctagon black
+node "FAM_fish_j2.1" "FAM_fish_j2\n1" unfilled doubleoctagon black
+node "FAM_fish_j3.1" "FAM_fish_j3\n1" unfilled doubleoctagon black
+node "FAM_fish_j4.1" "FAM_fish_j4\n1" unfilled doubleoctagon black
+node "FAM_fish_j5.1" "FAM_fish_j5\n1" unfilled doubleoctagon black
+node "boo.1" "boo\n1" unfilled ellipse black
+node "foo.1" "foo\n1" unfilled ellipse black
+stop

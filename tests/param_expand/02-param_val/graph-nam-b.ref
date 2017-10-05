@@ -1,0 +1,67 @@
+edge FAM_cat_j1 bar_cat_j1 solid
+edge FAM_cat_j2 bar_cat_j2 solid
+edge FAM_cat_j4 bar_cat_j4 solid
+edge FAM_cat_j5 bar_cat_j5 solid
+edge FAM_dog_j1 bar_cat_j3 solid
+edge FAM_dog_j1 bar_dog_j1 solid
+edge FAM_dog_j2 bar_dog_j2 solid
+edge FAM_dog_j3 bar_dog_j3 solid
+edge FAM_dog_j4 bar_dog_j4 solid
+edge FAM_dog_j5 bar_dog_j5 solid
+edge FAM_fish_j1 bar_fish_j1 solid
+edge FAM_fish_j2 bar_fish_j2 solid
+edge FAM_fish_j3 bar_fish_j3 solid
+edge FAM_fish_j4 bar_fish_j4 solid
+edge FAM_fish_j5 bar_fish_j5 solid
+edge root FAM_cat_j1 solid
+edge root FAM_cat_j2 solid
+edge root FAM_cat_j3 solid
+edge root FAM_cat_j4 solid
+edge root FAM_cat_j5 solid
+edge root FAM_dog_j1 solid
+edge root FAM_dog_j2 solid
+edge root FAM_dog_j3 solid
+edge root FAM_dog_j4 solid
+edge root FAM_dog_j5 solid
+edge root FAM_fish_j1 solid
+edge root FAM_fish_j2 solid
+edge root FAM_fish_j3 solid
+edge root FAM_fish_j4 solid
+edge root FAM_fish_j5 solid
+edge root boo solid
+edge root foo solid
+graph
+node FAM_cat_j1 FAM_cat_j1 filled box royalblue
+node FAM_cat_j2 FAM_cat_j2 filled box royalblue
+node FAM_cat_j3 FAM_cat_j3 filled box royalblue
+node FAM_cat_j4 FAM_cat_j4 filled box royalblue
+node FAM_cat_j5 FAM_cat_j5 filled box royalblue
+node FAM_dog_j1 FAM_dog_j1 filled box royalblue
+node FAM_dog_j2 FAM_dog_j2 filled box royalblue
+node FAM_dog_j3 FAM_dog_j3 filled box royalblue
+node FAM_dog_j4 FAM_dog_j4 filled box royalblue
+node FAM_dog_j5 FAM_dog_j5 filled box royalblue
+node FAM_fish_j1 FAM_fish_j1 filled box royalblue
+node FAM_fish_j2 FAM_fish_j2 filled box royalblue
+node FAM_fish_j3 FAM_fish_j3 filled box royalblue
+node FAM_fish_j4 FAM_fish_j4 filled box royalblue
+node FAM_fish_j5 FAM_fish_j5 filled box royalblue
+node bar_cat_j1 bar_cat_j1 filled box royalblue
+node bar_cat_j2 bar_cat_j2 filled box royalblue
+node bar_cat_j3 bar_cat_j3 filled box royalblue
+node bar_cat_j4 bar_cat_j4 filled box royalblue
+node bar_cat_j5 bar_cat_j5 filled box royalblue
+node bar_dog_j1 bar_dog_j1 filled box royalblue
+node bar_dog_j2 bar_dog_j2 filled box royalblue
+node bar_dog_j3 bar_dog_j3 filled box royalblue
+node bar_dog_j4 bar_dog_j4 filled box royalblue
+node bar_dog_j5 bar_dog_j5 filled box royalblue
+node bar_fish_j1 bar_fish_j1 filled box royalblue
+node bar_fish_j2 bar_fish_j2 filled box royalblue
+node bar_fish_j3 bar_fish_j3 filled box royalblue
+node bar_fish_j4 bar_fish_j4 filled box royalblue
+node bar_fish_j5 bar_fish_j5 filled box royalblue
+node boo boo filled box royalblue
+node foo foo filled box royalblue
+node root root filled box royalblue
+stop

@@ -206,13 +206,13 @@ class NameExpander(object):
 
     def expand_parent_params(self, parent, param_values, origin):
         """Replace parameters with specific values in inherited parent names.
-        
+
         If a value is NOT specified, e.g.:
             inherit = parent<m>
         then it must be given in param_values (as defined by expansion of the
         enclosing namespace name).
 
-        If a value IS specified, e.g.: 
+        If a value IS specified, e.g.:
             inherit = parent<m=3>
         then it must be a legal value for that parameter.
 
@@ -224,22 +224,22 @@ class NameExpander(object):
         for item in (i.strip() for i in p_str_list.split(',')):
             if '-' in item or '+' in item:
                 raise ParamExpandError(
-                    "ERROR, parameter offsets aren't legal here: '%s'" % origin)
+                    "ERROR, parameter offsets illegal here: '%s'" % origin)
             elif '=' in item:
                 # Specific value given.
                 pname, pval = re.split('\s*=\s*', item)
+                try:
+                    pval = int(pval)
+                except ValueError:
+                    pass
                 if pname not in self.param_cfg:
                     raise ParamExpandError(
                         "ERROR, parameter '%s' undefined in '%s'" % (
                             pname, origin))
                 elif pval not in self.param_cfg[pname]:
                     raise ParamExpandError(
-                        "ERROR, value '%s' is out of range for '%s' in"
-                        " '%s'" % (pval, pname, origin))
-                try:
-                    pval = int(pval)
-                except ValueError:
-                    pass
+                        "ERROR, illegal value '%s=%s' in '%s'" % (
+                            pname, pval, origin))
                 used[pname] = pval
             else:
                 # Non-specific; value must be supplied in param_values.
@@ -247,11 +247,12 @@ class NameExpander(object):
                     used[item] = param_values[item]
                 except KeyError:
                     raise ParamExpandError(
-                        "ERROR, bad parameter '%s' in '%s'" % (item, origin))
+                        "ERROR, parameter '%s' undefined in '%s'" % (item, origin))
         str_template = name
         for pname in used:
             str_template += self.param_tmpl_cfg[pname]
         return str_template % used
+
 
 class GraphExpander(object):
     """Handle parameter expansion of graph string lines."""
