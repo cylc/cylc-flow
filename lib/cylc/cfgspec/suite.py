@@ -190,10 +190,10 @@ coercers['parameter_list'] = _coerce_parameter_list
 
 
 SPEC = {
-    'group': vdr(vtype='string', default="(ungrouped)"),
     'meta': {
-        'title': vdr(vtype='string', default=""),
         'description': vdr(vtype='string', default=""),
+        'group': vdr(vtype='string', default=""),
+        'title': vdr(vtype='string', default=""),
         'URL': vdr(vtype='string', default=""),
         '__MANY__': vdr(vtype='string', default=""),
     },
@@ -541,6 +541,10 @@ def upg(cfg, descr):
         '7.5.0',
         ['URL'],
         ['meta', 'URL'])
+    u.deprecate(
+        '7.6.0',
+        ['group'],
+        ['meta', 'group'])
     u.obsolete('7.2.2', ['cylc', 'dummy mode'])
     u.obsolete('7.2.2', ['cylc', 'simulation mode'])
     u.obsolete('7.2.2', ['runtime', '__MANY__', 'dummy mode'])
