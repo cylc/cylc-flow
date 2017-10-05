@@ -1312,8 +1312,6 @@ conditions; see `cylc conditions`.
             if cylc.flags.iflag:
                 self.suite_db_mgr.put_task_pool(self.pool)
                 self.update_state_summary()  # Will reset cylc.flags.iflag
-
-            # Process suite DB queue
             self.process_suite_db_queue()
 
             # If public database is stuck, blast it away by copying the content
