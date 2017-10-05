@@ -247,7 +247,8 @@ class NameExpander(object):
                     used[item] = param_values[item]
                 except KeyError:
                     raise ParamExpandError(
-                        "ERROR, parameter '%s' undefined in '%s'" % (item, origin))
+                        "ERROR, parameter '%s' undefined in '%s'" % (
+                            item, origin))
         str_template = name
         for pname in used:
             str_template += self.param_tmpl_cfg[pname]
