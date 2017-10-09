@@ -107,7 +107,8 @@ class CylcSuiteDBChecker(object):
 
         res = []
         for row in self.conn.execute(stmt, stmt_args):
-            res.append(list(row))
+            if not all(v is None for v in row):
+                res.append(list(row))
 
         return res
 
