@@ -98,6 +98,8 @@ class TaskProxy(object):
             'logfiles': [],
             'job_hosts': {},
             'execution_time_limit': None,
+            'batch_sys_name': None,
+            'submit_method_id': None
         }
 
         self.local_job_file_path = None

@@ -842,7 +842,8 @@ class TaskEventsManager(object):
                     "id": quote(itask.identity),
                     "message": quote(message),
                     "batch_sys_name": quote(itask.summary['batch_sys_name']),
-                    "batch_sys_id": quote(itask.summary['submit_method_id'])
+                    "batch_sys_job_id": quote(
+                        itask.summary['submit_method_id'])
                 }
 
                 if self.suite_cfg:
