@@ -762,9 +762,9 @@ class ScanAppUpdater(threading.Thread):
             self.hosts = []
         self.comms_timeout = comms_timeout
         if interval is None:
-            interval = gsfg.get(['full update interval'])
+            interval = gsfg.get(['suite listing update interval'])
         self.interval_full = interval
-        self.interval_part = gsfg.get(['part update interval'])
+        self.interval_part = gsfg.get(['suite status update interval'])
         self.suite_info_map = {}
         self.prev_full_update = None
         self.prev_norm_update = None
@@ -877,12 +877,13 @@ class ScanAppUpdater(threading.Thread):
                     self.prev_norm_update is None or
                     now >= self.prev_norm_update + self.interval_part):
                 title = self.window.get_title()
-                if full_mode:
-                    gobject.idle_add(
-                        self.window.set_title, title + " (listing + updating)")
+                if full_mode and self.hosts:
+                    active_title = "%s (scanning + updating)" % title
+                elif full_mode:
+                    active_title = "%s (listing + updating)" % title
                 else:
-                    gobject.idle_add(
-                        self.window.set_title, title + " (updating)")
+                    active_title = "%s (updating)" % title
+                gobject.idle_add(self.window.set_title, active_title)
                 self.suite_info_map = update_suites_info(self, full_mode)
                 self.prev_norm_update = time()
                 if full_mode:

@@ -77,7 +77,7 @@ def main():
         action="store", default=None, dest="comms_timeout")
     parser.add_option(
         "--interval",
-        help="Time interval (in seconds) betwen full updates",
+        help="Time interval (in seconds) between full updates",
         type="int", metavar="SECONDS", dest="interval")
     options, args = parser.parse_args()
 

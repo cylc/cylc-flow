@@ -45,10 +45,19 @@ specified here does not affect the display order.
 \item {\em example:} \lstinline@columns = suite, title, status@
 \end{myitemize}
 
-\subsubsection{full update interval}
+\subsubsection{suite listing update interval}
 
 Set the time interval between refreshing the suite listing (by file system or
 port range scan).
+
+Increasing this setting will reduce the frequency of gscan looking for running
+suites. Scanning for suites by port range scan can be a hit on the network and
+the running suite processes, while scanning for suites by walking the file
+system can hit the file system (especially if the file system is a network file
+system). Therefore, this is normally set with a lower frequency than the status
+update interval. Increasing this setting will make gscan friendlier to the
+network and/or the file system, but gscan may appear out of sync if there are
+many start up or shut down of suites between the intervals.
 
 \begin{myitemize}
 \item {\em type:} ISO 8601 duration/interval representation (e.g.\ 
@@ -56,10 +65,14 @@ port range scan).
 \item {\em default: PT5M}
 \end{myitemize}
 
-\subsubsection{part update interval}
+\subsubsection{suite status update interval}
 
-Set the time interval between calls to previous known running suites for data
-updates.
+Set the time interval between calls to known running suites (suites that are
+known via the latest suite listing) for data updates.
+
+Increasing this setting will reduce the network traffic and hits on the suite
+processes. However, gscan may appear out of sync with what may be happening
+in very busy suites.
 
 \begin{myitemize}
 \item {\em type:} ISO 8601 duration/interval representation (e.g.\ 

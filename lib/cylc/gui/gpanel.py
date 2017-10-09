@@ -105,8 +105,8 @@ class ScanPanelAppletUpdater(object):
         self.quit = True
         self._set_gcylc_image_tooltip()
         self.gcylc_image.set_sensitive(False)
-        self.interval_full = gcfg.get(['full update interval'])
-        self.interval_part = gcfg.get(['part update interval'])
+        self.interval_full = gcfg.get(['suite listing update interval'])
+        self.interval_part = gcfg.get(['suite status update interval'])
         self.theme_name = gcfg.get(['use theme'])
         self.theme = gcfg.get(['themes', self.theme_name])
         self.dots = DotMaker(self.theme)

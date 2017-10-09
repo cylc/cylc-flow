@@ -311,7 +311,7 @@ class Updater(threading.Thread):
             self.update_interval = self.max_update_interval
 
     def _update_err_log(self, my_state):
-        """Update suite err log if necessary."""
+        """Display suite err log info if necessary."""
         self.err_log_lines += my_state['err_content'].splitlines()
         self.err_log_lines = self.err_log_lines[-10:]
         gobject.idle_add(
@@ -319,7 +319,7 @@ class Updater(threading.Thread):
             my_state['err_size'])
 
     def _update_state_summary(self, my_state):
-        """Retrieve suite summary."""
+        """Display suite summary."""
         glbl, states, fam_states = my_state['summary']
         self.mode = glbl['run_mode']
 

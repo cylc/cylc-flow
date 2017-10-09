@@ -555,11 +555,13 @@ def update_suites_info(updater, full_mode=False):
             run_dirs = []
             skips = ('/false', '/nologin')
             for pwent in getpwall():
-                if any(pwent.pw_shell.endswith(s) for s in (skip_shells)):
+                if any(pwent.pw_shell.endswith(s) for s in (skips)):
                     continue
                 if owner_pattern.match(pwent.pw_name):
                     run_dirs.append(GLOBAL_CFG.get_host_item(
-                        'run directory', owner=pwent.pw_name))
+                        'run directory',
+                        owner=pwent.pw_name,
+                        owner_home=pwent.pw_dir))
         for run_d in run_dirs:
             for dirpath, dnames, fnames in os.walk(run_d, followlinks=True):
                 if updater.quit:
@@ -593,8 +595,8 @@ def update_suites_info(updater, full_mode=False):
                 items.append((host, port))
             else:
                 results[(host, owner, name)] = prev_result
-        if not items:
-            return results
+    if not items:
+        return results
     # Scan
     for host, port, result in scan_many(
             items, timeout=timeout, updater=updater):

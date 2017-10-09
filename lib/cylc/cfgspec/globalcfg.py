@@ -28,7 +28,7 @@ from parsec.validate import validator as vdr
 from parsec.validate import coercers
 from parsec import ParsecError
 from parsec.upgrade import upgrader, converter
-from cylc.suite_host import get_user
+from cylc.suite_host import is_remote_user
 from cylc.envvar import expandvars
 from cylc.mkdir_p import mkdir_p
 import cylc.flags
@@ -485,7 +485,8 @@ class GlobalConfig(config):
 
         return value
 
-    def get_host_item(self, item, host=None, owner=None, replace_home=False):
+    def get_host_item(self, item, host=None, owner=None, replace_home=False,
+                      owner_home=None):
         """This allows hosts with no matching entry in the config file
         to default to appropriately modified localhost settings."""
 
@@ -496,8 +497,6 @@ class GlobalConfig(config):
         if not host:
             # if no host is given the caller is asking about localhost
             host = 'localhost'
-        if not owner:
-            owner = get_user()
 
         # is there a matching host section?
         host_key = None
@@ -524,11 +523,12 @@ class GlobalConfig(config):
             if replace_home or modify_dirs:
                 # Replace local home dir with $HOME for eval'n on other host.
                 value = value.replace(os.environ['HOME'], '$HOME')
-            elif owner != get_user():
+            elif is_remote_user(owner):
                 # Replace with ~owner for direct access via local filesys
                 # (works for standard cylc-run directory location).
-                value = value.replace(
-                    os.environ['HOME'], os.path.expanduser('~%s' % owner))
+                if owner_home is None:
+                    owner_home = os.path.expanduser('~%s' % owner)
+                value = value.replace(os.environ['HOME'], owner_home)
         return value
 
     def roll_directory(self, d, name, archlen=0):

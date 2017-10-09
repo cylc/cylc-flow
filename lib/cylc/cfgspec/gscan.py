@@ -32,8 +32,10 @@ USER_FILE = os.path.join(os.environ['HOME'], '.cylc', 'gscan.rc')
 SPEC = {
     'activate on startup': vdr(vtype='boolean', default=False),
     'columns': vdr(vtype='string_list', default=['suite', 'status']),
-    'full update interval': vdr(vtype='interval', default=DurationFloat(300)),
-    'part update interval': vdr(vtype='interval', default=DurationFloat(15)),
+    'suite listing update interval': vdr(
+        vtype='interval', default=DurationFloat(300)),
+    'suite status update interval': vdr(
+        vtype='interval', default=DurationFloat(15)),
     'window size': vdr(vtype='integer_list', default=[300, 200]),
 }
 
