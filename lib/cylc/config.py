@@ -1382,8 +1382,9 @@ class SuiteConfig(object):
                 for key, value in self.cfg['meta'].items():
                     subs['suite_' + key.lower()] = value
                 subs.update(taskdef.rtconfig['meta'])
+                # Back compat.
                 try:
-                    subs['task_url'] = subs.pop('URL')
+                    subs['task_url'] = subs['URL']
                 except KeyError:
                     pass
                 for key, values in taskdef.rtconfig['events'].items():

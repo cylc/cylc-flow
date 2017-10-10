@@ -681,10 +681,7 @@ class TaskEventsManager(object):
             "time_submit_exit": get_current_time_string(),
             "submit_status": 1,
         })
-        try:
-            del itask.summary['submit_method_id']
-        except KeyError:
-            pass
+        itask.summary['submit_method_id'] = None
         if (TASK_STATUS_SUBMIT_RETRYING not in itask.try_timers or
                 itask.try_timers[TASK_STATUS_SUBMIT_RETRYING].next() is None):
             # No submission retry lined up: definitive failure.
@@ -832,6 +829,7 @@ class TaskEventsManager(object):
                 continue
             # Custom event handler can be a command template string
             # or a command that takes 4 arguments (classic interface)
+            # Note quote() fails on None, need str(None).
             try:
                 handler_data = {
                     "event": quote(event),
@@ -841,9 +839,10 @@ class TaskEventsManager(object):
                     "submit_num": itask.submit_num,
                     "id": quote(itask.identity),
                     "message": quote(message),
-                    "batch_sys_name": quote(itask.summary['batch_sys_name']),
+                    "batch_sys_name": quote(
+                        str(itask.summary['batch_sys_name'])),
                     "batch_sys_job_id": quote(
-                        itask.summary['submit_method_id'])
+                        str(itask.summary['submit_method_id']))
                 }
 
                 if self.suite_cfg:
