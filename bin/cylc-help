@@ -280,6 +280,7 @@ utility_commands['cycle-point'] = [
 utility_commands['scp-transfer'] = ['scp-transfer']
 utility_commands['suite-state'] = ['suite-state']
 utility_commands['ls-checkpoints'] = ['ls-checkpoints']
+utility_commands['report-timings'] = ['report-timings']
 
 hook_commands = {}
 hook_commands['email-suite'] = ['email-suite']
@@ -430,6 +431,7 @@ comsum['jobscript'] = 'Generate a task job script and print it to stdout'
 comsum['scp-transfer'] = 'Scp-based file transfer for cylc suites'
 comsum['suite-state'] = 'Query the task states in a suite'
 comsum['ls-checkpoints'] = 'Display task pool etc at given events'
+comsum['report-timings'] = 'Generate a report on task timing data'
 # hook
 comsum['email-task'] = 'A task event hook script that sends email alerts'
 comsum['email-suite'] = 'A suite event hook script that sends email alerts'
