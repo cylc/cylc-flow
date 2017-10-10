@@ -22,6 +22,7 @@ Implementation currently via requests (urllib3) or urllib2.
 
 import os
 import sys
+import traceback
 from uuid import uuid4
 import warnings
 
@@ -112,15 +113,15 @@ class SuiteRuntimeServiceClient(object):
 
     def clear_broadcast(self, **kwargs):
         """Clear broadcast runtime task settings."""
-        return self._call_server_func('clear_broadcast', payload=kwargs)
+        return self._call_server('clear_broadcast', payload=kwargs)
 
     def expire_broadcast(self, **kwargs):
         """Expire broadcast runtime task settings."""
-        return self._call_server_func('expire_broadcast', **kwargs)
+        return self._call_server('expire_broadcast', **kwargs)
 
     def get_broadcast(self, **kwargs):
         """Return broadcast settings."""
-        return self._call_server_func(
+        return self._call_server(
             'get_broadcast', method=self.METHOD_GET, **kwargs)
 
     def get_info(self, command, *args, **kwargs):
@@ -144,29 +145,29 @@ class SuiteRuntimeServiceClient(object):
         Result in the form:
         {state: [(most_recent_time_string, task_name, point_string), ...]}
         """
-        return self._call_server_func(
+        return self._call_server(
             'get_tasks_by_state', method=self.METHOD_GET)
 
     def identify(self):
         """Return suite identity."""
-        return self._call_server_func('identify', method=self.METHOD_GET)
+        return self._call_server('identify', method=self.METHOD_GET)
 
     def put_broadcast(self, **kwargs):
         """Put/set broadcast runtime task settings."""
-        return self._call_server_func('put_broadcast', payload=kwargs)
+        return self._call_server('put_broadcast', payload=kwargs)
 
     def put_command(self, command, **kwargs):
         """Invoke suite command."""
-        return self._call_server_func(command, **kwargs)
+        return self._call_server(command, **kwargs)
 
     def put_ext_trigger(self, event_message, event_id):
         """Put external trigger."""
-        return self._call_server_func(
+        return self._call_server(
             'put_ext_trigger', event_message=event_message, event_id=event_id)
 
     def put_message(self, task_id, priority, message):
         """Send task message."""
-        return self._call_server_func(
+        return self._call_server(
             'put_message', task_id=task_id, priority=priority, message=message)
 
     def reset(self, *args, **kwargs):
@@ -177,7 +178,7 @@ class SuiteRuntimeServiceClient(object):
         """Tell server to forget this client."""
         return self._call_server_func('signout')
 
-    def _get_comms_from_suite_contact_file(self):
+    def _get_protocol_from_contact_file(self):
         """Find out the communications protocol (http/https) from the
         suite contact file."""
         try:
@@ -191,50 +192,28 @@ class SuiteRuntimeServiceClient(object):
         except (AttributeError, KeyError, TypeError, ValueError):
             raise KeyError("No suite contact info for comms protocol found")
 
-    @staticmethod
-    def _get_comms_from_global_config():
-        """Find out the communications protocol (http/https) from the
-        user' global config file."""
-        from cylc.cfgspec.globalcfg import GLOBAL_CFG
-        comms_methods = GLOBAL_CFG.get(['communication', 'method'])
-        # Set the comms method
-        if "https" in comms_methods:
-            return "https"
-        elif "http" in comms_methods:
-            return "http"
-        else:
-            # Something has gone very wrong here
-            # possibly user set bad value in global config
-            raise CylcError(
-                "Communications protocol "
-                "\"{0}\" invalid."
-                " (protocol set in global config.)".format(comms_methods))
-
-    def _compile_url(self, func_dict, host, comms_protocol=None):
+    def _compile_request(self, func_dict, host, comms_protocol=None):
         """Build request URL."""
         payload = func_dict.pop("payload", None)
         method = func_dict.pop("method", self.METHOD)
         function = func_dict.pop("function", None)
-
         if comms_protocol is None:
             try:
-                protocol_prefix = self._get_comms_from_suite_contact_file()
+                comms_protocol = self._get_protocol_from_contact_file()
             except (KeyError, TypeError, SuiteServiceFileError):
-                protocol_prefix = self._get_comms_from_global_config()
-        elif comms_protocol is not None:
-            protocol_prefix = comms_protocol
-        else:
-            raise CylcError("Unable to detect suite communication protocol")
-        url = protocol_prefix + '://%s:%s/%s' % (host, self.port, function)
+                # Use standard setting from global configuration
+                from cylc.cfgspec.globalcfg import GLOBAL_CFG
+                comms_protocol = GLOBAL_CFG.get(['communication', 'method'])
+        url = '%s://%s:%s/%s' % (comms_protocol, host, self.port, function)
         # If there are any parameters left in the dict after popping,
         # append them to the url.
         if func_dict:
             import urllib
             params = urllib.urlencode(func_dict, doseq=True)
             url += "?" + params
-        return {"url": url, "payload": payload, "method": method}
+        return (method, url, payload, comms_protocol)
 
-    def _call_server_func(self, *func_dicts, **fargs):
+    def _call_server(self, *func_dicts, **fargs):
         """func_dict is a dictionary of command names (fnames)
         and arguments to that command"""
         # Deal with the case of one func_dict/function name passed
@@ -257,11 +236,11 @@ class SuiteRuntimeServiceClient(object):
         http_request_items = []
         try:
             # dictionary containing: url, payload, method
-            http_request_items.append(self._compile_url(
+            http_request_items.append(self._compile_request(
                 func_dict, self.host, self.comms_protocol))
         except (IndexError, ValueError, AttributeError):
             for f_dict in func_dicts:
-                http_request_items.append(self._compile_url(
+                http_request_items.append(self._compile_request(
                     f_dict, self.host, self.comms_protocol))
         # Remove proxy settings from environment for now
         environ = {}
@@ -271,52 +250,47 @@ class SuiteRuntimeServiceClient(object):
                 environ[key] = val
         # Returns a list of http returns from the requests
         try:
-            return self._get_data_from_url(http_request_items)
+            return self.call_server_impl(http_request_items)
         finally:
             os.environ.update(environ)
 
-    def _get_data_from_url(self, http_request_items):
-        requests_ok = True
+    def call_server_impl(self, http_request_items):
+        """Determine whether to use requests or urllib2 to call suite API."""
+        method = self._call_server_impl_urllib2
         try:
             import requests
         except ImportError:
-            requests_ok = False
+            pass
         else:
-            version = [int(_) for _ in requests.__version__.split(".")]
-            if version < [2, 4, 2]:
-                requests_ok = False
-        if requests_ok:
-            return self._get_data_from_url_with_requests(http_request_items)
-        return self._get_data_from_url_with_urllib2(http_request_items)
+            if [int(_) for _ in requests.__version__.split(".")] >= [2, 4, 2]:
+                method = self._call_server_impl_requests
+        return method(http_request_items)
 
-    def _get_data_from_url_with_requests(self, http_request_items):
+    def _call_server_impl_requests(self, http_request_items):
+        """Call server with "requests" library."""
         import requests
         from requests.packages.urllib3.exceptions import InsecureRequestWarning
         warnings.simplefilter("ignore", InsecureRequestWarning)
-        username, password, verify = self._get_auth()
-        auth = requests.auth.HTTPDigestAuth(username, password)
         if not hasattr(self, "session"):
             self.session = requests.Session()
 
         http_return_items = []
-        for http_request_item in http_request_items:
-            method = http_request_item['method']
-            url = http_request_item['url']
-            json_data = http_request_item['payload']
+        for method, url, payload, comms_protocol in http_request_items:
             if method is None:
                 method = self.METHOD
             if method == self.METHOD_POST:
                 session_method = self.session.post
             else:
                 session_method = self.session.get
+            username, password, verify = self._get_auth(comms_protocol)
             try:
                 ret = session_method(
                     url,
-                    json=json_data,
+                    json=payload,
                     verify=verify,
                     proxies={},
                     headers=self._get_headers(),
-                    auth=auth,
+                    auth=requests.auth.HTTPDigestAuth(username, password),
                     timeout=self.timeout
                 )
             except requests.exceptions.SSLError as exc:
@@ -326,17 +300,14 @@ class SuiteRuntimeServiceClient(object):
                     raise CylcError(
                         "Cannot issue commands over unsecured http.")
                 if cylc.flags.debug:
-                    import traceback
                     traceback.print_exc()
                 raise ClientError(url, exc)
             except requests.exceptions.Timeout as exc:
                 if cylc.flags.debug:
-                    import traceback
                     traceback.print_exc()
                 raise ClientTimeout(url, exc)
             except requests.exceptions.RequestException as exc:
                 if cylc.flags.debug:
-                    import traceback
                     traceback.print_exc()
                 raise ClientError(url, exc)
             if ret.status_code == 401:
@@ -354,7 +325,6 @@ class SuiteRuntimeServiceClient(object):
                 ret.raise_for_status()
             except requests.exceptions.HTTPError as exc:
                 if cylc.flags.debug:
-                    import traceback
                     traceback.print_exc()
                 raise ClientError(url, exc)
             if self.auth and self.auth[1] != NO_PASSPHRASE:
@@ -370,7 +340,8 @@ class SuiteRuntimeServiceClient(object):
         return (http_return_items if len(http_return_items) > 1
                 else http_return_items[0])
 
-    def _get_data_from_url_with_urllib2(self, http_request_items):
+    def _call_server_impl_urllib2(self, http_request_items):
+        """Call server with "urllib2" library."""
         import json
         import urllib2
         import ssl
@@ -378,28 +349,25 @@ class SuiteRuntimeServiceClient(object):
             ssl._create_default_https_context = ssl._create_unverified_context
 
         http_return_items = []
-        for http_request_item in http_request_items:
-            method = http_request_item['method']
-            url = http_request_item['url']
-            json_data = http_request_item['payload']
+        for method, url, payload, comms_protocol in http_request_items:
             if method is None:
                 method = self.METHOD
-            username, password = self._get_auth()[0:2]
+            username, password = self._get_auth(comms_protocol)[0:2]
             auth_manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
             auth_manager.add_password(None, url, username, password)
             auth = urllib2.HTTPDigestAuthHandler(auth_manager)
             opener = urllib2.build_opener(auth, urllib2.HTTPSHandler())
             headers_list = self._get_headers().items()
-            if json_data:
-                json_data = json.dumps(json_data)
+            if payload:
+                payload = json.dumps(payload)
                 headers_list.append(('Accept', 'application/json'))
                 json_headers = {'Content-Type': 'application/json',
-                                'Content-Length': len(json_data)}
+                                'Content-Length': len(payload)}
             else:
-                json_data = None
+                payload = None
                 json_headers = {'Content-Length': 0}
             opener.addheaders = headers_list
-            req = urllib2.Request(url, json_data, json_headers)
+            req = urllib2.Request(url, payload, json_headers)
 
             # This is an unpleasant monkey patch, but there isn't an
             # alternative. urllib2 uses POST if there is a data payload
@@ -416,7 +384,6 @@ class SuiteRuntimeServiceClient(object):
                     raise CylcError(
                         "Cannot issue commands over unsecured http.")
                 if cylc.flags.debug:
-                    import traceback
                     traceback.print_exc()
                 if "timed out" in str(exc):
                     raise ClientTimeout(url, exc)
@@ -424,7 +391,6 @@ class SuiteRuntimeServiceClient(object):
                     raise ClientError(url, exc)
             except Exception as exc:
                 if cylc.flags.debug:
-                    import traceback
                     traceback.print_exc()
                 raise ClientError(url, exc)
 
@@ -455,7 +421,7 @@ class SuiteRuntimeServiceClient(object):
         return (http_return_items if len(http_return_items) > 1
                 else http_return_items[0])
 
-    def _get_auth(self):
+    def _get_auth(self, protocol):
         """Return a user/password Digest Auth."""
         if self.auth is None:
             self.auth = self.ANON_AUTH
@@ -463,14 +429,17 @@ class SuiteRuntimeServiceClient(object):
                 pphrase = self.srv_files_mgr.get_auth_item(
                     self.srv_files_mgr.FILE_BASE_PASSPHRASE,
                     self.suite, self.owner, self.host, content=True)
-                server_cert = self.srv_files_mgr.get_auth_item(
-                    self.srv_files_mgr.FILE_BASE_SSL_CERT,
-                    self.suite, self.owner, self.host)
+                if protocol == 'https':
+                    verify = self.srv_files_mgr.get_auth_item(
+                        self.srv_files_mgr.FILE_BASE_SSL_CERT,
+                        self.suite, self.owner, self.host)
+                else:
+                    verify = False
             except SuiteServiceFileError:
                 pass
             else:
                 if pphrase and pphrase != NO_PASSPHRASE:
-                    self.auth = ('cylc', pphrase, server_cert)
+                    self.auth = ('cylc', pphrase, verify)
         return self.auth
 
     def _get_headers(self):
@@ -569,15 +538,14 @@ if __name__ == '__main__':
                          "payload": "None"}
 
             myclient = SuiteRuntimeServiceClient("test-suite", port=80)
-            request_https = myclient._compile_url(func_dict, host, "https")
+            request_https = myclient._compile_request(func_dict, host, "https")
 
             test_url_https = (
                 'https://localhost:80/test_command'
                 '?apples=False&oranges=True')
 
-            self.assertEqual(request_https['url'], test_url_https)
-            self.assertEqual(request_https['payload'], "None")
-            self.assertEqual(request_https['method'], "GET")
+            self.assertEqual(
+                request_https, ("GET", test_url_https, "None", "https"))
 
         def test_compile_url_compiler_http(self):
             """Test that the url compiler produces a http request when
@@ -590,14 +558,13 @@ if __name__ == '__main__':
                          "payload": "None"}
 
             myclient = SuiteRuntimeServiceClient("test-suite", port=80)
-            request_http = myclient._compile_url(func_dict, host, "http")
+            request_http = myclient._compile_request(func_dict, host, "http")
             test_url_http = (
                 'http://localhost:80/test_command'
                 '?apples=False&oranges=True')
 
-            self.assertEqual(request_http['url'], test_url_http)
-            self.assertEqual(request_http['payload'], "None")
-            self.assertEqual(request_http['method'], "GET")
+            self.assertEqual(
+                ("GET", test_url_http, "None", 'http'), request_http)
 
         def test_compile_url_compiler_none_specified(self):
             """Test that the url compiler produces a http request when
@@ -611,39 +578,36 @@ if __name__ == '__main__':
                          "payload": "None"}
 
             myclient = SuiteRuntimeServiceClient("test-suite", port=80)
-            request_http = myclient._compile_url(func_dict, host)
+            request = myclient._compile_request(func_dict, host)
 
             # Check that the url has had http (or https) appended
             # to it. (If it does not start with "http*" then something
             # has gone wrong.)
-            self.assertTrue(request_http['url'].startswith("http"))
+            self.assertTrue(request[1].startswith("http"))
 
         def test_get_data_from_url_single_http(self):
-            """Test the get data from _get_data_from_url() function"""
+            """Test the get data from call_server_impl() function"""
             myclient = SuiteRuntimeServiceClient("dummy-suite")
             url = "http://httpbin.org/get"
             payload = None
             method = "GET"
-            request = [{"url": url, "payload": payload, "method": method}]
-            ret = myclient._get_data_from_url(request)
-            self.assertEqual(ret['url'], "http://httpbin.org/get")
+            ret = myclient.call_server_impl(
+                [(method, url, payload, 'http')])
+            self.assertEqual(ret["url"], "http://httpbin.org/get")
 
         def test_get_data_from_url_multiple(self):
-            """Tests that the _get_data_from_url() method can
+            """Tests that the call_server_impl() method can
             handle multiple requests in call to the method."""
             myclient = SuiteRuntimeServiceClient("dummy-suite")
             payload = None
             method = "GET"
-            request1 = {"url": "http://httpbin.org/get#1",
-                        "payload": payload, "method": method}
-            request2 = {"url": "http://httpbin.org/get#2",
-                        "payload": payload, "method": method}
-            request3 = {"url": "http://httpbin.org/get#3",
-                        "payload": payload, "method": method}
 
-            rets = myclient._get_data_from_url([request1, request2, request3])
+            rets = myclient.call_server_impl([
+                (method, "http://httpbin.org/get#1", payload, 'http'),
+                (method, "http://httpbin.org/get#2", payload, 'http'),
+                (method, "http://httpbin.org/get#3", payload, 'http')])
 
-            for i in range(2):
-                self.assertEqual(rets[i]['url'], "http://httpbin.org/get")
+            for i in range(3):
+                self.assertEqual(rets[i]["url"], "http://httpbin.org/get")
 
     unittest.main()
