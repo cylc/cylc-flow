@@ -42,6 +42,7 @@ from cylc.wallclock import get_unix_time_from_time_string as timestr_to_seconds
 
 DURATION_EXPIRE_STOPPED = 600.0
 KEY_PORT = "port"
+_UPDATE_DEBUG_DELIM = '\n' + ' ' * 4
 
 
 def get_gpanel_scan_menu(
@@ -562,6 +563,9 @@ def update_suites_info(updater, full_mode=False):
                         'run directory',
                         owner=pwent.pw_name,
                         owner_home=pwent.pw_dir))
+        if cylc.flags.debug:
+            sys.stderr.write('Listing suites:%s%s\n' % (
+                _UPDATE_DEBUG_DELIM, _UPDATE_DEBUG_DELIM.join(run_dirs)))
         for run_d in run_dirs:
             for dirpath, dnames, fnames in os.walk(run_d, followlinks=True):
                 if updater.quit:
@@ -572,7 +576,7 @@ def update_suites_info(updater, full_mode=False):
                 # * cylc-suite.db: (pre-cylc-7 suites don't have ".service/").
                 if dirpath != run_d and (
                         suite_srv_files_mgr.DIR_BASE_SRV in dnames or
-                        "cylc-suite.db" in fnames):
+                        'cylc-suite.db' in fnames):
                     dnames[:] = []
                 # Choose only suites with .service and matching filter
                 reg = os.path.relpath(dirpath, run_d)
@@ -597,6 +601,10 @@ def update_suites_info(updater, full_mode=False):
                 results[(host, owner, name)] = prev_result
     if not items:
         return results
+    if cylc.flags.debug:
+        sys.stderr.write('Scan items:%s%s\n' % (
+            _UPDATE_DEBUG_DELIM,
+            _UPDATE_DEBUG_DELIM.join(str(item) for item in items)))
     # Scan
     for host, port, result in scan_many(
             items, timeout=timeout, updater=updater):
