@@ -1,0 +1,20 @@
+#!/usr/bin/env python
+
+# Compare actual and expected event handler command lines.
+
+import sys
+
+start = ['SUITE:', 'JID:']
+other = ['custom', '1', 'foo', '1', 'foo.1', 'background', 'cheesy peas', 'trout',
+         'a task called foo', 'http://cheesy.peas', 'a test suite', 'large']
+one = len(sys.argv) >= 3
+two = sys.argv[1].startswith(start[0])
+thr = sys.argv[2].startswith(start[1])
+fou = sys.argv[3:] == other
+
+if one and two and thr and fou:
+    print "OK: command line checks out"
+    sys.exit(0)
+else:
+    print >> sys.stderr, 'ERROR: unexpected event handler command line.'
+    sys.exit(1)
