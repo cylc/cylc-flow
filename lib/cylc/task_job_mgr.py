@@ -964,6 +964,7 @@ class TaskJobManager(object):
             'job_d': job_d,
             'namespace_hierarchy': itask.tdef.namespace_hierarchy,
             'owner': itask.task_owner,
+            'param_env_tmpl': rtconfig['parameter environment templates'],
             'param_var': itask.tdef.param_var,
             'post-script': scripts[2],
             'pre-script': scripts[0],

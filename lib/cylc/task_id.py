@@ -26,6 +26,8 @@ class TaskID(object):
 
     DELIM = '.'
     DELIM2 = '/'
+    NAME_SUFFIX_RE = r"[\w\-+%@]+"
+    NAME_SUFFIX_REC = re.compile(r"\A" + NAME_SUFFIX_RE + r"\Z")
     NAME_RE = r"\w[\w\-+%@]*"
     NAME_REC = re.compile(r"\A" + NAME_RE + r"\Z")
     POINT_RE = r"\S+"

@@ -273,14 +273,15 @@ class SuiteConfig(object):
                 self.cfg['scheduling']['queues'][queue]['members'] = (
                     self._expand_name_list(cfg['members']))
 
+        # Check environment variable names and parameter environment templates
+        # Done before inheritance to avoid repetition
+        self.check_env_names()
+        self.check_param_env_tmpls()
         self.mem_log("config.py: before _expand_runtime")
         self._expand_runtime()
         self.mem_log("config.py: after _expand_runtime")
 
         self.ns_defn_order = self.cfg['runtime'].keys()
-
-        # check var names before inheritance to avoid repetition
-        self.check_env_names()
 
         self.mem_log("config.py: before compute_family_tree")
         # do sparse inheritance
@@ -780,11 +781,8 @@ class SuiteConfig(object):
                 replicate(newruntime[name], namespace_dict)
                 if indices:
                     # Put parameter values in task environments.
+                    self.task_param_vars[name] = indices
                     new_environ = OrderedDictWithDefaults()
-                    self.task_param_vars[name] = {}
-                    for p_name, p_val in indices.items():
-                        p_var_name = 'CYLC_TASK_PARAM_%s' % p_name
-                        self.task_param_vars[name][p_var_name] = p_val
                     if 'environment' in newruntime[name]:
                         for k, v in newruntime[name]['environment'].items():
                             new_environ[k] = v
@@ -838,26 +836,55 @@ class SuiteConfig(object):
         return s
 
     def check_env_names(self):
-        # check for illegal environment variable names
+        """Check for illegal environment variable names"""
         bad = {}
-        for label in self.cfg['runtime']:
-            res = []
-            if 'environment' in self.cfg['runtime'][label]:
-                res = check_varnames(self.cfg['runtime'][label]['environment'])
-            if res:
-                bad[label] = res
+        for label, item in self.cfg['runtime'].items():
+            for key in ('environment', 'parameter environment templates'):
+                if key in item:
+                    res = check_varnames(item[key])
+                    if res:
+                        bad[(label, key)] = res
         if bad:
             err_msg = "bad env variable names:"
-            for label, vars_ in bad.items():
-                err_msg += '\nNamespace:\t' + label
-                for var in vars_:
-                    err_msg += "\n\t\t" + var
+            for (label, key), names in bad.items():
+                err_msg += '\nNamespace:\t%s [%s]' % (label, key)
+                for name in names:
+                    err_msg += "\n\t\t%s" % name
             ERR.error(err_msg)
             raise SuiteConfigError(
                 "Illegal environment variable name(s) detected")
 
+    def check_param_env_tmpls(self):
+        """Check for illegal parameter environment templates"""
+        parameter_values = dict(
+            (key, values[0])
+            for key, values in self.parameters[0].items() if values)
+        bads = set()
+        for namespace, item in self.cfg['runtime'].items():
+            if 'parameter environment templates' not in item:
+                continue
+            for name, tmpl in item['parameter environment templates'].items():
+                try:
+                    value = tmpl % parameter_values
+                except KeyError:
+                    bads.add((namespace, name, tmpl, 'bad parameter'))
+                except TypeError:
+                    bads.add((
+                        namespace, name, tmpl,
+                        'wrong data type for parameter'))
+                except ValueError:
+                    bads.add((namespace, name, tmpl, 'bad template syntax'))
+                else:
+                    if value == tmpl:  # Not a template
+                        bads.add((namespace, name, tmpl, 'not a template'))
+        if bads:
+            ERR.error("bad parameter environment template:\n  %s" % (
+                "\n  ".join('[%s]%s=%s  # %s' % bad for bad in sorted(bads))))
+            raise SuiteConfigError(
+                "Illegal parameter environment template(s) detected")
+
     def filter_env(self):
-        # filter environment variables after sparse inheritance
+        """Filter environment variables after sparse inheritance"""
         for ns in self.cfg['runtime'].values():
             try:
                 oenv = ns['environment']
@@ -2029,7 +2056,7 @@ class SuiteConfig(object):
             reversed(self.runtime['linearized ancestors'][name]))
 
         if name in self.task_param_vars:
-            taskd.param_var = self.task_param_vars[name]
+            taskd.param_var.update(self.task_param_vars[name])
 
         return taskd
 
