@@ -40,15 +40,36 @@ from cylc.version import CYLC_VERSION
 # is a built-in exception in Python 3.
 class ClientError(Exception):
 
-    """An error raised when the client cannot connect."""
+    """An error raised when the client has a general failure."""
 
-    MESSAGE = "Cannot connect: %s: %s"
+    MESSAGE = "Client error: %s: %s"
 
     def __str__(self):
         return self.MESSAGE % (self.args[0], self.args[1])
 
 
-class ClientDeniedError(ClientError):
+class ClientConnectError(ClientError):
+
+    """An error raised when the client cannot connect."""
+
+    MESSAGE = "Cannot connect: %s: %s"
+    STOPPED = "suite \"%s\" already stopped"
+
+    def __str__(self):
+        return self.MESSAGE % (self.args[0], self.args[1])
+
+
+class ClientConnectedError(ClientError):
+
+    """An error raised when the client gets a bad return code from server."""
+
+    MESSAGE = "Bad return code: %s: %s"
+
+    def __str__(self):
+        return self.MESSAGE % (self.args[0], self.args[1])
+
+
+class ClientDeniedError(ClientConnectedError):
 
     """An error raised when the client is not permitted to connect."""
 
@@ -264,7 +285,22 @@ class SuiteRuntimeServiceClient(object):
         else:
             if [int(_) for _ in requests.__version__.split(".")] >= [2, 4, 2]:
                 method = self._call_server_impl_requests
-        return method(http_request_items)
+        try:
+            return method(http_request_items)
+        except ClientConnectError as exc:
+            if self.suite is None:
+                raise
+            # Cannot connect, perhaps suite is no longer running and is leaving
+            # behind a contact file?
+            try:
+                self.srv_files_mgr.detect_old_contact_file(self.suite)
+            except SuiteServiceFileError:
+                raise exc
+            else:
+                # self.srv_files_mgr.detect_old_contact_file should delete left
+                # behind contact file if the old suite process no longer
+                # exists. Should be safe to report that the suite has stopped.
+                raise ClientConnectError(exc.args[0], exc.STOPPED % self.suite)
 
     def _call_server_impl_requests(self, http_request_items):
         """Call server with "requests" library."""
@@ -301,7 +337,7 @@ class SuiteRuntimeServiceClient(object):
                         "Cannot issue commands over unsecured http.")
                 if cylc.flags.debug:
                     traceback.print_exc()
-                raise ClientError(url, exc)
+                raise ClientConnectError(url, exc)
             except requests.exceptions.Timeout as exc:
                 if cylc.flags.debug:
                     traceback.print_exc()
@@ -309,7 +345,7 @@ class SuiteRuntimeServiceClient(object):
             except requests.exceptions.RequestException as exc:
                 if cylc.flags.debug:
                     traceback.print_exc()
-                raise ClientError(url, exc)
+                raise ClientConnectError(url, exc)
             if ret.status_code == 401:
                 access_desc = 'private'
                 if self.auth == self.ANON_AUTH:
@@ -326,7 +362,7 @@ class SuiteRuntimeServiceClient(object):
             except requests.exceptions.HTTPError as exc:
                 if cylc.flags.debug:
                     traceback.print_exc()
-                raise ClientError(url, exc)
+                raise ClientConnectedError(url, exc)
             if self.auth and self.auth[1] != NO_PASSPHRASE:
                 self.srv_files_mgr.cache_passphrase(
                     self.suite, self.owner, self.host, self.auth[1])
@@ -388,7 +424,7 @@ class SuiteRuntimeServiceClient(object):
                 if "timed out" in str(exc):
                     raise ClientTimeout(url, exc)
                 else:
-                    raise ClientError(url, exc)
+                    raise ClientConnectError(url, exc)
             except Exception as exc:
                 if cylc.flags.debug:
                     traceback.print_exc()
@@ -406,7 +442,7 @@ class SuiteRuntimeServiceClient(object):
                     sys.stderr.write(exception_text)
                 else:
                     sys.stderr.write(response_text)
-                raise ClientError(
+                raise ClientConnectedError(
                     url,
                     "%s HTTP return code" % response.getcode())
             if self.auth and self.auth[1] != NO_PASSPHRASE:
