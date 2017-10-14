@@ -3104,8 +3104,8 @@ This is what my suite does:..."""
                 box = ebox.get_children()[0]
                 try:
                     chb = box.get_children()[1]
-                except (ValueError, AttributeError):
-                    # ValueError: an empty box to line things up.
+                except (IndexError, AttributeError):
+                    # IndexError: an empty box to line things up.
                     # AttributeError: the name filter entry box.
                     pass
                 else:
