@@ -81,7 +81,13 @@ def main():
              "command reinvocation on the remote account.",
         metavar="HOST", action="store", default=get_hostname(), dest="host")
 
+    parser.add_option(
+        "--debug",
+        help="Print exception traceback on error.",
+        action="store_true", default=False, dest="debug")
+
     (options, args) = parser.parse_args()
+    cylc.flags.debug = options.debug
 
     intranet_url = GLOBAL_CFG.get(['documentation', 'urls', 'local index'])
     internet_url = GLOBAL_CFG.get(['documentation', 'urls',
@@ -154,10 +160,16 @@ def main():
         print target
         sys.exit(0)
 
-    retcode = subprocess.call(command_list)
-    if retcode != 0:
-        print >> sys.stderr, 'ERROR, command failed: %s' % command
-    sys.exit(retcode)
+    try:
+        retcode = subprocess.call(command_list)
+    except OSError as exc:
+        print >> sys.stderr, 'ERROR, failed to execute: %s' % command
+        if cylc.flags.debug:
+            raise
+    else:
+        if retcode != 0:
+            print >> sys.stderr, 'ERROR, command failed: %s' % command
+        sys.exit(retcode)
 
 
 if __name__ == "__main__":
