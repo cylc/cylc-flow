@@ -1212,12 +1212,17 @@ been defined for this suite""").inform()
         about.run()
         about.destroy()
 
-    def view_task_descr(self, w, e, task_id, *args):
-        command = ("cylc show" + self.get_remote_run_opts() + " " +
-                   self.cfg.suite + " " + task_id)
-        foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 600, 400)
+    def _gcapture_cmd(self, command, xdim=400, ydim=400, title=None):
+        foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir,
+                               xdim, ydim, title=title)
         self.gcapture_windows.append(foo)
         foo.run()
+
+    def view_task_descr(self, w, e, task_id, *args):
+        self._gcapture_cmd(
+            "cylc show %s %s %s" % (
+                self.get_remote_run_opts(), self.cfg.suite, task_id),
+            600, 400)
 
     def view_in_editor(self, w, e, task_id, choice):
         try:
@@ -1243,15 +1248,8 @@ been defined for this suite""").inform()
                 command_opt = "--stderr"
             elif choice == 'job':
                 command_opt = ""
-
-            command = (
-                "cylc cat-log %s --geditor %s %s" % (
-                    command_opt, self.cfg.suite, task_id)
-            )
-
-            foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 400, 400)
-            self.gcapture_windows.append(foo)
-            foo.run()
+            self._gcapture_cmd("cylc cat-log %s --geditor %s %s" % (
+                command_opt, self.cfg.suite, task_id))
 
     def view_task_info(self, w, e, task_id, choice):
         try:
@@ -1312,9 +1310,7 @@ been defined for this suite""").inform()
         if len(task_ids) == 1:
             # Browse task URL.
             url_item = gtk.MenuItem('_Browse task URL')
-            name = TaskID.split(task_ids[0])[0]
-            url_item.connect('activate', self.browse, "-t", name,
-                             self.cfg.suite)
+            url_item.connect('activate', self.browse_suite, task_ids[0])
             menu.append(url_item)
 
             if not task_is_family[0]:
@@ -1752,11 +1748,9 @@ shown here in the state they were in at the time of triggering.''')
         """
         if not self.get_confirmation("Edit run %s?" % task_id):
             return
-        command = "cylc trigger --use-ssh --edit --geditor -f%s %s %s" % (
-            self.get_remote_run_opts(), self.cfg.suite, task_id)
-        foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 400, 400)
-        self.gcapture_windows.append(foo)
-        foo.run()
+        self._gcapture_cmd(
+            "cylc trigger --use-ssh --edit --geditor -f %s %s %s" % (
+                self.get_remote_run_opts(), self.cfg.suite, task_id))
 
     def poll_task(self, b, task_ids):
         """Poll a task/family."""
@@ -2731,8 +2725,8 @@ to reduce network traffic.""")
         url_item = gtk.ImageMenuItem('_Browse Suite URL')
         img = gtk.image_new_from_stock(gtk.STOCK_DND, gtk.ICON_SIZE_MENU)
         url_item.set_image(img)
+        url_item.connect('activate', self.browse_suite)
         tools_menu.append(url_item)
-        url_item.connect('activate', self.browse, self.cfg.suite)
 
         tools_menu.append(gtk.SeparatorMenuItem())
 
@@ -2846,13 +2840,13 @@ to reduce network traffic.""")
         img = gtk.image_new_from_stock(gtk.STOCK_DND, gtk.ICON_SIZE_MENU)
         cug_html_item.set_image(img)
         doc_menu.append(cug_html_item)
-        cug_html_item.connect('activate', self.browse)
+        cug_html_item.connect('activate', self.browse_doc)
 
         cug_pdf_item = gtk.ImageMenuItem('(file://) PDF User Guide')
         img = gtk.image_new_from_stock(gtk.STOCK_EDIT, gtk.ICON_SIZE_MENU)
         cug_pdf_item.set_image(img)
         doc_menu.append(cug_pdf_item)
-        cug_pdf_item.connect('activate', self.browse, '-p')
+        cug_pdf_item.connect('activate', self.browse_doc, '-p')
 
         doc_menu.append(gtk.SeparatorMenuItem())
 
@@ -2862,13 +2856,13 @@ to reduce network traffic.""")
                                            gtk.ICON_SIZE_MENU)
             cug_www_item.set_image(img)
             doc_menu.append(cug_www_item)
-            cug_www_item.connect('activate', self.browse, '-x')
+            cug_www_item.connect('activate', self.browse_doc, '-x')
 
         cug_www_item = gtk.ImageMenuItem('(http://) _Internet Home Page')
         img = gtk.image_new_from_stock(gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU)
         cug_www_item.set_image(img)
         doc_menu.append(cug_www_item)
-        cug_www_item.connect('activate', self.browse, '-w')
+        cug_www_item.connect('activate', self.browse_doc, '-w')
 
         chelp_menu = gtk.ImageMenuItem('_Command Help')
         img = gtk.image_new_from_stock(gtk.STOCK_EXECUTE, gtk.ICON_SIZE_MENU)
@@ -2903,11 +2897,9 @@ to reduce network traffic.""")
             info_dialog(descr, self.window).inform()
         except ClientError:
             # Parse the suite definition.
-            command = ("cylc get-suite-config -i title -i description " +
-                       self.get_remote_run_opts() + " " + self.cfg.suite)
-            foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 800, 400)
-            self.gcapture_windows.append(foo)
-            foo.run()
+            self._gcapture_cmd(
+                "cylc get-suite-config -i title -i description %s %s" % (
+                    self.get_remote_run_opts(), self.cfg.suite), 800, 400)
 
     def search_suite_popup(self, w):
         reg = self.cfg.suite
@@ -2957,14 +2949,8 @@ to reduce network traffic.""")
         options = ''
         if not yesbin_cb.get_active():
             options += ' -x '
-        command = (
-            "cylc search %s %s %s" % (
-                options, reg, pattern)
-        )
-        foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, width=600,
-                               height=500)
-        self.gcapture_windows.append(foo)
-        foo.run()
+        self._gcapture_cmd("cylc search %s %s %s" % (
+            options, reg, pattern), 600, 500)
 
     def click_register(self, w):
         """Callback for File -> Register A New Suite."""
@@ -3446,36 +3432,28 @@ For more Stop options use the Control menu.""")
                 warning_dialog(msg, self.window).warn()
 
     def run_suite_validate(self, w):
-        command = ("cylc validate -v " + self.get_remote_run_opts() +
-                   " " + self.cfg.template_vars_opts +
-                   " " + self.cfg.suite)
-        foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 700)
-        self.gcapture_windows.append(foo)
-        foo.run()
+        self._gcapture_cmd(
+            "cylc validate -v %s %s %s" % (
+                self.get_remote_run_opts(), self.cfg.template_vars_opts,
+                self.cfg.suite), 700)
         return False
 
     def run_suite_edit(self, w, inlined=False):
         extra = ''
         if inlined:
             extra = '-i '
-        command = ("cylc edit -g " +
-                   self.cfg.template_vars_opts + " " +
-                   self.get_remote_run_opts() + " " + extra + ' ' +
-                   self.cfg.suite)
-        foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir)
-        self.gcapture_windows.append(foo)
-        foo.run()
+        self._gcapture_cmd(
+            "cylc edit -g %s %s %s %s" % (
+                self.cfg.template_vars_opts, self.get_remote_run_opts(), extra,
+                self.cfg.suite))
         return False
 
     def run_suite_graph(self, w, show_ns=False):
         if show_ns:
-            command = "cylc graph -n %s %s %s" % (
-                self.cfg.template_vars_opts,
-                self.get_remote_run_opts(),
-                self.cfg.suite)
-            foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir)
-            self.gcapture_windows.append(foo)
-            foo.run()
+            self._gcapture_cmd(
+                "cylc graph -n %s %s %s" % (
+                    self.cfg.template_vars_opts, self.get_remote_run_opts(),
+                    self.cfg.suite))
         else:
             # TODO - a "load" button as for suite startup cycle points.
             graph_suite_popup(
@@ -3485,21 +3463,15 @@ For more Stop options use the Control menu.""")
                 parent_window=self.window)
 
     def run_suite_info(self, w):
-        command = (
-            "cylc show " + self.get_remote_run_opts() +
-            " " + self.cfg.suite)
-        foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 600, 400)
-        self.gcapture_windows.append(foo)
-        foo.run()
+        self._gcapture_cmd(
+            "cylc show %s %s" % (
+                self.get_remote_run_opts(), self.cfg.suite), 600, 400)
 
     def run_suite_list(self, w, opt=''):
-        command = (
-            "cylc list " + self.get_remote_run_opts() + " " + opt +
-            " " + self.cfg.template_vars_opts + " " +
-            self.cfg.suite)
-        foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 600, 600)
-        self.gcapture_windows.append(foo)
-        foo.run()
+        self._gcapture_cmd(
+            "cylc list %s %s %s %s" % (
+                self.get_remote_run_opts(), opt, self.cfg.template_vars_opts,
+                self.cfg.suite), 600, 600)
 
     def run_suite_log(self, w, type_='log'):
         if is_remote(self.cfg.host, self.cfg.owner):
@@ -3509,14 +3481,10 @@ For more Stop options use the Control menu.""")
                 xopts = ' --stderr '
             else:
                 xopts = ' '
-
-            command = ("cylc cat-log " +
-                       self.get_remote_run_opts() +
-                       xopts + self.cfg.suite)
-            foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 800, 400,
-                                   title="%s %s" % (self.cfg.suite, type_))
-            self.gcapture_windows.append(foo)
-            foo.run()
+            self._gcapture_cmd(
+                "cylc cat-log %s %s %s" % (
+                    self.get_remote_run_opts(), xopts, self.cfg.suite),
+                800, 400, title="%s %s" % (self.cfg.suite, type_))
             return
 
         task_name_list = []  # TODO
@@ -3530,13 +3498,10 @@ For more Stop options use the Control menu.""")
             extra = ' -i'
         elif method == 'processed':
             extra = ' -j'
-
-        command = ("cylc view -g " +
-                   self.get_remote_run_opts() + " " + extra + " " +
-                   self.cfg.template_vars_opts + " " + self.cfg.suite)
-        foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 400)
-        self.gcapture_windows.append(foo)
-        foo.run()
+        self._gcapture_cmd(
+            "cylc view -g %s %s %s %s" % (
+                self.get_remote_run_opts(), extra, self.cfg.template_vars_opts,
+                self.cfg.suite), 400)
         return False
 
     def get_remote_run_opts(self):
@@ -3552,15 +3517,23 @@ For more Stop options use the Control menu.""")
             ret += " --user=" + self.cfg.owner
         return ret
 
-    def browse(self, b, *args):
-        command = (
-            'cylc doc ' + self.get_remote_run_opts() + ' ' + ' '.join(args))
-        foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 700)
-        self.gcapture_windows.append(foo)
-        foo.run()
+    def browse_doc(self, b, *args):
+        self._gcapture_cmd('cylc doc %s' % ' '.join(args), 700)
+
+    def browse_suite(self, _, target='suite'):
+        if not self.updater.global_summary:
+            # Suite not running, revert to parsing (can only be suite URL).
+            self._gcapture_cmd('cylc doc %s %s' % (
+                self.get_remote_run_opts(), self.cfg.suite), 700)
+            return
+        if target != 'suite':
+            # Task URL
+            target = TaskID.split(target)[0]
+        url = self.updater.global_summary['suite_urls'][target]
+        if url == '':
+            warning_dialog("No URL defined for %s" % target).warn()
+            return
+        self._gcapture_cmd('cylc doc --url=%s' % url, 700)
 
     def command_help(self, w, cat='', com=''):
-        command = "cylc " + cat + " " + com
-        foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 700, 600)
-        self.gcapture_windows.append(foo)
-        foo.run()
+        self._gcapture_cmd("cylc %s %s" % (cat, com), 700, 600)

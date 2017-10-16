@@ -18,21 +18,21 @@
 
 """cylc [info] documentation|browse [OPTIONS] [SUITE]
 
-Open cylc or suite documentation in your browser or PDF viewer (as defined
-in cylc global config files).
+View documentation in browser or PDF viewer, as per Cylc global config.
 
 % cylc doc [OPTIONS]
-   Open local or internet [--www] cylc documentation (locations must be
-specified in cylc global config files).
+   View local or internet [--www] Cylc documentation URLs.
 
-% cylc doc -u [-t TASK] SUITE
-    Open suite or task documentation if corresponding URL items are specified
-in the suite definition.
+% cylc doc [-t TASK] SUITE
+    View suite or task documentation, if URLs are specified in the suite. This
+parses the suite definition to extract the requested URL. Note that running
+suite daemons also hold suite URLs for access from the Cylc GUI.
 
 Arguments:
    [TARGET]    File, URL, or suite name"""
 
 import sys
+
 for arg in sys.argv[1:]:
     if arg.startswith('--host=') or arg.startswith('--user='):
         from cylc.remote import remrun
@@ -85,6 +85,11 @@ def main():
         help="Print exception traceback on error.",
         action="store_true", default=False, dest="debug")
 
+    parser.add_option(
+        "--url",
+        help="URL to view in your configured browser.",
+        metavar="URL", default=None, action="store", dest="url")
+
     (options, args) = parser.parse_args()
     cylc.flags.debug = options.debug
 
@@ -101,6 +106,9 @@ def main():
             # Force PDF.
             viewer = pdf_viewer
             target = pdf_file
+        elif options.url:
+            viewer = html_viewer
+            target = options.url
         else:
             # HTML documentation index.
             viewer = html_viewer

@@ -666,18 +666,21 @@ class SuiteConfig(object):
             if vfcp > final_point:
                 self.cfg['visualization']['final cycle point'] = str(
                     final_point)
-        # Replace suite name in suite  URL.
-        url = self.cfg['meta']['URL']
-        if url is not '':
-            self.cfg['meta']['URL'] = RE_SUITE_NAME_VAR.sub(self.suite, url)
 
-        # Replace suite and task name in task URLs.
+        # Replace suite and task name in suite and task URLs.
+        self.cfg['meta']['URL'] = self.cfg['meta']['URL'] % {
+            'suite_name': self.suite}
+        # back-compat $CYLC_SUITE_NAME:
+        self.cfg['meta']['URL'] = RE_SUITE_NAME_VAR.sub(
+            self.suite, self.cfg['meta']['URL'])
         for name, cfg in self.cfg['runtime'].items():
-            if cfg['meta']['URL']:
-                cfg['meta']['URL'] = RE_TASK_NAME_VAR.sub(
-                    name, cfg['meta']['URL'])
-                cfg['meta']['URL'] = RE_SUITE_NAME_VAR.sub(
-                    self.suite, cfg['meta']['URL'])
+            cfg['meta']['URL'] = cfg['meta']['URL'] % {
+                'suite_name': self.suite, 'task_name': name}
+            # back-compat $CYLC_SUITE_NAME and $CYLC_TASK_NAME:
+            cfg['meta']['URL'] = RE_SUITE_NAME_VAR.sub(
+                self.suite, cfg['meta']['URL'])
+            cfg['meta']['URL'] = RE_TASK_NAME_VAR.sub(
+                name, cfg['meta']['URL'])
 
         if is_validate:
             self.mem_log("config.py: before _check_circular()")
