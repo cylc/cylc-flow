@@ -6205,15 +6205,6 @@ To customize the environment more generally for Cylc on jobs hosts,
 use of \lstinline=job-init-env.sh= is described in Section~\ref{Configure
 Environment on Job Hosts}.
 
-\subsection{The Suite Contact File}
-\label{The Suite Contact File}
-
-At start-up, suite daemons write a {\em suite contact file}
-\lstinline=$HOME/cylc-run/<SUITE>/.service/contact= that records suite host,
-user, port number, process ID, Cylc version, and other information. Client
-commands can read this file, if they have access to it, to find the target
-suite daemon.
-
 \subsection{Tracking Task State}
 \label{TaskComms}
 
@@ -6362,6 +6353,22 @@ tracking (see these with \lstinline=cylc get-site-config=):
         default polling interval in minutes = 1.0
 \end{lstlisting}
 
+\subsection{The Suite Service Directory}
+\label{The Suite Service Directory}
+\label{The Suite Contact File}
+
+At registration time a {\em suite service directory},
+\lstinline=$HOME/cylc-run/<SUITE>/.service/=, is created and populated
+with a private passphrase file (containing random text), a self-signed
+SSL certificate (see~\ref{ConnectionAuthentication}, and a symlink to the suite
+source directory.  An existing passphrase file will not be overwritten
+if a suite is re-registered.
+
+At run time, the private suite run database is also written to the service
+directory, along with a {\em suite contact file} that records the host,
+user, port number, process ID, Cylc version, and other information about the
+suite daemon. Client commands automatically read daemon targetting information
+from the contact file, if they have access to it.
 
 \subsection{Client-Server Interaction}
 \label{ConnectionAuthentication}
@@ -6372,18 +6379,15 @@ and GUIs).
 
 Use \lstinline=cylc scan= to see which suites are listening on which ports on
 scanned hosts (this lists your own suites, by default, but it can show others
-too).
+too - see \lstinline=cylc scan --help=).
 
-Cylc currently supports two kinds of access to suite daemons:
+Cylc supports two kinds of access to suite daemons:
 \begin{myitemize}
     \item {\em public} (non-authenticated) - the amount of information
       revealed is configurable, see~\ref{PublicAccess}
     \item {\em control} (authenticated) - full control, suite passphrase
       required, see~\ref{passphrases}
 \end{myitemize}
-
-{\em Note in both cases the suite {\em SSL certificate} is required to
-establish the HTTPS connection.}
 
 \subsubsection{Public Access - No Passphrase}
 \label{PublicAccess}
@@ -6405,28 +6409,28 @@ The \lstinline=cylc scan= command can print descriptions and task state totals
 in addition to basic suite identity, if you have the right passphrases or if
 the requested information is revealed publicly.
 
-
 \subsubsection{Full Control - With Passphrase}
 \label{passphrases}
 
-Suite passphrases, which give full control over a suite, are loaded by the
-suite daemon at start-up and used to authenticate connections from client
-programs. They are used in a secure encrypted challenge-response scheme, never
+Suite passphrases, which give full control over a suite, are loaded from the
+suite service directory (see~\ref{The Suite Service Directory}) by the suite
+daemon at start-up, and used to authenticate subsequent client connections.
+Passphrases are used in a secure encrypted challenge-response scheme, never
 sent in plain text over the network.
 
-A random passphrase file (called \lstinline=passphrase=) and SSL certificate
-(\lstinline=ssl.cert=) are generated automatically with owner-only permissions
-at suite registration time, in the suite service directory
-\lstinline=$HOME/cylc-run/<SUITE>/.service/=.
+If two users need access to the same suite daemon, they must both possess the
+same suite passphrase file. Fine-grained access to a single suite daemon via
+multiple distinct ``user accounts'' is not currently supported.
 
-On submission of the first job to another host a suite daemon automatically
-install these and the {\em suite contact file} (see~\ref{The Suite Contact File})
-to the remote suite run directory, via scp, to enable task jobs to connect to
-the suite.
+Suite daemons automatically install their auth and contact files to job hosts,
+by scp, to enable task jobs to connect to the suite daemon with client commands,
+e.g.\ for task messaging.
 
-Client programs invoked by the user on the suite host will load this
-information too, from the suite service directory, to allow automatic
-connection to suites.
+Client programs invoked by the suite owner automatically load the passphrase,
+SSL certificate, and contact file too, for automatic connection to suites.
+
+{\em Manual installation of suite auth files is only needed for remote control
+- see below.}
 
 \subsubsection{Remote Control}
 \label{RemoteControl}
@@ -6439,32 +6443,23 @@ hosts, the suite SSL certificate and passphrase must be installed under your
 $HOME/.cylc/auth/OWNER@HOST/SUITE/
       ssl.cert
       passphrase
+      contact  # (optional - see below)
 \end{lstlisting}
-where \lstinline=OWNER@HOST= is the suite daemon account and \lstinline=SUITE=
-is the suite name. Then invoke client commands with the \lstinline=--user=
-and \lstinline=--host= options:
+where \lstinline=OWNER@HOST= is the suite host account and \lstinline=SUITE=
+is the suite name. Client commands should then be invoked with the
+\lstinline=--user= and \lstinline=--host= options, e.g.:
 \lstset{language=transcript}
 \begin{lstlisting}
 $ cylc monitor --user=OWNER --host=HOST SUITE
 \end{lstlisting}
 
-The suite contact file (see~\ref{The Suite Contact File}) can also be
-installed in the same place:
-\lstset{language=transcript}
-\begin{lstlisting}
-$HOME/.cylc/auth/OWNER@HOST/SUITE/
-      contact
-\end{lstlisting}
-but note this is not necessary if the remote suite run directory is in the
-standard location and you have read access to the contact file via the local
-filesystem, or via non-interactive ssh to the suite host - client commands
-will automatically read it.
-
-If you do not have access to these files the suite owner must give you the
-SSL certificate (for any connection) and the passphrase (for control). The
-contact file would also be useful, but note that without it you can still
-determine the port number with \lstinline=cylc scan= and then use it with
-\lstinline=--port= on the client command line.
+The suite contact file (see~\ref{The Suite Contact File}) is not needed if 
+you have read-access to the remote suite run directory via the local
+filesystem or non-interactive ssh to the suite host account - client commands
+will automatically read it. If you do install the contact file in your auth
+directory note that the port number will need to be updated if the suite gets
+restarted on a different port. Otherwise use \lstinline=cylc scan= to determine
+the suite port number and use the \lstinline=--port= client command option.
 
 {\em WARNING: possession of a suite passphrase gives full control over the
 target suite, including {\em edit run} functionality - which lets you run
@@ -6472,6 +6467,32 @@ arbitrary scripting on job hosts as the suite owner. Further,
 non-interactive ssh gives full access to the target user account, so we
 recommended that this is only used to interact with suites running on
 accounts to which you already have full access. }
+
+\subsection{Non-client Cylc Suite Commands}
+\label{Suite-parsing Commands}
+
+Some Cylc commands do not interact with running suite daemons as described
+above, but they parse suite definitions or access files such as suite logs on
+the suite host account.
+
+If the target suite is owned by another user then these non-client commands
+require non-interactive ssh access to the suite host account. Use of the
+\lstinline=--host= and \lstinline=--user= command options will result in the
+command being re-invoked, via ssh, on the suite host account (this includes
+the \lstinline=cylc run= and \lstinline=cylc restart= commands to start up a
+suite daemon).
+
+\subsection{GUI Suite Interaction}
+\label{GUI Suite Interaction}
+
+The gcylc GUI includes both client and non-client command functionality. This
+is completely transparent to the user if the GUI is running on the suite host
+account, but full GUI functionality for remote suites requires auth file
+installation (for connecting to the suite daemon) {\em and} non-interactive ssh
+access to the suite host account in order for file parsing and retrieval - such
+as viewing or graphing the suite definition and retrieving log files. Without
+ssh access you will see ``permission denied'' errors in command pop-up windows
+when attempting file access.
 
 \subsection{Task States Explained}
 
