@@ -1569,7 +1569,7 @@ delay.
 \begin{myitemize}
     \item {\em type:} Comma-separated list of ISO 8601 duration/interval representations, optionally {\em preceded} by multipliers.
     \item {\em default:} (none)
-    \item {\em example:} \lstinline@handler = PT10S, PT1M, PT5M@
+    \item {\em example:} \lstinline@retrieve job logs retry delays = PT10S, PT1M, PT5M@
 \end{myitemize}
 
 \subparagraph[suite definition directory]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[remote]]] \textrightarrow  suite definition directory}
@@ -1737,7 +1737,7 @@ run an event handler command once without any delay.
 \begin{myitemize}
     \item {\em type:} Comma-separated list of ISO 8601 duration/interval representations, optionally {\em preceded} by multipliers.
     \item {\em default:} (none)
-    \item {\em example:} \lstinline@handler = PT10S, PT1M, PT5M@
+    \item {\em example:} \lstinline@handler retry delays = PT10S, PT1M, PT5M@
 \end{myitemize}
 
 \subparagraph[mail events]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[events]]] \textrightarrow mail events}
@@ -1769,7 +1769,7 @@ is to run the mail notification command once without any delay.
 \begin{myitemize}
     \item {\em type:} Comma-separated list of ISO 8601 duration/interval representations, optionally {\em preceded} by multipliers.
     \item {\em default:} (none)
-    \item {\em example:} \lstinline@handler = PT10S, PT1M, PT5M@
+    \item {\em example:} \lstinline@mail retry delays = PT10S, PT1M, PT5M@
 \end{myitemize}
 
 \subparagraph[mail smtp]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[events]]] \textrightarrow mail smtp}
