@@ -771,9 +771,9 @@ class SuiteConfig(object):
             for name, indices in name_expander.expand(namespace_heading):
                 if name not in newruntime:
                     newruntime[name] = OrderedDictWithDefaults()
-                # Put parameter index values in task environment.
                 replicate(newruntime[name], namespace_dict)
                 if indices:
+                    # Put parameter values in task environments.
                     new_environ = OrderedDictWithDefaults()
                     self.task_param_vars[name] = {}
                     for p_name, p_val in indices.items():
@@ -783,14 +783,16 @@ class SuiteConfig(object):
                         for k, v in newruntime[name]['environment'].items():
                             new_environ[k] = v
                     newruntime[name]['environment'] = new_environ
-                    if 'inherit' in newruntime[name]:
-                        parents = newruntime[name]['inherit']
-                        origin = 'inherit = %s' % ' '.join(parents)
-                        repl_parents = []
-                        for parent in parents:
-                            repl_parents.append(name_expander.replace_params(
+                if 'inherit' in newruntime[name]:
+                    # Allow inheritance from parameterized namespaces.
+                    parents = newruntime[name]['inherit']
+                    origin = 'inherit = %s' % ', '.join(parents)
+                    repl_parents = []
+                    for parent in parents:
+                        repl_parents.append(
+                            name_expander.expand_parent_params(
                                 parent, indices, origin))
-                        newruntime[name]['inherit'] = repl_parents
+                    newruntime[name]['inherit'] = repl_parents
         self.cfg['runtime'] = newruntime
 
         # Parameter expansion of visualization node attributes. TODO - do vis
