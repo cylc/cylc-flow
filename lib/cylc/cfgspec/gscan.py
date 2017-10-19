@@ -33,7 +33,7 @@ SPEC = {
     'activate on startup': vdr(vtype='boolean', default=False),
     'columns': vdr(vtype='string_list', default=['suite', 'status']),
     'suite listing update interval': vdr(
-        vtype='interval', default=DurationFloat(300)),
+        vtype='interval', default=DurationFloat(60)),
     'suite status update interval': vdr(
         vtype='interval', default=DurationFloat(15)),
     'window size': vdr(vtype='integer_list', default=[300, 200]),
