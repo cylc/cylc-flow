@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from cylc.suite_srv_files_mgr import SuiteServiceFileError
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2017 NIWA
@@ -48,6 +47,7 @@ from cylc.job_file import JobFileWriter
 from cylc.mkdir_p import mkdir_p
 from cylc.mp_pool import SuiteProcPool, SuiteProcContext
 from cylc.suite_host import is_remote, is_remote_host, is_remote_user
+from cylc.suite_srv_files_mgr import SuiteServiceFileError
 from cylc.suite_logging import ERR, LOG
 from cylc.task_events_mgr import TaskEventsManager
 from cylc.task_message import TaskMessage
@@ -61,6 +61,29 @@ from cylc.task_state import (
     TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING)
 from cylc.wallclock import (
     get_current_time_string, get_seconds_as_interval_string)
+
+
+class JobHostPrep(object):
+    """Widget for tracking if all the host init commands are
+    complete yet"""
+    def __init__(self, cmds):
+        self.init_commands = cmds
+        self.num_init_commands = len(cmds)
+        # Flags marking each command as complete.
+        self.cmds_completed = self._write_init_cmd_dict()
+
+    def _write_init_cmd_dict(self):
+        """Map each command to a truthy value to mark
+        whether they have finished or not"""
+        return dict((str(command), False) for command in self.init_commands)
+
+    def set_cmd_complete(self, cmd):
+        """Mark a completed init command"""
+        self.cmds_completed[str(cmd)] = True
+
+    def complete(self):
+        """Test if all the init commands have completion flags"""
+        return all(self.cmds_completed.values())
 
 
 class RemoteJobHostInitError(Exception):
@@ -96,6 +119,7 @@ class TaskJobManager(object):
     JOBS_KILL = "jobs-kill"
     JOBS_POLL = "jobs-poll"
     JOBS_SUBMIT = SuiteProcPool.JOBS_SUBMIT
+    JOB_INIT_HOST = SuiteProcPool.JOB_INIT_HOST
     KEY_EXECUTE_TIME_LIMIT = "execution_time_limit"
 
     def __init__(self, suite, proc_pool, suite_db_mgr, suite_srv_files_mgr):
@@ -124,8 +148,53 @@ class TaskJobManager(object):
         if poll_tasks:
             self.poll_task_jobs(suite, poll_tasks)
 
+    def init_host_exec_commands(
+            self, host, owner, user_at_host, r_suite_run_dir, cmds):
+        """Submits the commands needed to initialise the suite on
+        remote host on the first run of the suite, by sending these commands
+        to the multiprocessing pool.
+
+        Args:
+            cmds: A list of host initialisation commands (copy files etc.)
+            user_at_host: [USERNAME]@[HOSTNAME]
+        """
+        # Create a job host prep manager
+        job_host_prepper = JobHostPrep(cmds)
+        for cmd in cmds:
+            proc_ctx = SuiteProcContext(self.JOB_INIT_HOST, cmd)
+            self.proc_pool.put_command(
+                proc_ctx,
+                self._init_host_command_callback,
+                [cmd, owner, host, user_at_host, r_suite_run_dir,
+                 job_host_prepper])
+
+    def log_host_init_success(self, owner, host,
+                              user_at_host, r_suite_run_dir):
+        """Record that the host has been initialised successfully"""
+        self.init_host_map[(host, owner)] = self.should_unlink(host, owner)
+        LOG.info('Initialised %s:%s' % (user_at_host, r_suite_run_dir))
+
+    def host_is_already_initialised(self, host, owner):
+        """Checks to see if the host/owner combo is already initialised.
+
+        If the host is localhost, or if the init_host_map dictionary is
+        already logged as having this host and owner initialised,
+        then we can just return now."""
+        if (self.single_task_mode or
+                (host, owner) in self.init_host_map or
+                not is_remote(host, owner)):
+            return True
+        else:
+            return False
+
+    @staticmethod
+    def should_unlink(host, owner):
+        return GLOBAL_CFG.get_host_item(
+            'task communication method', host, owner) != "poll"
+
     def init_host(self, reg, host, owner):
-        """Initialise suite run dir on a user@host.
+        """Prepare commands needed to initialise suite run dir
+        on a user@host.
 
         Create SUITE_RUN_DIR/log/job/ if necessary.
         Install suite contact environment file.
@@ -136,9 +205,7 @@ class TaskJobManager(object):
         """
         if host is None:
             host = 'localhost'
-        if (self.single_task_mode or
-                (host, owner) in self.init_host_map or
-                not is_remote(host, owner)):
+        if self.host_is_already_initialised(host, owner):
             return
         user_at_host = host
         if owner:
@@ -165,6 +232,7 @@ class TaskJobManager(object):
                     '-n', user_at_host,
                     'test', '-e', os.path.join(r_suite_srv_dir, uuid_str)],
                 stdout=PIPE, stderr=PIPE)
+
             if proc.wait() == 0:
                 # Initialised, but no need to tidy up
                 self.init_host_map[(host, owner)] = False
@@ -175,17 +243,22 @@ class TaskJobManager(object):
             except OSError:
                 pass
 
-        cmds = []
         # Command to create suite directory structure on remote host.
-        cmds.append(shlex.split(ssh_tmpl) + [
+        # This should be done before other commands that follow
+        suite_dir_create = shlex.split(ssh_tmpl) + [
             '-n', user_at_host,
             'mkdir', '-p',
-            r_suite_run_dir, r_log_job_dir, r_suite_srv_dir])
+            r_suite_run_dir, r_log_job_dir, r_suite_srv_dir]
+
+        # Run command to create suite directory first
+        proc = Popen(suite_dir_create, stdout=PIPE, stderr=PIPE)
+        proc.wait()
+
+        # A list that will store the remaining host init commands
+        cmds = []
         # Command to copy contact and authentication files to remote host.
         # Note: no need to do this if task communication method is "poll".
-        should_unlink = GLOBAL_CFG.get_host_item(
-            'task communication method', host, owner) != "poll"
-        if should_unlink:
+        if self.should_unlink(host, owner):
             scp_tmpl = GLOBAL_CFG.get_host_item('scp command', host, owner)
             # Handle not having SSL certs installed.
             try:
@@ -209,17 +282,9 @@ class TaskJobManager(object):
             cmds.append(shlex.split(scp_tmpl) + [
                 '-pr',
                 suite_run_py, user_at_host + ':' + r_suite_run_dir + '/'])
-        # Run commands in sequence.
-        for cmd in cmds:
-            proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-            out, err = proc.communicate()
-            if proc.wait():
-                raise RemoteJobHostInitError(
-                    RemoteJobHostInitError.MSG_INIT,
-                    user_at_host, ' '.join(quote(item) for item in cmd),
-                    proc.returncode, out, err)
-        self.init_host_map[(host, owner)] = should_unlink
-        LOG.info('Initialised %s:%s' % (user_at_host, r_suite_run_dir))
+
+        self.init_host_exec_commands(
+            host, owner, user_at_host, r_suite_run_dir, cmds)
 
     def kill_task_jobs(self, suite, itasks):
         """Kill jobs of active tasks, and hold the tasks.
@@ -273,7 +338,10 @@ class TaskJobManager(object):
         return prepared_tasks
 
     def submit_task_jobs(self, suite, itasks, is_simulation=False):
-        """Prepare and submit task jobs."""
+        """Prepare and submit task jobs.
+
+        This method uses prep_submit_task_job() and
+        _prep_submit_task_jobs() as helper methods"""
         if is_simulation:
             return self._simulation_submit_task_jobs(itasks)
 
@@ -340,8 +408,8 @@ class TaskJobManager(object):
         """
         # Issue all SSH commands in parallel
         procs = {}
-        for (host, owner), should_unlink in self.init_host_map.items():
-            if not should_unlink:
+        for (host, owner), should_unlink_true in self.init_host_map.items():
+            if not should_unlink_true:
                 continue
             user_at_host = host
             if owner:
@@ -757,6 +825,21 @@ class TaskJobManager(object):
                 except KeyError:
                     itask.try_timers[key] = TaskActionTimer(delays=delays)
 
+    def _init_host_command_callback(
+        self, proc_ctx, cmd, owner, host, user_at_host, r_suite_run_dir,
+            init_host_commander):
+        """Callback when init_host_exec_commands has exited"""
+        if proc_ctx.ret_code:
+            LOG.error(RemoteJobHostInitError.MSG_INIT, user_at_host)
+            LOG.error(proc_ctx)
+        else:
+            LOG.debug(proc_ctx)
+        # Do something to log that each init command has run
+        init_host_commander.set_cmd_complete(cmd)
+        if init_host_commander.complete():
+            self.log_host_init_success(
+                owner, host, user_at_host, r_suite_run_dir)
+
     def _simulation_submit_task_jobs(self, itasks):
         """Simulation mode task jobs submission."""
         for itask in itasks:
@@ -932,6 +1015,7 @@ class TaskJobManager(object):
         self.init_host(suite, itask.task_host, itask.task_owner)
         if itask.state.outputs.has_custom_triggers():
             self.suite_db_mgr.put_update_task_outputs(itask)
+
         self.suite_db_mgr.put_update_task_jobs(itask, {
             "user_at_host": user_at_host,
             "batch_sys_name": itask.summary['batch_sys_name'],
