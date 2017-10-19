@@ -123,7 +123,28 @@ class Updater(threading.Thread):
         self.global_summary = {}
         self.cfg.port = None
         self.client = None
+
         gobject.idle_add(self.app_window.set_title, str(self.cfg.suite))
+
+        # Use info bar to display stop summary if available.
+        # Otherwise, just display the reconnect count down.
+        if self.cfg.suite and self.stop_summary is None:
+            stop_summary = get_stop_state_summary(
+                cat_state(self.cfg.suite, self.cfg.host, self.cfg.owner))
+            if stop_summary != self.stop_summary:
+                self.stop_summary = stop_summary
+                self.status = SUITE_STATUS_STOPPED
+                gobject.idle_add(
+                    self.info_bar.set_stop_summary, stop_summary)
+                self.last_update_time = time()
+        try:
+            update_time_str = time2str(self.stop_summary[0]["last_updated"])
+        except (AttributeError, IndexError, KeyError, TypeError):
+            update_time_str = None
+        gobject.idle_add(
+            self.info_bar.set_update_time,
+            update_time_str, self.info_bar.DISCONNECTED_TEXT)
+        gobject.idle_add(self.info_bar.prog_bar_stop)
 
     def set_status(self, status=None):
         """Update status bar."""
