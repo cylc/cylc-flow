@@ -31,7 +31,6 @@ from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
 from cylc.suite_host import is_remote_host, get_host_ip_by_name
 
-
 CONNECT_TIMEOUT = 5.0
 INACTIVITY_TIMEOUT = 10.0
 MSG_QUIT = "QUIT"
@@ -104,37 +103,55 @@ def _scan_item(timeout, my_uuid, srv_files_mgr, item):
         return (host, port, result)
 
 
-def scan_all(hosts=None, timeout=None, updater=None):
-    """Scan all hosts."""
+def scan_many(items=None, timeout=None, updater=None):
+    """Call "identify" method of suites on many host:port.
+
+    Args:
+        items (list): list of 'host' string or ('host', port) tuple to scan.
+        timeout (float): connection timeout, default is CONNECT_TIMEOUT.
+        updater (object): quit scan cleanly if updater.quit is set.
+
+    Return:
+        list: [(host, port, identify_result), ...]
+    """
     try:
         timeout = float(timeout)
     except (TypeError, ValueError):
         timeout = CONNECT_TIMEOUT
     my_uuid = uuid4()
     # Determine hosts to scan
-    if not hosts:
-        hosts = GLOBAL_CFG.get(["suite host scanning", "hosts"])
+    if not items:
+        items = GLOBAL_CFG.get(["suite host scanning", "hosts"])
     # Ensure that it does "localhost" only once
-    hosts = set(hosts)
-    for host in list(hosts):
-        if not is_remote_host(host):
-            hosts.remove(host)
-            hosts.add("localhost")
+    items = set(items)
+    for item in list(items):
+        if not isinstance(item, tuple) and not is_remote_host(item):
+            items.remove(item)
+            items.add("localhost")
+    # To do and wait (submitted, waiting for results) sets
+    todo_set = set()
+    wait_set = set()
     # Determine ports to scan
-    base_port = GLOBAL_CFG.get(['communication', 'base port'])
-    max_ports = GLOBAL_CFG.get(['communication', 'maximum number of ports'])
+    base_port = None
+    max_ports = None
+    for item in items:
+        if isinstance(item, tuple):
+            # Assume item is ("host", port)
+            todo_set.add(item)
+        else:
+            # Full port range for a host
+            if base_port is None or max_ports is None:
+                base_port = GLOBAL_CFG.get(['communication', 'base port'])
+                max_ports = GLOBAL_CFG.get(
+                    ['communication', 'maximum number of ports'])
+            for port in range(base_port, base_port + max_ports):
+                todo_set.add((item, port))
+    proc_items = []
+    results = []
     # Number of child processes
     max_procs = GLOBAL_CFG.get(["process pool size"])
     if max_procs is None:
         max_procs = cpu_count()
-    # To do and wait (submitted, waiting for results) sets
-    todo_set = set()
-    wait_set = set()
-    for host in hosts:
-        for port in range(base_port, base_port + max_ports):
-            todo_set.add((host, port))
-    proc_items = []
-    results = []
     try:
         while todo_set or proc_items:
             no_action = True

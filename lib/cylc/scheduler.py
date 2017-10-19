@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Cylc scheduler server."""
 
+from collections import deque
 from logging import DEBUG
 import os
 from Queue import Empty, Queue
@@ -123,6 +124,7 @@ class Scheduler(object):
         self.suite_dir = self.suite_srv_files_mgr.get_suite_source_dir(
             self.suite)
         self.suiterc = self.suite_srv_files_mgr.get_suite_rc(self.suite)
+        self.suiterc_update_time = None
         # For user-defined batch system handlers
         sys.path.append(os.path.join(self.suite_dir, 'python'))
         self.suite_run_dir = GLOBAL_CFG.get_derived_host_item(
@@ -197,6 +199,8 @@ class Scheduler(object):
         self.suite_log = None
 
         self.ref_test_allowed_failures = []
+        # Last 10 durations (in seconds) of the main loop
+        self.main_loop_intervals = deque(maxlen=10)
 
     def start(self):
         """Start the server."""
@@ -602,34 +606,20 @@ conditions; see `cylc conditions`.
         return TaskID.get(
             name, self.get_standardised_point_string(point_string))
 
-    def info_ping_task(self, task_id, exists_only=False):
-        """Return True if task exists and running."""
-        task_id = self.get_standardised_taskid(task_id)
-        return self.pool.ping_task(task_id, exists_only)
-
-    def info_get_err_lines(self, prev_size, max_lines):
-        """Read content from err log file up to max_lines from prev_size."""
-        return self.suite_log.get_lines(
-            self.suite_log.ERR, prev_size, max_lines)
-
-    def info_get_update_times(self):
-        """Return latest update time of ERR."""
-        return (self.state_summary_mgr.summary_update_time, ERR.update_time)
-
     def info_get_task_jobfile_path(self, task_id):
         """Return task job file path."""
         name, point = TaskID.split(task_id)
         return self.task_events_mgr.get_task_job_log(
             self.suite, point, name, tail=self.task_job_mgr.JOB_FILE_BASE)
 
-    def info_get_state_summary(self):
-        """Return the global, task, and family summary data structures."""
-        return self.state_summary_mgr.get_state_summary()
-
     def info_get_suite_info(self):
         """Return a dict containing the suite title and description."""
         return {'title': self.config.cfg['meta']['title'],
                 'description': self.config.cfg['meta']['description']}
+
+    def info_get_suite_state_summary(self):
+        """Return the global, task, and family summary data structures."""
+        return self.state_summary_mgr.get_state_summary()
 
     def info_get_task_info(self, names):
         """Return info of a task."""
@@ -641,21 +631,65 @@ conditions; see `cylc conditions`.
                 results[name] = {}
         return results
 
-    def info_get_all_families(self, exclude_root=False):
-        """Return info of all families."""
-        fams = self.config.get_first_parent_descendants().keys()
-        if exclude_root:
-            return fams[:-1]
-        else:
-            return fams
+    def info_get_latest_state(self, client_info, full_mode):
+        """Return latest suite state (suitable for a GUI update).
 
-    def info_get_first_parent_descendants(self):
-        """Families for single-inheritance hierarchy based on first parents"""
-        return self.config.get_first_parent_descendants()
+        If previous update time is set, return only information since previous
+        update time. Otherwise, return full information required to populate
+        the GUI tree and LED views.
 
-    def info_get_first_parent_ancestors(self, pruned=False):
-        """Single-inheritance hierarchy based on first parents"""
-        return self.config.get_first_parent_ancestors(pruned)
+        Args:
+            client_info (dict): store 'prev_time', 'prev_err_size'.
+            full_mode (bool): force full update
+
+        Return:
+            (dict):
+                cylc_version (str): version of cylc running this suite
+                full_mode (bool): is this returning a full update?
+                summary (tuple): (global_summary, task_summary, family_summary)
+                ancestors (dict): first parent ancestors
+                ancestors_pruned (dict):
+                    first parent ancestors, without non-task namespaces
+                descendants (dict): first parent descendants
+                err_content (str): new content in error log
+                err_size (int): new size of error log
+                mean_main_loop_interval (float):
+                    average time interval (seconds) of last 10 main loops
+
+        See Also:
+            info_get_graph_raw
+        """
+        ret = {
+            'cylc_version': CYLC_VERSION,
+            'full_mode': full_mode,
+        }
+        if full_mode:
+            client_info['prev_time'] = None
+            client_info['prev_err_size'] = None
+        prev_time = client_info.get('prev_time')
+        if prev_time is None:
+            full_mode = True
+            ret['full_mode'] = True
+        if full_mode or (
+                self.state_summary_mgr.update_time and
+                prev_time < self.state_summary_mgr.update_time):
+            ret['summary'] = self.state_summary_mgr.get_state_summary()
+        if full_mode or (
+                self.suiterc_update_time and
+                prev_time < self.suiterc_update_time):
+            ret['ancestors'] = self.config.get_first_parent_ancestors()
+            ret['ancestors_pruned'] = self.config.get_first_parent_ancestors(
+                pruned=True)
+            ret['descendants'] = self.config.get_first_parent_descendants()
+        if full_mode or ERR.update_time and prev_time < ERR.update_time:
+            ret['err_content'], ret['err_size'] = self.suite_log.get_lines(
+                self.suite_log.ERR, client_info.get('prev_err_size'))
+            client_info['prev_err_size'] = ret['err_size']
+        client_info['prev_time'] = client_info['time']
+        if self.main_loop_intervals:
+            ret['mean_main_loop_interval'] = (
+                sum(self.main_loop_intervals) / len(self.main_loop_intervals))
+        return ret
 
     def info_get_graph_raw(self, cto, ctn, group_nodes=None,
                            ungroup_nodes=None,
@@ -681,7 +715,7 @@ conditions; see `cylc conditions`.
             for key in (KEY_TITLE, KEY_DESCRIPTION, KEY_GROUP):
                 result[key] = self.config.cfg[KEY_META].get(key)
         if PRIVILEGE_LEVELS[2] in privileges:
-            result[KEY_UPDATE_TIME] = self.info_get_update_times()[0]
+            result[KEY_UPDATE_TIME] = self.state_summary_mgr.update_time
             result[KEY_STATES] = self.state_summary_mgr.get_state_totals()
             result[KEY_TASKS_BY_STATE] = (
                 self.state_summary_mgr.get_tasks_by_state())
@@ -690,6 +724,11 @@ conditions; see `cylc conditions`.
     def info_get_task_requisites(self, items, list_prereqs=False):
         """Return prerequisites of a task."""
         return self.pool.get_task_requisites(items, list_prereqs=list_prereqs)
+
+    def info_ping_task(self, task_id, exists_only=False):
+        """Return True if task exists and running."""
+        task_id = self.get_standardised_taskid(task_id)
+        return self.pool.ping_task(task_id, exists_only)
 
     def command_set_stop_cleanly(self, kill_active_tasks=False):
         """Stop job submission and set the flag for clean shutdown."""
@@ -929,6 +968,7 @@ conditions; see `cylc conditions`.
                 self.suite_run_dir,
                 self.suite_srv_files_mgr.FILE_BASE_SUITE_RC + '.processed'),
         )
+        self.suiterc_update_time = time()
         # Dump the loaded suiterc for future reference.
         cfg_logdir = GLOBAL_CFG.get_derived_host_item(
             self.suite, 'suite config log directory')
@@ -1331,6 +1371,7 @@ conditions; see `cylc conditions`.
                 self.update_profiler_logs(tinit)
 
             sleep(self.INTERVAL_MAIN_LOOP)
+            self.main_loop_intervals.append(time() - tinit)
             # END MAIN LOOP
 
     def update_state_summary(self):

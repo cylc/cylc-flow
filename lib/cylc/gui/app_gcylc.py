@@ -52,6 +52,7 @@ from cylc.gui.updater import Updater
 from cylc.gui.util import (
     get_icon, get_image_dir, get_logo, EntryTempText,
     EntryDialog, setup_icons, set_exception_hook_dialog)
+from cylc.network.httpclient import ClientError
 from cylc.suite_status import SUITE_STATUS_STOPPED_WITH
 from cylc.task_id import TaskID
 from cylc.task_state_prop import extract_group_state
@@ -232,12 +233,12 @@ class InfoBar(gtk.VBox):
         self.time_widget = gtk.Label()
         self._set_tooltip(self.time_widget, "last update time")
 
-        self.reconnect_duration_widget = gtk.Label()
+        self.reconnect_interval_widget = gtk.Label()
         self._set_tooltip(
-            self.reconnect_duration_widget,
-            r"""Duration to next reconnect attempt
+            self.reconnect_interval_widget,
+            r"""Time interval to next reconnect attempt
 
-Use (Re-)connect button to reconnect immediately.""")
+Use *Connect Now* button to reconnect immediately.""")
 
         hbox = gtk.HBox(spacing=0)
         self.pack_start(hbox, False, False)
@@ -267,7 +268,7 @@ Use (Re-)connect button to reconnect immediately.""")
         # From the right.
         for widget in [
                 self.log_widget, self.time_widget,
-                self.reconnect_duration_widget]:
+                self.reconnect_interval_widget]:
             eb = gtk.EventBox()
             eb.add(widget)
             hbox.pack_end(eb, False)
@@ -421,14 +422,14 @@ Use (Re-)connect button to reconnect immediately.""")
             gobject.idle_add(
                 self.time_widget.set_text, " %s " % update_time_str)
         if next_update_dt_str is None:
-            gobject.idle_add(self.reconnect_duration_widget.set_text, "")
+            gobject.idle_add(self.reconnect_interval_widget.set_text, "")
         elif next_update_dt_str == self.DISCONNECTED_TEXT:
             gobject.idle_add(
-                self.reconnect_duration_widget.set_text, next_update_dt_str)
+                self.reconnect_interval_widget.set_text, next_update_dt_str)
         else:
             gobject.idle_add(
-                self.reconnect_duration_widget.set_text,
-                " (reconnect in %s) " % next_update_dt_str)
+                self.reconnect_interval_widget.set_text,
+                " (next connect: %s) " % next_update_dt_str)
 
     def _set_tooltip(self, widget, text):
         tooltip = gtk.Tooltips()
@@ -1001,10 +1002,13 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             self.reset(reg, auth)
 
     def pause_suite(self, bt):
+        """Tell suite to hold (go into "held" status)."""
         self.put_comms_command('hold_suite')
 
     def resume_suite(self, bt):
+        """Tell suite to release "held" status."""
         self.put_comms_command('release_suite')
+        self.reset_connect()
 
     def stopsuite_default(self, *args):
         """Try to stop the suite (after currently running tasks...)."""
@@ -1191,7 +1195,7 @@ been defined for this suite""").inform()
         except OSError:
             warning_dialog('Error: failed to start ' + self.cfg.suite,
                            self.window).warn()
-        self.reset_connect(None)
+        self.reset_connect()
 
     def about(self, bt):
         about = gtk.AboutDialog()
@@ -1631,8 +1635,11 @@ been defined for this suite""").inform()
     def popup_requisites(self, w, e, task_id, *args):
         """Show prerequisites of task_id in a pop up window."""
         name = TaskID.split(task_id)[0]
-        results, bad_items = self.get_comms_info(
-            'get_task_requisites', items=[task_id])
+        try:
+            results, bad_items = self.updater.client.get_info(
+                'get_task_requisites', items=[task_id])
+        except ClientError as exc:
+            warning_dialog(str(exc), self.window).warn()
         if not results or task_id in bad_items:
             warning_dialog(
                 "Task proxy " + task_id +
@@ -2448,15 +2455,15 @@ shown here in the state they were in at the time of triggering.''')
 
         self.view_menu.append(gtk.SeparatorMenuItem())
 
-        self.reset_connect_menuitem = gtk.ImageMenuItem("(_Re-)connect")
+        self.reset_connect_menuitem = gtk.ImageMenuItem("_Connect Now")
         img = gtk.image_new_from_stock(gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU)
         self.reset_connect_menuitem.set_image(img)
         self._set_tooltip(
             self.reset_connect_menuitem,
-            """(Re-)connect to suite immediately.
+            """Connect to suite immediately.
 
-If gcylc is not connected to a running suite
-it tries to reconnect after increasingly long delays,
+If gcylc cannot connect to the suite,
+it retries after increasingly long delays,
 to reduce network traffic.""")
         self.view_menu.append(self.reset_connect_menuitem)
         self.reset_connect_menuitem.connect('activate', self.reset_connect)
@@ -2887,14 +2894,14 @@ to reduce network traffic.""")
         self.menu_bar.append(help_menu_root)
 
     def describe_suite(self, w):
-        # Show suite title and description.
-        if self.updater.connected:
+        """Show suite title and description."""
+        try:
             # Interrogate the suite daemon.
-            info = self.get_comms_info('get_suite_info')
+            info = self.updater.client.get_info('get_suite_info')
             descr = '\n'.join(
                 "%s: %s" % (key, val) for key, val in info.items())
             info_dialog(descr, self.window).inform()
-        else:
+        except ClientError:
             # Parse the suite definition.
             command = ("cylc get-suite-config -i title -i description " +
                        self.get_remote_run_opts() + " " + self.cfg.suite)
@@ -3038,11 +3045,8 @@ This is what my suite does:..."""
                 self.reset(suite)
 
     def reset_connect(self, _=None):
-        """Force the polling schedule to go back to short intervals.
-
-        This is so that the GUI can immediately connect to the started suite.
-        """
-        self.updater.connect_schd.stop()
+        """Force a suite API call as soon as possible."""
+        self.updater.update_interval = 1.0
 
     def construct_command_menu(self, menu):
         """Constructs the top bar help menu in gcylc that lists all
@@ -3280,15 +3284,15 @@ This is what my suite does:..."""
         self.reset_connect_toolbutton = gtk.ToolButton(
             icon_widget=gtk.image_new_from_stock(
                 gtk.STOCK_REFRESH, gtk.ICON_SIZE_SMALL_TOOLBAR))
-        self.reset_connect_toolbutton.set_label("(Re-)connect")
+        self.reset_connect_toolbutton.set_label("Connect Now")
         tooltip = gtk.Tooltips()
         tooltip.enable()
         tooltip.set_tip(
             self.reset_connect_toolbutton,
-            """(Re-)connect to suite immediately.
+            """Connect to suite immediately.
 
-If gcylc is not connected to a running suite
-it tries to reconnect after increasingly long delays,
+If gcylc cannot connect to the suite
+it retries after increasingly long delays,
 to reduce network traffic.""")
         self.reset_connect_toolbutton.connect("clicked", self.reset_connect)
         self.tool_bars[0].insert(self.reset_connect_toolbutton, 0)
@@ -3440,12 +3444,6 @@ For more Stop options use the Control menu.""")
         else:
             if not success:
                 warning_dialog(msg, self.window).warn()
-
-    def get_comms_info(self, command, **kwargs):
-        try:
-            return self.updater.client.get_info(command, **kwargs)
-        except Exception as exc:
-            warning_dialog(str(exc), self.window).warn()
 
     def run_suite_validate(self, w):
         command = ("cylc validate -v " + self.get_remote_run_opts() +

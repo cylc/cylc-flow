@@ -123,17 +123,20 @@ class SuiteRuntimeServiceClient(object):
         return self._call_server_func(
             'get_broadcast', method=self.METHOD_GET, **kwargs)
 
-    def get_err_content(self, prev_size, max_lines):
-        """Return the content and new size of the suite's err file."""
+    def get_info(self, command, *args, **kwargs):
+        """Return suite info."""
+        kwargs['method'] = self.METHOD_GET
+        return self._call_server_func(command, *args, **kwargs)
+
+    def get_latest_state(self, full_mode):
+        """Return latest state of the suite (for the GUI)."""
         return self._call_server_func(
-            'get_err_content',
-            method=self.METHOD_GET,
-            prev_size=prev_size, max_lines=max_lines)
+            'get_latest_state', method=self.METHOD_GET, full_mode=full_mode)
 
     def get_suite_state_summary(self):
         """Return the global, task, and family summary data structures."""
         return utf8_enforce(self._call_server_func(
-            'get_state_summary', method=self.METHOD_GET))
+            'get_suite_state_summary', method=self.METHOD_GET))
 
     def get_tasks_by_state(self):
         """Returns a dict containing lists of tasks by state.
@@ -143,16 +146,6 @@ class SuiteRuntimeServiceClient(object):
         """
         return self._call_server_func(
             'get_tasks_by_state', method=self.METHOD_GET)
-
-    def get_update_times(self):
-        """Return the update times for (state summary, err_content)."""
-        return self._call_server_func(
-            'get_update_times', method=self.METHOD_GET)
-
-    def get_info(self, command, *args, **kwargs):
-        """Return suite info."""
-        kwargs['method'] = self.METHOD_GET
-        return self._call_server_func(command, *args, **kwargs)
 
     def identify(self):
         """Return suite identity."""
@@ -181,8 +174,8 @@ class SuiteRuntimeServiceClient(object):
         pass
 
     def signout(self, *args, **kwargs):
-        """Compat method, does nothing."""
-        pass
+        """Tell server to forget this client."""
+        return self._call_server_func('signout')
 
     def _get_comms_from_suite_contact_file(self):
         """Find out the communications protocol (http/https) from the

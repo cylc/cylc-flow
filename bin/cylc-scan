@@ -44,7 +44,7 @@ if "--use-ssh" in sys.argv[1:]:
 
 import re
 
-from cylc.network.port_scan import scan_all
+from cylc.network.port_scan import scan_many
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.suite_host import get_user
@@ -207,7 +207,7 @@ def main():
         state_legend = state_legend.rstrip()
 
     skip_one = True
-    for host, port, suite_identity in scan_all(args, options.comms_timeout):
+    for host, port, suite_identity in scan_many(args, options.comms_timeout):
         name = suite_identity[KEY_NAME]
         owner = suite_identity[KEY_OWNER]
 

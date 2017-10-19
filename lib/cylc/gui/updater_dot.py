@@ -16,18 +16,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from copy import deepcopy
 import gobject
 import gtk
 import threading
 from time import sleep
 
-from cylc.task_id import TaskID
-from cylc.gui.dot_maker import DotMaker
-from copy import deepcopy
-
 import warnings
 warnings.filterwarnings('ignore', '^.*was not found when attempting to ' +
                         'remove it', Warning)
+
+from cylc.task_id import TaskID
+from cylc.gui.dot_maker import DotMaker
+from cylc.gui.util import get_id_summary
 
 
 class DotUpdater(threading.Thread):
@@ -88,15 +89,17 @@ class DotUpdater(threading.Thread):
         tip.enable()
         tip.set_tip(widget, tip_text)
 
-    def clear_list(self):
+    def clear_gui(self):
+        """Clear the LED tree store."""
         self.led_treestore.clear()
         # gtk idle functions must return false or will be called multiple times
         return False
 
     def update(self):
+        """Update data using data from self.updater."""
         if not self.updater.connected:
             if not self.cleared:
-                gobject.idle_add(self.clear_list)
+                gobject.idle_add(self.clear_gui)
                 self.cleared = True
             return False
         self.cleared = False
@@ -107,14 +110,14 @@ class DotUpdater(threading.Thread):
             return False
 
         self.last_update_time = self.updater.last_update_time
-        self.updater.set_update(False)
+        self.updater.no_update_event.set()
 
         self.state_summary = deepcopy(self.updater.state_summary)
         self.fam_state_summary = deepcopy(self.updater.fam_state_summary)
         self.ancestors_pruned = deepcopy(self.updater.ancestors_pruned)
         self.descendants = deepcopy(self.updater.descendants)
 
-        self.updater.set_update(True)
+        self.updater.no_update_event.clear()
 
         self.point_strings = []
         for id_ in self.state_summary:
@@ -469,7 +472,7 @@ class DotUpdater(threading.Thread):
         if col_index == 0:
             tooltip.set_text(task_id)
             return True
-        text = self.updater.get_id_summary(
+        text = get_id_summary(
             task_id, self.state_summary, self.fam_state_summary,
             self.descendants)
         if text == task_id:
@@ -596,5 +599,3 @@ class DotUpdater(threading.Thread):
             if self.update() or self.action_required:
                 gobject.idle_add(self.update_gui)
             sleep(0.2)
-        else:
-            pass

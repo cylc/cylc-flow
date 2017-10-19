@@ -36,7 +36,6 @@ This can be changed later using the ``View'' menu ``Toggle views side-by-side''
 \item {\em default:} ``False''
 \end{myitemize}
 
-
 \subsubsection{initial views}
 
 Set the suite view panel(s) displayed initially, when the GUI starts.
@@ -47,6 +46,31 @@ This can be changed later using the tool bar.
 \item {\em legal values:} ``text'', ``dot'',  ``graph''
 \item {\em default:} ``text''
 \item {\em example:} \lstinline@initial views = graph, dot@
+\end{myitemize}
+
+\subsubsection{maximum update interval}
+
+Set the maximum (longest) time interval between calls to the suite for data
+update.
+
+The update frequency of the GUI is variable. It is determined by considering
+the time of last update and the mean duration of the last 10 main loops of the
+suite.
+
+In general, the GUI will use an update frequency that matches the mean duration
+of the suite's main loop. In quiet time (or if the suite is not contactable),
+it will gradually increase the update interval (i.e. reduce the update
+frequency) to a maximum determined by this setting.
+
+Increasing this setting will reduce the network traffic and hits on the suite
+process.  However, if a quiet suite starts to pick up activity, the GUI may
+initially appear out of sync with what is happening in the suite for the
+duration of this interval.
+
+\begin{myitemize}
+\item {\em type:} ISO 8601 duration/interval representation (e.g.\ 
+\lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
+\item {\em default: PT15S}
 \end{myitemize}
 
 \subsubsection{sort by definition order}

@@ -17,7 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import gtk
-from updater_dot import DotUpdater
+
+from cylc.gui.updater_dot import DotUpdater
 from cylc.task_id import TaskID
 
 
