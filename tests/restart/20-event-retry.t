@@ -36,8 +36,8 @@ cmp_ok "${SUITED}/file" <<'__TEXT__'
 1
 2
 __TEXT__
-grep_ok 'LOADING task action timers' "${SUITED}/log/suite/out"
-grep_ok "+ t01\\.1 (('event-handler-00', 'succeeded'), 1)" "${SUITED}/log/suite/out"
+grep_ok 'LOADING task action timers' "${SUITED}/log/suite/log"
+grep_ok "+ t01\\.1 (('event-handler-00', 'succeeded'), 1)" "${SUITED}/log/suite/log"
 
 purge_suite "${SUITE_NAME}"
 exit

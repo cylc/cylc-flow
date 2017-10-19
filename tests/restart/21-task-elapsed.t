@@ -41,7 +41,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --debug
 suite_run_ok "${TEST_NAME_BASE}-restart-1" \
     cylc restart "${SUITE_NAME}" --until=2028 --debug
 sed -n '/LOADING task run times/,+2{s/^.* INFO - //;s/[0-9]\(,\|$\)/%d\1/g;p}' \
-    "${RUND}/log/suite/out" >'restart-1.out'
+    "${RUND}/log/suite/log" >'restart-1.out'
 contains_ok 'restart-1.out' <<'__OUT__'
 LOADING task run times
 + t2: %d,%d,%d,%d,%d
@@ -50,7 +50,7 @@ __OUT__
 suite_run_ok "${TEST_NAME_BASE}-restart-2" \
     cylc restart "${SUITE_NAME}" --until=2030 --debug
 sed -n '/LOADING task run times/,+2{s/^.* INFO - //;s/[0-9]\(,\|$\)/%d\1/g;p}' \
-    "${RUND}/log/suite/out" >'restart-2.out'
+    "${RUND}/log/suite/log" >'restart-2.out'
 contains_ok 'restart-2.out' <<'__OUT__'
 LOADING task run times
 + t2: %d,%d,%d,%d,%d,%d,%d,%d,%d,%d

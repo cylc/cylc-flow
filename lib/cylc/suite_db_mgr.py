@@ -33,7 +33,7 @@ from tempfile import mkstemp
 
 from cylc.broadcast_report import get_broadcast_change_iter
 from cylc.rundb import CylcSuiteDAO
-from cylc.suite_logging import ERR, LOG, OUT
+from cylc.suite_logging import ERR, LOG
 from cylc.wallclock import get_current_time_string
 
 
@@ -457,7 +457,5 @@ class SuiteDatabaseManager(object):
             pri_dao = self.get_pri_dao()
 
         # Vacuum the primary/private database file
-        OUT.info("Vacuuming the suite db ...")
         pri_dao.vacuum()
-        OUT.info("...done")
         pri_dao.close()

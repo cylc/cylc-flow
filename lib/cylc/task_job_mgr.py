@@ -48,7 +48,7 @@ from cylc.job_file import JobFileWriter
 from cylc.mkdir_p import mkdir_p
 from cylc.mp_pool import SuiteProcPool, SuiteProcContext
 from cylc.suite_host import is_remote, is_remote_host, is_remote_user
-from cylc.suite_logging import ERR, LOG
+from cylc.suite_logging import LOG
 from cylc.task_events_mgr import TaskEventsManager
 from cylc.task_message import TaskMessage
 from cylc.task_outputs import (
@@ -832,7 +832,6 @@ class TaskJobManager(object):
             self.job_file_writer.write(local_job_file_path, job_conf)
         except Exception, exc:
             # Could be a bad command template.
-            ERR.error(traceback.format_exc())
             LOG.error(traceback.format_exc())
             self.task_events_mgr.log_task_job_activity(
                 SuiteProcContext(
