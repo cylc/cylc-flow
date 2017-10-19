@@ -1,0 +1,20 @@
+# Test all the standard event handler command line template args.
+[meta]
+  title = a test suite
+  size = large
+[cylc]
+    [[events]]
+        inactivity = PT15S
+        abort on inactivity = True
+[scheduling]
+    [[dependencies]]
+        graph = "foo"
+[runtime]
+    [[foo]]
+        script = cylc message -p CUSTOM "cheesy peas"
+        [[[events]]]
+            custom handler = checkargs SUITE:%(suite)s JID:%(batch_sys_job_id)s %(event)s %(point)s %(name)s %(submit_num)s %(id)s %(batch_sys_name)s %(message)s %(fish)s %(title)s %(URL)s %(suite_title)s %(suite_size)s
+        [[[meta]]]
+            title = "a task called foo"
+            URL = http://cheesy.peas
+            fish = trout

@@ -83,7 +83,6 @@ class TaskProxy(object):
         self.is_manual_submit = False
         self.summary = {
             'latest_message': "",
-            'submit_method_id': None,
             'submitted_time': None,
             'submitted_time_string': None,
             'submit_num': self.submit_num,
@@ -98,6 +97,8 @@ class TaskProxy(object):
             'logfiles': [],
             'job_hosts': {},
             'execution_time_limit': None,
+            'batch_sys_name': None,
+            'submit_method_id': None
         }
 
         self.local_job_file_path = None
