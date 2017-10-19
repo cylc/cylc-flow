@@ -26,7 +26,7 @@ from cylc.broadcast_report import (
     get_broadcast_bad_options_report)
 from cylc.cycling import PointParsingError
 from cylc.cycling.loader import get_point, standardise_point_string
-from cylc.suite_logging import LOG, OUT
+from cylc.suite_logging import LOG
 from cylc.task_id import TaskID
 
 
