@@ -47,7 +47,7 @@ from cylc.host_select import get_task_host
 from cylc.job_file import JobFileWriter
 from cylc.mkdir_p import mkdir_p
 from cylc.mp_pool import SuiteProcPool, SuiteProcContext
-from cylc.suite_host import is_remote, is_remote_host, is_remote_user
+from cylc.hostuserutil import is_remote, is_remote_host, is_remote_user
 from cylc.suite_logging import LOG
 from cylc.task_events_mgr import TaskEventsManager
 from cylc.task_message import TaskMessage
@@ -364,7 +364,7 @@ class TaskJobManager(object):
                 del procs[user_at_host]
                 out, err = proc.communicate()
                 if proc.wait():
-                    ERR.warning(RemoteJobHostInitError(
+                    LOG.warning(RemoteJobHostInitError(
                         RemoteJobHostInitError.MSG_TIDY,
                         user_at_host, ' '.join(quote(item) for item in cmd),
                         proc.returncode, out, err))
@@ -376,7 +376,7 @@ class TaskJobManager(object):
                 pass
             out, err = proc.communicate()
             if proc.wait():
-                ERR.warning(RemoteJobHostInitError(
+                LOG.warning(RemoteJobHostInitError(
                     RemoteJobHostInitError.MSG_TIDY,
                     user_at_host, ' '.join(quote(item) for item in cmd),
                     proc.returncode, out, err))

@@ -35,7 +35,7 @@ from cylc.gui.dot_maker import DotMaker
 from cylc.gui.scanutil import (KEY_PORT, get_gpanel_scan_menu,
                                update_suites_info)
 from cylc.gui.util import get_icon, setup_icons
-from cylc.suite_host import get_user
+from cylc.hostuserutil import get_user
 from cylc.suite_status import KEY_STATES
 from cylc.task_state_prop import extract_group_state
 

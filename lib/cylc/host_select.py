@@ -22,7 +22,7 @@ import os
 import re
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.run_get_stdout import run_get_stdout
-from cylc.suite_host import is_remote_host
+from cylc.hostuserutil import is_remote_host
 
 
 REC_COMMAND = re.compile(r"(`|\$\()\s*(.*)\s*(`|\))$")

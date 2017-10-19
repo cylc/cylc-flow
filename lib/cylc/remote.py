@@ -67,7 +67,7 @@ class remrun(object):
         if self.owner is None and self.host is None:
             self.is_remote = False
         else:
-            from cylc.suite_host import is_remote
+            from cylc.hostuserutil import is_remote
             self.is_remote = is_remote(self.host, self.owner)
 
     def execute(self, force_required=False, env=None, path=None,

@@ -36,7 +36,7 @@ import cylc.flags
 from cylc.network import (
     NO_PASSPHRASE, PRIVILEGE_LEVELS, PRIV_IDENTITY, PRIV_DESCRIPTION,
     PRIV_STATE_TOTALS, PRIV_FULL_READ, PRIV_SHUTDOWN, PRIV_FULL_CONTROL)
-from cylc.suite_host import get_suite_host
+from cylc.hostuserutil import get_host
 from cylc.suite_logging import ERR, LOG
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
@@ -121,7 +121,7 @@ class HTTPServer(object):
         """Start quick web service."""
         # cherrypy.config["tools.encode.on"] = True
         # cherrypy.config["tools.encode.encoding"] = "utf-8"
-        cherrypy.config["server.socket_host"] = get_suite_host()
+        cherrypy.config["server.socket_host"] = get_host()
         cherrypy.config["engine.autoreload.on"] = False
 
         if self.comms_method == "https":
