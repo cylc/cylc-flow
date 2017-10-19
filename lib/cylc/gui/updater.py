@@ -91,7 +91,6 @@ class Updater(threading.Thread):
         self.filt_task_ids = set()
 
         self.version_mismatch_warned = False
-        self.client = None
 
         self.client = None
         # Report sign-out on exit.
