@@ -148,16 +148,16 @@ class SuiteRuntimeServiceClient(object):
     def get_info(self, command, *args, **kwargs):
         """Return suite info."""
         kwargs['method'] = self.METHOD_GET
-        return self._call_server_func(command, *args, **kwargs)
+        return self._call_server(command, *args, **kwargs)
 
     def get_latest_state(self, full_mode):
         """Return latest state of the suite (for the GUI)."""
-        return self._call_server_func(
+        return self._call_server(
             'get_latest_state', method=self.METHOD_GET, full_mode=full_mode)
 
     def get_suite_state_summary(self):
         """Return the global, task, and family summary data structures."""
-        return utf8_enforce(self._call_server_func(
+        return utf8_enforce(self._call_server(
             'get_suite_state_summary', method=self.METHOD_GET))
 
     def get_tasks_by_state(self):
@@ -197,7 +197,7 @@ class SuiteRuntimeServiceClient(object):
 
     def signout(self, *args, **kwargs):
         """Tell server to forget this client."""
-        return self._call_server_func('signout')
+        return self._call_server('signout')
 
     def _get_protocol_from_contact_file(self):
         """Find out the communications protocol (http/https) from the
