@@ -39,8 +39,7 @@ cylc__job__main() {
     typeset file_name=
     for file_name in \
         "${HOME}/.cylc/job-init-env.sh" \
-        "${CYLC_DIR}/conf/job-init-env.sh" \
-        "${CYLC_DIR}/conf/job-init-env-default.sh"
+        "${CYLC_DIR}/conf/job-init-env.sh"
     do
         if [[ -f "${file_name}" ]]; then
             if "${CYLC_DEBUG:-false}"; then

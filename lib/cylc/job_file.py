@@ -125,8 +125,8 @@ class JobFileWriter(object):
     @staticmethod
     def _write_header(handle, job_conf):
         """Write job script header."""
-        handle.write("#!" + job_conf['shell'])
-        handle.write("\n#\n# ++++ THIS IS A CYLC TASK JOB SCRIPT ++++")
+        handle.write("#!%s -l\n" % job_conf['shell'])
+        handle.write("#\n# ++++ THIS IS A CYLC TASK JOB SCRIPT ++++")
         for prefix, value in [
                 ("# Suite: ", job_conf['suite_name']),
                 ("# Task: ", job_conf['task_id']),
