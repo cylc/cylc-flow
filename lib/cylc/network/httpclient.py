@@ -119,6 +119,10 @@ class SuiteRuntimeServiceClient(object):
             owner = get_user()
         self.owner = owner
         self.host = host
+        if self.host and self.host.split('.')[0] == 'localhost':
+            self.host = get_host()
+        elif self.host and '.' not in self.host:  # Not IP and no domain
+            self.host = get_fqdn_by_host(self.host)
         self.port = port
         self.srv_files_mgr = SuiteSrvFilesManager()
         self.comms_protocol = comms_protocol
@@ -250,10 +254,6 @@ class SuiteRuntimeServiceClient(object):
             self._load_contact_info()
         except (IOError, ValueError, SuiteServiceFileError):
             raise ClientInfoError(self.suite)
-        if self.host and self.host.split('.')[0] == 'localhost':
-            self.host = get_host()
-        elif self.host and '.' not in self.host:  # Not IP and no domain
-            self.host = get_fqdn_by_host(self.host)
         http_request_items = []
         try:
             # dictionary containing: url, payload, method
@@ -501,17 +501,13 @@ class SuiteRuntimeServiceClient(object):
             # In case the contact file is corrupted, user can specify the port.
             self.host = get_host()
             return
+        # Always trust the values in the contact file otherwise.
         data = self.srv_files_mgr.load_contact_file(
             self.suite, self.owner, self.host)
-        if not self.host:
-            self.host = data.get(self.srv_files_mgr.KEY_HOST)
-        if not self.port:
-            self.port = int(data.get(self.srv_files_mgr.KEY_PORT))
-        if not self.owner:
-            self.owner = data.get(self.srv_files_mgr.KEY_OWNER)
-        if not self.comms_protocol:
-            self.comms_protocol = data.get(
-                self.srv_files_mgr.KEY_COMMS_PROTOCOL)
+        self.host = data.get(self.srv_files_mgr.KEY_HOST)
+        self.port = int(data.get(self.srv_files_mgr.KEY_PORT))
+        self.owner = data.get(self.srv_files_mgr.KEY_OWNER)
+        self.comms_protocol = data.get(self.srv_files_mgr.KEY_COMMS_PROTOCOL)
 
 
 def get_exception_from_html(html_text):
