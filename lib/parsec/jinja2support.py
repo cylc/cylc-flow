@@ -42,8 +42,11 @@ def assert_helper(logical, message):
     return ''  # Prevent None return value polluting output.
 
 
-def jinja2process(flines, dir_, template_vars=None):
-    """Pass configure file through Jinja2 processor."""
+def jinja2environment(dir_=None):
+    """Set up and return Jinja2 environment."""
+    if dir_ is None:
+        dir_ = os.getcwd()
+
     env = Environment(
         loader=FileSystemLoader(dir_),
         undefined=StrictUndefined,
@@ -72,6 +75,13 @@ def jinja2process(flines, dir_, template_vars=None):
     env.globals['environ'] = os.environ
     env.globals['raise'] = raise_helper
     env.globals['assert'] = assert_helper
+    return env
+
+
+def jinja2process(flines, dir_, template_vars=None):
+    """Pass configure file through Jinja2 processor."""
+    # Set up Jinja2 environment.
+    env = jinja2environment(dir_)
 
     # Load file lines into a template, excluding '#!jinja2' so that
     # '#!cylc-x.y.z' rises to the top. Callers should handle jinja2
