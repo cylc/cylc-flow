@@ -24,10 +24,50 @@ from glob import glob
 import os
 import sys
 from jinja2 import (
+    BaseLoader,
+    ChoiceLoader,
     Environment,
     FileSystemLoader,
-    StrictUndefined)
+    StrictUndefined,
+    TemplateNotFound)
 import cylc.flags
+
+
+class PyModuleLoader(BaseLoader):
+    """Load python module as Jinja2 template.
+
+    This loader piggybacks on the jinja import mechanism and
+    returns an empty template that exports module's namespace."""
+
+    # no source access for this loader
+    has_source_access = False
+
+    def __init__(self, prefix='__python__'):
+        self._templates = {}
+        # prefix that can be used to avoid name collisions with template files
+        self._python_namespace_prefix = prefix + '.'
+
+    def load(self, environment, name, globals=None):
+        if name.startswith(self._python_namespace_prefix):
+            name = name[len(self._python_namespace_prefix):]
+        try:
+            return self._templates[name]
+        except KeyError:
+            pass
+        try:
+            mdict = __import__(name, fromlist=['*']).__dict__
+        except ImportError:
+            raise TemplateNotFound(name)
+        # inject module dict into the context of an empty template
+        def root_render_func(context, *args, **kwargs):
+            if False:
+                yield None  # to make it a generator
+            context.vars.update(mdict)
+            context.exported_vars.update(mdict)
+        templ = environment.from_string('')
+        templ.root_render_func = root_render_func
+        self._templates[name] = templ
+        return templ
 
 
 def raise_helper(message, error_type='Error'):
@@ -48,7 +88,7 @@ def jinja2environment(dir_=None):
         dir_ = os.getcwd()
 
     env = Environment(
-        loader=FileSystemLoader(dir_),
+        loader=ChoiceLoader([FileSystemLoader(dir_), PyModuleLoader()]),
         undefined=StrictUndefined,
         extensions=['jinja2.ext.do'])
 
