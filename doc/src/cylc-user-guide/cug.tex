@@ -6419,25 +6419,77 @@ Passphrases are used in a secure encrypted challenge-response scheme, never
 sent in plain text over the network.
 
 If two users need access to the same suite daemon, they must both possess the
-same suite passphrase file. Fine-grained access to a single suite daemon via
-multiple distinct ``user accounts'' is not currently supported.
+passphrase file for that suite. Fine-grained access to a single suite daemon
+via distinct user accounts is not currently supported.
 
-Suite daemons automatically install their auth and contact files to job hosts,
-by scp, to enable task jobs to connect to the suite daemon with client commands,
-e.g.\ for task messaging.
+Suite daemons automatically install their auth and contact files to job hosts
+by scp, to enable task jobs to connect back to the suite daemon for task
+messaging.
 
 Client programs invoked by the suite owner automatically load the passphrase,
 SSL certificate, and contact file too, for automatic connection to suites.
 
-{\em Manual installation of suite auth files is only needed for remote control
-- see below.}
+{\em Manual installation of suite auth files is only needed for remote control,
+if you do not have a shared filesystem - see below.}
 
-\subsubsection{Remote Control}
+\subsection{File-Reading Commands}
+
+Some Cylc commands and GUI actions parse the suite definition file or read
+other files, such as suite logs, from the suite host account rather than
+communicate with a suite daemon over the network.  In the future we plan to
+have suite daemons serve up these files to clients, but for the moment this
+functionality requires read-access to the relevant files on the suite host.
+
+\subsubsection{On A Shared Filesystem}
+
+If you are logged into the suite host account, suite-parsing commands will just
+work. The same goes if you are logged into another host that shares the same
+filesystem as the suite host - which is often the case in an HPC environment.
+Specifically, the two accounts must see the same home directory.
+
+\subsubsection{Without A Shared Filesystem}
+
+If you are logged into another host that does not see the same filesystem as
+the suite host you must have non-interactive ssh configured to the suite host
+account, and use the \lstinline=--host= and \lstinline=--user= command options
+to re-invoke (via ssh) suite-parsing commands on the suite host. The GUI should
+automatically do this when it invokes suite-parsing commands.
+
+\subsection{GUI-to-Suite Interaction}
+\label{GUI-to-Suite Interaction}
+
+The gcylc GUI is mainly a network client to retrieve and display suite status
+information from the suite daemon, but it can also invoke suite-parsing
+commands to view and graph the suite definition and so on. This is entirely
+transparent if the GUI is running on the suite host account, but full
+functionality for remote suites requires either a shared filesystem, or 
+(see~\ref{RemoteControl}) auth file installation {\em and} non-interactive ssh
+access to the suite host.  Without the auth files you will not be able to connect
+to the suite, and without ssh you will see ``permission denied'' errors on
+attempting file access.
+
+\subsection{Remote Control}
 \label{RemoteControl}
 
+Cylc client programs - command line and GUI - can interact with suite daemons
+running on other accounts or hosts. How this works depends on whether or not
+you have:
+\begin{myitemize}
+  \item a {\em shared filesystem} such that you see the same home directory on
+    both hosts.
+  \item {\em non-interactive ssh} from the client account to the server
+    account.
+\end{myitemize}
+
+With a shared filesystem, a suite registered on the remote (server) host is
+also - in effect - registered on the local (client) host.  In this case you
+can invoke client commands without the \lstinline=--host= option; the client
+will automatically read the host and port from the contact file in the
+suite service directory. 
+
 To interact with suite daemons running under other user accounts or on other
-hosts, the suite SSL certificate and passphrase must be installed under your
-\lstinline=$HOME/.cylc/= directory:
+hosts without a shared filesystem, the suite SSL certificate and passphrase
+must be installed under your \lstinline=$HOME/.cylc/= directory:
 \lstset{language=transcript}
 \begin{lstlisting}
 $HOME/.cylc/auth/OWNER@HOST/SUITE/
@@ -6467,32 +6519,6 @@ arbitrary scripting on job hosts as the suite owner. Further,
 non-interactive ssh gives full access to the target user account, so we
 recommended that this is only used to interact with suites running on
 accounts to which you already have full access. }
-
-\subsection{Non-client Cylc Suite Commands}
-\label{Suite-parsing Commands}
-
-Some Cylc commands do not interact with running suite daemons as described
-above, but they parse suite definitions or access files such as suite logs on
-the suite host account.
-
-If the target suite is owned by another user then these non-client commands
-require non-interactive ssh access to the suite host account. Use of the
-\lstinline=--host= and \lstinline=--user= command options will result in the
-command being re-invoked, via ssh, on the suite host account (this includes
-the \lstinline=cylc run= and \lstinline=cylc restart= commands to start up a
-suite daemon).
-
-\subsection{GUI Suite Interaction}
-\label{GUI Suite Interaction}
-
-The gcylc GUI includes both client and non-client command functionality. This
-is completely transparent to the user if the GUI is running on the suite host
-account, but full GUI functionality for remote suites requires auth file
-installation (for connecting to the suite daemon) {\em and} non-interactive ssh
-access to the suite host account in order for file parsing and retrieval - such
-as viewing or graphing the suite definition and retrieving log files. Without
-ssh access you will see ``permission denied'' errors in command pop-up windows
-when attempting file access.
 
 \subsection{Task States Explained}
 
