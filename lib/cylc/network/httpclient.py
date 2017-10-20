@@ -203,32 +203,15 @@ class SuiteRuntimeServiceClient(object):
         """Tell server to forget this client."""
         return self._call_server('signout')
 
-    def _get_protocol_from_contact_file(self):
-        """Find out the communications protocol (http/https) from the
-        suite contact file."""
-        try:
-            comms_prtcl = self.srv_files_mgr.get_auth_item(
-                self.srv_files_mgr.KEY_COMMS_PROTOCOL,
-                self.suite, content=True)
-            if comms_prtcl is None or comms_prtcl == "":
-                raise TypeError("Comms protocol is not in suite contact file")
-            else:
-                return comms_prtcl
-        except (AttributeError, KeyError, TypeError, ValueError):
-            raise KeyError("No suite contact info for comms protocol found")
-
     def _compile_request(self, func_dict, host, comms_protocol=None):
         """Build request URL."""
         payload = func_dict.pop("payload", None)
         method = func_dict.pop("method", self.METHOD)
         function = func_dict.pop("function", None)
         if comms_protocol is None:
-            try:
-                comms_protocol = self._get_protocol_from_contact_file()
-            except (KeyError, TypeError, SuiteServiceFileError):
-                # Use standard setting from global configuration
-                from cylc.cfgspec.globalcfg import GLOBAL_CFG
-                comms_protocol = GLOBAL_CFG.get(['communication', 'method'])
+            # Use standard setting from global configuration
+            from cylc.cfgspec.globalcfg import GLOBAL_CFG
+            comms_protocol = GLOBAL_CFG.get(['communication', 'method'])
         url = '%s://%s:%s/%s' % (comms_protocol, host, self.port, function)
         # If there are any parameters left in the dict after popping,
         # append them to the url.
