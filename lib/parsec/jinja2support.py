@@ -52,23 +52,27 @@ def jinja2environment(dir_=None):
         undefined=StrictUndefined,
         extensions=['jinja2.ext.do'])
 
-    # Load any custom Jinja2 filters in the suite definition directory
+    # Load any custom Jinja2 filters, tests or globals in the suite
+    # definition directory
     # Example: a filter to pad integer values some fill character:
     # |(file SUITE_DEFINIION_DIRECTORY/Jinja2/foo.py)
     # |  #!/usr/bin/env python2
     # |  def foo( value, length, fillchar ):
     # |     return str(value).rjust( int(length), str(fillchar) )
-    for fdir in [
-            os.path.join(os.environ['CYLC_DIR'], 'lib', 'Jinja2Filters'),
-            os.path.join(dir_, 'Jinja2Filters'),
-            os.path.join(os.environ['HOME'], '.cylc', 'Jinja2Filters')]:
-        if os.path.isdir(fdir):
-            sys.path.append(os.path.abspath(fdir))
-            for name in glob(os.path.join(fdir, '*.py')):
-                fname = os.path.splitext(os.path.basename(name))[0]
-                # TODO - EXCEPTION HANDLING FOR LOADING CUSTOM FILTERS
-                module = __import__(fname)
-                env.filters[fname] = getattr(module, fname)
+    for namespace in ['filters', 'tests', 'globals']:
+        nspdir = 'Jinja2' + namespace.capitalize()
+        for fdir in [
+                os.path.join(os.environ['CYLC_DIR'], 'lib', nspdir),
+                os.path.join(dir_, nspdir),
+                os.path.join(os.environ['HOME'], '.cylc', nspdir)]:
+            if os.path.isdir(fdir):
+                sys.path.append(os.path.abspath(fdir))
+                for name in glob(os.path.join(fdir, '*.py')):
+                    fname = os.path.splitext(os.path.basename(name))[0]
+                    # TODO - EXCEPTION HANDLING FOR LOADING CUSTOM FILTERS
+                    module = __import__(fname)
+                    envnsp = getattr(env, namespace)
+                    envnsp[fname] = getattr(module, fname)
 
     # Import SUITE HOST USER ENVIRONMENT into template:
     # (usage e.g.: {{environ['HOME']}}).
