@@ -669,16 +669,17 @@ class SuiteRuntimeService(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def trigger_tasks(self, items):
+    def trigger_tasks(self, items, back_out=False):
         """Trigger submission of task jobs where possible.
 
         items is a list of identifiers for matching task proxies.
         """
         self._check_access_priv_and_report(PRIV_FULL_CONTROL)
+        back_out = self._literal_eval('back_out', back_out)
         if not isinstance(items, list):
             items = [items]
         items = [str(item) for item in items]
-        self.schd.command_queue.put(("trigger_tasks", (items,), {}))
+        self.schd.command_queue.put(("trigger_tasks", (items,), {"back_out": back_out}))
         return (True, 'Command queued')
 
     def _access_priv_ok(self, required_privilege_level):
