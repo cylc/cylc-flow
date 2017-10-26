@@ -62,9 +62,8 @@ class SGEHandler(object):
 
     def get_poll_many_cmd(cls, job_ids):
         """Return poll command"""
-        # "qstat jobid" invalid for SGE.
-        # Use plain "qstat" and let batch_sys_manager._jobs_poll_batch_sys 
-        # check for requested id in the list. 
+        # No way to run POLL_CMD on specific job id(s). List all user's jobs.
+        # batch_sys_manager._jobs_poll_batch_sys checks requested id in list. 
         return [cls.POLL_CMD]
 
 BATCH_SYS_HANDLER = SGEHandler()
