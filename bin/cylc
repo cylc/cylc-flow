@@ -95,12 +95,11 @@ help_util() {
     # make this deal with 'cylc help CATEGORY' only
     if [[ " ${CATEGORIES[*]} " == *" ${UTIL} "* \
           || " ${HELP_OPTS[*]} " == *" ${UTIL} "* \
-          && $# -gt 0 && ( "${CATEGORIES[*]} " == *" $1 "* \
+          && $# -gt 0 && ( " ${CATEGORIES[*]} " == *" $1 "* \
           || " ${HELP_OPTS[*]} " == *" $1 "* ) ]]; then
         local COMMAND="${CYLC_HOME_BIN}/cylc-help"
         exec "${COMMAND}" "$@"
     fi
-
     # Deal with cases like 'cylc --help [COMMAND/CATEGORY] or cylc [CATEGORY]'   
     if (( $# >= 1 )); then
         if [[  -f "$(ls cylc-${1}* 2>/dev/null)" ]]; then
