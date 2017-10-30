@@ -45,6 +45,10 @@ def main():
         action="store", dest="priority", default="NORMAL")
 
     parser.add_option(
+        "--env", help="Override environment variables", action="append",
+        default=[], dest="env")
+
+    parser.add_option(
         "-v", "--verbose", help="Verbose output mode.", action="store_true",
         default=False, dest="verbose")
 
@@ -52,6 +56,9 @@ def main():
     if not args:
         parser.error("No task message supplied")
 
+    for item in options.env:
+        key, value = item.split('=', 1)
+        os.environ[key] = value
     task_message = TaskMessage(priority=options.priority)
     if (task_message.env_map.get('CYLC_VERBOSE') in ["True", "true"] or
             options.verbose):

@@ -183,24 +183,24 @@ class TaskJobManager(object):
             r_suite_run_dir, r_log_job_dir, r_suite_srv_dir])
         # Command to copy contact and authentication files to remote host.
         # Note: no need to do this if task communication method is "poll".
-        should_unlink = GLOBAL_CFG.get_host_item(
-            'task communication method', host, owner) != "poll"
+        comm_meth = GLOBAL_CFG.get_host_item(
+            'task communication method', host, owner)
+        should_unlink = comm_meth != 'poll'
         if should_unlink:
             scp_tmpl = GLOBAL_CFG.get_host_item('scp command', host, owner)
-            # Handle not having SSL certs installed.
-            try:
-                ssl_cert = self.suite_srv_files_mgr.get_auth_item(
-                    self.suite_srv_files_mgr.FILE_BASE_SSL_CERT, reg)
-            except (SuiteServiceFileError, ValueError):
-                ssl_cert = None
-            cmds.append(shlex.split(scp_tmpl) + [
-                '-p',
-                self.suite_srv_files_mgr.get_contact_file(reg),
-                self.suite_srv_files_mgr.get_auth_item(
-                    self.suite_srv_files_mgr.FILE_BASE_PASSPHRASE, reg),
-                user_at_host + ':' + r_suite_srv_dir + '/'])
-            if ssl_cert is not None:
-                cmds[-1].insert(-1, ssl_cert)
+            items = [self.suite_srv_files_mgr.get_contact_file(reg)]
+            if comm_meth.startswith('http'):
+                items.append(self.suite_srv_files_mgr.get_auth_item(
+                    self.suite_srv_files_mgr.FILE_BASE_PASSPHRASE, reg))
+                # Handle not having SSL certs installed.
+                try:
+                    items.append(self.suite_srv_files_mgr.get_auth_item(
+                        self.suite_srv_files_mgr.FILE_BASE_SSL_CERT, reg))
+                except (SuiteServiceFileError, ValueError):
+                    pass
+            cmds.append(
+                shlex.split(scp_tmpl) + ['-p'] +
+                items + [user_at_host + ':' + r_suite_srv_dir + '/'])
         # Command to copy python library to remote host.
         suite_run_py = os.path.join(
             GLOBAL_CFG.get_derived_host_item(reg, 'suite run directory'),

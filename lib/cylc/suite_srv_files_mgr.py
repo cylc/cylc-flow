@@ -221,7 +221,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
                 env_keys.append('CYLC_SUITE_RUN_DIR')
             elif self.KEY_SUITE_RUN_DIR_ON_SUITE_HOST in os.environ:
                 # 1(b)/ Task messaging call via ssh messaging.
-                env_keys.append(self.SUITE_RUN_DIR_ON_SUITE_HOST)
+                env_keys.append(self.KEY_SUITE_RUN_DIR_ON_SUITE_HOST)
             for key in env_keys:
                 path = os.path.join(os.environ[key], self.DIR_BASE_SRV)
                 if content:
