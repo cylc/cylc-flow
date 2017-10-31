@@ -679,7 +679,8 @@ class SuiteRuntimeService(object):
         if not isinstance(items, list):
             items = [items]
         items = [str(item) for item in items]
-        self.schd.command_queue.put(("trigger_tasks", (items,), {"back_out": back_out}))
+        self.schd.command_queue.put(
+            ("trigger_tasks", (items,), {"back_out": back_out}))
         return (True, 'Command queued')
 
     def _access_priv_ok(self, required_privilege_level):

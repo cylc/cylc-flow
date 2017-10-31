@@ -176,7 +176,7 @@ def main():
         msg = "Trigger edited task %s?" % task_id
         if not prompt(msg, gui=options.geditor, no_force=True, no_abort=True):
             log_dir_symlink = os.path.dirname(jobfile_path)
-            real_log_dir = os.path.realpath(log_dir_symlink) 
+            real_log_dir = os.path.realpath(log_dir_symlink)
             prev_nn = "%02d" % (int(os.path.basename(real_log_dir)) - 1)
             os.unlink(log_dir_symlink)
             if int(prev_nn) == 0:
@@ -189,7 +189,7 @@ def main():
                            os.path.join(dirname, "NN"))
                 shutil.rmtree(real_log_dir)
             aborted = True
- 
+
     # Trigger the task proxy(s).
     items = parser.parse_multitask_compat(options, args)
     pclient.put_command('trigger_tasks', items=items, back_out=aborted)
