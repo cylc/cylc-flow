@@ -486,7 +486,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
                     return  # certificate good for the same suite and host
         # Generate a new certificate
         cert_obj = crypto.X509()
-        cert_obj.get_subject().O = "Cylc"
+        # cert_obj.get_subject().O = "Cylc"
         cert_obj.get_subject().CN = common_name
         cert_obj.gmtime_adj_notBefore(0)
         cert_obj.gmtime_adj_notAfter(10 * 365 * 24 * 60 * 60)  # 10 years.

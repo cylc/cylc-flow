@@ -320,21 +320,18 @@ def profile(schedule):
                 try:
                     processed_results = extract_results(
                         result_files, experiment['config'])
-                except:
+                except Exception:
                     # Analysis failed, move onto the next experiment.
                     traceback.print_exc()
                     exp_files = []
-                    try:
-                        for run in result_files:
-                            exp_files.extend(result_files[run])
-                        print >> sys.stderr, (
-                            'Analysis failed on results from experiment "%s" '
-                            'running at version "%s".\n\tProfile files: %s' % (
-                                experiment['name'],
-                                version_id,
-                                ' '.join(exp_files)))
-                    except:
-                        print >> sys.stderr, 'HERE'
+                    for run in result_files:
+                        exp_files.extend(result_files[run])
+                    print >> sys.stderr, (
+                        'Analysis failed on results from experiment "%s" '
+                        'running at version "%s".\n\tProfile files: %s' % (
+                            experiment['name'],
+                            version_id,
+                            ' '.join(exp_files)))
                     if any(PROFILE_MODES[mode] == PROFILE_MODE_CYLC
                             for mode in experiment['config']['profile modes']):
                         print >> sys.stderr, (

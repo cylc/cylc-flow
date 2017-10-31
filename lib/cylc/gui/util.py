@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import glib
 import os
 import sys
 import traceback
@@ -106,10 +107,10 @@ def get_image_dir():
 
 def get_icon():
     """Return the gcylc icon as a gtk.gdk.Pixbuf."""
+    icon_path = os.path.join(get_image_dir(), "icon.svg")
     try:
-        icon_path = os.path.join(get_image_dir(), "icon.svg")
         icon = gtk.gdk.pixbuf_new_from_file(icon_path)
-    except:
+    except glib.GError:
         # SVG error? Try loading it the old way.
         icon_path = os.path.join(get_image_dir(), "icon.png")
         icon = gtk.gdk.pixbuf_new_from_file(icon_path)

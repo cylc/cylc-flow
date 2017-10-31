@@ -103,15 +103,16 @@ class logviewer(object):
             s = tb.get_end_iter()
             tv.scroll_to_iter(s, 0)
         try:
-            f, l = s.backward_search(needle, gtk.TEXT_SEARCH_TEXT_ONLY)
-        except:
+            start, end = s.backward_search(needle, gtk.TEXT_SEARCH_TEXT_ONLY)
+        except TypeError:
+            # No search results.
             warning_dialog('"' + needle + '"' + " not found").warn()
         else:
             tag = tb.create_tag(None, background="#70FFA9")
-            tb.apply_tag(tag, f, l)
-            self.find_current_iter = f
+            tb.apply_tag(tag, start, end)
+            self.find_current_iter = start
             self.find_current = needle
-            tv.scroll_to_iter(f, 0)
+            tv.scroll_to_iter(start, 0)
 
     def freeze_log(self, b):
         # TODO - HANDLE MORE STUFF IN THREADS LIKE THIS, RATHER THAN

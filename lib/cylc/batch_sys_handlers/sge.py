@@ -66,4 +66,5 @@ class SGEHandler(object):
         # batch_sys_manager._jobs_poll_batch_sys checks requested id in list.
         return [cls.POLL_CMD]
 
+
 BATCH_SYS_HANDLER = SGEHandler()

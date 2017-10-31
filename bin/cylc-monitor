@@ -257,7 +257,7 @@ The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
                 indxs = blitlines.keys()
                 try:
                     int(indxs[1])
-                except:
+                except (ValueError, IndexError):
                     indxs.sort()
                 else:
                     indxs.sort(key=int)

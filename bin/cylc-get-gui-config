@@ -67,6 +67,7 @@ def main():
     from cylc.cfgspec.gcylc import gcfg
     gcfg.idump(options.item, sparse=options.sparse, pnative=options.pnative)
 
+
 if __name__ == "__main__":
     try:
         main()

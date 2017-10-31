@@ -179,6 +179,7 @@ def _coerce_parameter_list(value, keys, _):
     else:
         return [int(item) for item in items]
 
+
 coercers['cycletime'] = _coerce_cycletime
 coercers['cycletime_format'] = _coerce_cycletime_format
 coercers['cycletime_time_zone'] = _coerce_cycletime_time_zone

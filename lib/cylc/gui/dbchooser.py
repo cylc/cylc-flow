@@ -21,6 +21,7 @@ import gtk
 from time import time, sleep
 import os
 import re
+import sre_constants
 import threading
 
 from cylc.gui.warning_dialog import warning_dialog, info_dialog
@@ -417,7 +418,7 @@ class dbchooser(object):
         filtr = filtr_e.get_text()
         try:
             re.compile(filtr)
-        except:
+        except sre_constants.error:
             warning_dialog(
                 "Bad Regular Expression: " + filtr, self.window).warn()
             filtr_e.set_text("")

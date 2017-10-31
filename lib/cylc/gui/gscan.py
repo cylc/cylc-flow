@@ -473,7 +473,7 @@ class ScanApp(object):
                         self.HOST_COLUMN, self.OWNER_COLUMN, self.SUITE_COLUMN)
                     suite_keys.append((host, owner, suite))
 
-                except:
+                except TypeError:
                     # Now iterate over the children instead.
                     # We need to iterate over the children as there can be more
                     # than one suite in a group of suites.

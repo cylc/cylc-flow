@@ -86,10 +86,7 @@ def get_task_host(cfg_item):
             host = os.environ[name]
         except KeyError, exc:
             raise HostSelectError(host, "Variable not defined: " + str(exc))
-    try:
-        if is_remote_host(host):
-            return host
-        else:
-            return "localhost"
-    except:
+    if is_remote_host(host):
         return host
+    else:
+        return "localhost"
