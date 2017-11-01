@@ -1,8 +1,5 @@
 [meta]
     title = A suite to test an aborted edit run has no subsequent effect.
-    description = """
-A broken task will fail and cause the suite to abort on timeout, unless a
-second task fixes and retriggers it with an edit-run."""
 [cylc]
     [[events]]
         abort on timeout = True
