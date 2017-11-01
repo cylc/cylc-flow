@@ -69,8 +69,7 @@ class TaskProxy(object):
             self.point = min(adjusted)
         else:
             self.point = start_point
-        self.cleanup_cutoff = self.tdef.get_cleanup_cutoff_point(
-            self.point, self.tdef.intercycle_offsets)
+        self.cleanup_cutoff = self.tdef.get_cleanup_cutoff_point(self.point)
         self.identity = TaskID.get(self.tdef.name, self.point)
 
         self.has_spawned = has_spawned
