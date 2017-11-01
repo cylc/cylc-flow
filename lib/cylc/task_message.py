@@ -187,7 +187,7 @@ class TaskMessage(object):
                 SuiteSrvFilesManager.KEY_DIR_ON_SUITE_HOST,
                 'CYLC_TASK_ID',
                 'CYLC_UTC',
-                'CYLC_VERBOSE',]:
+                'CYLC_VERBOSE']:
             # (no exception handling here as these variables should
             # always be present in the task execution environment)
             try:
