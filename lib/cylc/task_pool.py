@@ -1118,11 +1118,16 @@ class TaskPool(object):
             self.remove(itask, 'by request')
         return len(bad_items)
 
-    def trigger_tasks(self, items):
+    def trigger_tasks(self, items, back_out=False):
         """Trigger tasks."""
         itasks, bad_items = self.filter_task_proxies(items)
         n_warnings = len(bad_items)
         for itask in itasks:
+            if back_out:
+                # (Aborted edit-run, reset for next trigger attempt).
+                itask.submit_num -= 1
+                itask.local_job_file_path = None
+                continue
             if itask.state.status in TASK_STATUSES_ACTIVE:
                 LOG.warning('%s: already triggered' % itask.identity)
                 n_warnings += 1

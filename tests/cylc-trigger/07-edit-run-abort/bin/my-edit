@@ -1,0 +1,3 @@
+#!/bin/bash
+
+sed -i 's@echo HELLO@echo OOPS; /bin/false@' "$@"

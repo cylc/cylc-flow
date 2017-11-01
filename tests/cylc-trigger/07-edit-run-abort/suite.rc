@@ -1,0 +1,22 @@
+[meta]
+    title = A suite to test an aborted edit run has no subsequent effect.
+[cylc]
+    [[events]]
+        abort on timeout = True
+        timeout = PT20S
+[scheduling]
+    [[dependencies]]
+        graph = victim => perpetrator
+[runtime]
+    [[victim]]
+        script = echo HELLO
+    [[perpetrator]]
+        script = """
+# Edit run to break victim, but abort after the edit.
+cylc trigger --edit $CYLC_SUITE_NAME victim.1 << __END__
+n
+__END__
+# Then trigger victim - the original unedited task should run.
+cylc trigger $CYLC_SUITE_NAME victim.1
+"""
+
