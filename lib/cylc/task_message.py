@@ -192,7 +192,7 @@ class TaskMessage(object):
             # always be present in the task execution environment)
             try:
                 env[var] = self.env_map[var]
-            except:
+            except KeyError:
                 pass
 
         # The path to cylc/bin on the remote end may be required:
