@@ -255,9 +255,9 @@ class gconfig(config):
                 for state in theme.keys():
                     clist = []
                     for attr, val in theme[state].items():
-                        clist.append(attr + '=' + val)
+                        clist.append('%s=%s' % (attr, val))
                     theme[state] = clist
-        except:
+        except (KeyError, AttributeError):
             pass
 
         parents = []
@@ -273,6 +273,7 @@ class gconfig(config):
             print cfg
         else:
             printcfg(cfg, prefix=prefix, level=len(keys))
+
 
 # load on import if not already loaded
 gcfg = None

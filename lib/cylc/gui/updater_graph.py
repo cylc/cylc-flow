@@ -412,7 +412,8 @@ class GraphUpdater(threading.Thread):
         for id_ in self.fam_state_summary:
             try:
                 node = self.graphw.get_node(id_)
-            except:
+            except KeyError:
+                # Node not in graph.
                 continue
             self.set_live_node_attr(node, id_)
 

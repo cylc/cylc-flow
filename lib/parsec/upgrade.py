@@ -158,13 +158,13 @@ class upgrader(object):
             for u in upgs:
                 try:
                     exp = self.expand(u)
-                except:
+                except (KeyError, UpgradeError):
                     continue
 
                 for upg in exp:
                     try:
                         old = self.get_item(upg['old'])
-                    except:
+                    except KeyError:
                         # OK: deprecated item not found
                         pass
                     else:
@@ -187,6 +187,7 @@ class upgrader(object):
             for vn, msgs in warnings.items():
                 for m in msgs:
                     print >> sys.stderr, " * (" + vn + ")", m
+
 
 if __name__ == "__main__":
     from util import printcfg

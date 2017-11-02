@@ -689,5 +689,6 @@ class TestGraphParser(unittest.TestCase):
                 detected += 1
         self.assertEqual(detected, len(graphs))
 
+
 if __name__ == "__main__":
     unittest.main()

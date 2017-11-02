@@ -1149,8 +1149,8 @@ class SuiteConfig(object):
         # Check custom script is not defined for automatic suite polling tasks.
         for l_task in self.suite_polling_tasks:
             try:
-                cs = self.pcfg.getcfg(sparse=True)['runtime'][l_task]['script']
-            except:
+                cs = self.pcfg.get(sparse=True)['runtime'][l_task]['script']
+            except KeyError:
                 pass
             else:
                 if cs:

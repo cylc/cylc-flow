@@ -256,7 +256,7 @@ Arguments:"""
         for opt in remove_opts:
             try:
                 self.remove_option(opt)
-            except:
+            except ValueError:
                 pass
 
         (options, args) = OptionParser.parse_args(self)

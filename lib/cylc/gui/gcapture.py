@@ -251,15 +251,17 @@ are displayed in red.
             s = tb.get_end_iter()
             tv.scroll_to_iter(s, 0)
         try:
-            f, l = s.backward_search(needle, gtk.TEXT_SEARCH_VISIBLE_ONLY)
-        except:
+            start, end = s.backward_search(needle,
+                                           gtk.TEXT_SEARCH_VISIBLE_ONLY)
+        except TypeError:
+            # Search pattern not found.
             warning_dialog(
                 '"' + needle + '"' + " not found", self.window).warn()
         else:
-            tb.apply_tag(self.ftag, f, l)
-            self.find_current_iter = f
+            tb.apply_tag(self.ftag, start, end)
+            self.find_current_iter = start
             self.find_current = needle
-            tv.scroll_to_iter(f, 0)
+            tv.scroll_to_iter(start, 0)
 
     def _handle_proc_completed(self):
         self.progress_bar.hide()

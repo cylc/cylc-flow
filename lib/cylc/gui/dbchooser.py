@@ -417,7 +417,7 @@ class dbchooser(object):
         filtr = filtr_e.get_text()
         try:
             re.compile(filtr)
-        except:
+        except re.error:
             warning_dialog(
                 "Bad Regular Expression: " + filtr, self.window).warn()
             filtr_e.set_text("")

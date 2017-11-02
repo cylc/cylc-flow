@@ -61,6 +61,7 @@ def main():
     pclient.put_command('remove_tasks', items=items,
                         spawn=(not options.no_spawn))
 
+
 if __name__ == "__main__":
     try:
         main()

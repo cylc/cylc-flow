@@ -59,6 +59,7 @@ def section_level(heading):
 def print_heading(heading):
     print '>>>' + '->'.join(heading)
 
+
 parser = COP(
     __doc__, prep=True,
     argdoc=[('SUITE', 'Suite name or path'),
