@@ -6049,6 +6049,7 @@ starts wipe out prior suite state, so you can't go back to a restart if you
 decide you made a mistake.}
 
 \subsubsection{Cold Start}
+\label{Cold Start}
 
 A cold start is the primary way to start a suite run from scratch:
 \lstset{language=transcript}
@@ -6060,6 +6061,7 @@ file. The scheduler starts by loading the first instance of each task at the
 suite initial cycle point, or at the next valid point for the task.
 
 \subsubsection{Warm Start}
+\label{Warm Start}
 
 A warm start runs a suite from scratch like a cold start, but from the
 beginning of a given cycle point that is beyond the suite initial cycle point.
@@ -7226,17 +7228,25 @@ Databases}) rather than parse the log files.
 \subsection{Suite Run Databases}
 \label{Suite Run Databases}
 
-Suites maintain \lstinline=sqlite= databases to record run history and restart
-checkpoints etc.:
+Suite daemons maintain two \lstinline=sqlite= databases to record restart
+checkpoints and various other aspects of run history:
 
 \lstset{language=transcript}
 \begin{lstlisting}
-$HOME/cylc-run/<SUITE-NAME>/log/db
+$HOME/cylc-run/<SUITE-NAME>/log/db  # public suite DB
+$HOME/cylc-run/<SUITE-NAME>/.service/db  # private suite DB
 \end{lstlisting}
 
-You can use any standard sqlite interface to read these databases, such as the
-Python standard library \lstinline=sqlite3= module, and a command line tool of
-the same name:
+The private DB is for use only by the suite daemon. The identical public DB is
+provided for use by external commands such as \lstinline=cylc suite-state=,
+\lstinline=cylc ls-checkpoints=, and \lstinline=cylc report-timings=. If the
+public DB gets locked for too long by an external reader, the suite daemon
+will eventually delete it and replace it with a new copy of the private DB, to
+ensure that both correctly reflect the suite state.
+
+You can interrogate the public DB with the \lstinline=sqlite3= command line tool,
+the \lstinline=sqlite3= module in the Python standard library, or any other
+sqlite interface.
 
 \begin{lstlisting}
 $ sqlite3 ~/cylc-run/foo/log/db << _END_
@@ -7250,6 +7260,66 @@ foo|1|2017-03-12T11:06:09Z|1|started|
 foo|1|2017-03-12T11:06:19Z|1|output completed|succeeded
 foo|1|2017-03-12T11:06:19Z|1|succeeded|
 \end{lstlisting}
+
+\subsection{Disaster Recovery}
+\label{Disaster Recovery}
+
+If a suite run directory gets deleted or corrupted, the options for recovery
+are:
+\begin{myitemize}
+  \item restore the run directory from back-up, and restart the suite
+  \item re-install from source, and warm start from the beginning of the
+    current cycle point
+\end{myitemize}
+
+A warm start (see~\ref{Warm Start}) does not need a suite state checkpoint, but
+it wipes out prior history, and it could re-run a significant number of tasks
+that had already completed. 
+
+To restart the suite, the critical Cylc files that must be restored are:
+
+\lstset{language=transcript}
+\begin{lstlisting}
+# On the suite host:
+~/cylc-run/<SUITE-NAME>/
+    <suite.rc>   # live suite definition (located here in Rose suites)
+    log/db  # public suite DB (can just be a copy of the private DB)
+    log/rose-suite-run.conf  # (needed to restart a Rose suite)
+    .service/db  # private suite DB
+    .service/source -> <PATH-TO-SUITE-DIR>  # symlink to live suite directory
+ 
+# On job hosts (if no shared filesystem):
+~/cylc-run/<SUITE-NAME>/
+    log/job/<CYCLE-POINT>/<TASK-NAME>/<SUBMIT-NUM>/job.status
+\end{lstlisting}
+
+{\em Note this disucssion ignores any files - model data etc. - that may be
+required by task jobs at run time once the suite has been restarted.}
+
+In short, you can simply restore the suite service directory, the log
+directory, and the suite.rc file that is the target of the symlink in the
+service directory. The service and log directories will come with extra files
+that aren't strictly needed for a restart, but that doesn't matter - although
+depending on your log housekeeping the \lstinline=log/job= directory could be
+huge, so you might want to be selective about that.  (Also in a Rose suite, the
+\lstinline=suite.rc= file does not need to be restored if you restart with
+\lstinline=rose suite-run= - which re-installs suite source files to the run
+directory).
+
+The public DB is not strictly required for a restart - the suite daemon will
+recreate it if need be - but it is required by \lstinline=cylc ls-checkpoints=
+if you need to identify the right restart checkpoint.
+
+The job status files are only needed if the restart suite state checkpoint
+contains active tasks that need to be polled to determine what happened to them
+while the suite was down.  Without them, polling will fail and those tasks will
+need to be manually set to the correct state.
+
+{\em WARNING: it is not safe to copy or rsync a potentially-active sqlite DB -
+the copy might end up corrupted. It is best to stop the suite before copying
+a DB, or else write a back-up utility using the official sqlite backup API:
+\url{http://www.sqlite.org/backup.html}.}
+
 
 \section{Suite Storage, Discovery, Revision Control, and Deployment}
 \label{SuiteStorageEtc}
