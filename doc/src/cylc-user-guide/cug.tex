@@ -6035,7 +6035,7 @@ to running suites. Please also see the Tutorial (\ref{Tutorial}) and
 command documentation (\ref{CommandReference}), and experiment with
 plenty of examples.
 
-\subsection{Startup: Cold-start, Warm-start, and Restart}
+\subsection{Suite Start-Up}
 \label{SuiteStartUp}
 
 There are three ways to start a suite running: {\em cold start} and {\em warm
@@ -6097,7 +6097,7 @@ down or killed.
 $ cylc restart SUITE
 \end{lstlisting}
 
-Tasks loaded in the `submitted' or `running' states are automatically polled 
+Tasks recorded in the `submitted' or `running' states are automatically polled 
 (see Section~\ref{Task Job Polling}) at start-up to determine what happened to
 them while the suite was down.
 
@@ -6114,36 +6114,97 @@ $ cylc restart SUITE
 
 \paragraph{Restart From Another Checkpoint}
 
-Use the \lstinline=cylc ls-checkpoints= command to identify the right
-checkpoint (see \lstinline=cylc ls-checkpoints --help=).
+Suite daemons automatically update the ``latest'' checkpoint every time a task
+changes state, and at every suite restart, but you can also take checkpoints
+at other times. To tell a suite daemon to checkpoint its current state:
+\lstset{language=transcript}
+\begin{lstlisting}
+$ cylc checkpoint SUITE-NAME CHECKPOINT-NAME
+\end{lstlisting}
+
+The 2nd argument is a name to identify the checkpoint later with:
+\begin{lstlisting}
+$ cylc ls-checkpoints SUITE-NAME
+\end{lstlisting}
+
+For example, with checkpoints named `bob', `alice', and `breakfast':
+\begin{lstlisting}
+$ cylc ls-checkpoints SUITE-NAME
+#######################################################################
+# CHECKPOINT ID (ID|TIME|EVENT)
+1|2017-11-01T15:48:34+13|bob
+2|2017-11-01T15:48:47+13|alice
+3|2017-11-01T15:49:00+13|breakfast
+...
+0|2017-11-01T17:29:19+13|latest
+\end{lstlisting}
+
+To see the actual task state content of a given checkpoint ID (if you need to),
+for the moment you have to interrogate the suite DB, e.g.:
+
+\begin{lstlisting}
+$ sqlite3 ~/cylc-run/SUITE-NAME/log/db \
+    'select * from task_pool_checkpoints where id == 3;'
+3|2012|model|1|running|
+3|2013|pre|0|waiting|
+3|2013|post|0|waiting|
+3|2013|model|0|waiting|
+3|2013|upload|0|waiting|
+\end{lstlisting}
+
+Note that a checkpoint captures the instantaneous state of every task in the
+suite, including any tasks that are currently active, so you may want to be
+careful where you do it. Tasks recorded as active are polled automatically on
+restart to determine what happened to them. 
 
 The checkpoint ID 0 (zero) is always used for latest state of the suite, which
-is updated continuously as the suite progresses. The checkpoint IDs of
-earlier states are positive integers starting from 1, incremented each
-time a new checkpoint is stored. Currently suites automatically store
-checkpoints before and after reloads, and on restarts (using the latest
-checkpoints before the restarts).
+is updated continuously as the suite progresses. The checkpoint IDs of earlier
+states are positive integers starting from 1, incremented each time a new
+checkpoint is stored. Currently suites automatically store checkpoints before
+and after reloads, and on restarts (using the latest checkpoints before the
+restarts).
 
-Once you have identified the right checkpoint, restart the suite like this
-(or select `restart' in the GUI suite start dialog window, and enter the
-checkpoint ID in the space provided):
+Once you have identified the right checkpoint, restart the suite like this:
 \lstset{language=transcript}
 \begin{lstlisting}
 $ cylc restart --checkpoint=CHECKPOINT-ID SUITE
 \end{lstlisting}
+or enter the checkpoint ID in the space provided in the GUI restart window.
 
-\paragraph{Manual Checkpoints}
+\paragraph{Checkpointing With A Task}
 
-Use the \lstinline=cylc checkpoint= command to tell a suite daemon to
-checkpoint its current state:
+Checkpoints can be generated automatically at particular points in the
+workflow by coding tasks that run the \lstinline=cylc checkpoint= command.
 
-\lstset{language=transcript}
+\lstset{language=suiterc}
 \begin{lstlisting}
-$ cylc checkpoint SUITE CHECKPOINT-NAME
+[scheduling]
+   [[dependencies]]
+      [[[PT6H]]]
+          graph = "pre => model => post => checkpointer"
+[runtime]
+   # ...
+   [[checkpointer]]
+      script = """
+sleep 5  # important! (see below)
+CHECKPOINT_NAME=cp-${CYLC_TASK_CYCLE_POINT}
+cylc checkpoint ${CYLC_SUITE_NAME} ${CHECKPOINT_NAME}"""
 \end{lstlisting}
 
-The 2nd argument is a name you give to the checkpoint so you can easily
-identify it later (see also \lstinline=cylc checkpoint --help=).
+Note that the checkpointer task is running at the time, and it will be recorded
+as such in the resulting checkpoint. This doesn't matter, because on restart
+the suite daemon will poll that task to determine that it finished successfully.
+
+However {\em the \lstinline=sleep 5= above is required to ensure that the
+checkpointer task is correctly recorded as running} - this is because the
+``task started'' message that informs the suite daemon of running status is
+sent back via a background process (so that network outages don't delay the
+job's real work from starting). Without this short delay the checkpoint may
+be taken just before the task hits the running state in the daemon, and the
+checkpointer task will be recorded incorrectly in the waiting state. If this
+happens {\em and} checkpointer's upstream dependencies have already been
+removed from the suite (so they won't be recorded in the checkpoint) the task
+will need to be manually reset from waiting to succeeded after the restart.
 
 \paragraph{Behaviour of Tasks on Restart}
 
@@ -6162,9 +6223,10 @@ instances. They can be removed manually if necessary,
 with~\lstinline=cylc remove=.
 
 Similarly, instances of new tasks added to the suite definition before
-restart are not inserted into the task pool automatically. The first
-instance of each can be inserted manually at the right cycle point,
-with~\lstinline=cylc insert=.
+restart are not inserted into the task pool automatically, because it is
+very difficult in general to automatically determine the cycle point of
+the first instance. Instead, the first instance of a new task should be
+inserted manually at the right cycle point, with~\lstinline=cylc insert=.
 
 \subsection{Reloading The Suite Definition At Runtime}
 
@@ -7273,8 +7335,8 @@ are:
 \end{myitemize}
 
 A warm start (see~\ref{Warm Start}) does not need a suite state checkpoint, but
-it wipes out prior history, and it could re-run a significant number of tasks
-that had already completed. 
+it wipes out prior run history, and it could re-run a significant number of
+tasks that had already completed. 
 
 To restart the suite, the critical Cylc files that must be restored are:
 
@@ -7293,8 +7355,9 @@ To restart the suite, the critical Cylc files that must be restored are:
     log/job/<CYCLE-POINT>/<TASK-NAME>/<SUBMIT-NUM>/job.status
 \end{lstlisting}
 
-{\em Note this disucssion ignores any files - model data etc. - that may be
-required by task jobs at run time once the suite has been restarted.}
+{\em Note this discussion does not address restoration of files generated and
+consumed by task jobs at run time}. How suite data is stored and recovered in
+your environment is a matter of suite and system design.
 
 In short, you can simply restore the suite service directory, the log
 directory, and the suite.rc file that is the target of the symlink in the
