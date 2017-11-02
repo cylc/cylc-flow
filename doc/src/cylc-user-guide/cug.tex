@@ -6081,23 +6081,23 @@ start cycle point, or at the next valid point for the task.
 cycle point is at or later than the given start cycle point, they will run; if
 not, they will be ignored.
 
-\subsubsection{Restart}
+\subsubsection{Restart and Suite State Checkpoints}
 \label{RestartingSuites}
 
-A restarted suite (see \lstinline=cylc restart --help=) is initialized from a
-previous recorded state checkpoint (normally the end of a previous run) so that
-it can carry on from wherever it got to before being shut down or killed,
-without resubmitting any tasks that were already submitted, running, or
-completed.
+At restart (see \lstinline=cylc restart --help=) a suite daemon initializes its
+task pool from a previously recorded checkpoint state. By default the latest
+automatic checkpoint - which is updated with every task state change - is
+loaded so that the suite can carry on exactly as it was just before being shut
+down or killed.
 
 \lstset{language=transcript}
 \begin{lstlisting}
 $ cylc restart SUITE
 \end{lstlisting}
 
-The scheduler starts by loading each task proxy in its recorded state, and
-polling any recorded as `submitted' or `running' to determine what happened to
-them while the daemon was down.
+Tasks loaded in the `submitted' or `running' states are automatically polled 
+(see Section~\ref{Task Job Polling}) at start-up to determine what happened to
+them while the suite was down.
 
 \paragraph{Restart From Latest Checkpoint}
 
@@ -6205,6 +6205,44 @@ To customize the environment more generally for Cylc on jobs hosts,
 use of \lstinline=job-init-env.sh= is described in Section~\ref{Configure
 Environment on Job Hosts}.
 
+\subsection{The Suite Contact File}
+\label{The Suite Contact File}
+
+At start-up, suite daemons write a {\em suite contact file}
+\lstinline=$HOME/cylc-run/<SUITE>/.service/contact= that records suite host,
+user, port number, process ID, Cylc version, and other information. Client
+commands can read this file, if they have access to it, to find the target
+suite daemon.
+
+\subsection{Task Job Polling}
+\label{Task Job Polling}
+
+At any point after job submission task jobs can be {\em polled} to check that
+their true state conforms to what is currently recorded by the suite daemon.
+See \lstinline=cylc poll --help= for how to poll one or more tasks manually, or
+right-click poll a task or family in GUI.
+
+Polling may be necessary if, for example, a task job gets killed by the
+untrappable SIGKILL signal (e.g.\ \lstinline=kill -9 PID=), or if a network
+outage prevents task success or failure messages getting through, or if the
+suite daemon itself is down when tasks finish execution.
+
+To poll a task job the suite daemon interrogates the batch system, and the
+\lstinline=job.status= file, on the job host. This information is enough to
+determine the final task status even if the job finished while the suite
+daemon was down or unreachable on the network.
+
+\subsubsection{Routine Polling}
+
+Task jobs are automatically polled at certain times: once on job submission
+timeout; several times on exceeding the job execution time limit; and at suite
+restart any tasks recorded as active in the suite state checkpoint are polled
+to find out what happened to them while the suite was down.
+
+Finally, in necessary routine polling can be configured as a way to track job
+status on job hosts that do not allow networking routing back to the suite host
+for task messaging by HTTPS or ssh.  See~\ref{Polling To Track Job Status}.
+
 \subsection{Tracking Task State}
 \label{TaskComms}
 
@@ -6254,7 +6292,8 @@ the same thing with the \lstinline=--use-ssh= command option).
 This is less efficient than direct HTTPS messaging, but it may be useful at
 sites where the HTTPS ports are blocked but non-interactive ssh is allowed.
 
-\subsubsection{Task Job Polling}
+\subsubsection{Polling to Track Job Status}
+\label{Polling To Track Job Status}
 
 Finally, suite daemons can actively poll task jobs at configurable intervals,
 via non-interactive ssh to the job host.
@@ -6649,13 +6688,6 @@ running two task trees side by side (as seen in the graph GUI) each
 limited to 2 and 3 tasks respectively:
 \lstset{language=suiterc}
 \lstinputlisting{../../../examples/queues/suite.rc}
-
-\subsection{Routine Job Polling}
-
-Task jobs are automatically polled by suite daemons, once on job submission timeout,
-and several times on exceeding the job execution time limit, to check if they
-failed or not; and on suite restarts, to see what happened to any tasks that
-were orphaned when the suite went down.
 
 \subsection{Automatic Task Retry On Failure}
 \label{TaskRetries}
