@@ -1562,7 +1562,7 @@ class SuiteConfig(object):
                     ltaskdef.intercycle_offsets.add((None, seq))
                 else:
                     ltaskdef.intercycle_offsets.add(
-                        (str(first_point - last_point), seq))
+                        (str(-(last_point - first_point)), seq))
             elif offset:
                 if offset_is_irregular:
                     offset_tuple = (offset, seq)

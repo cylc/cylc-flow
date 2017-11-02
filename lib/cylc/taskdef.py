@@ -115,21 +115,19 @@ class TaskDef(object):
             raise TaskDefError(
                 "No cycling sequences defined for %s" % self.name)
 
-    @classmethod
-    def get_cleanup_cutoff_point(cls, my_point, offset_sequence_tuples):
+    def get_cleanup_cutoff_point(self, point):
         """Extract the max dependent cycle point for this point."""
-        if not offset_sequence_tuples:
+        if not self.intercycle_offsets:
             # This task does not have dependent tasks at other cycles.
-            return my_point
+            return point
         cutoff_points = []
-        for offset_string, sequence in offset_sequence_tuples:
+        for offset_string, sequence in self.intercycle_offsets:
             if offset_string is None:
                 # This indicates a dependency that lasts for the whole run.
                 return None
             if sequence is None:
                 # This indicates a simple offset interval such as [-PT6H].
-                cutoff_points.append(
-                    my_point - get_interval(offset_string))
+                cutoff_points.append(point - get_interval(offset_string))
                 continue
             if is_offset_absolute(offset_string):
                 stop_point = sequence.get_stop_point()
@@ -150,11 +148,11 @@ class TaskDef(object):
                 # TODO: Is it realistically possible to hang in this loop?
                 target_point = (
                     get_point_relative(offset_string, dependent_point))
-                if target_point > my_point:
+                if target_point > point:
                     # Assume monotonic (target_point can never jump back).
                     break
-                if target_point == my_point:
-                    # We have found a dependent_point for my_point.
+                if target_point == point:
+                    # We have found a dependent_point for point.
                     my_cutoff_point = dependent_point
                 dependent_point = sequence.get_next_point_on_sequence(
                     dependent_point)
@@ -163,9 +161,9 @@ class TaskDef(object):
                 cutoff_points.append(my_cutoff_point)
         if cutoff_points:
             max_cutoff_point = max(cutoff_points)
-            if max_cutoff_point < my_point:
-                # This is caused by future triggers - default to my_point.
-                return my_point
+            if max_cutoff_point < point:
+                # This is caused by future triggers - default to point.
+                return point
             return max_cutoff_point
-        # There aren't any dependent tasks in other cycles for my_point.
-        return my_point
+        # There aren't any dependent tasks in other cycles for point.
+        return point
