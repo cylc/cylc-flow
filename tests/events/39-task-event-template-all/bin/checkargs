@@ -2,19 +2,42 @@
 
 # Compare actual and expected event handler command lines.
 
+import os
 import sys
+import subprocess
 
-start = ['SUITE:', 'JID:']
-other = ['custom', '1', 'foo', '1', 'foo.1', 'background', 'cheesy peas', 'trout',
-         'a task called foo', 'http://cheesy.peas', 'a test suite', 'large']
-one = len(sys.argv) >= 3
-two = sys.argv[1].startswith(start[0])
-thr = sys.argv[2].startswith(start[1])
-fou = sys.argv[3:] == other
+args = dict([arg.split('=') for arg in sys.argv[1:]])
 
-if one and two and thr and fou:
+suite = os.environ['CYLC_SUITE_NAME']
+alog = subprocess.check_output(['cylc', 'cat-log', '-la', suite, 'foo.1'])
+start_time, _, job_id = (subprocess.check_output(['grep', 'STDOUT', alog.strip()])).split(' ') 
+
+expected_args = {
+        'suite_title': 'a test suite',
+        'job_id': job_id.strip(),
+        'start_time': 'None',
+        'point': '1',
+        'URL': 'http://cheesy.peas',
+        'title': 'a task called foo',
+        'fish': 'trout',
+        'submit_num': '1',
+        'batch_sys_name': 'background',
+        'id': 'foo.1',
+        'finish_time': 'None',
+        'suite_size': 'large',
+        'suite': suite,
+        'message': 'cheesy peas',
+        'user@host': 'localhost',
+        'event': 'custom',
+        'submit_time': start_time,
+        'name': 'foo'
+}
+
+
+if args == expected_args:
     print "OK: command line checks out"
-    sys.exit(0)
 else:
     print >> sys.stderr, 'ERROR: unexpected event handler command line.'
+    print >> sys.stderr, "EXPECTED:", expected_args
+    print >> sys.stderr, "RECEIVED:", args
     sys.exit(1)

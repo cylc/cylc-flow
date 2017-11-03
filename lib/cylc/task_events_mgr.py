@@ -842,7 +842,15 @@ class TaskEventsManager(object):
                     "batch_sys_name": quote(
                         str(itask.summary['batch_sys_name'])),
                     "batch_sys_job_id": quote(
-                        str(itask.summary['submit_method_id']))
+                        str(itask.summary['submit_method_id'])),
+                    "submit_time": quote(
+                        str(itask.summary['submitted_time_string'])),
+                    "start_time": quote(
+                        str(itask.summary['started_time_string'])),
+                    "finish_time": quote(
+                        str(itask.summary['finished_time_string'])),
+                    "user@host": quote(
+                        str(itask.summary['job_hosts'][itask.submit_num]))
                 }
 
                 if self.suite_cfg:
