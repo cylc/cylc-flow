@@ -27,14 +27,12 @@ if [[ -z "${CYLC_TEST_HOST}" ]]; then
 fi
 set_test_number 3
 
-create_test_globalrc '' '
+create_test_globalrc '' "
 [hosts]
     [[${CYLC_TEST_HOST}]]
-        task communication method = ssh'
+        task communication method = ssh"
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-# Note: Don't install passphrase on remote host. Message should only return via
-# SSH.
 
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${SUITE_NAME}" -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}"

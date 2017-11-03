@@ -85,10 +85,10 @@ class TaskMessage(object):
                 import traceback
                 traceback.print_exc()
             return
-        if (self.env_map.get('CYLC_TASK_COMMS_METHOD') == 'ssh' and
-                self._send_by_ssh()):
-            return
-        self._send_by_remote_port(messages)
+        if self.env_map.get('CYLC_TASK_COMMS_METHOD') == 'ssh':
+            self._send_by_ssh()
+        else:
+            self._send_by_remote_port(messages)
 
     def _print_messages(self, messages):
         """Print message to send."""
@@ -183,16 +183,17 @@ class TaskMessage(object):
         # this code block.
         env = {}
         for var in [
-                'CYLC_MODE', 'CYLC_TASK_ID', 'CYLC_VERBOSE',
-                'CYLC_SUITE_RUN_DIR',
-                'CYLC_SUITE_RUN_DIR_ON_SUITE_HOST',
-                'CYLC_SUITE_NAME', 'CYLC_SUITE_OWNER',
-                'CYLC_SUITE_HOST', 'CYLC_SUITE_PORT', 'CYLC_UTC',
-                'CYLC_TASK_MSG_MAX_TRIES', 'CYLC_TASK_MSG_TIMEOUT',
-                'CYLC_TASK_MSG_RETRY_INTVL']:
+                SuiteSrvFilesManager.KEY_NAME,
+                SuiteSrvFilesManager.KEY_DIR_ON_SUITE_HOST,
+                'CYLC_TASK_ID',
+                'CYLC_UTC',
+                'CYLC_VERBOSE']:
             # (no exception handling here as these variables should
             # always be present in the task execution environment)
-            env[var] = self.env_map.get(var, 'UNSET')
+            try:
+                env[var] = self.env_map[var]
+            except KeyError:
+                pass
 
         # The path to cylc/bin on the remote end may be required:
         path = os.path.join(self.env_map['CYLC_DIR_ON_SUITE_HOST'], 'bin')
@@ -201,10 +202,7 @@ class TaskMessage(object):
         # otherwise drop through to local messaging.
         # Note: do not sys.exit(0) here as the commands do, it
         # will cause messaging failures on the remote host.
-        try:
-            return remrun().execute(env=env, path=[path])
-        except SystemExit:
-            return
+        remrun().execute(env=env, path=[path])
 
     def _update_job_status_file(self, messages):
         """Write messages to job status file."""
