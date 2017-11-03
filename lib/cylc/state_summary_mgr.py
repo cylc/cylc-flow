@@ -130,9 +130,9 @@ class StateSummaryMgr(object):
         global_summary['reloading'] = schd.pool.do_reload
         global_summary['state totals'] = state_count_totals
         # Extract suite and task URLs from config.
-        global_summary['suite_urls'] = {
-            i: j['meta']['URL'] for (i, j) in
-            schd.config.cfg['runtime'].items()}
+        global_summary['suite_urls'] = dict(
+            (i, j['meta']['URL'])
+            for (i, j) in schd.config.cfg['runtime'].items())
         global_summary['suite_urls']['suite'] = schd.config.cfg['meta']['URL']
 
         # Construct a suite status string for use by monitoring clients.
