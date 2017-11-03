@@ -48,15 +48,14 @@ A multi-line description of the suite. It can be retrieved at run time with the
 \label{SuiteURL}
 
 A web URL to suite documentation.  If present it can be browsed with the
-\lstinline=cylc doc= command, or from the gcylc Suite menu.  The variable
-\lstinline=${CYLC_SUITE_NAME}= will be replaced with the actual suite name
-(note this is not a shell environment variable in this context). See also
-task URLs (\ref{TaskURL}).
+\lstinline=cylc doc= command, or from the gcylc Suite menu. The string
+template \lstinline=%(suite_name)s= will be replaced with the actual suite
+name. See also task URLs (\ref{TaskURL}).
 
 \begin{myitemize}
 \item {\em type:} string (URL)
 \item {\em default:} (none)
-\item {\em example:} \lstinline=http://suites/${CYLC_SUITE_NAME}/index.html=
+\item {\em example:} \lstinline=http://my-site.com/suites/%(suite_name)s/index.html=
 \end{myitemize}
 
 \subsubsection{group}{ [meta] \textrightarrow group}
@@ -1287,10 +1286,9 @@ A multi-line description of this namespace, retrievable from running tasks with 
 
 A web URL to task documentation for this suite.  If present it can be browsed
 with the \lstinline=cylc doc= command, or by right-clicking on the task in
-gcylc.  The variables \lstinline=${CYLC_SUITE_NAME}= and
-\lstinline=${CYLC_TASK_NAME}= will be replaced with the actual suite and task
-names (note that these are not environment variables in this context). See also
-suite URLs (\ref{SuiteURL}).
+gcylc. The string templates \lstinline=%(suite_name)s= and
+\lstinline=%(task_name)s= will be replaced with the actual suite and task names.
+See also suite URLs (\ref{SuiteURL}).
 
 \begin{myitemize}
 \item {\em type:} string (URL)
@@ -1301,12 +1299,12 @@ suite URLs (\ref{SuiteURL}).
 [runtime]
     [[root]]
         [[[meta]]]
-            URL = http://suites/${CYLC_SUITE_NAME}/${CYLC_TASK_NAME}.html
+            URL = http://my-site.com/suites/%(suite_name)s/%(task_name)s.html
     \end{lstlisting}
 \end{myitemize}
 
-(Note that URLs containing the suite comment delimiter
-\lstinline=#= must be protected by quotes).
+(Note that URLs containing the comment delimiter \lstinline=#= must be
+protected by quotes).
 
 \subparagraph[\_\_MANY\_\_]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[meta]]] \textrightarrow \_\_MANY\_\_}
 

@@ -1,0 +1,12 @@
+[meta]
+    URL = http://localhost/suite-docs/%(suite_name)s.html
+[scheduling]
+   [[dependencies]]
+        graph = foo => FAM
+[runtime]
+    [[root]]
+        [[[meta]]]
+            URL = 'http://localhost/suite-docs/%(suite_name)s.html#%(task_name)s'
+    [[FAM]]
+    [[bar,baz]]
+        inherit = FAM
