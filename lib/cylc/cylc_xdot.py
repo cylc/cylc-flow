@@ -20,6 +20,7 @@ import gtk
 import os
 import re
 import xdot
+
 from cylc.config import SuiteConfig
 from cylc.cycling.loader import get_point
 from cylc.graphing import CGraphPlain, CGraph
@@ -41,7 +42,9 @@ def style_ghost_node(node):
 
 
 class CylcDotViewerCommon(xdot.DotWindow):
+
     def load_config(self):
+        """Load the suite config."""
         if self.suiterc:
             is_reload = True
             collapsed = self.suiterc.closed_families
@@ -55,11 +58,24 @@ class CylcDotViewerCommon(xdot.DotWindow):
                 cli_initial_point_string=self.start_point_string,
                 vis_start_string=self.start_point_string,
                 vis_stop_string=self.stop_point_string)
-        except Exception, x:
-            ERR.error("Failed - parsing error?\n" + str(x))
+        except Exception as exc:
+            msg = "Failed - parsing error?\n\n" + str(exc)
+            ERR.error(msg)
+            dia = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
+                                    buttons=gtk.BUTTONS_OK,
+                                    message_format=msg)
+            dia.run()
+            dia.destroy()
             return False
         self.inherit = self.suiterc.get_parent_lists()
         return True
+
+    def on_refresh(self, w):
+        """Re-load the suite config and refresh the graph."""
+        if self.load_config():
+            self.get_graph()
+        else:
+            self.set_dotcode('graph {}')
 
     def set_filter_graph_patterns(self, filter_patterns):
         """Set some regular expressions to filter out graph nodes."""
@@ -237,11 +253,6 @@ class MyDotWindow2(CylcDotViewerCommon):
             return False
         self.orientation = orientation
         self.get_graph()
-
-    def on_refresh(self, w):
-        self.load_config()
-        self.get_graph()
-        return True
 
 
 class MyDotWindow(CylcDotViewerCommon):
@@ -494,11 +505,6 @@ class MyDotWindow(CylcDotViewerCommon):
             return False
         self.orientation = orientation
         self.get_graph()
-
-    def on_refresh(self, w):
-        self.load_config()
-        self.get_graph()
-        return True
 
 
 class DotTipWidget(xdot.DotWidget):
