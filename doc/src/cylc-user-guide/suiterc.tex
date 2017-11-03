@@ -407,7 +407,7 @@ Specify the suite events for which notification emails should be sent.
 \begin{myitemize}
     \item {\em type:} Comma-separated list of events
     \item {\em default:} (none)
-    \item {\em example:} \lstinline@handler = startup, shutdown, timeout@
+    \item {\em example:} \lstinline@mail events = startup, shutdown, timeout@
 \end{myitemize}
 
 \paragraph[mail footer]{[cylc] \textrightarrow [[events]] \textrightarrow mail footer}
@@ -1749,7 +1749,7 @@ Specify the events for which notification emails should be sent.
 \begin{myitemize}
     \item {\em type:} Comma-separated list of events
     \item {\em default:} (none)
-    \item {\em example:} \lstinline@handler = submission failed, failed@
+    \item {\em example:} \lstinline@mail events = submission failed, failed@
 \end{myitemize}
 
 \subparagraph[mail from]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[events]]] \textrightarrow mail from}
