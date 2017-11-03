@@ -6174,7 +6174,7 @@ or enter the checkpoint ID in the space provided in the GUI restart window.
 \paragraph{Checkpointing With A Task}
 
 Checkpoints can be generated automatically at particular points in the
-workflow by coding tasks that run the \lstinline=cylc checkpoint= command.
+workflow by coding tasks that run the \lstinline=cylc checkpoint= command:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -6186,25 +6186,19 @@ workflow by coding tasks that run the \lstinline=cylc checkpoint= command.
    # ...
    [[checkpointer]]
       script = """
-sleep 5  # important! (see below)
-CHECKPOINT_NAME=cp-${CYLC_TASK_CYCLE_POINT}
-cylc checkpoint ${CYLC_SUITE_NAME} ${CHECKPOINT_NAME}"""
+wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
+cylc checkpoint ${CYLC_SUITE_NAME} CP-${CYLC_TASK_CYCLE_POINT}
+               """
 \end{lstlisting}
 
-Note that the checkpointer task is running at the time, and it will be recorded
-as such in the resulting checkpoint. This doesn't matter, because on restart
-the suite daemon will poll that task to determine that it finished successfully.
-
-However {\em the \lstinline=sleep 5= above is required to ensure that the
-checkpointer task is correctly recorded as running} - this is because the
-``task started'' message that informs the suite daemon of running status is
-sent back via a background process (so that network outages don't delay the
-job's real work from starting). Without this short delay the checkpoint may
-be taken just before the task hits the running state in the daemon, and the
-checkpointer task will be recorded incorrectly in the waiting state. If this
-happens {\em and} checkpointer's upstream dependencies have already been
-removed from the suite (so they won't be recorded in the checkpoint) the task
-will need to be manually reset from waiting to succeeded after the restart.
+Note that we need to \lstinline=wait= on the ``task started'' message - which
+is sent in the background to avoid holding tasks up in a network outage - to
+ensure that the checkpointer task is correctly recorded as running in the
+checkpoint (at restart the suite daemon will poll to determine that that task
+job finished successfully). Otherwise it may be recorded in the waiting state
+and, if its upstream dependencies have already been cleaned up, it will need to
+be manually reset from waiting to succeeded after the restart to avoid stalling
+the suite.
 
 \paragraph{Behaviour of Tasks on Restart}
 
