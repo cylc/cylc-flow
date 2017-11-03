@@ -6019,13 +6019,13 @@ reality).
 {\em Custom batch system handlers must be installed on suite and job
 hosts} in one of these locations:
 \begin{myitemize}
-    \item under \lstinline=<suite-def-path>/lib/python/=
-    \item under \lstinline=<cylc-path>/lib/cylc/batch_sys_handlers/=
+    \item under \lstinline=SUITE-DEF-PATH/lib/python/=
+    \item under \lstinline=CYLC-PATH/lib/cylc/batch_sys_handlers/=
     \item or anywhere in \lstinline=$PYTHONPATH=
 \end{myitemize}
 
 (A note for Rose users: \lstinline=rose suite-run= automatically installs
-\lstinline=<suite-def-path>/lib/python/= to job hosts).
+\lstinline=SUITE-DEF-PATH/lib/python/= to job hosts).
 
 \section{Running Suites}
 \label{RunningSuites}
@@ -6273,7 +6273,7 @@ Environment on Job Hosts}.
 \label{The Suite Contact File}
 
 At start-up, suite daemons write a {\em suite contact file}
-\lstinline=$HOME/cylc-run/<SUITE>/.service/contact= that records suite host,
+\lstinline=$HOME/cylc-run/SUITE/.service/contact= that records suite host,
 user, port number, process ID, Cylc version, and other information. Client
 commands can read this file, if they have access to it, to find the target
 suite daemon.
@@ -7207,7 +7207,7 @@ Each suite maintains its own log of time-stamped events under the {\em suite
 server log directory}:
 
 \begin{lstlisting}
-$HOME/cylc-run/<SUITE-NAME>/log/suite/
+$HOME/cylc-run/SUITE-NAME/log/suite/
 \end{lstlisting}
 
 By way of example, we will show the complete server log generated (at
@@ -7295,8 +7295,8 @@ checkpoints and various other aspects of run history:
 
 \lstset{language=transcript}
 \begin{lstlisting}
-$HOME/cylc-run/<SUITE-NAME>/log/db  # public suite DB
-$HOME/cylc-run/<SUITE-NAME>/.service/db  # private suite DB
+$HOME/cylc-run/SUITE-NAME/log/db  # public suite DB
+$HOME/cylc-run/SUITE-NAME/.service/db  # private suite DB
 \end{lstlisting}
 
 The private DB is for use only by the suite daemon. The identical public DB is
@@ -7343,16 +7343,16 @@ To restart the suite, the critical Cylc files that must be restored are:
 \lstset{language=transcript}
 \begin{lstlisting}
 # On the suite host:
-~/cylc-run/<SUITE-NAME>/
-    <suite.rc>   # live suite definition (located here in Rose suites)
+~/cylc-run/SUITE-NAME/
+    suite.rc   # live suite definition (located here in Rose suites)
     log/db  # public suite DB (can just be a copy of the private DB)
     log/rose-suite-run.conf  # (needed to restart a Rose suite)
     .service/db  # private suite DB
-    .service/source -> <PATH-TO-SUITE-DIR>  # symlink to live suite directory
+    .service/source -> PATH-TO-SUITE-DIR  # symlink to live suite directory
  
 # On job hosts (if no shared filesystem):
-~/cylc-run/<SUITE-NAME>/
-    log/job/<CYCLE-POINT>/<TASK-NAME>/<SUBMIT-NUM>/job.status
+~/cylc-run/SUITE-NAME/
+    log/job/CYCLE-POINT/TASK-NAME/SUBMIT-NUM/job.status
 \end{lstlisting}
 
 {\em Note this discussion does not address restoration of files generated and
