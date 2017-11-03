@@ -4,15 +4,20 @@
 
 import os
 import sys
-import subprocess
+from subprocess import Popen, PIPE
 
 args = dict([arg.split('=') for arg in sys.argv[1:]])
 
 suite = os.environ['CYLC_SUITE_NAME']
-alog = subprocess.check_output(['cylc', 'cat-log', '-la', suite, 'foo.1'])
-start_time, _, job_id = (subprocess.check_output(['grep', 'STDOUT', alog.strip()])).split(' ') 
+proc = Popen(['cylc', 'cat-log', '-la', suite, 'foo.1'], stdout=PIPE)
+alog = proc.communicate()[0].strip()
+proc.wait()
+for line in open(alog):
+    if 'STDOUT' in line:
+        submit_time, _, job_id = line.split(' ') 
+        break
 
-expected_args = {
+assert args == {
         'suite_title': 'a test suite',
         'job_id': job_id.strip(),
         'start_time': 'None',
@@ -29,15 +34,7 @@ expected_args = {
         'message': 'cheesy peas',
         'user@host': 'localhost',
         'event': 'custom',
-        'submit_time': start_time,
+        'submit_time': submit_time,
         'name': 'foo'
 }
-
-
-if args == expected_args:
-    print "OK: command line checks out"
-else:
-    print >> sys.stderr, 'ERROR: unexpected event handler command line.'
-    print >> sys.stderr, "EXPECTED:", expected_args
-    print >> sys.stderr, "RECEIVED:", args
-    sys.exit(1)
+print "OK: command line checks out"
