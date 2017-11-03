@@ -6,7 +6,7 @@ import os
 import sys
 from subprocess import Popen, PIPE
 
-args = dict([arg.split('=') for arg in sys.argv[1:]])
+args = dict([arg.split('=', 1) for arg in sys.argv[1:]])
 
 suite = os.environ['CYLC_SUITE_NAME']
 proc = Popen(['cylc', 'cat-log', '-la', suite, 'foo.1'], stdout=PIPE)
@@ -17,24 +17,23 @@ for line in open(alog):
         submit_time, _, job_id = line.split(' ') 
         break
 
+del args['start_time']  # must exist, but value unreliable
 assert args == {
-        'suite_title': 'a test suite',
-        'job_id': job_id.strip(),
-        'start_time': 'None',
-        'point': '1',
-        'URL': 'http://cheesy.peas',
-        'title': 'a task called foo',
-        'fish': 'trout',
-        'submit_num': '1',
-        'batch_sys_name': 'background',
-        'id': 'foo.1',
-        'finish_time': 'None',
-        'suite_size': 'large',
-        'suite': suite,
-        'message': 'cheesy peas',
-        'user@host': 'localhost',
-        'event': 'custom',
-        'submit_time': submit_time,
-        'name': 'foo'
-}
-print "OK: command line checks out"
+    'suite_title': 'a test suite',
+    'job_id': job_id.strip(),
+    'point': '1',
+    'URL': 'http://cheesy.peas',
+    'title': 'a task called foo',
+    'fish': 'trout',
+    'submit_num': '1',
+    'batch_sys_name': 'background',
+    'id': 'foo.1',
+    'finish_time': 'None',
+    'suite_size': 'large',
+    'suite': suite,
+    'message': 'cheesy peas',
+    'user@host': 'localhost',
+    'event': 'custom',
+    'submit_time': submit_time,
+    'name': 'foo'}
+print 'OK: command line checks out'
