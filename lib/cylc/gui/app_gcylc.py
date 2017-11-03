@@ -1213,18 +1213,21 @@ been defined for this suite""").inform()
         about.destroy()
 
     def _gcapture_cmd(self, command, xdim=400, ydim=400, title=None):
+        """Run given command and capture its stdout and stderr in a window."""
         foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir,
                                xdim, ydim, title=title)
         self.gcapture_windows.append(foo)
         foo.run()
 
     def view_task_descr(self, w, e, task_id, *args):
+        """Run 'cylc show SUITE TASK' and capture output in a viewer window."""
         self._gcapture_cmd(
             "cylc show %s %s %s" % (
                 self.get_remote_run_opts(), self.cfg.suite, task_id),
             600, 400)
 
     def view_in_editor(self, w, e, task_id, choice):
+        """View various job logs in your configured text editor."""
         try:
             task_state_summary = self.updater.full_state_summary[task_id]
         except KeyError:
@@ -1252,6 +1255,7 @@ been defined for this suite""").inform()
                 command_opt, self.cfg.suite, task_id))
 
     def view_task_info(self, w, e, task_id, choice):
+        """Viewer window with a drop-down list of job logs to choose from."""
         try:
             task_state_summary = self.updater.full_state_summary[task_id]
         except KeyError:
@@ -1265,7 +1269,7 @@ been defined for this suite""").inform()
         return False
 
     def connect_right_click_sub_menu(self, is_graph_view, item, x, y, z):
-        """Handle right-clicks in sub-menus"""
+        """Handle right-clicks in sub-menus."""
         if is_graph_view:
             item.connect('button-release-event', x, y, z)
         else:
@@ -1602,11 +1606,13 @@ been defined for this suite""").inform()
         window.show_all()
 
     def window_show_all(self):
+        """Show all window widgets."""
         self.window.show_all()
         if not self.info_bar.prog_bar_active():
             self.info_bar.prog_bar.hide()
 
     def change_runahead(self, w, entry, window):
+        """Change the suite runahead limit."""
         ent = entry.get_text()
         if ent == '':
             limit = None
@@ -1623,6 +1629,7 @@ been defined for this suite""").inform()
         self.put_comms_command('set_runahead', interval=limit)
 
     def update_tb(self, tb, line, tags=None):
+        """Update a text view buffer."""
         if tags:
             tb.insert_with_tags(tb.get_end_iter(), line, *tags)
         else:
@@ -1702,11 +1709,13 @@ shown here in the state they were in at the time of triggering.''')
         window.show_all()
 
     def on_popup_quit(self, b, lv, w):
+        """Destroy a popup window on quit."""
         lv.quit()
         self.quitters.remove(lv)
         w.destroy()
 
     def get_confirmation(self, question, force_prompt=False):
+        """Pop up a confirmation prompt window."""
         if self.cfg.no_prompt and not force_prompt:
             return True
         prompt = gtk.MessageDialog(self.window, gtk.DIALOG_MODAL,
@@ -1743,9 +1752,7 @@ shown here in the state they were in at the time of triggering.''')
         self.put_comms_command('trigger_tasks', items=task_ids)
 
     def trigger_task_edit_run(self, b, task_id):
-        """
-        Do an edit-run by invoking 'cylc trigger --edit' on the suite host.
-        """
+        """Trigger an edit run with 'cylc trigger --edit'."""
         if not self.get_confirmation("Edit run %s?" % task_id):
             return
         self._gcapture_cmd(
@@ -1807,6 +1814,7 @@ shown here in the state they were in at the time of triggering.''')
         self.put_comms_command('remove_tasks', items=task_ids, spawn=spawn)
 
     def stopsuite_popup(self, b):
+        """Suite shutdown dialog window popup."""
         window = gtk.Window()
         window.modify_bg(gtk.STATE_NORMAL,
                          gtk.gdk.color_parse(self.log_colors.get_color()))
@@ -1959,6 +1967,7 @@ shown here in the state they were in at the time of triggering.''')
         window.show_all()
 
     def stop_method(self, b, meth, st_box, sc_box, tt_box):
+        """Determine the suite stop method."""
         for ch in (
                 st_box.get_children() +
                 sc_box.get_children() +
@@ -1981,6 +1990,7 @@ shown here in the state they were in at the time of triggering.''')
             box.set_sensitive(True)
 
     def startup_method(self, b, meth, ic_box, is_box):
+        """Determine the suite start-up method."""
         if meth in ['cold', 'warm']:
             for ch in ic_box.get_children():
                 ch.set_sensitive(True)
@@ -1994,6 +2004,7 @@ shown here in the state they were in at the time of triggering.''')
                 ch.set_sensitive(True)
 
     def startsuite_popup(self, b):
+        """Suite start-up dialog window popup."""
         window = gtk.Window()
         window.modify_bg(gtk.STATE_NORMAL,
                          gtk.gdk.color_parse(self.log_colors.get_color()))
@@ -2146,6 +2157,7 @@ shown here in the state they were in at the time of triggering.''')
         window.show_all()
 
     def point_string_entry_popup(self, b, callback, title):
+        """Cycle point entry popup."""
         window = gtk.Window()
         window.modify_bg(gtk.STATE_NORMAL,
                          gtk.gdk.color_parse(self.log_colors.get_color()))
@@ -2263,11 +2275,13 @@ shown here in the state they were in at the time of triggering.''')
         self.put_comms_command('poll_tasks')
 
     def reload_suite(self, w):
+        """Tell the suite daemon to reload."""
         if not self.get_confirmation("Reload suite definition?"):
             return
         self.put_comms_command('reload_suite')
 
     def nudge_suite(self, w):
+        """Nudge the suite daemon."""
         if not self.get_confirmation("Nudge suite?"):
             return
         self.put_comms_command('nudge')
@@ -2395,6 +2409,7 @@ shown here in the state they were in at the time of triggering.''')
         return (submit_num, base, head)
 
     def _set_tooltip(self, widget, tip_text):
+        """Set a tool-tip text."""
         tooltip = gtk.Tooltips()
         tooltip.enable()
         tooltip.set_tip(widget, tip_text)
@@ -2902,6 +2917,7 @@ to reduce network traffic.""")
                     self.get_remote_run_opts(), self.cfg.suite), 800, 400)
 
     def search_suite_popup(self, w):
+        """Pop up a suite source dir search dialog."""
         reg = self.cfg.suite
         window = gtk.Window()
         window.set_border_width(5)
@@ -2945,6 +2961,7 @@ to reduce network traffic.""")
         window.show_all()
 
     def search_suite(self, w, reg, yesbin_cb, pattern_entry):
+        """Run 'cylc search', capture output in a viewer window."""
         pattern = pattern_entry.get_text()
         options = ''
         if not yesbin_cb.get_active():
@@ -3061,6 +3078,7 @@ This is what my suite does:..."""
                                  command + " --help")
 
     def check_task_filter_buttons(self, tb=None):
+        """Action task state filter settings."""
         task_states = []
         for subbox in self.state_filter_box.get_children():
             for ebox in subbox.get_children():
@@ -3089,6 +3107,7 @@ This is what my suite does:..."""
             self.refresh_views()
 
     def select_state_filters(self, w, arg):
+        """Process task state filter settings."""
         for subbox in self.state_filter_box.get_children():
             for ebox in subbox.get_children():
                 box = ebox.get_children()[0]
@@ -3103,10 +3122,12 @@ This is what my suite does:..."""
         self.check_task_filter_buttons()
 
     def reset_filter_entry(self, w):
+        """Reset task state filter settings."""
         self.filter_entry.set_text("")
         self.check_filter_entry()
 
     def check_filter_entry(self, e=None):
+        """Check the task name filter entry."""
         filter_text = self.filter_entry.get_text()
         try:
             re.compile(filter_text)
@@ -3128,11 +3149,13 @@ This is what my suite does:..."""
         self.refresh_views()
 
     def refresh_views(self):
+        """Refresh all live views."""
         for view in self.current_views:
             if view is not None:
                 view.refresh()
 
     def create_task_filter_widgets(self):
+        """Create task filter widgets - state and name."""
         self.filter_widgets = gtk.VBox()
         self.filter_widgets.pack_start(
             gtk.Label("Filter by task state"))
@@ -3365,6 +3388,7 @@ For more Stop options use the Control menu.""")
         self.run_pause_toolbutton.click_func = click_func
 
     def create_info_bar(self):
+        """Create the window info bar."""
         self.info_bar = InfoBar(
             self.cfg.host, self.theme, self.dot_size,
             self.filter_states_excl,
@@ -3374,6 +3398,7 @@ For more Stop options use the Control menu.""")
         self._set_info_bar()
 
     def popup_uuid_dialog(self, w):
+        """Pop up the client UUID info."""
         info_dialog(
             "Client UUID %s\n"
             "(this identifies a client instance to the suite daemon)" % (
@@ -3422,6 +3447,7 @@ For more Stop options use the Control menu.""")
         self.theme_legend_window = None
 
     def put_comms_command(self, command, **kwargs):
+        """Put a command to the suite client interface."""
         try:
             success, msg = self.updater.client.put_command(
                 command, **kwargs)
@@ -3432,6 +3458,7 @@ For more Stop options use the Control menu.""")
                 warning_dialog(msg, self.window).warn()
 
     def run_suite_validate(self, w):
+        """Validate the suite and capture output in a viewer window."""
         self._gcapture_cmd(
             "cylc validate -v %s %s %s" % (
                 self.get_remote_run_opts(), self.cfg.template_vars_opts,
@@ -3439,6 +3466,7 @@ For more Stop options use the Control menu.""")
         return False
 
     def run_suite_edit(self, w, inlined=False):
+        """Run 'cylc edit' and capture output in a viewer window."""
         extra = ''
         if inlined:
             extra = '-i '
@@ -3449,6 +3477,7 @@ For more Stop options use the Control menu.""")
         return False
 
     def run_suite_graph(self, w, show_ns=False):
+        """Run 'cylc graph' and capture output in a viewer window."""
         if show_ns:
             self._gcapture_cmd(
                 "cylc graph -n %s %s %s" % (
@@ -3463,17 +3492,20 @@ For more Stop options use the Control menu.""")
                 parent_window=self.window)
 
     def run_suite_info(self, w):
+        """Run 'cylc show SUITE' and capture output in a viewer window."""
         self._gcapture_cmd(
             "cylc show %s %s" % (
                 self.get_remote_run_opts(), self.cfg.suite), 600, 400)
 
     def run_suite_list(self, w, opt=''):
+        """Run 'cylc list' and capture output in a viewer window."""
         self._gcapture_cmd(
             "cylc list %s %s %s %s" % (
                 self.get_remote_run_opts(), opt, self.cfg.template_vars_opts,
                 self.cfg.suite), 600, 600)
 
     def run_suite_log(self, w, type_='log'):
+        """Run 'cylc cat-log' and capture its output in a viewer window."""
         if is_remote(self.cfg.host, self.cfg.owner):
             if type_ == 'out':
                 xopts = ' --stdout '
@@ -3493,6 +3525,7 @@ For more Stop options use the Control menu.""")
         self.quitters.append(foo)
 
     def run_suite_view(self, w, method):
+        """Run 'cylc view' and capture its output in a viewer window."""
         extra = ''
         if method == 'inlined':
             extra = ' -i'
@@ -3518,9 +3551,11 @@ For more Stop options use the Control menu.""")
         return ret
 
     def browse_doc(self, b, *args):
+        """Run 'cylc doc' and capture its output."""
         self._gcapture_cmd('cylc doc %s' % ' '.join(args), 700)
 
     def browse_suite(self, _, target='suite'):
+        """Browse the suite or task URL, if any."""
         if not self.updater.global_summary:
             # Suite not running, revert to parsing (can only be suite URL).
             self._gcapture_cmd('cylc doc %s %s' % (
@@ -3536,4 +3571,5 @@ For more Stop options use the Control menu.""")
         self._gcapture_cmd('cylc doc --url=%s' % url, 700)
 
     def command_help(self, w, cat='', com=''):
+        """Run 'cylc help' commands, and capture output in a viewer window."""
         self._gcapture_cmd("cylc %s %s" % (cat, com), 700, 600)
