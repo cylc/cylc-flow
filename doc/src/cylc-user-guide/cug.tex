@@ -4639,12 +4639,13 @@ parameter expansion. For example, if we have:
         graph = model<run,obs>
 \end{lstlisting}
 
-Task \lstinline=model_run2_ship= would get the following standard environment
-variables:
+Then task \lstinline=model_run2_ship= would get the following standard
+environment variables:
 
 \begin{lstlisting}
-    export CYLC_TASK_PARAM_run="2"
-    export CYLC_TASK_PARAM_obs="ship"
+# In a job script of an instance of the "model_run2_ship" task:
+export CYLC_TASK_PARAM_run="2"
+export CYLC_TASK_PARAM_obs="ship"
 \end{lstlisting}
 
 These variables allow tasks to determine which member of a parameterized
@@ -4661,12 +4662,13 @@ substitution. For example, if we add this to the above configuration:
             MYFILE = /path/to/run%(run)03d/%(obs)s
 \end{lstlisting}
 
-Task \lstinline=model_run2_ship= would get the following custom environment
-variables:
+Then task \lstinline=model_run2_ship= would get the following custom
+environment variables:
 
 \begin{lstlisting}
-    export MYNAME=shipy-mcshipface
-    export MYFILE=/path/to/run002/ship
+# In a job script of an instance of the "model_run2_ship" task:
+export MYNAME=shipy-mcshipface
+export MYFILE=/path/to/run002/ship
 \end{lstlisting}
 
 \subsubsection{Selecting Specific Parameter Values}

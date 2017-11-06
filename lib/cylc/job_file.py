@@ -208,11 +208,8 @@ class JobFileWriter(object):
             '\n    export CYLC_TASK_TRY_NUMBER=%s' % job_conf['try_num'])
         # Custom parameter environment variables
         for var, tmpl in job_conf['param_env_tmpl'].items():
-            try:
-                handle.write('\n    export %s="%s"' % (
-                    var, tmpl % job_conf['param_var']))
-            except (KeyError, TypeError, ValueError):
-                continue
+            handle.write('\n    export %s="%s"' % (
+                var, tmpl % job_conf['param_var']))
         # Standard parameter environment variables
         for var, val in job_conf['param_var'].items():
             handle.write('\n    export CYLC_TASK_PARAM_%s="%s"' % (var, val))
