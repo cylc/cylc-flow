@@ -276,8 +276,9 @@ class SuiteRuntimeServiceClient(object):
             # Cannot connect, perhaps suite is no longer running and is leaving
             # behind a contact file?
             try:
-                self.srv_files_mgr.detect_old_contact_file(self.suite)
-            except SuiteServiceFileError:
+                self.srv_files_mgr.detect_old_contact_file(
+                    self.suite, (self.host, self.port))
+            except (AssertionError, SuiteServiceFileError):
                 raise exc
             else:
                 # self.srv_files_mgr.detect_old_contact_file should delete left

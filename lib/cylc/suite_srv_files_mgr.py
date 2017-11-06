@@ -94,11 +94,26 @@ class SuiteSrvFilesManager(object):
                     import traceback
                     traceback.print_exc()
 
-    def detect_old_contact_file(self, reg):
+    def detect_old_contact_file(self, reg, check_host_port=None):
         """Detect old suite contact file.
 
-        Raise SuiteServiceFileError if old contact file exists, and there is
-        evidence that the old suite is still running.
+        If old contact file does not exist, do nothing. If old contact file
+        exists, but suite process is definitely not alive, remove old contact
+        file. If old contact file exists and suite process still alive, raise
+        SuiteServiceFileError. If check_host_port is specified and does not
+        match the (host, port) value in the old contact file, raise
+        AssertionError.
+
+        Args:
+            reg (str): suite name
+            check_host_port (tuple): (host, port) to check against
+
+        Raise:
+            AssertionError:
+                If old contact file exists but does not have matching
+                (host, port) with value of check_host_port.
+            SuiteServiceFileError:
+                If old contact file exists and the suite process still alive.
         """
         # An old suite of the same name may be running if a contact file exists
         # and can be loaded.
@@ -110,6 +125,9 @@ class SuiteSrvFilesManager(object):
         except (IOError, ValueError, SuiteServiceFileError):
             # Contact file does not exist or corrupted, should be OK to proceed
             return
+        if check_host_port and check_host_port != (old_host, int(old_port)):
+            raise AssertionError("%s != (%s, %s)" % (
+                check_host_port, old_host, old_port))
         # Run the "ps" command to see if the process is still running or not.
         # If the old suite process is still running, it should show up with the
         # same command line as before.
