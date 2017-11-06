@@ -1,0 +1,25 @@
+[cylc]
+    [[parameters]]
+        num = 99..101..2
+        stuff = this, that
+    [[reference test]]
+        live mode suite timeout = PT1M
+[scheduling]
+    [[dependencies]]
+        graph = "t1<num,stuff> => t2<num,stuff>"
+[runtime]
+    [[T]]
+        [[[parameter environment templates]]]
+            MYNUM = %(num)d
+            MYSTUFF = stuff %(stuff)s
+            MY_FILE = %(num)04d-%(stuff)s
+    [[t1<num,stuff>]]
+        inherit = T
+        script = """
+echo "${MYNUM} and ${MYSTUFF}" >"${CYLC_SUITE_RUN_DIR}/${MY_FILE}"
+"""
+    [[t2<num,stuff>]]
+        inherit = T
+        script = """
+test "${MYNUM} and ${MYSTUFF}" = "$(<"${CYLC_SUITE_RUN_DIR}/${MY_FILE}")"
+"""

@@ -163,7 +163,7 @@ def _coerce_parameter_list(value, keys, _):
             if not step:
                 step = 1
             items.extend(range(int(lower), int(upper) + 1, int(step)))
-        elif TaskID.NAME_REC.match(item):
+        elif TaskID.NAME_SUFFIX_REC.match(item):
             if not item.isdigit():
                 if can_only_be == int:
                     raise IllegalValueError(
@@ -425,6 +425,9 @@ SPEC = {
                 '__MANY__': vdr(vtype='string'),
             },
             'outputs': {
+                '__MANY__': vdr(vtype='string'),
+            },
+            'parameter environment templates': {
                 '__MANY__': vdr(vtype='string'),
             },
         },

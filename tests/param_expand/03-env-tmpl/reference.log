@@ -1,0 +1,10 @@
+2017-01-12T14:46:57Z INFO - Initial point: 1
+2017-01-12T14:46:57Z INFO - Final point: 1
+2017-01-12T14:46:57Z INFO - [t1_num099_this.1] -triggered off []
+2017-01-12T14:47:00Z INFO - [t2_num099_this.1] -triggered off ['t1_num099_this.1']
+2017-01-12T14:46:57Z INFO - [t1_num099_that.1] -triggered off []
+2017-01-12T14:47:00Z INFO - [t2_num099_that.1] -triggered off ['t1_num099_that.1']
+2017-01-12T14:46:57Z INFO - [t1_num101_this.1] -triggered off []
+2017-01-12T14:47:00Z INFO - [t2_num101_this.1] -triggered off ['t1_num101_this.1']
+2017-01-12T14:46:57Z INFO - [t1_num101_that.1] -triggered off []
+2017-01-12T14:47:00Z INFO - [t2_num101_that.1] -triggered off ['t1_num101_that.1']

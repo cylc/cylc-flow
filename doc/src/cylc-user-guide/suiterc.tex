@@ -1869,6 +1869,33 @@ omission from an \lstinline=include= list.
 \item {\em default:} (none)
 \end{myitemize}
 
+\paragraph[{[[[}parameter environment templates{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[parameter environment templates]]]}
+
+The user defined task execution parameter environment templates. This is only
+relevant for {\em parameterized tasks} - see Section~\ref{Parameterized Tasks}.
+
+\subparagraph[\_\_VARIABLE\_\_ ]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[parameter environment templates]]] \textrightarrow \_\_VARIABLE\_\_}
+
+Replace \_\_VARIABLE\_\_ with pairs of environment variable
+name and Python string template for parameter substitution. This is only
+relevant for {\em parameterized tasks} - see Section~\ref{Parameterized Tasks}.
+
+If specified, in addition to the standard CYLC\_TASK\_PARAM\_<key> variables, the
+job script will also export the named variables specified here, with the
+template strings substituted with the parameter values.
+
+\begin{myitemize}
+\item {\em type:} string
+\item {\em default:} (none)
+\item {\em legal values:} name=string template pairs
+\item {\em examples}, for the bash shell:
+   \begin{myitemize}
+       \item \lstinline@MYNUM=%(i)d@
+       \item \lstinline@MYITEM=%(item)s@
+       \item \lstinline@MYFILE=/path/to/%(i)03d/%(item)s@
+   \end{myitemize}
+\end{myitemize}
+
 \paragraph[{[[[}directives{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[directives]]]}
 
 Batch queue scheduler directives.  Whether or not these are used depends

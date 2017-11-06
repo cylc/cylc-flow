@@ -206,9 +206,13 @@ class JobFileWriter(object):
             ' '.join(job_conf['namespace_hierarchy']))
         handle.write(
             '\n    export CYLC_TASK_TRY_NUMBER=%s' % job_conf['try_num'])
-        if job_conf['param_var']:
-            for var, val in job_conf['param_var'].items():
-                handle.write('\n    export %s="%s"' % (var, val))
+        # Custom parameter environment variables
+        for var, tmpl in job_conf['param_env_tmpl'].items():
+            handle.write('\n    export %s="%s"' % (
+                var, tmpl % job_conf['param_var']))
+        # Standard parameter environment variables
+        for var, val in job_conf['param_var'].items():
+            handle.write('\n    export CYLC_TASK_PARAM_%s="%s"' % (var, val))
         if job_conf['work_d']:
             # Note: not an environment variable, but used by job.sh
             handle.write(
