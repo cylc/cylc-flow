@@ -23,7 +23,7 @@ set_test_number 2
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE
-run_fail $TEST_NAME cylc validate --debug -v -v $SUITE_NAME
+run_fail $TEST_NAME cylc validate --debug -v $SUITE_NAME
 grep_ok "Illegal ISO 8601 interval value: \[cylc\]\[events\]timeout = 4320" \
     $TEST_NAME.stderr
 #-------------------------------------------------------------------------------

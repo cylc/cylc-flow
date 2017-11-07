@@ -27,6 +27,6 @@ run_ok $TEST_NAME cylc validate --set=RELEASE_MATCH='ST*' $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --set=RELEASE_MATCH='ST*' --reference-test \
-    --debug $SUITE_NAME
+    --debug --no-detach $SUITE_NAME
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

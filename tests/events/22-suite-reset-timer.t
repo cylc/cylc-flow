@@ -22,7 +22,7 @@ set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 # Note: reset timer is not used by a reference test
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug --no-detach "${SUITE_NAME}"
 # If reset timer is False, suite will shutdown well before it can run foo.2010
 grep_ok '\[foo\.20100101T0000Z\]' "${SUITE_RUN_DIR}/log/suite/log"
 

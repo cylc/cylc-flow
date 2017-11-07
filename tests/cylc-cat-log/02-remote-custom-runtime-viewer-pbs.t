@@ -45,7 +45,7 @@ create_test_globalrc "" "
                 out viewer = ${OUT_VIEWER}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}" \
-    cylc run --debug --reference-test "${SUITE_NAME}"
+    cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
 
 purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"

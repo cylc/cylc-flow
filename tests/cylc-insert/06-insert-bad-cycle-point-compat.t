@@ -26,7 +26,7 @@ TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-suite_run_fail $TEST_NAME cylc run -v -v --reference-test --debug $SUITE_NAME
+suite_run_fail $TEST_NAME cylc run -v -v --reference-test --debug --no-detach $SUITE_NAME
 grep_ok "No matching tasks found: foo.teatime" $TEST_NAME.stderr
 grep_ok "Invalid ISO 8601 date representation: teatime" $TEST_NAME.stderr
 #-------------------------------------------------------------------------------

@@ -35,10 +35,10 @@ if ! which sqlite3 > /dev/null; then
     exit 0
 fi
 TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --debug $SUITE_NAME
+suite_run_ok $TEST_NAME cylc run --debug --no-detach $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-restart-run
-suite_run_ok $TEST_NAME cylc restart --debug $SUITE_NAME
+suite_run_ok $TEST_NAME cylc restart --debug --no-detach $SUITE_NAME
 #-------------------------------------------------------------------------------
 cmp_ok $TEST_DIR/pre-restart-db <<'__DB_DUMP__'
 bar|20130923T0000Z|1|1|succeeded

@@ -28,7 +28,7 @@ TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-suite_run_fail $TEST_NAME cylc run --debug $SUITE_NAME --warm 20100101T1800Z
+suite_run_fail $TEST_NAME cylc run --debug --no-detach $SUITE_NAME --warm 20100101T1800Z
 #-------------------------------------------------------------------------------
 grep_ok "WARNING - Unmet prerequisites for foo.20100101T1200Z:" \
     "${TEST_NAME_BASE}-run.stderr"

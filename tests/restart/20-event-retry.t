@@ -22,7 +22,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 SUITED="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --debug
+suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --debug --no-detach
 if ! which sqlite3 > /dev/null; then
     skip 1 "sqlite3 not installed?"
 else
@@ -31,7 +31,7 @@ else
         >"${TEST_NAME_BASE}-db-n-entries"
     cmp_ok "${TEST_NAME_BASE}-db-n-entries" <<<'1'
 fi
-suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart "${SUITE_NAME}" --debug
+suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart "${SUITE_NAME}" --debug --no-detach
 cmp_ok "${SUITED}/file" <<'__TEXT__'
 1
 2

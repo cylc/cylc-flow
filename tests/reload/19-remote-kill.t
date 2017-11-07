@@ -29,7 +29,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate --set="CYLC_TEST_HOST=${TEST_HOST}" "${SUITE_NAME}"
 suite_run_fail "${TEST_NAME_BASE}-run" \
-    cylc run --debug --reference-test \
+    cylc run --debug --no-detach --reference-test \
     --set="CYLC_TEST_HOST=${TEST_HOST}" \
      "${SUITE_NAME}"
 if ! which sqlite3 > /dev/null; then

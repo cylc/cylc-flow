@@ -30,7 +30,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${SUITE_NAME}" -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --debug --reference-test -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}" \
+    cylc run --debug --no-detach --reference-test -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}" \
     "${SUITE_NAME}"
 
 RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"

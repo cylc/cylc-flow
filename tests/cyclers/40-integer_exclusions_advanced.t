@@ -35,7 +35,7 @@ graph_suite "$SUITE_NAME" "$SUITE_NAME.graph.plain"
 cmp_ok "$SUITE_NAME.graph.plain" "$TEST_SOURCE_DIR/$CHOSEN_SUITE/graph.plain.ref"
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
+suite_run_ok $TEST_NAME cylc run --reference-test --debug --no-detach $SUITE_NAME
 #-------------------------------------------------------------------------------
 if [[ -f "$TEST_SOURCE_DIR/$TEST_NAME_BASE-find.out" ]]; then
     TEST_NAME="$TEST_NAME_BASE-find"

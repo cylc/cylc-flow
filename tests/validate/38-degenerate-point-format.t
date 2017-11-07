@@ -23,7 +23,7 @@ set_test_number 2
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE
-run_fail $TEST_NAME cylc validate --debug -v -v $SUITE_NAME
+run_fail $TEST_NAME cylc validate --debug -v $SUITE_NAME
 grep_ok "Sequence R/2015-08/P1D, point format %Y-%m: equal adjacent points: 2015-08 => 2015-08." \
     $TEST_NAME.stderr
 #-------------------------------------------------------------------------------

@@ -28,7 +28,7 @@ grep_ok "This suite requires an initial cycle point\." \
     $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-run_fail $TEST_NAME cylc run --debug $SUITE_NAME
+run_fail $TEST_NAME cylc run --debug --no-detach $SUITE_NAME
 grep_ok "This suite requires an initial cycle point\." \
     $TEST_NAME.stderr
 #-------------------------------------------------------------------------------

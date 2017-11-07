@@ -46,7 +46,7 @@ chmod +x "${TEST_DIR}/${SUITE_NAME}/bin/my-rsync"
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate ${OPT_SET} -s "HOST=${HOST}" "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug ${OPT_SET} -s "HOST=${HOST}" \
+    cylc run --reference-test --debug --no-detach ${OPT_SET} -s "HOST=${HOST}" \
     "${SUITE_NAME}"
 
 SUITE_LOG_D="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log"

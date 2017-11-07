@@ -26,12 +26,12 @@ TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
+suite_run_ok $TEST_NAME cylc run --reference-test --debug --no-detach $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
 # Swapping the Monthly and Hours-of-the-day cycling sections
 # should make no difference.
 perl -pi -e 'undef $/; s/( *\[\[\[00.*marker1)\n( *\[\[\[Monthly.*marker2)/${2}\n${1}/smg' $TEST_DIR/$SUITE_NAME/suite.rc 
-suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
+suite_run_ok $TEST_NAME cylc run --reference-test --debug --no-detach $SUITE_NAME
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

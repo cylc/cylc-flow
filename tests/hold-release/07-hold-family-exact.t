@@ -27,6 +27,6 @@ run_ok $TEST_NAME cylc validate --set=HOLD_MATCH=STUFF $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --set=HOLD_MATCH=STUFF --reference-test \
-    --debug $SUITE_NAME
+    --debug --no-detach $SUITE_NAME
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

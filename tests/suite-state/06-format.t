@@ -23,7 +23,7 @@ set_test_number 5
 install_suite $TEST_NAME_BASE format
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --debug $SUITE_NAME
+suite_run_ok $TEST_NAME cylc run --debug --no-detach $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-cli-template-poll
 run_ok $TEST_NAME cylc suite-state $SUITE_NAME -p 20100101T0000Z \

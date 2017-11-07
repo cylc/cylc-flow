@@ -28,7 +28,7 @@ create_test_globalrc '' '
         copyable environment variables = FOO, BAR, BAZ'
 FOO='foo foo' BAR='bar bar' BAZ='baz baz' \
     suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug "${SUITE_NAME}"
+    cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}"
 JOB_FILE="${SUITE_RUN_DIR}/log/job/1/foo/NN/job"

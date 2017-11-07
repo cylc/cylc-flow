@@ -32,10 +32,10 @@ run_ok "${TEST_NAME_BASE}-validate" \
 
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run "${SUITE_NAME}" --set-file="${PWD}/template-vars.list" \
-    --until=2018 --debug
+    --until=2018 --debug --no-detach
 
 suite_run_ok "${TEST_NAME_BASE}-restart" \
-    cylc restart "${SUITE_NAME}" --debug --reference-test
+    cylc restart "${SUITE_NAME}" --debug --no-detach --reference-test
 
 purge_suite "${SUITE_NAME}"
 exit

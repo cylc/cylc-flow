@@ -23,12 +23,12 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run1" \
-    cylc run --reference-test --debug "${SUITE_NAME}"
+    cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 LOG="${SUITE_RUN_DIR}/log/suite/log"
 MESSAGE="('suite-event-handler-00', 'startup') bad template: 'rubbish'"
 run_ok "${TEST_NAME_BASE}-run1-log" grep -q -F "ERROR - ${MESSAGE}" "${LOG}"
 suite_run_fail "${TEST_NAME_BASE}-run2" \
-    cylc run --reference-test --debug -s 'ABORT=True' "${SUITE_NAME}"
+    cylc run --reference-test --debug --no-detach -s 'ABORT=True' "${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-run2-err" \
     grep -q -F "Suite shutting down - ${MESSAGE}" \
     "${TEST_NAME_BASE}-run2.stderr"

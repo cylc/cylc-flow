@@ -43,7 +43,7 @@ run_ok "${TEST_NAME_BASE}-validate" \
 
 TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug \
+    cylc run --reference-test --debug --no-detach \
     -s "CYLC_TEST_BATCH_SYS=${CYLC_TEST_BATCH_SYS}" \
     -s "CYLC_TEST_BATCH_TASK_HOST=${CYLC_TEST_BATCH_TASK_HOST}" \
     -s "CYLC_TEST_BATCH_SITE_DIRECTIVES=${CYLC_TEST_BATCH_SITE_DIRECTIVES}" \

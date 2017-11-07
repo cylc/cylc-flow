@@ -22,7 +22,7 @@ set_test_number 6
 #-------------------------------------------------------------------------------
 # test initial and final cycle point special notation (^, $)
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug --no-detach "${SUITE_NAME}"
 
 grep_ok '\[foo\.20160101T0000Z\]' "${SUITE_RUN_DIR}/log/suite/log"
 grep_ok '\[bar\.20160101T0000Z\]' "${SUITE_RUN_DIR}/log/suite/log"

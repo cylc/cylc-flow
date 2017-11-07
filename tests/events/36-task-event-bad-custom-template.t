@@ -29,7 +29,7 @@ cmp_ok "${TEST_NAME_BASE}-validate.stderr" <<'__ERR__'
 "ERROR: bad task event handler template t1: echo %(rubbish)s: KeyError('rubbish',)"
 __ERR__
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug "${SUITE_NAME}"
+    cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 LOG="${SUITE_RUN_DIR}/log/suite/log"
 run_ok "${TEST_NAME_BASE}-log" grep -q -F "ERROR - 1/t1/01 ('event-handler-00', 'succeeded') bad template: 'rubbish'" "${LOG}"
 
