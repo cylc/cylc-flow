@@ -622,7 +622,7 @@ To start a new run, stop the old one first with one or more of these:
             # Attempt to read suite contact file via the local filesystem.
             path = r'%(run_d)s/%(srv_base)s' % {
                 'run_d': GLOBAL_CFG.get_derived_host_item(
-                    reg, 'suite run directory', host, owner,
+                    reg, 'suite run directory', 'localhost', owner,
                     replace_home=False),
                 'srv_base': self.DIR_BASE_SRV,
             }
