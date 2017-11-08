@@ -25,11 +25,12 @@ from uuid import uuid4
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
+from cylc.hostuserutil import is_remote_host, get_host_ip_by_name
 from cylc.network.httpclient import (
     SuiteRuntimeServiceClient, ClientError, ClientTimeout)
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
-from cylc.hostuserutil import is_remote_host, get_host_ip_by_name
+from cylc.suite_status import (KEY_NAME, KEY_OWNER, KEY_STATES)
 
 CONNECT_TIMEOUT = 5.0
 INACTIVITY_TIMEOUT = 10.0
@@ -70,9 +71,9 @@ def _scan_item(timeout, my_uuid, srv_files_mgr, item):
     except ClientError:
         return (host, port, None)
     else:
-        owner = result.get('owner')
-        name = result.get('name')
-        states = result.get('states', None)
+        owner = result.get(KEY_OWNER)
+        name = result.get(KEY_NAME)
+        states = result.get(KEY_STATES, None)
         if cylc.flags.debug:
             sys.stderr.write('   suite: %s %s\n' % (name, owner))
         if states is None:
@@ -88,7 +89,6 @@ def _scan_item(timeout, my_uuid, srv_files_mgr, item):
                 if pphrase:
                     client.suite = name
                     client.owner = owner
-                    client.host = host
                     client.auth = None
                     try:
                         result = client.identify()

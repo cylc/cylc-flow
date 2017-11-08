@@ -94,11 +94,26 @@ class SuiteSrvFilesManager(object):
                     import traceback
                     traceback.print_exc()
 
-    def detect_old_contact_file(self, reg):
+    def detect_old_contact_file(self, reg, check_host_port=None):
         """Detect old suite contact file.
 
-        Raise SuiteServiceFileError if old contact file exists, and there is
-        evidence that the old suite is still running.
+        If old contact file does not exist, do nothing. If old contact file
+        exists, but suite process is definitely not alive, remove old contact
+        file. If old contact file exists and suite process still alive, raise
+        SuiteServiceFileError. If check_host_port is specified and does not
+        match the (host, port) value in the old contact file, raise
+        AssertionError.
+
+        Args:
+            reg (str): suite name
+            check_host_port (tuple): (host, port) to check against
+
+        Raise:
+            AssertionError:
+                If old contact file exists but does not have matching
+                (host, port) with value of check_host_port.
+            SuiteServiceFileError:
+                If old contact file exists and the suite process still alive.
         """
         # An old suite of the same name may be running if a contact file exists
         # and can be loaded.
@@ -110,11 +125,15 @@ class SuiteSrvFilesManager(object):
         except (IOError, ValueError, SuiteServiceFileError):
             # Contact file does not exist or corrupted, should be OK to proceed
             return
+        if check_host_port and check_host_port != (old_host, int(old_port)):
+            raise AssertionError("%s != (%s, %s)" % (
+                check_host_port, old_host, old_port))
         # Run the "ps" command to see if the process is still running or not.
         # If the old suite process is still running, it should show up with the
         # same command line as before.
+        # Terminate command after 10 seconds to prevent hanging, etc.
         old_pid_str = old_proc_str.split(None, 1)[0].strip()
-        cmd = ["ps", "-opid,args", str(old_pid_str)]
+        cmd = ["timeout", "10", "ps", "-opid,args", str(old_pid_str)]
         if is_remote_host(old_host):
             import shlex
             from cylc.cfgspec.globalcfg import GLOBAL_CFG
@@ -144,18 +163,18 @@ class SuiteSrvFilesManager(object):
                 except OSError:
                     break
 
-        sys.stderr.write(
+        raise SuiteServiceFileError(
             (
                 r"""ERROR, suite contact file exists: %(fname)s
 
-If %(suite)s is not running, delete the suite contact file and try again.
-If it is running but unresponsive, kill any left over suite processes too.
+Suite "%(suite)s" is already running, and listening at "%(host)s:%(port)s".
 
-To see if %(suite)s is running on '%(host)s:%(port)s':
- * cylc scan -n '\b%(suite)s\b' '%(host)s'
- * cylc ping -v --host='%(host)s' '%(suite)s'
- * ssh -n '%(host)s' 'ps -o pid,args %(pid)s'
-
+To start a new run, stop the old one first with one or more of these:
+* cylc stop %(suite)s              # wait for active tasks/event handlers
+* cylc stop --kill %(suite)s       # kill active tasks and wait
+* cylc stop --now %(suite)s        # don't wait for active tasks
+* cylc stop --now --now %(suite)s  # don't wait
+* ssh -n "%(host)s" kill %(pid)s   # final brute force!
 """
             ) % {
                 "host": old_host,
@@ -165,14 +184,13 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
                 "suite": reg,
             }
         )
-        raise SuiteServiceFileError(
-            "ERROR, suite contact file exists: %s" % fname)
 
     def dump_contact_file(self, reg, data):
         """Create contact file. Data should be a key=value dict."""
         with open(self.get_contact_file(reg), "wb") as handle:
             for key, value in sorted(data.items()):
                 handle.write("%s=%s\n" % (key, value))
+            os.fsync(handle.fileno())
 
     def get_contact_file(self, reg):
         """Return name of contact file."""
@@ -604,7 +622,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
             # Attempt to read suite contact file via the local filesystem.
             path = r'%(run_d)s/%(srv_base)s' % {
                 'run_d': GLOBAL_CFG.get_derived_host_item(
-                    reg, 'suite run directory', host, owner,
+                    reg, 'suite run directory', 'localhost', owner,
                     replace_home=False),
                 'srv_base': self.DIR_BASE_SRV,
             }

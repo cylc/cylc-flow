@@ -118,8 +118,8 @@ class Scheduler(object):
         self.suite_srv_files_mgr = SuiteSrvFilesManager()
         try:
             self.suite_srv_files_mgr.register(self.suite, options.source)
-        except SuiteServiceFileError:
-            sys.exit(1)
+        except SuiteServiceFileError as exc:
+            sys.exit(exc)
         # Register suite if not already done
         self.suite_dir = self.suite_srv_files_mgr.get_suite_source_dir(
             self.suite)
