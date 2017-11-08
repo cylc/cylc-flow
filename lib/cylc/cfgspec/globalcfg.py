@@ -529,6 +529,9 @@ class GlobalConfig(config):
                 if owner_home is None:
                     owner_home = os.path.expanduser('~%s' % owner)
                 value = value.replace(os.environ['HOME'], owner_home)
+        if item == "task communication method" and value == "default":
+            # Translate "default" to client-server comms: "https" or "http".
+            value = cfg['communication']['method']
         return value
 
     def roll_directory(self, d, name, archlen=0):
