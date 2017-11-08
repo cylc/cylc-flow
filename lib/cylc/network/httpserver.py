@@ -565,16 +565,6 @@ class SuiteRuntimeService(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def set_runahead(self, interval=None):
-        """Set runahead limit to a new interval."""
-        self._check_access_priv_and_report(PRIV_FULL_CONTROL)
-        interval = self._literal_eval('interval', interval)
-        self.schd.command_queue.put(
-            ("set_runahead", (), {"interval": interval}))
-        return (True, 'Command queued')
-
-    @cherrypy.expose
-    @cherrypy.tools.json_out()
     def set_stop_after_clock_time(self, datetime_string):
         """Set suite to stop after wallclock time."""
         self._check_access_priv_and_report(PRIV_SHUTDOWN)
