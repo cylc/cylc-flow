@@ -830,6 +830,10 @@ class TaskEventsManager(object):
             # Custom event handler can be a command template string
             # or a command that takes 4 arguments (classic interface)
             # Note quote() fails on None, need str(None).
+            user_at_host = itask.summary['job_hosts'][itask.submit_num]
+            if '@' not in user_at_host:
+                # (only has 'user@' on the front if user is not suite owner).
+                user_at_host = '%s@%s' % (get_user(), user_at_host)
             try:
                 handler_data = {
                     "event": quote(event),
@@ -849,8 +853,7 @@ class TaskEventsManager(object):
                         str(itask.summary['started_time_string'])),
                     "finish_time": quote(
                         str(itask.summary['finished_time_string'])),
-                    "user@host": quote(
-                        str(itask.summary['job_hosts'][itask.submit_num]))
+                    "user@host": quote(user_at_host)
                 }
 
                 if self.suite_cfg:

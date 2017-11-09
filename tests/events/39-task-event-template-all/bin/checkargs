@@ -18,6 +18,8 @@ for line in open(alog):
         break
 
 del args['start_time']  # must exist, but value unreliable
+
+user_at_host = "%s@localhost" % os.environ['USER']
 assert args == {
     'suite_title': 'a test suite',
     'job_id': job_id.strip(),
@@ -32,7 +34,7 @@ assert args == {
     'suite_size': 'large',
     'suite': suite,
     'message': 'cheesy peas',
-    'user@host': 'localhost',
+    'user@host': user_at_host,
     'event': 'custom',
     'submit_time': submit_time,
     'name': 'foo'}
