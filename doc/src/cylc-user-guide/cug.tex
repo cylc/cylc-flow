@@ -6500,6 +6500,35 @@ user, port number, process ID, Cylc version, and other information about the
 suite daemon. Client commands automatically read daemon targetting information
 from the contact file, if they have access to it.
 
+\subsection{File-Reading Commands}
+
+Some Cylc commands and GUI actions parse suite definitions or read other files
+from the suite host account, rather than communicate with a suite daemon over
+the network. In future we plan to have suite daemons serve up these files to
+clients, but for the moment this functionality requires read-access to the
+relevant files on the suite host.
+
+If you are logged into the suite host account, file-reading commands will just
+work. 
+
+\subsubsection{Remote Host, Shared Home Directory}
+
+If you are logged into another host with shared home directories (shared
+filesystems are common in HPC environments) file-reading commands will just
+work because suite files will look ``local'' on both hosts. 
+
+\subsubsection{Remote Host, Different Home Directory}
+
+If you are logged into another host with no shared home directory, file-reading
+commands require non-interactive ssh to the suite host account, and use of the
+\lstinline=--host= and \lstinline=--user= options to re-invoke the command
+on the suite account.
+
+\subsubsection{Same Host, Different User Account}
+
+(This is essentially the same as {\em Remote Host, Different Home Directory}.)
+
+
 \subsection{Client-Server Interaction}
 \label{ConnectionAuthentication}
 
@@ -6508,7 +6537,7 @@ HTTPS communications from Cylc clients (task jobs, and user-invoked commands
 and GUIs).
 
 Use \lstinline=cylc scan= to see which suites are listening on which ports on
-scanned hosts (this lists your own suites, by default, but it can show others
+scanned hosts (this lists your own suites by default, but it can show others
 too - see \lstinline=cylc scan --help=).
 
 Cylc supports two kinds of access to suite daemons:
@@ -6519,7 +6548,7 @@ Cylc supports two kinds of access to suite daemons:
       required, see~\ref{passphrases}
 \end{myitemize}
 
-\subsubsection{Public Access - No Passphrase}
+\subsubsection{Public Access - No Auth Files}
 \label{PublicAccess}
 
 Without a suite passphrase the amount of information revealed by a suite
@@ -6535,18 +6564,19 @@ site/user config (\ref{GlobalAuth}) and optionally overidden in suites
         control.
 \end{myitemize}
 The default public access level is {\em state-totals}.
-The \lstinline=cylc scan= command can print descriptions and task state totals
-in addition to basic suite identity, if you have the right passphrases or if
-the requested information is revealed publicly.
 
-\subsubsection{Full Control - With Passphrase}
+The \lstinline=cylc scan= command and the \lstinline=cylc gscan= GUI can print
+descriptions and task state totals in addition to basic suite identity, if the
+that information is revealed publicly.
+
+\subsubsection{Full Control - With Auth Files}
 \label{passphrases}
 
-Suite passphrases, which give full control over a suite, are loaded from the
-suite service directory (see~\ref{The Suite Service Directory}) by the suite
-daemon at start-up, and used to authenticate subsequent client connections.
-Passphrases are used in a secure encrypted challenge-response scheme, never
-sent in plain text over the network.
+Suite auth files (passphrase and SSL certificate) give full control. They are
+loaded from the suite service directory by the suite daemon at start-up, and
+used to authenticate subsequent client connections. Passphrases are used in a
+secure encrypted challenge-response scheme, never sent in plain text over the
+network.
 
 If two users need access to the same suite daemon, they must both possess the
 passphrase file for that suite. Fine-grained access to a single suite daemon
@@ -6562,34 +6592,12 @@ SSL certificate, and contact file too, for automatic connection to suites.
 {\em Manual installation of suite auth files is only needed for remote control,
 if you do not have a shared filesystem - see below.}
 
-\subsection{File-Reading Commands}
-
-Some Cylc commands and GUI actions parse the suite definition file or read
-other files, such as suite logs, from the suite host account rather than
-communicate with a suite daemon over the network.  In the future we plan to
-have suite daemons serve up these files to clients, but for the moment this
-functionality requires read-access to the relevant files on the suite host.
-
-\subsubsection{On A Shared Filesystem}
-
-If you are logged into the suite host account, suite-parsing commands will just
-work. The same goes if you are logged into another host that shares the same
-filesystem as the suite host - which is often the case in an HPC environment.
-Specifically, the two accounts must see the same home directory.
-
-\subsubsection{Without A Shared Filesystem}
-
-If you are logged into another host that does not see the same filesystem as
-the suite host you must have non-interactive ssh configured to the suite host
-account, and use the \lstinline=--host= and \lstinline=--user= command options
-to re-invoke (via ssh) suite-parsing commands on the suite host. The GUI should
-automatically do this when it invokes suite-parsing commands.
 
 \subsection{GUI-to-Suite Interaction}
 \label{GUI-to-Suite Interaction}
 
 The gcylc GUI is mainly a network client to retrieve and display suite status
-information from the suite daemon, but it can also invoke suite-parsing
+information from the suite daemon, but it can also invoke file-reading
 commands to view and graph the suite definition and so on. This is entirely
 transparent if the GUI is running on the suite host account, but full
 functionality for remote suites requires either a shared filesystem, or 
@@ -6617,9 +6625,9 @@ can invoke client commands without the \lstinline=--host= option; the client
 will automatically read the host and port from the contact file in the
 suite service directory. 
 
-To interact with suite daemons running under other user accounts or on other
-hosts without a shared filesystem, the suite SSL certificate and passphrase
-must be installed under your \lstinline=$HOME/.cylc/= directory:
+To control suite daemons running under other user accounts or on other hosts
+without a shared filesystem, the suite SSL certificate and passphrase must be
+installed under your \lstinline=$HOME/.cylc/= directory:
 \lstset{language=transcript}
 \begin{lstlisting}
 $HOME/.cylc/auth/OWNER@HOST/SUITE/
@@ -6632,8 +6640,11 @@ is the suite name. Client commands should then be invoked with the
 \lstinline=--user= and \lstinline=--host= options, e.g.:
 \lstset{language=transcript}
 \begin{lstlisting}
-$ cylc monitor --user=OWNER --host=HOST SUITE
+$ cylc gui --user=OWNER --host=HOST SUITE
 \end{lstlisting}
+
+Note remote suite auth files do not need to be installed for read-only access -
+see~ref{PublicAccess} - via the GUI or monitor.
 
 The suite contact file (see~\ref{The Suite Contact File}) is not needed if 
 you have read-access to the remote suite run directory via the local
@@ -6649,6 +6660,17 @@ arbitrary scripting on job hosts as the suite owner. Further,
 non-interactive ssh gives full access to the target user account, so we
 recommended that this is only used to interact with suites running on
 accounts to which you already have full access. }
+
+\subsection{Scan And Gscan}
+\label{Scan And Gscan}
+
+Both \lstinline=cylc scan= and the \lstinline=cylc gscan= GUI can display
+suites owned by other users on other hosts, including task state totals if the
+public access level permits that (see~\ref{PublicAccess}). Clicking on a remote
+suite in \lstinline=gscan= will open a \lstinline=cylc gui= to connect to that
+suite. This will give you full control, if you have the suite auth files
+installed; or it will display full read only information if the public access
+level allows that.
 
 \subsection{Task States Explained}
 
