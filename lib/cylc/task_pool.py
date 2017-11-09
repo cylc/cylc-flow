@@ -623,25 +623,6 @@ class TaskPool(object):
                 return True
         return False
 
-    def set_runahead(self, interval=None):
-        """Set the runahead."""
-        if isinstance(interval, int) or isinstance(interval, basestring):
-            # The unit is assumed to be hours (backwards compatibility).
-            interval = str(interval)
-            interval_cls = get_interval_cls()
-            if interval_cls.TYPE == ISO8601_CYCLING_TYPE:
-                interval = get_interval("PT%sH" % interval)
-            else:
-                interval = get_interval(interval)
-        if interval is None:
-            # No limit
-            LOG.warning("setting NO custom runahead limit")
-            self.custom_runahead_limit = None
-        else:
-            LOG.info("setting custom runahead limit to %s" % interval)
-            self.custom_runahead_limit = interval
-        return self.release_runahead_tasks()
-
     def get_min_point(self):
         """Return the minimum cycle point currently in the pool."""
         cycles = self.pool.keys()

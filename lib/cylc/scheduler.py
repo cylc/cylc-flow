@@ -99,7 +99,6 @@ class Scheduler(object):
         'release_suite',
         'release_tasks',
         'kill_tasks',
-        'set_runahead',
         'reset_task_states',
         'spawn_tasks',
         'trigger_tasks',
@@ -875,11 +874,6 @@ conditions; see `cylc conditions`.
             self.pool.is_held,
             self.config.cfg['cylc']['cycle point format'])
         cylc.flags.iflag = True
-
-    def command_set_runahead(self, interval=None):
-        """Set runahead limit."""
-        if self.pool.set_runahead(interval=interval):
-            self.task_events_mgr.pflag = True
 
     def set_suite_timer(self):
         """Set suite's timeout timer."""

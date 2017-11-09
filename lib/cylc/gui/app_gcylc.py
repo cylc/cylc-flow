@@ -227,8 +227,6 @@ class InfoBar(gtk.VBox):
         self.mode_widget = gtk.Label()
         self._set_tooltip(self.mode_widget, "mode")
 
-        self._runahead = ""
-
         self.update_time_str = "time..."
         self.time_widget = gtk.Label()
         self._set_tooltip(self.time_widget, "last update time")
@@ -1561,72 +1559,11 @@ been defined for this suite""").inform()
         menu.show_all()
         return menu
 
-    def change_runahead_popup(self, b):
-        window = gtk.Window()
-        window.modify_bg(gtk.STATE_NORMAL,
-                         gtk.gdk.color_parse(self.log_colors.get_color()))
-        window.set_border_width(5)
-        window.set_title("Change Suite Runahead Limit")
-        window.set_transient_for(self.window)
-        window.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DIALOG)
-
-        sw = gtk.ScrolledWindow()
-        sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-
-        vbox = gtk.VBox()
-
-        label = gtk.Label('SUITE: ' + self.cfg.suite)
-        vbox.pack_start(label, True)
-
-        entry = gtk.Entry()
-
-        hbox = gtk.HBox()
-        label = gtk.Label('HOURS')
-        hbox.pack_start(label, True)
-        hbox.pack_start(entry, True)
-        vbox.pack_start(hbox)
-
-        cancel_button = gtk.Button("_Cancel")
-        cancel_button.connect("clicked", lambda x: window.destroy())
-
-        start_button = gtk.Button("_Change")
-        start_button.connect("clicked", self.change_runahead, entry, window)
-
-        help_button = gtk.Button("_Help")
-        help_button.connect(
-            "clicked", self.command_help, "control", "set-runahead")
-
-        hbox = gtk.HBox()
-        hbox.pack_start(cancel_button, True)
-        hbox.pack_start(start_button, True)
-        hbox.pack_start(help_button, True)
-        vbox.pack_start(hbox)
-
-        window.add(vbox)
-        window.show_all()
-
     def window_show_all(self):
         """Show all window widgets."""
         self.window.show_all()
         if not self.info_bar.prog_bar_active():
             self.info_bar.prog_bar.hide()
-
-    def change_runahead(self, w, entry, window):
-        """Change the suite runahead limit."""
-        ent = entry.get_text()
-        if ent == '':
-            limit = None
-        else:
-            try:
-                int(ent)
-            except ValueError:
-                warning_dialog(
-                    'Hours value must be integer!', self.window).warn()
-                return
-            else:
-                limit = ent
-        window.destroy()
-        self.put_comms_command('set_runahead', interval=limit)
 
     def update_tb(self, tb, line, tags=None):
         """Update a text view buffer."""
@@ -2712,12 +2649,6 @@ to reduce network traffic.""")
         poll_item.connect('activate', self.poll_all)
 
         start_menu.append(gtk.SeparatorMenuItem())
-
-        runahead_item = gtk.ImageMenuItem('_Change Runahead Limit ...')
-        img = gtk.image_new_from_stock(gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU)
-        runahead_item.set_image(img)
-        start_menu.append(runahead_item)
-        runahead_item.connect('activate', self.change_runahead_popup)
 
         tools_menu = gtk.Menu()
         tools_menu_root = gtk.MenuItem('_Suite')
