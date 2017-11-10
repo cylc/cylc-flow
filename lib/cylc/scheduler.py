@@ -1182,15 +1182,12 @@ conditions; see `cylc conditions`.
             itasks = self.pool.get_ready_tasks()
             if itasks:
                 cylc.flags.iflag = True
+            done_tasks = self.task_job_mgr.submit_task_jobs(
+                self.suite, itasks, self.run_mode == 'simulation')
             if self.config.cfg['cylc']['log resolved dependencies']:
-                for itask in itasks:
-                    if itask.local_job_file_path:
-                        continue
+                for itask in done_tasks:
                     deps = itask.state.get_resolved_dependencies()
                     LOG.info('triggered off %s' % deps, itask=itask)
-
-            self.task_job_mgr.submit_task_jobs(
-                self.suite, itasks, self.run_mode == 'simulation')
         for meth in [
                 self.pool.spawn_all_tasks,
                 self.pool.remove_spent_tasks,
@@ -1624,7 +1621,7 @@ conditions; see `cylc conditions`.
             LOG.warning("Unique task match not found: %s" % items)
             return n_warnings + 1
         if self.task_job_mgr.prep_submit_task_jobs(
-                self.suite, [itasks[0]], dry_run=True):
+                self.suite, [itasks[0]], dry_run=True)[0]:
             return n_warnings
         else:
             return n_warnings + 1

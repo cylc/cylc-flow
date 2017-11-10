@@ -26,6 +26,7 @@ This module provides logic to:
 
 import os
 from pipes import quote
+import re
 from subprocess import Popen, PIPE
 import tarfile
 from tempfile import NamedTemporaryFile
@@ -40,14 +41,16 @@ from cylc.suite_logging import LOG
 from cylc.task_remote_cmd import REMOTE_INIT_DONE, REMOTE_INIT_NOT_REQUIRED
 
 
+REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*(`|\))$')
 REMOTE_INIT_FAILED = 'REMOTE INIT FAILED'
 
 
 class TaskRemoteMgmtError(Exception):
     """Cannot initialise suite run directory of remote job host."""
 
-    MSG_INIT = "%s: initialisation did not complete:\n"  # %s owner_at_host
-    MSG_TIDY = "%s: clean up did not complete:\n"  # %s owner_at_host
+    MSG_INIT = '%s: initialisation did not complete:\n'  # %s owner_at_host
+    MSG_SELECT = "%s: host selection failed:\n"  # %s host
+    MSG_TIDY = '%s: clean up did not complete:\n'  # %s owner_at_host
 
     def __str__(self):
         msg, (host, owner), cmd_str, ret_code, out, err = self.args
@@ -55,12 +58,12 @@ class TaskRemoteMgmtError(Exception):
             owner_at_host = owner + '@' + host
         else:
             owner_at_host = host
-        ret = (msg + "COMMAND FAILED (%d): %s\n") % (
+        ret = (msg + 'COMMAND FAILED (%d): %s\n') % (
             owner_at_host, ret_code, cmd_str)
-        for label, item in ("STDOUT", out), ("STDERR", err):
+        for label, item in ('STDOUT', out), ('STDERR', err):
             if item:
                 for line in item.splitlines(True):  # keep newline chars
-                    ret += "COMMAND %s: %s" % (label, line)
+                    ret += 'COMMAND %s: %s' % (label, line)
         return ret
 
 
@@ -71,11 +74,77 @@ class TaskRemoteMgr(object):
         self.suite = suite
         self.proc_pool = proc_pool
         self.suite_srv_files_mgr = suite_srv_files_mgr
+        # self.remote_host_str_map = {host_str: host|TaskRemoteMgmtError|None}
+        self.remote_host_str_map = {}
         # self.remote_init_map = {(host, owner): status, ...}
         self.remote_init_map = {}
         self.single_task_mode = False
         self.uuid = uuid4()
         self.ready = False
+
+    def remote_host_select(self, host_str):
+        """Evaluate a task host string.
+
+        Arguments:
+            host_str (str):
+                An explicit host name, a command in back-tick or $(command)
+                format, or an environment variable holding a hostname.
+
+        Return (str):
+            None if evaluate of host_str is still taking place.
+            'localhost' if host_str is not defined or if the evaluated host
+            name is equivalent to 'localhost'.
+            Otherwise, return the evaluated host name on success.
+
+        Raise TaskRemoteMgmtError on error.
+
+        """
+        if not host_str:
+            return 'localhost'
+
+        # Host selection command: $(command) or `command`
+        match = REC_COMMAND.match(host_str)
+        if match:
+            cmd_str = match.groups()[1]
+            if cmd_str in self.remote_host_str_map:
+                # Command recently launched
+                value = self.remote_host_str_map[cmd_str]
+                if isinstance(value, TaskRemoteMgmtError):
+                    raise value  # command failed
+                elif value is None:
+                    return  # command not yet ready
+                else:
+                    host_str = value  # command succeeded
+            else:
+                # Command not launched (or already reset)
+                timeout = GLOBAL_CFG.get(['task host select command timeout'])
+                if timeout:
+                    cmd = ['timeout', str(int(timeout)), 'bash', '-c', cmd_str]
+                else:
+                    cmd = ['bash', '-c', cmd_str]
+                self.proc_pool.put_command(
+                    SuiteProcContext(
+                        'remote-host-select', cmd, env=dict(os.environ)),
+                    self._remote_host_select_callback, [cmd_str])
+                self.remote_host_str_map[cmd_str] = None
+                return self.remote_host_str_map[cmd_str]
+
+        # Environment variable substitution
+        host_str = os.path.expandvars(host_str)
+        # Remote?
+        if is_remote_host(host_str):
+            return host_str
+        else:
+            return 'localhost'
+
+    def remote_host_select_reset(self):
+        """Reset remote host select results.
+
+        This is normally called after the results are consumed.
+        """
+        for key, value in self.remote_host_str_map.copy().items():
+            if value is not None:
+                del self.remote_host_str_map[key]
 
     def remote_init(self, host, owner):
         """Initialise a remote [owner@]host if necessary.
@@ -208,8 +277,22 @@ class TaskRemoteMgr(object):
                     (host, owner), ' '.join(quote(item) for item in cmd),
                     proc.ret_code, out, err))
 
+    def _remote_host_select_callback(self, proc_ctx, cmd_str):
+        """Callback when host select command exits"""
+        self.ready = True
+        if proc_ctx.ret_code == 0 and proc_ctx.out:
+            # Good status
+            LOG.debug(proc_ctx)
+            self.remote_host_str_map[cmd_str] = proc_ctx.out.splitlines()[0]
+        else:
+            # Bad status
+            LOG.error(proc_ctx)
+            self.remote_host_str_map[cmd_str] = TaskRemoteMgmtError(
+                TaskRemoteMgmtError.MSG_SELECT, (cmd_str, None), cmd_str,
+                proc_ctx.ret_code, proc_ctx.out, proc_ctx.err)
+
     def _remote_init_callback(self, proc_ctx, host, owner, tmphandle):
-        """Callback when init_host_exec_commands has exited"""
+        """Callback when "cylc remote-init" exits"""
         self.ready = True
         tmphandle.close()
         if proc_ctx.ret_code == 0:

@@ -18,8 +18,9 @@
 """Implement "cylc remote-init" and "cylc remote-tidy"."""
 
 import os
-from subprocess import check_call
 import sys
+import tarfile
+
 import cylc.flags
 from cylc.mkdir_p import mkdir_p
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
@@ -47,24 +48,14 @@ def remote_init(uuid_str, rund):
             print(REMOTE_INIT_NOT_REQUIRED)
             return
     mkdir_p(rund)
-    # Use "tar" command. Python (2.6) standard library "tarfile" does not
-    # appear to work even in stream mode.
-    # If "tarfile" works, we can do:
-    #
-    # import tarfile
-    # oldcwd = os.getcwd()
-    # os.chdir(rund)
-    # try:
-    #     tarhandle = tarfile.open(fileobj=sys.stdin, mode='r|')
-    #     print tarhandle.getnames()  # some diagnostics
-    #     tarhandle.extractall()
-    #     tarhandle.close()
-    # finally:
-    #     os.chdir(oldcwd)
-    if cylc.flags.debug:
-        check_call(['tar', '-C', rund, '-v', '-x', '-f', '-'], stdin=sys.stdin)
-    else:
-        check_call(['tar', '-C', rund, '-x', '-f', '-'], stdin=sys.stdin)
+    oldcwd = os.getcwd()
+    os.chdir(rund)
+    try:
+        tarhandle = tarfile.open(fileobj=sys.stdin, mode='r|')
+        tarhandle.extractall()
+        tarhandle.close()
+    finally:
+        os.chdir(oldcwd)
     print(REMOTE_INIT_DONE)
     return
 

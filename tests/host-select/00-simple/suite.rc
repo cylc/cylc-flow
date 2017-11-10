@@ -16,11 +16,11 @@ by many of the other test suites (see "cylc test-battery --help")."""
         suite shutdown event handler = cleanup.sh
 [scheduling]
     [[dependencies]]
-        graph = "foo & bar"
+        graph = "foo1 & foo2 & foo3 & bar"
 [runtime]
     [[root]]
         script = "/bin/true" # fast
-    [[foo]]
+    [[foo1, foo2, foo3]]
         [[[remote]]]
             # in suite bin directory:
             host = $(host-select.sh) # returns value of $CYLC_TEST_TASK_HOST
