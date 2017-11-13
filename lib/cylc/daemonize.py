@@ -79,10 +79,11 @@ def daemonize(server):
                     if (log_stat.st_mtime == old_log_mtime or
                             log_stat.st_size == 0):
                         continue
-                    if len(open(log_fname).readlines()) < 2:
-                        continue
                     with open(log_fname) as log_f:
-                        first_two_lines = next(log_f), next(log_f)
+                        try:
+                            first_two_lines = next(log_f), next(log_f)
+                        except StopIteration:
+                            continue
                     ok = False
                     for log_line in first_two_lines:
                         if server.START_MESSAGE_PREFIX in log_line:
