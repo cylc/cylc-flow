@@ -30,7 +30,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate -s "HOST=${HOST}" "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug -s "HOST=${HOST}" "${SUITE_NAME}"
+    cylc run --reference-test --debug --no-detach -s "HOST=${HOST}" "${SUITE_NAME}"
 
 # There are 2 remote tasks. One with "retrieve job logs = True", one without.
 # Only t1 should have job.err and job.out retrieved.

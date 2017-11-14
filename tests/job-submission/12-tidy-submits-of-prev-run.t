@@ -22,7 +22,7 @@ set_test_number 7
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --debug --reference-test "${SUITE_NAME}"
+    cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
 LOGD1="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/job/1/t1/01"
 LOGD2="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/job/1/t1/02"
 exists_ok "${LOGD1}"
@@ -30,7 +30,7 @@ exists_ok "${LOGD2}"
 sed -i 's/script =.*$/script = true/' "suite.rc"
 sed -i -n '1,/triggered off/p' "reference.log"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --debug --reference-test "${SUITE_NAME}"
+    cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
 exists_ok "${LOGD1}"
 exists_fail "${LOGD2}"
 #-------------------------------------------------------------------------------

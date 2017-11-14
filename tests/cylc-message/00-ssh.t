@@ -37,7 +37,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${SUITE_NAME}" -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --debug --reference-test "${SUITE_NAME}" \
+    cylc run --debug --no-detach --reference-test "${SUITE_NAME}" \
     -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}"
 
 run_fail "${TEST_NAME_BASE}-grep-DENIED-suite-log" \

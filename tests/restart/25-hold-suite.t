@@ -21,7 +21,7 @@ set_test_number 7
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --debug
+suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --debug --no-detach
 
 if ! which sqlite3 > /dev/null; then
     skip 1 "sqlite3 not installed?"
@@ -32,7 +32,7 @@ else
 fi
 T1_2016_PID="$(sed -n 's/CYLC_JOB_PID=//p' "${SUITE_RUN_DIR}/log/job/2016/t1/01/job.status")"
 poll ! ps "${T1_2016_PID}" 2>'/dev/null'
-cylc restart "${SUITE_NAME}" --debug 1>"${TEST_NAME_BASE}-restart.out" 2>&1 &
+cylc restart "${SUITE_NAME}" --debug --no-detach 1>"${TEST_NAME_BASE}-restart.out" 2>&1 &
 CYLC_RESTART_PID=$!
 # Ensure suite has started
 poll ! test -f "${SUITE_RUN_DIR}/.service/contact"

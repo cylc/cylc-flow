@@ -27,7 +27,7 @@ run_ok $TEST_NAME cylc validate -v --set=FUTURE_TRIGGER_START_POINT=T02 \
     $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-run_fail $TEST_NAME cylc run --debug --set=FUTURE_TRIGGER_START_POINT=T02 \
+run_fail $TEST_NAME cylc run --debug --no-detach --set=FUTURE_TRIGGER_START_POINT=T02 \
     $SUITE_NAME
 #-------------------------------------------------------------------------------
 if ! which sqlite3 > /dev/null; then

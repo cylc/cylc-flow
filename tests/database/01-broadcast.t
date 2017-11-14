@@ -22,7 +22,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --debug --reference-test "${SUITE_NAME}"
+    cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
 
 DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/log/db"
 

@@ -27,7 +27,7 @@ RUN_DOC = r"""cylc [control] run|start [OPTIONS] ARGS
 Start a suite run from scratch, wiping out any previous suite state. To
 restart from a previous state see 'cylc restart --help'.
 
-The scheduler runs in daemon mode unless you specify --no-detach or --debug.
+The scheduler runs as a daemon unless you specify --no-detach.
 
 Any dependence on cycle points earlier than the start cycle point is ignored.
 
@@ -45,7 +45,7 @@ RESTART_DOC = r"""cylc [control] restart [OPTIONS] ARGS
 Start a suite run from the previous state. To start from scratch (cold or warm
 start) see the 'cylc run' command.
 
-The scheduler runs in daemon mode unless you specify n/--no-detach or --debug.
+The scheduler runs as a daemon unless you specify --no-detach.
 
 Tasks recorded as submitted or running are polled at start-up to determine what
 happened to them while the suite was down."""

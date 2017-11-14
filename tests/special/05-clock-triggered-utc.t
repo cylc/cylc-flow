@@ -27,7 +27,7 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME -s START=$(date -u +%Y%m%dT%H00)Z \
     -s HOUR=$(date -u +%H) -s UTC_MODE=True -s OFFSET=PT0M -s TIMEOUT=PT0.2M
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run-now
-run_ok $TEST_NAME cylc run --debug $SUITE_NAME \
+run_ok $TEST_NAME cylc run --debug --no-detach $SUITE_NAME \
     -s START=$(date -u +%Y%m%dT%H00)Z -s HOUR=$(date -u +%H) \
     -s UTC_MODE=True -s OFFSET=PT0M -s TIMEOUT=PT1M
 #-------------------------------------------------------------------------------
@@ -35,14 +35,14 @@ TEST_NAME=$TEST_NAME_BASE-run-past
 NOW=$(date -u +%Y%m%dT%H00)Z
 START=$(cylc cycle-point $NOW --offset-hour=-10)
 HOUR=$(cylc cycle-point $NOW --offset-hour=-10 --print-hour)
-run_ok $TEST_NAME cylc run --debug $SUITE_NAME -s START=$START -s HOUR=$HOUR \
+run_ok $TEST_NAME cylc run --debug --no-detach $SUITE_NAME -s START=$START -s HOUR=$HOUR \
      -s UTC_MODE=True -s OFFSET=PT0M -s TIMEOUT=PT0.2M
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run-later
 NOW=$(date -u +%Y%m%dT%H00)Z
 START=$(cylc cycle-point $NOW --offset-hour=10)
 HOUR=T$(cylc cycle-point $NOW --offset-hour=10 --print-hour)
-run_fail $TEST_NAME cylc run --debug $SUITE_NAME -s START=$START \
+run_fail $TEST_NAME cylc run --debug --no-detach $SUITE_NAME -s START=$START \
     -s HOUR=$HOUR -s UTC_MODE=True -s OFFSET=PT0M -s TIMEOUT=PT0.2M
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

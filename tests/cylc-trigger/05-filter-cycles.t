@@ -22,7 +22,7 @@ set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-run_ok "${TEST_NAME_BASE}" cylc run --reference-test --debug "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}" cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 
 # Ensure that fixable.20100101T0000Z is only triggered once.
 JOB_LOG_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/job"

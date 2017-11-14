@@ -22,7 +22,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run "${SUITE_NAME}" --debug --until=2016
+    cylc run "${SUITE_NAME}" --debug --no-detach --until=2016
 if ! which sqlite3 > /dev/null; then
     skip 1 "sqlite3 not installed?"
 else
@@ -35,7 +35,7 @@ else
 __OUT__
 fi
 suite_run_ok "${TEST_NAME_BASE}-restart" \
-    cylc restart "${SUITE_NAME}" --debug --until=2017
+    cylc restart "${SUITE_NAME}" --debug --no-detach --until=2017
 grep_ok 'INFO - + t2\.2016 held (retrying)' "${SUITE_RUN_DIR}/log/suite/log"
 if ! which sqlite3 > /dev/null; then
     skip 1 "sqlite3 not installed?"

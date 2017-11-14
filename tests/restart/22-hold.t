@@ -21,7 +21,7 @@ set_test_number 6
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --debug
+suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --debug --no-detach
 if ! which sqlite3 > /dev/null; then
     skip 1 "sqlite3 not installed?"
 else
@@ -30,7 +30,7 @@ else
           >'t2-status.out'
     cmp_ok 't2-status.out' <<<'held|waiting'
 fi
-suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart "${SUITE_NAME}" --debug
+suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart "${SUITE_NAME}" --debug --no-detach
 grep_ok 'INFO - + t2\.2016 held (waiting)' "${SUITE_RUN_DIR}/log/suite/log"
 if ! which sqlite3 > /dev/null; then
     skip 1 "sqlite3 not installed?"

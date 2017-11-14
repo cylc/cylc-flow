@@ -28,7 +28,7 @@ run_ok "${TEST_NAME_BASE}-validate" \
     -s "CYLC_TEST_BATCH_SYS=${CYLC_TEST_BATCH_SYS}" \
     "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug \
+    cylc run --reference-test --debug --no-detach \
     -s "CYLC_TEST_BATCH_SYS=${CYLC_TEST_BATCH_SYS}" \
     "${SUITE_NAME}"
 

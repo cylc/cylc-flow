@@ -22,7 +22,7 @@ set_test_number 1
 install_suite $TEST_NAME_BASE options
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE
-suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
+suite_run_ok $TEST_NAME cylc run --reference-test --debug --no-detach $SUITE_NAME
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
 exit 0

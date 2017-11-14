@@ -27,13 +27,13 @@ run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate --debug ${SUITE_NAME}
 
 suite_run_fail "${TEST_NAME_BASE}-run-live" \
-    cylc run --reference-test --debug ${SUITE_NAME}
+    cylc run --reference-test --debug --no-detach ${SUITE_NAME}
 
 suite_run_ok "${TEST_NAME_BASE}-run-dummy" \
-    cylc run -m 'dummy' --reference-test --debug ${SUITE_NAME}
+    cylc run -m 'dummy' --reference-test --debug --no-detach ${SUITE_NAME}
 
 suite_run_ok "${TEST_NAME_BASE}-run-simulation" \
-    cylc run -m 'simulation' --reference-test --debug ${SUITE_NAME}
+    cylc run -m 'simulation' --reference-test --debug --no-detach ${SUITE_NAME}
 
 LOG=$(cylc log --location $SUITE_NAME)
 count_ok '> meet' ${LOG} 1

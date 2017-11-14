@@ -27,7 +27,7 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 # Test that normal auto-shutdown works.
 TEST_NAME=$TEST_NAME_BASE-auto-stop
-suite_run_ok $TEST_NAME cylc run --debug $SUITE_NAME
+suite_run_ok $TEST_NAME cylc run --debug --no-detach $SUITE_NAME
 #-------------------------------------------------------------------------------
 # Test that auto-shutdown can be disabled (CLI)
 TEST_NAME=$TEST_NAME_BASE-no-autostop-ping

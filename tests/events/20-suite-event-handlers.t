@@ -32,7 +32,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate ${OPT_SET} "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug ${OPT_SET} "${SUITE_NAME}"
+    cylc run --reference-test --debug --no-detach ${OPT_SET} "${SUITE_NAME}"
 
 LOG_FILE="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/suite/log"
 grep_ok "\\[('suite-event-handler-00', 'startup') ret_code\\] 0" "${LOG_FILE}"

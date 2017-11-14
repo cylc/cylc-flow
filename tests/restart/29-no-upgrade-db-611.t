@@ -25,8 +25,8 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 sqlite3 "${SUITE_RUN_DIR}/cylc-suite-private.db" <"cylc-suite-db.dump"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug --until=2011 "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug --no-detach --until=2011 "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-restart" \
-    cylc restart --debug --reference-test "${SUITE_NAME}"
+    cylc restart --debug --no-detach --reference-test "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

@@ -23,7 +23,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug --no-detach "${SUITE_NAME}"
 
 FOO_ACTIVITY_LOG="${SUITE_RUN_DIR}/log/job/1/foo/NN/job-activity.log"
 SUITE_LOG="${SUITE_RUN_DIR}/log/suite/log"

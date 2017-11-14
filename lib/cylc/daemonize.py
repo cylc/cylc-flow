@@ -70,21 +70,28 @@ def daemonize(server):
                     suite_pid is None or suite_port is None):
                 sleep(0.1)
                 try:
+                    # Line 1 (or 2 in debug mode) of suite log should contain
+                    # start up message, host name and port number. Format is:
+                    #  LOG-PREFIX Suite starting: server=HOST:PORT, pid=PID
+                    # Otherwise, something has gone wrong, print the suite log
+                    # and exit with an error.
                     log_stat = os.stat(log_fname)
                     if (log_stat.st_mtime == old_log_mtime or
                             log_stat.st_size == 0):
                         continue
-                    # Line 1 of suite log should contain start up message, host
-                    # name and port number. Format is:
-                    # LOG-PREIFX Suite starting: server=HOST:PORT, pid=PID
-                    # Otherwise, something has gone wrong, print the suite log
-                    # and exit with an error.
-                    log_line1 = open(log_fname).readline()
-                    if server.START_MESSAGE_PREFIX in log_line1:
-                        server_str, pid_str = log_line1.rsplit()[-2:]
-                        suite_pid = pid_str.rsplit("=", 1)[-1]
-                        suite_port = server_str.rsplit(":", 1)[-1]
-                    else:
+                    with open(log_fname) as log_f:
+                        try:
+                            first_two_lines = next(log_f), next(log_f)
+                        except StopIteration:
+                            continue
+                    ok = False
+                    for log_line in first_two_lines:
+                        if server.START_MESSAGE_PREFIX in log_line:
+                            ok = True
+                            server_str, pid_str = log_line.rsplit()[-2:]
+                            suite_pid = pid_str.rsplit("=", 1)[-1]
+                            suite_port = server_str.rsplit(":", 1)[-1]
+                    if not ok:
                         try:
                             sys.stderr.write(open(log_fname).read())
                             sys.exit(1)

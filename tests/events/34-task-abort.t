@@ -26,7 +26,7 @@ TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --no-detach --debug $SUITE_NAME
+suite_run_ok $TEST_NAME cylc run --no-detach --debug --no-detach $SUITE_NAME
 #-------------------------------------------------------------------------------
 # Check failed handler only call on last try.
 LOG="${SUITE_RUN_DIR}/log/job/1/foo/NN/job-activity.log"

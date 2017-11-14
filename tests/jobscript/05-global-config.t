@@ -33,7 +33,7 @@ create_test_globalrc '
         submission polling intervals = PT0.2M, PT0.1M'
 
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug "${SUITE_NAME}"
+    cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}"
 LOG_FILE="${SUITE_RUN_DIR}/log/suite/log"

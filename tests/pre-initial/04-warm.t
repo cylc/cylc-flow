@@ -26,7 +26,7 @@ TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --warm --reference-test --debug \
+suite_run_ok $TEST_NAME cylc run --warm --reference-test --debug --no-detach \
     $SUITE_NAME 20130101T00
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

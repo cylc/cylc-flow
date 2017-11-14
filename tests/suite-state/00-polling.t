@@ -59,7 +59,7 @@ __END__
 #-------------------------------------------------------------------------------
 # run the suite-state polling test suite
 TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --reference-test --debug --set UPSTREAM=$UPSTREAM $SUITE_NAME
+suite_run_ok $TEST_NAME cylc run --reference-test --debug --no-detach --set UPSTREAM=$UPSTREAM $SUITE_NAME
 
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

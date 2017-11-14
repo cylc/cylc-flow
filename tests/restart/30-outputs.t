@@ -34,7 +34,7 @@ suite_run_fail "${TEST_NAME_BASE}-restart-1" \
     cylc restart --no-detach "${SUITE_NAME}"
 sed -i 's/#\(startup handler\)/\1/' 'suite.rc'
 suite_run_ok "${TEST_NAME_BASE}-restart-2" \
-    cylc restart --debug --reference-test "${SUITE_NAME}"
+    cylc restart --debug --no-detach --reference-test "${SUITE_NAME}"
 if which sqlite3 > '/dev/null'; then
     sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT outputs FROM task_outputs' \
         >'sqlite3.out'

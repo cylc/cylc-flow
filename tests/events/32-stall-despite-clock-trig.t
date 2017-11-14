@@ -21,7 +21,7 @@ set_test_number 3
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-run_fail "${TEST_NAME_BASE}-run" timeout 60 cylc run --debug "${SUITE_NAME}"
+run_fail "${TEST_NAME_BASE}-run" timeout 60 cylc run --debug --no-detach "${SUITE_NAME}"
 sed -n 's/^.* WARNING - //p' "${SUITE_RUN_DIR}/log/suite/log" \
     >"${SUITE_RUN_DIR}/log/suite/log.edited"
 TODAY="$(date -u '+%Y%m%d')"

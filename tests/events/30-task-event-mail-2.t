@@ -40,7 +40,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate ${OPT_SET} "${SUITE_NAME}"
 suite_run_fail "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug ${OPT_SET} "${SUITE_NAME}"
+    cylc run --reference-test --debug --no-detach ${OPT_SET} "${SUITE_NAME}"
 
 contains_ok "${TEST_SMTPD_LOG}" <<__LOG__
 retry: 1/t1/01

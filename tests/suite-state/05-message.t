@@ -23,7 +23,7 @@ set_test_number 2
 install_suite $TEST_NAME_BASE message
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
+suite_run_ok $TEST_NAME cylc run --reference-test --debug --no-detach $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-cli-template
 run_ok $TEST_NAME cylc suite-state $SUITE_NAME -p 20100101T0000Z \

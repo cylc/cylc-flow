@@ -39,7 +39,7 @@ cylc register "${SUITE_NAME}" 2>'/dev/null'
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
-cylc run --debug --reference-test --host="${CYLC_TEST_HOST}" "${SUITE_NAME}" \
+cylc run --debug --no-detach --reference-test --host="${CYLC_TEST_HOST}" "${SUITE_NAME}" \
     1>'out' 2>&1 &
 SUITE_PID="$!"
 

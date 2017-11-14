@@ -31,10 +31,10 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 cmp_ok "$TEST_NAME.stderr" </dev/null
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --debug $SUITE_NAME
+suite_run_ok $TEST_NAME cylc run --debug --no-detach $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-restart-run
-suite_run_ok $TEST_NAME cylc restart --debug $SUITE_NAME
+suite_run_ok $TEST_NAME cylc restart --debug --no-detach $SUITE_NAME
 #-------------------------------------------------------------------------------
 if ! which sqlite3 > /dev/null; then
     skip 3 "sqlite3 not installed?"

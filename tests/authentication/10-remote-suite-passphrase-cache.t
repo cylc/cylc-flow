@@ -38,7 +38,7 @@ scp ${SSH_OPTS} -pqr "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/"* \
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate --host="${CYLC_TEST_HOST}" "${SUITE_NAME}"
 
-cylc run --debug --host="${CYLC_TEST_HOST}" --reference-test "${SUITE_NAME}" \
+cylc run --debug --no-detach --host="${CYLC_TEST_HOST}" --reference-test "${SUITE_NAME}" \
     1>'out' 2>'err' &
 SUITE_PID=$!
 

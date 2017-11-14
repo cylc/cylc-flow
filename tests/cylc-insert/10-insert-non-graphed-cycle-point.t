@@ -28,7 +28,7 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 # Test that tasks aren't inserted at invalid cycle points unless the --no-check
 # option is used.
 TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run -v -v --reference-test --debug $SUITE_NAME
+suite_run_ok $TEST_NAME cylc run -v -v --reference-test --debug --no-detach $SUITE_NAME
 grep_ok "Invalid cycle point for task: baz, 2" $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

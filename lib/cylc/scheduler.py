@@ -211,7 +211,7 @@ class Scheduler(object):
             self.suite_db_mgr.restart_upgrade()
 
         try:
-            detach = not (self.options.no_detach or cylc.flags.debug)
+            detach = not self.options.no_detach
 
             if detach:
                 daemonize(self)

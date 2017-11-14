@@ -26,7 +26,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug --no-detach "${SUITE_NAME}"
 
 LOG="${SUITE_RUN_DIR}/log/job/1/foo/01/job-activity.log"
 sed -n '/event-handler-00/,$p' "${LOG}" >'edited-job-activity.log'
