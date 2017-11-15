@@ -103,6 +103,18 @@ class SuiteRuntimeServiceClient(object):
     """Client for calling the HTTP(S) API of running suites."""
 
     ANON_AUTH = ('anon', NO_PASSPHRASE, False)
+    COMPAT_MAP = {  # Limited pre-7.5.0 API compat mapping
+        'clear_broadcast': {0: 'broadcast/clear'},
+        'expire_broadcast': {0: 'broadcast/expire'},
+        'get_broadcast': {0: 'broadcast/get'},
+        'get_info': {0: 'info/'},
+        'get_suite_state_summary': {0: 'state/get_state_summary'},
+        'get_tasks_by_state': {0: 'state/get_tasks_by_state'},
+        'put_broadcast': {0: 'broadcast/put'},
+        'put_command': {0: 'command/'},
+        'put_ext_trigger': {0: 'ext-trigger/put'},
+        'put_message': {0: 'message/put'},
+    }
     ERROR_NO_HTTPS_SUPPORT = (
         "ERROR: server has no HTTPS support," +
         " configure your global.rc file to use HTTP : {0}\n"
@@ -135,34 +147,68 @@ class SuiteRuntimeServiceClient(object):
 
         self.prog_name = os.path.basename(sys.argv[0])
         self.auth = auth
+        self.session = None
+        self.api = None
+
+    def _compat(self, name, default=None):
+        """Return server function name.
+
+        Handle back-compat for pre-7.5.0 if relevant.
+        """
+        # Need to load contact info here to get API version.
+        self._load_contact_info()
+        if default is None:
+            default = name
+        return self.COMPAT_MAP[name].get(self.api, default)
 
     def clear_broadcast(self, **kwargs):
         """Clear broadcast runtime task settings."""
-        return self._call_server('clear_broadcast', payload=kwargs)
+        return self._call_server(
+            self._compat('clear_broadcast'), payload=kwargs)
 
     def expire_broadcast(self, **kwargs):
         """Expire broadcast runtime task settings."""
-        return self._call_server('expire_broadcast', **kwargs)
+        return self._call_server(self._compat('expire_broadcast'), **kwargs)
 
     def get_broadcast(self, **kwargs):
         """Return broadcast settings."""
         return self._call_server(
-            'get_broadcast', method=self.METHOD_GET, **kwargs)
+            self._compat('get_broadcast'), method=self.METHOD_GET, **kwargs)
 
-    def get_info(self, command, *args, **kwargs):
+    def get_info(self, command, **kwargs):
         """Return suite info."""
-        kwargs['method'] = self.METHOD_GET
-        return self._call_server(command, *args, **kwargs)
+        return self._call_server(
+            self._compat('get_info', default='') + command,
+            method=self.METHOD_GET, **kwargs)
 
     def get_latest_state(self, full_mode):
         """Return latest state of the suite (for the GUI)."""
-        return self._call_server(
-            'get_latest_state', method=self.METHOD_GET, full_mode=full_mode)
+        self._load_contact_info()
+        if self.api == 0:
+            # Basic compat for pre-7.5.0 suites
+            # Full mode only.
+            # Error content/size not supported.
+            # Report made-up main loop interval of 5.0 seconds.
+            return {
+                'cylc_version': self.get_info('get_cylc_version'),
+                'full_mode': full_mode,
+                'summary': self.get_suite_state_summary(),
+                'ancestors': self.get_info('get_first_parent_ancestors'),
+                'ancestors_pruned': self.get_info(
+                    'get_first_parent_ancestors', pruned=True),
+                'descendants': self.get_info('get_first_parent_descendants'),
+                'err_content': '',
+                'err_size': 0,
+                'mean_main_loop_interval': 5.0}
+        else:
+            return self._call_server(
+                'get_latest_state',
+                method=self.METHOD_GET, full_mode=full_mode)
 
     def get_suite_state_summary(self):
         """Return the global, task, and family summary data structures."""
         return utf8_enforce(self._call_server(
-            'get_suite_state_summary', method=self.METHOD_GET))
+            self._compat('get_suite_state_summary'), method=self.METHOD_GET))
 
     def get_tasks_by_state(self):
         """Returns a dict containing lists of tasks by state.
@@ -171,105 +217,86 @@ class SuiteRuntimeServiceClient(object):
         {state: [(most_recent_time_string, task_name, point_string), ...]}
         """
         return self._call_server(
-            'get_tasks_by_state', method=self.METHOD_GET)
+            self._compat('get_tasks_by_state'), method=self.METHOD_GET)
 
     def identify(self):
         """Return suite identity."""
-        return self._call_server('identify', method=self.METHOD_GET)
+        # Note on compat: Suites on 7.6.0 or above can just call "identify",
+        # but has compat for "id/identity".
+        return self._call_server('id/identify', method=self.METHOD_GET)
 
     def put_broadcast(self, **kwargs):
         """Put/set broadcast runtime task settings."""
-        return self._call_server('put_broadcast', payload=kwargs)
+        return self._call_server(self._compat('put_broadcast'), payload=kwargs)
 
     def put_command(self, command, **kwargs):
         """Invoke suite command."""
-        return self._call_server(command, **kwargs)
+        return self._call_server(
+            self._compat('put_command', default='') + command, **kwargs)
 
     def put_ext_trigger(self, event_message, event_id):
         """Put external trigger."""
         return self._call_server(
-            'put_ext_trigger', event_message=event_message, event_id=event_id)
+            self._compat('put_ext_trigger'),
+            event_message=event_message, event_id=event_id)
 
     def put_message(self, task_id, priority, message):
         """Send task message."""
         return self._call_server(
-            'put_message', task_id=task_id, priority=priority, message=message)
+            self._compat('put_message'),
+            task_id=task_id, priority=priority, message=message)
 
-    def reset(self, *args, **kwargs):
+    def reset(self):
         """Compat method, does nothing."""
         pass
 
-    def signout(self, *args, **kwargs):
+    def signout(self):
         """Tell server to forget this client."""
         return self._call_server('signout')
 
-    def _compile_request(self, func_dict, host, comms_protocol=None):
-        """Build request URL."""
-        payload = func_dict.pop("payload", None)
-        method = func_dict.pop("method", self.METHOD)
-        function = func_dict.pop("function", None)
-        if comms_protocol is None:
-            # Use standard setting from global configuration
-            from cylc.cfgspec.globalcfg import GLOBAL_CFG
-            comms_protocol = GLOBAL_CFG.get(['communication', 'method'])
-        url = '%s://%s:%s/%s' % (comms_protocol, host, self.port, function)
-        # If there are any parameters left in the dict after popping,
-        # append them to the url.
-        if func_dict:
-            import urllib
-            params = urllib.urlencode(func_dict, doseq=True)
-            url += "?" + params
-        return (method, url, payload, comms_protocol)
-
-    def _call_server(self, *func_dicts, **fargs):
-        """func_dict is a dictionary of command names (fnames)
-        and arguments to that command"""
-        # Deal with the case of one func_dict/function name passed
-        # by converting them to the generic case: a dictionary of
-        # a single function and its function arguments.
-        if isinstance(func_dicts[0], str):
-            func_dict = {"function": func_dicts[0]}
-            func_dict.update(fargs)
-        else:
-            func_dict = None
-
-        try:
-            self._load_contact_info()
-        except (IOError, ValueError, SuiteServiceFileError):
-            raise ClientInfoError(self.suite)
-        http_request_items = []
-        try:
-            # dictionary containing: url, payload, method
-            http_request_items.append(self._compile_request(
-                func_dict, self.host, self.comms_protocol))
-        except (IndexError, ValueError, AttributeError):
-            for f_dict in func_dicts:
-                http_request_items.append(self._compile_request(
-                    f_dict, self.host, self.comms_protocol))
+    def _call_server(self, function, method=METHOD, payload=None, **kwargs):
+        """Build server URL + call it"""
+        url = self._call_server_get_url(function, **kwargs)
         # Remove proxy settings from environment for now
         environ = {}
         for key in ("http_proxy", "https_proxy"):
             val = os.environ.pop(key, None)
             if val:
                 environ[key] = val
-        # Returns a list of http returns from the requests
         try:
-            return self.call_server_impl(http_request_items)
+            return self.call_server_impl(url, method, payload)
         finally:
             os.environ.update(environ)
 
-    def call_server_impl(self, http_request_items):
+    def _call_server_get_url(self, function, **kwargs):
+        """Build request URL."""
+        comms_protocol = self.comms_protocol
+        if comms_protocol is None:
+            # Use standard setting from global configuration
+            from cylc.cfgspec.globalcfg import GLOBAL_CFG
+            comms_protocol = GLOBAL_CFG.get(['communication', 'method'])
+        url = '%s://%s:%s/%s' % (
+            comms_protocol, self.host, self.port, function)
+        # If there are any parameters left in the dict after popping,
+        # append them to the url.
+        if kwargs:
+            import urllib
+            params = urllib.urlencode(kwargs, doseq=True)
+            url += "?" + params
+        return url
+
+    def call_server_impl(self, url, method, payload):
         """Determine whether to use requests or urllib2 to call suite API."""
-        method = self._call_server_impl_urllib2
+        impl = self._call_server_impl_urllib2
         try:
             import requests
         except ImportError:
             pass
         else:
             if [int(_) for _ in requests.__version__.split(".")] >= [2, 4, 2]:
-                method = self._call_server_impl_requests
+                impl = self._call_server_impl_requests
         try:
-            return method(http_request_items)
+            return impl(url, method, payload)
         except ClientConnectError as exc:
             if self.suite is None:
                 raise
@@ -286,81 +313,73 @@ class SuiteRuntimeServiceClient(object):
                 # exists. Should be safe to report that the suite has stopped.
                 raise ClientConnectError(exc.args[0], exc.STOPPED % self.suite)
 
-    def _call_server_impl_requests(self, http_request_items):
+    def _call_server_impl_requests(self, url, method, payload):
         """Call server with "requests" library."""
         import requests
         from requests.packages.urllib3.exceptions import InsecureRequestWarning
         warnings.simplefilter("ignore", InsecureRequestWarning)
-        if not hasattr(self, "session"):
+        if self.session is None:
             self.session = requests.Session()
 
-        http_return_items = []
-        for method, url, payload, comms_protocol in http_request_items:
-            if method is None:
-                method = self.METHOD
-            if method == self.METHOD_POST:
-                session_method = self.session.post
+        if method == self.METHOD_POST:
+            session_method = self.session.post
+        else:
+            session_method = self.session.get
+        comms_protocol = url.split(':', 1)[0]  # Can use urlparse?
+        username, password, verify = self._get_auth(comms_protocol)
+        try:
+            ret = session_method(
+                url,
+                json=payload,
+                verify=verify,
+                proxies={},
+                headers=self._get_headers(),
+                auth=requests.auth.HTTPDigestAuth(username, password),
+                timeout=self.timeout
+            )
+        except requests.exceptions.SSLError as exc:
+            if "unknown protocol" in str(exc) and url.startswith("https:"):
+                # Server is using http rather than https, for some reason.
+                sys.stderr.write(self.ERROR_NO_HTTPS_SUPPORT.format(exc))
+                raise CylcError(
+                    "Cannot issue commands over unsecured http.")
+            if cylc.flags.debug:
+                traceback.print_exc()
+            raise ClientConnectError(url, exc)
+        except requests.exceptions.Timeout as exc:
+            if cylc.flags.debug:
+                traceback.print_exc()
+            raise ClientTimeout(url, exc)
+        except requests.exceptions.RequestException as exc:
+            if cylc.flags.debug:
+                traceback.print_exc()
+            raise ClientConnectError(url, exc)
+        if ret.status_code == 401:
+            access_desc = 'private'
+            if self.auth == self.ANON_AUTH:
+                access_desc = 'public'
+            raise ClientDeniedError(url, self.prog_name, access_desc)
+        if ret.status_code >= 400:
+            exception_text = get_exception_from_html(ret.text)
+            if exception_text:
+                sys.stderr.write(exception_text)
             else:
-                session_method = self.session.get
-            username, password, verify = self._get_auth(comms_protocol)
-            try:
-                ret = session_method(
-                    url,
-                    json=payload,
-                    verify=verify,
-                    proxies={},
-                    headers=self._get_headers(),
-                    auth=requests.auth.HTTPDigestAuth(username, password),
-                    timeout=self.timeout
-                )
-            except requests.exceptions.SSLError as exc:
-                if "unknown protocol" in str(exc) and url.startswith("https:"):
-                    # Server is using http rather than https, for some reason.
-                    sys.stderr.write(self.ERROR_NO_HTTPS_SUPPORT.format(exc))
-                    raise CylcError(
-                        "Cannot issue commands over unsecured http.")
-                if cylc.flags.debug:
-                    traceback.print_exc()
-                raise ClientConnectError(url, exc)
-            except requests.exceptions.Timeout as exc:
-                if cylc.flags.debug:
-                    traceback.print_exc()
-                raise ClientTimeout(url, exc)
-            except requests.exceptions.RequestException as exc:
-                if cylc.flags.debug:
-                    traceback.print_exc()
-                raise ClientConnectError(url, exc)
-            if ret.status_code == 401:
-                access_desc = 'private'
-                if self.auth == self.ANON_AUTH:
-                    access_desc = 'public'
-                raise ClientDeniedError(url, self.prog_name, access_desc)
-            if ret.status_code >= 400:
-                exception_text = get_exception_from_html(ret.text)
-                if exception_text:
-                    sys.stderr.write(exception_text)
-                else:
-                    sys.stderr.write(ret.text)
-            try:
-                ret.raise_for_status()
-            except requests.exceptions.HTTPError as exc:
-                if cylc.flags.debug:
-                    traceback.print_exc()
-                raise ClientConnectedError(url, exc)
-            if self.auth and self.auth[1] != NO_PASSPHRASE:
-                self.srv_files_mgr.cache_passphrase(
-                    self.suite, self.owner, self.host, self.auth[1])
-            try:
-                ret = ret.json()
-                http_return_items.append(ret)
-            except ValueError:
-                ret = ret.text
-                http_return_items.append(ret)
-        # Return a single http return or a list of them if multiple
-        return (http_return_items if len(http_return_items) > 1
-                else http_return_items[0])
+                sys.stderr.write(ret.text)
+        try:
+            ret.raise_for_status()
+        except requests.exceptions.HTTPError as exc:
+            if cylc.flags.debug:
+                traceback.print_exc()
+            raise ClientConnectedError(url, exc)
+        if self.auth and self.auth[1] != NO_PASSPHRASE:
+            self.srv_files_mgr.cache_passphrase(
+                self.suite, self.owner, self.host, self.auth[1])
+        try:
+            return ret.json()
+        except ValueError:
+            return ret.text
 
-    def _call_server_impl_urllib2(self, http_request_items):
+    def _call_server_impl_urllib2(self, url, method, payload):
         """Call server with "urllib2" library."""
         import json
         import urllib2
@@ -368,78 +387,72 @@ class SuiteRuntimeServiceClient(object):
         if hasattr(ssl, '_create_unverified_context'):
             ssl._create_default_https_context = ssl._create_unverified_context
 
-        http_return_items = []
-        for method, url, payload, comms_protocol in http_request_items:
-            if method is None:
-                method = self.METHOD
-            username, password = self._get_auth(comms_protocol)[0:2]
-            auth_manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
-            auth_manager.add_password(None, url, username, password)
-            auth = urllib2.HTTPDigestAuthHandler(auth_manager)
-            opener = urllib2.build_opener(auth, urllib2.HTTPSHandler())
-            headers_list = self._get_headers().items()
-            if payload:
-                payload = json.dumps(payload)
-                headers_list.append(('Accept', 'application/json'))
-                json_headers = {'Content-Type': 'application/json',
-                                'Content-Length': len(payload)}
+        comms_protocol = url.split(':', 1)[0]  # Can use urlparse?
+        username, password = self._get_auth(comms_protocol)[0:2]
+        auth_manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
+        auth_manager.add_password(None, url, username, password)
+        auth = urllib2.HTTPDigestAuthHandler(auth_manager)
+        opener = urllib2.build_opener(auth, urllib2.HTTPSHandler())
+        headers_list = self._get_headers().items()
+        if payload:
+            payload = json.dumps(payload)
+            headers_list.append(('Accept', 'application/json'))
+            json_headers = {'Content-Type': 'application/json',
+                            'Content-Length': len(payload)}
+        else:
+            payload = None
+            json_headers = {'Content-Length': 0}
+        opener.addheaders = headers_list
+        req = urllib2.Request(url, payload, json_headers)
+
+        # This is an unpleasant monkey patch, but there isn't an
+        # alternative. urllib2 uses POST if there is a data payload
+        # but that is not the correct criterion.
+        # The difference is basically that POST changes
+        # server state and GET doesn't.
+        req.get_method = lambda: method
+        try:
+            response = opener.open(req, timeout=self.timeout)
+        except urllib2.URLError as exc:
+            if "unknown protocol" in str(exc) and url.startswith("https:"):
+                # Server is using http rather than https, for some reason.
+                sys.stderr.write(self.ERROR_NO_HTTPS_SUPPORT.format(exc))
+                raise CylcError(
+                    "Cannot issue commands over unsecured http.")
+            if cylc.flags.debug:
+                traceback.print_exc()
+            if "timed out" in str(exc):
+                raise ClientTimeout(url, exc)
             else:
-                payload = None
-                json_headers = {'Content-Length': 0}
-            opener.addheaders = headers_list
-            req = urllib2.Request(url, payload, json_headers)
+                raise ClientConnectError(url, exc)
+        except Exception as exc:
+            if cylc.flags.debug:
+                traceback.print_exc()
+            raise ClientError(url, exc)
 
-            # This is an unpleasant monkey patch, but there isn't an
-            # alternative. urllib2 uses POST if there is a data payload
-            # but that is not the correct criterion.
-            # The difference is basically that POST changes
-            # server state and GET doesn't.
-            req.get_method = lambda: method
-            try:
-                response = opener.open(req, timeout=self.timeout)
-            except urllib2.URLError as exc:
-                if "unknown protocol" in str(exc) and url.startswith("https:"):
-                    # Server is using http rather than https, for some reason.
-                    sys.stderr.write(self.ERROR_NO_HTTPS_SUPPORT.format(exc))
-                    raise CylcError(
-                        "Cannot issue commands over unsecured http.")
-                if cylc.flags.debug:
-                    traceback.print_exc()
-                if "timed out" in str(exc):
-                    raise ClientTimeout(url, exc)
-                else:
-                    raise ClientConnectError(url, exc)
-            except Exception as exc:
-                if cylc.flags.debug:
-                    traceback.print_exc()
-                raise ClientError(url, exc)
+        if response.getcode() == 401:
+            access_desc = 'private'
+            if self.auth == self.ANON_AUTH:
+                access_desc = 'public'
+            raise ClientDeniedError(url, self.prog_name, access_desc)
+        response_text = response.read()
+        if response.getcode() >= 400:
+            exception_text = get_exception_from_html(response_text)
+            if exception_text:
+                sys.stderr.write(exception_text)
+            else:
+                sys.stderr.write(response_text)
+            raise ClientConnectedError(
+                url,
+                "%s HTTP return code" % response.getcode())
+        if self.auth and self.auth[1] != NO_PASSPHRASE:
+            self.srv_files_mgr.cache_passphrase(
+                self.suite, self.owner, self.host, self.auth[1])
 
-            if response.getcode() == 401:
-                access_desc = 'private'
-                if self.auth == self.ANON_AUTH:
-                    access_desc = 'public'
-                raise ClientDeniedError(url, self.prog_name, access_desc)
-            response_text = response.read()
-            if response.getcode() >= 400:
-                exception_text = get_exception_from_html(response_text)
-                if exception_text:
-                    sys.stderr.write(exception_text)
-                else:
-                    sys.stderr.write(response_text)
-                raise ClientConnectedError(
-                    url,
-                    "%s HTTP return code" % response.getcode())
-            if self.auth and self.auth[1] != NO_PASSPHRASE:
-                self.srv_files_mgr.cache_passphrase(
-                    self.suite, self.owner, self.host, self.auth[1])
-
-            try:
-                http_return_items.append(json.loads(response_text))
-            except ValueError:
-                http_return_items.append(response_text)
-        # Return a single http return or a list of them if multiple
-        return (http_return_items if len(http_return_items) > 1
-                else http_return_items[0])
+        try:
+            return json.loads(response_text)
+        except ValueError:
+            return response_text
 
     def _get_auth(self, protocol):
         """Return a user/password Digest Auth."""
@@ -485,13 +498,21 @@ class SuiteRuntimeServiceClient(object):
             # In case the contact file is corrupted, user can specify the port.
             self.host = get_host()
             return
-        # Always trust the values in the contact file otherwise.
-        data = self.srv_files_mgr.load_contact_file(
-            self.suite, self.owner, self.host)
+        try:
+            # Always trust the values in the contact file otherwise.
+            data = self.srv_files_mgr.load_contact_file(
+                self.suite, self.owner, self.host)
+            # Port inside "try" block, as it needs a type conversion
+            self.port = int(data.get(self.srv_files_mgr.KEY_PORT))
+        except (IOError, ValueError, SuiteServiceFileError):
+            raise ClientInfoError(self.suite)
         self.host = data.get(self.srv_files_mgr.KEY_HOST)
-        self.port = int(data.get(self.srv_files_mgr.KEY_PORT))
         self.owner = data.get(self.srv_files_mgr.KEY_OWNER)
         self.comms_protocol = data.get(self.srv_files_mgr.KEY_COMMS_PROTOCOL)
+        try:
+            self.api = int(data.get(self.srv_files_mgr.KEY_API))
+        except (TypeError, ValueError):
+            self.api = 0  # Assume cylc-7.5.0 or before
 
 
 def get_exception_from_html(html_text):
@@ -546,84 +567,46 @@ if __name__ == '__main__':
         def test_url_compiler_https(self):
             """Tests that the url parser works for a single url and command
             using https"""
-            host = "localhost"
-            func_dict = {"function": "test_command",
-                         "apples": "False",
-                         "oranges": "True",
-                         "method": "GET",
-                         "payload": "None"}
-
-            myclient = SuiteRuntimeServiceClient("test-suite", port=80)
-            request_https = myclient._compile_request(func_dict, host, "https")
-
-            test_url_https = (
-                'https://localhost:80/test_command'
-                '?apples=False&oranges=True')
-
+            myclient = SuiteRuntimeServiceClient(
+                "test-suite", host=get_host(), port=80,
+                comms_protocol="https")
             self.assertEqual(
-                request_https, ("GET", test_url_https, "None", "https"))
+                'https://%s:80/test_command?apples=False&oranges=True' %
+                get_host(),
+                myclient._call_server_get_url(
+                    "test_command", apples="False", oranges="True"))
 
         def test_compile_url_compiler_http(self):
             """Test that the url compiler produces a http request when
             http is specified."""
-            host = "localhost"
-            func_dict = {"function": "test_command",
-                         "apples": "False",
-                         "oranges": "True",
-                         "method": "GET",
-                         "payload": "None"}
-
-            myclient = SuiteRuntimeServiceClient("test-suite", port=80)
-            request_http = myclient._compile_request(func_dict, host, "http")
-            test_url_http = (
-                'http://localhost:80/test_command'
-                '?apples=False&oranges=True')
-
+            myclient = SuiteRuntimeServiceClient(
+                "test-suite", host=get_host(), port=80,
+                comms_protocol="http")
             self.assertEqual(
-                ("GET", test_url_http, "None", 'http'), request_http)
+                'http://%s:80/test_command?apples=False&oranges=True' %
+                get_host(),
+                myclient._call_server_get_url(
+                    "test_command", apples="False", oranges="True"))
 
         def test_compile_url_compiler_none_specified(self):
             """Test that the url compiler produces a http request when
             none is specified. This should retrieve it from the
             global config."""
-            host = "localhost"
-            func_dict = {"function": "test_command",
-                         "apples": "False",
-                         "oranges": "True",
-                         "method": "GET",
-                         "payload": "None"}
-
-            myclient = SuiteRuntimeServiceClient("test-suite", port=80)
-            request = myclient._compile_request(func_dict, host)
-
+            myclient = SuiteRuntimeServiceClient(
+                "test-suite", host=get_host(), port=80)
+            url = myclient._call_server_get_url(
+                "test_command", apples="False", oranges="True")
             # Check that the url has had http (or https) appended
             # to it. (If it does not start with "http*" then something
             # has gone wrong.)
-            self.assertTrue(request[1].startswith("http"))
+            self.assertTrue(url.startswith("http"))
 
         def test_get_data_from_url_single_http(self):
             """Test the get data from call_server_impl() function"""
-            myclient = SuiteRuntimeServiceClient("dummy-suite")
-            url = "http://httpbin.org/get"
-            payload = None
-            method = "GET"
+            myclient = SuiteRuntimeServiceClient(
+                "dummy-suite", comms_protocol='http')
             ret = myclient.call_server_impl(
-                [(method, url, payload, 'http')])
+                'http://httpbin.org/get', 'GET', None)
             self.assertEqual(ret["url"], "http://httpbin.org/get")
-
-        def test_get_data_from_url_multiple(self):
-            """Tests that the call_server_impl() method can
-            handle multiple requests in call to the method."""
-            myclient = SuiteRuntimeServiceClient("dummy-suite")
-            payload = None
-            method = "GET"
-
-            rets = myclient.call_server_impl([
-                (method, "http://httpbin.org/get#1", payload, 'http'),
-                (method, "http://httpbin.org/get#2", payload, 'http'),
-                (method, "http://httpbin.org/get#3", payload, 'http')])
-
-            for i in range(3):
-                self.assertEqual(rets[i]["url"], "http://httpbin.org/get")
 
     unittest.main()

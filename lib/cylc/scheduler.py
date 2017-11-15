@@ -923,6 +923,7 @@ conditions; see `cylc conditions`.
         # Preserve contact data in memory, for regular health check.
         mgr = self.suite_srv_files_mgr
         contact_data = {
+            mgr.KEY_API: str(self.httpserver.API),
             mgr.KEY_DIR_ON_SUITE_HOST: os.environ['CYLC_DIR'],
             mgr.KEY_NAME: self.suite,
             mgr.KEY_HOST: self.host,

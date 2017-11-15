@@ -47,6 +47,7 @@ from cylc.version import CYLC_VERSION
 class HTTPServer(object):
     """HTTP(S) server by cherrypy, for serving suite runtime API."""
 
+    API = 1
     LOG_CONNECT_DENIED_TMPL = "[client-connect] DENIED %s@%s:%s %s"
 
     def __init__(self, suite):
@@ -95,11 +96,10 @@ class HTTPServer(object):
                                 "Configure user's global.rc to use HTTP.")
         self.start()
 
-    def shutdown(self):
-        """Shutdown the web server."""
-        if hasattr(self, "engine"):
-            self.engine.exit()
-            self.engine.block()
+    @cherrypy.expose
+    def apiversion(self):
+        """Return API version."""
+        return str(self.API)
 
     @staticmethod
     def connect(schd):
@@ -116,6 +116,12 @@ class HTTPServer(object):
     def get_port(self):
         """Return the web server port."""
         return self.port
+
+    def shutdown(self):
+        """Shutdown the web server."""
+        if hasattr(self, "engine"):
+            self.engine.exit()
+            self.engine.block()
 
     def start(self):
         """Start quick web service."""
