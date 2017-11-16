@@ -30,12 +30,12 @@ cylc__job__inst__cylc_env() {
 
 cylc__job__inst__user_env() {
     # TASK RUNTIME ENVIRONMENT:
+    export E_ONE E_TWO E_THR E_FOU E_FIV
     E_ONE="$(( RANDOM % 10 ))"
     E_TWO="$VAR_IS"
     E_THR="$CYLC_SUITE_SHARE_PATH"
     E_FOU="$CYLC_TASK_NAME"
     E_FIV="$( foo.sh )"
-    export E_ONE E_TWO E_THR E_FOU E_FIV
 }
 
 cylc__job__inst__init_script() {
