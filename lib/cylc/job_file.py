@@ -238,6 +238,22 @@ class JobFileWriter(object):
             handle.write("\n\ncylc__job__inst__user_env() {")
             # Generate variable assignment expressions
             handle.write("\n    # TASK RUNTIME ENVIRONMENT:")
+
+            # NOTE: the reason for separate export of user-specified
+            # variables is this: inline export does not activate the
+            # error trap if sub-expressions fail, e.g. (note typo in
+            # 'echo' command name):
+            #   export FOO=$( ecko foo )  # error not trapped!
+            #   FOO=$( ecko foo )  # error trapped
+            # The export is done before variable definition to enable
+            # use of already defiend variables by command substitutions
+            # in later definitions:
+            #   FOO='foo'
+            #   BAR=$(script_using_FOO)
+            handle.write("\n    export")
+            for var in job_conf['environment']:
+                handle.write(" " + var)
+
             for var, val in job_conf['environment'].items():
                 value = str(val)  # (needed?)
                 match = re.match(r"^(~[^/\s]*/)(.*)$", value)
@@ -266,15 +282,6 @@ class JobFileWriter(object):
                 # | ~foo
                 # | ~
 
-            # NOTE: the reason for separate export of user-specified
-            # variables is this: inline export does not activate the
-            # error trap if sub-expressions fail, e.g. (note typo in
-            # 'echo' command name):
-            # export FOO=$( ecko foo )  # error not trapped!
-            # FOO=$( ecko foo )  # error trapped
-            handle.write("\n    export")
-            for var in job_conf['environment']:
-                handle.write(" " + var)
             handle.write("\n}")
 
     @classmethod
