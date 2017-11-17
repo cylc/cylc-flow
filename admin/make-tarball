@@ -38,10 +38,6 @@ fi
 THIS_DIR=$( cd $( dirname $0 ); pwd; )
 
 VERSION=$( "$THIS_DIR/get-repo-version" )
-if [[ $VERSION = *-dirty ]]; then
-    echo "The work tree is not clean: ABORTING" >&2
-    exit 1
-fi
 
 RELEASE=cylc-$VERSION
 TARBALL=${RELEASE}.tar.gz
