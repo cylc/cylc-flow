@@ -1,5 +1,5 @@
 
-\section{Cylc Gscan Config File Reference}
+\section{Gscan GUI (cylc gscan) Config File Reference}
 \label{GscanRCReference}
 
 \lstset{language=bash}
@@ -8,14 +8,14 @@ This section defines all legal items and values for the gscan config
 file which should be located in \lstinline=$HOME/.cylc/gscan.rc=. Some items
 also affect the gpanel panel app.
 
-The main menubar and toolbar appear when the mouse pointer is moved toward the
-top of the gscan window.  The View menu allows you to change which columns are
-displayed, which hosts to scan for running suites, and the task state icon
-theme.
+The main menubar can be hidden to maximise the display area. Its visibility
+can be toggled via the mouse right-click menu, or by typing Alt-m. When
+visible, the main View menu allows you to change properties such as the columns
+that are displayed, which hosts to scan for running suites, and the task state
+icon theme.
 
 At startup, the task state icon theme and icon size are taken from the gcylc
 config file \lstinline=$HOME/.cylc/gcylc.rc=.
-
 
 \subsection{Top Level Items}
 
@@ -82,11 +82,23 @@ in very busy suites.
 
 \subsubsection{window size}
 
-Sets the size in pixels of the \lstinline=cylc gscan= GUI at startup.
+Sets the size in pixels of the \lstinline=cylc gscan= GUI window at startup.
 
 \begin{myitemize}
     \item {\em type:} integer list: x, y
     \item {\em legal values:} positive integers
     \item {\em default:} 300, 200
     \item {\em example:} \lstinline@window size = 1000, 700@
+\end{myitemize}
+
+\subsubsection{hide main menubar}
+
+Hide the main menubar of the \lstinline=cylc gscan= GUI window at startup. By
+default, the menubar is initially hidden. Either way, you can toggle its
+visibility with Alt-m or via the right-click menu.
+
+\begin{myitemize}
+  \item {\em type:} boolean (True or False)
+    \item {\em default:} True
+    \item {\em example:} \lstinline@hide main menubar = False@
 \end{myitemize}

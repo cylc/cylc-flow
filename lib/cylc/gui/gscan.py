@@ -100,6 +100,7 @@ class ScanApp(object):
 
         # Visibility of columns
         vis_cols = gsfg.get(["columns"])
+        hide_main_menu_bar = gsfg.get(["hide main menubar"])
         # Doesn't make any sense without suite name column
         if gsfg.COL_SUITE not in vis_cols:
             vis_cols.append(gsfg.COL_SUITE.lower())
@@ -203,7 +204,8 @@ class ScanApp(object):
         self.menu_hbox.pack_start(self.menu_bar, expand=True, fill=True)
         self.menu_hbox.pack_start(self.tool_bar, expand=True, fill=True)
         self.menu_hbox.show_all()
-        self.menu_hbox.hide_all()
+        if hide_main_menu_bar:
+            self.menu_hbox.hide_all()
 
         scrolled_window = gtk.ScrolledWindow()
         scrolled_window.set_policy(gtk.POLICY_AUTOMATIC,
