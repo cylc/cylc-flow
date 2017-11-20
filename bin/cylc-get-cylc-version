@@ -16,10 +16,4 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# This redirects to cylc-get-site-config to avoid breaking some tests
-# that use get-global-config
-
-#echo >&2
-#echo "TYPO ALERT: it's \"cylc\", not \"cycl\"!" >&2
-#echo >&2
-exec $(dirname $0)/cylc-get-suite-version "$@"
+exec "$(dirname "$0")/cylc-get-suite-version" "$@"
