@@ -1,14 +1,17 @@
-edge "foo%percent.1" "bar%percent.1" solid
-edge "foo+plus.1" "bar+plus.1" solid
-edge "foo-minus.1" "bar-minus.1" solid
-edge "foo@at.1" "bar@at.1" solid
+edge "foo+%j001.1" "bar+%j001.1" solid
+edge "foo+%j002.1" "bar+%j002.1" solid
+edge "foo+%j003.1" "bar+%j003.1" solid
+edge "foo+%j004.1" "bar+%j004.1" solid
+edge "foo+%j005.1" "bar+%j005.1" solid
 graph
-node "bar%percent.1" "bar%percent\n1" unfilled ellipse black
-node "bar+plus.1" "bar+plus\n1" unfilled ellipse black
-node "bar-minus.1" "bar-minus\n1" unfilled ellipse black
-node "bar@at.1" "bar@at\n1" unfilled ellipse black
-node "foo%percent.1" "foo%percent\n1" unfilled ellipse black
-node "foo+plus.1" "foo+plus\n1" unfilled ellipse black
-node "foo-minus.1" "foo-minus\n1" unfilled ellipse black
-node "foo@at.1" "foo@at\n1" unfilled ellipse black
+node "bar+%j001.1" "bar+%j001\n1" unfilled ellipse black
+node "bar+%j002.1" "bar+%j002\n1" unfilled ellipse black
+node "bar+%j003.1" "bar+%j003\n1" unfilled ellipse black
+node "bar+%j004.1" "bar+%j004\n1" unfilled ellipse black
+node "bar+%j005.1" "bar+%j005\n1" unfilled ellipse black
+node "foo+%j001.1" "foo+%j001\n1" unfilled ellipse black
+node "foo+%j002.1" "foo+%j002\n1" unfilled ellipse black
+node "foo+%j003.1" "foo+%j003\n1" unfilled ellipse black
+node "foo+%j004.1" "foo+%j004\n1" unfilled ellipse black
+node "foo+%j005.1" "foo+%j005\n1" unfilled ellipse black
 stop

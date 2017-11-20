@@ -1,0 +1,25 @@
+edge "earth.1" "bar.1" solid
+edge "foo.1" "earth.1" solid
+edge "foo.1" "i0.1" solid
+edge "foo.1" "i1.1" solid
+edge "foo.1" "i2.1" solid
+edge "foo.1" "mars.1" solid
+edge "foo.1" "mercury.1" solid
+edge "foo.1" "venus.1" solid
+edge "i0.1" "bar.1" solid
+edge "i1.1" "bar.1" solid
+edge "i2.1" "bar.1" solid
+edge "mars.1" "bar.1" solid
+edge "mercury.1" "bar.1" solid
+edge "venus.1" "bar.1" solid
+graph
+node "bar.1" "bar\n1" unfilled ellipse black
+node "earth.1" "earth\n1" unfilled ellipse black
+node "foo.1" "foo\n1" unfilled ellipse black
+node "i0.1" "i0\n1" unfilled ellipse black
+node "i1.1" "i1\n1" unfilled ellipse black
+node "i2.1" "i2\n1" unfilled ellipse black
+node "mars.1" "mars\n1" unfilled ellipse black
+node "mercury.1" "mercury\n1" unfilled ellipse black
+node "venus.1" "venus\n1" unfilled ellipse black
+stop

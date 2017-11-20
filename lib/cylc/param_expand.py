@@ -68,7 +68,7 @@ from parsec.OrderedDict import OrderedDictWithDefaults
 REC_NAMES = re.compile(r'(?:[^,<]|\<[^>]*\>)+')
 # To extract (e.g.) 'name', 'the, quick, brown', and 'other' from
 #   'name<the, quick, brown>other' (other is used for clock-offsets).
-REC_P_ALL = re.compile(r"(%s)(?:<(.*?)>)?(.+)?" % TaskID.NAME_RE)
+REC_P_ALL = re.compile(r"(%s)?(?:<(.*?)>)?(.+)?" % TaskID.NAME_RE)
 # To extract all parameter lists e.g. 'm,n,o' (from '<m,n,o>').
 REC_P_GROUP = re.compile(r"<(.*?)>")
 # To extract parameter name and optional offset or value e.g. 'm-1'.
@@ -134,7 +134,10 @@ class NameExpander(object):
                 else:
                     expanded.append((name, {}))
                 continue
-            tmpl = name
+            if name:
+                tmpl = name
+            else:
+                tmpl = ''
             # Get the subset of parameters used in this case.
             used_param_names = []
             spec_vals = {}
@@ -173,17 +176,17 @@ class NameExpander(object):
             self._expand_name(tmpl, used_params, expanded, spec_vals)
         return expanded
 
-    def _expand_name(self, str_tmpl, param_list, results, spec_vals=None):
-        """Expand str_tmpl for any number of parameters.
+    def _expand_name(self, tmpl, param_list, results, spec_vals=None):
+        """Expand tmpl for any number of parameters.
 
-        str_tmpl is a string template, e.g. 'foo_m%(m)s_n%(n)s' for two
+        tmpl is a string template, e.g. 'foo_m%(m)s_n%(n)s' for two
             parameters m and n.
         param_list is a list of tuples (name, max-val) for each parameter
             to be looped over.
         spec_vals is a map of values for parameters that are not to be looped
             over because they've been assigned a specific value.
 
-        E.g. for "foo<m=0,n>" str_tmpl is "foo_m%(m)s_n%(n)s", param_list is
+        E.g. for "foo<m=0,n>" tmpl is "foo_m%(m)s_n%(n)s", param_list is
         [('n', 2)], and spec_values {'m': 0}.
 
         results contains the expanded names and corresponding parameter values,
@@ -195,14 +198,14 @@ class NameExpander(object):
             # Inner loop.
             current_values = dict(spec_vals)
             try:
-                results.append((str_tmpl % current_values, current_values))
+                results.append((tmpl % current_values, current_values))
             except KeyError as exc:
                 raise ParamExpandError('ERROR: parameter %s is not '
                                        'defined.' % str(exc.args[0]))
         else:
             for param_val in param_list[0][1]:
                 spec_vals[param_list[0][0]] = param_val
-                self._expand_name(str_tmpl, param_list[1:], results, spec_vals)
+                self._expand_name(tmpl, param_list[1:], results, spec_vals)
 
     def expand_parent_params(self, parent, param_values, origin):
         """Replace parameters with specific values in inherited parent names.
@@ -249,10 +252,13 @@ class NameExpander(object):
                     raise ParamExpandError(
                         "ERROR, parameter '%s' undefined in '%s'" % (
                             item, origin))
-        str_template = name
+        if name:
+            tmpl = name
+        else:
+            tmpl = ''
         for pname in used:
-            str_template += self.param_tmpl_cfg[pname]
-        return str_template % used
+            tmpl += self.param_tmpl_cfg[pname]
+        return tmpl % used
 
 
 class GraphExpander(object):
@@ -344,7 +350,7 @@ class GraphExpander(object):
             for p_group in set(REC_P_GROUP.findall(line)):
                 # Parameters must be expanded in the order found.
                 param_values = OrderedDictWithDefaults()
-                tmpl = ""
+                tmpl = ''
                 for item in p_group.split(','):
                     pname, offs = REC_P_OFFS.match(item).groups()
                     if offs is None:

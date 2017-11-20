@@ -16,10 +16,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Run graph parser unit tests.
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 
 set_test_number 2
 
-TEST_NAME=$TEST_NAME_BASE-unit-tests
-run_ok $TEST_NAME python $CYLC_DIR/lib/cylc/graph_parser.py
-run_ok $TEST_NAME python $CYLC_DIR/lib/cylc/cycling/__init__.py
+TEST_NAME="$TEST_NAME_BASE-unit-tests"
+run_ok "${TEST_NAME_BASE}-cylc.graph-parser" python -m 'cylc.graph_parser'
+run_ok "${TEST_NAME_BASE}-cylc.cycling" python -m 'cylc.cycling.__init__'

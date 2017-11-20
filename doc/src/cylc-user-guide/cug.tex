@@ -4623,6 +4623,27 @@ To get thicker padding and/or alternate suffixes, use a template. E.g.:
         p = %%p%(p)03d  # suffixes = %p003, %p004, ..., %p013, %p014
 \end{lstlisting}
 
+\paragraph{Parameters as Full Task Names}
+
+Parameter values can be used as full task names, but the default template
+should be overridden to remove the initial underscore.
+For example:
+
+\begin{lstlisting}
+[cylc]
+    [[parameters]]
+        i = 1..4
+        obs = ship, buoy, plane
+    [[parameter templates]]
+        i = i%(i)d  # task name must begin with an alphabet
+        obs = %(obs)s
+[scheduling]
+    [[dependencies]]
+        graph = """
+foo => <i>  # foo => i1 & i2 & i3 & i4
+<obs> => bar  # ship & buoy & plane => bar
+"""
+\end{lstlisting}
 
 \subsubsection{Passing Parameter Values To Tasks}
 
