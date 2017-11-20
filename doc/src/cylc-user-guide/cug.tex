@@ -6677,14 +6677,15 @@ level allows that.
 As a suite runs, its task proxies may pass through the following states:
 
 \begin{myitemize}
-    \item {\bf waiting} - prerequisites not satisfied yet
-    (note that clock-trigger tasks also wait on their trigger time).
+  \item {\bf waiting} - still waiting for prerequisites (e.g.\ dependence on
+    other tasks, and clock triggers) to be satisfied.
+
+    \item {\bf held} - will not be submitted to run even if all prerequisites
+      are satisfied, until released/un-held.
 
     \item {\bf queued} - ready to run (prerequisites satisfied) but
     temporarily held back by an {\em internal cylc queue}
     (see~\ref{InternalQueues}).
-
-    \item {\bf held} - will not be submitted even if ready to run.
 
     \item {\bf ready} - ready to run (prerequisites satisfied) and
     handed to cylc's job submission sub-system.
@@ -6711,6 +6712,15 @@ As a suite runs, its task proxies may pass through the following states:
     \item {\bf retrying} - job execution failed, but an execution retry
     was configured. Will only enter the {\em failed} state if all configured
     execution retries are exhausted.
+
+    \item {\bf runahead} - will not have prerequisites checked (and so
+      automatically held, in effect) until the rest of the suite catches up
+      sufficiently.  The amount of runahead allowed is configurable - see
+      ~\ref{RunaheadLimit}.
+
+    \item {\bf expired} - will not be submitted to run, due to falling too far
+      behind the wall-clock relative to its cycle point -
+      see~\ref{ClockExpireTasks}.
 
 \end{myitemize}
 
