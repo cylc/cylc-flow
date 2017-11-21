@@ -18,7 +18,7 @@
 
 import re
 import unittest
-from cylc.param_expand import GraphExpander
+from cylc.param_expand import GraphExpander, ParamExpandError
 from cylc.task_id import TaskID
 
 """Module for parsing cylc graph strings."""
@@ -102,14 +102,14 @@ class GraphParser(object):
     _RE_TRIG = r':[\w\-]+'
 
     # Match fully qualified parameterized single nodes.
-    REC_NODE_FULL = re.compile(r'''
-        (
-        (?:''' + _RE_NODE + r''')    # node name
-        (?:''' + _RE_PARAMS + r''')? # optional parameter list
+    REC_NODE_FULL = re.compile(
+        r'''(
+        (?:''' +
+        _RE_NODE + r'|' + _RE_PARAMS + r'|' + _RE_NODE + _RE_PARAMS +
+        ''')                         # node name
         (?:''' + _RE_OFFSET + r''')? # optional cycle point offset
         (?:''' + _RE_TRIG + r''')?   # optional trigger type
-        )
-    ''', re.X)           # end of string
+        )''', re.X)           # end of string
 
     # Extract node info from a left-side expression, after parameter expansion.
     REC_NODES = re.compile(r'''
@@ -246,8 +246,11 @@ class GraphParser(object):
             if not self.__class__.REC_PARAMS.search(line):
                 line_set.add(line)
                 continue
-            for l in graph_expander.expand(line):
-                line_set.add(l)
+            try:
+                for l in graph_expander.expand(line):
+                    line_set.add(l)
+            except ParamExpandError as exc:
+                raise GraphParseError(str(exc))
 
         # Process chains of dependencies as pairs: left => right.
         # Parameterization can duplicate some dependencies, so use a set.
@@ -671,23 +674,21 @@ class TestGraphParser(unittest.TestCase):
         The correct format is:
           NAME(<PARAMS>)([CYCLE-POINT-OFFSET])(:TRIGGER-TYPE)")
         """
-        graphs = [
-            "foo[-P1Y]<m,n> => bar",
-            "foo[-P1Y]<m,n> => bar",
-            "foo:fail[-P1Y] => bar",
-            "foo[-P1Y]:fail<m,n> => bar",
-            "foo[-P1Y]<m,n>:fail => bar",
-            "foo<m,n>:fail[-P1Y] => bar",
-            "foo:fail<m,n>[-P1Y] => bar"
-        ]
-        detected = 0
-        for graph in graphs:
-            gp = GraphParser()
-            try:
-                gp.parse_graph(graph)
-            except GraphParseError:
-                detected += 1
-        self.assertEqual(detected, len(graphs))
+        gp = GraphParser()
+        self.assertRaises(
+            GraphParseError, gp.parse_graph, "foo[-P1Y]<m,n> => bar")
+        self.assertRaises(
+            GraphParseError, gp.parse_graph, "foo[-P1Y]<m,n> => bar")
+        self.assertRaises(
+            GraphParseError, gp.parse_graph, "foo:fail[-P1Y] => bar")
+        self.assertRaises(
+            GraphParseError, gp.parse_graph, "foo[-P1Y]:fail<m,n> => bar")
+        self.assertRaises(
+            GraphParseError, gp.parse_graph, "foo[-P1Y]<m,n>:fail => bar")
+        self.assertRaises(
+            GraphParseError, gp.parse_graph, "foo<m,n>:fail[-P1Y] => bar")
+        self.assertRaises(
+            GraphParseError, gp.parse_graph, "foo:fail<m,n>[-P1Y] => bar")
 
 
 if __name__ == "__main__":
