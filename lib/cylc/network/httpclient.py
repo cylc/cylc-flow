@@ -175,7 +175,9 @@ class SuiteRuntimeServiceClient(object):
 
     def identify(self):
         """Return suite identity."""
-        return self._call_server('identify', method=self.METHOD_GET)
+        # Note on compat: Suites on 7.6.0 or above can just call "identify",
+        # but has compat for "id/identity".
+        return self._call_server('id/identify', method=self.METHOD_GET)
 
     def put_broadcast(self, **kwargs):
         """Put/set broadcast runtime task settings."""

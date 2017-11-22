@@ -18,6 +18,8 @@
 """Port scan utilities."""
 
 from multiprocessing import cpu_count, Process, Pipe
+import os
+from pwd import getpwall
 import sys
 from time import sleep, time
 import traceback
@@ -33,6 +35,7 @@ from cylc.suite_srv_files_mgr import (
 from cylc.suite_status import (KEY_NAME, KEY_OWNER, KEY_STATES)
 
 CONNECT_TIMEOUT = 5.0
+DEBUG_DELIM = '\n' + ' ' * 4
 INACTIVITY_TIMEOUT = 10.0
 MSG_QUIT = "QUIT"
 MSG_TIMEOUT = "TIMEOUT"
@@ -103,7 +106,7 @@ def _scan_item(timeout, my_uuid, srv_files_mgr, item):
         return (host, port, result)
 
 
-def scan_many(items=None, timeout=None, updater=None):
+def scan_many(items, timeout=None, updater=None):
     """Call "identify" method of suites on many host:port.
 
     Args:
@@ -114,14 +117,13 @@ def scan_many(items=None, timeout=None, updater=None):
     Return:
         list: [(host, port, identify_result), ...]
     """
+    if not items:
+        return []
     try:
         timeout = float(timeout)
     except (TypeError, ValueError):
         timeout = CONNECT_TIMEOUT
     my_uuid = uuid4()
-    # Determine hosts to scan
-    if not items:
-        items = GLOBAL_CFG.get(["suite host scanning", "hosts"])
     # Ensure that it does "localhost" only once
     items = set(items)
     for item in list(items):
@@ -228,3 +230,57 @@ def scan_many(items=None, timeout=None, updater=None):
         for key in sorted(wait_set):
             sys.stderr.write('  %s:%s\n' % key)
     return results
+
+
+def get_scan_items_from_fs(owner_pattern=None, updater=None):
+    """Get list of host:port available to scan using the file system.
+
+    Walk users' "~/cylc-run/" to get (host, port) from ".service/contact" for
+    active suites.
+
+    Return (list): List of (host, port) available for scan.
+    """
+    srv_files_mgr = SuiteSrvFilesManager()
+    if owner_pattern is None:
+        # Run directory of current user only
+        run_dirs = [GLOBAL_CFG.get_host_item('run directory')]
+    else:
+        # Run directory of all users matching "owner_pattern".
+        # But skip those with /nologin or /false shells
+        run_dirs = []
+        skips = ('/false', '/nologin')
+        for pwent in getpwall():
+            if any(pwent.pw_shell.endswith(s) for s in (skips)):
+                continue
+            if owner_pattern.match(pwent.pw_name):
+                run_dirs.append(GLOBAL_CFG.get_host_item(
+                    'run directory',
+                    owner=pwent.pw_name,
+                    owner_home=pwent.pw_dir))
+    if cylc.flags.debug:
+        sys.stderr.write('Listing suites:%s%s\n' % (
+            DEBUG_DELIM, DEBUG_DELIM.join(run_dirs)))
+    items = []
+    for run_d in run_dirs:
+        for dirpath, dnames, fnames in os.walk(run_d, followlinks=True):
+            if updater and updater.quit:
+                return
+            # Always descend for top directory, but
+            # don't descend further if it has a:
+            # * .service/
+            # * cylc-suite.db: (pre-cylc-7 suites don't have ".service/").
+            if dirpath != run_d and (
+                    srv_files_mgr.DIR_BASE_SRV in dnames or
+                    'cylc-suite.db' in fnames):
+                dnames[:] = []
+            # Choose only suites with .service and matching filter
+            reg = os.path.relpath(dirpath, run_d)
+            try:
+                contact_data = srv_files_mgr.load_contact_file(reg)
+            except (SuiteServiceFileError, IOError, TypeError, ValueError):
+                continue
+            else:
+                items.append((
+                    contact_data[srv_files_mgr.KEY_HOST],
+                    contact_data[srv_files_mgr.KEY_PORT]))
+    return items
