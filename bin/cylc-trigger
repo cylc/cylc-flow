@@ -192,7 +192,12 @@ def main():
 
     # Trigger the task proxy(s).
     items = parser.parse_multitask_compat(options, args)
-    pclient.put_command('trigger_tasks', items=items, back_out=aborted)
+    # Back compat: back_out introduced >7.5.0
+    # So don't call with "back_out" if not necessary to avoid breakage.
+    if aborted:
+        pclient.put_command('trigger_tasks', items=items, back_out=aborted)
+    else:
+        pclient.put_command('trigger_tasks', items=items)
 
 
 if __name__ == "__main__":

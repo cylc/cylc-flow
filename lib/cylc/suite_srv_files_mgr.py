@@ -47,6 +47,7 @@ class SuiteSrvFilesManager(object):
     FILE_BASE_SSL_CERT = "ssl.cert"
     FILE_BASE_SSL_PEM = "ssl.pem"
     FILE_BASE_SUITE_RC = "suite.rc"
+    KEY_API = "CYLC_API"
     KEY_COMMS_PROTOCOL = "CYLC_COMMS_PROTOCOL"  # default (or none?)
     KEY_DIR_ON_SUITE_HOST = "CYLC_DIR_ON_SUITE_HOST"
     KEY_HOST = "CYLC_SUITE_HOST"
