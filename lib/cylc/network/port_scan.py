@@ -243,7 +243,7 @@ def get_scan_items_from_fs(owner_pattern=None, updater=None):
     srv_files_mgr = SuiteSrvFilesManager()
     if owner_pattern is None:
         # Run directory of current user only
-        run_dirs = [GLOBAL_CFG.get_host_item('run directory')]
+        run_dirs = [(GLOBAL_CFG.get_host_item('run directory'), None)]
     else:
         # Run directory of all users matching "owner_pattern".
         # But skip those with /nologin or /false shells
@@ -253,30 +253,32 @@ def get_scan_items_from_fs(owner_pattern=None, updater=None):
             if any(pwent.pw_shell.endswith(s) for s in (skips)):
                 continue
             if owner_pattern.match(pwent.pw_name):
-                run_dirs.append(GLOBAL_CFG.get_host_item(
-                    'run directory',
-                    owner=pwent.pw_name,
-                    owner_home=pwent.pw_dir))
+                run_dirs.append((
+                    GLOBAL_CFG.get_host_item(
+                        'run directory',
+                        owner=pwent.pw_name,
+                        owner_home=pwent.pw_dir),
+                    pwent.pw_name))
     if cylc.flags.debug:
         sys.stderr.write('Listing suites:%s%s\n' % (
-            DEBUG_DELIM, DEBUG_DELIM.join(run_dirs)))
+            DEBUG_DELIM, DEBUG_DELIM.join(item[1] for item in run_dirs)))
     items = []
-    for run_d in run_dirs:
+    for run_d, owner in run_dirs:
         for dirpath, dnames, fnames in os.walk(run_d, followlinks=True):
             if updater and updater.quit:
                 return
             # Always descend for top directory, but
             # don't descend further if it has a:
-            # * .service/
+            # * .service/ or log/
             # * cylc-suite.db: (pre-cylc-7 suites don't have ".service/").
             if dirpath != run_d and (
-                    srv_files_mgr.DIR_BASE_SRV in dnames or
+                    srv_files_mgr.DIR_BASE_SRV in dnames or 'log' in dnames or
                     'cylc-suite.db' in fnames):
                 dnames[:] = []
             # Choose only suites with .service and matching filter
             reg = os.path.relpath(dirpath, run_d)
             try:
-                contact_data = srv_files_mgr.load_contact_file(reg)
+                contact_data = srv_files_mgr.load_contact_file(reg, owner)
             except (SuiteServiceFileError, IOError, TypeError, ValueError):
                 continue
             else:
