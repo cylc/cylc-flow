@@ -220,7 +220,7 @@ class NameExpander(object):
         then it must be a legal value for that parameter.
 
         """
-        name, p_str_list = REC_P_ALL.match(parent).groups()[:2]
+        name, p_str_list, other = REC_P_ALL.match(parent).groups()
         if not p_str_list:
             return name
         used = {}
@@ -258,6 +258,8 @@ class NameExpander(object):
             tmpl = ''
         for pname in used:
             tmpl += self.param_tmpl_cfg[pname]
+        if other:
+            tmpl += other
         return tmpl % used
 
 
