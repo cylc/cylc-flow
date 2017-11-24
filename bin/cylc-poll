@@ -60,7 +60,13 @@ def main():
         options.comms_timeout, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
     items = parser.parse_multitask_compat(options, args)
-    pclient.put_command('poll_tasks', items=items, poll_succ=options.poll_succ)
+    # Back compat: back_out introduced >7.5.0
+    # So don't call with "poll_succ" if not necessary to avoid breakage.
+    if options.poll_succ:
+        pclient.put_command(
+            'poll_tasks', items=items, poll_succ=options.poll_succ)
+    else:
+        pclient.put_command('poll_tasks', items=items)
 
 
 if __name__ == "__main__":
