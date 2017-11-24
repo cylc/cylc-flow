@@ -16,10 +16,6 @@ since the tag, and (c)the hash ID of the latest commit.
 How to apply an annotated tag to the repository:
  % git tag -a x.y.z -m 'Official cylc-x.y.z release.'
 
-The script aborts if the work tree contains uncommited changes - to
-guard against rolling a release after running the automated tests in a
-dirty tree. 
-
 eof
 }
 
@@ -35,11 +31,9 @@ if [[ ! -d .git && ! -f .git ]]; then
     exit 1
 fi
 
-VERSION=$( cylc -v )
-if [[ $VERSION = *-dirty ]]; then
-    echo "The work tree is not clean: ABORTING" >&2
-    exit 1
-fi
+THIS_DIR=$( cd $( dirname $0 ); pwd; )
+
+VERSION=$( "$THIS_DIR/get-repo-version" )
 
 RELEASE=cylc-$VERSION
 TARBALL=${RELEASE}.tar.gz
