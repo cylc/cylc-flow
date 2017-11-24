@@ -16,10 +16,6 @@ since the tag, and (c)the hash ID of the latest commit.
 How to apply an annotated tag to the repository:
  % git tag -a x.y.z -m 'Official cylc-x.y.z release.'
 
-The script aborts if the work tree contains uncommited changes - to
-guard against rolling a release after running the automated tests in a
-dirty tree. 
-
 eof
 }
 
