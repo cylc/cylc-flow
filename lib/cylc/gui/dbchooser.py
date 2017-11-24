@@ -25,10 +25,11 @@ import threading
 
 from cylc.gui.warning_dialog import warning_dialog, info_dialog
 from cylc.gui.util import get_icon, EntryTempText, EntryDialog
-from cylc.network.port_scan import scan_many
+from cylc.network.port_scan import scan_many, get_scan_items_from_fs
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.run_get_stdout import run_get_stdout
 from cylc.hostuserutil import is_remote_host, is_remote_user
+from cylc.suite_status import KEY_NAME, KEY_OWNER
 
 
 class db_updater(threading.Thread):
@@ -109,12 +110,13 @@ class db_updater(threading.Thread):
 
         # Scan for running suites
         choices = []
-        for host, port, suite_identity in scan_many(timeout=self.timeout):
-            name = suite_identity['name']
-            owner = suite_identity['owner']
+        for host, port, suite_identity in scan_many(
+                get_scan_items_from_fs(), timeout=self.timeout):
+            name = suite_identity[KEY_NAME]
+            owner = suite_identity[KEY_OWNER]
             if is_remote_user(owner):
                 continue  # current user only
-            auth = "%s:%d" % (host, port)
+            auth = "%s:%s" % (host, port)
             choices.append((name, auth))
         choices.sort()
         self.next_scan_time = time() + self.SCAN_INTERVAL

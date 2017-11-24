@@ -18,14 +18,18 @@
 
 """cylc [discovery] scan [OPTIONS] [HOSTS ...]
 
-Print information about cylc suites currently running on scanned hosts. The
-list of hosts to scan is determined by the global configuration "[suite host
-scanning]" setting, or hosts can be specified explicitly on the command line.
+Print information about running suites.
 
-By default, just your own suites are listed (this assumes your username is the
-same on all scanned hosts). Use -a/--all-suites to see all suites on all hosts,
-or restrict suites displayed with the -o/--owner and -n/--name options (with
---name the default owner restriction (i.e. just your own suites) is disabled.
+By default, it will obtain a listing of running suites for the current user
+from the file system, before connecting to the suites to obtain information.
+Use the -o/--suite-owner option to get information of running suites for other
+users.
+
+If a list of HOSTS is specified, it will obtain a listing of running suites by
+scanning all ports in the relevant range for running suites on the specified
+hosts. If the -a/--all option is specified, it will use the global
+configuration "[suite host scanning]" setting to determine a list of hosts to
+scan.
 
 Suite passphrases are not needed to get identity information (name and owner).
 Titles, descriptions, state totals, and cycle point state totals may also be
@@ -46,7 +50,7 @@ import re
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.hostuserutil import get_user
-from cylc.network.port_scan import scan_many
+from cylc.network.port_scan import scan_many, get_scan_items_from_fs
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.suite_status import (
     KEY_DESCRIPTION, KEY_META, KEY_NAME, KEY_OWNER, KEY_STATES,
@@ -55,16 +59,18 @@ from cylc.task_state import TASK_STATUSES_ORDERED
 from cylc.task_state_prop import get_status_prop
 
 
-NO_BOLD = False
+class TitleFormatter(object):
+    """Format title line, in bold or not if .no_bold set to False."""
 
+    def __init__(self, no_bold=False):
+        self.no_bold = no_bold
 
-def bold(line):
-    """Add terminal control characters for bold text."""
-    global NO_BOLD
-    if NO_BOLD:
-        return line
-    else:
-        return "\033[1m" + line + "\033[0m"
+    def __call__(self, line):
+        """Add terminal control characters for bold text, if .no_bold=False"""
+        if self.no_bold:
+            return line
+        else:
+            return "\033[1m" + line + "\033[0m"
 
 
 def main():
@@ -78,10 +84,9 @@ def main():
     )
 
     parser.add_option(
-        "-a", "--all", "--all-suites",
-        help="List all suites found on all scanned hosts (the default is "
-             "just your own suites).",
-        action="store_true", default=False, dest="all_suites")
+        "-a", "--all",
+        help="Scan all port ranges in known hosts.",
+        action="store_true", default=False, dest="all_ports")
 
     parser.add_option(
         "-n", "--name",
@@ -157,9 +162,7 @@ def main():
 
     indent = "   "
 
-    global NO_BOLD
-    if options.no_bold:
-        NO_BOLD = True
+    bold = TitleFormatter(options.no_bold)
 
     if options.print_full:
         options.describe = options.print_totals = True
@@ -172,31 +175,6 @@ def main():
         parser.error(
             "--raw-format cannot be used with other format options.")
 
-    if options.all_suites:
-        if options.patterns_name != []:
-            parser.error("-a and -n are mutually exclusive.")
-        if options.patterns_owner != []:
-            parser.error("-a and -o are mutually exclusive.")
-        patterns_name = ['.*']  # Any name.
-        patterns_owner = ['.*']  # Any owner.
-    else:
-        if options.patterns_name:
-            patterns_name = options.patterns_name
-        else:
-            # Any suite name.
-            patterns_name = ['.*']
-        if options.patterns_owner:
-            patterns_owner = options.patterns_owner
-        else:
-            if options.patterns_name:
-                # Any suite owner.
-                patterns_owner = ['.*']
-            else:
-                # Just the user's suites.
-                patterns_owner = [get_user()]
-    pattern_name = "(" + ")|(".join(patterns_name) + ")"
-    pattern_owner = "(" + ")|(".join(patterns_owner) + ")"
-
     state_legend = ""
     if options.color:
         n_states = len(TASK_STATUSES_ORDERED)
@@ -206,13 +184,44 @@ def main():
                 state_legend += "\n"
         state_legend = state_legend.rstrip()
 
+    if options.patterns_name:
+        patterns_name = options.patterns_name
+    else:
+        # Any suite name.
+        patterns_name = ['.*']
+    if options.patterns_owner:
+        patterns_owner = options.patterns_owner
+    else:
+        # Just the user's suites.
+        patterns_owner = [get_user()]
+    # Compile and check "name" and "owner" regular expressions
+    cres = {}
+    for key, patterns in [
+            ('name', patterns_name), ('suite-owner', patterns_owner)]:
+        try:
+            cres[key] = re.compile(r'(' + r')|('.join(patterns) + r')')
+        except re.error:
+            for pattern in patterns:
+                try:
+                    re.compile(pattern)
+                except re.error:
+                    parser.error(
+                        '--%s=%s: bad regular expression' % (key, pattern))
+    if options.all_ports:
+        args.extend(GLOBAL_CFG.get(["suite host scanning", "hosts"]))
+    if not args:
+        args = get_scan_items_from_fs(cres['suite-owner'])
+    if not args:
+        return
+
     skip_one = True
     for host, port, suite_identity in scan_many(args, options.comms_timeout):
         name = suite_identity[KEY_NAME]
         owner = suite_identity[KEY_OWNER]
 
-        if not (re.match(pattern_name, name) and
-                re.match(pattern_owner, owner)):
+        if not cres['name'].match(name):
+            continue
+        if not cres['suite-owner'].match(owner):
             continue
 
         if options.old_format:

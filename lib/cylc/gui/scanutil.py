@@ -18,7 +18,6 @@
 """Scan utilities for "cylc gscan" and "cylc gpanel"."""
 
 import os
-from pwd import getpwall
 import signal
 from subprocess import Popen, PIPE, STDOUT
 import sys
@@ -27,13 +26,11 @@ from time import time
 import gtk
 
 from cylc.cfgspec.gcylc import gcfg
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
 from cylc.gui.legend import ThemeLegendWindow
 from cylc.gui.util import get_icon
-from cylc.network.port_scan import scan_many
-from cylc.suite_srv_files_mgr import (
-    SuiteSrvFilesManager, SuiteServiceFileError)
+from cylc.network.port_scan import (
+    get_scan_items_from_fs, scan_many, DEBUG_DELIM)
 from cylc.suite_status import (
     KEY_NAME, KEY_OWNER, KEY_STATES, KEY_UPDATE_TIME)
 from cylc.version import CYLC_VERSION
@@ -42,7 +39,7 @@ from cylc.wallclock import get_unix_time_from_time_string as timestr_to_seconds
 
 DURATION_EXPIRE_STOPPED = 600.0
 KEY_PORT = "port"
-_UPDATE_DEBUG_DELIM = '\n' + ' ' * 4
+DEBUG_DELIM = '\n' + ' ' * 4
 
 
 def get_gpanel_scan_menu(
@@ -544,50 +541,8 @@ def update_suites_info(updater, full_mode=False):
     results = {}
     items = []
     if full_mode and not updater.hosts:
-        # Scan users suites. Walk "~/cylc-run/" to get (host, port) from
-        # ".service/contact" for active suites
-        suite_srv_files_mgr = SuiteSrvFilesManager()
-        if owner_pattern is None:
-            # Run directory of current user only
-            run_dirs = [GLOBAL_CFG.get_host_item('run directory')]
-        else:
-            # Run directory of all users matching "owner_pattern".
-            # But skip those with /nologin or /false shells
-            run_dirs = []
-            skips = ('/false', '/nologin')
-            for pwent in getpwall():
-                if any(pwent.pw_shell.endswith(s) for s in (skips)):
-                    continue
-                if owner_pattern.match(pwent.pw_name):
-                    run_dirs.append(GLOBAL_CFG.get_host_item(
-                        'run directory',
-                        owner=pwent.pw_name,
-                        owner_home=pwent.pw_dir))
-        if cylc.flags.debug:
-            sys.stderr.write('Listing suites:%s%s\n' % (
-                _UPDATE_DEBUG_DELIM, _UPDATE_DEBUG_DELIM.join(run_dirs)))
-        for run_d in run_dirs:
-            for dirpath, dnames, fnames in os.walk(run_d, followlinks=True):
-                if updater.quit:
-                    return
-                # Always descend for top directory, but
-                # don't descend further if it has a:
-                # * .service/
-                # * cylc-suite.db: (pre-cylc-7 suites don't have ".service/").
-                if dirpath != run_d and (
-                        suite_srv_files_mgr.DIR_BASE_SRV in dnames or
-                        'cylc-suite.db' in fnames):
-                    dnames[:] = []
-                # Choose only suites with .service and matching filter
-                reg = os.path.relpath(dirpath, run_d)
-                try:
-                    contact_data = suite_srv_files_mgr.load_contact_file(reg)
-                except (SuiteServiceFileError, IOError, TypeError, ValueError):
-                    continue
-                else:
-                    items.append((
-                        contact_data[suite_srv_files_mgr.KEY_HOST],
-                        contact_data[suite_srv_files_mgr.KEY_PORT]))
+        # Get (host, port) list from file system
+        items.extend(get_scan_items_from_fs(owner_pattern, updater))
     elif full_mode:
         # Scan full port range on all hosts
         items.extend(updater.hosts)
@@ -603,8 +558,7 @@ def update_suites_info(updater, full_mode=False):
         return results
     if cylc.flags.debug:
         sys.stderr.write('Scan items:%s%s\n' % (
-            _UPDATE_DEBUG_DELIM,
-            _UPDATE_DEBUG_DELIM.join(str(item) for item in items)))
+            DEBUG_DELIM, DEBUG_DELIM.join(str(item) for item in items)))
     # Scan
     for host, port, result in scan_many(
             items, timeout=timeout, updater=updater):

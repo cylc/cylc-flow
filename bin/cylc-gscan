@@ -82,7 +82,7 @@ def main():
     options, args = parser.parse_args()
 
     if options.all_ports:
-        args = GLOBAL_CFG.get(["suite host scanning", "hosts"])
+        args.extend(GLOBAL_CFG.get(["suite host scanning", "hosts"]))
     scan_app = ScanApp(
         hosts=args,
         patterns_name=options.patterns_name,
