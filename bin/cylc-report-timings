@@ -49,7 +49,7 @@ the database query to obtain the timing information may take some time.
 
 import sys
 from cylc.remote import remrun
-if remrun().execute():
+if remrun():
     sys.exit(0)
 
 import cStringIO as StringIO

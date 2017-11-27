@@ -7,6 +7,7 @@ from difflib import unified_diff
 
 class LogAnalyserError(Exception):
     def __init__(self, msg):
+        Exception.__init__(self, msg)
         self.msg = msg
 
     def __str__(self):

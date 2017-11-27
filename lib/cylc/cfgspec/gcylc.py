@@ -100,6 +100,39 @@ def upg(cfg, descr):
 class gconfig(config):
     """gcylc user configuration - default view panels, task themes etc."""
 
+    _INST = None
+
+    @classmethod
+    def get_inst(cls):
+        """Return default instance."""
+        if cls._INST is None:
+            cls._INST = cls(SPEC, upg)
+            try:
+                cls._INST.loadcfg(SITE_FILE, "site config")
+            except ParsecError as exc:
+                sys.stderr.write(
+                    "WARNING: ignoring bad site GUI config %s:\n"
+                    "%s\n" % (SITE_FILE, str(exc)))
+
+            if os.access(USER_FILE, os.F_OK | os.R_OK):
+                try:
+                    cls._INST.loadcfg(USER_FILE, "user config")
+                except ParsecError as exc:
+                    sys.stderr.write(
+                        "ERROR: bad user GUI config %s:\n" % USER_FILE)
+                    raise
+
+            # check and correct initial view config etc.
+            cls._INST.check()
+            # add spec defaults and do theme inheritance
+            cls._INST.transform()
+        return cls._INST
+
+    def __init__(self, *args):
+        config.__init__(self, *args)
+        self.default_theme = None
+        self.use_theme = None
+
     def transform(self):
         """
         1) theme inheritance
@@ -279,24 +312,4 @@ class gconfig(config):
 
 
 # load on import if not already loaded
-gcfg = None
-if not gcfg:
-    gcfg = gconfig(SPEC, upg)
-    try:
-        gcfg.loadcfg(SITE_FILE, "site config")
-    except ParsecError as exc:
-        sys.stderr.write(
-            "WARNING: ignoring bad site GUI config %s:\n"
-            "%s\n" % (SITE_FILE, str(exc)))
-
-    if os.access(USER_FILE, os.F_OK | os.R_OK):
-        try:
-            gcfg.loadcfg(USER_FILE, "user config")
-        except ParsecError as exc:
-            sys.stderr.write("ERROR: bad user GUI config %s:\n" % USER_FILE)
-            raise
-
-    # check and correct initial view config etc.
-    gcfg.check()
-    # add spec defaults and do theme inheritance
-    gcfg.transform()
+gcfg = gconfig.get_inst()

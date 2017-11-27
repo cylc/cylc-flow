@@ -28,7 +28,7 @@ from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 import cylc.flags
 
 from cylc.remote import remrun
-if remrun().execute():
+if remrun():
     sys.exit(0)
 
 

@@ -188,8 +188,10 @@ class ScanApp(object):
         self.updater.start()
 
         self.dot_size = gcfg.get(['dot icon size'])
+        self.dots = None
         self._set_dots()
 
+        self.menu_bar = None
         self.create_menubar()
 
         accelgroup = gtk.AccelGroup()
@@ -198,6 +200,7 @@ class ScanApp(object):
         accelgroup.connect_group(
             key, modifier, gtk.ACCEL_VISIBLE, self._toggle_hide_menu_bar)
 
+        self.tool_bar = None
         self.create_tool_bar()
 
         self.menu_hbox = gtk.HBox()

@@ -18,8 +18,8 @@
 
 import gtk
 
-from gcapture import gcapture_tmpfile
-from warning_dialog import warning_dialog
+from cylc.gui.gcapture import gcapture_tmpfile
+from cylc.gui.warning_dialog import warning_dialog
 
 
 def graph_suite_popup(reg, cmd_help, defstartc, defstopc, graph_opts,

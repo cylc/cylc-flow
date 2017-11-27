@@ -108,7 +108,7 @@ class TaskEventsManager(object):
     def __init__(self, suite, proc_pool, suite_db_mgr, broadcast_mgr=None):
         self.suite = suite
         self.suite_url = None
-        self.suite_cfg = []
+        self.suite_cfg = {}
         self.proc_pool = proc_pool
         self.suite_db_mgr = suite_db_mgr
         if broadcast_mgr is None:

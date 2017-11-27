@@ -19,8 +19,8 @@
 import re
 import gtk
 import gobject
-from updater_graph import GraphUpdater
 
+from cylc.gui.updater_graph import GraphUpdater
 from cylc.cylc_xdot import xdot_widgets
 from cylc.task_id import TaskID
 
@@ -45,6 +45,9 @@ Dependency graph suite control interface.
         self.get_right_click_menu = get_right_click_menu
         self.log_colors = log_colors
         self.insert_task_popup = insert_task_popup
+
+        self.t = None
+        self.menu_subgraphs_item = None
 
         self.gcapture_windows = []
 
@@ -225,20 +228,6 @@ Dependency graph suite control interface.
             self.t.group = []
         self.t.action_required = True
         self.t.best_fit = True
-
-    def rearrange(self, col, n):
-        cols = self.ttreeview.get_columns()
-        for i_n, col in enumerate(cols):
-            if i_n == n:
-                col.set_sort_indicator(True)
-            else:
-                col.set_sort_indicator(False)
-        # col is cols[n]
-        if col.get_sort_order() == gtk.SORT_ASCENDING:
-            col.set_sort_order(gtk.SORT_DESCENDING)
-        else:
-            col.set_sort_order(gtk.SORT_ASCENDING)
-        self.ttreestore.set_sort_column_id(n, col.get_sort_order())
 
     def refresh(self):
         self.t.update()
@@ -568,28 +557,3 @@ Dependency graph suite control interface.
 #        return
 #        self.t.best_fit = True
 #        self.t.action_required = True
-
-
-class StandaloneControlGraphApp(ControlGraph):
-    # For a ControlApp not launched by the gcylc main app:
-    # 1/ call gobject.threads_init() on startup
-    # 2/ call gtk.main_quit() on exit
-
-    def __init__(self, suite, owner, host, port):
-        gobject.threads_init()
-        ControlGraph.__init__(self, suite, owner, host, port)
-
-    def quit_gcapture(self):
-        for gwindow in self.gcapture_windows:
-            if not gwindow.quit_already:
-                gwindow.quit(None, None)
-
-    def delete_event(self, widget, event, data=None):
-        self.quit_gcapture()
-        ControlGraph.delete_event(self, widget, event, data)
-        gtk.main_quit()
-
-    def click_exit(self, foo):
-        self.quit_gcapture()
-        ControlGraph.click_exit(self, foo)
-        gtk.main_quit()

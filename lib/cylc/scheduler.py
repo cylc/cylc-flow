@@ -201,6 +201,11 @@ class Scheduler(object):
         # Last 10 durations (in seconds) of the main loop
         self.main_loop_intervals = deque(maxlen=10)
 
+        self.can_auto_stop = True
+        self.previous_profile_point = 0
+        self.count = 0
+        self.time_next_fs_check = None
+
     def start(self):
         """Start the server."""
         self._start_print_blurb()

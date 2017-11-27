@@ -133,17 +133,13 @@ class MyDotWindow2(CylcDotViewerCommon):
         util.setup_icons()
 
         gtk.Window.__init__(self)
-
         self.graph = xdot.Graph()
-
-        window = self
-
-        window.set_title('Cylc Suite Runtime Inheritance Graph Viewer')
-        window.set_default_size(512, 512)
-        window.set_icon(util.get_icon())
+        self.set_title('Cylc Suite Runtime Inheritance Graph Viewer')
+        self.set_default_size(512, 512)
+        self.set_icon(util.get_icon())
 
         vbox = gtk.VBox()
-        window.add(vbox)
+        self.add(vbox)
 
         self.widget = xdot.DotWidget()
 
@@ -152,7 +148,7 @@ class MyDotWindow2(CylcDotViewerCommon):
 
         # Add the accelerator group to the toplevel window
         accelgroup = uimanager.get_accel_group()
-        window.add_accel_group(accelgroup)
+        self.add_accel_group(accelgroup)
 
         # Create an ActionGroup
         actiongroup = gtk.ActionGroup('Actions')

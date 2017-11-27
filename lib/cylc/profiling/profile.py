@@ -35,9 +35,9 @@ from .git import (checkout, describe, GitCheckoutError,)
 
 def cylc_env(cylc_conf_path=''):
     """Provide an environment for executing cylc commands in."""
-    cylc_env = os.environ.copy()
-    cylc_env['CYLC_CONF_PATH'] = cylc_conf_path
-    return cylc_env
+    env = os.environ.copy()
+    env['CYLC_CONF_PATH'] = cylc_conf_path
+    return env
 
 
 CLEAN_ENV = cylc_env()

@@ -154,7 +154,7 @@ class ScanPanelAppletUpdater(object):
 
     def set_hosts(self, new_hosts):
         del self.hosts[:]
-        self.hosts.extend(gethostbyname_ex(host)[0] for host in new_hosts)
+        self.hosts.extend(new_hosts)
         self.update_now()
 
     def start(self):

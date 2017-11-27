@@ -30,7 +30,7 @@ import sys
 if '--use-ssh' in sys.argv[1:]:
     sys.argv.remove('--use-ssh')
     from cylc.remote import remrun
-    if remrun().execute(force_required=True):
+    if remrun():
         sys.exit(0)
 
 import cylc.flags

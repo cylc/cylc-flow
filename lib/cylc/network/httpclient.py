@@ -384,8 +384,9 @@ class SuiteRuntimeServiceClient(object):
         import json
         import urllib2
         import ssl
-        if hasattr(ssl, '_create_unverified_context'):
-            ssl._create_default_https_context = ssl._create_unverified_context
+        unverified_context = getattr(ssl, '_create_unverified_context', None)
+        if unverified_context is not None:
+            ssl._create_default_https_context = unverified_context
 
         comms_protocol = url.split(':', 1)[0]  # Can use urlparse?
         username, password = self._get_auth(comms_protocol)[0:2]

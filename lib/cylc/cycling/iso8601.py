@@ -342,6 +342,8 @@ class ISO8601Sequence(SequenceBase):
 
     def __init__(self, dep_section, context_start_point=None,
                  context_end_point=None):
+        SequenceBase.__init__(
+            self, dep_section, context_start_point, context_end_point)
         self.dep_section = dep_section
 
         if context_start_point is None:

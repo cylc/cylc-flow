@@ -38,7 +38,6 @@ import sys
 from subprocess import Popen, PIPE
 
 import cylc.flags
-from cylc.remote import remrun
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.version import CYLC_VERSION
 from cylc.config import SuiteConfig, SuiteConfigError

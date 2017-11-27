@@ -37,9 +37,10 @@ from cylc.gui.warning_dialog import warning_dialog, info_dialog
 try:
     from cylc.gui.view_graph import ControlGraph
     from cylc.gui.graph import graph_suite_popup
-except ImportError, x:
+except ImportError as exc:
     # pygraphviz not installed
-    warning_dialog("WARNING: graph view disabled\n" + str(x)).warn()
+    warning_dialog("WARNING: graph view disabled\n%s" % exc).warn()
+    del exc
     graphing_disabled = True
 else:
     graphing_disabled = False
@@ -156,6 +157,7 @@ Class to hold initialisation data.
         )
         self.imagedir = get_image_dir()
         self.my_uuid = uuid4()
+        self.logdir = None
 
     def reset(self, suite, auth=None):
         self.suite = suite

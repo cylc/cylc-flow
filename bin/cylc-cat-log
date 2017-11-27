@@ -29,7 +29,7 @@ window, or 'View in Editor' opens a temporary copy of it in your editor."""
 
 import sys
 from cylc.remote import remrun
-if remrun().execute():
+if remrun():
     sys.exit(0)
 
 import os

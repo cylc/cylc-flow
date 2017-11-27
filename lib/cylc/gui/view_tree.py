@@ -18,9 +18,11 @@
 
 import gtk
 import gobject
-from updater_tree import TreeUpdater
-from cylc.task_id import TaskID
+
 from isodatetime.parsers import DurationParser
+
+from cylc.gui.updater_tree import TreeUpdater
+from cylc.task_id import TaskID
 
 
 class ControlTree(object):
@@ -46,6 +48,14 @@ class ControlTree(object):
         self.gcapture_windows = []
 
         self.ttree_paths = {}  # Cache dict of tree paths & states, names.
+        self.group_toolbutton = None
+        self.group_menu_item = None
+        self.tmodelfilter = None
+        self.t = None
+        self.sort_col_num = None
+        self.tmodelsort = None
+        self.ttreeview = None
+        self.ttreestore = None
 
     def get_control_widgets(self):
         main_box = gtk.VBox()
@@ -266,7 +276,6 @@ class ControlTree(object):
 
     def on_popup_quit(self, b, lv, w):
         lv.quit()
-        self.quitters.remove(lv)
         w.destroy()
 
     def refresh(self):
@@ -361,27 +370,6 @@ class ControlTree(object):
         items.append(self.group_toolbutton)
 
         return items
-
-
-class StandaloneControlTreeApp(ControlTree):
-    def __init__(self, suite, owner, host, port):
-        gobject.threads_init()
-        ControlTree.__init__(self, suite, owner, host, port)
-
-    def quit_gcapture(self):
-        for gwindow in self.gcapture_windows:
-            if not gwindow.quit_already:
-                gwindow.quit(None, None)
-
-    def delete_event(self, widget, event, data=None):
-        self.quit_gcapture()
-        ControlTree.delete_event(self, widget, event, data)
-        gtk.main_quit()
-
-    def click_exit(self, foo):
-        self.quit_gcapture()
-        ControlTree.click_exit(self, foo)
-        gtk.main_quit()
 
 
 class TreeViewTaskExtractor(object):

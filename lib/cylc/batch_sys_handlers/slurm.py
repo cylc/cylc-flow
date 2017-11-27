@@ -34,7 +34,7 @@ class SLURMHandler(object):
     SUBMIT_CMD_TMPL = "sbatch '%(job)s'"
 
     @classmethod
-    def filter_poll_output(cls, out, job_id):
+    def filter_poll_output(cls, out, _):
         """Return True if job_id is in the queueing system."""
         # squeue -h -j JOB_ID when JOB_ID has stopped can either exit with
         # non-zero exit code or return blank text.
@@ -65,7 +65,7 @@ class SLURMHandler(object):
         return lines
 
     @staticmethod
-    def get_fail_signals(job_conf):
+    def get_fail_signals(_):
         """Return a list of failure signal names to trap.
 
         Do not include SIGTERM trapping, as SLURM tries to kill the

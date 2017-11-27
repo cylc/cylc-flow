@@ -53,6 +53,8 @@ class HTTPServer(object):
     def __init__(self, suite):
         # Suite only needed for back-compat with old clients (see below):
         self.suite = suite
+        self.engine = None
+        self.port = None
 
         # Figure out the ports we are allowed to use.
         base_port = GLOBAL_CFG.get(['communication', 'base port'])

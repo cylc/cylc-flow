@@ -109,6 +109,8 @@ RECURRENCE_FORMAT_RECS = [
         (r"^%(reps_1)s//%(end)s$", 4)
     ]
 ]
+del regex, format_num
+
 
 REC_RELATIVE_POINT = re.compile("^[-+]P\d+$")
 REC_INTERVAL = re.compile("^[-+]?P\d+$")
@@ -283,6 +285,8 @@ class IntegerSequence(SequenceBase):
         might not be. If computed start and stop points are out of bounds,
         they will be set to None. Context is used only initially to define
         the sequence bounds."""
+        SequenceBase.__init__(
+            self, dep_section, p_context_start, p_context_stop)
 
         # start context always exists
         self.p_context_start = IntegerPoint(p_context_start)
@@ -409,7 +413,7 @@ class IntegerSequence(SequenceBase):
                 int(self.p_context_stop - self.p_start) % int(self.i_step))
             self.p_stop = (
                 self.p_context_stop - self.i_step +
-                IntegerInterval.from_interval(remainder)
+                IntegerInterval.from_integer(remainder)
             )
             # if i_step is None here, points will just be None (out of bounds)
 
@@ -577,7 +581,7 @@ class IntegerSequence(SequenceBase):
                 self.exclusions == other.exclusions
 
 
-def init_from_cfg(cfg):
+def init_from_cfg(_):
     """Placeholder function required by all cycling modules."""
     pass
 

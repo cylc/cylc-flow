@@ -58,7 +58,6 @@ def _run_command(ctx):
         return ctx
 
     try:
-        stdin_file = open(os.devnull)
         if ctx.cmd_kwargs.get('stdin_file_paths'):
             stdin_file = TemporaryFile()
             for file_path in ctx.cmd_kwargs['stdin_file_paths']:
@@ -67,6 +66,8 @@ def _run_command(ctx):
             stdin_file.seek(0)
         elif ctx.cmd_kwargs.get('stdin_str'):
             stdin_file = PIPE
+        else:
+            stdin_file = open(os.devnull)
         proc = Popen(
             ctx.cmd, stdin=stdin_file, stdout=PIPE, stderr=PIPE,
             env=ctx.cmd_kwargs.get('env'), shell=ctx.cmd_kwargs.get('shell'))

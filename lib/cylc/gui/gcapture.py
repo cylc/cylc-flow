@@ -16,14 +16,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.gui.tailer import Tailer
-import gtk
 import gobject
+import gtk
+import os
 import pango
-import tempfile
-from warning_dialog import warning_dialog, info_dialog
-from util import get_icon
 from subprocess import Popen, STDOUT
+import tempfile
+
+from cylc.gui.tailer import Tailer
+from cylc.gui.util import get_icon
+from cylc.gui.warning_dialog import warning_dialog, info_dialog
 
 # unit test: see the command $CYLC_DIR/bin/gcapture
 
@@ -45,6 +47,8 @@ are displayed in red.
         self.command = command
         self.ignore_command = ignore_command
         self.stdout = stdoutfile
+        self.stdout_updater = None
+        self.proc = None
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.window.set_border_width(5)
         if title is None:

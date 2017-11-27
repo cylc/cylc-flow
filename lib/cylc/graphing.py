@@ -38,19 +38,6 @@ class CGraphPlain(pygraphviz.AGraph):
             suite_polling_tasks = {}
         self.suite_polling_tasks = suite_polling_tasks
 
-    def node_attr_by_taskname(self, node_string):
-        try:
-            name = TaskID.split(node_string)[0]
-        except ValueError:
-            # Special node?
-            if node_string.startswith("__remove_"):
-                return []
-            raise
-        if name in self.task_attr:
-            return self.task_attr[name]
-        else:
-            return []
-
     def style_edge(self, left, right):
         pass
 
@@ -314,6 +301,19 @@ class CGraph(CGraphPlain):
                     if item not in self.task_attr:
                         self.task_attr[item] = []
                     self.task_attr[item].append(attr)
+
+    def node_attr_by_taskname(self, node_string):
+        try:
+            name = TaskID.split(node_string)[0]
+        except ValueError:
+            # Special node?
+            if node_string.startswith("__remove_"):
+                return []
+            raise
+        if name in self.task_attr:
+            return self.task_attr[name]
+        else:
+            return []
 
     def style_node(self, node_string):
         CGraphPlain.style_node(self, node_string)

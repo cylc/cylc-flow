@@ -57,7 +57,7 @@ class TaskOutputs(object):
     # Memory optimization - constrain possible attributes to this list.
     __slots__ = ["_by_message", "_by_trigger"]
 
-    def __init__(self, tdef, point):
+    def __init__(self, tdef):
         self._by_message = {}
         self._by_trigger = {}
         for trigger, message in tdef.outputs:
