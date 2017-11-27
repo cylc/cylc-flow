@@ -194,7 +194,8 @@ class TimePointParser(object):
                 self._time_zone_regex_map[format_type].append(
                     [re.compile(time_zone_regex), time_zone_expr])
 
-    def get_expressions(self, text):
+    @staticmethod
+    def get_expressions(text):
         """Yield valid expressions from text."""
         for line in text.splitlines():
             line_text = line.strip()
@@ -221,7 +222,8 @@ class TimePointParser(object):
         expression = "^" + expression + "$"
         return expression
 
-    def parse_time_zone_expression_to_regex(self, expression):
+    @staticmethod
+    def parse_time_zone_expression_to_regex(expression):
         """Construct regular expressions for the time zone."""
         for expr_regex, substitute, _, name in (
                 parser_spec.get_time_zone_translate_info()):

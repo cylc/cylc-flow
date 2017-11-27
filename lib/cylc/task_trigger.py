@@ -190,7 +190,7 @@ class Dependency(object):
             if isinstance(item, TaskTrigger):
                 ret.append(Prerequisite.MESSAGE_TEMPLATE % (
                     item.task_name, item.get_point(point), item.output))
-            elif type(item) is list:
+            elif isinstance(item, list):
                 ret.extend(['('] + cls._stringify_list(item, point) + [')'])
             else:
                 ret.append(item)

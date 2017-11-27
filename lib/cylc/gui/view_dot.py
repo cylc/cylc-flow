@@ -216,8 +216,9 @@ LED suite control interface.
         self.t.update()
         self.t.action_required = True
 
-    def _set_tooltip(self, widget, tip_text):
-        # Convenience function to add hover over text to a widget.
+    @staticmethod
+    def _set_tooltip(widget, tip_text):
+        """Convenience function to add hover over text to a widget."""
         tip = gtk.Tooltips()
         tip.enable()
         tip.set_tip(widget, tip_text)

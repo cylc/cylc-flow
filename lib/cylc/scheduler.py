@@ -286,8 +286,8 @@ conditions; see `cylc conditions`.
         logo_lines = logo.splitlines()
         license_lines = cylc_license.splitlines()
         lmax = max(len(line) for line in license_lines)
-        for i in range(len(logo_lines)):
-            print logo_lines[i], ('{0: ^%s}' % lmax).format(license_lines[i])
+        for i, logo_line in enumerate(logo_lines):
+            print logo_line, ('{0: ^%s}' % lmax).format(license_lines[i])
 
     def configure(self):
         """Configure suite daemon."""

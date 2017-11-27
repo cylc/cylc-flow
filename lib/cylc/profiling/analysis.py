@@ -334,7 +334,7 @@ def print_table(table, transpose=False):
             if col_no != 0:
                 sys.stdout.write('  ')
             cell = table[row_no][col_no]
-            if type(cell) is list:
+            if isinstance(cell, list):
                 sys.stdout.write('-' * col_widths[col_no])
             else:
                 sys.stdout.write(cell + ' ' * (col_widths[col_no] - len(cell)))

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Check that single-line config print works""" 
+"""Check that single-line config print works"""
 
 import os, sys
 

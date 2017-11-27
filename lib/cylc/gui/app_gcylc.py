@@ -431,7 +431,8 @@ Use *Connect Now* button to reconnect immediately.""")
                 self.reconnect_interval_widget.set_text,
                 " (next connect: %s) " % next_update_dt_str)
 
-    def _set_tooltip(self, widget, text):
+    @staticmethod
+    def _set_tooltip(widget, text):
         tooltip = gtk.Tooltips()
         tooltip.enable()
         tooltip.set_tip(widget, text)
@@ -1268,7 +1269,8 @@ been defined for this suite""").inform()
             self._popup_logview(task_id, task_state_summary, choice)
         return False
 
-    def connect_right_click_sub_menu(self, is_graph_view, item, x, y, z):
+    @staticmethod
+    def connect_right_click_sub_menu(is_graph_view, item, x, y, z):
         """Handle right-clicks in sub-menus."""
         if is_graph_view:
             item.connect('button-release-event', x, y, z)
@@ -1284,10 +1286,10 @@ been defined for this suite""").inform()
         # connect_right_click_sub_menu should be used in preference to
         # item.connect to handle this
 
-        if type(task_is_family) is bool:
+        if isinstance(task_is_family, bool):
             task_is_family = [task_is_family] * len(task_ids)
-        if (type(task_ids) is not list or type(t_states) is not list or
-                type(task_is_family) is not list):
+        if any(not isinstance(item, list)
+               for item in (task_ids, t_states, task_is_family)):
             return False
 
         # Consistency check.
@@ -1567,7 +1569,8 @@ been defined for this suite""").inform()
         if not self.info_bar.prog_bar_active():
             self.info_bar.prog_bar.hide()
 
-    def update_tb(self, tb, line, tags=None):
+    @staticmethod
+    def update_tb(tb, line, tags=None):
         """Update a text view buffer."""
         if tags:
             tb.insert_with_tags(tb.get_end_iter(), line, *tags)
@@ -1666,7 +1669,7 @@ shown here in the state they were in at the time of triggering.''')
 
     def hold_task(self, b, task_ids, stop=True):
         """Hold or release a task."""
-        if type(task_ids) is not list:
+        if not isinstance(task_ids, list):
             task_ids = [task_ids]
 
         if stop:
@@ -1682,7 +1685,7 @@ shown here in the state they were in at the time of triggering.''')
 
     def trigger_task_now(self, b, task_ids):
         """Trigger task via the suite daemon's command interface."""
-        if type(task_ids) is not list:
+        if not isinstance(task_ids, list):
             task_ids = [task_ids]
 
         for task_id in task_ids:
@@ -1700,7 +1703,7 @@ shown here in the state they were in at the time of triggering.''')
 
     def poll_task(self, b, task_ids):
         """Poll a task/family."""
-        if type(task_ids) is not list:
+        if not isinstance(task_ids, list):
             task_ids = [task_ids]
 
         for task_id in task_ids:
@@ -1710,7 +1713,7 @@ shown here in the state they were in at the time of triggering.''')
 
     def kill_task(self, b, task_ids):
         """Kill a task/family."""
-        if type(task_ids) is not list:
+        if not isinstance(task_ids, list):
             task_ids = [task_ids]
 
         for task_id in task_ids:
@@ -1721,7 +1724,7 @@ shown here in the state they were in at the time of triggering.''')
 
     def spawn_task(self, b, task_ids):
         """For tasks to spawn their successors."""
-        if type(task_ids) is not list:
+        if not isinstance(task_ids, list):
             task_ids = [task_ids]
 
         for task_id in task_ids:
@@ -1731,7 +1734,7 @@ shown here in the state they were in at the time of triggering.''')
 
     def reset_task_state(self, b, e, task_ids, state):
         """Reset the state of a task/family."""
-        if type(task_ids) is not list:
+        if not isinstance(task_ids, list):
             task_ids = [task_ids]
 
         for task_id in task_ids:
@@ -1905,7 +1908,8 @@ shown here in the state they were in at the time of triggering.''')
         window.add(vbox)
         window.show_all()
 
-    def stop_method(self, b, meth, st_box, sc_box, tt_box):
+    @staticmethod
+    def stop_method(b, meth, st_box, sc_box, tt_box):
         """Determine the suite stop method."""
         for ch in (
                 st_box.get_children() +
@@ -1922,13 +1926,15 @@ shown here in the state they were in at the time of triggering.''')
             for ch in tt_box.get_children():
                 ch.set_sensitive(True)
 
-    def hold_cb_toggled(self, b, box):
+    @staticmethod
+    def hold_cb_toggled(b, box):
         if b.get_active():
             box.set_sensitive(False)
         else:
             box.set_sensitive(True)
 
-    def startup_method(self, b, meth, ic_box, is_box):
+    @staticmethod
+    def startup_method(b, meth, ic_box, is_box):
         """Determine the suite start-up method."""
         if meth in ['cold', 'warm']:
             for ch in ic_box.get_children():
@@ -2338,7 +2344,8 @@ shown here in the state they were in at the time of triggering.''')
                     continue
         return ret
 
-    def _sort_key_func(self, log_path):
+    @staticmethod
+    def _sort_key_func(log_path):
         """Sort key for a task job log path."""
         head, submit_num, base = log_path.rsplit("/", 2)
         try:
@@ -2347,7 +2354,8 @@ shown here in the state they were in at the time of triggering.''')
             pass
         return (submit_num, base, head)
 
-    def _set_tooltip(self, widget, tip_text):
+    @staticmethod
+    def _set_tooltip(widget, tip_text):
         """Set a tool-tip text."""
         tooltip = gtk.Tooltips()
         tooltip.enable()

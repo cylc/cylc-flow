@@ -71,7 +71,8 @@ class ScanPanelApplet(object):
         """Return the topmost widget for embedding in the panel."""
         return self.top_hbox
 
-    def stop(self, widget):
+    @staticmethod
+    def stop(_):
         """Handle a stop."""
         sys.exit()
 
@@ -80,7 +81,8 @@ class ScanPanelApplet(object):
             self.updater.launch_context_menu(event)
             return False
 
-    def _set_tooltip(self, widget, text):
+    @staticmethod
+    def _set_tooltip(widget, text):
         tooltip = gtk.Tooltips()
         tooltip.enable()
         tooltip.set_tip(widget, text)
@@ -343,7 +345,8 @@ class ScanPanelAppletUpdater(object):
     def _on_button_press_event_gscan(self, widget, event):
         self.launch_gscan()
 
-    def _on_img_tooltip_query(self, widget, x, y, kbd, tooltip, tip_widget):
+    @staticmethod
+    def _on_img_tooltip_query(widget, x, y, kbd, tooltip, tip_widget):
         tooltip.set_custom(tip_widget)
         return True
 

@@ -98,7 +98,8 @@ class C3(object):
             tree = {}
         self.tree = tree
 
-    def merge(self, seqs, label=None):
+    @staticmethod
+    def merge(seqs, label=None):
         # print '\n\nCPL[%s]=%s' % (seqs[0][0],seqs),
         res = []
         i = 0

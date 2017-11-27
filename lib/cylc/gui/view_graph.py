@@ -228,11 +228,11 @@ Dependency graph suite control interface.
 
     def rearrange(self, col, n):
         cols = self.ttreeview.get_columns()
-        for i_n in range(len(cols)):
+        for i_n, col in enumerate(cols):
             if i_n == n:
-                cols[i_n].set_sort_indicator(True)
+                col.set_sort_indicator(True)
             else:
-                cols[i_n].set_sort_indicator(False)
+                col.set_sort_indicator(False)
         # col is cols[n]
         if col.get_sort_order() == gtk.SORT_ASCENDING:
             col.set_sort_order(gtk.SORT_DESCENDING)
@@ -295,7 +295,8 @@ Dependency graph suite control interface.
 
         return items
 
-    def _set_tooltip(self, widget, tip_text):
+    @staticmethod
+    def _set_tooltip(widget, tip_text):
         tip = gtk.Tooltips()
         tip.enable()
         tip.set_tip(widget, tip_text)

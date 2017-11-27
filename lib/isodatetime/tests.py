@@ -975,7 +975,8 @@ class TestSuite(unittest.TestCase):
             str(data.Duration(days=7) + data.Duration(weeks=1)),
             "P14D")
 
-    def test_timepoint(self):
+    @staticmethod
+    def test_timepoint():
         """Test the time point data model (takes a while)."""
         pool = multiprocessing.Pool(processes=4)
         pool.map_async(test_timepoint_at_year, range(1801, 2403)).get()
@@ -1033,34 +1034,34 @@ class TestSuite(unittest.TestCase):
 
                 test_dates[3].set_time_zone(
                     data.TimeZone(hours=8, minutes=30))
-                for i in range(len(test_dates)):
-                    i_date_str = str(test_dates[i])
-                    date_no_tz = test_dates[i].copy()
+                for date1 in list(test_dates):
+                    date1_str = str(date1)
+                    date_no_tz = date1.copy()
                     date_no_tz.time_zone = data.TimeZone(hours=0, minutes=0)
 
                     # TODO: https://github.com/metomi/isodatetime/issues/34.
-                    if (test_dates[i].time_zone.hours >= 0 or
-                            test_dates[i].time_zone.minutes >= 0):
-                        utc_offset = date_no_tz - test_dates[i]
+                    if (date1.time_zone.hours >= 0 or
+                            date1.time_zone.minutes >= 0):
+                        utc_offset = date_no_tz - date1
                     else:
-                        utc_offset = (test_dates[i] - date_no_tz) * -1
+                        utc_offset = (date1 - date_no_tz) * -1
 
                     self.assertEqual(utc_offset.hours,
-                                     test_dates[i].time_zone.hours,
-                                     i_date_str + " utc offset (hrs)")
+                                     date1.time_zone.hours,
+                                     date1_str + " utc offset (hrs)")
                     self.assertEqual(utc_offset.minutes,
-                                     test_dates[i].time_zone.minutes,
-                                     i_date_str + " utc offset (mins)")
-                    for j in range(len(test_dates)):
-                        j_date_str = str(test_dates[j])
+                                     date1.time_zone.minutes,
+                                     date1_str + " utc offset (mins)")
+                    for date2 in list(test_dates):
+                        date2_str = str(date2)
                         self.assertEqual(
-                            test_dates[i], test_dates[j],
-                            i_date_str + " == " + j_date_str
+                            date1, date2,
+                            date1_str + " == " + date2_str
                         )
-                        duration = test_dates[j] - test_dates[i]
+                        duration = date2 - date1
                         self.assertEqual(
                             duration, data.Duration(days=0),
-                            i_date_str + " - " + j_date_str
+                            date1_str + " - " + date2_str
                         )
 
     def test_timepoint_dumper(self):

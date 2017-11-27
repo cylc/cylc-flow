@@ -287,7 +287,8 @@ class ControlTree(object):
         self.group_menu_item.connect('toggled', self.toggle_grouping)
         return items
 
-    def _set_tooltip(self, widget, tip_text):
+    @staticmethod
+    def _set_tooltip(widget, tip_text):
         """Convenience function to add hover over text to a widget."""
         tip = gtk.Tooltips()
         tip.enable()
@@ -412,7 +413,8 @@ class TreeViewTaskExtractor(object):
                     model.get_value(_iter, 1)))
         return ret
 
-    def _make_tree_from_rows(self, rows):
+    @staticmethod
+    def _make_tree_from_rows(rows):
         """Convert list of rows to a tree.
         Rows are denoted with the entry 'node' which holds the value
         (row1, row2)."""
@@ -443,7 +445,7 @@ class TreeViewTaskExtractor(object):
         its items."""
         ret = []
         for item in tree_list:
-            if type(item) is list:
+            if isinstance(item, list):
                 ret.extend(self._flatten_list(item))
             else:
                 ret.append(item)

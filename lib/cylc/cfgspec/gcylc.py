@@ -218,7 +218,8 @@ class gconfig(config):
                 "WARNING: no initial views defined, defaulting to 'text'")
             cfg['initial views'] = ['text']
 
-    def parse_state(self, theme, name, cfglist):
+    @staticmethod
+    def parse_state(theme, name, cfglist):
         allowed_keys = ['style', 'color', 'fontcolor']
         cfg = {}
         for item in cfglist:
