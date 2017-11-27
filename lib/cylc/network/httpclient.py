@@ -143,7 +143,7 @@ class SuiteRuntimeServiceClient(object):
         self.timeout = timeout
         self.my_uuid = my_uuid or uuid4()
         if print_uuid:
-            print >> sys.stderr, '%s' % self.my_uuid
+            sys.stderr.write('%s\n' % self.my_uuid)
 
         self.prog_name = os.path.basename(sys.argv[0])
         self.auth = auth

@@ -17,8 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-class rotator(object):
-    def __init__(self, colors=['#fcc', '#cfc', '#bbf', '#ffb']):
+class ColorRotator(object):
+
+    COLORS = ('#fcc', '#cfc', '#bbf', '#ffb')
+
+    def __init__(self, colors=COLORS):
         self.colors = colors
         self.current_color = 0
 

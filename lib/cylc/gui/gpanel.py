@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import re
 from subprocess import Popen, STDOUT
 import sys
 from time import time
@@ -27,7 +26,6 @@ import gtk
 import gobject
 import warnings
 
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gcylc import gcfg
 from cylc.cfgspec.gscan import gsfg
 import cylc.flags
@@ -350,13 +348,12 @@ class ScanPanelAppletUpdater(object):
         return True
 
     def _set_exception_hook(self):
-        # Handle an uncaught exception.
-        old_hook = sys.excepthook
-        sys.excepthook = (lambda *a:
-                          self._handle_exception(*a, old_hook=old_hook))
+        """Handle an uncaught exception."""
+        sys.excepthook = lambda e_type, e_value, e_traceback: (
+            self._handle_exception(
+                e_type, e_value, e_traceback, sys.excepthook))
 
-    def _handle_exception(self, e_type, e_value, e_traceback,
-                          old_hook=None):
+    def _handle_exception(self, e_type, e_value, e_traceback, old_hook):
         self.gcylc_image.set_from_stock(gtk.STOCK_DIALOG_ERROR,
                                         gtk.ICON_SIZE_MENU)
         exc_lines = traceback.format_exception(e_type, e_value, e_traceback)

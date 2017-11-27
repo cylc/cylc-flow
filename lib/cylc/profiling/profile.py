@@ -96,7 +96,7 @@ def purge_suite(reg):
     print '$ rm -rf ' + os.path.expanduser(os.path.join('~', 'cylc-run', reg))
     try:
         shutil.rmtree(os.path.expanduser(os.path.join('~', 'cylc-run', reg)))
-    except Exception:
+    except OSError:
         return False
     else:
         return True
@@ -306,6 +306,10 @@ def profile(schedule):
         for experiment in experiments:
             try:
                 result_files = run_experiment(experiment['config'])
+            except ProfilingKilledException as exc:
+                # Profiling has been terminated, return what results we have.
+                print exc
+                return results, checkout_count, False
             except SuiteFailedException as exc:
                 # Experiment failed to run, move onto the next one.
                 print >> sys.stderr, ('Experiment "%s" failed at version "%s"'
@@ -313,10 +317,6 @@ def profile(schedule):
                 print >> sys.stderr, exc
                 success = False
                 continue
-            except ProfilingKilledException as exc:
-                # Profiling has been terminated, return what results we have.
-                print exc
-                return results, checkout_count, False
             else:
                 # Run analysis.
                 try:

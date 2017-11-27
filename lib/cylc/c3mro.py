@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-from copy import copy
-
 """
 The C3 algorithm is used to linearize multiple inheritance hierarchies
 in Python and other languages (MRO = Method Resolution Order). The code
@@ -91,8 +89,13 @@ print_mro(ex_9.Z)
 """
 
 
+from copy import copy
+
+
 class C3(object):
-    def __init__(self, tree={}):
+    def __init__(self, tree=None):
+        if not tree:
+            tree = {}
         self.tree = tree
 
     def merge(self, seqs, label=None):

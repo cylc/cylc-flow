@@ -54,9 +54,7 @@ from cylc.task_outputs import (
     TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED)
 from cylc.wallclock import (
-    get_current_time_string,
-    get_unix_time_from_time_string,
-    RE_DATE_TIME_FORMAT_EXTENDED)
+    get_current_time_string, RE_DATE_TIME_FORMAT_EXTENDED)
 
 
 CustomTaskEventHandlerContext = namedtuple(

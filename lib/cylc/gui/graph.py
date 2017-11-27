@@ -28,8 +28,8 @@ def graph_suite_popup(reg, cmd_help, defstartc, defstopc, graph_opts,
     """Popup a dialog to allow a user to configure their suite graphing."""
     try:
         import xdot
-    except Exception, x:
-        warning_dialog(str(x) + "\nGraphing disabled.", parent_window).warn()
+    except ImportError as exc:
+        warning_dialog(str(exc) + "\nGraphing disabled.", parent_window).warn()
         return False
 
     window = gtk.Window()

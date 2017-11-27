@@ -35,7 +35,7 @@ from cylc.exceptions import CylcError
 import cylc.flags
 from cylc.network import (
     NO_PASSPHRASE, PRIVILEGE_LEVELS, PRIV_IDENTITY, PRIV_DESCRIPTION,
-    PRIV_STATE_TOTALS, PRIV_FULL_READ, PRIV_SHUTDOWN, PRIV_FULL_CONTROL)
+    PRIV_FULL_READ, PRIV_SHUTDOWN, PRIV_FULL_CONTROL)
 from cylc.hostuserutil import get_host
 from cylc.suite_logging import ERR, LOG
 from cylc.suite_srv_files_mgr import (

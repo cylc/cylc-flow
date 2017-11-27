@@ -106,7 +106,7 @@ class LogAnalyser(object):
 
         if new != ref:
             diff = unified_diff(new, ref)
-            print >> sys.stderr, '\n'.join(diff)
+            sys.stderr.write('\n'.join(diff) + '\n')
             raise LogAnalyserError(
                 "ERROR: triggering is NOT consistent with the reference log")
         else:

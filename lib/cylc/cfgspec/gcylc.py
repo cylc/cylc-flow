@@ -218,7 +218,7 @@ class gconfig(config):
                 "WARNING: no initial views defined, defaulting to 'text'")
             cfg['initial views'] = ['text']
 
-    def parse_state(self, theme, name, cfglist=[]):
+    def parse_state(self, theme, name, cfglist):
         allowed_keys = ['style', 'color', 'fontcolor']
         cfg = {}
         for item in cfglist:
@@ -245,14 +245,16 @@ class gconfig(config):
             else:
                 target[item] = source[item]
 
-    def dump(self, keys=[], sparse=False, pnative=False, prefix='',
+    def dump(self, keys, sparse=False, pnative=False, prefix='',
              none_str=''):
-        # override parse.config.dump() to restore the list-nature of
-        # theme state items
+        """Override parse.config.dump().
+
+        To restore the list-nature of theme state items.
+        """
         cfg = deepcopy(self.get([], sparse))
         try:
             for theme in cfg['themes'].values():
-                for state in theme.keys():
+                for state in theme:
                     clist = []
                     for attr, val in theme[state].items():
                         clist.append('%s=%s' % (attr, val))

@@ -58,7 +58,7 @@ from cylc.task_id import TaskID
 from cylc.task_state_prop import extract_group_state
 from cylc.version import CYLC_VERSION
 from cylc.gui.option_group import controlled_option_group
-from cylc.gui.color_rotator import rotator
+from cylc.gui.color_rotator import ColorRotator
 from cylc.gui.cylc_logviewer import cylc_logviewer
 from cylc.gui.gcapture import gcapture_tmpfile
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
@@ -542,7 +542,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.quitters = []
         self.gcapture_windows = []
 
-        self.log_colors = rotator()
+        self.log_colors = ColorRotator()
         hcolor = gcfg.get(['task filter highlight color'])
         try:
             self.filter_highlight_color = gtk.gdk.color_parse(hcolor)

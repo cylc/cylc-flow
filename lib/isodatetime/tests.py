@@ -872,7 +872,7 @@ def get_timerecurrenceparser_tests():
         for point_expr in test_points:
             duration_tests = get_timedurationparser_tests()
             start_point = point_parser.parse(point_expr)
-            for duration_expr, duration_result in duration_tests:
+            for duration_expr, _ in duration_tests:
                 if duration_expr.startswith("-P"):
                     # Our negative durations are not supported in recurrences.
                     continue
@@ -1293,7 +1293,7 @@ class TestSuite(unittest.TestCase):
                         expression
                     )
                 test_results = []
-                for i, time_point in enumerate(test_recurrence):
+                for time_point in test_recurrence:
                     test_results.append(str(time_point))
                 self.assertEqual(test_results, ctrl_results,
                                  expression + "(%s)" % calendar_mode)

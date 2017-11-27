@@ -15,6 +15,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Cylc-modified xdot windows for the "cylc graph" command.
+
+TODO - factor more commonality out of MyDotWindow, MyDotWindow2
+"""
+
 
 import gtk
 import os
@@ -28,11 +33,6 @@ from cylc.gui import util
 from cylc.task_id import TaskID
 from cylc.suite_logging import ERR
 
-"""
-Cylc-modified xdot windows for the "cylc graph" command.
-TODO - factor more commonality out of MyDotWindow, MyDotWindow2
-"""
-
 
 def style_ghost_node(node):
     """Apply default style to a ghost node."""
@@ -42,6 +42,10 @@ def style_ghost_node(node):
 
 
 class CylcDotViewerCommon(xdot.DotWindow):
+
+    def __init__(self, *args, **kwargs):
+        xdot.DotWindow.__init__(self, *args, **kwargs)
+        self.suiterc = None
 
     def load_config(self):
         """Load the suite config."""

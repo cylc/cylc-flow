@@ -45,7 +45,7 @@ def cat_state(suite, host=None, owner=None):
     except OSError:
         return []
     else:
-        out, err = proc.communicate()
+        out = proc.communicate()[0]
         if proc.wait():  # non-zero return code
             return []
         return out.splitlines()

@@ -415,12 +415,12 @@ class ISO8601Sequence(SequenceBase):
         """Deprecated: return the offset used for this sequence."""
         return self.offset
 
-    def set_offset(self, offset):
-        """Deprecated: alter state to offset the entire sequence."""
+    def set_offset(self, i_offset):
+        """Deprecated: alter state to i_offset the entire sequence."""
         if self.recurrence.start_point is not None:
-            self.recurrence.start_point += interval_parse(str(offset))
+            self.recurrence.start_point += interval_parse(str(i_offset))
         if self.recurrence.end_point is not None:
-            self.recurrence.end_point += interval_parse(str(offset))
+            self.recurrence.end_point += interval_parse(str(i_offset))
         self._cached_first_point_values = {}
         self._cached_next_point_values = {}
         self._cached_valid_point_booleans = {}

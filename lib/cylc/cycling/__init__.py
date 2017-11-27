@@ -433,7 +433,7 @@ class ExclusionBase(object):
         self.exclusion_end_point = end_point
 
     @abstractmethod
-    def build_exclusions(self):
+    def build_exclusions(self, excl_points):
         """Constructs the set of exclusion sequences or points"""
         pass
 
