@@ -18,7 +18,6 @@
 
 """Functionality for expressing and evaluating logical triggers."""
 
-from ast import literal_eval
 import math
 
 from cylc.conditional_simplifier import ConditionalSimplifier
@@ -184,7 +183,7 @@ class Prerequisite(object):
 
         """
         try:
-            res = literal_eval(self.conditional_expression)
+            res = eval(self.conditional_expression)
         except (SyntaxError, ValueError) as exc:
             err_msg = str(exc)
             if str(exc).find("unexpected EOF") != -1:

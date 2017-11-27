@@ -327,7 +327,7 @@ class CGraph(CGraphPlain):
         node.attr['penwidth'] = self.vizconfig['node penwidth']
 
     def style_edge(self, left, right):
-        CGraphPlain.style_edge(self, node_string)
+        CGraphPlain.style_edge(self, left, right)
         left_node = self.get_node(left)
         edge = self.get_edge(left, right)
         if self.vizconfig['use node color for edges']:
