@@ -25,8 +25,9 @@ from .git import is_git_repo
 
 def get_cylc_directory():
     """Returns the location of cylc's working copy."""
-    ver_str, _ = Popen(['cylc', 'version', '--long'], stdout=PIPE
-                       ).communicate()
+    ver_str, _ = Popen(
+        ['cylc', 'version', '--long'],
+        stdout=PIPE, stdin=open(os.devnull)).communicate()
     try:
         return os.path.realpath(re.search('\((.*)\)', ver_str).groups()[0])
     except IndexError:

@@ -76,7 +76,9 @@ from cylc.task_state_prop import get_status_prop
 
 def run_get_stdout(command, filter_=False):
     try:
-        popen = Popen(command, shell=True, stderr=PIPE, stdout=PIPE)
+        popen = Popen(
+            command,
+            shell=True, stdin=open(os.devnull), stderr=PIPE, stdout=PIPE)
         out = popen.stdout.read()
         err = popen.stderr.read()
         res = popen.wait()
@@ -1189,7 +1191,7 @@ been defined for this suite""").inform()
         print command
 
         try:
-            Popen([command], shell=True)
+            Popen([command], shell=True, stdin=open(os.devnull))
         except OSError:
             warning_dialog('Error: failed to start ' + self.cfg.suite,
                            self.window).warn()
@@ -2992,15 +2994,18 @@ This is what my suite does:..."""
         cat_menu.append(cylc_help_item)
         cylc_help_item.connect('activate', self.command_help)
 
-        cout = Popen(["cylc", "categories"], stdout=PIPE).communicate()[0]
+        cout = Popen(
+            ["cylc", "categories"],
+            stdin=open(os.devnull), stdout=PIPE).communicate()[0]
         categories = cout.rstrip().split()
         for category in categories:
             foo_item = gtk.MenuItem(category)
             cat_menu.append(foo_item)
             com_menu = gtk.Menu()
             foo_item.set_submenu(com_menu)
-            proc = Popen(["cylc-help", "category=" + category], stdout=PIPE)
-            cout = proc.communicate()[0]
+            cout = Popen(
+                ["cylc-help", "category=" + category],
+                stdin=open(os.devnull), stdout=PIPE).communicate()[0]
             commands = cout.rstrip().split()
             for command in commands:
                 bar_item = gtk.MenuItem(command)
@@ -3106,16 +3111,16 @@ This is what my suite does:..."""
         if n_states % PER_ROW:
             n_rows += 1
         dotm = DotMaker(self.theme, size=self.dot_size)
-        for row in range(0, n_rows):
+        for row in range(n_rows):
             subbox = gtk.HBox(homogeneous=True)
             self.state_filter_box.pack_start(subbox)
-            for i in range(0, PER_ROW):
+            for i in range(PER_ROW):
                 ebox = gtk.EventBox()
                 box = gtk.HBox()
                 ebox.add(box)
                 try:
                     st = self.legal_task_states[row * PER_ROW + i]
-                except Exception:
+                except IndexError:
                     pass
                 else:
                     icon = dotm.get_image(st)

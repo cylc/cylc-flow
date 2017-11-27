@@ -64,7 +64,7 @@ if remrun().execute(forward_x11=True):
 import os
 import re
 import datetime
-import subprocess
+from subprocess import call
 from shutil import copy
 
 import cylc.flags
@@ -124,7 +124,7 @@ def main():
         command_list.append(suiterc)
         command = ' '.join(command_list)
         # THIS BLOCKS UNTIL THE COMMAND COMPLETES
-        retcode = subprocess.call(command_list)
+        retcode = call(command_list, stdin=open(os.devnull))
         if retcode != 0:
             # the command returned non-zero exist status
             print >> sys.stderr, command, 'failed:', retcode
@@ -172,7 +172,7 @@ def main():
     command_list.append(suiterc)
     command = ' '.join(command_list)
     # THIS BLOCKS UNTIL THE COMMAND COMPLETES
-    retcode = subprocess.call(command_list)
+    retcode = call(command_list, stdin=open(os.devnull))
     if retcode != 0:
         # the command returned non-zero exist status
         print >> sys.stderr, command, 'failed:', retcode

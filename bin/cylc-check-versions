@@ -35,7 +35,7 @@ User -v/--verbose to see the command invoked to determine the remote version
 site dependent -- see cylc global config documentation."""
 
 import sys
-import subprocess
+from subprocess import Popen, PIPE
 
 import cylc.flags
 from cylc.remote import remrun
@@ -99,11 +99,9 @@ def main():
             user_at_host = host
         if verbose:
             print "%s: %s" % (user_at_host, ' '.join(argv))
-        p = subprocess.Popen(
-            argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = p.communicate()
-        res = p.wait()
-        if res == 0:
+        proc = Popen(argv, stdin=open(os.devnull), stdout=PIPE, stderr=PIPE)
+        out, err = proc.communicate()
+        if proc.wait() == 0:
             if verbose:
                 print "   %s" % out
             contacted += 1

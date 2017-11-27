@@ -1369,7 +1369,8 @@ class TestSuite(unittest.TestCase):
 
 def assert_equal(data1, data2):
     """A function-level equivalent of the unittest method."""
-    assert data1 == data2
+    if data1 != data2:
+        raise AssertionError()
 
 
 def test_timepoint_at_year(test_year):

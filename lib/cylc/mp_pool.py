@@ -31,6 +31,7 @@ Some notes:
 
 import logging
 import multiprocessing
+import os
 from pipes import quote
 from subprocess import Popen, PIPE
 import sys
@@ -57,7 +58,7 @@ def _run_command(ctx):
         return ctx
 
     try:
-        stdin_file = None
+        stdin_file = open(os.devnull)
         if ctx.cmd_kwargs.get('stdin_file_paths'):
             stdin_file = TemporaryFile()
             for file_path in ctx.cmd_kwargs['stdin_file_paths']:

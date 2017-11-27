@@ -16,7 +16,7 @@
 """Provides python wrappers to certain git commands."""
 
 import os
-from subprocess import (Popen, PIPE, CalledProcessError, check_call)
+from subprocess import Popen, PIPE, CalledProcessError, check_call
 
 
 class GitCheckoutError(Exception):
@@ -30,7 +30,9 @@ def describe(ref=None):
         cmd = ['git', 'describe']
         if ref:
             cmd.append(ref)
-        return Popen(cmd, stdout=PIPE).communicate()[0].strip()
+        return Popen(
+            cmd,
+            stdin=open(os.devnull), stdout=PIPE).communicate()[0].strip()
     except CalledProcessError:
         return None
 
@@ -38,8 +40,9 @@ def describe(ref=None):
 def is_ancestor_commit(commit1, commit2):
     """Returns True if commit1 is an ancestor of commit2."""
     try:
-        ancestor = Popen(['git', 'merge-base', commit1, commit2],
-                         stdout=PIPE).communicate()[0].strip()
+        ancestor = Popen(
+            ['git', 'merge-base', commit1, commit2],
+            stdin=open(os.devnull), stdout=PIPE).communicate()[0].strip()
         return ancestor == commit1
     except CalledProcessError:
         return False
@@ -50,14 +53,15 @@ def checkout(branch, delete_pyc=False):
     try:
         cmd = ['git', 'checkout', '-q', branch]
         print '$ ' + ' '.join(cmd)
-        check_call(cmd)
+        check_call(cmd, stdin=open(os.devnull))
     except CalledProcessError:
         raise GitCheckoutError()
     try:
         if delete_pyc:
             cmd = ['find', 'lib', '-name', r'\*.pyc', '-delete']
             print '$ ' + ' '.join(cmd)
-            check_call(cmd, stdout=open(os.devnull, 'wb'))
+            check_call(
+                cmd, stdin=open(os.devnull), stdout=open(os.devnull, 'wb'))
     except CalledProcessError:
         pass
 

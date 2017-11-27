@@ -426,7 +426,7 @@ class SuiteDatabaseManager(object):
             pri_dao.upgrade_with_state_file(old_state_file_path)
             target = os.path.join(suite_run_d, "state.tar.gz")
             cmd = ["tar", "-C", suite_run_d, "-czf", target, "state"]
-            if call(cmd) == 0:
+            if call(cmd, stdin=open(os.devnull)) == 0:
                 rmtree(os.path.join(suite_run_d, "state"), ignore_errors=True)
             else:
                 try:

@@ -331,7 +331,7 @@ def main():
                 '%s:%s' % (user_at_host, filename), viewfile]
         else:
             cp = ['cp', filename, viewfile]
-        proc = Popen(cp, stderr=PIPE, stdout=PIPE)
+        proc = Popen(cp, stdin=open(os.devnull), stderr=PIPE, stdout=PIPE)
         err = proc.communicate()[1]
         ret_code = proc.wait()
         if ret_code:
@@ -365,7 +365,7 @@ def main():
             sys.stderr.write(
                 " ".join(quote(item) for item in command) + "\n")
             stderr = None
-        proc = Popen(command, stderr=stderr)
+        proc = Popen(command, stdin=open(os.devnull), stderr=stderr)
         err = proc.communicate()[1]
         ret_code = proc.wait()
         if ret_code == 0:

@@ -21,7 +21,7 @@ System calls to cylc are performed here.
 
 import os
 import shutil
-from subprocess import (Popen, PIPE, call as subprocess_call)
+from subprocess import Popen, PIPE, call
 import sys
 import tempfile
 import time
@@ -69,15 +69,16 @@ class ProfilingKilledException(SuiteFailedException):
 
 def cylc_major_version():
     """Return the first character of the cylc version e.g. '7'."""
-    return Popen(['cylc', '--version'], env=CLEAN_ENV, stdout=PIPE
-                 ).communicate()[0].strip()[0]
+    return Popen(
+        ['cylc', '--version'], env=CLEAN_ENV, stdin=open(os.devnull),
+        stdout=PIPE).communicate()[0].strip()[0]
 
 
 def register_suite(reg, sdir):
     """Registers the suite located in sdir with the registration name reg."""
     cmd = ['cylc', 'register', reg, sdir]
     print '$ ' + ' '.join(cmd)
-    if not subprocess_call(cmd, stdout=PIPE, env=CLEAN_ENV):
+    if not call(cmd, stdin=open(os.devnull), stdout=PIPE, env=CLEAN_ENV):
         return True
     print '\tFailed'
     return False
@@ -87,7 +88,7 @@ def unregister_suite(reg):
     """Unregisters the suite reg."""
     cmd = ['cylc', 'unregister', reg]
     print '$ ' + ' '.join(cmd)
-    subprocess_call(cmd, stdout=PIPE, env=CLEAN_ENV)
+    call(cmd, stdin=open(os.devnull), stdout=PIPE, env=CLEAN_ENV)
 
 
 def purge_suite(reg):
@@ -155,7 +156,8 @@ def run_suite(reg, options, out_file, profile_modes, mode='live',
         # Add namespaces jinja2 param (list of task names).
         tmp = ['-s namespaces=root']
         namespaces = Popen(
-            ['cylc', 'list', reg] + jinja2_params + tmp, stdout=PIPE,
+            ['cylc', 'list', reg] + jinja2_params + tmp,
+            stdin=open(os.devnull), stdout=PIPE,
             env=env).communicate()[0].split() + ['root']
         jinja2_params.append(
             '-s namespaces={0}'.format(','.join(namespaces)))
@@ -192,7 +194,7 @@ def run_suite(reg, options, out_file, profile_modes, mode='live',
     except KeyboardInterrupt:
         kill_cmd = ['cylc', 'stop', '--kill', reg]
         print '$ ' + ' '.join(kill_cmd)
-        subprocess_call(kill_cmd, env=env)
+        call(kill_cmd, env=env, stdin=open(os.devnull))
         raise ProfilingKilledException(run_cmds, cmd_out, cmd_err)
 
     # Return cylc stderr if present.

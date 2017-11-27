@@ -56,6 +56,8 @@ class Profiler(object):
         """Print a message to standard out with the current memory usage."""
         if not self.enabled:
             return
-        proc = Popen(["ps", "h", "-orss", str(os.getpid())], stdout=PIPE)
+        proc = Popen(
+            ["ps", "h", "-orss", str(os.getpid())],
+            stdin=open(os.devnull), stdout=PIPE)
         memory = int(proc.communicate()[0])
         print "PROFILE: Memory: %d KiB: %s" % (memory, message)

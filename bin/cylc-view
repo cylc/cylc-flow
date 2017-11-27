@@ -39,7 +39,7 @@ if remrun().execute(forward_x11=True):
 import os
 from tempfile import NamedTemporaryFile
 import shlex
-import subprocess
+from subprocess import call
 
 import cylc.flags
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
@@ -154,7 +154,7 @@ def main():
     command_list.append(viewfile.name)
     command = ' '.join(command_list)
     # THIS BLOCKS UNTIL THE COMMAND COMPLETES
-    retcode = subprocess.call(command_list)
+    retcode = call(command_list, open(os.devnull))
     if retcode != 0:
         # the command returned non-zero exist status
         print >> sys.stderr, command, 'failed:', retcode

@@ -41,7 +41,7 @@ for arg in sys.argv[1:]:
 
 import os
 import re
-import subprocess
+from subprocess import call
 from optparse import OptionParser
 
 import cylc.flags
@@ -168,7 +168,7 @@ def main():
         sys.exit(0)
 
     try:
-        retcode = subprocess.call(command_list)
+        retcode = call(command_list, stdin=open(os.devnull))
     except OSError as exc:
         print >> sys.stderr, 'ERROR, failed to execute: %s' % command
         if cylc.flags.debug:

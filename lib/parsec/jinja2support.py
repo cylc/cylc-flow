@@ -44,6 +44,7 @@ def assert_helper(logical, message):
 def jinja2process(flines, dir_, template_vars=None):
     """Pass configure file through Jinja2 processor."""
     env = Environment(
+        autoescape=True,
         loader=FileSystemLoader(dir_),
         undefined=StrictUndefined,
         extensions=['jinja2.ext.do'])

@@ -722,16 +722,14 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
 def get_point_relative(offset_string, base_point):
     """Create a point from offset_string applied to base_point."""
     try:
-        interval = ISO8601Interval(
-            str(interval_parse(offset_string)))
-    except Exception:
-        pass
+        interval = ISO8601Interval(str(interval_parse(offset_string)))
+    except ValueError:
+        return ISO8601Point(str(
+            SuiteSpecifics.abbrev_util.parse_timepoint(
+                offset_string, context_point=_point_parse(base_point.value))
+        ))
     else:
         return base_point + interval
-    return ISO8601Point(str(
-        SuiteSpecifics.abbrev_util.parse_timepoint(
-            offset_string, context_point=_point_parse(base_point.value))
-    ))
 
 
 def interval_parse(interval_string):

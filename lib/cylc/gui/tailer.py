@@ -96,7 +96,8 @@ class Tailer(threading.Thread):
         command += shlex.split(cmd_tmpl % {"filename": filename})
         try:
             self.proc = Popen(
-                command, stdout=PIPE, stderr=STDOUT, preexec_fn=os.setpgrp)
+                command, stdin=open(os.devnull), stdout=PIPE, stderr=STDOUT,
+                preexec_fn=os.setpgrp)
         except OSError as exc:
             # E.g. ssh command not found
             dialog = warning_dialog("%s: %s" % (

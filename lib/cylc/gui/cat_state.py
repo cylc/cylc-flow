@@ -39,7 +39,9 @@ def cat_state(suite, host=None, owner=None):
         stderr = PIPE
     cmd.append(suite)
     try:
-        proc = Popen(cmd, stderr=stderr, stdout=PIPE, preexec_fn=os.setpgrp)
+        proc = Popen(
+            cmd, stdin=open(os.devnull), stderr=stderr, stdout=PIPE,
+            preexec_fn=os.setpgrp)
     except OSError:
         return []
     else:

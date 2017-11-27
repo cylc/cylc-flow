@@ -21,7 +21,7 @@ import os
 from posix import WIFSIGNALED
 from pipes import quote
 import shlex
-import subprocess
+from subprocess import Popen
 import sys
 from textwrap import TextWrapper
 
@@ -146,7 +146,7 @@ class remrun(object):
             return command
 
         try:
-            popen = subprocess.Popen(command)
+            popen = Popen(command)
         except OSError as exc:
             sys.exit("ERROR: remote command invocation failed %s" % str(exc))
 

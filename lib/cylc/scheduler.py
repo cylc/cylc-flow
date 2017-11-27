@@ -908,7 +908,8 @@ conditions; see `cylc conditions`.
         # Get "pid,args" process string with "ps"
         pid_str = str(os.getpid())
         proc = Popen(
-            ["ps", "h", "-opid,args", pid_str], stdout=PIPE, stderr=PIPE)
+            ["ps", "h", "-opid,args", pid_str],
+            stdin=open(os.devnull), stdout=PIPE, stderr=PIPE)
         out, err = proc.communicate()
         ret_code = proc.wait()
         process_str = None
@@ -1289,7 +1290,8 @@ conditions; see `cylc conditions`.
             try:
                 contact_data = self.suite_srv_files_mgr.load_contact_file(
                     self.suite)
-                assert contact_data == self.contact_data
+                if contact_data != self.contact_data:
+                    raise AssertionError()
             except (AssertionError, IOError, ValueError,
                     SuiteServiceFileError):
                 ERR.critical(traceback.format_exc())
@@ -1684,7 +1686,9 @@ conditions; see `cylc conditions`.
 
     def _update_cpu_usage(self):
         """Obtain CPU usage statistics."""
-        proc = Popen(["ps", "-o%cpu= ", str(os.getpid())], stdout=PIPE)
+        proc = Popen(
+            ["ps", "-o%cpu= ", str(os.getpid())],
+            stdin=open(os.devnull), stdout=PIPE)
         try:
             cpu_frac = float(proc.communicate()[0])
         except (TypeError, OSError, IOError, ValueError) as exc:

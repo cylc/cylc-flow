@@ -335,7 +335,7 @@ class ScanPanelAppletUpdater(object):
             command = ["cylc", "gscan"]
         if self.hosts:
             command += self.hosts
-        Popen(command, stdout=stdout, stderr=stderr)
+        Popen(command, stdin=open(os.devnull), stdout=stdout, stderr=stderr)
 
     def _on_button_press_event(self, widget, event):
         if event.button == 1:

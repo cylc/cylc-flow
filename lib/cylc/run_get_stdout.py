@@ -18,7 +18,7 @@
 """Provide a utility function to get STDOUT from a shell command."""
 
 
-from os import killpg, setpgrp
+from os import devnull, killpg, setpgrp
 from signal import SIGTERM
 from subprocess import Popen, PIPE
 from time import sleep, time
@@ -45,7 +45,8 @@ def run_get_stdout(command, timeout=None, poll_delay=None):
     """
     try:
         popen = Popen(
-            command, shell=True, preexec_fn=setpgrp, stderr=PIPE, stdout=PIPE)
+            command, shell=True, preexec_fn=setpgrp, stdin=open(devnull),
+            stderr=PIPE, stdout=PIPE)
         is_killed_after_timeout = False
         if timeout:
             if poll_delay is None:

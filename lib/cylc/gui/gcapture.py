@@ -23,7 +23,7 @@ import pango
 import tempfile
 from warning_dialog import warning_dialog, info_dialog
 from util import get_icon
-import subprocess
+from subprocess import Popen, STDOUT
 
 # unit test: see the command $CYLC_DIR/bin/gcapture
 
@@ -141,9 +141,9 @@ are displayed in red.
     def run(self):
         proc = None
         if not self.ignore_command:
-            proc = subprocess.Popen(
-                self.command, stdout=self.stdout, stderr=subprocess.STDOUT,
-                shell=True)
+            proc = Popen(
+                self.command, stdin=open(os.devnull), stdout=self.stdout,
+                stderr=STDOUT, shell=True)
             self.proc = proc
             gobject.timeout_add(40, self.pulse_proc_progress)
         self.stdout_updater = Tailer(

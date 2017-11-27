@@ -417,14 +417,13 @@ def launch_hosts_dialog(existing_hosts, change_hosts_func):
 
 def get_suite_version(args):
     """Gets the suite version given the host, owner, and suite arguments"""
-    f_null = open(os.devnull, "w")
     if cylc.flags.debug:
         stderr = sys.stderr
         args = ["--debug"] + args
     else:
-        stderr = f_null
+        stderr = open(os.devnull, "w")
     command = ["cylc", "get-suite-version"] + args
-    proc = Popen(command, stdout=PIPE, stderr=stderr)
+    proc = Popen(command, stdin=open(os.devnull), stdout=PIPE, stderr=stderr)
     suite_version = proc.communicate()[0].strip()
     proc.wait()
 
@@ -437,7 +436,6 @@ def launch_gcylc(key):
     args = ["--host=" + host, "--user=" + owner, suite]
 
     # Get version of suite - now separate method get_suite_version()
-    f_null = open(os.devnull, "w")
     suite_version = get_suite_version(args)
 
     # Run correct version of "cylc gui", provided that "admin/cylc-wrapper" is
@@ -447,14 +445,15 @@ def launch_gcylc(key):
         env = dict(os.environ)
         env["CYLC_VERSION"] = suite_version
     command = ["cylc", "gui"] + args
+    stdin = open(os.devnull)
     if cylc.flags.debug:
         stdout = sys.stdout
         stderr = sys.stderr
-        Popen(command, env=env, stdout=stdout, stderr=stderr)
     else:
-        stdout = f_null
+        command = ["nohup"] + command
+        stdout = open(os.devnull, "w")
         stderr = STDOUT
-        Popen(["nohup"] + command, env=env, stdout=stdout, stderr=stderr)
+    Popen(command, env=env, stdin=stdin, stdout=stdout, stderr=stderr)
 
 
 def call_cylc_command(keys, command_id):
@@ -484,7 +483,6 @@ def call_cylc_command(keys, command_id):
         args = ["--host=" + host, "--user=" + owner, suite]
 
         # Get version of suite
-        f_null = open(os.devnull, "w")
         suite_version = get_suite_version(args)
 
         env = None
@@ -492,15 +490,15 @@ def call_cylc_command(keys, command_id):
             env = dict(os.environ)
             env["CYLC_VERSION"] = suite_version
         command = ["cylc"] + command_id.split() + args
-
+        stdin = open(os.devnull)
         if cylc.flags.debug:
             stdout = sys.stdout
             stderr = sys.stderr
-            Popen(command, env=env, stdout=stdout, stderr=stderr)
         else:
-            stdout = f_null
+            command = ["nohup"] + command
+            stdout = open(os.devnull, "w")
             stderr = stdout
-            Popen(["nohup"] + command, env=env, stdout=stdout, stderr=stderr)
+        Popen(command, env=env, stdin=stdin, stdout=stdout, stderr=stderr)
 
 
 def update_suites_info(updater, full_mode=False):
@@ -614,7 +612,9 @@ def _update_stopped_suite_info(key):
     cmd += [suite, "0"]  # checkpoint 0 is latest checkpoint
     result = {}
     try:
-        proc = Popen(cmd, stderr=stderr, stdout=PIPE, preexec_fn=os.setpgrp)
+        proc = Popen(
+            cmd, stdin=open(os.devnull), stderr=stderr, stdout=PIPE,
+            preexec_fn=os.setpgrp)
     except OSError:
         return result
     else:
