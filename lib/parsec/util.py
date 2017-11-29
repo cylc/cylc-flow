@@ -125,22 +125,33 @@ def pdeepcopy(source):
     return target
 
 
-def poverride(target, sparse):
-    """Override items in a target pdict.
+def poverride(target, sparse, prepend=False):
+    """Override or add items in a target pdict.
 
-    Target sub-dicts must already exist.
+    Target sub-dicts must already exist. For keys that already exist in the
+    target, the value is overridden in-place. New keys can be prepended in the
+    target (Cylc use case: broadcast environment variables should be defined
+    first in the user environment section, to allow use in subsequent variable
+    definitions.
+
     """
     if not sparse:
         target = OrderedDictWithDefaults()
         return
     for key, val in sparse.items():
         if isinstance(val, dict):
-            poverride(target[key], val)
-        elif isinstance(val, list):
-            target[key] = val[:]
+            poverride(target[key], val, prepend)
         else:
-            target[key] = val
-
+            if prepend and (key not in target):
+                # Prepend new items in the target ordered dict.
+                setitem = target.prepend
+            else:
+                # Override in-place in the target ordered dict.
+                setitem = target.__setitem__
+            if isinstance(val, list):
+                setitem(key, val[:])
+            else:
+                setitem(key, val)
 
 def m_override(target, sparse):
     """Override items in a target pdict.
