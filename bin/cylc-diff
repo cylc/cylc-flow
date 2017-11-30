@@ -70,11 +70,10 @@ def diffdict(one, two, oone, otwo, diff):
 
 
 def prdict(dct, arrow='<', section='', level=0, diff=False, nested=False):
-    # Recursively print, in pseudo 'diff' format, the contents of
-    # one of the three dictionaries populated by the diffdict() function
-    # above (any element may itself be a dictionary).
-
-    count = 0
+    """Recursively print, in pseudo 'diff' format, the contents of
+    one of the three dictionaries populated by the diffdict() function
+    above (any element may itself be a dictionary).
+    """
 
     if section != '':
         prfx = section + ' '

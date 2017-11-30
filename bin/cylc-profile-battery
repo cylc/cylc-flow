@@ -707,8 +707,7 @@ def run_schedule(schedule, experiments, versions, exps_to_run,
         profiler_install_dir = install_profiler()
         try:
             from tempprofiling.profile import profile
-            from tempprofiling.git import (
-                checkout, has_changes_to_be_committed, GitCheckoutError)
+            from tempprofiling.git import checkout, GitCheckoutError
         except ImportError:
             shutil.rmtree(profiler_install_dir, ignore_errors=True)
             sys.exit('ERROR: Failed to install profiler.')

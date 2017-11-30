@@ -33,12 +33,10 @@ if remrun():
     sys.exit(0)
 
 import os
-import re
 from tempfile import mkstemp
 from pipes import quote
 import shlex
 from subprocess import Popen, PIPE
-import traceback
 
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.rundb import CylcSuiteDAO
@@ -46,7 +44,6 @@ from cylc.hostuserutil import is_remote
 from cylc.suite_logging import get_logs
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.task_id import TaskID
-from parsec.fileparse import read_and_proc
 
 
 NAME_DEFAULT = "log"
@@ -326,12 +323,12 @@ def main():
         # Copy local or remote job file to a local temp file.
         viewfile = mkstemp(dir=cylc_tmpdir)[1]
         if user_at_host:
-            cp = shlex.split(
+            cmd = shlex.split(
                 GLOBAL_CFG.get_host_item('scp command', host, owner)) + [
                 '%s:%s' % (user_at_host, filename), viewfile]
         else:
-            cp = ['cp', filename, viewfile]
-        proc = Popen(cp, stdin=open(os.devnull), stderr=PIPE, stdout=PIPE)
+            cmd = ['cp', filename, viewfile]
+        proc = Popen(cmd, stdin=open(os.devnull), stderr=PIPE, stdout=PIPE)
         err = proc.communicate()[1]
         ret_code = proc.wait()
         if ret_code:

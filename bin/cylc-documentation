@@ -169,7 +169,7 @@ def main():
 
     try:
         retcode = call(command_list, stdin=open(os.devnull))
-    except OSError as exc:
+    except OSError:
         print >> sys.stderr, 'ERROR, failed to execute: %s' % command
         if cylc.flags.debug:
             raise

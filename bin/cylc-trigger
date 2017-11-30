@@ -53,7 +53,6 @@ from cylc.prompt import prompt
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.network.httpclient import SuiteRuntimeServiceClient
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
-from cylc.task_id import TaskID
 
 
 def main():
@@ -76,8 +75,6 @@ def main():
 
     options, args = parser.parse_args()
     suite = args.pop(0)
-
-    task_ids = args
 
     msg = 'Trigger task(s) %s in %s' % (args, suite)
     prompt(msg, options.force)

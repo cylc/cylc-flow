@@ -107,7 +107,7 @@ def main():
             print >> sys.stderr, ('USER_AT_HOST must take the form '
                                   '"user@host:port"')
             sys.exit(1)
-    app = ControlApp(
+    ControlApp(
         suite, options.owner, options.host,
         options.port, options.comms_timeout,
         load_template_vars(options.templatevars, options.templatevars_file),

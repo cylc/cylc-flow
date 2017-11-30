@@ -56,8 +56,7 @@ from cylc.remote import remrun
 if remrun():
     sys.exit(0)
 
-import re
-from cylc.config import SuiteConfig, SuiteConfigError
+from cylc.config import SuiteConfig
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
