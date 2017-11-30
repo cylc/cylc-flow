@@ -6511,8 +6511,8 @@ tracking (see these with \lstinline=cylc get-site-config=):
 At registration time a {\em suite service directory},
 \lstinline=$HOME/cylc-run/<SUITE>/.service/=, is created and populated
 with a private passphrase file (containing random text), a self-signed
-SSL certificate (see~\ref{ConnectionAuthentication}, and a symlink to the suite
-source directory.  An existing passphrase file will not be overwritten
+SSL certificate (see~\ref{ConnectionAuthentication}), and a symlink to the
+suite source directory.  An existing passphrase file will not be overwritten
 if a suite is re-registered.
 
 At run time, the private suite run database is also written to the service
@@ -6665,7 +6665,7 @@ $ cylc gui --user=OWNER --host=HOST SUITE
 \end{lstlisting}
 
 Note remote suite auth files do not need to be installed for read-only access -
-see~ref{PublicAccess} - via the GUI or monitor.
+see~\ref{PublicAccess} - via the GUI or monitor.
 
 The suite contact file (see~\ref{The Suite Contact File}) is not needed if 
 you have read-access to the remote suite run directory via the local
