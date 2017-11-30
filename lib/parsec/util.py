@@ -153,6 +153,7 @@ def poverride(target, sparse, prepend=False):
             else:
                 setitem(key, val)
 
+
 def m_override(target, sparse):
     """Override items in a target pdict.
 
