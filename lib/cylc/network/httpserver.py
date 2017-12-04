@@ -493,9 +493,9 @@ class SuiteRuntimeService(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def put_message(self, task_id, priority, message):
+    def put_message(self, task_id, severity, message):
         self._check_access_priv_and_report(PRIV_FULL_CONTROL, log_info=False)
-        self.schd.message_queue.put((task_id, priority, str(message)))
+        self.schd.message_queue.put((task_id, severity, str(message)))
         return (True, 'Message queued')
 
     @cherrypy.expose

@@ -172,8 +172,8 @@ Arguments:"""
                 "--print-uuid",
                 help=(
                     "Print the client UUID to stderr. "
-                    "This can be matched "
-                    "to information logged by the receiving suite daemon."
+                    "This can be matched to information logged "
+                    "by the receiving suite server program."
                 ),
                 action="store_true", default=False, dest="print_uuid")
             self.add_std_option(

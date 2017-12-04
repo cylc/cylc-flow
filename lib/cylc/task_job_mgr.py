@@ -693,14 +693,14 @@ class TaskJobManager(object):
         ctx = SuiteProcContext(self.JOBS_POLL, None)
         ctx.out = line
         try:
-            event_time, priority, message = line.split("|")[2:5]
+            event_time, severity, message = line.split("|")[2:5]
         except ValueError:
             ctx.ret_code = 1
             ctx.cmd = cmd_ctx.cmd  # print original command on failure
         else:
             ctx.ret_code = 0
             self.task_events_mgr.process_message(
-                itask, priority, message, self.poll_task_jobs, event_time)
+                itask, severity, message, self.poll_task_jobs, event_time)
         self.task_events_mgr.log_task_job_activity(
             ctx, suite, itask.point, itask.tdef.name)
 

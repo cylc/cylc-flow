@@ -1,7 +1,7 @@
 [meta]
     title=broadcast bad point
     description=Test broadcast to an invalid cycle point fails.
-# And see github #1415 - it did cause the suite daemon to abort.
+# And see github #1415 - it did cause the suite server program to abort.
 [cylc]
     abort if any task fails = True
     [[events]]

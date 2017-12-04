@@ -240,11 +240,15 @@ class SuiteRuntimeServiceClient(object):
             self._compat('put_ext_trigger'),
             event_message=event_message, event_id=event_id)
 
-    def put_message(self, task_id, priority, message):
+    def put_message(self, task_id, severity, message):
         """Send task message."""
-        return self._call_server(
-            self._compat('put_message'),
-            task_id=task_id, priority=priority, message=message)
+        func_name = self._compat('put_message')
+        if func_name == 'put_message':
+            return self._call_server(
+                func_name, task_id=task_id, severity=severity, message=message)
+        else:  # pre-7.5.0 API compat
+            return self._call_server(
+                func_name, task_id=task_id, priority=severity, message=message)
 
     def reset(self):
         """Compat method, does nothing."""

@@ -182,8 +182,11 @@ class TreeUpdater(threading.Thread):
         # Retrieve any user-expanded rows so that we can expand them later.
         # This is only really necessary for edge cases in tree reconstruction.
         expand_me = self._get_user_expanded_row_ids()
-        daemon_time_zone_info = self.updater.global_summary.get(
-            "daemon time zone info")
+        try:
+            time_zone_info = self.updater.global_summary.get("time zone info")
+        except KeyError:  # Back compat <= 7.5.0
+            time_zone_info = self.updater.global_summary.get(
+                "daemon time zone info")
 
         # Store the state, times, messages, etc for tasks and families.
         new_data = {}
@@ -264,7 +267,7 @@ class TreeUpdater(threading.Thread):
                             # We have to calculate it.
                             tetc_string = get_time_string_from_unix_time(
                                 tetc_unix,
-                                custom_time_zone_info=daemon_time_zone_info)
+                                custom_time_zone_info=time_zone_info)
                             self._id_tetc_cache[id_] = {tetc_unix: tetc_string}
                         t_info['finished_time_string'] = tetc_string
                         estimated_t_finish = True

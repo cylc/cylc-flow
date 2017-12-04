@@ -24,7 +24,7 @@ Note that "cylc -v,--version" just prints the version string from the main
 command interface, whereas this is a proper cylc command that can take the
 standard --host and --user options, etc.
 
-For the cylc version of running a suite daemon see
+For the cylc version of running a suite server program, see
   "cylc get-suite-version"."""
 
 import sys

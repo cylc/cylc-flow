@@ -47,17 +47,17 @@ class TaskMessage(object):
     WARNING = "WARNING"
     CRITICAL = "CRITICAL"
     CUSTOM = "CUSTOM"
-    PRIORITIES = (NORMAL, WARNING, CRITICAL, CUSTOM)
+    SEVERITIES = (NORMAL, WARNING, CRITICAL, CUSTOM)
 
     MSG_RETRY_INTVL = 5.0
     MSG_MAX_TRIES = 7
     MSG_TIMEOUT = 30.0
 
-    def __init__(self, priority=NORMAL):
-        if priority in self.PRIORITIES:
-            self.priority = priority
+    def __init__(self, severity=NORMAL):
+        if severity in self.SEVERITIES:
+            self.severity = severity
         else:
-            raise ValueError('Illegal message priority ' + priority)
+            raise ValueError('Illegal message severity ' + severity)
 
         # load the environment
         self.env_map = dict(os.environ)
@@ -92,13 +92,13 @@ class TaskMessage(object):
 
     def _print_messages(self, messages):
         """Print message to send."""
-        if self.priority in [self.NORMAL, self.CUSTOM]:
+        if self.severity in [self.NORMAL, self.CUSTOM]:
             handle = sys.stdout
         else:
             handle = sys.stderr
         for message in messages:
             handle.write('%s %s - %s\n' % (
-                self.true_event_time, self.priority, message))
+                self.true_event_time, self.severity, message))
         handle.flush()
 
     def _send_by_remote_port(self, messages):
@@ -126,7 +126,7 @@ class TaskMessage(object):
         for i in range(1, max_tries + 1):  # 1..max_tries inclusive
             try:
                 for message in messages:
-                    client.put_message(self.task_id, self.priority, message)
+                    client.put_message(self.task_id, self.severity, message)
             except ClientError as exc:
                 sys.stderr.write("Send message: try %s of %s failed: %s\n" % (
                     i, max_tries, exc))
@@ -259,11 +259,11 @@ class TaskMessage(object):
                 for line in lines:
                     job_status_file.write(line)
                 job_status_file.write("%s=%s|%s|%s\n" % (
-                    self.CYLC_MESSAGE, self.true_event_time, self.priority,
+                    self.CYLC_MESSAGE, self.true_event_time, self.severity,
                     message))
             else:
                 job_status_file.write("%s=%s|%s|%s\n" % (
-                    self.CYLC_MESSAGE, self.true_event_time, self.priority,
+                    self.CYLC_MESSAGE, self.true_event_time, self.severity,
                     message))
         try:
             job_status_file.close()

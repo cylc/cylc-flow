@@ -63,6 +63,7 @@ class SuiteSrvFilesManager(object):
     NO_TITLE = "No title provided"
     PASSPHRASE_CHARSET = ascii_letters + digits
     PASSPHRASE_LEN = 20
+    PS_OPTS = '-opid,args'
     REC_TITLE = re.compile(r"^\s*title\s*=\s*(.*)\s*$")
 
     def __init__(self):
@@ -134,7 +135,7 @@ class SuiteSrvFilesManager(object):
         # same command line as before.
         # Terminate command after 10 seconds to prevent hanging, etc.
         old_pid_str = old_proc_str.split(None, 1)[0].strip()
-        cmd = ["timeout", "10", "ps", "-opid,args", str(old_pid_str)]
+        cmd = ["timeout", "10", "ps", self.PS_OPTS, str(old_pid_str)]
         if is_remote_host(old_host):
             import shlex
             from cylc.cfgspec.globalcfg import GLOBAL_CFG
@@ -142,7 +143,7 @@ class SuiteSrvFilesManager(object):
             cmd = shlex.split(ssh_str) + ["-n", old_host] + cmd
         from subprocess import Popen, PIPE
         from time import sleep, time
-        proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
+        proc = Popen(cmd, stdin=open(os.devnull), stdout=PIPE, stderr=PIPE)
         # Terminate command after 10 seconds to prevent hanging SSH, etc.
         timeout = time() + 10.0
         while proc.poll() is None:
@@ -150,8 +151,12 @@ class SuiteSrvFilesManager(object):
                 proc.terminate()
             sleep(0.1)
         fname = self.get_contact_file(reg)
-        proc.wait()
-        for line in reversed(proc.communicate()[0].splitlines()):
+        ret_code = proc.wait()
+        out, err = proc.communicate()
+        if cylc.flags.debug and ret_code:
+            sys.stderr.write(
+                "%s  # return %d\n%s\n" % (' '.join(cmd), ret_code, err))
+        for line in reversed(out.splitlines()):
             if line.strip() == old_proc_str:
                 # Suite definitely still running
                 break

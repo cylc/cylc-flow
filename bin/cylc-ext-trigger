@@ -18,8 +18,8 @@
 
 """cylc [control] ext-trigger [OPTIONS] ARGS
 
-Report an external event message to a suite daemon. It is expected that a
-task in the suite has registered the same message as an external trigger - a
+Report an external event message to a suite server program. It is expected that
+a task in the suite has registered the same message as an external trigger - a
 special prerequisite to be satisifed by an external system, via this command,
 rather than by triggering off other tasks.
 

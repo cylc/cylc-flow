@@ -290,7 +290,7 @@ conditions; see `cylc conditions`.
             print logo_lines[i], ('{0: ^%s}' % lmax).format(license_lines[i])
 
     def configure(self):
-        """Configure suite daemon."""
+        """Configure suite server program."""
         self.profiler.log_memory("scheduler.py: start configure")
 
         # Start up essential services
@@ -515,18 +515,18 @@ conditions; see `cylc conditions`.
         task_id_messages = {}
         while self.message_queue.qsize():
             try:
-                task_id, priority, message = self.message_queue.get(
+                task_id, severity, message = self.message_queue.get(
                     block=False)
             except Empty:
                 break
             self.message_queue.task_done()
             task_id_messages.setdefault(task_id, [])
-            task_id_messages[task_id].append((priority, message))
+            task_id_messages[task_id].append((severity, message))
         for itask in self.pool.get_tasks():
             if itask.identity in task_id_messages:
-                for priority, message in task_id_messages[itask.identity]:
+                for severity, message in task_id_messages[itask.identity]:
                     self.task_events_mgr.process_message(
-                        itask, priority, message,
+                        itask, severity, message,
                         self.task_job_mgr.poll_task_jobs, is_incoming=True)
 
     def process_command_queue(self):
@@ -908,7 +908,8 @@ conditions; see `cylc conditions`.
         # Get "pid,args" process string with "ps"
         pid_str = str(os.getpid())
         proc = Popen(
-            ["ps", "h", "-opid,args", pid_str], stdout=PIPE, stderr=PIPE)
+            ['ps', self.suite_srv_files_mgr.PS_OPTS, pid_str],
+            stdin=open(os.devnull), stdout=PIPE, stderr=PIPE)
         out, err = proc.communicate()
         ret_code = proc.wait()
         process_str = None

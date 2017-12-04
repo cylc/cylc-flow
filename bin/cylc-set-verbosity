@@ -18,8 +18,8 @@
 
 """cylc [control] set-verbosity [OPTIONS] ARGS
 
-Change the logging priority level of a running suite.  Only messages at
-or above the chosen priority level will be logged; for example, if you
+Change the logging severity level of a running suite.  Only messages at
+or above the chosen severity level will be logged; for example, if you
 choose WARNING, only warnings and critical messages will be logged."""
 
 from logging import CRITICAL, ERROR, WARNING, INFO, DEBUG
@@ -57,20 +57,20 @@ def main():
     (options, args) = parser.parse_args()
     suite = args[0]
 
-    priority_str = args[1]
+    severity_str = args[1]
     try:
-        priority = LOGGING_LVL_OF[priority_str]
+        severity = LOGGING_LVL_OF[severity_str]
     except KeyError:
-        parser.error("Illegal logging level, %s" % priority)
+        parser.error("Illegal logging level, %s" % severity)
 
-    prompt("Set logging level to %s in %s" % (priority_str, suite),
+    prompt("Set logging level to %s in %s" % (severity_str, suite),
            options.force)
     pclient = SuiteRuntimeServiceClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
 
-    pclient.put_command('set_verbosity', level=priority)
+    pclient.put_command('set_verbosity', level=severity)
 
 
 if __name__ == "__main__":

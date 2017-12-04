@@ -26,13 +26,13 @@ from cylc.suite_logging import SuiteLog
 
 SUITE_SCAN_INFO_TMPL = r"""
 
-To view suite daemon contact information:
+To view suite server program contact information:
  $ cylc get-suite-contact %(suite)s
 
 Other ways to see if the suite is still running:
  $ cylc scan -n '\b%(suite)s\b' %(host)s
  $ cylc ping -v --host=%(host)s %(suite)s
- $ ssh %(host)s "pgrep -a -P 1 -fu $USER 'cylc-r.* \b%(suite)s\b'"
+ $ ps %(ps_opts)s %(pid)s  # on %(host)s
 
 """
 
@@ -96,7 +96,7 @@ def daemonize(server):
                             sys.stderr.write(open(log_fname).read())
                             sys.exit(1)
                         except IOError:
-                            sys.exit("Suite daemon exited")
+                            sys.exit("Suite server program exited")
                 except (IOError, OSError, ValueError):
                     pass
             if suite_pid is None or suite_port is None:
@@ -106,6 +106,7 @@ def daemonize(server):
                 "suite": server.suite,
                 "host": server.host,
                 "port": suite_port,
+                "ps_opts": server.suite_srv_files_mgr.PS_OPTS,
                 "pid": suite_pid,
                 "logd": logd,
             })
