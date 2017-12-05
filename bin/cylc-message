@@ -42,7 +42,7 @@ def main():
         "-s", "--severity", "-p", "--priority",
         metavar="SEVERITY", type="choice",
         choices=['NORMAL', 'WARNING', 'CRITICAL', 'CUSTOM'],
-        help="message severity: NORMAL, WARNING, or CRITICAL; default NORMAL.",
+        help="message severity: NORMAL (default), WARNING, CRITICAL or CUSTOM",
         action="store", dest="severity", default="NORMAL")
 
     parser.add_option(
@@ -50,7 +50,7 @@ def main():
         default=[], dest="env")
 
     parser.add_option(
-        "-v", "--verbose", help="Verbose output mode.", action="store_true",
+        "-v", "--verbose", help="Verbose output mode", action="store_true",
         default=False, dest="verbose")
 
     options, args = parser.parse_args()
