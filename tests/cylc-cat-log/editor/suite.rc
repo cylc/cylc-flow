@@ -18,5 +18,6 @@ the lazy dog
 __END__
 """
         [[[remote]]]
-            host = {{HOST | default("localhost")}}
+            host = {{CYLC_TEST_HOST | default("localhost")}}
+            owner = {{CYLC_TEST_OWNER | default(environ["USER"])}}
             retrieve job logs = True

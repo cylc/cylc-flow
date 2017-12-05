@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test "cylc cat-log --tail" with a custom local tail command.
+# Test "cylc cat-log" with a custom local tail command.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 4
@@ -34,7 +34,7 @@ create_test_globalrc "" "
 #-------------------------------------------------------------------------------
 sleep 10
 TEST_NAME=$TEST_NAME_BASE-cat-log
-cylc cat-log $SUITE_NAME -o --tail foo.1 > ${TEST_NAME}.out
+cylc cat-log $SUITE_NAME -f o -m t foo.1 > ${TEST_NAME}.out
 grep_ok "HELLO from foo 1" ${TEST_NAME}.out
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-stop

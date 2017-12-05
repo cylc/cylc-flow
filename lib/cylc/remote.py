@@ -21,12 +21,65 @@ import os
 from posix import WIFSIGNALED
 from pipes import quote
 import shlex
-from subprocess import Popen
+from subprocess import Popen, PIPE
 import sys
 from textwrap import TextWrapper
 
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.version import CYLC_VERSION
+
+
+def remote_cylc_cmd(cmd, user=None, host=None, capture=False,
+                    ssh_login_shell=None):
+    """Run a given cylc command on a remote account.
+
+    """
+    # TODO - TEST FAILED COMMAND OSERROR
+    if host is None:
+        host = "localhost"
+    if user is None:
+        user_at_host = host
+    else:
+        user_at_host = "%s@%s" % (user, host)
+
+    # Pass cylc version through.
+    command = ["env", "CYLC_VERSION=%s" % CYLC_VERSION]
+
+    ssh = str(GLOBAL_CFG.get_host_item("ssh command", host, user))
+    command += shlex.split(ssh) + ["-n", user_at_host]
+
+    # Use bash loging shell?
+    if ssh_login_shell is None:
+        ssh_login_shell = GLOBAL_CFG.get_host_item(
+            "use login shell", host, user)
+    if ssh_login_shell:
+        # A login shell will always source /etc/profile and the user's bash
+        # profile file. To avoid having to quote the entire remote command
+        # it is passed as arguments to bash.
+        command += ["bash", "--login", "-c", "'exec $0 \"$@\"'"]
+
+    cmd = "%s %s" % (
+        GLOBAL_CFG.get_host_item("cylc executable", host, user), cmd)
+
+    command += [cmd]
+    if cylc.flags.debug:
+        msg = ' '.join(quote(c) for c in command)
+        print >> sys.stderr, msg
+    out = None
+    if capture:
+        proc = Popen(command, stdout=PIPE, stdin=open(os.devnull))
+        out = proc.communicate()[0]
+    else:
+        proc = Popen(command, stdin=open(os.devnull))
+    res = proc.wait()
+    if WIFSIGNALED(res):
+        print >> sys.stderr, (
+            "ERROR: remote command terminated by signal %d" % res)
+    elif res:
+        print >> sys.stderr, "ERROR: remote command failed %d" % res
+    return out
 
 
 def remrun(env=None, path=None, dry_run=False, forward_x11=False):
@@ -139,12 +192,8 @@ class RemoteRunner(object):
             # above: args quoted to avoid interpretation by the shell,
             # e.g. for match patterns such as '.*' on the command line.
 
-        if cylc.flags.verbose:
-            # Wordwrap the command, quoting arguments so they can be run
-            # properly from the command line
-            command_str = ' '.join(quote(arg) for arg in command)
-            print '\n'.join(
-                TextWrapper(subsequent_indent='\t').wrap(command_str))
+        if cylc.flags.debug:
+            print >> sys.stderr, ' '.join(quote(c) for c in command)
 
         if dry_run:
             return command

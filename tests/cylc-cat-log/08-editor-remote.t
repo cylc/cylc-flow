@@ -19,15 +19,15 @@
 
 . "$(dirname $0)"/test_header
 
-HOST="$( \
-    cylc get-global-config -i '[test battery]remote host' 2>'/dev/null')"
-if [[ -z "${HOST}" ]]; then
-    skip_all '"[test battery]remote host": not defined'
+HOST="$( cylc get-global-config -i '[test battery]remote host' 2>'/dev/null')"
+OWNER="$( cylc get-global-config -i '[test battery]remote owner' 2>'/dev/null')"
+if [[ -z "${OWNER}${HOST}" ]]; then
+    skip_all '"[test battery]remote host/owner": not defined'
 fi
 
 . "${TEST_SOURCE_DIR}"/editor/bin/run_tests.sh
 export PATH="${TEST_SOURCE_DIR}/editor/bin/":"${PATH}"
 
 install_suite "${TEST_NAME_BASE}" "editor"
-run_tests $HOST
+run_tests "${HOST}" "${OWNER}"
 purge_suite "${SUITE_NAME}"

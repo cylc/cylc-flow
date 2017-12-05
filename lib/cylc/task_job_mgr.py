@@ -40,6 +40,9 @@ from cylc.envvar import expandvars
 import cylc.flags
 from cylc.hostuserutil import is_remote_host, is_remote_user
 from cylc.job_file import JobFileWriter
+from cylc.task_job_logs import (
+    JOB_LOG_JOB, get_task_job_log, get_task_job_job_log,
+    get_task_job_activity_log, get_task_job_id, NN)
 from cylc.mkdir_p import mkdir_p
 from cylc.mp_pool import SuiteProcPool, SuiteProcContext
 from cylc.suite_logging import LOG
@@ -71,7 +74,6 @@ class TaskJobManager(object):
     * Remove suite contact files on job hosts.
     """
 
-    JOB_FILE_BASE = BatchSysManager.JOB_FILE_BASE
     JOBS_KILL = 'jobs-kill'
     JOBS_POLL = 'jobs-poll'
     JOBS_SUBMIT = SuiteProcPool.JOBS_SUBMIT
@@ -270,10 +272,10 @@ class TaskJobManager(object):
             for itask in sorted(itasks, key=lambda itask: itask.identity):
                 if remote_mode:
                     stdin_file_paths.append(
-                        self.task_events_mgr.get_task_job_log(
+                        get_task_job_job_log(
                             suite, itask.point, itask.tdef.name,
-                            itask.submit_num, self.JOB_FILE_BASE))
-                job_log_dirs.append(self.task_events_mgr.get_task_job_id(
+                            itask.submit_num))
+                job_log_dirs.append(get_task_job_id(
                     itask.point, itask.tdef.name, itask.submit_num))
                 # The job file is now (about to be) used: reset the file write
                 # flag so that subsequent manual retrigger will generate a new
@@ -340,7 +342,7 @@ class TaskJobManager(object):
         Return a string in the form "POINT/NAME/SUBMIT_NUM".
 
         """
-        job_file_dir = self.task_events_mgr.get_task_job_log(
+        job_file_dir = get_task_job_log(
             suite, itask.point, itask.tdef.name, itask.submit_num)
         task_log_dir = os.path.dirname(job_file_dir)
         if itask.submit_num == 1:
@@ -350,7 +352,7 @@ class TaskJobManager(object):
                 pass
             else:
                 for name in names:
-                    if name not in ["01", self.task_events_mgr.NN]:
+                    if name not in ["01", NN]:
                         rmtree(
                             os.path.join(task_log_dir, name),
                             ignore_errors=True)
@@ -358,7 +360,7 @@ class TaskJobManager(object):
             rmtree(job_file_dir, ignore_errors=True)
 
         mkdir_p(job_file_dir)
-        target = os.path.join(task_log_dir, self.task_events_mgr.NN)
+        target = os.path.join(task_log_dir, NN)
         source = os.path.basename(job_file_dir)
         try:
             prev_source = os.readlink(target)
@@ -418,7 +420,7 @@ class TaskJobManager(object):
             pass
         else:
             line = "%s %s" % (timestamp, content)
-        job_activity_log = self.task_events_mgr.get_task_job_activity_log(
+        job_activity_log = get_task_job_activity_log(
             suite, itask.point, itask.tdef.name)
         try:
             with open(job_activity_log, "ab") as handle:
@@ -644,7 +646,7 @@ class TaskJobManager(object):
                 suite, "suite job log directory", host, owner))
             job_log_dirs = []
             for itask in sorted(itasks, key=lambda itask: itask.identity):
-                job_log_dirs.append(self.task_events_mgr.get_task_job_id(
+                job_log_dirs.append(get_task_job_id(
                     itask.point, itask.tdef.name, itask.submit_num))
             cmd += job_log_dirs
             self.proc_pool.put_command(
@@ -774,9 +776,8 @@ class TaskJobManager(object):
 
         try:
             job_conf = self._prep_submit_task_job_impl(suite, itask, rtconfig)
-            local_job_file_path = self.task_events_mgr.get_task_job_log(
-                suite, itask.point, itask.tdef.name, itask.submit_num,
-                self.JOB_FILE_BASE)
+            local_job_file_path = get_task_job_job_log(
+                suite, itask.point, itask.tdef.name, itask.submit_num)
             self.job_file_writer.write(local_job_file_path, job_conf,
                                        check_syntax=check_syntax)
         except StandardError as exc:
@@ -859,13 +860,13 @@ class TaskJobManager(object):
 
         # Location of job file, etc
         self._create_job_log_path(suite, itask)
-        job_d = self.task_events_mgr.get_task_job_id(
+        job_d = get_task_job_id(
             itask.point, itask.tdef.name, itask.submit_num)
         job_file_path = os.path.join(
             glbl_cfg().get_derived_host_item(
                 suite, "suite job log directory",
                 itask.task_host, itask.task_owner),
-            job_d, self.JOB_FILE_BASE)
+            job_d, JOB_LOG_JOB)
         return {
             'batch_system_name': rtconfig['job']['batch system'],
             'batch_submit_command_template': (

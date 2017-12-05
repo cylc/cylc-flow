@@ -24,10 +24,7 @@ import pango
 
 
 class logviewer(object):
-    def __init__(self, name, dirname, filename):
-        self.name = name
-        self.dirname = dirname
-        self.filename = filename
+    def __init__(self):
         self.t = None
 
         self.find_current = None
@@ -54,14 +51,9 @@ class logviewer(object):
         s, e = logbuffer.get_bounds()
         logbuffer.delete(s, e)
 
-    def path(self):
-        if self.dirname and not os.path.isabs(self.filename):
-            return os.path.join(self.dirname, self.filename)
-        else:
-            return self.filename
-
     def connect(self):
-        self.t = Tailer(self.logview, self.path())
+        # TODO , self.path()
+        self.t = Tailer(self.logview)
         self.t.start()
 
     def quit_w_e(self, w, e):
@@ -163,7 +155,7 @@ class logviewer(object):
 
         self.vbox = gtk.VBox()
 
-        self.log_label = gtk.Label(self.path())
+        self.log_label = gtk.Label("PATH")
         self.log_label.modify_fg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#00a"))
         self.vbox.pack_start(self.log_label, False)
 

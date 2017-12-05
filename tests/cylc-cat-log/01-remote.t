@@ -19,9 +19,9 @@
 CYLC_TEST_IS_GENERIC=false
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-RC_ITEM='[test battery]remote host'
-export CYLC_TEST_HOST=$(cylc get-global-config -i "${RC_ITEM}" 2>'/dev/null')
-if [[ -z $CYLC_TEST_HOST ]]; then
+export CYLC_TEST_HOST=$(cylc get-global-config -i "[test battery]remote host" 2>'/dev/null')
+export CYLC_TEST_OWNER=$(cylc get-global-config -i "[test battery]remote owner" 2>'/dev/null')
+if [[ -z ${CYLC_TEST_HOST}${CYLC_TEST_OWNER} ]]; then
     skip_all '"[test battery]remote host": not defined'
 fi
 set_test_number 14
@@ -38,11 +38,11 @@ TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --debug --no-detach $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-task-out
-cylc cat-log -o $SUITE_NAME a-task.1 >$TEST_NAME.out
+cylc cat-log -f o $SUITE_NAME a-task.1 >$TEST_NAME.out
 grep_ok '^the quick brown fox$' $TEST_NAME.out
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-task-job
-cylc cat-log $SUITE_NAME a-task.1 >$TEST_NAME.out
+cylc cat-log -f j $SUITE_NAME a-task.1 >$TEST_NAME.out
 contains_ok $TEST_NAME.out - << __END__
 # SCRIPT:
 # Write to task stdout log
@@ -55,17 +55,17 @@ __END__
 #-------------------------------------------------------------------------------
 # remote
 TEST_NAME=$TEST_NAME_BASE-task-err
-cylc cat-log -e $SUITE_NAME a-task.1 >$TEST_NAME.out
+cylc cat-log -f e $SUITE_NAME a-task.1 >$TEST_NAME.out
 grep_ok "jumped over the lazy dog" $TEST_NAME.out
 #-------------------------------------------------------------------------------
 # remote
 TEST_NAME=$TEST_NAME_BASE-task-status
-cylc cat-log -u $SUITE_NAME a-task.1 >$TEST_NAME.out
+cylc cat-log -f s $SUITE_NAME a-task.1 >$TEST_NAME.out
 grep_ok "CYLC_BATCH_SYS_NAME=background" $TEST_NAME.out
 #-------------------------------------------------------------------------------
 # local
 TEST_NAME=$TEST_NAME_BASE-task-activity
-cylc cat-log -a $SUITE_NAME a-task.1 >$TEST_NAME.out
+cylc cat-log -f a $SUITE_NAME a-task.1 >$TEST_NAME.out
 grep_ok '\[jobs-submit ret_code\] 0' $TEST_NAME.out
 #-------------------------------------------------------------------------------
 # remote
@@ -75,24 +75,24 @@ grep_ok "drugs and money" $TEST_NAME.out
 #-------------------------------------------------------------------------------
 # local
 TEST_NAME=$TEST_NAME_BASE-task-list-local-NN
-cylc cat-log --list-local $SUITE_NAME a-task.1 >$TEST_NAME.out
-cmp_ok $TEST_NAME.out <<__END__
+cylc cat-log -f a -m l $SUITE_NAME a-task.1 >$TEST_NAME.out
+contains_ok $TEST_NAME.out <<__END__
 job
 job-activity.log
 __END__
 #-------------------------------------------------------------------------------
 # local
 TEST_NAME=$TEST_NAME_BASE-task-list-local-01
-cylc cat-log --list-local -s 1 $SUITE_NAME a-task.1 >$TEST_NAME.out
-cmp_ok $TEST_NAME.out <<__END__
+cylc cat-log -f a -m l -s 1 $SUITE_NAME a-task.1 >$TEST_NAME.out
+contains_ok $TEST_NAME.out <<__END__
 job
 job-activity.log
 __END__
 #-------------------------------------------------------------------------------
 # remote
 TEST_NAME=$TEST_NAME_BASE-task-list-remote-NN
-cylc cat-log --list-remote $SUITE_NAME a-task.1 >$TEST_NAME.out
-cmp_ok $TEST_NAME.out <<__END__
+cylc cat-log -f j -m l $SUITE_NAME a-task.1 >$TEST_NAME.out
+contains_ok $TEST_NAME.out <<__END__
 job
 job.custom-log
 job.err
@@ -103,17 +103,17 @@ __END__
 #-------------------------------------------------------------------------------
 # remote
 TEST_NAME=$TEST_NAME_BASE-task-log-dir-NN
-cylc cat-log --list-remote -l $SUITE_NAME a-task.1 >$TEST_NAME.out
+cylc cat-log -f j -m d $SUITE_NAME a-task.1 >$TEST_NAME.out
 grep_ok "$SUITE_NAME/log/job/1/a-task/NN$" $TEST_NAME.out
 #-------------------------------------------------------------------------------
 # remote
 TEST_NAME=$TEST_NAME_BASE-task-log-dir-01
-cylc cat-log --list-remote -l -s 1 $SUITE_NAME a-task.1 >$TEST_NAME.out
+cylc cat-log -m d -f j -s 1 $SUITE_NAME a-task.1 >$TEST_NAME.out
 grep_ok "$SUITE_NAME/log/job/1/a-task/01$" $TEST_NAME.out
 #-------------------------------------------------------------------------------
 # remote
 TEST_NAME=$TEST_NAME_BASE-task-job-path
-cylc cat-log -l $SUITE_NAME a-task.1 >$TEST_NAME.out
+cylc cat-log -m p -f j $SUITE_NAME a-task.1 >$TEST_NAME.out
 grep_ok "$SUITE_NAME/log/job/1/a-task/NN/job$" $TEST_NAME.out
 #-------------------------------------------------------------------------------
 # Clean up the task host.

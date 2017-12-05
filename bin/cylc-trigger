@@ -53,6 +53,7 @@ from cylc.prompt import prompt
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.network.httpclient import SuiteRuntimeServiceClient
 from cylc.cfgspec.glbl_cfg import glbl_cfg
+from cylc.task_job_logs import JOB_LOG_JOB, JOB_LOG_DIFF
 
 
 def main():
@@ -162,7 +163,8 @@ def main():
             print "Editing done. I'm popping up a confirmation dialog now."
 
         # Save a diff to record the changes made.
-        with open("%s-edit.diff" % jobfile_path, 'wb') as diff_file:
+        difflog = jobfile_path.replace(JOB_LOG_JOB, JOB_LOG_DIFF)
+        with open(difflog, 'wb') as diff_file:
             for line in difflib.unified_diff(
                     open(jobfile_copy_path).readlines(),
                     open(jobfile_path).readlines(),

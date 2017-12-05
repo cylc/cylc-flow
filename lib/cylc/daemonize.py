@@ -21,7 +21,7 @@
 import os
 import sys
 from time import sleep, time
-from cylc.suite_logging import SuiteLog
+from cylc.suite_logging import SuiteLog, SUITE_LOG
 
 
 SUITE_SCAN_INFO_TMPL = r"""
@@ -53,7 +53,7 @@ def daemonize(server):
 
     """
     logd = SuiteLog.get_dir_for_suite(server.suite)
-    log_fname = os.path.join(logd, SuiteLog.LOG)
+    log_fname = os.path.join(logd, SUITE_LOG)
     try:
         old_log_mtime = os.stat(log_fname).st_mtime
     except OSError:

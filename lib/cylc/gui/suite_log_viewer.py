@@ -16,29 +16,38 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import gtk
 import os
-
+import gtk
 from cylc.gui.logviewer import logviewer
 from cylc.gui.tailer import Tailer
 from cylc.gui.util import get_icon
 from cylc.gui.warning_dialog import warning_dialog
-from cylc.suite_logging import get_logs
+from cylc.suite_logging import SUITE_LOG_OPTS
 
 
-class cylc_logviewer(logviewer):
+class SuiteLogViewer(logviewer):
+    """A popup window to view suite logs.
 
-    def __init__(self, name, dirname, task_list):
-        self.task_list = task_list
-        self.main_log = name
-        self.dirname = dirname
-        self.level = 0
+    Implemented using "cylc cat-log".
+
+    """
+    def __init__(self, suite_name, suite_log, task_list=None):
+        """Initialise the suite log viewer."""
+        if task_list is None:
+            self.task_list = []
+        self.suite_name = suite_name
+        self.suite_log = suite_log
+        self.suite_log_name = SUITE_LOG_OPTS[suite_log]
+        self.rotation = 0
+        self.cmd_tmpl = ("cylc cat-log -m t -r %(rotation)s "
+                         "-f %(suite_log)s %(suite_name)s")
         self.task_filter = None
         self.custom_filter = None
-
-        logviewer.__init__(self, name, dirname, name)
+        logviewer.__init__(self)
+        self.update_view()
 
     def create_gui_panel(self):
+        """Create the GUI panel."""
         logviewer.create_gui_panel(self)
 
         self.window = gtk.Window()
@@ -84,78 +93,62 @@ class cylc_logviewer(logviewer):
         self.window.show_all()
 
     def shutdown(self, w, e, wind):
+        """Quite the suite log viewer."""
         self.quit()
         wind.destroy()
 
     def filter_log(self, cb):
+        """Filter for task names."""
         model = cb.get_model()
         index = cb.get_active()
         if index == 0:
             return False
-
         task = model[index][0]
         if task == 'all':
             filter_ = None
         else:
             # Good enough to match "[task.CYCLE]"?
             filter_ = r'\[' + task + r'\.[^\]]+\]'
-
         self.task_filter = filter_
         self.update_view()
-
-        # TODO - CHECK ALL BOOLEAN RETURN VALUES THROUGHOUT THE GUI
         return False
 
     def custom_filter_log(self, e):
+        """Filter for arbitrary text."""
         txt = e.get_text()
         if txt == '':
             filter_ = None
         else:
             filter_ = txt
-
         self.custom_filter = filter_
         self.update_view()
-
         return False
 
-    def current_log(self):
-        try:
-            return get_logs(self.dirname, self.main_log, False)[self.level]
-        except IndexError:
-            return None
-
     def rotate_log(self, bt, go_older):
+        """Switch to other log rotations."""
         if go_older:
-            self.level += 1
-        else:
-            self.level -= 1
-        if self.level < 0:
-            warning_dialog("""
-At newest rotation; reloading in case
-the suite has been restarted.""", self.window).warn()
-            self.level = 0
-            # but update view in case user started suite after gui
-        if self.current_log() not in os.listdir(self.dirname):
-            if go_older:
-                warning_dialog("Older log not available", self.window).warn()
-                self.level -= 1
-                return
-            else:
-                warning_dialog("Newer log not available", self.window).warn()
-                self.level += 1
-                return
-        else:
-            self.filename = self.current_log()
+            self.rotation += 1
+        elif self.rotation > 0:
+            self.rotation -= 1
         self.update_view()
 
+    def connect(self):
+        """Run the tailer command."""
+        cmd = self.cmd_tmpl % {'rotation': self.rotation,
+                               'suite_name': self.suite_name,
+                               'suite_log': self.suite_log}
+        self.t = Tailer(
+            self.logview, cmd,
+            filters=[f for f in [self.task_filter, self.custom_filter] if f])
+        self.t.start()
+
     def update_view(self):
+        """Restart the log view on another log."""
         self.t.stop()
         logbuffer = self.logview.get_buffer()
         s, e = logbuffer.get_bounds()
         self.reset_logbuffer()
         logbuffer.delete(s, e)
-        self.log_label.set_text(self.path())
-        self.t = Tailer(
-            self.logview, self.path(),
-            filters=[f for f in [self.task_filter, self.custom_filter] if f])
-        self.t.start()
+        label = "%s (rot %d)" % (self.suite_log_name, self.rotation)
+        self.log_label.set_text(label)
+        self.connect()
