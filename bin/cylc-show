@@ -29,6 +29,8 @@ if '--use-ssh' in sys.argv[1:]:
     if remrun():
         sys.exit(0)
 
+import json
+
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.network.httpclient import SuiteRuntimeServiceClient
@@ -45,6 +47,10 @@ def main():
 
     parser.add_option('--list-prereqs', action="store_true", default=False,
                       help="Print a task's pre-requisites as a list.")
+
+    parser.add_option('--json', action="store_true", default=False,
+                      help="Print all tasks and corresponding requisites in "
+                           "JSON format.")
 
     options, args = parser.parse_args()
     suite = args[0]
@@ -77,36 +83,39 @@ def main():
         results, bad_items = pclient.get_info(
             'get_task_requisites', items=task_ids,
             list_prereqs=options.list_prereqs)
-        for task_id, result in sorted(results.items()):
-            if len(results) > 1:
-                print "----\nTASK ID: %s" % task_id
-            if options.list_prereqs:
-                for prereq in result["prerequisites"]:
-                    print prereq
-            else:
-                for key, value in sorted(
-                        result["descriptions"].items(), reverse=True):
-                    print "%s: %s" % (key, value or "(not given)")
+        if options.json:
+            print json.dumps(results)
+        else:
+            for task_id, result in sorted(results.items()):
+                if len(results) > 1:
+                    print "----\nTASK ID: %s" % task_id
+                if options.list_prereqs:
+                    for prereq in result["prerequisites"]:
+                        print prereq
+                else:
+                    for key, value in sorted(
+                            result["descriptions"].items(), reverse=True):
+                        print "%s: %s" % (key, value or "(not given)")
 
-                for name, done in [("prerequisites", "satisfied"),
-                                   ("outputs", "completed")]:
-                    print '\n%s (- => not %s):' % (name, done)
-                    if not result[name]:
-                        print '  (None)'
-                    for msg, state in result[name]:
-                        if state:
-                            print '  + ' + msg
-                        else:
-                            print '  - ' + msg
+                    for name, done in [("prerequisites", "satisfied"),
+                                       ("outputs", "completed")]:
+                        print '\n%s (- => not %s):' % (name, done)
+                        if not result[name]:
+                            print '  (None)'
+                        for msg, state in result[name]:
+                            if state:
+                                print '  + ' + msg
+                            else:
+                                print '  - ' + msg
 
-                if result["extras"]:
-                    print '\nother:'
-                    for key, value in result["extras"].items():
-                        print '  o  %s ... %s' % (key, value)
-        for bad_item in bad_items:
-            sys.stderr.write("No matching tasks found: %s\n" % bad_item)
-        if bad_items:
-            sys.exit(1)
+                    if result["extras"]:
+                        print '\nother:'
+                        for key, value in result["extras"].items():
+                            print '  o  %s ... %s' % (key, value)
+            for bad_item in bad_items:
+                sys.stderr.write("No matching tasks found: %s\n" % bad_item)
+            if bad_items:
+                sys.exit(1)
 
 
 if __name__ == "__main__":
