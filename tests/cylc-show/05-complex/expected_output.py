@@ -32,15 +32,15 @@ exp_output = json.dumps(
 def is_valid_json(possiblejson):
     """Tests if input is a valid JSON data structure"""
     try:
-        valid_json_expression = json.loads(possiblejson)
-    except ValueError, e:
+        json.loads(possiblejson)
+    except ValueError:
         return False
     return True
 
 if is_valid_json(output):
-    if cmp(json.loads(output),json.loads(exp_output)) == 0:
+    if json.loads(output) == json.loads(exp_output):
         sys.exit()
     else:
-        sys.exit("Output in JSON format but not as expected ... not ok")
+        sys.exit("Output in JSON format but not as expected")
 else:
-    sys.exit("Output not in JSON format ... not ok")
+    sys.exit("Output not in JSON format")
