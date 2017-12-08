@@ -34,6 +34,11 @@ class logviewer(object):
         self.find_current_iter = None
         self.search_warning_done = False
 
+        self.freeze_button = None
+        self.log_label = None
+        self.logview = None
+        self.hbox = None
+        self.vbox = None
         self.create_gui_panel()
         self.logview.get_buffer()
 

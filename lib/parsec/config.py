@@ -48,8 +48,10 @@ class config(object):
         self.checkspec(spec)
         self.spec = spec
 
-    def checkspec(self, spec, parents=[]):
+    def checkspec(self, spec, parents=None):
         "check that the file spec is a nested dict of validators"
+        if not parents:
+            parents = []
         for key, value in spec.items():
             pars = parents + [key]
             if isinstance(value, dict):
@@ -88,7 +90,7 @@ class config(object):
         if not self.dense:
             self.dense = expand(self.sparse, self.spec)
 
-    def get(self, keys=[], sparse=False):
+    def get(self, keys=None, sparse=False):
         """
         Retrieve items or sections, sparse or dense, by list of keys:
         [sec1,sec2,item] =>
@@ -103,17 +105,18 @@ class config(object):
             cfg = self.dense
 
         parents = []
-        for key in keys:
-            try:
-                cfg = cfg[key]
-            except KeyError:
-                raise ItemNotFoundError(itemstr(parents, key))
-            else:
-                parents.append(key)
+        if keys:
+            for key in keys:
+                try:
+                    cfg = cfg[key]
+                except KeyError:
+                    raise ItemNotFoundError(itemstr(parents, key))
+                else:
+                    parents.append(key)
 
         return cfg
 
-    def idump(self, items=[], sparse=False, pnative=False, prefix='',
+    def idump(self, items=None, sparse=False, pnative=False, prefix='',
               oneline=False, none_str=''):
         """
         items is a list of --item style inputs:
@@ -121,35 +124,39 @@ class config(object):
         """
         mkeys = []
         null = True
-        for i in items:
-            null = False
-            i = i.lstrip('[')
-            i = i.rstrip(']')
-            j = re.split('\]\[*', i)
-            mkeys.append(j)
+        if items:
+            for i in items:
+                null = False
+                i = i.lstrip('[')
+                i = i.rstrip(']')
+                j = re.split('\]\[*', i)
+                mkeys.append(j)
         if null:
             mkeys = [[]]
         self.mdump(mkeys, sparse, pnative, prefix, oneline, none_str)
 
-    def mdump(self, mkeys=[], sparse=False, pnative=False, prefix='',
+    def mdump(self, mkeys=None, sparse=False, pnative=False, prefix='',
               oneline=False, none_str=''):
         if oneline:
             items = []
-            for keys in mkeys:
-                item = self.get(keys, sparse)
-                if isinstance(item, list) or isinstance(item, dict):
-                    raise NotSingleItemError(itemstr(keys))
-                if not item:
-                    item = none_str or "None"
-                items.append(str(item))
+            if mkeys:
+                for keys in mkeys:
+                    item = self.get(keys, sparse)
+                    if isinstance(item, list) or isinstance(item, dict):
+                        raise NotSingleItemError(itemstr(keys))
+                    if not item:
+                        item = none_str or "None"
+                    items.append(str(item))
             # TODO - quote items if they contain spaces or comment delimiters?
             print prefix + ' '.join(items)
-        else:
+        elif mkeys:
             for keys in mkeys:
                 self.dump(keys, sparse, pnative, prefix, none_str)
 
-    def dump(self, keys=[], sparse=False, pnative=False, prefix='',
+    def dump(self, keys=None, sparse=False, pnative=False, prefix='',
              none_str=''):
+        if not keys:
+            keys = []
         cfg = self.get(keys, sparse)
         if pnative:
             print cfg

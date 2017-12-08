@@ -77,7 +77,9 @@ class JobFileWriter(object):
             raise exc
         # check syntax
         try:
-            proc = Popen([job_conf['shell'], '-n', tmp_name], stderr=PIPE)
+            proc = Popen(
+                [job_conf['shell'], '-n', tmp_name],
+                stderr=PIPE, stdin=open(os.devnull))
         except OSError as exc:
             # Popen has a bad habit of not telling you anything if it fails
             # to run the executable.

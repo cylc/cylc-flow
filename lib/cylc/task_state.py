@@ -189,7 +189,7 @@ class TaskState(object):
             self.external_triggers[ext] = False
 
         # Message outputs.
-        self.outputs = TaskOutputs(tdef, point)
+        self.outputs = TaskOutputs(tdef)
 
         # Standard outputs.
         self.outputs.add(TASK_OUTPUT_SUBMITTED)

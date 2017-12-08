@@ -92,7 +92,7 @@ class SuiteConfig(object):
 
     def __init__(self, suite, fpath, template_vars=None,
                  owner=None, run_mode='live', is_validate=False, strict=False,
-                 collapsed=[], cli_initial_point_string=None,
+                 collapsed=None, cli_initial_point_string=None,
                  cli_start_point_string=None, cli_final_point_string=None,
                  is_reload=False, output_fname=None,
                  vis_start_string=None, vis_stop_string=None,
@@ -481,10 +481,12 @@ class SuiteConfig(object):
                     'ERROR [visualization]collapsed families: '
                     '%s is not a first parent' % fam)
 
-        if is_reload:
+        if is_reload and collapsed:
             # on suite reload retain an existing state of collapse
             # (used by the "cylc graph" viewer)
             self.closed_families = collapsed
+        elif is_reload:
+            self.closed_families = []
         else:
             self.closed_families = self.collapsed_families_rc
         for cfam in self.closed_families:

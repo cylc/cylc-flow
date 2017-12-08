@@ -202,7 +202,7 @@ class TaskMessage(object):
         # otherwise drop through to local messaging.
         # Note: do not sys.exit(0) here as the commands do, it
         # will cause messaging failures on the remote host.
-        remrun().execute(env=env, path=[path])
+        remrun(env=env, path=[path])
 
     def _update_job_status_file(self, messages):
         """Write messages to job status file."""

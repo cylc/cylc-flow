@@ -22,7 +22,7 @@ Print contact information of running suite REG."""
 
 import sys
 from cylc.remote import remrun
-if remrun().execute():
+if remrun():
     sys.exit(0)
 
 from cylc.option_parsers import CylcOptionParser as COP

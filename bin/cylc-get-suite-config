@@ -53,7 +53,7 @@ $ cylc get-suite-config --item=[runtime][modelX] SUITE
 
 import sys
 from cylc.remote import remrun
-if remrun().execute():
+if remrun():
     sys.exit(0)
 
 import re

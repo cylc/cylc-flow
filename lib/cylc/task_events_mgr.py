@@ -54,9 +54,7 @@ from cylc.task_outputs import (
     TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED)
 from cylc.wallclock import (
-    get_current_time_string,
-    get_unix_time_from_time_string,
-    RE_DATE_TIME_FORMAT_EXTENDED)
+    get_current_time_string, RE_DATE_TIME_FORMAT_EXTENDED)
 
 
 CustomTaskEventHandlerContext = namedtuple(
@@ -110,7 +108,7 @@ class TaskEventsManager(object):
     def __init__(self, suite, proc_pool, suite_db_mgr, broadcast_mgr=None):
         self.suite = suite
         self.suite_url = None
-        self.suite_cfg = []
+        self.suite_cfg = {}
         self.proc_pool = proc_pool
         self.suite_db_mgr = suite_db_mgr
         if broadcast_mgr is None:

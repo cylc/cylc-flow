@@ -21,11 +21,11 @@ from parsec.validate import validator as vdr
 SPEC = {
         'boolean' : {
             '__MANY__' : { '__MANY__' : vdr( vtype="boolean" ) },
-            }, 
-        'integer' : { 
+            },
+        'integer' : {
             '__MANY__' : { '__MANY__' : vdr( vtype="integer" ) },
             },
-        'float'   : { 
+        'float'   : {
             '__MANY__' : { '__MANY__' : vdr( vtype="float"   ) },
             },
         'string'  : {

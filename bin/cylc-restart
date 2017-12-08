@@ -20,7 +20,7 @@
 
 import sys
 from cylc.remote import remrun
-if remrun().execute():
+if remrun():
     sys.exit(0)
 
 from cylc.scheduler_cli import main

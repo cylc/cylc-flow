@@ -383,7 +383,7 @@ class SuiteLog(object):
             if cylc.flags.debug:
                 log_logger_level = logging.DEBUG
             elif cylc.flags.verbose:
-                log_logger_level = logging.VERBOSE
+                log_logger_level = logging.DEBUG
             else:
                 log_logger_level = logging.INFO
         # --- Create the 'log' logger. ---

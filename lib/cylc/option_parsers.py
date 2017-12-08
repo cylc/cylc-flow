@@ -247,17 +247,18 @@ Arguments:"""
                     "Set initial cycle point. "
                     "Required if not defined in suite.rc."))
 
-    def parse_args(self, remove_opts=[]):
+    def parse_args(self, remove_opts=None):
         """Parse options and arguments, overrides OptionParser.parse_args."""
         if self.auto_add:
             # Add common options after command-specific options.
             self.add_std_options()
 
-        for opt in remove_opts:
-            try:
-                self.remove_option(opt)
-            except ValueError:
-                pass
+        if remove_opts:
+            for opt in remove_opts:
+                try:
+                    self.remove_option(opt)
+                except ValueError:
+                    pass
 
         (options, args) = OptionParser.parse_args(self)
 

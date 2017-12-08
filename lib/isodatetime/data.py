@@ -205,7 +205,7 @@ class TimeRecurrence(object):
             self.format_number = 3
             if self.repetitions is not None:
                 point = self.start_point
-                for i in range(self.repetitions - 1):
+                for _ in range(self.repetitions - 1):
                     point += self.duration
                 self.end_point = point
         elif self.start_point is None:
@@ -213,7 +213,7 @@ class TimeRecurrence(object):
             self.format_number = 4
             if self.repetitions is not None:
                 point = self.end_point
-                for i in range(self.repetitions - 1):
+                for _ in range(self.repetitions - 1):
                     point -= self.duration
                 self.start_point = point
         else:
@@ -1343,7 +1343,6 @@ class TimePoint(object):
             other.set_time_zone(self.get_time_zone())
             my_year, my_day_of_year = self.get_ordinal_date()
             other_year, other_day_of_year = other.get_ordinal_date()
-            diff_year = my_year - other_year
             diff_day = my_day_of_year - other_day_of_year
             if my_year > other_year:
                 diff_day += get_days_in_year_range(other_year, my_year - 1)
@@ -1390,7 +1389,7 @@ class TimePoint(object):
             if self.get_is_week_date():
                 was_week_date = True
             self.to_calendar_date()
-        for i in range(abs(num_months)):
+        for _ in range(abs(num_months)):
             if num_months > 0:
                 self.month_of_year += 1
                 if self.month_of_year > CALENDAR.MONTHS_IN_YEAR:

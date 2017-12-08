@@ -53,7 +53,7 @@ flist = []
 include_re = re.compile('\s*%include\s+([\'"]?)(.*?)([\'"]?)\s*$')
 
 
-def inline(lines, dir_, filename, for_grep=False, for_edit=False, viewcfg={},
+def inline(lines, dir_, filename, for_grep=False, for_edit=False, viewcfg=None,
            level=None):
     """Recursive inlining of parsec include-files"""
 
@@ -70,6 +70,8 @@ def inline(lines, dir_, filename, for_grep=False, for_edit=False, viewcfg={},
         mark = viewcfg['mark']
         single = viewcfg['single']
         label = viewcfg['label']
+    else:
+        viewcfg = {}
 
     global done
     global modtimes

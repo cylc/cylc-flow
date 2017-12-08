@@ -45,7 +45,7 @@ The suite can subsequently be started and targeted by cylc commands using
 
 import sys
 from cylc.remote import remrun
-if remrun().execute():
+if remrun():
     sys.exit(0)
 
 from cylc.option_parsers import CylcOptionParser as COP

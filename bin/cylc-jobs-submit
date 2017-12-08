@@ -42,7 +42,7 @@ def main():
         args[0], args[1:], remote_mode=opts.remote_mode)
 
 
-if __name__ == "__main__" and not remrun().execute():
+if __name__ == "__main__" and not remrun():
     from cylc.option_parsers import CylcOptionParser as COP
     from cylc.batch_sys_manager import BatchSysManager
     main()

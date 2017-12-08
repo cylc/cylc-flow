@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Check that single-line config print works"""
 
 import os, sys
 
@@ -6,9 +7,6 @@ fpath = os.path.dirname(os.path.abspath(__file__))
 # parsec
 sys.path.append( fpath + '/../../..' )
 
-"""
-Check that single-line config print works
-""" 
 
 from parsec.config import config
 from parsec.validate import validator as vdr

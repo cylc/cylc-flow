@@ -17,7 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import gtk
-from util import get_icon
+
+from cylc.gui.util import get_icon
 
 
 class warning_dialog(object):

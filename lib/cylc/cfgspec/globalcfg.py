@@ -534,30 +534,32 @@ class GlobalConfig(config):
             value = cfg['communication']['method']
         return value
 
-    def roll_directory(self, d, name, archlen=0):
-        """
-        Create a directory after rolling back any previous instances of it.
-        e.g. if archlen = 2 we keep: d, d.1, d.2. If 0 keep no old ones.
+    def roll_directory(self, dir_, name, archlen=0):
+        """Create a directory after rolling back any previous instances of it.
+
+        E.g. if archlen = 2 we keep:
+            dir_, dir_.1, dir_.2. If 0 keep no old ones.
         """
         for n in range(archlen, -1, -1):  # archlen...0
             if n > 0:
-                dpath = d + '.' + str(n)
+                dpath = dir_ + '.' + str(n)
             else:
-                dpath = d
+                dpath = dir_
             if os.path.exists(dpath):
                 if n >= archlen:
                     # remove oldest backup
                     shutil.rmtree(dpath)
                 else:
                     # roll others over
-                    os.rename(dpath, d + '.' + str(n + 1))
-        self.create_directory(d, name)
+                    os.rename(dpath, dir_ + '.' + str(n + 1))
+        self.create_directory(dir_, name)
 
-    def create_directory(self, d, name):
+    @staticmethod
+    def create_directory(dir_, name):
         """Create directory. Raise GlobalConfigError on error."""
         try:
-            mkdir_p(d)
-        except Exception, exc:
+            mkdir_p(dir_)
+        except OSError as exc:
             print >> sys.stderr, str(exc)
             raise GlobalConfigError(
                 'Failed to create directory "' + name + '"')

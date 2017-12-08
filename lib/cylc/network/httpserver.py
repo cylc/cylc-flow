@@ -35,7 +35,7 @@ from cylc.exceptions import CylcError
 import cylc.flags
 from cylc.network import (
     NO_PASSPHRASE, PRIVILEGE_LEVELS, PRIV_IDENTITY, PRIV_DESCRIPTION,
-    PRIV_STATE_TOTALS, PRIV_FULL_READ, PRIV_SHUTDOWN, PRIV_FULL_CONTROL)
+    PRIV_FULL_READ, PRIV_SHUTDOWN, PRIV_FULL_CONTROL)
 from cylc.hostuserutil import get_host
 from cylc.suite_logging import ERR, LOG
 from cylc.suite_srv_files_mgr import (
@@ -53,6 +53,8 @@ class HTTPServer(object):
     def __init__(self, suite):
         # Suite only needed for back-compat with old clients (see below):
         self.suite = suite
+        self.engine = None
+        self.port = None
 
         # Figure out the ports we are allowed to use.
         base_port = GLOBAL_CFG.get(['communication', 'base port'])

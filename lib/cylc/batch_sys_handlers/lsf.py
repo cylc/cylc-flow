@@ -58,12 +58,12 @@ class LSFHandler(object):
         return lines
 
     @classmethod
-    def get_fail_signals(cls, job_conf):
+    def get_fail_signals(cls, _):
         """Return a list of failure signal names to trap."""
         return ["EXIT", "ERR", "XCPU", "TERM", "INT", "SIGUSR2"]
 
     @classmethod
-    def get_submit_stdin(cls, job_file_path, submit_opts):
+    def get_submit_stdin(cls, job_file_path, _):
         """Return proc_stdin_arg, proc_stdin_value."""
         return (open(job_file_path), None)
 

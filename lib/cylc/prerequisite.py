@@ -184,7 +184,7 @@ class Prerequisite(object):
         """
         try:
             res = eval(self.conditional_expression)
-        except Exception, exc:
+        except (SyntaxError, ValueError) as exc:
             err_msg = str(exc)
             if str(exc).find("unexpected EOF") != -1:
                 err_msg += ("\n(?could be unmatched parentheses in the graph "

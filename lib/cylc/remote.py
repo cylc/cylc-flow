@@ -15,20 +15,25 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Run command on a remote host."""
+"""Run command on a remote, (i.e. a remote [user@]host)."""
 
 import os
 from posix import WIFSIGNALED
 from pipes import quote
 import shlex
-import subprocess
+from subprocess import Popen
 import sys
 from textwrap import TextWrapper
 
 import cylc.flags
 
 
-class remrun(object):
+def remrun(env=None, path=None, dry_run=False, forward_x11=False):
+    """Short for RemoteRunner().execute(...)"""
+    return RemoteRunner().execute(env, path, dry_run, forward_x11)
+
+
+class RemoteRunner(object):
     """Run current command on a remote host.
 
     If owner or host differ from username and localhost, strip the
@@ -70,8 +75,7 @@ class remrun(object):
             from cylc.hostuserutil import is_remote
             self.is_remote = is_remote(self.host, self.owner)
 
-    def execute(self, force_required=False, env=None, path=None,
-                dry_run=False, forward_x11=False):
+    def execute(self, env=None, path=None, dry_run=False, forward_x11=False):
         """Execute command on remote host.
 
         Returns False if remote re-invocation is not needed, True if it is
@@ -146,7 +150,7 @@ class remrun(object):
             return command
 
         try:
-            popen = subprocess.Popen(command)
+            popen = Popen(command)
         except OSError as exc:
             sys.exit("ERROR: remote command invocation failed %s" % str(exc))
 

@@ -15,12 +15,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Legal items and validators for the parsec test config file."""
 
 from parsec.validate import validator as vdr
 
-"""
-Legal items and validators for the parsec test config file.
-"""
 
 SPEC = {
         'title' : vdr( vtype="string" ),

@@ -31,7 +31,7 @@ same time - both instances will attempt to write to the same job logs."""
 
 import sys
 from cylc.remote import remrun
-if remrun().execute():
+if remrun():
     sys.exit(0)
 
 import os

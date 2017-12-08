@@ -30,7 +30,7 @@ For the cylc version of running a suite daemon see
 import sys
 import os
 from cylc.remote import remrun
-if remrun().execute():
+if remrun():
     sys.exit(0)
 
 import cylc.flags

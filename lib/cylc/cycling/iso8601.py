@@ -342,6 +342,8 @@ class ISO8601Sequence(SequenceBase):
 
     def __init__(self, dep_section, context_start_point=None,
                  context_end_point=None):
+        SequenceBase.__init__(
+            self, dep_section, context_start_point, context_end_point)
         self.dep_section = dep_section
 
         if context_start_point is None:
@@ -415,12 +417,12 @@ class ISO8601Sequence(SequenceBase):
         """Deprecated: return the offset used for this sequence."""
         return self.offset
 
-    def set_offset(self, offset):
-        """Deprecated: alter state to offset the entire sequence."""
+    def set_offset(self, i_offset):
+        """Deprecated: alter state to i_offset the entire sequence."""
         if self.recurrence.start_point is not None:
-            self.recurrence.start_point += interval_parse(str(offset))
+            self.recurrence.start_point += interval_parse(str(i_offset))
         if self.recurrence.end_point is not None:
-            self.recurrence.end_point += interval_parse(str(offset))
+            self.recurrence.end_point += interval_parse(str(i_offset))
         self._cached_first_point_values = {}
         self._cached_next_point_values = {}
         self._cached_valid_point_booleans = {}
@@ -722,16 +724,14 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
 def get_point_relative(offset_string, base_point):
     """Create a point from offset_string applied to base_point."""
     try:
-        interval = ISO8601Interval(
-            str(interval_parse(offset_string)))
-    except Exception:
-        pass
+        interval = ISO8601Interval(str(interval_parse(offset_string)))
+    except ValueError:
+        return ISO8601Point(str(
+            SuiteSpecifics.abbrev_util.parse_timepoint(
+                offset_string, context_point=_point_parse(base_point.value))
+        ))
     else:
         return base_point + interval
-    return ISO8601Point(str(
-        SuiteSpecifics.abbrev_util.parse_timepoint(
-            offset_string, context_point=_point_parse(base_point.value))
-    ))
 
 
 def interval_parse(interval_string):

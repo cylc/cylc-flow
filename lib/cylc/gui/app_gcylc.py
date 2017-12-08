@@ -37,9 +37,10 @@ from cylc.gui.warning_dialog import warning_dialog, info_dialog
 try:
     from cylc.gui.view_graph import ControlGraph
     from cylc.gui.graph import graph_suite_popup
-except ImportError, x:
+except ImportError as exc:
     # pygraphviz not installed
-    warning_dialog("WARNING: graph view disabled\n" + str(x)).warn()
+    warning_dialog("WARNING: graph view disabled\n%s" % exc).warn()
+    del exc
     graphing_disabled = True
 else:
     graphing_disabled = False
@@ -58,7 +59,7 @@ from cylc.task_id import TaskID
 from cylc.task_state_prop import extract_group_state
 from cylc.version import CYLC_VERSION
 from cylc.gui.option_group import controlled_option_group
-from cylc.gui.color_rotator import rotator
+from cylc.gui.color_rotator import ColorRotator
 from cylc.gui.cylc_logviewer import cylc_logviewer
 from cylc.gui.gcapture import gcapture_tmpfile
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
@@ -76,7 +77,9 @@ from cylc.task_state_prop import get_status_prop
 
 def run_get_stdout(command, filter_=False):
     try:
-        popen = Popen(command, shell=True, stderr=PIPE, stdout=PIPE)
+        popen = Popen(
+            command,
+            shell=True, stdin=open(os.devnull), stderr=PIPE, stdout=PIPE)
         out = popen.stdout.read()
         err = popen.stderr.read()
         res = popen.wait()
@@ -154,6 +157,7 @@ Class to hold initialisation data.
         )
         self.imagedir = get_image_dir()
         self.my_uuid = uuid4()
+        self.logdir = None
 
     def reset(self, suite, auth=None):
         self.suite = suite
@@ -429,7 +433,8 @@ Use *Connect Now* button to reconnect immediately.""")
                 self.reconnect_interval_widget.set_text,
                 " (next connect: %s) " % next_update_dt_str)
 
-    def _set_tooltip(self, widget, text):
+    @staticmethod
+    def _set_tooltip(widget, text):
         tooltip = gtk.Tooltips()
         tooltip.enable()
         tooltip.set_tip(widget, text)
@@ -540,7 +545,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.quitters = []
         self.gcapture_windows = []
 
-        self.log_colors = rotator()
+        self.log_colors = ColorRotator()
         hcolor = gcfg.get(['task filter highlight color'])
         try:
             self.filter_highlight_color = gtk.gdk.color_parse(hcolor)
@@ -1189,7 +1194,7 @@ been defined for this suite""").inform()
         print command
 
         try:
-            Popen([command], shell=True)
+            Popen([command], shell=True, stdin=open(os.devnull))
         except OSError:
             warning_dialog('Error: failed to start ' + self.cfg.suite,
                            self.window).warn()
@@ -1266,7 +1271,8 @@ been defined for this suite""").inform()
             self._popup_logview(task_id, task_state_summary, choice)
         return False
 
-    def connect_right_click_sub_menu(self, is_graph_view, item, x, y, z):
+    @staticmethod
+    def connect_right_click_sub_menu(is_graph_view, item, x, y, z):
         """Handle right-clicks in sub-menus."""
         if is_graph_view:
             item.connect('button-release-event', x, y, z)
@@ -1282,10 +1288,10 @@ been defined for this suite""").inform()
         # connect_right_click_sub_menu should be used in preference to
         # item.connect to handle this
 
-        if type(task_is_family) is bool:
+        if isinstance(task_is_family, bool):
             task_is_family = [task_is_family] * len(task_ids)
-        if (type(task_ids) is not list or type(t_states) is not list or
-                type(task_is_family) is not list):
+        if any(not isinstance(item, list)
+               for item in (task_ids, t_states, task_is_family)):
             return False
 
         # Consistency check.
@@ -1565,7 +1571,8 @@ been defined for this suite""").inform()
         if not self.info_bar.prog_bar_active():
             self.info_bar.prog_bar.hide()
 
-    def update_tb(self, tb, line, tags=None):
+    @staticmethod
+    def update_tb(tb, line, tags=None):
         """Update a text view buffer."""
         if tags:
             tb.insert_with_tags(tb.get_end_iter(), line, *tags)
@@ -1664,7 +1671,7 @@ shown here in the state they were in at the time of triggering.''')
 
     def hold_task(self, b, task_ids, stop=True):
         """Hold or release a task."""
-        if type(task_ids) is not list:
+        if not isinstance(task_ids, list):
             task_ids = [task_ids]
 
         if stop:
@@ -1680,7 +1687,7 @@ shown here in the state they were in at the time of triggering.''')
 
     def trigger_task_now(self, b, task_ids):
         """Trigger task via the suite daemon's command interface."""
-        if type(task_ids) is not list:
+        if not isinstance(task_ids, list):
             task_ids = [task_ids]
 
         for task_id in task_ids:
@@ -1698,7 +1705,7 @@ shown here in the state they were in at the time of triggering.''')
 
     def poll_task(self, b, task_ids):
         """Poll a task/family."""
-        if type(task_ids) is not list:
+        if not isinstance(task_ids, list):
             task_ids = [task_ids]
 
         for task_id in task_ids:
@@ -1708,7 +1715,7 @@ shown here in the state they were in at the time of triggering.''')
 
     def kill_task(self, b, task_ids):
         """Kill a task/family."""
-        if type(task_ids) is not list:
+        if not isinstance(task_ids, list):
             task_ids = [task_ids]
 
         for task_id in task_ids:
@@ -1719,7 +1726,7 @@ shown here in the state they were in at the time of triggering.''')
 
     def spawn_task(self, b, task_ids):
         """For tasks to spawn their successors."""
-        if type(task_ids) is not list:
+        if not isinstance(task_ids, list):
             task_ids = [task_ids]
 
         for task_id in task_ids:
@@ -1729,7 +1736,7 @@ shown here in the state they were in at the time of triggering.''')
 
     def reset_task_state(self, b, e, task_ids, state):
         """Reset the state of a task/family."""
-        if type(task_ids) is not list:
+        if not isinstance(task_ids, list):
             task_ids = [task_ids]
 
         for task_id in task_ids:
@@ -1903,7 +1910,8 @@ shown here in the state they were in at the time of triggering.''')
         window.add(vbox)
         window.show_all()
 
-    def stop_method(self, b, meth, st_box, sc_box, tt_box):
+    @staticmethod
+    def stop_method(b, meth, st_box, sc_box, tt_box):
         """Determine the suite stop method."""
         for ch in (
                 st_box.get_children() +
@@ -1920,13 +1928,15 @@ shown here in the state they were in at the time of triggering.''')
             for ch in tt_box.get_children():
                 ch.set_sensitive(True)
 
-    def hold_cb_toggled(self, b, box):
+    @staticmethod
+    def hold_cb_toggled(b, box):
         if b.get_active():
             box.set_sensitive(False)
         else:
             box.set_sensitive(True)
 
-    def startup_method(self, b, meth, ic_box, is_box):
+    @staticmethod
+    def startup_method(b, meth, ic_box, is_box):
         """Determine the suite start-up method."""
         if meth in ['cold', 'warm']:
             for ch in ic_box.get_children():
@@ -2336,7 +2346,8 @@ shown here in the state they were in at the time of triggering.''')
                     continue
         return ret
 
-    def _sort_key_func(self, log_path):
+    @staticmethod
+    def _sort_key_func(log_path):
         """Sort key for a task job log path."""
         head, submit_num, base = log_path.rsplit("/", 2)
         try:
@@ -2345,7 +2356,8 @@ shown here in the state they were in at the time of triggering.''')
             pass
         return (submit_num, base, head)
 
-    def _set_tooltip(self, widget, tip_text):
+    @staticmethod
+    def _set_tooltip(widget, tip_text):
         """Set a tool-tip text."""
         tooltip = gtk.Tooltips()
         tooltip.enable()
@@ -2992,15 +3004,18 @@ This is what my suite does:..."""
         cat_menu.append(cylc_help_item)
         cylc_help_item.connect('activate', self.command_help)
 
-        cout = Popen(["cylc", "categories"], stdout=PIPE).communicate()[0]
+        cout = Popen(
+            ["cylc", "categories"],
+            stdin=open(os.devnull), stdout=PIPE).communicate()[0]
         categories = cout.rstrip().split()
         for category in categories:
             foo_item = gtk.MenuItem(category)
             cat_menu.append(foo_item)
             com_menu = gtk.Menu()
             foo_item.set_submenu(com_menu)
-            proc = Popen(["cylc-help", "category=" + category], stdout=PIPE)
-            cout = proc.communicate()[0]
+            cout = Popen(
+                ["cylc-help", "category=" + category],
+                stdin=open(os.devnull), stdout=PIPE).communicate()[0]
             commands = cout.rstrip().split()
             for command in commands:
                 bar_item = gtk.MenuItem(command)
@@ -3106,16 +3121,16 @@ This is what my suite does:..."""
         if n_states % PER_ROW:
             n_rows += 1
         dotm = DotMaker(self.theme, size=self.dot_size)
-        for row in range(0, n_rows):
+        for row in range(n_rows):
             subbox = gtk.HBox(homogeneous=True)
             self.state_filter_box.pack_start(subbox)
-            for i in range(0, PER_ROW):
+            for i in range(PER_ROW):
                 ebox = gtk.EventBox()
                 box = gtk.HBox()
                 ebox.add(box)
                 try:
                     st = self.legal_task_states[row * PER_ROW + i]
-                except Exception:
+                except IndexError:
                     pass
                 else:
                     icon = dotm.get_image(st)

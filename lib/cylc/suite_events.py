@@ -172,7 +172,8 @@ class SuiteEventHandler(object):
                 self.proc_pool.put_command(
                     proc_ctx, self._run_event_handlers_callback)
 
-    def _run_event_handlers_callback(self, proc_ctx, abort_on_error=False):
+    @staticmethod
+    def _run_event_handlers_callback(proc_ctx, abort_on_error=False):
         """Callback on completion of a suite event handler."""
         if proc_ctx.ret_code:
             msg = '%s EVENT HANDLER FAILED' % proc_ctx.cmd_key[1]

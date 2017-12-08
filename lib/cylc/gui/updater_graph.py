@@ -22,6 +22,7 @@ import os
 import re
 import threading
 from time import sleep
+import traceback
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags

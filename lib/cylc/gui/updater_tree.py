@@ -50,6 +50,7 @@ class TreeUpdater(threading.Thread):
         self.ancestors = {}
         self.descendants = []
         self.fam_state_summary = {}
+        self.state_summary = {}
         self._prev_id_named_paths = {}
         self._prev_data = {}
         self._prev_fam_data = {}
@@ -108,7 +109,8 @@ class TreeUpdater(threading.Thread):
         self.updater.no_update_event.clear()
         return True
 
-    def search_level(self, model, iter_, func, data):
+    @staticmethod
+    def search_level(model, iter_, func, data):
         while iter_:
             if func(model, iter_, data):
                 return iter_
@@ -126,7 +128,8 @@ class TreeUpdater(threading.Thread):
             iter_ = model.iter_next(iter_)
         return None
 
-    def match_func(self, model, iter_, data):
+    @staticmethod
+    def match_func(model, iter_, data):
         column, key = data
         value = model.get_value(iter_, column)
         return value == key
@@ -589,7 +592,8 @@ class TreeUpdater(threading.Thread):
         iter_ = model.append(parent_iter, data)
         return iter_
 
-    def _get_row_id(self, model, rpath):
+    @staticmethod
+    def _get_row_id(model, rpath):
         """Record a row's first two values."""
         riter = model.get_iter(rpath)
         point_string = model.get_value(riter, 0)

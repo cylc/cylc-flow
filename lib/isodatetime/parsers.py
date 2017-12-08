@@ -21,7 +21,6 @@
 import re
 
 from . import data
-from . import dumpers
 from . import parser_spec
 from . import timezone
 
@@ -195,7 +194,8 @@ class TimePointParser(object):
                 self._time_zone_regex_map[format_type].append(
                     [re.compile(time_zone_regex), time_zone_expr])
 
-    def get_expressions(self, text):
+    @staticmethod
+    def get_expressions(text):
         """Yield valid expressions from text."""
         for line in text.splitlines():
             line_text = line.strip()
@@ -206,7 +206,7 @@ class TimePointParser(object):
 
     def parse_date_expression_to_regex(self, expression):
         """Construct regular expressions for the date."""
-        for expr_regex, substitute, format_, name in (
+        for expr_regex, substitute, _, name in (
                 parser_spec.get_date_translate_info(
                     self.expanded_year_digits)):
             expression = re.sub(expr_regex, substitute, expression)
@@ -216,15 +216,16 @@ class TimePointParser(object):
     @staticmethod
     def parse_time_expression_to_regex(expression):
         """Construct regular expressions for the time."""
-        for expr_regex, substitute, format_, name in (
+        for expr_regex, substitute, _, name in (
                 parser_spec.get_time_translate_info()):
             expression = re.sub(expr_regex, substitute, expression)
         expression = "^" + expression + "$"
         return expression
 
-    def parse_time_zone_expression_to_regex(self, expression):
+    @staticmethod
+    def parse_time_zone_expression_to_regex(expression):
         """Construct regular expressions for the time zone."""
-        for expr_regex, substitute, format_, name in (
+        for expr_regex, substitute, _, name in (
                 parser_spec.get_time_zone_translate_info()):
             expression = re.sub(expr_regex, substitute, expression)
         expression = "^" + expression + "$"
@@ -323,8 +324,7 @@ class TimePointParser(object):
         regex = "^"
         for item in split_format:
             if parser_spec.REC_STRFTIME_DIRECTIVE_TOKEN.search(item):
-                item_regex, item_properties = (
-                    parser_spec.translate_strptime_token(item))
+                item_regex = parser_spec.translate_strptime_token(item)[0]
                 regex += item_regex
             else:
                 regex += re.escape(item)
@@ -350,12 +350,12 @@ class TimePointParser(object):
                 translator = data.PARSE_PROPERTY_TRANSLATORS[property_]
                 info.update(translator(value))
         date_info_keys = []
-        for expr_regex, substitute, format_, name in (
+        for expr_regex, substitute, _, name in (
                 parser_spec.get_date_translate_info(
                     self.expanded_year_digits)):
             date_info_keys.append(name)
         time_info_keys = []
-        for expr_regex, substitute, format_, name in (
+        for expr_regex, substitute, _, name in (
                 parser_spec.get_time_translate_info()):
             time_info_keys.append(name)
         date_info = {}
