@@ -22,14 +22,6 @@ import os
 import re
 
 
-class EnvVarError(Exception):
-    def __init__(self, msg):
-        self.msg = msg
-
-    def __str__(self):
-        return repr(self.msg)
-
-
 def check_varnames(env):
     """ check a bunch of putative environment names for legality,
     returns a list of bad names (empty implies success)."""

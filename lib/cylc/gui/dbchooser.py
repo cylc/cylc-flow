@@ -247,7 +247,8 @@ class db_updater(threading.Thread):
         else:
             return (fg_, bg_, bg_)
 
-    def search_level(self, model, iter_, func, data):
+    @staticmethod
+    def search_level(model, iter_, func, data):
         while iter_:
             if func(model, iter_, data):
                 return iter_
@@ -265,7 +266,8 @@ class db_updater(threading.Thread):
             iter_ = model.iter_next(iter_)
         return None
 
-    def match_func(self, model, iter_, data):
+    @staticmethod
+    def match_func(model, iter_, data):
         column, key = data
         value = model.get_value(iter_, column)
         return value == key

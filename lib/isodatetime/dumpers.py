@@ -78,7 +78,7 @@ class TimePointDumper(object):
                  "date"),
                 (parser_spec.get_time_translate_info(), "time"),
                 (parser_spec.get_time_zone_translate_info(), "time_zone")]:
-            for regex, regex_sub, format_sub, prop_name in info:
+            for regex, _, format_sub, prop_name in info:
                 rec = re.compile(regex)
                 self._rec_formats[key].append((rec, format_sub, prop_name))
 
@@ -218,9 +218,9 @@ class TimePointDumper(object):
         if not hasattr(self, "_timepoint_parser"):
             self._timepoint_parser = parsers.TimePointParser()
         try:
-            (expr, info) = (
-                self._timepoint_parser.get_time_zone_info(time_zone_string))
-        except parsers.ISO8601SyntaxError as e:
+            info = self._timepoint_parser.get_time_zone_info(
+                time_zone_string)[1]
+        except parsers.ISO8601SyntaxError:
             return None
         info = self._timepoint_parser.process_time_zone_info(info)
         if info.get('time_zone_utc'):

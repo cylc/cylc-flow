@@ -78,8 +78,10 @@ class IllegalItemError(ValidationError):
             self.msg = 'Illegal item: %s' % itemstr(keys, key)
 
 
-def validate(cfig, spec, keys=[]):
+def validate(cfig, spec, keys=None):
     """Validate and coerce a nested dict against a parsec spec."""
+    if not keys:
+        keys = []
     for key, val in cfig.items():
         if key not in spec:
             if '__MANY__' not in spec:
@@ -113,8 +115,10 @@ def validate(cfig, spec, keys=[]):
             pass
 
 
-def check_compulsory(cfig, spec, keys=[]):
+def check_compulsory(cfig, spec, keys=None):
     """Check compulsory items are defined in cfig."""
+    if not keys:
+        keys = []
     for key, val in spec.items():
         if isinstance(val, dict):
             check_compulsory(cfig, spec[key], keys + [key])
@@ -126,8 +130,8 @@ def check_compulsory(cfig, spec, keys=[]):
                         cfg = cfg[k]
                 except KeyError:
                     # TODO - raise an exception
-                    print >> sys.stderr, (
-                        "COMPULSORY ITEM MISSING", keys + [key])
+                    sys.stderr.write(
+                        "COMPULSORY ITEM MISSING %s\n" % (keys + [key]))
 
 
 def _populate_spec_defaults(defs, spec):
@@ -357,8 +361,10 @@ class validator(object):
 
     __slots__ = ['coercer', 'args']
 
-    def __init__(self, vtype='string', default=None, options=[],
+    def __init__(self, vtype='string', default=None, options=None,
                  allow_zeroes=True, compulsory=False):
+        if not options:
+            options = []
         self.coercer = coercers[vtype]
         self.args = {
             'options': options,

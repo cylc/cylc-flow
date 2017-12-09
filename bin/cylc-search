@@ -33,7 +33,7 @@ For case insenstive matching use '(?i)PATTERN'."""
 
 import sys
 from cylc.remote import remrun
-if remrun().execute():
+if remrun():
     sys.exit(0)
 
 import os

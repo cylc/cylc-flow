@@ -60,7 +60,8 @@ class SGEHandler(object):
                 lines.append("%s%s" % (self.DIRECTIVE_PREFIX, key))
         return lines
 
-    def get_poll_many_cmd(cls, job_ids):
+    @classmethod
+    def get_poll_many_cmd(cls, _):
         """Return poll command"""
         # No way to run POLL_CMD on specific job id(s). List all user's jobs.
         # batch_sys_manager._jobs_poll_batch_sys checks requested id in list.

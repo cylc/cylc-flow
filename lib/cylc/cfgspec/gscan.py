@@ -62,13 +62,13 @@ class GScanConfig(config):
         if 'columns' in cfg:
             for column in cfg['columns']:
                 if column not in self.COLS:
-                    print >> sys.stderr, (
-                        "WARNING: illegal column name '%s'" % column)
+                    sys.stderr.write(
+                        "WARNING: illegal column name '%s'\n" % column)
                     cfg['columns'].remove(column)
             if not cfg['columns']:
-                print >> sys.stderr, (
+                sys.stderr.write(
                     'WARNING: at least one column must be specified,' +
-                    ' defaulting to "%s, %s"' % self.COLS_DEFAULT)
+                    ' defaulting to "%s, %s"\n' % self.COLS_DEFAULT)
                 cfg['columns'] = list(self.COLS_DEFAULT)
 
 

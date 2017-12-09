@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import re
 from subprocess import Popen, STDOUT
 import sys
 from time import time
@@ -27,7 +26,6 @@ import gtk
 import gobject
 import warnings
 
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gcylc import gcfg
 from cylc.cfgspec.gscan import gsfg
 import cylc.flags
@@ -73,7 +71,8 @@ class ScanPanelApplet(object):
         """Return the topmost widget for embedding in the panel."""
         return self.top_hbox
 
-    def stop(self, widget):
+    @staticmethod
+    def stop(_):
         """Handle a stop."""
         sys.exit()
 
@@ -82,7 +81,8 @@ class ScanPanelApplet(object):
             self.updater.launch_context_menu(event)
             return False
 
-    def _set_tooltip(self, widget, text):
+    @staticmethod
+    def _set_tooltip(widget, text):
         tooltip = gtk.Tooltips()
         tooltip.enable()
         tooltip.set_tip(widget, text)
@@ -154,7 +154,7 @@ class ScanPanelAppletUpdater(object):
 
     def set_hosts(self, new_hosts):
         del self.hosts[:]
-        self.hosts.extend(gethostbyname_ex(host)[0] for host in new_hosts)
+        self.hosts.extend(new_hosts)
         self.update_now()
 
     def start(self):
@@ -335,7 +335,7 @@ class ScanPanelAppletUpdater(object):
             command = ["cylc", "gscan"]
         if self.hosts:
             command += self.hosts
-        Popen(command, stdout=stdout, stderr=stderr)
+        Popen(command, stdin=open(os.devnull), stdout=stdout, stderr=stderr)
 
     def _on_button_press_event(self, widget, event):
         if event.button == 1:
@@ -345,18 +345,18 @@ class ScanPanelAppletUpdater(object):
     def _on_button_press_event_gscan(self, widget, event):
         self.launch_gscan()
 
-    def _on_img_tooltip_query(self, widget, x, y, kbd, tooltip, tip_widget):
+    @staticmethod
+    def _on_img_tooltip_query(widget, x, y, kbd, tooltip, tip_widget):
         tooltip.set_custom(tip_widget)
         return True
 
     def _set_exception_hook(self):
-        # Handle an uncaught exception.
-        old_hook = sys.excepthook
-        sys.excepthook = (lambda *a:
-                          self._handle_exception(*a, old_hook=old_hook))
+        """Handle an uncaught exception."""
+        sys.excepthook = lambda e_type, e_value, e_traceback: (
+            self._handle_exception(
+                e_type, e_value, e_traceback, sys.excepthook))
 
-    def _handle_exception(self, e_type, e_value, e_traceback,
-                          old_hook=None):
+    def _handle_exception(self, e_type, e_value, e_traceback, old_hook):
         self.gcylc_image.set_from_stock(gtk.STOCK_DIALOG_ERROR,
                                         gtk.ICON_SIZE_MENU)
         exc_lines = traceback.format_exception(e_type, e_value, e_traceback)

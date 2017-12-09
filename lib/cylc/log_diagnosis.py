@@ -7,6 +7,7 @@ from difflib import unified_diff
 
 class LogAnalyserError(Exception):
     def __init__(self, msg):
+        Exception.__init__(self, msg)
         self.msg = msg
 
     def __str__(self):
@@ -106,7 +107,7 @@ class LogAnalyser(object):
 
         if new != ref:
             diff = unified_diff(new, ref)
-            print >> sys.stderr, '\n'.join(diff)
+            sys.stderr.write('\n'.join(diff) + '\n')
             raise LogAnalyserError(
                 "ERROR: triggering is NOT consistent with the reference log")
         else:

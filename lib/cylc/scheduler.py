@@ -201,6 +201,11 @@ class Scheduler(object):
         # Last 10 durations (in seconds) of the main loop
         self.main_loop_intervals = deque(maxlen=10)
 
+        self.can_auto_stop = True
+        self.previous_profile_point = 0
+        self.count = 0
+        self.time_next_fs_check = None
+
     def start(self):
         """Start the server."""
         self._start_print_blurb()
@@ -286,8 +291,8 @@ conditions; see `cylc conditions`.
         logo_lines = logo.splitlines()
         license_lines = cylc_license.splitlines()
         lmax = max(len(line) for line in license_lines)
-        for i in range(len(logo_lines)):
-            print logo_lines[i], ('{0: ^%s}' % lmax).format(license_lines[i])
+        for i, logo_line in enumerate(logo_lines):
+            print logo_line, ('{0: ^%s}' % lmax).format(license_lines[i])
 
     def configure(self):
         """Configure suite server program."""
@@ -1290,7 +1295,8 @@ conditions; see `cylc conditions`.
             try:
                 contact_data = self.suite_srv_files_mgr.load_contact_file(
                     self.suite)
-                assert contact_data == self.contact_data
+                if contact_data != self.contact_data:
+                    raise AssertionError()
             except (AssertionError, IOError, ValueError,
                     SuiteServiceFileError):
                 ERR.critical(traceback.format_exc())
@@ -1685,7 +1691,9 @@ conditions; see `cylc conditions`.
 
     def _update_cpu_usage(self):
         """Obtain CPU usage statistics."""
-        proc = Popen(["ps", "-o%cpu= ", str(os.getpid())], stdout=PIPE)
+        proc = Popen(
+            ["ps", "-o%cpu= ", str(os.getpid())],
+            stdin=open(os.devnull), stdout=PIPE)
         try:
             cpu_frac = float(proc.communicate()[0])
         except (TypeError, OSError, IOError, ValueError) as exc:

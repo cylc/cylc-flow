@@ -655,7 +655,8 @@ To start a new run, stop the old one first with one or more of these:
         command += ['-n', owner + '@' + host, script]
         from subprocess import Popen, PIPE
         try:
-            proc = Popen(command, stdout=PIPE, stderr=PIPE)
+            proc = Popen(
+                command, stdin=open(os.devnull), stdout=PIPE, stderr=PIPE)
         except OSError:
             if cylc.flags.debug:
                 import traceback

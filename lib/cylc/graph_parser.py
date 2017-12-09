@@ -15,13 +15,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Module for parsing cylc graph strings."""
 
 import re
 import unittest
 from cylc.param_expand import GraphExpander, ParamExpandError
 from cylc.task_id import TaskID
-
-"""Module for parsing cylc graph strings."""
 
 
 ARROW = '=>'

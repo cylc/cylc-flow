@@ -37,9 +37,7 @@ from time import time
 import traceback
 
 from cylc.config import SuiteConfigError
-from cylc.cycling.loader import (
-    get_interval, get_interval_cls, get_point, ISO8601_CYCLING_TYPE,
-    standardise_point_string)
+from cylc.cycling.loader import get_point, standardise_point_string
 import cylc.flags
 from cylc.suite_logging import ERR, LOG
 from cylc.task_action_timer import TaskActionTimer

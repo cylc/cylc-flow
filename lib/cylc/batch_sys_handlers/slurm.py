@@ -34,13 +34,14 @@ class SLURMHandler(object):
     SUBMIT_CMD_TMPL = "sbatch '%(job)s'"
 
     @classmethod
-    def filter_poll_output(cls, out, job_id):
+    def filter_poll_output(cls, out, _):
         """Return True if job_id is in the queueing system."""
         # squeue -h -j JOB_ID when JOB_ID has stopped can either exit with
         # non-zero exit code or return blank text.
         return out.strip()
 
-    def format_directives(self, job_conf):
+    @classmethod
+    def format_directives(cls, job_conf):
         """Format the job directives for a job file."""
         job_file_path = re.sub(r'\$HOME/', '', job_conf['job_file_path'])
         directives = job_conf['directives'].__class__()
@@ -58,12 +59,13 @@ class SLURMHandler(object):
         lines = []
         for key, value in directives.items():
             if value:
-                lines.append("%s%s=%s" % (self.DIRECTIVE_PREFIX, key, value))
+                lines.append("%s%s=%s" % (cls.DIRECTIVE_PREFIX, key, value))
             else:
-                lines.append("%s%s" % (self.DIRECTIVE_PREFIX, key))
+                lines.append("%s%s" % (cls.DIRECTIVE_PREFIX, key))
         return lines
 
-    def get_fail_signals(self, job_conf):
+    @staticmethod
+    def get_fail_signals(_):
         """Return a list of failure signal names to trap.
 
         Do not include SIGTERM trapping, as SLURM tries to kill the
@@ -80,6 +82,7 @@ class SLURMHandler(object):
         """
         return ["EXIT", "ERR", "XCPU"]
 
+    @classmethod
     def get_poll_many_cmd(cls, job_ids):
         """Return the poll command for a list of job IDs."""
         return shlex.split(cls.POLL_CMD) + ["-j", ",".join(job_ids)]

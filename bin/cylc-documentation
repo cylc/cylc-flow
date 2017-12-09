@@ -36,12 +36,12 @@ import sys
 for arg in sys.argv[1:]:
     if arg.startswith('--host=') or arg.startswith('--user='):
         from cylc.remote import remrun
-        if remrun().execute(force_required=True, forward_x11=True):
+        if remrun(forward_x11=True):
             sys.exit(0)
 
 import os
 import re
-import subprocess
+from subprocess import call
 from optparse import OptionParser
 
 import cylc.flags
@@ -168,7 +168,7 @@ def main():
         sys.exit(0)
 
     try:
-        retcode = subprocess.call(command_list)
+        retcode = call(command_list, stdin=open(os.devnull))
     except OSError as exc:
         print >> sys.stderr, 'ERROR, failed to execute: %s' % command
         if cylc.flags.debug:

@@ -38,6 +38,13 @@ LED suite control interface.
         self.log_colors = log_colors
         self.insert_task_popup = insert_task_popup
 
+        self.t = None
+        self.defn_order_menu_item = None
+        self.headings_menu_item = None
+        self.transpose_menu_item = None
+        self.transpose_toolbutton = None
+        self.group_menu_item = None
+        self.group_toolbutton = None
         self.gcapture_windows = []
 
     def get_control_widgets(self):
@@ -209,15 +216,15 @@ LED suite control interface.
 
     def on_popup_quit(self, b, lv, w):
         lv.quit()
-        self.quitters.remove(lv)
         w.destroy()
 
     def refresh(self):
         self.t.update()
         self.t.action_required = True
 
-    def _set_tooltip(self, widget, tip_text):
-        # Convenience function to add hover over text to a widget.
+    @staticmethod
+    def _set_tooltip(widget, tip_text):
+        """Convenience function to add hover over text to a widget."""
         tip = gtk.Tooltips()
         tip.enable()
         tip.set_tip(widget, tip_text)

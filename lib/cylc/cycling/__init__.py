@@ -314,7 +314,6 @@ class SequenceBase(object):
     Subclasses should provide values for TYPE and TYPE_SORT_KEY.
     They should also provide get_async_expr, get_interval,
     get_offset & set_offset (deprecated), is_on_sequence,
-    _get_point_in_bounds, is_valid, get_prev_point,
     get_nearest_prev_point, get_next_point,
     get_next_point_on_sequence, get_first_point, and
     get_stop_point.
@@ -369,10 +368,6 @@ class SequenceBase(object):
     def is_on_sequence(self, point):
         """Is point on-sequence, disregarding bounds?"""
         pass
-
-    def _get_point_in_bounds(self, point):
-        """Return point, or None if out of bounds."""
-        raise NotImplementedError("Not implemented yet")
 
     @abstractmethod
     def is_valid(self, point):
@@ -433,7 +428,7 @@ class ExclusionBase(object):
         self.exclusion_end_point = end_point
 
     @abstractmethod
-    def build_exclusions(self):
+    def build_exclusions(self, excl_points):
         """Constructs the set of exclusion sequences or points"""
         pass
 

@@ -21,7 +21,7 @@ System calls to cylc are performed here.
 
 import os
 import shutil
-from subprocess import (Popen, PIPE, call as subprocess_call)
+from subprocess import Popen, PIPE, call
 import sys
 import tempfile
 import time
@@ -35,9 +35,9 @@ from .git import (checkout, describe, GitCheckoutError,)
 
 def cylc_env(cylc_conf_path=''):
     """Provide an environment for executing cylc commands in."""
-    cylc_env = os.environ.copy()
-    cylc_env['CYLC_CONF_PATH'] = cylc_conf_path
-    return cylc_env
+    env = os.environ.copy()
+    env['CYLC_CONF_PATH'] = cylc_conf_path
+    return env
 
 
 CLEAN_ENV = cylc_env()
@@ -69,15 +69,16 @@ class ProfilingKilledException(SuiteFailedException):
 
 def cylc_major_version():
     """Return the first character of the cylc version e.g. '7'."""
-    return Popen(['cylc', '--version'], env=CLEAN_ENV, stdout=PIPE
-                 ).communicate()[0].strip()[0]
+    return Popen(
+        ['cylc', '--version'], env=CLEAN_ENV, stdin=open(os.devnull),
+        stdout=PIPE).communicate()[0].strip()[0]
 
 
 def register_suite(reg, sdir):
     """Registers the suite located in sdir with the registration name reg."""
     cmd = ['cylc', 'register', reg, sdir]
     print '$ ' + ' '.join(cmd)
-    if not subprocess_call(cmd, stdout=PIPE, env=CLEAN_ENV):
+    if not call(cmd, stdin=open(os.devnull), stdout=PIPE, env=CLEAN_ENV):
         return True
     print '\tFailed'
     return False
@@ -87,7 +88,7 @@ def unregister_suite(reg):
     """Unregisters the suite reg."""
     cmd = ['cylc', 'unregister', reg]
     print '$ ' + ' '.join(cmd)
-    subprocess_call(cmd, stdout=PIPE, env=CLEAN_ENV)
+    call(cmd, stdin=open(os.devnull), stdout=PIPE, env=CLEAN_ENV)
 
 
 def purge_suite(reg):
@@ -95,7 +96,7 @@ def purge_suite(reg):
     print '$ rm -rf ' + os.path.expanduser(os.path.join('~', 'cylc-run', reg))
     try:
         shutil.rmtree(os.path.expanduser(os.path.join('~', 'cylc-run', reg)))
-    except Exception:
+    except OSError:
         return False
     else:
         return True
@@ -155,7 +156,8 @@ def run_suite(reg, options, out_file, profile_modes, mode='live',
         # Add namespaces jinja2 param (list of task names).
         tmp = ['-s namespaces=root']
         namespaces = Popen(
-            ['cylc', 'list', reg] + jinja2_params + tmp, stdout=PIPE,
+            ['cylc', 'list', reg] + jinja2_params + tmp,
+            stdin=open(os.devnull), stdout=PIPE,
             env=env).communicate()[0].split() + ['root']
         jinja2_params.append(
             '-s namespaces={0}'.format(','.join(namespaces)))
@@ -192,7 +194,7 @@ def run_suite(reg, options, out_file, profile_modes, mode='live',
     except KeyboardInterrupt:
         kill_cmd = ['cylc', 'stop', '--kill', reg]
         print '$ ' + ' '.join(kill_cmd)
-        subprocess_call(kill_cmd, env=env)
+        call(kill_cmd, env=env, stdin=open(os.devnull))
         raise ProfilingKilledException(run_cmds, cmd_out, cmd_err)
 
     # Return cylc stderr if present.
@@ -304,6 +306,10 @@ def profile(schedule):
         for experiment in experiments:
             try:
                 result_files = run_experiment(experiment['config'])
+            except ProfilingKilledException as exc:
+                # Profiling has been terminated, return what results we have.
+                print exc
+                return results, checkout_count, False
             except SuiteFailedException as exc:
                 # Experiment failed to run, move onto the next one.
                 print >> sys.stderr, ('Experiment "%s" failed at version "%s"'
@@ -311,10 +317,6 @@ def profile(schedule):
                 print >> sys.stderr, exc
                 success = False
                 continue
-            except ProfilingKilledException as exc:
-                # Profiling has been terminated, return what results we have.
-                print exc
-                return results, checkout_count, False
             else:
                 # Run analysis.
                 try:

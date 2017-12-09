@@ -178,7 +178,7 @@ def get_logo():
 
 
 def _launch_exception_hook_dialog(e_type, e_value, e_traceback,
-                                  old_hook=None, program_name=None):
+                                  old_hook, program_name):
     if program_name is None:
         program_name = "This program"
     exc_lines = traceback.format_exception(e_type, e_value, e_traceback)
@@ -197,8 +197,9 @@ def _launch_exception_hook_dialog(e_type, e_value, e_traceback,
 def set_exception_hook_dialog(program_name=None):
     """Set a custom uncaught exception hook for launching an error dialog."""
     old_hook = sys.excepthook
-    sys.excepthook = lambda *a: _launch_exception_hook_dialog(
-        *a, old_hook=old_hook, program_name=program_name)
+    sys.excepthook = lambda e_type, e_value, e_traceback: (
+        _launch_exception_hook_dialog(
+            e_type, e_value, e_traceback, sys.excepthook, program_name))
 
 
 def setup_icons():

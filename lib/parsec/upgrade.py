@@ -99,7 +99,7 @@ class upgrader(object):
         if '__MANY__' not in upg['old']:
             return [upg]
         if upg['old'].count('__MANY__') > 1:
-            print >> sys.stderr, upg['old']
+            sys.stderr.write('%s\n' % upg['old'])
             raise UpgradeError("Multiple simultaneous __MANY__ not supported")
         exp_upgs = []
         pre = []
@@ -181,12 +181,12 @@ class upgrader(object):
                         if upg['cvt'].describe() != "DELETED (OBSOLETE)":
                             self.put_item(upg['new'], upg['cvt'].convert(old))
         if do_warn and cylc.flags.verbose:
-            print >> sys.stderr, (
-                "WARNING: deprecated items were automatically upgraded in '" +
-                self.descr + "':")
+            sys.stderr.write(
+                'WARNING: deprecated items were automatically upgraded in' +
+                " '%s':\n" % self.descr)
             for vn, msgs in warnings.items():
                 for m in msgs:
-                    print >> sys.stderr, " * (" + vn + ")", m
+                    sys.stderr.write(' * (%s) %s\n' % (vn, m))
 
 
 if __name__ == "__main__":
@@ -214,7 +214,7 @@ if __name__ == "__main__":
     x2 = converter(lambda x: 2 * x, 'value x 2')
 
     printcfg(cfg)
-    print
+    sys.stdout.write('\n')
 
     upg = upgrader(cfg, 'test file')
     # successive upgrades are incremental - at least until I think of a
@@ -233,5 +233,5 @@ if __name__ == "__main__":
 
     upg.upgrade()
 
-    print
+    sys.stdout.write('\n')
     printcfg(cfg)

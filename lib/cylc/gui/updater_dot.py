@@ -84,7 +84,8 @@ class DotUpdater(threading.Thread):
         dotm = DotMaker(theme, size=dot_size)
         self.dots = dotm.get_dots()
 
-    def _set_tooltip(self, widget, tip_text):
+    @staticmethod
+    def _set_tooltip(widget, tip_text):
         tip = gtk.Tooltips()
         tip.enable()
         tip.set_tip(widget, tip_text)

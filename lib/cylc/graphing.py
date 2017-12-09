@@ -28,26 +28,15 @@ from cylc.task_id import TaskID
 class CGraphPlain(pygraphviz.AGraph):
     """Directed Acyclic Graph class for cylc dependency graphs."""
 
-    def __init__(self, title, suite_polling_tasks={}):
+    def __init__(self, title, suite_polling_tasks=None):
         self.title = title
         pygraphviz.AGraph.__init__(self, directed=True, strict=True)
         # graph attributes
         # - label (suite name)
         self.graph_attr['label'] = title
+        if suite_polling_tasks is None:
+            suite_polling_tasks = {}
         self.suite_polling_tasks = suite_polling_tasks
-
-    def node_attr_by_taskname(self, node_string):
-        try:
-            name = TaskID.split(node_string)[0]
-        except ValueError:
-            # Special node?
-            if node_string.startswith("__remove_"):
-                return []
-            raise
-        if name in self.task_attr:
-            return self.task_attr[name]
-        else:
-            return []
 
     def style_edge(self, left, right):
         pass
@@ -275,11 +264,13 @@ class CGraph(CGraphPlain):
     This class automatically adds node and edge attributes
     according to the suite.rc file visualization config."""
 
-    def __init__(self, title, suite_polling_tasks={}, vizconfig={}):
+    def __init__(self, title, suite_polling_tasks=None, vizconfig=None):
 
         # suite.rc visualization config section
-        self.vizconfig = vizconfig
         CGraphPlain.__init__(self, title, suite_polling_tasks)
+        if vizconfig is None:
+            vizconfig = {}
+        self.vizconfig = vizconfig
 
         # graph attributes
         # - default node attributes
@@ -311,8 +302,21 @@ class CGraph(CGraphPlain):
                         self.task_attr[item] = []
                     self.task_attr[item].append(attr)
 
+    def node_attr_by_taskname(self, node_string):
+        try:
+            name = TaskID.split(node_string)[0]
+        except ValueError:
+            # Special node?
+            if node_string.startswith("__remove_"):
+                return []
+            raise
+        if name in self.task_attr:
+            return self.task_attr[name]
+        else:
+            return []
+
     def style_node(self, node_string):
-        super(self.__class__, self).style_node(node_string)
+        CGraphPlain.style_node(self, node_string)
         node = self.get_node(node_string)
         node.attr['shape'] = 'ellipse'  # Default shape.
         for item in self.node_attr_by_taskname(node_string):
@@ -323,7 +327,7 @@ class CGraph(CGraphPlain):
         node.attr['penwidth'] = self.vizconfig['node penwidth']
 
     def style_edge(self, left, right):
-        super(self.__class__, self).style_edge(left, right)
+        CGraphPlain.style_edge(self, left, right)
         left_node = self.get_node(left)
         edge = self.get_edge(left, right)
         if self.vizconfig['use node color for edges']:
