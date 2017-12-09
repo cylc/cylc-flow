@@ -570,7 +570,7 @@ submitted to the specified remote host.
 \paragraph[copyable environment variables]{[hosts] \textrightarrow [[HOST]] \textrightarrow copyable environment variables }
 
 A list containing the names of the environment variables that can and/or need
-to be copied from the suite daemon to a job.
+to be copied from the suite server program to a job.
 
 \begin{myitemize}
 \item {\em type:} string\_list
@@ -932,8 +932,8 @@ of which can be found under ~\ref{SuiteEventHandling}:
 \subsection{[authentication]}
 \label{GlobalAuth}
 
-Authentication of client programs with suite daemons can be configured here, and
-overridden in suites if necessary (see~\ref{SuiteAuth}).
+Authentication of client programs with suite server programs can be configured
+here, and overridden in suites if necessary (see~\ref{SuiteAuth}).
 
 The suite-specific passphrase must be installed on a user's account to
 authorize full control privileges (see~\ref{tutPassphrases}

@@ -119,7 +119,7 @@ __OUT__
     # Env-Script
     cylc__job__run_inst_func 'env_script'
     # Send task started message
-    cylc task message 'started' &
+    cylc message 'started' &
     CYLC_TASK_MESSAGE_STARTED_PID=$!
     # Access to the suite bin directory
     if [[ -n "${CYLC_SUITE_DEF_PATH:-}" && -d "${CYLC_SUITE_DEF_PATH}/bin" ]]
@@ -141,7 +141,7 @@ __OUT__
     rmdir "${CYLC_TASK_WORK_DIR}" 2>'/dev/null' || true
     # Send task succeeded message
     wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
-    cylc task message 'succeeded' || true
+    cylc message 'succeeded' || true
     trap '' EXIT
     exit 0
 }
@@ -168,14 +168,15 @@ cylc__job__run_inst_func() {
 #   CYLC_VACATION_SIGNALS
 # Arguments:
 #   signal - trapped or given signal
-#   priority - message priority
+#   severity - message severity
 #   run_err_script - boolean, run job err script or not
-#   messages - (remaining arguments) messages to send back to the suite daemon
+#   messages - (remaining arguments)
+#              messages to send back to the suite server program
 # Returns:
 #   exit 1
 cylc__job_finish() {
     typeset signal="$1"
-    typeset priority="$2"
+    typeset severity="$2"
     typeset run_err_script="$3"
     shift 3
     typeset signal_name=
@@ -185,7 +186,7 @@ cylc__job_finish() {
     if [[ -n "${CYLC_TASK_MESSAGE_STARTED_PID:-}" ]]; then
         wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
     fi
-    cylc task message -p "${priority}" "$@" || true
+    cylc message -s "${severity}" "$@" || true
     if $run_err_script; then
         cylc__job__run_inst_func 'err_script' "${signal}" >&2
     fi

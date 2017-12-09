@@ -107,8 +107,8 @@ expensive real tasks during suite development.
 Cylc runs off the suite host's system clock by default. This item allows
 you to run the suite in UTC even if the system clock is set to local time.
 Clock-trigger tasks will trigger when the current UTC time is equal to
-their cycle point date-time plus offset; other time values used, reported,
-or logged by the suite daemon will usually also be in UTC. The default for
+their cycle point date-time plus offset; other time values used, reported, or
+logged by the suite server program will usually also be in UTC. The default for
 this can be set at the site level (see ~\ref{SiteUTCMode}).
 
 \begin{myitemize}
@@ -246,7 +246,7 @@ many task events occur within a short period of time.
 \subsubsection[disable automatic shutdown]{[cylc] \textrightarrow disable automatic shutdown}
 
 This has the same effect as the \lstinline{--no-auto-shutdown} flag for
-the suite run commands: it prevents the suite daemon from shutting down
+the suite run commands: it prevents the suite server program from shutting down
 normally when all tasks have finished (a suite timeout can still be used to
 stop the daemon after a period of inactivity, however).  This option can
 make it easier to re-trigger tasks manually near the end of a suite run,
@@ -316,7 +316,7 @@ gets substituted with each value of the parameter.
 \label{SuiteEventHandling}
 
 Cylc has internal ``hooks'' to which you can attach handlers that are
-called by the suite daemon whenever certain events occur. This section
+called by the suite server program whenever certain events occur. This section
 configures suite event hooks; see~\ref{TaskEventHandling} for
 task event hooks.
 
@@ -554,8 +554,8 @@ task event handlers.
 \begin{myitemize}
     \item These variables are not passed to tasks - use task runtime
         variables for that. Similarly, task runtime variables are not
-        available to event handlers - which are executed by the suite daemon,
-        (not by running tasks) in response to task events.
+        available to event handlers - which are executed by the suite server
+        program, (not by running tasks) in response to task events.
 
     \item Cylc-defined environment variables such as
         \lstinline=$CYLC_SUITE_RUN_DIR= are not passed to task event
@@ -696,7 +696,7 @@ it is not possible to arrive at a sensible default for all suites.
 \subsubsection[{[[}authentication{]]}]{[cylc] \textrightarrow [[authentication]] }
 \label{SuiteAuth}
 
-Authentication of client programs with suite daemons can be set in the
+Authentication of client programs with suite server programs can be set in the
 global site/user config files and overridden here if necessary.
 See~\ref{GlobalAuth} for more information.
 
@@ -1377,8 +1377,8 @@ job file path.
 \subparagraph[shell]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[job]]] \textrightarrow shell}
 \label{JobSubShell}
 
-Location of the command used to interpret the job script submitted by the
-suite daemon when a task is ready to run. This can be set to the location of
+Location of the command used to interpret the job script submitted by the suite
+server program when a task is ready to run. This can be set to the location of
 \lstinline=bash= in the job host if the shell is not installed in the standard
 location.
 {\em Note: It has no bearing on any sub-shells that may be called by the job script.}
@@ -1513,8 +1513,8 @@ of cylc on the remote machine; if not, the corresponding local settings
 \subparagraph[owner]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[remote]]] \textrightarrow owner}
 
 The username of the task host account. This is (only) used in the
-non-interactive ssh command invoked by the suite daemon to submit the remote task
-(consequently it may be defined using local environment variables
+non-interactive ssh command invoked by the suite server program to submit the
+remote task (consequently it may be defined using local environment variables
 (i.e.\ the shell in which cylc runs, and [cylc] \textrightarrow [[environment]]).
 
 If you use dynamic host selection and have different usernames on
@@ -1596,8 +1596,8 @@ for suite events.
 
 Event handlers can be located in the suite \lstinline=bin/= directory,
 otherwise it is up to you to ensure their location is in \lstinline=$PATH= (in
-the shell in which the suite daemon runs). They should require little resource
-to run and return quickly.
+the shell in which the suite server program runs). They should require little
+resource to run and return quickly.
 
 Each task event handler can be specified as a list of command lines or command
 line templates. They can contain any or all of the following patterns, which
@@ -1660,9 +1660,9 @@ A list of one or more event handlers to call when one of the following EVENTs oc
     \item {\bf retry}          - the task failed, but cylc will resubmit it
                                   after a configured delay
     \item {\bf execution timeout}        - the task timed out after execution commenced
-    \item {\bf warning}        - the task reported a WARNING priority message
-    \item {\bf critical}       - the task reported a CRITICAL priority message
-    \item {\bf custom}       - the task reported a CUSTOM priority message
+    \item {\bf warning}        - the task reported a WARNING severity message
+    \item {\bf critical}       - the task reported a CRITICAL severity message
+    \item {\bf custom}       - the task reported a CUSTOM severity message
 \end{myitemize}
 
 Item details:

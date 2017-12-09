@@ -260,7 +260,7 @@ class TaskEventsManager(object):
             itask.state.confirming_with_poll = False
             return False
 
-    def process_message(self, itask, priority, message, poll_func,
+    def process_message(self, itask, severity, message, poll_func,
                         poll_event_time=None, is_incoming=False):
         """Parse an incoming task message and update task state.
 
@@ -287,7 +287,7 @@ class TaskEventsManager(object):
             itask.state.status, message_flag, message)
         if poll_event_time is not None:
             log_message += ' %s' % self.POLLED_INDICATOR
-        LOG.log(self.LEVELS.get(priority, INFO), log_message, itask=itask)
+        LOG.log(self.LEVELS.get(severity, INFO), log_message, itask=itask)
 
         # Strip the "at TIME" suffix.
         event_time = poll_event_time
@@ -377,14 +377,14 @@ class TaskEventsManager(object):
             LOG.debug(
                 '(current: %s) unhandled: %s' % (itask.state.status, message),
                 itask=itask)
-            if priority in [CRITICAL, ERROR, WARNING, INFO, DEBUG]:
-                priority = getLevelName(priority)
+            if severity in [CRITICAL, ERROR, WARNING, INFO, DEBUG]:
+                severity = getLevelName(severity)
             self._db_events_insert(
-                itask, ("message %s" % str(priority).lower()), message)
-        if priority == "CUSTOM":
+                itask, ("message %s" % str(severity).lower()), message)
+        if severity == "CUSTOM":
             self.setup_event_handlers(itask, "custom", message)
-        elif priority in [TaskMessage.WARNING, TaskMessage.CRITICAL]:
-            self.setup_event_handlers(itask, priority.lower(), message)
+        elif severity in [TaskMessage.WARNING, TaskMessage.CRITICAL]:
+            self.setup_event_handlers(itask, severity.lower(), message)
 
     def setup_event_handlers(self, itask, event, message):
         """Set up handlers for a task event."""

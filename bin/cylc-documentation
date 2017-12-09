@@ -25,8 +25,8 @@ View documentation in browser or PDF viewer, as per Cylc global config.
 
 % cylc doc [-t TASK] SUITE
     View suite or task documentation, if URLs are specified in the suite. This
-parses the suite definition to extract the requested URL. Note that running
-suite daemons also hold suite URLs for access from the Cylc GUI.
+parses the suite definition to extract the requested URL. Note that suite
+server programs also hold suite URLs for access from the Cylc GUI.
 
 Arguments:
    [TARGET]    File, URL, or suite name"""

@@ -388,8 +388,9 @@ comsum['monitor'] = 'An in-terminal suite monitor (see also gcylc)'
 comsum['get-suite-config'] = 'Print suite configuration items'
 comsum['get-site-config'] = 'Print site/user configuration items'
 comsum['get-gui-config'] = 'Print gcylc configuration items'
-comsum['get-suite-contact'] = 'Print the contact information of a suite daemon'
-comsum['get-suite-version'] = 'Print the cylc version of a suite daemon'
+comsum['get-suite-contact'] = (
+    'Print contact information of a suite server program')
+comsum['get-suite-version'] = 'Print cylc version of a suite server program'
 comsum['version'] = 'Print the cylc release version'
 comsum['gscan'] = 'Scan GUI for monitoring multiple suites'
 comsum['gpanel'] = 'Internal interface for GNOME 2 panel applet'

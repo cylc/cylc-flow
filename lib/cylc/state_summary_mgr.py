@@ -119,9 +119,9 @@ class StateSummaryMgr(object):
             else:
                 global_summary[key] = None
         if cylc.flags.utc:
-            global_summary['daemon time zone info'] = TIME_ZONE_UTC_INFO
+            global_summary['time zone info'] = TIME_ZONE_UTC_INFO
         else:
-            global_summary['daemon time zone info'] = TIME_ZONE_LOCAL_INFO
+            global_summary['time zone info'] = TIME_ZONE_LOCAL_INFO
         global_summary['last_updated'] = self.update_time
         global_summary['run_mode'] = schd.run_mode
         global_summary['states'] = all_states

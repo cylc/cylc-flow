@@ -1686,7 +1686,7 @@ shown here in the state they were in at the time of triggering.''')
             self.put_comms_command('release_tasks', items=task_ids)
 
     def trigger_task_now(self, b, task_ids):
-        """Trigger task via the suite daemon's command interface."""
+        """Trigger task via the suite server program's command interface."""
         if not isinstance(task_ids, list):
             task_ids = [task_ids]
 
@@ -1763,7 +1763,7 @@ shown here in the state they were in at the time of triggering.''')
         window.modify_bg(gtk.STATE_NORMAL,
                          gtk.gdk.color_parse(self.log_colors.get_color()))
         window.set_border_width(5)
-        window.set_title("Stop Suite Daemon %s" % self.cfg.suite)
+        window.set_title("Stop Suite Server Program %s" % self.cfg.suite)
         window.set_transient_for(self.window)
         window.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DIALOG)
 
@@ -2222,13 +2222,13 @@ shown here in the state they were in at the time of triggering.''')
         self.put_comms_command('poll_tasks')
 
     def reload_suite(self, w):
-        """Tell the suite daemon to reload."""
+        """Tell the suite server program to reload."""
         if not self.get_confirmation("Reload suite definition?"):
             return
         self.put_comms_command('reload_suite')
 
     def nudge_suite(self, w):
-        """Nudge the suite daemon."""
+        """Nudge the suite server program."""
         if not self.get_confirmation("Nudge suite?"):
             return
         self.put_comms_command('nudge')
@@ -2848,7 +2848,7 @@ to reduce network traffic.""")
     def describe_suite(self, w):
         """Show suite title and description."""
         try:
-            # Interrogate the suite daemon.
+            # Interrogate the suite server program
             info = self.updater.client.get_info('get_suite_info')
             descr = '\n'.join(
                 "%s: %s" % (key, val) for key, val in info.items())
@@ -3347,7 +3347,7 @@ For more Stop options use the Control menu.""")
         """Pop up the client UUID info."""
         info_dialog(
             "Client UUID %s\n"
-            "(this identifies a client instance to the suite daemon)" % (
+            "(this identifies the client to the suite server program)" % (
                 self.cfg.my_uuid), self.window).inform()
 
     def popup_theme_legend(self, widget=None):

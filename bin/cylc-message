@@ -19,7 +19,7 @@
 
 This command is used by task jobs to automatically report success and failure.
 
-It can also be used to send info-, warning-, or critical-priority messages
+It can also be used to send info-, warning-, or critical-severity messages
 back, and to report registered task "message outputs" completed.
 
 Note: to abort a job script with a custom error message, use cylc__job_abort:
@@ -39,17 +39,18 @@ def main():
     parser = OptionParser(__doc__)
 
     parser.add_option(
-        "-p", "--priority", metavar="PRIORITY", type="choice",
+        "-s", "--severity", "-p", "--priority",
+        metavar="SEVERITY", type="choice",
         choices=['NORMAL', 'WARNING', 'CRITICAL', 'CUSTOM'],
-        help="message priority: NORMAL, WARNING, or CRITICAL; default NORMAL.",
-        action="store", dest="priority", default="NORMAL")
+        help="message severity: NORMAL (default), WARNING, CRITICAL or CUSTOM",
+        action="store", dest="severity", default="NORMAL")
 
     parser.add_option(
         "--env", help="Override environment variables", action="append",
         default=[], dest="env")
 
     parser.add_option(
-        "-v", "--verbose", help="Verbose output mode.", action="store_true",
+        "-v", "--verbose", help="Verbose output mode", action="store_true",
         default=False, dest="verbose")
 
     options, args = parser.parse_args()
@@ -59,7 +60,7 @@ def main():
     for item in options.env:
         key, value = item.split('=', 1)
         os.environ[key] = value
-    task_message = TaskMessage(priority=options.priority)
+    task_message = TaskMessage(severity=options.severity)
     if (task_message.env_map.get('CYLC_VERBOSE') in ["True", "true"] or
             options.verbose):
         cylc.flags.verbose = True

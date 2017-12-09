@@ -18,8 +18,8 @@
 
 """cylc [info] show [OPTIONS] ARGS
 
-Interrogate a suite daemon for the suite title and description; or for the
-title and description of one of its tasks; or for the current state of the
+Interrogate a suite server program for the suite title and description; or for
+the title and description of one of its tasks; or for the current state of the
 prerequisites, outputs, and clock-triggering of a specific task instance."""
 
 import sys

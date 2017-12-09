@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Process pool to execute shell commands for the suite daemon.
+"""Process pool to execute shell commands for the suite server program.
 
 In debug mode, commands are printed to stdout before execution.
 

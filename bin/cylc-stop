@@ -18,7 +18,7 @@
 
 """cylc [control] stop|shutdown [OPTIONS] ARGS
 
-Tell a running suite daemon to shut down. In order to prevent failures going
+Tell a suite server program to shut down. In order to prevent failures going
 unnoticed, suites only shut down automatically at a final cycle point if no
 failed tasks are present. There are several shutdown methods:
 
