@@ -124,4 +124,4 @@ class OrderedDictWithDefaults(OrderedDict):
         else:
             root[1] = first[0] = self._OrderedDict__map[key] = [
                 root, first, key]
-            dict_setitem(self, key, value)
+        dict_setitem(self, key, value)
