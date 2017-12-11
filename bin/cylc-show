@@ -49,8 +49,7 @@ def main():
                       help="Print a task's pre-requisites as a list.")
 
     parser.add_option('--json', action="store_true", default=False,
-                      help="Print all tasks and corresponding requisites in "
-                           "JSON format.")
+                      help="Print output in JSON format.")
 
     options, args = parser.parse_args()
     suite = args[0]
@@ -64,8 +63,11 @@ def main():
     if not task_args:
         # Print suite info.
         suite_info = pclient.get_info('get_suite_info')
-        for key, value in sorted(suite_info.items(), reverse=True):
-            print '%s: %s' % (key, value or "(not given)")
+        if options.json:
+            print json.dumps(suite_info)
+        else:
+            for key, value in sorted(suite_info.items(), reverse=True):
+                print '%s: %s' % (key, value or "(not given)")
         return
 
     task_names = [arg for arg in task_args if TaskID.is_valid_name(arg)]
@@ -73,11 +75,14 @@ def main():
 
     if task_names:
         results = pclient.get_info('get_task_info', names=task_names)
-        for task_name, result in sorted(results.items()):
-            if len(results) > 1:
-                print "----\nTASK NAME: %s" % task_name
-            for key, value in sorted(result.items(), reverse=True):
-                print "%s: %s" % (key, value or "(not given)")
+        if options.json:
+            print json.dumps(results)
+        else:
+            for task_name, result in sorted(results.items()):
+                if len(results) > 1:
+                    print "----\nTASK NAME: %s" % task_name
+                for key, value in sorted(result.items(), reverse=True):
+                    print "%s: %s" % (key, value or "(not given)")
 
     if task_ids:
         results, bad_items = pclient.get_info(

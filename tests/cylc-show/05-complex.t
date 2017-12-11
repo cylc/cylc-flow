@@ -18,7 +18,7 @@
 # Test cylc show for a basic task.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 8
+set_test_number 6
 #-------------------------------------------------------------------------------
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
@@ -33,6 +33,7 @@ run_ok "${TEST_NAME}" cylc show "${SUITE_NAME}" 'f.20000102T00Z'
 cmp_ok "${TEST_NAME}.stdout" << '__OUT__'
 title: (not given)
 description: (not given)
+URL: (not given)
 
 prerequisites (- => not satisfied):
   - 0 & 1 & (2 | (3 & 4)) & 5
@@ -59,11 +60,6 @@ d.20000102T0000Z succeeded
 e.20000102T0000Z succeeded
 f.20000101T0000Z succeeded
 __OUT__
-#-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-short"
-run_ok "${TEST_NAME}" cylc show --json "${SUITE_NAME}" 'f.20000102T00Z'
-run_ok "${TEST_NAME}" &(cylc show --json "${SUITE_NAME}" 'f.20000102T00Z') \
-| python $TEST_SOURCE_DIR/$TEST_NAME_BASE/expected_output.py
 #-------------------------------------------------------------------------------
 cylc stop "${SUITE_NAME}" --now
 purge_suite "${SUITE_NAME}"
