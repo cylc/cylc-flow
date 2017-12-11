@@ -860,7 +860,7 @@ class TaskJobManager(object):
             itask.identity)
         if overrides:
             rtconfig = pdeepcopy(itask.tdef.rtconfig)
-            poverride(rtconfig, overrides)
+            poverride(rtconfig, overrides, prepend=True)
         else:
             rtconfig = itask.tdef.rtconfig
 

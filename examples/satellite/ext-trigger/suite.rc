@@ -73,8 +73,9 @@ datasets very quickly, to show parallel processing streams."""
         # Define a common cycle-point-specific work-directory for all
         # processing tasks so that they all work on the same dataset.
         work sub-directory = proc-$CYLC_TASK_CYCLE_POINT
-        pre-script = "DATASET=dataset-$CYLC_EXT_TRIGGER_ID"
         post-script = sleep 5
+        [[[environment]]]
+            DATASET = dataset-$CYLC_EXT_TRIGGER_ID
 
     [[get_data]]
         inherit = WORKDIR
