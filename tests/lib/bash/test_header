@@ -47,6 +47,10 @@
 #         compare files. However, if an alternate command such as "xxdiff -D"
 #         is desirable (e.g. for debugging),
 #         "export CYLC_TEST_DIFF_CMD=xxdiff -D".
+#     cmp_json_ok FILE_TEST [FILE_CONTROL]
+#         Compare FILE_TEST with a file or stdin given by FILE_CONTROL (stdin
+#         if FILE_CONTROL is "-" or missing), where FILE_TEST must also be in
+#         valid JSON format.
 #     contains_ok FILE_TEST [FILE_CONTROL]
 #         Make sure that each line in FILE_TEST is present in FILE_CONTROL
 #         (stdin if FILE_CONTROL is "-" or missing).
@@ -210,6 +214,22 @@ cmp_ok() {
     mkdir -p "${TEST_LOG_DIR}"
     cp -p "${TEST_NAME}.stderr" "${TEST_LOG_DIR}/${TEST_NAME}.stderr"
     fail "${TEST_NAME}"
+}
+
+cmp_json_ok() {
+    run_ok "$1" python -c "import sys
+import json
+
+output = json.load(open(sys.argv[1], 'r'))
+if sys.argv[2]:
+    expected_output = json.load(open(sys.argv[2], 'r'))
+else:
+    expected_output = json.load(sys.stdin)
+
+if output == expected_output:
+    sys.exit(0)
+else:
+    sys.exit('%s not equal to %s' % (output, expected_output))" "$2" "${3:-}"
 }
 
 contains_ok() {

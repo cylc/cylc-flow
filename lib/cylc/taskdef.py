@@ -101,10 +101,7 @@ class TaskDef(object):
 
     def describe(self):
         """Return title and description of the current task."""
-        info = {}
-        for item in 'title', 'description':
-            info[item] = self.rtconfig['meta'][item]
-        return info
+        return self.rtconfig['meta']
 
     def check_for_explicit_cycling(self):
         """Check for explicitly somewhere.

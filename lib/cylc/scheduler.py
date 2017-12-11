@@ -624,8 +624,7 @@ conditions; see `cylc conditions`.
 
     def info_get_suite_info(self):
         """Return a dict containing the suite title and description."""
-        return {'title': self.config.cfg['meta']['title'],
-                'description': self.config.cfg['meta']['description']}
+        return self.config.cfg['meta']
 
     def info_get_suite_state_summary(self):
         """Return the global, task, and family summary data structures."""
