@@ -1345,8 +1345,8 @@ been defined for this suite""").inform()
 
                 # View.
                 view_menu = gtk.Menu()
-                view_item = gtk.ImageMenuItem("View")
-                img = gtk.image_new_from_stock(gtk.STOCK_DIALOG_INFO,
+                view_item = gtk.ImageMenuItem("View All Job Logs (Viewer)")
+                img = gtk.image_new_from_stock(gtk.STOCK_DND,
                                                gtk.ICON_SIZE_MENU)
                 view_item.set_image(img)
                 view_item.set_submenu(view_menu)
@@ -1354,8 +1354,8 @@ been defined for this suite""").inform()
 
                 # View In Editor.
                 view_editor_menu = gtk.Menu()
-                view_editor_item = gtk.ImageMenuItem("View In Editor")
-                img = gtk.image_new_from_stock(gtk.STOCK_DIALOG_INFO,
+                view_editor_item = gtk.ImageMenuItem("View One Job Log (Editor)")
+                img = gtk.image_new_from_stock(gtk.STOCK_DND,
                                                gtk.ICON_SIZE_MENU)
                 view_editor_item.set_image(img)
                 view_editor_item.set_submenu(view_editor_menu)
@@ -1389,7 +1389,7 @@ been defined for this suite""").inform()
                 img = gtk.image_new_from_stock(
                     gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU)
                 info_item.set_image(img)
-                view_menu.append(info_item)
+                menu.append(info_item)
                 self.connect_right_click_sub_menu(is_graph_view, info_item,
                                                   self.popup_requisites,
                                                   task_ids[0], None)
@@ -1398,7 +1398,7 @@ been defined for this suite""").inform()
                 img = gtk.image_new_from_stock(
                     gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU)
                 js0_item.set_image(img)
-                view_menu.append(js0_item)
+                menu.append(js0_item)
                 self.connect_right_click_sub_menu(is_graph_view, js0_item,
                                                   self.view_task_descr,
                                                   task_ids[0], None)
