@@ -62,7 +62,7 @@ from cylc.version import CYLC_VERSION
 from cylc.gui.option_group import controlled_option_group
 from cylc.gui.color_rotator import ColorRotator
 from cylc.gui.suite_log_viewer import SuiteLogViewer
-from cylc.gui.gcapture import gcapture_tmpfile
+from cylc.gui.gcapture import Gcapture
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.suite_logging import SuiteLog
 from cylc.cfgspec.glbl_cfg import glbl_cfg
@@ -1228,8 +1228,8 @@ been defined for this suite""").inform()
 
     def _gcapture_cmd(self, command, xdim=400, ydim=400, title=None):
         """Run given command and capture its stdout and stderr in a window."""
-        gcap_win = gcapture_tmpfile(command, self.cfg.cylc_tmpdir,
-                                    xdim, ydim, title=title)
+        gcap_win = Gcapture(
+            command, self.cfg.cylc_tmpdir, xdim, ydim, title=title)
         self.gcapture_windows.append(gcap_win)
         gcap_win.run()
 

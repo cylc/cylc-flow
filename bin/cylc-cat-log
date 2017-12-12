@@ -56,6 +56,7 @@ from cylc.suite_logging import SUITE_LOG_OPTS
 from cylc.task_job_logs import JOB_LOG_OPTS, OPT_JOB_OUT, OPT_JOB_ERR, NN
 from parsec.fileparse import read_and_proc
 
+
 MODES = {
     'p': 'print',
     'l': 'list-dir',

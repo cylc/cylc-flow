@@ -27,8 +27,6 @@ import signal
 from subprocess import Popen, PIPE, STDOUT
 import threading
 from time import sleep
-
-from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.gui.warning_dialog import warning_dialog
 
 
