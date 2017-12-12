@@ -40,6 +40,7 @@ import traceback
 from parsec import ParsecError
 from parsec.OrderedDict import OrderedDictWithDefaults
 from parsec.include import inline, IncludeFileNotFoundError
+from parsec.empysupport import empyprocess, EmPyError
 from parsec.jinja2support import jinja2process
 from jinja2 import TemplateError, UndefinedError
 from parsec.util import itemstr
@@ -241,9 +242,12 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
         flines = [line.rstrip('\n') for line in f]
 
     do_inline = True
+    do_empy = True
     do_jinja2 = True
     do_contin = True
     if viewcfg:
+        if not viewcfg['empy']:
+            do_empy = False
         if not viewcfg['jinja2']:
             do_jinja2 = False
         if not viewcfg['contin']:
@@ -258,6 +262,19 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
                 flines, fdir, fpath, False, viewcfg=viewcfg, for_edit=asedit)
         except IncludeFileNotFoundError, x:
             raise FileParseError(str(x))
+
+    # process with EmPy
+    if do_empy:
+        if flines and re.match('^#![Ee]m[Pp]y\s*', flines[0]):
+            if cylc.flags.verbose:
+                print "Processing with EmPy"
+            try:
+                flines = empyprocess(flines, fdir, template_vars)
+            except EmPyError as exc:
+                lines = flines[max(exc.lineno - 4, 0): exc.lineno]
+                msg = traceback.format_exc()
+                raise FileParseError(msg, lines=lines,
+                                     error_name="EmPyError")
 
     # process with Jinja2
     if do_jinja2:
