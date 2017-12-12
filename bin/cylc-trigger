@@ -150,7 +150,7 @@ def main():
         command = ' '.join(command_list)
         try:
             # Block until the editor exits.
-            retcode = call(command_list, stdin=open(os.devnull))
+            retcode = call(command_list)
             if retcode != 0:
                 sys.exit(
                     'ERROR, command failed with %d:\n %s' % (retcode, command))
