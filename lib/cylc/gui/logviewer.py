@@ -18,7 +18,6 @@
 
 import gtk
 import os
-from cylc.gui.tailer import Tailer
 from cylc.gui.warning_dialog import warning_dialog
 import pango
 
@@ -50,11 +49,6 @@ class logviewer(object):
         logbuffer = self.logview.get_buffer()
         s, e = logbuffer.get_bounds()
         logbuffer.delete(s, e)
-
-    def connect(self):
-        # TODO , self.path()
-        self.t = Tailer(self.logview)
-        self.t.start()
 
     def quit_w_e(self, w, e):
         self.t.stop()
@@ -129,7 +123,7 @@ class logviewer(object):
         self.logview.set_editable(False)
         # Use a monospace font. This is safe - by testing - setting an
         # illegal font description has no effect.
-        self.logview.modify_font(pango.FontDescription("monospace"))
+        self.logview.modify_font(pango.FontDescription("monospace bold"))
 
         searchbox = gtk.HBox()
         entry = gtk.Entry()
