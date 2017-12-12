@@ -11,11 +11,9 @@
     [[dependencies]]
         [[[PT1H]]]
             graph = """
-                show-suite => show-task => show-taskinstance
-                show-suite-json => show-task-json => show-taskinstance-json
-                show-taskinstance & show-taskinstance-json => foo
-                foo[-PT1H] => foo
-                foo:start => baz & bar
+                bar => foo
+                foo:start => show-suite & show-task & show-taskinstance & \
+                show-suite-json & show-task-json & show-taskinstance-json
             """
 [runtime]
     [[foo]]
