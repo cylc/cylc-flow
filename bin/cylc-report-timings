@@ -187,6 +187,7 @@ class TimingSummary(object):
 
         """
         import pandas as pd
+        pd.set_option("display.max_colwidth", 10000)
         df = pd.read_csv(
             filepath_or_buffer, delim_whitespace=True, index_col=[0, 1, 2, 3],
             parse_dates=[4, 5, 6]
@@ -211,7 +212,7 @@ class TimingSummary(object):
         self.write_summary_header(buf)
         for group, df in self.by_host_and_batch:
             self.write_group_header(buf, group)
-            df_reshape = df.unstack('name').stack(level=0)
+            df_reshape = df
             df_describe = df.groupby(level='name').describe()
             if df_describe.index.nlevels > 1:
                 df_describe = df_describe.unstack()  # for pandas < 0.20.0
