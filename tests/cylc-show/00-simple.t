@@ -55,12 +55,11 @@ baz: pub
 URL: (not given)
 
 prerequisites (- => not satisfied):
-  - show-taskinstance-json.20141106T0900Z succeeded
-  - show-taskinstance.20141106T0900Z succeeded
+  + bar.20141106T0900Z succeeded
 
 outputs (- => not completed):
-  - foo.20141106T0900Z submitted
-  - foo.20141106T0900Z started
+  + foo.20141106T0900Z submitted
+  + foo.20141106T0900Z started
   - foo.20141106T0900Z succeeded
 __SHOW_OUTPUT__
 #-------------------------------------------------------------------------------
@@ -92,22 +91,18 @@ cmp_json_ok "$TEST_NAME-taskinstance" "$TEST_NAME-taskinstance" \
     "foo.20141106T0900Z":{
         "prerequisites":[
             [
-                "show-taskinstance-json.20141106T0900Z succeeded",
-                false
-            ],
-            [
-                "show-taskinstance.20141106T0900Z succeeded",
-                false
+                "bar.20141106T0900Z succeeded",
+                "satisfied naturally"
             ]
         ],
         "outputs":[
             [
                 "foo.20141106T0900Z submitted",
-                false
+                true
             ],
             [
                 "foo.20141106T0900Z started",
-                false
+                true
             ],
             [
                 "foo.20141106T0900Z succeeded",
