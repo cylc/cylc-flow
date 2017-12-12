@@ -117,7 +117,7 @@ cmp_json_ok "$TEST_NAME-taskinstance" "$TEST_NAME-taskinstance" \
         "extras":{
 
         },
-        "descriptions":{
+        "meta":{
             "URL":"",
             "baz":"pub",
             "description":"jumped over the lazy dog",

@@ -18,9 +18,9 @@
 
 """cylc [info] show [OPTIONS] ARGS
 
-Interrogate a suite server program for the suite title and description; or for
-the title and description of one of its tasks; or for the current state of the
-prerequisites, outputs, and clock-triggering of a specific task instance."""
+Interrogate a suite server program for the suite metadata; or for the metadata
+of one of its tasks; or for the current state of the prerequisites, outputs,
+and clock-triggering of a specific task instance."""
 
 import sys
 if '--use-ssh' in sys.argv[1:]:
@@ -99,7 +99,7 @@ def main():
                         print prereq
                 else:
                     for key, value in sorted(
-                            result["descriptions"].items(), reverse=True):
+                            result["meta"].items(), reverse=True):
                         print "%s: %s" % (key, value or "(not given)")
 
                     for name, done in [("prerequisites", "satisfied"),
