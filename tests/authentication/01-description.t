@@ -48,6 +48,10 @@ cmp_ok 'scan.out' <<__END__
 ${SUITE_NAME} ${USER}@${HOST}:${PORT}
    Title:
       "Authentication test suite."
+   URL:
+      (no URL)
+   Group:
+      (no group)
    Description:
       "Stalls when the first task fails."
    (state totals withheld)
