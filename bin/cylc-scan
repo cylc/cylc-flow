@@ -104,7 +104,7 @@ def main():
 
     parser.add_option(
         "-d", "--describe",
-        help="Print suite titles and descriptions if available.",
+        help="Print suite metadata if available.",
         action="store_true", default=False, dest="describe")
 
     parser.add_option(
@@ -267,40 +267,43 @@ def main():
 
         if options.describe:
             try:
-                title = suite_identity[KEY_META].get(KEY_TITLE)
+                meta_items = suite_identity[KEY_META]
             except KeyError:
                 # Compat:<=7.5.0
-                title = suite_identity.get(KEY_TITLE)
-            if title is None:
-                print indent + bold("(description and state totals withheld)")
-                continue
-            print indent + bold("Title:")
-            if title == "":
-                line = "(no title)"
-            else:
-                line = '"%s"' % title
-            print indent * 2 + line
+                meta_items = {
+                    "title": suite_identity.get(KEY_TITLE),
+                    "description": suite_identity.get(KEY_DESCRIPTION)
+                }
 
-            try:
-                description = suite_identity[KEY_META].get(KEY_DESCRIPTION)
-            except KeyError:
-                # Compat:<=7.5.0
-                description = suite_identity.get(KEY_DESCRIPTION)
-            print indent + bold("Description:")
-            if description == "":
-                lines = "(no description)"
+            # Deal with the title first for case of just withheld statement
+            if not meta_items["title"]:
+                print indent + bold("(description and state totals "
+                                    "withheld)")
+                continue
             else:
-                lines = '"%s"' % description
-            line1 = True
-            for line in lines.split('\n'):
-                line = line.lstrip()
-                if not line1:
-                    # Indent under the double quote.
-                    line = " " + line
-                line1 = False
-                print indent * 2 + line
+                print (indent + bold("Title:\n") + indent * 2 +
+                       '"%s"' % meta_items["title"])
+                for metaitem in meta_items.keys():
+                    if metaitem != "title":
+                        if metaitem == "description" or metaitem == "group":
+                            print indent + bold(metaitem.capitalize() + ":")
+                        else:
+                            print indent + bold(metaitem + ":")
+                        if not meta_items[metaitem]:
+                            lines = "(no %s)" % metaitem
+                        else:
+                            lines = '"%s"' % meta_items[metaitem]
+                        line1 = True
+                        for line in lines.split('\n'):
+                            line = line.lstrip()
+                            if not line1:
+                                # Indent under the double quote.
+                                line = " " + line
+                            line1 = False
+                            print indent * 2 + line
 
         totals = suite_identity.get(KEY_STATES)
+
         if options.print_totals:
             if totals is None:
                 print indent + bold("(state totals withheld)")
