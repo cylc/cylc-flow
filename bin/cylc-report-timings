@@ -189,7 +189,7 @@ class TimingSummary(object):
         """
         import pandas as pd
 
-        # Make sure lines don't wrap!
+        # Avoid truncation of content in columns.
         pd.set_option('display.max_colwidth', 10000)
 
         df = pd.read_csv(
