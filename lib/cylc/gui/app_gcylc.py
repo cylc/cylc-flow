@@ -1217,10 +1217,10 @@ been defined for this suite""").inform()
 
     def _gcapture_cmd(self, command, xdim=400, ydim=400, title=None):
         """Run given command and capture its stdout and stderr in a window."""
-        foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir,
-                               xdim, ydim, title=title)
-        self.gcapture_windows.append(foo)
-        foo.run()
+        gcap_win = gcapture_tmpfile(command, self.cfg.cylc_tmpdir,
+                                    xdim, ydim, title=title)
+        self.gcapture_windows.append(gcap_win)
+        gcap_win.run()
 
     def view_task_descr(self, w, e, task_id, *args):
         """Run 'cylc show SUITE TASK' and capture output in a viewer window."""
@@ -1229,8 +1229,19 @@ been defined for this suite""").inform()
                 self.get_remote_run_opts(), self.cfg.suite, task_id),
             600, 400)
 
+    def view_jobscript_preview(self, task_id, geditor=False):
+        """View generated jobscript in a text editor."""
+        self._gcapture_cmd(
+            "cylc jobscript %s %s %s %s" % (
+                self.get_remote_run_opts(), self.cfg.suite, task_id,
+                '-g' if geditor else '--plain'),
+            600, 400)
+
     def view_in_editor(self, w, e, task_id, choice):
         """View various job logs in your configured text editor."""
+        if choice == 'job-preview':
+            self.view_jobscript_preview(task_id, geditor=True)
+            return False
         try:
             task_state_summary = self.updater.full_state_summary[task_id]
         except KeyError:
@@ -1262,6 +1273,9 @@ been defined for this suite""").inform()
 
     def view_task_info(self, w, e, task_id, choice):
         """Viewer window with a drop-down list of job logs to choose from."""
+        if choice == 'job-preview':
+            self.view_jobscript_preview(task_id, geditor=False)
+            return
         try:
             task_state_summary = self.updater.full_state_summary[task_id]
         except KeyError:
@@ -1269,7 +1283,8 @@ been defined for this suite""").inform()
             return False
         if (not task_state_summary['logfiles'] and
                 not task_state_summary.get('job_hosts')):
-            warning_dialog('%s has no log files' % task_id, self.window).warn()
+            warning_dialog('%s has no log files' % task_id,
+                           self.window).warn()
         else:
             self._popup_logview(task_id, task_state_summary, choice)
         return False
@@ -1342,8 +1357,13 @@ been defined for this suite""").inform()
                 # graph-view so use connect_right_click_sub_menu instead of
                 # item.connect
 
+                if t_states[0] in TASK_STATUSES_WITH_JOB_SCRIPT:
+                    job_script = ('job script', 'job')
+                else:
+                    job_script = ('preview job script', 'job-preview')
+
                 for key, filename in [
-                        ('job script', 'job'),
+                        job_script,
                         ('job activity log', 'job-activity.log'),
                         ('job status file', 'job.status'),
                         ('job edit diff', 'job-edit.diff'),
@@ -1356,6 +1376,7 @@ been defined for this suite""").inform()
                                                       self.view_task_info,
                                                       task_ids[0], filename)
                     item.set_sensitive(
+                        '-preview' in filename or
                         t_states[0] in TASK_STATUSES_WITH_JOB_SCRIPT)
 
                 try:
@@ -1418,7 +1439,7 @@ been defined for this suite""").inform()
                 # item.connect
 
                 for key, filename in [
-                        ('job script', 'job'),
+                        job_script,
                         ('job activity log', 'job-activity.log'),
                         ('job status file', 'job.status'),
                         ('job edit diff', 'job-edit.diff'),
@@ -1431,6 +1452,7 @@ been defined for this suite""").inform()
                                                       self.view_in_editor,
                                                       task_ids[0], filename)
                     item.set_sensitive(
+                        '-preview' in filename or
                         t_states[0] in TASK_STATUSES_WITH_JOB_SCRIPT)
 
                 for key, filename in [

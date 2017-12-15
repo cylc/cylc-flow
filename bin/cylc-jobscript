@@ -37,6 +37,7 @@ Options:
   -h, --help   Print this usage message.
   -e --edit    Open the jobscript in a CLI text editor.
   -g --gedit   Open the jobscript in a GUI text editor.
+  --plain      Don't print the "Task Job Script Generated message."
  (see also 'cylc submit --help')
 
 Arguments:
@@ -56,6 +57,7 @@ elif sys.argv[1] in ['-e', '--edit']:
 " $1
 }
 
+PLAIN=0
 EDITOR_CMD=
 SUBMIT_ARGS=
 for arg in "${@}"; do
@@ -65,6 +67,8 @@ for arg in "${@}"; do
     elif [[ "${arg}" == '--edit' ]] || [[ "${arg}" == '--gedit' ]] || \
          [[ "${arg}" == '-e' ]] || [[ "${arg}" == '-g' ]]; then
         EDITOR_CMD="$(editor ${arg})"
+    elif [[ "${arg}" == '--plain' ]]; then
+        PLAIN=1
     else
         SUBMIT_ARGS="${SUBMIT_ARGS} ${arg}"
     fi
@@ -72,9 +76,11 @@ done
 
 if CYLC_SUBMIT_OUT="$(cylc submit --dry-run ${SUBMIT_ARGS})"; then
     JOBSCRIPT="$(sed -n 's/^JOB SCRIPT=//p' <<<"${CYLC_SUBMIT_OUT}")"
-    echo "Task Job Script Generated: ${JOBSCRIPT}" >&2
+    if [[ ${PLAIN} == 0 ]]; then
+        echo "Task Job Script Generated: ${JOBSCRIPT}" >&2
+    fi
     if [[ -n ${EDITOR_CMD} ]]; then
-        $EDITOR_CMD "${JOBSCRIPT}"
+        exec $EDITOR_CMD "${JOBSCRIPT}"
     else
         exec less "${JOBSCRIPT}"
     fi
