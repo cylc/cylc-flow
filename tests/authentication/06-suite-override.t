@@ -19,7 +19,7 @@
 # (Suite overrides global privilege 'identity'.)
 
 . $(dirname $0)/test_header
-set_test_number 9
+set_test_number 10
 
 install_suite "${TEST_NAME_BASE}" override
 
@@ -43,6 +43,7 @@ mv "${SRV_D}/passphrase" "${SRV_D}/passphrase.DIS"
 
 HOST="$(sed -n 's/^CYLC_SUITE_HOST=//p' "${SRV_D}/contact")"
 PORT="$(sed -n 's/^CYLC_SUITE_PORT=//p' "${SRV_D}/contact")"
+
 cylc scan --comms-timeout=5 -fb -n "${SUITE_NAME}" >'scan.out' 2>'/dev/null'
 cmp_ok 'scan.out' <<__END__
 ${SUITE_NAME} ${USER}@${HOST}:${PORT}
@@ -58,6 +59,20 @@ ${SUITE_NAME} ${USER}@${HOST}:${PORT}
    Task state totals:
       failed:1 waiting:1
       1 failed:1 waiting:1
+__END__
+
+cylc scan --comms-timeout=5 -db -n "${SUITE_NAME}" >'scan.out' 2>'/dev/null'
+cmp_ok 'scan.out' <<__END__
+${SUITE_NAME} ${USER}@${HOST}:${PORT}
+   Title:
+      "Authentication test suite."
+   URL:
+      (no URL)
+   Group:
+      (no group)
+   Description:
+      "Stalls when the first task fails.
+       Suite overrides global authentication settings."
 __END__
 
 # "cylc show" (suite info) OK.

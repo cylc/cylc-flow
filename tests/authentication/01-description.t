@@ -18,7 +18,7 @@
 # Test authentication - privilege 'description'.
 
 . $(dirname $0)/test_header
-set_test_number 7
+set_test_number 8
 
 install_suite "${TEST_NAME_BASE}" basic
 
@@ -40,7 +40,7 @@ cylc suite-state "${SUITE_NAME}" --task=foo --status=failed --point=1 \
 SRV_D="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/.service"
 mv "${SRV_D}/passphrase" "${SRV_D}/passphrase.DIS"
 
-# Check scan output.
+# Check scan --full output.
 HOST="$(sed -n 's/^CYLC_SUITE_HOST=//p' "${SRV_D}/contact")"
 PORT="$(sed -n 's/^CYLC_SUITE_PORT=//p' "${SRV_D}/contact")"
 cylc scan --comms-timeout=5 -fb -n "${SUITE_NAME}" >'scan.out' 2>'/dev/null'
@@ -48,13 +48,37 @@ cmp_ok 'scan.out' <<__END__
 ${SUITE_NAME} ${USER}@${HOST}:${PORT}
    Title:
       "Authentication test suite."
-   URL:
-      (no URL)
    Group:
       (no group)
    Description:
-      "Stalls when the first task fails."
+      "Stalls when the first task fails.
+       Here we test out a multi-line description!"
+   URL:
+      (no URL)
+   another_metadata:
+      "1"
+   custom_metadata:
+      "something_custom"
    (state totals withheld)
+__END__
+
+# Check scan --describe output.
+cylc scan --comms-timeout=5 -db -n "${SUITE_NAME}" >'scan.out' 2>'/dev/null'
+cmp_ok 'scan.out' <<__END__
+${SUITE_NAME} ${USER}@${HOST}:${PORT}
+   Title:
+      "Authentication test suite."
+   Group:
+      (no group)
+   Description:
+      "Stalls when the first task fails.
+       Here we test out a multi-line description!"
+   URL:
+      (no URL)
+   another_metadata:
+      "1"
+   custom_metadata:
+      "something_custom"
 __END__
 
 # "cylc show" (suite info) OK.
