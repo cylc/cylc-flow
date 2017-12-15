@@ -356,9 +356,11 @@ class HTMLTimingSummary(TimingSummary):
         import matplotlib.pyplot as plt
         buf.write('<div class="timing" id=%s>' % category)
         buf.write('<h2>%s</h2>\n' % (category.replace('_', ' ').title()))
-        ax = df_reshape\
-            .xs(category, level='timing_category')\
+        ax = (
+            df_reshape
+            .xs(category, level='timing_category')
             .plot(kind='box', vert=False)
+        )
         ax.invert_yaxis()
         ax.set_xlabel('Seconds')
         plt.tight_layout()
