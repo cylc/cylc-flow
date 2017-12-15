@@ -1254,6 +1254,9 @@ been defined for this suite""").inform()
                 command_opt = "--stderr"
             elif choice == 'job':
                 command_opt = ""
+            else:
+                # Custom job log (see "extra log files").
+                command_opt = '--filename %s' % choice
             self._gcapture_cmd("cylc cat-log %s --geditor %s %s" % (
                 command_opt, self.cfg.suite, task_id))
 
@@ -1355,9 +1358,15 @@ been defined for this suite""").inform()
                     item.set_sensitive(
                         t_states[0] in TASK_STATUSES_WITH_JOB_SCRIPT)
 
+                try:
+                    logfiles = sorted(map(str, self.updater.full_state_summary[
+                        task_ids[0]]['logfiles']))
+                except KeyError:
+                    logfiles = []
                 for key, filename in [
                         ('job stdout', 'job.out'),
-                        ('job stderr', 'job.err')]:
+                        ('job stderr', 'job.err')] + [
+                        (fname, fname) for fname in logfiles]:
                     item = gtk.ImageMenuItem(key)
                     item.set_image(gtk.image_new_from_stock(
                         gtk.STOCK_DND, gtk.ICON_SIZE_MENU))
@@ -1426,7 +1435,8 @@ been defined for this suite""").inform()
 
                 for key, filename in [
                         ('job stdout', 'job.out'),
-                        ('job stderr', 'job.err')]:
+                        ('job stderr', 'job.err')] + [
+                        (fname, fname) for fname in logfiles]:
                     item = gtk.ImageMenuItem(key)
                     item.set_image(gtk.image_new_from_stock(
                         gtk.STOCK_DND, gtk.ICON_SIZE_MENU))
@@ -2280,9 +2290,10 @@ shown here in the state they were in at the time of triggering.''')
                                  "job-edit.diff", "job.xtrace"]:
                     filenames.append(os.path.join(job_log_dir, filename))
 
-        for filename in sorted(list(task_state_summary['logfiles'])):
+        # NOTE: Filenames come through as unicode and must be converted.
+        for filename in map(str, sorted(list(task_state_summary['logfiles']))):
             if filename not in filenames:
-                filenames.append(filename)
+                filenames.append(os.path.join(job_log_dir, filename))
 
         init_active_index = None
         if choice:
