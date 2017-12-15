@@ -18,7 +18,7 @@
 # Test authentication - privilege 'identity'.
 
 . $(dirname $0)/test_header
-set_test_number 14
+set_test_number 15
 
 install_suite "${TEST_NAME_BASE}" basic
 
@@ -68,8 +68,16 @@ cylc suite-state "${SUITE_NAME}" --task=foo --status=failed --point=1 \
 # Disable the suite passphrase (to leave us with public access privilege).
 mv "${SRV_D}/passphrase" "${SRV_D}/passphrase.DIS"
 
-# Check scan output.
+# Check scan --full output.
 cylc scan --comms-timeout=5 -fb -n "${SUITE_NAME}" 'localhost' \
+    >'scan.out' 2>'/dev/null'
+cmp_ok scan.out << __END__
+${SUITE_NAME} ${USER}@localhost:${PORT}
+   (description and state totals withheld)
+__END__
+
+# Check scan --describe output.
+cylc scan --comms-timeout=5 -db -n "${SUITE_NAME}" 'localhost' \
     >'scan.out' 2>'/dev/null'
 cmp_ok scan.out << __END__
 ${SUITE_NAME} ${USER}@localhost:${PORT}
