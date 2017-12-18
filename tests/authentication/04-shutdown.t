@@ -18,7 +18,7 @@
 # Test authentication - privilege 'shutdown'.
 
 . $(dirname $0)/test_header
-set_test_number 10
+set_test_number 12
 
 install_suite "${TEST_NAME_BASE}" basic
 
@@ -43,8 +43,8 @@ mv "${SRV_D}/passphrase" "${SRV_D}/passphrase.DIS"
 HOST="$(sed -n 's/^CYLC_SUITE_HOST=//p' "${SRV_D}/contact")"
 PORT="$(sed -n 's/^CYLC_SUITE_PORT=//p' "${SRV_D}/contact")"
 
-cylc scan --comms-timeout=5 -fb -n "${SUITE_NAME}" >'scan.out' 2>'/dev/null'
-cmp_ok 'scan.out' <<__END__
+cylc scan --comms-timeout=5 -fb -n "${SUITE_NAME}" >'scan-f.out' 2>'/dev/null'
+cmp_ok 'scan-f.out' <<__END__
 ${SUITE_NAME} ${USER}@${HOST}:${PORT}
    Title:
       "Authentication test suite."
@@ -64,8 +64,8 @@ ${SUITE_NAME} ${USER}@${HOST}:${PORT}
       1 failed:1 waiting:1
 __END__
 
-cylc scan --comms-timeout=5 -db -n "${SUITE_NAME}" >'scan.out' 2>'/dev/null'
-cmp_ok 'scan.out' <<__END__
+cylc scan --comms-timeout=5 -db -n "${SUITE_NAME}" >'scan-d.out' 2>'/dev/null'
+cmp_ok 'scan-d.out' <<__END__
 ${SUITE_NAME} ${USER}@${HOST}:${PORT}
    Title:
       "Authentication test suite."
@@ -80,6 +80,32 @@ ${SUITE_NAME} ${USER}@${HOST}:${PORT}
       "1"
    custom_metadata:
       "something_custom"
+__END__
+
+# Check scan --raw output.
+cylc scan --comms-timeout=5 -rb -n "${SUITE_NAME}" >'scan-r.out' 2>'/dev/null'
+cmp_ok 'scan-r.out' <<__END__
+${SUITE_NAME}|${USER}|${HOST}|port|${PORT}
+${SUITE_NAME}|${USER}|${HOST}|title|Authentication test suite.
+${SUITE_NAME}|${USER}|${HOST}|description|Stalls when the first task fails. Here we test out a multi-line description!
+${SUITE_NAME}|${USER}|${HOST}|states|failed:1 waiting:1
+${SUITE_NAME}|${USER}|${HOST}|states:1|failed:1 waiting:1
+__END__
+
+# Check scan --json output.
+cylc scan --comms-timeout=5 -jb -n "${SUITE_NAME}" >'scan-j.out' 2>'/dev/null'
+cmp_json_ok 'scan-j.out' 'scan-j.out' <<__END__
+{
+	"states": {
+		"1": "failed:1 waiting:1"
+	},
+	"host": "${HOST}",
+	"name": "${SUITE_NAME}",
+	"title": "Authentication test suite.",
+	"owner": "${USER}",
+	"port": "${PORT}",
+	"description": "Stalls when the first task fails.\\\n Here we test out a multi-line description!"
+}
 __END__
 
 # "cylc show" (suite info) OK.
