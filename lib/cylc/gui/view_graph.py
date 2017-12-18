@@ -158,9 +158,7 @@ Dependency graph suite control interface.
                                        name not in self.t.leaves)
         ungroup_rec_item.connect('activate', self.grouping, name, False, True)
 
-        menu.append(gtk.SeparatorMenuItem())
-
-        if type is not 'live task':
+        if type_ != 'live task':
             insert_item = gtk.ImageMenuItem('Insert ...')
             img = gtk.image_new_from_stock(gtk.STOCK_DIALOG_INFO,
                                            gtk.ICON_SIZE_MENU)
@@ -173,7 +171,7 @@ Dependency graph suite control interface.
                     name=name, point_string=point_string
                 )
             )
-            menu.append(gtk.SeparatorMenuItem())
+        menu.append(gtk.SeparatorMenuItem())
 
         menu.append(timezoom_item_direct)
         menu.append(timezoom_reset_item)

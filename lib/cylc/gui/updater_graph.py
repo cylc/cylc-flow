@@ -402,6 +402,7 @@ class GraphUpdater(threading.Thread):
             node.attr['color'] = '#888888'
             node.attr['fillcolor'] = 'white'
             node.attr['fontcolor'] = '#888888'
+            node.attr['URL'] = 'base:%s' % node.attr['URL']
 
         for id_ in self.state_summary:
             try:
