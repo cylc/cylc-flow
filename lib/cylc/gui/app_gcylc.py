@@ -1028,6 +1028,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         stopclock = False
         stoptask = False
         stopkill = False
+        stopnownow = False
 
         if stop_rb.get_active():
             stop = True
