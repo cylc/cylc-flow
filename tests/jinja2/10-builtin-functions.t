@@ -18,22 +18,19 @@
 # jinja2 test cylc-provided functions.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 4
+set_test_number 5
 #-------------------------------------------------------------------------------
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
-# raise(message, error_type='Error')
-TEST_NAME="${TEST_NAME_BASE}-raise-validate"
-run_fail "${TEST_NAME}" cylc validate "${SUITE_NAME}"
-cmp_ok "${TEST_NAME}.stderr" << '__ERR__'
-Jinja2 Error: Some Exception
-__ERR__
-#-------------------------------------------------------------------------------
-# assert(logical, message)
-TEST_NAME="${TEST_NAME_BASE}-assert-validate"
-run_fail "${TEST_NAME}" cylc validate "${SUITE_NAME}" -s 'ANSWER=43'
-cmp_ok "${TEST_NAME}.stderr" << '__ERR__'
-Jinja2 Assertation Error: Reality check needed
-__ERR__
+TEST_NAME="${TEST_NAME_BASE}"-pass
+run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}" -s 'FOO=True' \
+    -s 'ANSWER=42'
+TEST_NAME="${TEST_NAME_BASE}"-fail-assert
+run_fail "${TEST_NAME}" cylc validate "${SUITE_NAME}" -s 'FOO=True' \
+    -s 'ANSWER=43'
+grep_ok 'Jinja2 Assertation Error: Universal' "${TEST_NAME}.stderr"
+TEST_NAME="${TEST_NAME_BASE}"-fail-raise
+run_fail "${TEST_NAME}" cylc validate "${SUITE_NAME}" -s 'ANSWER=42'
+grep_ok 'Jinja2 Error: FOO must be defined' "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"

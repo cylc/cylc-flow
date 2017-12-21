@@ -39,6 +39,7 @@ def assert_helper(logical, message):
     """Provides a Jinja2 function for asserting logical expressions."""
     if not logical:
         raise_helper(message, 'Assertation Error')
+    return ''  # Prevent None return value polluting output.
 
 
 def jinja2process(flines, dir_, template_vars=None):

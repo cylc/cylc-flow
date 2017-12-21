@@ -1,9 +1,11 @@
 #!Jinja2
 
-{% if not ANSWER is defined %}
-    {% set ANSWER = 42 %}
+{% if not FOO is defined %}
+    {{ raise('FOO must be defined.') }}
 {% endif %}
 
-{{ assert(ANSWER == 42, 'Reality check needed') }}
+{{ assert(ANSWER | int == 42, 'Universal constant incorrectly set.') }}
 
-{{ raise('Some Exception') }}
+[scheduling]
+    [[dependencies]]
+        graph = foo
