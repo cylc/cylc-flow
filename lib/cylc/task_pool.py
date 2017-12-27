@@ -963,7 +963,7 @@ class TaskPool(object):
         num_removed = 0
         for itask in self.get_tasks():
             if itask.state.suicide_prerequisites:
-                if itask.state.suicide_prerequisites_are_all_satisfied():
+                if itask.state.suicide_prerequisites_satisfied():
                     if itask.state.status in [TASK_STATUS_READY,
                                               TASK_STATUS_SUBMITTED,
                                               TASK_STATUS_RUNNING]:
