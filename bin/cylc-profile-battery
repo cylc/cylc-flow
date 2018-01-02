@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2017 NIWA
+# Copyright (C) 2008-2018 NIWA
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

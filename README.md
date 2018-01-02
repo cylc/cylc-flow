@@ -9,7 +9,7 @@ tasks. It was originally designed for environmental forecasting systems at
 
 ### Copyright and Terms of Use
 
-Copyright (C) 2008-2017 NIWA
+Copyright (C) 2008-2018 NIWA
  
 Cylc is free software: you can redistribute it and/or modify it under the terms
 of the GNU General Public License as published by the Free Software Foundation,
