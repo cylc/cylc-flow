@@ -89,15 +89,19 @@ __END__
 cylc scan --comms-timeout=5 -jb -n "${SUITE_NAME}" >'scan-j.out' 2>'/dev/null'
 cmp_json_ok 'scan-j.out' 'scan-j.out' <<__END__
 {
-	"states": {
-		"1": "failed:1 waiting:1"
-	},
-	"host": "${HOST}",
-	"name": "${SUITE_NAME}",
-	"title": "Authentication test suite.",
-	"owner": "${USER}",
-	"port": "${PORT}",
-	"description": "Stalls when the first task fails.\\\nSuite overrides global authentication settings."
+    "${SUITE_NAME}": {
+        "owner": "${USER}",
+        "host": "${HOST}",
+        "port": "${PORT}",
+        "title": "Authentication test suite.",
+        "description": "Stalls when the first task fails. Suite overrides global authentication settings.",
+		"states": {
+			"1": {
+                "failed": 1,
+				"waiting": 1
+			}
+		}
+    }
 }
 __END__
 

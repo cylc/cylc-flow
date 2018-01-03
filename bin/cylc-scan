@@ -226,6 +226,7 @@ def main():
     if not args:
         return
 
+    json_dict = {}
     skip_one = True
     for host, port, suite_identity in scan_many(args, options.comms_timeout):
         name = suite_identity[KEY_NAME]
@@ -249,14 +250,10 @@ def main():
                     # KEY_UPDATE_TIME and Compat:<=7.5.0
                     value = suite_identity.get(key)
                 if value:
-                    # Remove new-line characters for readability
-                    value_to_output = str(value).replace("\n", " ")
-                    # Remove whitespace from multiline indents for readability
-                    while "  " in value_to_output:
-                        value_to_output = value_to_output.replace("  ", " ")
-                    print "%s|%s|%s|%s|%s" % (
-                        name, owner, host, key,
-                        value_to_output)
+                    print "%s|%s|%s|%s|%s" % (name, owner, host, key,
+                                              ' '.join([x.strip() for x in
+                                                       str(value).split('\n')
+                                                       if x]))
             totals = suite_identity.get(KEY_STATES)
             if totals is None:
                 continue
@@ -270,8 +267,7 @@ def main():
             continue
 
         if options.json_format:
-            json_info = {"name": name, "owner": owner, "host": host,
-                         "port": port}
+            suite_inf = {"owner": owner, "host": host, "port": port}
             for key in [KEY_TITLE, KEY_DESCRIPTION, KEY_UPDATE_TIME]:
                 try:
                     value = suite_identity[KEY_META].get(key)
@@ -279,23 +275,25 @@ def main():
                     # KEY_UPDATE_TIME and Compat:<=7.5.0
                     value = suite_identity.get(key)
                 if value:
-                    # Escape new-line characters for valid JSON
-                    value_to_dump = str(value).replace("\n", "\\n")
-                    # Remove whitespace from multiline indents for readability
-                    while "  " in value_to_dump:
-                        value_to_dump = value_to_dump.replace("  ", " ")
-                    additions = {key: value_to_dump}
-                    json_info.update(additions)
+                    suite_inf.update({key: ' '.join([x.strip() for x in
+                                      str(value).split('\n') if x])})
                 totals = suite_identity.get(KEY_STATES)
                 if totals is None:
                     continue
                 point_state_lines = get_point_state_count_lines(
                     *totals, use_color=options.color)
                 for point, state_line in point_state_lines:
+                    state_dict = {}
                     if point:
-                        more_additions = {KEY_STATES: {point: state_line}}
-                        json_info.update(more_additions)
-            print json.dumps(json_info)
+                        for state_inf in state_line.split(' '):
+                            if ':' in state_inf:
+                                key, value = state_inf.split(':')
+                                try:
+                                    state_dict.update({key: int(value)})
+                                except (TypeError, ValueError):
+                                    state_dict.update({key: str(value)})
+                        suite_inf.update({KEY_STATES: {point: state_dict}})
+            json_dict[name] = suite_inf
             continue
 
         line = '%s %s@%s:%s' % (name, owner, host, port)
@@ -330,16 +328,16 @@ def main():
             else:
                 print (indent + bold("Title:\n") + indent * 2 +
                        '"%s"' % meta_items["title"])
-            for metaitem in meta_items.keys():
+            for metaitem, metavalue in meta_items.items():
                 if metaitem != "title":
                     if metaitem == "description" or metaitem == "group":
                         print indent + bold(metaitem.capitalize() + ":")
                     else:
                         print indent + bold(metaitem + ":")
-                    if not meta_items[metaitem]:
+                    if not metavalue:
                         lines = "(no %s)" % metaitem
                     else:
-                        lines = '"%s"' % meta_items[metaitem]
+                        lines = '"%s"' % metavalue
                     line1 = True
                     for line in lines.split('\n'):
                         line = line.lstrip()
@@ -363,6 +361,10 @@ def main():
                 if point:
                     point_prefix = "%s " % point
                 print indent * 2 + "%s%s" % (point_prefix, state_line)
+
+    # Need a single filtered JSON structure => only dump after final iteration
+    if options.json_format:
+        print json.dumps(json_dict, indent=4)
 
 
 def get_point_state_count_lines(state_count_totals, state_count_cycles,
