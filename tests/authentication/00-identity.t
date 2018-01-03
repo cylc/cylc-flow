@@ -96,10 +96,11 @@ cylc scan --comms-timeout=5 -jb -n "${SUITE_NAME}" 'localhost' \
     >'scan-j.out' 2>'/dev/null'
 cmp_json_ok 'scan-j.out' 'scan-j.out' << __END__
 {
-	"host": "localhost",
-	"name": "${SUITE_NAME}",
-	"owner": "${USER}",
-	"port": ${PORT}
+    "${SUITE_NAME}": {
+        "owner": "${USER}",
+        "host": "localhost",
+        "port": ${PORT}
+    }
 }
 __END__
 

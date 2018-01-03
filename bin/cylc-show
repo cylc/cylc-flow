@@ -64,7 +64,7 @@ def main():
         # Print suite info.
         suite_info = pclient.get_info('get_suite_info')
         if options.json:
-            print json.dumps(suite_info)
+            print json.dumps(suite_info, indent=4)
         else:
             for key, value in sorted(suite_info.items(), reverse=True):
                 print '%s: %s' % (key, value or "(not given)")
@@ -76,7 +76,7 @@ def main():
     if task_names:
         results = pclient.get_info('get_task_info', names=task_names)
         if options.json:
-            print json.dumps(results)
+            print json.dumps(results, indent=4)
         else:
             for task_name, result in sorted(results.items()):
                 if len(results) > 1:
@@ -89,7 +89,7 @@ def main():
             'get_task_requisites', items=task_ids,
             list_prereqs=options.list_prereqs)
         if options.json:
-            print json.dumps(results)
+            print json.dumps(results, indent=4)
         else:
             for task_id, result in sorted(results.items()):
                 if len(results) > 1:
