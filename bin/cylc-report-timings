@@ -53,6 +53,7 @@ if remrun():
     sys.exit(0)
 
 import cStringIO as StringIO
+import collections
 import contextlib
 import os
 
@@ -187,6 +188,10 @@ class TimingSummary(object):
 
         """
         import pandas as pd
+
+        # Avoid truncation of content in columns.
+        pd.set_option('display.max_colwidth', 10000)
+
         df = pd.read_csv(
             filepath_or_buffer, delim_whitespace=True, index_col=[0, 1, 2, 3],
             parse_dates=[4, 5, 6]
@@ -199,6 +204,7 @@ class TimingSummary(object):
             'total_time': (
                 df['succeed_time'] - df['submit_time']).apply(self._dt_to_s),
         })
+        self.df = self.df.rename_axis('timing_category', axis='columns')
         self.by_host_and_batch = self.df.groupby(
             level=['host', 'batch_system']
         )
@@ -211,7 +217,7 @@ class TimingSummary(object):
         self.write_summary_header(buf)
         for group, df in self.by_host_and_batch:
             self.write_group_header(buf, group)
-            df_reshape = df.unstack('name').stack(level=0)
+            df_reshape = self._reshape_timings(df)
             df_describe = df.groupby(level='name').describe()
             if df_describe.index.nlevels > 1:
                 df_describe = df_describe.unstack()  # for pandas < 0.20.0
@@ -239,6 +245,33 @@ class TimingSummary(object):
             import pandas as pd
         except ImportError:
             raise Exception('Cannot import pandas - summary unavailable.')
+
+    @staticmethod
+    def _reshape_timings(timings):
+        """
+        Given a dataframe of timings returned from the Cylc DAO methods
+        indexed by (task, cycle point, ...) with columns for the various
+        timing categories, return a dataframe reshaped with an index of
+        (timing category, cycle point, ...) with columns for each task.
+
+        Need a special method rather than standard Pandas pivot-table
+        to handle duplicated index entries properly.
+
+        """
+        if timings.index.duplicated().any():
+            # The 'unstack' used to pivot the dataframe gives an error if
+            # there are duplicate entries in the index (see #2509).  The
+            # best way around this seems to be to add an intermediate index
+            # level (in this case a retry counter) to de-duplicate indices.
+            counts = collections.defaultdict(int)
+            retry = []
+            for t in timings.index:
+                counts[t] += 1
+                retry.append(counts[t])
+            timings = timings.assign(retry=retry)
+            timings = timings.set_index('retry', append=True)
+
+        return timings.unstack('name').stack(level=0)
 
     @staticmethod
     def _dt_to_s(dt):
@@ -323,7 +356,11 @@ class HTMLTimingSummary(TimingSummary):
         import matplotlib.pyplot as plt
         buf.write('<div class="timing" id=%s>' % category)
         buf.write('<h2>%s</h2>\n' % (category.replace('_', ' ').title()))
-        ax = df_reshape.xs(category, level=3).plot(kind='box', vert=False)
+        ax = (
+            df_reshape
+            .xs(category, level='timing_category')
+            .plot(kind='box', vert=False)
+        )
         ax.invert_yaxis()
         ax.set_xlabel('Seconds')
         plt.tight_layout()
