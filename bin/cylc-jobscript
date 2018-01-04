@@ -57,7 +57,7 @@ elif sys.argv[1] in ['-e', '--edit']:
 " $1
 }
 
-PLAIN=0
+PLAIN=false
 EDITOR_CMD=
 SUBMIT_ARGS=
 for arg in "${@}"; do
@@ -68,7 +68,7 @@ for arg in "${@}"; do
          [[ "${arg}" == '-e' ]] || [[ "${arg}" == '-g' ]]; then
         EDITOR_CMD="$(editor ${arg})"
     elif [[ "${arg}" == '--plain' ]]; then
-        PLAIN=1
+        PLAIN=true
     else
         SUBMIT_ARGS="${SUBMIT_ARGS} ${arg}"
     fi
@@ -76,7 +76,7 @@ done
 
 if CYLC_SUBMIT_OUT="$(cylc submit --dry-run ${SUBMIT_ARGS})"; then
     JOBSCRIPT="$(sed -n 's/^JOB SCRIPT=//p' <<<"${CYLC_SUBMIT_OUT}")"
-    if [[ ${PLAIN} == 0 ]]; then
+    if ! "${PLAIN}"; then
         echo "Task Job Script Generated: ${JOBSCRIPT}" >&2
     fi
     if [[ -n ${EDITOR_CMD} ]]; then
