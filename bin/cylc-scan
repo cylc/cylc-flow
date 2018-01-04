@@ -280,8 +280,7 @@ def main():
                 totals = suite_identity.get(KEY_STATES)
                 if totals is None:
                     continue
-                point_state_lines = get_point_state_count_lines(
-                    *totals, use_color=options.color)
+                point_state_lines = get_point_state_count_lines(*totals)
                 for point, state_line in point_state_lines:
                     state_dict = {}
                     if point:
