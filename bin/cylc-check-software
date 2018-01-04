@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env python
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2018 NIWA
@@ -16,84 +16,251 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Check for cylc software dependencies
+"""
+    cylc-check-software
+    Check for external software and version dependencies of cylc.
+"""
 
-usage() {
-    cat <<eof
-Usage: cylc [admin] check-software
+import sys
+import re
+from subprocess import check_call, PIPE
 
-Check that the external software required by cylc is installed.
 
-Minimum versions are not checked, except in the case of Python.
+TERMINAL_WIDTH = 70
 
-Options:
-  -h, --help   Print this help message and exit.
-eof
+# Standardise output messages
+FOUND_NONVERCHECK_MSG = 'FOUND (n/a)'
+MINVER_MET_MSG = 'FOUND & min. version MET'
+MINVER_NOTMET_MSG = 'FOUND but min. version NOT MET'
+FOUND_UNKNOWNVER_MSG = 'FOUND but could not determine version (?)'
+NOTFOUND_IMPORT_MSG = 'NOT FOUND by attempted import (-)'
+NOTFOUND_COMMAND_MSG = 'NOT FOUND by shell command (n/a)'
+
+# Use (0, 0, 0) as min. version for modules to look for but not version-check
+opt_python_spec = {
+    'OpenSSL': (0, 0, 0),
+    'requests': (2, 4, 2),
+    'urllib3': (0, 0, 0),
+    'pygraphviz': (0, 0, 0),
+    'pygtk': (0, 0, 0)
 }
 
-# handle long --help
-if [[ $@ == *\-\-help ]]; then
-    usage
-    exit 0
-fi
+opt_nonpython_spec = {
+    'graphviz': [['dot', '-V'], True],
+    'imagemagick': [['magick', 'identify', '-version'], False],
+    'tex': [['which'], True]
+}
 
-while getopts "h" opt; do
-    case $opt in
-        h )
-            usage
-            exit 0
-            ;;
-        ? )
-            usage
-            exit 0
-            ;;
-    esac
-done
+opt_tex_spec = ['texlive', 'tocloft', 'framed', 'preprint', 'tex4ht']
 
-# Minimum Python version 2.6
-echo -n "Checking for Python >= 2.6 ... "
-PVER=$( python -V 2>&1 | awk '{print $2}' )
-echo -n "found ${PVER} ... "
-if python -c 'import sys; sys.exit(sys.version_info < (2,6))'; then
-    echo "ok"
-else
-    echo "ERROR: Python version too old"
-fi
-
-# non-Python packages
-echo "Checking for non-Python packages:"
-echo -n " + Graphviz ... "
-if ! which dot > /dev/null 2>&1; then
-    echo "NOT FOUND"
-else
-    echo "ok"
-fi
-
-# Python packages
-PKGS="pygraphviz:pygraphviz \
-pygtk:pygtk"
+# Ensure packages are named as in spec dicts/lists above or will not be found
+functionality_reqs = {
+    'HTTPS communications layer': ['OpenSSL', 'requests', 'urllib3'],
+    'cylc GUI & the dependency graph visualisation': ['pygtk', 'graphviz',
+                                                      'pygraphviz'],
+    'LaTeX User Guide': ['tex', 'texlive', 'tocloft', 'framed', 'preprint',
+                         'tex4ht'],
+    'HTML User Guide': ['imagemagick']
+}
 
 
-echo "Checking for Python packages:"
+def tex_commands(tex_module):
+    ver_extract = ("kpsepath tex | tr ':' '\n' | locate '*tex*" + tex_module +
+                   "*' | sort -u")
+    return ver_extract.split(' ')
 
-for ITEM in ${PKGS}; do
-    NAME=${ITEM%:*}
-    MODL=${ITEM#*:}
 
-    echo -n " + ${NAME} ... "
-    if ! python -c "import ${MODL}" > /dev/null 2>&1; then
-        echo "NOT FOUND"
-    else
-        echo "ok"
-    fi
-done
+def draw_table_line(single_character):
+    sys.stdout.write(single_character * TERMINAL_WIDTH + '\n')
+    return None
 
-# Check for the OpenSSL python package
-HTTPS_MODL="OpenSSL"
-echo -n " + ${HTTPS_MODL} ... "
-if ! python -c "import ${HTTPS_MODL}" > /dev/null 2>&1; then
-    echo "NOT FOUND...Install it, or else configure Cylc to run in http mode."
-else
-    echo "ok"
-fi
 
+def parse_version(version):
+    ret = []
+    for sub_version in version.split('.'):
+        try:
+            ret.append(int(sub_version))
+        except ValueError:
+            ret.append(sub_version)
+    return tuple(ret)
+
+
+def string_version(version_tuple):
+    return '.'.join(str(x) for x in version_tuple)
+
+
+def shell_align_write(one_delimiter, left_msg, right_msg):
+    """Write two messages aligned with left and right of the terminal
+       assuming specific reasonable terminal width, if messages are
+       not too long to fit with at least two spaces inbetween."""
+    padding = TERMINAL_WIDTH - len(left_msg) - len(right_msg)
+    # Minimal two-character separation for distinct columns
+    if padding >= 2:
+        sys.stdout.write(left_msg + one_delimiter * padding +
+                         right_msg + '\n')
+        return True
+    else:
+        return False
+
+
+def shell_centre_write(centre_msg):
+    """Write message centrally in terminal assuming given terminal width."""
+    spacing = int(round(TERMINAL_WIDTH - len(centre_msg)) / 2) * ' '
+    sys.stdout.write(spacing + centre_msg + spacing + '\n')
+    return None
+
+
+def check_python_version(min_version, max_version=None):
+    """Check if a minimum version of python is installed."""
+    if max_version:
+        msg = 'python (%s+, <%s)' % (string_version(min_version),
+                                     string_version(max_version))
+    else:
+        msg = 'python (%s+)' % string_version(min_version)
+    version = sys.version_info
+    ret = (version >= min_version and
+           (not max_version or version < max_version))
+    shell_align_write('.', msg, '%s (%s)' % (MINVER_MET_MSG if ret else
+                      MINVER_NOTMET_MSG, string_version(version)))
+    return ret
+
+
+def check_py_module_ver(module, min_version):
+    """Check if a minimum version of a python module is installed."""
+    msg = 'python:%s (' % module + '%s)' % (string_version(min_version) + '+'
+                                            if min_version != (0, 0, 0) else
+                                            'n/a')
+    try:
+        imported_module = __import__(module)
+        try:
+            # some module improts are awkward so approach like this for now
+            if module == 'pygtk':
+                import gtk
+                version_tuple = gtk.pygtk_version
+                module_version = '.'.join(map(str, version_tuple))
+            else:
+                module_version = imported_module.__version__
+            if parse_version(module_version) >= min_version:
+                result = ['%s (%s)' % (MINVER_MET_MSG, module_version), True]
+            else:
+                result = ['%s (%s)' % (MINVER_NOTMET_MSG, module_version),
+                          False]
+        except AttributeError:
+            result = [FOUND_UNKNOWNVER_MSG, False]
+    except ImportError:
+        result = [NOTFOUND_IMPORT_MSG, False]
+    shell_align_write('.', msg, result[0])
+    return result[1]
+
+
+def shell_command_ver(package, custom_commands, append_package):
+    """Check a shell command is avaliable to test for module availability."""
+    for component in custom_commands:
+        command_chars = ["|", "':'", "'\n'"]
+        if (command_chars.count(component) == 0 and
+                component.count('*') == 0 and
+                not re.match('^[\w-]+$', component)):
+            raise Exception('Invalid command "%s"' % component)
+    msg = '%s (n/a)' % package
+    if append_package:
+        custom_commands.append(package)
+    try:
+        check_call(custom_commands, stdout=PIPE, stderr=PIPE)
+    except OSError:
+        shell_align_write('.', msg, NOTFOUND_COMMAND_MSG)
+        return False
+    else:
+        shell_align_write('.', msg, FOUND_NONVERCHECK_MSG)
+        return True
+
+
+def main():
+    """Check external software packages with minimum versions as
+       required for both minimal core and fully-functional cylc
+       and print user-friendly outcomes from this check."""
+
+    # Introductory message and table header
+    sys.stdout.write('Checking your software...\n\nIndividual results:\n')
+    draw_table_line('-')
+    shell_align_write(' ', 'Package (version requirements)',
+                      'Outcome (version found)')
+    draw_table_line('-')
+
+    # Required module results section
+    shell_centre_write('REQUIRED SOFTWARE')
+    # Assinging a variable so don't rewrite to stdout with another call later
+    req_result = check_python_version((2, 6), (3,))
+    sys.stdout.write('\n')
+
+    # Optional module results section
+    shell_centre_write('OPTIONAL SOFTWARE')
+    # Assinging to dictionary so don't rewrite to stdout with more calls later
+    opt_result = {}
+    for module in opt_python_spec.keys():
+        opt_result[module] = check_py_module_ver(module,
+                                                 opt_python_spec[module])
+    for module in opt_nonpython_spec.keys():
+        opt_result[module] = shell_command_ver(module,
+                                               opt_nonpython_spec[module][0],
+                                               opt_nonpython_spec[module][1])
+    for module in opt_tex_spec:
+        opt_result[module] = shell_command_ver(module,
+                                               tex_commands(module), False)
+    draw_table_line('-')
+    sys.stdout.write('\n')
+
+    # Print-out of specific results for core and optional functionalities
+    sys.stdout.write('Overall result:\n')
+    if req_result:
+        req_words = ['ok', '', '&', ' also', '', ' also', 'however']
+    else:
+        reqfail_text = ' once core requirements are installed,'
+        req_words = ['not ok', ' not', 'but otherwise', '', reqfail_text,
+                     '', '& additionally' + reqfail_text]
+    shell_centre_write('You do%s have the required packages meeting minimum' %
+                       req_words[1])
+    shell_centre_write('version requirements, so core cylc will%s work' %
+                       req_words[1])
+    failed_func = []
+    for functionality in functionality_reqs.keys():
+        for module in functionality_reqs[functionality]:
+            if not opt_result[module]:
+                failed_func.append(functionality)
+                break
+    if len(failed_func) == 0:
+        shell_centre_write('%s you have%s satisfied all optional package '
+                           'requirements' % (req_words[2], req_words[3]))
+        shell_centre_write('so%s all non-essential but recommended aspects '
+                           'of' % req_words[4])
+        shell_centre_write('cylc will%s work with full functionality.' %
+                           req_words[5])
+    else:
+        shell_centre_write('%s' % req_words[6])
+        shell_centre_write('due to lack of &/or sub-minimal versions for '
+                           'optional software (see ')
+        shell_centre_write("'individual results'), the following "
+                           'non-essential but recommended')
+        shell_centre_write('aspect%s of cylc will not work with full '
+                           'functionality:\n' % ('s' if len(failed_func) > 1
+                                                 else ''))
+        for functionality in enumerate(failed_func, 1):
+            shell_centre_write('%s) %s' % functionality)
+    sys.stdout.write('\n')
+
+    # Final summary print for clear pass/fail final outcome
+    sys.stdout.write('Summary:\n')
+    shell_centre_write('*' * 28)
+    shell_centre_write('Requirements: %s' % req_words[0])
+    shell_centre_write('Full-functionality: %s' % ('ok' if
+                                                   len(failed_func) == 0 else
+                                                   'not ok'))
+    shell_centre_write('*' * 28)
+
+    sys.exit()
+
+
+if __name__ == '__main__':
+    if 'help' in sys.argv or '--help' in sys.argv:
+        print __doc__
+    else:
+        main()
