@@ -128,15 +128,17 @@ class TaskMessage(object):
                 for message in messages:
                     client.put_message(self.task_id, self.severity, message)
             except ClientError as exc:
-                sys.stderr.write("Send message: try %s of %s failed: %s\n" % (
-                    i, max_tries, exc))
+                sys.stderr.write(
+                    "%s WARNING - Send message: try %s of %s failed: %s\n" % (
+                        get_current_time_string(), i, max_tries, exc))
                 # Break if:
                 # * Exhausted number of tries.
                 # * Contact info file not found, suite probably not running.
                 #   Don't bother with retry, suite restart will poll any way.
                 if i >= max_tries or isinstance(exc, ClientInfoError):
                     # Issue a warning and let the task carry on
-                    sys.stderr.write("WARNING: MESSAGE SEND FAILED\n")
+                    sys.stderr.write("%s WARNING - MESSAGE SEND FAILED\n" % (
+                        get_current_time_string()))
                 else:
                     sys.stderr.write(
                         "   retry in %s seconds, timeout is %s\n" % (
@@ -151,8 +153,8 @@ class TaskMessage(object):
                     # Continue to write to STDERR, so users can easily see that
                     # it has recovered from previous failures.
                     sys.stderr.write(
-                        "Send message: try %s of %s succeeded\n" % (
-                            i, max_tries))
+                        "%s INFO - Send message: try %s of %s succeeded\n" % (
+                            get_current_time_string(), i, max_tries))
                 break
 
     def _send_by_ssh(self):
