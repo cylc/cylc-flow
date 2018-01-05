@@ -79,8 +79,8 @@ __END__
 cylc scan --comms-timeout=5 -rb -n "${SUITE_NAME}" >'scan-r.out' 2>'/dev/null'
 cmp_ok 'scan-r.out' <<__END__
 ${SUITE_NAME}|${USER}|${HOST}|port|${PORT}
-${SUITE_NAME}|${USER}|${HOST}|title|Authentication test suite.
 ${SUITE_NAME}|${USER}|${HOST}|description|Stalls when the first task fails. Suite overrides global authentication settings.
+${SUITE_NAME}|${USER}|${HOST}|title|Authentication test suite.
 ${SUITE_NAME}|${USER}|${HOST}|states|failed:1 waiting:1
 ${SUITE_NAME}|${USER}|${HOST}|states:1|failed:1 waiting:1
 __END__
@@ -89,18 +89,20 @@ __END__
 cylc scan --comms-timeout=5 -jb -n "${SUITE_NAME}" >'scan-j.out' 2>'/dev/null'
 cmp_json_ok 'scan-j.out' 'scan-j.out' <<__END__
 {
-    "${SUITE_NAME}": {
-        "owner": "${USER}",
-        "host": "${HOST}",
-        "port": "${PORT}",
-        "title": "Authentication test suite.",
-        "description": "Stalls when the first task fails. Suite overrides global authentication settings.",
-		"states": {
-			"1": {
-                "failed": 1,
-				"waiting": 1
-			}
-		}
+    "${SUITE_NAME}":{
+        "owner":"${USER}",
+        "states":{
+            "1":{
+                "failed":1,
+                "waiting":1
+            }
+        },
+        "host":"${HOST}",
+        "meta":{
+            "description":"Stalls when the first task fails. Suite overrides global authentication settings.",
+            "title":"Authentication test suite."
+        },
+        "port":"${PORT}"
     }
 }
 __END__
