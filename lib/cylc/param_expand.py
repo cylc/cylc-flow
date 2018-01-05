@@ -267,7 +267,8 @@ class GraphExpander(object):
     """Handle parameter expansion of graph string lines."""
 
     _REMOVE = -32768
-    _REMOVE_REC = re.compile(r'^.*' + str(_REMOVE) + r'.*?=>\s*?')
+    _REMOVE_REC = re.compile(
+        r'(?:^|\s*=>).*' + str(_REMOVE) + r'.*?(?:$|=>\s*?)')
 
     def __init__(self, parameters):
         """Initialize the parameterized task name expander.
