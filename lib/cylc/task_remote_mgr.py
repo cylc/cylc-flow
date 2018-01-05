@@ -250,7 +250,9 @@ class TaskRemoteMgr(object):
                 cmd.append('--debug')
             cmd.append(os.path.join(GLOBAL_CFG.get_derived_host_item(
                 self.suite, 'suite run directory', host, owner)))
-            procs[(host, owner)] = (cmd, Popen(cmd, stdout=PIPE, stderr=PIPE))
+            procs[(host, owner)] = (
+                cmd,
+                Popen(cmd, stdout=PIPE, stderr=PIPE, stdin=open(os.devnull)))
         # Wait for commands to complete for a max of 10 seconds
         timeout = time() + 10.0
         while procs and time() < timeout:
