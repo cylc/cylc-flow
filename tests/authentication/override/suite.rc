@@ -9,10 +9,18 @@ Suite overrides global authentication settings."""
     [[authentication]]
         public = shutdown
 [scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    final cycle point = 2
     [[dependencies]]
-        graph = foo => bar
+        [[[R/1]]]
+           graph = foo => bar
+        [[[R/2]]]
+           graph = bar[-P1] => pub
 [runtime]
     [[foo]]
         script = /bin/false
     [[bar]]
+        script = /bin/true
+    [[pub]]
         script = /bin/true

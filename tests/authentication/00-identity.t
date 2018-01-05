@@ -95,7 +95,13 @@ __END__
 cylc scan --comms-timeout=5 -jb -n "${SUITE_NAME}" 'localhost' \
     >'scan-j.out' 2>'/dev/null'
 cmp_json_ok 'scan-j.out' 'scan-j.out' << __END__
-{}
+{
+    "${SUITE_NAME}":{
+        "owner":"${USER}",
+        "host":"localhost",
+        "port":${PORT}
+    }
+}
 __END__
 
 # "cylc show" should be denied.

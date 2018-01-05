@@ -60,8 +60,9 @@ ${SUITE_NAME} ${USER}@${HOST}:${PORT}
    custom_metadata:
       "something_custom"
    Task state totals:
-      failed:1 waiting:1
+      failed:1 waiting:2
       1 failed:1 waiting:1
+      2 waiting:1
 __END__
 
 cylc scan --comms-timeout=5 -db -n "${SUITE_NAME}" >'scan-d.out' 2>'/dev/null'
@@ -90,8 +91,9 @@ ${SUITE_NAME}|${USER}|${HOST}|description|Stalls when the first task fails. Here
 ${SUITE_NAME}|${USER}|${HOST}|title|Authentication test suite.
 ${SUITE_NAME}|${USER}|${HOST}|another_metadata|1
 ${SUITE_NAME}|${USER}|${HOST}|custom_metadata|something_custom
-${SUITE_NAME}|${USER}|${HOST}|states|failed:1 waiting:1
+${SUITE_NAME}|${USER}|${HOST}|states|failed:1 waiting:2
 ${SUITE_NAME}|${USER}|${HOST}|states:1|failed:1 waiting:1
+${SUITE_NAME}|${USER}|${HOST}|states:2|waiting:1
 __END__
 
 # Check scan --json output.
@@ -103,6 +105,9 @@ cmp_json_ok 'scan-j.out' 'scan-j.out' <<__END__
         "states":{
             "1":{
                 "failed":1,
+                "waiting":1
+            },
+            "2":{
                 "waiting":1
             }
         },
@@ -141,3 +146,4 @@ TEST_NAME="${TEST_NAME_BASE}-stop"
 run_ok "${TEST_NAME}" cylc stop --debug --max-polls=20 --interval=1 "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit
+ 

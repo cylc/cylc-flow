@@ -244,24 +244,23 @@ def main():
         if options.raw_format:
             print "%s|%s|%s|port|%s" % (name, owner, host, port)
             try:
-                items = suite_identity[KEY_META]
+                meta_items = suite_identity[KEY_META]
             except KeyError:
                 # Compat:<=7.5.0
-                items = {
+                meta_items = {
                     "title": suite_identity.get(KEY_TITLE),
                     "description": suite_identity.get(KEY_DESCRIPTION),
                     "update time": suite_identity.get(KEY_UPDATE_TIME)
                 }
-            for key in items:
-                if not items[key] == "" and items[key] is not None:
+            for key, value in meta_items.items():
+                if value:
                     cleaned = ' '.join([x.strip() for x
-                                       in str(items[key]).split('\n') if x])
+                                       in str(value).split('\n') if x])
                     print "%s|%s|%s|%s|%s" % (name, owner, host, key, cleaned)
             totals = suite_identity.get(KEY_STATES)
             if totals is None:
                 continue
-            point_state_lines = get_point_state_count_lines(
-                *totals, use_color=options.color)
+            point_state_lines = get_point_state_count_lines(*totals)
             for point, state_line in point_state_lines:
                 key = KEY_STATES
                 if point:
@@ -281,20 +280,18 @@ def main():
                     "update time": suite_identity.get(KEY_UPDATE_TIME)
                 }
             clean_meta_items = {}
-            for key in meta_items:
-                if not meta_items[key] == "" and meta_items[key] is not None:
-                    if '\n' in meta_items[key]:
-                        clean_meta_items.update({
-                            key: ' '.join([x.strip() for x in
-                                          str(meta_items[key]).split('\n') if
-                                          x])})
-                    else:
-                        clean_meta_items.update({key: meta_items[key]})
-            suite_inf.update({"meta": clean_meta_items})
+            for key, value in meta_items.items():
+                if value:
+                    clean_meta_items.update({
+                        key: ' '.join([x.strip() for x in
+                                      str(value).split('\n') if x])})
+            if len(clean_meta_items) != 0:
+                suite_inf.update({"meta": clean_meta_items})
             totals = suite_identity.get(KEY_STATES)
-            point_inf = {}
             if totals is None:
+                json_dict[name] = suite_inf
                 continue
+            point_inf = {}
             point_state_lines = get_point_state_count_lines(*totals)
             for point, state_line in point_state_lines:
                 state_dict = {}
@@ -307,7 +304,7 @@ def main():
                             except (TypeError, ValueError):
                                 state_dict.update({key: str(value)})
                     point_inf.update({point: state_dict})
-            suite_inf.update({KEY_STATES: point_inf})
+                suite_inf.update({KEY_STATES: point_inf})
             json_dict[name] = suite_inf
             continue
 

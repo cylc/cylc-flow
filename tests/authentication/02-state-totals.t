@@ -60,8 +60,9 @@ ${SUITE_NAME} ${USER}@${HOST}:${PORT}
    custom_metadata:
       "something_custom"
    Task state totals:
-      failed:1 waiting:1
+      failed:1 waiting:2
       1 failed:1 waiting:1
+      2 waiting:1
 __END__
 
 # Check scan --describe output.
@@ -91,8 +92,9 @@ ${SUITE_NAME}|${USER}|${HOST}|description|Stalls when the first task fails. Here
 ${SUITE_NAME}|${USER}|${HOST}|title|Authentication test suite.
 ${SUITE_NAME}|${USER}|${HOST}|another_metadata|1
 ${SUITE_NAME}|${USER}|${HOST}|custom_metadata|something_custom
-${SUITE_NAME}|${USER}|${HOST}|states|failed:1 waiting:1
+${SUITE_NAME}|${USER}|${HOST}|states|failed:1 waiting:2
 ${SUITE_NAME}|${USER}|${HOST}|states:1|failed:1 waiting:1
+${SUITE_NAME}|${USER}|${HOST}|states:2|waiting:1
 __END__
 
 # Check scan --json output.
@@ -104,6 +106,9 @@ cmp_json_ok 'scan-j.out' 'scan-j.out' <<__END__
         "states":{
             "1":{
                 "failed":1,
+                "waiting":1
+            },
+            "2":{
                 "waiting":1
             }
         },
