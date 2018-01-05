@@ -85,8 +85,10 @@ __END__
 cylc scan --comms-timeout=5 -rb -n "${SUITE_NAME}" >'scan-r.out' 2>'/dev/null'
 cmp_ok 'scan-r.out' <<__END__
 ${SUITE_NAME}|${USER}|${HOST}|port|${PORT}
-${SUITE_NAME}|${USER}|${HOST}|title|Authentication test suite.
 ${SUITE_NAME}|${USER}|${HOST}|description|Stalls when the first task fails. Here we test out a multi-line description!
+${SUITE_NAME}|${USER}|${HOST}|title|Authentication test suite.
+${SUITE_NAME}|${USER}|${HOST}|another_metadata|1
+${SUITE_NAME}|${USER}|${HOST}|custom_metadata|something_custom
 ${SUITE_NAME}|${USER}|${HOST}|states|failed:1 waiting:1
 ${SUITE_NAME}|${USER}|${HOST}|states:1|failed:1 waiting:1
 __END__
@@ -95,18 +97,22 @@ __END__
 cylc scan --comms-timeout=5 -jb -n "${SUITE_NAME}" >'scan-j.out' 2>'/dev/null'
 cmp_json_ok 'scan-j.out' 'scan-j.out' <<__END__
 {
-    "${SUITE_NAME}": {
-        "owner": "${USER}",
-        "host": "${HOST}",
-        "port": "${PORT}",
-        "title": "Authentication test suite.",
-        "description": "Stalls when the first task fails. Here we test out a multi-line description!",
-		"states": {
-			"1": {
-                "failed": 1,
-				"waiting": 1
-			}
-		}
+    "${SUITE_NAME}":{
+        "owner":"${USER}",
+        "states":{
+            "1":{
+                "failed":1,
+                "waiting":1
+            }
+        },
+        "host":"${HOST}",
+        "meta":{
+            "another_metadata":"1",
+            "custom_metadata":"something_custom",
+            "description":"Stalls when the first task fails. Here we test out a multi-line description!",
+            "title":"Authentication test suite."
+        },
+        "port":"${PORT}"
     }
 }
 __END__
