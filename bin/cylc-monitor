@@ -34,7 +34,7 @@ from time import sleep, time
 
 from parsec.OrderedDict import OrderedDict
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.httpclient import SuiteRuntimeServiceClient
+from cylc.network.httpclient import SuiteRuntimeServiceClient, ClientError
 from cylc.wallclock import get_time_string_from_unix_time
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.task_state import (
@@ -140,9 +140,9 @@ The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
                     sleep(float(options.update_interval))
             is_cont = True
             try:
-                glbl, task_summaries, fam_summaries = (
-                    self.pclient.get_suite_state_summary())
-            except Exception as exc:
+                glbl, task_summaries = (
+                    self.pclient.get_suite_state_summary()[0:2])
+            except ClientError as exc:
                 print >> sys.stderr, "\033[1;37;41mERROR\033[0m", str(exc)
                 self.reset(suite, options.owner, options.host, options.port,
                            options.comms_timeout)

@@ -51,7 +51,7 @@ to poll. This is useful when you want to use cylc suite-state in a cylc task.
 import os
 import sqlite3
 import sys
-from time import sleep, time
+from time import sleep
 
 from cylc.remote import remrun
 
@@ -64,7 +64,6 @@ from cylc.dbstatecheck import CylcSuiteDBChecker
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.command_polling import Poller
 from cylc.task_state import TASK_STATUSES_ORDERED
-from cylc.cycling.loader import get_point
 
 from isodatetime.parsers import TimePointParser, DurationParser
 

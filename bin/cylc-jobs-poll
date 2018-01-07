@@ -24,7 +24,6 @@ relevant batch system commands to ask the batch systems for more statuses.
 """
 
 
-import sys
 from cylc.remote import remrun
 
 

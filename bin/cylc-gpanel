@@ -35,6 +35,8 @@ To configure default suite hosts, edit the
 from optparse import OptionParser
 import os
 import sys
+import warnings
+warnings.filterwarnings('ignore', 'use the new', Warning)
 
 sys.path.append(
     os.path.dirname(os.path.realpath(os.path.abspath(__file__))) + '/../lib/')
@@ -61,11 +63,7 @@ parser.add_option("--test",
 arglist = [a for a in sys.argv[1:] if not a.startswith("--oaf")]
 (options, args) = parser.parse_args(arglist)
 
-import gtk
-import warnings
-warnings.filterwarnings('ignore', 'use the new', Warning)
-
-import cylc.gui
+import cylc
 
 cylc_dir = os.path.dirname(
     os.path.dirname(os.path.realpath(os.path.abspath(__file__))))
@@ -105,14 +103,14 @@ files into your /usr/lib/bonobo/servers/ directory, or equivalent.
 select "Add to Panel", then choose a Cylc Applet."""
 
 
-def panel_applet_factory_compact(applet, iid):
+def panel_applet_factory_compact(applet, _):
     my_panel_app = ScanPanelApplet(is_compact=True)
     applet.add(my_panel_app.get_widget())
     applet.show_all()
     return True
 
 
-def panel_applet_factory(applet, iid):
+def panel_applet_factory(applet, _):
     my_panel_app = ScanPanelApplet()
     applet.add(my_panel_app.get_widget())
     applet.show_all()

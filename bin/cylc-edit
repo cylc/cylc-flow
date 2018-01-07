@@ -63,7 +63,6 @@ if remrun(forward_x11=True):
 
 import os
 import re
-import datetime
 from subprocess import call
 from shutil import copy
 
@@ -95,7 +94,7 @@ def main():
 
     (options, args) = parser.parse_args()
 
-    suite, suiterc = SuiteSrvFilesManager().parse_suite_arg(options, args[0])
+    suiterc = SuiteSrvFilesManager().parse_suite_arg(options, args[0])[1]
 
     if options.geditor:
         editor = GLOBAL_CFG.get(['editors', 'gui'])

@@ -242,9 +242,11 @@ class TimingSummary(object):
 
     def _check_imports(self):
         try:
-            import pandas as pd
+            import pandas
         except ImportError:
             raise Exception('Cannot import pandas - summary unavailable.')
+        else:
+            del pandas
 
     @staticmethod
     def _reshape_timings(timings):

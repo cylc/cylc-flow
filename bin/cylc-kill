@@ -38,6 +38,7 @@ from cylc.network.httpclient import SuiteRuntimeServiceClient
 
 
 def main():
+    """CLI of "cylc kill"."""
     parser = COP(
         __doc__, comms=True, multitask=True,
         argdoc=[

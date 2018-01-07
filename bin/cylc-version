@@ -35,7 +35,6 @@ if remrun():
 
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.version import CYLC_VERSION
 
 
@@ -45,7 +44,7 @@ def main():
         "--long",
         help="Print the path to the current cylc version",
         action="store_true", dest="long_version", default=False)
-    (options, args) = parser.parse_args()
+    options = parser.parse_args()[0]
     if options.long_version:
         print "%s (%s)" % (CYLC_VERSION, os.environ["CYLC_DIR"])
     else:

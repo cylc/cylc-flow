@@ -44,6 +44,7 @@ REC_BROADCAST_KEY_SECTIONS = re.compile(r"\[([^\]]+)\]")
 
 
 def main():
+    """CLI of "cylc cat-state"."""
     parser = COP(__doc__, argdoc=[("REG", "Suite name")])
 
     parser.add_option(
@@ -56,7 +57,7 @@ def main():
 
     try:
         lines = _get_state_lines(suite)
-    except sqlite3.Error as exc:
+    except sqlite3.Error:
         if cylc.flags.debug:
             traceback.print_exc()
         try:

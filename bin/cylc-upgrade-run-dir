@@ -41,7 +41,7 @@ OLD_LOGFILE_RE = re.compile(
     ([^.]+)  # any cycle time format
     \.
     (\d+)    # submit number
-    (\.
+    (?:\.
       (.*)
     )?       # optional extension
     $""",
@@ -67,13 +67,13 @@ def upgrade_logdir(jobdir):
     print "Upgrading %s" % jobdir
     max_subnums = defaultdict(lambda: defaultdict(int))
     for old_jobfile in os.listdir("."):
-        m = re.match(OLD_LOGFILE_RE, old_jobfile)
+        m = OLD_LOGFILE_RE.match(old_jobfile)
         if not m:
             print >> sys.stderr, (
                 "WARNING: skipping non-standard log file: %s" % old_jobfile)
             continue
         sys.stdout.write(".")
-        task_name, cycle_point, subnum, dot, extn = m.groups()
+        task_name, cycle_point, subnum, extn = m.groups()
         if len(subnum) == 1:
             subnum = "0" + subnum
         new_jobdir = os.path.join(cycle_point, task_name, subnum)
@@ -115,7 +115,7 @@ def upgrade_workdir(workdir):
     os.chdir(workdir)
     print "Upgrading %s" % workdir
     for old_workdir in os.listdir("."):
-        m = re.match(OLD_WORKDIR_RE, old_workdir)
+        m = OLD_WORKDIR_RE.match(old_workdir)
         if not m:
             print >> sys.stderr, (
                 "WARNING: skipping non-standard workdir %s" % old_workdir)
@@ -132,7 +132,7 @@ def main():
 
     parser = OptionParser(__doc__)
 
-    (options, args) = parser.parse_args()
+    args = parser.parse_args()[1]
 
     arg0 = args[0]
     if os.path.isdir(arg0):

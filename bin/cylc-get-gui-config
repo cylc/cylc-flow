@@ -28,7 +28,6 @@ Multiple items can be specified at once."""
 import sys
 from optparse import OptionParser
 import cylc.flags
-from parsec.util import itemstr
 
 
 def main():

@@ -24,7 +24,6 @@ job files from STDIN.
 """
 
 
-import sys
 from cylc.remote import remrun
 
 

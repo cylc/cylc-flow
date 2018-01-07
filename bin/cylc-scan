@@ -301,9 +301,6 @@ def main():
                 print indent * 2 + line
 
         totals = suite_identity.get(KEY_STATES)
-        if totals is not None:
-            state_count_totals, state_count_cycles = totals
-
         if options.print_totals:
             if totals is None:
                 print indent + bold("(state totals withheld)")

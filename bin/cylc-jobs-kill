@@ -25,7 +25,6 @@ terminate the jobs.
 """
 
 
-import sys
 from cylc.remote import remrun
 
 
