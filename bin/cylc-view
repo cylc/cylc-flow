@@ -154,7 +154,7 @@ def main():
     command_list.append(viewfile.name)
     command = ' '.join(command_list)
     # THIS BLOCKS UNTIL THE COMMAND COMPLETES
-    retcode = call(command_list, open(os.devnull))
+    retcode = call(command_list)
     if retcode != 0:
         # the command returned non-zero exist status
         print >> sys.stderr, command, 'failed:', retcode
