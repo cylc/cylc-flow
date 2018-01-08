@@ -241,27 +241,33 @@ def main():
             print name, owner, host, port
             continue
 
-        if options.raw_format:
-            print "%s|%s|%s|port|%s" % (name, owner, host, port)
+        if options.raw_format or options.json_format or options.describe:
+            # Extracting required data for these options before processing
             try:
                 meta_items = suite_identity[KEY_META]
             except KeyError:
                 # Compat:<=7.5.0
                 meta_items = {
                     "title": suite_identity.get(KEY_TITLE),
-                    "description": suite_identity.get(KEY_DESCRIPTION),
-                    "update time": suite_identity.get(KEY_UPDATE_TIME)
+                    "description": suite_identity.get(KEY_DESCRIPTION)
                 }
-            for key, value in meta_items.items():
-                if value:
-                    cleaned = ' '.join([x.strip() for x
-                                       in str(value).split('\n') if x])
-                    print "%s|%s|%s|%s|%s" % (name, owner, host, key, cleaned)
-            totals = suite_identity.get(KEY_STATES)
+            if not options.describe:
+                suite_identity.get(KEY_UPDATE_TIME)
+                clean_meta_items = {}
+                for key, value in meta_items.items():
+                    if value:
+                        clean_meta_items.update({
+                            key: ' '.join([x.strip() for x in
+                                          str(value).split('\n') if x])})
+                totals = suite_identity.get(KEY_STATES)
+
+        if options.raw_format:
+            print "%s|%s|%s|port|%s" % (name, owner, host, port)
+            for key, value in clean_meta_items.items():
+                print "%s|%s|%s|%s|%s" % (name, owner, host, key, value)
             if totals is None:
                 continue
-            point_state_lines = get_point_state_count_lines(*totals)
-            for point, state_line in point_state_lines:
+            for point, state_line in get_point_state_count_lines(*totals):
                 key = KEY_STATES
                 if point:
                     key = "%s:%s" % (KEY_STATES, point)
@@ -270,30 +276,13 @@ def main():
 
         if options.json_format:
             suite_inf = {"owner": owner, "host": host, "port": port}
-            try:
-                meta_items = suite_identity[KEY_META]
-            except KeyError:
-                # Compat:<=7.5.0
-                meta_items = {
-                    "title": suite_identity.get(KEY_TITLE),
-                    "description": suite_identity.get(KEY_DESCRIPTION),
-                    "update time": suite_identity.get(KEY_UPDATE_TIME)
-                }
-            clean_meta_items = {}
-            for key, value in meta_items.items():
-                if value:
-                    clean_meta_items.update({
-                        key: ' '.join([x.strip() for x in
-                                      str(value).split('\n') if x])})
             if len(clean_meta_items) != 0:
                 suite_inf.update({"meta": clean_meta_items})
-            totals = suite_identity.get(KEY_STATES)
             if totals is None:
                 json_dict[name] = suite_inf
                 continue
             point_inf = {}
-            point_state_lines = get_point_state_count_lines(*totals)
-            for point, state_line in point_state_lines:
+            for point, state_line in get_point_state_count_lines(*totals):
                 state_dict = {}
                 if point:
                     for state_inf in state_line.split(' '):
@@ -321,15 +310,6 @@ def main():
             print line
 
         if options.describe:
-            try:
-                meta_items = suite_identity[KEY_META]
-            except KeyError:
-                # Compat:<=7.5.0
-                meta_items = {
-                    "title": suite_identity.get(KEY_TITLE),
-                    "description": suite_identity.get(KEY_DESCRIPTION)
-                }
-
             # Deal with title first for case of just withheld statement
             if meta_items["title"] is None:
                 print indent + bold("(description and state totals "
