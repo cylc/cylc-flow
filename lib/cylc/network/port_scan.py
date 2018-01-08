@@ -261,7 +261,8 @@ def get_scan_items_from_fs(owner_pattern=None, updater=None):
                     pwent.pw_name))
     if cylc.flags.debug:
         sys.stderr.write('Listing suites:%s%s\n' % (
-            DEBUG_DELIM, DEBUG_DELIM.join(item[1] for item in run_dirs)))
+            DEBUG_DELIM, DEBUG_DELIM.join(item[1] for item in run_dirs if
+                                          item[1] is not None)))
     items = []
     for run_d, owner in run_dirs:
         for dirpath, dnames, fnames in os.walk(run_d, followlinks=True):
