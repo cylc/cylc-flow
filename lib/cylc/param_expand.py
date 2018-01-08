@@ -316,22 +316,17 @@ class GraphExpander(object):
                     raise ParamExpandError(
                         "ERROR, parameter %s is not defined in <%s>: %s" % (
                             pname, p_group, line))
-                if offs:
-                    if offs.startswith('+'):
+                if offs and offs.startswith('='):
+                    # Check that specific parameter values exist.
+                    val = offs[1:]
+                    try:
+                        nval = int(val)
+                    except ValueError:
+                        nval = val
+                    if not item_in_iterable(nval, self.param_cfg[pname]):
                         raise ParamExpandError(
-                            "ERROR, +ve parameter offsets are not"
-                            " supported: %s%s" % (pname, offs))
-                    elif offs.startswith('='):
-                        # Check that specific parameter values exist.
-                        val = offs[1:]
-                        try:
-                            nval = int(val)
-                        except ValueError:
-                            nval = val
-                        if not item_in_iterable(nval, self.param_cfg[pname]):
-                            raise ParamExpandError(
-                                "ERROR, parameter %s out of range: %s" % (
-                                    pname, p_group))
+                            "ERROR, parameter %s out of range: %s" % (
+                                pname, p_group))
                 if pname not in used_pnames:
                     used_pnames.append(pname)
         used_params = [(p, self.param_cfg[p]) for p in used_pnames]
@@ -370,10 +365,10 @@ class GraphExpander(object):
                         plist = all_params[pname]
                         cur_idx = plist.index(values[pname])
                         off_idx = cur_idx + int(offs)
-                        if off_idx < 0:
-                            offval = self._REMOVE
-                        else:
+                        if 0 <= off_idx < len(plist):
                             offval = plist[off_idx]
+                        else:
+                            offval = self._REMOVE
                         param_values[pname] = offval
                 for pname in param_values:
                     tmpl += self.param_tmpl_cfg[pname]
@@ -382,10 +377,11 @@ class GraphExpander(object):
                 except KeyError as exc:
                     raise ParamExpandError('ERROR: parameter %s is not '
                                            'defined.' % str(exc.args[0]))
-                line = re.sub('<' + p_group + '>', repl, line)
-                # Remove out-of-range nodes to first arrow.
+                line = line.replace('<' + p_group + '>', repl)
+                # Remove out-of-range nodes
                 line = self._REMOVE_REC.sub('', line)
-            line_set.add(line)
+            if line:
+                line_set.add(line)
         else:
             # Recurse through index ranges.
             for param_val in param_list[0][1]:
@@ -399,13 +395,10 @@ class TestParamExpand(unittest.TestCase):
 
     def setUp(self):
         """Create some parameters and templates for use in tests."""
-        ivals = list(range(2))
-        jvals = list(range(3))
-        kvals = list(range(2))
-        params_map = {'i': ivals, 'j': jvals, 'k': kvals}
-        templates = {'i': '_i%(i)s',
-                     'j': '_j%(j)s',
-                     'k': '_k%(k)s'}
+        params_map = {'a': [-3, -1], 'i': [0, 1], 'j': [0, 1, 2], 'k': [0, 1]}
+        # k has template is deliberately bad
+        templates = {
+            'a': '_a%(a)d', 'i': '_i%(i)d', 'j': '_j%(j)d', 'k': '_k%(z)d'}
         self.name_expander = NameExpander((params_map, templates))
         self.graph_expander = GraphExpander((params_map, templates))
 
@@ -469,22 +462,19 @@ class TestParamExpand(unittest.TestCase):
         """Test foo<0,j> fails."""
         # It should be foo<i=0,j>.
         self.assertRaises(ParamExpandError,
-                          self.name_expander.expand,
-                          'foo<0,j>')
+                          self.name_expander.expand, 'foo<0,j>')
 
     def test_name_fail_undefined_param(self):
         """Test that an undefined parameter gets failed."""
         # m is not defined.
         self.assertRaises(ParamExpandError,
-                          self.name_expander.expand,
-                          'foo<m,j>')
+                          self.name_expander.expand, 'foo<m,j>')
 
     def test_name_fail_param_value_too_high(self):
         """Test that an out-of-range parameter gets failed."""
         # i stops at 3.
         self.assertRaises(ParamExpandError,
-                          self.name_expander.expand,
-                          'foo<i=4,j>')
+                          self.name_expander.expand, 'foo<i=4,j>')
 
     def test_name_multiple(self):
         """Test expansion of two names, with one and two parameters."""
@@ -515,8 +505,7 @@ class TestParamExpand(unittest.TestCase):
     def test_graph_expand_2(self):
         """Test graph expansion to 'branch and merge' a workflow."""
         self.assertEqual(
-            self.graph_expander.expand(
-                "pre=>bar<i>=>baz<i,j>=>post"),
+            self.graph_expander.expand("pre=>bar<i>=>baz<i,j>=>post"),
             set(["pre=>bar_i0=>baz_i0_j1=>post",
                  "pre=>bar_i1=>baz_i1_j2=>post",
                  "pre=>bar_i0=>baz_i0_j2=>post",
@@ -525,17 +514,29 @@ class TestParamExpand(unittest.TestCase):
                  "pre=>bar_i0=>baz_i0_j0=>post"])
         )
 
-    def test_graph_expand_offset(self):
-        """Test graph expansion with an offset."""
+    def test_graph_expand_3(self):
+        """Test graph expansion -ve integers."""
         self.assertEqual(
-            self.graph_expander.expand(
-                "bar<i-1,j>=>baz<i,j>"),
+            self.graph_expander.expand("bar<a>"),
+            set(["bar_a-1", "bar_a-3"]))
+
+    def test_graph_expand_offset_1(self):
+        """Test graph expansion with a -ve offset."""
+        self.assertEqual(
+            self.graph_expander.expand("bar<i-1,j>=>baz<i,j>"),
             set(["baz_i0_j0",
                  "baz_i0_j1",
                  "baz_i0_j2",
                  "bar_i0_j0=>baz_i1_j0",
                  "bar_i0_j1=>baz_i1_j1",
                  "bar_i0_j2=>baz_i1_j2"])
+        )
+
+    def test_graph_expand_offset_2(self):
+        """Test graph expansion with a +ve offset."""
+        self.assertEqual(
+            self.graph_expander.expand("baz<i>=>baz<i+1>"),
+            set(["baz_i0=>baz_i1"])
         )
 
     def test_graph_expand_specific(self):
@@ -553,32 +554,24 @@ class TestParamExpand(unittest.TestCase):
     def test_graph_fail_bare_value(self):
         """Test that a bare parameter value fails in the graph."""
         self.assertRaises(ParamExpandError,
-                          self.graph_expander.expand,
-                          'foo<0,j>=>bar<i,j>')
+                          self.graph_expander.expand, 'foo<0,j>=>bar<i,j>')
 
     def test_graph_fail_undefined_param(self):
         """Test that an undefined parameter value fails in the graph."""
         self.assertRaises(ParamExpandError,
-                          self.graph_expander.expand,
-                          'foo<m,j>=>bar<i,j>')
+                          self.graph_expander.expand, 'foo<m,j>=>bar<i,j>')
 
     def test_graph_fail_param_value_too_high(self):
         """Test that an out-of-range parameter value fails in the graph."""
         self.assertRaises(ParamExpandError,
-                          self.graph_expander.expand,
-                          'foo<i=4,j><i,j>')
+                          self.graph_expander.expand, 'foo<i=4,j><i,j>')
 
     def test_template_fail_missing_param(self):
         """Test a template string specifying a non-existent parameter."""
-        kvals = [str(k) for k in range(2)]
-        params_map = {'k': kvals}
-        templates = {'k': '_%(z)s'}
-        self.assertRaises(ParamExpandError,
-                          NameExpander((params_map, templates,)).expand,
-                          'foo<k>')
-        self.assertRaises(ParamExpandError,
-                          GraphExpander((params_map, templates,)).expand,
-                          'foo<k>')
+        self.assertRaises(
+            ParamExpandError, self.name_expander.expand, 'foo<k>')
+        self.assertRaises(
+            ParamExpandError, self.graph_expander.expand, 'foo<k>')
 
 
 if __name__ == "__main__":
