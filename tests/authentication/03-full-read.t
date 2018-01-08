@@ -88,10 +88,10 @@ __END__
 cylc scan --comms-timeout=5 -rb -n "${SUITE_NAME}" >'scan-r.out' 2>'/dev/null'
 cmp_ok 'scan-r.out' <<__END__
 ${SUITE_NAME}|${USER}|${HOST}|port|${PORT}
-${SUITE_NAME}|${USER}|${HOST}|description|Stalls when the first task fails. Here we test out a multi-line description!
-${SUITE_NAME}|${USER}|${HOST}|title|Authentication test suite.
 ${SUITE_NAME}|${USER}|${HOST}|another_metadata|1
 ${SUITE_NAME}|${USER}|${HOST}|custom_metadata|something_custom
+${SUITE_NAME}|${USER}|${HOST}|description|Stalls when the first task fails. Here we test out a multi-line description!
+${SUITE_NAME}|${USER}|${HOST}|title|Authentication test suite.
 ${SUITE_NAME}|${USER}|${HOST}|states|failed:1 waiting:2
 ${SUITE_NAME}|${USER}|${HOST}|states:1|failed:1 waiting:1
 ${SUITE_NAME}|${USER}|${HOST}|states:2|waiting:1
