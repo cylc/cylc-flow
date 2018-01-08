@@ -550,8 +550,12 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         try:
             self.filter_highlight_color = gtk.gdk.color_parse(hcolor)
         except Exception:
-            print >> sys.stderr, ("WARNING: bad gcylc.rc 'task filter "
-                                  "highlight color' (defaulting to yellow)")
+            try:
+                print >> sys.stderr, ("WARNING: bad gcylc.rc 'task filter "
+                                      "highlight color' (defaulting to yellow)"
+                                     )
+            except IOError:
+                pass  # Cannot print to terminal (session may be closed).
             self.filter_highlight_color = gtk.gdk.color_parse("yellow")
 
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
@@ -596,9 +600,12 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
         for filter_state in filter_excl:
             if filter_state not in TASK_STATUSES_ALL:
-                print >> sys.stderr, ("WARNING: bad gcylc.rc 'task states to "
-                                      "filter out' value (ignoring): %s" %
-                                      filter_state)
+                try:
+                    print >> sys.stderr, (
+                        "WARNING: bad gcylc.rc 'task states to filter out' "
+                        "value (ignoring): %s" % filter_state)
+                except IOError:
+                    pass  # Cannot print to terminal (session may be closed).
                 filter_excl.remove(filter_state)
 
         self.filter_states_excl = filter_excl
@@ -1192,7 +1199,10 @@ been defined for this suite""").inform()
         options += self.get_remote_run_opts()
 
         command += ' ' + options + ' ' + self.cfg.suite + ' ' + point_string
-        print command
+        try:
+            print command
+        except IOError:
+            pass  # Cannot print to terminal (session may be closed).
 
         try:
             Popen([command], shell=True, stdin=open(os.devnull))
