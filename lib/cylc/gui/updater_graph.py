@@ -306,7 +306,11 @@ class GraphUpdater(threading.Thread):
             )
         except ClientError:
             if cylc.flags.debug:
-                traceback.print_exc()
+                try:
+                    traceback.print_exc()
+                except IOError:
+                    pass  # Cannot print to terminal (session may be closed).
+
             return False
 
         self.have_leaves_and_feet = True

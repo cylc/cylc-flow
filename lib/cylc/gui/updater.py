@@ -243,7 +243,10 @@ class Updater(threading.Thread):
         except ClientError:
             # Bad credential, suite not running, starting up or just stopped?
             if cylc.flags.debug:
-                traceback.print_exc()
+                try:
+                    traceback.print_exc()
+                except IOError:
+                    pass  # Cannot print to terminal (session may be closed).
             self.set_stopped()
             return
         # OK
