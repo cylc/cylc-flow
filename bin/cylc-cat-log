@@ -362,7 +362,7 @@ def main():
             sys.stderr.write(
                 " ".join(quote(item) for item in command) + "\n")
             stderr = None
-        proc = Popen(command, stdin=open(os.devnull), stderr=stderr)
+        proc = Popen(command, stderr=stderr)
         err = proc.communicate()[1]
         ret_code = proc.wait()
         if ret_code == 0:
