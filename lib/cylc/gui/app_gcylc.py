@@ -553,7 +553,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             try:
                 print >> sys.stderr, ("WARNING: bad gcylc.rc 'task filter "
                                       "highlight color' (defaulting to yellow)"
-                                     )
+                                      )
             except IOError:
                 pass  # Cannot print to terminal (session may be closed).
             self.filter_highlight_color = gtk.gdk.color_parse("yellow")
