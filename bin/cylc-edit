@@ -171,7 +171,7 @@ def main():
     command_list.append(suiterc)
     command = ' '.join(command_list)
     # THIS BLOCKS UNTIL THE COMMAND COMPLETES
-    retcode = call(command_list, stdin=open(os.devnull))
+    retcode = call(command_list)
     if retcode != 0:
         # the command returned non-zero exist status
         print >> sys.stderr, command, 'failed:', retcode
