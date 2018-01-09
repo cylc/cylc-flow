@@ -24,6 +24,7 @@ TODO - factor more commonality out of MyDotWindow, MyDotWindow2
 import gtk
 import os
 import re
+import sys
 import xdot
 
 from cylc.config import SuiteConfig
@@ -93,7 +94,8 @@ class CylcDotViewerCommon(xdot.DotWindow):
                                         message_format=msg)
                 dia.run()
                 dia.destroy()
-            return False
+                return False
+            sys.exit(1)
         self.inherit = self.suiterc.get_parent_lists()
         return True
 
