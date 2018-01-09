@@ -88,6 +88,16 @@ class TaskTrigger(object):
                 self.cycle_point_offset, point)
         return point
 
+    def __str__(self):
+        if self.abs_cycle_point:
+            return '%s[%s]:%s' % (self.task_name, self.abs_cycle_point,
+                                  self.output)
+        elif self.cycle_point_offset:
+            return '%s[%s]:%s' % (self.task_name, self.cycle_point_offset,
+                                  self.output)
+        else:
+            return '%s:%s' % (self.task_name, self.output)
+
     @staticmethod
     def get_trigger_name(trigger_name):
         """Standardise a trigger name.
@@ -181,6 +191,17 @@ class Dependency(object):
 
         """
         return ''.join(self._stringify_list(self._exp, point))
+
+    def __str__(self):
+        ret = []
+        if self.suicide:
+            ret.append('!')
+        for item in self._exp:
+            if isinstance(item, list):
+                ret.append(str(item))
+            else:
+                ret.append('( %s )' % str(item))
+        return ' '.join(ret)
 
     @classmethod
     def _stringify_list(cls, nested_expr, point):

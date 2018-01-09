@@ -1,0 +1,11 @@
+2017-12-27T14:42:10Z INFO - Initial point: 1
+2017-12-27T14:42:10Z INFO - Final point: 3
+2017-12-27T14:42:10Z INFO - [showdown.1] -triggered off []
+2017-12-27T14:42:13Z INFO - [ugly.1] -triggered off ['showdown.1']
+2017-12-27T14:42:16Z INFO - [fin.1] -triggered off ['ugly.1']
+2017-12-27T14:42:19Z INFO - [showdown.2] -triggered off ['fin.1']
+2017-12-27T14:42:22Z INFO - [bad.2] -triggered off ['showdown.2']
+2017-12-27T14:42:25Z INFO - [fin.2] -triggered off ['bad.2']
+2017-12-27T14:42:28Z INFO - [showdown.3] -triggered off ['fin.2']
+2017-12-27T14:42:32Z INFO - [good.3] -triggered off ['showdown.3']
+2017-12-27T14:42:35Z INFO - [fin.3] -triggered off ['good.3']
