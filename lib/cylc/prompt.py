@@ -21,7 +21,8 @@ import sys
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 
 
-def prompt(question, force=False, gui=False, no_force=False, no_abort=False):
+def prompt(question, force=False, gui=False, no_force=False, no_abort=False,
+           keep_above=True):
     """Interactive Yes/No prompt for cylc CLI scripts.
 
     For convenience, on No we just exit rather than return.
@@ -38,6 +39,7 @@ def prompt(question, force=False, gui=False, no_force=False, no_abort=False):
             gtk.MESSAGE_QUESTION, gtk.BUTTONS_YES_NO,
             question
         )
+        dialog.set_keep_above(keep_above)
         gui_response = dialog.run()
         response_no = (gui_response != gtk.RESPONSE_YES)
     else:
