@@ -121,7 +121,7 @@ def main():
     if options.dry_run:
         while waiting_tasks:
             prep_tasks, bad_tasks = task_job_mgr.prep_submit_task_jobs(
-                suite, itasks, dry_run=True)
+                suite, waiting_tasks, dry_run=True)
             for itask in prep_tasks + bad_tasks:
                 waiting_tasks.remove(itask)
             if waiting_tasks:
@@ -137,7 +137,7 @@ def main():
                 ret_code = 1
     else:
         while waiting_tasks:
-            for itask in task_job_mgr.submit_task_jobs(suite, itasks):
+            for itask in task_job_mgr.submit_task_jobs(suite, waiting_tasks):
                 waiting_tasks.remove(itask)
             if waiting_tasks:
                 task_job_mgr.proc_pool.handle_results_async()
