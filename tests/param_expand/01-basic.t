@@ -353,7 +353,7 @@ cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/17.graph.ref" '17.graph'
 cat >'suite.rc' <<'__SUITE__'
 [cylc]
     [[parameters]]
-        m = -11..-7..2
+        m = -12..12..6
 [scheduling]
     [[dependencies]]
         graph = "foo<m>"
