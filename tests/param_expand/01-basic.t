@@ -219,7 +219,7 @@ __ERR__
 cat >'suite.rc' <<'__SUITE__'
 [cylc]
     [[parameters]]
-        j = 1..5
+        j = +1..+5
     [[parameter templates]]
         j = @%(j)03d
 [scheduling]
