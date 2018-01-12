@@ -28,9 +28,9 @@ for I in 13 37 61; do
         [[[batch systems]]]
             [[[[pbs]]]]
                 job name length maximum = ${I}"
-run_ok "${TEST_NAME_BASE}-${I}" cylc jobscript "${SUITE_NAME}" \
-    "abcdefghijklmnopqrstuvwxyz_0123456789.1"
-contains_ok "${TEST_NAME_BASE}-${I}.stdout" <<__OUT__
+    run_ok "${TEST_NAME_BASE}-${I}" cylc jobscript "${SUITE_NAME}" \
+        "abcdefghijklmnopqrstuvwxyz_0123456789.1"
+    contains_ok "${TEST_NAME_BASE}-${I}.stdout" <<__OUT__
 #PBS -N $(cut -c1-${I} <<<"abcdefghijklmnopqrstuvwxyz_0123456789.1.${SUITE_NAME}")
 __OUT__
 done

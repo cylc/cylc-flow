@@ -35,6 +35,7 @@ if remrun():
     sys.exit(0)
 
 import os
+from time import sleep
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.config import SuiteConfig
@@ -102,7 +103,7 @@ def main():
     GLOBAL_CFG.create_cylc_run_tree(suite)
     task_job_mgr = TaskJobManager(
         suite, SuiteProcPool(), SuiteDatabaseManager(), suite_srv_mgr)
-    task_job_mgr.single_task_mode = True
+    task_job_mgr.task_remote_mgr.single_task_mode = True
     task_job_mgr.job_file_writer.set_suite_env({
         'CYLC_UTC': str(config.cfg['cylc']['UTC mode']),
         'CYLC_DEBUG': str(cylc.flags.debug),
@@ -116,8 +117,17 @@ def main():
     })
 
     ret_code = 0
+    waiting_tasks = list(itasks)
     if options.dry_run:
-        task_job_mgr.prep_submit_task_jobs(suite, itasks, dry_run=True)
+        while waiting_tasks:
+            prep_tasks, bad_tasks = task_job_mgr.prep_submit_task_jobs(
+                suite, waiting_tasks, dry_run=True)
+            for itask in prep_tasks + bad_tasks:
+                waiting_tasks.remove(itask)
+            if waiting_tasks:
+                task_job_mgr.proc_pool.handle_results_async()
+                sleep(1.0)
+
         for itask in itasks:
             if itask.local_job_file_path:
                 print('JOB SCRIPT=%s' % itask.local_job_file_path)
@@ -126,7 +136,12 @@ def main():
                     'Unable to prepare job file for %s' % itask.identity)
                 ret_code = 1
     else:
-        task_job_mgr.submit_task_jobs(suite, itasks)
+        while waiting_tasks:
+            for itask in task_job_mgr.submit_task_jobs(suite, waiting_tasks):
+                waiting_tasks.remove(itask)
+            if waiting_tasks:
+                task_job_mgr.proc_pool.handle_results_async()
+                sleep(1.0)
         while task_job_mgr.proc_pool.results:
             task_job_mgr.proc_pool.handle_results_async()
         task_job_mgr.proc_pool.close()

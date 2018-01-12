@@ -1,7 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env python
+
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2018 NIWA
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -14,17 +15,20 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-------------------------------------------------------------------------------
-# Test host selection
-. "$(dirname "$0")/test_header"
-set_test_number 3
+"""cylc [task] remote-tidy RUND
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
+(This command is for internal use.)
+Remove ".service/contact" from a task remote (i.e. a [owner@]host).
+Remove ".service" directory on the remote if emptied.
 
-N_HOST_SELECT_CMDS="$(ls "${SUITE_RUN_DIR}/host-select-"* | wc -l)"
-run_ok "${TEST_NAME_BASE}-n-host-select-cmds" test "${N_HOST_SELECT_CMDS}" -eq 1
-purge_suite "${SUITE_NAME}"
-exit
+"""
+
+
+from cylc.remote import remrun
+
+
+if __name__ == '__main__' and not remrun():
+    from cylc.option_parsers import CylcOptionParser as COP
+    from cylc.task_remote_cmd import remote_tidy
+    parser = COP(__doc__, argdoc=[('RUND', 'The run directory of the suite')])
+    remote_tidy(parser.parse_args()[1][0])  # position argument 1, rund

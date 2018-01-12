@@ -59,11 +59,13 @@ def _run_command(ctx):
 
     try:
         if ctx.cmd_kwargs.get('stdin_file_paths'):
-            stdin_file = TemporaryFile()
-            for file_path in ctx.cmd_kwargs['stdin_file_paths']:
-                for line in open(file_path):
-                    stdin_file.write(line)
-            stdin_file.seek(0)
+            if len(ctx.cmd_kwargs['stdin_file_paths']) > 1:
+                stdin_file = TemporaryFile()
+                for file_path in ctx.cmd_kwargs['stdin_file_paths']:
+                    stdin_file.write(open(file_path, 'rb').read())
+                stdin_file.seek(0)
+            else:
+                stdin_file = open(ctx.cmd_kwargs['stdin_file_paths'][0], 'rb')
         elif ctx.cmd_kwargs.get('stdin_str'):
             stdin_file = PIPE
         else:

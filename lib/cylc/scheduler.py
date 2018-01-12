@@ -55,7 +55,7 @@ from cylc.suite_status import (
     KEY_TASKS_BY_STATE, KEY_TITLE, KEY_UPDATE_TIME)
 from cylc.taskdef import TaskDef
 from cylc.task_id import TaskID
-from cylc.task_job_mgr import TaskJobManager, RemoteJobHostInitError
+from cylc.task_job_mgr import TaskJobManager
 from cylc.task_pool import TaskPool
 from cylc.task_proxy import TaskProxy, TaskProxySequenceBoundsError
 from cylc.task_state import TASK_STATUSES_ACTIVE, TASK_STATUS_FAILED
@@ -452,13 +452,19 @@ conditions; see `cylc conditions`.
         # Re-initialise run directory for user@host for each submitted and
         # running tasks.
         # Note: tasks should all be in the runahead pool at this point.
+        auths = set()
         for itask in self.pool.get_rh_tasks():
             if itask.state.status in TASK_STATUSES_ACTIVE:
-                try:
-                    self.task_job_mgr.init_host(
-                        self.suite, itask.task_host, itask.task_owner)
-                except RemoteJobHostInitError as exc:
-                    LOG.error(str(exc))
+                auths.add((itask.task_host, itask.task_owner))
+        while auths:
+            for host, owner in auths.copy():
+                if self.task_job_mgr.task_remote_mgr.remote_init(
+                        host, owner) is not None:
+                    auths.remove((host, owner))
+            if auths:
+                sleep(1.0)
+                # Remote init is done via process pool
+                self.proc_pool.handle_results_async()
         self.command_poll_tasks()
 
     def _load_suite_params(self, row_idx, row):
@@ -1168,20 +1174,20 @@ conditions; see `cylc conditions`.
         if cylc.flags.debug:
             LOG.debug("BEGIN TASK PROCESSING")
             time0 = time()
+        if (self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT) and
+                self._get_events_conf('reset inactivity timer')):
+            self.set_suite_inactivity_timer()
         self.pool.match_dependencies()
         if self.stop_mode is None:
             itasks = self.pool.get_ready_tasks()
             if itasks:
                 cylc.flags.iflag = True
+            done_tasks = self.task_job_mgr.submit_task_jobs(
+                self.suite, itasks, self.run_mode == 'simulation')
             if self.config.cfg['cylc']['log resolved dependencies']:
-                for itask in itasks:
-                    if itask.local_job_file_path:
-                        continue
+                for itask in done_tasks:
                     deps = itask.state.get_resolved_dependencies()
                     LOG.info('triggered off %s' % deps, itask=itask)
-
-            self.task_job_mgr.submit_task_jobs(
-                self.suite, itasks, self.run_mode == 'simulation')
         for meth in [
                 self.pool.spawn_all_tasks,
                 self.pool.remove_spent_tasks,
@@ -1454,6 +1460,11 @@ conditions; see `cylc conditions`.
             process = True
             self.task_events_mgr.pflag = False  # reset
 
+        if self.task_job_mgr.task_remote_mgr.ready:
+            # This flag is turned on when a host init/select command completes
+            process = True
+            self.task_job_mgr.task_remote_mgr.ready = False  # reset
+
         self.pool.set_expired_tasks()
         if self.pool.waiting_tasks_ready():
             process = True
@@ -1461,11 +1472,6 @@ conditions; see `cylc conditions`.
         if self.run_mode == 'simulation' and self.pool.sim_time_check(
                 self.message_queue):
             process = True
-
-        if (process and
-                self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT) and
-                self._get_events_conf('reset inactivity timer')):
-            self.set_suite_inactivity_timer()
 
         return process
 
@@ -1523,7 +1529,7 @@ conditions; see `cylc conditions`.
                 ERR.warning("failed to remove suite contact file: %s\n%s\n" % (
                     fname, exc))
             if self.task_job_mgr:
-                self.task_job_mgr.unlink_hosts_contacts(self.suite)
+                self.task_job_mgr.task_remote_mgr.remote_tidy()
 
         # disconnect from suite-db, stop db queue
         try:
@@ -1615,7 +1621,7 @@ conditions; see `cylc conditions`.
             LOG.warning("Unique task match not found: %s" % items)
             return n_warnings + 1
         if self.task_job_mgr.prep_submit_task_jobs(
-                self.suite, [itasks[0]], dry_run=True):
+                self.suite, [itasks[0]], dry_run=True)[0]:
             return n_warnings
         else:
             return n_warnings + 1
