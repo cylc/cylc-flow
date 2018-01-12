@@ -11,8 +11,5 @@ test suite (should be the same)."""
 [runtime]
     [[root]]
         script = """
-CYLC_VERSION_1=$(cylc --version)
-CYLC_VERSION_2=$(cylc get-cylc-version $CYLC_SUITE_NAME)
-if [[ $CYLC_VERSION_1 != $CYLC_VERSION_2 ]]; then
-   exit 1
-fi"""
+diff -u <(cylc --version) <(cylc get-cylc-version "${CYLC_SUITE_NAME}")
+"""

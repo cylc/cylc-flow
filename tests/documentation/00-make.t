@@ -25,6 +25,6 @@ fi
 set_test_number 1
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-make-docs
-run_ok $TEST_NAME make -C $CYLC_DIR/doc
+run_ok $TEST_NAME make -C $CYLC_DIR/doc <'/dev/null'
 #-------------------------------------------------------------------------------
 exit

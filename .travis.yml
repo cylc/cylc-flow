@@ -52,7 +52,7 @@ install:
     - ssh-keyscan -t rsa localhost >> ~/.ssh/known_hosts
 
     # Install dependencies
-    - sudo apt-get install build-essential
+    - sudo apt-get install build-essential texlive-latex-base
     - sudo apt-get install at python-pip python-dev graphviz libgraphviz-dev python-gtk2-dev
       heirloom-mailx
     # Pygraphviz needs special treatment to avoid an error from "from . import release"
@@ -70,5 +70,5 @@ script:
 
 # Check output (more useful if you narrow down what tests get run)
 after_script:
-    - find $HOME/cylc-run -type f -name '*err' -exec echo '==== {} ====' \; -exec cat '{}' \;
+    - find $HOME/cylc-run -name '*.err' -type f -exec echo '==== {} ====' \; -exec cat '{}' \;
     - find /tmp/${USER}/cylctb-* -type f -exec echo '==== {} ====' \; -exec cat '{}' \;

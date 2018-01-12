@@ -27,7 +27,7 @@ class GitCheckoutError(Exception):
 def describe(ref=None):
     """Returns stdout of the `git describe <COMMIT>` command."""
     try:
-        cmd = ['git', 'describe']
+        cmd = ['git', 'describe', '--tags', '--always']
         if ref:
             cmd.append(ref)
         return Popen(

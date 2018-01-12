@@ -54,9 +54,8 @@ then
 else
     fail "${TEST_NAME}"
     # Move/rename profiling files so they will be cat'ed out by travis-ci.
-    PROF_FILES=($(sed 's/Profile files:\(.*\)/\1/' <<< \
-        $(cat "${LOG_DIR}.stderr" | grep 'Profile files:')))
-    for file_path in ${PROF_FILES[@]}; do
+    while read; do
+        file_path="${REPLY}"
         file_prefix=$(basename ${file_path})
         profile_dir=$(dirname ${file_path})
         profile_files=($(find "${profile_dir}" -type f -name "${file_prefix}*" \
@@ -64,6 +63,6 @@ else
         for profile_file in ${profile_files[@]}; do
             mv "${profile_file}" "${LOG_DIR}/$(basename ${profile_file})-err"
         done
-    done
+    done < <(sed -n 's/Profile files:\(.*\)/\1/p' "${LOG_DIR}.stderr")
     mv "${LOG_DIR}.log" "${LOG_DIR}.profile-battery-log-err"
 fi
