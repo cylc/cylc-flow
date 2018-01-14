@@ -4474,7 +4474,7 @@ the clarity of a suite definition).}
 
 \subsubsection{Parameter Expansion}
 
-Parameter values can be lists of strings, or lists of positive integers and
+Parameter values can be lists of strings, or lists of integers and
 integer ranges (with inclusive bounds). Numeric values in a list of strings are
 considered strings. It is not possible to mix strings with integer ranges.
 
@@ -4494,6 +4494,10 @@ For example:
         # parameters: 1, 3, 5, 7, 9
         # default task suffixes: _idx1, _idx3, _idx5, _idx7, _idx9
         idx = 1..9..2
+
+        # parameters: -11, -1, 9
+        # default task suffixes: _idx-11, _idx-01, _idx+09
+        idx = -11..9..10
 
         # parameters: 1, 3, 5, 10, 11, 12, 13
         # default task suffixes: _i01, _i03, _i05, _i10, _i11, _i12, _i13
@@ -4606,10 +4610,15 @@ Figure~\ref{fig-params-1} shows the result as visualized by \lstinline=cylc grap
 \paragraph{Zero-Padded Integer Values}
 
 Integer parameter values are given a default template for generating task
-suffixes that are zero-padded according to the size of their largest value.
+suffixes that are zero-padded according to the longest size of their values.
 For example, the default template for \lstinline@p = 9..10@ would be
 \lstinline@_p%(p)02d@, so that \lstinline@foo<p>@ would become
 \lstinline@foo_p09, foo_p10@.
+If negative values are present in the parameter list, the
+default template will include the sign.
+For example, the default template for \lstinline@p = -1..1@ would be
+\lstinline@_p%(p)+02d@, so that \lstinline@foo<p>@ would become
+\lstinline@foo_p-1, foo_p+0, foo_p+1@.
 
 To get thicker padding and/or alternate suffixes, use a template. E.g.:
 
@@ -4743,12 +4752,13 @@ template as the full-range parameter. For example:
 
 \subsubsection{Parameter Offsets In The Graph}
 
-A negative offset notation \lstinline@<NAME-1>@ is interpreted as the
-previous value in the ordered list of parameter values. For example, to split
-a model run into multiple steps with each step depending on the previous one,
-this graph:
+A negative offset notation \lstinline@<NAME-1>@ is interpreted as the previous
+value in the ordered list of parameter values, while a positive offset is
+interpreted as the next value. For example, to split a model run into multiple
+steps with each step depending on the previous one, either of these graphs:
 \begin{lstlisting}
     graph = "model<run-1> => model<run>"  # for run = 1, 2, 3
+    graph = "model<run> => model<run+1>"  # for run = 1, 2, 3
 \end{lstlisting}
 expands to:
 \begin{lstlisting}

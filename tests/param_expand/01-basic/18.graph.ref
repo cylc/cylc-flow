@@ -1,0 +1,7 @@
+graph
+node "foo_m+00.1" "foo_m+00\n1" unfilled ellipse black
+node "foo_m+06.1" "foo_m+06\n1" unfilled ellipse black
+node "foo_m+12.1" "foo_m+12\n1" unfilled ellipse black
+node "foo_m-06.1" "foo_m-06\n1" unfilled ellipse black
+node "foo_m-12.1" "foo_m-12\n1" unfilled ellipse black
+stop

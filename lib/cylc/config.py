@@ -252,12 +252,20 @@ class SuiteConfig(object):
         # Set default parameter expansion templates if necessary.
         for pname, pvalues in parameter_values.items():
             if pvalues and pname not in parameter_templates:
-                if all(isinstance(pvalue, int) for pvalue in pvalues):
+                if any(not isinstance(pvalue, int) for pvalue in pvalues):
+                    # Strings, bare parameter values
+                    parameter_templates[pname] = r'_%%(%s)s' % pname
+                elif any(pvalue < 0 for pvalue in pvalues):
+                    # Integers, with negative value(s)
+                    # Prefix values with signs and parameter names
+                    parameter_templates[pname] = r'_%s%%(%s)+0%dd' % (
+                        pname, pname,
+                        max(len(str(pvalue)) for pvalue in pvalues))
+                else:
+                    # Integers, positive only
+                    # Prefix values with parameter names
                     parameter_templates[pname] = r'_%s%%(%s)0%dd' % (
                         pname, pname, len(str(max(pvalues))))
-                else:
-                    # Don't prefix string values with the parameter name.
-                    parameter_templates[pname] = r'_%%(%s)s' % pname
 
         # Expand parameters in 'special task' lists.
         if 'special tasks' in self.cfg['scheduling']:
