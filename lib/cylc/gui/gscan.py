@@ -404,7 +404,7 @@ class ScanApp(object):
         collapse_button = gtk.ToolButton(
             icon_widget=gtk.image_new_from_stock(
                 gtk.STOCK_REMOVE, gtk.ICON_SIZE_SMALL_TOOLBAR))
-        collapse_button.set_label("Expand all")
+        collapse_button.set_label("Collapse all")
         tooltip = gtk.Tooltips()
         tooltip.enable()
         tooltip.set_tip(collapse_button, "Collapse all rows")
