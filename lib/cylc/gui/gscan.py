@@ -974,7 +974,7 @@ class ScanAppUpdater(threading.Thread):
                         continue
                     self.suite_treemodel.append(
                         parent_iter, [
-                            None, None, None, None, is_stopped, title,
+                            None, None, None, None, is_stopped, None,
                             suite_updated_time, str(point),
                             states_text, warning_text])
             else:
