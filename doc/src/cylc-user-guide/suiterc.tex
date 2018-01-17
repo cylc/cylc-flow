@@ -1497,7 +1497,7 @@ until finished.
 Configure host and username, for tasks that do not run on the suite host
 account. Non-interactive ssh is used to submit the task by the configured
 batch system, so you must distribute your ssh key to allow
-this. Cylc must be installed on remote task hosts, but no external
+this. Cylc must be installed on task remote accounts, but no external
 software dependencies are required there.
 
 \subparagraph[host]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[remote]]] \textrightarrow host}
@@ -1590,16 +1590,16 @@ delay.
 
 \subparagraph[suite definition directory]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[remote]]] \textrightarrow  suite definition directory}
 
-The path to the suite definition directory on the remote host, needed if
+The path to the suite definition directory on the remote account, needed if
 remote tasks require access to files stored there (via
 \lstinline=$CYLC_SUITE_DEF_PATH=) or in the suite bin directory (via
 \lstinline=$PATH=).  If this item is not defined, the local suite
 definition directory path will be assumed, with the suite owner's home
 directory, if present, replaced by \lstinline='$HOME'= for
-interpretation on the remote host.
+interpretation on the remote account.
 
 \begin{myitemize}
-\item {\em type:} string (a valid directory path on the remote host)
+\item {\em type:} string (a valid directory path on the remote account)
 \item {\em default:} (local suite definition path with \lstinline=$HOME=
     replaced)
 \end{myitemize}
