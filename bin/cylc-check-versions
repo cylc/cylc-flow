@@ -69,8 +69,6 @@ def main():
         load_template_vars(options.templatevars, options.templatevars_file))
     account_set = set()
     for name in config.get_namespace_list('all tasks'):
-        host_str = config.get_config(['runtime', name, 'remote', 'host'])
-        user = config.get_config(['runtime', name, 'remote', 'owner'])
         account_set.add((
             config.get_config(['runtime', name, 'remote', 'owner']),
             config.get_config(['runtime', name, 'remote', 'host'])))
