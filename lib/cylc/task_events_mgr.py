@@ -36,10 +36,10 @@ from time import time
 import traceback
 
 from parsec.config import ItemNotFoundError
+from parsec.validate import SuiteProcContext
 
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
-from cylc.mp_pool import SuiteProcContext
 from cylc.suite_logging import ERR, LOG
 from cylc.hostuserutil import get_host, get_user
 from cylc.task_action_timer import TaskActionTimer

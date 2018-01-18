@@ -26,7 +26,7 @@ from time import sleep, time
 import traceback
 
 import cylc.flags
-from cylc.cfgspec.gcylc import gcfg
+from cylc.cfgspec.gcylc import GcylcConfig
 from cylc.dump import get_stop_state_summary
 from cylc.gui.cat_state import cat_state
 from cylc.gui.warning_dialog import warning_dialog
@@ -77,7 +77,8 @@ class Updater(threading.Thread):
         self.update_time_str = "waiting..."
         self.last_update_time = time()
         self.update_interval = 1.0
-        self.max_update_interval = gcfg.get(['maximum update interval'])
+        self.max_update_interval = GcylcConfig.get_inst().get(
+            ['maximum update interval'])
         self.status = SUITE_STATUS_NOT_CONNECTED
         self.is_reloading = False
         self.connected = False

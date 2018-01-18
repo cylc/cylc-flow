@@ -28,12 +28,18 @@ import os
 import re
 import traceback
 
+from isodatetime.data import Calendar
+from isodatetime.parsers import DurationParser
+from parsec.OrderedDict import OrderedDictWithDefaults
+from parsec.util import replicate
+from parsec.validate import SuiteFuncContext
+
 from cylc.c3mro import C3
 from cylc.conditional_simplifier import ConditionalSimplifier
 from cylc.exceptions import CylcError
 from cylc.graph_parser import GraphParser
 from cylc.param_expand import NameExpander
-from cylc.xtrigger_mgr import XtriggerManager
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.cfgspec.suite import RawSuiteConfig
 from cylc.cycling.loader import (
     get_point, get_point_relative, get_interval, get_interval_cls,
@@ -44,20 +50,14 @@ from cylc.envvar import check_varnames
 import cylc.flags
 from cylc.graphnode import GraphNodeParser, GraphNodeError
 from cylc.print_tree import print_tree
-from cylc.taskdef import TaskDef, TaskDefError
-from cylc.task_id import TaskID
-from cylc.task_trigger import TaskTrigger, Dependency
-from cylc.wallclock import get_current_time_string
-from isodatetime.data import Calendar
-from isodatetime.parsers import DurationParser
-from parsec.OrderedDict import OrderedDictWithDefaults
-from parsec.util import replicate
 from cylc.suite_logging import OUT, ERR
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
+from cylc.taskdef import TaskDef, TaskDefError
+from cylc.task_id import TaskID
 from cylc.task_outputs import TASK_OUTPUT_SUCCEEDED
-from cylc.cfgspec.utils import (
-    get_interval_as_seconds, DEFAULT_XTRIG_INTVL_SECS)
-from cylc.mp_pool import SuiteFuncContext
+from cylc.task_trigger import TaskTrigger, Dependency
+from cylc.wallclock import get_current_time_string
+from cylc.xtrigger_mgr import XtriggerManager
 
 RE_CLOCK_OFFSET = re.compile(r'(' + TaskID.NAME_RE + r')(?:\(\s*(.+)\s*\))?')
 RE_EXT_TRIGGER = re.compile(r'(.*)\s*\(\s*(.+)\s*\)\s*')
@@ -180,9 +180,9 @@ class SuiteConfig(object):
                 "ERROR: missing [scheduling][[dependencies]] section.")
         # (The check that 'graph' is definied is below).
         # The two runahead limiting schemes are mutually exclusive.
-        rlim = self.cfg['scheduling'].get('runahead limit', None)
-        mact = self.cfg['scheduling'].get('max active cycle points', None)
-        if rlim is not None and mact is not None:
+        rlim = self.cfg['scheduling'].get('runahead limit')
+        mact = self.cfg['scheduling'].get('max active cycle points')
+        if rlim and mact:
             raise SuiteConfigError(
                 "ERROR: use 'runahead limit' OR "
                 "'max active cycle points', not both")
@@ -325,7 +325,10 @@ class SuiteConfig(object):
         init_cyclers(self.cfg)
 
         # Running in UTC time? (else just use the system clock)
-        cylc.flags.utc = self.cfg['cylc']['UTC mode']
+        if self.cfg['cylc']['UTC mode'] is None:
+            cylc.flags.utc = glbl_cfg().get(['cylc', 'UTC mode'])
+        else:
+            cylc.flags.utc = self.cfg['cylc']['UTC mode']
         # Capture cycling mode
         cylc.flags.cycling_mode = self.cfg['scheduling']['cycling mode']
 
@@ -1084,6 +1087,8 @@ class SuiteConfig(object):
             'max active cycle points']
 
         limit = self.cfg['scheduling']['runahead limit']
+        if not limit:
+            limit = None
         if (limit is not None and limit.isdigit() and
                 get_interval_cls().get_null().TYPE == ISO8601_CYCLING_TYPE):
             # Backwards-compatibility for raw number of hours.
@@ -2019,8 +2024,7 @@ class SuiteConfig(object):
                     if label == 'wall_clock':
                         # Allow predefined zero-offset wall clock xtrigger.
                         xtrig = SuiteFuncContext(
-                            'wall_clock', 'wall_clock', [], {},
-                            DEFAULT_XTRIG_INTVL_SECS)
+                            'wall_clock', 'wall_clock', [], {})
                     else:
                         raise SuiteConfigError(
                             "ERROR, undefined xtrigger label: %s" % label)
@@ -2028,8 +2032,7 @@ class SuiteConfig(object):
                     self.xtrigger_mgr.add_clock(label, xtrig)
                     # Replace existing xclock if the new offset is larger.
                     try:
-                        offset = get_interval_as_seconds(
-                            xtrig.func_kwargs['offset'])
+                        offset = get_interval(xtrig.func_kwargs['offset'])
                     except KeyError:
                         offset = 0
                     old_label = self.taskdefs[task_name].xclock_label
@@ -2037,7 +2040,7 @@ class SuiteConfig(object):
                         self.taskdefs[task_name].xclock_label = label
                     else:
                         old_xtrig = self.xtrigger_mgr.clockx_map[old_label]
-                        old_offset = get_interval_as_seconds(
+                        old_offset = get_interval(
                             old_xtrig.func_kwargs['offset'])
                         if offset > old_offset:
                             self.taskdefs[task_name].xclock_label = label

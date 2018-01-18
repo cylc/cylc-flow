@@ -89,8 +89,8 @@ from cylc.network.httpclient import SuiteRuntimeServiceClient
 from cylc.print_tree import print_tree
 from cylc.task_id import TaskID
 from cylc.cfgspec.suite import SPEC, upg
-from parsec.config import config
-from parsec.validate import validate
+from parsec.config import ParsecConfig
+from parsec.validate import ParsecValidator
 
 
 REC_ITEM = re.compile(r'^\[([^\]]*)\](.*)$')
@@ -135,13 +135,13 @@ def get_rdict(left, right=None):
             cur_dict[tail.strip()] = right
             tail = None
     upg({'runtime': {'__MANY__': rdict}}, 'test')
-    validate(rdict, SPEC['runtime']['__MANY__'])
+    ParsecValidator().validate(rdict, SPEC['runtime']['__MANY__'])
     return rdict
 
 
 def files_to_settings(settings, setting_files, cancel_mode=False):
     """Parse setting files, and append to settings."""
-    cfg = config(SPEC['runtime']['__MANY__'])
+    cfg = ParsecConfig(SPEC['runtime']['__MANY__'])
     for setting_file in setting_files:
         if setting_file == '-':
             with NamedTemporaryFile() as handle:

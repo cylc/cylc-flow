@@ -34,6 +34,7 @@ from time import time
 import traceback
 
 from parsec.util import pdeepcopy, poverride
+from parsec.validate import SuiteProcContext
 
 from cylc.batch_sys_manager import BatchSysManager, JobPollContext
 from cylc.cfgspec.glbl_cfg import glbl_cfg
@@ -45,7 +46,7 @@ from cylc.task_job_logs import (
     JOB_LOG_JOB, get_task_job_log, get_task_job_job_log,
     get_task_job_activity_log, get_task_job_id, NN)
 from cylc.mkdir_p import mkdir_p
-from cylc.mp_pool import SuiteProcPool, SuiteProcContext
+from cylc.mp_pool import SuiteProcPool
 from cylc.suite_logging import LOG
 from cylc.task_action_timer import TaskActionTimer
 from cylc.task_events_mgr import TaskEventsManager, log_task_job_activity
@@ -643,6 +644,8 @@ class TaskJobManager(object):
                     (TASK_STATUS_SUBMIT_RETRYING, 'submission retry delays'),
                     (TASK_STATUS_RETRYING, 'execution retry delays')]:
                 delays = rtconfig['job'][cfg_key]
+                if delays is None:
+                    delays = []
                 try:
                     itask.try_timers[key].set_delays(delays)
                 except KeyError:

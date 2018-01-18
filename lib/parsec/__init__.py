@@ -18,8 +18,9 @@
 
 
 class ParsecError(Exception):
-    def __init__(self, msg):
-        self.msg = msg
+    def __init__(self, msg=''):
+        Exception.__init__(self, msg)
+        self.msg = self.args[0]
 
     def __str__(self):
         return str(self.msg)

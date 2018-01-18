@@ -21,8 +21,9 @@ from collections import namedtuple
 import os
 from pipes import quote
 
+from parsec.validate import SuiteProcContext
+
 from cylc.cfgspec.glbl_cfg import glbl_cfg
-from cylc.mp_pool import SuiteProcContext
 from cylc.hostuserutil import get_host, get_user
 from cylc.suite_logging import LOG
 

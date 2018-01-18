@@ -23,8 +23,8 @@ import gtk
 from copy import deepcopy, copy
 
 from parsec import ParsecError
-from parsec.config import config, ItemNotFoundError, itemstr
-from parsec.validate import coercers, validator as vdr
+from parsec.config import ParsecConfig, ItemNotFoundError, itemstr
+from parsec.validate import ParsecValidator as VDR, DurationFloat
 from parsec.upgrade import upgrader
 from parsec.util import printcfg
 from cylc.gui.view_tree import ControlTree
@@ -34,60 +34,58 @@ from cylc.task_state import (
     TASK_STATUS_READY, TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED,
     TASK_STATUS_FAILED, TASK_STATUS_RETRYING)
-from cylc.cfgspec.utils import (coerce_interval, DurationFloat)
 
 
-coercers['interval'] = coerce_interval
 OLD_SITE_FILE = os.path.join(
     os.environ['CYLC_DIR'], 'etc', 'gcylcrc', 'themes.rc')
 SITE_FILE = os.path.join(
     os.environ['CYLC_DIR'], 'etc', 'gcylc-themes.rc')
 USER_FILE = os.path.join(os.environ['HOME'], '.cylc', 'gcylc.rc')
+_COLS = [heading for heading in ControlTree.headings if heading] + ['none']
+
+# Nested dict of spec items.
+# Spec value is [value_type, default, allowed_2, allowed_3, ...]
+# where:
+# - value_type: value type (compulsory).
+# - default: the default value (optional).
+# - allowed_2, ...: the only other allowed values of this setting (optional).
 SPEC = {
-    'dot icon size': vdr(
-        vtype='string',
-        default="medium",
-        options=["small", "medium", "large", "extra large"]),
-    'initial side-by-side views': vdr(vtype='boolean', default=False),
-    'initial views': vdr(vtype='string_list', default=["text"]),
-    'maximum update interval': vdr(
-        vtype='interval', default=DurationFloat(15)),
-    'sort by definition order': vdr(vtype='boolean', default=True),
-    'sort column': vdr(
-        vtype='string',
-        default='none',
-        options=[heading for heading in ControlTree.headings if heading is not
-                 None] + ['none']),
-    'sort column ascending': vdr(vtype='boolean', default=True),
-    'task filter highlight color': vdr(vtype='string', default='PowderBlue'),
-    'task states to filter out': vdr(
-        vtype='string_list',
-        default=[TASK_STATUS_RUNAHEAD]),
+    'dot icon size': [
+        VDR.V_STRING, "medium", "small", "medium", "large", "extra large"],
+    'initial side-by-side views': [VDR.V_BOOLEAN],
+    'initial views': [VDR.V_STRING_LIST, ["text"]],
+    'maximum update interval': [VDR.V_INTERVAL, DurationFloat(15)],
+    'sort by definition order': [VDR.V_BOOLEAN, True],
+    'sort column': [VDR.V_STRING, 'none'] + _COLS,
+    'sort column ascending': [VDR.V_BOOLEAN, True],
+    'sub-graphs on': [VDR.V_BOOLEAN],
+    'task filter highlight color': [VDR.V_STRING, 'PowderBlue'],
+    'task states to filter out': [
+        VDR.V_STRING_LIST, [TASK_STATUS_RUNAHEAD]],
     'themes': {
         '__MANY__': {
-            'inherit': vdr(vtype='string', default="default"),
-            'defaults': vdr(vtype='string_list'),
-            TASK_STATUS_WAITING: vdr(vtype='string_list'),
-            TASK_STATUS_HELD: vdr(vtype='string_list'),
-            TASK_STATUS_QUEUED: vdr(vtype='string_list'),
-            TASK_STATUS_READY: vdr(vtype='string_list'),
-            TASK_STATUS_EXPIRED: vdr(vtype='string_list'),
-            TASK_STATUS_SUBMITTED: vdr(vtype='string_list'),
-            TASK_STATUS_SUBMIT_FAILED: vdr(vtype='string_list'),
-            TASK_STATUS_RUNNING: vdr(vtype='string_list'),
-            TASK_STATUS_SUCCEEDED: vdr(vtype='string_list'),
-            TASK_STATUS_FAILED: vdr(vtype='string_list'),
-            TASK_STATUS_RETRYING: vdr(vtype='string_list'),
-            TASK_STATUS_SUBMIT_RETRYING: vdr(vtype='string_list'),
-            TASK_STATUS_RUNAHEAD: vdr(vtype='string_list'),
+            'inherit': [VDR.V_STRING, "default"],
+            'defaults': [VDR.V_STRING_LIST],
+            TASK_STATUS_WAITING: [VDR.V_STRING_LIST],
+            TASK_STATUS_HELD: [VDR.V_STRING_LIST],
+            TASK_STATUS_QUEUED: [VDR.V_STRING_LIST],
+            TASK_STATUS_READY: [VDR.V_STRING_LIST],
+            TASK_STATUS_EXPIRED: [VDR.V_STRING_LIST],
+            TASK_STATUS_SUBMITTED: [VDR.V_STRING_LIST],
+            TASK_STATUS_SUBMIT_FAILED: [VDR.V_STRING_LIST],
+            TASK_STATUS_RUNNING: [VDR.V_STRING_LIST],
+            TASK_STATUS_SUCCEEDED: [VDR.V_STRING_LIST],
+            TASK_STATUS_FAILED: [VDR.V_STRING_LIST],
+            TASK_STATUS_RETRYING: [VDR.V_STRING_LIST],
+            TASK_STATUS_SUBMIT_RETRYING: [VDR.V_STRING_LIST],
+            TASK_STATUS_RUNAHEAD: [VDR.V_STRING_LIST],
         },
     },
-    'transpose dot': vdr(vtype='boolean', default=False),
-    'transpose graph': vdr(vtype='boolean', default=False),
-    'ungrouped views': vdr(vtype='string_list', default=[]),
-    'sub-graphs on': vdr(vtype='boolean', default=False),
-    'use theme': vdr(vtype='string', default="default"),
-    'window size': vdr(vtype='integer_list', default=[800, 500]),
+    'transpose dot': [VDR.V_BOOLEAN],
+    'transpose graph': [VDR.V_BOOLEAN],
+    'ungrouped views': [VDR.V_STRING_LIST],
+    'use theme': [VDR.V_STRING, "default"],
+    'window size': [VDR.V_INTEGER_LIST, [800, 500]],
 }
 
 
@@ -100,7 +98,7 @@ def upg(cfg, descr):
     u.upgrade()
 
 
-class gconfig(config):
+class GcylcConfig(ParsecConfig):
     """gcylc user configuration - default view panels, task themes etc."""
 
     _INST = None
@@ -131,8 +129,8 @@ class gconfig(config):
             cls._INST.transform()
         return cls._INST
 
-    def __init__(self, *args):
-        config.__init__(self, *args)
+    def __init__(self, spec, upg):
+        ParsecConfig.__init__(self, spec, upg)
         self.default_theme = None
         self.use_theme = None
 
@@ -282,7 +280,7 @@ class gconfig(config):
             else:
                 target[item] = source[item]
 
-    def dump(self, keys, sparse=False, pnative=False, prefix='',
+    def dump(self, keys=None, sparse=False, pnative=False, prefix='',
              none_str=''):
         """Override parse.config.dump().
 
@@ -312,7 +310,3 @@ class gconfig(config):
             print cfg
         else:
             printcfg(cfg, prefix=prefix, level=len(keys))
-
-
-# load on import if not already loaded
-gcfg = gconfig.get_inst()

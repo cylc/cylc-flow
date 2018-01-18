@@ -17,17 +17,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Manage queueing and pooling of subprocesses for the suite server program."""
 
+from collections import deque
 import os
 import sys
-import time
-from pipes import quote
+import json
 from signal import SIGKILL
 from subprocess import Popen, PIPE
 from tempfile import TemporaryFile
-from collections import deque
 from threading import RLock
+from time import time
+
 from cylc.cfgspec.glbl_cfg import glbl_cfg
-import json
 from cylc.suite_logging import LOG
 from cylc.wallclock import get_current_time_string
 
@@ -89,142 +89,12 @@ def run_function(func_name, json_args, json_kwargs, src_dir):
     sys.stdout.write(json.dumps(res))
 
 
-class SuiteProcContext(object):
-    """Represent the context of a command to run.
-
-    Attributes:
-        .cmd (list/str):
-            The command to run expressed as a list (or as a str if shell=True
-            is set in cmd_kwargs).
-        .cmd_key (str):
-            A key to identify the type of command. E.g. "jobs-submit".
-        .cmd_kwargs (dict):
-            Extra information about the command. This may contain:
-                env (dict):
-                    Specify extra environment variables for command.
-                err (str):
-                    Default STDERR content.
-                out (str):
-                    Default STDOUT content.
-                ret_code (int):
-                    Default return code.
-                shell (boolean):
-                    Launch command with "/bin/sh"?
-                stdin_file_paths (list):
-                    Files with content to send to command's STDIN.
-                stdin_str (str):
-                    Content to send to command's STDIN.
-        .err (str):
-            Content of the command's STDERR.
-        .out (str)
-            Content of the command's STDOUT.
-        .ret_code (int):
-            Return code of the command.
-        .timestamp (str):
-            Time string of latest update.
-        .proc_pool_timeout (float):
-            command execution timeout.
-    """
-
-    # Format string for single line output
-    JOB_LOG_FMT_1 = '[%(cmd_key)s %(attr)s] %(mesg)s'
-    # Format string for multi-line output
-    JOB_LOG_FMT_M = '[%(cmd_key)s %(attr)s]\n%(mesg)s'
-
-    def __init__(self, cmd_key, cmd, **cmd_kwargs):
-        self.timestamp = get_current_time_string()
-        self.cmd_key = cmd_key
-        self.cmd = cmd
-        self.cmd_kwargs = cmd_kwargs
-
-        self.err = cmd_kwargs.get('err')
-        self.ret_code = cmd_kwargs.get('ret_code')
-        self.out = cmd_kwargs.get('out')
-
-    def update_cmd(self):
-        pass
-
-    def __str__(self):
-        ret = ''
-        for attr in 'cmd', 'ret_code', 'out', 'err':
-            value = getattr(self, attr, None)
-            if value is not None and str(value).strip():
-                mesg = ''
-                if attr == 'cmd' and self.cmd_kwargs.get('stdin_file_paths'):
-                    mesg += 'cat'
-                    for file_path in self.cmd_kwargs.get('stdin_file_paths'):
-                        mesg += ' ' + quote(file_path)
-                    mesg += ' | '
-                if attr == 'cmd' and isinstance(value, list):
-                    mesg += ' '.join(quote(item) for item in value)
-                else:
-                    mesg = str(value).strip()
-                if attr == 'cmd' and self.cmd_kwargs.get('stdin_str'):
-                    mesg += ' <<<%s' % quote(self.cmd_kwargs.get('stdin_str'))
-                if len(mesg.splitlines()) > 1:
-                    fmt = self.JOB_LOG_FMT_M
-                else:
-                    fmt = self.JOB_LOG_FMT_1
-                if not mesg.endswith('\n'):
-                    mesg += '\n'
-                ret += fmt % {
-                    'cmd_key': self.cmd_key,
-                    'attr': attr,
-                    'mesg': mesg}
-        return ret.rstrip()
-
-
-class SuiteFuncContext(SuiteProcContext):
-    """Represent the context of a function to run in the process pool.
-
-    Attributes:
-        # See also parent class attributes.
-        .label (str):
-            function label under [xtriggers] in suite.rc
-        .func_name (str):
-            function name
-        .func_args (list):
-            function positional args
-        .func_kwargs (dict):
-            function keyword args
-        .intvl (float - seconds):
-            function call interval (how often to check the external trigger)
-        .ret_val (bool, dict)
-            function return: (satisfied?, result to pass to trigger tasks)
-    """
-
-    def __init__(self, label, func_name, func_args, func_kwargs, intvl):
-        """Initialize a function context."""
-        self.label = label
-        self.func_name = func_name
-        self.func_kwargs = func_kwargs
-        self.func_args = func_args
-        self.intvl = float(intvl)
-        self.ret_val = (False, None)  # (satisfied, broadcast)
-        super(SuiteFuncContext, self).__init__(
-            'xtrigger-func', cmd=[], shell=False)
-
-    def update_command(self, suite_source_dir):
-        """Update the function wrap command after changes."""
-        self.cmd = ['cylc-function-run', self.func_name,
-                    json.dumps(self.func_args),
-                    json.dumps(self.func_kwargs),
-                    suite_source_dir]
-
-    def get_signature(self):
-        """Return the function call signature (as a string)."""
-        skeys = sorted(self.func_kwargs.keys())
-        args = self.func_args + [
-            "%s=%s" % (i, self.func_kwargs[i]) for i in skeys]
-        return "%s(%s)" % (self.func_name, ", ".join([str(a) for a in args]))
-
-
 class SuiteProcPool(object):
     """Manage queueing and pooling of subprocesses.
 
     This is mainly used by the main loop of the suite server program, although
     the SuiteProcPool.run_command can be used as a standalone utility function
-    to run the command in a SuiteProcContext.
+    to run the command in a parsec.validate.SuiteProcContext.
 
     Arguments:
         size (int): Pool size.
@@ -276,7 +146,7 @@ class SuiteProcPool(object):
         for proc, ctx, callback, callback_args in self.runnings:
             if proc.poll() is not None:
                 self._proc_exit(proc, "", ctx, callback, callback_args)
-            elif time.time() < ctx.timeout:
+            elif time() < ctx.timeout:
                 runnings.append([proc, ctx, callback, callback_args])
             else:
                 # Timed out, kill it.
@@ -303,14 +173,14 @@ class SuiteProcPool(object):
             else:
                 proc = self._run_command_init(ctx, callback, callback_args)
                 if proc is not None:
-                    ctx.timeout = time.time() + self.proc_pool_timeout
+                    ctx.timeout = time() + self.proc_pool_timeout
                     self.runnings.append([proc, ctx, callback, callback_args])
 
     def put_command(self, ctx, callback=None, callback_args=None):
         """Queue a new shell command to execute.
 
         Arguments:
-            ctx (SuiteProcContext):
+            ctx (parsec.validate.SuiteProcContext):
                 A context object containing the command to run and its status.
             callback (callable):
                 Function to call back when command exits or on error.
@@ -332,7 +202,7 @@ class SuiteProcPool(object):
         """Execute command in ctx and capture its output and exit status.
 
         Arguments:
-            ctx (SuiteProcContext):
+            ctx (parsec.validate.SuiteProcContext):
                 A context object containing the command to run and its status.
         """
         proc = cls._run_command_init(ctx)

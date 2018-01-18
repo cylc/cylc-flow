@@ -20,9 +20,9 @@ import re
 from parsec import ParsecError
 from parsec.fileparse import parse
 from parsec.util import printcfg
-from parsec.validate import validate, check_compulsory, expand, validator
+from parsec.validate import ParsecValidator
 from parsec.OrderedDict import OrderedDictWithDefaults
-from parsec.util import replicate, itemstr
+from parsec.util import itemstr, m_override, replicate, un_many
 
 
 class ItemNotFoundError(ParsecError):
@@ -35,7 +35,7 @@ class NotSingleItemError(ParsecError):
         self.msg = 'ERROR: not a singular item: %s' % msg
 
 
-class config(object):
+class ParsecConfig(object):
     "Object wrapper for parsec functions"
 
     def __init__(self, spec, upgrader=None, output_fname=None, tvars=None):
@@ -45,19 +45,19 @@ class config(object):
         self.upgrader = upgrader
         self.tvars = tvars
         self.output_fname = output_fname
-        self.checkspec(spec)
         self.spec = spec
 
-    def checkspec(self, spec, parents=None):
-        "check that the file spec is a nested dict of validators"
-        if not parents:
-            parents = []
-        for key, value in spec.items():
-            pars = parents + [key]
-            if isinstance(value, dict):
-                self.checkspec(value, pars)
-            else:
-                if not isinstance(value, validator):
+    @staticmethod
+    def checkspec(spec_root, parents=None):
+        """Check that the file spec is a nested dict of specifications"""
+        stack = [[spec_root, []]]
+        while stack:
+            spec, parents = stack.pop()
+            for key, value in spec.items():
+                pars = parents + [key]
+                if isinstance(value, dict):
+                    stack.append([value, pars])
+                elif not isinstance(value, list):
                     raise ParsecError(
                         "Illegal file spec item: %s" % itemstr(
                             pars, repr(value)))
@@ -82,13 +82,33 @@ class config(object):
 
     def validate(self, sparse):
         "Validate sparse config against the file spec."
-        validate(sparse, self.spec)
-        check_compulsory(sparse, self.spec)
+        ParsecValidator().validate(sparse, self.spec)
 
     def expand(self):
         "Flesh out undefined items with defaults, if any, from the spec."
         if not self.dense:
-            self.dense = expand(self.sparse, self.spec)
+            dense = OrderedDictWithDefaults()
+            # Populate dict with default values from the spec
+            stack = [[dense, self.spec]]
+            while stack:
+                defs, spec = stack.pop()
+                for key, val in spec.items():
+                    if isinstance(val, dict):
+                        if key not in defs:
+                            defs[key] = OrderedDictWithDefaults()
+                        stack.append((defs[key], spec[key]))
+                    else:
+                        try:
+                            defs[key] = spec[key][1]
+                        except IndexError:
+                            if spec[key][0].endswith('_LIST'):
+                                defs[key] = []
+                            else:
+                                defs[key] = None
+            # override defaults with sparse values
+            m_override(dense, self.sparse)
+            un_many(dense)
+            self.dense = dense
 
     def get(self, keys=None, sparse=False):
         """

@@ -21,27 +21,29 @@ import os
 import sys
 
 from parsec import ParsecError
-from parsec.config import config
-from parsec.validate import coercers, validator as vdr
-from cylc.cfgspec.utils import (coerce_interval, DurationFloat)
+from parsec.config import ParsecConfig
+from parsec.validate import ParsecValidator as VDR, DurationFloat
 
 
-coercers['interval'] = coerce_interval
 USER_FILE = os.path.join(os.environ['HOME'], '.cylc', 'gscan.rc')
 
+# Nested dict of spec items.
+# Spec value is [value_type, default, allowed_2, allowed_3, ...]
+# where:
+# - value_type: value type (compulsory).
+# - default: the default value (optional).
+# - allowed_2, ...: the only other allowed values of this setting (optional).
 SPEC = {
-    'activate on startup': vdr(vtype='boolean', default=False),
-    'columns': vdr(vtype='string_list', default=['suite', 'status']),
-    'suite listing update interval': vdr(
-        vtype='interval', default=DurationFloat(60)),
-    'suite status update interval': vdr(
-        vtype='interval', default=DurationFloat(15)),
-    'window size': vdr(vtype='integer_list', default=[300, 200]),
-    'hide main menubar': vdr(vtype='boolean', default=False),
+    'activate on startup': [VDR.V_BOOLEAN],
+    'columns': [VDR.V_STRING_LIST, ['suite', 'status']],
+    'suite listing update interval': [VDR.V_INTERVAL, DurationFloat(60)],
+    'suite status update interval': [VDR.V_INTERVAL, DurationFloat(15)],
+    'window size': [VDR.V_INTEGER_LIST, [300, 200]],
+    'hide main menubar': [VDR.V_BOOLEAN, False],
 }
 
 
-class GScanConfig(config):
+class GScanConfig(ParsecConfig):
     """Configuration for "gscan"."""
 
     COL_GROUP = "Group"
@@ -57,6 +59,23 @@ class GScanConfig(config):
         COL_GROUP, COL_HOST, COL_OWNER, COL_SUITE, COL_TITLE, COL_UPDATED,
         COL_STATUS, COL_VERSION)]
 
+    _INST = None
+
+    @classmethod
+    def get_inst(cls):
+        """Return the singleton instance."""
+        if cls._INST is None:
+            cls._INST = cls(SPEC)
+            if os.access(USER_FILE, os.F_OK | os.R_OK):
+                try:
+                    cls._INST.loadcfg(USER_FILE, 'user config')
+                except ParsecError:
+                    sys.stderr.write(
+                        'ERROR: bad gscan config %s:\n' % USER_FILE)
+                    raise
+            cls._INST.check()
+        return cls._INST
+
     def check(self):
         """Custom configuration check."""
         cfg = self.get(sparse=True)
@@ -71,15 +90,3 @@ class GScanConfig(config):
                     'WARNING: at least one column must be specified,' +
                     ' defaulting to "%s, %s"\n' % self.COLS_DEFAULT)
                 cfg['columns'] = list(self.COLS_DEFAULT)
-
-
-gsfg = None
-if not gsfg:
-    gsfg = GScanConfig(SPEC)
-    if os.access(USER_FILE, os.F_OK | os.R_OK):
-        try:
-            gsfg.loadcfg(USER_FILE, 'user config')
-        except ParsecError as exc:
-            sys.stderr.write('ERROR: bad gscan config %s:\n' % USER_FILE)
-            raise
-    gsfg.check()
