@@ -27,9 +27,7 @@ get_version() {
         CYLC_VERSION="$(cat ${CYLC_DIR}/VERSION)"
     # Otherwise, use git (if in a git repo) to determine version
     elif [[ -d "${CYLC_DIR}/.git" ]]; then
-        local DESC=
-        DESC="$(cd ${CYLC_DIR} && git describe --abbrev=4 2>/dev/null)"
-        CYLC_VERSION="${DESC}"
+        CYLC_VERSION="$(cd ${CYLC_DIR} && git describe --abbrev=4 --always)"
         # Append "-dirty" if there are uncommitted changes.
         if [[ -n "$(cd ${CYLC_DIR} && git status \
                 --untracked-files=no --porcelain)" ]]; then
