@@ -4199,6 +4199,7 @@ must use a different name for the parent variable:
 \end{lstlisting}
 
 \paragraph{Task Job Script Variables}
+\label{Task Job Script Variables}
 
 These are variables that can be referenced (but should not be modified) in a
 task job script.
@@ -7403,12 +7404,12 @@ $HOME/cylc-run/SUITE-NAME/.service/db  # private suite DB
 \end{lstlisting}
 
 The private DB is for use only by the suite server program. The identical
-public DB is provided for use by external commands such as \lstinline=cylc
-suite-state=, \lstinline=cylc ls-checkpoints=, and \lstinline=cylc
-report-timings=. If the public DB gets locked for too long by an external
-reader, the suite server program will eventually delete it and replace it with
-a new copy of the private DB, to ensure that both correctly reflect the suite
-state.
+public DB is provided for use by external commands such as
+\lstinline=cylc suite-state=, \lstinline=cylc ls-checkpoints=, and
+\lstinline=cylc report-timings=. If the public DB gets locked for too long by
+an external reader, the suite server program will eventually delete it and
+replace it with a new copy of the private DB, to ensure that both correctly
+reflect the suite state.
 
 You can interrogate the public DB with the \lstinline=sqlite3= command line tool,
 the \lstinline=sqlite3= module in the Python standard library, or any other
@@ -7474,8 +7475,9 @@ huge, so you might want to be selective about that.  (Also in a Rose suite, the
 directory).
 
 The public DB is not strictly required for a restart - the suite server program
-will recreate it if need be - but it is required by \lstinline=cylc
-ls-checkpoints= if you need to identify the right restart checkpoint.
+will recreate it if need be - but it is required by
+\lstinline=cylc ls-checkpoints= if you need to identify the right restart
+checkpoint.
 
 The job status files are only needed if the restart suite state checkpoint
 contains active tasks that need to be polled to determine what happened to them
