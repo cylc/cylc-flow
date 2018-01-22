@@ -1,0 +1,33 @@
+edge "foo.1" "bar_cat_baz_j1.1" solid
+edge "foo.1" "bar_cat_baz_j2.1" solid
+edge "foo.1" "bar_cat_baz_j3.1" solid
+edge "foo.1" "bar_cat_baz_j4.1" solid
+edge "foo.1" "bar_cat_baz_j5.1" solid
+edge "foo.1" "bar_dog_baz_j1.1" solid
+edge "foo.1" "bar_dog_baz_j2.1" solid
+edge "foo.1" "bar_dog_baz_j3.1" solid
+edge "foo.1" "bar_dog_baz_j4.1" solid
+edge "foo.1" "bar_dog_baz_j5.1" solid
+edge "foo.1" "bar_fish_baz_j1.1" solid
+edge "foo.1" "bar_fish_baz_j2.1" solid
+edge "foo.1" "bar_fish_baz_j3.1" solid
+edge "foo.1" "bar_fish_baz_j4.1" solid
+edge "foo.1" "bar_fish_baz_j5.1" solid
+graph
+node "bar_cat_baz_j1.1" "bar_cat_baz_j1\n1" unfilled ellipse black
+node "bar_cat_baz_j2.1" "bar_cat_baz_j2\n1" unfilled ellipse black
+node "bar_cat_baz_j3.1" "bar_cat_baz_j3\n1" unfilled ellipse black
+node "bar_cat_baz_j4.1" "bar_cat_baz_j4\n1" unfilled ellipse black
+node "bar_cat_baz_j5.1" "bar_cat_baz_j5\n1" unfilled ellipse black
+node "bar_dog_baz_j1.1" "bar_dog_baz_j1\n1" unfilled ellipse black
+node "bar_dog_baz_j2.1" "bar_dog_baz_j2\n1" unfilled ellipse black
+node "bar_dog_baz_j3.1" "bar_dog_baz_j3\n1" unfilled ellipse black
+node "bar_dog_baz_j4.1" "bar_dog_baz_j4\n1" unfilled ellipse black
+node "bar_dog_baz_j5.1" "bar_dog_baz_j5\n1" unfilled ellipse black
+node "bar_fish_baz_j1.1" "bar_fish_baz_j1\n1" unfilled ellipse black
+node "bar_fish_baz_j2.1" "bar_fish_baz_j2\n1" unfilled ellipse black
+node "bar_fish_baz_j3.1" "bar_fish_baz_j3\n1" unfilled ellipse black
+node "bar_fish_baz_j4.1" "bar_fish_baz_j4\n1" unfilled ellipse black
+node "bar_fish_baz_j5.1" "bar_fish_baz_j5\n1" unfilled ellipse black
+node "foo.1" "foo\n1" unfilled ellipse black
+stop

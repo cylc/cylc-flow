@@ -123,70 +123,69 @@ class NameExpander(object):
              ('foo_i1_j1', {i:'1', j:'1'})]
         """
         # Create a string template and values to pass to the expansion method.
-        expanded = []
-        for namespace in REC_NAMES.findall(runtime_heading):
-            template = namespace.strip()
-            name, p_str_list, other = REC_P_ALL.match(template).groups()
-            if not p_str_list:
-                # Not parameterized.
-                if other:
-                    expanded.append((name + other, {}))
-                else:
-                    expanded.append((name, {}))
-                continue
-            if name:
-                tmpl = name
-            else:
-                tmpl = ''
-            # Get the subset of parameters used in this case.
-            used_param_names = []
+        results = []
+        for name in REC_NAMES.findall(runtime_heading):
+            tmpl = ''
             spec_vals = {}
-            for item in (i.strip() for i in p_str_list.split(',')):
-                pname, sval = REC_P_OFFS.match(item.strip()).groups()
-                if not self.param_cfg.get(pname, None):
-                    raise ParamExpandError(
-                        "ERROR, parameter %s is not defined in %s" % (
-                            pname, runtime_heading))
-                if sval:
-                    if sval.startswith('+') or sval.startswith('-'):
+            used_params = []
+            while name:
+                head, p_list_str, tail = REC_P_ALL.match(name.strip()).groups()
+                if not p_list_str:
+                    break
+                if head:
+                    tmpl += head
+                # Get the subset of parameters used in this case.
+                for item in (i.strip() for i in p_list_str.split(',')):
+                    pname, sval = REC_P_OFFS.match(item.strip()).groups()
+                    if not self.param_cfg.get(pname, None):
                         raise ParamExpandError(
-                            "ERROR, parameter index offsets are not"
-                            " supported in name expansion: %s%s" % (
-                                pname, sval))
-                    elif sval.startswith('='):
-                        # Check that specific parameter values exist.
-                        val = sval[1:].strip()
-                        # Pad integer values here.
-                        try:
-                            nval = int(val)
-                        except ValueError:
-                            nval = val
-                        if not item_in_iterable(nval, self.param_cfg[pname]):
+                            "ERROR, parameter %s is not defined in %s" % (
+                                pname, runtime_heading))
+                    if sval:
+                        if sval.startswith('+') or sval.startswith('-'):
                             raise ParamExpandError(
-                                "ERROR, parameter %s out of range: %s" % (
-                                    pname, p_str_list))
-                        spec_vals[pname] = nval
+                                "ERROR, parameter index offsets are not"
+                                " supported in name expansion: %s%s" % (
+                                    pname, sval))
+                        elif sval.startswith('='):
+                            # Check that specific parameter values exist.
+                            val = sval[1:].strip()
+                            # Pad integer values here.
+                            try:
+                                nval = int(val)
+                            except ValueError:
+                                nval = val
+                            if not item_in_iterable(
+                                    nval, self.param_cfg[pname]):
+                                raise ParamExpandError(
+                                    "ERROR, parameter %s out of range: %s" % (
+                                        pname, p_list_str))
+                            spec_vals[pname] = nval
+                    else:
+                        used_params.append((pname, self.param_cfg[pname]))
+                    tmpl += self.param_tmpl_cfg[pname]
+                if tail:
+                    name = tail
                 else:
-                    used_param_names.append(pname)
-                tmpl += self.param_tmpl_cfg[pname]
-            if other:
-                tmpl += other
-            used_params = [
-                (p, self.param_cfg[p]) for p in used_param_names]
-            self._expand_name(tmpl, used_params, expanded, spec_vals)
-        return expanded
+                    name = ''
+            if tmpl:
+                tmpl += name
+                self._expand_name(results, tmpl, used_params, spec_vals)
+            else:
+                results.append((name.strip(), {}))
+        return results
 
-    def _expand_name(self, tmpl, param_list, results, spec_vals=None):
-        """Expand tmpl for any number of parameters.
+    def _expand_name(self, results, tmpl, params, spec_vals=None):
+        """Recursively expand tmpl for any number of parameters.
 
         tmpl is a string template, e.g. 'foo_m%(m)s_n%(n)s' for two
             parameters m and n.
-        param_list is a list of tuples (name, max-val) for each parameter
+        params is a list of tuples (name, max-val) for each parameter
             to be looped over.
         spec_vals is a map of values for parameters that are not to be looped
             over because they've been assigned a specific value.
 
-        E.g. for "foo<m=0,n>" tmpl is "foo_m%(m)s_n%(n)s", param_list is
+        E.g. for "foo<m=0,n>" tmpl is "foo_m%(m)s_n%(n)s", params is
         [('n', 2)], and spec_values {'m': 0}.
 
         results contains the expanded names and corresponding parameter values,
@@ -194,7 +193,7 @@ class NameExpander(object):
         """
         if spec_vals is None:
             spec_vals = {}
-        if not param_list:
+        if not params:
             # Inner loop.
             current_values = dict(spec_vals)
             try:
@@ -203,9 +202,9 @@ class NameExpander(object):
                 raise ParamExpandError('ERROR: parameter %s is not '
                                        'defined.' % str(exc.args[0]))
         else:
-            for param_val in param_list[0][1]:
-                spec_vals[param_list[0][0]] = param_val
-                self._expand_name(tmpl, param_list[1:], results, spec_vals)
+            for param_val in params[0][1]:
+                spec_vals[params[0][0]] = param_val
+                self._expand_name(results, tmpl, params[1:], spec_vals)
 
     def expand_parent_params(self, parent, param_values, origin):
         """Replace parameters with specific values in inherited parent names.
@@ -220,11 +219,11 @@ class NameExpander(object):
         then it must be a legal value for that parameter.
 
         """
-        name, p_str_list, other = REC_P_ALL.match(parent).groups()
-        if not p_str_list:
-            return name
+        head, p_list_str, tail = REC_P_ALL.match(parent).groups()
+        if not p_list_str:
+            return head
         used = {}
-        for item in (i.strip() for i in p_str_list.split(',')):
+        for item in (i.strip() for i in p_list_str.split(',')):
             if '-' in item or '+' in item:
                 raise ParamExpandError(
                     "ERROR, parameter offsets illegal here: '%s'" % origin)
@@ -252,14 +251,14 @@ class NameExpander(object):
                     raise ParamExpandError(
                         "ERROR, parameter '%s' undefined in '%s'" % (
                             item, origin))
-        if name:
-            tmpl = name
+        if head:
+            tmpl = head
         else:
             tmpl = ''
         for pname in used:
             tmpl += self.param_tmpl_cfg[pname]
-        if other:
-            tmpl += other
+        if tail:
+            tmpl += tail
         return tmpl % used
 
 
