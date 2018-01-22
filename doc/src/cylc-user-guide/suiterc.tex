@@ -1424,6 +1424,8 @@ submission fails.
 \subparagraph[execution retry delays]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[job]]] \textrightarrow execution retry delays}
 \label{RefRetries}
 
+See also~\ref{TaskRetries}.
+
 A list of ISO 8601 time duration/intervals after which to resubmit the task
 if it fails. The variable \lstinline=$CYLC_TASK_TRY_NUMBER= in the task
 execution environment is incremented each time, starting from 1 for the
