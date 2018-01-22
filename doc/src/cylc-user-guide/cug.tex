@@ -4779,8 +4779,9 @@ expands to:
     graph = "proc_small => proc_big => proc_huge"
 \end{lstlisting}
 
-However, a mixture of conditional logic in these statements may create
-surprises. For example:
+However, a quirk in the current system means that you should avoid mixing
+conditional logic in these statements. For example, the following will do the
+unexpected:
 
 \begin{lstlisting}
     graph = foo<m-1> & baz => foo<m>  # for m = cat, dog
@@ -4791,6 +4792,14 @@ currently expands to:
 # when users may expect it to be:
 #    graph = foo_cat => foo_dog
 #    graph = baz => foo_cat & foo_dog
+\end{lstlisting}
+
+For the time being, writing out the logic explicitly will give you the correct
+graph.
+
+\begin{lstlisting}
+    graph = """foo<m-1> => foo<m>  # for m = cat, dog
+               baz => foo<m>"""
 \end{lstlisting}
 
 \subsubsection{Task Families And Parameterization}
