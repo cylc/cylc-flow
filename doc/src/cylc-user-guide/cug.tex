@@ -964,9 +964,8 @@ locations under the suite run directory.
 Log file locations relative to the suite run directory look like
 \lstinline=job/1/hello/01/= where the first digit is the {\em cycle point} of
 the task \lstinline=hello= (for non-cycling tasks this is just `1'); and the
-final \lstinline=01= is the {\em submit number} (tasks can be made to retry on
-failure or manually retriggered - each time a new log directory is used to
-avoid overwriting previous output).
+final \lstinline=01= is the {\em submit number} (so that job logs do not get
+overwritten if a job is resubmitted for any reason).
 
 The suite shuts down automatically once all tasks have succeeded.
 
@@ -1117,9 +1116,8 @@ private \lstinline=work/= directories that are deleted automatically
 if empty when the task finishes. The suite
 \lstinline=share/= directory is made available to all tasks (by
 \lstinline=$CYLC_SUITE_SHARE_DIR=) as a common share space. The task submission
-number increments from 1 if a task retries on failure; this is used a
-sub-directory of the log tree to avoid overwriting log files from earlier
-job submissions.
+number increments from 1 if a task retries; this is used as a sub-directory of
+the log tree to avoid overwriting log files from earlier job submissions.
 
 The top level run directory location can be changed in site and user
 config files if necessary, and the suite share and work locations can be
@@ -1901,10 +1899,14 @@ different behaviour on the retry:
 \lstset{language=suiterc}
 \lstinputlisting{../../../examples/tutorial/oneoff/retry/suite.rc}
 
-When a task with configured retries fails, its cylc task proxy goes
-into the {\em retrying} state until the next retry delay is up, then it
-resubmits. It only enters the {\em failed} state on a final definitive
-failure.
+If a task with configured retries fails, it goes into the {\em retrying} state
+until the next retry delay is up, then it resubmits. It only enters the {\em
+failed} state on a final definitive failure.
+
+If a task with configured retries is {\em killed} (by \lstinline=cylc kill= or
+via the GUI) it goes to the {\em held} state so that the operator can decide
+whether to release it and continue the retry sequence or to abort the retry
+sequence by manually resetting it to the {\em failed} state.
 
 Experiment with \lstinline=tut/oneoff/retry= to see how this works.
 
@@ -4197,6 +4199,7 @@ must use a different name for the parent variable:
 \end{lstlisting}
 
 \paragraph{Task Job Script Variables}
+\label{Task Job Script Variables}
 
 These are variables that can be referenced (but should not be modified) in a
 task job script.
@@ -5528,10 +5531,11 @@ task to repeatedly poll for the results of the detached processes:
         # Uh-oh, this script does an internal job submission to run model.exe:
         script = "run-model.sh"
     [[checker]]
-        # Fail and retry every minute (for 10 tries at the most) if the model's
+        # Fail and retry every minute (for 10 tries at the most) if model's
         # job.done indicator file does not exist yet.
-        retry delays = 10 * PT1M
         script = "[[ ! -f $RUN_DIR/job.done ]] && exit 1"
+        [[[job]]]
+            execution retry delays = 10 * PT1M
 \end{lstlisting}
 
 \section{Task Job Submission and Management}
@@ -6851,11 +6855,15 @@ limited to 2 and 3 tasks respectively:
 
 See also~\ref{RefRetries} in the {\em Suite.rc Reference}.
 
-Tasks can be configured with a list of ``retry delay'' periods, as
-ISO 8601 durations, such that if a task fails it will go into a temporary
-{\em retrying} state and then automatically resubmit itself after
-the next specified delay period expires. A usage example is shown in the
-suite listed below under~\ref{EventHandling}.
+Tasks can be configured with a list of ``retry delay'' intervals, as
+ISO 8601 durations. If the task job fails it will go into the {\em retrying}
+state and resubmit after the next configured delay interval. An example is
+shown in the suite listed below under~\ref{EventHandling}.
+
+If a task with configured retries is {\em killed} (by \lstinline=cylc kill= or
+via the GUI) it goes to the {\em held} state so that the operator can decide
+whether to release it and continue the retry sequence or to abort the retry
+sequence by manually resetting it to the {\em failed} state.
 
 \subsection{Task Event Handling}
 \label{EventHandling}
@@ -6877,10 +6885,11 @@ send an email on (submission) failed and retry:
 \begin{lstlisting}
 [runtime]
     [[foo]]
-        retry delays = PT0S, PT30S
         script = "test ${CYLC_TASK_TRY_NUMBER} -eq 3"
         [[[events]]]
             mail events = submission failed, submission retry, failed, retry
+        [[[job]]]
+            execution retry delays = PT0S, PT30S
 \end{lstlisting}
 
 By default, the emails will be sent to the current user with:
@@ -6973,22 +6982,24 @@ event handlers using the alternate methods:
 \begin{lstlisting}
 [runtime]
     [[foo]]
-        retry delays = PT0S, PT30S
         script = "test ${CYLC_TASK_TRY_NUMBER} -eq 2"
         [[[events]]]
             retry handler = "echo '!!!!!EVENT!!!!!' "
             failed handler = "echo '!!!!!EVENT!!!!!' "
+        [[[job]]]
+            execution retry delays = PT0S, PT30S
 \end{lstlisting}
 
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
     [[foo]]
-        retry delays = PT0S, PT30S
         script = "test ${CYLC_TASK_TRY_NUMBER} -eq 2"
         [[[events]]]
             handlers = "echo '!!!!!EVENT!!!!!' "
             handler events = retry, failed
+        [[[job]]]
+            execution retry delays = PT0S, PT30S
 \end{lstlisting}
 The handler command here - specified with no arguments - is called with the
 default arguments, like this:
@@ -7393,12 +7404,12 @@ $HOME/cylc-run/SUITE-NAME/.service/db  # private suite DB
 \end{lstlisting}
 
 The private DB is for use only by the suite server program. The identical
-public DB is provided for use by external commands such as \lstinline=cylc
-suite-state=, \lstinline=cylc ls-checkpoints=, and \lstinline=cylc
-report-timings=. If the public DB gets locked for too long by an external
-reader, the suite server program will eventually delete it and replace it with
-a new copy of the private DB, to ensure that both correctly reflect the suite
-state.
+public DB is provided for use by external commands such as
+\lstinline=cylc suite-state=, \lstinline=cylc ls-checkpoints=, and
+\lstinline=cylc report-timings=. If the public DB gets locked for too long by
+an external reader, the suite server program will eventually delete it and
+replace it with a new copy of the private DB, to ensure that both correctly
+reflect the suite state.
 
 You can interrogate the public DB with the \lstinline=sqlite3= command line tool,
 the \lstinline=sqlite3= module in the Python standard library, or any other
@@ -7464,8 +7475,9 @@ huge, so you might want to be selective about that.  (Also in a Rose suite, the
 directory).
 
 The public DB is not strictly required for a restart - the suite server program
-will recreate it if need be - but it is required by \lstinline=cylc
-ls-checkpoints= if you need to identify the right restart checkpoint.
+will recreate it if need be - but it is required by
+\lstinline=cylc ls-checkpoints= if you need to identify the right restart
+checkpoint.
 
 The job status files are only needed if the restart suite state checkpoint
 contains active tasks that need to be polled to determine what happened to them
@@ -7632,9 +7644,9 @@ some places, this is quite radically different from the earlier syntax.
 \label{cylc-6-migration-timeout-delays}
 
 Timeouts and delays such as \lstinline=[cylc][[events]]timeout= or
-\lstinline=[runtime][[my_task]]retry delays= were written in a purely
-numeric form before cylc 6, in seconds, minutes (most common), or hours,
-depending on the setting.
+\lstinline=[runtime][[my_task]][[[job]]]execution retry delays= were written in
+a purely numeric form before cylc 6, in seconds, minutes (most common), or
+hours, depending on the setting.
 
 They are now written in an ISO 8601 duration form, which has the benefit
 that the units are user-selectable (use 1 day instead of 1440 minutes)
@@ -7657,7 +7669,7 @@ See Table \ref{cylc-6-migration-timeout-delays-table}.
 Setting & Pre-Cylc-6 & Cylc-6+ \\
 \hline
 \lstinline=[cylc][[events]]timeout= & 180 & PT3H \\
-\lstinline=[runtime][[my_task]]retry delays= & 2*30, 360, & 2*PT30M, PT6H, \\
+\lstinline=[runtime][[my_task]][[[job]]]execution retry delays= & 2*30, 360, & 2*PT30M, PT6H, \\
  & 1440 & P1D \\
 \lstinline=[runtime][[my_task]][[[suite state polling]]]interval= & 2 & PT2S \\
 \end{tabular}
