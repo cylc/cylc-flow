@@ -864,7 +864,11 @@ conditions; see `cylc conditions`.
         self.task_events_mgr.broadcast_mgr.linearized_ancestors = (
             self.config.get_linearized_ancestors())
         self.suite_db_mgr.put_runtime_inheritance(self.config)
-        self.pool.set_do_reload(self.config, self.final_point)
+        if self.stop_point is None:
+            stop_point = self.final_point
+        else:
+            stop_point = self.stop_point
+        self.pool.set_do_reload(self.config, stop_point)
         self.task_events_mgr.mail_interval = self._get_cylc_conf(
             "task event mail interval")
         self.task_events_mgr.mail_footer = self._get_events_conf("mail footer")
@@ -1597,13 +1601,6 @@ conditions; see `cylc conditions`.
         self.pool.release_all_tasks()
         sdm = self.suite_db_mgr
         sdm.db_deletes_map[sdm.TABLE_SUITE_PARAMS].append({"key": "is_held"})
-
-    def clear_stop_times(self):
-        """Clear attributes associated with stop time."""
-        self.stop_point = None
-        self.stop_clock_time = None
-        self.stop_clock_time_string = None
-        self.stop_task = None
 
     def paused(self):
         """Is the suite paused?"""
