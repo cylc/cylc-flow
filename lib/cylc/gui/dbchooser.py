@@ -63,12 +63,7 @@ class db_updater(threading.Thread):
 
         for suite, auth in self.running_choices:
             if suite in regd_choices:
-                if is_remote_host(auth.split(':', 1)[0]):
-                    descr, suite_dir = (None, None)
-                else:
-                    # local suite
-                    suite_dir, descr = regd_choices[suite][1:3]
-                    del regd_choices[suite]
+                suite_dir, descr = regd_choices.pop(suite)[1:3]
             nest2 = self.newtree
             regp = suite.split(SuiteSrvFilesManager.DELIM)
             for key in regp[:-1]:
