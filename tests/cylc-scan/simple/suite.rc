@@ -1,10 +1,18 @@
+[meta]
+    title = A simple test
+    description = """A simple test to simply test whether cylc scan is
+                     doing the right thing - let's see what happens."""
+    datum = metadatum
+    another_datum = another_metadatum
+
 [cylc]
-   [[reference test]]
-       required run mode = live
-       live mode suite timeout = PT1M
+    [[reference test]]
+        required run mode = live
+        live mode suite timeout = PT1M
 [scheduling]
     [[dependencies]]
         graph = "foo"
 [runtime]
     [[foo]]
-        script = cylc scan --comms-timeout=5 | grep "^${CYLC_SUITE_NAME} "
+    [[bar]]
+    [[baz]]

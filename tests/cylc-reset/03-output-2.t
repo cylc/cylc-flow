@@ -26,6 +26,7 @@ run_ok "${TEST_NAME_BASE}" cylc run --reference-test --debug --no-detach "${SUIT
 cmp_ok "${SUITE_RUN_DIR}/cylc-show.out" <<'__OUT__'
 title: (not given)
 description: (not given)
+URL: (not given)
 
 prerequisites (- => not satisfied):
   (None)
