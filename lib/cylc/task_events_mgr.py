@@ -361,12 +361,12 @@ class TaskEventsManager(object):
             except (TypeError, ValueError):
                 itask.timeout_timers[TASK_STATUS_SUBMITTED] = None
             # Believe this and change state without polling (could poll?).
-            cylc.flags.pflag = True
+            self.pflag = True
             itask.state.reset_state(TASK_STATUS_SUBMITTED)
         elif an_output_was_satisfied:
             # Message of an as-yet unreported custom task output.
             # No state change.
-            cylc.flags.pflag = True
+            self.pflag = True
             self.suite_db_mgr.put_update_task_outputs(itask)
         else:
             # Unhandled messages. These include:
