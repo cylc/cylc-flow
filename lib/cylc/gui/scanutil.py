@@ -518,6 +518,7 @@ def update_suites_info(updater, full_mode=False):
         dict: {(host, owner, name): suite_info, ...}
         where each "suite_info" is a dict with keys:
             KEY_GROUP: group name of suite
+            KEY_META: suite metadata (new in 7.6)
             KEY_OWNER: suite owner name
             KEY_PORT: suite port, for running suites only
             KEY_STATES: suite state
@@ -585,10 +586,12 @@ def update_suites_info(updater, full_mode=False):
             continue
         if prev_result.get(KEY_PORT):
             # A previously running suite is no longer running.
-            # Get suite info with "cat-state", if possible, and include in the
-            # results set.
+            # Get suite info with "ls-checkpoints", if possible, and include in
+            # the results set.
             try:
-                prev_result = _update_stopped_suite_info((host, owner, name))
+                prev_result.update(
+                    _update_stopped_suite_info((host, owner, name)))
+                del prev_result[KEY_PORT]
             except (IndexError, TypeError, ValueError):
                 continue
         if prev_result.get(KEY_UPDATE_TIME, 0) > expire_threshold:
