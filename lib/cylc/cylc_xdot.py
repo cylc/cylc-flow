@@ -24,6 +24,7 @@ TODO - factor more commonality out of MyDotWindow, MyDotWindow2
 import gtk
 import os
 import re
+import sys
 import xdot
 
 from cylc.config import SuiteConfig
@@ -43,9 +44,31 @@ def style_ghost_node(node):
 
 class CylcDotViewerCommon(xdot.DotWindow):
 
-    def __init__(self, *args, **kwargs):
-        xdot.DotWindow.__init__(self, *args, **kwargs)
+    def __init__(self, suite, suiterc, template_vars, orientation="TB",
+                 should_hide=False, start_point_string=None,
+                 stop_point_string=None, interactive=True):
+        self.suite = suite
         self.suiterc = None
+        self.template_vars = template_vars
+        self.orientation = orientation
+        self.should_hide = should_hide
+        self.start_point_string = start_point_string
+        self.stop_point_string = stop_point_string
+        self.interactive = interactive
+
+        self.outfile = None
+        self.disable_output_image = False
+        self.file = suiterc
+        self.filter_recs = []
+
+        util.setup_icons()
+        gtk.Window.__init__(self)
+        self.graph = xdot.Graph()
+        self.set_icon(util.get_icon())
+        self.set_default_size(512, 512)
+        self.vbox = gtk.VBox()
+        self.add(self.vbox)
+        self.widget = xdot.DotWidget()
 
     def load_config(self):
         """Load the suite config."""
@@ -65,12 +88,14 @@ class CylcDotViewerCommon(xdot.DotWindow):
         except Exception as exc:
             msg = "Failed - parsing error?\n\n" + str(exc)
             ERR.error(msg)
-            dia = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
-                                    buttons=gtk.BUTTONS_OK,
-                                    message_format=msg)
-            dia.run()
-            dia.destroy()
-            return False
+            if self.interactive:
+                dia = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
+                                        buttons=gtk.BUTTONS_OK,
+                                        message_format=msg)
+                dia.run()
+                dia.destroy()
+                return False
+            sys.exit(1)
         self.inherit = self.suiterc.get_parent_lists()
         return True
 
@@ -117,31 +142,10 @@ class MyDotWindow2(CylcDotViewerCommon):
     </ui>
     '''
 
-    def __init__(self, suite, suiterc, template_vars, orientation="TB",
-                 should_hide=False):
-        self.outfile = None
-        self.disable_output_image = False
-        self.suite = suite
-        self.file = suiterc
-        self.suiterc = None
-        self.orientation = orientation
-        self.template_vars = template_vars
-        self.start_point_string = None
-        self.stop_point_string = None
-        self.filter_recs = []
+    def __init__(self, *args, **kwargs):
+        CylcDotViewerCommon.__init__(self, *args, **kwargs)
 
-        util.setup_icons()
-
-        gtk.Window.__init__(self)
-        self.graph = xdot.Graph()
         self.set_title('Cylc Suite Runtime Inheritance Graph Viewer')
-        self.set_default_size(512, 512)
-        self.set_icon(util.get_icon())
-
-        vbox = gtk.VBox()
-        self.add(vbox)
-
-        self.widget = xdot.DotWidget()
 
         # Create a UIManager instance
         uimanager = self.uimanager = gtk.UIManager()
@@ -153,7 +157,6 @@ class MyDotWindow2(CylcDotViewerCommon):
         # Create an ActionGroup
         actiongroup = gtk.ActionGroup('Actions')
         self.actiongroup = actiongroup
-
         actiongroup.add_actions((
             ('ZoomIn', gtk.STOCK_ZOOM_IN, None, None, 'Zoom In',
                 self.widget.on_zoom_in),
@@ -185,12 +188,12 @@ class MyDotWindow2(CylcDotViewerCommon):
         # Create a Toolbar
 
         toolbar = uimanager.get_widget('/ToolBar')
-        vbox.pack_start(toolbar, False)
-        vbox.pack_start(self.widget)
+        self.vbox.pack_start(toolbar, False)
+        self.vbox.pack_start(self.widget)
 
         self.set_focus(self.widget)
 
-        if not should_hide:
+        if not self.should_hide:
             self.show_all()
         self.load_config()
 
@@ -279,48 +282,28 @@ class MyDotWindow(CylcDotViewerCommon):
     </ui>
     '''
 
-    def __init__(self, suite, suiterc, start_point_string, stop_point_string,
-                 template_vars, orientation="TB",
-                 subgraphs_on=False, ignore_suicide=True, should_hide=False):
-        self.outfile = None
-        self.disable_output_image = False
-        self.suite = suite
-        self.file = suiterc
-        self.suiterc = None
-        self.orientation = orientation
-        self.subgraphs_on = subgraphs_on
-        self.template_vars = template_vars
-        self.ignore_suicide = ignore_suicide
-        self.start_point_string = start_point_string
-        self.stop_point_string = stop_point_string
-        self.filter_recs = []
+    def __init__(self, suite, suiterc, template_vars,
+                 start_point_string, stop_point_string, **kwargs):
+        self.subgraphs_on = kwargs.get('subgraphs_on', False)
+        self.ignore_suicide = kwargs.get('ignore_suicide', True)
+        for kwarg in ['subgraphs_on', 'ignore_suicide']:
+            try:
+                del kwargs[kwarg]
+            except KeyError:
+                pass
+        CylcDotViewerCommon.__init__(
+            self, suite, suiterc, template_vars,
+            start_point_string=start_point_string,
+            stop_point_string=stop_point_string, **kwargs)
 
-        util.setup_icons()
-
-        gtk.Window.__init__(self)
-
-        self.graph = xdot.Graph()
-
-        window = self
-
-        window.set_title('Cylc Suite Dependency Graph Viewer')
-        window.set_default_size(512, 512)
-        window.set_icon(util.get_icon())
-        vbox = gtk.VBox()
-        window.add(vbox)
-
-        self.widget = xdot.DotWidget()
+        self.set_title('Cylc Suite Dependency Graph Viewer')
 
         # Create a UIManager instance
         uimanager = self.uimanager = gtk.UIManager()
 
         # Add the accelerator group to the toplevel window
         accelgroup = uimanager.get_accel_group()
-        window.add_accel_group(accelgroup)
-
-        # Create an ActionGroup
-        actiongroup = gtk.ActionGroup('Actions')
-        self.actiongroup = actiongroup
+        self.add_accel_group(accelgroup)
 
         # create new stock icons for group and ungroup actions
         imagedir = os.environ['CYLC_DIR'] + '/images/icons'
@@ -331,6 +314,9 @@ class MyDotWindow(CylcDotViewerCommon):
             factory.add(i, iconset)
         factory.add_default()
 
+        # Create an ActionGroup
+        actiongroup = gtk.ActionGroup('Actions')
+        self.actiongroup = actiongroup
         actiongroup.add_actions((
             ('ZoomIn', gtk.STOCK_ZOOM_IN, None, None, 'Zoom In',
                 self.widget.on_zoom_in),
@@ -381,17 +367,17 @@ class MyDotWindow(CylcDotViewerCommon):
         # Create a Toolbar
 
         toolbar = uimanager.get_widget('/ToolBar')
-        vbox.pack_start(toolbar, False)
-        vbox.pack_start(self.widget)
+        self.vbox.pack_start(toolbar, False)
+        self.vbox.pack_start(self.widget)
 
         eb = gtk.EventBox()
         eb.add(gtk.Label("right-click on nodes to control family grouping"))
         eb.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse('#8be'))
-        vbox.pack_start(eb, False)
+        self.vbox.pack_start(eb, False)
 
         self.set_focus(self.widget)
 
-        if not should_hide:
+        if not self.should_hide:
             self.show_all()
         self.load_config()
 

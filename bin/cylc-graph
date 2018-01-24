@@ -227,18 +227,21 @@ def main():
     if len(args) == 3:
         stop_point_string = args[2]
 
+    interactive = not (options.reference or options.output_filename)
     template_vars = load_template_vars(
         options.templatevars, options.templatevars_file)
     should_hide_gtk_window = (options.output_filename is not None)
     if options.namespaces:
         window = MyDotWindow2(suite, suiterc, template_vars,
-                              should_hide=should_hide_gtk_window)
+                              should_hide=should_hide_gtk_window,
+                              interactive=interactive)
     else:
         hide_suicide = not options.show_suicide
-        window = MyDotWindow(suite, suiterc, start_point_string,
-                             stop_point_string, template_vars,
+        window = MyDotWindow(suite, suiterc, template_vars,
+                             start_point_string, stop_point_string,
                              should_hide=should_hide_gtk_window,
-                             ignore_suicide=hide_suicide)
+                             ignore_suicide=hide_suicide,
+                             interactive=interactive)
 
     if options.start_ungrouped:
         window.ungroup_all(None)
