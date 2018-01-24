@@ -210,6 +210,9 @@ class JobFileWriter(object):
             '\n    export CYLC_TASK_NAMESPACE_HIERARCHY="%s"' %
             ' '.join(job_conf['namespace_hierarchy']))
         handle.write(
+            '\n    export CYLC_TASK_DEPENDENCIES="%s"' %
+            ' '.join(job_conf['dependencies']))
+        handle.write(
             '\n    export CYLC_TASK_TRY_NUMBER=%s' % job_conf['try_num'])
         # Custom parameter environment variables
         for var, tmpl in job_conf['param_env_tmpl'].items():

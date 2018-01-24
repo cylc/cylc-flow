@@ -870,6 +870,7 @@ class TaskJobManager(object):
             'batch_submit_command_template': (
                 rtconfig['job']['batch submit command template']),
             'batch_system_conf': batch_sys_conf,
+            'dependencies': itask.state.get_resolved_dependencies(),
             'directives': rtconfig['directives'],
             'environment': rtconfig['environment'],
             'execution_time_limit': itask.summary[self.KEY_EXECUTE_TIME_LIMIT],
