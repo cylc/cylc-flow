@@ -667,15 +667,17 @@ can be overridden by users,
 
 The \lstinline=cylc get-site-config= command retrieves current
 global settings consisting of cylc defaults overridden by site settings,
-if any, overridden by user settings, if any. To generate an
-initial site or user global config file:
+if any, overridden by user settings, if any.
+If you need to generate an example user global config file filled with the
+default values commented out (useful as a quick reference), you can do:
 \lstset{language=transcript}
 \begin{lstlisting}
-$ cylc get-site-config > $HOME/.cylc/global.rc
+$ cylc get-site-config | sed 's/^/#/' > ~/.cylc/global.rc.example
 \end{lstlisting}
-Settings that do not need to be changed should be deleted or commented
-out of user global config files so that they don't override future changes to
-the site file.
+Settings that do not need to be changed should be deleted to reduce conflicts
+with site changes and changes in future versions of cylc.
+Copy the example file into \lstinline=~/.cylc/global.rc= if you need to apply
+any changes.
 
 Legal items, values, and system defaults are documented in
 (\ref{SiteRCReference}).
