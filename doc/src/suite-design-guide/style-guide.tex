@@ -123,13 +123,12 @@ so the script block would end up being the same as the previous example.
 However, you should watch your line length (see~\ref{Line Length}) when you
 have many levels of indentations.
 
-{\em Do not indent here documents}:
+{\em Take care when indenting here documents}:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
     [[foo]]
-        # ... this is an error!
         script = """
         cat >> log.txt <<_EOF_
             The quick brown fox jumped
@@ -138,8 +137,20 @@ have many levels of indentations.
                  """
 \end{lstlisting}
 
-(The leading whitespace would end up in \lstinline=log.txt=,
-and there may be other unwanted surprises).
+In the above, each line in \lstinline=log.txt= would end up with 4 leading
+white spaces. The following will give you lines with no white spaces.
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[runtime]
+    [[foo]]
+        script = """
+        cat >> log.txt <<_EOF_
+        The quick brown fox jumped
+        over the lazy dog.
+        _EOF_
+                 """
+\end{lstlisting}
 
 \subsubsection{Graph String Lines}
 
