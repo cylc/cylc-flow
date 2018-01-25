@@ -175,7 +175,7 @@ Class to hold initialisation data.
             else:
                 self.host = auth
                 self.port = None
-        self.logdir = SuiteLog.get_inst(suite).get_dir()
+        self.logdir = SuiteLog.get_dir_for_suite(suite)
 
 
 class InfoBar(gtk.VBox):
