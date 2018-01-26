@@ -218,35 +218,41 @@ cmp_ok() {
 
 cmp_json_ok() {
     run_ok "$1" python -c "import sys
+import re
 import json
+from cylc.task_state import TASK_STATUSES_ORDERED
 
-# no need for try/except as get traceback anyway in stderr
+# Load data; no need for JSON object try/except as get stderr traceback anyway
+output = json.load(open(sys.argv[1], 'r'))
 if sys.argv[2]:
     expected_output = json.load(open(sys.argv[2], 'r'))
 else:
     expected_output = json.load(sys.stdin)
-output = json.load(open(sys.argv[1], 'r'))
 
-# convert unicode for useful stderr - '^?*?^' chosen as arbitrary placeholder
-def process(some_output):
-    if isinstance(some_output, unicode):
-        return str(some_output.encode('utf-8')).replace('\'', '^?*?^')
-    if isinstance(some_output, list):
-        return [process(item) for item in some_output]
-    if isinstance(some_output, dict):
-        return dict((process(key), process(value)) for key, value in
-                    some_output.items())
-    return some_output
+# Replace arbitary time floats in JSON structures for effective comparison
+def float_repl(some_output, marker):
+    new_output = re.sub(r'((\'|\")update-time(\'|\")\s*:\s*)\d*\.\d*',
+                        r'\1' + marker, str(some_output))
+    # Deal with cylc scan TIME_FIELDS (see cylc.state_summary_mgr)
+    for status in TASK_STATUSES_ORDERED:
+        new_regex = (r'((\'|\")%s(\'|\")\s*:\s*\[\n*\s*\[\n*\s*)\d*\.\d*' %
+                     status)
+        new_output = re.sub(new_regex, r'\1' + marker, str(new_output))
+    return new_output
 
-# check for match; if different process for convenient stderr lifting -> tests
-if output == expected_output:
+# Unicode (u'...') for 'loaded' outputs; double-quoted strings for 'dumps'
+u_marker = \"u'<FLOAT_REPLACED>'\"
+s_marker = '\"<FLOAT_REPLACED>\"'
+
+# Check for match; if different, process for easy stderr lifting -> tests
+if float_repl(output, u_marker) == float_repl(expected_output, u_marker):
     sys.exit(0)
 else:
-    # Python's return always includes single quotes; JSON needs double
-    print_string = '%s\n not equal to \n%s' % (
-        str(process(output)).replace('\'', '\"'),
-        str(process(expected_output)).replace('\'', '\"'))
-    sys.exit(print_string.replace('^?*?^', '\''))" "$2" "${3:-}"
+    sys.exit('LOADED:\n%s\n!=\n%s\n OR DUMPED:\n%s\n!=\n%s' % (
+        float_repl(output, u_marker), float_repl(expected_output, u_marker),
+        float_repl(json.dumps(output, indent=4), s_marker),
+        float_repl(json.dumps(expected_output, indent=4),
+                   s_marker)))" "$2" "${3:-}"
 }
 
 contains_ok() {

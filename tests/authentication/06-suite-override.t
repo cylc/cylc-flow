@@ -116,7 +116,7 @@ cmp_json_ok 'scan-j.out' 'scan-j.out' <<__END__
             "tasks-by-state":{
                 "failed":[
                     [
-                        1516968607.0,
+                        "<FLOAT_REPLACED>",
                         "foo",
                         "1"
                     ]
@@ -134,14 +134,14 @@ cmp_json_ok 'scan-j.out' 'scan-j.out' <<__END__
                     ]
                 ]
             },
-            "meta":{
-                "URL":"",
-                "group":"",
-                "description":"Stalls when the first task fails.\nSuite overrides global authentication settings.",
-                "title":"Authentication test suite."
+            "meta": {
+                "URL": "", 
+                "group": "", 
+                "description": "Stalls when the first task fails.\nSuite overrides global authentication settings.", 
+                "title": "Authentication test suite."
             },
             "owner":"${USER}",
-            "update-time":1516968608.1505351,
+            "update-time":"<FLOAT_REPLACED>",
             "name":"${SUITE_NAME}"
         }
     ]
