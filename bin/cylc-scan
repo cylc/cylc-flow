@@ -226,7 +226,7 @@ def main():
     if not args:
         return
 
-    json_dict = {}
+    json_filter = []
     skip_one = True
     for host, port, suite_identity in scan_many(args, options.comms_timeout):
         name = suite_identity[KEY_NAME]
@@ -236,12 +236,15 @@ def main():
             continue
         if not cres['suite-owner'].match(owner):
             continue
+        if options.json_format:
+            json_filter.append([host, port, suite_identity])
+            continue
 
         if options.old_format:
             print name, owner, host, port
             continue
 
-        if options.raw_format or options.json_format or options.describe:
+        if options.raw_format or options.describe:
             # Extracting required data for these options before processing
             try:
                 meta_items = suite_identity[KEY_META]
@@ -251,17 +254,16 @@ def main():
                     "title": suite_identity.get(KEY_TITLE),
                     "description": suite_identity.get(KEY_DESCRIPTION)
                 }
-            if not options.describe:
-                suite_identity.get(KEY_UPDATE_TIME)
-                clean_meta_items = {}
-                for key, value in meta_items.items():
-                    if value:
-                        clean_meta_items.update({
-                            key: ' '.join([x.strip() for x in
-                                          str(value).split('\n') if x])})
-                totals = suite_identity.get(KEY_STATES)
 
         if options.raw_format:
+            suite_identity.get(KEY_UPDATE_TIME)
+            clean_meta_items = {}
+            for key, value in meta_items.items():
+                if value:
+                    clean_meta_items.update({
+                        key: ' '.join([x.strip() for x in
+                                       str(value).split('\n') if x])})
+            totals = suite_identity.get(KEY_STATES)
             print "%s|%s|%s|port|%s" % (name, owner, host, port)
             for key, value in clean_meta_items.items():
                 print "%s|%s|%s|%s|%s" % (name, owner, host, key, value)
@@ -272,29 +274,6 @@ def main():
                 if point:
                     key = "%s:%s" % (KEY_STATES, point)
                 print "%s|%s|%s|%s|%s" % (name, owner, host, key, state_line)
-            continue
-
-        if options.json_format:
-            suite_inf = {"owner": owner, "host": host, "port": port}
-            if len(clean_meta_items) != 0:
-                suite_inf.update({"meta": clean_meta_items})
-            if totals is None:
-                json_dict[name] = suite_inf
-                continue
-            point_inf = {}
-            for point, state_line in get_point_state_count_lines(*totals):
-                state_dict = {}
-                if point:
-                    for state_inf in state_line.split(' '):
-                        if ':' in state_inf:
-                            key, value = state_inf.split(':')
-                            try:
-                                state_dict.update({key: int(value)})
-                            except (TypeError, ValueError):
-                                state_dict.update({key: str(value)})
-                    point_inf.update({point: state_dict})
-                suite_inf.update({KEY_STATES: point_inf})
-            json_dict[name] = suite_inf
             continue
 
         line = '%s %s@%s:%s' % (name, owner, host, port)
@@ -354,9 +333,8 @@ def main():
                     point_prefix = "%s " % point
                 print indent * 2 + "%s%s" % (point_prefix, state_line)
 
-    # Need a single filtered JSON structure => only dump after final iteration
     if options.json_format:
-        print json.dumps(json_dict, indent=4)
+        print json.dumps(json_filter, indent=4)
 
 
 def get_point_state_count_lines(state_count_totals, state_count_cycles,

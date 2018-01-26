@@ -95,19 +95,27 @@ __END__
 # Check scan --json output.
 cylc scan --comms-timeout=5 -jb -n "${SUITE_NAME}" >'scan-j.out' 2>'/dev/null'
 cmp_json_ok 'scan-j.out' 'scan-j.out' <<__END__
-{
-    "${SUITE_NAME}":{
-        "owner":"${USER}",
-        "host":"${HOST}",
-        "meta":{
-            "another_metadata":"1",
-            "custom_metadata":"something_custom",
-            "description":"Stalls when the first task fails. Here we test out a multi-line description!",
-            "title":"Authentication test suite."
-        },
-        "port":"${PORT}"
-    }
-}
+[
+    [
+        "${HOST}",
+        "${PORT}",
+        {
+            "group":"",
+            "description":"Stalls when the first task fails.\n                     Here we test out a multi-line description!",
+            "title":"Authentication test suite.",
+            "meta":{
+                "group":"",
+                "description":"Stalls when the first task fails.\n                     Here we test out a multi-line description!",
+                "title":"Authentication test suite.",
+                "URL":"",
+                "another_metadata":"1",
+                "custom_metadata":"something_custom"
+            },
+            "owner":"${USER}",
+            "name":"${SUITE_NAME}"
+        }
+    ]
+]
 __END__
 
 # "cylc show" (suite info) OK.

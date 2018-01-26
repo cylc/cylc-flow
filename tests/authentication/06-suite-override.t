@@ -90,26 +90,62 @@ __END__
 # Check scan --json output.
 cylc scan --comms-timeout=5 -jb -n "${SUITE_NAME}" >'scan-j.out' 2>'/dev/null'
 cmp_json_ok 'scan-j.out' 'scan-j.out' <<__END__
-{
-    "${SUITE_NAME}":{
-        "owner":"${USER}",
-        "states":{
-            "1":{
-                "failed":1,
-                "waiting":1
+[
+    [
+        "${HOST}",
+        "${PORT}",
+        {
+            "group":"",
+            "description":"Stalls when the first task fails.\nSuite overrides global authentication settings.",
+            "title":"Authentication test suite.",
+            "states":[
+                {
+                    "failed":1,
+                    "waiting":2
+                },
+                {
+                    "1":{
+                        "failed":1,
+                        "waiting":1
+                    },
+                    "2":{
+                        "waiting":1
+                    }
+                }
+            ],
+            "tasks-by-state":{
+                "failed":[
+                    [
+                        1516968607.0,
+                        "foo",
+                        "1"
+                    ]
+                ],
+                "waiting":[
+                    [
+                        0,
+                        "pub",
+                        "2"
+                    ],
+                    [
+                        0,
+                        "bar",
+                        "1"
+                    ]
+                ]
             },
-            "2":{
-                "waiting":1
-            }
-        },
-        "host":"${HOST}",
-        "meta":{
-            "description":"Stalls when the first task fails. Suite overrides global authentication settings.",
-            "title":"Authentication test suite."
-        },
-        "port":"${PORT}"
-    }
-}
+            "meta":{
+                "URL":"",
+                "group":"",
+                "description":"Stalls when the first task fails.\nSuite overrides global authentication settings.",
+                "title":"Authentication test suite."
+            },
+            "owner":"${USER}",
+            "update-time":1516968608.1505351,
+            "name":"${SUITE_NAME}"
+        }
+    ]
+]
 __END__
 
 # "cylc show" (suite info) OK.

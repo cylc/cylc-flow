@@ -220,16 +220,33 @@ cmp_json_ok() {
     run_ok "$1" python -c "import sys
 import json
 
-output = json.load(open(sys.argv[1], 'r'))
+# no need for try/except as get traceback anyway in stderr
 if sys.argv[2]:
     expected_output = json.load(open(sys.argv[2], 'r'))
 else:
     expected_output = json.load(sys.stdin)
+output = json.load(open(sys.argv[1], 'r'))
 
+# convert unicode for useful stderr - '^?*?^' chosen as arbitrary placeholder
+def process(some_output):
+    if isinstance(some_output, unicode):
+        return str(some_output.encode('utf-8')).replace('\'', '^?*?^')
+    if isinstance(some_output, list):
+        return [process(item) for item in some_output]
+    if isinstance(some_output, dict):
+        return dict((process(key), process(value)) for key, value in
+                    some_output.items())
+    return some_output
+
+# check for match; if different process for convenient stderr lifting -> tests
 if output == expected_output:
     sys.exit(0)
 else:
-    sys.exit('%s not equal to %s' % (output, expected_output))" "$2" "${3:-}"
+    # Python's return always includes single quotes; JSON needs double
+    print_string = '%s\n not equal to \n%s' % (
+        str(process(output)).replace('\'', '\"'),
+        str(process(expected_output)).replace('\'', '\"'))
+    sys.exit(print_string.replace('^?*?^', '\''))" "$2" "${3:-}"
 }
 
 contains_ok() {
