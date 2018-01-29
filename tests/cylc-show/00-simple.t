@@ -65,61 +65,65 @@ __SHOW_OUTPUT__
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-show-json
 cmp_json_ok "$TEST_NAME-suite" "$TEST_NAME-suite" <<__SHOW_OUTPUT__
-{
-    "URL":"",
-    "title":"a test suite",
-    "group":"",
-    "description":"the quick brown fox",
-    "custom":"custard"
-}
+[
+    {
+        "URL": "", 
+        "custom": "custard", 
+        "group": "", 
+        "description": "the quick brown fox", 
+        "title": "a test suite"
+    }
+]
 __SHOW_OUTPUT__
 
 cmp_json_ok "$TEST_NAME-task" "$TEST_NAME-task" <<__SHOW_OUTPUT__
-{
-    "foo":{
-        "URL":"",
-        "baz":"pub",
-        "description":"jumped over the lazy dog",
-        "title":"a task"
+[
+    {
+        "foo": {
+            "URL": "", 
+            "baz": "pub", 
+            "description": "jumped over the lazy dog", 
+            "title": "a task"
+        }
     }
-}
+]
 __SHOW_OUTPUT__
 
 cmp_json_ok "$TEST_NAME-taskinstance" "$TEST_NAME-taskinstance" \
     <<__SHOW_OUTPUT__
-{
-    "foo.20141106T0900Z":{
-        "prerequisites":[
-            [
-                "bar.20141106T0900Z succeeded",
-                "satisfied naturally"
-            ]
-        ],
-        "outputs":[
-            [
-                "foo.20141106T0900Z submitted",
-                true
-            ],
-            [
-                "foo.20141106T0900Z started",
-                true
-            ],
-            [
-                "foo.20141106T0900Z succeeded",
-                false
-            ]
-        ],
-        "extras":{
-
-        },
-        "meta":{
-            "URL":"",
-            "baz":"pub",
-            "description":"jumped over the lazy dog",
-            "title":"a task"
+[
+    {
+        "foo.20141106T0900Z": {
+            "prerequisites": [
+                [
+                    "bar.20141106T0900Z succeeded", 
+                    "satisfied naturally"
+                ]
+            ], 
+            "outputs": [
+                [
+                    "foo.20141106T0900Z submitted", 
+                    true
+                ], 
+                [
+                    "foo.20141106T0900Z started", 
+                    true
+                ], 
+                [
+                    "foo.20141106T0900Z succeeded", 
+                    false
+                ]
+            ], 
+            "meta": {
+                "URL": "", 
+                "baz": "pub", 
+                "description": "jumped over the lazy dog", 
+                "title": "a task"
+            }, 
+            "extras": {}
         }
     }
-}
+]
 __SHOW_OUTPUT__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

@@ -59,16 +59,16 @@ def main():
         options.comms_timeout, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid
     )
+    json_filter = []
 
     if not task_args:
         # Print suite info.
         suite_info = pclient.get_info('get_suite_info')
         if options.json:
-            print json.dumps(suite_info, indent=4)
+            json_filter.append(suite_info)
         else:
             for key, value in sorted(suite_info.items(), reverse=True):
                 print '%s: %s' % (key, value or "(not given)")
-        return
 
     task_names = [arg for arg in task_args if TaskID.is_valid_name(arg)]
     task_ids = [arg for arg in task_args if TaskID.is_valid_id_2(arg)]
@@ -76,7 +76,7 @@ def main():
     if task_names:
         results = pclient.get_info('get_task_info', names=task_names)
         if options.json:
-            print json.dumps(results, indent=4)
+            json_filter.append(results)
         else:
             for task_name, result in sorted(results.items()):
                 if len(results) > 1:
@@ -89,7 +89,7 @@ def main():
             'get_task_requisites', items=task_ids,
             list_prereqs=options.list_prereqs)
         if options.json:
-            print json.dumps(results, indent=4)
+            json_filter.append(results)
         else:
             for task_id, result in sorted(results.items()):
                 if len(results) > 1:
@@ -121,6 +121,9 @@ def main():
                 sys.stderr.write("No matching tasks found: %s\n" % bad_item)
             if bad_items:
                 sys.exit(1)
+
+    if options.json:
+        print json.dumps(json_filter, indent=4)
 
 
 if __name__ == "__main__":
