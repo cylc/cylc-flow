@@ -1166,22 +1166,22 @@ change its runtime configuration as in \lstinline=tut/oneoff/remote=:
             host = server1.niwa.co.nz
 \end{lstlisting}
 
-For remote task hosting to work several requirements must be satisfied:
+In general, a {\em task remote} is a user account, other than the account
+running the suite server program, where a task job is submitted to run. It can
+be on the same machine running the suite or on another machine.
+
+A task remote account must satify several requirements:
 \begin{myitemize}
 
-\item Non-interactive ssh must be enabled from the suite host account to
-the task host account, for task job submission.
+\item Non-interactive ssh must be enabled from the account running the suite
+server program to the account for submitting (and managing) the remote task job.
 
-\item Your shell initialization (.profile, .bashrc, .cshrc, etc) on the remote
-host must not produce any standard output as it may confuse commands such as
-scp. See \url{http://www.openssh.com/faq.html#2.9} for more information.
+\item Network settings must allow communication {\em back} from the remote task
+job to the suite, either by network ports or ssh, unless the last-resort one
+way {\em task polling} communication method is used.
 
-\item Network settings must allow communication {\em back} from the task host
-  to the suite host, either by network ports or ssh, unless the last-resort one
-  way {\em task polling} communication method is used.
-
-\item Cylc must be installed on the task host. Other software dependencies like
-graphviz are not required there.
+\item Cylc must be installed and runnable on the task remote account. Other
+software dependencies like graphviz are not required there.
 
 \item Any files needed by a remote task must be installed on the task
 host. In this example there is nothing to install because the
@@ -1190,20 +1190,20 @@ and thus ends up entirely contained within the task job script.
 
 \end{myitemize}
 
-If your username is different on the task host the
-\lstinline=[[[remote]]]= section also supports an
-\lstinline@owner=username@ item, or your \lstinline=$HOME/.ssh/config=
-file can be configured for username translation.
+If your username is different on the task host, you can add a \lstinline=User=
+setting for the relevant host in your \lstinline=~/.ssh/config=.
+If you are unable to do so, the \lstinline=[[[remote]]]= section also supports an
+\lstinline@owner=username@ item.
 
-If you configure a task host according to the requirements cylc will
-create remote log directories, source login scripts on the remote host
-to ensure cylc is visible there, send the task job script over, and submit it
-to run there by the configured batch system:
+If you configure a task account according to the requirements cylc will invoke
+itself on the remote account (with a login shell by default) to create log
+directories, transfer any essential service files, send the task job script
+over, and submit it to run there by the configured batch system.
 
-Remote task job logs are saved to the suite run directory on the task host, not
-on the suite host. They can be retrieved by right-clicking on the task
-in the GUI, or to have cylc pull them back to the suite host automatically
-do this:
+Remote task job logs are saved to the suite run directory on the task remote,
+not on the account running the suite. They can be retrieved by right-clicking
+on the task in the GUI, or to have cylc pull them back to the suite account
+automatically do this:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -4338,11 +4338,8 @@ batch system:
 \lstset{language=transcript}
 For this to work:
 \begin{myitemize}
-    \item non-interactive ssh/scp is required from the suite host to the task
-    host accounts. Note: Your shell initialization (.profile, .bashrc, .cshrc,
-    etc) on the remote host must not produce any standard output as it may
-    confuse commands such as scp. See \url{http://www.openssh.com/faq.html#2.9}
-    for more information.
+    \item non-interactive ssh is required from the suite host to the remote
+    task accounts.
 
     \item cylc must be installed on task hosts.
     \begin{myitemize}
@@ -6645,7 +6642,7 @@ possess the passphrase file for that suite. Fine-grained access to a single
 suite server program via distinct user accounts is not currently supported.
 
 Suite server programs automatically install their auth and contact files to job
-hosts by scp, to enable task jobs to connect back to the suite server program
+hosts via ssh, to enable task jobs to connect back to the suite server program
 for task messaging.
 
 Client programs invoked by the suite owner automatically load the passphrase,
