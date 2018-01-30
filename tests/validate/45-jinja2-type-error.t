@@ -41,15 +41,6 @@ Context lines:
 {{ 1 / 'foo' }}	<-- Jinja2Error
 __ERROR__
 
-cat >'suite.rc' <<'__SUITERC__'
-#!jinja2
-
-[scheduling]
-    [[dependencies]]
-        graph = foo
-{{ 1 / 'foo' }}
-__SUITERC__
-
 TEST_NAME="${TEST_NAME}-value-error"
 cat >'suite.rc' <<'__SUITERC__'
 #!Jinja2
