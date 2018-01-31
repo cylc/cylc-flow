@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test job script sets dependencies in evironment.
 . "$(dirname "${0}")/test_header"
-set_test_number 3
+set_test_number 4
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
@@ -25,6 +25,8 @@ run_ok "${TEST_NAME_BASE}-run" \
     cylc run "${SUITE_NAME}" --reference-test --debug --no-detach
 grep_ok 'CYLC_TASK_DEPENDENCIES="bar\.1 baz\.1"' \
     "${SUITE_RUN_DIR}/log/job/1/foo/01/job"
+grep_ok 'CYLC_TASK_DEPENDENCIES=""' \
+    "${SUITE_RUN_DIR}/log/job/1/qux/01/job"
 
 purge_suite "${SUITE_NAME}"
 exit
