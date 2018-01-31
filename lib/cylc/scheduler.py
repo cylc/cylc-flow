@@ -387,7 +387,6 @@ conditions; see `cylc conditions`.
             self.task_job_mgr.task_remote_mgr.uuid_str,
             self.run_mode,
             str(cylc.flags.utc),
-            str(glbl_cfg().get(['cylc', 'UTC mode'])),
             self.initial_point,
             self.final_point,
             self.pool.is_held,
@@ -532,22 +531,34 @@ conditions; see `cylc conditions`.
 
     def process_queued_task_messages(self):
         """Handle incoming task messages for each task proxy."""
-        task_id_messages = {}
+        messages = {}
         while self.message_queue.qsize():
             try:
-                task_id, severity, message = self.message_queue.get(
-                    block=False)
+                task_job, event_time, severity, message = (
+                    self.message_queue.get(block=False))
             except Empty:
                 break
             self.message_queue.task_done()
-            task_id_messages.setdefault(task_id, [])
-            task_id_messages[task_id].append((severity, message))
+            if '/' in task_job:  # cycle/task-name/submit-num
+                cycle, task_name, submit_num = task_job.split('/', 2)
+                task_id = TaskID.get(task_name, cycle)
+                submit_num = int(submit_num, 10)
+            else:  # back compat: task-name.cycle
+                task_id = task_job
+                submit_num = None
+            messages.setdefault(task_id, [])
+            messages[task_id].append(
+                (submit_num, event_time, severity, message))
         for itask in self.pool.get_tasks():
-            if itask.identity in task_id_messages:
-                for severity, message in task_id_messages[itask.identity]:
-                    self.task_events_mgr.process_message(
-                        itask, severity, message,
-                        self.task_job_mgr.poll_task_jobs, is_incoming=True)
+            message_items = messages.get(itask.identity)
+            if message_items is None:
+                continue
+            for submit_num, event_time, severity, message in message_items:
+                self.task_events_mgr.process_message(
+                    itask, severity, message,
+                    self.task_job_mgr.poll_task_jobs,
+                    incoming_event_time=event_time,
+                    submit_num=submit_num)
 
     def process_command_queue(self):
         """Process queued commands."""

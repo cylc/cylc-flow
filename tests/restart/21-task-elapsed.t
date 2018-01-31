@@ -37,9 +37,10 @@ __PYTHON__
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
 RUND="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --debug --no-detach
+suite_run_ok "${TEST_NAME_BASE}-run" \
+    timeout 120 cylc run "${SUITE_NAME}" --debug --no-detach
 suite_run_ok "${TEST_NAME_BASE}-restart-1" \
-    cylc restart "${SUITE_NAME}" --until=2028 --debug --no-detach
+    timeout 120 cylc restart "${SUITE_NAME}" --until=2028 --debug --no-detach
 sed -n '/LOADING task run times/,+2{s/^.* INFO - //;s/[0-9]\(,\|$\)/%d\1/g;p}' \
     "${RUND}/log/suite/log" >'restart-1.out'
 contains_ok 'restart-1.out' <<'__OUT__'
@@ -48,7 +49,7 @@ LOADING task run times
 + t1: %d,%d,%d,%d,%d
 __OUT__
 suite_run_ok "${TEST_NAME_BASE}-restart-2" \
-    cylc restart "${SUITE_NAME}" --until=2030 --debug --no-detach
+    timeout 120 cylc restart "${SUITE_NAME}" --until=2030 --debug --no-detach
 sed -n '/LOADING task run times/,+2{s/^.* INFO - //;s/[0-9]\(,\|$\)/%d\1/g;p}' \
     "${RUND}/log/suite/log" >'restart-2.out'
 contains_ok 'restart-2.out' <<'__OUT__'
@@ -57,7 +58,7 @@ LOADING task run times
 + t1: %d,%d,%d,%d,%d,%d,%d,%d,%d,%d
 __OUT__
 suite_run_ok "${TEST_NAME_BASE}-restart-3" \
-    cylc restart "${SUITE_NAME}" --until=2031 --hold
+    timeout 120 cylc restart "${SUITE_NAME}" --until=2031 --hold
 cylc dump -r "${SUITE_NAME}" >'cylc-dump.out'
 test_dump 'cylc-dump.out'
 

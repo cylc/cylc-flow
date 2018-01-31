@@ -93,9 +93,9 @@ def remote_cylc_cmd(cmd, user=None, host=None, capture=False,
             sys.stderr.write("ERROR: remote command failed %d\n" % res)
 
 
-def remrun(env=None, path=None, dry_run=False, forward_x11=False):
+def remrun(dry_run=False, forward_x11=False):
     """Short for RemoteRunner().execute(...)"""
-    return RemoteRunner().execute(env, path, dry_run, forward_x11)
+    return RemoteRunner().execute(dry_run, forward_x11)
 
 
 class RemoteRunner(object):
@@ -114,6 +114,7 @@ class RemoteRunner(object):
         self.owner = None
         self.host = None
         self.ssh_login_shell = None
+        self.ssh_cylc = None
         self.argv = argv or sys.argv
 
         cylc.flags.verbose = '-v' in self.argv or '--verbose' in self.argv
@@ -123,13 +124,15 @@ class RemoteRunner(object):
         # detect and replace host and owner options
         while argv:
             arg = argv.pop(0)
-            if arg.startswith("--user="):
-                self.owner = arg.replace("--user=", "")
-            elif arg.startswith("--host="):
-                self.host = arg.replace("--host=", "")
-            elif arg == "--login":
+            if arg.startswith('--user='):
+                self.owner = arg.replace('--user=', '')
+            elif arg.startswith('--host='):
+                self.host = arg.replace('--host=', '')
+            elif arg == '--ssh-cylc=':
+                self.ssh_cylc = arg.replace('--ssh-cylc=', '')
+            elif arg == '--login':
                 self.ssh_login_shell = True
-            elif arg == "--no-login":
+            elif arg == '--no-login':
                 self.ssh_login_shell = False
             else:
                 self.args.append(arg)
@@ -140,7 +143,7 @@ class RemoteRunner(object):
             from cylc.hostuserutil import is_remote
             self.is_remote = is_remote(self.host, self.owner)
 
-    def execute(self, env=None, path=None, dry_run=False, forward_x11=False):
+    def execute(self, dry_run=False, forward_x11=False):
         """Execute command on remote host.
 
         Returns False if remote re-invocation is not needed, True if it is
@@ -150,54 +153,55 @@ class RemoteRunner(object):
         if not self.is_remote:
             return False
 
-        name = os.path.basename(self.argv[0])[5:]  # /path/to/cylc-foo => foo
-
         # Build the remote command
         command = shlex.split(glbl_cfg().get_host_item(
-            "ssh command", self.host, self.owner))
+            'ssh command', self.host, self.owner))
         if forward_x11:
-            command.append("-Y")
+            command.append('-Y')
 
-        user_at_host = ""
+        user_at_host = ''
         if self.owner:
-            user_at_host = self.owner + "@"
+            user_at_host = self.owner + '@'
         if self.host:
             user_at_host += self.host
         else:
-            user_at_host += "localhost"
+            user_at_host += 'localhost'
         command.append(user_at_host)
+
+        # Pass cylc version through.
+        command += ['env', quote(r'CYLC_VERSION=%s' % CYLC_VERSION)]
+        if 'CYLC_UTC' in os.environ:
+            command.append(quote(r'CYLC_UTC=True'))
+            command.append(quote(r'TZ=UTC'))
 
         # Use bash -l?
         ssh_login_shell = self.ssh_login_shell
         if ssh_login_shell is None:
             ssh_login_shell = glbl_cfg().get_host_item(
-                "use login shell", self.host, self.owner)
-
-        # Pass cylc version through.
-        command += ["env", "CYLC_VERSION=%s" % CYLC_VERSION]
-
+                'use login shell', self.host, self.owner)
         if ssh_login_shell:
             # A login shell will always source /etc/profile and the user's bash
             # profile file. To avoid having to quote the entire remote command
             # it is passed as arguments to the bash script.
-            command += ["bash", "--login", "-c", "'exec $0 \"$@\"'"]
+            command += ['bash', '--login', '-c', quote(r'exec "$0" "$@"')]
 
-        # "cylc" on the remote host
-        if path:
-            command.append(os.sep.join(path + ["cylc"]))
+        # 'cylc' on the remote host
+        if self.ssh_cylc:
+            command.append(self.ssh_cylc)
         else:
             command.append(glbl_cfg().get_host_item(
-                "cylc executable", self.host, self.owner))
+                'cylc executable', self.host, self.owner))
 
-        command.append(name)
+        # /path/to/cylc-foo => foo
+        command.append(os.path.basename(self.argv[0])[5:])
 
-        if env is None:
-            env = {}
-        for var, val in env.iteritems():
-            command.append("--env=%s=%s" % (var, val))
+        if cylc.flags.verbose or os.getenv('CYLC_VERBOSE') in ["True", "true"]:
+            command.append(r'--verbose')
+        if cylc.flags.debug or os.getenv('CYLC_DEBUG') in ["True", "true"]:
+            command.append(r'--debug')
 
         for arg in self.args:
-            command.append("'" + arg + "'")
+            command.append(quote(arg))
             # above: args quoted to avoid interpretation by the shell,
             # e.g. for match patterns such as '.*' on the command line.
 
@@ -210,12 +214,12 @@ class RemoteRunner(object):
         try:
             popen = Popen(command)
         except OSError as exc:
-            sys.exit("ERROR: remote command invocation failed %s" % str(exc))
+            sys.exit(r'ERROR: remote command invocation failed %s' % exc)
 
         res = popen.wait()
         if WIFSIGNALED(res):
-            sys.exit("ERROR: remote command terminated by signal %d" % res)
+            sys.exit(r'ERROR: remote command terminated by signal %d' % res)
         elif res:
-            sys.exit("ERROR: remote command failed %d" % res)
+            sys.exit(r'ERROR: remote command failed %d' % res)
         else:
             return True

@@ -8,5 +8,5 @@ execution timeout    foo.1    job started PT3S ago, but has not finished
 started              baz.1    job started
 failed               baz.1    job failed
 warning              foo.1    this is a user-defined warning message
-critical             foo.1    Task job script received signal EXIT
+critical             foo.1    failed/EXIT
 succeeded            foo.1    job succeeded

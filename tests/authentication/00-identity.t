@@ -35,31 +35,30 @@ unset CYLC_CONF_PATH
 SRV_D="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/.service"
 HOST="$(sed -n 's/^CYLC_SUITE_HOST=//p' "${SRV_D}/contact")"
 PORT="$(sed -n 's/^CYLC_SUITE_PORT=//p' "${SRV_D}/contact")"
-run_ok "${TEST_NAME_BASE}-curl-anon" \
-    env no_proxy=* curl -v --cacert "${SRV_D}/ssl.cert" \
-    --digest -u 'anon:the quick brown fox' \
-    "https://${HOST}:${PORT}/identify"
-run_ok "${TEST_NAME_BASE}-curl-anon.stdout" \
-    grep -qF "\"name\": \"${SUITE_NAME}\"" "${TEST_NAME_BASE}-curl-anon.stdout"
-run_ok "${TEST_NAME_BASE}-curl-cylc" \
-    env no_proxy=* curl -v --cacert "${SRV_D}/ssl.cert" \
-    --digest -u "cylc:$(<"${SRV_D}/passphrase")" \
-    "https://${HOST}:${PORT}/identify"
-run_ok "${TEST_NAME_BASE}-curl-cylc.stdout" \
-    grep -qF "\"name\": \"${SUITE_NAME}\"" "${TEST_NAME_BASE}-curl-cylc.stdout"
-run_ok "${TEST_NAME_BASE}-curl-cylc-bad-ping-task" \
-    env no_proxy=* curl -v --cacert "${SRV_D}/ssl.cert" \
-    --digest -u "cylc:$(<"${SRV_D}/passphrase")" \
-    "https://${HOST}:${PORT}/ping_task?task_id=foo.1&exists_only=Truer"
-run_ok "${TEST_NAME_BASE}-curl-cylc-bad-ping-task.stdout" \
-    grep -qF "HTTPError: (400, u'Bad argument value: exists_only=Truer')" \
-    "${TEST_NAME_BASE}-curl-cylc-bad-ping-task.stdout"
-run_ok "${TEST_NAME_BASE}-curl-cylc-ping-task" \
-    env no_proxy=* curl -v --cacert "${SRV_D}/ssl.cert" \
-    --digest -u "cylc:$(<"${SRV_D}/passphrase")" \
-    "https://${HOST}:${PORT}/ping_task?task_id=foo.1&exists_only=True"
-echo >>"${TEST_NAME_BASE}-curl-cylc-ping-task.stdout"  # add new line
-cmp_ok "${TEST_NAME_BASE}-curl-cylc-ping-task.stdout" <<<'[true, "task found"]'
+run_ok "${TEST_NAME_BASE}-client-anon" \
+    cylc client -n --host="${HOST}" --port="${PORT}" 'identify'
+run_ok "${TEST_NAME_BASE}-client-anon.stdout" \
+    grep -qF "\"name\": \"${SUITE_NAME}\"" "${TEST_NAME_BASE}-client-anon.stdout"
+run_ok "${TEST_NAME_BASE}-client-cylc" \
+    cylc client -n --host="${HOST}" --port="${PORT}" 'identify' "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-client-cylc.stdout" \
+    grep -qF "\"name\": \"${SUITE_NAME}\"" "${TEST_NAME_BASE}-client-cylc.stdout"
+run_fail "${TEST_NAME_BASE}-client-cylc-bad-ping-task" \
+    cylc client 'get_info' "${SUITE_NAME}" <<'__JSON__'
+{"command": "ping_task", "task_id": "foo.1", "exists_only": "Truer"}
+__JSON__
+grep_ok 'HTTP.*Error.*400' "${TEST_NAME_BASE}-client-cylc-bad-ping-task.stderr"
+run_ok "${TEST_NAME_BASE}-client-cylc-ping-task" \
+    cylc client 'get_info' "${SUITE_NAME}" <<'__JSON__'
+{"command": "ping_task", "task_id": "foo.1", "exists_only": "True"}
+__JSON__
+echo >>"${TEST_NAME_BASE}-client-cylc-ping-task.stdout"  # add new line
+cmp_ok "${TEST_NAME_BASE}-client-cylc-ping-task.stdout" <<'__JSON__'
+[
+    true, 
+    "task found"
+]
+__JSON__
 
 # Wait for first task 'foo' to fail.
 cylc suite-state "${SUITE_NAME}" --task=foo --status=failed --point=1 \

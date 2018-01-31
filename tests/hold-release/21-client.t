@@ -15,35 +15,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test task outputs status is retained on restart
+# Test release held suite using the "cylc client" command.
 . "$(dirname "$0")/test_header"
-
-set_test_number 6
+set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_fail "${TEST_NAME_BASE}-run" cylc run --no-detach "${SUITE_NAME}"
-if which sqlite3 > '/dev/null'; then
-    sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT outputs FROM task_outputs' \
-        >'sqlite3.out'
-    cmp_ok 'sqlite3.out' <<<'hello=hello'
-else
-    skip 1 'sqlite3 not installed?'
-fi
-suite_run_fail "${TEST_NAME_BASE}-restart-1" \
-    cylc restart --no-detach "${SUITE_NAME}"
-sed -i 's/#\(stalled handler\)/\1/; s/\(abort on stalled\)/#\1/' 'suite.rc'
-suite_run_ok "${TEST_NAME_BASE}-restart-2" \
-    cylc restart --debug --no-detach --reference-test "${SUITE_NAME}"
-if which sqlite3 > '/dev/null'; then
-    sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT outputs FROM task_outputs' \
-        >'sqlite3.out'
-    cmp_ok 'sqlite3.out' <<'__OUT__'
-greet=greeting
-hello=hello
-__OUT__
-else
-    skip 1 'sqlite3 not installed?'
-fi
+cylc run --reference-test --hold --debug --no-detach "${SUITE_NAME}" \
+    1>"${TEST_NAME_BASE}.out" 2>&1 &
+CYLC_RUN_PID=$!
+poll ! test -f "${SUITE_RUN_DIR}/.service/contact"
+run_ok "${TEST_NAME_BASE}-client" \
+    cylc client 'put_command' "${SUITE_NAME}" <<<'{"command": "release_suite"}'
+run_ok "${TEST_NAME_BASE}-run" wait "${CYLC_RUN_PID}"
 purge_suite "${SUITE_NAME}"
 exit

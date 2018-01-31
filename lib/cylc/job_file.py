@@ -224,18 +224,6 @@ class JobFileWriter(object):
                 "\n    CYLC_TASK_WORK_DIR_BASE='%s'" % job_conf['work_d'])
         handle.write("\n}")
 
-        # SSH comms variables. Note:
-        # For "poll", contact file will not be installed, and job will not
-        # attempt to communicate back.
-        # Otherwise, job will attempt to communicate back via HTTP(S).
-        comms = self._get_host_item(job_conf, 'task communication method')
-        if comms == 'ssh':
-            handle.write("\n\n    # CYLC MESSAGE ENVIRONMENT:")
-            handle.write('\n    export CYLC_TASK_COMMS_METHOD="%s"' % comms)
-            handle.write(
-                '\n    export CYLC_TASK_SSH_LOGIN_SHELL="%s"' %
-                self._get_host_item(job_conf, 'use login shell'))
-
     @staticmethod
     def _write_environment_2(handle, job_conf):
         """Run time environment part 2."""

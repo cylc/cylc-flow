@@ -50,9 +50,9 @@ __END__
 cylc cat-log $SUITE_NAME | grep "\[client-.*cylc-message" | awk '{print $4,$5,$6}' > log2.txt
 cmp_ok log2.txt << __END__
 [client-connect] ${USER_AT_HOST}:cylc-message privilege='full-control'
-[client-command] put_message ${USER_AT_HOST}:cylc-message
+[client-command] put_messages ${USER_AT_HOST}:cylc-message
 [client-connect] ${USER_AT_HOST}:cylc-message privilege='full-control'
-[client-command] put_message ${USER_AT_HOST}:cylc-message
+[client-command] put_messages ${USER_AT_HOST}:cylc-message
 __END__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

@@ -120,7 +120,7 @@ cylc__job__main() {
     # Env-Script
     cylc__job__run_inst_func 'env_script'
     # Send task started message
-    cylc message 'started' &
+    cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'started' &
     CYLC_TASK_MESSAGE_STARTED_PID=$!
     # Access to the suite bin directory
     if [[ -n "${CYLC_SUITE_DEF_PATH:-}" && -d "${CYLC_SUITE_DEF_PATH}/bin" ]]
@@ -142,7 +142,7 @@ cylc__job__main() {
     rmdir "${CYLC_TASK_WORK_DIR}" 2>'/dev/null' || true
     # Send task succeeded message
     wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
-    cylc message 'succeeded' || true
+    cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'succeeded' || true
     trap '' EXIT
     exit 0
 }
@@ -177,9 +177,8 @@ cylc__job__run_inst_func() {
 #   exit 1
 cylc__job_finish() {
     typeset signal="$1"
-    typeset severity="$2"
-    typeset run_err_script="$3"
-    shift 3
+    typeset run_err_script="$2"
+    shift 2
     typeset signal_name=
     for signal_name in ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}; do
         trap '' "${signal_name}"
@@ -187,8 +186,8 @@ cylc__job_finish() {
     if [[ -n "${CYLC_TASK_MESSAGE_STARTED_PID:-}" ]]; then
         wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
     fi
-    cylc message -s "${severity}" "$@" || true
-    if $run_err_script; then
+    cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" "$@" || true
+    if "${run_err_script}"; then
         cylc__job__run_inst_func 'err_script' "${signal}" >&2
     fi
     exit 1
@@ -197,22 +196,19 @@ cylc__job_finish() {
 ###############################################################################
 # Wrap cylc__job_finish to abort with a user-defined error message.
 cylc__job_abort() {
-    cylc__job_finish \
-        "EXIT" "CRITICAL" true "Task job script aborted with \"${1}\""
+    cylc__job_finish "EXIT" true "CRITICAL: aborted/\"${1}\""
 }
 
 ###############################################################################
 # Wrap cylc__job_finish for job preempt/vacation signal trap.
 cylc__job_vacation() {
-    cylc__job_finish \
-        "${1}" "WARNING" false "Task job script vacated by signal ${1}"
+    cylc__job_finish "${1}" false "WARNING: vacated/${1}"
 }
 
 ###############################################################################
 # Wrap cylc__job_finish for automatic job exit signal trap.
 cylc__job_err() {
-    cylc__job_finish \
-        "${1}" "CRITICAL" true "Task job script received signal ${1}"
+    cylc__job_finish "${1}" true "CRITICAL: failed/${1}"
 }
 
 ###############################################################################

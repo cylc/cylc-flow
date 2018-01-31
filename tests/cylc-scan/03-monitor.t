@@ -33,7 +33,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
 
 TEST_NAME="${TEST_NAME_BASE}-monitor"
-run_ok "${TEST_NAME}" cylc monitor $(cylc scan | grep "${SUITE_NAME}") --once
+run_ok "${TEST_NAME}" cylc monitor $(cylc scan -n "${SUITE_NAME}") --once
 grep_ok "${SUITE_NAME} - 1 task" "${TEST_NAME}.stdout"
 #-------------------------------------------------------------------------------
 cylc stop --kill "${SUITE_NAME}"

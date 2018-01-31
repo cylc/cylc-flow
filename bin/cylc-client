@@ -1,0 +1,71 @@
+#!/usr/bin/env python
+
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) 2008-2016 NIWA
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""cylc client [OPTIONS] ARGS
+
+(This command is for internal use.)
+Invoke HTTP(S) client, expect JSON from STDIN for keyword arguments.
+Use the -n option if client function requires no keyword arguments.
+"""
+
+import json
+import sys
+if '--use-ssh' in sys.argv[1:]:
+    sys.argv.remove('--use-ssh')
+    from cylc.remote import remrun
+    if remrun():
+        sys.exit(0)
+
+import cylc.flags
+from cylc.option_parsers import CylcOptionParser as COP
+from cylc.network.httpclient import SuiteRuntimeServiceClient
+
+
+def main():
+    parser = COP(__doc__, comms=True, argdoc=[
+        ('METHOD', 'Network API function name'),
+        ('[REG]', 'Suite name')])
+    parser.add_option(
+        '-n', '--no-input',
+        help='Do not read from STDIN, assume null input',
+        action='store_true', dest='no_input')
+    options, args = parser.parse_args()
+    # Client API function name
+    func = args[0]
+    if len(args) == 2:
+        # 2nd argument is suite name, assume authentication required
+        suite = args[1]
+        auth = None
+    else:
+        # No 2nd argument, assume anonymous authentication
+        suite = None
+        auth = SuiteRuntimeServiceClient.ANON_AUTH
+    pclient = SuiteRuntimeServiceClient(
+        suite, options.owner, options.host, options.port,
+        options.comms_timeout, my_uuid=options.set_uuid,
+        print_uuid=options.print_uuid, auth=auth)
+    if options.no_input:
+        kwargs = {}
+    else:
+        kwargs = json.load(sys.stdin)
+    sys.stdin.close()
+    sys.stdout.write(json.dumps(getattr(pclient, func)(**kwargs), indent=4))
+
+
+if __name__ == '__main__':
+    main()

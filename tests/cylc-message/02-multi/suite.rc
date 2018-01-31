@@ -1,0 +1,19 @@
+[scheduling]
+    [[dependencies]]
+        graph = foo
+[runtime]
+    [[foo]]
+        script = """
+wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
+cylc message -p WARNING "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" \
+    "Warn this" "INFO: Greeting" - <<'__MESSAGES__'
+Warn that
+
+DEBUG: Remove stuffs such as
+badness
+slowness
+and other incorrectness.
+
+CUSTOM: whatever
+__MESSAGES__
+"""

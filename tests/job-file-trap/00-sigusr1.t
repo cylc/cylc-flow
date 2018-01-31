@@ -42,8 +42,7 @@ run_tests() {
     done
     run_fail "${TEST_NAME_BASE}-t1-status" grep -q '^CYLC_JOB' "${T1_STATUS_FILE}"
     TIMEOUT=$(($(date +%s) + 120))
-    while ! grep -q 'Task job script vacated by signal USR1' \
-                $SUITE_RUN_DIR/log/suite/log \
+    while ! grep -q 'vacated/USR1' $SUITE_RUN_DIR/log/suite/log \
             && (($TIMEOUT > $(date +%s)))
     do
         sleep 1

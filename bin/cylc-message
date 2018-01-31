@@ -15,68 +15,106 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""cylc [task] message [OPTIONS] MESSAGE ...
+"""cylc [task] message [OPTIONS] -- ARGS
 
-This command is used by task jobs to automatically report success and failure.
+Record task job messages.
 
-It can also be used to send info-, warning-, or critical-severity messages
-back, and to report registered task "message outputs" completed.
+Send task job messages to:
+- The stdout/stderr.
+- The job status file, if there is one.
+- The suite server program, if communication is possible.
+
+Task jobs use this command to record and report status such as success and
+failure. Applications run by task jobs can use this command to report messages
+and to report registered task outputs.
+
+Messages can be specified as arguments. A '-' indicates that messages the
+command should read messages from STDIN. When reading from STDIN, multiple
+messages are separated by empty lines.
+
+Each message can be prefixed with a severity level using the syntax 'SEVERITY:
+MESSAGE'.
+
+The default message severity is INFO. The --severity=SEVERITY option can be
+used to set the default severity level for all unprefixed messages.
 
 Note: to abort a job script with a custom error message, use cylc__job_abort:
   cylc__job_abort 'message...'
-(for technical reasons this is a shell function, not a cylc sub-command)."""
+(for technical reasons this is a shell function, not a cylc sub-command).
+
+For compatibility, if number of arguments is less than or equal to 2, the
+command will assume the classic interface, where all arguments are messages.
+Otherwise, the first 2 arguments are assumed to be the suite name and the task
+job identifier.
+"""
 
 
+from logging import getLevelName, INFO
 import os
 import sys
-from optparse import OptionParser
+
 import cylc.flags
-from cylc.task_message import TaskMessage
+from cylc.option_parsers import CylcOptionParser as COP
+from cylc.task_message import record_messages
 
 
 def main():
     """CLI."""
-    parser = OptionParser(__doc__)
-
+    parser = COP(
+        __doc__, comms=True,
+        argdoc=[
+            ('[REG]', 'Suite name'),
+            ('[TASK-JOB]', 'Task job identifier CYCLE/TASK_NAME/SUBMIT_NUM'),
+            ('[[SEVERITY:]MESSAGE ...]', 'Messages')])
     parser.add_option(
-        "-s", "--severity", "-p", "--priority",
-        metavar="SEVERITY", type="choice",
-        choices=['NORMAL', 'WARNING', 'CRITICAL', 'CUSTOM'],
-        help="message severity: NORMAL (default), WARNING, CRITICAL or CUSTOM",
-        action="store", dest="severity", default="NORMAL")
-
-    parser.add_option(
-        "--env", help="Override environment variables", action="append",
-        default=[], dest="env")
-
-    parser.add_option(
-        "-v", "--verbose", help="Verbose output mode", action="store_true",
-        default=False, dest="verbose")
-
+        '-s', '--severity', '-p', '--priority',
+        metavar='SEVERITY',
+        help='Set severity levels for messages that do not have one',
+        action='store', dest='severity')
     options, args = parser.parse_args()
     if not args:
-        parser.error("No task message supplied")
+        return parser.error('No message supplied')
+    cylc.flags.verbose = os.getenv('CYLC_VERBOSE') == 'true'
+    cylc.flags.debug = os.getenv('CYLC_DEBUG') == 'true'
+    if len(args) <= 2:  # compat
+        suite = os.getenv('CYLC_SUITE_NAME')
+        task_job = os.getenv('CYLC_TASK_JOB')
+        message_strs = args
+    else:
+        suite, task_job = args[0:2]
+        message_strs = args[2:]
+    # Read messages from STDIN
+    if '-' in message_strs:
+        current_message_str = ''
+        while True:  # Note: for line in sys.stdin: can hang
+            message_str = sys.stdin.readline()
+            if message_str.strip():
+                # non-empty line
+                current_message_str += message_str
+            elif message_str:
+                # empty line, start next message
+                if current_message_str:
+                    message_strs.append(current_message_str)
+                current_message_str = ''  # reset
+            else:
+                # end of file
+                if current_message_str:
+                    message_strs.append(current_message_str)
+                break
+    # Separate "severity: message"
+    messages = []  # [(severity, message_str), ...]
+    for message_str in message_strs:
+        if message_str == '-':
+            pass
+        elif ':' in message_str:
+            messages.append(
+                [item.strip() for item in message_str.split(':', 1)])
+        elif options.severity:
+            messages.append([options.severity, message_str.strip()])
+        else:
+            messages.append([getLevelName(INFO), message_str.strip()])
+    return record_messages(suite, task_job, messages)
 
-    for item in options.env:
-        key, value = item.split('=', 1)
-        os.environ[key] = value
-    task_message = TaskMessage(severity=options.severity)
-    if (task_message.env_map.get('CYLC_VERBOSE') == "true" or
-            options.verbose):
-        cylc.flags.verbose = True
 
-    if task_message.env_map.get('CYLC_DEBUG') == "true":
-        cylc.flags.debug = True
-
-    try:
-        task_message.send(args)
-    except Exception, exc:
-        print >> sys.stderr, 'ERROR: task messaging failure.'
-        if cylc.flags.debug:
-            import traceback
-            traceback.print_exc(exc)
-        raise SystemExit(exc)
-
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

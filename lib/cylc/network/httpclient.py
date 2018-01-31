@@ -22,6 +22,7 @@ Implementation currently via requests (urllib3) or urllib2.
 
 import os
 import sys
+from time import sleep
 import traceback
 from uuid import uuid4
 import warnings
@@ -35,6 +36,7 @@ from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
 from cylc.unicode_util import utf8_enforce
 from cylc.version import CYLC_VERSION
+from cylc.wallclock import get_current_time_string
 
 
 # Note: This was renamed from ConnectionError to ClientError. ConnectionError
@@ -120,11 +122,10 @@ class SuiteRuntimeServiceClient(object):
         'get_broadcast': {0: 'broadcast/get'},
         'get_info': {0: 'info/'},
         'get_suite_state_summary': {0: 'state/get_state_summary'},
-        'get_tasks_by_state': {0: 'state/get_tasks_by_state'},
         'put_broadcast': {0: 'broadcast/put'},
         'put_command': {0: 'command/'},
         'put_ext_trigger': {0: 'ext-trigger/put'},
-        'put_message': {0: 'message/put'},
+        'put_messages': {0: 'message/put', 1: 'put_message'},
     }
     ERROR_NO_HTTPS_SUPPORT = (
         "ERROR: server has no HTTPS support," +
@@ -134,9 +135,13 @@ class SuiteRuntimeServiceClient(object):
     METHOD_POST = 'POST'
     METHOD_GET = 'GET'
 
+    MSG_RETRY_INTVL = 5.0
+    MSG_MAX_TRIES = 7
+    MSG_TIMEOUT = 30.0
+
     def __init__(
             self, suite, owner=None, host=None, port=None, timeout=None,
-            my_uuid=None, print_uuid=False, comms_protocol=None, auth=None):
+            my_uuid=None, print_uuid=False, auth=None):
         self.suite = suite
         if not owner:
             owner = get_user()
@@ -148,7 +153,6 @@ class SuiteRuntimeServiceClient(object):
             self.host = get_fqdn_by_host(self.host)
         self.port = port
         self.srv_files_mgr = SuiteSrvFilesManager()
-        self.comms_protocol = comms_protocol
         if timeout is not None:
             timeout = float(timeout)
         self.timeout = timeout
@@ -159,7 +163,8 @@ class SuiteRuntimeServiceClient(object):
         self.prog_name = os.path.basename(sys.argv[0])
         self.auth = auth
         self.session = None
-        self.api = None
+        self.comms1 = {}  # content in primary contact file
+        self.comms2 = {}  # content in extra contact file, e.g. contact via ssh
 
     def _compat(self, name, default=None):
         """Return server function name.
@@ -170,12 +175,13 @@ class SuiteRuntimeServiceClient(object):
         self._load_contact_info()
         if default is None:
             default = name
-        return self.COMPAT_MAP[name].get(self.api, default)
+        return self.COMPAT_MAP[name].get(
+            self.comms1.get(self.srv_files_mgr.KEY_API), default)
 
-    def clear_broadcast(self, **kwargs):
+    def clear_broadcast(self, payload):
         """Clear broadcast runtime task settings."""
         return self._call_server(
-            self._compat('clear_broadcast'), payload=kwargs)
+            self._compat('clear_broadcast'), payload=payload)
 
     def expire_broadcast(self, **kwargs):
         """Expire broadcast runtime task settings."""
@@ -192,10 +198,10 @@ class SuiteRuntimeServiceClient(object):
             self._compat('get_info', default='') + command,
             method=self.METHOD_GET, **kwargs)
 
-    def get_latest_state(self, full_mode):
+    def get_latest_state(self, full_mode=False):
         """Return latest state of the suite (for the GUI)."""
         self._load_contact_info()
-        if self.api == 0:
+        if self.comms1.get(self.srv_files_mgr.KEY_API) == 0:
             # Basic compat for pre-7.5.0 suites
             # Full mode only.
             # Error content/size not supported.
@@ -221,24 +227,16 @@ class SuiteRuntimeServiceClient(object):
         return utf8_enforce(self._call_server(
             self._compat('get_suite_state_summary'), method=self.METHOD_GET))
 
-    def get_tasks_by_state(self):
-        """Returns a dict containing lists of tasks by state.
-
-        Result in the form:
-        {state: [(most_recent_time_string, task_name, point_string), ...]}
-        """
-        return self._call_server(
-            self._compat('get_tasks_by_state'), method=self.METHOD_GET)
-
     def identify(self):
         """Return suite identity."""
         # Note on compat: Suites on 7.6.0 or above can just call "identify",
         # but has compat for "id/identity".
         return self._call_server('id/identify', method=self.METHOD_GET)
 
-    def put_broadcast(self, **kwargs):
+    def put_broadcast(self, payload):
         """Put/set broadcast runtime task settings."""
-        return self._call_server(self._compat('put_broadcast'), payload=kwargs)
+        return self._call_server(
+            self._compat('put_broadcast'), payload=payload)
 
     def put_command(self, command, **kwargs):
         """Invoke suite command."""
@@ -251,15 +249,76 @@ class SuiteRuntimeServiceClient(object):
             self._compat('put_ext_trigger'),
             event_message=event_message, event_id=event_id)
 
-    def put_message(self, task_id, severity, message):
-        """Send task message."""
-        func_name = self._compat('put_message')
-        if func_name == 'put_message':
-            return self._call_server(
-                func_name, task_id=task_id, severity=severity, message=message)
-        else:  # pre-7.5.0 API compat
-            return self._call_server(
-                func_name, task_id=task_id, priority=severity, message=message)
+    def put_messages(self, payload):
+        """Send task messages to suite server program.
+
+        Arguments:
+            payload (dict):
+                task_job (str): Task job as "CYCLE/TASK_NAME/SUBMIT_NUM".
+                event_time (str): Event time as string.
+                messages (list): List in the form [[severity, message], ...].
+        """
+        retry_intvl = float(self.comms1.get(
+            self.srv_files_mgr.KEY_TASK_MSG_RETRY_INTVL,
+            self.MSG_RETRY_INTVL))
+        max_tries = int(self.comms1.get(
+            self.srv_files_mgr.KEY_TASK_MSG_MAX_TRIES,
+            self.MSG_MAX_TRIES))
+        for i in range(1, max_tries + 1):  # 1..max_tries inclusive
+            orig_timeout = self.timeout
+            if self.timeout is None:
+                self.timeout = self.MSG_TIMEOUT
+            try:
+                func_name = self._compat('put_messages')
+                if func_name == 'put_messages':
+                    results = self._call_server(func_name, payload=payload)
+                elif func_name == 'put_message':  # API 1, 7.5.0 compat
+                    cycle, name = payload['task_job'].split('/')[0:2]
+                    for severity, message in payload['messages']:
+                        results.append(self._call_server(
+                            func_name, task_id='%s.%s' % (name, cycle),
+                            severity=severity, message=message))
+                else:  # API 0, pre-7.5.0 compat, priority instead of severity
+                    cycle, name = payload['task_job'].split('/')[0:2]
+                    for severity, message in payload['messages']:
+                        results.append(self._call_server(
+                            func_name, task_id='%s.%s' % (name, cycle),
+                            priority=severity, message=message))
+            except ClientInfoError:
+                raise
+            except ClientError as exc:
+                now = get_current_time_string()
+                sys.stderr.write(
+                    "%s WARNING - Message send failed, try %s of %s: %s\n" % (
+                        now, i, max_tries, exc))
+                # Break if:
+                # * Exhausted number of tries.
+                # * Contact info file not found, suite probably not running.
+                #   Don't bother with retry, suite restart will poll any way.
+                if i >= max_tries or isinstance(exc, ClientInfoError):
+                    # Issue a warning and let the task carry on
+                    sys.stderr.write(
+                        "%s WARNING - MESSAGE SEND FAILED\n" % (now))
+                else:
+                    sys.stderr.write(
+                        "   retry in %s seconds, timeout is %s\n" % (
+                            retry_intvl, self.timeout))
+                    sleep(retry_intvl)
+                    # Reset in case contact info or passphrase change
+                    self.comms1 = {}
+                    self.host = None
+                    self.port = None
+                    self.auth = None
+            else:
+                if i > 1:
+                    # Continue to write to STDERR, so users can easily see that
+                    # it has recovered from previous failures.
+                    sys.stderr.write(
+                        "%s INFO - Send message: try %s of %s succeeded\n" % (
+                            get_current_time_string(), i, max_tries))
+                return results
+            finally:
+                self.timeout = orig_timeout
 
     def reset(self):
         """Compat method, does nothing."""
@@ -271,6 +330,8 @@ class SuiteRuntimeServiceClient(object):
 
     def _call_server(self, function, method=METHOD, payload=None, **kwargs):
         """Build server URL + call it"""
+        if self.comms2:
+            return self._call_server_via_comms2(function, payload, **kwargs)
         url = self._call_server_get_url(function, **kwargs)
         # Remove proxy settings from environment for now
         environ = {}
@@ -285,12 +346,12 @@ class SuiteRuntimeServiceClient(object):
 
     def _call_server_get_url(self, function, **kwargs):
         """Build request URL."""
-        comms_protocol = self.comms_protocol
-        if comms_protocol is None:
+        scheme = self.comms1.get(self.srv_files_mgr.KEY_COMMS_PROTOCOL)
+        if scheme is None:
             # Use standard setting from global configuration
-            comms_protocol = glbl_cfg().get(['communication', 'method'])
+            scheme = glbl_cfg().get(['communication', 'method'])
         url = '%s://%s:%s/%s' % (
-            comms_protocol, self.host, self.port, function)
+            scheme, self.host, self.port, function)
         # If there are any parameters left in the dict after popping,
         # append them to the url.
         if kwargs:
@@ -339,8 +400,8 @@ class SuiteRuntimeServiceClient(object):
             session_method = self.session.post
         else:
             session_method = self.session.get
-        comms_protocol = url.split(':', 1)[0]  # Can use urlparse?
-        username, password, verify = self._get_auth(comms_protocol)
+        scheme = url.split(':', 1)[0]  # Can use urlparse?
+        username, password, verify = self._get_auth(scheme)
         try:
             ret = session_method(
                 url,
@@ -402,8 +463,8 @@ class SuiteRuntimeServiceClient(object):
         if unverified_context is not None:
             ssl._create_default_https_context = unverified_context
 
-        comms_protocol = url.split(':', 1)[0]  # Can use urlparse?
-        username, password = self._get_auth(comms_protocol)[0:2]
+        scheme = url.split(':', 1)[0]  # Can use urlparse?
+        username, password = self._get_auth(scheme)[0:2]
         auth_manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
         auth_manager.add_password(None, url, username, password)
         auth = urllib2.HTTPDigestAuthHandler(auth_manager)
@@ -469,6 +530,57 @@ class SuiteRuntimeServiceClient(object):
         except ValueError:
             return response_text
 
+    def _call_server_via_comms2(self, function, payload, **kwargs):
+        """Call server via "cylc client --use-ssh".
+
+        Call "cylc client --use-ssh" using `subprocess.Popen`. Payload and
+        arguments of the API method are serialized as JSON and is written to a
+        temporary file, which is then used as the STDIN of the "cylc client"
+        command. The external call here should be even safer than a direct
+        HTTP(S) call, as it can be blocked by SSH before it even get a chance
+        to make the subsequent HTTP(S) call.
+
+        Arguments:
+            function (str): name of API method, argument 1 of "cylc client".
+            payload (str): extra data or information for the API method.
+            **kwargs (dict): arguments for the API method.
+        """
+        import json
+        from subprocess import Popen, PIPE
+        from tempfile import TemporaryFile
+        command = ["cylc", "client", "--use-ssh"]
+        if self.comms1.get(self.srv_files_mgr.KEY_SSH_USE_LOGIN_SHELL) in [
+                'True', 'true']:
+            command.append("--login")
+        else:
+            command.append("--no-login")
+        if self.host:
+            command.append("--host=%s" % self.host)
+        if self.owner:
+            command.append("--user=%s" % self.owner)
+        r_cylc_dir = self.comms1.get(self.srv_files_mgr.KEY_DIR_ON_SUITE_HOST)
+        if r_cylc_dir:
+            command.append("--ssh-cylc=%s/bin/cylc" % r_cylc_dir)
+        command.append(function)
+        if self.suite:
+            command.append(self.suite)
+        if payload:
+            kwargs["payload"] = payload
+        if kwargs:
+            proc_stdin = TemporaryFile()
+            json.dump(kwargs, proc_stdin)
+            proc_stdin.seek(0)
+        else:
+            proc_stdin = open(os.devnull)
+        proc = Popen(command, stdin=proc_stdin, stdout=PIPE)
+        out = proc.communicate()[0]
+        return_code = proc.wait()
+        if return_code:
+            from pipes import quote
+            command_str = " ".join(quote(item) for item in command)
+            raise ClientError(command_str, "return-code=%d" % return_code)
+        return json.loads(out)
+
     def _get_auth(self, protocol):
         """Return a user/password Digest Auth."""
         if self.auth is None:
@@ -515,10 +627,10 @@ class SuiteRuntimeServiceClient(object):
             return
         try:
             # Always trust the values in the contact file otherwise.
-            data = self.srv_files_mgr.load_contact_file(
+            self.comms1 = self.srv_files_mgr.load_contact_file(
                 self.suite, self.owner, self.host)
             # Port inside "try" block, as it needs a type conversion
-            self.port = int(data.get(self.srv_files_mgr.KEY_PORT))
+            self.port = int(self.comms1.get(self.srv_files_mgr.KEY_PORT))
         except (IOError, ValueError, SuiteServiceFileError):
             raise ClientInfoError(self.suite)
         else:
@@ -531,8 +643,6 @@ class SuiteRuntimeServiceClient(object):
                 raise ClientInfoUUIDError(
                     env_uuid, self.comms1[self.srv_files_mgr.KEY_UUID])
             # All good
-            self.comms_protocol = self.comms1.get(
-                self.srv_files_mgr.KEY_COMMS_PROTOCOL)
             self.host = self.comms1.get(self.srv_files_mgr.KEY_HOST)
             self.owner = self.comms1.get(self.srv_files_mgr.KEY_OWNER)
             if self.srv_files_mgr.KEY_API not in self.comms1:
@@ -540,9 +650,11 @@ class SuiteRuntimeServiceClient(object):
         # Indirect comms settings
         self.comms2.clear()
         try:
-            self.api = int(data.get(self.srv_files_mgr.KEY_API))
-        except (TypeError, ValueError):
-            self.api = 0  # Assume cylc-7.5.0 or before
+            self.comms2.update(self.srv_files_mgr.load_contact_file(
+                self.suite, self.owner, self.host,
+                SuiteSrvFilesManager.FILE_BASE_CONTACT2))
+        except SuiteServiceFileError:
+            pass
 
 
 def get_exception_from_html(html_text):
@@ -598,8 +710,8 @@ if __name__ == '__main__':
             """Tests that the url parser works for a single url and command
             using https"""
             myclient = SuiteRuntimeServiceClient(
-                "test-suite", host=get_host(), port=80,
-                comms_protocol="https")
+                "test-suite", host=get_host(), port=80)
+            myclient.comms1[SuiteSrvFilesManager.KEY_COMMS_PROTOCOL] = 'https'
             self.assertEqual(
                 'https://%s:80/test_command?apples=False&oranges=True' %
                 get_host(),
@@ -610,8 +722,8 @@ if __name__ == '__main__':
             """Test that the url compiler produces a http request when
             http is specified."""
             myclient = SuiteRuntimeServiceClient(
-                "test-suite", host=get_host(), port=80,
-                comms_protocol="http")
+                "test-suite", host=get_host(), port=80)
+            myclient.comms1[SuiteSrvFilesManager.KEY_COMMS_PROTOCOL] = 'http'
             self.assertEqual(
                 'http://%s:80/test_command?apples=False&oranges=True' %
                 get_host(),
@@ -633,8 +745,8 @@ if __name__ == '__main__':
 
         def test_get_data_from_url_single_http(self):
             """Test the get data from call_server_impl() function"""
-            myclient = SuiteRuntimeServiceClient(
-                "dummy-suite", comms_protocol='http')
+            myclient = SuiteRuntimeServiceClient("dummy-suite")
+            myclient.comms1[SuiteSrvFilesManager.KEY_COMMS_PROTOCOL] = 'http'
             ret = myclient.call_server_impl(
                 'http://httpbin.org/get', 'GET', None)
             self.assertEqual(ret["url"], "http://httpbin.org/get")
