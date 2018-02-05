@@ -54,7 +54,8 @@ from cylc.task_outputs import (
     TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED)
 from cylc.wallclock import (
-    get_current_time_string, RE_DATE_TIME_FORMAT_EXTENDED)
+    get_current_time_string, RE_DATE_TIME_FORMAT_EXTENDED,
+    get_seconds_as_interval_string)
 
 
 CustomTaskEventHandlerContext = namedtuple(
@@ -186,7 +187,7 @@ class TaskEventsManager(object):
     def process_events(self, schd_ctx):
         """Process task events that were created by "setup_event_handlers".
 
-        schd_ctx is an instance of "Schduler" in "cylc.scheduler".
+        schd_ctx is an instance of "Scheduler" in "cylc.scheduler".
         """
         ctx_groups = {}
         now = time()
@@ -210,7 +211,7 @@ class TaskEventsManager(object):
                 if tmpl:
                     LOG.debug(tmpl % (
                         point, name, submit_num, key1,
-                        timer.delay_as_seconds(),
+                        timer.delay_as_duration(),
                         timer.timeout_as_str()))
             # Ready to run?
             if not timer.is_delay_done() or (
@@ -407,18 +408,39 @@ class TaskEventsManager(object):
         """
         key = itask.state.status
         timer = itask.poll_timers.get(key)
-        if timer is None:
-            return
-        if now is not None and not timer.is_delay_done(now):
-            return
-        if timer.num is None:
-            timer.num = 0
-        delay = timer.next(no_exhaust=True)
+        delay = None
+        delay_as_duration = None
+        timeout_as_str = None
+
+        if timer is not None:
+            if now is not None and not timer.is_delay_done(now):
+                return
+            if timer.num is None:
+                timer.num = 0
+            delay = timer.next(no_exhaust=True)
+            delay_as_duration = timer.delay_as_duration()
+            timeout_as_str = timer.timeout_as_str()
+
+        if key == TASK_STATUS_RUNNING:
+            etl_timer = itask.poll_timers.get('execution_time_limit')
+            if etl_timer:
+                if now is not None and not timer.is_delay_done(now):
+                    return
+                execution_time_limit = itask.tdef.rtconfig['job'][
+                    'execution time limit']
+                etl_poll_interval = etl_timer.next(no_exhaust=True)
+                if etl_poll_interval:
+                    etl_delay = etl_poll_interval + execution_time_limit
+                    if delay is None or etl_delay < delay:
+                        delay = etl_delay
+                        delay_as_duration = etl_timer.delay_as_duration(
+                            offset=execution_time_limit)
+                        timeout_as_str = etl_timer.timeout_as_str(
+                            offset=execution_time_limit)
+
         if delay is not None:
-            LOG.info(
-                'next job poll in %s (after %s)' % (
-                    timer.delay_as_seconds(), timer.timeout_as_str()),
-                itask=itask)
+            LOG.info('next job poll in %s (after %s)' % (delay_as_duration,
+                timeout_as_str), itask=itask)
         return delay
 
     def _custom_handler_callback(self, ctx, schd_ctx, id_key):
@@ -614,7 +636,7 @@ class TaskEventsManager(object):
             timeout_str = (
                 itask.try_timers[TASK_STATUS_RETRYING].timeout_as_str())
             delay_msg = "retrying in %s" % (
-                itask.try_timers[TASK_STATUS_RETRYING].delay_as_seconds())
+                itask.try_timers[TASK_STATUS_RETRYING].delay_as_duration())
             msg = "failed, %s (after %s)" % (delay_msg, timeout_str)
             LOG.info("job(%02d) %s" % (itask.submit_num, msg), itask=itask)
             itask.summary['latest_message'] = msg
@@ -694,7 +716,7 @@ class TaskEventsManager(object):
             # There is a submission retry lined up.
             timer = itask.try_timers[TASK_STATUS_SUBMIT_RETRYING]
             timeout_str = timer.timeout_as_str()
-            delay_msg = "submit-retrying in %s" % timer.delay_as_seconds()
+            delay_msg = "submit-retrying in %s" % timer.delay_as_duration()
             msg = "%s, %s (after %s)" % (
                 self.EVENT_SUBMIT_FAILED, delay_msg, timeout_str)
             LOG.info("job(%02d) %s" % (itask.submit_num, msg), itask=itask)

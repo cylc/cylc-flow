@@ -1,0 +1,20 @@
+[cylc]
+    [[events]]
+        timeout = PT1M
+    [[reference test]]
+        expected task failures = foo.1
+[scheduling]
+    [[dependencies]]
+        graph = """
+            foo
+            foo:fail => ! foo
+        """
+[runtime]
+    [[foo]]
+        script = """
+            rm "$CYLC_TASK_LOG_ROOT.status"  # Disable polling.
+            export PATH=/bin  # Disable task message.
+            sleep 30  # Job must exceed exeuction time limit.
+        """
+        [[[job]]]
+            execution time limit = PT5S
