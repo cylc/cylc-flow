@@ -464,7 +464,7 @@ separately.
     (recommended) or else pure Python via {\bf urllib2}.
 \newline \url{http://www.cherrypy.org/}
 \newline \url{http://docs.python-requests.org/}
-  \item {\bf Jinja2 2.9.6}: a full featured template engine for Python, and its
+  \item {\bf Jinja2 2.10}: a full featured template engine for Python, and its
     dependency {\bf MarkupSafe 0.23}; both BSD licensed.
 \newline \url{http://jinja.pocoo.org/}
 \newline \url{http://www.pocoo.org/projects/markupsafe/}
@@ -5323,12 +5323,33 @@ so the following will print \lstinline=# FOO is 0=, not \lstinline=# FOO is 9=:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
-{% set COUNT = 0 %}
-{% for I in range(10) %}
-   {% set FOO = I %}
+{% set FOO = false %}
+{% for item in items %}
+    {% if item.check_something() %}
+        {% set FOO = true %}
+    {% endif %}
 {% endfor %}
 # FOO is {{FOO}}
 \end{lstlisting}
+
+Jinja2 documentation suggests using alternative constructs like the loop else
+block or the special \lstinline=loop= variable. More complex use cases can be
+handled using \lstinline=namespace= objects which allow propagating of changes
+across scopes:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+{% set ns = namespace(foo=false) %}
+{% for item in items %}
+    {% if item.check_something() %}
+        {% set ns.foo = true %}
+    {% endif %}
+{% endfor %}
+# FOO is {{ns.foo}}
+\end{lstlisting}
+
+For detail, see:
+\href{http://jinja.pocoo.org/docs/2.10/templates/#assignments}{Jinja2 Template Designer Documentation > Assignments}
 
 \subsubsection{Raising Exceptions}
 

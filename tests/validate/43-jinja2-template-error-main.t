@@ -16,21 +16,25 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test validation for a filter Jinja2 error with no line number.
-. $(dirname $0)/test_header
-#-------------------------------------------------------------------------------
+. "$(dirname "$0")/test_header"
+
 set_test_number 2
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-val
-run_fail "$TEST_NAME" cylc validate suite.rc
-# Filter Python version specific output, e.g.:
-#   File "/usr/lib/python2.6/site-packages/jinja2/filters.py", line 183, in do_dictsort
-sed -i '/File.*in do_dictsort/d' "$TEST_NAME.stderr"
-cmp_ok "$TEST_NAME.stderr" <<'__ERROR__'
+
+cat >'suite.rc' <<'__SUITERC__'
+#!jinja2
+{% set foo = {} %}
+[scheduling]
+    [[dependencies]]
+        graph = {{ foo|dictsort(by='by') }}
+[runtime]
+    [[foo]]
+        script = sleep 1
+__SUITERC__
+run_fail "${TEST_NAME_BASE}" cylc validate 'suite.rc'
+contains_ok "${TEST_NAME_BASE}.stderr" <<'__ERROR__'
 Jinja2Error:
-    raise FilterArgumentError('You can only sort by either '
+    'You can only sort by either "key" or "value"'
 FilterArgumentError: You can only sort by either "key" or "value"
 __ERROR__
-#-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+
 exit

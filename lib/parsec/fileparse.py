@@ -266,7 +266,7 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
                 print "Processing with Jinja2"
             try:
                 flines = jinja2process(flines, fdir, template_vars)
-            except (TemplateError, TypeError, UndefinedError) as exc:
+            except (StandardError, TemplateError, UndefinedError) as exc:
                 # Extract diagnostic info from the end of the Jinja2 traceback.
                 exc_lines = traceback.format_exc().splitlines()
                 suffix = []
@@ -279,7 +279,7 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
                 lineno = None
                 if hasattr(exc, 'lineno'):
                     lineno = exc.lineno
-                elif (isinstance(exc, TypeError) or
+                elif (isinstance(exc, StandardError) or
                         isinstance(exc, UndefinedError)):
                     match = re.search(r'File "<template>", line (\d+)', msg)
                     if match:
