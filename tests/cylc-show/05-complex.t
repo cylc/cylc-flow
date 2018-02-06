@@ -33,6 +33,7 @@ run_ok "${TEST_NAME}" cylc show "${SUITE_NAME}" 'f.20000102T00Z'
 cmp_ok "${TEST_NAME}.stdout" << '__OUT__'
 title: (not given)
 description: (not given)
+URL: (not given)
 
 prerequisites (- => not satisfied):
   - 0 & 1 & (2 | (3 & 4)) & 5

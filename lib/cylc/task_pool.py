@@ -1228,7 +1228,7 @@ class TaskPool(object):
         Result in a dict of a dict:
         {
             "task_id": {
-                "descriptions": {key: value, ...},
+                "meta": {key: value, ...},
                 "prerequisites": {key: value, ...},
                 "outputs": {key: value, ...},
                 "extras": {key: value, ...},
@@ -1263,7 +1263,7 @@ class TaskPool(object):
             for _, msg, is_completed in itask.state.outputs.get_all():
                 outputs.append(["%s %s" % (itask.identity, msg), is_completed])
             results[itask.identity] = {
-                "descriptions": itask.tdef.describe(),
+                "meta": itask.tdef.describe(),
                 "prerequisites": itask.state.prerequisites_dump(),
                 "outputs": outputs,
                 "extras": extras}

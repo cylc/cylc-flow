@@ -2,6 +2,7 @@
 [meta]
     title = a test suite
     description = the quick brown fox
+    custom = custard 
 [cylc]
     UTC mode = True
 [scheduling]
@@ -10,9 +11,9 @@
     [[dependencies]]
         [[[PT1H]]]
             graph = """
-                show => foo
-                foo[-PT1H] => foo
-                foo:start => baz & bar
+                bar => foo
+                foo:start => show-suite & show-task & show-taskinstance & \
+                show-suite-json & show-task-json & show-taskinstance-json
             """
 [runtime]
     [[foo]]
@@ -20,15 +21,22 @@
         [[[meta]]]
              title = a task
              description = jumped over the lazy dog
-
+             baz = pub
     [[bar,baz]]
         script = true
-    [[show]]
-        script = """
-# suite info
-cylc show "$CYLC_SUITE_NAME" >{{ TEST_OUTPUT_PATH }}
-# task info
-cylc show "$CYLC_SUITE_NAME" foo >>{{ TEST_OUTPUT_PATH }}
-# task instance info
-cylc show "$CYLC_SUITE_NAME" foo.20141106T0900Z >>{{ TEST_OUTPUT_PATH }}
-"""
+    [[show-suite]]
+        script = cylc show "$CYLC_SUITE_NAME" >>{{ TEST_OUTPUT_PATH }}-suite
+    [[show-task]]
+        script = cylc show "$CYLC_SUITE_NAME" foo >>{{ TEST_OUTPUT_PATH }}-task
+    [[show-taskinstance]]
+        script = cylc show "$CYLC_SUITE_NAME" foo.20141106T0900Z \
+            >>{{ TEST_OUTPUT_PATH }}-taskinstance
+    [[show-suite-json]]
+        script = cylc show --json "$CYLC_SUITE_NAME" \
+            >>{{ TEST_OUTPUT_PATH }}-json-suite
+    [[show-task-json]]
+        script = cylc show --json "$CYLC_SUITE_NAME" foo \
+            >>{{ TEST_OUTPUT_PATH }}-json-task
+    [[show-taskinstance-json]]
+        script = cylc show --json "$CYLC_SUITE_NAME" foo.20141106T0900Z \
+            >>{{ TEST_OUTPUT_PATH }}-json-taskinstance

@@ -18,11 +18,11 @@
 # Test cylc show for a basic task.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 3
+set_test_number 8
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE simple
 #-------------------------------------------------------------------------------
-TEST_SHOW_OUTPUT_PATH="$PWD/$TEST_NAME_BASE-show.stdout"
+TEST_SHOW_OUTPUT_PATH="$PWD/$TEST_NAME_BASE-show"
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate \
@@ -33,21 +33,97 @@ suite_run_ok $TEST_NAME cylc run --reference-test --debug --no-detach \
     --set=TEST_OUTPUT_PATH="$TEST_SHOW_OUTPUT_PATH" "$SUITE_NAME"
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-show
-contains_ok $TEST_NAME.stdout <<__SHOW_OUTPUT__
+cmp_ok "$TEST_NAME-suite" <<__SHOW_OUTPUT__
 title: a test suite
+group: (not given)
 description: the quick brown fox
+custom: custard
+URL: (not given)
+__SHOW_OUTPUT__
+
+cmp_ok "$TEST_NAME-task" <<__SHOW_OUTPUT__
 title: a task
 description: jumped over the lazy dog
+baz: pub
+URL: (not given)
+__SHOW_OUTPUT__
+
+cmp_ok "$TEST_NAME-taskinstance" <<__SHOW_OUTPUT__
 title: a task
 description: jumped over the lazy dog
+baz: pub
+URL: (not given)
 
 prerequisites (- => not satisfied):
-  - show.20141106T0900Z succeeded
+  + bar.20141106T0900Z succeeded
 
 outputs (- => not completed):
-  - foo.20141106T0900Z started
-  - foo.20141106T0900Z submitted
+  + foo.20141106T0900Z submitted
+  + foo.20141106T0900Z started
   - foo.20141106T0900Z succeeded
+__SHOW_OUTPUT__
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-show-json
+cmp_json_ok "$TEST_NAME-suite" "$TEST_NAME-suite" <<__SHOW_OUTPUT__
+[
+    {
+        "URL": "", 
+        "custom": "custard", 
+        "group": "", 
+        "description": "the quick brown fox", 
+        "title": "a test suite"
+    }
+]
+__SHOW_OUTPUT__
+
+cmp_json_ok "$TEST_NAME-task" "$TEST_NAME-task" <<__SHOW_OUTPUT__
+[
+    {
+        "foo": {
+            "URL": "", 
+            "baz": "pub", 
+            "description": "jumped over the lazy dog", 
+            "title": "a task"
+        }
+    }
+]
+__SHOW_OUTPUT__
+
+cmp_json_ok "$TEST_NAME-taskinstance" "$TEST_NAME-taskinstance" \
+    <<__SHOW_OUTPUT__
+[
+    {
+        "foo.20141106T0900Z": {
+            "prerequisites": [
+                [
+                    "bar.20141106T0900Z succeeded", 
+                    "satisfied naturally"
+                ]
+            ], 
+            "outputs": [
+                [
+                    "foo.20141106T0900Z submitted", 
+                    true
+                ], 
+                [
+                    "foo.20141106T0900Z started", 
+                    true
+                ], 
+                [
+                    "foo.20141106T0900Z succeeded", 
+                    false
+                ]
+            ], 
+            "meta": {
+                "URL": "", 
+                "baz": "pub", 
+                "description": "jumped over the lazy dog", 
+                "title": "a task"
+            }, 
+            "extras": {}
+        }
+    }
+]
 __SHOW_OUTPUT__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

@@ -18,7 +18,7 @@
 # Test authentication - privilege 'identity'.
 
 . $(dirname $0)/test_header
-set_test_number 14
+set_test_number 17
 
 install_suite "${TEST_NAME_BASE}" basic
 
@@ -68,12 +68,43 @@ cylc suite-state "${SUITE_NAME}" --task=foo --status=failed --point=1 \
 # Disable the suite passphrase (to leave us with public access privilege).
 mv "${SRV_D}/passphrase" "${SRV_D}/passphrase.DIS"
 
-# Check scan output.
+# Check scan --full output.
 cylc scan --comms-timeout=5 -fb -n "${SUITE_NAME}" 'localhost' \
-    >'scan.out' 2>'/dev/null'
-cmp_ok scan.out << __END__
+    >'scan-f.out' 2>'/dev/null'
+cmp_ok scan-f.out << __END__
 ${SUITE_NAME} ${USER}@localhost:${PORT}
    (description and state totals withheld)
+__END__
+
+# Check scan --describe output.
+cylc scan --comms-timeout=5 -db -n "${SUITE_NAME}" 'localhost' \
+    >'scan-d.out' 2>'/dev/null'
+cmp_ok scan-d.out << __END__
+${SUITE_NAME} ${USER}@localhost:${PORT}
+   (description and state totals withheld)
+__END__
+
+# Check scan --raw output.
+cylc scan --comms-timeout=5 -rb -n "${SUITE_NAME}" 'localhost' \
+    >'scan-r.out' 2>'/dev/null'
+cmp_ok scan-r.out << __END__
+${SUITE_NAME}|${USER}|localhost|port|${PORT}
+__END__
+
+# Check scan --json output.
+cylc scan --comms-timeout=5 -jb -n "${SUITE_NAME}" 'localhost' \
+    >'scan-j.out' 2>'/dev/null'
+cmp_json_ok 'scan-j.out' 'scan-j.out' << __END__
+[
+    [
+        "localhost",
+        ${PORT},
+        {
+            "owner":"${USER}",
+            "name":"${SUITE_NAME}"
+        }
+    ]
+]
 __END__
 
 # "cylc show" should be denied.

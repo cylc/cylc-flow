@@ -19,7 +19,7 @@
 # (Suite overrides global privilege 'identity'.)
 
 . $(dirname $0)/test_header
-set_test_number 9
+set_test_number 12
 
 install_suite "${TEST_NAME_BASE}" override
 
@@ -43,17 +43,109 @@ mv "${SRV_D}/passphrase" "${SRV_D}/passphrase.DIS"
 
 HOST="$(sed -n 's/^CYLC_SUITE_HOST=//p' "${SRV_D}/contact")"
 PORT="$(sed -n 's/^CYLC_SUITE_PORT=//p' "${SRV_D}/contact")"
-cylc scan --comms-timeout=5 -fb -n "${SUITE_NAME}" >'scan.out' 2>'/dev/null'
-cmp_ok 'scan.out' <<__END__
+
+cylc scan --comms-timeout=5 -fb -n "${SUITE_NAME}" >'scan-f.out' 2>'/dev/null'
+cmp_ok 'scan-f.out' <<__END__
 ${SUITE_NAME} ${USER}@${HOST}:${PORT}
    Title:
       "Authentication test suite."
+   URL:
+      (no URL)
+   Group:
+      (no group)
    Description:
       "Stalls when the first task fails.
        Suite overrides global authentication settings."
    Task state totals:
-      failed:1 waiting:1
+      failed:1 waiting:2
       1 failed:1 waiting:1
+      2 waiting:1
+__END__
+
+cylc scan --comms-timeout=5 -db -n "${SUITE_NAME}" >'scan-d.out' 2>'/dev/null'
+cmp_ok 'scan-d.out' <<__END__
+${SUITE_NAME} ${USER}@${HOST}:${PORT}
+   Title:
+      "Authentication test suite."
+   URL:
+      (no URL)
+   Group:
+      (no group)
+   Description:
+      "Stalls when the first task fails.
+       Suite overrides global authentication settings."
+__END__
+
+# Check scan --raw output.
+cylc scan --comms-timeout=5 -rb -n "${SUITE_NAME}" >'scan-r.out' 2>'/dev/null'
+cmp_ok 'scan-r.out' <<__END__
+${SUITE_NAME}|${USER}|${HOST}|port|${PORT}
+${SUITE_NAME}|${USER}|${HOST}|description|Stalls when the first task fails. Suite overrides global authentication settings.
+${SUITE_NAME}|${USER}|${HOST}|title|Authentication test suite.
+${SUITE_NAME}|${USER}|${HOST}|states|failed:1 waiting:2
+${SUITE_NAME}|${USER}|${HOST}|states:1|failed:1 waiting:1
+${SUITE_NAME}|${USER}|${HOST}|states:2|waiting:1
+__END__
+
+# Check scan --json output.
+cylc scan --comms-timeout=5 -jb -n "${SUITE_NAME}" >'scan-j.out' 2>'/dev/null'
+cmp_json_ok 'scan-j.out' 'scan-j.out' <<__END__
+[
+    [
+        "${HOST}",
+        "${PORT}",
+        {
+            "group":"",
+            "description":"Stalls when the first task fails.\nSuite overrides global authentication settings.",
+            "title":"Authentication test suite.",
+            "states":[
+                {
+                    "failed":1,
+                    "waiting":2
+                },
+                {
+                    "1":{
+                        "failed":1,
+                        "waiting":1
+                    },
+                    "2":{
+                        "waiting":1
+                    }
+                }
+            ],
+            "tasks-by-state":{
+                "failed":[
+                    [
+                        "<FLOAT_REPLACED>",
+                        "foo",
+                        "1"
+                    ]
+                ],
+                "waiting":[
+                    [
+                        0,
+                        "pub",
+                        "2"
+                    ],
+                    [
+                        0,
+                        "bar",
+                        "1"
+                    ]
+                ]
+            },
+            "meta": {
+                "URL": "", 
+                "group": "", 
+                "description": "Stalls when the first task fails.\nSuite overrides global authentication settings.", 
+                "title": "Authentication test suite."
+            },
+            "owner":"${USER}",
+            "update-time":"<FLOAT_REPLACED>",
+            "name":"${SUITE_NAME}"
+        }
+    ]
+]
 __END__
 
 # "cylc show" (suite info) OK.
