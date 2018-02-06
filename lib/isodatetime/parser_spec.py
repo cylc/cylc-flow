@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # ----------------------------------------------------------------------------
-# (C) British Crown Copyright 2013-2017 Met Office.
+# (C) British Crown Copyright 2013-2018 Met Office.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -169,23 +169,23 @@ Z
 }
 TIME_DESIGNATOR = "T"
 _DATE_TRANSLATE_INFO = [
-    ("\+(?=X)", "(?P<year_sign>[-+])",
+    (r"\+(?=X)", "(?P<year_sign>[-+])",
      "%(year_sign)s", "year_sign"),
-    ("CC", "(?P<century>\d\d)",
+    ("CC", r"(?P<century>\d\d)",
      "%(century)02d", "century"),
-    ("YY", "(?P<year_of_century>\d\d)",
+    ("YY", r"(?P<year_of_century>\d\d)",
      "%(year_of_century)02d", "year_of_century"),
-    ("MM", "(?P<month_of_year>\d\d)",
+    ("MM", r"(?P<month_of_year>\d\d)",
      "%(month_of_year)02d", "month_of_year"),
-    ("DDD", "(?P<day_of_year>\d\d\d)",
+    ("DDD", r"(?P<day_of_year>\d\d\d)",
      "%(day_of_year)03d", "day_of_year"),
-    ("DD", "(?P<day_of_month>\d\d)",
+    ("DD", r"(?P<day_of_month>\d\d)",
      "%(day_of_month)02d", "day_of_month"),
-    ("Www", "W(?P<week_of_year>\d\d)",
+    ("Www", r"W(?P<week_of_year>\d\d)",
      "W%(week_of_year)02d", "week_of_year"),
-    ("D", "(?P<day_of_week>\d)",
+    ("D", r"(?P<day_of_week>\d)",
      "%(day_of_week)01d", "day_of_week"),
-    ("z", "(?P<year_of_decade>\d)",
+    ("z", r"(?P<year_of_decade>\d)",
      "%(year_of_decade)01d", "year_of_decade"),
     ("^---", "(?P<truncated>---)",
      "---", None),
@@ -195,28 +195,28 @@ _DATE_TRANSLATE_INFO = [
      "-", None)
 ]
 _TIME_TRANSLATE_INFO = [
-    ("(?<=^hh)mm", "(?P<minute_of_hour>\d\d)",
+    ("(?<=^hh)mm", r"(?P<minute_of_hour>\d\d)",
      "%(minute_of_hour)02d", "minute_of_hour"),
-    ("(?<=^hh:)mm", "(?P<minute_of_hour>\d\d)",
+    ("(?<=^hh:)mm", r"(?P<minute_of_hour>\d\d)",
      "%(minute_of_hour)02d", "minute_of_hour"),
-    ("(?<=^-)mm", "(?P<minute_of_hour>\d\d)",
+    ("(?<=^-)mm", r"(?P<minute_of_hour>\d\d)",
      "%(minute_of_hour)02d", "minute_of_hour"),
-    ("^hh", "(?P<hour_of_day>\d\d)",
+    ("^hh", r"(?P<hour_of_day>\d\d)",
      "%(hour_of_day)02d", "hour_of_day"),
-    (",ii", ",(?P<hour_of_day_decimal>\d+)",
+    (",ii", r",(?P<hour_of_day_decimal>\d+)",
      ",%(hour_of_day_decimal_string)s", "hour_of_day_decimal_string"),
-    ("\.ii", "\.(?P<hour_of_day_decimal>\d+)",
+    (r"\.ii", r"\.(?P<hour_of_day_decimal>\d+)",
      ".%(hour_of_day_decimal_string)s", "hour_of_day_decimal_string"),
-    (",nn", ",(?P<minute_of_hour_decimal>\d+)",
+    (",nn", r",(?P<minute_of_hour_decimal>\d+)",
      ",%(minute_of_hour_decimal_string)s", "minute_of_hour_decimal_string"),
-    ("\.nn", "\.(?P<minute_of_hour_decimal>\d+)",
+    (r"\.nn", r"\.(?P<minute_of_hour_decimal>\d+)",
      ".%(minute_of_hour_decimal_string)s", "minute_of_hour_decimal_string"),
-    ("ss", "(?P<second_of_minute>\d\d)",
+    ("ss", r"(?P<second_of_minute>\d\d)",
      "%(second_of_minute)02d", "second_of_minute"),
-    (",tt", ",(?P<second_of_minute_decimal>\d+)",
+    (",tt", r",(?P<second_of_minute_decimal>\d+)",
      ",%(second_of_minute_decimal_string)s",
      "second_of_minute_decimal_string"),
-    ("\.tt", "\.(?P<second_of_minute_decimal>\d+)",
+    (r"\.tt", r"\.(?P<second_of_minute_decimal>\d+)",
      ".%(second_of_minute_decimal_string)s",
      "second_of_minute_decimal_string"),
     ("^--", "(?P<truncated>--)",
@@ -225,13 +225,13 @@ _TIME_TRANSLATE_INFO = [
      "-", None)
 ]
 _TIME_ZONE_TRANSLATE_INFO = [
-    ("mm", "(?P<time_zone_minute>\d\d)",
+    ("mm", r"(?P<time_zone_minute>\d\d)",
      "%(time_zone_minute_abs)02d", "time_zone_minute_abs"),
-    ("mm", "(?P<time_zone_minute>\d\d)",
+    ("mm", r"(?P<time_zone_minute>\d\d)",
      "%(time_zone_minute_abs)02d", "time_zone_minute_abs"),
-    ("hh", "(?P<time_zone_hour>\d\d)",
+    ("hh", r"(?P<time_zone_hour>\d\d)",
      "%(time_zone_hour_abs)02d", "time_zone_hour_abs"),
-    ("\+", "(?P<time_zone_sign>[-+])",
+    (r"\+", "(?P<time_zone_sign>[-+])",
      "%(time_zone_sign)s", "time_zone_sign"),
     ("Z", "(?P<time_zone_utc>Z)",
      "Z", None)
@@ -260,7 +260,7 @@ STRFTIME_TRANSLATE_INFO = {
     "%m": ["month_of_year"],
     "%M": ["minute_of_hour"],
     "%s": (
-        "(?P<seconds_since_unix_epoch>\d+[,.]?\d*)",
+        r"(?P<seconds_since_unix_epoch>\d+[,.]?\d*)",
         "%(seconds_since_unix_epoch)s", "seconds_since_unix_epoch"),
     "%S": ["second_of_minute"],
     "%X": ["hour_of_day", ":", "minute_of_hour", ":", "second_of_minute"],
@@ -270,7 +270,7 @@ STRFTIME_TRANSLATE_INFO = {
 STRPTIME_EXCLUSIVE_GROUP_INFO = {
     "%X": ("%H", "%M", "%S"),
     "%F": ("%Y", "%y", "%m", "%d"),
-    "%s": tuple([i for i in STRFTIME_TRANSLATE_INFO if i != "%s"])
+    "%s": tuple(i for i in STRFTIME_TRANSLATE_INFO if i != "%s")
 }
 
 
@@ -285,7 +285,16 @@ class StrftimeSyntaxError(ValueError):
 
 
 def get_date_translate_info(num_expanded_year_digits=2):
-    expanded_year_digit_regex = "\d" * num_expanded_year_digits
+    """Return list of 4-element tuples with date translate information.
+
+    returns:
+        list: List tuples. Each tuple has 4 elements:
+            - regex1 (str) - regex to match a date info substitution string
+            - regex2 (str) - regex to capture date info
+            - format (str) - template string to format date info
+            - name (str) - name of this property
+    """
+    expanded_year_digit_regex = r"\d" * num_expanded_year_digits
     return _DATE_TRANSLATE_INFO + [
         ("X",
          "(?P<expanded_year>" + expanded_year_digit_regex + ")",
@@ -295,10 +304,28 @@ def get_date_translate_info(num_expanded_year_digits=2):
 
 
 def get_time_translate_info():
+    """Return list of 4-element tuples with time translate information.
+
+    returns:
+        list: List tuples. Each tuple has 4 elements:
+            - regex1 (str) - regex to match a time info substitution string
+            - regex2 (str) - regex to capture a time info
+            - format (str) - template string to format time info
+            - name (str) - name of this property
+    """
     return _TIME_TRANSLATE_INFO
 
 
 def get_time_zone_translate_info():
+    """Return list of 4-element tuples with time zone translate information.
+
+    returns:
+        list: List tuples. Each tuple has 4 elements:
+            - regex1 (str) - regex to match a time zone substitution string
+            - regex2 (str) - regex to capture a time zone
+            - format (str) - template string to format time zone
+            - name (str) - name of this property
+    """
     return _TIME_ZONE_TRANSLATE_INFO
 
 
@@ -343,7 +370,7 @@ def _translate_strftime_token(strftime_token, dump_mode=False,
         return our_translation, [name]
     attr_names = list(attr_names)
     for attr_name in list(attr_names):
-        for expr_regex, substitute, format_, name in our_translate_info:
+        for _, substitute, format_, name in our_translate_info:
             if name == attr_name:
                 if dump_mode:
                     our_translation += format_
