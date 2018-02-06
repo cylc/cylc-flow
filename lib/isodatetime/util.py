@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # ----------------------------------------------------------------------------
-# (C) British Crown Copyright 2013-2017 Met Office.
+# (C) British Crown Copyright 2013-2018 Met Office.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -32,7 +32,7 @@ def cache_results(func):
     """
     cache = {}
 
-    def wrap_func(*args, **kwargs):
+    def _wrap_func(*args, **kwargs):
         key = (str(args), str(kwargs))
         if key in cache:
             return cache[key]
@@ -42,4 +42,4 @@ def cache_results(func):
                 cache.popitem()
             cache[key] = results
             return results
-    return wrap_func
+    return _wrap_func

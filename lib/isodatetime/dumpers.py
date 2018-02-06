@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # ----------------------------------------------------------------------------
-# (C) British Crown Copyright 2013-2017 Met Office.
+# (C) British Crown Copyright 2013-2018 Met Office.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -69,6 +69,7 @@ class TimePointDumper(object):
     """
 
     def __init__(self, num_expanded_year_digits=2):
+        self._timepoint_parser = None
         self._rec_formats = {"date": [], "time": [], "time_zone": []}
         self._time_designator = parser_spec.TIME_DESIGNATOR
         self.num_expanded_year_digits = num_expanded_year_digits
@@ -214,8 +215,9 @@ class TimePointDumper(object):
 
     @util.cache_results
     def get_time_zone(self, time_zone_string):
+        """Parse and return time zone from time_zone_string."""
         from . import parsers
-        if not hasattr(self, "_timepoint_parser"):
+        if self._timepoint_parser is None:
             self._timepoint_parser = parsers.TimePointParser()
         try:
             info = self._timepoint_parser.get_time_zone_info(

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # ----------------------------------------------------------------------------
-# (C) British Crown Copyright 2013-2017 Met Office.
+# (C) British Crown Copyright 2013-2018 Met Office.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -634,6 +634,21 @@ def get_timepoint_subtract_tests():
             "P29DT19H"
         ),
         (
+            {"year": 1969, "month_of_year": 7, "day_of_month": 20,
+             "hour_of_day": 20, "time_zone_hour": 0, "time_zone_minute": 0},
+            {"year": 1969, "month_of_year": 7, "day_of_month": 20,
+             "hour_of_day": 19, "time_zone_hour": 0, "time_zone_minute": 0},
+            "PT1H"
+        ),
+
+        (
+            {"year": 1969, "month_of_year": 7, "day_of_month": 20,
+             "hour_of_day": 19, "time_zone_hour": 0, "time_zone_minute": 0},
+            {"year": 1969, "month_of_year": 7, "day_of_month": 20,
+             "hour_of_day": 20, "time_zone_hour": 0, "time_zone_minute": 0},
+            "-PT1H"
+        ),
+        (
             {"year": 1991, "month_of_year": 5, "day_of_month": 4,
              "hour_of_day": 5, "time_zone_hour": 0, "time_zone_minute": 0},
             {"year": 1991, "month_of_year": 6, "day_of_month": 3,
@@ -913,14 +928,14 @@ class TestSuite(unittest.TestCase):
 
     """Test the functionality of parsers and data model manipulation."""
 
-    def assertEqual(self, test, control, source=None):
+    def assertEqual(self, test, control, info=None):
         """Override the assertEqual method to provide more information."""
-        if source is None:
-            info = None
-        else:
-            info = ("Source %s produced:\n'%s'\nshould be:\n'%s'" %
-                    (source, test, control))
-        super(TestSuite, self).assertEqual(test, control, info)
+        superinfo = None
+        if info is not None:
+            superinfo = (
+                "Source %s produced:\n'%s'\nshould be:\n'%s'" %
+                (info, test, control))
+        super(TestSuite, self).assertEqual(test, control, superinfo)
 
     def test_days_in_year_range(self):
         """Test the summing-over-days-in-year-range shortcut code."""
@@ -1034,35 +1049,30 @@ class TestSuite(unittest.TestCase):
 
                 test_dates[3].set_time_zone(
                     data.TimeZone(hours=8, minutes=30))
-                for date1 in list(test_dates):
-                    date1_str = str(date1)
-                    date_no_tz = date1.copy()
+                for i_test_date in list(test_dates):
+                    i_test_date_str = str(i_test_date)
+                    date_no_tz = i_test_date.copy()
                     date_no_tz.time_zone = data.TimeZone(hours=0, minutes=0)
-
-                    # TODO: https://github.com/metomi/isodatetime/issues/34.
-                    if (date1.time_zone.hours >= 0 or
-                            date1.time_zone.minutes >= 0):
-                        utc_offset = date_no_tz - date1
+                    if (i_test_date.time_zone.hours >= 0 or
+                            i_test_date.time_zone.minutes >= 0):
+                        utc_offset = date_no_tz - i_test_date
                     else:
-                        utc_offset = (date1 - date_no_tz) * -1
-
+                        utc_offset = (i_test_date - date_no_tz) * -1
                     self.assertEqual(utc_offset.hours,
-                                     date1.time_zone.hours,
-                                     date1_str + " utc offset (hrs)")
+                                     i_test_date.time_zone.hours,
+                                     i_test_date_str + " utc offset (hrs)")
                     self.assertEqual(utc_offset.minutes,
-                                     date1.time_zone.minutes,
-                                     date1_str + " utc offset (mins)")
-                    for date2 in list(test_dates):
-                        date2_str = str(date2)
+                                     i_test_date.time_zone.minutes,
+                                     i_test_date_str + " utc offset (mins)")
+                    for j_test_date in list(test_dates):
+                        j_test_date_str = str(j_test_date)
                         self.assertEqual(
-                            date1, date2,
-                            date1_str + " == " + date2_str
-                        )
-                        duration = date2 - date1
+                            i_test_date, j_test_date,
+                            i_test_date_str + " == " + j_test_date_str)
+                        duration = j_test_date - i_test_date
                         self.assertEqual(
                             duration, data.Duration(days=0),
-                            date1_str + " - " + date2_str
-                        )
+                            i_test_date_str + " - " + j_test_date_str)
 
     def test_timepoint_dumper(self):
         """Test the dumping of TimePoint instances."""
@@ -1406,8 +1416,7 @@ def test_timepoint_at_year(test_year):
         test_data += data.get_days_since_1_ad(year - 1)
         assert_equal(test_data, ctrl_data)
         for attribute, attr_max in test_duration_attributes:
-            delta_attr = random.randrange(0, attr_max)
-            kwargs = {attribute: delta_attr}
+            kwargs = {attribute: random.randrange(0, attr_max)}
             ctrl_data = my_date + datetime.timedelta(**kwargs)
             ctrl_data = (ctrl_data.year, ctrl_data.month, ctrl_data.day)
             test_data = (
@@ -1422,8 +1431,7 @@ def test_timepoint_at_year(test_year):
             assert_equal(test_data, ctrl_data)
         kwargs = {}
         for attribute, attr_max in test_duration_attributes:
-            delta_attr = random.randrange(0, attr_max)
-            kwargs[attribute] = delta_attr
+            kwargs[attribute] = random.randrange(0, attr_max)
         test_date_minus = (
             test_date - data.Duration(**kwargs))
         test_data = test_date - test_date_minus
@@ -1453,5 +1461,5 @@ def test_timepoint_at_year(test_year):
 
 
 if __name__ == "__main__":
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestSuite)
-    unittest.TextTestRunner(verbosity=2).run(suite)
+    unittest.TextTestRunner(verbosity=2).run(
+        unittest.TestLoader().loadTestsFromTestCase(TestSuite))
