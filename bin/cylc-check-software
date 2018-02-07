@@ -42,7 +42,7 @@ opt_python_spec = {
     'requests': (2, 4, 2),
     'urllib3': (0, 0, 0),
     'pygraphviz': (0, 0, 0),
-    'pygtk': (0, 0, 0)
+    'pygtk': (2, 0, 0)
 }
 
 opt_nonpython_spec = {
@@ -181,10 +181,10 @@ def main():
 
     # Introductory message and table header
     sys.stdout.write('Checking your software...\n\nIndividual results:\n')
-    draw_table_line('-')
+    draw_table_line('=')
     shell_align_write(' ', 'Package (version requirements)',
                       'Outcome (version found)')
-    draw_table_line('-')
+    draw_table_line('=')
 
     # Required module results section
     shell_centre_write('REQUIRED SOFTWARE')
@@ -206,7 +206,7 @@ def main():
     for module in opt_tex_spec:
         opt_result[module] = shell_command_ver(module,
                                                tex_commands(module), False)
-    draw_table_line('-')
+    draw_table_line('=')
     sys.stdout.write('\n')
 
     # Print-out of specific results for core and optional functionalities
