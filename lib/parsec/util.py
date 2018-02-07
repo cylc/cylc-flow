@@ -88,7 +88,10 @@ def printcfg(cfg, level=0, indent=0, prefix='', none_str='',
             elif isinstance(cfg_i, list):
                 value = listjoin(cfg_i, none_str)
             elif "\n" in str(cfg_i) and key:
-                value = '"""\n%s\n"""' % (cfg_i)
+                value = '"""\n'
+                for line in str(cfg_i).splitlines(True):
+                    value += spacer + " " * 4 + line
+                value += '\n' + spacer + '"""'
             else:
                 value = str(cfg_i)
             if value is not None:
