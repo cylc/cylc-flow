@@ -30,9 +30,6 @@ reconnects automatically if its target suite gets restarted on a different port
 <code>cylc gui</code> - significant reduction in impact on suite server
 programs
 
-[#2431](https://github.com/cylc/cylc/pull/2431) - allow "%d" integer format in
-parameter templates
-
 [#2433](https://github.com/cylc/cylc/pull/2433) - "group" (used to group suites
 in <code>cylc gscan</code>) is now defined under the suite "[[meta]]" section
 
@@ -51,10 +48,6 @@ arguments:
  * batch system name and job ID
  * submit time, start time, finish time
  * user@host
-
-[#2445](https://github.com/cylc/cylc/pull/2445) - allow custom templating of
-the parameter variables in task job environments, in addition to the built-in
-<code>CYLC_TASK_PARAM\_&lt;parameter-name&gt;</code>
 
 [#2455](https://github.com/cylc/cylc/pull/2455) - network client improvements:
  * on a failed connection, clients detect if the suite has stopped according to
@@ -111,9 +104,6 @@ definitions
  * configurable menubar visibility at start-up
  * grouped suites now retain their grouped status once stopped
 
-[#2491](https://github.com/cylc/cylc/pull/2491) - allow bare parameter values
-as task names
-
 [#2515](https://github.com/cylc/cylc/pull/2515) -
 [#2529](https://github.com/cylc/cylc/pull/2529) - 
 [#2517](https://github.com/cylc/cylc/pull/2517) -
@@ -128,18 +118,31 @@ as task names
    * add text-editor functionality to <code>cylc jobscript</code>
    * add "preview jobscript" functionality to the GUI
 
-[#2527](https://github.com/cylc/cylc/pull/2527) - improved parameter support: 
+[#2527](https://github.com/cylc/cylc/pull/2527) -
+[#2431](https://github.com/cylc/cylc/pull/2431) - 
+[#2435](https://github.com/cylc/cylc/pull/2435) - 
+[#2445](https://github.com/cylc/cylc/pull/2445) - 
+[#2491](https://github.com/cylc/cylc/pull/2491) - 
+[#2484](https://github.com/cylc/cylc/pull/2484) - 
+[#2556](https://github.com/cylc/cylc/pull/2556) - 
+improved parameter support: 
+ * allow "%d" integer format in parameter templates
  * allow out of range parameter on graph RHS
  * allow positive offset for parameter index on graph
- * Allow negative integer parameters
+ * allow negative integer parameters
+ * allow custom templating of parameter environment variables, in addition to
+   the built-in <code>CYLC_TASK_PARAM\_&lt;param-name&gt;</code>
+ * allow bare parameter values as task names
+ * allow explicit parameter values in "inherit" items under "[runtime]"
+ * fix parameters inside (as opposed to beginning or end) of family names
+ * fixed inheritance from multiple parameterized namespaces at once
 
 [#2553](https://github.com/cylc/cylc/pull/2553) - upgraded the bundled Jinja2
 version to 2.10. This fixes the block scope problem introduced in the previous
 version
 
 [#2558](https://github.com/cylc/cylc/pull/2558) - new options to print out JSON
-format from <code>cylc show</code> and <code>cylc scan<code>
-
+format from <code>cylc show</code> and <code>cylc scan</code>
 
 ### Fixes
 
@@ -159,9 +162,6 @@ cause HTTPS client failure due to SSL certificate host name mismatch
 
 [#2434](https://github.com/cylc/cylc/pull/2434) - correctly strip "at TIME"
 from the end of multi-line task messages
-
-[#2435](https://github.com/cylc/cylc/pull/2435) - allow explicit parameter
-values in "inherit" items under "[runtime]"
 
 [#2440](https://github.com/cylc/cylc/pull/2440) - <code>cylc suite-state</code>
 - fixed DB query of tasks with custom outputs that have not been generated yet
@@ -191,9 +191,6 @@ date-time subtraction (first\_point - last\_point)
 [#2474](https://github.com/cylc/cylc/pull/2474) - <code>cylc graph</code> -
 better handle suite parsing errors on view refresh
 
-[#2484](https://github.com/cylc/cylc/pull/2484) - fix parameters inside (as
-opposed to beginning or end) of family names
-
 [#2496](https://github.com/cylc/cylc/pull/2496) - ensure that broadcasted
 environment variables are defined before all user-defined variables, which may
 need to reference the broadcasted ones 
@@ -205,9 +202,6 @@ triggers: with several used at once, tasks could go untriggered
 point after a suite reload: do not reset an existing stop point (this is
 dangerous, but it could be done before, and the stop point in the GUI status
 bar would still refer to the original)
-
-[#2556](https://github.com/cylc/cylc/pull/2556) - fixed a problem with
-inheriting from multiple parameterized namespaces at once
 
 [#2562](https://github.com/cylc/cylc/pull/2562) - improved advice on how to
 generate an initial user config file (<code>global.rc</code>)
