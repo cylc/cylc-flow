@@ -1,0 +1,4 @@
+NOTE: the cylc repository side-bar information (latest release, recent
+releases,...) will not be regenerated unless the source files change, which
+they don't because we extract the latest release info automatically. To force
+this, make some dummy change (e.g. whitespace) to _includes/repository.html.
