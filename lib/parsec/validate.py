@@ -25,6 +25,7 @@ Also provides default values from the spec as a nested dict.
 
 import re
 import sys
+from textwrap import dedent
 from parsec import ParsecError
 from parsec.OrderedDict import OrderedDictWithDefaults
 from parsec.util import m_override, un_many, itemstr
@@ -201,7 +202,7 @@ def _strip_and_unquote(keys, value):
 
     # Note strip() removes leading and trailing whitespace, including
     # initial newlines on a multiline string:
-    return value.strip()
+    return dedent(value).strip()
 
 
 def _unquoted_list_parse(keys, value):

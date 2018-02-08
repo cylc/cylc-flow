@@ -100,9 +100,9 @@ if [[ $RESULT == "bad" ]]; then
 fi"""
 \end{lstlisting}
 
-Indentation is {\em mostly} ignored by the bash interpreter, however, so if you
-feel it aids readability it is {\em mostly} harmless to indent internal script
-lines as if part of the Cylc syntax, or even out to the triple quotes:
+Indentation is {\em mostly} ignored by the bash interpreter, but is useful for
+readability. It is {\em mostly} harmless to indent internal script lines as if
+part of the Cylc syntax, or even out to the triple quotes:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -116,14 +116,19 @@ lines as if part of the Cylc syntax, or even out to the triple quotes:
             fi"""
 \end{lstlisting}
 
-But if you do this, watch your line length (see~\ref{Line Length}) and {\em do not
-indent here documents}:
+On parsing the triple quoted value, Cylc will remove any common leading
+whitespace from each line using the logic of
+\href{https://docs.python.org/2/library/textwrap.html#textwrap.dedent}{Python's textwrap.dedent}
+so the script block would end up being the same as the previous example.
+However, you should watch your line length (see~\ref{Line Length}) when you
+have many levels of indentations.
+
+{\em Take care when indenting here documents}:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
     [[foo]]
-        # ... this is an error!
         script = """
         cat >> log.txt <<_EOF_
             The quick brown fox jumped
@@ -132,8 +137,20 @@ indent here documents}:
                  """
 \end{lstlisting}
 
-(The leading whitespace would end up in \lstinline=log.txt=, and indenting the
-\lstinline=_EOF_= marker is actually an error).
+In the above, each line in \lstinline=log.txt= would end up with 4 leading
+white spaces. The following will give you lines with no white spaces.
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[runtime]
+    [[foo]]
+        script = """
+        cat >> log.txt <<_EOF_
+        The quick brown fox jumped
+        over the lazy dog.
+        _EOF_
+                 """
+\end{lstlisting}
 
 \subsubsection{Graph String Lines}
 
