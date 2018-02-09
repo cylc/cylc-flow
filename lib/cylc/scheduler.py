@@ -146,6 +146,8 @@ class Scheduler(object):
             self.options.templatevars, self.options.templatevars_file)
 
         self.run_mode = self.options.run_mode
+        self.cylc_version = CYLC_VERSION
+        self.UTC_mode = str(cylc.flags.utc)
 
         self.owner = get_user()
         self.host = get_host()
@@ -379,6 +381,8 @@ conditions; see `cylc conditions`.
 
         self.suite_db_mgr.put_suite_params(
             self.run_mode,
+            self.cylc_version,
+            self.UTC_mode,
             self.initial_point,
             self.final_point,
             self.pool.is_held,
@@ -883,6 +887,8 @@ conditions; see `cylc conditions`.
             self.configure_reftest(recon=True)
         self.suite_db_mgr.put_suite_params(
             self.run_mode,
+            self.cylc_version,
+            self.UTC_mode,
             self.initial_point,
             self.final_point,
             self.pool.is_held,
