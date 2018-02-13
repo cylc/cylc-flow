@@ -44,6 +44,7 @@ cylc.  If not, see [GNU licenses](http://www.gnu.org/licenses/).
  *  Alex Reinecke
  *  Chan Wilson
  *  Kevin Pulo
+ *  Thomas Coleman
  
 ## Acknowledgement For Non-Cylc Work:
 Licences for non-cylc work included in this distribution can be found in the
