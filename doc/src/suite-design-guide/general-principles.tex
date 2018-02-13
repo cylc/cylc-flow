@@ -161,6 +161,12 @@ suite and its tasks, all task scripts should:
     to an empty string, make it explicit: \lstinline@FOO=${FOO:-}@.
   \item In shell scripts use \lstinline=set -e= to abort on any error without
       having to failure-check each command explicitly.
+  \item In shell scripts use \lstinline=set -o pipefail= to abort on any error
+      within a pipe line. Note that all commands in the pipe line will still
+      run, it will just exit with the right most non-zero exit status.
+  \item For examples and more details on the above three \lstinline=set= commands, see
+      \url{https://vaneyckt.io/posts/safer_bash_scripts_with_set_euxo_pipefail/}
+    
 \end{itemize}
 
 
