@@ -35,35 +35,31 @@ MINVER_NOTMET_MSG =     'FOUND but min. version NOT MET'
 FOUND_UNKNOWNVER_MSG =  'FOUND but could not determine version (?)'
 NOTFOUND_MSG =          'NOT FOUND (-)'
 
-# Specification of cylc full-funcionality reqs grouped as Python, tex or other
-opt_py_spec = {
-    'requests': (2, 4, 2),
-    'pygtk': (2, 0, 0),
-    'OpenSSL': None,
-    'urllib3': None,
-    'pygraphviz': None
-}
-opt_tex_spec = [
-    'texlive',
-    'tocloft',
-    'framed',
-    'preprint',
-    'tex4ht'
-]
-opt_other_spec = {
-    'graphviz': [['dot', '-V'], True],
-    'imagemagick': [['magick', 'identify', '-version'], False],
-    'tex': [['which'], True]
+func_tags_and_text = {
+    'HTTPScomms': 'HTTPS communications layer',
+    'GUIorgraph': 'GUI & dependency graph visualisation',
+    'LaTeXguide': 'LaTeX User Guide',
+    'HTMLuguide': 'HTML User Guide'
 }
 
-# Requirements for specific (optional i.e. non-core) functionalities
-# N.B. ensure modules named as in specification above
-functionality_reqs = {
-    'HTTPS communications layer': ['OpenSSL', 'requests', 'urllib3'],
-    'HTML User Guide': ['imagemagick'],
-    'LaTeX User Guide': ['tex'] + opt_tex_spec,
-    'cylc GUI & the dependency graph visualisation': ['pygtk', 'graphviz',
-                                                      'pygraphviz']
+# Specification of cylc full-funcionality reqs grouped as Python, tex or other
+# Item format <MODULE>: [<VER REQ>, <FUNC DEP>, <GROUP>(, <'OTHER' COMMAND>)]
+req_py_ver_min, req_py_ver_max = (2, 6), (3,)
+opt_spec = {
+    'requests': [(2, 4, 2), 'HTTPScomms', 'py'],
+    'OpenSSL': [None, 'HTTPScomms', 'py'],
+    'urllib3': [None, 'HTTPScomms', 'py'],
+    'pygtk': [(2, 0, 0), 'GUIorgraph', 'py'],
+    'pygraphviz': [None, 'GUIorgraph', 'py'],
+    'graphviz': [None, 'GUIorgraph', 'other', ['dot', '-V', 'graphviz']],
+    'tex': [None, 'LaTeXguide', 'other', ['which', 'tex']],
+    'texlive': [None, 'LaTeXguide', 'tex'],
+    'tocloft': [None, 'LaTeXguide', 'tex'],
+    'framed': [None, 'LaTeXguide', 'tex'],
+    'preprint': [None, 'LaTeXguide', 'tex'],
+    'tex4ht': [None, 'LaTeXguide', 'tex'],
+    'imagemagick': [None, 'HTMLuguide', 'other', ['magick', 'identify',
+                                                  '-version']]
 }
 
 
@@ -87,7 +83,7 @@ def string_ver(version_tuple):
 
 
 def shell_align_write(one_delimiter, left_msg, right_msg):
-    """Write 2 messages aligned with left and right of terminal assuming given
+    """Write 2 messages aligned with left and right of terminal assuming set
        terminal width, with minimum 2-char separation for distinct columns."""
     gap = TERMINAL_WIDTH - len(left_msg) - len(right_msg)
     if gap >= 2:
@@ -97,11 +93,14 @@ def shell_align_write(one_delimiter, left_msg, right_msg):
         return False
 
 
-def shell_centre_write(centre_msg):
-    """Write message centrally in terminal assuming given terminal width."""
-    spacing = int(round(TERMINAL_WIDTH - len(centre_msg)) / 2) * ' '
-    sys.stdout.write(spacing + centre_msg + spacing + '\n')
-    return None
+def shell_centre_write(prepend_newline, *args):
+    """Write message(s) centrally in terminal assuming set terminal width."""
+    if prepend_newline:
+        sys.stdout.write('\n')
+    for msg_line in args:
+        spacing = int(round(TERMINAL_WIDTH - len(msg_line)) / 2) * ' '
+        sys.stdout.write(spacing + msg_line + spacing + '\n')
+    return
 
 
 def check_py_ver(min_ver, max_ver=None):
@@ -119,6 +118,8 @@ def check_py_ver(min_ver, max_ver=None):
 
 def check_py_module_ver(module, min_ver):
     """Check if a minimum version of a python module is installed."""
+    if not min_ver:
+        min_ver = (0,)
     msg = 'python:%s (' % module + '%s)' % (string_ver(min_ver) + '+'
                                             if min_ver != (0,) else 'none')
     try:
@@ -171,99 +172,57 @@ def kpsepath_command(tex_module):
     return command_check('tex:%s' % tex_module, final_command)
     
 
-def custom_command(package, command, append_package=False):
+def custom_command(package, command):
     """Check if some shell command is valid to test for module availability."""
     for component in command:
         if component.count('*') == 0 and not re.match('^[\w-]+$', component):
             raise Exception('Invalid command "%s"' % component)
-    if append_package:
-        command.append(package)
     return command_check(package, command)
 
 
-def main():
-    """Check external software packages with minimum versions as
-       required for both minimal core and fully-functional cylc
-       and print user-friendly outcomes from this check."""
+opt_result = {}
+def functionality_print(func):
+    for module, item_list in opt_spec.items():
+        ver_req, func_dep, tag = item_list[:3]
+        if func_dep == func:
+           if tag == 'py':
+               opt_result[module] = check_py_module_ver(module, ver_req)
+           elif tag == 'tex':
+               opt_result[module] = kpsepath_command(module)
+           else:
+               opt_result[module] = custom_command(module, item_list[3])
+    return
 
-    # Introductory message and table header
+def opt_software_table(func_tag, func_text):
+    shell_centre_write(True, '*OPTIONAL SOFTWARE for the ' + func_text + '*')
+    functionality_print(func_tag)
+    return
+
+
+def main():
+    """Test for and print external software packages with minimum versions
+       as required for both minimal core and fully-functional cylc."""
+
+    # Introductory message and individual results table header
     sys.stdout.write('Checking your software...\n\nIndividual results:\n')
     draw_table_line('=')
     shell_align_write(' ', 'Package (version requirements)',
                       'Outcome (version found)')
     draw_table_line('=')
 
-    # Required module results section
-    shell_centre_write('REQUIRED SOFTWARE')
-    # Assinging a variable so don't rewrite to stdout with another call later
-    req_result = check_py_ver((2, 6), (3,))
-    sys.stdout.write('\n')
-
-    # Optional module results section
-    shell_centre_write('OPTIONAL SOFTWARE')
-    # Assinging to dictionary so don't rewrite to stdout with more calls later
-    opt_result = {}
-    for module in opt_py_spec.keys():
-        if opt_py_spec[module] is not None:
-            opt_result[module] = check_py_module_ver(module,
-                                                     opt_py_spec[module])
-        else:
-            opt_result[module] = check_py_module_ver(module, (0,))
-    for module in opt_other_spec.keys():
-        opt_result[module] = custom_command(module, opt_other_spec[module][0],
-                                            opt_other_spec[module][1])
-    for module in opt_tex_spec:
-        opt_result[module] = kpsepath_command(module)
+    # Individual results section in mock-table format
+    shell_centre_write(False, '*REQUIRED SOFTWARE*')
+    req_result = check_py_ver(req_py_ver_min, req_py_ver_max)
+    for key, value in func_tags_and_text.items():
+        opt_software_table(key, value)
     draw_table_line('=')
-    sys.stdout.write('\n')
 
-    # Print-out of specific results for core and optional functionalities
-    sys.stdout.write('Overall result:\n')
-    if req_result:
-        req_words = ['ok', '', '&', ' also', '', ' also', '*however*']
-    else:
-        reqfail_text = ' once core requirements are installed,'
-        req_words = ['not ok', ' not', 'but otherwise', '', reqfail_text,
-                     '', '& additionally' + reqfail_text]
-    shell_centre_write('You do%s have the required packages meeting minimum' %
-                       req_words[1])
-    shell_centre_write('version requirements, so core cylc will%s work' %
-                       req_words[1])
-    failed_func = []
-    for functionality in functionality_reqs.keys():
-        for module in functionality_reqs[functionality]:
-            if not opt_result[module]:
-                failed_func.append(functionality)
-                break
-    if len(failed_func) == 0:
-        shell_centre_write('%s you have%s satisfied all optional package '
-                           'requirements' % (req_words[2], req_words[3]))
-        shell_centre_write('so%s all non-essential but recommended aspects '
-                           'of' % req_words[4])
-        shell_centre_write('cylc will%s work with full functionality.' %
-                           req_words[5])
-    else:
-        shell_centre_write('%s' % req_words[6])
-        shell_centre_write('due to lack of &/or sub-minimal versions for '
-                           'optional software (see ')
-        shell_centre_write("'individual results'), the following "
-                           'non-essential but recommended')
-        shell_centre_write('aspect%s of cylc will not work with full '
-                           'functionality:\n' % ('s' if len(failed_func) > 1
-                                                 else ''))
-        for functionality in enumerate(failed_func, 1):
-            shell_centre_write('%s) %s' % functionality)
-    sys.stdout.write('\n')
-
-    # Final summary print for clear pass/fail final outcome
-    sys.stdout.write('Summary:\n')
-    shell_centre_write('*' * 28)
-    shell_centre_write('Requirements: %s' % req_words[0])
-    shell_centre_write('Full-functionality: %s' % ('ok' if
-                                                   len(failed_func) == 0 else
-                                                   'not ok'))
-    shell_centre_write('*' * 28)
-
+    # Final summary print for clear pass/fail final outcome and exit
+    sys.stdout.write('\nSummary:')
+    shell_centre_write(True, '*' * 28, 'Core requirements: %s' % 'ok' if
+                       req_result else 'not ok', 'Full-functionality: %s'
+                       % ('ok' if all(opt_result.values()) else 'not ok'),
+                       '*' * 28)
     sys.exit()
 
 
