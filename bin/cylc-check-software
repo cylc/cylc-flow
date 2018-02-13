@@ -23,51 +23,48 @@
 
 import sys
 import re
-from subprocess import check_call, PIPE
+from subprocess import check_call, PIPE, Popen, CalledProcessError
 
 
 TERMINAL_WIDTH = 70
 
-# Standardise output messages
+# Standardised output messages
 FOUND_NONVERCHECK_MSG = 'FOUND (n/a)'
-MINVER_MET_MSG = 'FOUND & min. version MET'
-MINVER_NOTMET_MSG = 'FOUND but min. version NOT MET'
-FOUND_UNKNOWNVER_MSG = 'FOUND but could not determine version (?)'
-NOTFOUND_IMPORT_MSG = 'NOT FOUND by attempted import (-)'
-NOTFOUND_COMMAND_MSG = 'NOT FOUND by shell command (n/a)'
+MINVER_MET_MSG =        'FOUND & min. version MET'
+MINVER_NOTMET_MSG =     'FOUND but min. version NOT MET'
+FOUND_UNKNOWNVER_MSG =  'FOUND but could not determine version (?)'
+NOTFOUND_MSG =          'NOT FOUND (-)'
 
-# Use (0, 0, 0) as min. version for modules to look for but not version-check
-opt_python_spec = {
-    'OpenSSL': (0, 0, 0),
+# Specification of cylc full-funcionality reqs grouped as Python, tex or other
+opt_py_spec = {
     'requests': (2, 4, 2),
-    'urllib3': (0, 0, 0),
-    'pygraphviz': (0, 0, 0),
-    'pygtk': (2, 0, 0)
+    'pygtk': (2, 0, 0),
+    'OpenSSL': None,
+    'urllib3': None,
+    'pygraphviz': None
 }
-
-opt_nonpython_spec = {
+opt_tex_spec = [
+    'texlive',
+    'tocloft',
+    'framed',
+    'preprint',
+    'tex4ht'
+]
+opt_other_spec = {
     'graphviz': [['dot', '-V'], True],
     'imagemagick': [['magick', 'identify', '-version'], False],
     'tex': [['which'], True]
 }
 
-opt_tex_spec = ['texlive', 'tocloft', 'framed', 'preprint', 'tex4ht']
-
-# Ensure packages are named as in spec dicts/lists above or will not be found
+# Requirements for specific (optional i.e. non-core) functionalities
+# N.B. ensure modules named as in specification above
 functionality_reqs = {
     'HTTPS communications layer': ['OpenSSL', 'requests', 'urllib3'],
+    'HTML User Guide': ['imagemagick'],
+    'LaTeX User Guide': ['tex'] + opt_tex_spec,
     'cylc GUI & the dependency graph visualisation': ['pygtk', 'graphviz',
-                                                      'pygraphviz'],
-    'LaTeX User Guide': ['tex', 'texlive', 'tocloft', 'framed', 'preprint',
-                         'tex4ht'],
-    'HTML User Guide': ['imagemagick']
+                                                      'pygraphviz']
 }
-
-
-def tex_commands(tex_module):
-    ver_extract = ("kpsepath tex | tr ':' '\n' | locate '*tex*" + tex_module +
-                   "*' | sort -u")
-    return ver_extract.split(' ')
 
 
 def draw_table_line(single_character):
@@ -85,19 +82,16 @@ def parse_version(version):
     return tuple(ret)
 
 
-def string_version(version_tuple):
+def string_ver(version_tuple):
     return '.'.join(str(x) for x in version_tuple)
 
 
 def shell_align_write(one_delimiter, left_msg, right_msg):
-    """Write two messages aligned with left and right of the terminal
-       assuming specific reasonable terminal width, if messages are
-       not too long to fit with at least two spaces inbetween."""
-    padding = TERMINAL_WIDTH - len(left_msg) - len(right_msg)
-    # Minimal two-character separation for distinct columns
-    if padding >= 2:
-        sys.stdout.write(left_msg + one_delimiter * padding +
-                         right_msg + '\n')
+    """Write 2 messages aligned with left and right of terminal assuming given
+       terminal width, with minimum 2-char separation for distinct columns."""
+    gap = TERMINAL_WIDTH - len(left_msg) - len(right_msg)
+    if gap >= 2:
+        sys.stdout.write(left_msg + one_delimiter * gap + right_msg + '\n')
         return True
     else:
         return False
@@ -110,37 +104,36 @@ def shell_centre_write(centre_msg):
     return None
 
 
-def check_python_version(min_version, max_version=None):
+def check_py_ver(min_ver, max_ver=None):
     """Check if a minimum version of python is installed."""
-    if max_version:
-        msg = 'python (%s+, <%s)' % (string_version(min_version),
-                                     string_version(max_version))
+    if max_ver:
+        msg = 'python (%s+, <%s)' % (string_ver(min_ver), string_ver(max_ver))
     else:
-        msg = 'python (%s+)' % string_version(min_version)
+        msg = 'python (%s+)' % string_ver(min_ver)
     version = sys.version_info
-    ret = (version >= min_version and
-           (not max_version or version < max_version))
+    ret = (version >= min_ver and (not max_ver or version < max_ver))
     shell_align_write('.', msg, '%s (%s)' % (MINVER_MET_MSG if ret else
-                      MINVER_NOTMET_MSG, string_version(version)))
+                      MINVER_NOTMET_MSG, string_ver(version)))
     return ret
 
 
-def check_py_module_ver(module, min_version):
+def check_py_module_ver(module, min_ver):
     """Check if a minimum version of a python module is installed."""
-    msg = 'python:%s (' % module + '%s)' % (string_version(min_version) + '+'
-                                            if min_version != (0, 0, 0) else
-                                            'n/a')
+    msg = 'python:%s (' % module + '%s)' % (string_ver(min_ver) + '+'
+                                            if min_ver != (0,) else 'none')
     try:
         imported_module = __import__(module)
         try:
-            # some module improts are awkward so approach like this for now
+            # some module imports are awkward so approach like this for now
             if module == 'pygtk':
                 import gtk
                 version_tuple = gtk.pygtk_version
                 module_version = '.'.join(map(str, version_tuple))
             else:
                 module_version = imported_module.__version__
-            if parse_version(module_version) >= min_version:
+            if min_ver == (0,):
+                result = ['%s (%s)' % ('FOUND' , module_version), True]
+            elif parse_version(module_version) >= min_ver:
                 result = ['%s (%s)' % (MINVER_MET_MSG, module_version), True]
             else:
                 result = ['%s (%s)' % (MINVER_NOTMET_MSG, module_version),
@@ -148,30 +141,44 @@ def check_py_module_ver(module, min_version):
         except AttributeError:
             result = [FOUND_UNKNOWNVER_MSG, False]
     except ImportError:
-        result = [NOTFOUND_IMPORT_MSG, False]
+        result = [NOTFOUND_MSG, False]
     shell_align_write('.', msg, result[0])
     return result[1]
 
 
-def shell_command_ver(package, custom_commands, append_package):
-    """Check a shell command is avaliable to test for module availability."""
-    for component in custom_commands:
-        command_chars = ["|", "':'", "'\n'"]
-        if (command_chars.count(component) == 0 and
-                component.count('*') == 0 and
-                not re.match('^[\w-]+$', component)):
-            raise Exception('Invalid command "%s"' % component)
-    msg = '%s (n/a)' % package
-    if append_package:
-        custom_commands.append(package)
+def command_check(package_tag, custom_commands):
+    msg = '%s (n/a)' % package_tag
     try:
         check_call(custom_commands, stdout=PIPE, stderr=PIPE)
-    except OSError:
-        shell_align_write('.', msg, NOTFOUND_COMMAND_MSG)
+    except (CalledProcessError, OSError):
+        shell_align_write('.', msg, NOTFOUND_MSG)
         return False
     else:
         shell_align_write('.', msg, FOUND_NONVERCHECK_MSG)
         return True
+
+
+def kpsepath_command(tex_module):
+    """Search for tex modules using the 'kpsepath' command. Test line-count
+       and not for e.g. non-zero string as 'locate' output can be large."""
+    command = ("kpsepath tex | locate '*tex*" + tex_module + "*' | wc -l")
+    try:
+        init = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
+        init.wait()
+        final_command = ['test', init.communicate()[0].strip(), '-ne', '0']     
+    except (CalledProcessError, OSError):
+        pass
+    return command_check('tex:%s' % tex_module, final_command)
+    
+
+def custom_command(package, command, append_package=False):
+    """Check if some shell command is valid to test for module availability."""
+    for component in command:
+        if component.count('*') == 0 and not re.match('^[\w-]+$', component):
+            raise Exception('Invalid command "%s"' % component)
+    if append_package:
+        command.append(package)
+    return command_check(package, command)
 
 
 def main():
@@ -189,30 +196,31 @@ def main():
     # Required module results section
     shell_centre_write('REQUIRED SOFTWARE')
     # Assinging a variable so don't rewrite to stdout with another call later
-    req_result = check_python_version((2, 6), (3,))
+    req_result = check_py_ver((2, 6), (3,))
     sys.stdout.write('\n')
 
     # Optional module results section
     shell_centre_write('OPTIONAL SOFTWARE')
     # Assinging to dictionary so don't rewrite to stdout with more calls later
     opt_result = {}
-    for module in opt_python_spec.keys():
-        opt_result[module] = check_py_module_ver(module,
-                                                 opt_python_spec[module])
-    for module in opt_nonpython_spec.keys():
-        opt_result[module] = shell_command_ver(module,
-                                               opt_nonpython_spec[module][0],
-                                               opt_nonpython_spec[module][1])
+    for module in opt_py_spec.keys():
+        if opt_py_spec[module] is not None:
+            opt_result[module] = check_py_module_ver(module,
+                                                     opt_py_spec[module])
+        else:
+            opt_result[module] = check_py_module_ver(module, (0,))
+    for module in opt_other_spec.keys():
+        opt_result[module] = custom_command(module, opt_other_spec[module][0],
+                                            opt_other_spec[module][1])
     for module in opt_tex_spec:
-        opt_result[module] = shell_command_ver(module,
-                                               tex_commands(module), False)
+        opt_result[module] = kpsepath_command(module)
     draw_table_line('=')
     sys.stdout.write('\n')
 
     # Print-out of specific results for core and optional functionalities
     sys.stdout.write('Overall result:\n')
     if req_result:
-        req_words = ['ok', '', '&', ' also', '', ' also', 'however']
+        req_words = ['ok', '', '&', ' also', '', ' also', '*however*']
     else:
         reqfail_text = ' once core requirements are installed,'
         req_words = ['not ok', ' not', 'but otherwise', '', reqfail_text,
