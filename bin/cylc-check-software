@@ -26,25 +26,18 @@ import re
 from subprocess import check_call, PIPE, Popen, CalledProcessError
 
 
-TERMINAL_WIDTH = 70
-
 # Standardised output messages
 FOUND_NONVERCHECK_MSG = 'FOUND (n/a)'
-MINVER_MET_MSG =        'FOUND & min. version MET'
-MINVER_NOTMET_MSG =     'FOUND but min. version NOT MET'
-FOUND_UNKNOWNVER_MSG =  'FOUND but could not determine version (?)'
-NOTFOUND_MSG =          'NOT FOUND (-)'
+MINVER_MET_MSG = 'FOUND & min. version MET'
+MINVER_NOTMET_MSG = 'FOUND but min. version NOT MET'
+FOUND_UNKNOWNVER_MSG = 'FOUND but could not determine version (?)'
+NOTFOUND_MSG = 'NOT FOUND (-)'
 
-func_tags_and_text = {
-    'HTTPScomms': 'HTTPS communications layer',
-    'GUIorgraph': 'GUI & dependency graph visualisation',
-    'LaTeXguide': 'LaTeX User Guide',
-    'HTMLuguide': 'HTML User Guide'
-}
+opt_result = {}
 
-# Specification of cylc full-funcionality reqs grouped as Python, tex or other
-# Item format <MODULE>: [<VER REQ>, <FUNC DEP>, <GROUP>(, <'OTHER' COMMAND>)]
-req_py_ver_min, req_py_ver_max = (2, 6), (3,)
+# Specification of cylc full-functionality reqs grouped Python, tex or other
+# Item format <PACKAGE>: [<VER REQ>, <FUNC TAG>, <GROUP>(, <'OTHER' COMMAND>)]
+req_py_ver_range = (2, 6), (3,)
 opt_spec = {
     'requests': [(2, 4, 2), 'HTTPScomms', 'py'],
     'OpenSSL': [None, 'HTTPScomms', 'py'],
@@ -52,7 +45,7 @@ opt_spec = {
     'pygtk': [(2, 0, 0), 'GUIorgraph', 'py'],
     'pygraphviz': [None, 'GUIorgraph', 'py'],
     'graphviz': [None, 'GUIorgraph', 'other', ['dot', '-V', 'graphviz']],
-    'tex': [None, 'LaTeXguide', 'other', ['which', 'tex']],
+    'TeX': [None, 'LaTeXguide', 'other', ['which', 'tex']],
     'texlive': [None, 'LaTeXguide', 'tex'],
     'tocloft': [None, 'LaTeXguide', 'tex'],
     'framed': [None, 'LaTeXguide', 'tex'],
@@ -62,9 +55,29 @@ opt_spec = {
                                                   '-version']]
 }
 
+# Package-dep. functionality dict; item format <SHORT TAG>: <FULL DESCRIPTION>
+func_tags_and_text = {
+    'HTTPScomms': 'HTTPS communications layer',
+    'GUIorgraph': 'GUI & dependency graph visualisation',
+    'LaTeXguide': 'LaTeX User Guide',
+    'HTMLuguide': 'HTML User Guide'
+}
+
+
+def terminal_width(default_width=70, min_width=50):
+    """Return the terminal width or a specified minimum width if larger."""
+    proc = Popen(['stty', 'size'], stdout=PIPE)
+    if proc.wait():
+        return default_width
+    else:
+        try:
+            return max(min_width, int(proc.communicate()[0].split()[1]))
+        except IndexError:
+            return default_width
+
 
 def draw_table_line(single_character):
-    sys.stdout.write(single_character * TERMINAL_WIDTH + '\n')
+    sys.stdout.write(single_character * terminal_width() + '\n')
     return None
 
 
@@ -83,9 +96,9 @@ def string_ver(version_tuple):
 
 
 def shell_align_write(one_delimiter, left_msg, right_msg):
-    """Write 2 messages aligned with left and right of terminal assuming set
-       terminal width, with minimum 2-char separation for distinct columns."""
-    gap = TERMINAL_WIDTH - len(left_msg) - len(right_msg)
+    """Write two messages aligned with the terminal edges, separated by a
+       given delimiter, with a minimum separation of two characters."""
+    gap = terminal_width() - len(left_msg) - len(right_msg)
     if gap >= 2:
         sys.stdout.write(left_msg + one_delimiter * gap + right_msg + '\n')
         return True
@@ -94,17 +107,17 @@ def shell_align_write(one_delimiter, left_msg, right_msg):
 
 
 def shell_centre_write(prepend_newline, *args):
-    """Write message(s) centrally in terminal assuming set terminal width."""
+    """Write one or more lines of text centrally in the terminal."""
     if prepend_newline:
         sys.stdout.write('\n')
     for msg_line in args:
-        spacing = int(round(TERMINAL_WIDTH - len(msg_line)) / 2) * ' '
+        spacing = int(round(terminal_width() - len(msg_line)) / 2) * ' '
         sys.stdout.write(spacing + msg_line + spacing + '\n')
     return
 
 
 def check_py_ver(min_ver, max_ver=None):
-    """Check if a minimum version of python is installed."""
+    """Check if a version of Python within a specified range is installed."""
     if max_ver:
         msg = 'python (%s+, <%s)' % (string_ver(min_ver), string_ver(max_ver))
     else:
@@ -116,8 +129,8 @@ def check_py_ver(min_ver, max_ver=None):
     return ret
 
 
-def check_py_module_ver(module, min_ver):
-    """Check if a minimum version of a python module is installed."""
+def check_py_module_ver(module, min_ver=None):
+    """Check if a minimum version of a Python module is installed."""
     if not min_ver:
         min_ver = (0,)
     msg = 'python:%s (' % module + '%s)' % (string_ver(min_ver) + '+'
@@ -133,7 +146,7 @@ def check_py_module_ver(module, min_ver):
             else:
                 module_version = imported_module.__version__
             if min_ver == (0,):
-                result = ['%s (%s)' % ('FOUND' , module_version), True]
+                result = ['%s (%s)' % ('FOUND', module_version), True]
             elif parse_version(module_version) >= min_ver:
                 result = ['%s (%s)' % (MINVER_MET_MSG, module_version), True]
             else:
@@ -148,6 +161,7 @@ def check_py_module_ver(module, min_ver):
 
 
 def command_check(package_tag, custom_commands):
+    """Call a module-checking command and print relevant outcome message."""
     msg = '%s (n/a)' % package_tag
     try:
         check_call(custom_commands, stdout=PIPE, stderr=PIPE)
@@ -160,42 +174,38 @@ def command_check(package_tag, custom_commands):
 
 
 def kpsepath_command(tex_module):
-    """Search for tex modules using the 'kpsepath' command. Test line-count
-       and not for e.g. non-zero string as 'locate' output can be large."""
+    """Print outcome of local TeX module search using 'kpsepath' command."""
+    # Test line-count; 'locate' output can be >> for acc. string-length test
     command = ("kpsepath tex | locate '*tex*" + tex_module + "*' | wc -l")
     try:
         init = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
         init.wait()
-        final_command = ['test', init.communicate()[0].strip(), '-ne', '0']     
+        final_command = ['test', init.communicate()[0].strip(), '-ne', '0']
     except (CalledProcessError, OSError):
         pass
-    return command_check('tex:%s' % tex_module, final_command)
-    
+    return command_check('TeX:%s' % tex_module, final_command)
+
 
 def custom_command(package, command):
-    """Check if some shell command is valid to test for module availability."""
+    """Print outcome of local module search using custom command provided."""
     for component in command:
         if component.count('*') == 0 and not re.match('^[\w-]+$', component):
             raise Exception('Invalid command "%s"' % component)
     return command_check(package, command)
 
 
-opt_result = {}
 def functionality_print(func):
+    """Apply and print outcome of searches, applied by relevant group, for all
+       modules including minimum versions necessary for some funcionality."""
     for module, item_list in opt_spec.items():
         ver_req, func_dep, tag = item_list[:3]
         if func_dep == func:
-           if tag == 'py':
-               opt_result[module] = check_py_module_ver(module, ver_req)
-           elif tag == 'tex':
-               opt_result[module] = kpsepath_command(module)
-           else:
-               opt_result[module] = custom_command(module, item_list[3])
-    return
-
-def opt_software_table(func_tag, func_text):
-    shell_centre_write(True, '*OPTIONAL SOFTWARE for the ' + func_text + '*')
-    functionality_print(func_tag)
+            if tag == 'py':
+                opt_result[module] = check_py_module_ver(module, ver_req)
+            elif tag == 'tex':
+                opt_result[module] = kpsepath_command(module)
+            else:
+                opt_result[module] = custom_command(module, item_list[3])
     return
 
 
@@ -212,9 +222,10 @@ def main():
 
     # Individual results section in mock-table format
     shell_centre_write(False, '*REQUIRED SOFTWARE*')
-    req_result = check_py_ver(req_py_ver_min, req_py_ver_max)
-    for key, value in func_tags_and_text.items():
-        opt_software_table(key, value)
+    req_result = check_py_ver(*req_py_ver_range)
+    for tag, text in func_tags_and_text.items():
+        shell_centre_write(True, '*OPTIONAL SOFTWARE for the ' + text + '*')
+        functionality_print(tag)
     draw_table_line('=')
 
     # Final summary print for clear pass/fail final outcome and exit
