@@ -137,25 +137,6 @@ TASK_STATUSES_TRIGGERABLE = set([
     TASK_STATUS_RETRYING
 ])
 
-# Task statues that that have viewable job logs.
-TASK_STATUSES_WITH_JOB_LOGS = set([
-    TASK_STATUS_RUNNING,
-    TASK_STATUS_SUCCEEDED,
-    TASK_STATUS_FAILED,
-    TASK_STATUS_RETRYING
-])
-
-# Task statuses that have viewable job script (and activity logs). .
-TASK_STATUSES_WITH_JOB_SCRIPT = set([
-    TASK_STATUS_SUBMITTED,
-    TASK_STATUS_SUBMIT_FAILED,
-    TASK_STATUS_SUBMIT_RETRYING,
-    TASK_STATUS_RUNNING,
-    TASK_STATUS_SUCCEEDED,
-    TASK_STATUS_FAILED,
-    TASK_STATUS_RETRYING
-])
-
 # Tasks statuses to auto-exand in the gcylc tree view.
 TASK_STATUSES_AUTO_EXPAND = set([
     TASK_STATUS_QUEUED,

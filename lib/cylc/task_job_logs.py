@@ -45,13 +45,6 @@ JOB_LOG_OPTS = {
 NN = "NN"
 
 
-def get_opt(job_log):
-    for opt, log in JOB_LOG_OPTS.items():
-        if log == job_log:
-            return opt
-    return None
-
-
 def get_task_job_id(point, name, submit_num=None):
     """Return the job log path from cycle point down."""
     try:

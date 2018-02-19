@@ -70,9 +70,8 @@ from cylc.cfgspec.gcylc import gcfg
 from cylc.wallclock import get_current_time_string
 from cylc.task_state import (
     TASK_STATUSES_ALL, TASK_STATUSES_RESTRICTED, TASK_STATUSES_CAN_RESET_TO,
-    TASK_STATUSES_WITH_JOB_SCRIPT, TASK_STATUSES_WITH_JOB_LOGS,
     TASK_STATUSES_TRIGGERABLE, TASK_STATUSES_ACTIVE, TASK_STATUS_RUNNING,
-    TASK_STATUS_HELD, TASK_STATUS_FAILED)
+    TASK_STATUS_HELD, TASK_STATUS_FAILED, TASK_STATUS_WAITING)
 from cylc.task_state_prop import get_status_prop
 
 
@@ -1249,7 +1248,7 @@ been defined for this suite""").inform()
             600, 400)
 
     def view_in_editor(self, w, e, task_id, choice):
-        """View various job logs in your configured text editor."""
+        """View job logs in your configured text editor."""
         if choice == 'job-preview':
             self.view_jobscript_preview(task_id, geditor=True)
             return False
@@ -1258,36 +1257,21 @@ been defined for this suite""").inform()
         except KeyError:
             warning_dialog('%s is not live' % task_id, self.window).warn()
             return False
-        if (not task_state_summary['logfiles'] and
-                not task_state_summary.get('job_hosts')):
-            warning_dialog('%s has no log files' % task_id, self.window).warn()
-        else:
-            for opt, fname in JOB_LOG_OPTS.items():
-                if choice == fname:
-                    # Custom job log (see "extra log files").
-                    command_opt = "-f %s" % opt
-                    break
-            self._gcapture_cmd("cylc cat-log %s -m e %s --geditor %s %s" % (
-                self.get_remote_run_opts(), command_opt, self.cfg.suite,
-                task_id))
+        self._gcapture_cmd("cylc cat-log %s -m e -f %s --geditor %s %s" % (
+            self.get_remote_run_opts(), choice, self.cfg.suite, task_id))
+        return False
 
-    def view_task_info(self, w, e, task_id, choice):
-        """Viewer window with a drop-down list of job logs to choose from."""
+    def view_task_logs(self, w, e, task_id, choice):
+        """Viewer with a drop-down list of job logs to choose from."""
         if choice == 'job-preview':
             self.view_jobscript_preview(task_id, geditor=False)
-            return
-        # TODO: MUCH OF THIS NOT NEEDED?
+            return False
         try:
             task_state_summary = self.updater.full_state_summary[task_id]
         except KeyError:
-            warning_dialog(task_id + ' is not live', self.window).warn()
+            warning_dialog('%s is not live' % task_id, self.window).warn()
             return False
-        if (not task_state_summary['logfiles'] and
-                not task_state_summary.get('job_hosts')):
-            warning_dialog('%s has no log files' % task_id,
-                           self.window).warn()
-        else:
-            self._popup_logview(task_id, task_state_summary, choice)
+        self._popup_logview(task_id, task_state_summary, choice)
         return False
 
     @staticmethod
@@ -1298,6 +1282,13 @@ been defined for this suite""").inform()
         else:
             item.connect('activate', x, None, y, z)
 
+    def _get_task_extra_job_logs(self, task_id):
+        try:
+            return sorted(map(str, self.updater.full_state_summary[
+                task_id]['logfiles']))
+        except KeyError:
+            return []
+ 
     def get_right_click_menu(self, task_ids, t_states, task_is_family=False,
                              is_graph_view=False):
         """Return the default menu for a list of tasks."""
@@ -1366,14 +1357,15 @@ been defined for this suite""").inform()
                 # than 'activate' in order for sub-menus to work in the
                 # graph-view so use connect_right_click_sub_menu instead of
                 # item.connect
-                try:
-                    logfiles = sorted(map(str, self.updater.full_state_summary[
-                        task_ids[0]]['logfiles']))
-                except KeyError:
-                    logfiles = []
-                for fname in JOB_LOG_OPTS.values() + logfiles:
+                if t_states[0] == TASK_STATUS_WAITING:
+                    # No job script generated yet.
+                    fnames = ['job-preview']
+                else:
+                    fnames = (JOB_LOG_OPTS.values() +
+                             self._get_task_extra_job_logs(task_ids[0]))
+                for fname in fnames:
                     for handler, vmenu in [
-                            (self.view_task_info, view_menu),
+                            (self.view_task_logs, view_menu),
                             (self.view_in_editor, view_editor_menu)]:
                         task_id = task_ids[0]
                         item = gtk.ImageMenuItem(fname)
@@ -1382,9 +1374,6 @@ been defined for this suite""").inform()
                         vmenu.append(item)
                         self.connect_right_click_sub_menu(
                             is_graph_view, item, handler, task_ids[0], fname)
-                        # CHECK: NEEDED?:
-                        item.set_sensitive(
-                            t_states[0] in TASK_STATUSES_WITH_JOB_SCRIPT)
 
                 info_item = gtk.ImageMenuItem('prereq\'s & outputs')
                 img = gtk.image_new_from_stock(
@@ -2217,10 +2206,10 @@ shown here in the state they were in at the time of triggering.''')
         window.set_size_request(800, 400)
         window.set_title(task_id + ": Log Files")
 
-        job_hosts = task_state_summary.get('job_hosts', {})
-        nsubmits = len(job_hosts.keys())
-        viewer = ComboLogViewer(self.cfg.suite, task_id, choice, nsubmits,
-                                self.get_remote_run_opts())
+        nsubmits = len(task_state_summary.get('job_hosts', {}))
+        viewer = ComboLogViewer(self.cfg.suite, task_id, choice,
+            self._get_task_extra_job_logs(task_id),
+            nsubmits, self.get_remote_run_opts())
         self.quitters.append(viewer)
         window.add(viewer.get_widget())
         quit_button = gtk.Button("_Close")
@@ -2228,35 +2217,6 @@ shown here in the state they were in at the time of triggering.''')
         viewer.hbox.pack_start(quit_button, False)
         window.connect("delete_event", viewer.quit_w_e)
         window.show_all()
-
-    def _get_logview_cmd_tmpls_map(self, task_id, filenames):
-        """Helper for self._popup_logview()."""
-        summary = self.updater.full_state_summary[task_id]
-        if summary["state"] != "running":
-            return {}
-        ret = {}
-        for key in "out", "err":
-            suffix = "/%(submit_num)02d/job.%(key)s" % {
-                "submit_num": summary["submit_num"], "key": key}
-            for filename in filenames:
-                if not filename.endswith(suffix):
-                    continue
-                user_at_host = None
-                if ":" in filename:
-                    user_at_host = filename.split(":", 1)[0]
-                if user_at_host and "@" in user_at_host:
-                    owner, host = user_at_host.split("@", 1)
-                else:
-                    owner, host = (None, user_at_host)
-                try:
-                    conf = glbl_cfg().get_host_item(
-                        "batch systems", host, owner)
-                    cmd_tmpl = conf[summary["batch_sys_name"]][key + " tailer"]
-                    ret[filename] = cmd_tmpl % {
-                        "job_id": summary["submit_method_id"]}
-                except (KeyError, TypeError):
-                    continue
-        return ret
 
     @staticmethod
     def _sort_key_func(log_path):

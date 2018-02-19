@@ -24,29 +24,26 @@ from parsec.OrderedDict import OrderedDict
 from cylc.gui.logviewer import logviewer
 from cylc.gui.tailer import Tailer
 from cylc.task_id import TaskID
-from cylc.task_job_logs import JOB_LOG_OPTS, get_opt
+from cylc.task_job_logs import JOB_LOG_OPTS
 
 
 class ComboLogViewer(logviewer):
 
-    """Implement a viewer for task jobs in the "cylc gui".
+    """Implement a viewer for task job logs in the GUI, via "cylc cat-log".
 
     It has a a combo box for log file selection.
-
-    task_id -- The NAME.POINT of a task proxy.
-    filenames -- The names of the task job logs.
-    cmd_tmpls -- A dict to map file names and alternate commands to tail follow
-                 the file.
+    
     """
-
     LABEL_TEXT = "File: "
     LABEL_TEXT2 = "Submit: "
 
-    def __init__(self, suite, task_id, choice, nsubmits, remote_run_opts):
+    def __init__(self, suite, task_id, choice, extra_logs, nsubmits,
+            remote_run_opts):
         self.suite_name = suite
         self.task_id = task_id
         self.nsubmits = nsubmits
         self.nsubmit = nsubmits
+        self.extra_logs = extra_logs
         self.suite = suite
         self.choice = choice
         name_str, point_str = TaskID.split(task_id)
@@ -56,11 +53,13 @@ class ComboLogViewer(logviewer):
 
     def connect(self):
         """Connect to the selected log file tailer."""
+        print self.choice
         cmd = self.cmd_tmpl % {'subnum': self.nsubmit,
                                'suite_name': self.suite_name,
                                'task_id': self.task_id,
-                               'job_log': get_opt(self.choice)}
+                               'job_log': self.choice}
         self.log_label.set_text(self.choice)
+        print cmd
         self.t = Tailer(self.logview, cmd)
         self.t.start()
 
@@ -80,7 +79,7 @@ class ComboLogViewer(logviewer):
 
         label = gtk.Label(self.LABEL_TEXT)
         combobox = gtk.combo_box_new_text()
-        names = JOB_LOG_OPTS.values()
+        names = JOB_LOG_OPTS.values() + self.extra_logs
         for name in names:
             combobox.append_text(name)
         combobox.connect("changed", self.switch_log)
