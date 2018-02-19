@@ -163,7 +163,7 @@ def main():
             print "Editing done. I'm popping up a confirmation dialog now."
 
         # Save a diff to record the changes made.
-        difflog = jobfile_path.replace(JOB_LOG_JOB, JOB_LOG_DIFF)
+        difflog = os.path.join(os.path.dirname(jobfile_path), JOB_LOG_DIFF)
         with open(difflog, 'wb') as diff_file:
             for line in difflib.unified_diff(
                     open(jobfile_copy_path).readlines(),

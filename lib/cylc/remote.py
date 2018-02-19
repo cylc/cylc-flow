@@ -18,16 +18,13 @@
 """Run command on a remote, (i.e. a remote [user@]host)."""
 
 import os
-from posix import WIFSIGNALED
-from pipes import quote
-import shlex
-from subprocess import Popen, PIPE
 import sys
-from textwrap import TextWrapper
-
-from cylc.cfgspec.glbl_cfg import glbl_cfg
+import shlex
+from pipes import quote
+from posix import WIFSIGNALED
+from subprocess import Popen, PIPE
 import cylc.flags
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.version import CYLC_VERSION
 
 
@@ -47,12 +44,12 @@ def remote_cylc_cmd(cmd, user=None, host=None, capture=False,
     # Pass cylc version through.
     command = ["env", "CYLC_VERSION=%s" % CYLC_VERSION]
 
-    ssh = str(GLOBAL_CFG.get_host_item("ssh command", host, user))
+    ssh = str(glbl_cfg().get_host_item("ssh command", host, user))
     command += shlex.split(ssh) + ["-n", user_at_host]
 
     # Use bash loging shell?
     if ssh_login_shell is None:
-        ssh_login_shell = GLOBAL_CFG.get_host_item(
+        ssh_login_shell = glbl_cfg().get_host_item(
             "use login shell", host, user)
     if ssh_login_shell:
         # A login shell will always source /etc/profile and the user's bash
@@ -61,7 +58,7 @@ def remote_cylc_cmd(cmd, user=None, host=None, capture=False,
         command += ["bash", "--login", "-c", "'exec $0 \"$@\"'"]
 
     cmd = "%s %s" % (
-        GLOBAL_CFG.get_host_item("cylc executable", host, user), cmd)
+        glbl_cfg().get_host_item("cylc executable", host, user), cmd)
 
     command += [cmd]
     if cylc.flags.debug:
@@ -138,8 +135,6 @@ class RemoteRunner(object):
         """
         if not self.is_remote:
             return False
-
-        from cylc.version import CYLC_VERSION
 
         name = os.path.basename(self.argv[0])[5:]  # /path/to/cylc-foo => foo
 

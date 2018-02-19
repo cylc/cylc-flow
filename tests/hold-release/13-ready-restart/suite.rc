@@ -21,7 +21,7 @@ bar
         [[[job]]]
             batch system = at
             # A fake submission on 1st attempt
-            batch submit command template = sleep 10
+            batch submit command template = sleep 20
     [[bar]]
         script = """
 # Stop the suite as soon as job file of "foo-1" is in the ready state.
@@ -40,5 +40,6 @@ timeout 1m my-log-grepper 'Held on start-up (no tasks will be submitted)'
 cylc broadcast "${CYLC_SUITE_NAME}" \
     -p '1' -n 'foo-1' -s '[job]batch submit command template=at now'
 # Release the suite to run to completion.
+sleep 2
 cylc release "${CYLC_SUITE_NAME}"
 """

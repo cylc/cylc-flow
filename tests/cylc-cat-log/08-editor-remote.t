@@ -24,6 +24,8 @@ OWNER="$( cylc get-global-config -i '[test battery]remote owner' 2>'/dev/null')"
 if [[ -z "${OWNER}${HOST}" ]]; then
     skip_all '"[test battery]remote host/owner": not defined'
 fi
+CYLC_TEST_HOST=${CYLC_TEST_HOST:-"localhost"}
+CYLC_TEST_OWNER=${CYLC_TEST_OWNER:-${USER}}
 
 . "${TEST_SOURCE_DIR}"/editor/bin/run_tests.sh
 export PATH="${TEST_SOURCE_DIR}/editor/bin/":"${PATH}"

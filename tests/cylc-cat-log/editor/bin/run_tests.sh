@@ -39,15 +39,12 @@ function run_tests {
     LOG_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
     JOB_LOG_DIR="${LOG_DIR}/log/job/1/foo/01"
 
-    for OPT_JOBFILE in "-f j_job" "-f o_job.out" "-f e_job.err" \
-          "-f s_job.status" "-f a_job-activity.log" \
-          "-c job.custom_job.custom"; do
-        OPT="${OPT_JOBFILE%_*}"
-        JOBFILE="${OPT_JOBFILE#*_}"
+    for JOBFILE in "job" "job.out" "job.err" "job.status" "job-activity.log" \
+          "job.custom"; do
         TEST_NAME="${TEST_NAME_BASE}-${JOBFILE}"
         export DESTFILE="${JOBFILE}.edit"
         # Check we can view the job log file in the "editor".
-        run_ok "${TEST_NAME}" cylc cat-log ${OPT} -m e "${SUITE_NAME}" foo.1
+        run_ok "${TEST_NAME}" cylc cat-log -f ${JOBFILE} -m e "${SUITE_NAME}" foo.1
         # Compare viewed (i.e. copied by the fake editor) file with the original.
         cmp_ok "${DESTFILE}" "${JOB_LOG_DIR}/${JOBFILE}"
     done

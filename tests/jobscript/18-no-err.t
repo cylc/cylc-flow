@@ -24,7 +24,7 @@ set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --no-detach 
-JOB_ERR=$(cylc cat-log -l -e ${SUITE_NAME} foo.1)
+JOB_ERR=$(cylc cat-log -f e -m p ${SUITE_NAME} foo.1)
 cmp_ok $JOB_ERR << __END__
 __END__
 purge_suite "${SUITE_NAME}"

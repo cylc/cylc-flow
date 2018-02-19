@@ -44,6 +44,7 @@ SUITE_LOG_OPTS = {
 
 LOG_DELIMITER = '.'
 
+
 def get_logs(directory, basename, absolute_path=True):
     """Returns a list of log files is the given directory for the provided
     basename (i.e. log, err, out) ordered newest to oldest."""

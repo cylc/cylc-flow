@@ -70,7 +70,7 @@ grep_ok '\[jobs-submit ret_code\] 0' $TEST_NAME.out
 #-------------------------------------------------------------------------------
 # remote
 TEST_NAME=$TEST_NAME_BASE-task-custom
-cylc cat-log -c 'job.custom-log' $SUITE_NAME a-task.1 >$TEST_NAME.out
+cylc cat-log -f 'job.custom-log' $SUITE_NAME a-task.1 >$TEST_NAME.out
 grep_ok "drugs and money" $TEST_NAME.out
 #-------------------------------------------------------------------------------
 # local

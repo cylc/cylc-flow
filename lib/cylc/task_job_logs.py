@@ -18,7 +18,7 @@
 """Define task job log filenames and option names."""
 
 import os
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 
 # Task job log filenames.
 JOB_LOG_JOB = "job"
@@ -57,7 +57,7 @@ def get_task_job_id(point, name, submit_num=None):
 def get_task_job_log(suite, point, name, submit_num=None, tail=None):
     """Return the full job log path."""
     args = [
-        GLOBAL_CFG.get_derived_host_item(suite, "suite job log directory"),
+        glbl_cfg().get_derived_host_item(suite, "suite job log directory"),
         get_task_job_id(point, name, submit_num)]
     if tail is not None:
         args.append(tail)

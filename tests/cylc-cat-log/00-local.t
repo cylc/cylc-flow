@@ -18,7 +18,7 @@
 # Test "cylc cat-log" on the suite host.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 17
+set_test_number 33
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
@@ -31,24 +31,24 @@ sleep 5
 cylc stop --max-polls=10 --interval=2 $SUITE_NAME 2>'/dev/null'
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-suite-log-log
-cylc cat-log $SUITE_NAME >$TEST_NAME.out
-contains_ok "${TEST_NAME}.out" "${SUITE_RUN_DIR}/log/suite/log"
+run_ok $TEST_NAME cylc cat-log $SUITE_NAME
+contains_ok "${TEST_NAME}.stdout" "${SUITE_RUN_DIR}/log/suite/log"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-suite-log-out
-cylc cat-log -f o $SUITE_NAME >$TEST_NAME.out
-contains_ok "${TEST_NAME}.out" "${SUITE_RUN_DIR}/log/suite/out"
+run_ok $TEST_NAME cylc cat-log -f o $SUITE_NAME
+contains_ok "${TEST_NAME}.stdout" "${SUITE_RUN_DIR}/log/suite/out"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-suite-log-err
-cylc cat-log -f e $SUITE_NAME >$TEST_NAME.out
-contains_ok "${TEST_NAME}.out" "${SUITE_RUN_DIR}/log/suite/err"
+run_ok $TEST_NAME cylc cat-log -f e $SUITE_NAME
+contains_ok "${TEST_NAME}.stdout" "${SUITE_RUN_DIR}/log/suite/err"
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-task-out
-cylc cat-log -f o $SUITE_NAME a-task.1 >$TEST_NAME.out
-grep_ok '^the quick brown fox$' $TEST_NAME.out
+run_ok $TEST_NAME cylc cat-log -f o $SUITE_NAME a-task.1
+grep_ok '^the quick brown fox$' $TEST_NAME.stdout
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-task-job
-cylc cat-log -f j $SUITE_NAME a-task.1 >$TEST_NAME.out
-contains_ok $TEST_NAME.out - << __END__
+run_ok $TEST_NAME cylc cat-log -f j $SUITE_NAME a-task.1
+contains_ok $TEST_NAME.stdout - << __END__
 # SCRIPT:
 # Write to task stdout log
 echo "the quick brown fox"
@@ -61,24 +61,24 @@ cylc task message -p WARNING 'marmite and squashed bananas'
 __END__
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-task-err
-cylc cat-log -f e $SUITE_NAME a-task.1 >$TEST_NAME.out
-grep_ok "jumped over the lazy dog" $TEST_NAME.out
+run_ok $TEST_NAME cylc cat-log -f e $SUITE_NAME a-task.1
+grep_ok "jumped over the lazy dog" $TEST_NAME.stdout
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-task-status
-cylc cat-log -f s $SUITE_NAME a-task.1 >$TEST_NAME.out
-grep_ok "CYLC_BATCH_SYS_NAME=background" $TEST_NAME.out
+run_ok $TEST_NAME cylc cat-log -f s $SUITE_NAME a-task.1
+grep_ok "CYLC_BATCH_SYS_NAME=background" $TEST_NAME.stdout
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-task-activity
-cylc cat-log -f a $SUITE_NAME a-task.1 >$TEST_NAME.out
-grep_ok '\[jobs-submit ret_code\] 0' $TEST_NAME.out
+run_ok $TEST_NAME cylc cat-log -f a $SUITE_NAME a-task.1
+grep_ok '\[jobs-submit ret_code\] 0' $TEST_NAME.stdout
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-task-custom
-cylc cat-log -c 'job.custom-log' $SUITE_NAME a-task.1 >$TEST_NAME.out
-grep_ok "drugs and money" $TEST_NAME.out
+run_ok $TEST_NAME cylc cat-log -f 'job.custom-log' $SUITE_NAME a-task.1
+grep_ok "drugs and money" $TEST_NAME.stdout
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-task-list-local-NN
-cylc cat-log -f a -m l $SUITE_NAME a-task.1 >$TEST_NAME.out
-contains_ok $TEST_NAME.out <<__END__
+run_ok $TEST_NAME cylc cat-log -f a -m l $SUITE_NAME a-task.1
+contains_ok $TEST_NAME.stdout <<__END__
 job
 job-activity.log
 job.custom-log
@@ -88,8 +88,8 @@ job.status
 __END__
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-task-list-local-01
-cylc cat-log -f a -m l -s 1 $SUITE_NAME a-task.1 >$TEST_NAME.out
-contains_ok $TEST_NAME.out <<__END__
+run_ok $TEST_NAME cylc cat-log -f a -m l -s 1 $SUITE_NAME a-task.1
+contains_ok $TEST_NAME.stdout <<__END__
 job
 job-activity.log
 job.custom-log
@@ -102,16 +102,19 @@ TEST_NAME=$TEST_NAME_BASE-task-list-local-02
 run_fail cylc cat-log -f j -m l -s 2 $SUITE_NAME a-task.1
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-task-log-dir-NN
-cylc cat-log -f j -m d $SUITE_NAME a-task.1 >$TEST_NAME.out
-grep_ok "$SUITE_NAME/log/job/1/a-task/NN$" $TEST_NAME.out
+run_ok $TEST_NAME cylc cat-log -f j -m d $SUITE_NAME a-task.1
+grep_ok "$SUITE_NAME/log/job/1/a-task/NN$" $TEST_NAME.stdout
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-task-log-dir-01
-cylc cat-log -f j -m d -s 1 $SUITE_NAME a-task.1 >$TEST_NAME.out
-grep_ok "$SUITE_NAME/log/job/1/a-task/01$" $TEST_NAME.out
+run_ok $TEST_NAME cylc cat-log -f j -m d -s 1 $SUITE_NAME a-task.1
+grep_ok "$SUITE_NAME/log/job/1/a-task/01$" $TEST_NAME.stdout
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-task-job-path
-cylc cat-log -f j -m p $SUITE_NAME a-task.1 >$TEST_NAME.out
-grep_ok "$SUITE_NAME/log/job/1/a-task/NN/job$" $TEST_NAME.out
+run_ok $TEST_NAME cylc cat-log -f j -m p $SUITE_NAME a-task.1
+grep_ok "$SUITE_NAME/log/job/1/a-task/NN/job$" $TEST_NAME.stdout
 #-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-bad-suite-log
+run_fail $TEST_NAME cylc cat-log -f q $SUITE_NAME
+grep_ok "Error: bad suite log option: 'q'"  $TEST_NAME.stderr
 purge_suite $SUITE_NAME
 exit

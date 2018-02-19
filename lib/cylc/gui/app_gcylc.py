@@ -1288,7 +1288,7 @@ been defined for this suite""").inform()
                 task_id]['logfiles']))
         except KeyError:
             return []
- 
+
     def get_right_click_menu(self, task_ids, t_states, task_is_family=False,
                              is_graph_view=False):
         """Return the default menu for a list of tasks."""
@@ -1337,7 +1337,7 @@ been defined for this suite""").inform()
 
                 # View.
                 view_menu = gtk.Menu()
-                view_item = gtk.ImageMenuItem("View All Job Logs (Viewer)")
+                view_item = gtk.ImageMenuItem("View Job Logs (Viewer)")
                 img = gtk.image_new_from_stock(gtk.STOCK_DND,
                                                gtk.ICON_SIZE_MENU)
                 view_item.set_image(img)
@@ -1346,7 +1346,7 @@ been defined for this suite""").inform()
 
                 # View In Editor.
                 view_editor_menu = gtk.Menu()
-                view_editor_item = gtk.ImageMenuItem("View One Job Log (Editor)")
+                view_editor_item = gtk.ImageMenuItem("View Job Log (Editor)")
                 img = gtk.image_new_from_stock(gtk.STOCK_DND,
                                                gtk.ICON_SIZE_MENU)
                 view_editor_item.set_image(img)
@@ -1362,7 +1362,7 @@ been defined for this suite""").inform()
                     fnames = ['job-preview']
                 else:
                     fnames = (JOB_LOG_OPTS.values() +
-                             self._get_task_extra_job_logs(task_ids[0]))
+                              self._get_task_extra_job_logs(task_ids[0]))
                 for fname in fnames:
                     for handler, vmenu in [
                             (self.view_task_logs, view_menu),
@@ -2208,8 +2208,8 @@ shown here in the state they were in at the time of triggering.''')
 
         nsubmits = len(task_state_summary.get('job_hosts', {}))
         viewer = ComboLogViewer(self.cfg.suite, task_id, choice,
-            self._get_task_extra_job_logs(task_id),
-            nsubmits, self.get_remote_run_opts())
+                                self._get_task_extra_job_logs(task_id),
+                                nsubmits, self.get_remote_run_opts())
         self.quitters.append(viewer)
         window.add(viewer.get_widget())
         quit_button = gtk.Button("_Close")

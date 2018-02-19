@@ -32,13 +32,13 @@ class ComboLogViewer(logviewer):
     """Implement a viewer for task job logs in the GUI, via "cylc cat-log".
 
     It has a a combo box for log file selection.
-    
+
     """
     LABEL_TEXT = "File: "
     LABEL_TEXT2 = "Submit: "
 
     def __init__(self, suite, task_id, choice, extra_logs, nsubmits,
-            remote_run_opts):
+                 remote_run_opts):
         self.suite_name = suite
         self.task_id = task_id
         self.nsubmits = nsubmits

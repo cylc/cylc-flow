@@ -26,7 +26,7 @@ import tempfile
 from cylc.gui.tailer import Tailer
 from cylc.gui.util import get_icon
 from cylc.gui.warning_dialog import warning_dialog, info_dialog
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 
 
 class Gcapture(object):
@@ -135,7 +135,7 @@ class Gcapture(object):
             stderr=STDOUT, shell=True)
         self.proc = proc
         gobject.timeout_add(40, self.pulse_proc_progress)
-        tail_cmd_tmpl = GLOBAL_CFG.get_host_item("tail command template")
+        tail_cmd_tmpl = glbl_cfg().get_host_item("tail command template")
         tail_cmd = tail_cmd_tmpl % {'filename': self.stdoutfile.name}
         self.stdout_updater = Tailer(self.textview, tail_cmd, pollable=proc)
         self.stdout_updater.start()

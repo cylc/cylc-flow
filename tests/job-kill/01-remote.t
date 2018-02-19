@@ -38,7 +38,7 @@ suite_run_ok $TEST_NAME cylc run --reference-test --debug --no-detach $SUITE_NAM
 TEST_NAME=$TEST_NAME_BASE-ps
 run_fail $TEST_NAME \
     ${SSH} -n "${CYLC_TEST_HOST}" \
-    "ps \$(cat cylc-run/$SUITE_NAME/work/*/t*/file)"
+    "bash -c 'ps \$(cat cylc-run/$SUITE_NAME/work/*/t*/file)'"
 #-------------------------------------------------------------------------------
 purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
 purge_suite $SUITE_NAME

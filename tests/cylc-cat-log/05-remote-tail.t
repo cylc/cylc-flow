@@ -26,6 +26,8 @@ CYLC_TEST_OWNER="$( \
 if [[ -z "${CYLC_TEST_HOST}${CYLC_TEST_OWNER}" ]]; then
     skip_all '"[test battery]remote host/owner": not defined'
 fi
+CYLC_TEST_HOST=${CYLC_TEST_HOST:-"localhost"}
+CYLC_TEST_OWNER=${CYLC_TEST_OWNER:-${USER}}
 export CYLC_TEST_HOST
 set_test_number 4
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
