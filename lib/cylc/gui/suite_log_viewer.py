@@ -31,7 +31,7 @@ class SuiteLogViewer(logviewer):
     Implemented using "cylc cat-log".
 
     """
-    def __init__(self, suite_name, suite_log, task_list=None):
+    def __init__(self, suite_name, suite_log, remote_run_opts, task_list=None):
         """Initialise the suite log viewer."""
         if task_list is None:
             self.task_list = []
@@ -39,8 +39,8 @@ class SuiteLogViewer(logviewer):
         self.suite_log = suite_log
         self.suite_log_name = SUITE_LOG_OPTS[suite_log]
         self.rotation = 0
-        self.cmd_tmpl = ("cylc cat-log -m t -r %(rotation)s "
-                         "-f %(suite_log)s %(suite_name)s")
+        self.cmd_tmpl = "cylc cat-log %s" % remote_run_opts + (
+            " -m t -r %(rotation)s -f %(suite_log)s %(suite_name)s")
         self.task_filter = None
         self.custom_filter = None
         logviewer.__init__(self)

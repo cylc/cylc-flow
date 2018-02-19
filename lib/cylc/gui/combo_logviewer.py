@@ -42,7 +42,7 @@ class ComboLogViewer(logviewer):
     LABEL_TEXT = "File: "
     LABEL_TEXT2 = "Submit: "
 
-    def __init__(self, suite, task_id, choice, nsubmits):
+    def __init__(self, suite, task_id, choice, nsubmits, remote_run_opts):
         self.suite_name = suite
         self.task_id = task_id
         self.nsubmits = nsubmits
@@ -50,8 +50,8 @@ class ComboLogViewer(logviewer):
         self.suite = suite
         self.choice = choice
         name_str, point_str = TaskID.split(task_id)
-        self.cmd_tmpl = ("cylc cat-log -m t -s %(subnum)s "
-                         "-f %(job_log)s %(suite_name)s %(task_id)s")
+        self.cmd_tmpl = "cylc cat-log %s" % remote_run_opts + (
+            " -m t -s %(subnum)s -f %(job_log)s %(suite_name)s %(task_id)s")
         logviewer.__init__(self)
 
     def connect(self):

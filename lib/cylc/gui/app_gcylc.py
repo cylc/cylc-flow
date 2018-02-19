@@ -1267,8 +1267,9 @@ been defined for this suite""").inform()
                     # Custom job log (see "extra log files").
                     command_opt = "-f %s" % opt
                     break
-            self._gcapture_cmd("cylc cat-log -m e %s --geditor %s %s" % (
-                command_opt, self.cfg.suite, task_id))
+            self._gcapture_cmd("cylc cat-log %s -m e %s --geditor %s %s" % (
+                self.get_remote_run_opts(), command_opt, self.cfg.suite,
+                task_id))
 
     def view_task_info(self, w, e, task_id, choice):
         """Viewer window with a drop-down list of job logs to choose from."""
@@ -2214,22 +2215,17 @@ shown here in the state they were in at the time of triggering.''')
                          gtk.gdk.color_parse(self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_size_request(800, 400)
+        window.set_title(task_id + ": Log Files")
 
         job_hosts = task_state_summary.get('job_hosts', {})
         nsubmits = len(job_hosts.keys())
-
-        window.set_title(task_id + ": Log Files")
-
-        viewer = ComboLogViewer(self.cfg.suite, task_id, choice, nsubmits)
+        viewer = ComboLogViewer(self.cfg.suite, task_id, choice, nsubmits,
+                                self.get_remote_run_opts())
         self.quitters.append(viewer)
-
         window.add(viewer.get_widget())
-
         quit_button = gtk.Button("_Close")
         quit_button.connect("clicked", self.on_popup_quit, viewer, window)
-
         viewer.hbox.pack_start(quit_button, False)
-
         window.connect("delete_event", viewer.quit_w_e)
         window.show_all()
 
@@ -2813,8 +2809,8 @@ to reduce network traffic.""")
         options = ''
         if not yesbin_cb.get_active():
             options += ' -x '
-        self._gcapture_cmd("cylc search %s %s %s" % (
-            options, reg, pattern), 600, 500)
+        self._gcapture_cmd("cylc search %s %s %s %s" % (
+            self.get_remote_run_opts(), options, reg, pattern), 600, 500)
 
     def click_register(self, w):
         """Callback for File -> Register A New Suite."""
@@ -3356,7 +3352,7 @@ For more Stop options use the Control menu.""")
 
     def run_suite_log(self, w, log='l'):
         """View suite logs."""
-        foo = SuiteLogViewer(self.cfg.suite, log)
+        foo = SuiteLogViewer(self.cfg.suite, log, self.get_remote_run_opts())
         self.quitters.append(foo)
 
     def run_suite_view(self, w, method):
