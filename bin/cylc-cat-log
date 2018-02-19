@@ -155,13 +155,9 @@ def get_option_parser():
                        for i, j in SUITE_LOG_OPTS.items()])) +
              "  Job log: %s; default o(out)." % (
              ', '.join(['%s(%s)' % (i, j)
-                       for i, j in JOB_LOG_OPTS.items()])),
-        metavar="LOG", action="store", default=None, dest="filename",
-        choices=SUITE_LOG_OPTS.keys() + JOB_LOG_OPTS.keys())
-
-    parser.add_option(
-        "-c", "--custom", help="Custom job log.",
-        metavar="LOG", action="store", default=None, dest="custom")
+                       for i, j in JOB_LOG_OPTS.items()])) +
+             "  Or <filename> for custom (and standard) job logs.",
+        metavar="LOG", action="store", default=None, dest="filename")
 
     parser.add_option(
         "-m", "--mode",
@@ -200,16 +196,19 @@ def get_task_job_log_path(
         user, host = user_at_host.split("@", 1)
     else:
         user, host = (None, user_at_host)
-    if options.custom is not None:
-        basename = options.custom
-    else:
+    try:
         basename = JOB_LOG_OPTS[options.filename or 'o']
+    except KeyError:
+        basename = options.filename
     if submit_num != NN:
         submit_num = "%02d" % int(submit_num)
-    return os.path.normpath(os.path.join(
-        glbl_cfg().get_derived_host_item(
-            suite_name, "suite job log directory", host, user),
-        point, task, submit_num, basename))
+    if os.path.isabs(basename):
+        return basename
+    else:
+        return os.path.normpath(os.path.join(
+            glbl_cfg().get_derived_host_item(
+                suite_name, "suite job log directory", host, user),
+            point, task, submit_num, basename))
 
 
 def get_task_job_attrs(options, suite_name, point, task, submit_num):
@@ -305,10 +304,12 @@ def main():
 
     """
 
-    # TODO - command option consistency checks (orig parser.error).
+    # TODO - TEST ERROR HANDLING VIA CLI and GUI
 
     parser = get_option_parser()
     options, args = parser.parse_args()
+
+    # TODO choices=SUITE_LOG_OPTS.keys() + JOB_LOG_OPTS.keys()
 
     if options.remote_mode:
         # Invoked on job hosts for job logs only, as a wrapper to elucidate().
@@ -331,17 +332,20 @@ def main():
 
     if len(args) == 1:
         # Cat suite logs, local only.
-        basename = SUITE_LOG_OPTS[options.filename or 'l']
+        try:
+            basename = SUITE_LOG_OPTS[options.filename or 'l']
+        except KeyError:
+            basename = options.filename
         logdir = GLOBAL_CFG.get_derived_host_item(
             suite_name, "suite log directory")
+        logpath = os.path.join(logdir, basename)
         if options.rotation_num:
-            logs = glob(os.path.join(logdir, '%s.*' % basename))
+            logs = glob('%s.*' % logpath)
             logs.sort(key=os.path.getmtime, reverse=True)
             try:
                 logpath = logs[int(options.rotation_num)]
             except IndexError:
-                print >> sys.stderr, "ERROR: only %d logs" % len(logs)
-                return
+                sys.exit("ERROR: max rotation %d" % (len(logs) - 1))
         else:
             logpath = os.path.join(logdir, basename)
         tail_tmpl = str(GLOBAL_CFG.get_host_item("tail command template"))
@@ -354,6 +358,8 @@ def main():
 
     if len(args) == 2:
         # Cat task job logs, may be on suite or job host.
+        if options.rotation_num is not None:
+            sys.exit("ERROR: rotation is a suite (not job) log property")
         task_id = args[1]
         try:
             task, point = TaskID.split(task_id)
