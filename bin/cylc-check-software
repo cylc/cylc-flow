@@ -27,31 +27,32 @@ from subprocess import check_call, PIPE, Popen, CalledProcessError
 
 
 # Standardised output messages
-FOUND_NONVERCHECK_MSG = 'FOUND'
+FOUND_NOVER_MSG = 'FOUND'
 MINVER_MET_MSG = 'FOUND & min. version MET'
 MINVER_NOTMET_MSG = 'FOUND but min. version NOT MET'
 FOUND_UNKNOWNVER_MSG = 'FOUND but could not determine version (?)'
 NOTFOUND_MSG = 'NOT FOUND (-)'
 
-# Specification of cylc full-functionality reqs grouped Python, TeX or 'other'
+"""Specification of cylc core & full-functionality module requirements, the
+   latter grouped as Python, TeX or 'other' (neither). 'opt_spec' item format:
+   <MODULE>: [<MIN VER OR 'None'>, <FUNC TAG>, <GROUP>, <'OTHER' TUPLE>] with
+   <'OTHER' TUPLE> = (<BASE CMD(S)>, <VER OPT>, <REGEX>, <OUTFILE ARG>)."""
 req_py_ver_range = (2, 6), (3,)
-# Item format <PACKAGE>: [<MIN VER>, <FUNC TAG>, <GROUP>(, <*>)], with <*> a
-# version-extracting tuple for 'OTHER': (<BASE CMD>, <VER OPT>, <VER FORMAT>)
 opt_spec = {
     'requests': [(2, 4, 2), 'HTTPSCOMMS', 'PY'],
     'OpenSSL': [None, 'HTTPSCOMMS', 'PY'],
     'urllib3': [None, 'HTTPSCOMMS', 'PY'],
-    'pygtk': [(2, 0, 0), 'GUIORGRAPH', 'PY'],
+    'pygtk': [(2, 0), 'GUIORGRAPH', 'PY'],
     'pygraphviz': [None, 'GUIORGRAPH', 'PY'],
     'texlive': [None, 'LATEXGUIDE', 'TEX'],
     'tocloft': [None, 'LATEXGUIDE', 'TEX'],
     'framed': [None, 'LATEXGUIDE', 'TEX'],
     'preprint': [None, 'LATEXGUIDE', 'TEX'],
     'tex4ht': [None, 'LATEXGUIDE', 'TEX'],
-    'TeX': [(1, 0, 0), 'LATEXGUIDE', 'OTHER', ('tex', '-v', r'TeX ([^\s]+)')],
-    'graphviz': [(1, 0, 0), 'GUIORGRAPH', 'OTHER',
+    'TeX': [(3, 0), 'LATEXGUIDE', 'OTHER', ('tex', '-v', r'TeX ([^\s]+)')],
+    'graphviz': [None, 'GUIORGRAPH', 'OTHER',
                  ('dot', '-V', r'graphviz version ([^\s]+)', 2)],
-    'imagemagick': [(1, 0, 0), 'HTMLUGUIDE', 'OTHER',
+    'imagemagick': [None, 'HTMLUGUIDE', 'OTHER',
                     ('magick identify', '-version', r'ImageMagick ([^\s]+)')]
 }
 
@@ -63,6 +64,7 @@ func_tags_and_text = {
     'HTMLUGUIDE': 'HTML User Guide'
 }
 
+# Initialise results dict
 opt_result = {}
 
 
@@ -136,27 +138,23 @@ def check_py_module_ver(module, min_ver):
     msg = 'Python:%s (%s)' % (module, string_ver(min_ver) + '+' if
                               min_ver is not None else 'none')
     try:
-        imported_module = __import__(module)
-        try:
-            # some module imports are awkward so approach like this for now
-            if module == 'pygtk':
-                import gtk
-                version_tuple = gtk.pygtk_version
-                module_version = '.'.join(map(str, version_tuple))
-            else:
-                module_version = imported_module.__version__
-            if min_ver is None:
-                res = ['%s (%s)' % (FOUND_NONVERCHECK_MSG, module_version),
-                       True]
-            elif parse_version(module_version) >= min_ver:
-                res = ['%s (%s)' % (MINVER_MET_MSG, module_version), True]
-            else:
-                res = ['%s (%s)' % (MINVER_NOTMET_MSG, module_version),
-                       False]
-        except AttributeError:
-            res = [FOUND_UNKNOWNVER_MSG, False]
+        if module == 'pygtk':
+            import gtk
+            module_version = '.'.join(map(str, gtk.pygtk_version))
+        else:
+            imported_module = __import__(module)
+            module_version = imported_module.__version__
     except ImportError:
         res = [NOTFOUND_MSG, False]
+    try:
+        if min_ver is None:
+            res = ['%s (%s)' % (FOUND_NOVER_MSG, module_version), True]
+        elif parse_version(module_version) >= min_ver:
+            res = ['%s (%s)' % (MINVER_MET_MSG, module_version), True]
+        else:
+            res = ['%s (%s)' % (MINVER_NOTMET_MSG, module_version), False]
+    except AttributeError:
+        res = [FOUND_UNKNOWNVER_MSG, False]
     shell_align_write('.', msg, res[0])
     return res[1]
 
@@ -175,14 +173,14 @@ def kpsepath_search(tex_module):
         shell_align_write('.', msg, NOTFOUND_MSG)
         return False
     else:
-        shell_align_write('.', msg, FOUND_NONVERCHECK_MSG + ' (n/a)')
+        shell_align_write('.', msg, FOUND_NOVER_MSG + ' (n/a)')
         return True
 
 
-def command_find_ver(module, min_ver, cmd_base, ver_opt, ver_extr, outfile=1):
+def cmd_find_ver(module, min_ver, cmd_base, ver_opt, ver_extr, outfile=1):
     """Print outcome & return Boolean (True for pass) of local module version
        requirement test using relevant custom command base keyword(s),
-       version-checking option(s) & version tuple-extraction regex."""
+       version-checking option(s) & version-extraction regex."""
     msg = '%s (%s)' % (module, string_ver(min_ver) + '+' if
                        min_ver is not None else 'none')
     if Popen(['which', cmd_base], stdout=PIPE, stderr=PIPE).wait():
@@ -193,9 +191,8 @@ def command_find_ver(module, min_ver, cmd_base, ver_opt, ver_extr, outfile=1):
                            stderr=PIPE).communicate()[outfile - 1].strip()
             version = re.search(ver_extr, output).groups()[0]
             if min_ver is None:
-                min_ver = (0,)
-                res = ['%s (%s)' % (MINVER_MET_MSG, version), True]
-            if parse_version(version) >= min_ver:
+                res = ['%s (%s)' % (FOUND_NOVER_MSG, version), True]
+            elif parse_version(version) >= min_ver:
                 res = ['%s (%s)' % (MINVER_MET_MSG, version), True]
             else:
                 res = ['%s (%s)' % (MINVER_NOTMET_MSG, version), False]
@@ -208,16 +205,15 @@ def command_find_ver(module, min_ver, cmd_base, ver_opt, ver_extr, outfile=1):
 def functionality_print(func):
     """Apply and print outcome of searches, applied by relevant group, for all
        modules including minimum versions necessary for some funcionality."""
-    for module, item_list in opt_spec.items():
-        ver_req, func_dep, tag = item_list[:3]
+    for module, items in opt_spec.items():
+        ver_req, func_dep, tag = items[:3]
         if func_dep == func:
             if tag == 'PY':
                 opt_result[module] = check_py_module_ver(module, ver_req)
             elif tag == 'TEX':
                 opt_result[module] = kpsepath_search(module)
             else:
-                opt_result[module] = command_find_ver(module, ver_req,
-                                                      *item_list[3])
+                opt_result[module] = cmd_find_ver(module, ver_req, *items[3])
     return
 
 
@@ -240,7 +236,7 @@ def main():
         functionality_print(tag)
     draw_table_line('=')
 
-    # Final summary print for clear pass/fail final outcome and exit
+    # Final summary print for clear pass/fail final outcome & exit
     sys.stdout.write('\nSummary:')
     shell_centre_write(True, '*' * 28, 'Core requirements: %s' % 'ok' if
                        req_result else 'not ok', 'Full-functionality: %s'
