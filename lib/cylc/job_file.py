@@ -201,6 +201,8 @@ class JobFileWriter(object):
         handle.write(
             '\n    export CYLC_SUITE_DEF_PATH_ON_SUITE_HOST="%s"' %
             os.environ['CYLC_SUITE_DEF_PATH'])
+        handle.write(
+            '\n    export CYLC_SUITE_UUID="%s"' % job_conf['uuid_str'])
 
         handle.write("\n\n    # CYLC TASK ENVIRONMENT:")
         handle.write('\n    export CYLC_TASK_JOB="%s"' % job_conf['job_d'])

@@ -39,7 +39,7 @@ sed -i 's/^--- original $/--- original/; s/^+++ edited $/+++ edited/' $DIFF_LOG
 cmp_ok "${DIFF_LOG}" - <<'__END__'
 --- original
 +++ edited
-@@ -30,7 +30,7 @@
+@@ -31,7 +31,7 @@
  
  cylc__job__inst__script() {
  # SCRIPT:

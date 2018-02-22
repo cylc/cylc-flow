@@ -31,7 +31,6 @@ from collections import namedtuple
 from logging import getLevelName, CRITICAL, ERROR, WARNING, INFO, DEBUG
 import os
 from pipes import quote
-import re
 import shlex
 from time import time
 import traceback

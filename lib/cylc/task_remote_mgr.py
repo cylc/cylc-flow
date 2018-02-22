@@ -79,7 +79,7 @@ class TaskRemoteMgr(object):
         # self.remote_init_map = {(host, owner): status, ...}
         self.remote_init_map = {}
         self.single_task_mode = False
-        self.uuid = uuid4()
+        self.uuid_str = str(uuid4())
         self.ready = False
 
     def remote_host_select(self, host_str):
@@ -199,7 +199,7 @@ class TaskRemoteMgr(object):
         uuid_fname = os.path.join(
             self.suite_srv_files_mgr.get_suite_srv_dir(self.suite), 'uuid')
         if not os.path.exists(uuid_fname):
-            open(uuid_fname, 'wb').write(str(self.uuid))
+            open(uuid_fname, 'wb').write(self.uuid_str)
         # Build the command
         cmd = ['cylc', 'remote-init']
         if is_remote_host(host):
@@ -208,7 +208,9 @@ class TaskRemoteMgr(object):
             cmd.append('--user=%s' % owner)
         if cylc.flags.debug:
             cmd.append('--debug')
-        cmd.append(str(self.uuid))
+        if comm_meth in ['ssh']:
+            cmd.append('--indirect-comm=%s' % comm_meth)
+        cmd.append(self.uuid_str)
         cmd.append(glbl_cfg().get_derived_host_item(
             self.suite, 'suite run directory', host, owner))
         self.proc_pool.put_command(
@@ -231,7 +233,8 @@ class TaskRemoteMgr(object):
         """
         # Remove UUID file
         uuid_fname = os.path.join(
-            self.suite_srv_files_mgr.get_suite_srv_dir(self.suite), 'uuid')
+            self.suite_srv_files_mgr.get_suite_srv_dir(self.suite),
+            FILE_BASE_UUID)
         try:
             os.unlink(uuid_fname)
         except OSError:

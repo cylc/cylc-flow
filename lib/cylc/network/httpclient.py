@@ -90,6 +90,16 @@ class ClientInfoError(ClientError):
         return self.MESSAGE % (self.args[0])
 
 
+class ClientInfoUUIDError(ClientInfoError):
+
+    """An error on UUID mismatch between environment and contact info."""
+
+    MESSAGE = "Suite UUID mismatch: environment=%s, contact-info=%s"
+
+    def __str__(self):
+        return self.MESSAGE % self.args
+
+
 class ClientTimeout(ClientError):
 
     """An error raised on connection timeout."""
@@ -511,9 +521,24 @@ class SuiteRuntimeServiceClient(object):
             self.port = int(data.get(self.srv_files_mgr.KEY_PORT))
         except (IOError, ValueError, SuiteServiceFileError):
             raise ClientInfoError(self.suite)
-        self.host = data.get(self.srv_files_mgr.KEY_HOST)
-        self.owner = data.get(self.srv_files_mgr.KEY_OWNER)
-        self.comms_protocol = data.get(self.srv_files_mgr.KEY_COMMS_PROTOCOL)
+        else:
+            # Check mismatch suite UUID
+            env_suite = os.getenv(self.srv_files_mgr.KEY_NAME)
+            env_uuid = os.getenv(self.srv_files_mgr.KEY_UUID)
+            if (self.suite and env_suite and env_uuid and
+                    env_suite == self.suite and
+                    env_uuid != self.comms1.get(self.srv_files_mgr.KEY_UUID)):
+                raise ClientInfoUUIDError(
+                    env_uuid, self.comms1[self.srv_files_mgr.KEY_UUID])
+            # All good
+            self.comms_protocol = self.comms1.get(
+                self.srv_files_mgr.KEY_COMMS_PROTOCOL)
+            self.host = self.comms1.get(self.srv_files_mgr.KEY_HOST)
+            self.owner = self.comms1.get(self.srv_files_mgr.KEY_OWNER)
+            if self.srv_files_mgr.KEY_API not in self.comms1:
+                self.comms1[self.srv_files_mgr.KEY_API] = 0  # <=7.5.0 compat
+        # Indirect comms settings
+        self.comms2.clear()
         try:
             self.api = int(data.get(self.srv_files_mgr.KEY_API))
         except (TypeError, ValueError):

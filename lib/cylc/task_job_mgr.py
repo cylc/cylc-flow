@@ -892,5 +892,6 @@ class TaskJobManager(object):
             'suite_name': suite,
             'task_id': itask.identity,
             'try_num': itask.get_try_num(),
+            'uuid_str': self.task_remote_mgr.uuid_str,
             'work_d': rtconfig['work sub-directory'],
         }

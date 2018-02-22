@@ -133,8 +133,6 @@ class Scheduler(object):
         self.config = None
 
         self.is_restart = is_restart
-        if self.is_restart:
-            self.restart_warm_point = None
         self._cli_initial_point_string = None
         self._cli_start_point_string = None
         start_point_str = None
@@ -151,7 +149,6 @@ class Scheduler(object):
 
         self.owner = get_user()
         self.host = get_host()
-        self.port = None
 
         self.is_stalled = False
 
@@ -166,6 +163,7 @@ class Scheduler(object):
         self.task_events_mgr = None
         self.suite_event_handler = None
         self.httpserver = None
+        self.port = None
         self.command_queue = None
         self.message_queue = None
         self.ext_trigger_queue = None
@@ -225,8 +223,9 @@ class Scheduler(object):
 
             # Setup the suite log.
             SuiteLog.get_inst(self.suite).pimp(detach)
-
-            self.configure_comms_daemon()
+            self.proc_pool = SuiteProcPool()
+            self.httpserver = HTTPServer(self.suite)
+            self.port = self.httpserver.port
             self.configure()
             self.profiler.start()
             self.run()
@@ -316,13 +315,16 @@ conditions; see `cylc conditions`.
             # This logic handles the lack of initial cycle point in "suite.rc".
             # Things that can't change on suite reload.
             pri_dao = self.suite_db_mgr.get_pri_dao()
-            pri_dao.select_suite_params(self._load_initial_cycle_point)
+            pri_dao.select_suite_params(self._load_suite_params_1)
+            # Configure contact data only after loading UUID string
+            self.configure_contact()
             pri_dao.select_suite_template_vars(self._load_template_vars)
-            pri_dao.select_suite_params(self._load_warm_cycle_point)
             # Take checkpoint and commit immediately so that checkpoint can be
             # copied to the public database.
             pri_dao.take_checkpoints("restart")
             pri_dao.execute_queued_items()
+        else:
+            self.configure_contact()
 
         self.profiler.log_memory("scheduler.py: before load_suiterc")
         self.load_suiterc()
@@ -358,7 +360,8 @@ conditions; see `cylc conditions`.
             self.configure_reftest()
 
         LOG.info(self.START_MESSAGE_TMPL % {
-            'host': self.host, 'port': self.port, 'pid': os.getpid()})
+            'host': self.host, 'port': self.httpserver.port,
+            'pid': os.getpid()})
         # Note that the following lines must be present at the top of
         # the suite log file for use in reference test runs:
         LOG.info('Cylc version: %s' % CYLC_VERSION)
@@ -380,9 +383,11 @@ conditions; see `cylc conditions`.
         self.profiler.log_memory("scheduler.py: after load_tasks")
 
         self.suite_db_mgr.put_suite_params(
-            self.run_mode,
             CYLC_VERSION,
+            self.task_job_mgr.task_remote_mgr.uuid_str,
+            self.run_mode,
             str(cylc.flags.utc),
+            str(glbl_cfg().get(['cylc', 'UTC mode'])),
             self.initial_point,
             self.final_point,
             self.pool.is_held,
@@ -441,9 +446,9 @@ conditions; see `cylc conditions`.
     def load_tasks_for_restart(self):
         """Load tasks for restart."""
         self.suite_db_mgr.pri_dao.select_suite_params(
-            self._load_suite_params, self.options.checkpoint)
-        if self.restart_warm_point:
-            self.start_point = self.restart_warm_point
+            self._load_suite_params_2, self.options.checkpoint)
+        if self._cli_start_point_string:
+            self.start_point = self._cli_start_point_string
         self.suite_db_mgr.pri_dao.select_broadcast_states(
             self.task_events_mgr.broadcast_mgr.load_db_broadcast_states,
             self.options.checkpoint)
@@ -471,7 +476,7 @@ conditions; see `cylc conditions`.
                 self.proc_pool.process()
         self.command_poll_tasks()
 
-    def _load_suite_params(self, row_idx, row):
+    def _load_suite_params_2(self, row_idx, row):
         """Load previous initial/final cycle point."""
         if row_idx == 0:
             LOG.info("LOADING suite parameters")
@@ -886,8 +891,9 @@ conditions; see `cylc conditions`.
         if self.options.genref or self.options.reftest:
             self.configure_reftest(recon=True)
         self.suite_db_mgr.put_suite_params(
-            self.run_mode,
             CYLC_VERSION,
+            self.task_job_mgr.task_remote_mgr.uuid_str,
+            self.run_mode,
             str(cylc.flags.utc),
             self.initial_point,
             self.final_point,
@@ -918,10 +924,8 @@ conditions; see `cylc conditions`.
                     self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT)),
                 get_current_time_string()))
 
-    def configure_comms_daemon(self):
-        """Create and configure daemon."""
-        self.httpserver = HTTPServer(self.suite)
-        self.port = self.httpserver.get_port()
+    def configure_contact(self):
+        """Create contact file."""
         # Make sure another suite of the same name has not started while this
         # one is starting
         self.suite_srv_files_mgr.detect_old_contact_file(self.suite)
@@ -945,12 +949,16 @@ conditions; see `cylc conditions`.
         mgr = self.suite_srv_files_mgr
         contact_data = {
             mgr.KEY_API: str(self.httpserver.API),
+            mgr.KEY_COMMS_PROTOCOL: glbl_cfg().get(
+                ['communication', 'method']),
             mgr.KEY_DIR_ON_SUITE_HOST: os.environ['CYLC_DIR'],
-            mgr.KEY_NAME: self.suite,
             mgr.KEY_HOST: self.host,
-            mgr.KEY_PROCESS: process_str,
-            mgr.KEY_PORT: str(self.port),
+            mgr.KEY_NAME: self.suite,
             mgr.KEY_OWNER: self.owner,
+            mgr.KEY_PORT: str(self.httpserver.port),
+            mgr.KEY_PROCESS: process_str,
+            mgr.KEY_SSH_USE_LOGIN_SHELL: str(glbl_cfg().get_host_item(
+                'use login shell')),
             mgr.KEY_SUITE_RUN_DIR_ON_SUITE_HOST: self.suite_run_dir,
             mgr.KEY_TASK_MSG_MAX_TRIES: str(glbl_cfg().get(
                 ['task messaging', 'maximum number of tries'])),
@@ -958,9 +966,8 @@ conditions; see `cylc conditions`.
                 ['task messaging', 'retry interval']))),
             mgr.KEY_TASK_MSG_TIMEOUT: str(float(glbl_cfg().get(
                 ['task messaging', 'connection timeout']))),
-            mgr.KEY_VERSION: CYLC_VERSION,
-            mgr.KEY_COMMS_PROTOCOL: glbl_cfg().get(
-                ['communication', 'method'])}
+            mgr.KEY_UUID: self.task_job_mgr.task_remote_mgr.uuid_str,
+            mgr.KEY_VERSION: CYLC_VERSION}
         try:
             mgr.dump_contact_file(self.suite, contact_data)
         except IOError as exc:
@@ -1025,23 +1032,21 @@ conditions; see `cylc conditions`.
         if self.run_mode != self.config.run_mode:
             self.run_mode = self.config.run_mode
 
-    def _load_initial_cycle_point(self, _, row):
-        """Load previous initial cycle point.
+    def _load_suite_params_1(self, _, row):
+        """Load previous initial/start cycle point.
 
         For restart, it may be missing from "suite.rc", but was specified as a
         command line argument on cold/warm start.
         """
         key, value = row
-        if key == "initial_point":
+        if key == 'initial_point':
             self._cli_initial_point_string = value
             self.task_events_mgr.pflag = True
-
-    def _load_warm_cycle_point(self, _, row):
-        """Load previous warm start point on restart"""
-        key, value = row
-        if key == "warm_point":
+        elif key == 'warm_point':
             self._cli_start_point_string = value
-            self.restart_warm_point = value
+            self.task_events_mgr.pflag = True
+        elif key == 'uuid_str':
+            self.task_job_mgr.task_remote_mgr.uuid_str = str(value)
 
     def _load_template_vars(self, _, row):
         """Load suite start up template variables."""
@@ -1145,7 +1150,8 @@ conditions; see `cylc conditions`.
             pass
         try:
             self.suite_event_handler.handle(self.config, SuiteEventContext(
-                event, reason, self.suite, self.owner, self.host, self.port))
+                event, reason, self.suite, self.owner, self.host,
+                self.httpserver.port))
         except SuiteEventError as exc:
             if event == self.EVENT_SHUTDOWN and self.options.reftest:
                 LOG.error('SUITE REFERENCE TEST FAILED')
