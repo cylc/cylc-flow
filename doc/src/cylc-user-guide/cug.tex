@@ -7343,9 +7343,28 @@ or in-suite:
             template = %Y-%m-%dT%H
 \end{lstlisting}
 
-Note that the remote suite does not have to be running when polling commences
-because the command interrogates the suite run database, not the suite server
-process.
+The remote suite does not have to be running when polling commences because the
+command interrogates the suite run database, not the suite server program.
+
+Note that the graph syntax for suite polling tasks cannot be combined with 
+cycle point offsets, family triggers, or parameterized task notation. This does
+not present a problem because suite polling tasks can be put on the same
+cycling sequence as the remote-suite target task (as recommended above), and
+there is no point in having multiple tasks (family members or parameterized
+tasks) performing the same polling operation. Task state triggers can be used
+with suite polling, e.g.\ to trigger another task if polling fails after 10
+tries at 10 second intervals:
+
+\begin{lstlisting}
+[scheduling]
+    [[dependencies]]
+        graph = "poller<other-suite::foo:succeed>:fail => another-task"
+[runtime]
+    [[my-foo]]
+        [[[suite state polling]]]
+            max-polls = 10
+            interval = PT10S
+\end{lstlisting}
 
 \subsection{Suite Server Logs}
 \label{Suite Server Logs}
