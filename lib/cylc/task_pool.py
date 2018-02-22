@@ -35,6 +35,7 @@ from fnmatch import fnmatchcase
 import pickle
 from time import time
 import traceback
+from collections import OrderedDict
 
 from cylc.config import SuiteConfigError
 from cylc.cycling.loader import get_point, standardise_point_string
@@ -460,7 +461,7 @@ class TaskPool(object):
             queue = self.myq[itask.tdef.name]
         except KeyError:
             queue = self.config.Q_DEFAULT
-        self.queues.setdefault(queue, {})
+        self.queues.setdefault(queue, OrderedDict())
         self.queues[queue][itask.identity] = itask
         self.pool.setdefault(itask.point, {})
         self.pool[itask.point][itask.identity] = itask
