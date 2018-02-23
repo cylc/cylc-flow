@@ -186,11 +186,12 @@ class TaskJobManager(object):
 
         # Prepare tasks for job submission
         prepared_tasks, bad_tasks = self.prep_submit_task_jobs(suite, itasks)
-        if not prepared_tasks:
-            return bad_tasks
 
         # Reset consumed host selection results
         self.task_remote_mgr.remote_host_select_reset()
+
+        if not prepared_tasks:
+            return bad_tasks
 
         # Group task jobs by (host, owner)
         auth_itasks = {}  # {(host, owner): [itask, ...], ...}
@@ -753,6 +754,8 @@ class TaskJobManager(object):
             # Submit number not yet incremented
             itask.submit_num += 1
             itask.summary['submit_num'] = itask.submit_num
+            # Retry delays, needed for the try_num
+            self._set_retry_timers(itask, rtconfig)
             self._prep_submit_task_job_error(
                 suite, itask, dry_run, '(remote host select)', exc)
             return False
@@ -761,6 +764,11 @@ class TaskJobManager(object):
                 itask.summary['latest_message'] = self.REMOTE_SELECT_MSG
                 return
             itask.task_host = task_host
+            # Submit number not yet incremented
+            itask.submit_num += 1
+            itask.summary['submit_num'] = itask.submit_num
+            # Retry delays, needed for the try_num
+            self._set_retry_timers(itask, rtconfig)
 
         try:
             job_conf = self._prep_submit_task_job_impl(suite, itask, rtconfig)
@@ -785,10 +793,12 @@ class TaskJobManager(object):
 
     def _prep_submit_task_job_error(self, suite, itask, dry_run, action, exc):
         """Helper for self._prep_submit_task_job. On error."""
-        LOG.error(traceback.format_exc())
+        LOG.debug("submit_num %s" % itask.submit_num)
+        LOG.debug(traceback.format_exc())
+        LOG.error(exc)
         self.task_events_mgr.log_task_job_activity(
             SuiteProcContext(self.JOBS_SUBMIT, action, err=exc, ret_code=1),
-            suite, itask.point, itask.tdef.name)
+            suite, itask.point, itask.tdef.name, submit_num=itask.submit_num)
         if not dry_run:
             # Perist
             self.suite_db_mgr.put_insert_task_jobs(itask, {
@@ -804,10 +814,6 @@ class TaskJobManager(object):
 
     def _prep_submit_task_job_impl(self, suite, itask, rtconfig):
         """Helper for self._prep_submit_task_job."""
-        # Submit number
-        itask.submit_num += 1
-        itask.summary['submit_num'] = itask.submit_num
-
         itask.task_owner = rtconfig['remote']['owner']
         if itask.task_owner:
             owner_at_host = itask.task_owner + "@" + itask.task_host
@@ -847,9 +853,6 @@ class TaskJobManager(object):
                     itask.poll_timers[key] = TaskActionTimer(delays=values)
 
         scripts = self._get_job_scripts(itask, rtconfig)
-
-        # Retry delays, needed for the try_num
-        self._set_retry_timers(itask, rtconfig)
 
         # Location of job file, etc
         self._create_job_log_path(suite, itask)
