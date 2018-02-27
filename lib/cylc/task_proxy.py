@@ -25,6 +25,7 @@ from cylc.task_id import TaskID
 from cylc.task_state import (
     TaskState, TASK_STATUS_WAITING, TASK_STATUS_RETRYING)
 from cylc.wallclock import get_unix_time_from_time_string
+from cylc.task_events_mgr import TaskEventsManager
 
 
 class TaskProxySequenceBoundsError(ValueError):
@@ -44,7 +45,7 @@ class TaskProxy(object):
                  "is_manual_submit", "summary", "local_job_file_path",
                  "try_timers", "task_host", "task_owner",
                  "job_vacated", "poll_timers", "timeout_timers",
-                 "delayed_start", "expire_time", "state"]
+                 "delayed_start", "expire_time", "state", "task_is_late"]
 
     def __init__(
             self, tdef, start_point, status=TASK_STATUS_WAITING,
@@ -110,6 +111,7 @@ class TaskProxy(object):
         self.timeout_timers = {}
         self.try_timers = {}
 
+        self.task_is_late = False
         self.delayed_start = None
         self.expire_time = None
 
@@ -208,17 +210,26 @@ class TaskProxy(object):
         Queued tasks are not counted as they've already been deemed ready.
 
         """
-        return self.start_time_reached(now) and (
-            (
-                self.state.status == TASK_STATUS_WAITING and
-                self.state.prerequisites_are_all_satisfied() and
-                all(self.state.external_triggers.values())
-            ) or
-            (
-                self.state.status in self.try_timers and
-                self.try_timers[self.state.status].is_delay_done(now)
+        if self.start_time_reached(now):
+            if (not self.task_is_late and
+                self.tdef.clocktrigger_offset is not None and
+                not self.state.prerequisites_are_all_satisfied()):
+                #TaskEventsManager.setup_event_handlers(self.identity, 'late',
+                #                                       'Task late.')
+                self.task_is_late = True
+            return (
+                (
+                    self.state.status == TASK_STATUS_WAITING and
+                    self.state.prerequisites_are_all_satisfied() and
+                    all(self.state.external_triggers.values())
+                ) or
+                (
+                    self.state.status in self.try_timers and
+                    self.try_timers[self.state.status].is_delay_done(now)
+                )
             )
-        )
+        else:
+            return False
 
     def reset_manual_trigger(self):
         """This is called immediately after manual trigger flag used."""
