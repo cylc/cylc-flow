@@ -126,10 +126,8 @@ Arguments:"""
             action="store_true", default=False, dest="verbose")
         self.add_std_option(
             "--debug",
-            help=(
-                "Run suites in non-daemon mode, "
-                "and show exception tracebacks."
-            ),
+            help=("Output developer information and show exception "
+                  "tracebacks."),
             action="store_true", default=False, dest="debug")
 
         if self.prep:
