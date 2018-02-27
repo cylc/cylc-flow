@@ -245,6 +245,7 @@ class TreeUpdater(threading.Thread):
                         t_info[dt] = summary[id_][dt]
 
                     # Compute percent progress.
+                    t_info['progress'] = 0
                     if (isinstance(tstart, float) and (
                             isinstance(meant, float) or
                             isinstance(meant, int))):
@@ -252,11 +253,9 @@ class TreeUpdater(threading.Thread):
                         tnow = time()
                         if tnow > tetc_unix:
                             t_info['progress'] = 100
-                        else:
+                        elif meant != 0:
                             t_info['progress'] = int(
                                 100 * (tnow - tstart) / (tetc_unix - tstart))
-                    else:
-                        t_info['progress'] = 0
 
                     if (t_info['finished_time_string'] is None and
                             isinstance(tstart, float) and
