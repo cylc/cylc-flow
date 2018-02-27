@@ -237,14 +237,17 @@ class SuiteDatabaseManager(object):
                 "inheritance": value})
 
     def put_suite_params(
-            self, run_mode, initial_point, final_point, is_held,
-            cycle_point_format=None, warm_point=None):
-        """Put run mode, initial/final cycle point in runtime database.
+            self, run_mode, cylc_version, UTC_mode, initial_point,
+            final_point, is_held, cycle_point_format=None, warm_point=None):
+        """Put run mode, cylc version, UTC mode & initial & final cycle
+        points in runtime database.
 
         This method queues the relevant insert statements.
         """
         self.db_inserts_map[self.TABLE_SUITE_PARAMS].extend([
             {"key": "run_mode", "value": run_mode},
+            {"key": "cylc_version", "value": cylc_version},
+            {"key": "UTC_mode", "value": UTC_mode},
             {"key": "initial_point", "value": str(initial_point)},
             {"key": "final_point", "value": str(final_point)},
         ])

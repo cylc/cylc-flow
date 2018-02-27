@@ -1,3 +1,5 @@
+UTC_mode|False
+cylc_version|<SOME-VERSION>
 final_point|1
 initial_point|1
 run_mode|live

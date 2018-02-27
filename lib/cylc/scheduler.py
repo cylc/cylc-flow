@@ -379,6 +379,8 @@ conditions; see `cylc conditions`.
 
         self.suite_db_mgr.put_suite_params(
             self.run_mode,
+            CYLC_VERSION,
+            str(GLOBAL_CFG.get(['cylc', 'UTC mode'])),
             self.initial_point,
             self.final_point,
             self.pool.is_held,
@@ -883,6 +885,8 @@ conditions; see `cylc conditions`.
             self.configure_reftest(recon=True)
         self.suite_db_mgr.put_suite_params(
             self.run_mode,
+            CYLC_VERSION,
+            str(GLOBAL_CFG.get(['cylc', 'UTC mode'])),
             self.initial_point,
             self.final_point,
             self.pool.is_held,
