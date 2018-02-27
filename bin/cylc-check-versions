@@ -84,7 +84,7 @@ def main():
                 account_set.remove((user, host_str))
                 accounts.append((user, res))
         if account_set:
-            task_remote_mgr.proc_pool.handle_results_async()
+            task_remote_mgr.proc_pool.process()
             sleep(1.0)
 
     # Interrogate the each remote account with CYLC_VERSION set to our version.

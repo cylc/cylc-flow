@@ -87,6 +87,7 @@ class Scheduler(object):
 
     # Intervals in seconds
     INTERVAL_MAIN_LOOP = 1.0
+    INTERVAL_MAIN_LOOP_QUICK = 0.5
     INTERVAL_STOP_KILL = 10.0
     INTERVAL_STOP_PROCESS_POOL_EMPTY = 0.5
 
@@ -224,7 +225,6 @@ class Scheduler(object):
             # Setup the suite log.
             SuiteLog.get_inst(self.suite).pimp(detach)
 
-            self.proc_pool = SuiteProcPool()
             self.configure_comms_daemon()
             self.configure()
             self.profiler.start()
@@ -299,6 +299,7 @@ conditions; see `cylc conditions`.
         self.profiler.log_memory("scheduler.py: start configure")
 
         # Start up essential services
+        self.proc_pool = SuiteProcPool()
         self.suite_log = SuiteLog.get_inst(self.suite)
         self.state_summary_mgr = StateSummaryMgr()
         self.command_queue = Queue()
@@ -466,7 +467,7 @@ conditions; see `cylc conditions`.
             if auths:
                 sleep(1.0)
                 # Remote init is done via process pool
-                self.proc_pool.handle_results_async()
+                self.proc_pool.process()
         self.command_poll_tasks()
 
     def _load_suite_params(self, row_idx, row):
@@ -756,7 +757,7 @@ conditions; see `cylc conditions`.
 
     def _set_stop(self, stop_mode=None):
         """Set shutdown mode."""
-        self.proc_pool.stop_job_submission()
+        self.proc_pool.set_stopping()
         if stop_mode is None:
             stop_mode = TaskPool.STOP_REQUEST_CLEAN
         self.stop_mode = stop_mode
@@ -1270,12 +1271,12 @@ conditions; see `cylc conditions`.
                 stop_process_pool_empty_msg = (
                     "Waiting for the command process pool to empty" +
                     " for shutdown")
-                while not self.proc_pool.is_dead():
+                while self.proc_pool.is_not_done():
                     sleep(self.INTERVAL_STOP_PROCESS_POOL_EMPTY)
                     if stop_process_pool_empty_msg:
                         LOG.info(stop_process_pool_empty_msg)
                         stop_process_pool_empty_msg = None
-                    self.proc_pool.handle_results_async()
+                    self.proc_pool.process()
                     self.process_command_queue()
             if self.options.profile_mode:
                 self.profiler.log_memory(
@@ -1350,7 +1351,7 @@ conditions; see `cylc conditions`.
             if self.pool.release_runahead_tasks():
                 cylc.flags.iflag = True
                 self.task_events_mgr.pflag = True
-            self.proc_pool.handle_results_async()
+            self.proc_pool.process()
 
             # PROCESS ALL TASKS whenever something has changed that might
             # require renegotiation of dependencies, etc.
@@ -1385,7 +1386,19 @@ conditions; see `cylc conditions`.
             if self.options.profile_mode:
                 self.update_profiler_logs(tinit)
 
-            sleep(self.INTERVAL_MAIN_LOOP)
+            # Sleep a bit for things to catch up
+            elapsed = time() - tinit
+            quick_mode = self.proc_pool.is_not_done()
+            if (elapsed >= self.INTERVAL_MAIN_LOOP or
+                    quick_mode and elapsed >= self.INTERVAL_MAIN_LOOP_QUICK):
+                # Main loop has taken quite a bit to get through
+                # Still yield control to other threads by sleep(0.0)
+                sleep(0.0)
+            elif quick_mode:
+                sleep(self.INTERVAL_MAIN_LOOP_QUICK - elapsed)
+            else:
+                sleep(self.INTERVAL_MAIN_LOOP - elapsed)
+            # Record latest main loop interval
             self.main_loop_intervals.append(time() - tinit)
             # END MAIN LOOP
 
@@ -1507,11 +1520,10 @@ conditions; see `cylc conditions`.
                 ERR.error(str(exc))
 
         if self.proc_pool:
-            if not self.proc_pool.is_dead():
+            if self.proc_pool.is_not_done():
                 # e.g. KeyboardInterrupt
                 self.proc_pool.terminate()
-            self.proc_pool.join()
-            self.proc_pool.handle_results_async()
+            self.proc_pool.process()
 
         if self.pool is not None:
             self.pool.warn_stop_orphans()
@@ -1628,8 +1640,8 @@ conditions; see `cylc conditions`.
             elif itasks[0] in bad_tasks:
                 return n_warnings + 1
             else:
-                self.task_job_mgr.proc_pool.handle_results_async()
-                sleep(1.0)
+                self.proc_pool.process()
+                sleep(self.INTERVAL_MAIN_LOOP_QUICK)
 
     def command_reset_task_states(self, items, state=None, outputs=None):
         """Reset the state of tasks."""

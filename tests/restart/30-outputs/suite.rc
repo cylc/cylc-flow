@@ -1,6 +1,8 @@
 [cylc]
     [[events]]
+        abort on inactivity = True
         abort on stalled = True
+        inactivity = PT30S
         #startup handler = cylc reset '%(suite)s' -O greet 't1.1'
 [scheduling]
     [[dependencies]]

@@ -291,11 +291,10 @@ def main():
         if options.describe:
             # Deal with title first for case of just withheld statement
             if meta_items["title"] is None:
-                print indent + bold("(description and state totals "
-                                    "withheld)")
+                print(indent + bold("(description and state totals withheld)"))
                 continue
-            elif not meta_items["title"]:
-                print indent + bold("Title:\n") + indent * 2 + "(no title)"
+            if not meta_items["title"]:
+                print(indent + bold("Title:\n") + indent * 2 + "(no title)")
             else:
                 print(indent + bold("Title:\n") + indent * 2 +
                       '"%s"' % meta_items["title"])
