@@ -68,20 +68,21 @@ func_tags_and_text = {
 opt_result = {}
 
 
-def terminal_width(default_width=70, min_width=50):
-    """Return the terminal width or a specified minimum width if larger."""
+def output_width(min_width=65, max_width=90):
+    """Return a suitable output alignment width given user terminal width."""
     proc = Popen(['stty', 'size'], stdout=PIPE)
     if proc.wait():
-        return default_width
+        return int((min_width + max_width) / 2)
     else:
         try:
-            return max(min_width, int(proc.communicate()[0].split()[1]))
+            return max(min_width, min(max_width,
+                                      int(proc.communicate()[0].split()[1])))
         except IndexError:
-            return default_width
+            return int((min_width + max_width) / 2)
 
 
 def draw_table_line(single_character):
-    sys.stdout.write(single_character * terminal_width() + '\n')
+    sys.stdout.write(single_character * output_width() + '\n')
     return None
 
 
@@ -102,7 +103,7 @@ def string_ver(version_tuple):
 def shell_align_write(one_delimiter, left_msg, right_msg):
     """Write two messages aligned with the terminal edges, separated by a
        given delimiter, with a minimum separation of two characters."""
-    gap = terminal_width() - len(left_msg) - len(right_msg)
+    gap = output_width() - len(left_msg) - len(right_msg)
     if gap >= 2:
         sys.stdout.write(left_msg + one_delimiter * gap + right_msg + '\n')
         return True
@@ -115,7 +116,7 @@ def shell_centre_write(prepend_newline, *args):
     if prepend_newline:
         sys.stdout.write('\n')
     for msg_line in args:
-        spacing = int(round(terminal_width() - len(msg_line)) / 2) * ' '
+        spacing = int(round(output_width() - len(msg_line)) / 2) * ' '
         sys.stdout.write(spacing + msg_line + spacing + '\n')
     return
 
