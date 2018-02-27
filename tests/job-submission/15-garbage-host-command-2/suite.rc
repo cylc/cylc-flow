@@ -1,0 +1,13 @@
+[cylc]
+    [[parameters]]
+        i = 1..5
+[scheduling]
+    [[dependencies]]
+        graph = foo<i>
+[runtime]
+    [[foo<i>]]
+        script = true
+        [[[job]]]
+            submission retry delays = PT10S
+        [[[remote]]]
+            host = $(my-host-select)
