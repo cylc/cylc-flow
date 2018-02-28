@@ -1620,11 +1620,16 @@ conditions; see `cylc conditions`.
         if len(itasks) > 1:
             LOG.warning("Unique task match not found: %s" % items)
             return n_warnings + 1
-        if self.task_job_mgr.prep_submit_task_jobs(
-                self.suite, [itasks[0]], dry_run=True)[0]:
-            return n_warnings
-        else:
-            return n_warnings + 1
+        while self.stop_mode is None:
+            prep_tasks, bad_tasks = self.task_job_mgr.prep_submit_task_jobs(
+                self.suite, [itasks[0]], dry_run=True)
+            if itasks[0] in prep_tasks:
+                return n_warnings
+            elif itasks[0] in bad_tasks:
+                return n_warnings + 1
+            else:
+                self.task_job_mgr.proc_pool.handle_results_async()
+                sleep(1.0)
 
     def command_reset_task_states(self, items, state=None, outputs=None):
         """Reset the state of tasks."""
