@@ -55,6 +55,7 @@ from cylc.task_outputs import (
     TASK_OUTPUT_FAILED)
 from cylc.wallclock import (
     get_current_time_string, RE_DATE_TIME_FORMAT_EXTENDED)
+from cylc.task_proxy import TaskProxy
 
 
 CustomTaskEventHandlerContext = namedtuple(
@@ -87,6 +88,7 @@ class TaskEventsManager(object):
     EVENT_SUBMIT_FAILED = "submission failed"
     EVENT_SUBMIT_RETRY = "submission retry"
     EVENT_SUCCEEDED = TASK_OUTPUT_SUCCEEDED
+    EVENT_LATE = "late"
     HANDLER_CUSTOM = "event-handler"
     HANDLER_MAIL = "event-mail"
     JOB_FAILED = "job failed"
@@ -368,6 +370,13 @@ class TaskEventsManager(object):
             # No state change.
             self.pflag = True
             self.suite_db_mgr.put_update_task_outputs(itask)
+        elif (TaskProxy(itask, event_time).start_time_reached(event_time) and
+              self.tdef.clocktrigger_offset is not None and
+              not self.state.prerequisites_are_all_satisfied()):
+            # !!!!! late clock-trigger
+            self.pflag = True
+            self.setup_event_handlers(itask, 'late', 'Task late.')
+            itask.set_event_time('late', event_time)
         else:
             # Unhandled messages. These include:
             #  * general non-output/progress messages
