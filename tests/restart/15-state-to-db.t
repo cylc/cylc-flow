@@ -58,7 +58,7 @@ run_ok "${TEST_NAME_BASE}-suite_params" \
 sed -i "s/$(cylc --version)/<SOME-VERSION>/g" \
     "${TEST_NAME_BASE}-suite_params.stdout"
 cmp_ok "${TEST_NAME_BASE}-suite_params.stdout" <<__OUT__
-UTC_mode|False
+UTC_mode|True
 cylc_version|<SOME-VERSION>
 final_point|20050101T0000Z
 initial_point|20000101T0000Z
