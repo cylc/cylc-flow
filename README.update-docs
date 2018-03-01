@@ -10,7 +10,7 @@ cp ~/install/suite-design-guide.pdf doc/
 for f in ~/install/html/{single,multi}/*.{html,css}; do
     F=${f#*install/}
     mkdir -p $(dirname $F)
-    echo cp $f $F
+    cp $f $F
 done
 
 Finally:
@@ -18,3 +18,5 @@ Finally:
 git checkout -- doc/cylc-autosub-response.pdf
 
 git add any new files under html/
+
+(Note the html directory is not currently under doc, although it should be).
