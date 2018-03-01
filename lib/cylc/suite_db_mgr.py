@@ -325,24 +325,33 @@ class SuiteDatabaseManager(object):
                 "spawned": int(itask.has_spawned),
                 "status": itask.state.status,
                 "hold_swap": itask.state.hold_swap})
-            if itask.state.status in itask.timeout_timers:
+            if itask.timeout is not None:
                 self.db_inserts_map[self.TABLE_TASK_TIMEOUT_TIMERS].append({
                     "name": itask.tdef.name,
                     "cycle": str(itask.point),
-                    "timeout": itask.timeout_timers[itask.state.status]})
-            for ctx_key_0 in ["poll_timers", "try_timers"]:
-                for ctx_key_1, timer in getattr(itask, ctx_key_0).items():
-                    if timer is None:
-                        continue
-                    self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
-                        "name": itask.tdef.name,
-                        "cycle": str(itask.point),
-                        "ctx_key": json.dumps((ctx_key_0, ctx_key_1)),
-                        "ctx": self._namedtuple2json(timer.ctx),
-                        "delays": json.dumps(timer.delays),
-                        "num": timer.num,
-                        "delay": timer.delay,
-                        "timeout": timer.timeout})
+                    "timeout": itask.timeout})
+            if itask.poll_timer is not None:
+                self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
+                    "name": itask.tdef.name,
+                    "cycle": str(itask.point),
+                    "ctx_key": "poll_timer",
+                    "ctx": json.dumps(itask.poll_timer.ctx),
+                    "delays": json.dumps(itask.poll_timer.delays),
+                    "num": itask.poll_timer.num,
+                    "delay": itask.poll_timer.delay,
+                    "timeout": itask.poll_timer.timeout})
+            for ctx_key_1, timer in itask.try_timers.items():
+                if timer is None:
+                    continue
+                self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
+                    "name": itask.tdef.name,
+                    "cycle": str(itask.point),
+                    "ctx_key": json.dumps(("try_timers", ctx_key_1)),
+                    "ctx": json.dumps(timer.ctx),
+                    "delays": json.dumps(timer.delays),
+                    "num": timer.num,
+                    "delay": timer.delay,
+                    "timeout": timer.timeout})
             if itask.state.time_updated:
                 set_args = {
                     "time_updated": itask.state.time_updated,

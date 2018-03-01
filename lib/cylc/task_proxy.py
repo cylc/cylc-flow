@@ -66,8 +66,8 @@ class TaskProxy(object):
             Cycle point of the task.
         .point_as_seconds (int):
             Cycle point as seconds since epoch.
-        .poll_timers (dict):
-            Polling schedule as cylc.task_action_timer.TaskActionTimer objects.
+        .poll_timer (cylc.task_action_timer.TaskActionTimer):
+            Schedule for polling submitted or running jobs.
         .stop_point (cylc.cycling.PointBase):
             Do not spawn successor beyond this point.
         .submit_num (int):
@@ -115,8 +115,8 @@ class TaskProxy(object):
             Name of user (at task_host) where latest job is submitted.
         .tdef (cylc.taskdef.TaskDef):
             The definition object of this task.
-        .timeout_timers (dict):
-            Timeout values in seconds since epoch for latest job
+        .timeout (float):
+            Timeout value in seconds since epoch for latest job
             submission/execution.
         .try_timers (dict)
             Retry schedules as cylc.task_action_timer.TaskActionTimer objects.
@@ -159,7 +159,7 @@ class TaskProxy(object):
         'manual_trigger',
         'point',
         'point_as_seconds',
-        'poll_timers',
+        'poll_timer',
         'submit_num',
         'tdef',
         'state',
@@ -167,7 +167,7 @@ class TaskProxy(object):
         'summary',
         'task_host',
         'task_owner',
-        'timeout_timers',
+        'timeout',
         'try_timers',
     ]
 
@@ -232,8 +232,8 @@ class TaskProxy(object):
         self.task_owner = None
 
         self.job_vacated = False
-        self.poll_timers = {}
-        self.timeout_timers = {}
+        self.poll_timer = None
+        self.timeout = None
         self.try_timers = {}
 
         self.clock_trigger_time = None
@@ -270,8 +270,8 @@ class TaskProxy(object):
         self.task_host = pre_reload_inst.task_host
         self.task_owner = pre_reload_inst.task_owner
         self.job_vacated = pre_reload_inst.job_vacated
-        self.poll_timers = pre_reload_inst.poll_timers
-        self.timeout_timers = pre_reload_inst.timeout_timers
+        self.poll_timer = pre_reload_inst.poll_timer
+        self.timeout = pre_reload_inst.timeout
         self.state.outputs = pre_reload_inst.state.outputs
 
     @staticmethod

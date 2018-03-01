@@ -15,21 +15,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test broadcasts
-. $(dirname $0)/test_header
-#-------------------------------------------------------------------------------
+# Test broadcasts a float setting
+. "$(dirname "$0")/test_header"
+
 set_test_number 3
-#-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --reference-test --debug --no-detach $SUITE_NAME
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-check-err
-cp $(cylc get-global-config --print-run-dir)/$SUITE_NAME/log/suite/err $TEST_NAME.log-err
-grep_ok "WARNING - \[timeout\.20100808T0000Z\] -job started PT1S ago, but has not finished" $TEST_NAME.log-err
-#-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" \
+    cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
+ERR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/suite/err"
+
+grep_ok 'WARNING - \[timeout\.20100808T0000Z\] -execution timeout after PT1S' \
+    "${ERR}"
+
+purge_suite "${SUITE_NAME}"
+exit
