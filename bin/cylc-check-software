@@ -167,7 +167,6 @@ def kpsepath_search(tex_module):
     msg = 'TeX:%s (none)' % tex_module
     try:
         init = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
-        init.wait()
         final_command = ['test', init.communicate()[0].strip(), '-ne', '0']
         check_call(final_command, stdout=PIPE, stderr=PIPE)
     except (CalledProcessError, OSError):
