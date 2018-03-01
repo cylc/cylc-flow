@@ -209,7 +209,7 @@ class TaskPool(object):
             itask.state.set_held()
 
         # add to the runahead pool
-        self.runahead_pool.setdefault(itask.point, {})
+        self.runahead_pool.setdefault(itask.point, OrderedDict())
         self.runahead_pool[itask.point][itask.identity] = itask
         self.rhpool_changed = True
 
