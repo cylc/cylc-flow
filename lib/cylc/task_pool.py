@@ -681,8 +681,7 @@ class TaskPool(object):
                 if itask.tdef.name not in self.myq:
                     continue
                 key = self.myq[itask.tdef.name]
-                if key not in new_queues:
-                    new_queues[key] = {}
+                new_queues.setdefault(key, OrderedDict())
                 new_queues[key][id_] = itask
         self.queues = new_queues
 
