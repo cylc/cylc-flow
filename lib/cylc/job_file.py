@@ -40,7 +40,7 @@ class JobFileWriter(object):
         self.suite_env.clear()
         self.suite_env.update(suite_env)
 
-    def write(self, local_job_file_path, job_conf):
+    def write(self, local_job_file_path, job_conf, check_syntax=True):
         """Write each job script section in turn."""
 
         # ########### !!!!!!!! WARNING !!!!!!!!!!! #####################
@@ -76,26 +76,27 @@ class JobFileWriter(object):
                 pass
             raise exc
         # check syntax
-        try:
-            proc = Popen(
-                [job_conf['shell'], '-n', tmp_name],
-                stderr=PIPE, stdin=open(os.devnull))
-        except OSError as exc:
-            # Popen has a bad habit of not telling you anything if it fails
-            # to run the executable.
-            if exc.filename is None:
-                exc.filename = job_conf['shell']
-            # Remove temporary file
+        if check_syntax:
             try:
-                os.unlink(tmp_name)
-            except OSError:
-                pass
-            raise exc
-        else:
-            if proc.wait():
-                # This will leave behind the temporary file,
-                # which is useful for debugging syntax errors, etc.
-                raise RuntimeError(proc.communicate()[1])
+                proc = Popen(
+                    [job_conf['shell'], '-n', tmp_name],
+                    stderr=PIPE, stdin=open(os.devnull))
+            except OSError as exc:
+                # Popen has a bad habit of not telling you anything if it fails
+                # to run the executable.
+                if exc.filename is None:
+                    exc.filename = job_conf['shell']
+                # Remove temporary file
+                try:
+                    os.unlink(tmp_name)
+                except OSError:
+                    pass
+                raise exc
+            else:
+                if proc.wait():
+                    # This will leave behind the temporary file,
+                    # which is useful for debugging syntax errors, etc.
+                    raise RuntimeError(proc.communicate()[1])
         # Make job file executable
         mode = (
             os.stat(tmp_name).st_mode |

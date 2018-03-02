@@ -9,12 +9,22 @@ second task fixes and retriggers it with an edit-run."""
         timeout = PT20S
 [scheduling]
     [[dependencies]]
-        graph = broken-task:fail => fixer-task
+        graph = """
+            broken-task:fail => fixer-task
+            syntax_errored_task:submit-fail => syntax_fixer_task
+        """
 [runtime]
     [[broken-task]]
         script = /bin/false
     [[fixer-task]]
         script = """
 cylc trigger --edit $CYLC_SUITE_NAME broken-task 1 << __END__
+y
+__END__"""
+    [[syntax_errored_task]]
+        script = $(
+    [[syntax_fixer_task]]
+        script = """
+cylc trigger --edit $CYLC_SUITE_NAME syntax_errored_task 1 << __END__
 y
 __END__"""

@@ -243,7 +243,7 @@ class SuiteRuntimeService(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def dry_run_tasks(self, items):
+    def dry_run_tasks(self, items, check_syntax=True):
         """Prepare job file for a task.
 
         items[0] is an identifier for matching a task proxy.
@@ -251,7 +251,9 @@ class SuiteRuntimeService(object):
         self._check_access_priv_and_report(PRIV_FULL_CONTROL)
         if not isinstance(items, list):
             items = [items]
-        self.schd.command_queue.put(("dry_run_tasks", (items,), {}))
+        check_syntax = check_syntax in [True, 'True']
+        self.schd.command_queue.put(('dry_run_tasks', (items,),
+                                    {'check_syntax': check_syntax}))
         return (True, 'Command queued')
 
     @cherrypy.expose
