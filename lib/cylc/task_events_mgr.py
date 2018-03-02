@@ -126,6 +126,7 @@ class TaskEventsManager(object):
         # Scheduler.process_tasks, to ensure that dependency negotation occurs
         # when required.
         self.pflag = False
+        self.lateflag = False
 
     def get_host_conf(self, itask, key, default=None, skey="remote"):
         """Return a host setting from suite then global configuration."""
@@ -370,13 +371,25 @@ class TaskEventsManager(object):
             # No state change.
             self.pflag = True
             self.suite_db_mgr.put_update_task_outputs(itask)
-        elif (TaskProxy(itask, event_time).start_time_reached(event_time) and
-              self.tdef.clocktrigger_offset is not None and
-              not self.state.prerequisites_are_all_satisfied()):
-            # !!!!! late clock-trigger
-            self.pflag = True
-            self.setup_event_handlers(itask, 'late', 'Task late.')
-            itask.set_event_time('late', event_time)
+        elif (not self.lateflag and
+              itask.tdef.clocktrigger_offset is not None and
+              not itask.state.prerequisites_are_all_satisfied()):
+            # Multi-step conditional to avoid invoking TaskProxy unnecessarily
+            itask_proxy = TaskProxy(itask, event_time)
+            trigger_time = (itask_proxy.get_point_as_seconds() +
+                            itask_proxy.get_offset_as_seconds(
+                                itask.tdef.clocktrigger_offset))
+            # Only consider clock-triggers subsequent to the suite startup
+            suite_pridao = self.suite_db_manager.get_pri_dao()
+            suite_start = suite_pridao.select_suite_params(
+                suite._load_initial_cycle_point)
+            if (itask_proxy.start_time_reached(event_time) and
+                    trigger_time >= suite_start):
+                # Clock-triggered task due but has unsatisfied dependencies
+                itask.set_event_time('late', event_time)
+                self.pflag = True
+                self.setup_event_handlers(itask, 'late', 'Task late.')
+                self.lateflag = True
         else:
             # Unhandled messages. These include:
             #  * general non-output/progress messages
