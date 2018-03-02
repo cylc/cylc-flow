@@ -238,9 +238,11 @@ def main():
 
     # Final summary print for clear pass/fail final outcome & exit
     sys.stdout.write('\nSummary:')
-    shell_centre_write(True, '*' * 28, 'Core requirements: %s' % 'ok' if
-                       req_result else 'not ok', 'Full-functionality: %s'
-                       % ('ok' if all(opt_result.values()) else 'not ok'),
+    shell_centre_write(True, '*' * 28,
+                       'Core requirements: %s' % (
+                           'ok' if req_result else 'not ok'),
+                       'Full-functionality: %s' % (
+                           'ok' if all(opt_result.values()) else 'not ok'),
                        '*' * 28)
     sys.exit()
 
