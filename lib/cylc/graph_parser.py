@@ -339,9 +339,10 @@ class GraphParser(object):
                 if not trig:
                     trig = self.__class__.TRIG_SUCCEED
                     if offset:
-                        this = r'\b%s\b%s(?!:)' % (name, re.escape(offset))
+                        this = r'\b%s\b%s(?!:)' % (
+                            re.escape(name), re.escape(offset))
                     else:
-                        this = r'\b%s\b(?![\[:])' % name
+                        this = r'\b%s\b(?![\[:])' % re.escape(name)
 
                     that = name + offset + trig
                     expr = re.sub(this, that, expr)
