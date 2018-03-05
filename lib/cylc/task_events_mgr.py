@@ -373,23 +373,14 @@ class TaskEventsManager(object):
             self.suite_db_mgr.put_update_task_outputs(itask)
         elif (not self.lateflag and
               itask.tdef.clocktrigger_offset is not None and
-              not itask.state.prerequisites_are_all_satisfied()):
-            # Multi-step conditional to avoid invoking TaskProxy unnecessarily
-            itask_proxy = TaskProxy(itask, event_time)
-            trigger_time = (itask_proxy.get_point_as_seconds() +
-                            itask_proxy.get_offset_as_seconds(
-                                itask.tdef.clocktrigger_offset))
-            # Only consider clock-triggers subsequent to the suite startup
-            suite_pridao = self.suite_db_manager.get_pri_dao()
-            suite_start = suite_pridao.select_suite_params(
-                suite._load_initial_cycle_point)
-            if (itask_proxy.start_time_reached(event_time) and
-                    trigger_time >= suite_start):
-                # Clock-triggered task due but has unsatisfied dependencies
-                itask.set_event_time('late', event_time)
-                self.pflag = True
-                self.setup_event_handlers(itask, 'late', 'Task late.')
-                self.lateflag = True
+              itask.state.prerequisites_are_not_all_satisfied() and
+              itask.start_time_reached(now)):
+            # Clock-triggered task due but has unsatisfied dependencies
+            itask.set_event_time('late', now)
+            self.pflag = True
+            LOG.info('late', itask=itask)
+            self.setup_event_handlers(itask, 'late', 'Task late.')
+            self.lateflag = True
         else:
             # Unhandled messages. These include:
             #  * general non-output/progress messages
