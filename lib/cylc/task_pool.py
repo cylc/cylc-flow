@@ -169,7 +169,7 @@ class TaskPool(object):
                 LOG.info("inserted", itask=itask)
         return n_warnings
 
-    def add_to_runahead_pool(self, itask, is_restart=False):
+    def add_to_runahead_pool(self, itask, is_new=True):
         """Add a new task to the runahead pool if possible.
 
         Tasks whose recurrences allow them to spawn beyond the suite
@@ -215,15 +215,8 @@ class TaskPool(object):
         self.runahead_pool[itask.point][itask.identity] = itask
         self.rhpool_changed = True
 
-        if is_restart:
-            return itask
-
-        # store in persistent
-        if itask.submit_num > 0:
-            self.suite_db_mgr.put_update_task_states(itask, {
-                "time_updated": get_current_time_string(),
-                "status": itask.state.status})
-        else:
+        # add row to "task_states" table
+        if is_new and itask.submit_num == 0:
             self.suite_db_mgr.put_insert_task_states(itask, {
                 "time_created": get_current_time_string(),
                 "time_updated": get_current_time_string(),
@@ -345,7 +338,7 @@ class TaskPool(object):
         """
         if row_idx == 0:
             LOG.info("LOADING task proxies")
-        (cycle, name, spawned, status, hold_swap, submit_num, _,
+        (cycle, name, spawned, is_late, status, hold_swap, submit_num, _,
          user_at_host, time_submit, time_run, timeout,
          outputs_str) = row
         try:
@@ -354,7 +347,8 @@ class TaskPool(object):
                 get_point(cycle),
                 hold_swap=hold_swap,
                 has_spawned=bool(spawned),
-                submit_num=submit_num)
+                submit_num=submit_num,
+                is_late=bool(is_late))
         except SuiteConfigError:
             LOG.exception((
                 'ignoring task %s from the suite run database\n'
@@ -418,7 +412,7 @@ class TaskPool(object):
                 LOG.info("+ %s.%s %s (%s)" % (name, cycle, status, hold_swap))
             else:
                 LOG.info("+ %s.%s %s" % (name, cycle, status))
-            self.add_to_runahead_pool(itask, is_restart=True)
+            self.add_to_runahead_pool(itask, is_new=False)
 
     def load_db_task_action_timers(self, row_idx, row):
         """Load a task action timer, e.g. event handlers, retry states."""
@@ -589,7 +583,7 @@ class TaskPool(object):
             for itask in tasks:
                 if itask.state.status != TASK_STATUS_QUEUED:
                     # only need to check that unqueued tasks are ready
-                    if itask.manual_trigger or itask.ready_to_run(now):
+                    if itask.is_ready(now):
                         # queue the task
                         itask.state.reset_state(TASK_STATUS_QUEUED)
                         itask.reset_manual_trigger()
@@ -831,7 +825,7 @@ class TaskPool(object):
         return can_be_stalled
 
     def report_stalled_task_deps(self):
-        """Return a set of unmet dependencies"""
+        """Log unmet dependencies on stalled."""
         prereqs_map = {}
         for itask in self.get_tasks():
             if ((itask.state.status == TASK_STATUS_WAITING or
@@ -1175,40 +1169,25 @@ class TaskPool(object):
                 sim_task_state_changed = True
         return sim_task_state_changed
 
-    def set_expired_tasks(self):
-        """Check if any waiting tasks expired.
+    def set_expired_task(self, itask, now):
+        """Check if task has expired. Set state and event handler if so.
 
-        Set their status accordingly.
+        Return True if task has expired.
         """
-        now = time()
-        for itask in self.get_tasks():
-            if (itask.state.status != TASK_STATUS_WAITING or
-                    itask.tdef.expiration_offset is None):
-                continue
-            if itask.expire_time is None:
-                itask.expire_time = (
-                    itask.get_point_as_seconds() +
-                    itask.get_offset_as_seconds(itask.tdef.expiration_offset))
-            if now > itask.expire_time:
-                msg = 'Task expired (skipping job).'
-                LOG.warning(msg, itask=itask)
-                self.task_events_mgr.setup_event_handlers(
-                    itask, "expired", msg)
-                itask.state.reset_state(TASK_STATUS_EXPIRED)
-
-    def waiting_tasks_ready(self):
-        """Waiting tasks can become ready for internal reasons.
-
-        Namely clock-triggers or retry-delay timers
-
-        """
-        now = time()
-        result = False
-        for itask in self.get_tasks():
-            if itask.ready_to_run(now):
-                result = True
-                break
-        return result
+        if (itask.state.status != TASK_STATUS_WAITING or
+                itask.tdef.expiration_offset is None):
+            return False
+        if itask.expire_time is None:
+            itask.expire_time = (
+                itask.get_point_as_seconds() +
+                itask.get_offset_as_seconds(itask.tdef.expiration_offset))
+        if now > itask.expire_time:
+            msg = 'Task expired (skipping job).'
+            LOG.warning(msg, itask=itask)
+            self.task_events_mgr.setup_event_handlers(itask, "expired", msg)
+            itask.state.reset_state(TASK_STATUS_EXPIRED)
+            return True
+        return False
 
     def task_succeeded(self, id_):
         """Return True if task with id_ is in the succeeded state."""
@@ -1264,9 +1243,9 @@ class TaskPool(object):
             extras = {}
             if itask.tdef.clocktrigger_offset is not None:
                 extras['Clock trigger time reached'] = (
-                    itask.start_time_reached(now))
+                    not itask.is_waiting_clock(now))
                 extras['Triggers at'] = get_time_string_from_unix_time(
-                    itask.delayed_start)
+                    itask.clock_trigger_time)
             for trig, satisfied in itask.state.external_triggers.items():
                 if satisfied:
                     state = 'satisfied'

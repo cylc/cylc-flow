@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Suite database content, "task_jobs" table after a task retries.
 . "$(dirname "$0")/test_header"
-set_test_number 7
+set_test_number 4
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
@@ -34,12 +34,6 @@ JOB_PID="$(awk -F'=' '$1 == "CYLC_JOB_PID" {print $2}' \
     "${SUITE_RUN_DIR}/log/job/1/locker/01/job.status")" >&2
 # Cannot use cmp_ok as the error message is prefixed by a timestamp.
 grep_ok "WARNING - cannot execute database statement:" \
-    "${TEST_NAME_BASE}-run.stderr.grep"
-grep_ok "file=${SUITE_RUN_DIR}/log/db:" \
-    "${TEST_NAME_BASE}-run.stderr.grep"
-grep_ok "stmt=DELETE FROM task_pool" \
-    "${TEST_NAME_BASE}-run.stderr.grep"
-grep_ok "stmt_args\[0\]=\[\]" \
     "${TEST_NAME_BASE}-run.stderr.grep"
 
 if ! which sqlite3 > /dev/null; then

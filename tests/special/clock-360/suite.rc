@@ -9,7 +9,7 @@
     final cycle point   = 20150101T00
     cycling mode = 360day
     [[special tasks]]
-        clock-triggered = clock(0)
+        clock-trigger = clock(0)
     [[dependencies]]
         [[[T00]]]
             graph = "clock"

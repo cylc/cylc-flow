@@ -50,10 +50,7 @@ fi
 DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/log/db"
 NAME='database-entry'
 sqlite3 "${DB_FILE}" \
-    'SELECT value FROM suite_params
-     WHERE key is "warm_point"' >"${NAME}"
-cmp_ok "${NAME}" <<'__SELECT__'
-20130101T12
-__SELECT__
+    'SELECT value FROM suite_params WHERE key=="start_point"' >"${NAME}"
+cmp_ok "${NAME}" <<<'20130101T12'
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

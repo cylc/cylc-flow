@@ -106,6 +106,7 @@ class TaskEventsManager(object):
     * Generate and manage task event handlers.
     """
     EVENT_FAILED = TASK_OUTPUT_FAILED
+    EVENT_LATE = "late"
     EVENT_RETRY = "retry"
     EVENT_STARTED = TASK_OUTPUT_STARTED
     EVENT_SUBMITTED = TASK_OUTPUT_SUBMITTED
@@ -811,8 +812,9 @@ class TaskEventsManager(object):
                 key1, str(itask.point), itask.tdef.name, itask.submit_num)
             if id_key in self.event_timers:
                 continue
-            # Note: if host select command fails, this will not be set for this
-            # submit number. Use null string to prevent issues in this case.
+            # Note: user@host may not always be set for a submit number, e.g.
+            # on late event or if host select command fails. Use null string to
+            # prevent issues in this case.
             user_at_host = itask.summary['job_hosts'].get(itask.submit_num, '')
             if user_at_host and '@' not in user_at_host:
                 # (only has 'user@' on the front if user is not suite owner).

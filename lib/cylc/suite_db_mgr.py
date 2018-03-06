@@ -32,8 +32,10 @@ from subprocess import call
 from tempfile import mkstemp
 
 from cylc.broadcast_report import get_broadcast_change_iter
+import cylc.flags
 from cylc.rundb import CylcSuiteDAO
 from cylc.suite_logging import ERR, LOG
+from cylc.version import CYLC_VERSION
 from cylc.wallclock import get_current_time_string
 
 
@@ -251,44 +253,33 @@ class SuiteDatabaseManager(object):
                 "namespace": namespace,
                 "inheritance": json.dumps(value)})
 
-    def put_suite_params(
-            self, cylc_version, uuid_str, run_mode, UTC_mode, initial_point,
-            final_point, is_held, cycle_point_format=None, warm_point=None):
-        """Put run mode, cylc version, UTC mode & initial & final cycle
-        points in runtime database.
+    def put_suite_params(self, schd):
+        """Put various suite parameters from schd in runtime database.
 
         This method queues the relevant insert statements.
 
         Arguments:
-            cylc_version (str): Cylc version of the running suite.
-            uuid_str (str): UUID of the suite that persists for restarts.
-            run_mode (str): "live", "dummy", "simulation", etc.
-            UTC_mode (boolean): Is UTC mode?
-            initial_point (str): Initial cycle point.
-            final_point (str): Final cycle point.
-            is_held (boolean): Is suite held?
-            cycle_point_format (str): Format string for cycle points.
-            warm_point (str): Warn start cycle point.
+            schd (cylc.scheduler.Scheduler): scheduler object.
         """
         self.db_inserts_map[self.TABLE_SUITE_PARAMS].extend([
-            {"key": "uuid_str", "value": uuid_str},
-            {"key": "run_mode", "value": run_mode},
-            {"key": "cylc_version", "value": cylc_version},
-            {"key": "UTC_mode", "value": UTC_mode},
-            {"key": "initial_point", "value": str(initial_point)},
-            {"key": "final_point", "value": str(final_point)},
+            {"key": "uuid_str",
+             "value": schd.task_job_mgr.task_remote_mgr.uuid_str},
+            {"key": "run_mode", "value": schd.run_mode},
+            {"key": "cylc_version", "value": CYLC_VERSION},
+            {"key": "UTC_mode", "value": cylc.flags.utc},
+            {"key": "initial_point", "value": str(schd.initial_point)},
+            {"key": "final_point", "value": str(schd.final_point)},
         ])
-        if cycle_point_format:
-            self.db_inserts_map[self.TABLE_SUITE_PARAMS].append(
-                {"key": "cycle_point_format", "value": str(cycle_point_format)}
-            )
-        if is_held:
-            self.db_inserts_map[self.TABLE_SUITE_PARAMS].append(
-                {"key": "is_held", "value": 1})
-        if warm_point:
-            self.db_inserts_map[self.TABLE_SUITE_PARAMS].append(
-                {"key": "warm_point", "value": str(warm_point)}
-            )
+        if schd.config.cfg['cylc']['cycle point format']:
+            self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
+                "key": "cycle_point_format",
+                "value": schd.config.cfg['cylc']['cycle point format']})
+        if schd.pool.is_held:
+            self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
+                "key": "is_held", "value": 1})
+        if schd.cli_start_point_string:
+            self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
+                "key": "start_point", "value": schd.cli_start_point_string})
 
     def put_suite_template_vars(self, template_vars):
         """Put template_vars in runtime database.
@@ -377,6 +368,12 @@ class SuiteDatabaseManager(object):
         """Put INSERT statement for task_events table."""
         self._put_insert_task_x(CylcSuiteDAO.TABLE_TASK_EVENTS, itask, args)
 
+    def put_insert_task_late_flags(self, itask):
+        """If itask is late, put INSERT statement to task_late_flags table."""
+        if itask.is_late:
+            self._put_insert_task_x(
+                CylcSuiteDAO.TABLE_TASK_LATE_FLAGS, itask, {"value": True})
+
     def put_insert_task_jobs(self, itask, args):
         """Put INSERT statement for task_jobs table."""
         self._put_insert_task_x(CylcSuiteDAO.TABLE_TASK_JOBS, itask, args)
@@ -412,11 +409,6 @@ class SuiteDatabaseManager(object):
         self._put_update_task_x(
             CylcSuiteDAO.TABLE_TASK_OUTPUTS,
             itask, {"outputs": json.dumps(items)})
-
-    def put_update_task_states(self, itask, set_args):
-        """Put UPDATE statement for task_states table."""
-        self._put_update_task_x(
-            CylcSuiteDAO.TABLE_TASK_STATES, itask, set_args)
 
     def _put_update_task_x(self, table_name, itask, set_args):
         """Put UPDATE statement for a task_* table."""

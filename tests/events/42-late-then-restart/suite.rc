@@ -1,0 +1,15 @@
+[cylc]
+    UTC mode = True
+[scheduling]
+    initial cycle point = now
+    [[dependencies]]
+        [[[R1]]]
+            graph = t1 => t2
+[runtime]
+    [[t1]]
+        script = cylc stop --now "${CYLC_SUITE_NAME}"; sleep 61
+    [[t2]]
+        script = true
+        [[[events]]]
+            late offset = PT1M
+            late handler = my-handler %(message)s

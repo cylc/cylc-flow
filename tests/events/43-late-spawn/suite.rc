@@ -1,0 +1,13 @@
+[cylc]
+    UTC mode = True
+[scheduling]
+    initial cycle point = 2015
+    final cycle point = 2016
+    [[dependencies]]
+        [[[P1Y]]]
+            graph = t1
+[runtime]
+    [[t1]]
+        script = true
+        [[[events]]]
+            late offset = PT1M

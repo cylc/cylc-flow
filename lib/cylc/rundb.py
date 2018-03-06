@@ -187,6 +187,7 @@ class CylcSuiteDAO(object):
     TABLE_TASK_EVENTS = "task_events"
     TABLE_TASK_ACTION_TIMERS = "task_action_timers"
     TABLE_CHECKPOINT_ID = "checkpoint_id"
+    TABLE_TASK_LATE_FLAGS = "task_late_flags"
     TABLE_TASK_OUTPUTS = "task_outputs"
     TABLE_TASK_POOL = "task_pool"
     TABLE_TASK_POOL_CHECKPOINTS = "task_pool_checkpoints"
@@ -271,6 +272,11 @@ class CylcSuiteDAO(object):
             ["submit_num", {"datatype": "INTEGER"}],
             ["event"],
             ["message"],
+        ],
+        TABLE_TASK_LATE_FLAGS: [
+            ["cycle", {"is_primary_key": True}],
+            ["name", {"is_primary_key": True}],
+            ["value", {"datatype": "INTEGER"}],
         ],
         TABLE_TASK_OUTPUTS: [
             ["cycle", {"is_primary_key": True}],
@@ -664,8 +670,8 @@ class CylcSuiteDAO(object):
         """Select from task_pool+task_states+task_jobs for restart.
 
         Invoke callback(row_idx, row) on each row, where each row contains:
-            [cycle, name, spawned, status, hold_swap, submit_num, try_num,
-             user_at_host, time_submit, time_run, timeout]
+            [cycle, name, spawned, is_late, status, hold_swap, submit_num,
+             try_num, user_at_host, time_submit, time_run, timeout, outputs]
 
         If id_key is specified,
         select from task_pool table if id_key == CHECKPOINT_LATEST_ID.
@@ -676,6 +682,7 @@ class CylcSuiteDAO(object):
                 %(task_pool)s.cycle,
                 %(task_pool)s.name,
                 %(task_pool)s.spawned,
+                %(task_late_flags)s.value,
                 %(task_pool)s.status,
                 %(task_pool)s.hold_swap,
                 %(task_states)s.submit_num,
@@ -691,6 +698,10 @@ class CylcSuiteDAO(object):
                 %(task_states)s
             ON  %(task_pool)s.cycle == %(task_states)s.cycle AND
                 %(task_pool)s.name == %(task_states)s.name
+            LEFT OUTER JOIN
+                %(task_late_flags)s
+            ON  %(task_pool)s.cycle == %(task_late_flags)s.cycle AND
+                %(task_pool)s.name == %(task_late_flags)s.name
             LEFT OUTER JOIN
                 %(task_jobs)s
             ON  %(task_pool)s.cycle == %(task_jobs)s.cycle AND
@@ -708,6 +719,7 @@ class CylcSuiteDAO(object):
         form_data = {
             "task_pool": self.TABLE_TASK_POOL,
             "task_states": self.TABLE_TASK_STATES,
+            "task_late_flags": self.TABLE_TASK_LATE_FLAGS,
             "task_timeout_timers": self.TABLE_TASK_TIMEOUT_TIMERS,
             "task_jobs": self.TABLE_TASK_JOBS,
             "task_outputs": self.TABLE_TASK_OUTPUTS,

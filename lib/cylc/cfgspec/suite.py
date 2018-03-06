@@ -397,6 +397,8 @@ SPEC = {
                 'submission timeout': vdr(vtype='interval'),
 
                 'expired handler': vdr(vtype='string_list'),
+                'late offset': vdr(vtype='interval'),
+                'late handler': vdr(vtype='string_list'),
                 'submitted handler': vdr(vtype='string_list'),
                 'started handler': vdr(vtype='string_list'),
                 'succeeded handler': vdr(vtype='string_list'),
