@@ -72,7 +72,8 @@ REC_P_ALL = re.compile(r"(%s)?(?:<(.*?)>)?(.+)?" % TaskID.NAME_RE)
 # To extract all parameter lists e.g. 'm,n,o' (from '<m,n,o>').
 REC_P_GROUP = re.compile(r"<(.*?)>")
 # To extract parameter name and optional offset or value e.g. 'm-1'.
-REC_P_OFFS = re.compile(r'(\w+)([\-\+]\d+|=%s)?' % TaskID.NAME_SUFFIX_RE)
+REC_P_OFFS = re.compile(
+    r'(\w+)\s*([\-\+]\s*\d+|=\s*%s)?' % TaskID.NAME_SUFFIX_RE)
 
 
 def item_in_iterable(item, itt):
