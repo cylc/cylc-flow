@@ -239,9 +239,9 @@ class CylcSuiteDAO(object):
         TABLE_TASK_ACTION_TIMERS: [
             ["cycle", {"is_primary_key": True}],
             ["name", {"is_primary_key": True}],
-            ["ctx_key_pickle", {"is_primary_key": True}],
-            ["ctx_pickle"],
-            ["delays_pickle"],
+            ["ctx_key_json", {"is_primary_key": True}],
+            ["ctx_json"],
+            ["delays_json"],
             ["num", {"datatype": "INTEGER"}],
             ["delay"],
             ["timeout"],
@@ -813,7 +813,7 @@ class CylcSuiteDAO(object):
                 # run mode, time stamp, initial cycle, final cycle
                 location = self._upgrade_with_state_file_header(line)
             elif location == "broadcast":
-                # Ignore broadcast pickle in state file.
+                # Ignore broadcast json in state file.
                 # The "broadcast_states" table should already be populated.
                 if line == "Begin task states":
                     location = "task states"
