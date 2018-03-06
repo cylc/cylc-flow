@@ -55,6 +55,7 @@ from cylc.task_outputs import (
     TASK_OUTPUT_FAILED)
 from cylc.wallclock import (
     get_current_time_string, RE_DATE_TIME_FORMAT_EXTENDED)
+from cylc.task_proxy import TaskProxy
 
 
 CustomTaskEventHandlerContext = namedtuple(
@@ -87,6 +88,7 @@ class TaskEventsManager(object):
     EVENT_SUBMIT_FAILED = "submission failed"
     EVENT_SUBMIT_RETRY = "submission retry"
     EVENT_SUCCEEDED = TASK_OUTPUT_SUCCEEDED
+    EVENT_LATE = "late"
     HANDLER_CUSTOM = "event-handler"
     HANDLER_MAIL = "event-mail"
     JOB_FAILED = "job failed"
@@ -124,6 +126,7 @@ class TaskEventsManager(object):
         # Scheduler.process_tasks, to ensure that dependency negotation occurs
         # when required.
         self.pflag = False
+        self.lateflag = False
 
     def get_host_conf(self, itask, key, default=None, skey="remote"):
         """Return a host setting from suite then global configuration."""
@@ -368,6 +371,16 @@ class TaskEventsManager(object):
             # No state change.
             self.pflag = True
             self.suite_db_mgr.put_update_task_outputs(itask)
+        elif (not self.lateflag and
+              itask.tdef.clocktrigger_offset is not None and
+              itask.state.prerequisites_are_not_all_satisfied() and
+              itask.start_time_reached(now)):
+            # Clock-triggered task due but has unsatisfied dependencies
+            itask.set_event_time('late', now)
+            self.pflag = True
+            LOG.info('late', itask=itask)
+            self.setup_event_handlers(itask, 'late', 'Task late.')
+            self.lateflag = True
         else:
             # Unhandled messages. These include:
             #  * general non-output/progress messages
