@@ -32,6 +32,7 @@ tasks against the new stop cycle.
 """
 
 from fnmatch import fnmatchcase
+import json
 import pickle
 from time import time
 import traceback
@@ -41,6 +42,9 @@ from cylc.cycling.loader import get_point, standardise_point_string
 import cylc.flags
 from cylc.suite_logging import ERR, LOG
 from cylc.task_action_timer import TaskActionTimer
+from cylc.task_events_mgr import (
+    CustomTaskEventHandlerContext, TaskEventMailContext,
+    TaskJobLogsRetrieveContext)
 from cylc.task_id import TaskID
 from cylc.task_job_logs import get_task_job_id
 from cylc.task_proxy import TaskProxy
@@ -421,14 +425,34 @@ class TaskPool(object):
         """Load a task action timer, e.g. event handlers, retry states."""
         if row_idx == 0:
             LOG.info("LOADING task action timers")
-        (cycle, name, ctx_key_pickle, ctx_pickle, delays_pickle, num, delay,
+        (cycle, name, ctx_key_json, ctx_json, delays_json, num, delay,
          timeout) = row
         id_ = TaskID.get(name, cycle)
         ctx_key = "?"
         try:
-            ctx_key = pickle.loads(str(ctx_key_pickle))
-            ctx = pickle.loads(str(ctx_pickle))
-            delays = pickle.loads(str(delays_pickle))
+            try:
+                # Extract type namedtuple variables from JSON strings
+                ctx_key = json.loads(str(ctx_key_json))
+                json_tmp = json.loads(ctx_json)
+                if 'CustomTaskEventHandlerContext' in ctx_json:
+                    ctx = CustomTaskEventHandlerContext(
+                        *json_tmp[json_tmp.keys()[0]])
+                elif 'TaskEventMailContext' in ctx_json:
+                    ctx = TaskEventMailContext(*json_tmp[json_tmp.keys()[0]])
+                elif 'TaskJobLogsRetrieveContext' in ctx_json:
+                    ctx = TaskJobLogsRetrieveContext(
+                        *json_tmp[json_tmp.keys()[0]])
+                else:
+                    ctx = json_tmp
+                delays = json.loads(str(delays_json))
+            # If ValueError from JSON, check for pickled objects in database
+            except ValueError as exc:
+                try:
+                    ctx_key = pickle.loads(str(ctx_key_json))
+                    ctx = pickle.loads(str(ctx_json))
+                    delays = pickle.loads(str(delays_json))
+                except:
+                    raise exc
             if ctx_key and ctx_key[0] in ["poll_timers", "try_timers"]:
                 itask = self.get_task_by_id(id_)
                 if itask is None:
@@ -438,6 +462,10 @@ class TaskPool(object):
                     ctx, delays, num, delay, timeout)
             else:
                 key1, submit_num = ctx_key
+                # Convert key1 to type tuple - JSON restores as type list
+                # and this will not previously have been converted back
+                if isinstance(key1, list):
+                    key1 = tuple(key1)
                 key = (key1, cycle, name, submit_num)
                 self.task_events_mgr.event_timers[key] = TaskActionTimer(
                     ctx, delays, num, delay, timeout)
