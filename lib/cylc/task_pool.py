@@ -439,7 +439,8 @@ class TaskPool(object):
             # Extract type namedtuple variables from JSON strings
             json_tmp = json.loads(ctx_json)
             if 'CustomTaskEventHandlerContext' in ctx_json:
-                ctx = CustomTaskEventHandlerContext(*json_tmp[json_tmp.keys()[0]])
+                ctx = CustomTaskEventHandlerContext(
+                    *json_tmp[json_tmp.keys()[0]])
             if 'TaskEventMailContext' in ctx_json:
                 ctx = TaskEventMailContext(*json_tmp[json_tmp.keys()[0]])
             if 'TaskJobLogsRetrieveContext' in ctx_json:

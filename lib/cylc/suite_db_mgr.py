@@ -279,7 +279,7 @@ class SuiteDatabaseManager(object):
             for key, timer in task_events_mgr.event_timers.items():
                 key1, point, name, submit_num = key
                 # convert namedtuple timer.ctx for JSON serialisation
-                if timer.ctx != None:
+                if timer.ctx is not None:
                     ctx_obj = {}
                     my_obj = timer.ctx
                     ctx_obj[type(my_obj).__name__] = my_obj.__getnewargs__()
@@ -324,10 +324,11 @@ class SuiteDatabaseManager(object):
                     if timer is None:
                         continue
                     # convert namedtuple timer.ctx for JSON serialisation
-                    if timer.ctx != None:
+                    if timer.ctx is not None:
                         ctx_obj = {}
                         my_obj = timer.ctx
-                        ctx_obj[type(my_obj).__name__] = my_obj.__getnewargs__()
+                        ctx_obj[type(my_obj).__name__] = (
+                            my_obj.__getnewargs__())
                     else:
                         ctx_obj = None
                     self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
