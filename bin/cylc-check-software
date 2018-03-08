@@ -36,7 +36,7 @@ NOTFOUND_MSG = 'NOT FOUND (-)'
 """Specification of cylc core & full-functionality module requirements, the
    latter grouped as Python, TeX or 'other' (neither). 'opt_spec' item format:
    <MODULE>: [<MIN VER OR 'None'>, <FUNC TAG>, <GROUP>, <'OTHER' TUPLE>] with
-   <'OTHER' TUPLE> = (<BASE CMD(S)>, <VER OPT>, <REGEX>, <OUTFILE ARG>)."""
+   <'OTHER' TUPLE> = ([<BASE CMD(S)>], <VER OPT>, <REGEX>, <OUTFILE ARG>)."""
 req_py_ver_range = (2, 6), (3,)
 opt_spec = {
     'requests': [(2, 4, 2), 'HTTPSCOMMS', 'PY'],
@@ -49,11 +49,13 @@ opt_spec = {
     'framed': [None, 'LATEXGUIDE', 'TEX'],
     'preprint': [None, 'LATEXGUIDE', 'TEX'],
     'tex4ht': [None, 'LATEXGUIDE', 'TEX'],
-    'TeX': [(3, 0), 'LATEXGUIDE', 'OTHER', ('tex', '-v', r'TeX ([^\s]+)')],
+    'TeX': [(3, 0), 'LATEXGUIDE', 'OTHER',
+            (['tex'], '-v', r'TeX ([^\s]+)')],
     'graphviz': [None, 'GUIORGRAPH', 'OTHER',
-                 ('dot', '-V', r'graphviz version ([^\s]+)', 2)],
-    'imagemagick': [None, 'HTMLUGUIDE', 'OTHER',
-                    ('magick identify', '-version', r'ImageMagick ([^\s]+)')]
+                 (['dot'], '-V', r'graphviz version ([^\s]+)', 2)],
+    'ImageMagick': [None, 'HTMLUGUIDE', 'OTHER',
+                    (['magick identify', 'identify', 'convert'],
+                     '-version', r'ImageMagick ([^\s]+)')]
 }
 
 # Package-dep. functionality dict; item format <FUNC TAG>: <FULL DESCRIPTION>
@@ -124,9 +126,9 @@ def shell_centre_write(prepend_newline, *args):
 def check_py_ver(min_ver, max_ver=None):
     """Check if a version of Python within a specified range is installed."""
     if max_ver:
-        msg = 'python (%s+, <%s)' % (string_ver(min_ver), string_ver(max_ver))
+        msg = 'Python (%s+, <%s)' % (string_ver(min_ver), string_ver(max_ver))
     else:
-        msg = 'python (%s+)' % string_ver(min_ver)
+        msg = 'Python (%s+)' % string_ver(min_ver)
     version = sys.version_info
     ret = (version >= min_ver and (not max_ver or version < max_ver))
     shell_align_write('.', msg, '%s (%s)' % (MINVER_MET_MSG if ret else
@@ -183,21 +185,26 @@ def cmd_find_ver(module, min_ver, cmd_base, ver_opt, ver_extr, outfile=1):
        version-checking option(s) & version-extraction regex."""
     msg = '%s (%s)' % (module, string_ver(min_ver) + '+' if
                        min_ver is not None else 'none')
-    if Popen(['which', cmd_base], stdout=PIPE, stderr=PIPE).wait():
-        res = [NOTFOUND_MSG, False]
-    else:
-        try:
-            output = Popen([cmd_base, ver_opt], stdout=PIPE,
-                           stderr=PIPE).communicate()[outfile - 1].strip()
-            version = re.search(ver_extr, output).groups()[0]
-            if min_ver is None:
-                res = ['%s (%s)' % (FOUND_NOVER_MSG, version), True]
-            elif parse_version(version) >= min_ver:
-                res = ['%s (%s)' % (MINVER_MET_MSG, version), True]
-            else:
-                res = ['%s (%s)' % (MINVER_NOTMET_MSG, version), False]
-        except AttributeError:
-            res = [FOUND_UNKNOWNVER_MSG, False]
+    for cmd in cmd_base:
+        try_next_cmd = True
+        if Popen(['which', cmd], stdout=PIPE, stderr=PIPE).wait():
+            res = [NOTFOUND_MSG, False]
+        else:
+            try:
+                output = Popen([cmd, ver_opt], stdout=PIPE,
+                               stderr=PIPE).communicate()[outfile - 1].strip()
+                version = re.search(ver_extr, output).groups()[0]
+                try_next_cmd = False
+                if min_ver is None:
+                    res = ['%s (%s)' % (FOUND_NOVER_MSG, version), True]
+                elif parse_version(version) >= min_ver:
+                    res = ['%s (%s)' % (MINVER_MET_MSG, version), True]
+                else:
+                    res = ['%s (%s)' % (MINVER_NOTMET_MSG, version), False]
+            except AttributeError:
+                res = [FOUND_UNKNOWNVER_MSG, False]
+        if not try_next_cmd:
+            break
     shell_align_write('.', msg, res[0])
     return res[1]
 
@@ -212,7 +219,7 @@ def functionality_print(func):
                 opt_result[module] = check_py_module_ver(module, ver_req)
             elif tag == 'TEX':
                 opt_result[module] = kpsepath_search(module)
-            else:
+            elif tag == 'OTHER':
                 opt_result[module] = cmd_find_ver(module, ver_req, *items[3])
     return
 
