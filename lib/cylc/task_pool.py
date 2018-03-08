@@ -441,9 +441,9 @@ class TaskPool(object):
             if 'CustomTaskEventHandlerContext' in ctx_json:
                 ctx = CustomTaskEventHandlerContext(
                     *json_tmp[json_tmp.keys()[0]])
-            if 'TaskEventMailContext' in ctx_json:
+            elif 'TaskEventMailContext' in ctx_json:
                 ctx = TaskEventMailContext(*json_tmp[json_tmp.keys()[0]])
-            if 'TaskJobLogsRetrieveContext' in ctx_json:
+            elif 'TaskJobLogsRetrieveContext' in ctx_json:
                 ctx = TaskJobLogsRetrieveContext(*json_tmp[json_tmp.keys()[0]])
             else:
                 ctx = json_tmp
