@@ -1371,6 +1371,11 @@ Specify the execution wall clock limit for a job of the task.
 For \lstinline=background= and \lstinline=at=, the job script will be invoked using the \lstinline=timeout= command.
 For other batch systems, the specified time will be automatically translated into the equivalent directive for wall clock limit.
 
+Tasks are polled multiple times, where necessary, when they exceed their
+execution time limits.
+(See~\ref{ExecutionTimeLimitPollingIntervals} for how to configure the polling
+intervals).
+
 \begin{myitemize}
     \item {\em type:} ISO 8601 duration/interval representation
     \item {\em example:} \lstinline=PT5M=, 5 minutes, \lstinline=PT1H=, 1 hour
