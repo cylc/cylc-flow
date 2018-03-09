@@ -101,6 +101,11 @@ class TaskJobManager(object):
         for itask in task_pool.get_tasks():
             if self.task_events_mgr.check_job_time(itask, now):
                 poll_tasks.add(itask)
+                if itask.poll_timer.delay is not None:
+                    LOG.info(
+                        'poll now, (next in %s)' % (
+                            itask.poll_timer.delay_timeout_as_str()),
+                        itask=itask)
         if poll_tasks:
             self.poll_task_jobs(suite, poll_tasks)
 

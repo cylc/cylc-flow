@@ -33,12 +33,19 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}"
 LOG_FILE="${SUITE_RUN_DIR}/log/suite/log"
-# t1.1 should get the submission polling intervals
-run_ok "log" grep -Fq '[t1.1] -next job poll in PT2S' "${LOG_FILE}"
-run_ok "log" grep -Fq '[t1.1] -next job poll in PT10S' "${LOG_FILE}"
-# t2.1 should get the execution polling intervals
-run_ok "log" grep -Fq '[t2.1] -next job poll in PT1S' "${LOG_FILE}"
-run_ok "log" grep -Fq '[t2.1] -next job poll in PT6S' "${LOG_FILE}"
+grep health "${LOG_FILE}" >&2
+grep_ok \
+    '\[t1\.1\] -health check settings: submission.*, polling intervals=PT2S,6\*PT10S,...' \
+    "${LOG_FILE}"
+grep_ok \
+    '\[t2\.1\] -health check settings: submission.*, polling intervals=PT2S,6\*PT10S,...' \
+    "${LOG_FILE}"
+grep_ok \
+    '\[t1\.1\] -health check settings: execution.*, polling intervals=2\*PT1S,10\*PT6S,...' \
+    "${LOG_FILE}"
+grep_ok \
+    '\[t2\.1\] -health check settings: execution.*, polling intervals=2\*PT1S,10\*PT6S,...' \
+    "${LOG_FILE}"
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
 exit

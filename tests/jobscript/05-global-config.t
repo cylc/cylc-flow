@@ -18,7 +18,7 @@
 # Test that global config is used search for poll
 . "$(dirname "${0}")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 4
+set_test_number 6
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
@@ -37,8 +37,18 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}"
 LOG_FILE="${SUITE_RUN_DIR}/log/suite/log"
-run_ok "log" grep -Fq '[bar.1] -next job poll' "${LOG_FILE}"
-run_ok "log" grep -Fq '[foo.1] -next job poll' "${LOG_FILE}"
+grep_ok \
+    '\[bar\.1\] -health check settings: submission.*, polling intervals=PT6S,...' \
+    "${LOG_FILE}"
+grep_ok \
+    '\[foo\.1\] -health check settings: submission.*, polling intervals=PT12S,PT6S,...' \
+    "${LOG_FILE}"
+grep_ok \
+    '\[bar\.1\] -health check settings: execution.*, polling intervals=PT18S,2\*PT12S,PT6S,...' \
+    "${LOG_FILE}"
+grep_ok \
+    '\[foo\.1\] -health check settings: execution.*, polling intervals=PT12S,PT6S,...' \
+    "${LOG_FILE}"
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
 exit

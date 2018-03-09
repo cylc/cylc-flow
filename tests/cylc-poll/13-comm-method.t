@@ -18,7 +18,7 @@
 # Test poll intervals is used from both global.rc and suite.rc
 . "$(dirname "${0}")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 4
+set_test_number 6
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
@@ -34,8 +34,18 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}"
 LOG_FILE="${SUITE_RUN_DIR}/log/suite/log"
-run_ok "log" grep -Fq '[t1.1] -next job poll' "${LOG_FILE}"
-run_ok "log" grep -Fq '[t2.1] -next job poll' "${LOG_FILE}"
+grep_ok \
+    '\[t1\.1\] -health check settings: submission.*, polling intervals=10\*PT6S,...' \
+    "${LOG_FILE}"
+grep_ok \
+    '\[t2\.1\] -health check settings: submission.*, polling intervals=10\*PT6S,...' \
+    "${LOG_FILE}"
+grep_ok \
+    '\[t1\.1\] -health check settings: execution.*, polling intervals=10\*PT6S,...' \
+    "${LOG_FILE}"
+grep_ok \
+    '\[t2\.1\] -health check settings: execution.*, polling intervals=10\*PT6S,...' \
+    "${LOG_FILE}"
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
 exit
