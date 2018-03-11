@@ -440,11 +440,11 @@ class GraphParser(object):
                     title = "SUICIDE:"
                 else:
                     title = "TRIGGER:"
-                print '\nTASK:', right
-                print ' ', title, expr
+                print('\nTASK:', right)
+                print(' ', title, expr)
                 for t in triggers:
-                    print '    +', t
-                print '  from', self.original[right][expr]
+                    print('    +', t)
+                print('  from', self.original[right][expr])
 
 
 class TestGraphParser(unittest.TestCase):
