@@ -16,6 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test cylc print doesn't skip special names at root level,
+# WARNING: bad directories under ~/cylc-run can screw this test.
+
 # e.g. "~/cylc-run/work"
 . "$(dirname "$0")/test_header"
 set_test_number 3

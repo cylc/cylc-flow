@@ -16,6 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test cylc suite registration
+# WARNING: bad directories under ~/cylc-run can screw this test.
+
 . "$(dirname "$0")/test_header"
 set_test_number 7
 
@@ -43,6 +45,7 @@ run_ok "${TEST_NAME_BASE}-print" cylc print
 contains_ok "${TEST_NAME_BASE}-print.stdout" <<__OUT__
 ${SUITE_NAME} | the quick brown fox | ${TEST_DIR}/${SUITE_NAME}
 __OUT__
+
 cmp_ok "${TEST_NAME_BASE}-print.stderr" <'/dev/null'
 
 purge_suite "${SUITE_NAME}"
