@@ -23,8 +23,8 @@
 
 import sys
 import re
+import os
 from subprocess import check_call, PIPE, Popen, CalledProcessError
-
 
 # Standardised output messages
 FOUND_NOVER_MSG = 'FOUND'
@@ -54,7 +54,7 @@ opt_spec = {
     'graphviz': [None, 'GUIORGRAPH', 'OTHER',
                  (['dot'], '-V', r'graphviz version ([^\s]+)', 2)],
     'ImageMagick': [None, 'HTMLUGUIDE', 'OTHER',
-                    (['magick identify', 'identify', 'convert'],
+                    (['magick convert', 'convert'],
                      '-version', r'ImageMagick ([^\s]+)')]
 }
 
@@ -139,7 +139,7 @@ def check_py_ver(min_ver, max_ver=None):
 def check_py_module_ver(module, min_ver):
     """Check if a minimum version of a Python module is installed."""
     msg = 'Python:%s (%s)' % (module, string_ver(min_ver) + '+' if
-                              min_ver is not None else 'none')
+                              min_ver is not None else 'any')
     try:
         if module == 'pygtk':
             import gtk
@@ -164,13 +164,19 @@ def check_py_module_ver(module, min_ver):
 
 def kpsepath_search(tex_module):
     """Print outcome of local TeX module search using 'kpsepath' command."""
-    # Test line-count; 'locate' output can be >> for acc. string-length test
-    command = ("kpsepath tex | locate '*tex*" + tex_module + "*' | wc -l")
-    msg = 'TeX:%s (none)' % tex_module
+    msg = 'TeX:%s (any)' % tex_module
+    pipeline = (['kpsepath', 'tex'], ['locate', '*tex*%s*' % tex_module],
+                ['wc', '-l'])
     try:
-        init = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
-        final_command = ['test', init.communicate()[0].strip(), '-ne', '0']
-        check_call(final_command, stdout=PIPE, stderr=PIPE)
+        pipe_in = Popen(pipeline[0], stdin=open(os.devnull), stdout=PIPE)
+        for index in range(1, len(pipeline)):
+            pipe_out = Popen(pipeline[index], stdin=pipe_in.stdout,
+                             stdout=PIPE)
+            pipe_in.stdout.close()
+            pipe_in = pipe_out
+        # Test line-count; 'locate' output can be >> for string-length testing
+        check_call(['test', pipe_out.communicate()[0].strip(), '-ne', '0'],
+                   stdin=open(os.devnull), stdout=PIPE, stderr=PIPE)
     except (CalledProcessError, OSError):
         shell_align_write('.', msg, NOTFOUND_MSG)
         return False
@@ -184,14 +190,16 @@ def cmd_find_ver(module, min_ver, cmd_base, ver_opt, ver_extr, outfile=1):
        requirement test using relevant custom command base keyword(s),
        version-checking option(s) & version-extraction regex."""
     msg = '%s (%s)' % (module, string_ver(min_ver) + '+' if
-                       min_ver is not None else 'none')
+                       min_ver is not None else 'any')
     for cmd in cmd_base:
         try_next_cmd = True
-        if Popen(['which', cmd], stdout=PIPE, stderr=PIPE).wait():
+        if Popen(['which', cmd], stdin=open(os.devnull), stdout=PIPE,
+                 stderr=PIPE).wait():
             res = [NOTFOUND_MSG, False]
         else:
             try:
-                output = Popen([cmd, ver_opt], stdout=PIPE,
+                output = Popen([cmd, ver_opt], stdin=open(os.devnull),
+                               stdout=PIPE,
                                stderr=PIPE).communicate()[outfile - 1].strip()
                 version = re.search(ver_extr, output).groups()[0]
                 try_next_cmd = False
