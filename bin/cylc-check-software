@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env python
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2018 NIWA
@@ -16,84 +16,254 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Check for cylc software dependencies
+"""
+    cylc-check-software
+    Check for external software and version dependencies of cylc.
+"""
 
-usage() {
-    cat <<eof
-Usage: cylc [admin] check-software
+import sys
+import re
+import os
+from subprocess import check_call, PIPE, Popen, CalledProcessError
 
-Check that the external software required by cylc is installed.
+# Standardised output messages
+FOUND_NOVER_MSG = 'FOUND'
+MINVER_MET_MSG = 'FOUND & min. version MET'
+MINVER_NOTMET_MSG = 'FOUND but min. version NOT MET'
+FOUND_UNKNOWNVER_MSG = 'FOUND but could not determine version (?)'
+NOTFOUND_MSG = 'NOT FOUND (-)'
 
-Minimum versions are not checked, except in the case of Python.
-
-Options:
-  -h, --help   Print this help message and exit.
-eof
+"""Specification of cylc core & full-functionality module requirements, the
+   latter grouped as Python, TeX or 'other' (neither). 'opt_spec' item format:
+   <MODULE>: [<MIN VER OR 'None'>, <FUNC TAG>, <GROUP>, <'OTHER' TUPLE>] with
+   <'OTHER' TUPLE> = ([<BASE CMD(S)>], <VER OPT>, <REGEX>, <OUTFILE ARG>)."""
+req_py_ver_range = (2, 6), (3,)
+opt_spec = {
+    'requests': [(2, 4, 2), 'HTTPSCOMMS', 'PY'],
+    'OpenSSL': [None, 'HTTPSCOMMS', 'PY'],
+    'urllib3': [None, 'HTTPSCOMMS', 'PY'],
+    'pygtk': [(2, 0), 'GUIORGRAPH', 'PY'],
+    'pygraphviz': [None, 'GUIORGRAPH', 'PY'],
+    'texlive': [None, 'LATEXGUIDE', 'TEX'],
+    'tocloft': [None, 'LATEXGUIDE', 'TEX'],
+    'framed': [None, 'LATEXGUIDE', 'TEX'],
+    'preprint': [None, 'LATEXGUIDE', 'TEX'],
+    'tex4ht': [None, 'LATEXGUIDE', 'TEX'],
+    'TeX': [(3, 0), 'LATEXGUIDE', 'OTHER',
+            (['tex'], '-v', r'TeX ([^\s]+)')],
+    'graphviz': [None, 'GUIORGRAPH', 'OTHER',
+                 (['dot'], '-V', r'graphviz version ([^\s]+)', 2)],
+    'ImageMagick': [None, 'HTMLUGUIDE', 'OTHER',
+                    (['magick convert', 'convert'],
+                     '-version', r'ImageMagick ([^\s]+)')]
 }
 
-# handle long --help
-if [[ $@ == *\-\-help ]]; then
-    usage
-    exit 0
-fi
+# Package-dep. functionality dict; item format <FUNC TAG>: <FULL DESCRIPTION>
+func_tags_and_text = {
+    'HTTPSCOMMS': 'HTTPS communications layer',
+    'GUIORGRAPH': 'GUI & dependency graph visualisation',
+    'LATEXGUIDE': 'LaTeX User Guide',
+    'HTMLUGUIDE': 'HTML User Guide'
+}
 
-while getopts "h" opt; do
-    case $opt in
-        h )
-            usage
-            exit 0
-            ;;
-        ? )
-            usage
-            exit 0
-            ;;
-    esac
-done
-
-# Minimum Python version 2.6
-echo -n "Checking for Python >= 2.6 ... "
-PVER=$( python -V 2>&1 | awk '{print $2}' )
-echo -n "found ${PVER} ... "
-if python -c 'import sys; sys.exit(sys.version_info < (2,6))'; then
-    echo "ok"
-else
-    echo "ERROR: Python version too old"
-fi
-
-# non-Python packages
-echo "Checking for non-Python packages:"
-echo -n " + Graphviz ... "
-if ! which dot > /dev/null 2>&1; then
-    echo "NOT FOUND"
-else
-    echo "ok"
-fi
-
-# Python packages
-PKGS="pygraphviz:pygraphviz \
-pygtk:pygtk"
+# Initialise results dict
+opt_result = {}
 
 
-echo "Checking for Python packages:"
+def output_width(min_width=65, max_width=90):
+    """Return a suitable output alignment width given user terminal width."""
+    proc = Popen(['stty', 'size'], stdout=PIPE)
+    if proc.wait():
+        return int((min_width + max_width) / 2)
+    else:
+        try:
+            return max(min_width, min(max_width,
+                                      int(proc.communicate()[0].split()[1])))
+        except IndexError:
+            return int((min_width + max_width) / 2)
 
-for ITEM in ${PKGS}; do
-    NAME=${ITEM%:*}
-    MODL=${ITEM#*:}
 
-    echo -n " + ${NAME} ... "
-    if ! python -c "import ${MODL}" > /dev/null 2>&1; then
-        echo "NOT FOUND"
-    else
-        echo "ok"
-    fi
-done
+def draw_table_line(single_character):
+    sys.stdout.write(single_character * output_width() + '\n')
+    return None
 
-# Check for the OpenSSL python package
-HTTPS_MODL="OpenSSL"
-echo -n " + ${HTTPS_MODL} ... "
-if ! python -c "import ${HTTPS_MODL}" > /dev/null 2>&1; then
-    echo "NOT FOUND...Install it, or else configure Cylc to run in http mode."
-else
-    echo "ok"
-fi
 
+def parse_version(version):
+    ret = []
+    for sub_version in version.split('.'):
+        try:
+            ret.append(int(sub_version))
+        except ValueError:
+            ret.append(sub_version)
+    return tuple(ret)
+
+
+def string_ver(version_tuple):
+    return '.'.join(str(x) for x in version_tuple)
+
+
+def shell_align_write(one_delimiter, left_msg, right_msg):
+    """Write two messages aligned with the terminal edges, separated by a
+       given delimiter, with a minimum separation of two characters."""
+    gap = output_width() - len(left_msg) - len(right_msg)
+    if gap >= 2:
+        sys.stdout.write(left_msg + one_delimiter * gap + right_msg + '\n')
+        return True
+    else:
+        return False
+
+
+def shell_centre_write(prepend_newline, *args):
+    """Write one or more lines of text centrally in the terminal."""
+    if prepend_newline:
+        sys.stdout.write('\n')
+    for msg_line in args:
+        spacing = int(round(output_width() - len(msg_line)) / 2) * ' '
+        sys.stdout.write(spacing + msg_line + spacing + '\n')
+    return
+
+
+def check_py_ver(min_ver, max_ver=None):
+    """Check if a version of Python within a specified range is installed."""
+    if max_ver:
+        msg = 'Python (%s+, <%s)' % (string_ver(min_ver), string_ver(max_ver))
+    else:
+        msg = 'Python (%s+)' % string_ver(min_ver)
+    version = sys.version_info
+    ret = (version >= min_ver and (not max_ver or version < max_ver))
+    shell_align_write('.', msg, '%s (%s)' % (MINVER_MET_MSG if ret else
+                      MINVER_NOTMET_MSG, string_ver(version)))
+    return ret
+
+
+def check_py_module_ver(module, min_ver):
+    """Check if a minimum version of a Python module is installed."""
+    msg = 'Python:%s (%s)' % (module, string_ver(min_ver) + '+' if
+                              min_ver is not None else 'any')
+    try:
+        if module == 'pygtk':
+            import gtk
+            module_version = '.'.join(map(str, gtk.pygtk_version))
+        else:
+            imported_module = __import__(module)
+            module_version = imported_module.__version__
+    except ImportError:
+        res = [NOTFOUND_MSG, False]
+    try:
+        if min_ver is None:
+            res = ['%s (%s)' % (FOUND_NOVER_MSG, module_version), True]
+        elif parse_version(module_version) >= min_ver:
+            res = ['%s (%s)' % (MINVER_MET_MSG, module_version), True]
+        else:
+            res = ['%s (%s)' % (MINVER_NOTMET_MSG, module_version), False]
+    except AttributeError:
+        res = [FOUND_UNKNOWNVER_MSG, False]
+    shell_align_write('.', msg, res[0])
+    return res[1]
+
+
+def kpsepath_search(tex_module):
+    """Print outcome of local TeX module search using 'kpsepath' command."""
+    msg = 'TeX:%s (any)' % tex_module
+    pipeline = (['kpsepath', 'tex'], ['locate', '*tex*%s*' % tex_module],
+                ['wc', '-l'])
+    try:
+        pipe_in = Popen(pipeline[0], stdin=open(os.devnull), stdout=PIPE)
+        for index in range(1, len(pipeline)):
+            pipe_out = Popen(pipeline[index], stdin=pipe_in.stdout,
+                             stdout=PIPE)
+            pipe_in.stdout.close()
+            pipe_in = pipe_out
+        # Test line-count; 'locate' output can be >> for string-length testing
+        check_call(['test', pipe_out.communicate()[0].strip(), '-ne', '0'],
+                   stdin=open(os.devnull), stdout=PIPE, stderr=PIPE)
+    except (CalledProcessError, OSError):
+        shell_align_write('.', msg, NOTFOUND_MSG)
+        return False
+    else:
+        shell_align_write('.', msg, FOUND_NOVER_MSG + ' (n/a)')
+        return True
+
+
+def cmd_find_ver(module, min_ver, cmd_base, ver_opt, ver_extr, outfile=1):
+    """Print outcome & return Boolean (True for pass) of local module version
+       requirement test using relevant custom command base keyword(s),
+       version-checking option(s) & version-extraction regex."""
+    msg = '%s (%s)' % (module, string_ver(min_ver) + '+' if
+                       min_ver is not None else 'any')
+    for cmd in cmd_base:
+        try_next_cmd = True
+        if Popen(['which', cmd], stdin=open(os.devnull), stdout=PIPE,
+                 stderr=PIPE).wait():
+            res = [NOTFOUND_MSG, False]
+        else:
+            try:
+                output = Popen([cmd, ver_opt], stdin=open(os.devnull),
+                               stdout=PIPE,
+                               stderr=PIPE).communicate()[outfile - 1].strip()
+                version = re.search(ver_extr, output).groups()[0]
+                try_next_cmd = False
+                if min_ver is None:
+                    res = ['%s (%s)' % (FOUND_NOVER_MSG, version), True]
+                elif parse_version(version) >= min_ver:
+                    res = ['%s (%s)' % (MINVER_MET_MSG, version), True]
+                else:
+                    res = ['%s (%s)' % (MINVER_NOTMET_MSG, version), False]
+            except AttributeError:
+                res = [FOUND_UNKNOWNVER_MSG, False]
+        if not try_next_cmd:
+            break
+    shell_align_write('.', msg, res[0])
+    return res[1]
+
+
+def functionality_print(func):
+    """Apply and print outcome of searches, applied by relevant group, for all
+       modules including minimum versions necessary for some funcionality."""
+    for module, items in opt_spec.items():
+        ver_req, func_dep, tag = items[:3]
+        if func_dep == func:
+            if tag == 'PY':
+                opt_result[module] = check_py_module_ver(module, ver_req)
+            elif tag == 'TEX':
+                opt_result[module] = kpsepath_search(module)
+            elif tag == 'OTHER':
+                opt_result[module] = cmd_find_ver(module, ver_req, *items[3])
+    return
+
+
+def main():
+    """Test for and print external software packages with minimum versions
+       as required for both minimal core and fully-functional cylc."""
+
+    # Introductory message and individual results table header
+    sys.stdout.write('Checking your software...\n\nIndividual results:\n')
+    draw_table_line('=')
+    shell_align_write(' ', 'Package (version requirements)',
+                      'Outcome (version found)')
+    draw_table_line('=')
+
+    # Individual results section in mock-table format
+    shell_centre_write(False, '*REQUIRED SOFTWARE*')
+    req_result = check_py_ver(*req_py_ver_range)
+    for tag, text in func_tags_and_text.items():
+        shell_centre_write(True, '*OPTIONAL SOFTWARE for the ' + text + '*')
+        functionality_print(tag)
+    draw_table_line('=')
+
+    # Final summary print for clear pass/fail final outcome & exit
+    sys.stdout.write('\nSummary:')
+    shell_centre_write(True, '*' * 28,
+                       'Core requirements: %s' % (
+                           'ok' if req_result else 'not ok'),
+                       'Full-functionality: %s' % (
+                           'ok' if all(opt_result.values()) else 'not ok'),
+                       '*' * 28)
+    sys.exit()
+
+
+if __name__ == '__main__':
+    if 'help' in sys.argv or '--help' in sys.argv:
+        print __doc__
+    else:
+        main()
