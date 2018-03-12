@@ -108,8 +108,6 @@ class Tailer(threading.Thread):
                 exc, " ".join(quote(item) for item in command)))
             gobject.idle_add(dialog.warn)
             return
-        poller = select.poll()
-        poller.register(self.proc.stdout.fileno())
 
         buf = ""
         while not self.quit and self.proc.poll() is None:
@@ -117,12 +115,15 @@ class Tailer(threading.Thread):
                 self.pollable.poll()
             except (TypeError, AttributeError):
                 pass
-            if self.freeze or not poller.poll(100):  # 100 ms timeout
+            if (
+                self.freeze or
+                not select.select([self.proc.stdout.fileno()], [], [], 100)
+            ):
                 sleep(1)
                 continue
             # Both self.proc.stdout.read(SIZE) and self.proc.stdout.readline()
             # can block. However os.read(FILENO, SIZE) should be fine after a
-            # poller.poll().
+            # select.select().
             try:
                 data = os.read(self.proc.stdout.fileno(), self.READ_SIZE)
             except (IOError, OSError) as exc:
