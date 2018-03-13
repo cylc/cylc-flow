@@ -592,6 +592,7 @@ class TaskPool(object):
             n_active = 0
             n_release = 0
             n_limit = qconfig[queue]['limit']
+            tasks = self.queues[queue].values()
 
             # 2.1) count active tasks and compare to queue limit
             if n_limit:

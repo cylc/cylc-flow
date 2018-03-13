@@ -1,0 +1,17 @@
+2018-03-13T14:22:38Z INFO - Initial point: 1
+2018-03-13T14:22:38Z INFO - Final point: 1
+2018-03-13T14:22:38Z INFO - [delay_n1.1] -triggered off []
+2018-03-13T14:22:38Z INFO - [hold.1] -triggered off []
+2018-03-13T14:22:40Z INFO - [delay_n2.1] -triggered off ['delay_n1.1']
+2018-03-13T14:22:42Z INFO - [delay_n3.1] -triggered off ['delay_n2.1']
+2018-03-13T14:22:44Z INFO - [delay_n4.1] -triggered off ['delay_n3.1']
+2018-03-13T14:22:47Z INFO - [delay_n5.1] -triggered off ['delay_n4.1']
+2018-03-13T14:22:48Z INFO - [proc_n1.1] -triggered off ['delay_n1.1']
+2018-03-13T14:22:49Z INFO - [delay_n6.1] -triggered off ['delay_n5.1']
+2018-03-13T14:22:50Z INFO - [proc_n2.1] -triggered off ['delay_n2.1']
+2018-03-13T14:22:52Z INFO - [delay_n7.1] -triggered off ['delay_n6.1']
+2018-03-13T14:22:52Z INFO - [proc_n3.1] -triggered off ['delay_n3.1']
+2018-03-13T14:22:54Z INFO - [proc_n4.1] -triggered off ['delay_n4.1']
+2018-03-13T14:22:56Z INFO - [proc_n5.1] -triggered off ['delay_n5.1']
+2018-03-13T14:22:58Z INFO - [proc_n6.1] -triggered off ['delay_n6.1']
+2018-03-13T14:23:00Z INFO - [proc_n7.1] -triggered off ['delay_n7.1']

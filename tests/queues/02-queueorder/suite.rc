@@ -1,0 +1,19 @@
+[cylc]
+    [[parameters]]
+        n = 1..7
+[scheduling]
+    [[queues]]
+        [[[q1]]]
+            limit = 1
+            members = proc<n>, hold
+    [[dependencies]]
+        graph = """
+            delay<n-1> => delay<n>
+            delay<n> => proc<n>
+            hold
+        """
+[runtime]
+    [[delay<n>]]
+    [[proc<n>]]
+    [[hold]]
+        script = sleep 7
