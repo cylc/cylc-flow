@@ -251,7 +251,7 @@ class SuiteRuntimeService(object):
         self._check_access_priv_and_report(PRIV_FULL_CONTROL)
         if not isinstance(items, list):
             items = [items]
-        check_syntax = check_syntax in [True, 'True']
+        check_syntax = self._literal_eval('check_syntax', check_syntax)
         self.schd.command_queue.put(('dry_run_tasks', (items,),
                                     {'check_syntax': check_syntax}))
         return (True, 'Command queued')
