@@ -240,7 +240,7 @@ class SuiteProcPool(object):
 
     @classmethod
     def _run_command_init(cls, ctx, callback=None, callback_args=None):
-        """Execute a shell command and capture its output and exit status."""
+        """Prepare and launch shell command in ctx."""
         try:
             if ctx.cmd_kwargs.get('stdin_file_paths'):
                 if len(ctx.cmd_kwargs['stdin_file_paths']) > 1:

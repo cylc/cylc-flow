@@ -1386,7 +1386,9 @@ conditions; see `cylc conditions`.
             if self.options.profile_mode:
                 self.update_profiler_logs(tinit)
 
-            # Sleep a bit for things to catch up
+            # Sleep a bit for things to catch up.
+            # Quick sleep if there are items pending in process pool.
+            # (Should probably use quick sleep logic for other queues?)
             elapsed = time() - tinit
             quick_mode = self.proc_pool.is_not_done()
             if (elapsed >= self.INTERVAL_MAIN_LOOP or
