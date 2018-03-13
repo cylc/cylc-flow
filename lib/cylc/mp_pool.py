@@ -66,9 +66,9 @@ class SuiteProcContext(object):
     """
 
     # Format string for single line output
-    JOB_LOG_FMT_1 = "[%(cmd_key)s %(attr)s] %(mesg)s"
+    JOB_LOG_FMT_1 = '[%(cmd_key)s %(attr)s] %(mesg)s'
     # Format string for multi-line output
-    JOB_LOG_FMT_M = "[%(cmd_key)s %(attr)s]\n%(mesg)s"
+    JOB_LOG_FMT_M = '[%(cmd_key)s %(attr)s]\n%(mesg)s'
 
     def __init__(self, cmd_key, cmd, **cmd_kwargs):
         self.timestamp = get_current_time_string()
@@ -81,32 +81,32 @@ class SuiteProcContext(object):
         self.out = cmd_kwargs.get('out')
 
     def __str__(self):
-        ret = ""
-        for attr in "cmd", "ret_code", "out", "err":
+        ret = ''
+        for attr in 'cmd', 'ret_code', 'out', 'err':
             value = getattr(self, attr, None)
             if value is not None and str(value).strip():
-                mesg = ""
-                if attr == "cmd" and self.cmd_kwargs.get("stdin_file_paths"):
-                    mesg += "cat"
-                    for file_path in self.cmd_kwargs.get("stdin_file_paths"):
-                        mesg += " " + quote(file_path)
-                    mesg += " | "
-                if attr == "cmd" and isinstance(value, list):
-                    mesg += " ".join(quote(item) for item in value)
+                mesg = ''
+                if attr == 'cmd' and self.cmd_kwargs.get('stdin_file_paths'):
+                    mesg += 'cat'
+                    for file_path in self.cmd_kwargs.get('stdin_file_paths'):
+                        mesg += ' ' + quote(file_path)
+                    mesg += ' | '
+                if attr == 'cmd' and isinstance(value, list):
+                    mesg += ' '.join(quote(item) for item in value)
                 else:
                     mesg = str(value).strip()
-                if attr == "cmd" and self.cmd_kwargs.get("stdin_str"):
-                    mesg += " <<<%s" % quote(self.cmd_kwargs.get("stdin_str"))
+                if attr == 'cmd' and self.cmd_kwargs.get('stdin_str'):
+                    mesg += ' <<<%s' % quote(self.cmd_kwargs.get('stdin_str'))
                 if len(mesg.splitlines()) > 1:
                     fmt = self.JOB_LOG_FMT_M
                 else:
                     fmt = self.JOB_LOG_FMT_1
-                if not mesg.endswith("\n"):
-                    mesg += "\n"
+                if not mesg.endswith('\n'):
+                    mesg += '\n'
                 ret += fmt % {
-                    "cmd_key": self.cmd_key,
-                    "attr": attr,
-                    "mesg": mesg}
+                    'cmd_key': self.cmd_key,
+                    'attr': attr,
+                    'mesg': mesg}
         return ret.rstrip()
 
 
@@ -116,20 +116,18 @@ class SuiteProcPool(object):
     This is mainly used by the main loop of the suite server program, although
     the SuiteProcPool.run_command can be used as a standalone utility function
     to run the command in a SuiteProcContext.
+
+    Arguments:
+        size (int): Pool size.
     """
 
     ERR_SUITE_STOPPING = 'suite stopping, command not run'
-    JOBS_SUBMIT = "jobs-submit"
+    JOBS_SUBMIT = 'jobs-submit'
     RET_CODE_SUITE_STOPPING = 999
 
     def __init__(self, size=None):
-        """Constructor.
-
-        Arguments:
-            size (int): Pool size.
-        """
         if not size:
-            size = glbl_cfg().get(["process pool size"], size)
+            size = glbl_cfg().get(['process pool size'], size)
         self.size = size
         self.closed = False  # Close queue
         self.stopping = False  # No more job submit if True
