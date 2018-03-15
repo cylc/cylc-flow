@@ -318,7 +318,7 @@ class TaskState(object):
         else:
             self.reset_state(self.hold_swap)
 
-    def reset_state(self, status, forced=False):
+    def reset_state(self, status):
         """Change status, and manipulate outputs and prerequisites accordingly.
 
         Outputs are manipulated on manual state reset to reflect the new task
@@ -328,6 +328,9 @@ class TaskState(object):
         Prerequisites, which reflect the state of *other tasks*, are not
         manipulated, except to unset them on reset to waiting or earlier.
         (TODO - we should not do this - see GitHub #2329).
+
+        Note this method could take an additional argument to distinguish
+        internal and manually forced state changes, if needed.
 
         The held state is handled in set/unset_held() for swap-state handling.
 
@@ -350,8 +353,8 @@ class TaskState(object):
         self.outputs.set_completion(
             TASK_OUTPUT_FAILED, status == TASK_STATUS_FAILED)
 
-        # Set prerequisites on forced reset to waiting (see docstring).
-        if forced and status == TASK_STATUS_WAITING:
+        # Unset prerequisites on reset to waiting (see docstring).
+        if status == TASK_STATUS_WAITING:
             self.set_prerequisites_not_satisfied()
 
         return self._set_state(status)

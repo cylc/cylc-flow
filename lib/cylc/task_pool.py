@@ -1044,7 +1044,7 @@ class TaskPool(object):
         for itask in itasks:
             if status and status != itask.state.status:
                 LOG.info("resetting state to %s" % status, itask=itask)
-                itask.state.reset_state(status, forced=True)
+                itask.state.reset_state(status)
                 if status in [TASK_STATUS_FAILED,
                               TASK_STATUS_SUBMIT_FAILED]:
                     # TODO - HUH? SUBMIT_FAILED? WHAT ABOUT SUCCEEDED?
@@ -1110,7 +1110,7 @@ class TaskPool(object):
                 continue
             itask.manual_trigger = True
             if not itask.state.status == TASK_STATUS_QUEUED:
-                itask.state.reset_state(TASK_STATUS_READY, forced=True)
+                itask.state.reset_state(TASK_STATUS_READY)
         return n_warnings
 
     def check_auto_shutdown(self):
