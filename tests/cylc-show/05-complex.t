@@ -45,9 +45,12 @@ prerequisites (- => not satisfied):
   - 	5 = f.20000101T0000Z succeeded
 
 outputs (- => not completed):
+  - f.20000102T0000Z expired
   - f.20000102T0000Z submitted
+  - f.20000102T0000Z submit-failed
   - f.20000102T0000Z started
   - f.20000102T0000Z succeeded
+  - f.20000102T0000Z failed
 __OUT__
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-short"
