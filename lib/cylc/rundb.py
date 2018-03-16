@@ -551,7 +551,7 @@ class CylcSuiteDAO(object):
             Try upgrade on database - see if pickle rather than JSON
             '''
             my_file=open('/home/h04/aplh/rose_test_out.txt','w')
-            print >> my_file, 'error has been found!'
+            print >> my_file, 'An error has been found!'
             my_file.close()
 
     def select_task_job(self, keys, cycle, name, submit_num=None):
