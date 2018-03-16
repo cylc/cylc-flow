@@ -395,70 +395,6 @@ class CylcSuiteDAO(object):
         ],
     }
 
-    # For Rose Bush migration DAO needs
-    CYCLE_ORDERS = {"time_desc": " DESC", "time_asc": " ASC"}
-    JOB_ORDERS = {
-        "time_desc": "time DESC, submit_num DESC, name DESC, cycle DESC",
-        "time_asc": "time ASC, submit_num ASC, name ASC, cycle ASC",
-        "cycle_desc_name_asc": "cycle DESC, name ASC, submit_num DESC",
-        "cycle_desc_name_desc": "cycle DESC, name DESC, submit_num DESC",
-        "cycle_asc_name_asc": "cycle ASC, name ASC, submit_num DESC",
-        "cycle_asc_name_desc": "cycle ASC, name DESC, submit_num DESC",
-        "name_asc_cycle_asc": "name ASC, cycle ASC, submit_num DESC",
-        "name_desc_cycle_asc": "name DESC, cycle ASC, submit_num DESC",
-        "name_asc_cycle_desc": "name ASC, cycle DESC, submit_num DESC",
-        "name_desc_cycle_desc": "name DESC, cycle DESC, submit_num DESC",
-        "time_submit_desc": (
-            "time_submit DESC, submit_num DESC, name DESC, cycle DESC"),
-        "time_submit_asc": (
-            "time_submit ASC, submit_num DESC, name DESC, cycle DESC"),
-        "time_run_desc": (
-            "time_run DESC, submit_num DESC, name DESC, cycle DESC"),
-        "time_run_asc": (
-            "time_run ASC, submit_num DESC, name DESC, cycle DESC"),
-        "time_run_exit_desc": (
-            "time_run_exit DESC, submit_num DESC, name DESC, cycle DESC"),
-        "time_run_exit_asc": (
-            "time_run_exit ASC, submit_num DESC, name DESC, cycle DESC"),
-        "duration_queue_desc": (
-            "(CAST(strftime('%s', time_run) AS NUMERIC) -" +
-            " CAST(strftime('%s', time_submit) AS NUMERIC)) DESC, " +
-            "submit_num DESC, name DESC, cycle DESC"),
-        "duration_queue_asc": (
-            "(CAST(strftime('%s', time_run) AS NUMERIC) -" +
-            " CAST(strftime('%s', time_submit) AS NUMERIC)) ASC, " +
-            "submit_num DESC, name DESC, cycle DESC"),
-        "duration_run_desc": (
-            "(CAST(strftime('%s', time_run_exit) AS NUMERIC) -" +
-            " CAST(strftime('%s', time_run) AS NUMERIC)) DESC, " +
-            "submit_num DESC, name DESC, cycle DESC"),
-        "duration_run_asc": (
-            "(CAST(strftime('%s', time_run_exit) AS NUMERIC) -" +
-            " CAST(strftime('%s', time_run) AS NUMERIC)) ASC, " +
-            "submit_num DESC, name DESC, cycle DESC"),
-        "duration_queue_run_desc": (
-            "(CAST(strftime('%s', time_run_exit) AS NUMERIC) -" +
-            " CAST(strftime('%s', time_submit) AS NUMERIC)) DESC, " +
-            "submit_num DESC, name DESC, cycle DESC"),
-        "duration_queue_run_asc": (
-            "(CAST(strftime('%s', time_run_exit) AS NUMERIC) -" +
-            " CAST(strftime('%s', time_submit) AS NUMERIC)) ASC, " +
-            "submit_num DESC, name DESC, cycle DESC"),
-    }
-    JOB_STATUS_COMBOS = {
-        "all": "",
-        "submitted": "submit_status == 0 AND time_run IS NULL",
-        "submitted,running": "submit_status == 0 AND run_status IS NULL",
-        "submission-failed": "submit_status == 1",
-        "submission-failed,failed": "submit_status == 1 OR run_status == 1",
-        "running": "time_run IS NOT NULL AND run_status IS NULL",
-        "running,succeeded,failed": "time_run IS NOT NULL",
-        "succeeded": "run_status == 0",
-        "succeeded,failed": "run_status IS NOT NULL",
-        "failed": "run_status == 1",
-    }
-    REC_CYCLE_QUERY_OP = re.compile(r"\A(before |after |[<>]=?)(.+)\Z")
-    REC_SEQ_LOG = re.compile(r"\A(.+\.)([^\.]+)(\.[^\.]+)\Z")
 
     def __init__(self, db_file_name=None, is_public=False):
         """Initialise object.
@@ -479,7 +415,6 @@ class CylcSuiteDAO(object):
         if not self.is_public:
             self.create_tables()
 
-        self.daos = {}
 
     def add_delete_item(self, table_name, where_args=None):
         """Queue a DELETE item for a given table.
@@ -1154,11 +1089,76 @@ class CylcSuiteDAO(object):
         """Vacuum to the database."""
         return self.connect().execute("VACUUM")
 
-### ---------------------------------------------------------###
-#                                                              #
-#   TAGZ  New adapted migration functions all go below here:   #
-#                                                              #
-### ---------------------------------------------------------###
+
+class CylcBushDAO(object):
+    """Data access object to the suite runtime database from Cylc Bush."""
+
+    CYCLE_ORDERS = {"time_desc": " DESC", "time_asc": " ASC"}
+    JOB_ORDERS = {
+        "time_desc": "time DESC, submit_num DESC, name DESC, cycle DESC",
+        "time_asc": "time ASC, submit_num ASC, name ASC, cycle ASC",
+        "cycle_desc_name_asc": "cycle DESC, name ASC, submit_num DESC",
+        "cycle_desc_name_desc": "cycle DESC, name DESC, submit_num DESC",
+        "cycle_asc_name_asc": "cycle ASC, name ASC, submit_num DESC",
+        "cycle_asc_name_desc": "cycle ASC, name DESC, submit_num DESC",
+        "name_asc_cycle_asc": "name ASC, cycle ASC, submit_num DESC",
+        "name_desc_cycle_asc": "name DESC, cycle ASC, submit_num DESC",
+        "name_asc_cycle_desc": "name ASC, cycle DESC, submit_num DESC",
+        "name_desc_cycle_desc": "name DESC, cycle DESC, submit_num DESC",
+        "time_submit_desc": (
+            "time_submit DESC, submit_num DESC, name DESC, cycle DESC"),
+        "time_submit_asc": (
+            "time_submit ASC, submit_num DESC, name DESC, cycle DESC"),
+        "time_run_desc": (
+            "time_run DESC, submit_num DESC, name DESC, cycle DESC"),
+        "time_run_asc": (
+            "time_run ASC, submit_num DESC, name DESC, cycle DESC"),
+        "time_run_exit_desc": (
+            "time_run_exit DESC, submit_num DESC, name DESC, cycle DESC"),
+        "time_run_exit_asc": (
+            "time_run_exit ASC, submit_num DESC, name DESC, cycle DESC"),
+        "duration_queue_desc": (
+            "(CAST(strftime('%s', time_run) AS NUMERIC) -" +
+            " CAST(strftime('%s', time_submit) AS NUMERIC)) DESC, " +
+            "submit_num DESC, name DESC, cycle DESC"),
+        "duration_queue_asc": (
+            "(CAST(strftime('%s', time_run) AS NUMERIC) -" +
+            " CAST(strftime('%s', time_submit) AS NUMERIC)) ASC, " +
+            "submit_num DESC, name DESC, cycle DESC"),
+        "duration_run_desc": (
+            "(CAST(strftime('%s', time_run_exit) AS NUMERIC) -" +
+            " CAST(strftime('%s', time_run) AS NUMERIC)) DESC, " +
+            "submit_num DESC, name DESC, cycle DESC"),
+        "duration_run_asc": (
+            "(CAST(strftime('%s', time_run_exit) AS NUMERIC) -" +
+            " CAST(strftime('%s', time_run) AS NUMERIC)) ASC, " +
+            "submit_num DESC, name DESC, cycle DESC"),
+        "duration_queue_run_desc": (
+            "(CAST(strftime('%s', time_run_exit) AS NUMERIC) -" +
+            " CAST(strftime('%s', time_submit) AS NUMERIC)) DESC, " +
+            "submit_num DESC, name DESC, cycle DESC"),
+        "duration_queue_run_asc": (
+            "(CAST(strftime('%s', time_run_exit) AS NUMERIC) -" +
+            " CAST(strftime('%s', time_submit) AS NUMERIC)) ASC, " +
+            "submit_num DESC, name DESC, cycle DESC"),
+    }
+    JOB_STATUS_COMBOS = {
+        "all": "",
+        "submitted": "submit_status == 0 AND time_run IS NULL",
+        "submitted,running": "submit_status == 0 AND run_status IS NULL",
+        "submission-failed": "submit_status == 1",
+        "submission-failed,failed": "submit_status == 1 OR run_status == 1",
+        "running": "time_run IS NOT NULL AND run_status IS NULL",
+        "running,succeeded,failed": "time_run IS NOT NULL",
+        "succeeded": "run_status == 0",
+        "succeeded,failed": "run_status IS NOT NULL",
+        "failed": "run_status == 1",
+    }
+    REC_CYCLE_QUERY_OP = re.compile(r"\A(before |after |[<>]=?)(.+)\Z")
+    REC_SEQ_LOG = re.compile(r"\A(.+\.)([^\.]+)(\.[^\.]+)\Z")
+
+    def __init__(self):
+        self.daos = {}
 
 
     def get_suite_broadcast_states(self, user_name, suite_name):
@@ -1530,16 +1530,6 @@ class CylcSuiteDAO(object):
 
         return ret
 
-### ---------------------------------------------------------###
-#                                                              #
-#   TAGZ  End of new adapted migration functions.              #
-#   Start of req secondary functions                           #
-#                                                              #
-### ---------------------------------------------------------###
-
-
-# Note that req secondary variables from top of RoseBushDAO were added
-# to the top of the class, so not put here.
 
 
     def _db_init(self, user_name, suite_name):
@@ -1729,10 +1719,3 @@ class CylcSuiteDAO(object):
                 if log_dict["seq_key"] not in entry["seq_logs_indexes"]:
                     log_dict["seq_key"] = None
 
-
-
-### ---------------------------------------------------------###
-#                                                              #
-#   TAGZ  End of req secondary functions.                      #
-#                                                              #
-### ---------------------------------------------------------###

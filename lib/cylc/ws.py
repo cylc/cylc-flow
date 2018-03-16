@@ -147,7 +147,7 @@ def _configure(service_cls):
     cherrypy.config["tools.encode.on"] = True
     cherrypy.config["tools.encode.encoding"] = "utf-8"
     config = {}
-    static_lib =  get_util_home("lib", "html", "static")
+    static_lib =  get_util_home("lib", "cylc", "cylc-bush", "static")
     for name in os.listdir(static_lib):
         path = os.path.join(static_lib, name)
         if os.path.isdir(path):
@@ -192,6 +192,6 @@ def get_util_home(*args):
         value = os.environ["CYLC_HOME"]
     except KeyError:
         value = os.path.abspath(__file__)
-        for _ in range(3):  # assume __file__ under $CYLC_HOME/lib/cylc/
+        for _ in range(4):  # assume __file__ under $CYLC_HOME/
             value = os.path.dirname(value)
     return os.path.join(value, *args)

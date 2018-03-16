@@ -38,7 +38,7 @@ import urllib
 from cylc.version import CYLC_VERSION
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.hostuserutil import get_host
-from cylc.rundb import CylcSuiteDAO
+from cylc.rundb import CylcBushDAO
 from cylc.task_state import (
     TASK_STATUSES_ORDERED, TASK_STATUS_GROUPS)
 from cylc.ws import get_util_home
@@ -64,7 +64,7 @@ class CylcBushService(object):
 
     def __init__(self, *args, **kwargs):
         self.exposed = True
-        self.suite_dao = CylcSuiteDAO()
+        self.suite_dao = CylcBushDAO()
         conf = GLOBAL_CFG
         self.logo = conf.get_value(["cylc-bush", "logo"])
         self.title = conf.get_value(["cylc-bush", "title"], self.TITLE)
@@ -85,7 +85,7 @@ class CylcBushService(object):
 
 
         template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(
-            get_util_home("lib", "html", "template", "rose-bush")))
+            get_util_home("lib", "cylc", "cylc-bush", "template")))
         template_env.filters['urlise'] = self.url2hyperlink
         self.template_env = template_env
 
