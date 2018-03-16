@@ -21,8 +21,6 @@ import json
 import sqlite3
 import sys
 import traceback
-
-# new non-cylc imports for Rose Bush migration work
 import os
 import tarfile
 import re
@@ -1090,8 +1088,8 @@ class CylcSuiteDAO(object):
         return self.connect().execute("VACUUM")
 
 
-class CylcBushDAO(object):
-    """Data access object to the suite runtime database from Cylc Bush."""
+class CylcNamelessDAO(object):
+    """Cylc Nameless data access object to the suite runtime database."""
 
     CYCLE_ORDERS = {"time_desc": " DESC", "time_asc": " ASC"}
     JOB_ORDERS = {
@@ -1333,7 +1331,6 @@ class CylcBushDAO(object):
                                   "mtime": f_stat.st_mtime,
                                   "size": f_stat.st_size}
         # Get cylc suite log files.
-        # Have responded to TODO RE Rose Bush migration that was in this logic.
         log_files = ["log/suite/err", "log/suite/log", "log/suite/out"]
         for key in log_files:
             f_stat = os.stat(os.path.join(dir_, key))
@@ -1402,7 +1399,7 @@ class CylcBushDAO(object):
             pass
 
         states_stmt = {}
-        for key, names in self.TASK_STATUS_GROUPS.items():
+        for key, names in TASK_STATUS_GROUPS.items():
             states_stmt[key] = " OR ".join(
                 ["status=='%s'" % (name) for name in names])
         stmt = (
@@ -1461,7 +1458,7 @@ class CylcBushDAO(object):
         else:
             fail_events_stmt = " OR ".join(
                 ["event=='%s'" % (name)
-                 for name in self.TASK_STATUS_GROUPS["fail"]])
+                 for name in TASK_STATUS_GROUPS["fail"]])
             stmt = (
                 "SELECT cycle," +
                 " sum(" + fail_events_stmt + ") AS n_job_fail" +

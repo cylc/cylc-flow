@@ -131,15 +131,15 @@ def _ws_init(service_cls, port, service_root_mode, *args, **kwargs):
 def _configure(service_cls):
     """Configure cherrypy and return a dict for the specified cherrypy app."""
     # Environment variables (not normally defined in WSGI mode)
-    if not os.getenv("ROSE_HOME"):
+    if not os.getenv("CYLC_HOME"):
         path = os.path.abspath(__file__)
         while os.path.dirname(path) != path:  # not root
             if os.path.basename(path) == "lib":
-                os.environ["ROSE_HOME"] = os.path.dirname(path)
+                os.environ["CYLC_HOME"] = os.path.dirname(path)
                 break
             path = os.path.dirname(path)
     for key, value in (
-            ("ROSE_NS", service_cls.NS), ("ROSE_UTIL", service_cls.UTIL)):
+            ("CYLC_NS", service_cls.NS), ("CYLC_UTIL", service_cls.UTIL)):
         if os.getenv(key) is None:
             os.environ[key] = value
 
@@ -147,7 +147,7 @@ def _configure(service_cls):
     cherrypy.config["tools.encode.on"] = True
     cherrypy.config["tools.encode.encoding"] = "utf-8"
     config = {}
-    static_lib =  get_util_home("lib", "cylc", "cylc-bush", "static")
+    static_lib =  get_util_home("lib", "cylc", "cylc-nameless", "static")
     for name in os.listdir(static_lib):
         path = os.path.join(static_lib, name)
         if os.path.isdir(path):
@@ -163,7 +163,7 @@ def _configure(service_cls):
 
 
 def _get_server_status(service_cls):
-    """Return a dict containing 'cylc bush' quick server status."""
+    """Return a dict containing 'cylc nameless' quick server status."""
     ret = {}
     log_root_glob = os.path.expanduser(LOG_ROOT_TMPL % {
         "ns": service_cls.NS,
@@ -181,7 +181,6 @@ def _get_server_status(service_cls):
     return ret
 
 
-# Define this here to prevent circular import dependency with 'bush.py'
 def get_util_home(*args):
     """Return CYLC_HOME or the dirname of the dirname of sys.argv[0].
 

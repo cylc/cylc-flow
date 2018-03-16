@@ -38,19 +38,19 @@ import urllib
 from cylc.version import CYLC_VERSION
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.hostuserutil import get_host
-from cylc.rundb import CylcBushDAO
+from cylc.rundb import CylcNamelessDAO
 from cylc.task_state import (
     TASK_STATUSES_ORDERED, TASK_STATUS_GROUPS)
 from cylc.ws import get_util_home
 
 
-class CylcBushService(object):
+class CylcNamelessService(object):
 
-    """'cylc bush' Service."""
+    """'Cylc Nameless Service."""
 
     NS = "cylc"
-    UTIL = "cylc bush"
-    TITLE = "cylc bush"
+    UTIL = "cylc nameless"
+    TITLE = "Cylc Nameless"
 
     CYCLES_PER_PAGE = 100
     JOBS_PER_PAGE = 15
@@ -64,15 +64,15 @@ class CylcBushService(object):
 
     def __init__(self, *args, **kwargs):
         self.exposed = True
-        self.suite_dao = CylcBushDAO()
-        self.logo = os.path.join("cylc", "doc", "src", "cylc-logo.png")
+        self.suite_dao = CylcNamelessDAO()
+        self.logo = get_util_home("doc", "src", "cylc-logo.png")
         self.title = self.TITLE
         self.host_name = get_host()
         if self.host_name and "." in self.host_name:
             self.host_name = self.host_name.split(".", 1)[0]
         self.cylc_version = CYLC_VERSION
         template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(
-            get_util_home("lib", "cylc", "cylc-bush", "template")))
+            get_util_home("lib", "cylc", "cylc-nameless", "template")))
         template_env.filters['urlise'] = self.url2hyperlink
         self.template_env = template_env
 
@@ -420,6 +420,7 @@ class CylcBushService(object):
             try:
                 data["entries"].append({
                     "name": item,
+                    "info": {},
                     "last_activity_time": (
                         self.get_last_activity_time(user, item))})
             except OSError:
@@ -649,11 +650,9 @@ class CylcBushService(object):
         # Other recognised formats
         for key in ["html", "txt", "version"]:
             for f_name in glob(os.path.join(user_suite_dir, "log/*." + key)):
-                if os.path.basename(f_name).startswith("rose-"):
-                    continue
                 name = os.path.join("log", os.path.basename(f_name))
                 stat = os.stat(f_name)
-                data["files"]["rose"]["other:" + name] = {
+                data["files"]["cylc"]["other:" + name] = {
                     "path": name,
                     "mtime": stat.st_mtime,
                     "size": stat.st_size}
@@ -790,8 +789,8 @@ class CylcBushService(object):
 
 if __name__ == "__main__":
     from cylc.ws import ws_cli
-    ws_cli(CylcBushService)
+    ws_cli(CylcNamelessService)
 elif 'doctest' not in sys.argv[0]:
     # If called as a module but not by the doctest module.
     from cylc.ws import wsgi_app
-    application = wsgi_app(CylcBushService)
+    application = wsgi_app(CylcNamelessService)

@@ -42,4 +42,4 @@
 #        (For start only.) Include web service name under root of URL.
 #----------------------------------------------------------------------------
 
-exec python -m cylc.bush "$@"
+exec python -m cylc.nameless "$@"
