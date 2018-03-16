@@ -1,23 +1,22 @@
-# -*- coding: utf-8 -*-
-# -----------------------------------------------------------------------------
-# (C) British Crown Copyright 2012-8 Met Office.
+#!/usr/bin/env python
+
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) 2008-2018 NIWA
 #
-# This file is part of Rose, a framework for meteorological suites.
-#
-# Rose is free software: you can redistribute it and/or modify
+# This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Rose is distributed in the hope that it will be useful,
+# This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Rose. If not, see <http://www.gnu.org/licenses/>.
-# -----------------------------------------------------------------------------
-"""Web service for browsing users' Rose suite logs via an HTTP interface."""
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""Web service for browsing users' suite logs via an HTTP interface."""
 
 import cherrypy
 from fnmatch import fnmatch
@@ -36,19 +35,21 @@ from time import gmtime, strftime
 import traceback
 import urllib
 
-import rose.config
-from rose.host_select import HostSelector
-from rose.resource import ResourceLocator
-from rose.bush_dao import RoseBushDAO
+from cylc.version import CYLC_VERSION
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.hostuserutil import get_host
+from cylc.rundb import CylcSuiteDAO
+from cylc.task_state import (
+    TASK_STATUSES_ORDERED, TASK_STATUS_GROUPS)
 
 
-class RoseBushService(object):
+class CylcBushService(object):
 
-    """Rose Bush Service."""
+    """'cylc bush' Service."""
 
-    NS = "rose"
-    UTIL = "bush"
-    TITLE = "Rose Bush"
+    NS = "cylc"
+    UTIL = "cylc bush"
+    TITLE = "cylc bush"
 
     CYCLES_PER_PAGE = 100
     JOBS_PER_PAGE = 15
@@ -62,19 +63,28 @@ class RoseBushService(object):
 
     def __init__(self, *args, **kwargs):
         self.exposed = True
-        self.bush_dao = RoseBushDAO()
-        rose_conf = ResourceLocator.default().get_conf()
-        self.logo = rose_conf.get_value(["rose-bush", "logo"])
-        self.title = rose_conf.get_value(["rose-bush", "title"], self.TITLE)
-        self.host_name = rose_conf.get_value(["rose-bush", "host"])
+        self.suite_dao = CylcSuiteDAO()
+        conf = GLOBAL_CFG
+        self.logo = conf.get_value(["cylc-bush", "logo"])
+        self.title = conf.get_value(["cylc-bush", "title"], self.TITLE)
+        self.host_name = conf.get_value(["cylc-bush", "host"])
         if self.host_name is None:
-            self.host_name = HostSelector().get_local_host()
+            self.host_name = get_host()
             if self.host_name and "." in self.host_name:
                 self.host_name = self.host_name.split(".", 1)[0]
-        self.rose_version = ResourceLocator.default().get_version()
+        self.cylc_version = CYLC_VERSION
+
+        try:
+            value = os.environ["CYLC_HOME"]
+        except KeyError:
+            value = os.path.abspath(__file__)
+            for _ in range(4):
+                value = os.path.dirname(value)
+        return os.path.join(value, *args)
+
+
         template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(
-            ResourceLocator.default().get_util_home(
-                "lib", "html", "template", "rose-bush")))
+            get_util_home("lib", "html", "template", "rose-bush")))
         template_env.filters['urlise'] = self.url2hyperlink
         self.template_env = template_env
 
@@ -90,7 +100,7 @@ class RoseBushService(object):
             "logo": self.logo,
             "title": self.title,
             "host": self.host_name,
-            "rose_version": self.rose_version,
+            "cylc_version": self.cylc_version,
             "script": cherrypy.request.script_name,
         }
         if form == "json":
@@ -109,19 +119,19 @@ class RoseBushService(object):
             "host": self.host_name,
             "user": user,
             "suite": suite,
-            "rose_version": self.rose_version,
+            "cylc_version": self.cylc_version,
             "script": cherrypy.request.script_name,
             "method": "broadcast_states",
             "states": {},
             "time": strftime("%Y-%m-%dT%H:%M:%SZ", gmtime()),
         }
         data["states"].update(
-            self.bush_dao.get_suite_state_summary(user, suite))
+            self.suite_dao.get_suite_state_summary(user, suite))
         data["states"]["last_activity_time"] = (
             self.get_last_activity_time(user, suite))
         data.update(self._get_suite_logs_info(user, suite))
         data["broadcast_states"] = (
-            self.bush_dao.get_suite_broadcast_states(user, suite))
+            self.suite_dao.get_suite_broadcast_states(user, suite))
         if form == "json":
             return json.dumps(data)
         try:
@@ -140,17 +150,17 @@ class RoseBushService(object):
             "host": self.host_name,
             "user": user,
             "suite": suite,
-            "rose_version": self.rose_version,
+            "cylc_version": self.cylc_version,
             "script": cherrypy.request.script_name,
             "method": "broadcast_events",
             "states": {},
             "time": strftime("%Y-%m-%dT%H:%M:%SZ", gmtime())
         }
         data["states"].update(
-            self.bush_dao.get_suite_state_summary(user, suite))
+            self.suite_dao.get_suite_state_summary(user, suite))
         data.update(self._get_suite_logs_info(user, suite))
         data["broadcast_events"] = (
-            self.bush_dao.get_suite_broadcast_events(user, suite))
+            self.suite_dao.get_suite_broadcast_events(user, suite))
         if form == "json":
             return json.dumps(data)
         try:
@@ -165,7 +175,7 @@ class RoseBushService(object):
             self, user, suite, page=1, order=None, per_page=None,
             no_fuzzy_time="0", form=None):
         """List cycles of a running or completed suite."""
-        conf = ResourceLocator.default().get_conf()
+        conf = GLOBAL_CFG
         per_page_default = int(conf.get_value(
             ["rose-bush", "cycles-per-page"], self.CYCLES_PER_PAGE))
         if not isinstance(per_page, int):
@@ -188,7 +198,7 @@ class RoseBushService(object):
                 per_page is not None and per_page != per_page_default
             ),
             "order": order,
-            "rose_version": self.rose_version,
+            "cylc_version": self.cylc_version,
             "script": cherrypy.request.script_name,
             "method": "cycles",
             "no_fuzzy_time": no_fuzzy_time,
@@ -196,10 +206,10 @@ class RoseBushService(object):
             "per_page": per_page,
             "per_page_default": per_page_default,
             "page": page,
-            "task_status_groups": self.bush_dao.TASK_STATUS_GROUPS,
+            "task_status_groups": TASK_STATUS_GROUPS,
         }
         data["entries"], data["of_n_entries"] = (
-            self.bush_dao.get_suite_cycles_summary(
+            self.suite_dao.get_suite_cycles_summary(
                 user, suite, order, per_page, (page - 1) * per_page))
         if per_page:
             data["n_pages"] = data["of_n_entries"] / per_page
@@ -209,7 +219,7 @@ class RoseBushService(object):
             data["n_pages"] = 1
         data.update(self._get_suite_logs_info(user, suite))
         data["states"].update(
-            self.bush_dao.get_suite_state_summary(user, suite))
+            self.suite_dao.get_suite_state_summary(user, suite))
         data["states"]["last_activity_time"] = (
             self.get_last_activity_time(user, suite))
         data["time"] = strftime("%Y-%m-%dT%H:%M:%SZ", gmtime())
@@ -259,7 +269,7 @@ class RoseBushService(object):
                 return a JSON data structure.
 
         """
-        conf = ResourceLocator.default().get_conf()
+        conf = GLOBAL_CFG
         per_page_default = int(conf.get_value(
             ["rose-bush", "jobs-per-page"], self.JOBS_PER_PAGE))
         per_page_max = int(conf.get_value(
@@ -282,7 +292,7 @@ class RoseBushService(object):
         else:
             page = 1
         task_statuses = (
-            [[item, ""] for item in self.bush_dao.TASK_STATUSES])
+            [[item, ""] for item in TASK_STATUSES_ORDERED])
         if task_status:
             if not isinstance(task_status, list):
                 task_status = [task_status]
@@ -307,12 +317,12 @@ class RoseBushService(object):
             "per_page": per_page,
             "per_page_default": per_page_default,
             "per_page_max": per_page_max,
-            "rose_version": self.rose_version,
+            "cylc_version": self.cylc_version,
             "script": cherrypy.request.script_name,
             "states": {},
             "suite": suite,
             "tasks": tasks,
-            "task_status_groups": self.bush_dao.TASK_STATUS_GROUPS,
+            "task_status_groups": TASK_STATUS_GROUPS,
             "title": self.title,
             "user": user,
         }
@@ -322,10 +332,10 @@ class RoseBushService(object):
             tasks = shlex.split(str(tasks))
         data.update(self._get_suite_logs_info(user, suite))
         data["states"].update(
-            self.bush_dao.get_suite_state_summary(user, suite))
+            self.suite_dao.get_suite_state_summary(user, suite))
         data["states"]["last_activity_time"] = (
             self.get_last_activity_time(user, suite))
-        entries, of_n_entries = self.bush_dao.get_suite_job_entries(
+        entries, of_n_entries = self.suite_dao.get_suite_job_entries(
             user, suite, cycles, tasks, task_status, job_status, order,
             per_page, (page - 1) * per_page)
         data["entries"] = entries
@@ -358,7 +368,7 @@ class RoseBushService(object):
             task_status = []
             if not isinstance(no_status, list):
                 no_status = [no_status]
-            for key, values in self.bush_dao.TASK_STATUS_GROUPS.items():
+            for key, values in TASK_STATUS_GROUPS.items():
                 if key not in no_status:
                     task_status += values
         return self.taskjobs(
@@ -376,7 +386,7 @@ class RoseBushService(object):
 
         """
         user_suite_dir_root = self._get_user_suite_dir_root(user)
-        conf = ResourceLocator.default().get_conf()
+        conf = GLOBAL_CFG
         per_page_default = int(conf.get_value(
             ["rose-bush", "suites-per-page"], self.SUITES_PER_PAGE))
         if not isinstance(per_page, int):
@@ -392,7 +402,7 @@ class RoseBushService(object):
             "logo": self.logo,
             "title": self.title,
             "host": self.host_name,
-            "rose_version": self.rose_version,
+            "cylc_version": self.cylc_version,
             "script": cherrypy.request.script_name,
             "method": "suites",
             "no_fuzzy_time": no_fuzzy_time,
@@ -414,7 +424,7 @@ class RoseBushService(object):
             name_globs = shlex.split(str(names))
         # Get entries
         sub_names = [
-            ".service", "log", "share", "work", self.bush_dao.SUITE_CONF]
+            ".service", "log", "share", "work", "suite.rc"]
         for dirpath, dnames, fnames in os.walk(
                 user_suite_dir_root, followlinks=True):
             if dirpath != user_suite_dir_root and (
@@ -429,7 +439,6 @@ class RoseBushService(object):
             try:
                 data["entries"].append({
                     "name": item,
-                    "info": {},
                     "last_activity_time": (
                         self.get_last_activity_time(user, item))})
             except OSError:
@@ -455,16 +464,6 @@ class RoseBushService(object):
         # Get suite info for each entry
         for entry in data["entries"]:
             user_suite_dir = os.path.join(user_suite_dir_root, entry["name"])
-            rose_suite_info = os.path.join(user_suite_dir, "rose-suite.info")
-            try:
-                info_root = rose.config.load(rose_suite_info)
-                for key, node in info_root.value.items():
-                    if (node.is_ignored() or
-                            not isinstance(node.value, str)):
-                        continue
-                    entry["info"][key] = node.value
-            except (IOError, rose.config.ConfigSyntaxError):
-                pass
         data["time"] = strftime("%Y-%m-%dT%H:%M:%SZ", gmtime())
         if form == "json":
             return json.dumps(data)
@@ -474,7 +473,7 @@ class RoseBushService(object):
     def get_file(self, user, suite, path, path_in_tar=None, mode=None):
         """Returns file information / content or a cherrypy response."""
         f_name = self._get_user_suite_dir(user, suite, path)
-        conf = ResourceLocator.default().get_conf()
+        conf = GLOBAL_CFG
         view_size_max = int(conf.get_value(
             ["rose-bush", "view-size-max"], self.VIEW_SIZE_MAX))
         if path_in_tar:
@@ -544,20 +543,18 @@ class RoseBushService(object):
             name = "log/" + path_in_tar
         job_entry = None
         if name.startswith("log/job"):
-            names = self.bush_dao.parse_job_log_rel_path(name)
+            names = name.replace("log/job/", "").split("/", 3)
             if len(names) == 4:
                 cycle, task, submit_num, _ = names
-                entries = self.bush_dao.get_suite_job_entries(
+                entries = self.suite_dao.get_suite_job_entries(
                     user, suite, [cycle], [task],
                     None, None, None, None, None)[0]
                 for entry in entries:
                     if entry["submit_num"] == int(submit_num):
                         job_entry = entry
                         break
-        if fnmatch(os.path.basename(path), "rose*.conf"):
-            file_content = "rose-conf"
-        else:
-            file_content = self.bush_dao.is_conf(path)
+        if fnmatch(os.path.basename(path), "suite*.rc*"):
+            file_content = "cylc-suite-rc"
 
         return lines, job_entry, file_content, f_name
 
@@ -645,7 +642,7 @@ class RoseBushService(object):
         data = {}
         data.update(self._get_suite_logs_info(user, suite))
         return template.render(
-            rose_version=self.rose_version,
+            cylc_version=self.cylc_version,
             script=cherrypy.request.script_name,
             method="view",
             time=strftime("%Y-%m-%dT%H:%M:%SZ", gmtime()),
@@ -662,36 +659,13 @@ class RoseBushService(object):
             file_content=file_content,
             lines=lines,
             entry=job_entry,
-            task_status_groups=self.bush_dao.TASK_STATUS_GROUPS,
+            task_status_groups=TASK_STATUS_GROUPS,
             **data)
 
     def _get_suite_logs_info(self, user, suite):
-        """Return a dict with suite logs and Rosie suite info."""
+        """Return a dict with suite logs."""
         data = {"info": {}, "files": {}}
         user_suite_dir = self._get_user_suite_dir(user, suite)
-
-        # rose-suite.info
-        info_name = os.path.join(user_suite_dir, "rose-suite.info")
-        if os.path.isfile(info_name):
-            try:
-                info_root = rose.config.load(info_name)
-                for key, node in info_root.value.items():
-                    if node.is_ignored() or not isinstance(node.value, str):
-                        continue
-                    data["info"][key] = node.value
-            except rose.config.ConfigSyntaxError:
-                pass
-
-        # rose-suite-run.conf, rose-suite-run.log, rose-suite-run.version
-        data["files"]["rose"] = {}
-        for key in ["conf", "log", "version"]:
-            f_name = os.path.join(user_suite_dir, "log/rose-suite-run." + key)
-            if os.path.isfile(f_name):
-                stat = os.stat(f_name)
-                data["files"]["rose"]["log/rose-suite-run." + key] = {
-                    "path": "log/rose-suite-run." + key,
-                    "mtime": stat.st_mtime,
-                    "size": stat.st_size}
 
         # Other recognised formats
         for key in ["html", "txt", "version"]:
@@ -705,7 +679,7 @@ class RoseBushService(object):
                     "mtime": stat.st_mtime,
                     "size": stat.st_size}
 
-        k, logs_info = self.bush_dao.get_suite_logs_info(user, suite)
+        k, logs_info = self.suite_dao.get_suite_logs_info(user, suite)
         data["files"][k] = logs_info
 
         return data
@@ -746,7 +720,7 @@ class RoseBushService(object):
         """Return, e.g. ~user/cylc-run/ for a cylc suite."""
         return self._check_dir_access(os.path.join(
             self._get_user_home(user),
-            self.bush_dao.SUITE_DIR_REL_ROOT))
+            "cylc-run"))
 
     @staticmethod
     def _check_string_for_path(string):
@@ -814,7 +788,7 @@ class RoseBushService(object):
             self._check_path_normalised(path)
         suite_dir = os.path.join(
             self._get_user_home(user),
-            self.bush_dao.SUITE_DIR_REL_ROOT,
+            "cylc-run",
             suite)
         if not paths:
             return self._check_dir_access(suite_dir)
@@ -833,11 +807,26 @@ class RoseBushService(object):
                     suite1.get("last_activity_time")) or
                 cmp(suite1["name"], suite2["name"]))
 
+    @staticmethod
+    def get_util_home(*args):
+        """Return CYLC_HOME or the dirname of the dirname of sys.argv[0].
+
+        If args are specified, they are added to the end of returned path.
+
+        """
+        try:
+            value = os.environ["CYLC_HOME"]
+        except KeyError:
+            value = os.path.abspath(__file__)
+            for _ in range(3):  # assume __file__ under $CYLC_HOME/lib/cylc/
+                value = os.path.dirname(value)
+        return os.path.join(value, *args)
+
 
 if __name__ == "__main__":
-    from rose.ws import ws_cli
-    ws_cli(RoseBushService)
+    from cylc.ws import ws_cli
+    ws_cli(CylcBushService)
 elif 'doctest' not in sys.argv[0]:
     # If called as a module but not by the doctest module.
-    from rose.ws import wsgi_app
-    application = wsgi_app(RoseBushService)
+    from cylc.ws import wsgi_app
+    application = wsgi_app(CylcBushService)

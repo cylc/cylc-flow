@@ -1,22 +1,21 @@
-# -*- coding: utf-8 -*-
-# -----------------------------------------------------------------------------
-# (C) British Crown Copyright 2012-8 Met Office.
+#!/usr/bin/env python
+
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) 2008-2018 NIWA
 #
-# This file is part of Rose, a framework for meteorological suites.
-#
-# Rose is free software: you can redistribute it and/or modify
+# This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Rose is distributed in the hope that it will be useful,
+# This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Rose. If not, see <http://www.gnu.org/licenses/>.
-# -----------------------------------------------------------------------------
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """Web service CLI and mod_wsgi functions.
 
 wsgi_app - Return a WSGI application for a web service.
@@ -28,10 +27,9 @@ import cherrypy
 from glob import glob
 import os
 import signal
-from rose.opt_parse import RoseOptionParser
-from rose.reporter import Reporter
-from rose.resource import ResourceLocator
 
+from cylc.bush import get_util_home
+from cylc.option_parsers import CylcOptionParser as COP
 
 LOG_ROOT_TMPL = "~/.metomi/%(ns)s-%(util)s-%(host)s-%(port)s"
 
@@ -62,9 +60,18 @@ def ws_cli(service_cls, *args, **kwargs):
                   service_cls.NS and service_cls.UTIL. *args and **kwargs are
                   passed to its constructor.
     """
-    opt_parser = RoseOptionParser()
-    opt_parser.add_my_options("non_interactive", "service_root_mode")
-    opts, args = opt_parser.parse_args()
+    parser = COP(__doc__, jset=True, prep=True, icp=True)
+
+    parser.add_option(
+        "--non-interactive", "--yes", "-y",
+        help="Switch off interactive prompting.",
+        action="store_true", default=False, dest="non_interactive")
+    parser.add_option(
+        "--service-root", "-R"
+        help="Include web service name under root of URL.",
+        action="store_true", default=False, dest="service_root_mode")
+
+    opts, args = parser.parse_args()
     arg = None
     if args:
         arg = args[0]
@@ -74,13 +81,10 @@ def ws_cli(service_cls, *args, **kwargs):
             port = args[1]
         _ws_init(service_cls, port, opts.service_root_mode, *args, **kwargs)
     else:
-        report = Reporter(opts.verbosity - opts.quietness)
         status = _get_server_status(service_cls)
-        level = Reporter.DEFAULT
-        if arg != "stop":
-            level = 0
+        # TODO: levels, verbosity & quietness dealt with by set-verbosity etc?
         for key, value in sorted(status.items()):
-            report("%s=%s\n" % (key, value), level=level)
+            print "%s=%s\n" % (key, value)
         if (arg == "stop" and status.get("pid") and
                 (opts.non_interactive or
                  raw_input("Stop server? y/n (default=n)") == "y")):
@@ -144,8 +148,7 @@ def _configure(service_cls):
     cherrypy.config["tools.encode.on"] = True
     cherrypy.config["tools.encode.encoding"] = "utf-8"
     config = {}
-    static_lib = ResourceLocator.default().get_util_home(
-        "lib", "html", "static")
+    static_lib =  get_util_home("lib", "html", "static")
     for name in os.listdir(static_lib):
         path = os.path.join(static_lib, name)
         if os.path.isdir(path):
@@ -161,7 +164,7 @@ def _configure(service_cls):
 
 
 def _get_server_status(service_cls):
-    """Return a dict containing Rose Bush quick server status."""
+    """Return a dict containing 'cylc bush' quick server status."""
     ret = {}
     log_root_glob = os.path.expanduser(LOG_ROOT_TMPL % {
         "ns": service_cls.NS,

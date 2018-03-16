@@ -109,12 +109,15 @@ TASK_STATUSES_CAN_RESET_TO = set([
 ])
 
 # Task statuses that are final.
-TASK_STATUSES_FINAL = set([
+TASK_STATUSES_SUCCESS = set([
     TASK_STATUS_EXPIRED,
-    TASK_STATUS_SUCCEEDED,
-    TASK_STATUS_FAILED,
-    TASK_STATUS_SUBMIT_FAILED,
+    TASK_STATUS_SUCCEEDED
 ])
+TASK_STATUSES_FAILURE = set([
+    TASK_STATUS_FAILED,
+    TASK_STATUS_SUBMIT_FAILED
+])
+TASK_STATUSES_FINAL = TASK_STATUSES_SUCCESS | TASK_STATUSES_FAILURE
 
 # Task statuses that are never active.
 # For tasks that have never been submitted, but excluding:
@@ -166,6 +169,14 @@ TASK_STATUSES_AUTO_EXPAND = set([
     TASK_STATUS_RUNNING,
     TASK_STATUS_FAILED,
 ])
+
+# Tasks statuses grouped as required in cylc <NAMEHERE> (migrated Rose Bush)
+# TODO: check 'submitting' isn't a task state (is in 'active' in bush_dao).
+TASK_STATUS_GROUPS = {
+    "active": list(TASK_STATUSES_NOT_STALLED),
+    "fail": list(TASK_STATUSES_FAILURE),
+    "success": list(TASK_STATUSES_SUCCESS)
+}
 
 
 def status_leq(status_a, status_b):
