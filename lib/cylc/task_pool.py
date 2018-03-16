@@ -52,6 +52,7 @@ from cylc.task_state import (
     TASK_STATUS_RETRYING)
 from cylc.wallclock import (
     get_current_time_string, get_time_string_from_unix_time)
+from parsec.OrderedDict import OrderedDict
 
 
 class TaskPool(object):
@@ -208,7 +209,7 @@ class TaskPool(object):
             itask.state.set_held()
 
         # add to the runahead pool
-        self.runahead_pool.setdefault(itask.point, {})
+        self.runahead_pool.setdefault(itask.point, OrderedDict())
         self.runahead_pool[itask.point][itask.identity] = itask
         self.rhpool_changed = True
 
@@ -460,7 +461,7 @@ class TaskPool(object):
             queue = self.myq[itask.tdef.name]
         except KeyError:
             queue = self.config.Q_DEFAULT
-        self.queues.setdefault(queue, {})
+        self.queues.setdefault(queue, OrderedDict())
         self.queues[queue][itask.identity] = itask
         self.pool.setdefault(itask.point, {})
         self.pool[itask.point][itask.identity] = itask
@@ -568,25 +569,32 @@ class TaskPool(object):
         Return the tasks that are dequeued.
         """
 
-        # 1) queue unqueued tasks that are ready to run or manually forced
         now = time()
-        for itask in self.get_tasks():
-            if itask.state.status != TASK_STATUS_QUEUED:
-                # only need to check that unqueued tasks are ready
-                if itask.manual_trigger or itask.ready_to_run(now):
-                    # queue the task
-                    itask.state.reset_state(TASK_STATUS_QUEUED)
-                    itask.reset_manual_trigger()
-
-        # 2) submit queued tasks if manually forced or not queue-limited
         ready_tasks = []
         qconfig = self.config.cfg['scheduling']['queues']
+
         for queue in self.queues:
-            # 2.1) count active tasks and compare to queue limit
+            tasks = self.queues[queue].values()
+
+            # 1) queue unqueued tasks that are ready to run or manually forced
+            for itask in tasks:
+                if itask.state.status != TASK_STATUS_QUEUED:
+                    # only need to check that unqueued tasks are ready
+                    if itask.manual_trigger or itask.ready_to_run(now):
+                        # queue the task
+                        itask.state.reset_state(TASK_STATUS_QUEUED)
+                        itask.reset_manual_trigger()
+                        # move the task to the back of the queue
+                        self.queues[queue][itask.identity] = \
+                            self.queues[queue].pop(itask.identity)
+
+            # 2) submit queued tasks if manually forced or not queue-limited
             n_active = 0
             n_release = 0
             n_limit = qconfig[queue]['limit']
             tasks = self.queues[queue].values()
+
+            # 2.1) count active tasks and compare to queue limit
             if n_limit:
                 for itask in tasks:
                     if itask.state.status in [TASK_STATUS_READY,
@@ -674,8 +682,7 @@ class TaskPool(object):
                 if itask.tdef.name not in self.myq:
                     continue
                 key = self.myq[itask.tdef.name]
-                if key not in new_queues:
-                    new_queues[key] = {}
+                new_queues.setdefault(key, OrderedDict())
                 new_queues[key][id_] = itask
         self.queues = new_queues
 

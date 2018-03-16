@@ -6857,7 +6857,10 @@ see~\ref{runahead limit}.
 Large suites can potentially overwhelm task hosts by submitting too many
 tasks at once. You can prevent this with {\em internal queues}, which
 limit the number of tasks that can be active (submitted or running)
-at the some time.
+at the same time.
+
+Internal queues behave in the first-in-first-out (FIFO) manner, i.e.\ tasks are
+released from a queue in the same order that they were queued.
 
 A queue is defined by a {\em name}; a {\em limit}, which is the maximum
 number of active tasks allowed for the queue; and a list of {\em members},
