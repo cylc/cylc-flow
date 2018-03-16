@@ -545,6 +545,13 @@ class CylcSuiteDAO(object):
             ",".join(attrs), self.TABLE_TASK_ACTION_TIMERS)
         for row_idx, row in enumerate(self.connect().execute(stmt)):
             callback(row_idx, list(row))
+        except:
+            '''
+            Try upgrade on database - see if pickle rather than JSON
+            '''
+            my_file=open('/home/h04/aplh/rose_test_out.txt','w')
+            print >> my_file, 'error has been found!'
+            my_file.close()
 
     def select_task_job(self, keys, cycle, name, submit_num=None):
         """Select items from task_jobs by (cycle, name, submit_num).
