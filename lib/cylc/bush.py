@@ -65,25 +65,12 @@ class CylcBushService(object):
     def __init__(self, *args, **kwargs):
         self.exposed = True
         self.suite_dao = CylcBushDAO()
-        conf = GLOBAL_CFG
-        self.logo = conf.get_value(["cylc-bush", "logo"])
-        self.title = conf.get_value(["cylc-bush", "title"], self.TITLE)
-        self.host_name = conf.get_value(["cylc-bush", "host"])
-        if self.host_name is None:
-            self.host_name = get_host()
-            if self.host_name and "." in self.host_name:
-                self.host_name = self.host_name.split(".", 1)[0]
+        self.logo = os.path.join("cylc", "doc", "src", "cylc-logo.png")
+        self.title = self.TITLE
+        self.host_name = get_host()
+        if self.host_name and "." in self.host_name:
+            self.host_name = self.host_name.split(".", 1)[0]
         self.cylc_version = CYLC_VERSION
-
-        try:
-            value = os.environ["CYLC_HOME"]
-        except KeyError:
-            value = os.path.abspath(__file__)
-            for _ in range(4):
-                value = os.path.dirname(value)
-        return os.path.join(value, *args)
-
-
         template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(
             get_util_home("lib", "cylc", "cylc-bush", "template")))
         template_env.filters['urlise'] = self.url2hyperlink
@@ -176,9 +163,7 @@ class CylcBushService(object):
             self, user, suite, page=1, order=None, per_page=None,
             no_fuzzy_time="0", form=None):
         """List cycles of a running or completed suite."""
-        conf = GLOBAL_CFG
-        per_page_default = int(conf.get_value(
-            ["rose-bush", "cycles-per-page"], self.CYCLES_PER_PAGE))
+        per_page_default = self.CYCLES_PER_PAGE
         if not isinstance(per_page, int):
             if per_page:
                 per_page = int(per_page)
@@ -270,11 +255,8 @@ class CylcBushService(object):
                 return a JSON data structure.
 
         """
-        conf = GLOBAL_CFG
-        per_page_default = int(conf.get_value(
-            ["rose-bush", "jobs-per-page"], self.JOBS_PER_PAGE))
-        per_page_max = int(conf.get_value(
-            ["rose-bush", "jobs-per-page-max"], self.JOBS_PER_PAGE_MAX))
+        per_page_default = self.JOBS_PER_PAGE
+        per_page_max = self.JOBS_PER_PAGE_MAX
         if not isinstance(per_page, int):
             if per_page:
                 per_page = int(per_page)
@@ -387,9 +369,7 @@ class CylcBushService(object):
 
         """
         user_suite_dir_root = self._get_user_suite_dir_root(user)
-        conf = GLOBAL_CFG
-        per_page_default = int(conf.get_value(
-            ["rose-bush", "suites-per-page"], self.SUITES_PER_PAGE))
+        per_page_default = self.SUITES_PER_PAGE
         if not isinstance(per_page, int):
             if per_page:
                 per_page = int(per_page)
@@ -474,9 +454,7 @@ class CylcBushService(object):
     def get_file(self, user, suite, path, path_in_tar=None, mode=None):
         """Returns file information / content or a cherrypy response."""
         f_name = self._get_user_suite_dir(user, suite, path)
-        conf = GLOBAL_CFG
-        view_size_max = int(conf.get_value(
-            ["rose-bush", "view-size-max"], self.VIEW_SIZE_MAX))
+        view_size_max = self.VIEW_SIZE_MAX
         if path_in_tar:
             tar_f = tarfile.open(f_name, "r:gz")
             try:
