@@ -543,8 +543,9 @@ class CylcSuiteDAO(object):
             attrs.append(item[0])
         stmt = r"SELECT %s FROM %s" % (
             ",".join(attrs), self.TABLE_TASK_ACTION_TIMERS)
-        for row_idx, row in enumerate(self.connect().execute(stmt)):
-            callback(row_idx, list(row))
+        try:
+            for row_idx, row in enumerate(self.connect().execute(stmt)):
+                callback(row_idx, list(row))
         except:
             '''
             Try upgrade on database - see if pickle rather than JSON
