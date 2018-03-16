@@ -28,7 +28,6 @@ from glob import glob
 import os
 import signal
 
-from cylc.bush import get_util_home
 from cylc.option_parsers import CylcOptionParser as COP
 
 LOG_ROOT_TMPL = "~/.metomi/%(ns)s-%(util)s-%(host)s-%(port)s"
@@ -67,7 +66,7 @@ def ws_cli(service_cls, *args, **kwargs):
         help="Switch off interactive prompting.",
         action="store_true", default=False, dest="non_interactive")
     parser.add_option(
-        "--service-root", "-R"
+        "--service-root", "-R",
         help="Include web service name under root of URL.",
         action="store_true", default=False, dest="service_root_mode")
 
@@ -180,3 +179,19 @@ def _get_server_status(service_cls):
         except (IOError, ValueError):
             pass
     return ret
+
+
+# Define this here to prevent circular import dependency with 'bush.py'
+def get_util_home(*args):
+    """Return CYLC_HOME or the dirname of the dirname of sys.argv[0].
+
+    If args are specified, they are added to the end of returned path.
+
+    """
+    try:
+        value = os.environ["CYLC_HOME"]
+    except KeyError:
+        value = os.path.abspath(__file__)
+        for _ in range(3):  # assume __file__ under $CYLC_HOME/lib/cylc/
+            value = os.path.dirname(value)
+    return os.path.join(value, *args)

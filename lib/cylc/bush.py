@@ -41,6 +41,7 @@ from cylc.hostuserutil import get_host
 from cylc.rundb import CylcSuiteDAO
 from cylc.task_state import (
     TASK_STATUSES_ORDERED, TASK_STATUS_GROUPS)
+from cylc.ws import get_util_home
 
 
 class CylcBushService(object):
@@ -807,20 +808,6 @@ class CylcBushService(object):
                     suite1.get("last_activity_time")) or
                 cmp(suite1["name"], suite2["name"]))
 
-    @staticmethod
-    def get_util_home(*args):
-        """Return CYLC_HOME or the dirname of the dirname of sys.argv[0].
-
-        If args are specified, they are added to the end of returned path.
-
-        """
-        try:
-            value = os.environ["CYLC_HOME"]
-        except KeyError:
-            value = os.path.abspath(__file__)
-            for _ in range(3):  # assume __file__ under $CYLC_HOME/lib/cylc/
-                value = os.path.dirname(value)
-        return os.path.join(value, *args)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) 2008-2018 NIWA
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+#----------------------------------------------------------------------------
+#NAME
+#    rose bush
+#
+#SYNOPSIS
+#    rose bush start [PORT] # start ad-hoc web service server (on PORT)
+#    rose bush stop         # stop ad-hoc web service server
+#    rose bush stop -y      # stop ad-hoc web service server w/o prompting
+#    rose bush              # print status of ad-hoc web service server
+#
+#DESCRIPTION
+#    Start/stop ad-hoc Rose Bush web service server.
+#
+#    For "rose bush start", if PORT is not specified, use port 8080.
+#
+#    Rose Bush is a web service for browsing users' Rose suite logs via an
+#    HTTP interface.
+#
+#OPTIONS
+#    --non-interactive, --yes, -y
+#        (For stop only.) Switch off interactive prompting (=answer yes to
+#        everything)
+#    --service-root, -R
+#        (For start only.) Include web service name under root of URL.
+#----------------------------------------------------------------------------
+
+exec python -m cylc.bush "$@"
