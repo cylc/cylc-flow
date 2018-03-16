@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>{{title}} @ {{host}} - Browse User Suite-logs on HTTP</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="{{script}}/favicon.ico" />
+<link rel="shortcut icon" href="{{script}}/favicon.ico" />
+<link type="text/css" href="{{script}}/css/bootstrap.min.css"
+rel="stylesheet" media="screen" />
+<link type="text/css" href="{{script}}/css/rose-bush.css" rel="stylesheet" media="screen" />
+</head>
+<body>
+<div class="container-fluid">
+<div class="jumbotron">
+{% if logo -%}
+<img {{logo}} />
+{% endif -%}
+<h1>{{title}} <small>@ {{host}}</small></h1>
+<p>Browse User Suite-logs on HTTP</p>
+<p class="pull-right"><small>Rose {{rose_version}}</small></p>
+</div>
+<div class="row">
+<div class="col-md-4">
+<form action="{{script}}/suites" class="form-inline">
+<fieldset class="form-group">
+<legend>User's Suites List:</legend>
+<input id="user" name="user" type="text" class="form-control"
+placeholder="User ID" required="1" />
+<input type="submit" class="btn btn-primary" value="Suites List" />
+</fieldset>
+</form>
+</div>
+<div class="col-md-8">
+<form action="{{script}}/taskjobs" class="form-inline">
+<fieldset class="form-group">
+<legend>User's Suite Cycles or Jobs List:</legend>
+<input id="user" name="user" type="text" class="input-short form-control"
+placeholder="User ID" required="1" />
+<input id="suite" name="suite" type="text" class="form-control input-short"
+placeholder="Suite ID" required="1" />
+<input type="submit" class="btn btn-primary" value="Cycles List"
+formaction="{{script}}/cycles" />
+<input type="submit" class="btn btn-primary" value="Jobs List" />
+<input type="submit" class="btn btn-primary" value="Broadcasts List"
+formaction="{{script}}/broadcast_states" />
+</fieldset>
+</form>
+</div>
+</div>
+</div>
+<script src="{{script}}/js/jquery.min.js"></script>
+<script src="{{script}}/js/bootstrap.min.js"></script>
+</body>
+</html>
+<body>

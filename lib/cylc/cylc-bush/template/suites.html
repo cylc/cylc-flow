@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>{{user}}: {{title}}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="refresh" content="120">
+<link rel="icon" href="{{script}}/favicon.ico" />
+<link rel="shortcut icon" href="{{script}}/favicon.ico" />
+<link type="text/css" href="{{script}}/css/bootstrap.min.css"
+rel="stylesheet" media="screen" />
+<link type="text/css" href="{{script}}/css/rose-bush.css" rel="stylesheet" media="screen" />
+</head>
+<body>
+
+<!-- Static navbar -->
+<nav class="navbar navbar-default">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed"
+      data-toggle="collapse" data-target="#navbar" aria-expanded="false"
+      aria-controls="navbar">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="{{script}}/">
+        {% if logo -%}
+        <img {{logo}} />
+        {% endif -%}
+        {{title}} <small>@ {{host}}</small>
+      </a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li class="active"><a href="#"><strong>{{user}}</strong></a></li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+          <span class="navbar-text">
+            {{entries|length}} installed suite(s)
+            <span class="label label-default">
+              <abbr class="livestamp" title="{{time}}">{{time}}</abbr>
+            </span>
+          </span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="page-header">
+  <div class="panel-group" id="accordion-0">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <a class="accordion-toggle" data-toggle="collapse"
+        data-parent="#accordion-0" href="#filter">
+          <i class="glyphicon glyphicon-wrench"></i>
+          Display Options
+        </a>
+      </div>
+      <div id="filter"
+      class="panel-collapse collapse{% if not is_option_on %} in{% endif %}">
+        <div class="panel-body">
+          <form action="{{script}}/{{method}}">
+            <input type="hidden" name="user" value="{{user}}" />
+            <input type="hidden" name="no_fuzzy_time" value="{{no_fuzzy_time}}" />
+            <div class="row">
+
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label for="names">Names (Default=*)</label>
+                  <input type="text" name="names" class="form-control"
+                  title="Names (Default=*)"
+                  placeholder="Names (Default=*)"
+                  {% if names -%}value="{{names}}"{% endif -%}
+                  />
+                </div>
+              </div>
+
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label for="per_page">Entries/Page (Default=100)</label>
+                  <input id="per_page" type="text" name="per_page"
+                  title="Entries/Page, 0=unlimited" class="form-control"
+                  placeholder="Entries/Page (Default={{per_page_default}})"
+                  {% if per_page is defined and per_page != per_page_default -%}
+                  value="{{per_page}}"
+                  {% endif -%}
+                  />
+                </div>
+              </div>
+
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label for="order">Sort Order</label>
+                  <select name="order" title="Sort Order" class="form-control">
+                  {% for k, v in [
+                      ("time_desc", "new-&gt;old"),
+                      ("time_asc", "old-&gt;new"),
+                      ("name_asc", "a-z suite name"),
+                      ("name_desc", "z-a suite name"),
+                  ] -%}
+                    <option
+                    {% if order and order == k -%}selected="selected"{% endif -%}
+                    value="{{k}}">{{v}}</option>
+                  {% endfor -%}
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-md-3">
+                <div class="btn-group pull-right">
+                  <input type="reset" class="btn" value="reset"
+                  title="Reset Display Options"/>
+                  <input type="submit" class="btn btn-primary" value="update"
+                  title="Update Display Options"/>
+                </div>
+              </div>
+
+            </div> <!-- /row -->
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% include "pager.html" -%}
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-12 text-right">
+      <a id="toggle-fuzzy-time" data-no-fuzzy-time="{{no_fuzzy_time}}" href="#">
+        <small>toggle &Delta;t</small>
+      </a>
+    </div>
+  </div>
+</div>
+
+<table summary="suites entries"
+class="table table-bordered table-condensed table-striped">
+  <thead>
+    <tr>
+      <th>suite name</th>
+
+      <th>
+        cycles list
+      </th>
+
+      <th>
+        task jobs list
+      </th>
+
+      <th>
+        last active time
+      </th>
+
+      <th>
+        project
+      </th>
+
+      <th>
+        title
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+{% for entry in entries -%}
+    <tr>
+      <td><small>{{entry.name}}</small></td>
+      <td>
+        <small>
+          <a href="{{script}}/cycles/{{user}}/?suite={{entry.name|replace('/', '%2F')}}">cycles list</a>
+        </small>
+      </td>
+
+      <td>
+        <small>
+          <a href="{{script}}/taskjobs/{{user}}/?suite={{entry.name|replace('/', '%2F')}}">task jobs list</a>
+        </small>
+      </td>
+
+      <td>
+        <small>
+          <abbr class="livestamp"
+          title="{{entry.last_activity_time}}">{{entry.last_activity_time}}</abbr>
+        </small>
+      </td>
+
+      <td><small>{{entry.info["project"]}}</small></td>
+
+      <td><small>{{entry.info["title"]}}</small></td>
+
+    </tr>
+{% endfor -%}{# entry in entries #}
+  </tbody>
+</table>
+
+<hr/>
+<address text-right><small>Rose {{rose_version}}</small></address>
+
+<script type="text/javascript" src="{{script}}/js/jquery.min.js"></script>
+<script type="text/javascript" src="{{script}}/js/bootstrap.min.js">
+</script>
+<script type="text/javascript" src="{{script}}/js/moment.min.js">
+</script>
+<script type="text/javascript" src="{{script}}/js/livestamp.min.js">
+</script>
+<script type="text/javascript" src="{{script}}/js/rose-bush.js">
+</script>
+</body>
+</html>

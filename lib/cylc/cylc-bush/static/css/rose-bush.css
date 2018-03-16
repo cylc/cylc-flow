@@ -1,0 +1,116 @@
+pre {
+    white-space: pre;
+}
+.entry {
+    border-radius: 5px;
+    padding: 5px;
+}
+.even {
+    background: #eee;
+}
+.inline {
+    margin: 0;
+}
+.page-header {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+.highlight {
+    background-color: yellow;
+}
+.line-number {
+    cursor: pointer;
+}
+.badge-label {
+    border-radius: 1em;
+}
+
+
+@media screen {
+    div.top_nav {
+        position: fixed;
+        bottom: 0;
+        background-color: lightgrey;
+        z-index: 10;
+     }
+    .next {
+        background: white
+     }
+    .previous {
+        background: white
+     }
+    .page_entries select {
+        width: 300px;
+     }
+}
+
+
+/* dropdown-submenu code from bootstrap v2.3.1 (removed in v3.x)
+   see boostrap v2.3.1 docs/assets/css/boostrap.css #3031->3075 */
+.dropdown-submenu {
+  position: relative;
+}
+
+.dropdown-submenu > .dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  -webkit-border-radius: 0 6px 6px 6px;
+     -moz-border-radius: 0 6px 6px 6px;
+          border-radius: 0 6px 6px 6px;
+}
+
+.dropdown-submenu:hover > .dropdown-menu {
+  display: block;
+}
+
+.dropup .dropdown-submenu > .dropdown-menu {
+  top: auto;
+  bottom: 0;
+  margin-top: 0;
+  margin-bottom: -2px;
+  -webkit-border-radius: 5px 5px 5px 0;
+     -moz-border-radius: 5px 5px 5px 0;
+          border-radius: 5px 5px 5px 0;
+}
+
+.dropdown-submenu > a:after {
+  display: block;
+  float: right;
+  width: 0;
+  height: 0;
+  margin-top: 5px;
+  margin-right: -10px;
+  border-color: transparent;
+  border-left-color: #cccccc;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  content: " ";
+}
+
+.dropdown-submenu:hover > a:after {
+  //border-left-color: #ffffff;
+  border-left-color: #222222;  // make the right arrow visible on hover
+}
+
+.dropdown-submenu.pull-left {
+  float: none;
+}
+
+.dropdown-submenu.pull-left > .dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  -webkit-border-radius: 6px 0 6px 6px;
+     -moz-border-radius: 6px 0 6px 6px;
+          border-radius: 6px 0 6px 6px;
+}
+
+@-moz-document url-prefix() {
+  fieldset { display: table-cell; }
+}
+
+th,
+.livestamp {
+  white-space: nowrap;
+}
