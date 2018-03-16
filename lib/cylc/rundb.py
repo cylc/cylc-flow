@@ -533,6 +533,17 @@ class CylcSuiteDAO(object):
                 r"SELECT key,value FROM %s" % self.TABLE_SUITE_TEMPLATE_VARS)):
             callback(row_idx, list(row))
 
+    def select_table_schema(self, my_type="table",
+                            my_name="task_action_timers"):
+        """Select from task_action_timers for restart.
+
+        Invoke callback(row_idx, row) on each row.
+        """
+        for row_idx, row in enumerate(self.connect().execute(
+                r"SELECT sql FROM sqlite_master where type==? and name==?",
+                [my_type, my_name])):
+            return row_idx, row
+
     def select_task_action_timers(self, callback):
         """Select from task_action_timers for restart.
 
@@ -550,7 +561,7 @@ class CylcSuiteDAO(object):
             '''
             Try upgrade on database - see if pickle rather than JSON
             '''
-            my_file=open('/home/h04/aplh/rose_test_out.txt','w')
+            my_file = open('/home/h04/aplh/rose_test_out.txt', 'a')
             print >> my_file, 'An error has been found!'
             my_file.close()
 
@@ -909,6 +920,41 @@ class CylcSuiteDAO(object):
 
         # Drop old tables
         for t_name in [self.TABLE_TASK_STATES, self.TABLE_TASK_EVENTS]:
+            conn.execute(r"DROP TABLE " + t_name + "_old")
+        conn.commit()
+
+    def upgrade_pickle_to_json(self):
+        """Upgrade the database tables if containing pickled objects."""
+        conn = self.connect()
+
+        # Rename old tables
+        for t_name in [self.TABLE_TASK_ACTION_TIMERS]:
+            conn.execute(
+                r"ALTER TABLE " + t_name +
+                r" RENAME TO " + t_name + "_old")
+        conn.commit()
+
+        # Create tables with new columns
+        self.create_tables()
+
+        # Populate new tables using old column data
+        for t_name in [self.TABLE_TASK_ACTION_TIMERS]:
+            sys.stdout.write(r"Upgrading %s table " % (t_name))
+            column_names = [col.name for col in self.tables[t_name].columns]
+            for i, row in enumerate(conn.execute(
+                    r"SELECT " + ",".join(column_names) +
+                    " FROM " + t_name + "_old")):
+                # These tables can be big, so we don't want to queue the items
+                # in memory.
+                conn.execute(self.tables[t_name].get_insert_stmt(), list(row))
+                if i:
+                    sys.stdout.write("\b" * len("%d rows" % (i)))
+                sys.stdout.write("%d rows" % (i + 1))
+            sys.stdout.write(" done\n")
+        conn.commit()
+
+        # Drop old tables
+        for t_name in [self.TABLE_TASK_ACTION_TIMERS]:
             conn.execute(r"DROP TABLE " + t_name + "_old")
         conn.commit()
 
