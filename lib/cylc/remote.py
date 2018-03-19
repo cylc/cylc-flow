@@ -25,6 +25,7 @@ from subprocess import Popen
 import sys
 from textwrap import TextWrapper
 
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
 
 
@@ -85,13 +86,12 @@ class RemoteRunner(object):
         if not self.is_remote:
             return False
 
-        from cylc.cfgspec.globalcfg import GLOBAL_CFG
         from cylc.version import CYLC_VERSION
 
         name = os.path.basename(self.argv[0])[5:]  # /path/to/cylc-foo => foo
 
         # Build the remote command
-        command = shlex.split(GLOBAL_CFG.get_host_item(
+        command = shlex.split(glbl_cfg().get_host_item(
             "ssh command", self.host, self.owner))
         if forward_x11:
             command.append("-Y")
@@ -108,7 +108,7 @@ class RemoteRunner(object):
         # Use bash -l?
         ssh_login_shell = self.ssh_login_shell
         if ssh_login_shell is None:
-            ssh_login_shell = GLOBAL_CFG.get_host_item(
+            ssh_login_shell = glbl_cfg().get_host_item(
                 "use login shell", self.host, self.owner)
 
         # Pass cylc version through.
@@ -124,7 +124,7 @@ class RemoteRunner(object):
         if path:
             command.append(os.sep.join(path + ["cylc"]))
         else:
-            command.append(GLOBAL_CFG.get_host_item(
+            command.append(glbl_cfg().get_host_item(
                 "cylc executable", self.host, self.owner))
 
         command.append(name)

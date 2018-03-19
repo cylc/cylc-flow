@@ -24,7 +24,7 @@ import threading
 from time import sleep
 import traceback
 
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
 from cylc.graphing import CGraphPlain
 from cylc.gui.warning_dialog import warning_dialog
@@ -120,7 +120,7 @@ class GraphUpdater(threading.Thread):
             self.group_all = True
 
         self.graph_frame_count = 0
-        self.suite_share_dir = GLOBAL_CFG.get_derived_host_item(
+        self.suite_share_dir = glbl_cfg().get_derived_host_item(
             self.cfg.suite, 'suite share directory')
 
     def toggle_write_dot_frames(self):

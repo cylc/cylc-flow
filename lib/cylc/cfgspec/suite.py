@@ -30,7 +30,7 @@ from isodatetime.parsers import TimePointParser, DurationParser
 
 from cylc.cfgspec.utils import (
     coerce_interval, coerce_interval_list, DurationFloat)
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.network import PRIVILEGE_LEVELS, PRIV_SHUTDOWN
 from cylc.task_id import TaskID
 
@@ -201,7 +201,7 @@ SPEC = {
     },
     'cylc': {
         'UTC mode': vdr(
-            vtype='boolean', default=GLOBAL_CFG.get(['cylc', 'UTC mode'])),
+            vtype='boolean', default=glbl_cfg().get(['cylc', 'UTC mode'])),
         'cycle point format': vdr(
             vtype='cycletime_format', default=None),
         'cycle point num expanded year digits': vdr(
@@ -286,7 +286,7 @@ SPEC = {
                 vtype='string',
                 options=PRIVILEGE_LEVELS[
                     :PRIVILEGE_LEVELS.index(PRIV_SHUTDOWN) + 1],
-                default=GLOBAL_CFG.get(['authentication', 'public']))
+                default=glbl_cfg().get(['authentication', 'public']))
         },
     },
     'scheduling': {

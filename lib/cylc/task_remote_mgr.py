@@ -33,7 +33,7 @@ from tempfile import NamedTemporaryFile
 from time import time
 from uuid import uuid4
 
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
 from cylc.hostuserutil import is_remote, is_remote_host, is_remote_user
 from cylc.mp_pool import SuiteProcContext
@@ -117,7 +117,7 @@ class TaskRemoteMgr(object):
                     host_str = value  # command succeeded
             else:
                 # Command not launched (or already reset)
-                timeout = GLOBAL_CFG.get(['task host select command timeout'])
+                timeout = glbl_cfg().get(['task host select command timeout'])
                 if timeout:
                     cmd = ['timeout', str(int(timeout)), 'bash', '-c', cmd_str]
                 else:
@@ -209,7 +209,7 @@ class TaskRemoteMgr(object):
         if cylc.flags.debug:
             cmd.append('--debug')
         cmd.append(str(self.uuid))
-        cmd.append(GLOBAL_CFG.get_derived_host_item(
+        cmd.append(glbl_cfg().get_derived_host_item(
             self.suite, 'suite run directory', host, owner))
         self.proc_pool.put_command(
             SuiteProcContext(
@@ -248,7 +248,7 @@ class TaskRemoteMgr(object):
                 cmd.append('--user=%s' % owner)
             if cylc.flags.debug:
                 cmd.append('--debug')
-            cmd.append(os.path.join(GLOBAL_CFG.get_derived_host_item(
+            cmd.append(os.path.join(glbl_cfg().get_derived_host_item(
                 self.suite, 'suite run directory', host, owner)))
             procs[(host, owner)] = (
                 cmd,
@@ -319,7 +319,7 @@ class TaskRemoteMgr(object):
         where name is relative path under suite run directory.
         """
         items = []
-        comm_meth = GLOBAL_CFG.get_host_item(
+        comm_meth = glbl_cfg().get_host_item(
             'task communication method', host, owner)
         LOG.debug('comm_meth=%s' % comm_meth)
         if comm_meth in ['ssh', 'http', 'https']:

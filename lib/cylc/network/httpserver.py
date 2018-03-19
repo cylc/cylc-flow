@@ -30,7 +30,7 @@ import traceback
 from uuid import uuid4
 
 import cherrypy
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.exceptions import CylcError
 import cylc.flags
 from cylc.network import (
@@ -57,13 +57,13 @@ class HTTPServer(object):
         self.port = None
 
         # Figure out the ports we are allowed to use.
-        base_port = GLOBAL_CFG.get(['communication', 'base port'])
-        max_ports = GLOBAL_CFG.get(
+        base_port = glbl_cfg().get(['communication', 'base port'])
+        max_ports = glbl_cfg().get(
             ['communication', 'maximum number of ports'])
         self.ok_ports = range(int(base_port), int(base_port) + int(max_ports))
         random.shuffle(self.ok_ports)
 
-        comms_options = GLOBAL_CFG.get(['communication', 'options'])
+        comms_options = glbl_cfg().get(['communication', 'options'])
 
         # HTTP Digest Auth uses MD5 - pretty secure in this use case.
         # Extending it with extra algorithms is allowed, but won't be
@@ -74,7 +74,7 @@ class HTTPServer(object):
             self.hash_algorithm = "SHA"
 
         self.srv_files_mgr = SuiteSrvFilesManager()
-        self.comms_method = GLOBAL_CFG.get(['communication', 'method'])
+        self.comms_method = glbl_cfg().get(['communication', 'method'])
         self.get_ha1 = cherrypy.lib.auth_digest.get_ha1_dict_plain(
             {
                 'cylc': self.srv_files_mgr.get_auth_item(

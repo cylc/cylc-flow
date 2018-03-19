@@ -28,7 +28,7 @@ from subprocess import Popen, PIPE, STDOUT
 import threading
 from time import sleep
 
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.gui.warning_dialog import warning_dialog
 
 
@@ -85,16 +85,16 @@ class Tailer(threading.Thread):
                 owner, host = user_at_host.split("@", 1)
             else:
                 owner, host = (None, user_at_host)
-            ssh = str(GLOBAL_CFG.get_host_item("ssh command", host, owner))
+            ssh = str(glbl_cfg().get_host_item("ssh command", host, owner))
             command = shlex.split(ssh) + ["-n", user_at_host]
             if not cmd_tmpl:
-                cmd_tmpl = str(GLOBAL_CFG.get_host_item(
+                cmd_tmpl = str(glbl_cfg().get_host_item(
                     "remote tail command template", host, owner))
             command.append(cmd_tmpl % {"filename": filename})
         else:
             filename = self.filename
             if not cmd_tmpl:
-                cmd_tmpl = str(GLOBAL_CFG.get_host_item(
+                cmd_tmpl = str(glbl_cfg().get_host_item(
                     "local tail command template"))
             command += shlex.split(cmd_tmpl % {"filename": filename})
 

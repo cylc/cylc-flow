@@ -39,7 +39,7 @@ import traceback
 from parsec.config import ItemNotFoundError
 
 from cylc.broadcast_mgr import BroadcastMgr
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
 from cylc.mp_pool import SuiteProcContext
 from cylc.suite_logging import ERR, LOG
@@ -134,7 +134,7 @@ class TaskEventsManager(object):
             return itask.tdef.rtconfig[skey][key]
         else:
             try:
-                return GLOBAL_CFG.get_host_item(
+                return glbl_cfg().get_host_item(
                     key, itask.task_host, itask.task_owner)
             except (KeyError, ItemNotFoundError):
                 pass
@@ -150,7 +150,7 @@ class TaskEventsManager(object):
             self, suite, point, name, submit_num=None, tail=None):
         """Return the job log path."""
         args = [
-            GLOBAL_CFG.get_derived_host_item(suite, "suite job log directory"),
+            glbl_cfg().get_derived_host_item(suite, "suite job log directory"),
             self.get_task_job_id(point, name, submit_num)]
         if tail:
             args.append(tail)
@@ -513,7 +513,7 @@ class TaskEventsManager(object):
         for getter in [
                 self.broadcast_mgr.get_broadcast(itask.identity).get("events"),
                 itask.tdef.rtconfig["events"],
-                GLOBAL_CFG.get()["task events"]]:
+                glbl_cfg().get()["task events"]]:
             try:
                 value = getter.get(key)
             except (AttributeError, ItemNotFoundError, KeyError):
@@ -529,8 +529,8 @@ class TaskEventsManager(object):
             s_user, s_host = ctx.user_at_host.split("@", 1)
         else:
             s_user, s_host = (None, ctx.user_at_host)
-        ssh_str = str(GLOBAL_CFG.get_host_item("ssh command", s_host, s_user))
-        rsync_str = str(GLOBAL_CFG.get_host_item(
+        ssh_str = str(glbl_cfg().get_host_item("ssh command", s_host, s_user))
+        rsync_str = str(glbl_cfg().get_host_item(
             "retrieve job logs command", s_host, s_user))
 
         cmd = shlex.split(rsync_str) + ["--rsh=" + ssh_str]
@@ -549,10 +549,10 @@ class TaskEventsManager(object):
         cmd += ["--include=%s" % (include) for include in sorted(includes)]
         cmd.append("--exclude=/**")  # exclude everything else
         # Remote source
-        cmd.append(ctx.user_at_host + ":" + GLOBAL_CFG.get_derived_host_item(
+        cmd.append(ctx.user_at_host + ":" + glbl_cfg().get_derived_host_item(
             schd_ctx.suite, "suite job log directory", s_host, s_user) + "/")
         # Local target
-        cmd.append(GLOBAL_CFG.get_derived_host_item(
+        cmd.append(glbl_cfg().get_derived_host_item(
             schd_ctx.suite, "suite job log directory") + "/")
         self.proc_pool.put_command(
             SuiteProcContext(ctx, cmd, env=dict(os.environ), id_keys=id_keys),

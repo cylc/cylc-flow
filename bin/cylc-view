@@ -42,7 +42,7 @@ import shlex
 from subprocess import call
 
 import cylc.flags
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.templatevars import load_template_vars
@@ -109,11 +109,11 @@ def main():
     options, args = parser.parse_args()
     suite, suiterc = SuiteSrvFilesManager().parse_suite_arg(options, args[0])
 
-    cylc_tmpdir = GLOBAL_CFG.get_tmpdir()
+    cylc_tmpdir = glbl_cfg().get_tmpdir()
     if options.geditor:
-        editor = GLOBAL_CFG.get(['editors', 'gui'])
+        editor = glbl_cfg().get(['editors', 'gui'])
     else:
-        editor = GLOBAL_CFG.get(['editors', 'terminal'])
+        editor = glbl_cfg().get(['editors', 'terminal'])
 
     # read in the suite.rc file
     viewcfg = {'mark': options.mark,

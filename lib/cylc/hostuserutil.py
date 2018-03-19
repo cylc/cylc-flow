@@ -51,6 +51,8 @@ import pwd
 import socket
 from time import time
 
+from cylc.cfgspec.glbl_cfg import glbl_cfg
+
 
 class HostUtil(object):
     """host and user ID utility."""
@@ -122,8 +124,7 @@ class HostUtil(object):
     @staticmethod
     def _get_identification_cfg(key):
         """Return the [suite host self-identification]key global conf."""
-        from cylc.cfgspec.globalcfg import GLOBAL_CFG
-        return GLOBAL_CFG.get(['suite host self-identification', key])
+        return glbl_cfg().get(['suite host self-identification', key])
 
     def get_host(self):
         """Return the preferred identifier for the suite (or current) host.

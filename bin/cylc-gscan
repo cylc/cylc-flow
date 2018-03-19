@@ -40,7 +40,7 @@ gtk.settings_get_default().set_long_property(
 gtk.settings_get_default().set_long_property(
     "gtk-menu-images", True, "main")
 
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.gui.gscan import ScanApp
 from cylc.option_parsers import CylcOptionParser as COP
 
@@ -81,7 +81,7 @@ def main():
     options, args = parser.parse_args()
 
     if options.all_ports:
-        args.extend(GLOBAL_CFG.get(["suite host scanning", "hosts"]))
+        args.extend(glbl_cfg().get(["suite host scanning", "hosts"]))
     scan_app = ScanApp(
         hosts=args,
         patterns_name=options.patterns_name,

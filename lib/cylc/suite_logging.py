@@ -28,12 +28,7 @@ import sys
 from time import time
 
 
-try:
-    # Permits use of module by standalone utilities that aren't part of a
-    # suite.
-    from cylc.cfgspec.globalcfg import GLOBAL_CFG
-except ImportError:
-    pass
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
 from cylc.wallclock import (get_time_string_from_unix_time,
                             get_current_time_string)
@@ -254,11 +249,11 @@ class SuiteLog(object):
         self._group = None
         if not test_params:
             self.is_test = False
-            self.max_bytes = GLOBAL_CFG.get(
+            self.max_bytes = glbl_cfg().get(
                 ['suite logging', 'maximum size in bytes'])
-            self.roll_at_startup = GLOBAL_CFG.get(
+            self.roll_at_startup = glbl_cfg().get(
                 ['suite logging', 'roll over at start-up'])
-            self.archive_length = GLOBAL_CFG.get(
+            self.archive_length = glbl_cfg().get(
                 ['suite logging', 'rolling archive length'])
         else:
             self.is_test = True
@@ -270,7 +265,7 @@ class SuiteLog(object):
         if test_params:
             self.ldir = test_params['ldir']
         else:
-            self.ldir = GLOBAL_CFG.get_derived_host_item(
+            self.ldir = glbl_cfg().get_derived_host_item(
                 suite, 'suite log directory')
         self.log_paths = {}
         self.log_paths[self.LOG] = os.path.join(self.ldir, self.LOG)
@@ -303,7 +298,7 @@ class SuiteLog(object):
     def get_dir_for_suite(suite):
         """Returns the logging directory for a given suite without setting up
         suite logging."""
-        return GLOBAL_CFG.get_derived_host_item(suite, 'suite log directory')
+        return glbl_cfg().get_derived_host_item(suite, 'suite log directory')
 
     def get_lines(self, log, prev_size, max_lines=10):
         """Read content from log file up to max_lines from prev_size."""

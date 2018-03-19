@@ -32,7 +32,7 @@ import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.task_id import TaskID
 from cylc.network.httpclient import SuiteRuntimeServiceClient
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 
 
 def main():
@@ -48,8 +48,8 @@ def main():
     (options, args) = parser.parse_args()
 
     if options.print_ports:
-        base = GLOBAL_CFG.get(['comms', 'base port'])
-        range = GLOBAL_CFG.get(['comms', 'maximum number of ports'])
+        base = glbl_cfg().get(['comms', 'base port'])
+        range = glbl_cfg().get(['comms', 'maximum number of ports'])
         print base, '<= port <=', base + range
         sys.exit(0)
 

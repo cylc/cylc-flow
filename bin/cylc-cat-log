@@ -42,7 +42,7 @@ from cylc.option_parsers import CylcOptionParser as COP
 from cylc.rundb import CylcSuiteDAO
 from cylc.hostuserutil import is_remote
 from cylc.suite_logging import get_logs
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.task_id import TaskID
 
 
@@ -148,7 +148,7 @@ def get_option_parser():
 
 def get_suite_log_path(options, suite):
     """Return file name of a suite log, given the options."""
-    log_dir = GLOBAL_CFG.get_derived_host_item(suite, "suite log directory")
+    log_dir = glbl_cfg().get_derived_host_item(suite, "suite log directory")
     if options.list_mode:
         basename = "."
     else:
@@ -186,7 +186,7 @@ def get_task_job_log_path(
     if submit_num != "NN":
         submit_num = "%02d" % submit_num
     return os.path.normpath(os.path.join(
-        GLOBAL_CFG.get_derived_host_item(
+        glbl_cfg().get_derived_host_item(
             suite, "suite job log directory", host, owner),
         point, task, submit_num, basename))
 
@@ -204,7 +204,7 @@ def get_task_job_attrs(options, suite, point, task, submit_num):
         return (None, None)
     suite_dao = CylcSuiteDAO(
         os.path.join(
-            GLOBAL_CFG.get_derived_host_item(suite, "suite run directory"),
+            glbl_cfg().get_derived_host_item(suite, "suite run directory"),
             "log", CylcSuiteDAO.DB_FILE_BASE_NAME),
         is_public=True)
     task_job_data = suite_dao.select_task_job(None, point, task, submit_num)
@@ -242,7 +242,7 @@ def get_task_job_attrs(options, suite, point, task, submit_num):
             key = "out viewer"
         else:
             key = "err viewer"
-        conf = GLOBAL_CFG.get_host_item("batch systems", host, owner)
+        conf = glbl_cfg().get_host_item("batch systems", host, owner)
         command0_tmpl = conf[str(task_job_data["batch_sys_name"])][key]
     except (KeyError, TypeError):
         return (user_at_host, None)
@@ -291,7 +291,7 @@ def main():
         else:
             owner, host = (None, user_at_host)
 
-    cylc_tmpdir = GLOBAL_CFG.get_tmpdir()
+    cylc_tmpdir = glbl_cfg().get_tmpdir()
 
     # Construct the shell command
     commands = []
@@ -311,12 +311,12 @@ def main():
     elif options.tail:
         if user_at_host:
             # Replace 'cat' with the remote tail command.
-            cmd_tmpl = str(GLOBAL_CFG.get_host_item(
+            cmd_tmpl = str(glbl_cfg().get_host_item(
                 "remote tail command template", host, owner))
             commands.append(shlex.split(cmd_tmpl % {"filename": filename}))
         else:
             # Replace 'cat' with the local tail command.
-            cmd_tmpl = str(GLOBAL_CFG.get_host_item(
+            cmd_tmpl = str(glbl_cfg().get_host_item(
                 "local tail command template"))
             commands.append(shlex.split(cmd_tmpl % {"filename": filename}))
     elif options.geditor or options.editor:
@@ -324,7 +324,7 @@ def main():
         viewfile = mkstemp(dir=cylc_tmpdir)[1]
         if user_at_host:
             cmd = shlex.split(
-                GLOBAL_CFG.get_host_item('scp command', host, owner)) + [
+                glbl_cfg().get_host_item('scp command', host, owner)) + [
                 '%s:%s' % (user_at_host, filename), viewfile]
         else:
             cmd = ['cp', filename, viewfile]
@@ -336,9 +336,9 @@ def main():
                 sys.stderr.write(err)
             sys.exit(ret_code)
         if options.geditor:
-            editor = GLOBAL_CFG.get(['editors', 'gui'])
+            editor = glbl_cfg().get(['editors', 'gui'])
         elif options.editor:
-            editor = GLOBAL_CFG.get(['editors', 'terminal'])
+            editor = glbl_cfg().get(['editors', 'terminal'])
 
         command_list = shlex.split(editor)
         command_list.append(viewfile)
@@ -351,7 +351,7 @@ def main():
 
     # Deal with [user@]host.
     if user_at_host and editor is None:
-        ssh = str(GLOBAL_CFG.get_host_item("ssh command", host, owner))
+        ssh = str(glbl_cfg().get_host_item("ssh command", host, owner))
         for i, command in enumerate(commands):
             commands[i] = shlex.split(ssh) + ["-n", user_at_host] + command
 

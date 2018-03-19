@@ -49,11 +49,11 @@ __END__
 editor () {
     python -c "
 import sys
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 if sys.argv[1] in ['-g', '--gedit']:
-    print GLOBAL_CFG.get(['editors', 'gui'])
+    print glbl_cfg().get(['editors', 'gui'])
 elif sys.argv[1] in ['-e', '--edit']:
-    print GLOBAL_CFG.get(['editors', 'terminal'])
+    print glbl_cfg().get(['editors', 'terminal'])
 " $1
 }
 

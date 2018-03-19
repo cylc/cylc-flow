@@ -409,42 +409,44 @@ class GlobalConfig(config):
     def get_inst(cls):
         """Return the singleton instance."""
         if not cls._DEFAULT:
-            if cylc.flags.verbose:
-                print "Loading site/user config files"
             cls._DEFAULT = cls(SPEC, upg)
-            conf_path_str = os.getenv("CYLC_CONF_PATH")
-            count = 0
-            if conf_path_str is None:
-                # CYLC_CONF_PATH not defined, use default locations
-                for old_base, conf_dir in [
-                        [cls.OLD_SITE_CONF_BASE, cls.SITE_CONF_DIR],
-                        [cls.OLD_USER_CONF_BASE, cls.USER_CONF_DIR]]:
-                    for base in [cls.CONF_BASE, old_base]:
-                        file_name = os.path.join(conf_dir, base)
-                        if os.access(file_name, os.F_OK | os.R_OK):
-                            try:
-                                cls._DEFAULT.loadcfg(
-                                    file_name, "global config")
-                            except ParsecError as exc:
-                                if count == 0:
-                                    sys.stderr.write(
-                                        "WARNING: ignoring bad site config %s:"
-                                        "\n%s\n" % (file_name, str(exc)))
-                                else:
-                                    sys.stderr.write(
-                                        "ERROR: bad user config %s:\n" % (
-                                            file_name))
-                                    raise
-                            count += 1
-                            break
-            elif conf_path_str:
-                # CYLC_CONF_PATH defined with a value
-                for path in conf_path_str.split(os.pathsep):
-                    file_name = os.path.join(path, cls.CONF_BASE)
-                    if os.access(file_name, os.F_OK | os.R_OK):
-                        cls._DEFAULT.loadcfg(file_name, "global config")
-            cls._DEFAULT.transform()
+            cls._DEFAULT.load()
         return cls._DEFAULT
+
+    def load(self):
+        """Load or reload configuration from files."""
+        self.sparse.clear()
+        self.dense.clear()
+        if cylc.flags.verbose:
+            print "Loading site/user config files"
+        conf_path_str = os.getenv("CYLC_CONF_PATH")
+        if conf_path_str is None:
+            # CYLC_CONF_PATH not defined, use default locations
+            for old_base, conf_dir, is_site in [
+                    [self.OLD_SITE_CONF_BASE, self.SITE_CONF_DIR, True],
+                    [self.OLD_USER_CONF_BASE, self.USER_CONF_DIR, False]]:
+                for base in [self.CONF_BASE, old_base]:
+                    fname = os.path.join(conf_dir, base)
+                    if os.access(fname, os.F_OK | os.R_OK):
+                        try:
+                            self.loadcfg(fname, "global config")
+                        except ParsecError as exc:
+                            if is_site:
+                                sys.stderr.write(
+                                    "WARNING: ignoring bad site config %s:"
+                                    "\n%s\n" % (fname, str(exc)))
+                            else:
+                                sys.stderr.write(
+                                    "ERROR: bad user config %s:\n" % (fname))
+                                raise
+                        break
+        elif conf_path_str:
+            # CYLC_CONF_PATH defined with a value
+            for path in conf_path_str.split(os.pathsep):
+                fname = os.path.join(path, self.CONF_BASE)
+                if os.access(fname, os.F_OK | os.R_OK):
+                    self.loadcfg(fname, "global config")
+        self.transform()
 
     def get_derived_host_item(
             self, suite, item, host=None, owner=None, replace_home=False):
@@ -648,6 +650,3 @@ class GlobalConfig(config):
         for key, val in cfg['hosts']['localhost'].items():
             if val and 'directory' in key:
                 cfg['hosts']['localhost'][key] = expandvars(val)
-
-
-GLOBAL_CFG = GlobalConfig.get_inst()

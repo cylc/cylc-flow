@@ -31,7 +31,7 @@ import isodatetime.data
 import isodatetime.parsers
 from parsec.util import printcfg
 
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.config import SuiteConfig
 from cylc.cycling import PointParsingError
 from cylc.cycling.loader import get_point, standardise_point_string
@@ -126,7 +126,7 @@ class Scheduler(object):
         self.suiterc_update_time = None
         # For user-defined batch system handlers
         sys.path.append(os.path.join(self.suite_dir, 'python'))
-        self.suite_run_dir = GLOBAL_CFG.get_derived_host_item(
+        self.suite_run_dir = glbl_cfg().get_derived_host_item(
             self.suite, 'suite run directory')
         self.config = None
 
@@ -210,7 +210,7 @@ class Scheduler(object):
         """Start the server."""
         self._start_print_blurb()
 
-        GLOBAL_CFG.create_cylc_run_tree(self.suite)
+        glbl_cfg().create_cylc_run_tree(self.suite)
 
         if self.is_restart:
             self.suite_db_mgr.restart_upgrade()
@@ -950,14 +950,14 @@ conditions; see `cylc conditions`.
             mgr.KEY_PORT: str(self.port),
             mgr.KEY_OWNER: self.owner,
             mgr.KEY_SUITE_RUN_DIR_ON_SUITE_HOST: self.suite_run_dir,
-            mgr.KEY_TASK_MSG_MAX_TRIES: str(GLOBAL_CFG.get(
+            mgr.KEY_TASK_MSG_MAX_TRIES: str(glbl_cfg().get(
                 ['task messaging', 'maximum number of tries'])),
-            mgr.KEY_TASK_MSG_RETRY_INTVL: str(float(GLOBAL_CFG.get(
+            mgr.KEY_TASK_MSG_RETRY_INTVL: str(float(glbl_cfg().get(
                 ['task messaging', 'retry interval']))),
-            mgr.KEY_TASK_MSG_TIMEOUT: str(float(GLOBAL_CFG.get(
+            mgr.KEY_TASK_MSG_TIMEOUT: str(float(glbl_cfg().get(
                 ['task messaging', 'connection timeout']))),
             mgr.KEY_VERSION: CYLC_VERSION,
-            mgr.KEY_COMMS_PROTOCOL: GLOBAL_CFG.get(
+            mgr.KEY_COMMS_PROTOCOL: glbl_cfg().get(
                 ['communication', 'method'])}
         try:
             mgr.dump_contact_file(self.suite, contact_data)
@@ -984,7 +984,7 @@ conditions; see `cylc conditions`.
         )
         self.suiterc_update_time = time()
         # Dump the loaded suiterc for future reference.
-        cfg_logdir = GLOBAL_CFG.get_derived_host_item(
+        cfg_logdir = glbl_cfg().get_derived_host_item(
             self.suite, 'suite config log directory')
         time_str = get_current_time_string(
             override_use_utc=True, use_basic_format=True,
@@ -1071,9 +1071,9 @@ conditions; see `cylc conditions`.
         for var, val in [
                 ('CYLC_SUITE_RUN_DIR', self.suite_run_dir),
                 ('CYLC_SUITE_LOG_DIR', self.suite_log.get_dir()),
-                ('CYLC_SUITE_WORK_DIR', GLOBAL_CFG.get_derived_host_item(
+                ('CYLC_SUITE_WORK_DIR', glbl_cfg().get_derived_host_item(
                     self.suite, 'suite work directory')),
-                ('CYLC_SUITE_SHARE_DIR', GLOBAL_CFG.get_derived_host_item(
+                ('CYLC_SUITE_SHARE_DIR', glbl_cfg().get_derived_host_item(
                     self.suite, 'suite share directory')),
                 ('CYLC_SUITE_DEF_PATH', self.suite_dir)]:
             os.environ[var] = val
@@ -1714,7 +1714,7 @@ conditions; see `cylc conditions`.
 
     def _get_cylc_conf(self, key, default=None):
         """Return a named setting under [cylc] from suite.rc or global.rc."""
-        for getter in [self.config.cfg['cylc'], GLOBAL_CFG.get(['cylc'])]:
+        for getter in [self.config.cfg['cylc'], glbl_cfg().get(['cylc'])]:
             try:
                 value = getter[key]
             except KeyError:

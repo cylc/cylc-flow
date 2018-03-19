@@ -32,7 +32,7 @@ import re
 import sqlite3
 import traceback
 
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.dump import dump_to_stdout, get_stop_state_summary
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
@@ -78,7 +78,7 @@ def _get_state_lines(suite):
     """Get state lines from suite runtime DB."""
     dao = CylcSuiteDAO(
         os.path.join(
-            GLOBAL_CFG.get_derived_host_item(suite, 'suite run directory'),
+            glbl_cfg().get_derived_host_item(suite, 'suite run directory'),
             'log', CylcSuiteDAO.DB_FILE_BASE_NAME),
         is_public=True)
     data = {
@@ -149,7 +149,7 @@ def _callback_task_pool(data, row):
 def _get_state_lines_compat(suite):
     """Read old state file from normal location, for backward compat."""
     state_file_path = os.path.join(
-        GLOBAL_CFG.get_derived_host_item(suite, 'suite run directory'),
+        glbl_cfg().get_derived_host_item(suite, 'suite run directory'),
         "state", "state")
     lines = []
     for line in open(state_file_path, 'rb').readlines():
