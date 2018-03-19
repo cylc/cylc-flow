@@ -936,22 +936,37 @@ class CylcSuiteDAO(object):
 
         # Create tables with new columns
         self.create_tables()
+        
+        # NEED TO CHANGE NAMES OF STUFF SOMEWHERE IN HERE!
+        # NOTE - CURRENTLY CAUSES AN ERROR, BUT COLUMNS
+        # ARE SOMEHOW RENAMED BUT UNPOPULATED IN NEW VERSION
+        # THE CONVERSION OF THE CONTENTS WILL ALSO NEED DOING
+        # BUT PERHAPS ELSEWHERE
 
         # Populate new tables using old column data
         for t_name in [self.TABLE_TASK_ACTION_TIMERS]:
             sys.stdout.write(r"Upgrading %s table " % (t_name))
             column_names = [col.name for col in self.tables[t_name].columns]
+            old_column_names = [col_name.replace('json','pickle') for col_name in column_names]
+            print old_column_names
+            print self.tables[t_name].get_insert_stmt()
+            
+            old_idx, old = (self.select_table_schema())
+            old_headers = type(old)
+            print 'here!!', old_headers
             for i, row in enumerate(conn.execute(
-                    r"SELECT " + ",".join(column_names) +
+                    r"SELECT " + ",".join(old_column_names) +
                     " FROM " + t_name + "_old")):
+                    #" FROM " + t_name)):
                 # These tables can be big, so we don't want to queue the items
                 # in memory.
                 conn.execute(self.tables[t_name].get_insert_stmt(), list(row))
-                if i:
-                    sys.stdout.write("\b" * len("%d rows" % (i)))
-                sys.stdout.write("%d rows" % (i + 1))
+                print list(row)
+                #if i:
+                #    sys.stdout.write("\b" * len("%d rows" % (i)))
+                #sys.stdout.write("%d rows" % (i + 1))
             sys.stdout.write(" done\n")
-        conn.commit()
+        #conn.commit()
 
         # Drop old tables
         for t_name in [self.TABLE_TASK_ACTION_TIMERS]:
