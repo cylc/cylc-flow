@@ -1613,7 +1613,7 @@ conditions; see `cylc conditions`.
         """Trigger tasks."""
         return self.pool.trigger_tasks(items, back_out)
 
-    def command_dry_run_tasks(self, items):
+    def command_dry_run_tasks(self, items, check_syntax=True):
         """Dry-run tasks, e.g. edit run."""
         itasks, bad_items = self.pool.filter_task_proxies(items)
         n_warnings = len(bad_items)
@@ -1622,7 +1622,8 @@ conditions; see `cylc conditions`.
             return n_warnings + 1
         while self.stop_mode is None:
             prep_tasks, bad_tasks = self.task_job_mgr.prep_submit_task_jobs(
-                self.suite, [itasks[0]], dry_run=True)
+                self.suite, [itasks[0]], dry_run=True,
+                check_syntax=check_syntax)
             if itasks[0] in prep_tasks:
                 return n_warnings
             elif itasks[0] in bad_tasks:

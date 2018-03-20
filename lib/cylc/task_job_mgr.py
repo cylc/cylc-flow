@@ -149,7 +149,8 @@ class TaskJobManager(object):
             self._run_job_cmd(
                 self.JOBS_POLL, suite, poll_me, self._poll_task_jobs_callback)
 
-    def prep_submit_task_jobs(self, suite, itasks, dry_run=False):
+    def prep_submit_task_jobs(self, suite, itasks, dry_run=False,
+                              check_syntax=True):
         """Prepare task jobs for submit.
 
         Prepare tasks where possible. Ignore tasks that are waiting for host
@@ -161,7 +162,8 @@ class TaskJobManager(object):
         prepared_tasks = []
         bad_tasks = []
         for itask in itasks:
-            prep_task = self._prep_submit_task_job(suite, itask, dry_run)
+            prep_task = self._prep_submit_task_job(suite, itask, dry_run,
+                                                   check_syntax=check_syntax)
             if prep_task:
                 prepared_tasks.append(itask)
             elif prep_task is False:
@@ -727,7 +729,7 @@ class TaskJobManager(object):
                     self.task_events_mgr.EVENT_SUBMIT_FAILED, ctx.timestamp),
                 self.poll_task_jobs)
 
-    def _prep_submit_task_job(self, suite, itask, dry_run):
+    def _prep_submit_task_job(self, suite, itask, dry_run, check_syntax=True):
         """Prepare a task job submission.
 
         Return itask on a good preparation.
@@ -775,7 +777,8 @@ class TaskJobManager(object):
             local_job_file_path = self.task_events_mgr.get_task_job_log(
                 suite, itask.point, itask.tdef.name, itask.submit_num,
                 self.JOB_FILE_BASE)
-            self.job_file_writer.write(local_job_file_path, job_conf)
+            self.job_file_writer.write(local_job_file_path, job_conf,
+                                       check_syntax=check_syntax)
         except StandardError as exc:
             # Could be a bad command template, IOError, etc
             self._prep_submit_task_job_error(
