@@ -229,8 +229,8 @@ class TaskProxy(object):
             for timer in self.try_timers.values():
                 timer.timeout = None
 
-    def set_event_time(self, event_key, time_str=None):
-        """Set event time in self.summary
+    def set_summary_time(self, event_key, time_str=None):
+        """Set an event time in self.summary
 
         Set values of both event_key + "_time" and event_key + "_time_string".
         """

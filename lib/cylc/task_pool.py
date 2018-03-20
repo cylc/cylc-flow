@@ -375,9 +375,9 @@ class TaskPool(object):
                     itask.task_owner = None
                     itask.task_host = user_at_host
                 if time_submit:
-                    itask.set_event_time('submitted', time_submit)
+                    itask.set_summary_time('submitted', time_submit)
                 if time_run:
-                    itask.set_event_time('started', time_run)
+                    itask.set_summary_time('started', time_run)
                 if timeout is not None:
                     itask.timeout_timers[status] = timeout
 
@@ -1045,11 +1045,9 @@ class TaskPool(object):
             if status and status != itask.state.status:
                 LOG.info("resetting state to %s" % status, itask=itask)
                 itask.state.reset_state(status)
-                if status in [TASK_STATUS_FAILED,
-                              TASK_STATUS_SUBMIT_FAILED]:
-                    # TODO - HUH? SUBMIT_FAILED? WHAT ABOUT SUCCEEDED?
-                    itask.set_event_time('finished',
-                                         get_current_time_string())
+                if status in [TASK_STATUS_FAILED, TASK_STATUS_SUCCEEDED]:
+                    itask.set_summary_time('finished',
+                                           get_current_time_string())
             if outputs:
                 for output in outputs:
                     is_completed = True
