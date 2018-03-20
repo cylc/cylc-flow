@@ -37,7 +37,7 @@ if remrun():
 import os
 from time import sleep
 
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.config import SuiteConfig
 from cylc.cycling.loader import get_point
 import cylc.flags
@@ -100,7 +100,7 @@ def main():
                 taskdef, get_point(point_str).standardise(), is_startup=True))
 
     # Initialise job submit environment
-    GLOBAL_CFG.create_cylc_run_tree(suite)
+    glbl_cfg().create_cylc_run_tree(suite)
     task_job_mgr = TaskJobManager(
         suite, SuiteProcPool(), SuiteDatabaseManager(), suite_srv_mgr)
     task_job_mgr.task_remote_mgr.single_task_mode = True

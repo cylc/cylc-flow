@@ -23,7 +23,7 @@ import stat
 from subprocess import Popen, PIPE
 
 from cylc.batch_sys_manager import BatchSysManager
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
 
 
@@ -114,14 +114,14 @@ class JobFileWriter(object):
 
     @staticmethod
     def _get_derived_host_item(job_conf, key):
-        """Return derived host item from GLOBAL_CFG."""
-        return GLOBAL_CFG.get_derived_host_item(
+        """Return derived host item from glbl_cfg()."""
+        return glbl_cfg().get_derived_host_item(
             job_conf['suite_name'], key, job_conf["host"], job_conf["owner"])
 
     @staticmethod
     def _get_host_item(job_conf, key):
-        """Return host item from GLOBAL_CFG."""
-        return GLOBAL_CFG.get_host_item(
+        """Return host item from glbl_cfg()."""
+        return glbl_cfg().get_host_item(
             key, job_conf["host"], job_conf["owner"])
 
     @staticmethod

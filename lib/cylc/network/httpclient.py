@@ -26,6 +26,7 @@ import traceback
 from uuid import uuid4
 import warnings
 
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.exceptions import CylcError
 import cylc.flags
 from cylc.network import NO_PASSPHRASE
@@ -277,8 +278,7 @@ class SuiteRuntimeServiceClient(object):
         comms_protocol = self.comms_protocol
         if comms_protocol is None:
             # Use standard setting from global configuration
-            from cylc.cfgspec.globalcfg import GLOBAL_CFG
-            comms_protocol = GLOBAL_CFG.get(['communication', 'method'])
+            comms_protocol = glbl_cfg().get(['communication', 'method'])
         url = '%s://%s:%s/%s' % (
             comms_protocol, self.host, self.port, function)
         # If there are any parameters left in the dict after popping,

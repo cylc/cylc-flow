@@ -45,7 +45,7 @@ from subprocess import call
 from optparse import OptionParser
 
 import cylc.flags
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.run_get_stdout import run_get_stdout
 
 
@@ -93,13 +93,13 @@ def main():
     (options, args) = parser.parse_args()
     cylc.flags.debug = options.debug
 
-    intranet_url = GLOBAL_CFG.get(['documentation', 'urls', 'local index'])
-    internet_url = GLOBAL_CFG.get(['documentation', 'urls',
+    intranet_url = glbl_cfg().get(['documentation', 'urls', 'local index'])
+    internet_url = glbl_cfg().get(['documentation', 'urls',
                                    'internet homepage'])
-    html_file = GLOBAL_CFG.get(['documentation', 'files', 'html index'])
-    html_viewer = GLOBAL_CFG.get(['document viewers', 'html'])
-    pdf_file = GLOBAL_CFG.get(['documentation', 'files', 'pdf user guide'])
-    pdf_viewer = GLOBAL_CFG.get(['document viewers', 'pdf'])
+    html_file = glbl_cfg().get(['documentation', 'files', 'html index'])
+    html_viewer = glbl_cfg().get(['document viewers', 'html'])
+    pdf_file = glbl_cfg().get(['documentation', 'files', 'pdf user guide'])
+    pdf_viewer = glbl_cfg().get(['document viewers', 'pdf'])
     if len(args) == 0:
         # Cylc documentation.
         if options.pdf:

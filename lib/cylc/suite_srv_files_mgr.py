@@ -24,6 +24,7 @@ import re
 from string import ascii_letters, digits
 import sys
 
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
 from cylc.mkdir_p import mkdir_p
 from cylc.hostuserutil import (
@@ -138,8 +139,7 @@ class SuiteSrvFilesManager(object):
         cmd = ["timeout", "10", "ps", self.PS_OPTS, str(old_pid_str)]
         if is_remote_host(old_host):
             import shlex
-            from cylc.cfgspec.globalcfg import GLOBAL_CFG
-            ssh_str = str(GLOBAL_CFG.get_host_item("ssh command", old_host))
+            ssh_str = str(glbl_cfg().get_host_item("ssh command", old_host))
             cmd = shlex.split(ssh_str) + ["-n", old_host] + cmd
         from subprocess import Popen, PIPE
         from time import sleep, time
@@ -329,8 +329,7 @@ To start a new run, stop the old one first with one or more of these:
         run_d = os.getenv("CYLC_SUITE_RUN_DIR")
         if (not run_d or os.getenv("CYLC_SUITE_NAME") != reg or
                 os.getenv("CYLC_SUITE_OWNER") != suite_owner):
-            from cylc.cfgspec.globalcfg import GLOBAL_CFG
-            run_d = GLOBAL_CFG.get_derived_host_item(
+            run_d = glbl_cfg().get_derived_host_item(
                 reg, 'suite run directory')
         return os.path.join(run_d, self.DIR_BASE_SRV)
 
@@ -342,8 +341,7 @@ To start a new run, stop the old one first with one or more of these:
                 rec_regfilter = re.compile(regfilter)
             except re.error as exc:
                 raise ValueError("%s: %s" % (regfilter, exc))
-        from cylc.cfgspec.globalcfg import GLOBAL_CFG
-        run_d = GLOBAL_CFG.get_host_item('run directory')
+        run_d = glbl_cfg().get_host_item('run directory')
         results = []
         for dirpath, dnames, fnames in os.walk(run_d, followlinks=True):
             # Always descend for top directory, but
@@ -623,11 +621,10 @@ To start a new run, stop the old one first with one or more of these:
             host = 'localhost'
         if owner is None:
             owner = get_user()
-        from cylc.cfgspec.globalcfg import GLOBAL_CFG
         if item == 'contact' and not is_remote_host(host):
             # Attempt to read suite contact file via the local filesystem.
             path = r'%(run_d)s/%(srv_base)s' % {
-                'run_d': GLOBAL_CFG.get_derived_host_item(
+                'run_d': glbl_cfg().get_derived_host_item(
                     reg, 'suite run directory', 'localhost', owner,
                     replace_home=False),
                 'srv_base': self.DIR_BASE_SRV,
@@ -644,14 +641,14 @@ To start a new run, stop the old one first with one or more of these:
             r'''cat "%(run_d)s/%(srv_base)s/%(item)s"'''
         ) % {
             'prefix': prefix,
-            'run_d': GLOBAL_CFG.get_derived_host_item(
+            'run_d': glbl_cfg().get_derived_host_item(
                 reg, 'suite run directory', host, owner),
             'srv_base': self.DIR_BASE_SRV,
             'item': item
         }
         import shlex
         command = shlex.split(
-            GLOBAL_CFG.get_host_item('ssh command', host, owner))
+            glbl_cfg().get_host_item('ssh command', host, owner))
         command += ['-n', owner + '@' + host, script]
         from subprocess import Popen, PIPE
         try:

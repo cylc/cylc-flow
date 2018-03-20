@@ -39,7 +39,7 @@ from tempfile import TemporaryFile
 import time
 import traceback
 
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
 from cylc.suite_logging import LOG
 from cylc.wallclock import get_current_time_string
@@ -152,7 +152,7 @@ class SuiteProcPool(object):
     def __init__(self, pool_size=None):
         self.pool_size = (
             pool_size or
-            GLOBAL_CFG.get(["process pool size"]) or
+            glbl_cfg().get(["process pool size"]) or
             multiprocessing.cpu_count())
         # (The Pool class defaults to cpu_count anyway, but does not
         # expose the result via its public interface).

@@ -30,7 +30,7 @@ import shutil
 from optparse import OptionParser
 from collections import defaultdict
 
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.mkdir_p import mkdir_p
 import cylc.flags
 
@@ -138,7 +138,7 @@ def main():
     if os.path.isdir(arg0):
         rundir = arg0
     else:
-        rundir = GLOBAL_CFG.get_derived_host_item(arg0, "suite run directory")
+        rundir = glbl_cfg().get_derived_host_item(arg0, "suite run directory")
     if not os.path.isdir(rundir):
         sys.exit("ERROR: Directory not found: %s" % rundir)
 

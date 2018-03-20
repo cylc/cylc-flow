@@ -30,7 +30,7 @@ if remrun():
 
 import os
 
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.rundb import CylcSuiteDAO
 
@@ -97,7 +97,7 @@ def list_checkpoints(suite, callback):
 def _get_dao(suite):
     """Return the DAO (public) for suite."""
 
-    suite_log_dir = GLOBAL_CFG.get_derived_host_item(
+    suite_log_dir = glbl_cfg().get_derived_host_item(
         suite, 'suite log directory')
     pub_db_path = os.path.join(os.path.dirname(suite_log_dir),
                                CylcSuiteDAO.DB_FILE_BASE_NAME)

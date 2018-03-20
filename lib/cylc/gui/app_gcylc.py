@@ -64,7 +64,7 @@ from cylc.gui.cylc_logviewer import cylc_logviewer
 from cylc.gui.gcapture import gcapture_tmpfile
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.suite_logging import SuiteLog
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.cfgspec.gcylc import gcfg
 from cylc.wallclock import get_current_time_string
 from cylc.task_state import (
@@ -151,8 +151,8 @@ Class to hold initialisation data.
         self.ungrouped_views = ungrouped_views
         self.use_defn_order = use_defn_order
 
-        self.cylc_tmpdir = GLOBAL_CFG.get_tmpdir()
-        self.no_prompt = GLOBAL_CFG.get(
+        self.cylc_tmpdir = glbl_cfg().get_tmpdir()
+        self.no_prompt = glbl_cfg().get(
             ['disable interactive command prompts']
         )
         self.imagedir = get_image_dir()
@@ -2291,7 +2291,7 @@ shown here in the state they were in at the time of triggering.''')
             filenames = []
             name, point_str = TaskID.split(task_id)
             itask_log_dir = os.path.join(
-                GLOBAL_CFG.get_derived_host_item(
+                glbl_cfg().get_derived_host_item(
                     self.cfg.suite, "suite job log directory",
                 ),
                 point_str,
@@ -2311,7 +2311,7 @@ shown here in the state they were in at the time of triggering.''')
                     job_user, job_host = (None, job_user_at_host)
                 if is_remote(job_host, job_user):
                     job_log_dir = job_user_at_host + ':' + os.path.join(
-                        GLOBAL_CFG.get_derived_host_item(
+                        glbl_cfg().get_derived_host_item(
                             self.cfg.suite, 'suite job log directory',
                             job_host, job_user,
                         ),
@@ -2381,7 +2381,7 @@ shown here in the state they were in at the time of triggering.''')
                 else:
                     owner, host = (None, user_at_host)
                 try:
-                    conf = GLOBAL_CFG.get_host_item(
+                    conf = glbl_cfg().get_host_item(
                         "batch systems", host, owner)
                     cmd_tmpl = conf[summary["batch_sys_name"]][key + " tailer"]
                     ret[filename] = cmd_tmpl % {
@@ -2852,7 +2852,7 @@ to reduce network traffic.""")
 
         doc_menu.append(gtk.SeparatorMenuItem())
 
-        if GLOBAL_CFG.get(['documentation', 'urls', 'local index']):
+        if glbl_cfg().get(['documentation', 'urls', 'local index']):
             cug_www_item = gtk.ImageMenuItem('(http://) Local Document Index')
             img = gtk.image_new_from_stock(gtk.STOCK_JUMP_TO,
                                            gtk.ICON_SIZE_MENU)

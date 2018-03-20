@@ -61,7 +61,7 @@ if remrun():
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.dbstatecheck import CylcSuiteDBChecker
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.command_polling import Poller
 from cylc.task_state import TASK_STATUSES_ORDERED
 
@@ -239,7 +239,7 @@ def main():
     # re-invocation).
     run_dir = os.path.expandvars(
         os.path.expanduser(
-            options.run_dir or GLOBAL_CFG.get_host_item('run directory')))
+            options.run_dir or glbl_cfg().get_host_item('run directory')))
 
     pollargs = {'suite': suite,
                 'run_dir': run_dir,

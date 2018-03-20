@@ -25,7 +25,7 @@ from time import sleep, time
 import traceback
 from uuid import uuid4
 
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
 from cylc.hostuserutil import is_remote_host, get_host_ip_by_name
 from cylc.network.httpclient import (
@@ -143,15 +143,15 @@ def scan_many(items, timeout=None, updater=None):
         else:
             # Full port range for a host
             if base_port is None or max_ports is None:
-                base_port = GLOBAL_CFG.get(['communication', 'base port'])
-                max_ports = GLOBAL_CFG.get(
+                base_port = glbl_cfg().get(['communication', 'base port'])
+                max_ports = glbl_cfg().get(
                     ['communication', 'maximum number of ports'])
             for port in range(base_port, base_port + max_ports):
                 todo_set.add((item, port))
     proc_items = []
     results = []
     # Number of child processes
-    max_procs = GLOBAL_CFG.get(["process pool size"])
+    max_procs = glbl_cfg().get(["process pool size"])
     if max_procs is None:
         max_procs = cpu_count()
     try:
@@ -243,7 +243,7 @@ def get_scan_items_from_fs(owner_pattern=None, updater=None):
     srv_files_mgr = SuiteSrvFilesManager()
     if owner_pattern is None:
         # Run directory of current user only
-        run_dirs = [(GLOBAL_CFG.get_host_item('run directory'), None)]
+        run_dirs = [(glbl_cfg().get_host_item('run directory'), None)]
     else:
         # Run directory of all users matching "owner_pattern".
         # But skip those with /nologin or /false shells
@@ -254,7 +254,7 @@ def get_scan_items_from_fs(owner_pattern=None, updater=None):
                 continue
             if owner_pattern.match(pwent.pw_name):
                 run_dirs.append((
-                    GLOBAL_CFG.get_host_item(
+                    glbl_cfg().get_host_item(
                         'run directory',
                         owner=pwent.pw_name,
                         owner_home=pwent.pw_dir),

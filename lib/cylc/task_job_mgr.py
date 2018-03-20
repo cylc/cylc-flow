@@ -35,7 +35,7 @@ import traceback
 from parsec.util import pdeepcopy, poverride
 
 from cylc.batch_sys_manager import BatchSysManager
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.envvar import expandvars
 import cylc.flags
 from cylc.hostuserutil import is_remote_host, is_remote_user
@@ -261,7 +261,7 @@ class TaskJobManager(object):
             if remote_mode:
                 cmd.append('--remote-mode')
             cmd.append('--')
-            cmd.append(GLOBAL_CFG.get_derived_host_item(
+            cmd.append(glbl_cfg().get_derived_host_item(
                 suite, 'suite job log directory', host, owner))
             stdin_file_paths = []
             job_log_dirs = []
@@ -638,7 +638,7 @@ class TaskJobManager(object):
             if is_remote_user(owner):
                 cmd.append("--user=%s" % (owner))
             cmd.append("--")
-            cmd.append(GLOBAL_CFG.get_derived_host_item(
+            cmd.append(glbl_cfg().get_derived_host_item(
                 suite, "suite job log directory", host, owner))
             job_log_dirs = []
             for itask in sorted(itasks, key=lambda itask: itask.identity):
@@ -859,7 +859,7 @@ class TaskJobManager(object):
         job_d = self.task_events_mgr.get_task_job_id(
             itask.point, itask.tdef.name, itask.submit_num)
         job_file_path = os.path.join(
-            GLOBAL_CFG.get_derived_host_item(
+            glbl_cfg().get_derived_host_item(
                 suite, "suite job log directory",
                 itask.task_host, itask.task_owner),
             job_d, self.JOB_FILE_BASE)

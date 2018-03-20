@@ -52,7 +52,7 @@ import cylc.flags
 from cylc.prompt import prompt
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.network.httpclient import SuiteRuntimeServiceClient
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 
 
 def main():
@@ -138,9 +138,9 @@ def main():
 
         # Edit the new job file.
         if options.geditor:
-            editor = GLOBAL_CFG.get(['editors', 'gui'])
+            editor = glbl_cfg().get(['editors', 'gui'])
         else:
-            editor = GLOBAL_CFG.get(['editors', 'terminal'])
+            editor = glbl_cfg().get(['editors', 'terminal'])
         # The editor command may have options, e.g. 'emacs -nw'.
         command_list = re.split(' ', editor)
         command_list.append(jobfile_path)

@@ -36,7 +36,7 @@ from parsec.OrderedDict import OrderedDict
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.network.httpclient import SuiteRuntimeServiceClient, ClientError
 from cylc.wallclock import get_time_string_from_unix_time
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.task_state import (
     TASK_STATUS_RUNAHEAD, TASK_STATUSES_ORDERED,
     TASK_STATUSES_RESTRICTED)
@@ -73,7 +73,7 @@ The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
             "The state summary line still reflects all task proxies.",
             action="store_true", default=False, dest="restricted")
 
-        def_sort_order = GLOBAL_CFG.get(["monitor", "sort order"])
+        def_sort_order = glbl_cfg().get(["monitor", "sort order"])
 
         self.parser.add_option(
             "-s", "--sort", metavar="ORDER",
