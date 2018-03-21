@@ -473,13 +473,14 @@ class SuiteDatabaseManager(object):
                     pass
         else:
             pri_dao = self.get_pri_dao()
-            
+
             # Look for instances of pickle
-            current = pri_dao.tables[pri_dao.TABLE_TASK_ACTION_TIMERS].get_create_stmt()
-            old_idx, old = (pri_dao.select_table_schema())
+            current = pri_dao.tables[
+                pri_dao.TABLE_TASK_ACTION_TIMERS].get_create_stmt()
+            old = (pri_dao.select_table_schema())
             old_str = ''.join(old)
             if not old_str == current:
-                pri_dao.upgrade_pickle_to_json()        
+                pri_dao.upgrade_pickle_to_json()
 
         # Vacuum the primary/private database file
         pri_dao.vacuum()

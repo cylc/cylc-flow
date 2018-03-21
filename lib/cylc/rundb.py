@@ -539,10 +539,10 @@ class CylcSuiteDAO(object):
 
         Invoke callback(row_idx, row) on each row.
         """
-        for row_idx, row in enumerate(self.connect().execute(
+        for row in self.connect().execute(
                 r"SELECT sql FROM sqlite_master where type==? and name==?",
-                [my_type, my_name])):
-            return row_idx, row
+                [my_type, my_name]):
+            return row
 
     def select_task_action_timers(self, callback):
         """Select from task_action_timers for restart.
@@ -928,12 +928,13 @@ class CylcSuiteDAO(object):
 
         # Create tables with new columns
         self.create_tables()
-        
+
         # Populate new tables using old column data
         for t_name in [self.TABLE_TASK_ACTION_TIMERS]:
             sys.stdout.write(r"Upgrading %s table " % (t_name))
             column_names = [col.name for col in self.tables[t_name].columns]
-            old_column_names = [col_name.replace('json', 'pickle') for col_name in column_names]
+            old_column_names = [col_name.replace(
+                'json', 'pickle') for col_name in column_names]
 
             for i, row in enumerate(conn.execute(
                     r"SELECT " + ",".join(old_column_names) +

@@ -446,10 +446,11 @@ class TaskPool(object):
                 elif 'TaskEventMailContext' in ctx_json:
                     ctx = TaskEventMailContext(*json_tmp[json_tmp.keys()[0]])
                 elif 'TaskJobLogsRetrieveContext' in ctx_json:
-                    ctx = TaskJobLogsRetrieveContext(*json_tmp[json_tmp.keys()[0]])
+                    ctx = TaskJobLogsRetrieveContext(
+                        *json_tmp[json_tmp.keys()[0]])
                 else:
                     ctx = json_tmp
-                delays = json.loads(str(delays_json))         
+                delays = json.loads(str(delays_json))
             # If ValueError from JSON, check for pickled objects in database
             except ValueError as exc:
                 try:
