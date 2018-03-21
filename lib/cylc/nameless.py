@@ -235,8 +235,8 @@ class CylcNamelessService(object):
                  shlex.split by this method. Values can be a valid task name or
                  a glob like pattern for matching valid task names.
         task_status -- Select by task statuses.
-        job_status -- Select by job status. See RoseBushDAO.JOB_STATUS_COMBOS
-                      for detail.
+        job_status -- Select by job status. See
+                      CylcNamelessDAO.JOB_STATUS_COMBOS for detail.
         order -- Order search in a predetermined way. A valid value is one of
             "time_desc", "time_asc",
             "cycle_desc_name_desc", "cycle_desc_name_asc",
@@ -535,6 +535,10 @@ class CylcNamelessService(object):
                         break
         if fnmatch(os.path.basename(path), "suite*.rc*"):
             file_content = "cylc-suite-rc"
+        elif fnmatch(os.path.basename(path), "rose*.conf"):
+            file_content = "rose-conf"
+        else:
+            file_content = None
 
         return lines, job_entry, file_content, f_name
 
@@ -645,14 +649,35 @@ class CylcNamelessService(object):
     def _get_suite_logs_info(self, user, suite):
         """Return a dict with suite logs."""
         data = {"info": {}, "files": {}}
+
+        # Cylc files
         user_suite_dir = self._get_user_suite_dir(user, suite)
 
-        # Other recognised formats
+        # Rose files: to recognise & group, but not process, standard formats.
+        info_name = os.path.join(user_suite_dir, "rose-suite.info")
+        if os.path.isfile(info_name):
+            try:
+                info_root = rose.config.load(info_name)
+                for key, node in info_root.value.items():
+                    if node.is_ignored() or not isinstance(node.value, str):
+                        continue
+                    data["info"][key] = node.value
+            except rose.config.ConfigSyntaxError:
+                pass
+        data["files"]["rose"] = {}
+        for key in ["conf", "log", "version"]:
+            f_name = os.path.join(user_suite_dir, "log/rose-suite-run." + key)
+            if os.path.isfile(f_name):
+                stat = os.stat(f_name)
+                data["files"]["rose"]["log/rose-suite-run." + key] = {
+                    "path": "log/rose-suite-run." + key,
+                    "mtime": stat.st_mtime,
+                    "size": stat.st_size}
         for key in ["html", "txt", "version"]:
             for f_name in glob(os.path.join(user_suite_dir, "log/*." + key)):
                 name = os.path.join("log", os.path.basename(f_name))
                 stat = os.stat(f_name)
-                data["files"]["cylc"]["other:" + name] = {
+                data["files"]["rose"]["other:" + name] = {
                     "path": name,
                     "mtime": stat.st_mtime,
                     "size": stat.st_size}
@@ -705,7 +730,7 @@ class CylcNamelessService(object):
         """Raise HTTP 403 error if the provided string contain path chars.
 
         Examples:
-            >>> RoseBushService._check_string_for_path(
+            >>> CylcNamelessService._check_string_for_path(
             ...     os.path.join('foo', 'bar'))
             Traceback (most recent call last):
              ...
@@ -723,23 +748,23 @@ class CylcNamelessService(object):
         """Raise HTTP 403 error if path is not normalised.
 
         Examples:
-            >>> RoseBushService._check_path_normalised('foo//bar')
+            >>> CylcNamelessService._check_path_normalised('foo//bar')
             Traceback (most recent call last):
              ...
             HTTPError: (403, None)
-            >>> RoseBushService._check_path_normalised('foo/bar/')
+            >>> CylcNamelessService._check_path_normalised('foo/bar/')
             Traceback (most recent call last):
              ...
             HTTPError: (403, None)
-            >>> RoseBushService._check_path_normalised('foo/./bar')
+            >>> CylcNamelessService._check_path_normalised('foo/./bar')
             Traceback (most recent call last):
              ...
             HTTPError: (403, None)
-            >>> RoseBushService._check_path_normalised('foo/../bar')
+            >>> CylcNamelessService._check_path_normalised('foo/../bar')
             Traceback (most recent call last):
              ...
             HTTPError: (403, None)
-            >>> RoseBushService._check_path_normalised('../foo')
+            >>> CylcNamelessService._check_path_normalised('../foo')
             Traceback (most recent call last):
              ...
             HTTPError: (403, None)

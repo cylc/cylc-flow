@@ -24,6 +24,8 @@ import traceback
 import os
 import tarfile
 import re
+from glob import glob
+from time import sleep
 
 import cylc.flags
 from cylc.wallclock import get_current_time_string
@@ -1218,10 +1220,10 @@ class CylcNamelessDAO(object):
                        Display only jobs in the specified list. If not
                        specified, display all jobs.
         job_status -- If specified, must be a string matching a key in
-                      RoseBushDAO.JOB_STATUS_COMBOS. Select jobs by their
+                      CylcNamelessDAO.JOB_STATUS_COMBOS. Select jobs by their
                       statuses.
         order -- Order search in a predetermined way. A valid value is one of
-                 the keys in RoseBushDAO.ORDERS.
+                 the keys in CylcNamelessDAO.ORDERS.
         limit -- Limit number of returned entries
         offset -- Offset entry number
 
@@ -1463,8 +1465,8 @@ class CylcNamelessDAO(object):
                 "SELECT cycle," +
                 " sum(" + fail_events_stmt + ") AS n_job_fail" +
                 " FROM task_events GROUP BY cycle")
-        for cycle, n_job_active, n_job_success, n_job_fail in self._db_exec(
-                user_name, suite_name, stmt):
+        for row in self._db_exec(user_name, suite_name, stmt, stmt_args):
+            cycle, n_job_active, n_job_success, n_job_fail = row
             try:
                 entry_of[cycle]["n_states"]["job_active"] = n_job_active
                 entry_of[cycle]["n_states"]["job_success"] = n_job_success
@@ -1526,7 +1528,6 @@ class CylcNamelessDAO(object):
         self._db_close(user_name, suite_name)
 
         return ret
-
 
 
     def _db_init(self, user_name, suite_name):

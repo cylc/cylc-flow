@@ -16,30 +16,30 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-#----------------------------------------------------------------------------
-#NAME
-#    rose bush
+#-------------------------------------------------------------------------------
+#  NAME
+#      cylc nameless
 #
-#SYNOPSIS
-#    rose bush start [PORT] # start ad-hoc web service server (on PORT)
-#    rose bush stop         # stop ad-hoc web service server
-#    rose bush stop -y      # stop ad-hoc web service server w/o prompting
-#    rose bush              # print status of ad-hoc web service server
+#  SYNOPSIS
+#      cylc nameless start [PORT] # start ad-hoc web service server (on PORT)
+#      cylc nameless stop         # stop ad-hoc web service server
+#      cylc nameless stop -y      # stop ad-hoc web service server w/o prompting
+#      cylc nameless              # print status of ad-hoc web service server
 #
-#DESCRIPTION
-#    Start/stop ad-hoc Rose Bush web service server.
+#  DESCRIPTION
+#      Start/stop ad-hoc Cylc Nameless web service server.
 #
-#    For "rose bush start", if PORT is not specified, use port 8080.
+#      For "cylc nameless start", if PORT is not specified, use port 8080.
 #
-#    Rose Bush is a web service for browsing users' Rose suite logs via an
-#    HTTP interface.
+#      Cylc Nameless is a web service for browsing users' suite logs via
+#      an HTTP interface.
 #
-#OPTIONS
-#    --non-interactive, --yes, -y
-#        (For stop only.) Switch off interactive prompting (=answer yes to
-#        everything)
-#    --service-root, -R
-#        (For start only.) Include web service name under root of URL.
-#----------------------------------------------------------------------------
+#  OPTIONS
+#      --non-interactive, --yes, -y
+#          (For stop only.) Switch off interactive prompting (=answer yes to
+#          everything)
+#      --service-root, -R
+#          (For start only.) Include web service name under root of URL.
+#-------------------------------------------------------------------------------
 
 exec python -m cylc.nameless "$@"

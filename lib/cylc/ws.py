@@ -30,7 +30,7 @@ import signal
 
 from cylc.option_parsers import CylcOptionParser as COP
 
-LOG_ROOT_TMPL = "~/.metomi/%(ns)s-%(util)s-%(host)s-%(port)s"
+LOG_ROOT_TMPL = "~/.cylc/%(ns)s-%(util)s-%(host)s-%(port)s"
 
 
 def wsgi_app(service_cls, *args, **kwargs):
@@ -81,7 +81,6 @@ def ws_cli(service_cls, *args, **kwargs):
         _ws_init(service_cls, port, opts.service_root_mode, *args, **kwargs)
     else:
         status = _get_server_status(service_cls)
-        # TODO: levels, verbosity & quietness dealt with by set-verbosity etc?
         for key, value in sorted(status.items()):
             print "%s=%s\n" % (key, value)
         if (arg == "stop" and status.get("pid") and
