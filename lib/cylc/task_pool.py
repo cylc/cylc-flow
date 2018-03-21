@@ -33,6 +33,7 @@ tasks against the new stop cycle.
 
 from fnmatch import fnmatchcase
 import json
+import pickle
 from time import time
 import traceback
 
@@ -435,19 +436,32 @@ class TaskPool(object):
         id_ = TaskID.get(name, cycle)
         ctx_key = "?"
         try:
-            ctx_key = json.loads(str(ctx_key_json))
-            # Extract type namedtuple variables from JSON strings
-            json_tmp = json.loads(ctx_json)
-            if 'CustomTaskEventHandlerContext' in ctx_json:
-                ctx = CustomTaskEventHandlerContext(
-                    *json_tmp[json_tmp.keys()[0]])
-            elif 'TaskEventMailContext' in ctx_json:
-                ctx = TaskEventMailContext(*json_tmp[json_tmp.keys()[0]])
-            elif 'TaskJobLogsRetrieveContext' in ctx_json:
-                ctx = TaskJobLogsRetrieveContext(*json_tmp[json_tmp.keys()[0]])
-            else:
-                ctx = json_tmp
-            delays = json.loads(str(delays_json))
+            try:
+                # Extract type namedtuple variables from JSON strings
+                ctx_key = json.loads(str(ctx_key_json))
+                json_tmp = json.loads(ctx_json)
+                if 'CustomTaskEventHandlerContext' in ctx_json:
+                    ctx = CustomTaskEventHandlerContext(
+                        *json_tmp[json_tmp.keys()[0]])
+                elif 'TaskEventMailContext' in ctx_json:
+                    ctx = TaskEventMailContext(*json_tmp[json_tmp.keys()[0]])
+                elif 'TaskJobLogsRetrieveContext' in ctx_json:
+                    ctx = TaskJobLogsRetrieveContext(*json_tmp[json_tmp.keys()[0]])
+                else:
+                    ctx = json_tmp
+                delays = json.loads(str(delays_json))            
+            # If ValueError from JSON, check for pickled objects in database
+            except (ValueError):
+                try:
+                    ctx_key = pickle.loads(str(ctx_key_pickle))
+                    ctx = pickle.loads(str(ctx_pickle))
+                    delays = pickle.loads(str(delays_pickle))
+                except (EOFError, TypeError, LookupError, ValueError):
+                    ERR.warning(
+                        "%(id)s: skip action timer %(ctx_key)s" %
+                        {"id": id_, "ctx_key": ctx_key})
+                    ERR.warning(traceback.format_exc())
+            return
             if ctx_key and ctx_key[0] in ["poll_timers", "try_timers"]:
                 itask = self.get_task_by_id(id_)
                 if itask is None:
