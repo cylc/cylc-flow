@@ -948,25 +948,20 @@ class CylcSuiteDAO(object):
             sys.stdout.write(r"Upgrading %s table " % (t_name))
             column_names = [col.name for col in self.tables[t_name].columns]
             old_column_names = [col_name.replace('json','pickle') for col_name in column_names]
-            print old_column_names
-            print self.tables[t_name].get_insert_stmt()
-            
-            old_idx, old = (self.select_table_schema())
-            old_headers = type(old)
-            print 'here!!', old_headers
+
             for i, row in enumerate(conn.execute(
                     r"SELECT " + ",".join(old_column_names) +
                     " FROM " + t_name + "_old")):
-                    #" FROM " + t_name)):
                 # These tables can be big, so we don't want to queue the items
                 # in memory.
                 conn.execute(self.tables[t_name].get_insert_stmt(), list(row))
                 print list(row)
-                #if i:
-                #    sys.stdout.write("\b" * len("%d rows" % (i)))
-                #sys.stdout.write("%d rows" % (i + 1))
+                print row.keys()
+                if i:
+                    sys.stdout.write("\b" * len("%d rows" % (i)))
+                sys.stdout.write("%d rows" % (i + 1))
             sys.stdout.write(" done\n")
-        #conn.commit()
+        conn.commit()
 
         # Drop old tables
         for t_name in [self.TABLE_TASK_ACTION_TIMERS]:
