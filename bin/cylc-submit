@@ -125,7 +125,7 @@ def main():
             for itask in prep_tasks + bad_tasks:
                 waiting_tasks.remove(itask)
             if waiting_tasks:
-                task_job_mgr.proc_pool.handle_results_async()
+                task_job_mgr.proc_pool.process()
                 sleep(1.0)
 
         for itask in itasks:
@@ -140,12 +140,10 @@ def main():
             for itask in task_job_mgr.submit_task_jobs(suite, waiting_tasks):
                 waiting_tasks.remove(itask)
             if waiting_tasks:
-                task_job_mgr.proc_pool.handle_results_async()
+                task_job_mgr.proc_pool.process()
                 sleep(1.0)
-        while task_job_mgr.proc_pool.results:
-            task_job_mgr.proc_pool.handle_results_async()
-        task_job_mgr.proc_pool.close()
-        task_job_mgr.proc_pool.join()
+        while task_job_mgr.proc_pool.is_not_done():
+            task_job_mgr.proc_pool.process()
         for itask in itasks:
             if itask.summary.get('submit_method_id') is not None:
                 print('[%s] Job ID: %s' % (

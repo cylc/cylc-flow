@@ -709,7 +709,7 @@ class TaskJobManager(object):
         self.task_events_mgr.log_task_job_activity(
             ctx, suite, itask.point, itask.tdef.name)
 
-        if ctx.ret_code == SuiteProcPool.JOB_SKIPPED_FLAG:
+        if ctx.ret_code == SuiteProcPool.RET_CODE_SUITE_STOPPING:
             return
 
         try:

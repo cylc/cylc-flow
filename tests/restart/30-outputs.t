@@ -32,7 +32,7 @@ else
 fi
 suite_run_fail "${TEST_NAME_BASE}-restart-1" \
     cylc restart --no-detach "${SUITE_NAME}"
-sed -i 's/#\(startup handler\)/\1/' 'suite.rc'
+sed -i 's/#\(startup handler\)/\1/; s/\(abort on stalled\)/#\1/' 'suite.rc'
 suite_run_ok "${TEST_NAME_BASE}-restart-2" \
     cylc restart --debug --no-detach --reference-test "${SUITE_NAME}"
 if which sqlite3 > '/dev/null'; then
