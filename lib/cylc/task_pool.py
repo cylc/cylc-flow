@@ -437,7 +437,6 @@ class TaskPool(object):
         ctx_key = "?"
         try:
             try:
-                print "attempting JSON extract"
                 # Extract type namedtuple variables from JSON strings
                 ctx_key = json.loads(str(ctx_key_json))
                 json_tmp = json.loads(ctx_json)
@@ -450,17 +449,14 @@ class TaskPool(object):
                     ctx = TaskJobLogsRetrieveContext(*json_tmp[json_tmp.keys()[0]])
                 else:
                     ctx = json_tmp
-                delays = json.loads(str(delays_json))
-                print "extracted stuff with JSON"         
+                delays = json.loads(str(delays_json))         
             # If ValueError from JSON, check for pickled objects in database
             except ValueError as exc:
                 try:
                     ctx_key = pickle.loads(str(ctx_key_json))
                     ctx = pickle.loads(str(ctx_json))
                     delays = pickle.loads(str(delays_json))
-                    print "pickle extract", ctx_key
                 except:
-                    print "pickle extract fail"
                     raise exc
             if ctx_key and ctx_key[0] in ["poll_timers", "try_timers"]:
                 itask = self.get_task_by_id(id_)

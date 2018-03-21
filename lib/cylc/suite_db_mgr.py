@@ -475,24 +475,11 @@ class SuiteDatabaseManager(object):
             pri_dao = self.get_pri_dao()
             
             # Look for instances of pickle
-            my_file=open('/home/h04/aplh/rose_test_out.txt','a')
             current = pri_dao.tables[pri_dao.TABLE_TASK_ACTION_TIMERS].get_create_stmt()
             old_idx, old = (pri_dao.select_table_schema())
             old_str = ''.join(old)
-            print >> my_file, pri_dao.tables[pri_dao.TABLE_TASK_ACTION_TIMERS].get_create_stmt()
-            print >> my_file, old_str
-            print >> my_file, current==old_str
             if not old_str == current:
-                '''
-                Extract pickled objects
-                Unpickle picked objects
-                Create new JSON objects from unpickled objects
-                Swap out new table for old in database
-                '''
-                pri_dao.upgrade_pickle_to_json()
-            my_file.close()
-
-        
+                pri_dao.upgrade_pickle_to_json()        
 
         # Vacuum the primary/private database file
         pri_dao.vacuum()
