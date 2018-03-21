@@ -554,16 +554,8 @@ class CylcSuiteDAO(object):
             attrs.append(item[0])
         stmt = r"SELECT %s FROM %s" % (
             ",".join(attrs), self.TABLE_TASK_ACTION_TIMERS)
-        try:
-            for row_idx, row in enumerate(self.connect().execute(stmt)):
-                callback(row_idx, list(row))
-        except:
-            '''
-            Try upgrade on database - see if pickle rather than JSON
-            '''
-            my_file = open('/home/h04/aplh/rose_test_out.txt', 'a')
-            print >> my_file, 'An error has been found!'
-            my_file.close()
+        for row_idx, row in enumerate(self.connect().execute(stmt)):
+            callback(row_idx, list(row))
 
     def select_task_job(self, keys, cycle, name, submit_num=None):
         """Select items from task_jobs by (cycle, name, submit_num).
@@ -937,17 +929,11 @@ class CylcSuiteDAO(object):
         # Create tables with new columns
         self.create_tables()
         
-        # NEED TO CHANGE NAMES OF STUFF SOMEWHERE IN HERE!
-        # NOTE - CURRENTLY CAUSES AN ERROR, BUT COLUMNS
-        # ARE SOMEHOW RENAMED BUT UNPOPULATED IN NEW VERSION
-        # THE CONVERSION OF THE CONTENTS WILL ALSO NEED DOING
-        # BUT PERHAPS ELSEWHERE
-
         # Populate new tables using old column data
         for t_name in [self.TABLE_TASK_ACTION_TIMERS]:
             sys.stdout.write(r"Upgrading %s table " % (t_name))
             column_names = [col.name for col in self.tables[t_name].columns]
-            old_column_names = [col_name.replace('json','pickle') for col_name in column_names]
+            old_column_names = [col_name.replace('json', 'pickle') for col_name in column_names]
 
             for i, row in enumerate(conn.execute(
                     r"SELECT " + ",".join(old_column_names) +
@@ -955,7 +941,6 @@ class CylcSuiteDAO(object):
                 # These tables can be big, so we don't want to queue the items
                 # in memory.
                 conn.execute(self.tables[t_name].get_insert_stmt(), list(row))
-                print list(row)
                 if i:
                     sys.stdout.write("\b" * len("%d rows" % (i)))
                 sys.stdout.write("%d rows" % (i + 1))
