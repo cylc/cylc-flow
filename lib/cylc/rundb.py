@@ -956,7 +956,6 @@ class CylcSuiteDAO(object):
                 # in memory.
                 conn.execute(self.tables[t_name].get_insert_stmt(), list(row))
                 print list(row)
-                print row.keys()
                 if i:
                     sys.stdout.write("\b" * len("%d rows" % (i)))
                 sys.stdout.write("%d rows" % (i + 1))
