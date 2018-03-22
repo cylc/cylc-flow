@@ -475,8 +475,9 @@ class SuiteDatabaseManager(object):
             pri_dao = self.get_pri_dao()
 
             # Check for instances of pickle
-            if 'pickle' in ''.join(
-               pri_dao.select_table_schema("table", "task_action_timers")):
+            old_headers = "".join(
+               pri_dao.select_table_schema("table", "task_action_timers"))
+            if 'pickle' in old_headers:
                 pri_dao.upgrade_pickle_to_json()
 
         # Vacuum the primary/private database file
