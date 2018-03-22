@@ -282,10 +282,12 @@ class BatchSysManager(object):
             ctx_list.append(ctx)
 
             if not ctx.batch_sys_name or not ctx.batch_sys_job_id:
+                # Lost batch system information for some reason.
+                # Mark the job as if it is no longer in the batch system.
+                ctx.batch_sys_exit_polled = 1
                 sys.stderr.write(
                     "%s/job.status: incomplete batch system info\n" % (
                         ctx.job_log_dir))
-                continue
 
             # We can trust:
             # * Jobs previously polled to have exited the batch system.
