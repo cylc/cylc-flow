@@ -22,7 +22,7 @@ from logging import DEBUG
 import os
 from Queue import Empty, Queue
 from shutil import copytree, rmtree
-from sqlite import OperationalError
+from sqlite3 import OperationalError
 from subprocess import Popen, PIPE
 import sys
 from time import sleep, time
