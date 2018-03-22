@@ -482,7 +482,7 @@ class SuiteDatabaseManager(object):
             #print old_str
             #if not old_str == current:
             #if 'pickle' in old_str:
-            if 'pickle' in ''.join(pri_dao.select_table_schema("table", "task_action_timers"):
+            #if 'pickle' in ''.join(pri_dao.select_table_schema("table", "task_action_timers"):
             if 'pickle' in (pri_dao.select_table_schema("table", "task_action_timers"):
                 try:
                     pri_dao.upgrade_pickle_to_json()
