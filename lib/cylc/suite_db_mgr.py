@@ -475,10 +475,11 @@ class SuiteDatabaseManager(object):
             pri_dao = self.get_pri_dao()
 
             # Look for instances of pickle
-            current = pri_dao.tables[
-                pri_dao.TABLE_TASK_ACTION_TIMERS].get_create_stmt()
+            #current = pri_dao.tables[
+            #    pri_dao.TABLE_TASK_ACTION_TIMERS].get_create_stmt()
             old = (pri_dao.select_table_schema())
             old_str = ''.join(old)
+            print old_str
             #if not old_str == current:
             if 'pickle' in old_str:
                 try:
