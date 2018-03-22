@@ -533,8 +533,7 @@ class CylcSuiteDAO(object):
                 r"SELECT key,value FROM %s" % self.TABLE_SUITE_TEMPLATE_VARS)):
             callback(row_idx, list(row))
 
-    def select_table_schema(self, my_type="table",
-                            my_name="task_action_timers"):
+    def select_table_schema(self, my_type, my_name):
         """Select from task_action_timers for restart.
 
         Invoke callback(row_idx, row) on each row.
