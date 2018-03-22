@@ -1,0 +1,10 @@
+[cylc]
+    [[events]]
+        inactivity = PT20S
+        abort on inactivity = True
+[scheduling]
+    [[dependencies]]
+        graph = foo
+[runtime]
+    [[foo]]
+        script = echo "hello"
