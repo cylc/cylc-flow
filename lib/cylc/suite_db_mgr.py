@@ -480,7 +480,11 @@ class SuiteDatabaseManager(object):
             old = (pri_dao.select_table_schema())
             old_str = ''.join(old)
             if not old_str == current:
-                pri_dao.upgrade_pickle_to_json()
+                try:
+                    pri_dao.upgrade_pickle_to_json()
+                except:
+                    pass
+                ERR.error("cannot upgrade task action timer table in database")
 
         # Vacuum the primary/private database file
         pri_dao.vacuum()
