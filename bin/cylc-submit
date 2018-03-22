@@ -106,8 +106,8 @@ def main():
     task_job_mgr.task_remote_mgr.single_task_mode = True
     task_job_mgr.job_file_writer.set_suite_env({
         'CYLC_UTC': str(config.cfg['cylc']['UTC mode']),
-        'CYLC_DEBUG': str(cylc.flags.debug),
-        'CYLC_VERBOSE': str(cylc.flags.verbose),
+        'CYLC_DEBUG': str(cylc.flags.debug).lower(),
+        'CYLC_VERBOSE': str(cylc.flags.verbose).lower(),
         'CYLC_SUITE_NAME': suite,
         'CYLC_CYCLING_MODE': str(cylc.flags.cycling_mode),
         'CYLC_SUITE_INITIAL_CYCLE_POINT': str(

@@ -156,7 +156,7 @@ class JobFileWriter(object):
         # Environment variables for prelude
         handle.write("\nexport CYLC_DIR='%s'" % (os.environ['CYLC_DIR']))
         if cylc.flags.debug:
-            handle.write("\nexport CYLC_DEBUG='true'")
+            handle.write("\nexport CYLC_DEBUG=true")
         for key in ['CYLC_VERSION'] + self._get_host_item(
                 job_conf, 'copyable environment variables'):
             if key in os.environ:

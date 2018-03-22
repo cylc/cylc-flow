@@ -1054,8 +1054,8 @@ conditions; see `cylc conditions`.
         # Pass static cylc and suite variables to job script generation code
         self.task_job_mgr.job_file_writer.set_suite_env({
             'CYLC_UTC': str(cylc.flags.utc),
-            'CYLC_DEBUG': str(cylc.flags.debug),
-            'CYLC_VERBOSE': str(cylc.flags.verbose),
+            'CYLC_DEBUG': str(cylc.flags.debug).lower(),
+            'CYLC_VERBOSE': str(cylc.flags.verbose).lower(),
             'CYLC_SUITE_NAME': self.suite,
             'CYLC_CYCLING_MODE': str(cylc.flags.cycling_mode),
             'CYLC_SUITE_INITIAL_CYCLE_POINT': str(self.initial_point),
