@@ -170,8 +170,7 @@ TASK_STATUSES_AUTO_EXPAND = set([
     TASK_STATUS_FAILED,
 ])
 
-# Tasks statuses grouped as required in cylc <NAMEHERE> (migrated Rose Bush)
-# TODO: check 'submitting' isn't a task state (is in 'active' in bush_dao).
+# Tasks statuses grouped for cylc nameless 'create_suite_cycles_summary()'
 TASK_STATUS_GROUPS = {
     "active": list(TASK_STATUSES_NOT_STALLED),
     "fail": list(TASK_STATUSES_FAILURE),

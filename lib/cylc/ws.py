@@ -146,7 +146,7 @@ def _configure(service_cls):
     cherrypy.config["tools.encode.on"] = True
     cherrypy.config["tools.encode.encoding"] = "utf-8"
     config = {}
-    static_lib =  get_util_home("lib", "cylc", "cylc-nameless", "static")
+    static_lib = get_util_home("lib", "cylc", "cylc-nameless", "static")
     for name in os.listdir(static_lib):
         path = os.path.join(static_lib, name)
         if os.path.isdir(path):

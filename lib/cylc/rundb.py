@@ -29,79 +29,8 @@ from time import sleep
 
 import cylc.flags
 from cylc.wallclock import get_current_time_string
-from cylc.suite_logging import LOG, ERR, get_logs
+from cylc.suite_logging import LOG, ERR
 from cylc.task_state import TASK_STATUS_GROUPS
-
-
-class GenericDAO(object):
-
-    """Generic SQLite Data Access Object."""
-
-    CONNECT_RETRY_DELAY = 0.1
-    N_CONNECT_TRIES = 10
-
-    def __init__(self, db_f_name):
-        self.db_f_name = db_f_name
-        self.conn = None
-        self.cursor = None
-
-    def close(self):
-        """Close the DB connection."""
-        if self.conn is not None:
-            try:
-                self.conn.close()
-            except (sqlite3.OperationalError, sqlite3.ProgrammingError):
-                pass
-        self.cursor = None
-        self.conn = None
-
-    def commit(self):
-        """Commit any changes to current connection."""
-        if self.conn is not None:
-            self.conn.commit()
-
-    def connect(self, is_new=False):
-        """Connect to the DB. Set the cursor. Return the connection."""
-        if self.cursor is not None:
-            return self.cursor
-        if not is_new and not os.access(self.db_f_name, os.F_OK | os.R_OK):
-            return None
-        for _ in range(self.N_CONNECT_TRIES):
-            try:
-                self.conn = sqlite3.connect(
-                    self.db_f_name, self.CONNECT_RETRY_DELAY)
-                self.cursor = self.conn.cursor()
-            except sqlite3.OperationalError:
-                sleep(self.CONNECT_RETRY_DELAY)
-                self.conn = None
-                self.cursor = None
-            else:
-                break
-        return self.conn
-
-    def execute(self, stmt, stmt_args=None, commit=False):
-        """Execute a statement. Return the cursor."""
-        if stmt_args is None:
-            stmt_args = []
-        for _ in range(self.N_CONNECT_TRIES):
-            if self.connect() is None:
-                return []
-            try:
-                self.cursor.execute(stmt, stmt_args)
-            except sqlite3.OperationalError:
-                sleep(self.CONNECT_RETRY_DELAY)
-                self.conn = None
-                self.cursor = None
-            except sqlite3.ProgrammingError:
-                self.conn = None
-                self.cursor = None
-            else:
-                break
-        if self.cursor is None:
-            return []
-        if commit:
-            self.commit()
-        return self.cursor
 
 
 class CylcSuiteDAOTableColumn(object):
@@ -395,6 +324,19 @@ class CylcSuiteDAO(object):
         ],
     }
 
+    # Required only for cylc nameless - to move?
+    JOB_STATUS_COMBOS = {
+        "all": "",
+        "submitted": "submit_status == 0 AND time_run IS NULL",
+        "submitted,running": "submit_status == 0 AND run_status IS NULL",
+        "submission-failed": "submit_status == 1",
+        "submission-failed,failed": "submit_status == 1 OR run_status == 1",
+        "running": "time_run IS NOT NULL AND run_status IS NULL",
+        "running,succeeded,failed": "time_run IS NOT NULL",
+        "succeeded": "run_status == 0",
+        "succeeded,failed": "run_status IS NOT NULL",
+        "failed": "run_status == 1",
+    }
 
     def __init__(self, db_file_name=None, is_public=False):
         """Initialise object.
@@ -414,7 +356,6 @@ class CylcSuiteDAO(object):
 
         if not self.is_public:
             self.create_tables()
-
 
     def add_delete_item(self, table_name, where_args=None):
         """Queue a DELETE item for a given table.
@@ -555,7 +496,7 @@ class CylcSuiteDAO(object):
             LOG.warning(err_log)
             raise
 
-    def select_broadcast_states(self, callback, id_key=None):
+    def select_broadcast_states(self, callback, id_key=None, sort=False):
         """Select from broadcast_states or broadcast_states_checkpoints.
 
         Invoke callback(row_idx, row) on each row, where each row contains:
@@ -566,6 +507,9 @@ class CylcSuiteDAO(object):
         Otherwise select from broadcast_states_checkpoints where id == id_key.
         """
         form_stmt = r"SELECT point,namespace,key,value FROM %s"
+        if sort:
+            ordering = " ORDER BY point ASC, namespace ASC, key ASC"
+            form_stmt = form_stmt + ordering
         if id_key is None or id_key == self.CHECKPOINT_LATEST_ID:
             stmt = form_stmt % self.TABLE_BROADCAST_STATES
             stmt_args = []
@@ -573,6 +517,22 @@ class CylcSuiteDAO(object):
             stmt = (form_stmt % self.TABLE_BROADCAST_STATES_CHECKPOINTS +
                     r" WHERE id==?")
             stmt_args = [id_key]
+        for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
+            callback(row_idx, list(row))
+
+    def select_broadcast_events(self, callback, sort=False):
+        """Select from broadcast_events.
+
+        Invoke callback(row_idx, row) on each row, where each row contains:
+            [time, change, point, namespace, key, value]
+        """
+        form_stmt = r"SELECT point,namespace,key,value FROM %s"
+        if sort:
+            ordering = (" ORDER BY " +
+                        "time DESC, point DESC, namespace DESC, key DESC")
+            form_stmt = form_stmt + ordering
+        stmt = form_stmt % self.TABLE_BROADCAST_EVENTS
+        stmt_args = []
         for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
             callback(row_idx, list(row))
 
@@ -1166,44 +1126,178 @@ class CylcNamelessDAO(object):
 
         [[point, name, key, value], ...]
 
+        Return {"is_running": b, "is_failed": b, "server": s}
+        where:
+        * is_running is a boolean to indicate if the suite is running
+        * is_failed: a boolean to indicate if any tasks (submit) failed
+        * server: host:port of server, if available.
         """
-        # Check if "broadcast_states" table is available or not
-        if not self._db_has_table(user_name, suite_name, "broadcast_states"):
-            return
+        ret = {
+            "is_running": False,
+            "is_failed": False,
+            "server": None}
+        port_path = os.path.join("~" + user_name, "cylc-run", suite_name,
+                                 ".service", "contact")
+        try:
+            host = None
+            port_str = None
+            for line in open(os.path.expanduser(port_path)):
+                key, value = [item.strip() for item in line.split("=", 1)]
+                if key == "CYLC_SUITE_HOST":
+                    host = value
+                elif key == "CYLC_SUITE_PORT":
+                    port_str = value
+        except (IOError, ValueError):
+            pass
+        else:
+            if host and port_str:
+                ret["is_running"] = True
+                ret["server"] = host.split(".", 1)[0] + ":" + port_str
+        stmt = ("SELECT status FROM " + self.TABLE_TASK_STATES +
+                " WHERE status GLOB ? LIMIT 1")
+        stmt_args = ["*failed"]
+        for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
+            ret["is_failed"] = True
+            break
+        return ret
 
-        broadcast_states = []
-        for row in self._db_exec(
-                user_name, suite_name,
-                "SELECT point,namespace,key,value FROM broadcast_states" +
-                " ORDER BY point ASC, namespace ASC, key ASC"):
-            point, namespace, key, value = row
-            broadcast_states.append([point, namespace, key, value])
-        return broadcast_states
+    def select_suite_cycles_summary(
+            self, user_name, suite_name, order, limit, offset):
+        """Return a the state summary (of each cycle) of a user's suite.
 
+        user -- A string containing a valid user ID
+        suite -- A string containing a valid suite ID
+        limit -- Limit number of returned entries
+        offset -- Offset entry number
 
-    def get_suite_broadcast_events(self, user_name, suite_name):
-        """Return broadcast events of a suite.
-
-        [[time, change, point, name, key, value], ...]
-
+        Return (entries, of_n_entries), where entries is a data structure that
+        looks like:
+            [   {   "cycle": cycle,
+                    "n_states": {
+                        "active": N, "success": M, "fail": L, "job_fails": K,
+                    },
+                    "max_time_updated": T2,
+                },
+                # ...
+            ]
+        where:
+        * cycle is a date-time cycle label
+        * N, M, L, K are the numbers of tasks in given states
+        * T2 is the time when last update time of (a task in) the cycle
+        *  of_n_entries is the total number of entries.
         """
-        # Check if "broadcast_events" table is available or not
-        if not self._db_has_table(user_name, suite_name, "broadcast_events"):
-            return {}
+        of_n_entries = 0
+        stmt = ("SELECT COUNT(DISTINCT cycle) FROM " +
+                self.TABLE_TASK_STATES + " WHERE submit_num > 0")
+        for row in enumerate(
+                self.connect().execute(user_name, suite_name, stmt)):
+            of_n_entries = row[0]
+            break
+        if not of_n_entries:
+            return ([], 0)
 
-        broadcast_events = []
-        for row in self._db_exec(
-                user_name, suite_name,
-                "SELECT time,change,point,namespace,key,value" +
-                " FROM broadcast_events" +
-                " ORDER BY time DESC, point DESC, namespace DESC, key DESC"):
-            time_, change, point, namespace, key, value = row
-            broadcast_events.append(
-                (time_, change, point, namespace, key, value))
-        return broadcast_events
+        integer_mode = False
+        stmt = "SELECT cycle FROM " + self.TABLE_TASK_STATES + " LIMIT 1"
+        for row in enumerate(
+                self.connect().execute(user_name, suite_name, stmt)):
+            integer_mode = row[0].isdigit()
+            break
 
-  
-    def get_suite_job_entries(
+        prefix = "~"
+        if user_name:
+            prefix += user_name
+        user_suite_dir = os.path.expanduser(os.path.join(
+            prefix, os.path.join("cylc-run", suite_name)))
+        targzip_log_cycles = []
+        try:
+            for item in os.listdir(os.path.join(user_suite_dir, "log")):
+                if item.startswith("job-") and item.endswith(".tar.gz"):
+                    targzip_log_cycles.append(item[4:-7])
+        except OSError:
+            pass
+
+        states_stmt = {}
+        for key, names in TASK_STATUS_GROUPS.items():
+            states_stmt[key] = " OR ".join(
+                ["status=='%s'" % (name) for name in names])
+        stmt = (
+            "SELECT" +
+            " cycle," +
+            " max(time_updated)," +
+            " sum(" + states_stmt["active"] + ") AS n_active," +
+            " sum(" + states_stmt["success"] + ") AS n_success,"
+            " sum(" + states_stmt["fail"] + ") AS n_fail"
+            " FROM " + self.TABLE_TASK_STATES +
+            " GROUP BY cycle")
+        if integer_mode:
+            stmt += " ORDER BY cast(cycle as number)"
+        else:
+            stmt += " ORDER BY cycle"
+        stmt += " DESC"  # apply ordering choice here
+        stmt_args = []
+        if limit:
+            stmt += " LIMIT ? OFFSET ?"
+            stmt_args += [limit, offset]
+        entry_of = {}
+        entries = []
+        for row in enumerate(
+            self.connect().execute(
+                user_name, suite_name, stmt, stmt_args)):
+            cycle, max_time_updated, n_active, n_success, n_fail = row
+            if n_active or n_success or n_fail:
+                entry_of[cycle] = {
+                    "cycle": cycle,
+                    "has_log_job_tar_gz": cycle in targzip_log_cycles,
+                    "max_time_updated": max_time_updated,
+                    "n_states": {
+                        "active": n_active,
+                        "success": n_success,
+                        "fail": n_fail,
+                        "job_active": 0,
+                        "job_success": 0,
+                        "job_fail": 0,
+                    },
+                }
+                entries.append(entry_of[cycle])
+
+        check_stmt = "SELECT name FROM sqlite_master WHERE name==?"
+        check_table = self.connect().execute(user_name, suite_name,
+                                             check_stmt, ["task_jobs"])
+        if table_check.fetchone() is not None:
+            stmt = (
+                "SELECT cycle," +
+                " sum(" + self.JOB_STATUS_COMBOS["submitted,running"] +
+                ") AS n_job_active," +
+                " sum(" + self.JOB_STATUS_COMBOS["succeeded"] +
+                ") AS n_job_success," +
+                " sum(" + self.JOB_STATUS_COMBOS["submission-failed,failed"] +
+                ") AS n_job_fail" +
+                " FROM task_jobs GROUP BY cycle")
+        else:
+            fail_events_stmt = " OR ".join(
+                ["event=='%s'" % (name)
+                 for name in TASK_STATUS_GROUPS["fail"]])
+            stmt = (
+                "SELECT cycle," +
+                " sum(" + fail_events_stmt + ") AS n_job_fail" +
+                " FROM task_events GROUP BY cycle")
+        for row in enumerate(
+            self.connect().execute(
+                user_name, suite_name, stmt, stmt_args)):
+            cycle, n_job_active, n_job_success, n_job_fail = row
+            try:
+                entry_of[cycle]["n_states"]["job_active"] = n_job_active
+                entry_of[cycle]["n_states"]["job_success"] = n_job_success
+                entry_of[cycle]["n_states"]["job_fail"] = n_job_fail
+            except KeyError:
+                pass
+            else:
+                del entry_of[cycle]
+                if not entry_of:
+                    break
+        return entries, of_n_entries
+
+    def select_suite_job_entries(
             self, user_name, suite_name, cycles, tasks, task_status,
             job_status, order, limit, offset):
         """Query suite runtime databsae to return a listing of task jobs.
@@ -1241,344 +1335,14 @@ class CylcNamelessDAO(object):
                       "err": {...},
                       ...}}
         """
-        where_expr, where_args = self._get_suite_job_entries_where(
-            cycles, tasks, task_status, job_status)
-
-        # Get number of entries
-        of_n_entries = 0
-        stmt = ("SELECT COUNT(*)" +
-                " FROM task_jobs JOIN task_states USING (name, cycle)" +
-                where_expr)
-        for row in self._db_exec(user_name, suite_name, stmt, where_args):
-            of_n_entries = row[0]
-            break
-        else:
-            self._db_close(user_name, suite_name)
-            return ([], 0)
-
-        # Get entries
-        entries = []
-        entry_of = {}
-        stmt = ("SELECT" +
-                " task_states.time_updated AS time," +
-                " cycle, name," +
-                " task_jobs.submit_num AS submit_num," +
-                " task_states.submit_num AS submit_num_max," +
-                " task_states.status AS task_status," +
-                " time_submit, submit_status," +
-                " time_run, time_run_exit, run_signal, run_status," +
-                " user_at_host, batch_sys_name, batch_sys_job_id" +
-                " FROM task_jobs JOIN task_states USING (cycle, name)" +
-                where_expr +
-                " ORDER BY " +
-                self.JOB_ORDERS.get(order, self.JOB_ORDERS["time_desc"]))
-        limit_args = []
-        if limit:
-            stmt += " LIMIT ? OFFSET ?"
-            limit_args = [limit, offset]
-        for row in self._db_exec(
-                user_name, suite_name, stmt, where_args + limit_args):
-            (
-                cycle, name, submit_num, submit_num_max, task_status,
-                time_submit, submit_status,
-                time_run, time_run_exit, run_signal, run_status,
-                user_at_host, batch_sys_name, batch_sys_job_id
-            ) = row[1:]
-            entry = {
-                "cycle": cycle,
-                "name": name,
-                "submit_num": submit_num,
-                "submit_num_max": submit_num_max,
-                "events": [time_submit, time_run, time_run_exit],
-                "task_status": task_status,
-                "submit_status": submit_status,
-                "run_signal": run_signal,
-                "run_status": run_status,
-                "host": user_at_host,
-                "submit_method": batch_sys_name,
-                "submit_method_id": batch_sys_job_id,
-                "logs": {},
-                "seq_logs_indexes": {}}
-            entries.append(entry)
-            entry_of[(cycle, name, submit_num)] = entry
-        self._db_close(user_name, suite_name)
-        if entries:
-            self._get_job_logs(user_name, suite_name, entries, entry_of)
-        return (entries, of_n_entries)
-
-
-    def get_suite_logs_info(self, user_name, suite_name):
-        """Return the information of the suite logs.
-
-        Return a tuple that looks like:
-            ("cylc-run",
-             {"err": {"path": "log/suite/err", "mtime": mtime, "size": size},
-              "log": {"path": "log/suite/log", "mtime": mtime, "size": size},
-              "out": {"path": "log/suite/out", "mtime": mtime, "size": size}})
-
-        """
-        logs_info = {}
-        prefix = "~"
-        if user_name:
-            prefix += user_name
-        d_rel = os.path.join("cylc-run", suite_name)
-        dir_ = os.path.expanduser(os.path.join(prefix, d_rel))
-        # Get cylc files.
-        cylc_files = ["cylc-suite-env", "suite.rc", "suite.rc.processed"]
-        for key in cylc_files:
-            f_name = os.path.join(dir_, key)
-            if os.path.isfile(f_name):
-                f_stat = os.stat(f_name)
-                logs_info[key] = {"path": key,
-                                  "mtime": f_stat.st_mtime,
-                                  "size": f_stat.st_size}
-        # Get cylc suite log files.
-        log_files = ["log/suite/err", "log/suite/log", "log/suite/out"]
-        for key in log_files:
-            f_stat = os.stat(os.path.join(dir_, key))
-            logs_info[key] = {"path": key,
-                              "paths": [key] + get_logs(dir_, key),
-                              "mtime": f_stat.st_mtime,
-                              "size": f_stat.st_size}
-        return ("cylc", logs_info)
-
-
-    def get_suite_cycles_summary(
-            self, user_name, suite_name, order, limit, offset):
-        """Return a the state summary (of each cycle) of a user's suite.
-
-        user -- A string containing a valid user ID
-        suite -- A string containing a valid suite ID
-        limit -- Limit number of returned entries
-        offset -- Offset entry number
-
-        Return (entries, of_n_entries), where entries is a data structure that
-        looks like:
-            [   {   "cycle": cycle,
-                    "n_states": {
-                        "active": N, "success": M, "fail": L, "job_fails": K,
-                    },
-                    "max_time_updated": T2,
-                },
-                # ...
-            ]
-        where:
-        * cycle is a date-time cycle label
-        * N, M, L, K are the numbers of tasks in given states
-        * T2 is the time when last update time of (a task in) the cycle
-
-        and of_n_entries is the total number of entries.
-
-        """
-        of_n_entries = 0
-        stmt = ("SELECT COUNT(DISTINCT cycle) FROM task_states WHERE " +
-                "submit_num > 0")
-        for row in self._db_exec(user_name, suite_name, stmt):
-            of_n_entries = row[0]
-            break
-        if not of_n_entries:
-            return ([], 0)
-
-        # Not strictly correct, if cycle is in basic date-only format,
-        # but should not matter for most cases
-        integer_mode = False
-        stmt = "SELECT cycle FROM task_states LIMIT 1"
-        for row in self._db_exec(user_name, suite_name, stmt):
-            integer_mode = row[0].isdigit()
-            break
-
-        prefix = "~"
-        if user_name:
-            prefix += user_name
-        user_suite_dir = os.path.expanduser(os.path.join(
-            prefix, os.path.join("cylc-run", suite_name)))
-        targzip_log_cycles = []
-        try:
-            for item in os.listdir(os.path.join(user_suite_dir, "log")):
-                if item.startswith("job-") and item.endswith(".tar.gz"):
-                    targzip_log_cycles.append(item[4:-7])
-        except OSError:
-            pass
-
-        states_stmt = {}
-        for key, names in TASK_STATUS_GROUPS.items():
-            states_stmt[key] = " OR ".join(
-                ["status=='%s'" % (name) for name in names])
-        stmt = (
-            "SELECT" +
-            " cycle," +
-            " max(time_updated)," +
-            " sum(" + states_stmt["active"] + ") AS n_active," +
-            " sum(" + states_stmt["success"] + ") AS n_success,"
-            " sum(" + states_stmt["fail"] + ") AS n_fail"
-            " FROM task_states" +
-            " GROUP BY cycle")
-        if integer_mode:
-            stmt += " ORDER BY cast(cycle as number)"
-        else:
-            stmt += " ORDER BY cycle"
-        stmt += self.CYCLE_ORDERS.get(order, self.CYCLE_ORDERS["time_desc"])
-        stmt_args = []
-        if limit:
-            stmt += " LIMIT ? OFFSET ?"
-            stmt_args += [limit, offset]
-        entry_of = {}
-        entries = []
-        for row in self._db_exec(user_name, suite_name, stmt, stmt_args):
-            cycle, max_time_updated, n_active, n_success, n_fail = row
-            if n_active or n_success or n_fail:
-                entry_of[cycle] = {
-                    "cycle": cycle,
-                    "has_log_job_tar_gz": cycle in targzip_log_cycles,
-                    "max_time_updated": max_time_updated,
-                    "n_states": {
-                        "active": n_active,
-                        "success": n_success,
-                        "fail": n_fail,
-                        "job_active": 0,
-                        "job_success": 0,
-                        "job_fail": 0,
-                    },
-                }
-                entries.append(entry_of[cycle])
-
-        # Check if "task_jobs" table is available or not.
-        # Note: A single query with a JOIN is probably a more elegant solution.
-        # However, timing tests suggest that it is cheaper with 2 queries.
-        # This 2nd query may return more results than is necessary, but should
-        # be a very cheap query as it does not have to do a lot of work.
-        if self._db_has_table(user_name, suite_name, "task_jobs"):
-            stmt = (
-                "SELECT cycle," +
-                " sum(" + self.JOB_STATUS_COMBOS["submitted,running"] +
-                ") AS n_job_active," +
-                " sum(" + self.JOB_STATUS_COMBOS["succeeded"] +
-                ") AS n_job_success," +
-                " sum(" + self.JOB_STATUS_COMBOS["submission-failed,failed"] +
-                ") AS n_job_fail" +
-                " FROM task_jobs GROUP BY cycle")
-        else:
-            fail_events_stmt = " OR ".join(
-                ["event=='%s'" % (name)
-                 for name in TASK_STATUS_GROUPS["fail"]])
-            stmt = (
-                "SELECT cycle," +
-                " sum(" + fail_events_stmt + ") AS n_job_fail" +
-                " FROM task_events GROUP BY cycle")
-        for row in self._db_exec(user_name, suite_name, stmt, stmt_args):
-            cycle, n_job_active, n_job_success, n_job_fail = row
-            try:
-                entry_of[cycle]["n_states"]["job_active"] = n_job_active
-                entry_of[cycle]["n_states"]["job_success"] = n_job_success
-                entry_of[cycle]["n_states"]["job_fail"] = n_job_fail
-            except KeyError:
-                pass
-            else:
-                del entry_of[cycle]
-                if not entry_of:
-                    break
-        self._db_close(user_name, suite_name)
-
-        return entries, of_n_entries
-
-
-    def get_suite_state_summary(self, user_name, suite_name):
-        """Return a the state summary of a user's suite.
-
-        Return {"is_running": b, "is_failed": b, "server": s}
-        where:
-        * is_running is a boolean to indicate if the suite is running
-        * is_failed: a boolean to indicate if any tasks (submit) failed
-        * server: host:port of server, if available
-
-        """
-        ret = {
-            "is_running": False,
-            "is_failed": False,
-            "server": None}
-        dao = self._db_init(user_name, suite_name)
-        if not os.access(dao.db_f_name, os.F_OK | os.R_OK):
-            return ret
-
-        port_file_path = os.path.expanduser(
-            os.path.join(
-                "~" + user_name, "cylc-run", suite_name, ".service",
-                "contact"))
-        try:
-            host = None
-            port_str = None
-            for line in open(port_file_path):
-                key, value = [item.strip() for item in line.split("=", 1)]
-                if key == "CYLC_SUITE_HOST":
-                    host = value
-                elif key == "CYLC_SUITE_PORT":
-                    port_str = value
-        except (IOError, ValueError):
-            pass
-        else:
-            if host and port_str:
-                ret["is_running"] = True
-                ret["server"] = host.split(".", 1)[0] + ":" + port_str
-
-        stmt = "SELECT status FROM task_states WHERE status GLOB ? LIMIT 1"
-        stmt_args = ["*failed"]
-        for _ in self._db_exec(user_name, suite_name, stmt, stmt_args):
-            ret["is_failed"] = True
-            break
-        self._db_close(user_name, suite_name)
-
-        return ret
-
-
-    def _db_init(self, user_name, suite_name):
-        """Initialise a named database connection."""
-        key = (user_name, suite_name)
-        if key not in self.daos:
-            prefix = "~"
-            if user_name:
-                prefix += user_name
-            for name in [os.path.join("log", "db"), "cylc-suite.db"]:
-                db_f_name = os.path.expanduser(os.path.join(
-                    prefix, os.path.join("cylc-run", suite_name, name)))
-                self.daos[key] = GenericDAO(db_f_name)
-                if os.path.exists(db_f_name):
-                    break
-        return self.daos[key]
-
-
-    def _db_close(self, user_name, suite_name):
-        """Close a named database connection."""
-        key = (user_name, suite_name)
-        if self.daos.get(key) is not None:
-            self.daos[key].close()
-
-
-    def _db_exec(self, user_name, suite_name, stmt, stmt_args=None):
-        """Execute a query on a named database connection."""
-        daos = self._db_init(user_name, suite_name)
-        return daos.execute(stmt, stmt_args)
-
-
-    def _db_has_table(self, user_name, suite_name, table_name):
-        """Return True if table_name exists in the suite database."""
-        cursor = self._db_exec(
-            user_name, suite_name,
-            "SELECT name FROM sqlite_master WHERE name==?", [table_name])
-        return cursor.fetchone() is not None
-
-
-    def _get_suite_job_entries_where(
-            self, cycles, tasks, task_status, job_status):
-        """Helper for get_suite_job_entries.
-
-        Get query's "WHERE" expression and its arguments.
-        """
+        # Get query's "WHERE" expression and its arguments
         where_exprs = []
         where_args = []
         if cycles:
             cycle_where_exprs = []
             for cycle in cycles:
-                match = self.REC_CYCLE_QUERY_OP.match(cycle)
+                query_r = r"\A(before |after |[<>]=?)(.+)\Z"
+                match = re.compile(query_r).match(cycle)
                 if match:
                     operator, operand = match.groups()
                     where_args.append(operand)
@@ -1609,22 +1373,75 @@ class CylcNamelessDAO(object):
             if job_status_where:
                 where_exprs.append(job_status_where)
         if where_exprs:
-            return (" WHERE (" + ") AND (".join(where_exprs) + ")", where_args)
+            where_expr, where_args = (" WHERE (" +
+                                      ") AND (".join(where_exprs) +
+                                      ")", where_args)
         else:
-            return ("", where_args)
+            where_expr, where_args = ("", where_args)
 
+        # Get number of entries
+        of_n_entries = 0
+        stmt = ("SELECT COUNT(*)" +
+                " FROM task_jobs JOIN task_states USING (name, cycle)" +
+                where_expr)
+        for row in enumerate(
+            self.connect().execute(
+                user_name, suite_name, stmt, where_args)):
+            of_n_entries = row[0]
+            break
+        else:
+            return ([], 0)
 
-    def _get_job_logs(self, user_name, suite_name, entries, entry_of):
-        """Helper for "get_suite_job_entries". Get job logs.
+        # Get entries
+        entries = []
+        entry_of = {}
+        stmt = ("SELECT" +
+                " task_states.time_updated AS time," +
+                " cycle, name," +
+                " task_jobs.submit_num AS submit_num," +
+                " task_states.submit_num AS submit_num_max," +
+                " task_states.status AS task_status," +
+                " time_submit, submit_status," +
+                " time_run, time_run_exit, run_signal, run_status," +
+                " user_at_host, batch_sys_name, batch_sys_job_id" +
+                " FROM task_jobs JOIN task_states USING (cycle, name)" +
+                where_expr +
+                " ORDER BY " +
+                "time DESC, submit_num DESC, name DESC, cycle DESC")
+        limit_args = []
+        if limit:
+            stmt += " LIMIT ? OFFSET ?"
+            limit_args = [limit, offset]
+        for row in enumerate(
+            self.connect().execute(
+                user_name, suite_name, stmt, where_args + limit_args)):
+            (
+                cycle, name, submit_num, submit_num_max, task_status,
+                time_submit, submit_status,
+                time_run, time_run_exit, run_signal, run_status,
+                user_at_host, batch_sys_name, batch_sys_job_id
+            ) = row[1:]
+            entry = {
+                "cycle": cycle,
+                "name": name,
+                "submit_num": submit_num,
+                "submit_num_max": submit_num_max,
+                "events": [time_submit, time_run, time_run_exit],
+                "task_status": task_status,
+                "submit_status": submit_status,
+                "run_signal": run_signal,
+                "run_status": run_status,
+                "host": user_at_host,
+                "submit_method": batch_sys_name,
+                "submit_method_id": batch_sys_job_id,
+                "logs": {},
+                "seq_logs_indexes": {}}
+            entries.append(entry)
+            entry_of[(cycle, name, submit_num)] = entry
+        if not entries:
+            return (entries, of_n_entries)
 
-        Recent job logs are likely to be in the file system, so we can get a
-        listing of the relevant "log/job/CYCLE/NAME/SUBMI_NUM/" directory.
-        Older job logs may be archived in "log/job-CYCLE.tar.gz", we should
-        only open each relevant TAR file once to obtain a listing for all
-        relevant entries of that cycle.
-
-        Modify each entry in entries.
-        """
+        # Get job logs
         prefix = "~"
         if user_name:
             prefix += user_name
@@ -1682,7 +1499,7 @@ class CylcNamelessDAO(object):
                 entry["logs"][os.path.basename(member.name)] = {
                     "path": path,
                     "path_in_tar": member.name,
-                    "mtime": int(member.mtime),  # too precise otherwise
+                    "mtime": int(member.mtime),
                     "size": member.size,
                     "exists": True,
                     "seq_key": None}
@@ -1690,7 +1507,8 @@ class CylcNamelessDAO(object):
         # Sequential logs
         for entry in entries:
             for filename, filename_items in entry["logs"].items():
-                seq_log_match = self.REC_SEQ_LOG.match(filename)
+                match_r = r"\A(.+\.)([^\.]+)(\.[^\.]+)\Z"
+                seq_log_match = re.compile(match_r).match(filename)
                 if not seq_log_match:
                     continue
                 head, index_str, tail = seq_log_match.groups()
@@ -1717,3 +1535,139 @@ class CylcNamelessDAO(object):
                 if log_dict["seq_key"] not in entry["seq_logs_indexes"]:
                     log_dict["seq_key"] = None
 
+        return (entries, of_n_entries)
+
+    def upgrade_from_611(self):
+        """Upgrade database on restart with a 6.11.X private database."""
+        conn = self.connect()
+        # Add hold_swap column task_pool(_checkpoints) tables
+        for t_name in [self.TABLE_TASK_POOL, self.TABLE_TASK_POOL_CHECKPOINTS]:
+            sys.stdout.write("Add hold_swap column to %s\n" % (t_name,))
+            conn.execute(
+                r"ALTER TABLE " + t_name + r" ADD COLUMN hold_swap TEXT")
+        conn.commit()
+
+    def upgrade_with_state_file(self, state_file_path):
+        """Upgrade database on restart with an old state file.
+
+        Upgrade database from a state file generated by a suite that ran with
+        an old cylc version.
+        """
+        check_points = []
+        self.select_checkpoint_id(
+            lambda row_idx, row: check_points.append(row),
+            self.CHECKPOINT_LATEST_ID)
+        if check_points:
+            # No need to upgrade if latest check point already exists
+            return
+        sys.stdout.write("Upgrading suite db with %s ...\n" % state_file_path)
+        self._upgrade_with_state_file_states(state_file_path)
+        self._upgrade_with_state_file_extras()
+
+    def _upgrade_with_state_file_states(self, state_file_path):
+        """Helper for self.upgrade_with_state_file().
+
+        Populate the new database tables with information from state file.
+        """
+        location = None
+        sys.stdout.write("Populating %s table" % self.TABLE_SUITE_PARAMS)
+        for line in open(state_file_path):
+            line = line.strip()
+            if location is None:
+                # run mode, time stamp, initial cycle, final cycle
+                location = self._upgrade_with_state_file_header(line)
+            elif location == "broadcast":
+                # Ignore broadcast pickle in state file.
+                # The "broadcast_states" table should already be populated.
+                if line == "Begin task states":
+                    location = "task states"
+                    sys.stdout.write(
+                        "\nPopulating %s table" % self.TABLE_TASK_POOL)
+            else:
+                self._upgrade_with_state_file_tasks(line)
+        sys.stdout.write("\n")
+        self.execute_queued_items()
+
+    def _upgrade_with_state_file_header(self, line):
+        """Parse a header line in state file, add information to DB."""
+        head, tail = line.split(" : ", 1)
+        if head == "time":
+            self.add_insert_item(self.TABLE_CHECKPOINT_ID, {
+                "id": self.CHECKPOINT_LATEST_ID,
+                "time": tail.split(" ", 1)[0],
+                "event": self.CHECKPOINT_LATEST_EVENT})
+            return
+        for name, key in [
+                ("run mode", "run_mode"),
+                ("initial cycle", "initial_point"),
+                ("final cycle", "final_point")]:
+            if tail == "None":
+                tail = None
+            if head == name:
+                self.add_insert_item(self.TABLE_SUITE_PARAMS, {
+                    "key": key,
+                    "value": tail})
+                sys.stdout.write("\n + %s=%s" % (key, tail))
+                if name == "final cycle":
+                    return "broadcast"
+                else:
+                    return
+
+    def _upgrade_with_state_file_tasks(self, line):
+        """Parse a task state line in state file, add information to DB."""
+        head, tail = line.split(" : ", 1)
+        name, cycle = head.split(".")
+        status = None
+        spawned = None
+        for item in tail.split(", "):
+            key, value = item.split("=", 1)
+            if key == "status":
+                status = value
+            elif key == "spawned":
+                spawned = int(value in ["True", "true"])
+        self.add_insert_item(self.TABLE_TASK_POOL, {
+            "name": name,
+            "cycle": cycle,
+            "spawned": spawned,
+            "status": status,
+            "hold_swap": None})
+        sys.stdout.write("\n + %s" % head)
+
+    def _upgrade_with_state_file_extras(self):
+        """Upgrade the database tables after reading in state file."""
+        conn = self.connect()
+
+        # Rename old tables
+        for t_name in [self.TABLE_TASK_STATES, self.TABLE_TASK_EVENTS]:
+            conn.execute(
+                r"ALTER TABLE " + t_name +
+                r" RENAME TO " + t_name + "_old")
+        conn.commit()
+
+        # Create tables with new columns
+        self.create_tables()
+
+        # Populate new tables using old column data
+        for t_name in [self.TABLE_TASK_STATES, self.TABLE_TASK_EVENTS]:
+            sys.stdout.write(r"Upgrading %s table " % (t_name))
+            column_names = [col.name for col in self.tables[t_name].columns]
+            for i, row in enumerate(conn.execute(
+                    r"SELECT " + ",".join(column_names) +
+                    " FROM " + t_name + "_old")):
+                # These tables can be big, so we don't want to queue the items
+                # in memory.
+                conn.execute(self.tables[t_name].get_insert_stmt(), list(row))
+                if i:
+                    sys.stdout.write("\b" * len("%d rows" % (i)))
+                sys.stdout.write("%d rows" % (i + 1))
+            sys.stdout.write(" done\n")
+        conn.commit()
+
+        # Drop old tables
+        for t_name in [self.TABLE_TASK_STATES, self.TABLE_TASK_EVENTS]:
+            conn.execute(r"DROP TABLE " + t_name + "_old")
+        conn.commit()
+
+    def vacuum(self):
+        """Vacuum to the database."""
+        return self.connect().execute("VACUUM")

@@ -36,12 +36,12 @@ import traceback
 import urllib
 
 from cylc.version import CYLC_VERSION
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.hostuserutil import get_host
-from cylc.rundb import CylcNamelessDAO
+from cylc.rundb import CylcSuiteDAO
 from cylc.task_state import (
     TASK_STATUSES_ORDERED, TASK_STATUS_GROUPS)
 from cylc.ws import get_util_home
+from cylc.suite_logging import get_logs
 
 
 class CylcNamelessService(object):
@@ -64,7 +64,7 @@ class CylcNamelessService(object):
 
     def __init__(self, *args, **kwargs):
         self.exposed = True
-        self.suite_dao = CylcNamelessDAO()
+        self.suite_dao = CylcSuiteDAO(CylcSuiteDAO.DB_FILE_BASE_NAME)
         self.logo = get_util_home("doc", "src", "cylc-logo.png")
         self.title = self.TITLE
         self.host_name = get_host()
@@ -114,12 +114,12 @@ class CylcNamelessService(object):
             "time": strftime("%Y-%m-%dT%H:%M:%SZ", gmtime()),
         }
         data["states"].update(
-            self.suite_dao.get_suite_state_summary(user, suite))
+            self.suite_dao.select_suite_state_summary(user, suite))
         data["states"]["last_activity_time"] = (
             self.get_last_activity_time(user, suite))
         data.update(self._get_suite_logs_info(user, suite))
         data["broadcast_states"] = (
-            self.suite_dao.get_suite_broadcast_states(user, suite))
+            self.suite_dao.select_broadcast_states(user, suite, sort=True))
         if form == "json":
             return json.dumps(data)
         try:
@@ -145,10 +145,10 @@ class CylcNamelessService(object):
             "time": strftime("%Y-%m-%dT%H:%M:%SZ", gmtime())
         }
         data["states"].update(
-            self.suite_dao.get_suite_state_summary(user, suite))
+            self.suite_dao.select_suite_state_summary(user, suite))
         data.update(self._get_suite_logs_info(user, suite))
         data["broadcast_events"] = (
-            self.suite_dao.get_suite_broadcast_events(user, suite))
+            self.suite_dao.select_broadcast_events(user, suite, sort=True))
         if form == "json":
             return json.dumps(data)
         try:
@@ -195,7 +195,7 @@ class CylcNamelessService(object):
             "task_status_groups": TASK_STATUS_GROUPS,
         }
         data["entries"], data["of_n_entries"] = (
-            self.suite_dao.get_suite_cycles_summary(
+            self.suite_dao.select_suite_cycles_summary(
                 user, suite, order, per_page, (page - 1) * per_page))
         if per_page:
             data["n_pages"] = data["of_n_entries"] / per_page
@@ -205,7 +205,7 @@ class CylcNamelessService(object):
             data["n_pages"] = 1
         data.update(self._get_suite_logs_info(user, suite))
         data["states"].update(
-            self.suite_dao.get_suite_state_summary(user, suite))
+            self.suite_dao.select_suite_state_summary(user, suite))
         data["states"]["last_activity_time"] = (
             self.get_last_activity_time(user, suite))
         data["time"] = strftime("%Y-%m-%dT%H:%M:%SZ", gmtime())
@@ -315,10 +315,10 @@ class CylcNamelessService(object):
             tasks = shlex.split(str(tasks))
         data.update(self._get_suite_logs_info(user, suite))
         data["states"].update(
-            self.suite_dao.get_suite_state_summary(user, suite))
+            self.suite_dao.select_suite_state_summary(user, suite))
         data["states"]["last_activity_time"] = (
             self.get_last_activity_time(user, suite))
-        entries, of_n_entries = self.suite_dao.get_suite_job_entries(
+        entries, of_n_entries = self.suite_dao.select_suite_job_entries(
             user, suite, cycles, tasks, task_status, job_status, order,
             per_page, (page - 1) * per_page)
         data["entries"] = entries
@@ -526,7 +526,7 @@ class CylcNamelessService(object):
             names = name.replace("log/job/", "").split("/", 3)
             if len(names) == 4:
                 cycle, task, submit_num, _ = names
-                entries = self.suite_dao.get_suite_job_entries(
+                entries = self.suite_dao.select_suite_job_entries(
                     user, suite, [cycle], [task],
                     None, None, None, None, None)[0]
                 for entry in entries:
@@ -649,22 +649,18 @@ class CylcNamelessService(object):
     def _get_suite_logs_info(self, user, suite):
         """Return a dict with suite logs."""
         data = {"info": {}, "files": {}}
-
-        # Cylc files
-        user_suite_dir = self._get_user_suite_dir(user, suite)
+        user_suite_dir = self._get_user_suite_dir(user, suite)  # cylc files
 
         # Rose files: to recognise & group, but not process, standard formats.
+        data["files"]["rose"] = {}
+
         info_name = os.path.join(user_suite_dir, "rose-suite.info")
         if os.path.isfile(info_name):
-            try:
-                info_root = rose.config.load(info_name)
-                for key, node in info_root.value.items():
-                    if node.is_ignored() or not isinstance(node.value, str):
-                        continue
-                    data["info"][key] = node.value
-            except rose.config.ConfigSyntaxError:
-                pass
-        data["files"]["rose"] = {}
+            stat = os.stat(info_name)
+            data["files"]["rose"]["info"] = {
+                    "path": info_name,
+                    "mtime": stat.st_mtime,
+                    "size": stat.st_size}
         for key in ["conf", "log", "version"]:
             f_name = os.path.join(user_suite_dir, "log/rose-suite-run." + key)
             if os.path.isfile(f_name):
@@ -682,9 +678,38 @@ class CylcNamelessService(object):
                     "mtime": stat.st_mtime,
                     "size": stat.st_size}
 
-        k, logs_info = self.suite_dao.get_suite_logs_info(user, suite)
-        data["files"][k] = logs_info
+        # Logic from old CylcNamelessDAO function of same name now here; it
+        # returns a tuple that looks like:
+        #    ("cylc-run",
+        #     {"err": {"path": "log/suite/err", "mtime": mtime, "size": size},
+        #      "log": {"path": "log/suite/log", "mtime": mtime, "size": size},
+        #      "out": {"path": "log/suite/out", "mtime": mtime, "size": size}})
+        logs_info = {}
+        prefix = "~"
+        if user:
+            prefix += user
+        d_rel = os.path.join("cylc-run", suite)
+        dir_ = os.path.expanduser(os.path.join(prefix, d_rel))
+        # Get cylc files.
+        cylc_files = ["cylc-suite-env", "suite.rc", "suite.rc.processed"]
+        for key in cylc_files:
+            f_name = os.path.join(dir_, key)
+            if os.path.isfile(f_name):
+                f_stat = os.stat(f_name)
+                logs_info[key] = {"path": key,
+                                  "mtime": f_stat.st_mtime,
+                                  "size": f_stat.st_size}
+        # Get cylc suite log files.
+        log_files = ["log/suite/err", "log/suite/log", "log/suite/out"]
+        for key in log_files:
+            f_stat = os.stat(os.path.join(dir_, key))
+            logs_info[key] = {"path": key,
+                              "paths": [key] + get_logs(dir_, key),
+                              "mtime": f_stat.st_mtime,
+                              "size": f_stat.st_size}
 
+        k, logs_info = ("cylc", logs_info)
+        data["files"][k] = logs_info
         return data
 
     @classmethod
@@ -809,7 +834,6 @@ class CylcNamelessService(object):
         return (cmp(suite2.get("last_activity_time"),
                     suite1.get("last_activity_time")) or
                 cmp(suite1["name"], suite2["name"]))
-
 
 
 if __name__ == "__main__":
