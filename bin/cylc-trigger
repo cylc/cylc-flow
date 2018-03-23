@@ -113,7 +113,8 @@ def main():
             old_mtime = None
 
         # Tell the suite server program to generate the job file.
-        pclient.put_command('dry_run_tasks', items=[task_id])
+        pclient.put_command('dry_run_tasks', items=[task_id],
+                            check_syntax=False)
 
         # Wait for the new job file to be written. Use mtime because the same
         # file could potentially exist already, left from a previous run.

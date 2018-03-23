@@ -1,0 +1,12 @@
+2018-02-23T15:03:50Z INFO - Initial point: 1
+2018-02-23T15:03:50Z INFO - Final point: 1
+2018-02-23T15:03:51Z INFO - [foo_i3.1] -triggered off []
+2018-02-23T15:03:51Z INFO - [foo_i1.1] -triggered off []
+2018-02-23T15:03:51Z INFO - [foo_i4.1] -triggered off []
+2018-02-23T15:03:51Z INFO - [foo_i2.1] -triggered off []
+2018-02-23T15:03:51Z INFO - [foo_i5.1] -triggered off []
+2018-02-23T15:04:53Z INFO - [foo_i3.1] -triggered off []
+2018-02-23T15:04:53Z INFO - [foo_i1.1] -triggered off []
+2018-02-23T15:04:53Z INFO - [foo_i4.1] -triggered off []
+2018-02-23T15:04:53Z INFO - [foo_i2.1] -triggered off []
+2018-02-23T15:04:53Z INFO - [foo_i5.1] -triggered off []

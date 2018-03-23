@@ -199,7 +199,7 @@ def set_exception_hook_dialog(program_name=None):
     old_hook = sys.excepthook
     sys.excepthook = lambda e_type, e_value, e_traceback: (
         _launch_exception_hook_dialog(
-            e_type, e_value, e_traceback, sys.excepthook, program_name))
+            e_type, e_value, e_traceback, old_hook, program_name))
 
 
 def setup_icons():

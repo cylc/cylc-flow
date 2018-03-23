@@ -1049,8 +1049,8 @@ conditions; see `cylc conditions`.
         # Pass static cylc and suite variables to job script generation code
         self.task_job_mgr.job_file_writer.set_suite_env({
             'CYLC_UTC': str(cylc.flags.utc),
-            'CYLC_DEBUG': str(cylc.flags.debug),
-            'CYLC_VERBOSE': str(cylc.flags.verbose),
+            'CYLC_DEBUG': str(cylc.flags.debug).lower(),
+            'CYLC_VERBOSE': str(cylc.flags.verbose).lower(),
             'CYLC_SUITE_NAME': self.suite,
             'CYLC_CYCLING_MODE': str(cylc.flags.cycling_mode),
             'CYLC_SUITE_INITIAL_CYCLE_POINT': str(self.initial_point),
@@ -1609,18 +1609,24 @@ conditions; see `cylc conditions`.
         """Trigger tasks."""
         return self.pool.trigger_tasks(items, back_out)
 
-    def command_dry_run_tasks(self, items):
+    def command_dry_run_tasks(self, items, check_syntax=True):
         """Dry-run tasks, e.g. edit run."""
         itasks, bad_items = self.pool.filter_task_proxies(items)
         n_warnings = len(bad_items)
         if len(itasks) > 1:
             LOG.warning("Unique task match not found: %s" % items)
             return n_warnings + 1
-        if self.task_job_mgr.prep_submit_task_jobs(
-                self.suite, [itasks[0]], dry_run=True)[0]:
-            return n_warnings
-        else:
-            return n_warnings + 1
+        while self.stop_mode is None:
+            prep_tasks, bad_tasks = self.task_job_mgr.prep_submit_task_jobs(
+                self.suite, [itasks[0]], dry_run=True,
+                check_syntax=check_syntax)
+            if itasks[0] in prep_tasks:
+                return n_warnings
+            elif itasks[0] in bad_tasks:
+                return n_warnings + 1
+            else:
+                self.task_job_mgr.proc_pool.handle_results_async()
+                sleep(1.0)
 
     def command_reset_task_states(self, items, state=None, outputs=None):
         """Reset the state of tasks."""

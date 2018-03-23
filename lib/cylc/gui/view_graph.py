@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
 import gtk
 import gobject
 
@@ -77,19 +76,6 @@ Dependency graph suite control interface.
     def graph_update(self, w):
         self.t.action_required = True
 
-    def on_url_clicked(self, widget, url, event):
-        if event.button != 3:
-            return False
-
-        m = re.match('base:(.*)', url)
-        if m:
-            # base graph node
-            task_id = m.groups()[0]
-            self.right_click_menu(event, task_id, type_='base graph task')
-            return
-
-        self.right_click_menu(event, url, type_='live task')
-
     def on_motion_notify(self, widget, event):
         """Add a new tooltip when the cursor moves in the graph."""
         url = self.xdot.widget.get_url(event.x, event.y)
@@ -103,21 +89,26 @@ Dependency graph suite control interface.
         if url is None:
             self.xdot.widget.set_tooltip_text(None)
             return False
-        url = unicode(url.url)
-        m = re.match('base:(.*)', url)
-        if m:
-            task_id = m.groups()[0]
-            self.xdot.widget.set_tooltip_text(self.t.get_summary(task_id))
-            return False
-
-        # URL is task ID
-        self.xdot.widget.set_tooltip_text(self.t.get_summary(url))
+        task_id = unicode(url.url)
+        if task_id.startswith(self.t.PREFIX_BASE):
+            # base graph node
+            task_id = task_id[len(self.t.PREFIX_BASE):]
+        self.xdot.widget.set_tooltip_text(self.t.get_summary(task_id))
         return False
 
     def stop(self):
         self.t.quit = True
 
-    def right_click_menu(self, event, task_id, type_='live task'):
+    def on_url_clicked(self, _, task_id, event):
+        """Callback on clicking the right hand mouse button."""
+        if event.button != 3:
+            return False
+
+        is_base = task_id.startswith(self.t.PREFIX_BASE)
+        if is_base:
+            # base graph node
+            task_id = task_id[len(self.t.PREFIX_BASE):]
+
         name, point_string = TaskID.split(task_id)
 
         menu = gtk.Menu()
@@ -158,7 +149,7 @@ Dependency graph suite control interface.
                                        name not in self.t.leaves)
         ungroup_rec_item.connect('activate', self.grouping, name, False, True)
 
-        if type_ != 'live task':
+        if is_base:
             insert_item = gtk.ImageMenuItem('Insert ...')
             img = gtk.image_new_from_stock(gtk.STOCK_DIALOG_INFO,
                                            gtk.ICON_SIZE_MENU)
@@ -181,7 +172,7 @@ Dependency graph suite control interface.
         menu.append(ungroup_item)
         menu.append(ungroup_rec_item)
 
-        if type_ == 'live task':
+        if not is_base:
             is_fam = (name in self.t.descendants)
             if is_fam:
                 if task_id not in self.t.fam_state_summary:

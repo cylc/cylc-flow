@@ -15,10 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test an edit-run (cylc trigger --edit).
-. $(dirname $0)/test_header
+# Test an edit-run (cylc trigger --edit) with host-select command.
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 4
+set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
@@ -32,10 +32,10 @@ TEST_NAME="${TEST_NAME_BASE}-run"
 run_ok "${TEST_NAME}" cylc run --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-diff"
-DIFF_LOG=$(cylc cat-log -dl $SUITE_NAME broken-task.1)
+DIFF_LOG="$(cylc cat-log -dl "${SUITE_NAME}" 'broken-task.1')"
 # Python 2.6 difflib adds an extra space after the filename,
 # but Python 2.7 does not. Remove it if it exists.
-sed -i 's/^--- original $/--- original/; s/^+++ edited $/+++ edited/' $DIFF_LOG
+sed -i 's/^--- original $/--- original/; s/^+++ edited $/+++ edited/' "${DIFF_LOG}"
 cmp_ok "${DIFF_LOG}" - <<'__END__'
 --- original
 +++ edited
@@ -44,25 +44,6 @@ cmp_ok "${DIFF_LOG}" - <<'__END__'
  cylc__job__inst__script() {
  # SCRIPT:
 -/bin/false
-+/bin/true
- }
- 
- . "${CYLC_DIR}/lib/cylc/job.sh"
-__END__
-#-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-diff2"
-DIFF_LOG=$(cylc cat-log -dl $SUITE_NAME syntax_errored_task.1)
-# Python 2.6 difflib adds an extra space after the filename,
-# but Python 2.7 does not. Remove it if it exists.
-sed -i 's/^--- original $/--- original/; s/^+++ edited $/+++ edited/' $DIFF_LOG
-cmp_ok "${DIFF_LOG}" - <<'__END__'
---- original
-+++ edited
-@@ -30,7 +30,7 @@
- 
- cylc__job__inst__script() {
- # SCRIPT:
--$(
 +/bin/true
  }
  

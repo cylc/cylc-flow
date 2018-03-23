@@ -59,6 +59,10 @@ def compare_dict_of_dict(one, two):
 
 
 class GraphUpdater(threading.Thread):
+    """Thread for updating "cylc gui" graph view."""
+
+    PREFIX_BASE = 'base:'
+
     def __init__(self, cfg, updater, theme, info_bar, xdot):
         super(GraphUpdater, self).__init__()
 
@@ -406,7 +410,8 @@ class GraphUpdater(threading.Thread):
             node.attr['color'] = '#888888'
             node.attr['fillcolor'] = 'white'
             node.attr['fontcolor'] = '#888888'
-            node.attr['URL'] = 'base:%s' % node.attr['URL']
+            if not node.attr['URL'].startswith(self.PREFIX_BASE):
+                node.attr['URL'] = self.PREFIX_BASE + node.attr['URL']
 
         for id_ in self.state_summary:
             try:
