@@ -16,12 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import gtk
 from cylc.gui.logviewer import logviewer
 from cylc.gui.tailer import Tailer
 from cylc.gui.util import get_icon
-from cylc.gui.warning_dialog import warning_dialog
 from cylc.suite_logging import SUITE_LOG_OPTS
 
 

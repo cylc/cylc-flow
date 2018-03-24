@@ -47,7 +47,7 @@ from cylc.mkdir_p import mkdir_p
 from cylc.mp_pool import SuiteProcPool, SuiteProcContext
 from cylc.suite_logging import LOG
 from cylc.task_action_timer import TaskActionTimer
-from cylc.task_events_mgr import TaskEventsManager
+from cylc.task_events_mgr import TaskEventsManager, log_task_job_activity
 from cylc.task_message import TaskMessage
 from cylc.task_outputs import (
     TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED,
@@ -237,7 +237,7 @@ class TaskJobManager(object):
                 # Set submit-failed for all affected tasks
                 for itask in itasks:
                     itask.local_job_file_path = None  # reset for retry
-                    self.task_events_mgr.log_task_job_activity(
+                    log_task_job_activity(
                         SuiteProcContext(
                             self.JOBS_SUBMIT,
                             '(init %s)' % owner_at_host,
@@ -333,7 +333,8 @@ class TaskJobManager(object):
             self.task_events_mgr.setup_event_handlers(itask, event, msg)
             return True
 
-    def _create_job_log_path(self, suite, itask):
+    @staticmethod
+    def _create_job_log_path(suite, itask):
         """Create job log directory for a task job, etc.
 
         Create local job directory, and NN symbolic link.
@@ -404,7 +405,8 @@ class TaskJobManager(object):
             script = "echo " + comstr + "\n" + comstr
         return pre_script, script, post_script
 
-    def _job_cmd_out_callback(self, suite, itask, cmd_ctx, line):
+    @staticmethod
+    def _job_cmd_out_callback(suite, itask, cmd_ctx, line):
         """Callback on job command STDOUT/STDERR."""
         if cmd_ctx.cmd_kwargs.get("host") and cmd_ctx.cmd_kwargs.get("user"):
             owner_at_host = "(%(user)s@%(host)s) " % cmd_ctx.cmd_kwargs
@@ -453,8 +455,7 @@ class TaskJobManager(object):
             ctx.ret_code = int(ctx.ret_code)
             if ctx.ret_code:
                 ctx.cmd = cmd_ctx.cmd  # print original command on failure
-        self.task_events_mgr.log_task_job_activity(
-            ctx, suite, itask.point, itask.tdef.name)
+        log_task_job_activity(ctx, suite, itask.point, itask.tdef.name)
         log_lvl = INFO
         log_msg = 'killed'
         if ctx.ret_code:  # non-zero exit status
@@ -556,8 +557,7 @@ class TaskJobManager(object):
             ctx.cmd = cmd_ctx.cmd  # print original command on failure
             return
         finally:
-            self.task_events_mgr.log_task_job_activity(
-                ctx, suite, itask.point, itask.tdef.name)
+            log_task_job_activity(ctx, suite, itask.point, itask.tdef.name)
         if run_status == "1" and run_signal in ["ERR", "EXIT"]:
             # Failed normally
             self.task_events_mgr.process_message(
@@ -616,8 +616,7 @@ class TaskJobManager(object):
             ctx.ret_code = 0
             self.task_events_mgr.process_message(
                 itask, severity, message, self.poll_task_jobs, event_time)
-        self.task_events_mgr.log_task_job_activity(
-            ctx, suite, itask.point, itask.tdef.name)
+        log_task_job_activity(ctx, suite, itask.point, itask.tdef.name)
 
     def _run_job_cmd(self, cmd_key, suite, itasks, callback):
         """Run job commands, e.g. poll, kill, etc.
@@ -708,8 +707,7 @@ class TaskJobManager(object):
             ctx.ret_code = int(ctx.ret_code)
             if ctx.ret_code:
                 ctx.cmd = cmd_ctx.cmd  # print original command on failure
-        self.task_events_mgr.log_task_job_activity(
-            ctx, suite, itask.point, itask.tdef.name)
+        log_task_job_activity(ctx, suite, itask.point, itask.tdef.name)
 
         if ctx.ret_code == SuiteProcPool.RET_CODE_SUITE_STOPPING:
             return
@@ -800,7 +798,7 @@ class TaskJobManager(object):
         LOG.debug("submit_num %s" % itask.submit_num)
         LOG.debug(traceback.format_exc())
         LOG.error(exc)
-        self.task_events_mgr.log_task_job_activity(
+        log_task_job_activity(
             SuiteProcContext(self.JOBS_SUBMIT, action, err=exc, ret_code=1),
             suite, itask.point, itask.tdef.name, submit_num=itask.submit_num)
         if not dry_run:

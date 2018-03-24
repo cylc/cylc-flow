@@ -29,7 +29,7 @@ from subprocess import Popen, PIPE, STDOUT
 from uuid import uuid4
 from isodatetime.parsers import TimePointParser
 
-from cylc.hostuserutil import is_remote, is_remote_host, is_remote_user
+from cylc.hostuserutil import is_remote_host, is_remote_user
 from cylc.gui.dbchooser import dbchooser
 from cylc.gui.combo_logviewer import ComboLogViewer
 from cylc.gui.warning_dialog import warning_dialog, info_dialog
@@ -1252,9 +1252,7 @@ been defined for this suite""").inform()
         if choice == 'job-preview':
             self.view_jobscript_preview(task_id, geditor=True)
             return False
-        try:
-            task_state_summary = self.updater.full_state_summary[task_id]
-        except KeyError:
+        if task_id not in self.updater.full_state_summary:
             warning_dialog('%s is not live' % task_id, self.window).warn()
             return False
         self._gcapture_cmd("cylc cat-log %s -m e -f %s --geditor %s %s" % (
@@ -1367,7 +1365,6 @@ been defined for this suite""").inform()
                     for handler, vmenu in [
                             (self.view_task_logs, view_menu),
                             (self.view_in_editor, view_editor_menu)]:
-                        task_id = task_ids[0]
                         item = gtk.ImageMenuItem(fname)
                         item.set_image(gtk.image_new_from_stock(
                             gtk.STOCK_DND, gtk.ICON_SIZE_MENU))

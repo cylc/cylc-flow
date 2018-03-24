@@ -22,7 +22,13 @@ import sys
 import shlex
 from pipes import quote
 from posix import WIFSIGNALED
+
+# CODACY ISSUE:
+#   Consider possible security implications associated with Popen module.
+# REASON IGNORED:
+#   Subprocess is needed, but we use it with security in mind.
 from subprocess import Popen, PIPE
+
 import cylc.flags
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.version import CYLC_VERSION
@@ -30,10 +36,9 @@ from cylc.version import CYLC_VERSION
 
 def remote_cylc_cmd(cmd, user=None, host=None, capture=False,
                     ssh_login_shell=None):
-    """Run a given cylc command on a remote account.
+    """Run a given cylc command on another account and/or host.
 
     """
-    # TODO - TEST FAILED COMMAND OSERROR
     if host is None:
         host = "localhost"
     if user is None:
@@ -57,25 +62,34 @@ def remote_cylc_cmd(cmd, user=None, host=None, capture=False,
         # it is passed as arguments to bash.
         command += ["bash", "--login", "-c", "'exec $0 \"$@\"'"]
 
-    cmd = "%s %s" % (
-        glbl_cfg().get_host_item("cylc executable", host, user), cmd)
-
+    cylc_exec = glbl_cfg().get_host_item("cylc executable", host, user)
+    if not cylc_exec.endswith('cylc'):
+        sys.exit("ERROR: bad cylc executable in global config: %s" % (
+                 cylc_exec))
+    cmd = "%s %s" % (cylc_exec, cmd)
     command += [cmd]
     if cylc.flags.debug:
-        msg = ' '.join(quote(c) for c in command)
-        print >> sys.stderr, msg
+        sys.stderr.write(' '.join(quote(c) for c in command) + '\n')
     out = None
     if capture:
-        proc = Popen(command, stdout=PIPE, stdin=open(os.devnull))
-        out = proc.communicate()[0]
+        stdout = PIPE
     else:
-        proc = Popen(command, stdin=open(os.devnull))
+        stdout = None
+    # CODACY ISSUE:
+    #   subprocess call - check for execution of untrusted input.
+    # REASON IGNORED:
+    #   The command is read from the site/user global config file, but we check
+    #   above that it ends in 'cylc', and in any case the user could execute
+    #   any such command directly via ssh.
+    proc = Popen(command, stdout=stdout, stdin=open(os.devnull))
+    if capture:
+        out = proc.communicate()[0]
     res = proc.wait()
     if WIFSIGNALED(res):
-        print >> sys.stderr, (
-            "ERROR: remote command terminated by signal %d" % res)
+        sys.stderr.write(
+            "ERROR: remote command terminated by signal %d\n" % res)
     elif res:
-        print >> sys.stderr, "ERROR: remote command failed %d" % res
+        sys.stderr.write("ERROR: remote command failed %d\n" % res)
     return out
 
 
@@ -188,7 +202,7 @@ class RemoteRunner(object):
             # e.g. for match patterns such as '.*' on the command line.
 
         if cylc.flags.debug:
-            print >> sys.stderr, ' '.join(quote(c) for c in command)
+            sys.stderr.write(' '.join(quote(c) for c in command) + '\n')
 
         if dry_run:
             return command

@@ -18,14 +18,19 @@
 
 """cylc [info] cat-log|log [OPTIONS] ARGS
 
-Cat (print contents of) to stdout, view in editor, or tail-follow suite or task
-job logs, or print their locations. Works for local and remote jobs, and with
-batch-system-specific commands to cat or tail the stdout and stderr of live
-jobs (set in Cylc global config).
+Print, edit, or tail-follow content, or print path or list directory, of local
+or remote task job logs and suite server logs. Batch-system-specific job cat or
+tail commands are used if defined in global config.
 
-For task job logs, the correct cycle point format for the suite must be used.
-To list the local job log directory of a remote task, choose 'list-dir' mode
-and a local-only file such as job-activity.log: -m l -f a.
+For standard log types use the short-cut option argument or full filename (e.g.
+for job stdout "-f o" or "-f job.out" will do).
+
+To list the local job log directory of a remote task, choose "-m l" (directory
+list mode) and a local file, e.g. "-f a" (job-activity.log).
+
+Custom job logs are assumed to reside on the job host.
+
+The correct cycle point format of the suite must be for task job logs.
 
 Note the --host/user options are not needed to view remote job logs. They are
 the general command reinvocation options for sites using ssh-based task
@@ -67,8 +72,6 @@ MODES = {
 }
 
 
-# TODO - check behaviour for remote and local file not found.
-
 def split_user_at_host(user_at_host):
     """split user@host into user, host."""
     if user_at_host is None:
@@ -100,10 +103,7 @@ def join_user_at_host(user, host):
 
 
 def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False):
-    """View the log file in the specified way, on its native host.
-
-    For log files on job hosts, this function gets call by the after the
-    cat-log command re-invokes itself there.
+    """View (by mode) local log file. This is only called on the file host.
 
     batchview_cmd is a batch-system-specific job stdout or stderr cat or tail
     command (e.g. 'qcat') that may be implemented for batch systems that don't
@@ -115,7 +115,7 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False):
         print logpath
         return 0
     elif not os.path.exists(logpath):
-        print >> sys.stderr, 'ERROR: file not found: %s' % logpath
+        sys.stderr.write('ERROR: file not found: %s\n' % logpath)
         return 1
     elif mode == 'print-dir':
         print os.path.dirname(logpath)
@@ -249,7 +249,6 @@ def get_task_job_attrs(options, suite_name, point, task, submit_num):
     user, host = split_user_at_host(str(task_job_data["user_at_host"]))
     user_at_host = join_user_at_host(user, host)
 
-    # TODO - OPTIONS.filename IS NOW INSUFFICIENT (allow literal job.out etc.)
     if (options.mode in ['l', 'p'] or options.filename not in ['e', 'o'] or
             not task_job_data["batch_sys_name"] or
             not task_job_data["batch_sys_job_id"] or
@@ -303,7 +302,7 @@ def tmpfile_edit(filestr, logpath, geditor=False):
     if ret_code == 0:
         if os.stat(viewfile).st_mtime > modtime1:
             sys.stderr.write(
-                'WARNING: you edited a TEMPORARY COPY of %s' % (
+                'WARNING: you edited a TEMPORARY COPY of %s\n' % (
                     os.path.basename(logpath)))
     if ret_code and err:
         sys.stderr.write(err)
@@ -313,9 +312,9 @@ def main():
     """Implement cylc cat-log CLI.
 
     Determine log path, user@host, batchview_cmd, and action (print, dir-list,
-    cat, edit, or tail), and then:
-      a) if the log path is local, perform action on log path, or
-      b) if the log path is remote, re-invoke as a) on the remote account
+    cat, edit, or tail), and then if the log path is:
+      a) local: perform action on log path, or
+      b) remote: re-invoke cylc cat-log as a) on the remote account
 
     """
     parser = get_option_parser()

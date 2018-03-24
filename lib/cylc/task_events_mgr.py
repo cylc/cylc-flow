@@ -74,6 +74,26 @@ TaskJobLogsRetrieveContext = namedtuple(
     ["key", "ctx_type", "user_at_host", "max_size"])
 
 
+def log_task_job_activity(ctx, suite, point, name, submit_num=None):
+    """Log an activity for a task job."""
+    ctx_str = str(ctx)
+    if not ctx_str:
+        return
+    if isinstance(ctx.cmd_key, tuple):  # An event handler
+        submit_num = ctx.cmd_key[-1]
+    job_activity_log = get_task_job_activity_log(
+        suite, point, name, submit_num)
+    try:
+        with open(job_activity_log, "ab") as handle:
+            handle.write(ctx_str + '\n')
+    except IOError as exc:
+        LOG.warning("%s: write failed\n%s" % (job_activity_log, exc))
+    if ctx.cmd and ctx.ret_code:
+        LOG.error(ctx_str)
+    elif ctx.cmd:
+        LOG.debug(ctx_str)
+
+
 class TaskEventsManager(object):
     """Task events manager.
 
@@ -140,25 +160,6 @@ class TaskEventsManager(object):
             except (KeyError, ItemNotFoundError):
                 pass
         return default
-
-    def log_task_job_activity(self, ctx, suite, point, name, submit_num=None):
-        """Log an activity for a task job."""
-        ctx_str = str(ctx)
-        if not ctx_str:
-            return
-        if isinstance(ctx.cmd_key, tuple):  # An event handler
-            submit_num = ctx.cmd_key[-1]
-        job_activity_log = get_task_job_activity_log(
-            suite, point, name, submit_num)
-        try:
-            with open(job_activity_log, "ab") as handle:
-                handle.write(ctx_str + '\n')
-        except IOError as exc:
-            LOG.warning("%s: write failed\n%s" % (job_activity_log, exc))
-        if ctx.cmd and ctx.ret_code:
-            LOG.error(ctx_str)
-        elif ctx.cmd:
-            LOG.debug(ctx_str)
 
     def process_events(self, schd_ctx):
         """Process task events that were created by "setup_event_handlers".
@@ -401,8 +402,7 @@ class TaskEventsManager(object):
     def _custom_handler_callback(self, ctx, schd_ctx, id_key):
         """Callback when a custom event handler is done."""
         _, point, name, submit_num = id_key
-        self.log_task_job_activity(
-            ctx, schd_ctx.suite, point, name, submit_num)
+        log_task_job_activity(ctx, schd_ctx.suite, point, name, submit_num)
         if ctx.ret_code == 0:
             del self.event_timers[id_key]
         else:
@@ -477,7 +477,7 @@ class TaskEventsManager(object):
                     del self.event_timers[id_key]
                     log_ctx = SuiteProcContext((key1, submit_num), None)
                     log_ctx.ret_code = 0
-                    self.log_task_job_activity(
+                    log_task_job_activity(
                         log_ctx, schd_ctx.suite, point, name, submit_num)
                 else:
                     self.event_timers[id_key].unset_waiting()
@@ -563,7 +563,7 @@ class TaskEventsManager(object):
                         if not exist_ok:
                             log_ctx.err += " %s" % fname
                     self.event_timers[id_key].unset_waiting()
-                self.log_task_job_activity(
+                log_task_job_activity(
                     log_ctx, schd_ctx.suite, point, name, submit_num)
             except KeyError:
                 if cylc.flags.debug:

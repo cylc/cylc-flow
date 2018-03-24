@@ -17,13 +17,9 @@
 """Cylc gui log viewer, with a combo box for log file selection."""
 
 import gtk
-import os
-
-from parsec.OrderedDict import OrderedDict
 
 from cylc.gui.logviewer import logviewer
 from cylc.gui.tailer import Tailer
-from cylc.task_id import TaskID
 from cylc.task_job_logs import JOB_LOG_OPTS
 
 
@@ -46,7 +42,6 @@ class ComboLogViewer(logviewer):
         self.extra_logs = extra_logs
         self.suite = suite
         self.choice = choice
-        name_str, point_str = TaskID.split(task_id)
         self.cmd_tmpl = "cylc cat-log %s" % remote_run_opts + (
             " -m t -s %(subnum)s -f %(job_log)s %(suite_name)s %(task_id)s")
         logviewer.__init__(self)

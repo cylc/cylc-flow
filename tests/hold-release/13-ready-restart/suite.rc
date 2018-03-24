@@ -21,7 +21,7 @@ bar
         [[[job]]]
             batch system = at
             # A fake submission on 1st attempt
-            batch submit command template = sleep 20
+            batch submit command template = sleep 15
     [[bar]]
         script = """
 # Stop the suite as soon as job file of "foo-1" is in the ready state.
