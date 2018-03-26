@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test #958: task in ready state, stop now, restart hold, release
+# Test restart with a "ready" task. See GitHub #958 (update: and #2610).
 . "$(dirname "$0")/test_header"
 
 set_test_number 4
