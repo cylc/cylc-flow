@@ -61,11 +61,11 @@ def main():
         key, value = item.split('=', 1)
         os.environ[key] = value
     task_message = TaskMessage(severity=options.severity)
-    if (task_message.env_map.get('CYLC_VERBOSE') in ["True", "true"] or
+    if (task_message.env_map.get('CYLC_VERBOSE') == "true" or
             options.verbose):
         cylc.flags.verbose = True
 
-    if task_message.env_map.get('CYLC_DEBUG') in ["True", "true"]:
+    if task_message.env_map.get('CYLC_DEBUG') == "true":
         cylc.flags.debug = True
 
     try:

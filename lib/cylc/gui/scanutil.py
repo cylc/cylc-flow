@@ -18,6 +18,7 @@
 """Scan utilities for "cylc gscan" and "cylc gpanel"."""
 
 import os
+import re
 import signal
 from subprocess import Popen, PIPE, STDOUT
 import sys
@@ -29,6 +30,7 @@ from cylc.cfgspec.gcylc import gcfg
 import cylc.flags
 from cylc.gui.legend import ThemeLegendWindow
 from cylc.gui.util import get_icon
+from cylc.hostuserutil import get_user
 from cylc.network.port_scan import (
     get_scan_items_from_fs, scan_many, DEBUG_DELIM)
 from cylc.suite_status import (
@@ -539,12 +541,14 @@ def update_suites_info(updater, full_mode=False):
     # Determine items to scan
     results = {}
     items = []
-    if full_mode and not updater.hosts:
-        # Get (host, port) list from file system
-        items.extend(get_scan_items_from_fs(owner_pattern, updater))
-    elif full_mode:
+    if full_mode and updater.hosts:
         # Scan full port range on all hosts
         items.extend(updater.hosts)
+        if owner_pattern is None:
+            owner_pattern = re.compile(r"\A" + get_user() + r"\Z")
+    elif full_mode:
+        # Get (host, port) list from file system
+        items.extend(get_scan_items_from_fs(owner_pattern, updater))
     else:
         # Scan suites in previous results only
         for (host, owner, name), prev_result in updater.suite_info_map.items():
