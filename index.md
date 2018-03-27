@@ -4,8 +4,8 @@ title: a workflow engine
 ---
 
 **Cylc (*"silk"*) is a workflow engine for cycling systems** - it orchestrates
-complex distributed **suites** of interdependent **cycling tasks** that may
-continue indefinitely (Cylc dynamically generates ongoing workflows).
+distributed **suites** of interdependent **cycling tasks** that may continue on
+indefinitely.
 
 There are several reasons why tasks might need to be cycled:
 
