@@ -27,7 +27,7 @@ if ! which sqlite3 > /dev/null; then
     skip 1 "sqlite3 not installed?"
 else
     sqlite3 "${SUITED}/log/db" \
-        'SELECT COUNT(*) FROM task_action_timers WHERE ctx_key_json GLOB "*event-handler-00*"' \
+        'SELECT COUNT(*) FROM task_action_timers WHERE ctx_key GLOB "*event-handler-00*"' \
         >"${TEST_NAME_BASE}-db-n-entries"
     cmp_ok "${TEST_NAME_BASE}-db-n-entries" <<<'1'
 fi

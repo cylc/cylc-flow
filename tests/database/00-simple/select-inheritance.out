@@ -1,4 +1,4 @@
-bar|bar root
-baz|baz root
-foo|foo root
-root|root
+bar|["bar", "root"]
+baz|["baz", "root"]
+foo|["foo", "root"]
+root|["root"]

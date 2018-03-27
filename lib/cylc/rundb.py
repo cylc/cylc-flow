@@ -17,13 +17,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Provide data access object for the suite runtime database."""
 
+import json
 import sqlite3
 import sys
 import traceback
 
 import cylc.flags
 from cylc.wallclock import get_current_time_string
-from cylc.suite_logging import LOG, ERR
+from cylc.suite_logging import LOG
 
 
 class CylcSuiteDAOTableColumn(object):
@@ -239,9 +240,9 @@ class CylcSuiteDAO(object):
         TABLE_TASK_ACTION_TIMERS: [
             ["cycle", {"is_primary_key": True}],
             ["name", {"is_primary_key": True}],
-            ["ctx_key_json", {"is_primary_key": True}],
-            ["ctx_json"],
-            ["delays_json"],
+            ["ctx_key", {"is_primary_key": True}],
+            ["ctx"],
+            ["delays"],
             ["num", {"datatype": "INTEGER"}],
             ["delay"],
             ["timeout"],
@@ -461,7 +462,7 @@ class CylcSuiteDAO(object):
             for i, stmt_args in enumerate(stmt_args_list):
                 err_log += ("\nstmt_args[%(i)d]=%(stmt_args)s" % {
                     "i": i, "stmt_args": stmt_args})
-            ERR.warning(err_log)
+            LOG.warning(err_log)
             raise
 
     def select_broadcast_states(self, callback, id_key=None):
@@ -538,10 +539,10 @@ class CylcSuiteDAO(object):
 
         Invoke callback(row_idx, row) on each row.
         """
-        for row in self.connect().execute(
+        for sql, in self.connect().execute(
                 r"SELECT sql FROM sqlite_master where type==? and name==?",
                 [my_type, my_name]):
-            return row
+            return sql
 
     def select_task_action_timers(self, callback):
         """Select from task_action_timers for restart.
@@ -915,41 +916,72 @@ class CylcSuiteDAO(object):
         conn.commit()
 
     def upgrade_pickle_to_json(self):
-        """Upgrade the database tables if containing pickled objects."""
+        """Upgrade the database tables if containing pickled objects.
+
+        Back compat for <=7.6.X.
+        """
         conn = self.connect()
+        t_name = self.TABLE_TASK_ACTION_TIMERS
+        if "_pickle" not in self.select_table_schema("table", t_name):
+            return
 
         # Rename old tables
-        for t_name in [self.TABLE_TASK_ACTION_TIMERS]:
-            conn.execute(
-                r"ALTER TABLE " + t_name +
-                r" RENAME TO " + t_name + "_old")
+        conn.execute(r"ALTER TABLE %(table)s RENAME TO %(table)s_old" % {
+            "table": t_name})
         conn.commit()
 
         # Create tables with new columns
         self.create_tables()
 
         # Populate new tables using old column data
-        for t_name in [self.TABLE_TASK_ACTION_TIMERS]:
-            sys.stdout.write(r"Upgrading %s table " % (t_name))
-            column_names = [col.name for col in self.tables[t_name].columns]
-            old_column_names = [col_name.replace(
-                'json', 'pickle') for col_name in column_names]
-
-            for i, row in enumerate(conn.execute(
-                    r"SELECT " + ",".join(old_column_names) +
-                    " FROM " + t_name + "_old")):
+        # Codacy: Pickle library appears to be in use, possible security issue.
+        # Use of "pickle" module is for loading data written by <=7.6.X of Cylc
+        # in users' own spaces.
+        import pickle
+        sys.stdout.write(r"Upgrading %s table " % (t_name))
+        cols = []
+        for col in self.tables[t_name].columns:
+            if col.name in ['ctx_key', 'ctx', 'delays']:
+                cols.append(col.name + '_pickle')
+            else:
+                cols.append(col.name)
+        n_skips = 0
+        # Codacy: Possible SQL injection vector through string-based query
+        # construction.
+        # This is highly unlikely - all strings in the constuct are from
+        # constants in this module.
+        for i, row in enumerate(conn.execute(
+                r"SELECT " + ",".join(cols) + " FROM " + t_name + "_old")):
+            args = []
+            try:
+                for col, cell in zip(cols, row):
+                    if col == "ctx_pickle":
+                        # Upgrade pickled namedtuple objects
+                        orig = pickle.loads(str(cell))
+                        if orig is not None:
+                            args.append(json.dumps(
+                                [type(orig).__name__, orig.__getnewargs__()]))
+                        else:
+                            args.append(json.dumps(orig))
+                    elif col.endswith("_pickle"):
+                        # Upgrade pickled lists
+                        args.append(json.dumps(pickle.loads(str(cell))))
+                    else:
+                        args.append(cell)
+            except (EOFError, TypeError, LookupError, ValueError):
+                n_skips += 1  # skip bad rows
+            else:
                 # These tables can be big, so we don't want to queue the items
                 # in memory.
-                conn.execute(self.tables[t_name].get_insert_stmt(), list(row))
+                conn.execute(self.tables[t_name].get_insert_stmt(), args)
                 if i:
                     sys.stdout.write("\b" * len("%d rows" % (i)))
                 sys.stdout.write("%d rows" % (i + 1))
-            sys.stdout.write(" done\n")
+        sys.stdout.write(" done, %d skipped\n" % n_skips)
         conn.commit()
 
         # Drop old tables
-        for t_name in [self.TABLE_TASK_ACTION_TIMERS]:
-            conn.execute(r"DROP TABLE " + t_name + "_old")
+        conn.execute(r"DROP TABLE %(table)s_old" % {"table": t_name})
         conn.commit()
 
     def vacuum(self):

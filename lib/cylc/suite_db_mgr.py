@@ -231,10 +231,10 @@ class SuiteDatabaseManager(object):
     def put_runtime_inheritance(self, config):
         """Put task/family inheritance in runtime database."""
         for namespace in config.cfg['runtime']:
-            value = ' '.join(config.runtime['linearized ancestors'][namespace])
+            value = config.runtime['linearized ancestors'][namespace]
             self.db_inserts_map[self.TABLE_INHERITANCE].append({
                 "namespace": namespace,
-                "inheritance": value})
+                "inheritance": json.dumps(value)})
 
     def put_suite_params(
             self, cylc_version, uuid_str, run_mode, UTC_mode, initial_point,
@@ -292,17 +292,16 @@ class SuiteDatabaseManager(object):
                 key1, point, name, submit_num = key
                 # convert namedtuple timer.ctx for JSON serialisation
                 if timer.ctx is not None:
-                    ctx_obj = {}
-                    my_obj = timer.ctx
-                    ctx_obj[type(my_obj).__name__] = my_obj.__getnewargs__()
+                    ctx_obj = [
+                        type(timer.ctx).__name__, timer.ctx.__getnewargs__()]
                 else:
                     ctx_obj = None
                 self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
                     "name": name,
                     "cycle": point,
-                    "ctx_key_json": json.dumps((key1, submit_num,)),
-                    "ctx_json": json.dumps(ctx_obj),
-                    "delays_json": json.dumps(timer.delays),
+                    "ctx_key": json.dumps((key1, submit_num,)),
+                    "ctx": json.dumps(ctx_obj),
+                    "delays": json.dumps(timer.delays),
                     "num": timer.num,
                     "delay": timer.delay,
                     "timeout": timer.timeout})
@@ -337,18 +336,17 @@ class SuiteDatabaseManager(object):
                         continue
                     # convert namedtuple timer.ctx for JSON serialisation
                     if timer.ctx is not None:
-                        ctx_obj = {}
-                        my_obj = timer.ctx
-                        ctx_obj[type(my_obj).__name__] = (
-                            my_obj.__getnewargs__())
+                        ctx_obj = [
+                            type(timer.ctx).__name__,
+                            timer.ctx.__getnewargs__()]
                     else:
                         ctx_obj = None
                     self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
                         "name": itask.tdef.name,
                         "cycle": str(itask.point),
-                        "ctx_key_json": json.dumps((ctx_key_0, ctx_key_1)),
-                        "ctx_json": json.dumps(ctx_obj),
-                        "delays_json": json.dumps(timer.delays),
+                        "ctx_key": json.dumps((ctx_key_0, ctx_key_1)),
+                        "ctx": json.dumps(ctx_obj),
+                        "delays": json.dumps(timer.delays),
                         "num": timer.num,
                         "delay": timer.delay,
                         "timeout": timer.timeout})
@@ -406,12 +404,12 @@ class SuiteDatabaseManager(object):
 
     def put_update_task_outputs(self, itask):
         """Put UPDATE statement for task_outputs table."""
-        items = []
-        for item in sorted(itask.state.outputs.get_completed_customs()):
-            items.append("%s=%s" % item)
+        items = {}
+        for trigger, message in itask.state.outputs.get_completed_customs():
+            items[trigger] = message
         self._put_update_task_x(
             CylcSuiteDAO.TABLE_TASK_OUTPUTS,
-            itask, {"outputs": "\n".join(items)})
+            itask, {"outputs": json.dumps(items)})
 
     def put_update_task_states(self, itask, set_args):
         """Put UPDATE statement for task_states table."""
@@ -485,12 +483,7 @@ class SuiteDatabaseManager(object):
                     pass
         else:
             pri_dao = self.get_pri_dao()
-
-            # Check for instances of pickle
-            old_headers = "".join(
-               pri_dao.select_table_schema("table", "task_action_timers"))
-            if 'pickle' in old_headers:
-                pri_dao.upgrade_pickle_to_json()
+            pri_dao.upgrade_pickle_to_json()
 
         # Vacuum the primary/private database file
         pri_dao.vacuum()

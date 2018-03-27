@@ -22,7 +22,6 @@ from logging import DEBUG
 import os
 from Queue import Empty, Queue
 from shutil import copytree, rmtree
-from sqlite3 import OperationalError
 from subprocess import Popen, PIPE
 import sys
 from time import sleep, time
@@ -214,11 +213,7 @@ class Scheduler(object):
         glbl_cfg().create_cylc_run_tree(self.suite)
 
         if self.is_restart:
-            try:
-                self.suite_db_mgr.restart_upgrade()
-            except OperationalError:
-                ERR.error("cannot upgrade task action timer table in database")
-                sys.exit(1)
+            self.suite_db_mgr.restart_upgrade()
 
         try:
             detach = not self.options.no_detach
