@@ -33,19 +33,18 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}"
 LOG_FILE="${SUITE_RUN_DIR}/log/suite/log"
-grep health "${LOG_FILE}" >&2
-grep_ok \
-    '\[t1\.1\] -health check settings: submission.*, polling intervals=PT2S,6\*PT10S,...' \
-    "${LOG_FILE}"
-grep_ok \
-    '\[t2\.1\] -health check settings: submission.*, polling intervals=PT2S,6\*PT10S,...' \
-    "${LOG_FILE}"
-grep_ok \
-    '\[t1\.1\] -health check settings: execution.*, polling intervals=2\*PT1S,10\*PT6S,...' \
-    "${LOG_FILE}"
-grep_ok \
-    '\[t2\.1\] -health check settings: execution.*, polling intervals=2\*PT1S,10\*PT6S,...' \
-    "${LOG_FILE}"
+
+PRE_MSG='-health check settings:'
+for INDEX in 1 2; do
+    for STAGE in 'submission' 'execution'; do
+        POLL_INT='PT2S,6\*PT10S,'
+        if [[ "${STAGE}" == 'execution' ]]; then
+            POLL_INT='2\*PT1S,10\*PT6S,'
+        fi
+        POST_MSG=".*, polling intervals=${POLL_INT}..."
+        grep_ok "\[t${INDEX}\.1\] ${PRE_MSG} ${STAGE}${POST_MSG}" "${LOG_FILE}"
+    done
+done
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
 exit

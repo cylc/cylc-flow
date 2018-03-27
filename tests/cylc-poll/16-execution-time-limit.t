@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test execution time limit polling.
-. "$(dirname "${0}")/test_header"
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 4
 create_test_globalrc '
@@ -35,27 +35,24 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 cmp_times () {
-    # Test if the times $1 and $2 are within $3 seconds of eachother.
-    python -c '
+    # Test if the times $1 and $2 are within $3 seconds of each other.
+    python - "$@" <<'__PYTHON__'
 import sys
 from isodatetime.parsers import TimePointParser
 parser = TimePointParser()
 time_1 = parser.parse(sys.argv[1])
 time_2 = parser.parse(sys.argv[2])
-diff = (time_1 - time_2).get_seconds()
-if abs(diff) <= int(sys.argv[3]):
-    sys.exit(0)
-else:
-    sys.exit(1)
-    ' $1 $2 $3
+if abs((time_1 - time_2).get_seconds()) > int(sys.argv[3]):
+    sys.exit("abs(predicted - actual) > tolerance: %s" % sys.argv[1:])
+__PYTHON__
 }
 time_offset () {
     # Add an ISO8601 duration to an ISO8601 date-time.
-    python -c '
+    python - "$@" <<'__PYTHON__'
 import sys
 from isodatetime.parsers import TimePointParser, DurationParser
 print TimePointParser().parse(sys.argv[1]) + DurationParser().parse(sys.argv[2])
-    ' $1 $2
+__PYTHON__
 }
 #-------------------------------------------------------------------------------
 LOG_FILE="${SUITE_RUN_DIR}/log/suite/log"
@@ -69,17 +66,11 @@ PREDICTED_POLL_TIME=$(time_offset \
     "$(cut -d ' ' -f 1 <<< "${LINE}")" \
     "$(sed 's/.*execution timeout=\([^,]\+\).*/\1/' <<< "${LINE}")")
 ACTUALL_POLL_TIME=$(sed -n \
-    's/\(.*\) INFO - \[foo.1\] -(current:running) failed (polled).*/\1/p' \
+    's/\(.*\) INFO - \[foo.1\] -(current:running)(polled) failed .*/\1/p' \
     "${LOG_FILE}")
 # Test execution timeout polling.
-TEST_NAME="${TEST_NAME_BASE}-poll-time"
-if cmp_times ${PREDICTED_POLL_TIME} ${ACTUALL_POLL_TIME} 1; then
-    ok "${TEST_NAME}"
-else
-    echo "Poll time differs from log entry '${PREDICTED_POLL_TIME} != " \
-        "${ACTUALL_POLL_TIME}'." >&2
-    fail "${TEST_NAME}"
-fi
+run_ok "${TEST_NAME_BASE}-poll-time" \
+    cmp_times "${PREDICTED_POLL_TIME}" "${ACTUALL_POLL_TIME}" '1'
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
 exit

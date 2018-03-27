@@ -900,7 +900,6 @@ class TaskEventsManager(object):
         # Set timeout
         timeref = None  # reference time, submitted or started time
         timeout = None  # timeout in setting
-        delays = []  # polling intervals
         if itask.state.status == TASK_STATUS_RUNNING:
             timeref = itask.summary['started_time']
             timeout_key = 'execution timeout'
