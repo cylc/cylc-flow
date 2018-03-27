@@ -150,7 +150,7 @@ cylc__job__main() {
 ###############################################################################
 # Run a function in the task job instance file, if possible.
 # Arguments:
-#   func_name - name of function without the "cylc__job__inst__" prefix
+#   func_name: name of function without the "cylc__job__inst__" prefix
 # Returns:
 #   return 0, or the return code of the function if called
 cylc__job__run_inst_func() {
@@ -168,11 +168,11 @@ cylc__job__run_inst_func() {
 #   CYLC_TASK_MESSAGE_STARTED_PID
 #   CYLC_VACATION_SIGNALS
 # Arguments:
-#   signal - trapped or given signal
-#   severity - message severity
-#   run_err_script - boolean, run job err script or not
-#   messages - (remaining arguments)
-#              messages to send back to the suite server program
+#   signal: trapped or given signal
+#   run_err_script (boolean): run job err script or not
+#   messages (remaining arguments):
+#     messages to send back to the suite server program,
+#     see "cylc help message" for format of messages.
 # Returns:
 #   exit 1
 cylc__job_finish() {
@@ -218,10 +218,10 @@ cylc__job_err() {
 #   CYLC_TASK_CYCLE_POINT
 #   CYLC_CYCLING_MODE
 # Arguments:
-#   Fail try 1 only (T/F)
-#   Fail cycle points:
-#     'all' - fail all cycle points
-#     'P1 P2 P3 ...' - fail these cycle points
+#   fail_try_1_only (boolean): fail only on 1st try
+#   fail_cycle_points (remaining arguments):
+#     'all': fail all cycle points
+#     'P1 P2 P3 ...': fail these cycle points
 # Returns:
 #   0 - dummy job succeed
 #   1 - dummy job fail
