@@ -4,6 +4,50 @@ For the full list of all changes for each release see [closed
 milestones](https://github.com/cylc/cylc/milestones?state=closed).
 
 -------------------------------------------------------------------------------
+## __cylc-7.6.1 (2018-03-28)__
+
+A collection of bug fixes made since cylc-7.6.0.
+
+### Fixes
+
+[#2571](https://github.com/cylc/cylc/pull/2571) - `cylc gui`: fix tailing of
+remote job logs from the GUI (in 7.6.0 this failed with a Python traceback).
+
+[#2596](https://github.com/cylc/cylc/pull/2596) - allow parameter values that
+contain +/- characters
+
+[#2574](https://github.com/cylc/cylc/pull/2574) - `cylc gscan HOST`: show just
+the owner's suites by default (at 7.6.0 this showed all suites on HOST).
+
+[#2592](https://github.com/cylc/cylc/pull/2592) - `cylc trigger --edit`:
+disable job script syntax checking in edit runs (this prevented a new job
+script from being written for editing).
+
+[#2579](https://github.com/cylc/cylc/pull/2579) - `cylc gscan`: fix respawning
+error dialog on giving a bad regular expression (on the command line) to match
+owner or suite name.
+
+[#2606](https://github.com/cylc/cylc/pull/2606) - jobs with batch system info
+missing in a corrupted status file (thus not pollable) will now poll as failed
+rather appear stuck as running.
+
+[#2603](https://github.com/cylc/cylc/pull/2603) - `cylc gui` (graph view): fix
+possible error on inserting a nested family.
+
+[#2602](https://github.com/cylc/cylc/pull/2602) - `cylc gui` (tree view): fix
+negative progress bar value (reportedly possible after manual task state
+manipulations).
+
+[#2586](https://github.com/cylc/cylc/pull/2586) - `cylc gui` (tree view): fix
+possible division-by-zero error in elapsed time computation.
+
+[#2588](https://github.com/cylc/cylc/pull/2588) - `cylc trigger --edit`: fix
+edit runs for tasks with dynamic remote host selection.
+
+[#2585](https://github.com/cylc/cylc/pull/2585) - fix recovery from a failed
+host select command.
+
+-------------------------------------------------------------------------------
 ## __cylc-7.6.0 (2018-02-07)__
 
 ### Enhancements
