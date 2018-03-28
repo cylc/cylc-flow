@@ -1,0 +1,27 @@
+#!Jinja2
+[cylc]
+    UTC mode = True
+    abort if any task fails = True
+[scheduling]
+    initial cycle point = 2000
+    final cycle point = 2000
+    [[dependencies]]
+        [[[P1Y]]]
+            graph = FOO
+[runtime]
+    [[FOO]]
+        script = """
+echo "Hello from ${CYLC_TASK_ID}.${CYLC_SUITE_NAME}"
+for I in $(seq -w 1 10); do
+    echo "[INFO] whatever stuff ${I}" >"$0.${I}.txt"
+done
+for NAME in holly iris daisy; do
+    echo "[INFO] ${NAME}" >"$(dirname "$0")/bunch.${NAME}.out"
+done
+for I in 2 4 8 16 32 64 128 256; do
+    echo "<html><head><title>${I}</title></head><body>${I}</body></html>" \
+        >"$0.trace.${I}.html"
+done
+"""
+    [[foo0, foo1]]
+        inherit = FOO
