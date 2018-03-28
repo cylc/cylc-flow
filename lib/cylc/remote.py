@@ -128,7 +128,7 @@ class RemoteRunner(object):
                 self.owner = arg.replace('--user=', '')
             elif arg.startswith('--host='):
                 self.host = arg.replace('--host=', '')
-            elif arg == '--ssh-cylc=':
+            elif arg.startswith('--ssh-cylc='):
                 self.ssh_cylc = arg.replace('--ssh-cylc=', '')
             elif arg == '--login':
                 self.ssh_login_shell = True
