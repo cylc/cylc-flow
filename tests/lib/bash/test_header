@@ -95,6 +95,27 @@
 #         (Remote job tests should really use set_test_remote, below, however).
 #     set_test_remote
 #         set CYLC_TEST_HOST and CYLC_TEST_OWNER for remote job tests.
+#     port_is_busy $PORT
+#         Return 0 if $PORT is busy or 1 if $PORT is not busy.
+#     cylc_ws_init $NS $UTIL
+#         Start a cylc web service server. Test server OK. Write to these shell
+#         variables on success:
+#         * TEST_CYLC_WS_PID - PID of the service server
+#         * TEST_CYLC_WS_PORT - Port of the service server on localhost.
+#         * TEST_CYLC_WS_URL - URL of service server.
+#         E.g. cylc_ws_init cylc nameless
+#     cylc_ws_kill
+#         Kill a web service server started by "cylc_ws_init" and remove
+#         generated log and status files.
+#     cylc_ws_json_greps TEST_KEY JSON-FILE EXPECTED [EXPECTED ...]
+#         Load JSON content in argument 1
+#         Each remaining argument is an expected content in the JSON data in
+#         the form: [keys, value] where "keys" is a list containing keys or
+#         indexes to an expected item in the data structure, and the value is
+#         an expected value. A key in keys can be a simple dict key or an
+#         array index. It can also be a dict {attr_key: attr_value, ...}. In
+#         which case, the expected data item is under a list of dicts, where a
+#         unique dict in the list contains all elements attr_key: attr_value.
 #-------------------------------------------------------------------------------
 set -eu
 
@@ -522,6 +543,97 @@ set_test_remote() {
   export CYLC_TEST_HOST=${CYLC_TEST_HOST:-"localhost"}
   export CYLC_TEST_OWNER=${CYLC_TEST_OWNER:-${USER}}
 }
+
+port_is_busy() {
+    local PORT="${1}"
+    if type -P netcat 1>/dev/null; then
+        HOSTNAME="${HOSTNAME:-"$(hostname)"}"
+        HOSTNAME="${HOSTNAME:-'localhost'}"
+        netcat -z "${HOSTNAME}" "${PORT}"
+    else
+        netstat -atun | grep -q "127.0.0.1:${PORT}"
+    fi
+}
+
+TEST_CYLC_WS_PID=
+TEST_CYLC_WS_PORT=
+TEST_CYLC_WS_URL=
+TEST_NAME=
+cylc_ws_init() {
+    local NS="$1"
+    local UTIL="$2"
+    local PORT="$((${RANDOM} + 10000))"
+    while port_is_busy "${PORT}"; do
+        PORT="$((${RANDOM} + 10000))"
+        echo "choosing port, selected ${PORT}" >&2
+    done
+
+    TEST_NAME="${TEST_NAME_BASE}-${NS}-${UTIL}"
+    "${NS}" "${UTIL}" '-R' 'start' "${PORT}" \
+        0<'/dev/null' 1>"${NS}-${UTIL}.stdout" 2>"${NS}-${UTIL}.stderr" &
+    TEST_CYLC_WS_PID="$!"
+    T_INIT="$(date '+%s')"
+    while ! port_is_busy "${PORT}" && (($(date '+%s') < ${T_INIT} + 60)); do
+        sleep 1
+    done
+    TEST_CYLC_WS_PORT="${PORT}"
+    if port_is_busy "${TEST_CYLC_WS_PORT}"; then
+        ok "${TEST_NAME}"
+        TEST_CYLC_WS_URL="http://${HOSTNAME}:${TEST_CYLC_WS_PORT}/${NS}-${UTIL}/"
+    else
+        fail "${TEST_NAME}"
+        cylc_ws_kill
+    fi
+}
+
+cylc_ws_kill() {
+    if [[ -n "${TEST_CYLC_WS_PID}" ]]; then
+        kill "${TEST_CYLC_WS_PID}" 2>'/dev/null'
+        wait 2>'/dev/null'
+    fi
+    if [[ -n "${TEST_CYLC_WS_PORT}" ]]; then
+        rm -fr "${HOME}/.cylc/"*"-0.0.0.0-${TEST_CYLC_WS_PORT}"* 2>'/dev/null'
+    fi
+    TEST_CYLC_WS_PID=
+    TEST_CYLC_WS_PORT=
+    TEST_CYLC_WS_URL=
+}
+
+cylc_ws_json_greps() {
+    local TEST_NAME="$1"
+    shift 1
+    run_ok "${TEST_NAME}" python - "$@" <<'__PYTHON__'
+import ast
+import json
+import sys
+
+data = json.load(open(sys.argv[1]))
+for item in sys.argv[2:]:
+    keys, value = ast.literal_eval(item)
+    datum = data
+    try:
+        for key in keys:
+            if isinstance(key, dict):
+                for datum_item in datum:
+                    if all([datum_item.get(k) == v for k, v in key.items()]):
+                        datum = datum_item
+                        break
+                else:
+                    raise KeyError
+            else:
+                datum = datum[key]
+        if datum != value:
+            raise ValueError((item, datum))
+    except IndexError:
+        raise IndexError(item)
+    except KeyError:
+        raise KeyError(item)
+__PYTHON__
+    if [[ -s "${TEST_NAME}.stderr" ]]; then
+        cat "${TEST_NAME}.stderr" >&2
+    fi
+}
+
 
 CYLC_DIR="${CYLC_DIR:-$(cd $(dirname "${BASH_SOURCE}")/../../.. && pwd)}"
 PATH="${CYLC_DIR}/bin:${PATH}"

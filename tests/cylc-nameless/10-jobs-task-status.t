@@ -1,33 +1,31 @@
 #!/bin/bash
-#-------------------------------------------------------------------------------
-# (C) British Crown Copyright 2012-8 Met Office.
-#
-# This file is part of Rose, a framework for meteorological suites.
-#
-# Rose is free software: you can redistribute it and/or modify
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) 2008-2018 NIWA
+# 
+# This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Rose is distributed in the hope that it will be useful,
+# This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Rose. If not, see <http://www.gnu.org/licenses/>.
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test for "rose bush", jobs list, task status.
+# Test for "cylc nameless", jobs list, task status.
 #-------------------------------------------------------------------------------
 . "$(dirname "$0")/test_header"
 if ! python -c 'import cherrypy' 2>'/dev/null'; then
     skip_all '"cherrypy" not installed'
 fi
 
-tests 15
+set_test_number 15
 
-ROSE_CONF_PATH= rose_ws_init 'rose' 'bush'
-if [[ -z "${TEST_ROSE_WS_PORT}" ]]; then
+ROSE_CONF_PATH= cylc_ws_init 'cylc' 'nameless'
+if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
     exit 1
 fi
 
@@ -68,16 +66,16 @@ __SUITE_RC__
 #-------------------------------------------------------------------------------
 # Run a quick cylc suite
 mkdir -p "${HOME}/cylc-run"
-SUITE_DIR="$(mktemp -d --tmpdir="${HOME}/cylc-run" "rtb-rose-bush-10-XXXXXXXX")"
-SUITE_NAME="$(basename "${SUITE_DIR}")"
-cp -p 'suite.rc' "${SUITE_DIR}"
+TEST_DIR="$(mktemp -d --tmpdir="${HOME}/cylc-run" "rtb-rose-bush-10-XXXXXXXX")"
+SUITE_NAME="$(basename "${TEST_DIR}")"
+cp -p 'suite.rc' "${TEST_DIR}"
 export CYLC_CONF_PATH=
-cylc register "${SUITE_NAME}" "${SUITE_DIR}"
+cylc register "${SUITE_NAME}" "${TEST_DIR}"
 cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null'
-TASKJOBS_URL="${TEST_ROSE_WS_URL}/taskjobs/${USER}/${SUITE_NAME}?form=json"
+TASKJOBS_URL="${TEST_CYLC_WS_URL}/taskjobs/${USER}/${SUITE_NAME}?form=json"
 #-------------------------------------------------------------------------------
-TEST_KEY="${TEST_KEY_BASE}-200-curl-jobs"
-run_pass "${TEST_KEY}" curl "${TASKJOBS_URL}"
+TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs"
+run_ok "${TEST_NAME}" curl "${TASKJOBS_URL}"
 FOO1="{'cycle': '20000101T0000Z', 'name': 'foo', 'submit_num': 1}"
 FOO2="{'cycle': '20000101T0000Z', 'name': 'foo', 'submit_num': 2}"
 FOO3="{'cycle': '20000101T0000Z', 'name': 'foo', 'submit_num': 3}"
@@ -86,7 +84,7 @@ BAR2="{'cycle': '20000101T0000Z', 'name': 'bar', 'submit_num': 2}"
 BAR3="{'cycle': '20000101T0000Z', 'name': 'bar', 'submit_num': 3}"
 BAZ1="{'cycle': '20000101T0000Z', 'name': 'baz', 'submit_num': 1}"
 BAZ2="{'cycle': '20000101T0000Z', 'name': 'baz', 'submit_num': 2}"
-rose_ws_json_greps "${TEST_KEY}.out" "${TEST_KEY}.out" \
+cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('of_n_entries',), 9]" \
     "[('job_status',), None]" \
     "[('entries', ${FOO1}, 'task_status',), 'succeeded']" \
@@ -116,41 +114,41 @@ rose_ws_json_greps "${TEST_KEY}.out" "${TEST_KEY}.out" \
     "[('entries', ${BAZ2}, 'run_signal',), None]"
 
 #-------------------------------------------------------------------------------
-TEST_KEY="${TEST_KEY_BASE}-200-curl-jobs-failed"
-run_pass "${TEST_KEY}" curl "${TASKJOBS_URL}&job_status=failed"
-rose_ws_json_greps "${TEST_KEY}.out" "${TEST_KEY}.out" \
+TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-failed"
+run_ok "${TEST_NAME}" curl "${TASKJOBS_URL}&job_status=failed"
+cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('job_status',), 'failed']" \
     "[('of_n_entries',), 6]"
 #-------------------------------------------------------------------------------
-TEST_KEY="${TEST_KEY_BASE}-200-curl-jobs-submission-failed-and-failed"
-run_pass "${TEST_KEY}" curl "${TASKJOBS_URL}&job_status=submission-failed,failed"
-rose_ws_json_greps "${TEST_KEY}.out" "${TEST_KEY}.out" \
+TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-submission-failed-and-failed"
+run_ok "${TEST_NAME}" curl "${TASKJOBS_URL}&job_status=submission-failed,failed"
+cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('job_status',), 'submission-failed,failed']" \
     "[('of_n_entries',), 7]"
 #-------------------------------------------------------------------------------
-TEST_KEY="${TEST_KEY_BASE}-200-curl-jobs-succeeded"
-run_pass "${TEST_KEY}" curl "${TASKJOBS_URL}&job_status=succeeded"
-rose_ws_json_greps "${TEST_KEY}.out" "${TEST_KEY}.out" \
+TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-succeeded"
+run_ok "${TEST_NAME}" curl "${TASKJOBS_URL}&job_status=succeeded"
+cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('job_status',), 'succeeded']" \
     "[('of_n_entries',), 2]"
 #-------------------------------------------------------------------------------
-TEST_KEY="${TEST_KEY_BASE}-200-curl-jobs-succeeded-failed"
-run_pass "${TEST_KEY}" curl "${TASKJOBS_URL}&job_status=succeeded,failed"
-rose_ws_json_greps "${TEST_KEY}.out" "${TEST_KEY}.out" \
+TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-succeeded-failed"
+run_ok "${TEST_NAME}" curl "${TASKJOBS_URL}&job_status=succeeded,failed"
+cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('job_status',), 'succeeded,failed']" \
     "[('of_n_entries',), 8]"
 #-------------------------------------------------------------------------------
-TEST_KEY="${TEST_KEY_BASE}-200-curl-task-succeeded"
-run_pass "${TEST_KEY}" curl "${TASKJOBS_URL}&task_status=succeeded"
-rose_ws_json_greps "${TEST_KEY}.out" "${TEST_KEY}.out" \
+TEST_NAME="${TEST_NAME_BASE}-200-curl-task-succeeded"
+run_ok "${TEST_NAME}" curl "${TASKJOBS_URL}&task_status=succeeded"
+cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('of_n_entries',), 5]"
 #-------------------------------------------------------------------------------
-TEST_KEY="${TEST_KEY_BASE}-200-curl-task-succeeded-job-failed"
-run_pass "${TEST_KEY}" curl "${TASKJOBS_URL}&task_status=succeeded&job_status=failed"
-rose_ws_json_greps "${TEST_KEY}.out" "${TEST_KEY}.out" \
+TEST_NAME="${TEST_NAME_BASE}-200-curl-task-succeeded-job-failed"
+run_ok "${TEST_NAME}" curl "${TASKJOBS_URL}&task_status=succeeded&job_status=failed"
+cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('of_n_entries',), 2]"
 #-------------------------------------------------------------------------------
 # Tidy up
-rose_ws_kill
-rm -fr "${SUITE_DIR}" 2>'/dev/null'
+cylc_ws_kill
+rm -fr "${TEST_DIR}" 2>'/dev/null'
 exit 0
