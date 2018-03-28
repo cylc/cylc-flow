@@ -385,6 +385,8 @@ To start a new run, stop the old one first with one or more of these:
         If arg is a file, suite name is the base name of its container
         directory.
         """
+        if arg == '.':
+            arg = os.getcwd()
         try:
             path = self.get_suite_rc(arg, options.suite_owner)
             name = arg
