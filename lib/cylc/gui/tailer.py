@@ -72,7 +72,7 @@ class Tailer(threading.Thread):
         try:
             self.proc = Popen(
                 command, stdin=open(os.devnull), stdout=PIPE, stderr=STDOUT,
-                preexec_fn=os.setsid)
+                preexec_fn=os.setpgrp)
         except OSError as exc:
             dialog = warning_dialog("%s: %s" % (
                 exc, " ".join(quote(item) for item in command)))

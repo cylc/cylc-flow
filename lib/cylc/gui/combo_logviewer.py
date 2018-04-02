@@ -48,13 +48,11 @@ class ComboLogViewer(logviewer):
 
     def connect(self):
         """Connect to the selected log file tailer."""
-        print self.choice
         cmd = self.cmd_tmpl % {'subnum': self.nsubmit,
                                'suite_name': self.suite_name,
                                'task_id': self.task_id,
                                'job_log': self.choice}
         self.log_label.set_text(self.choice)
-        print cmd
         self.t = Tailer(self.logview, cmd)
         self.t.start()
 

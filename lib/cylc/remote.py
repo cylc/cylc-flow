@@ -60,8 +60,7 @@ def remote_cylc_cmd(cmd, user=None, host=None, capture=False,
         # A login shell will always source /etc/profile and the user's bash
         # profile file. To avoid having to quote the entire remote command
         # it is passed as arguments to bash.
-        command += ["bash", "--login", "-c", "'exec $0 \"$@\"'"]
-
+        command += ["bash", "--login", "-c", quote(r'exec "$0" "$@"')]
     cylc_exec = glbl_cfg().get_host_item("cylc executable", host, user)
     if not cylc_exec.endswith('cylc'):
         sys.exit("ERROR: bad cylc executable in global config: %s" % (

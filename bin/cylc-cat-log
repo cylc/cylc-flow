@@ -49,6 +49,7 @@ import traceback
 from glob import glob
 from time import sleep
 from pipes import quote
+from stat import S_IRUSR
 from tempfile import mkstemp
 from subprocess import Popen, PIPE
 
@@ -145,7 +146,7 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False):
         # Ensure that the tail command dies if the parent process dies.
         ppid = os.getppid()
         if remote:
-            fn = os.setsid
+            fn = os.setpgrp
         else:
             fn = None
         proc = Popen(shlex.split(cmd), stdin=open(os.devnull), preexec_fn=fn)
@@ -291,7 +292,7 @@ def tmpfile_edit(filestr, logpath, geditor=False):
     viewfile = mkstemp(dir=glbl_cfg().get_tmpdir())[1]
     with open(viewfile, 'w') as vf:
         vf.write(filestr)
-    os.chmod(viewfile, 0400)
+    os.chmod(viewfile, S_IRUSR)
     modtime1 = os.stat(viewfile).st_mtime
 
     cmd = shlex.split(editor)
