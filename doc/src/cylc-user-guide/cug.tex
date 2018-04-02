@@ -7052,54 +7052,42 @@ default arguments, like this:
 echo '!!!!!EVENT!!!!!' %(event)s %(suite)s %(id)s %(message)s
 \end{lstlisting}
 
-\subsubsection{``Late'' Events}
+\subsubsection{Late Events}
 \label{Late Events}
 
-Operators in production environments often want automatic alerting of delays in
-important tasks. This is not quite as straightforward as it may seem!
+You may want to be notified when certain tasks are running late in a real time
+production system - i.e.\ when they have not triggered by {\em the usual time}.
+Tasks of primary interest are not normally clock-triggered however, so their
+trigger times are mostly a function of how the suite runs in its environment,
+and even external factors such as contention with other suites.\footnote{Late
+notification of clock-triggered tasks is not very useful in any case because
+they typically do not depend on other tasks, and as such they can often trigger
+on time even if the suite is delayed to the point that downstream tasks are
+late due to their dependence on previous-cycle tasks that are delayed.}
 
-Firstly, lateness is only well-defined for clock-triggered tasks, where the
-clock-trigger represents the wall-clock time at which the task will trigger,
-upstream dependencies and/or overall progress of the suite allowing. Other
-tasks just trigger as soon as their dependencies are met, regardless of time.
+But if your system is reasonably stable from one cycle to the next such that a
+given task has consistently triggered by some interval beyond its cycle point,
+you can configure Cylc to emit a {\em late event} if it has not triggered by
+that time. For example, if a task \lstinline=forecast= normally triggers by 30
+minutes after its cycle point, configure late notification for it like this:
 
-So if you configure a {\em late event handler} for a clock-triggered task,
-Cylc will emit a single {\em late event} for it if and when its clock-trigger
-is first determined to lie in the past (with one minute leeway).
+\begin{lstlisting}
+[runtime]
+   [[forecast]]
+        script = run-model.sh
+        [[[events]]]
+            late offset = PT30M
+            late handler = my-handler %(message)s
+\end{lstlisting}
 
-Secondly, there are typically few clock-triggered tasks in a suite, and they
-are typically not the ``important'' ones that need alerting on (consider
-clock-triggered tasks that wait on external real time data, vs a forecast model
-that triggers as soon as its dependencies are met - you probably just want to
-know if the forecast is running late).
+{\em Late offset intervals are not computed automatically so be careful
+to update them after any change that affects triggering times.}
 
-Thirdly, clock-triggered tasks often have no dependence on other tasks, so
-after moderate delays they can typically trigger on time even if the important
-downstream tasks are delayed by dependence on previous-cycle tasks that haven't
-finished yet.
-
-Finally, note that Cylc only checks for lateness in tasks belonging to cycle
-points that it is currently aware of. If a suite is delayed over multiple
-cycles, the nearest upcoming late tasks can be identified immediately, and
-subsequent ones will be identified in turn as the suite progresses to
-subsequent cycle points, until it catches up to the clock.
-
-In light of the above information it might be tempting to add
-technically-unnecessary clock-triggers to selected important tasks, based on
-the typical suite execution time since the last genuine clock-triggered task,
-just to allow lateness to be identified. This is dangerous though: variations
-in suite execution time due to resource contention or suite changes (say) would
-result in either spurious late alerts or unecessary delays waiting on the new
-clock-triggers.
-
-Similarly, it is not a good idea to add technically-unnecessary previous-cycle
-dependence to genuine clock-triggered tasks to make them run late too in the
-event of a suite delay. That would prevent efficient interleaving of cycles
-during catch-up.
-
-A safer option might be to use an external IT infrastructure monitoring tool
-that knows the normal approximate time schedule of all important tasks in the
-suite.
+Note that Cylc can only check for lateness in tasks that it is currently aware
+of. If a suite gets delayed over many cycles the next tasks coming up can be
+identified as late immediately, and subsequent tasks can be identified as late
+as the suite progresses to subsequent cycle points, until it catches up to the
+clock.
 
 \subsection{Handling Job Preemption}
 \label{PreemptionHPC}
