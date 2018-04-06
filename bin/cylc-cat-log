@@ -150,13 +150,16 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False):
         else:
             fn = None
         proc = Popen(shlex.split(cmd), stdin=open(os.devnull), preexec_fn=fn)
-        while True:
-            sleep(0.5)
-            if proc.poll() is not None:
-                break
-            if remote and os.getppid() != ppid:
-                os.killpg(proc.pid, signal.SIGTERM)
-                break
+        try:
+            while True:
+                sleep(0.5)
+                if proc.poll() is not None:
+                    break
+                if remote and os.getppid() != ppid:
+                    os.killpg(proc.pid, signal.SIGTERM)
+                    break
+        except KeyboardInterrupt:
+            pass
         proc.wait()
         return 0
 
