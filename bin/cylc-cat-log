@@ -28,7 +28,9 @@ for job stdout "-f o" or "-f job.out" will do).
 To list the local job log directory of a remote task, choose "-m l" (directory
 list mode) and a local file, e.g. "-f a" (job-activity.log).
 
-Custom job logs are assumed to reside on the job host.
+Custom job logs are assumed to reside on the job host. These will be available
+to view from the GUI if listed in 'extra log files' in the suite definition.
+Here the file name must be given (but it can be discovered with list-dir mode).
 
 The correct cycle point format of the suite must be for task job logs.
 
