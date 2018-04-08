@@ -1,0 +1,37 @@
+{
+  "@context": "https://raw.githubusercontent.com/codemeta/codemeta/master/codemeta.jsonld",
+  "@type": "Code",
+  "author": [
+    {
+      "@id": "https://orcid.org/0000-0002-5715-5279",
+      "@type": "Person",
+      "email": "hilary.oliver@niwa.co.nz",
+      "name": "Hilary Oliver",
+      "affiliation": "NIWA"
+    },
+    {
+      "@id": "TODO",
+      "@type": "Person",
+      "email": "matthew.shin@metoffice.gov.uk",
+      "name": "Matthew Shin",
+      "affiliation": "Met Office"
+    },
+    {
+      "@id": "TODO",
+      "@type": "Person",
+      "email": "oliver.sanders@metoffice.gov.uk",
+      "name": "Oliver Sanders",
+      "affiliation": "Met Office"
+    }
+  ],
+  "identifier": "https://zenodo.org/record/1208732#.WsmAj9axWV4",
+  "codeRepository": "https://github.com/cylc/cylc",
+  "datePublished": "2018-04-08",
+  "dateModified": "2018-04-08",
+  "dateCreated": "2018-04-08",
+  "description": "Cylc is a workflow engine for automation of ongoing cycling workflows",
+  "keywords": "workflow, metascheduler, distributed, automation, cycling, forecasting, climate, weather",
+  "license": "GPV v3.0",
+  "title": "Cylc: a workflow engine for cycling systems",
+  "version": "https://cylc.github.io/cylc/ v7.6.1"
+}
