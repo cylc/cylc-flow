@@ -71,7 +71,8 @@ from cylc.wallclock import get_current_time_string
 from cylc.task_state import (
     TASK_STATUSES_ALL, TASK_STATUSES_RESTRICTED, TASK_STATUSES_CAN_RESET_TO,
     TASK_STATUSES_TRIGGERABLE, TASK_STATUSES_ACTIVE, TASK_STATUS_RUNNING,
-    TASK_STATUS_HELD, TASK_STATUS_FAILED, TASK_STATUS_WAITING)
+    TASK_STATUS_HELD, TASK_STATUS_FAILED, TASK_STATUS_WAITING,
+    TASK_STATUSES_NO_JOB_FILE)
 from cylc.task_state_prop import get_status_prop
 
 
@@ -1355,8 +1356,7 @@ been defined for this suite""").inform()
                 # than 'activate' in order for sub-menus to work in the
                 # graph-view so use connect_right_click_sub_menu instead of
                 # item.connect
-                if t_states[0] == TASK_STATUS_WAITING:
-                    # No job script generated yet.
+                if t_states[0] in TASK_STATUSES_NO_JOB_FILE:
                     fnames = ['job-preview']
                 else:
                     fnames = (JOB_LOG_OPTS.values() +
