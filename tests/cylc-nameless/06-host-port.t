@@ -23,50 +23,44 @@ if ! python -c 'import cherrypy' 2>'/dev/null'; then
     skip_all '"cherrypy" not installed'
 fi
 
-set_test_number 5
-
-
-CYLC_CONF_PATH="${PWD}/conf" cylc_ws_init 'cylc' 'nameless'
-if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
-    exit 1
-fi
-
+set_test_number 6
 #-------------------------------------------------------------------------------
-# Run a quick cylc suite
-mkdir -p "${HOME}/cylc-run"
-TEST_DIR="$(mktemp -d --tmpdir="${HOME}/cylc-run" "cylctb-cylc-nameless-00-XXXXXXXX")"
-SUITE_NAME="$(basename "${TEST_DIR}")"
-cat >"${TEST_DIR}/suite.rc" <<'__SUITE_RC__'
+init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 #!Jinja2
 [cylc]
-    UTC mode = True
     [[events]]
         timeout = PT2M
         abort on timeout = True
 [scheduling]
-    initial cycle point = 2000
-    final cycle point = 2000
     [[dependencies]]
-        [[[P1Y]]]
-            graph = loser
-[runtime]
-    [[loser]]
-        script = false
+        graph = foo
 __SUITE_RC__
+
+TEST_NAME=$TEST_NAME_BASE-run
+suite_run_ok $TEST_NAME cylc run --debug --no-detach $SUITE_NAME 2>'/dev/null' &
+#-------------------------------------------------------------------------------
+# Initialise WSGI application for the cylc nameless web service
+TEST_NAME="${TEST_NAME_BASE}-ws-init"
+cylc_ws_init 'cylc' 'nameless'
+if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
+    exit 1
+fi
+#-------------------------------------------------------------------------------
+# Check a suite's host and port are correctly determined
 export CYLC_CONF_PATH=
-cylc register "${SUITE_NAME}" "${TEST_DIR}"
-cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null' &
 SUITE_PID="$!"
-CONTACT="${HOME}/cylc-run/${SUITE_NAME}/.service/contact"
+SRV_D="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/.service"
+CONTACT="${SRV_D}/contact"
 poll '!' test -s "${CONTACT}"
 sleep 1
+
 PORT="$(awk -F= '$1 ~ /CYLC_SUITE_PORT/ {print $2}' "${CONTACT}")"
 HOST="$(awk -F= '$1 ~ /CYLC_SUITE_HOST/ {print $2}' "${CONTACT}")"
-HOST=${HOST%%.*}  # strip domain
+HOST=${HOST%%.*} # strip domain
 
 if [[ -n "${HOST}" && -n "${PORT}" ]]; then
     for METHOD in 'cycles' 'jobs'; do
-        TEST_NAME="${TEST_NAME_BASE}-200-curl-${METHOD}"
+        TEST_NAME="${TEST_NAME_BASE}-ws-json-${METHOD}"
         run_ok "${TEST_NAME}" curl \
             "${TEST_CYLC_WS_URL}/${METHOD}/${USER}/${SUITE_NAME}?form=json"
         cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
@@ -77,8 +71,6 @@ else
 fi
 #-------------------------------------------------------------------------------
 # Tidy up
-cylc stop "${SUITE_NAME}"
-wait "${SUITE_PID}" || cat "${TEST_DIR}/log/suite/err" >&2
+purge_suite "${SUITE_NAME}"
 cylc_ws_kill
-rm -fr "${TEST_DIR}" 2>'/dev/null'
-exit 0
+exit

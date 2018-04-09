@@ -544,39 +544,42 @@ set_test_remote() {
   export CYLC_TEST_OWNER=${CYLC_TEST_OWNER:-${USER}}
 }
 
+
+# tags
+
 port_is_busy() {
-    local PORT="${1}"
+    local WS_PORT="${1}"
     if type -P netcat 1>/dev/null; then
-        HOSTNAME="${HOSTNAME:-"$(hostname)"}"
-        HOSTNAME="${HOSTNAME:-'localhost'}"
-        netcat -z "${HOSTNAME}" "${PORT}"
+        WS_HOSTNAME="${WS_HOSTNAME:-"$(hostname)"}"
+        WS_HOSTNAME="${WS_HOSTNAME:-'localhost'}"
+        netcat -z "${WS_HOSTNAME}" "${WS_PORT}"
     else
-        netstat -atun | grep -q "127.0.0.1:${PORT}"
+        netstat -atun | grep -q "0.0.0.0:${WS_PORT}"
     fi
 }
 
 TEST_CYLC_WS_PID=
 TEST_CYLC_WS_PORT=
 TEST_CYLC_WS_URL=
-TEST_NAME=
 cylc_ws_init() {
+    # set -x
     local NS="$1"
     local UTIL="$2"
-    local PORT="$((${RANDOM} + 10000))"
-    while port_is_busy "${PORT}"; do
-        PORT="$((${RANDOM} + 10000))"
-        echo "choosing port, selected ${PORT}" >&2
+
+    local WS_PORT="$((${RANDOM} + 10000))"
+    while port_is_busy "${WS_PORT}"; do
+        WS_PORT="$((${RANDOM} + 10000))"
     done
 
     TEST_NAME="${TEST_NAME_BASE}-${NS}-${UTIL}"
-    "${NS}" "${UTIL}" '-R' 'start' "${PORT}" \
+    "${NS}" "${UTIL}" 'start' "${WS_PORT}" '-R'  \
         0<'/dev/null' 1>"${NS}-${UTIL}.stdout" 2>"${NS}-${UTIL}.stderr" &
     TEST_CYLC_WS_PID="$!"
     T_INIT="$(date '+%s')"
-    while ! port_is_busy "${PORT}" && (($(date '+%s') < ${T_INIT} + 60)); do
+    while ! port_is_busy "${WS_PORT}" && (($(date '+%s') < ${T_INIT} + 30)); do
         sleep 1
     done
-    TEST_CYLC_WS_PORT="${PORT}"
+    TEST_CYLC_WS_PORT="${WS_PORT}"
     if port_is_busy "${TEST_CYLC_WS_PORT}"; then
         ok "${TEST_NAME}"
         TEST_CYLC_WS_URL="http://${HOSTNAME}:${TEST_CYLC_WS_PORT}/${NS}-${UTIL}/"

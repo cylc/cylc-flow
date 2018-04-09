@@ -59,7 +59,11 @@ def ws_cli(service_cls, *args, **kwargs):
                   service_cls.NS and service_cls.UTIL. *args and **kwargs are
                   passed to its constructor.
     """
-    parser = COP(__doc__, jset=True, prep=True, icp=True)
+    parser = COP(
+        __doc__,
+        argdoc=[
+            ("[START ...]", "EXPLAIN HERE."),
+            ("[STOP ...]", "EXPLAIN HERE.")])
 
     parser.add_option(
         "--non-interactive", "--yes", "-y",
