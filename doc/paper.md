@@ -6,10 +6,10 @@ authors:
   orcid: 0000-0002-5715-5279
 - affiliation: 2
   name: Matthew Shin
-  orcid: TODO
+  orcid: 0000-0002-5904-7511
 - affiliation: 3
   name: Oliver Sanders
-  orcid: TODO
+  orcid: 0000-0001-6916-7034
 date: "10 Arpil 2018"
 output:
   html_document: default

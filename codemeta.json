@@ -10,14 +10,14 @@
       "affiliation": "NIWA"
     },
     {
-      "@id": "TODO",
+      "@id": "https://orcid.org/0000-0002-5904-7511",
       "@type": "Person",
       "email": "matthew.shin@metoffice.gov.uk",
       "name": "Matthew Shin",
       "affiliation": "Met Office"
     },
     {
-      "@id": "TODO",
+      "@id": "https://orcid.org/0000-0001-6916-7034",
       "@type": "Person",
       "email": "oliver.sanders@metoffice.gov.uk",
       "name": "Oliver Sanders",
