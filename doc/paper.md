@@ -36,15 +36,15 @@ affiliations:
 # Summary
 
 Cylc (http://cylc.github.io/cylc/) is a workflow engine for orchestrating
-complex distributed systems of cycling (repeating) tasks, as well as ordinary
-non-cycling workflows. It has been widely adopted for weather, climate, and
-related forecasting applications in research and production HPC environments,
-and it is now part of the official software infrastructure for the Unified
-Model atmospheric model. Cylc is written in Python and developed primarily by
-NIWA (NZ) and Met Office (UK). It has strong support for large production
-systems, but ease of use for individuals with smaller workflow automation
-requirements remains a key priority, and despite its core user base it is not
-in any way specialized to environmental forecasting.
+complex distributed systems of inter-dependent cycling (repeating) tasks, as
+well as ordinary non-cycling workflows. It has been widely adopted for weather,
+climate, and related forecasting applications in research and production HPC
+environments, and it is now part of the official software infrastructure for
+the Unified Model atmospheric model. Cylc is written in Python and developed
+primarily by NIWA (NZ) and Met Office (UK). It has strong support for large
+production systems, but ease of use for individuals with smaller workflow
+automation requirements remains a key priority, and despite its core user base
+it is not in any way specialized to environmental forecasting.
 
 In cycling workflows tasks repeat on sequences that may represent forecast
 cycles, chunks of a simulation that is too long for a single run, steps in some
@@ -67,13 +67,9 @@ own lightweight ad-hoc server program. Existing scripts or programs can by used
 by Cylc without modification: they are automatically wrapped in code to trap
 errors and report run status via authenticated HTTPS messages. Cylc workflows
 (or *suites*) are defined with a graph notation that efficiently expresses
-dependence between tasks; and task runtime properties (what to run, where to
-run it, and how to submit the job) are defined in an inheritance hierarchy for
-efficient sharing of common settings. Tasks can depend on the wall clock and
-arbitrary external events, as well as other tasks.  Dependence between
-workflows is also supported, so for coupled systems you can choose between a
-large suite that controls all tasks, and many smaller suites that depend on
-each other.
-
-# References
-(not sure if there are any at this point...)
+dependence between tasks; and task runtime properties (what to run, and where
+and how to run the job) are defined in an inheritance hierarchy for efficient
+sharing of common settings. Tasks can depend on the wall clock and arbitrary
+external events, as well as other tasks. Dependence between workflows is also
+supported: for coupled systems you can choose between a large suite that
+controls all tasks, and many smaller suites that depend on each other.
