@@ -50,15 +50,17 @@ In cycling workflows tasks repeat on sequences that may represent forecast
 cycles, or successive chunks of a simulation that is too long for a single run,
 or steps in some multi-program iterative process (e.g. for optimizing model
 parameters), or successive datasets to be processed as they are generated or
-received, and so forth. Dependence across cycles creates ongoing, potentially
-never-ending, workflows. Cylc can uniquely manage these without imposing a
-global cycle loop: one cycle does not have to complete before the next can
-start. Instead, Cylc's novel meta-scheduling algorithm runs tasks from many
-cycles at once, to the full extent allowed by individual dependencies and
-external constraints such as compute resource and data availability. So, for
-example, on restarting after extended downtime, a workflow that processes
-real-time data can clear its backlog and catch up very quickly by interleaving
-cycles.
+received, and so forth. Cycling in Cylc is controlled by ISO 8601 date-time
+recurrence expressions (e.g. for environmental forecasting), or integer
+recurrence expressions (e.g. for iterative processes). Dependence across cycles
+creates ongoing, potentially never-ending, workflows. Cylc can uniquely manage
+these without imposing a global cycle loop: one cycle does not have to complete
+before the next can start. Instead, Cylc's novel meta-scheduling algorithm runs
+tasks from many cycles at once, to the full extent allowed by individual
+dependencies and external constraints such as compute resource and data
+availability. So, for example, on restarting after extended downtime, a
+workflow that processes real-time data can clear its backlog and catch up very
+quickly by interleaving cycles.
 
 As a distributed system, Cylc scales sideways: each workflow is managed by its
 own lightweight ad-hoc server program. Existing scripts or programs can by used
@@ -71,10 +73,6 @@ depend on the wall clock and arbitrary external events, as well as other tasks.
 Dependence between workflows is also supported, so for coupled systems you can
 choose between a large suite that controls all tasks, and many smaller suites
 that depend on each other.
-
-Cycling is controlled by ISO 8601 date-time recurrence expressions (e.g. for
-environmental forecasting), or integer recurrence expressions (e.g. for
-iterative processes).
 
 # References
 (not sure if there are any at this point...)
