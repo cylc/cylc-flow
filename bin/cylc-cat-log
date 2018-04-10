@@ -75,6 +75,9 @@ MODES = {
 }
 
 
+BUFSIZE = 1024*1024
+
+
 def split_user_at_host(user_at_host):
     """split user@host into user, host."""
     if user_at_host is None:
@@ -112,6 +115,8 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False):
     command (e.g. 'qcat') that may be implemented for batch systems that don't
     write logs to their final locations until after the job completes.
 
+    If remote is True, we are executing on a remote host for a log file there.
+
     """
     if mode == 'print':
         # Print location even if the suite does not exist yet.
@@ -128,11 +133,19 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False):
             print entry
         return 0
     elif not remote and mode == 'edit':
-        content = ''
-        with open(logpath, 'r') as log:
-            content = log.read()
-        return content
+        # Copy the log to a temporary read-only file for viewing in editor.
+        # Copy only BUFSIZE bytes at time, in case the file is huge.
+        outfile = mkstemp(dir=glbl_cfg().get_tmpdir())[1]
+        with open(logpath, 'rb') as log:
+            with open(outfile, 'wb') as out:
+                data = log.read(BUFSIZE)
+                while data:
+                    out.write(data)
+                    data = log.read(BUFSIZE)
+        os.chmod(outfile, S_IRUSR)
+        return outfile
     elif mode == 'cat' or (remote and mode == 'edit'):
+        # Just cat file contents to stdout.
         if batchview_cmd is not None:
             cmd = batchview_cmd
         else:
@@ -284,7 +297,7 @@ def get_task_job_attrs(options, suite_name, point, task, submit_num):
                 "job_id": str(task_job_data["batch_sys_job_id"])})
 
 
-def tmpfile_edit(filestr, logpath, geditor=False):
+def tmpfile_edit(tmpfile, geditor=False):
     """Edit a temporary read-only file containing the string filestr.
 
     Detect and warn if the user forcibly writes to the temporary file.
@@ -294,22 +307,17 @@ def tmpfile_edit(filestr, logpath, geditor=False):
         editor = glbl_cfg().get(['editors', 'gui'])
     else:
         editor = glbl_cfg().get(['editors', 'terminal'])
-    viewfile = mkstemp(dir=glbl_cfg().get_tmpdir())[1]
-    with open(viewfile, 'w') as vf:
-        vf.write(filestr)
-    os.chmod(viewfile, S_IRUSR)
-    modtime1 = os.stat(viewfile).st_mtime
-
+    modtime1 = os.stat(tmpfile).st_mtime
     cmd = shlex.split(editor)
-    cmd.append(viewfile)
+    cmd.append(tmpfile)
     proc = Popen(cmd, stderr=PIPE)
     err = proc.communicate()[1]
     ret_code = proc.wait()
     if ret_code == 0:
-        if os.stat(viewfile).st_mtime > modtime1:
+        if os.stat(tmpfile).st_mtime > modtime1:
             sys.stderr.write(
                 'WARNING: you edited a TEMPORARY COPY of %s\n' % (
-                    os.path.basename(logpath)))
+                    os.path.basename(tmpfile)))
     if ret_code and err:
         sys.stderr.write(err)
 
@@ -368,7 +376,7 @@ def main():
         if out == 1:
             sys.exit(1)
         if mode == 'edit':
-            tempfile_edit(out)
+            tmpfile_edit(out)
         return
 
     if len(args) == 2:
@@ -389,7 +397,7 @@ def main():
             options, suite_name, point, task, options.submit_num)
         logpath = get_task_job_log_path(
             options, suite_name, point, task, options.submit_num, user_at_host)
-        out = None
+        pout = None
         if user_at_host:
             # Reinvoke the cat-log command on the remote account.
             user, host = split_user_at_host(user_at_host)
@@ -401,17 +409,28 @@ def main():
                 cmd += ',%s' % quote(batchview_cmd)
             capture = (mode == 'edit')
             try:
-                out = remote_cylc_cmd(cmd, user, host, capture)
+                proc = remote_cylc_cmd(cmd, user, host, capture)
             except KeyboardInterrupt:
                 # Ctrl-C while tailing.
                 pass
+            else:
+                if capture:
+                    # Write remote stdout to a temp file for viewing in editor.
+                    # Only BUFSIZE bytes at a time in case huge stdout volume.
+                    out = mkstemp(dir=glbl_cfg().get_tmpdir())[1]
+                    with open(out, 'wb') as outf:
+                        data = proc.stdout.read(BUFSIZE)
+                        while data:
+                            outf.write(data)
+                            data = proc.stdout.read(BUFSIZE)
+                    os.chmod(out, S_IRUSR)
         else:
             tail_tmpl = str(glbl_cfg().get_host_item("tail command template"))
             out = view_log(logpath, mode, tail_tmpl, batchview_cmd)
             if out == 1:
                 sys.exit(1)
         if mode == 'edit':
-            tmpfile_edit(out, logpath, options.geditor)
+            tmpfile_edit(out, options.geditor)
 
 
 if __name__ == "__main__":

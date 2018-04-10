@@ -69,7 +69,6 @@ def remote_cylc_cmd(cmd, user=None, host=None, capture=False,
     command += [cmd]
     if cylc.flags.debug:
         sys.stderr.write(' '.join(quote(c) for c in command) + '\n')
-    out = None
     if capture:
         stdout = PIPE
     else:
@@ -80,16 +79,16 @@ def remote_cylc_cmd(cmd, user=None, host=None, capture=False,
     #   The command is read from the site/user global config file, but we check
     #   above that it ends in 'cylc', and in any case the user could execute
     #   any such command directly via ssh.
-    proc = Popen(command, stdout=stdout, stdin=open(os.devnull))
+    proc = Popen(command, stdout=stdout, stdin=open(os.devnull), bufsize=0)
     if capture:
-        out = proc.communicate()[0]
-    res = proc.wait()
-    if WIFSIGNALED(res):
-        sys.stderr.write(
-            "ERROR: remote command terminated by signal %d\n" % res)
-    elif res:
-        sys.stderr.write("ERROR: remote command failed %d\n" % res)
-    return out
+        return proc
+    else:
+        res = proc.wait()
+        if WIFSIGNALED(res):
+            sys.stderr.write(
+                "ERROR: remote command terminated by signal %d\n" % res)
+        elif res:
+            sys.stderr.write("ERROR: remote command failed %d\n" % res)
 
 
 def remrun(env=None, path=None, dry_run=False, forward_x11=False):
