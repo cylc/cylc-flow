@@ -230,7 +230,7 @@ class NameExpander(object):
                     "ERROR, parameter offsets illegal here: '%s'" % origin)
             elif '=' in item:
                 # Specific value given.
-                pname, pval = re.split('\s*=\s*', item)
+                pname, pval = [val.strip() for val in item.split('=', 1)]
                 try:
                     pval = int(pval)
                 except ValueError:

@@ -76,8 +76,8 @@ _KEY_VALUE = re.compile(
 #       python-regex-to-match-text-in-single-quotes-
 #           ignoring-escaped-quotes-and-tabs-n
 
-_LINECOMMENT = re.compile('^\s*#')
-_BLANKLINE = re.compile('^\s*$')
+_LINECOMMENT = re.compile(r'^\s*#')
+_BLANKLINE = re.compile(r'^\s*$')
 
 # triple quoted values on one line
 _SINGLE_LINE_SINGLE = re.compile(r"^'''(.*?)'''\s*(#.*)?$")
@@ -261,7 +261,7 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
 
     # process with Jinja2
     if do_jinja2:
-        if flines and re.match('^#![jJ]inja2\s*', flines[0]):
+        if flines and re.match(r'^#![jJ]inja2\s*', flines[0]):
             if cylc.flags.verbose:
                 print "Processing with Jinja2"
             try:
@@ -272,7 +272,7 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
                 suffix = []
                 for line in reversed(exc_lines):
                     suffix.append(line)
-                    if re.match("\s*File", line):
+                    if re.match(r"\s*File", line):
                         break
                 msg = '\n'.join(reversed(suffix))
                 lines = None

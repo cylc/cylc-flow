@@ -129,8 +129,8 @@ class GraphParser(object):
 
     # Detect and extract suite state polling task info.
     REC_SUITE_STATE = re.compile(
-        r'(' + TaskID.NAME_RE + ')(<([\w\.\-/]+)::(' + TaskID.NAME_RE + ')(' +
-        _RE_TRIG + ')?>)')
+        r'(' + TaskID.NAME_RE + r')(<([\w\.\-/]+)::(' + TaskID.NAME_RE + r')('
+        + _RE_TRIG + r')?>)')
 
     def __init__(self, family_map=None, parameters=None):
         """Initializing the graph string parser.

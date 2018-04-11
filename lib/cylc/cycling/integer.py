@@ -60,11 +60,11 @@ CYCLER_TYPE_SORT_KEY_INTEGER = "a"
 #         4: start at END, keep subtracting INTV (if n, only for n points)
 
 RE_COMPONENTS = {
-    "end": "(?P<end>[^PR/][^/]*)",
-    "intv": "(?P<intv>P[^/]*)",
-    "reps_1": "R(?P<reps>1)",
-    "reps": "R(?P<reps>\d+)",
-    "start": "(?P<start>[^PR/][^/]*)"
+    "end": r"(?P<end>[^PR/][^/]*)",
+    "intv": r"(?P<intv>P[^/]*)",
+    "reps_1": r"R(?P<reps>1)",
+    "reps": r"R(?P<reps>\d+)",
+    "start": r"(?P<start>[^PR/][^/]*)"
 }
 
 RECURRENCE_FORMAT_RECS = [
@@ -112,8 +112,8 @@ RECURRENCE_FORMAT_RECS = [
 del regex, format_num
 
 
-REC_RELATIVE_POINT = re.compile("^[-+]P\d+$")
-REC_INTERVAL = re.compile("^[-+]?P\d+$")
+REC_RELATIVE_POINT = re.compile(r"^[-+]P\d+$")
+REC_INTERVAL = re.compile(r"^[-+]?P\d+$")
 
 
 class IntegerPoint(PointBase):

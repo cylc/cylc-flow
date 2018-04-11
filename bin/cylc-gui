@@ -36,7 +36,7 @@ To see current configuration settings use "cylc get-gui-config".
 
 In the graph view, View -> Options -> "Write Graph Frames" writes .dot graph
 files to the suite share directory (locally, for a remote suite). These can
-be processed into a movie by \$CYLC_DIR/dev/bin/live-graph-movie.sh=."""
+be processed into a movie by $CYLC_DIR/dev/bin/live-graph-movie.sh=."""
 
 import sys
 if '--use-ssh' in sys.argv[1:]:

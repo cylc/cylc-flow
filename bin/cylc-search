@@ -48,7 +48,7 @@ def section_level(heading):
     # e.g. foo => 0
     #     [foo] => 1
     #    [[foo]] => 2
-    m = re.match('^(\[+)', heading)
+    m = re.match(r'^(\[+)', heading)
     if m:
         level = len(m.groups()[0])
     else:
@@ -97,7 +97,7 @@ prev_file = None
 
 for line in lines:
 
-    m = re.match('^#\+\+\+\+ START INLINED INCLUDE FILE ([\w/\.\-]+)', line)
+    m = re.match(r'^#\+\+\+\+ START INLINED INCLUDE FILE ([\w/\.\-]+)', line)
     if m:
         inc_file = m.groups()[0]
         in_include_file = True
@@ -108,18 +108,17 @@ for line in lines:
         line_count += 1
     else:
         inc_line_count += 1
-        m = re.match('^#\+\+\+\+ END INLINED INCLUDE FILE ' + inc_file, line)
+        m = re.match(r'^#\+\+\+\+ END INLINED INCLUDE FILE ' + inc_file, line)
         if m:
             in_include_file = False
             inc_file = None
             continue
 
-    m = re.match('\s*(\[+\s*(.+)\s*\]+)', line)
+    m = re.match(r'\s*(\[+\s*.+\s*\]+)', line)
     if m:
         # new section heading detected
         heading = m.groups()[0]
         level = section_level(heading)
-        name = m.groups()[1]
         # unwind to the current section level
         while len(sections) > level - 1:
             sections.pop()
@@ -154,22 +153,22 @@ if not options.search_bin:
     sys.exit(0)
 
 # search files in suite bin directory
-bin = os.path.join(suitedir, 'bin')
-if not os.path.isdir(bin):
+bin_ = os.path.join(suitedir, 'bin')
+if not os.path.isdir(bin_):
     print >> sys.stderr, "\nSuite " + suite + " has no bin directory"
     sys.exit(0)
 
-for file in os.listdir(bin):
-    if re.match('^\.', file):
+for name in os.listdir(bin_):
+    if name.startswith('.'):
         # skip hidden dot-files
         # (e.g. vim editor temporary files)
         continue
     new_file = True
     try:
-        h = open(os.path.join(bin, file), 'rb')
+        h = open(os.path.join(bin_, name), 'rb')
     except IOError, x:
         # e.g. there's a sub-directory under bin; ignore it.
-        print >> sys.stderr, 'Unable to open file ' + os.path.join(bin, file)
+        print >> sys.stderr, 'Unable to open file ' + os.path.join(bin_, name)
         print >> sys.stderr, x
         continue
     contents = h.readlines()
@@ -181,6 +180,6 @@ for file in os.listdir(bin):
         count += 1
         if re.search(pattern, line):
             if new_file:
-                print '\nFILE:', os.path.join(bin, file)
+                print '\nFILE:', os.path.join(bin_, name)
                 new_file = False
             print '   (' + str(count) + '): ' + line

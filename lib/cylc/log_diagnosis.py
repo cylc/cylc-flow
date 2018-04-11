@@ -85,7 +85,7 @@ class LogAnalyser(object):
     def get_triggered(lines):
         res = []
         for line in lines:
-            m = re.search('INFO - (\[.* -triggered off .*)$', line)
+            m = re.search(r'INFO - (\[.* -triggered off .*)$', line)
             if m:
                 res.append(m.groups()[0])
         return res

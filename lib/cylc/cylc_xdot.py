@@ -578,11 +578,11 @@ def get_reference_from_plain_format(plain_text):
     indexed_lines = []
     for line in plain_text.splitlines(True):
         # Remove spaces followed by numbers.
-        line = re.sub(r"\s+[+-]?\d+(?:\.\d+)?(?:e[+-][.\d]+)?\b", "", line)
+        line = re.sub(r"\s+[+-]?\d+(?:\.\d+)?(?:e[+-][.\d]+)?\b", r"", line)
         # Get rid of extra spaces.
-        line = re.sub("^((?:node|edge).*)\s+\w+", r"\1", line)
+        line = re.sub(r"^((?:node|edge).*)\s+\w+", r"\1", line)
         # Create a numeric content index.
-        line_items = re.split("(\d+)", line)
+        line_items = re.split(r"(\d+)", line)
         for i, item in enumerate(line_items):
             try:
                 line_items[i] = int(item)

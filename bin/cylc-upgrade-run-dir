@@ -35,7 +35,7 @@ from cylc.mkdir_p import mkdir_p
 import cylc.flags
 
 OLD_LOGFILE_RE = re.compile(
-    """^
+    r"""^
     ([\w]+)  # task name
     \.
     ([^.]+)  # any cycle time format
@@ -49,7 +49,7 @@ OLD_LOGFILE_RE = re.compile(
 )
 
 OLD_WORKDIR_RE = re.compile(
-    """^
+    r"""^
     ([\w]+)  # task name
     \.
     ([^.]+)  # any cycle time format

@@ -50,7 +50,7 @@ backups = {}
 newfiles = []
 flist = []
 
-include_re = re.compile('\s*%include\s+([\'"]?)(.*?)([\'"]?)\s*$')
+include_re = re.compile(r'\s*%include\s+([\'"]?)(.*?)([\'"]?)\s*$')
 
 
 def inline(lines, dir_, filename, for_grep=False, for_edit=False, viewcfg=None,
@@ -193,8 +193,8 @@ def split_file(dir_, lines, filename, recovery=False, level=None):
             continue
         if not match_on:
             m = re.match(
-                '^#\+\+\+\+ START INLINED INCLUDE FILE ' +
-                '([\w\/\.\-]+) \(DO NOT MODIFY THIS LINE!\)', line)
+                r'^#\+\+\+\+ START INLINED INCLUDE FILE ' +
+                r'([\w\/\.\-]+) \(DO NOT MODIFY THIS LINE!\)', line)
             if m:
                 match_on = True
                 inc_filename = m.groups()[0]
@@ -205,8 +205,8 @@ def split_file(dir_, lines, filename, recovery=False, level=None):
         elif match_on:
             # match on, go to end of the 'on' include-file
             m = re.match(
-                '^#\+\+\+\+ END INLINED INCLUDE FILE ' +
-                inc_filename + ' \(DO NOT MODIFY THIS LINE!\)', line)
+                r'^#\+\+\+\+ END INLINED INCLUDE FILE ' +
+                inc_filename + r' \(DO NOT MODIFY THIS LINE!\)', line)
             if m:
                 match_on = False
                 # now split this lot, in case of nested inclusions
