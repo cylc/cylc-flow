@@ -3589,46 +3589,34 @@ will never be removed from the task pool.:
 \paragraph{Special Sequential Tasks}
 \label{SequentialTasks}
 
-If a cycling task does not generate files required by its own successor,
-then successive instances can run in parallel if the opportunity arises.
-However, if such a task would interfere with its own siblings for
-internal reasons (e.g.\ use of a hardwired non cycle dependent
-temporary file or similar) then it can be forced to run sequentially.
-This can be done with explicit inter-cycle triggers in the graph:
-\lstset{language=suiterc}
-\begin{lstlisting}
-[scheduling]
-    [[dependencies]]
-        [[[T00,T12]]]
-            graph = "foo[-PT12H] => foo => bar"
-\end{lstlisting}
-or by declaring the task to be {\em sequential}:
+Tasks that depend on their own previous-cycle instance can be declared as {\em
+sequential}:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
     [[special tasks]]
-        sequential = foo
+        # foo depends on its previous instance:
+        sequential = foo  # deprecated - see below!
     [[dependencies]]
         [[[T00,T12]]]
             graph = "foo => bar"
 \end{lstlisting}
 
-The {\em sequential} declaration also results in each instance of
-\lstinline=foo= triggering off its own predecessor, exactly as in
-the explicit version. The only difference is that implicit triggers will
-not appear in graph visualizations. The implicit version can also be
-considerably simpler when the task appears in multiple graph sections or
-in a non-uniform cycling sequence: this suite:
+{\em The sequential declaration is deprecated} however, in favour of explicit
+inter-cycle triggers which clearly expose the same scheduling behaviour in the
+graph:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
-    [[special tasks]]
-        sequential = foo
     [[dependencies]]
-        [[[T00,T03,T11]]]
-            graph = "foo => bar"
+        [[[T00,T12]]]
+            # foo depends on its previous instance:
+            graph = "foo[-PT12H] => foo => bar"
 \end{lstlisting}
-is equivalent to this one:
+
+The sequential declaration is arguably convenient in one unusual situation
+though: if a task has a non-uniform cycling sequence then multiple explicit
+triggers, 
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
@@ -3642,12 +3630,22 @@ is equivalent to this one:
         [[[T11]]]
             graph = "foo[-PT8H] => foo"
 \end{lstlisting}
-
+can be replaced by a single sequential declaration,
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    [[special tasks]]
+        sequential = foo
+    [[dependencies]]
+        [[[T00,T03,T11]]]
+            graph = "foo => bar"
+\end{lstlisting}
 
 \paragraph{Future Triggers}
 
 Cylc also supports inter-cycle triggering off tasks ``in the future'' (with
-respect to cycle point):
+respect to cycle point - which has no bearing on wall-clock job submission time
+unless the task has a clock trigger):
 \begin{lstlisting}
 [[dependencies]]
     [[[T00,T06,T12,T18]]]
@@ -3658,12 +3656,11 @@ respect to cycle point):
             A[PT6H] => B
         """
 \end{lstlisting}
-(Recall that \lstinline=A[t+PT6H]= can run before B[t] because tasks in cylc
-have private cycle points). Future triggers present a problem at the suite
-shutdown rather than at start-up. Here, \lstinline=B= at the final cycle
-point wants to trigger off an instance of \lstinline=A= that will never exist
-because it is beyond the suite stop point. Consequently cylc prevents tasks
-from spawning successors that depend on other tasks beyond the stop point.
+Future triggers present a problem at suite shutdown rather than at start-up.
+Here, \lstinline=B= at the final cycle point wants to trigger off an instance
+of \lstinline=A= that will never exist because it is beyond the suite stop
+point. Consequently Cylc prevents tasks from spawning successors that depend on
+other tasks beyond the final point.
 
 \paragraph{Clock Triggers}
 \label{ClockTriggerTasks}
