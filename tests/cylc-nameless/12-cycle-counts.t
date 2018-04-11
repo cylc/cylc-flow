@@ -22,19 +22,10 @@ if ! python -c 'import cherrypy' 2>'/dev/null'; then
     skip_all '"cherrypy" not installed'
 fi
 
-set_test_number 3
-
-ROSE_CONF_PATH= cylc_ws_init 'cylc' 'nameless'
-if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
-    exit 1
-fi
-
+set_test_number 4
 #-------------------------------------------------------------------------------
-# Run a quick cylc suite
-mkdir -p "${HOME}/cylc-run"
-TEST_DIR="$(mktemp -d --tmpdir="${HOME}/cylc-run" "rtb-rose-bush-12-XXXXXXXX")"
-SUITE_NAME="$(basename "${TEST_DIR}")"
-cat >"${TEST_DIR}/suite.rc" <<'__SUITE_RC__'
+# Initialise, validate and run a suite for testing with
+init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 #!Jinja2
 [cylc]
 UTC mode = True
@@ -52,13 +43,21 @@ final cycle point = 20100101T0000Z
 [[bar, baz]]
     script = true
 __SUITE_RC__
+
+TEST_NAME=$TEST_NAME_BASE-validate
+run_ok $TEST_NAME cylc validate $SUITE_NAME
+
 export CYLC_CONF_PATH=
 cylc register "${SUITE_NAME}" "${TEST_DIR}"
-cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null' \
-    || cat "${TEST_DIR}/log/suite/err" >&2
-
+cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null'
 #-------------------------------------------------------------------------------
-# Sort by time_desc
+# Initialise WSGI application for the cylc nameless web service
+cylc_ws_init 'cylc' 'nameless'
+if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
+    exit 1
+fi
+#-------------------------------------------------------------------------------
+# Data transfer output check for a suite's cycles page, sorted by time_desc
 TEST_NAME_PREFIX="${TEST_NAME_BASE}-200-curl-cycles-page-"
 TEST_NAME="${TEST_NAME_PREFIX}1"
 PAGE_OPT="&page=1&per_page=3"
@@ -72,7 +71,7 @@ cylc_ws_json_greps "${TEST_NAME_PREFIX}1.stdout" "${TEST_NAME_PREFIX}1.stdout" \
     "[('of_n_entries',), 1]" \
     "[('entries', 0, 'cycle'), '20100101T0000Z']"
 #-------------------------------------------------------------------------------
-# Tidy up
+# Tidy up - note suite terminates by itself with 'stop' task
+purge_suite "${SUITE_NAME}"
 cylc_ws_kill
-rm -fr "${TEST_DIR}" 2>'/dev/null'
-exit 0
+exit

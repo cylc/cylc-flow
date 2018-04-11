@@ -22,14 +22,10 @@ if ! python -c 'import cherrypy' 2>'/dev/null'; then
     skip_all '"cherrypy" not installed'
 fi
 
-set_test_number 7
-
-ROSE_CONF_PATH= cylc_ws_init 'cylc' 'nameless'
-if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
-    exit 1
-fi
-
-cat >'suite.rc' <<'__SUITE_RC__'
+set_test_number 8
+#-------------------------------------------------------------------------------
+# Initialise, validate and run a suite for testing with
+init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 #!Jinja2
 [cylc]
     UTC mode = True
@@ -43,20 +39,23 @@ cat >'suite.rc' <<'__SUITE_RC__'
 [runtime]
     [[echo1]]
         script = echo 1
-    [[echo1]]
+    [[echo2]]
         script = echo 2
 __SUITE_RC__
 
+TEST_NAME=$TEST_NAME_BASE-validate
+run_ok $TEST_NAME cylc validate $SUITE_NAME
+
+cylc run --debug --no-detach $SUITE_NAME 2>'/dev/null'
 #-------------------------------------------------------------------------------
-# Run a quick cylc suite
-mkdir -p "${HOME}/cylc-run"
-TEST_DIR="$(mktemp -d --tmpdir="${HOME}/cylc-run" "rtb-rose-bush-11-XXXXXXXX")"
-SUITE_NAME="$(basename "${TEST_DIR}")"
-cp -pr 'suite.rc' "${TEST_DIR}"
-export CYLC_CONF_PATH=
-cylc register "${SUITE_NAME}" "${TEST_DIR}"
-cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null'
+# Initialise WSGI application for the cylc nameless web service
+TEST_NAME="${TEST_NAME_BASE}-ws-init"
+cylc_ws_init 'cylc' 'nameless'
+if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
+    exit 1
+fi
 #-------------------------------------------------------------------------------
+# Data transfer output check for a 'tar.gz' format log file job path
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs"
 ECHO1="{'cycle': '19990101T0000Z', 'name': 'echo1', 'submit_num': 1}"
 ECHO1_JOB='job/19990101T0000Z/echo1/01/job'
@@ -81,6 +80,7 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('entries', ${ECHO2}, 'logs', 'job.stderr', 'path_in_tar'), '${ECHO2_JOB}.stderr']" \
     "[('entries', ${ECHO2}, 'logs', 'job.stdout', 'path_in_tar'), '${ECHO2_JOB}.stdout']"
 #-------------------------------------------------------------------------------
+# Data transfer output check for tar job path, 'echo1' task check
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-tasks-1"
 run_ok "${TEST_NAME}" curl \
     "${TEST_CYLC_WS_URL}/jobs/${USER}/${SUITE_NAME}?form=json&tasks=echo1"
@@ -92,6 +92,7 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('entries', ${ECHO1}, 'logs', 'job.stderr', 'path_in_tar'), '${ECHO1_JOB}.stderr']" \
     "[('entries', ${ECHO1}, 'logs', 'job.stdout', 'path_in_tar'), '${ECHO1_JOB}.stdout']"
 #-------------------------------------------------------------------------------
+# Data transfer output check for tar job path, 'echo2' task check
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-tasks-2"
 run_ok "${TEST_NAME}" curl \
     "${TEST_CYLC_WS_URL}/jobs/${USER}/${SUITE_NAME}?form=json&tasks=echo2"
@@ -103,7 +104,7 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('entries', ${ECHO2}, 'logs', 'job.stderr', 'path_in_tar'), '${ECHO2_JOB}.stderr']" \
     "[('entries', ${ECHO2}, 'logs', 'job.stdout', 'path_in_tar'), '${ECHO2_JOB}.stdout']"
 #-------------------------------------------------------------------------------
-# Tidy up
+# Tidy up - note suite trivial so stops early on by itself
+purge_suite "${SUITE_NAME}"
 cylc_ws_kill
-rm -fr "${TEST_DIR}" 2>'/dev/null'
-exit 0
+exit

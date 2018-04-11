@@ -22,157 +22,131 @@ if ! python -c 'import cherrypy' 2>'/dev/null'; then
     skip_all '"cherrypy" not installed'
 fi
 
-set_test_number 15
+set_test_number 16
+#-------------------------------------------------------------------------------
+# Set-up multiple suites
 
-ROSE_CONF_PATH= cylc_ws_init 'cylc' 'nameless'
+# Check the common 'suite.rc' to use is valid
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+TEST_NAME=$TEST_NAME_BASE-validate
+run_ok $TEST_NAME cylc validate $SUITE_NAME
+
+export CYLC_CONF_PATH=
+# Initialise multiple suites with same 'suite.rc' file; name [abc] and [1-10]
+for SUFFIX in 'b' 'a' 'c' $(seq -w 1 10); do
+    SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}-${SUFFIX}"
+    cylc register "${SUITE_NAME}" "${TEST_DIR}"
+    cylc run --no-detach --debug "${SUITE_NAME}"  2>'/dev/null'
+    # Make one of set [abc] a symlink
+    if [[ "${SUFFIX}" == 'a' ]]; then
+        ln -s "${PWD}/${SUITE_NAME}" "${HOME}/cylc-run/${SUITE_NAME}"
+    fi
+done
+#-------------------------------------------------------------------------------
+# Initialise WSGI application for the cylc nameless web service
+TEST_NAME="${TEST_NAME_BASE}-ws-init"
+cylc_ws_init 'cylc' 'nameless'
 if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
     exit 1
 fi
-
-cat >'suite.rc' <<'__SUITE_RC__'
-#!Jinja2
-[cylc]
-    UTC mode = True
-[scheduling]
-    initial cycle point = 2000
-    final cycle point = 2000
-    [[dependencies]]
-        [[[P1Y]]]
-            graph = foo
-[runtime]
-    [[foo]]
-        script = true
-__SUITE_RC__
-
 #-------------------------------------------------------------------------------
-# Run a few cylc suites
-export CYLC_CONF_PATH=
-mkdir -p "${HOME}/cylc-run"
-SUITE_NAME_1_PREFIX="rtb-rose-bush-08-$(uuidgen)-"
-for SUFFIX in 'b' 'a' 'c'; do
-    SUITE_NAME="${SUITE_NAME_1_PREFIX}${SUFFIX}"
-    TEST_DIR="${HOME}/cylc-run/${SUITE_NAME}"
-    # Make one of these a symlink
-    if [[ "${SUFFIX}" == 'a' ]]; then
-        mkdir "${SUITE_NAME}"
-        ln -s "${PWD}/${SUITE_NAME}" "${TEST_DIR}"
-    else
-        mkdir -p "${TEST_DIR}"
-    fi
-    cp -p 'suite.rc' "${TEST_DIR}/suite.rc"
-    cylc register "${SUITE_NAME}" "${TEST_DIR}"
-    cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null' \
-        || cat "${TEST_DIR}/log/suite/err" >&2
-done
-
-# Run another set of suites, for glob and paging tests
-SUITE_NAME_2_PREFIX="rtb-rose-bush-08-$(uuidgen)-"
-for SUFFIX in $(seq -w 1 10); do
-    SUITE_NAME="${SUITE_NAME_2_PREFIX}${SUFFIX}"
-    TEST_DIR="${HOME}/cylc-run/${SUITE_NAME}"
-    mkdir -p "${TEST_DIR}"
-    cp -p 'suite.rc' "${TEST_DIR}/suite.rc"
-    cylc register "${SUITE_NAME}" "${TEST_DIR}"
-    cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null' \
-        || cat "${TEST_DIR}/log/suite/err" >&2
-done
-#-------------------------------------------------------------------------------
-# Batch 1, sort by time_desc
+# Data transfer output check for [abc], sort by time_desc
 TEST_NAME="${TEST_NAME_BASE}-200-curl-suites"
-ARGS="&names=${SUITE_NAME_1_PREFIX}*"
+ARGS="&names=${SUITE_NAME}*"
 run_ok "${TEST_NAME}" curl \
     "${TEST_CYLC_WS_URL}/suites/${USER}?form=json${ARGS}"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('page',), 1]" \
     "[('per_page',), 100]" \
     "[('of_n_entries',), 3]" \
-    "[('entries', 0, 'name'), '${SUITE_NAME_1_PREFIX}c']" \
-    "[('entries', 1, 'name'), '${SUITE_NAME_1_PREFIX}a']" \
-    "[('entries', 2, 'name'), '${SUITE_NAME_1_PREFIX}b']"
+    "[('entries', 0, 'name'), '${SUITE_NAME}-c']" \
+    "[('entries', 1, 'name'), '${SUITE_NAME}-a']" \
+    "[('entries', 2, 'name'), '${SUITE_NAME}-b']"
 #-------------------------------------------------------------------------------
-# Batch 1, sort by time_asc
+# Data transfer output check for [abc], sort by time_asc
 TEST_NAME="${TEST_NAME_BASE}-200-curl-suites-time-asc"
-ARGS="&names=${SUITE_NAME_1_PREFIX}*&order=time_asc"
+ARGS="&names=${SUITE_NAME}*&order=time_asc"
 run_ok "${TEST_NAME}" curl \
     "${TEST_CYLC_WS_URL}/suites/${USER}?form=json${ARGS}"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('page',), 1]" \
     "[('per_page',), 100]" \
     "[('of_n_entries',), 3]" \
-    "[('entries', 0, 'name'), '${SUITE_NAME_1_PREFIX}b']" \
-    "[('entries', 1, 'name'), '${SUITE_NAME_1_PREFIX}a']" \
-    "[('entries', 2, 'name'), '${SUITE_NAME_1_PREFIX}c']"
+    "[('entries', 0, 'name'), '${SUITE_NAME}-b']" \
+    "[('entries', 1, 'name'), '${SUITE_NAME}-a']" \
+    "[('entries', 2, 'name'), '${SUITE_NAME}-c']"
 #-------------------------------------------------------------------------------
-# Batch 1, sort by name_asc
+# Data transfer output check for [abc], sort by name_asc
 TEST_NAME="${TEST_NAME_BASE}-200-curl-suites-name-asc"
-ARGS="&names=${SUITE_NAME_1_PREFIX}*&order=name_asc"
+ARGS="&names=${SUITE_NAME}*&order=name_asc"
 run_ok "${TEST_NAME}" curl \
     "${TEST_CYLC_WS_URL}/suites/${USER}?form=json${ARGS}"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('page',), 1]" \
     "[('per_page',), 100]" \
     "[('of_n_entries',), 3]" \
-    "[('entries', 0, 'name'), '${SUITE_NAME_1_PREFIX}a']" \
-    "[('entries', 1, 'name'), '${SUITE_NAME_1_PREFIX}b']" \
-    "[('entries', 2, 'name'), '${SUITE_NAME_1_PREFIX}c']"
+    "[('entries', 0, 'name'), '${SUITE_NAME}-a']" \
+    "[('entries', 1, 'name'), '${SUITE_NAME}-b']" \
+    "[('entries', 2, 'name'), '${SUITE_NAME}-c']"
 #-------------------------------------------------------------------------------
-# Batch 1, sort by name_desc
+# Data transfer output check for [abc], sort by name_desc
 TEST_NAME="${TEST_NAME_BASE}-200-curl-suites-name-desc"
-ARGS="&names=${SUITE_NAME_1_PREFIX}*&order=name_desc"
+ARGS="&names=${SUITE_NAME}*&order=name_desc"
 run_ok "${TEST_NAME}" curl \
     "${TEST_CYLC_WS_URL}/suites/${USER}?form=json${ARGS}"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('page',), 1]" \
     "[('per_page',), 100]" \
     "[('of_n_entries',), 3]" \
-    "[('entries', 0, 'name'), '${SUITE_NAME_1_PREFIX}c']" \
-    "[('entries', 1, 'name'), '${SUITE_NAME_1_PREFIX}b']" \
-    "[('entries', 2, 'name'), '${SUITE_NAME_1_PREFIX}a']"
+    "[('entries', 0, 'name'), '${SUITE_NAME}-c']" \
+    "[('entries', 1, 'name'), '${SUITE_NAME}-b']" \
+    "[('entries', 2, 'name'), '${SUITE_NAME}-a']"
 #-------------------------------------------------------------------------------
-# Batch 2, page 1
+# Data transfer output check for [1-10], page 1
 TEST_NAME="${TEST_NAME_BASE}-200-curl-suites-2-page-1"
-ARGS="&names=${SUITE_NAME_2_PREFIX}*&per_page=4&page=1"
+ARGS="&names=${SUITE_NAME}*&per_page=4&page=1"
 run_ok "${TEST_NAME}" curl \
     "${TEST_CYLC_WS_URL}/suites/${USER}?form=json${ARGS}"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('page',), 1]" \
     "[('per_page',), 4]" \
     "[('of_n_entries',), 10]" \
-    "[('entries', 0, 'name'), '${SUITE_NAME_2_PREFIX}10']" \
-    "[('entries', 1, 'name'), '${SUITE_NAME_2_PREFIX}09']" \
-    "[('entries', 2, 'name'), '${SUITE_NAME_2_PREFIX}08']" \
-    "[('entries', 3, 'name'), '${SUITE_NAME_2_PREFIX}07']"
+    "[('entries', 0, 'name'), '${SUITE_NAME}-10']" \
+    "[('entries', 1, 'name'), '${SUITE_NAME}-09']" \
+    "[('entries', 2, 'name'), '${SUITE_NAME}-08']" \
+    "[('entries', 3, 'name'), '${SUITE_NAME}-07']"
 #-------------------------------------------------------------------------------
-# Batch 2, page 2
+# Data transfer output check for [1-10], page 2
 TEST_NAME="${TEST_NAME_BASE}-200-curl-suites-2-page-2"
-ARGS="&names=${SUITE_NAME_2_PREFIX}*&per_page=4&page=2"
+ARGS="&names=${SUITE_NAME}*&per_page=4&page=2"
 run_ok "${TEST_NAME}" curl \
     "${TEST_CYLC_WS_URL}/suites/${USER}?form=json${ARGS}"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('page',), 2]" \
     "[('per_page',), 4]" \
     "[('of_n_entries',), 10]" \
-    "[('entries', 0, 'name'), '${SUITE_NAME_2_PREFIX}06']" \
-    "[('entries', 1, 'name'), '${SUITE_NAME_2_PREFIX}05']" \
-    "[('entries', 2, 'name'), '${SUITE_NAME_2_PREFIX}04']" \
-    "[('entries', 3, 'name'), '${SUITE_NAME_2_PREFIX}03']"
+    "[('entries', 0, 'name'), '${SUITE_NAME}-06']" \
+    "[('entries', 1, 'name'), '${SUITE_NAME}-05']" \
+    "[('entries', 2, 'name'), '${SUITE_NAME}-04']" \
+    "[('entries', 3, 'name'), '${SUITE_NAME}-03']"
 #-------------------------------------------------------------------------------
-# Batch 2, page 3
+# Data transfer output check for [1-10], page 3
 TEST_NAME="${TEST_NAME_BASE}-200-curl-suites-2-page-3"
-ARGS="&names=${SUITE_NAME_2_PREFIX}*&per_page=4&page=3"
+ARGS="&names=${SUITE_NAME}*&per_page=4&page=3"
 run_ok "${TEST_NAME}" curl \
     "${TEST_CYLC_WS_URL}/suites/${USER}?form=json${ARGS}"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('page',), 3]" \
     "[('per_page',), 4]" \
     "[('of_n_entries',), 10]" \
-    "[('entries', 0, 'name'), '${SUITE_NAME_2_PREFIX}02']" \
-    "[('entries', 1, 'name'), '${SUITE_NAME_2_PREFIX}01']"
+    "[('entries', 0, 'name'), '${SUITE_NAME}-02']" \
+    "[('entries', 1, 'name'), '${SUITE_NAME}-01']"
 #-------------------------------------------------------------------------------
 # Tidy up
+for SUFFIX in 'a' 'b' 'c' $(seq -w 1 10); do
+    SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}-${SUFFIX}"
+    # Suite trivial so stops early on by itself
+    purge_suite "${SUITE_NAME}"
+done
 cylc_ws_kill
-rm -fr \
-    "${HOME}/cylc-run/${SUITE_NAME_1_PREFIX}"[abc] \
-    "${HOME}/cylc-run/${SUITE_NAME_2_PREFIX}"?? \
-    2>'/dev/null'
-exit 0
+exit

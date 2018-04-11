@@ -22,8 +22,11 @@ if ! python -c 'import cherrypy' 2>'/dev/null'; then
     skip_all '"cherrypy" not installed'
 fi
 
-set_test_number 9
+set_test_number 10
+#-------------------------------------------------------------------------------
+# Initialise suite and associated config
 
+# Rose conf to extract via nameless
 mkdir 'conf'
 cat >'conf/rose.conf' <<'__ROSE_CONF__'
 [rose-bush]
@@ -32,24 +35,23 @@ title=Humpty Dumpty
 host=The Wall
 __ROSE_CONF__
 
-ROSE_CONF_PATH="${PWD}/conf" cylc_ws_init 'cylc' 'nameless'
+# Initialise, validate and run a suite for testing with
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+
+TEST_NAME=$TEST_NAME_BASE-validate
+run_ok $TEST_NAME cylc validate $SUITE_NAME
+
+export CYLC_CONF_PATH=
+cylc register "${SUITE_NAME}" "${TEST_DIR}"
+cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null'
+#-------------------------------------------------------------------------------
+# Initialise WSGI application for the cylc nameless web service
+cylc_ws_init 'cylc' 'nameless'
 if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
     exit 1
 fi
-
 #-------------------------------------------------------------------------------
-# Run a quick cylc suite
-mkdir -p "${HOME}/cylc-run"
-TEST_DIR="$(mktemp -d --tmpdir="${HOME}/cylc-run" "ctb-cylc-nameless-01-XXXXXXXX")"
-SUITE_NAME="$(basename "${TEST_DIR}")"
-cp -pr "${TEST_SOURCE_DIR}/${TEST_KEY_BASE}/"* "${TEST_DIR}"
-export CYLC_CONF_PATH=
-cylc register "${SUITE_NAME}" "${TEST_DIR}"
-cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null' \
-    || cat "${TEST_DIR}/log/suite/err" >&2
-
-#-------------------------------------------------------------------------------
-
+# Data transfer output check for a suite with Rose config provided
 TEST_NAME="${TEST_NAME_BASE}-200-curl-root-json"
 run_ok "${TEST_NAME}" curl "${TEST_CYLC_WS_URL}/?form=json"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
@@ -79,9 +81,8 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('logo',), 'src=\"rose-favicon.png\" alt=\"Rose Logo\"']" \
     "[('title',), 'Humpty Dumpty']" \
     "[('host',), 'The Wall']"
-
 #-------------------------------------------------------------------------------
-# Tidy up
+# Tidy up - note suite trivial so stops early on by itself
+purge_suite "${SUITE_NAME}"
 cylc_ws_kill
-rm -fr "${TEST_DIR}" 2>'/dev/null'
-exit 0
+exit

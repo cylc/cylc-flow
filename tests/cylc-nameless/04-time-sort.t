@@ -23,25 +23,25 @@ if ! python -c 'import cherrypy' 2>'/dev/null'; then
     skip_all '"cherrypy" not installed'
 fi
 
-set_test_number 13
+set_test_number 14
+#-------------------------------------------------------------------------------
+# Initialise, validate and run a suite for testing with
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-ROSE_CONF_PATH= cylc_ws_init 'cylc' 'nameless'
+TEST_NAME=$TEST_NAME_BASE-validate
+run_ok $TEST_NAME cylc validate $SUITE_NAME
+
+export CYLC_CONF_PATH=
+cylc register "${SUITE_NAME}" "${TEST_DIR}"
+cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null'
+#-------------------------------------------------------------------------------
+# Initialise WSGI application for the cylc nameless web service
+cylc_ws_init 'cylc' 'nameless'
 if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
     exit 1
 fi
-
 #-------------------------------------------------------------------------------
-# Run a quick cylc suite
-mkdir -p "${HOME}/cylc-run"
-TEST_DIR="$(mktemp -d --tmpdir="${HOME}/cylc-run" "rtb-rose-bush-04-XXXXXXXX")"
-SUITE_NAME="$(basename "${TEST_DIR}")"
-cp -pr "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/"* "${TEST_DIR}"
-export CYLC_CONF_PATH=
-cylc register "${SUITE_NAME}" "${TEST_DIR}"
-cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null' \
-    || cat "${TEST_DIR}/log/suite/err" >&2
-
-#-------------------------------------------------------------------------------
+# Data transfer output checks for a specific jobs page, various time-ordering
 ORDER='time_submit'
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-${ORDER}"
 run_ok "${TEST_NAME}" curl \
@@ -52,7 +52,6 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('order',), '${ORDER}']" \
     "[('entries', 0, 'name'), 'qux']"
 
-#-------------------------------------------------------------------------------
 ORDER='time_run_desc'
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-${ORDER}"
 run_ok "${TEST_NAME}" curl \
@@ -64,7 +63,6 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('entries', 2, 'name'), 'baz']" \
     "[('entries', 3, 'name'), 'foo']"
 
-#-------------------------------------------------------------------------------
 ORDER='time_run_exit_desc'
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-${ORDER}"
 run_ok "${TEST_NAME}" curl \
@@ -76,7 +74,6 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('entries', 2, 'name'), 'bar']" \
     "[('entries', 3, 'name'), 'foo']"
 
-#-------------------------------------------------------------------------------
 ORDER='duration_queue_desc'
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-${ORDER}"
 run_ok "${TEST_NAME}" curl \
@@ -88,7 +85,6 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('entries', 2, 'name'), 'foo']" \
     "[('entries', 3, 'name'), 'qux']"
 
-#-------------------------------------------------------------------------------
 ORDER='duration_run_desc'
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-${ORDER}"
 run_ok "${TEST_NAME}" curl \
@@ -100,7 +96,6 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('entries', 2, 'name'), 'qux']" \
     "[('entries', 3, 'name'), 'bar']"
 
-#-------------------------------------------------------------------------------
 ORDER='duration_queue_run_desc'
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-${ORDER}"
 run_ok "${TEST_NAME}" curl \
@@ -112,7 +107,8 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('entries', 2, 'name'), 'foo']" \
     "[('entries', 3, 'name'), 'qux']"
 #-------------------------------------------------------------------------------
-# Tidy up
+# Tidy up - note suite trivial so stops early on by itself
+purge_suite "${SUITE_NAME}"
 cylc_ws_kill
-rm -fr "${TEST_DIR}" 2>'/dev/null'
-exit 0
+exit
+

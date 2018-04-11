@@ -22,19 +22,10 @@ if ! python -c 'import cherrypy' 2>'/dev/null'; then
     skip_all '"cherrypy" not installed'
 fi
 
-set_test_number 17
-
-ROSE_CONF_PATH= cylc_ws_init 'cylc' 'nameless'
-if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
-    exit 1
-fi
-
+set_test_number 18
 #-------------------------------------------------------------------------------
-# Run a quick cylc suite
-mkdir -p "${HOME}/cylc-run"
-TEST_DIR="$(mktemp -d --tmpdir="${HOME}/cylc-run" "rtb-rose-bush-07-XXXXXXXX")"
-SUITE_NAME="$(basename "${TEST_DIR}")"
-cat >"${TEST_DIR}/suite.rc" <<'__SUITE_RC__'
+# Initialise, validate and run a suite for testing with
+init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 #!Jinja2
 [cylc]
     UTC mode = True
@@ -48,13 +39,20 @@ cat >"${TEST_DIR}/suite.rc" <<'__SUITE_RC__'
     [[foo]]
         script = true
 __SUITE_RC__
-export CYLC_CONF_PATH=
-cylc register "${SUITE_NAME}" "${TEST_DIR}"
-cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null' \
-    || cat "${TEST_DIR}/log/suite/err" >&2
 
+TEST_NAME=$TEST_NAME_BASE-validate
+run_ok $TEST_NAME cylc validate $SUITE_NAME
+
+cylc run --debug --no-detach $SUITE_NAME 2>'/dev/null' &
 #-------------------------------------------------------------------------------
-# Sort by time_desc
+# Initialise WSGI application for the cylc nameless web service
+TEST_NAME="${TEST_NAME_BASE}-ws-init"
+cylc_ws_init 'cylc' 'nameless'
+if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
+    exit 1
+fi
+#-------------------------------------------------------------------------------
+# Data transfer output check for the suite's cycles page, sorted by time_desc
 TEST_NAME_PREFIX="${TEST_NAME_BASE}-200-curl-cycles-page-"
 for PAGE in {1..4}; do
     TEST_NAME="${TEST_NAME_PREFIX}${PAGE}"
@@ -90,7 +88,7 @@ cylc_ws_json_greps "${TEST_NAME_PREFIX}4.stdout" "${TEST_NAME_PREFIX}4.stdout" \
     "[('entries', 0, 'cycle'), '20010101T0000Z']" \
     "[('entries', 1, 'cycle'), '20000101T0000Z']"
 #-------------------------------------------------------------------------------
-# Sort by time_asc
+# Data transfer output check for the suite's cycles page, sorted by time_asc
 TEST_NAME_PREFIX="${TEST_NAME_BASE}-200-curl-cycles-asc-page-"
 for PAGE in {1..4}; do
     TEST_NAME="${TEST_NAME_PREFIX}${PAGE}"
@@ -127,6 +125,7 @@ cylc_ws_json_greps "${TEST_NAME_PREFIX}4.stdout" "${TEST_NAME_PREFIX}4.stdout" \
     "[('entries', 0, 'cycle'), '20090101T0000Z']"
 #-------------------------------------------------------------------------------
 # Tidy up
+cylc stop "${SUITE_NAME}"
+purge_suite "${SUITE_NAME}"
 cylc_ws_kill
-rm -fr "${TEST_DIR}" 2>'/dev/null'
-exit 0
+exit

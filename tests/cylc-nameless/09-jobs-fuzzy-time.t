@@ -22,14 +22,10 @@ if ! python -c 'import cherrypy' 2>'/dev/null'; then
     skip_all '"cherrypy" not installed'
 fi
 
-set_test_number 13
-
-ROSE_CONF_PATH= cylc_ws_init 'cylc' 'nameless'
-if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
-    exit 1
-fi
-
-cat >'suite.rc' <<'__SUITE_RC__'
+set_test_number 14
+#-------------------------------------------------------------------------------
+# Initialise, validate and run a suite for testing with
+init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 #!Jinja2
 [cylc]
     UTC mode = True
@@ -44,55 +40,58 @@ cat >'suite.rc' <<'__SUITE_RC__'
         script = true
 __SUITE_RC__
 
-#-------------------------------------------------------------------------------
-# Run a quick cylc suite
-mkdir -p "${HOME}/cylc-run"
-TEST_DIR="$(mktemp -d --tmpdir="${HOME}/cylc-run" "rtb-rose-bush-09-XXXXXXXX")"
-SUITE_NAME="$(basename "${TEST_DIR}")"
-cp -p 'suite.rc' "${TEST_DIR}"
+TEST_NAME=$TEST_NAME_BASE-validate
+run_ok $TEST_NAME cylc validate $SUITE_NAME
+
 export CYLC_CONF_PATH=
 cylc register "${SUITE_NAME}" "${TEST_DIR}"
-cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null' \
-    || cat "${TEST_DIR}/log/suite/err" >&2
-
+cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null'
 #-------------------------------------------------------------------------------
+# Initialise WSGI application for the cylc nameless web service
+TEST_NAME="${TEST_NAME_BASE}-ws-init"
+cylc_ws_init 'cylc' 'nameless'
+if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
+    exit 1
+fi
+#-------------------------------------------------------------------------------
+# Data transfer output check for a specific user's/suite's 'fuzzy time'
 TEST_NAME="${TEST_NAME_BASE}-200-curl-suites"
 run_ok "${TEST_NAME}" curl \
     "${TEST_CYLC_WS_URL}/suites/${USER}?form=json"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('no_fuzzy_time',), '0']"
-#-------------------------------------------------------------------------------
+
 TEST_NAME="${TEST_NAME_BASE}-200-curl-suites-no-fuzzy-time"
 run_ok "${TEST_NAME}" curl \
     "${TEST_CYLC_WS_URL}/suites/${USER}?form=json&no_fuzzy_time=1"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('no_fuzzy_time',), '1']"
-#-------------------------------------------------------------------------------
+
 TEST_NAME="${TEST_NAME_BASE}-200-curl-cycles"
 run_ok "${TEST_NAME}" curl \
     "${TEST_CYLC_WS_URL}/cycles/${USER}/${SUITE_NAME}?form=json"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('no_fuzzy_time',), '0']"
-#-------------------------------------------------------------------------------
+
 TEST_NAME="${TEST_NAME_BASE}-200-curl-cycles-no-fuzzy-time"
 run_ok "${TEST_NAME}" curl \
     "${TEST_CYLC_WS_URL}/cycles/${USER}/${SUITE_NAME}?form=json&no_fuzzy_time=1"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('no_fuzzy_time',), '1']"
-#-------------------------------------------------------------------------------
+
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs"
 run_ok "${TEST_NAME}" curl \
     "${TEST_CYLC_WS_URL}/taskjobs/${USER}/${SUITE_NAME}?form=json"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('no_fuzzy_time',), '0']"
-#-------------------------------------------------------------------------------
+
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-no-fuzzy-time"
 run_ok "${TEST_NAME}" curl \
     "${TEST_CYLC_WS_URL}/taskjobs/${USER}/${SUITE_NAME}?form=json&no_fuzzy_time=1"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('no_fuzzy_time',), '1']"
 #-------------------------------------------------------------------------------
-# Tidy up
+# Tidy up - note suite trivial so stops early on by itself
+purge_suite "${SUITE_NAME}"
 cylc_ws_kill
-rm -fr "${TEST_DIR}" 2>'/dev/null'
-exit 0
+exit

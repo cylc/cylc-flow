@@ -22,35 +22,35 @@ if ! python -c 'import cherrypy' 2>'/dev/null'; then
     skip_all '"cherrypy" not installed'
 fi
 
-set_test_number 3
+set_test_number 4
+#-------------------------------------------------------------------------------
+# Initialise, validate and run a suite for testing with
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-ROSE_CONF_PATH= cylc_ws_init 'cylc' 'nameless'
+TEST_NAME=$TEST_NAME_BASE-validate
+run_ok $TEST_NAME cylc validate $SUITE_NAME
+
+cylc run --debug --no-detach $SUITE_NAME 2>'/dev/null'
+#-------------------------------------------------------------------------------
+# Initialise WSGI application for the cylc nameless web service
+cylc_ws_init 'cylc' 'nameless'
 if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
     exit 1
 fi
-
 #-------------------------------------------------------------------------------
-# Run a quick cylc suite
-mkdir -p "${HOME}/cylc-run"
-TEST_DIR="$(mktemp -d --tmpdir="${HOME}/cylc-run" "rtb-rose-bush-03-XXXXXXXX")"
-SUITE_NAME="$(basename "${TEST_DIR}")"
-cp -pr "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/"* "${TEST_DIR}"
-export CYLC_CONF_PATH=
-cylc register "${SUITE_NAME}" "${TEST_DIR}"
-cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null'
-
-#-------------------------------------------------------------------------------
+# Data transfer output check for case with no minimal task status values
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs"
 FILTERS='&no_status=active&no_status=fail'
-run_ok "${TEST_NAME}" \
-    curl "${TEST_CYLC_WS_URL}/jobs/${USER}/${SUITE_NAME}?form=json${FILTERS}"
+
+ESC_SUITE_NAME="$(echo ${SUITE_NAME} | sed 's|/|%2F|g')"
+URL_NAME="${TEST_CYLC_WS_URL}/taskjobs?user=${USER}&suite=${ESC_SUITE_NAME}&form=json${FILTERS}"
+run_ok "${TEST_NAME}" curl "${URL_NAME}"
 FOO="{'cycle': '20000101T0000Z', 'name': 'foo', 'submit_num': 1}"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('of_n_entries',), 1]" \
     "[('entries', ${FOO}, 'task_status'), 'succeeded']"
-
 #-------------------------------------------------------------------------------
-# Tidy up
+# Tidy up - note suite trivial so stops early on by itself
+purge_suite "${SUITE_NAME}"
 cylc_ws_kill
-rm -fr "${TEST_DIR}" 2>'/dev/null'
-exit 0
+exit

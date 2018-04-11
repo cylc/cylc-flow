@@ -22,14 +22,10 @@ if ! python -c 'import cherrypy' 2>'/dev/null'; then
     skip_all '"cherrypy" not installed'
 fi
 
-set_test_number 7
-
-ROSE_CONF_PATH= cylc_ws_init 'cylc' 'nameless'
-if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
-    exit 1
-fi
-
-cat >'suite.rc' <<'__SUITE_RC__'
+set_test_number 8
+#-------------------------------------------------------------------------------
+# Initialise, validate and run a suite for testing with
+init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 #!Jinja2
 [cylc]
     UTC mode = True
@@ -44,6 +40,7 @@ cat >'suite.rc' <<'__SUITE_RC__'
     [[echo-euro]]
         script = echo-euro >"$0.txt"
 __SUITE_RC__
+
 mkdir -p 'bin'
 cat >'bin/echo-euro' <<'__BASH__'
 #!/bin/bash
@@ -51,17 +48,21 @@ echo €
 __BASH__
 chmod +x 'bin/echo-euro'
 
-#-------------------------------------------------------------------------------
-# Run a quick cylc suite
-mkdir -p "${HOME}/cylc-run"
-TEST_DIR="$(mktemp -d --tmpdir="${HOME}/cylc-run" "rtb-rose-bush-11-XXXXXXXX")"
-SUITE_NAME="$(basename "${TEST_DIR}")"
-cp -pr 'bin' 'suite.rc' "${TEST_DIR}"
+TEST_NAME=$TEST_NAME_BASE-validate
+run_ok $TEST_NAME cylc validate $SUITE_NAME
+
 export CYLC_CONF_PATH=
 cylc register "${SUITE_NAME}" "${TEST_DIR}"
-cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null' \
-    || cat "${TEST_DIR}/log/suite/err" >&2
+cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null'
 #-------------------------------------------------------------------------------
+# Initialise WSGI application for the cylc nameless web service
+TEST_NAME="${TEST_NAME_BASE}-ws-init"
+cylc_ws_init 'cylc' 'nameless'
+if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
+    exit 1
+fi
+#-------------------------------------------------------------------------------
+# Tests of unicode output for standard '.txt' format
 LOG_FILE='log/job/20000101T0000Z/echo-euro/01/job.txt'
 
 TEST_NAME="${TEST_NAME_BASE}-200-curl-view-default"
@@ -74,15 +75,16 @@ run_ok "${TEST_NAME}" curl \
     "${TEST_CYLC_WS_URL}/view/${USER}/${SUITE_NAME}?path=${LOG_FILE}&mode=text"
 cmp_ok "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" <<<'€'
 #-------------------------------------------------------------------------------
-# Tar
-TEST_NAME="${TEST_NAME_BASE}-200-curl-view-default-tar"
+# Test of unicode output for zipped 'tar.gz' format
 TAR_FILE='job-19990101T0000Z.tar.gz'
+
+TEST_NAME="${TEST_NAME_BASE}-200-curl-view-default-tar"
 (cd "${TEST_DIR}/log" && tar -czf "${TAR_FILE}" 'job/19990101T0000Z')
 run_ok "${TEST_NAME}" curl \
     "${TEST_CYLC_WS_URL}/view/${USER}/${SUITE_NAME}?path=log/${TAR_FILE}&path_in_tar=job/19990101T0000Z/echo-euro/01/job.txt&mode=text"
 cmp_ok "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" <<<'€'
 #-------------------------------------------------------------------------------
-# Tidy up
+# Tidy up - note suite trivial so stops early on by itself
+purge_suite "${SUITE_NAME}"
 cylc_ws_kill
-rm -fr "${TEST_DIR}" 2>'/dev/null'
-exit 0
+exit

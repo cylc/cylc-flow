@@ -562,7 +562,6 @@ TEST_CYLC_WS_PID=
 TEST_CYLC_WS_PORT=
 TEST_CYLC_WS_URL=
 cylc_ws_init() {
-    # set -x
     local NS="$1"
     local UTIL="$2"
 
@@ -582,7 +581,8 @@ cylc_ws_init() {
     TEST_CYLC_WS_PORT="${WS_PORT}"
     if port_is_busy "${TEST_CYLC_WS_PORT}"; then
         ok "${TEST_NAME}"
-        TEST_CYLC_WS_URL="http://${HOSTNAME}:${TEST_CYLC_WS_PORT}/${NS}-${UTIL}/"
+        TEST_CYLC_WS_URL="http://${HOSTNAME}:${TEST_CYLC_WS_PORT}/"
+        echo "${TEST_CYLC_WS_URL}" >&2
     else
         fail "${TEST_NAME}"
         cylc_ws_kill
@@ -633,7 +633,8 @@ for item in sys.argv[2:]:
         raise KeyError(item)
 __PYTHON__
     if [[ -s "${TEST_NAME}.stderr" ]]; then
-        cat "${TEST_NAME}.stderr" >&2
+        # Only print the final exception line - change to cat for details
+        tail -n 1 "${TEST_NAME}.stderr" >&2
     fi
 }
 

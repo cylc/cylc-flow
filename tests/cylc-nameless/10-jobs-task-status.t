@@ -22,14 +22,10 @@ if ! python -c 'import cherrypy' 2>'/dev/null'; then
     skip_all '"cherrypy" not installed'
 fi
 
-set_test_number 15
-
-ROSE_CONF_PATH= cylc_ws_init 'cylc' 'nameless'
-if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
-    exit 1
-fi
-
-cat >'suite.rc' <<'__SUITE_RC__'
+set_test_number 16
+#-------------------------------------------------------------------------------
+# Initialise, validate and run a suite for testing with
+init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 #!Jinja2
 [cylc]
     UTC mode = True
@@ -63,17 +59,23 @@ fi
             submission polling intervals = 20*PT3S
 __SUITE_RC__
 
+TEST_NAME=$TEST_NAME_BASE-validate
+run_ok $TEST_NAME cylc validate $SUITE_NAME
+
+cylc run --debug --no-detach $SUITE_NAME 2>'/dev/null' &
 #-------------------------------------------------------------------------------
-# Run a quick cylc suite
-mkdir -p "${HOME}/cylc-run"
-TEST_DIR="$(mktemp -d --tmpdir="${HOME}/cylc-run" "rtb-rose-bush-10-XXXXXXXX")"
-SUITE_NAME="$(basename "${TEST_DIR}")"
-cp -p 'suite.rc' "${TEST_DIR}"
-export CYLC_CONF_PATH=
-cylc register "${SUITE_NAME}" "${TEST_DIR}"
-cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null'
+# Initialise WSGI application for the cylc nameless web service
+TEST_NAME="${TEST_NAME_BASE}-ws-init"
+cylc_ws_init 'cylc' 'nameless'
+if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
+    exit 1
+fi
+#-------------------------------------------------------------------------------
+# Data transfer output check for a specific suite's jobs page
+
+# Key variable for core tests up to end of file
 TASKJOBS_URL="${TEST_CYLC_WS_URL}/taskjobs/${USER}/${SUITE_NAME}?form=json"
-#-------------------------------------------------------------------------------
+
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs"
 run_ok "${TEST_NAME}" curl "${TASKJOBS_URL}"
 FOO1="{'cycle': '20000101T0000Z', 'name': 'foo', 'submit_num': 1}"
@@ -114,41 +116,45 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('entries', ${BAZ2}, 'run_signal',), None]"
 
 #-------------------------------------------------------------------------------
+# Data transfer output check for suite's job page, job status filters
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-failed"
 run_ok "${TEST_NAME}" curl "${TASKJOBS_URL}&job_status=failed"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('job_status',), 'failed']" \
     "[('of_n_entries',), 6]"
-#-------------------------------------------------------------------------------
+
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-submission-failed-and-failed"
 run_ok "${TEST_NAME}" curl "${TASKJOBS_URL}&job_status=submission-failed,failed"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('job_status',), 'submission-failed,failed']" \
     "[('of_n_entries',), 7]"
-#-------------------------------------------------------------------------------
+
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-succeeded"
 run_ok "${TEST_NAME}" curl "${TASKJOBS_URL}&job_status=succeeded"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('job_status',), 'succeeded']" \
     "[('of_n_entries',), 2]"
-#-------------------------------------------------------------------------------
+
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-succeeded-failed"
 run_ok "${TEST_NAME}" curl "${TASKJOBS_URL}&job_status=succeeded,failed"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('job_status',), 'succeeded,failed']" \
     "[('of_n_entries',), 8]"
 #-------------------------------------------------------------------------------
+# Data transfer output check for suite's job page, task status filters
 TEST_NAME="${TEST_NAME_BASE}-200-curl-task-succeeded"
 run_ok "${TEST_NAME}" curl "${TASKJOBS_URL}&task_status=succeeded"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('of_n_entries',), 5]"
-#-------------------------------------------------------------------------------
+
 TEST_NAME="${TEST_NAME_BASE}-200-curl-task-succeeded-job-failed"
 run_ok "${TEST_NAME}" curl "${TASKJOBS_URL}&task_status=succeeded&job_status=failed"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('of_n_entries',), 2]"
 #-------------------------------------------------------------------------------
 # Tidy up
+cylc stop "${SUITE_NAME}"
+purge_suite "${SUITE_NAME}"
 cylc_ws_kill
-rm -fr "${TEST_DIR}" 2>'/dev/null'
-exit 0
+exit
+

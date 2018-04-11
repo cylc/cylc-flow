@@ -25,19 +25,30 @@ fi
 
 set_test_number 6
 #-------------------------------------------------------------------------------
+# Initialise, validate and run a suite for testing with
 init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 #!Jinja2
 [cylc]
+    UTC mode = True
     [[events]]
         timeout = PT2M
         abort on timeout = True
 [scheduling]
+    initial cycle point = 2000
+    final cycle point = 2000
     [[dependencies]]
-        graph = foo
+        [[[P1Y]]]
+            graph = loser
+[runtime]
+    [[loser]]
+        script = false
 __SUITE_RC__
 
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --debug --no-detach $SUITE_NAME 2>'/dev/null' &
+TEST_NAME=$TEST_NAME_BASE-validate
+run_ok $TEST_NAME cylc validate $SUITE_NAME
+
+# Background to leave sitting in stalled state
+cylc run --debug --no-detach $SUITE_NAME 2>'/dev/null' &
 #-------------------------------------------------------------------------------
 # Initialise WSGI application for the cylc nameless web service
 TEST_NAME="${TEST_NAME_BASE}-ws-init"
@@ -46,31 +57,31 @@ if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
     exit 1
 fi
 #-------------------------------------------------------------------------------
-# Check a suite's host and port are correctly determined
-export CYLC_CONF_PATH=
-SUITE_PID="$!"
+# Data transfer output check for a specific suite's host and port
+
 SRV_D="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/.service"
 CONTACT="${SRV_D}/contact"
 poll '!' test -s "${CONTACT}"
 sleep 1
-
 PORT="$(awk -F= '$1 ~ /CYLC_SUITE_PORT/ {print $2}' "${CONTACT}")"
 HOST="$(awk -F= '$1 ~ /CYLC_SUITE_HOST/ {print $2}' "${CONTACT}")"
 HOST=${HOST%%.*} # strip domain
 
 if [[ -n "${HOST}" && -n "${PORT}" ]]; then
-    for METHOD in 'cycles' 'jobs'; do
-        TEST_NAME="${TEST_NAME_BASE}-ws-json-${METHOD}"
-        run_ok "${TEST_NAME}" curl \
-            "${TEST_CYLC_WS_URL}/${METHOD}/${USER}/${SUITE_NAME}?form=json"
-        cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
-            "[('states', 'server',), '${HOST}:${PORT}']"
+    for METHOD in 'cycles' 'taskjobs'; do
+        TEST_NAME="${TEST_NAME_BASE}-ws-run-${METHOD}"
+        ESC_SUITE_NAME="$(echo ${SUITE_NAME} | sed 's|/|%2F|g')"
+        URL_NAME="${TEST_CYLC_WS_URL}/${METHOD}/${USER}?suite=${ESC_SUITE_NAME}&form=json"
+        run_ok "${TEST_NAME}" curl "${URL_NAME}"
+        # cat "${TEST_NAME}.stdout" "${TEST_NAME}.stderr" >&2
+        cylc_ws_json_greps "${TEST_NAME}-json" "${TEST_NAME}.stdout" "[('states', 'server',), '${HOST}:${PORT}']"
     done
 else
     skip 4 'Cannot determine suite host or port'
 fi
 #-------------------------------------------------------------------------------
 # Tidy up
+cylc stop "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 cylc_ws_kill
 exit
