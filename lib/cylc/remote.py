@@ -38,6 +38,8 @@ def remote_cylc_cmd(cmd, user=None, host=None, capture=False,
                     ssh_login_shell=None):
     """Run a given cylc command on another account and/or host.
 
+    If capture is True, pipe stdout and return the Popen object.
+
     """
     if host is None:
         host = "localhost"
@@ -79,7 +81,7 @@ def remote_cylc_cmd(cmd, user=None, host=None, capture=False,
     #   The command is read from the site/user global config file, but we check
     #   above that it ends in 'cylc', and in any case the user could execute
     #   any such command directly via ssh.
-    proc = Popen(command, stdout=stdout, stdin=open(os.devnull), bufsize=0)
+    proc = Popen(command, stdout=stdout, stdin=open(os.devnull))
     if capture:
         return proc
     else:
