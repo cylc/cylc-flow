@@ -968,10 +968,9 @@ trigger message string and pass the cycle point to the \lstinline=cylc ext-trigg
 
 \paragraph[sequential]{[scheduling] \textrightarrow [[special tasks]] \textrightarrow sequential}
 
-Sequential tasks are automatically given dependence on their own
-predecessor. This is equivalent to use of explicit inter-cycle triggers
-in the graph, except that the automatic version does not show in suite
-graph visualization. For more on sequential tasks see~\ref{SequentialTasks}.
+Sequential tasks automatically depend on their own previous-cycle instance.
+This declaration is deprecated in favour of explicit inter-cycle triggers -
+see~\ref{SequentialTasks}.
 
 \begin{myitemize}
     \item {\em type:} Comma-separated list of task or family names.
