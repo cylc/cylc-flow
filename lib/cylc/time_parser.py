@@ -98,19 +98,23 @@ class CylcTimeParser(object):
         (re.compile(r"^R(?P<reps>1)//(?P<end>[^PR/][^/]*)$"), 4)
     ]
 
-    CHAIN_REGEX = re.compile('((?:[+-P]|[\dT])[\d\w]*)')
+    CHAIN_REGEX = re.compile(r'((?:[+-P]|[\dT])[\d\w]*)')
 
-    MIN_REGEX = re.compile('min\(([^\)]+)\)')
+    MIN_REGEX = re.compile(r'min\(([^\)]+)\)')
 
     OFFSET_REGEX = re.compile(r"(?P<sign>[+-])(?P<intv>P.+)$")
 
-    TRUNCATED_REC_MAP = {"---": [re.compile("^\d\dT")],
-                         "--": [re.compile("^\d\d\d\dT")],
-                         "-": [re.compile("^\d\d\dT"),
-                               re.compile("\dW\d\dT"),
-                               re.compile("W\d\d\d?T"),
-                               re.compile("W-\dT"),
-                               re.compile("W-\d")]}
+    TRUNCATED_REC_MAP = {
+        "---": [re.compile(r"^\d\dT")],
+        "--": [re.compile(r"^\d\d\d\dT")],
+        "-": [
+            re.compile(r"^\d\d\dT"),
+            re.compile(r"\dW\d\dT"),
+            re.compile(r"W\d\d\d?T"),
+            re.compile(r"W-\dT"),
+            re.compile(r"W-\d")
+        ]
+    }
 
     __slots__ = ('timepoint_parser', 'duration_parser', 'recurrence_parser',
                  'context_start_point', 'context_end_point')

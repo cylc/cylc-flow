@@ -129,7 +129,7 @@ class config(object):
                 null = False
                 i = i.lstrip('[')
                 i = i.rstrip(']')
-                j = re.split('\]\[*', i)
+                j = re.split(r'\]\[*', i)
                 mkeys.append(j)
         if null:
             mkeys = [[]]

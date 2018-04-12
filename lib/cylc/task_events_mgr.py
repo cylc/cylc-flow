@@ -103,7 +103,7 @@ class TaskEventsManager(object):
     NN = "NN"
     POLLED_INDICATOR = "(polled)"
     RE_MESSAGE_TIME = re.compile(
-        '\A(.+) at (' + RE_DATE_TIME_FORMAT_EXTENDED + ')\Z', re.DOTALL)
+        r'\A(.+) at (' + RE_DATE_TIME_FORMAT_EXTENDED + r')\Z', re.DOTALL)
 
     def __init__(self, suite, proc_pool, suite_db_mgr, broadcast_mgr=None):
         self.suite = suite

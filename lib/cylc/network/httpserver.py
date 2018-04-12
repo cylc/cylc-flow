@@ -684,7 +684,7 @@ class SuiteRuntimeService(object):
         return (True, 'Command queued')
 
     def _access_priv_ok(self, required_privilege_level):
-        """Return True if a client is allowed access to info from server_obj.
+        """Return True if a client has enough privilege for given level.
 
         The required privilege level is compared to the level granted to the
         client by the connection validator (held in thread local storage).
@@ -696,7 +696,7 @@ class SuiteRuntimeService(object):
             return False
 
     def _check_access_priv(self, required_privilege_level):
-        """Raise an exception if client privilege is insufficient for server_obj.
+        """Raise an exception if client privilege is insufficient.
 
         (See the documentation above for the boolean version of this function).
 

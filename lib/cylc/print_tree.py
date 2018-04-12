@@ -25,7 +25,7 @@ a_hbar = '-'
 a_vbar = '|'
 a_tee = a_vbar + a_hbar
 a_trm = '`' + a_hbar
-a_tee_re = '\|' + a_hbar
+a_tee_re = r'\|' + a_hbar
 
 # Unicode box-printing characters
 u_hbar = u'\u2500'

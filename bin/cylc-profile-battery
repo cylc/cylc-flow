@@ -389,7 +389,7 @@ def install_experiments(experiment_ids, experiments, install_dir,
                 string = ''
                 for setting in run['globalrc']:
                     indent = 0
-                    setting = re.split('[\[\]]+', setting.strip())
+                    setting = re.split(r'[\[\]]+', setting.strip())
                     for part in setting[:-1]:  # Key hierarchy.
                         if not part:
                             continue

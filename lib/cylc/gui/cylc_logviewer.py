@@ -97,7 +97,8 @@ class cylc_logviewer(logviewer):
         if task == 'all':
             filter_ = None
         else:
-            filter_ = '\\[' + task + '%\d+\\]'
+            # Good enough to match "[task.CYCLE]"?
+            filter_ = r'\[' + task + r'\.[^\]]+\]'
 
         self.task_filter = filter_
         self.update_view()

@@ -29,7 +29,7 @@ def get_cylc_directory():
         ['cylc', 'version', '--long'],
         stdout=PIPE, stdin=open(os.devnull)).communicate()
     try:
-        return os.path.realpath(re.search('\((.*)\)', ver_str).groups()[0])
+        return os.path.realpath(re.search(r'\((.*)\)', ver_str).groups()[0])
     except IndexError:
         sys.exit('Could not locate local git repository for cylc.')
 
@@ -70,15 +70,17 @@ PROFILE_FILES = {
 
 # ------------- REGEXES ---------------
 # Matches the summary line from the cylc <cmd> --profile output.
-SUMMARY_LINE_REGEX = re.compile('([\d]+) function calls \(([\d]+) primitive'
-                                ' calls\) in ([\d.]+)(?: CPU)? seconds')
+SUMMARY_LINE_REGEX = re.compile(
+    r'([\d]+) function calls \(([\d]+) primitive'
+    r' calls\) in ([\d.]+)(?: CPU)? seconds')
 # Matches the memory checkpoints in the cylc <cmd> --profile output
-MEMORY_LINE_REGEX = re.compile('PROFILE: Memory: ([\d]+) KiB: ([\w.]+): (.*)')
+MEMORY_LINE_REGEX = re.compile(
+    r'PROFILE: Memory: ([\d]+) KiB: ([\w.]+): (.*)')
 # Matches main-loop memory checkpoints in cylc <cmd> --profile output.
-LOOP_MEMORY_LINE_REGEX = re.compile('(?:loop #|end main loop \(total loops )'
-                                    '([\d]+)(?:: |\): )(.*)')
+LOOP_MEMORY_LINE_REGEX = re.compile(
+    r'(?:loop #|end main loop \(total loops )([\d]+)(?:: |\): )(.*)')
 # Matches the sleep function line in cylc <cmd> --profile output.
-SLEEP_FUNCTION_REGEX = re.compile('([\d.]+)[\s]+[\d.]+[\s]+\{time.sleep\}')
+SLEEP_FUNCTION_REGEX = re.compile(r'([\d.]+)[\s]+[\d.]+[\s]+\{time.sleep\}')
 # The string prefixing the suite-startup timestamp (unix time).
 SUITE_STARTUP_STRING = 'SUITE STARTUP: '
 
