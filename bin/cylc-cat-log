@@ -75,7 +75,7 @@ MODES = {
 }
 
 
-BUFSIZE = 1024*1024
+BUFSIZE = 1024 * 1024
 
 
 def split_user_at_host(user_at_host):

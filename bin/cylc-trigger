@@ -53,7 +53,7 @@ from cylc.prompt import prompt
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.network.httpclient import SuiteRuntimeServiceClient
 from cylc.cfgspec.glbl_cfg import glbl_cfg
-from cylc.task_job_logs import JOB_LOG_JOB, JOB_LOG_DIFF
+from cylc.task_job_logs import JOB_LOG_DIFF
 
 
 def main():

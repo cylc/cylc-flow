@@ -57,7 +57,7 @@ from cylc.gui.util import (
 from cylc.network.httpclient import ClientError
 from cylc.suite_status import SUITE_STATUS_STOPPED_WITH
 from cylc.task_id import TaskID
-from cylc.task_state_prop import extract_group_state
+from cylc.task_state_prop import extract_group_state, get_status_prop
 from cylc.version import CYLC_VERSION
 from cylc.gui.option_group import controlled_option_group
 from cylc.gui.color_rotator import ColorRotator
@@ -71,9 +71,7 @@ from cylc.wallclock import get_current_time_string
 from cylc.task_state import (
     TASK_STATUSES_ALL, TASK_STATUSES_RESTRICTED, TASK_STATUSES_CAN_RESET_TO,
     TASK_STATUSES_TRIGGERABLE, TASK_STATUSES_ACTIVE, TASK_STATUS_RUNNING,
-    TASK_STATUS_HELD, TASK_STATUS_FAILED, TASK_STATUS_WAITING,
-    TASK_STATUSES_NO_JOB_FILE)
-from cylc.task_state_prop import get_status_prop
+    TASK_STATUS_HELD, TASK_STATUS_FAILED, TASK_STATUSES_NO_JOB_FILE)
 
 
 def run_get_stdout(command, filter_=False):
