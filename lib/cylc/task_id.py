@@ -25,6 +25,7 @@ class TaskID(object):
     """Task ID utilities."""
 
     DELIM = '.'
+    DELIM_RE = r"\."
     DELIM2 = '/'
     NAME_SUFFIX_RE = r"[\w\-+%@]+"
     NAME_SUFFIX_REC = re.compile(r"\A" + NAME_SUFFIX_RE + r"\Z")
@@ -34,6 +35,7 @@ class TaskID(object):
     POINT_REC = re.compile(r"\A" + POINT_RE + r"\Z")
     SYNTAX = 'NAME' + DELIM + 'CYCLE_POINT'
     SYNTAX_OPT_POINT = 'NAME[' + DELIM + 'CYCLE_POINT]'
+    ID_RE = NAME_RE + DELIM_RE + POINT_RE
 
     @classmethod
     def get(cls, name, point):

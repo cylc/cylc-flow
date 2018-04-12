@@ -53,7 +53,6 @@ class Tailer(threading.Thread):
             self.filters = [re.compile(f) for f in filters]
         else:
             self.filters = None
-
         self.logbuffer = logview.get_buffer()
         self.quit = False
         self.proc = None

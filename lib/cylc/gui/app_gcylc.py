@@ -3309,7 +3309,8 @@ For more Stop options use the Control menu.""")
 
     def run_suite_log(self, w, log='l'):
         """View suite logs."""
-        foo = SuiteLogViewer(self.cfg.suite, log, self.get_remote_run_opts())
+        foo = SuiteLogViewer(self.cfg.suite, log, self.get_remote_run_opts(),
+                             self.updater.task_list)
         self.quitters.append(foo)
 
     def run_suite_view(self, w, method):

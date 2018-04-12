@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import gtk
+from cylc.task_id import TaskID
 from cylc.gui.logviewer import logviewer
 from cylc.gui.tailer import Tailer
 from cylc.gui.util import get_icon
@@ -29,10 +30,16 @@ class SuiteLogViewer(logviewer):
     Implemented using "cylc cat-log".
 
     """
+
+    LABEL_ALL_LINES = "(all lines)"
+    LABEL_ALL_TASKS = "(all tasks)"
+
     def __init__(self, suite_name, suite_log, remote_run_opts, task_list=None):
         """Initialise the suite log viewer."""
         if task_list is None:
             self.task_list = []
+        else:
+            self.task_list = task_list
         self.suite_name = suite_name
         self.suite_log = suite_log
         self.suite_log_name = SUITE_LOG_OPTS[suite_log]
@@ -42,7 +49,6 @@ class SuiteLogViewer(logviewer):
         self.task_filter = None
         self.custom_filter = None
         logviewer.__init__(self)
-        self.update_view()
 
     def create_gui_panel(self):
         """Create the GUI panel."""
@@ -55,8 +61,8 @@ class SuiteLogViewer(logviewer):
         self.window.set_icon(get_icon())
 
         combobox = gtk.combo_box_new_text()
-        combobox.append_text('Task')
-        combobox.append_text('all')
+        combobox.append_text(self.LABEL_ALL_LINES)
+        combobox.append_text(self.LABEL_ALL_TASKS)
         for task in self.task_list:
             combobox.append_text(task)
 
@@ -99,14 +105,14 @@ class SuiteLogViewer(logviewer):
         """Filter for task names."""
         model = cb.get_model()
         index = cb.get_active()
-        if index == 0:
-            return False
         task = model[index][0]
-        if task == 'all':
+        # Good enough to match "[task.CYCLE]"?
+        if task == self.LABEL_ALL_LINES:
             filter_ = None
+        elif task == self.LABEL_ALL_TASKS:
+            filter_ = r'\[' + TaskID.ID_RE + r'\]'
         else:
-            # Good enough to match "[task.CYCLE]"?
-            filter_ = r'\[' + task + r'\.[^\]]+\]'
+            filter_ = r'\[' + task + TaskID.DELIM_RE + TaskID.POINT_RE + r'\]'
         self.task_filter = filter_
         self.update_view()
         return False
@@ -142,6 +148,8 @@ class SuiteLogViewer(logviewer):
 
     def update_view(self):
         """Restart the log view on another log."""
+        if self.t is None:
+            return False
         self.t.stop()
         logbuffer = self.logview.get_buffer()
         s, e = logbuffer.get_bounds()
