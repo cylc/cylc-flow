@@ -78,12 +78,10 @@ cylc__job__main() {
             typeset host="$(hostname -f)"
         fi
     fi
-    cat <<__OUT__
-Suite    : ${CYLC_SUITE_NAME}
-Task Job : ${CYLC_TASK_JOB} (try ${CYLC_TASK_TRY_NUMBER})
-User@Host: ${USER}@${host}
-
-__OUT__
+    echo "Suite    : ${CYLC_SUITE_NAME}"
+    echo "Task Job : ${CYLC_TASK_JOB} (try ${CYLC_TASK_TRY_NUMBER})"
+    echo "User@Host: ${USER}@${host}"
+    echo
     # Derived environment variables
     export CYLC_SUITE_LOG_DIR="${CYLC_SUITE_RUN_DIR}/log/suite"
     CYLC_SUITE_WORK_DIR_ROOT="${CYLC_SUITE_WORK_DIR_ROOT:-${CYLC_SUITE_RUN_DIR}}"
