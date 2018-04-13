@@ -24,7 +24,13 @@ fi
 
 set_test_number 3
 
-run_ok "${TEST_NAME_BASE}" pep8 --ignore=E402 \
+# Ignores:
+# E402 module level import not at top of file:
+# - To allow import on demand for expensive modules.
+# W503 line break before binary operator
+# W504 line break after binary operator
+# - PEP8 allows both, line break before binary preferred for new code.
+run_ok "${TEST_NAME_BASE}" pep8 --ignore=E402,W503,W504 \
     "${CYLC_DIR}/lib/cylc" \
     "${CYLC_DIR}/lib/isodatetime" \
     "${CYLC_DIR}/lib/Jinja2Filters"/*.py \
