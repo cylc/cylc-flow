@@ -78,6 +78,9 @@ cylc__job__main() {
             typeset host="$(hostname -f)"
         fi
     fi
+    # Developer Note:
+    # We were using a HERE document for writing info here until we notice that
+    # Bash uses temporary files for HERE documents, which can be inefficient.
     echo "Suite    : ${CYLC_SUITE_NAME}"
     echo "Task Job : ${CYLC_TASK_JOB} (try ${CYLC_TASK_TRY_NUMBER})"
     echo "User@Host: ${USER}@${host}"
