@@ -32,9 +32,12 @@ prerequisites (- => not satisfied):
   (None)
 
 outputs (- => not completed):
+  - t1.1 expired
   + t1.1 submitted
+  - t1.1 submit-failed
   + t1.1 started
   + t1.1 succeeded
+  - t1.1 failed
   - t1.1 Greet World
   - t1.1 Hello World
 __OUT__

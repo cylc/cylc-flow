@@ -329,23 +329,17 @@ class TaskPool(object):
     def load_db_task_pool_for_restart(self, row_idx, row):
         """Load a task from previous task pool.
 
-        The state of task prerequisites (satisfied or not) and outputs
-        (completed or not) is determined by the recorded TASK_STATUS:
+        Output completion status is loaded from the DB, and tasks recorded
+        as submitted or running are polled to confirm their true status.
 
-        TASK_STATUS_WAITING    - prerequisites and outputs unsatisified
-        TASK_STATUS_HELD       - ditto (only waiting tasks can be held)
-        TASK_STATUS_QUEUED     - prereqs satisfied, outputs not completed
-                                 (only tasks ready to run can get queued)
-        TASK_STATUS_READY      - ditto
-        TASK_STATUS_SUBMITTED  - ditto (but see *)
-        TASK_STATUS_SUBMIT_RETRYING - ditto
-        TASK_STATUS_RUNNING    - ditto (but see *)
-        TASK_STATUS_FAILED     - ditto (tasks must run in order to fail)
-        TASK_STATUS_RETRYING   - ditto (tasks must fail in order to retry)
-        TASK_STATUS_SUCCEEDED  - prerequisites satisfied, outputs completed
+        Prerequisite status (satisfied or not) is inferred from task status:
+           WAITING or HELD  - all prerequisites unsatisified
+           status > QUEUED - all prerequisites satisfied.
+        TODO - this is not correct, e.g. a held task may have some (but not
+        all) satisified prerequisites; and a running task (etc.) could have
+        been manually triggered with unsatisfied prerequisites. See comments
+        in GitHub #2329 on how to fix this in the future.
 
-        (*) tasks reloaded with TASK_STATUS_SUBMITTED or TASK_STATUS_RUNNING
-        are polled to determine what their true status is.
         """
         if row_idx == 0:
             LOG.info("LOADING task proxies")
@@ -381,9 +375,9 @@ class TaskPool(object):
                     itask.task_owner = None
                     itask.task_host = user_at_host
                 if time_submit:
-                    itask.set_event_time('submitted', time_submit)
+                    itask.set_summary_time('submitted', time_submit)
                 if time_run:
-                    itask.set_event_time('started', time_run)
+                    itask.set_summary_time('started', time_run)
                 if timeout is not None:
                     itask.timeout_timers[status] = timeout
 
@@ -403,8 +397,7 @@ class TaskPool(object):
 
             itask.state.reset_state(status)
 
-            # Tasks that are running or finished can have completed custom
-            # outputs
+            # Running or finished task can have completed custom outputs.
             if status in [
                     TASK_STATUS_RUNNING, TASK_STATUS_FAILED,
                     TASK_STATUS_SUCCEEDED]:
@@ -614,6 +607,7 @@ class TaskPool(object):
                     n_release -= 1
                     ready_tasks.append(itask)
                     itask.reset_manual_trigger()
+                    # (Set to 'ready' is done just before job submission).
                 # else leaved queued
 
         LOG.debug('%d task(s) de-queued' % len(ready_tasks))
@@ -955,7 +949,8 @@ class TaskPool(object):
                 itask.state.status != TASK_STATUS_SUBMIT_FAILED and
                 (
                     itask.tdef.spawn_ahead or
-                    itask.state.is_greater_than(TASK_STATUS_READY)
+                    itask.state.status == TASK_STATUS_EXPIRED or
+                    itask.state.is_gt(TASK_STATUS_READY)
                 )
             ):
                 if self.force_spawn(itask) is not None:
@@ -1044,24 +1039,15 @@ class TaskPool(object):
         return len(bad_items)
 
     def reset_task_states(self, items, status, outputs):
-        """Reset task states."""
+        """Operator-forced task status reset and output manipulation."""
         itasks, bad_items = self.filter_task_proxies(items)
         for itask in itasks:
             if status and status != itask.state.status:
                 LOG.info("resetting state to %s" % status, itask=itask)
-                if status == TASK_STATUS_READY:
-                    # Pseudo state (in this context) -
-                    # set waiting and satisified.
-                    itask.state.reset_state(TASK_STATUS_WAITING)
-                    itask.state.set_prerequisites_all_satisfied()
-                    itask.state.unset_special_outputs()
-                    itask.state.outputs.set_all_incomplete()
-                else:
-                    itask.state.reset_state(status)
-                    if status in [
-                            TASK_STATUS_FAILED, TASK_STATUS_SUBMIT_FAILED]:
-                        itask.set_event_time('finished',
-                                             get_current_time_string())
+                itask.state.reset_state(status)
+                if status in [TASK_STATUS_FAILED, TASK_STATUS_SUCCEEDED]:
+                    itask.set_summary_time('finished',
+                                           get_current_time_string())
             if outputs:
                 for output in outputs:
                     is_completed = True
@@ -1070,10 +1056,12 @@ class TaskPool(object):
                         output = output[1:]
                     if output == '*' and is_completed:
                         itask.state.outputs.set_all_completed()
-                        LOG.info("reset all output to completed", itask=itask)
+                        LOG.info("reset all outputs to completed",
+                                 itask=itask)
                     elif output == '*':
                         itask.state.outputs.set_all_incomplete()
-                        LOG.info("reset all output to incomplete", itask=itask)
+                        LOG.info("reset all outputs to incomplete",
+                                 itask=itask)
                     else:
                         ret = itask.state.outputs.set_msg_trg_completion(
                             message=output, is_completed=is_completed)
@@ -1105,7 +1093,7 @@ class TaskPool(object):
         return len(bad_items)
 
     def trigger_tasks(self, items, back_out=False):
-        """Trigger tasks."""
+        """Operator-forced task triggering."""
         itasks, bad_items = self.filter_task_proxies(items)
         n_warnings = len(bad_items)
         for itask in itasks:

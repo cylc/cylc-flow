@@ -60,6 +60,10 @@ class TaskOutputs(object):
     def __init__(self, tdef):
         self._by_message = {}
         self._by_trigger = {}
+        # Add standard outputs.
+        for output in _SORT_ORDERS:
+            self.add(output)
+        # Add custom message outputs.
         for trigger, message in tdef.outputs:
             self.add(message, trigger)
 

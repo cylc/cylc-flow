@@ -52,7 +52,7 @@ from cylc.task_state import (
     TASK_STATUS_FAILED, TASK_STATUS_SUCCEEDED)
 from cylc.task_outputs import (
     TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED,
-    TASK_OUTPUT_FAILED)
+    TASK_OUTPUT_FAILED, TASK_OUTPUT_SUBMIT_FAILED, TASK_OUTPUT_EXPIRED)
 from cylc.wallclock import (
     get_current_time_string, RE_DATE_TIME_FORMAT_EXTENDED)
 
@@ -250,7 +250,7 @@ class TaskEventsManager(object):
 
     def _poll_to_confirm(self, itask, status_gt, poll_func):
         """Poll itask to confirm an apparent state reversal."""
-        if (itask.state.is_greater_than(status_gt) and not
+        if (itask.state.is_gt(status_gt) and not
                 itask.state.confirming_with_poll):
             poll_func(self.suite, [itask],
                       msg="polling %s to confirm state" % itask.identity)
@@ -350,7 +350,7 @@ class TaskEventsManager(object):
         elif message.startswith(TaskMessage.VACATION_MESSAGE_PREFIX):
             # Task job pre-empted into a vacation state
             self._db_events_insert(itask, "vacated", message)
-            itask.set_event_time('started')  # reset
+            itask.set_summary_time('started')  # unset
             if TASK_STATUS_SUBMIT_RETRYING in itask.try_timers:
                 itask.try_timers[TASK_STATUS_SUBMIT_RETRYING].num = 0
             itask.job_vacated = True
@@ -596,7 +596,7 @@ class TaskEventsManager(object):
         """Helper for process_message, handle a failed message."""
         if event_time is None:
             event_time = get_current_time_string()
-        itask.set_event_time('finished', event_time)
+        itask.set_summary_time('finished', event_time)
         self.suite_db_mgr.put_update_task_jobs(itask, {
             "run_status": 1,
             "time_run_exit": event_time,
@@ -629,7 +629,7 @@ class TaskEventsManager(object):
             LOG.warning("Vacated job restarted", itask=itask)
         self.pflag = True
         itask.state.reset_state(TASK_STATUS_RUNNING)
-        itask.set_event_time('started', event_time)
+        itask.set_summary_time('started', event_time)
         self.suite_db_mgr.put_update_task_jobs(itask, {
             "time_run": itask.summary['started_time_string']})
         if itask.summary['execution_time_limit']:
@@ -652,7 +652,7 @@ class TaskEventsManager(object):
     def _process_message_succeeded(self, itask, event_time):
         """Helper for process_message, handle a succeeded message."""
         self.pflag = True
-        itask.set_event_time('finished', event_time)
+        itask.set_summary_time('finished', event_time)
         self.suite_db_mgr.put_update_task_jobs(itask, {
             "run_status": 0,
             "time_run_exit": event_time,
@@ -663,10 +663,15 @@ class TaskEventsManager(object):
                 itask.summary['finished_time'] -
                 itask.summary['started_time'])
         if not itask.state.outputs.all_completed():
-            message = "Succeeded with unreported outputs:"
+            msg = ""
             for output in itask.state.outputs.get_not_completed():
-                message += "\n  " + output
-            LOG.info(message, itask=itask)
+                if output not in [TASK_OUTPUT_EXPIRED,
+                                  TASK_OUTPUT_SUBMIT_FAILED,
+                                  TASK_OUTPUT_FAILED]:
+                    msg += "\n  " + output
+            if msg:
+                LOG.info("Succeeded with outputs not completed: %s" % msg,
+                         itask=itask)
         itask.state.reset_state(TASK_STATUS_SUCCEEDED)
         self.setup_event_handlers(itask, "succeeded", "job succeeded")
 
@@ -683,7 +688,6 @@ class TaskEventsManager(object):
         if (TASK_STATUS_SUBMIT_RETRYING not in itask.try_timers or
                 itask.try_timers[TASK_STATUS_SUBMIT_RETRYING].next() is None):
             # No submission retry lined up: definitive failure.
-            itask.set_event_time('finished', event_time)
             self.pflag = True
             # See github #476.
             self.setup_event_handlers(
@@ -721,23 +725,24 @@ class TaskEventsManager(object):
 
         if itask.tdef.run_mode == 'simulation':
             # Simulate job execution at this point.
-            itask.set_event_time('started', event_time)
+            itask.set_summary_time('submitted', event_time)
+            itask.set_summary_time('started', event_time)
             itask.state.reset_state(TASK_STATUS_RUNNING)
             itask.state.outputs.set_completion(TASK_OUTPUT_STARTED, True)
             return
 
-        itask.set_event_time('submitted', event_time)
-        itask.set_event_time('started')
-        itask.set_event_time('finished')
+        itask.set_summary_time('submitted', event_time)
+        # Unset started and finished times in case of resubmission.
+        itask.set_summary_time('started')
+        itask.set_summary_time('finished')
         itask.summary['latest_message'] = TASK_OUTPUT_SUBMITTED
         self.setup_event_handlers(
             itask, TASK_OUTPUT_SUBMITTED, 'job submitted')
 
         self.pflag = True
         if itask.state.status == TASK_STATUS_READY:
-            # In rare occassions, the submit command of a batch system has sent
-            # the job to its server, and the server has started the job before
-            # the job submit command returns.
+            # The job started message can (rarely) come in before the submit
+            # command returns - in which case do not go back to 'submitted'.
             itask.state.reset_state(TASK_STATUS_SUBMITTED)
             try:
                 itask.timeout_timers[TASK_STATUS_SUBMITTED] = (

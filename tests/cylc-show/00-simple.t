@@ -58,9 +58,12 @@ prerequisites (- => not satisfied):
   + bar.20141106T0900Z succeeded
 
 outputs (- => not completed):
+  - foo.20141106T0900Z expired
   + foo.20141106T0900Z submitted
+  - foo.20141106T0900Z submit-failed
   + foo.20141106T0900Z started
   - foo.20141106T0900Z succeeded
+  - foo.20141106T0900Z failed
 __SHOW_OUTPUT__
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-show-json
@@ -102,8 +105,16 @@ cmp_json_ok "$TEST_NAME-taskinstance" "$TEST_NAME-taskinstance" \
             ], 
             "outputs": [
                 [
+                    "foo.20141106T0900Z expired", 
+                    false
+                ], 
+                [
                     "foo.20141106T0900Z submitted", 
                     true
+                ], 
+                [
+                    "foo.20141106T0900Z submit-failed", 
+                    false
                 ], 
                 [
                     "foo.20141106T0900Z started", 
@@ -111,6 +122,10 @@ cmp_json_ok "$TEST_NAME-taskinstance" "$TEST_NAME-taskinstance" \
                 ], 
                 [
                     "foo.20141106T0900Z succeeded", 
+                    false
+                ],
+                [
+                    "foo.20141106T0900Z failed", 
                     false
                 ]
             ], 

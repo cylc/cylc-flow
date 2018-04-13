@@ -181,7 +181,7 @@ class TaskJobManager(object):
 
         This method uses prep_submit_task_job() as helper.
 
-        Return (list): list of tasks that attempted submission
+        Return (list): list of tasks that attempted submission.
         """
         if is_simulation:
             return self._simulation_submit_task_jobs(itasks)

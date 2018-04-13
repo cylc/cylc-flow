@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test cylc print doesn't skip special names at root level,
+
 # e.g. "~/cylc-run/work"
 . "$(dirname "$0")/test_header"
 set_test_number 3
@@ -37,7 +38,17 @@ run_ok "${TEST_NAME_BASE}-print" cylc print
 contains_ok "${TEST_NAME_BASE}-print.stdout" <<__OUT__
 work | the quick brown fox | ${TEST_DIR}/${SUITE_NAME}
 __OUT__
-cmp_ok "${TEST_NAME_BASE}-print.stderr" <'/dev/null'
+
+# Filter out errors from 'bad' suites in the 'cylc-run' directory
+NONSPECIFIC_ERR2='\[Errno 2\] No such file or directory:'
+SPECIFIC_ERR2="$NONSPECIFIC_ERR2 '$HOME/cylc-run/$SUITE_NAME/suite.rc'"
+ERR2_COUNT=$(grep -c "$SPECIFIC_ERR2" "${TEST_NAME_BASE}-print.stderr")
+if [ "$ERR2_COUNT" -eq "0" ]; then
+    grep -v -s "$NONSPECIFIC_ERR2" "${TEST_NAME_BASE}-print.stderr" > "${TEST_NAME_BASE}-print-filtered.stderr"
+    cmp_ok "${TEST_NAME_BASE}-print-filtered.stderr" <'/dev/null'
+else
+    fail "${TEST_NAME_BASE}-print.stderr"
+fi
 
 rm -f "${RUND}/work"
 purge_suite "${SUITE_NAME}"

@@ -18,15 +18,19 @@
 
 """cylc [control] reset [OPTIONS] ARGS
 
-Force one or more task proxies in a running suite to change state and modify
-their prerequisites and outputs accordingly.  For example, --state=waiting
-means "prerequisites not satisfied, outputs not completed"; --state=ready means
-"prerequisites satisfied, outputs not completed" (this generally has the same
-effect as using the "cylc trigger" command).
+Force tasks to a specified state, and modify their prerequisites and outputs
+accordingly.
 
+Outputs are automatically updated to reflect the new task state, except for
+custom message outputs - which can be manipulated directly with "--output".
+
+Prerequisites reflect the state of other  tasks; they are not changed except
+to unset them on resetting the task state to 'waiting' or earlier.
+
+To hold and release tasks use "cylc hold" and "cylc release".
 "cylc reset --state=spawn" is deprecated: use "cylc spawn" instead.
 
-See the documentation for the -s/--state option for legal reset states."""
+"""
 
 import os
 import sys
