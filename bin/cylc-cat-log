@@ -61,7 +61,8 @@ from cylc.hostuserutil import is_remote
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.task_id import TaskID
 from cylc.suite_logging import SUITE_LOG_OPTS
-from cylc.task_job_logs import JOB_LOG_OPTS, OPT_JOB_OUT, OPT_JOB_ERR, NN
+from cylc.task_job_logs import (
+    JOB_LOG_OPTS, OPT_JOB_OUT, OPT_JOB_ERR, NN, JOB_LOGS_LOCAL)
 from parsec.fileparse import read_and_proc
 
 
@@ -252,7 +253,7 @@ def get_task_job_attrs(options, suite_name, point, task, submit_num):
     config, if such a command is needed and exists on the system).
 
     """
-    if options.filename in ['d', 'a']:
+    if options.filename in ['d', 'a'] or options.filename in JOB_LOGS_LOCAL:
         return (None, None)
     suite_dao = CylcSuiteDAO(
         os.path.join(
@@ -267,7 +268,6 @@ def get_task_job_attrs(options, suite_name, point, task, submit_num):
         return (None, None)
     user, host = split_user_at_host(str(task_job_data["user_at_host"]))
     user_at_host = join_user_at_host(user, host)
-
     if (options.mode in ['l', 'p'] or options.filename not in ['e', 'o'] or
             not task_job_data["batch_sys_name"] or
             not task_job_data["batch_sys_job_id"] or
@@ -393,6 +393,8 @@ def main():
                 submit_num = int(options.submit_num)
             except ValueError:
                 parser.error("Illegal submit number: %s" % options.submit_num)
+        if options.filename is None:
+            options.filename = OPT_JOB_OUT
         user_at_host, batchview_cmd = get_task_job_attrs(
             options, suite_name, point, task, options.submit_num)
         logpath = get_task_job_log_path(
@@ -403,10 +405,11 @@ def main():
             user, host = split_user_at_host(user_at_host)
             tail_tmpl = str(glbl_cfg().get_host_item(
                 "tail command template", host, user))
-            cmd = 'cat-log --remote-mode %s,%s,%s' % (
-                logpath, mode, quote(tail_tmpl % {"filename": logpath}))
+            # Double quote the tail command to allow interpolation of $HOME.
+            cmd = 'cat-log --remote-mode %s,%s,"%s"' % (
+                logpath, mode, tail_tmpl % {"filename": logpath})
             if batchview_cmd:
-                cmd += ',%s' % quote(batchview_cmd)
+                cmd += ',"%s"' % batchview_cmd
             capture = (mode == 'edit')
             try:
                 proc = remote_cylc_cmd(cmd, user, host, capture)

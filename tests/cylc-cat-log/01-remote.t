@@ -27,7 +27,7 @@ fi
 set_test_number 14
 create_test_globalrc "" "
 [hosts]
-   [[$CYLC_TEST_HOST]]
+   [[${CYLC_TEST_HOST:-localhost}]]
        retrieve job logs = False"
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
