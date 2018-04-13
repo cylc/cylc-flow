@@ -67,10 +67,10 @@ def remote_cylc_cmd(cmd, user=None, host=None, capture=False,
     if not cylc_exec.endswith('cylc'):
         sys.exit("ERROR: bad cylc executable in global config: %s" % (
                  cylc_exec))
-    cmd = "%s %s" % (cylc_exec, cmd)
-    command += [cmd]
+    command.append(cylc_exec)
+    command += cmd
     if cylc.flags.debug:
-        sys.stderr.write(' '.join(quote(c) for c in command) + '\n')
+        sys.stderr.write('%s\n' % command)
     if capture:
         stdout = PIPE
     else:

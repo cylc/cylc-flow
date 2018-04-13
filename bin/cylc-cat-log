@@ -55,6 +55,7 @@ from stat import S_IRUSR
 from tempfile import mkstemp
 from subprocess import Popen, PIPE
 
+import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.rundb import CylcSuiteDAO
 from cylc.hostuserutil import is_remote
@@ -123,7 +124,9 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False):
         # Print location even if the suite does not exist yet.
         print logpath
         return 0
-    elif not os.path.exists(logpath):
+    elif not os.path.exists(logpath) and batchview_cmd is None:
+        # Note: batchview_cmd may not need to have access to logpath, so don't
+        # test for existence of path if it is set.
         sys.stderr.write('ERROR: file not found: %s\n' % logpath)
         return 1
     elif mode == 'print-dir':
@@ -148,10 +151,10 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False):
     elif mode == 'cat' or (remote and mode == 'edit'):
         # Just cat file contents to stdout.
         if batchview_cmd is not None:
-            cmd = batchview_cmd
+            cmd = shlex.split(batchview_cmd)
         else:
-            cmd = 'cat %s' % logpath
-        proc = Popen(shlex.split(cmd), stdin=open(os.devnull))
+            cmd = ['cat', logpath]
+        proc = Popen(cmd, stdin=open(os.devnull))
         proc.wait()
         return 0
     elif mode == 'tail':
@@ -219,9 +222,9 @@ def get_option_parser():
         action="store_true", default=False, dest="geditor")
 
     parser.add_option(
-        "--remote-mode",
+        "--remote-arg",
         help="(for internal use: continue processing on job host)",
-        action="store_true", default=False, dest="remote_mode")
+        action="append", dest="remote_args")
 
     return parser
 
@@ -333,15 +336,16 @@ def main():
     """
     parser = get_option_parser()
     options, args = parser.parse_args()
-    if options.remote_mode:
+    if options.remote_args:
         # Invoked on job hosts for job logs only, as a wrapper to view_log().
         # Tail and batchview commands come from global config on suite host).
-        xargs = args[0].split(',')
-        logpath = xargs[0]
-        mode = xargs[1]
-        tail_tmpl = xargs[2]
+        logpath, mode, tail_tmpl = options.remote_args[0:3]
+        if logpath.startswith('$'):
+            logpath = os.path.expandvars(logpath)
+        elif logpath.startswith('~'):
+            logpath = os.path.expanduser(logpath)
         try:
-            batchview_cmd = xargs[3]
+            batchview_cmd = options.remote_args[3]
         except IndexError:
             batchview_cmd = None
         res = view_log(logpath, mode, tail_tmpl, batchview_cmd, remote=True)
@@ -405,11 +409,14 @@ def main():
             user, host = split_user_at_host(user_at_host)
             tail_tmpl = str(glbl_cfg().get_host_item(
                 "tail command template", host, user))
-            # Double quote the tail command to allow interpolation of $HOME.
-            cmd = 'cat-log --remote-mode %s,%s,"%s"' % (
-                logpath, mode, tail_tmpl % {"filename": logpath})
+            cmd = ['cat-log']
+            if cylc.flags.debug:
+                cmd.append('--debug')
+            for item in [logpath, mode, tail_tmpl]:
+                cmd.append('--remote-arg=%s' % quote(item))
             if batchview_cmd:
-                cmd += ',"%s"' % batchview_cmd
+                cmd.append('--remote-arg=%s' % quote(batchview_cmd))
+            cmd.append(suite_name)
             capture = (mode == 'edit')
             try:
                 proc = remote_cylc_cmd(cmd, user, host, capture)
