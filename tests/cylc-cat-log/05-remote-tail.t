@@ -19,6 +19,7 @@
 CYLC_TEST_IS_GENERIC=false
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
+create_test_globalrc
 CYLC_TEST_HOST="$( \
     cylc get-global-config -i '[test battery]remote host' 2>'/dev/null')"
 CYLC_TEST_OWNER="$( \

@@ -63,7 +63,7 @@ from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.task_id import TaskID
 from cylc.suite_logging import SUITE_LOG_OPTS
 from cylc.task_job_logs import (
-    JOB_LOG_OPTS, OPT_JOB_OUT, OPT_JOB_ERR, NN, JOB_LOGS_LOCAL)
+    JOB_LOG_OUT, JOB_LOG_ERR, JOB_LOG_OPTS, NN, JOB_LOGS_LOCAL)
 from parsec.fileparse import read_and_proc
 
 
@@ -92,22 +92,6 @@ def split_user_at_host(user_at_host):
         # local user on other host
         user, host = (None, user_at_host)
     return (user, host)
-
-
-def join_user_at_host(user, host):
-    """join user, host into user@host, with explicit localhost."""
-    user_at_host = None
-    if is_remote(host, user):
-        if host and user:
-            # other user on other host
-            user_at_host = user + "@" + host
-        elif host:
-            # local user on other host
-            user_at_host = host
-        elif user:
-            # other user on other localhost
-            user_at_host = user + "@localhost"
-    return user_at_host
 
 
 def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False):
@@ -229,76 +213,31 @@ def get_option_parser():
     return parser
 
 
-def get_task_job_log_path(
-        options, suite_name, point, task, submit_num, user_at_host):
-    """Return file path of a task job log, given the options."""
-    user, host = split_user_at_host(user_at_host)
-    try:
-        basename = JOB_LOG_OPTS[options.filename or 'o']
-    except KeyError:
-        basename = options.filename
-    if submit_num != NN:
-        submit_num = "%02d" % int(submit_num)
-    if os.path.isabs(basename):
-        return basename
-    else:
-        return os.path.normpath(os.path.join(
-            glbl_cfg().get_derived_host_item(
-                suite_name, "suite job log directory", host, user),
-            point, task, submit_num, basename))
+def get_task_job_attrs(suite_name, point, task, submit_num):
+    """Return job (user_at_host, batch_sys_name, live_job_id).
 
-
-def get_task_job_attrs(options, suite_name, point, task, submit_num):
-    """Return (user@host, batchview_cmd) of a task job log.
-
-    user@host is set if task job is run remotely and for relevant log files.
-    batchview_cmd is a special command to view stdout/stderr files (from global
-    config, if such a command is needed and exists on the system).
+    live_job_id is batch system job ID if job is running, else None.
 
     """
-    if options.filename in ['d', 'a'] or options.filename in JOB_LOGS_LOCAL:
-        return (None, None)
     suite_dao = CylcSuiteDAO(
         os.path.join(
             glbl_cfg().get_derived_host_item(
-                suite_name,
-                "suite run directory"),
+                suite_name, "suite run directory"),
             "log", CylcSuiteDAO.DB_FILE_BASE_NAME),
         is_public=True)
     task_job_data = suite_dao.select_task_job(None, point, task, submit_num)
     suite_dao.close()
     if task_job_data is None:
-        return (None, None)
-    user, host = split_user_at_host(str(task_job_data["user_at_host"]))
-    user_at_host = join_user_at_host(user, host)
-    if (options.mode in ['l', 'p'] or options.filename not in ['e', 'o'] or
-            not task_job_data["batch_sys_name"] or
-            not task_job_data["batch_sys_job_id"] or
-            not task_job_data["time_run"] or task_job_data["time_run_exit"]):
-        return (user_at_host, None)
-    key = None
-    if options.filename == OPT_JOB_OUT:
-        if options.mode == 'c':
-            key = "out viewer"
-        elif options.mode == 't':
-            key = "out tailer"
-    elif options.filename == OPT_JOB_ERR:
-        if options.mode == 'c':
-            key = "err viewer"
-        elif options.mode == 't':
-            key = "err tailer"
-    if key is None:
-        return (user_at_host, None)
-
-    conf = glbl_cfg().get_host_item("batch systems", host, user)
-    try:
-        batchview_cmd_tmpl = conf[str(task_job_data["batch_sys_name"])][key]
-    except KeyError:
-        return (user_at_host, None)
+        return (None, None, None)
+    batch_sys_name = task_job_data["batch_sys_name"]
+    batch_sys_job_id = task_job_data["batch_sys_job_id"]
+    if (not batch_sys_name or not batch_sys_job_id
+            or not task_job_data["time_run"]
+            or task_job_data["time_run_exit"]):
+        live_job_id = None
     else:
-        return (user_at_host, batchview_cmd_tmpl % {
-                "job_id": str(task_job_data["batch_sys_job_id"])})
-
+        live_job_id = batch_sys_job_id
+    return (task_job_data["user_at_host"], batch_sys_name, live_job_id)
 
 def tmpfile_edit(tmpfile, geditor=False):
     """Edit a temporary read-only file containing the string filestr.
@@ -394,21 +333,55 @@ def main():
             parser.error("Illegal task ID: %s" % task_id)
         if options.submit_num != NN:
             try:
-                submit_num = int(options.submit_num)
+                options.submit_num = "%02d" % int(options.submit_num)
             except ValueError:
                 parser.error("Illegal submit number: %s" % options.submit_num)
         if options.filename is None:
-            options.filename = OPT_JOB_OUT
-        user_at_host, batchview_cmd = get_task_job_attrs(
-            options, suite_name, point, task, options.submit_num)
-        logpath = get_task_job_log_path(
-            options, suite_name, point, task, options.submit_num, user_at_host)
+            options.filename = JOB_LOG_OUT
+        else:
+            # Convert short filename args to long (e.g. 'o' to 'job.out').
+            try:
+                options.filename = JOB_LOG_OPTS[options.filename]
+            except KeyError:
+                # Is already long form (standard log, or custom).
+                pass
+        user_at_host, batch_sys_name, live_job_id = get_task_job_attrs(
+            suite_name, point, task, options.submit_num)
+        user, host = split_user_at_host(user_at_host)
+        batchview_cmd = None
+        if live_job_id is not None:
+            # Get special batch system log viewer command (e.g. qcat) if one
+            # exists, the log is out or err, and the job is live.
+            conf_key = None
+            if options.filename == JOB_LOG_OUT:
+                if options.mode == 'c':
+                    conf_key = "out viewer"
+                elif options.mode == 't':
+                    conf_key = "out tailer"
+            elif options.filename == JOB_LOG_ERR:
+                if options.mode == 'c':
+                    conf_key = "err viewer"
+                elif options.mode == 't':
+                    conf_key = "err tailer"
+            if conf_key is not None:
+                conf = glbl_cfg().get_host_item("batch systems", host, user)
+                batchview_cmd_tmpl = None
+                try:
+                    batchview_cmd_tmpl = conf[batch_sys_name][key]
+                except KeyError:
+                    pass
+                if batchview_cmd_tmpl is not None:
+                    batchview_cmd = batchview_cmd_tmpl % {
+                        "job_id": str(live_job_id)}
         pout = None
-        if user_at_host:
-            # Reinvoke the cat-log command on the remote account.
-            user, host = split_user_at_host(user_at_host)
+        if is_remote(user, host) and (options.filename not in JOB_LOGS_LOCAL):
+            logpath = os.path.normpath(os.path.join(
+                glbl_cfg().get_derived_host_item(
+                    suite_name, "suite job log directory", host, user),
+                point, task, options.submit_num, options.filename))
             tail_tmpl = str(glbl_cfg().get_host_item(
                 "tail command template", host, user))
+            # Reinvoke the cat-log command on the remote account.
             cmd = ['cat-log']
             if cylc.flags.debug:
                 cmd.append('--debug')
@@ -435,6 +408,11 @@ def main():
                             data = proc.stdout.read(BUFSIZE)
                     os.chmod(out, S_IRUSR)
         else:
+            # Local task job or local job log.
+            logpath = os.path.normpath(os.path.join(
+                glbl_cfg().get_derived_host_item(
+                    suite_name, "suite job log directory"),
+                point, task, options.submit_num, options.filename))
             tail_tmpl = str(glbl_cfg().get_host_item("tail command template"))
             out = view_log(logpath, mode, tail_tmpl, batchview_cmd)
             if out == 1:

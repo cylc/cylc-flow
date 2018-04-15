@@ -19,6 +19,8 @@
 
 . "$(dirname $0)"/test_header
 
+create_test_globalrc
+
 HOST="$( cylc get-global-config -i '[test battery]remote host' 2>'/dev/null')"
 OWNER="$( cylc get-global-config -i '[test battery]remote owner' 2>'/dev/null')"
 if [[ -z "${OWNER}${HOST}" ]]; then

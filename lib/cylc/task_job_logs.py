@@ -29,13 +29,10 @@ JOB_LOG_STATUS = "job.status"
 JOB_LOG_XTRACE = "job.xtrace"  # Note this is also defined in job.sh.
 JOB_LOG_DIFF = "job-edit.diff"
 
-OPT_JOB_OUT = 'o'
-OPT_JOB_ERR = 'e'
-
 JOB_LOG_OPTS = {
     'j': JOB_LOG_JOB,
-    OPT_JOB_OUT: JOB_LOG_OUT,
-    OPT_JOB_ERR: JOB_LOG_ERR,
+    'o': JOB_LOG_OUT,
+    'e': JOB_LOG_ERR,
     'a': JOB_LOG_ACTIVITY,
     's': JOB_LOG_STATUS,
     'x': JOB_LOG_XTRACE,
@@ -56,21 +53,21 @@ def get_task_job_id(point, name, submit_num=None):
     return os.path.join(str(point), name, submit_num)
 
 
-def get_task_job_log(suite, point, name, submit_num=None, tail=None):
+def get_task_job_log(suite, point, name, submit_num=None, suffix=None):
     """Return the full job log path."""
     args = [
         glbl_cfg().get_derived_host_item(suite, "suite job log directory"),
         get_task_job_id(point, name, submit_num)]
-    if tail is not None:
-        args.append(tail)
+    if suffix is not None:
+        args.append(suffix)
     return os.path.join(*args)
 
 
 def get_task_job_activity_log(suite, point, name, submit_num=None):
-    """Shorthand for get_task_job_log(..., tail="job-activity.log")."""
+    """Shorthand for get_task_job_log(..., suffix="job-activity.log")."""
     return get_task_job_log(suite, point, name, submit_num, JOB_LOG_ACTIVITY)
 
 
 def get_task_job_job_log(suite, point, name, submit_num=None):
-    """Shorthand for get_task_job_log(..., tail="job")."""
+    """Shorthand for get_task_job_log(..., suffix="job")."""
     return get_task_job_log(suite, point, name, submit_num, JOB_LOG_JOB)
