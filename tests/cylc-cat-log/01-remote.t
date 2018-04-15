@@ -19,15 +19,11 @@
 CYLC_TEST_IS_GENERIC=false
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-export CYLC_TEST_HOST=$(cylc get-global-config -i "[test battery]remote host" 2>'/dev/null')
-export CYLC_TEST_OWNER=$(cylc get-global-config -i "[test battery]remote owner" 2>'/dev/null')
-if [[ -z ${CYLC_TEST_HOST}${CYLC_TEST_OWNER} ]]; then
-    skip_all '"[test battery]remote host": not defined'
-fi
+set_test_remote
 set_test_number 14
 create_test_globalrc "" "
 [hosts]
-   [[${CYLC_TEST_HOST:-localhost}]]
+   [[${CYLC_TEST_HOST}]]
        retrieve job logs = False"
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------

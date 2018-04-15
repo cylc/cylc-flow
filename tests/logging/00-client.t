@@ -30,7 +30,11 @@ suite_run_ok $TEST_NAME cylc run --no-detach --debug --no-detach $SUITE_NAME
 # Test logging of client commands invoked by task foo.
 UUID=$(cylc cat-log $SUITE_NAME | grep '\[client-connect].*cylc-hold' | awk '{print $7}')
 cylc cat-log $SUITE_NAME | grep "\[client-.* $UUID" | sed -e 's/^.* - //' > log1.txt
-USER_AT_HOST=${USER}@$(hostname -f)
+CONTACT=$(cylc cat-log -f job.contact -m p $SUITE_NAME foo.1)
+eval $(grep CYLC_SUITE_OWNER $CONTACT)
+eval $(grep CYLC_SUITE_HOST $CONTACT)
+# (in case of suite self-identification by IP address rather than hostname)
+USER_AT_HOST=${CYLC_SUITE_OWNER}@${CYLC_SUITE_HOST}
 cmp_ok log1.txt << __END__
 [client-connect] ${USER_AT_HOST}:cylc-hold privilege='full-control' $UUID
 [client-command] hold_suite ${USER_AT_HOST}:cylc-hold $UUID
@@ -44,7 +48,6 @@ __END__
 #-------------------------------------------------------------------------------
 # Test logging of task messaging connections.
 cylc cat-log $SUITE_NAME | grep "\[client-.*cylc-message" | awk '{print $4,$5,$6}' > log2.txt
-USER_AT_HOST=${USER}@$(hostname -f)
 cmp_ok log2.txt << __END__
 [client-connect] ${USER_AT_HOST}:cylc-message privilege='full-control'
 [client-command] put_message ${USER_AT_HOST}:cylc-message

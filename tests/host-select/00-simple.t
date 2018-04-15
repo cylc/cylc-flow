@@ -17,6 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test host selection
 . "$(dirname "$0")/test_header"
+set_test_remote
 set_test_number 3
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

@@ -18,12 +18,7 @@
 # Test broadcast from remote task job.
 CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
-
-export CYLC_TEST_HOST=$(cylc get-global-config -i '[test battery]remote host' \
-    2>'/dev/null')
-if [[ -z $CYLC_TEST_HOST ]]; then
-    skip_all '"[test battery]remote host": not defined'
-fi
+set_test_remote_host
 set_test_number 2
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 

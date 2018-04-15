@@ -6,6 +6,7 @@
 [runtime]
     [[foo]]
         script = """
+cylc get-suite-contact ${CYLC_SUITE_NAME} > ${CYLC_TASK_LOG_ROOT}.contact
 sleep 5
 # COMMAND INTERFACE:
 UUID=$(cylc hold --print-uuid $CYLC_SUITE_NAME 2>&1 > /dev/null)

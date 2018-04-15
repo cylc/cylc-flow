@@ -18,17 +18,8 @@
 # Test "cylc cat-log" with a custom remote tail command.
 CYLC_TEST_IS_GENERIC=false
 . $(dirname $0)/test_header
+set_test_remote
 #-------------------------------------------------------------------------------
-create_test_globalrc
-CYLC_TEST_HOST="$( \
-    cylc get-global-config -i '[test battery]remote host' 2>'/dev/null')"
-CYLC_TEST_OWNER="$( \
-    cylc get-global-config -i '[test battery]remote owner' 2>'/dev/null')"
-if [[ -z "${CYLC_TEST_HOST}${CYLC_TEST_OWNER}" ]]; then
-    skip_all '"[test battery]remote host/owner": not defined'
-fi
-export CYLC_TEST_HOST=${CYLC_TEST_HOST:-"localhost"}
-export CYLC_TEST_OWNER=${CYLC_TEST_OWNER:-${USER}}
 set_test_number 4
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 set -eu

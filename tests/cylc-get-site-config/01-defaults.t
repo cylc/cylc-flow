@@ -21,9 +21,6 @@
 
 set_test_number 1
 
-# Configure a new site config file.
-create_test_globalrc
-
 # Empty it (of non-default global-tests.rc items, which would then be retrieved
 # by "cylc get-global-config" below).
 echo '' > "$CYLC_CONF_PATH/global.rc"

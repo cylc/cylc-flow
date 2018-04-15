@@ -624,7 +624,7 @@ conditions; see `cylc conditions`.
         """Return task job file path."""
         name, point = TaskID.split(task_id)
         return get_task_job_log(
-            self.suite, point, name, tail=JOB_LOG_JOB)
+            self.suite, point, name, suffix=JOB_LOG_JOB)
 
     def info_get_suite_info(self):
         """Return a dict containing the suite title and description."""

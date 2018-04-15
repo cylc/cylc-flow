@@ -239,6 +239,7 @@ def get_task_job_attrs(suite_name, point, task, submit_num):
         live_job_id = batch_sys_job_id
     return (task_job_data["user_at_host"], batch_sys_name, live_job_id)
 
+
 def tmpfile_edit(tmpfile, geditor=False):
     """Edit a temporary read-only file containing the string filestr.
 

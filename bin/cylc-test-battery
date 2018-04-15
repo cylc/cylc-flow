@@ -22,46 +22,32 @@ usage() {
   cat <<eof
 Usage: cylc test-battery [...]
 
-Run automated cylc and parsec tests under [FILES or DIRECTORIES].
-Test locations default to the following directory tree:
-  $CYLC_DIR/tests/
+Run automated Cylc and Parsec tests, under (by default):
+   $CYLC_DIR/tests/.
 
-Some tests (e.g. those specific to particular batch schedulers) can be
-configured in your site/user config file. A few others still submit jobs
-to a user@host account taken from the environment:
-  \$CYLC_TEST_TASK_HOST # default localhost
-  \$CYLC_TEST_TASK_OWNER # defaut \$USER
+Options and arguments are appended to "prove -j \$NPROC -s -r \${@:-tests}".
+NPROC is the number of concurrent processes to run, which defaults to the
+global config "process pool size" setting.
 
-Requirements:
-  * Passwordless ssh must be configured to task host accounts.
-  * Some test suites submit jobs to 'at' so atd must be running.
+The tests ignore normal site/user global config and instead use the file:
+   $CYLC_DIR/conf/global-tests.rc
+This should specify test job hosts under the [test battery] section, plus any
+other critical settings settings, including [hosts] configuration for test job
+hosts (and special batchview commands like qcat if available). Additional
+global config items can be added on the fly using the create_test_globalrc
+shell function defined in the test_header.
 
-Options and arguments are appended to the "prove -j \$NPROC -s -r \${@:-tests}"
-command, where NPROC is the number of child processes that can be used to run
-the test files.
+Suite run directories are only cleaned up for passing tests on the suite host.
 
-Some tests use a clean global config file. If some items from your site config
-file are needed in this, e.g. to get remote test hosts working, add them to
-$CYLC_DIR/conf/global-tests.rc.
+Set "export CYLC_TEST_DEBUG=true" to print failed-test stderr to the terminal.
 
-The command normally uses the "process pool size" setting (default=4) in the
-site/user global configuration file to determine the number of tests to run in
-parallel. You can also change the amount of concurrency with the "-j N" option.
+To change the test file comparision command from "diff -u" do (for example):
+   export CYLC_TEST_DIFF_CMD='xxdiff -D'
 
-Suite run directories are cleaned up on the suite host for passing tests -
-otherwise they are left alone.
-
-To output stderr from failed tests to the terminal,
-"export CYLC_TEST_DEBUG=true" before running this command.
-
-The command normally uses "diff -u" to compare files.  However, if an alternate
-command such as "xxdiff -D" is desirable (e.g. for debugging), "export
-CYLC_TEST_DIFF_CMD=xxdiff -D".
+Some test suites submit jobs to the 'at' so atd must be up on the job hosts.
 
 Commits or Pull Requests to cylc/cylc on GitHub will trigger Travis CI to run
 generic (non platform-specific) tests - see $CYLC_DIR/.travis.yml.
-After enabling Travis CI for your own cylc fork, you can skip generic tests
-locally by setting CYLC_TEST_RUN_GENERIC=false.
 
 By default all tests are executed.  To run just a subset of them:
   * list individual tests or test directories to run on the comand line
@@ -71,19 +57,17 @@ By default all tests are executed.  To run just a subset of them:
   List specific tests relative to $CYLC_DIR (i.e. starting with "test/").
 Some platform-specific tests are automatically skipped, depending on platform.
 
-FOR DEVELOPERS:
-  * Platform-specific tests must set "CYLC_TEST_IS_GENERIC=false" before
-    sourcing the test_header.
-  * Tests requiring the sqlite3 CLI must be skipped if sqlite3 is not installed
-    (it is not otherwise a Cylc software prerequisite):
+Platform-specific tests must set "CYLC_TEST_IS_GENERIC=false" before sourcing
+the test_header.
+
+Tests requiring the sqlite3 CLI must be skipped if sqlite3 is not installed (it
+is not otherwise a Cylc software prerequisite):
 | if ! which sqlite3 > /dev/null; then
 |     # Skip the remaining 3 tests.
 |     skip 3 "sqlite3 not installed?"
 |     purge_suite \$SUITE_NAME
 |     exit 0
 | fi
-
-For more information see "Reference Tests" in the User Guide.
 
 Options:
   -h, --help   Print this help message and exit.
@@ -92,15 +76,15 @@ Examples:
 
 Run the full test suite with the default options.
   cylc test-battery
-Run the full test suite with 12 processes.
+Run the full test suite with 12 processes
   cylc test-battery -j 12
-Run only tests under "tests/cyclers/" with 12 processes.
-  cylc test-battery -j 12 tests/cyclers
+Run only tests under "tests/cyclers/"
+  cylc test-battery tests/cyclers
 Run only "tests/cyclers/16-weekly.t" in verbose mode
   cylc test-battery -v tests/cyclers/16-weekly.t
-Run only tests under "tests/cyclers/" with 12 processes, and skip 00-daily.t
+Run only tests under "tests/cyclers/", and skip 00-daily.t
   export CYLC_TEST_SKIP=tests/cyclers/00-daily.t
-  cylc test-battery -j 12 tests/cyclers
+  cylc test-battery tests/cyclers
 eof
 }
 

@@ -18,20 +18,12 @@
 # Test "cylc cat-log" open local logs in editor.
 
 . "$(dirname $0)"/test_header
-
-create_test_globalrc
-
-HOST="$( cylc get-global-config -i '[test battery]remote host' 2>'/dev/null')"
-OWNER="$( cylc get-global-config -i '[test battery]remote owner' 2>'/dev/null')"
-if [[ -z "${OWNER}${HOST}" ]]; then
-    skip_all '"[test battery]remote host/owner": not defined'
-fi
-CYLC_TEST_HOST=${CYLC_TEST_HOST:-"localhost"}
-CYLC_TEST_OWNER=${CYLC_TEST_OWNER:-${USER}}
+set_test_remote
 
 . "${TEST_SOURCE_DIR}"/editor/bin/run_tests.sh
 export PATH="${TEST_SOURCE_DIR}/editor/bin/":"${PATH}"
 
 install_suite "${TEST_NAME_BASE}" "editor"
-run_tests "${HOST}" "${OWNER}"
+run_tests "${CYLC_TEST_HOST}" "${CYLC_TEST_OWNER}"
 purge_suite "${SUITE_NAME}"
+purge_suite_remote "${CYLC_TEST_OWNER}@${CYLC_TEST_HOST}" "${SUITE_NAME}"
