@@ -48,13 +48,13 @@ def remote_cylc_cmd(cmd, user=None, host=None, capture=False,
     else:
         user_at_host = "%s@%s" % (user, host)
 
-    # Pass cylc version through.
-    command = ["env", "CYLC_VERSION=%s" % CYLC_VERSION]
-
+    # Build the remote command
     ssh = str(glbl_cfg().get_host_item("ssh command", host, user))
-    command += shlex.split(ssh) + ["-n", user_at_host]
+    command = shlex.split(ssh) + ["-n", user_at_host]
 
-    # Use bash loging shell?
+    # Pass cylc version through.
+    command += ["env", "CYLC_VERSION=%s" % CYLC_VERSION]
+
     if ssh_login_shell is None:
         ssh_login_shell = glbl_cfg().get_host_item(
             "use login shell", host, user)
