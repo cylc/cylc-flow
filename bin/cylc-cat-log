@@ -368,7 +368,7 @@ def main():
                 conf = glbl_cfg().get_host_item("batch systems", host, user)
                 batchview_cmd_tmpl = None
                 try:
-                    batchview_cmd_tmpl = conf[batch_sys_name][key]
+                    batchview_cmd_tmpl = conf[batch_sys_name][conf_key]
                 except KeyError:
                     pass
                 if batchview_cmd_tmpl is not None:
