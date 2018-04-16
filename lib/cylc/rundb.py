@@ -239,9 +239,9 @@ class CylcSuiteDAO(object):
         TABLE_TASK_ACTION_TIMERS: [
             ["cycle", {"is_primary_key": True}],
             ["name", {"is_primary_key": True}],
-            ["ctx_key_pickle", {"is_primary_key": True}],
-            ["ctx_pickle"],
-            ["delays_pickle"],
+            ["ctx_key_json", {"is_primary_key": True}],
+            ["ctx_json"],
+            ["delays_json"],
             ["num", {"datatype": "INTEGER"}],
             ["delay"],
             ["timeout"],
@@ -533,6 +533,16 @@ class CylcSuiteDAO(object):
                 r"SELECT key,value FROM %s" % self.TABLE_SUITE_TEMPLATE_VARS)):
             callback(row_idx, list(row))
 
+    def select_table_schema(self, my_type, my_name):
+        """Select from task_action_timers for restart.
+
+        Invoke callback(row_idx, row) on each row.
+        """
+        for row in self.connect().execute(
+                r"SELECT sql FROM sqlite_master where type==? and name==?",
+                [my_type, my_name]):
+            return row
+
     def select_task_action_timers(self, callback):
         """Select from task_action_timers for restart.
 
@@ -813,7 +823,7 @@ class CylcSuiteDAO(object):
                 # run mode, time stamp, initial cycle, final cycle
                 location = self._upgrade_with_state_file_header(line)
             elif location == "broadcast":
-                # Ignore broadcast pickle in state file.
+                # Ignore broadcast json in state file.
                 # The "broadcast_states" table should already be populated.
                 if line == "Begin task states":
                     location = "task states"
@@ -901,6 +911,44 @@ class CylcSuiteDAO(object):
 
         # Drop old tables
         for t_name in [self.TABLE_TASK_STATES, self.TABLE_TASK_EVENTS]:
+            conn.execute(r"DROP TABLE " + t_name + "_old")
+        conn.commit()
+
+    def upgrade_pickle_to_json(self):
+        """Upgrade the database tables if containing pickled objects."""
+        conn = self.connect()
+
+        # Rename old tables
+        for t_name in [self.TABLE_TASK_ACTION_TIMERS]:
+            conn.execute(
+                r"ALTER TABLE " + t_name +
+                r" RENAME TO " + t_name + "_old")
+        conn.commit()
+
+        # Create tables with new columns
+        self.create_tables()
+
+        # Populate new tables using old column data
+        for t_name in [self.TABLE_TASK_ACTION_TIMERS]:
+            sys.stdout.write(r"Upgrading %s table " % (t_name))
+            column_names = [col.name for col in self.tables[t_name].columns]
+            old_column_names = [col_name.replace(
+                'json', 'pickle') for col_name in column_names]
+
+            for i, row in enumerate(conn.execute(
+                    r"SELECT " + ",".join(old_column_names) +
+                    " FROM " + t_name + "_old")):
+                # These tables can be big, so we don't want to queue the items
+                # in memory.
+                conn.execute(self.tables[t_name].get_insert_stmt(), list(row))
+                if i:
+                    sys.stdout.write("\b" * len("%d rows" % (i)))
+                sys.stdout.write("%d rows" % (i + 1))
+            sys.stdout.write(" done\n")
+        conn.commit()
+
+        # Drop old tables
+        for t_name in [self.TABLE_TASK_ACTION_TIMERS]:
             conn.execute(r"DROP TABLE " + t_name + "_old")
         conn.commit()
 

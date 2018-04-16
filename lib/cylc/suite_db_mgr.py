@@ -26,7 +26,7 @@ This module provides the logic to:
 """
 
 import os
-import pickle
+import json
 from shutil import copy, rmtree
 from subprocess import call
 from tempfile import mkstemp
@@ -278,12 +278,19 @@ class SuiteDatabaseManager(object):
             self.db_deletes_map[self.TABLE_TASK_ACTION_TIMERS].append({})
             for key, timer in task_events_mgr.event_timers.items():
                 key1, point, name, submit_num = key
+                # convert namedtuple timer.ctx for JSON serialisation
+                if timer.ctx is not None:
+                    ctx_obj = {}
+                    my_obj = timer.ctx
+                    ctx_obj[type(my_obj).__name__] = my_obj.__getnewargs__()
+                else:
+                    ctx_obj = None
                 self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
                     "name": name,
                     "cycle": point,
-                    "ctx_key_pickle": pickle.dumps((key1, submit_num,)),
-                    "ctx_pickle": pickle.dumps(timer.ctx),
-                    "delays_pickle": pickle.dumps(timer.delays),
+                    "ctx_key_json": json.dumps((key1, submit_num,)),
+                    "ctx_json": json.dumps(ctx_obj),
+                    "delays_json": json.dumps(timer.delays),
                     "num": timer.num,
                     "delay": timer.delay,
                     "timeout": timer.timeout})
@@ -316,12 +323,20 @@ class SuiteDatabaseManager(object):
                 for ctx_key_1, timer in getattr(itask, ctx_key_0).items():
                     if timer is None:
                         continue
+                    # convert namedtuple timer.ctx for JSON serialisation
+                    if timer.ctx is not None:
+                        ctx_obj = {}
+                        my_obj = timer.ctx
+                        ctx_obj[type(my_obj).__name__] = (
+                            my_obj.__getnewargs__())
+                    else:
+                        ctx_obj = None
                     self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
                         "name": itask.tdef.name,
                         "cycle": str(itask.point),
-                        "ctx_key_pickle": pickle.dumps((ctx_key_0, ctx_key_1)),
-                        "ctx_pickle": pickle.dumps(timer.ctx),
-                        "delays_pickle": pickle.dumps(timer.delays),
+                        "ctx_key_json": json.dumps((ctx_key_0, ctx_key_1)),
+                        "ctx_json": json.dumps(ctx_obj),
+                        "delays_json": json.dumps(timer.delays),
                         "num": timer.num,
                         "delay": timer.delay,
                         "timeout": timer.timeout})
@@ -458,6 +473,12 @@ class SuiteDatabaseManager(object):
                     pass
         else:
             pri_dao = self.get_pri_dao()
+
+            # Check for instances of pickle
+            old_headers = "".join(
+               pri_dao.select_table_schema("table", "task_action_timers"))
+            if 'pickle' in old_headers:
+                pri_dao.upgrade_pickle_to_json()
 
         # Vacuum the primary/private database file
         pri_dao.vacuum()
