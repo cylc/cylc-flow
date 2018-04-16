@@ -18,19 +18,15 @@
 # Test remote job logs retrieval OK with only "job.out" on a succeeded task.
 CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
-HOST=$(cylc get-global-config -i '[test battery]remote host' 2>'/dev/null')
-if [[ -z "${HOST}" ]]; then
-    skip_all '"[test battery]remote host": not defined'
-fi
+set_test_remote_host
 set_test_number 5
-create_test_globalrc
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate -s "HOST=${HOST}" "${SUITE_NAME}"
+    cylc validate -s "HOST=${CYLC_TEST_HOST}" "${SUITE_NAME}"
 suite_run_fail "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug --no-detach -s "HOST=${HOST}" "${SUITE_NAME}"
+    cylc run --reference-test --debug --no-detach -s "HOST=${CYLC_TEST_HOST}" "${SUITE_NAME}"
 
 sed "/'job-logs-retrieve'/!d" \
     "${SUITE_RUN_DIR}/log/job/1/t1/01/job-activity.log" \
@@ -44,6 +40,6 @@ __LOG__
 exists_ok "${SUITE_RUN_DIR}/log/job/1/t1/01/job.out"
 exists_fail "${SUITE_RUN_DIR}/log/job/1/t1/01/job.err"
 
-purge_suite_remote "${HOST}" "${SUITE_NAME}"
+purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

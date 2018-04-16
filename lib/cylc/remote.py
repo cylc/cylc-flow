@@ -18,15 +18,79 @@
 """Run command on a remote, (i.e. a remote [user@]host)."""
 
 import os
-from posix import WIFSIGNALED
-from pipes import quote
-import shlex
-from subprocess import Popen
 import sys
-from textwrap import TextWrapper
+import shlex
+from pipes import quote
+from posix import WIFSIGNALED
 
-from cylc.cfgspec.glbl_cfg import glbl_cfg
+# CODACY ISSUE:
+#   Consider possible security implications associated with Popen module.
+# REASON IGNORED:
+#   Subprocess is needed, but we use it with security in mind.
+from subprocess import Popen, PIPE
+
 import cylc.flags
+from cylc.cfgspec.glbl_cfg import glbl_cfg
+from cylc.version import CYLC_VERSION
+
+
+def remote_cylc_cmd(cmd, user=None, host=None, capture=False,
+                    ssh_login_shell=None):
+    """Run a given cylc command on another account and/or host.
+
+    If capture is True, pipe stdout and return the Popen object.
+
+    """
+    if host is None:
+        host = "localhost"
+    if user is None:
+        user_at_host = host
+    else:
+        user_at_host = "%s@%s" % (user, host)
+
+    # Build the remote command
+    ssh = str(glbl_cfg().get_host_item("ssh command", host, user))
+    command = shlex.split(ssh) + ["-n", user_at_host]
+
+    # Pass cylc version through.
+    command += ["env", "CYLC_VERSION=%s" % CYLC_VERSION]
+
+    if ssh_login_shell is None:
+        ssh_login_shell = glbl_cfg().get_host_item(
+            "use login shell", host, user)
+    if ssh_login_shell:
+        # A login shell will always source /etc/profile and the user's bash
+        # profile file. To avoid having to quote the entire remote command
+        # it is passed as arguments to bash.
+        command += ["bash", "--login", "-c", quote(r'exec "$0" "$@"')]
+    cylc_exec = glbl_cfg().get_host_item("cylc executable", host, user)
+    if not cylc_exec.endswith('cylc'):
+        sys.exit("ERROR: bad cylc executable in global config: %s" % (
+                 cylc_exec))
+    command.append(cylc_exec)
+    command += cmd
+    if cylc.flags.debug:
+        sys.stderr.write('%s\n' % command)
+    if capture:
+        stdout = PIPE
+    else:
+        stdout = None
+    # CODACY ISSUE:
+    #   subprocess call - check for execution of untrusted input.
+    # REASON IGNORED:
+    #   The command is read from the site/user global config file, but we check
+    #   above that it ends in 'cylc', and in any case the user could execute
+    #   any such command directly via ssh.
+    proc = Popen(command, stdout=stdout, stdin=open(os.devnull))
+    if capture:
+        return proc
+    else:
+        res = proc.wait()
+        if WIFSIGNALED(res):
+            sys.stderr.write(
+                "ERROR: remote command terminated by signal %d\n" % res)
+        elif res:
+            sys.stderr.write("ERROR: remote command failed %d\n" % res)
 
 
 def remrun(env=None, path=None, dry_run=False, forward_x11=False):
@@ -86,8 +150,6 @@ class RemoteRunner(object):
         if not self.is_remote:
             return False
 
-        from cylc.version import CYLC_VERSION
-
         name = os.path.basename(self.argv[0])[5:]  # /path/to/cylc-foo => foo
 
         # Build the remote command
@@ -139,12 +201,8 @@ class RemoteRunner(object):
             # above: args quoted to avoid interpretation by the shell,
             # e.g. for match patterns such as '.*' on the command line.
 
-        if cylc.flags.verbose:
-            # Wordwrap the command, quoting arguments so they can be run
-            # properly from the command line
-            command_str = ' '.join(quote(arg) for arg in command)
-            print '\n'.join(
-                TextWrapper(subsequent_indent='\t').wrap(command_str))
+        if cylc.flags.debug:
+            sys.stderr.write(' '.join(quote(c) for c in command) + '\n')
 
         if dry_run:
             return command

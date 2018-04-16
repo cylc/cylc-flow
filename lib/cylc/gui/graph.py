@@ -18,7 +18,7 @@
 
 import gtk
 
-from cylc.gui.gcapture import gcapture_tmpfile
+from cylc.gui.gcapture import Gcapture
 from cylc.gui.warning_dialog import warning_dialog
 
 
@@ -89,7 +89,7 @@ def graph_suite(reg, start, stop, graph_opts,
     options = graph_opts
     options += ' ' + reg + ' ' + start + ' ' + stop
     command = "cylc graph " + template_opts + " " + options
-    foo = gcapture_tmpfile(command, tmpdir)
+    foo = Gcapture(command, tmpdir)
     gcapture_windows.append(foo)
     foo.run()
     return False

@@ -18,15 +18,12 @@
 # Test general task event handler + retry.
 CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
-HOST=$(cylc get-global-config -i '[test battery]remote host' 2>'/dev/null')
-if [[ -z "${HOST}" ]]; then
-    skip_all '"[test battery]remote host": not defined'
-fi
+set_test_remote_host
 set_test_number 4
 
 create_test_globalrc "" "
 [hosts]
-    [[${HOST}]]
+    [[${CYLC_TEST_HOST}]]
         task event handler retry delays=3*PT1S
 [task events]
     handlers=hello-event-handler '%(name)s' '%(event)s'
@@ -35,9 +32,9 @@ create_test_globalrc "" "
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate -s "HOST=${HOST}" -s 'GLOBALCFG=True' "${SUITE_NAME}"
+    cylc validate -s "HOST=${CYLC_TEST_HOST}" -s 'GLOBALCFG=True' "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug --no-detach -s "HOST=${HOST}" -s 'GLOBALCFG=True' \
+    cylc run --reference-test --debug --no-detach -s "HOST=${CYLC_TEST_HOST}" -s 'GLOBALCFG=True' \
     "${SUITE_NAME}"
 
 LOG="${SUITE_RUN_DIR}/log/job/1/t1/NN/job-activity.log"
@@ -60,6 +57,6 @@ cmp_ok 'edited-log' <<'__LOG__'
 1/t1/01 ('event-handler-00', 'succeeded') will run after PT1S
 __LOG__
 
-purge_suite_remote "${HOST}" "${SUITE_NAME}"
+purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

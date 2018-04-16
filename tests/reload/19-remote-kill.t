@@ -18,19 +18,15 @@
 # Test reload then kill remote running task.
 CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
-TEST_HOST=$(cylc get-global-config -i '[test battery]remote host' 2>'/dev/null')
-if [[ -z "${TEST_HOST}" ]]; then
-    skip_all '"[test battery]remote host": not defined'
-fi
-
+set_test_remote_host
 set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate --set="CYLC_TEST_HOST=${TEST_HOST}" "${SUITE_NAME}"
+    cylc validate --set="CYLC_TEST_HOST=${CYLC_TEST_HOST}" "${SUITE_NAME}"
 suite_run_fail "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach --reference-test \
-    --set="CYLC_TEST_HOST=${TEST_HOST}" \
+    --set="CYLC_TEST_HOST=${CYLC_TEST_HOST}" \
      "${SUITE_NAME}"
 if ! which sqlite3 > /dev/null; then
     skip 1 "sqlite3 not installed?"
@@ -44,6 +40,6 @@ cmp_ok 'db.out' <<'__OUT__'
 1|bar|0
 __OUT__
 
-purge_suite_remote "${TEST_HOST}" "${SUITE_NAME}"
+purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

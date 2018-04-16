@@ -111,6 +111,8 @@ import traceback
 from cylc.mkdir_p import mkdir_p
 from cylc.task_message import TaskMessage
 from cylc.task_outputs import TASK_OUTPUT_SUCCEEDED
+from cylc.task_job_logs import (
+    JOB_LOG_JOB, JOB_LOG_OUT, JOB_LOG_ERR, JOB_LOG_STATUS)
 from cylc.wallclock import get_current_time_string
 
 
@@ -173,7 +175,6 @@ class BatchSysManager(object):
     CYLC_BATCH_SYS_JOB_ID = "CYLC_BATCH_SYS_JOB_ID"
     CYLC_BATCH_SYS_JOB_SUBMIT_TIME = "CYLC_BATCH_SYS_JOB_SUBMIT_TIME"
     CYLC_BATCH_SYS_EXIT_POLLED = "CYLC_BATCH_SYS_EXIT_POLLED"
-    JOB_FILE_BASE = "job"
     LINE_PREFIX_CYLC_DIR = "export CYLC_DIR="
     LINE_PREFIX_BATCH_SYS_NAME = "# Job submit method: "
     LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL = "# Job submit command template: "
@@ -249,7 +250,7 @@ class BatchSysManager(object):
         now = get_current_time_string()
         for job_log_dir in job_log_dirs:
             ret_code, err = self.job_kill(
-                os.path.join(job_log_root, job_log_dir, "job.status"))
+                os.path.join(job_log_root, job_log_dir, JOB_LOG_STATUS))
             sys.stdout.write("%s%s|%s|%d\n" % (
                 self.OUT_PREFIX_SUMMARY, now, job_log_dir, ret_code))
             # Note: Print STDERR to STDOUT may look a bit strange, but it
@@ -286,8 +287,8 @@ class BatchSysManager(object):
                 # Mark the job as if it is no longer in the batch system.
                 ctx.batch_sys_exit_polled = 1
                 sys.stderr.write(
-                    "%s/job.status: incomplete batch system info\n" % (
-                        ctx.job_log_dir))
+                    "%s/%s: incomplete batch system info\n" % (
+                        ctx.job_log_dir, JOB_LOG_STATUS))
 
             # We can trust:
             # * Jobs previously polled to have exited the batch system.
@@ -335,7 +336,7 @@ class BatchSysManager(object):
         now = get_current_time_string()
         for job_log_dir, batch_sys_name, submit_opts in items:
             job_file_path = os.path.join(
-                job_log_root, job_log_dir, self.JOB_FILE_BASE)
+                job_log_root, job_log_dir, JOB_LOG_JOB)
             if not batch_sys_name:
                 sys.stdout.write("%s%s|%s|1|\n" % (
                     self.OUT_PREFIX_SUMMARY, now, job_log_dir))
@@ -368,8 +369,9 @@ class BatchSysManager(object):
                     batch_sys = self._get_sys(line.strip().split("=", 1)[1])
                     break
             else:
-                return (
-                    1, "Cannot determine batch system from 'job.status' file")
+                return (1,
+                        "Cannot determine batch system from %s file" % (
+                            JOB_LOG_STATUS))
             st_file.seek(0, 0)  # rewind
             if getattr(batch_sys, "SHOULD_KILL_PROC_GROUP", False):
                 for line in st_file:
@@ -402,7 +404,8 @@ class BatchSysManager(object):
                         return (1, str(exc))
                     else:
                         return (proc.wait(), proc.communicate()[1])
-            return (1, "Cannot determine batch job ID from 'job.status' file")
+            return (1, "Cannot determine batch job ID from %s file" % (
+                       JOB_LOG_STATUS))
         except IOError as exc:
             return (1, str(exc))
 
@@ -467,7 +470,7 @@ class BatchSysManager(object):
         ctx = JobPollContext(job_log_dir)
         try:
             handle = open(os.path.join(
-                job_log_root, ctx.job_log_dir, "job.status"))
+                job_log_root, ctx.job_log_dir, JOB_LOG_STATUS))
         except IOError as exc:
             sys.stderr.write(str(exc) + "\n")
             return
@@ -566,7 +569,7 @@ class BatchSysManager(object):
             if ctx.batch_sys_exit_polled:
                 try:
                     handle = open(os.path.join(
-                        job_log_root, ctx.job_log_dir, "job.status"), "a")
+                        job_log_root, ctx.job_log_dir, JOB_LOG_STATUS), "a")
                     handle.write("%s=%s\n" % (
                         self.CYLC_BATCH_SYS_EXIT_POLLED,
                         get_current_time_string()))
@@ -580,7 +583,7 @@ class BatchSysManager(object):
 
         # Create NN symbolic link, if necessary
         self._create_nn(job_file_path)
-        for name in "job.err", "job.out":
+        for name in JOB_LOG_ERR, JOB_LOG_OUT:
             try:
                 os.unlink(os.path.join(job_file_path, name))
             except OSError:

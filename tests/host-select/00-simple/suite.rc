@@ -1,13 +1,13 @@
 #!Jinja2
 
-{% set OWNER = environ['CYLC_TEST_TASK_OWNER'] %}
+{% set OWNER = environ['CYLC_TEST_OWNER'] %}
 
 [meta]
     title = "Test external task host selection"
 
     description = """
 Task host is determined by a script in the suite bin directory; for this
-test suite it just returns the value of $CYLC_TEST_TASK_HOST as used 
+test suite it just returns the value of $CYLC_TEST_HOST as used
 by many of the other test suites (see "cylc test-battery --help")."""
 
 [cylc]
@@ -23,9 +23,9 @@ by many of the other test suites (see "cylc test-battery --help")."""
     [[foo1, foo2, foo3]]
         [[[remote]]]
             # in suite bin directory:
-            host = $(host-select.sh) # returns value of $CYLC_TEST_TASK_HOST
+            host = $(host-select.sh) # returns value of $CYLC_TEST_HOST
             owner = {{ OWNER }}
     [[bar]]
         [[[remote]]]
-            host = $CYLC_TEST_TASK_HOST
+            host = $CYLC_TEST_HOST
             owner = {{ OWNER }}

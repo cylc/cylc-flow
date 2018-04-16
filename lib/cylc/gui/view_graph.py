@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import gtk
-import gobject
 
 from cylc.gui.updater_graph import GraphUpdater
 from cylc.cylc_xdot import xdot_widgets

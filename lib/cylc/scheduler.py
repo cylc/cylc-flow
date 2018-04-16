@@ -44,10 +44,11 @@ from cylc.network import PRIVILEGE_LEVELS
 from cylc.network.httpserver import HTTPServer
 from cylc.state_summary_mgr import StateSummaryMgr
 from cylc.suite_db_mgr import SuiteDatabaseManager
+from cylc.task_job_logs import JOB_LOG_JOB, get_task_job_log
 from cylc.suite_events import (
     SuiteEventContext, SuiteEventError, SuiteEventHandler)
 from cylc.hostuserutil import get_host, get_user
-from cylc.suite_logging import SuiteLog, ERR, LOG
+from cylc.suite_logging import SuiteLog, SUITE_LOG, SUITE_ERR, ERR, LOG
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
 from cylc.suite_status import (
@@ -622,8 +623,8 @@ conditions; see `cylc conditions`.
     def info_get_task_jobfile_path(self, task_id):
         """Return task job file path."""
         name, point = TaskID.split(task_id)
-        return self.task_events_mgr.get_task_job_log(
-            self.suite, point, name, tail=self.task_job_mgr.JOB_FILE_BASE)
+        return get_task_job_log(
+            self.suite, point, name, suffix=JOB_LOG_JOB)
 
     def info_get_suite_info(self):
         """Return a dict containing the suite title and description."""
@@ -695,7 +696,7 @@ conditions; see `cylc conditions`.
             ret['descendants'] = self.config.get_first_parent_descendants()
         if full_mode or ERR.update_time and prev_time < ERR.update_time:
             ret['err_content'], ret['err_size'] = self.suite_log.get_lines(
-                self.suite_log.ERR, client_info.get('prev_err_size'))
+                SUITE_ERR, client_info.get('prev_err_size'))
             client_info['prev_err_size'] = ret['err_size']
         client_info['prev_time'] = client_info['time']
         if self.main_loop_intervals:
@@ -1514,7 +1515,8 @@ conditions; see `cylc conditions`.
             try:
                 handle = open(
                     os.path.join(self.config.fdir, 'reference.log'), 'wb')
-                for line in open(self.suite_log.get_log_path(SuiteLog.LOG)):
+                for line in open(
+                        self.suite_log.get_log_path(SUITE_LOG)):
                     if any(text in line for text in self.REF_LOG_TEXTS):
                         handle.write(line)
                 handle.close()

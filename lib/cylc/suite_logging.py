@@ -20,19 +20,27 @@ Provides loggers for use by cylc suites.
 """
 from __future__ import print_function
 
+import os
+import sys
 import glob
 import logging
 import logging.handlers
-import os
-import sys
 from time import time
-
-
-from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.wallclock import (get_time_string_from_unix_time,
                             get_current_time_string)
 
+# Suite log filenames.
+SUITE_LOG = 'log'
+SUITE_OUT = 'out'
+SUITE_ERR = 'err'
+
+SUITE_LOG_OPTS = {
+    'l': SUITE_LOG,
+    'o': SUITE_OUT,
+    'e': SUITE_ERR,
+}
 
 LOG_DELIMITER = '.'
 
@@ -235,10 +243,7 @@ class RollingFileHandlerGroup(object):
 
 class SuiteLog(object):
     """Provides logging functionality for a cylc suite."""
-    LOG = 'log'
-    OUT = 'out'
-    ERR = 'err'
-    ALL_LOGS = [LOG, OUT, ERR]
+    ALL_LOGS = [SUITE_LOG, SUITE_OUT, SUITE_ERR]
     __INSTANCE = None
 
     def __init__(self, suite, test_params=None):
@@ -268,15 +273,15 @@ class SuiteLog(object):
             self.ldir = glbl_cfg().get_derived_host_item(
                 suite, 'suite log directory')
         self.log_paths = {}
-        self.log_paths[self.LOG] = os.path.join(self.ldir, self.LOG)
-        self.log_paths[self.OUT] = os.path.join(self.ldir, self.OUT)
-        self.log_paths[self.ERR] = os.path.join(self.ldir, self.ERR)
+        self.log_paths[SUITE_LOG] = os.path.join(self.ldir, SUITE_LOG)
+        self.log_paths[SUITE_OUT] = os.path.join(self.ldir, SUITE_OUT)
+        self.log_paths[SUITE_ERR] = os.path.join(self.ldir, SUITE_ERR)
 
         # The loggers.
         self.loggers = {}
-        self.loggers[self.LOG] = None
-        self.loggers[self.OUT] = None
-        self.loggers[self.ERR] = None
+        self.loggers[SUITE_LOG] = None
+        self.loggers[SUITE_OUT] = None
+        self.loggers[SUITE_ERR] = None
 
         # File streams
         self.streams = []
@@ -350,7 +355,7 @@ class SuiteLog(object):
 
     def pimp(self, detach=False, log_logger_level=None):
         """Initiate the suite logs."""
-        if not self.loggers[self.LOG]:
+        if not self.loggers[SUITE_LOG]:
             # Don't initiate logs if they exist already.
             self._create_logs(detach, log_logger_level=log_logger_level)
             self._register_syncronised_logs()
@@ -382,13 +387,13 @@ class SuiteLog(object):
             else:
                 log_logger_level = logging.INFO
         # --- Create the 'log' logger. ---
-        log = logging.getLogger(self.LOG)
-        self.loggers[self.LOG] = log
+        log = logging.getLogger(SUITE_LOG)
+        self.loggers[SUITE_LOG] = log
         log.setLevel(log_logger_level)
         log.addFilter(multi_line_indented_filter)
 
         # Output to the 'log' file.
-        log_fh = RollingFileHandler(self.log_paths[self.LOG],
+        log_fh = RollingFileHandler(self.log_paths[SUITE_LOG],
                                     mode='a',
                                     maxBytes=self.max_bytes,
                                     archive_length=self.archive_length,
@@ -398,7 +403,7 @@ class SuiteLog(object):
         log.addHandler(log_fh)
 
         # Output errors to the 'err' file.
-        log_err_fh = RollingFileHandler(self.log_paths[self.ERR],
+        log_err_fh = RollingFileHandler(self.log_paths[SUITE_ERR],
                                         mode='a',
                                         maxBytes=self.max_bytes,
                                         archive_length=self.archive_length,
@@ -408,12 +413,12 @@ class SuiteLog(object):
         log.addHandler(log_err_fh)
 
         # --- Create the 'out' logger. ---
-        out = logging.getLogger(self.OUT)
-        self.loggers[self.OUT] = out
+        out = logging.getLogger(SUITE_OUT)
+        self.loggers[SUITE_OUT] = out
         out.setLevel(log_logger_level)
 
         # Output to the 'out' file.
-        out_fh = RollingFileHandler(self.log_paths[self.OUT],
+        out_fh = RollingFileHandler(self.log_paths[SUITE_OUT],
                                     mode='a',
                                     maxBytes=self.max_bytes,
                                     archive_length=self.archive_length,
@@ -423,13 +428,13 @@ class SuiteLog(object):
         out.addHandler(out_fh)
 
         # --- Create the 'err' logger. ---
-        err = logging.getLogger(self.ERR)
-        self.loggers[self.ERR] = err
+        err = logging.getLogger(SUITE_ERR)
+        self.loggers[SUITE_ERR] = err
         err.setLevel(log_logger_level)
         err.addFilter(multi_line_indented_filter)
 
         # Output to the 'err' file.
-        err_fh = RollingFileHandler(self.log_paths[self.ERR],
+        err_fh = RollingFileHandler(self.log_paths[SUITE_ERR],
                                     mode='a',
                                     maxBytes=self.max_bytes,
                                     file_stamp_fcn=self.get_stamp)
@@ -440,8 +445,8 @@ class SuiteLog(object):
         if detach:
             # If we are in detached mode redirect stdout/stderr to the logs.
             self.streams = [
-                StreamRedirectRoller(sys.stdout, self.log_paths[self.OUT]),
-                StreamRedirectRoller(sys.stderr, self.log_paths[self.ERR])
+                StreamRedirectRoller(sys.stdout, self.log_paths[SUITE_OUT]),
+                StreamRedirectRoller(sys.stderr, self.log_paths[SUITE_ERR])
             ]
         else:
             # If we are not in detached mode redirect the logs to
@@ -531,7 +536,7 @@ class STDLogger(object):
             msg = (get_current_time_string() + ' ' +
                    logging._levelNames[level] + ' - ' +
                    str(args[0]),) + tuple(*args[1:])
-            if self.log_ in [SuiteLog.OUT, SuiteLog.LOG]:
+            if self.log_ in [SUITE_OUT, SUITE_LOG]:
                 print(*msg)
             else:
                 print(*msg, file=sys.stderr)
@@ -562,9 +567,9 @@ class STDLogger(object):
 
 
 # Loggers as constants for convenience.
-OUT = STDLogger(SuiteLog.OUT)  # Log to suite if defined || print out.
-ERR = STDLogger(SuiteLog.ERR)  # Log to suite if defined || print err.
-LOG = STDLogger(SuiteLog.LOG)  # Log to suite if defined || print out.
+OUT = STDLogger(SUITE_OUT)  # Log to suite if defined || print out.
+ERR = STDLogger(SUITE_ERR)  # Log to suite if defined || print err.
+LOG = STDLogger(SUITE_LOG)  # Log to suite if defined || print out.
 
 
 def test_log_rolling(ldir):
@@ -626,7 +631,7 @@ def test_housekeeping(ldir):
 
     # Create log files.
     suite_log.pimp()
-    log = suite_log.get_log(SuiteLog.LOG)
+    log = suite_log.get_log(SUITE_LOG)
     for num in range(25):
         log.info('log-%02d' % num)
 

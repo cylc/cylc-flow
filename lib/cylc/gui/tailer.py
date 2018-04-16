@@ -27,8 +27,6 @@ import signal
 from subprocess import Popen, PIPE, STDOUT
 import threading
 from time import sleep
-
-from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.gui.warning_dialog import warning_dialog
 
 
@@ -36,31 +34,25 @@ class Tailer(threading.Thread):
     """Logic to tail follow a log file for a GUI viewer.
 
     logview -- A GUI view to display the content of the log file.
-    filename -- The name of the log file.
-    cmd_tmpl -- The command template use to follow the log file.
-                (global cfg '[hosts][HOST]remote/local tail command template')
-    pollable -- If specified, it must implement a pollable.poll() method,
-                which is called at regular intervals.
-    """
+    cmd - a given tail-follow type command.
+    pollable -- If given, must implement a poll() method.
 
+    """
     READ_SIZE = 4096
     TAGS = {
         "CRITICAL": [re.compile(r"\b(?:CRITICAL|ERROR)\b"), "red"],
         "WARNING": [re.compile(r"\bWARNING\b"), "#a83fd3"]}
 
-    def __init__(self, logview, filename, cmd_tmpl=None, pollable=None,
-                 filters=None):
+    def __init__(self, logview, cmd, pollable=None, filters=None):
         super(Tailer, self).__init__()
 
         self.logview = logview
-        self.filename = filename
-        self.cmd_tmpl = cmd_tmpl
+        self.cmd = cmd
         self.pollable = pollable
         if filters:
             self.filters = [re.compile(f) for f in filters]
         else:
             self.filters = None
-
         self.logbuffer = logview.get_buffer()
         self.quit = False
         self.proc = None
@@ -74,36 +66,13 @@ class Tailer(threading.Thread):
         self.logbuffer.delete(pos_start, pos_end)
 
     def run(self):
-        """Invoke the tailer."""
-        command = []
-        cmd_tmpl = None
-        if self.cmd_tmpl:
-            cmd_tmpl = self.cmd_tmpl
-        if ":" in self.filename:  # remote
-            user_at_host, filename = self.filename.split(':')
-            if "@" in user_at_host:
-                owner, host = user_at_host.split("@", 1)
-            else:
-                owner, host = (None, user_at_host)
-            ssh = str(glbl_cfg().get_host_item("ssh command", host, owner))
-            command = shlex.split(ssh) + ["-n", user_at_host]
-            if not cmd_tmpl:
-                cmd_tmpl = str(glbl_cfg().get_host_item(
-                    "remote tail command template", host, owner))
-            command.append(cmd_tmpl % {"filename": filename})
-        else:
-            filename = self.filename
-            if not cmd_tmpl:
-                cmd_tmpl = str(glbl_cfg().get_host_item(
-                    "local tail command template"))
-            command += shlex.split(cmd_tmpl % {"filename": filename})
-
+        """Invoke the command."""
+        command = shlex.split(self.cmd)
         try:
             self.proc = Popen(
                 command, stdin=open(os.devnull), stdout=PIPE, stderr=STDOUT,
                 preexec_fn=os.setpgrp)
         except OSError as exc:
-            # E.g. ssh command not found
             dialog = warning_dialog("%s: %s" % (
                 exc, " ".join(quote(item) for item in command)))
             gobject.idle_add(dialog.warn)
@@ -151,8 +120,6 @@ class Tailer(threading.Thread):
         """Stop the tailer."""
         self.quit = True
         try:
-            # It is important that we kill processes like "tail -F", or it will
-            # hang the GUI.
             os.killpg(self.proc.pid, signal.SIGTERM)
             self.proc.wait()
         except (AttributeError, OSError):

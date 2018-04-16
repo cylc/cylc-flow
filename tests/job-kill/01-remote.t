@@ -19,13 +19,8 @@
 CYLC_TEST_IS_GENERIC=false
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-export CYLC_TEST_HOST=$( \
-    cylc get-global-config -i '[test battery]remote host' 2>'/dev/null')
-if [[ -z $CYLC_TEST_HOST ]]; then
-    skip_all '"[test battery]remote host": not defined'
-fi
-N_TESTS=3
-set_test_number $N_TESTS
+set_test_remote_host
+set_test_number 3
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 SSH='ssh -oBatchMode=yes -oConnectTimeout=5'
 #-------------------------------------------------------------------------------
@@ -38,7 +33,7 @@ suite_run_ok $TEST_NAME cylc run --reference-test --debug --no-detach $SUITE_NAM
 TEST_NAME=$TEST_NAME_BASE-ps
 run_fail $TEST_NAME \
     ${SSH} -n "${CYLC_TEST_HOST}" \
-    "ps \$(cat cylc-run/$SUITE_NAME/work/*/t*/file)"
+    "bash -c 'ps \$(cat cylc-run/$SUITE_NAME/work/*/t*/file)'"
 #-------------------------------------------------------------------------------
 purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
 purge_suite $SUITE_NAME

@@ -20,11 +20,7 @@
 CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-CYLC_TEST_HOST="$( \
-    cylc get-global-config -i '[test battery]remote host' 2>'/dev/null')"
-if [[ -z "${CYLC_TEST_HOST}" ]]; then
-    skip_all '"[test battery]remote host": not defined'
-fi
+set_test_remote_host
 set_test_number 3
 
 create_test_globalrc '' "
@@ -38,7 +34,7 @@ run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${SUITE_NAME}" -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach --reference-test "${SUITE_NAME}" \
-    -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}"
+        -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}"
 
 run_fail "${TEST_NAME_BASE}-grep-DENIED-suite-log" \
     grep -q "\\[client-connect\\] DENIED .*@${CYLC_TEST_HOST}:cylc-message" \

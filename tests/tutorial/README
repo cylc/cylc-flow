@@ -29,7 +29,7 @@ The example suites are modified slightly, by test_header_tutorial, after
 installation to the temporary test directory so that the originals don't
 have to be complicated by reference test configuration details.
  1) set task 'sleep' intervals to zero, to make tasks run faster
- 2) replace any 'host = HOST' item with 'host = $CYLC_TEST_TASK_HOST'
+ 2) replace any 'host = HOST' item with 'host = localhost'
  3) detect and declare expected task failures (else the test will abort)
  4) set initial and final cycle points to cover two 12-hourly cycles 
 

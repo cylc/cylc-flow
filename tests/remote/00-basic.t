@@ -18,6 +18,7 @@
 # Test remote host settings.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
+set_test_remote
 set_test_number 4
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE basic
@@ -36,11 +37,11 @@ fi
 TEST_NAME=$TEST_NAME_BASE-userathost
 sqlite3 "${SUITE_RUN_DIR}/log/db" \
     'select user_at_host from task_jobs where name=="foo"' >'foo-host.txt'
-cmp_ok 'foo-host.txt' <<<"${CYLC_TEST_TASK_OWNER}@${CYLC_TEST_TASK_HOST}"
+cmp_ok 'foo-host.txt' <<<"${CYLC_TEST_OWNER}@${CYLC_TEST_HOST}"
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-hostonly
 sqlite3 "${SUITE_RUN_DIR}/log/db" \
     'select user_at_host from task_jobs where name=="bar"' >'bar-host.txt'
-cmp_ok 'bar-host.txt' - <<<"${CYLC_TEST_TASK_HOST}"
+cmp_ok 'bar-host.txt' - <<<"${CYLC_TEST_HOST}"
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

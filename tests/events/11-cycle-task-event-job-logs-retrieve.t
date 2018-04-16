@@ -19,18 +19,15 @@
 # job host.
 CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
-HOST=$(cylc get-global-config -i '[test battery]remote host' 2>'/dev/null')
-if [[ -z "${HOST}" ]]; then
-    skip_all '"[test battery]remote host": not defined'
-fi
+set_test_remote_host
 set_test_number 3
-create_test_globalrc
+
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate -s "HOST=${HOST}" "${SUITE_NAME}"
+    cylc validate -s "HOST=${CYLC_TEST_HOST}" "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug --no-detach -s "HOST=${HOST}" "${SUITE_NAME}"
+    cylc run --reference-test --debug --no-detach -s "HOST=${CYLC_TEST_HOST}" "${SUITE_NAME}"
 
 # There are 2 remote tasks. One with "retrieve job logs = True", one without.
 # Only t1 should have job.err and job.out retrieved.
@@ -44,6 +41,6 @@ cmp_ok 'edited-activities.log' <<__LOG__
 [(('job-logs-retrieve', 'succeeded'), 3) ret_code] 0
 __LOG__
 
-purge_suite_remote "${HOST}" "${SUITE_NAME}"
+purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

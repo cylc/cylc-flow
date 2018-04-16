@@ -19,15 +19,12 @@
 # cylc on remote job host.
 CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
-HOST=$(cylc get-global-config -i '[test battery]remote host' 2>'/dev/null')
-if [[ -z "${HOST}" ]]; then
-    skip_all '"[test battery]remote host": not defined'
-fi
+set_test_remote_host
 set_test_number 3
 
 create_test_globalrc "" "
 [hosts]
-    [[${HOST}]]
+    [[${CYLC_TEST_HOST}]]
         retrieve job logs = True
         retrieve job logs command = my-rsync"
 OPT_SET='-s GLOBALCFG=True'
@@ -44,23 +41,23 @@ __BASH__
 chmod +x "${TEST_DIR}/${SUITE_NAME}/bin/my-rsync"
 
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate ${OPT_SET} -s "HOST=${HOST}" "${SUITE_NAME}"
+    cylc validate ${OPT_SET} -s "HOST=${CYLC_TEST_HOST}" "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug --no-detach ${OPT_SET} -s "HOST=${HOST}" \
-    "${SUITE_NAME}"
+    cylc run --reference-test --debug --no-detach ${OPT_SET} \
+       -s "HOST=${CYLC_TEST_HOST}" "${SUITE_NAME}"
 
 SUITE_LOG_D="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log"
 sed 's/^.* -v //' "${SUITE_LOG_D}/suite/my-rsync.log" >'my-rsync.log.edited'
 
 OPT_HEAD='--include=/1 --include=/1/t1'
 OPT_TAIL='--exclude=/**'
-ARGS="${HOST}:\$HOME/cylc-run/${SUITE_NAME}/log/job/ ${SUITE_LOG_D}/job/"
+ARGS="${CYLC_TEST_HOST}:\$HOME/cylc-run/${SUITE_NAME}/log/job/ ${SUITE_LOG_D}/job/"
 cmp_ok 'my-rsync.log.edited' <<__LOG__
 ${OPT_HEAD} --include=/1/t1/01 --include=/1/t1/01/** ${OPT_TAIL} ${ARGS}
 ${OPT_HEAD} --include=/1/t1/02 --include=/1/t1/02/** ${OPT_TAIL} ${ARGS}
 ${OPT_HEAD} --include=/1/t1/03 --include=/1/t1/03/** ${OPT_TAIL} ${ARGS}
 __LOG__
 
-purge_suite_remote "${HOST}" "${SUITE_NAME}"
+purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

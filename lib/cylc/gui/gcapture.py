@@ -26,27 +26,17 @@ import tempfile
 from cylc.gui.tailer import Tailer
 from cylc.gui.util import get_icon
 from cylc.gui.warning_dialog import warning_dialog, info_dialog
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 
-# unit test: see the command $CYLC_DIR/bin/gcapture
 
+class Gcapture(object):
+    """Capture command output in a temp file and tail it in a window."""
+    def __init__(self, command, tmpdir, width=400, height=400,
+                 standalone=False, title=None):
 
-class gcapture(object):
-    """
-Run a command as a subprocess and capture its stdout and stderr in real
-time, to display in a GUI window. Examples:
-    $ capture "echo foo"
-    $ capture "echo hello && sleep 5 && echo bye"
-Lines containing:
-  'CRITICAL', 'WARNING', 'ERROR'
-are displayed in red.
-    $ capture "echo foo && echox bar"
-    """
-    def __init__(self, command, stdoutfile, width=400, height=400,
-                 standalone=False, ignore_command=False, title=None):
         self.standalone = standalone
         self.command = command
-        self.ignore_command = ignore_command
-        self.stdout = stdoutfile
+        self.stdoutfile = tempfile.NamedTemporaryFile(dir=tmpdir)
         self.stdout_updater = None
         self.proc = None
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
@@ -82,15 +72,12 @@ are displayed in red.
         vbox = gtk.VBox()
         vbox.show()
 
-        if not self.ignore_command:
-            self.progress_bar = gtk.ProgressBar()
-            self.progress_bar.set_text(command)
-            self.progress_bar.set_pulse_step(0.04)
-            self.progress_bar.show()
-            vbox.pack_start(self.progress_bar, expand=False)
+        self.progress_bar = gtk.ProgressBar()
+        self.progress_bar.set_text(command)
+        self.progress_bar.set_pulse_step(0.04)
+        self.progress_bar.show()
+        vbox.pack_start(self.progress_bar, expand=False)
         self.command_label = gtk.Label(self.command)
-        if self.ignore_command:
-            self.command_label.show()
         vbox.pack_start(self.command_label, expand=False)
 
         sw.add(self.textview)
@@ -108,7 +95,7 @@ are displayed in red.
         hbox.pack_start(save_button, False)
         hbox.show()
 
-        output_label = gtk.Label('output : ' + stdoutfile.name)
+        output_label = gtk.Label('output : ' + self.stdoutfile.name)
         output_label.show()
         hbox.pack_start(output_label, expand=True)
 
@@ -143,15 +130,14 @@ are displayed in red.
         self.window.show()
 
     def run(self):
-        proc = None
-        if not self.ignore_command:
-            proc = Popen(
-                self.command, stdin=open(os.devnull), stdout=self.stdout,
-                stderr=STDOUT, shell=True)
-            self.proc = proc
-            gobject.timeout_add(40, self.pulse_proc_progress)
-        self.stdout_updater = Tailer(
-            self.textview, self.stdout.name, pollable=proc)
+        proc = Popen(
+            self.command, stdin=open(os.devnull), stdout=self.stdoutfile,
+            stderr=STDOUT, shell=True)
+        self.proc = proc
+        gobject.timeout_add(40, self.pulse_proc_progress)
+        tail_cmd_tmpl = glbl_cfg().get_host_item("tail command template")
+        tail_cmd = tail_cmd_tmpl % {'filename': self.stdoutfile.name}
+        self.stdout_updater = Tailer(self.textview, tail_cmd, pollable=proc)
         self.stdout_updater.start()
 
     def pulse_proc_progress(self):
@@ -274,12 +260,3 @@ are displayed in red.
                                          gtk.gdk.color_parse("red"))
         self.command_label.show()
         return False
-
-
-class gcapture_tmpfile(gcapture):
-    def __init__(self, command, tmpdir, width=400, height=400,
-                 standalone=False, title=None):
-        stdout = tempfile.NamedTemporaryFile(dir=tmpdir)
-        gcapture.__init__(
-            self, command, stdout, width=width, height=height,
-            standalone=standalone, title=title)

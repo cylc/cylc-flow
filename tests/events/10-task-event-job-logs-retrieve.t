@@ -19,29 +19,26 @@
 # job host.
 CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
-HOST=$(cylc get-global-config -i '[test battery]remote host' 2>'/dev/null')
-if [[ -z "${HOST}" ]]; then
-    skip_all '"[test battery]remote host": not defined'
-fi
+set_test_remote
 set_test_number 4
 OPT_SET=
 if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
     create_test_globalrc "" "
 [hosts]
-    [[${HOST}]]
+    [[${CYLC_TEST_HOST}]]
         retrieve job logs = True
         retrieve job logs retry delays = PT5S"
     OPT_SET='-s GLOBALCFG=True'
-else
-    create_test_globalrc
 fi
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate ${OPT_SET} -s "HOST=${HOST}" "${SUITE_NAME}"
+    cylc validate ${OPT_SET} -s "HOST=${CYLC_TEST_HOST}" \
+       -s "OWNER=${CYLC_TEST_OWNER}" "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug --no-detach ${OPT_SET} -s "HOST=${HOST}" "${SUITE_NAME}"
+    cylc run --reference-test --debug --no-detach ${OPT_SET} \
+       -s "HOST=${CYLC_TEST_HOST}" -s "OWNER=${CYLC_TEST_OWNER}" "${SUITE_NAME}"
 
 sed "/'job-logs-retrieve'/!d" \
     "${SUITE_RUN_DIR}/log/job/1/t1/"{01,02,03}"/job-activity.log" \
@@ -64,6 +61,6 @@ else
     cmp_ok 'edited-log' <'/dev/null'  # P0Y not displayed
 fi
 
-purge_suite_remote "${HOST}" "${SUITE_NAME}"
+purge_suite_remote "${CYLC_TEST_OWNER}@${CYLC_TEST_HOST}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit

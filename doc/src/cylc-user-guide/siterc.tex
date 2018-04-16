@@ -544,8 +544,8 @@ environment.
 
 \paragraph[cylc executable]{[hosts] \textrightarrow [[HOST]] \textrightarrow cylc executable }
 
-The \lstinline=cylc= executable on a remote host. Note this should point to the
-cylc multi-version wrapper (see~\ref{CUI}) on the host, not
+The \lstinline=cylc= executable on a remote host. Note this should normally
+point to the cylc multi-version wrapper (see~\ref{CUI}) on the host, not
 \lstinline=bin/cylc= for a specific installed version.
 Specify a full path if \lstinline=cylc= is not in \lstinline=\$PATH= when it is
 invoked via \lstinline=ssh= on this host.
@@ -607,33 +607,16 @@ setting for the specified host.
 Host specific default for the~\ref{runtime-events-handler-retry-delays}
 setting.
 
-\paragraph[local tail command template]{[hosts] \textrightarrow [[HOST]] \textrightarrow local tail command template}
+\paragraph[tail command template]{[hosts] \textrightarrow [[HOST]] \textrightarrow tail command template}
 \label{local-tail-template}
 
-A template (with \lstinline=%(filename)s= substitution) for the command used to
-tail-follow local job logs, used by the gcylc log viewer and
-\lstinline=cylc cat-log --tail=.  You are unlikely to need to override this.
+A command template (with \lstinline=%(filename)s= substitution) to tail-follow
+job logs on HOST, by the GUI log viewer and \lstinline=cylc cat-log=. You are
+unlikely to need to override this.
 
 \begin{myitemize}
 \item {\em type:} string
 \item {\em default:} \lstinline@tail -n +1 -F %(filename)s@
-\end{myitemize}
-
-\paragraph[remote tail command template]{[hosts] \textrightarrow [[HOST]] \textrightarrow remote tail command template}
-\label{remote-tail-template}
-
-A template (with \lstinline=%(filename)s= substitution) for the command used
-to tail-follow remote job logs, used by the gcylc log viewer and
-\lstinline=cylc cat-log --tail=.  The remote tail command needs to be told to
-die when its parent process exits. You may need to override this command for
-task hosts where the default \lstinline=tail= or \lstinline=ps= commands are
-not equivalent to the Gnu Linux versions.
-
-\begin{myitemize}
-\item {\em type:} string
-\item {\em default:} \lstinline@tail --pid=$(ps h -o ppid $$ | sed -e 's/[[:space:]]//g') -n +1 -F %(filename)s@
-\item {\em example:} for AIX hosts:\\
-    \lstinline@/gnu/tail --pid=$(ps -o ppid= -p $$ | sed -e 's/[[:space:]]//g') -n +1 -F %(filename)s@
 \end{myitemize}
 
 \paragraph[{[[[}batch systems{]]]}]{[hosts] \textrightarrow [[HOST]] \textrightarrow [[[batch systems]]]}
@@ -824,17 +807,24 @@ Global site/user defaults for~\ref{TaskEventHandling}.
 
 \subsection{[test battery]}
 
-Settings for the automated development tests.
+Settings for the automated development tests. Note the test battery reads
+\lstinline=$CYLC_DIR/conf/global-tests.rc= instead of the normal site/user
+global config files.
 
 \subsubsection[remote host with shared fs]{[test battery] \textrightarrow remote host with shared fs}
 
-The name of a remote host with shared HOME file system as the host running the
+The name of a remote host that sees the same HOME file system as the host running the
 test battery.
 
-\subsubsection[remote host with shared fs]{[test battery] \textrightarrow remote host}
+\subsubsection[remote host]{[test battery] \textrightarrow remote host}
 
-The name of a remote host without shared HOME file system as the host running
-the test battery.
+Host name of a remote account that does not see the same home directory as
+the account running the test battery - see also ``remote owner'' below).
+
+\subsubsection[remote owner]{[test battery] \textrightarrow remote owner}
+
+User name of a remote account that does not see the same home directory as the
+account running the test battery - see also ``remote host'' above).
 
 \subsubsection[{[[}batch systems{]]}]{[test battery] \textrightarrow [[batch systems]]}
 

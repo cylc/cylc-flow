@@ -22,14 +22,14 @@ set_test_number 4
 CYLC_RUN_DIR="$(cylc get-global-config --print-run-dir)"
 BAD_NAME="$(basename "$(mktemp -u "${CYLC_RUN_DIR}/XXXXXXXX")")"
 
-run_fail "${TEST_NAME_BASE}-suite" cylc cat-log "${BAD_NAME}"
+run_fail "${TEST_NAME_BASE}-suite" cylc cat-log -f l "${BAD_NAME}"
 cmp_ok "${TEST_NAME_BASE}-suite.stderr" <<__ERR__
-cat: ${CYLC_RUN_DIR}/${BAD_NAME}/log/suite/log: No such file or directory
+ERROR: file not found: ${CYLC_RUN_DIR}/${BAD_NAME}/log/suite/log
 __ERR__
 
-run_fail "${TEST_NAME_BASE}-suite" cylc cat-log "${BAD_NAME}" "garbage.1"
+run_fail "${TEST_NAME_BASE}-suite" cylc cat-log -f j "${BAD_NAME}" "garbage.1"
 cmp_ok "${TEST_NAME_BASE}-suite.stderr" <<__ERR__
-cat: ${CYLC_RUN_DIR}/${BAD_NAME}/log/job/1/garbage/NN/job: No such file or directory
+ERROR: file not found: ${CYLC_RUN_DIR}/${BAD_NAME}/log/job/1/garbage/NN/job
 __ERR__
 
 exit

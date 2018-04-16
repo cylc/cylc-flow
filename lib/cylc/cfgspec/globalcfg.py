@@ -166,22 +166,8 @@ SPEC = {
                 vtype='interval_list', default=[]),
             'task event handler retry delays': vdr(
                 vtype='interval_list', default=[]),
-            'local tail command template': vdr(
+            'tail command template': vdr(
                 vtype='string', default="tail -n +1 -F %(filename)s"),
-            'remote tail command template': vdr(
-                vtype='string',
-                default=(
-                    "tail --pid=`ps h -o ppid $$" +
-                    " | sed -e s/[[:space:]]//g` -n +1 -F %(filename)s")),
-            # Template for tail commands on remote files.  On signal to "ssh"
-            # client, a signal is sent to "sshd" on server.  However, "sshd"
-            # cannot send a signal to the "tail" command, because it is not a
-            # terminal. Apparently, we can use "ssh -t" or "ssh -tt", but that
-            # just causes the command to hang here for some reason. The easiest
-            # solution is to use the "--pid=PID" option of the "tail" command,
-            # so it dies as soon as PID dies. Note: if remote login shell is
-            # bash/ksh, we can use $PPID instead of `ps...` command, but we
-            # have to support login shell "tcsh" too.
             'batch systems': {
                 '__MANY__': {
                     'err tailer': vdr(vtype='string'),
@@ -217,8 +203,7 @@ SPEC = {
                 vtype='interval_list'),
             'task event handler retry delays': vdr(
                 vtype='interval_list'),
-            'local tail command template': vdr(vtype='string'),
-            'remote tail command template': vdr(vtype='string'),
+            'tail command template': vdr(vtype='string'),
             'batch systems': {
                 '__MANY__': {
                     'err tailer': vdr(vtype='string'),
@@ -250,6 +235,7 @@ SPEC = {
     'test battery': {
         'remote host with shared fs': vdr(vtype='string'),
         'remote host': vdr(vtype='string'),
+        'remote owner': vdr(vtype='string'),
         'batch systems': {
             '__MANY__': {
                 'host': vdr(vtype='string'),
@@ -379,6 +365,17 @@ def upg(cfg, descr):
         '7.3.1',
         ['hosts', '__MANY__', 'remote copy template'],
         ['hosts', '__MANY__', 'scp command'])
+    # A special remote tail command template is no longer needed. It used to
+    # use 'tail -pid' to kill 'tail' on ssh exit, but we do this in cylc now.
+    u.obsolete(
+        '7.6.0',
+        ['hosts', '__MANY__', 'remote tail command template']
+    )
+    u.deprecate(
+        '7.6.0',
+        ['hosts', '__MANY__', 'local tail command template'],
+        ['hosts', '__MANY__', 'tail command template']
+    )
     u.upgrade()
 
 

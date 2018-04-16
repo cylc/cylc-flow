@@ -46,6 +46,8 @@ from cylc.suite_logging import ERR, LOG
 from cylc.hostuserutil import get_host, get_user
 from cylc.task_action_timer import TaskActionTimer
 from cylc.task_message import TaskMessage
+from cylc.task_job_logs import (
+    get_task_job_log, get_task_job_activity_log, JOB_LOG_OUT, JOB_LOG_ERR)
 from cylc.task_state import (
     TASK_STATUS_READY, TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_RETRYING,
     TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_RUNNING, TASK_STATUS_RETRYING,
@@ -70,6 +72,26 @@ TaskEventMailContext = namedtuple(
 TaskJobLogsRetrieveContext = namedtuple(
     "TaskJobLogsRetrieveContext",
     ["key", "ctx_type", "user_at_host", "max_size"])
+
+
+def log_task_job_activity(ctx, suite, point, name, submit_num=None):
+    """Log an activity for a task job."""
+    ctx_str = str(ctx)
+    if not ctx_str:
+        return
+    if isinstance(ctx.cmd_key, tuple):  # An event handler
+        submit_num = ctx.cmd_key[-1]
+    job_activity_log = get_task_job_activity_log(
+        suite, point, name, submit_num)
+    try:
+        with open(job_activity_log, "ab") as handle:
+            handle.write(ctx_str + '\n')
+    except IOError as exc:
+        LOG.warning("%s: write failed\n%s" % (job_activity_log, exc))
+    if ctx.cmd and ctx.ret_code:
+        LOG.error(ctx_str)
+    elif ctx.cmd:
+        LOG.debug(ctx_str)
 
 
 class TaskEventsManager(object):
@@ -100,7 +122,6 @@ class TaskEventsManager(object):
         "CRITICAL": CRITICAL,
         "DEBUG": DEBUG,
     }
-    NN = "NN"
     POLLED_INDICATOR = "(polled)"
     RE_MESSAGE_TIME = re.compile(
         r'\A(.+) at (' + RE_DATE_TIME_FORMAT_EXTENDED + r')\Z', re.DOTALL)
@@ -139,49 +160,6 @@ class TaskEventsManager(object):
             except (KeyError, ItemNotFoundError):
                 pass
         return default
-
-    def get_task_job_activity_log(
-            self, suite, point, name, submit_num=None):
-        """Shorthand for get_task_job_log(..., tail="job-activity.log")."""
-        return self.get_task_job_log(
-            suite, point, name, submit_num, "job-activity.log")
-
-    def get_task_job_log(
-            self, suite, point, name, submit_num=None, tail=None):
-        """Return the job log path."""
-        args = [
-            glbl_cfg().get_derived_host_item(suite, "suite job log directory"),
-            self.get_task_job_id(point, name, submit_num)]
-        if tail:
-            args.append(tail)
-        return os.path.join(*args)
-
-    def get_task_job_id(self, point, name, submit_num=None):
-        """Return the job log path."""
-        try:
-            submit_num = "%02d" % submit_num
-        except TypeError:
-            submit_num = self.NN
-        return os.path.join(str(point), name, submit_num)
-
-    def log_task_job_activity(self, ctx, suite, point, name, submit_num=NN):
-        """Log an activity for a task job."""
-        ctx_str = str(ctx)
-        if not ctx_str:
-            return
-        if isinstance(ctx.cmd_key, tuple):  # An event handler
-            submit_num = ctx.cmd_key[-1]
-        job_activity_log = self.get_task_job_activity_log(
-            suite, point, name, submit_num)
-        try:
-            with open(job_activity_log, "ab") as handle:
-                handle.write(ctx_str + '\n')
-        except IOError as exc:
-            LOG.warning("%s: write failed\n%s" % (job_activity_log, exc))
-        if ctx.cmd and ctx.ret_code:
-            LOG.error(ctx_str)
-        elif ctx.cmd:
-            LOG.debug(ctx_str)
 
     def process_events(self, schd_ctx):
         """Process task events that were created by "setup_event_handlers".
@@ -424,8 +402,7 @@ class TaskEventsManager(object):
     def _custom_handler_callback(self, ctx, schd_ctx, id_key):
         """Callback when a custom event handler is done."""
         _, point, name, submit_num = id_key
-        self.log_task_job_activity(
-            ctx, schd_ctx.suite, point, name, submit_num)
+        log_task_job_activity(ctx, schd_ctx.suite, point, name, submit_num)
         if ctx.ret_code == 0:
             del self.event_timers[id_key]
         else:
@@ -500,7 +477,7 @@ class TaskEventsManager(object):
                     del self.event_timers[id_key]
                     log_ctx = SuiteProcContext((key1, submit_num), None)
                     log_ctx.ret_code = 0
-                    self.log_task_job_activity(
+                    log_task_job_activity(
                         log_ctx, schd_ctx.suite, point, name, submit_num)
                 else:
                     self.event_timers[id_key].unset_waiting()
@@ -564,15 +541,15 @@ class TaskEventsManager(object):
             key1, point, name, submit_num = id_key
             try:
                 # All completed jobs are expected to have a "job.out".
-                fnames = ["job.out"]
+                fnames = [JOB_LOG_OUT]
                 try:
                     if key1[1] not in 'succeeded':
-                        fnames.append("job.err")
+                        fnames.append(JOB_LOG_ERR)
                 except TypeError:
                     pass
                 fname_oks = {}
                 for fname in fnames:
-                    fname_oks[fname] = os.path.exists(self.get_task_job_log(
+                    fname_oks[fname] = os.path.exists(get_task_job_log(
                         schd_ctx.suite, point, name, submit_num, fname))
                 # All expected paths must exist to record a good attempt
                 log_ctx = SuiteProcContext((key1, submit_num), None)
@@ -586,7 +563,7 @@ class TaskEventsManager(object):
                         if not exist_ok:
                             log_ctx.err += " %s" % fname
                     self.event_timers[id_key].unset_waiting()
-                self.log_task_job_activity(
+                log_task_job_activity(
                     log_ctx, schd_ctx.suite, point, name, submit_num)
             except KeyError:
                 if cylc.flags.debug:

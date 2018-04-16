@@ -29,10 +29,11 @@ from subprocess import Popen, PIPE, STDOUT
 from uuid import uuid4
 from isodatetime.parsers import TimePointParser
 
-from cylc.hostuserutil import is_remote, is_remote_host, is_remote_user
+from cylc.hostuserutil import is_remote_host, is_remote_user
 from cylc.gui.dbchooser import dbchooser
 from cylc.gui.combo_logviewer import ComboLogViewer
 from cylc.gui.warning_dialog import warning_dialog, info_dialog
+from cylc.task_job_logs import JOB_LOG_OPTS
 
 try:
     from cylc.gui.view_graph import ControlGraph
@@ -56,12 +57,12 @@ from cylc.gui.util import (
 from cylc.network.httpclient import ClientError
 from cylc.suite_status import SUITE_STATUS_STOPPED_WITH
 from cylc.task_id import TaskID
-from cylc.task_state_prop import extract_group_state
+from cylc.task_state_prop import extract_group_state, get_status_prop
 from cylc.version import CYLC_VERSION
 from cylc.gui.option_group import controlled_option_group
 from cylc.gui.color_rotator import ColorRotator
-from cylc.gui.cylc_logviewer import cylc_logviewer
-from cylc.gui.gcapture import gcapture_tmpfile
+from cylc.gui.suite_log_viewer import SuiteLogViewer
+from cylc.gui.gcapture import Gcapture
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.suite_logging import SuiteLog
 from cylc.cfgspec.glbl_cfg import glbl_cfg
@@ -69,10 +70,8 @@ from cylc.cfgspec.gcylc import gcfg
 from cylc.wallclock import get_current_time_string
 from cylc.task_state import (
     TASK_STATUSES_ALL, TASK_STATUSES_RESTRICTED, TASK_STATUSES_CAN_RESET_TO,
-    TASK_STATUSES_WITH_JOB_SCRIPT, TASK_STATUSES_WITH_JOB_LOGS,
     TASK_STATUSES_TRIGGERABLE, TASK_STATUSES_ACTIVE, TASK_STATUS_RUNNING,
-    TASK_STATUS_HELD, TASK_STATUS_FAILED)
-from cylc.task_state_prop import get_status_prop
+    TASK_STATUS_HELD, TASK_STATUS_FAILED, TASK_STATUSES_NO_JOB_FILE)
 
 
 def run_get_stdout(command, filter_=False):
@@ -1197,7 +1196,6 @@ been defined for this suite""").inform()
         window.destroy()
 
         options += self.get_remote_run_opts()
-
         command += ' ' + options + ' ' + self.cfg.suite + ' ' + point_string
         try:
             print command
@@ -1228,8 +1226,8 @@ been defined for this suite""").inform()
 
     def _gcapture_cmd(self, command, xdim=400, ydim=400, title=None):
         """Run given command and capture its stdout and stderr in a window."""
-        gcap_win = gcapture_tmpfile(command, self.cfg.cylc_tmpdir,
-                                    xdim, ydim, title=title)
+        gcap_win = Gcapture(
+            command, self.cfg.cylc_tmpdir, xdim, ydim, title=title)
         self.gcapture_windows.append(gcap_win)
         gcap_win.run()
 
@@ -1249,55 +1247,28 @@ been defined for this suite""").inform()
             600, 400)
 
     def view_in_editor(self, w, e, task_id, choice):
-        """View various job logs in your configured text editor."""
+        """View job logs in your configured text editor."""
         if choice == 'job-preview':
             self.view_jobscript_preview(task_id, geditor=True)
+            return False
+        if task_id not in self.updater.full_state_summary:
+            warning_dialog('%s is not live' % task_id, self.window).warn()
+            return False
+        self._gcapture_cmd("cylc cat-log %s -m e -f %s --geditor %s %s" % (
+            self.get_remote_run_opts(), choice, self.cfg.suite, task_id))
+        return False
+
+    def view_task_logs(self, w, e, task_id, choice):
+        """Viewer with a drop-down list of job logs to choose from."""
+        if choice == 'job-preview':
+            self.view_jobscript_preview(task_id, geditor=False)
             return False
         try:
             task_state_summary = self.updater.full_state_summary[task_id]
         except KeyError:
             warning_dialog('%s is not live' % task_id, self.window).warn()
             return False
-        if (not task_state_summary['logfiles'] and
-                not task_state_summary.get('job_hosts')):
-            warning_dialog('%s has no log files' % task_id, self.window).warn()
-        else:
-            if choice == 'job-activity.log':
-                command_opt = "--activity"
-            elif choice == 'job.status':
-                command_opt = "--status"
-            elif choice == 'job.xtrace':
-                command_opt = "--xtrace"
-            elif choice == 'job.out':
-                command_opt = "--stdout"
-            elif choice == 'job-edit.diff':
-                command_opt = "--diff"
-            elif choice == 'job.err':
-                command_opt = "--stderr"
-            elif choice == 'job':
-                command_opt = ""
-            else:
-                # Custom job log (see "extra log files").
-                command_opt = '--filename %s' % choice
-            self._gcapture_cmd("cylc cat-log %s --geditor %s %s" % (
-                command_opt, self.cfg.suite, task_id))
-
-    def view_task_info(self, w, e, task_id, choice):
-        """Viewer window with a drop-down list of job logs to choose from."""
-        if choice == 'job-preview':
-            self.view_jobscript_preview(task_id, geditor=False)
-            return
-        try:
-            task_state_summary = self.updater.full_state_summary[task_id]
-        except KeyError:
-            warning_dialog(task_id + ' is not live', self.window).warn()
-            return False
-        if (not task_state_summary['logfiles'] and
-                not task_state_summary.get('job_hosts')):
-            warning_dialog('%s has no log files' % task_id,
-                           self.window).warn()
-        else:
-            self._popup_logview(task_id, task_state_summary, choice)
+        self._popup_logview(task_id, task_state_summary, choice)
         return False
 
     @staticmethod
@@ -1307,6 +1278,13 @@ been defined for this suite""").inform()
             item.connect('button-release-event', x, y, z)
         else:
             item.connect('activate', x, None, y, z)
+
+    def _get_task_extra_job_logs(self, task_id):
+        try:
+            return sorted(map(str, self.updater.full_state_summary[
+                task_id]['logfiles']))
+        except KeyError:
+            return []
 
     def get_right_click_menu(self, task_ids, t_states, task_is_family=False,
                              is_graph_view=False):
@@ -1356,64 +1334,47 @@ been defined for this suite""").inform()
 
                 # View.
                 view_menu = gtk.Menu()
-                view_item = gtk.ImageMenuItem("View")
-                img = gtk.image_new_from_stock(gtk.STOCK_DIALOG_INFO,
+                view_item = gtk.ImageMenuItem("View Job Logs (Viewer)")
+                img = gtk.image_new_from_stock(gtk.STOCK_DND,
                                                gtk.ICON_SIZE_MENU)
                 view_item.set_image(img)
                 view_item.set_submenu(view_menu)
                 menu.append(view_item)
 
+                # View In Editor.
+                view_editor_menu = gtk.Menu()
+                view_editor_item = gtk.ImageMenuItem("View Job Log (Editor)")
+                img = gtk.image_new_from_stock(gtk.STOCK_DND,
+                                               gtk.ICON_SIZE_MENU)
+                view_editor_item.set_image(img)
+                view_editor_item.set_submenu(view_editor_menu)
+                menu.append(view_editor_item)
+
                 # NOTE: we have to respond to 'button-release-event' rather
                 # than 'activate' in order for sub-menus to work in the
                 # graph-view so use connect_right_click_sub_menu instead of
                 # item.connect
-
-                if t_states[0] in TASK_STATUSES_WITH_JOB_SCRIPT:
-                    job_script = ('job script', 'job')
+                if t_states[0] in TASK_STATUSES_NO_JOB_FILE:
+                    fnames = ['job-preview']
                 else:
-                    job_script = ('preview job script', 'job-preview')
-
-                for key, filename in [
-                        job_script,
-                        ('job activity log', 'job-activity.log'),
-                        ('job status file', 'job.status'),
-                        ('job edit diff', 'job-edit.diff'),
-                        ('job debug xtrace', 'job.xtrace')]:
-                    item = gtk.ImageMenuItem(key)
-                    item.set_image(gtk.image_new_from_stock(
-                        gtk.STOCK_DND, gtk.ICON_SIZE_MENU))
-                    view_menu.append(item)
-                    self.connect_right_click_sub_menu(is_graph_view, item,
-                                                      self.view_task_info,
-                                                      task_ids[0], filename)
-                    item.set_sensitive(
-                        '-preview' in filename or
-                        t_states[0] in TASK_STATUSES_WITH_JOB_SCRIPT)
-
-                try:
-                    logfiles = sorted(map(str, self.updater.full_state_summary[
-                        task_ids[0]]['logfiles']))
-                except KeyError:
-                    logfiles = []
-                for key, filename in [
-                        ('job stdout', 'job.out'),
-                        ('job stderr', 'job.err')] + [
-                        (fname, fname) for fname in logfiles]:
-                    item = gtk.ImageMenuItem(key)
-                    item.set_image(gtk.image_new_from_stock(
-                        gtk.STOCK_DND, gtk.ICON_SIZE_MENU))
-                    view_menu.append(item)
-                    self.connect_right_click_sub_menu(is_graph_view, item,
-                                                      self.view_task_info,
-                                                      task_ids[0], filename)
-                    item.set_sensitive(
-                        t_states[0] in TASK_STATUSES_WITH_JOB_LOGS)
+                    fnames = (JOB_LOG_OPTS.values() +
+                              self._get_task_extra_job_logs(task_ids[0]))
+                for fname in fnames:
+                    for handler, vmenu in [
+                            (self.view_task_logs, view_menu),
+                            (self.view_in_editor, view_editor_menu)]:
+                        item = gtk.ImageMenuItem(fname)
+                        item.set_image(gtk.image_new_from_stock(
+                            gtk.STOCK_DND, gtk.ICON_SIZE_MENU))
+                        vmenu.append(item)
+                        self.connect_right_click_sub_menu(
+                            is_graph_view, item, handler, task_ids[0], fname)
 
                 info_item = gtk.ImageMenuItem('prereq\'s & outputs')
                 img = gtk.image_new_from_stock(
                     gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU)
                 info_item.set_image(img)
-                view_menu.append(info_item)
+                menu.append(info_item)
                 self.connect_right_click_sub_menu(is_graph_view, info_item,
                                                   self.popup_requisites,
                                                   task_ids[0], None)
@@ -1422,7 +1383,7 @@ been defined for this suite""").inform()
                 img = gtk.image_new_from_stock(
                     gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU)
                 js0_item.set_image(img)
-                view_menu.append(js0_item)
+                menu.append(js0_item)
                 self.connect_right_click_sub_menu(is_graph_view, js0_item,
                                                   self.view_task_descr,
                                                   task_ids[0], None)
@@ -1434,51 +1395,6 @@ been defined for this suite""").inform()
                 # cug_pdf_item.set_label('_PDF User Guide')
                 # help_menu.append(cug_pdf_item)
                 # cug_pdf_item.connect('activate', self.browse, '--pdf')
-
-                # View In Editor.
-                view_editor_menu = gtk.Menu()
-                view_editor_item = gtk.ImageMenuItem("View In Editor")
-                img = gtk.image_new_from_stock(gtk.STOCK_DIALOG_INFO,
-                                               gtk.ICON_SIZE_MENU)
-                view_editor_item.set_image(img)
-                view_editor_item.set_submenu(view_editor_menu)
-                menu.append(view_editor_item)
-
-                # NOTE: we have to respond to 'button-release-event' rather
-                # than 'activate' in order for sub-menus to work in the
-                # graph-view so use connect_right_click_sub_menu instead of
-                # item.connect
-
-                for key, filename in [
-                        job_script,
-                        ('job activity log', 'job-activity.log'),
-                        ('job status file', 'job.status'),
-                        ('job edit diff', 'job-edit.diff'),
-                        ('job debug xtrace', 'job.xtrace')]:
-                    item = gtk.ImageMenuItem(key)
-                    item.set_image(gtk.image_new_from_stock(
-                        gtk.STOCK_DND, gtk.ICON_SIZE_MENU))
-                    view_editor_menu.append(item)
-                    self.connect_right_click_sub_menu(is_graph_view, item,
-                                                      self.view_in_editor,
-                                                      task_ids[0], filename)
-                    item.set_sensitive(
-                        '-preview' in filename or
-                        t_states[0] in TASK_STATUSES_WITH_JOB_SCRIPT)
-
-                for key, filename in [
-                        ('job stdout', 'job.out'),
-                        ('job stderr', 'job.err')] + [
-                        (fname, fname) for fname in logfiles]:
-                    item = gtk.ImageMenuItem(key)
-                    item.set_image(gtk.image_new_from_stock(
-                        gtk.STOCK_DND, gtk.ICON_SIZE_MENU))
-                    view_editor_menu.append(item)
-                    self.connect_right_click_sub_menu(is_graph_view, item,
-                                                      self.view_in_editor,
-                                                      task_ids[0], filename)
-                    item.set_sensitive(
-                        t_states[0] in TASK_STATUSES_WITH_JOB_LOGS)
 
         # Separator
         menu.append(gtk.SeparatorMenuItem())
@@ -2283,112 +2199,19 @@ shown here in the state they were in at the time of triggering.''')
                          gtk.gdk.color_parse(self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_size_request(800, 400)
-
-        # Derive file names from the job host of each submit
-        # task_state_summary['logfiles'] logic retained for backward compat
-        job_hosts = task_state_summary.get('job_hosts')
-        if job_hosts:
-            filenames = []
-            name, point_str = TaskID.split(task_id)
-            itask_log_dir = os.path.join(
-                glbl_cfg().get_derived_host_item(
-                    self.cfg.suite, "suite job log directory",
-                ),
-                point_str,
-                name,
-            )
-            for submit_num, job_user_at_host in sorted(
-                    job_hosts.items(), reverse=True, key=lambda x: int(x[0])):
-                submit_num_str = "%02d" % int(submit_num)
-                local_job_log_dir = os.path.join(itask_log_dir, submit_num_str)
-                for filename in ["job", "job-activity.log"]:
-                    filenames.append(os.path.join(local_job_log_dir, filename))
-                if job_user_at_host is None:
-                    continue
-                if '@' in job_user_at_host:
-                    job_user, job_host = job_user_at_host.split('@', 1)
-                else:
-                    job_user, job_host = (None, job_user_at_host)
-                if is_remote(job_host, job_user):
-                    job_log_dir = job_user_at_host + ':' + os.path.join(
-                        glbl_cfg().get_derived_host_item(
-                            self.cfg.suite, 'suite job log directory',
-                            job_host, job_user,
-                        ),
-                        point_str, name, submit_num_str,
-                    )
-                else:
-                    job_log_dir = local_job_log_dir
-                for filename in ["job.out", "job.err", "job.status",
-                                 "job-edit.diff", "job.xtrace"]:
-                    filenames.append(os.path.join(job_log_dir, filename))
-
-        # NOTE: Filenames come through as unicode and must be converted.
-        for filename in map(str, sorted(list(task_state_summary['logfiles']))):
-            if filename not in filenames:
-                filenames.append(os.path.join(job_log_dir, filename))
-
-        init_active_index = None
-        if choice:
-            for i, log in enumerate(filenames):
-                if log.endswith("/" + choice):
-                    init_active_index = i
-                    break
-
-        auth = None
-        if is_remote_host(self.cfg.host):
-            auth = self.cfg.host
-        elif is_remote_user(self.cfg.owner):
-            auth = self.cfg.owner + "@" + self.cfg.host
-        if auth:
-            for i, log in enumerate(filenames):
-                if ":" not in log:
-                    filenames[i] = auth + ":" + log
         window.set_title(task_id + ": Log Files")
-        viewer = ComboLogViewer(
-            task_id, filenames,
-            self._get_logview_cmd_tmpls_map(task_id, filenames),
-            init_active_index)
+
+        nsubmits = len(task_state_summary.get('job_hosts', {}))
+        viewer = ComboLogViewer(self.cfg.suite, task_id, choice,
+                                self._get_task_extra_job_logs(task_id),
+                                nsubmits, self.get_remote_run_opts())
         self.quitters.append(viewer)
-
         window.add(viewer.get_widget())
-
         quit_button = gtk.Button("_Close")
         quit_button.connect("clicked", self.on_popup_quit, viewer, window)
-
         viewer.hbox.pack_start(quit_button, False)
-
         window.connect("delete_event", viewer.quit_w_e)
         window.show_all()
-
-    def _get_logview_cmd_tmpls_map(self, task_id, filenames):
-        """Helper for self._popup_logview()."""
-        summary = self.updater.full_state_summary[task_id]
-        if summary["state"] != "running":
-            return {}
-        ret = {}
-        for key in "out", "err":
-            suffix = "/%(submit_num)02d/job.%(key)s" % {
-                "submit_num": summary["submit_num"], "key": key}
-            for filename in filenames:
-                if not filename.endswith(suffix):
-                    continue
-                user_at_host = None
-                if ":" in filename:
-                    user_at_host = filename.split(":", 1)[0]
-                if user_at_host and "@" in user_at_host:
-                    owner, host = user_at_host.split("@", 1)
-                else:
-                    owner, host = (None, user_at_host)
-                try:
-                    conf = glbl_cfg().get_host_item(
-                        "batch systems", host, owner)
-                    cmd_tmpl = conf[summary["batch_sys_name"]][key + " tailer"]
-                    ret[filename] = cmd_tmpl % {
-                        "job_id": summary["submit_method_id"]}
-                except (KeyError, TypeError):
-                    continue
-        return ret
 
     @staticmethod
     def _sort_key_func(log_path):
@@ -2809,23 +2632,11 @@ to reduce network traffic.""")
 
         tools_menu.append(gtk.SeparatorMenuItem())
 
-        log_item = gtk.ImageMenuItem('Std _Output')
+        log_item = gtk.ImageMenuItem('Suite _Log')
         img = gtk.image_new_from_stock(gtk.STOCK_DND, gtk.ICON_SIZE_MENU)
         log_item.set_image(img)
         tools_menu.append(log_item)
-        log_item.connect('activate', self.run_suite_log, 'out')
-
-        out_item = gtk.ImageMenuItem('Std _Error')
-        img = gtk.image_new_from_stock(gtk.STOCK_DND, gtk.ICON_SIZE_MENU)
-        out_item.set_image(img)
-        tools_menu.append(out_item)
-        out_item.connect('activate', self.run_suite_log, 'err')
-
-        log_item = gtk.ImageMenuItem('Event _Log')
-        img = gtk.image_new_from_stock(gtk.STOCK_DND, gtk.ICON_SIZE_MENU)
-        log_item.set_image(img)
-        tools_menu.append(log_item)
-        log_item.connect('activate', self.run_suite_log, 'log')
+        log_item.connect('activate', self.run_suite_log)
 
         help_menu = gtk.Menu()
         help_menu_root = gtk.MenuItem('_Help')
@@ -2953,8 +2764,8 @@ to reduce network traffic.""")
         options = ''
         if not yesbin_cb.get_active():
             options += ' -x '
-        self._gcapture_cmd("cylc search %s %s %s" % (
-            options, reg, pattern), 600, 500)
+        self._gcapture_cmd("cylc search %s %s %s %s" % (
+            self.get_remote_run_opts(), options, reg, pattern), 600, 500)
 
     def click_register(self, w):
         """Callback for File -> Register A New Suite."""
@@ -3384,7 +3195,7 @@ For more Stop options use the Control menu.""")
             self.filter_states_excl,
             self.popup_filter_dialog,
             self._alter_status_toolbar_menu,
-            lambda: self.run_suite_log(None, type_="err"))
+            lambda: self.run_suite_log(None, log="e"))
         self._set_info_bar()
 
     def popup_uuid_dialog(self, w):
@@ -3494,24 +3305,10 @@ For more Stop options use the Control menu.""")
                 self.get_remote_run_opts(), opt, self.cfg.template_vars_opts,
                 self.cfg.suite), 600, 600)
 
-    def run_suite_log(self, w, type_='log'):
-        """Run 'cylc cat-log' and capture its output in a viewer window."""
-        if is_remote(self.cfg.host, self.cfg.owner):
-            if type_ == 'out':
-                xopts = ' --stdout '
-            elif type_ == 'err':
-                xopts = ' --stderr '
-            else:
-                xopts = ' '
-            self._gcapture_cmd(
-                "cylc cat-log %s %s %s" % (
-                    self.get_remote_run_opts(), xopts, self.cfg.suite),
-                800, 400, title="%s %s" % (self.cfg.suite, type_))
-            return
-
-        task_name_list = []  # TODO
-        # assumes suite out, err, and log are in the same location:
-        foo = cylc_logviewer(type_, self.cfg.logdir, task_name_list)
+    def run_suite_log(self, w, log='l'):
+        """View suite logs."""
+        foo = SuiteLogViewer(self.cfg.suite, log, self.get_remote_run_opts(),
+                             self.updater.task_list)
         self.quitters.append(foo)
 
     def run_suite_view(self, w, method):
