@@ -35,7 +35,7 @@ from cylc.version import CYLC_VERSION
 
 
 def remote_cylc_cmd(cmd, user=None, host=None, capture=False,
-                    ssh_login_shell=None):
+                    ssh_login_shell=None, ssh_cylc=None, stdin=None):
     """Run a given cylc command on another account and/or host.
 
     If capture is True, pipe stdout and return the Popen object.
@@ -46,28 +46,32 @@ def remote_cylc_cmd(cmd, user=None, host=None, capture=False,
     if user is None:
         user_at_host = host
     else:
-        user_at_host = "%s@%s" % (user, host)
+        user_at_host = '%s@%s' % (user, host)
 
     # Build the remote command
-    ssh = str(glbl_cfg().get_host_item("ssh command", host, user))
-    command = shlex.split(ssh) + ["-n", user_at_host]
+    command = shlex.split(
+        str(glbl_cfg().get_host_item('ssh command', host, user)))
+    if stdin is None:
+        command.append('-n')
+    command.append(user_at_host)
 
     # Pass cylc version through.
-    command += ["env", "CYLC_VERSION=%s" % CYLC_VERSION]
+    command += ['env', r'CYLC_VERSION=%s' % CYLC_VERSION]
 
     if ssh_login_shell is None:
         ssh_login_shell = glbl_cfg().get_host_item(
-            "use login shell", host, user)
+            'use login shell', host, user)
     if ssh_login_shell:
         # A login shell will always source /etc/profile and the user's bash
         # profile file. To avoid having to quote the entire remote command
         # it is passed as arguments to bash.
-        command += ["bash", "--login", "-c", quote(r'exec "$0" "$@"')]
-    cylc_exec = glbl_cfg().get_host_item("cylc executable", host, user)
-    if not cylc_exec.endswith('cylc'):
-        sys.exit("ERROR: bad cylc executable in global config: %s" % (
-                 cylc_exec))
-    command.append(cylc_exec)
+        command += ['bash', '--login', '-c', quote(r'exec "$0" "$@"')]
+    if ssh_cylc is None:
+        ssh_cylc = glbl_cfg().get_host_item('cylc executable', host, user)
+        if not ssh_cylc.endswith('cylc'):
+            raise ValueError(
+                r'ERROR: bad cylc executable in global config: %s' % ssh_cylc)
+    command.append(ssh_cylc)
     command += cmd
     if cylc.flags.debug:
         sys.stderr.write('%s\n' % command)
@@ -81,16 +85,19 @@ def remote_cylc_cmd(cmd, user=None, host=None, capture=False,
     #   The command is read from the site/user global config file, but we check
     #   above that it ends in 'cylc', and in any case the user could execute
     #   any such command directly via ssh.
-    proc = Popen(command, stdout=stdout, stdin=open(os.devnull))
+    if stdin is None:
+        stdin = open(os.devnull)
+    proc = Popen(command, stdout=stdout, stdin=stdin)
     if capture:
         return proc
     else:
         res = proc.wait()
         if WIFSIGNALED(res):
             sys.stderr.write(
-                "ERROR: remote command terminated by signal %d\n" % res)
+                'ERROR: remote command terminated by signal %d\n' % res)
         elif res:
-            sys.stderr.write("ERROR: remote command failed %d\n" % res)
+            sys.stderr.write('ERROR: remote command failed %d\n' % res)
+        return res
 
 
 def remrun(dry_run=False, forward_x11=False):

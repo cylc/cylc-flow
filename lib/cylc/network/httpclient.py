@@ -546,33 +546,27 @@ class SuiteRuntimeServiceClient(object):
             **kwargs (dict): arguments for the API method.
         """
         import json
-        from subprocess import Popen, PIPE
-        from tempfile import TemporaryFile
-        command = ["cylc", "client", "--use-ssh"]
-        if self.comms1.get(self.srv_files_mgr.KEY_SSH_USE_LOGIN_SHELL) in [
-                'True', 'true']:
-            command.append("--login")
-        else:
-            command.append("--no-login")
-        if self.host:
-            command.append("--host=%s" % self.host)
-        if self.owner:
-            command.append("--user=%s" % self.owner)
-        r_cylc_dir = self.comms1.get(self.srv_files_mgr.KEY_DIR_ON_SUITE_HOST)
-        if r_cylc_dir:
-            command.append("--ssh-cylc=%s/bin/cylc" % r_cylc_dir)
-        command.append(function)
-        if self.suite:
-            command.append(self.suite)
+        from cylc.remote import remote_cylc_cmd
+        command = ["client", function, self.suite]
         if payload:
             kwargs["payload"] = payload
         if kwargs:
-            proc_stdin = TemporaryFile()
-            json.dump(kwargs, proc_stdin)
-            proc_stdin.seek(0)
+            from tempfile import TemporaryFile
+            stdin = TemporaryFile()
+            json.dump(kwargs, stdin)
+            stdin.seek(0)
         else:
-            proc_stdin = open(os.devnull)
-        proc = Popen(command, stdin=proc_stdin, stdout=PIPE)
+            stdin = None
+        proc = remote_cylc_cmd(
+            command, self.owner, self.host, capture=True,
+            ssh_login_shell=(self.comms1.get(
+                self.srv_files_mgr.KEY_SSH_USE_LOGIN_SHELL
+            ) in ['True', 'true']),
+            ssh_cylc=(r'%s/bin/cylc' % self.comms1.get(
+                self.srv_files_mgr.KEY_DIR_ON_SUITE_HOST)
+            ),
+            stdin=stdin,
+        )
         out = proc.communicate()[0]
         return_code = proc.wait()
         if return_code:
