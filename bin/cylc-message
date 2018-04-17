@@ -28,9 +28,9 @@ Task jobs use this command to record and report status such as success and
 failure. Applications run by task jobs can use this command to report messages
 and to report registered task outputs.
 
-Messages can be specified as arguments. A '-' indicates that messages the
-command should read messages from STDIN. When reading from STDIN, multiple
-messages are separated by empty lines.
+Messages can be specified as arguments. A '-' indicates that the command should
+read messages from STDIN. When reading from STDIN, multiple messages are
+separated by empty lines.
 
 Each message can be prefixed with a severity level using the syntax 'SEVERITY:
 MESSAGE'.

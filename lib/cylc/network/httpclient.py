@@ -285,21 +285,15 @@ class SuiteRuntimeServiceClient(object):
                             func_name, task_id='%s.%s' % (name, cycle),
                             priority=severity, message=message))
             except ClientInfoError:
+                # Contact info file not found, suite probably not running.
+                # Don't bother with retry, suite restart will poll any way.
                 raise
             except ClientError as exc:
                 now = get_current_time_string()
                 sys.stderr.write(
                     "%s WARNING - Message send failed, try %s of %s: %s\n" % (
                         now, i, max_tries, exc))
-                # Break if:
-                # * Exhausted number of tries.
-                # * Contact info file not found, suite probably not running.
-                #   Don't bother with retry, suite restart will poll any way.
-                if i >= max_tries or isinstance(exc, ClientInfoError):
-                    # Issue a warning and let the task carry on
-                    sys.stderr.write(
-                        "%s WARNING - MESSAGE SEND FAILED\n" % (now))
-                else:
+                if i < max_tries:
                     sys.stderr.write(
                         "   retry in %s seconds, timeout is %s\n" % (
                             retry_intvl, self.timeout))
