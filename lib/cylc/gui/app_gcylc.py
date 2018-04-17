@@ -1628,8 +1628,11 @@ been defined for this suite""").inform()
         try:
             results, bad_items = self.updater.client.get_info(
                 'get_task_requisites', items=[task_id])
+        except AttributeError:
+            pass
         except ClientError as exc:
             warning_dialog(str(exc), self.window).warn()
+            return
         if not results or task_id in bad_items:
             warning_dialog(
                 "Task proxy " + task_id +
