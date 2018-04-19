@@ -93,7 +93,6 @@ def _append_job_status_file(suite, task_job, event_time, messages):
         job_log_name = os.path.join(
             glbl_cfg().get_derived_host_item(suite, 'suite job log directory'),
             'job')
-    job_status_file = None
     try:
         job_status_file = open(job_log_name + '.status', 'ab')
     except IOError:

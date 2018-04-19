@@ -528,10 +528,10 @@ class SuiteRuntimeServiceClient(object):
         """Call server via "cylc client --use-ssh".
 
         Call "cylc client --use-ssh" using `subprocess.Popen`. Payload and
-        arguments of the API method are serialized as JSON and is written to a
+        arguments of the API method are serialized as JSON and are written to a
         temporary file, which is then used as the STDIN of the "cylc client"
         command. The external call here should be even safer than a direct
-        HTTP(S) call, as it can be blocked by SSH before it even get a chance
+        HTTP(S) call, as it can be blocked by SSH before it even gets a chance
         to make the subsequent HTTP(S) call.
 
         Arguments:
@@ -550,6 +550,9 @@ class SuiteRuntimeServiceClient(object):
             json.dump(kwargs, stdin)
             stdin.seek(0)
         else:
+            # With stdin=None, `remote_cylc_cmd` will:
+            # * Set stdin to open(os.devnull)
+            # * Add `-n` to the SSH command
             stdin = None
         proc = remote_cylc_cmd(
             command, self.owner, self.host, capture=True,
@@ -625,8 +628,8 @@ class SuiteRuntimeServiceClient(object):
             # Check mismatch suite UUID
             env_suite = os.getenv(self.srv_files_mgr.KEY_NAME)
             env_uuid = os.getenv(self.srv_files_mgr.KEY_UUID)
-            if (self.suite and env_suite and env_uuid and
-                    env_suite == self.suite and
+            if (self.suite and env_suite and env_suite == self.suite and
+                    env_uuid and
                     env_uuid != self.comms1.get(self.srv_files_mgr.KEY_UUID)):
                 raise ClientInfoUUIDError(
                     env_uuid, self.comms1[self.srv_files_mgr.KEY_UUID])

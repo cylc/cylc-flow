@@ -522,7 +522,7 @@ class SuiteRuntimeService(object):
     @cherrypy.tools.json_in()
     @cherrypy.tools.json_out()
     def put_messages(self, task_job=None, event_time=None, messages=None):
-        """Put task messages.
+        """Put task messages in queue for processing later by the main loop.
 
         Arguments:
             task_job (str): Task job in the form "CYCLE/TASK_NAME/SUBMIT_NUM".

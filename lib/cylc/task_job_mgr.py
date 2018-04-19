@@ -720,14 +720,13 @@ class TaskJobManager(object):
             itask.summary['submit_method_id'] = None
         if itask.summary['submit_method_id'] and ctx.ret_code == 0:
             self.task_events_mgr.process_message(
-                itask, INFO, TASK_OUTPUT_SUBMITTED,
-                incoming_event_time=ctx.timestamp,
-                poll_func=self.poll_task_jobs)
+                itask, INFO, TASK_OUTPUT_SUBMITTED, self.poll_task_jobs,
+                incoming_event_time=ctx.timestamp)
         else:
             self.task_events_mgr.process_message(
                 itask, CRITICAL, self.task_events_mgr.EVENT_SUBMIT_FAILED,
-                incoming_event_time=ctx.timestamp,
-                poll_func=self.poll_task_jobs)
+                self.poll_task_jobs,
+                incoming_event_time=ctx.timestamp)
 
     def _prep_submit_task_job(self, suite, itask, dry_run, check_syntax=True):
         """Prepare a task job submission.

@@ -38,8 +38,24 @@ def remote_cylc_cmd(cmd, user=None, host=None, capture=False,
                     ssh_login_shell=None, ssh_cylc=None, stdin=None):
     """Run a given cylc command on another account and/or host.
 
-    If capture is True, pipe stdout and return the Popen object.
+    Arguments:
+        cmd (list): command to run remotely.
+        user (string): user ID for the remote login.
+        host (string): remote host name. Use 'localhost' if not specified.
+        capture (boolean):
+            If True, set stdout=PIPE and return the Popen object.
+        ssh_login_shell (boolean):
+            If True, launch remote command with `bash -l -c 'exec "$0" "$@"'`.
+        ssh_cylc (string):
+            Location of the remote cylc executable.
+        stdin (file):
+            If specified, it should be a readable file object.
+            If None, it will be set to `open(os.devnull)` and the `-n` option
+            will be added to the SSH command line.
 
+    Return:
+        If capture=True, return the Popen object if created successfully.
+        Otherwise, return the return the exit code of the remote command.
     """
     if host is None:
         host = "localhost"
@@ -53,6 +69,7 @@ def remote_cylc_cmd(cmd, user=None, host=None, capture=False,
         str(glbl_cfg().get_host_item('ssh command', host, user)))
     if stdin is None:
         command.append('-n')
+        stdin = open(os.devnull)
     command.append(user_at_host)
 
     # Pass cylc version through.
@@ -85,8 +102,6 @@ def remote_cylc_cmd(cmd, user=None, host=None, capture=False,
     #   The command is read from the site/user global config file, but we check
     #   above that it ends in 'cylc', and in any case the user could execute
     #   any such command directly via ssh.
-    if stdin is None:
-        stdin = open(os.devnull)
     proc = Popen(command, stdout=stdout, stdin=stdin)
     if capture:
         return proc
