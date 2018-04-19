@@ -2,8 +2,10 @@
     [[events]]
         abort on inactivity = True
         abort on stalled = True
-        inactivity = PT30S
-        #startup handler = cylc reset '%(suite)s' -O greet 't1.1'
+        inactivity = PT1M
+        abort on timeout = True
+        timeout = PT1M
+        #stalled handler = cylc reset '%(suite)s' -O greet 't1.1'
 [scheduling]
     [[dependencies]]
         graph = """

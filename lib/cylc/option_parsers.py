@@ -151,6 +151,10 @@ Arguments:"""
                 help="Use ssh to re-invoke the command on the suite host.",
                 action="store_true", default=False, dest="use_ssh")
             self.add_std_option(
+                "--ssh-cylc",
+                help="Location of cylc executable on remote ssh comamnds.",
+                action="store", default="cylc", dest="ssh_cylc")
+            self.add_std_option(
                 "--no-login",
                 help=(
                     "Do not use a login shell to run remote ssh commands. "

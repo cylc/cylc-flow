@@ -6,10 +6,18 @@
 
 [scheduling]
     [[dependencies]]
-        graph=t0
+        graph="t0 => t1"
 
 [runtime]
     [[t0]]
-        script = true
+        script = """
+# Ensure that contact 2 is installed, but passphrase isn't.
+test -f "${CYLC_SUITE_RUN_DIR}/.service/contact2"
+! test -f "${CYLC_SUITE_RUN_DIR}/.service/passphrase"
+# A client command should not require --use-ssh option.
+cylc broadcast "${CYLC_SUITE_NAME}" '--name=t1' '--set=script=true'
+"""
         [[[remote]]]
             host = {{CYLC_TEST_HOST}}
+    [[t1]]
+        script = false

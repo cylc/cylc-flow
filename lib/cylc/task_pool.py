@@ -42,6 +42,7 @@ import cylc.flags
 from cylc.suite_logging import ERR, LOG
 from cylc.task_action_timer import TaskActionTimer
 from cylc.task_id import TaskID
+from cylc.task_job_logs import get_task_job_id
 from cylc.task_proxy import TaskProxy
 from cylc.task_state import (
     TASK_STATUSES_ACTIVE, TASK_STATUSES_NOT_STALLED,
@@ -1134,24 +1135,28 @@ class TaskPool(object):
     def sim_time_check(self, message_queue):
         """Simulation mode: simulate task run times and set states."""
         sim_task_state_changed = False
+        now = time()
         for itask in self.get_tasks():
             if itask.state.status != TASK_STATUS_RUNNING:
                 continue
             timeout = (itask.summary['started_time'] +
                        itask.tdef.rtconfig['job']['simulated run length'])
-            if time() > timeout:
+            if now > timeout:
                 conf = itask.tdef.rtconfig['simulation']
+                job_d = get_task_job_id(
+                    itask.point, itask.tdef.name, itask.submit_num)
+                now_str = get_current_time_string()
                 if (itask.point in conf['fail cycle points'] and
                         (itask.get_try_num() == 1 or
                          not conf['fail try 1 only'])):
                     message_queue.put(
-                        (itask.identity, 'CRITICAL', TASK_STATUS_FAILED))
+                        (job_d, now_str, 'CRITICAL', TASK_STATUS_FAILED))
                 else:
                     # Simulate message outputs.
                     for msg in itask.tdef.rtconfig['outputs'].values():
-                        message_queue.put((itask.identity, 'NORMAL', msg))
+                        message_queue.put((job_d, now_str, 'INFO', msg))
                     message_queue.put(
-                        (itask.identity, 'NORMAL', TASK_STATUS_SUCCEEDED))
+                        (job_d, now_str, 'INFO', TASK_STATUS_SUCCEEDED))
                 sim_task_state_changed = True
         return sim_task_state_changed
 
@@ -1208,10 +1213,10 @@ class TaskPool(object):
                 if itask.state.status == TASK_STATUS_RUNNING:
                     running = True
                 break
-        if running:
-            return True, " running"
-        elif found and exists_only:
+        if found and exists_only:
             return True, "task found"
+        elif running:
+            return True, "task running"
         elif found:
             return False, "task not running"
         else:

@@ -38,7 +38,8 @@ import cylc.flags
 from cylc.hostuserutil import is_remote, is_remote_host, is_remote_user
 from cylc.mp_pool import SuiteProcContext
 from cylc.suite_logging import LOG
-from cylc.task_remote_cmd import REMOTE_INIT_DONE, REMOTE_INIT_NOT_REQUIRED
+from cylc.task_remote_cmd import (
+    FILE_BASE_UUID, REMOTE_INIT_DONE, REMOTE_INIT_NOT_REQUIRED)
 
 
 REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*(`|\))$')
@@ -79,7 +80,7 @@ class TaskRemoteMgr(object):
         # self.remote_init_map = {(host, owner): status, ...}
         self.remote_init_map = {}
         self.single_task_mode = False
-        self.uuid = uuid4()
+        self.uuid_str = str(uuid4())
         self.ready = False
 
     def remote_host_select(self, host_str):
@@ -182,7 +183,15 @@ class TaskRemoteMgr(object):
             return status
 
         # Determine what items to install
-        items = self._remote_init_items(host, owner)
+        comm_meth = glbl_cfg().get_host_item(
+            'task communication method', host, owner)
+        owner_at_host = 'localhost'
+        if host:
+            owner_at_host = host
+        if owner:
+            owner_at_host = owner + '@' + owner_at_host
+        LOG.debug('comm_meth[%s]=%s' % (owner_at_host, comm_meth))
+        items = self._remote_init_items(comm_meth)
         # No item to install
         if not items:
             self.remote_init_map[(host, owner)] = REMOTE_INIT_NOT_REQUIRED
@@ -197,9 +206,10 @@ class TaskRemoteMgr(object):
         tmphandle.seek(0)
         # UUID file - for remote to identify shared file system with suite host
         uuid_fname = os.path.join(
-            self.suite_srv_files_mgr.get_suite_srv_dir(self.suite), 'uuid')
+            self.suite_srv_files_mgr.get_suite_srv_dir(self.suite),
+            FILE_BASE_UUID)
         if not os.path.exists(uuid_fname):
-            open(uuid_fname, 'wb').write(str(self.uuid))
+            open(uuid_fname, 'wb').write(self.uuid_str)
         # Build the command
         cmd = ['cylc', 'remote-init']
         if is_remote_host(host):
@@ -208,7 +218,9 @@ class TaskRemoteMgr(object):
             cmd.append('--user=%s' % owner)
         if cylc.flags.debug:
             cmd.append('--debug')
-        cmd.append(str(self.uuid))
+        if comm_meth in ['ssh']:
+            cmd.append('--indirect-comm=%s' % comm_meth)
+        cmd.append(self.uuid_str)
         cmd.append(glbl_cfg().get_derived_host_item(
             self.suite, 'suite run directory', host, owner))
         self.proc_pool.put_command(
@@ -231,7 +243,8 @@ class TaskRemoteMgr(object):
         """
         # Remove UUID file
         uuid_fname = os.path.join(
-            self.suite_srv_files_mgr.get_suite_srv_dir(self.suite), 'uuid')
+            self.suite_srv_files_mgr.get_suite_srv_dir(self.suite),
+            FILE_BASE_UUID)
         try:
             os.unlink(uuid_fname)
         except OSError:
@@ -312,16 +325,15 @@ class TaskRemoteMgr(object):
         LOG.error(proc_ctx)
         self.remote_init_map[(host, owner)] = REMOTE_INIT_FAILED
 
-    def _remote_init_items(self, host, owner):
-        """Return list of items that should be installed on task remote.
+    def _remote_init_items(self, comm_meth):
+        """Return list of items to install based on communication method.
 
-        Each item is (path, name),
-        where name is relative path under suite run directory.
+        Return (list):
+            Each item is (path, name) where:
+            - path is the path to the source file to install.
+            - name is relative path under suite run directory at target remote.
         """
         items = []
-        comm_meth = glbl_cfg().get_host_item(
-            'task communication method', host, owner)
-        LOG.debug('comm_meth=%s' % comm_meth)
         if comm_meth in ['ssh', 'http', 'https']:
             # Contact file
             items.append((
@@ -329,22 +341,22 @@ class TaskRemoteMgr(object):
                 os.path.join(
                     self.suite_srv_files_mgr.DIR_BASE_SRV,
                     self.suite_srv_files_mgr.FILE_BASE_CONTACT)))
-            if comm_meth in ['http', 'https']:
-                # Passphrase file
-                items.append((
-                    self.suite_srv_files_mgr.get_auth_item(
-                        self.suite_srv_files_mgr.FILE_BASE_PASSPHRASE,
-                        self.suite),
-                    os.path.join(
-                        self.suite_srv_files_mgr.DIR_BASE_SRV,
-                        self.suite_srv_files_mgr.FILE_BASE_PASSPHRASE)))
-            if comm_meth in ['https']:
-                # SSL cert file
-                items.append((
-                    self.suite_srv_files_mgr.get_auth_item(
-                        self.suite_srv_files_mgr.FILE_BASE_SSL_CERT,
-                        self.suite),
-                    os.path.join(
-                        self.suite_srv_files_mgr.DIR_BASE_SRV,
-                        self.suite_srv_files_mgr.FILE_BASE_SSL_CERT)))
+        if comm_meth in ['http', 'https']:
+            # Passphrase file
+            items.append((
+                self.suite_srv_files_mgr.get_auth_item(
+                    self.suite_srv_files_mgr.FILE_BASE_PASSPHRASE,
+                    self.suite),
+                os.path.join(
+                    self.suite_srv_files_mgr.DIR_BASE_SRV,
+                    self.suite_srv_files_mgr.FILE_BASE_PASSPHRASE)))
+        if comm_meth in ['https']:
+            # SSL cert file
+            items.append((
+                self.suite_srv_files_mgr.get_auth_item(
+                    self.suite_srv_files_mgr.FILE_BASE_SSL_CERT,
+                    self.suite),
+                os.path.join(
+                    self.suite_srv_files_mgr.DIR_BASE_SRV,
+                    self.suite_srv_files_mgr.FILE_BASE_SSL_CERT)))
         return items

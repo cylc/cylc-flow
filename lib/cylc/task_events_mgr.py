@@ -31,7 +31,6 @@ from collections import namedtuple
 from logging import getLevelName, CRITICAL, ERROR, WARNING, INFO, DEBUG
 import os
 from pipes import quote
-import re
 import shlex
 from time import time
 import traceback
@@ -45,9 +44,10 @@ from cylc.mp_pool import SuiteProcContext
 from cylc.suite_logging import ERR, LOG
 from cylc.hostuserutil import get_host, get_user
 from cylc.task_action_timer import TaskActionTimer
-from cylc.task_message import TaskMessage
 from cylc.task_job_logs import (
     get_task_job_log, get_task_job_activity_log, JOB_LOG_OUT, JOB_LOG_ERR)
+from cylc.task_message import (
+    ABORT_MESSAGE_PREFIX, FAIL_MESSAGE_PREFIX, VACATION_MESSAGE_PREFIX)
 from cylc.task_state import (
     TASK_STATUS_READY, TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_RETRYING,
     TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_RUNNING, TASK_STATUS_RETRYING,
@@ -55,8 +55,7 @@ from cylc.task_state import (
 from cylc.task_outputs import (
     TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED, TASK_OUTPUT_SUBMIT_FAILED, TASK_OUTPUT_EXPIRED)
-from cylc.wallclock import (
-    get_current_time_string, RE_DATE_TIME_FORMAT_EXTENDED)
+from cylc.wallclock import get_current_time_string
 
 
 CustomTaskEventHandlerContext = namedtuple(
@@ -113,6 +112,7 @@ class TaskEventsManager(object):
     HANDLER_MAIL = "event-mail"
     JOB_FAILED = "job failed"
     HANDLER_JOB_LOGS_RETRIEVE = "job-logs-retrieve"
+    IGNORED_INCOMING_FLAG = "(>ignored)"
     INCOMING_FLAG = ">"
     LEVELS = {
         "INFO": INFO,
@@ -122,9 +122,7 @@ class TaskEventsManager(object):
         "CRITICAL": CRITICAL,
         "DEBUG": DEBUG,
     }
-    POLLED_INDICATOR = "(polled)"
-    RE_MESSAGE_TIME = re.compile(
-        r'\A(.+) at (' + RE_DATE_TIME_FORMAT_EXTENDED + r')\Z', re.DOTALL)
+    POLLED_FLAG = "(polled)"
 
     def __init__(self, suite, proc_pool, suite_db_mgr, broadcast_mgr=None):
         self.suite = suite
@@ -239,7 +237,8 @@ class TaskEventsManager(object):
             return False
 
     def process_message(self, itask, severity, message, poll_func,
-                        poll_event_time=None, is_incoming=False):
+                        poll_event_time=None, incoming_event_time=None,
+                        submit_num=None):
         """Parse an incoming task message and update task state.
 
         Incoming, e.g. "succeeded at <TIME>", may be from task job or polling.
@@ -256,30 +255,33 @@ class TaskEventsManager(object):
 
         """
 
-        is_polled = poll_event_time is not None
         # Log incoming messages with '>' to distinguish non-message log entries
-        message_flag = ""
-        if is_incoming:
-            message_flag = self.INCOMING_FLAG
-        log_message = '(current:%s)%s %s' % (
-            itask.state.status, message_flag, message)
-        if poll_event_time is not None:
-            log_message += ' %s' % self.POLLED_INDICATOR
-        LOG.log(self.LEVELS.get(severity, INFO), log_message, itask=itask)
-
-        # Strip the "at TIME" suffix.
-        event_time = poll_event_time
-        if not event_time:
-            match = self.RE_MESSAGE_TIME.match(message)
-            if match:
-                message, event_time = match.groups()
-        if not event_time:
+        if incoming_event_time:
+            if submit_num is None or submit_num == itask.submit_num:
+                message_flag = self.INCOMING_FLAG
+            else:
+                message_flag = self.IGNORED_INCOMING_FLAG
+            event_time = incoming_event_time
+        elif poll_event_time:
+            message_flag = self.POLLED_FLAG
+            event_time = poll_event_time
+        else:
+            message_flag = ''
             event_time = get_current_time_string()
+        log_message = '(current:%s)%s %s at %s' % (
+            itask.state.status, message_flag, message, event_time)
+        LOG.log(self.LEVELS.get(severity, INFO), log_message, itask=itask)
+        if message_flag == self.IGNORED_INCOMING_FLAG:
+            LOG.warning(
+                'submit-num=%d: ignore message from job submit-num=%d' % (
+                    itask.submit_num, submit_num),
+                itask=itask)
+            return
 
         # always update the suite state summary for latest message
         itask.summary['latest_message'] = message
-        if is_polled:
-            itask.summary['latest_message'] += " %s" % self.POLLED_INDICATOR
+        if poll_event_time is not None:
+            itask.summary['latest_message'] += ' %s' % self.POLLED_FLAG
         cylc.flags.iflag = True
 
         # Satisfy my output, if possible, and record the result.
@@ -307,25 +309,25 @@ class TaskEventsManager(object):
             if self._poll_to_confirm(itask, TASK_STATUS_SUBMITTED, poll_func):
                 return
             self._process_message_submitted(itask, event_time)
-        elif message.startswith(TaskMessage.FAIL_MESSAGE_PREFIX):
+        elif message.startswith(FAIL_MESSAGE_PREFIX):
             # Task received signal.
-            signal = message[len(TaskMessage.FAIL_MESSAGE_PREFIX):]
+            signal = message[len(FAIL_MESSAGE_PREFIX):]
             self._db_events_insert(itask, "signaled", signal)
             self.suite_db_mgr.put_update_task_jobs(
                 itask, {"run_signal": signal})
             if self._poll_to_confirm(itask, TASK_STATUS_FAILED, poll_func):
                 return
             self._process_message_failed(itask, event_time, self.JOB_FAILED)
-        elif message.startswith(TaskMessage.ABORT_MESSAGE_PREFIX):
+        elif message.startswith(ABORT_MESSAGE_PREFIX):
             # Task aborted with message
-            aborted_with = message[len(TaskMessage.ABORT_MESSAGE_PREFIX):]
+            aborted_with = message[len(ABORT_MESSAGE_PREFIX):]
             self._db_events_insert(itask, "aborted", message)
             self.suite_db_mgr.put_update_task_jobs(
                 itask, {"run_signal": aborted_with})
             if self._poll_to_confirm(itask, TASK_STATUS_FAILED, poll_func):
                 return
             self._process_message_failed(itask, event_time, aborted_with)
-        elif message.startswith(TaskMessage.VACATION_MESSAGE_PREFIX):
+        elif message.startswith(VACATION_MESSAGE_PREFIX):
             # Task job pre-empted into a vacation state
             self._db_events_insert(itask, "vacated", message)
             itask.set_summary_time('started')  # unset
@@ -353,15 +355,13 @@ class TaskEventsManager(object):
             # Note that all messages are logged already at the top.
             # No state change.
             LOG.debug(
-                '(current: %s) unhandled: %s' % (itask.state.status, message),
+                '(current:%s) unhandled: %s' % (itask.state.status, message),
                 itask=itask)
             if severity in [CRITICAL, ERROR, WARNING, INFO, DEBUG]:
                 severity = getLevelName(severity)
             self._db_events_insert(
                 itask, ("message %s" % str(severity).lower()), message)
-        if severity == "CUSTOM":
-            self.setup_event_handlers(itask, "custom", message)
-        elif severity in [TaskMessage.WARNING, TaskMessage.CRITICAL]:
+        if severity in ['WARNING', 'CRITICAL', 'CUSTOM']:
             self.setup_event_handlers(itask, severity.lower(), message)
 
     def setup_event_handlers(self, itask, event, message):

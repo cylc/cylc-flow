@@ -29,6 +29,10 @@ data = json.load(open(sys.argv[1]))
 exp_keys = [unicode(arg) for arg in sys.argv[2:]]
 exp_keys.sort()
 act_keys = list(data.keys())
+try:
+    act_keys.remove('mean_main_loop_interval')  # unreliable
+except ValueError:
+    pass
 act_keys.sort()
 if exp_keys != act_keys:
     raise AssertionError(r'%s != %s' % (exp_keys, act_keys))
@@ -63,24 +67,18 @@ TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 
 cylc run --hold "${SUITE_NAME}"
-SRV_D="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/.service"
-HOST="$(sed -n 's/^CYLC_SUITE_HOST=//p' "${SRV_D}/contact")"
-PORT="$(sed -n 's/^CYLC_SUITE_PORT=//p' "${SRV_D}/contact")"
-AGENT="cylc/${CYLC_VERSION:-$(cylc --version)} prog_name/cylc-test-battery uuid/$(uuidgen)"
+UUID="$(uuidgen)"
 
-# Call 1, full, no "mean_main_loop_interval" as suite started on hold
+# Call 1, full
 run_ok "${TEST_NAME_BASE}-1" \
-    env no_proxy=* curl -A "${AGENT}" -v --cacert "${SRV_D}/ssl.cert" \
-    --digest -u "cylc:$(<"${SRV_D}/passphrase")" \
-    "https://${HOST}:${PORT}/get_latest_state"
+    cylc client -n --set-uuid="${UUID}" 'get_latest_state' "${SUITE_NAME}"
 json_keys_cmp "${TEST_NAME_BASE}-1.stdout" \
     'ancestors' 'ancestors_pruned' 'cylc_version' 'descendants' 'err_content' \
     'err_size' 'full_mode' 'summary'
+sleep 1
 # Call 2, incremental
 run_ok "${TEST_NAME_BASE}-2" \
-    env no_proxy=* curl -A "${AGENT}" -v --cacert "${SRV_D}/ssl.cert" \
-    --digest -u "cylc:$(<"${SRV_D}/passphrase")" \
-    "https://${HOST}:${PORT}/get_latest_state"
+    cylc client -n --set-uuid="${UUID}" 'get_latest_state' "${SUITE_NAME}"
 json_keys_cmp "${TEST_NAME_BASE}-2.stdout" 'cylc_version' 'full_mode'
 
 # Run the 2010 tasks and wait
@@ -90,47 +88,41 @@ cylc suite-state "${SUITE_NAME}" \
     --interval=1 --max-polls=20
 
 # Call 3, after some normal activities
+sleep 1
 run_ok "${TEST_NAME_BASE}-3" \
-    env no_proxy=* curl -A "${AGENT}" -v --cacert "${SRV_D}/ssl.cert" \
-    --digest -u "cylc:$(<"${SRV_D}/passphrase")" \
-    "https://${HOST}:${PORT}/get_latest_state"
+    cylc client -n --set-uuid="${UUID}" 'get_latest_state' "${SUITE_NAME}"
 json_keys_cmp "${TEST_NAME_BASE}-3.stdout" \
-    'cylc_version' 'full_mode' 'mean_main_loop_interval' 'summary'
+    'cylc_version' 'full_mode' 'summary'
+sleep 1
 # Call 4, incremental
 run_ok "${TEST_NAME_BASE}-4" \
-    env no_proxy=* curl -A "${AGENT}" -v --cacert "${SRV_D}/ssl.cert" \
-    --digest -u "cylc:$(<"${SRV_D}/passphrase")" \
-    "https://${HOST}:${PORT}/get_latest_state"
+    cylc client -n --set-uuid="${UUID}" 'get_latest_state' "${SUITE_NAME}"
 json_keys_cmp "${TEST_NAME_BASE}-4.stdout" \
-    'cylc_version' 'full_mode' 'mean_main_loop_interval'
+    'cylc_version' 'full_mode'
 
 # Call 5, after a reload
 cylc reload "${SUITE_NAME}"
 LOG="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/suite/log"
 poll "! grep -qF 'Reload completed' '${LOG}'"
 run_ok "${TEST_NAME_BASE}-5" \
-    env no_proxy=* curl -A "${AGENT}" -v --cacert "${SRV_D}/ssl.cert" \
-    --digest -u "cylc:$(<"${SRV_D}/passphrase")" \
-    "https://${HOST}:${PORT}/get_latest_state"
+    cylc client -n --set-uuid="${UUID}" 'get_latest_state' "${SUITE_NAME}"
 json_keys_cmp "${TEST_NAME_BASE}-5.stdout" \
     'ancestors' 'ancestors_pruned' 'cylc_version' 'descendants' \
-    'full_mode' 'mean_main_loop_interval' 'summary'
+    'full_mode' 'summary'
+sleep 1
 # Call 6, incremental
 run_ok "${TEST_NAME_BASE}-6" \
-    env no_proxy=* curl -A "${AGENT}" -v --cacert "${SRV_D}/ssl.cert" \
-    --digest -u "cylc:$(<"${SRV_D}/passphrase")" \
-    "https://${HOST}:${PORT}/get_latest_state"
+    cylc client -n --set-uuid="${UUID}" 'get_latest_state' "${SUITE_NAME}"
 json_keys_cmp "${TEST_NAME_BASE}-6.stdout" \
-    'cylc_version' 'full_mode' 'mean_main_loop_interval'
+    'cylc_version' 'full_mode'
 
 # Call 7, forced full mode
 run_ok "${TEST_NAME_BASE}-7" \
-    env no_proxy=* curl -A "${AGENT}" -v --cacert "${SRV_D}/ssl.cert" \
-    --digest -u "cylc:$(<"${SRV_D}/passphrase")" \
-    "https://${HOST}:${PORT}/get_latest_state?&full_mode=True"
+    cylc client --set-uuid="${UUID}" 'get_latest_state' "${SUITE_NAME}" \
+    <<<'{"full_mode": true}'
 json_keys_cmp "${TEST_NAME_BASE}-7.stdout" \
     'ancestors' 'ancestors_pruned' 'cylc_version' 'descendants' 'err_content' \
-    'err_size' 'full_mode' 'mean_main_loop_interval' 'summary'
+    'err_size' 'full_mode' 'summary'
 
 # Stop and purge the suite.
 cylc stop --max-polls=20 --interval=1 "${SUITE_NAME}"

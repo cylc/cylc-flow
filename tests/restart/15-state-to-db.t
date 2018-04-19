@@ -54,12 +54,10 @@ cmp_ok "${TEST_NAME_BASE}-checkpoint_id.stdout" <<__OUT__
 __OUT__
 run_ok "${TEST_NAME_BASE}-suite_params" \
     sqlite3 "${SUITE_RUN_DIR}/log/db" \
-    'SELECT key,value FROM suite_params ORDER BY key'
-sed -i "s/$(cylc --version)/<SOME-VERSION>/g" \
-    "${TEST_NAME_BASE}-suite_params.stdout"
+    'SELECT key,value FROM suite_params WHERE key != "uuid_str" ORDER BY key'
 cmp_ok "${TEST_NAME_BASE}-suite_params.stdout" <<__OUT__
 UTC_mode|True
-cylc_version|<SOME-VERSION>
+cylc_version|$(cylc version)
 final_point|20050101T0000Z
 initial_point|20000101T0000Z
 run_mode|live

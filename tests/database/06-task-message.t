@@ -45,7 +45,7 @@ sqlite3 "${DB_FILE}" '
 ' >"${NAME}"
 cmp_ok "${NAME}" <<'__SELECT__'
 1|t1|message critical|You are being critical
-1|t1|message normal|You are normal
+1|t1|message info|You are normal
 1|t1|message warning|You have been warned
 __SELECT__
 

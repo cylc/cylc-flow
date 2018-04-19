@@ -109,7 +109,9 @@ from subprocess import Popen, PIPE
 import sys
 import traceback
 from cylc.mkdir_p import mkdir_p
-from cylc.task_message import TaskMessage
+from cylc.task_message import (
+    CYLC_JOB_PID, CYLC_JOB_INIT_TIME, CYLC_JOB_EXIT_TIME, CYLC_JOB_EXIT,
+    CYLC_MESSAGE)
 from cylc.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.task_job_logs import (
     JOB_LOG_JOB, JOB_LOG_OUT, JOB_LOG_ERR, JOB_LOG_STATUS)
@@ -375,7 +377,7 @@ class BatchSysManager(object):
             st_file.seek(0, 0)  # rewind
             if getattr(batch_sys, "SHOULD_KILL_PROC_GROUP", False):
                 for line in st_file:
-                    if line.startswith(TaskMessage.CYLC_JOB_PID + "="):
+                    if line.startswith(CYLC_JOB_PID + "="):
                         pid = line.strip().split("=", 1)[1]
                         try:
                             os.killpg(os.getpgid(int(pid)), SIGKILL)
@@ -484,21 +486,21 @@ class BatchSysManager(object):
                 ctx.batch_sys_job_id = value
             elif key == self.CYLC_BATCH_SYS_EXIT_POLLED:
                 ctx.batch_sys_exit_polled = 1
-            elif key == TaskMessage.CYLC_JOB_PID:
+            elif key == CYLC_JOB_PID:
                 ctx.pid = value
             elif key == self.CYLC_BATCH_SYS_JOB_SUBMIT_TIME:
                 ctx.time_submit_exit = value
-            elif key == TaskMessage.CYLC_JOB_INIT_TIME:
+            elif key == CYLC_JOB_INIT_TIME:
                 ctx.time_run = value
-            elif key == TaskMessage.CYLC_JOB_EXIT_TIME:
+            elif key == CYLC_JOB_EXIT_TIME:
                 ctx.time_run_exit = value
-            elif key == TaskMessage.CYLC_JOB_EXIT:
+            elif key == CYLC_JOB_EXIT:
                 if value == TASK_OUTPUT_SUCCEEDED.upper():
                     ctx.run_status = 0
                 else:
                     ctx.run_status = 1
                     ctx.run_signal = value
-            elif key == TaskMessage.CYLC_MESSAGE:
+            elif key == CYLC_MESSAGE:
                 ctx.messages.append(value)
         handle.close()
 

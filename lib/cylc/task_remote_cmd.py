@@ -26,21 +26,23 @@ from cylc.mkdir_p import mkdir_p
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 
 
+FILE_BASE_UUID = 'uuid'
 REMOTE_INIT_DONE = 'REMOTE INIT DONE'
 REMOTE_INIT_NOT_REQUIRED = 'REMOTE INIT NOT REQUIRED'
 
 
-def remote_init(uuid_str, rund):
+def remote_init(uuid_str, rund, indirect_comm=None):
     """cylc remote-init
 
     Arguments:
         uuid_str (str): suite host UUID
         rund (str): suite run directory
+        *indirect_comm (str): use indirect communication via e.g. 'ssh'
     """
     rund = os.path.expandvars(rund)
     srvd = os.path.join(rund, SuiteSrvFilesManager.DIR_BASE_SRV)
     try:
-        orig_uuid_str = open(os.path.join(srvd, 'uuid')).read()
+        orig_uuid_str = open(os.path.join(srvd, FILE_BASE_UUID)).read()
     except IOError:
         pass
     else:
@@ -56,6 +58,11 @@ def remote_init(uuid_str, rund):
         tarhandle.close()
     finally:
         os.chdir(oldcwd)
+    if indirect_comm:
+        fname = os.path.join(srvd, SuiteSrvFilesManager.FILE_BASE_CONTACT2)
+        with open(fname, 'w') as handle:
+            handle.write('%s=%s\n' % (
+                SuiteSrvFilesManager.KEY_COMMS_PROTOCOL_2, indirect_comm))
     print(REMOTE_INIT_DONE)
     return
 
@@ -68,15 +75,18 @@ def remote_tidy(rund):
     """
     rund = os.path.expandvars(rund)
     srvd = os.path.join(rund, SuiteSrvFilesManager.DIR_BASE_SRV)
-    fname = os.path.join(srvd, SuiteSrvFilesManager.FILE_BASE_CONTACT)
-    try:
-        os.unlink(fname)
-    except OSError:
-        if os.path.exists(fname):
-            raise
-    else:
-        if cylc.flags.debug:
-            print('Deleted: %s' % fname)
+    for name in [
+            SuiteSrvFilesManager.FILE_BASE_CONTACT,
+            SuiteSrvFilesManager.FILE_BASE_CONTACT2]:
+        fname = os.path.join(srvd, name)
+        try:
+            os.unlink(fname)
+        except OSError:
+            if os.path.exists(fname):
+                raise
+        else:
+            if cylc.flags.debug:
+                print('Deleted: %s' % fname)
     try:
         os.rmdir(srvd)  # remove directory if empty
     except OSError:

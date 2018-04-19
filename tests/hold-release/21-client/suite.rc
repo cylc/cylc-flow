@@ -1,0 +1,12 @@
+#!jinja2
+[cylc]
+    [[events]]
+        abort on stalled = True
+        abort on inactivity = True
+        inactivity = P1M
+[scheduling]
+    [[dependencies]]
+        graph = t1
+[runtime]
+    [[t1]]
+        script = true

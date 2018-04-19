@@ -4229,6 +4229,7 @@ CYLC_SUITE_DEF_PATH_ON_SUITE_HOST
                                 # Location of the suite definition directory in
                                 # suite host, e.g. ~/cylc-run/foo
 CYLC_SUITE_SHARE_DIR            # Suite (or task!) shared directory (see below)
+CYLC_SUITE_UUID                 # Suite UUID string
 CYLC_SUITE_WORK_DIR             # Suite work directory (see below)
 
 CYLC_TASK_JOB                   # Task job identifier expressed as
@@ -7413,8 +7414,7 @@ $ cylc cat-log SUITE-NAME
 2017-03-30T09:46:11Z INFO - [foo.2017-01-01T00Z] -submit_method_id=3507
 2017-03-30T09:46:11Z INFO - [foo.2017-01-01T00Z] -submission succeeded
 2017-03-30T09:46:11Z INFO - [foo.2017-01-01T00Z] -(current:submitted)> started at 2017-03-30T09:46:10Z
-2017-03-30T09:46:41Z CRITICAL - [foo.2017-01-01T00Z] -(current:running)> Task job script received signal EXIT at 2017-03-30T09:46:40Z
-2017-03-30T09:46:41Z CRITICAL - [foo.2017-01-01T00Z] -(current:running)> failed at 2017-03-30T09:46:40Z
+2017-03-30T09:46:41Z CRITICAL - [foo.2017-01-01T00Z] -(current:running)> failed/EXIT at 2017-03-30T09:46:40Z
 2017-03-30T09:46:42Z WARNING - suite stalled
 2017-03-30T09:46:42Z WARNING - Unmet prerequisites for bar.2017-01-01T00Z:
 2017-03-30T09:46:42Z WARNING -  * foo.2017-01-01T00Z succeeded

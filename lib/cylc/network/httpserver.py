@@ -25,6 +25,7 @@ import binascii
 import inspect
 import os
 import random
+import re
 from time import time
 import traceback
 from uuid import uuid4
@@ -42,13 +43,16 @@ from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
 from cylc.unicode_util import utf8_enforce
 from cylc.version import CYLC_VERSION
+from cylc.wallclock import RE_DATE_TIME_FORMAT_EXTENDED
 
 
 class HTTPServer(object):
     """HTTP(S) server by cherrypy, for serving suite runtime API."""
 
-    API = 1
+    API = 2
     LOG_CONNECT_DENIED_TMPL = "[client-connect] DENIED %s@%s:%s %s"
+    RE_MESSAGE_TIME = re.compile(
+        r'\A(.+) at (' + RE_DATE_TIME_FORMAT_EXTENDED + r')\Z', re.DOTALL)
 
     def __init__(self, suite):
         # Suite only needed for back-compat with old clients (see below):
@@ -498,9 +502,44 @@ class SuiteRuntimeService(object):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def put_message(self, task_id, severity, message):
+        """(Compat) Put task message.
+
+        Arguments:
+            task_id (str): Task ID in the form "TASK_NAME.CYCLE".
+            severity (str): Severity level of message.
+            message (str): Content of message.
+        """
         self._check_access_priv_and_report(PRIV_FULL_CONTROL, log_info=False)
-        self.schd.message_queue.put((task_id, severity, str(message)))
+        match = self.RE_MESSAGE_TIME.match(message)
+        event_time = None
+        if match:
+            message, event_time = match.groups()
+        self.schd.message_queue.put(
+            (task_id, event_time, severity, message))
         return (True, 'Message queued')
+
+    @cherrypy.expose
+    @cherrypy.tools.json_in()
+    @cherrypy.tools.json_out()
+    def put_messages(self, task_job=None, event_time=None, messages=None):
+        """Put task messages in queue for processing later by the main loop.
+
+        Arguments:
+            task_job (str): Task job in the form "CYCLE/TASK_NAME/SUBMIT_NUM".
+            event_time (str): Event time as string.
+            messages (list): List in the form [[severity, message], ...].
+        """
+        self._check_access_priv_and_report(PRIV_FULL_CONTROL, log_info=False)
+        task_job = utf8_enforce(
+            cherrypy.request.json.get("task_job", task_job))
+        event_time = utf8_enforce(
+            cherrypy.request.json.get("event_time", event_time))
+        messages = utf8_enforce(
+            cherrypy.request.json.get("messages", messages))
+        for severity, message in messages:
+            self.schd.message_queue.put(
+                (task_job, event_time, severity, message))
+        return (True, 'Messages queued: %d' % len(messages))
 
     @cherrypy.expose
     @cherrypy.tools.json_out()

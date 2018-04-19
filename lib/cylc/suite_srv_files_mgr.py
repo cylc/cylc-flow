@@ -43,6 +43,7 @@ class SuiteSrvFilesManager(object):
     DIR_BASE_AUTH = "auth"
     DIR_BASE_SRV = ".service"
     FILE_BASE_CONTACT = "contact"
+    FILE_BASE_CONTACT2 = "contact2"
     FILE_BASE_PASSPHRASE = "passphrase"
     FILE_BASE_SOURCE = "source"
     FILE_BASE_SSL_CERT = "ssl.cert"
@@ -50,16 +51,19 @@ class SuiteSrvFilesManager(object):
     FILE_BASE_SUITE_RC = "suite.rc"
     KEY_API = "CYLC_API"
     KEY_COMMS_PROTOCOL = "CYLC_COMMS_PROTOCOL"  # default (or none?)
+    KEY_COMMS_PROTOCOL_2 = "CYLC_COMMS_PROTOCOL_2"  # indirect comms
     KEY_DIR_ON_SUITE_HOST = "CYLC_DIR_ON_SUITE_HOST"
     KEY_HOST = "CYLC_SUITE_HOST"
     KEY_NAME = "CYLC_SUITE_NAME"
     KEY_OWNER = "CYLC_SUITE_OWNER"
     KEY_PROCESS = "CYLC_SUITE_PROCESS"
     KEY_PORT = "CYLC_SUITE_PORT"
+    KEY_SSH_USE_LOGIN_SHELL = "CYLC_SSH_USE_LOGIN_SHELL"
     KEY_SUITE_RUN_DIR_ON_SUITE_HOST = "CYLC_SUITE_RUN_DIR_ON_SUITE_HOST"
     KEY_TASK_MSG_MAX_TRIES = "CYLC_TASK_MSG_MAX_TRIES"
     KEY_TASK_MSG_RETRY_INTVL = "CYLC_TASK_MSG_RETRY_INTVL"
     KEY_TASK_MSG_TIMEOUT = "CYLC_TASK_MSG_TIMEOUT"
+    KEY_UUID = "CYLC_SUITE_UUID"
     KEY_VERSION = "CYLC_VERSION"
     NO_TITLE = "No title provided"
     PASSPHRASE_CHARSET = ascii_letters + digits
@@ -233,7 +237,7 @@ To start a new run, stop the old one first with one or more of these:
         if item not in [
                 self.FILE_BASE_SSL_CERT, self.FILE_BASE_SSL_PEM,
                 self.FILE_BASE_PASSPHRASE, self.FILE_BASE_CONTACT,
-                self.KEY_COMMS_PROTOCOL]:
+                self.FILE_BASE_CONTACT2]:
             raise ValueError("%s: item not recognised" % item)
         if item == self.FILE_BASE_PASSPHRASE:
             self.can_disk_cache_passphrases[(reg, owner, host)] = False
@@ -366,10 +370,12 @@ To start a new run, stop the old one first with one or more of these:
                 print >> sys.stderr, str(exc)
         return results
 
-    def load_contact_file(self, reg, owner=None, host=None):
+    def load_contact_file(self, reg, owner=None, host=None, file_base=None):
         """Load contact file. Return data as key=value dict."""
+        if not file_base:
+            file_base = self.FILE_BASE_CONTACT
         file_content = self.get_auth_item(
-            self.FILE_BASE_CONTACT, reg, owner, host, content=True)
+            file_base, reg, owner, host, content=True)
         data = {}
         for line in file_content.splitlines():
             key, value = [item.strip() for item in line.split("=", 1)]

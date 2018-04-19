@@ -18,8 +18,8 @@ wait
 # Simulate "cylc task message", messages written to status file but failed to
 # get sent back to the suite
 {
-    echo "CYLC_MESSAGE=$(date +%FT%H:%M:%SZ)|NORMAL|hello1"
-    echo "CYLC_MESSAGE=$(date +%FT%H:%M:%SZ)|NORMAL|hello2"
+    echo "CYLC_MESSAGE=$(date +%FT%H:%M:%SZ)|INFO|hello1"
+    echo "CYLC_MESSAGE=$(date +%FT%H:%M:%SZ)|INFO|hello2"
 } >>"${CYLC_TASK_LOG_ROOT}.status"
 sleep 30
 """
@@ -33,7 +33,7 @@ wait
 # Simulate "cylc task message", messages written to status file but failed to
 # get sent back to the suite
 {
-    echo "CYLC_MESSAGE=$(date +%FT%H:%M:%SZ)|NORMAL|greet"
+    echo "CYLC_MESSAGE=$(date +%FT%H:%M:%SZ)|INFO|greet"
 } >>"${CYLC_TASK_LOG_ROOT}.status"
 sleep 30
 """

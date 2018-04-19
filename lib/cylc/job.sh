@@ -120,7 +120,7 @@ cylc__job__main() {
     # Env-Script
     cylc__job__run_inst_func 'env_script'
     # Send task started message
-    cylc message 'started' &
+    cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'started' &
     CYLC_TASK_MESSAGE_STARTED_PID=$!
     # Access to the suite bin directory
     if [[ -n "${CYLC_SUITE_DEF_PATH:-}" && -d "${CYLC_SUITE_DEF_PATH}/bin" ]]
@@ -142,7 +142,7 @@ cylc__job__main() {
     rmdir "${CYLC_TASK_WORK_DIR}" 2>'/dev/null' || true
     # Send task succeeded message
     wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
-    cylc message 'succeeded' || true
+    cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'succeeded' || true
     trap '' EXIT
     exit 0
 }
@@ -150,7 +150,7 @@ cylc__job__main() {
 ###############################################################################
 # Run a function in the task job instance file, if possible.
 # Arguments:
-#   func_name - name of function without the "cylc__job__inst__" prefix
+#   func_name: name of function without the "cylc__job__inst__" prefix
 # Returns:
 #   return 0, or the return code of the function if called
 cylc__job__run_inst_func() {
@@ -168,18 +168,17 @@ cylc__job__run_inst_func() {
 #   CYLC_TASK_MESSAGE_STARTED_PID
 #   CYLC_VACATION_SIGNALS
 # Arguments:
-#   signal - trapped or given signal
-#   severity - message severity
-#   run_err_script - boolean, run job err script or not
-#   messages - (remaining arguments)
-#              messages to send back to the suite server program
+#   signal: trapped or given signal
+#   run_err_script (boolean): run job err script or not
+#   messages (remaining arguments):
+#     messages to send back to the suite server program,
+#     see "cylc help message" for format of messages.
 # Returns:
 #   exit 1
 cylc__job_finish() {
     typeset signal="$1"
-    typeset severity="$2"
-    typeset run_err_script="$3"
-    shift 3
+    typeset run_err_script="$2"
+    shift 2
     typeset signal_name=
     for signal_name in ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}; do
         trap '' "${signal_name}"
@@ -187,8 +186,8 @@ cylc__job_finish() {
     if [[ -n "${CYLC_TASK_MESSAGE_STARTED_PID:-}" ]]; then
         wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
     fi
-    cylc message -s "${severity}" "$@" || true
-    if $run_err_script; then
+    cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" "$@" || true
+    if "${run_err_script}"; then
         cylc__job__run_inst_func 'err_script' "${signal}" >&2
     fi
     exit 1
@@ -197,22 +196,19 @@ cylc__job_finish() {
 ###############################################################################
 # Wrap cylc__job_finish to abort with a user-defined error message.
 cylc__job_abort() {
-    cylc__job_finish \
-        "EXIT" "CRITICAL" true "Task job script aborted with \"${1}\""
+    cylc__job_finish "EXIT" true "CRITICAL: aborted/\"${1}\""
 }
 
 ###############################################################################
 # Wrap cylc__job_finish for job preempt/vacation signal trap.
 cylc__job_vacation() {
-    cylc__job_finish \
-        "${1}" "WARNING" false "Task job script vacated by signal ${1}"
+    cylc__job_finish "${1}" false "WARNING: vacated/${1}"
 }
 
 ###############################################################################
 # Wrap cylc__job_finish for automatic job exit signal trap.
 cylc__job_err() {
-    cylc__job_finish \
-        "${1}" "CRITICAL" true "Task job script received signal ${1}"
+    cylc__job_finish "${1}" true "CRITICAL: failed/${1}"
 }
 
 ###############################################################################
@@ -222,10 +218,10 @@ cylc__job_err() {
 #   CYLC_TASK_CYCLE_POINT
 #   CYLC_CYCLING_MODE
 # Arguments:
-#   Fail try 1 only (T/F)
-#   Fail cycle points:
-#     'all' - fail all cycle points
-#     'P1 P2 P3 ...' - fail these cycle points
+#   fail_try_1_only (boolean): fail only on 1st try
+#   fail_cycle_points (remaining arguments):
+#     'all': fail all cycle points
+#     'P1 P2 P3 ...': fail these cycle points
 # Returns:
 #   0 - dummy job succeed
 #   1 - dummy job fail

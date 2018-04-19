@@ -16,42 +16,55 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [control] checkpoint [OPTIONS] ARGS
+"""cylc client [OPTIONS] ARGS
 
-Tell suite to checkpoint its current state.
+(This command is for internal use.)
+Invoke HTTP(S) client, expect JSON from STDIN for keyword arguments.
+Use the -n option if client function requires no keyword arguments.
 """
 
+import json
 import sys
-if "--use-ssh" in sys.argv[1:]:
-    sys.argv.remove("--use-ssh")
+if '--use-ssh' in sys.argv[1:]:
+    sys.argv.remove('--use-ssh')
     from cylc.remote import remrun
     if remrun():
         sys.exit(0)
 
-import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.network.httpclient import SuiteRuntimeServiceClient
 
 
 def main():
     parser = COP(__doc__, comms=True, argdoc=[
-        ("REG", "Suite name"),
-        ("CHECKPOINT-NAME", "Checkpoint name")])
-
+        ('METHOD', 'Network API function name'),
+        ('[REG]', 'Suite name')])
+    parser.add_option(
+        '-n', '--no-input',
+        help='Do not read from STDIN, assume null input',
+        action='store_true', dest='no_input')
     options, args = parser.parse_args()
-    suite, name = args
-
+    # Client API function name
+    func = args[0]
+    if len(args) == 2:
+        # 2nd argument is suite name, assume authentication required
+        suite = args[1]
+        auth = None
+    else:
+        # No 2nd argument, assume anonymous authentication
+        suite = None
+        auth = SuiteRuntimeServiceClient.ANON_AUTH
     pclient = SuiteRuntimeServiceClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout, my_uuid=options.set_uuid,
-        print_uuid=options.print_uuid)
-    pclient.put_command("take_checkpoints", items=[name])
+        print_uuid=options.print_uuid, auth=auth)
+    if options.no_input:
+        kwargs = {}
+    else:
+        kwargs = json.load(sys.stdin)
+    sys.stdin.close()
+    sys.stdout.write(json.dumps(getattr(pclient, func)(**kwargs), indent=4))
 
 
-if __name__ == "__main__":
-    try:
-        main()
-    except Exception as exc:
-        if cylc.flags.debug:
-            raise
-        sys.exit(str(exc))
+if __name__ == '__main__':
+    main()

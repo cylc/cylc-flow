@@ -29,7 +29,7 @@ run_ok "${TEST_NAME_BASE}-log-1" \
     grep -F '[jobs-poll err] 1/t1/01/job.status: incomplete batch system info' \
     "${LOG}"
 run_ok "${TEST_NAME_BASE}-log-2" \
-    grep -F '[t1.1] -(current:running) failed (polled)' \
+    grep -F '[t1.1] -(current:running)(polled) failed' \
     "${LOG}"
 
 purge_suite "${SUITE_NAME}"
