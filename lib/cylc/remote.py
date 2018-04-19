@@ -55,7 +55,7 @@ def remote_cylc_cmd(cmd, user=None, host=None, capture=False,
 
     Return:
         If capture=True, return the Popen object if created successfully.
-        Otherwise, return the return the exit code of the remote command.
+        Otherwise, return the exit code of the remote command.
     """
     if host is None:
         host = "localhost"
