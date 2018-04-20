@@ -113,6 +113,21 @@ class SuiteDatabaseManager(object):
         """Return the primary DAO."""
         return CylcSuiteDAO(self.pri_path)
 
+    @staticmethod
+    def _namedtuple2json(obj):
+        """Convert nametuple obj to a JSON string.
+
+        Arguments:
+            obj (namedtuple): input object to serialize to JSON.
+
+        Return (str):
+            Serialized JSON string of input object in the form "[type, list]".
+        """
+        if obj is None:
+            return json.dumps(None)
+        else:
+            return json.dumps([type(obj).__name__, obj.__getnewargs__()])
+
     def on_suite_start(self, is_restart):
         """Initialise data access objects.
 
@@ -290,17 +305,11 @@ class SuiteDatabaseManager(object):
             self.db_deletes_map[self.TABLE_TASK_ACTION_TIMERS].append({})
             for key, timer in task_events_mgr.event_timers.items():
                 key1, point, name, submit_num = key
-                # convert namedtuple timer.ctx for JSON serialisation
-                if timer.ctx is not None:
-                    ctx_obj = [
-                        type(timer.ctx).__name__, timer.ctx.__getnewargs__()]
-                else:
-                    ctx_obj = None
                 self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
                     "name": name,
                     "cycle": point,
                     "ctx_key": json.dumps((key1, submit_num,)),
-                    "ctx": json.dumps(ctx_obj),
+                    "ctx": self._namedtuple2json(timer.ctx),
                     "delays": json.dumps(timer.delays),
                     "num": timer.num,
                     "delay": timer.delay,
@@ -334,18 +343,11 @@ class SuiteDatabaseManager(object):
                 for ctx_key_1, timer in getattr(itask, ctx_key_0).items():
                     if timer is None:
                         continue
-                    # convert namedtuple timer.ctx for JSON serialisation
-                    if timer.ctx is not None:
-                        ctx_obj = [
-                            type(timer.ctx).__name__,
-                            timer.ctx.__getnewargs__()]
-                    else:
-                        ctx_obj = None
                     self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
                         "name": itask.tdef.name,
                         "cycle": str(itask.point),
                         "ctx_key": json.dumps((ctx_key_0, ctx_key_1)),
-                        "ctx": json.dumps(ctx_obj),
+                        "ctx": self._namedtuple2json(timer.ctx),
                         "delays": json.dumps(timer.delays),
                         "num": timer.num,
                         "delay": timer.delay,

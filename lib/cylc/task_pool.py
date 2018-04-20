@@ -430,20 +430,21 @@ class TaskPool(object):
         try:
             # Extract type namedtuple variables from JSON strings
             ctx_key = json.loads(str(ctx_key_raw))
-            ctx_data = json.loads(str(ctx_raw))
-            ctx = ctx_data
-            if ctx_data:
-                for ctx_cls in [
-                        CustomTaskEventHandlerContext,
-                        TaskEventMailContext,
-                        TaskJobLogsRetrieveContext]:
-                    if ctx_cls.__name__ == ctx_data[0]:
-                        ctx = ctx_cls(*ctx_data[1])
+            ctx = None
+            if ctx_raw:
+                ctx_data = json.loads(str(ctx_raw))
+                if ctx_data:
+                    for ctx_cls in [
+                            CustomTaskEventHandlerContext,
+                            TaskEventMailContext,
+                            TaskJobLogsRetrieveContext]:
+                        if ctx_cls.__name__ == ctx_data[0]:
+                            ctx = ctx_cls(*ctx_data[1])
             delays = json.loads(str(delays_raw))
         except ValueError:
             LOG.exception(
-                "%(id)s: skip action timer %(ctx_key)s" %
-                {"id": id_, "ctx_key": 'ctx_key_raw'})
+                "%(id)s: skip action timer %(ctx_key)s, %(ctx)s" %
+                {"id": id_, "ctx_key": ctx_key_raw, "ctx": ctx_raw})
             return
         if ctx_key and ctx_key[0] in ["poll_timers", "try_timers"]:
             itask = self.get_task_by_id(id_)
