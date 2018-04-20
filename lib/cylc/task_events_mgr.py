@@ -86,7 +86,11 @@ def log_task_job_activity(ctx, suite, point, name, submit_num=None):
         with open(job_activity_log, "ab") as handle:
             handle.write(ctx_str + '\n')
     except IOError as exc:
-        LOG.warning("%s: write failed\n%s" % (job_activity_log, exc))
+        # This happens when there is no job directory, e.g. if job host
+        # selection command causes an submission failure, there will be no job
+        # directory. In this case, just send the information to the suite log.
+        LOG.debug(exc)
+        LOG.info(ctx_str)
     if ctx.cmd and ctx.ret_code:
         LOG.error(ctx_str)
     elif ctx.cmd:
@@ -807,13 +811,15 @@ class TaskEventsManager(object):
                 key1, str(itask.point), itask.tdef.name, itask.submit_num)
             if id_key in self.event_timers:
                 continue
+            # Note: if host select command fails, this will not be set for this
+            # submit number. Use null string to prevent issues in this case.
+            user_at_host = itask.summary['job_hosts'].get(itask.submit_num, '')
+            if user_at_host and '@' not in user_at_host:
+                # (only has 'user@' on the front if user is not suite owner).
+                user_at_host = '%s@%s' % (get_user(), user_at_host)
             # Custom event handler can be a command template string
             # or a command that takes 4 arguments (classic interface)
             # Note quote() fails on None, need str(None).
-            user_at_host = itask.summary['job_hosts'][itask.submit_num]
-            if '@' not in user_at_host:
-                # (only has 'user@' on the front if user is not suite owner).
-                user_at_host = '%s@%s' % (get_user(), user_at_host)
             try:
                 handler_data = {
                     "event": quote(event),

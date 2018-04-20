@@ -755,6 +755,7 @@ class TaskJobManager(object):
             # Submit number not yet incremented
             itask.submit_num += 1
             itask.summary['submit_num'] = itask.submit_num
+            itask.summary['job_hosts'][itask.submit_num] = ''
             # Retry delays, needed for the try_num
             self._set_retry_timers(itask, rtconfig)
             self._prep_submit_task_job_error(
