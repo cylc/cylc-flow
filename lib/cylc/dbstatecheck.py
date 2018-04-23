@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import errno
+import json
 import os
 import sqlite3
 import sys
@@ -123,8 +124,8 @@ class CylcSuiteDBChecker(object):
             return bool(res)
         elif message:
             for outputs_str, in res:
-                for line in outputs_str.splitlines():
-                    if message in line.split("=", 1):
+                for value in json.loads(outputs_str).values():
+                    if message == value:
                         return True
             return False
 

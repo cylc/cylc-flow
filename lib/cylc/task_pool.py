@@ -32,15 +32,16 @@ tasks against the new stop cycle.
 """
 
 from fnmatch import fnmatchcase
-import pickle
+import json
 from time import time
-import traceback
 
 from cylc.config import SuiteConfigError
 from cylc.cycling.loader import get_point, standardise_point_string
-import cylc.flags
-from cylc.suite_logging import ERR, LOG
+from cylc.suite_logging import LOG
 from cylc.task_action_timer import TaskActionTimer
+from cylc.task_events_mgr import (
+    CustomTaskEventHandlerContext, TaskEventMailContext,
+    TaskJobLogsRetrieveContext)
 from cylc.task_id import TaskID
 from cylc.task_job_logs import get_task_job_id
 from cylc.task_proxy import TaskProxy
@@ -354,17 +355,13 @@ class TaskPool(object):
                 hold_swap=hold_swap,
                 has_spawned=bool(spawned),
                 submit_num=submit_num)
-        except SuiteConfigError as exc:
-            if cylc.flags.debug:
-                ERR.error(traceback.format_exc())
-            else:
-                ERR.error(str(exc))
-            ERR.warning((
-                "ignoring task %s from the suite run database\n"
-                "(its task definition has probably been deleted).") % name)
+        except SuiteConfigError:
+            LOG.exception((
+                'ignoring task %s from the suite run database\n'
+                '(its task definition has probably been deleted).'
+            ) % name)
         except Exception:
-            ERR.error(traceback.format_exc())
-            ERR.error("could not load task %s" % name)
+            LOG.exception('could not load task %s' % name)
         else:
             if status in (TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING):
                 itask.state.set_prerequisites_all_satisfied()
@@ -403,11 +400,17 @@ class TaskPool(object):
                     TASK_STATUS_RUNNING, TASK_STATUS_FAILED,
                     TASK_STATUS_SUCCEEDED]:
                 try:
-                    for output in outputs_str.splitlines():
-                        itask.state.outputs.set_completion(
-                            output.split("=", 1)[1], True)
-                except AttributeError:
-                    pass
+                    for message in json.loads(outputs_str).values():
+                        itask.state.outputs.set_completion(message, True)
+                except (AttributeError, TypeError, ValueError):
+                    # Back compat for <=7.6.X
+                    # Each output in separate line as "trigger=message"
+                    try:
+                        for output in outputs_str.splitlines():
+                            itask.state.outputs.set_completion(
+                                output.split("=", 1)[1], True)
+                    except AttributeError:
+                        pass
 
             if user_at_host:
                 itask.summary['job_hosts'][int(submit_num)] = user_at_host
@@ -421,32 +424,44 @@ class TaskPool(object):
         """Load a task action timer, e.g. event handlers, retry states."""
         if row_idx == 0:
             LOG.info("LOADING task action timers")
-        (cycle, name, ctx_key_pickle, ctx_pickle, delays_pickle, num, delay,
+        (cycle, name, ctx_key_raw, ctx_raw, delays_raw, num, delay,
          timeout) = row
         id_ = TaskID.get(name, cycle)
-        ctx_key = "?"
         try:
-            ctx_key = pickle.loads(str(ctx_key_pickle))
-            ctx = pickle.loads(str(ctx_pickle))
-            delays = pickle.loads(str(delays_pickle))
-            if ctx_key and ctx_key[0] in ["poll_timers", "try_timers"]:
-                itask = self.get_task_by_id(id_)
-                if itask is None:
-                    ERR.warning("%(id)s: task not found, skip" % {"id": id_})
-                    return
-                getattr(itask, ctx_key[0])[ctx_key[1]] = TaskActionTimer(
-                    ctx, delays, num, delay, timeout)
-            else:
-                key1, submit_num = ctx_key
-                key = (key1, cycle, name, submit_num)
-                self.task_events_mgr.event_timers[key] = TaskActionTimer(
-                    ctx, delays, num, delay, timeout)
-        except (EOFError, TypeError, LookupError, ValueError):
-            ERR.warning(
-                "%(id)s: skip action timer %(ctx_key)s" %
-                {"id": id_, "ctx_key": ctx_key})
-            ERR.warning(traceback.format_exc())
+            # Extract type namedtuple variables from JSON strings
+            ctx_key = json.loads(str(ctx_key_raw))
+            ctx = None
+            if ctx_raw:
+                ctx_data = json.loads(str(ctx_raw))
+                if ctx_data:
+                    for ctx_cls in [
+                            CustomTaskEventHandlerContext,
+                            TaskEventMailContext,
+                            TaskJobLogsRetrieveContext]:
+                        if ctx_cls.__name__ == ctx_data[0]:
+                            ctx = ctx_cls(*ctx_data[1])
+            delays = json.loads(str(delays_raw))
+        except ValueError:
+            LOG.exception(
+                "%(id)s: skip action timer %(ctx_key)s, %(ctx)s" %
+                {"id": id_, "ctx_key": ctx_key_raw, "ctx": ctx_raw})
             return
+        if ctx_key and ctx_key[0] in ["poll_timers", "try_timers"]:
+            itask = self.get_task_by_id(id_)
+            if itask is None:
+                LOG.warning("%(id)s: task not found, skip" % {"id": id_})
+                return
+            getattr(itask, ctx_key[0])[ctx_key[1]] = TaskActionTimer(
+                ctx, delays, num, delay, timeout)
+        else:
+            key1, submit_num = ctx_key
+            # Convert key1 to type tuple - JSON restores as type list
+            # and this will not previously have been converted back
+            if isinstance(key1, list):
+                key1 = tuple(key1)
+            key = (key1, cycle, name, submit_num)
+            self.task_events_mgr.event_timers[key] = TaskActionTimer(
+                ctx, delays, num, delay, timeout)
         LOG.info("+ %s.%s %s" % (name, cycle, ctx_key))
 
     def release_runahead_task(self, itask):

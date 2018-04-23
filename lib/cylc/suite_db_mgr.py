@@ -26,7 +26,7 @@ This module provides the logic to:
 """
 
 import os
-import pickle
+import json
 from shutil import copy, rmtree
 from subprocess import call
 from tempfile import mkstemp
@@ -112,6 +112,21 @@ class SuiteDatabaseManager(object):
     def get_pri_dao(self):
         """Return the primary DAO."""
         return CylcSuiteDAO(self.pri_path)
+
+    @staticmethod
+    def _namedtuple2json(obj):
+        """Convert nametuple obj to a JSON string.
+
+        Arguments:
+            obj (namedtuple): input object to serialize to JSON.
+
+        Return (str):
+            Serialized JSON string of input object in the form "[type, list]".
+        """
+        if obj is None:
+            return json.dumps(None)
+        else:
+            return json.dumps([type(obj).__name__, obj.__getnewargs__()])
 
     def on_suite_start(self, is_restart):
         """Initialise data access objects.
@@ -231,10 +246,10 @@ class SuiteDatabaseManager(object):
     def put_runtime_inheritance(self, config):
         """Put task/family inheritance in runtime database."""
         for namespace in config.cfg['runtime']:
-            value = ' '.join(config.runtime['linearized ancestors'][namespace])
+            value = config.runtime['linearized ancestors'][namespace]
             self.db_inserts_map[self.TABLE_INHERITANCE].append({
                 "namespace": namespace,
-                "inheritance": value})
+                "inheritance": json.dumps(value)})
 
     def put_suite_params(
             self, cylc_version, uuid_str, run_mode, UTC_mode, initial_point,
@@ -293,9 +308,9 @@ class SuiteDatabaseManager(object):
                 self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
                     "name": name,
                     "cycle": point,
-                    "ctx_key_pickle": pickle.dumps((key1, submit_num,)),
-                    "ctx_pickle": pickle.dumps(timer.ctx),
-                    "delays_pickle": pickle.dumps(timer.delays),
+                    "ctx_key": json.dumps((key1, submit_num,)),
+                    "ctx": self._namedtuple2json(timer.ctx),
+                    "delays": json.dumps(timer.delays),
                     "num": timer.num,
                     "delay": timer.delay,
                     "timeout": timer.timeout})
@@ -331,9 +346,9 @@ class SuiteDatabaseManager(object):
                     self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
                         "name": itask.tdef.name,
                         "cycle": str(itask.point),
-                        "ctx_key_pickle": pickle.dumps((ctx_key_0, ctx_key_1)),
-                        "ctx_pickle": pickle.dumps(timer.ctx),
-                        "delays_pickle": pickle.dumps(timer.delays),
+                        "ctx_key": json.dumps((ctx_key_0, ctx_key_1)),
+                        "ctx": self._namedtuple2json(timer.ctx),
+                        "delays": json.dumps(timer.delays),
                         "num": timer.num,
                         "delay": timer.delay,
                         "timeout": timer.timeout})
@@ -391,12 +406,12 @@ class SuiteDatabaseManager(object):
 
     def put_update_task_outputs(self, itask):
         """Put UPDATE statement for task_outputs table."""
-        items = []
-        for item in sorted(itask.state.outputs.get_completed_customs()):
-            items.append("%s=%s" % item)
+        items = {}
+        for trigger, message in itask.state.outputs.get_completed_customs():
+            items[trigger] = message
         self._put_update_task_x(
             CylcSuiteDAO.TABLE_TASK_OUTPUTS,
-            itask, {"outputs": "\n".join(items)})
+            itask, {"outputs": json.dumps(items)})
 
     def put_update_task_states(self, itask, set_args):
         """Put UPDATE statement for task_states table."""
@@ -470,6 +485,7 @@ class SuiteDatabaseManager(object):
                     pass
         else:
             pri_dao = self.get_pri_dao()
+            pri_dao.upgrade_pickle_to_json()
 
         # Vacuum the primary/private database file
         pri_dao.vacuum()
