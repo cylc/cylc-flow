@@ -300,25 +300,35 @@ class TaskState(object):
         If state can be held, set hold_swap to current state.
         If state is active, set hold_swap to TASK_STATUS_HELD.
         If state cannot be held, do nothing.
+
+        Return:
+            A 2-element tuple with the previous value of (status, hold_swap)
+            on change of status, or None if no change.
         """
         if self.status in TASK_STATUSES_ACTIVE:
             self.hold_swap = TASK_STATUS_HELD
-            return
+            return (self.status, self.hold_swap)
         elif self.status in [
                 TASK_STATUS_WAITING, TASK_STATUS_QUEUED,
                 TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING]:
             return self._set_state(TASK_STATUS_HELD)
 
     def unset_held(self):
-        """Reset to my pre-held state, if not beyond the stop point."""
+        """Reset to my pre-held state, if not beyond the stop point.
+
+        Return:
+            A 2-element tuple with the previous value of (status, hold_swap)
+            on change of status, or None if no change.
+        """
         if self.status != TASK_STATUS_HELD:
             return
         elif self.hold_swap is None:
-            self.reset_state(TASK_STATUS_WAITING)
+            return self.reset_state(TASK_STATUS_WAITING)
         elif self.hold_swap == TASK_STATUS_HELD:
             self.hold_swap = None
+            return (self.status, self.hold_swap)
         else:
-            self.reset_state(self.hold_swap)
+            return self.reset_state(self.hold_swap)
 
     def reset_state(self, status):
         """Change status, and manipulate outputs and prerequisites accordingly.
@@ -336,6 +346,9 @@ class TaskState(object):
 
         The held state is handled in set/unset_held() for swap-state handling.
 
+        Return:
+            A 2-element tuple with the previous value of (status, hold_swap)
+            on change of status, or None if no change.
         """
         self.kill_failed = False
 
@@ -368,7 +381,7 @@ class TaskState(object):
             self.hold_swap = None
         if status == self.status and self.hold_swap is None:
             return
-        o_status, o_hold_swap = self.status, self.hold_swap
+        prev_status, prev_hold_swap = self.status, self.hold_swap
         if status == TASK_STATUS_HELD:
             self.hold_swap = self.status
         elif status in TASK_STATUSES_ACTIVE:
@@ -384,13 +397,14 @@ class TaskState(object):
         self.time_updated = get_current_time_string()
         flags.iflag = True
         # Log
-        message = str(o_status)
-        if o_hold_swap:
-            message += " (%s)" % o_hold_swap
+        message = str(prev_status)
+        if prev_hold_swap:
+            message += " (%s)" % prev_hold_swap
         message += " => %s" % self.status
         if self.hold_swap:
             message += " (%s)" % self.hold_swap
         LOG.debug(message, itask=self.identity)
+        return (prev_status, prev_hold_swap)
 
     def is_gt(self, status):
         """"Return True if self.status > status."""
