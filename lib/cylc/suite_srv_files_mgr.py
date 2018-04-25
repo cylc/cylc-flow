@@ -294,15 +294,19 @@ To start a new run, stop the old one first with one or more of these:
                     return value
 
         # 5/ Use SSH to load content from remote owner@host
-        value = self._load_remote_item(item, reg, owner, host)
-        if value:
-            if item == self.FILE_BASE_PASSPHRASE:
-                self.can_disk_cache_passphrases[(reg, owner, host)] = True
-            if not content:
-                path = self._get_cache_dir(reg, owner, host)
-                self._dump_item(path, item, value)
-                value = os.path.join(path, item)
-            return value
+        # Note: It is not possible to find ".service/contact2" on the suite
+        # host, because it is installed on task host by "cylc remote-init" on
+        # demand.
+        if item != self.FILE_BASE_CONTACT2:
+            value = self._load_remote_item(item, reg, owner, host)
+            if value:
+                if item == self.FILE_BASE_PASSPHRASE:
+                    self.can_disk_cache_passphrases[(reg, owner, host)] = True
+                if not content:
+                    path = self._get_cache_dir(reg, owner, host)
+                    self._dump_item(path, item, value)
+                    value = os.path.join(path, item)
+                return value
 
         raise SuiteServiceFileError("Couldn't get %s" % item)
 
@@ -629,7 +633,7 @@ To start a new run, stop the old one first with one or more of these:
             host = 'localhost'
         if owner is None:
             owner = get_user()
-        if item == 'contact' and not is_remote_host(host):
+        if item == self.FILE_BASE_CONTACT and not is_remote_host(host):
             # Attempt to read suite contact file via the local filesystem.
             path = r'%(run_d)s/%(srv_base)s' % {
                 'run_d': glbl_cfg().get_derived_host_item(
