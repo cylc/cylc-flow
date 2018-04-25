@@ -188,7 +188,7 @@ class TaskState(object):
     __slots__ = ["identity", "status", "hold_swap",
                  "_is_satisfied", "_suicide_is_satisfied", "prerequisites",
                  "suicide_prerequisites", "external_triggers", "outputs",
-                 "kill_failed", "time_updated", "confirming_with_poll"]
+                 "kill_failed", "time_updated"]
 
     def __init__(self, tdef, point, status, hold_swap):
         self.identity = TaskID.get(tdef.name, str(point))
@@ -215,7 +215,6 @@ class TaskState(object):
 
         self.outputs = TaskOutputs(tdef)
         self.kill_failed = False
-        self.confirming_with_poll = False
 
     def satisfy_me(self, all_task_outputs):
         """Attempt to get my prerequisites satisfied."""
