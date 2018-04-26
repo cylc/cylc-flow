@@ -6979,6 +6979,7 @@ Task event handlers can be specified using the
     \item `warning' - the task reported a WARNING severity message
     \item `critical' - the task reported a CRITICAL severity message
     \item `custom' - the task reported a CUSTOM severity message
+    \item `late' - the task is never active and is late
     \item `failed' - the task failed
     \item `retry' - the task failed but will retry after a configured delay
     \item `execution timeout' - task execution timed out
@@ -7015,9 +7016,9 @@ configured (see~\ref{TaskRetries}).
 The event handler will be called as soon as the task fails, not after
 the retry delay period when it is resubmitted.
 
-{\em Note that event handlers are called by the suite server program, not by task jobs.}
-If you wish to pass additional information to them use [cylc] \textrightarrow
-[[environment]], not task runtime environment.
+{\em Note that event handlers are called by the suite server program, not by
+task jobs.} If you wish to pass additional information to them use [cylc]
+\textrightarrow [[environment]], not task runtime environment.
 
 The following 2 \lstinline=suite.rc= snippets are examples on how to specify
 event handlers using the alternate methods:
@@ -7051,6 +7052,42 @@ default arguments, like this:
 echo '!!!!!EVENT!!!!!' %(event)s %(suite)s %(id)s %(message)s
 \end{lstlisting}
 
+\subsubsection{Late Events}
+\label{Late Events}
+
+You may want to be notified when certain tasks are running late in a real time
+production system - i.e.\ when they have not triggered by {\em the usual time}.
+Tasks of primary interest are not normally clock-triggered however, so their
+trigger times are mostly a function of how the suite runs in its environment,
+and even external factors such as contention with other suites.\footnote{Late
+notification of clock-triggered tasks is not very useful in any case because
+they typically do not depend on other tasks, and as such they can often trigger
+on time even if the suite is delayed to the point that downstream tasks are
+late due to their dependence on previous-cycle tasks that are delayed.}
+
+But if your system is reasonably stable from one cycle to the next such that a
+given task has consistently triggered by some interval beyond its cycle point,
+you can configure Cylc to emit a {\em late event} if it has not triggered by
+that time. For example, if a task \lstinline=forecast= normally triggers by 30
+minutes after its cycle point, configure late notification for it like this:
+
+\begin{lstlisting}
+[runtime]
+   [[forecast]]
+        script = run-model.sh
+        [[[events]]]
+            late offset = PT30M
+            late handler = my-handler %(message)s
+\end{lstlisting}
+
+{\em Late offset intervals are not computed automatically so be careful
+to update them after any change that affects triggering times.}
+
+Note that Cylc can only check for lateness in tasks that it is currently aware
+of. If a suite gets delayed over many cycles the next tasks coming up can be
+identified as late immediately, and subsequent tasks can be identified as late
+as the suite progresses to subsequent cycle points, until it catches up to the
+clock.
 
 \subsection{Handling Job Preemption}
 \label{PreemptionHPC}

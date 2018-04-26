@@ -117,6 +117,17 @@ TASK_STATUSES_FINAL = set([
     TASK_STATUS_SUBMIT_FAILED,
 ])
 
+# Task statuses that are never active.
+# For tasks that have never been submitted, but excluding:
+# - expired: which is effectively the "succeeded" final state.
+# - held: which is placeholder state, not a real state.
+TASK_STATUSES_NEVER_ACTIVE = set([
+    TASK_STATUS_RUNAHEAD,
+    TASK_STATUS_WAITING,
+    TASK_STATUS_QUEUED,
+    TASK_STATUS_READY,
+])
+
 # Task statuses that are to be externally active
 TASK_STATUSES_TO_BE_ACTIVE = set([
     TASK_STATUS_QUEUED,

@@ -15,27 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validation of special tasks names with non-word characters
+# Test late event, with spawned tasks that are also late
 . "$(dirname "$0")/test_header"
-set_test_number 1
-cat >'suite.rc' <<'__SUITE_RC__'
-[scheduling]
-    initial cycle point = 20200202
-    final cycle point = 20300303
-    [[special tasks]]
-        clock-trigger = t-1, t+1, t%1, t@1
-    [[dependencies]]
-        [[[P1D]]]
-            graph = """
-t-1
-t+1
-t%1
-t@1
-"""
+set_test_number 3
 
-[runtime]
-    [[t-1, t+1, t%1, t@1]]
-        script = true
-__SUITE_RC__
-run_ok "${TEST_NAME_BASE}" cylc validate --strict "${PWD}/suite.rc"
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-run" cylc run --debug --no-detach "${SUITE_NAME}"
+grep -c 'WARNING.*late (late-time=.*)' \
+    <"${SUITE_RUN_DIR}/log/suite/log" >'grep-log.out'
+cmp_ok 'grep-log.out' <<<'2'
+purge_suite "${SUITE_NAME}"
 exit

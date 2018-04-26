@@ -56,7 +56,7 @@ run_ok "${TEST_NAME_BASE}-suite_params" \
     sqlite3 "${SUITE_RUN_DIR}/log/db" \
     'SELECT key,value FROM suite_params WHERE key != "uuid_str" ORDER BY key'
 cmp_ok "${TEST_NAME_BASE}-suite_params.stdout" <<__OUT__
-UTC_mode|True
+UTC_mode|1
 cylc_version|$(cylc version)
 final_point|20050101T0000Z
 initial_point|20000101T0000Z

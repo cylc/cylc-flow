@@ -179,7 +179,7 @@ class BroadcastMgr(object):
 
     def match_ext_trigger(self, itask):
         """Match external triggers for a waiting task proxy."""
-        if not self.ext_triggers:
+        if not self.ext_triggers or not itask.state.external_triggers:
             return
         has_changed = False
         for trig, satisfied in itask.state.external_triggers.items():

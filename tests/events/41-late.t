@@ -15,21 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test stall does not wait for unrelated clock trigger.
+# Test late event handler
 . "$(dirname "$0")/test_header"
-set_test_number 3
+set_test_number 4
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-run_fail "${TEST_NAME_BASE}-run" timeout 60 cylc run --debug --no-detach "${SUITE_NAME}"
-sed -n 's/^.* WARNING - //p' "${SUITE_RUN_DIR}/log/suite/log" \
-    >"${SUITE_RUN_DIR}/log/suite/log.edited"
-TODAY="$(date -u '+%Y%m%d')"
-contains_ok "${SUITE_RUN_DIR}/log/suite/log.edited" <<__OUT__
-suite stalled
-Unmet prerequisites for t3.${TODAY}:
- * t2.${TODAY} succeeded
-__OUT__
+run_ok "${TEST_NAME_BASE}-run" cylc run --debug --no-detach "${SUITE_NAME}"
+grep_ok 'late (late-time=.*)' "${SUITE_RUN_DIR}/log/suite/log"
+grep_ok 'late (late-time=.*)' "${SUITE_RUN_DIR}/log/suite/my-handler.out"
 
 purge_suite "${SUITE_NAME}"
 exit

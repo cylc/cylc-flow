@@ -4,7 +4,7 @@
     initial cycle point = 20140808T09
     final cycle point = 20140808T09
     [[special tasks]]
-        clock-triggered = foo(PT5M)
+        clock-trigger = foo(PT5M)
     [[dependencies]]
         [[[PT1H]]]
             graph = """
