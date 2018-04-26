@@ -52,3 +52,5 @@ grep_ok '^the quick brown fox$' ${TEST_NAME}.stdout
 TEST_NAME=${TEST_NAME_BASE}-out-loc
 run_ok $TEST_NAME cylc cat-log -f o $SUITE_NAME a-task.1
 grep_ok '^the quick brown FOX$' ${TEST_NAME}.stdout
+
+purge_suite $SUITE_NAME

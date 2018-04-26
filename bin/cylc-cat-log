@@ -18,9 +18,9 @@
 
 """cylc [info] cat-log|log [OPTIONS] ARGS
 
-Cat (print), edit, or tail-follow content, or print path or list directory, of
-local or remote task job logs and suite server logs. Batch-system view commands
-(e.g. 'qcat') are used if defined in global config and the job is running.
+Print, edit, or tail-follow content, or print path or list directory, of local
+or remote task job logs and suite server logs. Batch-system view commands (e.g.
+'qcat') are used if defined in global config and the job is running.
 
 For standard log types use the short-cut option argument or full filename (e.g.
 for job stdout "-f o" or "-f job.out" will do).
