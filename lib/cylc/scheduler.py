@@ -1035,10 +1035,11 @@ conditions; see `cylc conditions`.
         a command line argument on cold/warm start.
         """
         key, value = row
-        if key == "initial_point":
+        if key == 'initial_point':
             self.cli_initial_point_string = value
             self.task_events_mgr.pflag = True
-        elif key in ["start_point", "warm_point"]:
+        elif key in ['start_point', 'warm_point']:
+            # 'warm_point' for back compat <= 7.6.X
             self.cli_start_point_string = value
             self.task_events_mgr.pflag = True
         elif key == 'uuid_str':
@@ -1231,7 +1232,7 @@ conditions; see `cylc conditions`.
             raise SchedulerError(str(exc))
 
     def late_tasks_check(self):
-        """Report tasks that are late for their clock triggers."""
+        """Report tasks that are never active and are late."""
         now = time()
         for itask in self.pool.get_tasks():
             if (not itask.is_late and itask.get_late_time() and

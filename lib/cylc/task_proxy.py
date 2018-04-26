@@ -42,6 +42,8 @@ class TaskProxy(object):
             Cycle point beyond which this task can be removed from the pool.
         .clock_trigger_time (float):
             Clock trigger time in seconds since epoch.
+        .expire_time (float):
+            Time in seconds since epoch when this task is considered expired.
         .has_spawned (boolean):
             Has this task spawned its successor in the sequence?
         .identity (str):
