@@ -35,16 +35,16 @@ affiliations:
 
 # Summary
 
-Cylc (http://cylc.github.io/cylc/) is a workflow engine for orchestrating
-complex distributed *suites* of inter-dependent cycling (repeating) tasks, as
-well as ordinary non-cycling workflows. It has been widely adopted for weather,
-climate, and related forecasting applications in research and production HPC
-environments, and it is now part of the official software infrastructure for
-the Unified Model atmospheric model. Cylc is written in Python and developed
-primarily by NIWA (NZ) and Met Office (UK). It has strong support for large
-production systems, but ease of use for individuals with smaller workflow
-automation requirements remains a key priority, and despite its core user base
-it is not in any way specialized to environmental forecasting.
+Cylc is a workflow engine for orchestrating complex *suites* of inter-dependent
+distributed cycling (repeating) tasks, as well as ordinary non-cycling
+workflows. It has been widely adopted for weather, climate, and related
+forecasting applications in research and production HPC environments, and it is
+now part of the official software infrastructure for the Unified Model
+atmospheric model. Cylc is written in Python and developed primarily by NIWA
+(NZ) and Met Office (UK). It has strong support for large production systems,
+but ease of use for individuals with smaller workflow automation requirements
+remains a key priority, and despite its core user base it is not in any way
+specialized to environmental forecasting.
 
 In cycling workflows tasks repeat on sequences that may represent forecast
 cycles, chunks of a simulation that is too long for a single run, steps in some
@@ -74,3 +74,19 @@ external events, as well as on the status of other tasks (*submitted*,
 *started*, *succeeded*, *failed*, etc.). Dependence between workflows is also
 supported: for coupled systems you can choose between a large suite that
 controls all tasks, and many smaller suites that depend on each other.
+
+Other features of Cylc include a comprehensive command line interface and GUI;
+restart from workflow state snapshots with automatic determination of the fate
+of orphaned jobs; support for common HPC resource managers and batch systems
+(PBS, Slurm, etc.) as well as background jobs; edit run (manually modify a job
+script at the last minute); configurable automatic retries; flexible event
+handling; simulation and dummy modes; support for the Jinja2 template processor 
+in workflow definitions; internal queues to limit job submission; and conditional
+triggering. Major items on the development roadmap include a web GUI and port
+to Python 3.
+
+The Cylc source code is available on GitHub
+[http://cylc.github.io/cylc/](http://cylc.github.io/cylc/) and is archived to
+Zenodo with the linked DOI: [@zenodo]
+
+# References
