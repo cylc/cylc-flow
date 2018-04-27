@@ -730,11 +730,12 @@ This section allows cylc to determine when tasks are ready to run.
 
 Cylc runs using the proleptic Gregorian calendar by default. This item allows
 you to either run the suite using the 360 day calendar (12 months of 30 days
-in a year) or using integer cycling.
+in a year) or using integer cycling. It also supports use of the 365 (never a
+leap year) and 366 (always a leap year) calendars.
 
 \begin{myitemize}
     \item {\em type:} string
-    \item {\em legal values:} gregorian, 360day, integer
+    \item {\em legal values:} gregorian, 360day, 365day, 366day, integer
     \item {\em default:} gregorian
 
 \end{myitemize}
