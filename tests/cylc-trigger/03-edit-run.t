@@ -53,11 +53,10 @@ TEST_NAME="${TEST_NAME_BASE}-diff2"
 DIFF_LOG=$(cylc cat-log -m p -f d $SUITE_NAME syntax_errored_task.1)
 # Python 2.6 difflib adds an extra space after the filename,
 # but Python 2.7 does not. Remove it if it exists.
-sed -i 's/^--- original $/--- original/; s/^+++ edited $/+++ edited/' $DIFF_LOG
+sed -i 's/^\(--- original\|+++ edited\) $/\1/; /^@@/d' $DIFF_LOG
 cmp_ok "${DIFF_LOG}" - <<'__END__'
 --- original
 +++ edited
-@@ -31,7 +31,7 @@
  
  cylc__job__inst__script() {
  # SCRIPT:
