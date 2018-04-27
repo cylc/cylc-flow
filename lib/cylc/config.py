@@ -46,6 +46,7 @@ from cylc.cycling.loader import (
     get_sequence, get_sequence_cls, init_cyclers, INTEGER_CYCLING_TYPE,
     ISO8601_CYCLING_TYPE)
 from cylc.cycling import IntervalParsingError
+from cylc.cycling.iso8601 import ingest_time
 import cylc.flags
 from cylc.graphnode import GraphNodeParser, GraphNodeError
 from cylc.print_tree import print_tree
@@ -346,6 +347,12 @@ class SuiteConfig(object):
                 "This suite requires an initial cycle point.")
         if icp == "now":
             icp = get_current_time_string()
+        else:
+            try:
+                my_now = get_current_time_string()
+                icp = ingest_time(icp, my_now)
+            except ValueError as exc:
+                raise SuiteConfigError(str(exc))
         self.initial_point = get_point(icp).standardise()
         self.cfg['scheduling']['initial cycle point'] = str(self.initial_point)
         if cli_start_point_string:

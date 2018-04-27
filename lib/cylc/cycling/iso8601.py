@@ -28,6 +28,7 @@ from cylc.time_parser import CylcTimeParser
 from cylc.cycling import (
     PointBase, IntervalBase, SequenceBase, ExclusionBase, PointParsingError,
     IntervalParsingError, SequenceDegenerateError)
+from cylc.wallclock import get_current_time_string
 from parsec.validate import IllegalValueError
 
 CYCLER_TYPE_ISO8601 = "iso8601"
@@ -644,6 +645,128 @@ def _get_old_anchor_step_recurrence(anchor, step, start_point):
         while anchor_point >= start_point + step:
             anchor_point -= step
     return str(anchor_point) + "/" + str(step)
+
+
+def ingest_time(value, my_now=None):
+    """
+    Allows for relative and truncated cycle points,
+    and cycle point as an offset from 'now'
+    """
+
+    # Send back integer cycling, date-only, and expanded datetimes.
+    if re.match(r"\d+$", value):
+        # Could be an old date-time cycle point format, or integer format.
+        return value
+    if (value.startswith("-") or value.startswith("+")) and "P" not in value:
+        # Expanded year
+        return value
+
+    parser = SuiteSpecifics.point_parser
+    offset = None
+
+    if my_now is None:
+        my_now = parser.parse(get_current_time_string())
+    else:
+        my_now = parser.parse(my_now)
+
+    # remove extraneous whitespace from cycle point
+    value = value.replace(" ", "")
+
+    # correct for year in 'now' if year only,
+    # or year and time, specified in input
+    if re.search(r"\(-\d{2}[\);T]", value):
+        my_now.year = my_now.year + 1
+
+    # correct for month in 'now' if year and month only,
+    # or year, month and time, specified in input
+    elif re.search(r"\(-\d{4}[\);T]", value):
+        my_now.month_of_year = my_now.month_of_year + 1
+
+    if "next" in value or "previous" in value:
+
+        # break down cycle point into constituent parts.
+        direction, tmp = value.split("(")
+        tmp, offset = tmp.split(")")
+
+        if offset.strip() == '':
+            offset = None
+        else:
+            offset = offset.strip()
+
+        timepoints = tmp.split(";")
+
+        # for use with 'previous' below.
+        go_back = {
+            "minute_of_hour": "PT1M",
+            "hour_of_day": "PT1H",
+            "day_of_week": "P1D",
+            "day_of_month": "P1D",
+            "day_of_year": "P1D",
+            "week_of_year": "P1W",
+            "month_of_year": "P1M",
+            "year_of_decade": "P1Y",
+            "decade_of_century": "P10Y",
+            "year_of_century": "P1Y",
+            "century": "P100Y"}
+
+        for i_time, my_time in enumerate(timepoints):
+            parsed_point = parser.parse(my_time.strip())
+            timepoints[i_time] = parsed_point + my_now
+
+            if direction == 'previous':
+                # for 'previous' determine next largest unit,
+                # from go_back dict (defined outside 'for' loop), and
+                # subtract 1 of it from each timepoint
+                duration_parser = SuiteSpecifics.interval_parser
+                next_unit = parsed_point.get_smallest_missing_property_name()
+
+                timepoints[i_time] = (
+                    timepoints[i_time] -
+                    duration_parser.parse(go_back[next_unit]))
+
+        my_diff = []
+        my_diff = [abs(my_time - my_now) for my_time in timepoints]
+
+        my_cp = timepoints[my_diff.index(min(my_diff))]
+
+        # ensure truncated dates do not have
+        # time from 'now' included'
+        if 'T' not in value.split(')')[0]:
+            my_cp.hour_of_day = 0
+            my_cp.minute_of_hour = 0
+            my_cp.second_of_minute = 0
+        # ensure month and day from 'now' are not included
+        # where they did not appear in the truncated datetime
+        # NOTE: this may break when the order of tick over
+        # for time point is reversed!!!
+        # https://github.com/metomi/isodatetime/pull/101
+        # case 1 - year only
+        if re.search(r"\(-\d{2}[\);T]", value):
+            my_cp.month_of_year = 1
+            my_cp.day_of_month = 1
+        # case 2 - month only or year and month
+        elif re.search(r"\(-(-\d{2}|\d{4})[;T\)]", value):
+            my_cp.day_of_month = 1
+
+    elif value.startswith("P") or value.startswith("-P"):
+        my_cp = my_now
+        offset = value
+
+    else:
+        timepoint = parser.parse(value)
+        if timepoint.truncated is False:
+            return value
+        my_cp = my_now + timepoint
+
+    if offset is not None:
+        # add/subtract offset duration to/from chosen timepoint
+        duration_parser = SuiteSpecifics.interval_parser
+
+        offset = offset.replace('+', '')
+        offset = duration_parser.parse(offset)
+        my_cp = my_cp + offset
+
+    return str(my_cp)
 
 
 def init_from_cfg(cfg):

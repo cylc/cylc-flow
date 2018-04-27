@@ -17,9 +17,9 @@ and description.
 \subsection{[meta]}
 
 Section containing metadata items for this suite. Several items
-(title, description, URL) are pre-defined and are used by the GUI. Others can be 
-user-defined and passed to suite event handlers to be interpreted according to your 
-needs. For example, the value of a ``suite-priority'' item could determine how an event 
+(title, description, URL) are pre-defined and are used by the GUI. Others can be
+user-defined and passed to suite event handlers to be interpreted according to your
+needs. For example, the value of a ``suite-priority'' item could determine how an event
 handler responds to failure events.
 
 
@@ -225,7 +225,7 @@ directory exists and that its contact file contains the expected information.
 If not, the suite will shut itself down automatically.
 
 \begin{myitemize}
-    \item {\em type:} ISO 8601 duration/interval representation (e.g.\ 
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.\
  \lstinline=PT5M=, 5 minutes (note: by contrast, \lstinline=P5M= means 5
  months, so remember the \lstinline=T=!)).
     \item {\em default:} PT10M
@@ -426,7 +426,7 @@ substituted with actual values:
 \end{myitemize}
 
 \begin{myitemize}
-    \item {\em type:} 
+    \item {\em type:}
     \item {\em default:} (none)
     \item {\em example:} \lstinline@mail footer = see: http://localhost/%(owner)s/notes-on/%(suite)s/@
 \end{myitemize}
@@ -470,7 +470,7 @@ of time. The timer is set initially at suite start up. It is possible to set a
 default for this at the site level (see ~\ref{SiteCylcHooks}).
 
 \begin{myitemize}
-    \item {\em type:} ISO 8601 duration/interval representation (e.g.\ 
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.\
  \lstinline=PT5S=, 5 seconds, \lstinline=PT1S=, 1 second) - minimum 0 seconds.
     \item {\em default:} (none), unless set at the site level.
 \end{myitemize}
@@ -483,7 +483,7 @@ of time. The timer is set initially at suite start up. It is possible to set a
 default for this at the site level (see ~\ref{SiteCylcHooks}).
 
 \begin{myitemize}
-    \item {\em type:} ISO 8601 duration/interval representation (e.g.\  
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.\
  \lstinline=PT5S=, 5 seconds, \lstinline=PT1S=, 1 second) - minimum 0 seconds.
     \item {\em default:} (none), unless set at the site level.
 \end{myitemize}
@@ -661,7 +661,7 @@ cannot be done in live mode unless you define a value for this item, because
 it is not possible to arrive at a sensible default for all suites.
 
 \begin{myitemize}
-    \item {\em type:} ISO 8601 duration/interval representation, e.g.\ 
+    \item {\em type:} ISO 8601 duration/interval representation, e.g.\
         \lstinline=PT5M= is 5 minutes (note: by contrast \lstinline=P5M= means 5
          months, so remember the \lstinline=T=!).
     \item {\em default:} PT1M (1 minute)
@@ -675,7 +675,7 @@ simulation mode unless you define a value for this item, because it is
 not possible to arrive at a sensible default for all suites.
 
 \begin{myitemize}
-    \item {\em type:} ISO 8601 duration/interval representation (e.g.\ 
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.\
  \lstinline=PT5M=, 5 minutes (note: by contrast, \lstinline=P5M= means 5
  months, so remember the \lstinline=T=!)).
     \item {\em default:} PT1M (1 minute)
@@ -689,7 +689,7 @@ cannot be done in dummy mode unless you define a value for this item, because
 it is not possible to arrive at a sensible default for all suites.
 
 \begin{myitemize}
-    \item {\em type:} ISO 8601 duration/interval representation (e.g.\ 
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.\
  \lstinline=PT5M=, 5 minutes (note: by contrast, \lstinline=P5M= means 5
  months, so remember the \lstinline=T=!)).
     \item {\em default:} PT1M (1 minute)
@@ -754,7 +754,7 @@ it will be assumed to be local time, or in UTC if~\ref{UTC-mode} is set, or in
 the time zone determined by \ref{cycle-point-time-zone} if that is set.
 
 \begin{myitemize}
-    \item {\em type:} ISO 8601 date-time point representation (e.g.\ 
+    \item {\em type:} ISO 8601 date-time point representation (e.g.\
  \lstinline=CCYYMMDDThhmm=, 19951231T0630) or ``now''.
     \item {\em default:} (none)
 \end{myitemize}
@@ -762,7 +762,90 @@ the time zone determined by \ref{cycle-point-time-zone} if that is set.
 The string ``now'' converts to the current date-time on the suite host (adjusted
 to UTC if the suite is in UTC mode but the host is not) to minute resolution.
 Minutes (or hours, etc.) may be ignored depending on your cycle point format
+
 (\ref{cycle-point-format}).
+
+\paragraph[initial cycle point relative to current time]{[scheduling] \textrightarrow [[initial cycle point]] \textrightarrow initial cycle point relative to current time}
+
+This can be used to set the initial cycle point time relative to the current time.
+
+Two additional commands, \lstinline=next= and \lstinline=previous=, can be used when setting the initial cycle point.
+
+The syntax uses truncated ISO8601 time representations, and is of the style: \lstinline=next(Thh:mmZ)=, \lstinline=previous(T-mm)=; e.g.
+\begin{myitemize}
+    \item {\lstinline.initial cycle point = next(T15:00Z).}
+    \item {\lstinline.initial cycle point = previous(T09:00).}
+    \item {\lstinline.initial cycle point = next(T12).}
+    \item {\lstinline.initial cycle point = previous(T-20).}
+\end{myitemize}
+Examples of interpretation are given in figure \ref{relative initial cycle point time syntax interpretation}.
+
+A list of times, separated by semicolons, can be provided, e.g. \lstinline=next(T-00;T-15;T-30;T-45)=.
+At least one time is required within the brackets, and if more than one is given, the major time unit in each (hours or minutes) should all be of the same type.
+
+If an offset from the specified date or time is required, this should be used in the form: \lstinline=previous(Thh:mm)= \begin{math} \pm \end{math}\lstinline=PxTy=
+in the same way as is used for determining cycle periods, e.g.
+\begin{myitemize}
+    \item {\lstinline.initial cycle point = previous(T06) +P1D.}
+    \item {\lstinline.initial cycle point = next(T-30) -PT1H.}
+\end{myitemize}
+The section in the bracket attached to the next/previous command is interpreted first, and then the offset is applied.
+
+The offset can also be used independently without a \lstinline=next= or \lstinline=previous= command, and will be interpreted as an offset from ``now''.
+
+\begin{figure}[H]
+\centering
+\caption{Examples of setting relative initial cycle point for times and offsets \\
+using now = 2018-03-14T15:12Z (and UTC mode)}
+\begin{tabular}{ | l | l | }
+\hline
+Syntax & Interpretation \\
+\hline
+\lstinline=next(T-00)= & 2018-03-14T16:00Z \\
+\lstinline=previous(T-00)= & 2018-03-14T15:00Z \\
+\lstinline=next(T-00; T-15; T-30; T-45)= & 2018-03-14T15:15Z \\
+\lstinline=previous(T-00; T-15; T-30; T-45)= & 2018-03-14T15:00Z \\
+\lstinline=next(T00)= & 2018-03-15T00:00Z \\
+\lstinline=previous(T00)= & 2018-03-14T00:00Z \\
+\lstinline=next(T06:30Z)= & 2018-03-15T06:30Z \\
+\lstinline=previous(T06:30) -P1D= & 2018-03-13T06:30Z \\
+\lstinline=next(T00; T06; T12; T18) = & 2018-03-14T18:00Z \\
+\lstinline=previous(T00; T06; T12; T18) = & 2018-03-14T12:00Z \\
+\lstinline=next(T00; T06; T12; T18) +P1W = & 2018-03-21T18:00Z \\
+\lstinline=PT1H= & 2018-03-14T16:12Z \\
+\lstinline=-P1M= & 2018-02-14T15:12Z \\
+\hline
+\end{tabular}
+\label{relative initial cycle point time syntax interpretation}
+\end{figure}
+
+The relative intial cycle point also works with truncated dates, including weeks and ordinal date, using ISO8601 truncated date representations.
+Note that day-of-week should always be specified when using weeks. If a time is not included, the calulation of the next or previous corresponding
+point will be done from midnight of the current day.
+Examples of interpretation are given in figure \ref{relative initial cycle point date syntax interpretation}.
+
+\begin{figure}[H]
+\centering
+\caption{Examples of setting relative initial cycle point for dates \\
+using now = 2018-03-14T15:12Z (and UTC mode)}
+\begin{tabular}{ | l | l | }
+\hline
+Syntax & Interpretation \\
+\hline
+\lstinline=next(-00)= & 2100-01-01T00:00Z \\
+\lstinline=previous(--01)= & 2018-01-01T00:00Z \\
+\lstinline=next(---01)= & 2018-04-01T00:00Z \\
+\lstinline=previous(--1225)= & 2017-12-25T00:00Z \\
+\lstinline=next(-2006)= & 2020-06-01T00:00Z \\
+\lstinline=previous(-W101)= & 2018-03-05T00:00Z \\
+\lstinline=next(-W-1; -W-3; -W-5)= & 2018-03-14T00:00Z \\
+\lstinline=next(-001; -091; -181; -271)= & 2018-04-01T00:00Z \\
+\lstinline=previous(-365T12Z)= & 2017-12-31T12:00Z \\
+\hline
+\end{tabular}
+\label{relative initial cycle point date syntax interpretation}
+\end{figure}
+
 
 \subsubsection[final cycle point]{[scheduling] \textrightarrow final cycle point}
 
@@ -776,7 +859,7 @@ it will be assumed to be local time, or in UTC if \ref{UTC-mode} is set, or in
 the \ref{cycle-point-time-zone} if that is set.
 
 \begin{myitemize}
-    \item {\em type:} ISO 8601 date-time point representation (e.g.\ 
+    \item {\em type:} ISO 8601 date-time point representation (e.g.\
  \lstinline=CCYYMMDDThhmm=, 19951231T1230) or ISO 8601 date-time offset
     (e.g.\  +P1D+PT6H)
     \item {\em default:} (none)
@@ -932,7 +1015,7 @@ be used in special task lists as shorthand for listing all member tasks.
 \paragraph[clock-trigger]{[scheduling] \textrightarrow [[special tasks]] \textrightarrow clock-trigger}
 
 {\em NOTE: please read {\em External Triggers} (\ref{External Triggers}) before
-using the older clock triggers described in this section.} 
+using the older clock triggers described in this section.}
 
 Clock-trigger tasks (see~\ref{ClockTriggerTasks}) wait on a wall clock time
 specified as an offset from their own cycle point.
@@ -972,7 +1055,7 @@ see~\ref{ClockExpireTasks}.
 \paragraph[external-trigger]{[scheduling] \textrightarrow [[special tasks]] \textrightarrow external-trigger}
 
 {\em NOTE: please read {\em External Triggers} (\ref{External Triggers}) before
-using the older mechanism described in this section.} 
+using the older mechanism described in this section.}
 
 Externally triggered tasks (see~\ref{Old-Style External Triggers}) wait on
 external events reported via the \lstinline=cylc ext-trigger= command. To
@@ -1302,13 +1385,13 @@ cycle point offset housekeeping of work directories before doing this.
 \paragraph[{[[[}meta{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[meta]]]}
 
 Section containing metadata items for this task or family namespace. Several items
-(title, description, URL) are pre-defined and are used by the GUI. Others can be 
-user-defined and passed to task event handlers to be interpreted according to your 
-needs. For example, the value of an ``importance'' item could determine how an event 
+(title, description, URL) are pre-defined and are used by the GUI. Others can be
+user-defined and passed to task event handlers to be interpreted according to your
+needs. For example, the value of an ``importance'' item could determine how an event
 handler responds to task failure events.
 
 Any suite meta item can now be passed to task event handlers by prefixing the
-string template item name with ``suite\_'', for example : 
+string template item name with ``suite\_'', for example :
 
 \begin{lstlisting}
 [runtime]
@@ -1745,7 +1828,7 @@ Item details:
 If a task has not started after the specified ISO 8601 duration/interval, the
 {\em submission timeout} event handler(s) will be called.
 \begin{myitemize}
-    \item {\em type:} ISO 8601 duration/interval representation (e.g.\ 
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.\
  \lstinline=PT30M=, 30 minutes or \lstinline=P1D=, 1 day).
     \item {\em default:} (none)
 \end{myitemize}
@@ -1756,7 +1839,7 @@ If a task has not started after the specified ISO 8601 duration/interval, the
 If a task has not finished after the specified ISO 8601 duration/interval, the
 {\em execution timeout} event handler(s) will be called.
 \begin{myitemize}
-    \item {\em type:} ISO 8601 duration/interval representation (e.g.\ 
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.\
  \lstinline=PT4H=, 4 hours or \lstinline=P1D=, 1 day).
     \item {\em default:} (none)
 \end{myitemize}
@@ -1975,7 +2058,7 @@ individually overridden at lower levels of the runtime namespace hierarchy.
 
 \subparagraph[\_\_DIRECTIVE\_\_ ]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[directives]]] \textrightarrow \_\_DIRECTIVE\_\_}
 
-Replace \_\_DIRECTIVE\_\_ with each directive assignment, e.g.\ 
+Replace \_\_DIRECTIVE\_\_ with each directive assignment, e.g.\
 \lstinline@class = parallel@
 
 \begin{myitemize}
@@ -2033,7 +2116,7 @@ suite-name sub-directory of this location).
 
 Polling interval expressed as an ISO 8601 duration/interval.
 \begin{myitemize}
-    \item {\em type:} ISO 8601 duration/interval representation (e.g.\ 
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.\
  \lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
     \item {\em default:} PT1M
 \end{myitemize}
@@ -2101,7 +2184,7 @@ The default simulated job run length, if \lstinline=[job]execution time limit=
 and \lstinline=[simulation]speedup factor= are not set.
 
 \begin{myitemize}
-    \item {\em type:} ISO 8601 duration/interval representation (e.g.\ 
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.\
  \lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
     \item {\em default:} \lstinline=PT10S=
 \end{myitemize}
@@ -2124,7 +2207,7 @@ simulated task run length plus this buffer interval, to avoid job kill due to
 exceeding the time limit.
 
 \begin{myitemize}
-    \item {\em type:} ISO 8601 duration/interval representation (e.g.\ 
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.\
  \lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
     \item {\em default:} PT10S
 \end{myitemize}
