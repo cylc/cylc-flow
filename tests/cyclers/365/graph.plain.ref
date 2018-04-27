@@ -1,0 +1,5 @@
+edge "foo.20120228T00" "foo.20120330T00" solid
+graph
+node "foo.20120228T00" "foo\n20120228T00" unfilled ellipse black
+node "foo.20120301T00" "foo\n20120301T00" unfilled ellipse black
+stop

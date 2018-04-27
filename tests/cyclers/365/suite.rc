@@ -1,0 +1,18 @@
+[cylc]
+    UTC mode = True
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = PT0.5M
+[scheduling]
+    initial cycle point = 20120228T00
+    final cycle point = 20120301T00
+    cycling mode = 365day
+    [[dependencies]]
+        [[[ P1D ]]]
+            graph = foo[-P1D] => foo
+[runtime]
+    [[foo]]
+        script = true
+[visualization]
+    initial cycle point = 20120228T00
+    final cycle point = 20120301T00
