@@ -320,11 +320,14 @@ class BatchSysManager(object):
                 cur_time_str,
                 ctx.get_summary_str()))
 
-    def jobs_submit(self, job_log_root, job_log_dirs, remote_mode=False):
+    def jobs_submit(self, job_log_root, job_log_dirs, remote_mode=False,
+                    utc_mode=False):
         """Submit multiple jobs.
 
         job_log_root -- The log/job/ sub-directory of the suite.
         job_log_dirs -- A list containing point/name/submit_num for task jobs.
+        remote_mode -- am I running on the remote job host?
+        utc_mode -- is the suite running in UTC mode?
 
         """
         if "$" in job_log_root:
@@ -335,7 +338,7 @@ class BatchSysManager(object):
             items = self._jobs_submit_prep_by_stdin(job_log_root, job_log_dirs)
         else:
             items = self._jobs_submit_prep_by_args(job_log_root, job_log_dirs)
-        now = get_current_time_string()
+        now = get_current_time_string(override_use_utc=utc_mode)
         for job_log_dir, batch_sys_name, submit_opts in items:
             job_file_path = os.path.join(
                 job_log_root, job_log_dir, JOB_LOG_JOB)

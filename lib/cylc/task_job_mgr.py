@@ -253,6 +253,8 @@ class TaskJobManager(object):
             cmd = ['cylc', self.JOBS_SUBMIT]
             if cylc.flags.debug:
                 cmd.append('--debug')
+            if cylc.flags.utc:
+                cmd.append('--utc-mode')
             remote_mode = False
             kwargs = {}
             for key, value, test_func in [
