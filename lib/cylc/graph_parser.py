@@ -674,7 +674,9 @@ class TestGraphParser(unittest.TestCase):
         The correct format is:
           NAME(<PARAMS>)([CYCLE-POINT-OFFSET])(:TRIGGER-TYPE)")
         """
-        gp = GraphParser()
+        params = {'m': ['0', '1'], 'n': ['0', '1']}
+        templates = {'m': '_m%(m)s', 'n': '_n%(n)s'}
+        gp = GraphParser(parameters=(params, templates))
         self.assertRaises(
             GraphParseError, gp.parse_graph, "foo[-P1Y]<m,n> => bar")
         self.assertRaises(
