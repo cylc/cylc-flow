@@ -46,7 +46,7 @@ print_version() {
     if [[ "$#" -eq 0 ]]; then
         echo "$CYLC_VERSION"
     fi
-    if [[ "$@" == 'long' ]]; then
+    if [[ "$@" == 'long' || "$@" == '--long' ]]; then
     echo "Cylc ${CYLC_VERSION} (${CYLC_DIR})"    
     fi
 }
@@ -100,9 +100,19 @@ help_util() {
     fi
     # Deal with cases like 'cylc --help [COMMAND/CATEGORY] or cylc [CATEGORY]'   
     if (( $# >= 1 )); then
-        if [[  -f "$(ls cylc-${1}* 2>/dev/null)" ]]; then
-        local COMMAND="${CYLC_HOME_BIN}/$(ls "cylc-$1"*)"
-        exec "${COMMAND}" "--help"
+        if [[ "$1" == 'version' ]]; then
+            cat <<'__HELP__'
+Usage: cylc version [--long]
+
+Print version and exit.
+
+Options:
+  --long            print cylc version and location of cylc installation
+__HELP__
+            return
+        elif ls cylc-${1}* 2>'/dev/null'; then
+            local COMMAND="${CYLC_HOME_BIN}/$(ls "cylc-$1"*)"
+            exec "${COMMAND}" "--help"
         elif (( "$(wc -l <<<"$(ls cylc-${1}* 2>/dev/null)")" > 1 )); then
             abort_ambiguous_command "$1"
         else
@@ -121,7 +131,7 @@ help_util() {
         exec "${COMMAND}" "--help"
     fi
     # If not a category or not an actual command in the bin dir, exit
-    if [[ ! -f "$(ls "cylc-${UTIL}"*)" ]]; then
+    if ! ls "cylc-${UTIL}"* 2>'/dev/null'; then
         echo "${UTIL}: unknown utility. Abort." >&2
         echo "Type 'cylc help' for a list of utilities."
         return 1
