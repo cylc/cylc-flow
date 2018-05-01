@@ -58,8 +58,7 @@ from cylc.task_state import (
     TASK_STATUSES_ACTIVE, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
     TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING)
-from cylc.wallclock import (
-    get_current_time_string, get_seconds_as_interval_string)
+from cylc.wallclock import get_current_time_string
 
 
 class TaskJobManager(object):
@@ -79,7 +78,7 @@ class TaskJobManager(object):
     JOBS_SUBMIT = SuiteProcPool.JOBS_SUBMIT
     REMOTE_SELECT_MSG = 'waiting for remote host selection'
     REMOTE_INIT_MSG = 'remote host initialising'
-    KEY_EXECUTE_TIME_LIMIT = 'execution_time_limit'
+    KEY_EXECUTE_TIME_LIMIT = TaskEventsManager.KEY_EXECUTE_TIME_LIMIT
 
     def __init__(self, suite, proc_pool, suite_db_mgr, suite_srv_files_mgr):
         self.suite = suite
@@ -100,9 +99,13 @@ class TaskJobManager(object):
         now = time()
         poll_tasks = set()
         for itask in task_pool.get_tasks():
-            if (self._check_timeout(itask, now) or
-                    self.task_events_mgr.set_poll_time(itask, now)):
+            if self.task_events_mgr.check_job_time(itask, now):
                 poll_tasks.add(itask)
+                if itask.poll_timer.delay is not None:
+                    LOG.info(
+                        'poll now, (next in %s)' % (
+                            itask.poll_timer.delay_timeout_as_str()),
+                        itask=itask)
         if poll_tasks:
             self.poll_task_jobs(suite, poll_tasks)
 
@@ -295,43 +298,6 @@ class TaskJobManager(object):
                 ),
                 self._submit_task_jobs_callback, [suite, itasks])
         return done_tasks
-
-    def _check_timeout(self, itask, now):
-        """Check/handle submission/execution timeouts."""
-        if itask.state.status == TASK_STATUS_RUNNING:
-            timer = itask.poll_timers.get(self.KEY_EXECUTE_TIME_LIMIT)
-            if timer is not None:
-                if not timer.is_timeout_set():
-                    timer.next()
-                if not timer.is_delay_done():
-                    # Don't poll
-                    return False
-                if timer.next() is not None:
-                    # Poll now, and more retries lined up
-                    return True
-                # No more retry lined up, can issue execution timeout event
-        if itask.state.status in itask.timeout_timers:
-            timeout = itask.timeout_timers[itask.state.status]
-            if timeout is None or now <= timeout:
-                return False
-            itask.timeout_timers[itask.state.status] = None
-            if (itask.state.status == TASK_STATUS_RUNNING and
-                    itask.summary['started_time'] is not None):
-                msg = 'job started %s ago, but has not finished' % (
-                    get_seconds_as_interval_string(
-                        timeout - itask.summary['started_time']))
-                event = 'execution timeout'
-            elif (itask.state.status == TASK_STATUS_SUBMITTED and
-                    itask.summary['submitted_time'] is not None):
-                msg = 'job submitted %s ago, but has not started' % (
-                    get_seconds_as_interval_string(
-                        timeout - itask.summary['submitted_time']))
-                event = 'submission timeout'
-            else:
-                return False
-            LOG.warning(msg, itask=itask)
-            self.task_events_mgr.setup_event_handlers(itask, event, msg)
-            return True
 
     @staticmethod
     def _create_job_log_path(suite, itask):
@@ -829,7 +795,7 @@ class TaskJobManager(object):
             itask.summary['logfiles'].append(expandvars(name))
         try:
             batch_sys_conf = self.task_events_mgr.get_host_conf(
-                itask, 'batch systems')[rtconfig['job']['batch system']]
+                itask, 'batch systems')[itask.summary['batch_sys_name']]
         except (TypeError, KeyError):
             batch_sys_conf = {}
         try:
@@ -837,22 +803,6 @@ class TaskJobManager(object):
                 rtconfig['job']['execution time limit'])
         except TypeError:
             pass
-        if itask.summary[self.KEY_EXECUTE_TIME_LIMIT]:
-            # Default = 1, 2 and 7 minutes intervals, roughly 1, 3 and 10
-            # minutes after time limit exceeded
-            itask.poll_timers[self.KEY_EXECUTE_TIME_LIMIT] = (
-                TaskActionTimer(delays=batch_sys_conf.get(
-                    'execution time limit polling intervals', [60, 120, 420])))
-        for label, key in [
-                ('submission polling intervals', TASK_STATUS_SUBMITTED),
-                ('execution polling intervals', TASK_STATUS_RUNNING)]:
-            if key in itask.poll_timers:
-                itask.poll_timers[key].reset()
-            else:
-                values = self.task_events_mgr.get_host_conf(
-                    itask, label, skey='job')
-                if values:
-                    itask.poll_timers[key] = TaskActionTimer(delays=values)
 
         scripts = self._get_job_scripts(itask, rtconfig)
 

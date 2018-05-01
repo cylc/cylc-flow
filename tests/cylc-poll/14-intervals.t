@@ -33,12 +33,18 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}"
 LOG_FILE="${SUITE_RUN_DIR}/log/suite/log"
-# t1.1 should get the submission polling intervals
-run_ok "log" grep -Fq '[t1.1] -next job poll in PT2S' "${LOG_FILE}"
-run_ok "log" grep -Fq '[t1.1] -next job poll in PT10S' "${LOG_FILE}"
-# t2.1 should get the execution polling intervals
-run_ok "log" grep -Fq '[t2.1] -next job poll in PT1S' "${LOG_FILE}"
-run_ok "log" grep -Fq '[t2.1] -next job poll in PT6S' "${LOG_FILE}"
+
+PRE_MSG='-health check settings:'
+for INDEX in 1 2; do
+    for STAGE in 'submission' 'execution'; do
+        POLL_INT='PT2S,6\*PT10S,'
+        if [[ "${STAGE}" == 'execution' ]]; then
+            POLL_INT='2\*PT1S,10\*PT6S,'
+        fi
+        POST_MSG=".*, polling intervals=${POLL_INT}..."
+        grep_ok "\[t${INDEX}\.1\] ${PRE_MSG} ${STAGE}${POST_MSG}" "${LOG_FILE}"
+    done
+done
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
 exit

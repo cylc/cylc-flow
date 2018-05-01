@@ -371,7 +371,7 @@ class TaskPool(object):
                 if time_run:
                     itask.set_summary_time('started', time_run)
                 if timeout is not None:
-                    itask.timeout_timers[status] = timeout
+                    itask.timeout = timeout
 
             elif status in (TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_FAILED):
                 itask.state.set_prerequisites_all_satisfied()
@@ -421,31 +421,44 @@ class TaskPool(object):
         (cycle, name, ctx_key_raw, ctx_raw, delays_raw, num, delay,
          timeout) = row
         id_ = TaskID.get(name, cycle)
+        itask = self.get_task_by_id(id_)
+        if itask is None:
+            LOG.warning("%(id)s: task not found, skip" % {"id": id_})
+            return
         try:
             # Extract type namedtuple variables from JSON strings
             ctx_key = json.loads(str(ctx_key_raw))
-            ctx = None
-            if ctx_raw:
-                ctx_data = json.loads(str(ctx_raw))
-                if ctx_data:
-                    for ctx_cls in [
-                            CustomTaskEventHandlerContext,
-                            TaskEventMailContext,
-                            TaskJobLogsRetrieveContext]:
-                        if ctx_cls.__name__ == ctx_data[0]:
-                            ctx = ctx_cls(*ctx_data[1])
+            ctx_data = json.loads(str(ctx_raw))
+            for known_cls in [
+                    CustomTaskEventHandlerContext,
+                    TaskEventMailContext,
+                    TaskJobLogsRetrieveContext]:
+                if ctx_data and ctx_data[0] == known_cls.__name__:
+                    ctx = known_cls(*ctx_data[1])
+                    break
+            else:
+                ctx = ctx_data
+                if ctx is not None:
+                    ctx = tuple(ctx)
             delays = json.loads(str(delays_raw))
         except ValueError:
             LOG.exception(
-                "%(id)s: skip action timer %(ctx_key)s, %(ctx)s" %
-                {"id": id_, "ctx_key": ctx_key_raw, "ctx": ctx_raw})
+                "%(id)s: skip action timer %(ctx_key)s" %
+                {"id": id_, "ctx_key": ctx_key_raw})
             return
-        if ctx_key and ctx_key[0] in ["poll_timers", "try_timers"]:
+        if ctx_key == "poll_timer":
             itask = self.get_task_by_id(id_)
             if itask is None:
                 LOG.warning("%(id)s: task not found, skip" % {"id": id_})
                 return
-            getattr(itask, ctx_key[0])[ctx_key[1]] = TaskActionTimer(
+            itask.poll_timer = TaskActionTimer(
+                ctx, delays, num, delay, timeout)
+        elif ctx_key[0] == "try_timers":
+            itask = self.get_task_by_id(id_)
+            if itask is None:
+                LOG.warning("%(id)s: task not found, skip" % {"id": id_})
+                return
+            itask.try_timers[ctx_key[1]] = TaskActionTimer(
                 ctx, delays, num, delay, timeout)
         else:
             key1, submit_num = ctx_key

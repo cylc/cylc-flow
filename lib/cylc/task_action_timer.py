@@ -43,9 +43,11 @@ class TaskActionTimer(object):
         self.timeout = timeout
         self.is_waiting = False
 
-    def delay_as_seconds(self):
-        """Return the delay as PTnS, where n is number of seconds."""
-        return get_seconds_as_interval_string(self.delay)
+    def delay_timeout_as_str(self):
+        """Return a string in the form "delay (after timeout)"."""
+        return r"%s (after %s)" % (
+            get_seconds_as_interval_string(self.delay),
+            get_time_string_from_unix_time(self.timeout))
 
     def is_delay_done(self, now=None):
         """Is timeout done?"""
@@ -99,7 +101,3 @@ class TaskActionTimer(object):
     def unset_waiting(self):
         """Unset waiting flag after an action has completed."""
         self.is_waiting = False
-
-    def timeout_as_str(self):
-        """Return the timeout as an ISO8601 date-time string."""
-        return get_time_string_from_unix_time(self.timeout)

@@ -49,13 +49,15 @@ from cylc.task_job_logs import (
 from cylc.task_message import (
     ABORT_MESSAGE_PREFIX, FAIL_MESSAGE_PREFIX, VACATION_MESSAGE_PREFIX)
 from cylc.task_state import (
+    TASK_STATUSES_ACTIVE,
     TASK_STATUS_READY, TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_RETRYING,
     TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_RUNNING, TASK_STATUS_RETRYING,
     TASK_STATUS_FAILED, TASK_STATUS_SUCCEEDED)
 from cylc.task_outputs import (
     TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED, TASK_OUTPUT_SUBMIT_FAILED, TASK_OUTPUT_EXPIRED)
-from cylc.wallclock import get_current_time_string
+from cylc.wallclock import (
+    get_current_time_string, get_seconds_as_interval_string as intvl_as_str)
 
 
 CustomTaskEventHandlerContext = namedtuple(
@@ -119,6 +121,7 @@ class TaskEventsManager(object):
     HANDLER_JOB_LOGS_RETRIEVE = "job-logs-retrieve"
     IGNORED_INCOMING_FLAG = "(>ignored)"
     INCOMING_FLAG = ">"
+    KEY_EXECUTE_TIME_LIMIT = 'execution_time_limit'
     LEVELS = {
         "INFO": INFO,
         "NORMAL": INFO,
@@ -148,6 +151,57 @@ class TaskEventsManager(object):
         # Scheduler.process_tasks, to ensure that dependency negotation occurs
         # when required.
         self.pflag = False
+
+    @staticmethod
+    def check_poll_time(itask, now=None):
+        """Set the next task execution/submission poll time.
+
+        If now is set, set the timer only if the previous delay is done.
+        Return the next delay.
+        """
+        if itask.state.status not in TASK_STATUSES_ACTIVE:
+            # Reset, task not active
+            itask.timeout = None
+            itask.poll_timer = None
+            return None
+        ctx = (itask.submit_num, itask.state.status)
+        if itask.poll_timer is None or itask.poll_timer.ctx != ctx:
+            # Reset, timer no longer relevant
+            itask.timeout = None
+            itask.poll_timer = None
+            return None
+        if now is not None and not itask.poll_timer.is_delay_done(now):
+            return False
+        if itask.poll_timer.num is None:
+            itask.poll_timer.num = 0
+        itask.poll_timer.next(no_exhaust=True)
+        return True
+
+    def check_job_time(self, itask, now):
+        """Check/handle job timeout and poll timer"""
+        can_poll = self.check_poll_time(itask, now)
+        if itask.timeout is None or now <= itask.timeout:
+            return can_poll
+        # Timeout reached for task, emit event and reset itask.timeout
+        if itask.state.status == TASK_STATUS_RUNNING:
+            time_ref = itask.summary['started_time']
+            event = 'execution timeout'
+        elif itask.state.status == TASK_STATUS_SUBMITTED:
+            time_ref = itask.summary['submitted_time']
+            event = 'submission timeout'
+        msg = event
+        try:
+            msg += ' after %s' % intvl_as_str(itask.timeout - time_ref)
+        except (TypeError, ValueError):
+            # Badness in time_ref?
+            pass
+        itask.timeout = None  # emit event only once
+        if msg and event:
+            LOG.warning(msg, itask=itask)
+            self.setup_event_handlers(itask, event, msg)
+            return True
+        else:
+            return can_poll
 
     def get_host_conf(self, itask, key, default=None, skey="remote"):
         """Return a host setting from suite then global configuration."""
@@ -185,14 +239,13 @@ class TaskEventsManager(object):
                 # Report retries and delayed 1st try
                 tmpl = None
                 if timer.num > 1:
-                    tmpl = "%s/%s/%02d %s failed, retrying in %s (after %s)"
+                    tmpl = "%s/%s/%02d %s failed, retrying in %s"
                 elif timer.delay:
-                    tmpl = "%s/%s/%02d %s will run after %s (after %s)"
+                    tmpl = "%s/%s/%02d %s will run after %s"
                 if tmpl:
                     LOG.debug(tmpl % (
                         point, name, submit_num, key1,
-                        timer.delay_as_seconds(),
-                        timer.timeout_as_str()))
+                        timer.delay_timeout_as_str()))
             # Ready to run?
             if not timer.is_delay_done() or (
                 # Avoid flooding user's mail box with mail notification.
@@ -339,15 +392,10 @@ class TaskEventsManager(object):
             if TASK_STATUS_SUBMIT_RETRYING in itask.try_timers:
                 itask.try_timers[TASK_STATUS_SUBMIT_RETRYING].num = 0
             itask.job_vacated = True
-            try:
-                itask.timeout_timers[TASK_STATUS_SUBMITTED] = (
-                    itask.summary['submitted_time'] +
-                    float(self._get_events_conf(itask, 'submission timeout')))
-            except (TypeError, ValueError):
-                itask.timeout_timers[TASK_STATUS_SUBMITTED] = None
             # Believe this and change state without polling (could poll?).
             self.pflag = True
             itask.state.reset_state(TASK_STATUS_SUBMITTED)
+            self._reset_job_timers(itask)
         elif an_output_was_satisfied:
             # Message of an as-yet unreported custom task output.
             # No state change.
@@ -380,29 +428,6 @@ class TaskEventsManager(object):
         self._setup_job_logs_retrieval(itask, event)
         self._setup_event_mail(itask, event)
         self._setup_custom_event_handlers(itask, event, message)
-
-    @staticmethod
-    def set_poll_time(itask, now=None):
-        """Set the next task execution/submission poll time.
-
-        If now is set, set the timer only if the previous delay is done.
-        Return the next delay.
-        """
-        key = itask.state.status
-        timer = itask.poll_timers.get(key)
-        if timer is None:
-            return
-        if now is not None and not timer.is_delay_done(now):
-            return
-        if timer.num is None:
-            timer.num = 0
-        delay = timer.next(no_exhaust=True)
-        if delay is not None:
-            LOG.info(
-                'next job poll in %s (after %s)' % (
-                    timer.delay_as_seconds(), timer.timeout_as_str()),
-                itask=itask)
-        return delay
 
     def _custom_handler_callback(self, ctx, schd_ctx, id_key):
         """Callback when a custom event handler is done."""
@@ -593,16 +618,15 @@ class TaskEventsManager(object):
                 itask.submit_num, "failed"), itask=itask)
         else:
             # There is a retry lined up
-            timeout_str = (
-                itask.try_timers[TASK_STATUS_RETRYING].timeout_as_str())
             delay_msg = "retrying in %s" % (
-                itask.try_timers[TASK_STATUS_RETRYING].delay_as_seconds())
-            msg = "failed, %s (after %s)" % (delay_msg, timeout_str)
+                itask.try_timers[TASK_STATUS_RETRYING].delay_timeout_as_str())
+            msg = "failed, %s" % (delay_msg)
             LOG.info("job(%02d) %s" % (itask.submit_num, msg), itask=itask)
             itask.summary['latest_message'] = msg
             self.setup_event_handlers(
                 itask, "retry", "%s, %s" % (self.JOB_FAILED, delay_msg))
             itask.state.reset_state(TASK_STATUS_RETRYING)
+        self._reset_job_timers(itask)
 
     def _process_message_started(self, itask, event_time):
         """Helper for process_message, handle a started message."""
@@ -612,24 +636,14 @@ class TaskEventsManager(object):
         self.pflag = True
         itask.state.reset_state(TASK_STATUS_RUNNING)
         itask.set_summary_time('started', event_time)
+        self._reset_job_timers(itask)
         self.suite_db_mgr.put_update_task_jobs(itask, {
             "time_run": itask.summary['started_time_string']})
-        if itask.summary['execution_time_limit']:
-            execution_timeout = itask.summary['execution_time_limit']
-        else:
-            execution_timeout = self._get_events_conf(
-                itask, 'execution timeout')
-        try:
-            itask.timeout_timers[TASK_STATUS_RUNNING] = (
-                itask.summary['started_time'] + float(execution_timeout))
-        except (TypeError, ValueError):
-            itask.timeout_timers[TASK_STATUS_RUNNING] = None
 
         # submission was successful so reset submission try number
         if TASK_STATUS_SUBMIT_RETRYING in itask.try_timers:
             itask.try_timers[TASK_STATUS_SUBMIT_RETRYING].num = 0
         self.setup_event_handlers(itask, 'started', 'job started')
-        self.set_poll_time(itask)
 
     def _process_message_succeeded(self, itask, event_time):
         """Helper for process_message, handle a succeeded message."""
@@ -656,6 +670,7 @@ class TaskEventsManager(object):
                          itask=itask)
         itask.state.reset_state(TASK_STATUS_SUCCEEDED)
         self.setup_event_handlers(itask, "succeeded", "job succeeded")
+        self._reset_job_timers(itask)
 
     def _process_message_submit_failed(self, itask, event_time):
         """Helper for process_message, handle a submit-failed message."""
@@ -679,16 +694,15 @@ class TaskEventsManager(object):
         else:
             # There is a submission retry lined up.
             timer = itask.try_timers[TASK_STATUS_SUBMIT_RETRYING]
-            timeout_str = timer.timeout_as_str()
-            delay_msg = "submit-retrying in %s" % timer.delay_as_seconds()
-            msg = "%s, %s (after %s)" % (
-                self.EVENT_SUBMIT_FAILED, delay_msg, timeout_str)
+            delay_msg = "submit-retrying in %s" % timer.delay_timeout_as_str()
+            msg = "%s, %s" % (self.EVENT_SUBMIT_FAILED, delay_msg)
             LOG.info("job(%02d) %s" % (itask.submit_num, msg), itask=itask)
             itask.summary['latest_message'] = msg
             self.setup_event_handlers(
                 itask, self.EVENT_SUBMIT_RETRY,
                 "job %s, %s" % (self.EVENT_SUBMIT_FAILED, delay_msg))
             itask.state.reset_state(TASK_STATUS_SUBMIT_RETRYING)
+        self._reset_job_timers(itask)
 
     def _process_message_submitted(self, itask, event_time):
         """Helper for process_message, handle a submit-succeeded message."""
@@ -726,13 +740,7 @@ class TaskEventsManager(object):
             # The job started message can (rarely) come in before the submit
             # command returns - in which case do not go back to 'submitted'.
             itask.state.reset_state(TASK_STATUS_SUBMITTED)
-            try:
-                itask.timeout_timers[TASK_STATUS_SUBMITTED] = (
-                    itask.summary['submitted_time'] +
-                    float(self._get_events_conf(itask, 'submission timeout')))
-            except (TypeError, ValueError):
-                itask.timeout_timers[TASK_STATUS_SUBMITTED] = None
-            self.set_poll_time(itask)
+            self._reset_job_timers(itask)
 
     def _setup_job_logs_retrieval(self, itask, event):
         """Set up remote job logs retrieval.
@@ -877,3 +885,77 @@ class TaskEventsManager(object):
                         cmd,
                     ),
                     retry_delays))
+
+    def _reset_job_timers(self, itask):
+        """Set up poll timer and timeout for task."""
+        if itask.state.status not in TASK_STATUSES_ACTIVE:
+            # Reset, task not active
+            itask.timeout = None
+            itask.poll_timer = None
+            return
+        ctx = (itask.submit_num, itask.state.status)
+        if itask.poll_timer and itask.poll_timer.ctx == ctx:
+            return
+        # Set poll timer
+        # Set timeout
+        timeref = None  # reference time, submitted or started time
+        timeout = None  # timeout in setting
+        if itask.state.status == TASK_STATUS_RUNNING:
+            timeref = itask.summary['started_time']
+            timeout_key = 'execution timeout'
+            timeout = self._get_events_conf(itask, timeout_key)
+            delays = self.get_host_conf(
+                itask, 'execution polling intervals', skey='job',
+                default=[900])  # Default 15 minute intervals
+            if itask.summary[self.KEY_EXECUTE_TIME_LIMIT]:
+                time_limit = itask.summary[self.KEY_EXECUTE_TIME_LIMIT]
+                try:
+                    host_conf = self.get_host_conf(itask, 'batch systems')
+                    batch_sys_conf = host_conf[itask.summary['batch_sys_name']]
+                except (TypeError, KeyError):
+                    batch_sys_conf = {}
+                time_limit_delays = batch_sys_conf.get(
+                    'execution time limit polling intervals', [60, 120, 420])
+                timeout = time_limit + sum(time_limit_delays)
+                # Remove execessive polling before time limit
+                while sum(delays) > time_limit:
+                    del delays[-1]
+                # But fill up the gap before time limit
+                if delays:
+                    size = int((time_limit - sum(delays)) / delays[-1])
+                    delays.extend([delays[-1]] * size)
+                time_limit_delays[0] += time_limit - sum(delays)
+                delays += time_limit_delays
+        else:  # if itask.state.status == TASK_STATUS_SUBMITTED:
+            timeref = itask.summary['submitted_time']
+            timeout_key = 'submission timeout'
+            timeout = self._get_events_conf(itask, timeout_key)
+            delays = self.get_host_conf(
+                itask, 'submission polling intervals', skey='job',
+                default=[900])  # Default 15 minute intervals
+        try:
+            itask.timeout = timeref + float(timeout)
+            timeout_str = intvl_as_str(timeout)
+        except (TypeError, ValueError):
+            itask.timeout = None
+            timeout_str = None
+        itask.poll_timer = TaskActionTimer(ctx=ctx, delays=delays)
+        # Log timeout and polling schedule
+        message = 'health check settings: %s=%s' % (timeout_key, timeout_str)
+        # Attempt to group idenitical consecutive delays as N*DELAY,...
+        if itask.poll_timer.delays:
+            items = []  # [(number of item - 1, item), ...]
+            for delay in itask.poll_timer.delays:
+                if items and items[-1][1] == delay:
+                    items[-1][0] += 1
+                else:
+                    items.append([0, delay])
+            message += ', polling intervals='
+            for num, item in items:
+                if num:
+                    message += '%d*' % (num + 1)
+                message += '%s,' % intvl_as_str(item)
+            message += '...'
+        LOG.info(message, itask=itask)
+        # Set next poll time
+        self.check_poll_time(itask)
