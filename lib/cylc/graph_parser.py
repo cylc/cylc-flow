@@ -95,20 +95,23 @@ class GraphParser(object):
     LEN_FAM_TRIG_EXT_ALL = len(FAM_TRIG_EXT_ALL)
     LEN_FAM_TRIG_EXT_ANY = len(FAM_TRIG_EXT_ANY)
 
-    _RE_NODE = r'(?:!)?' + TaskID.NAME_RE
+    _RE_SUICIDE = r'(?:!)?'
+    _RE_NODE = _RE_SUICIDE + TaskID.NAME_RE
     _RE_PARAMS = r'<[\w,=\-+]+>'
     _RE_OFFSET = r'\[[\w\-\+\^:]+\]'
     _RE_TRIG = r':[\w\-]+'
 
     # Match fully qualified parameterized single nodes.
     REC_NODE_FULL = re.compile(
-        r'''(
-        (?:''' +
-        _RE_NODE + r'|' + _RE_PARAMS + r'|' + _RE_NODE + _RE_PARAMS +
-        ''')                         # node name
-        (?:''' + _RE_OFFSET + r''')? # optional cycle point offset
-        (?:''' + _RE_TRIG + r''')?   # optional trigger type
-        )''', re.X)           # end of string
+        _RE_SUICIDE +
+        r'''
+        (?:(?:''' +
+        TaskID.NAME_RE + r'(?:' + _RE_PARAMS + r')?|' + _RE_PARAMS +
+        ''')                             # node name
+        )+                               # allow task<param> to repeat
+        (?:''' + _RE_OFFSET + r''')?     # optional cycle point offset
+        (?:''' + _RE_TRIG + r''')?       # optional trigger type
+        ''', re.X)                       # end of string
 
     # Extract node info from a left-side expression, after parameter expansion.
     REC_NODES = re.compile(r'''
@@ -129,8 +132,8 @@ class GraphParser(object):
 
     # Detect and extract suite state polling task info.
     REC_SUITE_STATE = re.compile(
-        r'(' + TaskID.NAME_RE + r')(<([\w\.\-/]+)::(' + TaskID.NAME_RE + r')('
-        + _RE_TRIG + r')?>)')
+        r'(' + TaskID.NAME_RE + r')(<([\w\.\-/]+)::(' +
+        TaskID.NAME_RE + r')(' + _RE_TRIG + r')?>)')
 
     def __init__(self, family_map=None, parameters=None):
         """Initializing the graph string parser.
@@ -224,13 +227,8 @@ class GraphParser(object):
             for s in ['=>', '|', '&', '(', ')', '!']:
                 node_str = node_str.replace(s, ' ')
             # Then drop all valid nodes, longest first to avoid sub-strings.
-            nodes = self.__class__.REC_NODE_FULL.findall(node_str)
-            nodes.sort(key=len, reverse=True)
-            for node in nodes:
-                node_str = node_str.replace(node, '')
-            # Result should be empty string.
-            if node_str.strip():
-                bad_lines.append(line.strip())
+            bad_lines = [node_str for node in node_str.split()
+                         if self.__class__.REC_NODE_FULL.sub('', node, 1)]
         if bad_lines:
             raise GraphParseError(
                 "ERROR, bad graph node format:\n"
@@ -674,11 +672,15 @@ class TestGraphParser(unittest.TestCase):
         The correct format is:
           NAME(<PARAMS>)([CYCLE-POINT-OFFSET])(:TRIGGER-TYPE)")
         """
-        gp = GraphParser()
+        params = {'m': ['0', '1'], 'n': ['0', '1']}
+        templates = {'m': '_m%(m)s', 'n': '_n%(n)s'}
+        gp = GraphParser(parameters=(params, templates))
         self.assertRaises(
             GraphParseError, gp.parse_graph, "foo[-P1Y]<m,n> => bar")
         self.assertRaises(
             GraphParseError, gp.parse_graph, "foo[-P1Y]<m,n> => bar")
+        self.assertRaises(
+            GraphParseError, gp.parse_graph, "foo:fail<m,n> => bar")
         self.assertRaises(
             GraphParseError, gp.parse_graph, "foo:fail[-P1Y] => bar")
         self.assertRaises(
@@ -689,6 +691,14 @@ class TestGraphParser(unittest.TestCase):
             GraphParseError, gp.parse_graph, "foo<m,n>:fail[-P1Y] => bar")
         self.assertRaises(
             GraphParseError, gp.parse_graph, "foo:fail<m,n>[-P1Y] => bar")
+        self.assertRaises(
+            GraphParseError, gp.parse_graph, "<m,n>:fail[-P1Y] => bar")
+        self.assertRaises(
+            GraphParseError, gp.parse_graph, "[-P1Y]<m,n> => bar")
+        self.assertRaises(
+            GraphParseError, gp.parse_graph, "[-P1Y]<m,n>:fail => bar")
+        self.assertRaises(
+            GraphParseError, gp.parse_graph, "bar => foo:fail<m,n>[-P1Y]")
 
 
 if __name__ == "__main__":
