@@ -34,18 +34,18 @@ LOG="${RUN_DIR}/log/suite/log"
 sed -n 's/^.*\(cylc jobs-submit\)/\1/p' "${LOG}" | sort -u >'edited-suite-log'
 
 sort >'edited-suite-log-ref' <<__LOG__
-cylc jobs-submit --debug -- ${RUN_DIR}/log/job 20200101T0000Z/t0/01 20200101T0000Z/t1/01 20200101T0000Z/t2/01 20200101T0000Z/t3/01
-cylc jobs-submit --debug -- ${RUN_DIR}/log/job 20210101T0000Z/t0/01 20210101T0000Z/t1/01 20210101T0000Z/t2/01 20210101T0000Z/t3/01
-cylc jobs-submit --debug -- ${RUN_DIR}/log/job 20220101T0000Z/t0/01 20220101T0000Z/t1/01 20220101T0000Z/t2/01 20220101T0000Z/t3/01
-cylc jobs-submit --debug -- ${RUN_DIR}/log/job 20230101T0000Z/t0/01 20230101T0000Z/t1/01 20230101T0000Z/t2/01 20230101T0000Z/t3/01
-cylc jobs-submit --debug -- ${RUN_DIR}/log/job 20240101T0000Z/t0/01 20240101T0000Z/t1/01 20240101T0000Z/t2/01 20240101T0000Z/t3/01
-cylc jobs-submit --debug -- ${RUN_DIR}/log/job 20250101T0000Z/t0/01 20250101T0000Z/t1/01 20250101T0000Z/t2/01 20250101T0000Z/t3/01
-cylc jobs-submit --debug --host=${CYLC_TEST_HOST} --remote-mode -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20200101T0000Z/t4/01 20200101T0000Z/t5/01 20200101T0000Z/t6/01
-cylc jobs-submit --debug --host=${CYLC_TEST_HOST} --remote-mode -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20210101T0000Z/t4/01 20210101T0000Z/t5/01 20210101T0000Z/t6/01
-cylc jobs-submit --debug --host=${CYLC_TEST_HOST} --remote-mode -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20220101T0000Z/t4/01 20220101T0000Z/t5/01 20220101T0000Z/t6/01
-cylc jobs-submit --debug --host=${CYLC_TEST_HOST} --remote-mode -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20230101T0000Z/t4/01 20230101T0000Z/t5/01 20230101T0000Z/t6/01
-cylc jobs-submit --debug --host=${CYLC_TEST_HOST} --remote-mode -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20240101T0000Z/t4/01 20240101T0000Z/t5/01 20240101T0000Z/t6/01
-cylc jobs-submit --debug --host=${CYLC_TEST_HOST} --remote-mode -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20250101T0000Z/t4/01 20250101T0000Z/t5/01 20250101T0000Z/t6/01
+cylc jobs-submit --debug --utc-mode -- ${RUN_DIR}/log/job 20200101T0000Z/t0/01 20200101T0000Z/t1/01 20200101T0000Z/t2/01 20200101T0000Z/t3/01
+cylc jobs-submit --debug --utc-mode -- ${RUN_DIR}/log/job 20210101T0000Z/t0/01 20210101T0000Z/t1/01 20210101T0000Z/t2/01 20210101T0000Z/t3/01
+cylc jobs-submit --debug --utc-mode -- ${RUN_DIR}/log/job 20220101T0000Z/t0/01 20220101T0000Z/t1/01 20220101T0000Z/t2/01 20220101T0000Z/t3/01
+cylc jobs-submit --debug --utc-mode -- ${RUN_DIR}/log/job 20230101T0000Z/t0/01 20230101T0000Z/t1/01 20230101T0000Z/t2/01 20230101T0000Z/t3/01
+cylc jobs-submit --debug --utc-mode -- ${RUN_DIR}/log/job 20240101T0000Z/t0/01 20240101T0000Z/t1/01 20240101T0000Z/t2/01 20240101T0000Z/t3/01
+cylc jobs-submit --debug --utc-mode -- ${RUN_DIR}/log/job 20250101T0000Z/t0/01 20250101T0000Z/t1/01 20250101T0000Z/t2/01 20250101T0000Z/t3/01
+cylc jobs-submit --debug --utc-mode --host=${CYLC_TEST_HOST} --remote-mode -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20200101T0000Z/t4/01 20200101T0000Z/t5/01 20200101T0000Z/t6/01
+cylc jobs-submit --debug --utc-mode --host=${CYLC_TEST_HOST} --remote-mode -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20210101T0000Z/t4/01 20210101T0000Z/t5/01 20210101T0000Z/t6/01
+cylc jobs-submit --debug --utc-mode --host=${CYLC_TEST_HOST} --remote-mode -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20220101T0000Z/t4/01 20220101T0000Z/t5/01 20220101T0000Z/t6/01
+cylc jobs-submit --debug --utc-mode --host=${CYLC_TEST_HOST} --remote-mode -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20230101T0000Z/t4/01 20230101T0000Z/t5/01 20230101T0000Z/t6/01
+cylc jobs-submit --debug --utc-mode --host=${CYLC_TEST_HOST} --remote-mode -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20240101T0000Z/t4/01 20240101T0000Z/t5/01 20240101T0000Z/t6/01
+cylc jobs-submit --debug --utc-mode --host=${CYLC_TEST_HOST} --remote-mode -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 20250101T0000Z/t4/01 20250101T0000Z/t5/01 20250101T0000Z/t6/01
 __LOG__
 cmp_ok 'edited-suite-log' 'edited-suite-log-ref'
 

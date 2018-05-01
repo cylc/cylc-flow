@@ -36,9 +36,15 @@ def main():
         "--remote-mode",
         help="Is this being run on a remote job host?",
         action="store_true", dest="remote_mode", default=False)
+    parser.add_option(
+        "--utc-mode",
+        help="(for remote mode) is the suite running in UTC mode?",
+        action="store_true", dest="utc_mode", default=False)
+
     opts, args = parser.parse_args()
     BatchSysManager().jobs_submit(
-        args[0], args[1:], remote_mode=opts.remote_mode)
+        args[0], args[1:], remote_mode=opts.remote_mode,
+        utc_mode=opts.utc_mode)
 
 
 if __name__ == "__main__" and not remrun():

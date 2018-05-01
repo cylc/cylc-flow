@@ -312,7 +312,6 @@ class TaskEventsManager(object):
         each poll with its result message.
 
         """
-
         # Log incoming messages with '>' to distinguish non-message log entries
         if incoming_event_time:
             if submit_num is None or submit_num == itask.submit_num:
