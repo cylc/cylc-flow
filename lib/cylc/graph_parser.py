@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Module for parsing cylc graph strings."""
 
+import os
 import re
 import unittest
 from cylc.param_expand import GraphExpander, ParamExpandError
@@ -74,6 +75,8 @@ class GraphParser(object):
         * A parameterized qualified node name looks like this:
             NODE(<PARAMS>)([CYCLE-POINT-OFFSET])(:TRIGGER-TYPE)
         * The default trigger type is ':succeed'.
+        * A remote suite qualified node name looks like this:
+            NODE(<REMOTE-SUITE-TRIGGER>)(:TRIGGER-TYPE)
         * Trigger qualifiers are ignored on the right to allow chaining:
                "foo => bar => baz & qux"
           Think of this as describing the graph structure first, then
@@ -95,10 +98,53 @@ class GraphParser(object):
     LEN_FAM_TRIG_EXT_ALL = len(FAM_TRIG_EXT_ALL)
     LEN_FAM_TRIG_EXT_ANY = len(FAM_TRIG_EXT_ANY)
 
+    _RE_ARROW_SPACES = r'\s*{arrow}\s*'.format(arrow=ARROW)
+
     _RE_NODE = r'(?:!)?' + TaskID.NAME_RE
-    _RE_PARAMS = r'<[\w,=\-+]+>'
-    _RE_OFFSET = r'\[[\w\-\+\^:]+\]'
-    _RE_TRIG = r':[\w\-]+'
+
+    _RE_PARAMS_CORE = r'\s*[\w\-+]+\s*(?:[=\-+]\s*[\w\-+]+\s*)?'
+    _RE_PARAMS_SPACES = r'<{core}(?:,{core})*>'.format(
+        core=_RE_PARAMS_CORE)
+    _RE_PARAMS = _RE_PARAMS_SPACES.replace(r'\s*', '')
+
+    _RE_OFFSET_SPACES = r'\[\s*[\w\-\+\^:]+\s*\]'
+    _RE_OFFSET = _RE_OFFSET_SPACES.replace(r'\s*', '')
+
+    _RE_TRIG_SPACES = r':(?:\w+[\w\-]*)+'
+    _RE_TRIG = _RE_TRIG_SPACES.replace(r'\s*', '')
+
+    _RE_TRIG_REMOTE = (r'<{taskname}::{taskname}'
+                       r'(?::[\w\-]*)?\s*>')
+    _RE_TRIG_REMOTE = _RE_TRIG_REMOTE.format(taskname=TaskID.NAME_RE)
+
+    _RE_TASK_PATTERN = (r'\s*(?:!)?'
+                        '(?:{task}(?:{param})?(?:{task})?(?:{offset})?'
+                        '|'
+                        '{param}(?:{task})?(?:{offset})?'
+                        '|'
+                        '{task}(?:{remote})?)'
+                        '(?:{trig})?')
+    _RE_TASK_PATTERN = _RE_TASK_PATTERN.format(param=_RE_PARAMS_SPACES,
+                                               offset=_RE_OFFSET_SPACES,
+                                               remote=_RE_TRIG_REMOTE,
+                                               trig=_RE_TRIG_SPACES,
+                                               task=TaskID.NAME_RE)
+
+    _RE_MULTI_PATTERN = (r'[\s(]*{pattern}'
+                         r'(?:\s*[&|][\s(]*{pattern}[\s)]*)*[\s)]*')
+    _RE_MULTI_TASK = _RE_MULTI_PATTERN.format(pattern=_RE_TASK_PATTERN)
+
+    REC_GRAPH_LINE = re.compile(
+        r'''\A
+        (?:{arrow})?                # allow arrow as leading string
+        (?:{multi_task}             # standard pattern for multiple tasks
+        (?:                         # python style atomic grouping
+        (?:{arrow}                  # graph in between task groups
+        {multi_task}                # standard pattern for multiple tasks
+        )*)                         # finish off the arrow/multi task combo
+        (?:{arrow})?
+        )?                          # close off the first multi_task group
+        \Z'''.format(arrow=_RE_ARROW_SPACES, multi_task=_RE_MULTI_TASK), re.X)
 
     # Match fully qualified parameterized single nodes.
     REC_NODE_FULL = re.compile(
@@ -161,13 +207,23 @@ class GraphParser(object):
         """
         # Strip comments, whitespace, and blank lines.
         non_blank_lines = []
+        bad_lines = []
         for line in graph_string.split('\n'):
             line = self.__class__.REC_COMMENT.sub('', line)
+
+            if not line or line.isspace():
+                continue
+            if not self.REC_GRAPH_LINE.match(line):
+                bad_lines.append(line)
+                continue
+
             # Apparently this is the fastest way to strip all whitespace!:
             line = "".join(line.split())
-            if not line:
-                continue
             non_blank_lines.append(line)
+
+        # Check if there were problem lines and abort
+        if bad_lines:
+            self._report_invalid_lines(bad_lines)
 
         # Join incomplete lines (beginning or ending with an arrow).
         full_lines = []
@@ -232,11 +288,7 @@ class GraphParser(object):
             if node_str.strip():
                 bad_lines.append(line.strip())
         if bad_lines:
-            raise GraphParseError(
-                "ERROR, bad graph node format:\n"
-                "  " + "\n  ".join(bad_lines) + "\n"
-                "Correct format is"
-                " NAME(<PARAMS>)([CYCLE-POINT-OFFSET])(:TRIGGER-TYPE)")
+            self._report_invalid_lines(bad_lines)
 
         # Expand parameterized lines (or detect undefined parameters).
         line_set = set()
@@ -269,6 +321,17 @@ class GraphParser(object):
 
         # If debugging, print the final result here:
         # self.print_triggers()
+
+    def _report_invalid_lines(self, lines):
+        raise GraphParseError(
+                "ERROR, bad graph node format:\n"
+                "  " + "\n  ".join(lines) + "\n"
+                "Correct format is:\n"
+                " NAME(<PARAMS>)([CYCLE-POINT-OFFSET])(:TRIGGER-TYPE)\n"
+                " {NAME(<PARAMS>) can also be: "
+                "<PARAMS>NAME or NAME<PARAMS>NAME_CONTINUED}\n"
+                " or\n"
+                " NAME(<REMOTE-SUITE-TRIGGER>)(:TRIGGER-TYPE)")
 
     def _proc_dep_pair(self, left, right):
         """Process a single dependency pair 'left => right'.
@@ -440,11 +503,11 @@ class GraphParser(object):
                     title = "SUICIDE:"
                 else:
                     title = "TRIGGER:"
-                print '\nTASK:', right
-                print ' ', title, expr
+                print('\nTASK:', right)
+                print(' ', title, expr)
                 for t in triggers:
-                    print '    +', t
-                print '  from', self.original[right][expr]
+                    print('    +', t)
+                print('  from', self.original[right][expr])
 
 
 class TestGraphParser(unittest.TestCase):
