@@ -231,7 +231,7 @@ control|information|all|task|license|GPL|admin|preparation|hook|discovery\
     # the arguments along by 1.
     shift 1
     :;;
-help|h|?|--help|-h)
+help|h|\?|--help|-h)
     help_util "$@"
     exit 0
     :;;
@@ -254,11 +254,10 @@ esac
 
 # Store any matching file glob as a number for later use
 # Minimises re-running ls
-commands_match="$(ls "${CYLC_HOME_BIN}/cylc-${UTIL}"* 2>/dev/null || true )"
-if [[ -z $commands_match ]]; then
-    num_commands_match=0
-else
+if commands_match="$(ls "${CYLC_HOME_BIN}/cylc-${UTIL}"* 2>'/dev/null')"; then
     num_commands_match="$(wc -l <<<"${commands_match}")"
+else
+    num_commands_match=0
 fi
 
 # Abort if no matches to command abbrev, list matches if multiple matches
@@ -270,8 +269,8 @@ elif (( "$num_commands_match" == 1 )); then
 # Abort if the command wildcard match is ambiguous, unless it is itself a 
 # command, e.g. "cylc graph" matches "cylc-graph" and "cylc-graph-diff",
 # but the command should not abort in this case.  
-elif [[ "$num_commands_match" -gt 1 \
-        && -f "${CYLC_HOME_BIN}/cylc-${UTIL}" ]] ; then
+elif [[ "$num_commands_match" -gt 1 && -f "${CYLC_HOME_BIN}/cylc-${UTIL}" ]]
+then
     exec "${CYLC_HOME_BIN}/cylc-${UTIL}" "@"
 else
     abort_ambiguous_command "${UTIL}"
