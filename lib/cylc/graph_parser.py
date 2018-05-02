@@ -678,8 +678,6 @@ class TestGraphParser(unittest.TestCase):
         self.assertRaises(
             GraphParseError, gp.parse_graph, "foo[-P1Y]<m,n> => bar")
         self.assertRaises(
-            GraphParseError, gp.parse_graph, "foo[-P1Y]<m,n> => bar")
-        self.assertRaises(
             GraphParseError, gp.parse_graph, "foo:fail<m,n> => bar")
         self.assertRaises(
             GraphParseError, gp.parse_graph, "foo:fail[-P1Y] => bar")
@@ -699,6 +697,8 @@ class TestGraphParser(unittest.TestCase):
             GraphParseError, gp.parse_graph, "[-P1Y]<m,n>:fail => bar")
         self.assertRaises(
             GraphParseError, gp.parse_graph, "bar => foo:fail<m,n>[-P1Y]")
+        self.assertRaises(
+            GraphParseError, gp.parse_graph, "foo[-P1Y]baz => bar")
 
 
 if __name__ == "__main__":
