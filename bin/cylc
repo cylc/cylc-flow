@@ -171,20 +171,19 @@ path_lead() {
 }
 
 get_command_from_abbr() {
-    local ABBR="$1"
     local COMMAND="$(cd "${CYLC_HOME_BIN}" && ls "cylc-$1"* 2>'/dev/null')"
-    if (("$(wc -l <<<"${COMMAND}")" == 1)); then
-        # Abbreviation has one match, good
-        sed 's/^cylc-//' <<<"${COMMAND}"
-        return
-    elif (("$(wc -l <<<"${COMMAND}")" == 0)); then
+    if [[ -z "${COMMAND}" ]]; then
         # Abbreviation has no match, bad
         echo "cylc $1: unknown utility. Abort." >&2
         echo "Type \"cylc help all\" for a list of utilities." >&2
-    else
+    elif (("$(wc -l <<<"${COMMAND}")" != 1)); then
         # Abbreviation has multiple matches, bad
         echo "cylc $1: is ambiguous for:" >&2
-        sed 's/^/    cylc /' <<<"${COMMAND}" >&2
+        sed 's/^cylc-/    cylc /' <<<"${COMMAND}" >&2
+    else
+        # Abbreviation has one match, good
+        sed 's/^cylc-//' <<<"${COMMAND}"
+        return
     fi
     return 1
 }
