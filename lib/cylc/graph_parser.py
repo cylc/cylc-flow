@@ -74,6 +74,8 @@ class GraphParser(object):
         * A parameterized qualified node name looks like this:
             NODE(<PARAMS>)([CYCLE-POINT-OFFSET])(:TRIGGER-TYPE)
         * The default trigger type is ':succeed'.
+        * A remote suite qualified node name looks like this:
+            NODE(<REMOTE-SUITE-TRIGGER>)(:TRIGGER-TYPE)
         * Trigger qualifiers are ignored on the right to allow chaining:
                "foo => bar => baz & qux"
           Think of this as describing the graph structure first, then
@@ -100,6 +102,15 @@ class GraphParser(object):
     _RE_PARAMS = r'<[\w,=\-+]+>'
     _RE_OFFSET = r'\[[\w\-\+\^:]+\]'
     _RE_TRIG = r':[\w\-]+'
+
+    # Match if there are any spaces which could lead to graph problems
+    REC_GRAPH_BAD_SPACES_LINE = re.compile(
+        TaskID.NAME_RE +
+        r'''
+        (?<![\-+](?=\s*[0-9])) # allow spaces after -+ if numbers follow
+        (?!\s*[\-+]\s*[0-9])   # allow spaces before/after -+ if numbers follow
+        \s+                    # do not allow 'task<space>task'
+        ''' + TaskID.NAME_SUFFIX_RE, re.X)
 
     # Match fully qualified parameterized single nodes.
     REC_NODE_FULL = re.compile(
@@ -164,13 +175,27 @@ class GraphParser(object):
         """
         # Strip comments, whitespace, and blank lines.
         non_blank_lines = []
+        bad_lines = []
         for line in graph_string.split('\n'):
-            line = self.__class__.REC_COMMENT.sub('', line)
-            # Apparently this is the fastest way to strip all whitespace!:
-            line = "".join(line.split())
-            if not line:
+            modified_line = self.__class__.REC_COMMENT.sub('', line)
+
+            # Ignore empty lines
+            if not modified_line or modified_line.isspace():
                 continue
-            non_blank_lines.append(line)
+
+            # Catch simple bad lines that would be accepted once
+            # spaces are removed, e.g. 'foo bar => baz'
+            if self.REC_GRAPH_BAD_SPACES_LINE.search(modified_line):
+                bad_lines.append(line)
+                continue
+
+            # Apparently this is the fastest way to strip all whitespace!:
+            modified_line = "".join(modified_line.split())
+            non_blank_lines.append(modified_line)
+
+        # Check if there were problem lines and abort
+        if bad_lines:
+            self._report_invalid_lines(bad_lines)
 
         # Join incomplete lines (beginning or ending with an arrow).
         full_lines = []
@@ -230,11 +255,7 @@ class GraphParser(object):
             bad_lines = [node_str for node in node_str.split()
                          if self.__class__.REC_NODE_FULL.sub('', node, 1)]
         if bad_lines:
-            raise GraphParseError(
-                "ERROR, bad graph node format:\n"
-                "  " + "\n  ".join(bad_lines) + "\n"
-                "Correct format is"
-                " NAME(<PARAMS>)([CYCLE-POINT-OFFSET])(:TRIGGER-TYPE)")
+            self._report_invalid_lines(bad_lines)
 
         # Expand parameterized lines (or detect undefined parameters).
         line_set = set()
@@ -267,6 +288,31 @@ class GraphParser(object):
 
         # If debugging, print the final result here:
         # self.print_triggers()
+
+    @classmethod
+    def _report_invalid_lines(cls, lines):
+        """Raise GraphParseError in a consistent format when there are
+        lines with bad syntax.
+
+        The list of bad lines are inserted into the error message to show
+        exactly what lines have problems. The correct syntax of graph lines
+        is displayed to direct people on the correct path.
+
+        Keyword Arguments:
+        lines -- a list of bad graph lines to be reported
+
+        Raises:
+        GraphParseError -- always. This is the sole purpose of this method
+        """
+        raise GraphParseError(
+            "ERROR, bad graph node format:\n"
+            "  " + "\n  ".join(lines) + "\n"
+            "Correct format is:\n"
+            " NAME(<PARAMS>)([CYCLE-POINT-OFFSET])(:TRIGGER-TYPE)\n"
+            " {NAME(<PARAMS>) can also be: "
+            "<PARAMS>NAME or NAME<PARAMS>NAME_CONTINUED}\n"
+            " or\n"
+            " NAME(<REMOTE-SUITE-TRIGGER>)(:TRIGGER-TYPE)")
 
     def _proc_dep_pair(self, left, right):
         """Process a single dependency pair 'left => right'.
@@ -438,11 +484,11 @@ class GraphParser(object):
                     title = "SUICIDE:"
                 else:
                     title = "TRIGGER:"
-                print '\nTASK:', right
-                print ' ', title, expr
+                print('\nTASK:', right)
+                print(' ', title, expr)
                 for t in triggers:
-                    print '    +', t
-                print '  from', self.original[right][expr]
+                    print('    +', t)
+                print('  from', self.original[right][expr])
 
 
 class TestGraphParser(unittest.TestCase):
@@ -699,6 +745,51 @@ class TestGraphParser(unittest.TestCase):
             GraphParseError, gp.parse_graph, "bar => foo:fail<m,n>[-P1Y]")
         self.assertRaises(
             GraphParseError, gp.parse_graph, "foo[-P1Y]baz => bar")
+
+    def test_spaces_between_tasks_fails(self):
+        """Test that <task> <task> is rejected (i.e. no & or | in between)"""
+        gp = GraphParser()
+        self.assertRaises(
+            GraphParseError, gp.parse_graph, "foo bar=> baz")
+        self.assertRaises(
+            GraphParseError, gp.parse_graph, "foo&bar=> ba z")
+        self.assertRaises(
+            GraphParseError, gp.parse_graph, "foo 123=> bar")
+        self.assertRaises(
+            GraphParseError, gp.parse_graph, "foo - 123 baz=> bar")
+
+    def test_spaces_between_parameters_fails(self):
+        """Test that <param param> are rejected (i.e. no comma)"""
+        gp = GraphParser()
+        self.assertRaises(
+            GraphParseError, gp.parse_graph, "<foo bar> => baz")
+        self.assertRaises(
+            GraphParseError, gp.parse_graph, "<foo=a _bar> => baz")
+        self.assertRaises(
+            GraphParseError, gp.parse_graph, "<foo=a_ bar> => baz")
+
+    @classmethod
+    def test_spaces_between_parameters_passes(cls):
+        """Test that <param-1> works, with spaces around the -+ signs"""
+        params = {'m': ['0', '1', '2']}
+        templates = {'m': '_m%(m)s'}
+        gp = GraphParser(parameters=(params, templates))
+        gp.parse_graph("<m- 1> => <m>")
+        gp.parse_graph("<m -1> => <m>")
+        gp.parse_graph("<m - 1> => <m>")
+        gp.parse_graph("<m+ 1> => <m>")
+        gp.parse_graph("<m +1> => <m>")
+        gp.parse_graph("<m + 1> => <m>")
+
+    def test_spaces_in_trigger_fails(self):
+        """Test that 'task:a- b' are rejected"""
+        gp = GraphParser()
+        self.assertRaises(
+            GraphParseError, gp.parse_graph, "FOO:custom -trigger => baz")
+        self.assertRaises(
+            GraphParseError, gp.parse_graph, "FOO:custom- trigger => baz")
+        self.assertRaises(
+            GraphParseError, gp.parse_graph, "FOO:custom - trigger => baz")
 
 
 if __name__ == "__main__":
