@@ -374,23 +374,23 @@ class TaskEventsManager(object):
             self._process_message_submitted(itask, event_time)
         elif message.startswith(FAIL_MESSAGE_PREFIX):
             # Task received signal.
+            if (flag == self.INCOMING_FLAG
+                    and itask.state.is_gt(TASK_STATUS_FAILED)):
+                return True
             signal = message[len(FAIL_MESSAGE_PREFIX):]
             self._db_events_insert(itask, "signaled", signal)
             self.suite_db_mgr.put_update_task_jobs(
                 itask, {"run_signal": signal})
-            if (flag == self.INCOMING_FLAG
-                    and itask.state.is_gt(TASK_STATUS_FAILED)):
-                return True
             self._process_message_failed(itask, event_time, self.JOB_FAILED)
         elif message.startswith(ABORT_MESSAGE_PREFIX):
             # Task aborted with message
+            if (flag == self.INCOMING_FLAG
+                    and itask.state.is_gt(TASK_STATUS_FAILED)):
+                return True
             aborted_with = message[len(ABORT_MESSAGE_PREFIX):]
             self._db_events_insert(itask, "aborted", message)
             self.suite_db_mgr.put_update_task_jobs(
                 itask, {"run_signal": aborted_with})
-            if (flag == self.INCOMING_FLAG
-                    and itask.state.is_gt(TASK_STATUS_FAILED)):
-                return True
             self._process_message_failed(itask, event_time, aborted_with)
         elif message.startswith(VACATION_MESSAGE_PREFIX):
             # Task job pre-empted into a vacation state
