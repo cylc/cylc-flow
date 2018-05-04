@@ -164,9 +164,9 @@ def typo(str):
 
 # BEGIN MAIN
 general_usage = """
-Cylc ("silk") is a suite engine and metascheduler that specializes in
-cycling weather and climate forecasting suites and related processing
-(but it can also be used for one-off workflows of non-cycling tasks).
+Cylc ("silk") is a workflow engine for orchestrating complex *suites* of
+inter-dependent distributed cycling (repeating) tasks, as well as ordinary
+non-cycling workflows.
 For detailed documentation see the Cylc User Guide (cylc doc --help).
 
 Version __CYLC_VERSION__
@@ -174,13 +174,15 @@ Version __CYLC_VERSION__
 The graphical user interface for cylc is "gcylc" (a.k.a. "cylc gui").
 
 USAGE:
-  % cylc -v,--version,version           # print cylc version
+  % cylc -V,--version,version           # print cylc version
   % cylc version --long                 # print cylc version and path
   % cylc help,--help,-h,?               # print this help page
 
   % cylc help CATEGORY                  # print help by category
   % cylc CATEGORY help                  # (ditto)
   % cylc help [CATEGORY] COMMAND        # print command help
+  % cylc [CATEGORY] COMMAND --help      # (ditto)
+  % cylc COMMAND --help                 # (ditto)
 
   % cylc COMMAND [options] SUITE [arguments]
   % cylc COMMAND [options] SUITE TASK [arguments]"""
@@ -191,8 +193,8 @@ Commands can be abbreviated as long as there is no ambiguity in
 the abbreviated command:
 
   % cylc trigger SUITE TASK             # trigger TASK in SUITE
-  % cylc tri SUITE TASK                 # ditto
-  % cylc t SUITE TASK                   # ditto
+  % cylc trig SUITE TASK                # ditto
+  % cylc tr SUITE TASK                  # ditto
 
   % cylc get                            # Error: ambiguous command
 
@@ -444,7 +446,7 @@ if __name__ == "__main__":
         from cylc.version import CYLC_VERSION
         print usage.replace("__CYLC_VERSION__", CYLC_VERSION)
         pretty_print(catsum, categories)
-        sys.exit(1)
+        sys.exit(0)
 
     args = sys.argv[1:]
 
@@ -476,7 +478,7 @@ if __name__ == "__main__":
             print usage.replace("__CYLC_VERSION__", CYLC_VERSION)
             pretty_print(catsum, categories)
             sys.exit(0)
-        if (args[0] == '-v' or args[0] == '--version'):
+        if (args[0] in ['--version', '-V']):
             from cylc.version import CYLC_VERSION
             print CYLC_VERSION
             sys.exit(0)
