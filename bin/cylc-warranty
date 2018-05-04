@@ -43,7 +43,7 @@ IS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF
 ALL NECESSARY SERVICING, REPAIR OR CORRECTION."""
     else:
         print __doc__
-        if sys.argv[1] not in ['help', '--help']:
+        if sys.argv[1] not in ['-h', 'help', '--help']:
             sys.exit(1)
 
 

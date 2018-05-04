@@ -225,7 +225,7 @@ help|h|\?|--help|-h)
     help_util "$@"
     exit 0
     :;;
-version|--version|-V|-v)
+version|--version|-V)
     print_version "$@"
     exit 0
     :;;
