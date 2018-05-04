@@ -17,10 +17,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Common logic for "cylc run" and "cylc restart" CLI."""
 
+import os
 import sys
+from subprocess import Popen
 
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.scheduler import Scheduler
+from cylc.hostuserutil import is_remote_host
+from cylc.remote import (
+    HostAppointer, remrun, construct_ssh_cmd, run_ssh_cmd)
 
 RUN_DOC = r"""cylc [control] run|start [OPTIONS] ARGS
 
@@ -61,6 +66,25 @@ START_POINT_ARG_DOC = (
 def main(is_restart=False):
     """CLI main."""
     options, args = parse_commandline(is_restart)
+
+    # Check whether a run host is explicitly specified, else select one.
+    if not options.host:
+        host = HostAppointer().appoint_host()
+        if is_remote_host(host):
+            if is_restart:
+                base_cmd = ["restart"] + sys.argv[1:]
+            else:
+                base_cmd = ["run"] + sys.argv[1:]
+            # State as relative localhost to prevent recursive host selection.
+            base_cmd.append("--host=localhost")
+            cmd = construct_ssh_cmd(base_cmd, host=host)
+            proc = Popen(
+                construct_ssh_cmd(base_cmd, host=host), stdin=open(os.devnull))
+            res = proc.wait()
+            sys.exit(res)
+    elif remrun():
+        sys.exit()
+
     scheduler = Scheduler(is_restart, options, args)
     scheduler.start()
 

@@ -73,6 +73,33 @@ def coerce_interval_list(value, keys, args):
     )
 
 
+def convert_range_list(values, keys):
+    """Convert valid 'X .. Y' string to list of integers from X to Y inclusive.
+
+    Return the list object or None if input is invalid 'X .. Y' format."""
+    list_format = r'\s*(\d+)\s\.\.\s(\d+)\s*$'
+    matches = re.match(list_format, values)
+    core_err_msg = "Cannot extract start and end integers from '%s'" % values
+    if not matches:
+        raise ValueError(core_err_msg)
+    try:
+        list_start, list_end = matches.group(1, 2)
+        startpoint = int(list_start)
+        # Range function has non-inclusive end-point so must add 1.
+        endpoint = int(list_end) + 1
+        if startpoint >= endpoint:
+            raise ValueError("%s >= %s but 'X .. Y' format requires X < Y." %
+                             (startpoint, endpoint))
+    except (AttributeError, TypeError):
+        raise ValueError(core_err_msg)
+    return range(startpoint, endpoint)
+
+
+def coerce_range_list(value, keys, _):
+    """Coerce a valid 'X .. Y' string into a list of integers."""
+    return convert_range_list(value, keys)
+
+
 def coerce_xtrig(value, keys, _):
     """Coerce a string into an xtrigger function context object.
 

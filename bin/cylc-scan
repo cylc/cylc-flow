@@ -161,10 +161,8 @@ def main():
     options, args = parser.parse_args()
 
     if options.print_ports:
-        base = glbl_cfg().get(["communication", "base port"])
-        max_num_ports = glbl_cfg().get(
-            ["communication", "maximum number of ports"])
-        print base, "<= port <=", base + max_num_ports
+        run_ports_list = glbl_cfg().get(['suite servers', 'run ports'])
+        print run_ports_list[0], '<= port <=', run_ports_list[-1]
         sys.exit(0)
 
     indent = "   "

@@ -135,19 +135,16 @@ def scan_many(items, timeout=None, updater=None):
     todo_set = set()
     wait_set = set()
     # Determine ports to scan
-    base_port = None
-    max_ports = None
+    valid_ports = None
     for item in items:
         if isinstance(item, tuple):
             # Assume item is ("host", port)
             todo_set.add(item)
         else:
             # Full port range for a host
-            if base_port is None or max_ports is None:
-                base_port = glbl_cfg().get(['communication', 'base port'])
-                max_ports = glbl_cfg().get(
-                    ['communication', 'maximum number of ports'])
-            for port in range(base_port, base_port + max_ports):
+            if valid_ports is None:
+                valid_ports = glbl_cfg().get(['suite servers', 'run ports'])
+            for port in valid_ports:
                 todo_set.add((item, port))
     proc_items = []
     results = []

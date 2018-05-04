@@ -33,12 +33,13 @@ from cylc.envvar import expandvars
 from cylc.mkdir_p import mkdir_p
 import cylc.flags
 from cylc.cfgspec.utils import (
-    coerce_interval, coerce_interval_list, DurationFloat)
+    coerce_interval, coerce_interval_list, coerce_range_list, DurationFloat)
 from cylc.network import PRIVILEGE_LEVELS, PRIV_STATE_TOTALS, PRIV_SHUTDOWN
 from cylc.version import CYLC_VERSION
 
 coercers['interval'] = coerce_interval
 coercers['interval_list'] = coerce_interval_list
+coercers['range_list'] = coerce_range_list
 
 SPEC = {
     'process pool size': vdr(vtype='integer', default=4),
@@ -272,6 +273,21 @@ SPEC = {
                 PRIVILEGE_LEVELS[:PRIVILEGE_LEVELS.index(PRIV_SHUTDOWN) + 1]),
             default=PRIV_STATE_TOTALS),
     },
+
+    'suite servers': {
+        'run hosts': vdr(vtype='string_list', default=["localhost"]),
+        'run ports': vdr(vtype='range_list', default=range(43001, 43101)),
+        'scan hosts': vdr(vtype='string_list', default=["localhost"]),
+        'scan ports': vdr(vtype='range_list', default=range(43001, 43101)),
+        'run host select': {
+            'rank': vdr(
+                vtype='string',
+                options=["random", "load:1", "load:5", "load:15", "memory",
+                         "disk-space"],
+                default="random"),
+            'thresholds': vdr(vtype='string', default=None),
+        },
+    },
 }
 
 
@@ -279,10 +295,20 @@ def upg(cfg, descr):
     """Upgrader."""
     add_bin_dir = converter(lambda x: x + '/bin', "Added + '/bin' to path")
     use_ssh = converter(lambda x: "ssh", "set to 'ssh'")
+
     u = upgrader(cfg, descr)
-    u.deprecate('5.1.1', ['editors', 'in-terminal'], ['editors', 'terminal'])
-    u.deprecate('5.1.1', ['task hosts'], ['hosts'])
-    u.deprecate('5.1.1', ['hosts', 'local'], ['hosts', 'localhost'])
+    u.deprecate(
+        '5.1.1',
+        ['editors', 'in-terminal'],
+        ['editors', 'terminal'])
+    u.deprecate(
+        '5.1.1',
+        ['task hosts'],
+        ['hosts'])
+    u.deprecate(
+        '5.1.1',
+        ['hosts', 'local'],
+        ['hosts', 'localhost'])
     u.deprecate(
         '5.1.1',
         ['hosts', '__MANY__', 'workspace directory'],
@@ -322,37 +348,40 @@ def upg(cfg, descr):
             '6.4.1',
             ['test battery', 'directives', batch_sys_name + ' directives'],
             ['test battery', 'batch systems', batch_sys_name, 'directives'])
-    u.obsolete('6.4.1', ['test battery', 'directives'])
-    u.obsolete('6.11.0', ['state dump rolling archive length'])
-    u.deprecate('6.11.0', ['cylc', 'event hooks'], ['cylc', 'events'])
+    u.obsolete(
+        '6.4.1',
+        ['test battery', 'directives'])
+    u.obsolete(
+        '6.11.0',
+        ['state dump rolling archive length'])
+    u.deprecate(
+        '6.11.0',
+        ['cylc', 'event hooks'],
+        ['cylc', 'events'])
     for key in SPEC['cylc']['events']:
         u.deprecate(
-            '6.11.0', ['cylc', 'event hooks', key], ['cylc', 'events', key])
+            '6.11.0',
+            ['cylc', 'event hooks', key],
+            ['cylc', 'events', key])
     u.obsolete(
         '7.0.0',
-        ['pyro', 'base port']
-    )
+        ['pyro', 'base port'])
     u.obsolete(
         '7.0.0',
         ['pyro', 'maximum number of ports'],
-        ['communication', 'maximum number of ports']
-    )
+        ['communication', 'maximum number of ports'])
     u.obsolete(
         '7.0.0',
-        ['pyro', 'ports directory'],
-    )
+        ['pyro', 'ports directory'])
     u.obsolete(
         '7.0.0',
-        ['pyro']
-    )
+        ['pyro'])
     u.obsolete(
         '7.0.0',
-        ['authentication', 'hashes']
-    )
+        ['authentication', 'hashes'])
     u.obsolete(
         '7.0.0',
-        ['authentication', 'scan hash']
-    )
+        ['authentication', 'scan hash'])
     u.deprecate(
         '7.0.0',
         ['execution polling intervals'],
@@ -373,13 +402,30 @@ def upg(cfg, descr):
     # use 'tail -pid' to kill 'tail' on ssh exit, but we do this in cylc now.
     u.obsolete(
         '7.6.0',
-        ['hosts', '__MANY__', 'remote tail command template']
-    )
+        ['hosts', '__MANY__', 'remote tail command template'])
     u.deprecate(
         '7.6.0',
         ['hosts', '__MANY__', 'local tail command template'],
-        ['hosts', '__MANY__', 'tail command template']
-    )
+        ['hosts', '__MANY__', 'tail command template'])
+    u.deprecate(
+        '7.8.0',
+        ['communication', 'base port'],
+        ['suite servers', 'run ports'],
+        converter(lambda x: '%s .. %s' % (
+            int(x),
+            int(x) + int(cfg['communication']['maximum number of ports'])),
+            "Format as range list"))
+    u.obsolete(
+        '7.8.0',
+        ['communication', 'maximum number of ports'])
+    u.deprecate(
+        '7.8.0',
+        ['suite host scanning'],
+        ['suite servers'])
+    u.deprecate(
+        '7.8.0',
+        ['suite servers', 'hosts'],
+        ['suite servers', 'scan hosts'])
     u.upgrade()
 
 
