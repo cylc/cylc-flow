@@ -542,16 +542,24 @@ conditions; see `cylc conditions`.
             messages.setdefault(task_id, [])
             messages[task_id].append(
                 (submit_num, event_time, severity, message))
+        # Note on to_poll_tasks: If an incoming message is going to cause a
+        # reverse change to task state, it is desirable to confirm this by
+        # polling.
+        to_poll_tasks = []
         for itask in self.pool.get_tasks():
             message_items = messages.get(itask.identity)
             if message_items is None:
                 continue
+            should_poll = False
             for submit_num, event_time, severity, message in message_items:
-                self.task_events_mgr.process_message(
-                    itask, severity, message,
-                    self.task_job_mgr.poll_task_jobs,
-                    incoming_event_time=event_time,
-                    submit_num=submit_num)
+                if self.task_events_mgr.process_message(
+                        itask, severity, message, event_time,
+                        self.task_events_mgr.INCOMING_FLAG, submit_num):
+                    should_poll = True
+            if should_poll:
+                to_poll_tasks.append(itask)
+        self.task_job_mgr.poll_task_jobs(
+            self.suite, to_poll_tasks, poll_succ=True)
 
     def process_command_queue(self):
         """Process queued commands."""
