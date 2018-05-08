@@ -43,7 +43,7 @@ class ConditionalSimplifier(object):
 
         Examples:
             >>> ConditionalSimplifier.listify('(foo)')
-            [['foo']]
+            ['foo']
 
             >>> ConditionalSimplifier.listify('foo & (bar | baz)')
             ['foo', '&', ['bar', '|', 'baz']]
@@ -51,8 +51,14 @@ class ConditionalSimplifier(object):
             >>> ConditionalSimplifier.listify('(a&b)|(c|d)&(e|f)')
             [['a', '&', 'b'], '|', ['c', '|', 'd'], '&', ['e', '|', 'f']]
 
-            >>> ConditionalSimplifier.listify('a & (b, c,)')
-            ['a', '&', ['b, c,']]
+            >>> ConditionalSimplifier.listify('a & (b & c)')
+            ['a', '&', ['b', '&', 'c']]
+
+            >>> ConditionalSimplifier.listify('a & b')
+            ['a', '&', 'b']
+
+            >>> ConditionalSimplifier.listify('a & (b)')
+            ['a', '&', 'b']
 
             >>> ConditionalSimplifier.listify('((foo)')
             Traceback (most recent call last):
@@ -78,6 +84,8 @@ class ConditionalSimplifier(object):
                 stack.pop()
                 if not stack:
                     raise ValueError(message)
+                if isinstance(stack[-1][-1], list) and len(stack[-1][-1]) == 1:
+                    stack[-1][-1] = stack[-1][-1][0]
         if len(stack) > 1:
             raise ValueError(message)
         return ret_list
@@ -183,3 +191,8 @@ class ConditionalSimplifier(object):
         flattened = "(" + flattened
         flattened += ")"
         return flattened
+
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()

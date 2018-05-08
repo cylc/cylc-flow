@@ -987,17 +987,17 @@ class TaskPool(object):
         """
         num_removed = 0
         for itask in self.get_tasks():
-            if itask.state.suicide_prerequisites:
-                if itask.state.suicide_prerequisites_satisfied():
-                    if itask.state.status in [TASK_STATUS_READY,
-                                              TASK_STATUS_SUBMITTED,
-                                              TASK_STATUS_RUNNING]:
-                        LOG.warning('suiciding while active', itask=itask)
-                    else:
-                        LOG.info('suiciding', itask=itask)
-                    self.force_spawn(itask)
-                    self.remove(itask, 'suicide')
-                    num_removed += 1
+            if (itask.state.suicide_prerequisites and
+                    itask.state.suicide_prerequisites_are_all_satisfied()):
+                if itask.state.status in [TASK_STATUS_READY,
+                                          TASK_STATUS_SUBMITTED,
+                                          TASK_STATUS_RUNNING]:
+                    LOG.warning('suiciding while active', itask=itask)
+                else:
+                    LOG.info('suiciding', itask=itask)
+                self.force_spawn(itask)
+                self.remove(itask, 'suicide')
+                num_removed += 1
         return num_removed
 
     def _get_earliest_unsatisfied_point(self):
