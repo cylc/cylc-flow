@@ -1,0 +1,29 @@
+[cylc]
+    UTC mode = True
+    [[events]]
+        abort on stalled = True
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    final cycle point = 3
+    [[dependencies]]
+        [[[P1]]]
+            graph = """
+                t0:hello & t0:greet => !t1
+                t0:whatever => t1
+            """
+[runtime]
+    [[t0]]
+        script = """
+if ((${CYLC_TASK_CYCLE_POINT} == 1)); then
+    cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'hello' 'greet'
+else
+    cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'whatever'
+fi
+"""
+        [[[outputs]]]
+            hello = hello
+            greet = greet
+            whatever = whatever
+    [[t1]]
+        script = true

@@ -1,0 +1,5 @@
+2018-05-08T15:09:34Z INFO - Initial point: 1
+2018-05-08T15:09:34Z INFO - Final point: 2
+2018-05-08T15:09:34Z INFO - [t0.1] -triggered off []
+2018-05-08T15:09:34Z INFO - [t0.2] -triggered off []
+2018-05-08T15:09:47Z INFO - [t1.2] -triggered off ['t0.2']

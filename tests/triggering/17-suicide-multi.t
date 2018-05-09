@@ -15,19 +15,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test suicide triggering
-# (this is currently just a copy of the tutorial suicide example, but I
-# anticipate making it more fiendish at some point).
-. $(dirname $0)/test_header
-#-------------------------------------------------------------------------------
-set_test_number 2
-#-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE suicide-multi
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --reference-test --debug --no-detach $SUITE_NAME
-#-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+# Test "or" outputs from same task triggerting suicide triggering
+. "$(dirname "$0")/test_header"
+set_test_number 3
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}" \
+    cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
+if which 'sqlite3' >'/dev/null'; then
+    DBFILE="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/db"
+    sqlite3 "${DBFILE}" 'SELECT * FROM task_pool ORDER BY cycle, name;' \
+        >'sqlite3.out'
+    cmp_ok 'sqlite3.out' <<'__OUT__'
+2|fin|1|succeeded|
+3|fin|1|succeeded|
+3|good|1|succeeded|
+3|showdown|1|succeeded|
+__OUT__
+else
+    skip 1 "sqlite3 not installed?"
+fi
+
+purge_suite "${SUITE_NAME}"
+exit
