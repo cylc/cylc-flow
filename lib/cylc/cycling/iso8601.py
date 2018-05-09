@@ -54,6 +54,7 @@ class SuiteSpecifics(object):
     abbrev_util = None
     interval_parser = None
     point_parser = None
+    recurrence_parser = None
     iso8601_parsers = None
 
 
@@ -672,9 +673,6 @@ def init_from_cfg(cfg):
 def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
          assume_utc=False, cycling_mode=None):
     """Initialise suite-setup-specific information."""
-
-    SuiteSpecifics.interval_parser = DurationParser()
-
     if cycling_mode in Calendar.default().MODES:
         Calendar.default().set_mode(cycling_mode)
 
@@ -702,19 +700,16 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
                 ('cylc', 'cycle point format'),
                 SuiteSpecifics.DUMP_FORMAT
             )
-    SuiteSpecifics.point_parser = TimePointParser(
-        allow_only_basic=False,
-        allow_truncated=True,
-        num_expanded_year_digits=SuiteSpecifics.NUM_EXPANDED_YEAR_DIGITS,
-        dump_format=SuiteSpecifics.DUMP_FORMAT,
-        assumed_time_zone=time_zone_hours_minutes
-    )
 
     SuiteSpecifics.iso8601_parsers = CylcTimeParser.initiate_parsers(
         dump_format=SuiteSpecifics.DUMP_FORMAT,
         num_expanded_year_digits=num_expanded_year_digits,
         assumed_time_zone=SuiteSpecifics.ASSUMED_TIME_ZONE
     )
+
+    (SuiteSpecifics.point_parser,
+     SuiteSpecifics.interval_parser,
+     SuiteSpecifics.recurrence_parser) = SuiteSpecifics.iso8601_parsers
 
     SuiteSpecifics.abbrev_util = CylcTimeParser(
         None, None, SuiteSpecifics.iso8601_parsers
