@@ -1,0 +1,14 @@
+2018-05-08T15:09:34Z INFO - Initial point: 1
+2018-05-08T15:09:34Z INFO - Final point: 3
+2017-12-27T14:42:10Z INFO - [showdown.1] -triggered off []
+2017-12-27T14:42:13Z INFO - [bad.1] -triggered off ['showdown.1']
+2017-12-27T14:42:13Z INFO - [ugly.1] -triggered off ['showdown.1']
+2017-12-27T14:42:16Z INFO - [fin.1] -triggered off ['bad.1', 'ugly.1']
+2017-12-27T14:42:19Z INFO - [showdown.2] -triggered off ['fin.1']
+2017-12-27T14:42:22Z INFO - [good.2] -triggered off ['showdown.2']
+2017-12-27T14:42:22Z INFO - [ugly.2] -triggered off ['showdown.2']
+2017-12-27T14:42:25Z INFO - [fin.2] -triggered off ['good.2', 'ugly.2']
+2017-12-27T14:42:28Z INFO - [showdown.3] -triggered off ['fin.2']
+2017-12-27T14:42:32Z INFO - [bad.3] -triggered off ['showdown.3']
+2017-12-27T14:42:32Z INFO - [good.3] -triggered off ['showdown.3']
+2017-12-27T14:42:35Z INFO - [fin.3] -triggered off ['bad.3', 'good.3']

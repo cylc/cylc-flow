@@ -236,12 +236,6 @@ class TaskState(object):
         return (not self.prerequisites_are_all_satisfied() or
                 not self.suicide_prerequisites_are_all_satisfied())
 
-    def suicide_prerequisites_satisfied(self):
-        """Return True if any suicide prerequisites are satisfied."""
-        if self._suicide_is_satisfied is True:
-            return True
-        return any(preq.is_satisfied() for preq in self.suicide_prerequisites)
-
     def suicide_prerequisites_are_all_satisfied(self):
         """Return True if all suicide prerequisites are satisfied."""
         if self._suicide_is_satisfied is None:

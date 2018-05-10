@@ -1,0 +1,21 @@
+[cylc]
+    UTC mode = True
+    [[events]]
+        abort on stalled = True
+    [[reference test]]
+        expected task failures = t1.1
+[scheduling]
+    [[dependencies]]
+        graph = """
+            t0:failed & t1:failed => !t2
+            t0 | t1 => t2
+        """
+[runtime]
+    [[t0]]
+        # https://github.com/cylc/cylc/issues/2655
+        # "t2.1" should not suicide on "t1.1:failed"
+        script = sleep 10
+    [[t1]]
+        script = false
+    [[t2]]
+        script = true

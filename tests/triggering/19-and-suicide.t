@@ -15,23 +15,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test "or" outputs from same task triggerting suicide triggering
+# Test "and" outputs from 2 tasks triggering suicide.
+# https://github.com/cylc/cylc/issues/2655
 . "$(dirname "$0")/test_header"
 set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}" \
+suite_run_fail "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 if which 'sqlite3' >'/dev/null'; then
     DBFILE="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/db"
-    sqlite3 "${DBFILE}" 'SELECT * FROM task_pool ORDER BY cycle, name;' \
-        >'sqlite3.out'
+    sqlite3 "${DBFILE}" 'SELECT * FROM task_pool ORDER BY name;' >'sqlite3.out'
     cmp_ok 'sqlite3.out' <<'__OUT__'
-2|fin|1|succeeded|
-3|fin|1|succeeded|
-3|good|1|succeeded|
-3|showdown|1|succeeded|
+1|t0|1|succeeded|
+1|t1|1|failed|
+1|t2|1|succeeded|
 __OUT__
 else
     skip 1 "sqlite3 not installed?"

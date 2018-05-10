@@ -734,12 +734,4 @@ if __name__ == '__main__':
             # has gone wrong.)
             self.assertTrue(url.startswith("http"))
 
-        def test_get_data_from_url_single_http(self):
-            """Test the get data from call_server_impl() function"""
-            myclient = SuiteRuntimeServiceClient("dummy-suite")
-            myclient.comms1[SuiteSrvFilesManager.KEY_COMMS_PROTOCOL] = 'http'
-            ret = myclient.call_server_impl(
-                'http://httpbin.org/get', 'GET', None)
-            self.assertEqual(ret["url"], "http://httpbin.org/get")
-
     unittest.main()
