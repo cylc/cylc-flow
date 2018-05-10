@@ -23,7 +23,7 @@
                 # showdown:good & showdown:ugly => ! bad
                 # showdown:bad & showdown:ugly => ! good
 
-                good | bad | ugly => fin
+                (good & bad) | (bad & ugly) | (ugly & good) => fin
             """
 [runtime]
     [[showdown]]
