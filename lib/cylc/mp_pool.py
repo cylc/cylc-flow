@@ -19,6 +19,7 @@
 
 from collections import deque
 import os
+import time
 from pipes import quote
 from signal import SIGKILL
 from subprocess import Popen, PIPE
@@ -63,6 +64,8 @@ class SuiteProcContext(object):
             Return code of the command.
         .timestamp (str):
             Time string of latest update.
+        .init_time (int):
+            Time command execution commenced.  
     """
 
     # Format string for single line output
@@ -124,6 +127,7 @@ class SuiteProcPool(object):
     ERR_SUITE_STOPPING = 'suite stopping, command not run'
     JOBS_SUBMIT = 'jobs-submit'
     RET_CODE_SUITE_STOPPING = 999
+    CMD_TIMEOUT = 10
 
     def __init__(self, size=None):
         if not size:
@@ -159,7 +163,12 @@ class SuiteProcPool(object):
         for proc, ctx, callback, callback_args in self.runnings:
             ret_code = proc.poll()
             if ret_code is None:
-                runnings.append([proc, ctx, callback, callback_args])
+                if time.time() > ctx.init_time + self.CMD_TIMEOUT:
+                    LOG.warning('kill (timed out) %s' % ctx)
+                    os.killpg(proc.pid, SIGKILL)
+                    proc.wait()
+                else:
+                    runnings.append([proc, ctx, callback, callback_args])
             else:
                 ctx.out, ctx.err = proc.communicate()
                 ctx.ret_code = ret_code
@@ -177,6 +186,7 @@ class SuiteProcPool(object):
             else:
                 proc = self._run_command_init(ctx, callback, callback_args)
                 if proc is not None:
+                    ctx.init_time = time.time()
                     self.runnings.append([proc, ctx, callback, callback_args])
 
     def put_command(self, ctx, callback=None, callback_args=None):
