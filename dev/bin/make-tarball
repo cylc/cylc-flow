@@ -31,9 +31,10 @@ if [[ ! -d .git && ! -f .git ]]; then
     exit 1
 fi
 
+# sbin/
 THIS_DIR=$( cd $( dirname $0 ); pwd; )
-
-VERSION=$( "$THIS_DIR/get-repo-version" )
+# dev/bin/get-repo-version
+VERSION=$( "$THIS_DIR/../dev/bin/get-repo-version" )
 
 RELEASE=cylc-$VERSION
 TARBALL=${RELEASE}.tar.gz

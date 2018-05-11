@@ -11,14 +11,14 @@
 #  "cylc gui" under this framework.
 #
 #  2. Install cylc versions as described in the INSTALL file, e.g.:
-#     /home/admin/cylc/cylc-5.4.4/
-#     /home/admin/cylc/cylc-5.4.5/
-#     /home/admin/cylc/cylc -> cylc.5.4.5 # symlink DEFAULT version
+#     /opt/cylc/cylc-7.6.1/
+#     /opt/cylc/cylc-7.7.0/
+#     /opt/cylc/cylc -> cylc-7.7.0/  # symlink DEFAULT version
 #
 # Environment variables:
-#  $CYLC_HOME_ROOT: top installation directory, e.g. /home/admin/cylc/
-#  $CYLC_HOME:   a specific version, e.g. /home/admin/cylc/cylc-5.4.5/
-#  $CYLC_VERSION: a specific version string, e.g. 5.4.5
+#  $CYLC_HOME_ROOT: top installation directory, e.g. /opt/cylc/
+#  $CYLC_HOME:   a specific version, e.g. /opt/cylc/cylc-7.7.0/
+#  $CYLC_VERSION: a specific version string, e.g. 7.7.0
 #
 #  3. Set $CYLC_HOME_ROOT for your site - see "!!! EDIT ME !!! below.
 
@@ -43,7 +43,7 @@
 #    task messaging commands etc. pick up the compatible cylc version.
 # * Note that $CYLC_ROOT_HOME can be overridden in the environment too.
 
-CYLC_HOME_ROOT=${CYLC_HOME_ROOT:-/home/admin/cylc} # !!! EDIT ME !!!
+CYLC_HOME_ROOT=${CYLC_HOME_ROOT:-/opt/cylc} # !!! EDIT ME !!!
 
 if [[ -z ${CYLC_HOME:-} ]]; then
     if [[ -n ${CYLC_VERSION:-} && -d $CYLC_HOME_ROOT/cylc-$CYLC_VERSION ]]; then
