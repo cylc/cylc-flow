@@ -83,7 +83,7 @@ SPEC = {
     'transpose dot': vdr(vtype='boolean', default=False),
     'transpose graph': vdr(vtype='boolean', default=False),
     'ungrouped views': vdr(vtype='string_list', default=[]),
-    'sub-graphs on': vdr(vtype='boolean', default=False), 
+    'sub-graphs on': vdr(vtype='boolean', default=False),
     'use theme': vdr(vtype='string', default="default"),
     'window size': vdr(vtype='integer_list', default=[800, 500]),
 }
