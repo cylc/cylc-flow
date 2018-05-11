@@ -32,19 +32,28 @@ cylc.  If not, see [GNU licenses](http://www.gnu.org/licenses/).
  *  Ben Fitzpatrick
  *  Andrew Clark
  *  Oliver Sanders
+ *  Declan Valters
+ *  Sadie Bartholomew
  *  Luis Kornblueh
  *  Kerry Day
+ *  Prasanna Challuri
  *  David Matthews
  *  Tim Whitcomb
  *  Scott Wales
- *  Annette Osprey
+ *  Tomek Trzeciak
+ *  Thomas Coleman
  *  Bruno Kinoshita
+ *  Annette Osprey
+ *  Jonathan Thomas
+ *  Rosalyn Hatcher
  *  Domingo Manubens Gil
  *  Jonny Williams
+ *  Milton Woods
  *  Alex Reinecke
  *  Chan Wilson
  *  Kevin Pulo
- *  Thomas Coleman
+ *  Lois Hugget
+ *  Martin Dix
  
 ## Acknowledgement For Non-Cylc Work:
 Licences for non-cylc work included in this distribution can be found in the

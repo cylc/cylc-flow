@@ -437,12 +437,42 @@ are installed properly:
 \lstset{language=transcript}
 \begin{lstlisting}
 $ cylc check-software
-Checking for Python >= 2.6 ... found 2.7.6 ... ok
-Checking for non-Python packages:
- + Graphviz ... ok
-Checking for Python packages:
- + pygraphviz ... ok
- + pygtk ... ok
+Checking your software...
+
+Individual results:
+=============================================================================
+Package (version requirements)                        Outcome (version found)
+=============================================================================
+                            *REQUIRED SOFTWARE*                                 
+Python (2.6+, <3)...................FOUND & min. version MET (2.7.12.final.0)
+
+  *OPTIONAL SOFTWARE for the GUI & dependency graph visualisation*           
+Python:pygtk (2.0+).........................FOUND & min. version MET (2.24.0)
+graphviz (any).................................................FOUND (2.38.0)
+Python:pygraphviz (any).........................................FOUND (1.3.1)
+
+                *OPTIONAL SOFTWARE for the HTML User Guide*                     
+ImageMagick (any).............................................FOUND (6.8.9-9)
+
+           *OPTIONAL SOFTWARE for the HTTPS communications layer*                
+Python:urllib3 (any)...........................................FOUND (1.13.1)
+Python:OpenSSL (any)...........................................FOUND (17.2.0)
+Python:requests (2.4.2+).....................FOUND & min. version MET (2.9.1)
+
+                *OPTIONAL SOFTWARE for the LaTeX User Guide*                     
+TeX:framed (any)..................................................FOUND (n/a)
+TeX (3.0+)..............................FOUND & min. version MET (3.14159265)
+TeX:preprint (any)................................................FOUND (n/a)
+TeX:tex4ht (any)..................................................FOUND (n/a)
+TeX:tocloft (any).................................................FOUND (n/a)
+TeX:texlive (any).................................................FOUND (n/a)
+=============================================================================
+
+Summary:
+                        ****************************                             
+                           Core requirements: ok                                
+                           Full-functionality: ok                                
+                        **************************** 
 \end{lstlisting}
 
 If errors are reported then the packages concerned are either not installed or
@@ -484,15 +514,15 @@ such as \lstinline=/opt= where successive Cylc releases will be unpacked
 side by side.
 
 To install Cylc, unpack the release tarball in the right location, e.g.\
-\lstinline=/opt/cylc-7.4.0=, type \lstinline=make= inside the release
+\lstinline=/opt/cylc-7.7.0=, type \lstinline=make= inside the release
 directory, and set site defaults - if necessary - in a site global config file
 (below).
 
 Make a symbolic link from \lstinline=cylc= to the latest installed version:
-\lstinline=ln -s /opt/cylc-7.4.0 /opt/cylc=. This will be invoked by the
+\lstinline=ln -s /opt/cylc-7.7.0 /opt/cylc=. This will be invoked by the
 central wrapper if a specific version is not requested. Otherwise, the
 wrapper will attempt to invoke the Cylc version specified in
-\lstinline@$CYLC_VERSION@, e.g.\ \lstinline@CYLC_VERSION=7.4.0@. This variable
+\lstinline@$CYLC_VERSION@, e.g.\ \lstinline@CYLC_VERSION=7.7.0@. This variable
 is automatically set in task job scripts to ensure that jobs use the same Cylc
 version as their parent suite server program.  It can also be set by users,
 manually or in login scripts, to fix the Cylc version in their environment.
