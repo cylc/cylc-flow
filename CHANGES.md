@@ -1,7 +1,96 @@
 # Selected Cylc Changes
 
-For the full list of all changes for each release see [closed
-milestones](https://github.com/cylc/cylc/milestones?state=closed).
+Internal changes that do not directly affect users may not be listed here.  For
+all changes see the [closed
+milestones](https://github.com/cylc/cylc/milestones?state=closed) for each
+release.
+
+-------------------------------------------------------------------------------
+## __cylc-7.7.0 (2018-05-12)__
+
+### Enhancements
+
+[#2582](https://github.com/cylc/cylc/pull/2582) - improve client/server
+interface, including: `cylc message` can send multiple messages at once, with
+different severities; server ignores messages from superseded job submits;
+running jobs detect that the suite has been cold-started under them and will
+not attempt to connect; ssh-based indirect client-server communication now
+works automatically for all clients, not just messaging.
+
+[#2624](https://github.com/cylc/cylc/pull/2624) - rewrite `cylc cat-log`
+for enhanced functionality and some bug fixes.
+
+[#2582](https://github.com/cylc/cylc/pull/2582), 
+[#2624](https://github.com/cylc/cylc/pull/2624), and earlier changes: all job
+host actions are now done by remote `cylc` subcommands that are compatible with
+ssh whitelisting.
+
+[#2590](https://github.com/cylc/cylc/pull/2590) - replaced the fixed process
+pool with direct management of individual sub-processes (for external commands
+executed by the server program).
+
+[#2561](https://github.com/cylc/cylc/pull/2561) - pass resolved triggering
+dependencies to `$CYLC_TASK_DEPENDENCIES` in job environments.
+
+[#2639](https://github.com/cylc/cylc/pull/2639) - date-time cycling: document
+availability of 365-day (never a leap year) and 366-day (always a leap year)
+calendars.
+
+[#2597](https://github.com/cylc/cylc/pull/2597) - emit a "late" event if a task
+has not triggered by a user-defined real-time offset relative to cycle point. 
+
+[#2648](https://github.com/cylc/cylc/pull/2648) - improve version reporting.
+Note than non-standard lowercase `cylc -v` is now gone; use `cylc -V` or `cylc
+--version`, with optional `--long` format to print as well as version.
+
+[#2620](https://github.com/cylc/cylc/pull/2620) - re-document the long-dated
+`[special tasks]sequential` and recommend using explicit dependencies in the
+graph instead.
+
+[#2584](https://github.com/cylc/cylc/pull/2584) - internal queues now release
+task jobs on a FIFO (First In, First Out) basis, rather than randomly.
+
+[#2538](https://github.com/cylc/cylc/pull/2538) - remove leading whitespace
+from multi-line `script` items in task definitions, for cleaner job scripts.
+
+### Fixes
+
+[#2593](https://github.com/cylc/cylc/pull/2593) - fix polling after job
+execution timeout (configured pre-poll delays were being ignored).
+
+[#2656](https://github.com/cylc/cylc/pull/2656) - fix suicide triggers with
+multiple prerequisites in the same graph line. 
+
+[#2638](https://github.com/cylc/cylc/pull/2618) - fix duplicate "failed" task
+events after `cylc stop --kill`.
+
+[#2653](https://github.com/cylc/cylc/pull/2653) - tidy and correct the main `cylc
+help` documentation.
+
+[#2644](https://github.com/cylc/cylc/pull/2644), 
+[#2646](https://github.com/cylc/cylc/pull/2646) - fix some graph parsing edge
+cases.
+
+[#2649](https://github.com/cylc/cylc/pull/2649) - respect suite
+UTC mode when recording job submit time (database and GUI tree view).
+
+[#2631](https://github.com/cylc/cylc/pull/2631) - fix "failed" task event after
+bad host select.
+
+[#2626](https://github.com/cylc/cylc/pull/2626) - `cylc gui`: fix error when
+a task job completes just before "view task prerequisites" (menu) is actioned.
+
+[#2600](https://github.com/cylc/cylc/pull/2600) - correct task prerequisite
+manipulation on state changes.
+
+[#2596](https://github.com/cylc/cylc/pull/2596) - fix reference to parameter
+values containing `+` or `-` characters.
+
+[#2592](https://github.com/cylc/cylc/pull/2592) - permit syntax errors in edit
+runs, so that the job file still gets written.
+
+[#2579](https://github.com/cylc/cylc/pull/2579) - `cylc gscan`: fix a
+re-spawning error dialog.
 
 -------------------------------------------------------------------------------
 ## __cylc-7.6.1 (2018-03-28)__
@@ -67,23 +156,23 @@ state reset:
 [#2410](https://github.com/cylc/cylc/pull/2410) - new CUSTOM severity task
 messages that can trigger a custom event handler
 
-[#2420](https://github.com/cylc/cylc/pull/2420) - <code>cylc monitor</code> now
+[#2420](https://github.com/cylc/cylc/pull/2420) - `cylc monitor` now
 reconnects automatically if its target suite gets restarted on a different port
 
-[#2430](https://github.com/cylc/cylc/pull/2430) - <code>cylc gscan</code>,
-<code>cylc gui</code> - significant reduction in impact on suite server
+[#2430](https://github.com/cylc/cylc/pull/2430) - `cylc gscan`,
+`cylc gui` - significant reduction in impact on suite server
 programs
 
 [#2433](https://github.com/cylc/cylc/pull/2433) - "group" (used to group suites
-in <code>cylc gscan</code>) is now defined under the suite "[[meta]]" section
+in `cylc gscan`) is now defined under the suite "[[meta]]" section
 
 [#2424](https://github.com/cylc/cylc/pull/2424) - task job scripts now run in
-<code>bash -l</code> (login shell) instead of explicitly sourcing your
-<code>.profile</code> file. <em>WARNING</em>: if you have a
-<code>.bash_profile</code> and were using <code>.profile</code>as well just for
+`bash -l` (login shell) instead of explicitly sourcing your
+`.profile` file. *WARNING*: if you have a
+`.bash_profile` and were using `.profile` as well just for
 Cylc, the latter file will now be ignored because bash gives precendence to the
 former. If so, just move your Cylc settings into
-</code>.bash_profile</code> or consult the Cylc User Guide for
+`.bash_profile` or consult the Cylc User Guide for
 other ways to configure the task job environment.
 
 [#2441](https://github.com/cylc/cylc/pull/2441) -
@@ -105,8 +194,8 @@ arguments:
 
 [#2468](https://github.com/cylc/cylc/pull/2468) - initialize task remotes
 asynchronously via the multiprocessing pool, to avoid holding up suite start-up
-unnecessarily. <em>WARNING</em> this introduces new remote commands: <code>cylc
-remote-init</code> and <code>cylc remote-tidy</code> that will affect sites
+unnecessarily. *WARNING* this introduces new remote commands: `cylc
+remote-init` and `cylc remote-tidy` that will affect sites
 using ssh whitelisting
 
 [#2449](https://github.com/cylc/cylc/pull/2449) -
@@ -144,7 +233,7 @@ definitions
 
 [#2489](https://github.com/cylc/cylc/pull/2489) -
 [#2557](https://github.com/cylc/cylc/pull/2557) - 
-<code>cylc gscan</code> -
+`cylc gscan` -
  * configurable menubar visibility at start-up
  * grouped suites now retain their grouped status once stopped
 
@@ -152,14 +241,14 @@ definitions
 [#2529](https://github.com/cylc/cylc/pull/2529) - 
 [#2517](https://github.com/cylc/cylc/pull/2517) -
 [#2560](https://github.com/cylc/cylc/pull/2560) - 
-<code>cylc gui</code>
+`cylc gui`
  * put prompt dialogss above all windows
  * load new-suite log files after switching to another suite via the File menu
  * graph view: reinstate the right-click menu for ghost nodes (lost at cylc-7.5.0)
  * job log files:
    * fix and document the "extra log files" setting
    * add "view in editor" support for extra log files
-   * add text-editor functionality to <code>cylc jobscript</code>
+   * add text-editor functionality to `cylc jobscript`
    * add "preview jobscript" functionality to the GUI
 
 [#2527](https://github.com/cylc/cylc/pull/2527) -
@@ -175,7 +264,7 @@ improved parameter support:
  * allow positive offset for parameter index on graph
  * allow negative integer parameters
  * allow custom templating of parameter environment variables, in addition to
-   the built-in <code>CYLC_TASK_PARAM\_&lt;param-name&gt;</code>
+   the built-in `CYLC_TASK_PARAM\_&lt;param-name&gt;`
  * allow bare parameter values as task names
  * allow explicit parameter values in "inherit" items under "[runtime]"
  * fix parameters inside (as opposed to beginning or end) of family names
@@ -186,7 +275,7 @@ version to 2.10. This fixes the block scope problem introduced in the previous
 version
 
 [#2558](https://github.com/cylc/cylc/pull/2558) - new options to print out JSON
-format from <code>cylc show</code> and <code>cylc scan</code>
+format from `cylc show` and `cylc scan`
 
 ### Fixes
 
@@ -207,11 +296,11 @@ cause HTTPS client failure due to SSL certificate host name mismatch
 [#2434](https://github.com/cylc/cylc/pull/2434) - correctly strip "at TIME"
 from the end of multi-line task messages
 
-[#2440](https://github.com/cylc/cylc/pull/2440) - <code>cylc suite-state</code>
+[#2440](https://github.com/cylc/cylc/pull/2440) - `cylc suite-state`
 - fixed DB query of tasks with custom outputs that have not been generated yet
 
-[#2444](https://github.com/cylc/cylc/pull/2444) - added <code>cylc
-report-timings</code> to main command help
+[#2444](https://github.com/cylc/cylc/pull/2444) - added `cylc
+report-timings` to main command help
 
 [#2449](https://github.com/cylc/cylc/pull/2449):
  * server suite and task URLs from suite server programs, rather than parsing
@@ -232,7 +321,7 @@ communication method (broken at cylc-7.5.0)
 [#2467](https://github.com/cylc/cylc/pull/2467) - fixed an error in reverse
 date-time subtraction (first\_point - last\_point)
 
-[#2474](https://github.com/cylc/cylc/pull/2474) - <code>cylc graph</code> -
+[#2474](https://github.com/cylc/cylc/pull/2474) - `cylc graph` -
 better handle suite parsing errors on view refresh
 
 [#2496](https://github.com/cylc/cylc/pull/2496) - ensure that broadcasted
@@ -248,7 +337,7 @@ dangerous, but it could be done before, and the stop point in the GUI status
 bar would still refer to the original)
 
 [#2562](https://github.com/cylc/cylc/pull/2562) - improved advice on how to
-generate an initial user config file (<code>global.rc</code>)
+generate an initial user config file (`global.rc`)
 
 -------------------------------------------------------------------------------
 ## __cylc-7.5.0 (2017-08-29)__
@@ -791,7 +880,7 @@ tasks in the 'runahead' state.
 [#2025](https://github.com/cylc/cylc/pull/2025): Provide a configurable event
 mail footer (suite or site/user configuration).
 
-[#2032](https://github.com/cylc/cylc/pull/2032): <code>cylc gui</code> -
+[#2032](https://github.com/cylc/cylc/pull/2032): `cylc gui` -
 removed the annoying warning dialog for connection failed. Take note of the
 connection countdown in the status bar instead.
 
@@ -801,18 +890,18 @@ connection countdown in the status bar instead.
 occasionally generated by the gcylc GUI log view window.
 
 [#2018](https://github.com/cylc/cylc/pull/2018): Restored the incremental
-printing of dots to stdout from the <code>cylc suite-state</code> polling
+printing of dots to stdout from the `cylc suite-state` polling
 command (lost at 6.11.1).
 
 [#2014](https://github.com/cylc/cylc/pull/2014): Fixed "remove after spawning".
 Since 6.9.0 this would not force-spawn the successor of a waiting task.
 
-[#2031](https://github.com/cylc/cylc/pull/2031): <code>cylc gscan</code> -
+[#2031](https://github.com/cylc/cylc/pull/2031): `cylc gscan` -
 fixed occasional jumping status icons introduced in 6.11.1.
 
 [#2040](https://github.com/cylc/cylc/pull/2040): Corrected documentation for
-the <code>cylc cat-log</code> command (it was using the alias <code>cylc
-log</code>).
+the `cylc cat-log` command (it was using the alias `cylc
+log`).
 
 
 ## __cylc-6.11.1 (2016-09-22)__

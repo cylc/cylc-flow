@@ -23,7 +23,7 @@ You should have received a copy of the GNU General Public License along with
 cylc.  If not, see [GNU licenses](http://www.gnu.org/licenses/).
 
 ## Cylc Documentation
- * See [The Cylc Home Page](https://cylc.github.io/cylc)
+ * See [The Cylc Web Page](https://cylc.github.io/cylc)
 
 ## Code Contributors
 <!--  git shortlog -s -n -->

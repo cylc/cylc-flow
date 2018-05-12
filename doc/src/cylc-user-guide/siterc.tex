@@ -608,7 +608,7 @@ Host specific default for the~\ref{runtime-events-handler-retry-delays}
 setting.
 
 \paragraph[tail command template]{[hosts] \textrightarrow [[HOST]] \textrightarrow tail command template}
-\label{local-tail-template}
+\label{tail-command-template}
 
 A command template (with \lstinline=%(filename)s= substitution) to tail-follow
 job logs on HOST, by the GUI log viewer and \lstinline=cylc cat-log=. You are
@@ -631,7 +631,7 @@ batch system (see~\ref{RuntimeJobSubMethods}).
 A command template (with \lstinline=%(job_id)s= substitution) that can be used
 to tail-follow the stderr stream of a running job if SYSTEM does
 not use the normal log file location while the job is running.  This setting
-overrides~\ref{local-tail-template} and~\ref{remote-tail-template} above.
+overrides~\ref{tail-command-template} above.
 
 \begin{myitemize}
 \item {\em type:} string
@@ -655,7 +655,7 @@ overrides~\ref{local-tail-template} and~\ref{remote-tail-template} above.
 A command template (with \lstinline=%(job_id)s= substitution) that can be used
 to tail-follow the stdout stream of a running job if SYSTEM does
 not use the normal log file location while the job is running.  This setting
-overrides~\ref{local-tail-template} and~\ref{remote-tail-template} above.
+overrides~\ref{tail-command-template} above.
 
 \begin{myitemize}
 \item {\em type:} string
