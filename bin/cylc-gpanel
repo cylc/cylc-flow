@@ -26,7 +26,7 @@ and follow the instructions that it gives you.
 
 This applet can be tested using the --test option.
 
-To customize themes, copy $CYLC_DIR/conf/gcylcrc/gcylc.rc.eg to
+To customize themes, copy $CYLC_DIR/etc/gcylc/gcylc.rc.eg to
 $HOME/.cylc/gcylc.rc and follow the instructions in the file.
 
 To configure default suite hosts, edit the
@@ -85,7 +85,7 @@ def install_panel_applet():
     if not os.path.isdir(dest_dir):
         os.mkdir(dest_dir)
     for server_filename in ["cylc.server", "cylc-compact.server"]:
-        source_file = os.path.join(cylc_dir, "conf", "gpanel",
+        source_file = os.path.join(cylc_dir, "etc", "gpanel",
                                    server_filename)
         dest_file = os.path.join(dest_dir, server_filename)
         f = open(source_file, "r")

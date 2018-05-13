@@ -29,7 +29,7 @@ to running remote suites (whose passphrase you have installed) you must
 currently use --host and/or --user on the gcylc command line.
 
 Available task state color themes are shown under the View menu. To customize
-themes copy $CYLC_DIR/conf/gcylcrc/gcylc.rc.eg to $HOME/.cylc/gcylc.rc and
+themes copy $CYLC_DIR/etc/gcylcrc/gcylc.rc.eg to $HOME/.cylc/gcylc.rc and
 follow the instructions in the file.
 
 To see current configuration settings use "cylc get-gui-config".

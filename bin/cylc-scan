@@ -131,8 +131,7 @@ def main():
 
     parser.add_option(
         "--print-ports",
-        help="Print the port range from the site config file "
-             "($CYLC_DIR/conf/global.rc).",
+        help="Print the port range from the global config file.",
         action="store_true", default=False, dest="print_ports")
 
     parser.add_option(

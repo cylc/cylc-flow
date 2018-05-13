@@ -39,7 +39,7 @@ from cylc.cfgspec.utils import (coerce_interval, DurationFloat)
 
 coercers['interval'] = coerce_interval
 SITE_FILE = os.path.join(
-    os.environ['CYLC_DIR'], 'conf', 'gcylcrc', 'themes.rc')
+    os.environ['CYLC_DIR'], 'etc', 'gcylcrc', 'themes.rc')
 USER_FILE = os.path.join(os.environ['HOME'], '.cylc', 'gcylc.rc')
 SPEC = {
     'dot icon size': vdr(

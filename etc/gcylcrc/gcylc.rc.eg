@@ -2,7 +2,7 @@
 # To customize your gcylc task state color themes:
 #   1) copy this file to $HOME/.cylc/gcylc.rc
 #   2) add new named themes to it by
-#    (a) defining all colors yourself (see $CYLC_DIR/conf/gcylcrc/themes.rc)
+#    (a) defining all colors yourself (see $CYLC_DIR/etc/gcylcrc/themes.rc)
 #      or
 #    (b) inheriting from an existing theme and overriding specific
 #     colors (see the "PinkRun" example below).
