@@ -85,4 +85,4 @@ while getopts "h" opt; do
     esac
 done
 
-sed -f $(dirname $0)/../conf/5to6/5to6.sedfile $1
+sed -f $(dirname $0)/../etc/5to6/5to6.sedfile $1
