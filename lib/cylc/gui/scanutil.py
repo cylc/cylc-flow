@@ -440,7 +440,7 @@ def launch_gcylc(key):
     # Get version of suite - now separate method get_suite_version()
     suite_version = get_suite_version(args)
 
-    # Run correct version of "cylc gui" (if "sbin/cylc-wrapper" is installed).
+    # Run correct version of "cylc gui".
     env = None
     if suite_version != CYLC_VERSION:
         env = dict(os.environ)

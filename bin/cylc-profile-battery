@@ -45,11 +45,11 @@ experiments can be specified after the -e flag, if not provided the experiment
 "complex" will be chosen. A list of versions to profile against can be
 specified after the -v flag, if not provided the current version will be used.
 
-Experiments are stored in dev/profile-experiments, user experiments can be
+Experiments are stored in etc/profile-experiments, user experiments can be
 stored in .profiling/experiments. Experiments are specified without the file
-extension, experiments in .profiling/ will be chosen before those in dev/.
+extension, experiments in .profiling/ will be chosen before those in etc/.
 
-IMPORTANT: See dev/profile-experiments/example for an experiment template with
+IMPORTANT: See etc/profile-experiments/example for an experiment template with
 further details.
 
 Versions are any valid git identifiers i.e. tags, branches, commits. To compare

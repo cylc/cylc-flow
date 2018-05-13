@@ -35,7 +35,7 @@ def _get_cylc_version():
         # the cylc version string.  Enclose the path in quotes to handle
         # avoid failure when cylc_dir contains spaces.
         is_ok, outlines = run_get_stdout(
-            '"%s"' % os.path.join(cylc_dir, "sbin", "get-repo-version"))
+            '"%s"' % os.path.join(cylc_dir, "etc", "bin", "get-repo-version"))
         if is_ok and outlines:
             return outlines[0]
         else:

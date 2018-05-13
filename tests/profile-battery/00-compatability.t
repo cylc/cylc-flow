@@ -32,7 +32,7 @@ if get_cylc_directory() != '${CYLC_DIR}':
 #-------------------------------------------------------------------------------
 # Check for hello-world suite and that the cylc list command is still instated.
 TEST_NAME="${TEST_NAME_BASE}-cylc-list-hello-world-suite"
-run_ok "${TEST_NAME}" cylc list "${CYLC_DIR}/dev/suites/hello-world"
+run_ok "${TEST_NAME}" cylc list "${CYLC_DIR}/etc/dev-suites/hello-world"
 cmp_ok "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" "hello-world"
 #-------------------------------------------------------------------------------
 # Run the test experiment.

@@ -2,7 +2,7 @@
     "runs": [
         {
            "name": "run",
-           "suite dir": "dev/suites/hello-world",
+           "suite dir": "etc/dev-suites/hello-world",
            "repeats": 10
         }
     ],

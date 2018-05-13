@@ -15,8 +15,8 @@ See also *Check Software Installation* below.
 Download the latest tarball from [Cylc
 Releases](https://github.com/cylc/cylc/releases).
 
-Successive Cylc releases should be installed side-by-side under a location such
-as `/opt`:
+Successive Cylc releases should be installed side-by-side under a location
+such as `/opt`:
 
 ```bash
 cd /opt
@@ -27,32 +27,33 @@ export PATH=$PWD/bin:$PATH
 make
 ```
 
-When you type `make`:
-  * A file called VERSION is created, containing the Cylc version number
-    * The version number is taken from the name of the parent directory. DO NOT
-      CHANGE THE NAME OF THE UNPACKED CYLC SOURCE DIRECTORY
-  * The Cylc documentation is generated from source and put in doc/install/ (if
-    you have pdflatex, tex4ht, and several other LateX packages installed).
-
-Now copy the wrapper script `sbin/cylc-wrapper` to (say) `/usr/local/bin/`,
-rename it as just `cylc`, and edit it - as per instructions in the file - to
-point to the Cylc install location:
-
-```bash
-cp /opt/cylc-7.7.0/sbin/cylc-wrapper /usr/local/bin/cylc
-# (Now EDIT /usr/local/bin/cylc as per the in-file instructions...)
-```
-
-Finally, make a symlink to the latest installed version:
+Then make (or update) a symlink to the latest installed version:
 ```bash
 ln -s /opt/cylc-7.7.0 /opt/cylc
 ```
-The central wrapper will invoke `cylc-$CYLC_VERSION` if `$CYLC_VERSION` is set
-and that version is installed, or else the symlinked version as default. (Or
-developers can set `$CYLC_HOME` to point to their local Cylc clone). Suite
-server programs set `$CYLC_VERSION` to ensure that client programs invoked by
-running task jobs (for messaging etc.) run from the same version as the
-server.
+
+When you type `make`:
+  * A file called VERSION is created, containing the Cylc version number
+    * The version number is taken from the name of the parent directory. DO
+      NOT CHANGE THE NAME OF THE UNPACKED CYLC SOURCE DIRECTORY
+  * The Cylc documentation is generated from source and put in doc/install/
+    (if you have pdflatex, tex4ht, and several other LateX packages installed).
+
+If this is the first installed version of Cylc, copy the wrapper script
+`usr/bin/cylc` to a location in the system executable path, such as
+`/usr/bin/` or `/usr/local/bin/`, and edit it - as per the in-file
+instructions - to point to the Cylc install location:
+
+```bash
+cp /opt/cylc-7.7.0/usr/bin/cylc /usr/local/bin/
+# (and EDIT /usr/local/bin/cylc as instructed)
+```
+
+The wrapper is designed invoke the latest (symlinked) version of Cylc by
+default, or else a particular version determined by `$CYLC_VERSION` or
+`$CYLC_HOME` in your environment. This is how a long-running suite server
+program ensures that the jobs it manages invoke clients at the right cylc
+version.
 
 ### Check Software Installation
 
