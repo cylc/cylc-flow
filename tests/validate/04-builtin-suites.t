@@ -19,7 +19,7 @@
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 # Generate a list of suites.
-SUITES=($(find "${CYLC_DIR}/"{examples,etc/dev-suites} -name 'suite.rc'))
+SUITES=($(find "${CYLC_DIR}/"{etc/examples,etc/dev-suites} -name 'suite.rc'))
 ABS_PATH_LENGTH=${#CYLC_DIR}
 #-------------------------------------------------------------------------------
 # Filter out certain warnings to prevent tests being failed by them.

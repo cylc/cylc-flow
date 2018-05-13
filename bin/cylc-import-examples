@@ -20,7 +20,7 @@ set -e
 
 usage() {
     cat << __END__
-Usage: cylc [admin] import-examples DIR
+Usage: cylc import-examples DIR
 
 Copy the cylc example suites to DIR and register them for use under the GROUP
 suite name group.
@@ -37,7 +37,7 @@ fi
 
 if [[ -z $CYLC_DIR ]]; then
     echo "ERROR: \$CYLC_DIR is not defined. Run this script via" >&2
-    echo "the main command interface: 'cylc admin import-examples'" >&2
+    echo "the main command interface: 'cylc import-examples'" >&2
     exit 1
 fi
 
@@ -47,7 +47,7 @@ if [[ $# -gt 2 ]] || [[ $# -lt 1 ]]; then
 fi
 
 TOP_DIR=$1
-BASE_DIR=examples/$(cylc -v)
+BASE_DIR=examples/$(cylc --version)
 DESTINATION=$TOP_DIR/cylc-$BASE_DIR
 if [[ -d $DESTINATION ]]; then
     echo "ERROR: $DESTINATION already exists." >&2
@@ -56,7 +56,7 @@ fi
 
 echo " + Copying example suites"
 mkdir -p $DESTINATION
-cp -r $CYLC_DIR/examples/* $DESTINATION
+cp -r $CYLC_DIR/etc/examples/* $DESTINATION
 
 echo " + Registering example suites"
 cd $DESTINATION

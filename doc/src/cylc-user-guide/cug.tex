@@ -851,7 +851,7 @@ $ cylc import-examples /tmp
 
 \subsection{Rename The Imported Tutorial Suites}
 
-Suites can be renames by simply renaming (i.e.\ moving) their run directories.
+Suites can be renamed by simply renaming (i.e.\ moving) their run directories.
 Make the tutorial suite names shorter, and print their locations with
 \lstinline=cylc print=:
 
@@ -892,7 +892,7 @@ $ echo $?
 Here's the traditional {\em Hello World} program rendered as a cylc
 suite:
 \lstset{language=suiterc}
-\lstinputlisting{../../../examples/tutorial/oneoff/basic/suite.rc}
+\lstinputlisting{../../../etc/examples/tutorial/oneoff/basic/suite.rc}
 \lstset{language=transcript}
 
 Cylc suites feature a clean separation of scheduling configuration,
@@ -913,7 +913,7 @@ prototyping of new suites, it is submitted to run as a background job on
 the suite host. In fact cylc even provides a default task implementation
 that makes the entire \lstinline=[runtime]= section technically optional:
 \lstset{language=suiterc}
-\lstinputlisting{../../../examples/tutorial/oneoff/minimal/suite.rc}
+\lstinputlisting{../../../etc/examples/tutorial/oneoff/minimal/suite.rc}
 \lstset{language=transcript}
 (the resulting {\em dummy task} just prints out some identifying
 information and exits).
@@ -1420,7 +1420,7 @@ represents a task, or if it is inherited by other namespaces, a {\em
 family}. This allows common configuration to be factored out of related
 tasks very efficiently.
 \lstset{language=suiterc}
-\lstinputlisting{../../../examples/tutorial/oneoff/inherit/suite.rc}
+\lstinputlisting{../../../etc/examples/tutorial/oneoff/inherit/suite.rc}
 The \lstinline=[root]= namespace provides defaults for all tasks in the suite.
 Here both tasks inherit \lstinline=script= from \lstinline=root=, which they
 customize with different values of the environment variable
@@ -1459,7 +1459,7 @@ i.e.\ if \lstinline=foo= succeeds, trigger all members of
 \lstinline=GREETERS= at once. Here's the full suite with runtime
 hierarchy shown:
 \lstset{language=suiterc}
-\lstinputlisting{../../../examples/tutorial/oneoff/ftrigger1/suite.rc}
+\lstinputlisting{../../../etc/examples/tutorial/oneoff/ftrigger1/suite.rc}
 
 (Note that we recommend given ALL-CAPS names to task families to help
 distinguish them from task names. However, this is just a convention).
@@ -1591,11 +1591,11 @@ basic Hello World suite and cut the implementation of the task
 \lstinline=hello= out to a file \lstinline=hello.sh= in the suite
 bin directory:
 \lstset{language=bash}
-\lstinputlisting{../../../examples/tutorial/oneoff/external/bin/hello.sh}
+\lstinputlisting{../../../etc/examples/tutorial/oneoff/external/bin/hello.sh}
 Make the task script executable, and change the \lstinline=hello= task
 runtime section to invoke it:
 \lstset{language=suiterc}
-\lstinputlisting{../../../examples/tutorial/oneoff/external/suite.rc}
+\lstinputlisting{../../../etc/examples/tutorial/oneoff/external/suite.rc}
 
 If you run the suite now the new greeting from the external task script
 should appear in the \lstinline=hello= task stdout log. This works
@@ -1632,7 +1632,7 @@ belonging to that sequence may only run once.
 
 Open the \lstinline=tut/cycling/one= suite:
 \lstset{language=suiterc}
-\lstinputlisting{../../../examples/tutorial/cycling/one/suite.rc}
+\lstinputlisting{../../../etc/examples/tutorial/cycling/one/suite.rc}
 The difference between cycling and non-cycling suites is all in the
 \lstinline=[scheduling]= section, so we will leave the
 \lstinline=[runtime]= section alone for now (this will result in
@@ -1834,7 +1834,7 @@ date-time based.
 Open the \lstinline=tut/cycling/integer= suite, which is plotted in
 Figure~\ref{fig-tut-int}.
 \lstset{language=suiterc}
-\lstinputlisting{../../../examples/tutorial/cycling/integer/suite.rc}
+\lstinputlisting{../../../etc/examples/tutorial/cycling/integer/suite.rc}
 
 \begin{figure}
     \begin{center}
@@ -1874,7 +1874,7 @@ uses of Jinja2: changing suite content or structure based on the value
 of a logical switch; and iteratively generating dependencies and runtime
 configuration for groups of related tasks:
 \lstset{language=suiterc}
-\lstinputlisting{../../../examples/tutorial/oneoff/jinja2/suite.rc}
+\lstinputlisting{../../../etc/examples/tutorial/oneoff/jinja2/suite.rc}
 
 To view the result of Jinja2 processing with the Jinja2 flag
 \lstinline@MULTI@ set to \lstinline=False=:
@@ -1929,7 +1929,7 @@ An environment variable \lstinline=$CYLC_TASK_TRY_NUMBER= increments
 from $1$ on each successive try, and is passed to the task to allow
 different behaviour on the retry:
 \lstset{language=suiterc}
-\lstinputlisting{../../../examples/tutorial/oneoff/retry/suite.rc}
+\lstinputlisting{../../../etc/examples/tutorial/oneoff/retry/suite.rc}
 
 If a task with configured retries fails, it goes into the {\em retrying} state
 until the next retry delay is up, then it resubmits. It only enters the {\em
@@ -3036,7 +3036,7 @@ where suite initial and final cycle points can be assumed. Some examples:
 \subparagraph{Example}
 
 The tutorial illustrates integer cycling in~\ref{TutInteger}, and
-\lstinline=$CYLC_DIR/examples/satellite/= is a
+\lstinline=$CYLC_DIR/etc/examples/satellite/= is a
 self-contained example of a realistic use for integer cycling. It simulates
 the processing of incoming satellite data: each new dataset arrives after a
 random (as far as the suite is concerned) interval, and is labeled by an
@@ -3055,7 +3055,7 @@ shown in Figure~\ref{fig-satellite}.
     \begin{center}
         \includegraphics[width=0.4\textwidth]{graphics/png/orig/satellite.png}
     \end{center}
-    \caption{The \lstinline=examples/satellite= integer suite}
+    \caption{The \lstinline=etc/examples/satellite= integer suite}
 \label{fig-satellite}
 \end{figure}
 
@@ -3187,11 +3187,11 @@ Tasks can also trigger off custom output messages. These must be registered in
 the \lstinline=[runtime]= section of the emitting task, and reported using the
 \lstinline=cylc message= command in task scripting. The graph trigger notation
 refers to the item name of the registered output message.
-The example suite \lstinline=$CYLC_DIR/examples/message-triggers= illustrates
+The example suite \lstinline=$CYLC_DIR/etc/examples/message-triggers= illustrates
 message triggering.
 
 \lstset{language=suiterc}
-\lstinputlisting{../../../examples/message-triggers/suite.rc}
+\lstinputlisting{../../../etc/examples/message-triggers/suite.rc}
 
 \paragraph{Job Submission Triggers}
 
@@ -3735,7 +3735,7 @@ has gone beyond the cycle point. Triggering off an expired task typically
 requires suicide triggers to remove the workflow that runs if the task has not
 expired. Here a task called \lstinline=copy= expires, and its downstream
 workflow is skipped, if it is more than one day behind the wall-clock (see also
-\lstinline=examples/clock-expire=):
+\lstinline=etc/examples/clock-expire=):
 \lstset{language=suiterc}
 \begin{lstlisting}
 [cylc]
@@ -3809,7 +3809,7 @@ Note that only one task in a suite can trigger off a particular external
 message. Other tasks can trigger off the externally triggered task as required,
 of course.
 
-\lstinline=$CYLC_DIR/examples/satellite/ext-triggers/suite.rc= is a working
+\lstinline=$CYLC_DIR/etc/examples/satellite/ext-triggers/suite.rc= is a working
 example of a simulated satellite processing suite.
 
 External triggers are not normally needed in date-time cycling suites driven
@@ -4081,7 +4081,7 @@ The following listing of the {\em inherit.single.one} example suite
 illustrates basic runtime inheritance with single parents.
 
 \lstset{language=suiterc}
-\lstinputlisting{../../../examples/inherit/single/one/suite.rc}
+\lstinputlisting{../../../etc/examples/inherit/single/one/suite.rc}
 \lstset{language=transcript}
 
 \subsubsection{Runtime Inheritance - Multiple}
@@ -4100,7 +4100,7 @@ The {\em inherit.multi.one} example suite, listed here, makes use of
 multiple inheritance:
 
 \lstset{language=suiterc}
-\lstinputlisting{../../../examples/inherit/multi/one/suite.rc}
+\lstinputlisting{../../../etc/examples/inherit/multi/one/suite.rc}
 \lstset{language=transcript}
 
 \lstinline=cylc get-suite-config= provides an easy way to check the result of
@@ -5121,7 +5121,7 @@ with the New York City task family expanded, in
 Figure~\ref{fig-jinja2-cities}.
 
 \lstset{language=suiterc}
-\lstinputlisting{../../../examples/jinja2/cities/suite.rc}
+\lstinputlisting{../../../etc/examples/jinja2/cities/suite.rc}
 \lstset{language=transcript}
 
 \begin{figure}
@@ -5227,7 +5227,7 @@ Examples:
 
 Associative arrays ({\em dicts} in Python) can be very useful.
 Here's an example, from \\*
-\lstinline=$CYLC_DIR/examples/jinja2/dict=:
+\lstinline=$CYLC_DIR/etc/examples/jinja2/dict=:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -5262,7 +5262,7 @@ $ cylc get-suite-config -i [runtime][airs]directives SUITE
 The values of Jinja2 variables can be passed in from the cylc command
 line rather than hardwired in the suite definition.
 Here's an example, from \\*
-\lstinline=$CYLC_DIR/examples/jinja2/defaults=:
+\lstinline=$CYLC_DIR/etc/examples/jinja2/defaults=:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -6924,7 +6924,7 @@ queue. The {\em queues} example suite illustrates how queues work by
 running two task trees side by side (as seen in the graph GUI) each
 limited to 2 and 3 tasks respectively:
 \lstset{language=suiterc}
-\lstinputlisting{../../../examples/queues/suite.rc}
+\lstinputlisting{../../../etc/examples/queues/suite.rc}
 
 \subsection{Automatic Task Retry On Failure}
 \label{TaskRetries}

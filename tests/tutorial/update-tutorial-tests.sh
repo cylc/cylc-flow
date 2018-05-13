@@ -29,7 +29,7 @@ for GROUP in oneoff cycling; do
     # remove old symlinks
     rm -f tut.*
     # generate new symlinks
-    for SRCE in ../../../examples/tutorial/$GROUP/*; do
+    for SRCE in ../../../etc/examples/tutorial/$GROUP/*; do
         ln -s $SRCE tut.$(basename $SRCE )
     done
 

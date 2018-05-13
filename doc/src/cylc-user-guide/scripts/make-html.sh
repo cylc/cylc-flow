@@ -29,7 +29,7 @@ cp -r *.tex cug-html.cfg cylc-version.txt titlepic.sty $DEST
 
 cd $DEST
 ls *.tex | xargs -n 1 perl -pi -e 's@graphics/png/orig@../../graphics/png/scaled@g'
-ls *.tex | xargs -n 1 perl -pi -e 's@\.\./examples/@../../../examples/@g'
+ls *.tex | xargs -n 1 perl -pi -e 's@\.\./etc/examples/@../../../etc/examples/@g'
 ls *.tex | xargs -n 1 perl -pi -e 's@\.\./conf/@../../../conf/@g'
 perl -pi -e 's@categories/@../../categories/@g' commands.tex
 perl -pi -e 's@commands/@../../commands/@g' commands.tex
