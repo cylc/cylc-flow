@@ -18,7 +18,14 @@
 
 set -e
 
-for GROUP in oneoff cycling; do
+# Run this from inside tests/tutorial/.
+export CYLC_TEST_TIME_INIT=$(date -I)
+export CYLC_TEST_RUN_GENERIC=true
+export CYLC_TEST_RUN_PLATFORM=true
+
+#for GROUP in oneoff cycling; do
+for GROUP in cycling; do
+    rm -r $GROUP
     mkdir -p $GROUP
     cd $GROUP
     GDIR=$PWD
@@ -46,6 +53,7 @@ for GROUP in oneoff cycling; do
             # ref log does not exist, generate a new one
             install_suite $NAME $NAME
             alter_suite
+            echo cylc run --reference-log --no-detach $SUITE_NAME
             cylc run --reference-log --no-detach $SUITE_NAME
             cp $TEST_DIR/$SUITE_NAME/reference.log $REFLOGS/$NAME
             purge_suite $SUITE_NAME

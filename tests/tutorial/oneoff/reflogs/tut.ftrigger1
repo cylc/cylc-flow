@@ -1,6 +1,5 @@
-2013/10/06 23:32:20 INFO - Run mode: live
-2013/10/06 23:32:20 INFO - Initial point: 1
-2013/10/06 23:32:20 INFO - Final point: 1
-2013/10/06 23:32:20 INFO - [foo.1] -triggered off []
-2013/10/06 23:32:22 INFO - [greeter_2.1] -triggered off ['foo.1']
-2013/10/06 23:32:22 INFO - [greeter_1.1] -triggered off ['foo.1']
+2018-05-14T09:41:12+12 INFO - Initial point: 1
+2018-05-14T09:41:12+12 INFO - Final point: 1
+2018-05-14T09:41:12+12 INFO - [foo.1] -triggered off []
+2018-05-14T09:41:15+12 INFO - [greeter_2.1] -triggered off ['foo.1']
+2018-05-14T09:41:15+12 INFO - [greeter_1.1] -triggered off ['foo.1']
