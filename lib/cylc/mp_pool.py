@@ -65,7 +65,7 @@ class SuiteProcContext(object):
         .timestamp (str):
             Time string of latest update.
         .init_time (int):
-            Time command execution commenced.  
+            Time command execution commenced.
     """
 
     # Format string for single line output
@@ -127,11 +127,11 @@ class SuiteProcPool(object):
     ERR_SUITE_STOPPING = 'suite stopping, command not run'
     JOBS_SUBMIT = 'jobs-submit'
     RET_CODE_SUITE_STOPPING = 999
-    CMD_TIMEOUT = 10
 
     def __init__(self, size=None):
         if not size:
             size = glbl_cfg().get(['process pool size'], size)
+        self.cmd_timeout = glbl_cfg().get(['process pool timeout'])
         self.size = size
         self.closed = False  # Close queue
         self.stopping = False  # No more job submit if True
@@ -163,9 +163,11 @@ class SuiteProcPool(object):
         for proc, ctx, callback, callback_args in self.runnings:
             ret_code = proc.poll()
             if ret_code is None:
-                if time.time() > ctx.init_time + self.CMD_TIMEOUT:
-                    LOG.warning('kill (timed out) %s' % ctx)
+                if time.time() > ctx.init_time + self.cmd_timeout:
                     os.killpg(proc.pid, SIGKILL)
+                    ctx.ret_code = 1
+                    ctx.err = "killed on timeout"
+                    self._run_command_exit(ctx, callback, callback_args)
                     proc.wait()
                 else:
                     runnings.append([proc, ctx, callback, callback_args])
