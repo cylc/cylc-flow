@@ -131,8 +131,8 @@ class SuiteProcPool(object):
     def __init__(self, size=None):
         if not size:
             size = glbl_cfg().get(['process pool size'], size)
-        self.cmd_timeout = glbl_cfg().get(['process pool timeout'])
         self.size = size
+        self.cmd_timeout = glbl_cfg().get(['process pool timeout'])
         self.closed = False  # Close queue
         self.stopping = False  # No more job submit if True
         # .stopping may be set by an API command in a different thread
@@ -166,7 +166,7 @@ class SuiteProcPool(object):
                 if time.time() > ctx.init_time + self.cmd_timeout:
                     os.killpg(proc.pid, SIGKILL)
                     ctx.ret_code = 1
-                    ctx.err = "killed on timeout"
+                    ctx.err = "killed on timeout (%s)" % self.cmd_timeout
                     self._run_command_exit(ctx, callback, callback_args)
                     proc.wait()
                 else:

@@ -1,0 +1,13 @@
+[cylc]
+   [[events]]
+      abort on timeout = True
+      timeout = PT20S
+[scheduling]
+    [[dependencies]]
+        graph = "foo => stopper"
+[runtime]
+    [[foo]]
+        [[[events]]]
+            started handler = sleeper.sh %(id)s
+    [[stopper]]
+        script = cylc stop "${CYLC_SUITE_NAME}"
