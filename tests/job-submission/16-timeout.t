@@ -40,7 +40,7 @@ SUITE_LOG_DIR=$(cylc cat-log -m p "${SUITE_NAME}")
 
 cmp_ok log <<__END__
 ERROR - [jobs-submit cmd] cylc jobs-submit --debug -- ${SUITE_LOG_DIR%suite/log}job 1/foo/01
-	[jobs-submit ret_code] 1
+	[jobs-submit ret_code] -9
 	[jobs-submit err] killed on timeout (PT10S)
 __END__
 

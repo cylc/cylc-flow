@@ -37,7 +37,7 @@ cylc cat-log "${SUITE_NAME}" | \
 
 cmp_ok log <<__END__
 ERROR - [(('event-handler-00', 'started'), 1) cmd] sleeper.sh foo.1
-	[(('event-handler-00', 'started'), 1) ret_code] 1
+	[(('event-handler-00', 'started'), 1) ret_code] -9
 	[(('event-handler-00', 'started'), 1) err] killed on timeout (PT10S)
 WARNING - 1/foo/01 ('event-handler-00', 'started') failed
 __END__
