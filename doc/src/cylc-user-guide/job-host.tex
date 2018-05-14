@@ -1,24 +1,25 @@
 \section{Remote Job Management}
 
-Managing tasks in a workflow requires more than just job execution: cylc
+Managing tasks in a workflow requires more than just job execution: Cylc
 performs additional actions with \lstinline=rsync= for file transfer, and
 direct execution of \lstinline=cylc= sub-commands over non-interactive
 SSH.\footnote{Cylc used to run bare shell expressions over SSH, which required
-a bash shell and made whitelisting difficult.} This section shows exactly what
-cylc does on and to remote job hosts.
+a bash shell and made whitelisting difficult.}
 
-Security-conscious sites may want to restrict access to job hosts with SSH
-connections whitelisted to allow only \lstinline=rsync= for file transfer, and
-a local batch system that sees the job host.\footnote{A malicious
-script could be \lstinline=rsync='d and run from a batch job, but batch
-jobs are considered easier to audit.}  We are investigating the feasibility
-of avoiding SSH entirely in Cylc when a local batch system is available,
-however that is not yet possible yet unless you have a local batch system {\em
-and} a shared filesystem with job hosts - which allows cylc to treat task
-jobs as entirely local.\footnote{The job ID must also be valid to query and
-kill the job via the local batch system. This is not the case for Slurm, unless
-the \lstinline=--cluster= option is explicitly used in job query and kill
-commands, otherwise the job ID is not recognized by the local Slurm instance.}
+\subsection{SSH-free Job Management?}
+
+Some sites may want to restrict access to job hosts by whitelisting SSH
+connections to allow only \lstinline=rsync= for file transfer, and allowing job
+execution only via a local batch system that sees the job hosts.\footnote{A
+malicious script could be \lstinline=rsync='d and run from a batch job, but
+batch jobs are considered easier to audit.} We are investigating the
+feasibility of SSH-free job management when a local batch system is available,
+but this is not yet possible unless your suite and job hosts also share a
+filesystem, which allows Cylc to treat jobs as entirely local.\footnote{The job ID
+must also be valid to query and kill the job via the local batch system. This
+is not the case for Slurm, unless the \lstinline=--cluster= option is
+explicitly used in job query and kill commands, otherwise the job ID is not
+recognized by the local Slurm instance.}
 
 \subsection{SSH-based Job Management}
 
@@ -85,8 +86,8 @@ The {\em delayer} task just separates suite start-up from remote job
 submission, for clarity when watching the job host (e.g.\ with
 \lstinline=watch -n 1 find ~/cylc-run/suitex=).
 
-Global config specifies the path to the remote cylc executable, and tells cylc
-not to use a remote login shell, and to retrieve job logs:
+Global config specifies the path to the remote Cylc executable, says
+to retrieve job logs, and not to use a remote login shell:
 \begin{lstlisting}
 # global.rc
 [hosts]
@@ -106,7 +107,7 @@ executables in scripts that log their command lines before taking action.
 \subsubsection{create suite run directory and install source files}
 
 Done by \lstinline=rose suite-run= before suite start-up
-(the command will be migrated to cylc soon though).
+(the command will be migrated to Cylc soon though).
 
 \begin{itemize}
   \item with \lstinline=--new= it invokes bash over SSH and a raw shell
@@ -146,7 +147,7 @@ Result:
 \lstset{language=sh}
 {\scriptsize
 \dirtree{%
-.1 /home/hjoliver/cylc-run/suitex.
+.1 \textasciitilde/cylc-run/suitex.
 .2 log->log.20180418T025047Z\DTcomment{\textbf{LOG DIRECTORIES}}.
 .2 log.20180418T025047Z\DTcomment{log directory for current suite run}.
 .2 suiter.rc.
@@ -182,7 +183,7 @@ ssh -oBatchMode=yes -oConnectTimeout=10 hobo@wizard env CYLC_VERSION=7.6.x /opt/
 Result:
 {\scriptsize
 \dirtree{%
-.1 /home/hjoliver/cylc-run/suitex.
+.1 \textasciitilde/cylc-run/suitex.
 .2 .service\DTcomment{\textbf{SUITE SERVICE DIRECTORY}}. 
 .3 contact\DTcomment{{\color{blue} server address information}}.
 .3 passphrase\DTcomment{{\color{blue} suite passphrase}}.
@@ -216,7 +217,7 @@ ssh -oBatchMode=yes -oConnectTimeout=10 hobo@wizard env CYLC_VERSION=7.6.x /opt/
 Result:
 {\scriptsize
 \dirtree{%
-.1 /home/hjoliver/cylc-run/suitex.
+.1 \textasciitilde/cylc-run/suitex.
 .2 .service\DTcomment{\textbf{SUITE SERVICE DIRECTORY}}. 
 .3 contact\DTcomment{{\color{blue} server address information}}.
 .3 passphrase\DTcomment{{\color{blue} suite passphrase}}.
