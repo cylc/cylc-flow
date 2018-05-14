@@ -12,9 +12,9 @@
     [[foo]]
         script = """
 sleep 5
-cylc message "file 1 done"
+cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" "file 1 done"
 sleep 10
-cylc message "file 2 done"
+cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" "file 2 done"
 sleep 10"""
         [[[outputs]]]
             out1 = "file 1 done"

@@ -4296,7 +4296,7 @@ CYLC_FAIL_SIGNALS               # List of signals trapped by the error trap
 CYLC_VACATION_SIGNALS           # List of signals trapped by the vacation trap
 CYLC_SUITE_WORK_DIR_ROOT        # Root directory above the suite work directory
                                 # in the job host
-CYLC_TASK_MESSAGE_STARTED_PID   # PID of "cylc message started" command
+CYLC_TASK_MESSAGE_STARTED_PID   # PID of "cylc message" job started" command
 CYLC_TASK_WORK_DIR_BASE         # Alternate task work directory,
                                 # relative to the suite work directory
 \end{lstlisting}
@@ -5503,28 +5503,34 @@ Normal severity messages are printed to \lstinline=job.out= and logged by the
 suite server program:
 \lstset{language=bash}
 \begin{lstlisting}
-cylc message "Hello from ${CYLC_TASK_ID}"
+cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" \
+  "Hello from ${CYLC_TASK_ID}"
 \end{lstlisting}
 
 CUSTOM severity messages are printed to \lstinline=job.out=, logged by the
 suite server program, and can be used to trigger {\em custom} event handlers:
 \lstset{language=bash}
 \begin{lstlisting}
-cylc message -p CUSTOM "data available for ${CYLC_TASK_CYCLE_POINT}"
+cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" \
+  "CUSTOM:data available for ${CYLC_TASK_CYCLE_POINT}"
 \end{lstlisting}
-Task output messages, used for triggering other tasks, can also be sent with
-custom severity if need be
+Custom severity messages and event handlers can be used to signal special
+events that are neither routine information or an error condition, such as
+production of a particular data file. Task output messages, used for triggering
+other tasks, can also be sent with custom severity if need be.
 
 WARNING severity messages are printed to \lstinline=job.err=, logged by the
 suite server program, and can be passed to {\em warning} event handlers:
 \begin{lstlisting}
-cylc message -p WARNING "Uh-oh, something's not right here."
+cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" \
+  "WARNING:Uh-oh, something's not right here."
 \end{lstlisting}
 
 CRITICAL severity messages are printed to \lstinline=job.err=, logged by the
 suite server program, and can be passed to {\em critical} event handlers:
 \begin{lstlisting}
-cylc message -p CRITICAL "ERROR occurred in process X!"
+cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" \
+  "CRITICAL:ERROR occurred in process X!"
 \end{lstlisting}
 
 \subsection{Aborting Job Scripts on Error}
@@ -5563,7 +5569,8 @@ For failures detected by the scripting you could send a critical message back
 before aborting, potentially triggering a {\em critical} task event handler:
 \begin{lstlisting}
 if ! /bin/false; then
-  cylc message -p CRITICAL "ERROR: /bin/false failed!"
+  cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" \
+    "CRITICAL:ERROR: /bin/false failed!"
   exit 1
 fi
 \end{lstlisting}
