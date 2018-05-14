@@ -64,7 +64,7 @@ class SuiteProcContext(object):
             Return code of the command.
         .timestamp (str):
             Time string of latest update.
-        .proc_pool_timeout (int):
+        .proc_pool_timeout (float):
             command execution timeout.
     """
 
