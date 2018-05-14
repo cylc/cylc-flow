@@ -53,6 +53,18 @@ task jobs on a FIFO (First In, First Out) basis, rather than randomly.
 [#2538](https://github.com/cylc/cylc/pull/2538) - remove leading whitespace
 from multi-line `script` items in task definitions, for cleaner job scripts.
 
+[#2661](https://github.com/cylc/cylc/pull/2661) - release prep:
+ * new User Guide section on remote job management
+ * installation documentation tidied up
+ * minor directory restructure (all documentation updated accordingly):
+   - central cylc wrapper template moved to `usr/bin/cylc`
+   - editor syntax files moved to `etc/syntax/`
+   - Cylc bash completion file moved to `etc/cylc-bash-completion`
+   - example gcylc config file moved to `etc/gcylcrc/`
+   - gpanel config files moved to `etc/gpanel/`
+   - various developer files moved into `etc/`
+   - *note `conf/` is still the correct location for site `global.rc`*
+
 ### Fixes
 
 [#2593](https://github.com/cylc/cylc/pull/2593) - fix polling after job
@@ -144,7 +156,7 @@ host select command.
 [#2373](https://github.com/cylc/cylc/pull/2373) - refactored suite server code
 (for efficiency, maintainability, etc.)
 
-[#2396](https://github.com/cylc/cylc/pull/2396) - improved task polling and
+[#2396](https://github.com/cylc/cylc/pull/2396) - improved job polling and task
 state reset:
  * allow polling of finished tasks - to confirm they really succeeded or failed
  * poll to confirm a task message that implies a state reversal - it could just
