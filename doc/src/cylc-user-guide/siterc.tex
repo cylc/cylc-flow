@@ -29,13 +29,28 @@ automatically on exit. Leave unset for the default (usually
 \end{myitemize}
 
 \subsubsection{process pool size}
+\label{process pool size}
 
-Number of process pool worker processes used to execute shell commands
-(job submission, event handlers, job poll and kill commands).
+Maximum number of concurrent processes used to execute external job submission,
+event handlers, and job poll and kill commands - see~\ref{Managing External
+Command Execution}.
 
 \begin{myitemize}
 \item {\em type:} integer
-\item {\em default:} None (number of processor cores on the suite host)
+\item {\em default:} 4
+\end{myitemize}
+
+\subsubsection{process pool timeout}
+\label{process pool timeout}
+
+Interval after which long-running commands in the process pool will be killed -
+see~\ref{Managing External Command Execution}.
+
+\begin{myitemize}
+\item {\em type:} ISO 8601 duration/interval representation (e.g.\ 
+\lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
+\item {\em default:} PT10M -  note this is set quite high to avoid killing
+  important processes when the system is under load.
 \end{myitemize}
 
 \subsubsection{disable interactive command prompts}
