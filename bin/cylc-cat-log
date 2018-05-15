@@ -385,7 +385,7 @@ def main():
                     batchview_cmd = batchview_cmd_tmpl % {
                         "job_id": str(live_job_id)}
 
-        log_is_remote = (is_remote(user, host)
+        log_is_remote = (is_remote(host, user)
                          and (options.filename not in JOB_LOGS_LOCAL))
         log_is_retrieved = (glbl_cfg().get_host_item('retrieve job logs', host)
                             and live_job_id is None)
