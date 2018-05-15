@@ -53,7 +53,6 @@ for GROUP in cycling; do
             # ref log does not exist, generate a new one
             install_suite $NAME $NAME
             alter_suite
-            echo cylc run --reference-log --no-detach $SUITE_NAME
             cylc run --reference-log --no-detach $SUITE_NAME
             cp $TEST_DIR/$SUITE_NAME/reference.log $REFLOGS/$NAME
             purge_suite $SUITE_NAME
@@ -101,7 +100,7 @@ TEST_NAME=\$TEST_NAME_BASE-val
 run_ok \$TEST_NAME cylc validate \$SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=\$TEST_NAME_BASE-run
-suite_run_ok \$TEST_NAME cylc run --reference-test --debug \$SUITE_NAME
+suite_run_ok \$TEST_NAME cylc run --reference-test --no-detach --debug \$SUITE_NAME
 #-------------------------------------------------------------------------------
 purge_suite \$SUITE_NAME
 EOF
