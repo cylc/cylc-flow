@@ -34,6 +34,7 @@ perl -pi -e 's@commands/@../commands/@g' commands.tex
 perl -pi -e 's@cylc.txt@../cylc.txt@g' commands.tex
 perl -pi -e 's@\.\./README@../../README@g' cug.tex
 perl -pi -e 's@\.\./INSTALL@../../INSTALL@g' cug.tex
+perl -pi -e 's@\.\./etc/global.rc.eg@../../etc/global.rc.eg@g' cug.tex
 
 # run pdflatex three times to resolve all cross-references
 pdflatex -halt-on-error cug-pdf.tex

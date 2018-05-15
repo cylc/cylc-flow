@@ -1,14 +1,11 @@
-
 \section{Gcylc GUI (cylc gui) Config File Reference}
 \label{GcylcRCReference}
 
 \lstset{language=bash}
 
-This section defines all legal items and values for the gcylc user
-config file, which should be located in
-\lstinline=$HOME/.cylc/gcylc.rc=.
-Current settings can be printed with the \lstinline=cylc get-gui-config=
-command.
+This section defines all legal items and values for the gcylc user config file,
+which should be located in \lstinline=$HOME/.cylc/gcylc.rc=. Current settings
+can be printed with the \lstinline=cylc get-gui-config= command.
 
 \subsection{Top Level Items}
 
@@ -23,7 +20,6 @@ views.
         ``extra large (30px)''
 \item {\em default:} ``medium''
 \end{myitemize}
-
 
 \subsubsection{initial side-by-side views}
 
@@ -184,12 +180,11 @@ using the tool bar.
 
 \subsubsection{use theme}
 
-Set the task state color theme, common to all views, to use
-initially. The color theme can be changed later using the tool bar.
-See \lstinline@gcylc.rc.eg@ and \lstinline@themes.rc@ in
-\lstinline@$CYLC_DIR/etc/gcylcrc/@ for how to modify existing color
-themes or define your own. Use \lstinline@cylc get-gui-config@
-to list your available themes.
+Set the task state color theme, common to all views, to use initially. The
+color theme can be changed later using the tool bar.  See
+\lstinline@etc/gcylc.rc.eg@ and \lstinline@etc/gcylc-themes.rc@ in the Cylc
+installation directory for how to modify existing themes or define your own.
+Use \lstinline@cylc get-gui-config@ to list available themes.
 
 \begin{myitemize}
 \item {\em type:} string (theme name)
@@ -245,8 +240,8 @@ Set default icon attributes for all state icons in this theme.
 For the attribute values, COLOR and FONTCOLOR can be color names from the X11
 rgb.txt file, e.g.\ \lstinline=SteelBlue=; or hexadecimal color codes, e.g.\ 
 \lstinline@#ff0000@ for red; and STYLE can be ``filled'' or ``unfilled''.
-See \lstinline@gcylc.rc.eg@ and \lstinline@themes.rc@ in
-\lstinline@$CYLC_DIR/etc/gcylcrc/@ for examples.
+See \lstinline@etc/gcylc.rc.eg@ and \lstinline@etc/gcylc-themes.rc@ in
+the Cylc installation directory for examples.
 
 \paragraph[STATE]{[themes] \textrightarrow [[THEME]] \textrightarrow STATE}
 
@@ -264,5 +259,5 @@ submitted, submit-failed, running, succeeded, failed, retrying, submit-retrying}
 For the attribute values, COLOR and FONTCOLOR can be color names from the X11
 rgb.txt file, e.g.\ \lstinline=SteelBlue=; or hexadecimal color codes, e.g.\ 
 \lstinline@#ff0000@ for red; and STYLE can be ``filled'' or ``unfilled''.
-See \lstinline@gcylc.rc.eg@ and \lstinline@themes.rc@ in
-\lstinline@$CYLC_DIR/etc/gcylcrc/@ for examples.
+See \lstinline@etc/gcylc.rc.eg@ and \lstinline@etc/gcylc-themes.rc@ in
+the Cylc installation directory for examples.

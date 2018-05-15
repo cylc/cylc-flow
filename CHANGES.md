@@ -10,6 +10,20 @@ release.
 
 ### Enhancements
 
+[#2661](https://github.com/cylc/cylc/pull/2661)
+ * new User Guide section on Remote Job Management
+ * tidied the installation documentation
+ * directory structure standardisation (all docs updated accordingly):
+   - look for site `global.rc` first in `etc/`, then (if not found) in
+     the old `conf/` location.
+   - look for user `global.rc` first in `~/.cylc/$CYLC_VERSION/`, then (if not
+     found) in the old `~/.cylc/` location. See notes in `/etc/global.rc.eg`.
+   - moved central cylc wrapper template to `usr/bin/cylc`
+   - moved editor syntax files to `etc/syntax/`
+   - moved Cylc bash completion file to `etc/cylc-bash-completion`
+   - moved example gcylc config file to `etc/gcylc.rc.eg`
+   - moved various developer files into `etc/`
+
 [#2582](https://github.com/cylc/cylc/pull/2582) - improve client/server
 interface, including: `cylc message` can send multiple messages at once, with
 different severities; server ignores messages from superseded job submits;
@@ -52,18 +66,6 @@ task jobs on a FIFO (First In, First Out) basis, rather than randomly.
 
 [#2538](https://github.com/cylc/cylc/pull/2538) - remove leading whitespace
 from multi-line `script` items in task definitions, for cleaner job scripts.
-
-[#2661](https://github.com/cylc/cylc/pull/2661) - release prep:
- * new User Guide section on remote job management
- * installation documentation tidied up
- * minor directory restructure (all documentation updated accordingly):
-   - central cylc wrapper template moved to `usr/bin/cylc`
-   - editor syntax files moved to `etc/syntax/`
-   - Cylc bash completion file moved to `etc/cylc-bash-completion`
-   - example gcylc config file moved to `etc/gcylcrc/`
-   - gpanel config files moved to `etc/gpanel/`
-   - various developer files moved into `etc/`
-   - *note `conf/` is still the correct location for site `global.rc`*
 
 ### Fixes
 

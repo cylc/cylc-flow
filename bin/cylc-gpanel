@@ -21,16 +21,16 @@
 This is a cylc scan panel applet for monitoring running suites on a set of
 hosts in GNOME 2.
 
-To install this applet, run "cylc gpanel --install"
-and follow the instructions that it gives you.
+To install this applet, run "cylc gpanel --install" and follow the instructions
+that it gives you.
 
 This applet can be tested using the --test option.
 
-To customize themes, copy $CYLC_DIR/etc/gcylc/gcylc.rc.eg to
-$HOME/.cylc/gcylc.rc and follow the instructions in the file.
+To customize themes, copy $CYLC_DIR/etc/gcylc.rc.eg to $HOME/.cylc/gcylc.rc and
+follow the instructions in the file.
 
-To configure default suite hosts, edit the
-[suite host scanning]hosts entry in your global.rc file."""
+To configure default suite hosts, edit "[suite host scanning]hosts" in your
+global.rc file."""
 
 from optparse import OptionParser
 import os
@@ -85,8 +85,7 @@ def install_panel_applet():
     if not os.path.isdir(dest_dir):
         os.mkdir(dest_dir)
     for server_filename in ["cylc.server", "cylc-compact.server"]:
-        source_file = os.path.join(cylc_dir, "etc", "gpanel",
-                                   server_filename)
+        source_file = os.path.join(cylc_dir, "etc", server_filename)
         dest_file = os.path.join(dest_dir, server_filename)
         f = open(source_file, "r")
         text = f.read().replace("$CYLC_DIR", cylc_dir)

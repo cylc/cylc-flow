@@ -1,0 +1,42 @@
+#------------------------------------------------------------------------------
+# How to create a site or user global.rc config file.
+#------------------------------------------------------------------------------
+# The command "cylc get-global-config" will print - in valid global.rc format -
+# system global config defaults, overridden by site global config settings (if
+# any), overridden by user global config settings (if any).
+#
+# Therefore, to generate a new global config file, do this:
+#   % cylc get-global-config > global.rc
+#
+# See the global config reference appendix in the User Guide for documentation.
+#
+#----------------------
+# Then, for a SITE FILE, delete or comment out any default values that you do
+# not need to change (otherwise you may unwittingly override future changes to
+# system defaults).
+#
+# The SITE FILE LOCATION is [cylc-dir]/etc/global.rc, where [cylc-dir] is your
+# install location, e.g. /opt/cylc/cylc-7.7.0.
+#
+# # FORWARD COMPATIBILITY:
+# The site global.rc file must be kept in the source installation (i.e. it is
+# version specific) because older version of Cylc will not understand newer
+# global config items. WHEN YOU INSTALL A NEW VERSION OF CYLC, COPY OVER YOUR
+# OLD SITE GLOBAL CONFIG FILE AND ADD NEW ITEMS TO IT IF NEEDED.
+#
+#----------------------
+# Then, for a USER FILE, delete or comment out any default values that you do
+# not need to change (otherwise you may unwittingly override future changes to
+# site settings or system defaults).
+#
+# The SITE FILE LOCATIONS are:
+#   1) ~/.cylc/$(cylc --version)/global.rc  # e.g. ~/.cylc/7.7.0/global.rc
+# and if a file is not found there:
+#   2) ~/.cylc/global.rc
+# 
+# The first location is preferred for FORWARD COMPATIBILITY reasons (see
+# above). WHEN YOU FIRST USE A NEW VERSION OF CYLC, COPY OVER YOUR
+# OLD USER GLOBAL CONFIG FILE AND ADD NEW ITEMS TO IT IF NEEDED. However, if
+# you only set a few items that are unlikely to change from one version to the
+# next, you may be OK with the second, non version-specific, location.
+#------------------------------------------------------------------------------

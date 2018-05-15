@@ -1,0 +1,8 @@
+#------------------------------------------------------------------------------
+# Global configuration for the cylc test battery: etc/global-tests.rc
+#------------------------------------------------------------------------------
+# Some cylc tests need to mess with, or ignore, certain global configuration
+# values. To enable this, they ignore the standard site and user global config
+# files and start from global-tests.rc instead. This should contain the minimal
+# essential settings (e.g. for host names) needed to run cylc at your site.
+#------------------------------------------------------------------------------

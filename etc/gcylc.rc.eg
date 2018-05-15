@@ -1,11 +1,14 @@
-
+#------------------------------------------------------------------------------
+# An example gcylc.rc config file for "cylc gui" aka "gcylc".
+#------------------------------------------------------------------------------
 # To customize your gcylc task state color themes:
-#   1) copy this file to $HOME/.cylc/gcylc.rc
+#   1) copy this file to ~/.cylc/gcylc.rc
 #   2) add new named themes to it by
-#    (a) defining all colors yourself (see $CYLC_DIR/etc/gcylcrc/themes.rc)
+#    (a) defining all colors yourself (see <cylc-dir>/etc/gcylc-themes.rc)
 #      or
 #    (b) inheriting from an existing theme and overriding specific
 #     colors (see the "PinkRun" example below).
+#------------------------------------------------------------------------------
 
 initial views = text, dot      # set your default views
 ungrouped views = graph        # set your initially ungrouped views
