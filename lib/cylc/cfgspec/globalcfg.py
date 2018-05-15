@@ -431,7 +431,7 @@ class GlobalConfig(config):
                 fname2 = os.path.join(conf_dir_2, self.CONF_BASE)
                 if os.access(fname1, os.F_OK | os.R_OK):
                     fname = fname1
-                elif os.access(fname2, os.F_OK | os.R_OK): 
+                elif os.access(fname2, os.F_OK | os.R_OK):
                     fname = fname2
                 else:
                     continue

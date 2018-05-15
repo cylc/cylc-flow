@@ -41,7 +41,7 @@ Multiple messages as arguments:
 
 Multiple messages on STDIN:
  % cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" - <<'__STDIN__'
- % Hello 
+ % Hello
  % world!
  %
  % Hi
