@@ -21,8 +21,8 @@
 This is the cylc scan gui for monitoring running suites on a set of
 hosts.
 
-To customize themes copy $CYLC_DIR/conf/gcylcrc/gcylc.rc.eg to
-$HOME/.cylc/gcylc.rc and follow the instructions in the file."""
+To customize themes copy $CYLC_DIR/etc/gcylc.rc.eg to ~/.cylc/gcylc.rc and
+follow the instructions in the file."""
 
 import sys
 if "--use-ssh" in sys.argv[1:]:

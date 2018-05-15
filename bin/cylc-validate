@@ -18,8 +18,7 @@
 
 """cylc [prep] validate [OPTIONS] ARGS
 
-Validate a suite definition against the official specification
-files held in $CYLC_DIR/conf/suiterc/.
+Validate a suite definition.
 
 If the suite definition uses include-files reported line numbers
 will correspond to the inlined version seen by the parser; use

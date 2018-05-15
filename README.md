@@ -23,7 +23,7 @@ You should have received a copy of the GNU General Public License along with
 cylc.  If not, see [GNU licenses](http://www.gnu.org/licenses/).
 
 ## Cylc Documentation
- * See [The Cylc Home Page](https://cylc.github.io/cylc)
+ * See [The Cylc Web Site](https://cylc.github.io/cylc)
 
 ## Code Contributors
 <!--  git shortlog -s -n -->
@@ -32,19 +32,28 @@ cylc.  If not, see [GNU licenses](http://www.gnu.org/licenses/).
  *  Ben Fitzpatrick
  *  Andrew Clark
  *  Oliver Sanders
+ *  Declan Valters
+ *  Sadie Bartholomew
  *  Luis Kornblueh
  *  Kerry Day
+ *  Prasanna Challuri
  *  David Matthews
  *  Tim Whitcomb
  *  Scott Wales
- *  Annette Osprey
+ *  Tomek Trzeciak
+ *  Thomas Coleman
  *  Bruno Kinoshita
+ *  Annette Osprey
+ *  Jonathan Thomas
+ *  Rosalyn Hatcher
  *  Domingo Manubens Gil
  *  Jonny Williams
+ *  Milton Woods
  *  Alex Reinecke
  *  Chan Wilson
  *  Kevin Pulo
- *  Thomas Coleman
+ *  Lois Hugget
+ *  Martin Dix
  
 ## Acknowledgement For Non-Cylc Work:
 Licences for non-cylc work included in this distribution can be found in the

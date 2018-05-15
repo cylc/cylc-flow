@@ -44,7 +44,7 @@ PROFILE_DIR_NAME = '.profiling'  # Path to profiling directory.
 PROFILE_FILE_NAME = 'results.json'  # Path to profiling results file
 PROFILE_PLOT_DIR_NAME = 'plots'  # Path to default plotting directory.
 USER_EXPERIMENT_DIR_NAME = 'experiments'  # Path to user defined experiments.
-EXPERIMENTS_PATH = os.path.join('dev', 'profile-experiments'
+EXPERIMENTS_PATH = os.path.join('etc', 'profile-experiments'
                                 )  # Path to built-in experiments.
 
 # Ancestor commit for cylc profile-battery

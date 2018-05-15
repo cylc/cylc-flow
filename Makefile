@@ -17,7 +17,7 @@
 all: version documentation
 
 version:
-	admin/create-version-file
+	etc/dev-bin/create-version-file
 
 documentation:
 	cd doc && $(MAKE)

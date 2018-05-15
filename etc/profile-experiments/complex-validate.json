@@ -1,0 +1,10 @@
+{
+    "runs": [
+        {
+           "name": "complex suite",
+           "suite dir": "etc/dev-suites/complex"
+        }
+    ],
+    "profile modes": ["time"],
+    "mode": "validate"
+}

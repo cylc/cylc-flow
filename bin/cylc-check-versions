@@ -30,7 +30,7 @@ file and User Guide. This must be done on suite and task hosts. Users then get
 the latest installed version by default, or (like tasks) a particular version
 if $CYLC_VERSION is defined.
 
-User -v/--verbose to see the command invoked to determine the remote version
+Use -v/--verbose to see the command invoked to determine the remote version
 (all remote cylc command invocations will be of the same form, which may be
 site dependent -- see cylc global config documentation."""
 
@@ -92,7 +92,7 @@ def main():
     #   cylc version --host=HOST --user=USER
     # but this command only exists for version > 6.3.0.
     # So for the moment generate an actual remote invocation command string for
-    # "cylc -v".
+    # "cylc --version".
 
     # (save verbose flag as gets reset in remrun)
     verbose = cylc.flags.verbose

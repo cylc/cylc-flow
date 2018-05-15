@@ -383,7 +383,7 @@ previous section, emerges naturally at run time.
 
 Cylc runs on Unix variants, usually Linux, and including Apple OS X.
 
-\subsection{External Software Packages}
+\subsection{Third-Party Software Packages}
 
 {\bf Python \lstinline@>=@ 2.6} is required (but not yet Python 3). Python
 should already be installed in your Linux system. \url{https://python.org}.
@@ -425,6 +425,7 @@ required may vary by distribution, e.g.:
     \item texlive-framed
     \item texlive-preprint (for \lstinline=fullpage.sty=)
     \item texlive-tex4ht
+    \item texlive-generic-extra (for \lstinline=dirtree.sty=)
 \end{myitemize}
 
 To generate the HTML User Guide {\bf ImageMagick} is also needed.
@@ -437,12 +438,42 @@ are installed properly:
 \lstset{language=transcript}
 \begin{lstlisting}
 $ cylc check-software
-Checking for Python >= 2.6 ... found 2.7.6 ... ok
-Checking for non-Python packages:
- + Graphviz ... ok
-Checking for Python packages:
- + pygraphviz ... ok
- + pygtk ... ok
+Checking your software...
+
+Individual results:
+=============================================================================
+Package (version requirements)                        Outcome (version found)
+=============================================================================
+                            *REQUIRED SOFTWARE*                                 
+Python (2.6+, <3)...................FOUND & min. version MET (2.7.12.final.0)
+
+  *OPTIONAL SOFTWARE for the GUI & dependency graph visualisation*           
+Python:pygtk (2.0+).........................FOUND & min. version MET (2.24.0)
+graphviz (any).................................................FOUND (2.38.0)
+Python:pygraphviz (any).........................................FOUND (1.3.1)
+
+                *OPTIONAL SOFTWARE for the HTML User Guide*                     
+ImageMagick (any).............................................FOUND (6.8.9-9)
+
+           *OPTIONAL SOFTWARE for the HTTPS communications layer*                
+Python:urllib3 (any)...........................................FOUND (1.13.1)
+Python:OpenSSL (any)...........................................FOUND (17.2.0)
+Python:requests (2.4.2+).....................FOUND & min. version MET (2.9.1)
+
+                *OPTIONAL SOFTWARE for the LaTeX User Guide*                     
+TeX:framed (any)..................................................FOUND (n/a)
+TeX (3.0+)..............................FOUND & min. version MET (3.14159265)
+TeX:preprint (any)................................................FOUND (n/a)
+TeX:tex4ht (any)..................................................FOUND (n/a)
+TeX:tocloft (any).................................................FOUND (n/a)
+TeX:texlive (any).................................................FOUND (n/a)
+=============================================================================
+
+Summary:
+                        ****************************                             
+                           Core requirements: ok                                
+                           Full-functionality: ok                                
+                        **************************** 
 \end{lstlisting}
 
 If errors are reported then the packages concerned are either not installed or
@@ -477,22 +508,21 @@ separately.
 
 Cylc releases can be downloaded from from \url{https://cylc.github.io/cylc}.
 
-The wrapper script \lstinline=admin/cylc-wrapper= should be installed as
-\lstinline=cylc= in the system executable search path (e.g.\
-\lstinline=/usr/local/bin/=) and modified slightly to point to a location
-such as \lstinline=/opt= where successive Cylc releases will be unpacked
-side by side.
+The wrapper script \lstinline=usr/bin/cylc= should be installed to
+the system executable search path (e.g.\ \lstinline=/usr/local/bin/=) and
+modified slightly to point to a location such as \lstinline=/opt= where
+successive Cylc releases will be unpacked side by side.
 
 To install Cylc, unpack the release tarball in the right location, e.g.\
-\lstinline=/opt/cylc-7.4.0=, type \lstinline=make= inside the release
+\lstinline=/opt/cylc-7.7.0=, type \lstinline=make= inside the release
 directory, and set site defaults - if necessary - in a site global config file
 (below).
 
 Make a symbolic link from \lstinline=cylc= to the latest installed version:
-\lstinline=ln -s /opt/cylc-7.4.0 /opt/cylc=. This will be invoked by the
+\lstinline=ln -s /opt/cylc-7.7.0 /opt/cylc=. This will be invoked by the
 central wrapper if a specific version is not requested. Otherwise, the
 wrapper will attempt to invoke the Cylc version specified in
-\lstinline@$CYLC_VERSION@, e.g.\ \lstinline@CYLC_VERSION=7.4.0@. This variable
+\lstinline@$CYLC_VERSION@, e.g.\ \lstinline@CYLC_VERSION=7.7.0@. This variable
 is automatically set in task job scripts to ensure that jobs use the same Cylc
 version as their parent suite server program.  It can also be set by users,
 manually or in login scripts, to fix the Cylc version in their environment.
@@ -646,41 +676,26 @@ A simpler six-hourly cycling workflow should be considered first, however.
 \label{SiteAndUserConfiguration}
 
 Cylc site and user global configuration files contain settings that affect all
-suites. Some of these, such as the range of network ports used by cylc,
-should be set at site level,
+suites.  Some of these, such as the range of network ports used by cylc,
+should be set at site level. Legal items, values, and system defaults are
+documented in (\ref{SiteRCReference}).
+
 \lstset{language=transcript}
 \begin{lstlisting}
 # cylc site global config file
-/path/to/cylc/conf/global.rc
-# Deprecated path to cylc site global config file
-/path/to/cylc/conf/siterc/site.rc
+<cylc-dir>/etc/global.rc
 \end{lstlisting}
 Others, such as the preferred text editor for suite definitions,
 can be overridden by users,
 \lstset{language=transcript}
 \begin{lstlisting}
 # cylc user global config file
-~/.cylc/global.rc
-# Deprecated cylc user global config file
-~/.cylc/user.rc
+~/.cylc/$(cylc --version)/global.rc  # e.g. ~/.cylc/7.7.0/global.rc
 \end{lstlisting}
 
-The \lstinline=cylc get-site-config= command retrieves current
-global settings consisting of cylc defaults overridden by site settings,
-if any, overridden by user settings, if any.
-If you need to generate an example user global config file filled with the
-default values commented out (useful as a quick reference), you can do:
-\lstset{language=transcript}
-\begin{lstlisting}
-$ cylc get-site-config | sed 's/^/#/' > ~/.cylc/global.rc.example
-\end{lstlisting}
-Settings that do not need to be changed should be deleted to reduce conflicts
-with site changes and changes in future versions of cylc.
-Copy the example file into \lstinline=~/.cylc/global.rc= if you need to apply
-any changes.
-
-Legal items, values, and system defaults are documented in
-(\ref{SiteRCReference}).
+The file \lstinline=<cylc-dir>/etc/global.rc.eg= contains instructions on how
+to generate and install site and user global config files:
+\lstinputlisting{../../../etc/global.rc.eg}
 
 %\pagebreak
 \section{Tutorial}
@@ -697,7 +712,7 @@ cylc on suite definitions:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
-# $HOME/.cylc/global.rc
+# $HOME/.cylc/$(cylc --version)/global.rc
 [editors]
     terminal = vim
     gui = gvim -f
@@ -821,7 +836,7 @@ $ cylc import-examples /tmp
 
 \subsection{Rename The Imported Tutorial Suites}
 
-Suites can be renames by simply renaming (i.e.\ moving) their run directories.
+Suites can be renamed by simply renaming (i.e.\ moving) their run directories.
 Make the tutorial suite names shorter, and print their locations with
 \lstinline=cylc print=:
 
@@ -862,7 +877,7 @@ $ echo $?
 Here's the traditional {\em Hello World} program rendered as a cylc
 suite:
 \lstset{language=suiterc}
-\lstinputlisting{../../../examples/tutorial/oneoff/basic/suite.rc}
+\lstinputlisting{../../../etc/examples/tutorial/oneoff/basic/suite.rc}
 \lstset{language=transcript}
 
 Cylc suites feature a clean separation of scheduling configuration,
@@ -883,7 +898,7 @@ prototyping of new suites, it is submitted to run as a background job on
 the suite host. In fact cylc even provides a default task implementation
 that makes the entire \lstinline=[runtime]= section technically optional:
 \lstset{language=suiterc}
-\lstinputlisting{../../../examples/tutorial/oneoff/minimal/suite.rc}
+\lstinputlisting{../../../etc/examples/tutorial/oneoff/minimal/suite.rc}
 \lstset{language=transcript}
 (the resulting {\em dummy task} just prints out some identifying
 information and exits).
@@ -1390,7 +1405,7 @@ represents a task, or if it is inherited by other namespaces, a {\em
 family}. This allows common configuration to be factored out of related
 tasks very efficiently.
 \lstset{language=suiterc}
-\lstinputlisting{../../../examples/tutorial/oneoff/inherit/suite.rc}
+\lstinputlisting{../../../etc/examples/tutorial/oneoff/inherit/suite.rc}
 The \lstinline=[root]= namespace provides defaults for all tasks in the suite.
 Here both tasks inherit \lstinline=script= from \lstinline=root=, which they
 customize with different values of the environment variable
@@ -1429,7 +1444,7 @@ i.e.\ if \lstinline=foo= succeeds, trigger all members of
 \lstinline=GREETERS= at once. Here's the full suite with runtime
 hierarchy shown:
 \lstset{language=suiterc}
-\lstinputlisting{../../../examples/tutorial/oneoff/ftrigger1/suite.rc}
+\lstinputlisting{../../../etc/examples/tutorial/oneoff/ftrigger1/suite.rc}
 
 (Note that we recommend given ALL-CAPS names to task families to help
 distinguish them from task names. However, this is just a convention).
@@ -1561,11 +1576,11 @@ basic Hello World suite and cut the implementation of the task
 \lstinline=hello= out to a file \lstinline=hello.sh= in the suite
 bin directory:
 \lstset{language=bash}
-\lstinputlisting{../../../examples/tutorial/oneoff/external/bin/hello.sh}
+\lstinputlisting{../../../etc/examples/tutorial/oneoff/external/bin/hello.sh}
 Make the task script executable, and change the \lstinline=hello= task
 runtime section to invoke it:
 \lstset{language=suiterc}
-\lstinputlisting{../../../examples/tutorial/oneoff/external/suite.rc}
+\lstinputlisting{../../../etc/examples/tutorial/oneoff/external/suite.rc}
 
 If you run the suite now the new greeting from the external task script
 should appear in the \lstinline=hello= task stdout log. This works
@@ -1602,7 +1617,7 @@ belonging to that sequence may only run once.
 
 Open the \lstinline=tut/cycling/one= suite:
 \lstset{language=suiterc}
-\lstinputlisting{../../../examples/tutorial/cycling/one/suite.rc}
+\lstinputlisting{../../../etc/examples/tutorial/cycling/one/suite.rc}
 The difference between cycling and non-cycling suites is all in the
 \lstinline=[scheduling]= section, so we will leave the
 \lstinline=[runtime]= section alone for now (this will result in
@@ -1804,7 +1819,7 @@ date-time based.
 Open the \lstinline=tut/cycling/integer= suite, which is plotted in
 Figure~\ref{fig-tut-int}.
 \lstset{language=suiterc}
-\lstinputlisting{../../../examples/tutorial/cycling/integer/suite.rc}
+\lstinputlisting{../../../etc/examples/tutorial/cycling/integer/suite.rc}
 
 \begin{figure}
     \begin{center}
@@ -1844,7 +1859,7 @@ uses of Jinja2: changing suite content or structure based on the value
 of a logical switch; and iteratively generating dependencies and runtime
 configuration for groups of related tasks:
 \lstset{language=suiterc}
-\lstinputlisting{../../../examples/tutorial/oneoff/jinja2/suite.rc}
+\lstinputlisting{../../../etc/examples/tutorial/oneoff/jinja2/suite.rc}
 
 To view the result of Jinja2 processing with the Jinja2 flag
 \lstinline@MULTI@ set to \lstinline=False=:
@@ -1899,7 +1914,7 @@ An environment variable \lstinline=$CYLC_TASK_TRY_NUMBER= increments
 from $1$ on each successive try, and is passed to the task to allow
 different behaviour on the retry:
 \lstset{language=suiterc}
-\lstinputlisting{../../../examples/tutorial/oneoff/retry/suite.rc}
+\lstinputlisting{../../../etc/examples/tutorial/oneoff/retry/suite.rc}
 
 If a task with configured retries fails, it goes into the {\em retrying} state
 until the next retry delay is up, then it resubmits. It only enters the {\em
@@ -2149,10 +2164,10 @@ Jinja2 (\ref{Jinja2}) also has template inclusion functionality.
 Cylc comes with syntax files for a number of text editors:
 \lstset{language=transcript}
 \begin{lstlisting}
-$CYLC_DIR/conf/cylc.vim     # vim
-$CYLC_DIR/conf/cylc-mode.el # emacs
-$CYLC_DIR/conf/cylc.lang    # gedit (and other gtksourceview programs)
-$CYLC_DIR/conf/cylc.xml     # kate
+<cylc-dir>/etc/syntax/cylc.vim     # vim
+<cylc-dir>/etc/syntax/cylc-mode.el # emacs
+<cylc-dir>/etc/syntax/cylc.lang    # gedit (and other gtksourceview programs)
+<cylc-dir>/etc/syntax/cylc.xml     # kate
 \end{lstlisting}
 Refer to comments at the top of each file to see how to use them.
 
@@ -3006,7 +3021,7 @@ where suite initial and final cycle points can be assumed. Some examples:
 \subparagraph{Example}
 
 The tutorial illustrates integer cycling in~\ref{TutInteger}, and
-\lstinline=$CYLC_DIR/examples/satellite/= is a
+\lstinline=<cylc-dir>/etc/examples/satellite/= is a
 self-contained example of a realistic use for integer cycling. It simulates
 the processing of incoming satellite data: each new dataset arrives after a
 random (as far as the suite is concerned) interval, and is labeled by an
@@ -3025,7 +3040,7 @@ shown in Figure~\ref{fig-satellite}.
     \begin{center}
         \includegraphics[width=0.4\textwidth]{graphics/png/orig/satellite.png}
     \end{center}
-    \caption{The \lstinline=examples/satellite= integer suite}
+    \caption{The \lstinline=etc/examples/satellite= integer suite}
 \label{fig-satellite}
 \end{figure}
 
@@ -3157,11 +3172,11 @@ Tasks can also trigger off custom output messages. These must be registered in
 the \lstinline=[runtime]= section of the emitting task, and reported using the
 \lstinline=cylc message= command in task scripting. The graph trigger notation
 refers to the item name of the registered output message.
-The example suite \lstinline=$CYLC_DIR/examples/message-triggers= illustrates
+The example suite \lstinline=<cylc-dir>/etc/examples/message-triggers= illustrates
 message triggering.
 
 \lstset{language=suiterc}
-\lstinputlisting{../../../examples/message-triggers/suite.rc}
+\lstinputlisting{../../../etc/examples/message-triggers/suite.rc}
 
 \paragraph{Job Submission Triggers}
 
@@ -3705,7 +3720,7 @@ has gone beyond the cycle point. Triggering off an expired task typically
 requires suicide triggers to remove the workflow that runs if the task has not
 expired. Here a task called \lstinline=copy= expires, and its downstream
 workflow is skipped, if it is more than one day behind the wall-clock (see also
-\lstinline=examples/clock-expire=):
+\lstinline=etc/examples/clock-expire=):
 \lstset{language=suiterc}
 \begin{lstlisting}
 [cylc]
@@ -3779,7 +3794,7 @@ Note that only one task in a suite can trigger off a particular external
 message. Other tasks can trigger off the externally triggered task as required,
 of course.
 
-\lstinline=$CYLC_DIR/examples/satellite/ext-triggers/suite.rc= is a working
+\lstinline=<cylc-dir>/etc/examples/satellite/ext-triggers/suite.rc= is a working
 example of a simulated satellite processing suite.
 
 External triggers are not normally needed in date-time cycling suites driven
@@ -4051,7 +4066,7 @@ The following listing of the {\em inherit.single.one} example suite
 illustrates basic runtime inheritance with single parents.
 
 \lstset{language=suiterc}
-\lstinputlisting{../../../examples/inherit/single/one/suite.rc}
+\lstinputlisting{../../../etc/examples/inherit/single/one/suite.rc}
 \lstset{language=transcript}
 
 \subsubsection{Runtime Inheritance - Multiple}
@@ -4070,7 +4085,7 @@ The {\em inherit.multi.one} example suite, listed here, makes use of
 multiple inheritance:
 
 \lstset{language=suiterc}
-\lstinputlisting{../../../examples/inherit/multi/one/suite.rc}
+\lstinputlisting{../../../etc/examples/inherit/multi/one/suite.rc}
 \lstset{language=transcript}
 
 \lstinline=cylc get-suite-config= provides an easy way to check the result of
@@ -4266,7 +4281,7 @@ CYLC_FAIL_SIGNALS               # List of signals trapped by the error trap
 CYLC_VACATION_SIGNALS           # List of signals trapped by the vacation trap
 CYLC_SUITE_WORK_DIR_ROOT        # Root directory above the suite work directory
                                 # in the job host
-CYLC_TASK_MESSAGE_STARTED_PID   # PID of "cylc message started" command
+CYLC_TASK_MESSAGE_STARTED_PID   # PID of "cylc message" job started" command
 CYLC_TASK_WORK_DIR_BASE         # Alternate task work directory,
                                 # relative to the suite work directory
 \end{lstlisting}
@@ -5091,7 +5106,7 @@ with the New York City task family expanded, in
 Figure~\ref{fig-jinja2-cities}.
 
 \lstset{language=suiterc}
-\lstinputlisting{../../../examples/jinja2/cities/suite.rc}
+\lstinputlisting{../../../etc/examples/jinja2/cities/suite.rc}
 \lstset{language=transcript}
 
 \begin{figure}
@@ -5139,7 +5154,7 @@ single Python function in a source file with the same name as the
 function (plus ``.py'' extension) and stored in one of the following
 locations:
 \begin{myitemize}
-    \item \lstinline=$CYLC_DIR/lib/Jinja2Filters/=
+    \item \lstinline=<cylc-dir>/lib/Jinja2Filters/=
     \item \lstinline=[suite definition directory]/Jinja2Filters/=
     \item \lstinline=$HOME/.cylc/Jinja2Filters/=
 \end{myitemize}
@@ -5197,7 +5212,7 @@ Examples:
 
 Associative arrays ({\em dicts} in Python) can be very useful.
 Here's an example, from \\*
-\lstinline=$CYLC_DIR/examples/jinja2/dict=:
+\lstinline=<cylc-dir>/etc/examples/jinja2/dict=:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -5232,7 +5247,7 @@ $ cylc get-suite-config -i [runtime][airs]directives SUITE
 The values of Jinja2 variables can be passed in from the cylc command
 line rather than hardwired in the suite definition.
 Here's an example, from \\*
-\lstinline=$CYLC_DIR/examples/jinja2/defaults=:
+\lstinline=<cylc-dir>/etc/examples/jinja2/defaults=:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -5473,28 +5488,34 @@ Normal severity messages are printed to \lstinline=job.out= and logged by the
 suite server program:
 \lstset{language=bash}
 \begin{lstlisting}
-cylc message "Hello from ${CYLC_TASK_ID}"
+cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" \
+  "Hello from ${CYLC_TASK_ID}"
 \end{lstlisting}
 
 CUSTOM severity messages are printed to \lstinline=job.out=, logged by the
 suite server program, and can be used to trigger {\em custom} event handlers:
 \lstset{language=bash}
 \begin{lstlisting}
-cylc message -p CUSTOM "data available for ${CYLC_TASK_CYCLE_POINT}"
+cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" \
+  "CUSTOM:data available for ${CYLC_TASK_CYCLE_POINT}"
 \end{lstlisting}
-Task output messages, used for triggering other tasks, can also be sent with
-custom severity if need be
+Custom severity messages and event handlers can be used to signal special
+events that are neither routine information or an error condition, such as
+production of a particular data file. Task output messages, used for triggering
+other tasks, can also be sent with custom severity if need be.
 
 WARNING severity messages are printed to \lstinline=job.err=, logged by the
 suite server program, and can be passed to {\em warning} event handlers:
 \begin{lstlisting}
-cylc message -p WARNING "Uh-oh, something's not right here."
+cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" \
+  "WARNING:Uh-oh, something's not right here."
 \end{lstlisting}
 
 CRITICAL severity messages are printed to \lstinline=job.err=, logged by the
 suite server program, and can be passed to {\em critical} event handlers:
 \begin{lstlisting}
-cylc message -p CRITICAL "ERROR occurred in process X!"
+cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" \
+  "CRITICAL:ERROR occurred in process X!"
 \end{lstlisting}
 
 \subsection{Aborting Job Scripts on Error}
@@ -5533,7 +5554,8 @@ For failures detected by the scripting you could send a critical message back
 before aborting, potentially triggering a {\em critical} task event handler:
 \begin{lstlisting}
 if ! /bin/false; then
-  cylc message -p CRITICAL "ERROR: /bin/false failed!"
+  cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" \
+    "CRITICAL:ERROR: /bin/false failed!"
   exit 1
 fi
 \end{lstlisting}
@@ -6894,7 +6916,7 @@ queue. The {\em queues} example suite illustrates how queues work by
 running two task trees side by side (as seen in the graph GUI) each
 limited to 2 and 3 tasks respectively:
 \lstset{language=suiterc}
-\lstinputlisting{../../../examples/queues/suite.rc}
+\lstinputlisting{../../../etc/examples/queues/suite.rc}
 
 \subsection{Automatic Task Retry On Failure}
 \label{TaskRetries}

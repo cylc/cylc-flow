@@ -30,7 +30,7 @@ NPROC is the number of concurrent processes to run, which defaults to the
 global config "process pool size" setting.
 
 The tests ignore normal site/user global config and instead use the file:
-   $CYLC_DIR/conf/global-tests.rc
+   $CYLC_DIR/etc/global-tests.rc
 This should specify test job hosts under the [test battery] section, plus any
 other critical settings settings, including [hosts] configuration for test job
 hosts (and special batchview commands like qcat if available). Additional

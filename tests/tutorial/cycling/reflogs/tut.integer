@@ -1,0 +1,9 @@
+2018-05-14T10:19:03+12 INFO - Initial point: 1
+2018-05-14T10:19:03+12 INFO - Final point: 2
+2018-05-14T10:19:03+12 INFO - [start.1] -triggered off []
+2018-05-14T10:19:06+12 INFO - [foo.1] -triggered off ['start.1']
+2018-05-14T10:19:09+12 INFO - [bar.1] -triggered off ['foo.1']
+2018-05-14T10:19:09+12 INFO - [foo.2] -triggered off ['foo.1']
+2018-05-14T10:19:12+12 INFO - [stop.1] -triggered off ['bar.1']
+2018-05-14T10:19:12+12 INFO - [bar.2] -triggered off ['foo.2']
+2018-05-14T10:19:15+12 INFO - [stop.2] -triggered off ['bar.2']

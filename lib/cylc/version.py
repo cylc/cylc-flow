@@ -34,8 +34,8 @@ def _get_cylc_version():
         # We're running in a cylc git repository, so dynamically determine
         # the cylc version string.  Enclose the path in quotes to handle
         # avoid failure when cylc_dir contains spaces.
-        is_ok, outlines = run_get_stdout(
-            '"%s"' % os.path.join(cylc_dir, "admin", "get-repo-version"))
+        is_ok, outlines = run_get_stdout('"%s"' % os.path.join(
+            cylc_dir, "etc", "dev-bin", "get-repo-version"))
         if is_ok and outlines:
             return outlines[0]
         else:

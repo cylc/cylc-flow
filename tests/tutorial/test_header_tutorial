@@ -39,7 +39,11 @@ EOF
     # *** WARNING: ASSUMING ALL THE SUITES HAVE A 12-HOURLY CYCLE
     # (this is just for consistency - reference tests actually take
     # initial and final cycles from reference log, not the suite def).
-    perl -pi -e "s/(initial cycle point\s*=)\s*.*/\1 20130808T00/g" suite.rc
-    perl -pi -e "s/(final cycle point\s*=)\s*.*/\1 20130808T12/g" suite.rc
-
+    if grep -q "cycling mode = integer" suite.rc; then
+      perl -pi -e "s/(initial cycle point\s*=)\s*.*/\1 1/g" suite.rc
+      perl -pi -e "s/(final cycle point\s*=)\s*.*/\1 2/g" suite.rc
+    else
+      perl -pi -e "s/(initial cycle point\s*=)\s*.*/\1 20130808T00/g" suite.rc
+      perl -pi -e "s/(final cycle point\s*=)\s*.*/\1 20130808T12/g" suite.rc
+    fi
 }

@@ -1,0 +1,23 @@
+[meta]
+    title = "test suite for cylc-6 message triggers"
+
+[scheduling]
+    initial cycle point = 20140801T00
+    final cycle point = 20141201T00
+    [[dependencies]]
+        [[[P2M]]]
+           graph = """foo:out1 => bar
+                      foo[-P2M]:out2 => baz"""
+[runtime]
+    [[foo]]
+        script = """
+sleep 5
+cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" "file 1 done"
+sleep 10
+cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" "file 2 done"
+sleep 10"""
+        [[[outputs]]]
+            out1 = "file 1 done"
+            out2 = "file 2 done"
+    [[bar, baz]]
+        script = sleep 10

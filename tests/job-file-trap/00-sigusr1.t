@@ -26,6 +26,7 @@ run_tests() {
     TEST_NAME=$TEST_NAME_BASE-validate
     run_ok $TEST_NAME cylc validate $SUITE_NAME
     TEST_NAME=$TEST_NAME_BASE-run
+    # Needs to be detaching:
     suite_run_ok $TEST_NAME cylc run --reference-test $SUITE_NAME
 
     # Make sure t1.1.1's status file is in place

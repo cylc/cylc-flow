@@ -35,6 +35,7 @@ import cylc.flags
 from cylc.cfgspec.utils import (
     coerce_interval, coerce_interval_list, DurationFloat)
 from cylc.network import PRIVILEGE_LEVELS, PRIV_STATE_TOTALS, PRIV_SHUTDOWN
+from cylc.version import CYLC_VERSION
 
 coercers['interval'] = coerce_interval
 coercers['interval_list'] = coerce_interval_list
@@ -396,11 +397,15 @@ class GlobalConfig(config):
     """
 
     _DEFAULT = None
+    # For working with git clones, just go to minor version number.
+    cylc_version = re.sub('-.*', '', CYLC_VERSION)
     CONF_BASE = "global.rc"
-    SITE_CONF_DIR = os.path.join(os.environ["CYLC_DIR"], "conf")
-    USER_CONF_DIR = os.path.join(os.environ['HOME'], '.cylc')
-    OLD_SITE_CONF_BASE = os.path.join("siterc", "site.rc")
-    OLD_USER_CONF_BASE = os.path.join("user.rc")
+    # Site global.rc loc preference: if not in etc/ look in old conf/.
+    SITE_CONF_DIR = os.path.join(os.environ["CYLC_DIR"], "etc")
+    SITE_CONF_DIR_OLD = os.path.join(os.environ["CYLC_DIR"], "conf")
+    # User global.rc loc preference: if not in .cylc/x.y.z/ look in .cylc/.
+    USER_CONF_DIR_1 = os.path.join(os.environ['HOME'], '.cylc', cylc_version)
+    USER_CONF_DIR_2 = os.path.join(os.environ['HOME'], '.cylc')
 
     @classmethod
     def get_inst(cls):
@@ -415,34 +420,42 @@ class GlobalConfig(config):
         self.sparse.clear()
         self.dense.clear()
         if cylc.flags.verbose:
-            print "Loading site/user config files"
+            print "Loading site/user global config files"
         conf_path_str = os.getenv("CYLC_CONF_PATH")
         if conf_path_str is None:
-            # CYLC_CONF_PATH not defined, use default locations
-            for old_base, conf_dir, is_site in [
-                    [self.OLD_SITE_CONF_BASE, self.SITE_CONF_DIR, True],
-                    [self.OLD_USER_CONF_BASE, self.USER_CONF_DIR, False]]:
-                for base in [self.CONF_BASE, old_base]:
-                    fname = os.path.join(conf_dir, base)
-                    if os.access(fname, os.F_OK | os.R_OK):
-                        try:
-                            self.loadcfg(fname, "global config")
-                        except ParsecError as exc:
-                            if is_site:
-                                sys.stderr.write(
-                                    "WARNING: ignoring bad site config %s:"
-                                    "\n%s\n" % (fname, str(exc)))
-                            else:
-                                sys.stderr.write(
-                                    "ERROR: bad user config %s:\n" % (fname))
-                                raise
-                        break
+            # CYLC_CONF_PATH not defined, use default locations.
+            for conf_dir_1, conf_dir_2, is_site in [
+                    (self.SITE_CONF_DIR, self.SITE_CONF_DIR_OLD, True),
+                    (self.USER_CONF_DIR_1, self.USER_CONF_DIR_2, False)]:
+                fname1 = os.path.join(conf_dir_1, self.CONF_BASE)
+                fname2 = os.path.join(conf_dir_2, self.CONF_BASE)
+                if os.access(fname1, os.F_OK | os.R_OK):
+                    fname = fname1
+                elif os.access(fname2, os.F_OK | os.R_OK):
+                    fname = fname2
+                else:
+                    continue
+                try:
+                    self.loadcfg(fname, "global config")
+                except ParsecError as exc:
+                    if is_site:
+                        # Warn on bad site file (users can't fix it).
+                        sys.stderr.write(
+                            "WARNING: ignoring bad site config %s:"
+                            "\n%s\n" % (fname, str(exc)))
+                    else:
+                        # Abort on bad user file (users can fix it).
+                        sys.stderr.write(
+                            "ERROR: bad user config %s:\n" % (fname))
+                        raise
+                    break
         elif conf_path_str:
             # CYLC_CONF_PATH defined with a value
             for path in conf_path_str.split(os.pathsep):
                 fname = os.path.join(path, self.CONF_BASE)
                 if os.access(fname, os.F_OK | os.R_OK):
                     self.loadcfg(fname, "global config")
+        # (OK if no global.rc is found, just use system defaults).
         self.transform()
 
     def get_derived_host_item(

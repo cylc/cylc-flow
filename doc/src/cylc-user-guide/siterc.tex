@@ -174,7 +174,7 @@ File locations of documentation held locally on the cylc host server.
 File location of the main cylc documentation index.
 \begin{myitemize}
 \item {\em type:} string
-\item {\em default:} \lstinline=$CYLC_DIR/doc/index.html=
+\item {\em default:} \lstinline=<cylc-dir>/doc/index.html=
 \end{myitemize}
 
 \paragraph[pdf user guide]{[documentation] \textrightarrow [[files]] \textrightarrow pdf user guide }
@@ -182,7 +182,7 @@ File location of the main cylc documentation index.
 File location of the cylc User Guide, PDF version.
 \begin{myitemize}
 \item {\em type:} string
-\item {\em default:} \lstinline=$CYLC_DIR/doc/cug-pdf.pdf=
+\item {\em default:} \lstinline=<cylc-dir>/doc/cug-pdf.pdf=
 \end{myitemize}
 
 \paragraph[multi-page html user guide]{[documentation] \textrightarrow [[files]] \textrightarrow multi-page html user guide }
@@ -190,7 +190,7 @@ File location of the cylc User Guide, PDF version.
 File location of the cylc User Guide, multi-page HTML version.
 \begin{myitemize}
 \item {\em type:} string
-\item {\em default:} \lstinline=$CYLC_DIR/doc/html/multi/cug-html.html=
+\item {\em default:} \lstinline=<cylc-dir>/doc/html/multi/cug-html.html=
 \end{myitemize}
 
 \paragraph[single-page html user guide]{[documentation] \textrightarrow [[files]] \textrightarrow single-page html user guide }
@@ -198,7 +198,7 @@ File location of the cylc User Guide, multi-page HTML version.
 File location of the cylc User Guide, single-page HTML version.
 \begin{myitemize}
 \item {\em type:} string
-\item {\em default:} \lstinline=$CYLC_DIR/doc/html/single/cug-html.html=
+\item {\em default:} \lstinline=<cylc-dir>/doc/html/single/cug-html.html=
 \end{myitemize}
 
 \subsubsection[{[[}urls{]]}]{[documentation] \textrightarrow [[urls]]}
@@ -608,7 +608,7 @@ Host specific default for the~\ref{runtime-events-handler-retry-delays}
 setting.
 
 \paragraph[tail command template]{[hosts] \textrightarrow [[HOST]] \textrightarrow tail command template}
-\label{local-tail-template}
+\label{tail-command-template}
 
 A command template (with \lstinline=%(filename)s= substitution) to tail-follow
 job logs on HOST, by the GUI log viewer and \lstinline=cylc cat-log=. You are
@@ -631,7 +631,7 @@ batch system (see~\ref{RuntimeJobSubMethods}).
 A command template (with \lstinline=%(job_id)s= substitution) that can be used
 to tail-follow the stderr stream of a running job if SYSTEM does
 not use the normal log file location while the job is running.  This setting
-overrides~\ref{local-tail-template} and~\ref{remote-tail-template} above.
+overrides~\ref{tail-command-template} above.
 
 \begin{myitemize}
 \item {\em type:} string
@@ -655,7 +655,7 @@ overrides~\ref{local-tail-template} and~\ref{remote-tail-template} above.
 A command template (with \lstinline=%(job_id)s= substitution) that can be used
 to tail-follow the stdout stream of a running job if SYSTEM does
 not use the normal log file location while the job is running.  This setting
-overrides~\ref{local-tail-template} and~\ref{remote-tail-template} above.
+overrides~\ref{tail-command-template} above.
 
 \begin{myitemize}
 \item {\em type:} string
@@ -752,7 +752,7 @@ suite host; if it doesn't, adjust network settings or use one of the
 other methods. For the {\em address} method, cylc attempts to use a
 special external ``target address'' to determine the IP address of the
 suite host as seen by remote task hosts (in-source documentation in
-\lstinline=$CYLC_DIR/lib/cylc/hostuserutil.py= explains how this works).
+\lstinline=<cylc-dir>/lib/cylc/hostuserutil.py= explains how this works).
 And finally, as a last resort, you can choose the {\em hardwired} method
 and manually specify the host name or IP address of the suite host.
 
@@ -790,7 +790,7 @@ if you have to use the {\em hardwired} self-identification method.
 
 \subsection{[suite host scanning]}
 
-Utilities such as \lstinline=cylc gsummary= need to scan hosts for
+Utilities such as \lstinline=cylc gscan= need to scan hosts for
 running suites.
 
 \subsubsection[hosts]{[suite host scanning] \textrightarrow hosts }
@@ -808,7 +808,7 @@ Global site/user defaults for~\ref{TaskEventHandling}.
 \subsection{[test battery]}
 
 Settings for the automated development tests. Note the test battery reads
-\lstinline=$CYLC_DIR/conf/global-tests.rc= instead of the normal site/user
+\lstinline=<cylc-dir>/etc/global-tests.rc= instead of the normal site/user
 global config files.
 
 \subsubsection[remote host with shared fs]{[test battery] \textrightarrow remote host with shared fs}

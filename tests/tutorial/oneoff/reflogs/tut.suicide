@@ -1,6 +1,5 @@
-2014/01/08 10:04:17 INFO - Run mode: live
-2014/01/08 10:04:17 INFO - Initial point: 1
-2014/01/08 10:04:17 INFO - Final point: 1
-2014/01/08 10:04:17 INFO - [hello.1] -triggered off []
-2014/01/08 10:04:30 INFO - [goodbye.1] -triggered off ['hello.1']
-2014/01/08 10:04:44 INFO - [really_goodbye.1] -triggered off ['goodbye.1']
+2018-05-14T09:42:32+12 INFO - Initial point: 1
+2018-05-14T09:42:32+12 INFO - Final point: 1
+2018-05-14T09:42:32+12 INFO - [hello.1] -triggered off []
+2018-05-14T09:42:35+12 INFO - [goodbye.1] -triggered off ['hello.1']
+2018-05-14T09:42:38+12 INFO - [really_goodbye.1] -triggered off ['goodbye.1']

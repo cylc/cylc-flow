@@ -18,7 +18,14 @@
 
 set -e
 
-for GROUP in oneoff cycling; do
+# Run this from inside tests/tutorial/.
+export CYLC_TEST_TIME_INIT=$(date -I)
+export CYLC_TEST_RUN_GENERIC=true
+export CYLC_TEST_RUN_PLATFORM=true
+
+#for GROUP in oneoff cycling; do
+for GROUP in cycling; do
+    rm -r $GROUP
     mkdir -p $GROUP
     cd $GROUP
     GDIR=$PWD
@@ -29,7 +36,7 @@ for GROUP in oneoff cycling; do
     # remove old symlinks
     rm -f tut.*
     # generate new symlinks
-    for SRCE in ../../../examples/tutorial/$GROUP/*; do
+    for SRCE in ../../../etc/examples/tutorial/$GROUP/*; do
         ln -s $SRCE tut.$(basename $SRCE )
     done
 
@@ -93,7 +100,7 @@ TEST_NAME=\$TEST_NAME_BASE-val
 run_ok \$TEST_NAME cylc validate \$SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=\$TEST_NAME_BASE-run
-suite_run_ok \$TEST_NAME cylc run --reference-test --debug \$SUITE_NAME
+suite_run_ok \$TEST_NAME cylc run --reference-test --no-detach --debug \$SUITE_NAME
 #-------------------------------------------------------------------------------
 purge_suite \$SUITE_NAME
 EOF

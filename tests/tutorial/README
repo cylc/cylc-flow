@@ -3,7 +3,7 @@ CYLC DEV NOTES
 ________________________
 update-tutorial-tests.sh
 
-This script does the following for suites under examples/tutorial/:
+This script does the following for suites under etc/examples/tutorial/:
 
 1) it (re)makes symlinks to all suites
 2) it runs cylc to generate a reference log for any suite that does
