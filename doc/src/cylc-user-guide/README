@@ -1,7 +1,7 @@
 
 To generate pdf and html (single and multi-page) Cylc User Guides:
 
- | cd $CYLC_DIR/doc
+ | cd <cylc-dir>/doc
  | make
 
 The following make targets are also avaialable:
