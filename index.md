@@ -9,10 +9,9 @@ indefinitely.
 
 There are several reasons why tasks might need to be cycled:
 
- * To run successive cycles of a real time environmental forecasting system
-   (where in real time operation new forecasts are initiated at regular
-   intervals as new driving data comes in; but in catch-up or historical-run
-   mode the system dependencies may allow multiple cycles to run concurrently)
+ * To run successive cycles of an environmental forecasting system (where in
+   real time operation new forecasts are initiated at regular intervals; but in
+   catch-up or historical mode dependencies may allow concurrent cycles).
 
  * To split long model runs into a sequence of smaller runs, with associated
    processing tasks for each chunk.
