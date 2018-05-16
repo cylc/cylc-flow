@@ -19,6 +19,7 @@
 
 from collections import deque
 import os
+import time
 from pipes import quote
 from signal import SIGKILL
 from subprocess import Popen, PIPE
@@ -63,6 +64,8 @@ class SuiteProcContext(object):
             Return code of the command.
         .timestamp (str):
             Time string of latest update.
+        .proc_pool_timeout (float):
+            command execution timeout.
     """
 
     # Format string for single line output
@@ -129,6 +132,7 @@ class SuiteProcPool(object):
         if not size:
             size = glbl_cfg().get(['process pool size'], size)
         self.size = size
+        self.proc_pool_timeout = glbl_cfg().get(['process pool timeout'])
         self.closed = False  # Close queue
         self.stopping = False  # No more job submit if True
         # .stopping may be set by an API command in a different thread
@@ -152,18 +156,34 @@ class SuiteProcPool(object):
             stopping = self.stopping
         return stopping
 
+    def _proc_exit(self, proc, err_xtra, ctx, callback, callback_args):
+        """Get ret_code, out, err of exited command, and call its callback."""
+        ctx.ret_code = proc.wait()
+        ctx.out, err = proc.communicate()
+        ctx.err = err + err_xtra
+        self._run_command_exit(ctx, callback, callback_args)
+
     def process(self):
         """Process done child processes and submit more."""
         # Handle child processes that are done
         runnings = []
         for proc, ctx, callback, callback_args in self.runnings:
-            ret_code = proc.poll()
-            if ret_code is None:
+            if proc.poll() is not None:
+                self._proc_exit(proc, "", ctx, callback, callback_args)
+            elif time.time() < ctx.timeout:
                 runnings.append([proc, ctx, callback, callback_args])
             else:
-                ctx.out, ctx.err = proc.communicate()
-                ctx.ret_code = ret_code
-                self._run_command_exit(ctx, callback, callback_args)
+                # Timed out, kill it.
+                try:
+                    os.killpg(proc.pid, SIGKILL)
+                except OSError:
+                    # must have just exited, since poll.
+                    err_xtra = ""
+                else:
+                    err_xtra = "\nkilled on timeout (%s)" % (
+                        self.proc_pool_timeout)
+                self._proc_exit(proc, err_xtra, ctx, callback, callback_args)
+
         # Update list of running items
         self.runnings[:] = runnings
         # Create more child processes, if items in queue and space in pool
@@ -177,6 +197,7 @@ class SuiteProcPool(object):
             else:
                 proc = self._run_command_init(ctx, callback, callback_args)
                 if proc is not None:
+                    ctx.timeout = time.time() + self.proc_pool_timeout
                     self.runnings.append([proc, ctx, callback, callback_args])
 
     def put_command(self, ctx, callback=None, callback_args=None):

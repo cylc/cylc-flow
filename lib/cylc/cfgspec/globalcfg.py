@@ -42,6 +42,7 @@ coercers['interval_list'] = coerce_interval_list
 
 SPEC = {
     'process pool size': vdr(vtype='integer', default=4),
+    'process pool timeout': vdr(vtype='interval', default=DurationFloat(600)),
     'temporary directory': vdr(vtype='string'),
     'state dump rolling archive length': vdr(
         vtype='integer', default=10),

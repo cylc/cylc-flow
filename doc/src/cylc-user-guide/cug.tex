@@ -6983,11 +6983,7 @@ See ~\ref{task-event-mail-interval} for details.
 Event handlers can be located in the suite \lstinline=bin/= directory;
 otherwise it is up to you to ensure their location is in \lstinline=$PATH= (in
 the shell in which the suite server program runs). They should require little
-resource and return quickly - as each event handler is invoked by a child
-process in a finite process pool that is also used to submit, poll and kill
-jobs. The child process will wait for the event handler to complete before
-moving on to the next item in the queue. If the process pool is saturated with
-long running event handlers, the suite will appear to hang.
+resource and return quickly - see~\ref{Managing External Command Execution}.
 
 Task event handlers can be specified using the
 \lstinline=[[[events]]]<event> handler= settings, where
@@ -7112,6 +7108,21 @@ of. If a suite gets delayed over many cycles the next tasks coming up can be
 identified as late immediately, and subsequent tasks can be identified as late
 as the suite progresses to subsequent cycle points, until it catches up to the
 clock.
+
+\subsection{Managing External Command Execution}
+\label{Managing External Command Execution}
+
+Job submission commands, event handlers, and job poll and kill commands, are
+executed by the suite server program in a ``pool'' of asynchronous
+subprocesses, in order to avoid holding the suite up. The process pool is
+actively managed to limit it to a configurable size (\ref{process pool size}).
+Custom event handlers should be light-weight and quick-running because they
+will tie up a process pool member until they complete, and the suite will
+appear to stall if the pool is saturated with long-running processes. Processes
+are killed after a configurable timeout (\ref{process pool timeout}) however,
+to guard against rogue commands that hang indefinitely. All process kills are
+logged by the suite server program. For killed job submissions the associated
+tasks also go to the {\em submit-failed} state.
 
 \subsection{Handling Job Preemption}
 \label{PreemptionHPC}

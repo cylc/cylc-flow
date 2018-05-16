@@ -1,0 +1,14 @@
+[cylc]
+   [[events]]
+      abort on timeout = True
+      timeout = PT20S
+[scheduling]
+    [[dependencies]]
+        graph = "foo:submit-fail => stopper"
+[runtime]
+    [[foo]]
+        [[[job]]]
+            batch system = at
+            batch submit command template = sleep 30
+    [[stopper]]
+        script = cylc stop "${CYLC_SUITE_NAME}"
