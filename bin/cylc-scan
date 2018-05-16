@@ -221,17 +221,13 @@ def main():
     if options.all_ports:
         args.extend(glbl_cfg().get(["suite host scanning", "hosts"]))
     if not args:
-        print 1, args
         args = get_scan_items_from_fs(cres['suite-owner'])
-        print 2, args
     if not args:
         return
 
     json_filter = []
     skip_one = True
-    print '___>', args
     for host, port, suite_identity in scan_many(args, options.comms_timeout):
-        print host, port, suite_identity
         name = suite_identity[KEY_NAME]
         owner = suite_identity[KEY_OWNER]
 
