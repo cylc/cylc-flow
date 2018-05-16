@@ -152,17 +152,14 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False):
             cmd = tailer_tmpl % {"filename": logpath}
         # Ensure that the tail command dies if the parent process dies.
         ppid = os.getppid()
-        if remote:
-            fn = os.setpgrp
-        else:
-            fn = None
-        proc = Popen(shlex.split(cmd), stdin=open(os.devnull), preexec_fn=fn)
+        proc = Popen(
+            shlex.split(cmd), stdin=open(os.devnull), preexec_fn=os.setpgrp)
         try:
             while True:
                 sleep(0.5)
                 if proc.poll() is not None:
                     break
-                if remote and os.getppid() != ppid:
+                if os.getppid() != ppid:
                     os.killpg(proc.pid, signal.SIGTERM)
                     break
         except KeyboardInterrupt:
