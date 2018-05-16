@@ -35,6 +35,7 @@ from cylc.gui.scanutil import (
     KEY_PORT, get_scan_menu, launch_gcylc, update_suites_info,
     launch_hosts_dialog, launch_about_dialog)
 from cylc.gui.util import get_icon, setup_icons, set_exception_hook_dialog
+from cylc.network.port_scan import re_compile_filters
 from cylc.suite_status import (
     KEY_GROUP, KEY_META, KEY_STATES, KEY_TASKS_BY_STATE, KEY_TITLE,
     KEY_UPDATE_TIME)
@@ -169,21 +170,11 @@ class ScanApp(object):
         self.treeview.connect("button-press-event",
                               self._on_button_press_event)
 
-        patterns = {"name": None, "owner": None}
-        for label, items in [
-                ("owner", patterns_owner), ("name", patterns_name)]:
-            if items:
-                patterns[label] = r"\A(?:" + r")|(?:".join(items) + r")\Z"
-                try:
-                    patterns[label] = re.compile(patterns[label])
-                except re.error:
-                    raise ValueError("Invalid %s pattern: %s" % (label, items))
+        cre_owner, cre_name = re_compile_filters(patterns_owner, patterns_name)
 
         self.updater = ScanAppUpdater(
             self.window, hosts, suite_treemodel, self.treeview,
-            comms_timeout=comms_timeout, interval=interval,
-            group_column_id=self.GROUP_COLUMN,
-            name_pattern=patterns["name"], owner_pattern=patterns["owner"])
+            comms_timeout, interval, self.GROUP_COLUMN, cre_owner, cre_name)
 
         self.updater.start()
 
@@ -759,7 +750,7 @@ class ScanAppUpdater(threading.Thread):
 
     def __init__(self, window, hosts, suite_treemodel, suite_treeview,
                  comms_timeout=None, interval=None, group_column_id=0,
-                 name_pattern=None, owner_pattern=None):
+                 owner_pattern=None, name_pattern=None):
         self.window = window
         if hosts:
             self.hosts = hosts
@@ -779,8 +770,8 @@ class ScanAppUpdater(threading.Thread):
         self.group_column_id = group_column_id
         self.tasks_by_state = {}
         self.warning_times = {}
-        self.name_pattern = name_pattern
         self.owner_pattern = owner_pattern
+        self.name_pattern = name_pattern
         super(ScanAppUpdater, self).__init__()
 
     @staticmethod

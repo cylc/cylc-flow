@@ -20,6 +20,7 @@
 from multiprocessing import cpu_count, Process, Pipe
 import os
 from pwd import getpwall
+import re
 import sys
 from time import sleep, time
 import traceback
@@ -230,6 +231,28 @@ def scan_many(items, timeout=None, updater=None):
         for key in sorted(wait_set):
             sys.stderr.write('  %s:%s\n' % key)
     return results
+
+
+def re_compile_filters(patterns_owner=None, patterns_name=None):
+    """Compile regexp for suite owner and suite name scan filters.
+
+    Arguments:
+        patterns_owner (list): List of suite owner patterns
+        patterns_name (list): List of suite name patterns
+
+    Returns (tuple):
+        A 2-element tuple in the form (cre_owner, cre_name). Either or both
+        element can be None to allow for the default scan behaviour.
+    """
+    cres = {'owner': None, 'name': None}
+    for label, items in [('owner', patterns_owner), ('name', patterns_name)]:
+        if items:
+            cres[label] = r'\A(?:' + r')|(?:'.join(items) + r')\Z'
+            try:
+                cres[label] = re.compile(cres[label])
+            except re.error:
+                raise ValueError(r'%s=%s: bad regexp' % (label, items))
+    return (cres['owner'], cres['name'])
 
 
 def get_scan_items_from_fs(owner_pattern=None, updater=None):
