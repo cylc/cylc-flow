@@ -30,7 +30,7 @@ To view suite server program contact information:
  $ cylc get-suite-contact %(suite)s
 
 Other ways to see if the suite is still running:
- $ cylc scan -n '\b%(suite)s\b' %(host)s
+ $ cylc scan -n '%(suite)s' %(host)s
  $ cylc ping -v --host=%(host)s %(suite)s
  $ ps %(ps_opts)s %(pid)s  # on %(host)s
 

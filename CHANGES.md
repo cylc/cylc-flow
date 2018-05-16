@@ -71,6 +71,13 @@ from multi-line `script` items in task definitions, for cleaner job scripts.
 
 ### Fixes
 
+[#2666](https://github.com/cylc/cylc/pull/2666) - `cylc scan`: fix default
+behavior to only obtain suite information from the `~/cylc-run/` of the current
+user. This is consistent with `cylc gscan`. However, the `--name=PATTERN`
+(`-n PATTERN`) option has also been modified to be consistent with
+`cylc gscan`, so `cylc scan --name=bar` will only match the suite `bar` but not
+the suites `foobar` and `barbaz`.
+
 [#2593](https://github.com/cylc/cylc/pull/2593) - fix polling after job
 execution timeout (configured pre-poll delays were being ignored).
 
