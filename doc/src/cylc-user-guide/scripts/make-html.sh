@@ -29,14 +29,12 @@ cp -r *.tex cug-html.cfg cylc-version.txt titlepic.sty $DEST
 
 cd $DEST
 ls *.tex | xargs -n 1 perl -pi -e 's@graphics/png/orig@../../graphics/png/scaled@g'
-ls *.tex | xargs -n 1 perl -pi -e 's@\.\./etc/examples/@../../../etc/examples/@g'
-ls *.tex | xargs -n 1 perl -pi -e 's@\.\./conf/@../../../conf/@g'
+ls *.tex | xargs -n 1 perl -pi -e 's@\.\./etc/@../../../etc/@g'
 perl -pi -e 's@categories/@../../categories/@g' commands.tex
 perl -pi -e 's@commands/@../../commands/@g' commands.tex
 perl -pi -e 's@cylc.txt@../../cylc.txt@g' commands.tex
 perl -pi -e 's@\.\./README@../../../README@g' cug.tex
 perl -pi -e 's@\.\./INSTALL@../../../INSTALL@g' cug.tex
-perl -pi -e 's@\.\./etc/global.rc.eg@../../../etc/global.rc.eg@g' cug.tex
 
 # NOTE the 5th argument '-halt-on-error' is passed to the latex
 # compiler, but htlatex does not return error status if latex aborts.

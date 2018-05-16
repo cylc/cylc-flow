@@ -27,14 +27,12 @@ cp -r *.tex cylc-version.txt titlepic.sty $DEST
 
 cd $DEST
 ls *.tex | xargs -n 1 perl -pi -e 's@graphics/png/orig@../graphics/png/orig@g'
-ls *.tex | xargs -n 1 perl -pi -e 's@\.\./etc/examples/@../../etc/examples/@g'
-ls *.tex | xargs -n 1 perl -pi -e 's@\.\./conf/@../../conf/@g'
+ls *.tex | xargs -n 1 perl -pi -e 's@\.\./etc/@../../etc/@g'
 perl -pi -e 's@categories/@../categories/@g' commands.tex
 perl -pi -e 's@commands/@../commands/@g' commands.tex
 perl -pi -e 's@cylc.txt@../cylc.txt@g' commands.tex
 perl -pi -e 's@\.\./README@../../README@g' cug.tex
 perl -pi -e 's@\.\./INSTALL@../../INSTALL@g' cug.tex
-perl -pi -e 's@\.\./etc/global.rc.eg@../../etc/global.rc.eg@g' cug.tex
 
 # run pdflatex three times to resolve all cross-references
 pdflatex -halt-on-error cug-pdf.tex

@@ -23,8 +23,7 @@ editor, after optional include-file inlining and Jinja2 preprocessing.
 
 The edit process is spawned in the foreground as follows:
   % <editor> suite.rc
-Where <editor> is defined in the cylc site and user config files
-($CYLC_DIR/conf/global.rc and $HOME/.cylc/global.rc).
+Where <editor> can be set in cylc global config.
 
 For remote host or owner, the suite will be printed to stdout unless
 the '-g,--gui' flag is used to spawn a remote GUI edit session.

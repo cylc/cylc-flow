@@ -37,8 +37,10 @@ cylc__job__main() {
     fi
     # Prelude
     typeset file_name=
+    # conf/job-init-env.sh for back-compat pre 7.7.0.
     for file_name in \
         "${HOME}/.cylc/job-init-env.sh" \
+        "${CYLC_DIR}/etc/job-init-env.sh" \
         "${CYLC_DIR}/conf/job-init-env.sh"
     do
         if [[ -f "${file_name}" ]]; then

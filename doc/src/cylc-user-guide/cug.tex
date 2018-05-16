@@ -561,14 +561,14 @@ script. Users and sites should ensure that their bash login profiles are able
 to set up the correct environment for running cylc and their task jobs.
 
 Your site administrator may customise the environment for all task jobs by adding
-a \lstinline=${CYLC_DIR}/conf/job-init-env.sh= file and populate it with the
+a \lstinline=<cylc-dir>/etc/job-init-env.sh= file and populate it with the
 appropriate contents. If customisation is still required, you can add your own
 \lstinline=${HOME}/.cylc/job-init-env.sh= file and populate it with the
 appropriate contents.
 
 \begin{myitemize}
 \item \lstinline=${HOME}/.cylc/job-init-env.sh=
-\item \lstinline=${CYLC_DIR}/conf/job-init-env.sh=
+\item \lstinline=<cylc-dir>/etc/job-init-env.sh=
 \end{myitemize}
 
 The job will attempt to source the first of these files it finds to set up its
@@ -925,7 +925,7 @@ and choose {\em Suite } \textrightarrow {\em Edit} from the menu.
 The editor will be invoked from within the suite definition directory for easy
 access to other suite files (in this case there are none). There are syntax
 highlighting control files for several text editors under
-\lstinline=/path/to/cylc/conf/=; see in-file comments for installation
+\lstinline=<cylc-dir>/etc/syntax/=; see in-file comments for installation
 instructions.
 
 \subsection{Running Suites}
