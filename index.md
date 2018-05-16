@@ -12,8 +12,14 @@ There are several reasons why tasks might need to be cycled:
  * In real time environmental forecasting systems, new forecasts are initiated
    at regular intervals as new driving data comes in.
 
- * You may need to split long model runs into many smaller runs, with
-   associated processing tasks for each smaller run.
+ * To split long model runs into a sequence of smaller runs, with associated
+   processing tasks for each chunk.
+
+ * To run successive steps in some multi-task iterative process, such as for
+   optimizing model parameters.
+
+ * To process a series of datasets (potentially concurrently, to the extent
+   possible) as they are generated or received.
 
 Cylc was originally developed for operational environmental forecasting at
 [NIWA](http://www.niwa.co.nz) by [Dr Hilary
