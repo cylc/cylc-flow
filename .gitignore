@@ -30,7 +30,7 @@ VERSION
 ext/ordereddict-0.4.5/build
 
 # global configuration and processed configuration
-conf/job-init-env.sh
+etc/job-init-env.sh
 etc/global.rc
 etc/global-tests.rc
 

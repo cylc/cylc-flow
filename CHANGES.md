@@ -18,8 +18,10 @@ release.
      the old `conf/` location.
    - look for user `global.rc` first in `~/.cylc/$CYLC_VERSION/`, then (if not
      found) in the old `~/.cylc/` location. See notes in `/etc/global.rc.eg`.
-   - *note the very old `site.rc` and `user.rc` global config filename variants
+     - *note the very old `site.rc` and `user.rc` filename variants
      are now obsolete and will not be recognized*
+   - look for `job-init-env.sh` first in `etc/`, then (if not found) in the old
+     `conf/` location
    - moved central cylc wrapper template to `usr/bin/cylc`
    - moved editor syntax files to `etc/syntax/`
    - moved Cylc bash completion file to `etc/cylc-bash-completion`
