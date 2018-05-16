@@ -50,8 +50,8 @@ import re
 import json
 
 from cylc.cfgspec.glbl_cfg import glbl_cfg
-from cylc.hostuserutil import get_user
-from cylc.network.port_scan import scan_many, get_scan_items_from_fs
+from cylc.network.port_scan import (
+    get_scan_items_from_fs, re_compile_filters, scan_many)
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.suite_status import (
     KEY_DESCRIPTION, KEY_META, KEY_NAME, KEY_OWNER, KEY_STATES,
@@ -200,28 +200,18 @@ def main():
     else:
         # Any suite name.
         patterns_name = ['.*']
+    patterns_owner = None
     if options.patterns_owner:
         patterns_owner = options.patterns_owner
-    else:
-        # Just the user's suites.
-        patterns_owner = [get_user()]
     # Compile and check "name" and "owner" regular expressions
-    cres = {}
-    for key, patterns in [
-            ('name', patterns_name), ('suite-owner', patterns_owner)]:
-        try:
-            cres[key] = re.compile(r'(' + r')|('.join(patterns) + r')')
-        except re.error:
-            for pattern in patterns:
-                try:
-                    re.compile(pattern)
-                except re.error:
-                    parser.error(
-                        '--%s=%s: bad regular expression' % (key, pattern))
+    try:
+        cre_owner, cre_name = re_compile_filters(patterns_owner, patterns_name)
+    except ValueError as exc:
+        parser.error(str(exc))
     if options.all_ports:
         args.extend(glbl_cfg().get(["suite host scanning", "hosts"]))
     if not args:
-        args = get_scan_items_from_fs(cres['suite-owner'])
+        args = get_scan_items_from_fs(cre_owner)
     if not args:
         return
 
@@ -231,9 +221,9 @@ def main():
         name = suite_identity[KEY_NAME]
         owner = suite_identity[KEY_OWNER]
 
-        if not cres['name'].match(name):
+        if cre_name and not cre_name.match(name):
             continue
-        if not cres['suite-owner'].match(owner):
+        if cre_owner and not cre_owner.match(owner):
             continue
         if options.json_format:
             json_filter.append([host, port, suite_identity])
