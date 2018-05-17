@@ -85,15 +85,48 @@ MODES = {
 BUFSIZE = 1024 * 1024
 
 
-def suicide():
-    """Kill myself if my parent PID changes."""
-    PPID = os.getppid()
-    PID = os.getpid()
+def get_proc_ancestors(pid):
+    """Return list of parent PIDs back to init."""
+    ancestors = []
     while True:
-        sleep(1)
-        if os.getppid() != PPID:
-            os.killpg(PID, signal.SIGTERM)
-            break  # (technically unnecessary - I'll be dead here)
+        p = Popen(["ps", "-p", str(pid), "-oppid="], stdout=PIPE)
+        ppid = p.communicate()[0].strip()
+        if int(ppid) != 1:
+            pid = ppid
+            ancestors.append(pid)
+        else:
+            return ancestors
+
+
+def suicide():
+    """Kill myself if my process ancestry changes.
+
+    Execute in a thread when tail-follow mode is invoked from another host over
+    ssh. If the ssh connection is shut down at the remote end, this process
+    will be orphaned and needs to suicide (it spawns a tail-follow process that
+    otherwise will not die).
+
+    Note: sshd executes commands with $SHELL -c "<comand> <args>":
+    1) bash-4 execs "<command> <args>" so it becomes the top level process
+    under sshd, so <command> gets inherited by init when ssh dies. In this case
+    suicide by killing my own process group.
+    2) bash-3 and tcsh (and others?) do not exec, so "$SHELL -c ..." remains
+    and gets inherited by init when ssh dies. In this case suicide by killing
+    my parent's process group.
+
+    """
+    pid = os.getpid()
+    ppid = os.getppid()
+    orig_anc = get_proc_ancestors(pid)
+    while True:
+        if os.getppid() != ppid:
+            # case 1)
+            os.killpg(pid, signal.SIGTERM)
+        elif get_proc_ancestors(pid) != orig_anc:
+            # case 2)
+            os.killpg(ppid, signal.SIGTERM)
+        else:
+            sleep(1)
 
 
 def split_user_at_host(user_at_host):
@@ -325,13 +358,10 @@ def main():
     mode = MODES[options.mode]
 
     if options.by_remrun and mode == "tail":
-        # If invoked remotely by ssh, start a watcher thread to kill me if the
-        # parent ssh connection dies.
+        # If invoked remotely by ssh, start a watcher thread to kill my
+        # processes if the parent ssh connection gets killed.
         t = threading.Thread(target=suicide)
         t.start()
-
-    suite_name = args[0]
-    mode = MODES[options.mode]
 
     if len(args) == 1:
         # Cat suite logs, local only.
