@@ -115,9 +115,9 @@ def remote_cylc_cmd(cmd, user=None, host=None, capture=False,
         return res
 
 
-def remrun(dry_run=False, forward_x11=False):
+def remrun(dry_run=False, forward_x11=False, reveal=False):
     """Short for RemoteRunner().execute(...)"""
-    return RemoteRunner().execute(dry_run, forward_x11)
+    return RemoteRunner().execute(dry_run, forward_x11, reveal)
 
 
 class RemoteRunner(object):
@@ -165,8 +165,10 @@ class RemoteRunner(object):
             from cylc.hostuserutil import is_remote
             self.is_remote = is_remote(self.host, self.owner)
 
-    def execute(self, dry_run=False, forward_x11=False):
+    def execute(self, dry_run=False, forward_x11=False, reveal=False):
         """Execute command on remote host.
+
+        reveal - if True, pass --by-remrun to the remote command.
 
         Returns False if remote re-invocation is not needed, True if it is
         needed and executes successfully otherwise aborts.
@@ -221,7 +223,8 @@ class RemoteRunner(object):
             command.append(r'--verbose')
         if cylc.flags.debug or os.getenv('CYLC_DEBUG') in ["True", "true"]:
             command.append(r'--debug')
-
+        if reveal:
+            command.append(r'--by-remrun')
         for arg in self.args:
             command.append(quote(arg))
             # above: args quoted to avoid interpretation by the shell,

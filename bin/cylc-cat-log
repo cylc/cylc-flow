@@ -44,7 +44,7 @@ messaging."""
 
 import sys
 from cylc.remote import remrun, remote_cylc_cmd
-if remrun():
+if remrun(reveal=True):
     sys.exit(0)
 
 import os
@@ -86,6 +86,7 @@ BUFSIZE = 1024 * 1024
 
 
 def suicide():
+    """Kill myself if my parent PID changes."""
     PPID = os.getppid()
     PID = os.getpid()
     while True:
@@ -232,6 +233,11 @@ def get_option_parser():
         help="(for internal use: continue processing on job host)",
         action="append", dest="remote_args")
 
+    parser.add_option(
+        "--by-remrun",
+        help="(for internal use: was invoked by remrun)",
+        action="store_true", default=False, dest="by_remrun")
+
     return parser
 
 
@@ -315,8 +321,11 @@ def main():
             sys.exit(res)
         return
 
-    t = threading.Thread(target=suicide)
-    t.start()
+    if options.by_remrun:
+        # If invoked remotely by ssh, start a watcher thread to kill me if the
+        # parent ssh connection dies.
+        t = threading.Thread(target=suicide)
+        t.start()
 
     suite_name = args[0]
     mode = MODES[options.mode]
