@@ -1,0 +1,1 @@
+../etc/syntax/cylc.vim
