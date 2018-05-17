@@ -50,6 +50,7 @@ import re
 import json
 
 from cylc.cfgspec.glbl_cfg import glbl_cfg
+from cylc.hostuserutil import get_user
 from cylc.network.port_scan import (
     get_scan_items_from_fs, re_compile_filters, scan_many)
 from cylc.option_parsers import CylcOptionParser as COP
@@ -100,7 +101,8 @@ def main():
         "-o", "--suite-owner",
         metavar="PATTERN",
         help="List suites with owner matching PATTERN (regular expression). "
-             "Defaults to just your own suites. Can be used multiple times.",
+             "Defaults to current user. Use '.*' to match all known users. "
+             "Can be used multiple times.",
         action="append", dest="patterns_owner", default=[])
 
     parser.add_option(
@@ -223,7 +225,8 @@ def main():
 
         if cre_name and not cre_name.match(name):
             continue
-        if cre_owner and not cre_owner.match(owner):
+        if (cre_owner is None and owner != get_user() or
+                cre_owner and not cre_owner.match(owner)):
             continue
         if options.json_format:
             json_filter.append([host, port, suite_identity])
