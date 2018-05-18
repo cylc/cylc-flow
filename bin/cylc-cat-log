@@ -321,7 +321,10 @@ def main():
             sys.exit(res)
         return
 
-    if options.by_remrun:
+    suite_name = args[0]
+    mode = MODES[options.mode]
+
+    if options.by_remrun and mode == "tail":
         # If invoked remotely by ssh, start a watcher thread to kill me if the
         # parent ssh connection dies.
         t = threading.Thread(target=suicide)
