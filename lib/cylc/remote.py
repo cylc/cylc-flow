@@ -20,6 +20,8 @@
 import os
 import sys
 import shlex
+import signal
+from time import sleep
 from pipes import quote
 from posix import WIFSIGNALED
 
@@ -34,7 +36,33 @@ from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.version import CYLC_VERSION
 
 
-def remote_cylc_cmd(cmd, user=None, host=None, capture=False,
+def get_proc_ancestors():
+    """Return list of parent PIDs back to init."""
+    pid = os.getpid()
+    ancestors = []
+    while True:
+        p = Popen(["ps", "-p", str(pid), "-oppid="], stdout=PIPE, stderr=PIPE)
+        ppid = p.communicate()[0].strip()
+        if not ppid:
+            return ancestors
+        ancestors.append(ppid)
+        pid = ppid
+
+
+def watch_and_kill(proc):
+    """ Kill proc if my PPID (etc.) changed - e.g. ssh connection dropped."""
+    gpa = get_proc_ancestors()
+    while True:
+        sleep(0.5)
+        if proc.poll() is not None:
+            break
+        if get_proc_ancestors() != gpa:
+            sleep(1)
+            os.kill(proc.pid, signal.SIGTERM)
+            break
+
+
+def remote_cylc_cmd(cmd, user=None, host=None, capture=False, manage=False,
                     ssh_login_shell=None, ssh_cylc=None, stdin=None):
     """Run a given cylc command on another account and/or host.
 
@@ -44,6 +72,9 @@ def remote_cylc_cmd(cmd, user=None, host=None, capture=False,
         host (string): remote host name. Use 'localhost' if not specified.
         capture (boolean):
             If True, set stdout=PIPE and return the Popen object.
+        manage (boolean):
+            If True, watch ancestor processes and kill command if they change
+            (e.g. kill tail-follow commands when parent ssh connection dies).
         ssh_login_shell (boolean):
             If True, launch remote command with `bash -l -c 'exec "$0" "$@"'`.
         ssh_cylc (string):
@@ -102,10 +133,13 @@ def remote_cylc_cmd(cmd, user=None, host=None, capture=False,
     #   The command is read from the site/user global config file, but we check
     #   above that it ends in 'cylc', and in any case the user could execute
     #   any such command directly via ssh.
+
     proc = Popen(command, stdout=stdout, stdin=stdin)
     if capture:
         return proc
     else:
+        if manage:
+            watch_and_kill(proc)
         res = proc.wait()
         if WIFSIGNALED(res):
             sys.stderr.write(
@@ -115,9 +149,9 @@ def remote_cylc_cmd(cmd, user=None, host=None, capture=False,
         return res
 
 
-def remrun(dry_run=False, forward_x11=False, reveal=False):
+def remrun(dry_run=False, forward_x11=False):
     """Short for RemoteRunner().execute(...)"""
-    return RemoteRunner().execute(dry_run, forward_x11, reveal)
+    return RemoteRunner().execute(dry_run, forward_x11)
 
 
 class RemoteRunner(object):
@@ -165,10 +199,8 @@ class RemoteRunner(object):
             from cylc.hostuserutil import is_remote
             self.is_remote = is_remote(self.host, self.owner)
 
-    def execute(self, dry_run=False, forward_x11=False, reveal=False):
+    def execute(self, dry_run=False, forward_x11=False):
         """Execute command on remote host.
-
-        reveal - if True, pass --by-remrun to the remote command.
 
         Returns False if remote re-invocation is not needed, True if it is
         needed and executes successfully otherwise aborts.
@@ -223,8 +255,6 @@ class RemoteRunner(object):
             command.append(r'--verbose')
         if cylc.flags.debug or os.getenv('CYLC_DEBUG') in ["True", "true"]:
             command.append(r'--debug')
-        if reveal:
-            command.append(r'--by-remrun')
         for arg in self.args:
             command.append(quote(arg))
             # above: args quoted to avoid interpretation by the shell,
