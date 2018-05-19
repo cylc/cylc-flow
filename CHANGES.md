@@ -10,23 +10,29 @@ release.
 
 ### Enhancements
 
-[#2661](https://github.com/cylc/cylc/pull/2661)
+[#2661](https://github.com/cylc/cylc/pull/2661) -
  * new User Guide section on Remote Job Management
- * tidied the installation documentation
- * directory structure standardisation (all docs updated accordingly):
-   - look for site `global.rc` first in `etc/`, then (if not found) in
-     the old `conf/` location.
-   - look for user `global.rc` first in `~/.cylc/$CYLC_VERSION/`, then (if not
-     found) in the old `~/.cylc/` location. See notes in `/etc/global.rc.eg`.
-     - *note the very old `site.rc` and `user.rc` filename variants
-     are now obsolete and will not be recognized*
-   - look for `job-init-env.sh` first in `etc/`, then (if not found) in the old
-     `conf/` location
+ * tidy the installation documentation
+ * standardise directory structures (all docs updated accordingly):
+   - deprecated `<cylc-dir>conf/` file locations:
+     - site config file `<cylc-dir>etc/global.rc`
+     - gcylc config example `<cylc-dir>/etc/gcylc.rc.eg`
+     - site job environment init `<cylc-dir/etc/job-init-env.sh`
+     - editor syntax files in `<cylc-dir>etc/syntax/`
+     - bash completion script `<cylc-dir>/etc/cylc-bash-completion`
+   - user `global.rc` can now go in `~/.cylc/<cylc-version>/` or `~/.cylc/`
+     (the version-specific location avoid forward compatibility problems - see
+     notes in `<cylc-dir>/etc/global.rc.eg`).
    - moved central cylc wrapper template to `usr/bin/cylc`
-   - moved editor syntax files to `etc/syntax/`
-   - moved Cylc bash completion file to `etc/cylc-bash-completion`
-   - moved example gcylc config file to `etc/gcylc.rc.eg`
-   - moved various developer files into `etc/`
+   - various developer scripts and notes moved from `<cylc-dir>/dev/` to
+     `<cylc-dir>/etc/dev-bin, dev-notes, dev-suites`.
+   - *the ancient `site.rc` and `user.rc` global config filename variants are
+     now obsolete.*
+
+[#2659](https://github.com/cylc/cylc/pull/2659) - commands in the process pool
+(event handlers, and job submit, poll and kill commands) will now be killed on
+a configurable timeout if they hang, rather than tying up a member of the
+finite process pool: `global.rc` default: `process pool timeout = PT10M`
 
 [#2582](https://github.com/cylc/cylc/pull/2582) - improve client/server
 interface, including: `cylc message` can send multiple messages at once, with
@@ -34,9 +40,6 @@ different severities; server ignores messages from superseded job submits;
 running jobs detect that the suite has been cold-started under them and will
 not attempt to connect; ssh-based indirect client-server communication now
 works automatically for all clients, not just messaging.
-
-[#2624](https://github.com/cylc/cylc/pull/2624) - rewrite `cylc cat-log`
-for enhanced functionality and some bug fixes.
 
 [#2582](https://github.com/cylc/cylc/pull/2582), 
 [#2624](https://github.com/cylc/cylc/pull/2624), and earlier changes: all job
@@ -71,14 +74,19 @@ task jobs on a FIFO (First In, First Out) basis, rather than randomly.
 [#2538](https://github.com/cylc/cylc/pull/2538) - remove leading whitespace
 from multi-line `script` items in task definitions, for cleaner job scripts.
 
+[#2624](https://github.com/cylc/cylc/pull/2624),
+[#2667](https://github.com/cylc/cylc/pull/2667),
+[#2669](https://github.com/cylc/cylc/pull/2669), 
+[#2672](https://github.com/cylc/cylc/pull/2672) - `cylc cat-log` (and GUI "View
+Jobs Logs") rewrite for enhanced functionality (and fix: should no longer leave
+orphaned `tail` processes on remote hosts).
+
 ### Fixes
 
-[#2666](https://github.com/cylc/cylc/pull/2666) - `cylc scan`: fix default
-behavior to only obtain suite information from the `~/cylc-run/` of the current
-user. This is consistent with `cylc gscan`. However, the `--name=PATTERN`
-(`-n PATTERN`) option has also been modified to be consistent with
-`cylc gscan`, so `cylc scan --name=bar` will only match the suite `bar` but not
-the suites `foobar` and `barbaz`.
+[#2666](https://github.com/cylc/cylc/pull/2666) - `cylc scan`: make default
+behavior consistent with `cylc gscan`: get suite information from `~/cylc-run/`
+only for the current user; and no partial matches with `-n/--name=PATTERN`
+(i.e. `--name=bar` will only match the suite `bar`, not `foobar` or `barbaz`).
 
 [#2593](https://github.com/cylc/cylc/pull/2593) - fix polling after job
 execution timeout (configured pre-poll delays were being ignored).
