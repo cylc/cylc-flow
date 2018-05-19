@@ -197,7 +197,8 @@ def get_option_parser():
         "-m", "--mode",
         help="Mode: %s. Default c(cat)." % (
             ', '.join(['%s(%s)' % (i, j) for i, j in MODES.items()])),
-        action="store", choices=MODES.keys(), default='c', dest="mode")
+        action="store", choices=MODES.keys() + MODES.values(), default='c',
+        dest="mode")
 
     parser.add_option(
         "-r", "--rotation",
@@ -310,7 +311,11 @@ def main():
         return
 
     suite_name = args[0]
-    mode = MODES[options.mode]
+    try:
+        mode = MODES[options.mode]
+    except KeyError:
+        # User chose log form. 
+        mode = options.mode
 
     if len(args) == 1:
         # Cat suite logs, local only.
