@@ -149,9 +149,9 @@ def remote_cylc_cmd(cmd, user=None, host=None, capture=False, manage=False,
         return res
 
 
-def remrun(dry_run=False, forward_x11=False):
+def remrun(dry_run=False, forward_x11=False, abort_if=None):
     """Short for RemoteRunner().execute(...)"""
-    return RemoteRunner().execute(dry_run, forward_x11)
+    return RemoteRunner().execute(dry_run, forward_x11, abort_if)
 
 
 class RemoteRunner(object):
@@ -199,7 +199,7 @@ class RemoteRunner(object):
             from cylc.hostuserutil import is_remote
             self.is_remote = is_remote(self.host, self.owner)
 
-    def execute(self, dry_run=False, forward_x11=False):
+    def execute(self, dry_run=False, forward_x11=False, abort_if=None):
         """Execute command on remote host.
 
         Returns False if remote re-invocation is not needed, True if it is
@@ -208,6 +208,11 @@ class RemoteRunner(object):
         """
         if not self.is_remote:
             return False
+
+        if abort_if is not None and abort_if in sys.argv:
+            sys.stderr.write(
+                "ERROR: option '%s' not available for remote run\n" % abort_if)
+            return True
 
         # Build the remote command
         command = shlex.split(glbl_cfg().get_host_item(

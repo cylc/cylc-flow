@@ -44,7 +44,8 @@ messaging."""
 
 import sys
 from cylc.remote import remrun, remote_cylc_cmd, watch_and_kill
-if remrun():
+# Disallow remote re-invocation of edit mode (result: "ssh HOST vim <file>").
+if remrun(abort_if='edit'):
     sys.exit(0)
 
 import os
@@ -314,7 +315,7 @@ def main():
     try:
         mode = MODES[options.mode]
     except KeyError:
-        # User chose log form. 
+        # User chose log form.
         mode = options.mode
 
     if len(args) == 1:
