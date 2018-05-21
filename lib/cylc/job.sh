@@ -145,7 +145,9 @@ cylc__job__main() {
     # Send task succeeded message
     wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
     cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'succeeded' || true
-    trap '' EXIT
+    for signal_name in ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}; do
+        trap '' "${signal_name}"
+    done
     exit 0
 }
 
