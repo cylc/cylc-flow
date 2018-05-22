@@ -74,12 +74,10 @@ task jobs on a FIFO (First In, First Out) basis, rather than randomly.
 [#2538](https://github.com/cylc/cylc/pull/2538) - remove leading whitespace
 from multi-line `script` items in task definitions, for cleaner job scripts.
 
-[#2624](https://github.com/cylc/cylc/pull/2624),
-[#2667](https://github.com/cylc/cylc/pull/2667),
-[#2669](https://github.com/cylc/cylc/pull/2669), 
-[#2672](https://github.com/cylc/cylc/pull/2672) - `cylc cat-log` (and GUI "View
-Jobs Logs") rewrite for enhanced functionality (and fix: should no longer leave
-orphaned `tail` processes on remote hosts).
+[#2503](https://github.com/cylc/cylc/pull/2503),
+[#2624](https://github.com/cylc/cylc/pull/2624) - `cylc cat-log`: all remote
+host actions now done by a `cylc` sub-command; and simpler command options (see
+`cylc cat-log --help`; **warning: the old command options are not supported**)
 
 ### Fixes
 
@@ -124,6 +122,10 @@ runs, so that the job file still gets written.
 
 [#2579](https://github.com/cylc/cylc/pull/2579) - `cylc gscan`: fix a
 re-spawning error dialog.
+
+[#2674](https://github.com/cylc/cylc/pull/2674) - `cylc cat-log`: avoid leaving
+orphaned tail-follow processes on job hosts.
+
 
 -------------------------------------------------------------------------------
 ## __cylc-7.6.1 (2018-03-28)__

@@ -45,9 +45,13 @@ while ! grep -q -F '[foo.1] -(current:submitted)> started' \
 do
     sleep 1
 done
-TEST_NAME=$TEST_NAME_BASE-cat-log
-cylc cat-log $SUITE_NAME -f o -m t foo.1 > ${TEST_NAME}.out
-grep_ok "HELLO from foo 1" ${TEST_NAME}.out
+# cylc cat-log -m 't' tail-follows a file, so needs to be killed.
+# Send interrupt signal to tail command after 15 seconds.
+TEST_NAME="${TEST_NAME_BASE}-cat-log"
+timeout -s 'INT' 15 \
+    cylc cat-log "${SUITE_NAME}" -f 'o' -m 't' 'foo.1' \
+    >"${TEST_NAME}.out" 2>"${TEST_NAME}.err" || true
+grep_ok "HELLO from foo 1" "${TEST_NAME}.out"
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-stop
 run_ok $TEST_NAME cylc stop --kill --max-polls=20 --interval=1 $SUITE_NAME

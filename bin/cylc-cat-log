@@ -18,9 +18,9 @@
 
 """cylc [info] cat-log|log [OPTIONS] ARGS
 
-Print, edit, or tail-follow content, or print path or list directory, of local
-or remote task job logs and suite server logs. Batch-system view commands (e.g.
-'qcat') are used if defined in global config and the job is running.
+Print, view-in-editor, or tail-follow content, print path, or list directory,
+of local or remote task job and suite server logs. Batch-system view commands
+(e.g. 'qcat') are used if defined in global config and the job is running.
 
 For standard log types use the short-cut option argument or full filename (e.g.
 for job stdout "-f o" or "-f job.out" will do).
@@ -43,16 +43,15 @@ the general command reinvocation options for sites using ssh-based task
 messaging."""
 
 import sys
-from cylc.remote import remrun, remote_cylc_cmd
-if remrun(reveal=True):
+from cylc.remote import remrun, remote_cylc_cmd, watch_and_kill
+# Disallow remote re-invocation of edit mode (result: "ssh HOST vim <file>").
+if remrun(abort_if='edit'):
     sys.exit(0)
 
 import os
 import re
 import shlex
-import signal
 import traceback
-import threading
 from glob import glob
 from time import sleep
 from pipes import quote
@@ -72,6 +71,29 @@ from cylc.task_job_logs import (
 from parsec.fileparse import read_and_proc
 
 
+# Immortal tail-follow processes on job hosts can be cleaned up by killing
+# my subprocesses if my PPID or PPPID changes (due to parent ssh connection
+# dying). This works even if cat-log is invoked with '--host' from a third
+# host, and even if the sshd-invoked "$(SHELL) -c <remote-command>" does not
+# exec <remote-command> (affects whether my parent process or I get inherited
+# by init).
+#
+# Example: On host A: cylc cat-log --host=B <suite> <task-on-C>
+#    => on host A: cat-log spawns subprocess
+#                     ssh B "cylc cat-log <suite> <task-on-C>"
+#      => on host B: cat-log spawns subprocess
+#                     ssh C "cylc cat-log --remote <suite> <task-on-C>"
+#        => on host C: cat-log spawns subprocess
+#                       tail -f <task-on-C>.out
+#
+# Then Ctrl-C (or exit GUI log viewer) on host-A:
+#    => ssh from A to B dies
+#       => on B: cat-log detects the previous,
+#                  and kills its ssh subprocess to C
+#         => on C: cat-log detects the previous,
+#                  and kills its tail subprocess, then exits as finished
+
+
 MODES = {
     'p': 'print',
     'l': 'list-dir',
@@ -83,17 +105,6 @@ MODES = {
 
 
 BUFSIZE = 1024 * 1024
-
-
-def suicide():
-    """Kill myself if my parent PID changes."""
-    PPID = os.getppid()
-    PID = os.getpid()
-    while True:
-        sleep(1)
-        if os.getppid() != PPID:
-            os.killpg(PID, signal.SIGTERM)
-            break  # (technically unnecessary - I'll be dead here)
 
 
 def split_user_at_host(user_at_host):
@@ -162,26 +173,9 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False):
             cmd = batchview_cmd
         else:
             cmd = tailer_tmpl % {"filename": logpath}
-        # Ensure that the tail command dies if the parent process dies.
-        ppid = os.getppid()
-        if remote:
-            fn = os.setpgrp
-        else:
-            fn = None
-        proc = Popen(
-            shlex.split(cmd), stdin=open(os.devnull), preexec_fn=fn)
-        try:
-            while True:
-                sleep(0.5)
-                if proc.poll() is not None:
-                    break
-                if os.getppid() != ppid:
-                    os.killpg(proc.pid, signal.SIGTERM)
-                    break
-        except KeyboardInterrupt:
-            pass
-        proc.wait()
-        return 0
+        proc = Popen(shlex.split(cmd), stdin=open(os.devnull))
+        watch_and_kill(proc)
+        return proc.wait()
 
 
 def get_option_parser():
@@ -204,7 +198,8 @@ def get_option_parser():
         "-m", "--mode",
         help="Mode: %s. Default c(cat)." % (
             ', '.join(['%s(%s)' % (i, j) for i, j in MODES.items()])),
-        action="store", choices=MODES.keys(), default='c', dest="mode")
+        action="store", choices=MODES.keys() + MODES.values(), default='c',
+        dest="mode")
 
     parser.add_option(
         "-r", "--rotation",
@@ -232,11 +227,6 @@ def get_option_parser():
         "--remote-arg",
         help="(for internal use: continue processing on job host)",
         action="append", dest="remote_args")
-
-    parser.add_option(
-        "--by-remrun",
-        help="(for internal use: was invoked by remrun)",
-        action="store_true", default=False, dest="by_remrun")
 
     return parser
 
@@ -321,14 +311,12 @@ def main():
             sys.exit(res)
         return
 
-    if options.by_remrun:
-        # If invoked remotely by ssh, start a watcher thread to kill me if the
-        # parent ssh connection dies.
-        t = threading.Thread(target=suicide)
-        t.start()
-
     suite_name = args[0]
-    mode = MODES[options.mode]
+    # Get long-format mode.
+    try:
+        mode = MODES[options.mode]
+    except KeyError:
+        mode = options.mode
 
     if len(args) == 1:
         # Cat suite logs, local only.
@@ -350,11 +338,11 @@ def main():
         else:
             logpath = os.path.join(logdir, basename)
         tail_tmpl = str(glbl_cfg().get_host_item("tail command template"))
-        out = view_log(logpath, MODES[options.mode], tail_tmpl)
+        out = view_log(logpath, mode, tail_tmpl)
         if out == 1:
             sys.exit(1)
         if mode == 'edit':
-            tmpfile_edit(out)
+            tmpfile_edit(out, options.geditor)
         return
 
     if len(args) == 2:
@@ -389,14 +377,14 @@ def main():
             # command (e.g. qcat) if one exists, and the log is out or err.
             conf_key = None
             if options.filename == JOB_LOG_OUT:
-                if options.mode == 'c':
+                if mode == 'cat':
                     conf_key = "out viewer"
-                elif options.mode == 't':
+                elif mode == 'tail':
                     conf_key = "out tailer"
             elif options.filename == JOB_LOG_ERR:
-                if options.mode == 'c':
+                if mode == 'cat':
                     conf_key = "err viewer"
-                elif options.mode == 't':
+                elif mode == 'tail':
                     conf_key = "err tailer"
             if conf_key is not None:
                 conf = glbl_cfg().get_host_item("batch systems", host, user)
@@ -430,8 +418,10 @@ def main():
                 cmd.append('--remote-arg=%s' % quote(batchview_cmd))
             cmd.append(suite_name)
             capture = (mode == 'edit')
+            manage = (mode == 'tail')
             try:
-                proc = remote_cylc_cmd(cmd, user, host, capture)
+                proc = remote_cylc_cmd(cmd, user, host, capture=capture,
+                                       manage=manage)
             except KeyboardInterrupt:
                 # Ctrl-C while tailing.
                 pass
@@ -454,8 +444,8 @@ def main():
                 point, task, options.submit_num, options.filename))
             tail_tmpl = str(glbl_cfg().get_host_item("tail command template"))
             out = view_log(logpath, mode, tail_tmpl, batchview_cmd)
-            if out == 1:
-                sys.exit(1)
+            if mode != 'edit':
+                sys.exit(out)
         if mode == 'edit':
             tmpfile_edit(out, options.geditor)
 
