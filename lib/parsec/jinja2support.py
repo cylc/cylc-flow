@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2018 NIWA
@@ -52,7 +52,7 @@ def jinja2process(flines, dir_, template_vars=None):
     # Load any custom Jinja2 filters in the suite definition directory
     # Example: a filter to pad integer values some fill character:
     # |(file SUITE_DEFINIION_DIRECTORY/Jinja2/foo.py)
-    # |  #!/usr/bin/env python
+    # |  #!/usr/bin/env python2
     # |  def foo( value, length, fillchar ):
     # |     return str(value).rjust( int(length), str(fillchar) )
     for fdir in [

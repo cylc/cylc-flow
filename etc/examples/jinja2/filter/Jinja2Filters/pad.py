@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 def pad( value, length, fillchar ):
     """A Jinja2 custom filter.
     Pad a string to some length with a fill character"""
