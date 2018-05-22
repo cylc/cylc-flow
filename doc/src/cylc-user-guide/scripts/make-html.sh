@@ -35,6 +35,7 @@ perl -pi -e 's@commands/@../../commands/@g' commands.tex
 perl -pi -e 's@cylc.txt@../../cylc.txt@g' commands.tex
 perl -pi -e 's@\.\./README@../../../README@g' cug.tex
 perl -pi -e 's@\.\./INSTALL@../../../INSTALL@g' cug.tex
+perl -pi -e 's@job-host-2.tex@job-host-2-html.tex@g' cug.tex
 
 # NOTE the 5th argument '-halt-on-error' is passed to the latex
 # compiler, but htlatex does not return error status if latex aborts.
