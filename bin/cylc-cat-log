@@ -312,10 +312,10 @@ def main():
         return
 
     suite_name = args[0]
+    # Get long-format mode.
     try:
         mode = MODES[options.mode]
     except KeyError:
-        # User chose log form.
         mode = options.mode
 
     if len(args) == 1:
@@ -338,7 +338,7 @@ def main():
         else:
             logpath = os.path.join(logdir, basename)
         tail_tmpl = str(glbl_cfg().get_host_item("tail command template"))
-        out = view_log(logpath, MODES[options.mode], tail_tmpl)
+        out = view_log(logpath, mode, tail_tmpl)
         if out == 1:
             sys.exit(1)
         if mode == 'edit':
@@ -377,14 +377,14 @@ def main():
             # command (e.g. qcat) if one exists, and the log is out or err.
             conf_key = None
             if options.filename == JOB_LOG_OUT:
-                if options.mode == 'c':
+                if mode == 'cat':
                     conf_key = "out viewer"
-                elif options.mode == 't':
+                elif mode == 'tail':
                     conf_key = "out tailer"
             elif options.filename == JOB_LOG_ERR:
-                if options.mode == 'c':
+                if mode == 'cat':
                     conf_key = "err viewer"
-                elif options.mode == 't':
+                elif mode == 'tail':
                     conf_key = "err tailer"
             if conf_key is not None:
                 conf = glbl_cfg().get_host_item("batch systems", host, user)
