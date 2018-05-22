@@ -1,13 +1,13 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"  
   "http://www.w3.org/TR/html4/loose.dtd">  
 <html > 
-<head><title>Remote Job Host Interaction</title> 
+<head><title>Remote Job Management</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"> 
 <meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2018-03-28 12:29:00"> 
+<meta name="date" content="2018-05-23 00:59:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -18,1711 +18,507 @@ href="cug-htmlse17.html#tailcug-htmlse17.html" >prev-tail</a>] [<a
 href="#tailcug-htmlse18.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse18.html" >up</a>] </p></div>
 <!--l. 1--><p class="noindent" > <h3 id="E" class="sectionHead"><span class="titlemark"> <a href="#E">E</a>  <a 
- id="x19-536000E"></a>Remote Job Host Interaction </span></h3> <div class="sectionTOCS">
+ id="x19-539000E"></a>Remote Job Management </span></h3> <div class="sectionTOCS">
+&#x00A0;<span class="subsectionToc" >E.1 <a 
+href="#x19-540000E.1">SSH-free Job Management?</a></span>
+<br />&#x00A0;<span class="subsectionToc" >E.2 <a 
+href="#x19-541000E.2">SSH-based Job Management</a></span>
+<br />&#x00A0;<span class="subsectionToc" >E.3 <a 
+href="#x19-542000E.3">A Concrete Example</a></span>
 </div>
-<!--l. 5--><p class="noindent" >This appendix shows transcripts of all <span class="lstinline"><span 
-class="pcrb7t-">ssh</span></span>, <span class="lstinline"><span 
-class="pcrb7t-">scp</span></span>, and <span class="lstinline"><span 
-class="pcrb7t-">rsync</span></span> invocations from a Cylc suite called <span class="lstinline"><span 
-class="pcrr7t-">test</span></span> started by
+<!--l. 3--><p class="noindent" >Managing tasks in a workflow requires more than just job execution: Cylc performs additional actions
+with <span class="lstinline"><span 
+class="pcrr7t-">rsync</span></span> for file transfer, and direct execution of <span class="lstinline"><span 
+class="pcrr7t-">cylc</span></span> sub-commands over non-interactive
+SSH.<span class="footnote-mark"><a 
+href="#fn5x0" id="fn5x0-bk"><sup class="textsuperscript">5</sup></a></span><a 
+ id="x19-539001f5"></a>
+<!--l. 9--><p class="noindent" >
+<!--l. 9--><p class="noindent" > <h4 id="E.1" class="subsectionHead"> <span class="titlemark"> <a href="#E.1"> E.1</a>  <a 
+ id="x19-540000E.1"></a>SSH-free Job Management? </span></h4>
+<!--l. 11--><p class="noindent" >Some sites may want to restrict access to job hosts by whitelisting SSH connections to allow only
 <span class="lstinline"><span 
-class="pcrr7t-">rose</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">suite</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">run</span></span> on <span class="lstinline"><span 
-class="pcrb7t-">vagrant@localhost</span></span>. The suite submits a single task called <span class="lstinline"><span 
-class="pcrr7t-">foo</span></span> to <span class="lstinline"><span 
-class="pcrb7t-">hobo@otherhost</span></span>.
-The operator polls then kills the task, then shuts the suite down.
-<!--l. 11--><p class="noindent" >Note that Cylc has been configured (site/global config) not to use a bash login shell on the remote host, but
-<span class="lstinline"><span 
-class="pcrr7t-">rose</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">suite</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">run</span></span> is executing <span class="lstinline"><span 
-class="pcrb7t-">bash</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">login</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">c</span></span> (this may be optional in the future).
-<!--l. 15--><p class="noindent" >The transcripts were obtained by wrapping <span class="lstinline"><span 
-class="pcrb7t-">ssh</span></span>, <span class="lstinline"><span 
-class="pcrb7t-">scp</span></span>, and <span class="lstinline"><span 
-class="pcrb7t-">rsync</span></span> with scripts that log the command line before
-invoking the command.
-<!--l. 20-->
-<div class="lstlisting" id="listing-311"><span class="label"><a 
- id="x19-536001r1"></a></span><span 
+class="pcrr7t-">rsync</span></span> for file transfer, and allowing job execution only via a local batch system that sees the job
+hosts.<span class="footnote-mark"><a 
+href="#fn6x0" id="fn6x0-bk"><sup class="textsuperscript">6</sup></a></span><a 
+ id="x19-540001f6"></a>
+We are investigating the feasibility of SSH-free job management when a local batch system is available, but this is
+not yet possible unless your suite and job hosts also share a filesystem, which allows Cylc to treat jobs as entirely
+local.<span class="footnote-mark"><a 
+href="#fn7x0" id="fn7x0-bk"><sup class="textsuperscript">7</sup></a></span><a 
+ id="x19-540002f7"></a>
+<!--l. 24--><p class="noindent" >
+<!--l. 24--><p class="noindent" > <h4 id="E.2" class="subsectionHead"> <span class="titlemark"> <a href="#E.2"> E.2</a>  <a 
+ id="x19-541000E.2"></a>SSH-based Job Management </span></h4>
+<!--l. 26--><p class="noindent" >Cylc does not have persistent agent processes running on job hosts to act on instructions received over the
+network<span class="footnote-mark"><a 
+href="#fn8x0" id="fn8x0-bk"><sup class="textsuperscript">8</sup></a></span><a 
+ id="x19-541001f8"></a>
+so instead we execute job management commands directly on job hosts over SSH. Reasons for this
+include:
+     <ul class="itemize1">
+     <li class="itemize">it works equally for batch system and background jobs
+     </li>
+     <li class="itemize">SSH is <span 
+class="cmti-10">required </span>for background jobs, and for batch jobs if the batch system is not available on the suite
+     host
+                                                                                         
+
+                                                                                         
+     </li>
+     <li class="itemize"><span 
+class="cmti-10">querying the batch system alone is not sufficient for full job polling functionality </span>because jobs can complete
+     (and then be forgotten by the batch system) while the network, suite host, or suite server program is down
+     (e.g.&#x00A0;between suite shutdown and restart)
+         <ul class="itemize2">
+         <li class="itemize">to handle this we get the automatic job wrapper code to write job messages and exit status to
+         <span 
+class="cmti-10">job status files </span>that are interrogated by suite server programs during job polling operations
+         </li>
+         <li class="itemize">job status files reside on the job host, so the interrogation is done over SSH</li></ul>
+     </li>
+     <li class="itemize">job status files also hold batch system name and job ID; this is written by the job submit command, and read
+     by job poll and kill commands (all over SSH)</li></ul>
+<!--l. 51--><p class="noindent" >
+<!--l. 51--><p class="noindent" > <h4 id="E.3" class="subsectionHead"> <span class="titlemark"> <a href="#E.3"> E.3</a>  <a 
+ id="x19-542000E.3"></a>A Concrete Example </span></h4>
+<!--l. 53--><p class="noindent" >The following suite, registered as <span class="lstinline"><span 
+class="pcrr7t-">suitex</span></span>, is used to illustrate our current SSH-based remote job management. It
+submits two jobs to a remote, and a local task views a remote job log then polls and kills the remote
+jobs.
+<!--l. 58-->
+<div class="lstlisting" id="listing-312"><span class="label"><a 
+ id="x19-542001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">(</span><span 
-class="pcrro7t-">ROSE</span><span 
-class="pcrro7t-">)</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">vagrant@locahost</span><span 
-class="pcrro7t-">:</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">test</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">for</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">shared</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">filesystem</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">and</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">create</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">share</span><span 
-class="pcrro7t-">/</span><span 
-class="pcrro7t-">cycle</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">etc</span><span 
+class="pcrro7t-">suite</span><span 
 class="pcrro7t-">.</span><span 
+class="pcrro7t-">rc</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536002r2"></a></span><span 
-class="pcrb7t-">ssh</span><span 
+ id="x19-542002r2"></a></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">scheduling</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-542003r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oBatchMode</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">dependencies</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-542004r4"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">graph</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
-class="pcrr7t-">yes</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">delayer</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=&#x003E;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">master</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&amp;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">REMOTES</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-542005r5"></a></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">runtime</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-542006r6"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">REMOTES</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-542007r7"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">script</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">sleep</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">30</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-542008r8"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[[</span><span 
+class="pcrr7t-">remote</span><span 
+class="pcrr7t-">]]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-542009r9"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">host</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">wizard</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-542010r10"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">owner</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">hobo</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-542011r11"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">remote</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">a</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">remote</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">b</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-542012r12"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">inherit</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">REMOTES</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-542013r13"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">delayer</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-542014r14"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">script</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">sleep</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">10</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-542015r15"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">master</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-542016r16"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">script</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-542017r17"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">sleep</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">5</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-542018r18"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cat</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">log</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">-</span><span 
-class="pcrr7t-">oConnectTimeout</span><span 
-class="pcrr7t-">=10</span><span 
+class="pcrr7t-">m</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">hobo@otherhost</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">bash</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">login</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
 class="pcrr7t-">c</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">ROSE_VERSION</span><span 
-class="pcrr7t-">=2016.12.0</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">rose</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">suite</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">run</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">v</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">v</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">name</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">test</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">run</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">run</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">remote</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">uuid</span><span 
-class="pcrr7t-">=78</span><span 
-class="pcrr7t-">f99c51</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">fd82</span><span 
-class="pcrr7t-">-4</span><span 
-class="pcrr7t-">c4e</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">b666</span><span 
-class="pcrr7t-">-944</span><span 
-class="pcrr7t-">a7f5454a7</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536003r3"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536004r4"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">(</span><span 
-class="pcrro7t-">ROSE</span><span 
-class="pcrro7t-">)</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">vagrant@locahost</span><span 
-class="pcrro7t-">:</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">copy</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">suite</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">source</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">files</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">to</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">job</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">host</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536005r5"></a></span><span 
-class="pcrb7t-">rsync</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">a</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">exclude</span><span 
-class="pcrr7t-">=.&#x22C6;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">timeout</span><span 
-class="pcrr7t-">=1800</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">rsh</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrb7t-">ssh</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oBatchMode</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">yes</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oConnectTimeout</span><span 
-class="pcrr7t-">=10</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">exclude</span><span 
-class="pcrr7t-">=78</span><span 
-class="pcrr7t-">f99c51</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">fd82</span><span 
-class="pcrr7t-">-4</span><span 
-class="pcrr7t-">c4e</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">b666</span><span 
-class="pcrr7t-">-944</span><span 
-class="pcrr7t-">a7f5454a7</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">exclude</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">log</span><span 
-class="pcrr7t-">/78</span><span 
-class="pcrr7t-">f99c51</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">fd82</span><span 
-class="pcrr7t-">-4</span><span 
-class="pcrr7t-">c4e</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">b666</span><span 
-class="pcrr7t-">-944</span><span 
-class="pcrr7t-">a7f5454a7</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">exclude</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">share</span><span 
-class="pcrr7t-">/78</span><span 
-class="pcrr7t-">f99c51</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">fd82</span><span 
-class="pcrr7t-">-4</span><span 
-class="pcrr7t-">c4e</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">b666</span><span 
-class="pcrr7t-">-944</span><span 
-class="pcrr7t-">a7f5454a7</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">exclude</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">share</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cycle</span><span 
-class="pcrr7t-">/78</span><span 
-class="pcrr7t-">f99c51</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">fd82</span><span 
-class="pcrr7t-">-4</span><span 
-class="pcrr7t-">c4e</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">b666</span><span 
-class="pcrr7t-">-944</span><span 
-class="pcrr7t-">a7f5454a7</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">exclude</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">work</span><span 
-class="pcrr7t-">/78</span><span 
-class="pcrr7t-">f99c51</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">fd82</span><span 
-class="pcrr7t-">-4</span><span 
-class="pcrr7t-">c4e</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">b666</span><span 
-class="pcrr7t-">-944</span><span 
-class="pcrr7t-">a7f5454a7</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">exclude</span><span 
-class="pcrr7t-">=/.&#x22C6;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">exclude</span><span 
-class="pcrr7t-">=/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">suite</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">db</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">exclude</span><span 
-class="pcrr7t-">=/</span><span 
-class="pcrr7t-">log</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">exclude</span><span 
-class="pcrr7t-">=/</span><span 
-class="pcrr7t-">log</span><span 
-class="pcrr7t-">.&#x22C6;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">exclude</span><span 
-class="pcrr7t-">=/</span><span 
-class="pcrr7t-">state</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">exclude</span><span 
-class="pcrr7t-">=/</span><span 
-class="pcrr7t-">share</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">exclude</span><span 
-class="pcrr7t-">=/</span><span 
-class="pcrr7t-">work</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">./</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">hobo@otherhost</span><span 
-class="pcrr7t-">:</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">run</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">test</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536006r6"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536007r7"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">(</span><span 
-class="pcrro7t-">RSYNC</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">INTERNAL</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">COMMAND</span><span 
-class="pcrro7t-">)</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">vagrant@locahost</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536008r8"></a></span><span 
-class="pcrb7t-">ssh</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oBatchMode</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">yes</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oConnectTimeout</span><span 
-class="pcrr7t-">=10</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">l</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">hobo</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">otherhost</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">rsync</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">server</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">logDtpre</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">iLs</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">timeout</span><span 
-class="pcrr7t-">=1800</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">run</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">test</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536009r9"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536010r10"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">(</span><span 
-class="pcrro7t-">RSYNC</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">INTERNAL</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">COMMAND</span><span 
-class="pcrro7t-">)</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">vagrant@localhost</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536011r11"></a></span><span 
-class="pcrb7t-">rsync</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">server</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">logDtpre</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">iLs</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">timeout</span><span 
-class="pcrr7t-">=1800</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">run</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">test</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536012r12"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536013r13"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">vagrant@locahost</span><span 
-class="pcrro7t-">:</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">test</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">for</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">shared</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">FS</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">on</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">suite</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">and</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">job</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">host</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536014r14"></a></span><span 
-class="pcrb7t-">ssh</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oBatchMode</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">yes</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oConnectTimeout</span><span 
-class="pcrr7t-">=10</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">n</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">hobo@otherhost</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">test</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">e</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">HOME</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">run</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">test</span><span 
-class="pcrr7t-">/.</span><span 
-class="pcrr7t-">service</span><span 
-class="pcrr7t-">/87</span><span 
-class="pcrr7t-">a8ff0a</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">dbc7</span><span 
-class="pcrr7t-">-4</span><span 
-class="pcrr7t-">ec2</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">a0f5</span><span 
-class="pcrr7t-">-7</span><span 
-class="pcrr7t-">ffd44f8e99c</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536015r15"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536016r16"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">vagrant@localhost</span><span 
-class="pcrro7t-">:</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">create</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">log</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">and</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">service</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">directories</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">on</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">job</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">host</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536017r17"></a></span><span 
-class="pcrb7t-">ssh</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oBatchMode</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">yes</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oConnectTimeout</span><span 
-class="pcrr7t-">=10</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">n</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">hobo@otherhost</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">mkdir</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">p</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">HOME</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">run</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">test</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">HOME</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">run</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">test</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">log</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">job</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">HOME</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">run</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">test</span><span 
-class="pcrr7t-">/.</span><span 
-class="pcrr7t-">service</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536018r18"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536019r19"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">vagrant@localhost</span><span 
-class="pcrro7t-">:</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">copy</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">suite</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">service</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">and</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">contact</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">files</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">to</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">job</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">host</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536020r20"></a></span><span 
-class="pcrb7t-">scp</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oBatchMode</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">yes</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oConnectTimeout</span><span 
-class="pcrr7t-">=10</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">p</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">home</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">vagrant</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">run</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">test</span><span 
-class="pcrr7t-">/.</span><span 
-class="pcrr7t-">service</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">contact</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">home</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">vagrant</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">run</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">test</span><span 
-class="pcrr7t-">/.</span><span 
-class="pcrr7t-">service</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">passphrase</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">home</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">vagrant</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">run</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">test</span><span 
-class="pcrr7t-">/.</span><span 
-class="pcrr7t-">service</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">ssl</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">cert</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">hobo@otherhost</span><span 
-class="pcrr7t-">:</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">HOME</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">run</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">test</span><span 
-class="pcrr7t-">/.</span><span 
-class="pcrr7t-">service</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536021r21"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536022r22"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">(</span><span 
-class="pcrro7t-">SCP</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">INTERNAL</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">COMMAND</span><span 
-class="pcrro7t-">)</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">vagrant@locahost</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536023r23"></a></span><span 
-class="pcrb7t-">ssh</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">x</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oForwardAgent</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">no</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oPermitLocalCommand</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">no</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oClearAllForwardings</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">yes</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">o</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">BatchMode</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">yes</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">o</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">ConnectTimeout</span><span 
-class="pcrr7t-">=10</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">l</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">hobo</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">otherhost</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">scp</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">p</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">d</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">t</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">HOME</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">run</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">test</span><span 
-class="pcrr7t-">/.</span><span 
-class="pcrr7t-">service</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536024r24"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536025r25"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">(</span><span 
-class="pcrro7t-">SCP</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">INTERNAL</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">COMMAND</span><span 
-class="pcrro7t-">)</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">hobo@otherhost</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536026r26"></a></span><span 
-class="pcrb7t-">scp</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">p</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">d</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">t</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">home</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">hobo</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">run</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">test</span><span 
-class="pcrr7t-">/.</span><span 
-class="pcrr7t-">service</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536027r27"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536028r28"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">vagrant@localhost</span><span 
-class="pcrro7t-">:</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">submit</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">job</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">foo</span><span 
-class="pcrro7t-">.1</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">(</span><span 
-class="pcrro7t-">cycle</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">point</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">1,</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">try</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">01)</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">on</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">job</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">host</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536029r29"></a></span><span 
-class="pcrb7t-">ssh</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oBatchMode</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">yes</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oConnectTimeout</span><span 
-class="pcrr7t-">=10</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">hobo@otherhost</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">env</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">CYLC_VERSION</span><span 
-class="pcrr7t-">=7.3.0</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">jobs</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">submit</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">remote</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">mode</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">HOME</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">run</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">test</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">log</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">job</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">1/</span><span 
-class="pcrr7t-">foo</span><span 
-class="pcrr7t-">/01</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536030r30"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536031r31"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">vagrant@localhost</span><span 
-class="pcrro7t-">:</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">poll</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">job</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">foo</span><span 
-class="pcrro7t-">.1</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">(</span><span 
-class="pcrro7t-">cycle</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">point</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">1,</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">try</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">01)</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">on</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">job</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">host</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536032r32"></a></span><span 
-class="pcrb7t-">ssh</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oBatchMode</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">yes</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oConnectTimeout</span><span 
-class="pcrr7t-">=10</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">hobo@otherhost</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">env</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">CYLC_VERSION</span><span 
-class="pcrr7t-">=7.3.0</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">jobs</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">poll</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">HOME</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">run</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">test</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">log</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">job</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">1/</span><span 
-class="pcrr7t-">foo</span><span 
-class="pcrr7t-">/01</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536033r33"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536034r34"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">vagrant@localhost</span><span 
-class="pcrro7t-">:</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">kill</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">job</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">foo</span><span 
-class="pcrro7t-">.1</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">(</span><span 
-class="pcrro7t-">cycle</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">point</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">1,</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">try</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">01)</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">on</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">job</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">host</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536035r35"></a></span><span 
-class="pcrb7t-">ssh</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oBatchMode</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">yes</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oConnectTimeout</span><span 
-class="pcrr7t-">=10</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">hobo@otherhost</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">env</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">CYLC_VERSION</span><span 
-class="pcrr7t-">=7.3.0</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">jobs</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">kill</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">HOME</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">run</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">test</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">log</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">job</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">1/</span><span 
-class="pcrr7t-">foo</span><span 
-class="pcrr7t-">/01</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536036r36"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536037r37"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">vagrant@localhost</span><span 
-class="pcrro7t-">:</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">retrieve</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">job</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">logs</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">from</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">job</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">host</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536038r38"></a></span><span 
-class="pcrb7t-">rsync</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">a</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">rsh</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrb7t-">ssh</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oBatchMode</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">yes</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oConnectTimeout</span><span 
-class="pcrr7t-">=10</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">include</span><span 
-class="pcrr7t-">=/1</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">include</span><span 
-class="pcrr7t-">=/1/</span><span 
-class="pcrr7t-">foo</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">include</span><span 
-class="pcrr7t-">=/1/</span><span 
-class="pcrr7t-">foo</span><span 
-class="pcrr7t-">/01</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">include</span><span 
-class="pcrr7t-">=/1/</span><span 
-class="pcrr7t-">foo</span><span 
-class="pcrr7t-">/01/&#x22C6;&#x22C6;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">exclude</span><span 
-class="pcrr7t-">=/&#x22C6;&#x22C6;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">hobo@otherhost</span><span 
-class="pcrr7t-">:</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">HOME</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">run</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">test</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">log</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">job</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">home</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">vagrant</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">run</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">test</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">log</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">job</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536039r39"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536040r40"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">(</span><span 
-class="pcrro7t-">INTERNAL</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">RSYNC</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">COMMAND</span><span 
-class="pcrro7t-">)</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">vagrant@locahost</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536041r41"></a></span><span 
-class="pcrb7t-">ssh</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oBatchMode</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">yes</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oConnectTimeout</span><span 
-class="pcrr7t-">=10</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">l</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">hobo</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">otherhost</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">rsync</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">server</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">sender</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">logDtpre</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">iLs</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">HOME</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">run</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">test</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">log</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">job</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536042r42"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536043r43"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">(</span><span 
-class="pcrro7t-">INTERNAL</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">RSYNC</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">COMMAND</span><span 
-class="pcrro7t-">)</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">hobo@otherhost</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536044r44"></a></span><span 
-class="pcrb7t-">rsync</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">server</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">sender</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">logDtpre</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">iLs</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">home</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">hobo</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">run</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">test</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">log</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">job</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536045r45"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536046r46"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">vagrant@localhost</span><span 
-class="pcrro7t-">:</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">remove</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">suite</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">contact</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">file</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">from</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">job</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">host</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536047r47"></a></span><span 
-class="pcrb7t-">ssh</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oBatchMode</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">yes</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oConnectTimeout</span><span 
-class="pcrr7t-">=10</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">n</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">hobo@otherhost</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">rm</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">f</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">HOME</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">run</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">test</span><span 
-class="pcrr7t-">/.</span><span 
-class="pcrr7t-">service</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">contact</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536048r48"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536049r49"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">vagrant@localhost</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">CLI</span><span 
-class="pcrro7t-">:</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">cylc</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">cat</span><span 
-class="pcrro7t-">-</span><span 
-class="pcrro7t-">log</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">--</span><span 
-class="pcrro7t-">list</span><span 
-class="pcrro7t-">-</span><span 
-class="pcrro7t-">remote</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">test</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">foo</span><span 
-class="pcrro7t-">.1</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536050r50"></a></span><span 
-class="pcrb7t-">ssh</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oBatchMode</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">yes</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oConnectTimeout</span><span 
-class="pcrr7t-">=10</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">n</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">hobo@otherhost</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">ls</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">HOME</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">run</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">foo</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">log</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">job</span><span 
-class="pcrr7t-">/1/</span><span 
-class="pcrr7t-">foo</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">NN</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536051r51"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536052r52"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">vagrant@localhost</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">CLI</span><span 
-class="pcrro7t-">:</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">cylc</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">cat</span><span 
-class="pcrro7t-">-</span><span 
-class="pcrro7t-">log</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x003C;</span><span 
-class="pcrro7t-">OPT</span><span 
-class="pcrro7t-">&#x003E;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">test</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">foo</span><span 
-class="pcrro7t-">.1</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536053r53"></a></span><span 
-class="pcrb7t-">ssh</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oBatchMode</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">yes</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oConnectTimeout</span><span 
-class="pcrr7t-">=10</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">n</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">hobo@otherhost</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cat</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">HOME</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">run</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">foo</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">log</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">job</span><span 
-class="pcrr7t-">/1/</span><span 
-class="pcrr7t-">foo</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">NN</span><span 
-class="pcrr7t-">/&#x003C;</span><span 
-class="pcrr7t-">LOG</span><span 
-class="pcrr7t-">&#x003E;</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536054r54"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">where</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x003C;</span><span 
-class="pcrro7t-">LOG</span><span 
-class="pcrro7t-">&#x003E;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">(</span><span 
-class="pcrro7t-">depending</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">on</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x003C;</span><span 
-class="pcrro7t-">OPT</span><span 
-class="pcrro7t-">&#x003E;,</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">see</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">"</span><span 
-class="pcrro7t-">cylc</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">cat</span><span 
-class="pcrro7t-">-</span><span 
-class="pcrro7t-">log</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">--</span><span 
-class="pcrro7t-">help</span><span 
-class="pcrro7t-">")</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">can</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">be</span><span 
-class="pcrro7t-">:</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536055r55"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x22C6;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">job</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536056r56"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x22C6;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">job</span><span 
-class="pcrro7t-">.</span><span 
-class="pcrro7t-">out</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536057r57"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x22C6;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">job</span><span 
-class="pcrro7t-">.</span><span 
-class="pcrro7t-">err</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536058r58"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x22C6;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">job</span><span 
-class="pcrro7t-">.</span><span 
-class="pcrro7t-">status</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536059r59"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x22C6;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">job</span><span 
-class="pcrro7t-">.</span><span 
-class="pcrro7t-">activity</span><span 
-class="pcrro7t-">.</span><span 
-class="pcrro7t-">log</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536060r60"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x22C6;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">job</span><span 
-class="pcrro7t-">-</span><span 
-class="pcrro7t-">edit</span><span 
-class="pcrro7t-">.</span><span 
-class="pcrro7t-">diff</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536061r61"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x22C6;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">job</span><span 
-class="pcrro7t-">.</span><span 
-class="pcrro7t-">xtrace</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536062r62"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536063r63"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">vagrant@localhost</span><span 
-class="pcrro7t-">:</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">live</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">tail</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">remote</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">job</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">log</span><span 
-class="pcrro7t-">,</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">via</span><span 
-class="pcrro7t-">:</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536064r64"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">GUI</span><span 
-class="pcrro7t-">:</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">View</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">-&#x003E;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">job</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">stdout</span><span 
-class="pcrro7t-">,</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">etc</span><span 
-class="pcrro7t-">.</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536065r65"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">CLI</span><span 
-class="pcrro7t-">:</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">cylc</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">cat</span><span 
-class="pcrro7t-">-</span><span 
-class="pcrro7t-">log</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">--</span><span 
-class="pcrro7t-">tail</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x003C;</span><span 
-class="pcrro7t-">OPT</span><span 
-class="pcrro7t-">&#x003E;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">test</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">foo</span><span 
-class="pcrro7t-">.1</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536066r66"></a></span><span 
-class="pcrb7t-">ssh</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oBatchMode</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">yes</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oConnectTimeout</span><span 
-class="pcrr7t-">=10</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">n</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">hobo@otherhost</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">tail</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">pid</span><span 
-class="pcrr7t-">=&#8216;</span><span 
-class="pcrr7t-">ps</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">h</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
 class="pcrr7t-">o</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">ppid</span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">CYLC_SUITE_NAME</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr8c-">$$</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">|</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">sed</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">remote</span><span 
 class="pcrr7t-">-</span><span 
-class="pcrr7t-">e</span><span 
+class="pcrr7t-">a</span><span 
+class="pcrr7t-">.1</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-542019r19"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">s</span><span 
-class="pcrr7t-">/[[:</span><span 
-class="pcrr7t-">space</span><span 
-class="pcrr7t-">:]]//</span><span 
-class="pcrr7t-">g</span><span 
-class="pcrr7t-">&#8216;</span><span 
+class="pcrr7t-">sleep</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">2</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-542020r20"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">poll</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">CYLC_SUITE_NAME</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">REMOTES</span><span 
+class="pcrr7t-">.1</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-542021r21"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">sleep</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">2</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-542022r22"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">kill</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">CYLC_SUITE_NAME</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">REMOTES</span><span 
+class="pcrr7t-">.1</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-542023r23"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">sleep</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">2</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-542024r24"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">remove</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">CYLC_SUITE_NAME</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">REMOTES</span><span 
+class="pcrr7t-">.1</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">"</span>
+</div>
+<!--l. 85--><p class="noindent" >The <span 
+class="cmti-10">delayer </span>task just separates suite start-up from remote job submission, for clarity when watching the job host
+(e.g.&#x00A0;with <span class="lstinline"><span 
+class="pcrr7t-">watch</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">n</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">+1</span><span 
+class="pcrr7t-">1</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">F</span><span 
+class="pcrr7t-">find</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">HOME</span><span 
-class="pcrr7t-">/</span><span 
+class="pcrr7t-">~/</span><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">run</span><span 
 class="pcrr7t-">/</span><span 
-class="pcrr7t-">test</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">log</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">job</span><span 
-class="pcrr7t-">/1/</span><span 
-class="pcrr7t-">foo</span><span 
-class="pcrr7t-">/01/&#x003C;</span><span 
-class="pcrr7t-">LOG</span><span 
-class="pcrr7t-">&#x003E;</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-536067r67"></a></span><span 
+class="pcrr7t-">suitex</span></span>).
+<!--l. 89--><p class="noindent" >Global config specifies the path to the remote Cylc executable, says to retrieve job logs, and not to use a remote
+login shell: <!--l. 91-->
+<div class="lstlisting" id="listing-313"><span class="label"><a 
+ id="x19-542025r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">(</span><span 
-class="pcrro7t-">where</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x003C;</span><span 
-class="pcrro7t-">LOG</span><span 
-class="pcrro7t-">&#x003E;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">and</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x003C;</span><span 
-class="pcrro7t-">OPT</span><span 
-class="pcrro7t-">&#x003E;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">are</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">as</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">described</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">above</span><span 
-class="pcrro7t-">)</span>
+class="pcrro7t-">global</span><span 
+class="pcrro7t-">.</span><span 
+class="pcrro7t-">rc</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-542026r2"></a></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">hosts</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-542027r3"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">wizard</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-542028r4"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">executable</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">opt</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">bin</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-542029r5"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">retrieve</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">job</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">logs</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">True</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-542030r6"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">use</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">login</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">shell</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">False</span>
 </div>
+<!--l. 100--><p class="noindent" >On running the suite, remote job host actions were captured in the transcripts below by wrapping the <span class="lstinline"><span 
+class="pcrr7t-">ssh</span></span>, <span class="lstinline"><span 
+class="pcrr7t-">scp</span></span>,
+and <span class="lstinline"><span 
+class="pcrr7t-">rsync</span></span> executables in scripts that log their command lines before taking action.
+<!--l. 2--><p class="noindent" ><span 
+class="cmbx-10">NOTE the rest of this section is omitted in the HTML User Guide because the complex formatting</span>
+<span 
+class="cmbx-10">translates badly to HTML. Please see the PDF User Guide for details.</span>
                                                                                          
 
                                                                                          
                                                                                          
 
                                                                                          
-<!--l. 7584--><div class="crosslinks"><p class="noindent">[<a 
-href="cug-htmlse19.html" >next</a>] [<a 
+<div class="footnotes"><!--l. 7--><p class="noindent" ><span class="footnote-mark"><a 
+href="#fn5x0-bk" id="fn5x0"><sup class="textsuperscript">5</sup></a></span><span 
+class="cmr-8">Cylc used to run bare shell expressions over SSH, which required a bash shell and made whitelisting difficult.</span>
+<!--l. 15--><p class="noindent" ><span class="footnote-mark"><a 
+href="#fn6x0-bk" id="fn6x0"><sup class="textsuperscript">6</sup></a></span><span 
+class="cmr-8">A malicious script could be </span><span class="lstinline"><span 
+class="pcrr7t-x-x-80">rsync</span></span><span 
+class="cmr-8">&#8217;d and run from a batch job, but batch jobs are considered easier to audit.</span>
+<!--l. 22--><p class="noindent" ><span class="footnote-mark"><a 
+href="#fn7x0-bk" id="fn7x0"><sup class="textsuperscript">7</sup></a></span><span 
+class="cmr-8">The job ID must also be valid to query and kill the job via the local batch system. This is not the case for Slurm, unless the</span>
+<span class="lstinline"><span 
+class="pcrr7t-x-x-80">--</span><span 
+class="pcrr7t-x-x-80">cluster</span></span> <span 
+class="cmr-8">option is explicitly used in job query and kill commands, otherwise the job ID is not recognized by the local Slurm</span>
+<span 
+class="cmr-8">instance.</span>
+<!--l. 28--><p class="noindent" ><span class="footnote-mark"><a 
+href="#fn8x0-bk" id="fn8x0"><sup class="textsuperscript">8</sup></a></span><span 
+class="cmr-8">This would be a more complex solution, in terms of implementation, administration, and security.</span>                 </div> <!--l. 7676--><div class="crosslinks"><p class="noindent">[<a 
+href="cug-htmlse19.html" >next</a>]
+[<a 
 href="cug-htmlse17.html" >prev</a>] [<a 
 href="cug-htmlse17.html#tailcug-htmlse17.html" >prev-tail</a>] [<a 
 href="cug-htmlse18.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse18.html" >up</a>] </p></div>
-<!--l. 7584--><p class="noindent" ><a 
+<!--l. 7676--><p class="noindent" ><a 
  id="tailcug-htmlse18.html"></a>  
 </body></html> 

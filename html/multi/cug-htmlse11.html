@@ -7,17 +7,17 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2018-03-28 12:29:00"> 
+<meta name="date" content="2018-05-23 00:59:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-<!--l. 5584--><div class="crosslinks"><p class="noindent">[<a 
+<!--l. 5606--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse12.html" >next</a>] [<a 
 href="cug-htmlse10.html" >prev</a>] [<a 
 href="cug-htmlse10.html#tailcug-htmlse10.html" >prev-tail</a>] [<a 
 href="#tailcug-htmlse11.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse11.html" >up</a>] </p></div>
-<!--l. 5584--><p class="noindent" > <h3 id="11" class="sectionHead"><span class="titlemark"> <a href="#11">11</a>  <a 
+<!--l. 5606--><p class="noindent" > <h3 id="11" class="sectionHead"><span class="titlemark"> <a href="#11">11</a>  <a 
  id="x12-16300011"></a>Task Job Submission and Management </span></h3> <div class="sectionTOCS">
 &#x00A0;<span class="subsectionToc" >11.1 <a 
 href="#x12-16400011.1">Supported Job Submission Methods</a></span>
@@ -34,16 +34,16 @@ href="#x12-17900011.6">Execution Time Limit</a></span>
 <br />&#x00A0;<span class="subsectionToc" >11.7 <a 
 href="#x12-18100011.7">Custom Job Submission Methods</a></span>
 </div>
-<!--l. 5587--><p class="noindent" >For the requirements a command, script, or program, must fulfill in order to function as a cylc task, see&#x00A0;<a 
+<!--l. 5609--><p class="noindent" >For the requirements a command, script, or program, must fulfill in order to function as a cylc task, see&#x00A0;<a 
 href="cug-htmlse10.html#x11-15600010">10<!--tex4ht:ref: TaskImplementation --></a>. This
 section explains how tasks are submitted by the suite server program when they are ready to run, and how to define
 new batch system handlers.
-<!--l. 5592--><p class="noindent" >When a task is ready cylc generates a job script (see&#x00A0;<a 
+<!--l. 5614--><p class="noindent" >When a task is ready cylc generates a job script (see&#x00A0;<a 
 href="cug-htmlse10.html#x11-15700010.1">10.1<!--tex4ht:ref: JobScripts --></a>). The job script is submitted to run by the <span 
 class="cmti-10">batch system</span>
 chosen for the task. Different tasks can use different batch systems. Like other runtime properties, you can set a
-suite default batch system and override it for specific tasks or families:  <!--l. 5598-->
-<div class="lstlisting" id="listing-229"><span class="label"><a 
+suite default batch system and override it for specific tasks or families:  <!--l. 5620-->
+<div class="lstlisting" id="listing-228"><span class="label"><a 
  id="x12-163001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -147,37 +147,37 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">at</span>
 </div>
-<!--l. 5608--><p class="noindent" >
-<!--l. 5608--><p class="noindent" > <h4 id="11.1" class="subsectionHead"> <span class="titlemark"> <a href="#11.1"> 11.1</a>  <a 
+<!--l. 5630--><p class="noindent" >
+<!--l. 5630--><p class="noindent" > <h4 id="11.1" class="subsectionHead"> <span class="titlemark"> <a href="#11.1"> 11.1</a>  <a 
  id="x12-16400011.1"></a>Supported Job Submission Methods </span></h4>
-<!--l. 5611--><p class="noindent" >Cylc supports a number of commonly used batch systems. See&#x00A0;<a 
+<!--l. 5633--><p class="noindent" >Cylc supports a number of commonly used batch systems. See&#x00A0;<a 
 href="#x12-18100011.7">11.7<!--tex4ht:ref: CustomJobSubmissionMethods --></a> for how to add new job submission
 methods.
                                                                                          
 
                                                                                          
-<!--l. 5615--><p class="noindent" >
-<!--l. 5615--><p class="noindent" > <h4 id="11.1.1" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.1"> 11.1.1</a>  <a 
+<!--l. 5637--><p class="noindent" >
+<!--l. 5637--><p class="noindent" > <h4 id="11.1.1" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.1"> 11.1.1</a>  <a 
  id="x12-16500011.1.1"></a>background </span></h4>
-<!--l. 5617--><p class="noindent" >Runs task job scripts as Unix background processes.
-<!--l. 5619--><p class="noindent" >If an execution time limit is specified for a task, its job will be wrapped by the <span class="lstinline"><span 
+<!--l. 5639--><p class="noindent" >Runs task job scripts as Unix background processes.
+<!--l. 5641--><p class="noindent" >If an execution time limit is specified for a task, its job will be wrapped by the <span class="lstinline"><span 
 class="pcrr7t-">timeout</span></span> command.
-<!--l. 5622--><p class="noindent" >
-<!--l. 5622--><p class="noindent" > <h4 id="11.1.2" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.2"> 11.1.2</a>  <a 
+<!--l. 5644--><p class="noindent" >
+<!--l. 5644--><p class="noindent" > <h4 id="11.1.2" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.2"> 11.1.2</a>  <a 
  id="x12-16600011.1.2"></a>at </span></h4>
-<!--l. 5624--><p class="noindent" >Submits task job scripts to the rudimentary Unix <span class="lstinline"><span 
+<!--l. 5646--><p class="noindent" >Submits task job scripts to the rudimentary Unix <span class="lstinline"><span 
 class="pcrr7t-">at</span></span> scheduler. The <span class="lstinline"><span 
 class="pcrr7t-">atd</span></span> daemon must be running.
-<!--l. 5627--><p class="noindent" >If an execution time limit is specified for a task, its job will be wrapped by the <span class="lstinline"><span 
+<!--l. 5649--><p class="noindent" >If an execution time limit is specified for a task, its job will be wrapped by the <span class="lstinline"><span 
 class="pcrr7t-">timeout</span></span> command.
-<!--l. 5630--><p class="noindent" >
-<!--l. 5630--><p class="noindent" > <h4 id="11.1.3" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.3"> 11.1.3</a>  <a 
+<!--l. 5652--><p class="noindent" >
+<!--l. 5652--><p class="noindent" > <h4 id="11.1.3" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.3"> 11.1.3</a>  <a 
  id="x12-16700011.1.3"></a>loadleveler </span></h4>
-<!--l. 5632--><p class="noindent" >Submits task job scripts to loadleveler by the <span class="lstinline"><span 
+<!--l. 5654--><p class="noindent" >Submits task job scripts to loadleveler by the <span class="lstinline"><span 
 class="pcrr7t-">llsubmit</span></span> command. Loadleveler directives can be provided in the
 suite.rc file:
-<!--l. 5636-->
-<div class="lstlisting" id="listing-230"><span class="label"><a 
+<!--l. 5658-->
+<div class="lstlisting" id="listing-229"><span class="label"><a 
  id="x12-167001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -300,8 +300,8 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">qux</span>
 </div>
-<!--l. 5646--><p class="noindent" >These are written to the top of the task job script like this:  <!--l. 5648-->
-<div class="lstlisting" id="listing-231"><span class="label"><a 
+<!--l. 5668--><p class="noindent" >These are written to the top of the task job script like this:  <!--l. 5670-->
+<div class="lstlisting" id="listing-230"><span class="label"><a 
  id="x12-167009r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
@@ -354,11 +354,11 @@ class="pcrro7t-">@</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">queue</span>
 </div>
-<!--l. 5657--><p class="noindent" >If restart=yes is specified as a directive for loadleveler, the job will automatically trap SIGUSR1, which
+<!--l. 5679--><p class="noindent" >If restart=yes is specified as a directive for loadleveler, the job will automatically trap SIGUSR1, which
 loadleveler may use to preempt the job. On trapping SIGUSR1, the job will inform the suite that it
 has been vacated by loadleveler. This will put it back to the submitted state, until it starts running
 again.
-<!--l. 5663--><p class="noindent" >If <span class="lstinline"><span 
+<!--l. 5685--><p class="noindent" >If <span class="lstinline"><span 
 class="pcrr7t-">execution</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">time</span><span 
@@ -378,14 +378,14 @@ system.
                                                                                          
 
                                                                                          
-<!--l. 5671--><p class="noindent" >
-<!--l. 5671--><p class="noindent" > <h4 id="11.1.4" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.4"> 11.1.4</a>  <a 
+<!--l. 5693--><p class="noindent" >
+<!--l. 5693--><p class="noindent" > <h4 id="11.1.4" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.4"> 11.1.4</a>  <a 
  id="x12-16800011.1.4"></a>lsf </span></h4>
-<!--l. 5673--><p class="noindent" >Submits task job scripts to IBM Platform LSF by the <span class="lstinline"><span 
+<!--l. 5695--><p class="noindent" >Submits task job scripts to IBM Platform LSF by the <span class="lstinline"><span 
 class="pcrr7t-">bsub</span></span> command. LSF directives can be provided in the
 suite.rc file:
-<!--l. 5677-->
-<div class="lstlisting" id="listing-232"><span class="label"><a 
+<!--l. 5699-->
+<div class="lstlisting" id="listing-231"><span class="label"><a 
  id="x12-168001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -490,8 +490,8 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">foo</span>
 </div>
-<!--l. 5686--><p class="noindent" >These are written to the top of the task job script like this:  <!--l. 5688-->
-<div class="lstlisting" id="listing-233"><span class="label"><a 
+<!--l. 5708--><p class="noindent" >These are written to the top of the task job script like this:  <!--l. 5710-->
+<div class="lstlisting" id="listing-232"><span class="label"><a 
  id="x12-168008r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
@@ -526,7 +526,7 @@ class="pcrro7t-">=</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">10</span>
 </div>
-<!--l. 5695--><p class="noindent" >If <span class="lstinline"><span 
+<!--l. 5717--><p class="noindent" >If <span class="lstinline"><span 
 class="pcrr7t-">execution</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">time</span><span 
@@ -543,13 +543,13 @@ class="pcrr7t-">time</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">limit</span></span> is specified. Otherwise, the execution time limit known by the suite may be
 out of sync with what is submitted to the batch system.
-<!--l. 5701--><p class="noindent" >
-<!--l. 5701--><p class="noindent" > <h4 id="11.1.5" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.5"> 11.1.5</a>  <a 
+<!--l. 5723--><p class="noindent" >
+<!--l. 5723--><p class="noindent" > <h4 id="11.1.5" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.5"> 11.1.5</a>  <a 
  id="x12-16900011.1.5"></a>pbs </span></h4>
-<!--l. 5703--><p class="noindent" >Submits task job scripts to PBS (or Torque) by the <span class="lstinline"><span 
+<!--l. 5725--><p class="noindent" >Submits task job scripts to PBS (or Torque) by the <span class="lstinline"><span 
 class="pcrr7t-">qsub</span></span> command. PBS directives can be provided in the suite.rc
-file:  <!--l. 5706-->
-<div class="lstlisting" id="listing-234"><span class="label"><a 
+file:  <!--l. 5728-->
+<div class="lstlisting" id="listing-233"><span class="label"><a 
  id="x12-169001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -694,8 +694,8 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">1</span>
 </div>
-<!--l. 5717--><p class="noindent" >These are written to the top of the task job script like this:  <!--l. 5719-->
-<div class="lstlisting" id="listing-235"><span class="label"><a 
+<!--l. 5739--><p class="noindent" >These are written to the top of the task job script like this:  <!--l. 5741-->
+<div class="lstlisting" id="listing-234"><span class="label"><a 
  id="x12-169010r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
@@ -744,7 +744,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">walltime</span><span 
 class="pcrro7t-">=60</span>
 </div>
-<!--l. 5728--><p class="noindent" >If <span class="lstinline"><span 
+<!--l. 5750--><p class="noindent" >If <span class="lstinline"><span 
 class="pcrr7t-">execution</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">time</span><span 
@@ -766,16 +766,16 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">limit</span></span> is specified. Otherwise,
 the execution time limit known by the suite may be out of sync with what is submitted to the batch
 system.
-<!--l. 5734--><p class="noindent" >
-<!--l. 5734--><p class="noindent" > <h4 id="11.1.6" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.6"> 11.1.6</a>  <a 
+<!--l. 5756--><p class="noindent" >
+<!--l. 5756--><p class="noindent" > <h4 id="11.1.6" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.6"> 11.1.6</a>  <a 
  id="x12-17000011.1.6"></a>moab </span></h4>
-<!--l. 5736--><p class="noindent" >Submits task job scripts to the Moab workload manager by the <span class="lstinline"><span 
+<!--l. 5758--><p class="noindent" >Submits task job scripts to the Moab workload manager by the <span class="lstinline"><span 
 class="pcrr7t-">msub</span></span> command. Moab directives can be provided in
-the suite.rc file; the syntax is very similar to PBS:  <!--l. 5740-->
+the suite.rc file; the syntax is very similar to PBS:  <!--l. 5762-->
                                                                                          
 
                                                                                          
-<div class="lstlisting" id="listing-236"><span class="label"><a 
+<div class="lstlisting" id="listing-235"><span class="label"><a 
  id="x12-170001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -920,8 +920,8 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">1</span>
 </div>
-<!--l. 5751--><p class="noindent" >These are written to the top of the task job script like this:  <!--l. 5753-->
-<div class="lstlisting" id="listing-237"><span class="label"><a 
+<!--l. 5773--><p class="noindent" >These are written to the top of the task job script like this:  <!--l. 5775-->
+<div class="lstlisting" id="listing-236"><span class="label"><a 
  id="x12-170010r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
@@ -970,10 +970,10 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">walltime</span><span 
 class="pcrro7t-">=60</span>
 </div>
-<!--l. 5761--><p class="noindent" >(Moab understands <span class="lstinline"><span 
+<!--l. 5783--><p class="noindent" >(Moab understands <span class="lstinline"><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">PBS</span></span> directives).
-<!--l. 5763--><p class="noindent" >If <span class="lstinline"><span 
+<!--l. 5785--><p class="noindent" >If <span class="lstinline"><span 
 class="pcrr7t-">execution</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">time</span><span 
@@ -995,13 +995,13 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">limit</span></span> is specified. Otherwise,
 the execution time limit known by the suite may be out of sync with what is submitted to the batch
 system.
-<!--l. 5769--><p class="noindent" >
-<!--l. 5769--><p class="noindent" > <h4 id="11.1.7" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.7"> 11.1.7</a>  <a 
+<!--l. 5791--><p class="noindent" >
+<!--l. 5791--><p class="noindent" > <h4 id="11.1.7" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.7"> 11.1.7</a>  <a 
  id="x12-17100011.1.7"></a>sge </span></h4>
-<!--l. 5771--><p class="noindent" >Submits task job scripts to Sun/Oracle Grid Engine by the <span class="lstinline"><span 
+<!--l. 5793--><p class="noindent" >Submits task job scripts to Sun/Oracle Grid Engine by the <span class="lstinline"><span 
 class="pcrr7t-">qsub</span></span> command. SGE directives can be provided in the
-suite.rc file:  <!--l. 5774-->
-<div class="lstlisting" id="listing-238"><span class="label"><a 
+suite.rc file:  <!--l. 5796-->
+<div class="lstlisting" id="listing-237"><span class="label"><a 
  id="x12-171001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -1169,8 +1169,8 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">24:00:00</span>
 </div>
-<!--l. 5786--><p class="noindent" >These are written to the top of the task job script like this:  <!--l. 5788-->
-<div class="lstlisting" id="listing-239"><span class="label"><a 
+<!--l. 5808--><p class="noindent" >These are written to the top of the task job script like this:  <!--l. 5810-->
+<div class="lstlisting" id="listing-238"><span class="label"><a 
  id="x12-171011r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
@@ -1220,7 +1220,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">h_rt</span><span 
 class="pcrro7t-">=24:00:00</span>
 </div>
-<!--l. 5797--><p class="noindent" >If <span class="lstinline"><span 
+<!--l. 5819--><p class="noindent" >If <span class="lstinline"><span 
 class="pcrr7t-">execution</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">time</span><span 
@@ -1241,14 +1241,14 @@ class="pcrr7t-">time</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">limit</span></span> is specified. Otherwise, the execution time limit known
 by the suite may be out of sync with what is submitted to the batch system.
-<!--l. 5803--><p class="noindent" >
-<!--l. 5803--><p class="noindent" > <h4 id="11.1.8" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.8"> 11.1.8</a>  <a 
+<!--l. 5825--><p class="noindent" >
+<!--l. 5825--><p class="noindent" > <h4 id="11.1.8" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.8"> 11.1.8</a>  <a 
  id="x12-17200011.1.8"></a>slurm </span></h4>
-<!--l. 5805--><p class="noindent" >Submits task job scripts to Simple Linux Utility for Resource Management by the <span class="lstinline"><span 
+<!--l. 5827--><p class="noindent" >Submits task job scripts to Simple Linux Utility for Resource Management by the <span class="lstinline"><span 
 class="pcrr7t-">sbatch</span></span> command. SLURM
 directives can be provided in the suite.rc file (note that since not all SLURM commands have a short form, cylc
-requires the long form directives):  <!--l. 5810-->
-<div class="lstlisting" id="listing-240"><span class="label"><a 
+requires the long form directives):  <!--l. 5832-->
+<div class="lstlisting" id="listing-239"><span class="label"><a 
  id="x12-172001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -1376,8 +1376,8 @@ class="pcrr7t-">QXZ5W2</span>
 
                                                                                          
 </div>
-<!--l. 5820--><p class="noindent" >These are written to the top of the task job script like this:  <!--l. 5822-->
-<div class="lstlisting" id="listing-241"><span class="label"><a 
+<!--l. 5842--><p class="noindent" >These are written to the top of the task job script like this:  <!--l. 5844-->
+<div class="lstlisting" id="listing-240"><span class="label"><a 
  id="x12-172009r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
@@ -1410,7 +1410,7 @@ class="pcrro7t-">account</span><span
 class="pcrro7t-">=</span><span 
 class="pcrro7t-">QXZ5W2</span>
 </div>
-<!--l. 5829--><p class="noindent" >If <span class="lstinline"><span 
+<!--l. 5851--><p class="noindent" >If <span class="lstinline"><span 
 class="pcrr7t-">execution</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">time</span><span 
@@ -1427,12 +1427,12 @@ class="pcrr7t-">time</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">limit</span></span> is specified. Otherwise, the execution time limit known by the suite
 may be out of sync with what is submitted to the batch system.
-<!--l. 5835--><p class="noindent" >
-<!--l. 5835--><p class="noindent" > <h4 id="11.1.9" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.9"> 11.1.9</a>  <a 
+<!--l. 5857--><p class="noindent" >
+<!--l. 5857--><p class="noindent" > <h4 id="11.1.9" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.9"> 11.1.9</a>  <a 
  id="x12-17300011.1.9"></a>Default Directives Provided </span></h4>
-<!--l. 5837--><p class="noindent" >For batch systems that use job file directives (PBS, Loadleveler, etc.) default directives are provided to set the job
+<!--l. 5859--><p class="noindent" >For batch systems that use job file directives (PBS, Loadleveler, etc.) default directives are provided to set the job
 name, stdout and stderr file paths, and the execution time limit (if specified).
-<!--l. 5841--><p class="noindent" >Cylc constructs the job name string using a combination of the task ID and the suite name. PBS fails a job submit
+<!--l. 5863--><p class="noindent" >Cylc constructs the job name string using a combination of the task ID and the suite name. PBS fails a job submit
 if the job name in <span class="lstinline"><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">N</span><span 
@@ -1441,9 +1441,9 @@ class="pcrr7t-">name</span></span> is too long. For version 12 or below, this is
 characters. The default setting will truncate the job name string to 15 characters. If you have PBS 13 at your site,
 you should modify your site&#8217;s global configuration file to allow the job name to be longer. (See also
 Section&#x00A0;<a 
-href="cug-htmlse15.html#x16-465000B.9.1.19.5">B.9.1.19.5<!--tex4ht:ref: JobNameLengthMaximum --></a>.) For example:
-<!--l. 5849-->
-<div class="lstlisting" id="listing-242"><span class="label"><a 
+href="cug-htmlse15.html#x16-467000B.9.1.18.5">B.9.1.18.5<!--tex4ht:ref: JobNameLengthMaximum --></a>.) For example:
+<!--l. 5871-->
+<div class="lstlisting" id="listing-241"><span class="label"><a 
  id="x12-173001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">hosts</span><span 
@@ -1542,22 +1542,22 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">236</span>
 </div>
-<!--l. 5858--><p class="noindent" >
-<!--l. 5858--><p class="noindent" > <h4 id="11.1.10" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.10"> 11.1.10</a>  <a 
+<!--l. 5880--><p class="noindent" >
+<!--l. 5880--><p class="noindent" > <h4 id="11.1.10" class="subsubsectionHead"><span class="titlemark"> <a href="#11.1.10"> 11.1.10</a>  <a 
  id="x12-17400011.1.10"></a>Directives Section Quirks (PBS, SGE, ...)  </span></h4>
-<!--l. 5860--><p class="noindent" >To specify an option with no argument, such as <span class="lstinline"><span 
+<!--l. 5882--><p class="noindent" >To specify an option with no argument, such as <span class="lstinline"><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">V</span></span> in PBS or <span class="lstinline"><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">cwd</span></span> in SGE you must give a null string as the
 directive value in the suite.rc file.
-<!--l. 5864--><p class="noindent" >The left hand side of a setting (i.e.&#x00A0;the string before the first equal sign) must be unique. To specify
+<!--l. 5886--><p class="noindent" >The left hand side of a setting (i.e.&#x00A0;the string before the first equal sign) must be unique. To specify
 multiple values using an option such as <span class="lstinline"><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">l</span></span> option in PBS, SGE, etc., either specify all items in a single
 line:
-<!--l. 5869-->
-<div class="lstlisting" id="listing-243"><span class="label"><a 
+<!--l. 5891-->
+<div class="lstlisting" id="listing-242"><span class="label"><a 
  id="x12-174001r1"></a></span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">l</span><span 
@@ -1573,20 +1573,20 @@ class="pcrr7t-">=2:</span><span
 class="pcrr7t-">walltime</span><span 
 class="pcrr7t-">=12:00:00</span>
 </div>
-<!--l. 5873--><p class="noindent" >(Left hand side is <span class="lstinline"><span 
+<!--l. 5895--><p class="noindent" >(Left hand side is <span class="lstinline"><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">l</span></span>. A second <span class="lstinline"><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">l</span><span 
 class="pcrr7t-">=...</span></span> line will override the first.)
-<!--l. 5876--><p class="noindent" >Or separate the items (note: no equal sign after <span class="lstinline"><span 
+<!--l. 5898--><p class="noindent" >Or separate the items (note: no equal sign after <span class="lstinline"><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">l</span></span>):
-<!--l. 5878-->
+<!--l. 5900-->
                                                                                          
 
                                                                                          
-<div class="lstlisting" id="listing-244"><span class="label"><a 
+<div class="lstlisting" id="listing-243"><span class="label"><a 
  id="x12-174002r1"></a></span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">l</span><span 
@@ -1622,7 +1622,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">walltime</span><span 
 class="pcrr7t-">=12:00:00</span>
 </div>
-<!--l. 5886--><p class="noindent" >(Left hand sides are now <span class="lstinline"><span 
+<!--l. 5908--><p class="noindent" >(Left hand sides are now <span class="lstinline"><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">l</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1631,14 +1631,14 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">l</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">ncpus</span></span>, etc.)
-<!--l. 5888--><p class="noindent" >
-<!--l. 5888--><p class="noindent" > <h4 id="11.2" class="subsectionHead"> <span class="titlemark"> <a href="#11.2"> 11.2</a>  <a 
+<!--l. 5910--><p class="noindent" >
+<!--l. 5910--><p class="noindent" > <h4 id="11.2" class="subsectionHead"> <span class="titlemark"> <a href="#11.2"> 11.2</a>  <a 
  id="x12-17500011.2"></a>Task stdout And stderr Logs </span></h4>
-<!--l. 5891--><p class="noindent" >When a task is ready to run cylc generates a filename root to be used for the task job script and log files. The
+<!--l. 5913--><p class="noindent" >When a task is ready to run cylc generates a filename root to be used for the task job script and log files. The
 filename containing the task name, cycle point, and a submit number that increments if the same task is re-triggered
 multiple times:
-<!--l. 5897-->
-<div class="lstlisting" id="listing-245"><span class="label"><a 
+<!--l. 5919-->
+<div class="lstlisting" id="listing-244"><span class="label"><a 
  id="x12-175001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -1729,16 +1729,16 @@ class="pcrr7t-">job</span><span
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">err</span>
 </div>
-<!--l. 5906--><p class="noindent" >How the stdout and stderr streams are directed into these files depends on the batch system. The <span class="lstinline"><span 
+<!--l. 5928--><p class="noindent" >How the stdout and stderr streams are directed into these files depends on the batch system. The <span class="lstinline"><span 
 class="pcrr7t-">background</span></span>
 method just uses appropriate output redirection on the command line, as shown above. The <span class="lstinline"><span 
 class="pcrr7t-">loadleveler</span></span> method
 writes appropriate directives to the job script that is submitted to loadleveler.
-<!--l. 5912--><p class="noindent" >Cylc obviously has no control over the stdout and stderr output from tasks that do their own internal
+<!--l. 5934--><p class="noindent" >Cylc obviously has no control over the stdout and stderr output from tasks that do their own internal
 output management (e.g.&#x00A0;tasks that submit internal jobs and direct the associated output to other
 files). For less internally complex tasks, however, the files referred to here will be complete task job
 logs.
-<!--l. 5918--><p class="noindent" >Some batch systems, such as <span class="lstinline"><span 
+<!--l. 5940--><p class="noindent" >Some batch systems, such as <span class="lstinline"><span 
 class="pcrr7t-">pbs</span></span>, redirect a job&#8217;s stdout and stderr streams to a separate cache area while the job is
 running. The contents are only copied to the normal locations when the job completes. This means that
 <span class="lstinline"><span 
@@ -1751,8 +1751,8 @@ Some sites with these batch systems are known to provide commands for viewing an
 and stderr streams that are redirected to these cache areas. If this is the case at your site, you can configure
 cylc to make use of the provided commands by adding some settings to the global site/user config.
 E.g.:
-<!--l. 5929-->
-<div class="lstlisting" id="listing-246"><span class="label"><a 
+<!--l. 5951-->
+<div class="lstlisting" id="listing-245"><span class="label"><a 
  id="x12-175007r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">hosts</span><span 
@@ -1956,19 +1956,19 @@ class="pcrr7t-">job_id</span><span
 class="pcrr7t-">)</span><span 
 class="pcrr7t-">s</span>
 </div>
-<!--l. 5940--><p class="noindent" >
-<!--l. 5940--><p class="noindent" > <h4 id="11.3" class="subsectionHead"> <span class="titlemark"> <a href="#11.3"> 11.3</a>  <a 
+<!--l. 5962--><p class="noindent" >
+<!--l. 5962--><p class="noindent" > <h4 id="11.3" class="subsectionHead"> <span class="titlemark"> <a href="#11.3"> 11.3</a>  <a 
  id="x12-17600011.3"></a>Overriding The Job Submission Command </span></h4>
-<!--l. 5944--><p class="noindent" >To change the form of the actual command used to submit a job you do not need to define a new batch system
+<!--l. 5966--><p class="noindent" >To change the form of the actual command used to submit a job you do not need to define a new batch system
 handler; just override the <span class="lstinline"><span 
 class="pcrr7t-">command</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">template</span></span> in the relevant job submission sections of your suite.rc file:
-<!--l. 5948-->
+<!--l. 5970-->
                                                                                          
 
                                                                                          
-<div class="lstlisting" id="listing-247"><span class="label"><a 
+<div class="lstlisting" id="listing-246"><span class="label"><a 
  id="x12-176001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -2107,38 +2107,38 @@ class="pcrr7t-">job</span><span
 class="pcrr7t-">)</span><span 
 class="pcrr7t-">s</span>
 </div>
-<!--l. 5957--><p class="noindent" >As explained in&#x00A0;<a 
-href="cug-htmlse14.html#x15-238000A">A<!--tex4ht:ref: SuiteRCReference --></a> the template&#8217;s %(job)s will be substituted by the job file path.
-<!--l. 5960--><p class="noindent" >
-<!--l. 5960--><p class="noindent" > <h4 id="11.4" class="subsectionHead"> <span class="titlemark"> <a href="#11.4"> 11.4</a>  <a 
+<!--l. 5979--><p class="noindent" >As explained in&#x00A0;<a 
+href="cug-htmlse14.html#x15-240000A">A<!--tex4ht:ref: SuiteRCReference --></a> the template&#8217;s %(job)s will be substituted by the job file path.
+<!--l. 5982--><p class="noindent" >
+<!--l. 5982--><p class="noindent" > <h4 id="11.4" class="subsectionHead"> <span class="titlemark"> <a href="#11.4"> 11.4</a>  <a 
  id="x12-17700011.4"></a>Job Polling </span></h4>
-<!--l. 5962--><p class="noindent" >For supported batch systems, one-way polling can be used to determine actual job status: the suite server
+<!--l. 5984--><p class="noindent" >For supported batch systems, one-way polling can be used to determine actual job status: the suite server
 program executes a process on the task host, by non-interactive ssh, to interrogate the batch queueing
 system there, and to read a <span 
 class="cmti-10">status file </span>that is automatically generated by the task job script as it
 runs.
-<!--l. 5968--><p class="noindent" >Polling may be required to update the suite state correctly after unusual events such as a machine being rebooted
+<!--l. 5990--><p class="noindent" >Polling may be required to update the suite state correctly after unusual events such as a machine being rebooted
 with tasks running on it, or network problems that prevent task messages from getting back to the suite
 host.
-<!--l. 5972--><p class="noindent" >Tasks can be polled on demand by right-clicking on them in gcylc or using the <span class="lstinline"><span 
+<!--l. 5994--><p class="noindent" >Tasks can be polled on demand by right-clicking on them in gcylc or using the <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">poll</span></span> command.
-<!--l. 5975--><p class="noindent" >Tasks are polled automatically, once, if they timeout while queueing in a batch scheduler and submission timeout is
+<!--l. 5997--><p class="noindent" >Tasks are polled automatically, once, if they timeout while queueing in a batch scheduler and submission timeout is
 set. (See&#x00A0;<a 
-href="cug-htmlse14.html#x15-346000A.5.1.13">A.5.1.13<!--tex4ht:ref: TaskEventHandling --></a> for how to configure timeouts).
-<!--l. 5979--><p class="noindent" >Tasks are polled multiple times, where necessary, when they exceed their execution time limits. These are normally
+href="cug-htmlse14.html#x15-348000A.5.1.13">A.5.1.13<!--tex4ht:ref: TaskEventHandling --></a> for how to configure timeouts).
+<!--l. 6001--><p class="noindent" >Tasks are polled multiple times, where necessary, when they exceed their execution time limits. These are normally
 set with some initial delays to allow the batch systems to kill the jobs. (See&#x00A0;<a 
-href="cug-htmlse15.html#x16-466000B.9.1.19.6">B.9.1.19.6<!--tex4ht:ref: ExecutionTimeLimitPollingIntervals --></a> for how to configure the
+href="cug-htmlse15.html#x16-468000B.9.1.18.6">B.9.1.18.6<!--tex4ht:ref: ExecutionTimeLimitPollingIntervals --></a> for how to configure the
 polling intervals).
-<!--l. 5985--><p class="noindent" >Any tasks recorded in the <span 
+<!--l. 6007--><p class="noindent" >Any tasks recorded in the <span 
 class="cmti-10">submitted </span>or <span 
 class="cmti-10">running </span>states at suite restart are automatically polled to determine what
 happened to them while the suite was down.
-<!--l. 5989--><p class="noindent" >Regular polling can also be configured as a health check on tasks submitted to hosts that are known to be flaky, or
+<!--l. 6011--><p class="noindent" >Regular polling can also be configured as a health check on tasks submitted to hosts that are known to be flaky, or
 as the sole method of determining task status on hosts that do not allow task messages to be routed back to the
 suite host.
-<!--l. 5994--><p class="noindent" >To use polling instead of task-to-suite messaging set <span class="lstinline"><span 
+<!--l. 6016--><p class="noindent" >To use polling instead of task-to-suite messaging set <span class="lstinline"><span 
 class="pcrr7t-">task</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">communication</span><span 
@@ -2149,44 +2149,44 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">poll</span></span> in cylc site and
 user global config (see&#x00A0;<a 
-href="cug-htmlse15.html#x16-444000B.9.1.3">B.9.1.3<!--tex4ht:ref: task_comms_method --></a>). The default polling intervals can be overridden for all suites there too (see&#x00A0;<a 
-href="cug-htmlse15.html#x16-446000B.9.1.5">B.9.1.5<!--tex4ht:ref: submission_polling --></a>
+href="cug-htmlse15.html#x16-447000B.9.1.3">B.9.1.3<!--tex4ht:ref: task_comms_method --></a>). The default polling intervals can be overridden for all suites there too (see&#x00A0;<a 
+href="cug-htmlse15.html#x16-449000B.9.1.5">B.9.1.5<!--tex4ht:ref: submission_polling --></a>
 and&#x00A0;<a 
-href="cug-htmlse15.html#x16-445000B.9.1.4">B.9.1.4<!--tex4ht:ref: execution_polling --></a>), or in specific suite definitions (in which case polling will be done regardless of the task communication
+href="cug-htmlse15.html#x16-448000B.9.1.4">B.9.1.4<!--tex4ht:ref: execution_polling --></a>), or in specific suite definitions (in which case polling will be done regardless of the task communication
 method configured for the host; see&#x00A0;<a 
-href="cug-htmlse14.html#x15-337000A.5.1.11.7">A.5.1.11.7<!--tex4ht:ref: SubmissionPollingIntervals --></a> and&#x00A0;<a 
-href="cug-htmlse14.html#x15-338000A.5.1.11.8">A.5.1.11.8<!--tex4ht:ref: ExecutionPollingIntervals --></a>).
-<!--l. 6003--><p class="noindent" >Note that regular polling is not as efficient as task messaging in updating task status, and it should be used
+href="cug-htmlse14.html#x15-339000A.5.1.11.7">A.5.1.11.7<!--tex4ht:ref: SubmissionPollingIntervals --></a> and&#x00A0;<a 
+href="cug-htmlse14.html#x15-340000A.5.1.11.8">A.5.1.11.8<!--tex4ht:ref: ExecutionPollingIntervals --></a>).
+<!--l. 6025--><p class="noindent" >Note that regular polling is not as efficient as task messaging in updating task status, and it should be used
 sparingly in large suites.
-<!--l. 6006--><p class="noindent" >Note that for polling to work correctly, the batch queueing system must have a job listing command for listing your
+<!--l. 6028--><p class="noindent" >Note that for polling to work correctly, the batch queueing system must have a job listing command for listing your
 jobs, and that the job listing must display job IDs as they are returned by the batch queueing system submit
 command. For example, for pbs, moab and sge, the <span class="lstinline"><span 
 class="pcrr7t-">qstat</span></span> command should list jobs with their IDs displayed in
 exactly the same format as they are returned by the <span class="lstinline"><span 
 class="pcrr7t-">qsub</span></span> command.
-<!--l. 6013--><p class="noindent" >
-<!--l. 6013--><p class="noindent" > <h4 id="11.5" class="subsectionHead"> <span class="titlemark"> <a href="#11.5"> 11.5</a>  <a 
+<!--l. 6035--><p class="noindent" >
+<!--l. 6035--><p class="noindent" > <h4 id="11.5" class="subsectionHead"> <span class="titlemark"> <a href="#11.5"> 11.5</a>  <a 
  id="x12-17800011.5"></a>Job Killing </span></h4>
                                                                                          
 
                                                                                          
-<!--l. 6015--><p class="noindent" >For supported batch systems, the suite server program can execute a process on the task host, by non-interactive
+<!--l. 6037--><p class="noindent" >For supported batch systems, the suite server program can execute a process on the task host, by non-interactive
 ssh, to kill a submitted or running job according to its batch system.
-<!--l. 6019--><p class="noindent" >Tasks can be killed on demand by right-clicking on them in gcylc or using the <span class="lstinline"><span 
+<!--l. 6041--><p class="noindent" >Tasks can be killed on demand by right-clicking on them in gcylc or using the <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">kill</span></span> command.
-<!--l. 6022--><p class="noindent" >
-<!--l. 6022--><p class="noindent" > <h4 id="11.6" class="subsectionHead"> <span class="titlemark"> <a href="#11.6"> 11.6</a>  <a 
+<!--l. 6044--><p class="noindent" >
+<!--l. 6044--><p class="noindent" > <h4 id="11.6" class="subsectionHead"> <span class="titlemark"> <a href="#11.6"> 11.6</a>  <a 
  id="x12-17900011.6"></a>Execution Time Limit </span></h4>
-<!--l. 6024--><p class="noindent" >You can specify an <span class="lstinline"><span 
+<!--l. 6046--><p class="noindent" >You can specify an <span class="lstinline"><span 
 class="pcrr7t-">execution</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">time</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">limit</span></span> for all supported job submission methods. E.g.:
-<!--l. 6028-->
-<div class="lstlisting" id="listing-248"><span class="label"><a 
+<!--l. 6050-->
+<div class="lstlisting" id="listing-247"><span class="label"><a 
  id="x12-179001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -2239,12 +2239,12 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">PT1H</span>
 </div>
-<!--l. 6035--><p class="noindent" >For tasks running with <span class="lstinline"><span 
+<!--l. 6057--><p class="noindent" >For tasks running with <span class="lstinline"><span 
 class="pcrr7t-">background</span></span> or <span class="lstinline"><span 
 class="pcrr7t-">at</span></span>, their jobs will be wrapped using the <span class="lstinline"><span 
 class="pcrr7t-">timeout</span></span> command. For all other
 methods, the relevant time limit directive will be added to their job files.
-<!--l. 6039--><p class="noindent" >The <span class="lstinline"><span 
+<!--l. 6061--><p class="noindent" >The <span class="lstinline"><span 
 class="pcrr7t-">execution</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">time</span><span 
@@ -2254,10 +2254,10 @@ task job has not reported completing within the specified time, the suite will p
 default setting is PT1M, PT2M, PT7M. The accumulated times for these intervals will be roughly 1
 minute, 1 + 2 = 3 minutes and 1 + 2 + 7 = 10 minutes after a task job exceeds its execution time
 limit.)
-<!--l. 6046--><p class="noindent" >
-<!--l. 6046--><p class="noindent" > <h4 id="11.6.1" class="subsubsectionHead"><span class="titlemark"> <a href="#11.6.1"> 11.6.1</a>  <a 
+<!--l. 6068--><p class="noindent" >
+<!--l. 6068--><p class="noindent" > <h4 id="11.6.1" class="subsubsectionHead"><span class="titlemark"> <a href="#11.6.1"> 11.6.1</a>  <a 
  id="x12-18000011.6.1"></a>Execution Time Limit and Execution Timeout </span></h4>
-<!--l. 6048--><p class="noindent" >If you specify an <span class="lstinline"><span 
+<!--l. 6070--><p class="noindent" >If you specify an <span class="lstinline"><span 
 class="pcrr7t-">execution</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">time</span><span 
@@ -2273,7 +2273,7 @@ class="pcrr7t-">handler</span></span> will only be called if the
 job has not completed after the final poll (by default, 10 min after the time limit). This should only happen if the
 submission method you are using is not enforcing wallclock limits (unlikely) or you are unable to contact the
 machine to confirm the job status.
-<!--l. 6055--><p class="noindent" >If you specify an <span class="lstinline"><span 
+<!--l. 6077--><p class="noindent" >If you specify an <span class="lstinline"><span 
 class="pcrr7t-">execution</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">timeout</span></span> and not an <span class="lstinline"><span 
@@ -2292,7 +2292,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">handler</span></span> will be called as soon as the specified time is reached. The job will also
 be polled to check its latest status (possibly resulting in an update in its status and the calling of the relevant event
 handler). This behaviour is deprecated, which users should avoid using.
-<!--l. 6063--><p class="noindent" >If you specify an <span class="lstinline"><span 
+<!--l. 6085--><p class="noindent" >If you specify an <span class="lstinline"><span 
 class="pcrr7t-">execution</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">timeout</span></span> and an <span class="lstinline"><span 
@@ -2302,10 +2302,10 @@ class="pcrr7t-">time</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">limit</span></span> then the execution timeout setting will
 be ignored.
-<!--l. 6067--><p class="noindent" >
-<!--l. 6067--><p class="noindent" > <h4 id="11.7" class="subsectionHead"> <span class="titlemark"> <a href="#11.7"> 11.7</a>  <a 
+<!--l. 6089--><p class="noindent" >
+<!--l. 6089--><p class="noindent" > <h4 id="11.7" class="subsectionHead"> <span class="titlemark"> <a href="#11.7"> 11.7</a>  <a 
  id="x12-18100011.7"></a>Custom Job Submission Methods </span></h4>
-<!--l. 6070--><p class="noindent" >Defining a new batch system handler requires a little Python programming. Use the built-in handlers as examples,
+<!--l. 6092--><p class="noindent" >Defining a new batch system handler requires a little Python programming. Use the built-in handlers as examples,
 and read the documentation in <span class="lstinline"><span 
 class="pcrr7t-">lib</span><span 
 class="pcrr7t-">/</span><span 
@@ -2317,10 +2317,10 @@ class="pcrr7t-">py</span></span>.
                                                                                          
 
                                                                                          
-<!--l. 6076--><p class="noindent" >
-<!--l. 6076--><p class="noindent" > <h4 id="11.7.1" class="subsubsectionHead"><span class="titlemark"> <a href="#11.7.1"> 11.7.1</a>  <a 
+<!--l. 6098--><p class="noindent" >
+<!--l. 6098--><p class="noindent" > <h4 id="11.7.1" class="subsubsectionHead"><span class="titlemark"> <a href="#11.7.1"> 11.7.1</a>  <a 
  id="x12-18200011.7.1"></a>An Example </span></h4>
-<!--l. 6078--><p class="noindent" >The following <span class="lstinline"><span 
+<!--l. 6100--><p class="noindent" >The following <span class="lstinline"><span 
 class="pcrr7t-">qsub</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">py</span></span> module overrides the built-in <span 
@@ -2330,8 +2330,8 @@ class="pcrro7t-">#</span><span
 class="pcrro7t-">PBS</span></span> to <span class="lstinline"><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">QSUB</span></span>:
-<!--l. 6082-->
-<div class="lstlisting" id="listing-249"><span class="label"><a 
+<!--l. 6104-->
+<div class="lstlisting" id="listing-248"><span class="label"><a 
  id="x12-182001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
@@ -2393,10 +2393,10 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">QSUBHandler</span><span 
 class="pcrr7t-">()</span>
 </div>
-<!--l. 6093--><p class="noindent" >If this is in the Python search path (see&#x00A0;<a 
+<!--l. 6115--><p class="noindent" >If this is in the Python search path (see&#x00A0;<a 
 href="#x12-18300011.7.2">11.7.2<!--tex4ht:ref: Where To Put Batch System Handler Modules --></a> below) you can use it by name in suite definitions:
-<!--l. 6096-->
-<div class="lstlisting" id="listing-250"><span class="label"><a 
+<!--l. 6118-->
+<div class="lstlisting" id="listing-249"><span class="label"><a 
  id="x12-182009r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -2577,8 +2577,8 @@ class="pcrr7t-">V</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span>
 </div>
-<!--l. 6111--><p class="noindent" >Generate a job script to see the resulting directives:  <!--l. 6113-->
-<div class="lstlisting" id="listing-251"><span class="label"><a 
+<!--l. 6133--><p class="noindent" >Generate a job script to see the resulting directives:  <!--l. 6135-->
+<div class="lstlisting" id="listing-250"><span class="label"><a 
  id="x12-182021r1"></a></span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2717,14 +2717,14 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">V</span>
 </div>
-<!--l. 6125--><p class="noindent" >(Of course this suite will fail at run time because we only changed the directive format, and PBS does not accept
+<!--l. 6147--><p class="noindent" >(Of course this suite will fail at run time because we only changed the directive format, and PBS does not accept
 <span class="lstinline"><span 
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">QSUB</span></span> directives in reality).
-<!--l. 6129--><p class="noindent" >
-<!--l. 6129--><p class="noindent" > <h4 id="11.7.2" class="subsubsectionHead"><span class="titlemark"> <a href="#11.7.2"> 11.7.2</a>  <a 
+<!--l. 6151--><p class="noindent" >
+<!--l. 6151--><p class="noindent" > <h4 id="11.7.2" class="subsubsectionHead"><span class="titlemark"> <a href="#11.7.2"> 11.7.2</a>  <a 
  id="x12-18300011.7.2"></a>Where To Put Batch System Handler Modules </span></h4>
-<!--l. 6132--><p class="noindent" ><span 
+<!--l. 6154--><p class="noindent" ><span 
 class="cmti-10">Custom batch system handlers must be installed on suite and job hosts </span>in one of these locations:
      <ul class="itemize1">
      <li class="itemize">under <span class="lstinline"><span 
@@ -2754,7 +2754,7 @@ class="pcrr7t-">/</span></span>
      <li class="itemize">or anywhere in <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">PYTHONPATH</span></span></li></ul>
-<!--l. 6140--><p class="noindent" >(A note for Rose users: <span class="lstinline"><span 
+<!--l. 6162--><p class="noindent" >(A note for Rose users: <span class="lstinline"><span 
 class="pcrr7t-">rose</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">suite</span><span 
@@ -2774,12 +2774,12 @@ hosts).
                                                                                          
 
                                                                                          
-<!--l. 6143--><div class="crosslinks"><p class="noindent">[<a 
+<!--l. 6165--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse12.html" >next</a>] [<a 
 href="cug-htmlse10.html" >prev</a>] [<a 
 href="cug-htmlse10.html#tailcug-htmlse10.html" >prev-tail</a>] [<a 
 href="cug-htmlse11.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse11.html" >up</a>] </p></div>
-<!--l. 6143--><p class="noindent" ><a 
+<!--l. 6165--><p class="noindent" ><a 
  id="tailcug-htmlse11.html"></a>   
 </body></html> 
