@@ -446,7 +446,8 @@ class TaskPool(object):
                 "%(id)s: skip action timer %(ctx_key)s" %
                 {"id": id_, "ctx_key": ctx_key_raw})
             return
-        if ctx_key == "poll_timer":
+        if ctx_key == "poll_timer" or ctx_key[0] == "poll_timers":
+            # "poll_timers" for back compat with <=7.6.X
             itask = self.get_task_by_id(id_)
             if itask is None:
                 LOG.warning("%(id)s: task not found, skip" % {"id": id_})
@@ -460,7 +461,7 @@ class TaskPool(object):
                 return
             itask.try_timers[ctx_key[1]] = TaskActionTimer(
                 ctx, delays, num, delay, timeout)
-        else:
+        elif ctx:
             key1, submit_num = ctx_key
             # Convert key1 to type tuple - JSON restores as type list
             # and this will not previously have been converted back
@@ -469,6 +470,11 @@ class TaskPool(object):
             key = (key1, cycle, name, submit_num)
             self.task_events_mgr.event_timers[key] = TaskActionTimer(
                 ctx, delays, num, delay, timeout)
+        else:
+            LOG.exception(
+                "%(id)s: skip action timer %(ctx_key)s" %
+                {"id": id_, "ctx_key": ctx_key_raw})
+            return
         LOG.info("+ %s.%s %s" % (name, cycle, ctx_key))
 
     def release_runahead_task(self, itask):
