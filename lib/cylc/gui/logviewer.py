@@ -122,7 +122,7 @@ class logviewer(object):
         self.logview.set_editable(False)
         # Use a monospace font. This is safe - by testing - setting an
         # illegal font description has no effect.
-        self.logview.modify_font(pango.FontDescription("monospace bold"))
+        self.logview.modify_font(pango.FontDescription("monospace"))
 
         searchbox = gtk.HBox()
         entry = gtk.Entry()
