@@ -21,8 +21,9 @@
 # imported on demand.
 import os
 import re
-from string import ascii_letters, digits
 import sys
+from uuid import uuid4
+from string import ascii_letters, digits
 
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
@@ -526,9 +527,9 @@ To start a new run, stop the old one first with one or more of these:
         cert_obj.gmtime_adj_notAfter(10 * 365 * 24 * 60 * 60)  # 10 years.
         cert_obj.set_issuer(cert_obj.get_subject())
         cert_obj.set_pubkey(pkey_obj)
-        # Set a random serial number to avoid the browser error
+        # Set a random serial number to avoid browser error
         # SEC_ERROR_REUSED_ISSUER_AND_SERIAL.
-        cert_obj.set_serial_number(int(os.urandom(20).encode('hex'), 16))
+        cert_obj.set_serial_number(uuid4().int)
         cert_obj.add_extensions([ext])
         cert_obj.sign(pkey_obj, 'sha256')
         self._dump_item(
