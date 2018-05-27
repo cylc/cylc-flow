@@ -162,20 +162,14 @@ def check_py_module_ver(module, min_ver):
     return res[1]
 
 
-def kpsepath_search(tex_module):
-    """Print outcome of local TeX module search using 'kpsepath' command."""
+def tex_module_search(tex_module):
+    """Print outcome of local TeX module search using 'kpsewhich' command."""
     msg = 'TeX:%s (any)' % tex_module
-    pipeline = (['kpsepath', 'tex'], ['locate', '*tex*%s*' % tex_module],
-                ['wc', '-l'])
+    cmd = ['kpsewhich', '%s.sty' % tex_module]
+    # This is less intensive & quicker than searching via 'find' or 'locate'.
     try:
-        pipe_in = Popen(pipeline[0], stdin=open(os.devnull), stdout=PIPE)
-        for index in range(1, len(pipeline)):
-            pipe_out = Popen(pipeline[index], stdin=pipe_in.stdout,
-                             stdout=PIPE)
-            pipe_in.stdout.close()
-            pipe_in = pipe_out
-        # Test line-count; 'locate' output can be >> for string-length testing
-        check_call(['test', pipe_out.communicate()[0].strip(), '-ne', '0'],
+        process = Popen(cmd, stdin=open(os.devnull), stdout=PIPE)
+        check_call(['test', '-n', process.communicate()[0].strip()],
                    stdin=open(os.devnull), stdout=PIPE, stderr=PIPE)
     except (CalledProcessError, OSError):
         shell_align_write('.', msg, NOTFOUND_MSG)
@@ -226,7 +220,7 @@ def functionality_print(func):
             if tag == 'PY':
                 opt_result[module] = check_py_module_ver(module, ver_req)
             elif tag == 'TEX':
-                opt_result[module] = kpsepath_search(module)
+                opt_result[module] = tex_module_search(module)
             elif tag == 'OTHER':
                 opt_result[module] = cmd_find_ver(module, ver_req, *items[3])
     return
