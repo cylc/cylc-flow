@@ -149,15 +149,16 @@ def check_py_module_ver(module, min_ver):
             module_version = imported_module.__version__
     except ImportError:
         res = [NOTFOUND_MSG, False]
-    try:
-        if min_ver is None:
-            res = ['%s (%s)' % (FOUND_NOVER_MSG, module_version), True]
-        elif parse_version(module_version) >= min_ver:
-            res = ['%s (%s)' % (MINVER_MET_MSG, module_version), True]
-        else:
-            res = ['%s (%s)' % (MINVER_NOTMET_MSG, module_version), False]
-    except AttributeError:
-        res = [FOUND_UNKNOWNVER_MSG, False]
+    else:
+        try:
+            if min_ver is None:
+                res = ['%s (%s)' % (FOUND_NOVER_MSG, module_version), True]
+            elif parse_version(module_version) >= min_ver:
+                res = ['%s (%s)' % (MINVER_MET_MSG, module_version), True]
+            else:
+                res = ['%s (%s)' % (MINVER_NOTMET_MSG, module_version), False]
+        except AttributeError:
+            res = [FOUND_UNKNOWNVER_MSG, False]
     shell_align_write('.', msg, res[0])
     return res[1]
 
