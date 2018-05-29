@@ -19,6 +19,7 @@ from isodatetime.parsers import DurationParser
 
 SECONDS_PER_HOUR = 3600.0
 
+
 def duration_to_hours(iso8601_duration):
     """Format an iso8601 duration string as floating-point hours.
 

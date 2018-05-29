@@ -36,7 +36,7 @@ def duration_to_seconds(iso8601_duration):
         >>> duration_to_seconds('PT1M')
         60.0
         >>> duration_to_seconds('PT1H')
-        3600.0 
+        3600.0
 
         >>> # Exceptions.
         >>> try:
