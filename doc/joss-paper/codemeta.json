@@ -24,14 +24,14 @@
       "affiliation": "Met Office"
     }
   ],
-  "identifier": "https://zenodo.org/record/1208732#.WsmAj9axWV4",
+  "identifier": "https://doi.org/10.5281/zenodo.594577",
   "codeRepository": "https://github.com/cylc/cylc",
-  "datePublished": "2018-04-08",
-  "dateModified": "2018-04-08",
-  "dateCreated": "2018-04-08",
-  "description": "Cylc is a workflow engine for automation of ongoing cycling workflows",
-  "keywords": "workflow, metascheduler, distributed, automation, cycling, forecasting, climate, weather",
-  "license": "GPV v3.0",
+  "datePublished": "2018-05-22",
+  "dateModified": "2018-05-22",
+  "dateCreated": "2018-05-22",
+  "description": "Cylc is a workflow engine for orchestrating cycling systems",
+  "keywords": "workflow, metascheduling, scheduling, distributed, automation, cycling, forecasting, climate, weather",
+  "license": "GPL v3.0",
   "title": "Cylc: a workflow engine for cycling systems",
-  "version": "https://cylc.github.io/cylc/ v7.6.1"
+  "version": "https://cylc.github.io/cylc/ v7.7.0"
 }
