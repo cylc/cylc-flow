@@ -45,4 +45,4 @@ def duration_to_seconds(iso8601_duration):
         ...     print type(exc)
         <class 'isodatetime.parsers.ISO8601SyntaxError'>
     """
-    return DurationParser().parse(duration).get_seconds()
+    return DurationParser().parse(iso8601_duration).get_seconds()

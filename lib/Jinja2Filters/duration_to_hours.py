@@ -46,5 +46,5 @@ def duration_to_hours(iso8601_duration):
         ...     print type(exc)
         <class 'isodatetime.parsers.ISO8601SyntaxError'>
     """
-    s = DurationParser().parse(duration).get_seconds()
+    s = DurationParser().parse(iso8601_duration).get_seconds()
     return s / SECONDS_PER_HOUR
