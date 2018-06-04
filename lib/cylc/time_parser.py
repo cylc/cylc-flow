@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2018 NIWA
