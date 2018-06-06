@@ -18,7 +18,7 @@
 # cylc help and basic invocation.
 
 . "$(dirname "$0")/test_header"
-set_test_number 45
+set_test_number 136
 
 # Top help
 run_ok "${TEST_NAME_BASE}-0" cylc
@@ -108,5 +108,11 @@ run_ok "${TEST_NAME_BASE}-version.stdout" \
     test -n "${TEST_NAME_BASE}-version.stdout"
 cmp_ok "${TEST_NAME_BASE}-version.stdout" "${TEST_NAME_BASE}---version.stdout"
 cmp_ok "${TEST_NAME_BASE}-version.stdout" "${TEST_NAME_BASE}-V.stdout"
+
+# --help with no DISPLAY
+while read ITEM; do
+    run_ok "${TEST_NAME_BASE}-no-display-${ITEM}--help" \
+        env DISPLAY= cylc "${ITEM#cylc-}" --help
+done < <(cd "${CYLC_DIR}/bin" && ls 'cylc-'*)
 
 exit
