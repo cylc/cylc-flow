@@ -381,7 +381,9 @@ previous section, emerges naturally at run time.
 \section{Installation}
 \label{Requirements}
 
-Cylc runs on Unix variants, usually Linux, and including Apple OS X.
+Cylc runs on Linux. It is tested quite thoroughly on modern RHEL and Ubuntu
+distros. Some users have also managed to make it work on other Unix variants
+including Apple OS X.
 
 \subsection{Third-Party Software Packages}
 
@@ -394,6 +396,8 @@ For Cylc's HTTPS communications layer:
   \item {\bf pyOpenSSL} - \url{http://www.pyopenssl.org/}
   \item {\bf python-requests} - \url{http://docs.python-requests.org/}
   \item ({\bf python-urllib3} - should be bundled with python-requests)
+  \item ({\bf Python \lstinline@>=@ 2.7.9} (but not yet Python 3) is
+        recommended for the best security.)
 \end{myitemize}
 
 The following packages are highly recommended, but are technically optional as
