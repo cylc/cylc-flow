@@ -27,7 +27,7 @@ try:
     import matplotlib.cm as colour_map
     import matplotlib.pyplot as plt
     CAN_PLOT = True
-except ImportError:
+except (ImportError, RuntimeError):
     CAN_PLOT = False
 
 from . import (PROFILE_MODE_TIME, PROFILE_MODE_CYLC, SUMMARY_LINE_REGEX,
