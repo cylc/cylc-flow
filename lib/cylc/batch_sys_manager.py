@@ -28,12 +28,6 @@ system handler logic.
 Each batch system handler class should instantiate with no argument, and may
 have the following constants and methods:
 
-batch_sys.filter_poll_output(out, job_id) => boolean
-    * If this method is available, it will be called after the batch system's
-      poll command is called and returns zero. The method should read the
-      output to see if job_id is still alive in the batch system, and return
-      True if so.
-
 batch_sys.filter_poll_many_output(out) => job_ids
     * Called after the batch system's poll many command. The method should read
       the output and return a list of job IDs that are still in the batch
@@ -69,6 +63,19 @@ batch_sys.submit(job_file_path) => ret_code, out, err
       beyond just running a system or shell command. See also
       "batch_sys.SUBMIT_CMD".
 
+batch_sys.KILL_CMD_TMPL
+    *  A Python string template for getting the batch system command to remove
+       and terminate a job ID. The command is formed using the logic:
+           batch_sys.KILL_CMD_TMPL % {"job_id": job_id}
+
+batch_sys.POLL_CANT_CONNECT_ERR
+    * A string containing an error message. If this is defined, when a poll
+      command returns a non-zero return code and its STDERR contains this
+      string, then the poll result will not be trusted, because it is assumed
+      that the batch system is currently unavailable. Jobs submitted to the
+      batch system will be assumed OK until we are able to connect to the batch
+      system again.
+
 batch_sys.SHOULD_KILL_PROC_GROUP
     * A boolean to indicate whether it is necessary to kill a job by sending
       a signal to its Unix process group.
@@ -76,11 +83,6 @@ batch_sys.SHOULD_KILL_PROC_GROUP
 batch_sys.SHOULD_POLL_PROC_GROUP
     * A boolean to indicate whether it is necessary to poll a job by its PID
       as well as the job ID.
-
-batch_sys.KILL_CMD_TMPL
-    *  A Python string template for getting the batch system command to remove
-       and terminate a job ID. The command is formed using the logic:
-           batch_sys.KILL_CMD_TMPL % {"job_id": job_id}
 
 batch_sys.REC_ID_FROM_SUBMIT_ERR
 batch_sys.REC_ID_FROM_SUBMIT_OUT
@@ -537,10 +539,15 @@ class BatchSysManager(object):
                     exc.filename = cmd[0]
                 sys.stderr.write(str(exc) + "\n")
                 return
-            proc.wait()
+            ret_code = proc.wait()
             out, err = proc.communicate()
             sys.stderr.write(err)
-            if hasattr(batch_sys, "filter_poll_many_output"):
+            if (ret_code and hasattr(batch_sys, "POLL_CANT_CONNECT_ERR") and
+                    batch_sys.POLL_CANT_CONNECT_ERR in err):
+                # Poll command failed because it cannot connect to batch system
+                # Assume jobs are still healthy until the batch system is back.
+                bad_ids[:] = []
+            elif hasattr(batch_sys, "filter_poll_many_output"):
                 # Allow custom filter
                 for id_ in batch_sys.filter_poll_many_output(out):
                     try:
