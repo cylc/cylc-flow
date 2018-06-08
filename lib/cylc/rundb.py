@@ -25,7 +25,6 @@ import os
 import tarfile
 import re
 from glob import glob
-from time import sleep
 
 import cylc.flags
 from cylc.wallclock import get_current_time_string

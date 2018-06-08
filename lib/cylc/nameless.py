@@ -443,9 +443,6 @@ class CylcNamelessService(object):
             data["entries"] = data["entries"][offset:offset + per_page]
         else:
             data["n_pages"] = 1
-        # Get suite info for each entry
-        for entry in data["entries"]:
-            user_suite_dir = os.path.join(user_suite_dir_root, entry["name"])
         data["time"] = strftime("%Y-%m-%dT%H:%M:%SZ", gmtime())
         if form == "json":
             return json.dumps(data)
