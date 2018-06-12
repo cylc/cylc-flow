@@ -18,7 +18,8 @@
 # cylc help and basic invocation.
 
 . "$(dirname "$0")/test_header"
-set_test_number 136
+# Number of tests depends on the number of 'cylc' commands.
+set_test_number $(( 45 + $(cd "${CYLC_DIR}/bin" && ls 'cylc-'* | wc -l) ))
 
 # Top help
 run_ok "${TEST_NAME_BASE}-0" cylc
