@@ -15,15 +15,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test for "cylc nameless", behaviour of job entry with no "job.stdout".
+# Tests for "cylc review", "logo", "title" and "host" settings.
 #-------------------------------------------------------------------------------
 . "$(dirname "$0")/test_header"
 if ! python -c 'import cherrypy' 2>'/dev/null'; then
     skip_all '"cherrypy" not installed'
 fi
 
-set_test_number 4
+set_test_number 10
 #-------------------------------------------------------------------------------
+# Initialise suite and associated config
+
+# Rose conf to extract via review
+mkdir 'conf'
+cat >'conf/rose.conf' <<'__ROSE_CONF__'
+[rose-bush]
+logo=src="rose-favicon.png" alt="Rose Logo"
+title=Humpty Dumpty
+host=The Wall
+__ROSE_CONF__
+
 # Initialise, validate and run a suite for testing with
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
@@ -33,30 +44,43 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 export CYLC_CONF_PATH=
 cylc register "${SUITE_NAME}" "${TEST_DIR}"
 cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null'
-
-# Remove the "job.stdout" entry from the suite's public database.
-sqlite3 "${TEST_DIR}/log/db" \
-    'DELETE FROM task_job_logs WHERE filename=="job.stdout";' 2>'/dev/null' || true
 #-------------------------------------------------------------------------------
-# Initialise WSGI application for the cylc nameless web service
-cylc_ws_init 'cylc' 'nameless'
+# Initialise WSGI application for the cylc review web service
+cylc_ws_init 'cylc' 'review'
 if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
     exit 1
 fi
 #-------------------------------------------------------------------------------
-# Data transfer output check for case with no job output publicly viewable
-TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs"
+# Data transfer output check for a suite with Rose config provided
+TEST_NAME="${TEST_NAME_BASE}-200-curl-root-json"
+run_ok "${TEST_NAME}" curl "${TEST_CYLC_WS_URL}/?form=json"
+cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
+    "[('logo',), 'src=\"rose-favicon.png\" alt=\"Rose Logo\"']" \
+    "[('title',), 'Humpty Dumpty']" \
+    "[('host',), 'The Wall']"
+
+TEST_NAME="${TEST_NAME_BASE}-200-curl-suites-json"
+run_ok "${TEST_NAME}" curl "${TEST_CYLC_WS_URL}/suites/${USER}?form=json"
+cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
+    "[('logo',), 'src=\"rose-favicon.png\" alt=\"Rose Logo\"']" \
+    "[('title',), 'Humpty Dumpty']" \
+    "[('host',), 'The Wall']"
+
+TEST_NAME="${TEST_NAME_BASE}-200-curl-cycles-json"
+run_ok "${TEST_NAME}" \
+    curl "${TEST_CYLC_WS_URL}/cycles/${USER}/${SUITE_NAME}?form=json"
+cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
+    "[('logo',), 'src=\"rose-favicon.png\" alt=\"Rose Logo\"']" \
+    "[('title',), 'Humpty Dumpty']" \
+    "[('host',), 'The Wall']"
+
+TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-json"
 run_ok "${TEST_NAME}" \
     curl "${TEST_CYLC_WS_URL}/taskjobs/${USER}/${SUITE_NAME}?form=json"
-FOO0="{'cycle': '20000101T0000Z', 'name': 'foo0', 'submit_num': 1}"
-FOO0_OUT='log/job/20000101T0000Z/foo0/01/job.stdout'
-FOO0_OUT_MTIME=$(stat -c'%Y' "${TEST_DIR}/${FOO0_OUT}")
-FOO0_OUT_SIZE=$(stat -c'%s' "${TEST_DIR}/${FOO0_OUT}")
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
-    "[('entries', ${FOO0}, 'logs', 'job.stdout', 'path'), '${FOO0_OUT}']" \
-    "[('entries', ${FOO0}, 'logs', 'job.stdout', 'size'), ${FOO0_OUT_SIZE}]" \
-    "[('entries', ${FOO0}, 'logs', 'job.stdout', 'mtime'), ${FOO0_OUT_MTIME}]" \
-    "[('entries', ${FOO0}, 'logs', 'job.stdout', 'exists'), True]"
+    "[('logo',), 'src=\"rose-favicon.png\" alt=\"Rose Logo\"']" \
+    "[('title',), 'Humpty Dumpty']" \
+    "[('host',), 'The Wall']"
 #-------------------------------------------------------------------------------
 # Tidy up - note suite trivial so stops early on by itself
 purge_suite "${SUITE_NAME}"

@@ -21,7 +21,7 @@
 set_test_number 2
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}"
-run_ok "${TEST_NAME}" python -m doctest "${CYLC_HOME}/lib/cylc/nameless.py"
+run_ok "${TEST_NAME}" python -m doctest "${CYLC_HOME}/lib/cylc/review.py"
 sed -i /1034h/d "${TEST_NAME}.stdout"  # Remove some nasty unicode output.
 cmp_ok "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" /dev/null
 

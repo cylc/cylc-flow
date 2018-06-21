@@ -15,38 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test for "cylc nameless", view file with unicode characters.
+# Test for "cylc review", behaviour of job entry with no "job.stdout".
 #-------------------------------------------------------------------------------
 . "$(dirname "$0")/test_header"
 if ! python -c 'import cherrypy' 2>'/dev/null'; then
     skip_all '"cherrypy" not installed'
 fi
 
-set_test_number 8
+set_test_number 4
 #-------------------------------------------------------------------------------
 # Initialise, validate and run a suite for testing with
-init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
-#!Jinja2
-[cylc]
-    UTC mode = True
-    abort if any task fails = True
-[scheduling]
-    initial cycle point = 1999
-    final cycle point = 2000
-    [[dependencies]]
-        [[[P1Y]]]
-            graph = echo-euro
-[runtime]
-    [[echo-euro]]
-        script = echo-euro >"$0.txt"
-__SUITE_RC__
-
-mkdir -p 'bin'
-cat >'bin/echo-euro' <<'__BASH__'
-#!/bin/bash
-echo €
-__BASH__
-chmod +x 'bin/echo-euro'
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
@@ -54,35 +33,30 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 export CYLC_CONF_PATH=
 cylc register "${SUITE_NAME}" "${TEST_DIR}"
 cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null'
+
+# Remove the "job.stdout" entry from the suite's public database.
+sqlite3 "${TEST_DIR}/log/db" \
+    'DELETE FROM task_job_logs WHERE filename=="job.stdout";' 2>'/dev/null' || true
 #-------------------------------------------------------------------------------
-# Initialise WSGI application for the cylc nameless web service
-TEST_NAME="${TEST_NAME_BASE}-ws-init"
-cylc_ws_init 'cylc' 'nameless'
+# Initialise WSGI application for the cylc review web service
+cylc_ws_init 'cylc' 'review'
 if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
     exit 1
 fi
 #-------------------------------------------------------------------------------
-# Tests of unicode output for standard '.txt' format
-LOG_FILE='log/job/20000101T0000Z/echo-euro/01/job.txt'
-
-TEST_NAME="${TEST_NAME_BASE}-200-curl-view-default"
-run_ok "${TEST_NAME}" curl \
-    "${TEST_CYLC_WS_URL}/view/${USER}/${SUITE_NAME}?path=${LOG_FILE}"
-cmp_ok "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" <<<'€'
-
-TEST_NAME="${TEST_NAME_BASE}-200-curl-view-text"
-run_ok "${TEST_NAME}" curl \
-    "${TEST_CYLC_WS_URL}/view/${USER}/${SUITE_NAME}?path=${LOG_FILE}&mode=text"
-cmp_ok "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" <<<'€'
-#-------------------------------------------------------------------------------
-# Test of unicode output for zipped 'tar.gz' format
-TAR_FILE='job-19990101T0000Z.tar.gz'
-
-TEST_NAME="${TEST_NAME_BASE}-200-curl-view-default-tar"
-(cd "${TEST_DIR}/log" && tar -czf "${TAR_FILE}" 'job/19990101T0000Z')
-run_ok "${TEST_NAME}" curl \
-    "${TEST_CYLC_WS_URL}/view/${USER}/${SUITE_NAME}?path=log/${TAR_FILE}&path_in_tar=job/19990101T0000Z/echo-euro/01/job.txt&mode=text"
-cmp_ok "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" <<<'€'
+# Data transfer output check for case with no job output publicly viewable
+TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs"
+run_ok "${TEST_NAME}" \
+    curl "${TEST_CYLC_WS_URL}/taskjobs/${USER}/${SUITE_NAME}?form=json"
+FOO0="{'cycle': '20000101T0000Z', 'name': 'foo0', 'submit_num': 1}"
+FOO0_OUT='log/job/20000101T0000Z/foo0/01/job.stdout'
+FOO0_OUT_MTIME=$(stat -c'%Y' "${TEST_DIR}/${FOO0_OUT}")
+FOO0_OUT_SIZE=$(stat -c'%s' "${TEST_DIR}/${FOO0_OUT}")
+cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
+    "[('entries', ${FOO0}, 'logs', 'job.stdout', 'path'), '${FOO0_OUT}']" \
+    "[('entries', ${FOO0}, 'logs', 'job.stdout', 'size'), ${FOO0_OUT_SIZE}]" \
+    "[('entries', ${FOO0}, 'logs', 'job.stdout', 'mtime'), ${FOO0_OUT_MTIME}]" \
+    "[('entries', ${FOO0}, 'logs', 'job.stdout', 'exists'), True]"
 #-------------------------------------------------------------------------------
 # Tidy up - note suite trivial so stops early on by itself
 purge_suite "${SUITE_NAME}"

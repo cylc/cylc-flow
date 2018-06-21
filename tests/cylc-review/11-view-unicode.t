@@ -15,73 +15,76 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test for "cylc nameless", cycles/taskjobs list, suite server host:port.
-# Require a version of cylc with cylc/cylc#1705 merged in.
+# Test for "cylc review", view file with unicode characters.
 #-------------------------------------------------------------------------------
 . "$(dirname "$0")/test_header"
 if ! python -c 'import cherrypy' 2>'/dev/null'; then
     skip_all '"cherrypy" not installed'
 fi
 
-set_test_number 6
+set_test_number 8
 #-------------------------------------------------------------------------------
 # Initialise, validate and run a suite for testing with
 init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 #!Jinja2
 [cylc]
     UTC mode = True
-    [[events]]
-        timeout = PT2M
-        abort on timeout = True
+    abort if any task fails = True
 [scheduling]
-    initial cycle point = 2000
+    initial cycle point = 1999
     final cycle point = 2000
     [[dependencies]]
         [[[P1Y]]]
-            graph = loser
+            graph = echo-euro
 [runtime]
-    [[loser]]
-        script = false
+    [[echo-euro]]
+        script = echo-euro >"$0.txt"
 __SUITE_RC__
+
+mkdir -p 'bin'
+cat >'bin/echo-euro' <<'__BASH__'
+#!/bin/bash
+echo €
+__BASH__
+chmod +x 'bin/echo-euro'
 
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 
-# Background to leave sitting in stalled state
-cylc run --debug --no-detach $SUITE_NAME 2>'/dev/null' &
+export CYLC_CONF_PATH=
+cylc register "${SUITE_NAME}" "${TEST_DIR}"
+cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null'
 #-------------------------------------------------------------------------------
-# Initialise WSGI application for the cylc nameless web service
+# Initialise WSGI application for the cylc review web service
 TEST_NAME="${TEST_NAME_BASE}-ws-init"
-cylc_ws_init 'cylc' 'nameless'
+cylc_ws_init 'cylc' 'review'
 if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
     exit 1
 fi
 #-------------------------------------------------------------------------------
-# Data transfer output check for a specific suite's host and port
+# Tests of unicode output for standard '.txt' format
+LOG_FILE='log/job/20000101T0000Z/echo-euro/01/job.txt'
 
-SRV_D="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/.service"
-CONTACT="${SRV_D}/contact"
-poll '!' test -s "${CONTACT}"
-sleep 1
-PORT="$(awk -F= '$1 ~ /CYLC_SUITE_PORT/ {print $2}' "${CONTACT}")"
-HOST="$(awk -F= '$1 ~ /CYLC_SUITE_HOST/ {print $2}' "${CONTACT}")"
-HOST=${HOST%%.*} # strip domain
+TEST_NAME="${TEST_NAME_BASE}-200-curl-view-default"
+run_ok "${TEST_NAME}" curl \
+    "${TEST_CYLC_WS_URL}/view/${USER}/${SUITE_NAME}?path=${LOG_FILE}"
+cmp_ok "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" <<<'€'
 
-if [[ -n "${HOST}" && -n "${PORT}" ]]; then
-    for METHOD in 'cycles' 'taskjobs'; do
-        TEST_NAME="${TEST_NAME_BASE}-ws-run-${METHOD}"
-        ESC_SUITE_NAME="$(echo ${SUITE_NAME} | sed 's|/|%2F|g')"
-        URL_NAME="${TEST_CYLC_WS_URL}/${METHOD}/${USER}?suite=${ESC_SUITE_NAME}&form=json"
-        run_ok "${TEST_NAME}" curl "${URL_NAME}"
-        # cat "${TEST_NAME}.stdout" "${TEST_NAME}.stderr" >&2
-        cylc_ws_json_greps "${TEST_NAME}-json" "${TEST_NAME}.stdout" "[('states', 'server',), '${HOST}:${PORT}']"
-    done
-else
-    skip 4 'Cannot determine suite host or port'
-fi
+TEST_NAME="${TEST_NAME_BASE}-200-curl-view-text"
+run_ok "${TEST_NAME}" curl \
+    "${TEST_CYLC_WS_URL}/view/${USER}/${SUITE_NAME}?path=${LOG_FILE}&mode=text"
+cmp_ok "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" <<<'€'
 #-------------------------------------------------------------------------------
-# Tidy up
-cylc stop "${SUITE_NAME}"
+# Test of unicode output for zipped 'tar.gz' format
+TAR_FILE='job-19990101T0000Z.tar.gz'
+
+TEST_NAME="${TEST_NAME_BASE}-200-curl-view-default-tar"
+(cd "${TEST_DIR}/log" && tar -czf "${TAR_FILE}" 'job/19990101T0000Z')
+run_ok "${TEST_NAME}" curl \
+    "${TEST_CYLC_WS_URL}/view/${USER}/${SUITE_NAME}?path=log/${TAR_FILE}&path_in_tar=job/19990101T0000Z/echo-euro/01/job.txt&mode=text"
+cmp_ok "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" <<<'€'
+#-------------------------------------------------------------------------------
+# Tidy up - note suite trivial so stops early on by itself
 purge_suite "${SUITE_NAME}"
 cylc_ws_kill
 exit

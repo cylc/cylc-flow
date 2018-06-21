@@ -150,7 +150,7 @@ def _configure(service_cls):
     cherrypy.config["tools.encode.on"] = True
     cherrypy.config["tools.encode.encoding"] = "utf-8"
     config = {}
-    static_lib = get_util_home("lib", "cylc", "cylc-nameless", "static")
+    static_lib = get_util_home("lib", "cylc", "cylc-review", "static")
     for name in os.listdir(static_lib):
         path = os.path.join(static_lib, name)
         if os.path.isdir(path):
@@ -166,7 +166,7 @@ def _configure(service_cls):
 
 
 def _get_server_status(service_cls):
-    """Return a dict containing 'cylc nameless' quick server status."""
+    """Return a dict containing 'cylc review' quick server status."""
     ret = {}
     log_root_glob = os.path.expanduser(LOG_ROOT_TMPL % {
         "ns": service_cls.NS,

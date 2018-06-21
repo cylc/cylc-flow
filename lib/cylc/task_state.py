@@ -170,7 +170,7 @@ TASK_STATUSES_AUTO_EXPAND = set([
     TASK_STATUS_FAILED,
 ])
 
-# Tasks statuses grouped for cylc nameless 'create_suite_cycles_summary()'
+# Tasks statuses grouped for cylc review 'create_suite_cycles_summary()'
 TASK_STATUS_GROUPS = {
     "active": list(TASK_STATUSES_NOT_STALLED),
     "fail": list(TASK_STATUSES_FAILURE),

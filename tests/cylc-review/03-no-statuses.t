@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test for "cylc nameless", jobs list no statuses filter logic, #1762.
+# Test for "cylc review", jobs list no statuses filter logic, #1762.
 #-------------------------------------------------------------------------------
 . "$(dirname "$0")/test_header"
 if ! python -c 'import cherrypy' 2>'/dev/null'; then
@@ -32,8 +32,8 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 
 cylc run --debug --no-detach $SUITE_NAME 2>'/dev/null'
 #-------------------------------------------------------------------------------
-# Initialise WSGI application for the cylc nameless web service
-cylc_ws_init 'cylc' 'nameless'
+# Initialise WSGI application for the cylc review web service
+cylc_ws_init 'cylc' 'review'
 if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
     exit 1
 fi

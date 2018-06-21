@@ -103,7 +103,7 @@
 #         * TEST_CYLC_WS_PID - PID of the service server
 #         * TEST_CYLC_WS_PORT - Port of the service server on localhost.
 #         * TEST_CYLC_WS_URL - URL of service server.
-#         E.g. cylc_ws_init cylc nameless
+#         E.g. cylc_ws_init cylc review
 #     cylc_ws_kill
 #         Kill a web service server started by "cylc_ws_init" and remove
 #         generated log and status files.

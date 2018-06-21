@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Basic tests for "cycl nameless".
+# Basic tests for "cylc review".
 #-------------------------------------------------------------------------------
 . "$(dirname "$0")/test_header"
 if ! python -c 'import cherrypy' 2>'/dev/null'; then
@@ -34,13 +34,13 @@ export CYLC_CONF_PATH=
 cylc register "${SUITE_NAME}" "${TEST_DIR}"
 cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null'
 #-------------------------------------------------------------------------------
-# Initialise WSGI application for the cylc nameless web service
-cylc_ws_init 'cylc' 'nameless'
+# Initialise WSGI application for the cylc review web service
+cylc_ws_init 'cylc' 'review'
 if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
     exit 1
 fi
 #-------------------------------------------------------------------------------
-# Data transfer output check for nameless homepage
+# Data transfer output check for review homepage
 TEST_NAME="${TEST_NAME_BASE}-curl-root"
 echo ${TEST_CYLC_WS_URL} >&2
 # try -s opt to prvent weird header
@@ -55,7 +55,7 @@ TEST_NAME="${TEST_NAME_BASE}-200-curl-root-json"
 run_ok "${TEST_NAME}" curl "${TEST_CYLC_WS_URL}/?form=json"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('cylc_version',), '$(cylc version | cut -d' ' -f 2)']" \
-    "[('title',), 'Cylc Nameless']" \
+    "[('title',), 'Cylc Review']" \
     "[('host',), '$(hostname)']"
 #-------------------------------------------------------------------------------
 # Data transfer output check for a specific user's page including non-existent
@@ -67,7 +67,7 @@ TEST_NAME="${TEST_NAME_BASE}-200-curl-suites-json"
 run_ok "${TEST_NAME}" curl "${TEST_CYLC_WS_URL}/suites/${USER}?form=json"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('cylc_version',), '$(cylc version | cut -d' ' -f 2)']" \
-    "[('title',), 'Cylc Nameless']" \
+    "[('title',), 'Cylc Review']" \
     "[('host',), '$(hostname)']" \
     "[('user',), '${USER}']" \
     "[('entries', {'name': '${SUITE_NAME}'}, 'name',), '${SUITE_NAME}']" \
@@ -102,7 +102,7 @@ run_ok "${TEST_NAME}" \
     curl "${TEST_CYLC_WS_URL}/cycles/${USER}/${SUITE_NAME}?form=json"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('cylc_version',), '$(cylc version | cut -d' ' -f 2)']" \
-    "[('title',), 'Cylc Nameless']" \
+    "[('title',), 'Cylc Review']" \
     "[('host',), '$(hostname)']" \
     "[('user',), '${USER}']" \
     "[('suite',), '${SUITE_NAME}']" \
@@ -127,7 +127,7 @@ FOO1="{'cycle': '20000101T0000Z', 'name': 'foo1', 'submit_num': 1}"
 FOO1_JOB='log/job/20000101T0000Z/foo1/01/job'
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('cylc_version',), '$(cylc version | cut -d' ' -f 2)']" \
-    "[('title',), 'Cylc Nameless']" \
+    "[('title',), 'Cylc Review']" \
     "[('host',), '$(hostname)']" \
     "[('user',), '${USER}']" \
     "[('suite',), '${SUITE_NAME}']" \
@@ -195,7 +195,7 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
 
 #-------------------------------------------------------------------------------
 # Data transfer output check for a suite run directory with only a "log/db"
-TEST_DIR2="$(mktemp -d --tmpdir="${HOME}/cylc-run" "ctb-cylc-nameless-00-XXXXXXXX")"
+TEST_DIR2="$(mktemp -d --tmpdir="${HOME}/cylc-run" "ctb-cylc-review-00-XXXXXXXX")"
 SUITE_NAME2="$(basename "${TEST_DIR2}")"
 cp "${TEST_DIR}/log/db" "${TEST_DIR2}/"
 run_ok "${TEST_NAME}-bare" \
@@ -253,7 +253,7 @@ grep_ok 'HTTP/.* 403 Forbidden' "${TEST_NAME}.stdout"
 # 2. By absolute path to imaginary suite directory.
 TEST_NAME="${TEST_NAME_BASE}-403-curl-view-outside-imag"
 IMG_TEST_DIR="$(mktemp -d --tmpdir="${HOME}/cylc-run" \
-    "ctb-cylc-nameless-00-XXXXXXXX")"
+    "ctb-cylc-review-00-XXXXXXXX")"
 echo 'Welcome to the imaginery suite.'>"${IMG_TEST_DIR}/welcome.txt"
 run_ok "${TEST_NAME}" \
     curl -I \

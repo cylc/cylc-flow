@@ -18,20 +18,20 @@
 #
 #-------------------------------------------------------------------------------
 #  NAME
-#      cylc nameless
+#      cylc review
 #
 #  SYNOPSIS
-#      cylc nameless start [PORT] # start ad-hoc web service server (on PORT)
-#      cylc nameless stop         # stop ad-hoc web service server
-#      cylc nameless stop -y      # stop ad-hoc web service server w/o prompting
-#      cylc nameless              # print status of ad-hoc web service server
+#      cylc review start [PORT] # start ad-hoc web service server (on PORT)
+#      cylc review stop         # stop ad-hoc web service server
+#      cylc review stop -y      # stop ad-hoc web service server w/o prompting
+#      cylc review              # print status of ad-hoc web service server
 #
 #  DESCRIPTION
-#      Start/stop ad-hoc Cylc Nameless web service server.
+#      Start/stop ad-hoc Cylc Review web service server.
 #
-#      For "cylc nameless start", if PORT is not specified, use port 8080.
+#      For "cylc review start", if PORT is not specified, use port 8080.
 #
-#      Cylc Nameless is a web service for browsing users' suite logs via
+#      Cylc Review is a web service for browsing users' suite logs via
 #      an HTTP interface.
 #
 #  OPTIONS
@@ -42,4 +42,4 @@
 #          (For start only.) Include web service name under root of URL.
 #-------------------------------------------------------------------------------
 
-exec python -m cylc.nameless "$@"
+exec python -m cylc.review "$@"

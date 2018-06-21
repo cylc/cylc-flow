@@ -15,28 +15,30 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Tests for "cylc nameless", "logo", "title" and "host" settings.
+# Test for "cylc review", jobs list, fuzzy time flag.
 #-------------------------------------------------------------------------------
 . "$(dirname "$0")/test_header"
 if ! python -c 'import cherrypy' 2>'/dev/null'; then
     skip_all '"cherrypy" not installed'
 fi
 
-set_test_number 10
+set_test_number 14
 #-------------------------------------------------------------------------------
-# Initialise suite and associated config
-
-# Rose conf to extract via nameless
-mkdir 'conf'
-cat >'conf/rose.conf' <<'__ROSE_CONF__'
-[rose-bush]
-logo=src="rose-favicon.png" alt="Rose Logo"
-title=Humpty Dumpty
-host=The Wall
-__ROSE_CONF__
-
 # Initialise, validate and run a suite for testing with
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
+#!Jinja2
+[cylc]
+    UTC mode = True
+[scheduling]
+    initial cycle point = 2000
+    final cycle point = 2000
+    [[dependencies]]
+        [[[P1Y]]]
+            graph = foo
+[runtime]
+    [[foo]]
+        script = true
+__SUITE_RC__
 
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
@@ -45,42 +47,49 @@ export CYLC_CONF_PATH=
 cylc register "${SUITE_NAME}" "${TEST_DIR}"
 cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null'
 #-------------------------------------------------------------------------------
-# Initialise WSGI application for the cylc nameless web service
-cylc_ws_init 'cylc' 'nameless'
+# Initialise WSGI application for the cylc review web service
+TEST_NAME="${TEST_NAME_BASE}-ws-init"
+cylc_ws_init 'cylc' 'review'
 if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
     exit 1
 fi
 #-------------------------------------------------------------------------------
-# Data transfer output check for a suite with Rose config provided
-TEST_NAME="${TEST_NAME_BASE}-200-curl-root-json"
-run_ok "${TEST_NAME}" curl "${TEST_CYLC_WS_URL}/?form=json"
+# Data transfer output check for a specific user's/suite's 'fuzzy time'
+TEST_NAME="${TEST_NAME_BASE}-200-curl-suites"
+run_ok "${TEST_NAME}" curl \
+    "${TEST_CYLC_WS_URL}/suites/${USER}?form=json"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
-    "[('logo',), 'src=\"rose-favicon.png\" alt=\"Rose Logo\"']" \
-    "[('title',), 'Humpty Dumpty']" \
-    "[('host',), 'The Wall']"
+    "[('no_fuzzy_time',), '0']"
 
-TEST_NAME="${TEST_NAME_BASE}-200-curl-suites-json"
-run_ok "${TEST_NAME}" curl "${TEST_CYLC_WS_URL}/suites/${USER}?form=json"
+TEST_NAME="${TEST_NAME_BASE}-200-curl-suites-no-fuzzy-time"
+run_ok "${TEST_NAME}" curl \
+    "${TEST_CYLC_WS_URL}/suites/${USER}?form=json&no_fuzzy_time=1"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
-    "[('logo',), 'src=\"rose-favicon.png\" alt=\"Rose Logo\"']" \
-    "[('title',), 'Humpty Dumpty']" \
-    "[('host',), 'The Wall']"
+    "[('no_fuzzy_time',), '1']"
 
-TEST_NAME="${TEST_NAME_BASE}-200-curl-cycles-json"
-run_ok "${TEST_NAME}" \
-    curl "${TEST_CYLC_WS_URL}/cycles/${USER}/${SUITE_NAME}?form=json"
+TEST_NAME="${TEST_NAME_BASE}-200-curl-cycles"
+run_ok "${TEST_NAME}" curl \
+    "${TEST_CYLC_WS_URL}/cycles/${USER}/${SUITE_NAME}?form=json"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
-    "[('logo',), 'src=\"rose-favicon.png\" alt=\"Rose Logo\"']" \
-    "[('title',), 'Humpty Dumpty']" \
-    "[('host',), 'The Wall']"
+    "[('no_fuzzy_time',), '0']"
 
-TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-json"
-run_ok "${TEST_NAME}" \
-    curl "${TEST_CYLC_WS_URL}/taskjobs/${USER}/${SUITE_NAME}?form=json"
+TEST_NAME="${TEST_NAME_BASE}-200-curl-cycles-no-fuzzy-time"
+run_ok "${TEST_NAME}" curl \
+    "${TEST_CYLC_WS_URL}/cycles/${USER}/${SUITE_NAME}?form=json&no_fuzzy_time=1"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
-    "[('logo',), 'src=\"rose-favicon.png\" alt=\"Rose Logo\"']" \
-    "[('title',), 'Humpty Dumpty']" \
-    "[('host',), 'The Wall']"
+    "[('no_fuzzy_time',), '1']"
+
+TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs"
+run_ok "${TEST_NAME}" curl \
+    "${TEST_CYLC_WS_URL}/taskjobs/${USER}/${SUITE_NAME}?form=json"
+cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
+    "[('no_fuzzy_time',), '0']"
+
+TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-no-fuzzy-time"
+run_ok "${TEST_NAME}" curl \
+    "${TEST_CYLC_WS_URL}/taskjobs/${USER}/${SUITE_NAME}?form=json&no_fuzzy_time=1"
+cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
+    "[('no_fuzzy_time',), '1']"
 #-------------------------------------------------------------------------------
 # Tidy up - note suite trivial so stops early on by itself
 purge_suite "${SUITE_NAME}"

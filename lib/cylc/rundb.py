@@ -972,8 +972,8 @@ class CylcSuiteDAO(object):
         return self.connect().execute("VACUUM")
 
 
-class CylcNamelessDAO(object):
-    """Cylc Nameless data access object to the suite runtime database."""
+class CylcReviewDAO(object):
+    """Cylc Review data access object to the suite runtime database."""
 
     JOB_STATUS_COMBOS = {
         "all": "",
@@ -1062,10 +1062,10 @@ class CylcNamelessDAO(object):
                        Display only jobs in the specified list. If not
                        specified, display all jobs.
         job_status -- If specified, must be a string matching a key in
-                      RoseBushDAO.JOB_STATUS_COMBOS. Select jobs by their
+                      CylcReviewDAO.JOB_STATUS_COMBOS. Select jobs by their
                       statuses.
         order -- Order search in a predetermined way. A valid value is one of
-                 the keys in RoseBushDAO.ORDERS.
+                 the keys in CylcReviewDAO.ORDERS.
         limit -- Limit number of returned entries
         offset -- Offset entry number
         Return (entries, of_n_entries) where:

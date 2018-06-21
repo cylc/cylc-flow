@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test for "cylc nameless", suites list, glob, sort and page.
+# Test for "cylc review", suites list, glob, sort and page.
 #-------------------------------------------------------------------------------
 . "$(dirname "$0")/test_header"
 if ! python -c 'import cherrypy' 2>'/dev/null'; then
@@ -43,9 +43,9 @@ for SUFFIX in 'b' 'a' 'c' $(seq -w 1 10); do
     fi
 done
 #-------------------------------------------------------------------------------
-# Initialise WSGI application for the cylc nameless web service
+# Initialise WSGI application for the cylc review web service
 TEST_NAME="${TEST_NAME_BASE}-ws-init"
-cylc_ws_init 'cylc' 'nameless'
+cylc_ws_init 'cylc' 'review'
 if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
     exit 1
 fi

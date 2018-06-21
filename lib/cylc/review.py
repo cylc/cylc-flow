@@ -37,20 +37,20 @@ import urllib
 
 from cylc.version import CYLC_VERSION
 from cylc.hostuserutil import get_host
-from cylc.rundb import CylcNamelessDAO
+from cylc.rundb import CylcReviewDAO
 from cylc.task_state import (
     TASK_STATUSES_ORDERED, TASK_STATUS_GROUPS)
 from cylc.ws import get_util_home
 from cylc.suite_logging import get_logs
 
 
-class CylcNamelessService(object):
+class CylcReviewService(object):
 
-    """'Cylc Nameless Service."""
+    """'Cylc Review Service."""
 
     NS = "cylc"
-    UTIL = "cylc nameless"
-    TITLE = "Cylc Nameless"
+    UTIL = "cylc review"
+    TITLE = "Cylc Review"
 
     CYCLES_PER_PAGE = 100
     JOBS_PER_PAGE = 15
@@ -64,7 +64,7 @@ class CylcNamelessService(object):
 
     def __init__(self, *args, **kwargs):
         self.exposed = True
-        self.suite_dao = CylcNamelessDAO()
+        self.suite_dao = CylcReviewDAO()
         self.logo = get_util_home("doc", "src", "cylc-logo.png")
         self.title = self.TITLE
         self.host_name = get_host()
@@ -72,7 +72,7 @@ class CylcNamelessService(object):
             self.host_name = self.host_name.split(".", 1)[0]
         self.cylc_version = CYLC_VERSION
         template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(
-            get_util_home("lib", "cylc", "cylc-nameless", "template")))
+            get_util_home("lib", "cylc", "cylc-review", "template")))
         template_env.filters['urlise'] = self.url2hyperlink
         self.template_env = template_env
 
@@ -236,7 +236,7 @@ class CylcNamelessService(object):
                  a glob like pattern for matching valid task names.
         task_status -- Select by task statuses.
         job_status -- Select by job status. See
-                      CylcNamelessDAO.JOB_STATUS_COMBOS for detail.
+                      CylcReviewDAO.JOB_STATUS_COMBOS for detail.
         order -- Order search in a predetermined way. A valid value is one of
             "time_desc", "time_asc",
             "cycle_desc_name_desc", "cycle_desc_name_asc",
@@ -675,7 +675,7 @@ class CylcNamelessService(object):
                     "mtime": stat.st_mtime,
                     "size": stat.st_size}
 
-        # Logic from old CylcNamelessDAO function of same name now here; it
+        # Logic from old CylcReviewDAO function of same name now here; it
         # returns a tuple that looks like:
         #    ("cylc-run",
         #     {"err": {"path": "log/suite/err", "mtime": mtime, "size": size},
@@ -752,7 +752,7 @@ class CylcNamelessService(object):
         """Raise HTTP 403 error if the provided string contain path chars.
 
         Examples:
-            >>> CylcNamelessService._check_string_for_path(
+            >>> CylcReviewService._check_string_for_path(
             ...     os.path.join('foo', 'bar'))
             Traceback (most recent call last):
              ...
@@ -770,23 +770,23 @@ class CylcNamelessService(object):
         """Raise HTTP 403 error if path is not normalised.
 
         Examples:
-            >>> CylcNamelessService._check_path_normalised('foo//bar')
+            >>> CylcReviewService._check_path_normalised('foo//bar')
             Traceback (most recent call last):
              ...
             HTTPError: (403, None)
-            >>> CylcNamelessService._check_path_normalised('foo/bar/')
+            >>> CylcReviewService._check_path_normalised('foo/bar/')
             Traceback (most recent call last):
              ...
             HTTPError: (403, None)
-            >>> CylcNamelessService._check_path_normalised('foo/./bar')
+            >>> CylcReviewService._check_path_normalised('foo/./bar')
             Traceback (most recent call last):
              ...
             HTTPError: (403, None)
-            >>> CylcNamelessService._check_path_normalised('foo/../bar')
+            >>> CylcReviewService._check_path_normalised('foo/../bar')
             Traceback (most recent call last):
              ...
             HTTPError: (403, None)
-            >>> CylcNamelessService._check_path_normalised('../foo')
+            >>> CylcReviewService._check_path_normalised('../foo')
             Traceback (most recent call last):
              ...
             HTTPError: (403, None)
@@ -835,8 +835,8 @@ class CylcNamelessService(object):
 
 if __name__ == "__main__":
     from cylc.ws import ws_cli
-    ws_cli(CylcNamelessService)
+    ws_cli(CylcReviewService)
 elif 'doctest' not in sys.argv[0]:
     # If called as a module but not by the doctest module.
     from cylc.ws import wsgi_app
-    application = wsgi_app(CylcNamelessService)
+    application = wsgi_app(CylcReviewService)
