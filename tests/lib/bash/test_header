@@ -571,7 +571,7 @@ cylc_ws_init() {
     done
 
     TEST_NAME="${TEST_NAME_BASE}-${NS}-${UTIL}"
-    "${NS}" "${UTIL}" 'start' "${WS_PORT}" '-R'  \
+    "${NS}" "${UTIL}" 'start' "${WS_PORT}"  \
         0<'/dev/null' 1>"${NS}-${UTIL}.stdout" 2>"${NS}-${UTIL}.stderr" &
     TEST_CYLC_WS_PID="$!"
     T_INIT="$(date '+%s')"

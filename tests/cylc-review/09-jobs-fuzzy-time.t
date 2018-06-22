@@ -44,7 +44,6 @@ TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 
 export CYLC_CONF_PATH=
-cylc register "${SUITE_NAME}" "${TEST_DIR}"
 cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null'
 #-------------------------------------------------------------------------------
 # Initialise WSGI application for the cylc review web service
@@ -53,6 +52,9 @@ cylc_ws_init 'cylc' 'review'
 if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
     exit 1
 fi
+
+# Set up standard URL escaping of forward slashes in 'cylctb-' suite names.
+ESC_SUITE_NAME="$(echo ${SUITE_NAME} | sed 's|/|%2F|g')"
 #-------------------------------------------------------------------------------
 # Data transfer output check for a specific user's/suite's 'fuzzy time'
 TEST_NAME="${TEST_NAME_BASE}-200-curl-suites"
@@ -69,25 +71,25 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
 
 TEST_NAME="${TEST_NAME_BASE}-200-curl-cycles"
 run_ok "${TEST_NAME}" curl \
-    "${TEST_CYLC_WS_URL}/cycles/${USER}/${SUITE_NAME}?form=json"
+    "${TEST_CYLC_WS_URL}/cycles/${USER}/${ESC_SUITE_NAME}?form=json"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('no_fuzzy_time',), '0']"
 
 TEST_NAME="${TEST_NAME_BASE}-200-curl-cycles-no-fuzzy-time"
 run_ok "${TEST_NAME}" curl \
-    "${TEST_CYLC_WS_URL}/cycles/${USER}/${SUITE_NAME}?form=json&no_fuzzy_time=1"
+    "${TEST_CYLC_WS_URL}/cycles/${USER}/${ESC_SUITE_NAME}?form=json&no_fuzzy_time=1"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('no_fuzzy_time',), '1']"
 
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs"
 run_ok "${TEST_NAME}" curl \
-    "${TEST_CYLC_WS_URL}/taskjobs/${USER}/${SUITE_NAME}?form=json"
+    "${TEST_CYLC_WS_URL}/taskjobs/${USER}/${ESC_SUITE_NAME}?form=json"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('no_fuzzy_time',), '0']"
 
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-no-fuzzy-time"
 run_ok "${TEST_NAME}" curl \
-    "${TEST_CYLC_WS_URL}/taskjobs/${USER}/${SUITE_NAME}?form=json&no_fuzzy_time=1"
+    "${TEST_CYLC_WS_URL}/taskjobs/${USER}/${ESC_SUITE_NAME}?form=json&no_fuzzy_time=1"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('no_fuzzy_time',), '1']"
 #-------------------------------------------------------------------------------

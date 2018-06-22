@@ -62,8 +62,8 @@ def ws_cli(service_cls, *args, **kwargs):
     parser = COP(
         __doc__,
         argdoc=[
-            ("[START ...]", "EXPLAIN HERE."),
-            ("[STOP ...]", "EXPLAIN HERE.")])
+            ("[START]", "Start an ad-hoc server."),
+            ("[STOP]", "Stop an ad-hoc server.")])
 
     parser.add_option(
         "--non-interactive", "--yes", "-y",
@@ -90,8 +90,10 @@ def ws_cli(service_cls, *args, **kwargs):
         if (arg == "stop" and status.get("pid") and
                 (opts.non_interactive or
                  raw_input("Stop server? y/n (default=n)") == "y")):
-            os.killpg(int(status["pid"]), signal.SIGTERM)
-            # TODO: should check whether it is killed or not
+            try:
+                os.killpg(int(status["pid"]), signal.SIGTERM)
+            except OSError:
+                print "Already terminated."
 
 
 def _ws_init(service_cls, port, service_root_mode, *args, **kwargs):
@@ -194,6 +196,6 @@ def get_util_home(*args):
         value = os.environ["CYLC_HOME"]
     except KeyError:
         value = os.path.abspath(__file__)
-        for _ in range(4):  # assume __file__ under $CYLC_HOME/
+        for _ in range(3):  # assume __file__ under $CYLC_HOME/lib/cylc
             value = os.path.dirname(value)
     return os.path.join(value, *args)

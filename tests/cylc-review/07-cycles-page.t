@@ -43,7 +43,8 @@ __SUITE_RC__
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 
-cylc run --debug --no-detach $SUITE_NAME 2>'/dev/null' &
+export CYLC_CONF_PATH=
+cylc run --debug --no-detach $SUITE_NAME 2>'/dev/null'
 #-------------------------------------------------------------------------------
 # Initialise WSGI application for the cylc review web service
 TEST_NAME="${TEST_NAME_BASE}-ws-init"
@@ -51,6 +52,9 @@ cylc_ws_init 'cylc' 'review'
 if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
     exit 1
 fi
+
+# Set up standard URL escaping of forward slashes in 'cylctb-' suite names.
+ESC_SUITE_NAME="$(echo ${SUITE_NAME} | sed 's|/|%2F|g')"
 #-------------------------------------------------------------------------------
 # Data transfer output check for the suite's cycles page, sorted by time_desc
 TEST_NAME_PREFIX="${TEST_NAME_BASE}-200-curl-cycles-page-"
@@ -58,8 +62,9 @@ for PAGE in {1..4}; do
     TEST_NAME="${TEST_NAME_PREFIX}${PAGE}"
     PAGE_OPT="&page=${PAGE}&per_page=3"
     run_ok "${TEST_NAME}" curl \
-        "${TEST_CYLC_WS_URL}/cycles/${USER}/${SUITE_NAME}?form=json${PAGE_OPT}"
+        "${TEST_CYLC_WS_URL}/cycles/${USER}/${ESC_SUITE_NAME}?form=json${PAGE_OPT}"
 done
+
 # N.B. Extra cycle at the end, due to spawn-held task beyond final cycle point
 cylc_ws_json_greps "${TEST_NAME_PREFIX}1.stdout" "${TEST_NAME_PREFIX}1.stdout" \
     "[('page',), 1]" \
@@ -94,8 +99,9 @@ for PAGE in {1..4}; do
     TEST_NAME="${TEST_NAME_PREFIX}${PAGE}"
     PAGE_OPT="&page=${PAGE}&per_page=3&order=time_asc"
     run_ok "${TEST_NAME}" curl \
-        "${TEST_CYLC_WS_URL}/cycles/${USER}/${SUITE_NAME}?form=json${PAGE_OPT}"
+        "${TEST_CYLC_WS_URL}/cycles/${USER}/${ESC_SUITE_NAME}?form=json${PAGE_OPT}"
 done
+
 # N.B. Extra cycle at the end, due to spawn-held task beyond final cycle point
 cylc_ws_json_greps "${TEST_NAME_PREFIX}1.stdout" "${TEST_NAME_PREFIX}1.stdout" \
     "[('page',), 1]" \
@@ -124,8 +130,7 @@ cylc_ws_json_greps "${TEST_NAME_PREFIX}4.stdout" "${TEST_NAME_PREFIX}4.stdout" \
     "[('of_n_entries',), 10]" \
     "[('entries', 0, 'cycle'), '20090101T0000Z']"
 #-------------------------------------------------------------------------------
-# Tidy up
-cylc stop "${SUITE_NAME}"
+# Tidy up - note suite trivial so stops early on by itself
 purge_suite "${SUITE_NAME}"
 cylc_ws_kill
 exit

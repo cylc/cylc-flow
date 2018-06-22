@@ -62,7 +62,8 @@ __SUITE_RC__
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 
-cylc run --debug --no-detach $SUITE_NAME 2>'/dev/null' &
+export CYLC_CONF_PATH=
+cylc run --debug --no-detach $SUITE_NAME 2>'/dev/null'
 #-------------------------------------------------------------------------------
 # Initialise WSGI application for the cylc review web service
 TEST_NAME="${TEST_NAME_BASE}-ws-init"
@@ -70,11 +71,14 @@ cylc_ws_init 'cylc' 'review'
 if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
     exit 1
 fi
+
+# Set up standard URL escaping of forward slashes in 'cylctb-' suite names.
+ESC_SUITE_NAME="$(echo ${SUITE_NAME} | sed 's|/|%2F|g')"
 #-------------------------------------------------------------------------------
 # Data transfer output check for a specific suite's jobs page
 
 # Key variable for core tests up to end of file
-TASKJOBS_URL="${TEST_CYLC_WS_URL}/taskjobs/${USER}/${SUITE_NAME}?form=json"
+TASKJOBS_URL="${TEST_CYLC_WS_URL}/taskjobs/${USER}?suite=${ESC_SUITE_NAME}&form=json"
 
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs"
 run_ok "${TEST_NAME}" curl "${TASKJOBS_URL}"
@@ -152,9 +156,7 @@ run_ok "${TEST_NAME}" curl "${TASKJOBS_URL}&task_status=succeeded&job_status=fai
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('of_n_entries',), 2]"
 #-------------------------------------------------------------------------------
-# Tidy up
-cylc stop "${SUITE_NAME}"
+# Tidy up - note suite trivial so stops early on by itself
 purge_suite "${SUITE_NAME}"
 cylc_ws_kill
 exit
-

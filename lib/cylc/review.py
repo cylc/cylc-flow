@@ -49,7 +49,7 @@ class CylcReviewService(object):
     """'Cylc Review Service."""
 
     NS = "cylc"
-    UTIL = "cylc review"
+    UTIL = "review"
     TITLE = "Cylc Review"
 
     CYCLES_PER_PAGE = 100
@@ -65,7 +65,8 @@ class CylcReviewService(object):
     def __init__(self, *args, **kwargs):
         self.exposed = True
         self.suite_dao = CylcReviewDAO()
-        self.logo = get_util_home("doc", "src", "cylc-logo.png")
+        self.logo = os.path.basename(
+            get_util_home("doc", "src", "cylc-logo.png"))
         self.title = self.TITLE
         self.host_name = get_host()
         if self.host_name and "." in self.host_name:
@@ -163,6 +164,10 @@ class CylcReviewService(object):
             self, user, suite, page=1, order=None, per_page=None,
             no_fuzzy_time="0", form=None):
         """List cycles of a running or completed suite."""
+
+        # Call to ensure user and suite args valid (together), else raise 404.
+        self._get_user_suite_dir(user, suite)
+
         per_page_default = self.CYCLES_PER_PAGE
         if not isinstance(per_page, int):
             if per_page:
@@ -249,12 +254,15 @@ class CylcReviewService(object):
             "duration_queue_desc", "duration_queue_asc",
             "duration_run_desc", "duration_run_asc",
             "duration_queue_run_desc", "duration_queue_run_asc"
-        per_page -- Number of entries to display per page (defualt=32)
+        per_page -- Number of entries to display per page (default=32)
         no_fuzzy_time -- Don't display fuzzy time if this is True.
         form -- Specify return format. If None, display HTML page. If "json",
                 return a JSON data structure.
-
         """
+
+        # Call to ensure user and suite args valid (together), else raise 404.
+        self._get_user_suite_dir(user, suite)
+
         per_page_default = self.JOBS_PER_PAGE
         per_page_max = self.JOBS_PER_PAGE_MAX
         if not isinstance(per_page, int):
@@ -424,7 +432,7 @@ class CylcReviewService(object):
                     "last_activity_time": (
                         self.get_last_activity_time(user, item))})
             except OSError:
-                continue
+                pass
 
         if order == "name_asc":
             data["entries"].sort(key=lambda entry: entry["name"])
@@ -675,8 +683,7 @@ class CylcReviewService(object):
                     "mtime": stat.st_mtime,
                     "size": stat.st_size}
 
-        # Logic from old CylcReviewDAO function of same name now here; it
-        # returns a tuple that looks like:
+        # Returns a tuple that looks like:
         #    ("cylc-run",
         #     {"err": {"path": "log/suite/err", "mtime": mtime, "size": size},
         #      "log": {"path": "log/suite/log", "mtime": mtime, "size": size},
@@ -696,14 +703,19 @@ class CylcReviewService(object):
                 logs_info[key] = {"path": key,
                                   "mtime": f_stat.st_mtime,
                                   "size": f_stat.st_size}
+
         # Get cylc suite log files.
         log_files = ["log/suite/err", "log/suite/log", "log/suite/out"]
         for key in log_files:
-            f_stat = os.stat(os.path.join(dir_, key))
-            logs_info[key] = {"path": key,
-                              "paths": [key] + get_logs(dir_, key),
-                              "mtime": f_stat.st_mtime,
-                              "size": f_stat.st_size}
+            f_name = os.path.join(dir_, key)
+            if os.path.isfile(f_name):
+                f_stat = os.stat(f_name)
+                full_name = ["log/suite/%s" % name for name in
+                             get_logs(dir_, key, absolute_path=False)]
+                logs_info[key] = {"path": key,
+                                  "paths": [key] + full_name,
+                                  "mtime": f_stat.st_mtime,
+                                  "size": f_stat.st_size}
 
         k, logs_info = ("cylc", logs_info)
         data["files"][k] = logs_info

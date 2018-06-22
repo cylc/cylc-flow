@@ -47,6 +47,8 @@ __SUITE_RC__
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 
+export CYLC_CONF_PATH=
+
 # Background to leave sitting in stalled state
 cylc run --debug --no-detach $SUITE_NAME 2>'/dev/null' &
 #-------------------------------------------------------------------------------
@@ -56,6 +58,9 @@ cylc_ws_init 'cylc' 'review'
 if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
     exit 1
 fi
+
+# Set up standard URL escaping of forward slashes in 'cylctb-' suite names.
+ESC_SUITE_NAME="$(echo ${SUITE_NAME} | sed 's|/|%2F|g')"
 #-------------------------------------------------------------------------------
 # Data transfer output check for a specific suite's host and port
 
@@ -70,10 +75,8 @@ HOST=${HOST%%.*} # strip domain
 if [[ -n "${HOST}" && -n "${PORT}" ]]; then
     for METHOD in 'cycles' 'taskjobs'; do
         TEST_NAME="${TEST_NAME_BASE}-ws-run-${METHOD}"
-        ESC_SUITE_NAME="$(echo ${SUITE_NAME} | sed 's|/|%2F|g')"
         URL_NAME="${TEST_CYLC_WS_URL}/${METHOD}/${USER}?suite=${ESC_SUITE_NAME}&form=json"
         run_ok "${TEST_NAME}" curl "${URL_NAME}"
-        # cat "${TEST_NAME}.stdout" "${TEST_NAME}.stderr" >&2
         cylc_ws_json_greps "${TEST_NAME}-json" "${TEST_NAME}.stdout" "[('states', 'server',), '${HOST}:${PORT}']"
     done
 else

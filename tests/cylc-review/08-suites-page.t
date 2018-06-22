@@ -22,25 +22,30 @@ if ! python -c 'import cherrypy' 2>'/dev/null'; then
     skip_all '"cherrypy" not installed'
 fi
 
-set_test_number 16
+set_test_number 15
 #-------------------------------------------------------------------------------
-# Set-up multiple suites
-
-# Check the common 'suite.rc' to use is valid
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
-
-export CYLC_CONF_PATH=
 # Initialise multiple suites with same 'suite.rc' file; name [abc] and [1-10]
-for SUFFIX in 'b' 'a' 'c' $(seq -w 1 10); do
-    SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}-${SUFFIX}"
-    cylc register "${SUITE_NAME}" "${TEST_DIR}"
-    cylc run --no-detach --debug "${SUITE_NAME}"  2>'/dev/null'
+export CYLC_CONF_PATH=
+PREFIX="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}"
+
+# Group '1'
+PREFIX_GROUP1="${PREFIX}-1-"
+for SUFFIX in 'b' 'a' 'c'; do
+    cp "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/suite.rc" .
+    cylc register "${PREFIX_GROUP1}-${SUFFIX}" "${PWD}" 1>/dev/null 2>&1
+    cylc run "${PREFIX_GROUP1}-${SUFFIX}" 1>/dev/null 2>&1
     # Make one of set [abc] a symlink
     if [[ "${SUFFIX}" == 'a' ]]; then
-        ln -s "${PWD}/${SUITE_NAME}" "${HOME}/cylc-run/${SUITE_NAME}"
+        ln -s "${PWD}/${PREFIX_GROUP1}-${SUFFIX}" "${HOME}/cylc-run/${PREFIX_GROUP1}-${SUFFIX}"
     fi
+done
+
+# Group '2'
+PREFIX_GROUP2="${PREFIX}-2-"
+for SUFFIX in $(seq -w 1 10); do
+    cp "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/suite.rc" .
+    cylc register "${PREFIX_GROUP2}-${SUFFIX}" "${PWD}" 1>/dev/null 2>&1
+    cylc run "${PREFIX_GROUP2}-${SUFFIX}" 1>/dev/null 2>&1
 done
 #-------------------------------------------------------------------------------
 # Initialise WSGI application for the cylc review web service
@@ -52,101 +57,100 @@ fi
 #-------------------------------------------------------------------------------
 # Data transfer output check for [abc], sort by time_desc
 TEST_NAME="${TEST_NAME_BASE}-200-curl-suites"
-ARGS="&names=${SUITE_NAME}*"
+ARGS="&names=${PREFIX_GROUP1}*"
 run_ok "${TEST_NAME}" curl \
     "${TEST_CYLC_WS_URL}/suites/${USER}?form=json${ARGS}"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('page',), 1]" \
     "[('per_page',), 100]" \
     "[('of_n_entries',), 3]" \
-    "[('entries', 0, 'name'), '${SUITE_NAME}-c']" \
-    "[('entries', 1, 'name'), '${SUITE_NAME}-a']" \
-    "[('entries', 2, 'name'), '${SUITE_NAME}-b']"
+    "[('entries', 0, 'name'), '${PREFIX_GROUP1}-c']" \
+    "[('entries', 1, 'name'), '${PREFIX_GROUP1}-a']" \
+    "[('entries', 2, 'name'), '${PREFIX_GROUP1}-b']"
 #-------------------------------------------------------------------------------
 # Data transfer output check for [abc], sort by time_asc
 TEST_NAME="${TEST_NAME_BASE}-200-curl-suites-time-asc"
-ARGS="&names=${SUITE_NAME}*&order=time_asc"
+ARGS="&names=${PREFIX_GROUP1}*&order=time_asc"
 run_ok "${TEST_NAME}" curl \
     "${TEST_CYLC_WS_URL}/suites/${USER}?form=json${ARGS}"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('page',), 1]" \
     "[('per_page',), 100]" \
     "[('of_n_entries',), 3]" \
-    "[('entries', 0, 'name'), '${SUITE_NAME}-b']" \
-    "[('entries', 1, 'name'), '${SUITE_NAME}-a']" \
-    "[('entries', 2, 'name'), '${SUITE_NAME}-c']"
+    "[('entries', 0, 'name'), '${PREFIX_GROUP1}-b']" \
+    "[('entries', 1, 'name'), '${PREFIX_GROUP1}-a']" \
+    "[('entries', 2, 'name'), '${PREFIX_GROUP1}-c']"
 #-------------------------------------------------------------------------------
 # Data transfer output check for [abc], sort by name_asc
 TEST_NAME="${TEST_NAME_BASE}-200-curl-suites-name-asc"
-ARGS="&names=${SUITE_NAME}*&order=name_asc"
+ARGS="&names=${PREFIX_GROUP1}*&order=name_asc"
 run_ok "${TEST_NAME}" curl \
     "${TEST_CYLC_WS_URL}/suites/${USER}?form=json${ARGS}"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('page',), 1]" \
     "[('per_page',), 100]" \
     "[('of_n_entries',), 3]" \
-    "[('entries', 0, 'name'), '${SUITE_NAME}-a']" \
-    "[('entries', 1, 'name'), '${SUITE_NAME}-b']" \
-    "[('entries', 2, 'name'), '${SUITE_NAME}-c']"
+    "[('entries', 0, 'name'), '${PREFIX_GROUP1}-a']" \
+    "[('entries', 1, 'name'), '${PREFIX_GROUP1}-b']" \
+    "[('entries', 2, 'name'), '${PREFIX_GROUP1}-c']"
 #-------------------------------------------------------------------------------
 # Data transfer output check for [abc], sort by name_desc
 TEST_NAME="${TEST_NAME_BASE}-200-curl-suites-name-desc"
-ARGS="&names=${SUITE_NAME}*&order=name_desc"
+ARGS="&names=${PREFIX_GROUP1}*&order=name_desc"
 run_ok "${TEST_NAME}" curl \
     "${TEST_CYLC_WS_URL}/suites/${USER}?form=json${ARGS}"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('page',), 1]" \
     "[('per_page',), 100]" \
     "[('of_n_entries',), 3]" \
-    "[('entries', 0, 'name'), '${SUITE_NAME}-c']" \
-    "[('entries', 1, 'name'), '${SUITE_NAME}-b']" \
-    "[('entries', 2, 'name'), '${SUITE_NAME}-a']"
+    "[('entries', 0, 'name'), '${PREFIX_GROUP1}-c']" \
+    "[('entries', 1, 'name'), '${PREFIX_GROUP1}-b']" \
+    "[('entries', 2, 'name'), '${PREFIX_GROUP1}-a']"
 #-------------------------------------------------------------------------------
 # Data transfer output check for [1-10], page 1
 TEST_NAME="${TEST_NAME_BASE}-200-curl-suites-2-page-1"
-ARGS="&names=${SUITE_NAME}*&per_page=4&page=1"
+ARGS="&names=${PREFIX_GROUP2}*&per_page=4&page=1"
 run_ok "${TEST_NAME}" curl \
     "${TEST_CYLC_WS_URL}/suites/${USER}?form=json${ARGS}"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('page',), 1]" \
     "[('per_page',), 4]" \
     "[('of_n_entries',), 10]" \
-    "[('entries', 0, 'name'), '${SUITE_NAME}-10']" \
-    "[('entries', 1, 'name'), '${SUITE_NAME}-09']" \
-    "[('entries', 2, 'name'), '${SUITE_NAME}-08']" \
-    "[('entries', 3, 'name'), '${SUITE_NAME}-07']"
+    "[('entries', 0, 'name'), '${PREFIX_GROUP2}-10']" \
+    "[('entries', 1, 'name'), '${PREFIX_GROUP2}-09']" \
+    "[('entries', 2, 'name'), '${PREFIX_GROUP2}-08']" \
+    "[('entries', 3, 'name'), '${PREFIX_GROUP2}-07']"
 #-------------------------------------------------------------------------------
 # Data transfer output check for [1-10], page 2
 TEST_NAME="${TEST_NAME_BASE}-200-curl-suites-2-page-2"
-ARGS="&names=${SUITE_NAME}*&per_page=4&page=2"
+ARGS="&names=${PREFIX_GROUP2}*&per_page=4&page=2"
 run_ok "${TEST_NAME}" curl \
     "${TEST_CYLC_WS_URL}/suites/${USER}?form=json${ARGS}"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('page',), 2]" \
     "[('per_page',), 4]" \
     "[('of_n_entries',), 10]" \
-    "[('entries', 0, 'name'), '${SUITE_NAME}-06']" \
-    "[('entries', 1, 'name'), '${SUITE_NAME}-05']" \
-    "[('entries', 2, 'name'), '${SUITE_NAME}-04']" \
-    "[('entries', 3, 'name'), '${SUITE_NAME}-03']"
+    "[('entries', 0, 'name'), '${PREFIX_GROUP2}-06']" \
+    "[('entries', 1, 'name'), '${PREFIX_GROUP2}-05']" \
+    "[('entries', 2, 'name'), '${PREFIX_GROUP2}-04']" \
+    "[('entries', 3, 'name'), '${PREFIX_GROUP2}-03']"
 #-------------------------------------------------------------------------------
 # Data transfer output check for [1-10], page 3
 TEST_NAME="${TEST_NAME_BASE}-200-curl-suites-2-page-3"
-ARGS="&names=${SUITE_NAME}*&per_page=4&page=3"
+ARGS="&names=${PREFIX_GROUP2}*&per_page=4&page=3"
 run_ok "${TEST_NAME}" curl \
     "${TEST_CYLC_WS_URL}/suites/${USER}?form=json${ARGS}"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('page',), 3]" \
     "[('per_page',), 4]" \
     "[('of_n_entries',), 10]" \
-    "[('entries', 0, 'name'), '${SUITE_NAME}-02']" \
-    "[('entries', 1, 'name'), '${SUITE_NAME}-01']"
+    "[('entries', 0, 'name'), '${PREFIX_GROUP2}-02']" \
+    "[('entries', 1, 'name'), '${PREFIX_GROUP2}-01']"
 #-------------------------------------------------------------------------------
-# Tidy up
-for SUFFIX in 'a' 'b' 'c' $(seq -w 1 10); do
-    SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}-${SUFFIX}"
-    # Suite trivial so stops early on by itself
-    purge_suite "${SUITE_NAME}"
-done
+# Tidy up - note suites trivial so stop early on by themselves
+rm -fr \
+    "${HOME}/cylc-run/${PREFIX_GROUP1}"[abc] \
+    "${HOME}/cylc-run/${PREFIX_GROUP2}"?? \
+2>'/dev/null'
 cylc_ws_kill
 exit

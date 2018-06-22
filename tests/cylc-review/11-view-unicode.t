@@ -52,7 +52,6 @@ TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 
 export CYLC_CONF_PATH=
-cylc register "${SUITE_NAME}" "${TEST_DIR}"
 cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null'
 #-------------------------------------------------------------------------------
 # Initialise WSGI application for the cylc review web service
@@ -61,27 +60,30 @@ cylc_ws_init 'cylc' 'review'
 if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
     exit 1
 fi
+
+# Set up standard URL escaping of forward slashes in 'cylctb-' suite names.
+ESC_SUITE_NAME="$(echo ${SUITE_NAME} | sed 's|/|%2F|g')"
 #-------------------------------------------------------------------------------
 # Tests of unicode output for standard '.txt' format
 LOG_FILE='log/job/20000101T0000Z/echo-euro/01/job.txt'
 
 TEST_NAME="${TEST_NAME_BASE}-200-curl-view-default"
 run_ok "${TEST_NAME}" curl \
-    "${TEST_CYLC_WS_URL}/view/${USER}/${SUITE_NAME}?path=${LOG_FILE}"
+    "${TEST_CYLC_WS_URL}/view/${USER}/${ESC_SUITE_NAME}?path=${LOG_FILE}"
 cmp_ok "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" <<<'€'
 
 TEST_NAME="${TEST_NAME_BASE}-200-curl-view-text"
 run_ok "${TEST_NAME}" curl \
-    "${TEST_CYLC_WS_URL}/view/${USER}/${SUITE_NAME}?path=${LOG_FILE}&mode=text"
+    "${TEST_CYLC_WS_URL}/view/${USER}/${ESC_SUITE_NAME}?path=${LOG_FILE}&mode=text"
 cmp_ok "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" <<<'€'
 #-------------------------------------------------------------------------------
 # Test of unicode output for zipped 'tar.gz' format
 TAR_FILE='job-19990101T0000Z.tar.gz'
 
 TEST_NAME="${TEST_NAME_BASE}-200-curl-view-default-tar"
-(cd "${TEST_DIR}/log" && tar -czf "${TAR_FILE}" 'job/19990101T0000Z')
+(cd "${SUITE_RUN_DIR}/log" && tar -czf "${TAR_FILE}" 'job/19990101T0000Z')
 run_ok "${TEST_NAME}" curl \
-    "${TEST_CYLC_WS_URL}/view/${USER}/${SUITE_NAME}?path=log/${TAR_FILE}&path_in_tar=job/19990101T0000Z/echo-euro/01/job.txt&mode=text"
+    "${TEST_CYLC_WS_URL}/view/${USER}/${ESC_SUITE_NAME}?path=log/${TAR_FILE}&path_in_tar=job/19990101T0000Z/echo-euro/01/job.txt&mode=text"
 cmp_ok "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" <<<'€'
 #-------------------------------------------------------------------------------
 # Tidy up - note suite trivial so stops early on by itself

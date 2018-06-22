@@ -32,7 +32,6 @@ TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 
 export CYLC_CONF_PATH=
-cylc register "${SUITE_NAME}" "${TEST_DIR}"
 cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null'
 #-------------------------------------------------------------------------------
 # Initialise WSGI application for the cylc review web service
@@ -40,12 +39,15 @@ cylc_ws_init 'cylc' 'review'
 if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
     exit 1
 fi
+
+# Set up standard URL escaping of forward slashes in 'cylctb-' suite names.
+ESC_SUITE_NAME="$(echo ${SUITE_NAME} | sed 's|/|%2F|g')"
 #-------------------------------------------------------------------------------
 # Data transfer output checks for a specific jobs page, various time-ordering
 ORDER='time_submit'
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-${ORDER}"
 run_ok "${TEST_NAME}" curl \
-    "${TEST_CYLC_WS_URL}/taskjobs/${USER}/${SUITE_NAME}?form=json&order=${ORDER}"
+    "${TEST_CYLC_WS_URL}/taskjobs/${USER}?suite=${ESC_SUITE_NAME}&form=json&order=${ORDER}"
 # Note: only qux submit time order is reliable, the others are submitted at the
 # same time, in any order.
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
@@ -55,7 +57,8 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
 ORDER='time_run_desc'
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-${ORDER}"
 run_ok "${TEST_NAME}" curl \
-    "${TEST_CYLC_WS_URL}/taskjobs/${USER}/${SUITE_NAME}?form=json&order=${ORDER}"
+    "${TEST_CYLC_WS_URL}/taskjobs/${USER}?suite=${ESC_SUITE_NAME}&form=json&order=${ORDER}"
+
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('order',), '${ORDER}']" \
     "[('entries', 0, 'name'), 'qux']" \
@@ -66,7 +69,7 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
 ORDER='time_run_exit_desc'
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-${ORDER}"
 run_ok "${TEST_NAME}" curl \
-    "${TEST_CYLC_WS_URL}/taskjobs/${USER}/${SUITE_NAME}?form=json&order=${ORDER}"
+    "${TEST_CYLC_WS_URL}/taskjobs/${USER}?suite=${ESC_SUITE_NAME}&form=json&order=${ORDER}"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('order',), '${ORDER}']" \
     "[('entries', 0, 'name'), 'qux']" \
@@ -77,7 +80,7 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
 ORDER='duration_queue_desc'
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-${ORDER}"
 run_ok "${TEST_NAME}" curl \
-    "${TEST_CYLC_WS_URL}/taskjobs/${USER}/${SUITE_NAME}?form=json&order=${ORDER}"
+    "${TEST_CYLC_WS_URL}/taskjobs/${USER}?suite=${ESC_SUITE_NAME}&form=json&order=${ORDER}"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('order',), '${ORDER}']" \
     "[('entries', 0, 'name'), 'bar']" \
@@ -88,7 +91,7 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
 ORDER='duration_run_desc'
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-${ORDER}"
 run_ok "${TEST_NAME}" curl \
-    "${TEST_CYLC_WS_URL}/taskjobs/${USER}/${SUITE_NAME}?form=json&order=${ORDER}"
+    "${TEST_CYLC_WS_URL}/taskjobs/${USER}?suite=${ESC_SUITE_NAME}&form=json&order=${ORDER}"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('order',), '${ORDER}']" \
     "[('entries', 0, 'name'), 'baz']" \
@@ -99,7 +102,7 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
 ORDER='duration_queue_run_desc'
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-${ORDER}"
 run_ok "${TEST_NAME}" curl \
-    "${TEST_CYLC_WS_URL}/taskjobs/${USER}/${SUITE_NAME}?form=json&order=${ORDER}"
+    "${TEST_CYLC_WS_URL}/taskjobs/${USER}?suite=${ESC_SUITE_NAME}&form=json&order=${ORDER}"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('order',), '${ORDER}']" \
     "[('entries', 0, 'name'), 'baz']" \
@@ -111,4 +114,3 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
 purge_suite "${SUITE_NAME}"
 cylc_ws_kill
 exit
-

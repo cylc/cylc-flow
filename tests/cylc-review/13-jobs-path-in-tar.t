@@ -46,6 +46,7 @@ __SUITE_RC__
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 
+export CYLC_CONF_PATH=
 cylc run --debug --no-detach $SUITE_NAME 2>'/dev/null'
 #-------------------------------------------------------------------------------
 # Initialise WSGI application for the cylc review web service
@@ -54,55 +55,64 @@ cylc_ws_init 'cylc' 'review'
 if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
     exit 1
 fi
+
+# Set up standard URL escaping of forward slashes in 'cylctb-' suite names.
+ESC_SUITE_NAME="$(echo ${SUITE_NAME} | sed 's|/|%2F|g')"
 #-------------------------------------------------------------------------------
 # Data transfer output check for a 'tar.gz' format log file job path
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs"
+
 ECHO1="{'cycle': '19990101T0000Z', 'name': 'echo1', 'submit_num': 1}"
 ECHO1_JOB='job/19990101T0000Z/echo1/01/job'
 ECHO2="{'cycle': '19990101T0000Z', 'name': 'echo2', 'submit_num': 1}"
 ECHO2_JOB='job/19990101T0000Z/echo2/01/job'
 TAR_FILE='job-19990101T0000Z.tar.gz'
-(cd "${TEST_DIR}/log" && tar -czf "${TAR_FILE}" 'job/19990101T0000Z')
-rm -fr "${TEST_DIR}/log/job/19990101T0000Z"
+
+(cd "${SUITE_RUN_DIR}/log" && tar -czf "${TAR_FILE}" 'job/19990101T0000Z')
+rm -fr "${SUITE_RUN_DIR}/log/job/19990101T0000Z"
+
 run_ok "${TEST_NAME}" curl \
-    "${TEST_CYLC_WS_URL}/jobs/${USER}/${SUITE_NAME}?form=json"
+    "${TEST_CYLC_WS_URL}/jobs/${USER}/${ESC_SUITE_NAME}?form=json"
+
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('entries', ${ECHO1}, 'logs', 'job', 'path'), 'log/${TAR_FILE}']" \
-    "[('entries', ${ECHO1}, 'logs', 'job.stderr', 'path'), 'log/${TAR_FILE}']" \
-    "[('entries', ${ECHO1}, 'logs', 'job.stdout', 'path'), 'log/${TAR_FILE}']" \
+    "[('entries', ${ECHO1}, 'logs', 'job.err', 'path'), 'log/${TAR_FILE}']" \
+    "[('entries', ${ECHO1}, 'logs', 'job.out', 'path'), 'log/${TAR_FILE}']" \
     "[('entries', ${ECHO1}, 'logs', 'job', 'path_in_tar'), '${ECHO1_JOB}']" \
-    "[('entries', ${ECHO1}, 'logs', 'job.stderr', 'path_in_tar'), '${ECHO1_JOB}.stderr']" \
-    "[('entries', ${ECHO1}, 'logs', 'job.stdout', 'path_in_tar'), '${ECHO1_JOB}.stdout']" \
+    "[('entries', ${ECHO1}, 'logs', 'job.err', 'path_in_tar'), '${ECHO1_JOB}.err']" \
+    "[('entries', ${ECHO1}, 'logs', 'job.out', 'path_in_tar'), '${ECHO1_JOB}.out']" \
     "[('entries', ${ECHO2}, 'logs', 'job', 'path'), 'log/${TAR_FILE}']" \
-    "[('entries', ${ECHO2}, 'logs', 'job.stderr', 'path'), 'log/${TAR_FILE}']" \
-    "[('entries', ${ECHO2}, 'logs', 'job.stdout', 'path'), 'log/${TAR_FILE}']" \
+    "[('entries', ${ECHO2}, 'logs', 'job.err', 'path'), 'log/${TAR_FILE}']" \
+    "[('entries', ${ECHO2}, 'logs', 'job.out', 'path'), 'log/${TAR_FILE}']" \
     "[('entries', ${ECHO2}, 'logs', 'job', 'path_in_tar'), '${ECHO2_JOB}']" \
-    "[('entries', ${ECHO2}, 'logs', 'job.stderr', 'path_in_tar'), '${ECHO2_JOB}.stderr']" \
-    "[('entries', ${ECHO2}, 'logs', 'job.stdout', 'path_in_tar'), '${ECHO2_JOB}.stdout']"
+    "[('entries', ${ECHO2}, 'logs', 'job.err', 'path_in_tar'), '${ECHO2_JOB}.err']" \
+    "[('entries', ${ECHO2}, 'logs', 'job.out', 'path_in_tar'), '${ECHO2_JOB}.out']"
 #-------------------------------------------------------------------------------
 # Data transfer output check for tar job path, 'echo1' task check
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-tasks-1"
 run_ok "${TEST_NAME}" curl \
-    "${TEST_CYLC_WS_URL}/jobs/${USER}/${SUITE_NAME}?form=json&tasks=echo1"
+    "${TEST_CYLC_WS_URL}/jobs/${USER}/${ESC_SUITE_NAME}?form=json&tasks=echo1"
+
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('entries', ${ECHO1}, 'logs', 'job', 'path'), 'log/${TAR_FILE}']" \
-    "[('entries', ${ECHO1}, 'logs', 'job.stderr', 'path'), 'log/${TAR_FILE}']" \
-    "[('entries', ${ECHO1}, 'logs', 'job.stdout', 'path'), 'log/${TAR_FILE}']" \
+    "[('entries', ${ECHO1}, 'logs', 'job.err', 'path'), 'log/${TAR_FILE}']" \
+    "[('entries', ${ECHO1}, 'logs', 'job.out', 'path'), 'log/${TAR_FILE}']" \
     "[('entries', ${ECHO1}, 'logs', 'job', 'path_in_tar'), '${ECHO1_JOB}']" \
-    "[('entries', ${ECHO1}, 'logs', 'job.stderr', 'path_in_tar'), '${ECHO1_JOB}.stderr']" \
-    "[('entries', ${ECHO1}, 'logs', 'job.stdout', 'path_in_tar'), '${ECHO1_JOB}.stdout']"
+    "[('entries', ${ECHO1}, 'logs', 'job.err', 'path_in_tar'), '${ECHO1_JOB}.err']" \
+    "[('entries', ${ECHO1}, 'logs', 'job.out', 'path_in_tar'), '${ECHO1_JOB}.out']"
 #-------------------------------------------------------------------------------
 # Data transfer output check for tar job path, 'echo2' task check
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-tasks-2"
 run_ok "${TEST_NAME}" curl \
-    "${TEST_CYLC_WS_URL}/jobs/${USER}/${SUITE_NAME}?form=json&tasks=echo2"
+    "${TEST_CYLC_WS_URL}/jobs/${USER}/${ESC_SUITE_NAME}?form=json&tasks=echo2"
+
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('entries', ${ECHO2}, 'logs', 'job', 'path'), 'log/${TAR_FILE}']" \
-    "[('entries', ${ECHO2}, 'logs', 'job.stderr', 'path'), 'log/${TAR_FILE}']" \
-    "[('entries', ${ECHO2}, 'logs', 'job.stdout', 'path'), 'log/${TAR_FILE}']" \
+    "[('entries', ${ECHO2}, 'logs', 'job.err', 'path'), 'log/${TAR_FILE}']" \
+    "[('entries', ${ECHO2}, 'logs', 'job.out', 'path'), 'log/${TAR_FILE}']" \
     "[('entries', ${ECHO2}, 'logs', 'job', 'path_in_tar'), '${ECHO2_JOB}']" \
-    "[('entries', ${ECHO2}, 'logs', 'job.stderr', 'path_in_tar'), '${ECHO2_JOB}.stderr']" \
-    "[('entries', ${ECHO2}, 'logs', 'job.stdout', 'path_in_tar'), '${ECHO2_JOB}.stdout']"
+    "[('entries', ${ECHO2}, 'logs', 'job.err', 'path_in_tar'), '${ECHO2_JOB}.err']" \
+    "[('entries', ${ECHO2}, 'logs', 'job.out', 'path_in_tar'), '${ECHO2_JOB}.out']"
 #-------------------------------------------------------------------------------
 # Tidy up - note suite trivial so stops early on by itself
 purge_suite "${SUITE_NAME}"

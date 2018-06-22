@@ -48,7 +48,6 @@ TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 
 export CYLC_CONF_PATH=
-cylc register "${SUITE_NAME}" "${TEST_DIR}"
 cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null'
 #-------------------------------------------------------------------------------
 # Initialise WSGI application for the cylc review web service
@@ -56,13 +55,16 @@ cylc_ws_init 'cylc' 'review'
 if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
     exit 1
 fi
+
+# Set up standard URL escaping of forward slashes in 'cylctb-' suite names.
+ESC_SUITE_NAME="$(echo ${SUITE_NAME} | sed 's|/|%2F|g')"
 #-------------------------------------------------------------------------------
 # Data transfer output check for a suite's cycles page, sorted by time_desc
 TEST_NAME_PREFIX="${TEST_NAME_BASE}-200-curl-cycles-page-"
 TEST_NAME="${TEST_NAME_PREFIX}1"
 PAGE_OPT="&page=1&per_page=3"
 run_ok "${TEST_NAME}" curl \
-    "${TEST_CYLC_WS_URL}/cycles/${USER}/${SUITE_NAME}?form=json${PAGE_OPT}"
+    "${TEST_CYLC_WS_URL}/cycles/${USER}/${ESC_SUITE_NAME}?form=json${PAGE_OPT}"
 
 # N.B. Extra cycle at the end, due to spawn-held task beyond final cycle point
 cylc_ws_json_greps "${TEST_NAME_PREFIX}1.stdout" "${TEST_NAME_PREFIX}1.stdout" \

@@ -987,6 +987,55 @@ class CylcReviewDAO(object):
         "succeeded,failed": "run_status IS NOT NULL",
         "failed": "run_status == 1",
     }
+    JOB_ORDERS = {
+        "time_desc": "time DESC, submit_num DESC, name DESC, cycle DESC",
+        "time_asc": "time ASC, submit_num ASC, name ASC, cycle ASC",
+        "cycle_desc_name_asc": "cycle DESC, name ASC, submit_num DESC",
+        "cycle_desc_name_desc": "cycle DESC, name DESC, submit_num DESC",
+        "cycle_asc_name_asc": "cycle ASC, name ASC, submit_num DESC",
+        "cycle_asc_name_desc": "cycle ASC, name DESC, submit_num DESC",
+        "name_asc_cycle_asc": "name ASC, cycle ASC, submit_num DESC",
+        "name_desc_cycle_asc": "name DESC, cycle ASC, submit_num DESC",
+        "name_asc_cycle_desc": "name ASC, cycle DESC, submit_num DESC",
+        "name_desc_cycle_desc": "name DESC, cycle DESC, submit_num DESC",
+        "time_submit_desc": (
+            "time_submit DESC, submit_num DESC, name DESC, cycle DESC"),
+        "time_submit_asc": (
+            "time_submit ASC, submit_num DESC, name DESC, cycle DESC"),
+        "time_run_desc": (
+            "time_run DESC, submit_num DESC, name DESC, cycle DESC"),
+        "time_run_asc": (
+            "time_run ASC, submit_num DESC, name DESC, cycle DESC"),
+        "time_run_exit_desc": (
+            "time_run_exit DESC, submit_num DESC, name DESC, cycle DESC"),
+        "time_run_exit_asc": (
+            "time_run_exit ASC, submit_num DESC, name DESC, cycle DESC"),
+        "duration_queue_desc": (
+            "(CAST(strftime('%s', time_run) AS NUMERIC) -" +
+            " CAST(strftime('%s', time_submit) AS NUMERIC)) DESC, " +
+            "submit_num DESC, name DESC, cycle DESC"),
+        "duration_queue_asc": (
+            "(CAST(strftime('%s', time_run) AS NUMERIC) -" +
+            " CAST(strftime('%s', time_submit) AS NUMERIC)) ASC, " +
+            "submit_num DESC, name DESC, cycle DESC"),
+        "duration_run_desc": (
+            "(CAST(strftime('%s', time_run_exit) AS NUMERIC) -" +
+            " CAST(strftime('%s', time_run) AS NUMERIC)) DESC, " +
+            "submit_num DESC, name DESC, cycle DESC"),
+        "duration_run_asc": (
+            "(CAST(strftime('%s', time_run_exit) AS NUMERIC) -" +
+            " CAST(strftime('%s', time_run) AS NUMERIC)) ASC, " +
+            "submit_num DESC, name DESC, cycle DESC"),
+        "duration_queue_run_desc": (
+            "(CAST(strftime('%s', time_run_exit) AS NUMERIC) -" +
+            " CAST(strftime('%s', time_submit) AS NUMERIC)) DESC, " +
+            "submit_num DESC, name DESC, cycle DESC"),
+        "duration_queue_run_asc": (
+            "(CAST(strftime('%s', time_run_exit) AS NUMERIC) -" +
+            " CAST(strftime('%s', time_submit) AS NUMERIC)) ASC, " +
+            "submit_num DESC, name DESC, cycle DESC"),
+        }
+
     REC_CYCLE_QUERY_OP = re.compile(r"\A(before |after |[<>]=?)(.+)\Z")
     REC_SEQ_LOG = re.compile(r"\A(.+\.)([^\.]+)(\.[^\.]+)\Z")
 
@@ -1017,9 +1066,10 @@ class CylcReviewDAO(object):
     def _db_exec(self, user_name, suite_name, stmt, stmt_args=None):
         """Execute a query on a named CylcSuiteDAO database connection."""
         daos = self._db_init(user_name, suite_name)
-        if stmt_args is None:
-            stmt_args = []
-        return daos.connect().execute(stmt, stmt_args)
+        if stmt_args:
+            return daos.connect().execute(stmt, stmt_args)
+        else:
+            return daos.connect().execute(stmt)
 
     def get_suite_broadcast_states(self, user_name, suite_name):
         """Return broadcast states of a suite.
@@ -1049,7 +1099,7 @@ class CylcReviewDAO(object):
     def get_suite_job_entries(
             self, user_name, suite_name, cycles, tasks, task_status,
             job_status, order, limit, offset):
-        """Query suite runtime databsae to return a listing of task jobs.
+        """Query suite runtime database to return a listing of task jobs.
         user -- A string containing a valid user ID
         suite -- A string containing a valid suite ID
         cycles -- If specified, display only task jobs matching these cycles.
@@ -1111,7 +1161,7 @@ class CylcReviewDAO(object):
                 " FROM task_jobs JOIN task_states USING (cycle, name)" +
                 where_expr +
                 " ORDER BY " +
-                "time DESC, submit_num DESC, name DESC, cycle DESC")
+                self.JOB_ORDERS.get(order, self.JOB_ORDERS["time_desc"]))
         limit_args = []
         if limit:
             stmt += " LIMIT ? OFFSET ?"
@@ -1315,6 +1365,8 @@ class CylcReviewDAO(object):
         * T2 is the time when last update time of (a task in) the cycle
         and of_n_entries is the total number of entries.
         """
+
+
         of_n_entries = 0
         stmt = ("SELECT COUNT(DISTINCT cycle) FROM task_states WHERE " +
                 "submit_num > 0")
@@ -1322,6 +1374,7 @@ class CylcReviewDAO(object):
             of_n_entries = row[0]
             break
         if not of_n_entries:
+            self._db_close(user_name, suite_name)
             return ([], 0)
 
         # Not strictly correct, if cycle is in basic date-only format,
@@ -1362,7 +1415,10 @@ class CylcReviewDAO(object):
             stmt += " ORDER BY cast(cycle as number)"
         else:
             stmt += " ORDER BY cycle"
-        stmt += " DESC"  # ordering choice
+        if order == "time_asc":
+            stmt += " ASC"
+        else:
+            stmt += " DESC"  # "time_desc" or default ordering.
         stmt_args = []
         if limit:
             stmt += " LIMIT ? OFFSET ?"
@@ -1386,6 +1442,7 @@ class CylcReviewDAO(object):
                     },
                 }
                 entries.append(entry_of[cycle])
+
 
         # Check if "task_jobs" table is available or not.
         # Note: A single query with a JOIN is probably a more elegant solution.
