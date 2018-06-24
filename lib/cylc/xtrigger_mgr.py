@@ -50,16 +50,20 @@ class XtriggerManager(object):
     # Example:
     [scheduling]
         [[xtriggers]]
-            clock_0 = wall_clock(offset=PT0H)
+            clock_0 = wall_clock()  # offset PT0H
+            clock_1 = wall_clock(offset=PT1H)
             suite_x = suite_state(suite=other,
                                   point=%(task_cycle_point)s):PT30S
         [[dependencies]]
             [[[PT1H]]]
-                graph = @clock_0 & @suite_x => foo & bar
+                graph = '''
+                    @clock_1 & @suite_x => foo & bar
+                    @wall_clock = baz  # pre-defined zero-offset clock
+                        '''
 
-    Task proxies only store xtriggers labels (clock_0, suite_x above). These
-    labels are mapped to the defined function calls. Dependence on xtriggers
-    is satisfied by calling these functions asynchronously in the task pool
+    Task proxies only store xtriggers labels: clock_0, suite_x, etc. above.
+    These mapped to the defined function calls. Dependence on xtriggers is
+    satisfied by calling these functions asynchronously in the task pool
     (except clock triggers which are called synchronously as they're quick).
 
     A unique call is defined by a unique function call signature, i.e. the
@@ -116,11 +120,16 @@ class XtriggerManager(object):
         self.functx_map[label] = fctx
         # Check any string templates in the function arg values (note this
         # won't catch bad task-specific values - which are added dynamically).
-        for argv in fctx.func_kwargs.values():
-            for match in RE_STR_TMPL.findall(argv):
-                if match not in ARG_VAL_TEMPLATES:
-                    raise ValueError(
-                        "Illegal template in xtrigger %s: %s" % (label, match))
+        for argv in fctx.func_args + fctx.func_kwargs.values():
+            try:
+                for match in RE_STR_TMPL.findall(argv):
+                    if match not in ARG_VAL_TEMPLATES:
+                        raise ValueError(
+                            "Illegal template in xtrigger %s: %s" % (
+                                label, match))
+            except TypeError:
+                # Not a string arg.
+                pass
 
     def load_xtrigger_for_restart(self, row_idx, row):
         if row_idx == 0:
@@ -150,7 +159,7 @@ class XtriggerManager(object):
         if satisfied:
             return
         func = get_func(ctx.func_name)
-        if func(**ctx.func_kwargs):
+        if func(*ctx.func_args, **ctx.func_kwargs):
             satisfied = True
             itask.state.xclock = (label, True)
             self.sat_xclock.append(sig)
@@ -161,7 +170,6 @@ class XtriggerManager(object):
         ctx = deepcopy(self.clockx_map[label])
         ctx.func_kwargs.update(
             {
-                'point': str(itask.point),
                 'point_as_seconds': itask.get_point_as_seconds(),
             }
         )
@@ -184,16 +192,23 @@ class XtriggerManager(object):
             ctx = deepcopy(self.functx_map[label])
             ctx.point = itask.point
             kwargs = {}
+            args = []
             # Replace legal string templates in function arg values.
+            for val in ctx.func_args:
+                try:
+                    val = val % farg_templ
+                except TypeError:
+                    pass
+                args.append(val)
             for key, val in ctx.func_kwargs.items():
                 try:
-                    kwargs[key] = val % farg_templ
+                    val = val % farg_templ
                 except TypeError:
-                    # non-string val (debug mode is bool).
                     pass
-
+                kwargs[key] = val
             # Now add debug mode kwarg (boolean).
             kwargs['debug'] = cylc.flags.debug
+            ctx.func_args = args
             ctx.func_kwargs = kwargs
             ctx.update_command()
             sig = ctx.get_signature()

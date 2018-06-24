@@ -23,7 +23,6 @@ from collections import deque
 from cylc.cycling.loader import (
     get_point_relative, get_interval, is_offset_absolute)
 from cylc.task_id import TaskID
-from cylc.cfgspec.utils import get_interval_as_seconds
 
 
 class TaskDefError(Exception):
@@ -49,7 +48,7 @@ class TaskDef(object):
         "suite_polling_cfg", "clocktrigger_offset", "expiration_offset",
         "namespace_hierarchy", "dependencies", "outputs", "param_var",
         "external_triggers", "xtrig_labels", "xclock_label",
-        "xclock_offset_secs", "name", "elapsed_times"]
+        "name", "elapsed_times"]
 
     # Store the elapsed times for a maximum of 10 cycles
     MAX_LEN_ELAPSED_TIMES = 10
@@ -81,21 +80,13 @@ class TaskDef(object):
         self.external_triggers = []
         self.xtrig_labels = set()
         self.xclock_label = None
-        self.xclock_offset_secs = None
+        # Note a task can only have one clock xtrigger - if it depends on
+        # several we just keep the label of the one with the largest offset
+        # (this is determined and set during suite config parsing, to avoid
+        # storing the offset here in the taskdef).
 
         self.name = name
         self.elapsed_times = deque(maxlen=self.MAX_LEN_ELAPSED_TIMES)
-
-    def add_xclock(self, label, offset):
-        """Add or update the task's clock xtrigger.
-
-        If the task depends on multiple clock triggers, just keep the largest.
-
-        """
-        offset_secs = get_interval_as_seconds(offset)
-        if self.xclock_label is None or offset_secs > self.xclock_offset_secs:
-            self.xclock_label = label
-            self.xclock_offset_secs = offset_secs
 
     def add_dependency(self, dependency, sequence):
         """Add a dependency to a named sequence.

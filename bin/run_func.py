@@ -35,7 +35,8 @@ pool. The function is expected to be defined in a module of the same name.
 
 The return value is printed as a JSON string to stdout.
 
-Anything written to stdout by the function will be redirected to stderr.
+Anything written to stdout by the function will be redirected and printed to
+suite stderr in debug mode.
 
 """
 

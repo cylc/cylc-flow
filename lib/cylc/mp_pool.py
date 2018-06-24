@@ -129,29 +129,30 @@ class SuiteProcContext(object):
 class SuiteFuncContext(SuiteProcContext):
     """Represent the context of a function to run in the process pool."""
 
-    def __init__(self, label, func_name, func_kwargs, intvl):
+    # TODO - DOCUMENT ATTRIBUTES AS ABOVE.
+
+    def __init__(self, label, func_name, func_args, func_kwargs, intvl):
         self.label = label
         self.func_name = func_name
         self.func_kwargs = func_kwargs
+        self.func_args = func_args
         self.intvl = float(intvl)
         self.ret_val = (False, None)  # (satisfied, broadcast)
-        # TODO - ALLOW ARGS as well as kwargs
         super(SuiteFuncContext, self).__init__(
             'xtrigger-func', cmd=[], shell=False)
 
     def update_command(self):
         # call this after string formatting for point etc.
-        func_args = []
         self.cmd = ['run_func.py', self.func_name,
-                    json.dumps(func_args),
+                    json.dumps(self.func_args),
                     json.dumps(self.func_kwargs)]
 
     def get_signature(self):
-        """Return a string representation of the func call signature."""
+        """Return the function call signature (as a string)."""
         skeys = sorted(self.func_kwargs.keys())
-        return "%s(%s)" % (
-            self.func_name,
-            ", ".join("%s=%s" % (i, self.func_kwargs[i]) for i in skeys))
+        args = self.func_args + [
+            "%s=%s" % (i, self.func_kwargs[i]) for i in skeys]
+        return "%s(%s)" % (self.func_name, ", ".join([str(a) for a in args]))
 
 
 class SuiteProcPool(object):

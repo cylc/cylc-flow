@@ -55,6 +55,9 @@ from parsec.util import replicate
 from cylc.suite_logging import OUT, ERR
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.task_outputs import TASK_OUTPUT_SUCCEEDED
+from cylc.cfgspec.utils import (
+    get_interval_as_seconds, DEFAULT_XTRIG_INTVL_SECS)
+from cylc.mp_pool import SuiteFuncContext
 
 RE_CLOCK_OFFSET = re.compile(r'(' + TaskID.NAME_RE + r')(?:\(\s*(.+)\s*\))?')
 RE_EXT_TRIGGER = re.compile(r'(.*)\s*\(\s*(.+)\s*\)\s*')
@@ -2007,6 +2010,10 @@ class SuiteConfig(object):
                 parser.triggers, parser.original, seq, task_triggers)
 
         xtcfg = self.cfg['scheduling']['xtriggers']
+        # Add a predefined zero-offset wall clock xtrigger.
+        if 'wall_clock' not in xtcfg:
+            xtcfg['wall_clock'] = SuiteFuncContext(
+                'wall_clock', 'wall_clock', [], {}, DEFAULT_XTRIG_INTVL_SECS)
         # Taskdefs just know xtrigger labels.
         for task_name, xt_labels in self.xtriggers.items():
             for label in xt_labels:
@@ -2016,12 +2023,25 @@ class SuiteConfig(object):
                     raise SuiteConfigError(
                         "ERROR, xtrigger label not defined: %s" % label)
                 if xtrig.func_name.startswith('wall_clock'):
-                    self.taskdefs[task_name].add_xclock(
-                        label, xtrig.func_kwargs['offset'])
                     self.xtrigger_mgr.add_clock(label, xtrig)
+                    # Replace existing xclock if the new offset is larger.
+                    try:
+                        offset = get_interval_as_seconds(
+                            xtrig.func_kwargs['offset'])
+                    except KeyError:
+                        offset = 0
+                    old_label = self.taskdefs[task_name].xclock_label
+                    if old_label is None:
+                        self.taskdefs[task_name].xclock_label = label
+                    else: 
+                        old_xtrig = self.xtrigger_mgr.clockx_map[old_label]
+                        old_offset = get_interval_as_seconds(
+                                old_xtrig.func_kwargs['offset'])
+                        if offset > old_offset:
+                            self.taskdefs[task_name].xclock_label = label
                 else:
-                    self.taskdefs[task_name].xtrig_labels.add(label)
                     self.xtrigger_mgr.add_trig(label, xtrig)
+                    self.taskdefs[task_name].xtrig_labels.add(label)
 
         # Detect use of xtrigger names with '@' prefix (creates a task).
         overlap = set(self.taskdefs.keys()).intersection(

@@ -33,6 +33,9 @@ DURATION_PARSER = DurationParser()
 RE_TRIG_FUNC = re.compile(r'(\w+)\((.*)\)(?:\:(\w+))?')
 
 
+DEFAULT_XTRIG_INTVL_SECS = '10'
+
+
 class DurationFloat(float):
     """Duration in seconds."""
     def __str__(self):
@@ -73,11 +76,28 @@ def coerce_interval_list(value, keys, args):
 def coerce_xtrig(value, keys, _):
     """Coerce a string into an xtrigger function context object.
 
-    Input example: "func_name(arg1=val1, arg2=val2, ...)".
+    func_name(*args, **kwargs)
     Checks for legal string templates in arg values too.
 
     """
 
+    def coerce_type(in_str):
+        """Convert in_str to int, float, or bool, if possible."""
+        try:
+            val = int(in_str)
+        except ValueError:
+            try:
+                val = float(in_str)
+            except ValueError:
+                if in_str == 'False':
+                    val = False
+                elif in_str == 'True':
+                    val = True
+                else:
+                    # Leave as string.
+                    val = _strip_and_unquote([], in_str)
+        return val
+                
     # TODO - DO A VALIDATION-TIME GET_FUNC, FOR SAFETY.
 
     label = keys[-1]
@@ -86,22 +106,25 @@ def coerce_xtrig(value, keys, _):
         raise IllegalValueError("xtrigger", keys, value)
     fctx = None
     fname = None
+    args = []
     kwargs = {}
     m = RE_TRIG_FUNC.match(value)
     if m is None:
         raise IllegalValueError("xtrigger", keys, value)
     fname, fargs, intvl = m.groups()
     if intvl is None:
-        # Default xtrigger interval 10 seconds.
-        intvl = 'PT10S'
-    seconds = float(coerce_interval(intvl, keys, None))
+        seconds = DEFAULT_XTRIG_INTVL_SECS
+    else:
+        seconds = float(coerce_interval(intvl, keys, None))
 
     if fargs:
-        # Extract kwargs.
+        # Extract function args and kwargs.
         for farg in re.split('\s*,\s*', fargs):
-            key, val = re.split('\s*=\s*', farg)
-            key = key.strip()
-            kwargs[key] = _strip_and_unquote([key], val)
+            try: 
+                key, val = re.split('\s*=\s*', farg)
+            except ValueError:
+                args.append(coerce_type(farg.strip()))
+            else:
+                kwargs[key.strip()] = coerce_type(val)
 
-    fctx = SuiteFuncContext(label, fname, kwargs, seconds)
-    return fctx
+    return SuiteFuncContext(label, fname, args, kwargs, seconds)
