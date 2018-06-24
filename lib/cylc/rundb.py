@@ -293,7 +293,7 @@ class CylcSuiteDAO(object):
         ],
         TABLE_XTRIGGERS: [
             ["signature", {"is_primary_key": True}],
-            ["results_pickle"],
+            ["results"],
         ],
         TABLE_TASK_POOL_CHECKPOINTS: [
             ["id", {"datatype": "INTEGER", "is_primary_key": True}],
@@ -651,7 +651,7 @@ class CylcSuiteDAO(object):
         return ret
 
     def select_xtriggers_for_restart(self, callback):
-        stm = r"SELECT signature,results_pickle FROM %s" % self.TABLE_XTRIGGERS
+        stm = r"SELECT signature,results FROM %s" % self.TABLE_XTRIGGERS
         for row_idx, row in enumerate(self.connect().execute(stm, [])):
             callback(row_idx, list(row))
 

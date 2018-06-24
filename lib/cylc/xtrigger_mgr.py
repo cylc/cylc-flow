@@ -18,7 +18,6 @@
 
 import re
 import json
-import pickle
 from time import time
 from copy import deepcopy
 from cylc.suite_logging import LOG, OUT
@@ -134,9 +133,8 @@ class XtriggerManager(object):
     def load_xtrigger_for_restart(self, row_idx, row):
         if row_idx == 0:
             OUT.info("LOADING satisfied xtriggers")
-        sig, results_pickle = row
-        # TODO - CHANGE PICKLE TO JSON
-        self.sat_xtrig[sig] = pickle.loads(results_pickle)
+        sig, results = row
+        self.sat_xtrig[sig] = json.loads(results)
 
     def housekeep(self):
         """Delete satisfied xtriggers and xclocks no longer needed."""

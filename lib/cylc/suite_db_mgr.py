@@ -27,7 +27,6 @@ This module provides the logic to:
 
 import os
 import json
-import pickle  # TODO - REMOVE PICKLE (xtriggers only)
 from shutil import copy, rmtree
 from subprocess import call
 from tempfile import mkstemp
@@ -315,7 +314,7 @@ class SuiteDatabaseManager(object):
         for sig, res in sat_xtrig.items():
             self.db_inserts_map[self.TABLE_XTRIGGERS].append({
                 "signature": sig,
-                "results_pickle": pickle.dumps(res)})
+                "results": json.dumps(res)})
 
     def put_task_pool(self, pool):
         """Put statements to update the task_pool table in runtime database.
