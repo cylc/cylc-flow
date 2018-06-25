@@ -381,12 +381,16 @@ previous section, emerges naturally at run time.
 \section{Installation}
 \label{Requirements}
 
-Cylc runs on Unix variants, usually Linux, and including Apple OS X.
+Cylc runs on Linux. It is tested quite thoroughly on modern RHEL and Ubuntu
+distros. Some users have also managed to make it work on other Unix variants
+including Apple OS X, but they are not officially tested and supported.
 
 \subsection{Third-Party Software Packages}
 
-{\bf Python \lstinline@>=@ 2.6} is required (but not yet Python 3). Python
-should already be installed in your Linux system. \url{https://python.org}.
+{\bf Python 2 \lstinline@>=@ 2.6} is required.
+{\bf Python 2 \lstinline@>=@ 2.7.9} is recommended for the best security.
+Python 2 should already be installed in your Linux system.
+\url{https://python.org/}.
 
 For Cylc's HTTPS communications layer:
 \begin{myitemize}
