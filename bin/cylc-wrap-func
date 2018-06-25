@@ -15,30 +15,23 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+CYLC INTERNAL USE - for asynchronous xtrigger function execution.
+
+USAGE: cylc wrap-func <func-name> <'json-func-args'> <'json-func-kwargs'>
+
+Run "func-name(*func-args, **func-kwargs)" in the command process pool.
+
+Function func-name must be defined in a module of the same name.
+
+Function stdout will be redirected to stderr and visible in suite debug mode,
+and its return value printed to stdout as a JSON string.
+"""
 
 import importlib
 import json
 import sys
-
 from cylc.mp_func_context import get_func
-
-"""
-
-CYLC INTERNAL USE
-
-Run a Python function in a subprocess, print its return value to stdout.
-
-USAGE: cylc wrap-func <func-name> <'json-func-args'> <'json-func-kwargs'>
-
-Run a Python function (given name, args, and kwargs) in the command process
-pool. The function is expected to be defined in a module of the same name.
-
-The return value is printed as a JSON string to stdout.
-
-Anything written to stdout by the function will be redirected and printed to
-suite stderr in debug mode.
-
-"""
 
 
 def run_func(func_name, func_args, func_kwargs):
@@ -50,10 +43,13 @@ def run_func(func_name, func_args, func_kwargs):
     # Restore stdout.
     sys.stdout = orig_stdout
     # Write function return value as JSON to stdout.
-    print json.dumps(res)
+    sys.stdout.write(json.dumps(res))
 
 
 if __name__ == "__main__":
+    if sys.argv[1] in ['help', '--help']:
+        print __doc__
+        sys.exit(0)
     func_name = sys.argv[1]
     func_args = json.loads(sys.argv[2])
     func_kwargs = json.loads(sys.argv[3])

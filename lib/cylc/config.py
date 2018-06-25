@@ -2033,10 +2033,10 @@ class SuiteConfig(object):
                     old_label = self.taskdefs[task_name].xclock_label
                     if old_label is None:
                         self.taskdefs[task_name].xclock_label = label
-                    else: 
+                    else:
                         old_xtrig = self.xtrigger_mgr.clockx_map[old_label]
                         old_offset = get_interval_as_seconds(
-                                old_xtrig.func_kwargs['offset'])
+                            old_xtrig.func_kwargs['offset'])
                         if offset > old_offset:
                             self.taskdefs[task_name].xclock_label = label
                 else:

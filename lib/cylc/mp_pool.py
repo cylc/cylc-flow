@@ -143,7 +143,7 @@ class SuiteFuncContext(SuiteProcContext):
 
     def update_command(self):
         # call this after string formatting for point etc.
-        self.cmd = ['run_func.py', self.func_name,
+        self.cmd = ['cylc-wrap-func', self.func_name,
                     json.dumps(self.func_args),
                     json.dumps(self.func_kwargs)]
 

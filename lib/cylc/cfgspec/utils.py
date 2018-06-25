@@ -76,7 +76,7 @@ def coerce_interval_list(value, keys, args):
 def coerce_xtrig(value, keys, _):
     """Coerce a string into an xtrigger function context object.
 
-    func_name(*args, **kwargs)
+    func_name(*func_args, **func_kwargs)
     Checks for legal string templates in arg values too.
 
     """
@@ -97,8 +97,6 @@ def coerce_xtrig(value, keys, _):
                     # Leave as string.
                     val = _strip_and_unquote([], in_str)
         return val
-                
-    # TODO - DO A VALIDATION-TIME GET_FUNC, FOR SAFETY.
 
     label = keys[-1]
     value = _strip_and_unquote(keys, value)
@@ -119,9 +117,9 @@ def coerce_xtrig(value, keys, _):
 
     if fargs:
         # Extract function args and kwargs.
-        for farg in re.split('\s*,\s*', fargs):
-            try: 
-                key, val = re.split('\s*=\s*', farg)
+        for farg in re.split(r'\s*,\s*', fargs):
+            try:
+                key, val = re.split(r'\s*=\s*', farg)
             except ValueError:
                 args.append(coerce_type(farg.strip()))
             else:
