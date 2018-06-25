@@ -24,7 +24,7 @@ from time import time
 from cylc.cycling.iso8601 import interval_parse
 
 
-def wall_clock(point_as_seconds, offset=None):
+def wall_clock(offset=None, point_as_seconds=None):
     """Return True if now > (point + offset) else False."""
     if offset is None:
         offset_as_seconds = 0
