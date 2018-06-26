@@ -401,7 +401,7 @@ class TreeUpdater(threading.Thread):
                 try:
                     p_data = new_fam_data[point_string]["root"]
                 except KeyError:
-                    p_data = [None] * 11
+                    p_data = [None] * 10 + [-1]
                 p_path = (i,)
                 p_row_id = (point_string, point_string)
                 p_data = list(p_row_id) + p_data
