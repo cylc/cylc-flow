@@ -390,10 +390,20 @@ class SuiteRuntimeServiceClient(object):
         # python <2.7.9. On those platforms, these warnings serve no purpose
         # except to annoy or confuse users.
         if sys.version_info < (2, 7, 9):
-            from requests.packages.urllib3.exceptions import (
-                SecurityWarning, SNIMissingWarning)
-            warnings.simplefilter("ignore", SecurityWarning)
-            warnings.simplefilter("ignore", SNIMissingWarning)
+            try:
+                from requests.packages.urllib3.exceptions import (
+                    SecurityWarning)
+            except ImportError:
+                pass
+            else:
+                warnings.simplefilter("ignore", SecurityWarning)
+            try:
+                from requests.packages.urllib3.exceptions import (
+                    SNIMissingWarning)
+            except ImportError:
+                pass
+            else:
+                warnings.simplefilter("ignore", SNIMissingWarning)
         if self.session is None:
             self.session = requests.Session()
 
