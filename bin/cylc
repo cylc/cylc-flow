@@ -65,14 +65,6 @@ init_cylc() {
 }
 
 help_util() {
-    if [[ -z $PAGER ]]; then
-        help_util2 $@
-    else
-        help_util2 $@ | $PAGER
-    fi
-}
-
-help_util2() {
     # Deals with form 'cylc [COMMAND] --help'
     cd "${CYLC_HOME_BIN}"
     # deal with graph which is a weird edge case...
@@ -230,7 +222,7 @@ control|information|all|task|license|GPL|admin|preparation|hook|discovery\
     shift 1
     :;;
 help|h|\?|--help|-h)
-    help_util "$@"
+    help_util "$@" | ${PAGER:-less}
     exit 0
     :;;
 version|--version|-V)
