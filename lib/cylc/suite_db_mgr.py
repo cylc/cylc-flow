@@ -334,7 +334,7 @@ class SuiteDatabaseManager(object):
                 self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
                     "name": itask.tdef.name,
                     "cycle": str(itask.point),
-                    "ctx_key": "poll_timer",
+                    "ctx_key": json.dumps("poll_timer"),
                     "ctx": self._namedtuple2json(itask.poll_timer.ctx),
                     "delays": json.dumps(itask.poll_timer.delays),
                     "num": itask.poll_timer.num,
