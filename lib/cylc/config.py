@@ -2010,18 +2010,20 @@ class SuiteConfig(object):
                 parser.triggers, parser.original, seq, task_triggers)
 
         xtcfg = self.cfg['scheduling']['xtriggers']
-        # Add a predefined zero-offset wall clock xtrigger.
-        if 'wall_clock' not in xtcfg:
-            xtcfg['wall_clock'] = SuiteFuncContext(
-                'wall_clock', 'wall_clock', [], {}, DEFAULT_XTRIG_INTVL_SECS)
         # Taskdefs just know xtrigger labels.
         for task_name, xt_labels in self.xtriggers.items():
             for label in xt_labels:
                 try:
                     xtrig = xtcfg[label]
                 except KeyError:
-                    raise SuiteConfigError(
-                        "ERROR, xtrigger label not defined: %s" % label)
+                    if label == 'wall_clock':
+                        # Allow predefined zero-offset wall clock xtrigger.
+                        xtrig = SuiteFuncContext(
+                            'wall_clock', 'wall_clock', [], {},
+                            DEFAULT_XTRIG_INTVL_SECS)
+                    else:
+                        raise SuiteConfigError(
+                            "ERROR, undefined xtrigger label: %s" % label)
                 if xtrig.func_name.startswith('wall_clock'):
                     self.xtrigger_mgr.add_clock(label, xtrig)
                     # Replace existing xclock if the new offset is larger.
