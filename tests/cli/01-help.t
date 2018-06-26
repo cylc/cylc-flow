@@ -40,15 +40,15 @@ done
 run_ok "${TEST_NAME_BASE}-warranty" cylc warranty
 run_ok "${TEST_NAME_BASE}-license-warranty" cylc license warranty
 run_ok "${TEST_NAME_BASE}-GPL-warranty" cylc GPL warranty
-run_ok "${TEST_NAME_BASE}-w" cylc w
-run_ok "${TEST_NAME_BASE}-license-w" cylc license w
-run_ok "${TEST_NAME_BASE}-GPL-w" cylc GPL w
+run_ok "${TEST_NAME_BASE}-wa" cylc wa
+run_ok "${TEST_NAME_BASE}-license-wa" cylc license wa
+run_ok "${TEST_NAME_BASE}-GPL-wa" cylc GPL wa
 for FILE in \
     "${TEST_NAME_BASE}-license-warranty.stdout" \
     "${TEST_NAME_BASE}-GPL-warranty.stdout" \
-    "${TEST_NAME_BASE}-w.stdout" \
-    "${TEST_NAME_BASE}-license-w.stdout" \
-    "${TEST_NAME_BASE}-GPL-w.stdout"
+    "${TEST_NAME_BASE}-wa.stdout" \
+    "${TEST_NAME_BASE}-license-wa.stdout" \
+    "${TEST_NAME_BASE}-GPL-wa.stdout"
 do
     cmp_ok "${FILE}" "${TEST_NAME_BASE}-warranty.stdout"
 done
@@ -88,15 +88,15 @@ run_ok "${TEST_NAME_BASE}-warranty-h" cylc warranty -h
 run_ok "${TEST_NAME_BASE}-help-warranty" cylc help warranty
 run_ok "${TEST_NAME_BASE}-h-license-warranty" cylc h license warranty
 run_ok "${TEST_NAME_BASE}---help-license-warranty" cylc --help license warranty
-run_ok "${TEST_NAME_BASE}-help-w" cylc help w
-run_ok "${TEST_NAME_BASE}-license-w" cylc help license w
+run_ok "${TEST_NAME_BASE}-help-wa" cylc help wa
+run_ok "${TEST_NAME_BASE}-license-wa" cylc help license wa
 for FILE in \
     "${TEST_NAME_BASE}-warranty-h.stdout" \
     "${TEST_NAME_BASE}-help-warranty.stdout" \
     "${TEST_NAME_BASE}-h-license-warranty.stdout" \
     "${TEST_NAME_BASE}---help-license-warranty.stdout" \
-    "${TEST_NAME_BASE}-help-w.stdout" \
-    "${TEST_NAME_BASE}-license-w.stdout"
+    "${TEST_NAME_BASE}-help-wa.stdout" \
+    "${TEST_NAME_BASE}-license-wa.stdout"
 do
     cmp_ok "${FILE}" "${TEST_NAME_BASE}-warranty--help.stdout"
 done
