@@ -39,7 +39,6 @@ def xrandom(percent, secs=0, _=None, debug=False):
     specialize the function signature to cycle point or task.
 
     """
-    print "HELLO"
     sleep(float(secs))
     results = {}
     satisfied = (1 == randint(1, 100 / int(percent)))

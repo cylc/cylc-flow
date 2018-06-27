@@ -34,13 +34,6 @@ from cylc.suite_logging import LOG
 from cylc.wallclock import get_current_time_string
 
 
-# Possible xtrigger function results.
-FUNC_RES_TRUE = True
-FUNC_RES_FALSE = False
-FUNC_RES_FAILED = 2
-FUNC_RES_TIMEDOUT = 3
-
-
 class SuiteProcContext(object):
     """Represent the context of a command to run.
 
@@ -127,11 +120,26 @@ class SuiteProcContext(object):
 
 
 class SuiteFuncContext(SuiteProcContext):
-    """Represent the context of a function to run in the process pool."""
+    """Represent the context of a function to run in the process pool.
 
-    # TODO - DOCUMENT ATTRIBUTES AS ABOVE.
+    Attributes:
+        # (See also parent class attributes).
+        .label (str):
+            function label under [xtriggers] in suite.rc
+        .func_name (str):
+            function name
+        .func_args (list):
+            function positional args
+        .func_kwargs (dict):
+            function keyword args
+        .intvl (float - seconds):
+            function call interval (how often to check the external trigger)
+        .ret_val (bool, dict)
+            function return: (satisfied?, result to pass to trigger tasks)
+    """
 
     def __init__(self, label, func_name, func_args, func_kwargs, intvl):
+        """Initialize a function context."""
         self.label = label
         self.func_name = func_name
         self.func_kwargs = func_kwargs
@@ -142,7 +150,7 @@ class SuiteFuncContext(SuiteProcContext):
             'xtrigger-func', cmd=[], shell=False)
 
     def update_command(self):
-        # call this after string formatting for point etc.
+        """Update the function wrap command after changes."""
         self.cmd = ['cylc-wrap-func', self.func_name,
                     json.dumps(self.func_args),
                     json.dumps(self.func_kwargs)]

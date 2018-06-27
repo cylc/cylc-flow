@@ -16,22 +16,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-CYLC INTERNAL USE - for asynchronous xtrigger function execution.
+INTERNAL USE (asynchronous xtrigger function execution).
 
 USAGE: cylc wrap-func <func-name> <'json-func-args'> <'json-func-kwargs'>
 
 Run "func-name(*func-args, **func-kwargs)" in the command process pool.
 
-Function func-name must be defined in a module of the same name.
+The function must be defined in a module of the same name (func-name).
 
-Function stdout will be redirected to stderr and visible in suite debug mode,
-and its return value printed to stdout as a JSON string.
+The function's stdout is redirected to stderr, and visible in suite log in
+debug mode. Its return value is printed to stdout as a JSON string.
 """
+
+# Function return value to stdout: for compat with the command process pool.
 
 import importlib
 import json
 import sys
-from cylc.mp_func_context import get_func
+from cylc.xtrigger_mgr import get_func
 
 
 def run_func(func_name, func_args, func_kwargs):

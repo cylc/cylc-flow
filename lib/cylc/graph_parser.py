@@ -330,7 +330,7 @@ class GraphParser(object):
 
         'left' can be a logical expression of qualified node names.
         'right' can be one or more node names joined by AND.
-        A node is a trigger, or a task a family name.
+        A node is an xtrigger, or a task or a family name.
         A qualified name is NAME([CYCLE-POINT-OFFSET])(:TRIGGER-TYPE).
         Trigger qualifiers, but not cycle offsets, are ignored on the right to
         allow chaining.

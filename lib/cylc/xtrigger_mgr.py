@@ -16,16 +16,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import re
 import json
 from time import time
 from copy import deepcopy
 from cylc.suite_logging import LOG, OUT
-# TODO - DO WE NEED THESE?
-from cylc.mp_pool import (FUNC_RES_TRUE, FUNC_RES_FALSE,
-                          FUNC_RES_FAILED, FUNC_RES_TIMEDOUT)
 import cylc.flags
-from cylc.mp_func_context import get_func
 
 # Templates for string replacement in function arg values.
 TMPL_USER_NAME = 'user_name'
@@ -42,6 +39,33 @@ ARG_VAL_TEMPLATES = [
 # Extract all 'foo' from string templates '%(foo)s'.
 RE_STR_TMPL = re.compile(r'%\(([\w]+)\)s')
 
+# xtrigger function discovery.
+_FUNCS = {}
+CYLC_MOD_LOC = 'cylc.xtriggers'
+SUITE_MOD_LOC = os.path.join('lib', 'python')
+
+
+def get_func(func_name):
+    """Find and return a function from a module of the same name.
+
+    Can be in MOD_LOC or anywhere in Python path.
+
+    """
+    if func_name in _FUNCS:
+        return _FUNCS[func_name]
+    for key in ["%s.%s" % (SUITE_MOD_LOC, func_name),
+                "%s.%s" % (CYLC_MOD_LOC, func_name),
+                func_name]:
+        try:
+            mod_by_name = __import__(key, fromlist=[key])
+            _FUNCS[func_name] = getattr(mod_by_name, func_name)
+            return _FUNCS[func_name]
+        except ImportError as exc:
+            # 1) 'cannot import...': module found but could not be imported.
+            # 2) key == func_name: both location tried, module not found.
+            if str(exc).startswith('cannot import') or key == func_name:
+                raise
+
 
 class XtriggerManager(object):
     """Manage clock triggers and xtrigger functions.
@@ -51,6 +75,7 @@ class XtriggerManager(object):
         [[xtriggers]]
             clock_0 = wall_clock()  # offset PT0H
             clock_1 = wall_clock(offset=PT1H)
+                 # or wall_clock(PT1H)
             suite_x = suite_state(suite=other,
                                   point=%(task_cycle_point)s):PT30S
         [[dependencies]]
@@ -131,6 +156,7 @@ class XtriggerManager(object):
                 pass
 
     def load_xtrigger_for_restart(self, row_idx, row):
+        """Load satisfied xtrigger results from suite DB."""
         if row_idx == 0:
             OUT.info("LOADING satisfied xtriggers")
         sig, results = row
@@ -164,6 +190,7 @@ class XtriggerManager(object):
             LOG.info('clock xtrigger satisfied: %s = %s' % (label, str(ctx)))
 
     def _get_xclock(self, itask, sig_only=False):
+        """(Internal helper method.)"""
         label, satisfied = itask.state.xclock
         ctx = deepcopy(self.clockx_map[label])
         ctx.func_kwargs.update(
@@ -178,6 +205,7 @@ class XtriggerManager(object):
             return (label, sig, ctx, satisfied)
 
     def _get_xtrig(self, itask, unsat_only=False, sigs_only=False):
+        """(Internal helper method.)"""
         res = []
         farg_templ = {}
         farg_templ[TMPL_TASK_CYCLE_POINT] = str(itask.point)
@@ -262,19 +290,8 @@ class XtriggerManager(object):
         LOG.debug(ctx)
         sig = ctx.get_signature()
         self.active.remove(sig)
-        flag, results = json.loads(ctx.out)
+        satisfied, results = json.loads(ctx.out)
         LOG.debug('%s: returned %s' % (sig, results))
-        if flag == FUNC_RES_TRUE:
-            satisfied = True
-        elif flag == FUNC_RES_FALSE:
-            satisfied = False
-        elif flag == FUNC_RES_FAILED:
-            LOG.critical('%s: call failed' % sig)
-            return
-        elif flag == FUNC_RES_TIMEDOUT:
-            LOG.critical('%s: call timed out after %s' % (
-                sig, results['timeout']))
-            return
         if satisfied:
             self.pflag = True
             self.sat_xtrig[sig] = results
