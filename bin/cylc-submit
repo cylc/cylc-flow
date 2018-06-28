@@ -105,9 +105,9 @@ def main():
     glbl_cfg().create_cylc_run_tree(suite)
     pool = SuiteProcPool()
     db_mgr = SuiteDatabaseManager()
-    b_mgr = BroadcastMgr(db_mgr)
-    te_mgr = TaskEventsManager(suite, pool, db_mgr, b_mgr)
-    task_job_mgr = TaskJobManager(suite, pool, db_mgr, suite_srv_mgr, te_mgr)
+    task_job_mgr = TaskJobManager(
+        suite, pool, db_mgr, suite_srv_mgr,
+        TaskEventsManager(suite, pool, db_mgr, BroadcastMgr(db_mgr)))
     task_job_mgr.task_remote_mgr.single_task_mode = True
     task_job_mgr.job_file_writer.set_suite_env({
         'CYLC_UTC': str(config.cfg['cylc']['UTC mode']),

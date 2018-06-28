@@ -310,6 +310,7 @@ class SuiteDatabaseManager(object):
                     "timeout": timer.timeout})
 
     def put_xtriggers(self, sat_xtrig):
+        """Put statements to update external triggers table."""
         self.db_deletes_map[self.TABLE_XTRIGGERS].append({})
         for sig, res in sat_xtrig.items():
             self.db_inserts_map[self.TABLE_XTRIGGERS].append({

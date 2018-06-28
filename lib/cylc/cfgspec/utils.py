@@ -102,7 +102,6 @@ def coerce_xtrig(value, keys, _):
     value = _strip_and_unquote(keys, value)
     if not value:
         raise IllegalValueError("xtrigger", keys, value)
-    fctx = None
     fname = None
     args = []
     kwargs = {}

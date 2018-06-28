@@ -17,7 +17,6 @@ intervals, vs a persistent consumer looking for all suite trigger messages:
 """
 
 import re
-import sys
 import json
 from kafka import KafkaConsumer
 from cylc.suite_logging import LOG
@@ -63,11 +62,11 @@ def cylc_kafka_consumer(kafka_server, kafka_topic, group_id, message, debug):
      * group_id - determines Kafka offset ownership (see below).
      * message - string-ified dict with optional pattern elements (see below).
      * debug - boolean; set by daemon debug mode; prints to suite err log.
-     
+
     The topic is first consumed from the beginning, then from the previous
     committed offset. If the message is not found by end of topic, commit the
     offset and return (to will try again later). If found, return the result.
- 
+
     Kafka commits offsets per "consumer group" so the group_id argument
     must be unique per distinct trigger in the suite - this allows each trigger
     to separately consume the topic from the beginning, looking for its own
@@ -86,7 +85,7 @@ def cylc_kafka_consumer(kafka_server, kafka_topic, group_id, message, debug):
 
     The "message" argument is a stringified dict, e.g.:
         {'system': 'prod', 'point': '2025', 'data': '<nwp.*\.nc>'}
-    should be represented as: 
+    should be represented as:
         "system:prod point:2025 data:<nwp.*\.nc>"
 
     A match occurs Kafka if all message dict items match, and the result returned

@@ -164,18 +164,11 @@ class XtriggerManager(object):
 
     def housekeep(self):
         """Delete satisfied xtriggers and xclocks no longer needed."""
-        rem = []
-        for sig in self.sat_xtrig:
+        for sig in list(self.sat_xtrig):
             if sig not in self.all_xtrig:
-                rem.append(sig)
-        for r in rem:
-            del self.sat_xtrig[r]
-        rem = []
-        for sig in self.sat_xclock:
-            if sig not in self.all_xclock:
-                rem.append(sig)
-        for r in rem:
-            self.sat_xclock.remove(r)
+                del self.sat_xtrig[sig]
+        self.sat_xclock = [
+            sig for sig in self.sat_xclock if sig in self.all_xclock]
 
     def satisfy_xclock(self, itask):
         """Attempt to satisfy itask's clock trigger, if it has one."""
@@ -290,7 +283,11 @@ class XtriggerManager(object):
         LOG.debug(ctx)
         sig = ctx.get_signature()
         self.active.remove(sig)
-        satisfied, results = json.loads(ctx.out)
+        try:
+            satisfied, results = json.loads(ctx.out)
+        except ValueError:
+            print "WTF?"
+            return
         LOG.debug('%s: returned %s' % (sig, results))
         if satisfied:
             self.pflag = True

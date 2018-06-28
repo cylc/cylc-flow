@@ -78,7 +78,7 @@ rm -rf ~/cylc-run/$DEST
 SKIP=4
 for GROUP in nwp tst opr; do
   for N in 1 2 3 4; do
-    if (( $SKIP == $N )); then
+    if (( SKIP == N )); then
       SKIP=$(( SKIP - 1))
       break
     fi

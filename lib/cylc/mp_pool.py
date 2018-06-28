@@ -18,6 +18,7 @@
 """Manage queueing and pooling of subprocesses for the suite server program."""
 
 import os
+import sys
 import time
 from pipes import quote
 from signal import SIGKILL
@@ -26,12 +27,33 @@ from tempfile import TemporaryFile
 from collections import deque
 from threading import RLock
 from cylc.cfgspec.glbl_cfg import glbl_cfg
-import time
 import json
-import traceback
-from signal import signal, alarm, SIGALRM
 from cylc.suite_logging import LOG
 from cylc.wallclock import get_current_time_string
+from cylc.xtrigger_mgr import get_func
+
+
+def run_function(func_name, json_args, json_kwargs):
+    """Run a Python function in the process pool.
+
+    func_name(*func_args, **func_kwargs)
+
+    Redirect any function stdout to stderr (and suite log in debug mode).
+    Return value printed to stdout as a JSON string - allows use of the
+    existing process pool machinery as-is.
+
+    """
+    func_args = json.loads(json_args)
+    func_kwargs = json.loads(json_kwargs)
+    func = get_func(func_name)
+    # Redirect stdout to stderr.
+    orig_stdout = sys.stdout
+    sys.stdout = sys.stderr
+    res = func(*func_args, **func_kwargs)
+    # Restore stdout.
+    sys.stdout = orig_stdout
+    # Write function return value as JSON to stdout.
+    sys.stdout.write(json.dumps(res))
 
 
 class SuiteProcContext(object):
@@ -123,7 +145,7 @@ class SuiteFuncContext(SuiteProcContext):
     """Represent the context of a function to run in the process pool.
 
     Attributes:
-        # (See also parent class attributes).
+        # See also parent class attributes.
         .label (str):
             function label under [xtriggers] in suite.rc
         .func_name (str):
@@ -151,7 +173,7 @@ class SuiteFuncContext(SuiteProcContext):
 
     def update_command(self):
         """Update the function wrap command after changes."""
-        self.cmd = ['cylc-wrap-func', self.func_name,
+        self.cmd = ['cylc-function-run', self.func_name,
                     json.dumps(self.func_args),
                     json.dumps(self.func_kwargs)]
 

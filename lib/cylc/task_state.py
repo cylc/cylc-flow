@@ -236,10 +236,8 @@ class TaskState(object):
     def xtriggers_all_satisfied(self):
         """Return True if xclock and all xtriggers are satisfied."""
         if self.xclock is not None and not self.xclock[1]:
-            xclock_satisfied = False
-        else:
-            xclock_satisfied = True
-        return xclock_satisfied and all(self.xtriggers.values())
+            return False
+        return all(self.xtriggers.values())
 
     def prerequisites_are_all_satisfied(self):
         """Return True if (non-suicide) prerequisites are fully satisfied."""
