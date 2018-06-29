@@ -16,12 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import re
 import json
 from time import time
 from copy import deepcopy
 from cylc.suite_logging import LOG, OUT
+from cylc.xtriggers.wall_clock import wall_clock
 import cylc.flags
 
 # Templates for string replacement in function arg values.
@@ -32,39 +32,13 @@ TMPL_TASK_IDENT = 'id'
 TMPL_TASK_NAME = 'name'
 TMPL_SUITE_RUN_DIR = 'suite_run_dir'
 TMPL_SUITE_SHARE_DIR = 'suite_share_dir'
+TMPL_DEBUG_MODE = 'debug'
 ARG_VAL_TEMPLATES = [
     TMPL_TASK_CYCLE_POINT, TMPL_TASK_IDENT, TMPL_TASK_NAME, TMPL_SUITE_RUN_DIR,
-    TMPL_SUITE_SHARE_DIR, TMPL_USER_NAME, TMPL_SUITE_NAME]
+    TMPL_SUITE_SHARE_DIR, TMPL_USER_NAME, TMPL_SUITE_NAME, TMPL_DEBUG_MODE]
 
 # Extract all 'foo' from string templates '%(foo)s'.
 RE_STR_TMPL = re.compile(r'%\(([\w]+)\)s')
-
-# xtrigger function discovery.
-_FUNCS = {}
-CYLC_MOD_LOC = 'cylc.xtriggers'
-SUITE_MOD_LOC = os.path.join('lib', 'python')
-
-
-def get_func(func_name):
-    """Find and return a function from a module of the same name.
-
-    Can be in MOD_LOC or anywhere in Python path.
-
-    """
-    if func_name in _FUNCS:
-        return _FUNCS[func_name]
-    for key in ["%s.%s" % (SUITE_MOD_LOC, func_name),
-                "%s.%s" % (CYLC_MOD_LOC, func_name),
-                func_name]:
-        try:
-            mod_by_name = __import__(key, fromlist=[key])
-            _FUNCS[func_name] = getattr(mod_by_name, func_name)
-            return _FUNCS[func_name]
-        except ImportError as exc:
-            # 1) 'cannot import...': module found but could not be imported.
-            # 2) key == func_name: both location tried, module not found.
-            if str(exc).startswith('cannot import') or key == func_name:
-                raise
 
 
 class XtriggerManager(object):
@@ -107,7 +81,8 @@ class XtriggerManager(object):
     """
 
     def __init__(self, suite, user, broadcast_mgr=None, suite_run_dir=None,
-                 suite_share_dir=None, suite_work_dir=None):
+                 suite_share_dir=None, suite_work_dir=None,
+                 suite_source_dir=None):
         """Initialize the xtrigger manager."""
         # Suite function and clock triggers by label.
         self.functx_map = {}
@@ -132,8 +107,10 @@ class XtriggerManager(object):
             TMPL_USER_NAME: user,
             TMPL_SUITE_RUN_DIR: suite_run_dir,
             TMPL_SUITE_SHARE_DIR: suite_share_dir,
+            TMPL_DEBUG_MODE: cylc.flags.debug
         }
         self.broadcast_mgr = broadcast_mgr
+        self.suite_source_dir = suite_source_dir
 
     def add_clock(self, label, fctx):
         """Add a new clock xtrigger."""
@@ -175,8 +152,7 @@ class XtriggerManager(object):
         label, sig, ctx, satisfied = self._get_xclock(itask)
         if satisfied:
             return
-        func = get_func(ctx.func_name)
-        if func(*ctx.func_args, **ctx.func_kwargs):
+        if wall_clock(*ctx.func_args, **ctx.func_kwargs):
             satisfied = True
             itask.state.xclock = (label, True)
             self.sat_xclock.append(sig)
@@ -225,11 +201,9 @@ class XtriggerManager(object):
                 except TypeError:
                     pass
                 kwargs[key] = val
-            # Now add debug mode kwarg (boolean).
-            kwargs['debug'] = cylc.flags.debug
             ctx.func_args = args
             ctx.func_kwargs = kwargs
-            ctx.update_command()
+            ctx.update_command(self.suite_source_dir)
             sig = ctx.get_signature()
             if sigs_only:
                 res.append(sig)
@@ -286,7 +260,6 @@ class XtriggerManager(object):
         try:
             satisfied, results = json.loads(ctx.out)
         except ValueError:
-            print "WTF?"
             return
         LOG.debug('%s: returned %s' % (sig, results))
         if satisfied:

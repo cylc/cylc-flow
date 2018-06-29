@@ -3111,7 +3111,7 @@ be made to trigger off of the state of other tasks (indicated by a
 name in the graph) and, and off the clock, and arbitrary external events.
 
 External triggering is relatively more complicated, and is documented
-separately in Section~\ref{External Event Triggers}.
+separately in Section~\ref{External Triggers}.
 
 \paragraph{Success Triggers}
 
@@ -3688,10 +3688,8 @@ other tasks beyond the final point.
 \paragraph{Clock Triggers}
 \label{ClockTriggerTasks}
 
-{\em NOTE: this older clock-triggering mechanism is now deprecated in favour of
-built-in \lstinline=wall_clock= external triggers, which are more transparent
-(visible in the graph) and efficient (triggeris are shared among dependent
-tasks).}
+{\em NOTE: please read {\em External Triggers} (\ref{External Triggers}) before
+using the older clock triggers described in this section.} 
 
 By default, date-time cycle points are not connected to the real time ``wall
 clock''. They are just labels that are passed to task jobs (e.g.\ to
@@ -3754,10 +3752,10 @@ workflow is skipped, if it is more than one day behind the wall-clock (see also
               copy:expired => !proc"""
 \end{lstlisting}
 
-\paragraph{External Event Triggers}
+\paragraph{External Triggers}
 
 This is a substantial topic in its own right, documented in
-Section~\ref{External Event Triggers}.
+Section~\ref{External Triggers}.
 
 \subsubsection{Model Restart Dependencies}
 \label{ModelRestartDependencies}
@@ -6092,12 +6090,12 @@ hosts} in one of these locations:
 (A note for Rose users: \lstinline=rose suite-run= automatically installs
 \lstinline=SUITE-DEF-PATH/lib/python/= to job hosts).
 
-\section{External Event Triggers}
-\label{External Event Triggers}
+\section{External Triggers}
+\label{External Triggers}
 
-{\em WARNING: this is a new capability - its suite configuration interface may
-change somewhat in future releases - see {\em Current Limitations} below
-in~\ref{Current Trigger Function Limitations}.}
+{\em WARNING: this is a new capability and its suite configuration
+interface may change somewhat in future releases - see {\em Current
+Limitations} below in~\ref{Current Trigger Function Limitations}.}
 
 External triggers allow tasks to trigger directly off of external events, which
 is often preferable to implementing long-running polling tasks in the workflow.
@@ -6140,8 +6138,10 @@ described below in:
 \label{Built-in Clock Triggers}
 
 These are more transparent (exposed in the graph) and efficient (shared among
-dependent tasks) than the older deprecated clock triggers described
-in~\ref{ClockTriggerTasks}.
+dependent tasks) than the older clock triggers described
+in~\ref{ClockTriggerTasks}. (However we don't recommend wholesale conversion
+to the new method yet, until the new interface has stabilized -
+see~\ref{Current Trigger Function Limitations}.)
 
 Clock triggers, unlike other trigger functions, are executed synchronously in
 the main process. The clock trigger function signature looks like this:
@@ -6204,7 +6204,9 @@ the \lstinline=[xtriggers]= section:
 
 These can be used instead of the older suite state polling tasks described
 in~\ref{SuiteStatePolling} for inter-suite triggering - i.e.\ to trigger local
-tasks off of remote task statuses or messages in other suites.
+tasks off of remote task statuses or messages in other suites. (However we
+don't recommend wholesale conversion to the new method yet, until the new
+interface has stabilized - see~\ref{Current Trigger Function Limitations}.)
 
 The suite state trigger function signature looks like this:
 \begin{lstlisting}
@@ -6311,8 +6313,6 @@ properties:
     functions by using string templates in function arguments (see below)
   \item integer, float, boolean, and string arguments will be recognized and
     passed to the function as such
-  \item they must take a boolean \lstinline=debug= argument, because this will
-    be automatically supplied by the suite when running in debug mode
   \item if a trigger function depends on files or directories (for example)
     that might not exist when the function is first called, just return
     unsatisified until everything required does exist.
@@ -6328,6 +6328,7 @@ needs any of this information, in function arguments in the suite configuration:
   \item \lstinline=%(name)s= - name of the dependent task
   \item \lstinline=%(id)s= - identity of the dependent task (name.cycle-point)
   \item \lstinline=%(point)s= - cycle point of the dependent task
+  \item \lstinline=%(debug)s= - suite debug mode
 \end{myitemize}
 and less commonly needed:
 \begin{myitemize}
@@ -6375,7 +6376,7 @@ The suite server program manages trigger functions as follows:
     from the sub-process in which the function executes)
 \end{myitemize}
 
-\subsubsection{Examples}
+\subsubsection{Toy Examples}
 
 A couple of toy examples in \lstinline=<cylc-dir>/lib/cylc/xtriggers/= may
 be a useful aid to understanding trigger functions and how they work.
@@ -6447,6 +6448,8 @@ The following issues may be addressed in future Cylc releases:
     verbose, although no more functional) if we could just declare a label
     against the {\em common} arguments, and give remaining arguments (such as
     different wall clock offsets in clock triggers) as needed in the graph.
+  \item we may move away from the string templating method for providing suite
+    and task attributes to trigger function arguments.
 \end{myitemize}
 
 \subsection{Filesystem Events?}
@@ -6470,7 +6473,7 @@ Cylc trigger functions interact with it.
 \label{Old-Style External Triggers}
 
 {\em WARNING: This mechanism is now deprecated, please use external trigger
-functions instead, see~\ref{External Event Triggers}.}
+functions instead, see~\ref{External Triggers}.}
 
 These old-style external triggers are hidden task prerequisites that must be
 satisfied by using the \lstinline=cylc ext-trigger= client command to send an
@@ -7732,6 +7735,9 @@ you wish:
 
 \subsection{Triggering Off Of Tasks In Other Suites}
 \label{SuiteStatePolling}
+
+{\em NOTE: please read {\em External Triggers} (\ref{External Triggers}) before
+using the older inter-suite triggering mechanism described in this section.} 
 
 The \lstinline=cylc suite-state= command interrogates suite run databases. It
 has a polling mode that waits for a given task in the target suite to achieve a

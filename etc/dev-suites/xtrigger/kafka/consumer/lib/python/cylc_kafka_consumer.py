@@ -95,7 +95,7 @@ def cylc_kafka_consumer(kafka_server, kafka_topic, group_id, message, debug):
     """
 
     consumer = KafkaConsumer(kafka_topic, bootstrap_servers=[kafka_server],
-                             value_deserializer=lambda m: json.loads(m),
+                             value_deserializer=json.loads,
                              consumer_timeout_ms=CONSUMER_TIMEOUT_MS,
                              auto_offset_reset='earliest',
                              group_id=group_id)

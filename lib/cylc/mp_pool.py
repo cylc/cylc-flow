@@ -30,22 +30,55 @@ from cylc.cfgspec.glbl_cfg import glbl_cfg
 import json
 from cylc.suite_logging import LOG
 from cylc.wallclock import get_current_time_string
-from cylc.xtrigger_mgr import get_func
 
 
-def run_function(func_name, json_args, json_kwargs):
+_XTRIG_FUNCS = {}
+
+
+def get_func(func_name, src_dir):
+    """Find and return an xtrigger function from a module of the same name.
+
+    Can be in <src_dir>/lib/python, CYLC_MOD_LOC, or in Python path.
+    Suite source directory passed in because this is executed in an independent
+    process in the command pool - and therefore doesn't know about the suite.
+
+    """
+    if func_name in _XTRIG_FUNCS:
+        return _XTRIG_FUNCS[func_name]
+    # First look in <src-dir>/lib/python.
+    sys.path.insert(0, os.path.join(src_dir, 'lib', 'python'))
+    mod_name = func_name
+    try:
+        mod_by_name = __import__(mod_name, fromlist=[mod_name])
+    except ImportError:
+        # Then look in built-in xtriggers.
+        mod_name = "%s.%s" % ("cylc.xtriggers", func_name)
+        try:
+            mod_by_name = __import__(mod_name, fromlist=[mod_name])
+        except ImportError:
+            raise
+    try:
+        _XTRIG_FUNCS[func_name] = getattr(mod_by_name, func_name)
+    except AttributeError:
+        # Module func_name has no function func_name.
+        raise
+    return _XTRIG_FUNCS[func_name]
+
+
+def run_function(func_name, json_args, json_kwargs, src_dir):
     """Run a Python function in the process pool.
 
     func_name(*func_args, **func_kwargs)
 
     Redirect any function stdout to stderr (and suite log in debug mode).
     Return value printed to stdout as a JSON string - allows use of the
-    existing process pool machinery as-is.
+    existing process pool machinery as-is. src_dir is for local modules.
 
     """
     func_args = json.loads(json_args)
     func_kwargs = json.loads(json_kwargs)
-    func = get_func(func_name)
+    # Find and import then function.
+    func = get_func(func_name, src_dir)
     # Redirect stdout to stderr.
     orig_stdout = sys.stdout
     sys.stdout = sys.stderr
@@ -171,11 +204,12 @@ class SuiteFuncContext(SuiteProcContext):
         super(SuiteFuncContext, self).__init__(
             'xtrigger-func', cmd=[], shell=False)
 
-    def update_command(self):
+    def update_command(self, suite_source_dir):
         """Update the function wrap command after changes."""
         self.cmd = ['cylc-function-run', self.func_name,
                     json.dumps(self.func_args),
-                    json.dumps(self.func_kwargs)]
+                    json.dumps(self.func_kwargs),
+                    suite_source_dir]
 
     def get_signature(self):
         """Return the function call signature (as a string)."""
