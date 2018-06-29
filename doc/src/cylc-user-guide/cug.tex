@@ -3688,12 +3688,10 @@ other tasks beyond the final point.
 \paragraph{Clock Triggers}
 \label{ClockTriggerTasks}
 
-{\em NOTE: this is the original Cylc clock-triggering mechanism in which the
-time offset relative to cycle point is stored as an attribute of the tasks that
-depend on it. It is deprecated in favour of the newer built in
-\lstinline=wall_clock= external trigger function, which is more efficient
-(trigger functions can be shared by many tasks) and is conveniently exposed in
-the graph).}
+{\em NOTE: this older clock-triggering mechanism is now deprecated in favour of
+built-in \lstinline=wall_clock= external triggers, which are more transparent
+(visible in the graph) and efficient (triggeris are shared among dependent
+tasks).}
 
 By default, date-time cycle points are not connected to the real time ``wall
 clock''. They are just labels that are passed to task jobs (e.g.\ to
@@ -6097,87 +6095,64 @@ hosts} in one of these locations:
 \section{External Event Triggers}
 \label{External Event Triggers}
 
-External triggers allow tasks to trigger directly off of external events, which
-is often preferable to implementing long-running tasks in the workflow that
-poll for external events. The triggering mechanism described in this section
-replaces an older and less powerful one documented in~\ref{Old-Style
-External Triggers}.
-
-{\em WARNING - the suite configuration interface for this new capability
-may change somewhat in future releases - see {\em Current Limitations} below
+{\em WARNING: this is a new capability - its suite configuration interface may
+change somewhat in future releases - see {\em Current Limitations} below
 in~\ref{Current Trigger Function Limitations}.}
+
+External triggers allow tasks to trigger directly off of external events, which
+is often preferable to implementing long-running polling tasks in the workflow.
+The triggering mechanism described in this section replaces an older and less
+powerful one documented in~\ref{Old-Style External Triggers}.
 
 If you can write a Python function to check the status of an external
 condition or event, the suite server program can call it at configurable
 intervals until it reports success, at which point dependent tasks can trigger
 and data returned by the function will be passed to the job environments of
 those tasks. Functions can be written for triggering off of almost anything,
-such as delivery of a new dataset, creation of new entries in some database
+such as delivery of a new dataset, creation of a new entry in a database
 table, or appearance of new data availability notifications in a message
 broker.
 
-Cylc has built-in trigger functions for suite state polling (i.e.\ for
-inter-suite triggering, see~\ref{Built-in Suite State Triggers}) and for clock
-triggering (see~\ref{Built-in Clock Triggers}).
+External triggers are visible in suite visualizations as bare graph nodes (just
+the trigger names). They are plotted against all dependent tasks, not in a
+cycle point specific way like tasks. This is because external triggers may or 
+may not be cycle point (or even task name) specific - it depends on the
+arguments passed to the corresponding trigger functions. For example, if an
+external trigger does not depend on task name or cycle point it will only be
+called once - albeit repeatedly until satisfied - for the entire suite run,
+after which the function result will be remembered for all dependent tasks
+throughout the suite run.
 
-Trigger functions are just normal Python functions with the following
-properties and constraints:
+Several built-in external trigger functions are located in
+\lstinline=<cylc-dir>/lib/cylc/xtriggers/=:
 \begin{myitemize}
-  \item they must be defined in a module with the same name as the function
-  \item they can be located in:
-    \begin{myitemize}
-      \item \lstinline=<cylc-dir>/lib/cylc/xtriggers/=
-      \item \lstinline=<suite-dir>/lib/python/=
-      \item or anywhere in your Python library path
-    \end{myitemize}
-  \item they can take both positional and keyword arguments
-  \item they should return quickly
-  \item on failure they must return a tuple \lstinline=(False, {})=
-  \item on success they must return a tuple \lstinline=(True, results)= where
-    \lstinline=results= is a dictionary of event data to be passed to dependent
-    tasks (how this appears to task jobs is described below)
+  \item clock triggers - see~\ref{Built-in Clock Triggers}
+  \item inter-suite triggers - see~\ref{Built-in Suite State Triggers}
 \end{myitemize}
 
-At runtime, the suite server program manages trigger function execution as
-follows:
+Trigger functions are normal Python functions, with certain constraints as
+described below in:
 \begin{myitemize}
-  \item trigger functions are called asynchronously in the process pool, so if
-    one takes some time to execute it will not tie up the server program
-    \begin{myitemize}
-      \item (except for clock triggers, which are called from the main process)
-    \end{myitemize}
-  \item they are called repeatedly on a configurable interval, until satisified
-    \begin{myitemize}
-      \item the call interval defaults to \lstinline=PT10S= (10 seconds)
-      \item repeat calls are not made until the previous call has returned
-    \end{myitemize}
-  \item they are subject to the normal process pool command time out - if they
-    take too long to return, the process will be killed to prevent it from
-    holding up Cylc resources 
-  \item they are shared for efficiency: a single call will be made for all
-    triggers that share the same function signature - i.e.\ the same function
-    name and arguments
-  \item return status and results persist across suite restarts
-  \item trigger function stdout is redirected to stderr (because stdout
-    is needed by the function wrapper to communicate returned data) and visible
-    in the suite log in debug mode
+  \item custom trigger functions - see~\ref{Custom Trigger Functions}
 \end{myitemize}
 
 \subsection{Built-in Clock Triggers}
 \label{Built-in Clock Triggers}
 
-These replace the older deprecated clock triggers described
+These are more transparent (exposed in the graph) and efficient (shared among
+dependent tasks) than the older deprecated clock triggers described
 in~\ref{ClockTriggerTasks}.
 
-The clock trigger function signature looks like this:
+Clock triggers, unlike other trigger functions, are executed synchronously in
+the main process. The clock trigger function signature looks like this:
+
 \begin{lstlisting}
-wall_clock(offset=None, point_as_seconds=None)
+wall_clock(offset=None)
 \end{lstlisting}
 
-Clock triggers are treated differently to other trigger functions in that they
-are executed synchronously in the main process, and the cycle point of
-dependent tasks is automatically passed to them (via the second function
-argument above).
+The \lstinline=offset= argument is a date-time duration (\lstinline=PT1H= is 1
+hour) relative to the dependent task's cycle point (automatically passed to the
+function via a second argument not shown above).
  
 In the following suite, task \lstinline=foo= has a daily cycle point sequence,
 and each task instance can trigger once the wall clock time has passed its
@@ -6187,7 +6162,7 @@ cycle point value by one hour:
 [scheduling]
     initial cycle point = 2018-01-01
     [[xtriggers]]
-        clock_1 = wall_clock(offset=PT1H)
+        clock_1 = wall_clock(offset=PT1H):PT10S
     [[dependencies]]
         [[[P1D]]]
             graph = "@clock_1 => foo"
@@ -6196,12 +6171,13 @@ cycle point value by one hour:
         script = run-foo.sh
 \end{lstlisting}
 
-Notice that the label \lstinline=clock_1= is used to represent the trigger in
-the graph. This is because trigger function signatures can be quite large (many
-arguments).
+Notice that the short label \lstinline=clock_1= is used to represent the
+trigger function in the graph. The function call interval, which determines how
+often the suite server program checks the clock, is optional.  Here it is
+\lstinline=PT10S= (i.e.\ 10 seconds, which is also the default value).
 
 Argument keywords can be omitted if called in the right order, so the
-\lstinline=clock_1= trigger can also be defined like this: 
+\lstinline=clock_1= trigger can also be declared like this: 
 \lstset{language=suiterc}
 \begin{lstlisting}
     [[xtriggers]]
@@ -6209,7 +6185,7 @@ Argument keywords can be omitted if called in the right order, so the
 \end{lstlisting}
 
 Finally, a zero-offset clock trigger does not need to be declared under
-\lstinline=xtriggers=:
+the \lstinline=[xtriggers]= section:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
@@ -6227,8 +6203,8 @@ Finally, a zero-offset clock trigger does not need to be declared under
 \label{Built-in Suite State Triggers}
 
 These can be used instead of the older suite state polling tasks described
-in~\ref{SuiteStatePolling} for inter-suite triggering - i.e.\ to trigger tasks
-off of events in other suites.
+in~\ref{SuiteStatePolling} for inter-suite triggering - i.e.\ to trigger local
+tasks off of remote task statuses or messages in other suites.
 
 The suite state trigger function signature looks like this:
 \begin{lstlisting}
@@ -6236,28 +6212,11 @@ suite_state(suite, task, point, offset=None, status='succeeded',
             message=None, cylc_run_dir=None, debug=False)
 \end{lstlisting}
 
-The first three arguments single out the target suite name
+The first three arguments are compulsory; they single out the target suite name
 (\lstinline=suite=) task name (\lstinline=task=) and cycle point
-(\lstinline=point=). The others are optional - they correspond to the
-various arguments and options of the \lstinline=cylc suite-state= command.
-
-The data returned by the function when the suite state trigger is satisfied
-looks like this:
-\begin{lstlisting}
-    results = {
-        'suite': suite,
-        'task': task,
-        'point': point,
-        'offset': offset,
-        'status': status,
-        'message': message,
-        'cylc_run_dir': cylc_run_dir
-    }
-    return (satisfied, results)
-\end{lstlisting}
-i.e.\ the names and values of all of the target suite state parameters are
-returned, in case they are needed by dependent tasks. Exactly how this is
-passed to task job environments is described below. 
+(\lstinline=point=). The function argments mirror the arguments and options of
+the \lstinline=cylc suite-state= command - see
+\lstinline=cylc suite-state --help= for documentation.
 
 As a simple example, consider the suites in
 \lstinline=<cylc-dir>/etc/dev-suites/xtrigger/suite_state/=. The ``upstream''
@@ -6270,22 +6229,46 @@ It must be registered and run under the name {\em up}, as referenced in the
 
 \lstinputlisting{../../../etc/dev-suites/xtrigger/suite_state/downstream/suite.rc}
 
-Note the time interval \lstinline=:PT10S= (10 seconds, which is also
-the default) appended with a colon after the call signature. This is how often
-the suite server program will call the trigger function to check if the
-specified upstream suite state has been achieved yet.
-
 Try starting the downstream suite first, then the upstream, and watch what happens.
 In each cycle point the \lstinline=@upstream= trigger in the downstream suite
-waits on the task \lstinline=foo= in the upstream suite to achieve the default
-\lstinline=succeeded= state. Note that the trigger function, like the
-\lstinline=cylc suite-state= command, must have read-access to the upstream
-suite's public run database. 
+waits on the task \lstinline=foo= (with the same cycle point) in the upstream
+suite to emit the {\em data ready} message. 
 
-When each trigger succeeds, each item in the function return dictionary (above)
-is qualified with the unique trigger label and passed to the environment of
-dependent task jobs (in this case, to the members of the \lstinline=FAM=
-family). To see this, take a look at the job script for one the downstream tasks:
+Some important points to note about this:
+\begin{myitemize}
+  \item  the function call interval, which determines how often the suite
+    server program checks the clock, is optional. Here it is
+    \lstinline=PT10S= (i.e.\ 10 seconds, which is also the default value).
+  \item the \lstinline=suite_state= trigger function, like the
+    \lstinline=cylc suite-state= command, must have read-access to the upstream
+    suite's public database. 
+  \item the cycle point argument is supplied by a string template
+    \lstinline=%(point)s=. The string templates available to trigger function
+    arguments are described in {\em Custom Trigger Functions} (\ref{Custom
+    Trigger Functions}).
+\end{myitemize}
+
+The return value of the \lstinline=suite_state= trigger function looks like
+this:
+\begin{lstlisting}
+    results = {
+        'suite': suite,
+        'task': task,
+        'point': point,
+        'offset': offset,
+        'status': status,
+        'message': message,
+        'cylc_run_dir': cylc_run_dir
+    }
+    return (satisfied, results)
+\end{lstlisting}
+The \lstinline=satisified= variable is boolean (value True or False, depending
+on whether or not the trigger condition was found to be satisfied). The
+\lstinline=results= dictionary contains the names and values of all of the
+target suite state parameters. Each item in it gets qualified with the
+unique trigger label (``upstream'' here) and passed to the environment of
+dependent task jobs (the members of the \lstinline=FAM= family in this case).
+To see this, take a look at the job script for one of the downstream tasks:
 
 \begin{lstlisting}
 % cylc cat-log -f j dn f2.2011 
@@ -6305,62 +6288,173 @@ cylc__job__inst__user_env() {
 ...
 \end{lstlisting}
 
-(So the triggered task has to know the name of the external trigger that it
-depends on - although the name could also be passed to the task job enviroment
-from the suite configuration).
+Note that the task has to know the name (label) of the external trigger that it
+depends on - ``upstream'' in this case - in order to use this information.
+However the name could be given to the task environment in the suite
+configuration.
 
 \subsection{Custom Trigger Functions}
+\label{Custom Trigger Functions}
 
-{\em Note that trigger functions cannot store data Pythonically between
-invocations because each call is executed independently in the process pool.
-If necessary the filesystem can be used for this purpose.}
-
-%Xtrigger result names {'var1': val1, 'var2': val2} etc., are qualified with
-%label names. E.g. for '@x1 => foo` result would be 'x1_var1' = val1 etc.
-
-%Note auto debug arg.
-(\lstinline=<cylc-dir>/lib/cylc/xtriggers/suite_state.py=) 
-
-{\bf TODO}:
+Trigger functions are just normal Python functions, with a few special
+properties:
 \begin{myitemize}
-  \item explain the various metadata available to function args as string
-    templates
-  \item recommend using built-in trigger functions as an example 
-  \item refer above for result qualification by label name 
-  \item show another example (the random and echo built-ins?)
-  \item example graphs
-  \item debugging trigger functions
+  \item they must be defined in a module with the same name as the function
+  \item they can be located in:
+    \begin{myitemize}
+      \item \lstinline=<cylc-dir>/lib/cylc/xtriggers/=
+      \item \lstinline=<suite-dir>/lib/python/=
+      \item (or anywhere in your Python library path)
+    \end{myitemize}
+  \item they can take arbitrary positional and keyword arguments
+  \item suite and task identity, and cycle point, can be passed to trigger
+    functions by using string templates in function arguments (see below)
+  \item integer, float, boolean, and string arguments will be recognized and
+    passed to the function as such
+  \item they must take a boolean \lstinline=debug= argument, because this will
+    be automatically supplied by the suite when running in debug mode
+  \item if a trigger function depends on files or directories (for example)
+    that might not exist when the function is first called, just return
+    unsatisified until everything required does exist.
 \end{myitemize}
+
+Note that trigger functions cannot store data Pythonically between invocations
+because each call is executed in an independent process in the process pool. If
+necessary the filesystem can be used for this purpose.
+
+The following string templates are available for use, if the trigger function
+needs any of this information, in function arguments in the suite configuration:
+\begin{myitemize}
+  \item \lstinline=%(name)s= - name of the dependent task
+  \item \lstinline=%(id)s= - identity of the dependent task (name.cycle-point)
+  \item \lstinline=%(point)s= - cycle point of the dependent task
+\end{myitemize}
+and less commonly needed:
+\begin{myitemize}
+  \item \lstinline=%(user_name)s= - suite owner's user name
+  \item \lstinline=%(suite_name)s= - registered suite name
+  \item \lstinline=%(suite_run_dir)s= - suite run directory
+  \item \lstinline=%(suite_share_dir)s= - suite share directory
+\end{myitemize}
+
+Function return values should be as follows:
+\begin{myitemize}
+  \item if the trigger condition is {\em not satisfied}:
+    \begin{myitemize}
+      \item return \lstinline=(False, {})=
+    \end{myitemize}
+  \item if the trigger condition is {\em satisfied}:
+    \begin{myitemize}
+      \item return \lstinline=(True, results)=
+    \end{myitemize}
+\end{myitemize}
+where \lstinline=results= is an arbitrary dictionary of information to be
+passed to dependent tasks. How this looks to these tasks is described above
+in {\em Built-in Suite State Triggers} (\ref{Built-in Suite State Triggers}).
+
+The suite server program manages trigger functions as follows:
+\begin{myitemize}
+  \item they are called asynchronously in the process pool
+    \begin{myitemize}
+      \item (except for clock triggers, which are called from the main process)
+    \end{myitemize}
+  \item they are called repeatedly on a configurable interval, until satisified
+    \begin{myitemize}
+      \item the call interval defaults to \lstinline=PT10S= (10 seconds)
+      \item repeat calls are not made until the previous call has returned
+    \end{myitemize}
+  \item they are subject to the normal process pool command time out - if they
+    take too long to return, the process will be killed
+  \item they are shared for efficiency: a single call will be made for all
+    triggers that share the same function signature - i.e.\ the same function
+    name and arguments
+  \item their return status and results are stored in the suite DB and persist across
+    suite restarts
+  \item their stdout, if any, is redirected to stderr and will be visible in
+    the suite log in debug mode (stdout is needed to communicate return values
+    from the sub-process in which the function executes)
+\end{myitemize}
+
+\subsubsection{Examples}
+
+A couple of toy examples in \lstinline=<cylc-dir>/lib/cylc/xtriggers/= may
+be a useful aid to understanding trigger functions and how they work.
+
+\paragraph{echo}
+
+The \lstinline=echo= function is a trivial one that takes any number of
+positional and keyword arguments (from the suite configuration) and simply
+prints them to stdout, and then returns False (i.e.\ trigger condition not
+satisfied). Here it is in its entirety.
+
+\begin{lstlisting}
+def echo(*args, **kwargs):
+    print "echo: ARGS:", args
+    print "echo: KWARGS:", kwargs
+    return (False, {})
+\end{lstlisting}
+
+Here's an example echo trigger suite:
+\begin{lstlisting}
+[scheduling]
+    initial cycle point = now
+    [[xtriggers]]
+        echo_1 = echo(hello, 99, qux=True, point=%(point)s, foo=10)
+    [[dependencies]]
+        [[[PT1H]]]
+            graph = "@echo_1 => foo"
+[runtime]
+    [[foo]]
+        script = exit 1
+\end{lstlisting}
+
+To see the result, run this suite in debug mode and take a look at the
+suite log (or run \lstinline=cylc run --debug --no-detach <suite>= and watch
+your terminal).
+
+\paragraph{xrandom}
+
+The \lstinline=xrandom= function sleeps for a configurable amount of time
+(useful for testing the effect of a long-running trigger function - which
+should be avoided) and has a configurable random chance of success. The
+function signature is:
+
+\begin{lstlisting}
+xrandom(percent, secs=0, _=None, debug=False)
+\end{lstlisting}
+
+The \lstinline=percent= argument sets the odds of success in any given call; 
+\lstinline=secs= is the number of seconds to sleep before returning; and the
+\lstinline=_= argument (underscore is a conventional name for a variable
+that is not used, in Python) is provided to allow specialization of the trigger
+to (for example) task name, task ID, or cycle point (just use the appropriate
+string templates in the suite configuration for this).
+
+An example xrandom trigger suite is
+\lstinline=<cylc-dir>/etc/dev-suites/xtriggers/xrandom/=
 
 \subsection{Current Limitations}
 \label{Current Trigger Function Limitations}
 
 The following issues may be addressed in future Cylc releases:
 \begin{myitemize}
-  \item external trigger labels cannot be used in conditional (OR) expressions
+  \item trigger labels cannot currently be used in conditional (OR) expressions
     in the graph; attempts to do so will fail validation.
   \item aside from the predefined zero-offset \lstinline=wall_clock= trigger, all
-    unique external trigger function calls must be defined {\em with all of
-    their arguments} under the \lstinline=[scheduling][xtriggers]= section.
-    It would be more convenient to allow some arguments to be supplied in the
-    graph, e.g.\ to define a \lstinline=wall_clock= call once and give
-    different offsets as needed in the graph
-    \begin{myitemize}
-      \item the qualification of function result item names the label string,
-        as passed to task environments, may need to change if this is
-        implemented
-    \end{myitemize}
-  \item if a trigger function depends on files or directories (for example)
-    that might not exist when the function is first called, just return
-    unsatisified until everything that's required does exist.
+    unique trigger function calls must be declared {\em with all of
+    their arguments} under the \lstinline=[scheduling][xtriggers]= section, and
+    referred to by label alone in the graph. It would be convenient (and less
+    verbose, although no more functional) if we could just declare a label
+    against the {\em common} arguments, and give remaining arguments (such as
+    different wall clock offsets in clock triggers) as needed in the graph.
 \end{myitemize}
 
 \subsection{Filesystem Events?}
 
 Cylc does not have built-in support for triggering off of filesystem events
 such as \lstinline=inotify= on Linux. There is no cross-platform standard for
-this, and in any case filesystem events are not very useful in an HPC cluster
-environment where events can only be detected at the specific node on which
+this, and in any case filesystem events are not very useful in HPC cluster
+environments where events can only be detected at the specific node on which
 they were generated.
 
 \subsection{Continuous Event Watchers?}
@@ -6375,19 +6469,19 @@ Cylc trigger functions interact with it.
 \subsection{Old-Style External Triggers (Deprecated)}
 \label{Old-Style External Triggers}
 
-{\em NOTE: This external triggering mechanism is now deprecated, please use
-    external trigger functions instead (see~\ref{External Trigger Functions}).}
+{\em WARNING: This mechanism is now deprecated, please use external trigger
+functions instead, see~\ref{External Event Triggers}.}
 
-In this method, external triggers are defined as task runtime properties that
-must be satisfied by passing an associated message to the
-\lstinline=cylc ext-trigger= command, which must be given the suite name, the
-event message, and some ID that distinguishes one instance of the event from
-another (the name of the target task and its current cycle point are not
-required). The event ID is just an arbitrary string to Cylc, but it can be used
-to identify something associated with the event to the suite - such as the
-filename of a new externally-generated dataset. When the suite server program
-receives the event notification it will trigger the next instance of any task
-waiting on that trigger (whatever its cycle point) and then broadcast
+These old-style external triggers are hidden task prerequisites that must be
+satisfied by using the \lstinline=cylc ext-trigger= client command to send an
+associated pre-defined event message to the suite along with an ID string that
+distinguishes one instance of the event from another (the name of the target
+task and its current cycle point are not required). The event ID is just an
+arbitrary string to Cylc, but it can be used to identify something associated
+with the event to the suite - such as the filename of a new
+externally-generated dataset. When the suite server program receives the event
+notification it will trigger the next instance of any task waiting on that
+trigger (whatever its cycle point) and then broadcast
 (see~\ref{cylc-broadcast}) the event ID to the cycle point of the triggered
 task as \lstinline=$CYLC_EXT_TRIGGER_ID=. Downstream tasks with the same cycle
 point therefore know the new event ID too and can use it, if they need to, to

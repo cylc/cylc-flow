@@ -906,12 +906,33 @@ A list of member tasks, or task family names, to assign to this queue
 \item {\em default:} none for user-defined queues; all tasks for the ``default'' queue
 \end{myitemize}
 
+\subsubsection[{[[}xtriggers{]]}]{[scheduling] \textrightarrow [[xtriggers]]}
+
+This section is for {\em External Event Trigger} function declarations -
+see~\ref{External Event Triggers}.
+
+\paragraph[\_\_MANY\_\_]{[scheduling] \textrightarrow [[xtriggers]] \textrightarrow \_\_MANY\_\_}
+
+Replace \_\_MANY\_\_ with any user-defined event trigger function
+declarations and corresponding labels for use in the graph:
+
+\begin{myitemize}
+\item {\em type:} string: function signature followed by optional call interval
+\item {\em example:} \lstinline@trig_1 = my_trigger(arg1, arg2, kwarg1,
+  kwarg2):PT10S@
+\end{myitemize}
+
+(See~\ref{External Event Triggers} for details).
+
 \subsubsection[{[[}special tasks{]]}]{[scheduling] \textrightarrow [[special tasks]]}
 
 This section is used to identify tasks with special behaviour. Family names can
 be used in special task lists as shorthand for listing all member tasks.
 
 \paragraph[clock-trigger]{[scheduling] \textrightarrow [[special tasks]] \textrightarrow clock-trigger}
+
+{\em This feature is deprecated, please use {\em Built-in Clock Triggers}
+instead - see~\ref{Built-in Clock Triggers}.}
 
 Clock-trigger tasks (see~\ref{ClockTriggerTasks}) wait on a wall clock time
 specified as an offset from their own cycle point.
@@ -950,8 +971,8 @@ see~\ref{ClockExpireTasks}.
 
 \paragraph[external-trigger]{[scheduling] \textrightarrow [[special tasks]] \textrightarrow external-trigger}
 
-{\bf This feature is now deprecated. Please use {\em external trigger
-functions} instead - see~\ref{External Trigger Functions}}
+{\em This feature is deprecated, please use {\em External Event Triggers}
+instead - see~\ref{External Event Triggers}.}
 
 Externally triggered tasks (see~\ref{Old-Style External Triggers}) wait on
 external events reported via the \lstinline=cylc ext-trigger= command. To
