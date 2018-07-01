@@ -406,7 +406,7 @@ the Cylc GUIs:
 
 \begin{myitemize}
   \item {\bf PyGTK} - GUI toolkit \url{http://www.pygtk.org}.  {\em Note PyGTK
-    typically comes with your system Python. It is alledgedly quite
+    typically comes with your system Python. It is allegedly quite
     difficult to install if you need to do so for another Python version.}
     \item {\bf Graphviz} - graph layout engine (tested 2.36.0):
       \url{http://www.graphviz.org}.
@@ -510,7 +510,7 @@ separately.
 \subsection{Installing Cylc}
 \label{InstallCylc}
 
-Cylc releases can be downloaded from from \url{https://cylc.github.io/cylc}.
+Cylc releases can be downloaded from \url{https://cylc.github.io/cylc}.
 
 The wrapper script \lstinline=usr/bin/cylc= should be installed to
 the system executable search path (e.g.\ \lstinline=/usr/local/bin/=) and
@@ -656,7 +656,7 @@ For example, to run \lstinline=model.exe= 12 times on a monthly cycle we could
 loop over an integer parameter \lstinline@R = 0, 1, 2, ..., 11@ to define tasks
 \lstinline=model-R0, model-R1, model-R2, ...model-R11=, and the parameter
 values could be multiplied by the interval \lstinline=P1M= (one month) to get
-the start point point for the corresponding model run.
+the start point for the corresponding model run.
 
 This method is only good for smaller workflows of finite duration because every
 single task has to be mapped out in advance, and cylc has to be aware of all of
@@ -820,7 +820,7 @@ server program at start-up and used to authenticate connections from client
 programs.
 
 Possession of a suite's passphrase file gives full control over it.
-Without it, the information avaiable to a client is determined by the suite's
+Without it, the information available to a client is determined by the suite's
 public access privilege level.
 
 For more on connection authentication, suite passphrases, and public access,
@@ -1188,7 +1188,7 @@ In general, a {\em task remote} is a user account, other than the account
 running the suite server program, where a task job is submitted to run. It can
 be on the same machine running the suite or on another machine.
 
-A task remote account must satify several requirements:
+A task remote account must satisfy several requirements:
 \begin{myitemize}
 
 \item Non-interactive ssh must be enabled from the account running the suite
@@ -1494,7 +1494,7 @@ allow the two graph lines above to be combined in simple cases:
 Any task triggering status qualified by \lstinline=-all= or
 \lstinline=-any=, for the members, can be used with a family trigger.
 For example, here's how to trigger \lstinline=bar= if all members
-of \lstinline=GREETERS= finish (succeed or fail) and any of them them
+of \lstinline=GREETERS= finish (succeed or fail) and any of them
 succeed:
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -2686,7 +2686,7 @@ excluded from the main sequence.
 For example, partial date-times can be excluded using the syntax:
 \lstset{language=suiterc}
 \begin{lstlisting}
-[[[ PT1H ! T12 ]]]          # Run hourly but not at 12:00 from the inital
+[[[ PT1H ! T12 ]]]          # Run hourly but not at 12:00 from the initial
                             # cycle point.
 [[[ T-00 ! (T00, T06, T12, T18) ]]]   # Run hourly but not at 00:00, 06:00,
                                       # 12:00, 18:00.
@@ -3754,8 +3754,7 @@ workflow is skipped, if it is more than one day behind the wall-clock (see also
 
 \paragraph{External Triggers}
 
-This is a substantial topic in its own right, documented in
-Section~\ref{External Triggers}.
+This is a substantial topic, documented in Section~\ref{External Triggers}.
 
 \subsubsection{Model Restart Dependencies}
 \label{ModelRestartDependencies}
@@ -6026,7 +6025,7 @@ the built-in handlers as examples, and read the documentation in
 \subsubsection{An Example}
 
 The following \lstinline=qsub.py= module overrides the built-in {\em pbs}
-batch system handler to to change the directive prefix from \lstinline=#PBS= to
+batch system handler to change the directive prefix from \lstinline=#PBS= to
 \lstinline=#QSUB=:
 
 \begin{lstlisting}
