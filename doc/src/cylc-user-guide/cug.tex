@@ -6139,7 +6139,7 @@ described below in:
 These are more transparent (exposed in the graph) and efficient (shared among
 dependent tasks) than the older clock triggers described
 in~\ref{ClockTriggerTasks}. (However we don't recommend wholesale conversion
-to the new method yet, until the new interface has stabilized -
+to the new method yet, until its interface has stabilized -
 see~\ref{Current Trigger Function Limitations}.)
 
 Clock triggers, unlike other trigger functions, are executed synchronously in
@@ -6204,7 +6204,7 @@ the \lstinline=[xtriggers]= section:
 These can be used instead of the older suite state polling tasks described
 in~\ref{SuiteStatePolling} for inter-suite triggering - i.e.\ to trigger local
 tasks off of remote task statuses or messages in other suites. (However we
-don't recommend wholesale conversion to the new method yet, until the new
+don't recommend wholesale conversion to the new method yet, until its
 interface has stabilized - see~\ref{Current Trigger Function Limitations}.)
 
 The suite state trigger function signature looks like this:
@@ -6471,8 +6471,10 @@ Cylc trigger functions interact with it.
 \subsection{Old-Style External Triggers (Deprecated)}
 \label{Old-Style External Triggers}
 
-{\em WARNING: This mechanism is now deprecated, please use external trigger
-functions instead, see~\ref{External Triggers}.}
+{\em NOTE: This mechanism is now technically deprecated by the newer external
+trigger functions (\ref{External Triggers}). (However we don't recommend
+wholesale conversion to the new method yet, until its interface has
+stabilized - see~\ref{Current Trigger Function Limitations}.)
 
 These old-style external triggers are hidden task prerequisites that must be
 satisfied by using the \lstinline=cylc ext-trigger= client command to send an
