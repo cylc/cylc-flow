@@ -460,6 +460,7 @@ class CylcReviewService(object):
     def get_file(self, user, suite, path, path_in_tar=None, mode=None):
         """Returns file information / content or a cherrypy response."""
         f_name = self._get_user_suite_dir(user, suite, path)
+        self._check_file_path(path)
         view_size_max = self.VIEW_SIZE_MAX
         if path_in_tar:
             tar_f = tarfile.open(f_name, "r:gz")
@@ -775,6 +776,46 @@ class CylcReviewService(object):
 
         """
         if os.path.split(string)[0] != '':
+            raise cherrypy.HTTPError(403)
+
+    @classmethod
+    def _check_file_path(cls, path):
+        """Raise HTTP 403 error if the path is not indended to be served.
+
+        Examples:
+            >>> CylcReviewService._check_file_path('.service/contact')
+            Traceback (most recent call last):
+             ...
+            HTTPError: (403, None)
+            >>> CylcReviewService._check_file_path('log/../.service/contact')
+            Traceback (most recent call last):
+             ...
+            HTTPError: (403, None)
+            >>> CylcReviewService._check_file_path('log/foo')  # pass, etc.
+            >>> CylcReviewService._check_file_path('suite.rc')
+            >>> CylcReviewService._check_file_path('suite.rc.processed')
+
+        Raises:
+            cherrypy.HTTPError(403)
+
+        Whitelist paths:
+            * ``suite.rc``.
+            * ``suite.rc.processed``.
+            * ``log/``.
+
+        Blacklist non-normalised paths - see ``_check_path_normalised``.
+
+        """
+        cls._check_path_normalised(path)
+        # Get rootdir and sub-path.
+        head, tail = os.path.split(path)
+        while os.path.split(head)[0]:
+            head, tail1 = os.path.split(head)
+            tail = os.path.join(tail1, tail)
+        if not (
+            head == 'log' or
+            (not head and tail in ['suite.rc', 'suite.rc.processed'])
+        ):
             raise cherrypy.HTTPError(403)
 
     @staticmethod
