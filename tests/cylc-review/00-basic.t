@@ -30,7 +30,6 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 
-export CYLC_CONF_PATH=
 cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null'
 #-------------------------------------------------------------------------------
 # Initialise WSGI application for the cylc review web service
@@ -42,7 +41,7 @@ fi
 # Set up standard URL escaping of forward slashes in 'cylctb-' suite names.
 ESC_SUITE_NAME="$(echo ${SUITE_NAME} | sed 's|/|%2F|g')"
 #-------------------------------------------------------------------------------
-# Data transfer output check for review homepage. ###P1
+# Data transfer output check for review homepage
 TEST_NAME="${TEST_NAME_BASE}-curl-root"
 run_ok "${TEST_NAME}" curl -I -s "${TEST_CYLC_WS_URL}"
 grep_ok 'HTTP/.* 200 OK' "${TEST_NAME}.stdout"
@@ -71,11 +70,6 @@ TEST_NAME="${TEST_NAME_BASE}-404-curl-suites"
 run_ok "${TEST_NAME}" curl -I "${TEST_CYLC_WS_URL}/suites/no-such-user"
 grep_ok 'HTTP/.* 404 Not Found' "${TEST_NAME}.stdout"
 #-------------------------------------------------------------------------------
-
-#echo "\nstart 1\n" >&2  # TO DEBUG, REMOVE
-#cat "${TEST_NAME}.stdout" >&2  # TO DEBUG, REMOVE
-#echo "\nend 1\n" >&2  # TO DEBUG, REMOVE
-
 # Connection check for a specific suite's cycles & jobs page
 for METHOD in 'cycles' 'jobs'; do
     TEST_NAME="${TEST_NAME_BASE}-200-curl-${METHOD}"
@@ -123,11 +117,6 @@ FOO0="{'cycle': '20000101T0000Z', 'name': 'foo0', 'submit_num': 1}"
 FOO0_JOB='log/job/20000101T0000Z/foo0/01/job'
 FOO1="{'cycle': '20000101T0000Z', 'name': 'foo1', 'submit_num': 1}"
 FOO1_JOB='log/job/20000101T0000Z/foo1/01/job'
-
-
-#echo "\nstart 1\n" >&2  # TO DEBUG, REMOVE
-#cat "${TEST_NAME}.stdout" >&2  # TO DEBUG, REMOVE
-#echo "\nend 1\n" >&2  # TO DEBUG, REMOVE
 
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('cylc_version',), '$(cylc version | cut -d' ' -f 2)']" \

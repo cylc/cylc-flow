@@ -25,27 +25,29 @@ fi
 set_test_number 15
 #-------------------------------------------------------------------------------
 # Initialise multiple suites with same 'suite.rc' file; name [abc] and [1-10]
-export CYLC_CONF_PATH=
 PREFIX="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}"
 
 # Group '1'
 PREFIX_GROUP1="${PREFIX}-1-"
 for SUFFIX in 'b' 'a' 'c'; do
     cp "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/suite.rc" .
-    cylc register "${PREFIX_GROUP1}-${SUFFIX}" "${PWD}" 1>/dev/null 2>&1
-    cylc run "${PREFIX_GROUP1}-${SUFFIX}" 1>/dev/null 2>&1
     # Make one of set [abc] a symlink
     if [[ "${SUFFIX}" == 'a' ]]; then
-        ln -s "${PWD}/${PREFIX_GROUP1}-${SUFFIX}" "${HOME}/cylc-run/${PREFIX_GROUP1}-${SUFFIX}"
+        mkdir -p "${PREFIX_GROUP1}${SUFFIX}"
+        ln -s "${PWD}/${PREFIX_GROUP1}${SUFFIX}" "${HOME}/cylc-run/${PREFIX_GROUP1}${SUFFIX}"
     fi
+    cylc register "${PREFIX_GROUP1}${SUFFIX}" "${PWD}"
+    cylc run --no-detach --debug "${PREFIX_GROUP1}${SUFFIX}" 2>'/dev/null' \
+        || cat "${HOME}/cylc-run/${PREFIX_GROUP1}${SUFFIX}/log/suite/err" >&2
 done
 
 # Group '2'
 PREFIX_GROUP2="${PREFIX}-2-"
 for SUFFIX in $(seq -w 1 10); do
     cp "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/suite.rc" .
-    cylc register "${PREFIX_GROUP2}-${SUFFIX}" "${PWD}" 1>/dev/null 2>&1
-    cylc run "${PREFIX_GROUP2}-${SUFFIX}" 1>/dev/null 2>&1
+    cylc register "${PREFIX_GROUP2}${SUFFIX}" "${PWD}"
+    cylc run --no-detach --debug "${PREFIX_GROUP2}${SUFFIX}" 2>'/dev/null' \
+        || cat "${HOME}/cylc-run/${PREFIX_GROUP2}${SUFFIX}/log/suite/err" >&2
 done
 #-------------------------------------------------------------------------------
 # Initialise WSGI application for the cylc review web service
@@ -64,9 +66,9 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('page',), 1]" \
     "[('per_page',), 100]" \
     "[('of_n_entries',), 3]" \
-    "[('entries', 0, 'name'), '${PREFIX_GROUP1}-c']" \
-    "[('entries', 1, 'name'), '${PREFIX_GROUP1}-a']" \
-    "[('entries', 2, 'name'), '${PREFIX_GROUP1}-b']"
+    "[('entries', 0, 'name'), '${PREFIX_GROUP1}c']" \
+    "[('entries', 1, 'name'), '${PREFIX_GROUP1}a']" \
+    "[('entries', 2, 'name'), '${PREFIX_GROUP1}b']"
 #-------------------------------------------------------------------------------
 # Data transfer output check for [abc], sort by time_asc
 TEST_NAME="${TEST_NAME_BASE}-200-curl-suites-time-asc"
@@ -77,9 +79,9 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('page',), 1]" \
     "[('per_page',), 100]" \
     "[('of_n_entries',), 3]" \
-    "[('entries', 0, 'name'), '${PREFIX_GROUP1}-b']" \
-    "[('entries', 1, 'name'), '${PREFIX_GROUP1}-a']" \
-    "[('entries', 2, 'name'), '${PREFIX_GROUP1}-c']"
+    "[('entries', 0, 'name'), '${PREFIX_GROUP1}b']" \
+    "[('entries', 1, 'name'), '${PREFIX_GROUP1}a']" \
+    "[('entries', 2, 'name'), '${PREFIX_GROUP1}c']"
 #-------------------------------------------------------------------------------
 # Data transfer output check for [abc], sort by name_asc
 TEST_NAME="${TEST_NAME_BASE}-200-curl-suites-name-asc"
@@ -90,9 +92,9 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('page',), 1]" \
     "[('per_page',), 100]" \
     "[('of_n_entries',), 3]" \
-    "[('entries', 0, 'name'), '${PREFIX_GROUP1}-a']" \
-    "[('entries', 1, 'name'), '${PREFIX_GROUP1}-b']" \
-    "[('entries', 2, 'name'), '${PREFIX_GROUP1}-c']"
+    "[('entries', 0, 'name'), '${PREFIX_GROUP1}a']" \
+    "[('entries', 1, 'name'), '${PREFIX_GROUP1}b']" \
+    "[('entries', 2, 'name'), '${PREFIX_GROUP1}c']"
 #-------------------------------------------------------------------------------
 # Data transfer output check for [abc], sort by name_desc
 TEST_NAME="${TEST_NAME_BASE}-200-curl-suites-name-desc"
@@ -103,9 +105,9 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('page',), 1]" \
     "[('per_page',), 100]" \
     "[('of_n_entries',), 3]" \
-    "[('entries', 0, 'name'), '${PREFIX_GROUP1}-c']" \
-    "[('entries', 1, 'name'), '${PREFIX_GROUP1}-b']" \
-    "[('entries', 2, 'name'), '${PREFIX_GROUP1}-a']"
+    "[('entries', 0, 'name'), '${PREFIX_GROUP1}c']" \
+    "[('entries', 1, 'name'), '${PREFIX_GROUP1}b']" \
+    "[('entries', 2, 'name'), '${PREFIX_GROUP1}a']"
 #-------------------------------------------------------------------------------
 # Data transfer output check for [1-10], page 1
 TEST_NAME="${TEST_NAME_BASE}-200-curl-suites-2-page-1"
@@ -116,10 +118,10 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('page',), 1]" \
     "[('per_page',), 4]" \
     "[('of_n_entries',), 10]" \
-    "[('entries', 0, 'name'), '${PREFIX_GROUP2}-10']" \
-    "[('entries', 1, 'name'), '${PREFIX_GROUP2}-09']" \
-    "[('entries', 2, 'name'), '${PREFIX_GROUP2}-08']" \
-    "[('entries', 3, 'name'), '${PREFIX_GROUP2}-07']"
+    "[('entries', 0, 'name'), '${PREFIX_GROUP2}10']" \
+    "[('entries', 1, 'name'), '${PREFIX_GROUP2}09']" \
+    "[('entries', 2, 'name'), '${PREFIX_GROUP2}08']" \
+    "[('entries', 3, 'name'), '${PREFIX_GROUP2}07']"
 #-------------------------------------------------------------------------------
 # Data transfer output check for [1-10], page 2
 TEST_NAME="${TEST_NAME_BASE}-200-curl-suites-2-page-2"
@@ -130,10 +132,10 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('page',), 2]" \
     "[('per_page',), 4]" \
     "[('of_n_entries',), 10]" \
-    "[('entries', 0, 'name'), '${PREFIX_GROUP2}-06']" \
-    "[('entries', 1, 'name'), '${PREFIX_GROUP2}-05']" \
-    "[('entries', 2, 'name'), '${PREFIX_GROUP2}-04']" \
-    "[('entries', 3, 'name'), '${PREFIX_GROUP2}-03']"
+    "[('entries', 0, 'name'), '${PREFIX_GROUP2}06']" \
+    "[('entries', 1, 'name'), '${PREFIX_GROUP2}05']" \
+    "[('entries', 2, 'name'), '${PREFIX_GROUP2}04']" \
+    "[('entries', 3, 'name'), '${PREFIX_GROUP2}03']"
 #-------------------------------------------------------------------------------
 # Data transfer output check for [1-10], page 3
 TEST_NAME="${TEST_NAME_BASE}-200-curl-suites-2-page-3"
@@ -144,8 +146,8 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('page',), 3]" \
     "[('per_page',), 4]" \
     "[('of_n_entries',), 10]" \
-    "[('entries', 0, 'name'), '${PREFIX_GROUP2}-02']" \
-    "[('entries', 1, 'name'), '${PREFIX_GROUP2}-01']"
+    "[('entries', 0, 'name'), '${PREFIX_GROUP2}02']" \
+    "[('entries', 1, 'name'), '${PREFIX_GROUP2}01']"
 #-------------------------------------------------------------------------------
 # Tidy up - note suites trivial so stop early on by themselves
 rm -fr \

@@ -24,24 +24,12 @@ fi
 
 set_test_number 10
 #-------------------------------------------------------------------------------
-# Initialise suite and associated config
-
-# Rose conf to extract via review
-mkdir 'conf'
-cat >'conf/rose.conf' <<'__ROSE_CONF__'
-[rose-bush]
-logo=src="rose-favicon.png" alt="Rose Logo"
-title=Humpty Dumpty
-host=The Wall
-__ROSE_CONF__
-
 # Initialise, validate and run a suite for testing with
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 
-export CYLC_CONF_PATH=
 cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null'
 #-------------------------------------------------------------------------------
 # Initialise WSGI application for the cylc review web service
@@ -53,7 +41,7 @@ fi
 # Set up standard URL escaping of forward slashes in 'cylctb-' suite names.
 ESC_SUITE_NAME="$(echo ${SUITE_NAME} | sed 's|/|%2F|g')"
 #-------------------------------------------------------------------------------
-# Data transfer output check for a suite with Rose config provided
+# Basic data transfer output check
 TEST_NAME="${TEST_NAME_BASE}-200-curl-root-json"
 run_ok "${TEST_NAME}" curl "${TEST_CYLC_WS_URL}/?form=json"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \

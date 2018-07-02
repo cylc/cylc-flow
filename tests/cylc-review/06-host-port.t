@@ -47,8 +47,6 @@ __SUITE_RC__
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 
-export CYLC_CONF_PATH=
-
 # Background to leave sitting in stalled state
 cylc run --debug --no-detach $SUITE_NAME 2>'/dev/null' &
 #-------------------------------------------------------------------------------

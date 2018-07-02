@@ -30,7 +30,6 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 
-export CYLC_CONF_PATH=
 cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null'
 #-------------------------------------------------------------------------------
 # Initialise WSGI application for the cylc review web service

@@ -28,7 +28,7 @@ from glob import glob
 
 import cylc.flags
 from cylc.wallclock import get_current_time_string
-from cylc.suite_logging import LOG, ERR
+from cylc.suite_logging import LOG
 from cylc.task_state import TASK_STATUS_GROUPS
 
 
@@ -503,8 +503,8 @@ class CylcSuiteDAO(object):
         select from broadcast_states table if id_key == CHECKPOINT_LATEST_ID.
         Otherwise select from broadcast_states_checkpoints where id == id_key.
         """
-        stmt, stmt_args = pre_select_broadcast_states(self, id_key=None,
-                                                      order=sort)
+        stmt, stmt_args = self.pre_select_broadcast_states(id_key=None,
+                                                           order=sort)
         for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
             callback(row_idx, list(row))
 
@@ -523,7 +523,7 @@ class CylcSuiteDAO(object):
         Invoke callback(row_idx, row) on each row, where each row contains:
             [time, change, point, namespace, key, value]
         """
-        stmt, stmt_args = pre_select_broadcast_events(self, order=sort)
+        stmt, stmt_args = self.pre_select_broadcast_events(order=sort)
         for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
             callback(row_idx, list(row))
 
@@ -1044,18 +1044,7 @@ class CylcSuiteDAO(object):
 class CylcReviewDAO(object):
     """Cylc Review data access object to the suite runtime database."""
 
-    JOB_STATUS_COMBOS = {
-        "all": "",
-        "submitted": "submit_status == 0 AND time_run IS NULL",
-        "submitted,running": "submit_status == 0 AND run_status IS NULL",
-        "submission-failed": "submit_status == 1",
-        "submission-failed,failed": "submit_status == 1 OR run_status == 1",
-        "running": "time_run IS NOT NULL AND run_status IS NULL",
-        "running,succeeded,failed": "time_run IS NOT NULL",
-        "succeeded": "run_status == 0",
-        "succeeded,failed": "run_status IS NOT NULL",
-        "failed": "run_status == 1",
-    }
+    CYCLE_ORDERS = {"time_desc": " DESC", "time_asc": " ASC"}
     JOB_ORDERS = {
         "time_desc": "time DESC, submit_num DESC, name DESC, cycle DESC",
         "time_asc": "time ASC, submit_num ASC, name ASC, cycle ASC",
@@ -1103,7 +1092,19 @@ class CylcReviewDAO(object):
             "(CAST(strftime('%s', time_run_exit) AS NUMERIC) -" +
             " CAST(strftime('%s', time_submit) AS NUMERIC)) ASC, " +
             "submit_num DESC, name DESC, cycle DESC"),
-        }
+    }
+    JOB_STATUS_COMBOS = {
+        "all": "",
+        "submitted": "submit_status == 0 AND time_run IS NULL",
+        "submitted,running": "submit_status == 0 AND run_status IS NULL",
+        "submission-failed": "submit_status == 1",
+        "submission-failed,failed": "submit_status == 1 OR run_status == 1",
+        "running": "time_run IS NOT NULL AND run_status IS NULL",
+        "running,succeeded,failed": "time_run IS NOT NULL",
+        "succeeded": "run_status == 0",
+        "succeeded,failed": "run_status IS NOT NULL",
+        "failed": "run_status == 1",
+    }
 
     REC_CYCLE_QUERY_OP = re.compile(r"\A(before |after |[<>]=?)(.+)\Z")
     REC_SEQ_LOG = re.compile(r"\A(.+\.)([^\.]+)(\.[^\.]+)\Z")
@@ -1121,7 +1122,7 @@ class CylcReviewDAO(object):
             for name in [os.path.join("log", "db"), "cylc-suite.db"]:
                 db_f_name = os.path.expanduser(os.path.join(
                     prefix, os.path.join("cylc-run", suite_name, name)))
-                self.daos[key] = CylcSuiteDAO(db_f_name)
+                self.daos[key] = CylcSuiteDAO(db_f_name, is_public=True)
                 if os.path.exists(db_f_name):
                     break
         return self.daos[key]
@@ -1135,10 +1136,9 @@ class CylcReviewDAO(object):
     def _db_exec(self, user_name, suite_name, stmt, stmt_args=None):
         """Execute a query on a named CylcSuiteDAO database connection."""
         daos = self._db_init(user_name, suite_name)
-        if stmt_args:
-            return daos.connect().execute(stmt, stmt_args)
-        else:
-            return daos.connect().execute(stmt)
+        if stmt_args is None:
+            stmt_args = []
+        return daos.connect().execute(stmt, stmt_args)
 
     def get_suite_broadcast_states(self, user_name, suite_name):
         """Return broadcast states of a suite.
@@ -1208,11 +1208,14 @@ class CylcReviewDAO(object):
         stmt = ("SELECT COUNT(*)" +
                 " FROM task_jobs JOIN task_states USING (name, cycle)" +
                 where_expr)
-        for row in self._db_exec(user_name, suite_name, stmt, where_args):
-            of_n_entries = row[0]
-            break
-        else:
-            self._db_close(user_name, suite_name)
+        try:
+            for row in self._db_exec(user_name, suite_name, stmt, where_args):
+                of_n_entries = row[0]
+                break
+            else:
+                self._db_close(user_name, suite_name)
+                return ([], 0)
+        except sqlite3.Error:
             return ([], 0)
 
         # Get entries
@@ -1435,13 +1438,15 @@ class CylcReviewDAO(object):
         and of_n_entries is the total number of entries.
         """
 
-
         of_n_entries = 0
         stmt = ("SELECT COUNT(DISTINCT cycle) FROM task_states WHERE " +
                 "submit_num > 0")
-        for row in self._db_exec(user_name, suite_name, stmt):
-            of_n_entries = row[0]
-            break
+        try:
+            for row in self._db_exec(user_name, suite_name, stmt):
+                of_n_entries = row[0]
+                break
+        except sqlite3.Error:
+            return ([], 0)
         if not of_n_entries:
             self._db_close(user_name, suite_name)
             return ([], 0)
@@ -1484,10 +1489,7 @@ class CylcReviewDAO(object):
             stmt += " ORDER BY cast(cycle as number)"
         else:
             stmt += " ORDER BY cycle"
-        if order == "time_asc":
-            stmt += " ASC"
-        else:
-            stmt += " DESC"  # "time_desc" or default ordering.
+        stmt += self.CYCLE_ORDERS.get(order, self.CYCLE_ORDERS["time_desc"])
         stmt_args = []
         if limit:
             stmt += " LIMIT ? OFFSET ?"
@@ -1511,7 +1513,7 @@ class CylcReviewDAO(object):
                     },
                 }
                 entries.append(entry_of[cycle])
-
+        self._db_close(user_name, suite_name)
 
         # Check if "task_jobs" table is available or not.
         # Note: A single query with a JOIN is probably a more elegant solution.
@@ -1539,6 +1541,7 @@ class CylcReviewDAO(object):
                 "SELECT cycle," +
                 " sum(" + fail_events_stmt + ") AS n_job_fail" +
                 " FROM task_events GROUP BY cycle")
+        self._db_close(user_name, suite_name)
         for cycle, n_job_active, n_job_success, n_job_fail in self._db_exec(
                 user_name, suite_name, stmt):
             try:
