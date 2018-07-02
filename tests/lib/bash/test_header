@@ -116,6 +116,11 @@
 #         array index. It can also be a dict {attr_key: attr_value, ...}. In
 #         which case, the expected data item is under a list of dicts, where a
 #         unique dict in the list contains all elements attr_key: attr_value.
+#     set_test_remote_host
+#         set CYLC_TEST_HOST from global config, for remote job tests.
+#         (Remote job tests should really use set_test_remote, below, however).
+#     set_test_remote
+#         set CYLC_TEST_HOST and CYLC_TEST_OWNER for remote job tests.
 #-------------------------------------------------------------------------------
 set -eu
 
