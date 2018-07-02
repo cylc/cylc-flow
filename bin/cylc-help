@@ -280,6 +280,7 @@ utility_commands['scp-transfer'] = ['scp-transfer']
 utility_commands['suite-state'] = ['suite-state']
 utility_commands['ls-checkpoints'] = ['ls-checkpoints']
 utility_commands['report-timings'] = ['report-timings']
+utility_commands['function-run'] = ['function-run']
 
 hook_commands = {}
 hook_commands['email-suite'] = ['email-suite']
@@ -362,7 +363,7 @@ comsum['test-battery'] = 'Run a battery of self-diagnosing test suites'
 comsum['profile-battery'] = 'Run a battery of profiling tests'
 comsum['import-examples'] = 'Import example suites your suite run directory'
 comsum['upgrade-run-dir'] = 'Upgrade a pre-cylc-6 suite run directory'
-comsum['check-software'] = 'Check required software is installed.'
+comsum['check-software'] = 'Check required software is installed'
 # license
 comsum['warranty'] = 'Print the GPLv3 disclaimer of warranty'
 comsum['conditions'] = 'Print the GNU General Public License v3.0'
@@ -406,8 +407,8 @@ comsum['poll'] = 'Poll submitted or running tasks'
 comsum['kill'] = 'Kill submitted or running tasks'
 comsum['hold'] = 'Hold (pause) suites or individual tasks'
 comsum['release'] = 'Release (unpause) suites or individual tasks'
-comsum['reset'] = 'Force one or more tasks to change state.'
-comsum['spawn'] = 'Force one or more tasks to spawn their successors.'
+comsum['reset'] = 'Force one or more tasks to change state'
+comsum['spawn'] = 'Force one or more tasks to spawn their successors'
 comsum['nudge'] = 'Cause the cylc task processing loop to be invoked'
 comsum['reload'] = 'Reload the suite definition at run time'
 comsum['set-verbosity'] = 'Change a running suite\'s logging verbosity'
@@ -427,6 +428,7 @@ comsum['jobs-poll'] = '(Internal) Retrieve status for task jobs'
 comsum['jobs-submit'] = '(Internal) Submit task jobs'
 comsum['remote-init'] = '(Internal) Initialise a task remote'
 comsum['remote-tidy'] = '(Internal) Tidy a task remote'
+
 # utility
 comsum['cycle-point'] = 'Cycle point arithmetic and filename templating'
 comsum['jobscript'] = 'Generate a task job script and print it to stdout'
@@ -434,6 +436,8 @@ comsum['scp-transfer'] = 'Scp-based file transfer for cylc suites'
 comsum['suite-state'] = 'Query the task states in a suite'
 comsum['ls-checkpoints'] = 'Display task pool etc at given events'
 comsum['report-timings'] = 'Generate a report on task timing data'
+comsum['function-run'] = '(Internal) Run a function in the process pool'
+
 # hook
 comsum['email-task'] = 'A task event hook script that sends email alerts'
 comsum['email-suite'] = 'A suite event hook script that sends email alerts'

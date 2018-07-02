@@ -72,14 +72,12 @@ def main():
     profiler.start()
 
     suite, suiterc = SuiteSrvFilesManager().parse_suite_arg(options, args[0])
-
     cfg = SuiteConfig(
         suite, suiterc,
         load_template_vars(options.templatevars, options.templatevars_file),
         cli_initial_point_string=options.icp,
         is_validate=True, strict=options.strict, run_mode=options.run_mode,
-        output_fname=options.output,
-        mem_log_func=profiler.log_memory)
+        output_fname=options.output, mem_log_func=profiler.log_memory)
 
     # Instantiate tasks and force evaluation of trigger expressions.
     # (Taken from config.py to avoid circular import problems.)
@@ -103,9 +101,14 @@ def main():
         try:
             itask.state.prerequisites_eval_all()
         except TriggerExpressionError as exc:
-            print >> sys.stderr, str(exc)
-            raise SuiteConfigError(
-                'ERROR, %s: invalid trigger expression.' % name)
+            err = str(exc)
+            if '@' in err:
+                print >> sys.stderr, (
+                    "ERROR, %s: xtriggers can't be in conditional"
+                    " expressions: %s" % (name, err))
+            else:
+                print >> sys.stderr, 'ERROR, %s: bad trigger: %s' % (name, err)
+            raise SuiteConfigError("ERROR: bad trigger")
         except Exception as exc:
             print >> sys.stderr, str(exc)
             raise SuiteConfigError(

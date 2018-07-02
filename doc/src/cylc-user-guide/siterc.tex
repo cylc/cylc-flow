@@ -9,9 +9,9 @@ user config files. See {\em Site And User Config Files}
 usage, and how to generate the files using the
 \lstinline=cylc get-site-config= command.
 
-{\em As for suite definitions, Jinja2 expressions can be embedded in
+{\em As for suite configurations, Jinja2 expressions can be embedded in
 site and user config files to generate the final result parsed by cylc.}
-Use of Jinja2 in suite definitions is documented in
+Use of Jinja2 in suite configurations is documented in
 Section~\ref{Jinja2}.
 
 \subsection{Top Level Items}
@@ -263,7 +263,7 @@ Your preferred web browser.
 
 \subsection{[editors]}
 
-Choose your favourite text editor for editing suite definitions.
+Choose your favourite text editor for editing suite configurations.
 
 \subsubsection[terminal]{[editors] \textrightarrow terminal}
 
@@ -382,7 +382,7 @@ The sort order for tasks in the monitor view.
     \begin{myitemize}
         \item {\bf alphanumeric}
         \item {\bf definition} -  the order that tasks appear under
-            \lstinline=[runtime]= in the suite definition.
+            \lstinline=[runtime]= in the suite configuration.
     \end{myitemize}
     \item {\em default:} definition
 \end{myitemize}
@@ -414,7 +414,7 @@ is `\lstinline=.*=' (zero or more of any character), not
 `\lstinline=*='.
 Hostname matching regular expressions are used as-is in the Python
 \lstinline=re.match()= function. As such they match from the beginning
-of the hostname string (as specified in the suite definition) and they
+of the hostname string (as specified in the suite configuration) and they
 do not have to match through to the end of the string (use the
 string-end matching character `\lstinline=$=' in the expression to
 force this).
@@ -477,7 +477,7 @@ Cylc can poll running jobs to catch problems that prevent task messages
 from being sent back to the suite, such as hard job kills, network
 outages, or unplanned task host shutdown. Routine polling is done only
 for the polling {\em task communication method} (below) unless
-suite-specific polling is configured in the suite definition.
+suite-specific polling is configured in the suite configuration.
 A list of interval values can be specified, with the last value used
 repeatedly until the task is finished - this allows more frequent
 polling near the beginning and end of the anticipated task run time.
@@ -498,7 +498,7 @@ Cylc can also poll submitted jobs to catch problems that prevent the
 submitted job from executing at all, such as deletion from an external
 batch scheduler queue. Routine polling is done only for the polling {\em
 task communication method} (above) unless suite-specific polling
-is configured in the suite definition. A list of interval
+is configured in the suite configuration. A list of interval
 values can be specified as for execution polling (above) but a single
 value is probably sufficient for job submission polling.
 
@@ -756,7 +756,7 @@ can target the right suite on the right host.
 
 %(TO DO: is it conceivable that different remote task hosts at the same
 %site might see the suite host differently? If so we would need to be
-%able to override the target in suite definitions.)
+%able to override the target in suite configurations.)
 
 \subsubsection[method]{[suite host self-identification] \textrightarrow method }
 

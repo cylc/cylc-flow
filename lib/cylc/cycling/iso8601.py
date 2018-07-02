@@ -23,7 +23,6 @@ import unittest
 
 from isodatetime.data import Calendar, Duration
 from isodatetime.dumpers import TimePointDumper
-from isodatetime.parsers import TimePointParser, DurationParser
 from isodatetime.timezone import (
     get_local_time_zone, get_local_time_zone_format)
 from cylc.time_parser import CylcTimeParser

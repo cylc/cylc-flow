@@ -1,0 +1,52 @@
+#!Jinja2
+
+#------------------------------------------------------------------------------
+# A suite that uses the cylc_kafka_consumer module as an external trigger
+# function, to trigger tasks off of Kafka messages. Jinja2 inputs are defined
+# in rose-suite.conf.
+#------------------------------------------------------------------------------
+# For use with the corresponding PRODUCER example suite.
+#------------------------------------------------------------------------------
+# NOTE: to re-run the suite, re-run the producer suite to generate new
+# triggering messages, or change GROUP_ID_PREFIX in rose-suite.conf to change
+# the consume group ID and thereby re-consume the already-used messages.
+#------------------------------------------------------------------------------
+
+{% set KAFKA_SERVER = "localhost:9092" %}
+{% set KAFKA_TOPIC = "data-avail" %}
+{% set SYSTEM = "prod" %}
+{% set GROUP_ID_PREFIX = 1 %}
+
+[cylc]
+    cycle point format = %Y
+[scheduling]
+    initial cycle point = 3010
+    [[xtriggers]]
+        # Trigger off of availability of "analysis" files:
+        # Don't quote the function arguments here.
+        an = cylc_kafka_consumer( \
+                 kafka_server={{KAFKA_SERVER}}, kafka_topic={{KAFKA_TOPIC}}, \
+                 message=system:{{SYSTEM}} point:%(point)s data:<.*analysis.*>, \
+            group_id=an{{GROUP_ID_PREFIX}}(id)s):PT10S
+        # Trigger off of availability of "forecast" files:
+        # Don't quote the function arguments here.
+        fc = cylc_kafka_consumer( \
+            kafka_server={{KAFKA_SERVER}}, kafka_topic={{KAFKA_TOPIC}}, \
+            message=system:{{SYSTEM}} point:%(point)s data:<.*forecast.*>, \
+            group_id=fc{{GROUP_ID_PREFIX}}%(id)s):PT10S
+   [[dependencies]]
+        [[[P1Y]]]
+           graph = """@an => proc_an
+                      @fc => proc_fc
+                      pre => proc_an & proc_fc => publish
+                      # Make sure products are published in correct order:
+                      publish[-P1Y] => publish"""
+[runtime]
+    [[pre]]
+        #...
+    [[proc_an]]
+        script = sleep 10; echo "my analysis data is: $an_data"
+    [[proc_fc]]
+        script = sleep 10; echo "my forecast data is: $fc_data"
+    [[publish]]
+        #...

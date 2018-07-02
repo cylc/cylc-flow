@@ -44,9 +44,11 @@ import cylc.flags
 from cylc.mp_pool import SuiteProcPool
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.suite_db_mgr import SuiteDatabaseManager
+from cylc.broadcast_mgr import BroadcastMgr
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.task_id import TaskID
 from cylc.task_job_mgr import TaskJobManager
+from cylc.task_events_mgr import TaskEventsManager
 from cylc.task_proxy import TaskProxy
 from cylc.task_state import TASK_STATUS_SUBMIT_FAILED
 from cylc.templatevars import load_template_vars
@@ -101,8 +103,11 @@ def main():
 
     # Initialise job submit environment
     glbl_cfg().create_cylc_run_tree(suite)
+    pool = SuiteProcPool()
+    db_mgr = SuiteDatabaseManager()
     task_job_mgr = TaskJobManager(
-        suite, SuiteProcPool(), SuiteDatabaseManager(), suite_srv_mgr)
+        suite, pool, db_mgr, suite_srv_mgr,
+        TaskEventsManager(suite, pool, db_mgr, BroadcastMgr(db_mgr)))
     task_job_mgr.task_remote_mgr.single_task_mode = True
     task_job_mgr.job_file_writer.set_suite_env({
         'CYLC_UTC': str(config.cfg['cylc']['UTC mode']),

@@ -3,7 +3,7 @@
 
 \lstset{language=bash}
 
-This appendix defines all legal suite definition config items.
+This appendix defines all legal suite configuration items.
 Embedded Jinja2 code (see~\ref{Jinja2}) must process to a valid
 raw suite.rc file. See also~\ref{SuiteRCFile} for a descriptive
 overview of suite.rc files, including syntax (\ref{Syntax}).
@@ -906,12 +906,32 @@ A list of member tasks, or task family names, to assign to this queue
 \item {\em default:} none for user-defined queues; all tasks for the ``default'' queue
 \end{myitemize}
 
+\subsubsection[{[[}xtriggers{]]}]{[scheduling] \textrightarrow [[xtriggers]]}
+
+This section is for {\em External Trigger} function declarations -
+see~\ref{External Triggers}.
+
+\paragraph[\_\_MANY\_\_]{[scheduling] \textrightarrow [[xtriggers]] \textrightarrow \_\_MANY\_\_}
+
+Replace \_\_MANY\_\_ with any user-defined event trigger function
+declarations and corresponding labels for use in the graph:
+
+\begin{myitemize}
+\item {\em type:} string: function signature followed by optional call interval
+\item {\em example:} \lstinline@trig_1 = my_trigger(arg1, arg2, kwarg1, kwarg2):PT10S@
+\end{myitemize}
+
+(See~\ref{External Triggers} for details).
+
 \subsubsection[{[[}special tasks{]]}]{[scheduling] \textrightarrow [[special tasks]]}
 
 This section is used to identify tasks with special behaviour. Family names can
 be used in special task lists as shorthand for listing all member tasks.
 
 \paragraph[clock-trigger]{[scheduling] \textrightarrow [[special tasks]] \textrightarrow clock-trigger}
+
+{\em NOTE: please read {\em External Triggers} (\ref{External Triggers}) before
+using the older clock triggers described in this section.} 
 
 Clock-trigger tasks (see~\ref{ClockTriggerTasks}) wait on a wall clock time
 specified as an offset from their own cycle point.
@@ -950,10 +970,14 @@ see~\ref{ClockExpireTasks}.
 
 \paragraph[external-trigger]{[scheduling] \textrightarrow [[special tasks]] \textrightarrow external-trigger}
 
-Externally triggered tasks (see~\ref{ExternalTriggers}) wait on external events
-reported via the \lstinline=cylc ext-trigger= command.  To constrain triggers
-to a specific cycle point, include \lstinline=$CYLC_TASK_CYCLE_POINT= in the
-trigger message string and pass the cycle point to the \lstinline=cylc ext-trigger= command.
+{\em NOTE: please read {\em External Triggers} (\ref{External Triggers}) before
+using the older mechanism described in this section.} 
+
+Externally triggered tasks (see~\ref{Old-Style External Triggers}) wait on
+external events reported via the \lstinline=cylc ext-trigger= command. To
+constrain triggers to a specific cycle point, include
+\lstinline=$CYLC_TASK_CYCLE_POINT= in the trigger message string and pass the
+cycle point to the \lstinline=cylc ext-trigger= command.
 
 \begin{myitemize}
     \item {\em type:} Comma-separated list of task names with associated
@@ -1595,17 +1619,17 @@ delay.
 
 \subparagraph[suite definition directory]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[remote]]] \textrightarrow  suite definition directory}
 
-The path to the suite definition directory on the remote account, needed if
+The path to the suite configuration directory on the remote account, needed if
 remote tasks require access to files stored there (via
 \lstinline=$CYLC_SUITE_DEF_PATH=) or in the suite bin directory (via
 \lstinline=$PATH=).  If this item is not defined, the local suite
-definition directory path will be assumed, with the suite owner's home
+configuration directory path will be assumed, with the suite owner's home
 directory, if present, replaced by \lstinline='$HOME'= for
 interpretation on the remote account.
 
 \begin{myitemize}
 \item {\em type:} string (a valid directory path on the remote account)
-\item {\em default:} (local suite definition path with \lstinline=$HOME=
+\item {\em default:} (local suite configuration path with \lstinline=$HOME=
     replaced)
 \end{myitemize}
 
@@ -2270,7 +2294,7 @@ Here you can assign graph node attributes to specific nodes, or to all
 members of named groups defined in [visualization] \textrightarrow [[node
 groups]]. Task families are automatically node groups. Styling of a
 family node applies to all member nodes (tasks and sub-families), but
-precedence is determined by ordering in the suite definition.  For
+precedence is determined by ordering in the suite configuration.  For
 example, if you style a family red and then one of its members green,
 cylc will plot a red family with one green member; but if you style one
 member green and then the family red, the red family styling will

@@ -1,0 +1,21 @@
+#!Jinja2
+
+# Test wall_clock xtrigger: suite will run to completion and exit if the
+# clock trigger is not satisfied, else stall and abort.
+
+[cylc]
+    UTC mode = False
+    [[events]]
+        abort on inactivity = True
+        inactivity = PT15S
+[scheduling]
+    initial cycle point = {{START}}
+    final cycle point = {{START}}
+    [[xtriggers]]
+        clock = wall_clock(offset={{OFFSET}})
+    [[dependencies]]
+        [[[T{{HOUR}}]]]
+            graph = "@clock => foo"
+[runtime]
+    [[foo]]
+        script = true

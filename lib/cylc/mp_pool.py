@@ -17,18 +17,76 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Manage queueing and pooling of subprocesses for the suite server program."""
 
-from collections import deque
 import os
+import sys
 import time
 from pipes import quote
 from signal import SIGKILL
 from subprocess import Popen, PIPE
 from tempfile import TemporaryFile
+from collections import deque
 from threading import RLock
-
 from cylc.cfgspec.glbl_cfg import glbl_cfg
+import json
 from cylc.suite_logging import LOG
 from cylc.wallclock import get_current_time_string
+
+
+_XTRIG_FUNCS = {}
+
+
+def get_func(func_name, src_dir):
+    """Find and return an xtrigger function from a module of the same name.
+
+    Can be in <src_dir>/lib/python, CYLC_MOD_LOC, or in Python path.
+    Suite source directory passed in because this is executed in an independent
+    process in the command pool - and therefore doesn't know about the suite.
+
+    """
+    if func_name in _XTRIG_FUNCS:
+        return _XTRIG_FUNCS[func_name]
+    # First look in <src-dir>/lib/python.
+    sys.path.insert(0, os.path.join(src_dir, 'lib', 'python'))
+    mod_name = func_name
+    try:
+        mod_by_name = __import__(mod_name, fromlist=[mod_name])
+    except ImportError:
+        # Then look in built-in xtriggers.
+        mod_name = "%s.%s" % ("cylc.xtriggers", func_name)
+        try:
+            mod_by_name = __import__(mod_name, fromlist=[mod_name])
+        except ImportError:
+            raise
+    try:
+        _XTRIG_FUNCS[func_name] = getattr(mod_by_name, func_name)
+    except AttributeError:
+        # Module func_name has no function func_name.
+        raise
+    return _XTRIG_FUNCS[func_name]
+
+
+def run_function(func_name, json_args, json_kwargs, src_dir):
+    """Run a Python function in the process pool.
+
+    func_name(*func_args, **func_kwargs)
+
+    Redirect any function stdout to stderr (and suite log in debug mode).
+    Return value printed to stdout as a JSON string - allows use of the
+    existing process pool machinery as-is. src_dir is for local modules.
+
+    """
+    func_args = json.loads(json_args)
+    func_kwargs = json.loads(json_kwargs)
+    # Find and import then function.
+    func = get_func(func_name, src_dir)
+    # Redirect stdout to stderr.
+    orig_stdout = sys.stdout
+    sys.stdout = sys.stderr
+    res = func(*func_args, **func_kwargs)
+    # Restore stdout.
+    sys.stdout = orig_stdout
+    # Write function return value as JSON to stdout.
+    sys.stdout.write(json.dumps(res))
 
 
 class SuiteProcContext(object):
@@ -83,6 +141,9 @@ class SuiteProcContext(object):
         self.ret_code = cmd_kwargs.get('ret_code')
         self.out = cmd_kwargs.get('out')
 
+    def update_cmd(self):
+        pass
+
     def __str__(self):
         ret = ''
         for attr in 'cmd', 'ret_code', 'out', 'err':
@@ -111,6 +172,51 @@ class SuiteProcContext(object):
                     'attr': attr,
                     'mesg': mesg}
         return ret.rstrip()
+
+
+class SuiteFuncContext(SuiteProcContext):
+    """Represent the context of a function to run in the process pool.
+
+    Attributes:
+        # See also parent class attributes.
+        .label (str):
+            function label under [xtriggers] in suite.rc
+        .func_name (str):
+            function name
+        .func_args (list):
+            function positional args
+        .func_kwargs (dict):
+            function keyword args
+        .intvl (float - seconds):
+            function call interval (how often to check the external trigger)
+        .ret_val (bool, dict)
+            function return: (satisfied?, result to pass to trigger tasks)
+    """
+
+    def __init__(self, label, func_name, func_args, func_kwargs, intvl):
+        """Initialize a function context."""
+        self.label = label
+        self.func_name = func_name
+        self.func_kwargs = func_kwargs
+        self.func_args = func_args
+        self.intvl = float(intvl)
+        self.ret_val = (False, None)  # (satisfied, broadcast)
+        super(SuiteFuncContext, self).__init__(
+            'xtrigger-func', cmd=[], shell=False)
+
+    def update_command(self, suite_source_dir):
+        """Update the function wrap command after changes."""
+        self.cmd = ['cylc-function-run', self.func_name,
+                    json.dumps(self.func_args),
+                    json.dumps(self.func_kwargs),
+                    suite_source_dir]
+
+    def get_signature(self):
+        """Return the function call signature (as a string)."""
+        skeys = sorted(self.func_kwargs.keys())
+        args = self.func_args + [
+            "%s=%s" % (i, self.func_kwargs[i]) for i in skeys]
+        return "%s(%s)" % (self.func_name, ", ".join([str(a) for a in args]))
 
 
 class SuiteProcPool(object):

@@ -1,0 +1,25 @@
+#!Jinja2
+[cylc]
+  cycle point format = %Y
+    [[events]]
+       inactivity = PT10S
+       abort on inactivity = True
+[scheduling]
+    initial cycle point = 2011
+    final cycle point = 2016
+    [[xtriggers]]
+         upstream = suite_state(suite={{UPSTREAM}}, task=foo,\
+                                point=%(point)s, message='data ready'):PT1S
+   [[dependencies]]
+        [[[P1Y]]]
+           graph = """
+              foo
+              @upstream => FAM:succeed-all => blam
+                   """
+[runtime]
+    [[root]]
+        script = true
+    [[foo, blam]]
+    [[FAM]]
+    [[f1,f2,f3]]
+        inherit = FAM

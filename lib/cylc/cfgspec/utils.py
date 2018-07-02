@@ -17,23 +17,41 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Utilities for configuration settings that are time intervals."""
 
+import re
 from isodatetime.data import Calendar
 from isodatetime.parsers import DurationParser
 from parsec.validate import (
     _strip_and_unquote, _strip_and_unquote_list, _expand_list,
-    IllegalValueError
-)
+    IllegalValueError)
+from cylc.mp_pool import SuiteFuncContext
 from cylc.wallclock import get_seconds_as_interval_string
 
 CALENDAR = Calendar.default()
 DURATION_PARSER = DurationParser()
 
+# Function name and args: "fname(args):PT10S".
+RE_TRIG_FUNC = re.compile(r'(\w+)\((.*)\)(?:\:(\w+))?')
+
+
+DEFAULT_XTRIG_INTVL_SECS = '10'
+
 
 class DurationFloat(float):
     """Duration in seconds."""
-
     def __str__(self):
         return get_seconds_as_interval_string(self)
+
+
+def get_interval_as_seconds(intvl, keys=None):
+    """Convert an ISO 8601 interval to seconds."""
+    if keys is None:
+        keys = []
+    try:
+        interval = DURATION_PARSER.parse(intvl)
+    except ValueError:
+        raise IllegalValueError("ISO 8601 interval", keys, intvl)
+    days, seconds = interval.get_days_and_seconds()
+    return days * CALENDAR.SECONDS_IN_DAY + seconds
 
 
 def coerce_interval(value, keys, _):
@@ -42,12 +60,7 @@ def coerce_interval(value, keys, _):
     if not value:
         # Allow explicit empty values.
         return None
-    try:
-        interval = DURATION_PARSER.parse(value)
-    except ValueError:
-        raise IllegalValueError("ISO 8601 interval", keys, value)
-    days, seconds = interval.get_days_and_seconds()
-    return DurationFloat(days * CALENDAR.SECONDS_IN_DAY + seconds)
+    return DurationFloat(get_interval_as_seconds(value, keys))
 
 
 def coerce_interval_list(value, keys, args):
@@ -58,3 +71,57 @@ def coerce_interval_list(value, keys, args):
         lambda v: coerce_interval(v, keys, args),
         True
     )
+
+
+def coerce_xtrig(value, keys, _):
+    """Coerce a string into an xtrigger function context object.
+
+    func_name(*func_args, **func_kwargs)
+    Checks for legal string templates in arg values too.
+
+    """
+
+    def coerce_type(in_str):
+        """Convert in_str to int, float, or bool, if possible."""
+        try:
+            val = int(in_str)
+        except ValueError:
+            try:
+                val = float(in_str)
+            except ValueError:
+                if in_str == 'False':
+                    val = False
+                elif in_str == 'True':
+                    val = True
+                else:
+                    # Leave as string.
+                    val = _strip_and_unquote([], in_str)
+        return val
+
+    label = keys[-1]
+    value = _strip_and_unquote(keys, value)
+    if not value:
+        raise IllegalValueError("xtrigger", keys, value)
+    fname = None
+    args = []
+    kwargs = {}
+    m = RE_TRIG_FUNC.match(value)
+    if m is None:
+        raise IllegalValueError("xtrigger", keys, value)
+    fname, fargs, intvl = m.groups()
+    if intvl is None:
+        seconds = DEFAULT_XTRIG_INTVL_SECS
+    else:
+        seconds = float(coerce_interval(intvl, keys, None))
+
+    if fargs:
+        # Extract function args and kwargs.
+        for farg in re.split(r'\s*,\s*', fargs):
+            try:
+                key, val = re.split(r'\s*=\s*', farg)
+            except ValueError:
+                args.append(coerce_type(farg.strip()))
+            else:
+                kwargs[key.strip()] = coerce_type(val)
+
+    return SuiteFuncContext(label, fname, args, kwargs, seconds)

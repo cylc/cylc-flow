@@ -390,8 +390,9 @@ class TaskProxy(object):
     def is_waiting_prereqs(self):
         """Is this task waiting for its prerequisites?"""
         return (
-            any(not pre.is_satisfied() for pre in self.state.prerequisites) or
-            any(not tri for tri in self.state.external_triggers.values())
+            any(not pre.is_satisfied() for pre in self.state.prerequisites)
+            or any(not tri for tri in self.state.external_triggers.values())
+            or not self.state.xtriggers_all_satisfied()
         )
 
     def is_waiting_retry(self, now):

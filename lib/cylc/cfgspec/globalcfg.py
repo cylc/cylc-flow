@@ -52,6 +52,8 @@ SPEC = {
         vtype='integer', default=2),
     'task host select command timeout': vdr(
         vtype='interval', default=DurationFloat(10)),
+    'xtrigger function timeout': vdr(
+        vtype='interval', default=DurationFloat(10)),
     'task messaging': {
         'retry interval': vdr(
             vtype='interval', default=DurationFloat(5)),

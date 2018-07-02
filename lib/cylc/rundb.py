@@ -193,6 +193,7 @@ class CylcSuiteDAO(object):
     TABLE_TASK_POOL_CHECKPOINTS = "task_pool_checkpoints"
     TABLE_TASK_STATES = "task_states"
     TABLE_TASK_TIMEOUT_TIMERS = "task_timeout_timers"
+    TABLE_XTRIGGERS = "xtriggers"
 
     TABLES_ATTRS = {
         TABLE_BROADCAST_EVENTS: [
@@ -289,6 +290,10 @@ class CylcSuiteDAO(object):
             ["spawned", {"datatype": "INTEGER"}],
             ["status"],
             ["hold_swap"],
+        ],
+        TABLE_XTRIGGERS: [
+            ["signature", {"is_primary_key": True}],
+            ["results"],
         ],
         TABLE_TASK_POOL_CHECKPOINTS: [
             ["id", {"datatype": "INTEGER", "is_primary_key": True}],
@@ -644,6 +649,11 @@ class CylcSuiteDAO(object):
         for name, cycle, submit_num in self.connect().execute(stmt, stmt_args):
             ret[(name, cycle)] = submit_num
         return ret
+
+    def select_xtriggers_for_restart(self, callback):
+        stm = r"SELECT signature,results FROM %s" % self.TABLE_XTRIGGERS
+        for row_idx, row in enumerate(self.connect().execute(stm, [])):
+            callback(row_idx, list(row))
 
     def select_task_pool(self, callback, id_key=None):
         """Select from task_pool or task_pool_checkpoints.

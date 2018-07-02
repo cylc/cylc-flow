@@ -43,8 +43,11 @@ from cylc.mp_pool import SuiteProcPool
 from cylc.network import PRIVILEGE_LEVELS
 from cylc.network.httpserver import HTTPServer
 from cylc.state_summary_mgr import StateSummaryMgr
+from cylc.task_events_mgr import TaskEventsManager
+from cylc.broadcast_mgr import BroadcastMgr
 from cylc.suite_db_mgr import SuiteDatabaseManager
 from cylc.task_job_logs import JOB_LOG_JOB, get_task_job_log
+from cylc.xtrigger_mgr import XtriggerManager
 from cylc.suite_events import (
     SuiteEventContext, SuiteEventError, SuiteEventHandler)
 from cylc.hostuserutil import get_host, get_user
@@ -130,8 +133,14 @@ class Scheduler(object):
         self.suiterc_update_time = None
         # For user-defined batch system handlers
         sys.path.append(os.path.join(self.suite_dir, 'python'))
+        sys.path.append(os.path.join(self.suite_dir, 'lib', 'python'))
         self.suite_run_dir = glbl_cfg().get_derived_host_item(
             self.suite, 'suite run directory')
+        self.suite_work_dir = glbl_cfg().get_derived_host_item(
+            self.suite, 'suite work directory')
+        self.suite_share_dir = glbl_cfg().get_derived_host_item(
+            self.suite, 'suite share directory')
+
         self.config = None
 
         self.is_restart = is_restart
@@ -196,9 +205,11 @@ class Scheduler(object):
         self.suite_db_mgr = SuiteDatabaseManager(
             self.suite_srv_files_mgr.get_suite_srv_dir(self.suite),  # pri_d
             os.path.join(self.suite_run_dir, 'log'))                 # pub_d
-
+        self.broadcast_mgr = BroadcastMgr(self.suite_db_mgr)
+        self.xtrigger_mgr = XtriggerManager(
+            self.suite, self.owner, self.broadcast_mgr, self.suite_run_dir,
+            self.suite_share_dir, self.suite_work_dir, self.suite_dir)
         self.suite_log = None
-
         self.ref_test_allowed_failures = []
         # Last 10 durations (in seconds) of the main loop
         self.main_loop_intervals = deque(maxlen=10)
@@ -308,10 +319,11 @@ conditions; see `cylc conditions`.
         self.message_queue = Queue()
         self.ext_trigger_queue = Queue()
         self.suite_event_handler = SuiteEventHandler(self.proc_pool)
+        self.task_events_mgr = TaskEventsManager(
+            self.suite, self.proc_pool, self.suite_db_mgr, self.broadcast_mgr)
         self.task_job_mgr = TaskJobManager(
             self.suite, self.proc_pool, self.suite_db_mgr,
-            self.suite_srv_files_mgr)
-        self.task_events_mgr = self.task_job_mgr.task_events_mgr
+            self.suite_srv_files_mgr, self.task_events_mgr)
 
         if self.is_restart:
             # This logic handles the lack of initial cycle point in "suite.rc".
@@ -351,7 +363,7 @@ conditions; see `cylc conditions`.
                 raise SchedulerError(
                     'ERROR: this suite requires the %s run mode' % reqmode)
 
-        self.task_events_mgr.broadcast_mgr.linearized_ancestors.update(
+        self.broadcast_mgr.linearized_ancestors.update(
             self.config.get_linearized_ancestors())
         self.task_events_mgr.mail_interval = self._get_cylc_conf(
             "task event mail interval")
@@ -375,7 +387,7 @@ conditions; see `cylc conditions`.
 
         self.pool = TaskPool(
             self.config, self.final_point, self.suite_db_mgr,
-            self.task_events_mgr)
+            self.task_events_mgr, self.proc_pool, self.xtrigger_mgr)
 
         self.profiler.log_memory("scheduler.py: before load_tasks")
         if self.is_restart:
@@ -442,7 +454,7 @@ conditions; see `cylc conditions`.
         if self.cli_start_point_string:
             self.start_point = self.cli_start_point_string
         self.suite_db_mgr.pri_dao.select_broadcast_states(
-            self.task_events_mgr.broadcast_mgr.load_db_broadcast_states,
+            self.broadcast_mgr.load_db_broadcast_states,
             self.options.checkpoint)
         self.suite_db_mgr.pri_dao.select_task_job_run_times(
             self._load_task_run_times)
@@ -450,6 +462,9 @@ conditions; see `cylc conditions`.
             self.pool.load_db_task_pool_for_restart, self.options.checkpoint)
         self.suite_db_mgr.pri_dao.select_task_action_timers(
             self.pool.load_db_task_action_timers)
+        self.suite_db_mgr.pri_dao.select_xtriggers_for_restart(
+            self.xtrigger_mgr.load_xtrigger_for_restart)
+
         # Re-initialise run directory for user@host for each submitted and
         # running tasks.
         # Note: tasks should all be in the runahead pool at this point.
@@ -881,7 +896,7 @@ conditions; see `cylc conditions`.
         old_tasks = set(self.config.get_task_name_list())
         self.suite_db_mgr.checkpoint("reload-init")
         self.load_suiterc(is_reload=True)
-        self.task_events_mgr.broadcast_mgr.linearized_ancestors = (
+        self.broadcast_mgr.linearized_ancestors = (
             self.config.get_linearized_ancestors())
         self.suite_db_mgr.put_runtime_inheritance(self.config)
         if self.stop_point is None:
@@ -990,6 +1005,7 @@ conditions; see `cylc conditions`.
             cli_start_point_string=self.cli_start_point_string,
             cli_final_point_string=self.options.final_point_string,
             is_reload=is_reload,
+            xtrigger_mgr=self.xtrigger_mgr,
             mem_log_func=self.profiler.log_memory,
             output_fname=os.path.join(
                 self.suite_run_dir,
@@ -1083,10 +1099,8 @@ conditions; see `cylc conditions`.
         for var, val in [
                 ('CYLC_SUITE_RUN_DIR', self.suite_run_dir),
                 ('CYLC_SUITE_LOG_DIR', self.suite_log.get_dir()),
-                ('CYLC_SUITE_WORK_DIR', glbl_cfg().get_derived_host_item(
-                    self.suite, 'suite work directory')),
-                ('CYLC_SUITE_SHARE_DIR', glbl_cfg().get_derived_host_item(
-                    self.suite, 'suite share directory')),
+                ('CYLC_SUITE_WORK_DIR', self.suite_work_dir),
+                ('CYLC_SUITE_SHARE_DIR', self.suite_share_dir),
                 ('CYLC_SUITE_DEF_PATH', self.suite_dir)]:
             os.environ[var] = val
 
@@ -1215,8 +1229,9 @@ conditions; see `cylc conditions`.
             if meth():
                 cylc.flags.iflag = True
 
-        self.task_events_mgr.broadcast_mgr.expire_broadcast(
-            self.pool.get_min_point())
+        self.broadcast_mgr.expire_broadcast(self.pool.get_min_point())
+        self.xtrigger_mgr.housekeep()
+        self.suite_db_mgr.put_xtriggers(self.xtrigger_mgr.sat_xtrig)
         if cylc.flags.debug:
             LOG.debug("END TASK PROCESSING (took %s seconds)" %
                       (time() - time0))
@@ -1496,6 +1511,18 @@ conditions; see `cylc conditions`.
         """Return True if waiting tasks are ready."""
         # do we need to do a pass through the main task processing loop?
         process = False
+
+        # New-style xtriggers.
+        self.pool.check_xtriggers()
+        if self.xtrigger_mgr.pflag:
+            process = True
+            self.xtrigger_mgr.pflag = False  # reset
+        # Old-style external triggers.
+        self.broadcast_mgr.add_ext_triggers(self.ext_trigger_queue)
+        for itask in self.pool.get_tasks():
+            if (itask.state.external_triggers and
+                    self.broadcast_mgr.match_ext_trigger(itask)):
+                process = True
 
         if self.task_events_mgr.pflag:
             # This flag is turned on by commands that change task state

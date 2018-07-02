@@ -1,0 +1,35 @@
+#!Jinja2
+
+#------------------------------------------------------------------------------
+# A suite that uses the bin/cylc_kafka_producer as custom event handler to send
+# messages to Kafka.  Jinja2 inputs are defined in rose-suite.conf.
+#------------------------------------------------------------------------------
+# For use with the corresponding CONSUMER example suite.
+#------------------------------------------------------------------------------
+
+{% set KAFKA_SERVER = "localhost:9092" %}
+{% set KAFKA_TOPIC = "data-avail" %}
+{% set SYSTEM = "prod" %}
+
+[cylc]
+    cycle point format = %Y
+[scheduling]
+    initial cycle point = 3010
+    final cycle point = 3015
+   [[dependencies]]
+      [[[P1Y]]]
+          graph = "pre & forecast[-P1Y] => forecast => post"
+[runtime]
+   [[root]]
+      pre-script = sleep 10
+      [[[events]]]
+          # (don't use single quotes here)
+          custom handler = cylc_kafka_producer.py \
+                               {{KAFKA_SERVER}} {{KAFKA_TOPIC}} "system={{SYSTEM}}" \
+                                   "point=%(point)s" "data=%(message)s"
+   [[pre]]
+      script = cylc message -p CUSTOM /data/analysis-${CYLC_TASK_CYCLE_POINT}.nc
+   [[forecast]]
+      script = cylc message -p CUSTOM /data/forecast-${CYLC_TASK_CYCLE_POINT}.nc
+   [[post]]
+      script = cylc message -p CUSTOM /data/products-${CYLC_TASK_CYCLE_POINT}.nc
