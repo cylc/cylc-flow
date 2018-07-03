@@ -32,12 +32,13 @@ import re
 import sqlite3
 import traceback
 
+from wallclock import get_unix_time_from_time_string
+
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.dump import dump_to_stdout, get_stop_state_summary
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.rundb import CylcSuiteDAO
-from cylc.wallclock import get_unix_time_from_time_string
 
 
 REC_BROADCAST_KEY_SECTIONS = re.compile(r"\[([^\]]+)\]")

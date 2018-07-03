@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Unit test parts of lib/cylc/wallclock.py.
+# Unit test parts of lib/isodatetime/wallclock.py.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 7
@@ -24,7 +24,7 @@ export PYTHONPATH=$CYLC_DIR/lib:$PYTHONPATH
 # Arguments: TEST_NAME TIME_STRING EXPECTED_UNIX_TIME CALENDAR_IS_360
 function test_get_unix_time_from_time_string () {
     run_ok $1 python <<__PYTHON__
-from cylc.wallclock import get_unix_time_from_time_string
+from wallclock import get_unix_time_from_time_string
 
 if $4:
     from isodatetime.data import CALENDAR

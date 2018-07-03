@@ -33,7 +33,7 @@ from tempfile import NamedTemporaryFile
 from time import time
 from uuid import uuid4
 
-from parsec.validate import SuiteProcContext
+from parsec.validate import SubProcContext
 
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
@@ -125,7 +125,7 @@ class TaskRemoteMgr(object):
                 else:
                     cmd = ['bash', '-c', cmd_str]
                 self.proc_pool.put_command(
-                    SuiteProcContext(
+                    SubProcContext(
                         'remote-host-select', cmd, env=dict(os.environ)),
                     self._remote_host_select_callback, [cmd_str])
                 self.remote_host_str_map[cmd_str] = None
@@ -225,7 +225,7 @@ class TaskRemoteMgr(object):
         cmd.append(glbl_cfg().get_derived_host_item(
             self.suite, 'suite run directory', host, owner))
         self.proc_pool.put_command(
-            SuiteProcContext(
+            SubProcContext(
                 'remote-init', cmd, stdin_file_paths=[tmphandle.name]),
             self._remote_init_callback,
             [host, owner, tmphandle])

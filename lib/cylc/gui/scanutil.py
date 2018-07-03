@@ -26,6 +26,8 @@ from time import time
 
 import gtk
 
+from wallclock import get_unix_time_from_time_string as timestr_to_seconds
+
 from cylc.cfgspec.gcylc import GcylcConfig
 import cylc.flags
 from cylc.gui.legend import ThemeLegendWindow
@@ -36,7 +38,6 @@ from cylc.network.port_scan import (
 from cylc.suite_status import (
     KEY_NAME, KEY_OWNER, KEY_STATES, KEY_UPDATE_TIME)
 from cylc.version import CYLC_VERSION
-from cylc.wallclock import get_unix_time_from_time_string as timestr_to_seconds
 
 
 DURATION_EXPIRE_STOPPED = 600.0

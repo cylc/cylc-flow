@@ -31,12 +31,12 @@ from shutil import copy, rmtree
 from subprocess import call
 from tempfile import mkstemp
 
+from wallclock import get_current_time_string, get_utc_mode
+
 from cylc.broadcast_report import get_broadcast_change_iter
-import cylc.flags
 from cylc.rundb import CylcSuiteDAO
 from cylc.suite_logging import ERR, LOG
 from cylc.version import CYLC_VERSION
-from cylc.wallclock import get_current_time_string
 
 
 class SuiteDatabaseManager(object):
@@ -275,7 +275,7 @@ class SuiteDatabaseManager(object):
              "value": schd.task_job_mgr.task_remote_mgr.uuid_str},
             {"key": "run_mode", "value": schd.run_mode},
             {"key": "cylc_version", "value": CYLC_VERSION},
-            {"key": "UTC_mode", "value": cylc.flags.utc},
+            {"key": "UTC_mode", "value": get_utc_mode()},
             {"key": "initial_point", "value": str(schd.initial_point)},
             {"key": "final_point", "value": final_point_str},
         ])

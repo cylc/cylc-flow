@@ -35,8 +35,10 @@ import shlex
 from time import time
 import traceback
 
+from wallclock import (
+    get_current_time_string, get_seconds_as_interval_string as intvl_as_str)
 from parsec.config import ItemNotFoundError
-from parsec.validate import SuiteProcContext
+from parsec.validate import SubProcContext
 
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
@@ -55,8 +57,6 @@ from cylc.task_state import (
 from cylc.task_outputs import (
     TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED, TASK_OUTPUT_SUBMIT_FAILED, TASK_OUTPUT_EXPIRED)
-from cylc.wallclock import (
-    get_current_time_string, get_seconds_as_interval_string as intvl_as_str)
 
 
 CustomTaskEventHandlerContext = namedtuple(
@@ -260,7 +260,7 @@ class TaskEventsManager(object):
             if timer.ctx.ctx_type == self.HANDLER_CUSTOM:
                 # Run custom event handlers on their own
                 self.proc_pool.put_command(
-                    SuiteProcContext(
+                    SubProcContext(
                         (key1, submit_num),
                         timer.ctx.cmd, env=os.environ, shell=True,
                     ),
@@ -507,7 +507,7 @@ class TaskEventsManager(object):
         if mail_smtp:
             env["smtp"] = mail_smtp
         self.proc_pool.put_command(
-            SuiteProcContext(
+            SubProcContext(
                 ctx, cmd, env=env, stdin_str=stdin_str, id_keys=id_keys,
             ),
             self._event_email_callback, [schd_ctx])
@@ -519,7 +519,7 @@ class TaskEventsManager(object):
             try:
                 if proc_ctx.ret_code == 0:
                     del self.event_timers[id_key]
-                    log_ctx = SuiteProcContext((key1, submit_num), None)
+                    log_ctx = SubProcContext((key1, submit_num), None)
                     log_ctx.ret_code = 0
                     log_task_job_activity(
                         log_ctx, schd_ctx.suite, point, name, submit_num)
@@ -576,7 +576,7 @@ class TaskEventsManager(object):
         cmd.append(glbl_cfg().get_derived_host_item(
             schd_ctx.suite, "suite job log directory") + "/")
         self.proc_pool.put_command(
-            SuiteProcContext(ctx, cmd, env=dict(os.environ), id_keys=id_keys),
+            SubProcContext(ctx, cmd, env=dict(os.environ), id_keys=id_keys),
             self._job_logs_retrieval_callback, [schd_ctx])
 
     def _job_logs_retrieval_callback(self, proc_ctx, schd_ctx):
@@ -596,7 +596,7 @@ class TaskEventsManager(object):
                     fname_oks[fname] = os.path.exists(get_task_job_log(
                         schd_ctx.suite, point, name, submit_num, fname))
                 # All expected paths must exist to record a good attempt
-                log_ctx = SuiteProcContext((key1, submit_num), None)
+                log_ctx = SubProcContext((key1, submit_num), None)
                 if all(fname_oks.values()):
                     log_ctx.ret_code = 0
                     del self.event_timers[id_key]

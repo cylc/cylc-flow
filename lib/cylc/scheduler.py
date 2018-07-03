@@ -27,8 +27,10 @@ import sys
 from time import sleep, time
 import traceback
 
-import isodatetime.data
-import isodatetime.parsers
+from isodatetime.parsers import TimePointParser
+from wallclock import (
+    get_current_time_string, get_seconds_as_interval_string,
+    get_time_string_from_unix_time as time2str, get_utc_mode)
 from parsec.util import printcfg
 
 from cylc.cfgspec.glbl_cfg import glbl_cfg
@@ -66,9 +68,6 @@ from cylc.task_state import (
     TASK_STATUSES_ACTIVE, TASK_STATUSES_NEVER_ACTIVE, TASK_STATUS_FAILED)
 from cylc.templatevars import load_template_vars
 from cylc.version import CYLC_VERSION
-from cylc.wallclock import (
-    get_current_time_string, get_seconds_as_interval_string,
-    get_time_string_from_unix_time as time2str)
 from cylc.profiler import Profiler
 
 
@@ -800,7 +799,7 @@ conditions; see `cylc conditions`.
 
         format: ISO 8601 compatible or YYYY/MM/DD-HH:mm (backwards comp.)
         """
-        parser = isodatetime.parsers.TimePointParser()
+        parser = TimePointParser()
         try:
             stop_point = parser.parse(arg)
         except ValueError as exc:
@@ -1076,7 +1075,7 @@ conditions; see `cylc conditions`.
         """Configure suite environment."""
         # Pass static cylc and suite variables to job script generation code
         self.task_job_mgr.job_file_writer.set_suite_env({
-            'CYLC_UTC': str(cylc.flags.utc),
+            'CYLC_UTC': str(get_utc_mode()),
             'CYLC_DEBUG': str(cylc.flags.debug).lower(),
             'CYLC_VERBOSE': str(cylc.flags.verbose).lower(),
             'CYLC_SUITE_NAME': self.suite,
@@ -1729,12 +1728,8 @@ conditions; see `cylc conditions`.
     def stop_clock_done(self):
         """Return True if wall clock stop time reached."""
         if self.stop_clock_time is not None and time() > self.stop_clock_time:
-            time_point = (
-                isodatetime.data.get_timepoint_from_seconds_since_unix_epoch(
-                    self.stop_clock_time
-                )
-            )
-            LOG.info("Wall clock stop time reached: %s" % time_point)
+            LOG.info("Wall clock stop time reached: %s" % time2str(
+                self.stop_clock_time))
             self.stop_clock_time = None
             return True
         else:

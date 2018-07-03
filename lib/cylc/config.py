@@ -30,9 +30,10 @@ import traceback
 
 from isodatetime.data import Calendar
 from isodatetime.parsers import DurationParser
+from wallclock import get_current_time_string, set_utc_mode
 from parsec.OrderedDict import OrderedDictWithDefaults
 from parsec.util import replicate
-from parsec.validate import SuiteFuncContext
+from parsec.validate import SubFuncContext
 
 from cylc.c3mro import C3
 from cylc.conditional_simplifier import ConditionalSimplifier
@@ -56,7 +57,6 @@ from cylc.taskdef import TaskDef, TaskDefError
 from cylc.task_id import TaskID
 from cylc.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.task_trigger import TaskTrigger, Dependency
-from cylc.wallclock import get_current_time_string
 from cylc.xtrigger_mgr import XtriggerManager
 
 RE_CLOCK_OFFSET = re.compile(r'(' + TaskID.NAME_RE + r')(?:\(\s*(.+)\s*\))?')
@@ -326,9 +326,9 @@ class SuiteConfig(object):
 
         # Running in UTC time? (else just use the system clock)
         if self.cfg['cylc']['UTC mode'] is None:
-            cylc.flags.utc = glbl_cfg().get(['cylc', 'UTC mode'])
+            set_utc_mode(glbl_cfg().get(['cylc', 'UTC mode']))
         else:
-            cylc.flags.utc = self.cfg['cylc']['UTC mode']
+            set_utc_mode(self.cfg['cylc']['UTC mode'])
         # Capture cycling mode
         cylc.flags.cycling_mode = self.cfg['scheduling']['cycling mode']
 
@@ -2023,7 +2023,7 @@ class SuiteConfig(object):
                 except KeyError:
                     if label == 'wall_clock':
                         # Allow predefined zero-offset wall clock xtrigger.
-                        xtrig = SuiteFuncContext(
+                        xtrig = SubFuncContext(
                             'wall_clock', 'wall_clock', [], {})
                     else:
                         raise SuiteConfigError(

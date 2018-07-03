@@ -32,11 +32,10 @@ from textwrap import dedent
 from isodatetime.data import Calendar, Duration, TimePoint
 from isodatetime.dumpers import TimePointDumper
 from isodatetime.parsers import DurationParser, TimePointParser
+from wallclock import get_current_time_string
 
 from parsec import ParsecError
 from parsec.util import itemstr
-# FIXME
-from cylc.wallclock import get_current_time_string
 
 
 class DurationFloat(float):
@@ -46,8 +45,8 @@ class DurationFloat(float):
         return str(Duration(seconds=self, standardize=True))
 
 
-class SuiteProcContext(object):
-    """Represent the context of a command to run.
+class SubProcContext(object):
+    """Represent the context of an external command to run as a subprocess.
 
     Attributes:
         .cmd (list/str):
@@ -128,8 +127,8 @@ class SuiteProcContext(object):
         return ret.rstrip()
 
 
-class SuiteFuncContext(SuiteProcContext):
-    """Represent the context of a function to run in the process pool.
+class SubFuncContext(SubProcContext):
+    """Represent the context of a Python function to run as a subprocess.
 
     Attributes:
         # See also parent class attributes.
@@ -160,7 +159,7 @@ class SuiteFuncContext(SuiteProcContext):
         except (TypeError, ValueError):
             self.intvl = self.DEFAULT_INTVL
         self.ret_val = (False, None)  # (satisfied, broadcast)
-        super(SuiteFuncContext, self).__init__(
+        super(SubFuncContext, self).__init__(
             'xtrigger-func', cmd=[], shell=False)
 
     def update_command(self, suite_source_dir):
@@ -571,8 +570,7 @@ class ParsecValidator(object):
                     val = cls._strip_and_unquote([], value)
         return val
 
-    @classmethod
-    def _coerce_xtrigger(cls, value, keys, _):
+    def _coerce_xtrigger(self, value, keys):
         """Coerce a string into an xtrigger function context object.
 
         func_name(*func_args, **func_kwargs)
@@ -581,18 +579,18 @@ class ParsecValidator(object):
         """
 
         label = keys[-1]
-        value = cls._strip_and_unquote(keys, value)
+        value = self._strip_and_unquote(keys, value)
         if not value:
             raise IllegalValueError("xtrigger", keys, value)
         fname = None
         args = []
         kwargs = {}
-        match = cls._REC_TRIG_FUNC.match(value)
+        match = self._REC_TRIG_FUNC.match(value)
         if match is None:
             raise IllegalValueError("xtrigger", keys, value)
         fname, fargs, intvl = match.groups()
         if intvl:
-            intvl = cls._coerce_interval(intvl, keys, None)
+            intvl = self._coerce_interval(intvl, keys)
 
         if fargs:
             # Extract function args and kwargs.
@@ -600,11 +598,11 @@ class ParsecValidator(object):
                 try:
                     key, val = farg.strip().split(r'=', 1)
                 except ValueError:
-                    args.append(cls._coerce_type(farg.strip()))
+                    args.append(self._coerce_type(farg.strip()))
                 else:
-                    kwargs[key.strip()] = cls._coerce_type(val.strip())
+                    kwargs[key.strip()] = self._coerce_type(val.strip())
 
-        return SuiteFuncContext(label, fname, args, kwargs, intvl)
+        return SubFuncContext(label, fname, args, kwargs, intvl)
 
     @classmethod
     def _expand_list(cls, values, keys, type_):

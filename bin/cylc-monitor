@@ -32,10 +32,11 @@ import os
 import re
 from time import sleep, time
 
+from wallclock import get_time_string_from_unix_time
+
 from parsec.OrderedDict import OrderedDict
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.network.httpclient import SuiteRuntimeServiceClient, ClientError
-from cylc.wallclock import get_time_string_from_unix_time
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.task_state import (
     TASK_STATUS_RUNAHEAD, TASK_STATUSES_ORDERED,

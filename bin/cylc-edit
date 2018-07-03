@@ -66,13 +66,14 @@ import re
 from subprocess import call
 from shutil import copy
 
+from wallclock import get_current_time_string
+
 import cylc.flags
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from parsec.include import inline, \
     split_file, backup, backups, newfiles, cleanup, modtimes
-from cylc.wallclock import get_current_time_string
 
 
 def main():

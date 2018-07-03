@@ -27,6 +27,8 @@ import traceback
 from uuid import uuid4
 import warnings
 
+from wallclock import get_current_time_string
+
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.exceptions import CylcError
 import cylc.flags
@@ -36,7 +38,6 @@ from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
 from cylc.unicode_util import utf8_enforce
 from cylc.version import CYLC_VERSION
-from cylc.wallclock import get_current_time_string
 
 
 # Note: This was renamed from ConnectionError to ClientError. ConnectionError

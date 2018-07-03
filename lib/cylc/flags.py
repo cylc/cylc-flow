@@ -27,8 +27,3 @@ verbose = False
 
 # debug mode
 debug = False
-
-# TODO - run mode should be a flag
-
-# utc mode
-utc = False

@@ -27,7 +27,9 @@ import gobject
 import shlex
 from subprocess import Popen, PIPE, STDOUT
 from uuid import uuid4
+
 from isodatetime.parsers import TimePointParser
+from wallclock import get_current_time_string
 
 from cylc.hostuserutil import is_remote_host, is_remote_user
 from cylc.gui.dbchooser import dbchooser
@@ -67,7 +69,6 @@ from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.suite_logging import SuiteLog
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.cfgspec.gcylc import GcylcConfig
-from cylc.wallclock import get_current_time_string
 from cylc.task_state import (
     TASK_STATUSES_ALL, TASK_STATUSES_RESTRICTED, TASK_STATUSES_CAN_RESET_TO,
     TASK_STATUSES_TRIGGERABLE, TASK_STATUSES_ACTIVE, TASK_STATUS_RUNNING,

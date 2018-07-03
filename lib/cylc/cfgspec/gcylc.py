@@ -19,7 +19,6 @@
 
 import os
 import sys
-import gtk
 from copy import deepcopy, copy
 
 from parsec import ParsecError
@@ -27,7 +26,6 @@ from parsec.config import ParsecConfig, ItemNotFoundError, itemstr
 from parsec.validate import ParsecValidator as VDR, DurationFloat
 from parsec.upgrade import upgrader
 from parsec.util import printcfg
-from cylc.gui.view_tree import ControlTree
 from cylc.task_state import (
     TASK_STATUSES_ALL, TASK_STATUS_RUNAHEAD, TASK_STATUS_HELD,
     TASK_STATUS_WAITING, TASK_STATUS_EXPIRED, TASK_STATUS_QUEUED,
@@ -41,7 +39,9 @@ OLD_SITE_FILE = os.path.join(
 SITE_FILE = os.path.join(
     os.environ['CYLC_DIR'], 'etc', 'gcylc-themes.rc')
 USER_FILE = os.path.join(os.environ['HOME'], '.cylc', 'gcylc.rc')
-_COLS = [heading for heading in ControlTree.headings if heading] + ['none']
+HEADINGS = (
+    None, 'task', 'state', 'host', 'job system', 'job ID', 'T-submit',
+    'T-start', 'T-finish', 'dT-mean', 'latest message',)
 
 # Nested dict of spec items.
 # Spec value is [value_type, default, allowed_2, allowed_3, ...]
@@ -56,7 +56,7 @@ SPEC = {
     'initial views': [VDR.V_STRING_LIST, ["text"]],
     'maximum update interval': [VDR.V_INTERVAL, DurationFloat(15)],
     'sort by definition order': [VDR.V_BOOLEAN, True],
-    'sort column': [VDR.V_STRING, 'none'] + _COLS,
+    'sort column': [VDR.V_STRING] + list(HEADINGS),
     'sort column ascending': [VDR.V_BOOLEAN, True],
     'sub-graphs on': [VDR.V_BOOLEAN],
     'task filter highlight color': [VDR.V_STRING, 'PowderBlue'],
@@ -263,6 +263,7 @@ class GcylcConfig(ParsecConfig):
                                  name + ' = ' + cfglist)
             if key == 'color' or key == 'fontcolor':
                 try:
+                    import gtk
                     gtk.gdk.color_parse(val)
                 except ValueError as exc:
                     print >> sys.stderr, 'ERROR', exc

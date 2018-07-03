@@ -20,7 +20,7 @@
 
 from time import time
 
-from cylc.wallclock import (
+from wallclock import (
     get_seconds_as_interval_string, get_time_string_from_unix_time)
 
 
