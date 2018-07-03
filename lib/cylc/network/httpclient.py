@@ -385,6 +385,10 @@ class SuiteRuntimeServiceClient(object):
     def _call_server_impl_requests(self, url, method, payload):
         """Call server with "requests" library."""
         import requests
+        # Filter InsecureRequestWarning from urlib3. We use verify=False
+        # deliberately (and safely) for anonymous access.
+        from requests.packages.urllib3.exceptions import InsecureRequestWarning
+        warnings.simplefilter("ignore", InsecureRequestWarning)
         # Filter security warnings from urllib3 on python <2.7.9. Obviously, we
         # want to upgrade, but some sites have to run cylc on platforms with
         # python <2.7.9. On those platforms, these warnings serve no purpose
@@ -392,11 +396,11 @@ class SuiteRuntimeServiceClient(object):
         if sys.version_info < (2, 7, 9):
             try:
                 from requests.packages.urllib3.exceptions import (
-                    SecurityWarning)
+                    InsecurePlatformWarning)
             except ImportError:
                 pass
             else:
-                warnings.simplefilter("ignore", SecurityWarning)
+                warnings.simplefilter("ignore", InsecurePlatformWarning)
             try:
                 from requests.packages.urllib3.exceptions import (
                     SNIMissingWarning)
