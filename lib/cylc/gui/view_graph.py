@@ -323,6 +323,7 @@ Dependency graph suite control interface.
                                          gtk.ICON_SIZE_SMALL_TOOLBAR)
         self.subgraphs_button.set_icon_widget(image)
         self.subgraphs_button.set_label("Subgraphs")
+        self.subgraphs_button.set_active(self.t.subgraphs_on)
         self.subgraphs_button.connect(
             'clicked', self.toggle_cycle_point_subgraphs)
         self._set_tooltip(self.subgraphs_button,
