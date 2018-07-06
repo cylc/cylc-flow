@@ -908,9 +908,9 @@ class TaskEventsManager(object):
             timeref = itask.summary['started_time']
             timeout_key = 'execution timeout'
             timeout = self._get_events_conf(itask, timeout_key)
-            delays = self.get_host_conf(
+            delays = list(self.get_host_conf(
                 itask, 'execution polling intervals', skey='job',
-                default=[900])  # Default 15 minute intervals
+                default=[900]))  # Default 15 minute intervals
             if itask.summary[self.KEY_EXECUTE_TIME_LIMIT]:
                 time_limit = itask.summary[self.KEY_EXECUTE_TIME_LIMIT]
                 try:
@@ -934,9 +934,9 @@ class TaskEventsManager(object):
             timeref = itask.summary['submitted_time']
             timeout_key = 'submission timeout'
             timeout = self._get_events_conf(itask, timeout_key)
-            delays = self.get_host_conf(
+            delays = list(self.get_host_conf(
                 itask, 'submission polling intervals', skey='job',
-                default=[900])  # Default 15 minute intervals
+                default=[900]))  # Default 15 minute intervals
         try:
             itask.timeout = timeref + float(timeout)
             timeout_str = intvl_as_str(timeout)
