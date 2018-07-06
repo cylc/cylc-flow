@@ -222,7 +222,7 @@ control|information|all|task|license|GPL|admin|preparation|hook|discovery\
     shift 1
     :;;
 help|h|\?|--help|-h)
-    help_util "$@"
+    help_util "$@" | ${PAGER:-less}
     exit 0
     :;;
 version|--version|-V)
