@@ -108,7 +108,11 @@ Dependency graph suite control interface.
             # base graph node
             task_id = task_id[len(self.t.PREFIX_BASE):]
 
-        name, point_string = TaskID.split(task_id)
+        try:
+            name, point_string = TaskID.split(task_id)
+        except ValueError:
+            # not a task -> skip
+            return False
 
         menu = gtk.Menu()
         menu_root = gtk.MenuItem(task_id)
