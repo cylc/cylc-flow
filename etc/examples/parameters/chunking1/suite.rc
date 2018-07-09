@@ -20,11 +20,11 @@ sim<r,n,c-1> => sim<r,n,c>  # inter-chunk dependence
 [runtime]
     [[root]]
         script = """
-[[ -n ${r:-} ]] && echo "run.....$r"
-[[ -n ${n:-} ]] && echo "member..$n"
-if [[ -n ${c:-} ]]; then
-    echo "chunk...$c"
-    OFFSET=P$((c*{{MODEL_CHUNK_MONTHS}}))M
+[[ -n ${CYLC_TASK_PARAM_r:-} ]] && echo "run.....$CYLC_TASK_PARAM_r"
+[[ -n ${CYLC_TASK_PARAM_n:-} ]] && echo "member..$CYLC_TASK_PARAM_n"
+if [[ -n ${CYLC_TASK_PARAM_c:-} ]]; then
+    echo "chunk...$CYLC_TASK_PARAM_c"
+    OFFSET=P$((CYLC_TASK_PARAM_c*{{MODEL_CHUNK_MONTHS}}))M
     echo "model start date: \
         $(cylc cyclepoint --offset=$OFFSET {{MODEL_START_DATE}})"
 fi
