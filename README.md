@@ -54,6 +54,7 @@ cylc.  If not, see [GNU licenses](http://www.gnu.org/licenses/).
  *  Kevin Pulo
  *  Lois Hugget
  *  Martin Dix
+ *  Ivor Blockley
  
 ## Acknowledgement For Non-Cylc Work:
 Licences for non-cylc work included in this distribution can be found in the
