@@ -103,6 +103,7 @@ batch_sys.SUBMIT_CMD_TMPL
 """
 
 import os
+import json
 import shlex
 from shutil import rmtree
 from signal import SIGKILL
@@ -110,6 +111,7 @@ import stat
 from subprocess import Popen, PIPE
 import sys
 import traceback
+
 from cylc.mkdir_p import mkdir_p
 from cylc.task_message import (
     CYLC_JOB_PID, CYLC_JOB_INIT_TIME, CYLC_JOB_EXIT_TIME, CYLC_JOB_EXIT,
@@ -119,23 +121,30 @@ from cylc.task_job_logs import (
     JOB_LOG_JOB, JOB_LOG_OUT, JOB_LOG_ERR, JOB_LOG_STATUS)
 from cylc.wallclock import get_current_time_string
 
+from parsec.OrderedDict import OrderedDict
+
 
 class JobPollContext(object):
-    """Context object for a job poll.
+    """Context object for a job poll."""
+    CONTEXT_ATTRIBUTES = (
+        'job_log_dir',  # cycle/task/submit_num
+        'batch_sys_name',  # batch system name
+        'batch_sys_job_id',  # job id in batch system
+        'batch_sys_exit_polled',  # 0 for false, 1 for true
+        'run_status',  # 0 for success, 1 for failure
+        'run_signal',  # signal recieved on run failure
+        'time_submit_exit',  # submit (exit) time
+        'time_run',  # run start time
+        'time_run_exit',  # run exit time
+        'batch_sys_call_no_lines',  # number of lines in batch sys call stdout
+    )
 
-    0 ctx.job_log_dir -- cycle/task/submit_num
-    1 ctx.batch_sys_name -- batch system name
-    2 ctx.batch_sys_job_id -- job ID in batch system
-    3 ctx.batch_sys_exit_polled -- 0 for false, 1 for true
-    4 ctx.run_status -- 0 for success, 1 for failure
-    5 ctx.run_signal -- signal received on run failure
-    6 ctx.time_submit_exit -- submit (exit) time
-    7 ctx.time_run -- run start time
-    8 ctx.time_run_exit -- run exit time
+    __slots__ = CONTEXT_ATTRIBUTES + (
+        'pid',
+        'messages'
+    )
 
-    """
-
-    def __init__(self, job_log_dir):
+    def __init__(self, job_log_dir, **attrs):
         self.job_log_dir = job_log_dir
         self.batch_sys_name = None
         self.batch_sys_job_id = None
@@ -146,26 +155,25 @@ class JobPollContext(object):
         self.time_submit_exit = None
         self.time_run = None
         self.time_run_exit = None
+        self.batch_sys_call_no_lines = None
         self.messages = []
+
+        if attrs:
+            for key, value in attrs.items():
+                if key in self.CONTEXT_ATTRIBUTES:
+                    setattr(self, key, value)
+                else:
+                    raise ValueError('Invalid kwarg "%s"' % key)
 
     def get_summary_str(self):
         """Return the poll context as a summary string delimited by "|"."""
-        items = []
-        for item in [
-                self.job_log_dir,
-                self.batch_sys_name,
-                self.batch_sys_job_id,
-                self.batch_sys_exit_polled,
-                self.run_status,
-                self.run_signal,
-                self.time_submit_exit,
-                self.time_run,
-                self.time_run_exit]:
-            if item is None:
-                items.append("")
-            else:
-                items.append(str(item))
-        return "|".join(items)
+        ret = OrderedDict()
+        for key in self.CONTEXT_ATTRIBUTES:
+            value = getattr(self, key)
+            if key == 'job_log_dir' or value is None:
+                continue
+            ret[key] = value
+        return '%s|%s' % (self.job_log_dir, json.dumps(ret))
 
 
 class BatchSysManager(object):
@@ -522,6 +530,7 @@ class BatchSysManager(object):
             exp_pids = [ctx.pid for ctx in my_ctx_list if ctx.pid is not None]
             bad_pids.extend(exp_pids)
             items.append([self._get_sys("background"), exp_pids, bad_pids])
+        debug_messages = []
         for batch_sys, exp_ids, bad_ids in items:
             if hasattr(batch_sys, "get_poll_many_cmd"):
                 # Some poll commands may not be as simple
@@ -541,6 +550,7 @@ class BatchSysManager(object):
                 return
             ret_code = proc.wait()
             out, err = proc.communicate()
+            debug_messages.append('%s - %s' % (batch_sys, len(out.split('\n'))))
             sys.stderr.write(err)
             if (ret_code and hasattr(batch_sys, "POLL_CANT_CONNECT_ERR") and
                     batch_sys.POLL_CANT_CONNECT_ERR in err):
@@ -569,14 +579,16 @@ class BatchSysManager(object):
                         except ValueError:
                             pass
 
+        debug_flag = False
         for ctx in my_ctx_list:
-            ctx.batch_sys_exit_polled = int(
-                ctx.batch_sys_job_id in bad_job_ids)
+            ctx.batch_sys_exit_polled = int(ctx.batch_sys_job_id in bad_job_ids)
             # Exited batch system, but process still running
             # This can happen to jobs in some "at" implementation
-            if (ctx.batch_sys_exit_polled and
-                    ctx.pid in exp_pids and ctx.pid not in bad_pids):
-                ctx.batch_sys_exit_polled = 0
+            if ctx.batch_sys_exit_polled and ctx.pid in exp_pids:
+                if ctx.pid not in bad_pids:
+                    ctx.batch_sys_exit_polled = 0
+                else:
+                    debug_flag = True
             # Add information to "job.status"
             if ctx.batch_sys_exit_polled:
                 try:
@@ -588,6 +600,9 @@ class BatchSysManager(object):
                     handle.close()
                 except IOError as exc:
                     sys.stderr.write(str(exc) + "\n")
+
+        if debug_flag:
+            ctx.batch_sys_call_no_lines = ', '.join(debug_messages)
 
     def _job_submit_impl(
             self, job_file_path, batch_sys_name, submit_opts):
