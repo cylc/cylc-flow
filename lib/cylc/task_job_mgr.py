@@ -521,9 +521,9 @@ class TaskJobManager(object):
             # back compat for cylc 7.7.1 and previous
             try:
                 values = line.split('|')
-                values[9]  # force IndexError, splicing does not raise this
-                items = dict(zip(JobPollContext.CONTEXT_ATTRIBUTES,
-                                 values[4:10]))
+                items = dict(  # done this way to ensure IndexError is raised
+                    (key, values[x]) for
+                    x, key in enumerate(JobPollContext.CONTEXT_ATTRIBUTES))
                 job_log_dir = items.pop('job_log_dir')
             except (ValueError, IndexError):
                 itask.summary['latest_message'] = 'poll failed'
