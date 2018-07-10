@@ -550,7 +550,8 @@ class BatchSysManager(object):
                 return
             ret_code = proc.wait()
             out, err = proc.communicate()
-            debug_messages.append('%s - %s' % (batch_sys, len(out.split('\n'))))
+            debug_messages.append('%s - %s' % (
+                batch_sys, len(out.split('\n'))))
             sys.stderr.write(err)
             if (ret_code and hasattr(batch_sys, "POLL_CANT_CONNECT_ERR") and
                     batch_sys.POLL_CANT_CONNECT_ERR in err):
@@ -581,7 +582,8 @@ class BatchSysManager(object):
 
         debug_flag = False
         for ctx in my_ctx_list:
-            ctx.batch_sys_exit_polled = int(ctx.batch_sys_job_id in bad_job_ids)
+            ctx.batch_sys_exit_polled = int(
+                ctx.batch_sys_job_id in bad_job_ids)
             # Exited batch system, but process still running
             # This can happen to jobs in some "at" implementation
             if ctx.batch_sys_exit_polled and ctx.pid in exp_pids:
