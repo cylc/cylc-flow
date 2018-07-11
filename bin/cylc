@@ -24,12 +24,14 @@ HELP_OPTS=('help' '--help' '-h' 'h' '?')
 get_version() {
     # If there is a version file present, use that
     if [[ -f "${CYLC_DIR}/VERSION" ]]; then
-        CYLC_VERSION="$(cat ${CYLC_DIR}/VERSION)"
-    # Otherwise, use git (if in a git repo) to determine version
-    elif [[ -d "${CYLC_DIR}/.git" ]]; then
-        CYLC_VERSION="$(cd ${CYLC_DIR} && git describe --abbrev=4 --always)"
+        CYLC_VERSION="$(cat "${CYLC_DIR}/VERSION")"
+    # Otherwise, use git (if in a git repo and not a bare clone)
+    # to determine version
+    elif git -C "${CYLC_DIR}" rev-parse && \
+            [[ -n "$(git -C "${CYLC_DIR}" rev-parse --show-toplevel)" ]]; then
+        CYLC_VERSION="$(cd "${CYLC_DIR}" && git describe --abbrev=4 --always)"
         # Append "-dirty" if there are uncommitted changes.
-        if [[ -n "$(cd ${CYLC_DIR} && git status \
+        if [[ -n "$(cd "${CYLC_DIR}" && git status \
                 --untracked-files=no --porcelain)" ]]; then
             CYLC_VERSION="${CYLC_VERSION}-dirty"
         fi
