@@ -495,7 +495,7 @@ conditions; see `cylc conditions`.
         for key_str, self_attr, option_ignore_attr in [
                 ("initial", "start_point", "ignore_start_point"),
                 ("final", "stop_point", "ignore_stop_point")]:
-            if key != key_str + "_point" or value is None:
+            if key != key_str + "_point" or value is None or value == 'None':
                 continue
             # the suite_params table prescribes a start/stop cycle
             # (else we take whatever the suite.rc file gives us)
