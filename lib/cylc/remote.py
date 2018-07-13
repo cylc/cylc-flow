@@ -231,7 +231,7 @@ class RemoteRunner(object):
 
         # Pass cylc version through.
         command += ['env', quote(r'CYLC_VERSION=%s' % CYLC_VERSION)]
-        if 'CYLC_UTC' in os.environ:
+        if os.getenv('CYLC_UTC') in ["True", "true"]:
             command.append(quote(r'CYLC_UTC=True'))
             command.append(quote(r'TZ=UTC'))
 
