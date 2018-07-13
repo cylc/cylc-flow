@@ -74,6 +74,7 @@ node "nip.20000102T0800Z" "nip\n20000102T0800Z" unfilled ellipse black
 node "nip.20000102T0900Z" "nip\n20000102T0900Z" unfilled ellipse black
 node "nip.20000102T1000Z" "nip\n20000102T1000Z" unfilled ellipse black
 node "nip.20000102T1100Z" "nip\n20000102T1100Z" unfilled ellipse black
+node "pub.20000102T1200Z" "pub\n20000102T1200Z" unfilled ellipse black
 node "quux.20000101T0030Z" "quux\n20000101T0030Z" unfilled ellipse black
 node "quux.20000101T0130Z" "quux\n20000101T0130Z" unfilled ellipse black
 node "quux.20000101T0230Z" "quux\n20000101T0230Z" unfilled ellipse black
