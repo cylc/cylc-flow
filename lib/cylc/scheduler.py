@@ -224,7 +224,8 @@ class Scheduler(object):
                 daemonize(self)
 
             # Setup the suite log.
-            SuiteLog.get_inst(self.suite).pimp(detach)
+            self.suite_log = SuiteLog.get_inst(self.suite)
+            self.suite_log.pimp(detach)
             self.proc_pool = SuiteProcPool()
             self.httpserver = HTTPServer(self.suite)
             self.port = self.httpserver.port
@@ -301,8 +302,6 @@ conditions; see `cylc conditions`.
         self.profiler.log_memory("scheduler.py: start configure")
 
         # Start up essential services
-        self.proc_pool = SuiteProcPool()
-        self.suite_log = SuiteLog.get_inst(self.suite)
         self.state_summary_mgr = StateSummaryMgr()
         self.command_queue = Queue()
         self.message_queue = Queue()
