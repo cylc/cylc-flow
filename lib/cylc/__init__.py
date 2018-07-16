@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Set up the cylc environment."""
 
+import logging
 import os
 import sys
 
@@ -63,3 +64,4 @@ def environ_path_add(dirs, key='PATH'):
 
 
 environ_init()
+LOG = logging.getLogger('cylc')

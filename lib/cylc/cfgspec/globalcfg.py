@@ -369,8 +369,7 @@ def upg(cfg, descr):
         ['hosts', '__MANY__', 'remote tail command template'])
     u.deprecate(
         '7.6.0',
-        ['hosts', '__MANY__', 'local tail command template'],
-        ['hosts', '__MANY__', 'tail command template'])
+        ['hosts', '__MANY__', 'local tail command template'])
     u.deprecate(
         '7.8.0',
         ['communication', 'base port'],
@@ -390,6 +389,10 @@ def upg(cfg, descr):
         '7.8.0',
         ['suite servers', 'hosts'],
         ['suite servers', 'scan hosts'])
+    # Roll over is always done.
+    u.obsolete(
+        '7.8.0',
+        ['suite logging', 'roll over at start-up'])
     u.upgrade()
 
 
@@ -489,6 +492,9 @@ class GlobalConfig(ParsecConfig):
 
         elif item == 'suite log directory':
             value = os.path.join(srdir, 'log', 'suite')
+
+        elif item == 'suite log':
+            value = os.path.join(srdir, 'log', 'suite', 'log')
 
         elif item == 'suite job log directory':
             value = os.path.join(srdir, 'log', 'job')

@@ -18,7 +18,8 @@
 """Cylc scheduler server."""
 
 from collections import deque
-from logging import DEBUG
+import logging
+from logging.handlers import BufferingHandler
 import os
 from Queue import Empty, Queue
 from shutil import copytree, rmtree
@@ -30,6 +31,7 @@ import traceback
 from isodatetime.parsers import TimePointParser
 from parsec.util import printcfg
 
+from cylc import LOG
 from cylc.broadcast_mgr import BroadcastMgr
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.config import SuiteConfig
@@ -39,16 +41,16 @@ from cylc.daemonize import daemonize
 from cylc.exceptions import CylcError
 import cylc.flags
 from cylc.hostuserutil import get_host, get_user
+from cylc.loggingutil import CylcLogFormatter, TimestampRotatingFileHandler
 from cylc.log_diagnosis import LogSpec
 from cylc.subprocpool import SuiteProcPool
 from cylc.network import PRIVILEGE_LEVELS
 from cylc.network.httpserver import HTTPServer
+from cylc.profiler import Profiler
 from cylc.state_summary_mgr import StateSummaryMgr
 from cylc.suite_db_mgr import SuiteDatabaseManager
 from cylc.suite_events import (
     SuiteEventContext, SuiteEventError, SuiteEventHandler)
-from cylc.profiler import Profiler
-from cylc.suite_logging import SuiteLog, SUITE_LOG, SUITE_ERR, ERR, LOG
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
 from cylc.suite_status import (
@@ -134,6 +136,8 @@ class Scheduler(object):
             self.suite, 'suite work directory')
         self.suite_share_dir = glbl_cfg().get_derived_host_item(
             self.suite, 'suite share directory')
+        self.suite_log_dir = glbl_cfg().get_derived_host_item(
+            self.suite, 'suite log directory')
 
         self.config = None
 
@@ -203,7 +207,6 @@ class Scheduler(object):
         self.xtrigger_mgr = XtriggerManager(
             self.suite, self.owner, self.broadcast_mgr, self.suite_run_dir,
             self.suite_share_dir, self.suite_work_dir, self.suite_dir)
-        self.suite_log = None
         self.ref_test_allowed_failures = []
         # Last 10 durations (in seconds) of the main loop
         self.main_loop_intervals = deque(maxlen=10)
@@ -223,15 +226,9 @@ class Scheduler(object):
             self.suite_db_mgr.restart_upgrade()
 
         try:
-            detach = not self.options.no_detach
-
-            if detach:
+            if not self.options.no_detach:
                 daemonize(self)
-
-            # Setup the suite log.
-            self.suite_log = SuiteLog.get_inst(self.suite)
-            self.suite_log.pimp(detach)
-            self.proc_pool = SuiteProcPool()
+            self._setup_suite_logger()
             self.httpserver = HTTPServer(self.suite)
             self.port = self.httpserver.port
             self.configure()
@@ -248,19 +245,19 @@ class Scheduler(object):
         except KeyboardInterrupt as exc:
             try:
                 self.shutdown(str(exc))
-            except Exception:
+            except Exception as exc2:
                 # In case of exceptions in the shutdown method itself.
-                ERR.warning(traceback.format_exc())
+                LOG.exception(exc2)
                 sys.exit(1)
 
         except Exception as exc:
-            ERR.critical(traceback.format_exc())
-            ERR.error("error caught: cleaning up before exit")
+            LOG.exception(exc)
+            LOG.error("error caught: cleaning up before exit")
             try:
                 self.shutdown('ERROR: ' + str(exc))
-            except Exception:
+            except Exception as exc2:
                 # In case of exceptions in the shutdown method itself
-                ERR.warning(traceback.format_exc())
+                LOG.warning(exc2)
             if cylc.flags.debug:
                 raise
             else:
@@ -303,11 +300,22 @@ conditions; see `cylc conditions`.
         for i, logo_line in enumerate(logo_lines):
             print logo_line, ('{0: ^%s}' % lmax).format(license_lines[i])
 
+    def _setup_suite_logger(self):
+        """Set up logger for suite."""
+        # Remove stream handlers in detach mode
+        if not self.options.no_detach:
+            while LOG.handlers:
+                LOG.handlers[0].close()
+                LOG.removeHandler(LOG.handlers[0])
+        LOG.addHandler(
+            TimestampRotatingFileHandler(self.suite, self.options.no_detach))
+
     def configure(self):
         """Configure suite server program."""
         self.profiler.log_memory("scheduler.py: start configure")
 
         # Start up essential services
+        self.proc_pool = SuiteProcPool()
         self.state_summary_mgr = StateSummaryMgr()
         self.command_queue = Queue()
         self.message_queue = Queue()
@@ -498,7 +506,7 @@ conditions; see `cylc conditions`.
             if getattr(self.options, option_ignore_attr):
                 # ignore it and take whatever the suite.rc file gives us
                 if my_point is not None:
-                    ERR.warning(
+                    LOG.warning(
                         "I'm ignoring the old " + key_str +
                         " cycle point as requested,\n"
                         "but I can't ignore the one set"
@@ -506,7 +514,7 @@ conditions; see `cylc conditions`.
             elif my_point is not None:
                 # Given in the suite.rc file
                 if my_point != point:
-                    ERR.warning(
+                    LOG.warning(
                         "old %s cycle point %s, overriding suite.rc %s" %
                         (key_str, point, my_point))
                     setattr(self, self_attr, point)
@@ -678,7 +686,7 @@ conditions; see `cylc conditions`.
         the GUI tree and LED views.
 
         Args:
-            client_info (dict): store 'prev_time', 'prev_err_size'.
+            client_info (dict): store 'prev_time', 'err_log_handler'.
             full_mode (bool): force full update
 
         Return:
@@ -704,7 +712,6 @@ conditions; see `cylc conditions`.
         }
         if full_mode:
             client_info['prev_time'] = None
-            client_info['prev_err_size'] = None
         prev_time = client_info.get('prev_time')
         if prev_time is None:
             full_mode = True
@@ -720,10 +727,16 @@ conditions; see `cylc conditions`.
             ret['ancestors_pruned'] = self.config.get_first_parent_ancestors(
                 pruned=True)
             ret['descendants'] = self.config.get_first_parent_descendants()
-        if full_mode or ERR.update_time and prev_time < ERR.update_time:
-            ret['err_content'], ret['err_size'] = self.suite_log.get_lines(
-                SUITE_ERR, client_info.get('prev_err_size'))
-            client_info['prev_err_size'] = ret['err_size']
+        if 'err_log_handler' not in client_info:
+            client_info['err_log_handler'] = BufferingHandler(1000)
+            client_info['err_log_handler'].setFormatter(CylcLogFormatter())
+            client_info['err_log_handler'].setLevel(logging.WARNING)
+            LOG.addHandler(client_info['err_log_handler'])
+        if full_mode or client_info['err_log_handler'].buffer:
+            ret['err_content'] = '\n'.join(
+                client_info['err_log_handler'].buffer)
+            ret['err_size'] = len(ret['err_content'])
+            client_info['err_log_handler'].flush()
         client_info['prev_time'] = client_info['time']
         if self.main_loop_intervals:
             ret['mean_main_loop_interval'] = (
@@ -867,9 +880,12 @@ conditions; see `cylc conditions`.
     @staticmethod
     def command_set_verbosity(lvl):
         """Remove suite verbosity."""
-        LOG.logger.setLevel(lvl)
-        ERR.logger.setLevel(lvl)
-        cylc.flags.debug = (lvl == DEBUG)
+        try:
+            LOG.setLevel(int(lvl))
+        except (TypeError, ValueError):
+            return
+        cylc.flags.verbose = bool(LOG.isEnabledFor(logging.INFO))
+        cylc.flags.debug = bool(LOG.isEnabledFor(logging.DEBUG))
         return True, 'OK'
 
     def command_remove_tasks(self, items, spawn=False):
@@ -1027,7 +1043,7 @@ conditions; see `cylc conditions`.
                 handle.write("# cylc-version: %s\n" % CYLC_VERSION)
                 printcfg(self.config.cfg, none_str=None, handle=handle)
         except IOError as exc:
-            ERR.error(str(exc))
+            LOG.exception(exc)
             raise SchedulerError("Unable to log the loaded suite definition")
         # Initial and final cycle times - command line takes precedence.
         # self.config already alters the 'initial cycle point' for CLI.
@@ -1041,7 +1057,7 @@ conditions; see `cylc conditions`.
             self.final_point.standardise()
 
         if not self.initial_point and not self.is_restart:
-            ERR.warning('No initial cycle point provided - no cycling tasks '
+            LOG.warning('No initial cycle point provided - no cycling tasks '
                         'will be loaded.')
 
         if self.run_mode != self.config.run_mode:
@@ -1093,7 +1109,7 @@ conditions; see `cylc conditions`.
         # principle they could be needed locally by event handlers:
         for var, val in [
                 ('CYLC_SUITE_RUN_DIR', self.suite_run_dir),
-                ('CYLC_SUITE_LOG_DIR', self.suite_log.get_dir()),
+                ('CYLC_SUITE_LOG_DIR', self.suite_log_dir),
                 ('CYLC_SUITE_WORK_DIR', self.suite_work_dir),
                 ('CYLC_SUITE_SHARE_DIR', self.suite_share_dir),
                 ('CYLC_SUITE_DEF_PATH', self.suite_dir)]:
@@ -1124,7 +1140,7 @@ conditions; see `cylc conditions`.
                     'ERROR: suite allows only ' + req + ' reference tests')
             handlers = self._get_events_conf('shutdown handler')
             if handlers:
-                ERR.warning('shutdown handlers replaced by reference test')
+                LOG.warning('shutdown handlers replaced by reference test')
             self.config.cfg['cylc']['events']['shutdown handler'] = [
                 rtc['suite shutdown event handler']]
             self.config.cfg['cylc']['log resolved dependencies'] = True
@@ -1216,7 +1232,7 @@ conditions; see `cylc conditions`.
             if self.config.cfg['cylc']['log resolved dependencies']:
                 for itask in done_tasks:
                     deps = itask.state.get_resolved_dependencies()
-                    LOG.info('triggered off %s' % deps, itask=itask)
+                    LOG.info('[%s] -triggered off %s', itask, deps)
         for meth in [
                 self.pool.spawn_all_tasks,
                 self.pool.remove_spent_tasks,
@@ -1235,10 +1251,10 @@ conditions; see `cylc conditions`.
         """Update suite DB."""
         try:
             self.suite_db_mgr.process_queued_ops()
-        except OSError as err:
+        except OSError as exc:
             if cylc.flags.debug:
-                ERR.debug(traceback.format_exc())
-            raise SchedulerError(str(err))
+                LOG.exception(exc)
+            raise SchedulerError(str(exc))
 
     def database_health_check(self):
         """If public database is stuck, blast it away by copying the content
@@ -1260,7 +1276,7 @@ conditions; see `cylc conditions`.
                     self.task_events_mgr.EVENT_LATE,
                     time2str(itask.get_late_time()))
                 itask.is_late = True
-                LOG.warning(msg, itask=itask)
+                LOG.warning('[%s] -%s', itask, msg)
                 self.task_events_mgr.setup_event_handlers(
                     itask, self.task_events_mgr.EVENT_LATE, msg)
                 self.suite_db_mgr.put_insert_task_late_flags(itask)
@@ -1350,8 +1366,8 @@ conditions; see `cylc conditions`.
                 if contact_data != self.contact_data:
                     raise AssertionError()
             except (AssertionError, IOError, ValueError,
-                    SuiteServiceFileError):
-                ERR.critical(traceback.format_exc())
+                    SuiteServiceFileError) as exc:
+                LOG.exception(exc)
                 exc = SchedulerError(
                     ("%s: suite contact file corrupted/modified and" +
                      " may be left") %
@@ -1564,13 +1580,14 @@ conditions; see `cylc conditions`.
             try:
                 handle = open(
                     os.path.join(self.config.fdir, 'reference.log'), 'wb')
-                for line in open(
-                        self.suite_log.get_log_path(SUITE_LOG)):
+                logpath = glbl_cfg().get_derived_host_item(
+                    self.suite, 'suite log')
+                for line in open(logpath):
                     if any(text in line for text in self.REF_LOG_TEXTS):
                         handle.write(line)
                 handle.close()
             except IOError as exc:
-                ERR.error(str(exc))
+                LOG.exception(exc)
 
         if self.proc_pool:
             if self.proc_pool.is_not_done():
@@ -1584,7 +1601,7 @@ conditions; see `cylc conditions`.
                 self.suite_db_mgr.put_task_event_timers(self.task_events_mgr)
                 self.suite_db_mgr.put_task_pool(self.pool)
             except Exception as exc:
-                ERR.error(str(exc))
+                LOG.exception(exc)
 
         if self.httpserver:
             self.httpserver.shutdown()
@@ -1598,8 +1615,8 @@ conditions; see `cylc conditions`.
             try:
                 os.unlink(fname)
             except OSError as exc:
-                ERR.warning("failed to remove suite contact file: %s\n%s\n" % (
-                    fname, exc))
+                LOG.warning("failed to remove suite contact file: %s", fname)
+                LOG.exception(exc)
             if self.task_job_mgr:
                 self.task_job_mgr.task_remote_mgr.remote_tidy()
 
@@ -1608,7 +1625,7 @@ conditions; see `cylc conditions`.
             self.suite_db_mgr.process_queued_ops()
             self.suite_db_mgr.on_suite_shutdown()
         except StandardError as exc:
-            ERR.error(str(exc))
+            LOG.exception(exc)
 
         # The getattr() calls and if tests below are used in case the
         # suite is not fully configured before the shutdown is called.
@@ -1617,6 +1634,8 @@ conditions; see `cylc conditions`.
             self.run_event_handlers(self.EVENT_SHUTDOWN, str(reason))
 
         LOG.info("DONE")  # main thread exit
+        for handler in LOG.handlers:
+            handler.close()
 
     def set_stop_point(self, stop_point_string):
         """Set stop point."""

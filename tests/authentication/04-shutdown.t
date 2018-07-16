@@ -183,4 +183,3 @@ TEST_NAME="${TEST_NAME_BASE}-stop"
 run_ok "${TEST_NAME}" cylc stop --debug --max-polls=20 --interval=1 "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"
 exit
- 

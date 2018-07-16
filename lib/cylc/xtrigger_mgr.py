@@ -16,13 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
-import json
-from time import time
 from copy import deepcopy
-from cylc.suite_logging import LOG, OUT
-from cylc.xtriggers.wall_clock import wall_clock
+import json
+import re
+from time import time
+
+from cylc import LOG
 import cylc.flags
+from cylc.xtriggers.wall_clock import wall_clock
+
 
 # Templates for string replacement in function arg values.
 TMPL_USER_NAME = 'user_name'
@@ -135,7 +137,7 @@ class XtriggerManager(object):
     def load_xtrigger_for_restart(self, row_idx, row):
         """Load satisfied xtrigger results from suite DB."""
         if row_idx == 0:
-            OUT.info("LOADING satisfied xtriggers")
+            LOG.info("LOADING satisfied xtriggers")
         sig, results = row
         self.sat_xtrig[sig] = json.loads(results)
 

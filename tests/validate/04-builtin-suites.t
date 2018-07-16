@@ -24,16 +24,20 @@ ABS_PATH_LENGTH=${#CYLC_DIR}
 #-------------------------------------------------------------------------------
 # Filter out certain warnings to prevent tests being failed by them.
 function filter_warnings() {
-    python -c "import re, sys
-msgs=[r'.*naked dummy tasks detected.*\n(\+\t.*\n)+',
-      r'.*clock-(trigger|expire) offsets are normally positive.*\n']
+    python - "$@" <<'__PYTHON__'
+import re, sys
+msgs = [
+    r'.* INFO - .*\n(\t.*\n)*',
+    r'.*naked dummy tasks detected.*\n(\t.*\n)+',
+    r'.*clock-(trigger|expire) offsets are normally positive.*\n']
 file_name = sys.argv[1]
 with open(file_name, 'r') as in_file:
     contents = in_file.read()
     with open(file_name + '.processed', 'w+') as out_file:
         for msg in msgs:
             contents = re.sub(msg, '', contents)
-        out_file.write(contents)" "$1"
+        out_file.write(contents)
+__PYTHON__
 }
 #-------------------------------------------------------------------------------
 set_test_number $((( ((${#SUITES[@]})) * 2 )))

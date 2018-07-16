@@ -22,15 +22,11 @@ import math
 
 from cylc.conditional_simplifier import ConditionalSimplifier
 from cylc.cycling.loader import get_point
-from cylc.suite_logging import ERR
 
 
-class TriggerExpressionError(Exception):
-    def __init__(self, msg):
-        self.msg = msg
-
-    def __str__(self):
-        return repr(self.msg)
+class TriggerExpressionError(ValueError):
+    """Trigger expression syntax issue."""
+    pass
 
 
 class Prerequisite(object):
@@ -189,9 +185,8 @@ class Prerequisite(object):
             if str(exc).find("unexpected EOF") != -1:
                 err_msg += ("\n(?could be unmatched parentheses in the graph "
                             "string?)")
-            ERR.error(err_msg)
             raise TriggerExpressionError(
-                '"%s"' % self.get_raw_conditional_expression())
+                '"%s":\n%s' % (self.get_raw_conditional_expression(), err_msg))
         return res
 
     def satisfy_me(self, all_task_outputs):

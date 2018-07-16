@@ -34,9 +34,11 @@ from cylc.remote import remrun
 if remrun():
     sys.exit(0)
 
+from logging import WARNING
 import os
 from time import sleep
 
+from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.config import SuiteConfig
 from cylc.cycling.loader import get_point
@@ -74,8 +76,8 @@ def main():
         help="Generate the job script for the task, but don't submit it.",
         action="store_true", dest="dry_run")
     (options, args) = parser.parse_args()
-    if options.debug:
-        cylc.flags.debug = True
+    if not options.verbose and not options.debug:
+        LOG.setLevel(WARNING)
     suite = args.pop(0)
     for arg in args:
         if not TaskID.is_valid_id(arg):

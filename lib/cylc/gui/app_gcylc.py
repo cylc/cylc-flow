@@ -66,7 +66,6 @@ from cylc.gui.color_rotator import ColorRotator
 from cylc.gui.suite_log_viewer import SuiteLogViewer
 from cylc.gui.gcapture import Gcapture
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
-from cylc.suite_logging import SuiteLog
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.cfgspec.gcylc import GcylcConfig
 from cylc.task_state import (
@@ -157,7 +156,6 @@ Class to hold initialisation data.
         )
         self.imagedir = get_image_dir()
         self.my_uuid = uuid4()
-        self.logdir = None
 
     def reset(self, suite, auth=None):
         self.suite = suite
@@ -175,7 +173,6 @@ Class to hold initialisation data.
             else:
                 self.host = auth
                 self.port = None
-        self.logdir = SuiteLog.get_dir_for_suite(suite)
 
 
 class InfoBar(gtk.VBox):

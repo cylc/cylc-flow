@@ -21,7 +21,8 @@
 import os
 import sys
 from time import sleep, time
-from cylc.suite_logging import SuiteLog, SUITE_LOG
+
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 
 
 SUITE_SCAN_INFO_TMPL = r"""
@@ -52,10 +53,9 @@ def daemonize(server):
     http://code.activestate.com/recipes/66012-fork-a-daemon-process-on-unix/
 
     """
-    logd = SuiteLog.get_dir_for_suite(server.suite)
-    log_fname = os.path.join(logd, SUITE_LOG)
+    logpath = glbl_cfg().get_derived_host_item(server.suite, 'suite log')
     try:
-        old_log_mtime = os.stat(log_fname).st_mtime
+        old_log_mtime = os.stat(logpath).st_mtime
     except OSError:
         old_log_mtime = None
     # fork 1
@@ -75,11 +75,11 @@ def daemonize(server):
                     #  LOG-PREFIX Suite starting: server=HOST:PORT, pid=PID
                     # Otherwise, something has gone wrong, print the suite log
                     # and exit with an error.
-                    log_stat = os.stat(log_fname)
+                    log_stat = os.stat(logpath)
                     if (log_stat.st_mtime == old_log_mtime or
                             log_stat.st_size == 0):
                         continue
-                    with open(log_fname) as log_f:
+                    with open(logpath) as log_f:
                         try:
                             first_two_lines = next(log_f), next(log_f)
                         except StopIteration:
@@ -93,7 +93,7 @@ def daemonize(server):
                             suite_port = server_str.rsplit(":", 1)[-1]
                     if not ok:
                         try:
-                            sys.stderr.write(open(log_fname).read())
+                            sys.stderr.write(open(logpath).read())
                             sys.exit(1)
                         except IOError:
                             sys.exit("Suite server program exited")
@@ -108,7 +108,6 @@ def daemonize(server):
                 "port": suite_port,
                 "ps_opts": server.suite_srv_files_mgr.PS_OPTS,
                 "pid": suite_pid,
-                "logd": logd,
             })
             # exit parent 1
             sys.exit(0)

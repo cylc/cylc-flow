@@ -23,8 +23,8 @@ import sys
 import traceback
 
 
+from cylc import LOG
 import cylc.flags
-from cylc.suite_logging import LOG
 from cylc.wallclock import get_current_time_string
 
 

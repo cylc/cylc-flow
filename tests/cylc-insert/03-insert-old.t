@@ -18,7 +18,7 @@
 # Test cylc insert command for a task that has already run.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 6
+set_test_number 5
 #-------------------------------------------------------------------------------
 install_suite "$TEST_NAME_BASE" "$TEST_NAME_BASE"
 #-------------------------------------------------------------------------------
@@ -27,13 +27,6 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run -v -v --reference-test --debug --no-detach $SUITE_NAME
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-suite-err
-RUN_DIR=$(cylc get-global-config --print-run-dir)
-# Note: Take out deprecation warnings
-sed '/WARNING: deprecated items were automatically upgraded/d; /^ \* (/d' \
-    "${RUN_DIR}/${SUITE_NAME}/log/suite/err" >"${TEST_NAME}"
-cmp_ok $TEST_NAME </dev/null
 #-------------------------------------------------------------------------------
 if ! which sqlite3 > /dev/null; then
     skip 3 "sqlite3 not installed?"

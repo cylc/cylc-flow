@@ -18,18 +18,18 @@
 """Manage queueing and pooling of subprocesses for the suite server program."""
 
 from collections import deque
-import os
-import sys
 import json
+import os
 from signal import SIGKILL
 from subprocess import Popen, PIPE
+import sys
 from tempfile import TemporaryFile
 from threading import RLock
 from time import time
 
 
+from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
-from cylc.suite_logging import LOG
 from cylc.wallclock import get_current_time_string
 
 

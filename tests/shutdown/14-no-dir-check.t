@@ -36,7 +36,7 @@ ln -s "$(basename "${SUITE_NAME}")" "${SYM_SUITE_RUND}"
 suite_run_fail "${TEST_NAME_BASE}-run" \
     cylc run --no-detach ${OPT_SET} "${SYM_SUITE_NAME}"
 grep_ok "${SYM_SUITE_RUND}: suite run directory not found" \
-    "${SUITE_RUN_DIR}/log/suite/log"
+    "${SUITE_RUN_DIR}/log/suite/log".*
 
 rm -f "${SYM_SUITE_RUND}"
 purge_suite "${SUITE_NAME}"

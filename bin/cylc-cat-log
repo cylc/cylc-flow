@@ -62,7 +62,6 @@ from cylc.rundb import CylcSuiteDAO
 from cylc.hostuserutil import is_remote
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.task_id import TaskID
-from cylc.suite_logging import SUITE_LOG_OPTS
 from cylc.task_job_logs import (
     JOB_LOG_OUT, JOB_LOG_ERR, JOB_LOG_OPTS, NN, JOB_LOGS_LOCAL)
 
@@ -183,10 +182,7 @@ def get_option_parser():
 
     parser.add_option(
         "-f", "--file",
-        help="Suite log: %s; default l(log)." % (
-             ', '.join(['%s(%s)' % (i, j)
-                       for i, j in SUITE_LOG_OPTS.items()])) +
-             "  Job log: %s; default o(out)." % (
+        help="  Job log: %s; default o(out)." % (
              ', '.join(['%s(%s)' % (i, j)
                        for i, j in JOB_LOG_OPTS.items()])) +
              "  Or <filename> for custom (and standard) job logs.",
@@ -318,14 +314,7 @@ def main():
 
     if len(args) == 1:
         # Cat suite logs, local only.
-        try:
-            basename = SUITE_LOG_OPTS[options.filename or 'l']
-        except KeyError:
-            # (no such thing as a custom suite log)
-            sys.exit("Error: bad suite log option: '%s'" % options.filename)
-        logdir = glbl_cfg().get_derived_host_item(
-            suite_name, "suite log directory")
-        logpath = os.path.join(logdir, basename)
+        logpath = glbl_cfg().get_derived_host_item(suite_name, "suite log")
         if options.rotation_num:
             logs = glob('%s.*' % logpath)
             logs.sort(key=os.path.getmtime, reverse=True)
@@ -333,8 +322,6 @@ def main():
                 logpath = logs[int(options.rotation_num)]
             except IndexError:
                 sys.exit("ERROR: max rotation %d" % (len(logs) - 1))
-        else:
-            logpath = os.path.join(logdir, basename)
         tail_tmpl = str(glbl_cfg().get_host_item("tail command template"))
         out = view_log(logpath, mode, tail_tmpl)
         if out == 1:
