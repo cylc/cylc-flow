@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test remote host job log NN link correctness.
+# Test that suite does not set remote job TZ when in local time.
 CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 
