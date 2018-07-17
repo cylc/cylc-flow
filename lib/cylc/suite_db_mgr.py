@@ -264,6 +264,12 @@ class SuiteDatabaseManager(object):
         Arguments:
             schd (cylc.scheduler.Scheduler): scheduler object.
         """
+        if schd.final_point is None:
+            # Store None as proper null value in database. No need to do this
+            # for initial cycle point, which should never be None.
+            final_point_str = None
+        else:
+            final_point_str = str(schd.final_point)
         self.db_inserts_map[self.TABLE_SUITE_PARAMS].extend([
             {"key": "uuid_str",
              "value": schd.task_job_mgr.task_remote_mgr.uuid_str},
@@ -271,7 +277,7 @@ class SuiteDatabaseManager(object):
             {"key": "cylc_version", "value": CYLC_VERSION},
             {"key": "UTC_mode", "value": cylc.flags.utc},
             {"key": "initial_point", "value": str(schd.initial_point)},
-            {"key": "final_point", "value": str(schd.final_point)},
+            {"key": "final_point", "value": final_point_str},
         ])
         if schd.config.cfg['cylc']['cycle point format']:
             self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
