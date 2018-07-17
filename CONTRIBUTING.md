@@ -3,61 +3,61 @@
 ## Report Bugs
 
 Report bugs by opening an issue at [Cylc Issues on 
-Github](https://github.com/cylc/cylc/issues). Give the Cylc version that
-suffers from the bug, and a recipe to reproduce the problem.
+Github](https://github.com/cylc/cylc/issues). Give the Cylc version affected
+by the bug (you should test the latest release if possible) and a recipe to
+reproduce the problem.
 
 ## Request Enhancements
 
 Request enhancements by opening an issue at [Cylc Issues @
-Github](https://github.com/cylc/cylc/issues). Describe the use case in detail.
+Github](https://github.com/cylc/cylc/issues). Describe your use case in detail.
 
 ## Contribute Code
 
 All contributions to Cylc are made via pull requests against the *master*
 branch of [cylc/cylc](https://github.com/cylc/cylc). New contributors
 should add their details to the [Code Contributors](#code-contributors)
-section of this file as part of their first request. The developer who
-reviews each pull request is responsible for checking that the contributor's
-name is listed in this file before merging the pull request into *master*.
+section of this file as part of their first pull request. The developers who
+review each pull request are responsible for checking that the contributor's
+name is listed in this file before merging the new branch into *master*.
 
 ## Code Contributors
 
 The following people have contributed to this code under the terms of
 the Contributor Licence Agreement and Certificate of Origin detailed
-below.
+below (_except for the parenthesised names, which represent contributions
+from outside of NIWA and Met Office that predate the explicit introduction of
+this Agreement in July 2018; they must be un-parenthesised in future pull
+requests_).
 
-_NOTE: the names _(parenthesised)_ below represent contributions from outside of
-NIWA and Met Office that predate the introduction of this Agreement (July
-2018). These developers will be contacted to seek their consent._
-
- -  Hilary Oliver
- -  Matt Shin
- -  Ben Fitzpatrick
- -  Andrew Clark
- -  Oliver Sanders
- -  Declan Valters
- -  Sadie Bartholomew
- -  (Luis Kornblueh)
- -  Kerry Day
- -  Prasanna Challuri
- -  David Matthews
- -  (Tim Whitcomb)
- -  (Scott Wales)
- -  Tomek Trzeciak
- -  (Thomas Coleman)
- -  Bruno Kinoshita
- -  (Annette Osprey)
- -  (Jonathan Thomas)
- -  Rosalyn Hatcher
- -  (Domingo Manubens Gil)
- -  Jonny Williams
- -  (Milton Woods)
- -  (Alex Reinecke)
- -  (Chan Wilson)
- -  (Kevin Pulo)
- -  Lois Hugget
- -  (Martin Dix)
- -  (Ivor Blockley)
+ - Hilary Oliver
+ - Matt Shin
+ - Ben Fitzpatrick
+ - Andrew Clark
+ - Oliver Sanders
+ - Declan Valters
+ - Sadie Bartholomew
+ - (Luis Kornblueh)
+ - Kerry Day
+ - Prasanna Challuri
+ - David Matthews
+ - (Tim Whitcomb)
+ - (Scott Wales)
+ - Tomek Trzeciak
+ - (Thomas Coleman)
+ - Bruno Kinoshita
+ - (Annette Osprey)
+ - (Jonathan Thomas)
+ - Rosalyn Hatcher
+ - (Domingo Manubens Gil)
+ - Jonny Williams
+ - (Milton Woods)
+ - (Alex Reinecke)
+ - (Chan Wilson)
+ - (Kevin Pulo)
+ - Lois Hugget
+ - (Martin Dix)
+ - (Ivor Blockley)
 
 (All contributors are identifiable with email addresses in the git version
 control logs or otherwise.)
