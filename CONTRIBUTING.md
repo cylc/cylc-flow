@@ -2,13 +2,13 @@
 
 ## Report Bugs
 
-Report bugs by opening an issue on the [Cylc repository @
-Github](https://github.com/cylc/cylc/issues). Give your Cylc version number and
-a recipe to reproduce the bug.
+Report bugs by opening an issue at [Cylc Issues on 
+Github](https://github.com/cylc/cylc/issues). Give the Cylc version that
+suffers from the bug, and a recipe to reproduce the problem.
 
 ## Request Enhancements
 
-Request enhancements by opening an issue on the [Cylc repository @
+Request enhancements by opening an issue at [Cylc Issues @
 Github](https://github.com/cylc/cylc/issues). Describe the use case in detail.
 
 ## Contribute Code
@@ -24,8 +24,11 @@ name is listed in this file before merging the pull request into *master*.
 
 The following people have contributed to this code under the terms of
 the Contributor Licence Agreement and Certificate of Origin detailed
-below. (NOTE: those in _italics_ predate the introduction of this agreement;
-they will be contacted for consent).
+below.
+
+_NOTE: the names _(parenthesised)_ below represent contributions from outside of
+NIWA and Met Office that predate the introduction of this Agreement (July
+2018). These developers will be contacted to seek their consent._
 
  -  Hilary Oliver
  -  Matt Shin
@@ -34,27 +37,27 @@ they will be contacted for consent).
  -  Oliver Sanders
  -  Declan Valters
  -  Sadie Bartholomew
- -  _Luis Kornblueh_
+ -  (Luis Kornblueh)
  -  Kerry Day
  -  Prasanna Challuri
  -  David Matthews
- -  _Tim Whitcomb_
- -  _Scott Wales_
+ -  (Tim Whitcomb)
+ -  (Scott Wales)
  -  Tomek Trzeciak
- -  _Thomas Coleman_
+ -  (Thomas Coleman)
  -  Bruno Kinoshita
- -  _Annette Osprey_
- -  _Jonathan Thomas_
+ -  (Annette Osprey)
+ -  (Jonathan Thomas)
  -  Rosalyn Hatcher
- -  _Domingo Manubens Gil_
+ -  (Domingo Manubens Gil)
  -  Jonny Williams
- -  _Milton Woods_
- -  _Alex Reinecke_
- -  _Chan Wilson_
- -  _Kevin Pulo_
+ -  (Milton Woods)
+ -  (Alex Reinecke)
+ -  (Chan Wilson)
+ -  (Kevin Pulo)
  -  Lois Hugget
- -  _Martin Dix_
- -  _Ivor Blockley_
+ -  (Martin Dix)
+ -  (Ivor Blockley)
 
 (All contributors are identifiable with email addresses in the git version
 control logs or otherwise.)
@@ -99,5 +102,5 @@ By making a contribution to this project, I certify that:
     I become aware.
 
 (The Cylc Contributor Licence Agreement and Certificate of Origin is
-inspired by the Certificate of Origin used by Enyo and the Linux
-Kernel.)
+inspired that of [Rose](https://github.com/metomi/rose), which in turn was
+inspired by the Certificate of Origin used by Enyo and the Linux Kernel.)

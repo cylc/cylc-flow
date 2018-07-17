@@ -1,6 +1,7 @@
-# Cylc Installation.
+# Cylc: Quick Installation Guide
 
-**See also [The Cylc User Guide](https://cylc.github.io/cylc/documentation.html).**
+**See [The Cylc User Guide](https://cylc.github.io/cylc/documentation.html) for
+more detailed information.**
 
 Cylc must be installed on suite and task job hosts. Third-party dependencies
 (below) are not required on job hosts.
@@ -101,11 +102,3 @@ Summary:
 
 After running `make`, copy the `doc/install` directory to a location such as
 `/var/www/html/` and update your Cylc site config file to point to it.
-
-### Cloning The Cylc Repository
-
-To participate in Cylc development fork [Cylc on
-GitHub](https://github.com/cylc/cylc) and make a local clone of your own fork
-to work in. Changes should be developed in feature branches then pushed to
-your GitHub fork before issuing a Pull Request to the team. Please post an
-Issue to discuss proposed changes before you begin any signficant work.

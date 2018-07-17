@@ -5,14 +5,14 @@
 [![DOI](https://zenodo.org/badge/1836229.svg)](https://zenodo.org/badge/latestdoi/1836229)
 
 Cylc (“silk”) orchestrates complex distributed suites of interdependent cycling
-(or non-cycling) tasks. It was originally designed for environmental
-forecasting systems at [NIWA](https://www.niwa.co.nz) (but it is not
-specialized to environmental forecasting in any way).
+(or non-cycling) tasks. It was originally designed to automate environmental
+forecasting systems at [NIWA](https://www.niwa.co.nz). Cylc is a general
+workflow engine, however; it is not specialized to forecasting in any way.
 
 [Quick Installation](INSTALL.md) |
 [Web Site](https://cylc.github.io/cylc) |
-[User Guide and other documentation](https://cylc.github.io/cylc/documentation) |
-[How to Contribute](CONTRIBUTING.md)
+[Documentation](https://cylc.github.io/cylc/documentation) |
+[Contributing](CONTRIBUTING.md)
 
 ### Copyright and Terms of Use
 
