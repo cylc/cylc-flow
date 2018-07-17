@@ -20,7 +20,6 @@
 
 wsgi_app - Return a WSGI application for a web service.
 ws_cli - Parse CLI. Start/Stop ad-hoc server.
-
 """
 
 import cherrypy
@@ -52,48 +51,52 @@ def wsgi_app(service_cls, *args, **kwargs):
         cherrypy.engine.stop()
 
 
-def ws_cli(service_cls, *args, **kwargs):
+def ws_cli(service_cls, service_docstr, *args, **kwargs):
     """Parse command line, start/stop ad-hoc server.
 
     service_cls - Class to launch web service. Must have the constants
                   service_cls.NS and service_cls.UTIL. *args and **kwargs are
                   passed to its constructor.
     """
+
     parser = COP(
-        __doc__,
+        service_docstr,
         argdoc=[
-            ("[START]", "Start an ad-hoc server."),
-            ("[STOP]", "Stop an ad-hoc server.")])
+            ("[start [PORT]]", "Start ad-hoc web service server."),
+            ("[stop]", "Stop ad-hoc web service server.")])
 
     parser.add_option(
         "--non-interactive", "--yes", "-y",
-        help="Switch off interactive prompting.",
+        help="Switch off interactive prompting i.e. answer yes to everything"
+        " (for stop only).",
         action="store_true", default=False, dest="non_interactive")
     parser.add_option(
         "--service-root", "-R",
-        help="Include web service name under root of URL.",
+        help="Include web service name under root of URL (for start only).",
         action="store_true", default=False, dest="service_root_mode")
 
-    opts, args = parser.parse_args()
+    opts, args = parser.parse_args(
+        remove_opts=['--host', '--user', '--verbose', '--debug'])
     arg = None
     if args:
         arg = args[0]
+    status = _get_server_status(service_cls)
     if arg == "start":
         port = None
         if args[1:]:
             port = args[1]
         _ws_init(service_cls, port, opts.service_root_mode, *args, **kwargs)
+    elif not status:
+        print "No %s service server running." % service_cls.TITLE
     else:
-        status = _get_server_status(service_cls)
         for key, value in sorted(status.items()):
-            print "%s=%s\n" % (key, value)
-        if (arg == "stop" and status.get("pid") and
-                (opts.non_interactive or
-                 raw_input("Stop server? y/n (default=n)") == "y")):
+            print "%s=%s" % (key, value)
+        if (arg == "stop" and status.get("pid") and (opts.non_interactive or
+            raw_input("Stop server via termination? y/n (default=n)") == "y")):
             try:
                 os.killpg(int(status["pid"]), signal.SIGTERM)
             except OSError:
-                print "Already terminated."
+                print "Termination signal failed."
 
 
 def _ws_init(service_cls, port, service_root_mode, *args, **kwargs):
@@ -136,11 +139,11 @@ def _ws_init(service_cls, port, service_root_mode, *args, **kwargs):
 def _configure(service_cls):
     """Configure cherrypy and return a dict for the specified cherrypy app."""
     # Environment variables (not normally defined in WSGI mode)
-    if not os.getenv("CYLC_HOME"):
+    if not os.getenv("CYLC_DIR"):
         path = os.path.abspath(__file__)
         while os.path.dirname(path) != path:  # not root
             if os.path.basename(path) == "lib":
-                os.environ["CYLC_HOME"] = os.path.dirname(path)
+                os.environ["CYLC_DIR"] = os.path.dirname(path)
                 break
             path = os.path.dirname(path)
     for key, value in (
@@ -168,7 +171,7 @@ def _configure(service_cls):
 
 
 def _get_server_status(service_cls):
-    """Return a dict containing 'cylc review' quick server status."""
+    """Return a dict containing quick service server status."""
     ret = {}
     log_root_glob = os.path.expanduser(LOG_ROOT_TMPL % {
         "ns": service_cls.NS,
@@ -187,15 +190,15 @@ def _get_server_status(service_cls):
 
 
 def get_util_home(*args):
-    """Return CYLC_HOME or the dirname of the dirname of sys.argv[0].
+    """Return CYLC_DIR or the dirname of sys.argv[0].
 
     If args are specified, they are added to the end of returned path.
 
     """
     try:
-        value = os.environ["CYLC_HOME"]
+        value = os.environ["CYLC_DIR"]
     except KeyError:
         value = os.path.abspath(__file__)
-        for _ in range(3):  # assume __file__ under $CYLC_HOME/lib/cylc
+        for _ in range(4):  # assume __file__ under $CYLC_DIR/lib/cylc/
             value = os.path.dirname(value)
     return os.path.join(value, *args)

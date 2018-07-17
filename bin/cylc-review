@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2018 NIWA
@@ -15,31 +15,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
 #-------------------------------------------------------------------------------
-#  NAME
-#      cylc review
+#  cylc review
+#      Web service for browsing users' suite logs via an HTTP interface.
 #
-#  SYNOPSIS
-#      cylc review start [PORT] # start ad-hoc web service server (on PORT)
-#      cylc review stop         # stop ad-hoc web service server
-#      cylc review stop -y      # stop ad-hoc web service server w/o prompting
-#      cylc review              # print status of ad-hoc web service server
-#
-#  DESCRIPTION
-#      Start/stop ad-hoc Cylc Review web service server.
-#
-#      For "cylc review start", if PORT is not specified, use port 8080.
-#
-#      Cylc Review is a web service for browsing users' suite logs via
-#      an HTTP interface.
-#
-#  OPTIONS
-#      --non-interactive, --yes, -y
-#          (For stop only.) Switch off interactive prompting (=answer yes to
-#          everything)
-#      --service-root, -R
-#          (For start only.) Include web service name under root of URL.
+#  ['lib/cylc/review.py' module has formal docstring output for '--help' option]
 #-------------------------------------------------------------------------------
 
 exec python -m cylc.review "$@"

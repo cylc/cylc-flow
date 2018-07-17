@@ -16,7 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Web service for browsing users' suite logs via an HTTP interface."""
+"""cylc [info] review [OPTIONS] ARGS
+
+Start/stop ad-hoc Cylc Review web service server for browsing users' suite
+logs via an HTTP interface.
+
+With no arguments, the status of the ad-hoc web service server is printed.
+
+For 'cylc review start', if 'PORT' is not specified, port 8080 is used."""
 
 import cherrypy
 from fnmatch import fnmatch
@@ -888,7 +895,7 @@ class CylcReviewService(object):
 
 if __name__ == "__main__":
     from cylc.ws import ws_cli
-    ws_cli(CylcReviewService)
+    ws_cli(CylcReviewService, __doc__)
 elif 'doctest' not in sys.argv[0]:
     # If called as a module but not by the doctest module.
     from cylc.ws import wsgi_app
