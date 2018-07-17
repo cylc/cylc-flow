@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & contributors
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -293,7 +293,7 @@ class Scheduler(object):
         )
         cylc_license = """
 The Cylc Suite Engine [%s]
-Copyright (C) 2008-2018 NIWA
+Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & contributors
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 This program comes with ABSOLUTELY NO WARRANTY;
 see `cylc warranty`.  It is free software, you
