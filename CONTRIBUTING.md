@@ -26,8 +26,8 @@ name is listed in this file before merging the new branch into *master*.
 The following people have contributed to this code under the terms of
 the Contributor Licence Agreement and Certificate of Origin detailed
 below (_except for the parenthesised names, which represent contributions
-from outside of NIWA and Met Office that predate the explicit introduction of
-this Agreement in July 2018; they must be un-parenthesised in future pull
+from outside of NIWA and the Met Office that predate the explicit introduction
+of this Agreement in July 2018; they must be un-parenthesised in future pull
 requests_).
 
  - Hilary Oliver
