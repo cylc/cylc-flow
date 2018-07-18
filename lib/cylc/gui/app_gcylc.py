@@ -1216,7 +1216,8 @@ been defined for this suite""").inform()
                 # set_program_name() was added in PyGTK 2.12
                 about.set_program_name("cylc")
         about.set_version(CYLC_VERSION)
-        about.set_copyright("Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & contributors")
+        about.set_copyright("Copyright (C) 2008-2018 NIWA & British Crown"
+                            " (Met Office) & contributors")
         about.set_comments(
             "The Cylc Suite Engine.\n\nclient UUID:\n%s" % self.cfg.my_uuid)
         about.set_logo(get_logo())

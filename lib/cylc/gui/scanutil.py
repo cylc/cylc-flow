@@ -378,7 +378,8 @@ def launch_about_dialog(program_name, hosts):
         comments_text = program_name + "\n" + hosts_text
 
     about.set_version(CYLC_VERSION)
-    about.set_copyright("Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & contributors")
+    about.set_copyright("Copyright (C) 2008-2018 NIWA & British Crown"
+                        "(Met Office) & contributors")
     about.set_comments(comments_text)
     about.set_icon(get_icon())
     about.run()
