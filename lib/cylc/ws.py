@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -91,8 +91,9 @@ def ws_cli(service_cls, service_docstr, *args, **kwargs):
     else:
         for key, value in sorted(status.items()):
             print "%s=%s" % (key, value)
-        if (arg == "stop" and status.get("pid") and (opts.non_interactive or
-            raw_input("Stop server via termination? y/n (default=n)") == "y")):
+        if (arg == "stop" and status.get("pid") and
+                (opts.non_interactive or raw_input(
+                 "Stop server via termination? y/n (default=n)") == "y")):
             try:
                 os.killpg(int(status["pid"]), signal.SIGTERM)
             except OSError:
