@@ -31,9 +31,7 @@ license](./license.html).
 
 {% include feature.html content="Suites are defined in a human-readable config
 file format - so you can use software development power tools for suite
-development (see <a
-href='./faq.html#how-do-i-version-control-my-suites'>here</a> for why this is a
-good thing)." %}
+development." %}
 
 {% include feature.html content="Configure scheduling with an efficient graph
 description notation, and task runtime properties in an efficient inheritance

@@ -13,9 +13,6 @@ title: documentation
 
 ## Documentation And Information Links
 
-### Frequently Asked Questions
-See [FAQ](./faq.html).
-
 ### The Cylc User Guide
 
 If you have access to cylc already, type `cylc doc` or use the GUI "Help" menu
@@ -49,10 +46,14 @@ presentation, and the 'o' key for a multi-slide summary. This is the
 
 ### Publications, Citations, and References
 
-The Cylc developers plan to write a reference paper in 2017.
+Please cite Cylc in publications if you use it to automate your workflows.
 
-In the meantime Cylc releases have a citable DOI:
-[![DOI](https://zenodo.org/badge/1836229.svg)](https://zenodo.org/badge/latestdoi/1836229) 
+* [![DOI](https://zenodo.org/badge/1836229.svg)](https://zenodo.org/badge/latestdoi/1836229) - Citable DOI for Cylc source code
+
+* [![DOI](http://joss.theoj.org/papers/10.21105/joss.00737/status.svg)](https://doi.org/10.21105/joss.00737) - A short paper in the Journal of Open Source Software.
+Cite as:
+> _Oliver et al., (2018). Cylc: A Workflow Engine for Cycling Systems. Journal of
+Open Source Software, 3(27), 737, [https://doi.org/10.21105/joss.00737](https://doi.org/10.21105/joss.00737)_
 
 #### Cylc Response to "Assessment Report on Autosubmit, Cylc and ecFlow"
 
