@@ -46,7 +46,8 @@ presentation, and the 'o' key for a multi-slide summary. This is the
 
 ### Publications, Citations, and References
 
-Please cite Cylc in publications if you use it to automate your workflows.
+Please cite Cylc in your publications if you used it to automate your
+workflows.
 
 * [![DOI](https://zenodo.org/badge/1836229.svg)](https://zenodo.org/badge/latestdoi/1836229) - Citable DOI for Cylc source code
 
