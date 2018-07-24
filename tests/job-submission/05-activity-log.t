@@ -27,15 +27,13 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
 
 T1_ACTIVITY_LOG="${SUITE_RUN_DIR}/log/job/1/t1/NN/job-activity.log"
-
 grep_ok '\[jobs-submit ret_code\] 0' "${T1_ACTIVITY_LOG}"
 grep_ok '\[jobs-kill ret_code\] 1' "${T1_ACTIVITY_LOG}"
-grep_ok '\[jobs-kill out\] [^|]*\|1/t1/01\|1' "${T1_ACTIVITY_LOG}"
-grep_ok '\[jobs-poll out\] [^|]*\|1/t1/01\|background\|[^|]*\|1\|\|\|\|[^|]*\|' \
-    "${T1_ACTIVITY_LOG}"
-grep_ok \
-    "\\[(('event-handler-00', 'failed'), 1) out\\] failed ${SUITE_NAME} t1\\.1 job failed" \
-    "${T1_ACTIVITY_LOG}"
+grep_ok '\[jobs-kill out\] [^|]*|1/t1/01|1' "${T1_ACTIVITY_LOG}"
+grep_ok '\[jobs-poll out\] [^|]*|1/t1/01|{"batch_sys_name": "background", "batch_sys_job_id": "[^\"]*", "batch_sys_exit_polled": 1, "time_submit_exit": "[^\"]*", "time_run": "[^\"]*"}' "${T1_ACTIVITY_LOG}"
+grep_ok "\\[(('event-handler-00', 'failed'), 1) out\\] failed ${SUITE_NAME} \
+t1\\.1 job failed" "${T1_ACTIVITY_LOG}"
+cat "${T1_ACTIVITY_LOG}" >&2
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
 exit
