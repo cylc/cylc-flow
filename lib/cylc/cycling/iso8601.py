@@ -294,11 +294,8 @@ class ISO8601Exclusions(ExclusionBase):
     may be used on this object to determine if a point is in the collection
     of exclusion sequences."""
 
-    __slots__ = ExclusionBase.__slots__ + ('p_iso_exclusions',)
-
     def __init__(self, excl_points, start_point, end_point=None):
         super(ISO8601Exclusions, self).__init__(start_point, end_point)
-        self.p_iso_exclusions = []
         self.build_exclusions(excl_points)
 
     def build_exclusions(self, excl_points):
@@ -309,7 +306,6 @@ class ISO8601Exclusions(ExclusionBase):
                     str(point)) if point else None
                 if exclusion_point not in self.exclusion_points:
                     self.exclusion_points.append(exclusion_point)
-                    self.p_iso_exclusions.append(str(exclusion_point))
             except (AttributeError, TypeError, ValueError):
                 # Try making an ISO8601Sequence
                 exclusion = ISO8601Sequence(point, self.exclusion_start_point,
@@ -487,29 +483,29 @@ class ISO8601Sequence(SequenceBase):
         if self.is_on_sequence(point):
             return self.get_prev_point(point)
         p_iso_point = point_parse(point.value)
-        prev_iso_point = None
+        prev_cycle_point = None
 
         for recurrence_iso_point in self.recurrence:
+
             # Is recurrence point greater than aribitrary point?
-            if (
-                    recurrence_iso_point > p_iso_point or
-                    (self.exclusions and
-                     recurrence_iso_point in self.exclusions.p_iso_exclusions)
-            ):
+            if recurrence_iso_point > p_iso_point:
                 break
-            prev_iso_point = recurrence_iso_point
-        if prev_iso_point is None:
+            recurrence_cycle_point = ISO8601Point(str(recurrence_iso_point))
+            if self.exclusions and recurrence_cycle_point in self.exclusions:
+                break
+            prev_cycle_point = recurrence_cycle_point
+
+        if prev_cycle_point is None:
             return None
-        nearest_point = ISO8601Point(str(prev_iso_point))
-        if nearest_point == point:
+        if prev_cycle_point == point:
             raise SequenceDegenerateError(
                 self.recurrence, SuiteSpecifics.DUMP_FORMAT,
-                nearest_point, point
+                prev_cycle_point, point
             )
         # Check all exclusions
-        if self.exclusions and nearest_point in self.exclusions:
-            return self.get_prev_point(nearest_point)
-        return nearest_point
+        if self.exclusions and prev_cycle_point in self.exclusions:
+            return self.get_prev_point(prev_cycle_point)
+        return prev_cycle_point
 
     def get_next_point(self, point):
         """Return the next point > p, or None if out of bounds."""

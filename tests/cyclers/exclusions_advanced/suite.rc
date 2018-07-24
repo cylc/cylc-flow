@@ -4,7 +4,7 @@
     initial cycle point = 20000101T00Z
     final cycle point = 20000102T12Z
     [[dependencies]]
-        [[[ R1 ]]]
+        [[[ R1/^ ]]]
             graph = start => foo
 
         # Don't run at the initial cycle point
@@ -42,6 +42,10 @@
         # Stacked sequences
         [[[ T0230, PT3H!     (T09,    T12  ) , T1945 ]]]
             graph = dibble
+
+        [[[ R1/$ ]]]
+            graph = pub
+
 [runtime]
     [[root]]
         script = echo success
