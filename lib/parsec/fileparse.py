@@ -265,7 +265,7 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
 
     # process with EmPy
     if do_empy:
-        if flines and re.match('^#![Ee]m[Pp]y\s*', flines[0]):
+        if flines and re.match(r'^#![Ee]m[Pp]y\s*', flines[0]):
             if cylc.flags.verbose:
                 print "Processing with EmPy"
             try:
