@@ -27,8 +27,12 @@ sed -i 's/^  File ".*/  File "FILE", line NN, in ROUTINE/g' "$TEST_NAME.stderr"
 cmp_ok "$TEST_NAME.stderr" <<'__ERROR__'
 Jinja2Error:
   File "FILE", line NN, in ROUTINE
-    raise TemplateNotFound(template)
 TemplateNotFound: suite-foo.rc
+Context lines:
+    [[dependencies]]
+        graph = foo
+[runtime]
+{% include 'suite-foo.rc' %}	<-- Jinja2Error
 __ERROR__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

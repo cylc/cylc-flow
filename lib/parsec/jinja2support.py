@@ -47,7 +47,9 @@ class PyModuleLoader(BaseLoader):
         # prefix that can be used to avoid name collisions with template files
         self._python_namespace_prefix = prefix + '.'
 
+    # pylint: disable-msg=redefined-builtin
     def load(self, environment, name, globals=None):
+        """Imports Python module and returns it as Jinja2 template."""
         if name.startswith(self._python_namespace_prefix):
             name = name[len(self._python_namespace_prefix):]
         try:
@@ -58,12 +60,15 @@ class PyModuleLoader(BaseLoader):
             mdict = __import__(name, fromlist=['*']).__dict__
         except ImportError:
             raise TemplateNotFound(name)
+
         # inject module dict into the context of an empty template
         def root_render_func(context, *args, **kwargs):
+            """Template render function."""
             if False:
                 yield None  # to make it a generator
             context.vars.update(mdict)
             context.exported_vars.update(mdict)
+
         templ = environment.from_string('')
         templ.root_render_func = root_render_func
         self._templates[name] = templ
