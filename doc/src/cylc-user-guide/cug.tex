@@ -2050,8 +2050,8 @@ A cylc {\em suite configuration directory} contains:
         \begin{myitemize}
             \item For custom job submission modules
                 (see~\ref{CustomJobSubmissionMethods})
-                and local Python modules imported by custom Jinja2 filters
-                (see~\ref{CustomJinja2Filters}).
+                and local Python modules imported by custom Jinja2 filters,
+                tests and globals (see~\ref{CustomJinja2Filters}).
         \end{myitemize}
     \item {\bf Any other sub-directories and files} - documentation,
         control files, etc. (optional)
@@ -5049,8 +5049,9 @@ Figure~\ref{fig-jinja2-cities}.
 \subsubsection{Accessing Environment Variables With Jinja2}
 
 This functionality is not provided by Jinja2 by default, but cylc
-automatically imports the user environment to the template in a
-dictionary structure called {\em environ}. A usage example:
+automatically imports the user environment to template's global namespace
+(see~\ref{CustomJinja2Filters}) in a dictionary structure called
+{\em environ}. A usage example:
 \begin{lstlisting}
 #!Jinja2
 #...
@@ -5063,32 +5064,45 @@ This example is emphasizes that {\em the environment is read on the suite
 host at the time the suite configuration is parsed} - it is not, for
 instance, read at task run time on the task host.
 
-\subsubsection{Custom Jinja2 Filters}
+\subsubsection{Custom Jinja2 Filters, Tests and Globals}
 \label{CustomJinja2Filters}
 
-Jinja2 variable values can be modified by ``filters'', using pipe
-notation. For example, the built-in \lstinline=trim= filter strips
-leading and trailing white space from a string:
+Jinja2 has three different namespaces used to separate ``globals'',
+``filters'' and ``tests''. Globals are template-wide accessible variables
+and functions. Cylc extends this namespace with ``environ'' dictionary and
+``raise'' and ``assert'' functions for raising exceptions
+(see~\ref{Jinja2RaisingExceptions}).
+
+Filters can be used to modify variable values and are applied using pipe
+notation. For example, the built-in \lstinline=trim= filter strips leading
+and trailing white space from a string:
 \lstset{language=suiterc}
 \begin{lstlisting}
 {% set MyString = "   dog   " %}
 {{ MyString | trim() }}  # "dog"
 \end{lstlisting}
-(See official Jinja2 documentation for available built-in filters.)
 
-Cylc also supports custom Jinja2 filters. A custom filter is a
-single Python function in a source file with the same name as the
-function (plus ``.py'' extension) and stored in one of the following
+Additionally, variable values can be tested using ``is'' keyword followed by
+the name of the test, e.g.\ \lstinline=VARIABLE is defined=.
+See official Jinja2 documentation for available built-in globals, filters
+and tests.
+
+Cylc also supports custom Jinja2 globals, filters and tests. A custom global,
+filter or test is a single Python function in a source file with the same name
+as the function (plus ``.py'' extension) and stored in one of the following
 locations:
 \begin{myitemize}
-    \item \lstinline=<cylc-dir>/lib/Jinja2Filters/=
-    \item \lstinline=[suite configuration directory]/Jinja2Filters/=
-    \item \lstinline=$HOME/.cylc/Jinja2Filters/=
+    \item \lstinline=<cylc-dir>/lib/Jinja2[namespace]/=
+    \item \lstinline=[suite configuration directory]/Jinja2[namespace]/=
+    \item \lstinline=$HOME/.cylc/Jinja2[namespace]/=
 \end{myitemize}
+where \lstinline=[namespace]/= is one of \lstinline=Globals/=,
+\lstinline=Filters/= or \lstinline=Tests/=.
 
-In the filter function argument list, the first argument is the variable
-value to be ``filtered'', and subsequent arguments can be whatever is
-needed. Currently there are two custom filters:
+In the argument list of filter or test function, the first argument is
+the variable value to be ``filtered'' or ``tested'', respectively, and
+subsequent arguments can be whatever else is needed. Currently there are two
+custom filters:
 
 
 \paragraph{pad}
@@ -5294,6 +5308,7 @@ For detail, see:
 \href{http://jinja.pocoo.org/docs/2.10/templates/#assignments}{Jinja2 Template Designer Documentation > Assignments}
 
 \subsubsection{Raising Exceptions}
+\label{Jinja2RaisingExceptions}
 
 Cylc provides two functions for raising exceptions using Jinja2. These
 exceptions are raised when the suite.rc file is loaded and will prevent a suite
@@ -5322,6 +5337,37 @@ following example is equivalent to the ``raise'' example above.
 \lstset{language=suiterc}
 \begin{lstlisting}
 {{ assert(VARIABLE is defined, 'VARIABLE must be defined for this suite.') }}
+\end{lstlisting}
+
+\subsubsection{Importing additional Python modules}
+
+Jinja2 allows to gather variable and macro definitions in a separate template
+that can be imported into (and thus shared among) other templates.
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+{% import "suite-utils.rc" as utils %}
+{% from "suite-utils.rc" import VARIABLE as ALIAS %}
+{{ utils.VARIABLE is equalto(ALIAS)) }}
+\end{lstlisting}
+
+Cylc extends this functionality to allow import of arbitrary Python modules.
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+{% from "itertools" import product %}
+[runtime]
+{% for group, memeber in product(['a', 'b'], [0, 1, 2]) %}
+    [[{{group}}_{{memeber}}]]
+{% endfor %}
+\end{lstlisting}
+
+For better clarity and disambiguation Python modules can be prefixed with
+``__python__'':
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+{% from "__python__.itertools" import product %}
 \end{lstlisting}
 
 \subsection{Omitting Tasks At Runtime}
