@@ -6,6 +6,40 @@ milestones](https://github.com/cylc/cylc/milestones?state=closed) for each
 release.
 
 -------------------------------------------------------------------------------
+## __cylc-7.7.2 (2018-07-26)__
+
+Minor maintenance release.
+
+(Some minor changes not relevant to normal users may be omitted.)
+
+### Fixes and minor enhancements
+
+[#2719](https://github.com/cylc/cylc/pull/2719) - improved job poll logging 
+
+[#2724](https://github.com/cylc/cylc/pull/2724) - fix a rare error associated
+with ithe use of final cycle point in multiple recurrence expressions
+
+[#2723](https://github.com/cylc/cylc/pull/2723) - fix remote commands (executed
+by remote task jobs) running in UTC mode when the suite is not running in UTC
+mode
+
+[#2726](https://github.com/cylc/cylc/pull/2726) - fix crash in suites with no
+final cycle point that are reloaded following a restart
+
+[#2716](https://github.com/cylc/cylc/pull/2716) - ensure that job polling
+interval lists are not overridden
+
+[#2714](https://github.com/cylc/cylc/pull/2714) - block irrelevant
+`InsecureRequestWarning`s from urllib3 on anonymous suite server access by
+`cylc scan` and `cylc ping`
+
+[#2715](https://github.com/cylc/cylc/pull/2715) - fix a cross-version
+incompatibility, if a cylc-7.6.x task job messages a cylc-7.7.1 suite
+
+[#2710](https://github.com/cylc/cylc/pull/2710) - fix a GUI error on
+right-clicking a "scissor node" in the graph view
+
+-------------------------------------------------------------------------------
 ## __cylc-7.7.1 (2018-06-27)__
 
 Minor maintenance release.
