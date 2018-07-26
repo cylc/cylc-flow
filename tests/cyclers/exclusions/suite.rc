@@ -28,6 +28,9 @@
         [[[ PT5H!(20000101T05Z,20000102T05Z) ]]]
             graph = quux
 
+        [[[ R1/$ ]]]
+            graph = pub
+
 [runtime]
     [[root]]
         script = echo success

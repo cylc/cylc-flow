@@ -175,6 +175,7 @@
 2017-05-22T08:05:56Z INFO - [toot.20000102T1115Z] -triggered off []
 2017-05-22T08:05:56Z INFO - [bob.20000102T1115Z] -triggered off []
 2017-05-22T08:05:56Z INFO - [nip.20000102T1100Z] -triggered off []
+2017-05-22T08:05:56Z INFO - [pub.20000102T1200Z] -triggered off []
 2017-05-22T08:05:56Z INFO - [wibble.20000102T1100Z] -triggered off []
 2017-05-22T08:05:58Z INFO - [quux.20000102T1130Z] -triggered off []
 2017-05-22T08:05:59Z INFO - [qux.20000102T1200Z] -triggered off []

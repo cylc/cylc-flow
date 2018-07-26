@@ -26,6 +26,7 @@ This module provides logic to:
 * Prepare task jobs poll/kill, and manage the callbacks.
 """
 
+import json
 from logging import DEBUG, CRITICAL, INFO, WARNING
 import os
 from shutil import rmtree
@@ -34,7 +35,7 @@ import traceback
 
 from parsec.util import pdeepcopy, poverride
 
-from cylc.batch_sys_manager import BatchSysManager
+from cylc.batch_sys_manager import BatchSysManager, JobPollContext
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.envvar import expandvars
 import cylc.flags
@@ -512,60 +513,71 @@ class TaskJobManager(object):
         ctx.out = line
         ctx.ret_code = 0
 
-        items = line.split("|")
         # See cylc.batch_sys_manager.JobPollContext
         try:
-            (
-                batch_sys_exit_polled, run_status, run_signal,
-                time_submit_exit, time_run, time_run_exit
-            ) = items[4:10]
-        except IndexError:
-            itask.summary['latest_message'] = 'poll failed'
-            cylc.flags.iflag = True
-            ctx.cmd = cmd_ctx.cmd  # print original command on failure
-            return
+            job_log_dir, context = line.split('|')[1:4]
+            items = json.loads(context)
+        except ValueError:
+            # back compat for cylc 7.7.1 and previous
+            try:
+                values = line.split('|')
+                items = dict(  # done this way to ensure IndexError is raised
+                    (key, values[x]) for
+                    x, key in enumerate(JobPollContext.CONTEXT_ATTRIBUTES))
+                job_log_dir = items.pop('job_log_dir')
+            except (ValueError, IndexError):
+                itask.summary['latest_message'] = 'poll failed'
+                cylc.flags.iflag = True
+                ctx.cmd = cmd_ctx.cmd  # print original command on failure
+                return
         finally:
             log_task_job_activity(ctx, suite, itask.point, itask.tdef.name)
+
+        jp_ctx = JobPollContext(job_log_dir, **items)
+
         flag = self.task_events_mgr.POLLED_FLAG
-        if run_status == "1" and run_signal in ["ERR", "EXIT"]:
+        if jp_ctx.run_status == 1 and jp_ctx.run_signal in ["ERR", "EXIT"]:
             # Failed normally
             self.task_events_mgr.process_message(
-                itask, INFO, TASK_OUTPUT_FAILED, time_run_exit, flag)
-        elif run_status == "1" and batch_sys_exit_polled == "1":
+                itask, INFO, TASK_OUTPUT_FAILED, jp_ctx.time_run_exit, flag)
+        elif jp_ctx.run_status == 1 and jp_ctx.batch_sys_exit_polled == 1:
             # Failed by a signal, and no longer in batch system
             self.task_events_mgr.process_message(
-                itask, INFO, TASK_OUTPUT_FAILED, time_run_exit, flag)
+                itask, INFO, TASK_OUTPUT_FAILED, jp_ctx.time_run_exit, flag)
             self.task_events_mgr.process_message(
-                itask, INFO, FAIL_MESSAGE_PREFIX + run_signal, time_run_exit,
+                itask, INFO, FAIL_MESSAGE_PREFIX + jp_ctx.run_signal,
+                jp_ctx.time_run_exit,
                 flag)
-        elif run_status == "1":
+        elif jp_ctx.run_status == 1:
             # The job has terminated, but is still managed by batch system.
             # Some batch system may restart a job in this state, so don't
             # mark as failed yet.
             self.task_events_mgr.process_message(
-                itask, INFO, TASK_OUTPUT_STARTED, time_run, flag)
-        elif run_status == "0":
+                itask, INFO, TASK_OUTPUT_STARTED, jp_ctx.time_run, flag)
+        elif jp_ctx.run_status == 0:
             # The job succeeded
             self.task_events_mgr.process_message(
-                itask, INFO, TASK_OUTPUT_SUCCEEDED, time_run_exit, flag)
-        elif time_run and batch_sys_exit_polled == "1":
+                itask, INFO, TASK_OUTPUT_SUCCEEDED, jp_ctx.time_run_exit,
+                flag)
+        elif jp_ctx.time_run and jp_ctx.batch_sys_exit_polled == 1:
             # The job has terminated without executing the error trap
             self.task_events_mgr.process_message(
                 itask, INFO, TASK_OUTPUT_FAILED, get_current_time_string(),
                 flag)
-        elif time_run:
+        elif jp_ctx.time_run:
             # The job has started, and is still managed by batch system
             self.task_events_mgr.process_message(
-                itask, INFO, TASK_OUTPUT_STARTED, time_run, flag)
-        elif batch_sys_exit_polled == "1":
+                itask, INFO, TASK_OUTPUT_STARTED, jp_ctx.time_run, flag)
+        elif jp_ctx.batch_sys_exit_polled == 1:
             # The job never ran, and no longer in batch system
             self.task_events_mgr.process_message(
                 itask, INFO, self.task_events_mgr.EVENT_SUBMIT_FAILED,
-                time_submit_exit, flag)
+                jp_ctx.time_submit_exit, flag)
         else:
             # The job never ran, and is in batch system
             self.task_events_mgr.process_message(
-                itask, INFO, TASK_STATUS_SUBMITTED, time_submit_exit, flag)
+                itask, INFO, TASK_STATUS_SUBMITTED, jp_ctx.time_submit_exit,
+                flag)
 
     def _poll_task_job_message_callback(self, suite, itask, cmd_ctx, line):
         """Helper for _poll_task_jobs_callback, on message of one task job."""

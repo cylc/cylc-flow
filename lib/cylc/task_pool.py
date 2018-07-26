@@ -200,7 +200,7 @@ class TaskPool(object):
                 "holding (beyond suite hold point) %s" % self.hold_point,
                 itask=itask)
             itask.state.set_held()
-        elif (itask.point <= self.stop_point and
+        elif (self.stop_point and itask.point <= self.stop_point and
                 self.task_has_future_trigger_overrun(itask)):
             LOG.info("holding (future trigger beyond stop point)", itask=itask)
             self.held_future_tasks.append(itask.identity)
@@ -311,7 +311,7 @@ class TaskPool(object):
                         )
                     )
             self._prev_runahead_base_point = runahead_base_point
-        if latest_allowed_point > self.stop_point:
+        if self.stop_point and latest_allowed_point > self.stop_point:
             latest_allowed_point = self.stop_point
 
         for point, itask_id_map in self.runahead_pool.copy().items():
@@ -752,7 +752,7 @@ class TaskPool(object):
                 LOG.info('reloaded task definition', itask=itask)
                 if itask.state.status in TASK_STATUSES_ACTIVE:
                     LOG.warning(
-                        "job(%0d2) active with pre-reload settings" %
+                        "job(%02d) active with pre-reload settings" %
                         itask.submit_num,
                         itask=itask)
         LOG.info("Reload completed.")
@@ -819,8 +819,9 @@ class TaskPool(object):
             return False
         can_be_stalled = False
         for itask in self.get_tasks():
-            if itask.point > self.stop_point or itask.state.status in [
-                    TASK_STATUS_SUCCEEDED, TASK_STATUS_EXPIRED]:
+            if (self.stop_point and itask.point > self.stop_point or
+                    itask.state.status in [
+                        TASK_STATUS_SUCCEEDED, TASK_STATUS_EXPIRED]):
                 # Ignore: Task beyond stop point.
                 # Ignore: Succeeded and expired tasks.
                 continue
