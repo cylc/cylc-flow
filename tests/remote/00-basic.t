@@ -44,4 +44,6 @@ sqlite3 "${SUITE_RUN_DIR}/log/db" \
     'select user_at_host from task_jobs where name=="bar"' >'bar-host.txt'
 cmp_ok 'bar-host.txt' - <<<"${CYLC_TEST_HOST}"
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
+purge_suite "${SUITE_NAME}"
+exit
