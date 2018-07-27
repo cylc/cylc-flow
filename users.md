@@ -23,10 +23,11 @@ Known users include:
   * [Centre of Excellence in Simulation of Weather and Climate in
       Europe](https://verc.enes.org/esiwace/services/sup_cylc)
   * [NCAR](https://ncar.ucar.edu)
+  * [NOAA Environmental Modeling Center](https://www.emc.ncep.noaa.gov/)
   * [CMCC](https://www.cmcc.it)
   * [Plymouth Marine Laboratory](https://www.pml.ac.uk/)
  
-Many of these centers use cylc with [Rose](https://github.com/metomi/rose), a
+Many of these centers use Cylc with [Rose](https://github.com/metomi/rose), a
 framework for managing and running meteorological suites.
 
 
