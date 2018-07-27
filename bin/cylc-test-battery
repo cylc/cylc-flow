@@ -97,17 +97,55 @@ export CYLC_TEST_SKIP=${CYLC_TEST_SKIP:-}
 export CYLC_TEST_IS_GENERIC=true
 export CYLC_TEST_TIME_INIT="$(date -u +'%Y%m%dT%H%M%SZ')"
 
-for ARG in "$@"; do
-    if [[ "$ARG" == '--help' || "$ARG" == '-h' ]]; then
-        usage
-        exit 0
-    fi
-done
-
 if [[ "$PWD" != "$CYLC_DIR" ]]; then
     echo "cd \"$CYLC_DIR\""
     cd "$CYLC_DIR"
 fi
+
+ARGS=()
+OPTS=()
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --help|-h)
+            usage
+            exit 0
+            ;;
+        --chunk)
+            # argument in the format chunk_no/no_chunks
+            IFS=$'/' read CHUNK_NO CHUNKS <<< "$2"
+            # create lists of tests in a tempdir
+            TMPDIR="$(mktemp -d)"
+            TEST_FILE="$TMPDIR/cylc_tests"
+            prove -r 'tests' --dry > "$TEST_FILE"
+            LINES_PER_FILE=$(( ( $(wc -l "$TEST_FILE" | cut -d ' ' -f 1) \
+                + $CHUNKS - 1 ) / $CHUNKS ))
+            # chunk tests
+            split -d -l "$LINES_PER_FILE" "$TEST_FILE" "$TEST_FILE"
+            # select chunk
+            FILENO="$(printf '%02d' $(( $CHUNK_NO - 1 )) )"
+            ARGS+=($(cat "${TEST_FILE}${FILENO}"))
+            shift
+            shift
+            ;;
+        --exec|--harness|--formatter|--source|--archive|--jobs|\
+        -I|-P|-M|-e|-a|-j)
+            # prove options which take separate arguments
+            OPTS+=("$1" "$2")
+            shift
+            shift
+            ;;
+        -*)
+            # prove single item options
+            OPTS+=("$1")
+            shift
+            ;;
+        *)
+            # prove arguments
+            ARGS+=("$1")
+            shift
+            ;;
+    esac
+done
 
 # Recompile *.pyc files to ensure we are running the current code.
 if [[ -w "$CYLC_DIR/lib" ]]; then
@@ -120,8 +158,8 @@ if perl -e 'use Test::Harness 3.00' 2>/dev/null; then
     if [[ -z "${NPROC}" ]]; then
         NPROC=$(python -c 'import multiprocessing as mp; print mp.cpu_count()')
     fi
-    exec prove -j "$NPROC" -s -r "${@:-tests}"
+    exec prove -j "$NPROC" -s -r ${ARGS[@]:-tests} ${OPTS[@]:-}
 else
-    echo "WARNING: cannot run tests in parallel (Test::Harness < 3.00)" >&2
-    exec prove -s -r "${@:-tests}"
+    echo 'WARNING: cannot run tests in parallel (Test::Harness < 3.00)' >&2
+    exec prove -s -r ${ARGS[@]:-tests} ${OPTS[@]:-}
 fi
