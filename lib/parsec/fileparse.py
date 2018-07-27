@@ -40,7 +40,6 @@ import traceback
 from parsec import ParsecError
 from parsec.OrderedDict import OrderedDictWithDefaults
 from parsec.include import inline, IncludeFileNotFoundError
-from parsec.empysupport import empyprocess, EmPyError
 from parsec.jinja2support import jinja2process
 from jinja2 import TemplateError, UndefinedError
 from parsec.util import itemstr
@@ -268,6 +267,10 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
         if flines and re.match(r'^#![Ee]m[Pp]y\s*', flines[0]):
             if cylc.flags.verbose:
                 print "Processing with EmPy"
+
+            # import EmPy only when truly required (might throw ImportError)
+            from parsec.empysupport import EmPyError, empyprocess
+
             try:
                 flines = empyprocess(flines, fdir, template_vars)
             except EmPyError as exc:
