@@ -9,7 +9,8 @@ title: License
 
 THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 
-Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
+Copyright (C) 2008-2018 [NIWA](http://www.niwa.co.nz) & British Crown ([Met
+Office](http://www.metoffice.gov.uk)) & Contributors.
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
