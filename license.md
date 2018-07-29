@@ -8,6 +8,7 @@ title: License
 #### Gnu Public License v3
 
 THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+
 Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 
 This program is free software: you can redistribute it and/or modify it under
@@ -21,5 +22,5 @@ PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
 this program. If not, see
-[http://www.gnu.org/licenses/](http://www.gnu.org/licenses/]).
+[GNU Licenses](http://www.gnu.org/licenses/licenses.html).
 
