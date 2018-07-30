@@ -24,10 +24,11 @@ There are several reasons why tasks might need to be cycled:
 
 Cylc was originally developed for operational environmental forecasting at
 [NIWA](http://www.niwa.co.nz) by [Dr Hilary
-Oliver](mailto:hilary.oliver@niwa.co.nz), and is now an Open
+Oliver](mailto:hilary.oliver@niwa.co.nz). It is now an Open
 Source collaboration involving NIWA, [Met Office](http://www.metoffice.gov.uk),
-and [others](./users.html). It is [available under the GPL v3
-license](./license.html).
+and
+[others](https://github.com/cylc/cylc/blob/master/CONTRIBUTING.md#code-contributors).
+It is [available under the GPL v3 license](./license.html).
 
 {% include feature.html content="Suites are defined in a human-readable config
 file format - so you can use software development power tools for suite
