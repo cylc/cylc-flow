@@ -90,8 +90,7 @@ pre {
 }
 
 .dropdown-submenu:hover > a:after {
-  //border-left-color: #ffffff;
-  border-left-color: #222222;  // make the right arrow visible on hover
+  border-left-color: #222222;  /* make the right arrow visible on hover */
 }
 
 .dropdown-submenu.pull-left {
