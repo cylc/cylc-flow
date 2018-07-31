@@ -17,7 +17,9 @@
 #-------------------------------------------------------------------------------
 # basic EmPy expansion test
 . $(dirname $0)/test_header
-python -c 'import em' 2>/dev/null || skip_all '"em" not installed'
+if ! cylc check-software | grep '^Python:em.*([^-]*)$' >/dev/null; then
+    skip_all '"EmPy" not installed'
+fi
 #-------------------------------------------------------------------------------
 set_test_number 2
 #-------------------------------------------------------------------------------

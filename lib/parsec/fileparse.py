@@ -268,8 +268,11 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
             if cylc.flags.verbose:
                 print "Processing with EmPy"
 
-            # import EmPy only when truly required (might throw ImportError)
-            from parsec.empysupport import EmPyError, empyprocess
+            try:
+                from parsec.empysupport import EmPyError, empyprocess
+            except ImportError:
+                raise ParsecError('EmPy Python package must be installed '
+                                  'to process file: ' + fpath)
 
             try:
                 flines = empyprocess(flines, fdir, template_vars)
