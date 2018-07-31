@@ -5332,7 +5332,12 @@ configurations. Similarly to Jinja2, EmPy provides variables, mathematical
 expressions, loop control structures, conditional logic, etc., that are expanded
 to generate the final suite configuration seen by cylc. See
 \href{http://www.alcyone.com/software/empy}{EmPy documentation} for more details
-on its templating features and how to use them.
+on its templating features and how to use them. Please note that EmPy is not
+bundled with Cylc and must be installed separately. It should be available to
+Python through standard \lstinline[language=Python]=import em=. Please also
+note that there is another Python package called ``em'' that provides
+a conflicting module of the same name. You can run
+\lstinline=cylc check-software= command to check your installation.
 
 The need for Empy processing must be declared with a hash-bang comment as
 the first line of the suite.rc file:
