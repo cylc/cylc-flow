@@ -146,7 +146,7 @@ def check_py_module_ver(module, min_ver):
         if module == 'pygtk':
             import gtk
             module_version = '.'.join(map(str, gtk.pygtk_version))
-        if module == 'EmPy':
+        elif module == 'EmPy':
             # we want the 'em' module, but there is more than one out there
             # we want the one that provides 'Interpreter'
             from em import Interpreter
