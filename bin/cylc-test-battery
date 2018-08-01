@@ -70,7 +70,11 @@ is not otherwise a Cylc software prerequisite):
 | fi
 
 Options:
-  -h, --help   Print this help message and exit.
+  -h, --help       Print this help message and exit.
+  --chunk CHUNK    Divide the test battery into chunks and run the specified
+                   chunk. CHUNK takes the format 'a/b' where 'b' is the number
+                   of chunks to divide the battery into and 'a' is the number
+                   of the chunk to run (1 >= a >= b).
 
 Examples:
 
@@ -85,6 +89,8 @@ Run only "tests/cyclers/16-weekly.t" in verbose mode
 Run only tests under "tests/cyclers/", and skip 00-daily.t
   export CYLC_TEST_SKIP=tests/cyclers/00-daily.t
   cylc test-battery tests/cyclers
+Run the first quarter of the test battery
+  cylc test-battery --chunk '1/4'
 eof
 }
 
