@@ -6932,14 +6932,14 @@ tracking (see these with \lstinline=cylc get-site-config=):
 # Task messaging settings affect task-to-suite communications.
 [task messaging]
     # If a message send fails, retry after this delay:
-    retry interval in seconds = 5
+    retry interval = PT5S
     # If send fails after this many tries, give up trying:
     maximum number of tries = 7
 
     # This timeout is the same as --comms-timeout for user commands. If
     # set to None (no timeout) messages to non-responsive suites
     # (e.g. suspended with Ctrl-Z) could hang indefinitely.
-    connection timeout in seconds = 30
+    connection timeout = PT30S
 
 # Setup the communication method details. This is required for
 # communications between cylc clients and servers (i.e. between
@@ -6977,7 +6977,8 @@ tracking (see these with \lstinline=cylc get-site-config=):
         # with run-length appropriate intervals under task [runtime]
         # (however this will also result in routine polling under the
         # default or ssh communications).
-        default polling interval in minutes = 1.0
+        execution polling intervals = PT1M
+        submission polling intervals = PT1M
 \end{lstlisting}
 
 \subsection{The Suite Service Directory}
