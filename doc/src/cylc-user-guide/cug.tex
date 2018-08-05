@@ -5357,8 +5357,8 @@ Cylc extends this functionality to allow import of arbitrary Python modules.
 \begin{lstlisting}
 {% from "itertools" import product %}
 [runtime]
-{% for group, memeber in product(['a', 'b'], [0, 1, 2]) %}
-    [[{{group}}_{{memeber}}]]
+{% for group, member in product(['a', 'b'], [0, 1, 2]) %}
+    [[{{group}}_{{member}}]]
 {% endfor %}
 \end{lstlisting}
 
