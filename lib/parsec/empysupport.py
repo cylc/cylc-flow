@@ -39,11 +39,11 @@ def empyprocess(flines, dir_, template_vars=None):
 
     cwd = os.getcwd()
 
+    os.chdir(dir_)
+    ftempl = StringIO('\n'.join(flines))
+    xtempl = StringIO()
+    interpreter = em.Interpreter(output=em.UncloseableFile(xtempl))
     try:
-        os.chdir(dir_)
-        ftempl = StringIO('\n'.join(flines))
-        xtempl = StringIO()
-        interpreter = em.Interpreter(output=em.UncloseableFile(xtempl))
         interpreter.file(ftempl, '<template>', template_vars)
     except Exception as exc:
         lineno = interpreter.contexts[-1].identify()[1]
