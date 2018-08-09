@@ -44,7 +44,7 @@ import urllib
 
 from cylc.version import CYLC_VERSION
 from cylc.hostuserutil import get_host
-from cylc.rundb import CylcReviewDAO
+from cylc.review_dao import CylcReviewDAO
 from cylc.task_state import (
     TASK_STATUSES_ORDERED, TASK_STATUS_GROUPS)
 from cylc.ws import get_util_home
@@ -666,14 +666,6 @@ class CylcReviewService(object):
 
         # Rose files: to recognise & group, but not process, standard formats.
         data["files"]["rose"] = {}
-
-        info_name = os.path.join(user_suite_dir, "rose-suite.info")
-        if os.path.isfile(info_name):
-            stat = os.stat(info_name)
-            data["files"]["rose"]["info"] = {
-                "path": info_name,
-                "mtime": stat.st_mtime,
-                "size": stat.st_size}
         for key in ["conf", "log", "version"]:
             f_name = os.path.join(user_suite_dir, "log/rose-suite-run." + key)
             if os.path.isfile(f_name):
@@ -684,6 +676,8 @@ class CylcReviewService(object):
                     "size": stat.st_size}
         for key in ["html", "txt", "version"]:
             for f_name in glob(os.path.join(user_suite_dir, "log/*." + key)):
+                if os.path.basename(f_name).startswith("rose-"):
+                    continue
                 name = os.path.join("log", os.path.basename(f_name))
                 stat = os.stat(f_name)
                 data["files"]["rose"]["other:" + name] = {

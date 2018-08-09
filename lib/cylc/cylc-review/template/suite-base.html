@@ -93,35 +93,6 @@ rel="stylesheet" media="screen" />
         {% endif -%}
         {% endfor -%}
         {% endif -%}
-        {% if info -%}
-        <li>
-          <a data-toggle="modal" href="#suite-info" role="button">
-              rose-suite.info
-          </a>
-
-          <div class="modal" id="suite-info">
-            <div class="modal-dialog">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <button type="button" class="close" data-dismiss="modal"
-                  aria-hidden="true">×</button>
-                  <h4 class="modal-title">Suite Info</h4>
-                </div>
-                <div class="modal-body">
-                  <dl class="dl-horizontal">
-                  {% for key, value in info|dictsort -%}
-                  {% if info[key] -%}
-                    <dt>{{key}}</dt>
-                    <dd>{{info[key]}}</dd>
-                  {% endif -%}
-                  {% endfor -%}
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-        </li>
-        {% endif -%}
       </ul>
 
 {% if path is defined %}
