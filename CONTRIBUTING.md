@@ -14,12 +14,14 @@ Github](https://github.com/cylc/cylc/issues). Describe your use case in detail.
 
 ## Contribute Code
 
-All contributions to Cylc are made via pull requests against the *master*
-branch of [cylc/cylc](https://github.com/cylc/cylc). New contributors
-should add their details to the [Code Contributors](#code-contributors)
-section of this file as part of their first pull request. The developers who
-review each pull request are responsible for checking that the contributor's
-name is listed in this file before merging the new branch into *master*.
+All contributions to Cylc are made via Pull Requests against the *master*
+branch of [cylc/cylc](https://github.com/cylc/cylc). Non-trivial
+developments must be discussed and agreed in advance in a [Cylc
+Issue](https://github.com/cylc/cylc/issues) as the team may not be able to
+consider large changes that appear out of the blue. New contributors should
+add their details to the [Code Contributors](#code-contributors) section of
+this file as part of their first Pull Request, and reviewers are responsible
+for checking this before merging the new branch into *master*. 
 
 ## Code Contributors
 
