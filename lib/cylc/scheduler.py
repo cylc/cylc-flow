@@ -293,7 +293,8 @@ class Scheduler(object):
         )
         cylc_license = """
 The Cylc Suite Engine [%s]
-Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
+Copyright (C) 2008-2018 NIWA
+& British Crown (Met Office) & Contributors.
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 This program comes with ABSOLUTELY NO WARRANTY;
 see `cylc warranty`.  It is free software, you

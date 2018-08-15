@@ -2095,10 +2095,10 @@ Suite.rc files are an extended-INI format with section nesting.
 
 Embedded template processor expressions may also be used in the file, to
 programatically generate the final suite configuration seen by
-cylc. Currently the Jinja2 template processor is supported
-(\url{http://jinja.pocoo.org/docs}); see~\ref{Jinja2} for examples. In the
-future cylc may provide a plug-in interface to allow use of other template
-engines too.
+cylc. Currently the Jinja2 (\url{http://jinja.pocoo.org/docs}) and EmPy
+\url{http://www.alcyone.com/software/empy}) template processors are supported;
+see~\ref{Jinja2} and~\ref{EmPy} for examples. In the future cylc may provide
+a plug-in interface to allow use of other template engines too.
 
 \subsubsection{Syntax}
 \label{Syntax}
@@ -2125,7 +2125,7 @@ The following defines legal suite.rc syntax:
     \item {\bf Include-files} \lstinline=%include inc/foo.rc= can be
         used as a verbatim inlining mechanism.
 \end{myitemize}
-Suites that embed Jinja2 code (see~\ref{Jinja2}) must
+Suites that embed templating code (see~\ref{Jinja2} and~\ref{EmPy}) must
 process to raw suite.rc syntax.
 
 \subsubsection{Include-Files}
@@ -3983,9 +3983,9 @@ argument that identifies the calling task name:
         inherit = ENSEMBLE
 \end{lstlisting}
 
-For large ensembles Jinja2 template processing can be used to
+For large ensembles template processing can be used to
 automatically generate the member names and associated dependencies
-(see~\ref{Jinja2}).
+(see~\ref{Jinja2} and~\ref{Empy}).
 
 \subsubsection{Runtime Inheritance - Single}
 
@@ -5370,6 +5370,59 @@ For better clarity and disambiguation Python modules can be prefixed with
 {% from "__python__.itertools" import product %}
 \end{lstlisting}
 
+\subsection{EmPy}
+\label{EmPy}
+
+In addition to Jinja2, Cylc supports EmPy template processor in suite
+configurations. Similarly to Jinja2, EmPy provides variables, mathematical
+expressions, loop control structures, conditional logic, etc., that are expanded
+to generate the final suite configuration seen by Cylc. See
+\href{http://www.alcyone.com/software/empy}{EmPy documentation} for more details
+on its templating features and how to use them. Please note that EmPy is not
+bundled with Cylc and must be installed separately. It should be available to
+Python through standard \lstinline[language=Python]=import em=. Please also
+note that there is another Python package called ``em'' that provides
+a conflicting module of the same name. You can run
+\lstinline=cylc check-software= command to check your installation.
+
+The need for Empy processing must be declared with a hash-bang comment as
+the first line of the suite.rc file:
+\begin{lstlisting}
+#!empy
+# ...
+\end{lstlisting}
+
+An example suite \lstinline=empy.cities= demostrating its use is shown below.
+It is a translation of \lstinline=jinja2.cities= example from
+Section~\ref{Jinja2} and can be directly compared against it.
+
+\lstset{language=suiterc}
+\lstinputlisting{../../../etc/examples/empy/cities/suite.rc}
+\lstset{language=transcript}
+
+For basic usage the difference between Jinja2 and EmPy amounts to a different
+markup syntax with little else to distinguish them. EmPy might be preferable,
+however, in cases where more complicated processing logic have to be
+implemented.
+
+EmPy is a system for embedding Python expressions and statements in template
+text. It makes the full power of Python language and its ecosystem easily
+accessible from within the template. This might be desirable for several
+reasons:
+
+\begin{myitemize}
+    \item no need to learn different language and its idiosyncrasies just for
+          writing template logic
+    \item availability of lambda functions, list and dictionary comprehensions
+          can make template code smaller and more readable compared to Jinja2
+    \item natural and straightforward integration with Python package ecosystem
+    \item no two-language barrier between writing template logic and processing
+          extensions makes it easier to refactor and maintain the template code
+          as its complexity grows -- inline pieces of Python code can be
+          gathered into subroutines and eventually into separate modules and
+          packages in a seamless manner
+\end{myitemize}
+
 \subsection{Omitting Tasks At Runtime}
 
 It is sometimes convenient to omit certain tasks from the suite at
@@ -6520,7 +6573,7 @@ Cylc trigger functions interact with it.
 {\em NOTE: This mechanism is now technically deprecated by the newer external
 trigger functions (\ref{External Triggers}). (However we don't recommend
 wholesale conversion to the new method yet, until its interface has
-stabilized - see~\ref{Current Trigger Function Limitations}.)
+stabilized - see~\ref{Current Trigger Function Limitations}.)}
 
 These old-style external triggers are hidden task prerequisites that must be
 satisfied by using the \lstinline=cylc ext-trigger= client command to send an
@@ -6978,14 +7031,14 @@ tracking (see these with \lstinline=cylc get-site-config=):
 # Task messaging settings affect task-to-suite communications.
 [task messaging]
     # If a message send fails, retry after this delay:
-    retry interval in seconds = 5
+    retry interval = PT5S
     # If send fails after this many tries, give up trying:
     maximum number of tries = 7
 
     # This timeout is the same as --comms-timeout for user commands. If
     # set to None (no timeout) messages to non-responsive suites
     # (e.g. suspended with Ctrl-Z) could hang indefinitely.
-    connection timeout in seconds = 30
+    connection timeout = PT30S
 
 # Setup the communication method details. This is required for
 # communications between cylc clients and servers (i.e. between
@@ -7023,7 +7076,8 @@ tracking (see these with \lstinline=cylc get-site-config=):
         # with run-length appropriate intervals under task [runtime]
         # (however this will also result in routine polling under the
         # default or ssh communications).
-        default polling interval in minutes = 1.0
+        execution polling intervals = PT1M
+        submission polling intervals = PT1M
 \end{lstlisting}
 
 \subsection{The Suite Service Directory}

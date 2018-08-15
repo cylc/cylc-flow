@@ -50,9 +50,13 @@ syn region jinja2 start='{%' end='%}'
 syn region jinja2 start='{{' end='}}'
 syn region jinja2 start='{#' end='#}'
 
-syn region cylcSection start='\[' end='\]' contains=trailingWS,lineCon,badLineCon,jinja2
-syn region cylcSection start='\[\[' end='\]\]' contains=trailingWS,lineCon,badLineCon,jinja2
-syn region cylcSection start='\[\[\[' end='\]\]\]' contains=trailingWS,lineCon,badLineCon,jinja2
+syn region empy start='@\[' end=']'
+syn region empy start='@{' end='}'
+syn region empy start='@(' end=')'
+
+syn region cylcSection start='\[' end='\]' contains=trailingWS,lineCon,badLineCon,jinja2,empy
+syn region cylcSection start='\[\[' end='\]\]' contains=trailingWS,lineCon,badLineCon,jinja2,empy
+syn region cylcSection start='\[\[\[' end='\]\]\]' contains=trailingWS,lineCon,badLineCon,jinja2,empy
 
 syn match cylcItem ' *\zs\(\w\| \|\-\)*\> *=\@='
 syn match cylcEquals '='
@@ -70,12 +74,14 @@ syn match cylcInclude '.*\(START INLINED\|END INLINED\).*'
 
 syn match cylcToDo /[Tt][Oo][Dd][Oo]/
 
-syn match cylcComment /#.*/ contains=trailingWS,cylcToDo,lineCon,badLineCon,jinja2
+syn match empyVariable /@[a-zA-Z0-9]\+/
+syn match empyComment /@#.*/ contains=trailingWS,cylcToDo,lineCon,badLineCon
+syn match cylcComment /#.*/ contains=trailingWS,cylcToDo,lineCon,badLineCon,jinja2,empy
 
-syn region cylcString start=+'+ skip=+\\'+ end=+'+ contains=trailingWS,lineCon,badLineCon,jinja2,cylcToDo
-syn region cylcString start=+"+ skip=+\\"+ end=+"+ contains=trailingWS,lineCon,badLineCon,jinja2,cylcToDo
-syn region cylcString start=+=\@<= *"""+ end=+"""+ contains=trailingWS,lineCon,badLineCon,jinja2,cylcComment,trigger,output,suicide,offset,cylcToDo
-syn region cylcString start=+=\@<= *'''+ end=+'''+ contains=trailingWS,lineCon,badLineCon,jinja2,cylcComment,trigger,output,suicide,offset,cylcToDo
+syn region cylcString start=+'+ skip=+\\'+ end=+'+ contains=trailingWS,lineCon,badLineCon,jinja2,empy,cylcToDo
+syn region cylcString start=+"+ skip=+\\"+ end=+"+ contains=trailingWS,lineCon,badLineCon,jinja2,empy,cylcToDo
+syn region cylcString start=+=\@<= *"""+ end=+"""+ contains=trailingWS,lineCon,badLineCon,jinja2,empy,empyComment,cylcComment,trigger,output,suicide,offset,cylcToDo
+syn region cylcString start=+=\@<= *'''+ end=+'''+ contains=trailingWS,lineCon,badLineCon,jinja2,empy,empyComment,cylcComment,trigger,output,suicide,offset,cylcToDo
 
 "de-emphasize strings as quoting is irrelevant in cylc
 hi def link cylcString Normal
@@ -91,6 +97,9 @@ hi def link trailingWS Underlined
 hi def link cylcToDo Todo
 hi def link cylcInclude MatchParen
 hi def link jinja2 CursorColumn
+hi def link empy CursorColumn
+hi def link empyComment CursorColumn
+hi def link empyVariable CursorColumn
 hi def link cylcEquals LineNr
 hi def link output Special
 hi def link suicide Special

@@ -1,0 +1,53 @@
+#!EmPy
+[meta]
+    title = "EmPy city suite example."
+    description = """
+Illustrates use of variables and math expressions, and programmatic
+generation of groups of related dependencies and runtime properties.
+"""
+
+@{
+HOST = "SuperComputer"
+CITIES = 'NewYork', 'Philadelphia', 'Newark', 'Houston', 'SantaFe', 'Chicago'
+CITYJOBS = 'one', 'two', 'three', 'four'
+LIMIT_MINS = 20
+CLEANUP = True
+}
+
+[scheduling]
+    initial cycle point = 2011-08-08T12
+    [[ dependencies ]]
+@[ if CLEANUP ]
+        [[[T23]]]
+            graph = "clean"
+@[ end if ]
+        [[[T00,T12]]]
+            graph = """
+                setup => get_lbc & get_ic # foo
+@[ for CITY in CITIES ]@# comment
+                get_lbc => @(CITY)_one
+                get_ic => @(CITY)_two
+                @(CITY)_one & @(CITY)_two => @(CITY)_three & @(CITY)_four
+    @[ if CLEANUP ]
+                @(CITY)_three & @(CITY)_four => cleanup
+    @[ end if ]
+@[ end for ]
+            """
+[runtime]
+    [[on_@HOST ]]
+        [[[remote]]]
+            host = @HOST
+            # (remote cylc directory is set in site/user config for this host)
+        [[[directives]]]
+            wall_clock_limit = "00:@(LIMIT_MINS + 2):00,00:@(LIMIT_MINS):00"
+
+@[ for CITY in CITIES ]
+    [[ @(CITY) ]]
+        inherit = on_@(HOST)
+    @[ for JOB in CITYJOBS ]
+    [[ @(CITY)_@(JOB) ]]
+        inherit = @CITY
+    @[ end for ]
+@[ end for ]
+
+@empy.include("./suite-visualization.rc")
