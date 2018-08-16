@@ -18,7 +18,7 @@
 # Test cylc suite registration
 
 . "$(dirname "$0")/test_header"
-set_test_number 7
+set_test_number 9
 
 init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 [meta]
@@ -30,6 +30,12 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
     [[a,b,c]]
         script = true
 __SUITE_RC__
+
+TEST_NAME="${TEST_NAME_BASE}-noreg"
+run_fail "${TEST_NAME}" cylc register "${SUITE_NAME}" "${PWD}/zilch"
+contains_ok "${TEST_NAME}.stderr" <<__ERR__
+ERROR: no suite.rc in ${PWD}/zilch
+__ERR__
 
 run_ok "${TEST_NAME_BASE}-register" cylc register "${SUITE_NAME}"
 exists_ok "${SUITE_RUN_DIR}/.service/passphrase"

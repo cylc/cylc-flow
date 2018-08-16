@@ -40,15 +40,32 @@ restart from a previous state see 'cylc restart --help'.
 
 The scheduler runs as a daemon unless you specify --no-detach.
 
-Any dependence on cycle points earlier than the start cycle point is ignored.
+Dependence on cycle points earlier than the start cycle point is ignored.
+
+If the suite is not already registered (by "cylc register" or a previous run)
+it will be registered on the fly before start up - so long as the name is not
+already registered to another suite.
+
+% cylc run REG
+Run suite REG, or register $PWD/suite.rc as REG and run it. WARNING: if REG
+already points to a suite, this command will run that suite even if you run the
+command from another suite directory.
+
+% cylc run REG --source=PATH
+Register PATH/suite.rc as REG, and run it.
+
+% cylc run
+Register $PWD/suite.rc as "basename(PWD)", and run it.
+(In a suite directory /path/to/foo/, register and run the suite as "foo").
+(Note REG must be explicit if START_POINT is given on the command line.)
 
 A "cold start" (the default) starts from the suite initial cycle point
-(specified in the suite.rc or on the command line).  Any dependence on tasks
+(specified in the suite.rc or on the command line). Any dependence on tasks
 prior to the suite initial cycle point is ignored.
 
 A "warm start" (-w/--warm) starts from a given cycle point later than the suite
-initial cycle point (specified in the suite.rc).  Any dependence on tasks prior
-to the given warm start cycle point is ignored.  The suite initial cycle point
+initial cycle point (specified in the suite.rc). Any dependence on tasks prior
+to the given warm start cycle point is ignored. The suite initial cycle point
 is preserved."""
 
 RESTART_DOC = r"""cylc [control] restart [OPTIONS] ARGS
@@ -61,7 +78,7 @@ The scheduler runs as a daemon unless you specify --no-detach.
 Tasks recorded as submitted or running are polled at start-up to determine what
 happened to them while the suite was down."""
 
-SUITE_NAME_ARG_DOC = ("REG", "Suite name")
+SUITE_NAME_ARG_DOC = ("[REG]", "Suite name")
 START_POINT_ARG_DOC = (
     "[START_POINT]",
     "Initial cycle point or 'now';\n" +
