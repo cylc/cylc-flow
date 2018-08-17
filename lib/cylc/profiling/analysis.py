@@ -30,7 +30,7 @@ try:
 except (ImportError, RuntimeError):
     CAN_PLOT = False
 
-from wallclock import get_unix_time_from_time_string
+from cylc.wallclock import get_unix_time_from_time_string
 
 from . import (PROFILE_MODE_TIME, PROFILE_MODE_CYLC, SUMMARY_LINE_REGEX,
                MEMORY_LINE_REGEX, LOOP_MEMORY_LINE_REGEX, SLEEP_FUNCTION_REGEX,

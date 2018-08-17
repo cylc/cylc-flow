@@ -27,8 +27,9 @@ from tempfile import mkdtemp
 from parsec.config import ParsecConfig
 from parsec import ParsecError
 from parsec.upgrade import upgrader, converter
-from parsec.validate import ParsecValidator as VDR, DurationFloat
 
+from cylc.cfgvalidate import (
+    cylc_config_validate, CylcConfigValidator as VDR, DurationFloat)
 from cylc.hostuserutil import is_remote_user
 from cylc.envvar import expandvars
 from cylc.mkdir_p import mkdir_p
@@ -424,7 +425,7 @@ class GlobalConfig(ParsecConfig):
     def get_inst(cls):
         """Return the singleton instance."""
         if not cls._DEFAULT:
-            cls._DEFAULT = cls(SPEC, upg)
+            cls._DEFAULT = cls(SPEC, upg, validator=cylc_config_validate)
             cls._DEFAULT.load()
         return cls._DEFAULT
 

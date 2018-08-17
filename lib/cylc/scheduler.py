@@ -28,11 +28,9 @@ from time import sleep, time
 import traceback
 
 from isodatetime.parsers import TimePointParser
-from wallclock import (
-    get_current_time_string, get_seconds_as_interval_string,
-    get_time_string_from_unix_time as time2str, get_utc_mode)
 from parsec.util import printcfg
 
+from cylc.broadcast_mgr import BroadcastMgr
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.config import SuiteConfig
 from cylc.cycling import PointParsingError
@@ -40,19 +38,16 @@ from cylc.cycling.loader import get_point, standardise_point_string
 from cylc.daemonize import daemonize
 from cylc.exceptions import CylcError
 import cylc.flags
+from cylc.hostuserutil import get_host, get_user
 from cylc.log_diagnosis import LogSpec
-from cylc.mp_pool import SuiteProcPool
+from cylc.subprocpool import SuiteProcPool
 from cylc.network import PRIVILEGE_LEVELS
 from cylc.network.httpserver import HTTPServer
 from cylc.state_summary_mgr import StateSummaryMgr
-from cylc.task_events_mgr import TaskEventsManager
-from cylc.broadcast_mgr import BroadcastMgr
 from cylc.suite_db_mgr import SuiteDatabaseManager
-from cylc.task_job_logs import JOB_LOG_JOB, get_task_job_log
-from cylc.xtrigger_mgr import XtriggerManager
 from cylc.suite_events import (
     SuiteEventContext, SuiteEventError, SuiteEventHandler)
-from cylc.hostuserutil import get_host, get_user
+from cylc.profiler import Profiler
 from cylc.suite_logging import SuiteLog, SUITE_LOG, SUITE_ERR, ERR, LOG
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
@@ -60,7 +55,9 @@ from cylc.suite_status import (
     KEY_DESCRIPTION, KEY_GROUP, KEY_META, KEY_NAME, KEY_OWNER, KEY_STATES,
     KEY_TASKS_BY_STATE, KEY_TITLE, KEY_UPDATE_TIME, KEY_VERSION)
 from cylc.taskdef import TaskDef
+from cylc.task_events_mgr import TaskEventsManager
 from cylc.task_id import TaskID
+from cylc.task_job_logs import JOB_LOG_JOB, get_task_job_log
 from cylc.task_job_mgr import TaskJobManager
 from cylc.task_pool import TaskPool
 from cylc.task_proxy import TaskProxy, TaskProxySequenceBoundsError
@@ -68,7 +65,10 @@ from cylc.task_state import (
     TASK_STATUSES_ACTIVE, TASK_STATUSES_NEVER_ACTIVE, TASK_STATUS_FAILED)
 from cylc.templatevars import load_template_vars
 from cylc.version import CYLC_VERSION
-from cylc.profiler import Profiler
+from cylc.wallclock import (
+    get_current_time_string, get_seconds_as_interval_string,
+    get_time_string_from_unix_time as time2str, get_utc_mode)
+from cylc.xtrigger_mgr import XtriggerManager
 
 
 class SchedulerError(CylcError):

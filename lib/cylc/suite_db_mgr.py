@@ -31,12 +31,12 @@ from shutil import copy, rmtree
 from subprocess import call
 from tempfile import mkstemp
 
-from wallclock import get_current_time_string, get_utc_mode
 
 from cylc.broadcast_report import get_broadcast_change_iter
 from cylc.rundb import CylcSuiteDAO
 from cylc.suite_logging import ERR, LOG
 from cylc.version import CYLC_VERSION
+from cylc.wallclock import get_current_time_string, get_utc_mode
 
 
 class SuiteDatabaseManager(object):

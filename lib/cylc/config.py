@@ -30,10 +30,8 @@ import traceback
 
 from isodatetime.data import Calendar
 from isodatetime.parsers import DurationParser
-from wallclock import get_current_time_string, set_utc_mode
 from parsec.OrderedDict import OrderedDictWithDefaults
 from parsec.util import replicate
-from parsec.validate import SubFuncContext
 
 from cylc.c3mro import C3
 from cylc.conditional_simplifier import ConditionalSimplifier
@@ -51,12 +49,14 @@ from cylc.envvar import check_varnames
 import cylc.flags
 from cylc.graphnode import GraphNodeParser, GraphNodeError
 from cylc.print_tree import print_tree
+from cylc.subprocctx import SubFuncContext
 from cylc.suite_logging import OUT, ERR
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.taskdef import TaskDef, TaskDefError
 from cylc.task_id import TaskID
 from cylc.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.task_trigger import TaskTrigger, Dependency
+from cylc.wallclock import get_current_time_string, set_utc_mode
 from cylc.xtrigger_mgr import XtriggerManager
 
 RE_CLOCK_OFFSET = re.compile(r'(' + TaskID.NAME_RE + r')(?:\(\s*(.+)\s*\))?')

@@ -21,10 +21,9 @@ from collections import namedtuple
 import os
 from pipes import quote
 
-from parsec.validate import SubProcContext
-
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.hostuserutil import get_host, get_user
+from cylc.subprocctx import SubProcContext
 from cylc.suite_logging import LOG
 
 

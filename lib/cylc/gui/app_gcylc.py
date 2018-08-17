@@ -29,13 +29,13 @@ from subprocess import Popen, PIPE, STDOUT
 from uuid import uuid4
 
 from isodatetime.parsers import TimePointParser
-from wallclock import get_current_time_string
 
 from cylc.hostuserutil import is_remote_host, is_remote_user
 from cylc.gui.dbchooser import dbchooser
 from cylc.gui.combo_logviewer import ComboLogViewer
 from cylc.gui.warning_dialog import warning_dialog, info_dialog
 from cylc.task_job_logs import JOB_LOG_OPTS
+from cylc.wallclock import get_current_time_string
 
 try:
     from cylc.gui.view_graph import ControlGraph

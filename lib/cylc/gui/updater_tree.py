@@ -22,12 +22,12 @@ import itertools
 import threading
 from time import time, sleep
 
-from wallclock import get_time_string_from_unix_time
 
 from cylc.gui.dot_maker import DotMaker
 from cylc.gui.util import get_id_summary
 from cylc.task_id import TaskID
 from cylc.task_state import TASK_STATUSES_AUTO_EXPAND
+from cylc.wallclock import get_time_string_from_unix_time
 
 
 class TreeUpdater(threading.Thread):

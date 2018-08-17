@@ -112,7 +112,9 @@ from subprocess import Popen, PIPE
 import sys
 import traceback
 
-from wallclock import get_current_time_string
+
+from parsec.OrderedDict import OrderedDict
+
 
 from cylc.mkdir_p import mkdir_p
 from cylc.task_message import (
@@ -121,8 +123,7 @@ from cylc.task_message import (
 from cylc.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.task_job_logs import (
     JOB_LOG_JOB, JOB_LOG_OUT, JOB_LOG_ERR, JOB_LOG_STATUS)
-
-from parsec.OrderedDict import OrderedDict
+from cylc.wallclock import get_current_time_string
 
 
 class JobPollContext(object):

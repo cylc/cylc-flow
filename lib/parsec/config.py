@@ -20,7 +20,7 @@ import re
 from parsec import ParsecError
 from parsec.fileparse import parse
 from parsec.util import printcfg
-from parsec.validate import ParsecValidator
+from parsec.validate import parsec_validate
 from parsec.OrderedDict import OrderedDictWithDefaults
 from parsec.util import itemstr, m_override, replicate, un_many
 
@@ -36,16 +36,19 @@ class NotSingleItemError(ParsecError):
 
 
 class ParsecConfig(object):
-    "Object wrapper for parsec functions"
+    """Object wrapper for parsec functions."""
 
-    def __init__(self, spec, upgrader=None, output_fname=None, tvars=None):
-
+    def __init__(self, spec, upgrader=None, output_fname=None, tvars=None,
+                 validator=None):
         self.sparse = OrderedDictWithDefaults()
         self.dense = OrderedDictWithDefaults()
         self.upgrader = upgrader
         self.tvars = tvars
         self.output_fname = output_fname
         self.spec = spec
+        if validator is None:
+            validator = parsec_validate
+        self.validator = validator
 
     @staticmethod
     def checkspec(spec_root, parents=None):
@@ -81,11 +84,11 @@ class ParsecConfig(object):
             replicate(self.sparse, sparse)
 
     def validate(self, sparse):
-        "Validate sparse config against the file spec."
-        ParsecValidator().validate(sparse, self.spec)
+        """Validate sparse config against the file spec."""
+        return self.validator(sparse, self.spec)
 
     def expand(self):
-        "Flesh out undefined items with defaults, if any, from the spec."
+        """Flesh out undefined items with defaults, if any, from the spec."""
         if not self.dense:
             dense = OrderedDictWithDefaults()
             # Populate dict with default values from the spec
@@ -168,7 +171,7 @@ class ParsecConfig(object):
                         item = none_str or "None"
                     items.append(str(item))
             # TODO - quote items if they contain spaces or comment delimiters?
-            print prefix + ' '.join(items)
+            print(prefix + ' '.join(items))
         elif mkeys:
             for keys in mkeys:
                 self.dump(keys, sparse, pnative, prefix, none_str)
@@ -179,6 +182,6 @@ class ParsecConfig(object):
             keys = []
         cfg = self.get(keys, sparse)
         if pnative:
-            print cfg
+            print(cfg)
         else:
             printcfg(cfg, prefix=prefix, level=len(keys), none_str=none_str)

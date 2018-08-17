@@ -18,7 +18,6 @@
 
 """Task state related logic."""
 
-from wallclock import get_current_time_string
 
 import cylc.flags as flags
 from cylc.prerequisite import Prerequisite
@@ -28,6 +27,7 @@ from cylc.task_outputs import (
     TaskOutputs,
     TASK_OUTPUT_EXPIRED, TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_SUBMIT_FAILED,
     TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED)
+from cylc.wallclock import get_current_time_string
 
 
 # Task status names and meanings.

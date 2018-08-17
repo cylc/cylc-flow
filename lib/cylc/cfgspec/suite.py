@@ -21,8 +21,9 @@ from isodatetime.data import Calendar
 
 from parsec.upgrade import upgrader
 from parsec.config import ParsecConfig
-from parsec.validate import ParsecValidator as VDR, DurationFloat
 
+from cylc.cfgvalidate import (
+    cylc_config_validate, CylcConfigValidator as VDR, DurationFloat)
 from cylc.network import PRIVILEGE_LEVELS, PRIV_SHUTDOWN
 
 
@@ -385,5 +386,6 @@ class RawSuiteConfig(ParsecConfig):
 
     def __init__(self, fpath, output_fname, tvars):
         """Return the default instance."""
-        ParsecConfig.__init__(self, SPEC, upg, output_fname, tvars)
+        ParsecConfig.__init__(
+            self, SPEC, upg, output_fname, tvars, cylc_config_validate)
         self.loadcfg(fpath, "suite definition")

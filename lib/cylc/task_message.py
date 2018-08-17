@@ -27,12 +27,12 @@ from logging import getLevelName, WARNING, ERROR, CRITICAL
 import os
 import sys
 
-from wallclock import get_current_time_string
 
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
 from cylc.network.httpclient import SuiteRuntimeServiceClient, ClientInfoError
 from cylc.task_outputs import TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED
+from cylc.wallclock import get_current_time_string
 
 
 CYLC_JOB_PID = "CYLC_JOB_PID"

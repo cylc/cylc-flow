@@ -23,9 +23,10 @@ from copy import deepcopy, copy
 
 from parsec import ParsecError
 from parsec.config import ParsecConfig, ItemNotFoundError, itemstr
-from parsec.validate import ParsecValidator as VDR, DurationFloat
 from parsec.upgrade import upgrader
 from parsec.util import printcfg
+from cylc.cfgvalidate import (
+    cylc_config_validate, CylcConfigValidator as VDR, DurationFloat)
 from cylc.task_state import (
     TASK_STATUSES_ALL, TASK_STATUS_RUNAHEAD, TASK_STATUS_HELD,
     TASK_STATUS_WAITING, TASK_STATUS_EXPIRED, TASK_STATUS_QUEUED,
@@ -130,7 +131,7 @@ class GcylcConfig(ParsecConfig):
         return cls._INST
 
     def __init__(self, spec, upg):
-        ParsecConfig.__init__(self, spec, upg)
+        ParsecConfig.__init__(self, spec, upg, validator=cylc_config_validate)
         self.default_theme = None
         self.use_theme = None
 
@@ -154,9 +155,8 @@ class GcylcConfig(ParsecConfig):
 
         # and check it is valid
         if self.use_theme not in cfg['themes']:
-            print >> sys.stderr, (
-                "WARNING: theme " + self.use_theme + " not found, using '" +
-                self.default_theme + "'")
+            sys.stderr.write("WARNING: theme %s not found, using '%s'\n" % (
+                self.use_theme, self.default_theme))
             cfg['use theme'] = 'default'
             self.use_theme = self.default_theme
 
@@ -172,9 +172,9 @@ class GcylcConfig(ParsecConfig):
                 if cfg['themes'][name]['inherit']:
                     parent = cfg['themes'][name]['inherit']
                     if parent not in cfg['themes']:
-                        print >> sys.stderr, (
-                            "WARNING: undefined parent '" + parent +
-                            "' (theme '" + label + "')")
+                        sys.stderr.write(
+                            "WARNING: undefined parent '%s' (theme '%s')\n" %
+                            (parent, label))
                         parent = "default"
                 else:
                     break
@@ -207,9 +207,10 @@ class GcylcConfig(ParsecConfig):
                     continue
                 state = item
                 if state not in TASK_STATUSES_ALL:
-                    print >> sys.stderr, (
-                        "WARNING, ignoring illegal task state '" + state +
-                        "' in theme", theme)
+                    sys.stderr.write(
+                        ("WARNING, "
+                         "ignoring illegal task state '%s' in theme %s\n") %
+                        (state, theme))
                 # reverse inherit (override)
                 tcfg = deepcopy(defs)
                 self.inherit(tcfg, self.parse_state(theme, item, val))
@@ -225,12 +226,14 @@ class GcylcConfig(ParsecConfig):
         if 'window size' in cfg:
             fail = False
             if len(cfg['window size']) != 2:
-                print >> sys.stderr, ("WARNING: window size requires two "
-                                      "values (x, y). Using default.")
+                sys.stderr.write(
+                    "WARNING: window size requires two values (x, y). "
+                    "Using default.\n")
                 fail = True
             elif cfg['window size'][0] < 0 or cfg['window size'][1] < 0:
-                print >> sys.stderr, ("WARNING: window size values must be "
-                                      "positive. Using default.")
+                sys.stderr.write(
+                    "WARNING: window size values must be positive. "
+                    "Using default.\n")
                 fail = True
             # TODO: check for daft window sizes? (10, 5), (80000, 5000) ?
             if fail:
@@ -242,14 +245,14 @@ class GcylcConfig(ParsecConfig):
         views = copy(cfg['initial views'])
         for view in views:
             if view not in ['dot', 'text', 'graph']:
-                print >> sys.stderr, (
-                    "WARNING: ignoring illegal view name '" + view + "'")
+                sys.stderr.write(
+                    "WARNING: ignoring illegal view name '%s'\n" % (view))
                 cfg['initial views'].remove(view)
         views = cfg['initial views']
         if len(views) == 0:
             # at least one view required
-            print >> sys.stderr, (
-                "WARNING: no initial views defined, defaulting to 'text'")
+            sys.stderr.write(
+                "WARNING: no initial views defined, defaulting to 'text'\n")
             cfg['initial views'] = ['text']
 
     @staticmethod
@@ -259,16 +262,17 @@ class GcylcConfig(ParsecConfig):
         for item in cfglist:
             key, val = item.split('=')
             if key not in allowed_keys:
-                raise SystemExit('ERROR, gcylc.rc, illegal: ' + theme + ': ' +
-                                 name + ' = ' + cfglist)
+                sys.exit(
+                    'ERROR, gcylc.rc, illegal: %s: %s = %s' %
+                    (theme, name, cfglist))
             if key == 'color' or key == 'fontcolor':
                 try:
                     import gtk
                     gtk.gdk.color_parse(val)
                 except ValueError as exc:
-                    print >> sys.stderr, 'ERROR', exc
-                    sys.exit('ERROR, gcylc.rc, illegal color: ' + theme +
-                             ': ' + name + '="' + item + '"')
+                    sys.exit(
+                        'ERROR, gcylc.rc, illegal color: %s: %s="%s"\n%s' %
+                        (theme, name, item, exc))
             cfg[key] = val
         return cfg
 
@@ -308,6 +312,6 @@ class GcylcConfig(ParsecConfig):
                 parents.append(key)
 
         if pnative:
-            print cfg
+            print(cfg)
         else:
             printcfg(cfg, prefix=prefix, level=len(keys))

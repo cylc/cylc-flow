@@ -19,12 +19,12 @@
 """Provide a class to represent a task proxy in a running suite."""
 
 from isodatetime.timezone import get_local_time_zone
-from wallclock import get_unix_time_from_time_string as str2time
 
 import cylc.cycling.iso8601
 from cylc.task_id import TaskID
 from cylc.task_state import (
     TaskState, TASK_STATUS_WAITING, TASK_STATUS_RETRYING)
+from cylc.wallclock import get_unix_time_from_time_string as str2time
 
 
 class TaskProxySequenceBoundsError(ValueError):

@@ -35,15 +35,13 @@ import shlex
 from time import time
 import traceback
 
-from wallclock import (
-    get_current_time_string, get_seconds_as_interval_string as intvl_as_str)
 from parsec.config import ItemNotFoundError
-from parsec.validate import SubProcContext
 
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
-from cylc.suite_logging import ERR, LOG
 from cylc.hostuserutil import get_host, get_user
+from cylc.subprocctx import SubProcContext
+from cylc.suite_logging import ERR, LOG
 from cylc.task_action_timer import TaskActionTimer
 from cylc.task_job_logs import (
     get_task_job_log, get_task_job_activity_log, JOB_LOG_OUT, JOB_LOG_ERR)
@@ -57,6 +55,8 @@ from cylc.task_state import (
 from cylc.task_outputs import (
     TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED, TASK_OUTPUT_SUBMIT_FAILED, TASK_OUTPUT_EXPIRED)
+from cylc.wallclock import (
+    get_current_time_string, get_seconds_as_interval_string as intvl_as_str)
 
 
 CustomTaskEventHandlerContext = namedtuple(

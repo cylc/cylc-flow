@@ -25,10 +25,6 @@ import threading
 from time import sleep, time
 import traceback
 
-from wallclock import (
-    get_current_time_string,
-    get_seconds_as_interval_string as duration2str,
-    get_time_string_from_unix_time as time2str)
 
 import cylc.flags
 from cylc.cfgspec.gcylc import GcylcConfig
@@ -43,6 +39,10 @@ from cylc.suite_status import (
 from cylc.task_id import TaskID
 from cylc.task_state import TASK_STATUSES_RESTRICTED
 from cylc.version import CYLC_VERSION
+from cylc.wallclock import (
+    get_current_time_string,
+    get_seconds_as_interval_string as duration2str,
+    get_time_string_from_unix_time as time2str)
 
 
 class Updater(threading.Thread):

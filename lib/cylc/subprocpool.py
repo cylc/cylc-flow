@@ -27,10 +27,10 @@ from tempfile import TemporaryFile
 from threading import RLock
 from time import time
 
-from wallclock import get_current_time_string
 
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.suite_logging import LOG
+from cylc.wallclock import get_current_time_string
 
 
 _XTRIG_FUNCS = {}
@@ -95,7 +95,7 @@ class SuiteProcPool(object):
 
     This is mainly used by the main loop of the suite server program, although
     the SuiteProcPool.run_command can be used as a standalone utility function
-    to run the command in a parsec.validate.SubProcContext.
+    to run the command in a cylc.subprocctx.SubProcContext.
 
     Arguments:
         size (int): Pool size.
@@ -181,7 +181,7 @@ class SuiteProcPool(object):
         """Queue a new shell command to execute.
 
         Arguments:
-            ctx (parsec.validate.SubProcContext):
+            ctx (cylc.subprocctx.SubProcContext):
                 A context object containing the command to run and its status.
             callback (callable):
                 Function to call back when command exits or on error.
@@ -203,7 +203,7 @@ class SuiteProcPool(object):
         """Execute command in ctx and capture its output and exit status.
 
         Arguments:
-            ctx (parsec.validate.SubProcContext):
+            ctx (cylc.subprocctx.SubProcContext):
                 A context object containing the command to run and its status.
         """
         proc = cls._run_command_init(ctx)

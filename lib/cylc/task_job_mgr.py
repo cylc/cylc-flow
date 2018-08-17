@@ -33,9 +33,7 @@ from shutil import rmtree
 from time import time
 import traceback
 
-from wallclock import get_current_time_string, get_utc_mode
 from parsec.util import pdeepcopy, poverride
-from parsec.validate import SubProcContext
 
 from cylc.batch_sys_manager import BatchSysManager, JobPollContext
 from cylc.cfgspec.glbl_cfg import glbl_cfg
@@ -47,7 +45,8 @@ from cylc.task_job_logs import (
     JOB_LOG_JOB, get_task_job_log, get_task_job_job_log,
     get_task_job_activity_log, get_task_job_id, NN)
 from cylc.mkdir_p import mkdir_p
-from cylc.mp_pool import SuiteProcPool
+from cylc.subprocpool import SuiteProcPool
+from cylc.subprocctx import SubProcContext
 from cylc.suite_logging import LOG
 from cylc.task_action_timer import TaskActionTimer
 from cylc.task_events_mgr import TaskEventsManager, log_task_job_activity
@@ -61,6 +60,7 @@ from cylc.task_state import (
     TASK_STATUSES_ACTIVE, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
     TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING)
+from cylc.wallclock import get_current_time_string, get_utc_mode
 
 
 class TaskJobManager(object):

@@ -18,8 +18,6 @@
 """Manage suite state summary for client, e.g. GUI."""
 
 from time import time
-from wallclock import (
-    TIME_ZONE_LOCAL_INFO, TIME_ZONE_UTC_INFO, get_utc_mode)
 
 from cylc.task_id import TaskID
 from cylc.suite_status import (
@@ -28,6 +26,8 @@ from cylc.suite_status import (
     SUITE_STATUS_RUNNING_TO_HOLD)
 from cylc.task_state import TASK_STATUS_RUNAHEAD
 from cylc.task_state_prop import extract_group_state
+from cylc.wallclock import (
+    TIME_ZONE_LOCAL_INFO, TIME_ZONE_UTC_INFO, get_utc_mode)
 
 
 class StateSummaryMgr(object):
