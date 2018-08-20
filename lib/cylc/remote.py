@@ -448,35 +448,39 @@ class HostAppointer(object):
     def _remove_bad_hosts(self, cmd_with_opts, mock_stats=False):
         """Return dictionary of 'good' hosts with their metric stats.
 
-           Run 'get-host-metrics' on each run host in parallel & store
-           extracted stats for 'good' hosts only. Ignore 'bad' hosts whereby
-           either metric data cannot be accessed from the command or at least
-           one metric value does not pass a specified threshold."""
-        host_stats = {}
+        Run 'get-host-metrics' on each run host in parallel & store
+        extracted stats for 'good' hosts only. Ignore 'bad' hosts whereby
+        either metric data cannot be accessed from the command or at least
+        one metric value does not pass a specified threshold.
+        """
         cmd = cmd_with_opts.split()
         if mock_stats:  # Create fake data for unittest purposes (only).
             host_stats = dict(mock_stats)  # Prevent mutable object issues.
         else:
-            hosts = list(self.HOSTS)  # copy for safety.
-            processes = min(len(hosts), self.max_processes)
-            ordered_results = process_pool(processes, _process_host_unpack,
-                                           zip(hosts, len(hosts) * [cmd]))
-            proc_hosts = dict(zip(hosts, ordered_results))
-            host_stats = [dict(host, metr) for host, metr in
-                          proc_hosts.items() if metr is not None]
+            if not self.HOSTS:
+                return {}
+            proc_pool = Pool(min(len(self.HOSTS), self.max_processes))
+            host_stats = dict(zip(
+                self.HOSTS,
+                proc_pool.map(get_host_metrics,
+                              zip(self.HOSTS, [cmd] * len(self.HOSTS)))
+            ))
 
-        bad_hosts = []  # Get errors if alter dict during iteration. Use list.
-        for host in host_stats:
+        for host, data in dict(host_stats).items():
+            if not data:
+                # No results for host (command failed) -> skip.
+                host_stats.pop(host)
+                continue
             for measure, cutoff in self.PARSED_THRESHOLDS.items():
-                datum = host_stats[host][measure]
+                datum = data[measure]
                 # Cutoff is a minimum or maximum depending on measure context.
                 if ((datum > cutoff and measure.startswith("load")) or
-                        (datum < cutoff and (measure == "memory" or
-                         measure.startswith("disk-space")))):
-                    bad_hosts.append(host)
-                    continue
-        return dict((host, metr) for host, metr in
-                    host_stats.items() if host not in bad_hosts)
+                    (datum < cutoff and (
+                        measure == "memory" or
+                        measure.startswith("disk-space")))):
+                    host_stats.pop(host)
+                    break
+        return host_stats
 
     def _rank_good_hosts(self, all_host_stats):
         """Rank, by specified method, 'good' hosts to return the most suitable.
@@ -517,6 +521,31 @@ class HostAppointer(object):
             return pre_rank_check
 
         return self._rank_good_hosts(good_host_stats)
+
+def get_host_metrics((host, cmd)):
+    """Wrapper for the `cylc get-host-metric` command.
+
+    NOTE: multiprocessing.Pool.map does not work
+    """
+    try:
+        host_fqdn = get_fqdn_by_host(host)
+        if host_fqdn == get_fqdn_by_host('localhost'):
+            host = None
+    except socket.gaierror:
+        # No such host.
+        sys.stderr.write("Invalid host '%s'." % host)
+        return
+
+    process = Popen(construct_ssh_cmd(cmd, host=host), stdin=open(os.devnull),
+                    stdout=PIPE, stderr=PIPE)
+    if process.wait():
+        # Command failed.
+        sys.stderr.write((
+            "Can't obtain metric data from host '%s'; return code '%s' "
+            "from '%s'\n" % (host, process.returncode, cmd)))
+        return
+
+    return json.loads(process.communicate()[0])
 
 
 class TestHostAppointer(unittest.TestCase):
@@ -858,43 +887,5 @@ class TestHostAppointer(unittest.TestCase):
                 )
 
 
-def _process_host(host, cmd):
-    """Run 'get-host-metrics' on a host and return the extracted metric.
-
-       NB: this must lie outside HostAppointer for multiprocessing to work."""
-    host_alias = host
-    try:
-        host_fqdn = get_fqdn_by_host(host)
-        if host_fqdn == get_fqdn_by_host('localhost'):
-            host_alias = None
-    except socket.gaierror:
-        # no such host: don't consider for 'good' hosts, i.e. 'pass'.
-        sys.stderr.write("Invalid host '%s'." % host)
-    process = remote_cylc_cmd(cmd, capture=True, host=host_alias)
-    metric = process.communicate()[0]
-    process.wait()
-    ret_code = process.returncode
-    if ret_code:
-        # Can't access data => designate as 'bad' host & ignore ('pass');
-        # don't raise an exception, just print to error log.
-        sys.stderr.write("Can't obtain metric data from host " +
-                         "'%s'; return code '%s' from '%s'\n" % (
-                host, ret_code, cmd))
-    else:
-        return json.loads(metric)
-
-
-def _process_host_unpack(args):
-    """Enable multiple argument pass to multiprocess Pool for _process_host."""
-    return _process_host(*args)
-
-
 if __name__ == "__main__":
-
-    def process_pool(number_processes, function, *args):
-        """Generic muliprocessing Pool, which must lie within main()."""
-        proc_poll = Pool(number_processes)
-        result = proc_poll.map(function, *args)
-        return result
-
     unittest.main()
