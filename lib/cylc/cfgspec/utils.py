@@ -76,27 +76,28 @@ def coerce_interval_list(value, keys, args):
 def convert_range_list(values, keys):
     """Convert valid 'X .. Y' string to list of integers from X to Y inclusive.
 
-    Return the list object or None if input is invalid 'X .. Y' format."""
-    list_format = r'\s*(\d+)\s\.\.\s(\d+)\s*$'
+    Return the list object, or None if input is invalid 'X .. Y' format.
+    """
+    list_format = r'\s*(\d+)\s*\.\.\s*(\d+)\s*$'
     matches = re.match(list_format, values)
+
     core_err_msg = "Cannot extract start and end integers from '%s'" % values
     if not matches:
         raise ValueError(core_err_msg)
+    list_start, list_end = matches.group(1, 2)
     try:
-        list_start, list_end = matches.group(1, 2)
         startpoint = int(list_start)
-        # Range function has non-inclusive end-point so must add 1.
-        endpoint = int(list_end) + 1
-        if startpoint >= endpoint:
-            raise ValueError("%s >= %s but 'X .. Y' format requires X < Y." %
-                             (startpoint, endpoint))
-    except (AttributeError, TypeError):
-        raise ValueError(core_err_msg)
+        endpoint = int(list_end) + 1  # range has non-inclusive end-point.
+    except ValueError:
+        ValueError(core_err_msg)
+    if startpoint >= endpoint:
+        raise ValueError("%s >= %s but 'X .. Y' format requires X <= Y." %
+                         (startpoint, endpoint - 1))
     return range(startpoint, endpoint)
 
 
 def coerce_range_list(value, keys, _):
-    """Coerce a valid 'X .. Y' string into a list of integers."""
+    """Coerce a string 'X .. Y' with integer X, Y into a list of integers."""
     return convert_range_list(value, keys)
 
 

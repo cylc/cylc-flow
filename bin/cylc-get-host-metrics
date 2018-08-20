@@ -18,22 +18,22 @@
 
 """cylc get-host-metrics [OPTIONS]
 
-   Get metrics for localhost, in the form of a JSON structure with top-level
-   keys as requested via the OPTIONS:
+Get metrics for localhost, in the form of a JSON structure with top-level
+keys as requested via the OPTIONS:
 
-   1. --load
-          1, 5 and 15 minute load averages (as keys) from the 'uptime' command.
-   2. --memory
-          Total free RAM memory, in kilobytes, from the 'free -k' command.
-   3. --disk-space=PATH / --disk-space=PATH1,PATH2,PATH3 (etc)
-          Available disk space from the 'df -Pk' command, in kilobytes, for one
-          or more valid mount directory PATHs (as listed under 'Mounted on')
-          within the filesystem of localhost. Multiple PATH options can be
-          specified via a comma-delimited list, each becoming a key under the
-          top-level disk space key.
+1. --load
+       1, 5 and 15 minute load averages (as keys) from the 'uptime' command.
+2. --memory
+       Total free RAM memory, in kilobytes, from the 'free -k' command.
+3. --disk-space=PATH / --disk-space=PATH1,PATH2,PATH3 (etc)
+       Available disk space from the 'df -Pk' command, in kilobytes, for one
+       or more valid mount directory PATHs (as listed under 'Mounted on')
+       within the filesystem of localhost. Multiple PATH options can be
+       specified via a comma-delimited list, each becoming a key under the
+       top-level disk space key.
 
-   If no options are specified, --load and --memory are invoked by default."""
-
+If no options are specified, --load and --memory are invoked by default.
+"""
 
 import sys
 if '--use-ssh' in sys.argv[1:]:
@@ -48,55 +48,67 @@ from subprocess import Popen, PIPE, CalledProcessError
 import json
 
 import cylc.flags
-from cylc.option_parsers import CylcOptionParser as COP
+from cylc.option_parsers import OptionParser
 
 
 """Templates for extracting desired metric data via regular expression.
 
-   Example command outputs, with '*' enclosing data to extract with templates:
+Example command outputs, with '*' enclosing data to extract with templates:
 
-   LOAD_TEMPLATES
-     $ uptime
-     17:52:58 up  8:08,  2 users,  load average: *0.13*, *0.09*, *0.07*
+LOAD_TEMPLATES:
+    $ uptime
+    17:52:58 up  8:08,  2 users,  load average: *0.13*, *0.09*, *0.07*
 
-   MEMORY_TEMPLATES
-     $ free -k
-                  total       used       free     shared    buffers     cached
-     Mem:       6116852    5017920    1098932    54964     130328    1837404
-     -/+ buffers/cache:    3050188  *3066664*
-     Swap:      4190204      14624    4175580
+MEMORY_TEMPLATES
+    ('free -k' command inconsistent across Linux distros, see e.g.
+     'https://access.redhat.com/solutions/406773', so check '/proc' directly)
+    $ cat /proc/meminfo
+    MemTotal:        6116852 kB
+    MemFree:        *670856* kB
+    [MemAvailable:    3765092 kB]
+    Buffers:        *315808* kB
+    Cached:        *1497064* kB
+    SwapCached:            0 kB
+    Active:          3417432 kB
+    ...
+    ...
+    where [] encloses fields on RHEL7 only.
 
-   DISK_TEMPLATES, e.g. for mount directory path option '--disk-space=/boot'
-     $ df -Pk /boot
-     Filesystem            1024-blocks      Used Available Capacity Mounted on
-     /dev/md0                    96978     33904   *57856*      37% /boot."""
+DISK_TEMPLATES, e.g. for mount directory path option '--disk-space=/boot':
+    $ df -Pk /boot
+    Filesystem            1024-blocks      Used Available Capacity Mounted on
+    /dev/md0                    96978     33904   *57856*      37% /boot.
+"""
 LOAD_TEMPLATES = ['uptime', (1, 5, 15), re.compile(
                   r'load average:\s([\d\.]+),\s([\d\.]+),\s([\d\.]+)')]
-MEMORY_TEMPLATES = ['free -k', re.compile(
-                    r'\-/\+ buffers/cache:\s+\d+\s+(\d+)')]
+MEMORY_TEMPLATES = ['cat /proc/meminfo', re.compile(
+                    (r'MemFree:\s*(\d+)\skB\n.*\n*Buffers:\s*(\d+)\skB'
+                     r'\n.*\n*Cached:\s*(\d+)\skB'))]
 DISK_TEMPLATES = ['df -Pk', re.compile(
                   r'Mounted on\n\S+\s+\d+\s+\d+\s+(\d+)\s+')]
 
 
 def main():
-    parser = COP(__doc__, comms=True, noforce=True, argdoc=[])
+    parser = OptionParser(__doc__)
 
     parser.add_option(
         "--load", "-l",
-        help="1, 5 and 15 minute load averages from the 'uptime' command",
+        help="1, 5 and 15 minute load averages from the 'uptime' command.",
         action="store_true", default=False, dest="load")
 
     parser.add_option(
         "--memory", "-m",
-        help="Total free RAM memory, in KB, from the 'free -k' command.",
+        help="Total memory not in use by the system, buffer or cache, in " +
+             "KB, from '/proc/meminfo'.",
         action="store_true", default=False, dest="memory")
 
     parser.add_option(
         "--disk-space",
-        help="Available disk space, in KB, from the 'df -Pk' command",
+        help="Available disk space, in KB, from the 'df -Pk' command.",
         action="store", default=None, dest="disk")
 
     options, args = parser.parse_args()
+
     print get_host_metric(options.load, options.memory, options.disk)
 
     sys.exit()
@@ -105,7 +117,8 @@ def main():
 def run_command_string(command_string):
     """Return the result from running a command string in a local shell.
 
-       Return stdout if command successful, else raise CalledProcessError."""
+    Return stdout if command successful, else raise CalledProcessError.
+    """
     command_sequence = command_string.split()
     # Note: can replace function w/ 'subprocess.check_output()' when drop v2.6.
     process = Popen(command_sequence, stdin=open(os.devnull), stdout=PIPE,
@@ -136,33 +149,30 @@ def extract_pattern(data_pattern, raw_string):
 def process_load():
     """Return dictionary with load average float values from 'uptime' command.
 
-       String keys e.g. 'load:1' give minutes average was measured over."""
+    String keys e.g. 'load:1' give minutes average was measured over.
+    """
     cmd, av_times, patt = LOAD_TEMPLATES
     av_raw_tuple = extract_pattern(patt, run_command_string(cmd))
-    try:
-        av_floats_tuple = [float(av_raw) for av_raw in av_raw_tuple]
-    except ValueError:
-        raise
+    av_floats_tuple = [float(av_raw) for av_raw in av_raw_tuple]
     return dict(zip(
         ["load:" + str(time) for time in av_times], av_floats_tuple))
 
 
 def process_memory():
-    """Return dict with integer value of free memory from 'free -k' command."""
+    """Return dict with integer usable memory value from '/proc/meminfo'."""
     cmd, patt = MEMORY_TEMPLATES
-    free_memory_str, = extract_pattern(patt, run_command_string(cmd))
-    try:
-        free_memory_int = int(free_memory_str)
-    except ValueError:
-        raise
-    return {"memory": free_memory_int}
+    mem_tuple = extract_pattern(patt, run_command_string(cmd))
+    # Sum free, buffer and cache memory values (free plus/minus buffer/cache).
+    usable_memory = sum([int(mem_val) for mem_val in mem_tuple])
+    return {"memory": usable_memory}
 
 
 def process_disk(paths_list):
     """Return dictionary with available disk space for given mount dir paths.
 
-       Disk space data, from 'df -Pk' command, stored as float values under
-       associated path string keys."""
+    Disk space data, from 'df -Pk' command, stored as float values under
+    associated path string keys.
+    """
     partial_cmd, patt = DISK_TEMPLATES
     path_dict = {}
     for path in paths_list:
@@ -171,31 +181,27 @@ def process_disk(paths_list):
         cmd_output = run_command_string(partial_cmd + ' ' + path)
         free_space_str, = extract_pattern(patt, cmd_output)
         if free_space_str:
-            try:
-                free_space_int = int(free_space_str)
-            except ValueError:
-                raise
-            path_dict["disk-space:" + path] = free_space_int
+            path_dict["disk-space:" + path] = int(free_space_str)
     return path_dict
 
 
 def get_host_metric(inc_load, inc_memory, disk_paths):
     """Return JSON structure containing specified metric data for localhost.
 
-       Example:
-         {
-             "load:5": 0.059999999999999998,
-             "disk-space:/boot": 57856,
-             "load:1": 0.050000000000000003,
-             "memory": 3168296,
-             "load:15": 0.080000000000000002,
-             "disk-space:/": 9212088
-         }
+    Example:
+      {
+          "load:5": 0.059999999999999998,
+          "disk-space:/boot": 57856,
+          "load:1": 0.050000000000000003,
+          "memory": 3168296,
+          "load:15": 0.080000000000000002,
+          "disk-space:/": 9212088
+      }
 
-       The data included depends on the options specified to the command and
-       is one or more from: load average, free memory and available disk space
-       (for specified mount directory paths)."""
-
+    The data included depends on the options specified to the command and
+    is one or more from: load average, free memory and available disk space
+    (for specified mount directory paths).
+    """
     HOST_METRIC = {}
 
     if disk_paths:

@@ -17,15 +17,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Common logic for "cylc run" and "cylc restart" CLI."""
 
+import json
+from multiprocessing import Pool
 import os
+from random import shuffle, choice
+import socket
+from subprocess import Popen, PIPE
 import sys
-from subprocess import Popen
+import unittest
 
+from cylc.cfgspec.glbl_cfg import glbl_cfg
+from cylc.hostuserutil import is_remote_host, get_fqdn_by_host
 from cylc.option_parsers import CylcOptionParser as COP
+from cylc.remote import RemoteRunner, construct_ssh_cmd
 from cylc.scheduler import Scheduler
-from cylc.hostuserutil import is_remote_host
-from cylc.remote import (
-    HostAppointer, remrun, construct_ssh_cmd, run_ssh_cmd)
+from cylc.suite_srv_files_mgr import (
+    SuiteSrvFilesManager, SuiteServiceFileError)
 
 RUN_DOC = r"""cylc [control] run|start [OPTIONS] ARGS
 
@@ -67,9 +74,16 @@ def main(is_restart=False):
     """CLI main."""
     options, args = parse_commandline(is_restart)
 
+    # Check suite is not already running before start of host selection.
+    try:
+        SuiteSrvFilesManager().detect_old_contact_file(args[0])
+    except SuiteServiceFileError as exc:
+        sys.exit(exc)
+
     # Check whether a run host is explicitly specified, else select one.
     if not options.host:
-        host = HostAppointer().appoint_host()
+        host = HostAppointer(
+            is_debug=options.debug, is_verbose=options.verbose).appoint_host()
         if is_remote_host(host):
             if is_restart:
                 base_cmd = ["restart"] + sys.argv[1:]
@@ -77,12 +91,11 @@ def main(is_restart=False):
                 base_cmd = ["run"] + sys.argv[1:]
             # State as relative localhost to prevent recursive host selection.
             base_cmd.append("--host=localhost")
-            cmd = construct_ssh_cmd(base_cmd, host=host)
             proc = Popen(
                 construct_ssh_cmd(base_cmd, host=host), stdin=open(os.devnull))
             res = proc.wait()
             sys.exit(res)
-    elif remrun():
+    if RemoteRunner(set_rel_local=True).execute():  # State localhost as above.
         sys.exit()
 
     scheduler = Scheduler(is_restart, options, args)
@@ -186,6 +199,13 @@ def parse_commandline(is_restart):
         help="Specify the suite source.",
         metavar="SOURCE", action="store", dest="source")
 
+    # Override standard parser option for specific help description.
+    parser.add_option(
+        "--host",
+        help="Specify the host on which to start-up the suite. Without this "
+        "set a host will be selected using the 'suite servers' global config.",
+        metavar="HOST", action="store", dest="host")
+
     options, args = parser.parse_args()
 
     if not is_restart and options.warm and len(args) < 2:
@@ -193,3 +213,595 @@ def parse_commandline(is_restart):
         sys.exit(parser.get_usage())
 
     return options, args
+
+
+class EmptyHostList(Exception):
+    """Exception to be raised if there are no valid run hosts.
+
+    Raise if, from the global configuration settings, no hosts are listed
+    for potential appointment to run suites (as 'run hosts') or none
+    satisfy requirements to pass 'run host select' specifications.
+
+    Print message with the current state of relevant settings for info.
+    """
+    def __str__(self):
+        msg = ("\nERROR: No hosts currently compatible with this global "
+               "configuration:")
+        suite_server_cfg_items = (['run hosts'], ['run host select', 'rank'],
+                                  ['run host select', 'thresholds'])
+        for cfg_end_ref in suite_server_cfg_items:
+            cfg_end_ref.insert(0, 'suite servers')
+            # Add 2-space indentation for clarity in distinction of items.
+            msg = '\n  '.join([msg, ' -> '.join(cfg_end_ref) + ':',
+                               '  ' + str(glbl_cfg().get(cfg_end_ref))])
+        return msg
+
+
+class HostAppointer(object):
+    """Appoint the most suitable host to run a suite on.
+
+    Determine the one host most suitable to (re-)run a suite on from all
+    'run hosts' given the 'run host selection' ranking & threshold options
+    as specified (else taken as default) in the global configuration.
+    """
+
+    CMD_BASE = "get-host-metrics"  # 'cylc' prepended by remote_cylc_cmd.
+
+    def __init__(self, is_debug, is_verbose):
+        self.use_disk_path = "/"
+        self.max_processes = 5
+        self.is_debug = is_debug
+        self.is_verbose = is_verbose
+
+        self.hosts = glbl_cfg().get(['suite servers', 'run hosts'])
+        self.rank_method = glbl_cfg().get(
+            ['suite servers', 'run host select', 'rank'])
+        self.parsed_thresholds = self.parse_thresholds(glbl_cfg().get(
+            ['suite servers', 'run host select', 'thresholds']))
+
+    @staticmethod
+    def parse_thresholds(raw_thresholds_spec):
+        """Parse raw 'thresholds' global configuration option to dict."""
+        if not raw_thresholds_spec:
+            return {}
+
+        valid_thresholds = {}
+        error_msg = "Invalid suite host threshold component: '%s'"
+        for threshold in raw_thresholds_spec.split(';'):
+            try:
+                measure, cutoff = threshold.strip().split()
+                if measure.startswith("load"):
+                    valid_thresholds[measure] = float(cutoff)
+                elif measure == "memory" or measure.startswith("disk-space"):
+                    valid_thresholds[measure] = int(cutoff)
+                else:
+                    raise ValueError(error_msg % cutoff)
+            except ValueError:
+                raise ValueError(error_msg % threshold)
+        return valid_thresholds
+
+    def selection_complete(self, host_list):
+        """Check for and address a list (of hosts) with length zero or one.
+
+        Check length of a list (of hosts); for zero items raise an error,
+        for one return that item, else (for multiple items) return False.
+        """
+        if len(host_list) == 0:
+            if self.is_debug or self.is_verbose:
+                raise EmptyHostList()
+            else:
+                sys.exit(str(EmptyHostList()))
+        elif len(host_list) == 1:
+            return host_list[0]
+        else:
+            return False
+
+    def _trivial_choice(self, host_list, ignore_if_thresholds_prov=False):
+        """Address run host configuration that can be dealt with trivially.
+
+        If thresholds are not provided or set to be ignored, test if
+        'host_list' has length zero or one, else if the ranking method is
+        random; if so return an exception or host selected appropriately.
+        """
+        if ignore_if_thresholds_prov and self.parsed_thresholds:
+            return False
+        if self.selection_complete(host_list):
+            return self.selection_complete(host_list)
+        elif self.rank_method == 'random':
+            return choice(host_list)
+        else:
+            return False
+
+    def _process_get_host_metrics_cmd(self):
+        """Return 'get_host_metrics' command to run with only required options.
+
+        Return the command string to run 'cylc get host metric' with only
+        the required options given rank method and thresholds specified.
+        """
+        # Convert config keys to associated command options. Ignore 'random'.
+        considerations = [self.rank_method] + self.parsed_thresholds.keys()
+        opts = set()
+        for spec in considerations:
+            if spec.startswith("load"):
+                opts.add("--load")
+            elif spec.startswith("disk-space"):
+                opts.add("--disk-space=" + self.use_disk_path)
+            elif spec == "memory":
+                opts.add("--memory")
+
+        cmd = [self.CMD_BASE] + list(opts)
+        return " ".join(cmd)
+
+    def _remove_bad_hosts(self, cmd_with_opts, mock_stats=False):
+        """Return dictionary of 'good' hosts with their metric stats.
+
+        Run 'get-host-metrics' on each run host in parallel & store extracted
+        stats for hosts, else an empty JSON structure. Filter out 'bad' hosts
+        whereby either metric data cannot be accessed from the command or at
+        least one metric value does not pass a specified threshold.
+        """
+        cmd = cmd_with_opts.split()
+        if mock_stats:  # Create fake data for unittest purposes (only).
+            host_stats = dict(mock_stats)  # Prevent mutable object issues.
+        else:
+            if not self.hosts:
+                return {}
+            proc_pool = Pool(min(len(self.hosts), self.max_processes))
+            be_verbose = self.is_debug or self.is_verbose
+            host_stats = dict(zip(
+                self.hosts,
+                proc_pool.map(get_host_metrics,
+                              zip(self.hosts, [cmd] * len(self.hosts),
+                                  [be_verbose] * len(self.hosts)))
+            ))
+        # Regulate localhost aliases; always process as 'localhost' string key.
+        if get_fqdn_by_host(None) in host_stats:
+            host_stats['localhost'] = host_stats.pop(get_fqdn_by_host(None))
+
+        for host, data in dict(host_stats).items():
+            if not data:
+                # No results for host (command failed) -> skip.
+                host_stats.pop(host)
+                continue
+            for measure, cutoff in self.parsed_thresholds.items():
+                datum = data[measure]
+                # Cutoff is a minimum or maximum depending on measure context.
+                if ((datum > cutoff and measure.startswith("load")) or
+                    (datum < cutoff and (
+                        measure == "memory" or
+                        measure.startswith("disk-space")))):
+                    # Alert user that threshold has not been met.
+                    if self.is_debug or self.is_verbose:
+                        sys.stderr.write((
+                            "WARNING: host '%s' did not pass %s threshold "
+                            "(%s %s threshold %s)\n" % (
+                                host, measure, datum,
+                                ">" if measure.startswith("load") else "<",
+                                cutoff)))
+                    host_stats.pop(host)
+                    break
+        return host_stats
+
+    def _rank_good_hosts(self, all_host_stats):
+        """Rank, by specified method, 'good' hosts to return the most suitable.
+
+        Take a dictionary of hosts considered 'good' with the corresponding
+        metric data, and rank them via the method specified in the global
+        configuration, returning the lowest-ranked (taken as best) host.
+        """
+        # Convert all dict values from full metrics structures to single
+        # metric data values corresponding to the rank method to rank with.
+        hosts_with_vals_to_rank = dict((host, metric[self.rank_method]) for
+                                       host, metric in all_host_stats.items())
+        if self.is_debug or self.is_verbose:
+            print "INFO: host %s values extracted are:" % self.rank_method
+            for host, value in hosts_with_vals_to_rank.items():
+                print "  " + host + ": " + str(value)
+
+        # Sort new dict by value to return ascending-value ordered host list.
+        sort_asc_hosts = sorted(
+            hosts_with_vals_to_rank, key=hosts_with_vals_to_rank.get)
+        base_msg = ("INFO: good (metric-returning) hosts were ranked in the "
+                    "following order, from most to least suitable: ")
+        if self.rank_method in ("memory", "disk-space:" + self.use_disk_path):
+            # Want 'most free' i.e. highest => reverse asc. list for ranking.
+            if self.is_debug or self.is_verbose:
+                sys.stderr.write(
+                    base_msg + ', '.join(sort_asc_hosts[::-1]) + '.\n')
+            return sort_asc_hosts[-1]
+        else:  # A load av. is only poss. left; 'random' dealt with earlier.
+            # Want lowest => ranking given by asc. list.
+            if self.is_debug or self.is_verbose:
+                sys.stderr.write(base_msg + ', '.join(sort_asc_hosts) + '.\n')
+            return sort_asc_hosts[0]
+
+    def appoint_host(self, override_stats=False):
+        """Appoint the most suitable host to (re-)run a suite on."""
+        # Check if immediately 'trivial': no thresholds and zero or one hosts.
+        initial_check = self._trivial_choice(
+            self.hosts, ignore_if_thresholds_prov=True)
+        if initial_check:
+            return initial_check
+
+        good_host_stats = self._remove_bad_hosts(
+            self._process_get_host_metrics_cmd(), mock_stats=override_stats)
+
+        # Re-check for triviality after bad host removal; otherwise must rank.
+        pre_rank_check = self._trivial_choice(good_host_stats.keys())
+        if pre_rank_check:
+            return pre_rank_check
+
+        return self._rank_good_hosts(good_host_stats)
+
+
+def get_host_metrics((host, cmd, be_verbose)):
+    """Wrapper for the `cylc get-host-metric` command.
+
+    NOTE: multiprocessing.Pool.map does not work.
+    """
+    try:
+        if (host == 'localhost' or
+                get_fqdn_by_host(host) == get_fqdn_by_host(None)):
+            host = None
+    except socket.gaierror:
+        if be_verbose:
+            # No such host.
+            sys.stderr.write("WARNING: no such host '%s'; excluding as "
+                             "possible run host & continuing.\n" % host)
+        return
+
+    process = Popen(construct_ssh_cmd(
+        cmd, host=host), stdin=open(os.devnull), stdout=PIPE, stderr=PIPE)
+    if process.wait():
+        if be_verbose:
+            # Command failed.
+            sys.stderr.write((
+                "WARNING: can't obtain metric data from host '%s'; return "
+                "code '%s' from '%s'\n" % (host, process.returncode, cmd)))
+        return
+    return json.loads(process.communicate()[0])
+
+
+class TestHostAppointer(unittest.TestCase):
+    """Unit tests for the HostAppointer class."""
+
+    def setUp(self):
+        """Create HostAppointer class instance to test."""
+        self.app = HostAppointer(is_debug=False, is_verbose=False)
+
+    def create_custom_metric(self, disk_int, mem_int, load_floats):
+        """Non-test method to create and return a dummy metric for testing.
+
+        Return a structure in the format of 'get_host_metric' output
+        containing fake data. 'disk_int' and 'mem_int' should be integers
+        and 'load_floats' a list of three floats. Use 'None' instead to not
+        add the associated top-level key to metric.
+        """
+        metric = {}
+        if disk_int is not None:  # Distinguish None from '0', value to insert.
+            metric.update({'disk-space:' + self.app.use_disk_path: disk_int})
+        if mem_int is not None:
+            metric.update({"memory": mem_int})
+        if load_floats is not None:
+            load_1min, load_5min, load_15min = load_floats
+            load_data = {
+                "load:1": load_1min,
+                "load:5": load_5min,
+                "load:15": load_15min
+            }
+            metric.update(load_data)
+        return json.dumps(metric)
+
+    def create_mock_hosts(self, N_hosts, initial_values, increments, load_var):
+        """Non-test method to create list of tuples of mock hosts and metrics.
+
+        For mock hosts, 'N_hosts' in number, create associated metrics with
+        data values that are incremented to create known data variation. The
+        list is shuffled to remove ordering by sequence position; name label
+        numbers (lower for lower values) indicate the data ordering.
+        """
+        mock_host_data = []
+        for label in range(1, N_hosts + 1):
+            val = []
+            # Indices {0,1,2} refer to {disk, memory, load} data respectively.
+            for index in range(3):
+                val.append(
+                    initial_values[index] + (label - 1) * increments[index])
+            # Load is special as it needs 3 values and they are floats not ints
+            val[2] = (val[2], float(val[2]) + load_var,
+                      float(val[2]) + 2 * load_var)
+            metric = self.create_custom_metric(val[0], val[1], val[2])
+            mock_host_data.append(('HOST_' + str(label), json.loads(metric)))
+        shuffle(mock_host_data)
+        return mock_host_data
+
+    def mock_global_config(self, set_hosts=None, set_rank_method='random',
+                           set_thresholds=None):
+        """Non-test method to edit global config input to HostAppointer()."""
+        if set_hosts is None:
+            set_hosts = []
+        self.app.hosts = set_hosts
+        self.app.rank_method = set_rank_method
+        self.app.parsed_thresholds = self.app.parse_thresholds(set_thresholds)
+
+    def setup_test_rank_good_hosts(self, num, init, incr, var):
+        """Non-test method to setup routine tests for '_rank_good_hosts'.
+
+        Note:
+            * Host list input as arg so not reading from 'self.app.hosts' =>
+              only 'set_rank_method' arg to 'mock_global_config' is relevant.
+            * rank_method 'random' dealt with before this method is called;
+              '_rank_good_hosts' not written to cater for it, so not tested.
+            * Mock set {HOST_X} created so that lower X host has lower data
+              values (assuming positive 'incr') so for X = {1, ..., N} HOST_1
+              or HOST_N is always 'best', depending on rank method context.
+        """
+        self.mock_global_config(set_rank_method='memory')
+        self.assertEqual(
+            self.app._rank_good_hosts(dict(
+                self.create_mock_hosts(num, init, incr, var))),
+            'HOST_' + str(num)
+        )
+        self.mock_global_config(set_rank_method='disk-space:%s' %
+                                self.app.use_disk_path)
+        self.assertEqual(
+            self.app._rank_good_hosts(dict(
+                self.create_mock_hosts(num, init, incr, var))),
+            'HOST_' + str(num)
+        )
+        # Use 'load:5' as test case of load averages. No need to test all.
+        self.mock_global_config(set_rank_method='load:5')
+        self.assertEqual(
+            self.app._rank_good_hosts(dict(
+                self.create_mock_hosts(num, init, incr, var))),
+            'HOST_1'
+        )
+
+    def test_parse_thresholds(self):
+        """Test the 'parse_thresholds' method."""
+        self.mock_global_config()
+        self.assertEqual(
+            self.app.parse_thresholds(None),
+            {}
+        )
+        self.assertEqual(
+            self.app.parse_thresholds("load:5 0.5; load:15 1.0; memory" +
+                                      " 100000; disk-space:/ 9999999"),
+            {
+                "load:5": 0.5,
+                "load:15": 1.0,
+                "memory": 100000,
+                "disk-space:/": 9999999
+            }
+        )
+        self.assertRaises(
+            ValueError,
+            self.app.parse_thresholds,
+            "memory 300000; gibberish 1.0"
+        )
+        self.assertRaises(
+            ValueError,
+            self.app.parse_thresholds,
+            "load:5 rogue_string"
+        )
+        # Note lack of semi-colon separator.
+        self.assertRaises(
+            ValueError,
+            self.app.parse_thresholds,
+            "disk-space:/ 888 memory 300000"
+        )
+
+    def test_trivial_choice(self):
+        """Test '_trivial_choice' and by extension 'selection_complete'."""
+        self.mock_global_config()  # Case with defaults.
+        # assertIn not introduced until Python 2.7, so can't use.
+        self.assertTrue(
+            self.app._trivial_choice(['HOST_1', 'HOST_2', 'HOST_3'],
+                                     ignore_if_thresholds_prov=True) in
+            ('HOST_1', 'HOST_2', 'HOST_3')
+        )
+
+        # Case of defaults except with rank_method as anything but 'random';
+        # really tests 'selection_complete' method (via '_trivial_choice').
+        self.mock_global_config(set_rank_method='memory')
+        self.assertEqual(
+            self.app._trivial_choice(['HOST_1', 'HOST_2', 'HOST_3']),
+            False
+        )
+        self.assertEqual(
+            self.app._trivial_choice(['HOST_1']),
+            'HOST_1'
+        )
+        self.assertRaises(
+            SystemExit,
+            self.app._trivial_choice, []
+        )
+
+        # Case with (any) valid thresholds and ignore_if_thresholds_prov=True.
+        self.mock_global_config(set_thresholds='memory 10000')
+        self.assertEqual(
+            self.app._trivial_choice(['HOST_1', 'HOST_2', 'HOST_3'],
+                                     ignore_if_thresholds_prov=True),
+            False
+        )
+
+    def test_process_get_host_metric_cmd(self):
+        """Test the '_process_get_host_metrics_cmd' method."""
+        self.mock_global_config()
+        self.assertEqual(
+            self.app._process_get_host_metrics_cmd(),
+            'get-host-metrics'
+        )
+        self.mock_global_config(set_thresholds='memory 1000')
+        self.assertEqual(
+            self.app._process_get_host_metrics_cmd(),
+            'get-host-metrics --memory'
+        )
+        self.mock_global_config(set_rank_method='memory')
+        self.assertEqual(
+            self.app._process_get_host_metrics_cmd(),
+            'get-host-metrics --memory'
+        )
+        self.mock_global_config(
+            set_rank_method='disk-space:%s' % self.app.use_disk_path,
+            set_thresholds='load:1 1000')
+        self.assertEqual(
+            self.app._process_get_host_metrics_cmd(),
+            'get-host-metrics --disk-space=' + self.app.use_disk_path +
+            ' --load'
+        )
+        self.mock_global_config(
+            set_rank_method='memory',
+            set_thresholds='disk-space:/ 1000; memory 1000; load:15 1.0')
+        # self.parsed_thresholds etc dict => unordered keys: opts order varies;
+        # instead of cataloging all combos or importing itertools, test split.
+        self.assertEqual(
+            set(self.app._process_get_host_metrics_cmd().split()),
+            set(['get-host-metrics', '--memory', '--disk-space=/', '--load'])
+        )
+
+    def test_remove_bad_hosts(self):
+        """Test the '_remove_bad_hosts' method.
+
+        Test using 'localhost' only since remote host functionality is
+        contained only inside remote_cylc_cmd() so is outside of the scope
+        of HostAppointer.
+        """
+        self.mock_global_config(set_hosts=['localhost'])
+        self.failUnless(
+            self.app._remove_bad_hosts(
+                self.app.CMD_BASE).get('localhost', False)
+        )
+        # Test 'localhost' true identifier is treated properly too.
+        self.mock_global_config(set_hosts=[get_fqdn_by_host(None)])
+        self.failUnless(
+            self.app._remove_bad_hosts(
+                self.app.CMD_BASE).get('localhost', False)
+        )
+
+        self.mock_global_config(set_hosts=['localhost', 'FAKE_HOST'])
+        # Check for no exceptions and 'localhost' but not 'FAKE_HOST' data
+        # Difficult to unittest for specific stderr string; this is sufficient.
+        self.failUnless(
+            self.app._remove_bad_hosts(
+                self.app.CMD_BASE).get('localhost', False)
+        )
+        self.failUnless(
+            self.app._remove_bad_hosts(
+                self.app.CMD_BASE).get('FAKE_HOST', True)
+        )
+        self.mock_global_config(set_hosts=['localhost'])  # see above RE stderr
+        self.assertEqual(
+            self.app._remove_bad_hosts(self.app.CMD_BASE + ' --nonsense'),
+            {}
+        )
+
+        # Apply thresholds impossible to pass; check results in host removal.
+        self.mock_global_config(
+            set_hosts=['localhost'], set_thresholds='load:15 0.0')
+        self.assertEqual(
+            self.app._remove_bad_hosts(self.app.CMD_BASE + " --load"),
+            {}
+        )
+        self.mock_global_config(
+            set_hosts=['localhost'], set_thresholds='memory 1000000000')
+        self.assertEqual(
+            self.app._remove_bad_hosts(self.app.CMD_BASE + " --memory"),
+            {}
+        )
+
+    def test_rank_good_hosts(self):
+        """Test the '_rank_good_hosts' method."""
+
+        # Considering special cases:
+        # Case with 0 or 1 hosts filtered out before method called, so ignore.
+        # Variation in load averages is irrelevant; no need to test lack of.
+
+        # Case with no increments => same stats for all hosts. Random result.
+        self.mock_global_config(set_rank_method='memory')  # Any except random.
+        self.assertTrue(
+            self.app._rank_good_hosts(dict(
+                self.create_mock_hosts(
+                    5, [100, 100, 1.0], [0, 0, 0.0], 0.1))) in
+            ('HOST_1', 'HOST_2', 'HOST_3', 'HOST_4', 'HOST_5')
+        )
+
+        # Test a selection of routine cases; only requirements are for types:
+        # init and incr in form [int, int, float] and int var, and for size:
+        # num > 1, all elements of init > 0(.0) and incr >= 0(.0), var >= 0.0.
+        self.setup_test_rank_good_hosts(
+            2, [100, 100, 1.0], [100, 100, 1.0], 0.2)
+        self.setup_test_rank_good_hosts(
+            10, [500, 200, 0.1], [100, 10, 10.0], 0.0)
+        self.setup_test_rank_good_hosts(
+            10, [103870, 52139, 3.19892], [5348, 45, 5.2321], 0.52323)
+        self.setup_test_rank_good_hosts(
+            50, [10000, 20000, 0.00000001], [400, 1000000, 1.1232982], 0.11)
+
+    def test_appoint_host(self):
+        """Test the 'appoint_host' method.
+
+        This method calls all other methods in the class directly or
+        indirectly, hence this is essentially a full-class test. The
+        following phase space is covered:
+
+            1. Number of hosts: none, one or multiple.
+            2. Rank method: random, load (use just 5 min average case),
+                            memory or disk space.
+            3. Thresholds: without or with, including all measures.
+        """
+        # Define phase space.
+        hosts_space = ([], ['HOST_1'],
+                       ['HOST_1', 'HOST_2', 'HOST_3', 'HOST_4', 'HOST_5'])
+        rank_method_space = ('random', 'load:5', 'memory', 'disk-space:/')
+        thresholds_space = (None, 'load:1 2.0; load:5 1.10; load:15' +
+                            ' 1.31; memory 31000; disk-space:/ 1000')
+
+        # Enumerate all (24) correct results required to test equality with.
+        # Correct results deduced individually based on mock host set. Note
+        # only HOST_2 and HOST_3 pass all thresholds for thresholds_space[1].
+        correct_results = (8 * [SystemExit] +
+                           4 * ['HOST_1', SystemExit] +
+                           ['HOST_X', 'HOST_Y', 'HOST_1', 'HOST_2', 'HOST_5',
+                            'HOST_3', 'HOST_5', 'HOST_3'])
+
+        for index, (host_list, method, thresholds) in enumerate(
+                [(hosts, meth, thr) for hosts in hosts_space for meth in
+                 rank_method_space for thr in thresholds_space]):
+
+            # Use same group of mock hosts each time, but ensure compatible
+            # number (at host_list changeover only; avoid re-creating same).
+            if index in (0, 8, 16):
+                mock_hosts = dict(self.create_mock_hosts(
+                    len(host_list), [400000, 30000, 0.05], [50000, 1000, 0.2],
+                    0.4))
+
+            self.mock_global_config(
+                set_hosts=host_list, set_rank_method=method,
+                set_thresholds=thresholds)
+
+            if correct_results[index] == 'HOST_X':  # random, any X={1..5} fine
+                self.assertTrue(
+                    self.app.appoint_host(override_stats=mock_hosts) in
+                    host_list
+                )
+            elif correct_results[index] == 'HOST_Y':  # random + thr, X={2,3}
+                self.assertTrue(
+                    self.app.appoint_host(override_stats=mock_hosts) in
+                    host_list[1:3]
+                )
+            elif isinstance(correct_results[index], str):
+                self.assertEqual(
+                    self.app.appoint_host(override_stats=mock_hosts),
+                    correct_results[index]
+                )
+            else:
+                self.assertRaises(
+                    correct_results[index],
+                    self.app.appoint_host,
+                    override_stats=mock_hosts
+                )
+
+
+if __name__ == "__main__":
+    unittest.main()

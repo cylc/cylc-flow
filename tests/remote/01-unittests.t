@@ -20,5 +20,5 @@
 #-------------------------------------------------------------------------------
 set_test_number 1
 
-run_ok "${TEST_NAME_BASE}" python -m 'cylc.remote'
+run_ok "${TEST_NAME_BASE}" python -m 'cylc.scheduler_cli'
 exit

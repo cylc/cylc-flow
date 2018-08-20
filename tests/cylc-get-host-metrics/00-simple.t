@@ -83,7 +83,9 @@ __OUTPUT_FORMAT__
 # Disk space option, including a bad path.
 run_fail "${TEST_NAME_BASE}-get-host-metric-disk-bad" cylc get-host-metric \
 --disk-space=nonsense
-grep_ok "subprocess\.CalledProcessError: Command '\['df', '-Pk', 'nonsense'\]' returned non-zero exit status 1" "${TEST_NAME_BASE}-get-host-metric-disk-bad.stderr"
+MESSAGE="subprocess\.CalledProcessError: Command '\['df', '-Pk', 'nonsense'\]'"
+MESSAGE+=" returned non-zero exit status 1"
+grep_ok "$MESSAGE" "${TEST_NAME_BASE}-get-host-metric-disk-bad.stderr"
 #-------------------------------------------------------------------------------
 # Test the various options in combination. Use '0.10' and '1000000' as
 # examples in correct format as cannot test for exact values.
