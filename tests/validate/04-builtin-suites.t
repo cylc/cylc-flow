@@ -39,9 +39,17 @@ with open(file_name, 'r') as in_file:
 set_test_number $((( ((${#SUITES[@]})) * 2 )))
 #-------------------------------------------------------------------------------
 # Validate suites.
+NO_EMPY=true
+if cylc check-software 2>'/dev/null' | grep -q '^Python:EmPy.*([^-]*)$'; then
+    NO_EMPY=false
+fi
 for suite in ${SUITES[@]}; do
     suite_name=$(sed 's/\//-/g' <<<"${suite:$ABS_PATH_LENGTH}")
     TEST_NAME="${TEST_NAME_BASE}${suite_name}"
+    if "${NO_EMPY}" && grep -qi '^#!empy' < <(head -1 "${suite}"); then
+        skip 2 "${TEST_NAME}: EmPy not installed"
+        continue
+    fi
     run_ok "${TEST_NAME}" cylc validate "${suite}" -v -v
     filter_warnings "${TEST_NAME}.stderr"
     cmp_ok "${TEST_NAME}.stderr.processed" /dev/null
