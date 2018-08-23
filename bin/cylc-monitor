@@ -266,4 +266,7 @@ The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
 
 
 if __name__ == "__main__":
-    SuiteMonitor().run()
+    try:
+        SuiteMonitor().run()
+    except KeyboardInterrupt:
+        pass
