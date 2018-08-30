@@ -30,14 +30,16 @@ Known users include:
   * [Plymouth Marine Laboratory](https://www.pml.ac.uk/) - UK
   * [Barcelona Supercomputing Center (BSC)](https://www.bsc.es) - Spain
   * [National Centre for Atmospheric Science (NCAS)](https://www.ncas.ac.uk) - UK
+  * [Centre for Environmental Data Analysis (CEDA)](http://www.ceda.ac.uk) - UK
   * [ARC Centre of Excellence for Climate Extremes (CLEX)](https://climateextremes.org.au/) - Australia
  
 Many of these centers use Cylc with [Rose](https://github.com/metomi/rose), a
 framework for managing and running meteorological suites.
 
 [NCAS Computational Modelling Services](https://www.ncas.ac.uk/en/cms) supports
-use of Rose and Cylc with the Unified Model in the UK academic community,
-including Reading, Leeds, Oxford, etc.
+the use of Rose and Cylc on the UK national HPC facility
+[ARCHER](http://www.archer.ac.uk) and the [JASMIN](http://www.jasmin.ac.uk)
+data center, for users throughout the UK academic community.
 
 [ARC Computational Modelling Systems](http://climate-cms.unsw.wikispaces.net/)
 supports use of Rose and Cylc with the Unified Model in the Australian academic
