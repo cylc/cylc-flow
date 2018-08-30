@@ -1,0 +1,46 @@
+# Codecov settings
+# After modifying this file, it might be worth to validate it with:
+# `curl --data-binary @.codecov.yml https://codecov.io/validate`
+
+# which branch to monitor and whether wait for ci success
+codecov:
+  branch: master
+  notify:
+    require_ci_to_pass: yes
+
+# define the colour bar limits here
+coverage:
+  precision: 2
+  round: down
+  range: "75...100"
+
+  # diff type
+  status:
+    project:
+      default:
+        # commits below this threshold will be marked as failed
+        target: '58%'
+        # how much we allow the coverage to drop
+        threshold: '5%'
+    patch:
+      default:
+        # basic
+        target: '58%'
+        threshold: '5%'
+        base: auto
+        # advanced
+        branches: null
+        if_no_uploads: error
+        if_not_found: success
+        if_ci_failed: error
+        only_pulls: false
+        flags: null
+        paths: null
+    changes: no
+
+# files to ignore
+ignore:
+  - "tests/**/*.py"
+
+# turn off comments to pull requests
+comment: off

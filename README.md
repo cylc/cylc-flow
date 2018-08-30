@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/cylc/cylc.svg?branch=master)](https://travis-ci.org/cylc/cylc)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1d6a97bf05114066ae30b63dcb0cdcf9)](https://www.codacy.com/app/Cylc/cylc?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=cylc/cylc&amp;utm_campaign=Badge_Grade)
+[![codecov](https://codecov.io/gh/cylc/cylc/branch/master/graph/badge.svg)](https://codecov.io/gh/cylc/cylc)
 [![DOI](https://zenodo.org/badge/1836229.svg)](https://zenodo.org/badge/latestdoi/1836229)
 [![DOI](http://joss.theoj.org/papers/10.21105/joss.00737/status.svg)](https://doi.org/10.21105/joss.00737)
 

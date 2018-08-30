@@ -1,0 +1,83 @@
+# This is the Coverage.py configuration file. This is used by Travis-CI when running
+# the tests and collecting coverage
+
+[run]
+
+branch=True
+cover_pylib=False
+concurrency=thread
+data_file=${TRAVIS_BUILD_DIR}/.coverage
+disable_warnings=
+    trace-changed
+    module-not-python
+    module-not-imported
+    no-data-collected
+    module-not-measured
+    # include-ignored
+debug=
+#    callers
+#    dataio
+#    multiprocess
+#    dataio
+#    dataop
+#    pid
+#    plugin
+#    process
+#    sys
+#    trace
+# Include can be used only if source is not used!
+#include
+note=
+omit=
+    */lib/cherrypy/*
+    */lib/cylc/gui/*
+    */lib/cylc/tests/*
+    */lib/isodatetime/*
+    */lib/jinja2/*
+    */lib/markupsafe/*
+    */lib/xdot.py
+parallel = True
+plugins=
+source=
+    ./bin
+    ./lib
+timid = False
+
+
+[report]
+
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    def parse_args
+fail_under=0
+ignore_errors = False
+include=
+omit=
+    */lib/cherrypy/*
+    */lib/cylc/gui/*
+    */lib/cylc/tests/*
+    */lib/isodatetime/*
+    */lib/jinja2/*
+    */lib/markupsafe/*
+    */lib/xdot.py
+partial_branches=
+precision=2
+show_missing=False
+skip_covered=False
+sort=Name
+
+
+[html]
+
+directory=htmlcov
+extra_css=
+title=
+
+
+[xml]
+
+output=coverage.xml
+package_depth=99
