@@ -14,11 +14,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-------------------------------------------------------------------------------
-# Test cylc suite registration
+#------------------------------------------------------------------------------
+# Test suite registration
 
 . "$(dirname "$0")/test_header"
-set_test_number 9
+set_test_number 20 
 
 init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 [meta]
@@ -31,14 +31,54 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
         script = true
 __SUITE_RC__
 
+CYLC_RUN_DIR=$(cylc get-global --print-run-dir)
 TEST_NAME="${TEST_NAME_BASE}-noreg"
 run_fail "${TEST_NAME}" cylc register "${SUITE_NAME}" "${PWD}/zilch"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
 ERROR: no suite.rc in ${PWD}/zilch
 __ERR__
 
-run_ok "${TEST_NAME_BASE}-register" cylc register "${SUITE_NAME}"
-exists_ok "${SUITE_RUN_DIR}/.service/passphrase"
+# Test default "cylc reg" (no args)
+TEST_NAME="${TEST_NAME_BASE}-cheese"
+mkdir cheese
+cd cheese
+touch suite.rc
+run_ok "${TEST_NAME}" cylc register
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
+REGISTERED cheese -> ${PWD}
+__OUT__
+cd ..
+exists_ok "${CYLC_RUN_DIR}/cheese/.service/passphrase"
+
+# Test "cylc reg REG" (suite in PWD)
+TEST_NAME="${TEST_NAME_BASE}-toast"
+cd cheese
+run_ok "${TEST_NAME}" cylc register toast
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
+REGISTERED toast -> ${PWD}
+__OUT__
+cd ..
+exists_ok "${CYLC_RUN_DIR}/toast/.service/passphrase"
+
+# Test "cylc reg REG PATH"
+TEST_NAME="${TEST_NAME_BASE}-bagels"
+run_ok "${TEST_NAME}" cylc register bagels cheese
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
+REGISTERED bagels -> ${PWD}/cheese
+__OUT__
+exists_ok "${CYLC_RUN_DIR}/bagels/.service/passphrase"
+
+# Test "cylc reg REG PATH" where REG already points to PATH2
+TEST_NAME="${TEST_NAME_BASE}-repurpose"
+cp -r cheese yoghurt
+run_ok "${TEST_NAME}" cylc register cheese yoghurt
+contains_ok "${TEST_NAME}.stderr" <<__ERR__
+WARNING: name cheese repurposed from ${PWD}/cheese
+__ERR__
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
+REGISTERED cheese -> ${PWD}/yoghurt
+__OUT__
+exists_ok "${CYLC_RUN_DIR}/cheese/.service/passphrase"
 
 run_ok "${TEST_NAME_BASE}-get-dir" cylc get-directory "${SUITE_NAME}"
 

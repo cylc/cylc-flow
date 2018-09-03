@@ -412,15 +412,15 @@ To start a new run, stop the old one first with one or more of these:
         return name, path
 
     def register(self, reg=None, source=None, on_the_fly=False):
-        """Register a new suite.
+        """Register a suite, or renew its registration.
 
         Create the suite run directory and generate service files if they
         don't already exist, with a symlink to the suite source location.
 
         Args:
-            reg (str): suite name, default basename(PWD)
-            source (str): directory location of suite.rc file, default PWD
-            on_the_fly (bool): ...
+            reg (str): suite name, default basename($PWD)
+            source (str): directory location of suite.rc file, default $PWD
+            on_the_fly (bool): indicates on-the-fly registration by "cylc run".
 
         Return:
             The registered suite name (which may be computed here).
@@ -462,10 +462,11 @@ To start a new run, stop the old one first with one or more of these:
             raise SuiteServiceFileError("ERROR: no suite.rc in %s" % source)
         if orig_source is None:
             os.symlink(source, target)
-        else:
-            if orig_source != source:
-                raise SuiteServiceFileError(
-                    "ERROR: name %s already used for %s" % (reg, orig_source))
+        elif orig_source != source:
+            sys.stderr.write(
+                "WARNING: name %s repurposed from %s\n" % (reg, orig_source))
+            os.unlink(target)
+            os.symlink(source, target)
         # Create a new passphrase for the suite if necessary.
         if not self._locate_item(self.FILE_BASE_PASSPHRASE, srv_d):
             import random
