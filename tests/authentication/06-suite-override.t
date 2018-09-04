@@ -96,6 +96,7 @@ cmp_json_ok 'scan-j.out' 'scan-j.out' <<__END__
         "${PORT}",
         {
             "group":"",
+            "version":"$(cylc version)",
             "description":"Stalls when the first task fails.\nSuite overrides global authentication settings.",
             "title":"Authentication test suite.",
             "states":[

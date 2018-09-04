@@ -38,7 +38,7 @@ from cylc.gui.util import get_icon, setup_icons, set_exception_hook_dialog
 from cylc.network.port_scan import re_compile_filters
 from cylc.suite_status import (
     KEY_GROUP, KEY_META, KEY_STATES, KEY_TASKS_BY_STATE, KEY_TITLE,
-    KEY_UPDATE_TIME)
+    KEY_UPDATE_TIME, KEY_VERSION)
 from cylc.task_state import (
     TASK_STATUSES_ORDERED, TASK_STATUS_RUNAHEAD, TASK_STATUS_FAILED,
     TASK_STATUS_SUBMIT_FAILED)
@@ -48,12 +48,13 @@ class ScanApp(object):
 
     """Summarize running suite statuses for a given set of hosts."""
 
-    WARNINGS_COLUMN = 9
-    STATUS_COLUMN = 8
-    CYCLE_COLUMN = 7
-    UPDATE_TIME_COLUMN = 6
-    TITLE_COLUMN = 5
-    STOPPED_COLUMN = 4
+    WARNINGS_COLUMN = 10
+    STATUS_COLUMN = 9
+    CYCLE_COLUMN = 8
+    UPDATE_TIME_COLUMN = 7
+    TITLE_COLUMN = 6
+    STOPPED_COLUMN = 5
+    VERSION_COLUMN = 4
     SUITE_COLUMN = 3
     OWNER_COLUMN = 2
     HOST_COLUMN = 1
@@ -90,6 +91,7 @@ class ScanApp(object):
             str,  # host
             str,  # owner
             str,  # suite
+            str,  # version
             bool,  # is_stopped
             str,  # title
             int,  # update_time
@@ -111,6 +113,8 @@ class ScanApp(object):
                 (gsfg.COL_HOST, self.HOST_COLUMN, self._set_cell_text_host),
                 (gsfg.COL_OWNER, self.OWNER_COLUMN, self._set_cell_text_owner),
                 (gsfg.COL_SUITE, self.SUITE_COLUMN, self._set_cell_text_name),
+                (gsfg.COL_VERSION, self.VERSION_COLUMN,
+                 self._set_cell_text_version),
                 (gsfg.COL_TITLE, self.TITLE_COLUMN, self._set_cell_text_title),
                 (gsfg.COL_UPDATED, self.UPDATE_TIME_COLUMN,
                  self._set_cell_text_time),
@@ -698,6 +702,13 @@ class ScanApp(object):
         cell.set_property("sensitive", not is_stopped)
         cell.set_property("text", name)
 
+    def _set_cell_text_version(self, _, cell, model, iter_):
+        """Set cell text for (suite version) "version" column."""
+        value = model.get_value(iter_, self.VERSION_COLUMN)
+        is_stopped = model.get_value(iter_, self.STOPPED_COLUMN)
+        cell.set_property("sensitive", not is_stopped)
+        cell.set_property("text", value)
+
     def _set_cell_text_title(self, _, cell, model, iter_):
         """Set cell text for "title" column."""
         title = model.get_value(iter_, self.TITLE_COLUMN)
@@ -911,6 +922,7 @@ class ScanAppUpdater(threading.Thread):
             suite_updated_time = suite_info.get(KEY_UPDATE_TIME)
             if suite_updated_time is None:
                 suite_updated_time = int(time())
+            suite_version = suite_info.get(KEY_VERSION, '(< 7.8.0)')
             try:
                 title = suite_info[KEY_META].get(KEY_TITLE)
                 group = suite_info[KEY_META].get(KEY_GROUP)
@@ -940,7 +952,7 @@ class ScanAppUpdater(threading.Thread):
                 summary_text = "%s - %d" % (
                     group, group_counts[group]['total'])
                 group_iters[group] = self.suite_treemodel.append(None, [
-                    summary_text, None, None, None, False, None,
+                    summary_text, None, None, None, None, False, None,
                     suite_updated_time, None, states_text, None])
 
             tasks = sorted(self._get_warnings(key), reverse=True)
@@ -953,8 +965,8 @@ class ScanAppUpdater(threading.Thread):
                 # Total count of each state
                 parent_iter = self.suite_treemodel.append(
                     group_iters.get(group), [
-                        None, host, owner, suite, is_stopped, title,
-                        suite_updated_time, None,
+                        None, host, owner, suite, suite_version,
+                        is_stopped, title, suite_updated_time, None,
                         self._states_to_text(suite_info[KEY_STATES][0]),
                         warning_text])
                 # Count of each state by cycle points
@@ -965,13 +977,13 @@ class ScanAppUpdater(threading.Thread):
                         continue
                     self.suite_treemodel.append(
                         parent_iter, [
-                            None, None, None, None, is_stopped, None,
-                            suite_updated_time, str(point),
+                            None, None, None, None, None, is_stopped,
+                            None, suite_updated_time, str(point),
                             states_text, warning_text])
             else:
                 # No states in suite_info
                 self.suite_treemodel.append(group_iters.get(group), [
-                    None, host, owner, suite, is_stopped, title,
+                    None, host, owner, suite, suite_version, is_stopped, title,
                     suite_updated_time, None, None, warning_text])
 
         self.suite_treemodel.foreach(self._expand_row, row_ids)

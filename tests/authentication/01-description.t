@@ -101,8 +101,9 @@ cmp_json_ok 'scan-j.out' 'scan-j.out' <<__END__
         "${PORT}",
         {
             "group":"",
-            "description":"Stalls when the first task fails.\n                     Here we test out a multi-line description!",
+            "version":"$(cylc version)",
             "title":"Authentication test suite.",
+            "description":"Stalls when the first task fails.\n                     Here we test out a multi-line description!",
             "meta":{
                 "group":"",
                 "description":"Stalls when the first task fails.\n                     Here we test out a multi-line description!",

@@ -51,10 +51,11 @@ class GScanConfig(config):
     COL_TITLE = "Title"
     COL_UPDATED = "Updated"
     COL_STATUS = "Status"
+    COL_VERSION = "Version"
     COLS_DEFAULT = (COL_SUITE.lower(), COL_STATUS.lower())
     COLS = [col.lower() for col in (
         COL_GROUP, COL_HOST, COL_OWNER, COL_SUITE, COL_TITLE, COL_UPDATED,
-        COL_STATUS)]
+        COL_STATUS, COL_VERSION)]
 
     def check(self):
         """Custom configuration check."""
