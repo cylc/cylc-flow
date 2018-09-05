@@ -32,6 +32,7 @@ from time import sleep
 
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
+from cylc.hostuserutil import is_remote
 from cylc.version import CYLC_VERSION
 
 
@@ -212,7 +213,7 @@ def construct_ssh_cmd(raw_cmd, user=None, host=None, forward_x11=False,
 
 def remote_cylc_cmd(
         cmd, user=None, host=None, stdin=None, ssh_login_shell=None,
-        ssh_cylc=None, capture=False, manage=False):
+        ssh_cylc=None, capture_process=False, manage=False):
     """Run a given cylc command on another account and/or host.
 
     Arguments:
@@ -230,20 +231,22 @@ def remote_cylc_cmd(
                 * manage.
 
     Return:
-        If capture=True, return the Popen object if created successfully.
-        Otherwise, return the exit code of the remote command.
+        If capture_process=True, return the Popen object if created
+        successfully. Otherwise, return the exit code of the remote command.
     """
     return run_cmd(
         construct_ssh_cmd(
             cmd, user=user, host=host, stdin=stdin,
             ssh_login_shell=ssh_login_shell, ssh_cylc=ssh_cylc),
-        stdin=stdin, capture_process=capture,
+        stdin=stdin, capture_process=capture_process,
         capture_status=True, manage=manage)
 
 
-def remrun(dry_run=False, forward_x11=False, abort_if=None):
+def remrun(dry_run=False, forward_x11=False, abort_if=None,
+           set_rel_local=False):
     """Short for RemoteRunner().execute(...)"""
-    return RemoteRunner().execute(dry_run, forward_x11, abort_if)
+    return RemoteRunner().execute(
+        dry_run, forward_x11, abort_if, set_rel_local)
 
 
 class RemoteRunner(object):
@@ -257,13 +260,12 @@ class RemoteRunner(object):
     printed, but to stderr so as not to interfere with results.
     """
 
-    def __init__(self, argv=None, set_rel_local=False):
+    def __init__(self, argv=None):
         self.owner = None
         self.host = None
         self.ssh_login_shell = None
         self.ssh_cylc = None
         self.argv = argv or sys.argv
-        self.set_rel_local = set_rel_local  # state host as relative localhost
 
         cylc.flags.verbose = '-v' in self.argv or '--verbose' in self.argv
 
@@ -290,7 +292,8 @@ class RemoteRunner(object):
         else:
             self.is_remote = is_remote(self.host, self.owner)
 
-    def execute(self, dry_run=False, forward_x11=False, abort_if=None):
+    def execute(self, dry_run=False, forward_x11=False, abort_if=None,
+                set_rel_local=False):
         """Execute command on remote host.
 
         Returns False if remote re-invocation is not needed, True if it is
@@ -310,7 +313,7 @@ class RemoteRunner(object):
             # above: args quoted to avoid interpretation by the shell,
             # e.g. for match patterns such as '.*' on the command line.
 
-        if self.set_rel_local:
+        if set_rel_local:
             # State as relative localhost to prevent recursive host selection.
             cmd.append("--host=localhost")
         command = construct_ssh_cmd(

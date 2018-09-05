@@ -21,8 +21,8 @@ import re
 from isodatetime.data import Calendar
 from isodatetime.parsers import DurationParser
 from parsec.validate import (
-    _strip_and_unquote, _strip_and_unquote_list, _expand_list,
-    IllegalValueError)
+    _coerce_int_list, _strip_and_unquote, _strip_and_unquote_list,
+    _expand_list, IllegalValueError)
 from cylc.mp_pool import SuiteFuncContext
 from cylc.wallclock import get_seconds_as_interval_string
 
@@ -73,13 +73,17 @@ def coerce_interval_list(value, keys, args):
     )
 
 
-def convert_range_list(values, keys):
+def coerce_range_list(values, keys, _):
     """Convert valid 'X .. Y' string to list of integers from X to Y inclusive.
 
     Return the list object, or None if input is invalid 'X .. Y' format.
     """
-    list_format = r'\s*(\d+)\s*\.\.\s*(\d+)\s*$'
-    matches = re.match(list_format, values)
+    try:
+        return _coerce_int_list(values, keys, _)
+    except IllegalValueError:
+        pass
+
+    matches = re.match(r'\s*(\d+)\s*\.\.\s*(\d+)\s*$', values)
 
     core_err_msg = "Cannot extract start and end integers from '%s'" % values
     if not matches:
@@ -94,11 +98,6 @@ def convert_range_list(values, keys):
         raise ValueError("%s >= %s but 'X .. Y' format requires X <= Y." %
                          (startpoint, endpoint - 1))
     return range(startpoint, endpoint)
-
-
-def coerce_range_list(value, keys, _):
-    """Coerce a string 'X .. Y' with integer X, Y into a list of integers."""
-    return convert_range_list(value, keys)
 
 
 def coerce_xtrig(value, keys, _):

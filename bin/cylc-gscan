@@ -82,7 +82,8 @@ def main():
     from cylc.gui.gscan import ScanApp
 
     if options.all_ports:
-        args.extend(glbl_cfg().get(["suite host scanning", "hosts"]))
+        args.extend(glbl_cfg().get(
+            ["suite servers", "scan hosts"], ["localhost"]))
     scan_app = ScanApp(
         hosts=args,
         patterns_name=options.patterns_name,

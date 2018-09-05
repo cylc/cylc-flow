@@ -260,10 +260,6 @@ SPEC = {
         'host': vdr(vtype='string'),
     },
 
-    'suite host scanning': {
-        'hosts': vdr(vtype='string_list', default=["localhost"])
-    },
-
     'authentication': {
         # Allow owners to grant public shutdown rights at the most, not full
         # control.
@@ -275,9 +271,9 @@ SPEC = {
     },
 
     'suite servers': {
-        'run hosts': vdr(vtype='string_list', default=["localhost"]),
+        'run hosts': vdr(vtype='string_list'),
         'run ports': vdr(vtype='range_list', default=range(43001, 43101)),
-        'scan hosts': vdr(vtype='string_list', default=["localhost"]),
+        'scan hosts': vdr(vtype='string_list'),
         'scan ports': vdr(vtype='range_list', default=range(43001, 43101)),
         'run host select': {
             'rank': vdr(
@@ -285,7 +281,7 @@ SPEC = {
                 options=["random", "load:1", "load:5", "load:15", "memory",
                          "disk-space"],
                 default="random"),
-            'thresholds': vdr(vtype='string', default=None),
+            'thresholds': vdr(vtype='string'),
         },
     },
 }
