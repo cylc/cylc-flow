@@ -61,8 +61,8 @@ def watch_and_kill(proc):
             break
 
 
-def run_ssh_cmd(command, stdin=None, capture_process=False,
-                capture_status=False, manage=False):
+def run_cmd(command, stdin=None, capture_process=False, capture_status=False,
+            manage=False):
     """Run a given cylc command on another account and/or host.
 
     Arguments:
@@ -93,34 +93,39 @@ def run_ssh_cmd(command, stdin=None, capture_process=False,
     #   above that it ends in 'cylc', and in any case the user could execute
     #   any such command directly via ssh.
     stdout = None
+    stderr = None
     if capture_process:
         stdout = PIPE
+        stderr = PIPE
         if stdin is None:
             stdin = open(os.devnull)
 
     try:
-        popen = Popen(command, stdin=stdin, stdout=stdout)
+        proc = Popen(command, stdin=stdin, stdout=stdout, stderr=stderr)
     except OSError as exc:
-        sys.exit(r'ERROR: remote command invocation failed %s' % exc)
+        sys.exit(r'ERROR: %s: %s' % (
+            exc, ' '.join(quote(item) for item in command)))
 
     if capture_process:
-        return popen
+        return proc
     else:
         if manage:
-            watch_and_kill(popen)
-        res = popen.wait()
+            watch_and_kill(proc)
+        res = proc.wait()
         if WIFSIGNALED(res):
-            sys.exit(r'ERROR: remote command terminated by signal %d' % res)
+            sys.exit(r'ERROR: command terminated by signal %d: %s' % (
+                res, ' '.join(quote(item) for item in command)))
         elif res and capture_status:
             return res
         elif res:
-            sys.exit(r'ERROR: remote command failed %d' % res)
+            sys.exit(r'ERROR: command returns %d: %s' % (
+                res, ' '.join(quote(item) for item in command)))
         else:
             return True
 
 
 def construct_ssh_cmd(raw_cmd, user=None, host=None, forward_x11=False,
-                      set_stdin=False, ssh_login_shell=None, ssh_cylc=None,
+                      stdin=False, ssh_login_shell=None, ssh_cylc=None,
                       set_UTC=False, allow_flag_opts=False):
     """Append a bare command with further options required to run via ssh.
 
@@ -130,7 +135,7 @@ def construct_ssh_cmd(raw_cmd, user=None, host=None, forward_x11=False,
         host (string): remote host name. Use 'localhost' if not specified.
         forward_x11 (boolean):
             If True, use 'ssh -Y' to enable X11 forwarding, else just 'ssh'.
-        set_stdin (file):
+        stdin:
             If None, the `-n` option will be added to the SSH command line.
         ssh_login_shell (boolean):
             If True, launch remote command with `bash -l -c 'exec "$0" "$@"'`.
@@ -150,7 +155,7 @@ def construct_ssh_cmd(raw_cmd, user=None, host=None, forward_x11=False,
 
     if forward_x11:
         command.append('-Y')
-    if set_stdin is None:
+    if stdin is None:
         command.append('-n')
 
     user_at_host = ''
@@ -216,10 +221,10 @@ def remote_cylc_cmd(
                 * cmd (--> raw_cmd);
                 * user;
                 * host;
-                * stdin (--> set_stdin) [see also below];
+                * stdin;
                 * ssh_login_shell;
                 * ssh_cylc.
-            * See 'run_ssh_cmd()' docstring:
+            * See 'run_cmd()' docstring:
                 * stdin [see also above]
                 * capture (--> capture_process);
                 * manage.
@@ -228,12 +233,12 @@ def remote_cylc_cmd(
         If capture=True, return the Popen object if created successfully.
         Otherwise, return the exit code of the remote command.
     """
-    command = construct_ssh_cmd(
-        cmd, user=user, host=host, set_stdin=stdin,
-        ssh_login_shell=ssh_login_shell, ssh_cylc=ssh_cylc)
-
-    return run_ssh_cmd(command, stdin=stdin, capture_process=capture,
-                       capture_status=True, manage=manage)
+    return run_cmd(
+        construct_ssh_cmd(
+            cmd, user=user, host=host, stdin=stdin,
+            ssh_login_shell=ssh_login_shell, ssh_cylc=ssh_cylc),
+        stdin=stdin, capture_process=capture,
+        capture_status=True, manage=manage)
 
 
 def remrun(dry_run=False, forward_x11=False, abort_if=None):
@@ -283,7 +288,6 @@ class RemoteRunner(object):
         if self.owner is None and self.host is None:
             self.is_remote = False
         else:
-            from cylc.hostuserutil import is_remote
             self.is_remote = is_remote(self.host, self.owner)
 
     def execute(self, dry_run=False, forward_x11=False, abort_if=None):
@@ -317,4 +321,4 @@ class RemoteRunner(object):
         if dry_run:
             return command
         else:
-            return run_ssh_cmd(command)
+            return run_cmd(command)
