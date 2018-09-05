@@ -33,7 +33,7 @@
 
 _cylc() {
 
-    local cur sec opts base 
+    local cur sec opts base
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     sec="${COMP_WORDS[1]}"
