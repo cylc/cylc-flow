@@ -40,19 +40,7 @@ def main():
         __doc__, comms=True,
         argdoc=[('REG', 'Suite name'), ('[TASK]', 'Task ' + TaskID.SYNTAX)])
 
-    parser.add_option(
-        "--print-ports",
-        help="Print the port range from the cylc site config file.",
-        action="store_true", default=False, dest="print_ports")
-
     (options, args) = parser.parse_args()
-
-    if options.print_ports:
-        base = glbl_cfg().get(['comms', 'base port'])
-        range = glbl_cfg().get(['comms', 'maximum number of ports'])
-        print base, '<= port <=', base + range
-        sys.exit(0)
-
     suite = args[0]
 
     pclient = SuiteRuntimeServiceClient(
