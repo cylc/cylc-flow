@@ -946,6 +946,8 @@ class TimePoint(object):
             return self.get_week_date()[2]
         if property_name == "year_of_decade":
             return abs(self.year) % 10
+        if property_name == "decade_of_century":
+            return (abs(self.year) % 100 - abs(self.year) % 10) / 10
         if property_name == "minute_of_hour":
             if self.minute_of_hour is None:
                 return self.get_hour_minute_second()[1]
@@ -1109,6 +1111,32 @@ class TimePoint(object):
                      "second_of_minute"]:
             if attr in prop_dict:
                 return attr
+        return None
+
+    def get_smallest_missing_property_name(self):
+        """Return the smallest unit missing
+        from a truncated representation."""
+        if not self.truncated:
+            return None
+        prop_dict = self.get_truncated_properties()
+        attr_keys = ["year_of_century", "decade_of_century",
+                     "year_of_decade", "month_of_year",
+                     "week_of_year", "day_of_year", "day_of_month",
+                     "day_of_week", "hour_of_day", "minute_of_hour",
+                     "second_of_minute"]
+        attr_dict = {"year_of_century": "century",
+                     "year_of_decade": "decade_of_century",
+                     "month_of_year": "year_of_century",
+                     "week_of_year": "year_of_century",
+                     "day_of_year": "year_of_century",
+                     "day_of_month": "month_of_year",
+                     "day_of_week": "week_of_year",
+                     "hour_of_day": "day_of_month",
+                     "minute_of_hour": "hour_of_day",
+                     "second_of_minute": "minute_of_hour"}
+        for attr in attr_keys:
+            if attr in prop_dict:
+                return attr_dict[attr]
         return None
 
     def get_truncated_properties(self):
