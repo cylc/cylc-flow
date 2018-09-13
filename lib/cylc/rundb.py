@@ -540,6 +540,15 @@ class CylcSuiteDAO(object):
         for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
             callback(row_idx, list(row))
 
+    def select_checkpoint_id_restart_count(self):
+        """Return number of restart event in checkpoint_id table."""
+        stmt = r"SELECT count(event) FROM %s WHERE event==?" % (
+            self.TABLE_CHECKPOINT_ID)
+        stmt_args = ['restart']
+        for row in self.connect().execute(stmt, stmt_args):
+            return row[0]
+        return 0
+
     def select_suite_params(self, callback, id_key=None):
         """Select from suite_params or suite_params_checkpoints.
 

@@ -38,7 +38,7 @@ Other ways to see if the suite is still running:
 """
 
 _INFO_TMPL = r"""
-*** listening on %(host)s:%(port)s ***""" + SUITE_SCAN_INFO_TMPL
+*** listening on %(url)s ***""" + SUITE_SCAN_INFO_TMPL
 
 _TIMEOUT = 300.0  # 5 minutes
 
@@ -64,15 +64,15 @@ def daemonize(server):
         if pid > 0:
             # Poll for suite log to be populated
             suite_pid = None
-            suite_port = None
+            suite_url = None
             timeout = time() + _TIMEOUT
             while time() <= timeout and (
-                    suite_pid is None or suite_port is None):
+                    suite_pid is None or suite_url is None):
                 sleep(0.1)
                 try:
                     # Line 1 (or 2 in debug mode) of suite log should contain
-                    # start up message, host name and port number. Format is:
-                    #  LOG-PREFIX Suite starting: server=HOST:PORT, pid=PID
+                    # start up message, URL and PID. Format is:
+                    #  LOG-PREFIX Suite server program: url=URL, pid=PID
                     # Otherwise, something has gone wrong, print the suite log
                     # and exit with an error.
                     log_stat = os.stat(logpath)
@@ -88,9 +88,10 @@ def daemonize(server):
                     for log_line in first_two_lines:
                         if server.START_MESSAGE_PREFIX in log_line:
                             ok = True
-                            server_str, pid_str = log_line.rsplit()[-2:]
-                            suite_pid = pid_str.rsplit("=", 1)[-1]
-                            suite_port = server_str.rsplit(":", 1)[-1]
+                            suite_url, suite_pid = (
+                                item.rsplit("=", 1)[-1]
+                                for item in log_line.rsplit()[-2:])
+                            print suite_url, suite_pid
                     if not ok:
                         try:
                             sys.stderr.write(open(logpath).read())
@@ -99,13 +100,13 @@ def daemonize(server):
                             sys.exit("Suite server program exited")
                 except (IOError, OSError, ValueError):
                     pass
-            if suite_pid is None or suite_port is None:
+            if suite_pid is None or suite_url is None:
                 sys.exit("Suite not started after %ds" % _TIMEOUT)
             # Print suite information
             sys.stdout.write(_INFO_TMPL % {
                 "suite": server.suite,
                 "host": server.host,
-                "port": suite_port,
+                "url": suite_url,
                 "ps_opts": server.suite_srv_files_mgr.PS_OPTS,
                 "pid": suite_pid,
             })

@@ -28,7 +28,6 @@ import os
 import sys
 from glob import glob
 import logging
-import logging.handlers
 
 
 from cylc.cfgspec.glbl_cfg import glbl_cfg
@@ -65,7 +64,7 @@ class CylcLogFormatter(logging.Formatter):
         return get_time_string_from_unix_time(record.created)
 
 
-class TimestampRotatingFileHandler(logging.handlers.RotatingFileHandler):
+class TimestampRotatingFileHandler(logging.FileHandler):
     """Rotating suite logs using creation time stamps for names.
 
     Argument:
@@ -73,28 +72,45 @@ class TimestampRotatingFileHandler(logging.handlers.RotatingFileHandler):
         no_detach (bool): non-detach mode? (Default=False)
     """
 
+    FILE_HEADER_FLAG = 'cylc_log_file_header'
+    FILE_NUM = 'cylc_log_num'
     GLBL_KEY = 'suite logging'
+    MIN_BYTES = 1024
 
     def __init__(self, suite, no_detach=False):
-        logging.handlers.RotatingFileHandler.__init__(
-            self,
-            glbl_cfg().get_derived_host_item(suite, 'suite log'),
-            maxBytes=glbl_cfg().get(
-                [self.GLBL_KEY, 'maximum size in bytes']),
-            backupCount=glbl_cfg().get(
-                [self.GLBL_KEY, 'rolling archive length']))
+        logging.FileHandler.__init__(
+            self, glbl_cfg().get_derived_host_item(suite, 'suite log'))
         self.no_detach = no_detach
         self.stamp = None
         self.formatter = CylcLogFormatter()
+        self.header_records = []
 
-    def shouldRollover(self, record):
-        """Create file if necessary."""
-        return (
-            self.stamp is None or
-            logging.handlers.RotatingFileHandler.shouldRollover(self, record))
+    def emit(self, record):
+        """Emit a record, rollover log if necessary."""
+        try:
+            if self.should_rollover(record):
+                self.do_rollover()
+            if record.__dict__.get(self.FILE_HEADER_FLAG):
+                self.header_records.append(record)
+            logging.FileHandler.emit(self, record)
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except Exception:
+            self.handleError(record)
 
-    def doRollover(self):
-        """Create log file if necessary."""
+    def should_rollover(self, record):
+        """Should rollover?"""
+        if self.stamp is None:
+            return True
+        max_bytes = glbl_cfg().get([self.GLBL_KEY, 'maximum size in bytes'])
+        if max_bytes < self.MIN_BYTES:  # No silly value
+            max_bytes = self.MIN_BYTES
+        msg = "%s\n" % self.format(record)
+        self.stream.seek(0, 2)  # due to non-posix-compliant Windows feature
+        return self.stream.tell() + len(msg) >= max_bytes
+
+    def do_rollover(self):
+        """Create and rollover log file if necessary."""
         # Generate new file name
         self.stamp = get_current_time_string(use_basic_format=True)
         filename = self.baseFilename + '.' + self.stamp
@@ -108,16 +124,26 @@ class TimestampRotatingFileHandler(logging.handlers.RotatingFileHandler):
             os.unlink(self.baseFilename)
         os.symlink(os.path.basename(filename), self.baseFilename)
         # Housekeep log files
-        if self.backupCount:
+        arch_len = glbl_cfg().get([self.GLBL_KEY, 'rolling archive length'])
+        if arch_len:
             log_files = glob(self.baseFilename + '.*')
             log_files.sort()
-            while len(log_files) > self.backupCount:
+            while len(log_files) > arch_len:
                 os.unlink(log_files.pop(0))
         # Reopen stream, redirect STDOUT and STDERR to log
         if self.stream:
             self.stream.close()
             self.stream = None
         self.stream = self._open()
+        # Dup STDOUT and STDERR in detach mode
         if not self.no_detach:
             os.dup2(self.stream.fileno(), sys.stdout.fileno())
             os.dup2(self.stream.fileno(), sys.stderr.fileno())
+        # Emit header records (should only do this for subsequent log files
+        for header_record in self.header_records:
+            if self.FILE_NUM in header_record.__dict__:
+                # Increment log file number
+                header_record.__dict__[self.FILE_NUM] += 1
+                header_record.args = header_record.args[0:-1] + (
+                    header_record.__dict__[self.FILE_NUM],)
+            logging.FileHandler.emit(self, header_record)

@@ -84,7 +84,6 @@ SPEC = {
     },
 
     'suite logging': {
-        'roll over at start-up': [VDR.V_BOOLEAN, True],
         'rolling archive length': [VDR.V_INTEGER, 5],
         'maximum size in bytes': [VDR.V_INTEGER, 1000000],
     },

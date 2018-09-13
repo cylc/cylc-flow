@@ -98,9 +98,10 @@ class Scheduler(object):
     INTERVAL_STOP_KILL = 10.0
     INTERVAL_STOP_PROCESS_POOL_EMPTY = 0.5
 
-    START_MESSAGE_PREFIX = 'Suite starting: '
+    START_MESSAGE_PREFIX = 'Suite server: '
     START_MESSAGE_TMPL = (
-        START_MESSAGE_PREFIX + 'server=%(host)s:%(port)s pid=%(pid)s')
+        START_MESSAGE_PREFIX +
+        'url=%(comms_method)s://%(host)s:%(port)s/ pid=%(pid)s')
 
     # Dependency negotation etc. will run after these commands
     PROC_CMDS = (
@@ -339,8 +340,10 @@ conditions; see `cylc conditions`.
             # copied to the public database.
             pri_dao.take_checkpoints("restart")
             pri_dao.execute_queued_items()
+            n_restart = pri_dao.select_checkpoint_id_restart_count()
         else:
             self.configure_contact()
+            n_restart = 0
 
         self.profiler.log_memory("scheduler.py: before load_suiterc")
         self.load_suiterc()
@@ -375,17 +378,27 @@ conditions; see `cylc conditions`.
         if self.options.genref or self.options.reftest:
             self.configure_reftest()
 
-        LOG.info(self.START_MESSAGE_TMPL % {
-            'host': self.host, 'port': self.httpserver.port,
-            'pid': os.getpid()})
+        log_extra = {TimestampRotatingFileHandler.FILE_HEADER_FLAG: True}
+        log_extra_num = {
+            TimestampRotatingFileHandler.FILE_HEADER_FLAG: True,
+            TimestampRotatingFileHandler.FILE_NUM: 1}
+        LOG.info(
+            self.START_MESSAGE_TMPL % {
+                'comms_method': self.httpserver.comms_method,
+                'host': self.host,
+                'port': self.httpserver.port,
+                'pid': os.getpid()},
+            extra=log_extra,
+        )
+        LOG.info('Run: (re)start=%d log=%d', n_restart, 1, extra=log_extra_num)
+        LOG.info('Cylc version: %s', CYLC_VERSION, extra=log_extra)
         # Note that the following lines must be present at the top of
         # the suite log file for use in reference test runs:
-        LOG.info('Cylc version: %s' % CYLC_VERSION)
-        LOG.info('Run mode: %s' % self.run_mode)
-        LOG.info('Initial point: %s' % self.initial_point)
+        LOG.info('Run mode: %s', self.run_mode, extra=log_extra)
+        LOG.info('Initial point: %s', self.initial_point, extra=log_extra)
         if self.start_point != self.initial_point:
-            LOG.info('Start point: %s' % self.start_point)
-        LOG.info('Final point: %s' % self.final_point)
+            LOG.info('Start point: %s', self.start_point, extra=log_extra)
+        LOG.info('Final point: %s', self.final_point, extra=log_extra)
 
         self.pool = TaskPool(
             self.config, self.final_point, self.suite_db_mgr,
