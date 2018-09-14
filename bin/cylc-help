@@ -395,7 +395,7 @@ comsum['get-suite-contact'] = (
 comsum['get-suite-version'] = 'Print cylc version of a suite server program'
 comsum['gscan'] = 'Scan GUI for monitoring multiple suites'
 comsum['gpanel'] = 'Internal interface for GNOME 2 panel applet'
-comsum['review'] = 'Start/stop ad-hoc Cylc Review web service server(s).'
+comsum['review'] = 'Start/stop ad-hoc Cylc Review web service server.'
 # control
 comsum['gui'] = '(a.k.a. gcylc) cylc GUI for suite control etc.'
 comsum['run'] = 'Start a suite at a given cycle point'

@@ -559,6 +559,7 @@ class CylcReviewDAO(object):
             "server": None}
         dao = self._db_init(user_name, suite_name)
         if not os.access(dao.db_file_name, os.F_OK | os.R_OK):
+            self._db_close(user_name, suite_name)
             return ret
 
         port_file_path = os.path.expanduser(
@@ -583,9 +584,12 @@ class CylcReviewDAO(object):
 
         stmt = "SELECT status FROM task_states WHERE status GLOB ? LIMIT 1"
         stmt_args = ["*failed"]
-        for _ in self._db_exec(user_name, suite_name, stmt, stmt_args):
-            ret["is_failed"] = True
-            break
+        try:
+            for _ in self._db_exec(user_name, suite_name, stmt, stmt_args):
+                ret["is_failed"] = True
+                break
+        except sqlite3.Error:
+            pass  # case with no task_states table.
         self._db_close(user_name, suite_name)
 
         return ret

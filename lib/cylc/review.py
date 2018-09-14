@@ -128,6 +128,8 @@ class CylcReviewService(object):
         data.update(self._get_suite_logs_info(user, suite))
         data["broadcast_states"] = (
             self.suite_dao.get_suite_broadcast_states(user, suite))
+        if not data["broadcast_states"]:
+            raise cherrypy.HTTPError(404)
         if form == "json":
             return json.dumps(data)
         try:
