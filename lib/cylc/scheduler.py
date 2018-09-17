@@ -56,7 +56,7 @@ from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
 from cylc.suite_status import (
     KEY_DESCRIPTION, KEY_GROUP, KEY_META, KEY_NAME, KEY_OWNER, KEY_STATES,
-    KEY_TASKS_BY_STATE, KEY_TITLE, KEY_UPDATE_TIME)
+    KEY_TASKS_BY_STATE, KEY_TITLE, KEY_UPDATE_TIME, KEY_VERSION)
 from cylc.taskdef import TaskDef
 from cylc.task_id import TaskID
 from cylc.task_job_mgr import TaskJobManager
@@ -755,6 +755,7 @@ conditions; see `cylc conditions`.
         if PRIVILEGE_LEVELS[0] in privileges:
             result[KEY_NAME] = self.suite
             result[KEY_OWNER] = self.owner
+            result[KEY_VERSION] = CYLC_VERSION
         if PRIVILEGE_LEVELS[1] in privileges:
             result[KEY_META] = self.config.cfg[KEY_META]
             for key in (KEY_TITLE, KEY_DESCRIPTION, KEY_GROUP):

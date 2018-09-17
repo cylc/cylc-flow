@@ -27,6 +27,7 @@ KEY_STATES = "states"
 KEY_TASKS_BY_STATE = "tasks-by-state"
 KEY_TITLE = "title"
 KEY_UPDATE_TIME = "update-time"
+KEY_VERSION = "version"
 
 # Suite status strings.
 SUITE_STATUS_HELD = "held"

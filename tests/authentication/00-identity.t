@@ -100,6 +100,7 @@ cmp_json_ok 'scan-j.out' 'scan-j.out' << __END__
         ${PORT},
         {
             "owner":"${USER}",
+            "version": "$(cylc version)",
             "name":"${SUITE_NAME}"
         }
     ]
