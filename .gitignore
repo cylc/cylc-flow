@@ -42,3 +42,7 @@ passphrase
 
 # profiling
 .profiling
+
+# distutils files
+dist
+MANIFEST
