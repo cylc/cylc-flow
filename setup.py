@@ -13,6 +13,6 @@ setup(name='cylc',
     packages=['lib/cylc'],
     license='GPL',
     platforms='any',
-    install_requires=['jinja2==2.10', 'markupsafe==1.0', 'cherrypy==18.0.1', 'xdot==0.6'],
+    install_requires=['jinja2==2.10', 'markupsafe==1.0', 'xdot==0.6'],
     python_requires='>=2.7'
 )
