@@ -48,3 +48,9 @@ passphrase
 .coverage.*
 coverage.xml
 htmlcov/
+
+# distutils files
+dist
+MANIFEST
+cylc.egg-info
+.eggs
