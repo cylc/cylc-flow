@@ -47,3 +47,5 @@ passphrase
 dist
 MANIFEST
 cylc.egg-info
+.eggs
+
