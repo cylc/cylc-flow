@@ -42,3 +42,10 @@ passphrase
 
 # profiling
 .profiling
+
+# distutils files
+dist
+MANIFEST
+cylc.egg-info
+.eggs
+
