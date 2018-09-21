@@ -236,7 +236,7 @@ information_commands['cat-state'] = ['cat-state']
 information_commands['show'] = ['show']
 information_commands['cat-log'] = ['cat-log', 'log']
 information_commands['get-suite-contact'] = [
-    'get-suite-contact', 'get-contact', 'print-contact']
+    'get-suite-contact', 'get-contact']
 information_commands['get-suite-version'] = [
     'get-suite-version', 'get-cylc-version']
 
