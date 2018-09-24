@@ -550,6 +550,19 @@ class TestHostAppointer(unittest.TestCase):
             'HOST_1'
         )
 
+    def test_simple(self):
+        """Simple end-to-end test of the host appointer."""
+        self.mock_global_config()
+        self.assertEqual(
+            self.app.appoint_host(),
+            'localhost'
+        )
+        self.mock_global_config(set_hosts=['foo'])
+        self.assertEqual(
+            self.app.appoint_host(),
+            'foo'
+        )
+
     def test_parse_thresholds(self):
         """Test the 'parse_thresholds' method."""
         self.mock_global_config()
