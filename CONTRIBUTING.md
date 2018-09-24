@@ -60,6 +60,7 @@ requests_).
  - Lois Hugget
  - (Martin Dix)
  - (Ivor Blockley)
+ - Alexander Paulsell
 
 (All contributors are identifiable with email addresses in the git version
 control logs or otherwise.)
