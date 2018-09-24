@@ -18,7 +18,24 @@
 # Run unit tests to test HostAppointer class for selecting hosts.
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 1
+set_test_number 3
 
 run_ok "${TEST_NAME_BASE}" python -m 'cylc.scheduler_cli'
+
+# No run hosts list
+create_test_globalrc '' ''
+run_ok "${TEST_NAME_BASE}-no-host-list" python - <<'__PYTHON__'
+from cylc.scheduler_cli import HostAppointer
+assert HostAppointer().appoint_host() == 'localhost'
+__PYTHON__
+
+# Empty run hosts list
+create_test_globalrc '' '
+[suite servers]
+    run hosts =
+'
+run_ok "${TEST_NAME_BASE}-empty-host-list" python - <<'__PYTHON__'
+from cylc.scheduler_cli import HostAppointer
+assert HostAppointer().appoint_host() == 'localhost'
+__PYTHON__
 exit

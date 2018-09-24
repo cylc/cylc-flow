@@ -81,17 +81,15 @@ def main(is_restart=False):
 
     # Check whether a run host is explicitly specified, else select one.
     if not options.host:
-        host_appointer = HostAppointer()
-        if host_appointer.hosts and host_appointer.hosts != ['localhost']:
-            host = host_appointer.appoint_host()
-            if is_remote_host(host):
-                if is_restart:
-                    base_cmd = ["restart"] + sys.argv[1:]
-                else:
-                    base_cmd = ["run"] + sys.argv[1:]
-                # Prevent recursive host selection
-                base_cmd.append("--host=localhost")
-                return remote_cylc_cmd(base_cmd, host=host)
+        host = HostAppointer().appoint_host()
+        if is_remote_host(host):
+            if is_restart:
+                base_cmd = ["restart"] + sys.argv[1:]
+            else:
+                base_cmd = ["run"] + sys.argv[1:]
+            # Prevent recursive host selection
+            base_cmd.append("--host=localhost")
+            return remote_cylc_cmd(base_cmd, host=host)
     if remrun(set_rel_local=True):  # State localhost as above.
         sys.exit()
 
@@ -365,7 +363,7 @@ class HostAppointer(object):
             sleep(0.01)
         return host_stats
 
-    def _remove_bad_hosts(self, mock_stats=False):
+    def _remove_bad_hosts(self, mock_host_stats=None):
         """Return dictionary of 'good' hosts with their metric stats.
 
         Run 'get-host-metrics' on each run host in parallel & store extracted
@@ -373,8 +371,8 @@ class HostAppointer(object):
         whereby either metric data cannot be accessed from the command or at
         least one metric value does not pass a specified threshold.
         """
-        if mock_stats:  # Create fake data for unittest purposes (only).
-            host_stats = dict(mock_stats)  # Prevent mutable object issues.
+        if mock_host_stats:  # Create fake data for unittest purposes (only).
+            host_stats = dict(mock_host_stats)  # Prevent mutable object issues
         else:
             if not self.hosts:
                 return {}
@@ -437,15 +435,18 @@ class HostAppointer(object):
                 sys.stderr.write(base_msg + ', '.join(sort_asc_hosts) + '.\n')
             return sort_asc_hosts[0]
 
-    def appoint_host(self, mock_stats=False):
+    def appoint_host(self, mock_host_stats=None):
         """Appoint the most suitable host to (re-)run a suite on."""
+        if mock_host_stats is None and (
+                not self.hosts or self.hosts == ['localhost']):
+            return 'localhost'
         # Check if immediately 'trivial': no thresholds and zero or one hosts.
         initial_check = self._trivial_choice(
             self.hosts, ignore_if_thresholds_prov=True)
         if initial_check:
             return initial_check
 
-        good_host_stats = self._remove_bad_hosts(mock_stats=mock_stats)
+        good_host_stats = self._remove_bad_hosts(mock_host_stats)
 
         # Re-check for triviality after bad host removal; otherwise must rank.
         pre_rank_check = self._trivial_choice(good_host_stats.keys())
@@ -747,7 +748,7 @@ class TestHostAppointer(unittest.TestCase):
             # Use same group of mock hosts each time, but ensure compatible
             # number (at host_list changeover only; avoid re-creating same).
             if index in (0, 8, 16):
-                mock_hosts = dict(self.create_mock_hosts(
+                mock_host_stats = dict(self.create_mock_hosts(
                     len(host_list), [400000, 30000, 0.05], [50000, 1000, 0.2],
                     0.4))
 
@@ -757,24 +758,20 @@ class TestHostAppointer(unittest.TestCase):
 
             if correct_results[index] == 'HOST_X':  # random, any X={1..5} fine
                 self.assertTrue(
-                    self.app.appoint_host(mock_stats=mock_hosts) in
-                    host_list
-                )
+                    self.app.appoint_host(mock_host_stats) in host_list)
             elif correct_results[index] == 'HOST_Y':  # random + thr, X={2,3}
                 self.assertTrue(
-                    self.app.appoint_host(mock_stats=mock_hosts) in
-                    host_list[1:3]
-                )
+                    self.app.appoint_host(mock_host_stats) in host_list[1:3])
             elif isinstance(correct_results[index], str):
                 self.assertEqual(
-                    self.app.appoint_host(mock_stats=mock_hosts),
+                    self.app.appoint_host(mock_host_stats),
                     correct_results[index]
                 )
             else:
                 self.assertRaises(
                     correct_results[index],
                     self.app.appoint_host,
-                    mock_stats=mock_hosts
+                    mock_host_stats
                 )
 
 
