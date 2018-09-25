@@ -45,8 +45,6 @@ class CylcConfigValidator(ParsecValidator):
             Map value type keys with coerce methods.
     """
     # Paramterized names containing at least one comma.
-    _REC_PARAM_INT_RANGE = re.compile(
-        r'\A([\+\-]?\d+)\.\.([\+\-]?\d+)(?:\.\.(\d+))?\Z')
     _REC_NAME_SUFFIX = re.compile(r'\A[\w\-+%@]+\Z')
     _REC_TRIG_FUNC = re.compile(r'(\w+)\((.*)\)(?:\:(\w+))?')
 
@@ -193,18 +191,17 @@ class CylcConfigValidator(ParsecValidator):
         items = []
         can_only_be = None   # A flag to prevent mixing str and int range
         for item in cls.strip_and_unquote_list(keys, value):
-            match = cls._REC_PARAM_INT_RANGE.match(item)
-            if match:
+            values = cls.parse_int_range(item)
+            if values is not None:
                 if can_only_be == str:
                     raise IllegalValueError(
                         'parameter', keys, value, 'mixing int range and str')
                 can_only_be = int
-                lower, upper, step = match.groups()
-                if not step:
-                    step = 1
-                items.extend(range(int(lower), int(upper) + 1, int(step)))
+                items.extend(values)
             elif cls._REC_NAME_SUFFIX.match(item):
-                if not item.isdigit():
+                try:
+                    int(item)
+                except ValueError:
                     if can_only_be == int:
                         raise IllegalValueError(
                             'parameter', keys, value,
@@ -214,11 +211,10 @@ class CylcConfigValidator(ParsecValidator):
             else:
                 raise IllegalValueError(
                     'parameter', keys, value, '%s: bad value' % item)
-        if not items or can_only_be == str or any(
-                not str(item).isdigit() for item in items):
-            return items
-        else:
+        try:
             return [int(item) for item in items]
+        except ValueError:
+            return items
 
     def coerce_xtrigger(self, value, keys):
         """Coerce a string into an xtrigger function context object.

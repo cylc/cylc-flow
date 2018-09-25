@@ -96,12 +96,11 @@ class ParsecValidator(object):
         r"\A'''(.*?)'''\s*(?:#.*)?\Z", re.MULTILINE | re.DOTALL)
     _REC_MULTI_LINE_DOUBLE = re.compile(
         r'\A"""(.*?)"""\s*(?:#.*)?\Z', re.MULTILINE | re.DOTALL)
+    # integer range syntax START..END[..STEP]
+    _REC_INT_RANGE = re.compile(
+        r'\A([\+\-]?\d+)\s*\.\.\s*([\+\-]?\d+)(?:\s*\.\.\s*(\d+))?\Z')
     # Paramterized names containing at least one comma.
     _REC_MULTI_PARAM = re.compile(r'<[\w]+,.*?>')
-    _REC_PARAM_INT_RANGE = re.compile(
-        r'\A([\+\-]?\d+)\.\.([\+\-]?\d+)(?:\.\.(\d+))?\Z')
-    _REC_NAME_SUFFIX = re.compile(r'\A[\w\-+%@]+\Z')
-    _REC_TRIG_FUNC = re.compile(r'(\w+)\((.*)\)(?:\:(\w+))?')
 
     # Value type constants
     V_BOOLEAN = 'V_BOOLEAN'
@@ -224,8 +223,14 @@ class ParsecValidator(object):
     @classmethod
     def coerce_int_list(cls, value, keys):
         "Coerce list values with optional multipliers to integer."
-        values = cls.strip_and_unquote_list(keys, value)
-        return cls.expand_list(values, keys, int)
+        items = []
+        for item in cls.strip_and_unquote_list(keys, value):
+            values = cls.parse_int_range(item)
+            if values is None:
+                items.extend(cls.expand_list([item], keys, int))
+            else:
+                items.extend(values)
+        return items
 
     @classmethod
     def coerce_str(cls, value, keys):
@@ -265,6 +270,23 @@ class ParsecValidator(object):
                 except ValueError as exc:
                     raise IllegalValueError('list', keys, item, exc)
         return lvalues
+
+    @classmethod
+    def parse_int_range(cls, value):
+        """Parse a value containing an integer range START..END[..STEP].
+
+        Return (list):
+            A list containing the integer values in range,
+            or None if value does not contain an integer range.
+        """
+        match = cls._REC_INT_RANGE.match(value)
+        if match:
+            lower, upper, step = match.groups()
+            if not step:
+                step = 1
+            return range(int(lower), int(upper) + 1, int(step))
+        else:
+            return None
 
     @classmethod
     def strip_and_unquote(cls, keys, value):
