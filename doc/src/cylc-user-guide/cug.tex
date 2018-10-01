@@ -486,6 +486,20 @@ become quite trivial as we've removed or bundled some former dependencies, but
 in future we intend to make it print a comprehensive list of library versions
 etc.\ to include in with bug reports.)
 
+To check for specific packages only, supply these as arguments to the
+\lstinline=check-software= command, either in the form used in the output of
+the bare command, without any parent package prefix and colon, or
+alternatively all in lower-case, should the given form contain capitals. For
+example:
+
+\begin{lstlisting}
+$ cylc check-software Python graphviz imagemagick
+\end{lstlisting}
+
+With arguments, check-software provides an exit status indicating a
+collective pass (zero) or a failure of that number of packages to satisfy
+the requirements (non-zero integer).
+
 \subsection{Software Bundled With Cylc}
 
 Cylc bundles several third party packages which do not need to be installed
