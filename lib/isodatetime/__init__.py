@@ -17,4 +17,4 @@
 # ----------------------------------------------------------------------------
 """Python ISO 8601 date time parser and data model/manipulation utilities."""
 
-__version__ = "2018.02.0"
+__version__ = "2018.09.0"
