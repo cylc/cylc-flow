@@ -33,7 +33,6 @@ import os
 from pipes import quote
 import shlex
 from time import time
-import traceback
 
 from parsec.config import ItemNotFoundError
 

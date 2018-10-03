@@ -20,7 +20,7 @@
 This module provides:
 - A custom rolling file handler for suite logs with date-time names.
 - A formatter with ISO date time and indented multi-line messages.
-  Note: The ISO date time bit is reducndant in Python 3,
+  Note: The ISO date time bit is redundant in Python 3,
   because "time.strftime" will handle time zone from "localtime" properly.
 """
 
@@ -139,7 +139,7 @@ class TimestampRotatingFileHandler(logging.FileHandler):
         if not self.no_detach:
             os.dup2(self.stream.fileno(), sys.stdout.fileno())
             os.dup2(self.stream.fileno(), sys.stderr.fileno())
-        # Emit header records (should only do this for subsequent log files
+        # Emit header records (should only do this for subsequent log files)
         for header_record in self.header_records:
             if self.FILE_NUM in header_record.__dict__:
                 # Increment log file number

@@ -747,7 +747,7 @@ conditions; see `cylc conditions`.
             LOG.addHandler(client_info['err_log_handler'])
         if full_mode or client_info['err_log_handler'].buffer:
             ret['err_content'] = '\n'.join(
-                client_info['err_log_handler'].buffer)
+                (str(item) for item in client_info['err_log_handler'].buffer))
             ret['err_size'] = len(ret['err_content'])
             client_info['err_log_handler'].flush()
         client_info['prev_time'] = client_info['time']

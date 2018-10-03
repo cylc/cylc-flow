@@ -1214,7 +1214,7 @@ class TaskPool(object):
                 itask.get_offset_as_seconds(itask.tdef.expiration_offset))
         if now > itask.expire_time:
             msg = 'Task expired (skipping job).'
-            LOG.warning('[%s] -', itask, msg)
+            LOG.warning('[%s] -%s', itask, msg)
             self.task_events_mgr.setup_event_handlers(itask, "expired", msg)
             itask.state.reset_state(TASK_STATUS_EXPIRED)
             return True
