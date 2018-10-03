@@ -59,10 +59,7 @@ class HTTPServer(object):
         self.port = None
 
         # Figure out the ports we are allowed to use.
-        base_port = glbl_cfg().get(['communication', 'base port'])
-        max_ports = glbl_cfg().get(
-            ['communication', 'maximum number of ports'])
-        self.ok_ports = range(int(base_port), int(base_port) + int(max_ports))
+        self.ok_ports = glbl_cfg().get(['suite servers', 'run ports'])
         random.shuffle(self.ok_ports)
 
         comms_options = glbl_cfg().get(['communication', 'options'])

@@ -418,10 +418,10 @@ def main():
                 cmd.append('--remote-arg=%s' % quote(batchview_cmd))
             cmd.append(suite_name)
             capture = (mode == 'edit')
-            manage = (mode == 'tail')
             try:
-                proc = remote_cylc_cmd(cmd, user, host, capture=capture,
-                                       manage=manage)
+                proc = remote_cylc_cmd(
+                    cmd, user, host, capture_process=capture,
+                    manage=(mode == 'tail'))
             except KeyboardInterrupt:
                 # Ctrl-C while tailing.
                 pass

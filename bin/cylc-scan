@@ -28,8 +28,8 @@ users.
 If a list of HOSTS is specified, it will obtain a listing of running suites by
 scanning all ports in the relevant range for running suites on the specified
 hosts. If the -a/--all option is specified, it will use the global
-configuration "[suite host scanning]" setting to determine a list of hosts to
-scan.
+configuration "[suite servers]scan hosts" setting to determine a list of hosts
+to scan.
 
 Suite passphrases are not needed to get identity information (name and owner).
 Titles, descriptions, state totals, and cycle point state totals may also be
@@ -161,10 +161,8 @@ def main():
     options, args = parser.parse_args()
 
     if options.print_ports:
-        base = glbl_cfg().get(["communication", "base port"])
-        max_num_ports = glbl_cfg().get(
-            ["communication", "maximum number of ports"])
-        print base, "<= port <=", base + max_num_ports
+        run_ports_list = glbl_cfg().get(['suite servers', 'run ports'])
+        print run_ports_list[0], '<= port <=', run_ports_list[-1]
         sys.exit(0)
 
     indent = "   "
@@ -211,7 +209,8 @@ def main():
     except ValueError as exc:
         parser.error(str(exc))
     if options.all_ports:
-        args.extend(glbl_cfg().get(["suite host scanning", "hosts"]))
+        args.extend(
+            glbl_cfg().get(["suite servers", "scan hosts"], ["localhost"]))
     if not args:
         args = get_scan_items_from_fs(cre_owner)
     if not args:

@@ -29,7 +29,7 @@ This applet can be tested using the --test option.
 To customize themes, copy $CYLC_DIR/etc/gcylc.rc.eg to $HOME/.cylc/gcylc.rc and
 follow the instructions in the file.
 
-To configure default suite hosts, edit "[suite host scanning]hosts" in your
+To configure default suite hosts, edit "[suite servers]scan hosts" in your
 global.rc file."""
 
 from optparse import OptionParser

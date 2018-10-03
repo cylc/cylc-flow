@@ -325,21 +325,26 @@ Cylc defaults to HTTPS if this setting is not explicitly configured.
 
 \subsubsection[base port]{[communication] \textrightarrow base port }
 
-The first port that cylc is allowed to use.
+The first port that Cylc is allowed to use. This config item is deprecated;
+instead specify this in combination with the also-deprecated
+\lstinline=maximum number of ports= using the \lstinline=run ports=
+setting under \lstinline=[suite servers]=.
 
 \begin{myitemize}
 \item {\em type:} integer
-\item {\em default:} 43001
+\item {\em default:} \lstinline=43001=
 \end{myitemize}
 
 \subsubsection[maximum number of ports]{[communication] \textrightarrow maximum number of ports}
 
 This determines the maximum number of suites that can run at once on the
-suite host.
+suite host. It is deprecated; instead specify this in combination with the
+also-deprecated \lstinline=base port= using the \lstinline=run ports=
+setting under \lstinline=[suite servers]=.
 
 \begin{myitemize}
 \item {\em type:} integer
-\item {\em default:} 100
+\item {\em default:} \lstinline=100=
 \end{myitemize}
 
 \subsubsection[proxies on]{[communication] \textrightarrow proxies on}
@@ -748,6 +753,141 @@ exceeds its execution time limit.
     \end{lstlisting}
 \end{myitemize}
 
+\subsection{[suite servers] }
+
+Configure allowed suite hosts and ports for starting up (running or
+restarting) suites and enabling them to be detected whilst running via
+utilities such as \lstinline=cylc gscan=. Additionally configure host
+selection settings specifying how to determine the most suitable run host at
+any given time from those configured.
+
+\subsubsection[run hosts]{[suite servers] \textrightarrow run hosts }
+
+A list of allowed suite run hosts. One of these hosts will be appointed for
+a suite to start up on if an explicit host is not provided as an option to
+a \lstinline=run= or \lstinline=restart= command.
+
+\begin{myitemize}
+\item {\em type:} comma-separated list of host names and/or IP addresses.
+\item {\em default:} \lstinline=localhost=
+\end{myitemize}
+
+\subsubsection[scan hosts]{[suite servers] \textrightarrow scan hosts }
+
+A list of hosts to scan for running suites.
+
+\begin{myitemize}
+\item {\em type:} comma-separated list of host names and/or IP addresses.
+\item {\em default:} \lstinline=localhost=
+\end{myitemize}
+
+\subsubsection[run ports]{[suite servers] \textrightarrow run ports }
+
+A list of allowed ports for Cylc to use to run suites. Note that only one
+suite can run per port for a given host, so the length of this list
+determines the maximum number of suites that can run at once per suite host.
+This config item supersedes the deprecated settings \lstinline=base port=
+and \lstinline=maximum number of ports=, where the base port is equivalent to
+the first port, and the maximum number of ports to the length, of this list.
+
+\begin{myitemize}
+\item {\em type:} string in the format \lstinline=X .. Y= for
+ \lstinline@X <= Y@ where \lstinline=X= and \lstinline=Y= are integers.
+\item {\em default:} \lstinline=43001 .. 43100= (equivalent to the list
+\lstinline=43001, 43002, ... , 43099, 43100=)
+\end{myitemize}
+
+\subsubsection[scan ports]{[suite servers] \textrightarrow scan ports }
+
+A list of ports to scan for running suites on each host set in scan hosts.
+
+\begin{myitemize}
+\item {\em type:} string in the format \lstinline=X .. Y= for
+ \lstinline@X <= Y@ where \lstinline=X= and \lstinline=Y= are integers.
+\item {\em default:} \lstinline=43001 .. 43100= (equivalent to the list
+\lstinline=43001, 43002, ... , 43099, 43100=)
+\end{myitemize}
+
+\subsubsection[run host select]{[suite servers] \textrightarrow [[run host select]]}
+
+Configure thresholds for excluding insufficient hosts and a method for
+ranking the remaining hosts to be applied in selection of the most suitable
+\lstinline=run host=, from those configured, at start-up whenever a set host
+is not specified on the command line via the \lstinline@--host=@ option.
+
+\paragraph[rank]{[suite servers] \textrightarrow [[run host select]] \textrightarrow rank}
+
+The method to use to rank the \lstinline=run host= list in order of
+suitability.
+
+\begin{myitemize}
+\item {\em type:} string (which must be one of the options outlined below)
+\item {\em default:} \lstinline=random=
+\item {\em options:}
+    \begin{myitemize}
+    \item {\bf random} - shuffle the hosts to select a host at random
+    \item {\bf load:1} - rank and select for the lowest load average over 1 minute (as given by the \lstinline=uptime= command)
+    \item {\bf load:5} - as for \lstinline=load:1= above, but over 5 minutes
+    \item {\bf load:15} - as for \lstinline=load:1= above, but over 15 minutes
+    \item {\bf memory} - rank and select for the highest usable memory i.e.
+      free memory plus memory in the buffer cache ('buffers') and in the
+      page cache ('cache'), as specified under \lstinline=/proc/meminfo=
+    \item {\bf disk-space:PATH} - rank and select for the highest free disk
+      space for a given mount directory path \lstinline=PATH= as given by
+      the \lstinline=df= command, where multiple paths may be specified
+      individually i.e. via \lstinline=disk-space:PATH_1= and
+      \lstinline=disk-space:PATH_2=, etc.
+    \end{myitemize}
+\item {\em default:} (none)
+\end{myitemize}
+
+\paragraph[thresholds]{[suite servers] \textrightarrow [[run host select]] \textrightarrow thresholds}
+
+A list of thresholds i.e. cutoff values which run hosts must meet in order
+to be considered as a possible run host. Each threshold is a minimum or a
+maximum requirement depending on the context of the measure; usable
+memory (\lstinline=memory=) and free disk space
+(\lstinline=disk-space:PATH=) threshold values set a {\em minimum} value,
+which must be exceeded, whereas load average (\lstinline=load:1=,
+\lstinline=load:5= and \lstinline=load:15=) threshold values set a
+{\em maximum}, which must not be. Failure to meet a threshold results in
+exclusion from the list of hosts that undergo ranking to
+determine the best host which becomes the run host.
+
+\begin{myitemize}
+\item {\em type:} string in format
+\lstinline=MEASURE_1 CUTOFF_1; ... ;MEASURE_n CUTOFF_n= (etc),
+where each \lstinline=MEASURE_N= is one of the options below (note
+these correspond to all the rank methods accepted under the rank setting
+except for \lstinline=random= which does not make sense as a threshold
+measure). Spaces delimit corresponding measures and their values, while
+semi-colons (optionally with subsequent spaces) delimit each measure-value
+pair.
+\item {\em options:}
+    \begin{myitemize}
+    \item {\bf load:1} - load average over 1 minute (as given by
+the \lstinline=uptime= command)
+    \item {\bf load:5} - as for \lstinline=load:1= above, but over 5 minutes
+    \item {\bf load:15} - as for \lstinline=load:1= above, but over 15 minutes
+    \item {\bf memory} - usable memory i.e. free memory plus memory in the
+      buffer cache ('buffers') and in the page cache ('cache'), in KB, as
+      specified under \lstinline=/proc/meminfo=
+    \item {\bf disk-space:PATH} - free disk space for a given mount
+directory path \lstinline=PATH=, in KB, as given by the \lstinline=df=
+command, where multiple paths may be specified individually i.e. via
+\lstinline=disk-space:PATH_1= and \lstinline=disk-space:PATH_2=, etc.
+    \end{myitemize}
+\item {\em default:} (none)
+\item {\em examples:}
+    \begin{myitemize}
+            \item \lstinline@thresholds = memory 2000@ (set a minimum of 2000 KB in usable memory for possible run hosts)
+            \item \lstinline@thresholds = load:5 0.5; load:15 1.0; disk-space:/ 5000@ (set a maximum of 0.5 and 1.0 for load averages over 5
+and 15 minutes respectively and a minimum of 5000 KB of free disk-space on
+the \lstinline=/= mount directory. If any of these thresholds are not met
+by a host, it will be excluded for running a suite on.)
+    \end{myitemize}
+\end{myitemize}
+
 \subsection{[suite host self-identification] }
 
 The suite host's identity must be determined locally by cylc and passed
@@ -801,19 +941,6 @@ if you have to use the {\em hardwired} self-identification method.
 \begin{myitemize}
 \item {\em type:} string (host name or IP address)
 \item {\em default:} (none)
-\end{myitemize}
-
-\subsection{[suite host scanning]}
-
-Utilities such as \lstinline=cylc gscan= need to scan hosts for
-running suites.
-
-\subsubsection[hosts]{[suite host scanning] \textrightarrow hosts }
-
-A list of hosts to scan for running suites.
-\begin{myitemize}
-\item {\em type:} comma-separated list of host names or IP addresses.
-\item {\em default:} localhost
 \end{myitemize}
 
 \subsection{[task events]}

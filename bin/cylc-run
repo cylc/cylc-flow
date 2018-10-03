@@ -18,12 +18,6 @@
 
 """CLI of "cylc run". See cylc.scheduler_cli for detail."""
 
-import sys
-from cylc.remote import remrun
-if remrun():
-    sys.exit(0)
-
-
 from cylc.scheduler_cli import main
 
 

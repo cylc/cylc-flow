@@ -576,7 +576,7 @@ class SuiteRuntimeServiceClient(object):
             # * Add `-n` to the SSH command
             stdin = None
         proc = remote_cylc_cmd(
-            command, self.owner, self.host, capture=True,
+            command, self.owner, self.host, capture_process=True,
             ssh_login_shell=(self.comms1.get(
                 self.srv_files_mgr.KEY_SSH_USE_LOGIN_SHELL
             ) in ['True', 'true']),

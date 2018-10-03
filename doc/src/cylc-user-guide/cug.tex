@@ -1018,6 +1018,23 @@ to view its output logs. The relative merits of the three {\em suite
 views} - dot, text, and graph - will be more apparent later when we
 have more tasks. Closing the GUI does not affect the suite itself.
 
+\subsection{Remote Suites}
+\label{RemoteSuites}
+
+Suites can run on {\em localhost} or on a {\em remote} host.
+
+To start up a suite on a given host, specify it explicitly via the
+\lstinline@--host=@ option to a \lstinline=run= or \lstinline=restart=
+command.
+
+Otherwise, Cylc selects the best host to start up on from allowed
+\lstinline=run hosts= as specified in the global config under
+\lstinline=[suite servers]=, which defaults to localhost. Should there be
+more than one allowed host set, the {\em most suitable} is determined
+according to the settings specified under \lstinline=[[run host select]]=,
+namely exclusion of hosts not meeting suitability {\em thresholds}, if
+provided, then ranking according to the given {\em rank} method.
+
 \subsection{Discovering Running Suites}
 
 Suites that are currently running can be detected with command line or
@@ -1187,7 +1204,7 @@ $ cylc cat-log -e tut/oneoff/basic hello.1   # task stderr log
 \vspace{3mm}
 
 The \lstinline=hello= task in the first two tutorial suites defaults to
-running on the suite host. To make it run on a remote host instead
+running on the suite host~\ref{RemoteSuites}. To make it run on a different host instead
 change its runtime configuration as in \lstinline=tut/oneoff/remote=:
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -7075,8 +7092,8 @@ tracking (see these with \lstinline=cylc get-site-config=):
     maximum number of ports = 100
 
 [hosts]
-    # The default task host is the suite host, i.e. localhost:
-    # Add task host sections if local defaults are not sufficient.
+    # The default task host is the suite host:
+    # Add task host sections if defaults are not sufficient.
     [[HOST]]
        # Method of communication of task progress back to the suite:
         #   1) default - HTTPS via network ports
