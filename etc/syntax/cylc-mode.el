@@ -1,5 +1,5 @@
 ;; Simple syntax highlighting for cylc suite definition files.
-;; Author: Luis Kornblueh, 2012
+;; Original author: Luis Kornblueh, 2012
 ;;
 ;; 1. copy this file to $HOME/.emacs.d/lisp
 ;; 2. add in $HOME/.emacs the following lines:
@@ -13,20 +13,20 @@
 
 (defconst cylc-mode-version "0.1")
 
+;; Jinja2 '{% ... %}' highlighting defined later via 'add-hook'.
 (setq cylc-font-lock-keywords
-      '(("{%[[:alnum:], _=\\(\\)]*%}" . font-lock-constant-face) 
-        ("{#[^\}]+#}" . font-lock-comment-face)
-        ("#.*" . font-lock-comment-face)
-	("{{[[:alnum:] ]*}}" . font-lock-constant-face) 
-        ("\\[\\[\\[[[:alnum:], _]+\\]\\]\\]" . font-lock-type-face)
-        ("\\[\\[\\[[[:alnum:], _]+" . font-lock-type-face)
-        ("\\]\\]\\]" . font-lock-type-face)
-	("\\[\\[[[:alnum:], _]*\\]\\]" . font-lock-function-name-face)
-	("\\[\\[[[:alnum:], _]*" . font-lock-function-name-face)
-	("\\]\\]" . font-lock-function-name-face)
-	("\\[[[:alnum:], ]+\\]" . font-lock-warning-face)
-        ("^[[:alnum:] -_]*=" . font-lock-variable-name-face)
-	))
+  '(("{#[^\}]+#}" . font-lock-comment-face)
+    ("#.*" . font-lock-comment-face)
+    ("{{[[:alnum:] ]*}}" . font-lock-constant-face)
+    ("\\[\\[\\[[[:alnum:], _]+\\]\\]\\]" . font-lock-type-face)
+    ("\\[\\[\\[[[:alnum:], _]+" . font-lock-type-face)
+    ("\\]\\]\\]" . font-lock-type-face)
+    ("\\[\\[[[:alnum:], _]*\\]\\]" . font-lock-function-name-face)
+    ("\\[\\[[[:alnum:], _]*" . font-lock-function-name-face)
+    ("\\]\\]" . font-lock-function-name-face)
+    ("\\[[[:alnum:], ]+\\]" . font-lock-warning-face)
+    ("^[[:alnum:] -_]*=" . font-lock-variable-name-face)
+))
 
 ;; define the mode
 (define-derived-mode cylc-mode fundamental-mode
@@ -43,5 +43,4 @@
 (add-hook 'cylc-mode-hook
   (lambda ()
     (font-lock-add-keywords nil
-       '(("\\({%[[:alnum:], _=\\(\\)]*%}\\|{{[[:alnum:] ]*}}\\)" 0
-	  font-lock-constant-face t)))))
+       '(("\\({%[[:alnum:], _=\\(\\), [[:punct:]]*?\\(\n.*?\\)*?%}\\|{{[[:alnum:] ]*}}\\)" 0 font-lock-constant-face t)))))
