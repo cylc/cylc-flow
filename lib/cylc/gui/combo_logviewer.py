@@ -66,7 +66,8 @@ class ComboLogViewer(logviewer):
         for snum in snums:
             combobox2.append_text(str(snum))
         combobox2.connect("changed", self.switch_snum)
-        combobox2.set_active(snums.index(self.nsubmit))
+        if self.nsubmit in snums:
+            combobox2.set_active(snums.index(self.nsubmit))
         self.hbox.pack_end(combobox2, False)
         self.hbox.pack_end(label2, False)
 
