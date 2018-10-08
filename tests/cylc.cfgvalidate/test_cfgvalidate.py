@@ -20,7 +20,7 @@
 import unittest
 
 from cylc.cfgvalidate import (
-    CylcConfigValidator, DurationFloat, IllegalValueError, SubFuncContext)
+    CylcConfigValidator, DurationFloat, IllegalValueError)
 
 
 class TestCylcConfigValidator(unittest.TestCase):
