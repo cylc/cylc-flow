@@ -366,7 +366,7 @@ class TaskPool(object):
                 try:
                     itask.task_owner, itask.task_host = user_at_host.split(
                         "@", 1)
-                except ValueError:
+                except (AttributeError, ValueError):
                     itask.task_owner = None
                     itask.task_host = user_at_host
                 if time_submit:
@@ -1171,6 +1171,9 @@ class TaskPool(object):
         for itask in self.get_tasks():
             if itask.state.status != TASK_STATUS_RUNNING:
                 continue
+            # Started time is not set on restart
+            if itask.summary['started_time'] is None:
+                itask.summary['started_time'] = now
             timeout = (itask.summary['started_time'] +
                        itask.tdef.rtconfig['job']['simulated run length'])
             if now > timeout:
