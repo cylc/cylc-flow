@@ -21,6 +21,7 @@ from collections import deque
 import logging
 from logging.handlers import BufferingHandler
 import os
+from pipes import quote
 from Queue import Empty, Queue
 from shutil import copytree, rmtree
 from subprocess import Popen, PIPE
@@ -51,6 +52,8 @@ from cylc.state_summary_mgr import StateSummaryMgr
 from cylc.suite_db_mgr import SuiteDatabaseManager
 from cylc.suite_events import (
     SuiteEventContext, SuiteEventError, SuiteEventHandler)
+from cylc.hostuserutil import get_host, get_user, get_fqdn_by_host
+import cylc.scheduler_cli
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
 from cylc.suite_status import (
@@ -97,6 +100,7 @@ class Scheduler(object):
     INTERVAL_MAIN_LOOP_QUICK = 0.5
     INTERVAL_STOP_KILL = 10.0
     INTERVAL_STOP_PROCESS_POOL_EMPTY = 0.5
+    INTERVAL_AUTO_RESTART_ERROR = 5
 
     START_MESSAGE_PREFIX = 'Suite server: '
     START_MESSAGE_TMPL = (
@@ -216,7 +220,11 @@ class Scheduler(object):
         self.can_auto_stop = True
         self.previous_profile_point = 0
         self.count = 0
-        self.time_next_fs_check = None
+
+        # health check settings
+        self.time_next_health_check = None
+        self.auto_restart = False
+        self.auto_restart_time = None
 
     def start(self):
         """Start the server."""
@@ -239,6 +247,8 @@ class Scheduler(object):
         except SchedulerStop as exc:
             # deliberate stop
             self.shutdown(exc)
+            if self.auto_restart:
+                self.suite_auto_restart()
 
         except SchedulerError as exc:
             self.shutdown(exc)
@@ -1216,7 +1226,7 @@ conditions; see `cylc conditions`.
             self.hold_suite()
         self.run_event_handlers(self.EVENT_STARTUP, 'suite starting')
         self.profiler.log_memory("scheduler.py: begin run while loop")
-        self.time_next_fs_check = None
+        self.time_next_health_check = None
         self.is_updated = True
         if self.options.profile_mode:
             self.previous_profile_point = 0
@@ -1353,20 +1363,156 @@ conditions; see `cylc conditions`.
             self.command_kill_tasks()
             self.time_next_kill = time() + self.INTERVAL_STOP_KILL
 
-    def suite_health_check(self, has_changes):
-        """Health check.
+        # Is the suite set to auto restart now?
+        if (self.auto_restart_time is not None and
+                time() > self.auto_restart_time):
+            self.auto_restart = True
+            self._set_stop(TaskPool.STOP_REQUEST_NOW_NOW)
 
-        Suite run directory still there.
-        Suite contact file has the right info.
+    def suite_auto_restart(self, max_retries=3):
+        """Attempt to restart the suite assuming it has already stopped."""
+        cmd = ['cylc', 'restart', quote(self.suite)]
+
+        for attempt_no in range(max_retries):
+            new_host = cylc.scheduler_cli.HostAppointer(
+                cached=True).appoint_host()
+            LOG.info('Attempting to restart on "%s"' % new_host)
+
+            # proc will start with current env (incl CYLC_HOME etc)
+            proc = Popen(
+                cmd + ['--host=%s' % new_host],
+                stdin=open(os.devnull), stdout=PIPE, stderr=PIPE)
+            if proc.wait():
+                msg = 'Could not restart suite'
+                if attempt_no < max_retries:
+                    msg += (' will retry in %ss'
+                            % self.INTERVAL_AUTO_RESTART_ERROR)
+                msg += '. Restart error:\n%s' % proc.communicate()[1]
+                LOG.critical(msg)
+                sleep(self.INTERVAL_AUTO_RESTART_ERROR)
+            else:
+                LOG.info('Suite now running on "%s".' % new_host)
+                return True
+        LOG.critical(
+            'Suite unable to automatically restart after %s tries - '
+            'manual restart required.' % max_retries)
+        return False
+
+    def set_auto_restart(self, restart_delay=None):
+        """Configure the suite to automatically stop and restart.
+
+        Restart handled by `suite_auto_restart`.
+
+        Args:
+            restart_delay (cylc.cfgvalidate.DurationFloat):
+                Suite will wait a random period between 0 and
+                `restart_delay` seconds before attempting to stop/restart in
+                order to avoid multiple suites restarting simultaneously.
+
+        Return:
+            bool: False if it is not possible to automatically stop/restart
+            the suite due to it's configuration/runtime state.
         """
+        # Check that the suite itn't already shutting down.
+        if self.stop_mode or self.auto_restart_time is not None:
+            return True
+
+        # Check the suite is auto-restartable see #2799.
+        if (
+            not self.can_auto_stop or
+            self.options.final_point_string or
+            self.pool_hold_point or
+            self.run_mode != 'live' or
+            self.stop_clock_time or
+            self.stop_point or
+            self.stop_task
+        ):
+            LOG.critical('Suite cannot automatically restart.')
+            return False
+
+        LOG.info('Suite will automatically restart on a new host.')
+        if restart_delay > 0:
+            # Delay shutdown by a random interval to avoid many
+            # suites restarting simultaneously.
+            from random import random
+            shutdown_delay = int(random() * restart_delay)
+            shutdown_time = time() + shutdown_delay
+            LOG.info('Suite will restart in %ss (at %s)' % (
+                shutdown_delay, time2str(shutdown_time)))
+            self.auto_restart_time = shutdown_time
+        else:
+            self.auto_restart_time = time()
+        return True
+
+    def can_auto_restart(self):
+        """Determine whether this suite can safely auto stop-restart."""
+        ret = ['Incompatible configuration: "%s"' % key for key, value in [
+            ('can_auto_stop', not self.can_auto_stop),
+            ('final_point', self.options.final_point_string),
+            ('no_detach', self.options.no_detach),
+            ('pool_hold_point', self.pool_hold_point),
+            ('run_mode', self.run_mode != 'live'),
+            ('stop_clock_time', self.stop_clock_time),
+            ('stop_point', self.stop_point),
+            ('stop_task', self.stop_task)
+        ] if value]
+
+        try:
+            cylc.scheduler_cli.HostAppointer(cached=True).appoint_host()
+        except cylc.scheduler_cli.EmptyHostList:
+            ret.append('No alternative host to restart suite on.')
+        except Exception:
+            # Any unexpected error in host selection shouldn't be able to take
+            # down the suite.
+            ret.append('Error in host selection:\n' + traceback.format_exc())
+
+        if ret:
+            LOG.critical('Suite cannot automatically restart because:\n' +
+                         '\n'.join(ret))
+            return False
+        return True
+
+    def suite_health_check(self, has_changes):
+        """Detect issues with the suite or its environment and act accordingly.
+
+        Check if:
+
+        1. Suite is stalled?
+        2. Suite host is condemned?
+        3. Suite run directory still there?
+        4. Suite contact file has the right info?
+
+        """
+
+        # 1. check if suite is stalled - if so call handler if defined
         if self.stop_mode is None and not has_changes:
             self.check_suite_stalled()
-        now = time()
 
-        if self.time_next_fs_check is None or now > self.time_next_fs_check:
+        now = time()
+        if (self.time_next_health_check is None or
+                now > self.time_next_health_check):
+
+            # 2. check if suite host is condemned - if so auto restart.
+            if self.auto_restart_time is None and self.stop_mode is None:
+                current_glbl_cfg = glbl_cfg(cached=False)
+                condemned_hosts = map(
+                    get_fqdn_by_host,
+                    current_glbl_cfg.get(['suite servers', 'condemned hosts']))
+                if get_fqdn_by_host(self.host) in condemned_hosts:
+                    LOG.info('The Cylc suite host will soon become '
+                             'un-available.')
+                    if self.can_auto_restart():
+                        if self.set_auto_restart(current_glbl_cfg.get(
+                                ['suite servers', 'auto restart delay'])):
+                            return  # skip remaining health checks
+
+            # 3. check if suite run dir still present - if not shutdown.
             if not os.path.exists(self.suite_run_dir):
                 raise SchedulerError(
                     "%s: suite run directory not found" % self.suite_run_dir)
+
+            # 4. check if contact file consistent with current start - if not
+            #    shutdown.
             try:
                 contact_data = self.suite_srv_files_mgr.load_contact_file(
                     self.suite)
@@ -1380,7 +1526,7 @@ conditions; see `cylc conditions`.
                      " may be left") %
                     self.suite_srv_files_mgr.get_contact_file(self.suite))
                 raise exc
-            self.time_next_fs_check = (
+            self.time_next_health_check = (
                 now + self._get_cylc_conf('health check interval'))
 
     def update_profiler_logs(self, tinit):
@@ -1810,6 +1956,8 @@ conditions; see `cylc conditions`.
         for getter in [self.config.cfg['cylc'], glbl_cfg().get(['cylc'])]:
             try:
                 value = getter[key]
+            except TypeError:
+                continue
             except KeyError:
                 pass
             else:

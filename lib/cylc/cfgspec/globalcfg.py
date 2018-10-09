@@ -245,6 +245,8 @@ SPEC = {
         'run ports': [VDR.V_INTEGER_LIST, range(43001, 43101)],
         'scan hosts': [VDR.V_STRING_LIST],
         'scan ports': [VDR.V_INTEGER_LIST, range(43001, 43101)],
+        'condemned hosts': [VDR.V_STRING_LIST],
+        'auto restart delay': [VDR.V_INTERVAL],
         'run host select': {
             'rank': [VDR.V_STRING, 'random', 'load:1', 'load:5', 'load:15',
                      'memory', 'disk-space'],
@@ -424,12 +426,25 @@ class GlobalConfig(ParsecConfig):
     USER_CONF_DIR_2 = os.path.join(os.environ['HOME'], '.cylc')
 
     @classmethod
-    def get_inst(cls):
-        """Return the singleton instance."""
-        if not cls._DEFAULT:
+    def get_inst(cls, cached=True):
+        """Return a GlobalConfig instance.
+
+        Args:
+            cached (bool):
+                If cached create if necessary and return the singleton
+                instance, else return a new instance.
+        """
+        if not cached:
+            # Return an up-to-date global config without affecting the
+            # singleton.
+            new_instance = cls(SPEC, upg, validator=cylc_config_validate)
+            new_instance.load()
+            return new_instance
+        elif not cls._DEFAULT:
             cls._DEFAULT = cls(SPEC, upg, validator=cylc_config_validate)
             cls._DEFAULT.load()
         return cls._DEFAULT
+
 
     def load(self):
         """Load or reload configuration from files."""

@@ -752,11 +752,37 @@ exceeds its execution time limit.
 
 \subsection{[suite servers] }
 
+\label{global-suite-servers}
+
 Configure allowed suite hosts and ports for starting up (running or
 restarting) suites and enabling them to be detected whilst running via
 utilities such as \lstinline=cylc gscan=. Additionally configure host
 selection settings specifying how to determine the most suitable run host at
 any given time from those configured.
+
+\subsubsection[run hosts]{[suite servers] \textrightarrow auto restart delay}
+
+Relates to Cylc's auto stop-restart mechanism (see~\ref{auto-stop-restart}).
+When a host is set to automatically shutdown/restart it will first wait a
+random period of time between zero and \lstinline=auto restart delay=
+seconds before beginning the process. This is to prevent large numbers
+of suites from restarting simultaneously. 
+
+\begin{myitemize}
+\item {\em type:} integer
+\item {\em default:} \lstinline=0=
+\end{myitemize}
+
+\subsubsection[run hosts]{[suite servers] \textrightarrow condemned hosts}
+
+Hosts specified in \lstinline=condemned hosts= will not be considered as suite
+run hosts. If suites are already running on \lstinline=condemned hosts= they
+will be automatically shutdown and restarted (see~\ref{auto-stop-restart}).
+
+\begin{myitemize}
+\item {\em type:} comma-separated list of host names and/or IP addresses.
+\item {\em default:} (none)
+\end{myitemize}
 
 \subsubsection[run hosts]{[suite servers] \textrightarrow run hosts }
 

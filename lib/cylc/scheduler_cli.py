@@ -21,6 +21,7 @@ import os
 import json
 from pipes import quote
 from random import shuffle, choice
+import socket
 import sys
 from time import sleep
 import unittest
@@ -28,10 +29,10 @@ import unittest
 from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
-from cylc.hostuserutil import get_host, is_remote_host
+from cylc.hostuserutil import get_host, is_remote_host, get_fqdn_by_host
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.remote import remrun, remote_cylc_cmd, run_cmd
-from cylc.scheduler import Scheduler
+import cylc.scheduler
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
 
@@ -93,6 +94,10 @@ def main(is_restart=False):
         # Replace this process with "cylc run REG ..." for 'ps -f'.
         os.execv(sys.argv[0], [sys.argv[0]] + [reg] + sys.argv[1:])
 
+    if not is_restart and options.warm and len(args) < 2:
+        # Warm start must have a start point
+        sys.exit(parser.get_usage())
+
     # Check suite is not already running before start of host selection.
     try:
         SuiteSrvFilesManager().detect_old_contact_file(args[0])
@@ -126,7 +131,7 @@ def main(is_restart=False):
             glbl_cfg().get_derived_host_item(args[0], 'suite run directory'))
 
     try:
-        scheduler = Scheduler(is_restart, options, args)
+        scheduler = cylc.scheduler.Scheduler(is_restart, options, args)
     except SuiteServiceFileError as exc:
         sys.exit(exc)
     scheduler.start()
@@ -249,6 +254,7 @@ class EmptyHostList(RuntimeError):
 
     Print message with the current state of relevant settings for info.
     """
+
     def __str__(self):
         msg = ("\nERROR: No hosts currently compatible with this global "
                "configuration:")
@@ -268,19 +274,33 @@ class HostAppointer(object):
     Determine the one host most suitable to (re-)run a suite on from all
     'run hosts' given the 'run host selection' ranking & threshold options
     as specified (else taken as default) in the global configuration.
+
+    Hosts will only be considered if available.
+
     """
 
     CMD_BASE = "get-host-metrics"  # 'cylc' prepended by remote_cylc_cmd.
 
-    def __init__(self):
-        self.use_disk_path = "/"
-        self.max_processes = 5
-        self.is_debug = cylc.flags.debug or cylc.flags.verbose
+    USE_DISK_PATH = "/"
+    IS_DEBUG = cylc.flags.debug or cylc.flags.verbose
 
-        self.hosts = glbl_cfg().get(['suite servers', 'run hosts'])
-        self.rank_method = glbl_cfg().get(
+    def __init__(self, cached=False):
+        global_config = glbl_cfg(cached=False)
+        condemned_hosts = map(
+            get_fqdn_by_host,
+            global_config.get(['suite servers', 'condemned hosts']))
+        self.hosts = []
+        for host in (
+                global_config.get(['suite servers', 'run hosts']) or
+                ['localhost']):
+            try:
+                if get_fqdn_by_host(host) not in condemned_hosts:
+                    self.hosts.append(host)
+            except socket.gaierror:
+                pass
+        self.rank_method = global_config.get(
             ['suite servers', 'run host select', 'rank'])
-        self.parsed_thresholds = self.parse_thresholds(glbl_cfg().get(
+        self.parsed_thresholds = self.parse_thresholds(global_config.get(
             ['suite servers', 'run host select', 'thresholds']))
 
     @staticmethod
@@ -311,7 +331,7 @@ class HostAppointer(object):
         for one return that item, else (for multiple items) return False.
         """
         if len(host_list) == 0:
-            if self.is_debug:
+            if self.IS_DEBUG:
                 raise EmptyHostList()
             else:
                 sys.exit(str(EmptyHostList()))
@@ -349,7 +369,7 @@ class HostAppointer(object):
             if spec.startswith("load"):
                 opts.add("--load")
             elif spec.startswith("disk-space"):
-                opts.add("--disk-space=" + self.use_disk_path)
+                opts.add("--disk-space=" + self.USE_DISK_PATH)
             elif spec == "memory":
                 opts.add("--memory")
         return opts
@@ -463,8 +483,7 @@ class HostAppointer(object):
 
     def appoint_host(self, mock_host_stats=None):
         """Appoint the most suitable host to (re-)run a suite on."""
-        if mock_host_stats is None and (
-                not self.hosts or self.hosts == ['localhost']):
+        if mock_host_stats is None and self.hosts == ['localhost']:
             return 'localhost'
         # Check if immediately 'trivial': no thresholds and zero or one hosts.
         initial_check = self._trivial_choice(
@@ -499,7 +518,7 @@ class TestHostAppointer(unittest.TestCase):
         """
         metric = {}
         if disk_int is not None:  # Distinguish None from '0', value to insert.
-            metric.update({'disk-space:' + self.app.use_disk_path: disk_int})
+            metric.update({'disk-space:' + self.app.USE_DISK_PATH: disk_int})
         if mem_int is not None:
             metric.update({"memory": mem_int})
         if load_floats is not None:
@@ -539,7 +558,7 @@ class TestHostAppointer(unittest.TestCase):
                            set_thresholds=None):
         """Non-test method to edit global config input to HostAppointer()."""
         if set_hosts is None:
-            set_hosts = []
+            set_hosts = ['localhost']
         self.app.hosts = set_hosts
         self.app.rank_method = set_rank_method
         self.app.parsed_thresholds = self.app.parse_thresholds(set_thresholds)
@@ -563,7 +582,7 @@ class TestHostAppointer(unittest.TestCase):
             'HOST_' + str(num)
         )
         self.mock_global_config(set_rank_method='disk-space:%s' %
-                                self.app.use_disk_path)
+                                self.app.USE_DISK_PATH)
         self.assertEqual(
             self.app._rank_good_hosts(dict(
                 self.create_mock_hosts(num, init, incr, var))),
@@ -669,11 +688,11 @@ class TestHostAppointer(unittest.TestCase):
         self.assertEqual(
             self.app._get_host_metrics_opts(), set(['--memory']))
         self.mock_global_config(
-            set_rank_method='disk-space:%s' % self.app.use_disk_path,
+            set_rank_method='disk-space:%s' % self.app.USE_DISK_PATH,
             set_thresholds='load:1 1000')
         self.assertEqual(
             self.app._get_host_metrics_opts(),
-            set(['--disk-space=' + self.app.use_disk_path, '--load']),
+            set(['--disk-space=' + self.app.USE_DISK_PATH, '--load']),
         )
         self.mock_global_config(
             set_rank_method='memory',

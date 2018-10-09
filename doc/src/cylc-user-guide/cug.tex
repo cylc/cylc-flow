@@ -8221,6 +8221,38 @@ the copy might end up corrupted. It is best to stop the suite before copying
 a DB, or else write a back-up utility using the official sqlite backup API:
 \url{http://www.sqlite.org/backup.html}.}
 
+\subsection{Auto Stop-Restart}
+\label{auto-stop-restart}
+
+Cylc has the ability to automatically stop suites and restart them on a
+different host. This is useful if a host needs to be taken off-line e.g.\ for
+scheduled maintenance.
+
+This functionality is configured via the following site configuration settings:
+\begin{myitemize}
+    \item \lstinline=[run hosts][suite servers]auto restart delay=
+    \item \lstinline=[run hosts][suite servers]condemned hosts=
+    \item \lstinline=[run hosts][suite servers]run hosts=
+\end{myitemize}
+
+When a host is added to the \lstinline=condemned hosts= list in a site
+configuration, any suites will automatically shutdown, select another host from
+\lstinline=run hosts= and restart.
+
+To prevent large numbers of suites attempting to restart simultaneously the
+\lstinline=auto restart delay= setting defines a period of time in seconds.
+Suites will wait for a random period of time between zero and
+\lstinline=auto restart delay= seconds before attempting to stop and restart.
+
+This auto shutdown-restart functionality can only operate provided that the
+user hasn't specified any behaviour which is not preserved by
+\lstinline=cylc restart= (e.g.\ user specified hold point or run mode). This
+caveat will be removed in a future version, at present Cylc will not attempt to
+auto shutdown-restart suites which meet this criterion but will log a critical
+error message to alert the user.
+
+See the \lstinline=[suite servers]= configuration section
+(\ref{global-suite-servers}) for more details.
 
 \section{Suite Storage, Discovery, Revision Control, and Deployment}
 \label{SuiteStorageEtc}
