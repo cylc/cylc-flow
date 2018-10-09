@@ -92,7 +92,7 @@ class SuiteConfig(object):
     TASK_EVENT_TMPL_KEYS = (
         'event', 'suite', 'point', 'name', 'submit_num', 'id', 'message',
         'batch_sys_name', 'batch_sys_job_id', 'submit_time', 'start_time',
-        'finish_time', 'user@host')
+        'finish_time', 'user@host', 'try_num')
 
     def __init__(self, suite, fpath, template_vars=None,
                  owner=None, run_mode='live', is_validate=False, strict=False,
