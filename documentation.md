@@ -99,7 +99,7 @@ read the User Guide!
           [[[R1]]]  # Initial cycle point.
              graph = prep => model
           [[[R//P1Y]]]  # Yearly cycling.
-             graph = model[-P1D] => model => post
+             graph = model[-P1Y] => model => post
           [[[R1/P0Y]]]  # Final cycle point.
              graph = post => stop
 
