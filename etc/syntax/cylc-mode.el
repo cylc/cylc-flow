@@ -1,5 +1,4 @@
 ;; Simple syntax highlighting for cylc suite definition files.
-;; Original author: Luis Kornblueh, 2012
 ;;
 ;; 1. copy this file to $HOME/.emacs.d/lisp
 ;; 2. add in $HOME/.emacs the following lines:
@@ -13,19 +12,35 @@
 
 (defconst cylc-mode-version "0.1")
 
-;; Jinja2 '{% ... %}' highlighting defined later via 'add-hook'.
+;; Note regular expression lookarounds are not possible in elisp.
 (setq cylc-font-lock-keywords
-  '(("{#[^\}]+#}" . font-lock-comment-face)
-    ("#.*" . font-lock-comment-face)
-    ("{{[[:alnum:] ]*}}" . font-lock-constant-face)
+  '(
+    ;; Ordered in terms precendence of application, where face specification
+    ;; order changes resultant highlighting, so don't change it.
+
+    ;; Regular i.e. non-Jinja2 comments
+    ("^#\\(\\([^{].{2}\\|.[^#]\\).*\\|.{0,1}\\)$" . font-lock-comment-face)
+
+     ;; Assignment and dependency characters, but only outside of Jinja2
+    ("=>" . font-lock-keyword-face)  ;; as of 'special syntactic significance'
+    ("=" . font-lock-preprocessor-face)  ;; as running out of font-lock faces
+
+    ;; Jinja2: make all Jinja2 including its comments & multilines one colour
+    ("{#\\(\n?.?\\)*?[[:alnum:][[:punct:]]*?#}" . font-lock-constant-face)
+    ("{{[[:alnum:] [[:punct:]]*?]*}}" . font-lock-constant-face)
+    ;; Note Jinja2 '{% ... %}' highlighting defined later via 'add-hook'
+
+    ;; All Cylc section (of any level e.g. sub-, sub-sub-) specifications
     ("\\[\\[\\[[[:alnum:], _]+\\]\\]\\]" . font-lock-type-face)
     ("\\[\\[\\[[[:alnum:], _]+" . font-lock-type-face)
     ("\\]\\]\\]" . font-lock-type-face)
-    ("\\[\\[[[:alnum:], _]*\\]\\]" . font-lock-function-name-face)
-    ("\\[\\[[[:alnum:], _]*" . font-lock-function-name-face)
-    ("\\]\\]" . font-lock-function-name-face)
+    ("\\[\\[[[:alnum:], _]*\\]\\]" . font-lock-type-face)
+    ("\\[\\[[[:alnum:], _]*" . font-lock-type-face)
+    ("\\]\\]" . font-lock-type-face)
     ("\\[[[:alnum:], ]+\\]" . font-lock-warning-face)
-    ("^[[:alnum:] -_]*=" . font-lock-variable-name-face)
+
+    ;; Cylc setting keys/names
+    ("^[ [:alnum:]-_]*" . font-lock-variable-name-face)  ;; AMEND broken
 ))
 
 ;; define the mode
@@ -33,14 +48,18 @@
   "cylc mode"
   "Major mode for editing CYLC .cylc files"
 
-  ;; code for syntax highlighting
+  ;; Double quotes treated as special in elisp, messing up mode, so turn off
+  (setq font-lock-keywords-only t)
+
+  ;; Code for syntax highlighting
   (setq font-lock-defaults '(cylc-font-lock-keywords))
 
 )
 
 (provide 'cylc-mode)
 
+;; Jinja2 AMEND THIS BIT
 (add-hook 'cylc-mode-hook
   (lambda ()
     (font-lock-add-keywords nil
-       '(("\\({%[[:alnum:], _=\\(\\), [[:punct:]]*?\\(\n.*?\\)*?%}\\|{{[[:alnum:] ]*}}\\)" 0 font-lock-constant-face t)))))
+       '(("\\({%\\(\n?.?\\)+?[[:alnum:] _=\\(\\)[[:punct:]]%}\\|{{[[:alnum:] ]*}}\\)" 0 font-lock-constant-face t)))))
