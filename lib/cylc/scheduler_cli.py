@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Common logic for "cylc run" and "cylc restart" CLI."""
 
+import os
 import json
 from pipes import quote
 from random import shuffle, choice
@@ -33,7 +34,7 @@ from cylc.scheduler import Scheduler
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
 
-RUN_DOC = r"""cylc [control] run|start [OPTIONS] ARGS
+RUN_DOC = r"""cylc [control] run|start [OPTIONS] [ARGS]
 
 Start a suite run from scratch, wiping out any previous suite state. To
 restart from a previous state see 'cylc restart --help'.
@@ -55,7 +56,7 @@ command from another suite directory.
 Register PATH/suite.rc as REG, and run it.
 
 % cylc run
-Register $PWD/suite.rc as "basename(PWD)", and run it.
+Register $PWD/suite.rc as "$(basename $PWD)", and run it.
 (In a suite directory /path/to/foo/, register and run the suite as "foo").
 (Note REG must be explicit if START_POINT is given on the command line.)
 
@@ -89,6 +90,13 @@ START_POINT_ARG_DOC = (
 def main(is_restart=False):
     """CLI main."""
     options, args = parse_commandline(is_restart)
+    if not args:
+        # Auto-registration: "cylc run" (no args) in source dir.
+        reg = SuiteSrvFilesManager().register(on_the_fly=True)
+        pth, exc = os.path.split(sys.argv[0])
+        # Replace process with explicit "cylc run REG ..." for easy
+        # identification in the process table.
+        os.execv(sys.argv[0], [sys.argv[0]] + [reg] + sys.argv[1:])
 
     # Check suite is not already running before start of host selection.
     try:

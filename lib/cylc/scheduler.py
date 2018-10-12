@@ -121,16 +121,7 @@ class Scheduler(object):
         self.options = options
         self.profiler = Profiler(self.options.profile_mode)
         self.suite_srv_files_mgr = SuiteSrvFilesManager()
-        try:
-            reg = args[0]
-        except IndexError:
-            reg = None
-        try:
-            self.suite = self.suite_srv_files_mgr.register(
-                reg, options.source, on_the_fly=True)
-        except SuiteServiceFileError as exc:
-            sys.exit(exc)
-        # Register suite if not already done
+        self.suite = args[0]
         self.suite_dir = self.suite_srv_files_mgr.get_suite_source_dir(
             self.suite)
         self.suiterc = self.suite_srv_files_mgr.get_suite_rc(self.suite)
