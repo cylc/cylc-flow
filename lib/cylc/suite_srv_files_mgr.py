@@ -421,72 +421,81 @@ To start a new run, stop the old one first with one or more of these:
                 name = os.path.basename(os.path.dirname(arg))
         return name, path
 
-    def register(self, reg=None, source=None, redirect=False):
-        """Register a suite, or renew its registration.
+    def register(self, reg=None, source=None, redirect=False, implicit=True):
+        """Register a suite.
 
-        Create suite service directory and symlink to suite source location.
+        Creates suite run (and service) directory, and symlinks to source dir.
+        If reg is an absolute path, create a local run directory (must be an
+        absolute path to distinguish from a name - which looks like a relative
+        path).
 
         Args:
-            reg (str): suite name, default basename($PWD).
-            source (str): directory location of suite.rc file, default $PWD.
+            reg (str): suite name, default basename(cwd).
+            source (str): directory location of suite.rc file, default cwd.
             redirect (bool): allow reuse of existing name and run directory.
+            implicit (bool): source directory implied to be cwd.
 
         Return:
             The registered suite name (which may be computed here).
 
         Raise:
             SuiteServiceFileError:
+                Suite not registered.
                 No suite.rc file found in source location.
-                Illegal name (can look like a relative path, but not absolute).
                 Another suite already has this name (unless --redirect).
         """
         if reg is None:
             reg = os.path.basename(os.getcwd())
 
-        if os.path.isabs(reg):
-            raise SuiteServiceFileError(
-                "ERROR: suite name cannot be an absolute path: %s" % reg)
+        # Abort if suite reg is already running.
+        self.detect_old_contact_file(reg)
 
-        if source is not None:
-            if os.path.basename(source) == self.FILE_BASE_SUITE_RC:
-                source = os.path.dirname(source)
-        else:
-            source = os.getcwd()
-
-        # suite.rc must exist so we can detect accidentally reversed args.
-        source = os.path.abspath(source)
-        if not os.path.isfile(os.path.join(source, self.FILE_BASE_SUITE_RC)):
-            raise SuiteServiceFileError("ERROR: no suite.rc in %s" % source)
-
-        # Suite service directory.
+        # See if name reg is already used for another suite.
         srv_d = self.get_suite_srv_dir(reg)
-
-        # Does symlink to suite source already exist?
         target = os.path.join(srv_d, self.FILE_BASE_SOURCE)
         try:
             orig_source = os.readlink(target)
         except OSError:
             orig_source = None
 
-        # Create service dir if necessary.
-        mkdir_p(srv_d)
+        if source is None:
+            if os.path.isabs(reg):
+                # Local run-dir mode.
+                source = reg
+            elif implicit:
+                # Assume cwd is implied as suite source.
+                source = os.getcwd()
+            elif orig_source is not None:
+                # Suite is already registered:
+                source = orig_source
+            else:
+                raise SuiteServiceFileError(
+                    "ERROR: suite '%s' is not registered" % (reg))
+        elif os.path.basename(source) == self.FILE_BASE_SUITE_RC:
+            source = os.path.dirname(source)
 
-        # Redirect an existing name to another suite?
-        if orig_source is not None and source != orig_source:
-            if not redirect:
+        if orig_source is not None and orig_source != source:
+            if redirect:
+                sys.stderr.write(
+                    "WARNING: the name '%(reg)s' points to %(old)s.\nIt will "
+                    "now be redirected to %(new)s.\nFiles in the existing "
+                    "%(reg)s run directory will be overwritten.\n" % {
+                        'reg': reg, 'old': orig_source, 'new': source})
+                os.unlink(target)
+            else:
                 raise SuiteServiceFileError(
                     "ERROR: the name '%s' already points to %s.\nUse "
                     "--redirect to re-use an existing name and run "
                     "directory." % (reg, orig_source))
-            LOG.warning(
-                "the name '%(reg)s' points to %(old)s.\nIt will now"
-                " be redirected to %(new)s.\nFiles in the existing %(reg)s run"
-                " directory will be overwritten.\n",
-                {'reg': reg, 'old': orig_source, 'new': source})
-            # Remove symlink to the original suite.
-            os.unlink(target)
 
-        # Create symlink to the suite, if it doesn't already exist.
+        # suite.rc must exist so we can detect accidentally reversed args.
+        source = os.path.abspath(source)
+        if not os.path.isfile(os.path.join(source, self.FILE_BASE_SUITE_RC)):
+            raise SuiteServiceFileError("ERROR: no suite.rc in %s" % source)
+
+        # Create new source symlink.
+        mkdir_p(srv_d)
+
         if source != orig_source:
             os.symlink(source, target)
 

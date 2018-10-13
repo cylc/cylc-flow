@@ -491,15 +491,18 @@ class GlobalConfig(ParsecConfig):
             self, suite, item, host=None, owner=None, replace_home=False):
         """Compute hardwired paths relative to the configurable top dirs."""
 
-        # suite run dir
-        srdir = os.path.join(
-            self.get_host_item('run directory', host, owner, replace_home),
-            suite)
-        # suite workspace
-        swdir = os.path.join(
-            self.get_host_item('work directory', host, owner, replace_home),
-            suite)
-
+        if os.path.isabs(suite):
+            # Local run-dir mode.
+            srdir = os.path.join(suite, 'cylc-run')
+            swdir = srdir
+        else:
+            # Normal run-dir mode.
+            srdir = os.path.join(
+                self.get_host_item(
+                    'run directory', host, owner, replace_home), suite)
+            swdir = os.path.join(
+                self.get_host_item(
+                    'work directory', host, owner, replace_home), suite)
         if item == 'suite run directory':
             value = srdir
 

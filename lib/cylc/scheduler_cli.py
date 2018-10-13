@@ -43,14 +43,21 @@ The scheduler will run as a daemon unless you specify --no-detach.
 If the suite is not already registered (by "cylc register" or a previous run)
 it will be registered on the fly before start up.
 
-% cylc run REG
-  Run the suite registered with name REG.
-
 % cylc run
-  Register $PWD/suite.rc as $(basename $PWD) and run it.
- (Note REG must be given explicitly if START_POINT is on the command line.)
+  Register $PWD/suite.rc as $(basename $PWD) and run it. This will fail if the
+  name is already registered. (And note that REG must be given explicitly with
+  START_POINT on the command line.)
+
+% cylc run REG
+  Run the suite registered as REG. (Note unlike "cylc register REG" this will
+  not implicitly register $PWD/suite.rc and run it as REG, because of the risk
+  of mistyping an intended already-registered suite name).
+
+% cylc run ABS-PATH
+  Run the suite defintion located in ABS-PATH, in local run directory mode.
 
 A "cold start" (the default) starts from the suite initial cycle point
+
 (specified in the suite.rc or on the command line). Any dependence on tasks
 prior to the suite initial cycle point is ignored.
 
@@ -89,9 +96,9 @@ def main(is_restart=False):
         # Replace this process with "cylc run REG ..." for 'ps -f'.
         os.execv(sys.argv[0], [sys.argv[0]] + [reg] + sys.argv[1:])
 
-    # Check suite is not already running before start of host selection.
     try:
-        SuiteSrvFilesManager().detect_old_contact_file(args[0])
+        # If reg is given, the name must already be registered.
+        reg = SuiteSrvFilesManager().register(args[0], implicit=False)
     except SuiteServiceFileError as exc:
         sys.exit(exc)
 
