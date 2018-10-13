@@ -208,9 +208,9 @@ def main():
         cre_owner, cre_name = re_compile_filters(patterns_owner, patterns_name)
     except ValueError as exc:
         parser.error(str(exc))
+
     if options.all_ports:
-        args.extend(
-            glbl_cfg().get(["suite servers", "scan hosts"]) or ["localhost"])
+        args.extend(glbl_cfg().get(["suite servers", "scan hosts"]))
     if not args:
         args = get_scan_items_from_fs(cre_owner)
     if not args:

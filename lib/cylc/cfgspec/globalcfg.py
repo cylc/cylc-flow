@@ -271,9 +271,9 @@ SPEC = {
     },
 
     'suite servers': {
-        'run hosts': vdr(vtype='string_list'),
+        'run hosts': vdr(vtype='string_list', default=['localhost']),
         'run ports': vdr(vtype='range_list', default=range(43001, 43101)),
-        'scan hosts': vdr(vtype='string_list'),
+        'scan hosts': vdr(vtype='string_list', default=['localhost']),
         'scan ports': vdr(vtype='range_list', default=range(43001, 43101)),
         'run host select': {
             'rank': vdr(
