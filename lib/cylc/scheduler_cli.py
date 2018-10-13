@@ -36,29 +36,26 @@ from cylc.suite_srv_files_mgr import (
 
 RUN_DOC = r"""cylc [control] run|start [OPTIONS] [ARGS]
 
-Start a suite run from scratch, wiping out any previous suite state. To
-restart from a previous state see 'cylc restart --help'.
+Start a suite run from scratch, ignoring dependence prior to the start point.
 
-The scheduler runs as a daemon unless you specify --no-detach.
+WARNING: this will wipe out previous suite state. To restart from a previous
+state, see 'cylc restart --help'.
 
-Dependence on cycle points earlier than the start cycle point is ignored.
+The scheduler will run as a daemon unless you specify --no-detach.
 
 If the suite is not already registered (by "cylc register" or a previous run)
-it will be registered on the fly before start up - so long as the name is not
-already registered to another suite.
+it will be registered on the fly before start up.
 
 % cylc run REG
-Run suite REG, or register $PWD/suite.rc as REG and run it. WARNING: if REG
-already points to a suite, this command will run that suite even if you run the
-command from another suite directory.
+  If suite REG exists, run it.
+  Otherwise, register $PWD/suite.rc as REG and run it.
 
-% cylc run REG --source=PATH
-Register PATH/suite.rc as REG, and run it.
+% cylc run --source=PATH REG
+  Register PATH/suite.rc as REG, and run it.
 
 % cylc run
-Register $PWD/suite.rc as "$(basename $PWD)", and run it.
-(In a suite directory /path/to/foo/, register and run the suite as "foo").
-(Note REG must be explicit if START_POINT is given on the command line.)
+  Register $PWD/suite.rc as its parent directory name, and run it.
+ (Note REG must be given if START_POINT is on the command line.)
 
 A "cold start" (the default) starts from the suite initial cycle point
 (specified in the suite.rc or on the command line). Any dependence on tasks
@@ -94,9 +91,9 @@ def main(is_restart=False):
         # Auto-registration: "cylc run" (no args) in source dir.
         reg = SuiteSrvFilesManager().register(on_the_fly=True)
         pth, exc = os.path.split(sys.argv[0])
-        # Replace process with explicit "cylc run REG ..." for easy
-        # identification in the process table.
+        # Replace with "cylc run REG ..." to identify suite in proc name.
         os.execv(sys.argv[0], [sys.argv[0]] + [reg] + sys.argv[1:])
+        # (This process no longer exists.)
 
     # Check suite is not already running before start of host selection.
     try:

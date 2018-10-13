@@ -19,8 +19,8 @@
 """cylc [prep] register [OPTIONS] ARGS
 
 Register the name REG for the suite definition in PATH. The suite server
-program can subsequently be started, stopped, and otherwise targetted by name.
-(Note however that "cylc run" can register the target suite on the fly, too).
+program can subsequently be started, stopped, and targeted by name. (Note
+however that "cylc run" can register the target suite on the fly, too).
 
 Registration creates a suite run directory "~/cylc-run/REG/" with a ".service/"
 sub-directory containing authentication files and source symlink to PATH. Suite
@@ -36,7 +36,7 @@ register suite in PATH as foo
 register suite in $PWD as foo
 
 % cylc reg
-register suite in $PWD as $(basename $PWD)
+register suite in $PWD as the name of its parent directory: $(basename $PWD).
 
 The same suite can be registered under multiple names (with corresponding
 different run directories) but the same name cannot be used for different
