@@ -236,7 +236,7 @@ class SuiteProcPool(object):
 
     def __init__(self, size=None):
         if not size:
-            size = glbl_cfg().get(['process pool size'], size)
+            size = glbl_cfg().get(['process pool size'])
         self.size = size
         self.proc_pool_timeout = glbl_cfg().get(['process pool timeout'])
         self.closed = False  # Close queue
