@@ -411,7 +411,8 @@ To start a new run, stop the old one first with one or more of these:
                 name = os.path.basename(os.path.dirname(arg))
         return name, path
 
-    def register(self, reg=None, source=None, on_the_fly=False):
+    def register(self, reg=None, source=None, on_the_fly=False,
+                 redirect=False):
         """Register a suite, or renew its registration.
 
         Create the suite run directory and generate service files if they
@@ -463,8 +464,11 @@ To start a new run, stop the old one first with one or more of these:
         if orig_source is None:
             os.symlink(source, target)
         elif orig_source != source:
+            if not redirect:
+                raise SuiteServiceFileError(
+                    "ERROR: name %s is used for %s" % (reg, orig_source))
             sys.stderr.write(
-                "WARNING: name %s repurposed from %s\n" % (reg, orig_source))
+                "WARNING: redirecting %s from %s\n" % (reg, orig_source))
             os.unlink(target)
             os.symlink(source, target)
         # Create a new passphrase for the suite if necessary.

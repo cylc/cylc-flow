@@ -19,28 +19,35 @@
 """cylc [prep] register [OPTIONS] ARGS
 
 Register the name REG for the suite definition in PATH. The suite server
-program can subsequently be started, stopped, and targeted by name. (Note
-however that "cylc run" can register the target suite on the fly, too).
+program can then be started, stopped, and targeted by name REG. (Note that
+"cylc run" can also register suites on the fly).
 
 Registration creates a suite run directory "~/cylc-run/REG/" with a ".service/"
-sub-directory containing authentication files and source symlink to PATH. Suite
-names can be a '/'-delimited hierarchy, which becomes a path under ~/cylc-run/.
+sub-directory containing authentication files and a "source" symlink to PATH.
 
-REG defaults to "$(basename $PWD)" and PATH defaults to "$PWD", but if you give
-only a single argument it must be the name, not the path.
+Suite names can be hierarchical, corresponding to the path under ~/cylc-run.
 
-% cylc reg foo PATH
-register suite in PATH as foo
+  % cylc register dogs/fido PATH
+Register PATH/suite.rc as dogs/fido, with run directory ~/cylc-run/dogs/fido.
 
-% cylc reg foo
-register suite in $PWD as foo
+  % cylc register dogs/fido
+Register $PWD/suite.rc as dogs/fido.
 
-% cylc reg
-register suite in $PWD as the name of its parent directory: $(basename $PWD).
+  % cylc register
+Register $PWD/suite.rc as the parent directory name: $(basename $PWD).
 
-The same suite can be registered under multiple names (with corresponding
-different run directories) but the same name cannot be used for different
-suites; the command will abort if REG is already used by a different suite."""
+The same suite can be registered with multiple names; this results in multiple
+suite run directories that link to the same suite definition.
+
+To "unregister" a suite, delete or rename its run directory (renaming it under
+~/cylc-run effectively re-registers the original suite with the new name).
+
+Use of "--redirect" is required to allow an existing name (and run directory)
+to be associated with a different suite definition. This is potentially
+dangerous because the new suite will overwrite files in the existing run
+directory. You should consider deleting or renaming an existing run directory
+rather than just re-use it with another suite."""
+
 
 import sys
 from cylc.remote import remrun
@@ -57,7 +64,13 @@ def main():
         __doc__,
         argdoc=[("[REG]", "Suite name"),
                 ("[PATH]", "Suite definition directory (defaults to $PWD)")])
-    args = parser.parse_args()[1]
+
+    parser.add_option(
+        "--redirect", help="Allow an existing suite name and run directory "
+                           "to be used with another suite.",
+        action="store_true", default=False, dest="redirect")
+
+    opts, args = parser.parse_args()
     if len(args) == 2:
         reg, src = args
     elif len(args) == 1:
@@ -65,7 +78,8 @@ def main():
         src = None
     else:
         reg = src = None
-    SuiteSrvFilesManager().register(reg, src)
+    SuiteSrvFilesManager().register(reg, src, redirect=opts.redirect)
+
 
 if __name__ == "__main__":
     try:
