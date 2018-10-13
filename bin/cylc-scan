@@ -210,7 +210,7 @@ def main():
         parser.error(str(exc))
     if options.all_ports:
         args.extend(
-            glbl_cfg().get(["suite servers", "scan hosts"], ["localhost"]))
+            glbl_cfg().get(["suite servers", "scan hosts"]) or ["localhost"])
     if not args:
         args = get_scan_items_from_fs(cre_owner)
     if not args:
