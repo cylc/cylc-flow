@@ -325,10 +325,9 @@ Cylc defaults to HTTPS if this setting is not explicitly configured.
 
 \subsubsection[base port]{[communication] \textrightarrow base port }
 
-The first port that Cylc is allowed to use. This config item is deprecated;
-instead specify this in combination with the also-deprecated
-\lstinline=maximum number of ports= using the \lstinline=run ports=
-setting under \lstinline=[suite servers]=.
+The first port that Cylc is allowed to use. This item (and
+\lstinline=maximum number of ports=) is deprecated; please use
+\lstinline=run ports= under \lstinline=[suite servers]= instead.
 
 \begin{myitemize}
 \item {\em type:} integer
@@ -337,10 +336,8 @@ setting under \lstinline=[suite servers]=.
 
 \subsubsection[maximum number of ports]{[communication] \textrightarrow maximum number of ports}
 
-This determines the maximum number of suites that can run at once on the
-suite host. It is deprecated; instead specify this in combination with the
-also-deprecated \lstinline=base port= using the \lstinline=run ports=
-setting under \lstinline=[suite servers]=.
+This setting (and \lstinline=base port=) is deprecated; please use
+\lstinline=run ports= under \lstinline=[suite servers]= instead.
 
 \begin{myitemize}
 \item {\em type:} integer

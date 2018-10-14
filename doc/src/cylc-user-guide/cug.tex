@@ -4016,7 +4016,7 @@ argument that identifies the calling task name:
 
 For large ensembles template processing can be used to
 automatically generate the member names and associated dependencies
-(see~\ref{Jinja2} and~\ref{Empy}).
+(see~\ref{Jinja2} and~\ref{EmPy}).
 
 \subsubsection{Runtime Inheritance - Single}
 
@@ -5394,7 +5394,7 @@ Cylc extends this functionality to allow import of arbitrary Python modules.
 \end{lstlisting}
 
 For better clarity and disambiguation Python modules can be prefixed with
-``__python__'':
+\lstinline=__python__=:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -5416,7 +5416,7 @@ note that there is another Python package called ``em'' that provides
 a conflicting module of the same name. You can run
 \lstinline=cylc check-software= command to check your installation.
 
-The need for Empy processing must be declared with a hash-bang comment as
+The need for EmPy processing must be declared with a hash-bang comment as
 the first line of the suite.rc file:
 \begin{lstlisting}
 #!empy
@@ -6971,8 +6971,8 @@ Cylc supports three ways of tracking task state on job hosts:
     \item regular polling by the suite server program
 \end{myitemize}
 
-These are explained in the following sections. All three can be used, on
-different job hosts, in the same suite if necessary.
+These can be configured per job host in the Cylc global config file - see
+~/ref{SiteRCReference}.
 
 If your site prohibits HTTPS and ssh back from job hosts to suite hosts, before resorting
 to the polling method you should consider installing dedicated Cylc servers or
@@ -7052,64 +7052,6 @@ like).
 
 \subsubsection{Task Communications Configuration}
 
-Here are the default site and user global config items relevant to task state
-tracking (see these with \lstinline=cylc get-site-config=):
-
-\lstset{language=suiterc}
-\begin{lstlisting}
-# SITE AND USER CONFIG
-
-# Task messaging settings affect task-to-suite communications.
-[task messaging]
-    # If a message send fails, retry after this delay:
-    retry interval = PT5S
-    # If send fails after this many tries, give up trying:
-    maximum number of tries = 7
-
-    # This timeout is the same as --comms-timeout for user commands. If
-    # set to None (no timeout) messages to non-responsive suites
-    # (e.g. suspended with Ctrl-Z) could hang indefinitely.
-    connection timeout = PT30S
-
-# Setup the communication method details. This is required for
-# communications between cylc clients and servers (i.e. between
-# suite-connecting commands and guis, and running suite server processes).
-[communication]
-
-    # Configure the choice of communication method. Https is configured by
-    # default, and this requires the Python OpenSSL package to be installed.
-    # Http can be configured to override the default setting.
-# SITE ONLY
-    method = http
-
-    # Each suite listens on a dedicated network port. The port to bind to is
-    # selected randomly from the allowed range of ports.
-# SITE ONLY
-    base port = 43001
-
-    # This sets the maximum number of suites that can run at once.
-# SITE ONLY
-    maximum number of ports = 100
-
-[hosts]
-    # The default task host is the suite host:
-    # Add task host sections if defaults are not sufficient.
-    [[HOST]]
-       # Method of communication of task progress back to the suite:
-        #   1) default - HTTPS via network ports
-        #   2) ssh  - re-invoke messaging commands on suite server
-        #   3) poll - the suite polls for status of passive tasks
-        # HTTPS comms are still required in all cases *on the suite host*
-        # for cylc clients (commands etc.) to communicate with suites.
-        task communication method = "default" # or "ssh" or "poll"
-        # The "poll" method sets a default interval here to ensure no
-        # tasks are accidentally left unpolled. You can override this
-        # with run-length appropriate intervals under task [runtime]
-        # (however this will also result in routine polling under the
-        # default or ssh communications).
-        execution polling intervals = PT1M
-        submission polling intervals = PT1M
-\end{lstlisting}
 
 \subsection{The Suite Service Directory}
 \label{The Suite Service Directory}
