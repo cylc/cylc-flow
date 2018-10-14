@@ -411,8 +411,7 @@ To start a new run, stop the old one first with one or more of these:
                 name = os.path.basename(os.path.dirname(arg))
         return name, path
 
-    def register(self, reg=None, source=None, on_the_fly=False,
-                 redirect=False):
+    def register(self, reg=None, source=None, redirect=False):
         """Register a suite, or renew its registration.
 
         Create the suite run directory and generate service files if they
@@ -421,56 +420,69 @@ To start a new run, stop the old one first with one or more of these:
         Args:
             reg (str): suite name, default basename($PWD)
             source (str): directory location of suite.rc file, default $PWD
-            on_the_fly (bool): indicates on-the-fly registration by "cylc run".
 
         Return:
             The registered suite name (which may be computed here).
 
         Raise:
             SuiteServiceFileError:
-                Illegal reg (can look like a relative path, but not absolute).
-                Another suite is already registered with this name.
-                No suite.rc file found.
+                No suite.rc file found in source location.
+                Illegal name (can look like a relative path, but not absolute).
+                Another suite already has this name (unless --redirect).
         """
         if reg is None:
+            # Take name of parent dir as suite name.
             reg = os.path.basename(os.getcwd())
-        elif os.path.isabs(reg):
+
+        if os.path.isabs(reg):
             raise SuiteServiceFileError(
                 "ERROR: suite name cannot be an absolute path: %s" % reg)
-        # Abort if 'reg' is already running; remove old contact file if not.
-        self.detect_old_contact_file(reg)
-        # Check if reg is already used.
+
+        # Suite service directory.
         srv_d = self.get_suite_srv_dir(reg)
-        mkdir_p(srv_d)
+
+        # Check if reg is already used.
         target = os.path.join(srv_d, self.FILE_BASE_SOURCE)
         try:
             # Already used?
             orig_source = os.readlink(target)
         except OSError:
-            # Not already used.
             orig_source = None
-        if source is None:
-            if on_the_fly and orig_source is not None:
-                # "cylc run REG": don't expect existing REG to point to PWD.
-                # (Contrast this with "cylc register REG").
-                source = orig_source
-            else:
+
+        if source is not None:
+            # Regularize: want suite dir name only (not dir/suite.rc).
+            if os.path.basename(source) == self.FILE_BASE_SUITE_RC:
+                source = os.path.dirname(source)
+        else:
+            # Assume source is $PWD unless reg is already used.
+            if orig_source is None:
                 source = os.getcwd()
-        if os.path.basename(source) == self.FILE_BASE_SUITE_RC:
-            source = os.path.dirname(source)
+            else:
+                source = orig_source
+
+        # suite.rc must exist so we can detect accidentally reversed args.
         source = os.path.abspath(source)
         if not os.path.isfile(os.path.join(source, self.FILE_BASE_SUITE_RC)):
             raise SuiteServiceFileError("ERROR: no suite.rc in %s" % source)
+
         if orig_source is None:
+            mkdir_p(srv_d)
             os.symlink(source, target)
+
         elif orig_source != source:
+            # Redirecting an existing name and run directory to another suite.
             if not redirect:
                 raise SuiteServiceFileError(
-                    "ERROR: name %s is used for %s" % (reg, orig_source))
-            sys.stderr.write(
-                "WARNING: redirecting %s from %s\n" % (reg, orig_source))
+                    "ERROR: name %s is already used for %s" % (
+                        reg, orig_source))
+            else:
+                sys.stderr.write(
+                    "WARNING: the suite name '%s' was used for %s\n"
+                    "The run directory will be reused for %s\n" % (
+                        reg, orig_source, source))
             os.unlink(target)
             os.symlink(source, target)
+
         # Create a new passphrase for the suite if necessary.
         if not self._locate_item(self.FILE_BASE_PASSPHRASE, srv_d):
             import random

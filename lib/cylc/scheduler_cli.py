@@ -89,11 +89,9 @@ def main(is_restart=False):
     options, args = parse_commandline(is_restart)
     if not args:
         # Auto-registration: "cylc run" (no args) in source dir.
-        reg = SuiteSrvFilesManager().register(on_the_fly=True)
-        pth, exc = os.path.split(sys.argv[0])
-        # Replace with "cylc run REG ..." to identify suite in proc name.
+        reg = SuiteSrvFilesManager().register()
+        # Replace this process with "cylc run REG ..." for easy identification.
         os.execv(sys.argv[0], [sys.argv[0]] + [reg] + sys.argv[1:])
-        # (This process no longer exists.)
 
     # Check suite is not already running before start of host selection.
     try:
