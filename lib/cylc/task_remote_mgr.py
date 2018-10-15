@@ -290,7 +290,7 @@ class TaskRemoteMgr(object):
                 LOG.warning(TaskRemoteMgmtError(
                     TaskRemoteMgmtError.MSG_TIDY,
                     (host, owner), ' '.join(quote(item) for item in cmd),
-                    proc.ret_code, out, err))
+                    proc.returncode, out, err))
 
     def _remote_host_select_callback(self, proc_ctx, cmd_str):
         """Callback when host select command exits"""
