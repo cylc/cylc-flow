@@ -473,12 +473,12 @@ To start a new run, stop the old one first with one or more of these:
             # Redirecting an existing name and run directory to another suite.
             if not redirect:
                 raise SuiteServiceFileError(
-                    "ERROR: name %s is already used for %s" % (
+                    "ERROR: the suite name '%s' is already used for %s." % (
                         reg, orig_source))
             else:
                 sys.stderr.write(
-                    "WARNING: the suite name '%s' was used for %s\n"
-                    "The run directory will be reused for %s\n" % (
+                    "WARNING: the suite name '%s' was used for %s.\n"
+                    "The run directory will be reused for %s.\n" % (
                         reg, orig_source, source))
             os.unlink(target)
             os.symlink(source, target)

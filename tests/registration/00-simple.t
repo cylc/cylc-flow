@@ -18,7 +18,7 @@
 # Test suite registration
 
 . "$(dirname "$0")/test_header"
-set_test_number 20 
+set_test_number 23 
 
 init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 [meta]
@@ -31,6 +31,10 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
         script = true
 __SUITE_RC__
 
+# Unique suite run-dir prefix to avoid messing with real suites.
+PRE=cylctb-reg-${CYLC_TEST_TIME_INIT}
+
+# Test fail no suite.rc file.
 CYLC_RUN_DIR=$(cylc get-global --print-run-dir)
 TEST_NAME="${TEST_NAME_BASE}-noreg"
 run_fail "${TEST_NAME}" cylc register "${SUITE_NAME}" "${PWD}/zilch"
@@ -38,47 +42,66 @@ contains_ok "${TEST_NAME}.stderr" <<__ERR__
 ERROR: no suite.rc in ${PWD}/zilch
 __ERR__
 
-# Test default "cylc reg" (no args)
+CHEESE=${PRE}-cheese
+# Test default name: "cylc reg" (suite in $PWD, no args)
 TEST_NAME="${TEST_NAME_BASE}-cheese"
-mkdir cheese
-cd cheese
+mkdir $CHEESE
+cd $CHEESE
 touch suite.rc
 run_ok "${TEST_NAME}" cylc register
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-REGISTERED cheese -> ${PWD}
+REGISTERED $CHEESE -> ${PWD}
 __OUT__
 cd ..
-exists_ok "${CYLC_RUN_DIR}/cheese/.service/passphrase"
+exists_ok "${CYLC_RUN_DIR}/$CHEESE/.service/passphrase"
+rm -rf "${CYLC_RUN_DIR}/$CHEESE"
 
-# Test "cylc reg REG" (suite in PWD)
+# Test default name: "cylc reg REG" (suite in $PWD)
 TEST_NAME="${TEST_NAME_BASE}-toast"
-cd cheese
-run_ok "${TEST_NAME}" cylc register toast
+cd $CHEESE
+TOAST=${PRE}-toast
+run_ok "${TEST_NAME}" cylc register $TOAST
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-REGISTERED toast -> ${PWD}
+REGISTERED $TOAST -> ${PWD}
 __OUT__
 cd ..
-exists_ok "${CYLC_RUN_DIR}/toast/.service/passphrase"
+exists_ok "${CYLC_RUN_DIR}/$TOAST/.service/passphrase"
+rm -rf "${CYLC_RUN_DIR}/$TOAST"
 
 # Test "cylc reg REG PATH"
 TEST_NAME="${TEST_NAME_BASE}-bagels"
-run_ok "${TEST_NAME}" cylc register bagels cheese
+BAGELS=${PRE}-bagels
+run_ok "${TEST_NAME}" cylc register $BAGELS $CHEESE
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-REGISTERED bagels -> ${PWD}/cheese
+REGISTERED $BAGELS -> ${PWD}/$CHEESE
 __OUT__
-exists_ok "${CYLC_RUN_DIR}/bagels/.service/passphrase"
+exists_ok "${CYLC_RUN_DIR}/$BAGELS/.service/passphrase"
+rm -rf "${CYLC_RUN_DIR}/$BAGELS"
 
-# Test "cylc reg REG PATH" where REG already points to PATH2
-TEST_NAME="${TEST_NAME_BASE}-repurpose"
-cp -r cheese yoghurt
-run_ok "${TEST_NAME}" cylc register cheese yoghurt
+# Test fail "cylc reg REG PATH" where REG already points to PATH2
+YOGHURT=${PRE}-YOGHURT
+cp -r $CHEESE $YOGHURT
+TEST_NAME="${TEST_NAME_BASE}-cheese"
+run_ok "${TEST_NAME}" cylc register $CHEESE $CHEESE
+TEST_NAME="${TEST_NAME_BASE}-repurpose1"
+run_fail "${TEST_NAME}" cylc register $CHEESE $YOGHURT
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WARNING: name cheese repurposed from ${PWD}/cheese
+ERROR: the suite name '$CHEESE' is already used for ${PWD}/$CHEESE.
+__ERR__
+
+# Test succeed "cylc reg REG PATH" where REG already points to PATH2
+TEST_NAME="${TEST_NAME_BASE}-repurpose2"
+cp -r $CHEESE $YOGHURT
+run_ok "${TEST_NAME}" cylc register --redirect $CHEESE $YOGHURT
+contains_ok "${TEST_NAME}.stderr" <<__ERR__
+WARNING: the suite name '$CHEESE' was used for ${PWD}/$CHEESE.
+The run directory will be reused for ${PWD}/$YOGHURT.
 __ERR__
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-REGISTERED cheese -> ${PWD}/yoghurt
+REGISTERED $CHEESE -> ${PWD}/$YOGHURT
 __OUT__
-exists_ok "${CYLC_RUN_DIR}/cheese/.service/passphrase"
+exists_ok "${CYLC_RUN_DIR}/$CHEESE/.service/passphrase"
+rm -rf "${CYLC_RUN_DIR}/$CHEESE"
 
 run_ok "${TEST_NAME_BASE}-get-dir" cylc get-directory "${SUITE_NAME}"
 
