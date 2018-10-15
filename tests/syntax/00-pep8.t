@@ -32,7 +32,6 @@ set_test_number 3
 # - PEP8 allows both, line break before binary preferred for new code.
 run_ok "${TEST_NAME_BASE}" pep8 --ignore=E402,W503,W504 \
     "${CYLC_DIR}/lib/cylc" \
-    "${CYLC_DIR}/lib/isodatetime" \
     "${CYLC_DIR}/lib/Jinja2Filters"/*.py \
     "${CYLC_DIR}/lib/parsec"/*.py \
     $(grep -l '#!.*\<python\>' "${CYLC_DIR}/bin/"*)
