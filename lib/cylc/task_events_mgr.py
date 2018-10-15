@@ -841,6 +841,7 @@ class TaskEventsManager(object):
                     "point": quote(str(itask.point)),
                     "name": quote(itask.tdef.name),
                     "submit_num": itask.submit_num,
+                    "try_num": itask.get_try_num(),
                     "id": quote(itask.identity),
                     "message": quote(message),
                     "batch_sys_name": quote(

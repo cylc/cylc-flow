@@ -29,6 +29,7 @@ assert args == {
     'title': 'a task called foo',
     'fish': 'trout',
     'submit_num': '1',
+    'try_num': '1',
     'batch_sys_name': 'background',
     'id': 'foo.1',
     'finish_time': 'None',
