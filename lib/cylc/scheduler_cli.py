@@ -47,15 +47,11 @@ If the suite is not already registered (by "cylc register" or a previous run)
 it will be registered on the fly before start up.
 
 % cylc run REG
-  If suite REG exists, run it.
-  Otherwise, register $PWD/suite.rc as REG and run it.
-
-% cylc run --source=PATH REG
-  Register PATH/suite.rc as REG, and run it.
+  Run the suite registered with name REG.
 
 % cylc run
-  Register $PWD/suite.rc as its parent directory name, and run it.
- (Note REG must be given if START_POINT is on the command line.)
+  Register $PWD/suite.rc as $(basename $PWD) and run it.
+ (Note REG must be given explicitly if START_POINT is on the command line.)
 
 A "cold start" (the default) starts from the suite initial cycle point
 (specified in the suite.rc or on the command line). Any dependence on tasks
@@ -208,11 +204,6 @@ def parse_commandline(is_restart):
         "--reference-test",
         help="Do a test run against a previously generated reference log.",
         action="store_true", default=False, dest="reftest")
-
-    parser.add_option(
-        "--source", "-S",
-        help="Specify the suite source.",
-        metavar="SOURCE", action="store", dest="source")
 
     # Override standard parser option for specific help description.
     parser.add_option(
