@@ -259,6 +259,7 @@ class RemoteRunner(object):
     To ensure that users are aware of remote re-invocation info is always
     printed, but to stderr so as not to interfere with results.
     """
+    OPT_ARG_OPTS = ('--user', '--host', '--ssh-cylc')
 
     def __init__(self, argv=None):
         self.user = None  # i.e. owner; name it user for consistency with CLI
@@ -272,21 +273,16 @@ class RemoteRunner(object):
         # Detect and replace host and user options
         argv = self.argv[1:]
 
-        # First standardise options with space instead of '=' delimiter to args
-        opt_arg_opts = ('--user', '--host', '--ssh-cylc')
-        for index, argument in enumerate(argv):
-            if argument in opt_arg_opts:
-                # Condense two items in argv (opt and arg) to one ('opt=arg')
-                argv[index] = argument + '=' + argv.pop(index + 1)
-
-        # Now process all standardised options
         self.args = []
         while argv:
             arg = argv.pop(0)
-            if arg.startswith(tuple([opt + '=' for opt in opt_arg_opts])):
+            if arg.startswith(tuple([opt + '=' for opt in self.OPT_ARG_OPTS])):
                 # e.g. if arg is '--host=HOST' here set self.host to HOST
-                opt_with_dashes, opt_arg = arg.split('=')[:2]
+                opt_with_dashes, opt_arg = arg.split('=', 1)
                 setattr(self, opt_with_dashes.strip('--'), opt_arg)
+            elif arg in self.OPT_ARG_OPTS:  # if opt arg provided after a space
+                # e.g. if arg is '--host' set self.host to next element in argv
+                setattr(self, arg.strip('--'), argv.pop())
             elif arg == '--login':
                 self.ssh_login_shell = True
             elif arg == '--no-login':
