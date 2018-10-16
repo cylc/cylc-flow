@@ -49,11 +49,8 @@ if remrun(abort_if='edit', forward_x11=True):
     sys.exit(0)
 
 import os
-import re
 import shlex
-import traceback
 from glob import glob
-from time import sleep
 from pipes import quote
 from stat import S_IRUSR
 from tempfile import mkstemp
@@ -68,7 +65,6 @@ from cylc.task_id import TaskID
 from cylc.suite_logging import SUITE_LOG_OPTS
 from cylc.task_job_logs import (
     JOB_LOG_OUT, JOB_LOG_ERR, JOB_LOG_OPTS, NN, JOB_LOGS_LOCAL)
-from parsec.fileparse import read_and_proc
 
 
 # Immortal tail-follow processes on job hosts can be cleaned up by killing

@@ -47,7 +47,6 @@ import re
 from subprocess import Popen, PIPE, CalledProcessError
 import json
 
-import cylc.flags
 from cylc.option_parsers import OptionParser
 
 
