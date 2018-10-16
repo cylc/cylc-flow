@@ -32,7 +32,6 @@ import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.task_id import TaskID
 from cylc.network.httpclient import SuiteRuntimeServiceClient
-from cylc.cfgspec.glbl_cfg import glbl_cfg
 
 
 def main():
