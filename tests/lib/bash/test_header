@@ -587,7 +587,6 @@ cylc_ws_init() {
     if port_is_busy "${TEST_CYLC_WS_PORT}"; then
         ok "${TEST_NAME}"
         TEST_CYLC_WS_URL="http://${HOSTNAME}:${TEST_CYLC_WS_PORT}/"
-        echo "${TEST_CYLC_WS_URL}" >&2
     else
         fail "${TEST_NAME}"
         cylc_ws_kill

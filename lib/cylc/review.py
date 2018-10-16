@@ -35,7 +35,6 @@ import os
 import pwd
 import re
 import shlex
-import sys
 import tarfile
 from tempfile import NamedTemporaryFile
 from time import gmtime, strftime
@@ -887,12 +886,3 @@ class CylcReviewService(object):
         return (cmp(suite2.get("last_activity_time"),
                     suite1.get("last_activity_time")) or
                 cmp(suite1["name"], suite2["name"]))
-
-
-if __name__ == "__main__":
-    from cylc.ws import ws_cli
-    ws_cli(CylcReviewService, __doc__)
-elif 'doctest' not in sys.argv[0]:
-    # If called as a module but not by the doctest module.
-    from cylc.ws import wsgi_app
-    application = wsgi_app(CylcReviewService)
