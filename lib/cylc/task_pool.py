@@ -1132,7 +1132,12 @@ class TaskPool(object):
         for itask in itasks:
             if back_out:
                 # (Aborted edit-run, reset for next trigger attempt).
+                try:
+                    del itask.summary['job_hosts'][itask.submit_num]
+                except KeyError:
+                    pass
                 itask.submit_num -= 1
+                itask.summary['submit_num'] = itask.submit_num
                 itask.local_job_file_path = None
                 continue
             if itask.state.status in TASK_STATUSES_ACTIVE:
