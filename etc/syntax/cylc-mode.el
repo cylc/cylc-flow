@@ -10,40 +10,41 @@
 ;;   (global-font-lock-mode t)
 ;;______________________________________________________________________________
 
-(defconst cylc-mode-version "0.1")
+(defconst cylc-mode-version "0.2")
 
-;; Note regular expression lookarounds are not possible in elisp.
+;; No regular expression lookarounds in Emacs Lisp => some regexes ugly here
 (setq cylc-font-lock-keywords
   '(
     ;; Ordered in terms precendence of application, where face specification
-    ;; order changes resultant highlighting, so don't change it.
+    ;; order changes resultant highlighting, so don't change ordering.
 
-    ;; Regular i.e. non-Jinja2 comments
+    ;; All comments: standard (# ...) and Jinja2 ('{# ... #}' incl. multiline)
     ("^#\\(\\([^{].{2}\\|.[^#]\\).*\\|.{0,1}\\)$" . font-lock-comment-face)
+    ("^{#\\(\n?.?\\)*?[[:alnum:][[:punct:]]*#}$" . font-lock-comment-face)
 
-     ;; Assignment and dependency characters, but only outside of Jinja2
+    ;; Cylc setting keys/names
+    ("^\\( *[[:alnum:]]+ *\\)=+" 1 font-lock-variable-name-face t)
+
+    ;; Assignment and dependency characters, but only outside of Jinja2
     ("=>" . font-lock-keyword-face)  ;; as of 'special syntactic significance'
-    ("=" . font-lock-preprocessor-face)  ;; as running out of font-lock faces
+    ("=+" . font-lock-preprocessor-face)  ;; as running out of font-lock faces
 
-    ;; Jinja2: make all Jinja2 including its comments & multilines one colour
-    ("{#\\(\n?.?\\)*?[[:alnum:][[:punct:]]*?#}" . font-lock-constant-face)
-    ("{{[[:alnum:] [[:punct:]]*?]*}}" . font-lock-constant-face)
-    ;; Note Jinja2 '{% ... %}' highlighting defined later via 'add-hook'
+    ;; All Jinja2 excl. comments: '{% ... %}' and '{{ ... }}' incl. multiline
+    ("{%\\(\n?.?\\)*?[[:alnum:][[:punct:]]*%}" . font-lock-constant-face)
+    ("{{[[:alnum:] [[:punct:]]+?}}" . font-lock-constant-face)
 
     ;; All Cylc section (of any level e.g. sub-, sub-sub-) specifications
     ("\\[\\[\\[[[:alnum:], _]+\\]\\]\\]" . font-lock-type-face)
     ("\\[\\[\\[[[:alnum:], _]+" . font-lock-type-face)
     ("\\]\\]\\]" . font-lock-type-face)
-    ("\\[\\[[[:alnum:], _]*\\]\\]" . font-lock-type-face)
-    ("\\[\\[[[:alnum:], _]*" . font-lock-type-face)
+    ("\\[\\[[[:alnum:], _]+\\]\\]" . font-lock-type-face)
+    ("\\[\\[[[:alnum:], _]+" . font-lock-type-face)
     ("\\]\\]" . font-lock-type-face)
     ("\\[[[:alnum:], ]+\\]" . font-lock-warning-face)
+  )
+)
 
-    ;; Cylc setting keys/names
-    ("^[ [:alnum:]-_]*" . font-lock-variable-name-face)  ;; AMEND broken
-))
-
-;; define the mode
+;; Define the mode
 (define-derived-mode cylc-mode fundamental-mode
   "cylc mode"
   "Major mode for editing CYLC .cylc files"
@@ -58,8 +59,7 @@
 
 (provide 'cylc-mode)
 
-;; Jinja2 AMEND THIS BIT
 (add-hook 'cylc-mode-hook
   (lambda ()
     (font-lock-add-keywords nil
-       '(("\\({%\\(\n?.?\\)+?[[:alnum:] _=\\(\\)[[:punct:]]%}\\|{{[[:alnum:] ]*}}\\)" 0 font-lock-constant-face t)))))
+       '(("\\({%\\(\n?.?\\)+?[[:alnum:] _=\\(\\)[[:punct:]]%}\\|{{[[:alnum:] [[:punct:]]*?]*}}\\)" 0 font-lock-constant-face t)))))
