@@ -16,7 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 
-# Test that aborting an edit-run has no effect on the next run (GitHub #2461)
+# Test that aborting an edit-run has no effect on the next run
+# (GitHub #2461, #2629)
 
 . $(dirname $0)/test_header
 
@@ -34,3 +35,4 @@ TEST_NAME="${TEST_NAME_BASE}-run"
 run_ok "${TEST_NAME}" cylc run --no-detach "${SUITE_NAME}"
 
 purge_suite "${SUITE_NAME}"
+exit
