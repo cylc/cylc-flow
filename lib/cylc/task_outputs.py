@@ -156,8 +156,10 @@ class TaskOutputs(object):
                                is_completed=True):
         """Set the output identified by message/trigger to is_completed.
 
-        Return True if completion flag is changed, False if completion is
-        unchanged, or None if message/trigger is not found.
+        Return:
+            - Value of trigger (True) if completion flag is changed,
+            - False if completion is unchanged, or
+            - None if message/trigger is not found.
 
         """
         try:
@@ -167,7 +169,10 @@ class TaskOutputs(object):
         except KeyError:
             return None
         else:
-            return bool(old_is_completed) != bool(is_completed)
+            if bool(old_is_completed) == bool(is_completed):
+                return False
+            else:
+                return item[_TRIGGER]
 
     def _get_item(self, message, trigger):
         """Return self._by_trigger[trigger] or self._by_message[message].

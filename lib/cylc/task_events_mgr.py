@@ -34,6 +34,7 @@ from pipes import quote
 import shlex
 from time import time
 import traceback
+import urllib
 
 from parsec.config import ItemNotFoundError
 
@@ -344,7 +345,7 @@ class TaskEventsManager(object):
         cylc.flags.iflag = True
 
         # Satisfy my output, if possible, and record the result.
-        an_output_was_satisfied = itask.state.outputs.set_msg_trg_completion(
+        completed_trigger = itask.state.outputs.set_msg_trg_completion(
             message=message, is_completed=True)
 
         if message == TASK_OUTPUT_STARTED:
@@ -400,11 +401,17 @@ class TaskEventsManager(object):
             self.pflag = True
             itask.state.reset_state(TASK_STATUS_SUBMITTED)
             self._reset_job_timers(itask)
-        elif an_output_was_satisfied:
+            # We should really have a special 'vacated' handler, but given that
+            # this feature can only be used on the deprecated loadleveler
+            # system, we should probably aim to remove support for job vacation
+            # instead. Otherwise, we should have:
+            # self.setup_event_handlers(itask, 'vacated', message)
+        elif completed_trigger:
             # Message of an as-yet unreported custom task output.
             # No state change.
             self.pflag = True
             self.suite_db_mgr.put_update_task_outputs(itask)
+            self.setup_event_handlers(itask, completed_trigger, message)
         else:
             # Unhandled messages. These include:
             #  * general non-output/progress messages
@@ -419,9 +426,10 @@ class TaskEventsManager(object):
             self._db_events_insert(
                 itask, ("message %s" % str(severity).lower()), message)
         if severity in ['WARNING', 'CRITICAL', 'CUSTOM']:
-            self.setup_event_handlers(itask, severity.lower(), message)
+            self.setup_event_handlers(
+                itask, str(severity).lower(), message, is_generic=True)
 
-    def setup_event_handlers(self, itask, event, message):
+    def setup_event_handlers(self, itask, event, message, is_generic=False):
         """Set up handlers for a task event."""
         if itask.tdef.run_mode != 'live':
             return
@@ -430,8 +438,8 @@ class TaskEventsManager(object):
             msg = message
         self._db_events_insert(itask, event, msg)
         self._setup_job_logs_retrieval(itask, event)
-        self._setup_event_mail(itask, event)
-        self._setup_custom_event_handlers(itask, event, message)
+        self._setup_event_mail(itask, event, message, is_generic)
+        self._setup_custom_event_handlers(itask, event, message, is_generic)
 
     def _custom_handler_callback(self, ctx, schd_ctx, id_key):
         """Callback when a custom event handler is done."""
@@ -778,11 +786,14 @@ class TaskEventsManager(object):
             ),
             retry_delays)
 
-    def _setup_event_mail(self, itask, event):
+    def _setup_event_mail(self, itask, event, message, is_generic):
         """Set up task event notification, by email."""
-        id_key = (
-            (self.HANDLER_MAIL, event),
-            str(itask.point), itask.tdef.name, itask.submit_num)
+        if is_generic:
+            key1 = (self.HANDLER_MAIL,
+                    '%s-%s' % (event, urllib.quote(message)))
+        else:
+            key1 = (self.HANDLER_MAIL, event)
+        id_key = (key1, str(itask.point), itask.tdef.name, itask.submit_num)
         if (id_key in self.event_timers or
                 event not in self._get_events_conf(itask, "mail events", [])):
             return
@@ -803,7 +814,7 @@ class TaskEventsManager(object):
             ),
             retry_delays)
 
-    def _setup_custom_event_handlers(self, itask, event, message):
+    def _setup_custom_event_handlers(self, itask, event, message, is_generic):
         """Set up custom task event handlers."""
         handlers = self._get_events_conf(itask, event + ' handler')
         if (handlers is None and
@@ -819,7 +830,11 @@ class TaskEventsManager(object):
             retry_delays = [0]
         # There can be multiple custom event handlers
         for i, handler in enumerate(handlers):
-            key1 = ("%s-%02d" % (self.HANDLER_CUSTOM, i), event)
+            if is_generic:
+                key1 = ('%s-%02d' % (self.HANDLER_CUSTOM, i),
+                        '%s-%s' % (event, urllib.quote(message)))
+            else:
+                key1 = ('%s-%02d' % (self.HANDLER_CUSTOM, i), event)
             id_key = (
                 key1, str(itask.point), itask.tdef.name, itask.submit_num)
             if id_key in self.event_timers:
