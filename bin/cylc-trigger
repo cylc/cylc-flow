@@ -185,8 +185,7 @@ def main():
             else:
                 # Reset to previous NN symlink and delete the log directory.
                 dirname = os.path.dirname(real_log_dir)
-                os.symlink(os.path.join(dirname, prev_nn),
-                           os.path.join(dirname, "NN"))
+                os.symlink(prev_nn, os.path.join(dirname, "NN"))
                 shutil.rmtree(real_log_dir)
             aborted = True
 
