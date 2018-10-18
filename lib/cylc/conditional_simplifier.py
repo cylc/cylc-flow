@@ -116,7 +116,7 @@ class ConditionalSimplifier(object):
     def nest_by_oper(cls, nest_me, oper):
         """Nest a list based on a specified logical operation"""
         found = False
-        for i in range(len(nest_me)):
+        for i, _ in enumerate(nest_me):
             if isinstance(nest_me[i], list):
                 nest_me[i] = cls.nest_by_oper(nest_me[i], oper)
             if nest_me[i] == oper:
@@ -154,7 +154,7 @@ class ConditionalSimplifier(object):
 
         # Recurse through the nested list and remove criterion.
         found = None
-        for i in range(0, len(cleaned)):
+        for i, _ in enumerate(cleaned):
             if isinstance(cleaned[i], list):
                 cleaned[i] = cls.clean_expr(cleaned[i], criterion)
             if cleaned[i] in [criterion, '']:
@@ -183,7 +183,7 @@ class ConditionalSimplifier(object):
     def flatten_nested_expr(cls, expr):
         """Convert a logical expression in a nested list back to a string"""
         flattened = copy.deepcopy(expr)
-        for i in range(len(flattened)):
+        for i, _ in enumerate(flattened):
             if isinstance(flattened[i], list):
                 flattened[i] = cls.flatten_nested_expr(flattened[i])
         if isinstance(flattened, list):
