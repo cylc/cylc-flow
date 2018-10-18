@@ -205,7 +205,7 @@ class GraphParser(object):
         # Join incomplete lines (beginning or ending with an arrow).
         full_lines = []
         part_lines = []
-        for i in range(0, len(non_blank_lines)):
+        for i, _ in enumerate(non_blank_lines):
             this_line = non_blank_lines[i]
             if i == 0:
                 # First line can't start with an arrow.
