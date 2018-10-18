@@ -187,7 +187,7 @@ class ConditionalSimplifier(object):
             if isinstance(flattened[i], list):
                 flattened[i] = cls.flatten_nested_expr(flattened[i])
         if isinstance(flattened, list):
-            flattened = (" ").join(flattened)
+            flattened = " ".join(flattened)
         flattened = "(" + flattened
         flattened += ")"
         return flattened
