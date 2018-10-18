@@ -233,16 +233,16 @@ class TestHostAppointer(unittest.TestCase):
         of HostAppointer.
         """
         self.mock_global_config(set_hosts=['localhost'])
-        self.failUnless(self.app._remove_bad_hosts().get('localhost', False))
+        self.assertTrue(self.app._remove_bad_hosts().get('localhost', False))
         # Test 'localhost' true identifier is treated properly too.
         self.mock_global_config(set_hosts=[get_host()])
-        self.failUnless(self.app._remove_bad_hosts().get('localhost', False))
+        self.assertTrue(self.app._remove_bad_hosts().get('localhost', False))
 
         self.mock_global_config(set_hosts=['localhost', 'FAKE_HOST'])
         # Check for no exceptions and 'localhost' but not 'FAKE_HOST' data
         # Difficult to unittest for specific stderr string; this is sufficient.
-        self.failUnless(self.app._remove_bad_hosts().get('localhost', False))
-        self.failUnless(self.app._remove_bad_hosts().get('FAKE_HOST', True))
+        self.assertTrue(self.app._remove_bad_hosts().get('localhost', False))
+        self.assertTrue(self.app._remove_bad_hosts().get('FAKE_HOST', True))
 
         # Apply thresholds impossible to pass; check results in host removal.
         self.mock_global_config(
