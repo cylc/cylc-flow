@@ -316,8 +316,8 @@ def print_table(table, transpose=False):
         table = map(list, zip(*table))
     if not table:
         return
-    for row_no in range(len(table)):
-        for col_no in range(len(table[0])):
+    for row_no, _ in enumerate(table):
+        for col_no, _ in enumerate(table[0]):
             cell = table[row_no][col_no]
             if cell is None:
                 table[row_no][col_no] = []
@@ -325,12 +325,12 @@ def print_table(table, transpose=False):
                 table[row_no][col_no] = str(cell)
 
     col_widths = []
-    for col_no in range(len(table[0])):
+    for col_no, _ in enumerate(table[0]):
         col_widths.append(
-            max(len(table[row_no][col_no]) for row_no in range(len(table))))
+            max(len(table[row_no][col_no]) for row_no, _ in enumerate(table)))
 
-    for row_no in range(len(table)):
-        for col_no in range(len(table[row_no])):
+    for row_no, _ in enumerate(table):
+        for col_no, _ in enumerate(table[row_no]):
             if col_no != 0:
                 sys.stdout.write('  ')
             cell = table[row_no][col_no]
@@ -370,7 +370,8 @@ def plot_scale(results, run_names, versions, metric, experiment,
     """Create a scatter plot with line of best fit interpreting float(run_name)
     as the x-axis value."""
     x_data = [int(run_name) for run_name in run_names]
-    colours = [c_map(x / (len(versions) - 0.99)) for x in range(len(versions))]
+    colours = [c_map(x / (len(versions) - 0.99))
+               for x, _ in enumerate(versions)]
 
     for ver_no, version in enumerate(reversed(versions)):
         y_data = []
