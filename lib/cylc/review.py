@@ -459,6 +459,22 @@ class CylcReviewService(object):
             data["entries"] = data["entries"][offset:offset + per_page]
         else:
             data["n_pages"] = 1
+
+        # Get basic ros(i)e suite info (project and title) per entry if found
+        for entry in data["entries"]:
+            user_suite_dir = os.path.join(user_suite_dir_root, entry["name"])
+            rosie_suite_info = os.path.join(user_suite_dir, "rose-suite.info")
+            if os.path.isfile(rosie_suite_info):
+                rosie_info = {}
+                try:
+                    for line in open(rosie_suite_info, 'r').readlines():
+                        rosie_key, rosie_val = line.strip().split("=", 1)
+                        if rosie_key in ("project", "title"):
+                            rosie_info[rosie_key] = rosie_val
+                except IOError:
+                    pass
+                entry["info"].update(rosie_info)
+
         data["time"] = strftime("%Y-%m-%dT%H:%M:%SZ", gmtime())
         if form == "json":
             return json.dumps(data)
@@ -661,12 +677,23 @@ class CylcReviewService(object):
             **data)
 
     def _get_suite_logs_info(self, user, suite):
-        """Return a dict with suite logs."""
-        data = {"info": {}, "files": {}}
+        """Return a dict of suite-related files including suite logs."""
+        data = {"files": {}}
         user_suite_dir = self._get_user_suite_dir(user, suite)  # cylc files
 
-        # Rose files: to recognise & group, but not process, standard formats.
+        # Rose files: to recognise & group, but not process, standard formats
         data["files"]["rose"] = {}
+
+        # Rosie suite info
+        info_name = os.path.join(user_suite_dir, "rose-suite.info")
+        if os.path.isfile(info_name):
+            stat = os.stat(info_name)
+            data["files"]["rose"]["rose-suite.info"] = {
+                "path": "rose-suite.info",
+                "mtime": stat.st_mtime,
+                "size": stat.st_size}
+
+        # Get Rose log files
         for key in ["conf", "log", "version"]:
             f_name = os.path.join(user_suite_dir, "log/rose-suite-run." + key)
             if os.path.isfile(f_name):
@@ -697,7 +724,8 @@ class CylcReviewService(object):
             prefix += user
         d_rel = os.path.join("cylc-run", suite)
         dir_ = os.path.expanduser(os.path.join(prefix, d_rel))
-        # Get cylc files.
+
+        # Get cylc files
         cylc_files = ["cylc-suite-env", "suite.rc", "suite.rc.processed"]
         for key in cylc_files:
             f_name = os.path.join(dir_, key)
@@ -707,7 +735,7 @@ class CylcReviewService(object):
                                   "mtime": f_stat.st_mtime,
                                   "size": f_stat.st_size}
 
-        # Get cylc suite log files.
+        # Get cylc suite log files
         log_files = ["log/suite/err", "log/suite/log", "log/suite/out"]
         for key in log_files:
             f_name = os.path.join(dir_, key)
@@ -816,7 +844,8 @@ class CylcReviewService(object):
             tail = os.path.join(tail1, tail)
         if not (
             head == 'log' or
-            (not head and tail in ['suite.rc', 'suite.rc.processed'])
+            (not head and tail in
+             ['suite.rc', 'suite.rc.processed', 'rose-suite.info'])
         ):
             raise cherrypy.HTTPError(403)
 

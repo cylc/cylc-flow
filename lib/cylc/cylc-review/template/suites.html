@@ -155,6 +155,14 @@ class="table table-bordered table-condensed table-striped">
       <th>
         last active time
       </th>
+
+      </th>
+      <th>
+        project
+      </th>
+      <th>
+        title
+      </th>
     </tr>
   </thead>
   <tbody>
@@ -179,6 +187,10 @@ class="table table-bordered table-condensed table-striped">
           title="{{entry.last_activity_time}}">{{entry.last_activity_time}}</abbr>
         </small>
       </td>
+
+      <td><small>{{entry.info["project"]}}</small></td>
+
+      <td><small>{{entry.info["title"]}}</small></td>
 
     </tr>
 {% endfor -%}{# entry in entries #}
