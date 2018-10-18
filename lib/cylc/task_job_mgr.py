@@ -729,7 +729,6 @@ class TaskJobManager(object):
         except TaskRemoteMgmtError as exc:
             # Submit number not yet incremented
             itask.submit_num += 1
-            itask.summary['submit_num'] = itask.submit_num
             itask.summary['job_hosts'][itask.submit_num] = ''
             # Retry delays, needed for the try_num
             self._set_retry_timers(itask, rtconfig)
@@ -743,7 +742,6 @@ class TaskJobManager(object):
             itask.task_host = task_host
             # Submit number not yet incremented
             itask.submit_num += 1
-            itask.summary['submit_num'] = itask.submit_num
             # Retry delays, needed for the try_num
             self._set_retry_timers(itask, rtconfig)
 

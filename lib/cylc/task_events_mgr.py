@@ -34,7 +34,6 @@ from pipes import quote
 import shlex
 from time import time
 import traceback
-import urllib
 
 from parsec.config import ItemNotFoundError
 
@@ -130,6 +129,7 @@ class TaskEventsManager(object):
         "CRITICAL": CRITICAL,
         "DEBUG": DEBUG,
     }
+    NON_UNIQUE_EVENTS = ('warning', 'critical', 'custom')
     POLLED_FLAG = "(polled)"
 
     def __init__(self, suite, proc_pool, suite_db_mgr, broadcast_mgr):
@@ -425,11 +425,12 @@ class TaskEventsManager(object):
                 severity = getLevelName(severity)
             self._db_events_insert(
                 itask, ("message %s" % str(severity).lower()), message)
-        if severity in ['WARNING', 'CRITICAL', 'CUSTOM']:
+        if str(severity).lower() in self.NON_UNIQUE_EVENTS:
+            itask.non_unique_events[str(severity).lower()] += 1
             self.setup_event_handlers(
-                itask, str(severity).lower(), message, is_generic=True)
+                itask, str(severity).lower(), message)
 
-    def setup_event_handlers(self, itask, event, message, is_generic=False):
+    def setup_event_handlers(self, itask, event, message):
         """Set up handlers for a task event."""
         if itask.tdef.run_mode != 'live':
             return
@@ -438,8 +439,8 @@ class TaskEventsManager(object):
             msg = message
         self._db_events_insert(itask, event, msg)
         self._setup_job_logs_retrieval(itask, event)
-        self._setup_event_mail(itask, event, message, is_generic)
-        self._setup_custom_event_handlers(itask, event, message, is_generic)
+        self._setup_event_mail(itask, event)
+        self._setup_custom_event_handlers(itask, event, message)
 
     def _custom_handler_callback(self, ctx, schd_ctx, id_key):
         """Callback when a custom event handler is done."""
@@ -786,11 +787,11 @@ class TaskEventsManager(object):
             ),
             retry_delays)
 
-    def _setup_event_mail(self, itask, event, message, is_generic):
+    def _setup_event_mail(self, itask, event):
         """Set up task event notification, by email."""
-        if is_generic:
+        if event in self.NON_UNIQUE_EVENTS:
             key1 = (self.HANDLER_MAIL,
-                    '%s-%s' % (event, urllib.quote(message)))
+                    '%s-%d' % (event, itask.non_unique_events[event]))
         else:
             key1 = (self.HANDLER_MAIL, event)
         id_key = (key1, str(itask.point), itask.tdef.name, itask.submit_num)
@@ -814,7 +815,7 @@ class TaskEventsManager(object):
             ),
             retry_delays)
 
-    def _setup_custom_event_handlers(self, itask, event, message, is_generic):
+    def _setup_custom_event_handlers(self, itask, event, message):
         """Set up custom task event handlers."""
         handlers = self._get_events_conf(itask, event + ' handler')
         if (handlers is None and
@@ -830,9 +831,9 @@ class TaskEventsManager(object):
             retry_delays = [0]
         # There can be multiple custom event handlers
         for i, handler in enumerate(handlers):
-            if is_generic:
+            if event in self.NON_UNIQUE_EVENTS:
                 key1 = ('%s-%02d' % (self.HANDLER_CUSTOM, i),
-                        '%s-%s' % (event, urllib.quote(message)))
+                        '%s-%d' % (event, itask.non_unique_events[event]))
             else:
                 key1 = ('%s-%02d' % (self.HANDLER_CUSTOM, i), event)
             id_key = (

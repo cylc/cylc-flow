@@ -32,11 +32,11 @@ LOG="${SUITE_RUN_DIR}/log/job/1/foo/01/job-activity.log"
 sed -n '/event-handler-00/,$p' "${LOG}" >'edited-job-activity.log'
 
 cmp_ok 'edited-job-activity.log' - <<__LOG__
-[(('event-handler-00', 'custom-the%20quick%20brown%20fox%0Ajumped%20over%20the%20lazy%20dog'), 1) cmd]
+[(('event-handler-00', 'custom-1'), 1) cmd]
 echo 'the quick brown fox
 jumped over the lazy dog'
-[(('event-handler-00', 'custom-the%20quick%20brown%20fox%0Ajumped%20over%20the%20lazy%20dog'), 1) ret_code] 0
-[(('event-handler-00', 'custom-the%20quick%20brown%20fox%0Ajumped%20over%20the%20lazy%20dog'), 1) out]
+[(('event-handler-00', 'custom-1'), 1) ret_code] 0
+[(('event-handler-00', 'custom-1'), 1) out]
 the quick brown fox
 jumped over the lazy dog
 __LOG__

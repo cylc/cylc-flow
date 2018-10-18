@@ -49,18 +49,18 @@ cylc cat-log "${SUITE_NAME}" \
     | sed -n -e 's/^.*\(\[(('"'"'event-handler-00'"'"'.*$\)/\1/p' >'log'
 
 cmp_ok log <<__END__
-[(('event-handler-00', 'warning-cat'), 1) cmd] echo "HANDLED cat"
-[(('event-handler-00', 'warning-cat'), 1) ret_code] 0
-[(('event-handler-00', 'warning-cat'), 1) out] HANDLED cat
-[(('event-handler-00', 'warning-dog'), 1) cmd] echo "HANDLED dog"
-[(('event-handler-00', 'warning-dog'), 1) ret_code] 0
-[(('event-handler-00', 'warning-dog'), 1) out] HANDLED dog
-[(('event-handler-00', 'warning-fish'), 1) cmd] echo "HANDLED fish"
-[(('event-handler-00', 'warning-fish'), 1) ret_code] 0
-[(('event-handler-00', 'warning-fish'), 1) out] HANDLED fish
-[(('event-handler-00', 'warning-guinea%20pig'), 1) cmd] echo "HANDLED 'guinea pig'"
-[(('event-handler-00', 'warning-guinea%20pig'), 1) ret_code] 0
-[(('event-handler-00', 'warning-guinea%20pig'), 1) out] HANDLED 'guinea pig'
+[(('event-handler-00', 'warning-1'), 1) cmd] echo "HANDLED cat"
+[(('event-handler-00', 'warning-1'), 1) ret_code] 0
+[(('event-handler-00', 'warning-1'), 1) out] HANDLED cat
+[(('event-handler-00', 'warning-2'), 1) cmd] echo "HANDLED dog"
+[(('event-handler-00', 'warning-2'), 1) ret_code] 0
+[(('event-handler-00', 'warning-2'), 1) out] HANDLED dog
+[(('event-handler-00', 'warning-3'), 1) cmd] echo "HANDLED fish"
+[(('event-handler-00', 'warning-3'), 1) ret_code] 0
+[(('event-handler-00', 'warning-3'), 1) out] HANDLED fish
+[(('event-handler-00', 'warning-4'), 1) cmd] echo "HANDLED 'guinea pig'"
+[(('event-handler-00', 'warning-4'), 1) ret_code] 0
+[(('event-handler-00', 'warning-4'), 1) out] HANDLED 'guinea pig'
 __END__
 
 purge_suite "${SUITE_NAME}"

@@ -57,9 +57,9 @@ cmp_ok log <<__END__
 [(('event-handler-00', 'rose'), 1) cmd] echo rose
 [(('event-handler-00', 'rose'), 1) out] rose
 [(('event-handler-00', 'rose'), 1) ret_code] 0
-[(('event-handler-00', 'warning-poison%20ivy'), 1) cmd] echo 'poison ivy'
-[(('event-handler-00', 'warning-poison%20ivy'), 1) out] poison ivy
-[(('event-handler-00', 'warning-poison%20ivy'), 1) ret_code] 0
+[(('event-handler-00', 'warning-1'), 1) cmd] echo 'poison ivy'
+[(('event-handler-00', 'warning-1'), 1) out] poison ivy
+[(('event-handler-00', 'warning-1'), 1) ret_code] 0
 __END__
 
 purge_suite "${SUITE_NAME}"
