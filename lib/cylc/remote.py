@@ -282,7 +282,7 @@ class RemoteRunner(object):
                 setattr(self, opt_with_dashes.strip('--'), opt_arg)
             elif arg in self.OPT_ARG_OPTS:  # if opt arg provided after a space
                 # e.g. if arg is '--host' set self.host to next element in argv
-                setattr(self, arg.strip('--'), argv.pop())
+                setattr(self, arg.strip('--'), argv.pop(0))
             elif arg == '--login':
                 self.ssh_login_shell = True
             elif arg == '--no-login':
