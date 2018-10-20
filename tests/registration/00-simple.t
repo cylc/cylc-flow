@@ -18,7 +18,7 @@
 # Test suite registration
 
 . "$(dirname "$0")/test_header"
-set_test_number 23 
+set_test_number 19 
 
 init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 [meta]
@@ -53,7 +53,6 @@ contains_ok "${TEST_NAME}.stdout" <<__OUT__
 REGISTERED $CHEESE -> ${PWD}
 __OUT__
 cd ..
-exists_ok "${CYLC_RUN_DIR}/$CHEESE/.service/passphrase"
 rm -rf "${CYLC_RUN_DIR}/$CHEESE"
 
 # Test default name: "cylc reg REG" (suite in $PWD)
@@ -65,7 +64,6 @@ contains_ok "${TEST_NAME}.stdout" <<__OUT__
 REGISTERED $TOAST -> ${PWD}
 __OUT__
 cd ..
-exists_ok "${CYLC_RUN_DIR}/$TOAST/.service/passphrase"
 rm -rf "${CYLC_RUN_DIR}/$TOAST"
 
 # Test "cylc reg REG PATH"
@@ -75,7 +73,6 @@ run_ok "${TEST_NAME}" cylc register $BAGELS $CHEESE
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
 REGISTERED $BAGELS -> ${PWD}/$CHEESE
 __OUT__
-exists_ok "${CYLC_RUN_DIR}/$BAGELS/.service/passphrase"
 rm -rf "${CYLC_RUN_DIR}/$BAGELS"
 
 # Test fail "cylc reg REG PATH" where REG already points to PATH2
@@ -100,7 +97,6 @@ __ERR__
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
 REGISTERED $CHEESE -> ${PWD}/$YOGHURT
 __OUT__
-exists_ok "${CYLC_RUN_DIR}/$CHEESE/.service/passphrase"
 rm -rf "${CYLC_RUN_DIR}/$CHEESE"
 
 run_ok "${TEST_NAME_BASE}-get-dir" cylc get-directory "${SUITE_NAME}"
