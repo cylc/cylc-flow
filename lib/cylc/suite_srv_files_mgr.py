@@ -414,12 +414,12 @@ To start a new run, stop the old one first with one or more of these:
     def register(self, reg=None, source=None, redirect=False):
         """Register a suite, or renew its registration.
 
-        Create the suite run directory and generate service files if they
-        don't already exist, with a symlink to the suite source location.
+        Create suite service directory and symlink to suite source location.
 
         Args:
-            reg (str): suite name, default basename($PWD)
-            source (str): directory location of suite.rc file, default $PWD
+            reg (str): suite name, default basename($PWD).
+            source (str): directory location of suite.rc file, default $PWD.
+            redirect (bool): allow reuse of existing name and run directory.
 
         Return:
             The registered suite name (which may be computed here).
@@ -483,6 +483,16 @@ To start a new run, stop the old one first with one or more of these:
             os.unlink(target)
             os.symlink(source, target)
 
+        # Report the new (or renewed) registration.
+        print 'REGISTERED %s -> %s' % (reg, source)
+        return reg
+
+    def create_auth_files(self, reg):
+        """Create or renew passphrase and SSL files for suite 'reg'."""
+
+        # Suite service directory.
+        srv_d = self.get_suite_srv_dir(reg)
+
         # Create a new passphrase for the suite if necessary.
         if not self._locate_item(self.FILE_BASE_PASSPHRASE, srv_d):
             import random
@@ -492,9 +502,6 @@ To start a new run, stop the old one first with one or more of these:
         pkey_obj = self._get_ssl_pem(srv_d)
         # Load or create SSL certificate for the suite.
         self._get_ssl_cert(srv_d, pkey_obj)
-        # Report the new (or renewed) registration.
-        print 'REGISTERED %s -> %s' % (reg, source)
-        return reg
 
     def _get_ssl_pem(self, path):
         """Load or create ssl.pem file for suite in path.
