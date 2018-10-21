@@ -239,7 +239,7 @@ def get_task_job_attrs(suite_name, point, task, submit_num):
                 suite_name, "suite run directory"),
             "log", CylcSuiteDAO.DB_FILE_BASE_NAME),
         is_public=True)
-    task_job_data = suite_dao.select_task_job(None, point, task, submit_num)
+    task_job_data = suite_dao.select_task_job(point, task, submit_num)
     suite_dao.close()
     if task_job_data is None:
         return (None, None, None)
