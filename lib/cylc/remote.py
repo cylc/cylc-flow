@@ -252,16 +252,17 @@ def remrun(dry_run=False, forward_x11=False, abort_if=None,
 class RemoteRunner(object):
     """Run current command on a remote host.
 
-    If owner or host differ from username and localhost, strip the
+    If user/owner or host differ from username and localhost, strip the
     remote options from the commandline and reinvoke the command on the
     remote host by non-interactive ssh, then exit; else do nothing.
 
     To ensure that users are aware of remote re-invocation info is always
     printed, but to stderr so as not to interfere with results.
     """
+    OPT_ARG_OPTS = ('--user', '--host', '--ssh-cylc')
 
     def __init__(self, argv=None):
-        self.owner = None
+        self.user = None  # i.e. owner; name it user for consistency with CLI
         self.host = None
         self.ssh_login_shell = None
         self.ssh_cylc = None
@@ -269,17 +270,19 @@ class RemoteRunner(object):
 
         cylc.flags.verbose = '-v' in self.argv or '--verbose' in self.argv
 
-        # Detect and replace host and owner options
+        # Detect and replace host and user options
         argv = self.argv[1:]
+
         self.args = []
         while argv:
             arg = argv.pop(0)
-            if arg.startswith('--user='):
-                self.owner = arg.replace('--user=', '')
-            elif arg.startswith('--host='):
-                self.host = arg.replace('--host=', '')
-            elif arg.startswith('--ssh-cylc='):
-                self.ssh_cylc = arg.replace('--ssh-cylc=', '')
+            if arg.startswith(tuple([opt + '=' for opt in self.OPT_ARG_OPTS])):
+                # e.g. if arg is '--host=HOST' here set self.host to HOST
+                opt_with_dashes, opt_arg = arg.split('=', 1)
+                setattr(self, opt_with_dashes.strip('--'), opt_arg)
+            elif arg in self.OPT_ARG_OPTS:  # if opt arg provided after a space
+                # e.g. if arg is '--host' set self.host to next element in argv
+                setattr(self, arg.strip('--'), argv.pop(0))
             elif arg == '--login':
                 self.ssh_login_shell = True
             elif arg == '--no-login':
@@ -287,10 +290,10 @@ class RemoteRunner(object):
             else:
                 self.args.append(arg)
 
-        if self.owner is None and self.host is None:
+        if self.user is None and self.host is None:
             self.is_remote = False
         else:
-            self.is_remote = is_remote(self.host, self.owner)
+            self.is_remote = is_remote(self.host, self.user)
 
     def execute(self, dry_run=False, forward_x11=False, abort_if=None,
                 set_rel_local=False):
@@ -317,7 +320,7 @@ class RemoteRunner(object):
             # State as relative localhost to prevent recursive host selection.
             cmd.append("--host=localhost")
         command = construct_ssh_cmd(
-            cmd, user=self.owner, host=self.host, forward_x11=forward_x11,
+            cmd, user=self.user, host=self.host, forward_x11=forward_x11,
             ssh_login_shell=self.ssh_login_shell, ssh_cylc=self.ssh_cylc,
             set_UTC=True, allow_flag_opts=False)
 
