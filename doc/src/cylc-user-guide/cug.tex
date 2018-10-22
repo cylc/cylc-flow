@@ -419,6 +419,9 @@ the Cylc GUIs:
           \end{myitemize}
 \end{myitemize}
 
+The Cylc Review service does not need any further packages to those
+already required (Python 2) and bundled with Cylc (CherryPy and Jinja2).
+
 The following packages are necessary for running all the tests in Cylc:
 
 \begin{myitemize}
@@ -1202,6 +1205,68 @@ $ cylc cat-log -e tut/oneoff/basic hello.1   # task stderr log
     \item For more on environment variables supplied to tasks,
     such as \lstinline=$CYLC_SUITE_SHARE_DIR=, see~\ref{TaskExecutionEnvironment}.
 \end{myitemize}
+
+\subsection{Viewing Suite Logs via Web Browser: Cylc Review}
+
+Cylc provides a utility for viewing the status and logs of suites called
+Cylc Review. It displays suite information in web pages, as shown in
+Figure~\ref{fig-review-screenshot}.
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=0.5\textwidth]{graphics/png/orig/cylc-review-screenshot.png}
+    \end{center}
+    \caption{Screenshot of a Cylc Review web page}
+\label{fig-review-screenshot}
+\end{figure}
+
+If a Cylc Review server is provided at your site, you can open the Cylc
+Review page for a suite by running the \lstinline=cylc review= command.
+See~\ref{HostsforCylcReview} for requirements and~\ref{ConfiguringCylcReview}
+for configuration steps for setting up a host to run the service at your site.
+
+Otherwise an ad-hoc web server can be set up using the
+\lstinline=cylc review start= command argument.
+
+\subsubsection{Hosts For Running Cylc Review}
+\label{HostsforCylcReview}
+
+Connectivity requirements:
+
+\begin{myitemize}
+
+\item Must be able to access the home directories of users' Cylc run
+directories.
+
+\end {myitemize}
+
+\subsubsection{Configuring Cylc Review}
+\label{ConfiguringCylcReview}
+
+Cylc Review can provide an intranet web service at your site for users to
+view their suite logs using a web browser. Depending on settings at your
+site, you may or may not be able to set up this service
+(see~\ref{HostsforCylcReview}).
+
+You can start an ad-hoc Cylc Review web server by running:
+
+\hilight{\lstinline=setsid /path/to/../cylc review start 0</dev/null 1>/dev/null 2>\&1 \&=}
+
+You will find the access and error logs under \lstinline=~/.cylc/cylc-review*=.
+
+Alternatively you can run the Cylc Review web service under Apache
+\lstinline=mod_wsgi=. To do this you will need to set up an Apache module
+configuration file (typically in
+\lstinline=/etc/httpd/conf.d/rose-wsgi.conf=) containing the following (with
+the paths set appropriately):
+
+\lstset{language=bash}
+\begin{lstlisting}
+WSGIPythonPath /path/to/rose/lib/python
+WSGIScriptAlias /cylc-review /path/to/lib/cylc/review.py
+\end{lstlisting}
+
+Use the Apache log at e.g. \lstinline=/var/log/httpd/= to debug problems.
 
 \subsection{Remote Tasks}
 \label{RemoteTasks}
