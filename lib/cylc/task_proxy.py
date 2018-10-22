@@ -18,6 +18,7 @@
 
 """Provide a class to represent a task proxy in a running suite."""
 
+from collections import Counter
 from isodatetime.timezone import get_local_time_zone
 
 import cylc.cycling.iso8601
@@ -62,6 +63,8 @@ class TaskProxy(object):
         .manual_trigger (boolean):
             Has this task received a manual trigger command? This flag is reset
             on trigger.
+        .non_unique_events (collections.Counter):
+            Count non-unique events (e.g. critical, warning, custom).
         .point (cylc.cycling.PointBase):
             Cycle point of the task.
         .point_as_seconds (int):
@@ -157,6 +160,7 @@ class TaskProxy(object):
         'late_time',
         'local_job_file_path',
         'manual_trigger',
+        'non_unique_events',
         'point',
         'point_as_seconds',
         'poll_timer',
@@ -210,15 +214,10 @@ class TaskProxy(object):
             'latest_message': '',
             'submitted_time': None,
             'submitted_time_string': None,
-            'submit_num': self.submit_num,
             'started_time': None,
             'started_time_string': None,
             'finished_time': None,
             'finished_time_string': None,
-            'name': self.tdef.name,
-            'description': self.tdef.rtconfig['meta']['description'],
-            'title': self.tdef.rtconfig['meta']['title'],
-            'label': str(self.point),
             'logfiles': [],
             'job_hosts': {},
             'execution_time_limit': None,
@@ -235,6 +234,7 @@ class TaskProxy(object):
         self.poll_timer = None
         self.timeout = None
         self.try_timers = {}
+        self.non_unique_events = Counter()
 
         self.clock_trigger_time = None
         self.expire_time = None
@@ -308,19 +308,24 @@ class TaskProxy(object):
 
     def get_state_summary(self):
         """Return a dict containing the state summary of this task proxy."""
-        self.summary['state'] = self.state.status
-        self.summary['spawned'] = str(self.has_spawned)
-        count = len(self.tdef.elapsed_times)
-        if count:
-            self.summary['mean_elapsed_time'] = (
-                float(sum(self.tdef.elapsed_times)) / count)
-        elif self.summary['execution_time_limit']:
-            self.summary['mean_elapsed_time'] = float(
-                self.summary['execution_time_limit'])
+        ret = self.summary.copy()
+        ret['name'] = self.tdef.name
+        ret['description'] = self.tdef.rtconfig['meta']['description']
+        ret['title'] = self.tdef.rtconfig['meta']['title']
+        ret['label'] = str(self.point)
+        ret['submit_num'] = self.submit_num
+        ret['state'] = self.state.status
+        ret['spawned'] = str(self.has_spawned)
+        ntimes = len(self.tdef.elapsed_times)
+        if ntimes:
+            ret['mean_elapsed_time'] = (
+                float(sum(self.tdef.elapsed_times)) / ntimes)
+        elif ret['execution_time_limit']:
+            ret['mean_elapsed_time'] = float(
+                ret['execution_time_limit'])
         else:
-            self.summary['mean_elapsed_time'] = None
-
-        return self.summary
+            ret['mean_elapsed_time'] = None
+        return ret
 
     def get_try_num(self):
         """Return the number of automatic tries (try number)."""

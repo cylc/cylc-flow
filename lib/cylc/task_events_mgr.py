@@ -129,6 +129,7 @@ class TaskEventsManager(object):
         "CRITICAL": CRITICAL,
         "DEBUG": DEBUG,
     }
+    NON_UNIQUE_EVENTS = ('warning', 'critical', 'custom')
     POLLED_FLAG = "(polled)"
 
     def __init__(self, suite, proc_pool, suite_db_mgr, broadcast_mgr):
@@ -344,7 +345,7 @@ class TaskEventsManager(object):
         cylc.flags.iflag = True
 
         # Satisfy my output, if possible, and record the result.
-        an_output_was_satisfied = itask.state.outputs.set_msg_trg_completion(
+        completed_trigger = itask.state.outputs.set_msg_trg_completion(
             message=message, is_completed=True)
 
         if message == TASK_OUTPUT_STARTED:
@@ -400,11 +401,17 @@ class TaskEventsManager(object):
             self.pflag = True
             itask.state.reset_state(TASK_STATUS_SUBMITTED)
             self._reset_job_timers(itask)
-        elif an_output_was_satisfied:
+            # We should really have a special 'vacated' handler, but given that
+            # this feature can only be used on the deprecated loadleveler
+            # system, we should probably aim to remove support for job vacation
+            # instead. Otherwise, we should have:
+            # self.setup_event_handlers(itask, 'vacated', message)
+        elif completed_trigger:
             # Message of an as-yet unreported custom task output.
             # No state change.
             self.pflag = True
             self.suite_db_mgr.put_update_task_outputs(itask)
+            self.setup_event_handlers(itask, completed_trigger, message)
         else:
             # Unhandled messages. These include:
             #  * general non-output/progress messages
@@ -418,8 +425,10 @@ class TaskEventsManager(object):
                 severity = getLevelName(severity)
             self._db_events_insert(
                 itask, ("message %s" % str(severity).lower()), message)
-        if severity in ['WARNING', 'CRITICAL', 'CUSTOM']:
-            self.setup_event_handlers(itask, severity.lower(), message)
+        if str(severity).lower() in self.NON_UNIQUE_EVENTS:
+            itask.non_unique_events[str(severity).lower()] += 1
+            self.setup_event_handlers(
+                itask, str(severity).lower(), message)
 
     def setup_event_handlers(self, itask, event, message):
         """Set up handlers for a task event."""
@@ -780,9 +789,12 @@ class TaskEventsManager(object):
 
     def _setup_event_mail(self, itask, event):
         """Set up task event notification, by email."""
-        id_key = (
-            (self.HANDLER_MAIL, event),
-            str(itask.point), itask.tdef.name, itask.submit_num)
+        if event in self.NON_UNIQUE_EVENTS:
+            key1 = (self.HANDLER_MAIL,
+                    '%s-%d' % (event, itask.non_unique_events[event]))
+        else:
+            key1 = (self.HANDLER_MAIL, event)
+        id_key = (key1, str(itask.point), itask.tdef.name, itask.submit_num)
         if (id_key in self.event_timers or
                 event not in self._get_events_conf(itask, "mail events", [])):
             return
@@ -819,7 +831,11 @@ class TaskEventsManager(object):
             retry_delays = [0]
         # There can be multiple custom event handlers
         for i, handler in enumerate(handlers):
-            key1 = ("%s-%02d" % (self.HANDLER_CUSTOM, i), event)
+            if event in self.NON_UNIQUE_EVENTS:
+                key1 = ('%s-%02d' % (self.HANDLER_CUSTOM, i),
+                        '%s-%d' % (event, itask.non_unique_events[event]))
+            else:
+                key1 = ('%s-%02d' % (self.HANDLER_CUSTOM, i), event)
             id_key = (
                 key1, str(itask.point), itask.tdef.name, itask.submit_num)
             if id_key in self.event_timers:

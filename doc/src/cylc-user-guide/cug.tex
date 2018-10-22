@@ -7419,18 +7419,24 @@ a pager, or whatever; they can even intervene in the operation of their own
 suite using cylc commands.
 
 To send an email, use the built-in setting \lstinline=[[[events]]]mail events=
-to specify a list of events for which notifications should be sent. E.g.\ to
+to specify a list of events for which notifications should be sent. (The name of
+a registered task output can also be used as an event name in this case.) E.g.\ to
 send an email on (submission) failed and retry:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
     [[foo]]
-        script = "test ${CYLC_TASK_TRY_NUMBER} -eq 3"
+        script = """
+            test ${CYLC_TASK_TRY_NUMBER} -eq 3
+            cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'oopsy daisy'
+        """
         [[[events]]]
-            mail events = submission failed, submission retry, failed, retry
+            mail events = submission failed, submission retry, failed, retry, oops
         [[[job]]]
             execution retry delays = PT0S, PT30S
+        [[[outputs]]]
+            oops = oopsy daisy
 \end{lstlisting}
 
 By default, the emails will be sent to the current user with:
@@ -7484,7 +7490,8 @@ templates (see below).
 Alternatively you can use \lstinline=[[[events]]]handlers= and
 \lstinline=[[[events]]]handler events=, where the former is a list of command
 lines or command line templates (see below) and the latter is a list of events
-for which these commands should be invoked.
+for which these commands should be invoked. (The name of a registered task
+output can also be used as an event name in this case.)
 
 Event handler arguments can be constructed from various templates
 representing suite name; task ID, name, cycle point, message, and submit
@@ -7520,7 +7527,7 @@ event handlers using the alternate methods:
 \begin{lstlisting}
 [runtime]
     [[foo]]
-        script = "test ${CYLC_TASK_TRY_NUMBER} -eq 2"
+        script = test ${CYLC_TASK_TRY_NUMBER} -eq 2
         [[[events]]]
             retry handler = "echo '!!!!!EVENT!!!!!' "
             failed handler = "echo '!!!!!EVENT!!!!!' "
@@ -7532,12 +7539,18 @@ event handlers using the alternate methods:
 \begin{lstlisting}
 [runtime]
     [[foo]]
-        script = "test ${CYLC_TASK_TRY_NUMBER} -eq 2"
+        script = """
+            test ${CYLC_TASK_TRY_NUMBER} -eq 2
+            cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'oopsy daisy'
+        """
         [[[events]]]
             handlers = "echo '!!!!!EVENT!!!!!' "
-            handler events = retry, failed
+            # Note: task output name can be used as an event in this method
+            handler events = retry, failed, oops
         [[[job]]]
             execution retry delays = PT0S, PT30S
+        [[[outputs]]]
+            oops = oopsy daisy
 \end{lstlisting}
 The handler command here - specified with no arguments - is called with the
 default arguments, like this:
