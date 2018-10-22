@@ -5208,48 +5208,43 @@ Examples:
     \item \lstinline={{'1066/10/14 08:00:00' | strftime('%Y%m%dT%H', '%Y/%m/%d %H:%M:%S')}}= - 10661014T08
 \end{myitemize}
 
-\paragraph{duration\_to\_hours}
+\paragraph{duration\_as}
 
-The ``duration\_to\_hours'' filter can be used to format ISO8601 duration
-strings as a floating-point number of hours.
-
-\lstset{language=suiterc}
-\begin{lstlisting}
-{% set CYCLE_INTERVAL = 'PT1D' %}
-{{ CYCLE_INTERVAL | duration_to_hours }}  # 24.0
-{% set CYCLE_SUBINTERVAL = 'PT30M' %}
-{{ CYCLE_SUBINTERVAL | duration_to_hours }}  # 0.5
-\end{lstlisting}
-
-While the filtered value is a floating-point number, it is often required to
-supply an integer to suite entities (e.g. environment variables) that require
-it.  This is accomplished by chaining filters:
-
+The ``duration\_as'' filter can be used to format ISO8601 duration
+strings as a floating-point number of several different units.  Units
+for the conversion can be specified in a case-insensitive short or long
+form:
 \begin{myitemize}
-    \item \lstinline={{CYCLE_INTERVAL | duration_to_hours | int}}= - 24
-    \item \lstinline={{CYCLE_SUBINTERVAL | duration_to_hours | int}}= - 0
+    \item Seconds - ``s'' or ``seconds''
+    \item Minutes - ``m'' or ``minutes''
+    \item Hours - ``h`` or ``hours''
+    \item Days - ``d'' or ``days''
+    \item Weeks - ``w'' or ``weeks''
 \end{myitemize}
 
-\paragraph{duration\_to\_seconds}
-
-The ``duration\_to\_seconds'' filter can be used to format ISO8601 duration
-strings as a floating-point number of seconds.
+Within the suite, this becomes
 
 \lstset{language=suiterc}
 \begin{lstlisting}
 {% set CYCLE_INTERVAL = 'PT1D' %}
-{{ CYCLE_INTERVAL | duration_to_seconds }}  # 86400.0
+{{ CYCLE_INTERVAL | duration_as('h') }}  # 24.0
 {% set CYCLE_SUBINTERVAL = 'PT30M' %}
-{{ CYCLE_SUBINTERVAL | duration_to_seconds }}  # 1800.0
+{{ CYCLE_SUBINTERVAL | duration_as('hours') }}  # 0.5
+{% set CYCLE_INTERVAL = 'PT1D' %}
+{{ CYCLE_INTERVAL | duration_as('s') }}  # 86400.0
+{% set CYCLE_SUBINTERVAL = 'PT30M' %}
+{{ CYCLE_SUBINTERVAL | duration_as('seconds') }}  # 1800.0
 \end{lstlisting}
 
 While the filtered value is a floating-point number, it is often required to
-supply an integer to suite entities (e.g. environment variables) that require
+supply an integer to suite entities (e.g.\ environment variables) that require
 it.  This is accomplished by chaining filters:
 
 \begin{myitemize}
-    \item \lstinline={{CYCLE_INTERVAL | duration_to_seconds | int}}= - 86400
-    \item \lstinline={{CYCLE_SUBINTERVAL | duration_to_seconds | int}}= - 1800
+    \item \lstinline={{CYCLE_INTERVAL | duration_as('h') | int}}= - 24
+    \item \lstinline={{CYCLE_SUBINTERVAL | duration_as('h') | int}}= - 0
+    \item \lstinline={{CYCLE_INTERVAL | duration_as('s') | int}}= - 86400
+    \item \lstinline={{CYCLE_SUBINTERVAL | duration_as('s') | int}}= - 1800
 \end{myitemize}
 
 

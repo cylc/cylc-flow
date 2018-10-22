@@ -7,7 +7,7 @@
     initial cycle point = 01231212T1212
     [[dependencies]]
         [[[R1]]]
-            graph = strftime => pad => end
+            graph = strftime => pad => duration_as => end
 [runtime]
     [[strftime]]
         script = test $TEST_1 == '00'; test $TEST_2 == '30'
@@ -16,5 +16,17 @@
             TEST_2 = {{ '12-30-2000' | strftime('%d', '%m-%d-%Y') }}
     [[pad]]
         script = test {{ 42 | pad(3, 0) }} == '042'
+    [[duration_as]]
+        script = """
+            test $TEST_1 == '3600'
+            test $TEST_2 == '1'
+            test $TEST_3 == '1'
+            test $TEST_4 == '1'
+        """
+        [[[environment]]]
+            TEST_1 = {{ 'PT1H' | duration_as('seconds') | int }}
+            TEST_2 = {{ 'P7D' | duration_as('w') | int }}
+            TEST_3 = {{ 'PT60M' | duration_as('hours') | int }}
+            TEST_4 = {{ 'PT60S' | duration_as('minutes') | int }}
     [[end]]
         script = true
