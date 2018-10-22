@@ -301,16 +301,16 @@ class ISO8601Exclusions(ExclusionBase):
     def build_exclusions(self, excl_points):
         for point in excl_points:
             try:
+                # Try making an ISO8601Sequence
+                exclusion = ISO8601Sequence(point, self.exclusion_start_point,
+                                            self.exclusion_end_point)
+                self.exclusion_sequences.append(exclusion)
+            except (AttributeError, TypeError, ValueError):
                 # Try making an ISO8601Point
                 exclusion_point = ISO8601Point.from_nonstandard_string(
                     str(point)) if point else None
                 if exclusion_point not in self.exclusion_points:
                     self.exclusion_points.append(exclusion_point)
-            except (AttributeError, TypeError, ValueError):
-                # Try making an ISO8601Sequence
-                exclusion = ISO8601Sequence(point, self.exclusion_start_point,
-                                            self.exclusion_end_point)
-                self.exclusion_sequences.append(exclusion)
 
 
 class ISO8601Sequence(SequenceBase):
