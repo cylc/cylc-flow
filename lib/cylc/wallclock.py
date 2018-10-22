@@ -21,7 +21,7 @@ from calendar import timegm
 from datetime import datetime, timedelta
 
 from isodatetime.timezone import (
-    get_local_time_zone_format, get_local_time_zone)
+    get_local_time_zone_format, get_local_time_zone, TimeZoneFormatMode)
 
 
 DATE_TIME_FORMAT_BASIC = "%Y%m%dT%H%M%S"
@@ -39,9 +39,10 @@ TIME_FORMAT_BASIC_SUB_SECOND = "%H%M%S.%f"
 TIME_FORMAT_EXTENDED = "%H:%M:%S"
 TIME_FORMAT_EXTENDED_SUB_SECOND = "%H:%M:%S.%f"
 
-TIME_ZONE_STRING_LOCAL_BASIC = get_local_time_zone_format(reduced_mode=True)
+TIME_ZONE_STRING_LOCAL_BASIC = get_local_time_zone_format(
+    TimeZoneFormatMode.reduced)
 TIME_ZONE_STRING_LOCAL_EXTENDED = get_local_time_zone_format(
-    extended_mode=True, reduced_mode=True)
+    TimeZoneFormatMode.extended)
 TIME_ZONE_STRING_UTC = "Z"
 TIME_ZONE_UTC_UTC_OFFSET = (0, 0)
 TIME_ZONE_LOCAL_UTC_OFFSET = get_local_time_zone()
