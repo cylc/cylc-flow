@@ -48,7 +48,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 cylc cat-log "${SUITE_NAME}" \
     | sed -n -e 's/^.*\(\[(('"'"'event-handler-00'"'"'.*$\)/\1/p' >'log'
 
-cmp_ok log <<__END__
+contains_ok log <<__END__
 [(('event-handler-00', 'warning-1'), 1) cmd] echo "HANDLED cat"
 [(('event-handler-00', 'warning-1'), 1) ret_code] 0
 [(('event-handler-00', 'warning-1'), 1) out] HANDLED cat
