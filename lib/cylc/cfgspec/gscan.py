@@ -37,7 +37,7 @@ SPEC = {
     'suite status update interval': vdr(
         vtype='interval', default=DurationFloat(15)),
     'window size': vdr(vtype='integer_list', default=[300, 200]),
-    'hide main menubar': vdr(vtype='boolean', default=True),
+    'hide main menubar': vdr(vtype='boolean', default=False),
 }
 
 
