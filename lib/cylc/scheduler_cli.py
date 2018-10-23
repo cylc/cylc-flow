@@ -113,7 +113,10 @@ def main(is_restart=False):
     if remrun(set_rel_local=True):  # State localhost as above.
         sys.exit()
 
-    scheduler = Scheduler(is_restart, options, args)
+    try:
+        scheduler = Scheduler(is_restart, options, args)
+    except SuiteServiceFileError as exc:
+        sys.exit(exc)
     scheduler.start()
 
 
