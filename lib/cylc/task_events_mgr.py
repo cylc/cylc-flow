@@ -425,10 +425,11 @@ class TaskEventsManager(object):
                 severity = getLevelName(severity)
             self._db_events_insert(
                 itask, ("message %s" % str(severity).lower()), message)
-        if str(severity).lower() in self.NON_UNIQUE_EVENTS:
-            itask.non_unique_events[str(severity).lower()] += 1
-            self.setup_event_handlers(
-                itask, str(severity).lower(), message)
+        lseverity = str(severity).lower()
+        if lseverity in self.NON_UNIQUE_EVENTS:
+            itask.non_unique_events.setdefault(lseverity, 0)
+            itask.non_unique_events[lseverity] += 1
+            self.setup_event_handlers(itask, lseverity, message)
 
     def setup_event_handlers(self, itask, event, message):
         """Set up handlers for a task event."""
@@ -790,8 +791,9 @@ class TaskEventsManager(object):
     def _setup_event_mail(self, itask, event):
         """Set up task event notification, by email."""
         if event in self.NON_UNIQUE_EVENTS:
-            key1 = (self.HANDLER_MAIL,
-                    '%s-%d' % (event, itask.non_unique_events[event]))
+            key1 = (
+                self.HANDLER_MAIL,
+                '%s-%d' % (event, itask.non_unique_events.get(event, 1)))
         else:
             key1 = (self.HANDLER_MAIL, event)
         id_key = (key1, str(itask.point), itask.tdef.name, itask.submit_num)
@@ -832,8 +834,9 @@ class TaskEventsManager(object):
         # There can be multiple custom event handlers
         for i, handler in enumerate(handlers):
             if event in self.NON_UNIQUE_EVENTS:
-                key1 = ('%s-%02d' % (self.HANDLER_CUSTOM, i),
-                        '%s-%d' % (event, itask.non_unique_events[event]))
+                key1 = (
+                    '%s-%02d' % (self.HANDLER_CUSTOM, i),
+                    '%s-%d' % (event, itask.non_unique_events.get(event, 1)))
             else:
                 key1 = ('%s-%02d' % (self.HANDLER_CUSTOM, i), event)
             id_key = (
