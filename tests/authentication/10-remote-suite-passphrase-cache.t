@@ -27,9 +27,10 @@ set_test_number 5
 SSH_OPTS='-oBatchMode=yes -oConnectTimeout=5'
 SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}"
 
-cylc register --host="${CYLC_TEST_HOST}" "${SUITE_NAME}"
+ssh ${SSH_OPTS} "${CYLC_TEST_HOST}" mkdir -p "cylc-run/${SUITE_NAME}"
 scp ${SSH_OPTS} -pqr "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/"* \
     "${CYLC_TEST_HOST}:cylc-run/${SUITE_NAME}"
+cylc register --host="${CYLC_TEST_HOST}" "${SUITE_NAME}" "cylc-run/${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate --host="${CYLC_TEST_HOST}" "${SUITE_NAME}"
 

@@ -2030,10 +2030,9 @@ as the suite runs.
 \section{Suite Name Registration}
 \label{SuiteRegistration}
 
-Cylc commands target suites via their names, which are relative path names under
-the suite run directory (\lstinline=~/cylc-run/= by default). Suites can be
-grouped together under sub-directories.
-E.g.:
+Cylc commands target suites via their names, which are relative path names
+under the suite run directory (\lstinline=~/cylc-run/= by default). Suites can
+be grouped together under sub-directories. E.g.:
 \begin{lstlisting}
 $ cylc print -t nwp
 nwp
@@ -2044,10 +2043,9 @@ nwp
    `-region1  Local Model TEST Region1  /home/oliverh/cylc-run/nwp/test/region1
 \end{lstlisting}
 
-Suites can be pre-registered with a name using the \lstinline=cylc register=
-command. This creates the essential directory structure for the suite, and
-generates some service files underneath it. Otherwise, \lstinline=cylc run= will
-create these files on suite start up.
+Suite names can be pre-registered with the \lstinline=cylc register= command,
+which creates the suite run directory structure and some service files
+underneath it. Otherwise, \lstinline=cylc run= will do this at suite start up.
 
 %\pagebreak
 \section{Suite Configuration}

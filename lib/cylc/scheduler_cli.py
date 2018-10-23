@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Common logic for "cylc run" and "cylc restart" CLI."""
 
+import os
 import json
 from pipes import quote
 from random import shuffle, choice
@@ -33,22 +34,32 @@ from cylc.scheduler import Scheduler
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
 
-RUN_DOC = r"""cylc [control] run|start [OPTIONS] ARGS
+RUN_DOC = r"""cylc [control] run|start [OPTIONS] [ARGS]
 
-Start a suite run from scratch, wiping out any previous suite state. To
-restart from a previous state see 'cylc restart --help'.
+Start a suite run from scratch, ignoring dependence prior to the start point.
 
-The scheduler runs as a daemon unless you specify --no-detach.
+WARNING: this will wipe out previous suite state. To restart from a previous
+state, see 'cylc restart --help'.
 
-Any dependence on cycle points earlier than the start cycle point is ignored.
+The scheduler will run as a daemon unless you specify --no-detach.
+
+If the suite is not already registered (by "cylc register" or a previous run)
+it will be registered on the fly before start up.
+
+% cylc run REG
+  Run the suite registered with name REG.
+
+% cylc run
+  Register $PWD/suite.rc as $(basename $PWD) and run it.
+ (Note REG must be given explicitly if START_POINT is on the command line.)
 
 A "cold start" (the default) starts from the suite initial cycle point
-(specified in the suite.rc or on the command line).  Any dependence on tasks
+(specified in the suite.rc or on the command line). Any dependence on tasks
 prior to the suite initial cycle point is ignored.
 
 A "warm start" (-w/--warm) starts from a given cycle point later than the suite
-initial cycle point (specified in the suite.rc).  Any dependence on tasks prior
-to the given warm start cycle point is ignored.  The suite initial cycle point
+initial cycle point (specified in the suite.rc). Any dependence on tasks prior
+to the given warm start cycle point is ignored. The suite initial cycle point
 is preserved."""
 
 RESTART_DOC = r"""cylc [control] restart [OPTIONS] ARGS
@@ -61,7 +72,7 @@ The scheduler runs as a daemon unless you specify --no-detach.
 Tasks recorded as submitted or running are polled at start-up to determine what
 happened to them while the suite was down."""
 
-SUITE_NAME_ARG_DOC = ("REG", "Suite name")
+SUITE_NAME_ARG_DOC = ("[REG]", "Suite name")
 START_POINT_ARG_DOC = (
     "[START_POINT]",
     "Initial cycle point or 'now';\n" +
@@ -72,12 +83,21 @@ START_POINT_ARG_DOC = (
 def main(is_restart=False):
     """CLI main."""
     options, args = parse_commandline(is_restart)
+    if not args:
+        # Auto-registration: "cylc run" (no args) in source dir.
+        reg = SuiteSrvFilesManager().register()
+        # Replace this process with "cylc run REG ..." for easy identification.
+        os.execv(sys.argv[0], [sys.argv[0]] + [reg] + sys.argv[1:])
 
     # Check suite is not already running before start of host selection.
     try:
         SuiteSrvFilesManager().detect_old_contact_file(args[0])
     except SuiteServiceFileError as exc:
         sys.exit(exc)
+
+    # Create auth files if needed. On a shared FS if the suite host changes
+    # this may (will?) renew the ssl.cert to reflect the change in host name.
+    SuiteSrvFilesManager().create_auth_files(args[0])
 
     # Check whether a run host is explicitly specified, else select one.
     if not options.host:
@@ -93,7 +113,10 @@ def main(is_restart=False):
     if remrun(set_rel_local=True):  # State localhost as above.
         sys.exit()
 
-    scheduler = Scheduler(is_restart, options, args)
+    try:
+        scheduler = Scheduler(is_restart, options, args)
+    except SuiteServiceFileError as exc:
+        sys.exit(exc)
     scheduler.start()
 
 
@@ -188,11 +211,6 @@ def parse_commandline(is_restart):
         "--reference-test",
         help="Do a test run against a previously generated reference log.",
         action="store_true", default=False, dest="reftest")
-
-    parser.add_option(
-        "--source", "-S",
-        help="Specify the suite source.",
-        metavar="SOURCE", action="store", dest="source")
 
     # Override standard parser option for specific help description.
     parser.add_option(
