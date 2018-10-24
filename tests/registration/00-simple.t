@@ -83,7 +83,8 @@ run_ok "${TEST_NAME}" cylc register $CHEESE $CHEESE
 TEST_NAME="${TEST_NAME_BASE}-repurpose1"
 run_fail "${TEST_NAME}" cylc register $CHEESE $YOGHURT
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-ERROR: the suite name '$CHEESE' is already used for ${PWD}/$CHEESE.
+ERROR: the name '$CHEESE' already points to ${PWD}/$CHEESE.
+Use --redirect to re-use an existing name and run directory.
 __ERR__
 
 # Test succeed "cylc reg REG PATH" where REG already points to PATH2
@@ -91,8 +92,9 @@ TEST_NAME="${TEST_NAME_BASE}-repurpose2"
 cp -r $CHEESE $YOGHURT
 run_ok "${TEST_NAME}" cylc register --redirect $CHEESE $YOGHURT
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WARNING: the suite name '$CHEESE' was used for ${PWD}/$CHEESE.
-The run directory will be reused for ${PWD}/$YOGHURT.
+WARNING: the name '$CHEESE' points to ${PWD}/$CHEESE.
+It will now be redirected to ${PWD}/$YOGHURT.
+Files in the existing $CHEESE run directory will be overwritten.
 __ERR__
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
 REGISTERED $CHEESE -> ${PWD}/$YOGHURT
