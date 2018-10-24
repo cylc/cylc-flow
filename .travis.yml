@@ -87,6 +87,7 @@ script:
 
 after_success:
     # Report metrics, such as coverage
+    - coverage combine
     - coverage xml --ignore-errors
     - bash <(curl -s https://codecov.io/bash)
 
