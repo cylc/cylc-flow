@@ -22,17 +22,16 @@ Implementation currently via requests (urllib3) or urllib2.
 
 import os
 import sys
-from time import sleep
 import traceback
-from uuid import uuid4
 import warnings
+from time import sleep
+from uuid import uuid4
 
-
+import cylc.flags
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.exceptions import CylcError
-import cylc.flags
-from cylc.network import NO_PASSPHRASE
 from cylc.hostuserutil import get_host, get_fqdn_by_host, get_user
+from cylc.network import NO_PASSPHRASE
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
 from cylc.unicode_util import utf8_enforce
@@ -43,7 +42,6 @@ from cylc.wallclock import get_current_time_string
 # Note: This was renamed from ConnectionError to ClientError. ConnectionError
 # is a built-in exception in Python 3.
 class ClientError(Exception):
-
     """An error raised when the client has a general failure."""
 
     MESSAGE = "Client error: %s: %s"
@@ -53,7 +51,6 @@ class ClientError(Exception):
 
 
 class ClientConnectError(ClientError):
-
     """An error raised when the client cannot connect."""
 
     MESSAGE = "Cannot connect: %s: %s"
@@ -64,7 +61,6 @@ class ClientConnectError(ClientError):
 
 
 class ClientConnectedError(ClientError):
-
     """An error raised when the client gets a bad return code from server."""
 
     MESSAGE = "Bad return code: %s: %s"
@@ -74,7 +70,6 @@ class ClientConnectedError(ClientError):
 
 
 class ClientDeniedError(ClientConnectedError):
-
     """An error raised when the client is not permitted to connect."""
 
     MESSAGE = "Not authorized: %s: %s: access type '%s'"
@@ -84,7 +79,6 @@ class ClientDeniedError(ClientConnectedError):
 
 
 class ClientInfoError(ClientError):
-
     """An error raised when the client is unable to load the contact info."""
 
     MESSAGE = "Contact info not found for suite \"%s\", suite not running?"
@@ -94,7 +88,6 @@ class ClientInfoError(ClientError):
 
 
 class ClientInfoUUIDError(ClientInfoError):
-
     """An error on UUID mismatch between environment and contact info."""
 
     MESSAGE = "Suite UUID mismatch: environment=%s, contact-info=%s"
@@ -104,7 +97,6 @@ class ClientInfoUUIDError(ClientInfoError):
 
 
 class ClientTimeout(ClientError):
-
     """An error raised on connection timeout."""
 
     MESSAGE = "Connection timeout: %s: %s"
@@ -129,8 +121,8 @@ class SuiteRuntimeServiceClient(object):
         'put_messages': {0: 'message/put', 1: 'put_message'},
     }
     ERROR_NO_HTTPS_SUPPORT = (
-        "ERROR: server has no HTTPS support," +
-        " configure your global.rc file to use HTTP : {0}\n"
+            "ERROR: server has no HTTPS support," +
+            " configure your global.rc file to use HTTP : {0}\n"
     )
     METHOD = 'POST'
     METHOD_POST = 'POST'
@@ -583,7 +575,7 @@ class SuiteRuntimeServiceClient(object):
             ) in ['True', 'true']),
             ssh_cylc=(r'%s/bin/cylc' % self.comms1.get(
                 self.srv_files_mgr.KEY_DIR_ON_SUITE_HOST)
-            ),
+                      ),
             stdin=stdin,
         )
         out = proc.communicate()[0]
@@ -618,9 +610,8 @@ class SuiteRuntimeServiceClient(object):
     def _get_headers(self):
         """Return HTTP headers identifying the client."""
         user_agent_string = (
-            "cylc/%s prog_name/%s uuid/%s" % (
-                CYLC_VERSION, self.prog_name, self.my_uuid
-            )
+                "cylc/%s prog_name/%s uuid/%s" % (
+                 CYLC_VERSION, self.prog_name, self.my_uuid)
         )
         auth_info = "%s@%s" % (get_user(), get_host())
         return {"User-Agent": user_agent_string,
@@ -682,6 +673,7 @@ def get_exception_from_html(html_text):
 
     class ExceptionPreReader(HTMLParser):
         """Read exception from <pre id="traceback">...</pre> element."""
+
         def __init__(self):
             HTMLParser.__init__(self)
             self.is_in_traceback_pre = False
@@ -690,8 +682,8 @@ def get_exception_from_html(html_text):
         def handle_starttag(self, tag, attrs):
             """Set is_in_traceback_pre to True if in <pre id="traceback">."""
             self.is_in_traceback_pre = (
-                tag == 'pre' and
-                any(attr == ('id', 'traceback') for attr in attrs))
+                    tag == 'pre' and
+                    any(attr == ('id', 'traceback') for attr in attrs))
 
         def handle_endtag(self, tag):
             """Set is_in_traceback_pre to False."""

@@ -17,22 +17,24 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Cylc scheduler server."""
 
-from collections import deque
-import logging
 from logging.handlers import BufferingHandler
-import os
 from pipes import quote
+import logging
+import os
+import sys
+import traceback
 from Queue import Empty, Queue
+from collections import deque
 from shutil import copytree, rmtree
 from subprocess import Popen, PIPE
-import sys
 from time import sleep, time
-import traceback
-
-from isodatetime.parsers import TimePointParser
-from parsec.util import printcfg
 
 from cylc import LOG
+import cylc.flags
+import cylc.flags
+import tornado.httpserver
+import tornado.ioloop
+import tornado.web
 from cylc.broadcast_mgr import BroadcastMgr
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.config import SuiteConfig
@@ -42,11 +44,11 @@ from cylc.daemonize import daemonize
 from cylc.exceptions import CylcError
 import cylc.flags
 from cylc.host_appointer import HostAppointer, EmptyHostList
-from cylc.hostuserutil import get_host, get_user, get_fqdn_by_host
 from cylc.loggingutil import CylcLogFormatter, TimestampRotatingFileHandler
+from cylc.hostuserutil import get_host, get_user, get_fqdn_by_host
 from cylc.log_diagnosis import LogSpec
 from cylc.network import PRIVILEGE_LEVELS
-from cylc.network.httpserver import HTTPServer
+from cylc.network.httpserver import HttpApplication
 from cylc.profiler import Profiler
 from cylc.state_summary_mgr import StateSummaryMgr
 from cylc.subprocpool import SuiteProcPool
@@ -58,7 +60,6 @@ from cylc.suite_srv_files_mgr import (
 from cylc.suite_status import (
     KEY_DESCRIPTION, KEY_GROUP, KEY_META, KEY_NAME, KEY_OWNER, KEY_STATES,
     KEY_TASKS_BY_STATE, KEY_TITLE, KEY_UPDATE_TIME, KEY_VERSION)
-from cylc.taskdef import TaskDef
 from cylc.task_events_mgr import TaskEventsManager
 from cylc.task_id import TaskID
 from cylc.task_job_logs import JOB_LOG_JOB, get_task_job_log
@@ -67,12 +68,16 @@ from cylc.task_pool import TaskPool
 from cylc.task_proxy import TaskProxy, TaskProxySequenceBoundsError
 from cylc.task_state import (
     TASK_STATUSES_ACTIVE, TASK_STATUSES_NEVER_ACTIVE, TASK_STATUS_FAILED)
+from cylc.taskdef import TaskDef
 from cylc.templatevars import load_template_vars
 from cylc.version import CYLC_VERSION
 from cylc.wallclock import (
     get_current_time_string, get_seconds_as_interval_string,
     get_time_string_from_unix_time as time2str, get_utc_mode)
 from cylc.xtrigger_mgr import XtriggerManager
+from isodatetime.parsers import TimePointParser
+from parsec.util import printcfg
+from .network import get_free_port
 
 
 class SchedulerError(CylcError):
@@ -179,7 +184,7 @@ class Scheduler(object):
         self.task_job_mgr = None
         self.task_events_mgr = None
         self.suite_event_handler = None
-        self.httpserver = None
+        self.httpserver = None  # type: HttpApplication
         self.port = None
         self.command_queue = None
         self.message_queue = None
@@ -210,7 +215,7 @@ class Scheduler(object):
 
         self.suite_db_mgr = SuiteDatabaseManager(
             self.suite_srv_files_mgr.get_suite_srv_dir(self.suite),  # pri_d
-            os.path.join(self.suite_run_dir, 'log'))                 # pub_d
+            os.path.join(self.suite_run_dir, 'log'))  # pub_d
         self.broadcast_mgr = BroadcastMgr(self.suite_db_mgr)
         self.xtrigger_mgr = XtriggerManager(
             self.suite, self.owner, self.broadcast_mgr, self.suite_run_dir,
@@ -240,12 +245,27 @@ class Scheduler(object):
         try:
             if not self.options.no_detach:
                 daemonize(self)
+
+            # Setup the suite log.
             self._setup_suite_logger()
-            self.httpserver = HTTPServer(self.suite)
-            self.port = self.httpserver.port
+            self.proc_pool = SuiteProcPool()
+            self.app = HttpApplication(self.suite, self)
+            self.host = get_host()
+            self.port = get_free_port(self.host)
+            self.httpserver = tornado.httpserver.HTTPServer(
+                self.app,
+                ssl_options=self.app.ssl_context,
+                xheaders=True
+            )
+            hn = logging.NullHandler()
+            hn.setLevel(logging.DEBUG)
+            logging.getLogger("tornado").addHandler(hn)
+            logging.getLogger("tornado").propagate = False
+            self.httpserver.listen(self.port)
             self.configure()
             self.profiler.start()
             self.run()
+
         except SchedulerStop as exc:
             # deliberate stop
             self.shutdown(exc)
@@ -369,7 +389,6 @@ conditions; see `cylc conditions`.
         self.profiler.log_memory("scheduler.py: before load_suiterc")
         self.load_suiterc()
         self.profiler.log_memory("scheduler.py: after load_suiterc")
-        self.httpserver.connect(self)
 
         self.suite_db_mgr.on_suite_start(self.is_restart)
         if self.config.cfg['scheduling']['hold after point']:
@@ -403,14 +422,14 @@ conditions; see `cylc conditions`.
         log_extra_num = {
             TimestampRotatingFileHandler.FILE_HEADER_FLAG: True,
             TimestampRotatingFileHandler.FILE_NUM: 1}
-        LOG.info(
-            self.START_MESSAGE_TMPL % {
-                'comms_method': self.httpserver.comms_method,
-                'host': self.host,
-                'port': self.httpserver.port,
-                'pid': os.getpid()},
-            extra=log_extra,
-        )
+        # LOG.info(
+        #     self.START_MESSAGE_TMPL % {
+        #         'comms_method': self.httpserver.comms_method,
+        #         'host': self.host,
+        #         'port': self.httpserver.port,
+        #         'pid': os.getpid()},
+        #     extra=log_extra,
+        # )
         LOG.info('Run: (re)start=%d log=%d', n_restart, 1, extra=log_extra_num)
         LOG.info('Cylc version: %s', CYLC_VERSION, extra=log_extra)
         # Note that the following lines must be present at the top of
@@ -529,8 +548,8 @@ conditions; see `cylc conditions`.
             LOG.info("+ hold suite = %s" % (bool(value),))
             return
         for key_str, self_attr, option_ignore_attr in [
-                ("initial", "start_point", "ignore_start_point"),
-                ("final", "stop_point", "ignore_stop_point")]:
+            ("initial", "start_point", "ignore_start_point"),
+            ("final", "stop_point", "ignore_stop_point")]:
             if key != key_str + "_point" or value is None or value == 'None':
                 continue
             # the suite_params table prescribes a start/stop cycle
@@ -774,7 +793,7 @@ conditions; see `cylc conditions`.
         client_info['prev_time'] = client_info['time']
         if self.main_loop_intervals:
             ret['mean_main_loop_interval'] = (
-                sum(self.main_loop_intervals) / len(self.main_loop_intervals))
+                    sum(self.main_loop_intervals) / len(self.main_loop_intervals))
         return ret
 
     def info_get_graph_raw(self, cto, ctn, group_nodes=None,
@@ -1012,14 +1031,14 @@ conditions; see `cylc conditions`.
         # Preserve contact data in memory, for regular health check.
         mgr = self.suite_srv_files_mgr
         contact_data = {
-            mgr.KEY_API: str(self.httpserver.API),
+            mgr.KEY_API: str(self.app.API),
             mgr.KEY_COMMS_PROTOCOL: glbl_cfg().get(
                 ['communication', 'method']),
             mgr.KEY_DIR_ON_SUITE_HOST: os.environ['CYLC_DIR'],
             mgr.KEY_HOST: self.host,
             mgr.KEY_NAME: self.suite,
             mgr.KEY_OWNER: self.owner,
-            mgr.KEY_PORT: str(self.httpserver.port),
+            mgr.KEY_PORT: str(self.port),
             mgr.KEY_PROCESS: process_str,
             mgr.KEY_SSH_USE_LOGIN_SHELL: str(glbl_cfg().get_host_item(
                 'use login shell')),
@@ -1143,11 +1162,11 @@ conditions; see `cylc conditions`.
         # are overridden by tasks prior to job submission, but in
         # principle they could be needed locally by event handlers:
         for var, val in [
-                ('CYLC_SUITE_RUN_DIR', self.suite_run_dir),
-                ('CYLC_SUITE_LOG_DIR', self.suite_log_dir),
-                ('CYLC_SUITE_WORK_DIR', self.suite_work_dir),
-                ('CYLC_SUITE_SHARE_DIR', self.suite_share_dir),
-                ('CYLC_SUITE_DEF_PATH', self.suite_dir)]:
+            ('CYLC_SUITE_RUN_DIR', self.suite_run_dir),
+            ('CYLC_SUITE_LOG_DIR', self.suite_log_dir),
+            ('CYLC_SUITE_WORK_DIR', self.suite_work_dir),
+            ('CYLC_SUITE_SHARE_DIR', self.suite_share_dir),
+            ('CYLC_SUITE_DEF_PATH', self.suite_dir)]:
             os.environ[var] = val
 
         # (global config auto expands environment variables in local paths)
@@ -1208,15 +1227,15 @@ conditions; see `cylc conditions`.
         """
         try:
             if (self.run_mode in ['simulation', 'dummy'] and
-                self.config.cfg['cylc']['simulation'][
-                    'disable suite event handlers']):
+                    self.config.cfg['cylc']['simulation'][
+                        'disable suite event handlers']):
                 return
         except KeyError:
             pass
         try:
             self.suite_event_handler.handle(self.config, SuiteEventContext(
                 event, reason, self.suite, self.owner, self.host,
-                self.httpserver.port))
+                self.port))
         except SuiteEventError as exc:
             if event == self.EVENT_SHUTDOWN and self.options.reftest:
                 LOG.error('SUITE REFERENCE TEST FAILED')
@@ -1245,8 +1264,8 @@ conditions; see `cylc conditions`.
             self.previous_profile_point = 0
             self.count = 0
         self.can_auto_stop = (
-            not self.config.cfg['cylc']['disable automatic shutdown'] and
-            not self.options.no_auto_shutdown)
+                not self.config.cfg['cylc']['disable automatic shutdown'] and
+                not self.options.no_auto_shutdown)
 
     def process_task_pool(self):
         """Process ALL TASKS whenever something has changed that might
@@ -1268,9 +1287,9 @@ conditions; see `cylc conditions`.
                     deps = itask.state.get_resolved_dependencies()
                     LOG.info('[%s] -triggered off %s', itask, deps)
         for meth in [
-                self.pool.spawn_all_tasks,
-                self.pool.remove_spent_tasks,
-                self.pool.remove_suiciding_tasks]:
+            self.pool.spawn_all_tasks,
+            self.pool.remove_spent_tasks,
+            self.pool.remove_suiciding_tasks]:
             if meth():
                 self.is_updated = True
 
@@ -1353,8 +1372,8 @@ conditions; see `cylc conditions`.
                 # Wait for process pool to complete,
                 # unless --now --now is requested
                 stop_process_pool_empty_msg = (
-                    "Waiting for the command process pool to empty" +
-                    " for shutdown")
+                        "Waiting for the command process pool to empty" +
+                        " for shutdown")
                 while self.proc_pool.is_not_done():
                     sleep(self.INTERVAL_STOP_PROCESS_POOL_EMPTY)
                     if stop_process_pool_empty_msg:
@@ -1371,7 +1390,7 @@ conditions; see `cylc conditions`.
             else:
                 raise SchedulerStop(self.stop_mode)
         elif (self.time_next_kill is not None and
-                time() > self.time_next_kill):
+              time() > self.time_next_kill):
             self.command_poll_tasks()
             self.command_kill_tasks()
             self.time_next_kill = time() + self.INTERVAL_STOP_KILL
@@ -1624,9 +1643,15 @@ conditions; see `cylc conditions`.
         self.count += 1
 
     def run(self):
+        """Main loop 1"""
+        tornado.ioloop.PeriodicCallback(self.run2, 1000).start()
+        tornado.ioloop.IOLoop.current().start()
+        raise self.e
+
+    def run2(self):
         """Main loop."""
         self.initialise_scheduler()
-        while True:  # MAIN LOOP
+        try:  # MAIN LOOP
             tinit = time()
 
             if self.pool.do_reload:
@@ -1674,20 +1699,23 @@ conditions; see `cylc conditions`.
             # Sleep a bit for things to catch up.
             # Quick sleep if there are items pending in process pool.
             # (Should probably use quick sleep logic for other queues?)
-            elapsed = time() - tinit
-            quick_mode = self.proc_pool.is_not_done()
-            if (elapsed >= self.INTERVAL_MAIN_LOOP or
-                    quick_mode and elapsed >= self.INTERVAL_MAIN_LOOP_QUICK):
-                # Main loop has taken quite a bit to get through
-                # Still yield control to other threads by sleep(0.0)
-                sleep(0.0)
-            elif quick_mode:
-                sleep(self.INTERVAL_MAIN_LOOP_QUICK - elapsed)
-            else:
-                sleep(self.INTERVAL_MAIN_LOOP - elapsed)
+            # elapsed = time() - tinit
+            # quick_mode = self.proc_pool.is_not_done()
+            # if (elapsed >= self.INTERVAL_MAIN_LOOP or
+            #         quick_mode and elapsed >= self.INTERVAL_MAIN_LOOP_QUICK):
+            #     # Main loop has taken quite a bit to get through
+            #     # Still yield control to other threads by sleep(0.0)
+            #     sleep(0.0)
+            # elif quick_mode:
+            #     sleep(self.INTERVAL_MAIN_LOOP_QUICK - elapsed)
+            # else:
+            #     sleep(self.INTERVAL_MAIN_LOOP - elapsed)
             # Record latest main loop interval
             self.main_loop_intervals.append(time() - tinit)
             # END MAIN LOOP
+        except (SchedulerError, SchedulerStop) as e:
+            self.e = e
+            tornado.ioloop.IOLoop.current().stop()
 
     def update_state_summary(self):
         """Update state summary, e.g. for GUI."""
@@ -1842,7 +1870,9 @@ conditions; see `cylc conditions`.
                 LOG.exception(exc)
 
         if self.httpserver:
-            self.httpserver.shutdown()
+            self.httpserver.stop()
+            ioloop = tornado.ioloop.IOLoop.instance()
+            ioloop.add_callback(ioloop.stop)
 
         # Flush errors and info before removing suite contact file
         sys.stdout.flush()
@@ -1870,6 +1900,10 @@ conditions; see `cylc conditions`.
         if getattr(self, "config", None) is not None:
             # run shutdown handlers
             self.run_event_handlers(self.EVENT_SHUTDOWN, str(reason))
+
+        tornado.ioloop.IOLoop.current().stop()
+
+        LOG.info("DONE")  # main thread exit
 
     def set_stop_point(self, stop_point_string):
         """Set stop point."""

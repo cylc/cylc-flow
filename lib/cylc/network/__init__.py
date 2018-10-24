@@ -18,9 +18,13 @@
 
 """Package for network interfaces to cylc suite server objects."""
 
+import random
+import socket
+
+from ..cfgspec.glbl_cfg import glbl_cfg
+
 # Dummy passphrase for client access from users without the suite passphrase.
 NO_PASSPHRASE = 'the quick brown fox'
-
 
 # Ordered privilege levels for authenticated users.
 PRIV_IDENTITY = 'identity'
@@ -37,3 +41,21 @@ PRIVILEGE_LEVELS = [
     PRIV_SHUTDOWN,  # (Not used yet - for the post-passphrase era.)
     PRIV_FULL_CONTROL,
 ]
+
+
+def get_free_port(host):
+    # get a random pool of ports that we can use to connect
+    ok_ports = glbl_cfg().get(['suite servers', 'run ports'])
+    random.shuffle(ok_ports)
+
+    # Check on specified host for free port
+    for port in ok_ports:
+        sock_check = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            sock_check.settimeout(1)
+            sock_check.connect((host, port))
+            sock_check.close()
+        except socket.error:
+            return port
+
+    raise Exception("No available ports")
