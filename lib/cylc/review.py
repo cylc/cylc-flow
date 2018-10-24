@@ -41,13 +41,14 @@ from time import gmtime, strftime
 import traceback
 import urllib
 
-from cylc.version import CYLC_VERSION
 from cylc.hostuserutil import get_host
 from cylc.review_dao import CylcReviewDAO
 from cylc.task_state import (
     TASK_STATUSES_ORDERED, TASK_STATUS_GROUPS)
+from cylc.version import CYLC_VERSION
 from cylc.ws import get_util_home
 from cylc.suite_logging import get_logs
+from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 
 
 class CylcReviewService(object):
@@ -127,8 +128,6 @@ class CylcReviewService(object):
         data.update(self._get_suite_logs_info(user, suite))
         data["broadcast_states"] = (
             self.suite_dao.get_suite_broadcast_states(user, suite))
-        if not data["broadcast_states"]:
-            raise cherrypy.HTTPError(404)
         if form == "json":
             return json.dumps(data)
         try:
@@ -421,7 +420,11 @@ class CylcReviewService(object):
             name_globs = shlex.split(str(names))
         # Get entries
         sub_names = [
-            ".service", "log", "share", "work", "suite.rc"]
+            SuiteSrvFilesManager.DIR_BASE_SRV,
+            "log",
+            "share",
+            "work",
+            SuiteSrvFilesManager.FILE_BASE_SUITE_RC]
         for dirpath, dnames, fnames in os.walk(
                 user_suite_dir_root, followlinks=True):
             if dirpath != user_suite_dir_root and (
@@ -468,9 +471,10 @@ class CylcReviewService(object):
                 rosie_info = {}
                 try:
                     for line in open(rosie_suite_info, 'r').readlines():
-                        rosie_key, rosie_val = line.strip().split("=", 1)
-                        if rosie_key in ("project", "title"):
-                            rosie_info[rosie_key] = rosie_val
+                        if not line.strip().startswith('#') and '=' in line:
+                            rosie_key, rosie_val = line.strip().split("=", 1)
+                            if rosie_key in ("project", "title"):
+                                rosie_info[rosie_key] = rosie_val
                 except IOError:
                     pass
                 entry["info"].update(rosie_info)
