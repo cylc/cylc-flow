@@ -59,7 +59,7 @@ SPEC = {
     'sort by definition order': [VDR.V_BOOLEAN, True],
     'sort column': [VDR.V_STRING] + list(HEADINGS),
     'sort column ascending': [VDR.V_BOOLEAN, True],
-    'sub-graphs on': [VDR.V_BOOLEAN],
+    'sub-graphs on': [VDR.V_BOOLEAN, False],
     'task filter highlight color': [VDR.V_STRING, 'PowderBlue'],
     'task states to filter out': [
         VDR.V_STRING_LIST, [TASK_STATUS_RUNAHEAD]],

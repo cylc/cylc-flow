@@ -33,7 +33,7 @@ from cylc.mkdir_p import mkdir_p
 from cylc.network.httpclient import ClientError
 from cylc.task_id import TaskID
 from cylc.task_state import TASK_STATUS_RUNAHEAD
-from cylc.cfgspec.gcylc import gcfg
+from cylc.cfgspec.gcylc import GcylcConfig
 
 
 def compare_dict_of_dict(one, two):
@@ -83,7 +83,7 @@ class GraphUpdater(threading.Thread):
         self.normal_fit = False  # zoom to 1.0 scale
         self.crop = False
         # organise by cycle point.
-        self.subgraphs_on = gcfg.get(["sub-graphs on"])
+        self.subgraphs_on = GcylcConfig.get_inst().get(["sub-graphs on"])
 
         self.descendants = {}
         self.all_families = []
