@@ -22,8 +22,9 @@ Register the name REG for the suite definition in PATH. The suite server
 program can then be started, stopped, and targeted by name REG. (Note that
 "cylc run" can also register suites on the fly).
 
-Registration creates a suite run directory "~/cylc-run/REG/" with a ".service/"
-sub-directory containing authentication files and a "source" symlink to PATH.
+Registration creates a suite run directory "~/cylc-run/REG/" containing a
+".service/source" symlink to the suite definition PATH. The .service directory
+will also be used for server authentication files at run time.
 
 Suite names can be hierarchical, corresponding to the path under ~/cylc-run.
 
