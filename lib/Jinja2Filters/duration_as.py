@@ -27,7 +27,7 @@ SECONDS_PER_DAY = SECONDS_PER_HOUR * HOURS_PER_DAY
 SECONDS_PER_WEEK = SECONDS_PER_DAY * DAYS_PER_WEEK
 
 CONVERSIONS = {
-    ('s', 'seconds'): lambda s: float(s),
+    ('s', 'seconds'): float,
     ('m', 'minutes'): lambda s: float(s) / SECONDS_PER_MINUTE,
     ('h', 'hours'): lambda s: float(s) / SECONDS_PER_HOUR,
     ('d', 'days'): lambda s: float(s) / SECONDS_PER_DAY,
