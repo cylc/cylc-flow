@@ -15,3 +15,62 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import doctest
+import os
+import pkgutil
+import sys
+import unittest
+
+
+def iter_package(name, path):
+    """Yield modules contained within the provided package."""
+    stack = [(name, path)]
+    while stack:
+        namespace, path = stack.pop()
+        for _, name, is_package in pkgutil.walk_packages([path]):
+            modname = '%s.%s' % (namespace, name)
+            modpath = os.path.join(path, name)
+            yield modname, modpath
+            if is_package:
+                stack.append((modname, modpath))
+
+
+def load_tests(loader, tests, _):
+    """Called by unittest to determine which tests to run.
+
+    See: https://docs.python.org/3/library/unittest.html#load-tests-protocol
+    """
+    import importlib
+
+    cylc_package_path = os.path.split(os.path.split(__file__)[0])[0]
+    for module_name, _ in iter_package('cylc',  cylc_package_path):
+        # ensure the module is importable
+        try:
+            importlib.import_module(module_name)
+        except ImportError as exc:
+            print 'doctest: skipping "%s" - %s' % (module_name, exc)
+            continue
+
+        try:
+            doctests = doctest.DocTestSuite(module_name)
+        except ValueError:
+            # Python 3.4-, DocTestSuite raises ValueError if no doctests are
+            # present.
+            print 'doctest: skipping "%s" - no tests' % module_name
+            continue
+        else:
+            # Python 3.5+, DocTestSuite returns an empty suite if no
+            # doctests are present.
+            if doctests.countTestCases() > 0:
+                tests.addTests(doctests)
+
+    return tests
+
+
+if __name__ == '__main__':
+    if sys.version_info < (2, 7):
+        # Python 2.6 or less, unittes load_tests protocol not yet implemented
+        print 'doctest: skipping all doctests (requires Python 2.7+)'
+    else:
+        unittest.main()
