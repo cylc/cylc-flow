@@ -31,6 +31,9 @@ matrix:
     include:
     - name: "1/4"
       env: CHUNK='1/4'
+      before_script:
+        # we must run unit tests only once
+        - PYTHONPATH=$(pwd -P)/lib/ py.test --cov=lib/cylc lib/cylc/tests/ --cov-append
     - name: "2/4"
       env: CHUNK='2/4'
     - name: "3/4"
@@ -72,6 +75,7 @@ install:
     - pip install EmPy pycodestyle pyopenssl
     # Coverage dependencies
     - pip install coverage pytest-cov mock
+    - export COVERAGE_PROCESS_START="${TRAVIS_BUILD_DIR}/.coveragerc"
 
 # Run tests
 script:
@@ -79,8 +83,6 @@ script:
     - export CYLC_TEST_DIFF_CMD='diff -I Xlib -u'
     # Only run the generic tests on Travis CI.
     - export CYLC_TEST_RUN_PLATFORM=false
-    - export COVERAGE_PROCESS_START="${TRAVIS_BUILD_DIR}/.coveragerc"
-    - PYTHONPATH=$(pwd -P)/lib/ py.test --cov=lib/cylc lib/cylc/tests/ --cov-append
     - export PYTHONPATH="${TRAVIS_BUILD_DIR}/.travis"
     - coverage run .travis/cover.py
     - unset PYTHONPATH
