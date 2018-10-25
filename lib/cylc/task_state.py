@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Task state related logic."""
-
 
 import cylc.flags as flags
 from cylc.prerequisite import Prerequisite
@@ -188,7 +187,7 @@ class TaskState(object):
     __slots__ = ["identity", "status", "hold_swap",
                  "_is_satisfied", "_suicide_is_satisfied", "prerequisites",
                  "suicide_prerequisites", "external_triggers", "outputs",
-                 "kill_failed", "time_updated"]
+                 "xtriggers", "xclock", "kill_failed", "time_updated"]
 
     def __init__(self, tdef, point, status, hold_swap):
         self.identity = TaskID.get(tdef.name, str(point))
@@ -213,6 +212,16 @@ class TaskState(object):
             # set unsatisfied
             self.external_triggers[ext] = False
 
+        # xtriggers (represented by labels) satisfied or not
+        self.xtriggers = {}
+        for label in tdef.xtrig_labels:
+            self.xtriggers[label] = False
+        if tdef.xclock_label:
+            self.xclock = (tdef.xclock_label, False)
+        else:
+            self.xclock = None
+
+        # Message outputs.
         self.outputs = TaskOutputs(tdef)
         self.kill_failed = False
 
@@ -223,6 +232,12 @@ class TaskState(object):
                 if prereq.satisfy_me(all_task_outputs):
                     self._is_satisfied = None
                     self._suicide_is_satisfied = None
+
+    def xtriggers_all_satisfied(self):
+        """Return True if xclock and all xtriggers are satisfied."""
+        if self.xclock is not None and not self.xclock[1]:
+            return False
+        return all(self.xtriggers.values())
 
     def prerequisites_are_all_satisfied(self):
         """Return True if (non-suicide) prerequisites are fully satisfied."""

@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ from cylc.version import CYLC_VERSION
 from cylc.config import SuiteConfig, SuiteConfigError
 from cylc.prerequisite import TriggerExpressionError
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
-from cylc.task_proxy import TaskProxy
+from cylc.task_proxy import TaskProxy, TaskProxySequenceBoundsError
 from cylc.templatevars import load_template_vars
 from cylc.profiler import Profiler
 
@@ -72,14 +72,21 @@ def main():
     profiler.start()
 
     suite, suiterc = SuiteSrvFilesManager().parse_suite_arg(options, args[0])
-
     cfg = SuiteConfig(
         suite, suiterc,
         load_template_vars(options.templatevars, options.templatevars_file),
         cli_initial_point_string=options.icp,
         is_validate=True, strict=options.strict, run_mode=options.run_mode,
-        output_fname=options.output,
-        mem_log_func=profiler.log_memory)
+        output_fname=options.output, mem_log_func=profiler.log_memory)
+    # Check bounds of sequences
+    for seq in cfg.sequences:
+        if seq.get_first_point(cfg.start_point) is None:
+            mesg = '%s: sequence out of bound for initial cycle point %s' % (
+                seq, cfg.start_point)
+            if options.strict:
+                raise SuiteConfigError(mesg)
+            elif cylc.flags.verbose:
+                sys.stderr.write(' + %s\n' % mesg)
 
     # Instantiate tasks and force evaluation of trigger expressions.
     # (Taken from config.py to avoid circular import problems.)
@@ -89,23 +96,28 @@ def main():
     for name, taskdef in cfg.taskdefs.items():
         try:
             itask = TaskProxy(taskdef, cfg.start_point, is_startup=True)
-        except Exception as exc:
-            print >> sys.stderr, str(exc)
-            raise SuiteConfigError(
-                'ERROR, failed to instantiate task %s' % name)
-        if itask.point is None:
+        except TaskProxySequenceBoundsError:
+            # Should already failed above in strict mode.
+            mesg = 'Task out of bounds for %s: %s\n' % (cfg.start_point, name)
             if cylc.flags.verbose:
-                print >> sys.stderr, (' + Task out of bounds for %s: %s' % (
-                    cfg.start_point, name))
+                sys.stderr.write(' + %s\n' % mesg)
             continue
+        except Exception as exc:
+            raise SuiteConfigError(
+                'ERROR, failed to instantiate task %s: %s' % (name, exc))
 
         # force trigger evaluation now
         try:
             itask.state.prerequisites_eval_all()
         except TriggerExpressionError as exc:
-            print >> sys.stderr, str(exc)
-            raise SuiteConfigError(
-                'ERROR, %s: invalid trigger expression.' % name)
+            err = str(exc)
+            if '@' in err:
+                print >> sys.stderr, (
+                    "ERROR, %s: xtriggers can't be in conditional"
+                    " expressions: %s" % (name, err))
+            else:
+                print >> sys.stderr, 'ERROR, %s: bad trigger: %s' % (name, err)
+            raise SuiteConfigError("ERROR: bad trigger")
         except Exception as exc:
             print >> sys.stderr, str(exc)
             raise SuiteConfigError(

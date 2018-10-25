@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ SPEC = {
     'suite status update interval': vdr(
         vtype='interval', default=DurationFloat(15)),
     'window size': vdr(vtype='integer_list', default=[300, 200]),
-    'hide main menubar': vdr(vtype='boolean', default=True),
+    'hide main menubar': vdr(vtype='boolean', default=False),
 }
 
 
@@ -51,10 +51,11 @@ class GScanConfig(config):
     COL_TITLE = "Title"
     COL_UPDATED = "Updated"
     COL_STATUS = "Status"
+    COL_VERSION = "Version"
     COLS_DEFAULT = (COL_SUITE.lower(), COL_STATUS.lower())
     COLS = [col.lower() for col in (
         COL_GROUP, COL_HOST, COL_OWNER, COL_SUITE, COL_TITLE, COL_UPDATED,
-        COL_STATUS)]
+        COL_STATUS, COL_VERSION)]
 
     def check(self):
         """Custom configuration check."""

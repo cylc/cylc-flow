@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 """
 The C3 algorithm is used to linearize multiple inheritance hierarchies

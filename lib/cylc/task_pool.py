@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -69,11 +69,14 @@ class TaskPool(object):
     STOP_REQUEST_NOW = 'REQUEST(NOW)'
     STOP_REQUEST_NOW_NOW = 'REQUEST(NOW-NOW)'
 
-    def __init__(self, config, stop_point, suite_db_mgr, task_events_mgr):
+    def __init__(self, config, stop_point, suite_db_mgr, task_events_mgr,
+                 proc_pool, xtrigger_mgr):
         self.config = config
         self.stop_point = stop_point
         self.suite_db_mgr = suite_db_mgr
         self.task_events_mgr = task_events_mgr
+        self.proc_pool = proc_pool
+        self.xtrigger_mgr = xtrigger_mgr
 
         self.do_reload = False
         self.custom_runahead_limit = self.config.get_custom_runahead_limit()
@@ -200,7 +203,7 @@ class TaskPool(object):
                 "holding (beyond suite hold point) %s" % self.hold_point,
                 itask=itask)
             itask.state.set_held()
-        elif (itask.point <= self.stop_point and
+        elif (self.stop_point and itask.point <= self.stop_point and
                 self.task_has_future_trigger_overrun(itask)):
             LOG.info("holding (future trigger beyond stop point)", itask=itask)
             self.held_future_tasks.append(itask.identity)
@@ -311,7 +314,7 @@ class TaskPool(object):
                         )
                     )
             self._prev_runahead_base_point = runahead_base_point
-        if latest_allowed_point > self.stop_point:
+        if self.stop_point and latest_allowed_point > self.stop_point:
             latest_allowed_point = self.stop_point
 
         for point, itask_id_map in self.runahead_pool.copy().items():
@@ -363,7 +366,7 @@ class TaskPool(object):
                 try:
                     itask.task_owner, itask.task_host = user_at_host.split(
                         "@", 1)
-                except ValueError:
+                except (AttributeError, ValueError):
                     itask.task_owner = None
                     itask.task_host = user_at_host
                 if time_submit:
@@ -752,7 +755,7 @@ class TaskPool(object):
                 LOG.info('reloaded task definition', itask=itask)
                 if itask.state.status in TASK_STATUSES_ACTIVE:
                     LOG.warning(
-                        "job(%0d2) active with pre-reload settings" %
+                        "job(%02d) active with pre-reload settings" %
                         itask.submit_num,
                         itask=itask)
         LOG.info("Reload completed.")
@@ -819,8 +822,9 @@ class TaskPool(object):
             return False
         can_be_stalled = False
         for itask in self.get_tasks():
-            if itask.point > self.stop_point or itask.state.status in [
-                    TASK_STATUS_SUCCEEDED, TASK_STATUS_EXPIRED]:
+            if (self.stop_point and itask.point > self.stop_point or
+                    itask.state.status in [
+                        TASK_STATUS_SUCCEEDED, TASK_STATUS_EXPIRED]):
                 # Ignore: Task beyond stop point.
                 # Ignore: Succeeded and expired tasks.
                 continue
@@ -1128,7 +1132,12 @@ class TaskPool(object):
         for itask in itasks:
             if back_out:
                 # (Aborted edit-run, reset for next trigger attempt).
+                try:
+                    del itask.summary['job_hosts'][itask.submit_num]
+                except KeyError:
+                    pass
                 itask.submit_num -= 1
+                itask.summary['submit_num'] = itask.submit_num
                 itask.local_job_file_path = None
                 continue
             if itask.state.status in TASK_STATUSES_ACTIVE:
@@ -1167,6 +1176,9 @@ class TaskPool(object):
         for itask in self.get_tasks():
             if itask.state.status != TASK_STATUS_RUNNING:
                 continue
+            # Started time is not set on restart
+            if itask.summary['started_time'] is None:
+                itask.summary['started_time'] = now
             timeout = (itask.summary['started_time'] +
                        itask.tdef.rtconfig['job']['simulated run length'])
             if now > timeout:
@@ -1267,10 +1279,20 @@ class TaskPool(object):
                     itask.clock_trigger_time)
             for trig, satisfied in itask.state.external_triggers.items():
                 if satisfied:
-                    state = 'satisfied'
+                    extras['External trigger "%s"' % trig] = 'satisfied'
                 else:
-                    state = 'NOT satisfied'
-                extras['External trigger "%s"' % trig] = state
+                    extras['External trigger "%s"' % trig] = 'NOT satisfied'
+            for label, satisfied in itask.state.xtriggers.items():
+                if satisfied:
+                    extras['xtrigger "%s"' % label] = 'satisfied'
+                else:
+                    extras['xtrigger "%s"' % label] = 'NOT satisfied'
+            if itask.state.xclock is not None:
+                label, satisfied = itask.state.xclock
+                if satisfied:
+                    extras['xclock "%s"' % label] = 'satisfied'
+                else:
+                    extras['xclock "%s"' % label] = 'NOT satisfied'
 
             outputs = []
             for _, msg, is_completed in itask.state.outputs.get_all():
@@ -1281,6 +1303,16 @@ class TaskPool(object):
                 "outputs": outputs,
                 "extras": extras}
         return results, bad_items
+
+    def check_xtriggers(self):
+        """See if any xtriggers are satisfied."""
+        itasks = self.get_tasks()
+        self.xtrigger_mgr.collate(itasks)
+        for itask in itasks:
+            if itask.state.xclock is not None:
+                self.xtrigger_mgr.satisfy_xclock(itask)
+            if itask.state.xtriggers:
+                self.xtrigger_mgr.satisfy_xtriggers(itask, self.proc_pool)
 
     def filter_task_proxies(self, items):
         """Return task proxies that match names, points, states in items.

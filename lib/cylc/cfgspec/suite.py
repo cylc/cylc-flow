@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,8 +29,9 @@ from isodatetime.data import Calendar, TimePoint
 from isodatetime.parsers import TimePointParser, DurationParser
 
 from cylc.cfgspec.utils import (
-    coerce_interval, coerce_interval_list, DurationFloat)
+    coerce_interval, coerce_xtrig, coerce_interval_list, DurationFloat)
 from cylc.cfgspec.glbl_cfg import glbl_cfg
+
 from cylc.network import PRIVILEGE_LEVELS, PRIV_SHUTDOWN
 from cylc.task_id import TaskID
 
@@ -187,6 +188,7 @@ coercers['cycletime_time_zone'] = _coerce_cycletime_time_zone
 coercers['cycleinterval'] = _coerce_cycleinterval
 coercers['final_cycletime'] = _coerce_final_cycletime
 coercers['interval'] = coerce_interval
+coercers['xtrig_func_calls'] = coerce_xtrig
 coercers['interval_list'] = coerce_interval_list
 coercers['parameter_list'] = _coerce_parameter_list
 
@@ -321,6 +323,9 @@ SPEC = {
             'sequential': vdr(vtype='string_list', default=[]),
             'exclude at start-up': vdr(vtype='string_list', default=[]),
             'include at start-up': vdr(vtype='string_list', default=[]),
+        },
+        'xtriggers': {
+            '__MANY__': vdr(vtype='xtrig_func_calls'),
         },
         'dependencies': {
             'graph': vdr(vtype='string'),

@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -401,7 +401,7 @@ class TreeUpdater(threading.Thread):
                 try:
                     p_data = new_fam_data[point_string]["root"]
                 except KeyError:
-                    p_data = [None] * 11
+                    p_data = [None] * 10 + [-1]
                 p_path = (i,)
                 p_row_id = (point_string, point_string)
                 p_data = list(p_row_id) + p_data
@@ -438,7 +438,7 @@ class TreeUpdater(threading.Thread):
                     f_iter = p_iter
                     f_path = p_path
                     fam = point_string
-                    for i, fam in enumerate(named_path[:-1]):
+                    for j, fam in enumerate(named_path[:-1]):
                         # Construct family nesting for this task.
                         if fam in family_iters:
                             # Family already in tree
@@ -450,8 +450,8 @@ class TreeUpdater(threading.Thread):
                                 f_data = new_fam_data[point_string][fam]
                             except KeyError:
                                 f_data = [None] * 7
-                            if i > 0:
-                                parent_fam = named_path[i - 1]
+                            if j > 0:
+                                parent_fam = named_path[j - 1]
                             else:
                                 # point_string is the implicit parent here.
                                 parent_fam = point_string

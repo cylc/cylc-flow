@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,10 +24,55 @@ from glob import glob
 import os
 import sys
 from jinja2 import (
+    BaseLoader,
+    ChoiceLoader,
     Environment,
     FileSystemLoader,
-    StrictUndefined)
+    StrictUndefined,
+    TemplateNotFound)
 import cylc.flags
+
+
+class PyModuleLoader(BaseLoader):
+    """Load python module as Jinja2 template.
+
+    This loader piggybacks on the jinja import mechanism and
+    returns an empty template that exports module's namespace."""
+
+    # no source access for this loader
+    has_source_access = False
+
+    def __init__(self, prefix='__python__'):
+        self._templates = {}
+        # prefix that can be used to avoid name collisions with template files
+        self._python_namespace_prefix = prefix + '.'
+
+    # pylint: disable-msg=redefined-builtin
+    def load(self, environment, name, globals=None):
+        """Imports Python module and returns it as Jinja2 template."""
+        if name.startswith(self._python_namespace_prefix):
+            name = name[len(self._python_namespace_prefix):]
+        try:
+            return self._templates[name]
+        except KeyError:
+            pass
+        try:
+            mdict = __import__(name, fromlist=['*']).__dict__
+        except ImportError:
+            raise TemplateNotFound(name)
+
+        # inject module dict into the context of an empty template
+        def root_render_func(context, *args, **kwargs):
+            """Template render function."""
+            if False:
+                yield None  # to make it a generator
+            context.vars.update(mdict)
+            context.exported_vars.update(mdict)
+
+        templ = environment.from_string('')
+        templ.root_render_func = root_render_func
+        self._templates[name] = templ
+        return templ
 
 
 def raise_helper(message, error_type='Error'):
@@ -42,36 +87,50 @@ def assert_helper(logical, message):
     return ''  # Prevent None return value polluting output.
 
 
-def jinja2process(flines, dir_, template_vars=None):
-    """Pass configure file through Jinja2 processor."""
+def jinja2environment(dir_=None):
+    """Set up and return Jinja2 environment."""
+    if dir_ is None:
+        dir_ = os.getcwd()
+
     env = Environment(
-        loader=FileSystemLoader(dir_),
+        loader=ChoiceLoader([FileSystemLoader(dir_), PyModuleLoader()]),
         undefined=StrictUndefined,
         extensions=['jinja2.ext.do'])
 
-    # Load any custom Jinja2 filters in the suite definition directory
+    # Load any custom Jinja2 filters, tests or globals in the suite
+    # definition directory
     # Example: a filter to pad integer values some fill character:
     # |(file SUITE_DEFINIION_DIRECTORY/Jinja2/foo.py)
-    # |  #!/usr/bin/env python
+    # |  #!/usr/bin/env python2
     # |  def foo( value, length, fillchar ):
     # |     return str(value).rjust( int(length), str(fillchar) )
-    for fdir in [
-            os.path.join(os.environ['CYLC_DIR'], 'lib', 'Jinja2Filters'),
-            os.path.join(dir_, 'Jinja2Filters'),
-            os.path.join(os.environ['HOME'], '.cylc', 'Jinja2Filters')]:
-        if os.path.isdir(fdir):
-            sys.path.append(os.path.abspath(fdir))
-            for name in glob(os.path.join(fdir, '*.py')):
-                fname = os.path.splitext(os.path.basename(name))[0]
-                # TODO - EXCEPTION HANDLING FOR LOADING CUSTOM FILTERS
-                module = __import__(fname)
-                env.filters[fname] = getattr(module, fname)
+    for namespace in ['filters', 'tests', 'globals']:
+        nspdir = 'Jinja2' + namespace.capitalize()
+        for fdir in [
+                os.path.join(os.environ['CYLC_DIR'], 'lib', nspdir),
+                os.path.join(dir_, nspdir),
+                os.path.join(os.environ['HOME'], '.cylc', nspdir)]:
+            if os.path.isdir(fdir):
+                sys.path.append(os.path.abspath(fdir))
+                for name in glob(os.path.join(fdir, '*.py')):
+                    fname = os.path.splitext(os.path.basename(name))[0]
+                    # TODO - EXCEPTION HANDLING FOR LOADING CUSTOM FILTERS
+                    module = __import__(fname)
+                    envnsp = getattr(env, namespace)
+                    envnsp[fname] = getattr(module, fname)
 
     # Import SUITE HOST USER ENVIRONMENT into template:
     # (usage e.g.: {{environ['HOME']}}).
     env.globals['environ'] = os.environ
     env.globals['raise'] = raise_helper
     env.globals['assert'] = assert_helper
+    return env
+
+
+def jinja2process(flines, dir_, template_vars=None):
+    """Pass configure file through Jinja2 processor."""
+    # Set up Jinja2 environment.
+    env = jinja2environment(dir_)
 
     # Load file lines into a template, excluding '#!jinja2' so that
     # '#!cylc-x.y.z' rises to the top. Callers should handle jinja2

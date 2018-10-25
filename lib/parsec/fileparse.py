@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -241,9 +241,12 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
         flines = [line.rstrip('\n') for line in f]
 
     do_inline = True
+    do_empy = True
     do_jinja2 = True
     do_contin = True
     if viewcfg:
+        if not viewcfg['empy']:
+            do_empy = False
         if not viewcfg['jinja2']:
             do_jinja2 = False
         if not viewcfg['contin']:
@@ -258,6 +261,26 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
                 flines, fdir, fpath, False, viewcfg=viewcfg, for_edit=asedit)
         except IncludeFileNotFoundError, x:
             raise FileParseError(str(x))
+
+    # process with EmPy
+    if do_empy:
+        if flines and re.match(r'^#![Ee]m[Pp]y\s*', flines[0]):
+            if cylc.flags.verbose:
+                print "Processing with EmPy"
+
+            try:
+                from parsec.empysupport import EmPyError, empyprocess
+            except ImportError:
+                raise ParsecError('EmPy Python package must be installed '
+                                  'to process file: ' + fpath)
+
+            try:
+                flines = empyprocess(flines, fdir, template_vars)
+            except EmPyError as exc:
+                lines = flines[max(exc.lineno - 4, 0): exc.lineno]
+                msg = traceback.format_exc()
+                raise FileParseError(msg, lines=lines,
+                                     error_name="EmPyError")
 
     # process with Jinja2
     if do_jinja2:

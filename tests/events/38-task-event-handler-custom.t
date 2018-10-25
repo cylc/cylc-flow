@@ -1,6 +1,6 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 FOO_ACTIVITY_LOG="${SUITE_RUN_DIR}/log/job/1/foo/NN/job-activity.log"
 SUITE_LOG="${SUITE_RUN_DIR}/log/suite/log"
 grep_ok \
-"\[(('event-handler-00', 'custom'), 1) out\] !!CUSTOM!! foo.1 fugu Data ready for barring" \
+"\[(('event-handler-00', 'custom-1'), 1) out\] !!CUSTOM!! foo.1 fugu Data ready for barring" \
     "${FOO_ACTIVITY_LOG}"
 grep_ok "\[foo.1\].*Data ready for barring" $SUITE_LOG
 grep_ok "\[foo.1\].*Data ready for bazzing" $SUITE_LOG

@@ -1,6 +1,6 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -100,6 +100,7 @@ cmp_json_ok 'scan-j.out' 'scan-j.out' << __END__
         ${PORT},
         {
             "owner":"${USER}",
+            "version": "$(cylc version)",
             "name":"${SUITE_NAME}"
         }
     ]

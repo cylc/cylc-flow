@@ -1,6 +1,6 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,11 +32,11 @@ LOG="${SUITE_RUN_DIR}/log/job/1/foo/01/job-activity.log"
 sed -n '/event-handler-00/,$p' "${LOG}" >'edited-job-activity.log'
 
 cmp_ok 'edited-job-activity.log' - <<__LOG__
-[(('event-handler-00', 'custom'), 1) cmd]
+[(('event-handler-00', 'custom-1'), 1) cmd]
 echo 'the quick brown fox
 jumped over the lazy dog'
-[(('event-handler-00', 'custom'), 1) ret_code] 0
-[(('event-handler-00', 'custom'), 1) out]
+[(('event-handler-00', 'custom-1'), 1) ret_code] 0
+[(('event-handler-00', 'custom-1'), 1) out]
 the quick brown fox
 jumped over the lazy dog
 __LOG__

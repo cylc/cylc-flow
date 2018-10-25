@@ -1,6 +1,6 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 # 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,8 +27,12 @@ sed -i 's/^  File ".*/  File "FILE", line NN, in ROUTINE/g' "$TEST_NAME.stderr"
 cmp_ok "$TEST_NAME.stderr" <<'__ERROR__'
 Jinja2Error:
   File "FILE", line NN, in ROUTINE
-    raise TemplateNotFound(template)
 TemplateNotFound: suite-foo.rc
+Context lines:
+    [[dependencies]]
+        graph = foo
+[runtime]
+{% include 'suite-foo.rc' %}	<-- Jinja2Error
 __ERROR__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

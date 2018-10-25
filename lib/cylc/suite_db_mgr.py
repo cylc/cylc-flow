@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -53,6 +53,7 @@ class SuiteDatabaseManager(object):
     TABLE_TASK_OUTPUTS = CylcSuiteDAO.TABLE_TASK_OUTPUTS
     TABLE_TASK_STATES = CylcSuiteDAO.TABLE_TASK_STATES
     TABLE_TASK_TIMEOUT_TIMERS = CylcSuiteDAO.TABLE_TASK_TIMEOUT_TIMERS
+    TABLE_XTRIGGERS = CylcSuiteDAO.TABLE_XTRIGGERS
 
     def __init__(self, pri_d=None, pub_d=None):
         self.pri_path = None
@@ -70,7 +71,8 @@ class SuiteDatabaseManager(object):
             self.TABLE_TASK_POOL: [],
             self.TABLE_TASK_ACTION_TIMERS: [],
             self.TABLE_TASK_OUTPUTS: [],
-            self.TABLE_TASK_TIMEOUT_TIMERS: []}
+            self.TABLE_TASK_TIMEOUT_TIMERS: [],
+            self.TABLE_XTRIGGERS: []}
         self.db_inserts_map = {
             self.TABLE_BROADCAST_EVENTS: [],
             self.TABLE_BROADCAST_STATES: [],
@@ -81,7 +83,8 @@ class SuiteDatabaseManager(object):
             self.TABLE_TASK_POOL: [],
             self.TABLE_TASK_ACTION_TIMERS: [],
             self.TABLE_TASK_OUTPUTS: [],
-            self.TABLE_TASK_TIMEOUT_TIMERS: []}
+            self.TABLE_TASK_TIMEOUT_TIMERS: [],
+            self.TABLE_XTRIGGERS: []}
         self.db_updates_map = {}
 
     def checkpoint(self, name):
@@ -261,6 +264,12 @@ class SuiteDatabaseManager(object):
         Arguments:
             schd (cylc.scheduler.Scheduler): scheduler object.
         """
+        if schd.final_point is None:
+            # Store None as proper null value in database. No need to do this
+            # for initial cycle point, which should never be None.
+            final_point_str = None
+        else:
+            final_point_str = str(schd.final_point)
         self.db_inserts_map[self.TABLE_SUITE_PARAMS].extend([
             {"key": "uuid_str",
              "value": schd.task_job_mgr.task_remote_mgr.uuid_str},
@@ -268,7 +277,7 @@ class SuiteDatabaseManager(object):
             {"key": "cylc_version", "value": CYLC_VERSION},
             {"key": "UTC_mode", "value": cylc.flags.utc},
             {"key": "initial_point", "value": str(schd.initial_point)},
-            {"key": "final_point", "value": str(schd.final_point)},
+            {"key": "final_point", "value": final_point_str},
         ])
         if schd.config.cfg['cylc']['cycle point format']:
             self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
@@ -306,6 +315,14 @@ class SuiteDatabaseManager(object):
                     "delay": timer.delay,
                     "timeout": timer.timeout})
 
+    def put_xtriggers(self, sat_xtrig):
+        """Put statements to update external triggers table."""
+        self.db_deletes_map[self.TABLE_XTRIGGERS].append({})
+        for sig, res in sat_xtrig.items():
+            self.db_inserts_map[self.TABLE_XTRIGGERS].append({
+                "signature": sig,
+                "results": json.dumps(res)})
+
     def put_task_pool(self, pool):
         """Put statements to update the task_pool table in runtime database.
 
@@ -334,7 +351,7 @@ class SuiteDatabaseManager(object):
                 self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
                     "name": itask.tdef.name,
                     "cycle": str(itask.point),
-                    "ctx_key": "poll_timer",
+                    "ctx_key": json.dumps("poll_timer"),
                     "ctx": self._namedtuple2json(itask.poll_timer.ctx),
                     "delays": json.dumps(itask.poll_timer.delays),
                     "num": itask.poll_timer.num,

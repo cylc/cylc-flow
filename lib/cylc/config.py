@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@ from cylc.conditional_simplifier import ConditionalSimplifier
 from cylc.exceptions import CylcError
 from cylc.graph_parser import GraphParser
 from cylc.param_expand import NameExpander
+from cylc.xtrigger_mgr import XtriggerManager
 from cylc.cfgspec.suite import RawSuiteConfig
 from cylc.cycling.loader import (
     get_point, get_point_relative, get_interval, get_interval_cls,
@@ -54,6 +55,9 @@ from parsec.util import replicate
 from cylc.suite_logging import OUT, ERR
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.task_outputs import TASK_OUTPUT_SUCCEEDED
+from cylc.cfgspec.utils import (
+    get_interval_as_seconds, DEFAULT_XTRIG_INTVL_SECS)
+from cylc.mp_pool import SuiteFuncContext
 
 RE_CLOCK_OFFSET = re.compile(r'(' + TaskID.NAME_RE + r')(?:\(\s*(.+)\s*\))?')
 RE_EXT_TRIGGER = re.compile(r'(.*)\s*\(\s*(.+)\s*\)\s*')
@@ -88,7 +92,7 @@ class SuiteConfig(object):
     TASK_EVENT_TMPL_KEYS = (
         'event', 'suite', 'point', 'name', 'submit_num', 'id', 'message',
         'batch_sys_name', 'batch_sys_job_id', 'submit_time', 'start_time',
-        'finish_time', 'user@host')
+        'finish_time', 'user@host', 'try_num')
 
     def __init__(self, suite, fpath, template_vars=None,
                  owner=None, run_mode='live', is_validate=False, strict=False,
@@ -96,7 +100,7 @@ class SuiteConfig(object):
                  cli_start_point_string=None, cli_final_point_string=None,
                  is_reload=False, output_fname=None,
                  vis_start_string=None, vis_stop_string=None,
-                 mem_log_func=None):
+                 xtrigger_mgr=None, mem_log_func=None):
 
         self.mem_log = mem_log_func
         if mem_log_func is None:
@@ -116,7 +120,14 @@ class SuiteConfig(object):
         self.first_graph = True
         self.clock_offsets = {}
         self.expiration_offsets = {}
+        # Old external triggers (client/server)
         self.ext_triggers = {}
+        if xtrigger_mgr is None:
+            # For validation and graph etc.
+            self.xtrigger_mgr = XtriggerManager(self.suite, self.owner)
+        else:
+            self.xtrigger_mgr = xtrigger_mgr
+        self.xtriggers = {}
         self.suite_polling_tasks = {}
         self.vis_start_point_string = vis_start_string
         self.vis_stop_point_string = vis_stop_string
@@ -1511,7 +1522,7 @@ class SuiteConfig(object):
         """Generate task definitions for all nodes in orig_expr."""
 
         for node in left_nodes + [right]:
-            if not node:
+            if not node or node.startswith('@'):
                 # if right is None, lefts are lone nodes
                 # for which we still define the taskdefs
                 continue
@@ -1585,7 +1596,11 @@ class SuiteConfig(object):
             raise SuiteConfigError('Error in expression "%s"' % lexpression)
 
         triggers = {}
+        xtrig_labels = set()
         for left in left_nodes:
+            if left.startswith('@'):
+                xtrig_labels.add(left[1:])
+                continue
             # (GraphNodeError checked above)
             name, offset_is_from_icp, offset_is_irregular, offset, output = (
                 GraphNodeParser.get_inst().parse(left))
@@ -1645,8 +1660,15 @@ class SuiteConfig(object):
                 elif item in triggers:
                     item_list[i] = triggers[item]
 
-        dependency = Dependency(expr_list, set(triggers.values()), suicide)
-        self.taskdefs[right].add_dependency(dependency, seq)
+        if triggers:
+            dependency = Dependency(expr_list, set(triggers.values()), suicide)
+            self.taskdefs[right].add_dependency(dependency, seq)
+
+        # Record xtrigger labels for each task name.
+        if right not in self.xtriggers:
+            self.xtriggers[right] = xtrig_labels
+        else:
+            self.xtriggers[right] = self.xtriggers[right].union(xtrig_labels)
 
     def get_actual_first_point(self, start_point):
         """Get actual first cycle point for the suite
@@ -1788,8 +1810,14 @@ class SuiteConfig(object):
                         r_id = (right, point)
                     else:
                         r_id = None
-                    name, offset_is_from_icp, _, offset, _ = (
-                        GraphNodeParser.get_inst().parse(left))
+                    if left.startswith('@'):
+                        # @trigger node.
+                        name = left
+                        offset_is_from_icp = False
+                        offset = None
+                    else:
+                        name, offset_is_from_icp, _, offset, _ = (
+                            GraphNodeParser.get_inst().parse(left))
                     if offset:
                         if offset_is_from_icp:
                             cache = start_point_offset_cache
@@ -1980,6 +2008,49 @@ class SuiteConfig(object):
             self.suite_polling_tasks.update(parser.suite_state_polling_tasks)
             self._proc_triggers(
                 parser.triggers, parser.original, seq, task_triggers)
+
+        xtcfg = self.cfg['scheduling']['xtriggers']
+        # Taskdefs just know xtrigger labels.
+        for task_name, xt_labels in self.xtriggers.items():
+            for label in xt_labels:
+                try:
+                    xtrig = xtcfg[label]
+                except KeyError:
+                    if label == 'wall_clock':
+                        # Allow predefined zero-offset wall clock xtrigger.
+                        xtrig = SuiteFuncContext(
+                            'wall_clock', 'wall_clock', [], {},
+                            DEFAULT_XTRIG_INTVL_SECS)
+                    else:
+                        raise SuiteConfigError(
+                            "ERROR, undefined xtrigger label: %s" % label)
+                if xtrig.func_name.startswith('wall_clock'):
+                    self.xtrigger_mgr.add_clock(label, xtrig)
+                    # Replace existing xclock if the new offset is larger.
+                    try:
+                        offset = get_interval_as_seconds(
+                            xtrig.func_kwargs['offset'])
+                    except KeyError:
+                        offset = 0
+                    old_label = self.taskdefs[task_name].xclock_label
+                    if old_label is None:
+                        self.taskdefs[task_name].xclock_label = label
+                    else:
+                        old_xtrig = self.xtrigger_mgr.clockx_map[old_label]
+                        old_offset = get_interval_as_seconds(
+                            old_xtrig.func_kwargs['offset'])
+                        if offset > old_offset:
+                            self.taskdefs[task_name].xclock_label = label
+                else:
+                    self.xtrigger_mgr.add_trig(label, xtrig)
+                    self.taskdefs[task_name].xtrig_labels.add(label)
+
+        # Detect use of xtrigger names with '@' prefix (creates a task).
+        overlap = set(self.taskdefs.keys()).intersection(
+            self.cfg['scheduling']['xtriggers'].keys())
+        if overlap:
+            ERR.error(', '.join(overlap))
+            raise SuiteConfigError('task and @xtrigger names clash')
 
     def _proc_triggers(self, triggers, original, seq, task_triggers):
         """Define graph edges, taskdefs, and triggers, from graph sections."""

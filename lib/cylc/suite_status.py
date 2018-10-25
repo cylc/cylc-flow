@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@ KEY_STATES = "states"
 KEY_TASKS_BY_STATE = "tasks-by-state"
 KEY_TITLE = "title"
 KEY_UPDATE_TIME = "update-time"
+KEY_VERSION = "version"
 
 # Suite status strings.
 SUITE_STATUS_HELD = "held"

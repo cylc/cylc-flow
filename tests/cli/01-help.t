@@ -1,6 +1,6 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 # 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,8 @@
 # cylc help and basic invocation.
 
 . "$(dirname "$0")/test_header"
-set_test_number 45
+# Number of tests depends on the number of 'cylc' commands.
+set_test_number $(( 45 + $(cd "${CYLC_DIR}/bin" && ls 'cylc-'* | wc -l) ))
 
 # Top help
 run_ok "${TEST_NAME_BASE}-0" cylc
@@ -75,6 +76,7 @@ cylc get: is ambiguous for:
     cylc get-directory
     cylc get-global-config
     cylc get-gui-config
+    cylc get-host-metrics
     cylc get-site-config
     cylc get-suite-config
     cylc get-suite-contact
@@ -108,5 +110,11 @@ run_ok "${TEST_NAME_BASE}-version.stdout" \
     test -n "${TEST_NAME_BASE}-version.stdout"
 cmp_ok "${TEST_NAME_BASE}-version.stdout" "${TEST_NAME_BASE}---version.stdout"
 cmp_ok "${TEST_NAME_BASE}-version.stdout" "${TEST_NAME_BASE}-V.stdout"
+
+# --help with no DISPLAY
+while read ITEM; do
+    run_ok "${TEST_NAME_BASE}-no-display-${ITEM}--help" \
+        env DISPLAY= cylc "${ITEM#cylc-}" --help
+done < <(cd "${CYLC_DIR}/bin" && ls 'cylc-'*)
 
 exit

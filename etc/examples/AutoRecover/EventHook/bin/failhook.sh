@@ -7,7 +7,9 @@
 # hook scripts can intervene in the running of their own suite.
 
 # inputs supplied by cylc
-EVENT=$1; SUITE=$2; TASK=$3; MSG=$4
+# EVENT=$1 # not needed
+SUITE=$2; TASK=$3
+# MSG=$4  # not needed
 
 echo "(HOOK SCRIPT: waiting 10 seconds)"
 sleep 10 # (time to observe failed task in the suite monitor).

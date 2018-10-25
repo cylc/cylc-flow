@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -55,7 +55,8 @@ class CGraphPlain(pygraphviz.AGraph):
         label = name
         if name in self.suite_polling_tasks:
             label += "\\n" + self.suite_polling_tasks[name][3]
-        label += "\\n" + point_string
+        if not label.startswith('@'):
+            label += "\\n" + point_string
         node.attr['label'] = label
         node.attr['URL'] = node_string
 

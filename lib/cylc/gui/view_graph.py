@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -108,7 +108,11 @@ Dependency graph suite control interface.
             # base graph node
             task_id = task_id[len(self.t.PREFIX_BASE):]
 
-        name, point_string = TaskID.split(task_id)
+        try:
+            name, point_string = TaskID.split(task_id)
+        except ValueError:
+            # not a task -> skip
+            return False
 
         menu = gtk.Menu()
         menu_root = gtk.MenuItem(task_id)
@@ -323,6 +327,7 @@ Dependency graph suite control interface.
                                          gtk.ICON_SIZE_SMALL_TOOLBAR)
         self.subgraphs_button.set_icon_widget(image)
         self.subgraphs_button.set_label("Subgraphs")
+        self.subgraphs_button.set_active(self.t.subgraphs_on)
         self.subgraphs_button.connect(
             'clicked', self.toggle_cycle_point_subgraphs)
         self._set_tooltip(self.subgraphs_button,

@@ -605,6 +605,96 @@ def get_timepointparser_tests(allow_only_basic=False,
                     yield tz_expr, tz_info
 
 
+def get_truncated_property_tests():
+    """
+    Tests for largest truncated and
+    smallest missing property names
+    """
+    test_timepoints = {
+        "-9001": {"year": 90,
+                  "month_of_year": 1,
+                  "largest_truncated_property_name": "year_of_century",
+                  "smallest_missing_property_name": "century"},
+        "20960328": {"year": 96,
+                     "month_of_year": 3,
+                     "day_of_month": 28,
+                     "largest_truncated_property_name": None,
+                     "smallest_missing_property_name": None},
+        "-90": {"year": 90,
+                "largest_truncated_property_name": "year_of_century",
+                "smallest_missing_property_name": "century"},
+        "--0501": {"month_of_year": 5, "day_of_month": 1,
+                   "largest_truncated_property_name": "month_of_year",
+                   "smallest_missing_property_name": "year_of_century"},
+        "--12": {"month_of_year": 12,
+                 "largest_truncated_property_name": "month_of_year",
+                 "smallest_missing_property_name": "year_of_century"},
+        "---30": {"day_of_month": 30,
+                  "largest_truncated_property_name": "day_of_month",
+                  "smallest_missing_property_name": "month_of_year"},
+        "98354": {"year": 98,
+                  "day_of_year": 354,
+                  "largest_truncated_property_name": "year_of_century",
+                  "smallest_missing_property_name": "century"},
+        "-034": {"day_of_year": 34,
+                 "largest_truncated_property_name": "day_of_year",
+                 "smallest_missing_property_name": "year_of_century"},
+        "00W031": {"year": 0,
+                   "week_of_year": 3,
+                   "day_of_week": 1,
+                   "largest_truncated_property_name": "year_of_century",
+                   "smallest_missing_property_name": "century"},
+        "99W34": {"year": 99,
+                  "week_of_year": 34,
+                  "largest_truncated_property_name": "year_of_century",
+                  "smallest_missing_property_name": "century"},
+        "-1W02": {"year": 1,
+                  "week_of_year": 2,
+                  "largest_truncated_property_name": "year_of_decade",
+                  "smallest_missing_property_name": "decade_of_century"},
+        "-W031": {"week_of_year": 3,
+                  "day_of_week": 1,
+                  "largest_truncated_property_name": "week_of_year",
+                  "smallest_missing_property_name": "year_of_century"},
+        "-W32": {"week_of_year": 32,
+                 "largest_truncated_property_name": "week_of_year",
+                 "smallest_missing_property_name": "year_of_century"},
+        "-W-1": {"day_of_week": 1,
+                 "largest_truncated_property_name": "day_of_week",
+                 "smallest_missing_property_name": "week_of_year"},
+        "T04:30": {"hour_of_day": 4,
+                   "minute_of_hour": 30,
+                   "largest_truncated_property_name": "hour_of_day",
+                   "smallest_missing_property_name": "day_of_month"},
+        "T19": {"hour_of_day": 19,
+                "largest_truncated_property_name": "hour_of_day",
+                "smallest_missing_property_name": "day_of_month"},
+        "T-56:12": {"minute_of_hour": 56,
+                    "second_of_minute": 12,
+                    "largest_truncated_property_name": "minute_of_hour",
+                    "smallest_missing_property_name": "hour_of_day"},
+        "T-12": {"minute_of_hour": 12,
+                 "largest_truncated_property_name": "minute_of_hour",
+                 "smallest_missing_property_name": "hour_of_day"},
+        "T--45": {"second_of_minute": 45,
+                  "largest_truncated_property_name": "second_of_minute",
+                  "smallest_missing_property_name": "minute_of_hour"},
+        "T-12:34.45": {"minute_of_hour": 12,
+                       "second_of_minute": 34,
+                       "second_of_minute_decimal": 0.45,
+                       "largest_truncated_property_name": "minute_of_hour",
+                       "smallest_missing_property_name": "hour_of_day"},
+        "T-34,2": {"minute_of_hour": 34,
+                   "minute_of_hour_decimal": 0.2,
+                   "largest_truncated_property_name": "minute_of_hour",
+                   "smallest_missing_property_name": "hour_of_day"},
+        "T--59.99": {"second_of_minute": 59,
+                     "second_of_minute_decimal": 0.99,
+                     "largest_truncated_property_name": "second_of_minute",
+                     "smallest_missing_property_name": "minute_of_hour"}}
+    return test_timepoints
+
+
 def get_timepoint_subtract_tests():
     """Yield tests for subtracting one timepoint from another."""
     return [
@@ -925,7 +1015,6 @@ def get_local_time_zone_hours_minutes():
 
 
 class TestSuite(unittest.TestCase):
-
     """Test the functionality of parsers and data model manipulation."""
 
     def assertEqual(self, test, control, info=None):
@@ -950,6 +1039,46 @@ class TestSuite(unittest.TestCase):
                     control_days, test_days, "days in %s to %s" % (
                         start_year, end_year)
                 )
+
+    def test_largest_truncated_property_name(self):
+        """Test the largest truncated property name."""
+
+        parser = parsers.TimePointParser(
+            allow_truncated=True)
+
+        truncated_property_tests = get_truncated_property_tests()
+        for expression in truncated_property_tests.keys():
+            try:
+                test_data = parser.parse(expression)
+            except parsers.ISO8601SyntaxError as syn_exc:
+                raise ValueError("Parsing failed for {0}: {1}".format(
+                    expression, syn_exc))
+
+            self.assertEqual(
+                test_data.get_largest_truncated_property_name(),
+                truncated_property_tests[expression]
+                ["largest_truncated_property_name"],
+                info=expression)
+
+    def test_smallest_missing_property_name(self):
+        """Test the smallest missing property name."""
+
+        parser = parsers.TimePointParser(
+            allow_truncated=True)
+
+        truncated_property_tests = get_truncated_property_tests()
+        for expression in truncated_property_tests.keys():
+            try:
+                test_data = parser.parse(expression)
+            except parsers.ISO8601SyntaxError as syn_exc:
+                raise ValueError("Parsing failed for {0}: {1}".format(
+                    expression, syn_exc))
+
+            self.assertEqual(
+                test_data.get_smallest_missing_property_name(),
+                truncated_property_tests[expression]
+                ["smallest_missing_property_name"],
+                info=expression)
 
     def test_timeduration(self):
         """Test the duration class methods."""

@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -433,12 +433,11 @@ class ExclusionBase(object):
         pass
 
     def __contains__(self, point):
-        """Checks to see if the Exclusions object contains a point
-        in any of the exclusion sequences.
+        """Return True if the provided point is in this exclusion.
 
         Args:
-            point (str): The time point to check lies in the
-                ISO8601Sequence object.
+            point (PointBase): The cycle point to check.
+
         """
         if point in self.exclusion_points:
             return True

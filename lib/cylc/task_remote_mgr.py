@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -290,7 +290,7 @@ class TaskRemoteMgr(object):
                 LOG.warning(TaskRemoteMgmtError(
                     TaskRemoteMgmtError.MSG_TIDY,
                     (host, owner), ' '.join(quote(item) for item in cmd),
-                    proc.ret_code, out, err))
+                    proc.returncode, out, err))
 
     def _remote_host_select_callback(self, proc_ctx, cmd_str):
         """Callback when host select command exits"""

@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -51,8 +51,6 @@ class HTTPServer(object):
 
     API = 2
     LOG_CONNECT_DENIED_TMPL = "[client-connect] DENIED %s@%s:%s %s"
-    RE_MESSAGE_TIME = re.compile(
-        r'\A(.+) at (' + RE_DATE_TIME_FORMAT_EXTENDED + r')\Z', re.DOTALL)
 
     def __init__(self, suite):
         # Suite only needed for back-compat with old clients (see below):
@@ -61,10 +59,7 @@ class HTTPServer(object):
         self.port = None
 
         # Figure out the ports we are allowed to use.
-        base_port = glbl_cfg().get(['communication', 'base port'])
-        max_ports = glbl_cfg().get(
-            ['communication', 'maximum number of ports'])
-        self.ok_ports = range(int(base_port), int(base_port) + int(max_ports))
+        self.ok_ports = glbl_cfg().get(['suite servers', 'run ports'])
         random.shuffle(self.ok_ports)
 
         comms_options = glbl_cfg().get(['communication', 'options'])
@@ -204,6 +199,8 @@ class SuiteRuntimeService(object):
     LOG_IDENTIFY_TMPL = '[client-identify] %d id requests in PT%dS'
     LOG_FORGET_TMPL = '[client-forget] %s'
     LOG_CONNECT_ALLOWED_TMPL = "[client-connect] %s@%s:%s privilege='%s' %s"
+    RE_MESSAGE_TIME = re.compile(
+        r'\A(.+) at (' + RE_DATE_TIME_FORMAT_EXTENDED + r')\Z', re.DOTALL)
 
     def __init__(self, schd):
         self.schd = schd

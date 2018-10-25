@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 """
 An empty config file should successfully yield an empty sparse config dict.
 """

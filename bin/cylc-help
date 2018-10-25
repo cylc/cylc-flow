@@ -1,6 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -163,10 +163,9 @@ def typo(str):
 
 
 # BEGIN MAIN
-general_usage = """
-Cylc ("silk") is a workflow engine for orchestrating complex *suites* of
-inter-dependent distributed cycling (repeating) tasks, as well as ordinary
-non-cycling workflows.
+general_usage = """Cylc ("silk") is a workflow engine for orchestrating complex
+*suites* of inter-dependent distributed cycling (repeating) tasks, as well as
+ordinary non-cycling workflows.
 For detailed documentation see the Cylc User Guide (cylc doc --help).
 
 Version __CYLC_VERSION__
@@ -237,7 +236,7 @@ information_commands['cat-state'] = ['cat-state']
 information_commands['show'] = ['show']
 information_commands['cat-log'] = ['cat-log', 'log']
 information_commands['get-suite-contact'] = [
-    'get-suite-contact', 'get-contact', 'print-contact']
+    'get-suite-contact', 'get-contact']
 information_commands['get-suite-version'] = [
     'get-suite-version', 'get-cylc-version']
 
@@ -247,6 +246,7 @@ information_commands['get-suite-config'] = ['get-suite-config', 'get-config']
 information_commands['get-site-config'] = [
     'get-site-config', 'get-global-config']
 information_commands['get-gui-config'] = ['get-gui-config']
+information_commands['get-host-metrics'] = ['get-host-metrics']
 
 control_commands = {}
 control_commands['gui'] = ['gui']
@@ -280,6 +280,7 @@ utility_commands['scp-transfer'] = ['scp-transfer']
 utility_commands['suite-state'] = ['suite-state']
 utility_commands['ls-checkpoints'] = ['ls-checkpoints']
 utility_commands['report-timings'] = ['report-timings']
+utility_commands['function-run'] = ['function-run']
 
 hook_commands = {}
 hook_commands['email-suite'] = ['email-suite']
@@ -362,7 +363,7 @@ comsum['test-battery'] = 'Run a battery of self-diagnosing test suites'
 comsum['profile-battery'] = 'Run a battery of profiling tests'
 comsum['import-examples'] = 'Import example suites your suite run directory'
 comsum['upgrade-run-dir'] = 'Upgrade a pre-cylc-6 suite run directory'
-comsum['check-software'] = 'Check required software is installed.'
+comsum['check-software'] = 'Check required software is installed'
 # license
 comsum['warranty'] = 'Print the GPLv3 disclaimer of warranty'
 comsum['conditions'] = 'Print the GNU General Public License v3.0'
@@ -389,6 +390,7 @@ comsum['monitor'] = 'An in-terminal suite monitor (see also gcylc)'
 comsum['get-suite-config'] = 'Print suite configuration items'
 comsum['get-site-config'] = 'Print site/user configuration items'
 comsum['get-gui-config'] = 'Print gcylc configuration items'
+comsum['get-host-metrics'] = 'Print localhost metric data'
 comsum['get-suite-contact'] = (
     'Print contact information of a suite server program')
 comsum['get-suite-version'] = 'Print cylc version of a suite server program'
@@ -406,8 +408,8 @@ comsum['poll'] = 'Poll submitted or running tasks'
 comsum['kill'] = 'Kill submitted or running tasks'
 comsum['hold'] = 'Hold (pause) suites or individual tasks'
 comsum['release'] = 'Release (unpause) suites or individual tasks'
-comsum['reset'] = 'Force one or more tasks to change state.'
-comsum['spawn'] = 'Force one or more tasks to spawn their successors.'
+comsum['reset'] = 'Force one or more tasks to change state'
+comsum['spawn'] = 'Force one or more tasks to spawn their successors'
 comsum['nudge'] = 'Cause the cylc task processing loop to be invoked'
 comsum['reload'] = 'Reload the suite definition at run time'
 comsum['set-verbosity'] = 'Change a running suite\'s logging verbosity'
@@ -427,6 +429,7 @@ comsum['jobs-poll'] = '(Internal) Retrieve status for task jobs'
 comsum['jobs-submit'] = '(Internal) Submit task jobs'
 comsum['remote-init'] = '(Internal) Initialise a task remote'
 comsum['remote-tidy'] = '(Internal) Tidy a task remote'
+
 # utility
 comsum['cycle-point'] = 'Cycle point arithmetic and filename templating'
 comsum['jobscript'] = 'Generate a task job script and print it to stdout'
@@ -434,6 +437,8 @@ comsum['scp-transfer'] = 'Scp-based file transfer for cylc suites'
 comsum['suite-state'] = 'Query the task states in a suite'
 comsum['ls-checkpoints'] = 'Display task pool etc at given events'
 comsum['report-timings'] = 'Generate a report on task timing data'
+comsum['function-run'] = '(Internal) Run a function in the process pool'
+
 # hook
 comsum['email-task'] = 'A task event hook script that sends email alerts'
 comsum['email-suite'] = 'A suite event hook script that sends email alerts'

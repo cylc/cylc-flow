@@ -381,12 +381,16 @@ previous section, emerges naturally at run time.
 \section{Installation}
 \label{Requirements}
 
-Cylc runs on Unix variants, usually Linux, and including Apple OS X.
+Cylc runs on Linux. It is tested quite thoroughly on modern RHEL and Ubuntu
+distros. Some users have also managed to make it work on other Unix variants
+including Apple OS X, but they are not officially tested and supported.
 
 \subsection{Third-Party Software Packages}
 
-{\bf Python \lstinline@>=@ 2.6} is required (but not yet Python 3). Python
-should already be installed in your Linux system. \url{https://python.org}.
+{\bf Python 2 \lstinline@>=@ 2.6} is required.
+{\bf Python 2 \lstinline@>=@ 2.7.9} is recommended for the best security.
+Python 2 should already be installed in your Linux system.
+\url{https://python.org/}.
 
 For Cylc's HTTPS communications layer:
 \begin{myitemize}
@@ -402,7 +406,7 @@ the Cylc GUIs:
 
 \begin{myitemize}
   \item {\bf PyGTK} - GUI toolkit \url{http://www.pygtk.org}.  {\em Note PyGTK
-    typically comes with your system Python. It is alledgedly quite
+    typically comes with your system Python. It is allegedly quite
     difficult to install if you need to do so for another Python version.}
     \item {\bf Graphviz} - graph layout engine (tested 2.36.0):
       \url{http://www.graphviz.org}.
@@ -413,6 +417,12 @@ the Cylc GUIs:
               \item python-devel
               \item graphviz-devel
           \end{myitemize}
+\end{myitemize}
+
+The following packages are necessary for running all the tests in Cylc:
+
+\begin{myitemize}
+  \item {\bf mock} - \url{https://mock.readthedocs.io}
 \end{myitemize}
 
 The User Guide is generated from \LaTeX source files by running
@@ -482,6 +492,20 @@ become quite trivial as we've removed or bundled some former dependencies, but
 in future we intend to make it print a comprehensive list of library versions
 etc.\ to include in with bug reports.)
 
+To check for specific packages only, supply these as arguments to the
+\lstinline=check-software= command, either in the form used in the output of
+the bare command, without any parent package prefix and colon, or
+alternatively all in lower-case, should the given form contain capitals. For
+example:
+
+\begin{lstlisting}
+$ cylc check-software Python graphviz imagemagick
+\end{lstlisting}
+
+With arguments, check-software provides an exit status indicating a
+collective pass (zero) or a failure of that number of packages to satisfy
+the requirements (non-zero integer).
+
 \subsection{Software Bundled With Cylc}
 
 Cylc bundles several third party packages which do not need to be installed
@@ -506,7 +530,7 @@ separately.
 \subsection{Installing Cylc}
 \label{InstallCylc}
 
-Cylc releases can be downloaded from from \url{https://cylc.github.io/cylc}.
+Cylc releases can be downloaded from \url{https://cylc.github.io/cylc}.
 
 The wrapper script \lstinline=usr/bin/cylc= should be installed to
 the system executable search path (e.g.\ \lstinline=/usr/local/bin/=) and
@@ -652,7 +676,7 @@ For example, to run \lstinline=model.exe= 12 times on a monthly cycle we could
 loop over an integer parameter \lstinline@R = 0, 1, 2, ..., 11@ to define tasks
 \lstinline=model-R0, model-R1, model-R2, ...model-R11=, and the parameter
 values could be multiplied by the interval \lstinline=P1M= (one month) to get
-the start point point for the corresponding model run.
+the start point for the corresponding model run.
 
 This method is only good for smaller workflows of finite duration because every
 single task has to be mapped out in advance, and cylc has to be aware of all of
@@ -685,7 +709,7 @@ documented in (\ref{SiteRCReference}).
 # cylc site global config file
 <cylc-dir>/etc/global.rc
 \end{lstlisting}
-Others, such as the preferred text editor for suite definitions,
+Others, such as the preferred text editor for suite configurations,
 can be overridden by users,
 \lstset{language=transcript}
 \begin{lstlisting}
@@ -708,7 +732,7 @@ functionality.
 
 Some settings affecting cylc's behaviour can be defined in site and user
 {\em global config files}. For example, to choose the text editor invoked by
-cylc on suite definitions:
+cylc on suite configurations:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -770,15 +794,15 @@ $ cylc gscan & # Multi-suite monitor GUI.
 Clicking on a suite in gscan, shown in Figure~\ref{fig-gscan}, opens a gcylc
 instance for it.
 
-\subsection{Suite Definitions}
+\subsection{Suite Configuration}
 
 Cylc suites are defined by extended-INI format \lstinline=suite.rc=
 files (the main file format extension is section nesting). These reside
-in {\em suite definition directories} that may also contain a
+in {\em suite configuration directories} that may also contain a
 \lstinline=bin= directory and any other suite-related files.
 
 \begin{myitemize}
-\item For more on the suite definition file format, see~\ref{SuiteDefinition}
+\item For more on the suite configuration file format, see~\ref{SuiteDefinition}
     and~\ref{SuiteRCReference}.
 \end{myitemize}
 
@@ -786,7 +810,7 @@ in {\em suite definition directories} that may also contain a
 
 Suite registration creates a run directory (under \lstinline=~/cylc-run/= by
 default) and populates it with authentication files and a symbolic link to a
-suite definition directory. Cylc commands that parse suite definitions can take
+suite configuration directory. Cylc commands that parse suites can take
 the file path or the suite name as input. Commands that interact with running
 suites have to target the suite by name.
 
@@ -816,7 +840,7 @@ server program at start-up and used to authenticate connections from client
 programs.
 
 Possession of a suite's passphrase file gives full control over it.
-Without it, the information avaiable to a client is determined by the suite's
+Without it, the information available to a client is determined by the suite's
 public access privilege level.
 
 For more on connection authentication, suite passphrases, and public access,
@@ -841,7 +865,7 @@ Make the tutorial suite names shorter, and print their locations with
 \lstinline=cylc print=:
 
 \begin{lstlisting}
-$ mv ~/cylc-run/$(cylc --version)/examples/tutorial ~/cylc-run/tut
+$ mv ~/cylc-run/examples/$(cylc --version)/tutorial ~/cylc-run/tut
 $ cylc print -ya tut
 tut/oneoff/jinja2  | /tmp/cylc-examples/7.0.0/tutorial/oneoff/jinja2
 tut/cycling/two    | /tmp/cylc-examples/7.0.0/tutorial/cycling/two
@@ -853,7 +877,7 @@ See \lstinline=cylc print --help= for other display options.
 
 \subsection{Suite Validation}
 
-Suite definitions can be validated to detect syntax (and other) errors:
+Suite configurations can be validated to detect syntax (and other) errors:
 
 \lstset{language=transcript}
 \begin{lstlisting}
@@ -905,11 +929,10 @@ information and exits).
 
 \subsection{Editing Suites}
 
-The text editor invoked by cylc on suite definitions is determined
+The text editor invoked by Cylc on suite configurations is determined
 by cylc site and user global config files, as shown above in~\ref{CUI}.
 Check that you have renamed the tutorial examples suites as described
-just above and open the {\em Hello World} suite definition in your text
-editor:
+just above and open the {\em Hello World} suite in your text editor:
 \lstset{language=transcript}
 \begin{lstlisting}
 $ cylc edit tut/oneoff/basic # in-terminal
@@ -922,7 +945,7 @@ $ gcylc tut/oneoff/basic &
 \end{lstlisting}
 and choose {\em Suite } \textrightarrow {\em Edit} from the menu.
 
-The editor will be invoked from within the suite definition directory for easy
+The editor will be invoked from within the suite configuration directory for easy
 access to other suite files (in this case there are none). There are syntax
 highlighting control files for several text editors under
 \lstinline=<cylc-dir>/etc/syntax/=; see in-file comments for installation
@@ -943,7 +966,7 @@ that you can exit the terminal or even log out without killing the suite:
 $ cylc run tut/oneoff/basic
             ._.
             | |                 The Cylc Suite Engine [7.0.0]
-._____._. ._| |_____.           Copyright (C) 2008-2018 NIWA
+._____._. ._| |_____.           Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 | .___| | | | | .___|  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 | !___| !_! | | !___.  This program comes with ABSOLUTELY NO WARRANTY;
 !_____!___. |_!_____!  see `cylc warranty`.  It is free software, you
@@ -995,11 +1018,28 @@ $ cylc gui tut/oneoff/basic &
 \end{lstlisting}
 Use the tool bar {\em Play} button, or the {\em Control}
 \textrightarrow {\em Run} menu item, to run the suite again.
-You may want to alter the suite definition slightly to make the task
+You may want to alter the suite configuration slightly to make the task
 take longer to run. Try right-clicking on the \lstinline=hello= task
 to view its output logs. The relative merits of the three {\em suite
 views} - dot, text, and graph - will be more apparent later when we
 have more tasks. Closing the GUI does not affect the suite itself.
+
+\subsection{Remote Suites}
+\label{RemoteSuites}
+
+Suites can run on {\em localhost} or on a {\em remote} host.
+
+To start up a suite on a given host, specify it explicitly via the
+\lstinline@--host=@ option to a \lstinline=run= or \lstinline=restart=
+command.
+
+Otherwise, Cylc selects the best host to start up on from allowed
+\lstinline=run hosts= as specified in the global config under
+\lstinline=[suite servers]=, which defaults to localhost. Should there be
+more than one allowed host set, the {\em most suitable} is determined
+according to the settings specified under \lstinline=[[run host select]]=,
+namely exclusion of hosts not meeting suitability {\em thresholds}, if
+provided, then ranking according to the given {\em rank} method.
 
 \subsection{Discovering Running Suites}
 
@@ -1020,7 +1060,7 @@ opens gcylc.
 \subsection{Task Identifiers}
 
 At run time, task instances are identified by {\em name}, which is
-determined entirely by the suite definition, and a {\em cycle point} which is
+determined entirely by the suite configuration, and a {\em cycle point} which is
 usually a date-time or an integer:
 \lstset{language=transcript}
 \begin{lstlisting}
@@ -1036,7 +1076,7 @@ still has to be used to target the task instance with cylc commands.
 \vspace{3mm}
 
 Task {\em job scripts} are generated by cylc to wrap the task implementation
-specified in the suite definition (environment, script, etc.) in
+specified in the suite configuration (environment, script, etc.) in
 error trapping code, messaging calls to report task progress back to the suite
 server program, and so forth. Job scripts are written to the {\em suite job log
 directory} where they can be viewed alongside the job output logs. They
@@ -1170,7 +1210,7 @@ $ cylc cat-log -e tut/oneoff/basic hello.1   # task stderr log
 \vspace{3mm}
 
 The \lstinline=hello= task in the first two tutorial suites defaults to
-running on the suite host. To make it run on a remote host instead
+running on the suite host~\ref{RemoteSuites}. To make it run on a different host instead
 change its runtime configuration as in \lstinline=tut/oneoff/remote=:
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -1185,7 +1225,7 @@ In general, a {\em task remote} is a user account, other than the account
 running the suite server program, where a task job is submitted to run. It can
 be on the same machine running the suite or on another machine.
 
-A task remote account must satify several requirements:
+A task remote account must satisfy several requirements:
 \begin{myitemize}
 
 \item Non-interactive ssh must be enabled from the account running the suite
@@ -1200,7 +1240,7 @@ software dependencies like graphviz are not required there.
 
 \item Any files needed by a remote task must be installed on the task
 host. In this example there is nothing to install because the
-implementation of \lstinline=hello= is inlined in the suite definition
+implementation of \lstinline=hello= is inlined in the suite configuration
 and thus ends up entirely contained within the task job script.
 
 \end{myitemize}
@@ -1491,7 +1531,7 @@ allow the two graph lines above to be combined in simple cases:
 Any task triggering status qualified by \lstinline=-all= or
 \lstinline=-any=, for the members, can be used with a family trigger.
 For example, here's how to trigger \lstinline=bar= if all members
-of \lstinline=GREETERS= finish (succeed or fail) and any of them them
+of \lstinline=GREETERS= finish (succeed or fail) and any of them
 succeed:
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -1570,7 +1610,7 @@ Graph styling can be applied to entire families at once, and custom
 \vspace{3mm}
 
 The tasks in our examples so far have all had inlined implementation, in
-the suite definition, but real tasks often need to call external
+the suite configuration, but real tasks often need to call external
 commands, scripts, or executables. To try this, let's return to the
 basic Hello World suite and cut the implementation of the task
 \lstinline=hello= out to a file \lstinline=hello.sh= in the suite
@@ -1590,7 +1630,7 @@ scripts. To execute scripts (etc.) located elsewhere you can
 refer to the file by its full file path, or set \lstinline=$PATH=
 appropriately yourself (this could be done via
 \lstinline=$HOME/.profile=, which is sourced at the top of the task job
-script, or in the suite definition itself).
+script, or in the suite configuration itself).
 
 Note the use of \lstinline=set -e= above to make the script abort on
 error. This allows the error trapping code in the task job script to
@@ -1851,7 +1891,7 @@ denotes period (interval) just like in the date-time notation.
 \vspace{3mm}
 
 Cylc has built in support for the Jinja2 template processor, which
-allows us to embed code in suite definitions to generate the
+allows us to embed code in suite configurations to generate the
 final result seen by cylc.
 
 The \lstinline=tut/oneoff/jinja2= suite illustrates two common
@@ -1966,7 +2006,7 @@ and can be copied and modified at will.
 it again with \lstinline=cylc restart=.
 
 \item Hold (pause) a suite mid-run with \lstinline=cylc hold=,
-    then modify the suite definition and \lstinline=cylc reload= it
+    then modify the suite configuration and \lstinline=cylc reload= it
     before using \lstinline=cylc release= to continue (you can also
     reload without holding).
 
@@ -1990,10 +2030,9 @@ as the suite runs.
 \section{Suite Name Registration}
 \label{SuiteRegistration}
 
-Cylc commands target suites via their names, which are relative path names under
-the suite run directory (\lstinline=~/cylc-run/= by default). Suites can be
-grouped together under sub-directories.
-E.g.:
+Cylc commands target suites via their names, which are relative path names
+under the suite run directory (\lstinline=~/cylc-run/= by default). Suites can
+be grouped together under sub-directories. E.g.:
 \begin{lstlisting}
 $ cylc print -t nwp
 nwp
@@ -2004,13 +2043,12 @@ nwp
    `-region1  Local Model TEST Region1  /home/oliverh/cylc-run/nwp/test/region1
 \end{lstlisting}
 
-Suites can be pre-registered with a name using the \lstinline=cylc register=
-command. The creates the essential directory structure for the suite, and
-generates some service files underneath it. Otherwise, \lstinline=cylc run= will
-create these files on suite start up.
+Suite names can be pre-registered with the \lstinline=cylc register= command,
+which creates the suite run directory structure and some service files
+underneath it. Otherwise, \lstinline=cylc run= will do this at suite start up.
 
 %\pagebreak
-\section{Suite Definition}
+\section{Suite Configuration}
 \label{SuiteDefinition}
 
 Cylc suites are defined in structured, validated, {\em suite.rc} files
@@ -2023,12 +2061,12 @@ tasks represent - is covered in~\ref{TaskImplementation}; and
 task job submission - how tasks are submitted to run - is
 in~\ref{TaskJobSubmission}.
 
-\subsection{Suite Definition Directories}
+\subsection{Suite Configuration Directories}
 \label{SuiteDefinitionDirectories}
 
-A cylc {\em suite definition directory} contains:
+A cylc {\em suite configuration directory} contains:
 \begin{myitemize}
-    \item {\bf A suite.rc file}: this is the suite definition.
+    \item {\bf A suite.rc file}: this is the suite configuration.
         \begin{myitemize}
             \item And any include-files used in it (see below; may be
                 kept in sub-directories).
@@ -2047,8 +2085,8 @@ A cylc {\em suite definition directory} contains:
         \begin{myitemize}
             \item For custom job submission modules
                 (see~\ref{CustomJobSubmissionMethods})
-                and local Python modules imported by custom Jinja2 filters
-                (see~\ref{CustomJinja2Filters}).
+                and local Python modules imported by custom Jinja2 filters,
+                tests and globals (see~\ref{CustomJinja2Filters}).
         \end{myitemize}
     \item {\bf Any other sub-directories and files} - documentation,
         control files, etc. (optional)
@@ -2059,7 +2097,7 @@ A cylc {\em suite definition directory} contains:
                 provided through
                 \lstinline=$CYLC_SUITE_DEF_PATH=
                 (see~\ref{TaskExecutionEnvironment}).
-            \item Ignored by cylc, but the entire suite definition
+            \item Ignored by cylc, but the entire suite configuration
                 directory tree is copied when you copy a
                 suite using cylc commands.
 
@@ -2068,8 +2106,8 @@ A cylc {\em suite definition directory} contains:
 A typical example:
 \lstset{language=transcript}
 \begin{lstlisting}
-/path/to/my/suite   # suite definition directory
-    suite.rc           # THE SUITE DEFINITION FILE
+/path/to/my/suite   # suite configuration directory
+    suite.rc           # THE SUITE CONFIGURATION FILE
     bin/               # scripts and executables used by tasks
         foo.sh
         bar.sh
@@ -2091,11 +2129,11 @@ A typical example:
 Suite.rc files are an extended-INI format with section nesting.
 
 Embedded template processor expressions may also be used in the file, to
-programatically generate the final suite definition seen by
-cylc. Currently the Jinja2 template processor is supported
-(\url{http://jinja.pocoo.org/docs}); see~\ref{Jinja2} for examples. In the
-future cylc may provide a plug-in interface to allow use of other template
-engines too.
+programatically generate the final suite configuration seen by
+cylc. Currently the Jinja2 (\url{http://jinja.pocoo.org/docs}) and EmPy
+\url{http://www.alcyone.com/software/empy}) template processors are supported;
+see~\ref{Jinja2} and~\ref{EmPy} for examples. In the future cylc may provide
+a plug-in interface to allow use of other template engines too.
 
 \subsubsection{Syntax}
 \label{Syntax}
@@ -2122,7 +2160,7 @@ The following defines legal suite.rc syntax:
     \item {\bf Include-files} \lstinline=%include inc/foo.rc= can be
         used as a verbatim inlining mechanism.
 \end{myitemize}
-Suites that embed Jinja2 code (see~\ref{Jinja2}) must
+Suites that embed templating code (see~\ref{Jinja2} and~\ref{EmPy}) must
 process to raw suite.rc syntax.
 
 \subsubsection{Include-Files}
@@ -2132,7 +2170,7 @@ organize large suites. Inclusion boundaries are completely arbitrary -
 you can think of include-files as chunks of the suite.rc file simply
 cut-and-pasted into another file. Include-files may be included
 multiple times in the same file, and even nested. Include-file paths
-can be specified portably relative to the suite definition directory,
+can be specified portably relative to the suite configuration directory,
 e.g.:
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -2150,14 +2188,14 @@ $ cylc edit --inline SUITE
 \end{lstlisting}
 The suite will be split back into its constituent include-files when you
 exit the edit session. While editing, the inlined file becomes the
-official suite definition so that changes take effect whenever you save
+official suite configuration so that changes take effect whenever you save
 the file. See \lstinline=cylc prep edit --help= for more information.
 
 \paragraph{Include-Files via Jinja2}
 
 Jinja2 (\ref{Jinja2}) also has template inclusion functionality.
 
-\subsubsection{Syntax Highlighting For Suite Definitions}
+\subsubsection{Syntax Highlighting For Suite Configuration}
 \label{SyntaxHighlighting}
 
 \lstset{language=transcript}
@@ -2439,7 +2477,7 @@ and also to this:
 \subsubsection{Graph Types}
 \label{GraphTypes}
 
-A suite definition can contain multiple graph strings that are combined
+A suite configuration can contain multiple graph strings that are combined
 to generate the final graph.
 
 \paragraph{One-off (Non-Cycling)}
@@ -2683,7 +2721,7 @@ excluded from the main sequence.
 For example, partial date-times can be excluded using the syntax:
 \lstset{language=suiterc}
 \begin{lstlisting}
-[[[ PT1H ! T12 ]]]          # Run hourly but not at 12:00 from the inital
+[[[ PT1H ! T12 ]]]          # Run hourly but not at 12:00 from the initial
                             # cycle point.
 [[[ T-00 ! (T00, T06, T12, T18) ]]]   # Run hourly but not at 00:00, 06:00,
                                       # 12:00, 18:00.
@@ -3096,14 +3134,19 @@ integer points, an integer sequence, or a combination of both:
 \lstset{language=transcript}
 
 
-\subsubsection{Trigger Types}
+\subsubsection{Task Triggering}
 \label{TriggerTypes}
 
 \lstset{language=suiterc}
 
-Trigger type, indicated by {\em:type} after the upstream task (or family)
-name, determines what kind of event results in the downstream task (or
-family) triggering.
+A task is said to ``trigger'' when it submits its job to run, as soon as all of
+its dependencies (also known as its separate ``triggers'') are met. Tasks can
+be made to trigger off of the state of other tasks (indicated by a
+\lstinline=:state= qualifier on the upstream task (or family)
+name in the graph) and, and off the clock, and arbitrary external events.
+
+External triggering is relatively more complicated, and is documented
+separately in Section~\ref{External Triggers}.
 
 \paragraph{Success Triggers}
 
@@ -3420,7 +3463,7 @@ failed):
                 """
 \end{lstlisting}
 
-\paragraph{Writing Efficient Inter-Family Triggering}
+\paragraph{Efficient Inter-Family Triggering}
 \label{EfficientInterFamilyTriggering}
 
 While cylc allows writing dependencies between two families it is important to
@@ -3617,7 +3660,7 @@ sequential}:
             graph = "foo => bar"
 \end{lstlisting}
 
-{\em The sequential declaration is deprecated} however, in favour of explicit
+{\em The sequential declaration is deprecated} however, in favor of explicit
 inter-cycle triggers which clearly expose the same scheduling behaviour in the
 graph:
 \lstset{language=suiterc}
@@ -3680,10 +3723,18 @@ other tasks beyond the final point.
 \paragraph{Clock Triggers}
 \label{ClockTriggerTasks}
 
-In addition to depending on other tasks (and on external events -
-see~\ref{ExternalTriggers}) tasks can depend on the wall clock: specifically,
-they can trigger off a wall clock time expressed as an offset from their own
-cycle point:
+{\em NOTE: please read {\em External Triggers} (\ref{External Triggers}) before
+using the older clock triggers described in this section.} 
+
+By default, date-time cycle points are not connected to the real time ``wall
+clock''. They are just labels that are passed to task jobs (e.g.\ to
+initialize an atmospheric model run with a particular date-time value). In real
+time cycling systems, however, some tasks - typically those near the top of the
+graph in each cycle - need to trigger at or near the time when their cycle point
+is equal to the real clock date-time.
+
+So {\em clock triggers} allow tasks to trigger at (or after, depending on other
+triggers) a wall clock time expressed as an offset from cycle point:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
@@ -3698,7 +3749,7 @@ when the wall clock time reaches \lstinline=2015-08-23T02=. Clock-trigger
 offsets are normally positive, to trigger some time {\em after} the wall-clock
 time is equal to task cycle point.
 
-Clock-triggers have no effect on scheduling if the suite is running sufficiently
+Clock-triggers have no effect on scheduling if a suite is running sufficiently
 far behind the clock (e.g.\ after a delay, or because it is processing archived
 historical data) that the trigger times, which are relative to task cycle
 point, have already passed.
@@ -3737,97 +3788,8 @@ workflow is skipped, if it is more than one day behind the wall-clock (see also
 \end{lstlisting}
 
 \paragraph{External Triggers}
-\label{ExternalTriggers}
 
-In addition to depending on other tasks (and on the wall clock -
-see~\ref{ClockTriggerTasks}) tasks can trigger off events reported by an
-external system. For example, an external process could detect incoming data
-on an ftp server, and then notify a suite containing a task to retrieve the
-new data for processing. This is an alternative to long-running tasks that poll
-for external events.
-
-Note that cylc does not currently support triggering off ``filesystem events''
-(e.g.\ \lstinline=inotify= on Linux). However, external watcher processes can
-use filesystem events to detect triggering conditions, if that is appropriate,
-before notifying a suite with our general external event system.
-
-The external triggering process must call \lstinline=cylc ext-trigger= with the
-name of the target suite, the message that identifies this type of event to the
-suite, and an ID that distinguishes this particular event instance from others
-(the name of the target task or its current cycle point is not required). The
-event ID is just an arbitary string to cylc, but it typically identifies the
-filename(s) of the latest dataset in some way. When the suite server program
-receives the external event notification it will trigger the next instance of
-any task waiting on that trigger (whatever its cycle point) and then broadcast
-(see~\ref{cylc-broadcast}) the event ID to the cycle point of the triggered
-task as \lstinline=$CYLC_EXT_TRIGGER_ID=. Downstream tasks with the same cycle
-point therefore know the new event ID too and can use it, if they need to, to
-identify the same new dataset. In this way a whole workflow can be associated
-with each new dataset, and multiple datasets can be processed in parallel if
-they happen to arrive in quick succession.
-
-An externally-triggered task must register the event it waits on in the suite
-scheduling section:
-\lstset{language=suiterc}
-\begin{lstlisting}
-# suite "sat-proc"
-[scheduling]
-    cycling mode = integer
-    initial cycle point = 1
-    [[special tasks]]
-        external-trigger = get-data("new sat X data avail")
-    [[dependencies]]
-        [[[P1]]]
-            graph = get-data => conv-data => products
-\end{lstlisting}
-
-Then, each time a new dataset arrives the external detection system should
-notify the suite like this:
-\lstset{language=transcript}
-\begin{lstlisting}
-$ cylc ext-trigger sat-proc "new sat X data avail" passX12334a
-\end{lstlisting}
-where ``sat-proc'' is the suite name and ``passX12334a'' is the ID string for
-the new event. The suite passphrase must be installed on triggering account.
-
-Note that only one task in a suite can trigger off a particular external
-message. Other tasks can trigger off the externally triggered task as required,
-of course.
-
-\lstinline=<cylc-dir>/etc/examples/satellite/ext-triggers/suite.rc= is a working
-example of a simulated satellite processing suite.
-
-External triggers are not normally needed in date-time cycling suites driven
-by real time data that comes in at regular intervals. In these cases a data
-retrieval task can be clock-triggered (and have appropriate retry intervals
-supplied) to submit at the expected data arrival time, so little time if any
-is wasted in polling. However, if the arrival time of the cycle-point-specific
-data is highly variable, external triggering may be used with the cycle point
-embedded in the message:
-\lstset{language=suiterc}
-\begin{lstlisting}
-# suite "data-proc"
-[scheduling]
-    initial cycle point = 20150125T00
-    final cycle point   = 20150126T00
-    [[special tasks]]
-        external-trigger = get-data("data arrived for $CYLC_TASK_CYCLE_POINT")
-    [[dependencies]]
-        [[[T00]]]
-            graph = init-process => get-data => post-process
-\end{lstlisting}
-
-Once the variable-length waiting is finished, an external detection system
-should notify the suite like this:
-\lstset{language=transcript}
-\begin{lstlisting}
-$ cylc ext-trigger data-proc "data arrived for 20150126T00" passX12334a
-\end{lstlisting}
-where ``data-proc'' is the suite name, the cycle point has replaced the
-variable in the trigger string, and ``passX12334a'' is the ID string for
-the new event. The suite passphrase must be installed on the triggering
-account. In this case, the event will trigger for the second cycle point but
-not the first because of the cycle-point matching.
+This is a substantial topic, documented in Section~\ref{External Triggers}.
 
 \subsubsection{Model Restart Dependencies}
 \label{ModelRestartDependencies}
@@ -3992,7 +3954,7 @@ task (foo) displayed as a ``ghost node''.
 \subsection{Runtime - Task Configuration}
 \label{NIORP}
 
-The \lstinline=[runtime]= section of a suite definition configures what
+The \lstinline=[runtime]= section of a suite configuration configures what
 to execute (and where and how to execute it) when each task is ready to
 run, in a {\em multiple inheritance hierarchy} of {\em
 namespaces} culminating in individual tasks. This allows all common
@@ -4021,7 +3983,7 @@ Note that {\em task names need not be hardwired into task implementations}
 because task and suite identity can be extracted portably from the task
 execution environment supplied by the suite server program
 (\ref{TaskExecutionEnvironment}) - then to rename a task you can just change
-its name in the suite definition.
+its name in the suite configuration.
 
 \subsubsection{Root - Runtime Defaults}
 
@@ -4056,9 +4018,9 @@ argument that identifies the calling task name:
         inherit = ENSEMBLE
 \end{lstlisting}
 
-For large ensembles Jinja2 template processing can be used to
+For large ensembles template processing can be used to
 automatically generate the member names and associated dependencies
-(see~\ref{Jinja2}).
+(see~\ref{Jinja2} and~\ref{EmPy}).
 
 \subsubsection{Runtime Inheritance - Single}
 
@@ -4079,7 +4041,7 @@ object oriented programming languages. The result of this should be
 fairly obvious for typical use of multiple inheritance in cylc suites,
 but for detailed documentation of how the algorithm works refer to the
 official Python documentation here:
-\lstinline=http://www.python.org/download/releases/2.3/mro/=.
+\url{http://www.python.org/download/releases/2.3/mro/}.
 
 The {\em inherit.multi.one} example suite, listed here, makes use of
 multiple inheritance:
@@ -4126,7 +4088,7 @@ without affecting the order of inheritance of runtime properties:
 
 The linear precedence order of ancestors is computed for each namespace
 using the C3 algorithm. Then any runtime items that are explicitly
-configured in the suite definition are ``inherited'' up the linearized
+configured in the suite configuration are ``inherited'' up the linearized
 hierarchy for each task, starting at the root namespace: if a particular
 item is defined at multiple levels in the hierarchy, the level nearest
 the final task namespace takes precedence. Finally, root namespace
@@ -4236,12 +4198,12 @@ TZ                              # Set to "UTC" in UTC mode or not defined
 
 CYLC_SUITE_RUN_DIR              # Location of the suite run directory in
                                 # job host, e.g. ~/cylc-run/foo
-CYLC_SUITE_DEF_PATH             # Location of the suite definition directory in
+CYLC_SUITE_DEF_PATH             # Location of the suite configuration directory in
                                 # job host, e.g. ~/cylc-run/foo
 CYLC_SUITE_HOST                 # Host running the suite process
 CYLC_SUITE_OWNER                # User ID running the suite process
 CYLC_SUITE_DEF_PATH_ON_SUITE_HOST
-                                # Location of the suite definition directory in
+                                # Location of the suite configuration directory in
                                 # suite host, e.g. ~/cylc-run/foo
 CYLC_SUITE_SHARE_DIR            # Suite (or task!) shared directory (see below)
 CYLC_SUITE_UUID                 # Suite UUID string
@@ -4259,7 +4221,9 @@ CYLC_TASK_TRY_NUMBER            # Number of execution tries, e.g. 1
 CYLC_TASK_ID                    # Task instance identifier expressed as
                                 # TASK-NAME.CYCLE-POINT
                                 # e.g. t1.20110511T1800Z
-CYLC_TASK_LOG_ROOT              # Location of the job file
+CYLC_TASK_LOG_DIR               # Location of the job log directory
+                                # e.g. ~/cylc-run/foo/log/job/20110511T1800Z/t1/01/
+CYLC_TASK_LOG_ROOT              # The task job file path
                                 # e.g. ~/cylc-run/foo/log/job/20110511T1800Z/t1/01/job
 CYLC_TASK_WORK_DIR              # Location of task work directory (see below)
                                 # e.g. ~/cylc-run/foo/work/20110511T1800Z/t1
@@ -4304,7 +4268,7 @@ automatically under the suite run directory. A task can get its own work
 directory from \lstinline=$CYLC_TASK_WORK_DIR= (or simply \lstinline=$PWD= if
 it does not \lstinline=cd= elsewhere at runtime). By default the location
 contains task name and cycle point, to provide a unique workspace for every
-instance of every task. This can be overridden in the suite definition,
+instance of every task. This can be overridden in the suite configuration,
 however, to get several tasks to share the same work directory
 (see~\ref{worksubdirectory}).
 
@@ -4328,7 +4292,7 @@ run time to the home directory of task owner on the task host.
 
 Tasks can use \lstinline=$CYLC_SUITE_DEF_PATH= to access suite files on
 the task host, and the suite bin directory is automatically added
-\lstinline=$PATH=. If a remote suite definition directory is not
+\lstinline=$PATH=. If a remote suite configuration directory is not
 specified the local (suite host) path will be assumed with the local
 home directory, if present, swapped for literal \lstinline=$HOME= for
 evaluation on the task host.
@@ -4367,7 +4331,7 @@ For this to work:
         \item If (default) task communication is configured, the task host
         should have access to the port on the suite host.
     \end{myitemize}
-    \item the suite definition directory, or some fraction of its
+    \item the suite configuration directory, or some fraction of its
         content, can be installed on the task host, if needed.
 \end{myitemize}
 
@@ -4382,7 +4346,7 @@ the root namespace, or per family, or for individual tasks.
 
 \paragraph{Dynamic Host Selection}
 
-Instead of hardwiring host names into the suite definition you can
+Instead of hardwiring host names into the suite configuration you can
 specify a shell command that prints a hostname, or an environment
 variable that holds a hostname, as the value of the host config item.
 See~\ref{DynamicHostSelection}.
@@ -4399,7 +4363,7 @@ necessary, during job submission.
 \subsection{Visualization}
 \label{viso}
 
-The visualization section of a suite definition is used to configure
+The visualization section of a suite configuration is used to configure
 suite graphing, principally graph node (task) and edge (dependency
 arrow) style attributes. Tasks can be grouped for the purpose of
 applying common style attributes. See~\ref{SuiteRCReference} for details.
@@ -4487,7 +4451,7 @@ include:
 
 {\em Note that this can be done with Jinja2 loops too (Section~\ref{Jinja2})
     but parameterization is much cleaner (nested loops can seriously reduce
-the clarity of a suite definition).}
+the clarity of a suite configuration).}
 
 \subsubsection{Parameter Expansion}
 
@@ -4528,7 +4492,7 @@ For example:
         p = one, two, 3..5
 \end{lstlisting}
 Then angle brackets denote use of these parameters throughout the suite
-definition. For the values above, this parameterized name:
+configuration. For the values above, this parameterized name:
 \begin{lstlisting}
     model<run>  # for run = 1..2
 \end{lstlisting}
@@ -5028,9 +4992,9 @@ cycling tasks.
     a cleaner way to auto-generate tasks without coding messy Jinja2 loops.}
 
 Cylc has built in support for the Jinja2 template processor in suite
-definitions. Jinja2 variables, mathematical expressions, loop control
+configurations. Jinja2 variables, mathematical expressions, loop control
 structures, conditional logic, etc., are automatically processed to
-generate the final suite definition seen by cylc.
+generate the final suite configuration seen by cylc.
 
 The need for Jinja2 processing must be declared with a hash-bang
 comment as the first line of the suite.rc file:
@@ -5046,11 +5010,11 @@ large complicated operational suite and several related parallel test
 suites with slightly different task content and structure (the parallel
 suites, for instance, might take certain large input files from the
 operation or the archive rather than downloading them again) - these can
-now be maintained as a single master suite definition that reconfigures
+now be maintained as a single master suite configuration that reconfigures
 itself according to the value of a flag variable indicating the intended use.
 
 Template processing is the first thing done on parsing a suite
-definition so Jinja2 expressions can appear anywhere in the file (inside
+configuration so Jinja2 expressions can appear anywhere in the file (inside
 strings and namespace headings, for example).
 
 Jinja2 is well documented at \url{http://jinja.pocoo.org/docs}, so here
@@ -5081,7 +5045,7 @@ generated using Jinja2:
                foo => mem_{{ I }} => post_{{ I }} => bar
             {% endfor %}"""
 \end{lstlisting}
-Here is the generated suite definition, after Jinja2 processing:
+Here is the generated suite configuration, after Jinja2 processing:
 \lstset{language=suiterc}
 \begin{lstlisting}
 #!jinja2
@@ -5122,8 +5086,9 @@ Figure~\ref{fig-jinja2-cities}.
 \subsubsection{Accessing Environment Variables With Jinja2}
 
 This functionality is not provided by Jinja2 by default, but cylc
-automatically imports the user environment to the template in a
-dictionary structure called {\em environ}. A usage example:
+automatically imports the user environment to template's global namespace
+(see~\ref{CustomJinja2Filters}) in a dictionary structure called
+{\em environ}. A usage example:
 \begin{lstlisting}
 #!Jinja2
 #...
@@ -5133,35 +5098,48 @@ dictionary structure called {\em environ}. A usage example:
             SUITE_OWNER_HOME_DIR_ON_SUITE_HOST = {{environ['HOME']}}
 \end{lstlisting}
 This example is emphasizes that {\em the environment is read on the suite
-host at the time the suite definition is parsed} - it is not, for
+host at the time the suite configuration is parsed} - it is not, for
 instance, read at task run time on the task host.
 
-\subsubsection{Custom Jinja2 Filters}
+\subsubsection{Custom Jinja2 Filters, Tests and Globals}
 \label{CustomJinja2Filters}
 
-Jinja2 variable values can be modified by ``filters'', using pipe
-notation. For example, the built-in \lstinline=trim= filter strips
-leading and trailing white space from a string:
+Jinja2 has three different namespaces used to separate ``globals'',
+``filters'' and ``tests''. Globals are template-wide accessible variables
+and functions. Cylc extends this namespace with ``environ'' dictionary and
+``raise'' and ``assert'' functions for raising exceptions
+(see~\ref{Jinja2RaisingExceptions}).
+
+Filters can be used to modify variable values and are applied using pipe
+notation. For example, the built-in \lstinline=trim= filter strips leading
+and trailing white space from a string:
 \lstset{language=suiterc}
 \begin{lstlisting}
 {% set MyString = "   dog   " %}
 {{ MyString | trim() }}  # "dog"
 \end{lstlisting}
-(See official Jinja2 documentation for available built-in filters.)
 
-Cylc also supports custom Jinja2 filters. A custom filter is a
-single Python function in a source file with the same name as the
-function (plus ``.py'' extension) and stored in one of the following
+Additionally, variable values can be tested using ``is'' keyword followed by
+the name of the test, e.g.\ \lstinline=VARIABLE is defined=.
+See official Jinja2 documentation for available built-in globals, filters
+and tests.
+
+Cylc also supports custom Jinja2 globals, filters and tests. A custom global,
+filter or test is a single Python function in a source file with the same name
+as the function (plus ``.py'' extension) and stored in one of the following
 locations:
 \begin{myitemize}
-    \item \lstinline=<cylc-dir>/lib/Jinja2Filters/=
-    \item \lstinline=[suite definition directory]/Jinja2Filters/=
-    \item \lstinline=$HOME/.cylc/Jinja2Filters/=
+    \item \lstinline=<cylc-dir>/lib/Jinja2[namespace]/=
+    \item \lstinline=[suite configuration directory]/Jinja2[namespace]/=
+    \item \lstinline=$HOME/.cylc/Jinja2[namespace]/=
 \end{myitemize}
+where \lstinline=[namespace]/= is one of \lstinline=Globals/=,
+\lstinline=Filters/= or \lstinline=Tests/=.
 
-In the filter function argument list, the first argument is the variable
-value to be ``filtered'', and subsequent arguments can be whatever is
-needed. Currently there are four custom filters:
+In the argument list of filter or test function, the first argument is
+the variable value to be ``filtered'' or ``tested'', respectively, and
+subsequent arguments can be whatever else is needed. Currently there are three
+custom filters:
 
 
 \paragraph{pad}
@@ -5285,7 +5263,7 @@ $ cylc get-suite-config -i [runtime][airs]directives SUITE
 \subsubsection{Jinja2 Default Values And Template Inputs}
 
 The values of Jinja2 variables can be passed in from the cylc command
-line rather than hardwired in the suite definition.
+line rather than hardwired in the suite configuration.
 Here's an example, from \\*
 \lstinline=<cylc-dir>/etc/examples/jinja2/defaults=:
 
@@ -5407,6 +5385,7 @@ For detail, see:
 \href{http://jinja.pocoo.org/docs/2.10/templates/#assignments}{Jinja2 Template Designer Documentation > Assignments}
 
 \subsubsection{Raising Exceptions}
+\label{Jinja2RaisingExceptions}
 
 Cylc provides two functions for raising exceptions using Jinja2. These
 exceptions are raised when the suite.rc file is loaded and will prevent a suite
@@ -5437,6 +5416,90 @@ following example is equivalent to the ``raise'' example above.
 {{ assert(VARIABLE is defined, 'VARIABLE must be defined for this suite.') }}
 \end{lstlisting}
 
+\subsubsection{Importing additional Python modules}
+
+Jinja2 allows to gather variable and macro definitions in a separate template
+that can be imported into (and thus shared among) other templates.
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+{% import "suite-utils.rc" as utils %}
+{% from "suite-utils.rc" import VARIABLE as ALIAS %}
+{{ utils.VARIABLE is equalto(ALIAS)) }}
+\end{lstlisting}
+
+Cylc extends this functionality to allow import of arbitrary Python modules.
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+{% from "itertools" import product %}
+[runtime]
+{% for group, member in product(['a', 'b'], [0, 1, 2]) %}
+    [[{{group}}_{{member}}]]
+{% endfor %}
+\end{lstlisting}
+
+For better clarity and disambiguation Python modules can be prefixed with
+\lstinline=__python__=:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+{% from "__python__.itertools" import product %}
+\end{lstlisting}
+
+\subsection{EmPy}
+\label{EmPy}
+
+In addition to Jinja2, Cylc supports EmPy template processor in suite
+configurations. Similarly to Jinja2, EmPy provides variables, mathematical
+expressions, loop control structures, conditional logic, etc., that are expanded
+to generate the final suite configuration seen by Cylc. See
+\href{http://www.alcyone.com/software/empy}{EmPy documentation} for more details
+on its templating features and how to use them. Please note that EmPy is not
+bundled with Cylc and must be installed separately. It should be available to
+Python through standard \lstinline[language=Python]=import em=. Please also
+note that there is another Python package called ``em'' that provides
+a conflicting module of the same name. You can run
+\lstinline=cylc check-software= command to check your installation.
+
+The need for EmPy processing must be declared with a hash-bang comment as
+the first line of the suite.rc file:
+\begin{lstlisting}
+#!empy
+# ...
+\end{lstlisting}
+
+An example suite \lstinline=empy.cities= demostrating its use is shown below.
+It is a translation of \lstinline=jinja2.cities= example from
+Section~\ref{Jinja2} and can be directly compared against it.
+
+\lstset{language=suiterc}
+\lstinputlisting{../../../etc/examples/empy/cities/suite.rc}
+\lstset{language=transcript}
+
+For basic usage the difference between Jinja2 and EmPy amounts to a different
+markup syntax with little else to distinguish them. EmPy might be preferable,
+however, in cases where more complicated processing logic have to be
+implemented.
+
+EmPy is a system for embedding Python expressions and statements in template
+text. It makes the full power of Python language and its ecosystem easily
+accessible from within the template. This might be desirable for several
+reasons:
+
+\begin{myitemize}
+    \item no need to learn different language and its idiosyncrasies just for
+          writing template logic
+    \item availability of lambda functions, list and dictionary comprehensions
+          can make template code smaller and more readable compared to Jinja2
+    \item natural and straightforward integration with Python package ecosystem
+    \item no two-language barrier between writing template logic and processing
+          extensions makes it easier to refactor and maintain the template code
+          as its complexity grows -- inline pieces of Python code can be
+          gathered into subroutines and eventually into separate modules and
+          packages in a seamless manner
+\end{myitemize}
+
 \subsection{Omitting Tasks At Runtime}
 
 It is sometimes convenient to omit certain tasks from the suite at
@@ -5446,7 +5509,7 @@ Defining [runtime] properties for tasks that do not appear in the suite
 graph results in verbose-mode validation warnings that the tasks are
 disabled. They cannot be used because the suite graph is what defines
 their dependencies and valid cycle points. Nevertheless, it is legal to
-leave these orphaned runtime sections in the suite definition because it
+leave these orphaned runtime sections in the suite configuration because it
 allows you to temporarily remove tasks from the suite by simply
 commenting them out of the graph.
 
@@ -5481,7 +5544,7 @@ itself (by divorcing it from its intended runtime config section).
 
 To avoid this problem any dummy task used in a real suite should not be
 naked - i.e.\ it should have an explicit entry in under the runtime
-section of the suite definition, even if the section is empty. This
+section of the suite configuration, even if the section is empty. This
 results in exactly the same dummy task behaviour, via implicit
 inheritance from root, but it allows use of
 \lstinline=cylc validate --strict=
@@ -6058,7 +6121,7 @@ To use polling instead of task-to-suite messaging set
 in cylc site and user global config (see~\ref{task_comms_method}).
 The default polling intervals can be overridden for all suites there too
 (see~\ref{submission_polling} and~\ref{execution_polling}), or in specific
-suite definitions (in which case polling will be done regardless of the
+suite configurations (in which case polling will be done regardless of the
 task communication method configured for the host;
 see~\ref{SubmissionPollingIntervals} and~\ref{ExecutionPollingIntervals}).
 
@@ -6138,11 +6201,11 @@ the built-in handlers as examples, and read the documentation in
 \subsubsection{An Example}
 
 The following \lstinline=qsub.py= module overrides the built-in {\em pbs}
-batch system handler to to change the directive prefix from \lstinline=#PBS= to
+batch system handler to change the directive prefix from \lstinline=#PBS= to
 \lstinline=#QSUB=:
 
 \begin{lstlisting}
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 from cylc.batch_sys_handlers.pbs import PBSHandler
 
@@ -6153,7 +6216,7 @@ BATCH_SYSTEM_HANDLER = QSUBHandler()
 \end{lstlisting}
 
 If this is in the Python search path (see~\ref{Where To Put Batch System
-Handler Modules} below) you can use it by name in suite definitions:
+Handler Modules} below) you can use it by name in suite configurations:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
@@ -6201,6 +6264,473 @@ hosts} in one of these locations:
 
 (A note for Rose users: \lstinline=rose suite-run= automatically installs
 \lstinline=SUITE-DEF-PATH/lib/python/= to job hosts).
+
+\section{External Triggers}
+\label{External Triggers}
+
+{\em WARNING: this is a new capability and its suite configuration
+interface may change somewhat in future releases - see {\em Current
+Limitations} below in~\ref{Current Trigger Function Limitations}.}
+
+External triggers allow tasks to trigger directly off of external events, which
+is often preferable to implementing long-running polling tasks in the workflow.
+The triggering mechanism described in this section replaces an older and less
+powerful one documented in~\ref{Old-Style External Triggers}.
+
+If you can write a Python function to check the status of an external
+condition or event, the suite server program can call it at configurable
+intervals until it reports success, at which point dependent tasks can trigger
+and data returned by the function will be passed to the job environments of
+those tasks. Functions can be written for triggering off of almost anything,
+such as delivery of a new dataset, creation of a new entry in a database
+table, or appearance of new data availability notifications in a message
+broker.
+
+External triggers are visible in suite visualizations as bare graph nodes (just
+the trigger names). They are plotted against all dependent tasks, not in a
+cycle point specific way like tasks. This is because external triggers may or 
+may not be cycle point (or even task name) specific - it depends on the
+arguments passed to the corresponding trigger functions. For example, if an
+external trigger does not depend on task name or cycle point it will only be
+called once - albeit repeatedly until satisfied - for the entire suite run,
+after which the function result will be remembered for all dependent tasks
+throughout the suite run.
+
+Several built-in external trigger functions are located in
+\lstinline=<cylc-dir>/lib/cylc/xtriggers/=:
+\begin{myitemize}
+  \item clock triggers - see~\ref{Built-in Clock Triggers}
+  \item inter-suite triggers - see~\ref{Built-in Suite State Triggers}
+\end{myitemize}
+
+Trigger functions are normal Python functions, with certain constraints as
+described below in:
+\begin{myitemize}
+  \item custom trigger functions - see~\ref{Custom Trigger Functions}
+\end{myitemize}
+
+\subsection{Built-in Clock Triggers}
+\label{Built-in Clock Triggers}
+
+These are more transparent (exposed in the graph) and efficient (shared among
+dependent tasks) than the older clock triggers described
+in~\ref{ClockTriggerTasks}. (However we don't recommend wholesale conversion
+to the new method yet, until its interface has stabilized -
+see~\ref{Current Trigger Function Limitations}.)
+
+Clock triggers, unlike other trigger functions, are executed synchronously in
+the main process. The clock trigger function signature looks like this:
+
+\begin{lstlisting}
+wall_clock(offset=None)
+\end{lstlisting}
+
+The \lstinline=offset= argument is a date-time duration (\lstinline=PT1H= is 1
+hour) relative to the dependent task's cycle point (automatically passed to the
+function via a second argument not shown above).
+ 
+In the following suite, task \lstinline=foo= has a daily cycle point sequence,
+and each task instance can trigger once the wall clock time has passed its
+cycle point value by one hour:
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    initial cycle point = 2018-01-01
+    [[xtriggers]]
+        clock_1 = wall_clock(offset=PT1H):PT10S
+    [[dependencies]]
+        [[[P1D]]]
+            graph = "@clock_1 => foo"
+[runtime]
+    [[foo]]
+        script = run-foo.sh
+\end{lstlisting}
+
+Notice that the short label \lstinline=clock_1= is used to represent the
+trigger function in the graph. The function call interval, which determines how
+often the suite server program checks the clock, is optional.  Here it is
+\lstinline=PT10S= (i.e.\ 10 seconds, which is also the default value).
+
+Argument keywords can be omitted if called in the right order, so the
+\lstinline=clock_1= trigger can also be declared like this: 
+\lstset{language=suiterc}
+\begin{lstlisting}
+    [[xtriggers]]
+        clock_1 = wall_clock(PT1H)
+\end{lstlisting}
+
+Finally, a zero-offset clock trigger does not need to be declared under
+the \lstinline=[xtriggers]= section:
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    initial cycle point = 2018-01-01
+    [[dependencies]]
+        [[[P1D]]]
+            # zero-offset clock trigger:
+            graph = "@wall_clock => foo"
+[runtime]
+    [[foo]]
+        script = run-foo.sh
+\end{lstlisting}
+
+\subsection{Built-in Suite State Triggers}
+\label{Built-in Suite State Triggers}
+
+These can be used instead of the older suite state polling tasks described
+in~\ref{SuiteStatePolling} for inter-suite triggering - i.e.\ to trigger local
+tasks off of remote task statuses or messages in other suites. (However we
+don't recommend wholesale conversion to the new method yet, until its
+interface has stabilized - see~\ref{Current Trigger Function Limitations}.)
+
+The suite state trigger function signature looks like this:
+\begin{lstlisting}
+suite_state(suite, task, point, offset=None, status='succeeded',
+            message=None, cylc_run_dir=None, debug=False)
+\end{lstlisting}
+
+The first three arguments are compulsory; they single out the target suite name
+(\lstinline=suite=) task name (\lstinline=task=) and cycle point
+(\lstinline=point=). The function argments mirror the arguments and options of
+the \lstinline=cylc suite-state= command - see
+\lstinline=cylc suite-state --help= for documentation.
+
+As a simple example, consider the suites in
+\lstinline=<cylc-dir>/etc/dev-suites/xtrigger/suite_state/=. The ``upstream''
+suite (which we want to trigger off of) looks like this:
+
+\lstinputlisting{../../../etc/dev-suites/xtrigger/suite_state/upstream/suite.rc}
+
+It must be registered and run under the name {\em up}, as referenced in the
+``downstream'' suite that depends on it:
+
+\lstinputlisting{../../../etc/dev-suites/xtrigger/suite_state/downstream/suite.rc}
+
+Try starting the downstream suite first, then the upstream, and watch what happens.
+In each cycle point the \lstinline=@upstream= trigger in the downstream suite
+waits on the task \lstinline=foo= (with the same cycle point) in the upstream
+suite to emit the {\em data ready} message. 
+
+Some important points to note about this:
+\begin{myitemize}
+  \item  the function call interval, which determines how often the suite
+    server program checks the clock, is optional. Here it is
+    \lstinline=PT10S= (i.e.\ 10 seconds, which is also the default value).
+  \item the \lstinline=suite_state= trigger function, like the
+    \lstinline=cylc suite-state= command, must have read-access to the upstream
+    suite's public database. 
+  \item the cycle point argument is supplied by a string template
+    \lstinline=%(point)s=. The string templates available to trigger function
+    arguments are described in {\em Custom Trigger Functions} (\ref{Custom
+    Trigger Functions}).
+\end{myitemize}
+
+The return value of the \lstinline=suite_state= trigger function looks like
+this:
+\begin{lstlisting}
+    results = {
+        'suite': suite,
+        'task': task,
+        'point': point,
+        'offset': offset,
+        'status': status,
+        'message': message,
+        'cylc_run_dir': cylc_run_dir
+    }
+    return (satisfied, results)
+\end{lstlisting}
+The \lstinline=satisified= variable is boolean (value True or False, depending
+on whether or not the trigger condition was found to be satisfied). The
+\lstinline=results= dictionary contains the names and values of all of the
+target suite state parameters. Each item in it gets qualified with the
+unique trigger label (``upstream'' here) and passed to the environment of
+dependent task jobs (the members of the \lstinline=FAM= family in this case).
+To see this, take a look at the job script for one of the downstream tasks:
+
+\begin{lstlisting}
+% cylc cat-log -f j dn f2.2011 
+...
+cylc__job__inst__user_env() {
+    # TASK RUNTIME ENVIRONMENT:
+    export upstream_suite upstream_cylc_run_dir upstream_offset \
+      upstream_message upstream_status upstream_point upstream_task
+    upstream_suite="up"
+    upstream_cylc_run_dir="/home/vagrant/cylc-run"
+    upstream_offset="None"
+    upstream_message="data ready"
+    upstream_status="succeeded"
+    upstream_point="2011"
+    upstream_task="foo"
+}
+...
+\end{lstlisting}
+
+Note that the task has to know the name (label) of the external trigger that it
+depends on - ``upstream'' in this case - in order to use this information.
+However the name could be given to the task environment in the suite
+configuration.
+
+\subsection{Custom Trigger Functions}
+\label{Custom Trigger Functions}
+
+Trigger functions are just normal Python functions, with a few special
+properties:
+\begin{myitemize}
+  \item they must be defined in a module with the same name as the function
+  \item they can be located in:
+    \begin{myitemize}
+      \item \lstinline=<cylc-dir>/lib/cylc/xtriggers/=
+      \item \lstinline=<suite-dir>/lib/python/=
+      \item (or anywhere in your Python library path)
+    \end{myitemize}
+  \item they can take arbitrary positional and keyword arguments
+  \item suite and task identity, and cycle point, can be passed to trigger
+    functions by using string templates in function arguments (see below)
+  \item integer, float, boolean, and string arguments will be recognized and
+    passed to the function as such
+  \item if a trigger function depends on files or directories (for example)
+    that might not exist when the function is first called, just return
+    unsatisified until everything required does exist.
+\end{myitemize}
+
+Note that trigger functions cannot store data Pythonically between invocations
+because each call is executed in an independent process in the process pool. If
+necessary the filesystem can be used for this purpose.
+
+The following string templates are available for use, if the trigger function
+needs any of this information, in function arguments in the suite configuration:
+\begin{myitemize}
+  \item \lstinline=%(name)s= - name of the dependent task
+  \item \lstinline=%(id)s= - identity of the dependent task (name.cycle-point)
+  \item \lstinline=%(point)s= - cycle point of the dependent task
+  \item \lstinline=%(debug)s= - suite debug mode
+\end{myitemize}
+and less commonly needed:
+\begin{myitemize}
+  \item \lstinline=%(user_name)s= - suite owner's user name
+  \item \lstinline=%(suite_name)s= - registered suite name
+  \item \lstinline=%(suite_run_dir)s= - suite run directory
+  \item \lstinline=%(suite_share_dir)s= - suite share directory
+\end{myitemize}
+
+Function return values should be as follows:
+\begin{myitemize}
+  \item if the trigger condition is {\em not satisfied}:
+    \begin{myitemize}
+      \item return \lstinline=(False, {})=
+    \end{myitemize}
+  \item if the trigger condition is {\em satisfied}:
+    \begin{myitemize}
+      \item return \lstinline=(True, results)=
+    \end{myitemize}
+\end{myitemize}
+where \lstinline=results= is an arbitrary dictionary of information to be
+passed to dependent tasks. How this looks to these tasks is described above
+in {\em Built-in Suite State Triggers} (\ref{Built-in Suite State Triggers}).
+
+The suite server program manages trigger functions as follows:
+\begin{myitemize}
+  \item they are called asynchronously in the process pool
+    \begin{myitemize}
+      \item (except for clock triggers, which are called from the main process)
+    \end{myitemize}
+  \item they are called repeatedly on a configurable interval, until satisified
+    \begin{myitemize}
+      \item the call interval defaults to \lstinline=PT10S= (10 seconds)
+      \item repeat calls are not made until the previous call has returned
+    \end{myitemize}
+  \item they are subject to the normal process pool command time out - if they
+    take too long to return, the process will be killed
+  \item they are shared for efficiency: a single call will be made for all
+    triggers that share the same function signature - i.e.\ the same function
+    name and arguments
+  \item their return status and results are stored in the suite DB and persist across
+    suite restarts
+  \item their stdout, if any, is redirected to stderr and will be visible in
+    the suite log in debug mode (stdout is needed to communicate return values
+    from the sub-process in which the function executes)
+\end{myitemize}
+
+\subsubsection{Toy Examples}
+
+A couple of toy examples in \lstinline=<cylc-dir>/lib/cylc/xtriggers/= may
+be a useful aid to understanding trigger functions and how they work.
+
+\paragraph{echo}
+
+The \lstinline=echo= function is a trivial one that takes any number of
+positional and keyword arguments (from the suite configuration) and simply
+prints them to stdout, and then returns False (i.e.\ trigger condition not
+satisfied). Here it is in its entirety.
+
+\begin{lstlisting}
+def echo(*args, **kwargs):
+    print "echo: ARGS:", args
+    print "echo: KWARGS:", kwargs
+    return (False, {})
+\end{lstlisting}
+
+Here's an example echo trigger suite:
+\begin{lstlisting}
+[scheduling]
+    initial cycle point = now
+    [[xtriggers]]
+        echo_1 = echo(hello, 99, qux=True, point=%(point)s, foo=10)
+    [[dependencies]]
+        [[[PT1H]]]
+            graph = "@echo_1 => foo"
+[runtime]
+    [[foo]]
+        script = exit 1
+\end{lstlisting}
+
+To see the result, run this suite in debug mode and take a look at the
+suite log (or run \lstinline=cylc run --debug --no-detach <suite>= and watch
+your terminal).
+
+\paragraph{xrandom}
+
+The \lstinline=xrandom= function sleeps for a configurable amount of time
+(useful for testing the effect of a long-running trigger function - which
+should be avoided) and has a configurable random chance of success. The
+function signature is:
+
+\begin{lstlisting}
+xrandom(percent, secs=0, _=None, debug=False)
+\end{lstlisting}
+
+The \lstinline=percent= argument sets the odds of success in any given call; 
+\lstinline=secs= is the number of seconds to sleep before returning; and the
+\lstinline=_= argument (underscore is a conventional name for a variable
+that is not used, in Python) is provided to allow specialization of the trigger
+to (for example) task name, task ID, or cycle point (just use the appropriate
+string templates in the suite configuration for this).
+
+An example xrandom trigger suite is
+\lstinline=<cylc-dir>/etc/dev-suites/xtriggers/xrandom/=
+
+\subsection{Current Limitations}
+\label{Current Trigger Function Limitations}
+
+The following issues may be addressed in future Cylc releases:
+\begin{myitemize}
+  \item trigger labels cannot currently be used in conditional (OR) expressions
+    in the graph; attempts to do so will fail validation.
+  \item aside from the predefined zero-offset \lstinline=wall_clock= trigger, all
+    unique trigger function calls must be declared {\em with all of
+    their arguments} under the \lstinline=[scheduling][xtriggers]= section, and
+    referred to by label alone in the graph. It would be convenient (and less
+    verbose, although no more functional) if we could just declare a label
+    against the {\em common} arguments, and give remaining arguments (such as
+    different wall clock offsets in clock triggers) as needed in the graph.
+  \item we may move away from the string templating method for providing suite
+    and task attributes to trigger function arguments.
+\end{myitemize}
+
+\subsection{Filesystem Events?}
+
+Cylc does not have built-in support for triggering off of filesystem events
+such as \lstinline=inotify= on Linux. There is no cross-platform standard for
+this, and in any case filesystem events are not very useful in HPC cluster
+environments where events can only be detected at the specific node on which
+they were generated.
+
+\subsection{Continuous Event Watchers?}
+
+For some applications a persistent process that continually monitors the
+external world is better than discrete periodic checking. This would be more
+difficult to support as a plugin mechanism in Cylc, but we may decide to do it
+in the future. In the meantime, consider implementing a small daemon process as
+the watcher (e.g.\ to watch continuously for filesystem events) and have your
+Cylc trigger functions interact with it.
+
+\subsection{Old-Style External Triggers (Deprecated)}
+\label{Old-Style External Triggers}
+
+{\em NOTE: This mechanism is now technically deprecated by the newer external
+trigger functions (\ref{External Triggers}). (However we don't recommend
+wholesale conversion to the new method yet, until its interface has
+stabilized - see~\ref{Current Trigger Function Limitations}.)}
+
+These old-style external triggers are hidden task prerequisites that must be
+satisfied by using the \lstinline=cylc ext-trigger= client command to send an
+associated pre-defined event message to the suite along with an ID string that
+distinguishes one instance of the event from another (the name of the target
+task and its current cycle point are not required). The event ID is just an
+arbitrary string to Cylc, but it can be used to identify something associated
+with the event to the suite - such as the filename of a new
+externally-generated dataset. When the suite server program receives the event
+notification it will trigger the next instance of any task waiting on that
+trigger (whatever its cycle point) and then broadcast
+(see~\ref{cylc-broadcast}) the event ID to the cycle point of the triggered
+task as \lstinline=$CYLC_EXT_TRIGGER_ID=. Downstream tasks with the same cycle
+point therefore know the new event ID too and can use it, if they need to, to
+identify the same new dataset. In this way a whole workflow can be associated
+with each new dataset, and multiple datasets can be processed in parallel if
+they happen to arrive in quick succession.
+
+An externally-triggered task must register the event it waits on in the suite
+scheduling section:
+\lstset{language=suiterc}
+\begin{lstlisting}
+# suite "sat-proc"
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    [[special tasks]]
+        external-trigger = get-data("new sat X data avail")
+    [[dependencies]]
+        [[[P1]]]
+            graph = get-data => conv-data => products
+\end{lstlisting}
+
+Then, each time a new dataset arrives the external detection system should
+notify the suite like this:
+\lstset{language=transcript}
+\begin{lstlisting}
+$ cylc ext-trigger sat-proc "new sat X data avail" passX12334a
+\end{lstlisting}
+where ``sat-proc'' is the suite name and ``passX12334a'' is the ID string for
+the new event. The suite passphrase must be installed on triggering account.
+
+Note that only one task in a suite can trigger off a particular external
+message. Other tasks can trigger off the externally triggered task as required,
+of course.
+
+\lstinline=<cylc-dir>/etc/examples/satellite/ext-triggers/suite.rc= is a working
+example of a simulated satellite processing suite.
+
+External triggers are not normally needed in date-time cycling suites driven
+by real time data that comes in at regular intervals. In these cases a data
+retrieval task can be clock-triggered (and have appropriate retry intervals) to
+submit at the expected data arrival time, so little time is wasted in polling.
+However, if the arrival time of the cycle-point-specific data is highly
+variable, external triggering may be used with the cycle point embedded in the
+message:
+\lstset{language=suiterc}
+\begin{lstlisting}
+# suite "data-proc"
+[scheduling]
+    initial cycle point = 20150125T00
+    final cycle point   = 20150126T00
+    [[special tasks]]
+        external-trigger = get-data("data arrived for $CYLC_TASK_CYCLE_POINT")
+    [[dependencies]]
+        [[[T00]]]
+            graph = init-process => get-data => post-process
+\end{lstlisting}
+
+Once the variable-length waiting is finished, an external detection system
+should notify the suite like this:
+\lstset{language=transcript}
+\begin{lstlisting}
+$ cylc ext-trigger data-proc "data arrived for 20150126T00" passX12334a
+\end{lstlisting}
+where ``data-proc'' is the suite name, the cycle point has replaced the
+variable in the trigger string, and ``passX12334a'' is the ID string for
+the new event. The suite passphrase must be installed on the triggering
+account. In this case, the event will trigger for the second cycle point but
+not the first because of the cycle-point matching.
 
 \section{Running Suites}
 \label{RunningSuites}
@@ -6387,29 +6917,29 @@ restart, to see if they are still waiting in a batch queue, still running, or
 if they succeeded or failed while the suite was down. The suite state will be
 updated automatically according to the poll results.
 
-Existing instances of tasks removed from the suite definition before restart
+Existing instances of tasks removed from the suite configuration before restart
 are not removed from the task pool automatically, but they will not spawn new
 instances. They can be removed manually if necessary,
 with~\lstinline=cylc remove=.
 
-Similarly, instances of new tasks added to the suite definition before
+Similarly, instances of new tasks added to the suite configuration before
 restart are not inserted into the task pool automatically, because it is
 very difficult in general to automatically determine the cycle point of
 the first instance. Instead, the first instance of a new task should be
 inserted manually at the right cycle point, with~\lstinline=cylc insert=.
 
-\subsection{Reloading The Suite Definition At Runtime}
+\subsection{Reloading The Suite Configuration At Runtime}
 
 The \lstinline=cylc reload= command tells a suite server program to reload its
-suite definition at run time. This is an alternative to shutting a suite down
+suite configuration at run time. This is an alternative to shutting a suite down
 and restarting it after making changes.
 
-As for a restart, existing instances of tasks removed from the suite definition
+As for a restart, existing instances of tasks removed from the suite configuration
 before reload are not removed from the task pool automatically, but they
 will not spawn new instances. They can be removed manually if necessary,
 with~\lstinline=cylc remove=.
 
-Similarly, instances of new tasks added to the suite definition before
+Similarly, instances of new tasks added to the suite configuration before
 reload are not inserted into the pool automatically. The first instance of each
 must be inserted manually at the right cycle point, with~\lstinline=cylc insert=.
 
@@ -6487,8 +7017,8 @@ Cylc supports three ways of tracking task state on job hosts:
     \item regular polling by the suite server program
 \end{myitemize}
 
-These are explained in the following sections. All three can be used, on
-different job hosts, in the same suite if necessary.
+These can be configured per job host in the Cylc global config file - see
+~/ref{SiteRCReference}.
 
 If your site prohibits HTTPS and ssh back from job hosts to suite hosts, before resorting
 to the polling method you should consider installing dedicated Cylc servers or
@@ -6568,63 +7098,6 @@ like).
 
 \subsubsection{Task Communications Configuration}
 
-Here are the default site and user global config items relevant to task state
-tracking (see these with \lstinline=cylc get-site-config=):
-
-\lstset{language=suiterc}
-\begin{lstlisting}
-# SITE AND USER CONFIG
-
-# Task messaging settings affect task-to-suite communications.
-[task messaging]
-    # If a message send fails, retry after this delay:
-    retry interval in seconds = 5
-    # If send fails after this many tries, give up trying:
-    maximum number of tries = 7
-
-    # This timeout is the same as --comms-timeout for user commands. If
-    # set to None (no timeout) messages to non-responsive suites
-    # (e.g. suspended with Ctrl-Z) could hang indefinitely.
-    connection timeout in seconds = 30
-
-# Setup the communication method details. This is required for
-# communications between cylc clients and servers (i.e. between
-# suite-connecting commands and guis, and running suite server processes).
-[communication]
-
-    # Configure the choice of communication method. Https is configured by
-    # default, and this requires the Python OpenSSL package to be installed.
-    # Http can be configured to override the default setting.
-# SITE ONLY
-    method = http
-
-    # Each suite listens on a dedicated network port. The port to bind to is
-    # selected randomly from the allowed range of ports.
-# SITE ONLY
-    base port = 43001
-
-    # This sets the maximum number of suites that can run at once.
-# SITE ONLY
-    maximum number of ports = 100
-
-[hosts]
-    # The default task host is the suite host, i.e. localhost:
-    # Add task host sections if local defaults are not sufficient.
-    [[HOST]]
-       # Method of communication of task progress back to the suite:
-        #   1) default - HTTPS via network ports
-        #   2) ssh  - re-invoke messaging commands on suite server
-        #   3) poll - the suite polls for status of passive tasks
-        # HTTPS comms are still required in all cases *on the suite host*
-        # for cylc clients (commands etc.) to communicate with suites.
-        task communication method = "default" # or "ssh" or "poll"
-        # The "poll" method sets a default interval here to ensure no
-        # tasks are accidentally left unpolled. You can override this
-        # with run-length appropriate intervals under task [runtime]
-        # (however this will also result in routine polling under the
-        # default or ssh communications).
-        default polling interval in minutes = 1.0
-\end{lstlisting}
 
 \subsection{The Suite Service Directory}
 \label{The Suite Service Directory}
@@ -6644,7 +7117,7 @@ information from the contact file, if they have access to it.
 
 \subsection{File-Reading Commands}
 
-Some Cylc commands and GUI actions parse suite definitions or read other files
+Some Cylc commands and GUI actions parse suite configurations or read other files
 from the suite host account, rather than communicate with a suite server
 program over the network. In future we plan to have suite server program serve
 up these files to clients, but for the moment this functionality requires
@@ -6740,7 +7213,7 @@ if you do not have a shared filesystem - see below.}
 
 The gcylc GUI is mainly a network client to retrieve and display suite status
 information from the suite server program, but it can also invoke file-reading
-commands to view and graph the suite definition and so on. This is entirely
+commands to view and graph the suite configuration and so on. This is entirely
 transparent if the GUI is running on the suite host account, but full
 functionality for remote suites requires either a shared filesystem, or 
 (see~\ref{RemoteControl}) auth file installation {\em and} non-interactive ssh
@@ -6986,18 +7459,24 @@ a pager, or whatever; they can even intervene in the operation of their own
 suite using cylc commands.
 
 To send an email, use the built-in setting \lstinline=[[[events]]]mail events=
-to specify a list of events for which notifications should be sent. E.g.\ to
+to specify a list of events for which notifications should be sent. (The name of
+a registered task output can also be used as an event name in this case.) E.g.\ to
 send an email on (submission) failed and retry:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
     [[foo]]
-        script = "test ${CYLC_TASK_TRY_NUMBER} -eq 3"
+        script = """
+            test ${CYLC_TASK_TRY_NUMBER} -eq 3
+            cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'oopsy daisy'
+        """
         [[[events]]]
-            mail events = submission failed, submission retry, failed, retry
+            mail events = submission failed, submission retry, failed, retry, oops
         [[[job]]]
             execution retry delays = PT0S, PT30S
+        [[[outputs]]]
+            oops = oopsy daisy
 \end{lstlisting}
 
 By default, the emails will be sent to the current user with:
@@ -7051,7 +7530,8 @@ templates (see below).
 Alternatively you can use \lstinline=[[[events]]]handlers= and
 \lstinline=[[[events]]]handler events=, where the former is a list of command
 lines or command line templates (see below) and the latter is a list of events
-for which these commands should be invoked.
+for which these commands should be invoked. (The name of a registered task
+output can also be used as an event name in this case.)
 
 Event handler arguments can be constructed from various templates
 representing suite name; task ID, name, cycle point, message, and submit
@@ -7087,7 +7567,7 @@ event handlers using the alternate methods:
 \begin{lstlisting}
 [runtime]
     [[foo]]
-        script = "test ${CYLC_TASK_TRY_NUMBER} -eq 2"
+        script = test ${CYLC_TASK_TRY_NUMBER} -eq 2
         [[[events]]]
             retry handler = "echo '!!!!!EVENT!!!!!' "
             failed handler = "echo '!!!!!EVENT!!!!!' "
@@ -7099,12 +7579,18 @@ event handlers using the alternate methods:
 \begin{lstlisting}
 [runtime]
     [[foo]]
-        script = "test ${CYLC_TASK_TRY_NUMBER} -eq 2"
+        script = """
+            test ${CYLC_TASK_TRY_NUMBER} -eq 2
+            cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'oopsy daisy'
+        """
         [[[events]]]
             handlers = "echo '!!!!!EVENT!!!!!' "
-            handler events = retry, failed
+            # Note: task output name can be used as an event in this method
+            handler events = retry, failed, oops
         [[[job]]]
             execution retry delays = PT0S, PT30S
+        [[[outputs]]]
+            oops = oopsy daisy
 \end{lstlisting}
 The handler command here - specified with no arguments - is called with the
 default arguments, like this:
@@ -7383,6 +7869,9 @@ you wish:
 \subsection{Triggering Off Of Tasks In Other Suites}
 \label{SuiteStatePolling}
 
+{\em NOTE: please read {\em External Triggers} (\ref{External Triggers}) before
+using the older inter-suite triggering mechanism described in this section.} 
+
 The \lstinline=cylc suite-state= command interrogates suite run databases. It
 has a polling mode that waits for a given task in the target suite to achieve a
 given state. This can be used to make task scripting wait for a remote task
@@ -7623,7 +8112,7 @@ To restart the suite, the critical Cylc files that must be restored are:
 \begin{lstlisting}
 # On the suite host:
 ~/cylc-run/SUITE-NAME/
-    suite.rc   # live suite definition (located here in Rose suites)
+    suite.rc   # live suite configuration (located here in Rose suites)
     log/db  # public suite DB (can just be a copy of the private DB)
     log/rose-suite-run.conf  # (needed to restart a Rose suite)
     .service/db  # private suite DB
@@ -7777,7 +8266,7 @@ mitigate any jumping layout problems:
     \item {\bf cylc-4} - refined and organized the suite.rc file
     structure; task runtime properties defined by an efficient
     inheritance hierarchy; support for the Jinja2 template processor in
-    suite definitions.
+    suite configurations.
 
     \item {\bf cylc-5} - multi-threading for continuous network request
     handling and job submission; more task states to distinguish job

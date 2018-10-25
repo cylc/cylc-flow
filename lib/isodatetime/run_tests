@@ -18,5 +18,5 @@
 #-----------------------------------------------------------------------------
 # Run tests for the ISO 8601 parsing and data model functionality."""
 #-----------------------------------------------------------------------------
-cd $(dirname $0)/../
+cd "$(dirname "$0")/../"
 python -m isodatetime.tests

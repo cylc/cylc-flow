@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,6 +39,7 @@ class PBSHandler(object):
     # N.B. The "qstat JOB_ID" command returns 1 if JOB_ID is no longer in the
     # system, so there is no need to filter its output.
     POLL_CMD = "qstat"
+    POLL_CANT_CONNECT_ERR = "Connection refused"
     REC_ID_FROM_SUBMIT_OUT = re.compile(r"""\A\s*(?P<id>\S+)\s*\Z""")
     SUBMIT_CMD_TMPL = "qsub '%(job)s'"
 

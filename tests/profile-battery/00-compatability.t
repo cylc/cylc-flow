@@ -1,6 +1,6 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 # 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,13 +37,8 @@ cmp_ok "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" "hello-world"
 #-------------------------------------------------------------------------------
 # Run the test experiment.
 TEST_NAME="${TEST_NAME_BASE}-run-test-experiment"
-LOG_DIR="${TEST_LOG_DIR}/${TEST_NAME}"
-mkdir "${LOG_DIR}" -p
 RET_CODE=0
-cylc profile-battery -e 'test' -v 'HEAD' --test \
-    >"${LOG_DIR}.log" \
-    2>"${LOG_DIR}.stderr" \
-    || RET_CODE=$?
+cylc profile-battery -e 'test' -v 'HEAD' --test >'log' 2>'err' || RET_CODE=$?
 if [[ ${RET_CODE} == 0 ]]
 then
     ok "${TEST_NAME}"
@@ -53,6 +48,9 @@ then
     skip 1
 else
     fail "${TEST_NAME}"
+    LOG_DIR="${TEST_LOG_DIR}/${TEST_NAME}"
+    mkdir -p "${LOG_DIR}"
+    mv 'log' 'err' "${LOG_DIR}"
     # Move/rename profiling files so they will be cat'ed out by travis-ci.
     while read; do
         file_path="${REPLY}"
@@ -66,3 +64,4 @@ else
     done < <(sed -n 's/Profile files:\(.*\)/\1/p' "${LOG_DIR}.stderr")
     mv "${LOG_DIR}.log" "${LOG_DIR}.profile-battery-log-err"
 fi
+exit

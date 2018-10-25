@@ -1,6 +1,6 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BA
 SUITE_RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
 mkdir -p "$(dirname "${SUITE_RUN_DIR}")"
 cp -r "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}" "${SUITE_RUN_DIR}"
-cylc register "${SUITE_NAME}" 2>'/dev/null'
+cylc register "${SUITE_NAME}" "${SUITE_RUN_DIR}" 2>'/dev/null'
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 

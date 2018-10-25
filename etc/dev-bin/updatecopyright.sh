@@ -2,23 +2,25 @@
 
 set -e
 
-# Automatically update copyright years; use once annually.
+# Automatically update copyright year - use once annually.
+
 # USAGE:
-# cd $CYLC_DIR
-# find . -type f -not -path "./.*" | xargs dev/bin/updatecopyright.sh
-# (find path exclusion avoids .git directory)
+#   % cd <cylc-dir>
+#   % find . -type f -not -path "./.*" | xargs dev/bin/updatecopyright.sh
+
+# ("./.*" avoids .git directory)
 
 YY=$(date +%y)
 
-OLD="Copyright \(C\) 2008-20\d\d NIWA"
-NEW="Copyright (C) 2008-20$YY NIWA"
+OLD="Copyright \(C\) 2008-20\d\d NIWA & British Crown \(Met Office\) & Contributors."
+NEW="Copyright (C) 2008-20$YY NIWA & British Crown (Met Office) & Contributors."
 
 FILES=$@
 for FILE in $FILES; do
     echo $FILE
     if [[ ! -f $FILE ]]; then
         echo "ERROR: no such file: $FILE"
-        exit 1
+        continue
     fi
     perl -pi -e "s/$OLD/$NEW/" $FILE
 done

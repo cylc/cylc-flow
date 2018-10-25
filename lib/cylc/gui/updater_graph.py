@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@ from cylc.mkdir_p import mkdir_p
 from cylc.network.httpclient import ClientError
 from cylc.task_id import TaskID
 from cylc.task_state import TASK_STATUS_RUNAHEAD
+from cylc.cfgspec.gcylc import gcfg
 
 
 def compare_dict_of_dict(one, two):
@@ -81,7 +82,8 @@ class GraphUpdater(threading.Thread):
         self.best_fit = True  # zoom to page size
         self.normal_fit = False  # zoom to 1.0 scale
         self.crop = False
-        self.subgraphs_on = False   # organise by cycle point.
+        # organise by cycle point.
+        self.subgraphs_on = gcfg.get(["sub-graphs on"])
 
         self.descendants = {}
         self.all_families = []
@@ -251,7 +253,6 @@ class GraphUpdater(threading.Thread):
             state = self.state_summary[id_]['state']
         else:
             state = self.fam_state_summary[id_]['state']
-
         try:
             node.attr['style'] = 'bold,' + self.theme[state]['style']
             node.attr['fillcolor'] = self.theme[state]['color']
@@ -400,6 +401,8 @@ class GraphUpdater(threading.Thread):
                     continue
                 if name in self.all_families:
                     node.attr['shape'] = 'doubleoctagon'
+                elif name.startswith('@'):
+                    node.attr['shape'] = 'none'
 
             if self.subgraphs_on:
                 self.graphw.add_cycle_point_subgraphs(gr_edges)

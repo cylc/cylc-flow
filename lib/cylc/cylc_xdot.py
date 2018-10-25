@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -432,7 +432,10 @@ class MyDotWindow(CylcDotViewerCommon):
         cache = {}  # For caching is_on_sequence() calls.
         for node in graph.iternodes():
             name, point = TaskID.split(node.get_name())
-            if name in family_nodes:
+            if name.startswith('@'):
+                # Style action trigger nodes.
+                node.attr['shape'] = 'none'
+            elif name in family_nodes:
                 # Style family nodes.
                 node.attr['shape'] = 'doubleoctagon'
                 # Detecting ghost families would involve analysing triggers

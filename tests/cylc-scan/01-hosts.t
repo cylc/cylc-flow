@@ -1,6 +1,6 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,9 +19,9 @@
 CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 HOSTS="$( \
-    cylc get-global-config '--item=[suite host scanning]hosts' 2>'/dev/null')"
+    cylc get-global-config '--item=[suite servers]scan hosts' 2>'/dev/null')"
 if [[ -z "${HOSTS}" || "${HOSTS}" == 'localhost' ]]; then
-    skip_all '"[suite host scanning]hosts" not defined with remote suite hosts'
+    skip_all '"[suite servers]scan hosts" not defined with remote suite hosts'
 fi
 #-------------------------------------------------------------------------------
 set_test_number "$(($(wc -w <<<"${HOSTS}") + 1))"

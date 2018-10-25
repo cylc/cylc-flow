@@ -19,6 +19,7 @@
 2017-04-13T11:34:36Z INFO - [quux.20000102T0100Z] -triggered off []
 2017-04-13T11:34:39Z INFO - [nip.20000102T0600Z] -triggered off []
 2017-04-13T11:34:39Z INFO - [quux.20000102T0600Z] -triggered off []
+2017-04-13T11:34:39Z INFO - [pub.20000102T1200Z] -triggered off []
 2017-04-13T11:34:40Z INFO - [qux.20000102T1200Z] -triggered off []
 2017-04-13T11:34:41Z INFO - [nip.20000102T1200Z] -triggered off []
 2017-04-13T11:34:41Z INFO - [quux.20000102T1100Z] -triggered off []

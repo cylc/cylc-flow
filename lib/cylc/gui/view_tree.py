@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 
 import gtk
 
-from isodatetime.parsers import DurationParser
+from isodatetime.parsers import DurationParser, ISO8601SyntaxError
 
 from cylc.gui.updater_tree import TreeUpdater
 from cylc.task_id import TaskID
@@ -242,25 +242,19 @@ class ControlTree(object):
             return cmp(point_string1, point_string2)
 
         # Columns do not include the cycle point (0th col), so add 1.
-        if (col_num + 1) == 9:
-            prop1 = (model.get_value(iter1, col_num + 1))
-            prop2 = (model.get_value(iter2, col_num + 1))
+        prop1 = model.get_value(iter1, col_num + 1)
+        prop2 = model.get_value(iter2, col_num + 1)
+        if col_num == 8:  # dT-mean column, convert intervals to seconds
             prop1 = self._get_interval_in_seconds(prop1)
             prop2 = self._get_interval_in_seconds(prop2)
-        else:
-            prop1 = model.get_value(iter1, col_num + 1)
-            prop2 = model.get_value(iter2, col_num + 1)
         return cmp(prop1, prop2)
 
     def _get_interval_in_seconds(self, val):
         """Convert the IOS 8601 date/time to seconds."""
-        if val == "*" or val == "":
-            secsout = val
-        else:
-            interval = self.interval_parser.parse(val)
-            seconds = interval.get_seconds()
-            secsout = seconds
-        return secsout
+        try:
+            return self.interval_parser.parse(str(val)).get_seconds()
+        except ISO8601SyntaxError:
+            return 0.0
 
     def change_sort_order(self, col, event=None, n=0):
         if hasattr(event, "button") and event.button != 1:

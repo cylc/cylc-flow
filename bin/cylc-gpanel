@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ This applet can be tested using the --test option.
 To customize themes, copy $CYLC_DIR/etc/gcylc.rc.eg to $HOME/.cylc/gcylc.rc and
 follow the instructions in the file.
 
-To configure default suite hosts, edit "[suite host scanning]hosts" in your
+To configure default suite hosts, edit "[suite servers]scan hosts" in your
 global.rc file."""
 
 from optparse import OptionParser

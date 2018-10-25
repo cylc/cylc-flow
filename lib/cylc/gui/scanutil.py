@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -368,18 +368,14 @@ def get_scan_menu(suite_keys, toggle_hide_menu_bar):
 
 def launch_about_dialog(program_name, hosts):
     """Launch a modified version of the app_main.py About dialog."""
-    hosts_text = "Hosts monitored: " + ", ".join(hosts)
-    comments_text = hosts_text
     about = gtk.AboutDialog()
     if gtk.gtk_version[0] == 2 and gtk.gtk_version[1] >= 12:
         # set_program_name() was added in PyGTK 2.12
         about.set_program_name(program_name)
-    else:
-        comments_text = program_name + "\n" + hosts_text
-
     about.set_version(CYLC_VERSION)
-    about.set_copyright("Copyright (C) 2008-2018 NIWA")
-    about.set_comments(comments_text)
+    about.set_copyright("Copyright (C) 2008-2018 NIWA & British Crown"
+                        "(Met Office) & contributors")
+    about.set_comments(program_name)
     about.set_icon(get_icon())
     about.run()
     about.destroy()
@@ -397,10 +393,12 @@ def launch_hosts_dialog(existing_hosts, change_hosts_func):
     dialog = gtk.Dialog()
     dialog.set_icon(get_icon())
     dialog.vbox.set_border_width(5)
-    dialog.set_title("Configure suite hosts")
+    dialog.set_title("Scan ports of hosts for suites?")
     dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
     dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
-    label = gtk.Label("Enter a comma-delimited list of suite hosts to scan")
+    label = gtk.Label(
+        "Hosts (comma-delimited list) to perform port scan?\n"
+        "Look for suites on the file system if list is empty (default).")
     label.show()
     label_hbox = gtk.HBox()
     label_hbox.pack_start(label, expand=False, fill=False)

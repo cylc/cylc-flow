@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-    cylc-check-software
-    Check for external software and version dependencies of cylc.
+"""cylc [admin] check-software [MODULES]
+
+Check for Cylc external software dependencices, including minimum versions.
+
+With no arguments, prints a table of results for all core & optional external
+module requirements, grouped by functionality. With module argument(s),
+provides an exit status for the collective result of checks on those modules.
+
+Arguments:
+    [MODULES]   Modules to include in the software check, which returns a
+                zero ('pass') or non-zero ('fail') exit status, where the
+                integer is equivalent to the number of modules failing. Run
+                the bare check-software command to view the full list of
+                valid module arguments (lower-case equivalents accepted).
 """
 
 import sys
@@ -34,11 +45,13 @@ FOUND_UNKNOWNVER_MSG = 'FOUND but could not determine version (?)'
 NOTFOUND_MSG = 'NOT FOUND (-)'
 
 """Specification of cylc core & full-functionality module requirements, the
-   latter grouped as Python, TeX or 'other' (neither). 'opt_spec' item format:
-   <MODULE>: [<MIN VER OR 'None'>, <FUNC TAG>, <GROUP>, <'OTHER' TUPLE>] with
-   <'OTHER' TUPLE> = ([<BASE CMD(S)>], <VER OPT>, <REGEX>, <OUTFILE ARG>)."""
+latter grouped as Python, TeX or 'other' (neither). 'opt_spec' item format:
+<MODULE>: [<MIN VER OR 'None'>, <FUNC TAG>, <GROUP>, <'OTHER' TUPLE>] with
+<'OTHER' TUPLE> = ([<BASE CMD(S)>], <VER OPT>, <REGEX>, <OUTFILE ARG>).
+"""
 req_py_ver_range = (2, 6), (3,)
 opt_spec = {
+    'EmPy': [None, 'TEMPLATING', 'PY'],
     'requests': [(2, 4, 2), 'HTTPSCOMMS', 'PY'],
     'OpenSSL': [None, 'HTTPSCOMMS', 'PY'],
     'urllib3': [None, 'HTTPSCOMMS', 'PY'],
@@ -58,8 +71,14 @@ opt_spec = {
                      '-version', r'ImageMagick ([^\s]+)')]
 }
 
+# All possible module reqs to accept as arguments, as above or all lower case.
+module_args = ['Python'] + opt_spec.keys()
+upper_case_conv = dict(
+    (upper.lower(), upper) for upper in module_args if upper.lower() != upper)
+
 # Package-dep. functionality dict; item format <FUNC TAG>: <FULL DESCRIPTION>
 func_tags_and_text = {
+    'TEMPLATING': 'configuration templating',
     'HTTPSCOMMS': 'HTTPS communications layer',
     'GUIORGRAPH': 'GUI & dependency graph visualisation',
     'LATEXGUIDE': 'LaTeX User Guide',
@@ -103,8 +122,11 @@ def string_ver(version_tuple):
 
 
 def shell_align_write(one_delimiter, left_msg, right_msg):
-    """Write two messages aligned with the terminal edges, separated by a
-       given delimiter, with a minimum separation of two characters."""
+    """Write two messages aligned with the terminal edges.
+
+    Messages are seaparated by a given delimiter and have a minimum separation
+    of two characters.
+    """
     gap = output_width() - len(left_msg) - len(right_msg)
     if gap >= 2:
         sys.stdout.write(left_msg + one_delimiter * gap + right_msg + '\n')
@@ -123,7 +145,7 @@ def shell_centre_write(prepend_newline, *args):
     return
 
 
-def check_py_ver(min_ver, max_ver=None):
+def check_py_ver(min_ver, max_ver=None, write=True):
     """Check if a version of Python within a specified range is installed."""
     if max_ver:
         msg = 'Python (%s+, <%s)' % (string_ver(min_ver), string_ver(max_ver))
@@ -131,12 +153,13 @@ def check_py_ver(min_ver, max_ver=None):
         msg = 'Python (%s+)' % string_ver(min_ver)
     version = sys.version_info
     ret = (version >= min_ver and (not max_ver or version < max_ver))
-    shell_align_write('.', msg, '%s (%s)' % (MINVER_MET_MSG if ret else
-                      MINVER_NOTMET_MSG, string_ver(version)))
+    if write:
+        shell_align_write('.', msg, '%s (%s)' % (MINVER_MET_MSG if ret else
+                          MINVER_NOTMET_MSG, string_ver(version)))
     return ret
 
 
-def check_py_module_ver(module, min_ver):
+def check_py_module_ver(module, min_ver, write=True):
     """Check if a minimum version of a Python module is installed."""
     msg = 'Python:%s (%s)' % (module, string_ver(min_ver) + '+' if
                               min_ver is not None else 'any')
@@ -144,25 +167,32 @@ def check_py_module_ver(module, min_ver):
         if module == 'pygtk':
             import gtk
             module_version = '.'.join(map(str, gtk.pygtk_version))
+        elif module == 'EmPy':
+            # we want the 'em' module, but there is more than one out there
+            # we want the one that provides 'Interpreter'
+            from em import Interpreter
+            module_version = sys.modules['em'].__version__
         else:
             imported_module = __import__(module)
             module_version = imported_module.__version__
     except ImportError:
         res = [NOTFOUND_MSG, False]
-    try:
-        if min_ver is None:
-            res = ['%s (%s)' % (FOUND_NOVER_MSG, module_version), True]
-        elif parse_version(module_version) >= min_ver:
-            res = ['%s (%s)' % (MINVER_MET_MSG, module_version), True]
-        else:
-            res = ['%s (%s)' % (MINVER_NOTMET_MSG, module_version), False]
-    except AttributeError:
-        res = [FOUND_UNKNOWNVER_MSG, False]
-    shell_align_write('.', msg, res[0])
+    else:
+        try:
+            if min_ver is None:
+                res = ['%s (%s)' % (FOUND_NOVER_MSG, module_version), True]
+            elif parse_version(module_version) >= min_ver:
+                res = ['%s (%s)' % (MINVER_MET_MSG, module_version), True]
+            else:
+                res = ['%s (%s)' % (MINVER_NOTMET_MSG, module_version), False]
+        except AttributeError:
+            res = [FOUND_UNKNOWNVER_MSG, False]
+    if write:
+        shell_align_write('.', msg, res[0])
     return res[1]
 
 
-def tex_module_search(tex_module):
+def tex_module_search(tex_module, write=True):
     """Print outcome of local TeX module search using 'kpsewhich' command."""
     msg = 'TeX:%s (any)' % tex_module
     cmd = ['kpsewhich', '%s.sty' % tex_module]
@@ -172,17 +202,21 @@ def tex_module_search(tex_module):
         check_call(['test', '-n', process.communicate()[0].strip()],
                    stdin=open(os.devnull), stdout=PIPE, stderr=PIPE)
     except (CalledProcessError, OSError):
-        shell_align_write('.', msg, NOTFOUND_MSG)
+        if write:
+            shell_align_write('.', msg, NOTFOUND_MSG)
         return False
     else:
-        shell_align_write('.', msg, FOUND_NOVER_MSG + ' (n/a)')
+        if write:
+            shell_align_write('.', msg, FOUND_NOVER_MSG + ' (n/a)')
         return True
 
 
-def cmd_find_ver(module, min_ver, cmd_base, ver_opt, ver_extr, outfile=1):
+def cmd_find_ver(
+    module, min_ver, cmd_base, ver_opt, ver_extr, outfile=1, write=True):
     """Print outcome & return Boolean (True for pass) of local module version
-       requirement test using relevant custom command base keyword(s),
-       version-checking option(s) & version-extraction regex."""
+    requirement test using relevant custom command base keyword(s),
+    version-checking option(s) & version-extraction regex.
+    """
     msg = '%s (%s)' % (module, string_ver(min_ver) + '+' if
                        min_ver is not None else 'any')
     for cmd in cmd_base:
@@ -207,13 +241,13 @@ def cmd_find_ver(module, min_ver, cmd_base, ver_opt, ver_extr, outfile=1):
                 res = [FOUND_UNKNOWNVER_MSG, False]
         if not try_next_cmd:
             break
-    shell_align_write('.', msg, res[0])
+    if write:
+        shell_align_write('.', msg, res[0])
     return res[1]
 
 
 def functionality_print(func):
-    """Apply and print outcome of searches, applied by relevant group, for all
-       modules including minimum versions necessary for some funcionality."""
+    """Print outcome of module checks as necessary for some funcionality."""
     for module, items in opt_spec.items():
         ver_req, func_dep, tag = items[:3]
         if func_dep == func:
@@ -226,18 +260,56 @@ def functionality_print(func):
     return
 
 
-def main():
-    """Test for and print external software packages with minimum versions
-       as required for both minimal core and fully-functional cylc."""
+def individual_status_print(module):
+    """Return a pass (0) or fail (1) result for an individual module check."""
+    if module == 'Python':
+        return int(not check_py_ver(*req_py_ver_range, write=False))
+    if module in opt_spec.keys():
+        ver_req, _, tag = opt_spec[module][:3]
+        if tag == 'PY':
+            return int(not check_py_module_ver(module, ver_req, write=False))
+        elif tag == 'TEX':
+            return int(not tex_module_search(module, write=False))
+        elif tag == 'OTHER':
+            other_args = opt_spec[module][3]
+            return int(
+                not cmd_find_ver(module, ver_req, *other_args, write=False))
 
-    # Introductory message and individual results table header
+
+def main():
+    """Check whether Cylc external software dependencies are satisfied.
+
+    Search local filesystem for external software packages of at least minimum
+    version as required for both minimal core and fully-functional Cylc.
+
+    If arguments are suppied, test for those module(s) only and return an exit
+    code where zero indicates a collective pass and a non-zero integer
+    indicates the number of module arguments that fail or are invalid, else
+    check for all dependencies and print results in a table.
+    """
+
+    # Check for valid module argument(s); if present exit with relevant code.
+    exit_status = 0
+    for user_arg in sys.argv[1:]:
+        if user_arg in module_args:
+            exit_status += individual_status_print(user_arg)
+        elif user_arg in upper_case_conv:  # lower-case equivalents
+            exit_status += individual_status_print(upper_case_conv[user_arg])
+        else:
+            sys.stdout.write("No such module '%s' in the software "
+                             "dependencies.\n" % user_arg)
+            exit_status += 1
+        if user_arg == sys.argv[-1]:  # give exit code after last user argument
+            sys.exit(exit_status)
+
+    # No arguments: table. Introductory message and individual results header.
     sys.stdout.write('Checking your software...\n\nIndividual results:\n')
     draw_table_line('=')
     shell_align_write(' ', 'Package (version requirements)',
                       'Outcome (version found)')
     draw_table_line('=')
 
-    # Individual results section in mock-table format
+    # Individual results section in mock-table format.
     shell_centre_write(False, '*REQUIRED SOFTWARE*')
     req_result = check_py_ver(*req_py_ver_range)
     for tag, text in func_tags_and_text.items():
@@ -245,7 +317,7 @@ def main():
         functionality_print(tag)
     draw_table_line('=')
 
-    # Final summary print for clear pass/fail final outcome & exit
+    # Final summary print for clear pass/fail final outcome & exit.
     sys.stdout.write('\nSummary:')
     shell_centre_write(True, '*' * 28,
                        'Core requirements: %s' % (

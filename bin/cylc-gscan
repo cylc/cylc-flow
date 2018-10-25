@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,17 +31,6 @@ if "--use-ssh" in sys.argv[1:]:
     if remrun(forward_x11=True):
         sys.exit(0)
 
-import gtk
-import warnings
-warnings.filterwarnings('ignore', 'use the new', Warning)
-
-gtk.settings_get_default().set_long_property(
-    "gtk-button-images", True, "main")
-gtk.settings_get_default().set_long_property(
-    "gtk-menu-images", True, "main")
-
-from cylc.cfgspec.glbl_cfg import glbl_cfg
-from cylc.gui.gscan import ScanApp
 from cylc.option_parsers import CylcOptionParser as COP
 
 
@@ -80,8 +69,21 @@ def main():
         type="int", metavar="SECONDS", dest="interval")
     options, args = parser.parse_args()
 
+    # Only import GTK, etc here, as the command may be called with "--help" in
+    # batch mode, which may be unable to import GTK.
+    import gtk
+    import warnings
+    warnings.filterwarnings('ignore', 'use the new', Warning)
+    gtk.settings_get_default().set_long_property(
+        "gtk-button-images", True, "main")
+    gtk.settings_get_default().set_long_property(
+        "gtk-menu-images", True, "main")
+    from cylc.cfgspec.glbl_cfg import glbl_cfg
+    from cylc.gui.gscan import ScanApp
+
     if options.all_ports:
-        args.extend(glbl_cfg().get(["suite host scanning", "hosts"]))
+        args.extend(
+            glbl_cfg().get(["suite servers", "scan hosts"]) or ["localhost"])
     scan_app = ScanApp(
         hosts=args,
         patterns_name=options.patterns_name,

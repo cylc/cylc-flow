@@ -1,6 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -66,7 +66,8 @@ class ComboLogViewer(logviewer):
         for snum in snums:
             combobox2.append_text(str(snum))
         combobox2.connect("changed", self.switch_snum)
-        combobox2.set_active(snums.index(self.nsubmit))
+        if self.nsubmit in snums:
+            combobox2.set_active(snums.index(self.nsubmit))
         self.hbox.pack_end(combobox2, False)
         self.hbox.pack_end(label2, False)
 

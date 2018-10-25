@@ -16,7 +16,7 @@
 {% endif %}
     [[foo]]
         script="""
-JOB_LOG_DIR=$(dirname $(dirname "$CYLC_TASK_LOG_ROOT"))
+JOB_LOG_DIR=$(dirname "$CYLC_TASK_LOG_DIR")
 readlink "$JOB_LOG_DIR/NN" >>what-is-nn.txt
 echo "$JOB_LOG_DIR/NN"
 # bash 4.2.0 bug: ((VAR == VAL)) does not trigger 'set -e':

@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,8 +21,9 @@
 # imported on demand.
 import os
 import re
-from string import ascii_letters, digits
 import sys
+from uuid import uuid4
+from string import ascii_letters, digits
 
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
@@ -104,12 +105,12 @@ class SuiteSrvFilesManager(object):
     def detect_old_contact_file(self, reg, check_host_port=None):
         """Detect old suite contact file.
 
-        If old contact file does not exist, do nothing. If old contact file
-        exists, but suite process is definitely not alive, remove old contact
-        file. If old contact file exists and suite process still alive, raise
-        SuiteServiceFileError. If check_host_port is specified and does not
-        match the (host, port) value in the old contact file, raise
-        AssertionError.
+        If an old contact file does not exist, do nothing. If one does exist
+        but the suite process is definitely not alive, remove it. If one exists
+        and the suite process is still alive, raise SuiteServiceFileError.
+
+        If check_host_port is specified and does not match the (host, port)
+        value in the old contact file, raise AssertionError.
 
         Args:
             reg (str): suite name
@@ -410,54 +411,95 @@ To start a new run, stop the old one first with one or more of these:
                 name = os.path.basename(os.path.dirname(arg))
         return name, path
 
-    def register(self, reg, source=None):
-        """Generate service files for a suite. Record its source location."""
-        self.detect_old_contact_file(reg)
+    def register(self, reg=None, source=None, redirect=False):
+        """Register a suite, or renew its registration.
+
+        Create suite service directory and symlink to suite source location.
+
+        Args:
+            reg (str): suite name, default basename($PWD).
+            source (str): directory location of suite.rc file, default $PWD.
+            redirect (bool): allow reuse of existing name and run directory.
+
+        Return:
+            The registered suite name (which may be computed here).
+
+        Raise:
+            SuiteServiceFileError:
+                No suite.rc file found in source location.
+                Illegal name (can look like a relative path, but not absolute).
+                Another suite already has this name (unless --redirect).
+        """
+        if reg is None:
+            # Take name of parent dir as suite name.
+            reg = os.path.basename(os.getcwd())
+
+        if os.path.isabs(reg):
+            raise SuiteServiceFileError(
+                "ERROR: suite name cannot be an absolute path: %s" % reg)
+
+        # Suite service directory.
         srv_d = self.get_suite_srv_dir(reg)
+
+        # Check if reg is already used.
         target = os.path.join(srv_d, self.FILE_BASE_SOURCE)
-        if source is None:
-            try:
-                # No change if already registered
-                source_str = os.readlink(target)
-            except OSError:
-                # Source path is assumed to be the run directory
-                source_str = ".."
-        else:
-            # Tidy source path
+        try:
+            # Already used?
+            orig_source = os.readlink(target)
+        except OSError:
+            orig_source = None
+
+        if source is not None:
+            # Regularize: want suite dir name only (not dir/suite.rc).
             if os.path.basename(source) == self.FILE_BASE_SUITE_RC:
                 source = os.path.dirname(source)
-            if not os.path.isabs(source):
-                # On AIX on GPFS os.path.abspath(source) returns the source
-                # with full 'fileset' prefix. Manual use of $PWD to absolutize
-                # a relative path gives a cleaner result.
-                source = os.path.join(os.getenv("PWD", os.getcwd()), source)
-            source = os.path.normpath(source)
-            if (os.path.abspath(source) ==
-                    os.path.abspath(os.path.dirname(srv_d))):
-                source_str = ".."
-            else:
-                source_str = source
-        # Create target if it does not exist.
-        # Re-create target if it does not point to specified source.
-        mkdir_p(srv_d)
-        try:
-            orig_source_str = os.readlink(target)
-        except OSError:
-            os.symlink(source_str, target)
         else:
-            if orig_source_str != source_str:
-                os.unlink(target)
-                os.symlink(source_str, target)
+            # Assume source is $PWD unless reg is already used.
+            if orig_source is None:
+                source = os.getcwd()
+            else:
+                source = orig_source
+
+        # suite.rc must exist so we can detect accidentally reversed args.
+        source = os.path.abspath(source)
+        if not os.path.isfile(os.path.join(source, self.FILE_BASE_SUITE_RC)):
+            raise SuiteServiceFileError("ERROR: no suite.rc in %s" % source)
+
+        if orig_source is None:
+            mkdir_p(srv_d)
+            os.symlink(source, target)
+
+        elif orig_source != source:
+            # Redirecting an existing name and run directory to another suite.
+            if not redirect:
+                raise SuiteServiceFileError(
+                    "ERROR: the suite name '%s' is already used for %s." % (
+                        reg, orig_source))
+            else:
+                sys.stderr.write(
+                    "WARNING: the suite name '%s' was used for %s.\n"
+                    "The run directory will be reused for %s.\n" % (
+                        reg, orig_source, source))
+            os.unlink(target)
+            os.symlink(source, target)
+
+        # Report the new (or renewed) registration.
+        print 'REGISTERED %s -> %s' % (reg, source)
+        return reg
+
+    def create_auth_files(self, reg):
+        """Create or renew passphrase and SSL files for suite 'reg'."""
+
+        # Suite service directory.
+        srv_d = self.get_suite_srv_dir(reg)
 
         # Create a new passphrase for the suite if necessary.
         if not self._locate_item(self.FILE_BASE_PASSPHRASE, srv_d):
             import random
             self._dump_item(srv_d, self.FILE_BASE_PASSPHRASE, ''.join(
                 random.sample(self.PASSPHRASE_CHARSET, self.PASSPHRASE_LEN)))
-
         # Load or create SSL private key for the suite.
         pkey_obj = self._get_ssl_pem(srv_d)
-
         # Load or create SSL certificate for the suite.
         self._get_ssl_cert(srv_d, pkey_obj)
 
@@ -526,7 +568,9 @@ To start a new run, stop the old one first with one or more of these:
         cert_obj.gmtime_adj_notAfter(10 * 365 * 24 * 60 * 60)  # 10 years.
         cert_obj.set_issuer(cert_obj.get_subject())
         cert_obj.set_pubkey(pkey_obj)
-        cert_obj.set_serial_number(1)
+        # Set a random serial number to avoid browser error
+        # SEC_ERROR_REUSED_ISSUER_AND_SERIAL.
+        cert_obj.set_serial_number(uuid4().int)
         cert_obj.add_extensions([ext])
         cert_obj.sign(pkey_obj, 'sha256')
         self._dump_item(
