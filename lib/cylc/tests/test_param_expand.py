@@ -125,61 +125,61 @@ class TestParamExpand(unittest.TestCase):
         """Test graph expansion with two parameters each side of an arrow."""
         self.assertEqual(
             self.graph_expander.expand("bar<i,j>=>baz<i,j>"),
-            {"bar_i0_j1=>baz_i0_j1",
-             "bar_i1_j2=>baz_i1_j2",
-             "bar_i0_j2=>baz_i0_j2",
-             "bar_i1_j1=>baz_i1_j1",
-             "bar_i1_j0=>baz_i1_j0",
-             "bar_i0_j0=>baz_i0_j0"}
+            set(["bar_i0_j1=>baz_i0_j1",
+                 "bar_i1_j2=>baz_i1_j2",
+                 "bar_i0_j2=>baz_i0_j2",
+                 "bar_i1_j1=>baz_i1_j1",
+                 "bar_i1_j0=>baz_i1_j0",
+                 "bar_i0_j0=>baz_i0_j0"])
         )
 
     def test_graph_expand_2(self):
         """Test graph expansion to 'branch and merge' a workflow."""
         self.assertEqual(
             self.graph_expander.expand("pre=>bar<i>=>baz<i,j>=>post"),
-            {"pre=>bar_i0=>baz_i0_j1=>post",
-             "pre=>bar_i1=>baz_i1_j2=>post",
-             "pre=>bar_i0=>baz_i0_j2=>post",
-             "pre=>bar_i1=>baz_i1_j1=>post",
-             "pre=>bar_i1=>baz_i1_j0=>post",
-             "pre=>bar_i0=>baz_i0_j0=>post"}
+            set(["pre=>bar_i0=>baz_i0_j1=>post",
+                 "pre=>bar_i1=>baz_i1_j2=>post",
+                 "pre=>bar_i0=>baz_i0_j2=>post",
+                 "pre=>bar_i1=>baz_i1_j1=>post",
+                 "pre=>bar_i1=>baz_i1_j0=>post",
+                 "pre=>bar_i0=>baz_i0_j0=>post"])
         )
 
     def test_graph_expand_3(self):
         """Test graph expansion -ve integers."""
         self.assertEqual(
             self.graph_expander.expand("bar<a>"),
-            {"bar_a-1", "bar_a-3"})
+            set(["bar_a-1", "bar_a-3"]))
 
     def test_graph_expand_offset_1(self):
         """Test graph expansion with a -ve offset."""
         self.assertEqual(
             self.graph_expander.expand("bar<i-1,j>=>baz<i,j>"),
-            {"baz_i0_j0",
-             "baz_i0_j1",
-             "baz_i0_j2",
-             "bar_i0_j0=>baz_i1_j0",
-             "bar_i0_j1=>baz_i1_j1",
-             "bar_i0_j2=>baz_i1_j2"}
+            set(["baz_i0_j0",
+                 "baz_i0_j1",
+                 "baz_i0_j2",
+                 "bar_i0_j0=>baz_i1_j0",
+                 "bar_i0_j1=>baz_i1_j1",
+                 "bar_i0_j2=>baz_i1_j2"])
         )
 
     def test_graph_expand_offset_2(self):
         """Test graph expansion with a +ve offset."""
         self.assertEqual(
             self.graph_expander.expand("baz<i>=>baz<i+1>"),
-            {"baz_i0=>baz_i1"}
+            set(["baz_i0=>baz_i1"])
         )
 
     def test_graph_expand_specific(self):
         """Test graph expansion with a specific value."""
         self.assertEqual(
             self.graph_expander.expand("bar<i=1,j>=>baz<i,j>"),
-            {"bar_i1_j0=>baz_i0_j0",
-             "bar_i1_j1=>baz_i0_j1",
-             "bar_i1_j2=>baz_i0_j2",
-             "bar_i1_j0=>baz_i1_j0",
-             "bar_i1_j1=>baz_i1_j1",
-             "bar_i1_j2=>baz_i1_j2"}
+            set(["bar_i1_j0=>baz_i0_j0",
+                 "bar_i1_j1=>baz_i0_j1",
+                 "bar_i1_j2=>baz_i0_j2",
+                 "bar_i1_j0=>baz_i1_j0",
+                 "bar_i1_j1=>baz_i1_j1",
+                 "bar_i1_j2=>baz_i1_j2"])
         )
 
     def test_graph_fail_bare_value(self):
