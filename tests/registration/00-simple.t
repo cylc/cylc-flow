@@ -37,7 +37,7 @@ PRE=cylctb-reg-${CYLC_TEST_TIME_INIT}
 # Test fail no suite.rc file.
 CYLC_RUN_DIR=$(cylc get-global --print-run-dir)
 TEST_NAME="${TEST_NAME_BASE}-noreg"
-run_fail "${TEST_NAME}" cylc register "${SUITE_NAME}" "${PWD}/zilch"
+run_fail "${TEST_NAME}" cylc register "${SUITE_NAME}2" "${PWD}/zilch"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
 ERROR: no suite.rc in ${PWD}/zilch
 __ERR__
@@ -91,10 +91,10 @@ __ERR__
 TEST_NAME="${TEST_NAME_BASE}-repurpose2"
 cp -r $CHEESE $YOGHURT
 run_ok "${TEST_NAME}" cylc register --redirect $CHEESE $YOGHURT
-sed -i 's/^\t//; s/^.* WARNING - /WARNING - /' "${TEST_NAME}.stderr"
+cp $TEST_NAME.stderr ~
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WARNING - the name '$CHEESE' points to ${PWD}/$CHEESE.
-It will now be redirected to ${PWD}/$YOGHURT.
+WARNING: the name '$CHEESE' points to ${PWD}/$CHEESE.
+It will now be redirected to $YOGHURT.
 Files in the existing $CHEESE run directory will be overwritten.
 __ERR__
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
@@ -104,7 +104,7 @@ rm -rf "${CYLC_RUN_DIR}/$CHEESE"
 
 run_ok "${TEST_NAME_BASE}-get-dir" cylc get-directory "${SUITE_NAME}"
 
-cd .. # necessary so the suite is being validated via the database not filepath
+cd .. # so the suite is being validated via the database not filepath
 run_ok "${TEST_NAME_BASE}-val" cylc validate "${SUITE_NAME}"
 cd "${OLDPWD}"
 
