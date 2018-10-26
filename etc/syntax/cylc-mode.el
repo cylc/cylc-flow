@@ -1,65 +1,97 @@
-;; Simple syntax highlighting for cylc suite definition files.
+;; ____________________________________________________________________________
 ;;
-;; 1. copy this file to $HOME/.emacs.d/lisp
-;; 2. add in $HOME/.emacs the following lines:
+;; = cylc-mode.el =
+;;    Emacs syntax highlighting mode for Cylc suite definition (suite.rc) files
+;; ____________________________________________________________________________
 ;;
-;;   (add-to-list 'load-path "~/.emacs.d/lisp/")
-;;   (require 'cylc-mode)
-;;   (setq auto-mode-alist (append auto-mode-alist 
-;;			      (list '("\\.rc$" . cylc-mode))))
-;;   (global-font-lock-mode t)
-;;______________________________________________________________________________
+;; = Instructions =
+;;    Place this file in a directory on your emacs load path (or symlink it)
+;;    e.g.
+;;         mkdir -p $HOME/.emacs.d/lisp
+;;         ln -s $CYLC_HOME/etc/cylc-mode.el ~/.emacs.d/lisp/
+;;
+;;    and in your $HOME/.emacs file add the following lines:
+;;
+;;         (add-to-list 'load-path "~/.emacs.d/lisp/")
+;;         (require 'cylc-mode)
+;;
+;; ____________________________________________________________________________
 
-(defconst cylc-mode-version "0.2")
+(defvar cylc-mode-hook nil)
 
-;; No regular expression lookarounds in Emacs Lisp => some regexes ugly here
-(setq cylc-font-lock-keywords
-  '(
-    ;; Ordered in terms precendence of application, where face specification
-    ;; order changes resultant highlighting, so don't change ordering.
+;; Extend region hook to ensure correct re-fontifying of the multi-line region
+(defun cylc-font-lock-extend-region ()
+  "Extend the search region to include an entire block of text."
+  ;; Avoid compiler warnings about these global variables from font-lock.el.
+  ;; See the documentation for variable `font-lock-extend-region-functions'.
+  (eval-when-compile (defvar font-lock-beg) (defvar font-lock-end))
+  (save-excursion
+    (goto-char font-lock-beg)
+    (let ((found (or (re-search-backward "\n\n" nil t) (point-min))))
+      (goto-char font-lock-end)
+      (when (re-search-forward "\n\n" nil t)
+        (beginning-of-line)
+        (setq font-lock-end (point)))
+      (setq font-lock-beg found))))
 
-    ;; All comments: standard (# ...) and Jinja2 ('{# ... #}' incl. multiline)
-    ("^#\\(\\([^{].{2}\\|.[^#]\\).*\\|.{0,1}\\)$" . font-lock-comment-face)
-    ("^{#\\(\n?.?\\)*?[[:alnum:][[:punct:]]*#}$" . font-lock-comment-face)
+;; Define the mode and the syntax highlighting for it
+(define-derived-mode cylc-mode fundamental-mode
+  "suite.rc" "Major mode for editing Cylc suite definition files"
+
+    ;; Note: ordered in terms of application precendence, where specification
+    ;; order for faces changes resultant highlighting; don't change order.
+
+   ;; Assignment and dependency characters, but only outside of Jinja2
+    (font-lock-add-keywords nil '(("=+" . font-lock-preprocessor-face)))
+    (font-lock-add-keywords nil '(("=>" . font-lock-keyword-face)))
+
+    ;; All comments: standard ('# ... ') and Jinja2 ('{# ... #}')
+    ;; Stop interference. No regex lookarounds in Emacs Lisp; ugly workaround.
+    (font-lock-add-keywords nil
+      '(("^#\\(\\([^{].{2}\\|.[^#]\\).*\\|.{0,1}\\)$"
+        . font-lock-comment-face)))
+    (font-lock-add-keywords nil
+      '(("{#\\(\n?.?\\)*?.*#}" . font-lock-comment-face)))
 
     ;; Cylc setting keys/names
-    ("^\\( *[[:alnum:]]+ *\\)=+" 1 font-lock-variable-name-face t)
-
-    ;; Assignment and dependency characters, but only outside of Jinja2
-    ("=>" . font-lock-keyword-face)  ;; as of 'special syntactic significance'
-    ("=+" . font-lock-preprocessor-face)  ;; as running out of font-lock faces
+    (font-lock-add-keywords nil
+      '(("^\\( *[a-zA-Z0-9]+ *\\)=+" 1 font-lock-variable-name-face t)))
 
     ;; All Jinja2 excl. comments: '{% ... %}' and '{{ ... }}' incl. multiline
-    ("{%\\(\n?.?\\)*?[[:alnum:][[:punct:]]*%}" . font-lock-constant-face)
-    ("{{[[:alnum:] [[:punct:]]+?}}" . font-lock-constant-face)
+    (font-lock-add-keywords nil
+      '(("{%\\(\n?.?\\)*?.*%}" . font-lock-constant-face)))
+    (font-lock-add-keywords nil '(("{{.*?}}" . font-lock-constant-face)))
 
-    ;; All Cylc section (of any level e.g. sub-, sub-sub-) specifications
-    ("\\[\\[\\[[[:alnum:], _]+\\]\\]\\]" . font-lock-type-face)
-    ("\\[\\[\\[[[:alnum:], _]+" . font-lock-type-face)
-    ("\\]\\]\\]" . font-lock-type-face)
-    ("\\[\\[[[:alnum:], _]+\\]\\]" . font-lock-type-face)
-    ("\\[\\[[[:alnum:], _]+" . font-lock-type-face)
-    ("\\]\\]" . font-lock-type-face)
-    ("\\[[[:alnum:], ]+\\]" . font-lock-warning-face)
-  )
-)
+    ;; Inter-cycle dependencies (distinguish from top-level section headings)
+    (font-lock-add-keywords nil '(("\\[.*\\]" . font-lock-string-face)))
 
-;; Define the mode
-(define-derived-mode cylc-mode fundamental-mode
-  "cylc mode"
-  "Major mode for editing CYLC .cylc files"
+    ;; All Cylc section (of any level e.g. sub-, sub-sub-) headings:
+    ;; Top-level headings, enclosed in single square brackets
+    (font-lock-add-keywords nil '(("^ *\\[.*\\]$" . font-lock-warning-face)))
+    ;; Second-level (sub-) section headings, enclosed in double brackets
+    (font-lock-add-keywords nil
+      '(("^ *\\[\\[.*\\]\\]$" . font-lock-function-name-face)))
+    ;; Third-level (sub-sub-) section headings, enclosed in triple brackets
+    (font-lock-add-keywords nil
+      '(("^ *\\[\\[\\[.*\\]\\]\\]$" . font-lock-type-face)))
 
-  ;; Double quotes treated as special in elisp, messing up mode, so turn off
-  (setq font-lock-keywords-only t)
+  ;; Add the extend region hook to deal with the multiline matching above
+  (add-hook 'font-lock-extend-region-functions 'cylc-font-lock-extend-region)
 
-  ;; Code for syntax highlighting
-  (setq font-lock-defaults '(cylc-font-lock-keywords))
+  ;; Make sure jit-lock scans larger multiline regions correctly
+  (set (make-local-variable 'jit-lock-contextually) t)
 
-)
+  ;; Force any other fundamental mode inherit font-locking to be ignored, this
+  ;; previously caused double-quotes to break the multiline highlighting
+  (set (make-local-variable 'font-lock-keywords-only) t)
+
+  ;; We need multiline mode
+  (set (make-local-variable 'font-lock-multiline) t)
+
+  ;; Run the mode hooks to allow a user to execute mode-specific actions
+  (run-hooks 'cylc-mode-hook))
+
+;;;###autoload
+(add-to-list 'auto-mode-alist '("suite*.rc" . cylc-mode))
 
 (provide 'cylc-mode)
-
-(add-hook 'cylc-mode-hook
-  (lambda ()
-    (font-lock-add-keywords nil
-       '(("\\({%\\(\n?.?\\)+?[[:alnum:] _=\\(\\)[[:punct:]]%}\\|{{[[:alnum:] [[:punct:]]*?]*}}\\)" 0 font-lock-constant-face t)))))
