@@ -987,10 +987,6 @@ class ScanAppUpdater(threading.Thread):
                     suite_updated_time, None, None, warning_text])
 
         self.suite_treemodel.foreach(self._expand_row, row_ids)
-        if len(hosts) > 1:
-            self.treeview.get_column(ScanApp.HOST_COLUMN).set_visible(True)
-        if len(owners) > 1:
-            self.treeview.get_column(ScanApp.OWNER_COLUMN).set_visible(True)
         return False
 
     def _update_group_counts(self):
