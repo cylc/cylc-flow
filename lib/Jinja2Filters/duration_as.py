@@ -34,6 +34,7 @@ CONVERSIONS = {
     ('w', 'weeks'): lambda s: float(s) / SECONDS_PER_WEEK,
 }
 
+
 def duration_as(iso8601_duration, units):
     """Format an iso8601 duration string as the specified units.
 
@@ -76,4 +77,3 @@ if __name__ == "__main__":
         for short_name, _ in CONVERSIONS:
             print short_name, duration_as(duration, short_name)
         print '\n'
-
