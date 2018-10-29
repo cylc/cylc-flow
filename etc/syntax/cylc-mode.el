@@ -38,42 +38,63 @@
 (define-derived-mode cylc-mode fundamental-mode
   "suite.rc" "Major mode for editing Cylc suite definition files"
 
-    ;; Note: ordered in terms of application precendence, where specification
-    ;; order for faces changes resultant highlighting; don't change order.
+  ;; Note: ordered according to reverse application precendence, where
+  ;; specification order for faces changes resultant highlighting
 
-   ;; Assignment and dependency characters, but only outside of Jinja2
-    (font-lock-add-keywords nil '(("=+" . font-lock-preprocessor-face)))
-    (font-lock-add-keywords nil '(("=>" . font-lock-keyword-face)))
+  ;; Assignment and dependency characters, but only outside of Jinja2
+  (font-lock-add-keywords nil '(("=+" . font-lock-preprocessor-face)))
+  (font-lock-add-keywords nil '(("=>" . font-lock-keyword-face)))
 
-    ;; All comments: standard ('# ... ') and Jinja2 ('{# ... #}')
-    ;; Stop interference. No regex lookarounds in Emacs Lisp; ugly workaround.
-    (font-lock-add-keywords nil
-      '(("^#\\(\\([^{].{2}\\|.[^#]\\).*\\|.{0,1}\\)$"
-        . font-lock-comment-face)))
-    (font-lock-add-keywords nil
-      '(("{#\\(\n?.?\\)*?.*#}" . font-lock-comment-face)))
+  ;; Cylc setting keys/names
+  (font-lock-add-keywords nil
+    '(("^\\( *[a-zA-Z0-9\-]+ *\\)=+" 1 font-lock-variable-name-face t)))
 
-    ;; Cylc setting keys/names
-    (font-lock-add-keywords nil
-      '(("^\\( *[a-zA-Z0-9]+ *\\)=+" 1 font-lock-variable-name-face t)))
+  ;; Account for section headings (see below) with internal patterns, e.g. a
+  ;; Jinja2 statement, inside by matching start and end heading groups. Note:
+  ;; must be applied here to get correct 'pure' header & ICD highlighting.
+  (font-lock-add-keywords nil
+    '(("\\[\\( *[ a-zA-Z0-9\-\_,.]*\\)" . font-lock-warning-face)))
+  (font-lock-add-keywords nil
+    '(("\\( *[ a-zA-Z0-9\-\_,.]*\\)\\]" . font-lock-warning-face)))
+  (font-lock-add-keywords nil
+    '(("\\[\\[\\( *[ a-zA-Z0-9\-\_,.]*\\)" . font-lock-function-name-face)))
+  (font-lock-add-keywords nil
+    '(("\\( *[ a-zA-Z0-9\-\_,.]*\\)\\]\\]" . font-lock-function-name-face)))
+  (font-lock-add-keywords nil
+    '(("\\[\\[\\[\\( *[ a-zA-Z0-9\-\_,.]*\\)" . font-lock-type-face)))
+  (font-lock-add-keywords nil
+    '(("\\( *[ a-zA-Z0-9\-\_,.]*\\)\\]\\]\\]" . font-lock-type-face)))
 
-    ;; All Jinja2 excl. comments: '{% ... %}' and '{{ ... }}' incl. multiline
-    (font-lock-add-keywords nil
-      '(("{%\\(\n?.?\\)*?.*%}" . font-lock-constant-face)))
-    (font-lock-add-keywords nil '(("{{.*?}}" . font-lock-constant-face)))
+  ;; Inter-cycle dependencies (distinguish from top-level section headings)
+  (font-lock-add-keywords nil '(("\\[.*\\]" . font-lock-string-face)))
 
-    ;; Inter-cycle dependencies (distinguish from top-level section headings)
-    (font-lock-add-keywords nil '(("\\[.*\\]" . font-lock-string-face)))
+  ;; All 'pure' Cylc section (of any level e.g. sub-, sub-sub-) headings:
+  ;; ... Top-level headings, enclosed in single square brackets
+  (font-lock-add-keywords nil '(("^ *\\[.*\\]$" . font-lock-warning-face)))
+  ;; ... Second-level (sub-) section headings, enclosed in double brackets
+  (font-lock-add-keywords nil
+    '(("^ *\\[\\[.*\\]\\]$" . font-lock-function-name-face)))
+  ;; ... Third-level (sub-sub-) section headings, enclosed in triple brackets
+  (font-lock-add-keywords nil
+    '(("^ *\\[\\[\\[.*\\]\\]\\]$" . font-lock-type-face)))
 
-    ;; All Cylc section (of any level e.g. sub-, sub-sub-) headings:
-    ;; Top-level headings, enclosed in single square brackets
-    (font-lock-add-keywords nil '(("^ *\\[.*\\]$" . font-lock-warning-face)))
-    ;; Second-level (sub-) section headings, enclosed in double brackets
-    (font-lock-add-keywords nil
-      '(("^ *\\[\\[.*\\]\\]$" . font-lock-function-name-face)))
-    ;; Third-level (sub-sub-) section headings, enclosed in triple brackets
-    (font-lock-add-keywords nil
-      '(("^ *\\[\\[\\[.*\\]\\]\\]$" . font-lock-type-face)))
+  ;; All comments: standard ('# ... ') and Jinja2 ('{# ... #}')
+  (font-lock-add-keywords nil
+    '(("#.*$" . font-lock-comment-face)))  ;; in-line only, by precendece
+  ;; Stop interference. No regex lookarounds in Emacs Lisp; ugly workaround
+  (font-lock-add-keywords nil
+    '(("^#\\(\\([^{].{2}\\|.[^#]\\).*\\|.{0,1}\\)$"
+      . font-lock-comment-face)))
+  (font-lock-add-keywords nil
+    '(("{#\\(\n?.?\\)*?.*#}" . font-lock-comment-face)))  ;; not in-line
+
+  ;; All Jinja2 excl. comments: '{% ... %}' and '{{ ... }}' incl. multiline
+  (font-lock-add-keywords nil
+    '(("{%\\(\n?.?\\)*?.*%}" . font-lock-constant-face)))
+  (font-lock-add-keywords nil '(("{{.*?}}" . font-lock-constant-face)))
+
+  ;; Highlight triple quotes for a multi-line setting value
+  (font-lock-add-keywords nil '(("\"\"\"" . 'font-lock-builtin-face)))
 
   ;; Add the extend region hook to deal with the multiline matching above
   (add-hook 'font-lock-extend-region-functions 'cylc-font-lock-extend-region)
