@@ -476,7 +476,19 @@ class CylcSuiteDAO(object):
             LOG.warning(err_log)
             raise
 
-    def select_broadcast_states(self, callback, id_key=None):
+    def pre_select_broadcast_states(self, id_key=None, order=None):
+        """Query statement and args formation for select_broadcast_states."""
+        form_stmt = r"SELECT point,namespace,key,value FROM %s"
+        if order == "ASC":
+            ordering = " ORDER BY point ASC, namespace ASC, key ASC"
+            form_stmt = form_stmt + ordering
+        if id_key is None or id_key == self.CHECKPOINT_LATEST_ID:
+            return form_stmt % self.TABLE_BROADCAST_STATES, []
+        else:
+            return (form_stmt % self.TABLE_BROADCAST_STATES_CHECKPOINTS +
+                    r" WHERE id==?"), [id_key]
+
+    def select_broadcast_states(self, callback, id_key=None, sort=None):
         """Select from broadcast_states or broadcast_states_checkpoints.
 
         Invoke callback(row_idx, row) on each row, where each row contains:
@@ -486,14 +498,27 @@ class CylcSuiteDAO(object):
         select from broadcast_states table if id_key == CHECKPOINT_LATEST_ID.
         Otherwise select from broadcast_states_checkpoints where id == id_key.
         """
-        form_stmt = r"SELECT point,namespace,key,value FROM %s"
-        if id_key is None or id_key == self.CHECKPOINT_LATEST_ID:
-            stmt = form_stmt % self.TABLE_BROADCAST_STATES
-            stmt_args = []
-        else:
-            stmt = (form_stmt % self.TABLE_BROADCAST_STATES_CHECKPOINTS +
-                    r" WHERE id==?")
-            stmt_args = [id_key]
+        stmt, stmt_args = self.pre_select_broadcast_states(id_key=None,
+                                                           order=sort)
+        for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
+            callback(row_idx, list(row))
+
+    def pre_select_broadcast_events(self, order=None):
+        """Query statement and args formation for select_broadcast_events."""
+        form_stmt = r"SELECT time,change,point,namespace,key,value FROM %s"
+        if order == "DESC":
+            ordering = (" ORDER BY " +
+                        "time DESC, point DESC, namespace DESC, key DESC")
+            form_stmt = form_stmt + ordering
+        return form_stmt % self.TABLE_BROADCAST_EVENTS, []
+
+    def select_broadcast_events(self, callback, id_key=None, sort=None):
+        """Select from broadcast_events.
+
+        Invoke callback(row_idx, row) on each row, where each row contains:
+            [time, change, point, namespace, key, value]
+        """
+        stmt, stmt_args = self.pre_select_broadcast_events(order=sort)
         for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
             callback(row_idx, list(row))
 

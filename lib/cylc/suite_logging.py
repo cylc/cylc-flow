@@ -46,7 +46,7 @@ LOG_DELIMITER = '.'
 
 
 def get_logs(directory, basename, absolute_path=True):
-    """Returns a list of log files is the given directory for the provided
+    """Returns a list of log files in the given directory for the provided
     basename (i.e. log, err, out) ordered newest to oldest."""
     log_files = glob.glob(os.path.join(directory,
                                        basename + LOG_DELIMITER + '*'))

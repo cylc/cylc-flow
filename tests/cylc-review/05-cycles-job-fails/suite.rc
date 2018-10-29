@@ -1,0 +1,19 @@
+#!Jinja2
+[cylc]
+    UTC mode = True
+[scheduling]
+    initial cycle point = 2000
+    final cycle point = 2000
+    [[dependencies]]
+        [[[P1Y]]]
+            graph = "loser:fail => rehab => done"
+[runtime]
+    [[done]]
+        script = sleep 1
+    [[loser]]
+        script = false
+    [[rehab]]
+        script = """
+cylc reset --state='succeeded' "${CYLC_SUITE_NAME}" 'loser' "${CYLC_TASK_CYCLE_POINT}"
+sleep 1
+"""

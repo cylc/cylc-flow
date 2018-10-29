@@ -1,0 +1,25 @@
+#!Jinja2
+[cylc]
+    UTC mode = True
+    abort if any task fails = True
+[scheduling]
+    initial cycle point = 2000
+    final cycle point = 2000
+    [[dependencies]]
+        [[[P1Y]]]
+            graph = "foo & bar & baz => qux"
+[runtime]
+    # init-script sleep to simulate queue duration
+    # script sleep to simulate run duration
+    [[foo]]
+        init-script = sleep 5
+        script = sleep 5
+    [[bar]]
+        init-script = sleep 15
+        script = true
+    [[baz]]
+        init-script = sleep 10
+        script = sleep 15
+    [[qux]]
+        init-script = true
+        script = sleep 2

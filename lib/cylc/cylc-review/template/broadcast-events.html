@@ -1,0 +1,24 @@
+{% extends "suite-base.html" %}
+{% block title_name %}broadcasts list{% endblock %}
+{% block auto_refresh %}<meta http-equiv="refresh" content="120">{% endblock %}
+{% block content %}
+<div class="container-fluid">
+
+<div class="row"><div class="col-md-12">
+<ul class="list-inline pull-right">
+  <li><a href="{{script}}/broadcast_states/{{user}}/?&amp;suite={{suite|replace("/", "%2F")}}">states</a></li>
+  <li>events</li>
+</ul>
+
+{% if broadcast_events %}
+<h1>Broadcasts List (Events)</h1>
+<pre>
+  {%- for time, change, point, namespace, key, value in broadcast_events %}
+    {{time}} {{change}} [{{namespace}}.{{point}}] {{key}}={{value|e}}
+  {%- endfor %}{# row in broadcast_events #}
+</pre>
+{% endif %}{# broadcast_events #}
+
+</div></div>
+</div>
+{% endblock %}

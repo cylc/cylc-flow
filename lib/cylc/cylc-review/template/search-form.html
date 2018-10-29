@@ -1,0 +1,32 @@
+<div class="nav pull-right">
+  <form name="file-search" role="search" action="#" onsubmit="return false">
+    <input type="hidden" name="search-mode" value="TEXT">
+    <input type="hidden" value="{{user}}" name="user">
+    <input type="hidden" value="{{suite|replace("/", "%2F")}}" name="suite">
+    <input type="hidden" value="{{path}}" name="path">
+    <input type="hidden" value="{{path_in_tar}}" name="path_in_tar">
+    <input type="hidden" value="{{mode}}" name="mode">
+    <input type="hidden" value="{{script}}" name="script">
+    <input type="hidden" value="" name="search-mode">
+    <div class="input-group">
+      <input type="text" class="form-control" name="search-string"
+      placeholder="Search File">
+      <div class="input-group-btn">
+        <button type="button" class="btn btn-default dropdown-toggle"
+        data-toggle="dropdown" aria-expanded="false" id="search-mode-button">
+          <span class="toggle-target"></span>
+          <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-right toggle-selector"
+        role="menu">
+          <li><a href="#" onclick="" data-value="TEXT">Text</a></li>
+          <li><a href="#" data-value="REGEX">Regex</a></li>
+        </ul>
+        <button type="submit" class="btn btn-primary">
+          <i class="glyphicon glyphicon-search"></i>
+          Search
+        </button>
+      </div>
+    </div><!-- /input-group -->
+  </form>
+</div>
