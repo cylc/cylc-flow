@@ -117,6 +117,14 @@ def main(is_restart=False):
         sys.exit()
 
     try:
+        SuiteSrvFilesManager().get_suite_source_dir(args[0], options.owner)
+    except SuiteServiceFileError:
+        # Source path is assumed to be the run directory
+        SuiteSrvFilesManager().register(
+            args[0],
+            glbl_cfg().get_derived_host_item(args[0], 'suite run directory'))
+
+    try:
         scheduler = Scheduler(is_restart, options, args)
     except SuiteServiceFileError as exc:
         sys.exit(exc)

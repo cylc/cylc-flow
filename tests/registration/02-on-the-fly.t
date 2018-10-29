@@ -14,11 +14,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#------------------------------------------------------------------------------
 # Test on-the-fly suite registration by "cylc run"
+#------------------------------------------------------------------------------
+# Test `cylc run` with no registration
 
 . "$(dirname "$0")/test_header"
-set_test_number 3 
+set_test_number 6
+
+TEST_NAME="${TEST_NAME_BASE}-pwd"
 
 TESTD="cylctb-cheese-${CYLC_TEST_TIME_INIT}"
 mkdir "${TESTD}"
@@ -27,20 +30,46 @@ cat >> "${TESTD}/suite.rc" <<'__SUITE_RC__'
     title = the quick brown fox
 [scheduling]
     [[dependencies]]
-        graph = foo 
+        graph = foo
 [runtime]
     [[foo]]
         script = true
 __SUITE_RC__
 
-TEST_NAME="${TEST_NAME_BASE}-run"
 cd "${TESTD}"
-run_ok "${TEST_NAME}" cylc run --hold
-contains_ok "${TEST_NAME}.stdout" <<__ERR__
+run_ok "${TEST_NAME}-run" cylc run --hold
+contains_ok "${TEST_NAME}-run.stdout" <<__ERR__
 REGISTERED ${TESTD} -> ${PWD}
 __ERR__
 
-TEST_NAME="${TEST_NAME_BASE}-stop"
-run_ok "${TEST_NAME}" cylc stop "${TESTD}"
+run_ok "${TEST_NAME}-stop" cylc stop "${TESTD}"
 
 purge_suite $TESTD
+#------------------------------------------------------------------------------
+# Test `cylc run` REG for an un-registered suite
+TESTD="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_NAME_BASE}"
+CYLC_RUN_DIR=$(cylc get-global --print-run-dir)
+
+mkdir -p "${CYLC_RUN_DIR}/${TESTD}"
+cat >> "${CYLC_RUN_DIR}/${TESTD}/suite.rc" <<'__SUITE_RC__'
+[meta]
+    title = the quick brown fox
+[scheduling]
+    [[dependencies]]
+        graph = foo
+[runtime]
+    [[foo]]
+        script = true
+__SUITE_RC__
+
+TEST_NAME="${TEST_NAME_BASE}-cylc-run-dir"
+run_ok "${TEST_NAME}-run" cylc run --hold "${TESTD}"
+contains_ok "${TEST_NAME}-run.stdout" <<__ERR__
+REGISTERED ${TESTD} -> ${CYLC_RUN_DIR}/${TESTD}
+__ERR__
+
+run_ok "${TEST_NAME}stop-" cylc stop "${TESTD}"
+
+purge_suite $TESTD
+
+exit

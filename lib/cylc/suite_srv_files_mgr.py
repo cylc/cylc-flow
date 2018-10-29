@@ -485,9 +485,9 @@ To start a new run, stop the old one first with one or more of these:
 
     def create_auth_files(self, reg):
         """Create or renew passphrase and SSL files for suite 'reg'."""
-
         # Suite service directory.
         srv_d = self.get_suite_srv_dir(reg)
+        mkdir_p(srv_d)
 
         # Create a new passphrase for the suite if necessary.
         if not self._locate_item(self.FILE_BASE_PASSPHRASE, srv_d):
