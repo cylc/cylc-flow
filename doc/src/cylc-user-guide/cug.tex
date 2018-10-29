@@ -7934,16 +7934,8 @@ at \lstinline=3,9,15,21=:
             graph = "my-dog[-PT3H] => cat"
 \end{lstlisting}
 
-For suite-state polling the cycle point of the target task is treated as a
-literal string so the polling command has to be told if the remote suite has a
-different cycle point format. Use the \lstinline=--template= option for this,
-or in-suite:
-\begin{lstlisting}
-[runtime]
-    [[my-foo]]
-        [[[suite state polling]]]
-            template = %Y-%m-%dT%H
-\end{lstlisting}
+For suite-state polling, the cycle point is automatically converted to the
+cycle point format of the target suite.
 
 The remote suite does not have to be running when polling commences because the
 command interrogates the suite run database, not the suite server program.

@@ -1230,8 +1230,7 @@ class SuiteConfig(object):
                     ('host', ' --%s=%s'),
                     ('interval', ' --%s=%d'),
                     ('max-polls', ' --%s=%s'),
-                    ('run-dir', ' --%s=%s'),
-                    ('template', ' --%s=%s')]:
+                    ('run-dir', ' --%s=%s')]:
                 if rtc['suite state polling'][key]:
                     comstr += fmt % (key, rtc['suite state polling'][key])
             comstr += " " + tdef.suite_polling_cfg['suite']

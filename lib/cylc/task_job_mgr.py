@@ -368,8 +368,7 @@ class TaskJobManager(object):
                     ('host', ' --%s=%s'),
                     ('interval', ' --%s=%d'),
                     ('max-polls', ' --%s=%s'),
-                    ('run-dir', ' --%s=%s'),
-                    ('template', ' --%s=%s')]:
+                    ('run-dir', ' --%s=%s')]:
                 if rtconfig['suite state polling'][key]:
                     comstr += fmt % (key, rtconfig['suite state polling'][key])
             comstr += " " + itask.tdef.suite_polling_cfg['suite']
