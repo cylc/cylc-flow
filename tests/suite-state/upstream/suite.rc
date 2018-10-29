@@ -1,5 +1,5 @@
 [meta]
-    title = "One task takes 20 sec to succeed, another to fail."
+    title = "One task takes 20 sec to succeed, another to fail, another to send a message."
 [cylc]
     [[reference test]]
         live mode suite timeout = PT10M
@@ -8,9 +8,18 @@
         graph = """
              good-stuff & bad
           bad:fail => !bad
+             messenger:x => done
                 """
 [runtime]
+    [[done]]
     [[good-stuff]]
         script = "sleep 20"
     [[bad]]
         script = "sleep 20; /bin/false"
+    [[messenger]]
+        script = """
+          sleep 20
+          cylc message 'the quick brown fox'
+                 """
+        [[[outputs]]]
+          x = "the quick brown fox"

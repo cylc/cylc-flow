@@ -240,6 +240,7 @@ SPEC = {
                 'host': [VDR.V_STRING],
                 'interval': [VDR.V_INTERVAL],
                 'max-polls': [VDR.V_INTEGER],
+                'message': [VDR.V_STRING],
                 'run-dir': [VDR.V_STRING],
                 'verbose mode': [VDR.V_BOOLEAN],
             },

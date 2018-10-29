@@ -359,8 +359,7 @@ class TaskJobManager(object):
             # Automatic suite state polling script
             comstr = "cylc suite-state " + \
                      " --task=" + itask.tdef.suite_polling_cfg['task'] + \
-                     " --point=" + str(itask.point) + \
-                     " --status=" + itask.tdef.suite_polling_cfg['status']
+                     " --point=" + str(itask.point) 
             if cylc.flags.debug:
                 comstr += ' --debug'
             for key, fmt in [
@@ -371,6 +370,11 @@ class TaskJobManager(object):
                     ('run-dir', ' --%s=%s')]:
                 if rtconfig['suite state polling'][key]:
                     comstr += fmt % (key, rtconfig['suite state polling'][key])
+            if rtconfig['suite state polling']['message']:
+                comstr += " --message='%s'" % (
+                    rtconfig['suite state polling']['message'])
+            else:
+                comstr += " --status=" + itask.tdef.suite_polling_cfg['status']
             comstr += " " + itask.tdef.suite_polling_cfg['suite']
             script = "echo " + comstr + "\n" + comstr
         return pre_script, script, post_script

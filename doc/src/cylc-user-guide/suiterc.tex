@@ -2050,6 +2050,16 @@ will be invoked on the remote account.
     \item {\em default:} (none)
 \end{myitemize}
 
+\subparagraph[host]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[suite state polling]]] \textrightarrow message}
+
+Wait for the target task in the target suite to receive a specified message
+rather than achieve a state.
+
+\begin{myitemize}
+    \item {\em type:} string (hostname)
+    \item {\em default:} (none)
+\end{myitemize}
+
 \subparagraph[verbose]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[suite state polling]]] \textrightarrow verbose}
 
 Run the polling \lstinline=cylc suite-state= command in verbose output mode.

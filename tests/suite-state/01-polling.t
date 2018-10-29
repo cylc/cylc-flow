@@ -41,15 +41,15 @@ run_ok $TEST_NAME cylc val --debug --set UPSTREAM=$UPSTREAM $SUITE_NAME
 # check auto-generated task script for lbad
 cylc get-config --set UPSTREAM=$UPSTREAM -i '[runtime][lbad]script' $SUITE_NAME > lbad.script
 cmp_ok lbad.script << __END__
-echo cylc suite-state --task=bad --point=\$CYLC_TASK_CYCLE_POINT --status=fail --interval=2 --max-polls=20 $UPSTREAM
-cylc suite-state --task=bad --point=\$CYLC_TASK_CYCLE_POINT --status=fail --interval=2 --max-polls=20 $UPSTREAM
+echo cylc suite-state --task=bad --point=\$CYLC_TASK_CYCLE_POINT --interval=2 --max-polls=20 --status=fail $UPSTREAM
+cylc suite-state --task=bad --point=\$CYLC_TASK_CYCLE_POINT --interval=2 --max-polls=20 --status=fail $UPSTREAM
 __END__
 
 # check auto-generated task script for l-good
 cylc get-config --set UPSTREAM=$UPSTREAM -i '[runtime][l-good]script' $SUITE_NAME > l-good.script
 cmp_ok l-good.script << __END__
-echo cylc suite-state --task=good-stuff --point=\$CYLC_TASK_CYCLE_POINT --status=succeed --interval=2 --max-polls=20 $UPSTREAM
-cylc suite-state --task=good-stuff --point=\$CYLC_TASK_CYCLE_POINT --status=succeed --interval=2 --max-polls=20 $UPSTREAM
+echo cylc suite-state --task=good-stuff --point=\$CYLC_TASK_CYCLE_POINT --interval=2 --max-polls=20 --status=succeed $UPSTREAM
+cylc suite-state --task=good-stuff --point=\$CYLC_TASK_CYCLE_POINT --interval=2 --max-polls=20 --status=succeed $UPSTREAM
 __END__
 
 #-------------------------------------------------------------------------------
