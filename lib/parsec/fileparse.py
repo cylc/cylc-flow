@@ -71,6 +71,9 @@ _KEY_VALUE = re.compile(
     ''',
     re.VERBOSE)
 
+_BAD_CONTINUATION_TRAILING_WHITESPACE = re.compile(
+    r'''.*\\\s''')
+
 # quoted value regex reference:
 #   http://stackoverflow.com/questions/5452655/
 #       python-regex-to-match-text-in-single-quotes-
@@ -117,6 +120,12 @@ def _concatenate(lines):
     maxline = len(lines)
     while index < maxline:
         line = lines[index]
+        # Raise an error if line has a whitespace after the line break
+        if re.match(_BAD_CONTINUATION_TRAILING_WHITESPACE, line):
+            msg = ("The line \"{0}\" has whitespace after the line break "
+                   "character (\). This is not allowed in the syntax for "
+                   "this type of file.")
+            raise FileParseError(msg.format(line))
         while line.endswith('\\'):
             if index == maxline - 1:
                 # continuation char on the last line
