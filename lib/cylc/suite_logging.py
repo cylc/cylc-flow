@@ -26,10 +26,11 @@ import glob
 import logging
 import logging.handlers
 from time import time
+
 import cylc.flags
 from cylc.cfgspec.glbl_cfg import glbl_cfg
-from cylc.wallclock import (get_time_string_from_unix_time,
-                            get_current_time_string)
+from cylc.wallclock import (
+    get_time_string_from_unix_time, get_current_time_string)
 
 # Suite log filenames.
 SUITE_LOG = 'log'

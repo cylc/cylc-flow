@@ -18,6 +18,7 @@
 
 """Task state related logic."""
 
+
 import cylc.flags as flags
 from cylc.prerequisite import Prerequisite
 from cylc.suite_logging import LOG

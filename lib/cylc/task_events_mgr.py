@@ -39,9 +39,9 @@ from parsec.config import ItemNotFoundError
 
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
-from cylc.mp_pool import SuiteProcContext
-from cylc.suite_logging import ERR, LOG
 from cylc.hostuserutil import get_host, get_user
+from cylc.subprocctx import SubProcContext
+from cylc.suite_logging import ERR, LOG
 from cylc.task_action_timer import TaskActionTimer
 from cylc.task_job_logs import (
     get_task_job_log, get_task_job_activity_log, JOB_LOG_OUT, JOB_LOG_ERR)
@@ -260,7 +260,7 @@ class TaskEventsManager(object):
             if timer.ctx.ctx_type == self.HANDLER_CUSTOM:
                 # Run custom event handlers on their own
                 self.proc_pool.put_command(
-                    SuiteProcContext(
+                    SubProcContext(
                         (key1, submit_num),
                         timer.ctx.cmd, env=os.environ, shell=True,
                     ),
@@ -507,7 +507,7 @@ class TaskEventsManager(object):
         if mail_smtp:
             env["smtp"] = mail_smtp
         self.proc_pool.put_command(
-            SuiteProcContext(
+            SubProcContext(
                 ctx, cmd, env=env, stdin_str=stdin_str, id_keys=id_keys,
             ),
             self._event_email_callback, [schd_ctx])
@@ -519,7 +519,7 @@ class TaskEventsManager(object):
             try:
                 if proc_ctx.ret_code == 0:
                     del self.event_timers[id_key]
-                    log_ctx = SuiteProcContext((key1, submit_num), None)
+                    log_ctx = SubProcContext((key1, submit_num), None)
                     log_ctx.ret_code = 0
                     log_task_job_activity(
                         log_ctx, schd_ctx.suite, point, name, submit_num)
@@ -576,7 +576,7 @@ class TaskEventsManager(object):
         cmd.append(glbl_cfg().get_derived_host_item(
             schd_ctx.suite, "suite job log directory") + "/")
         self.proc_pool.put_command(
-            SuiteProcContext(ctx, cmd, env=dict(os.environ), id_keys=id_keys),
+            SubProcContext(ctx, cmd, env=dict(os.environ), id_keys=id_keys),
             self._job_logs_retrieval_callback, [schd_ctx])
 
     def _job_logs_retrieval_callback(self, proc_ctx, schd_ctx):
@@ -596,7 +596,7 @@ class TaskEventsManager(object):
                     fname_oks[fname] = os.path.exists(get_task_job_log(
                         schd_ctx.suite, point, name, submit_num, fname))
                 # All expected paths must exist to record a good attempt
-                log_ctx = SuiteProcContext((key1, submit_num), None)
+                log_ctx = SubProcContext((key1, submit_num), None)
                 if all(fname_oks.values()):
                     log_ctx.ret_code = 0
                     del self.event_timers[id_key]

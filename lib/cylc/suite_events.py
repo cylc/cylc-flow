@@ -22,8 +22,8 @@ import os
 from pipes import quote
 
 from cylc.cfgspec.glbl_cfg import glbl_cfg
-from cylc.mp_pool import SuiteProcContext
 from cylc.hostuserutil import get_host, get_user
+from cylc.subprocctx import SubProcContext
 from cylc.suite_logging import LOG
 
 
@@ -99,7 +99,7 @@ class SuiteEventHandler(object):
                     'port': ctx.port,
                     'owner': ctx.owner,
                     'suite': ctx.suite}
-            proc_ctx = SuiteProcContext(
+            proc_ctx = SubProcContext(
                 (self.SUITE_EVENT_HANDLER, ctx.event),
                 [
                     'mail',
@@ -159,7 +159,7 @@ class SuiteEventHandler(object):
                 # Nothing substituted, assume classic interface
                 cmd = "%s '%s' '%s' '%s'" % (
                     handler, ctx.event, ctx.suite, ctx.reason)
-            proc_ctx = SuiteProcContext(
+            proc_ctx = SubProcContext(
                 cmd_key, cmd, env=dict(os.environ), shell=True)
             if abort_on_error or self.proc_pool.closed:
                 # Run command in foreground if abort on failure is set or if

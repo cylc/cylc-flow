@@ -22,9 +22,10 @@ import sqlite3
 import sys
 import traceback
 
+
 import cylc.flags
-from cylc.wallclock import get_current_time_string
 from cylc.suite_logging import LOG
+from cylc.wallclock import get_current_time_string
 
 
 class CylcSuiteDAOTableColumn(object):

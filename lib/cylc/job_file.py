@@ -107,10 +107,11 @@ class JobFileWriter(object):
     @staticmethod
     def _check_script_value(value):
         """Return True if script has any executable statements."""
-        for line in value.splitlines():
-            line = line.strip()
-            if line and not line.startswith("#"):
-                return True
+        if value:
+            for line in value.splitlines():
+                line = line.strip()
+                if line and not line.startswith("#"):
+                    return True
         return False
 
     @staticmethod

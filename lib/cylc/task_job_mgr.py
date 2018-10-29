@@ -45,7 +45,8 @@ from cylc.task_job_logs import (
     JOB_LOG_JOB, get_task_job_log, get_task_job_job_log,
     get_task_job_activity_log, get_task_job_id, NN)
 from cylc.mkdir_p import mkdir_p
-from cylc.mp_pool import SuiteProcPool, SuiteProcContext
+from cylc.subprocpool import SuiteProcPool
+from cylc.subprocctx import SubProcContext
 from cylc.suite_logging import LOG
 from cylc.task_action_timer import TaskActionTimer
 from cylc.task_events_mgr import TaskEventsManager, log_task_job_activity
@@ -59,7 +60,7 @@ from cylc.task_state import (
     TASK_STATUSES_ACTIVE, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
     TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING)
-from cylc.wallclock import get_current_time_string
+from cylc.wallclock import get_current_time_string, get_utc_mode
 
 
 class TaskJobManager(object):
@@ -244,7 +245,7 @@ class TaskJobManager(object):
                 for itask in itasks:
                     itask.local_job_file_path = None  # reset for retry
                     log_task_job_activity(
-                        SuiteProcContext(
+                        SubProcContext(
                             self.JOBS_SUBMIT,
                             '(init %s)' % owner_at_host,
                             err=REMOTE_INIT_FAILED,
@@ -258,7 +259,7 @@ class TaskJobManager(object):
             cmd = ['cylc', self.JOBS_SUBMIT]
             if cylc.flags.debug:
                 cmd.append('--debug')
-            if cylc.flags.utc:
+            if get_utc_mode():
                 cmd.append('--utc-mode')
             remote_mode = False
             kwargs = {}
@@ -293,7 +294,7 @@ class TaskJobManager(object):
                     self.suite_db_mgr.put_update_task_outputs(itask)
             cmd += job_log_dirs
             self.proc_pool.put_command(
-                SuiteProcContext(
+                SubProcContext(
                     self.JOBS_SUBMIT,
                     cmd,
                     stdin_file_paths=stdin_file_paths,
@@ -414,7 +415,7 @@ class TaskJobManager(object):
 
     def _kill_task_job_callback(self, suite, itask, cmd_ctx, line):
         """Helper for _kill_task_jobs_callback, on one task job."""
-        ctx = SuiteProcContext(self.JOBS_KILL, None)
+        ctx = SubProcContext(self.JOBS_KILL, None)
         ctx.out = line
         try:
             ctx.timestamp, _, ctx.ret_code = line.split("|", 2)
@@ -509,7 +510,7 @@ class TaskJobManager(object):
 
     def _poll_task_job_callback(self, suite, itask, cmd_ctx, line):
         """Helper for _poll_task_jobs_callback, on one task job."""
-        ctx = SuiteProcContext(self.JOBS_POLL, None)
+        ctx = SubProcContext(self.JOBS_POLL, None)
         ctx.out = line
         ctx.ret_code = 0
 
@@ -581,7 +582,7 @@ class TaskJobManager(object):
 
     def _poll_task_job_message_callback(self, suite, itask, cmd_ctx, line):
         """Helper for _poll_task_jobs_callback, on message of one task job."""
-        ctx = SuiteProcContext(self.JOBS_POLL, None)
+        ctx = SubProcContext(self.JOBS_POLL, None)
         ctx.out = line
         try:
             event_time, severity, message = line.split("|")[2:5]
@@ -626,7 +627,7 @@ class TaskJobManager(object):
                     itask.point, itask.tdef.name, itask.submit_num))
             cmd += job_log_dirs
             self.proc_pool.put_command(
-                SuiteProcContext(cmd_key, cmd), callback, [suite, itasks])
+                SubProcContext(cmd_key, cmd), callback, [suite, itasks])
 
     @staticmethod
     def _set_retry_timers(itask, rtconfig=None):
@@ -643,6 +644,8 @@ class TaskJobManager(object):
                     (TASK_STATUS_SUBMIT_RETRYING, 'submission retry delays'),
                     (TASK_STATUS_RETRYING, 'execution retry delays')]:
                 delays = rtconfig['job'][cfg_key]
+                if delays is None:
+                    delays = []
                 try:
                     itask.try_timers[key].set_delays(delays)
                 except KeyError:
@@ -672,7 +675,7 @@ class TaskJobManager(object):
 
     def _submit_task_job_callback(self, suite, itask, cmd_ctx, line):
         """Helper for _submit_task_jobs_callback, on one task job."""
-        ctx = SuiteProcContext(self.JOBS_SUBMIT, None)
+        ctx = SubProcContext(self.JOBS_SUBMIT, None)
         ctx.out = line
         items = line.split("|")
         try:
@@ -772,7 +775,7 @@ class TaskJobManager(object):
         LOG.debug(traceback.format_exc())
         LOG.error(exc)
         log_task_job_activity(
-            SuiteProcContext(self.JOBS_SUBMIT, action, err=exc, ret_code=1),
+            SubProcContext(self.JOBS_SUBMIT, action, err=exc, ret_code=1),
             suite, itask.point, itask.tdef.name, submit_num=itask.submit_num)
         if not dry_run:
             # Perist

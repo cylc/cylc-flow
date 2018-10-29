@@ -27,6 +27,7 @@ import gobject
 import shlex
 from subprocess import Popen, PIPE, STDOUT
 from uuid import uuid4
+
 from isodatetime.parsers import TimePointParser
 
 from cylc.hostuserutil import is_remote_host, is_remote_user
@@ -34,6 +35,7 @@ from cylc.gui.dbchooser import dbchooser
 from cylc.gui.combo_logviewer import ComboLogViewer
 from cylc.gui.warning_dialog import warning_dialog, info_dialog
 from cylc.task_job_logs import JOB_LOG_OPTS
+from cylc.wallclock import get_current_time_string
 
 try:
     from cylc.gui.view_graph import ControlGraph
@@ -66,8 +68,7 @@ from cylc.gui.gcapture import Gcapture
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.suite_logging import SuiteLog
 from cylc.cfgspec.glbl_cfg import glbl_cfg
-from cylc.cfgspec.gcylc import gcfg
-from cylc.wallclock import get_current_time_string
+from cylc.cfgspec.gcylc import GcylcConfig
 from cylc.task_state import (
     TASK_STATUSES_ALL, TASK_STATUSES_RESTRICTED, TASK_STATUSES_CAN_RESET_TO,
     TASK_STATUSES_TRIGGERABLE, TASK_STATUSES_ACTIVE, TASK_STATUS_RUNNING,
@@ -524,6 +525,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             if "graph" in self.__class__.VIEWS_ORDERED:
                 self.__class__.VIEWS_ORDERED.remove('graph')
 
+        gcfg = GcylcConfig.get_inst()
         self.cfg = InitData(
             suite, owner, host, port, comms_timeout, template_vars,
             gcfg.get(["ungrouped views"]),
@@ -693,7 +695,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         """Change self.theme and then replace each view with itself"""
         if not item.get_active():
             return False
-        self.theme = gcfg.get(['themes', item.theme_name])
+        self.theme = GcylcConfig.get_inst().get(['themes', item.theme_name])
         self.restart_views()
 
     def set_dot_size(self, item, dsize):
@@ -908,6 +910,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
     def set_view_defaults(self, viewname, view_num):
         """Apply user settings defined in gcylc.rc on a new view.
         Run this method before handling menus or toolbars."""
+        gcfg = GcylcConfig.get_inst()
         # Sort text view by column ('sort column')
         if gcfg.get(['sort column']) != 'none' and viewname == 'text':
             self.current_views[view_num].sort_by_column(
@@ -2328,7 +2331,7 @@ to reduce network traffic.""")
 
         dot_sizes = ['small', 'medium', 'large', 'extra large']
         dot_size_items = {}
-        self.dot_size = gcfg.get(['dot icon size'])
+        self.dot_size = GcylcConfig.get_inst().get(['dot icon size'])
         dot_size_items[self.dot_size] = gtk.RadioMenuItem(
             label='_' + self.dot_size)
         dot_sizemenu.append(dot_size_items[self.dot_size])
@@ -2373,7 +2376,7 @@ to reduce network traffic.""")
         thememenu.append(theme_items[theme])
         self._set_tooltip(theme_items[theme], theme + " state icon theme")
         theme_items[theme].theme_name = theme
-        for theme in gcfg.get(['themes']):
+        for theme in GcylcConfig.get_inst().get(['themes']):
             if theme == "default":
                 continue
             theme_items[theme] = gtk.RadioMenuItem(
@@ -2384,7 +2387,7 @@ to reduce network traffic.""")
 
         # set_active then connect, to avoid causing an unnecessary toggle now.
         theme_items[self.theme_name].set_active(True)
-        for theme in gcfg.get(['themes']):
+        for theme in GcylcConfig.get_inst().get(['themes']):
             theme_items[theme].connect('toggled', self.set_theme)
 
         self.view_menu.append(gtk.SeparatorMenuItem())
@@ -3076,7 +3079,7 @@ This is what my suite does:..."""
         self.layout_toolbutton.set_label("Layout")
         self.layout_toolbutton.set_homogeneous(False)
         self.layout_toolbutton.connect("toggled", self._cb_change_view_align)
-        self.layout_toolbutton.set_active(self.view_layout_horizontal)
+        self.layout_toolbutton.set_active(bool(self.view_layout_horizontal))
         self._set_tooltip(self.layout_toolbutton,
                           "Toggle views side-by-side.")
         # Insert the view choosers

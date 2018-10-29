@@ -15,273 +15,242 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"Cylc site and user configuration file spec."
+"""Cylc site and user configuration file spec."""
 
-import os
-import sys
-import re
 import atexit
+import os
+import re
+import sys
 import shutil
 from tempfile import mkdtemp
-from parsec.config import config
-from parsec.validate import validator as vdr
-from parsec.validate import coercers
+
+from parsec.config import ParsecConfig
 from parsec import ParsecError
 from parsec.upgrade import upgrader, converter
+
+from cylc.cfgvalidate import (
+    cylc_config_validate, CylcConfigValidator as VDR, DurationFloat)
 from cylc.hostuserutil import is_remote_user
 from cylc.envvar import expandvars
 from cylc.mkdir_p import mkdir_p
 import cylc.flags
-from cylc.cfgspec.utils import (
-    coerce_interval, coerce_interval_list, coerce_range_list, DurationFloat)
 from cylc.network import PRIVILEGE_LEVELS, PRIV_STATE_TOTALS, PRIV_SHUTDOWN
 from cylc.version import CYLC_VERSION
 
-coercers['interval'] = coerce_interval
-coercers['interval_list'] = coerce_interval_list
-coercers['range_list'] = coerce_range_list
-
+# Nested dict of spec items.
+# Spec value is [value_type, default, allowed_2, allowed_3, ...]
+# where:
+# - value_type: value type (compulsory).
+# - default: the default value (optional).
+# - allowed_2, ...: the only other allowed values of this setting (optional).
 SPEC = {
-    'process pool size': vdr(vtype='integer', default=4),
-    'process pool timeout': vdr(vtype='interval', default=DurationFloat(600)),
-    'temporary directory': vdr(vtype='string'),
-    'state dump rolling archive length': vdr(
-        vtype='integer', default=10),
-    'disable interactive command prompts': vdr(vtype='boolean', default=True),
-    'enable run directory housekeeping': vdr(vtype='boolean', default=False),
-    'run directory rolling archive length': vdr(
-        vtype='integer', default=2),
-    'task host select command timeout': vdr(
-        vtype='interval', default=DurationFloat(10)),
-    'xtrigger function timeout': vdr(
-        vtype='interval', default=DurationFloat(10)),
+    'process pool size': [VDR.V_INTEGER, 4],
+    'process pool timeout': [VDR.V_INTERVAL, DurationFloat(600)],
+    'temporary directory': [VDR.V_STRING],
+    'state dump rolling archive length': [VDR.V_INTEGER, 10],
+    'disable interactive command prompts': [VDR.V_BOOLEAN, True],
+    'enable run directory housekeeping': [VDR.V_BOOLEAN],
+    'run directory rolling archive length': [VDR.V_INTEGER, 2],
+    'task host select command timeout': [VDR.V_INTERVAL, DurationFloat(10)],
+    'xtrigger function timeout': [VDR.V_INTERVAL, DurationFloat(10)],
     'task messaging': {
-        'retry interval': vdr(
-            vtype='interval', default=DurationFloat(5)),
-        'maximum number of tries': vdr(vtype='integer', default=7),
-        'connection timeout': vdr(
-            vtype='interval', default=DurationFloat(30)),
+        'retry interval': [VDR.V_INTERVAL, DurationFloat(5)],
+        'maximum number of tries': [VDR.V_INTEGER, 7],
+        'connection timeout': [VDR.V_INTERVAL, DurationFloat(30)],
     },
 
     'cylc': {
-        'UTC mode': vdr(vtype='boolean', default=False),
-        'health check interval': vdr(
-            vtype='interval', default=DurationFloat(600)),
-        'task event mail interval': vdr(
-            vtype='interval', default=DurationFloat(300)),
+        'UTC mode': [VDR.V_BOOLEAN],
+        'health check interval': [VDR.V_INTERVAL, DurationFloat(600)],
+        'task event mail interval': [VDR.V_INTERVAL, DurationFloat(300)],
         'events': {
-            'handlers': vdr(vtype='string_list', default=[]),
-            'handler events': vdr(vtype='string_list', default=[]),
-            'mail events': vdr(vtype='string_list', default=[]),
-            'mail from': vdr(vtype='string'),
-            'mail smtp': vdr(vtype='string'),
-            'mail to': vdr(vtype='string'),
-            'mail footer': vdr(vtype='string'),
-            'startup handler': vdr(vtype='string_list', default=[]),
-            'timeout handler': vdr(vtype='string_list', default=[]),
-            'inactivity handler': vdr(vtype='string_list', default=[]),
-            'shutdown handler': vdr(vtype='string_list', default=[]),
-            'stalled handler': vdr(vtype='string_list', default=[]),
-            'timeout': vdr(vtype='interval'),
-            'inactivity': vdr(vtype='interval'),
-            'abort on timeout': vdr(vtype='boolean', default=False),
-            'abort on inactivity': vdr(vtype='boolean', default=False),
-            'abort on stalled': vdr(vtype='boolean', default=False),
+            'handlers': [VDR.V_STRING_LIST],
+            'handler events': [VDR.V_STRING_LIST],
+            'mail events': [VDR.V_STRING_LIST],
+            'mail from': [VDR.V_STRING],
+            'mail smtp': [VDR.V_STRING],
+            'mail to': [VDR.V_STRING],
+            'mail footer': [VDR.V_STRING],
+            'startup handler': [VDR.V_STRING_LIST],
+            'timeout handler': [VDR.V_STRING_LIST],
+            'inactivity handler': [VDR.V_STRING_LIST],
+            'shutdown handler': [VDR.V_STRING_LIST],
+            'stalled handler': [VDR.V_STRING_LIST],
+            'timeout': [VDR.V_INTERVAL],
+            'inactivity': [VDR.V_INTERVAL],
+            'abort on timeout': [VDR.V_BOOLEAN],
+            'abort on inactivity': [VDR.V_BOOLEAN],
+            'abort on stalled': [VDR.V_BOOLEAN],
         },
     },
 
     'suite logging': {
-        'roll over at start-up': vdr(vtype='boolean', default=True),
-        'rolling archive length': vdr(vtype='integer', default=5),
-        'maximum size in bytes': vdr(vtype='integer', default=1000000),
+        'roll over at start-up': [VDR.V_BOOLEAN, True],
+        'rolling archive length': [VDR.V_INTEGER, 5],
+        'maximum size in bytes': [VDR.V_INTEGER, 1000000],
     },
 
     'documentation': {
         'files': {
-            'html index': vdr(
-                vtype='string', default="$CYLC_DIR/doc/install/index.html"),
-            'pdf user guide': vdr(
-                vtype='string',
-                default="$CYLC_DIR/doc/install/cylc-user-guide.pdf"),
-            'multi-page html user guide': vdr(
-                vtype='string',
-                default="$CYLC_DIR/doc/install/html/multi/cug-html.html"),
-            'single-page html user guide': vdr(
-                vtype='string',
-                default="$CYLC_DIR/doc/install/html/single/cug-html.html"),
+            'html index': [
+                VDR.V_STRING, '$CYLC_DIR/doc/install/index.html'],
+            'pdf user guide': [
+                VDR.V_STRING, '$CYLC_DIR/doc/install/cylc-user-guide.pdf'],
+            'multi-page html user guide': [
+                VDR.V_STRING,
+                '$CYLC_DIR/doc/install/html/multi/cug-html.html'],
+            'single-page html user guide': [
+                VDR.V_STRING,
+                '$CYLC_DIR/doc/install/html/single/cug-html.html'],
         },
         'urls': {
-            'internet homepage': vdr(
-                vtype='string', default="http://cylc.github.io/cylc/"),
-            'local index': vdr(vtype='string', default=None),
+            'internet homepage': [VDR.V_STRING, 'http://cylc.github.io/cylc/'],
+            'local index': [VDR.V_STRING],
         },
     },
 
     'document viewers': {
-        'pdf': vdr(vtype='string', default="evince"),
-        'html': vdr(vtype='string', default="firefox"),
+        'pdf': [VDR.V_STRING, 'evince'],
+        'html': [VDR.V_STRING, 'firefox'],
     },
     'editors': {
-        'terminal': vdr(vtype='string', default="vim"),
-        'gui': vdr(vtype='string', default="gvim -f"),
+        'terminal': [VDR.V_STRING, 'vim'],
+        'gui': [VDR.V_STRING, 'gvim -f'],
     },
 
     'communication': {
-        'method': vdr(vtype='string', default="https",
-                      options=["https", "http"]),
-        'base port': vdr(vtype='integer', default=43001),
-        'maximum number of ports': vdr(vtype='integer', default=100),
-        'proxies on': vdr(vtype='boolean', default=False),
-        'options': vdr(vtype='string_list', default=[]),
+        'method': [VDR.V_STRING, 'https', 'http'],
+        'base port': [VDR.V_INTEGER, 43001],
+        'maximum number of ports': [VDR.V_INTEGER, 100],
+        'proxies on': [VDR.V_BOOLEAN],
+        'options': [VDR.V_STRING_LIST],
     },
 
     'monitor': {
-        'sort order': vdr(vtype='string',
-                          options=["alphanumeric", "definition"],
-                          default="definition"),
+        'sort order': [VDR.V_STRING, 'definition', 'alphanumeric'],
     },
 
     'hosts': {
         'localhost': {
-            'run directory': vdr(vtype='string', default="$HOME/cylc-run"),
-            'work directory': vdr(vtype='string', default="$HOME/cylc-run"),
-            'task communication method': vdr(
-                vtype='string',
-                options=["default", "ssh", "poll"], default="default"),
-            'submission polling intervals': vdr(
-                vtype='interval_list', default=[]),
-            'execution polling intervals': vdr(
-                vtype='interval_list', default=[]),
-            'scp command': vdr(
-                vtype='string',
-                default='scp -oBatchMode=yes -oConnectTimeout=10'),
-            'ssh command': vdr(
-                vtype='string',
-                default='ssh -oBatchMode=yes -oConnectTimeout=10'),
-            'use login shell': vdr(vtype='boolean', default=True),
-            'cylc executable': vdr(vtype='string', default='cylc'),
-            'global init-script': vdr(vtype='string', default=''),
-            'copyable environment variables': vdr(
-                vtype='string_list', default=[]),
-            'retrieve job logs': vdr(vtype='boolean', default=False),
-            'retrieve job logs command': vdr(
-                vtype='string', default='rsync -a'),
-            'retrieve job logs max size': vdr(vtype='string'),
-            'retrieve job logs retry delays': vdr(
-                vtype='interval_list', default=[]),
-            'task event handler retry delays': vdr(
-                vtype='interval_list', default=[]),
-            'tail command template': vdr(
-                vtype='string', default="tail -n +1 -F %(filename)s"),
+            'run directory': [VDR.V_STRING, '$HOME/cylc-run'],
+            'work directory': [VDR.V_STRING, '$HOME/cylc-run'],
+            'task communication method': [
+                VDR.V_STRING, 'default', 'ssh', 'poll'],
+            'submission polling intervals': [VDR.V_INTERVAL_LIST],
+            'execution polling intervals': [VDR.V_INTERVAL_LIST],
+            'scp command': [
+                VDR.V_STRING, 'scp -oBatchMode=yes -oConnectTimeout=10'],
+            'ssh command': [
+                VDR.V_STRING, 'ssh -oBatchMode=yes -oConnectTimeout=10'],
+            'use login shell': [VDR.V_BOOLEAN, True],
+            'cylc executable': [VDR.V_STRING, 'cylc'],
+            'global init-script': [VDR.V_STRING],
+            'copyable environment variables': [VDR.V_STRING_LIST],
+            'retrieve job logs': [VDR.V_BOOLEAN],
+            'retrieve job logs command': [VDR.V_STRING, 'rsync -a'],
+            'retrieve job logs max size': [VDR.V_STRING],
+            'retrieve job logs retry delays': [VDR.V_INTERVAL_LIST],
+            'task event handler retry delays': [VDR.V_INTERVAL_LIST],
+            'tail command template': [
+                VDR.V_STRING, 'tail -n +1 -F %(filename)s'],
             'batch systems': {
                 '__MANY__': {
-                    'err tailer': vdr(vtype='string'),
-                    'out tailer': vdr(vtype='string'),
-                    'err viewer': vdr(vtype='string'),
-                    'out viewer': vdr(vtype='string'),
-                    'job name length maximum': vdr(vtype='integer'),
-                    'execution time limit polling intervals': vdr(
-                        vtype='interval_list', default=[]),
+                    'err tailer': [VDR.V_STRING],
+                    'out tailer': [VDR.V_STRING],
+                    'err viewer': [VDR.V_STRING],
+                    'out viewer': [VDR.V_STRING],
+                    'job name length maximum': [VDR.V_INTEGER],
+                    'execution time limit polling intervals': [
+                        VDR.V_INTERVAL_LIST],
                 },
             },
         },
         '__MANY__': {
-            'run directory': vdr(vtype='string'),
-            'work directory': vdr(vtype='string'),
-            'task communication method': vdr(
-                vtype='string', options=["default", "ssh", "poll"]),
-            'submission polling intervals': vdr(
-                vtype='interval_list', default=[]),
-            'execution polling intervals': vdr(
-                vtype='interval_list', default=[]),
-            'scp command': vdr(vtype='string'),
-            'ssh command': vdr(vtype='string'),
-            'use login shell': vdr(vtype='boolean', default=None),
-            'cylc executable': vdr(vtype='string'),
-            'global init-script': vdr(vtype='string'),
-            'copyable environment variables': vdr(
-                vtype='string_list', default=[]),
-            'retrieve job logs': vdr(vtype='boolean', default=None),
-            'retrieve job logs command': vdr(vtype='string'),
-            'retrieve job logs max size': vdr(vtype='string'),
-            'retrieve job logs retry delays': vdr(
-                vtype='interval_list'),
-            'task event handler retry delays': vdr(
-                vtype='interval_list'),
-            'tail command template': vdr(vtype='string'),
+            'run directory': [VDR.V_STRING],
+            'work directory': [VDR.V_STRING],
+            'task communication method': [
+                VDR.V_STRING, 'default', 'ssh', 'poll'],
+            'submission polling intervals': [VDR.V_INTERVAL_LIST],
+            'execution polling intervals': [VDR.V_INTERVAL_LIST],
+            'scp command': [VDR.V_STRING],
+            'ssh command': [VDR.V_STRING],
+            'use login shell': [VDR.V_BOOLEAN],
+            'cylc executable': [VDR.V_STRING],
+            'global init-script': [VDR.V_STRING],
+            'copyable environment variables': [VDR.V_STRING_LIST],
+            'retrieve job logs': [VDR.V_BOOLEAN],
+            'retrieve job logs command': [VDR.V_STRING],
+            'retrieve job logs max size': [VDR.V_STRING],
+            'retrieve job logs retry delays': [VDR.V_INTERVAL_LIST],
+            'task event handler retry delays': [VDR.V_INTERVAL_LIST],
+            'tail command template': [VDR.V_STRING],
             'batch systems': {
                 '__MANY__': {
-                    'err tailer': vdr(vtype='string'),
-                    'out tailer': vdr(vtype='string'),
-                    'out viewer': vdr(vtype='string'),
-                    'err viewer': vdr(vtype='string'),
-                    'job name length maximum': vdr(vtype='integer'),
-                    'execution time limit polling intervals': vdr(
-                        vtype='interval_list'),
+                    'err tailer': [VDR.V_STRING],
+                    'out tailer': [VDR.V_STRING],
+                    'out viewer': [VDR.V_STRING],
+                    'err viewer': [VDR.V_STRING],
+                    'job name length maximum': [VDR.V_INTEGER],
+                    'execution time limit polling intervals': [
+                        VDR.V_INTERVAL_LIST],
                 },
             },
         },
     },
 
     'task events': {
-        'execution timeout': vdr(vtype='interval'),
-        'handlers': vdr(vtype='string_list', default=[]),
-        'handler events': vdr(vtype='string_list', default=[]),
-        'handler retry delays': vdr(vtype='interval_list'),
-        'mail events': vdr(vtype='string_list', default=[]),
-        'mail from': vdr(vtype='string'),
-        'mail retry delays': vdr(vtype='interval_list', default=[]),
-        'mail smtp': vdr(vtype='string'),
-        'mail to': vdr(vtype='string'),
-        'reset timer': vdr(vtype='boolean', default=False),
-        'submission timeout': vdr(vtype='interval'),
+        'execution timeout': [VDR.V_INTERVAL],
+        'handlers': [VDR.V_STRING_LIST],
+        'handler events': [VDR.V_STRING_LIST],
+        'handler retry delays': [VDR.V_INTERVAL_LIST, None],
+        'mail events': [VDR.V_STRING_LIST],
+        'mail from': [VDR.V_STRING],
+        'mail retry delays': [VDR.V_INTERVAL_LIST],
+        'mail smtp': [VDR.V_STRING],
+        'mail to': [VDR.V_STRING],
+        'reset timer': [VDR.V_BOOLEAN],
+        'submission timeout': [VDR.V_INTERVAL],
     },
 
     'test battery': {
-        'remote host with shared fs': vdr(vtype='string'),
-        'remote host': vdr(vtype='string'),
-        'remote owner': vdr(vtype='string'),
+        'remote host with shared fs': [VDR.V_STRING],
+        'remote host': [VDR.V_STRING],
+        'remote owner': [VDR.V_STRING],
         'batch systems': {
             '__MANY__': {
-                'host': vdr(vtype='string'),
-                'out viewer': vdr(vtype='string'),
-                'err viewer': vdr(vtype='string'),
-                'directives': {'__MANY__': vdr(vtype='string')},
+                'host': [VDR.V_STRING],
+                'out viewer': [VDR.V_STRING],
+                'err viewer': [VDR.V_STRING],
+                'directives': {
+                    '__MANY__': [VDR.V_STRING],
+                },
             },
         },
     },
 
     'suite host self-identification': {
-        'method': vdr(
-            vtype='string',
-            options=["name", "address", "hardwired"],
-            default="name"),
-        'target': vdr(vtype='string', default="google.com"),
-        'host': vdr(vtype='string'),
+        'method': [VDR.V_STRING, 'name', 'address', 'hardwired'],
+        'target': [VDR.V_STRING, 'google.com'],
+        'host': [VDR.V_STRING],
     },
 
     'authentication': {
         # Allow owners to grant public shutdown rights at the most, not full
         # control.
-        'public': vdr(
-            vtype='string',
-            options=(
-                PRIVILEGE_LEVELS[:PRIVILEGE_LEVELS.index(PRIV_SHUTDOWN) + 1]),
-            default=PRIV_STATE_TOTALS),
+        'public': (
+            [VDR.V_STRING, PRIV_STATE_TOTALS] +
+            PRIVILEGE_LEVELS[:PRIVILEGE_LEVELS.index(PRIV_SHUTDOWN) + 1]),
     },
 
     'suite servers': {
-        'run hosts': vdr(vtype='string_list'),
-        'run ports': vdr(vtype='range_list', default=range(43001, 43101)),
-        'scan hosts': vdr(vtype='string_list'),
-        'scan ports': vdr(vtype='range_list', default=range(43001, 43101)),
+        'run hosts': [VDR.V_STRING_LIST],
+        'run ports': [VDR.V_INTEGER_LIST, range(43001, 43101)],
+        'scan hosts': [VDR.V_STRING_LIST],
+        'scan ports': [VDR.V_INTEGER_LIST, range(43001, 43101)],
         'run host select': {
-            'rank': vdr(
-                vtype='string',
-                options=["random", "load:1", "load:5", "load:15", "memory",
-                         "disk-space"],
-                default="random"),
-            'thresholds': vdr(vtype='string'),
+            'rank': [VDR.V_STRING, 'random', 'load:1', 'load:5', 'load:15',
+                     'memory', 'disk-space'],
+            'thresholds': [VDR.V_STRING],
         },
     },
 }
@@ -432,7 +401,7 @@ class GlobalConfigError(Exception):
         return repr(self.args[0])
 
 
-class GlobalConfig(config):
+class GlobalConfig(ParsecConfig):
     """
     Handle global (all suites) site and user configuration for cylc.
     User file values override site file values.
@@ -456,7 +425,7 @@ class GlobalConfig(config):
     def get_inst(cls):
         """Return the singleton instance."""
         if not cls._DEFAULT:
-            cls._DEFAULT = cls(SPEC, upg)
+            cls._DEFAULT = cls(SPEC, upg, validator=cylc_config_validate)
             cls._DEFAULT.load()
         return cls._DEFAULT
 
@@ -557,16 +526,15 @@ class GlobalConfig(config):
 
         # is there a matching host section?
         host_key = None
-        if host:
-            if host in cfg['hosts']:
-                # there's an entry for this host
-                host_key = host
-            else:
-                # try for a pattern match
-                for cfg_host in cfg['hosts']:
-                    if re.match(cfg_host, host):
-                        host_key = cfg_host
-                        break
+        if host in cfg['hosts']:
+            # there's an entry for this host
+            host_key = host
+        else:
+            # try for a pattern match
+            for cfg_host in cfg['hosts']:
+                if re.match(cfg_host, host):
+                    host_key = cfg_host
+                    break
         modify_dirs = False
         if host_key is not None:
             # entry exists, any unset items under it have already
@@ -597,18 +565,18 @@ class GlobalConfig(config):
         E.g. if archlen = 2 we keep:
             dir_, dir_.1, dir_.2. If 0 keep no old ones.
         """
-        for n in range(archlen, -1, -1):  # archlen...0
-            if n > 0:
-                dpath = dir_ + '.' + str(n)
+        for i in range(archlen, -1, -1):  # archlen...0
+            if i > 0:
+                dpath = dir_ + '.' + str(i)
             else:
                 dpath = dir_
             if os.path.exists(dpath):
-                if n >= archlen:
+                if i >= archlen:
                     # remove oldest backup
                     shutil.rmtree(dpath)
                 else:
                     # roll others over
-                    os.rename(dpath, dir_ + '.' + str(n + 1))
+                    os.rename(dpath, dir_ + '.' + str(i + 1))
         self.create_directory(dir_, name)
 
     @staticmethod

@@ -11,12 +11,12 @@ sys.path.append(fpath + '/../lib/python')
 sys.path.append(fpath + '/../../..')
 
 from cfgspec import SPEC
-from config import config
+from config import ParsecConfig
 
 rcname = sys.argv[1]
 rcfile = rcname + '.rc'
 
-cfg = config(SPEC)
+cfg = ParsecConfig(SPEC)
 
 cfg.loadcfg(rcfile)
 

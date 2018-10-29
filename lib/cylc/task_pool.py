@@ -35,6 +35,8 @@ from fnmatch import fnmatchcase
 import json
 from time import time
 
+from parsec.OrderedDict import OrderedDict
+
 from cylc.config import SuiteConfigError
 from cylc.cycling.loader import get_point, standardise_point_string
 from cylc.suite_logging import LOG
@@ -54,7 +56,6 @@ from cylc.task_state import (
     TASK_STATUS_RETRYING)
 from cylc.wallclock import (
     get_current_time_string, get_time_string_from_unix_time)
-from parsec.OrderedDict import OrderedDict
 
 
 class TaskPool(object):

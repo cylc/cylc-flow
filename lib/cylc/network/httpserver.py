@@ -31,6 +31,7 @@ import traceback
 from uuid import uuid4
 
 import cherrypy
+
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.exceptions import CylcError
 import cylc.flags
@@ -800,7 +801,10 @@ class SuiteRuntimeService(object):
         """Get the privilege level for this authenticated user."""
         if auth_user == "cylc":
             return PRIVILEGE_LEVELS[-1]
-        return self.schd.config.cfg['cylc']['authentication']['public']
+        elif self.schd.config.cfg['cylc']['authentication']['public']:
+            return self.schd.config.cfg['cylc']['authentication']['public']
+        else:
+            return glbl_cfg().get(['authentication', 'public'])
 
     def _housekeep(self):
         """Forget inactive clients."""

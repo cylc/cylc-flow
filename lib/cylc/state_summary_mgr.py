@@ -19,15 +19,15 @@
 
 from time import time
 
-import cylc.flags
 from cylc.task_id import TaskID
-from cylc.wallclock import TIME_ZONE_LOCAL_INFO, TIME_ZONE_UTC_INFO
 from cylc.suite_status import (
     SUITE_STATUS_HELD, SUITE_STATUS_STOPPING,
     SUITE_STATUS_RUNNING, SUITE_STATUS_RUNNING_TO_STOP,
     SUITE_STATUS_RUNNING_TO_HOLD)
 from cylc.task_state import TASK_STATUS_RUNAHEAD
 from cylc.task_state_prop import extract_group_state
+from cylc.wallclock import (
+    TIME_ZONE_LOCAL_INFO, TIME_ZONE_UTC_INFO, get_utc_mode)
 
 
 class StateSummaryMgr(object):
@@ -118,7 +118,7 @@ class StateSummaryMgr(object):
                 global_summary[key] = str(value)
             else:
                 global_summary[key] = None
-        if cylc.flags.utc:
+        if get_utc_mode():
             global_summary['time zone info'] = TIME_ZONE_UTC_INFO
         else:
             global_summary['time zone info'] = TIME_ZONE_LOCAL_INFO

@@ -26,7 +26,7 @@ from time import time
 
 import gtk
 
-from cylc.cfgspec.gcylc import gcfg
+from cylc.cfgspec.gcylc import GcylcConfig
 import cylc.flags
 from cylc.gui.legend import ThemeLegendWindow
 from cylc.gui.util import get_icon
@@ -178,6 +178,7 @@ def get_gpanel_scan_menu(
     theme_items[theme] = gtk.RadioMenuItem(label=theme)
     thememenu.append(theme_items[theme])
     theme_items[theme].theme_name = theme
+    gcfg = GcylcConfig.get_inst()
     for theme in gcfg.get(['themes']):
         if theme == "default":
             continue

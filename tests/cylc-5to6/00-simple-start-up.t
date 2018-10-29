@@ -25,7 +25,7 @@ install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 TEST_NAME=$TEST_NAME_BASE-validate
 run_fail "$TEST_NAME" cylc validate $SUITE_NAME
 cmp_ok "$TEST_NAME.stderr" <<'__ERR__'
-Illegal ISO 8601 interval value: [cylc][reference test]live mode suite timeout = 120
+Illegal item: [scheduling]initial cycle time
 __ERR__
 #-------------------------------------------------------------------------------
 # Run the convert-suggest-tool.

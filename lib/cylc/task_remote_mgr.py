@@ -36,7 +36,7 @@ from uuid import uuid4
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
 from cylc.hostuserutil import is_remote, is_remote_host, is_remote_user
-from cylc.mp_pool import SuiteProcContext
+from cylc.subprocctx import SubProcContext
 from cylc.suite_logging import LOG
 from cylc.task_remote_cmd import (
     FILE_BASE_UUID, REMOTE_INIT_DONE, REMOTE_INIT_NOT_REQUIRED)
@@ -124,7 +124,7 @@ class TaskRemoteMgr(object):
                 else:
                     cmd = ['bash', '-c', cmd_str]
                 self.proc_pool.put_command(
-                    SuiteProcContext(
+                    SubProcContext(
                         'remote-host-select', cmd, env=dict(os.environ)),
                     self._remote_host_select_callback, [cmd_str])
                 self.remote_host_str_map[cmd_str] = None
@@ -224,7 +224,7 @@ class TaskRemoteMgr(object):
         cmd.append(glbl_cfg().get_derived_host_item(
             self.suite, 'suite run directory', host, owner))
         self.proc_pool.put_command(
-            SuiteProcContext(
+            SubProcContext(
                 'remote-init', cmd, stdin_file_paths=[tmphandle.name]),
             self._remote_init_callback,
             [host, owner, tmphandle])

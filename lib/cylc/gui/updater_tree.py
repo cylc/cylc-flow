@@ -22,6 +22,7 @@ import itertools
 import threading
 from time import time, sleep
 
+
 from cylc.gui.dot_maker import DotMaker
 from cylc.gui.util import get_id_summary
 from cylc.task_id import TaskID

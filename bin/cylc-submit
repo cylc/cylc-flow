@@ -41,7 +41,7 @@ from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.config import SuiteConfig
 from cylc.cycling.loader import get_point
 import cylc.flags
-from cylc.mp_pool import SuiteProcPool
+from cylc.subprocpool import SuiteProcPool
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.suite_db_mgr import SuiteDatabaseManager
 from cylc.broadcast_mgr import BroadcastMgr

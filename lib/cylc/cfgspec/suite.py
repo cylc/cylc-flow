@@ -17,449 +17,265 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 "Define all legal items and values for cylc suite definition files."
 
-import re
+from isodatetime.data import Calendar
 
-from parsec.validate import validator as vdr
-from parsec.validate import (
-    coercers, _strip_and_unquote, _strip_and_unquote_list, IllegalValueError)
 from parsec.upgrade import upgrader
-from parsec.config import config
-from isodatetime.dumpers import TimePointDumper
-from isodatetime.data import Calendar, TimePoint
-from isodatetime.parsers import TimePointParser, DurationParser
+from parsec.config import ParsecConfig
 
-from cylc.cfgspec.utils import (
-    coerce_interval, coerce_xtrig, coerce_interval_list, DurationFloat)
-from cylc.cfgspec.glbl_cfg import glbl_cfg
-
+from cylc.cfgvalidate import (
+    cylc_config_validate, CylcConfigValidator as VDR, DurationFloat)
 from cylc.network import PRIVILEGE_LEVELS, PRIV_SHUTDOWN
-from cylc.task_id import TaskID
 
 
-REC_PARAM_INT_RANGE = re.compile(
-    r'\A([\+\-]?\d+)\.\.([\+\-]?\d+)(?:\.\.(\d+))?\Z')
-
-
-def _coerce_cycleinterval(value, keys, _):
-    """Coerce value to a cycle interval."""
-    if not value:
-        return None
-    value = _strip_and_unquote(keys, value)
-    parser = DurationParser()
-    try:
-        parser.parse(value)
-    except ValueError:
-        raise IllegalValueError("interval", keys, value)
-    return value
-
-
-def _coerce_cycletime(value, keys, _):
-    """Coerce value to a cycle point."""
-    if not value:
-        return None
-    value = _strip_and_unquote(keys, value)
-    if value == "now":
-        # Handle this later in config.py when the suite UTC mode is known.
-        return value
-    if re.match(r"\d+$", value):
-        # Could be an old date-time cycle point format, or integer format.
-        return value
-    if value.startswith("-") or value.startswith("+"):
-        # We don't know the value given for num expanded year digits...
-        for i in range(1, 101):
-            parser = TimePointParser(num_expanded_year_digits=i)
-            try:
-                parser.parse(value)
-            except ValueError:
-                continue
-            return value
-        raise IllegalValueError("cycle point", keys, value)
-    parser = TimePointParser()
-    try:
-        parser.parse(value)
-    except ValueError:
-        raise IllegalValueError("cycle point", keys, value)
-    return value
-
-
-def _coerce_cycletime_format(value, keys, _):
-    """Coerce value to a cycle point format (either CCYYMM... or %Y%m...)."""
-    value = _strip_and_unquote(keys, value)
-    if not value:
-        return None
-    test_timepoint = TimePoint(year=2001, month_of_year=3, day_of_month=1,
-                               hour_of_day=4, minute_of_hour=30,
-                               second_of_minute=54)
-    if "/" in value:
-        raise IllegalValueError("cycle point format", keys, value)
-    if "%" in value:
-        try:
-            TimePointDumper().strftime(test_timepoint, value)
-        except ValueError:
-            raise IllegalValueError("cycle point format", keys, value)
-        return value
-    if "X" in value:
-        for i in range(1, 101):
-            dumper = TimePointDumper(num_expanded_year_digits=i)
-            try:
-                dumper.dump(test_timepoint, value)
-            except ValueError:
-                continue
-            return value
-        raise IllegalValueError("cycle point format", keys, value)
-    dumper = TimePointDumper()
-    try:
-        dumper.dump(test_timepoint, value)
-    except ValueError:
-        raise IllegalValueError("cycle point format", keys, value)
-    return value
-
-
-def _coerce_cycletime_time_zone(value, keys, _):
-    """Coerce value to a cycle point time zone format - Z, +13, -0800..."""
-    value = _strip_and_unquote(keys, value)
-    if not value:
-        return None
-    test_timepoint = TimePoint(year=2001, month_of_year=3, day_of_month=1,
-                               hour_of_day=4, minute_of_hour=30,
-                               second_of_minute=54)
-    dumper = TimePointDumper()
-    test_timepoint_string = dumper.dump(test_timepoint, "CCYYMMDDThhmmss")
-    test_timepoint_string += value
-    parser = TimePointParser(allow_only_basic=True)
-    try:
-        parser.parse(test_timepoint_string)
-    except ValueError:
-        raise IllegalValueError("cycle point time zone format", keys, value)
-    return value
-
-
-def _coerce_final_cycletime(value, keys, _):
-    """Coerce final cycle point."""
-    return _strip_and_unquote(keys, value)
-
-
-def _coerce_parameter_list(value, keys, _):
-    """Coerce parameter list
-
-    Can be:
-    * A list of str values. Each str value must conform to the same restriction
-      as a task name. Return list of str values.
-    * A mixture of int ranges and int values. Return list of str values
-      containing the sorted int list, zero-padded to the same width.
-
-    Raise IllegalValueError if:
-    * Mixing str and int range.
-    * A str value breaks the task name restriction.
-    """
-    items = []
-    can_only_be = None   # A flag to prevent mixing str and int range
-    for item in _strip_and_unquote_list(keys, value):
-        match = REC_PARAM_INT_RANGE.match(item)
-        if match:
-            if can_only_be == str:
-                raise IllegalValueError(
-                    'parameter', keys, value, 'mixing int range and str')
-            can_only_be = int
-            lower, upper, step = match.groups()
-            if not step:
-                step = 1
-            items.extend(range(int(lower), int(upper) + 1, int(step)))
-        elif TaskID.NAME_SUFFIX_REC.match(item):
-            if not item.isdigit():
-                if can_only_be == int:
-                    raise IllegalValueError(
-                        'parameter', keys, value, 'mixing int range and str')
-                can_only_be = str
-            items.append(item)
-        else:
-            raise IllegalValueError(
-                'parameter', keys, value, '%s: bad value' % item)
-    if not items or can_only_be == str or any(
-            not str(item).isdigit() for item in items):
-        return items
-    else:
-        return [int(item) for item in items]
-
-
-coercers['cycletime'] = _coerce_cycletime
-coercers['cycletime_format'] = _coerce_cycletime_format
-coercers['cycletime_time_zone'] = _coerce_cycletime_time_zone
-coercers['cycleinterval'] = _coerce_cycleinterval
-coercers['final_cycletime'] = _coerce_final_cycletime
-coercers['interval'] = coerce_interval
-coercers['xtrig_func_calls'] = coerce_xtrig
-coercers['interval_list'] = coerce_interval_list
-coercers['parameter_list'] = _coerce_parameter_list
-
-
+# Nested dict of spec items.
+# Spec value is [value_type, default, allowed_2, allowed_3, ...]
+# where:
+# - value_type: value type (compulsory).
+# - default: the default value (optional).
+# - allowed_2, ...: the only other allowed values of this setting (optional).
 SPEC = {
     'meta': {
-        'description': vdr(vtype='string', default=""),
-        'group': vdr(vtype='string', default=""),
-        'title': vdr(vtype='string', default=""),
-        'URL': vdr(vtype='string', default=""),
-        '__MANY__': vdr(vtype='string', default=""),
+        'description': [VDR.V_STRING, ''],
+        'group': [VDR.V_STRING, ''],
+        'title': [VDR.V_STRING, ''],
+        'URL': [VDR.V_STRING, ''],
+        '__MANY__': [VDR.V_STRING, ''],
     },
     'cylc': {
-        'UTC mode': vdr(
-            vtype='boolean', default=glbl_cfg().get(['cylc', 'UTC mode'])),
-        'cycle point format': vdr(
-            vtype='cycletime_format', default=None),
-        'cycle point num expanded year digits': vdr(
-            vtype='integer', default=0),
-        'cycle point time zone': vdr(
-            vtype='cycletime_time_zone', default=None),
-        'required run mode': vdr(
-            vtype='string',
-            options=['live', 'dummy', 'dummy-local', 'simulation', '']),
-        'force run mode': vdr(
-            vtype='string',
-            options=['live', 'dummy', 'dummy-local', 'simulation', '']),
-        'abort if any task fails': vdr(vtype='boolean', default=False),
-        'health check interval': vdr(vtype='interval', default=None),
-        'task event mail interval': vdr(vtype='interval', default=None),
-        'log resolved dependencies': vdr(vtype='boolean', default=False),
-        'disable automatic shutdown': vdr(vtype='boolean', default=False),
+        'UTC mode': [VDR.V_BOOLEAN, False],
+        'cycle point format': [VDR.V_CYCLE_POINT_FORMAT],
+        'cycle point num expanded year digits': [VDR.V_INTEGER, 0],
+        'cycle point time zone': [VDR.V_CYCLE_POINT_TIME_ZONE],
+        'required run mode': [
+            VDR.V_STRING, '', 'live', 'dummy', 'dummy-local', 'simulation'],
+        'force run mode': [
+            VDR.V_STRING, '', 'live', 'dummy', 'dummy-local', 'simulation'],
+        'abort if any task fails': [VDR.V_BOOLEAN],
+        'health check interval': [VDR.V_INTERVAL],
+        'task event mail interval': [VDR.V_INTERVAL],
+        'log resolved dependencies': [VDR.V_BOOLEAN],
+        'disable automatic shutdown': [VDR.V_BOOLEAN],
         'simulation': {
-            'disable suite event handlers': vdr(vtype='boolean', default=True),
+            'disable suite event handlers': [VDR.V_BOOLEAN, True],
         },
         'environment': {
-            '__MANY__': vdr(vtype='string'),
+            '__MANY__': [VDR.V_STRING],
         },
         'parameters': {
-            '__MANY__': vdr(vtype='parameter_list'),
+            '__MANY__': [VDR.V_PARAMETER_LIST],
         },
         'parameter templates': {
-            '__MANY__': vdr(vtype='string'),
+            '__MANY__': [VDR.V_STRING],
         },
         'events': {
-            'handlers': vdr(vtype='string_list'),
-            'handler events': vdr(vtype='string_list'),
-            'startup handler': vdr(vtype='string_list'),
-            'timeout handler': vdr(vtype='string_list'),
-            'inactivity handler': vdr(vtype='string_list'),
-            'shutdown handler': vdr(vtype='string_list'),
-            'stalled handler': vdr(vtype='string_list'),
-            'timeout': vdr(vtype='interval'),
-            'inactivity': vdr(vtype='interval'),
-            'reset timer': vdr(vtype='boolean', default=True),
-            'reset inactivity timer': vdr(vtype='boolean', default=True),
-            'abort if startup handler fails': vdr(
-                vtype='boolean', default=False),
-            'abort if shutdown handler fails': vdr(
-                vtype='boolean', default=False),
-            'abort if timeout handler fails': vdr(
-                vtype='boolean', default=False),
-            'abort if inactivity handler fails': vdr(
-                vtype='boolean', default=False),
-            'abort if stalled handler fails': vdr(
-                vtype='boolean', default=False),
-            'abort on stalled': vdr(vtype='boolean', default=None),
-            'abort on timeout': vdr(vtype='boolean', default=None),
-            'abort on inactivity': vdr(vtype='boolean'),
-            'mail events': vdr(vtype='string_list'),
-            'mail from': vdr(vtype='string'),
-            'mail smtp': vdr(vtype='string'),
-            'mail to': vdr(vtype='string'),
-            'mail footer': vdr(vtype='string'),
+            'handlers': [VDR.V_STRING_LIST, None],
+            'handler events': [VDR.V_STRING_LIST, None],
+            'startup handler': [VDR.V_STRING_LIST, None],
+            'timeout handler': [VDR.V_STRING_LIST, None],
+            'inactivity handler': [VDR.V_STRING_LIST, None],
+            'shutdown handler': [VDR.V_STRING_LIST, None],
+            'stalled handler': [VDR.V_STRING_LIST, None],
+            'timeout': [VDR.V_INTERVAL],
+            'inactivity': [VDR.V_INTERVAL],
+            'reset timer': [VDR.V_BOOLEAN, True],
+            'reset inactivity timer': [VDR.V_BOOLEAN, True],
+            'abort if startup handler fails': [VDR.V_BOOLEAN],
+            'abort if shutdown handler fails': [VDR.V_BOOLEAN],
+            'abort if timeout handler fails': [VDR.V_BOOLEAN],
+            'abort if inactivity handler fails': [VDR.V_BOOLEAN],
+            'abort if stalled handler fails': [VDR.V_BOOLEAN],
+            'abort on stalled': [VDR.V_BOOLEAN],
+            'abort on timeout': [VDR.V_BOOLEAN],
+            'abort on inactivity': [VDR.V_BOOLEAN],
+            'mail events': [VDR.V_STRING_LIST, None],
+            'mail from': [VDR.V_STRING],
+            'mail smtp': [VDR.V_STRING],
+            'mail to': [VDR.V_STRING],
+            'mail footer': [VDR.V_STRING],
         },
         'reference test': {
-            'suite shutdown event handler': vdr(
-                vtype='string', default='cylc hook check-triggering'),
-            'required run mode': vdr(
-                vtype='string',
-                options=['live', 'simulation', 'dummy-local', 'dummy', '']),
-            'allow task failures': vdr(vtype='boolean', default=False),
-            'expected task failures': vdr(vtype='string_list', default=[]),
-            'live mode suite timeout': vdr(
-                vtype='interval', default=DurationFloat(60)),
-            'dummy mode suite timeout': vdr(
-                vtype='interval', default=DurationFloat(60)),
-            'dummy-local mode suite timeout': vdr(
-                vtype='interval', default=DurationFloat(60)),
-            'simulation mode suite timeout': vdr(
-                vtype='interval', default=DurationFloat(60)),
+            'suite shutdown event handler': [
+                VDR.V_STRING, 'cylc hook check-triggering'],
+            'required run mode': [
+                VDR.V_STRING,
+                '', 'live', 'simulation', 'dummy-local', 'dummy'],
+            'allow task failures': [VDR.V_BOOLEAN],
+            'expected task failures': [VDR.V_STRING_LIST],
+            'live mode suite timeout': [
+                VDR.V_INTERVAL, DurationFloat(60)],
+            'dummy mode suite timeout': [
+                VDR.V_INTERVAL, DurationFloat(60)],
+            'dummy-local mode suite timeout': [
+                VDR.V_INTERVAL, DurationFloat(60)],
+            'simulation mode suite timeout': [
+                VDR.V_INTERVAL, DurationFloat(60)],
         },
         'authentication': {
             # Allow owners to grant public shutdown rights at the most, not
             # full control.
-            'public': vdr(
-                vtype='string',
-                options=PRIVILEGE_LEVELS[
-                    :PRIVILEGE_LEVELS.index(PRIV_SHUTDOWN) + 1],
-                default=glbl_cfg().get(['authentication', 'public']))
+            'public': (
+                [VDR.V_STRING, ''] +
+                PRIVILEGE_LEVELS[:PRIVILEGE_LEVELS.index(PRIV_SHUTDOWN) + 1]),
         },
     },
     'scheduling': {
-        'initial cycle point': vdr(vtype='cycletime'),
-        'final cycle point': vdr(vtype='final_cycletime'),
-        'initial cycle point constraints': vdr(
-            vtype='string_list', default=[]),
-        'final cycle point constraints': vdr(vtype='string_list', default=[]),
-        'hold after point': vdr(vtype='cycletime'),
-        'cycling mode': vdr(
-            vtype='string',
-            default=Calendar.MODE_GREGORIAN,
-            options=(Calendar.MODES.keys() + ["integer"])),
-        'runahead limit': vdr(vtype='cycleinterval'),
-        'max active cycle points': vdr(vtype='integer', default=3),
-        'spawn to max active cycle points': vdr(
-            vtype='boolean', default=False),
+        'initial cycle point': [VDR.V_CYCLE_POINT],
+        'final cycle point': [VDR.V_STRING],
+        'initial cycle point constraints': [VDR.V_STRING_LIST],
+        'final cycle point constraints': [VDR.V_STRING_LIST],
+        'hold after point': [VDR.V_CYCLE_POINT],
+        'cycling mode': (
+            [VDR.V_STRING, Calendar.MODE_GREGORIAN] +
+            Calendar.MODES.keys() + ["integer"]),
+        'runahead limit': [VDR.V_STRING],
+        'max active cycle points': [VDR.V_INTEGER, 3],
+        'spawn to max active cycle points': [VDR.V_BOOLEAN],
         'queues': {
             'default': {
-                'limit': vdr(vtype='integer', default=0),
-                'members': vdr(vtype='string_list', default=[]),
+                'limit': [VDR.V_INTEGER, 0],
+                'members': [VDR.V_STRING_LIST],
             },
             '__MANY__': {
-                'limit': vdr(vtype='integer', default=0),
-                'members': vdr(vtype='string_list', default=[]),
+                'limit': [VDR.V_INTEGER, 0],
+                'members': [VDR.V_STRING_LIST],
             },
         },
         'special tasks': {
-            'clock-trigger': vdr(vtype='string_list', default=[]),
-            'external-trigger': vdr(vtype='string_list', default=[]),
-            'clock-expire': vdr(vtype='string_list', default=[]),
-            'sequential': vdr(vtype='string_list', default=[]),
-            'exclude at start-up': vdr(vtype='string_list', default=[]),
-            'include at start-up': vdr(vtype='string_list', default=[]),
+            'clock-trigger': [VDR.V_STRING_LIST],
+            'external-trigger': [VDR.V_STRING_LIST],
+            'clock-expire': [VDR.V_STRING_LIST],
+            'sequential': [VDR.V_STRING_LIST],
+            'exclude at start-up': [VDR.V_STRING_LIST],
+            'include at start-up': [VDR.V_STRING_LIST],
         },
         'xtriggers': {
-            '__MANY__': vdr(vtype='xtrig_func_calls'),
+            '__MANY__': [VDR.V_XTRIGGER],
         },
         'dependencies': {
-            'graph': vdr(vtype='string'),
+            'graph': [VDR.V_STRING],
             '__MANY__':
             {
-                'graph': vdr(vtype='string'),
+                'graph': [VDR.V_STRING],
             },
         },
     },
     'runtime': {
         '__MANY__': {
-            'inherit': vdr(vtype='string_list', default=[]),
-            'init-script': vdr(vtype='string', default=""),
-            'env-script': vdr(vtype='string', default=""),
-            'err-script': vdr(vtype='string', default=""),
-            'pre-script': vdr(vtype='string', default=""),
-            'script': vdr(vtype='string', default=""),
-            'post-script': vdr(vtype='string', default=""),
-            'extra log files': vdr(vtype='string_list', default=[]),
-            'work sub-directory': vdr(vtype='string'),
+            'inherit': [VDR.V_STRING_LIST],
+            'init-script': [VDR.V_STRING],
+            'env-script': [VDR.V_STRING],
+            'err-script': [VDR.V_STRING],
+            'pre-script': [VDR.V_STRING],
+            'script': [VDR.V_STRING],
+            'post-script': [VDR.V_STRING],
+            'extra log files': [VDR.V_STRING_LIST],
+            'work sub-directory': [VDR.V_STRING],
             'meta': {
-                'title': vdr(vtype='string', default=""),
-                'description': vdr(vtype='string', default=""),
-                'URL': vdr(vtype='string', default=""),
-                '__MANY__': vdr(vtype='string', default=""),
+                'title': [VDR.V_STRING, ''],
+                'description': [VDR.V_STRING, ''],
+                'URL': [VDR.V_STRING, ''],
+                '__MANY__': [VDR.V_STRING, ''],
             },
             'simulation': {
-                'default run length': vdr(vtype='interval', default='PT10S'),
-                'speedup factor': vdr(vtype='float', default=None),
-                'time limit buffer': vdr(vtype='interval', default='PT10S'),
-                'fail cycle points': vdr(vtype='string_list', default=[]),
-                'fail try 1 only': vdr(vtype='boolean', default=True),
-                'disable task event handlers': vdr(
-                    vtype='boolean', default=True),
+                'default run length': [VDR.V_INTERVAL, DurationFloat(10)],
+                'speedup factor': [VDR.V_FLOAT],
+                'time limit buffer': [VDR.V_INTERVAL, DurationFloat(10)],
+                'fail cycle points': [VDR.V_STRING_LIST],
+                'fail try 1 only': [VDR.V_BOOLEAN, True],
+                'disable task event handlers': [VDR.V_BOOLEAN, True],
             },
             'environment filter': {
-                'include': vdr(vtype='string_list'),
-                'exclude': vdr(vtype='string_list'),
+                'include': [VDR.V_STRING_LIST],
+                'exclude': [VDR.V_STRING_LIST],
             },
             'job': {
-                'batch system': vdr(vtype='string', default='background'),
-                'batch submit command template': vdr(vtype='string'),
-                'execution polling intervals': vdr(
-                    vtype='interval_list'),
-                'execution retry delays': vdr(
-                    vtype='interval_list', default=[]),
-                'execution time limit': vdr(vtype='interval'),
-                'shell': vdr(vtype='string', default='/bin/bash'),
-                'submission polling intervals': vdr(
-                    vtype='interval_list'),
-                'submission retry delays': vdr(
-                    vtype='interval_list', default=[]),
+                'batch system': [VDR.V_STRING, 'background'],
+                'batch submit command template': [VDR.V_STRING],
+                'execution polling intervals': [VDR.V_INTERVAL_LIST, None],
+                'execution retry delays': [VDR.V_INTERVAL_LIST, None],
+                'execution time limit': [VDR.V_INTERVAL],
+                'shell': [VDR.V_STRING, '/bin/bash'],
+                'submission polling intervals': [VDR.V_INTERVAL_LIST, None],
+                'submission retry delays': [VDR.V_INTERVAL_LIST, None],
             },
             'remote': {
-                'host': vdr(vtype='string'),
-                'owner': vdr(vtype='string'),
-                'suite definition directory': vdr(vtype='string'),
-                'retrieve job logs': vdr(vtype='boolean', default=None),
-                'retrieve job logs max size': vdr(vtype='string'),
-                'retrieve job logs retry delays': vdr(
-                    vtype='interval_list'),
+                'host': [VDR.V_STRING],
+                'owner': [VDR.V_STRING],
+                'suite definition directory': [VDR.V_STRING],
+                'retrieve job logs': [VDR.V_BOOLEAN],
+                'retrieve job logs max size': [VDR.V_STRING],
+                'retrieve job logs retry delays': [VDR.V_INTERVAL_LIST, None],
             },
             'events': {
-                'execution timeout': vdr(vtype='interval'),
-                'handlers': vdr(vtype='string_list'),
-                'handler events': vdr(vtype='string_list'),
-                'handler retry delays': vdr(vtype='interval_list'),
-                'mail events': vdr(vtype='string_list'),
-                'mail from': vdr(vtype='string'),
-                'mail retry delays': vdr(vtype='interval_list'),
-                'mail smtp': vdr(vtype='string'),
-                'mail to': vdr(vtype='string'),
-                'reset timer': vdr(vtype='boolean', default=None),
-                'submission timeout': vdr(vtype='interval'),
+                'execution timeout': [VDR.V_INTERVAL],
+                'handlers': [VDR.V_STRING_LIST, None],
+                'handler events': [VDR.V_STRING_LIST, None],
+                'handler retry delays': [VDR.V_INTERVAL_LIST, None],
+                'mail events': [VDR.V_STRING_LIST, None],
+                'mail from': [VDR.V_STRING],
+                'mail retry delays': [VDR.V_INTERVAL_LIST, None],
+                'mail smtp': [VDR.V_STRING],
+                'mail to': [VDR.V_STRING],
+                'reset timer': [VDR.V_BOOLEAN],
+                'submission timeout': [VDR.V_INTERVAL],
 
-                'expired handler': vdr(vtype='string_list'),
-                'late offset': vdr(vtype='interval'),
-                'late handler': vdr(vtype='string_list'),
-                'submitted handler': vdr(vtype='string_list'),
-                'started handler': vdr(vtype='string_list'),
-                'succeeded handler': vdr(vtype='string_list'),
-                'failed handler': vdr(vtype='string_list'),
-                'submission failed handler': vdr(vtype='string_list'),
-                'warning handler': vdr(vtype='string_list'),
-                'critical handler': vdr(vtype='string_list'),
-                'retry handler': vdr(vtype='string_list'),
-                'submission retry handler': vdr(vtype='string_list'),
-                'execution timeout handler': vdr(vtype='string_list'),
-                'submission timeout handler': vdr(vtype='string_list'),
-                'custom handler': vdr(vtype='string_list'),
+                'expired handler': [VDR.V_STRING_LIST, None],
+                'late offset': [VDR.V_INTERVAL, None],
+                'late handler': [VDR.V_STRING_LIST, None],
+                'submitted handler': [VDR.V_STRING_LIST, None],
+                'started handler': [VDR.V_STRING_LIST, None],
+                'succeeded handler': [VDR.V_STRING_LIST, None],
+                'failed handler': [VDR.V_STRING_LIST, None],
+                'submission failed handler': [VDR.V_STRING_LIST, None],
+                'warning handler': [VDR.V_STRING_LIST, None],
+                'critical handler': [VDR.V_STRING_LIST, None],
+                'retry handler': [VDR.V_STRING_LIST, None],
+                'submission retry handler': [VDR.V_STRING_LIST, None],
+                'execution timeout handler': [VDR.V_STRING_LIST, None],
+                'submission timeout handler': [VDR.V_STRING_LIST, None],
+                'custom handler': [VDR.V_STRING_LIST, None],
             },
             'suite state polling': {
-                'user': vdr(vtype='string'),
-                'host': vdr(vtype='string'),
-                'interval': vdr(vtype='interval'),
-                'max-polls': vdr(vtype='integer'),
-                'run-dir': vdr(vtype='string'),
-                'template': vdr(vtype='string'),
-                'verbose mode': vdr(vtype='boolean', default=None),
+                'user': [VDR.V_STRING],
+                'host': [VDR.V_STRING],
+                'interval': [VDR.V_INTERVAL],
+                'max-polls': [VDR.V_INTEGER],
+                'run-dir': [VDR.V_STRING],
+                'template': [VDR.V_STRING],
+                'verbose mode': [VDR.V_BOOLEAN],
             },
             'environment': {
-                '__MANY__': vdr(vtype='string'),
+                '__MANY__': [VDR.V_STRING],
             },
             'directives': {
-                '__MANY__': vdr(vtype='string'),
+                '__MANY__': [VDR.V_STRING],
             },
             'outputs': {
-                '__MANY__': vdr(vtype='string'),
+                '__MANY__': [VDR.V_STRING],
             },
             'parameter environment templates': {
-                '__MANY__': vdr(vtype='string'),
+                '__MANY__': [VDR.V_STRING],
             },
         },
     },
     'visualization': {
-        'initial cycle point': vdr(vtype='cycletime'),
-        'final cycle point': vdr(vtype='final_cycletime'),
-        'number of cycle points': vdr(vtype='integer', default=3),
-        'collapsed families': vdr(vtype='string_list', default=[]),
-        'use node color for edges': vdr(vtype='boolean', default=False),
-        'use node fillcolor for edges': vdr(vtype='boolean', default=False),
-        'use node color for labels': vdr(vtype='boolean', default=False),
-        'node penwidth': vdr(vtype='integer', default=2),
-        'edge penwidth': vdr(vtype='integer', default=2),
-        'default node attributes': vdr(
-            vtype='string_list',
-            default=['style=unfilled', 'color=black', 'shape=box']),
-        'default edge attributes': vdr(
-            vtype='string_list', default=['color=black']),
+        'initial cycle point': [VDR.V_CYCLE_POINT],
+        'final cycle point': [VDR.V_STRING],
+        'number of cycle points': [VDR.V_INTEGER, 3],
+        'collapsed families': [VDR.V_STRING_LIST],
+        'use node color for edges': [VDR.V_BOOLEAN],
+        'use node fillcolor for edges': [VDR.V_BOOLEAN],
+        'use node color for labels': [VDR.V_BOOLEAN],
+        'node penwidth': [VDR.V_INTEGER, 2],
+        'edge penwidth': [VDR.V_INTEGER, 2],
+        'default node attributes': [
+            VDR.V_STRING_LIST, ['style=unfilled', 'color=black', 'shape=box']],
+        'default edge attributes': [VDR.V_STRING_LIST, ['color=black']],
         'node groups': {
-            '__MANY__': vdr(vtype='string_list', default=[]),
+            '__MANY__': [VDR.V_STRING_LIST],
         },
         'node attributes': {
-            '__MANY__': vdr(vtype='string_list', default=[]),
+            '__MANY__': [VDR.V_STRING_LIST],
         },
     },
 }
@@ -565,10 +381,11 @@ def upg(cfg, descr):
     u.upgrade()
 
 
-class RawSuiteConfig(config):
+class RawSuiteConfig(ParsecConfig):
     """Raw suite configuration."""
 
     def __init__(self, fpath, output_fname, tvars):
         """Return the default instance."""
-        config.__init__(self, SPEC, upg, output_fname, tvars)
+        ParsecConfig.__init__(
+            self, SPEC, upg, output_fname, tvars, cylc_config_validate)
         self.loadcfg(fpath, "suite definition")

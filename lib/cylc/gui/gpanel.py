@@ -26,8 +26,8 @@ import gtk
 import gobject
 import warnings
 
-from cylc.cfgspec.gcylc import gcfg
-from cylc.cfgspec.gscan import gsfg
+from cylc.cfgspec.gcylc import GcylcConfig
+from cylc.cfgspec.gscan import GScanConfig
 import cylc.flags
 from cylc.gui.dot_maker import DotMaker
 from cylc.gui.scanutil import (KEY_PORT, get_gpanel_scan_menu,
@@ -64,7 +64,7 @@ class ScanPanelApplet(object):
         self.top_hbox.show()
         self.updater = ScanPanelAppletUpdater(dot_hbox, image, self.is_compact)
         self.top_hbox.connect("destroy", self.stop)
-        if gsfg.get(["activate on startup"]):
+        if GScanConfig.get_inst().get(["activate on startup"]):
             self.updater.start()
 
     def get_widget(self):
@@ -105,8 +105,10 @@ class ScanPanelAppletUpdater(object):
         self.quit = True
         self._set_gcylc_image_tooltip()
         self.gcylc_image.set_sensitive(False)
+        gsfg = GScanConfig.get_inst()
         self.interval_full = gsfg.get(['suite listing update interval'])
         self.interval_part = gsfg.get(['suite status update interval'])
+        gcfg = GcylcConfig.get_inst()
         self.theme_name = gcfg.get(['use theme'])
         self.theme = gcfg.get(['themes', self.theme_name])
         self.dots = DotMaker(self.theme)
@@ -374,7 +376,7 @@ class ScanPanelAppletUpdater(object):
 
     def _set_theme(self, new_theme_name):
         self.theme_name = new_theme_name
-        self.theme = gcfg.get(['themes', self.theme_name])
+        self.theme = GcylcConfig.get_inst().get(['themes', self.theme_name])
         self.dots = DotMaker(self.theme)
 
     def _set_tooltip(self, widget, text):

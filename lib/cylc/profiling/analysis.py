@@ -30,13 +30,14 @@ try:
 except (ImportError, RuntimeError):
     CAN_PLOT = False
 
+from cylc.wallclock import get_unix_time_from_time_string
+
 from . import (PROFILE_MODE_TIME, PROFILE_MODE_CYLC, SUMMARY_LINE_REGEX,
                MEMORY_LINE_REGEX, LOOP_MEMORY_LINE_REGEX, SLEEP_FUNCTION_REGEX,
                SUITE_STARTUP_STRING, PROFILE_MODES, PROFILE_FILES, METRICS,
                METRIC_TITLE, METRIC_UNIT, METRIC_FILENAME, METRIC_FIELDS,
                QUICK_ANALYSIS_METRICS)
 from .git import (order_versions_by_date, describe)
-from cylc.wallclock import get_unix_time_from_time_string
 
 
 def mean(data):

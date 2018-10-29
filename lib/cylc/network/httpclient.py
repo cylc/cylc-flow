@@ -27,6 +27,7 @@ import traceback
 from uuid import uuid4
 import warnings
 
+
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.exceptions import CylcError
 import cylc.flags
