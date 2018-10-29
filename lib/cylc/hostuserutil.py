@@ -47,10 +47,12 @@ returning the IP address associated with this socket.
 """
 
 import os
+import sys
 import pwd
 import socket
 from time import time
 
+import cylc.flags
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 
 
@@ -111,7 +113,13 @@ class HostUtil(object):
     @staticmethod
     def get_host_ip_by_name(target):
         """Return internal IP address of target."""
-        return socket.gethostbyname(target)
+        try:
+            return socket.gethostbyname(target)
+        except socket.error as exc:
+            if cylc.flags.debug:
+                raise
+            sys.stderr.write("ERROR: %s: %s\n" % (exc, target))
+            return None
 
     def _get_host_info(self, target=None):
         """Return the extended info of the current host."""
