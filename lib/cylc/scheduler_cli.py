@@ -88,12 +88,6 @@ def main(is_restart=False):
         reg = SuiteSrvFilesManager().register()
         # Replace this process with "cylc run REG ..." for easy identification.
         os.execv(sys.argv[0], [sys.argv[0]] + [reg] + sys.argv[1:])
-    elif not os.path.exists(
-            SuiteSrvFilesManager().get_suite_srv_dir(args[0], options.owner)):
-        # Source path is assumed to be the run directory
-        SuiteSrvFilesManager().register(
-            args[0],
-            glbl_cfg().get_derived_host_item(args[0], 'suite run directory'))
 
     # Check suite is not already running before start of host selection.
     try:
@@ -118,6 +112,14 @@ def main(is_restart=False):
             return remote_cylc_cmd(base_cmd, host=host)
     if remrun(set_rel_local=True):  # State localhost as above.
         sys.exit()
+
+    try:
+        SuiteSrvFilesManager().get_suite_source_dir(args[0], options.owner)
+    except SuiteServiceFileError:
+        # Source path is assumed to be the run directory
+        SuiteSrvFilesManager().register(
+            args[0],
+            glbl_cfg().get_derived_host_item(args[0], 'suite run directory'))
 
     try:
         scheduler = Scheduler(is_restart, options, args)
