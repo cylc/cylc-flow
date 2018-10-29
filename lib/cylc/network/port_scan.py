@@ -24,6 +24,7 @@ import re
 import sys
 from time import sleep, time
 import traceback
+import socket
 from uuid import uuid4
 
 from cylc.cfgspec.glbl_cfg import glbl_cfg
@@ -64,7 +65,14 @@ def _scan_item(timeout, my_uuid, srv_files_mgr, item):
     host, port = item
     host_anon = host
     if is_remote_host(host):
-        host_anon = get_host_ip_by_name(host)  # IP reduces DNS traffic
+        try:
+            host_anon = get_host_ip_by_name(host)  # IP reduces DNS traffic
+        except socket.error as exc:
+            if cylc.flags.debug:
+                raise
+            sys.stderr.write("ERROR: %s: %s\n" % (exc, host))
+            return (host, port, None)
+
     client = SuiteRuntimeServiceClient(
         None, host=host_anon, port=port, my_uuid=my_uuid,
         timeout=timeout, auth=SuiteRuntimeServiceClient.ANON_AUTH)
