@@ -505,7 +505,7 @@ class CylcSuiteDAO(object):
 
     def pre_select_broadcast_events(self, order=None):
         """Query statement and args formation for select_broadcast_events."""
-        form_stmt = r"SELECT point,namespace,key,value FROM %s"
+        form_stmt = r"SELECT time,change,point,namespace,key,value FROM %s"
         if order == "DESC":
             ordering = (" ORDER BY " +
                         "time DESC, point DESC, namespace DESC, key DESC")
