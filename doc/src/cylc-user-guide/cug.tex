@@ -7875,10 +7875,12 @@ using the older inter-suite triggering mechanism described in this section.}
 The \lstinline=cylc suite-state= command interrogates suite run databases. It
 has a polling mode that waits for a given task in the target suite to achieve a
 given state, or receive a given message. This can be used to make task
-scripting wait for a remote task
-to succeed (for example). The suite graph notation also provides a way to
-define automatic suite-state polling tasks, which use the same polling command
-under the hood.
+scripting wait for a remote task to succeed (for example).
+
+Automatic suite-state polling tasks can be defined with in the graph. They get
+automatically-generated task scripting that uses \lstinline=cylc suite-state=
+appropriately (it is an error to give your own \lstinline=script= item for these
+tasks).
 
 Here's how to trigger a task \lstinline=bar= off a task \lstinline=foo= in
 a remote suite called \lstinline=other.suite=:
@@ -7911,7 +7913,7 @@ configured if necessary under the local polling task runtime section:
 \end{lstlisting}
 
 To poll for the target task to receive a message rather than achieve a state,
-give the message in the runtime configuration (in which case the status
+give the message in the runtime configuration (in which case the task status
 inferred from the graph syntax will be ignored):
 
 \begin{lstlisting}
@@ -7920,7 +7922,6 @@ inferred from the graph syntax will be ignored):
         [[[suite state polling]]]
             message = "the quick brown fox"
 \end{lstlisting}
-
 
 For suites owned by others, or those with run databases in non-standard
 locations, use the \lstinline=--run-dir= option, or in-suite:
