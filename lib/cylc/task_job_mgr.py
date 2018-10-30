@@ -359,7 +359,7 @@ class TaskJobManager(object):
             # Automatic suite state polling script
             comstr = "cylc suite-state " + \
                      " --task=" + itask.tdef.suite_polling_cfg['task'] + \
-                     " --point=" + str(itask.point) 
+                     " --point=" + str(itask.point)
             if cylc.flags.debug:
                 comstr += ' --debug'
             for key, fmt in [
