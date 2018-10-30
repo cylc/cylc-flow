@@ -20,7 +20,6 @@
 import atexit
 import os
 import re
-import sys
 import shutil
 from tempfile import mkdtemp
 
@@ -28,6 +27,7 @@ from parsec.config import ParsecConfig
 from parsec import ParsecError
 from parsec.upgrade import upgrader, converter
 
+from cylc import LOG
 from cylc.cfgvalidate import (
     cylc_config_validate, CylcConfigValidator as VDR, DurationFloat)
 from cylc.hostuserutil import is_remote_user
@@ -434,8 +434,7 @@ class GlobalConfig(ParsecConfig):
         """Load or reload configuration from files."""
         self.sparse.clear()
         self.dense.clear()
-        if cylc.flags.verbose:
-            print "Loading site/user global config files"
+        LOG.debug("Loading site/user global config files")
         conf_path_str = os.getenv("CYLC_CONF_PATH")
         if conf_path_str is None:
             # CYLC_CONF_PATH not defined, use default locations.
@@ -455,13 +454,11 @@ class GlobalConfig(ParsecConfig):
                 except ParsecError as exc:
                     if is_site:
                         # Warn on bad site file (users can't fix it).
-                        sys.stderr.write(
-                            "WARNING: ignoring bad site config %s:"
-                            "\n%s\n" % (fname, str(exc)))
+                        LOG.warning(
+                            'ignoring bad site config %s: %s', fname, exc)
                     else:
                         # Abort on bad user file (users can fix it).
-                        sys.stderr.write(
-                            "ERROR: bad user config %s:\n" % (fname))
+                        LOG.error('bad user config %s', fname)
                         raise
                     break
         elif conf_path_str:
@@ -589,22 +586,16 @@ class GlobalConfig(ParsecConfig):
         try:
             mkdir_p(dir_)
         except OSError as exc:
-            print >> sys.stderr, str(exc)
+            LOG.exception(exc)
             raise GlobalConfigError(
                 'Failed to create directory "' + name + '"')
 
     def create_cylc_run_tree(self, suite):
         """Create all top-level cylc-run output dirs on the suite host."""
-
-        if cylc.flags.verbose:
-            print 'Creating the suite output tree:'
-
         cfg = self.get()
-
         item = 'suite run directory'
-        if cylc.flags.verbose:
-            print ' +', item
         idir = self.get_derived_host_item(suite, item)
+        LOG.debug('creating %s: %s', item, idir)
         if cfg['enable run directory housekeeping']:
             self.roll_directory(
                 idir, item, cfg['run directory rolling archive length'])
@@ -615,9 +606,8 @@ class GlobalConfig(ParsecConfig):
                 'suite config log directory',
                 'suite work directory',
                 'suite share directory']:
-            if cylc.flags.verbose:
-                print ' +', item
             idir = self.get_derived_host_item(suite, item)
+            LOG.debug('creating %s: %s', item, idir)
             self.create_directory(idir, item)
 
         item = 'temporary directory'

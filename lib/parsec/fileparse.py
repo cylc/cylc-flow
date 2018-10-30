@@ -43,7 +43,7 @@ from parsec.include import inline, IncludeFileNotFoundError
 from parsec.jinja2support import jinja2process
 from jinja2 import TemplateError, UndefinedError
 from parsec.util import itemstr
-import cylc.flags
+from cylc import LOG
 
 
 # heading/sections can contain commas (namespace name lists) and any
@@ -137,8 +137,8 @@ def addsect(cfig, sname, parents):
         cfig = cfig[p]
     if sname in cfig:
         # this doesn't warrant a warning unless contained items are repeated
-        if cylc.flags.verbose:
-            print 'Section already encountered: ' + itemstr(parents + [sname])
+        LOG.debug(
+            'Section already encountered: %s', itemstr(parents + [sname]))
     else:
         cfig[sname] = OrderedDictWithDefaults()
 
@@ -151,10 +151,9 @@ def addict(cfig, key, val, parents, index):
 
     if not isinstance(cfig, dict):
         # an item of this name has already been encountered at this level
-        print >> sys.stderr, itemstr(parents, key, val)
         raise FileParseError(
-            'ERROR line ' + str(index) + ': already encountered ' +
-            itemstr(parents))
+            'ERROR line %d: already encountered %s',
+            index, itemstr(parents, key, val))
 
     if key in cfig:
         # this item already exists
@@ -163,18 +162,15 @@ def addict(cfig, key, val, parents, index):
                 len(parents) == 3 and
                 parents[-3:-1] == ['scheduling', 'dependencies'])):
             # append the new graph string to the existing one
-            if cylc.flags.verbose:
-                print 'Merging graph strings under ' + itemstr(parents)
+            LOG.debug('Merging graph strings under %s', itemstr(parents))
             if not isinstance(cfig[key], list):
                 cfig[key] = [cfig[key]]
             cfig[key].append(val)
         else:
             # otherwise override the existing item
-            if cylc.flags.verbose:
-                print >> sys.stderr, (
-                    'WARNING: overriding ' + itemstr(parents, key))
-                print >> sys.stderr, ' old value: ' + cfig[key]
-                print >> sys.stderr, ' new value: ' + val
+            LOG.debug(
+                'overriding %s old value: %s new value: %s',
+                itemstr(parents, key), cfig[key], val)
             cfig[key] = val
     else:
         cfig[key] = val
@@ -233,8 +229,7 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
     if os.path.isdir(suite_lib_python) and suite_lib_python not in sys.path:
         sys.path.append(suite_lib_python)
 
-    if cylc.flags.verbose:
-        print "Reading file", fpath
+    LOG.debug('Reading file %s', fpath)
 
     # read the file into a list, stripping newlines
     with open(fpath) as f:
@@ -265,9 +260,7 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
     # process with EmPy
     if do_empy:
         if flines and re.match(r'^#![Ee]m[Pp]y\s*', flines[0]):
-            if cylc.flags.verbose:
-                print "Processing with EmPy"
-
+            LOG.debug('Processing with EmPy')
             try:
                 from parsec.empysupport import EmPyError, empyprocess
             except ImportError:
@@ -285,8 +278,7 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
     # process with Jinja2
     if do_jinja2:
         if flines and re.match(r'^#![jJ]inja2\s*', flines[0]):
-            if cylc.flags.verbose:
-                print "Processing with Jinja2"
+            LOG.debug('Processing with Jinja2')
             try:
                 flines = jinja2process(flines, fdir, template_vars)
             except (StandardError, TemplateError, UndefinedError) as exc:
@@ -337,8 +329,7 @@ def parse(fpath, output_fname=None, template_vars=None):
     if output_fname:
         with open(output_fname, 'wb') as handle:
             handle.write('\n'.join(flines) + '\n')
-        if cylc.flags.verbose:
-            print "Processed configuration dumped: %s" % output_fname
+        LOG.debug('Processed configuration dumped: %s', output_fname)
 
     nesting_level = 0
     config = OrderedDictWithDefaults()

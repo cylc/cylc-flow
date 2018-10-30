@@ -28,8 +28,9 @@ run_ok $TEST_NAME cylc validate -v $SUITE_NAME
 TEST_NAME=$TEST_NAME_BASE-cmp
 cylc validate -v "${SUITE_NAME}" 2>&1 \
     | sed \
-    -e "1,/WARNING: deprecated items were automatically upgraded in 'suite/d;" \
-    -e '/Expanding \[runtime\] namespace lists and parameters/,$d' \
+    -e "1,/DEBUG - deprecated items were automatically upgraded in 'suite/d;" \
+    -e '/INFO - Expanding \[runtime\] namespace lists and parameters/,$d' \
+    -e 's/^.* DEBUG - //' \
     > 'val.out'
 cmp_ok val.out <<__END__
  * (6.1.3) [visualization][enable live graph movie] - DELETED (OBSOLETE)

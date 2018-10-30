@@ -30,7 +30,7 @@ from jinja2 import (
     FileSystemLoader,
     StrictUndefined,
     TemplateNotFound)
-import cylc.flags
+from cylc import LOG
 
 
 class PyModuleLoader(BaseLoader):
@@ -135,10 +135,8 @@ def jinja2process(flines, dir_, template_vars=None):
     # Load file lines into a template, excluding '#!jinja2' so that
     # '#!cylc-x.y.z' rises to the top. Callers should handle jinja2
     # TemplateSyntaxerror and TemplateError.
-    if cylc.flags.verbose and template_vars:
-        print 'Setting Jinja2 template variables:'
-        for item in sorted(template_vars.items()):
-            print '    + %s=%s' % item
+    if template_vars:
+        LOG.debug('Setting Jinja2 template variables: %s', template_vars)
 
     # Jinja2 render method requires a dictionary as argument (not None):
     if not template_vars:

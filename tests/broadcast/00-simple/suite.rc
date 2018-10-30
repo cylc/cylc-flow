@@ -77,9 +77,11 @@ set +x
         cylc bcast --display $CYLC_SUITE_NAME
 } 1>prep.out 2>prep.err
 set -x
+sed -i '/DEBUG -/d' 'prep.out'
+sed -i '/\(DEBUG\|WARNING\|ERROR\) -/d' 'prep.err'
 diff -u "${CYLC_SUITE_DEF_PATH}/expected-prep.out" 'prep.out'
 diff -u "${CYLC_SUITE_DEF_PATH}/expected-prep.err" 'prep.err'
-                            """
+"""
     [[ENS]]
     [[ENS1]]
         inherit = ENS

@@ -17,14 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Support automatic deprecation and obsoletion of parsec config items."""
 
-import sys
-if __name__ == '__main__':
-    import os
-    sys.path.append(os.path.dirname(__file__) + '/..')
-
 from parsec import ParsecError
 from parsec.OrderedDict import OrderedDict
-import cylc.flags
+from cylc import LOG
 
 
 class UpgradeError(ParsecError):
@@ -99,8 +94,9 @@ class upgrader(object):
         if '__MANY__' not in upg['old']:
             return [upg]
         if upg['old'].count('__MANY__') > 1:
-            sys.stderr.write('%s\n' % upg['old'])
-            raise UpgradeError("Multiple simultaneous __MANY__ not supported")
+            raise UpgradeError(
+                'Multiple simultaneous __MANY__ not supported: %s' %
+                upg['old'])
         exp_upgs = []
         pre = []
         post = []
@@ -180,18 +176,18 @@ class upgrader(object):
                         self.del_item(upg['old'])
                         if upg['cvt'].describe() != "DELETED (OBSOLETE)":
                             self.put_item(upg['new'], upg['cvt'].convert(old))
-        if do_warn and cylc.flags.verbose:
-            sys.stderr.write(
-                'WARNING: deprecated items were automatically upgraded in' +
-                " '%s':\n" % self.descr)
+        if do_warn:
+            LOG.debug(
+                "deprecated items were automatically upgraded in '%s':",
+                self.descr)
             for vn, msgs in warnings.items():
                 for m in msgs:
-                    sys.stderr.write(' * (%s) %s\n' % (vn, m))
+                    LOG.debug(' * (%s) %s', vn, m)
 
 
 if __name__ == "__main__":
-    from util import printcfg
-    cylc.flags.verbose = True
+    import sys
+    from parsec.util import printcfg
 
     cfg = {
         'item one': 1,

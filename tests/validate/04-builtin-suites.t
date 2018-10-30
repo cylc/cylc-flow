@@ -27,7 +27,7 @@ function filter_warnings() {
     python - "$@" <<'__PYTHON__'
 import re, sys
 msgs = [
-    r'.* INFO - .*\n(\t.*\n)*',
+    r'.* (?:INFO|DEBUG) - .*\n(\t.*\n)*',
     r'.*naked dummy tasks detected.*\n(\t.*\n)+',
     r'.*clock-(trigger|expire) offsets are normally positive.*\n']
 file_name = sys.argv[1]
@@ -54,7 +54,7 @@ for suite in ${SUITES[@]}; do
         skip 2 "${TEST_NAME}: EmPy not installed"
         continue
     fi
-    run_ok "${TEST_NAME}" cylc validate "${suite}" -v -v
+    run_ok "${TEST_NAME}" cylc validate "${suite}" -v
     filter_warnings "${TEST_NAME}.stderr"
     cmp_ok "${TEST_NAME}.stderr.processed" /dev/null
 done
