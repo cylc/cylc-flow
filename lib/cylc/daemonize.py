@@ -91,7 +91,6 @@ def daemonize(server):
                             suite_url, suite_pid = (
                                 item.rsplit("=", 1)[-1]
                                 for item in log_line.rsplit()[-2:])
-                            print suite_url, suite_pid
                     if not ok:
                         try:
                             sys.stderr.write(open(logpath).read())

@@ -836,7 +836,7 @@ class CylcReviewService(object):
         cls._check_path_normalised(path)
         # Get rootdir and sub-path.
         head, tail = os.path.split(path)
-        while os.path.dirname(head) not in ['', '/']:
+        while os.path.dirname(head) not in ['', os.sep]:
             head, tail1 = os.path.split(head)
             tail = os.path.join(tail1, tail)
         if not (

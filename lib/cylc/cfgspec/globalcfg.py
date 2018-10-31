@@ -368,7 +368,8 @@ def upg(cfg, descr):
         ['hosts', '__MANY__', 'remote tail command template'])
     u.deprecate(
         '7.6.0',
-        ['hosts', '__MANY__', 'local tail command template'])
+        ['hosts', '__MANY__', 'local tail command template'],
+        ['hosts', '__MANY__', 'tail command template'])
     u.deprecate(
         '7.8.0',
         ['communication', 'base port'],
@@ -455,7 +456,7 @@ class GlobalConfig(ParsecConfig):
                     if is_site:
                         # Warn on bad site file (users can't fix it).
                         LOG.warning(
-                            'ignoring bad site config %s: %s', fname, exc)
+                            'ignoring bad site config %s:\n%s', fname, exc)
                     else:
                         # Abort on bad user file (users can fix it).
                         LOG.error('bad user config %s', fname)
