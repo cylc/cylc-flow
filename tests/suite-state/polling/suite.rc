@@ -7,9 +7,17 @@
         live mode suite timeout = PT1M
 [scheduling]
     [[dependencies]]
-        graph = "l-good<{{UPSTREAM}}::good-stuff> & lbad<{{UPSTREAM}}::bad:fail>"
+        graph = """
+          l-good<{{UPSTREAM}}::good-stuff> & lbad<{{UPSTREAM}}::bad:fail>
+          l-mess<{{UPSTREAM}}::messenger> => done
+                """
 [runtime]
     [[l-good,lbad]]
         [[[suite state polling]]]
             interval = PT2S
             max-polls = 20
+    [[l-mess]]
+        [[[suite state polling]]]
+            interval = PT2S
+            max-polls = 20
+            message = "the quick brown fox"

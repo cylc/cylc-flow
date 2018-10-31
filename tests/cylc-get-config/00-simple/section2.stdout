@@ -58,9 +58,9 @@
         interval = 
         host = 
         max-polls = 
+        message = 
         run-dir = 
         user = 
-        template = 
         verbose mode = 
     [[[remote]]]
         owner = 
@@ -137,9 +137,9 @@
         interval = 
         host = 
         max-polls = 
+        message = 
         run-dir = 
         user = 
-        template = 
         verbose mode = 
     [[[remote]]]
         owner = 
@@ -217,9 +217,9 @@
         interval = 
         host = 
         max-polls = 
+        message = 
         run-dir = 
         user = 
-        template = 
         verbose mode = 
     [[[remote]]]
         owner = 
@@ -297,9 +297,9 @@
         interval = 
         host = 
         max-polls = 
+        message = 
         run-dir = 
         user = 
-        template = 
         verbose mode = 
     [[[remote]]]
         owner = 
@@ -377,9 +377,9 @@
         interval = 
         host = 
         max-polls = 
+        message = 
         run-dir = 
         user = 
-        template = 
         verbose mode = 
     [[[remote]]]
         owner = 
@@ -457,9 +457,9 @@
         interval = 
         host = 
         max-polls = 
+        message = 
         run-dir = 
         user = 
-        template = 
         verbose mode = 
     [[[remote]]]
         owner = 
@@ -537,9 +537,9 @@
         interval = 
         host = 
         max-polls = 
+        message = 
         run-dir = 
         user = 
-        template = 
         verbose mode = 
     [[[remote]]]
         owner = 
@@ -616,9 +616,9 @@
         interval = 
         host = 
         max-polls = 
+        message = 
         run-dir = 
         user = 
-        template = 
         verbose mode = 
     [[[remote]]]
         owner = 
@@ -696,9 +696,9 @@
         interval = 
         host = 
         max-polls = 
+        message = 
         run-dir = 
         user = 
-        template = 
         verbose mode = 
     [[[remote]]]
         owner = 
@@ -776,9 +776,9 @@
         interval = 
         host = 
         max-polls = 
+        message = 
         run-dir = 
         user = 
-        template = 
         verbose mode = 
     [[[remote]]]
         owner = 
@@ -855,9 +855,9 @@
         interval = 
         host = 
         max-polls = 
+        message = 
         run-dir = 
         user = 
-        template = 
         verbose mode = 
     [[[remote]]]
         owner = 
@@ -935,9 +935,9 @@
         interval = 
         host = 
         max-polls = 
+        message = 
         run-dir = 
         user = 
-        template = 
         verbose mode = 
     [[[remote]]]
         owner = 
@@ -1015,9 +1015,9 @@
         interval = 
         host = 
         max-polls = 
+        message = 
         run-dir = 
         user = 
-        template = 
         verbose mode = 
     [[[remote]]]
         owner = 

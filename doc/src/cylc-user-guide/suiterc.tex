@@ -2011,16 +2011,6 @@ suite-name sub-directory of this location).
     \item {\em default:} as configured by site/user config (for your own suites)
 \end{myitemize}
 
-\subparagraph[template]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[suite state polling]]] \textrightarrow template}
-
-Cycle point template of the target suite, if different from that of the polling suite.
-
-\begin{myitemize}
-    \item {\em type:} string
-    \item {\em default:} cycle point format of the polling suite
-    \item {\em example:} \lstinline=%Y-%m-%dT%H=
-\end{myitemize}
-
 \subparagraph[interval]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[suite state polling]]] \textrightarrow interval}
 
 Polling interval expressed as an ISO 8601 duration/interval.
@@ -2057,6 +2047,16 @@ will be invoked on the remote account.
 
 \begin{myitemize}
     \item {\em type:} string (hostname)
+    \item {\em default:} (none)
+\end{myitemize}
+
+\subparagraph[host]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[suite state polling]]] \textrightarrow message}
+
+Wait for the target task in the target suite to receive a specified message
+rather than achieve a state.
+
+\begin{myitemize}
+    \item {\em type:} string (the message)
     \item {\em default:} (none)
 \end{myitemize}
 

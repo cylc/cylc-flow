@@ -240,8 +240,8 @@ SPEC = {
                 'host': [VDR.V_STRING],
                 'interval': [VDR.V_INTERVAL],
                 'max-polls': [VDR.V_INTEGER],
+                'message': [VDR.V_STRING],
                 'run-dir': [VDR.V_STRING],
-                'template': [VDR.V_STRING],
                 'verbose mode': [VDR.V_BOOLEAN],
             },
             'environment': {
@@ -378,6 +378,8 @@ def upg(cfg, descr):
     u.obsolete('7.2.2', ['runtime', '__MANY__', 'dummy mode'])
     u.obsolete('7.2.2', ['runtime', '__MANY__', 'simulation mode'])
     u.obsolete('7.6.0', ['runtime', '__MANY__', 'enable resurrection'])
+    u.obsolete('7.8.0', ['runtime', '__MANY__', 'suite state polling',
+                         'template'])
     u.upgrade()
 
 

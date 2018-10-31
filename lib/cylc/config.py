@@ -1223,17 +1223,20 @@ class SuiteConfig(object):
             rtc = tdef.rtconfig
             comstr = "cylc suite-state" + \
                      " --task=" + tdef.suite_polling_cfg['task'] + \
-                     " --point=$CYLC_TASK_CYCLE_POINT" + \
-                     " --status=" + tdef.suite_polling_cfg['status']
+                     " --point=$CYLC_TASK_CYCLE_POINT"
             for key, fmt in [
                     ('user', ' --%s=%s'),
                     ('host', ' --%s=%s'),
                     ('interval', ' --%s=%d'),
                     ('max-polls', ' --%s=%s'),
-                    ('run-dir', ' --%s=%s'),
-                    ('template', ' --%s=%s')]:
+                    ('run-dir', ' --%s=%s')]:
                 if rtc['suite state polling'][key]:
                     comstr += fmt % (key, rtc['suite state polling'][key])
+            if rtc['suite state polling']['message']:
+                comstr += " --message='%s'" % (
+                    rtc['suite state polling']['message'])
+            else:
+                comstr += " --status=" + tdef.suite_polling_cfg['status']
             comstr += " " + tdef.suite_polling_cfg['suite']
             script = "echo " + comstr + "\n" + comstr
             rtc['script'] = script
