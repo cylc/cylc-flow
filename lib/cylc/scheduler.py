@@ -52,8 +52,7 @@ from cylc.state_summary_mgr import StateSummaryMgr
 from cylc.suite_db_mgr import SuiteDatabaseManager
 from cylc.suite_events import (
     SuiteEventContext, SuiteEventError, SuiteEventHandler)
-from cylc.hostuserutil import get_host, get_user, get_fqdn_by_host
-import cylc.scheduler_cli
+from cylc.host_appointer import HostAppointer, EmptyHostList
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
 from cylc.suite_status import (
@@ -1374,8 +1373,7 @@ conditions; see `cylc conditions`.
         cmd = ['cylc', 'restart', quote(self.suite)]
 
         for attempt_no in range(max_retries):
-            new_host = cylc.scheduler_cli.HostAppointer(
-                cached=True).appoint_host()
+            new_host = HostAppointer(cached=False).appoint_host()
             LOG.info('Attempting to restart on "%s"' % new_host)
 
             # proc will start with current env (incl CYLC_HOME etc)
@@ -1458,8 +1456,8 @@ conditions; see `cylc conditions`.
         ] if value]
 
         try:
-            cylc.scheduler_cli.HostAppointer(cached=True).appoint_host()
-        except cylc.scheduler_cli.EmptyHostList:
+            HostAppointer(cached=False).appoint_host()
+        except EmptyHostList:
             ret.append('No alternative host to restart suite on.')
         except Exception:
             # Any unexpected error in host selection shouldn't be able to take

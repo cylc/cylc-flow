@@ -20,12 +20,12 @@
 #-------------------------------------------------------------------------------
 set_test_number 7
 
-run_ok "${TEST_NAME_BASE}" python -m 'cylc.scheduler_cli'
+run_ok "${TEST_NAME_BASE}" python -m 'cylc.host_appointer'
 
 # No run hosts list
 create_test_globalrc '' ''
 run_ok "${TEST_NAME_BASE}-no-host-list" python - <<'__PYTHON__'
-from cylc.scheduler_cli import HostAppointer
+from cylc.host_appointer import HostAppointer
 assert HostAppointer().appoint_host() == 'localhost'
 __PYTHON__
 
@@ -35,7 +35,7 @@ create_test_globalrc '' '
     run hosts =
 '
 run_ok "${TEST_NAME_BASE}-empty-host-list" python - <<'__PYTHON__'
-from cylc.scheduler_cli import HostAppointer
+from cylc.host_appointer import HostAppointer
 assert HostAppointer().appoint_host() == 'localhost'
 __PYTHON__
 
@@ -46,7 +46,7 @@ create_test_globalrc '' "
 "
 run_ok "${TEST_NAME_BASE}-uncontactable" python -c '
 import sys
-from cylc.scheduler_cli import HostAppointer
+from cylc.host_appointer import HostAppointer
 appointer = HostAppointer()
 for _ in range(10):
     if appointer.appoint_host() != "localhost":
@@ -70,7 +70,7 @@ create_test_globalrc '' "
 "
 run_ok "${TEST_NAME_BASE}-condemned-local" python -c '
 import sys
-from cylc.scheduler_cli import HostAppointer
+from cylc.host_appointer import HostAppointer
 appointer = HostAppointer()
 for _ in range(10):
     if appointer.appoint_host() == "localhost":
@@ -86,7 +86,7 @@ create_test_globalrc '' "
 "
 run_ok "${TEST_NAME_BASE}-condemned-variants" python -c '
 import sys
-from cylc.scheduler_cli import HostAppointer
+from cylc.host_appointer import HostAppointer
 appointer = HostAppointer()
 for _ in range(10):
     if appointer.appoint_host() == "localhost":
@@ -101,7 +101,7 @@ create_test_globalrc '' "
     condemned hosts = localhost
 "
 run_fail "${TEST_NAME_BASE}-condemned-all" python -c '
-from cylc.scheduler_cli import HostAppointer
+from cylc.host_appointer import HostAppointer
 HostAppointer().appoint_host()
 '
 
