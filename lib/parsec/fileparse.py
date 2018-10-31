@@ -120,12 +120,9 @@ def _concatenate(lines):
     maxline = len(lines)
     while index < maxline:
         line = lines[index]
-        # Raise an error if line has a whitespace after the line break
-        if re.match(_BAD_CONTINUATION_TRAILING_WHITESPACE, line):
-            msg = ("The line \"{0}\" has whitespace after the line break "
-                   "character (\). This is not allowed in the syntax for "
-                   "this type of file.")
-            raise FileParseError(msg.format(line))
+        # Forgive error if line has a whitespace after the line break
+        while re.match(_BAD_CONTINUATION_TRAILING_WHITESPACE, line):
+            line = line[:-1]
         while line.endswith('\\'):
             if index == maxline - 1:
                 # continuation char on the last line
