@@ -2208,7 +2208,7 @@ shown here in the state they were in at the time of triggering.''')
         window.set_size_request(800, 400)
         window.set_title(task_id + ": Log Files")
 
-        nsubmits = len(task_state_summary.get('job_hosts', {}))
+        nsubmits = task_state_summary.get('submit_num', 1)
         viewer = ComboLogViewer(self.cfg.suite, task_id, choice,
                                 self._get_task_extra_job_logs(task_id),
                                 nsubmits, self.get_remote_run_opts())
