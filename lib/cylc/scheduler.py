@@ -41,18 +41,18 @@ from cylc.cycling.loader import get_point, standardise_point_string
 from cylc.daemonize import daemonize
 from cylc.exceptions import CylcError
 import cylc.flags
-from cylc.hostuserutil import get_host, get_user
+from cylc.host_appointer import HostAppointer, EmptyHostList
+from cylc.hostuserutil import get_host, get_user, get_fqdn_by_host
 from cylc.loggingutil import CylcLogFormatter, TimestampRotatingFileHandler
 from cylc.log_diagnosis import LogSpec
-from cylc.subprocpool import SuiteProcPool
 from cylc.network import PRIVILEGE_LEVELS
 from cylc.network.httpserver import HTTPServer
 from cylc.profiler import Profiler
 from cylc.state_summary_mgr import StateSummaryMgr
+from cylc.subprocpool import SuiteProcPool
 from cylc.suite_db_mgr import SuiteDatabaseManager
 from cylc.suite_events import (
     SuiteEventContext, SuiteEventError, SuiteEventHandler)
-from cylc.host_appointer import HostAppointer, EmptyHostList
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
 from cylc.suite_status import (

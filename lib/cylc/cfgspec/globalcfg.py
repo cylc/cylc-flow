@@ -445,7 +445,6 @@ class GlobalConfig(ParsecConfig):
             cls._DEFAULT.load()
         return cls._DEFAULT
 
-
     def load(self):
         """Load or reload configuration from files."""
         self.sparse.clear()

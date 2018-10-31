@@ -23,7 +23,7 @@ import sys
 from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
-from cylc.host_appointer import HostAppointer
+from cylc.host_appointer import HostAppointer, EmptyHostList
 from cylc.hostuserutil import is_remote_host
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.remote import remrun, remote_cylc_cmd
@@ -101,7 +101,13 @@ def main(is_restart=False):
 
     # Check whether a run host is explicitly specified, else select one.
     if not options.host:
-        host = HostAppointer().appoint_host()
+        try:
+            host = HostAppointer().appoint_host()
+        except EmptyHostList as exc:
+            if cylc.flags.debug:
+                raise
+            else:
+                sys.exit(str(exc))
         if is_remote_host(host):
             if is_restart:
                 base_cmd = ["restart"] + sys.argv[1:]

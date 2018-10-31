@@ -99,10 +99,7 @@ class HostAppointer(object):
         for one return that item, else (for multiple items) return False.
         """
         if len(host_list) == 0:
-            if self.IS_DEBUG:
-                raise EmptyHostList()
-            else:
-                sys.exit(str(EmptyHostList()))
+            raise EmptyHostList()
         elif len(host_list) == 1:
             return host_list[0]
         else:
@@ -437,7 +434,7 @@ class TestHostAppointer(unittest.TestCase):
             'HOST_1'
         )
         self.assertRaises(
-            SystemExit,
+            EmptyHostList,
             self.app._trivial_choice, []
         )
 
@@ -553,8 +550,8 @@ class TestHostAppointer(unittest.TestCase):
         # Enumerate all (24) correct results required to test equality with.
         # Correct results deduced individually based on mock host set. Note
         # only HOST_2 and HOST_3 pass all thresholds for thresholds_space[1].
-        correct_results = (8 * [SystemExit] +
-                           4 * ['HOST_1', SystemExit] +
+        correct_results = (8 * [EmptyHostList] +
+                           4 * ['HOST_1', EmptyHostList] +
                            ['HOST_X', 'HOST_Y', 'HOST_1', 'HOST_2', 'HOST_5',
                             'HOST_3', 'HOST_5', 'HOST_3'])
 

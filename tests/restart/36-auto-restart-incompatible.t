@@ -71,7 +71,7 @@ for opt in "${OPTS[@]}"; do
         run hosts = localhost
     "
 
-    cylc run "${SUITE_NAME}" --hold ${clo} --host=localhost &
+    cylc run "${SUITE_NAME}" --hold ${clo} --host=localhost >/dev/null 2>&1 &
     poll ! test -f "${SUITE_RUN_DIR}/.service/contact"
     run_ok "${TEST_NAME}-contact" cylc get-contact "${SUITE_NAME}"
     grep_ok "CYLC_SUITE_HOST=$(hostname -f)" "${TEST_NAME}-contact.stdout"
