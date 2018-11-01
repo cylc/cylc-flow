@@ -21,13 +21,18 @@
 CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 set_test_remote_host
-set_test_number 2
+set_test_number 3
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
-SSH='ssh -oBatchMode=yes -oConnectTimeout=5'
-cylc register --host="${CYLC_TEST_HOST}" "${SUITE_NAME}"
+SSH_OPTS='-oBatchMode=yes -oConnectTimeout=5'
+ssh ${SSH_OPTS} "${CYLC_TEST_HOST}" mkdir -p "cylc-run/${SUITE_NAME}"
+scp ${SSH_OPTS} -pqr "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/"* \
+    "${CYLC_TEST_HOST}:cylc-run/${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-register" \
+    cylc register --host="${CYLC_TEST_HOST}" \
+    "${SUITE_NAME}" "cylc-run/${SUITE_NAME}"
 
 suite_run_ok "${TEST_NAME_BASE}" \
     cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
