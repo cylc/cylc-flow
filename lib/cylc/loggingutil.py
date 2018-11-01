@@ -100,14 +100,14 @@ class TimestampRotatingFileHandler(logging.FileHandler):
 
     def should_rollover(self, record):
         """Should rollover?"""
-        if self.stamp is None:
+        if self.stamp is None or self.stream is None:
             return True
         max_bytes = glbl_cfg().get([self.GLBL_KEY, 'maximum size in bytes'])
         if max_bytes < self.MIN_BYTES:  # No silly value
             max_bytes = self.MIN_BYTES
         msg = "%s\n" % self.format(record)
         self.stream.seek(0, 2)  # due to non-posix-compliant Windows feature
-        return self.stream.tell() + len(msg) >= max_bytes
+        return self.stream.tell() + len(msg.encode('utf8')) >= max_bytes
 
     def do_rollover(self):
         """Create and rollover log file if necessary."""

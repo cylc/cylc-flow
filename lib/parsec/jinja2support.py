@@ -136,7 +136,10 @@ def jinja2process(flines, dir_, template_vars=None):
     # '#!cylc-x.y.z' rises to the top. Callers should handle jinja2
     # TemplateSyntaxerror and TemplateError.
     if template_vars:
-        LOG.debug('Setting Jinja2 template variables: %s', template_vars)
+        LOG.debug(
+            'Setting Jinja2 template variables:\n%s',
+            '\n'.join(
+                ['+ %s=%s' % item for item in sorted(template_vars.items())]))
 
     # Jinja2 render method requires a dictionary as argument (not None):
     if not template_vars:

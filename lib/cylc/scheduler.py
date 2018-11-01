@@ -892,7 +892,7 @@ conditions; see `cylc conditions`.
 
     @staticmethod
     def command_set_verbosity(lvl):
-        """Remove suite verbosity."""
+        """Set suite verbosity."""
         try:
             LOG.setLevel(int(lvl))
         except (TypeError, ValueError):
