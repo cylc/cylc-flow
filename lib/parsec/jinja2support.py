@@ -30,7 +30,7 @@ from jinja2 import (
     FileSystemLoader,
     StrictUndefined,
     TemplateNotFound)
-from cylc import LOG
+from parsec import LOG
 
 
 class PyModuleLoader(BaseLoader):

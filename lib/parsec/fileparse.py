@@ -37,13 +37,12 @@ import sys
 import re
 import traceback
 
-from parsec import ParsecError
+from jinja2 import TemplateError, UndefinedError
+from parsec import LOG, ParsecError
 from parsec.OrderedDict import OrderedDictWithDefaults
 from parsec.include import inline, IncludeFileNotFoundError
 from parsec.jinja2support import jinja2process
-from jinja2 import TemplateError, UndefinedError
 from parsec.util import itemstr
-from cylc import LOG
 
 
 # heading/sections can contain commas (namespace name lists) and any

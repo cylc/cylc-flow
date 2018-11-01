@@ -17,9 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Support automatic deprecation and obsoletion of parsec config items."""
 
-from parsec import ParsecError
+from parsec import LOG, ParsecError
 from parsec.OrderedDict import OrderedDict
-from cylc import LOG
 
 
 class UpgradeError(ParsecError):
