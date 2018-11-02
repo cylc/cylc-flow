@@ -268,9 +268,7 @@ class SuiteConfig(object):
         # parameter values and templates are normally needed together.
         self.parameters = (parameter_values, parameter_templates)
 
-        if cylc.flags.verbose:
-            LOG.info(
-                "Expanding [runtime] namespace lists and parameters")
+        LOG.debug("Expanding [runtime] namespace lists and parameters")
 
         # Set default parameter expansion templates if necessary.
         for pname, pvalues in parameter_values.items():
@@ -438,8 +436,7 @@ class SuiteConfig(object):
                         str(final_point), constraints_str))
 
         # Parse special task cycle point offsets, and replace family names.
-        if cylc.flags.verbose:
-            LOG.info("Parsing [special tasks]")
+        LOG.debug("Parsing [special tasks]")
         for s_type in self.cfg['scheduling']['special tasks']:
             result = copy(self.cfg['scheduling']['special tasks'][s_type])
             extn = ''
@@ -603,7 +600,7 @@ class SuiteConfig(object):
                 ngs[fam] = [fam] + self.runtime['descendants'][fam]
 
         if cylc.flags.verbose:
-            LOG.info("Checking [visualization] node attributes")
+            LOG.debug("Checking [visualization] node attributes")
             # TODO - these should probably be done in non-verbose mode too.
             # 1. node groups should contain valid namespace names
             nspaces = self.cfg['runtime'].keys()
@@ -984,7 +981,7 @@ class SuiteConfig(object):
             log_msg = "First parent(s) demoted to secondary:"
             for n, p in demoted.items():
                 log_msg += "\n + %s as parent of '%s'" % (p, n)
-            LOG.info(log_msg)
+            LOG.debug(log_msg)
 
         c3 = C3(self.runtime['parents'])
         c3_single = C3(first_parents)
@@ -1019,8 +1016,7 @@ class SuiteConfig(object):
                     self.runtime['first-parent descendants'][p].append(name)
 
     def compute_inheritance(self, use_simple_method=True):
-        if cylc.flags.verbose:
-            LOG.info("Parsing the runtime namespace hierarchy")
+        LOG.debug("Parsing the runtime namespace hierarchy")
 
         results = OrderedDictWithDefaults()
         # n_reps = 0
@@ -1136,8 +1132,7 @@ class SuiteConfig(object):
         # Note this modifies the parsed config dict.
         queues = self.cfg['scheduling']['queues']
 
-        if cylc.flags.verbose:
-            LOG.info("Configuring internal queues")
+        LOG.debug("Configuring internal queues")
 
         # First add all tasks to the default queue.
         all_task_names = self.get_task_name_list()
@@ -1212,7 +1207,7 @@ class SuiteConfig(object):
                 if key == self.Q_DEFAULT:
                     continue
                 log_msg += "\n+ %s: %s" % (key, ', '.join(queue['members']))
-            LOG.info(log_msg)
+            LOG.debug(log_msg)
 
     def configure_suite_state_polling_tasks(self):
         # Check custom script is not defined for automatic suite polling tasks.
@@ -1223,11 +1218,10 @@ class SuiteConfig(object):
                 pass
             else:
                 if cs:
-                    LOG.info(cs)
                     # (allow explicit blanking of inherited script)
                     raise SuiteConfigError(
                         "ERROR: script cannot be defined for automatic" +
-                        " suite polling task " + l_task)
+                        " suite polling task '%s':\n%s" % (l_task, cs))
         # Generate the automatic scripting.
         for name, tdef in self.taskdefs.items():
             if name not in self.suite_polling_tasks:
@@ -1474,7 +1468,7 @@ class SuiteConfig(object):
                                     ' %s: %s: %s' % (
                                         taskdef.name, value, repr(exc)))
         if cylc.flags.verbose:
-            LOG.info("Checking for defined tasks not used in the graph")
+            LOG.debug("Checking for defined tasks not used in the graph")
             for name in self.cfg['runtime']:
                 if name not in self.taskdefs:
                     if name not in self.runtime['descendants']:
@@ -1958,8 +1952,7 @@ class SuiteConfig(object):
 
     def load_graph(self):
         """Parse and load dependency graph."""
-        if cylc.flags.verbose:
-            LOG.info("Parsing the dependency graph")
+        LOG.debug("Parsing the dependency graph")
 
         # Generate a map of *task* members of each family.
         # Note we could exclude 'root' from this and disallow use of 'root' in

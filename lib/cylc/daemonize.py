@@ -70,7 +70,7 @@ def daemonize(server):
                     suite_pid is None or suite_url is None):
                 sleep(0.1)
                 try:
-                    # Line 1 (or 2 in debug mode) of suite log should contain
+                    # First INFO line of suite log should contain
                     # start up message, URL and PID. Format is:
                     #  LOG-PREFIX Suite server program: url=URL, pid=PID
                     # Otherwise, something has gone wrong, print the suite log
@@ -79,24 +79,19 @@ def daemonize(server):
                     if (log_stat.st_mtime == old_log_mtime or
                             log_stat.st_size == 0):
                         continue
-                    with open(logpath) as log_f:
-                        try:
-                            first_two_lines = next(log_f), next(log_f)
-                        except StopIteration:
-                            continue
-                    ok = False
-                    for log_line in first_two_lines:
-                        if server.START_MESSAGE_PREFIX in log_line:
-                            ok = True
+                    for line in open(logpath):
+                        if server.START_MESSAGE_PREFIX in line:
                             suite_url, suite_pid = (
                                 item.rsplit("=", 1)[-1]
-                                for item in log_line.rsplit()[-2:])
-                    if not ok:
-                        try:
-                            sys.stderr.write(open(logpath).read())
-                            sys.exit(1)
-                        except IOError:
-                            sys.exit("Suite server program exited")
+                                for item in line.rsplit()[-2:])
+                            break
+                        elif ' ERROR -' in line or ' CRITICAL -' in line:
+                            # ERROR and CRITICAL before suite starts
+                            try:
+                                sys.stderr.write(open(logpath).read())
+                                sys.exit(1)
+                            except IOError:
+                                sys.exit("Suite server program exited")
                 except (IOError, OSError, ValueError):
                     pass
             if suite_pid is None or suite_url is None:

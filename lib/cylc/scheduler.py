@@ -298,8 +298,9 @@ conditions; see `cylc conditions`.
         logo_lines = logo.splitlines()
         license_lines = cylc_license.splitlines()
         lmax = max(len(line) for line in license_lines)
-        for i, logo_line in enumerate(logo_lines):
-            print(logo_line, ('{0: ^%s}' % lmax).format(license_lines[i]))
+        print(
+            '\n'.join((('{0} {1: ^%s}' % lmax).format(*x)
+            for x in zip(logo_lines, license_lines))))
 
     def _setup_suite_logger(self):
         """Set up logger for suite."""
