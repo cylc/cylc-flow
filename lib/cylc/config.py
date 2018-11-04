@@ -71,7 +71,7 @@ BCOMPAT_MSG_RE_C6 = re.compile(r'^(.*)\[\s*(([+-])?\s*(.*))?\s*\](.*)$')
 
 def check_varnames(env):
     """Check a list of env var names for legality.
-    
+
     Return a list of bad names (empty implies success).
     """
     bad = []
