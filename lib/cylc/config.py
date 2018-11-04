@@ -45,7 +45,6 @@ from cylc.cycling.loader import (
     get_sequence, get_sequence_cls, init_cyclers, INTEGER_CYCLING_TYPE,
     ISO8601_CYCLING_TYPE)
 from cylc.cycling import IntervalParsingError
-from cylc.envvar import check_varnames
 import cylc.flags
 from cylc.graphnode import GraphNodeParser, GraphNodeError
 from cylc.print_tree import print_tree
@@ -68,6 +67,18 @@ NUM_RUNAHEAD_SEQ_POINTS = 5  # Number of cycle points to look at per sequence.
 
 # Message trigger offset regex.
 BCOMPAT_MSG_RE_C6 = re.compile(r'^(.*)\[\s*(([+-])?\s*(.*))?\s*\](.*)$')
+
+
+def check_varnames(env):
+    """Check a list of env var names for legality.
+    
+    Return a list of bad names (empty implies success).
+    """
+    bad = []
+    for varname in env:
+        if not re.match(r'^[a-zA-Z_][\w]*$', varname):
+            bad.append(varname)
+    return bad
 
 
 class SuiteConfigError(Exception):

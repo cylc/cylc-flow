@@ -37,7 +37,6 @@ from parsec.util import pdeepcopy, poverride
 
 from cylc.batch_sys_manager import BatchSysManager, JobPollContext
 from cylc.cfgspec.glbl_cfg import glbl_cfg
-from cylc.envvar import expandvars
 import cylc.flags
 from cylc.hostuserutil import is_remote_host, is_remote_user
 from cylc.job_file import JobFileWriter
@@ -804,7 +803,11 @@ class TaskJobManager(object):
 
         itask.summary['batch_sys_name'] = rtconfig['job']['batch system']
         for name in rtconfig['extra log files']:
-            itask.summary['logfiles'].append(expandvars(name))
+            itask.summary['logfiles'].append(
+                os.path.expanduser(
+                    os.path.expandvars(name)
+                    )
+                )
         try:
             batch_sys_conf = self.task_events_mgr.get_host_conf(
                 itask, 'batch systems')[itask.summary['batch_sys_name']]
