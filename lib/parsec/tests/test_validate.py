@@ -276,12 +276,14 @@ class TestValidate(unittest.TestCase):
             ('"false"', False),
             ("'false'", False),
             ('', None),
-            ('  ', None)]:
+            ('  ', None)
+        ]:
             self.assertEqual(
                 validator.coerce_boolean(value, ['whatever']), result)
         # The bad
         for value in [
-            'None', ' Who cares? ', '3.14', '[]', '[True]', 'True, False']:
+            'None', ' Who cares? ', '3.14', '[]', '[True]', 'True, False'
+        ]:
             self.assertRaises(
                 IllegalValueError,
                 validator.coerce_boolean, value, ['whatever'])
@@ -305,12 +307,14 @@ class TestValidate(unittest.TestCase):
             ('1e20', 1.0e20),
             ('6.02e23', 6.02e23),
             ('-1.6021765e-19', -1.6021765e-19),
-            ('6.62607004e-34', 6.62607004e-34)]:
+            ('6.62607004e-34', 6.62607004e-34)
+        ]:
             self.assertAlmostEqual(
                 validator.coerce_float(value, ['whatever']), result)
         # The bad
         for value in [
-            'None', ' Who cares? ', 'True', '[]', '[3.14]', '3.14, 2.72']:
+            'None', ' Who cares? ', 'True', '[]', '[3.14]', '3.14, 2.72'
+        ]:
             self.assertRaises(
                 IllegalValueError,
                 validator.coerce_float, value, ['whatever'])
@@ -326,13 +330,15 @@ class TestValidate(unittest.TestCase):
             ('12*8, 8*12.0', [8.0] * 12 + [12.0] * 8),
             ('-3, -2, -1, -0.0, 1.0', [-3.0, -2.0, -1.0, -0.0, 1.0]),
             ('6.02e23, -1.6021765e-19, 6.62607004e-34',
-             [6.02e23, -1.6021765e-19, 6.62607004e-34])]:
+             [6.02e23, -1.6021765e-19, 6.62607004e-34])
+        ]:
             items = validator.coerce_float_list(value, ['whatever'])
             for item, result in zip(items, results):
                 self.assertAlmostEqual(item, result)
         # The bad
         for value in [
-            'None', 'e, i, e, i, o', '[]', '[3.14]', 'pi, 2.72']:
+            'None', 'e, i, e, i, o', '[]', '[3.14]', 'pi, 2.72', '2*True'
+        ]:
             self.assertRaises(
                 IllegalValueError,
                 validator.coerce_float_list, value, ['whatever'])
@@ -348,12 +354,14 @@ class TestValidate(unittest.TestCase):
             ('-3', -3),
             ('-0', -0),
             ('653456', 653456),
-            ('-8362583645365', -8362583645365)]:
+            ('-8362583645365', -8362583645365)
+        ]:
             self.assertAlmostEqual(
                 validator.coerce_int(value, ['whatever']), result)
         # The bad
         for value in [
-            'None', ' Who cares? ', 'True', '4.8', '[]', '[3]', '60*60']:
+            'None', ' Who cares? ', 'True', '4.8', '[]', '[3]', '60*60'
+        ]:
             self.assertRaises(
                 IllegalValueError,
                 validator.coerce_int, value, ['whatever'])
@@ -372,12 +380,14 @@ class TestValidate(unittest.TestCase):
             ('-10..10..3', [-10, -7, -4, -1, 2, 5, 8]),
             ('10*3, 4*-6', [3] * 10 + [-6] * 4),
             ('10*128, -78..-72, 2048',
-             [128] * 10 + [-78, -77, -76, -75, -74, -73, -72, 2048])]:
+             [128] * 10 + [-78, -77, -76, -75, -74, -73, -72, 2048])
+        ]:
             self.assertEqual(
                 validator.coerce_int_list(value, ['whatever']), results)
         # The bad
         for value in [
-            'None', 'e, i, e, i, o', '[]', '1..3, x', 'one..ten']:
+            'None', 'e, i, e, i, o', '[]', '1..3, x', 'one..ten'
+        ]:
             self.assertRaises(
                 IllegalValueError,
                 validator.coerce_int_list, value, ['whatever'])
@@ -399,7 +409,9 @@ class TestValidate(unittest.TestCase):
             ('    Hello:\n        foo\n    Greet\n        baz\n',
              'Hello:\n    foo\nGreet\n    baz'),
             ('False', 'False'),
-            ('None', 'None')]:
+            ('None', 'None'),
+            (['a', 'b'], 'a\nb')
+        ]:
             self.assertAlmostEqual(
                 validator.coerce_str(value, ['whatever']), result)
 
@@ -417,9 +429,40 @@ class TestValidate(unittest.TestCase):
             ('Mercury, Venus, Earth, Mars,\n"Jupiter",\n"Saturn"\n',
              ['Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn']),
             ('New Zealand, United Kingdom',
-             ['New Zealand', 'United Kingdom'])]:
+             ['New Zealand', 'United Kingdom'])
+        ]:
             self.assertEqual(
                 validator.coerce_str_list(value, ['whatever']), results)
+
+    def test_strip_and_unquote(self):
+        with self.assertRaises(IllegalValueError):
+            ParsecValidator.strip_and_unquote(['a'], '"""')
+
+    def test_strip_and_unquote_list(self):
+        for value, results in [
+            ('"a"\n"b"', ['a', 'b']),
+            ('"a", "b"', ['a', 'b']),
+            ('"a", "b"', ['a', 'b']),
+            ('"c" # d', ['c']),
+            ('"a", "b", "c" # d', ['a', 'b', 'c']),
+            ('"a"\n"b"\n"c" # d', ['a', 'b', 'c']),
+            ("'a', 'b'", ['a', 'b']),
+            ("'c' #d", ['c']),
+            ("'a', 'b', 'c' # d", ['a', 'b', 'c']),
+            ("'a'\n'b'\n'c' # d", ['a', 'b', 'c']),
+            ('a, b, c,', ['a', 'b', 'c']),
+            ('a, b, c # d', ['a', 'b', 'c']),
+            ('a, b, c\n"d"', ['a', 'b', 'd']),
+            ('a, b, c\n"d" # e', ['a', 'b', '"d"'])
+        ]:
+            self.assertEqual(results, ParsecValidator.strip_and_unquote_list(
+                ['a'], value))
+
+    def test_strip_and_unquote_list_multiparam(self):
+        with self.assertRaises(ListValueError):
+            ParsecValidator.strip_and_unquote_list(
+                ['a'], 'a, b, c<a,b>'
+            )
 
 
 if __name__ == '__main__':
