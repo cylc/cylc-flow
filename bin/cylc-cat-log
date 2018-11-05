@@ -127,6 +127,8 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False):
     If remote is True, we are executing on a remote host for a log file there.
 
     """
+    # The log file path may contain '$USER' to be evaluated on the job host.
+    logpath = os.path.expandvars(logpath)
     if mode == 'print':
         # Print location even if the suite does not exist yet.
         print logpath
