@@ -436,22 +436,31 @@ file.
 
 \paragraph[run directory]{[hosts] \textrightarrow [[HOST]] \textrightarrow run directory }
 
-The top level of the directory tree that holds suite-specific output logs,
-run database, etc.
+The top level for suite logs and service files, etc. Can contain
+\lstinline=$HOME= or \lstinline=$USER= but not other environment variables (the
+item cannot actually be evaluated by the shell on HOST before use, but the
+remote home directory is where \lstinline=rsync= and \lstinline=ssh= naturally
+land, and the remote username is known by the suite daemon).
 
 \begin{myitemize}
 \item {\em type:} string (directory path)
 \item {\em default:} \lstinline=$HOME/cylc-run=
+\item {\em example:} \lstinline=/nfs/data/$USER/cylc-run=
 \end{myitemize}
 
 \paragraph[work directory]{[hosts] \textrightarrow [[HOST]] \textrightarrow work directory }
 \label{workdirectory}
 
-The top level for suite work and share directories.
+The top level for suite work and share directories. Can contain
+\lstinline=$HOME= or \lstinline=$USER= but not other environment variables
+(the item cannot actually be evaluated by the shell on HOST before use, but the
+remote home directory is where \lstinline=rsync= and \lstinline=ssh= naturally
+land, and the remote username is known by the suite daemon).
 
 \begin{myitemize}
 \item {\em type:} string (directory path)
-\item {\em localhost default:} \lstinline@$HOME/cylc-run@
+\item {\em localhost default:} \lstinline=$HOME/cylc-run=
+\item {\em example:} \lstinline=/nfs/data/$USER/cylc-run=
 \end{myitemize}
 
 
