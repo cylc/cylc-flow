@@ -31,7 +31,6 @@ from parsec.upgrade import upgrader, converter
 from cylc.cfgvalidate import (
     cylc_config_validate, CylcConfigValidator as VDR, DurationFloat)
 from cylc.hostuserutil import is_remote_user
-from cylc.envvar import expandvars
 from cylc.mkdir_p import mkdir_p
 import cylc.flags
 from cylc.network import PRIVILEGE_LEVELS, PRIV_STATE_TOTALS, PRIV_SHUTDOWN
@@ -634,8 +633,8 @@ class GlobalConfig(ParsecConfig):
         cfg = self.get()
         tdir = cfg['temporary directory']
         if tdir:
-            tdir = expandvars(tdir)
-            tmpdir = mkdtemp(prefix="cylc-", dir=expandvars(tdir))
+            tdir = os.path.expandvars(tdir)
+            tmpdir = mkdtemp(prefix="cylc-", dir=os.path.expandvars(tdir))
         else:
             tmpdir = mkdtemp(prefix="cylc-")
         # self-cleanup
@@ -668,8 +667,8 @@ class GlobalConfig(ParsecConfig):
 
         # Expand environment variables and ~user in LOCAL file paths.
         for key, val in cfg['documentation']['files'].items():
-            cfg['documentation']['files'][key] = expandvars(val)
+            cfg['documentation']['files'][key] = os.path.expandvars(val)
 
         for key, val in cfg['hosts']['localhost'].items():
             if val and 'directory' in key:
-                cfg['hosts']['localhost'][key] = expandvars(val)
+                cfg['hosts']['localhost'][key] = os.path.expandvars(val)
