@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # ----------------------------------------------------------------------------
-# (C) British Crown Copyright 2013-2018 Met Office.
+# Copyright (C) 2013-2018 British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -242,7 +242,7 @@ LOCAL_TIME_ZONE_BASIC_NO_Z = LOCAL_TIME_ZONE_BASIC
 if LOCAL_TIME_ZONE_BASIC_NO_Z == "Z":
     LOCAL_TIME_ZONE_BASIC_NO_Z = "+0000"
 LOCAL_TIME_ZONE_EXTENDED = timezone.get_local_time_zone_format(
-    extended_mode=True)
+    timezone.TimeZoneFormatMode.extended)
 LOCAL_TIME_ZONE_EXTENDED_NO_Z = LOCAL_TIME_ZONE_EXTENDED
 if LOCAL_TIME_ZONE_EXTENDED_NO_Z == "Z":
     LOCAL_TIME_ZONE_EXTENDED_NO_Z = "+0000"

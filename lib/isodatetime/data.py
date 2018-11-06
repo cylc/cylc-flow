@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # ----------------------------------------------------------------------------
-# (C) British Crown Copyright 2013-2018 Met Office.
+# Copyright (C) 2013-2018 British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -530,6 +530,7 @@ class Duration(object):
         new.hours //= other
         new.minutes //= other
         new.seconds //= other
+        return new
 
     def __cmp__(self, other):
         if not isinstance(other, Duration):
@@ -717,10 +718,10 @@ class TimePoint(object):
         "day_of_year", "day_of_month", "day_of_week",
         "week_of_year", "hour_of_day", "minute_of_hour",
         "second_of_minute", "truncated", "truncated_property",
-        "dump_format", "time_zone"
+        "truncated_dump_format", "dump_format", "time_zone"
     ]
 
-    __slots__ = DATA_ATTRIBUTES + ["truncated_dump_format"]
+    __slots__ = DATA_ATTRIBUTES
 
     def __init__(self, expanded_year_digits=0, year=None, month_of_year=None,
                  week_of_year=None, day_of_year=None, day_of_month=None,
@@ -1119,24 +1120,19 @@ class TimePoint(object):
         if not self.truncated:
             return None
         prop_dict = self.get_truncated_properties()
-        attr_keys = ["year_of_century", "decade_of_century",
-                     "year_of_decade", "month_of_year",
-                     "week_of_year", "day_of_year", "day_of_month",
-                     "day_of_week", "hour_of_day", "minute_of_hour",
-                     "second_of_minute"]
-        attr_dict = {"year_of_century": "century",
-                     "year_of_decade": "decade_of_century",
-                     "month_of_year": "year_of_century",
-                     "week_of_year": "year_of_century",
-                     "day_of_year": "year_of_century",
-                     "day_of_month": "month_of_year",
-                     "day_of_week": "week_of_year",
-                     "hour_of_day": "day_of_month",
-                     "minute_of_hour": "hour_of_day",
-                     "second_of_minute": "minute_of_hour"}
-        for attr in attr_keys:
-            if attr in prop_dict:
-                return attr_dict[attr]
+        attr_list = (("year_of_century", "century"),
+                     ("year_of_decade", "decade_of_century"),
+                     ("month_of_year", "year_of_century"),
+                     ("week_of_year", "year_of_century"),
+                     ("day_of_year", "year_of_century"),
+                     ("day_of_month", "month_of_year"),
+                     ("day_of_week", "week_of_year"),
+                     ("hour_of_day", "day_of_month"),
+                     ("minute_of_hour", "hour_of_day"),
+                     ("second_of_minute", "minute_of_hour"))
+        for attr_key, attr_value in attr_list:
+            if attr_key in prop_dict:
+                return attr_value
         return None
 
     def get_truncated_properties(self):
@@ -1293,11 +1289,11 @@ class TimePoint(object):
                     new.day_of_month = max_day_in_new_month
             elif new.get_is_ordinal_date():
                 max_days_in_year = get_days_in_year(new.year)
-                if max_days_in_year > new.day_of_year:
+                if max_days_in_year < new.day_of_year:
                     new.day_of_year = max_days_in_year
             elif new.get_is_week_date():
                 max_weeks_in_year = get_weeks_in_year(new.year)
-                if max_weeks_in_year > new.week_of_year:
+                if max_weeks_in_year < new.week_of_year:
                     new.week_of_year = max_weeks_in_year
         return new
 
