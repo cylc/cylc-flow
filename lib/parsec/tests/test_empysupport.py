@@ -24,6 +24,8 @@ import sys
 import tempfile
 import unittest
 
+from parsec.fileparse import FileParseError, read_and_proc
+
 IS_EMPY_INSTALLED = True
 
 try:
@@ -58,6 +60,33 @@ class TestEmpysupport1(unittest.TestCase):
         r = parsec.empysupport.empyprocess(lines, template_dir)
 
         self.assertEqual(0, len(r))
+
+        # --- testing fileparse (here due to stdout issue)
+
+        with tempfile.NamedTemporaryFile() as tf:
+            fpath = tf.name
+            template_vars = {
+                'name': 'Cylc'
+            }
+            viewcfg = {
+                'empy': True, 'jinja2': False,
+                'contin': False, 'inline': False
+            }
+            asedit = None
+            tf.write("#!empy\na=@name\n")
+            tf.flush()
+            r = read_and_proc(fpath=fpath, template_vars=template_vars,
+                              viewcfg=viewcfg, asedit=asedit)
+            self.assertEqual(['a=Cylc'], r)
+
+            del template_vars['name']
+
+            with self.assertRaises(FileParseError) as cm:
+                read_and_proc(fpath=fpath, template_vars=template_vars,
+                              viewcfg=viewcfg, asedit=asedit)
+            self.assertTrue("EmPyError" in cm.exception.msg)
+            sys.stdout.getvalue = lambda: ''
+
         sys.stdout.getvalue = lambda: ''
 
     def test_empy_error(self):
