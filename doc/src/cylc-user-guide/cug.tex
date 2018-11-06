@@ -8224,8 +8224,9 @@ a DB, or else write a back-up utility using the official sqlite backup API:
 \subsection{Auto Stop-Restart}
 \label{auto-stop-restart}
 
-Cylc has the ability to automatically stop suites and restart them on a
-different host. This is useful if a host needs to be taken off-line e.g.\ for
+Cylc has the ability to automatically stop suites running on a particular host
+and optionally, restart them on a different host.
+This is useful if a host needs to be taken off-line e.g.\ for
 scheduled maintenance.
 
 This functionality is configured via the following site configuration settings:
@@ -8235,9 +8236,20 @@ This functionality is configured via the following site configuration settings:
     \item \lstinline=[run hosts][suite servers]run hosts=
 \end{myitemize}
 
-When a host is added to the \lstinline=condemned hosts= list in a site
-configuration, any suites will automatically shutdown, select another host from
-\lstinline=run hosts= and restart.
+When a host is added to the \lstinline=condemned hosts= list in,
+any suites will automatically shutdown then restart selecting a new host from
+\lstinline=run hosts=. If a host is suffixed with an exclamation
+mark then Cylc will not attempt to automatically restart the suite.
+
+For example in the following configuration any suites running on
+lstinline=foo= will attempt to restart on \lstinline=pub= whereas any suites
+running on \lstinline=bar= will stop immediately, making no attempt to restart.
+
+\begin{lstlisting}
+[suite servers]
+    run hosts = pub
+    condemned hosts = foo, bar!
+\end{lstlisting}
 
 To prevent large numbers of suites attempting to restart simultaneously the
 \lstinline=auto restart delay= setting defines a period of time in seconds.

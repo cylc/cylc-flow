@@ -53,10 +53,17 @@ class HostAppointer(object):
     IS_DEBUG = cylc.flags.debug or cylc.flags.verbose
 
     def __init__(self, cached=False):
+        # get the global config, if cached = False a new config instance will
+        # be returned with the up-to-date configuration.
         global_config = glbl_cfg(cached=cached)
-        condemned_hosts = map(
-            get_fqdn_by_host,
-            global_config.get(['suite servers', 'condemned hosts']))
+
+        # list the condemned hosts, hosts may be suffixed with `!`
+        condemned_hosts = [
+            get_fqdn_by_host(host.split('!')[0]) for host in
+            global_config.get(['suite servers', 'condemned hosts'])]
+
+        # list configured run hosts eliminating any which cannot be contacted
+        # or which are condemned
         self.hosts = []
         for host in (
                 global_config.get(['suite servers', 'run hosts']) or
@@ -66,6 +73,8 @@ class HostAppointer(object):
                     self.hosts.append(host)
             except socket.gaierror:
                 pass
+
+        # determine the server ranking and acceptance thresholds if configured
         self.rank_method = global_config.get(
             ['suite servers', 'run host select', 'rank'])
         self.parsed_thresholds = self.parse_thresholds(global_config.get(

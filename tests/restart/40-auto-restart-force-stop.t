@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 . "$(dirname "$0")/test_header"
-set_test_number 5
+set_test_number 4
 
 BASE_GLOBALRC="
 [cylc]
@@ -28,16 +28,11 @@ BASE_GLOBALRC="
         timeout = PT2M
 "
 #-------------------------------------------------------------------------------
-# test that suites will not attempt to auto stop-restart if there is no
-# available host to restart on
+# test the force shutdown option (auto stop, no restart) in condemned hosts
 init_suite "${TEST_NAME_BASE}" <<< '
-[cylc]
-    UTC mode = True
 [scheduling]
-    initial cycle point = 2000
     [[dependencies]]
-        [[[P1D]]]
-            graph = foo
+        graph = foo
 '
 
 create_test_globalrc '' "
@@ -46,7 +41,7 @@ ${BASE_GLOBALRC}
     run hosts = localhost
 "
 
-cylc run "${SUITE_NAME}" >/dev/null 2>&1
+cylc run "${SUITE_NAME}" --hold
 poll ! test -f "${SUITE_RUN_DIR}/.service/contact"
 sleep 1
 
@@ -54,18 +49,17 @@ create_test_globalrc '' "
 ${BASE_GLOBALRC}
 [suite servers]
     run hosts = localhost
-    condemned hosts = localhost
+    condemned hosts = localhost!
 "
 
 FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)
 log_scan "${TEST_NAME_BASE}-no-auto-restart" "${FILE}" 20 1 \
     'The Cylc suite host will soon become un-available' \
-    'Suite cannot automatically restart because:' \
-    'No alternative host to restart suite on.' \
-    'Suite cannot automatically restart because:' \
-    'No alternative host to restart suite on.'
+    'This suite will be shutdown as the suite host is' \
+    'When another suite host becomes available the suite can' \
+    'Suite shutting down - REQUEST(NOW)'
 
-cylc stop "${SUITE_NAME}" --kill
+cylc stop "${SUITE_NAME}" --kill 2>/dev/null # in-case test fails
 poll test -f "${SUITE_RUN_DIR}/.service/contact"
 sleep 1
 purge_suite "${SUITE_NAME}"

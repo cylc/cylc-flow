@@ -1493,16 +1493,39 @@ conditions; see `cylc conditions`.
             # 2. check if suite host is condemned - if so auto restart.
             if self.auto_restart_time is None and self.stop_mode is None:
                 current_glbl_cfg = glbl_cfg(cached=False)
-                condemned_hosts = map(
-                    get_fqdn_by_host,
-                    current_glbl_cfg.get(['suite servers', 'condemned hosts']))
-                if get_fqdn_by_host(self.host) in condemned_hosts:
-                    LOG.info('The Cylc suite host will soon become '
-                             'un-available.')
-                    if self.can_auto_restart():
-                        if self.set_auto_restart(current_glbl_cfg.get(
-                                ['suite servers', 'auto restart delay'])):
+                for host in current_glbl_cfg.get(['suite servers',
+                                                  'condemned hosts']):
+                    force_kill = False
+                    if host.endswith('!'):
+                        # host ends in an `!` -> force shutdown mode
+                        force_kill = True
+                        host = host[:-1]
+
+                    if get_fqdn_by_host(host) == self.host:
+                        # this host is condemned, take the appropriate action
+                        LOG.info('The Cylc suite host will soon become '
+                                 'un-available.')
+                        if force_kill:
+                            # server is condemned in "force" mode -> stop
+                            # the suite, don't attempt to restart
+                            LOG.critical(
+                                'This suite will be shutdown as the suite '
+                                'host is unable to continue running it.\n'
+                                'When another suite host becomes available '
+                                'the suite can be restarted by:\n'
+                                '    $ cylc restart %s' % self.suite)
+                            self._set_stop(TaskPool.STOP_REQUEST_NOW)
                             return  # skip remaining health checks
+                        elif (
+                            self.can_auto_restart() and
+                            self.set_auto_restart(current_glbl_cfg.get(
+                                ['suite servers', 'auto restart delay']))
+                        ):
+                            # server is condemned -> configure the suite to
+                            # auto stop-restart if possible, else, report the
+                            # issue preventing this
+                            return  # skip remaining health checks
+                        break
 
             # 3. check if suite run dir still present - if not shutdown.
             if not os.path.exists(self.suite_run_dir):
