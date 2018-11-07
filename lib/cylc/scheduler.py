@@ -1317,10 +1317,9 @@ conditions; see `cylc conditions`.
                 if itask.identity not in self.ref_test_allowed_failures:
                     bad_tasks.append(itask)
             if bad_tasks:
-                sys.stderr.write(
-                    'Failed task(s) not in allowed failures list:\n')
-                for itask in bad_tasks:
-                    sys.stderr.write("\t%s\n" % itask.identity)
+                LOG.error(
+                    'Failed task(s) not in allowed failures list:\n%s',
+                    '\n'.join('\t%s' % itask.identity for itask in bad_tasks))
                 self._set_stop(TaskPool.STOP_AUTO_ON_TASK_FAILURE)
 
         # Can suite shut down automatically?
@@ -1583,7 +1582,7 @@ conditions; see `cylc conditions`.
         if isinstance(reason, CylcError):
             msg += ' - %s' % reason.args[0]
             if isinstance(reason, SchedulerError):
-                sys.stderr.write(msg + '\n')
+                LOG.exception(msg)
             reason = reason.args[0]
         elif reason:
             msg += ' - %s' % reason
