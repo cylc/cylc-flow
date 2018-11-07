@@ -296,9 +296,6 @@ class GraphParser(object):
         for pair in pairs:
             self._proc_dep_pair(pair[0], pair[1])
 
-        # If debugging, print the final result here:
-        # self.print_triggers()
-
     @classmethod
     def _report_invalid_lines(cls, lines):
         """Raise GraphParseError in a consistent format when there are
@@ -489,20 +486,6 @@ class GraphParser(object):
                 self.original.setdefault(member, {})
                 self.triggers[member][expr] = (trigs, suicide)
                 self.original[member][expr] = orig_expr
-
-    def print_triggers(self):
-        for right, val in self.triggers.items():
-            for expr, info in val.items():
-                triggers, suicide = info
-                if suicide:
-                    title = "SUICIDE:"
-                else:
-                    title = "TRIGGER:"
-                print('\nTASK:', right)
-                print(' ', title, expr)
-                for t in triggers:
-                    print('    +', t)
-                print('  from', self.original[right][expr])
 
 
 class TestGraphParser(unittest.TestCase):
