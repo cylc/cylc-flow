@@ -103,7 +103,7 @@ class ControlGraph(object):
 Dependency graph suite control interface.
     """
     def __init__(self, cfg, updater, theme, dot_size, info_bar,
-                 get_right_click_menu, log_colors, insert_task_popup):
+                 get_right_click_menu, insert_task_popup):
         # NOTE: this view has separate family Group and Ungroup buttons
         # instead of a single Group/Ungroup toggle button, unlike the
         # other views the graph view can display intermediate states
@@ -116,7 +116,6 @@ Dependency graph suite control interface.
         self.theme = theme
         self.info_bar = info_bar
         self.get_right_click_menu = get_right_click_menu
-        self.log_colors = log_colors
         self.insert_task_popup = insert_task_popup
 
         self.t = None
@@ -500,8 +499,6 @@ Dependency graph suite control interface.
 
 #    def focused_timezoom_popup(self, w, id):
 #        window = gtk.Window()
-#        window.modify_bg(gtk.STATE_NORMAL,
-#                gtk.gdk.color_parse(self.log_colors.get_color()))
 #        window.set_border_width(5)
 #        window.set_title("Cycle Point Zoom")
 #        parent_window = self.xdot.widget.get_toplevel()
@@ -562,8 +559,6 @@ Dependency graph suite control interface.
 
     def graph_timezoom_popup(self, w):
         window = gtk.Window()
-        window.modify_bg(gtk.STATE_NORMAL,
-                         gtk.gdk.color_parse(self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_title("Time Zoom")
         parent_window = self.xdot.widget.get_toplevel()
