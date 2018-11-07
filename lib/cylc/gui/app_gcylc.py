@@ -130,7 +130,7 @@ class TaskFilterWindow(gtk.Window):
 
 class InitData(object):
     """
-Class to hold initialisation data.
+    Class to hold initialisation data.
     """
     def __init__(self, suite, owner, host, port,
                  comms_timeout, template_vars, ungrouped_views,
@@ -179,7 +179,9 @@ Class to hold initialisation data.
 
 
 class InfoBar(gtk.VBox):
-    """Class to create an information bar."""
+    """
+    Class to create an information bar.
+    """
 
     DISCONNECTED_TEXT = "(not connected)"
 
@@ -490,7 +492,7 @@ Use *Connect Now* button to reconnect immediately.""")
 
 class ControlApp(object):
     """
-Main Control GUI that displays one or more views or interfaces to the suite.
+    Main Control GUI displaying one or more views or interfaces to the suite.
     """
 
     DEFAULT_VIEW = "text"
@@ -3314,6 +3316,8 @@ For more Stop options use the Control menu.""")
 
     def run_suite_log(self, w, log='l'):
         """View suite logs."""
+        if self.cfg.suite is None:
+            return
         foo = SuiteLogViewer(self.cfg.suite, log, self.get_remote_run_opts(),
                              self.updater.task_list)
         self.quitters.append(foo)
