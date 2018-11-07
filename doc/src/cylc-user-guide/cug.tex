@@ -8236,13 +8236,27 @@ This functionality is configured via the following site configuration settings:
     \item \lstinline=[run hosts][suite servers]run hosts=
 \end{myitemize}
 
-When a host is added to the \lstinline=condemned hosts= list in,
-any suites will automatically shutdown then restart selecting a new host from
-\lstinline=run hosts=. If a host is suffixed with an exclamation
-mark then Cylc will not attempt to automatically restart the suite.
+The auto stop-restart feature has two modes:
+
+\begin{description}
+    \item[Normal Mode] \hfill
+
+    When a host is added to the \lstinline=condemned hosts= list, any suites
+    running on that host will automatically shutdown then restart selecting a
+    new host from \lstinline=run hosts=.
+
+    For safety, before attempting to stop the suite cylc will first wait for any
+    jobs running locally (under background or at) to complete.
+
+    \item[Force Mode] \hfill
+
+    If a host is suffixed with an exclamation mark then Cylc will not attempt
+    to automatically restart the suite and any local jobs (running under
+    background or at) will be left running.
+\end{description}
 
 For example in the following configuration any suites running on
-lstinline=foo= will attempt to restart on \lstinline=pub= whereas any suites
+\lstinline=foo= will attempt to restart on \lstinline=pub= whereas any suites
 running on \lstinline=bar= will stop immediately, making no attempt to restart.
 
 \begin{lstlisting}
@@ -8256,10 +8270,10 @@ To prevent large numbers of suites attempting to restart simultaneously the
 Suites will wait for a random period of time between zero and
 \lstinline=auto restart delay= seconds before attempting to stop and restart.
 
-This auto shutdown-restart functionality can only operate provided that the
-user hasn't specified any behaviour which is not preserved by
+At present the auto shutdown-restart functionality can only operate provided
+that the user hasn't specified any behaviour which is not preserved by
 \lstinline=cylc restart= (e.g.\ user specified hold point or run mode). This
-caveat will be removed in a future version, at present Cylc will not attempt to
+caveat will be removed in a future version, currently Cylc will not attempt to
 auto shutdown-restart suites which meet this criterion but will log a critical
 error message to alert the user.
 
