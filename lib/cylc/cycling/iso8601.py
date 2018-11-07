@@ -24,7 +24,7 @@ import unittest
 from isodatetime.data import Calendar, Duration
 from isodatetime.dumpers import TimePointDumper
 from isodatetime.timezone import (
-    get_local_time_zone, get_local_time_zone_format)
+    get_local_time_zone, get_local_time_zone_format, TimeZoneFormatMode)
 from cylc.time_parser import CylcTimeParser
 from cylc.cycling import (
     PointBase, IntervalBase, SequenceBase, ExclusionBase, PointParsingError,
@@ -301,16 +301,16 @@ class ISO8601Exclusions(ExclusionBase):
     def build_exclusions(self, excl_points):
         for point in excl_points:
             try:
+                # Try making an ISO8601Sequence
+                exclusion = ISO8601Sequence(point, self.exclusion_start_point,
+                                            self.exclusion_end_point)
+                self.exclusion_sequences.append(exclusion)
+            except (AttributeError, TypeError, ValueError):
                 # Try making an ISO8601Point
                 exclusion_point = ISO8601Point.from_nonstandard_string(
                     str(point)) if point else None
                 if exclusion_point not in self.exclusion_points:
                     self.exclusion_points.append(exclusion_point)
-            except (AttributeError, TypeError, ValueError):
-                # Try making an ISO8601Sequence
-                exclusion = ISO8601Sequence(point, self.exclusion_start_point,
-                                            self.exclusion_end_point)
-                self.exclusion_sequences.append(exclusion)
 
 
 class ISO8601Sequence(SequenceBase):
@@ -676,7 +676,7 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
             time_zone = "Z"
             time_zone_hours_minutes = (0, 0)
         else:
-            time_zone = get_local_time_zone_format(reduced_mode=True)
+            time_zone = get_local_time_zone_format(TimeZoneFormatMode.reduced)
             time_zone_hours_minutes = get_local_time_zone()
     else:
         time_zone_hours_minutes = TimePointDumper().get_time_zone(time_zone)
