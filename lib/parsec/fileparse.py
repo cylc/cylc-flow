@@ -125,7 +125,7 @@ def _concatenate(lines):
         if re.match(_BAD_CONTINUATION_TRAILING_WHITESPACE, line):
             msg = ("Syntax error line {0}: Whitespace after the line "
                    "continuation character (\\).")
-            raise FileParseError(msg.format(index))
+            raise FileParseError(msg.format(index + 1))
         while line.endswith('\\'):
             if index == maxline - 1:
                 # continuation char on the last line

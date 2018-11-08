@@ -42,7 +42,7 @@ __SUITE_RC__
 run_fail "${TEST_NAME_BASE}-simple-fail" cylc validate 'suite.rc'
 cmp_ok "${TEST_NAME_BASE}-simple-fail.stderr" <<'__ERR__'
 FileParseError:
-Syntax error line 6: Whitespace after the line break character (\).
+Syntax error line 7: Whitespace after the line continuation character (\).
 __ERR__
 
 # Test example with correct syntax
