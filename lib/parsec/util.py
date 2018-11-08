@@ -210,7 +210,6 @@ def poverride(target, sparse, prepend=False):
 
     """
     if not sparse:
-        target = OrderedDictWithDefaults()
         return
     for key, val in sparse.items():
         if isinstance(val, dict):
@@ -235,7 +234,6 @@ def m_override(target, sparse):
     the right position.
     """
     if not sparse:
-        target = OrderedDictWithDefaults()
         return
     stack = [(sparse, target, [], OrderedDictWithDefaults())]
     defaults_list = []
