@@ -100,7 +100,7 @@ def jinja2environment(dir_=None):
     # Load any custom Jinja2 filters, tests or globals in the suite
     # definition directory
     # Example: a filter to pad integer values some fill character:
-    # |(file SUITE_DEFINIION_DIRECTORY/Jinja2/foo.py)
+    # |(file SUITE_DEFINITION_DIRECTORY/Jinja2/foo.py)
     # |  #!/usr/bin/env python2
     # |  def foo( value, length, fillchar ):
     # |     return str(value).rjust( int(length), str(fillchar) )

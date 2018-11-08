@@ -134,7 +134,7 @@ class JobPollContext(object):
         'batch_sys_job_id',  # job id in batch system
         'batch_sys_exit_polled',  # 0 for false, 1 for true
         'run_status',  # 0 for success, 1 for failure
-        'run_signal',  # signal recieved on run failure
+        'run_signal',  # signal received on run failure
         'time_submit_exit',  # submit (exit) time
         'time_run',  # run start time
         'time_run_exit',  # run exit time

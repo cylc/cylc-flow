@@ -225,7 +225,7 @@ class TaskJobManager(object):
             now_str = get_current_time_string()
             done_tasks.extend(itasks)
             for itask in itasks:
-                # Log and perist
+                # Log and persist
                 LOG.info(
                     'submit-num=%d, owner@host=%s' % (
                         itask.submit_num, owner_at_host),
@@ -780,7 +780,7 @@ class TaskJobManager(object):
             SubProcContext(self.JOBS_SUBMIT, action, err=exc, ret_code=1),
             suite, itask.point, itask.tdef.name, submit_num=itask.submit_num)
         if not dry_run:
-            # Perist
+            # Persist
             self.suite_db_mgr.put_insert_task_jobs(itask, {
                 'is_manual_submit': itask.is_manual_submit,
                 'try_num': itask.get_try_num(),

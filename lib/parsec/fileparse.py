@@ -342,7 +342,6 @@ def parse(fpath, output_fname=None, template_vars=None):
 
     nesting_level = 0
     config = OrderedDictWithDefaults()
-    sect_name = None
     parents = []
 
     maxline = len(flines) - 1

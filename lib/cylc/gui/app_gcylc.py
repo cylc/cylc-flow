@@ -108,7 +108,6 @@ def run_get_stdout(command, filter_=False):
             else:
                 res.append(line)
         return (True, res)
-    return (False, [])
 
 
 class TaskFilterWindow(gtk.Window):

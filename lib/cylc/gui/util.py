@@ -100,7 +100,7 @@ def get_image_dir():
     try:
         cylc_dir = os.environ['CYLC_DIR']
     except KeyError:
-        # This should not happen (unecessary)
+        # This should not happen (unnecessary)
         raise SystemExit("ERROR: $CYLC_DIR is not defined!")
     return os.path.join(cylc_dir, "images")
 

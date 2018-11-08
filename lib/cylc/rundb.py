@@ -136,7 +136,7 @@ class CylcSuiteDAOTable(object):
     def add_update_item(self, set_args, where_args):
         """Queue an UPDATE item.
 
-        set_args should be a dict, with colum keys and values to be set.
+        set_args should be a dict, with column keys and values to be set.
         where_args should be a dict, update will only apply to rows matching
         all these items.
 
@@ -363,7 +363,7 @@ class CylcSuiteDAO(object):
     def add_update_item(self, table_name, set_args, where_args=None):
         """Queue an UPDATE item for a given table.
 
-        set_args should be a dict, with colum keys and values to be set.
+        set_args should be a dict, with column keys and values to be set.
         where_args should be a dict, update will only apply to rows matching
         all these items.
 
@@ -995,7 +995,7 @@ class CylcSuiteDAO(object):
         n_skips = 0
         # Codacy: Possible SQL injection vector through string-based query
         # construction.
-        # This is highly unlikely - all strings in the constuct are from
+        # This is highly unlikely - all strings in the construct are from
         # constants in this module.
         for i, row in enumerate(conn.execute(
                 r"SELECT " + ",".join(cols) + " FROM " + t_name + "_old")):

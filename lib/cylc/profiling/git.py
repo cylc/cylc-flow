@@ -67,7 +67,7 @@ def checkout(branch, delete_pyc=False):
 
 
 def get_commit_date(commit):
-    """Returns the commit date (in unix time) of the profided commit."""
+    """Returns the commit date (in unix time) of the provided commit."""
     try:
         return int(Popen(['git', 'show', '-s', '--format=%at', commit],
                          stdout=PIPE, stderr=PIPE

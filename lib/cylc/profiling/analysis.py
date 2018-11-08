@@ -19,7 +19,7 @@ import os
 import re
 import sys
 
-# Import modules required for plotting if avaliable.
+# Import modules required for plotting if available.
 try:
     import numpy
     import warnings
@@ -459,7 +459,7 @@ def plot_results(results, versions, experiment, plt_dir=None,
 
         # Output graph.
         if not plt_dir:
-            # Output directory not specified, use interractive mode.
+            # Output directory not specified, use interactive mode.
             plt.show()
         else:
             # Output directory specified, save figure as a pdf.

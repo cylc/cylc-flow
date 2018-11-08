@@ -253,7 +253,7 @@ class TreeUpdater(threading.Thread):
                         tetc_unix = tstart + meant
                         tnow = time()
                         if tstart > tnow:
-                            # Reportably possible via interraction with
+                            # Reportably possible via interaction with
                             # cylc reset.
                             t_info['progress'] = 0
                         elif tnow > tetc_unix:

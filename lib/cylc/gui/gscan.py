@@ -934,7 +934,7 @@ class ScanAppUpdater(threading.Thread):
                 title = suite_info.get(KEY_TITLE)
                 group = suite_info.get(KEY_GROUP)
             # For the purpose of this method, it is OK to handle both
-            # witheld (None) and unset (empty string) together
+            # withheld (None) and unset (empty string) together
             if not group:
                 group = self.UNGROUPED
 
@@ -1002,7 +1002,7 @@ class ScanAppUpdater(threading.Thread):
                 # Compat:<=7.5.0
                 group_id = suite_info.get(KEY_GROUP)
             # For the purpose of this method, it is OK to handle both
-            # witheld (None) and unset (empty string) together
+            # withheld (None) and unset (empty string) together
             if not group_id:
                 group_id = self.UNGROUPED
 

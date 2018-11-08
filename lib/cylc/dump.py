@@ -56,7 +56,7 @@ def get_stop_state_summary(lines):
         items = dict(p.split("=") for p in info.split(', '))
         state = items.get("status")
         if state == 'submitting':
-            # backward compabitility for state dumps generated prior to #787
+            # backward compatibility for state dumps generated prior to #787
             state = TASK_STATUS_READY
         task_summary[task_id].update({"state": state})
         task_summary[task_id].update({"spawned": items.get("spawned")})
