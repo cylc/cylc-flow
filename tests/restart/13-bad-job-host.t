@@ -38,7 +38,7 @@ for DB_NAME in 'log/db' '.service/db'; do
 done
 suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart --debug --no-detach "${SUITE_NAME}"
 grep_ok 'ERROR - garbage: initialisation did not complete' \
-    "${CYLC_SUITE_RUN_DIR}/log/suite/err"
+    "${CYLC_SUITE_RUN_DIR}/log/suite/log"
 #-------------------------------------------------------------------------------
 purge_suite_remote "${CYLC_TEST_HOST}" "${SUITE_NAME}"
 purge_suite "${SUITE_NAME}"

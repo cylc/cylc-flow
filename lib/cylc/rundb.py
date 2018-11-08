@@ -23,8 +23,8 @@ import sys
 import traceback
 
 
+from cylc import LOG
 import cylc.flags
-from cylc.suite_logging import LOG
 from cylc.wallclock import get_current_time_string
 
 
@@ -531,7 +531,7 @@ class CylcSuiteDAO(object):
 
         If id_key is specified, add where id == id_key to select.
         """
-        stmt = r"SELECT id,time,event FROM %s" % self.TABLE_CHECKPOINT_ID
+        stmt = r"SELECT id,time,event FROM checkpoint_id"
         stmt_args = []
         if id_key is not None:
             stmt += r" WHERE id==?"
@@ -539,6 +539,14 @@ class CylcSuiteDAO(object):
         stmt += r"  ORDER BY time ASC"
         for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
             callback(row_idx, list(row))
+
+    def select_checkpoint_id_restart_count(self):
+        """Return number of restart event in checkpoint_id table."""
+        stmt = r"SELECT COUNT(event) FROM checkpoint_id WHERE event==?"
+        stmt_args = ['restart']
+        for row in self.connect().execute(stmt, stmt_args):
+            return row[0]
+        return 0
 
     def select_suite_params(self, callback, id_key=None):
         """Select from suite_params or suite_params_checkpoints.
@@ -812,8 +820,7 @@ class CylcSuiteDAO(object):
         """
         id_ = 1
         for max_id, in self.connect().execute(
-                "SELECT MAX(id) FROM %(table)s" %
-                {"table": self.TABLE_CHECKPOINT_ID}):
+                "SELECT MAX(id) FROM checkpoint_id"):
             if max_id >= id_:
                 id_ = max_id + 1
         daos = [self]

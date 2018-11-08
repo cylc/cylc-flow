@@ -249,8 +249,8 @@ run_ok "${TEST_NAME}" \
 grep_ok 'HTTP/.* 403 Forbidden' "${TEST_NAME}.stdout"
 # 2. By absolute path to imaginary suite directory.
 TEST_NAME="${TEST_NAME_BASE}-403-curl-view-outside-imag"
-IMG_TEST_DIR="$(mktemp -d --tmpdir="${HOME}/cylc-run" \
-    "ctb-cylc-review-00-XXXXXXXX")"
+IMG_TEST_DIR="${SUITE_RUN_DIR}-imag"
+mkdir -p "${IMG_TEST_DIR}"
 echo 'Welcome to the imaginary suite.'>"${IMG_TEST_DIR}/welcome.txt"
 run_ok "${TEST_NAME}" \
     curl -I \
@@ -262,6 +262,8 @@ run_ok "${TEST_NAME}" \
     curl -I \
     "${TEST_CYLC_WS_URL}/view/${USER}/${ESC_SUITE_NAME}?path=../$(basename $IMG_TEST_DIR)/welcome.txt"
 grep_ok 'HTTP/.* 403 Forbidden' "${TEST_NAME}.stdout"
+rm "${IMG_TEST_DIR}/welcome.txt"
+rmdir "${IMG_TEST_DIR}"
 #-------------------------------------------------------------------------------
 # Tidy up - note suite trivial so stops early on by itself
 purge_suite "${SUITE_NAME}"

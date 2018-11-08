@@ -17,10 +17,85 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import gtk
+import xdot
 
 from cylc.gui.updater_graph import GraphUpdater
-from cylc.cylc_xdot import xdot_widgets
 from cylc.task_id import TaskID
+
+
+class DotTipWidget(xdot.DotWidget):
+
+    """Subclass that allows connection of 'motion-notify-event'."""
+
+    def on_area_motion_notify(self, area, event):
+        """This returns False, instead of True as in the base class."""
+        self.drag_action.on_motion_notify(event)
+        return False
+
+
+class XDotWidgets(object):
+    """Used only by the GUI graph view."""
+
+    def __init__(self):
+        self.graph = xdot.Graph()
+
+        self.vbox = gtk.VBox()
+
+        self.widget = DotTipWidget()
+
+        zoomin_button = gtk.Button(stock=gtk.STOCK_ZOOM_IN)
+        zoomin_button.connect('clicked', self.widget.on_zoom_in)
+        zoomout_button = gtk.Button(stock=gtk.STOCK_ZOOM_OUT)
+        zoomout_button.connect('clicked', self.widget.on_zoom_out)
+        zoomfit_button = gtk.Button(stock=gtk.STOCK_ZOOM_FIT)
+        zoomfit_button.connect('clicked', self.widget.on_zoom_fit)
+        zoom100_button = gtk.Button(stock=gtk.STOCK_ZOOM_100)
+        zoom100_button.connect('clicked', self.widget.on_zoom_100)
+
+        self.graph_disconnect_button = gtk.ToggleButton('_DISconnect')
+        self.graph_disconnect_button.set_active(False)
+        self.graph_update_button = gtk.Button('_Update')
+        self.graph_update_button.set_sensitive(False)
+
+        bbox = gtk.HButtonBox()
+        bbox.add(zoomin_button)
+        bbox.add(zoomout_button)
+        bbox.add(zoomfit_button)
+        bbox.add(zoom100_button)
+        bbox.add(self.graph_disconnect_button)
+        bbox.add(self.graph_update_button)
+        bbox.set_layout(gtk.BUTTONBOX_SPREAD)
+
+        self.vbox.pack_start(self.widget)
+        self.vbox.pack_start(bbox, False)
+
+    def get(self):
+        return self.vbox
+
+    def set_filter(self, filter_):
+        self.widget.set_filter(filter_)
+
+    def set_dotcode(self, dotcode, filename='<stdin>', no_zoom=False):
+        if no_zoom:
+            old_zoom_func = self.widget.zoom_image
+            self.widget.zoom_image = lambda *a, **b: self.widget.queue_draw()
+        if self.widget.set_dotcode(dotcode, filename):
+            # self.set_title(os.path.basename(filename) + ' - Dot Viewer')
+            # disable automatic zoom-to-fit on update
+            # self.widget.zoom_to_fit()
+            pass
+        if no_zoom:
+            self.widget.zoom_image = old_zoom_func
+
+    def set_xdotcode(self, xdotcode, filename='<stdin>'):
+        if self.widget.set_xdotcode(xdotcode):
+            # self.set_title(os.path.basename(filename) + ' - Dot Viewer')
+            # disable automatic zoom-to-fit on update
+            # self.widget.zoom_to_fit()
+            pass
+
+    def on_reload(self, action):
+        self.widget.reload()
 
 
 class ControlGraph(object):
@@ -49,7 +124,7 @@ Dependency graph suite control interface.
 
         self.gcapture_windows = []
 
-        self.xdot = xdot_widgets()
+        self.xdot = XDotWidgets()
         self.xdot.widget.connect('clicked', self.on_url_clicked)
         self.xdot.widget.connect_after('motion-notify-event',
                                        self.on_motion_notify)

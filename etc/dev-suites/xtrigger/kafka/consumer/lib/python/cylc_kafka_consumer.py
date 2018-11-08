@@ -18,9 +18,10 @@ intervals, vs a persistent consumer looking for all suite trigger messages:
 
 import re
 import json
-from kafka import KafkaConsumer
-from cylc.suite_logging import LOG
 
+from kafka import KafkaConsumer
+
+from cylc import LOG
 
 # Time out after 1 second if we reach the end of the topic.
 CONSUMER_TIMEOUT_MS = 1000
@@ -121,5 +122,5 @@ def cylc_kafka_consumer(kafka_server, kafka_topic, group_id, message, debug):
             res = "\n  MATCHED: %s" % result[1]
         else:
             res = "no match."
-        LOG.debug('Kafka: "%s" (consumed %d) ... %s' % (message, n_cons, res))
+        LOG.debug('Kafka: "%s" (consumed %d) ... %s', message, n_cons, res)
     return result

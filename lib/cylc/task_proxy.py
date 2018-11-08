@@ -259,6 +259,10 @@ class TaskProxy(object):
                         self.cleanup_cutoff < p_next):
                     self.cleanup_cutoff = p_next
 
+    def __str__(self):
+        """Stringify using "self.identity"."""
+        return self.identity
+
     def copy_pre_reload(self, pre_reload_inst):
         """Copy attributes from pre-reload instant."""
         self.submit_num = pre_reload_inst.submit_num

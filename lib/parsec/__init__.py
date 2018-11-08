@@ -15,6 +15,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Parsec - library for parsing nested Cylc's INI-style configuration."""
+
+import logging
 
 
 class ParsecError(Exception):
@@ -24,3 +27,6 @@ class ParsecError(Exception):
 
     def __str__(self):
         return str(self.msg)
+
+
+LOG = logging.getLogger('cylc')  # Acceptable?

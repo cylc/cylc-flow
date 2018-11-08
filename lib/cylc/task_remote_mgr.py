@@ -33,11 +33,11 @@ from tempfile import NamedTemporaryFile
 from time import time
 from uuid import uuid4
 
+from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
 from cylc.hostuserutil import is_remote, is_remote_host, is_remote_user
 from cylc.subprocctx import SubProcContext
-from cylc.suite_logging import LOG
 from cylc.task_remote_cmd import (
     FILE_BASE_UUID, REMOTE_INIT_DONE, REMOTE_INIT_NOT_REQUIRED)
 

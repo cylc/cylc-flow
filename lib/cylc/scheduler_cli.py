@@ -25,6 +25,7 @@ import sys
 from time import sleep
 import unittest
 
+from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
 from cylc.hostuserutil import get_host, is_remote_host
@@ -384,11 +385,11 @@ class HostAppointer(object):
                     host_stats[host] = json.loads(out)
                 elif cylc.flags.verbose or cylc.flags.debug:
                     # Command failed in verbose/debug mode
-                    sys.stderr.write((
-                        "WARNING: can't get host metric from '%s';"
-                        " %s  # returncode=%s, err=%s\n" %
-                        (host, ' '.join((quote(item) for item in cmd)),
-                         proc.returncode, err)))
+                    LOG.warning(
+                        "can't get host metric from '%s'" +
+                        "%s  # returncode=%d, err=%s\n",
+                        host, ' '.join((quote(item) for item in cmd)),
+                        proc.returncode, err)
             sleep(0.01)
         return host_stats
 
@@ -420,13 +421,11 @@ class HostAppointer(object):
                         measure == "memory" or
                         measure.startswith("disk-space")))):
                     # Alert user that threshold has not been met.
-                    if self.is_debug:
-                        sys.stderr.write((
-                            "WARNING: host '%s' did not pass %s threshold "
-                            "(%s %s threshold %s)\n" % (
-                                host, measure, datum,
-                                ">" if measure.startswith("load") else "<",
-                                cutoff)))
+                    LOG.warning(
+                        "host '%s' did not pass %s threshold " +
+                        "(%s %s threshold %s)\n",
+                        host, measure, datum,
+                        ">" if measure.startswith("load") else "<", cutoff)
                     host_stats.pop(host)
                     break
         return host_stats
@@ -442,26 +441,24 @@ class HostAppointer(object):
         # metric data values corresponding to the rank method to rank with.
         hosts_with_vals_to_rank = dict((host, metric[self.rank_method]) for
                                        host, metric in all_host_stats.items())
-        if self.is_debug:
-            print "INFO: host %s values extracted are:" % self.rank_method
-            for host, value in hosts_with_vals_to_rank.items():
-                print "  " + host + ": " + str(value)
+        LOG.debug(
+            "INFO: host %s values extracted are: %s",
+            self.rank_method,
+            "\n".join("  %s: %s" % item
+                      for item in hosts_with_vals_to_rank.items()))
 
         # Sort new dict by value to return ascending-value ordered host list.
         sort_asc_hosts = sorted(
             hosts_with_vals_to_rank, key=hosts_with_vals_to_rank.get)
-        base_msg = ("INFO: good (metric-returning) hosts were ranked in the "
-                    "following order, from most to least suitable: ")
+        base_msg = ("good (metric-returning) hosts were ranked in the "
+                    "following order, from most to least suitable: %s")
         if self.rank_method in ("memory", "disk-space:" + self.use_disk_path):
             # Want 'most free' i.e. highest => reverse asc. list for ranking.
-            if self.is_debug:
-                sys.stderr.write(
-                    base_msg + ', '.join(sort_asc_hosts[::-1]) + '.\n')
+            LOG.debug(base_msg, ', '.join(sort_asc_hosts[::-1]))
             return sort_asc_hosts[-1]
         else:  # A load av. is only poss. left; 'random' dealt with earlier.
             # Want lowest => ranking given by asc. list.
-            if self.is_debug:
-                sys.stderr.write(base_msg + ', '.join(sort_asc_hosts) + '.\n')
+            LOG.debug(base_msg, ', '.join(sort_asc_hosts))
             return sort_asc_hosts[0]
 
     def appoint_host(self, mock_host_stats=None):

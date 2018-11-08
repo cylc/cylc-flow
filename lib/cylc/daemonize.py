@@ -21,7 +21,8 @@
 import os
 import sys
 from time import sleep, time
-from cylc.suite_logging import SuiteLog, SUITE_LOG
+
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 
 
 SUITE_SCAN_INFO_TMPL = r"""
@@ -37,7 +38,7 @@ Other ways to see if the suite is still running:
 """
 
 _INFO_TMPL = r"""
-*** listening on %(host)s:%(port)s ***""" + SUITE_SCAN_INFO_TMPL
+*** listening on %(url)s ***""" + SUITE_SCAN_INFO_TMPL
 
 _TIMEOUT = 300.0  # 5 minutes
 
@@ -52,10 +53,9 @@ def daemonize(server):
     http://code.activestate.com/recipes/66012-fork-a-daemon-process-on-unix/
 
     """
-    logd = SuiteLog.get_dir_for_suite(server.suite)
-    log_fname = os.path.join(logd, SUITE_LOG)
+    logpath = glbl_cfg().get_derived_host_item(server.suite, 'suite log')
     try:
-        old_log_mtime = os.stat(log_fname).st_mtime
+        old_log_mtime = os.stat(logpath).st_mtime
     except OSError:
         old_log_mtime = None
     # fork 1
@@ -64,51 +64,45 @@ def daemonize(server):
         if pid > 0:
             # Poll for suite log to be populated
             suite_pid = None
-            suite_port = None
+            suite_url = None
             timeout = time() + _TIMEOUT
             while time() <= timeout and (
-                    suite_pid is None or suite_port is None):
+                    suite_pid is None or suite_url is None):
                 sleep(0.1)
                 try:
-                    # Line 1 (or 2 in debug mode) of suite log should contain
-                    # start up message, host name and port number. Format is:
-                    #  LOG-PREFIX Suite starting: server=HOST:PORT, pid=PID
+                    # First INFO line of suite log should contain
+                    # start up message, URL and PID. Format is:
+                    #  LOG-PREFIX Suite server program: url=URL, pid=PID
                     # Otherwise, something has gone wrong, print the suite log
                     # and exit with an error.
-                    log_stat = os.stat(log_fname)
+                    log_stat = os.stat(logpath)
                     if (log_stat.st_mtime == old_log_mtime or
                             log_stat.st_size == 0):
                         continue
-                    with open(log_fname) as log_f:
-                        try:
-                            first_two_lines = next(log_f), next(log_f)
-                        except StopIteration:
-                            continue
-                    ok = False
-                    for log_line in first_two_lines:
-                        if server.START_MESSAGE_PREFIX in log_line:
-                            ok = True
-                            server_str, pid_str = log_line.rsplit()[-2:]
-                            suite_pid = pid_str.rsplit("=", 1)[-1]
-                            suite_port = server_str.rsplit(":", 1)[-1]
-                    if not ok:
-                        try:
-                            sys.stderr.write(open(log_fname).read())
-                            sys.exit(1)
-                        except IOError:
-                            sys.exit("Suite server program exited")
+                    for line in open(logpath):
+                        if server.START_MESSAGE_PREFIX in line:
+                            suite_url, suite_pid = (
+                                item.rsplit("=", 1)[-1]
+                                for item in line.rsplit()[-2:])
+                            break
+                        elif ' ERROR -' in line or ' CRITICAL -' in line:
+                            # ERROR and CRITICAL before suite starts
+                            try:
+                                sys.stderr.write(open(logpath).read())
+                                sys.exit(1)
+                            except IOError:
+                                sys.exit("Suite server program exited")
                 except (IOError, OSError, ValueError):
                     pass
-            if suite_pid is None or suite_port is None:
+            if suite_pid is None or suite_url is None:
                 sys.exit("Suite not started after %ds" % _TIMEOUT)
             # Print suite information
             sys.stdout.write(_INFO_TMPL % {
                 "suite": server.suite,
                 "host": server.host,
-                "port": suite_port,
+                "url": suite_url,
                 "ps_opts": server.suite_srv_files_mgr.PS_OPTS,
                 "pid": suite_pid,
-                "logd": logd,
             })
             # exit parent 1
             sys.exit(0)

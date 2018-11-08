@@ -35,6 +35,7 @@ import traceback
 
 from parsec.util import pdeepcopy, poverride
 
+from cylc import LOG
 from cylc.batch_sys_manager import BatchSysManager, JobPollContext
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
@@ -46,7 +47,6 @@ from cylc.task_job_logs import (
 from cylc.mkdir_p import mkdir_p
 from cylc.subprocpool import SuiteProcPool
 from cylc.subprocctx import SubProcContext
-from cylc.suite_logging import LOG
 from cylc.task_action_timer import TaskActionTimer
 from cylc.task_events_mgr import TaskEventsManager, log_task_job_activity
 from cylc.task_message import FAIL_MESSAGE_PREFIX
@@ -104,9 +104,8 @@ class TaskJobManager(object):
                 poll_tasks.add(itask)
                 if itask.poll_timer.delay is not None:
                     LOG.info(
-                        'poll now, (next in %s)' % (
-                            itask.poll_timer.delay_timeout_as_str()),
-                        itask=itask)
+                        '[%s] -poll now, (next in %s)',
+                        itask, itask.poll_timer.delay_timeout_as_str())
         if poll_tasks:
             self.poll_task_jobs(suite, poll_tasks)
 
@@ -227,9 +226,8 @@ class TaskJobManager(object):
             for itask in itasks:
                 # Log and persist
                 LOG.info(
-                    'submit-num=%d, owner@host=%s' % (
-                        itask.submit_num, owner_at_host),
-                    itask=itask)
+                    '[%s] -submit-num=%d, owner@host=%s',
+                    itask, itask.submit_num, owner_at_host)
                 self.suite_db_mgr.put_insert_task_jobs(itask, {
                     'is_manual_submit': itask.is_manual_submit,
                     'try_num': itask.get_try_num(),
@@ -404,7 +402,7 @@ class TaskJobManager(object):
                 handle.write(owner_at_host + line)
         except IOError as exc:
             LOG.warning("%s: write failed\n%s" % (job_activity_log, exc))
-            LOG.warning(owner_at_host + line, itask=itask)
+            LOG.warning("[%s] -%s%s", itask, owner_at_host, + line)
 
     def _kill_task_jobs_callback(self, ctx, suite, itasks):
         """Callback when kill tasks command exits."""
@@ -766,7 +764,7 @@ class TaskJobManager(object):
         if dry_run:
             # This will be shown next to submit num in gcylc:
             itask.summary['latest_message'] = 'job file written (edit/dry-run)'
-            LOG.debug(itask.summary['latest_message'], itask=itask)
+            LOG.debug('[%s] -%s', itask, itask.summary['latest_message'])
 
         # Return value used by "cylc submit" and "cylc jobscript":
         return itask

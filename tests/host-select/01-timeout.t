@@ -27,6 +27,6 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}" \
     cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
 grep_ok 'ERROR - \[jobs-submit cmd\] (remote host select)' \
-    "$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/suite/err"
+    "$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/suite/log"
 purge_suite "${SUITE_NAME}"
 exit

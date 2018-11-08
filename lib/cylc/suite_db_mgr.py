@@ -25,16 +25,16 @@ This module provides the logic to:
 * Manage existing run database files on restart.
 """
 
-import os
 import json
+import os
 from shutil import copy, rmtree
 from subprocess import call
 from tempfile import mkstemp
 
 
+from cylc import LOG
 from cylc.broadcast_report import get_broadcast_change_iter
 from cylc.rundb import CylcSuiteDAO
-from cylc.suite_logging import ERR, LOG
 from cylc.version import CYLC_VERSION
 from cylc.wallclock import get_current_time_string, get_utc_mode
 
@@ -481,7 +481,7 @@ class SuiteDatabaseManager(object):
                     os.unlink(os.path.join(suite_run_d, "state.tar.gz"))
                 except OSError:
                     pass
-                ERR.error("cannot tar-gzip + remove old state/ directory")
+                LOG.error("cannot tar-gzip + remove old state/ directory")
             # Remove old files as well
             try:
                 os.unlink(os.path.join(suite_run_d, "cylc-suite-env"))

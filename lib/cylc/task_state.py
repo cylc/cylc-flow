@@ -19,9 +19,9 @@
 """Task state related logic."""
 
 
-import cylc.flags as flags
+from cylc import LOG
+import cylc.flags
 from cylc.prerequisite import Prerequisite
-from cylc.suite_logging import LOG
 from cylc.task_id import TaskID
 from cylc.task_outputs import (
     TaskOutputs,
@@ -414,7 +414,7 @@ class TaskState(object):
             self.hold_swap = None
         self.status = status
         self.time_updated = get_current_time_string()
-        flags.iflag = True
+        cylc.flags.iflag = True
         # Log
         message = str(prev_status)
         if prev_hold_swap:
@@ -422,7 +422,7 @@ class TaskState(object):
         message += " => %s" % self.status
         if self.hold_swap:
             message += " (%s)" % self.hold_swap
-        LOG.debug(message, itask=self.identity)
+        LOG.debug("[%s] -%s", self.identity, message)
         return (prev_status, prev_hold_swap)
 
     def is_gt(self, status):

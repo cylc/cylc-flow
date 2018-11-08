@@ -47,7 +47,6 @@ from cylc.task_state import (
     TASK_STATUSES_ORDERED, TASK_STATUS_GROUPS)
 from cylc.version import CYLC_VERSION
 from cylc.ws import get_util_home
-from cylc.suite_logging import get_logs
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 
 
@@ -740,20 +739,14 @@ class CylcReviewService(object):
                                   "size": f_stat.st_size}
 
         # Get cylc suite log files
-        log_files = ["log/suite/err", "log/suite/log", "log/suite/out"]
-        for key in log_files:
-            f_name = os.path.join(dir_, key)
-            if os.path.isfile(f_name):
-                f_stat = os.stat(f_name)
-                full_name = ["log/suite/%s" % name for name in
-                             get_logs(dir_, key, absolute_path=False)]
-                logs_info[key] = {"path": key,
-                                  "paths": [key] + full_name,
-                                  "mtime": f_stat.st_mtime,
-                                  "size": f_stat.st_size}
+        for f_name in glob(os.path.join(dir_, "log/suite/log*")):
+            key = os.path.relpath(f_name, dir_)
+            f_stat = os.stat(f_name)
+            logs_info[key] = {"path": key,
+                              "mtime": f_stat.st_mtime,
+                              "size": f_stat.st_size}
 
-        k, logs_info = ("cylc", logs_info)
-        data["files"][k] = logs_info
+        data["files"]["cylc"] = logs_info
         return data
 
     @classmethod
@@ -843,7 +836,7 @@ class CylcReviewService(object):
         cls._check_path_normalised(path)
         # Get rootdir and sub-path.
         head, tail = os.path.split(path)
-        while os.path.split(head)[0]:
+        while os.path.dirname(head) not in ['', os.sep]:
             head, tail1 = os.path.split(head)
             tail = os.path.join(tail1, tail)
         if not (

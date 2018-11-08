@@ -18,7 +18,7 @@
 # Test "cylc cat-log" on the suite host.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 33
+set_test_number 27
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
@@ -33,14 +33,6 @@ cylc stop --max-polls=10 --interval=2 $SUITE_NAME 2>'/dev/null'
 TEST_NAME=${TEST_NAME_BASE}-suite-log-log
 run_ok $TEST_NAME cylc cat-log $SUITE_NAME
 contains_ok "${TEST_NAME}.stdout" "${SUITE_RUN_DIR}/log/suite/log"
-#-------------------------------------------------------------------------------
-TEST_NAME=${TEST_NAME_BASE}-suite-log-out
-run_ok $TEST_NAME cylc cat-log -f o $SUITE_NAME
-contains_ok "${TEST_NAME}.stdout" "${SUITE_RUN_DIR}/log/suite/out"
-#-------------------------------------------------------------------------------
-TEST_NAME=${TEST_NAME_BASE}-suite-log-err
-run_ok $TEST_NAME cylc cat-log -f e $SUITE_NAME
-contains_ok "${TEST_NAME}.stdout" "${SUITE_RUN_DIR}/log/suite/err"
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-task-out
 run_ok $TEST_NAME cylc cat-log -f o $SUITE_NAME a-task.1
@@ -113,8 +105,5 @@ TEST_NAME=$TEST_NAME_BASE-task-job-path
 run_ok $TEST_NAME cylc cat-log -f j -m p $SUITE_NAME a-task.1
 grep_ok "$SUITE_NAME/log/job/1/a-task/NN/job$" $TEST_NAME.stdout
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-bad-suite-log
-run_fail $TEST_NAME cylc cat-log -f q $SUITE_NAME
-grep_ok "Error: bad suite log option: 'q'"  $TEST_NAME.stderr
 purge_suite $SUITE_NAME
 exit

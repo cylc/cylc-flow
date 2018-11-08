@@ -27,12 +27,12 @@ import re
 import sys
 import xdot
 
+from cylc import LOG
 from cylc.config import SuiteConfig
 from cylc.cycling.loader import get_point
 from cylc.graphing import CGraphPlain, CGraph
 from cylc.gui import util
 from cylc.task_id import TaskID
-from cylc.suite_logging import ERR
 
 
 def style_ghost_node(node):
@@ -86,8 +86,8 @@ class CylcDotViewerCommon(xdot.DotWindow):
                 vis_start_string=self.start_point_string,
                 vis_stop_string=self.stop_point_string)
         except Exception as exc:
-            msg = "Failed - parsing error?\n\n" + str(exc)
-            ERR.error(msg)
+            msg = "Failed - parsing error?\n\n%s" % exc
+            LOG.error(msg)
             if self.interactive:
                 dia = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
                                         buttons=gtk.BUTTONS_OK,
@@ -494,81 +494,6 @@ class MyDotWindow(CylcDotViewerCommon):
             return False
         self.orientation = orientation
         self.get_graph()
-
-
-class DotTipWidget(xdot.DotWidget):
-
-    """Subclass that allows connection of 'motion-notify-event'."""
-
-    def on_area_motion_notify(self, area, event):
-        """This returns False, instead of True as in the base class."""
-        self.drag_action.on_motion_notify(event)
-        return False
-
-
-class xdot_widgets(object):
-    """Used only by the GUI graph view."""
-
-    def __init__(self):
-        self.graph = xdot.Graph()
-
-        self.vbox = gtk.VBox()
-
-        self.widget = DotTipWidget()
-
-        zoomin_button = gtk.Button(stock=gtk.STOCK_ZOOM_IN)
-        zoomin_button.connect('clicked', self.widget.on_zoom_in)
-        zoomout_button = gtk.Button(stock=gtk.STOCK_ZOOM_OUT)
-        zoomout_button.connect('clicked', self.widget.on_zoom_out)
-        zoomfit_button = gtk.Button(stock=gtk.STOCK_ZOOM_FIT)
-        zoomfit_button.connect('clicked', self.widget.on_zoom_fit)
-        zoom100_button = gtk.Button(stock=gtk.STOCK_ZOOM_100)
-        zoom100_button.connect('clicked', self.widget.on_zoom_100)
-
-        self.graph_disconnect_button = gtk.ToggleButton('_DISconnect')
-        self.graph_disconnect_button.set_active(False)
-        self.graph_update_button = gtk.Button('_Update')
-        self.graph_update_button.set_sensitive(False)
-
-        bbox = gtk.HButtonBox()
-        bbox.add(zoomin_button)
-        bbox.add(zoomout_button)
-        bbox.add(zoomfit_button)
-        bbox.add(zoom100_button)
-        bbox.add(self.graph_disconnect_button)
-        bbox.add(self.graph_update_button)
-        bbox.set_layout(gtk.BUTTONBOX_SPREAD)
-
-        self.vbox.pack_start(self.widget)
-        self.vbox.pack_start(bbox, False)
-
-    def get(self):
-        return self.vbox
-
-    def set_filter(self, filter_):
-        self.widget.set_filter(filter_)
-
-    def set_dotcode(self, dotcode, filename='<stdin>', no_zoom=False):
-        if no_zoom:
-            old_zoom_func = self.widget.zoom_image
-            self.widget.zoom_image = lambda *a, **b: self.widget.queue_draw()
-        if self.widget.set_dotcode(dotcode, filename):
-            # self.set_title(os.path.basename(filename) + ' - Dot Viewer')
-            # disable automatic zoom-to-fit on update
-            # self.widget.zoom_to_fit()
-            pass
-        if no_zoom:
-            self.widget.zoom_image = old_zoom_func
-
-    def set_xdotcode(self, xdotcode, filename='<stdin>'):
-        if self.widget.set_xdotcode(xdotcode):
-            # self.set_title(os.path.basename(filename) + ' - Dot Viewer')
-            # disable automatic zoom-to-fit on update
-            # self.widget.zoom_to_fit()
-            pass
-
-    def on_reload(self, action):
-        self.widget.reload()
 
 
 def get_reference_from_plain_format(plain_text):

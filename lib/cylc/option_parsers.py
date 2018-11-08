@@ -17,9 +17,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Common options for all cylc commands."""
 
+import logging
 from optparse import OptionParser, OptionConflictError
 import os
+import sys
+
+from cylc import LOG
 import cylc.flags
+from cylc.loggingutil import CylcLogFormatter
 
 
 class CylcOptionParser(OptionParser):
@@ -123,12 +128,13 @@ Arguments:"""
         self.add_std_option(
             "-v", "--verbose",
             help="Verbose output mode.",
-            action="store_true", default=False, dest="verbose")
+            action="store_true", dest="verbose",
+            default=(os.getenv("CYLC_VERBOSE", "false").lower() == "true"))
         self.add_std_option(
             "--debug",
-            help=("Output developer information and show exception "
-                  "tracebacks."),
-            action="store_true", default=False, dest="debug")
+            help="Output developer information and show exception tracebacks.",
+            action="store_true", dest="debug",
+            default=(os.getenv("CYLC_DEBUG", "false").lower() == "true"))
 
         if self.prep:
             self.add_std_option(
@@ -278,6 +284,15 @@ Arguments:"""
 
         cylc.flags.verbose = options.verbose
         cylc.flags.debug = options.debug
+
+        # Set up stream logging
+        if options.debug or options.verbose:
+            LOG.setLevel(logging.DEBUG)
+        else:
+            LOG.setLevel(logging.INFO)
+        errhandler = logging.StreamHandler(sys.stderr)
+        errhandler.setFormatter(CylcLogFormatter())
+        LOG.addHandler(errhandler)
 
         return (options, args)
 
