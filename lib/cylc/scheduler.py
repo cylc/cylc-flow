@@ -1437,25 +1437,37 @@ conditions; see `cylc conditions`.
             bool: False if it is not possible to automatically stop/restart
             the suite due to it's configuration/runtime state.
         """
-        # Check that the suite itn't already shutting down.
-        if self.stop_mode or self.auto_restart_time is not None:
+        # Check that the suite isn't already shutting down.
+        if self.stop_mode:
             return True
 
         # Force mode, stop the suite now, don't restart it.
         if mode == self.AUTO_STOP_RESTART_FORCE:
+            if self.auto_restart_time:
+                LOG.info('Scheduled automatic restart canceled')
             self.auto_restart_time = time()
             self.auto_restart_mode = mode
             return True
 
+        # Check suite isn't already scheduled to auto-stop.
+        if self.auto_restart_time is not None:
+            return True
+
+        # Check suite is able to be safely restarted.
         if not self.can_auto_restart():
             return False
 
         LOG.info('Suite will automatically restart on a new host.')
-        if restart_delay > 0:
-            # Delay shutdown by a random interval to avoid many
-            # suites restarting simultaneously.
-            from random import random
-            shutdown_delay = int(random() * restart_delay)
+        if restart_delay is not None and restart_delay != 0:
+            if restart_delay > 0:
+                # Delay shutdown by a random interval to avoid many
+                # suites restarting simultaneously.
+                from random import random
+                shutdown_delay = int(random() * restart_delay)
+            else:
+                # Un-documented feature, schedule exact restart interval for
+                # testing purposes.
+                shutdown_delay = abs(int(restart_delay))
             shutdown_time = time() + shutdown_delay
             LOG.info('Suite will restart in %ss (at %s)' % (
                 shutdown_delay, time2str(shutdown_time)))
@@ -1510,6 +1522,8 @@ conditions; see `cylc conditions`.
         4. Suite contact file has the right info?
 
         """
+        LOG.debug('Performing suite health check')
+
         # 1. check if suite is stalled - if so call handler if defined
         if self.stop_mode is None and not has_changes:
             self.check_suite_stalled()
@@ -1519,7 +1533,7 @@ conditions; see `cylc conditions`.
                 now > self.time_next_health_check):
 
             # 2. check if suite host is condemned - if so auto restart.
-            if self.auto_restart_time is None and self.stop_mode is None:
+            if self.stop_mode is None:
                 current_glbl_cfg = glbl_cfg(cached=False)
                 for host in current_glbl_cfg.get(['suite servers',
                                                   'condemned hosts']):
@@ -1528,6 +1542,7 @@ conditions; see `cylc conditions`.
                         mode = self.AUTO_STOP_RESTART_FORCE
                         host = host[:-1]
                     else:
+                        # normal mode (stop and restart the suite)
                         mode = self.AUTO_STOP_RESTART_NORMAL
                         if self.auto_restart_time is not None:
                             # suite is already scheduled to stop-restart only
