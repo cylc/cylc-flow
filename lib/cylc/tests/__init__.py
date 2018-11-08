@@ -44,7 +44,7 @@ def load_tests(loader, tests, _):
     import importlib
 
     cylc_package_path = os.path.split(os.path.split(__file__)[0])[0]
-    for module_name, _ in iter_package('cylc',  cylc_package_path):
+    for module_name, _ in iter_package('cylc', cylc_package_path):
         # ensure the module is importable
         try:
             importlib.import_module(module_name)

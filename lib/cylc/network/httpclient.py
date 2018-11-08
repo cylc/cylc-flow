@@ -711,4 +711,3 @@ def get_exception_from_html(html_text):
     except HTMLParseError:
         return None
     return parser.exception_text
-
