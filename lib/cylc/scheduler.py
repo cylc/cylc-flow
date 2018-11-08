@@ -1477,7 +1477,9 @@ conditions; see `cylc conditions`.
             ('pool_hold_point', self.pool_hold_point),
             ('run_mode', self.run_mode != 'live'),
             ('stop_clock_time', self.stop_clock_time),
-            ('stop_point', self.stop_point),
+            ('stop_point', (self.stop_point and
+                            self.stop_point != self.final_point)),
+            # ^ https://github.com/cylc/cylc/issues/2799#issuecomment-436720805
             ('stop_task', self.stop_task)
         ] if value]
 
@@ -1521,11 +1523,16 @@ conditions; see `cylc conditions`.
                 current_glbl_cfg = glbl_cfg(cached=False)
                 for host in current_glbl_cfg.get(['suite servers',
                                                   'condemned hosts']):
-                    mode = self.AUTO_STOP_RESTART_NORMAL
                     if host.endswith('!'):
                         # host ends in an `!` -> force shutdown mode
                         mode = self.AUTO_STOP_RESTART_FORCE
                         host = host[:-1]
+                    else:
+                        mode = self.AUTO_STOP_RESTART_NORMAL
+                        if self.auto_restart_time is not None:
+                            # suite is already scheduled to stop-restart only
+                            # AUTO_STOP_RESTART_FORCE can override this.
+                            continue
 
                     if get_fqdn_by_host(host) == self.host:
                         # this host is condemned, take the appropriate action
