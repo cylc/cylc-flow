@@ -487,7 +487,7 @@ class ISO8601Sequence(SequenceBase):
 
         for recurrence_iso_point in self.recurrence:
 
-            # Is recurrence point greater than aribitrary point?
+            # Is recurrence point greater than arbitrary point?
             if recurrence_iso_point > p_iso_point:
                 break
             recurrence_cycle_point = ISO8601Point(str(recurrence_iso_point))
@@ -978,7 +978,7 @@ class TestISO8601Sequence(unittest.TestCase):
 
     def test_exclusions_to_string(self):
         init(time_zone='Z')
-        # Chack that exclusions are not included where they should not be.
+        # Check that exclusions are not included where they should not be.
         basic = ISO8601Sequence('PT1H', '2000', '2001')
         self.assertFalse('!' in str(basic))
 

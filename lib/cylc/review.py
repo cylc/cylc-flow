@@ -619,7 +619,7 @@ class CylcReviewService(object):
                         continue
                     start, end = match.span()
                 else:
-                    # ERROR: un-reccognised search_mode
+                    # ERROR: un-recognised search_mode
                     break
                 # if line matches search string include in results
                 results.append([line[:start], line[start:end],
@@ -814,7 +814,7 @@ class CylcReviewService(object):
 
     @classmethod
     def _check_file_path(cls, path):
-        """Raise HTTP 403 error if the path is not indended to be served.
+        """Raise HTTP 403 error if the path is not intended to be served.
 
         Examples:
             >>> CylcReviewService._check_file_path('.service/contact')

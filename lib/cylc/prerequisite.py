@@ -59,7 +59,7 @@ class Prerequisite(object):
         # cylc.cycling.PointBase
         self.start_point = start_point
 
-        # List of cycle point strings that this prerequiste depends on.
+        # List of cycle point strings that this prerequisite depends on.
         self.target_point_strings = []
 
         # Dictionary of messages pertaining to this prerequisite.
@@ -76,7 +76,7 @@ class Prerequisite(object):
 
         # The cashed state of this prerequisite:
         # * `None` (no cached state)
-        # * `True` (prereuisite satisfied)
+        # * `True` (prerequisite satisfied)
         # * `False` (prerequisite unsatisfied).
         self._all_satisfied = None
 
@@ -234,7 +234,7 @@ class Prerequisite(object):
         return res
 
     def set_satisfied(self):
-        """Force this prerequiste into the satisfied state.
+        """Force this prerequisite into the satisfied state.
 
         State can be overridden by calling `self.satisfy_me`.
 

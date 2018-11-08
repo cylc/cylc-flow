@@ -243,7 +243,7 @@ class JobFileWriter(object):
             #   export FOO=$( ecko foo )  # error not trapped!
             #   FOO=$( ecko foo )  # error trapped
             # The export is done before variable definition to enable
-            # use of already defiend variables by command substitutions
+            # use of already defined variables by command substitutions
             # in later definitions:
             #   FOO='foo'
             #   BAR=$(script_using_FOO)

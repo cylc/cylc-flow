@@ -100,7 +100,7 @@ class Scheduler(object):
     START_MESSAGE_TMPL = (
         START_MESSAGE_PREFIX + 'server=%(host)s:%(port)s pid=%(pid)s')
 
-    # Dependency negotation etc. will run after these commands
+    # Dependency negotiation etc. will run after these commands
     PROC_CMDS = (
         'release_suite',
         'release_tasks',
@@ -1087,7 +1087,7 @@ conditions; see `cylc conditions`.
         # Make suite vars available to [cylc][environment]:
         for var, val in self.task_job_mgr.job_file_writer.suite_env.items():
             os.environ[var] = val
-        # Set local values of variables that are potenitally task-specific
+        # Set local values of variables that are potentially task-specific
         # due to different directory paths on different task hosts. These
         # are overridden by tasks prior to job submission, but in
         # principle they could be needed locally by event handlers:
@@ -1281,7 +1281,7 @@ conditions; see `cylc conditions`.
             # Task failure + abort if any task fails
             self._set_stop(TaskPool.STOP_AUTO_ON_TASK_FAILURE)
         elif self.options.reftest and self.ref_test_allowed_failures:
-            # In reference test mode and unexpected failures occured
+            # In reference test mode and unexpected failures occurred
             bad_tasks = []
             for itask in self.pool.get_failed_tasks():
                 if itask.identity not in self.ref_test_allowed_failures:

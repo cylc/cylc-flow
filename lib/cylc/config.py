@@ -189,7 +189,7 @@ class SuiteConfig(object):
         if 'dependencies' not in self.cfg['scheduling']:
             raise SuiteConfigError(
                 "ERROR: missing [scheduling][[dependencies]] section.")
-        # (The check that 'graph' is definied is below).
+        # (The check that 'graph' is defined is below).
         # The two runahead limiting schemes are mutually exclusive.
         rlim = self.cfg['scheduling'].get('runahead limit')
         mact = self.cfg['scheduling'].get('max active cycle points')
@@ -1048,7 +1048,7 @@ class SuiteConfig(object):
                 # completed MRO (full or partial) as we go, and re-use
                 # these wherever possible. This ought to be a lot more
                 # efficient for big namespaces (e.g. lots of environment
-                # variables) in deep hiearchies, but results may vary...
+                # variables) in deep hierarchies, but results may vary...
                 prev_shortcut = False
                 mro = []
                 for name in hierarchy:

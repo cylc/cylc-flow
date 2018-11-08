@@ -44,7 +44,7 @@ class CylcConfigValidator(ParsecValidator):
         .coercers (dict):
             Map value type keys with coerce methods.
     """
-    # Paramterized names containing at least one comma.
+    # Parameterized names containing at least one comma.
     _REC_NAME_SUFFIX = re.compile(r'\A[\w\-+%@]+\Z')
     _REC_TRIG_FUNC = re.compile(r'(\w+)\((.*)\)(?:\:(\w+))?')
 

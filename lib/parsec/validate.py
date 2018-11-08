@@ -99,7 +99,7 @@ class ParsecValidator(object):
     # integer range syntax START..END[..STEP]
     _REC_INT_RANGE = re.compile(
         r'\A([\+\-]?\d+)\s*\.\.\s*([\+\-]?\d+)(?:\s*\.\.\s*(\d+))?\Z')
-    # Paramterized names containing at least one comma.
+    # Parameterized names containing at least one comma.
     _REC_MULTI_PARAM = re.compile(r'<[\w]+,.*?>')
 
     # Value type constants

@@ -332,10 +332,10 @@ class TaskPool(object):
         as submitted or running are polled to confirm their true status.
 
         Prerequisite status (satisfied or not) is inferred from task status:
-           WAITING or HELD  - all prerequisites unsatisified
+           WAITING or HELD  - all prerequisites unsatisfied
            status > QUEUED - all prerequisites satisfied.
         TODO - this is not correct, e.g. a held task may have some (but not
-        all) satisified prerequisites; and a running task (etc.) could have
+        all) satisfied prerequisites; and a running task (etc.) could have
         been manually triggered with unsatisfied prerequisites. See comments
         in GitHub #2329 on how to fix this in the future.
 

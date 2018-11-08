@@ -350,7 +350,7 @@ class MyDotWindow(CylcDotViewerCommon):
         # Add the actiongroup to the uimanager
         uimanager.insert_action_group(actiongroup, 0)
 
-        # Add a UI descrption
+        # Add a UI description
         uimanager.add_ui_from_string(self.ui)
 
         left_to_right_toolitem = uimanager.get_widget('/ToolBar/LeftToRight')

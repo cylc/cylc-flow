@@ -146,7 +146,7 @@ class TaskEventsManager(object):
         # Set pflag = True to stimulate task dependency negotiation whenever a
         # task changes state in such a way that others could be affected. The
         # flag should only be turned off again after use in
-        # Scheduler.process_tasks, to ensure that dependency negotation occurs
+        # Scheduler.process_tasks, to ensure that dependency negotiation occurs
         # when required.
         self.pflag = False
 
@@ -219,7 +219,7 @@ class TaskEventsManager(object):
     def process_events(self, schd_ctx):
         """Process task events that were created by "setup_event_handlers".
 
-        schd_ctx is an instance of "Schduler" in "cylc.scheduler".
+        schd_ctx is an instance of "Scheduler" in "cylc.scheduler".
         """
         ctx_groups = {}
         now = time()
@@ -941,7 +941,7 @@ class TaskEventsManager(object):
                 time_limit_delays = batch_sys_conf.get(
                     'execution time limit polling intervals', [60, 120, 420])
                 timeout = time_limit + sum(time_limit_delays)
-                # Remove execessive polling before time limit
+                # Remove excessive polling before time limit
                 while sum(delays) > time_limit:
                     del delays[-1]
                 # But fill up the gap before time limit
@@ -966,7 +966,7 @@ class TaskEventsManager(object):
         itask.poll_timer = TaskActionTimer(ctx=ctx, delays=delays)
         # Log timeout and polling schedule
         message = 'health check settings: %s=%s' % (timeout_key, timeout_str)
-        # Attempt to group idenitical consecutive delays as N*DELAY,...
+        # Attempt to group identical consecutive delays as N*DELAY,...
         if itask.poll_timer.delays:
             items = []  # [(number of item - 1, item), ...]
             for delay in itask.poll_timer.delays:

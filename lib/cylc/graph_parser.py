@@ -81,7 +81,7 @@ class GraphParser(object):
           Think of this as describing the graph structure first, then
           annotating each node with a trigger type that is only meaningful on
           the left side of each pair (in the default ':succeed' case the
-          trigger type can be ommitted, but it is still there in principle).
+          trigger type can be omitted, but it is still there in principle).
     """
 
     OP_AND = '&'

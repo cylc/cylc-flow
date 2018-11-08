@@ -152,7 +152,7 @@ Arguments:"""
                 action="store_true", default=False, dest="use_ssh")
             self.add_std_option(
                 "--ssh-cylc",
-                help="Location of cylc executable on remote ssh comamnds.",
+                help="Location of cylc executable on remote ssh commands.",
                 action="store", default="cylc", dest="ssh_cylc")
             self.add_std_option(
                 "--no-login",

@@ -161,7 +161,7 @@ TASK_STATUSES_TRIGGERABLE = set([
     TASK_STATUS_RETRYING
 ])
 
-# Tasks statuses to auto-exand in the gcylc tree view.
+# Tasks statuses to auto-expand in the gcylc tree view.
 TASK_STATUSES_AUTO_EXPAND = set([
     TASK_STATUS_QUEUED,
     TASK_STATUS_READY,
