@@ -78,7 +78,9 @@ batch_sys.POLL_CANT_CONNECT_ERR
 
 batch_sys.SHOULD_KILL_PROC_GROUP
     * A boolean to indicate whether it is necessary to kill a job by sending
-      a signal to its Unix process group.
+      a signal to its Unix process group. This boolean also indicates that
+      a job submitted via this batch system will physically run on the same
+      host it is submitted to.
 
 batch_sys.SHOULD_POLL_PROC_GROUP
     * A boolean to indicate whether it is necessary to poll a job by its PID
@@ -246,6 +248,11 @@ class BatchSysManager(object):
         batch_sys = self._get_sys(job_conf['batch_system_name'])
         if hasattr(batch_sys, "get_vacation_signal"):
             return batch_sys.get_vacation_signal(job_conf)
+
+    def is_job_local_to_host(self, batch_sys_name):
+        """Return True if batch system runs jobs local to the submit host."""
+        return getattr(
+            self._get_sys(batch_sys_name), "SHOULD_KILL_PROC_GROUP", False)
 
     def jobs_kill(self, job_log_root, job_log_dirs):
         """Kill multiple jobs.

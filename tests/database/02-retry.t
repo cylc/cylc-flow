@@ -38,10 +38,11 @@ sqlite3 "${DB_FILE}" \
             user_at_host, batch_sys_name
      FROM task_jobs ORDER BY name' \
     >"${NAME}"
-cmp_ok "${NAME}" <<'__SELECT__'
-20200101T0000Z|t1|1|1|0|1|localhost|background
-20200101T0000Z|t1|2|2|0|1|localhost|background
-20200101T0000Z|t1|3|3|0|0|localhost|background
+LOCALHOST="$(hostname -f)"
+cmp_ok "${NAME}" <<__SELECT__
+20200101T0000Z|t1|1|1|0|1|${LOCALHOST}|background
+20200101T0000Z|t1|2|2|0|1|${LOCALHOST}|background
+20200101T0000Z|t1|3|3|0|0|${LOCALHOST}|background
 __SELECT__
 
 purge_suite "${SUITE_NAME}"

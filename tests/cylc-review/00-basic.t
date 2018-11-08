@@ -136,7 +136,7 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('states', 'is_failed',), False]" \
     "[('of_n_entries',), 2]" \
     "[('entries', ${FOO0}, 'task_status',), 'succeeded']" \
-    "[('entries', ${FOO0}, 'host',), 'localhost']" \
+    "[('entries', ${FOO0}, 'host',), '$(hostname -f)']" \
     "[('entries', ${FOO0}, 'submit_method',), 'background']" \
     "[('entries', ${FOO0}, 'logs', 'job', 'path'), '${FOO0_JOB}']" \
     "[('entries', ${FOO0}, 'logs', 'job.err', 'path'), '${FOO0_JOB}.err']" \
@@ -160,7 +160,7 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('entries', ${FOO0}, 'seq_logs_indexes', 'job.trace.*.html', '32'), 'job.trace.32.html']" \
     "[('entries', ${FOO0}, 'seq_logs_indexes', 'job.trace.*.html', '256'), 'job.trace.256.html']" \
     "[('entries', ${FOO1}, 'task_status',), 'succeeded']" \
-    "[('entries', ${FOO1}, 'host',), 'localhost']" \
+    "[('entries', ${FOO1}, 'host',), '$(hostname -f)']" \
     "[('entries', ${FOO1}, 'submit_method',), 'background']" \
     "[('entries', ${FOO1}, 'logs', 'job', 'path'), '${FOO1_JOB}']" \
     "[('entries', ${FOO1}, 'logs', 'job.err', 'path'), '${FOO1_JOB}.err']" \
