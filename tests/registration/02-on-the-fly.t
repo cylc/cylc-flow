@@ -19,7 +19,7 @@
 # Test `cylc run` with no registration
 
 . "$(dirname "$0")/test_header"
-set_test_number 6
+set_test_number 9
 
 TEST_NAME="${TEST_NAME_BASE}-pwd"
 
@@ -69,6 +69,30 @@ REGISTERED ${TESTD} -> ${CYLC_RUN_DIR}/${TESTD}
 __ERR__
 
 run_ok "${TEST_NAME}stop-" cylc stop "${TESTD}"
+
+purge_suite $TESTD
+#------------------------------------------------------------------------------
+# Test `cylc run` REG for an un-registered suite
+mkdir -p "${CYLC_RUN_DIR}/${TESTD}"
+cat >> "${CYLC_RUN_DIR}/${TESTD}/suite.rc" <<'__SUITE_RC__'
+[meta]
+    title = the quick brown fox
+[sched]
+    [[dependencies]]
+        graph = foo
+[runtime]
+    [[foo]]
+        script = true
+__SUITE_RC__
+
+TEST_NAME="${TEST_NAME_BASE}-cylc-run-dir-2"
+run_fail "${TEST_NAME}-validate" cylc validate "${TESTD}"
+contains_ok "${TEST_NAME}-validate.stdout" <<__OUT__
+REGISTERED ${TESTD} -> ${CYLC_RUN_DIR}/${TESTD}
+__OUT__
+contains_ok "${TEST_NAME}-validate.stderr" <<__ERR__
+Illegal item: sched
+__ERR__
 
 purge_suite $TESTD
 

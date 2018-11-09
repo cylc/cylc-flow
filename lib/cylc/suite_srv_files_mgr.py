@@ -318,13 +318,22 @@ To start a new run, stop the old one first with one or more of these:
             self.FILE_BASE_SUITE_RC)
 
     def get_suite_source_dir(self, reg, suite_owner=None):
-        """Return the source directory path of a suite."""
+        """Return the source directory path of a suite.
+
+        Will register un-registered suites located in the cylc run dir.
+        """
         srv_d = self.get_suite_srv_dir(reg, suite_owner)
         fname = os.path.join(srv_d, self.FILE_BASE_SOURCE)
         try:
             source = os.readlink(fname)
         except OSError:
-            raise SuiteServiceFileError("ERROR: Suite not found %s" % reg)
+            suite_d = os.path.dirname(srv_d)
+            if os.path.exists(suite_d):
+                # suite exists but is not yet registered
+                self.register(reg=reg, source=suite_d)
+                return suite_d
+            else:
+                raise SuiteServiceFileError("ERROR: Suite not found %s" % reg)
         else:
             if os.path.isabs(source):
                 return source
