@@ -251,9 +251,11 @@ class Scheduler(object):
             self.shutdown(exc)
             if self.auto_restart_mode == self.AUTO_STOP_RESTART_NORMAL:
                 self.suite_auto_restart()
+            self.close_logs()
 
         except SchedulerError as exc:
             self.shutdown(exc)
+            self.close_logs()
             sys.exit(1)
 
         except KeyboardInterrupt as exc:
@@ -263,6 +265,7 @@ class Scheduler(object):
                 # In case of exceptions in the shutdown method itself.
                 LOG.exception(exc2)
                 sys.exit(1)
+            self.close_logs()
 
         except Exception as exc:
             LOG.exception(exc)
@@ -272,12 +275,20 @@ class Scheduler(object):
             except Exception as exc2:
                 # In case of exceptions in the shutdown method itself
                 LOG.exception(exc2)
+            self.close_logs()
             raise exc
+
         else:
             # main loop ends (not used?)
             self.shutdown()
+            self.close_logs()
 
+    def close_logs(self):
+        """Close the Cylc logger."""
+        LOG.info("DONE")  # main thread exit
         self.profiler.stop()
+        for handler in LOG.handlers:
+            handler.close()
 
     @staticmethod
     def _start_print_blurb():
@@ -1375,9 +1386,10 @@ conditions; see `cylc conditions`.
             #           * Ensure the host can be safely taken down once suites
             for itask in self.pool.get_tasks():
                 if (
-                    itask.task_host == 'localhost' and
-                    itask.summary['batch_sys_name'] in ['background', 'at'] and
                     itask.state.status in TASK_STATUSES_ACTIVE
+                    and itask.summary['batch_sys_name']
+                    and self.task_job_mgr.batch_sys_mgr.is_job_local_to_host(
+                        itask.summary['batch_sys_name'])
                 ):
                     LOG.info('Waiting for jobs running on localhost to '
                              'complete before attempting restart')
@@ -1398,7 +1410,7 @@ conditions; see `cylc conditions`.
 
         for attempt_no in range(max_retries):
             new_host = HostAppointer(cached=False).appoint_host()
-            LOG.info('Attempting to restart on "%s"' % new_host)
+            LOG.info('Attempting to restart on "%s"', new_host)
 
             # proc will start with current env (incl CYLC_HOME etc)
             proc = Popen(
@@ -1409,15 +1421,15 @@ conditions; see `cylc conditions`.
                 if attempt_no < max_retries:
                     msg += (' will retry in %ss'
                             % self.INTERVAL_AUTO_RESTART_ERROR)
-                msg += '. Restart error:\n%s' % proc.communicate()[1]
-                LOG.critical(msg)
+                LOG.critical(msg + '. Restart error:\n%s',
+                             proc.communicate()[1])
                 sleep(self.INTERVAL_AUTO_RESTART_ERROR)
             else:
-                LOG.info('Suite now running on "%s".' % new_host)
+                LOG.info('Suite now running on "%s".', new_host)
                 return True
         LOG.critical(
             'Suite unable to automatically restart after %s tries - '
-            'manual restart required.' % max_retries)
+            'manual restart required.', max_retries)
         return False
 
     def set_auto_restart(self, restart_delay=None,
@@ -1469,8 +1481,8 @@ conditions; see `cylc conditions`.
                 # testing purposes.
                 shutdown_delay = abs(int(restart_delay))
             shutdown_time = time() + shutdown_delay
-            LOG.info('Suite will restart in %ss (at %s)' % (
-                shutdown_delay, time2str(shutdown_time)))
+            LOG.info('Suite will restart in %ss (at %s)', shutdown_delay,
+                     time2str(shutdown_time))
             self.auto_restart_time = shutdown_time
         else:
             self.auto_restart_time = time()
@@ -1561,7 +1573,7 @@ conditions; see `cylc conditions`.
                                 'host is unable to continue running it.\n'
                                 'When another suite host becomes available '
                                 'the suite can be restarted by:\n'
-                                '    $ cylc restart %s' % self.suite)
+                                '    $ cylc restart %s', self.suite)
                             if self.set_auto_restart(mode=mode):
                                 return  # skip remaining health checks
                         elif (
@@ -1857,10 +1869,6 @@ conditions; see `cylc conditions`.
         if getattr(self, "config", None) is not None:
             # run shutdown handlers
             self.run_event_handlers(self.EVENT_SHUTDOWN, str(reason))
-
-        LOG.info("DONE")  # main thread exit
-        for handler in LOG.handlers:
-            handler.close()
 
     def set_stop_point(self, stop_point_string):
         """Set stop point."""

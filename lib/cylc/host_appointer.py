@@ -1,4 +1,22 @@
+#!/usr/bin/env python2
+
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Functionality for selecting Cylc suite hosts."""
+
 import json
 from pipes import quote
 from random import choice, shuffle
@@ -7,8 +25,8 @@ import sys
 from time import sleep
 import unittest
 
+from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
-import cylc.flags
 from cylc.hostuserutil import get_host, is_remote_host, get_fqdn_by_host
 from cylc.remote import remote_cylc_cmd, run_cmd
 
@@ -48,9 +66,7 @@ class HostAppointer(object):
     """
 
     CMD_BASE = "get-host-metrics"  # 'cylc' prepended by remote_cylc_cmd.
-
     USE_DISK_PATH = "/"
-    IS_DEBUG = cylc.flags.debug or cylc.flags.verbose
 
     def __init__(self, cached=False):
         # get the global config, if cached = False a new config instance will
@@ -175,15 +191,16 @@ class HostAppointer(object):
                     continue
                 del host_proc_map[host]
                 out, err = proc.communicate()
-                if not proc.wait():  # Command OK
-                    host_stats[host] = json.loads(out)
-                elif cylc.flags.verbose or cylc.flags.debug:
+                if proc.wait():
                     # Command failed in verbose/debug mode
-                    sys.stderr.write((
-                        "WARNING: can't get host metric from '%s';"
-                        " %s  # returncode=%s, err=%s\n" %
-                        (host, ' '.join((quote(item) for item in cmd)),
-                         proc.returncode, err)))
+                    LOG.warning(
+                        "can't get host metric from '%s'" +
+                        "%s  # returncode=%d, err=%s\n",
+                        host, ' '.join((quote(item) for item in cmd)),
+                        proc.returncode, err)
+                else:
+                    # Command OK
+                    host_stats[host] = json.loads(out)
             sleep(0.01)
         return host_stats
 
@@ -215,13 +232,11 @@ class HostAppointer(object):
                         measure == "memory" or
                         measure.startswith("disk-space")))):
                     # Alert user that threshold has not been met.
-                    if self.IS_DEBUG:
-                        sys.stderr.write((
-                            "WARNING: host '%s' did not pass %s threshold "
-                            "(%s %s threshold %s)\n" % (
-                                host, measure, datum,
-                                ">" if measure.startswith("load") else "<",
-                                cutoff)))
+                    LOG.warning(
+                        "host '%s' did not pass %s threshold " +
+                        "(%s %s threshold %s)\n",
+                        host, measure, datum,
+                        ">" if measure.startswith("load") else "<", cutoff)
                     host_stats.pop(host)
                     break
         return host_stats
@@ -237,26 +252,24 @@ class HostAppointer(object):
         # metric data values corresponding to the rank method to rank with.
         hosts_with_vals_to_rank = dict((host, metric[self.rank_method]) for
                                        host, metric in all_host_stats.items())
-        if self.IS_DEBUG:
-            print "INFO: host %s values extracted are:" % self.rank_method
-            for host, value in hosts_with_vals_to_rank.items():
-                print "  " + host + ": " + str(value)
+        LOG.debug(
+            "INFO: host %s values extracted are: %s",
+            self.rank_method,
+            "\n".join("  %s: %s" % item
+                      for item in hosts_with_vals_to_rank.items()))
 
         # Sort new dict by value to return ascending-value ordered host list.
         sort_asc_hosts = sorted(
             hosts_with_vals_to_rank, key=hosts_with_vals_to_rank.get)
-        base_msg = ("INFO: good (metric-returning) hosts were ranked in the "
-                    "following order, from most to least suitable: ")
+        base_msg = ("good (metric-returning) hosts were ranked in the "
+                    "following order, from most to least suitable: %s")
         if self.rank_method in ("memory", "disk-space:" + self.USE_DISK_PATH):
             # Want 'most free' i.e. highest => reverse asc. list for ranking.
-            if self.IS_DEBUG:
-                sys.stderr.write(
-                    base_msg + ', '.join(sort_asc_hosts[::-1]) + '.\n')
+            LOG.debug(base_msg, ', '.join(sort_asc_hosts[::-1]))
             return sort_asc_hosts[-1]
         else:  # A load av. is only poss. left; 'random' dealt with earlier.
             # Want lowest => ranking given by asc. list.
-            if self.IS_DEBUG:
-                sys.stderr.write(base_msg + ', '.join(sort_asc_hosts) + '.\n')
+            LOG.debug(base_msg, ', '.join(sort_asc_hosts))
             return sort_asc_hosts[0]
 
     def appoint_host(self, mock_host_stats=None):
