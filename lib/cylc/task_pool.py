@@ -425,10 +425,6 @@ class TaskPool(object):
         (cycle, name, ctx_key_raw, ctx_raw, delays_raw, num, delay,
          timeout) = row
         id_ = TaskID.get(name, cycle)
-        itask = self.get_task_by_id(id_)
-        if itask is None:
-            LOG.warning("%(id)s: task not found, skip" % {"id": id_})
-            return
         try:
             # Extract type namedtuple variables from JSON strings
             ctx_key = json.loads(str(ctx_key_raw))
