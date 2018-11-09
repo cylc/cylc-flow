@@ -36,10 +36,10 @@ import traceback
 from parsec.util import pdeepcopy, poverride
 
 from cylc import LOG
-from cylc.batch_sys_manager import BatchSysManager, JobPollContext
+from cylc.batch_sys_manager import JobPollContext
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
-from cylc.hostuserutil import is_remote_host, is_remote_user
+from cylc.hostuserutil import get_host, is_remote_host, is_remote_user
 from cylc.job_file import JobFileWriter
 from cylc.task_job_logs import (
     JOB_LOG_JOB, get_task_job_log, get_task_job_job_log,
@@ -88,6 +88,7 @@ class TaskJobManager(object):
         self.suite_db_mgr = suite_db_mgr
         self.task_events_mgr = task_events_mgr
         self.job_file_writer = JobFileWriter()
+        self.batch_sys_mgr = self.job_file_writer.batch_sys_mgr
         self.suite_srv_files_mgr = suite_srv_files_mgr
         self.task_remote_mgr = TaskRemoteMgr(
             suite, proc_pool, suite_srv_files_mgr)
@@ -216,11 +217,23 @@ class TaskJobManager(object):
                 for itask in itasks:
                     itask.summary['latest_message'] = self.REMOTE_INIT_MSG
                 continue
-            # Persist
-            if owner:
-                owner_at_host = owner + '@' + host
+            # Ensure that localhost background/at jobs are recorded as running
+            # on the host name of the current suite host, rather than just
+            # "localhost". On suite restart on a different suite host, this
+            # allows the restart logic to correctly poll the status of the
+            # background/at jobs that may still be running on the previous
+            # suite host.
+            if (
+                self.batch_sys_mgr.is_job_local_to_host(
+                    itask.summary['batch_sys_name']) and
+                not is_remote_host(host)
+            ):
+                owner_at_host = get_host()
             else:
                 owner_at_host = host
+            # Persist
+            if owner:
+                owner_at_host = owner + '@' + owner_at_host
             now_str = get_current_time_string()
             done_tasks.extend(itasks)
             for itask in itasks:
@@ -411,7 +424,8 @@ class TaskJobManager(object):
             suite,
             itasks,
             self._kill_task_job_callback,
-            {BatchSysManager.OUT_PREFIX_COMMAND: self._job_cmd_out_callback})
+            {self.batch_sys_mgr.OUT_PREFIX_COMMAND: self._job_cmd_out_callback}
+        )
 
     def _kill_task_job_callback(self, suite, itask, cmd_ctx, line):
         """Helper for _kill_task_jobs_callback, on one task job."""
@@ -451,9 +465,8 @@ class TaskJobManager(object):
         LOG.log(log_lvl, "[%s] -job(%02d) %s" % (
             itask.identity, itask.submit_num, log_msg))
 
-    @staticmethod
     def _manip_task_jobs_callback(
-            ctx, suite, itasks, summary_callback, more_callbacks=None):
+            self, ctx, suite, itasks, summary_callback, more_callbacks=None):
         """Callback when submit/poll/kill tasks command exits."""
         if ctx.ret_code:
             LOG.error(ctx)
@@ -468,7 +481,7 @@ class TaskJobManager(object):
             if itask.point is not None and itask.submit_num:
                 submit_num = "%02d" % (itask.submit_num)
                 tasks[(str(itask.point), itask.tdef.name, submit_num)] = itask
-        handlers = [(BatchSysManager.OUT_PREFIX_SUMMARY, summary_callback)]
+        handlers = [(self.batch_sys_mgr.OUT_PREFIX_SUMMARY, summary_callback)]
         if more_callbacks:
             for prefix, callback in more_callbacks.items():
                 handlers.append((prefix, callback))
@@ -481,7 +494,7 @@ class TaskJobManager(object):
             for job_log_dir in job_log_dirs:
                 point, name, submit_num = job_log_dir.split(os.sep, 2)
                 itask = tasks[(point, name, submit_num)]
-                out += (BatchSysManager.OUT_PREFIX_SUMMARY +
+                out += (self.batch_sys_mgr.OUT_PREFIX_SUMMARY +
                         "|".join([ctx.timestamp, job_log_dir, "1"]) + "\n")
         for line in out.splitlines(True):
             for prefix, callback in handlers:
@@ -505,7 +518,7 @@ class TaskJobManager(object):
             suite,
             itasks,
             self._poll_task_job_callback,
-            {BatchSysManager.OUT_PREFIX_MESSAGE:
+            {self.batch_sys_mgr.OUT_PREFIX_MESSAGE:
              self._poll_task_job_message_callback})
 
     def _poll_task_job_callback(self, suite, itask, cmd_ctx, line):
@@ -671,7 +684,8 @@ class TaskJobManager(object):
             suite,
             itasks,
             self._submit_task_job_callback,
-            {BatchSysManager.OUT_PREFIX_COMMAND: self._job_cmd_out_callback})
+            {self.batch_sys_mgr.OUT_PREFIX_COMMAND: self._job_cmd_out_callback}
+        )
 
     def _submit_task_job_callback(self, suite, itask, cmd_ctx, line):
         """Helper for _submit_task_jobs_callback, on one task job."""
