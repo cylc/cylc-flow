@@ -32,6 +32,7 @@ Known users include:
   * [National Centre for Atmospheric Science (NCAS)](https://www.ncas.ac.uk) - UK
   * [Centre for Environmental Data Analysis (CEDA)](http://www.ceda.ac.uk) - UK
   * [ARC Centre of Excellence for Climate Extremes (CLEX)](https://climateextremes.org.au/) - Australia
+  * [eWaterCycle](forecast.ewatercycle.org) - Netherlands eScience Center, Univerity of Utrecht, TUDelft
  
 Many of these centers use Cylc with [Rose](https://github.com/metomi/rose), a
 framework for managing and running meteorological suites.
