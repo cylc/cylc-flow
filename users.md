@@ -19,7 +19,7 @@ Known users include:
   * [Geophysical Fluid Dynamics Laboratory](http://www.gfdl.noaa.gov/) - USA
   * [Meteorological Service Singapore (MSS)](http://www.weather.gov.sg/home/) - Singapore
   * [Phillippine Atmospheric, Geophysical, and Astronomical Services
-    Administration (PAGASA)](http://bagong.pagasa.dost.gov.ph)
+    Administration (PAGASA)](http://bagong.pagasa.dost.gov.ph)  - Phillippines
   * [South African Weather Service (SAWS)](http://www.weathersa.co.za/) - South Africa
   * [National Centre for Medium Range Weather
       Forecasting](http://www.ncmrwf.gov.in/) - India
