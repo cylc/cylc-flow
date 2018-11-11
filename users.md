@@ -17,8 +17,9 @@ Known users include:
   * [NRL Marine Meteorology Division](http://www.nrlmry.navy.mil) - USA
   * [557th Weather Wing](https://www.557weatherwing.af.mil) - USA
   * [Geophysical Fluid Dynamics Laboratory](http://www.gfdl.noaa.gov/) - USA
-  * [Meteorological Service Singapore (MSS)](http://www.weather.gov.sg/home/) -
-    Singapore
+  * [Meteorological Service Singapore (MSS)](http://www.weather.gov.sg/home/) - Singapore
+  * [Phillippine Atmospheric, Geophysical, and Astronomical Services
+    Administration (PAGASA)](http://bagong.pagasa.dost.gov.ph)
   * [South African Weather Service (SAWS)](http://www.weathersa.co.za/) - South Africa
   * [National Centre for Medium Range Weather
       Forecasting](http://www.ncmrwf.gov.in/) - India
