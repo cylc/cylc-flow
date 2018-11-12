@@ -91,8 +91,9 @@ __ERR__
 TEST_NAME="${TEST_NAME_BASE}-repurpose2"
 cp -r $CHEESE $YOGHURT
 run_ok "${TEST_NAME}" cylc register --redirect $CHEESE $YOGHURT
+sed -i 's/^\t//; s/^.* WARNING - /WARNING - /' "${TEST_NAME}.stderr"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WARNING: the name '$CHEESE' points to ${PWD}/$CHEESE.
+WARNING - the name '$CHEESE' points to ${PWD}/$CHEESE.
 It will now be redirected to ${PWD}/$YOGHURT.
 Files in the existing $CHEESE run directory will be overwritten.
 __ERR__

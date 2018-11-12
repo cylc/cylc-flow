@@ -524,8 +524,7 @@ class TaskEventsManager(object):
                 else:
                     self.event_timers[id_key].unset_waiting()
             except KeyError as exc:
-                if cylc.flags.debug:
-                    LOG.exception(exc)
+                LOG.exception(exc)
 
     def _get_events_conf(self, itask, key, default=None):
         """Return an events setting from suite then global configuration."""
@@ -553,7 +552,7 @@ class TaskEventsManager(object):
             "retrieve job logs command", s_host, s_user))
 
         cmd = shlex.split(rsync_str) + ["--rsh=" + ssh_str]
-        if cylc.flags.debug:
+        if LOG.isEnabledFor(DEBUG):
             cmd.append("-v")
         if ctx.max_size:
             cmd.append("--max-size=%s" % (ctx.max_size,))
@@ -608,8 +607,7 @@ class TaskEventsManager(object):
                 log_task_job_activity(
                     log_ctx, schd_ctx.suite, point, name, submit_num)
             except KeyError as exc:
-                if cylc.flags.debug:
-                    LOG.exception(exc)
+                LOG.exception(exc)
 
     def _process_message_failed(self, itask, event_time, message):
         """Helper for process_message, handle a failed message."""

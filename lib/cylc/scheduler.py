@@ -258,12 +258,8 @@ class Scheduler(object):
                 self.shutdown('ERROR: ' + str(exc))
             except Exception as exc2:
                 # In case of exceptions in the shutdown method itself
-                LOG.warning(exc2)
-            if cylc.flags.debug:
-                raise
-            else:
-                sys.exit(1)
-
+                LOG.exception(exc2)
+            raise exc
         else:
             # main loop ends (not used?)
             self.shutdown()
@@ -951,10 +947,10 @@ conditions; see `cylc conditions`.
         if timeout is None:
             return
         self.suite_timer_timeout = time() + timeout
-        if cylc.flags.verbose:
-            LOG.info("%s suite timer starts NOW: %s" % (
-                get_seconds_as_interval_string(timeout),
-                get_current_time_string()))
+        LOG.debug(
+            "%s suite timer starts NOW: %s",
+            get_seconds_as_interval_string(timeout),
+            get_current_time_string())
         self.suite_timer_active = True
 
     def set_suite_inactivity_timer(self):
@@ -962,11 +958,11 @@ conditions; see `cylc conditions`.
         self.suite_inactivity_timeout = time() + (
             self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT)
         )
-        if cylc.flags.verbose:
-            LOG.info("%s suite inactivity timer starts NOW: %s" % (
-                get_seconds_as_interval_string(
-                    self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT)),
-                get_current_time_string()))
+        LOG.debug(
+            "%s suite inactivity timer starts NOW: %s",
+            get_seconds_as_interval_string(
+                self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT)),
+            get_current_time_string())
 
     def configure_contact(self):
         """Create contact file."""
@@ -1230,9 +1226,8 @@ conditions; see `cylc conditions`.
     def process_task_pool(self):
         """Process ALL TASKS whenever something has changed that might
         require renegotiation of dependencies, etc"""
-        if cylc.flags.debug:
-            LOG.debug("BEGIN TASK PROCESSING")
-            time0 = time()
+        LOG.debug("BEGIN TASK PROCESSING")
+        time0 = time()
         if (self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT) and
                 self._get_events_conf('reset inactivity timer')):
             self.set_suite_inactivity_timer()
@@ -1257,17 +1252,14 @@ conditions; see `cylc conditions`.
         self.broadcast_mgr.expire_broadcast(self.pool.get_min_point())
         self.xtrigger_mgr.housekeep()
         self.suite_db_mgr.put_xtriggers(self.xtrigger_mgr.sat_xtrig)
-        if cylc.flags.debug:
-            LOG.debug("END TASK PROCESSING (took %s seconds)" %
-                      (time() - time0))
+        LOG.debug("END TASK PROCESSING (took %s seconds)" % (time() - time0))
 
     def process_suite_db_queue(self):
         """Update suite DB."""
         try:
             self.suite_db_mgr.process_queued_ops()
         except OSError as exc:
-            if cylc.flags.debug:
-                LOG.exception(exc)
+            LOG.exception(exc)
             raise SchedulerError(str(exc))
 
     def database_health_check(self):
@@ -1479,11 +1471,11 @@ conditions; see `cylc conditions`.
         self.is_stalled = False
         if self.suite_timer_active:
             self.suite_timer_active = False
-            if cylc.flags.verbose:
-                LOG.info("%s suite timer stopped NOW: %s" % (
-                    get_seconds_as_interval_string(
-                        self._get_events_conf(self.EVENT_TIMEOUT)),
-                    get_current_time_string()))
+            LOG.debug(
+                "%s suite timer stopped NOW: %s",
+                get_seconds_as_interval_string(
+                    self._get_events_conf(self.EVENT_TIMEOUT)),
+                get_current_time_string())
 
     def check_suite_timer(self):
         """Check if suite has timed out or not."""

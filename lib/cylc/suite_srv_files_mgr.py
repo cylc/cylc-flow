@@ -25,6 +25,7 @@ import sys
 from uuid import uuid4
 from string import ascii_letters, digits
 
+from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
 from cylc.mkdir_p import mkdir_p
@@ -158,9 +159,8 @@ class SuiteSrvFilesManager(object):
         fname = self.get_contact_file(reg)
         ret_code = proc.wait()
         out, err = proc.communicate()
-        if cylc.flags.debug and ret_code:
-            sys.stderr.write(
-                "%s  # return %d\n%s\n" % (' '.join(cmd), ret_code, err))
+        if ret_code:
+            LOG.debug("$ %s  # return %d\n%s", ' '.join(cmd), ret_code, err)
         for line in reversed(out.splitlines()):
             if line.strip() == old_proc_str:
                 # Suite definitely still running
@@ -372,7 +372,7 @@ To start a new run, stop the old one first with one or more of these:
                     self.get_suite_source_dir(reg),
                     self.get_suite_title(reg)])
             except (IOError, SuiteServiceFileError) as exc:
-                print >> sys.stderr, str(exc)
+                LOG.error('%s: %s', reg, exc)
         return results
 
     def load_contact_file(self, reg, owner=None, host=None, file_base=None):
@@ -468,11 +468,11 @@ To start a new run, stop the old one first with one or more of these:
                     "ERROR: the name '%s' already points to %s.\nUse "
                     "--redirect to re-use an existing name and run "
                     "directory." % (reg, orig_source))
-            sys.stderr.write(
-                "WARNING: the name '%(reg)s' points to %(old)s.\nIt will now"
+            LOG.warning(
+                "the name '%(reg)s' points to %(old)s.\nIt will now"
                 " be redirected to %(new)s.\nFiles in the existing %(reg)s run"
-                " directory will be overwritten.\n" % {
-                    'reg': reg, 'old': orig_source, 'new': source})
+                " directory will be overwritten.\n",
+                {'reg': reg, 'old': orig_source, 'new': source})
             # Remove symlink to the original suite.
             os.unlink(target)
 
@@ -480,7 +480,7 @@ To start a new run, stop the old one first with one or more of these:
         if source != orig_source:
             os.symlink(source, target)
 
-        print 'REGISTERED %s -> %s' % (reg, source)
+        print('REGISTERED %s -> %s' % (reg, source))
         return reg
 
     def create_auth_files(self, reg):
@@ -590,8 +590,7 @@ To start a new run, stop the old one first with one or more of these:
         handle.close()
         fname = os.path.join(path, item)
         os.rename(handle.name, fname)
-        if cylc.flags.verbose:
-            print 'Generated %s' % fname
+        LOG.debug('Generated %s', fname)
 
     def _get_cache_dir(self, reg, owner, host):
         """Return the cache directory for remote suite service files."""
@@ -723,16 +722,15 @@ To start a new run, stop the old one first with one or more of these:
             elif line.strip() == prefix:
                 can_read = True
         if not content or ret_code:
-            if cylc.flags.debug:
-                print >> sys.stderr, (
-                    'ERROR: %(command)s # code=%(ret_code)s\n%(err)s\n'
-                ) % {
+            LOG.debug(
+                '$ %(command)s  # code=%(ret_code)s\n%(err)s',
+                {
                     'command': command,
                     # STDOUT may contain passphrase, so not safe to print
                     # 'out': out,
                     'err': err,
                     'ret_code': ret_code,
-                }
+                })
             return
         return content
 

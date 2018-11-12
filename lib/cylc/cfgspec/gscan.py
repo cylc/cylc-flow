@@ -22,6 +22,7 @@ import sys
 
 from parsec import ParsecError
 from parsec.config import ParsecConfig
+from parsec.upgrade import upgrader
 
 from cylc.cfgvalidate import (
     cylc_config_validate, CylcConfigValidator as VDR, DurationFloat)
@@ -70,10 +71,9 @@ class GScanConfig(ParsecConfig):
             cls._INST = cls(SPEC, validator=cylc_config_validate)
             if os.access(USER_FILE, os.F_OK | os.R_OK):
                 try:
-                    cls._INST.loadcfg(USER_FILE, 'user config')
+                    cls._INST.loadcfg(USER_FILE, upgrader.USER_CONFIG)
                 except ParsecError:
-                    sys.stderr.write(
-                        'ERROR: bad gscan config %s:\n' % USER_FILE)
+                    LOG.error('bad %s %s', upgrader.USER_CONFIG, USER_FILE)
                     raise
             cls._INST.check()
         return cls._INST

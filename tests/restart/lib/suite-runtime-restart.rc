@@ -10,20 +10,22 @@
             done
         """
     [[shutdown]]
-        description = "Force a shutdown of the suite"
         inherit = OUTPUT
         post-script = """
             cylc shutdown $CYLC_SUITE_NAME
             sleep 5
         """
+        [[[meta]]]
+            description = "Force a shutdown of the suite"
         [[[environment]]]
             OUTPUT_SUFFIX=pre-restart
     [[output_states]]
-        description = "Wait for the restart to complete, then output states"
         inherit = OUTPUT
         pre-script = """
             sleep 5
         """
+        [[[meta]]]
+            description = "Wait for the restart to complete, then output states"
         [[[environment]]]
             OUTPUT_SUFFIX=post-restart
     [[finish]]

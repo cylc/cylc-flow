@@ -843,7 +843,7 @@ class CylcSuiteDAO(object):
         conn = self.connect()
         # Add hold_swap column task_pool(_checkpoints) tables
         for t_name in [self.TABLE_TASK_POOL, self.TABLE_TASK_POOL_CHECKPOINTS]:
-            sys.stdout.write("Add hold_swap column to %s\n" % (t_name,))
+            LOG.info("Add hold_swap column to %s", t_name)
             conn.execute(
                 r"ALTER TABLE " + t_name + r" ADD COLUMN hold_swap TEXT")
         conn.commit()
@@ -861,7 +861,7 @@ class CylcSuiteDAO(object):
         if check_points:
             # No need to upgrade if latest check point already exists
             return
-        sys.stdout.write("Upgrading suite db with %s ...\n" % state_file_path)
+        LOG.info("Upgrading suite db with %s ...", state_file_path)
         self._upgrade_with_state_file_states(state_file_path)
         self._upgrade_with_state_file_extras()
 
@@ -871,7 +871,7 @@ class CylcSuiteDAO(object):
         Populate the new database tables with information from state file.
         """
         location = None
-        sys.stdout.write("Populating %s table" % self.TABLE_SUITE_PARAMS)
+        LOG.info("Populating %s table", self.TABLE_SUITE_PARAMS)
         for line in open(state_file_path):
             line = line.strip()
             if location is None:
@@ -882,11 +882,9 @@ class CylcSuiteDAO(object):
                 # The "broadcast_states" table should already be populated.
                 if line == "Begin task states":
                     location = "task states"
-                    sys.stdout.write(
-                        "\nPopulating %s table" % self.TABLE_TASK_POOL)
+                    LOG.info("Populating %s table", self.TABLE_TASK_POOL)
             else:
                 self._upgrade_with_state_file_tasks(line)
-        sys.stdout.write("\n")
         self.execute_queued_items()
 
     def _upgrade_with_state_file_header(self, line):
@@ -908,7 +906,7 @@ class CylcSuiteDAO(object):
                 self.add_insert_item(self.TABLE_SUITE_PARAMS, {
                     "key": key,
                     "value": tail})
-                sys.stdout.write("\n + %s=%s" % (key, tail))
+                LOG.info(" + %s=%s", key, tail)
                 if name == "final cycle":
                     return "broadcast"
                 else:
@@ -932,7 +930,7 @@ class CylcSuiteDAO(object):
             "spawned": spawned,
             "status": status,
             "hold_swap": None})
-        sys.stdout.write("\n + %s" % head)
+        LOG.info(" + %s", head)
 
     def _upgrade_with_state_file_extras(self):
         """Upgrade the database tables after reading in state file."""
@@ -950,7 +948,7 @@ class CylcSuiteDAO(object):
 
         # Populate new tables using old column data
         for t_name in [self.TABLE_TASK_STATES, self.TABLE_TASK_EVENTS]:
-            sys.stdout.write(r"Upgrading %s table " % (t_name))
+            LOG.info(r"Upgrading %s table", t_name)
             column_names = [col.name for col in self.tables[t_name].columns]
             for i, row in enumerate(conn.execute(
                     r"SELECT " + ",".join(column_names) +
@@ -958,10 +956,6 @@ class CylcSuiteDAO(object):
                 # These tables can be big, so we don't want to queue the items
                 # in memory.
                 conn.execute(self.tables[t_name].get_insert_stmt(), list(row))
-                if i:
-                    sys.stdout.write("\b" * len("%d rows" % (i)))
-                sys.stdout.write("%d rows" % (i + 1))
-            sys.stdout.write(" done\n")
         conn.commit()
 
         # Drop old tables
@@ -992,14 +986,13 @@ class CylcSuiteDAO(object):
         # Use of "pickle" module is for loading data written by <=7.6.X of Cylc
         # in users' own spaces.
         import pickle
-        sys.stdout.write(r"Upgrading %s table " % (t_name))
+        LOG.info(r"Upgrading %s table", t_name)
         cols = []
         for col in self.tables[t_name].columns:
             if col.name in ['ctx_key', 'ctx', 'delays']:
                 cols.append(col.name + '_pickle')
             else:
                 cols.append(col.name)
-        n_skips = 0
         # Codacy: Possible SQL injection vector through string-based query
         # construction.
         # This is highly unlikely - all strings in the construct are from
@@ -1023,15 +1016,11 @@ class CylcSuiteDAO(object):
                     else:
                         args.append(cell)
             except (EOFError, TypeError, LookupError, ValueError):
-                n_skips += 1  # skip bad rows
+                pass
             else:
                 # These tables can be big, so we don't want to queue the items
                 # in memory.
                 conn.execute(self.tables[t_name].get_insert_stmt(), args)
-                if i:
-                    sys.stdout.write("\b" * len("%d rows" % (i)))
-                sys.stdout.write("%d rows" % (i + 1))
-        sys.stdout.write(" done, %d skipped\n" % n_skips)
         conn.commit()
 
         # Drop old tables

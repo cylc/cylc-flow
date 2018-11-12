@@ -21,6 +21,9 @@ import re
 from difflib import unified_diff
 
 
+from cylc import LOG
+
+
 class LogAnalyserError(Exception):
     def __init__(self, msg):
         Exception.__init__(self, msg)
@@ -123,9 +126,9 @@ class LogAnalyser(object):
 
         if new != ref:
             diff = unified_diff(new, ref)
-            sys.stderr.write('\n'.join(diff) + '\n')
             raise LogAnalyserError(
-                "ERROR: triggering is NOT consistent with the reference log")
+                "ERROR: triggering is NOT consistent with the reference log:" +
+                '\n' + '\n'.join(diff) + '\n')
         else:
-            print(
+            LOG.info(
                 "LogAnalyser: triggering is consistent with the reference log")

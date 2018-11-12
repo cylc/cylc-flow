@@ -43,7 +43,7 @@ def mkdir_p(path, mode=None):
         else:
             os.makedirs(path)
 
-    except OSError, err:
+    except OSError as err:
         if err.errno != errno.EEXIST:
             raise
         else:

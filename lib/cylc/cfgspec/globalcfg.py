@@ -439,9 +439,11 @@ class GlobalConfig(ParsecConfig):
         conf_path_str = os.getenv("CYLC_CONF_PATH")
         if conf_path_str is None:
             # CYLC_CONF_PATH not defined, use default locations.
-            for conf_dir_1, conf_dir_2, is_site in [
-                    (self.SITE_CONF_DIR, self.SITE_CONF_DIR_OLD, True),
-                    (self.USER_CONF_DIR_1, self.USER_CONF_DIR_2, False)]:
+            for conf_dir_1, conf_dir_2, conf_type in [
+                    (self.SITE_CONF_DIR, self.SITE_CONF_DIR_OLD,
+                     upgrader.SITE_CONFIG),
+                    (self.USER_CONF_DIR_1, self.USER_CONF_DIR_2,
+                     upgrader.USER_CONFIG)]:
                 fname1 = os.path.join(conf_dir_1, self.CONF_BASE)
                 fname2 = os.path.join(conf_dir_2, self.CONF_BASE)
                 if os.access(fname1, os.F_OK | os.R_OK):
@@ -451,15 +453,15 @@ class GlobalConfig(ParsecConfig):
                 else:
                     continue
                 try:
-                    self.loadcfg(fname, "global config")
+                    self.loadcfg(fname, conf_type)
                 except ParsecError as exc:
-                    if is_site:
+                    if conf_type == upgrader.SITE_CONFIG:
                         # Warn on bad site file (users can't fix it).
                         LOG.warning(
-                            'ignoring bad site config %s:\n%s', fname, exc)
+                            'ignoring bad %s %s:\n%s', conf_type, fname, exc)
                     else:
                         # Abort on bad user file (users can fix it).
-                        LOG.error('bad user config %s', fname)
+                        LOG.error('bad %s %s', conf_type, fname)
                         raise
                     break
         elif conf_path_str:
@@ -467,7 +469,7 @@ class GlobalConfig(ParsecConfig):
             for path in conf_path_str.split(os.pathsep):
                 fname = os.path.join(path, self.CONF_BASE)
                 if os.access(fname, os.F_OK | os.R_OK):
-                    self.loadcfg(fname, "global config")
+                    self.loadcfg(fname, upgrader.USER_CONFIG)
         # (OK if no global.rc is found, just use system defaults).
         self.transform()
 

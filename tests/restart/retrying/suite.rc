@@ -23,7 +23,8 @@
                 exit 1
             fi
         """
-        description = "Retrying state task for restart"
+        [[[meta]]]
+            description = "Retrying state task for restart"
         [[[job]]]
             execution retry delays = PT40S, PT1S
 {% include 'suite-runtime-restart.rc' %}
