@@ -32,6 +32,13 @@ omit=
     */lib/cherrypy/*
     */lib/cylc/gui/*
     */lib/cylc/tests/*
+    */lib/cylc/cylc_xdot.py
+    */lib/cylc/profiler.py
+    */lib/cylc/cfgspec/gcylc.py
+    */lib/cylc/cfgspec/gscan.py
+    */lib/cylc/profiling/*
+    */lib/cylc/mkdir_p.py
+    */lib/parsec/OrderedDictCompat.py
     */lib/isodatetime/*
     */lib/jinja2/*
     */lib/markupsafe/*
@@ -60,6 +67,13 @@ omit=
     */lib/cherrypy/*
     */lib/cylc/gui/*
     */lib/cylc/tests/*
+    */lib/cylc/cylc_xdot.py
+    */lib/cylc/profiler.py
+    */lib/cylc/cfgspec/gcylc.py
+    */lib/cylc/cfgspec/gscan.py
+    */lib/cylc/profiling/*
+    */lib/cylc/mkdir_p.py
+    */lib/parsec/OrderedDictCompat.py
     */lib/isodatetime/*
     */lib/jinja2/*
     */lib/markupsafe/*
