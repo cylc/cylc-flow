@@ -6,7 +6,7 @@
 branch=True
 cover_pylib=False
 concurrency=thread
-data_file=${TRAVIS_BUILD_DIR}/.coverage
+data_file=.coverage
 disable_warnings=
     trace-changed
     module-not-python
