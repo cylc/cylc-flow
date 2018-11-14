@@ -29,7 +29,8 @@ from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
 from cylc.mkdir_p import mkdir_p
 from cylc.hostuserutil import (
-    get_local_ip_address, get_host, get_user, is_remote, is_remote_host)
+    get_local_ip_address, get_host, get_user, is_remote, is_remote_host,
+    is_remote_user)
 
 
 class SuiteServiceFileError(Exception):
@@ -328,7 +329,7 @@ To start a new run, stop the old one first with one or more of these:
             source = os.readlink(fname)
         except OSError:
             suite_d = os.path.dirname(srv_d)
-            if os.path.exists(suite_d):
+            if os.path.exists(suite_d) and not is_remote_user(suite_owner):
                 # suite exists but is not yet registered
                 self.register(reg=reg, source=suite_d)
                 return suite_d
