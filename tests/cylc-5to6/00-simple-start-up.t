@@ -24,7 +24,7 @@ install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_fail "$TEST_NAME" cylc validate $SUITE_NAME
-cmp_ok "$TEST_NAME.stderr" <<'__ERR__'
+contains_ok "${TEST_NAME}.stderr" <<'__ERR__'
 Illegal item: [scheduling]initial cycle time
 __ERR__
 #-------------------------------------------------------------------------------

@@ -267,7 +267,7 @@ class TaskJobManager(object):
                 continue
             # Build the "cylc jobs-submit" command
             cmd = ['cylc', self.JOBS_SUBMIT]
-            if cylc.flags.debug:
+            if LOG.isEnabledFor(DEBUG):
                 cmd.append('--debug')
             if get_utc_mode():
                 cmd.append('--utc-mode')
@@ -370,7 +370,7 @@ class TaskJobManager(object):
             comstr = "cylc suite-state " + \
                      " --task=" + itask.tdef.suite_polling_cfg['task'] + \
                      " --point=" + str(itask.point)
-            if cylc.flags.debug:
+            if LOG.isEnabledFor(DEBUG):
                 comstr += ' --debug'
             for key, fmt in [
                     ('user', ' --%s=%s'),
@@ -505,11 +505,10 @@ class TaskJobManager(object):
                         point, name, submit_num = path.split(os.sep, 2)
                         itask = tasks[(point, name, submit_num)]
                         callback(suite, itask, ctx, line)
-                    except (KeyError, ValueError):
-                        if cylc.flags.debug:
-                            LOG.warning('Unhandled %s output: %s' % (
-                                ctx.cmd_key, line))
-                            LOG.warning(traceback.format_exc())
+                    except (LookupError, ValueError) as exc:
+                        LOG.warning(
+                            'Unhandled %s output: %s', ctx.cmd_key, line)
+                        LOG.exception(exc)
 
     def _poll_task_jobs_callback(self, ctx, suite, itasks):
         """Callback when poll tasks command exits."""
@@ -625,7 +624,7 @@ class TaskJobManager(object):
             auth_itasks[(itask.task_host, itask.task_owner)].append(itask)
         for (host, owner), itasks in sorted(auth_itasks.items()):
             cmd = ["cylc", cmd_key]
-            if cylc.flags.debug:
+            if LOG.isEnabledFor(DEBUG):
                 cmd.append("--debug")
             if is_remote_host(host):
                 cmd.append("--host=%s" % (host))

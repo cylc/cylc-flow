@@ -110,18 +110,17 @@ class GcylcConfig(ParsecConfig):
         if cls._INST is None:
             cls._INST = cls(SPEC, upg)
             try:
-                cls._INST.loadcfg(SITE_FILE, "site config")
+                cls._INST.loadcfg(SITE_FILE, upgrader.SITE_CONFIG)
             except ParsecError as exc:
-                sys.stderr.write(
-                    "WARNING: ignoring bad site GUI config %s:\n"
-                    "%s\n" % (SITE_FILE, str(exc)))
+                LOG.warning(
+                    'ignoring bad %s %s\n%s',
+                    upgrader.SITE_CONFIG, SITE_FILE, exc)
 
             if os.access(USER_FILE, os.F_OK | os.R_OK):
                 try:
-                    cls._INST.loadcfg(USER_FILE, "user config")
+                    cls._INST.loadcfg(USER_FILE, upgrader.USER_CONFIG)
                 except ParsecError as exc:
-                    sys.stderr.write(
-                        "ERROR: bad user GUI config %s:\n" % USER_FILE)
+                    LOG.error('bad %s %s', upgrader.USER_CONFIG, USER_FILE)
                     raise
 
             # check and correct initial view config etc.

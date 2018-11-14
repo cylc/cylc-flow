@@ -17,10 +17,11 @@
             """
 [runtime]
     [[running_task]]
-        description = "Running task (runs during restart)"
         script = """
             sleep 50
         """
+        [[[meta]]]
+            description = "Running task (runs during restart)"
 {% include 'suite-runtime-restart.rc' %}
     [[shutdown]]
         post-script = """

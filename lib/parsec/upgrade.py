@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Support automatic deprecation and obsoletion of parsec config items."""
 
+from logging import DEBUG, WARNING
+
 from parsec import LOG, ParsecError
 from parsec.OrderedDict import OrderedDict
 
@@ -41,6 +43,9 @@ class converter(object):
 
 class upgrader(object):
     """Handles upgrading of deprecated config values."""
+
+    SITE_CONFIG = 'site config'
+    USER_CONFIG = 'user config'
 
     def __init__(self, cfg, descr):
         """Store the config dict to be upgraded if necessary."""
@@ -146,10 +151,7 @@ class upgrader(object):
 
     def upgrade(self):
         warnings = OrderedDict()
-        do_warn = False
         for vn, upgs in self.upgrades.items():
-            warnings[vn] = []
-
             for u in upgs:
                 try:
                     exp = self.expand(u)
@@ -170,18 +172,28 @@ class upgrader(object):
                             upg['new'] = upg['old']
                         msg += " - " + upg['cvt'].describe()
                         if not upg['silent']:
+                            warnings.setdefault(vn, [])
                             warnings[vn].append(msg)
-                            do_warn = True
                         self.del_item(upg['old'])
                         if upg['cvt'].describe() != "DELETED (OBSOLETE)":
                             self.put_item(upg['new'], upg['cvt'].convert(old))
-        if do_warn:
-            LOG.debug(
+        if warnings:
+            level = WARNING
+            if self.descr == self.SITE_CONFIG:
+                # Site level configuration, user cannot easily fix.
+                # Only log at debug level.
+                level = DEBUG
+            else:
+                # User level configuration, user should be able to fix.
+                # Log at warning level.
+                level = WARNING
+            LOG.log(
+                level,
                 "deprecated items were automatically upgraded in '%s':",
                 self.descr)
             for vn, msgs in warnings.items():
-                for m in msgs:
-                    LOG.debug(' * (%s) %s', vn, m)
+                for msg in msgs:
+                    LOG.log(level, ' * (%s) %s', vn, msg)
 
 
 if __name__ == "__main__":

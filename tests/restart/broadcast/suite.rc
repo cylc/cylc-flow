@@ -19,13 +19,13 @@
             """
 [runtime]
     [[send_a_broadcast_task]]
-        description = "Broadcast setup task"
         script = """
             cylc broadcast -n broadcast_task -p $CYLC_TASK_CYCLE_POINT -s "[environment]MY_VALUE='something'" $CYLC_SUITE_NAME
             cylc broadcast -d $CYLC_SUITE_NAME
         """
+        [[[meta]]]
+            description = "Broadcast setup task"
     [[broadcast_task]]
-        description = "Broadcast-recipient task (runs after restart)"
         script = """
             if [[ "$MY_VALUE" != "something" ]]; then
                 echo "[FAIL] MY_VALUE ($MY_VALUE) not set correctly by broadcast" >&2
@@ -33,6 +33,8 @@
             fi
             echo "[PASS] MY_VALUE=$MY_VALUE"
         """
+        [[[meta]]]
+            description = "Broadcast-recipient task (runs after restart)"
         [[[environment]]]
             MY_VALUE=nothing
 {% include 'suite-runtime-restart.rc' %}

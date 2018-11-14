@@ -84,7 +84,7 @@ def main():
         cmd = sys.argv[0].replace('reset', 'spawn')
         try:
             os.execvp(cmd, [cmd] + args)
-        except OSError, exc:
+        except OSError as exc:
             if exc.filename is None:
                 exc.filename = cmd
             raise SystemExit(exc)
