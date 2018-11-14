@@ -27,7 +27,7 @@ class TestUnicodeUtil(unittest.TestCase):
     def test_utf8_encode_nothing_to_encode(self):
         self.assertEqual("d", utf8_enforce("d"))
 
-    def test_utf8_encode_nothing_to_encode(self):
+    def test_utf8_encode(self):
         value = unicode("d?")
         self.assertEqual("d?", utf8_enforce(value))
 
