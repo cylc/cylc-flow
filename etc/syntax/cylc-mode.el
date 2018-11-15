@@ -8,7 +8,7 @@
 ;;    Place this file in a directory on your emacs load path (or symlink it)
 ;;    e.g.
 ;;         mkdir -p $HOME/.emacs.d/lisp
-;;         ln -s $CYLC_HOME/etc/cylc-mode.el ~/.emacs.d/lisp/
+;;         ln -s $CYLC_HOME/etc/syntax/cylc-mode.el ~/.emacs.d/lisp/
 ;;
 ;;    and in your $HOME/.emacs file add the following lines:
 ;;
@@ -38,7 +38,7 @@
 (define-derived-mode cylc-mode fundamental-mode
   "suite.rc" "Major mode for editing Cylc suite definition files"
 
-  ;; Note: ordered according to reverse application precendence, where
+  ;; Note: ordered according to reverse application precedence, where
   ;; specification order for faces changes resultant highlighting
 
   ;; Assignment and dependency characters, but only outside of Jinja2
@@ -80,7 +80,7 @@
 
   ;; All comments: standard ('# ... ') and Jinja2 ('{# ... #}')
   (font-lock-add-keywords nil
-    '(("#.*$" . font-lock-comment-face)))  ;; in-line only, by precendece
+    '(("#.*$" . font-lock-comment-face)))  ;; in-line only, by precedence
   ;; Stop interference. No regex lookarounds in Emacs Lisp; ugly workaround
   (font-lock-add-keywords nil
     '(("^#\\(\\([^{].{2}\\|.[^#]\\).*\\|.{0,1}\\)$"
