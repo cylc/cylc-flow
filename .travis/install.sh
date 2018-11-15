@@ -16,25 +16,35 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-set -x
+set -eu
+set -o xtrace
+shopt -s extglob
 
 # Travis-CI install
 
-source ~/.bashrc
+args=("$@")
 
-# Setup local SSH for Cylc jobs
+# pygtk via apt-get, necessary for both unit and functional tests
+sudo apt-get install graphviz libgraphviz-dev python-gtk2-dev heirloom-mailx
 
+# install dependencies required for running unit tests
+if grep 'unit-tests' <<< "${args[@]}"; then
+    pip install EmPy pyopenssl pycodestyle pytest mock
+# install dependencies required for running functional tests
+elif grep 'functional-tests' <<< "${args[@]}"; then
+    # pygraphviz needs special treatment to avoid an error from "from . import release"
+    pip install EmPy pyopenssl
+    pip install pygraphviz \
+      --install-option="--include-path=/usr/include/graphviz" \
+      --install-option="--library-path=/usr/lib/graphviz/"
+fi
+
+# install dependencies required for building documentation, only when instructed to do so
+if grep 'docs' <<< "${args[@]}$"; then
+    sudo apt-get install texlive-latex-base
+fi
+
+# configure local SSH for Cylc jobs
 ssh-keygen -t rsa -f ~/.ssh/id_rsa -N "" -q
 cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
 ssh-keyscan -t rsa localhost >> ~/.ssh/known_hosts
-
-# Install dependencies
-
-sudo apt-get update -qq
-sudo apt-get install build-essential texlive-latex-base
-sudo apt-get install at python-pip python-dev graphviz libgraphviz-dev python-gtk2-dev heirloom-mailx
-
-# Pygraphviz needs special treatment to avoid an error from "from . import release"
-
-pip install pygraphviz --install-option="--include-path=/usr/include/graphviz" --install-option="--library-path=/usr/lib/graphviz/"
-pip install EmPy pyopenssl

@@ -16,13 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-set -x
-
 # Travis-CI after_script
 
 # Check output (more useful if you narrow down what tests get run)
-
-source ~/.bashrc
 
 find $HOME/cylc-run -name '*.err' -type f -exec echo '==== {} ====' \; -exec cat '{}' \;
 find /tmp/${USER}/cylctb-* -type f -exec echo '==== {} ====' \; -exec cat '{}' \;

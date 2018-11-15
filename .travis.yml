@@ -26,43 +26,46 @@
 
 ---
 language: python
-sudo: required
-dist: trusty
+cache: pip
+virtualenv:
+  # we need system packages in Travis-CI's virtualenv in order to access pygtk, installed via apt-get
+  system_site_packages: true
+dist: xenial
+addons:
+  apt:
+    # instruct travis-ci to always run apt-get before each build
+    update: true
 
 stages:
 - unit-test
 - test
 
 env:
-- CHUNK="1/4"
-- CHUNK="2/4"
-- CHUNK="3/4"
-- CHUNK="4/4"
+  global:
+  - PATH="${TRAVIS_BUILD_DIR}/bin:$PATH"
+  # Only run the generic tests on Travis CI.
+  - CYLC_TEST_RUN_PLATFORM=false
+  # Custom diff command to ignore Xlib errors (xvfb has not RANDR extension).
+  - CYLC_TEST_DIFF_CMD="diff -I Xlib -u"
+  matrix:
+  - CHUNK="1/4"
+  - CHUNK="2/4"
+  - CHUNK="3/4"
+  - CHUNK="4/4"
 
-before_install: .travis/before_install.sh
-install: .travis/install.sh
+# this is the default test stage, which is used for functional-tests
+install: .travis/install.sh functional-tests docs
 script:
-- source ~/.bashrc
-# Custom diff command to ignore Xlib errors (xvfb has not RANDR extension).
-- export CYLC_TEST_DIFF_CMD='diff -I Xlib -u'
-# Only run the generic tests on Travis CI.
-- export CYLC_TEST_RUN_PLATFORM=false
 # Run tests with virtual frame buffer for X support.
 - xvfb-run -a cylc test-battery --chunk $CHUNK --state=save -j 5 || (echo -e "\n\nRerunning Failed Tests...\n\n"; cylc test-battery --state=failed -j 5)
-
-
 after_script: .travis/after_script.sh
 
 jobs:
   include:
   - stage: unit-test
-    before_install: .travis/before_install.sh
     install:
-    - .travis/install.sh
-    # these dependencies are necessary only for the unit tests
-    - source ~/.bashrc
-    - pip install pycodestyle pytest mock
+    - .travis/install.sh unit-tests
     script:
-    - source ~/.bashrc
     - pycodestyle --ignore=E402,W503,W504 lib/cylc lib/Jinja2Filters/*.py lib/parsec/*.py $(grep -l '#!.*\<python\>' bin/*)
     - PYTHONPATH=$(pwd -P)/lib/ pytest lib/cylc/
+    after_script: true
