@@ -477,6 +477,8 @@ class BatchSysManager(object):
                 match = rec_id.match(line)
                 if match:
                     job_id = match.group("id")
+                    if hasattr(batch_sys, "manip_job_id"):
+                        job_id = batch_sys.manip_job_id(job_id)
                     job_status_file = open(st_file_path, "a")
                     job_status_file.write("%s=%s\n" % (
                         self.CYLC_BATCH_SYS_JOB_ID, job_id))
