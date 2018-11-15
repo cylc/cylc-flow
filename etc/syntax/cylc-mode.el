@@ -47,7 +47,7 @@
 
   ;; Cylc setting keys/names
   (font-lock-add-keywords nil
-    '(("^\\( *[a-zA-Z0-9\-]+ *\\)=+" 1 font-lock-variable-name-face t)))
+    '(("^\\( *[a-zA-Z0-9\-]+ *\\)=+[^>]" 1 font-lock-variable-name-face t)))
 
   ;; Account for section headings (see below) with internal patterns, e.g. a
   ;; Jinja2 statement, inside by matching start and end heading groups. Note:
@@ -86,11 +86,11 @@
     '(("^#\\(\\([^{].{2}\\|.[^#]\\).*\\|.{0,1}\\)$"
       . font-lock-comment-face)))
   (font-lock-add-keywords nil
-    '(("{#\\(\n?.?\\)*?.*#}" . font-lock-comment-face)))  ;; not in-line
+    '(("{#\\(.\\|\n\\)*?#}" . font-lock-comment-face)))  ;; not in-line
 
   ;; All Jinja2 excl. comments: '{% ... %}' and '{{ ... }}' incl. multiline
   (font-lock-add-keywords nil
-    '(("{%\\(\n?.?\\)*?.*%}" . font-lock-constant-face)))
+    '(("{%\\(.\\|\n\\)*?%}" . font-lock-constant-face)))
   (font-lock-add-keywords nil '(("{{.*?}}" . font-lock-constant-face)))
 
   ;; Highlight triple quotes for a multi-line setting value
