@@ -27,3 +27,6 @@ verbose = False
 
 # debug mode
 debug = False
+
+# cycling mode
+cycling_mode = None
