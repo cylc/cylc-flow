@@ -153,6 +153,8 @@ class SuiteRuntimeServiceClient(object):
         elif self.host and '.' not in self.host:  # Not IP and no domain
             self.host = get_fqdn_by_host(self.host)
         self.port = port
+        self.auth_scheme = glbl_cfg().get(
+            ['communication', 'authentication scheme'])
         self.srv_files_mgr = SuiteSrvFilesManager()
         if timeout is not None:
             timeout = float(timeout)
@@ -419,15 +421,26 @@ class SuiteRuntimeServiceClient(object):
         scheme = url.split(':', 1)[0]  # Can use urlparse?
         username, password, verify = self._get_auth(scheme)
         try:
-            ret = session_method(
-                url,
-                json=payload,
-                verify=verify,
-                proxies={},
-                headers=self._get_headers(),
-                auth=requests.auth.HTTPDigestAuth(username, password),
-                timeout=self.timeout
-            )
+            if self.auth_scheme == 'basic':
+                ret = session_method(
+                    url,
+                    json=payload,
+                    verify=verify,
+                    proxies={},
+                    headers=self._get_headers(),
+                    auth=requests.auth.HTTPBasicAuth(username, password),
+                    timeout=self.timeout
+                )
+            elif self.auth_scheme == 'digest':
+                ret = session_method(
+                    url,
+                    json=payload,
+                    verify=verify,
+                    proxies={},
+                    headers=self._get_headers(),
+                    auth=requests.auth.HTTPDigestAuth(username, password),
+                    timeout=self.timeout
+                )
         except requests.exceptions.SSLError as exc:
             if "unknown protocol" in str(exc) and url.startswith("https:"):
                 # Server is using http rather than https, for some reason.
@@ -483,7 +496,10 @@ class SuiteRuntimeServiceClient(object):
         username, password = self._get_auth(scheme)[0:2]
         auth_manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
         auth_manager.add_password(None, url, username, password)
-        auth = urllib2.HTTPDigestAuthHandler(auth_manager)
+        if self.auth_scheme == 'basic':
+            auth = urllib2.HTTPBasicAuthHandler(auth_manager)
+        elif self.auth_scheme == 'digest':
+            auth = urllib2.HTTPDigestAuthHandler(auth_manager)
         opener = urllib2.build_opener(auth, urllib2.HTTPSHandler())
         headers_list = self._get_headers().items()
         if payload:

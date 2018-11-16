@@ -17,6 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Cylc scheduler server."""
 
+# http://www.gevent.org/intro.html#monkey-patching
+from gevent import monkey; monkey.patch_all()
+
 from collections import deque
 import logging
 from logging.handlers import BufferingHandler
@@ -27,6 +30,7 @@ from subprocess import Popen, PIPE
 import sys
 from time import sleep, time
 import traceback
+from fnmatch import fnmatchcase
 
 from isodatetime.parsers import TimePointParser
 from parsec.util import printcfg
@@ -45,7 +49,7 @@ from cylc.loggingutil import CylcLogFormatter, TimestampRotatingFileHandler
 from cylc.log_diagnosis import LogSpec
 from cylc.subprocpool import SuiteProcPool
 from cylc.network import PRIVILEGE_LEVELS
-from cylc.network.httpserver import HTTPServer
+from cylc.network import httpserver
 from cylc.profiler import Profiler
 from cylc.state_summary_mgr import StateSummaryMgr
 from cylc.suite_db_mgr import SuiteDatabaseManager
@@ -172,7 +176,8 @@ class Scheduler(object):
         self.task_job_mgr = None
         self.task_events_mgr = None
         self.suite_event_handler = None
-        self.httpserver = None
+        self.flaskapp = None
+        self.http_server = None
         self.port = None
         self.command_queue = None
         self.message_queue = None
@@ -230,8 +235,9 @@ class Scheduler(object):
             if not self.options.no_detach:
                 daemonize(self)
             self._setup_suite_logger()
-            self.httpserver = HTTPServer(self.suite)
-            self.port = self.httpserver.port
+            self.flaskapp = httpserver.create_app(self)
+            self.http_server = httpserver.start_app(self.flaskapp)
+            self.port = httpserver.get_port(self.http_server)
             self.configure()
             self.profiler.start()
             self.run()
@@ -345,7 +351,6 @@ conditions; see `cylc conditions`.
         self.profiler.log_memory("scheduler.py: before load_suiterc")
         self.load_suiterc()
         self.profiler.log_memory("scheduler.py: after load_suiterc")
-        self.httpserver.connect(self)
 
         self.suite_db_mgr.on_suite_start(self.is_restart)
         if self.config.cfg['scheduling']['hold after point']:
@@ -381,9 +386,9 @@ conditions; see `cylc conditions`.
             TimestampRotatingFileHandler.FILE_NUM: 1}
         LOG.info(
             self.START_MESSAGE_TMPL % {
-                'comms_method': self.httpserver.comms_method,
+                'comms_method': self.flaskapp.config['COMMS_METHOD'],
                 'host': self.host,
-                'port': self.httpserver.port,
+                'port': self.port,
                 'pid': os.getpid()},
             extra=log_extra,
         )
@@ -788,6 +793,59 @@ conditions; see `cylc conditions`.
         """Return prerequisites of a task."""
         return self.pool.get_task_requisites(items, list_prereqs=list_prereqs)
 
+    def _graphql_id_parse(self, item):
+        """Return id tuple for search item"""
+        # Head of TaskPool filter_task_proxies
+        point_str, name_str, status = self.pool.parse_task_item(item)
+        if point_str is None:
+            point_str = "*"
+        else:
+            try:
+                point_str = standardise_point_string(point_str)
+            except ValueError:
+                # n_point may be a glob
+                pass
+        return (point_str, name_str, status)
+
+    @staticmethod
+    def _graphql_node_filter(nodes_dic, node_id, items, node_type='task'):
+        """Return true if GraphQL node matches any filter items"""
+        for n_point, n_name, n_state in items:
+            if (fnmatchcase(nodes_dic[node_id].label, n_point) and
+                    (not n_state or nodes_dic[node_id].state == n_state) and
+                    (fnmatchcase(nodes_dic[node_id].name, n_name) or
+                        (node_type == 'task' and 
+                            any(fnmatchcase(ns, n_name)
+                            for ns in nodes_dic[node_id].namespace)))):
+                return True
+        return False
+
+    def info_get_graphql_nodes(self, args={}, node_type='task'):
+        """Return list of GraphQL node objects"""
+        # We could split this into task and family specific functions,
+        # this would be needed if the filtering diverges
+        # graphql validates argument types so no need to check
+        items = []
+        if 'items' in args:
+            items += [self._graphql_id_parse(id) for id in args['items']]
+        if 'id' in args:
+            items.append(self._graphql_id_parse(args['id']))
+        exitems = []
+        if 'exitems' in args:
+            exitems += [self._graphql_id_parse(id) for id in args['exitems']]
+        if 'exid' in args:
+            exitems.append(self._graphql_id_parse(args['exid']))
+
+        if node_type == 'task':
+            n_dic = self.state_summary_mgr.get_taskql_data()
+        elif node_type == 'family':
+            n_dic = self.state_summary_mgr.get_familyql_data()
+
+        result = []
+        for n_id in n_dic:
+
+
+
     def info_ping_task(self, task_id, exists_only=False):
         """Return True if task exists and running."""
         task_id = self.get_standardised_taskid(task_id)
@@ -988,14 +1046,14 @@ conditions; see `cylc conditions`.
         # Preserve contact data in memory, for regular health check.
         mgr = self.suite_srv_files_mgr
         contact_data = {
-            mgr.KEY_API: str(self.httpserver.API),
-            mgr.KEY_COMMS_PROTOCOL: glbl_cfg().get(
-                ['communication', 'method']),
+            mgr.KEY_API: str(self.flaskapp.config['API']),
+            mgr.KEY_COMMS_PROTOCOL: self.flaskapp.config['COMMS_METHOD'],
+            mgr.KEY_AUTH_SCHEME: self.flaskapp.config['AUTH_SCHEME'],
             mgr.KEY_DIR_ON_SUITE_HOST: os.environ['CYLC_DIR'],
             mgr.KEY_HOST: self.host,
             mgr.KEY_NAME: self.suite,
             mgr.KEY_OWNER: self.owner,
-            mgr.KEY_PORT: str(self.httpserver.port),
+            mgr.KEY_PORT: str(self.port),
             mgr.KEY_PROCESS: process_str,
             mgr.KEY_SSH_USE_LOGIN_SHELL: str(glbl_cfg().get_host_item(
                 'use login shell')),
@@ -1192,7 +1250,7 @@ conditions; see `cylc conditions`.
         try:
             self.suite_event_handler.handle(self.config, SuiteEventContext(
                 event, reason, self.suite, self.owner, self.host,
-                self.httpserver.port))
+                self.port))
         except SuiteEventError as exc:
             if event == self.EVENT_SHUTDOWN and self.options.reftest:
                 LOG.error('SUITE REFERENCE TEST FAILED')
@@ -1609,8 +1667,8 @@ conditions; see `cylc conditions`.
             except Exception as exc:
                 LOG.exception(exc)
 
-        if self.httpserver:
-            self.httpserver.shutdown()
+        if self.http_server:
+            httpserver.shutdown(self.http_server)
 
         # Flush errors and info before removing suite contact file
         sys.stdout.flush()
