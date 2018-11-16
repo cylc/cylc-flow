@@ -843,8 +843,35 @@ conditions; see `cylc conditions`.
 
         result = []
         for n_id in n_dic:
+            if ((not ('states' in args and args['states']) or
+                        n_dic[n_id].state in args['states']) and
+                    (not items or 
+                        self._graphql_node_filter(
+                            n_dic, n_id, items, node_type)) and
+                    (not ('exstates' in args and args['exstates']) or
+                        n_dic[n_id].state not in args['exstates']) and
+                    (not exitems or not self._graphql_node_filter(
+                        n_dic, n_id, exitems, node_type))):
+                result.append(n_dic[n_id])
+        return result
 
+    def info_get_graphql_task(self, id=None):
+        """Return GrapphQL task object for given id."""
+        tdic = self.state_summary_mgr.get_taskql_data()
+        if id and id in tdic:
+           return tdic[id]
+        return None
+        
+    def info_get_graphql_family(self, id=None):
+        """Return GraphQL family object for given id."""
+        fdic = self.state_summary_mgr.get_familyql_data()
+        if id and id in fdic:
+           return fdic[id]
+        return None
 
+    def info_get_graphql_global(self):
+        """Return GraphQL global info dictionary."""
+        return self.state_summary_mgr.get_globalql_data()
 
     def info_ping_task(self, task_id, exists_only=False):
         """Return True if task exists and running."""

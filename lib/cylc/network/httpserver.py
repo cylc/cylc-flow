@@ -142,8 +142,9 @@ def create_app(schd_obj):
         DEBUG = False,
         SECRET_KEY = binascii.hexlify(os.urandom(16)),
         JSONIFY_PRETTYPRINT_REGULAR = False,
-        COMMS_METHOD = glbl_cfg().get(['communication', 'method'])
-        AUTH_SCHEME = glbl_cfg().get(['communication', 'authentication scheme'])
+        COMMS_METHOD = glbl_cfg().get(['communication', 'method']),
+        AUTH_SCHEME = glbl_cfg().get(
+            ['communication', 'authentication scheme']),
         CYLC_SCHEDULER = schd_obj,
         API = 3
         )
@@ -275,7 +276,7 @@ def start_app(app):
     flask_options = {'host': host}
 
     # set COMMS method
-    comms_method = app.config['COMMS_METHOD'].suite
+    comms_method = app.config['COMMS_METHOD']
     if comms_method == 'http':
         context = None
     else:
