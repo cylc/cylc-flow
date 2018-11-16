@@ -21,7 +21,6 @@ import json
 from pipes import quote
 from random import choice, shuffle
 import socket
-import sys
 from time import sleep
 import unittest
 

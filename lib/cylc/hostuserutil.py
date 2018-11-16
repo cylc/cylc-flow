@@ -148,7 +148,7 @@ class HostUtil(object):
 
     def get_fqdn_by_host(self, target):
         """Return the fully qualified domain name of the target host."""
-        if target == 'localhost':
+        if not self.is_remote_host(target):
             return self.get_host()
         return self._get_host_info(target)[0]
 

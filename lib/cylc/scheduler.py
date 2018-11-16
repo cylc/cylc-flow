@@ -1377,13 +1377,14 @@ conditions; see `cylc conditions`.
             self.time_next_kill = time() + self.INTERVAL_STOP_KILL
 
         # Is the suite set to auto stop [+restart] now ...
-        if (self.auto_restart_time is None or time() < self.auto_restart_time):
+        if self.auto_restart_time is None or time() < self.auto_restart_time:
             # ... no
             pass
         elif self.auto_restart_mode == self.AUTO_STOP_RESTART_NORMAL:
             # ... yes - wait for local jobs to complete before restarting
             #           * Avoid polling issues see #2843
-            #           * Ensure the host can be safely taken down once suites
+            #           * Ensure the host can be safely taken down once the
+            #             suite has stopped running.
             for itask in self.pool.get_tasks():
                 if (
                     itask.state.status in TASK_STATUSES_ACTIVE
@@ -1447,7 +1448,7 @@ conditions; see `cylc conditions`.
 
         Return:
             bool: False if it is not possible to automatically stop/restart
-            the suite due to it's configuration/runtime state.
+            the suite due to its configuration/runtime state.
         """
         # Check that the suite isn't already shutting down.
         if self.stop_mode:

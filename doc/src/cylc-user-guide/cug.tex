@@ -8248,6 +8248,9 @@ The auto stop-restart feature has two modes:
     For safety, before attempting to stop the suite cylc will first wait for any
     jobs running locally (under background or at) to complete.
 
+    {\em In order for Cylc to be able to successfully restart suites the
+    \lstinline=run hosts= must all be on a shared filesystem.}
+
     \item[Force Mode] \hfill
 
     If a host is suffixed with an exclamation mark then Cylc will not attempt
