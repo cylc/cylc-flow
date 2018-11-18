@@ -56,6 +56,8 @@
 #         (stdin if FILE_CONTROL is "-" or missing).
 #     grep_ok PATTERN FILE
 #         Run "grep -q -e PATTERN FILE".
+#     grep_fail PATTERN FILE
+#         Run "grep -q -e PATTERN FILE", expect no match.
 #     count_ok PATTERN FILE COUNT
 #         Test that PATTERN occurs in exactly COUNT lines of FILE.
 #     exists_ok FILE
@@ -330,6 +332,20 @@ grep_ok() {
     mkdir -p "${TEST_LOG_DIR}"
     echo "Can't find ${BRE} in ${FILE}" >"${TEST_LOG_DIR}/${TEST_NAME}.stderr"
     fail "${TEST_NAME}"
+}
+
+grep_fail() {
+    local BRE="$1"
+    local FILE="$2"
+    local TEST_NAME="$(basename "${FILE}")-grep-fail"
+    if grep -q -e "${BRE}" "${FILE}"; then
+        mkdir -p "${TEST_LOG_DIR}"
+        echo "ERROR: Found ${BRE} in ${FILE}" \
+          >"${TEST_LOG_DIR}/${TEST_NAME}.stderr"
+        fail "${TEST_NAME}"
+        return
+    fi
+    ok "${TEST_NAME}"
 }
 
 exists_ok() {
