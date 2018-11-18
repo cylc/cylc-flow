@@ -296,9 +296,10 @@ class JobFileWriter(object):
     def _write_script(cls, handle, job_conf):
         """Write (*-)script in functions.
 
-        init-script, env-script, err-script, pre-script, script, post-script
+        init-script, env-script, err-script, pre-script, script, post-script,
+        exit-script
         """
-        for prefix in ['init-', 'env-', 'err-', 'pre-', '', 'post-']:
+        for prefix in ['init-', 'env-', 'err-', 'pre-', '', 'post-', 'exit-']:
             value = job_conf[prefix + 'script']
             if cls._check_script_value(value):
                 handle.write("\n\ncylc__job__inst__%sscript() {" % (

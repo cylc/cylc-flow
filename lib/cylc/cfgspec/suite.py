@@ -165,6 +165,7 @@ SPEC = {
             'init-script': [VDR.V_STRING],
             'env-script': [VDR.V_STRING],
             'err-script': [VDR.V_STRING],
+            'exit-script': [VDR.V_STRING],
             'pre-script': [VDR.V_STRING],
             'script': [VDR.V_STRING],
             'post-script': [VDR.V_STRING],
