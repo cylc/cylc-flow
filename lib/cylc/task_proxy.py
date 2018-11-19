@@ -376,6 +376,15 @@ class TaskProxy(object):
             for timer in self.try_timers.values():
                 timer.timeout = None
 
+    def set_summary_message(self, message):
+        """Set `.summary['latest_message']` if necessary.
+
+        Set `.state.is_updated` to `True` if message is updated.
+        """
+        if self.summary['latest_message'] != message:
+            self.summary['latest_message'] = message
+            self.state.is_updated = True
+
     def set_summary_time(self, event_key, time_str=None):
         """Set an event time in self.summary
 
