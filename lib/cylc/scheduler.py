@@ -1105,7 +1105,8 @@ conditions; see `cylc conditions`.
             'CYLC_DEBUG': str(cylc.flags.debug).lower(),
             'CYLC_VERBOSE': str(cylc.flags.verbose).lower(),
             'CYLC_SUITE_NAME': self.suite,
-            'CYLC_CYCLING_MODE': str(cylc.flags.cycling_mode),
+            'CYLC_CYCLING_MODE': str(
+                self.config.cfg['scheduling']['cycling mode']),
             'CYLC_SUITE_INITIAL_CYCLE_POINT': str(self.initial_point),
             'CYLC_SUITE_FINAL_CYCLE_POINT': str(self.final_point),
         })
