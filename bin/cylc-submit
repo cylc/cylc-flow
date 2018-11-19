@@ -116,7 +116,7 @@ def main():
         'CYLC_DEBUG': str(cylc.flags.debug).lower(),
         'CYLC_VERBOSE': str(cylc.flags.verbose).lower(),
         'CYLC_SUITE_NAME': suite,
-        'CYLC_CYCLING_MODE': str(cylc.flags.cycling_mode),
+        'CYLC_CYCLING_MODE': str(config.cfg['scheduling']['cycling mode']),
         'CYLC_SUITE_INITIAL_CYCLE_POINT': str(
             config.cfg['scheduling']['initial cycle point']),
         'CYLC_SUITE_FINAL_CYCLE_POINT': str(
