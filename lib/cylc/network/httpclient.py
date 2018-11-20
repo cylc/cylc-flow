@@ -611,7 +611,7 @@ class SuiteRuntimeServiceClient(object):
         return json.loads(out)
 
     def _get_auth(self, protocol):
-        """Return a user/password Digest Auth."""
+        """Return a user/password for Basic/Digest Auth."""
         if self.auth is None:
             self.auth = self.ANON_AUTH
             try:
@@ -660,6 +660,8 @@ class SuiteRuntimeServiceClient(object):
                 self.suite, self.owner, self.host)
             # Port inside "try" block, as it needs a type conversion
             self.port = int(self.comms1.get(self.srv_files_mgr.KEY_PORT))
+            self.auth_scheme = self.comms1.get(
+                self.srv_files_mgr.KEY_AUTH_SCHEME)
         except (IOError, ValueError, SuiteServiceFileError):
             raise ClientInfoError(self.suite)
         else:
@@ -674,6 +676,9 @@ class SuiteRuntimeServiceClient(object):
             # All good
             self.host = self.comms1.get(self.srv_files_mgr.KEY_HOST)
             self.owner = self.comms1.get(self.srv_files_mgr.KEY_OWNER)
+            if self.srv_files_mgr.KEY_AUTH_SCHEME in self.comms1:
+                self.auth_scheme = self.comms1.get(
+                    self.srv_files_mgr.KEY_AUTH_SCHEME)
             if self.srv_files_mgr.KEY_API not in self.comms1:
                 self.comms1[self.srv_files_mgr.KEY_API] = 0  # <=7.5.0 compat
         # Indirect comms settings

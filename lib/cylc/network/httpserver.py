@@ -1000,7 +1000,7 @@ def api_blueprint(app):
         interval = now - _id_start_time
         if interval > CLIENT_ID_REPORT_SECONDS:
             rate = float(_num_id_requests) / interval
-            if rate > self.CLIENT_ID_MIN_REPORT_RATE:
+            if rate > CLIENT_ID_MIN_REPORT_RATE:
                 LOG.warning(LOG_IDENTIFY_TMPL, _num_id_requests, interval)
             else:
                 LOG.debug(LOG_IDENTIFY_TMPL, _num_id_requests, interval)
