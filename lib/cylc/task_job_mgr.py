@@ -285,33 +285,44 @@ class TaskJobManager(object):
             cmd.append('--')
             cmd.append(glbl_cfg().get_derived_host_item(
                 suite, 'suite job log directory', host, owner))
-            stdin_file_paths = []
-            job_log_dirs = []
-            for itask in sorted(itasks, key=lambda itask: itask.identity):
-                if remote_mode:
-                    stdin_file_paths.append(
-                        get_task_job_job_log(
-                            suite, itask.point, itask.tdef.name,
-                            itask.submit_num))
-                job_log_dirs.append(get_task_job_id(
-                    itask.point, itask.tdef.name, itask.submit_num))
-                # The job file is now (about to be) used: reset the file write
-                # flag so that subsequent manual retrigger will generate a new
-                # job file.
-                itask.local_job_file_path = None
-                itask.state.reset_state(TASK_STATUS_READY)
-                if itask.state.outputs.has_custom_triggers():
-                    self.suite_db_mgr.put_update_task_outputs(itask)
-            cmd += job_log_dirs
-            self.proc_pool.put_command(
-                SubProcContext(
-                    self.JOBS_SUBMIT,
-                    cmd,
-                    stdin_file_paths=stdin_file_paths,
-                    job_log_dirs=job_log_dirs,
-                    **kwargs
-                ),
-                self._submit_task_jobs_callback, [suite, itasks])
+            # Chop itasks into a series of shorter lists if it's very big
+            # to prevent overloading of stdout and stderr pipes.
+            itasks = sorted(itasks, key=lambda itask: itask.identity)
+            chunk_size = len(itasks) // ((len(itasks) // 100) + 1) + 1
+            itasks_batches = [
+                itasks[i:i + chunk_size] for i in range(0,
+                                                        len(itasks),
+                                                        chunk_size)]
+            LOG.debug(
+                '%s ... # will invoke in batches, sizes=%s',
+                cmd, [len(b) for b in itasks_batches])
+            for i, itasks_batch in enumerate(itasks_batches):
+                stdin_file_paths = []
+                job_log_dirs = []
+                for itask in itasks_batch:
+                    if remote_mode:
+                        stdin_file_paths.append(
+                            get_task_job_job_log(
+                                suite, itask.point, itask.tdef.name,
+                                itask.submit_num))
+                    job_log_dirs.append(get_task_job_id(
+                        itask.point, itask.tdef.name, itask.submit_num))
+                    # The job file is now (about to be) used: reset the file
+                    # write flag so that subsequent manual retrigger will
+                    # generate a new job file.
+                    itask.local_job_file_path = None
+                    itask.state.reset_state(TASK_STATUS_READY)
+                    if itask.state.outputs.has_custom_triggers():
+                        self.suite_db_mgr.put_update_task_outputs(itask)
+                self.proc_pool.put_command(
+                    SubProcContext(
+                        self.JOBS_SUBMIT,
+                        cmd + job_log_dirs,
+                        stdin_file_paths=stdin_file_paths,
+                        job_log_dirs=job_log_dirs,
+                        **kwargs
+                    ),
+                    self._submit_task_jobs_callback, [suite, itasks_batch])
         return done_tasks
 
     @staticmethod
