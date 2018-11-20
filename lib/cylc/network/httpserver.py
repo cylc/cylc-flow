@@ -66,9 +66,9 @@ elif auth_scheme == 'digest':
     auth.user_digest = {}
 
 user_priv = { 
-        'anon': PRIV_STATE_TOTALS,
         'cylc': PRIVILEGE_LEVELS[-1],
     }
+        #'anon': PRIV_STATE_TOTALS,
 
 class InvalidUsage(Exception):
     status_code = 400

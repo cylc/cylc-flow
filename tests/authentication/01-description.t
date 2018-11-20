@@ -101,7 +101,6 @@ cmp_json_ok 'scan-j.out' 'scan-j.out' <<__END__
         "${PORT}",
         {
             "group":"",
-            "version":"$(cylc version)",
             "title":"Authentication test suite.",
             "description":"Stalls when the first task fails.\n                     Here we test out a multi-line description!",
             "meta":{
@@ -112,6 +111,7 @@ cmp_json_ok 'scan-j.out' 'scan-j.out' <<__END__
                 "another_metadata":"1",
                 "custom_metadata":"something_custom"
             },
+            "version":"$(cylc version)",
             "owner":"${USER}",
             "name":"${SUITE_NAME}"
         }

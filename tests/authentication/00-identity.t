@@ -47,7 +47,7 @@ run_fail "${TEST_NAME_BASE}-client-cylc-bad-ping-task" \
     cylc client 'get_info' "${SUITE_NAME}" <<'__JSON__'
 {"command": "ping_task", "task_id": "foo.1", "exists_only": "Truer"}
 __JSON__
-grep_ok 'HTTP.*Error.*400' "${TEST_NAME_BASE}-client-cylc-bad-ping-task.stderr"
+grep_ok '.*400.*Clien.*BAD.*REQUEST' "${TEST_NAME_BASE}-client-cylc-bad-ping-task.stderr"
 run_ok "${TEST_NAME_BASE}-client-cylc-ping-task" \
     cylc client 'get_info' "${SUITE_NAME}" <<'__JSON__'
 {"command": "ping_task", "task_id": "foo.1", "exists_only": "True"}
