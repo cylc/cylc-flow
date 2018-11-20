@@ -40,8 +40,7 @@ grep_ok 'EXIT Oops!' "${SUITE_RUN_DIR}/log/job/1/foo/01/job.err"
 # 3) Should not run on external job TERM.
 cylc run --set=NSLEEP=30 "${SUITE_NAME}"
 sleep 3
-PID_SET=$(grep CYLC_JOB_PID "${SUITE_RUN_DIR}/log/job/1/foo/01/job.status")
-eval $PID_SET
+CYLC_JOB_PID=$(sed -n 's/^CYLC_JOB_PID=//p' "${SUITE_RUN_DIR}/log/job/1/foo/01/job.status")
 kill -s TERM $CYLC_JOB_PID
 sleep 5
 grep_fail 'Cheesy peas!' "${SUITE_RUN_DIR}/log/job/1/foo/01/job.out"
