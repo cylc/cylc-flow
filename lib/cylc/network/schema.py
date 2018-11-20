@@ -55,11 +55,14 @@ class QLStateTotals(graphene.ObjectType):
     succeeded = graphene.Int()
 
 
-
 class QLGlobal(graphene.ObjectType):
     """Global suite info."""
     class Meta:
         default_resolver = dict_resolver
+
+    suite = graphene.String()
+    owner = graphene.String()
+    host = graphene.String()
     title = graphene.String()
     description = graphene.String()
     url = graphene.String()
@@ -75,6 +78,8 @@ class QLGlobal(graphene.ObjectType):
     newest_runahead_cycle_point = graphene.String()
     newest_cycle_point = graphene.String()
     oldest_cycle_point = graphene.String()
+    tree_depth = graphene.Int()
+
 
 class QLPrereq(graphene.ObjectType):
     """Task prerequisite."""
@@ -129,11 +134,15 @@ class QLTask(graphene.ObjectType):
     parents = relay.ConnectionField(
         lambda: FamilyConnection,
         description="""Task parents.""",
+        id=graphene.ID(default_value=None),
         exid=graphene.ID(default_value=None),
+        items=graphene.List(graphene.ID, default_value=[]),
         exitems=graphene.List(graphene.ID, default_value=[]),
         states=graphene.List(graphene.String, default_value=[]),
         exstates=graphene.List(graphene.String, default_value=[]),
+        depth=graphene.Int(default_value=-1)
         )
+    node_depth = graphene.Int()
 
     def resolve_parents(self, info, **args):
         if self.parents:
@@ -166,27 +175,37 @@ class QLFamily(graphene.ObjectType):
     parents = relay.ConnectionField(
         lambda: FamilyConnection,
         description="""Family parents.""",
+        id=graphene.ID(default_value=None),
         exid=graphene.ID(default_value=None),
+        items=graphene.List(graphene.ID, default_value=[]),
         exitems=graphene.List(graphene.ID, default_value=[]),
         states=graphene.List(graphene.String, default_value=[]),
         exstates=graphene.List(graphene.String, default_value=[]),
+        depth=graphene.Int(default_value=-1),
         )
     tasks = relay.ConnectionField(
         TaskConnection,
         description="""Desendedant tasks.""",
+        id=graphene.ID(default_value=None),
         exid=graphene.ID(default_value=None),
+        items=graphene.List(graphene.ID, default_value=[]),
         exitems=graphene.List(graphene.ID, default_value=[]),
         states=graphene.List(graphene.String, default_value=[]),
         exstates=graphene.List(graphene.String, default_value=[]),
+        depth=graphene.Int(default_value=-1),
         )
     families = relay.ConnectionField(
         lambda: FamilyConnection,
         description="""Desendedant families.""",
+        id=graphene.ID(default_value=None),
         exid=graphene.ID(default_value=None),
+        items=graphene.List(graphene.ID, default_value=[]),
         exitems=graphene.List(graphene.ID, default_value=[]),
         states=graphene.List(graphene.String, default_value=[]),
         exstates=graphene.List(graphene.String, default_value=[]),
+        depth=graphene.Int(default_value=-1),
         )
+    node_depth = graphene.Int()
     
     def resolve_tasks(self, info, **args):
         if self.tasks:
@@ -232,6 +251,7 @@ class Query(graphene.ObjectType):
         exitems=graphene.List(graphene.ID, default_value=[]),
         states=graphene.List(graphene.String, default_value=[]),
         exstates=graphene.List(graphene.String, default_value=[]),
+        depth=graphene.Int(default_value=-1),
         )
 
     allFamilies = relay.ConnectionField(
@@ -242,6 +262,7 @@ class Query(graphene.ObjectType):
         exitems=graphene.List(graphene.ID, default_value=[]),
         states=graphene.List(graphene.String, default_value=[]),
         exstates=graphene.List(graphene.String, default_value=[]),
+        depth=graphene.Int(default_value=-1),
         )
 
     def resolve_apiversion(self, info):

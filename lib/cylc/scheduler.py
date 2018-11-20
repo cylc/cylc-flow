@@ -835,6 +835,9 @@ conditions; see `cylc conditions`.
             exitems += [self._graphql_id_parse(id) for id in args['exitems']]
         if 'exid' in args:
             exitems.append(self._graphql_id_parse(args['exid']))
+        ndepth = -1
+        if 'depth' in args:
+            ndepth = args['depth']
 
         if node_type == 'task':
             n_dic = self.state_summary_mgr.get_taskql_data()
@@ -845,6 +848,8 @@ conditions; see `cylc conditions`.
         for n_id in n_dic:
             if ((not ('states' in args and args['states']) or
                         n_dic[n_id].state in args['states']) and
+                    (ndepth < 0 or 
+                        n_dic[n_id].node_depth <= ndepth) and
                     (not items or 
                         self._graphql_node_filter(
                             n_dic, n_id, items, node_type)) and

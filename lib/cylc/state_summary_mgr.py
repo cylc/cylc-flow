@@ -135,14 +135,19 @@ class StateSummaryMgr(object):
                     URL = url,
                     parents = famparents,
                     tasks = taskdescs,
-                    families = famdescs
-                )
+                    families = famdescs,
+                    node_depth = len(ancestors_dict[fam])-1)
 
 
+        globalql_data['suite'] = schd.suite
+        globalql_data['owner'] = schd.owner
+        globalql_data['host'] = schd.host
         globalql_data['title'] = schd.config.cfg['meta']['title']
         globalql_data['description'] = schd.config.cfg['meta']['description']
         globalql_data['group'] = schd.config.cfg['meta']['group']
         globalql_data['url'] = schd.config.cfg['meta']['URL']
+        globalql_data['tree_depth'] = max(
+            [len(val) for key, val in ancestors_dict.items()])-1
 
         state_count_totals = {}
         for point_string, count in state_count_cycles.items():
@@ -235,6 +240,7 @@ class StateSummaryMgr(object):
         task_summary = {}
         task_states = {}
         taskql_data = {}
+        ancestors_dict = schd.config.get_first_parent_ancestors()
         parents_dict = schd.config.get_parent_lists()
 
         for task in schd.pool.get_tasks():
@@ -292,7 +298,8 @@ class StateSummaryMgr(object):
                 latest_message = ts['latest_message'],
                 job_hosts = j_hosts,
                 prerequisites = prereq_list,
-                outputs = t_outs)
+                outputs = t_outs,
+                node_depth = len(ancestors_dict[name])-1)
 
 
         for task in schd.pool.get_rh_tasks():
