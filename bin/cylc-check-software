@@ -55,6 +55,11 @@ opt_spec = {
     'requests': [(2, 4, 2), 'HTTPSCOMMS', 'PY'],
     'OpenSSL': [None, 'HTTPSCOMMS', 'PY'],
     'urllib3': [None, 'HTTPSCOMMS', 'PY'],
+    'Flask': [None, 'HTTPSCOMMS', 'PY'],
+    'Flask-GraphQL': [None, 'HTTPSCOMMS', 'PY'],
+    'Flask-HTTPAuth': [None, 'HTTPSCOMMS', 'PY'],
+    'graphene': [None, 'HTTPSCOMMS', 'PY'],
+    'gevent': [None, 'HTTPSCOMMS', 'PY'],
     'pygtk': [(2, 0), 'GUIORGRAPH', 'PY'],
     'pygraphviz': [None, 'GUIORGRAPH', 'PY'],
     'texlive': [None, 'LATEXGUIDE', 'TEX'],
@@ -172,6 +177,18 @@ def check_py_module_ver(module, min_ver, write=True):
             # we want the one that provides 'Interpreter'
             from em import Interpreter
             module_version = sys.modules['em'].__version__
+        elif module == 'Flask':
+            imported_module = __import__('flask')
+            module_version = imported_module.__version__
+        elif module == 'Flask-HTTPAuth':
+            imported_module = __import__('flask_httpauth')
+            module_version = imported_module.__version__
+        elif module == 'Flask-GraphQL':
+            imported_module = __import__('flask_graphql')
+            try:
+                module_version = imported_module.__version__
+            except AttributeError:
+                module_version = '?'
         else:
             imported_module = __import__(module)
             module_version = imported_module.__version__
