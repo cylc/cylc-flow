@@ -144,6 +144,8 @@ cylc__job__main() {
     wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
     cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'succeeded' || true
     trap '' ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}
+    # Execute success exit script
+    cylc__job__run_inst_func 'exit_script'
     exit 0
 }
 
@@ -175,7 +177,7 @@ cylc__job__run_inst_func() {
 #     see "cylc help message" for format of messages.
 # Returns:
 #   exit 1
-cylc__job_finish() {
+cylc__job_finish_err() {
     typeset signal="$1"
     typeset run_err_script="$2"
     shift 2
@@ -192,21 +194,21 @@ cylc__job_finish() {
 }
 
 ###############################################################################
-# Wrap cylc__job_finish to abort with a user-defined error message.
+# Wrap cylc__job_finish_err to abort with a user-defined error message.
 cylc__job_abort() {
-    cylc__job_finish "EXIT" true "CRITICAL: aborted/\"${1}\""
+    cylc__job_finish_err "EXIT" true "CRITICAL: aborted/\"${1}\""
 }
 
 ###############################################################################
-# Wrap cylc__job_finish for job preempt/vacation signal trap.
+# Wrap cylc__job_finish_err for job preempt/vacation signal trap.
 cylc__job_vacation() {
-    cylc__job_finish "${1}" false "WARNING: vacated/${1}"
+    cylc__job_finish_err "${1}" false "WARNING: vacated/${1}"
 }
 
 ###############################################################################
-# Wrap cylc__job_finish for automatic job exit signal trap.
+# Wrap cylc__job_finish_err for automatic job exit signal trap.
 cylc__job_err() {
-    cylc__job_finish "${1}" true "CRITICAL: failed/${1}"
+    cylc__job_finish_err "${1}" true "CRITICAL: failed/${1}"
 }
 
 ###############################################################################

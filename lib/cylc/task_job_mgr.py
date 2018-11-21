@@ -847,6 +847,7 @@ class TaskJobManager(object):
             'execution_time_limit': itask.summary[self.KEY_EXECUTE_TIME_LIMIT],
             'env-script': rtconfig['env-script'],
             'err-script': rtconfig['err-script'],
+            'exit-script': rtconfig['exit-script'],
             'host': itask.task_host,
             'init-script': rtconfig['init-script'],
             'job_file_path': job_file_path,
