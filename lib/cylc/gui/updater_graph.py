@@ -100,6 +100,7 @@ class GraphUpdater(threading.Thread):
         self.fam_state_summary = {}
         self.global_summary = {}
         self.last_update_time = None
+        self.fgcolor = None
 
         self.god = None
         self.mode = "waiting..."
@@ -236,8 +237,9 @@ class GraphUpdater(threading.Thread):
             sleep(0.2)
 
     def update_xdot(self, no_zoom=False):
-        tcolor = getattr(self.xdot.widget.style, 'bg', None)[gtk.STATE_NORMAL]
-        self.graphw.restyle(tcolor)
+        bgcolor = getattr(self.xdot.widget.style, 'bg', None)[gtk.STATE_NORMAL]
+        self.fgcolor = getattr(self.xdot.widget.style, 'fg', None)[gtk.STATE_NORMAL]
+        self.graphw.set_def_style(self.fgcolor, bgcolor)
         self.xdot.set_dotcode(self.graphw.to_string(), no_zoom=no_zoom)
         if self.first_update:
             self.xdot.widget.zoom_to_fit()
@@ -408,14 +410,13 @@ class GraphUpdater(threading.Thread):
                     node.attr['shape'] = 'none'
 
             if self.subgraphs_on:
-                self.graphw.add_cycle_point_subgraphs(gr_edges)
+                self.graphw.add_cycle_point_subgraphs(gr_edges, self.fgcolor)
 
         # Set base node style defaults
         for node in self.graphw.nodes():
-            node.attr.setdefault('style', 'filled')
-            node.attr['color'] = '#888888'
-            node.attr['fillcolor'] = 'white'
-            node.attr['fontcolor'] = '#888888'
+            node.attr['style'] = 'dotted'
+            node.attr['color'] = self.fgcolor
+            node.attr['fontcolor'] = self.fgcolor
             if not node.attr['URL'].startswith(self.PREFIX_BASE):
                 node.attr['URL'] = self.PREFIX_BASE + node.attr['URL']
 

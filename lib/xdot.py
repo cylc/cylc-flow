@@ -480,6 +480,7 @@ class Graph(Shape):
         if highlight_items is None:
             highlight_items = ()
         cr.set_source_rgba(0.0, 0.0, 0.0, 1.0)
+
         cr.set_line_cap(cairo.LINE_CAP_BUTT)
         cr.set_line_join(cairo.LINE_JOIN_MITER)
 
@@ -1497,7 +1498,6 @@ class DotWidget(gtk.DrawingArea):
 
     def __init__(self):
         gtk.DrawingArea.__init__(self)
-
 
         self.graph = Graph()
         self.openfilename = None

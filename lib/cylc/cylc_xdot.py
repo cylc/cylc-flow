@@ -413,6 +413,9 @@ class MyDotWindow(CylcDotViewerCommon):
         family_nodes = self.suiterc.get_first_parent_descendants()
         # Note this is used by "cylc graph" but not gcylc.
         # self.start_ and self.stop_point_string come from CLI.
+
+        tbg_color = getattr(self.style, 'bg', None)[gtk.STATE_NORMAL]
+        tfg_color = getattr(self.style, 'fg', None)[gtk.STATE_NORMAL]
         graph = CGraph.get_graph(
             self.suiterc,
             group_nodes=group_nodes,
@@ -420,11 +423,10 @@ class MyDotWindow(CylcDotViewerCommon):
             ungroup_recursive=ungroup_recursive,
             group_all=group_all, ungroup_all=ungroup_all,
             ignore_suicide=self.ignore_suicide,
-            subgraphs_on=self.subgraphs_on)
+            subgraphs_on=self.subgraphs_on,
+            bgcolor=tbg_color, fgcolor=tfg_color)
 
         graph.graph_attr['rankdir'] = self.orientation
-        tcolor = getattr(self.style, 'bg', None)[gtk.STATE_NORMAL]
-        graph.restyle(tcolor)
 
         # Style nodes.
         cache = {}  # For caching is_on_sequence() calls.
@@ -440,6 +442,7 @@ class MyDotWindow(CylcDotViewerCommon):
                 # in the suite's graphing.
             elif self.is_off_sequence(name, point, cache=cache):
                 node.attr['style'] = 'dotted'
+                node.attr['fontcolor'] = graph.graph_attr['fontcolor']
 
         self.graph = graph
         self.filter_graph()

@@ -38,13 +38,6 @@ class CGraphPlain(pygraphviz.AGraph):
             suite_polling_tasks = {}
         self.suite_polling_tasks = suite_polling_tasks
 
-    def set_color(self, color):
-        self.graph_attr['bgcolor'] = '#ffffff00'  # transparent white
-        self.graph_attr['fontcolor'] = color  # graph and cluster titles
-        self.node_attr['color'] = color  # node outlines
-        self.node_attr['fontcolor'] = color  # node labels
-        self.edge_attr['color'] = color  # edges
-
     def style_edge(self, left, right):
         pass
 
@@ -57,6 +50,7 @@ class CGraphPlain(pygraphviz.AGraph):
             if node_string.startswith("__remove_"):
                 node.attr['style'] = 'dashed'
                 node.attr['label'] = u'\u2702'
+                node.attr['shape'] = 'diamond'
                 return
             raise
         label = name
@@ -206,7 +200,7 @@ class CGraphPlain(pygraphviz.AGraph):
                 pygraphviz.AGraph.add_node(self, left)
                 self.style_node(left)
             else:
-                attrs = {'penwidth': 2}
+                attrs = {}
                 if skipped:
                     attrs.update({'style': 'dotted', 'arrowhead': 'oinv'})
                 elif conditional and suicide:
@@ -216,13 +210,13 @@ class CGraphPlain(pygraphviz.AGraph):
                 elif suicide:
                     attrs.update({'style': 'dashed', 'arrowhead': 'dot'})
                 else:
-                    attrs.update({'style': 'solid', 'arrowhead': 'normal'})
+                    attrs.update({'arrowhead': 'normal'})
                 pygraphviz.AGraph.add_edge(self, left, right, **attrs)
                 self.style_node(left)
                 self.style_node(right)
                 self.style_edge(left, right)
 
-    def add_cycle_point_subgraphs(self, edges):
+    def add_cycle_point_subgraphs(self, edges, fgcolor):
         """Draw nodes within cycle point groups (subgraphs)."""
         point_string_id_map = {}
         for edge_entry in edges:
@@ -239,7 +233,8 @@ class CGraphPlain(pygraphviz.AGraph):
         for point_string, ids in point_string_id_map.items():
             self.add_subgraph(
                 nbunch=ids, name="cluster_" + point_string,
-                label=point_string, fontsize=28, rank="max", style="dashed"
+                label=point_string, fontsize=28, rank="max", style="dashed",
+                color=fgcolor
             )
 
     def add_subgraph(self, nbunch=None, name=None, **attr):
@@ -266,20 +261,43 @@ class CGraphPlain(pygraphviz.AGraph):
 
         return subgraph
 
-    def restyle(self, bgcolor):
-        if sum([bgcolor.red_float, bgcolor.green_float,
-                bgcolor.blue_float]) > 1.5:
-            graph_color = 'black'  # light color theme
+    def set_def_style(self, fgcolor, bgcolor, def_node_attr=None):
+        """Set default graph styles.
+
+        Depending on light/dark desktop color theme.
+        """
+
+        if def_node_attr is None:
+            def_node_attr = {}
+
+        # Transparent graph bg - let the desktop theme bg shine through.
+        self.graph_attr['bgcolor'] = '#ffffff00'
+
+        fg, bg = str(fgcolor), str(bgcolor)
+        # 3-digit hex color codes are not recognized.
+        if len(fg) == 4:
+            fg = '#' + fg[1:2]*2 + fg[2:3]*2 + fg[3:4]*2
+        if len(bg) == 4:
+            bg = '#' + bg[1:2]*2 + bg[2:3]*2 + bg[3:4]*2
+
+        # graph and cluster labels:
+        self.graph_attr['fontcolor'] = fg
+        # node outlines, or node fill if fillcolor is not defined:
+        self.node_attr['color'] = fg
+        # edges:
+        self.edge_attr['color'] = fg  # edges
+        # node labels:
+        if def_node_attr.get('style', '') == "filled":
+            self.node_attr['fontcolor'] = bg  # node labels
         else:
-            graph_color = 'white'  # dark color theme
-        self.set_color(graph_color)
+            self.node_attr['fontcolor'] = fg  # node labels
 
 
 class CGraph(CGraphPlain):
     """Directed Acyclic Graph class for cylc dependency graphs.
 
-    For "cylc graph" - add node and edge attributes according to the suite.rc
-    file visualization config.
+    For "cylc graph" - add node and edge attributes according to the
+    suite.rc file visualization config.
     """
 
     def __init__(self, title, suite_polling_tasks=None, vizconfig=None):
@@ -336,10 +354,14 @@ class CGraph(CGraphPlain):
     def style_node(self, node_string):
         CGraphPlain.style_node(self, node_string)
         node = self.get_node(node_string)
-        node.attr['shape'] = 'ellipse'  # Default shape.
+        attrs = {}
         for item in self.node_attr_by_taskname(node_string):
             attr, value = [val.strip() for val in item.split('=', 1)]
+            attrs[attr] = value
             node.attr[attr] = value
+        if node.attr['style'] != 'filled' and (
+                'color' in attrs and 'fontcolor' not in attrs):
+            node.attr['fontcolor'] = node.attr['color']
         if self.vizconfig['use node color for labels']:
             node.attr['fontcolor'] = node.attr['color']
         node.attr['penwidth'] = self.vizconfig['node penwidth']
@@ -359,7 +381,8 @@ class CGraph(CGraphPlain):
     def get_graph(
             cls, suiterc, group_nodes=None, ungroup_nodes=None,
             ungroup_recursive=False, group_all=False, ungroup_all=False,
-            ignore_suicide=False, subgraphs_on=False):
+            ignore_suicide=False, subgraphs_on=False, bgcolor=None,
+            fgcolor=None):
         """Return dependency graph."""
         # Use visualization settings.
         start_point_string = (
@@ -390,11 +413,14 @@ class CGraph(CGraphPlain):
             suiterc.suite,
             suiterc.suite_polling_tasks,
             suiterc.cfg['visualization'])
+
+        graph.set_def_style(fgcolor, bgcolor, graph.node_attr)
+
         gr_edges = suiterc.get_graph_raw(
             start_point_string, stop_point_string,
             group_nodes, ungroup_nodes, ungroup_recursive,
             group_all, ungroup_all)
         graph.add_edges(gr_edges, ignore_suicide)
         if subgraphs_on:
-            graph.add_cycle_point_subgraphs(gr_edges)
+            graph.add_cycle_point_subgraphs(gr_edges, fgcolor)
         return graph
