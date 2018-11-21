@@ -25,26 +25,26 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
-# 1) runs on normal successful job exit?
+# 1) Should run on normal successful job exit.
 run_ok "${TEST_NAME_BASE}-run" \
   cylc run --debug --no-detach "${SUITE_NAME}" 
 grep_ok 'Cheesy peas!' "${SUITE_RUN_DIR}/log/job/1/foo/01/job.out"
 grep_fail 'Oops!' "${SUITE_RUN_DIR}/log/job/1/foo/01/job.err"
 
-# 2) runs on internal early EXIT?
+# 2) Should not run on internal early EXIT.
 run_fail "${TEST_NAME_BASE}-run" \
   cylc run --debug --no-detach --set=EXIT=true "${SUITE_NAME}" 
-grep_ok 'Cheesy peas!' "${SUITE_RUN_DIR}/log/job/1/foo/01/job.out"
+grep_fail 'Cheesy peas!' "${SUITE_RUN_DIR}/log/job/1/foo/01/job.out"
 grep_ok 'EXIT Oops!' "${SUITE_RUN_DIR}/log/job/1/foo/01/job.err"
 
-# 3) runs on external job TERM?
+# 3) Should not run on external job TERM.
 cylc run --set=NSLEEP=30 "${SUITE_NAME}"
 sleep 3
 PID_SET=$(grep CYLC_JOB_PID "${SUITE_RUN_DIR}/log/job/1/foo/01/job.status")
 eval $PID_SET
 kill -s TERM $CYLC_JOB_PID
 sleep 5
-grep_ok 'Cheesy peas!' "${SUITE_RUN_DIR}/log/job/1/foo/01/job.out"
+grep_fail 'Cheesy peas!' "${SUITE_RUN_DIR}/log/job/1/foo/01/job.out"
 grep_ok 'TERM Oops!' "${SUITE_RUN_DIR}/log/job/1/foo/01/job.err"
 
 purge_suite "${SUITE_NAME}"

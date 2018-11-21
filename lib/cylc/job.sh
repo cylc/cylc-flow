@@ -144,6 +144,7 @@ cylc__job__main() {
     wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
     cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'succeeded' || true
     trap '' ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}
+    # Execute success exit script
     cylc__job__run_inst_func 'exit_script'
     exit 0
 }
@@ -189,7 +190,6 @@ cylc__job_finish_err() {
     if "${run_err_script}"; then
         cylc__job__run_inst_func 'err_script' "${signal}" >&2
     fi
-    cylc__job__run_inst_func 'exit_script'
     exit 1
 }
 
