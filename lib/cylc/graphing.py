@@ -25,6 +25,15 @@ from cylc.cycling.loader import get_point, get_point_relative
 from cylc.task_id import TaskID
 
 
+GHOST_TRANSP_HEX = "88"
+
+
+def gtk_rgb_to_hex(rgb):
+    """Return a standard 6-char hex color code from a GTK RGB color."""
+    return '#' + ''.join('%02x' % (x * 255) for x in (
+        rgb.red_float, rgb.green_float, rgb.blue_float))
+
+
 class CGraphPlain(pygraphviz.AGraph):
     """Directed Acyclic Graph class for cylc dependency graphs."""
 
@@ -273,16 +282,13 @@ class CGraphPlain(pygraphviz.AGraph):
         # Transparent graph bg - let the desktop theme bg shine through.
         self.graph_attr['bgcolor'] = '#ffffff00'
 
-        fg, bg = str(fgcolor), str(bgcolor)
-        # 3-digit hex color codes are not recognized.
-        if len(fg) == 4:
-            fg = '#' + fg[1:2]*2 + fg[2:3]*2 + fg[3:4]*2
-        if len(bg) == 4:
-            bg = '#' + bg[1:2]*2 + bg[2:3]*2 + bg[3:4]*2
+        # TODO
+        fg, bg = fgcolor, bgcolor
 
-        # graph and cluster labels:
+        # graph and cluster:
+        self.graph_attr['color'] = fg
         self.graph_attr['fontcolor'] = fg
-        # node outlines, or node fill if fillcolor is not defined:
+        # node outlines (or node fill if fillcolor is not defined):
         self.node_attr['color'] = fg
         # edges:
         self.edge_attr['color'] = fg  # edges

@@ -27,7 +27,7 @@ import traceback
 
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
-from cylc.graphing import CGraphPlain
+from cylc.graphing import CGraphPlain, GHOST_TRANSP_HEX, gtk_rgb_to_hex
 from cylc.gui.warning_dialog import warning_dialog
 from cylc.gui.util import get_id_summary
 from cylc.mkdir_p import mkdir_p
@@ -100,7 +100,6 @@ class GraphUpdater(threading.Thread):
         self.fam_state_summary = {}
         self.global_summary = {}
         self.last_update_time = None
-        self.fgcolor = None
 
         self.god = None
         self.mode = "waiting..."
@@ -237,9 +236,12 @@ class GraphUpdater(threading.Thread):
             sleep(0.2)
 
     def update_xdot(self, no_zoom=False):
-        bgcolor = getattr(self.xdot.widget.style, 'bg', None)[gtk.STATE_NORMAL]
-        self.fgcolor = getattr(self.xdot.widget.style, 'fg', None)[gtk.STATE_NORMAL]
-        self.graphw.set_def_style(self.fgcolor, bgcolor)
+        self.graphw.set_def_style(
+            gtk_rgb_to_hex(
+                getattr(self.xdot.widget.style, 'fg', None)[gtk.STATE_NORMAL]),
+            gtk_rgb_to_hex(
+                getattr(self.xdot.widget.style, 'bg', None)[gtk.STATE_NORMAL])
+        )
         self.xdot.set_dotcode(self.graphw.to_string(), no_zoom=no_zoom)
         if self.first_update:
             self.xdot.widget.zoom_to_fit()
@@ -326,6 +328,8 @@ class GraphUpdater(threading.Thread):
         self.have_leaves_and_feet = True
         gr_edges, suite_polling_tasks, self.leaves, self.feet = res
         gr_edges = [tuple(edge) for edge in gr_edges]
+        fgcolor = gtk_rgb_to_hex(
+            getattr(self.xdot.widget.style, 'fg', None)[gtk.STATE_NORMAL])
 
         current_id = self.get_graph_id(gr_edges)
         if current_id != self.prev_graph_id:
@@ -410,13 +414,14 @@ class GraphUpdater(threading.Thread):
                     node.attr['shape'] = 'none'
 
             if self.subgraphs_on:
-                self.graphw.add_cycle_point_subgraphs(gr_edges, self.fgcolor)
+                self.graphw.add_cycle_point_subgraphs(gr_edges, fgcolor)
 
         # Set base node style defaults
+        fg_ghost = "%s%s" % (fgcolor, GHOST_TRANSP_HEX)
         for node in self.graphw.nodes():
             node.attr['style'] = 'dotted'
-            node.attr['color'] = self.fgcolor
-            node.attr['fontcolor'] = self.fgcolor
+            node.attr['color'] = fg_ghost
+            node.attr['fontcolor'] = fg_ghost
             if not node.attr['URL'].startswith(self.PREFIX_BASE):
                 node.attr['URL'] = self.PREFIX_BASE + node.attr['URL']
 

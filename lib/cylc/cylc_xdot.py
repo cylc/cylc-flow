@@ -30,7 +30,7 @@ import xdot
 from cylc import LOG
 from cylc.config import SuiteConfig
 from cylc.cycling.loader import get_point
-from cylc.graphing import CGraphPlain, CGraph
+from cylc.graphing import CGraphPlain, CGraph, GHOST_TRANSP_HEX, gtk_rgb_to_hex
 from cylc.gui import util
 from cylc.task_id import TaskID
 
@@ -193,19 +193,18 @@ class MyDotWindow2(CylcDotViewerCommon):
     def get_graph(self):
         title = self.suite + ': runtime inheritance graph'
         graph = CGraphPlain(title)
+        graph.set_def_style(
+            gtk_rgb_to_hex(
+                getattr(self.style, 'fg', None)[gtk.STATE_NORMAL]),
+            gtk_rgb_to_hex(
+                getattr(self.style, 'bg', None)[gtk.STATE_NORMAL])
+        )
         graph.graph_attr['rankdir'] = self.orientation
         for ns in self.inherit:
             for p in self.inherit[ns]:
-                attr = {}
-                attr['color'] = 'royalblue'
-                graph.add_edge(p, ns, **attr)
-                nl = graph.get_node(p)
-                nr = graph.get_node(ns)
-                for n in nl, nr:
-                    n.attr['shape'] = 'box'
-                    n.attr['style'] = 'filled'
-                    n.attr['fillcolor'] = 'powderblue'
-                    n.attr['color'] = 'royalblue'
+                graph.add_edge(p, ns)
+                graph.get_node(p).attr['shape'] = 'box'
+                graph.get_node(ns).attr['shape'] = 'box'
 
         self.graph = graph
         self.filter_graph()
@@ -413,9 +412,10 @@ class MyDotWindow(CylcDotViewerCommon):
         family_nodes = self.suiterc.get_first_parent_descendants()
         # Note this is used by "cylc graph" but not gcylc.
         # self.start_ and self.stop_point_string come from CLI.
-
-        tbg_color = getattr(self.style, 'bg', None)[gtk.STATE_NORMAL]
-        tfg_color = getattr(self.style, 'fg', None)[gtk.STATE_NORMAL]
+        bg_color = gtk_rgb_to_hex(
+            getattr(self.style, 'bg', None)[gtk.STATE_NORMAL])
+        fg_color = gtk_rgb_to_hex(
+            getattr(self.style, 'fg', None)[gtk.STATE_NORMAL])
         graph = CGraph.get_graph(
             self.suiterc,
             group_nodes=group_nodes,
@@ -424,12 +424,13 @@ class MyDotWindow(CylcDotViewerCommon):
             group_all=group_all, ungroup_all=ungroup_all,
             ignore_suicide=self.ignore_suicide,
             subgraphs_on=self.subgraphs_on,
-            bgcolor=tbg_color, fgcolor=tfg_color)
+            bgcolor=bg_color, fgcolor=fg_color)
 
         graph.graph_attr['rankdir'] = self.orientation
 
         # Style nodes.
         cache = {}  # For caching is_on_sequence() calls.
+        fg_ghost = "%s%s" % (fg_color, GHOST_TRANSP_HEX)
         for node in graph.iternodes():
             name, point = TaskID.split(node.get_name())
             if name.startswith('@'):
@@ -442,7 +443,8 @@ class MyDotWindow(CylcDotViewerCommon):
                 # in the suite's graphing.
             elif self.is_off_sequence(name, point, cache=cache):
                 node.attr['style'] = 'dotted'
-                node.attr['fontcolor'] = graph.graph_attr['fontcolor']
+                node.attr['color'] = fg_ghost
+                node.attr['fontcolor'] = fg_ghost
 
         self.graph = graph
         self.filter_graph()
