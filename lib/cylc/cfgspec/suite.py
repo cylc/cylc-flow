@@ -270,8 +270,8 @@ SPEC = {
         'node penwidth': [VDR.V_INTEGER, 2],
         'edge penwidth': [VDR.V_INTEGER, 2],
         'default node attributes': [
-            VDR.V_STRING_LIST, ['style=unfilled', 'color=black', 'shape=box']],
-        'default edge attributes': [VDR.V_STRING_LIST, ['color=black']],
+            VDR.V_STRING_LIST, ['style=unfilled', 'shape=box']],
+        'default edge attributes': [VDR.V_STRING_LIST],
         'node groups': {
             '__MANY__': [VDR.V_STRING_LIST],
         },

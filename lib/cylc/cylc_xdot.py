@@ -35,13 +35,6 @@ from cylc.gui import util
 from cylc.task_id import TaskID
 
 
-def style_ghost_node(node):
-    """Apply default style to a ghost node."""
-    node.attr['color'] = '#888888'
-    node.attr['fontcolor'] = '#888888'
-    node.attr['fillcolor'] = '#eeeeee'  # Used when style=filled.
-
-
 class CylcDotViewerCommon(xdot.DotWindow):
 
     def __init__(self, suite, suiterc, template_vars, orientation="TB",
@@ -387,8 +380,11 @@ class MyDotWindow(CylcDotViewerCommon):
     def ungroup_all(self, w):
         self.get_graph(ungroup_all=True)
 
-    def is_ghost_task(self, name, point, cache=None):
-        """Returns True if the task <name> at cycle point <point> is a ghost.
+    def is_off_sequence(self, name, point, cache=None):
+        """Return True if task <name> at point <point> is off-sequence.
+
+        (This implies inter-cycle dependence on a task that will not be
+        instantiated at run time).
         """
         try:
             sequences = self.suiterc.taskdefs[name].sequences
@@ -427,6 +423,8 @@ class MyDotWindow(CylcDotViewerCommon):
             subgraphs_on=self.subgraphs_on)
 
         graph.graph_attr['rankdir'] = self.orientation
+        tcolor = getattr(self.style, 'bg', None)[gtk.STATE_NORMAL]
+        graph.restyle(tcolor)
 
         # Style nodes.
         cache = {}  # For caching is_on_sequence() calls.
@@ -440,9 +438,8 @@ class MyDotWindow(CylcDotViewerCommon):
                 node.attr['shape'] = 'doubleoctagon'
                 # Detecting ghost families would involve analysing triggers
                 # in the suite's graphing.
-            elif self.is_ghost_task(name, point, cache=cache):
-                # Style ghost nodes.
-                style_ghost_node(node)
+            elif self.is_off_sequence(name, point, cache=cache):
+                node.attr['style'] = 'dotted'
 
         self.graph = graph
         self.filter_graph()

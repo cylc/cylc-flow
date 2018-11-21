@@ -1608,10 +1608,6 @@ class DotWidget(gtk.DrawingArea):
             event.area.width, event.area.height
         )
         cr.clip()
-
-        # Turn off white canvas border area.
-        # cr.set_source_rgba(1.0, 1.0, 1.0, 1.0)
-        # cr.paint()
         cr.save()
         rect = self.get_allocation()
         cr.translate(0.5*rect.width, 0.5*rect.height)

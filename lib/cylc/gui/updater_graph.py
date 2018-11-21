@@ -236,8 +236,8 @@ class GraphUpdater(threading.Thread):
             sleep(0.2)
 
     def update_xdot(self, no_zoom=False):
-        colors = getattr(self.xdot.widget.style, 'bg', None)
-        self.graphw.graph_attr['bgcolor'] = colors[gtk.STATE_NORMAL]
+        tcolor = getattr(self.xdot.widget.style, 'bg', None)[gtk.STATE_NORMAL]
+        self.graphw.restyle(tcolor)
         self.xdot.set_dotcode(self.graphw.to_string(), no_zoom=no_zoom)
         if self.first_update:
             self.xdot.widget.zoom_to_fit()

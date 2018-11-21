@@ -38,6 +38,13 @@ class CGraphPlain(pygraphviz.AGraph):
             suite_polling_tasks = {}
         self.suite_polling_tasks = suite_polling_tasks
 
+    def set_color(self, color):
+        self.graph_attr['bgcolor'] = '#ffffff00'  # transparent white
+        self.graph_attr['fontcolor'] = color  # graph and cluster titles
+        self.node_attr['color'] = color  # node outlines
+        self.node_attr['fontcolor'] = color  # node labels
+        self.edge_attr['color'] = color  # edges
+
     def style_edge(self, left, right):
         pass
 
@@ -259,11 +266,21 @@ class CGraphPlain(pygraphviz.AGraph):
 
         return subgraph
 
+    def restyle(self, bgcolor):
+        if sum([bgcolor.red_float, bgcolor.green_float,
+                bgcolor.blue_float]) > 1.5:
+            graph_color = 'black'  # light color theme
+        else:
+            graph_color = 'white'  # dark color theme
+        self.set_color(graph_color)
+
 
 class CGraph(CGraphPlain):
     """Directed Acyclic Graph class for cylc dependency graphs.
-    This class automatically adds node and edge attributes
-    according to the suite.rc file visualization config."""
+
+    For "cylc graph" - add node and edge attributes according to the suite.rc
+    file visualization config.
+    """
 
     def __init__(self, title, suite_polling_tasks=None, vizconfig=None):
 
