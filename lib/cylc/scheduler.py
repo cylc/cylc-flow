@@ -160,6 +160,7 @@ class Scheduler(object):
         self.owner = get_user()
         self.host = get_host()
 
+        self.is_updated = False
         self.is_stalled = False
 
         self.contact_data = None
@@ -627,7 +628,7 @@ conditions; see `cylc conditions`.
                         (n_warnings, cmdstr))
                 else:
                     LOG.info('Command succeeded: ' + cmdstr)
-                cylc.flags.iflag = True
+                self.is_updated = True
                 if name in self.PROC_CMDS:
                     self.task_events_mgr.pflag = True
             self.command_queue.task_done()
@@ -939,7 +940,7 @@ conditions; see `cylc conditions`.
         if self.options.genref or self.options.reftest:
             self.configure_reftest(recon=True)
         self.suite_db_mgr.put_suite_params(self)
-        cylc.flags.iflag = True
+        self.is_updated = True
 
     def set_suite_timer(self):
         """Set suite's timeout timer."""
@@ -1216,7 +1217,7 @@ conditions; see `cylc conditions`.
         self.run_event_handlers(self.EVENT_STARTUP, 'suite starting')
         self.profiler.log_memory("scheduler.py: begin run while loop")
         self.time_next_fs_check = None
-        cylc.flags.iflag = True
+        self.is_updated = True
         if self.options.profile_mode:
             self.previous_profile_point = 0
             self.count = 0
@@ -1236,7 +1237,7 @@ conditions; see `cylc conditions`.
         if self.stop_mode is None:
             itasks = self.pool.get_ready_tasks()
             if itasks:
-                cylc.flags.iflag = True
+                self.is_updated = True
             done_tasks = self.task_job_mgr.submit_task_jobs(
                 self.suite, itasks, self.run_mode == 'simulation')
             if self.config.cfg['cylc']['log resolved dependencies']:
@@ -1248,7 +1249,7 @@ conditions; see `cylc conditions`.
                 self.pool.remove_spent_tasks,
                 self.pool.remove_suiciding_tasks]:
             if meth():
-                cylc.flags.iflag = True
+                self.is_updated = True
 
         self.broadcast_mgr.expire_broadcast(self.pool.get_min_point())
         self.xtrigger_mgr.housekeep()
@@ -1405,11 +1406,11 @@ conditions; see `cylc conditions`.
             if self.pool.do_reload:
                 self.pool.reload_taskdefs()
                 self.suite_db_mgr.checkpoint("reload-done")
-                cylc.flags.iflag = True
+                self.is_updated = True
 
             self.process_command_queue()
             if self.pool.release_runahead_tasks():
-                cylc.flags.iflag = True
+                self.is_updated = True
                 self.task_events_mgr.pflag = True
             self.proc_pool.process()
 
@@ -1423,12 +1424,9 @@ conditions; see `cylc conditions`.
             self.process_command_queue()
             self.task_events_mgr.process_events(self)
 
-            # Update database
+            # Update state summary and database
             self.suite_db_mgr.put_task_event_timers(self.task_events_mgr)
-            has_changes = cylc.flags.iflag
-            if cylc.flags.iflag:
-                self.suite_db_mgr.put_task_pool(self.pool)
-                self.update_state_summary()  # Will reset cylc.flags.iflag
+            has_updated = self.update_state_summary()
             self.process_suite_db_queue()
 
             # If public database is stuck, blast it away by copying the content
@@ -1442,7 +1440,7 @@ conditions; see `cylc conditions`.
             self.suite_shutdown()
 
             # Suite health checks
-            self.suite_health_check(has_changes)
+            self.suite_health_check(has_updated)
 
             if self.options.profile_mode:
                 self.update_profiler_logs(tinit)
@@ -1467,16 +1465,24 @@ conditions; see `cylc conditions`.
 
     def update_state_summary(self):
         """Update state summary, e.g. for GUI."""
-        self.state_summary_mgr.update(self)
-        cylc.flags.iflag = False
-        self.is_stalled = False
-        if self.suite_timer_active:
-            self.suite_timer_active = False
-            LOG.debug(
-                "%s suite timer stopped NOW: %s",
-                get_seconds_as_interval_string(
-                    self._get_events_conf(self.EVENT_TIMEOUT)),
-                get_current_time_string())
+        updated_tasks = [
+            t for t in self.pool.get_all_tasks() if t.state.is_updated]
+        has_updated = self.is_updated or updated_tasks
+        if has_updated:
+            self.state_summary_mgr.update(self)
+            self.suite_db_mgr.put_task_pool(self.pool)
+            self.is_updated = False
+            self.is_stalled = False
+            for itask in updated_tasks:
+                itask.state.is_updated = False
+            if self.suite_timer_active:
+                self.suite_timer_active = False
+                LOG.debug(
+                    "%s suite timer stopped NOW: %s",
+                    get_seconds_as_interval_string(
+                        self._get_events_conf(self.EVENT_TIMEOUT)),
+                    get_current_time_string())
+        return has_updated
 
     def check_suite_timer(self):
         """Check if suite has timed out or not."""

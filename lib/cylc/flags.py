@@ -18,10 +18,6 @@
 
 """Some global flags used in cylc"""
 
-# Set iflag = True to simulate an update of the suite state summary
-# structure accessed by gcylc and commands.
-iflag = False
-
 # verbose mode
 verbose = False
 

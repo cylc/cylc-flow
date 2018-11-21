@@ -77,6 +77,7 @@ class TaskJobManager(object):
     JOBS_KILL = 'jobs-kill'
     JOBS_POLL = 'jobs-poll'
     JOBS_SUBMIT = SuiteProcPool.JOBS_SUBMIT
+    POLL_FAIL = 'poll failed'
     REMOTE_SELECT_MSG = 'waiting for remote host selection'
     REMOTE_INIT_MSG = 'remote host initialising'
     KEY_EXECUTE_TIME_LIMIT = TaskEventsManager.KEY_EXECUTE_TIME_LIMIT
@@ -215,7 +216,7 @@ class TaskJobManager(object):
             if is_init is None:
                 # Remote is waiting to be initialised
                 for itask in itasks:
-                    itask.summary['latest_message'] = self.REMOTE_INIT_MSG
+                    itask.set_summary_message(self.REMOTE_INIT_MSG)
                 continue
             # Ensure that localhost background/at jobs are recorded as running
             # on the host name of the current suite host, rather than just
@@ -451,17 +452,15 @@ class TaskJobManager(object):
             self.task_events_mgr.process_message(
                 itask, CRITICAL, self.task_events_mgr.EVENT_SUBMIT_FAILED,
                 ctx.timestamp)
-            cylc.flags.iflag = True
         elif itask.state.status == TASK_STATUS_RUNNING:
             self.task_events_mgr.process_message(
                 itask, CRITICAL, TASK_OUTPUT_FAILED)
-            cylc.flags.iflag = True
         else:
             log_lvl = DEBUG
             log_msg = (
                 'ignoring job kill result, unexpected task state: %s' %
                 itask.state.status)
-        itask.summary['latest_message'] = log_msg
+        itask.set_summary_message(log_msg)
         LOG.log(log_lvl, "[%s] -job(%02d) %s" % (
             itask.identity, itask.submit_num, log_msg))
 
@@ -539,8 +538,7 @@ class TaskJobManager(object):
                     x, key in enumerate(JobPollContext.CONTEXT_ATTRIBUTES))
                 job_log_dir = items.pop('job_log_dir')
             except (ValueError, IndexError):
-                itask.summary['latest_message'] = 'poll failed'
-                cylc.flags.iflag = True
+                itask.set_summary_message(self.POLL_FAIL)
                 ctx.cmd = cmd_ctx.cmd  # print original command on failure
                 return
         finally:
@@ -753,7 +751,7 @@ class TaskJobManager(object):
             return False
         else:
             if task_host is None:  # host select not ready
-                itask.summary['latest_message'] = self.REMOTE_SELECT_MSG
+                itask.set_summary_message(self.REMOTE_SELECT_MSG)
                 return
             itask.task_host = task_host
             # Submit number not yet incremented
@@ -776,7 +774,7 @@ class TaskJobManager(object):
 
         if dry_run:
             # This will be shown next to submit num in gcylc:
-            itask.summary['latest_message'] = 'job file written (edit/dry-run)'
+            itask.set_summary_message('job file written (edit/dry-run)')
             LOG.debug('[%s] -%s', itask, itask.summary['latest_message'])
 
         # Return value used by "cylc submit" and "cylc jobscript":
