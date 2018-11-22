@@ -15,19 +15,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""PBS batch system job submission and manipulation.
+"""PBS batch system job submission and manipulation: multi-cluster variant.
 
-This variant supports heteorogenous clusters where the Job ID returned by qsub
-is <job-id>.<server>. Prior to PBS 14 job query and kill need to target
-<job-id>@<server>.
+Support PBS clients that front heterogeneous clusters where the Job ID returned
+by qsub is <id>.<server>. PBS 13 qstat and qdel need <id>.<server>@<server>.
+From PBS 14, the standard cylc PBS module works ("@<server>" is not needed).
 
-This is achieved by:
-  - providing a manip_job_id() method to append "@<server>" to the Job ID
-    returned by qsub, for writing to the job status file.
-  - providing a filter_poll_many_output() method to append "@<server>" to the
-    Job IDs returned by qstat, for comparison with those known by cylc.
-
-From PBS 14 the standard "pbs" module works ("@<server>" is not needed).
+So this PBS handler writes "job_id@server" to the job status file, and appends
+"@server" to Job IDs returned by qstat, to matched the stored IDs.
 """
 
 from cylc.batch_sys_handlers.pbs import PBSHandler
@@ -37,6 +32,7 @@ class PBSMulticlusterHandler(PBSHandler):
 
     @classmethod
     def filter_poll_many_output(cls, out):
+        """For job_id's of the form "id.server", return job_id@server."""
         out = out.strip()
         job_ids = []
         lines = out.split('\n')
@@ -48,7 +44,7 @@ class PBSMulticlusterHandler(PBSHandler):
 
     @classmethod
     def manip_job_id(cls, job_id):
-        """Manipulate the job ID returned by qsub."""
+        """For job_id of the form "id.server", return job_id@server."""
         _, server = job_id.split('.')
         return job_id + '@' + server
 
