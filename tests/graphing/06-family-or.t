@@ -44,20 +44,20 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${PWD}/suite.rc"
 
 graph_suite "${PWD}/suite.rc" 'graph.plain'
 cmp_ok 'graph.plain' - <<'__GRAPH__'
-edge "A.20000101T0000Z" "c.20000102T0000Z" solid
-edge "A.20000102T0000Z" "c.20000103T0000Z" solid
-edge "B.20000101T0000Z" "c.20000102T0000Z" solid
-edge "B.20000102T0000Z" "c.20000103T0000Z" solid
+edge "A.20000101T0000Z" "c.20000102T0000Z"
+edge "A.20000102T0000Z" "c.20000103T0000Z"
+edge "B.20000101T0000Z" "c.20000102T0000Z"
+edge "B.20000102T0000Z" "c.20000103T0000Z"
 graph
-node "A.20000101T0000Z" "A\n20000101T0000Z" unfilled doubleoctagon black
-node "A.20000102T0000Z" "A\n20000102T0000Z" unfilled doubleoctagon black
-node "A.20000103T0000Z" "A\n20000103T0000Z" unfilled doubleoctagon black
-node "B.20000101T0000Z" "B\n20000101T0000Z" unfilled doubleoctagon black
-node "B.20000102T0000Z" "B\n20000102T0000Z" unfilled doubleoctagon black
-node "B.20000103T0000Z" "B\n20000103T0000Z" unfilled doubleoctagon black
-node "c.20000101T0000Z" "c\n20000101T0000Z" unfilled ellipse black
-node "c.20000102T0000Z" "c\n20000102T0000Z" unfilled ellipse black
-node "c.20000103T0000Z" "c\n20000103T0000Z" unfilled ellipse black
+node "A.20000101T0000Z" "A\n20000101T0000Z"
+node "A.20000102T0000Z" "A\n20000102T0000Z"
+node "A.20000103T0000Z" "A\n20000103T0000Z"
+node "B.20000101T0000Z" "B\n20000101T0000Z"
+node "B.20000102T0000Z" "B\n20000102T0000Z"
+node "B.20000103T0000Z" "B\n20000103T0000Z"
+node "c.20000101T0000Z" "c\n20000101T0000Z"
+node "c.20000102T0000Z" "c\n20000102T0000Z"
+node "c.20000103T0000Z" "c\n20000103T0000Z"
 stop
 __GRAPH__
 

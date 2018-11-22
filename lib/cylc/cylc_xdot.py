@@ -520,4 +520,10 @@ def get_reference_from_plain_format(plain_text):
                 pass
         indexed_lines.append((line_items, line))
     indexed_lines.sort()
-    return "".join(l[1] for l in indexed_lines)
+    # Strip node styling info (may depend on desktop theme).
+    lines = "".join(l[1] for l in indexed_lines)
+    stripped_lines = []
+    for line in lines.split("\n"):
+        line_items = line.split(' ')
+        stripped_lines.append(' '.join(line_items[0:3]))
+    return '\n'.join(stripped_lines)

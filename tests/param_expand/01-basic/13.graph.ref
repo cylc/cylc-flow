@@ -1,14 +1,14 @@
-edge "foo%percent.1" "bar%percent.1" solid
-edge "foo+plus.1" "bar+plus.1" solid
-edge "foo-minus.1" "bar-minus.1" solid
-edge "foo@at.1" "bar@at.1" solid
+edge "foo%percent.1" "bar%percent.1"
+edge "foo+plus.1" "bar+plus.1"
+edge "foo-minus.1" "bar-minus.1"
+edge "foo@at.1" "bar@at.1"
 graph
-node "bar%percent.1" "bar%percent\n1" unfilled ellipse black
-node "bar+plus.1" "bar+plus\n1" unfilled ellipse black
-node "bar-minus.1" "bar-minus\n1" unfilled ellipse black
-node "bar@at.1" "bar@at\n1" unfilled ellipse black
-node "foo%percent.1" "foo%percent\n1" unfilled ellipse black
-node "foo+plus.1" "foo+plus\n1" unfilled ellipse black
-node "foo-minus.1" "foo-minus\n1" unfilled ellipse black
-node "foo@at.1" "foo@at\n1" unfilled ellipse black
+node "bar%percent.1" "bar%percent\n1"
+node "bar+plus.1" "bar+plus\n1"
+node "bar-minus.1" "bar-minus\n1"
+node "bar@at.1" "bar@at\n1"
+node "foo%percent.1" "foo%percent\n1"
+node "foo+plus.1" "foo+plus\n1"
+node "foo-minus.1" "foo-minus\n1"
+node "foo@at.1" "foo@at\n1"
 stop
