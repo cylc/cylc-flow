@@ -33,7 +33,7 @@ matrix:
       env: CHUNK='1/4'
       before_script:
         # we must run unit tests only once
-        - PYTHONPATH=$(pwd -P)/lib/ py.test
+        - PYTHONPATH=$(pwd -P)/lib/ pytest --cov-append --cov=lib/cylc --cov=lib/parsec
     - name: "2/4"
       env: CHUNK='2/4'
     - name: "3/4"
