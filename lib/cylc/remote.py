@@ -169,8 +169,13 @@ def construct_ssh_cmd(raw_cmd, user=None, host=None, forward_x11=False,
         user_at_host += 'localhost'
     command.append(user_at_host)
 
-    # Pass cylc version (and optionally UTC mode) through.
+    # Pass CYLC_VERSION and optionally, CYLC_CONF_PATH & CYLC_UTC through.
     command += ['env', quote(r'CYLC_VERSION=%s' % CYLC_VERSION)]
+    try:
+        command.append(
+            quote(r'CYLC_CONF_PATH=%s' % os.environ['CYLC_CONF_PATH']))
+    except KeyError:
+        pass
     if set_UTC and os.getenv('CYLC_UTC') in ["True", "true"]:
         command.append(quote(r'CYLC_UTC=True'))
         command.append(quote(r'TZ=UTC'))

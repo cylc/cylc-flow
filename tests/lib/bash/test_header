@@ -71,6 +71,11 @@
 #     install_suite TEST_NAME SOURCE
 #         Same as init_suite, but SOURCE must be a directory containing a
 #         "suite.rc" file. Also provides SOURCE as ORIG_SUITE_NAME variable.
+#     log_scan TEST_NAME FILE ATTEMPTS DELAY PATTERN...
+#         Monitor FILE polling every DELAY seconds for maximum of ATTEMPTS
+#         tries grepping for each PATTERN in turn. Tests will only pass if the
+#         PATTERNs appear in FILE in the correct order. Runs one test per
+#         pattern, each prefixed by TEST_NAME.
 #     mock_smtpd_init
 #         Start a mock SMTP server daemon for testing. Write host:port setting
 #         to the variable TEST_SMTPD_HOST. Write pid of daemon to
@@ -402,6 +407,51 @@ install_suite() {
     cp -r "${TEST_SOURCE_DIR}/${TEST_SOURCE_BASE}/"* "${TEST_DIR}/${SUITE_NAME}/"
     cylc register "${SUITE_NAME}" "${TEST_DIR}/${SUITE_NAME}" 2>'/dev/null'
     cd "${TEST_DIR}/${SUITE_NAME}"
+}
+
+log_scan () {
+    local TEST_NAME="$1"
+    local FILE="$2"
+    local REPS=$3
+    local DELAY=$4
+    if ${CYLC_TEST_DEBUG:-false}; then
+        local ERR=2
+    else
+        local ERR=1
+    fi
+    shift 4
+    local count=0
+    local success=false
+    local position=0
+    local newposition=
+    for pattern in "$@"; do
+        count=$(( count + 1 ))
+        success=false
+        echo -n "scanning for '${pattern:0:30}'" >& $ERR
+        for try in $(seq 1 $REPS); do
+            echo -n '.' >& $ERR
+            newposition=$(grep -n "$pattern" "$FILE" | \
+                tail -n 1 | cut -d ':' -f 1)
+            if (( newposition > position )); then
+                position=$newposition
+                echo ': succeeded' >& $ERR
+                ok "${TEST_NAME}-${count}"
+                success=true
+                break
+            fi
+            sleep $DELAY
+        done
+        shift
+        if ! $success; then
+            echo ': failed' >& $ERR
+            fail "${TEST_NAME}-${count}"
+            if ${CYLC_TEST_DEBUG:-}; then
+                cat "${FILE}" >&2
+            fi
+            skip "$#"
+            return 1
+        fi
+    done
 }
 
 purge_suite_remote() {

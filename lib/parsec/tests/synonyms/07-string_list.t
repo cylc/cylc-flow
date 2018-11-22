@@ -1,7 +1,7 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA
-# 
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -15,27 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Run unit tests to test HostAppointer class for selecting hosts.
-. "$(dirname "$0")/test_header"
+# Test parsing of string list items
+. $(dirname $0)/test_header
+
 #-------------------------------------------------------------------------------
-set_test_number 3
+set_test_number 2
 
-run_ok "${TEST_NAME_BASE}" python -m 'cylc.scheduler_cli'
-
-# No run hosts list
-create_test_globalrc '' ''
-run_ok "${TEST_NAME_BASE}-no-host-list" python - <<'__PYTHON__'
-from cylc.scheduler_cli import HostAppointer
-assert HostAppointer().appoint_host() == 'localhost'
-__PYTHON__
-
-# Empty run hosts list
-create_test_globalrc '' '
-[suite servers]
-    run hosts =
-'
-run_ok "${TEST_NAME_BASE}-empty-host-list" python - <<'__PYTHON__'
-from cylc.scheduler_cli import HostAppointer
-assert HostAppointer().appoint_host() == 'localhost'
-__PYTHON__
-exit
+install_test $TEST_NAME_BASE
+#-------------------------------------------------------------------------------
+#synonyms.py spaceless_string_list >&2
+run_ok "${TEST_NAME_BASE}-good" synonyms.py spaceless_string_list
+run_ok "${TEST_NAME_BASE}-bad" python -m doctest \
+    "${CYLC_DIR}/lib/parsec/validate.py"
