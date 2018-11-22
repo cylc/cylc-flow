@@ -18,7 +18,7 @@
 # Run unit tests to test HostAppointer class for selecting hosts.
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 7
+set_test_number 9
 
 run_ok "${TEST_NAME_BASE}" python -m 'cylc.host_appointer'
 
@@ -52,6 +52,20 @@ for _ in range(10):
     if appointer.appoint_host() != "localhost":
         sys.exit(1)
 '
+
+# Invalid hostnames
+create_test_globalrc '' "
+[suite servers]
+    run hosts = foo bar
+[suite servers]
+    condemned hosts = localhost
+"
+run_fail "${TEST_NAME_BASE}-invalid" python -c '
+from cylc.host_appointer import HostAppointer
+HostAppointer().appoint_host()
+'
+grep_ok 'list item "foo bar" cannot contain a space character' \
+    "${TEST_NAME_BASE}-invalid.stderr"
 
 export CYLC_TEST_HOST=$( \
     cylc get-global-config -i '[test battery]remote host with shared fs' \

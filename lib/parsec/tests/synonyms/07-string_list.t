@@ -1,5 +1,4 @@
-#!/usr/bin/env python2
-
+#!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -15,17 +14,16 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#-------------------------------------------------------------------------------
+# Test parsing of string list items
+. $(dirname $0)/test_header
 
-from parsec.validate import ParsecValidator as VDR
+#-------------------------------------------------------------------------------
+set_test_number 2
 
-SPEC = {
-    'boolean': {'__MANY__': {'__MANY__': [VDR.V_BOOLEAN]}},
-    'integer': {'__MANY__': {'__MANY__': [VDR.V_INTEGER]}},
-    'float': {'__MANY__': {'__MANY__': [VDR.V_FLOAT]}},
-    'string': {'__MANY__': {'__MANY__': [VDR.V_STRING]}},
-    'string_list': {'__MANY__': {'__MANY__': [VDR.V_STRING_LIST]}},
-    'spaceless_string_list': {'__MANY__': {'__MANY__': [
-        VDR.V_SPACELESS_STRING_LIST]}},
-    'float_list': {'__MANY__': {'__MANY__': [VDR.V_FLOAT_LIST]}},
-    'integer_list': {'__MANY__': {'__MANY__': [VDR.V_INTEGER_LIST]}},
-}
+install_test $TEST_NAME_BASE
+#-------------------------------------------------------------------------------
+#synonyms.py spaceless_string_list >&2
+run_ok "${TEST_NAME_BASE}-good" synonyms.py spaceless_string_list
+run_ok "${TEST_NAME_BASE}-bad" python -m doctest \
+    "${CYLC_DIR}/lib/parsec/validate.py"
