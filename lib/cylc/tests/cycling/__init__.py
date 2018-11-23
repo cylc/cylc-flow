@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env python2
+
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -14,12 +15,3 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-# Run graph parser unit tests.
-. "$(dirname "$0")/test_header"
-
-set_test_number 2
-
-TEST_NAME="$TEST_NAME_BASE-unit-tests"
-run_ok "${TEST_NAME_BASE}-cylc.graph-parser" python -m 'cylc.graph_parser'
-run_ok "${TEST_NAME_BASE}-cylc.cycling" python -m 'cylc.cycling.__init__'

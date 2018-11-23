@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env python2
+
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -15,9 +16,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Run graph parser unit tests.
-. "$(dirname "$0")/test_header"
-set_test_number 1
+import os
+import unittest
 
-run_ok "${TEST_NAME_BASE}" python -m 'cylc.param_expand'
-exit
+from cylc.hostuserutil import get_host, is_remote_host, is_remote_user
+
+
+class TestLocal(unittest.TestCase):
+    """Test is_remote* behaves with local host and user."""
+
+    def test_users(self):
+        """is_remote_user with local users."""
+        self.assertFalse(is_remote_user(None))
+        self.assertFalse(is_remote_user(os.getenv('USER')))
+
+    def test_hosts(self):
+        """is_remote_host with local hosts."""
+        self.assertFalse(is_remote_host(None))
+        self.assertFalse(is_remote_host('localhost'))
+        self.assertFalse(is_remote_host(os.getenv('HOSTNAME')))
+        self.assertFalse(is_remote_host(get_host()))
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env python2
+
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -14,11 +15,3 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-# Run suite info API unit tests.
-. "$(dirname "$0")/test_header"
-set_test_number 1
-
-run_ok "${TEST_NAME_BASE}-unit-tests" python -m 'cylc.network.httpclient'
-
-exit

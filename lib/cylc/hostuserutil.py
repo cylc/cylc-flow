@@ -247,24 +247,3 @@ def is_remote_host(name):
 def is_remote_user(name):
     """Return True if name is not a name of the current user."""
     return HostUtil.get_inst().is_remote_user(name)
-
-
-if __name__ == "__main__":
-    import unittest
-
-    class TestLocal(unittest.TestCase):
-        """Test is_remote* behaves with local host and user."""
-
-        def test_users(self):
-            """is_remote_user with local users."""
-            self.assertFalse(is_remote_user(None))
-            self.assertFalse(is_remote_user(os.getenv('USER')))
-
-        def test_hosts(self):
-            """is_remote_host with local hosts."""
-            self.assertFalse(is_remote_host(None))
-            self.assertFalse(is_remote_host('localhost'))
-            self.assertFalse(is_remote_host(os.getenv('HOSTNAME')))
-            self.assertFalse(is_remote_host(get_host()))
-
-    unittest.main()

@@ -15,12 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Run unit tests to test HostAppointer class for selecting hosts.
+# Run tests to test HostAppointer class for selecting hosts.
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 9
-
-run_ok "${TEST_NAME_BASE}" python -m 'cylc.host_appointer'
+set_test_number 8
 
 # No run hosts list
 create_test_globalrc '' ''

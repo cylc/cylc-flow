@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env python2
+
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
 #
@@ -14,11 +15,21 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-------------------------------------------------------------------------------
-# Run unittest for cylc.cfgvalidate
-. "$(dirname "$0")/test_header"
 
-set_test_number 1
+import sys
 
-run_ok "${TEST_NAME_BASE}" python "${TEST_SOURCE_DIR}/test_cfgvalidate.py"
-exit
+from subprocess import call
+
+
+def main():
+    # Run tests with virtual frame buffer for X support.
+    if call('xvfb-run -a cylc test-battery --chunk $CHUNK --state=save -j 5',
+            shell=True) != 0:
+        # Non-zero return code
+        sys.stderr.write('\n\nRerunning Failed Tests...\n\n')
+        # Exit with final return code
+        sys.exit(call('cylc test-battery --state=failed -j 5', shell=True))
+
+
+if __name__ == '__main__':
+    main()
