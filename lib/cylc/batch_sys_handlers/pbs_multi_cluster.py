@@ -38,14 +38,14 @@ class PBSMulticlusterHandler(PBSHandler):
         lines = out.split('\n')
         for line in lines[2:]:
             job = line.split()[0]
-            _, server = job.split('.')
+            _, server = job.split('.', 1)
             job_ids.append(job + '@' + server)
         return job_ids
 
     @classmethod
     def manip_job_id(cls, job_id):
         """For job_id of the form "id.server", return job_id@server."""
-        _, server = job_id.split('.')
+        _, server = job_id.split('.', 1)
         return job_id + '@' + server
 
 
