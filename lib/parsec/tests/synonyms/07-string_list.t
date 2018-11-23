@@ -19,11 +19,9 @@
 . $(dirname $0)/test_header
 
 #-------------------------------------------------------------------------------
-set_test_number 2
+set_test_number 1
 
 install_test $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 #synonyms.py spaceless_string_list >&2
 run_ok "${TEST_NAME_BASE}-good" synonyms.py spaceless_string_list
-run_ok "${TEST_NAME_BASE}-bad" python -m doctest \
-    "${CYLC_DIR}/lib/parsec/validate.py"
