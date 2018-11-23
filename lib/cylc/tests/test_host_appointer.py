@@ -19,7 +19,8 @@
 import unittest
 import json
 from random import shuffle
-from cylc.scheduler_cli import HostAppointer, get_host
+from cylc.host_appointer import HostAppointer, EmptyHostList
+from cylc.hostuserutil import get_host
 
 
 class TestHostAppointer(unittest.TestCase):
@@ -31,7 +32,6 @@ class TestHostAppointer(unittest.TestCase):
 
     def create_custom_metric(self, disk_int, mem_int, load_floats):
         """Non-test method to create and return a dummy metric for testing.
-
         Return a structure in the format of 'get_host_metric' output
         containing fake data. 'disk_int' and 'mem_int' should be integers
         and 'load_floats' a list of three floats. Use 'None' instead to not
@@ -39,7 +39,7 @@ class TestHostAppointer(unittest.TestCase):
         """
         metric = {}
         if disk_int is not None:  # Distinguish None from '0', value to insert.
-            metric.update({'disk-space:' + self.app.use_disk_path: disk_int})
+            metric.update({'disk-space:' + self.app.USE_DISK_PATH: disk_int})
         if mem_int is not None:
             metric.update({"memory": mem_int})
         if load_floats is not None:
@@ -52,16 +52,15 @@ class TestHostAppointer(unittest.TestCase):
             metric.update(load_data)
         return json.dumps(metric)
 
-    def create_mock_hosts(self, N_hosts, initial_values, increments, load_var):
+    def create_mock_hosts(self, n_hosts, initial_values, increments, load_var):
         """Non-test method to create list of tuples of mock hosts and metrics.
-
-        For mock hosts, 'N_hosts' in number, create associated metrics with
+        For mock hosts, 'n_hosts' in number, create associated metrics with
         data values that are incremented to create known data variation. The
         list is shuffled to remove ordering by sequence position; name label
         numbers (lower for lower values) indicate the data ordering.
         """
         mock_host_data = []
-        for label in range(1, N_hosts + 1):
+        for label in range(1, n_hosts + 1):
             val = []
             # Indices {0,1,2} refer to {disk, memory, load} data respectively.
             for index in range(3):
@@ -79,14 +78,13 @@ class TestHostAppointer(unittest.TestCase):
                            set_thresholds=None):
         """Non-test method to edit global config input to HostAppointer()."""
         if set_hosts is None:
-            set_hosts = []
+            set_hosts = ['localhost']
         self.app.hosts = set_hosts
         self.app.rank_method = set_rank_method
         self.app.parsed_thresholds = self.app.parse_thresholds(set_thresholds)
 
     def setup_test_rank_good_hosts(self, num, init, incr, var):
         """Non-test method to setup routine tests for '_rank_good_hosts'.
-
         Note:
             * Host list input as arg so not reading from 'self.app.hosts' =>
               only 'set_rank_method' arg to 'mock_global_config' is relevant.
@@ -103,7 +101,7 @@ class TestHostAppointer(unittest.TestCase):
             'HOST_' + str(num)
         )
         self.mock_global_config(set_rank_method='disk-space:%s' %
-                                                self.app.use_disk_path)
+                                self.app.USE_DISK_PATH)
         self.assertEqual(
             self.app._rank_good_hosts(dict(
                 self.create_mock_hosts(num, init, incr, var))),
@@ -186,7 +184,7 @@ class TestHostAppointer(unittest.TestCase):
             'HOST_1'
         )
         self.assertRaises(
-            SystemExit,
+            EmptyHostList,
             self.app._trivial_choice, []
         )
 
@@ -209,11 +207,11 @@ class TestHostAppointer(unittest.TestCase):
         self.assertEqual(
             self.app._get_host_metrics_opts(), set(['--memory']))
         self.mock_global_config(
-            set_rank_method='disk-space:%s' % self.app.use_disk_path,
+            set_rank_method='disk-space:%s' % self.app.USE_DISK_PATH,
             set_thresholds='load:1 1000')
         self.assertEqual(
             self.app._get_host_metrics_opts(),
-            set(['--disk-space=' + self.app.use_disk_path, '--load']),
+            set(['--disk-space=' + self.app.USE_DISK_PATH, '--load']),
         )
         self.mock_global_config(
             set_rank_method='memory',
@@ -227,22 +225,21 @@ class TestHostAppointer(unittest.TestCase):
 
     def test_remove_bad_hosts(self):
         """Test the '_remove_bad_hosts' method.
-
         Test using 'localhost' only since remote host functionality is
         contained only inside remote_cylc_cmd() so is outside of the scope
         of HostAppointer.
         """
         self.mock_global_config(set_hosts=['localhost'])
-        self.assertTrue(self.app._remove_bad_hosts().get('localhost', False))
+        self.failUnless(self.app._remove_bad_hosts().get('localhost', False))
         # Test 'localhost' true identifier is treated properly too.
         self.mock_global_config(set_hosts=[get_host()])
-        self.assertTrue(self.app._remove_bad_hosts().get('localhost', False))
+        self.failUnless(self.app._remove_bad_hosts().get('localhost', False))
 
         self.mock_global_config(set_hosts=['localhost', 'FAKE_HOST'])
         # Check for no exceptions and 'localhost' but not 'FAKE_HOST' data
         # Difficult to unittest for specific stderr string; this is sufficient.
-        self.assertTrue(self.app._remove_bad_hosts().get('localhost', False))
-        self.assertTrue(self.app._remove_bad_hosts().get('FAKE_HOST', True))
+        self.failUnless(self.app._remove_bad_hosts().get('localhost', False))
+        self.failUnless(self.app._remove_bad_hosts().get('FAKE_HOST', True))
 
         # Apply thresholds impossible to pass; check results in host removal.
         self.mock_global_config(
@@ -282,11 +279,9 @@ class TestHostAppointer(unittest.TestCase):
 
     def test_appoint_host(self):
         """Test the 'appoint_host' method.
-
         This method calls all other methods in the class directly or
         indirectly, hence this is essentially a full-class test. The
         following phase space is covered:
-
             1. Number of hosts: none, one or multiple.
             2. Rank method: random, load (use just 5 min average case),
                             memory or disk space.
@@ -302,8 +297,8 @@ class TestHostAppointer(unittest.TestCase):
         # Enumerate all (24) correct results required to test equality with.
         # Correct results deduced individually based on mock host set. Note
         # only HOST_2 and HOST_3 pass all thresholds for thresholds_space[1].
-        correct_results = (8 * [SystemExit] +
-                           4 * ['HOST_1', SystemExit] +
+        correct_results = (8 * [EmptyHostList] +
+                           4 * ['HOST_1', EmptyHostList] +
                            ['HOST_X', 'HOST_Y', 'HOST_1', 'HOST_2', 'HOST_5',
                             'HOST_3', 'HOST_5', 'HOST_3'])
 
