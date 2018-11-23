@@ -92,5 +92,6 @@ class TestPBSMultiCluster(unittest.TestCase):
         import cylc.batch_sys_handlers.pbs_multi_cluster as m
         self.assertTrue(hasattr(m, 'BATCH_SYS_HANDLER'))
 
+
 if __name__ == '__main__':
     unittest.main()
