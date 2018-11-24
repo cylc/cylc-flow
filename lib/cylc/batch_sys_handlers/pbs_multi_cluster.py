@@ -30,9 +30,9 @@ from cylc.batch_sys_handlers.pbs import PBSHandler
 
 
 # Match and extract PBS Job ID of the form "<job>.<host>"
-REC_JOB = re.compile('^ *(?P<job>[^ ]+?)\.(?P<host>[^ ]+) *$')
+REC_JOB = re.compile(r'^ *(?P<job>[^ ]+?)\.(?P<host>[^ ]+) *$')
 # Replace with "<job>.<host>@<host>"
-REP_JOB = '\g<job>.\g<host>@\g<host>'
+REP_JOB = r'\g<job>.\g<host>@\g<host>'
 
 
 class PBSMulticlusterHandler(PBSHandler):
