@@ -23,42 +23,27 @@ from cylc.batch_sys_handlers.pbs_multi_cluster import *
 
 def get_test_filter_poll_many_output():
     return [
-        ("ignore\nignore\n123.localhost ignored", ["123.localhost@localhost"]),
-        ("\n\n#\n#\n10.samba", ["10.samba@samba"]),
+        ("header1\nheader2\n123.localhost", ["123.localhost@localhost"]),
         (
-            """
-            a
-            a
-            12.localhost ____ # this is ignored
-            09.jd-01
-            """,
+            """header1
+            header2
+            12.localhost
+            job123
+            09.jd-01.foo.bar""",
             [
                 "12.localhost@localhost",
-                "09.jd-01@jd-01",
+                "job123",  # unchanged
+                "09.jd-01.foo.bar@jd-01.foo.bar",
             ]
         ),
-        ("\n\n1.localhost", [])
-    ]
-
-
-def get_test_filter_poll_many_output_invalid():
-    return [
-        # could not find a `.`
-        ("a\nb\nnot_an_id", ValueError)
     ]
 
 
 def get_test_manip_job_id():
     return [
         ("1.localhost", "1.localhost@localhost"),
-        ("10000.jd-01", "10000.jd-01@jd-01")
-    ]
-
-
-def get_test_manip_job_id_invalid():
-    return [
-        # could not find a `.`
-        ("103", ValueError)
+        ("10000.jd-01", "10000.jd-01@jd-01"),
+        ("   1077   ", "1077")  # unchanged
     ]
 
 
@@ -70,23 +55,11 @@ class TestPBSMultiCluster(unittest.TestCase):
             job_ids = PBSMulticlusterHandler.filter_poll_many_output(out)
             self.assertEqual(expected, job_ids)
 
-    def test_filter_poll_many_output_invalid(self):
-        """Test filter_poll_many_output with invalid values."""
-        for out, ex in get_test_filter_poll_many_output_invalid():
-            with self.assertRaises(ex):
-                PBSMulticlusterHandler.filter_poll_many_output(out)
-
     def test_manip_job_id(self):
         """Basic tests for manip_job_id."""
         for job_id, expected in get_test_manip_job_id():
             mod_job_id = PBSMulticlusterHandler.manip_job_id(job_id)
             self.assertEqual(expected, mod_job_id)
-
-    def test_manip_job_id_invalid(self):
-        """Basic tests for manip_job_id with invalid values."""
-        for job_id, ex in get_test_manip_job_id_invalid():
-            with self.assertRaises(ex):
-                PBSMulticlusterHandler.manip_job_id(job_id)
 
     def test_export_handler(self):
         import cylc.batch_sys_handlers.pbs_multi_cluster as m

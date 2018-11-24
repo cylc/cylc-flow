@@ -25,28 +25,34 @@ So this PBS handler writes "job_id@server" to the job status file, and appends
 "@server" to Job IDs returned by qstat, to matched the stored IDs.
 """
 
+import re
 from cylc.batch_sys_handlers.pbs import PBSHandler
+
+
+# Match and extract PBS Job ID of the form "<job>.<host>"
+REC_JOB = re.compile('^ *(?P<job>[^ ]+?)\.(?P<host>[^ ]+) *$')
+# Replace with "<job>.<host>@<host>"
+REP_JOB = '\g<job>.\g<host>@\g<host>'
 
 
 class PBSMulticlusterHandler(PBSHandler):
 
     @classmethod
     def filter_poll_many_output(cls, out):
-        """For job_id's of the form "id.server", return job_id@server."""
-        out = out.strip()
+        """Extract and return Job IDs from qstat output.
+
+        Ignore first two lines of qstat output (header lines).
+        Manipulate Job IDs as described above, if matched, else leave as-is.
+        """
         job_ids = []
-        lines = out.split('\n')
-        for line in lines[2:]:
-            job = line.split()[0]
-            _, server = job.split('.', 1)
-            job_ids.append(job + '@' + server)
+        for line in out.splitlines()[2:]:
+            job_ids.append(cls.manip_job_id(line))
         return job_ids
 
     @classmethod
     def manip_job_id(cls, job_id):
         """For job_id of the form "id.server", return job_id@server."""
-        _, server = job_id.split('.', 1)
-        return job_id + '@' + server
+        return re.sub(REC_JOB, REP_JOB, job_id.strip())
 
 
 BATCH_SYS_HANDLER = PBSMulticlusterHandler()
