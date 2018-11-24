@@ -260,16 +260,23 @@ class GraphUpdater(threading.Thread):
             state = self.state_summary[id_]['state']
         else:
             state = self.fam_state_summary[id_]['state']
+        # required theme attributes
         try:
             node.attr['style'] = 'bold,' + self.theme[state]['style']
             node.attr['fillcolor'] = self.theme[state]['color']
             node.attr['color'] = self.theme[state]['color']
-            node.attr['fontcolor'] = self.theme[state]['fontcolor']
         except KeyError:
             # unknown state
-            node.attr['style'] = 'unfilled'
+            node.attr['style'] = 'filled'
+            node.attr['fillcolor'] = 'black'
             node.attr['color'] = 'black'
-            node.attr['fontcolor'] = 'black'
+            node.attr['fontcolor'] = 'white'
+
+        # optional theme attributes
+        theme = self.theme.get(state, {})
+        for attr in ['fontcolor']:
+            if attr in theme:
+                node.attr[attr] = theme[attr]
 
         if shape:
             node.attr['shape'] = shape
