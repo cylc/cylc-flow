@@ -293,7 +293,6 @@ class TestValidate(unittest.TestCase):
         validator = ParsecValidator()
         # The good
         for value, result in [
-            ('', None),
             ('3', 3.0),
             ('9.80', 9.80),
             ('3.141592654', 3.141592654),
@@ -311,6 +310,8 @@ class TestValidate(unittest.TestCase):
         ]:
             self.assertAlmostEqual(
                 validator.coerce_float(value, ['whatever']), result)
+        self.assertEqual(
+            validator.coerce_int('', ['whatever']), None)  # not a number
         # The bad
         for value in [
             'None', ' Who cares? ', 'True', '[]', '[3.14]', '3.14, 2.72'
@@ -348,7 +349,6 @@ class TestValidate(unittest.TestCase):
         validator = ParsecValidator()
         # The good
         for value, result in [
-            ('', None),
             ('0', 0),
             ('3', 3),
             ('-3', -3),
@@ -358,6 +358,8 @@ class TestValidate(unittest.TestCase):
         ]:
             self.assertAlmostEqual(
                 validator.coerce_int(value, ['whatever']), result)
+        self.assertEqual(
+            validator.coerce_int('', ['whatever']), None)  # not a number
         # The bad
         for value in [
             'None', ' Who cares? ', 'True', '4.8', '[]', '[3]', '60*60'
@@ -412,7 +414,7 @@ class TestValidate(unittest.TestCase):
             ('None', 'None'),
             (['a', 'b'], 'a\nb')
         ]:
-            self.assertAlmostEqual(
+            self.assertEqual(
                 validator.coerce_str(value, ['whatever']), result)
 
     def test_coerce_str_list(self):
