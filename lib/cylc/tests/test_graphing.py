@@ -22,9 +22,9 @@ from cylc.graphing import gtk_rgb_to_hex, CGraph
 
 
 class fake_gtk_color(object):
-    red_float = 1.0 
-    green_float = 1.0 
-    blue_float = 1.0 
+    red_float = 1.0
+    green_float = 1.0
+    blue_float = 1.0
 
 
 suiterc = {
@@ -58,6 +58,7 @@ suiterc = {
             }
         }
 
+
 class TestGraphParser(unittest.TestCase):
     """Unit tests for the graphing module."""
 
@@ -82,7 +83,6 @@ class TestGraphParser(unittest.TestCase):
                  ]
         self.cgraph.add_edges(edges)
 
-
     def test_gtk_rgb_to_hex(self):
         self.assertEqual(gtk_rgb_to_hex(fake_gtk_color()), '#ffffff')
 
@@ -91,10 +91,10 @@ class TestGraphParser(unittest.TestCase):
             self.cgraph.node_attr_by_taskname('foo.1'),
             ['style=filled', 'fillcolor=yellow']
         )
-    
+
     def test_style_node(self):
         node_str = 'foo.1'
-        self.cgraph.style_node(node_str) 
+        self.cgraph.style_node(node_str)
         node = self.cgraph.get_node(node_str)
         self.assertEqual(
             node.attr.items(),
@@ -109,7 +109,7 @@ class TestGraphParser(unittest.TestCase):
         bgcolor = 'blue'
         def_node_attr = {}
         def_node_attr['style'] = 'filled'
-        self.cgraph.set_def_style(fgcolor, bgcolor, def_node_attr) 
+        self.cgraph.set_def_style(fgcolor, bgcolor, def_node_attr)
         self.assertEqual(
             self.cgraph.graph_attr['bgcolor'], '#ffffff00'
         )
@@ -124,11 +124,11 @@ class TestGraphParser(unittest.TestCase):
             self.cgraph.node_attr['fontcolor'], fgcolor
         )
         def_node_attr['style'] = 'unfilled'
-        self.cgraph.set_def_style(fgcolor, bgcolor, def_node_attr) 
+        self.cgraph.set_def_style(fgcolor, bgcolor, def_node_attr)
         self.assertEqual(
             self.cgraph.node_attr['fontcolor'], fgcolor
         )
-    
+
 
 if __name__ == "__main__":
     unittest.main()
