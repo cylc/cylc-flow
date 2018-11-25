@@ -28,35 +28,35 @@ class fake_gtk_color(object):
 
 
 suiterc = {
-            'visualization': {
-                'default node attributes': [
-                    'style=filled',
-                    'color=red',
-                    'fillcolor=blue',
-                    'shape=box'
-                ],
-                'default edge attributes': [
-                    'color=red',
-                ],
-                'node penwidth': 2,
-                'edge penwidth': 2,
-                'use node color for edges': True,
-                'collapsed families': [],
-                'use node color for labels': False,
-                'initial cycle point': 1,
-                'final cycle point': 10,
-                'number of cycle points': 3,
-                'node groups': {
-                    'root': ['root', 'foo', 'bar', 'baz', 'qux'],
-                },
-                'node attributes': {
-                    'root': [
-                        'style=filled',
-                        'fillcolor=yellow'
-                    ]
-                }
+    'visualization': {
+        'default node attributes': [
+            'style=filled',
+            'color=red',
+            'fillcolor=blue',
+            'shape=box'
+            ],
+        'default edge attributes': [
+            'color=red',
+            ],
+        'node penwidth': 2,
+        'edge penwidth': 2,
+        'use node color for edges': True,
+        'collapsed families': [],
+        'use node color for labels': False,
+        'initial cycle point': 1,
+        'final cycle point': 10,
+        'number of cycle points': 3,
+        'node groups': {
+            'root': ['root', 'foo', 'bar', 'baz', 'qux'],
+            },
+        'node attributes': {
+            'root': [
+                'style=filled',
+                'fillcolor=yellow'
+                ]
             }
         }
+    }
 
 
 class TestGraphParser(unittest.TestCase):
