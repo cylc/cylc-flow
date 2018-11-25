@@ -308,7 +308,12 @@ class CGraph(CGraphPlain):
         # suite.rc visualization config section
         CGraphPlain.__init__(self, title, suite_polling_tasks)
         if vizconfig is None:
-            vizconfig = {}
+            vizconfig = {
+                'default node attributes': [],
+                'default edge attributes': [],
+                'node attributes': {},
+                'edge attributes': {},
+            }
         self.vizconfig = vizconfig
 
         # graph attributes
