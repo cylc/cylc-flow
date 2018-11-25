@@ -34,10 +34,10 @@ suiterc = {
             'color=red',
             'fillcolor=blue',
             'shape=box'
-            ],
+        ],
         'default edge attributes': [
             'color=red',
-            ],
+        ],
         'node penwidth': 2,
         'edge penwidth': 2,
         'use node color for edges': True,
@@ -48,15 +48,15 @@ suiterc = {
         'number of cycle points': 3,
         'node groups': {
             'root': ['root', 'foo', 'bar', 'baz', 'qux'],
-            },
+        },
         'node attributes': {
             'root': [
                 'style=filled',
                 'fillcolor=yellow'
-                ]
-            }
+            ]
         }
     }
+}
 
 
 class TestGraphParser(unittest.TestCase):
