@@ -68,6 +68,7 @@ extra_requires = {
 }
 extra_requires['all'] += extra_requires['ssl']
 extra_requires['all'] += extra_requires['empy']
+extra_requires['all'] += tests_require
 
 setup(
     name="cylc",
