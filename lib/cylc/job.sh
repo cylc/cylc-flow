@@ -133,10 +133,13 @@ cylc__job__main() {
     mkdir -p "${CYLC_TASK_WORK_DIR}"
     cd "${CYLC_TASK_WORK_DIR}"
     # User Environment, Pre-Script, Script and Post-Script
-    typeset func_name=
-    for func_name in 'user_env' 'pre_script' 'script' 'post_script'; do
-        cylc__job__run_inst_func "${func_name}"
-    done
+    # (execute in subshell to prevent interference with Cylc environment)
+    (
+        typeset func_name=
+        for func_name in 'user_env' 'pre_script' 'script' 'post_script'; do
+            cylc__job__run_inst_func "${func_name}"
+        done
+    )
     # Empty work directory remove
     cd
     rmdir "${CYLC_TASK_WORK_DIR}" 2>'/dev/null' || true
