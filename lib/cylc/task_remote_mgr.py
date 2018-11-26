@@ -309,7 +309,10 @@ class TaskRemoteMgr(object):
     def _remote_init_callback(self, proc_ctx, host, owner, tmphandle):
         """Callback when "cylc remote-init" exits"""
         self.ready = True
-        tmphandle.close()
+        try:
+            tmphandle.close()
+        except OSError:  # E.g. ignore bad unlink, etc
+            pass
         if proc_ctx.ret_code == 0:
             for status in (REMOTE_INIT_DONE, REMOTE_INIT_NOT_REQUIRED):
                 if status in proc_ctx.out:
