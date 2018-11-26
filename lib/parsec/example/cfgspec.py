@@ -17,29 +17,29 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Legal items and validators for the parsec test config file."""
 
-from parsec.validate import validator as vdr
+from parsec.validate import ParsecValidator as vdr
 
 
 SPEC = {
-        'title' : vdr( vtype="string" ),
+        'title' : [vdr.V_STRING],
         'single values' :
         {
-            'integers' : { '__MANY__' : vdr( vtype="integer" ) },
-            'booleans' : { '__MANY__' : vdr( vtype="boolean" ) },
-            'floats'   : { '__MANY__' : vdr( vtype="float"   ) },
-            'strings'  : { '__MANY__' : vdr( vtype="string"  ) },
-            'strings with internal comments'  : { '__MANY__' : vdr( vtype="string"  ) },
-            'multiline strings'  : { '__MANY__' : vdr( vtype="string"  ) },
-            'multiline strings with internal comments'  : { '__MANY__' : vdr( vtype="string"  ) },
+            'integers' : { '__MANY__' : [vdr.V_INTEGER] },
+            'booleans' : { '__MANY__' : [vdr.V_BOOLEAN] },
+            'floats'   : { '__MANY__' : [vdr.V_FLOAT] },
+            'strings'  : { '__MANY__' : [vdr.V_STRING] },
+            'strings with internal comments'  : { '__MANY__' : [vdr.V_STRING] },
+            'multiline strings'  : { '__MANY__' : [vdr.V_STRING] },
+            'multiline strings with internal comments'  : { '__MANY__' : [vdr.V_STRING] },
              },
         'list values' :
         {
             'string lists' :
             {
-                '__MANY__'   : vdr( vtype="string_list"  ),
-                'compulsory' : vdr( vtype="string_list", default=["jumped","over","the"], compulsory=True )
+                '__MANY__'   : [vdr.V_STRING_LIST],
+                'compulsory' : [vdr.V_STRING_LIST, ["jumped","over","the"]]
                 },
-            'integer lists' : { '__MANY__' : vdr( vtype="integer_list", allow_zeroes=False ) },
-            'float lists'   : { '__MANY__' : vdr( vtype="float_list", allow_zeroes=False   ) },
+            'integer lists' : { '__MANY__' : [vdr.V_INTEGER_LIST] },
+            'float lists'   : { '__MANY__' : [vdr.V_FLOAT_LIST] },
             },
         }
