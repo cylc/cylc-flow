@@ -33,8 +33,6 @@ from parsec.validate import IllegalValueError
 CYCLER_TYPE_ISO8601 = "iso8601"
 CYCLER_TYPE_SORT_KEY_ISO8601 = "b"
 
-MEMOIZE_LIMIT = 10000
-
 DATE_TIME_FORMAT = "CCYYMMDDThhmm"
 EXPANDED_DATE_TIME_FORMAT = "+XCCYYMMDDThhmm"
 NEW_DATE_TIME_REC = re.compile("T")
@@ -57,16 +55,18 @@ class SuiteSpecifics(object):
 
 
 def memoize(function):
-    """This stores results for a given set of inputs to a function.
+    """Stores results for a given set of inputs to a function.
 
-    The inputs and results of the function must be immutable.
-    Keyword arguments are not allowed.
+    To avoid memory leaks, a limit of 10000 separate input
+    permutations will be cached for a given function.
 
-    To avoid memory leaks, only the first 10000 separate input
-    permutations are cached for a given function.
-
+    Args:
+        function (function):
+            The inputs and results of the function must be immutable.
+            Keyword arguments are not allowed.
     """
     inputs_results = {}
+    memoize_limit = 10000
 
     def _wrapper(*args):
         """Cache results for function(*args)."""
@@ -74,7 +74,7 @@ def memoize(function):
             return inputs_results[args]
         except KeyError:
             results = function(*args)
-            if len(inputs_results) > MEMOIZE_LIMIT:
+            if len(inputs_results) > memoize_limit:
                 # Full up, no more room.
                 inputs_results.popitem()
             inputs_results[args] = results
