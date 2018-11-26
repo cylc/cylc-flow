@@ -48,13 +48,13 @@ SUITE_NAME2="${SUITE_NAME}"
 run_fail "${TEST_NAME_BASE}" \
     cylc graph-diff "${SUITE_NAME1}" "${SUITE_NAME2}" --  '20200101T0000Z'
 contains_ok "${TEST_NAME_BASE}.stdout" <<__OUT__
--edge "foo.20200101T0000Z" "bar.20200101T0000Z" solid
-+edge "food.20200101T0000Z" "barley.20200101T0000Z" solid
+-edge "foo.20200101T0000Z" "bar.20200101T0000Z"
++edge "food.20200101T0000Z" "barley.20200101T0000Z"
  graph
--node "bar.20200101T0000Z" "bar\n20200101T0000Z" unfilled ellipse black
--node "foo.20200101T0000Z" "foo\n20200101T0000Z" unfilled ellipse black
-+node "barley.20200101T0000Z" "barley\n20200101T0000Z" unfilled ellipse black
-+node "food.20200101T0000Z" "food\n20200101T0000Z" unfilled ellipse black
+-node "bar.20200101T0000Z" "bar\n20200101T0000Z"
+-node "foo.20200101T0000Z" "foo\n20200101T0000Z"
++node "barley.20200101T0000Z" "barley\n20200101T0000Z"
++node "food.20200101T0000Z" "food\n20200101T0000Z"
 __OUT__
 cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'
 

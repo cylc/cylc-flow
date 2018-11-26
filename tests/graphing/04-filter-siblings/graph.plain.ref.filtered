@@ -1,9 +1,9 @@
-edge "artichoke.1" __remove_0__ dotted
-edge "azuki.1" __remove_0__ dotted
-edge __remove_0__ "carrot.1" dotted
+edge "artichoke.1" __remove_0__
+edge "azuki.1" __remove_0__
+edge __remove_0__ "carrot.1"
 graph
-node "artichoke.1" "artichoke\n1" unfilled ellipse black
-node "azuki.1" "azuki\n1" unfilled ellipse black
-node "carrot.1" "carrot\n1" unfilled ellipse black
-node __remove_0__ ✂ dashed ellipse black
+node "artichoke.1" "artichoke\n1"
+node "azuki.1" "azuki\n1"
+node "carrot.1" "carrot\n1"
+node __remove_0__ ✂
 stop

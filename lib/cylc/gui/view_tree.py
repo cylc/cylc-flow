@@ -29,7 +29,7 @@ class ControlTree(object):
     """Text Treeview suite control interface."""
 
     def __init__(self, cfg, updater, theme, dot_size, info_bar,
-                 get_right_click_menu, log_colors, insert_task_popup):
+                 get_right_click_menu, insert_task_popup):
 
         self.cfg = cfg
         self.updater = updater
@@ -37,7 +37,6 @@ class ControlTree(object):
         self.dot_size = dot_size
         self.info_bar = info_bar
         self.get_right_click_menu = get_right_click_menu
-        self.log_colors = log_colors
         self.insert_task_popup = insert_task_popup
         self.interval_parser = DurationParser()
 

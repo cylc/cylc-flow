@@ -1,23 +1,23 @@
-edge "baz.2015-01-03" "stop.2015-01-03" solid
-edge "foo.2015-01-01" "bar.2015-01-01" solid
-edge "foo.2015-01-01" "baz.2015-01-01" solid
-edge "foo.2015-01-01" "foo.2015-01-02" solid
-edge "foo.2015-01-02" "bar.2015-01-02" solid
-edge "foo.2015-01-02" "baz.2015-01-02" solid
-edge "foo.2015-01-02" "foo.2015-01-03" solid
-edge "foo.2015-01-03" "bar.2015-01-03" solid
-edge "foo.2015-01-03" "baz.2015-01-03" solid
-edge "start.2015-01-01" "foo.2015-01-01" solid
+edge "baz.2015-01-03" "stop.2015-01-03"
+edge "foo.2015-01-01" "bar.2015-01-01"
+edge "foo.2015-01-01" "baz.2015-01-01"
+edge "foo.2015-01-01" "foo.2015-01-02"
+edge "foo.2015-01-02" "bar.2015-01-02"
+edge "foo.2015-01-02" "baz.2015-01-02"
+edge "foo.2015-01-02" "foo.2015-01-03"
+edge "foo.2015-01-03" "bar.2015-01-03"
+edge "foo.2015-01-03" "baz.2015-01-03"
+edge "start.2015-01-01" "foo.2015-01-01"
 graph
-node "bar.2015-01-01" "bar\n2015-01-01" unfilled ellipse black
-node "bar.2015-01-02" "bar\n2015-01-02" unfilled ellipse black
-node "bar.2015-01-03" "bar\n2015-01-03" unfilled ellipse black
-node "baz.2015-01-01" "baz\n2015-01-01" unfilled ellipse black
-node "baz.2015-01-02" "baz\n2015-01-02" unfilled ellipse black
-node "baz.2015-01-03" "baz\n2015-01-03" unfilled ellipse black
-node "foo.2015-01-01" "foo\n2015-01-01" unfilled ellipse black
-node "foo.2015-01-02" "foo\n2015-01-02" unfilled ellipse black
-node "foo.2015-01-03" "foo\n2015-01-03" unfilled ellipse black
-node "start.2015-01-01" "start\n2015-01-01" filled ellipse black
-node "stop.2015-01-03" "stop\n2015-01-03" filled ellipse black
+node "bar.2015-01-01" "bar\n2015-01-01"
+node "bar.2015-01-02" "bar\n2015-01-02"
+node "bar.2015-01-03" "bar\n2015-01-03"
+node "baz.2015-01-01" "baz\n2015-01-01"
+node "baz.2015-01-02" "baz\n2015-01-02"
+node "baz.2015-01-03" "baz\n2015-01-03"
+node "foo.2015-01-01" "foo\n2015-01-01"
+node "foo.2015-01-02" "foo\n2015-01-02"
+node "foo.2015-01-03" "foo\n2015-01-03"
+node "start.2015-01-01" "start\n2015-01-01"
+node "stop.2015-01-03" "stop\n2015-01-03"
 stop

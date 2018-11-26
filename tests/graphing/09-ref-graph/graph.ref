@@ -1,7 +1,7 @@
-edge "foo.20140808T0000+12" "bar.20140808T0000+12" solid
+edge "foo.20140808T0000+12" "bar.20140808T0000+12"
 graph
-node "bar.20140808T0000+12" "bar\n20140808T0000+12" unfilled ellipse black
-node "foo.20140808T0000+12" "foo\n20140808T0000+12" unfilled ellipse black
-node "foo.20140808T0600+12" "foo\n20140808T0600+12" unfilled ellipse black
-node "foo.20140808T1200+12" "foo\n20140808T1200+12" unfilled ellipse black
+node "bar.20140808T0000+12" "bar\n20140808T0000+12"
+node "foo.20140808T0000+12" "foo\n20140808T0000+12"
+node "foo.20140808T0600+12" "foo\n20140808T0600+12"
+node "foo.20140808T1200+12" "foo\n20140808T1200+12"
 stop

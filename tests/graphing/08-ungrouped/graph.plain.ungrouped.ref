@@ -1,9 +1,9 @@
-edge "foo.1" "bar1.1" solid
-edge "foo.1" "bar2.1" solid
-edge "foo.1" "bar3.1" solid
+edge "foo.1" "bar1.1"
+edge "foo.1" "bar2.1"
+edge "foo.1" "bar3.1"
 graph
-node "bar1.1" "bar1\n1" unfilled ellipse black
-node "bar2.1" "bar2\n1" unfilled ellipse black
-node "bar3.1" "bar3\n1" unfilled ellipse black
-node "foo.1" "foo\n1" unfilled ellipse black
+node "bar1.1" "bar1\n1"
+node "bar2.1" "bar2\n1"
+node "bar3.1" "bar3\n1"
+node "foo.1" "foo\n1"
 stop
