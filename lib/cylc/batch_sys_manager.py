@@ -63,6 +63,9 @@ batch_sys.submit(job_file_path) => ret_code, out, err
       beyond just running a system or shell command. See also
       "batch_sys.SUBMIT_CMD".
 
+batch_sys.manip_job_id(job_id) => job_id
+    * Modify the job ID that is returned by the job poll command.
+
 batch_sys.KILL_CMD_TMPL
     *  A Python string template for getting the batch system command to remove
        and terminate a job ID. The command is formed using the logic:
@@ -477,6 +480,8 @@ class BatchSysManager(object):
                 match = rec_id.match(line)
                 if match:
                     job_id = match.group("id")
+                    if hasattr(batch_sys, "manip_job_id"):
+                        job_id = batch_sys.manip_job_id(job_id)
                     job_status_file = open(st_file_path, "a")
                     job_status_file.write("%s=%s\n" % (
                         self.CYLC_BATCH_SYS_JOB_ID, job_id))
