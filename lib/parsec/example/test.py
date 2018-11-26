@@ -24,11 +24,11 @@ sys.path.append( os.path.join( os.path.dirname(os.path.abspath(__file__)), '..' 
 sys.path.append( os.path.join( os.path.dirname(os.path.abspath(__file__)), '../..' ))
 
 from cfgspec import SPEC
-from config import config
+from parsec.config import ParsecConfig
 import cylc.flags
 
 cylc.flags.verbose = True
-class testcfg( config ):
+class testcfg( ParsecConfig ):
     def check( self, sparse ):
         # TEMPORARY EXAMPLE
         if 'missing item' not in self.sparse.keys():
@@ -39,10 +39,10 @@ strict = False
 cfg.loadcfg( os.path.join( os.path.dirname( __file__ ), 'site.rc' )) # TODO: test strict=False (fail but accept defaults)
 cfg.loadcfg( os.path.join( os.path.dirname( __file__ ), 'user.rc' ))
 
-cfg.printcfg()
+cfg.dump()
 #print
-#cfg.printcfg( ['list values'] )
+#cfg.dump( ['list values'] )
 #print
-#cfg.printcfg( ['list values', 'integers'] )
+#cfg.dump( ['list values', 'integers'] )
 #print
-#cfg.printcfg( ['single values', 'strings with internal comments'] )
+#cfg.dump( ['single values', 'strings with internal comments'] )
