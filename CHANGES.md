@@ -125,6 +125,10 @@ suite registration tweaks and fixes.
 [#2861](https://github.com/cylc/cylc/pull/2861) - improved emacs
 syntax highlighting.
 
+[#2892](https://github.com/cylc/cylc/pull/2892) - print the bad host name along
+with "Name or service not known" exceptions.
+
+
 -------------------------------------------------------------------------------
 ## __cylc-7.7.2 (2018-07-26)__
 
