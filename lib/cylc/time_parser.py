@@ -327,7 +327,8 @@ class CylcTimeParser(object):
         return self.duration_parser.parse(expr)
 
     def _get_min_from_expression(self, expr, context):
-        points = re.findall(self.MIN_REGEX, expr)[0].split(",")
+        points = [x.strip()
+                  for x in re.findall(self.MIN_REGEX, expr)[0].split(",")]
         ptslist = []
         min_entry = ""
         for point in points:
