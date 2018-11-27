@@ -14,8 +14,8 @@ Minor release with over 120 issues closed. Significant issues include:
 
 [#2693](https://github.com/cylc/cylc/pull/2693) - __auto host selection__; and
 [#2809](https://github.com/cylc/cylc/pull/2809) - __auto migration__.  
-`cylc run` and `cylc restart` can now select the best available host (based on
-several metrics) on which to launch suite server programs. And running suites
+`cylc run` and `cylc restart` can now select the best host (based on several
+metrics) on which to launch suite server programs. And running suites
 can be told (via global config) to self-migrate to another available host, e.g.
 for server maintenance. (The pool of suite hosts should see a shared
 filesystem).
@@ -76,7 +76,7 @@ show application menu bar by default.
 version of running suites.
 
 [#2786](https://github.com/cylc/cylc/pull/2786) - make task try number
-available to event handlers (as for task job submit number) .
+available to event handlers (as for task job submit number).
 
 [#2771](https://github.com/cylc/cylc/pull/2771) - bash command completion:
 complete suite names for commands that take a suite name argument (see
