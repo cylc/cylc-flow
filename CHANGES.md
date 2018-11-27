@@ -15,7 +15,7 @@ Minor release with over 120 issues closed. Significant issues include:
 [#2809](https://github.com/cylc/cylc/pull/2809) - __auto-migration__ - suite
 server programs can now be told (via global config) to self-migrate to
 another available host, e.g. for server maintenance. (The pool of cylc hosts 
-should see a shared filestem).
+should see a shared filesystem).
 
 [#2614](https://github.com/cylc/cylc/pull/2614) and 
 [#2821](https://github.com/cylc/cylc/pull/2821) - __web-based job log viewer__ -
@@ -25,7 +25,7 @@ should see a shared filestem).
 `cylc run` and `cylc restart` can now select the best available host based on
 several metrics, on which to launch the suite server program. See `cylc
 get-host-metrics` and global config documentation. (The pool of cylc hosts
-should see a shared filestem).
+should see a shared filesystem).
 
 [#2339](https://github.com/cylc/cylc/pull/2339) - __general external
 triggering__: tasks can trigger off of arbitrary user-defined Python functions
@@ -48,7 +48,7 @@ decimal seconds or hours.
 
 [#2842](https://github.com/cylc/cylc/pull/2842) - `cylc gui` and
 `cylc graph` - better integration with system desktop themes, including dark
-themes; and other minor graph visualization improvments. 
+themes; and other minor graph visualization improvements. 
 
 [#2807](https://github.com/cylc/cylc/pull/2807) - task output events (event
 handlers can now be triggered when a task reports a registered output message).
