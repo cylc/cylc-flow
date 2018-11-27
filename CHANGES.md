@@ -12,20 +12,18 @@ Minor release with over 120 issues closed. Significant issues include:
 
 ### Enhancements
 
-[#2809](https://github.com/cylc/cylc/pull/2809) - __auto-migration__ - suite
-server programs can now be told (via global config) to self-migrate to
-another available host, e.g. for server maintenance. (The pool of cylc hosts 
-should see a shared filesystem).
+[#2693](https://github.com/cylc/cylc/pull/2693) - __auto host selection__; and
+[#2809](https://github.com/cylc/cylc/pull/2809) - __auto migration__.  
+`cylc run` and `cylc restart` can now select the best available host (based on
+several metrics) on which to launch suite server programs. And running suites
+can be told (via global config) to self-migrate to another available host, e.g.
+for server maintenance. (The pool of suite hosts should see a shared
+filesystem).
 
 [#2614](https://github.com/cylc/cylc/pull/2614) and 
 [#2821](https://github.com/cylc/cylc/pull/2821) - __web-based job log viewer__ -
  `cylc review` (migration of "Rose Bush" from the Rose project). 
 
-[#2693](https://github.com/cylc/cylc/pull/2693) - __auto host selection__ -
-`cylc run` and `cylc restart` can now select the best available host based on
-several metrics, on which to launch the suite server program. See `cylc
-get-host-metrics` and global config documentation. (The pool of cylc hosts
-should see a shared filesystem).
 
 [#2339](https://github.com/cylc/cylc/pull/2339) - __general external
 triggering__: tasks can trigger off of arbitrary user-defined Python functions
@@ -59,7 +57,7 @@ last moment after successful job completion. (Companion of `err-script`).
 
 [#2781](https://github.com/cylc/cylc/pull/2781) and
 [#2854](https://github.com/cylc/cylc/pull/2854) - improved suite
-server program logging.
+server program logging (including: `log/suite/err` is no longer used).
 
 [#2849](https://github.com/cylc/cylc/pull/2849) - record local
 background jobs by host name rather than "localhost".
