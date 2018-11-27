@@ -67,7 +67,7 @@ handler `pbs_multi_cluster`, supports PBS 13 clients fronting
 heterogeneous clusters with different home directories from the
 cylc remote. (Not needed for PBS 14+.) (For Rose suites this requires a
 corresponding change to `rose suite-run`:
-https://github.com/metomi/rose/pull/2252)
+[metomi/rose#2252](https://github.com/metomi/rose/pull/2252).)
 
 [#2812](https://github.com/cylc/cylc/pull/2812) - `cylc gscan`:
 show application menu bar by default.
