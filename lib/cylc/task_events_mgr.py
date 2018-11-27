@@ -38,7 +38,6 @@ from parsec.config import ItemNotFoundError
 
 from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
-import cylc.flags
 from cylc.hostuserutil import get_host, get_user
 from cylc.subprocctx import SubProcContext
 from cylc.task_action_timer import TaskActionTimer

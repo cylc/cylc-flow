@@ -38,7 +38,6 @@ from parsec.util import pdeepcopy, poverride
 from cylc import LOG
 from cylc.batch_sys_manager import JobPollContext
 from cylc.cfgspec.glbl_cfg import glbl_cfg
-import cylc.flags
 from cylc.hostuserutil import get_host, is_remote_host, is_remote_user
 from cylc.job_file import JobFileWriter
 from cylc.task_job_logs import (

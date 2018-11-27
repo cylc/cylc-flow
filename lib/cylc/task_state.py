@@ -20,7 +20,6 @@
 
 
 from cylc import LOG
-import cylc.flags
 from cylc.prerequisite import Prerequisite
 from cylc.task_id import TaskID
 from cylc.task_outputs import (

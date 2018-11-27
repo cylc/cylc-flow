@@ -32,7 +32,6 @@ from cylc.cfgvalidate import (
     cylc_config_validate, CylcConfigValidator as VDR, DurationFloat)
 from cylc.hostuserutil import is_remote_user
 from cylc.mkdir_p import mkdir_p
-import cylc.flags
 from cylc.network import PRIVILEGE_LEVELS, PRIV_STATE_TOTALS, PRIV_SHUTDOWN
 from cylc.version import CYLC_VERSION
 
