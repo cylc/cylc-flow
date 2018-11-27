@@ -118,7 +118,12 @@ class HostUtil(object):
         if target not in self._host_exs:
             if target is None:
                 target = socket.getfqdn()
-            self._host_exs[target] = socket.gethostbyname_ex(target)
+            try:
+                self._host_exs[target] = socket.gethostbyname_ex(target)
+            except IOError as exc:
+                if exc.filename is None:
+                    exc.filename = target
+                raise
         return self._host_exs[target]
 
     @staticmethod
