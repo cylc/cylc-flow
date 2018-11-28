@@ -22,7 +22,7 @@ json_keys_cmp() {
     # Return True if data structure is a dict containing all and only the keys
     # specified in the remaining arguments
     local TEST_KEY="$1"
-    run_ok "${TEST_KEY}" python - "$@" <<'__PYTHON__'
+    run_ok "${TEST_KEY}" python2 - "$@" <<'__PYTHON__'
 import json
 import sys
 data = json.load(open(sys.argv[1]))

@@ -30,7 +30,7 @@ from parsec.upgrade import upgrader, converter
 from cylc import LOG
 from cylc.cfgvalidate import (
     cylc_config_validate, CylcConfigValidator as VDR, DurationFloat)
-from cylc.hostuserutil import is_remote_user
+from cylc.hostuserutil import get_user_home, is_remote_user
 from cylc.mkdir_p import mkdir_p
 from cylc.network import PRIVILEGE_LEVELS, PRIV_STATE_TOTALS, PRIV_SHUTDOWN
 from cylc.version import CYLC_VERSION
@@ -414,6 +414,7 @@ class GlobalConfig(ParsecConfig):
     """
 
     _DEFAULT = None
+    _HOME = os.getenv('HOME') or get_user_home()
     # For working with git clones, just go to minor version number.
     cylc_version = re.sub('-.*', '', CYLC_VERSION)
     CONF_BASE = "global.rc"
@@ -421,8 +422,8 @@ class GlobalConfig(ParsecConfig):
     SITE_CONF_DIR = os.path.join(os.environ["CYLC_DIR"], "etc")
     SITE_CONF_DIR_OLD = os.path.join(os.environ["CYLC_DIR"], "conf")
     # User global.rc loc preference: if not in .cylc/x.y.z/ look in .cylc/.
-    USER_CONF_DIR_1 = os.path.join(os.environ['HOME'], '.cylc', cylc_version)
-    USER_CONF_DIR_2 = os.path.join(os.environ['HOME'], '.cylc')
+    USER_CONF_DIR_1 = os.path.join(_HOME, '.cylc', cylc_version)
+    USER_CONF_DIR_2 = os.path.join(_HOME, '.cylc')
 
     @classmethod
     def get_inst(cls, cached=True):
@@ -564,13 +565,13 @@ class GlobalConfig(ParsecConfig):
         if value is not None and 'directory' in item:
             if replace_home or modify_dirs:
                 # Replace local home dir with $HOME for eval'n on other host.
-                value = value.replace(os.environ['HOME'], '$HOME')
+                value = value.replace(self._HOME, '$HOME')
             elif is_remote_user(owner):
                 # Replace with ~owner for direct access via local filesys
                 # (works for standard cylc-run directory location).
                 if owner_home is None:
                     owner_home = os.path.expanduser('~%s' % owner)
-                value = value.replace(os.environ['HOME'], owner_home)
+                value = value.replace(self._HOME, owner_home)
         if item == "task communication method" and value == "default":
             # Translate "default" to client-server comms: "https" or "http".
             value = cfg['communication']['method']
@@ -659,6 +660,8 @@ class GlobalConfig(ParsecConfig):
 
         Host item values of None default to modified localhost values.
         Expand environment variables and ~ notations.
+
+        Ensure os.environ['HOME'] is defined with the correct value.
         """
         cfg = self.get()
 
@@ -673,13 +676,14 @@ class GlobalConfig(ParsecConfig):
                 if newvalue and 'directory' in item:
                     # replace local home dir with $HOME for evaluation on other
                     # host
-                    newvalue = newvalue.replace(os.environ['HOME'], '$HOME')
+                    newvalue = newvalue.replace(self._HOME, '$HOME')
                 cfg['hosts'][host][item] = newvalue
 
         # Expand environment variables and ~user in LOCAL file paths.
+        if 'HOME' not in os.environ:
+            os.environ['HOME'] = self._HOME
         for key, val in cfg['documentation']['files'].items():
             cfg['documentation']['files'][key] = os.path.expandvars(val)
-
         for key, val in cfg['hosts']['localhost'].items():
             if val and 'directory' in key:
                 cfg['hosts']['localhost'][key] = os.path.expandvars(val)
