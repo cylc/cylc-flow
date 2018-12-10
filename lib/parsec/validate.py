@@ -38,12 +38,10 @@ class ValidationError(ParsecError):
 
 class ListValueError(ValidationError):
     """Bad setting value, for a comma separated list."""
-    def __init__(self, keys, value, exc=None):
+    def __init__(self, keys, value, msg='', exc=None):
         ValidationError.__init__(self)
-        self.msg = (
-            "ERROR: names containing commas must be quoted"
-            " (e.g. 'foo<m,n>'):\n   %s" % itemstr(
-                keys[:-1], keys[-1], value=value))
+        self.msg = '%s\n    %s' % (
+            msg, itemstr(keys[:-1], keys[-1], value=value))
         if exc:
             self.msg += ": %s" % exc
 
@@ -110,6 +108,7 @@ class ParsecValidator(object):
     V_INTEGER_LIST = 'V_INTEGER_LIST'
     V_STRING = 'V_STRING'
     V_STRING_LIST = 'V_STRING_LIST'
+    V_SPACELESS_STRING_LIST = 'V_SPACELESS_STRING_LIST'
 
     def __init__(self):
         self.coercers = {
@@ -120,6 +119,7 @@ class ParsecValidator(object):
             self.V_INTEGER_LIST: self.coerce_int_list,
             self.V_STRING: self.coerce_str,
             self.V_STRING_LIST: self.coerce_str_list,
+            self.V_SPACELESS_STRING_LIST: self.coerce_spaceless_str_list,
         }
 
     def validate(self, cfg_root, spec_root):
@@ -251,6 +251,26 @@ class ParsecValidator(object):
         return cls.strip_and_unquote_list(keys, value)
 
     @classmethod
+    def coerce_spaceless_str_list(cls, value, keys):
+        """Coerce value to a list of strings ensuring no values contain spaces.
+
+        Examples:
+            >>> ParsecValidator.coerce_spaceless_str_list(
+            ...     'a, b c, d', ['foo'])
+            Traceback (most recent call last):
+            ListValueError: list item "b c" cannot contain a space character:
+                foo = a, b c, d
+        """
+        lst = cls.strip_and_unquote_list(keys, value)
+        for item in lst:
+            if ' ' in item:
+                raise ListValueError(
+                    keys, value,
+                    msg='list item "%s" cannot contain a space character:' %
+                    item)
+        return lst
+
+    @classmethod
     def expand_list(cls, values, keys, type_):
         """Handle multiplier syntax N*VALUE in a list."""
         lvalues = []
@@ -373,8 +393,10 @@ class ParsecValidator(object):
 
         # First detect multi-parameter lists like <m,n>.
         if cls._REC_MULTI_PARAM.search(value):
-            raise ListValueError(keys, value)
-
+            raise ListValueError(
+                keys, value,
+                msg="names containing commas must be quoted "
+                "(e.g. 'foo<m,n>'):")
         pos = 0
         while True:
             match = cls._REC_UQLP.search(value, pos)

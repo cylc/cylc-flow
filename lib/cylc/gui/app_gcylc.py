@@ -62,7 +62,6 @@ from cylc.task_id import TaskID
 from cylc.task_state_prop import extract_group_state, get_status_prop
 from cylc.version import CYLC_VERSION
 from cylc.gui.option_group import controlled_option_group
-from cylc.gui.color_rotator import ColorRotator
 from cylc.gui.suite_log_viewer import SuiteLogViewer
 from cylc.gui.gcapture import Gcapture
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
@@ -544,7 +543,6 @@ class ControlApp(object):
         self.quitters = []
         self.gcapture_windows = []
 
-        self.log_colors = ColorRotator()
         hcolor = gcfg.get(['task filter highlight color'])
         try:
             self.filter_highlight_color = gtk.gdk.color_parse(hcolor)
@@ -854,7 +852,7 @@ class ControlApp(object):
         container = self.view_containers[view_num]
         self.current_views[view_num] = self.VIEWS[viewname](
             self.cfg, self.updater, self.theme, self.dot_size, self.info_bar,
-            self.get_right_click_menu, self.log_colors, self.insert_task_popup)
+            self.get_right_click_menu, self.insert_task_popup)
         view = self.current_views[view_num]
         view.name = viewname
         if view_num == 1:
@@ -1724,8 +1722,6 @@ shown here in the state they were in at the time of triggering.''')
     def stopsuite_popup(self, b):
         """Suite shutdown dialog window popup."""
         window = gtk.Window()
-        window.modify_bg(gtk.STATE_NORMAL,
-                         gtk.gdk.color_parse(self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_title("Stop Suite Server Program %s" % self.cfg.suite)
         window.set_transient_for(self.window)
@@ -1917,8 +1913,6 @@ shown here in the state they were in at the time of triggering.''')
     def startsuite_popup(self, b):
         """Suite start-up dialog window popup."""
         window = gtk.Window()
-        window.modify_bg(gtk.STATE_NORMAL,
-                         gtk.gdk.color_parse(self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_title("Start Suite '" + self.cfg.suite + "'")
         window.set_transient_for(self.window)
@@ -2070,8 +2064,6 @@ shown here in the state they were in at the time of triggering.''')
     def point_string_entry_popup(self, b, callback, title):
         """Cycle point entry popup."""
         window = gtk.Window()
-        window.modify_bg(gtk.STATE_NORMAL,
-                         gtk.gdk.color_parse(self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_title(title)
         window.set_transient_for(self.window)
@@ -2100,8 +2092,6 @@ shown here in the state they were in at the time of triggering.''')
     def insert_task_popup(self, *b, **kwargs):
         """Display "Insert Task(s)" pop up box."""
         window = gtk.Window()
-        window.modify_bg(gtk.STATE_NORMAL,
-                         gtk.gdk.color_parse(self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_title("Insert Task(s)")
         window.set_transient_for(self.window)
@@ -2200,8 +2190,6 @@ shown here in the state they were in at the time of triggering.''')
     def _popup_logview(self, task_id, task_state_summary, choice=None):
         """Display task job log files in a combo log viewer."""
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.modify_bg(gtk.STATE_NORMAL,
-                         gtk.gdk.color_parse(self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_size_request(800, 400)
         window.set_title(task_id + ": Log Files")

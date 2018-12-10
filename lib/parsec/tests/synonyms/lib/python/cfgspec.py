@@ -24,6 +24,8 @@ SPEC = {
     'float': {'__MANY__': {'__MANY__': [VDR.V_FLOAT]}},
     'string': {'__MANY__': {'__MANY__': [VDR.V_STRING]}},
     'string_list': {'__MANY__': {'__MANY__': [VDR.V_STRING_LIST]}},
+    'spaceless_string_list': {'__MANY__': {'__MANY__': [
+        VDR.V_SPACELESS_STRING_LIST]}},
     'float_list': {'__MANY__': {'__MANY__': [VDR.V_FLOAT_LIST]}},
     'integer_list': {'__MANY__': {'__MANY__': [VDR.V_INTEGER_LIST]}},
 }

@@ -38,7 +38,6 @@ from parsec.config import ItemNotFoundError
 
 from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
-import cylc.flags
 from cylc.hostuserutil import get_host, get_user
 from cylc.subprocctx import SubProcContext
 from cylc.task_action_timer import TaskActionTimer
@@ -337,10 +336,10 @@ class TaskEventsManager(object):
             return
 
         # always update the suite state summary for latest message
-        itask.summary['latest_message'] = message
         if flag == self.POLLED_FLAG:
-            itask.summary['latest_message'] += ' %s' % self.POLLED_FLAG
-        cylc.flags.iflag = True
+            itask.set_summary_message('%s %s' % (message, self.POLLED_FLAG))
+        else:
+            itask.set_summary_message(message)
 
         # Satisfy my output, if possible, and record the result.
         completed_trigger = itask.state.outputs.set_msg_trg_completion(
@@ -632,7 +631,7 @@ class TaskEventsManager(object):
                 itask.try_timers[TASK_STATUS_RETRYING].delay_timeout_as_str())
             msg = "failed, %s" % (delay_msg)
             LOG.info("[%s] -job(%02d) %s", itask, itask.submit_num, msg)
-            itask.summary['latest_message'] = msg
+            itask.set_summary_message(msg)
             if itask.state.reset_state(TASK_STATUS_RETRYING):
                 self.setup_event_handlers(
                     itask, "retry", "%s, %s" % (self.JOB_FAILED, delay_msg))
@@ -708,7 +707,7 @@ class TaskEventsManager(object):
             delay_msg = "submit-retrying in %s" % timer.delay_timeout_as_str()
             msg = "%s, %s" % (self.EVENT_SUBMIT_FAILED, delay_msg)
             LOG.info("[%s] -job(%02d) %s", itask, itask.submit_num, msg)
-            itask.summary['latest_message'] = msg
+            itask.set_summary_message(msg)
             if itask.state.reset_state(TASK_STATUS_SUBMIT_RETRYING):
                 self.setup_event_handlers(
                     itask, self.EVENT_SUBMIT_RETRY,
@@ -744,7 +743,7 @@ class TaskEventsManager(object):
         # Unset started and finished times in case of resubmission.
         itask.set_summary_time('started')
         itask.set_summary_time('finished')
-        itask.summary['latest_message'] = TASK_OUTPUT_SUBMITTED
+        itask.set_summary_message(TASK_OUTPUT_SUBMITTED)
 
         self.pflag = True
         if itask.state.status == TASK_STATUS_READY:

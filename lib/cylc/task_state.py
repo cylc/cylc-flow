@@ -20,7 +20,6 @@
 
 
 from cylc import LOG
-import cylc.flags
 from cylc.prerequisite import Prerequisite
 from cylc.task_id import TaskID
 from cylc.task_outputs import (
@@ -192,18 +191,68 @@ def status_geq(status_a, status_b):
 
 
 class TaskState(object):
-    """Task status and utilities."""
+    """Task status and utilities.
+
+    Attributes:
+        .external_triggers (dict):
+            External triggers as {trigger (str): satisfied (boolean), ...}.
+        .hold_swap (str):
+            While the task is in `held` status, this holds the actual status if
+            the task is not held. For tasks in `submitted` or `running`
+            statuses, setting this to `held` will cause the task to hold when
+            the task is reset to anything other than the `submitted` or
+            `running` statuses.
+        .identity (str):
+            The task ID as `TASK.CYCLE` associated with this object.
+        .is_updated (boolean):
+            Has the status been updated since previous update?
+        .kill_failed (boolean):
+            Has a job kill attempt failed since previous status change?
+        .outputs (cylc.task_outputs.TaskOutputs):
+            Known outputs of the task.
+        .prerequisites (list<cylc.prerequisite.Prerequisite>):
+            List of prerequisites of the task.
+        .status (str):
+            The current status of the task.
+        .suicide_prerequisites (list<cylc.prerequisite.Prerequisite>):
+            List of prerequisites that will cause the task to suicide.
+        .time_updated (str):
+            Time string of latest update time.
+        .xclock (tuple):
+            A tuple (clock_label (str), is_done (boolean)) to indicate if a
+            clock trigger is satisfied or not. Set to `None` if the task has no
+            clock trigger.
+        .xtriggers (dict):
+            xtriggers as {trigger (str): satisfied (boolean), ...}.
+        ._is_satisfied (boolean):
+            Are prerequisites satisified?
+        ._suicide_is_satisfied (boolean):
+            Are prerequisites to trigger suicide satisified?
+    """
 
     # Memory optimization - constrain possible attributes to this list.
-    __slots__ = ["identity", "status", "hold_swap",
-                 "_is_satisfied", "_suicide_is_satisfied", "prerequisites",
-                 "suicide_prerequisites", "external_triggers", "outputs",
-                 "xtriggers", "xclock", "kill_failed", "time_updated"]
+    __slots__ = [
+        "external_triggers",
+        "hold_swap",
+        "identity",
+        "is_updated",
+        "kill_failed",
+        "outputs",
+        "prerequisites",
+        "status",
+        "suicide_prerequisites",
+        "time_updated",
+        "xclock",
+        "xtriggers",
+        "_is_satisfied",
+        "_suicide_is_satisfied",
+    ]
 
     def __init__(self, tdef, point, status, hold_swap):
         self.identity = TaskID.get(tdef.name, str(point))
         self.status = status
         self.hold_swap = hold_swap
+        self.is_updated = False
         self.time_updated = None
 
         self._is_satisfied = None
@@ -235,6 +284,13 @@ class TaskState(object):
         # Message outputs.
         self.outputs = TaskOutputs(tdef)
         self.kill_failed = False
+
+    def __str__(self):
+        """Print status (hold_swap)."""
+        ret = self.status
+        if self.hold_swap:
+            ret += ' (%s)' % self.hold_swap
+        return ret
 
     def satisfy_me(self, all_task_outputs):
         """Attempt to get my prerequisites satisfied."""
@@ -414,7 +470,7 @@ class TaskState(object):
             self.hold_swap = None
         self.status = status
         self.time_updated = get_current_time_string()
-        cylc.flags.iflag = True
+        self.is_updated = True
         # Log
         message = str(prev_status)
         if prev_hold_swap:

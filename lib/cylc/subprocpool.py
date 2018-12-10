@@ -20,6 +20,7 @@
 from collections import deque
 import json
 import os
+import select
 from signal import SIGKILL
 from subprocess import Popen, PIPE
 import sys
@@ -103,6 +104,7 @@ class SuiteProcPool(object):
 
     ERR_SUITE_STOPPING = 'suite stopping, command not run'
     JOBS_SUBMIT = 'jobs-submit'
+    POLLREAD = select.POLLIN | select.POLLPRI
     RET_CODE_SUITE_STOPPING = 999
 
     def __init__(self, size=None):
@@ -116,6 +118,10 @@ class SuiteProcPool(object):
         self.stopping_lock = RLock()
         self.queuings = deque()
         self.runnings = []
+        try:
+            self.pipepoller = select.poll()
+        except AttributeError:  # select.poll not implemented for this OS
+            self.pipepoller = None
 
     def close(self):
         """Close pool."""
@@ -136,8 +142,15 @@ class SuiteProcPool(object):
     def _proc_exit(self, proc, err_xtra, ctx, callback, callback_args):
         """Get ret_code, out, err of exited command, and call its callback."""
         ctx.ret_code = proc.wait()
-        ctx.out, err = proc.communicate()
-        ctx.err = err + err_xtra
+        out, err = proc.communicate()
+        if out:
+            if ctx.out is None:
+                ctx.out = ''
+            ctx.out += out
+        if err + err_xtra:
+            if ctx.err is None:
+                ctx.err = ''
+            ctx.err += err + err_xtra
         self._run_command_exit(ctx, callback, callback_args)
 
     def process(self):
@@ -145,14 +158,14 @@ class SuiteProcPool(object):
         # Handle child processes that are done
         runnings = []
         for proc, ctx, callback, callback_args in self.runnings:
+            # Command completed/exited
             if proc.poll() is not None:
                 self._proc_exit(proc, "", ctx, callback, callback_args)
-            elif time() < ctx.timeout:
-                runnings.append([proc, ctx, callback, callback_args])
-            else:
-                # Timed out, kill it.
+                continue
+            # Command timed out, kill it
+            if time() > ctx.timeout:
                 try:
-                    os.killpg(proc.pid, SIGKILL)
+                    os.killpg(proc.pid, SIGKILL)  # kill process group
                 except OSError:
                     # must have just exited, since poll.
                     err_xtra = ""
@@ -160,6 +173,11 @@ class SuiteProcPool(object):
                     err_xtra = "\nkilled on timeout (%s)" % (
                         self.proc_pool_timeout)
                 self._proc_exit(proc, err_xtra, ctx, callback, callback_args)
+                continue
+            # Command still running, see if STDOUT/STDERR are readable or not
+            runnings.append([proc, ctx, callback, callback_args])
+            # Unblock proc's STDOUT/STDERR if possible
+            self._poll_proc_pipes(proc, ctx)
 
         # Update list of running items
         self.runnings[:] = runnings
@@ -233,6 +251,45 @@ class SuiteProcPool(object):
                 os.killpg(proc.pid, SIGKILL)
         # Wait for child processes
         self.process()
+
+    def _poll_proc_pipes(self, proc, ctx):
+        """Poll STDOUT/ERR of proc and read some data if possible.
+
+        This helps to unblock the command by unblocking its pipes.
+        """
+        if self.pipepoller is None:
+            return  # select.poll not supported on this OS
+        for handle in [proc.stdout, proc.stderr]:
+            if not handle.closed:
+                self.pipepoller.register(handle.fileno(), self.POLLREAD)
+        while True:
+            fileno_list = [
+                fileno
+                for fileno, event in self.pipepoller.poll(0.0)
+                if event & self.POLLREAD]
+            if not fileno_list:
+                # Nothing readable
+                break
+            for fileno in fileno_list:
+                data = ''
+                while True:
+                    # Use the low level `os.read` here instead of
+                    # `file.read` to avoid any buffering that may cause
+                    # the file handle to block.
+                    res = os.read(fileno, 65536)  # 64K
+                    if not res:
+                        break
+                    data += res
+                if fileno == proc.stdout.fileno():
+                    if ctx.out is None:
+                        ctx.out = ''
+                    ctx.out += data
+                elif fileno == proc.stderr.fileno():
+                    if ctx.err is None:
+                        ctx.err = ''
+                    ctx.err += data
+        self.pipepoller.unregister(proc.stdout.fileno())
+        self.pipepoller.unregister(proc.stderr.fileno())
 
     @classmethod
     def _run_command_init(cls, ctx, callback=None, callback_args=None):

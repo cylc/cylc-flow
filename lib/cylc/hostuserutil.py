@@ -118,7 +118,12 @@ class HostUtil(object):
         if target not in self._host_exs:
             if target is None:
                 target = socket.getfqdn()
-            self._host_exs[target] = socket.gethostbyname_ex(target)
+            try:
+                self._host_exs[target] = socket.gethostbyname_ex(target)
+            except IOError as exc:
+                if exc.filename is None:
+                    exc.filename = target
+                raise
         return self._host_exs[target]
 
     @staticmethod
@@ -148,6 +153,8 @@ class HostUtil(object):
 
     def get_fqdn_by_host(self, target):
         """Return the fully qualified domain name of the target host."""
+        if not self.is_remote_host(target):
+            return self.get_host()
         return self._get_host_info(target)[0]
 
     def get_user(self):
@@ -245,24 +252,3 @@ def is_remote_host(name):
 def is_remote_user(name):
     """Return True if name is not a name of the current user."""
     return HostUtil.get_inst().is_remote_user(name)
-
-
-if __name__ == "__main__":
-    import unittest
-
-    class TestLocal(unittest.TestCase):
-        """Test is_remote* behaves with local host and user."""
-
-        def test_users(self):
-            """is_remote_user with local users."""
-            self.assertFalse(is_remote_user(None))
-            self.assertFalse(is_remote_user(os.getenv('USER')))
-
-        def test_hosts(self):
-            """is_remote_host with local hosts."""
-            self.assertFalse(is_remote_host(None))
-            self.assertFalse(is_remote_host('localhost'))
-            self.assertFalse(is_remote_host(os.getenv('HOSTNAME')))
-            self.assertFalse(is_remote_host(get_host()))
-
-    unittest.main()

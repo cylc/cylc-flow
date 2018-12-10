@@ -1,5 +1,5 @@
-edge "bar.20140101T1200Z" "baz.20140101T1200Z" solid
+edge "bar.20140101T1200Z" "baz.20140101T1200Z"
 graph
-node "bar.20140101T1200Z" "bar\n20140101T1200Z" unfilled ellipse black
-node "baz.20140101T1200Z" "baz\n20140101T1200Z" unfilled ellipse black
+node "bar.20140101T1200Z" "bar\n20140101T1200Z"
+node "baz.20140101T1200Z" "baz\n20140101T1200Z"
 stop

@@ -165,6 +165,7 @@ SPEC = {
             'init-script': [VDR.V_STRING],
             'env-script': [VDR.V_STRING],
             'err-script': [VDR.V_STRING],
+            'exit-script': [VDR.V_STRING],
             'pre-script': [VDR.V_STRING],
             'script': [VDR.V_STRING],
             'post-script': [VDR.V_STRING],
@@ -269,8 +270,8 @@ SPEC = {
         'node penwidth': [VDR.V_INTEGER, 2],
         'edge penwidth': [VDR.V_INTEGER, 2],
         'default node attributes': [
-            VDR.V_STRING_LIST, ['style=unfilled', 'color=black', 'shape=box']],
-        'default edge attributes': [VDR.V_STRING_LIST, ['color=black']],
+            VDR.V_STRING_LIST, ['style=unfilled', 'shape=ellipse']],
+        'default edge attributes': [VDR.V_STRING_LIST],
         'node groups': {
             '__MANY__': [VDR.V_STRING_LIST],
         },

@@ -70,7 +70,7 @@ class Prerequisite(object):
         # 'foo.1 failed & bar.1 succeeded'
         self.conditional_expression = None
 
-        # The cashed state of this prerequisite:
+        # The cached state of this prerequisite:
         # * `None` (no cached state)
         # * `True` (prerequisite satisfied)
         # * `False` (prerequisite unsatisfied).

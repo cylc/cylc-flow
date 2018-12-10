@@ -1,7 +1,7 @@
-edge "FAM.1" "bar.1" solid
-edge "foo.1" "FAM.1" solid
+edge "FAM.1" "bar.1"
+edge "foo.1" "FAM.1"
 graph
-node "FAM.1" "FAM\n1" unfilled doubleoctagon black
-node "bar.1" "bar\n1" unfilled ellipse black
-node "foo.1" "foo\n1" unfilled ellipse black
+node "FAM.1" "FAM\n1"
+node "bar.1" "bar\n1"
+node "foo.1" "foo\n1"
 stop

@@ -19,16 +19,16 @@
         # * The 'retry' states are hollow (pre-running) orange (almost red)
         #   as a failure has occurred but we're doing something about it.
         # * The 'waiting' state is light blue.
-        defaults  = "color=#bbbbbb", "style=unfilled", "fontcolor=black"
+        defaults  = "color=#bbbbbb", "style=unfilled"
         waiting   = "color=#88c6ff"
         held      = "color=#fe83ff"
         queued    = "color=#dcd901"
         ready     = "color=#a08f49"
         expired   = "color=#000000"
-        submitted = "color=#a1cf25", "style=filled"
+        submitted = "color=#a1cf25", "style=filled", "fontcolor=black"
         submit-failed = "color=#ff007e", "style=filled", "fontcolor=white"
-        running   = "color=#00c140", "style=filled"
-        succeeded = "color=#ada5a5", "style=filled"
+        running   = "color=#00c140", "style=filled", "fontcolor=black"
+        succeeded = "color=#ada5a5", "style=filled", "fontcolor=black"
         failed    = "color=#ff0000", "style=filled", "fontcolor=white"
         retrying  = "color=#ff7e00"
         submit-retrying  = "color=#fa7e00"

@@ -28,15 +28,15 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 TEST_NAME=$TEST_NAME_BASE-graph-check
 run_ok $TEST_NAME cylc graph --reference $SUITE_NAME
 cmp_ok "$TEST_NAME.stdout" <<'__OUT__'
-edge "bar.1" "baz.1" solid
-edge "foo.1" "bar.1" solid
-edge "foo.1" "qux.1" solid
-edge "qux.1" "baz.1" solid
+edge "bar.1" "baz.1"
+edge "foo.1" "bar.1"
+edge "foo.1" "qux.1"
+edge "qux.1" "baz.1"
 graph
-node "bar.1" "bar\n1" unfilled ellipse black
-node "baz.1" "baz\n1" unfilled ellipse black
-node "foo.1" "foo\n1" unfilled ellipse black
-node "qux.1" "qux\n1" unfilled ellipse black
+node "bar.1" "bar\n1"
+node "baz.1" "baz\n1"
+node "foo.1" "foo\n1"
+node "qux.1" "qux\n1"
 stop
 __OUT__
 #-------------------------------------------------------------------------------

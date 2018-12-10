@@ -189,8 +189,3 @@ class ConditionalSimplifier(object):
         if isinstance(flattened, list):
             flattened = " ".join(flattened)
         return "({0})".format(flattened)
-
-
-if __name__ == "__main__":
-    import doctest
-    doctest.testmod()

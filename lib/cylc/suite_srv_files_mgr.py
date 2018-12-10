@@ -21,7 +21,6 @@
 # imported on demand.
 import os
 import re
-import sys
 from uuid import uuid4
 from string import ascii_letters, digits
 

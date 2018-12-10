@@ -58,7 +58,7 @@ for expected in res[rcname].keys():
     elif rcname == 'float_list':
         expected = [float(i) for i in expected.split('_')]
 
-    elif rcname == 'string_list':
+    elif rcname in ['string_list', 'spaceless_string_list']:
         if expected:
             expected = expected.split('_')
         else:

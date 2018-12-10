@@ -173,7 +173,7 @@
                 {% else -%}
                   {% set path_in_tar_arg = log.path_in_tar|replace('+', '%2B') -%}
                   <a
-                  {% if log.size == "?" or not log.size -%}class="text-muted"{% endif -%}
+                  {% if log.size == "?" or not log.size -%}class="text-muted" {% endif -%}
                   href="{{view_link}}&amp;path={{path_arg}}&amp;path_in_tar={{path_in_tar_arg}}"
                   title="{{log.size}} bytes">{{key_str}}</a>
                 {% endif -%}
@@ -182,7 +182,7 @@
                   {{key_str}}
                 {% else -%}
                   <a
-                  {% if log.size == "?" or not log.size -%}class="text-muted"{% endif -%}
+                  {% if log.size == "?" or not log.size -%}class="text-muted" {% endif -%}
                   href="{{view_link}}&amp;path={{path_arg}}"
                   title="{{log.size}} bytes">{{key_str}}</a>
                 {% endif -%}

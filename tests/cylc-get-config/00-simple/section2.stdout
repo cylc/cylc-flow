@@ -2,6 +2,7 @@
     script = echo "RUN: run-var.sh"
     env-script = 
     err-script = 
+    exit-script = 
     extra log files = 
     work sub-directory = 
     init-script = 
@@ -82,6 +83,7 @@
     script = echo "RUN: run-ops.sh"
     env-script = 
     err-script = 
+    exit-script = 
     extra log files = 
     work sub-directory = 
     init-script = 
@@ -161,6 +163,7 @@
     script = echo "RUN: run-ops.sh"
     env-script = 
     err-script = 
+    exit-script = 
     extra log files = 
     work sub-directory = 
     init-script = 
@@ -241,6 +244,7 @@
     script = echo "RUN: run-ops.sh"
     env-script = 
     err-script = 
+    exit-script = 
     extra log files = 
     work sub-directory = 
     init-script = 
@@ -321,6 +325,7 @@
     script = echo "RUN: run-ops.sh"
     env-script = 
     err-script = 
+    exit-script = 
     extra log files = 
     work sub-directory = 
     init-script = 
@@ -401,6 +406,7 @@
     script = echo "RUN: run-ops.sh"
     env-script = 
     err-script = 
+    exit-script = 
     extra log files = 
     work sub-directory = 
     init-script = 
@@ -481,6 +487,7 @@
     script = echo "RUN: run-var.sh"
     env-script = 
     err-script = 
+    exit-script = 
     extra log files = 
     work sub-directory = 
     init-script = 
@@ -561,6 +568,7 @@
     script = echo "RUN: run-var.sh"
     env-script = 
     err-script = 
+    exit-script = 
     extra log files = 
     work sub-directory = 
     init-script = 
@@ -640,6 +648,7 @@
     script = echo "RUN: run-var.sh"
     env-script = 
     err-script = 
+    exit-script = 
     extra log files = 
     work sub-directory = 
     init-script = 
@@ -719,6 +728,7 @@
 [[SERIAL]]
     env-script = 
     err-script = 
+    exit-script = 
     script = 
     extra log files = 
     work sub-directory = 
@@ -799,6 +809,7 @@
 [[root]]
     env-script = 
     err-script = 
+    exit-script = 
     script = 
     extra log files = 
     work sub-directory = 
@@ -878,6 +889,7 @@
 [[PARALLEL]]
     env-script = 
     err-script = 
+    exit-script = 
     script = 
     extra log files = 
     work sub-directory = 
@@ -959,6 +971,7 @@
     script = echo "RUN: run-var.sh"
     env-script = 
     err-script = 
+    exit-script = 
     extra log files = 
     work sub-directory = 
     init-script = 
