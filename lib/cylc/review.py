@@ -79,7 +79,8 @@ class CylcReviewService(object):
             self.host_name = self.host_name.split(".", 1)[0]
         self.cylc_version = CYLC_VERSION
         template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(
-            get_util_home("lib", "cylc", "cylc-review", "template")))
+            get_util_home("lib", "cylc", "cylc-review", "template")),
+            autoescape = True)
         template_env.filters['urlise'] = self.url2hyperlink
         self.template_env = template_env
 

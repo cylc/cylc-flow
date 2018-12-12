@@ -95,7 +95,9 @@ def jinja2environment(dir_=None):
     env = Environment(
         loader=ChoiceLoader([FileSystemLoader(dir_), PyModuleLoader()]),
         undefined=StrictUndefined,
-        extensions=['jinja2.ext.do'])
+        extensions=['jinja2.ext.do'],
+        autoescape=True
+        )
 
     # Load any custom Jinja2 filters, tests or globals in the suite
     # definition directory

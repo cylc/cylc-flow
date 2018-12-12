@@ -64,7 +64,6 @@ from cherrypy._cpcompat import copyitems, ntob
 from cherrypy._cperror import format_exc, bare_error
 from cherrypy.lib import httputil
 
-
 # ------------------------------ Request-handling
 
 
@@ -272,17 +271,20 @@ def send_response(req, status, headers, body, stream=False):
 # --------------- Startup tools for CherryPy + mod_python --------------- #
 import os
 import re
+from cylc.subprocess_safe import popencylc
+
 try:
     import subprocess
+    # import pipes
 
     def popen(fullcmd):
-        p = subprocess.Popen(fullcmd, shell=True,
-                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                             close_fds=True)
+        p = popencylc(fullcmd, shell=True,
+                      stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                      close_fds=True)
         return p.stdout
 except ImportError:
     def popen(fullcmd):
-        pipein, pipeout = os.popen4(fullcmd)
+        pipein, pipeout = popencylc(fullcmd)
         return pipeout
 
 

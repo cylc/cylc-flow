@@ -114,6 +114,7 @@ from shutil import rmtree
 from signal import SIGKILL
 import stat
 from subprocess import Popen, PIPE
+from cylc.subprocess_safe import popencylc
 import sys
 import traceback
 
@@ -659,7 +660,7 @@ class BatchSysManager(object):
                 # that we do not have a shell, and still manage to get as far
                 # as here.
                 batch_sys_cmd = batch_submit_cmd_tmpl % {"job": job_file_path}
-                proc = Popen(
+                proc = popencylc(
                     batch_sys_cmd,
                     stdin=proc_stdin_arg, stdout=PIPE, stderr=PIPE,
                     shell=True, env=env)
