@@ -22,7 +22,7 @@
 {% endif %}
 {% if GLOBALCFG is not defined %}
         [[[events]]]
-            handlers = hello-event-handler %(name)s %(event)s %(suite_url)s %(task_url)s %(message)s %(point)s %(submit_num)s %(id)s
+            handlers = hello-event-handler %(name)s %(event)s %(suite_url)s %(suite_uuid)s %(task_url)s %(message)s %(point)s %(submit_num)s %(id)s
             handler events=succeeded, failed
             handler retry delays=PT0S, 2*PT1S
 {% endif %}{# not GLOBALCFG is not defined #}
