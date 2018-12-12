@@ -37,13 +37,14 @@ curdir = os.path.abspath(os.path.dirname(__file__))
 import re
 import sys
 import time
+from cylc.subprocess_safe import popencylc
 
 import cherrypy
 from cherrypy.test import helper, webtest
 
 
 def read_process(cmd, args=""):
-    pipein, pipeout = os.popen4("%s %s" % (cmd, args))
+    pipein, pipeout = popencylc("%s %s" % cmd, args)
     try:
         firstline = pipeout.readline()
         if (re.search(r"(not recognized|No such file|not found)", firstline,

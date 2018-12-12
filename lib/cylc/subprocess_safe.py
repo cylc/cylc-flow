@@ -1,0 +1,50 @@
+#!/usr/bin/env python2
+
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+""" Function to sanitize input to a spawning subprocess where shell==True
+    Bandit B602: subprocess_popen_with_shell_equals_true
+    https://docs.openstack.org/developer/bandit/plugins/subprocess_popen_with_shell_equals_true.html
+
+    Bandit can't determine if the command input is sanitized, it just raises
+    an issue if it detects Popen with with the option shell=True and so nosec
+    is used here to supress false positives.
+"""
+
+import sys
+from pipes import quote
+from subprocess import Popen
+
+# pylint: disable=too-many-arguments
+# pylint: disable=too-many-locals
+
+
+def popencylc(cmd, bufsize=0, executable=None, stdin=None, stdout=None,
+              stderr=None, preexec_fn=None,
+              close_fds=False, shell=False, cwd=None, env=None,
+              universal_newlines=False, startupinfo=None, creationflags=0):
+
+    try:
+        command = quote(cmd)
+        proc = Popen(command, bufsize, executable, stdin, stdout,  # nosec
+                     stderr, preexec_fn, close_fds, shell, cwd, env,
+                     universal_newlines, startupinfo, creationflags)
+        return proc
+    except OSError as exc:
+        sys.exit(r'ERROR: %s: %s' % (
+            exc, ' '.join(quote(item) for item in command)))
+        return proc
