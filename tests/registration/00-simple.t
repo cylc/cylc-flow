@@ -18,7 +18,7 @@
 # Test suite registration
 
 . "$(dirname "$0")/test_header"
-set_test_number 19 
+set_test_number 25
 
 init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
 [meta]
@@ -74,6 +74,26 @@ contains_ok "${TEST_NAME}.stdout" <<__OUT__
 REGISTERED $BAGELS -> ${PWD}/$CHEESE
 __OUT__
 rm -rf "${CYLC_RUN_DIR}/$BAGELS"
+
+# Test "cylc reg REG ~/cylc-run/REG"
+TEST_NAME="${TEST_NAME_BASE}-onion"
+ONION="${PRE}-onion"
+mkdir -p "${CYLC_RUN_DIR}/${ONION}"
+cp -p "${PWD}/suite.rc" "${CYLC_RUN_DIR}/${ONION}/"
+run_ok "${TEST_NAME}" cylc register "${ONION}" "${CYLC_RUN_DIR}/${ONION}"
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
+REGISTERED ${ONION} -> ${CYLC_RUN_DIR}/${ONION}
+__OUT__
+SOURCE="$(readlink "${CYLC_RUN_DIR}/${ONION}/.service/source")"
+run_ok "${TEST_NAME}-source" test '..' = "${SOURCE}"
+# Run it twice
+run_ok "${TEST_NAME}-2" cylc register "${ONION}" "${CYLC_RUN_DIR}/${ONION}"
+contains_ok "${TEST_NAME}-2.stdout" <<__OUT__
+REGISTERED ${ONION} -> ${CYLC_RUN_DIR}/${ONION}
+__OUT__
+SOURCE="$(readlink "${CYLC_RUN_DIR}/${ONION}/.service/source")"
+run_ok "${TEST_NAME}-2-source" test '..' = "${SOURCE}"
+rm -rf "${CYLC_RUN_DIR}/${ONION}"
 
 # Test fail "cylc reg REG PATH" where REG already points to PATH2
 YOGHURT=${PRE}-YOGHURT
