@@ -25,7 +25,6 @@ from pipes import quote
 from Queue import Empty, Queue
 from shutil import copytree, rmtree
 from subprocess import Popen, PIPE
-import subprocess_safe
 import sys
 from time import sleep, time
 import traceback
@@ -245,12 +244,6 @@ class Scheduler(object):
     def start(self):
         """Start the server."""
         self._start_print_blurb()
-
-        # # import pudb; pudb.set_trace()
-        proccom = subprocess_safe.popencylc("The$!cat#&ran\"'up()a|<>tree`\;",
-                                  stdin=PIPE, stdout=PIPE, stderr=PIPE,
-                                  shell=True)
-        print proccom
 
         glbl_cfg().create_cylc_run_tree(self.suite)
 
