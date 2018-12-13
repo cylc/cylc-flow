@@ -19,7 +19,7 @@
 """ Function to sanitize input to a spawning subprocess where shell==True
     Bandit B602: subprocess_popen_with_shell_equals_true
     https://docs.openstack.org/developer/bandit/plugins/subprocess_popen_with_shell_equals_true.html
-
+    REASON IGNORED:
     Bandit can't determine if the command input is sanitized, it just raises
     an issue if it detects Popen with with the option shell=True and so nosec
     is used here to supress false positives.
@@ -28,6 +28,7 @@
 import sys
 from pipes import quote
 from subprocess import Popen
+from cylc import LOG
 
 # pylint: disable=too-many-arguments
 # pylint: disable=too-many-locals
@@ -40,11 +41,12 @@ def popencylc(cmd, bufsize=0, executable=None, stdin=None, stdout=None,
 
     try:
         command = quote(cmd)
-        proc = Popen(command, bufsize, executable, stdin, stdout,  # nosec
-                     stderr, preexec_fn, close_fds, shell, cwd, env,
-                     universal_newlines, startupinfo, creationflags)
-        return proc
+        process = Popen(command, bufsize, executable, stdin, stdout,  # nosec
+                        stderr, preexec_fn, close_fds, shell, cwd, env,
+                        universal_newlines, startupinfo, creationflags)
+        return process
     except OSError as exc:
-        sys.exit(r'ERROR: %s: %s' % (
-            exc, ' '.join(quote(item) for item in command)))
-        return proc
+        LOG.exception(exc)
+        sys.exit(str(exc))
+    if process.returncode:
+        raise RuntimeError(process.communicate()[1])

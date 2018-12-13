@@ -16,16 +16,78 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.subprocess_safe import popencylc
 import unittest
+from pipes import quote
+from subprocess import PIPE
+
+from mock import call
+from testfixtures import compare
+from testfixtures.popen import MockPopen
 
 
 class TestSubprocessSafe(unittest.TestCase):
     """Unit tests for the parameter subprocess_safe utility function"""
 
-    def test_quote(self):
-        cmd = "The$!cat#&ran\"'up()a|<>tree`\;"
-        assert popencylc(cmd) == '\'The$!cat#&ran"\'"\'"\'up()a|<>tree`\\;\''
+    def setUp(self):
+        self.Popen = MockPopen()
+
+    def test_subprocess_safe_quote(self):
+        cmd = "$!#&'()|<>`\ ; "
+        command = quote(cmd)
+        self.assertEqual(command, '\'$!#&\'"\'"\'()|<>`\\ ; \'')
+        self.assertEqual(command, quote("$!#&'()|<>`\\ ; "))
+
+    def test_subprocess_safe_communicate_with_input(self):
+        cmd = "a command"
+        command = quote(cmd)
+        Popen = MockPopen()
+        Popen.set_command(command)
+        process = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
+        out, err = process.communicate('foo')
+        compare([
+                call.Popen(command, shell=True, stderr=-1, stdout=-1),
+                call.Popen_instance.communicate('foo'),
+                ], Popen.mock.method_calls)
+
+    def test_subprocess_safe_read_from_stdout_and_stderr(self):
+        cmd = "a command"
+        command = quote(cmd)
+        Popen = MockPopen()
+        Popen.set_command(command, stdout=b'foo', stderr=b'bar')
+        process = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
+        compare(process.stdout.read(), b'foo')
+        compare(process.stderr.read(), b'bar')
+        compare([
+                call.Popen(command, shell=True, stderr=PIPE, stdout=PIPE),
+                ], Popen.mock.method_calls)
+           
+    def test_subprocess_safe_write_to_stdin(self):
+        cmd = "a command"
+        command = quote(cmd)
+        Popen = MockPopen()
+        Popen.set_command(command)
+        process = Popen(command, stdin=PIPE, shell=True)
+        process.stdin.write(command)
+        process.stdin.close()
+        compare([
+                call.Popen(command, shell=True, stdin=PIPE),
+                call.Popen_instance.stdin.write(command),
+                call.Popen_instance.stdin.close(),
+                ], Popen.mock.method_calls)
+
+    def test_subprocess_safe_wait_and_return_code(self):
+        cmd = "a command"
+        command = quote(cmd)
+        Popen = MockPopen()
+        Popen.set_command(command, returncode=3)
+        process = Popen(command)
+        compare(process.returncode, None)
+        compare(process.wait(), 3)
+        compare(process.returncode, 3)
+        compare([
+                call.Popen(command),
+                call.Popen_instance.wait(),
+                ], Popen.mock.method_calls)
 
 
 if __name__ == "__main__":

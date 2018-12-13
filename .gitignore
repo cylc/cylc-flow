@@ -41,3 +41,9 @@ passphrase
 .coverage.*
 coverage.xml
 htmlcov/
+
+\.vscode/settings\.json
+
+\.pytest_cache/v/cache/
+
+\.vscode/launch\.json
