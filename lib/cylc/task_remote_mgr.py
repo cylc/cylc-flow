@@ -31,7 +31,6 @@ from subprocess import Popen, PIPE
 import tarfile
 from tempfile import NamedTemporaryFile
 from time import time
-from uuid import uuid4
 
 from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
@@ -80,7 +79,7 @@ class TaskRemoteMgr(object):
         # self.remote_init_map = {(host, owner): status, ...}
         self.remote_init_map = {}
         self.single_task_mode = False
-        self.uuid_str = str(uuid4())
+        self.uuid_str = None
         self.ready = False
 
     def remote_host_select(self, host_str):
@@ -209,7 +208,7 @@ class TaskRemoteMgr(object):
             self.suite_srv_files_mgr.get_suite_srv_dir(self.suite),
             FILE_BASE_UUID)
         if not os.path.exists(uuid_fname):
-            open(uuid_fname, 'wb').write(self.uuid_str)
+            open(uuid_fname, 'wb').write(str(self.uuid_str))
         # Build the command
         cmd = ['cylc', 'remote-init']
         if is_remote_host(host):
@@ -220,7 +219,7 @@ class TaskRemoteMgr(object):
             cmd.append('--debug')
         if comm_meth in ['ssh']:
             cmd.append('--indirect-comm=%s' % comm_meth)
-        cmd.append(self.uuid_str)
+        cmd.append(str(self.uuid_str))
         cmd.append(glbl_cfg().get_derived_host_item(
             self.suite, 'suite run directory', host, owner))
         self.proc_pool.put_command(

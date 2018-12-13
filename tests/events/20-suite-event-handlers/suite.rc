@@ -7,7 +7,7 @@
 [cylc]
     [[events]]
 {% if GLOBALCFG is not defined %}
-        handlers = echo 'Your %(suite)s suite has a %(event)s event and URL %(suite_url)s and suite-priority as %(suite-priority)s.'
+        handlers = echo 'Your %(suite)s suite has a %(event)s event and URL %(suite_url)s and suite-priority as %(suite-priority)s and suite-UUID as %(suite_uuid)s.'
         handler events = startup
 {% endif %}{# not GLOBALCFG is not defined #}
     [[reference test]]

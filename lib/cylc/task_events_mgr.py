@@ -133,6 +133,7 @@ class TaskEventsManager(object):
         self.suite = suite
         self.suite_url = None
         self.suite_cfg = {}
+        self.uuid_str = None
         self.proc_pool = proc_pool
         self.suite_db_mgr = suite_db_mgr
         self.broadcast_mgr = broadcast_mgr
@@ -855,6 +856,7 @@ class TaskEventsManager(object):
                 handler_data = {
                     "event": quote(event),
                     "suite": quote(self.suite),
+                    'suite_uuid': quote(str(self.uuid_str)),
                     "point": quote(str(itask.point)),
                     "name": quote(itask.tdef.name),
                     "submit_num": itask.submit_num,
