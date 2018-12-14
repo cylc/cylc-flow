@@ -20,7 +20,7 @@
 
 from os import devnull, killpg, setpgrp
 from signal import SIGTERM
-from subprocess import Popen, PIPE
+from subprocess import PIPE
 from time import sleep, time
 
 from subprocess_safe import popencylc
