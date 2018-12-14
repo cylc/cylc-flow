@@ -19,7 +19,7 @@ import os
 import sqlite3
 import subprocess
 import sys
-from pipes import quote
+from cylc.subprocess_safe import popencylc
 
 
 def main(argv):
@@ -31,9 +31,9 @@ def main(argv):
     sname = argv[0]
     rundir = argv[1]
 
-    p = subprocess.Popen(quote("cylc cat-state " + sname),  # nosec
-                         shell=True, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE)
+    p = popencylc("cylc cat-state " + sname,
+                  shell=True, stdout=subprocess.PIPE,
+                  stderr=subprocess.PIPE)
     state, err = p.communicate()
 
     if p.returncode > 0:

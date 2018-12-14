@@ -3,11 +3,11 @@ import sys
 import six
 
 try:
-    from xmlrpclib import DateTime, Fault, ProtocolError, ServerProxy
-    from xmlrpclib import SafeTransport
+    from defusedxml import DateTime, Fault, ProtocolError, ServerProxy
+    from defusedxml import SafeTransport
 except ImportError:
-    from xmlrpc.client import DateTime, Fault, ProtocolError, ServerProxy
-    from xmlrpc.client import SafeTransport
+    from defusedxml.client import DateTime, Fault, ProtocolError, ServerProxy
+    from defusedxml.client import SafeTransport
 
 if six.PY3:
     HTTPSTransport = SafeTransport

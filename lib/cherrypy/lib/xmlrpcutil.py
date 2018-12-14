@@ -6,9 +6,9 @@ from cherrypy._cpcompat import ntob
 
 def get_xmlrpclib():
     try:
-        import xmlrpc.client as x
+        import defusedxml.client as x
     except ImportError:
-        import xmlrpclib as x
+        import defusedxml as x
     return x
 
 
