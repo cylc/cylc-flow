@@ -1,7 +1,10 @@
 import sys
 
 import six
-
+# XMLRPC is particularly dangerous as it is also concerned with
+# communicating data over a network. Use defused.xmlrpc.monkey_patch()
+# function to monkey-patch xmlrpclib and mitigate remote XML attacks.
+# https://docs.openstack.org/developer/bandit/blacklists/blacklist_imports.html#b411-import-xmlrpclib
 try:
     from defusedxml import DateTime, Fault, ProtocolError, ServerProxy
     from defusedxml import SafeTransport
