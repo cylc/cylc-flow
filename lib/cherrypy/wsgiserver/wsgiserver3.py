@@ -1160,7 +1160,7 @@ class HTTPConnection(object):
             # the kernel socket.
             # Python 3 *probably* fixed this with socket._real_close;
             # hard to tell.
-# self.socket._sock.close()
+            # self.socket._sock.close()
             self.socket.close()
         else:
             # On the other hand, sometimes we want to hang around for a bit
@@ -1283,7 +1283,7 @@ class ThreadPool(object):
     """
 
     def __init__(self, server, min=10, max=-1,
-        accepted_queue_size=-1, accepted_queue_timeout=10):
+                 accepted_queue_size=-1, accepted_queue_timeout=10):
         self.server = server
         self.min = min
         self.max = max
@@ -1627,9 +1627,14 @@ class HTTPServer(object):
             except:
                 pass
 
-            # So everyone can access the socket...
+            # So everyone can access the socket, this was set to 777
+            # https://docs.openstack.org/developer/bandit/plugins/set_bad_file_permissions.html
+            # This plugin test looks for the use of chmod and will alert when
+            # it is used to set particularly permissive control flags. A MEDIUM warning is
+            # generated if a file is set to group executable and a HIGH warning is reported if a file
+            # is set world writable. Warnings are given with HIGH confidence.
             try:
-                os.chmod(self.bind_addr, 0o777)
+                os.chmod(self.bind_addr, 0o755)
             except:
                 pass
 
@@ -1938,8 +1943,8 @@ class CherryPyWSGIServer(HTTPServer):
                  max=-1, request_queue_size=5, timeout=10, shutdown_timeout=5,
                  accepted_queue_size=-1, accepted_queue_timeout=10):
         self.requests = ThreadPool(self, min=numthreads or 1, max=max,
-            accepted_queue_size=accepted_queue_size,
-            accepted_queue_timeout=accepted_queue_timeout)
+                                   accepted_queue_size=accepted_queue_size,
+                                   accepted_queue_timeout=accepted_queue_timeout)
         self.wsgi_app = wsgi_app
         self.gateway = wsgi_gateways[self.wsgi_version]
 
