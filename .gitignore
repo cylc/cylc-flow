@@ -54,3 +54,15 @@ htmlcov/
 \.pytest_cache/v/cache/
 
 \.vscode/launch\.json
+
+lib/cherrypy/test/access\.log
+
+lib/cherrypy/test/error\.log
+
+lib/cherrypy/test/test\.access\.log
+
+lib/cherrypy/test/test\.error\.log
+
+Pipfile
+
+lib/cherrypy/test/test\.conf
