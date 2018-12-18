@@ -17,16 +17,19 @@
 
 
 def pad(value, length, fillchar=' '):
-    """Pads a string to some length with a fill character
+    """Pads a value to some length with a fill character
+
+    If the value is a string, it will return the padded string. If the
+    value is a list, then each item will be padded and a new list returned.
 
     Args:
-        value (str): The string to padd.
+        value (str): The string or list of strings to pad.
         length (int/str): The length for the returned string.
         fillchar (str - optional): The character to fill in surplus space
             (space by default).
 
     Returns:
-        str: value padded to the left with fillchar to length length.
+        str/list: value(s) padded to the left with fillchar to length length.
 
     Examples:
         >>> pad('13', 3, '0')
@@ -35,6 +38,10 @@ def pad(value, length, fillchar=' '):
         '   foo'
         >>> pad('foo', 2)
         'foo'
+        >>> pad([0, 1, 2], 3, '0')
+        ['000', '001', '002']
 
     """
+    if isinstance(value, list):
+        return [str(v).rjust(int(length), str(fillchar)) for v in value]
     return str(value).rjust(int(length), str(fillchar))
