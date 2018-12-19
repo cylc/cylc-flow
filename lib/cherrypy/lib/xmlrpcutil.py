@@ -10,9 +10,9 @@ def get_xmlrpclib():
     # function to monkey-patch xmlrpclib and mitigate remote XML attacks.
     # https://docs.openstack.org/developer/bandit/blacklists/blacklist_imports.html#b411-import-xmlrpclib
     try:
-        import defusedxml.client as x
+        import xmlrpc.client as x
     except ImportError:
-        import defusedxml as x
+        import xmlrpclib as x  # nosec
     return x
 
 
