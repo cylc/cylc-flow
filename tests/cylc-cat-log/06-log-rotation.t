@@ -25,30 +25,30 @@ LOG_DIR="$(dirname "$(cylc cat-log -m p "${SUITE_NAME}")")"
 mkdir -p "${LOG_DIR}"
 # Note: .0 .1 .2: back compatability to old log rotation system
 # (short sleeps to get different file mtimes)
-touch "${LOG_DIR}/out.20000103T00Z"
+touch "${LOG_DIR}/log.20000103T00Z"
 sleep 1
-touch  "${LOG_DIR}/out.20000102T00Z"
+touch  "${LOG_DIR}/log.20000102T00Z"
 sleep 1
-touch "${LOG_DIR}/out.20000101T00Z"
+touch "${LOG_DIR}/log.20000101T00Z"
 sleep 1
-touch "${LOG_DIR}/out.0"
+touch "${LOG_DIR}/log.0"
 sleep 1
-touch "${LOG_DIR}/out.1"
+touch "${LOG_DIR}/log.1"
 sleep 1
-touch "${LOG_DIR}/out.2"
+touch "${LOG_DIR}/log.2"
 
 # Test log rotation.
 for I in {0..5}; do
-    basename "$(cylc cat-log "${SUITE_NAME}" -f o -m p -r "${I}")"
+    basename "$(cylc cat-log "${SUITE_NAME}" -m p -r "${I}")"
 done >'result'
 
 cmp_ok 'result' <<'__CMP__'
-out.2
-out.1
-out.0
-out.20000101T00Z
-out.20000102T00Z
-out.20000103T00Z
+log.2
+log.1
+log.0
+log.20000101T00Z
+log.20000102T00Z
+log.20000103T00Z
 __CMP__
 
 purge_suite "${SUITE_NAME}"

@@ -75,7 +75,7 @@ class AtCommandHandler(object):
     def filter_submit_output(self, out, err):
         """Suppress at's routine output to stderr.
 
-        Otherwises we get warning messages that suggest something is wrong.
+        Otherwise we get warning messages that suggest something is wrong.
         1) move the standard job ID message from stderr to stdout
         2) suppress the message warning that commands will be executed with
         /bin/sh (this refers to the command line that runs the job script).

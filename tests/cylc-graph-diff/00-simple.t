@@ -79,19 +79,19 @@ run_fail $TEST_NAME cylc graph-diff "$DIFF_SUITE_NAME" "$CONTROL_SUITE_NAME"
 sed -i "/\.graph\.ref\./d" "$TEST_NAME.stdout"
 cmp_ok "$TEST_NAME.stdout" <<'__OUT__'
 @@ -1,10 +1,10 @@
--edge "bar.20140808T0000Z" "baz.20140808T0000Z" solid
--edge "bar.20140809T0000Z" "baz.20140809T0000Z" solid
--edge "bar.20140810T0000Z" "baz.20140810T0000Z" solid
- edge "cold_foo.20140808T0000Z" "foo.20140808T0000Z" solid
- edge "foo.20140808T0000Z" "bar.20140808T0000Z" solid
-+edge "foo.20140808T0000Z" "baz.20140808T0000Z" solid
- edge "foo.20140809T0000Z" "bar.20140809T0000Z" solid
-+edge "foo.20140809T0000Z" "baz.20140809T0000Z" solid
- edge "foo.20140810T0000Z" "bar.20140810T0000Z" solid
-+edge "foo.20140810T0000Z" "baz.20140810T0000Z" solid
+-edge "bar.20140808T0000Z" "baz.20140808T0000Z"
+-edge "bar.20140809T0000Z" "baz.20140809T0000Z"
+-edge "bar.20140810T0000Z" "baz.20140810T0000Z"
+ edge "cold_foo.20140808T0000Z" "foo.20140808T0000Z"
+ edge "foo.20140808T0000Z" "bar.20140808T0000Z"
++edge "foo.20140808T0000Z" "baz.20140808T0000Z"
+ edge "foo.20140809T0000Z" "bar.20140809T0000Z"
++edge "foo.20140809T0000Z" "baz.20140809T0000Z"
+ edge "foo.20140810T0000Z" "bar.20140810T0000Z"
++edge "foo.20140810T0000Z" "baz.20140810T0000Z"
  graph
- node "bar.20140808T0000Z" "bar\n20140808T0000Z" unfilled ellipse black
- node "bar.20140809T0000Z" "bar\n20140809T0000Z" unfilled ellipse black
+ node "bar.20140808T0000Z" "bar\n20140808T0000Z"
+ node "bar.20140809T0000Z" "bar\n20140809T0000Z"
 __OUT__
 cmp_ok "$TEST_NAME.stderr" </dev/null
 #-------------------------------------------------------------------------------
@@ -105,58 +105,58 @@ run_fail $TEST_NAME cylc graph-diff "$DIFF_SUITE_NAME" "$CONTROL_SUITE_NAME" -- 
 sed -i "/\.graph\.ref\./d" "$TEST_NAME.stdout"
 cmp_ok "$TEST_NAME.stdout" <<'__OUT__'
 @@ -1,7 +1,7 @@
--edge FOO bar solid
--edge FOO baz solid
- edge FOO foo solid
- edge root FOO solid
-+edge root bar solid
-+edge root baz solid
- edge root cold_foo solid
+-edge FOO bar
+-edge FOO baz
+ edge FOO foo
+ edge root FOO
++edge root bar
++edge root baz
+ edge root cold_foo
  graph
- node FOO FOO filled box royalblue
+ node FOO FOO
 __OUT__
 cmp_ok "$TEST_NAME.stderr" </dev/null
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-custom-diff
 run_ok $TEST_NAME cylc graph-diff --diff-cmd=cat "$DIFF_SUITE_NAME" "$CONTROL_SUITE_NAME"
 cmp_ok "$TEST_NAME.stdout" <<'__OUT__'
-edge "bar.20140808T0000Z" "baz.20140808T0000Z" solid
-edge "bar.20140809T0000Z" "baz.20140809T0000Z" solid
-edge "bar.20140810T0000Z" "baz.20140810T0000Z" solid
-edge "cold_foo.20140808T0000Z" "foo.20140808T0000Z" solid
-edge "foo.20140808T0000Z" "bar.20140808T0000Z" solid
-edge "foo.20140809T0000Z" "bar.20140809T0000Z" solid
-edge "foo.20140810T0000Z" "bar.20140810T0000Z" solid
+edge "bar.20140808T0000Z" "baz.20140808T0000Z"
+edge "bar.20140809T0000Z" "baz.20140809T0000Z"
+edge "bar.20140810T0000Z" "baz.20140810T0000Z"
+edge "cold_foo.20140808T0000Z" "foo.20140808T0000Z"
+edge "foo.20140808T0000Z" "bar.20140808T0000Z"
+edge "foo.20140809T0000Z" "bar.20140809T0000Z"
+edge "foo.20140810T0000Z" "bar.20140810T0000Z"
 graph
-node "bar.20140808T0000Z" "bar\n20140808T0000Z" unfilled ellipse black
-node "bar.20140809T0000Z" "bar\n20140809T0000Z" unfilled ellipse black
-node "bar.20140810T0000Z" "bar\n20140810T0000Z" unfilled ellipse black
-node "baz.20140808T0000Z" "baz\n20140808T0000Z" unfilled ellipse black
-node "baz.20140809T0000Z" "baz\n20140809T0000Z" unfilled ellipse black
-node "baz.20140810T0000Z" "baz\n20140810T0000Z" unfilled ellipse black
-node "cold_foo.20140808T0000Z" "cold_foo\n20140808T0000Z" unfilled ellipse black
-node "foo.20140808T0000Z" "foo\n20140808T0000Z" unfilled ellipse black
-node "foo.20140809T0000Z" "foo\n20140809T0000Z" unfilled ellipse black
-node "foo.20140810T0000Z" "foo\n20140810T0000Z" unfilled ellipse black
+node "bar.20140808T0000Z" "bar\n20140808T0000Z"
+node "bar.20140809T0000Z" "bar\n20140809T0000Z"
+node "bar.20140810T0000Z" "bar\n20140810T0000Z"
+node "baz.20140808T0000Z" "baz\n20140808T0000Z"
+node "baz.20140809T0000Z" "baz\n20140809T0000Z"
+node "baz.20140810T0000Z" "baz\n20140810T0000Z"
+node "cold_foo.20140808T0000Z" "cold_foo\n20140808T0000Z"
+node "foo.20140808T0000Z" "foo\n20140808T0000Z"
+node "foo.20140809T0000Z" "foo\n20140809T0000Z"
+node "foo.20140810T0000Z" "foo\n20140810T0000Z"
 stop
-edge "cold_foo.20140808T0000Z" "foo.20140808T0000Z" solid
-edge "foo.20140808T0000Z" "bar.20140808T0000Z" solid
-edge "foo.20140808T0000Z" "baz.20140808T0000Z" solid
-edge "foo.20140809T0000Z" "bar.20140809T0000Z" solid
-edge "foo.20140809T0000Z" "baz.20140809T0000Z" solid
-edge "foo.20140810T0000Z" "bar.20140810T0000Z" solid
-edge "foo.20140810T0000Z" "baz.20140810T0000Z" solid
+edge "cold_foo.20140808T0000Z" "foo.20140808T0000Z"
+edge "foo.20140808T0000Z" "bar.20140808T0000Z"
+edge "foo.20140808T0000Z" "baz.20140808T0000Z"
+edge "foo.20140809T0000Z" "bar.20140809T0000Z"
+edge "foo.20140809T0000Z" "baz.20140809T0000Z"
+edge "foo.20140810T0000Z" "bar.20140810T0000Z"
+edge "foo.20140810T0000Z" "baz.20140810T0000Z"
 graph
-node "bar.20140808T0000Z" "bar\n20140808T0000Z" unfilled ellipse black
-node "bar.20140809T0000Z" "bar\n20140809T0000Z" unfilled ellipse black
-node "bar.20140810T0000Z" "bar\n20140810T0000Z" unfilled ellipse black
-node "baz.20140808T0000Z" "baz\n20140808T0000Z" unfilled ellipse black
-node "baz.20140809T0000Z" "baz\n20140809T0000Z" unfilled ellipse black
-node "baz.20140810T0000Z" "baz\n20140810T0000Z" unfilled ellipse black
-node "cold_foo.20140808T0000Z" "cold_foo\n20140808T0000Z" unfilled ellipse black
-node "foo.20140808T0000Z" "foo\n20140808T0000Z" unfilled ellipse black
-node "foo.20140809T0000Z" "foo\n20140809T0000Z" unfilled ellipse black
-node "foo.20140810T0000Z" "foo\n20140810T0000Z" unfilled ellipse black
+node "bar.20140808T0000Z" "bar\n20140808T0000Z"
+node "bar.20140809T0000Z" "bar\n20140809T0000Z"
+node "bar.20140810T0000Z" "bar\n20140810T0000Z"
+node "baz.20140808T0000Z" "baz\n20140808T0000Z"
+node "baz.20140809T0000Z" "baz\n20140809T0000Z"
+node "baz.20140810T0000Z" "baz\n20140810T0000Z"
+node "cold_foo.20140808T0000Z" "cold_foo\n20140808T0000Z"
+node "foo.20140808T0000Z" "foo\n20140808T0000Z"
+node "foo.20140809T0000Z" "foo\n20140809T0000Z"
+node "foo.20140810T0000Z" "foo\n20140810T0000Z"
 stop
 __OUT__
 cmp_ok "$TEST_NAME.stderr" </dev/null

@@ -25,18 +25,18 @@ This module provides the logic to:
 * Manage existing run database files on restart.
 """
 
-import os
 import json
+import os
 from shutil import copy, rmtree
 from subprocess import call
 from tempfile import mkstemp
 
+
+from cylc import LOG
 from cylc.broadcast_report import get_broadcast_change_iter
-import cylc.flags
 from cylc.rundb import CylcSuiteDAO
-from cylc.suite_logging import ERR, LOG
 from cylc.version import CYLC_VERSION
-from cylc.wallclock import get_current_time_string
+from cylc.wallclock import get_current_time_string, get_utc_mode
 
 
 class SuiteDatabaseManager(object):
@@ -271,11 +271,10 @@ class SuiteDatabaseManager(object):
         else:
             final_point_str = str(schd.final_point)
         self.db_inserts_map[self.TABLE_SUITE_PARAMS].extend([
-            {"key": "uuid_str",
-             "value": schd.task_job_mgr.task_remote_mgr.uuid_str},
+            {"key": "uuid_str", "value": str(schd.uuid_str)},
             {"key": "run_mode", "value": schd.run_mode},
             {"key": "cylc_version", "value": CYLC_VERSION},
-            {"key": "UTC_mode", "value": cylc.flags.utc},
+            {"key": "UTC_mode", "value": get_utc_mode()},
             {"key": "initial_point", "value": str(schd.initial_point)},
             {"key": "final_point", "value": final_point_str},
         ])
@@ -481,7 +480,7 @@ class SuiteDatabaseManager(object):
                     os.unlink(os.path.join(suite_run_d, "state.tar.gz"))
                 except OSError:
                     pass
-                ERR.error("cannot tar-gzip + remove old state/ directory")
+                LOG.error("cannot tar-gzip + remove old state/ directory")
             # Remove old files as well
             try:
                 os.unlink(os.path.join(suite_run_d, "cylc-suite-env"))

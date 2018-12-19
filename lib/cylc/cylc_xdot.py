@@ -27,19 +27,12 @@ import re
 import sys
 import xdot
 
+from cylc import LOG
 from cylc.config import SuiteConfig
 from cylc.cycling.loader import get_point
-from cylc.graphing import CGraphPlain, CGraph
+from cylc.graphing import CGraphPlain, CGraph, GHOST_TRANSP_HEX, gtk_rgb_to_hex
 from cylc.gui import util
 from cylc.task_id import TaskID
-from cylc.suite_logging import ERR
-
-
-def style_ghost_node(node):
-    """Apply default style to a ghost node."""
-    node.attr['color'] = '#888888'
-    node.attr['fontcolor'] = '#888888'
-    node.attr['fillcolor'] = '#eeeeee'  # Used when style=filled.
 
 
 class CylcDotViewerCommon(xdot.DotWindow):
@@ -86,8 +79,8 @@ class CylcDotViewerCommon(xdot.DotWindow):
                 vis_start_string=self.start_point_string,
                 vis_stop_string=self.stop_point_string)
         except Exception as exc:
-            msg = "Failed - parsing error?\n\n" + str(exc)
-            ERR.error(msg)
+            msg = "Failed - parsing error?\n\n%s" % exc
+            LOG.error(msg)
             if self.interactive:
                 dia = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
                                         buttons=gtk.BUTTONS_OK,
@@ -200,19 +193,18 @@ class MyDotWindow2(CylcDotViewerCommon):
     def get_graph(self):
         title = self.suite + ': runtime inheritance graph'
         graph = CGraphPlain(title)
+        graph.set_def_style(
+            gtk_rgb_to_hex(
+                getattr(self.style, 'fg', None)[gtk.STATE_NORMAL]),
+            gtk_rgb_to_hex(
+                getattr(self.style, 'bg', None)[gtk.STATE_NORMAL])
+        )
         graph.graph_attr['rankdir'] = self.orientation
         for ns in self.inherit:
             for p in self.inherit[ns]:
-                attr = {}
-                attr['color'] = 'royalblue'
-                graph.add_edge(p, ns, **attr)
-                nl = graph.get_node(p)
-                nr = graph.get_node(ns)
-                for n in nl, nr:
-                    n.attr['shape'] = 'box'
-                    n.attr['style'] = 'filled'
-                    n.attr['fillcolor'] = 'powderblue'
-                    n.attr['color'] = 'royalblue'
+                graph.add_edge(p, ns)
+                graph.get_node(p).attr['shape'] = 'box'
+                graph.get_node(ns).attr['shape'] = 'box'
 
         self.graph = graph
         self.filter_graph()
@@ -350,7 +342,7 @@ class MyDotWindow(CylcDotViewerCommon):
         # Add the actiongroup to the uimanager
         uimanager.insert_action_group(actiongroup, 0)
 
-        # Add a UI descrption
+        # Add a UI description
         uimanager.add_ui_from_string(self.ui)
 
         left_to_right_toolitem = uimanager.get_widget('/ToolBar/LeftToRight')
@@ -387,8 +379,11 @@ class MyDotWindow(CylcDotViewerCommon):
     def ungroup_all(self, w):
         self.get_graph(ungroup_all=True)
 
-    def is_ghost_task(self, name, point, cache=None):
-        """Returns True if the task <name> at cycle point <point> is a ghost.
+    def is_off_sequence(self, name, point, cache=None):
+        """Return True if task <name> at point <point> is off-sequence.
+
+        (This implies inter-cycle dependence on a task that will not be
+        instantiated at run time).
         """
         try:
             sequences = self.suiterc.taskdefs[name].sequences
@@ -417,6 +412,10 @@ class MyDotWindow(CylcDotViewerCommon):
         family_nodes = self.suiterc.get_first_parent_descendants()
         # Note this is used by "cylc graph" but not gcylc.
         # self.start_ and self.stop_point_string come from CLI.
+        bg_color = gtk_rgb_to_hex(
+            getattr(self.style, 'bg', None)[gtk.STATE_NORMAL])
+        fg_color = gtk_rgb_to_hex(
+            getattr(self.style, 'fg', None)[gtk.STATE_NORMAL])
         graph = CGraph.get_graph(
             self.suiterc,
             group_nodes=group_nodes,
@@ -424,12 +423,14 @@ class MyDotWindow(CylcDotViewerCommon):
             ungroup_recursive=ungroup_recursive,
             group_all=group_all, ungroup_all=ungroup_all,
             ignore_suicide=self.ignore_suicide,
-            subgraphs_on=self.subgraphs_on)
+            subgraphs_on=self.subgraphs_on,
+            bgcolor=bg_color, fgcolor=fg_color)
 
         graph.graph_attr['rankdir'] = self.orientation
 
         # Style nodes.
         cache = {}  # For caching is_on_sequence() calls.
+        fg_ghost = "%s%s" % (fg_color, GHOST_TRANSP_HEX)
         for node in graph.iternodes():
             name, point = TaskID.split(node.get_name())
             if name.startswith('@'):
@@ -440,9 +441,10 @@ class MyDotWindow(CylcDotViewerCommon):
                 node.attr['shape'] = 'doubleoctagon'
                 # Detecting ghost families would involve analysing triggers
                 # in the suite's graphing.
-            elif self.is_ghost_task(name, point, cache=cache):
-                # Style ghost nodes.
-                style_ghost_node(node)
+            elif self.is_off_sequence(name, point, cache=cache):
+                node.attr['style'] = 'dotted'
+                node.attr['color'] = fg_ghost
+                node.attr['fontcolor'] = fg_ghost
 
         self.graph = graph
         self.filter_graph()
@@ -496,81 +498,6 @@ class MyDotWindow(CylcDotViewerCommon):
         self.get_graph()
 
 
-class DotTipWidget(xdot.DotWidget):
-
-    """Subclass that allows connection of 'motion-notify-event'."""
-
-    def on_area_motion_notify(self, area, event):
-        """This returns False, instead of True as in the base class."""
-        self.drag_action.on_motion_notify(event)
-        return False
-
-
-class xdot_widgets(object):
-    """Used only by the GUI graph view."""
-
-    def __init__(self):
-        self.graph = xdot.Graph()
-
-        self.vbox = gtk.VBox()
-
-        self.widget = DotTipWidget()
-
-        zoomin_button = gtk.Button(stock=gtk.STOCK_ZOOM_IN)
-        zoomin_button.connect('clicked', self.widget.on_zoom_in)
-        zoomout_button = gtk.Button(stock=gtk.STOCK_ZOOM_OUT)
-        zoomout_button.connect('clicked', self.widget.on_zoom_out)
-        zoomfit_button = gtk.Button(stock=gtk.STOCK_ZOOM_FIT)
-        zoomfit_button.connect('clicked', self.widget.on_zoom_fit)
-        zoom100_button = gtk.Button(stock=gtk.STOCK_ZOOM_100)
-        zoom100_button.connect('clicked', self.widget.on_zoom_100)
-
-        self.graph_disconnect_button = gtk.ToggleButton('_DISconnect')
-        self.graph_disconnect_button.set_active(False)
-        self.graph_update_button = gtk.Button('_Update')
-        self.graph_update_button.set_sensitive(False)
-
-        bbox = gtk.HButtonBox()
-        bbox.add(zoomin_button)
-        bbox.add(zoomout_button)
-        bbox.add(zoomfit_button)
-        bbox.add(zoom100_button)
-        bbox.add(self.graph_disconnect_button)
-        bbox.add(self.graph_update_button)
-        bbox.set_layout(gtk.BUTTONBOX_SPREAD)
-
-        self.vbox.pack_start(self.widget)
-        self.vbox.pack_start(bbox, False)
-
-    def get(self):
-        return self.vbox
-
-    def set_filter(self, filter_):
-        self.widget.set_filter(filter_)
-
-    def set_dotcode(self, dotcode, filename='<stdin>', no_zoom=False):
-        if no_zoom:
-            old_zoom_func = self.widget.zoom_image
-            self.widget.zoom_image = lambda *a, **b: self.widget.queue_draw()
-        if self.widget.set_dotcode(dotcode, filename):
-            # self.set_title(os.path.basename(filename) + ' - Dot Viewer')
-            # disable automatic zoom-to-fit on update
-            # self.widget.zoom_to_fit()
-            pass
-        if no_zoom:
-            self.widget.zoom_image = old_zoom_func
-
-    def set_xdotcode(self, xdotcode, filename='<stdin>'):
-        if self.widget.set_xdotcode(xdotcode):
-            # self.set_title(os.path.basename(filename) + ' - Dot Viewer')
-            # disable automatic zoom-to-fit on update
-            # self.widget.zoom_to_fit()
-            pass
-
-    def on_reload(self, action):
-        self.widget.reload()
-
-
 def get_reference_from_plain_format(plain_text):
     """Return a stripped text format for 'plain' graphviz output.
 
@@ -593,4 +520,10 @@ def get_reference_from_plain_format(plain_text):
                 pass
         indexed_lines.append((line_items, line))
     indexed_lines.sort()
-    return "".join(l[1] for l in indexed_lines)
+    # Strip node styling info (may depend on desktop theme).
+    lines = "".join(l[1] for l in indexed_lines)
+    stripped_lines = []
+    for line in lines.split("\n"):
+        line_items = line.split(' ')
+        stripped_lines.append(' '.join(line_items[0:3]))
+    return '\n'.join(stripped_lines)

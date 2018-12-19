@@ -30,7 +30,7 @@ from jinja2 import (
     FileSystemLoader,
     StrictUndefined,
     TemplateNotFound)
-import cylc.flags
+from parsec import LOG
 
 
 class PyModuleLoader(BaseLoader):
@@ -100,7 +100,7 @@ def jinja2environment(dir_=None):
     # Load any custom Jinja2 filters, tests or globals in the suite
     # definition directory
     # Example: a filter to pad integer values some fill character:
-    # |(file SUITE_DEFINIION_DIRECTORY/Jinja2/foo.py)
+    # |(file SUITE_DEFINITION_DIRECTORY/Jinja2/foo.py)
     # |  #!/usr/bin/env python2
     # |  def foo( value, length, fillchar ):
     # |     return str(value).rjust( int(length), str(fillchar) )
@@ -135,10 +135,11 @@ def jinja2process(flines, dir_, template_vars=None):
     # Load file lines into a template, excluding '#!jinja2' so that
     # '#!cylc-x.y.z' rises to the top. Callers should handle jinja2
     # TemplateSyntaxerror and TemplateError.
-    if cylc.flags.verbose and template_vars:
-        print 'Setting Jinja2 template variables:'
-        for item in sorted(template_vars.items()):
-            print '    + %s=%s' % item
+    if template_vars:
+        LOG.debug(
+            'Setting Jinja2 template variables:\n%s',
+            '\n'.join(
+                ['+ %s=%s' % item for item in sorted(template_vars.items())]))
 
     # Jinja2 render method requires a dictionary as argument (not None):
     if not template_vars:

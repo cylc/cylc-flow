@@ -30,6 +30,7 @@ from subprocess import Popen, PIPE
 import sys
 from time import sleep
 
+from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
 from cylc.hostuserutil import is_remote
@@ -168,8 +169,13 @@ def construct_ssh_cmd(raw_cmd, user=None, host=None, forward_x11=False,
         user_at_host += 'localhost'
     command.append(user_at_host)
 
-    # Pass cylc version (and optionally UTC mode) through.
+    # Pass CYLC_VERSION and optionally, CYLC_CONF_PATH & CYLC_UTC through.
     command += ['env', quote(r'CYLC_VERSION=%s' % CYLC_VERSION)]
+    try:
+        command.append(
+            quote(r'CYLC_CONF_PATH=%s' % os.environ['CYLC_CONF_PATH']))
+    except KeyError:
+        pass
     if set_UTC and os.getenv('CYLC_UTC') in ["True", "true"]:
         command.append(quote(r'CYLC_UTC=True'))
         command.append(quote(r'TZ=UTC'))
@@ -204,9 +210,10 @@ def construct_ssh_cmd(raw_cmd, user=None, host=None, forward_x11=False,
             command.append(r'--verbose')
         if cylc.flags.debug or os.getenv('CYLC_DEBUG') in ["True", "true"]:
             command.append(r'--debug')
-    if cylc.flags.debug:
-        sys.stderr.write("INFO: ran the command '%s' on host '%s'\n" % (
-            ' '.join(quote(c) for c in command), host))
+    if LOG.handlers:
+        LOG.debug("$ %s", ' '.join(quote(c) for c in command))
+    elif cylc.flags.debug:
+        sys.stderr.write("$ %s\n" % ' '.join(quote(c) for c in command))
 
     return command
 
@@ -306,9 +313,8 @@ class RemoteRunner(object):
             return False
 
         if abort_if is not None and abort_if in sys.argv:
-            sys.stderr.write(
-                "ERROR: option '%s' not available for remote run\n" % abort_if)
-            return True
+            sys.exit(
+                "ERROR: option '%s' not available for remote run" % abort_if)
 
         cmd = [os.path.basename(self.argv[0])[5:]]  # /path/to/cylc-foo => foo
         for arg in self.args:

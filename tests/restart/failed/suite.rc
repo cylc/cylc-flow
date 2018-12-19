@@ -17,9 +17,10 @@
             """
 [runtime]
     [[failed_task]]
-        description = "Failed task (runs before restart)"
         script = """
             sleep 10
             exit 1
         """
+        [[[meta]]]
+            description = "Failed task (runs before restart)"
 {% include 'suite-runtime-restart.rc' %}

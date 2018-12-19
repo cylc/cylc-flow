@@ -16,28 +16,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from parsec.validate import validator as vdr
+from parsec.validate import ParsecValidator as VDR
 
 SPEC = {
-        'boolean' : {
-            '__MANY__' : { '__MANY__' : vdr( vtype="boolean" ) },
-            },
-        'integer' : {
-            '__MANY__' : { '__MANY__' : vdr( vtype="integer" ) },
-            },
-        'float'   : {
-            '__MANY__' : { '__MANY__' : vdr( vtype="float"   ) },
-            },
-        'string'  : {
-            '__MANY__' : { '__MANY__' : vdr( vtype="string"  ) },
-            },
-        'string_list' : {
-            '__MANY__' : { '__MANY__'   : vdr( vtype="string_list" ) },
-            },
-        'float_list' : {
-            '__MANY__' : { '__MANY__' : vdr( vtype="float_list", allow_zeroes=False   ) },
-            },
-        'integer_list' : {
-            '__MANY__' : { '__MANY__' : vdr( vtype="integer_list", allow_zeroes=False   ) },
-            },
-        }
+    'boolean': {'__MANY__': {'__MANY__': [VDR.V_BOOLEAN]}},
+    'integer': {'__MANY__': {'__MANY__': [VDR.V_INTEGER]}},
+    'float': {'__MANY__': {'__MANY__': [VDR.V_FLOAT]}},
+    'string': {'__MANY__': {'__MANY__': [VDR.V_STRING]}},
+    'string_list': {'__MANY__': {'__MANY__': [VDR.V_STRING_LIST]}},
+    'spaceless_string_list': {'__MANY__': {'__MANY__': [
+        VDR.V_SPACELESS_STRING_LIST]}},
+    'float_list': {'__MANY__': {'__MANY__': [VDR.V_FLOAT_LIST]}},
+    'integer_list': {'__MANY__': {'__MANY__': [VDR.V_INTEGER_LIST]}},
+}

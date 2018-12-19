@@ -419,6 +419,9 @@ the Cylc GUIs:
           \end{myitemize}
 \end{myitemize}
 
+The Cylc Review service does not need any further packages to those
+already required (Python 2) and bundled with Cylc (CherryPy and Jinja2).
+
 The following packages are necessary for running all the tests in Cylc:
 
 \begin{myitemize}
@@ -973,7 +976,7 @@ $ cylc run tut/oneoff/basic
       .___! |           are welcome to redistribute it under certain
       !_____!                conditions; see `cylc conditions`.
 
-*** listening on nwp-1:43027 ***
+*** listening on https://nwp-1:43027/ ***
 
 To view suite server program contact information:
  $ cylc get-suite-contact tut/oneoff/basic
@@ -1202,6 +1205,68 @@ $ cylc cat-log -e tut/oneoff/basic hello.1   # task stderr log
     \item For more on environment variables supplied to tasks,
     such as \lstinline=$CYLC_SUITE_SHARE_DIR=, see~\ref{TaskExecutionEnvironment}.
 \end{myitemize}
+
+\subsection{Viewing Suite Logs via Web Browser: Cylc Review}
+
+Cylc provides a utility for viewing the status and logs of suites called
+Cylc Review. It displays suite information in web pages, as shown in
+Figure~\ref{fig-review-screenshot}.
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=0.5\textwidth]{graphics/png/orig/cylc-review-screenshot.png}
+    \end{center}
+    \caption{Screenshot of a Cylc Review web page}
+\label{fig-review-screenshot}
+\end{figure}
+
+If a Cylc Review server is provided at your site, you can open the Cylc
+Review page for a suite by running the \lstinline=cylc review= command.
+See~\ref{HostsforCylcReview} for requirements and~\ref{ConfiguringCylcReview}
+for configuration steps for setting up a host to run the service at your site.
+
+Otherwise an ad-hoc web server can be set up using the
+\lstinline=cylc review start= command argument.
+
+\subsubsection{Hosts For Running Cylc Review}
+\label{HostsforCylcReview}
+
+Connectivity requirements:
+
+\begin{myitemize}
+
+\item Must be able to access the home directories of users' Cylc run
+directories.
+
+\end {myitemize}
+
+\subsubsection{Configuring Cylc Review}
+\label{ConfiguringCylcReview}
+
+Cylc Review can provide an intranet web service at your site for users to
+view their suite logs using a web browser. Depending on settings at your
+site, you may or may not be able to set up this service
+(see~\ref{HostsforCylcReview}).
+
+You can start an ad-hoc Cylc Review web server by running:
+
+\hilight{\lstinline=setsid /path/to/../cylc review start 0</dev/null 1>/dev/null 2>\&1 \&=}
+
+You will find the access and error logs under \lstinline=~/.cylc/cylc-review*=.
+
+Alternatively you can run the Cylc Review web service under Apache
+\lstinline=mod_wsgi=. To do this you will need to set up an Apache module
+configuration file (typically in
+\lstinline=/etc/httpd/conf.d/cylc-wsgi.conf=) containing the following (with
+the paths set appropriately):
+
+\lstset{language=bash}
+\begin{lstlisting}
+WSGIPythonPath /path/to/cylc/lib
+WSGIScriptAlias /cylc-review /path/to/lib/cylc/review.py
+\end{lstlisting}
+
+Use the Apache log at e.g. \lstinline=/var/log/httpd/= to debug problems.
 
 \subsection{Remote Tasks}
 \label{RemoteTasks}
@@ -2594,7 +2659,7 @@ with example graph headings for each form being:
 [[[ R//PT1H ]]]          # Run every hour (Note the R// is redundant)
 [[[ 20000101T00Z/P1D ]]] # Run every day starting at 00:00 1st Jan 2000
 [[[ R1 ]]]               # Run once at the initial cycle point
-[[[ 20000101T00Z ]]]     # Run once at 00:00 1st Jan 2000
+[[[ R1/20000101T00Z ]]]  # Run once at 00:00 1st Jan 2000
 [[[ P1Y ]]]              # Run every year
 \end{lstlisting}
 
@@ -5138,7 +5203,7 @@ where \lstinline=[namespace]/= is one of \lstinline=Globals/=,
 
 In the argument list of filter or test function, the first argument is
 the variable value to be ``filtered'' or ``tested'', respectively, and
-subsequent arguments can be whatever else is needed. Currently there are two
+subsequent arguments can be whatever else is needed. Currently there are three
 custom filters:
 
 
@@ -5185,6 +5250,46 @@ Examples:
     \item \lstinline={{'12,30,2000' | strftime('%m', '%m,%d,%Y')}}= - 12
     \item \lstinline={{'1066/10/14 08:00:00' | strftime('%Y%m%dT%H', '%Y/%m/%d %H:%M:%S')}}= - 10661014T08
 \end{myitemize}
+
+\paragraph{duration\_as}
+
+The ``duration\_as'' filter can be used to format ISO8601 duration
+strings as a floating-point number of several different units.  Units
+for the conversion can be specified in a case-insensitive short or long
+form:
+\begin{myitemize}
+    \item Seconds - ``s'' or ``seconds''
+    \item Minutes - ``m'' or ``minutes''
+    \item Hours - ``h`` or ``hours''
+    \item Days - ``d'' or ``days''
+    \item Weeks - ``w'' or ``weeks''
+\end{myitemize}
+
+Within the suite, this becomes
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+{% set CYCLE_INTERVAL = 'PT1D' %}
+{{ CYCLE_INTERVAL | duration_as('h') }}  # 24.0
+{% set CYCLE_SUBINTERVAL = 'PT30M' %}
+{{ CYCLE_SUBINTERVAL | duration_as('hours') }}  # 0.5
+{% set CYCLE_INTERVAL = 'PT1D' %}
+{{ CYCLE_INTERVAL | duration_as('s') }}  # 86400.0
+{% set CYCLE_SUBINTERVAL = 'PT30M' %}
+{{ CYCLE_SUBINTERVAL | duration_as('seconds') }}  # 1800.0
+\end{lstlisting}
+
+While the filtered value is a floating-point number, it is often required to
+supply an integer to suite entities (e.g.\ environment variables) that require
+it.  This is accomplished by chaining filters:
+
+\begin{myitemize}
+    \item \lstinline={{CYCLE_INTERVAL | duration_as('h') | int}}= - 24
+    \item \lstinline={{CYCLE_SUBINTERVAL | duration_as('h') | int}}= - 0
+    \item \lstinline={{CYCLE_INTERVAL | duration_as('s') | int}}= - 86400
+    \item \lstinline={{CYCLE_SUBINTERVAL | duration_as('s') | int}}= - 1800
+\end{myitemize}
+
 
 \subsubsection{Associative Arrays In Jinja2}
 
@@ -7834,12 +7939,13 @@ using the older inter-suite triggering mechanism described in this section.}
 
 The \lstinline=cylc suite-state= command interrogates suite run databases. It
 has a polling mode that waits for a given task in the target suite to achieve a
-given state. This can be used to make task scripting wait for a remote task
-to succeed (for example). The suite graph notation also provides a way to
-define automatic suite-state polling tasks, which use the same polling command
-under the hood. Note that cylc suite-state can only trigger off task
-{\em states} in remote suites and does not support triggering off task
-messages.
+given state, or receive a given message. This can be used to make task
+scripting wait for a remote task to succeed (for example).
+
+Automatic suite-state polling tasks can be defined with in the graph. They get
+automatically-generated task scripting that uses \lstinline=cylc suite-state=
+appropriately (it is an error to give your own \lstinline=script= item for these
+tasks).
 
 Here's how to trigger a task \lstinline=bar= off a task \lstinline=foo= in
 a remote suite called \lstinline=other.suite=:
@@ -7871,6 +7977,17 @@ configured if necessary under the local polling task runtime section:
             interval = PT10S
 \end{lstlisting}
 
+To poll for the target task to receive a message rather than achieve a state,
+give the message in the runtime configuration (in which case the task status
+inferred from the graph syntax will be ignored):
+
+\begin{lstlisting}
+[runtime]
+    [[my-foo]]
+        [[[suite state polling]]]
+            message = "the quick brown fox"
+\end{lstlisting}
+
 For suites owned by others, or those with run databases in non-standard
 locations, use the \lstinline=--run-dir= option, or in-suite:
 \begin{lstlisting}
@@ -7894,16 +8011,8 @@ at \lstinline=3,9,15,21=:
             graph = "my-dog[-PT3H] => cat"
 \end{lstlisting}
 
-For suite-state polling the cycle point of the target task is treated as a
-literal string so the polling command has to be told if the remote suite has a
-different cycle point format. Use the \lstinline=--template= option for this,
-or in-suite:
-\begin{lstlisting}
-[runtime]
-    [[my-foo]]
-        [[[suite state polling]]]
-            template = %Y-%m-%dT%H
-\end{lstlisting}
+For suite-state polling, the cycle point is automatically converted to the
+cycle point format of the target suite.
 
 The remote suite does not have to be running when polling commences because the
 command interrogates the suite run database, not the suite server program.
@@ -8112,6 +8221,67 @@ the copy might end up corrupted. It is best to stop the suite before copying
 a DB, or else write a back-up utility using the official sqlite backup API:
 \url{http://www.sqlite.org/backup.html}.}
 
+\subsection{Auto Stop-Restart}
+\label{auto-stop-restart}
+
+Cylc has the ability to automatically stop suites running on a particular host
+and optionally, restart them on a different host.
+This is useful if a host needs to be taken off-line e.g.\ for
+scheduled maintenance.
+
+This functionality is configured via the following site configuration settings:
+\begin{myitemize}
+    \item \lstinline=[run hosts][suite servers]auto restart delay=
+    \item \lstinline=[run hosts][suite servers]condemned hosts=
+    \item \lstinline=[run hosts][suite servers]run hosts=
+\end{myitemize}
+
+The auto stop-restart feature has two modes:
+
+\begin{description}
+    \item[Normal Mode] \hfill
+
+    When a host is added to the \lstinline=condemned hosts= list, any suites
+    running on that host will automatically shutdown then restart selecting a
+    new host from \lstinline=run hosts=.
+
+    For safety, before attempting to stop the suite cylc will first wait for any
+    jobs running locally (under background or at) to complete.
+
+    {\em In order for Cylc to be able to successfully restart suites the
+    \lstinline=run hosts= must all be on a shared filesystem.}
+
+    \item[Force Mode] \hfill
+
+    If a host is suffixed with an exclamation mark then Cylc will not attempt
+    to automatically restart the suite and any local jobs (running under
+    background or at) will be left running.
+\end{description}
+
+For example in the following configuration any suites running on
+\lstinline=foo= will attempt to restart on \lstinline=pub= whereas any suites
+running on \lstinline=bar= will stop immediately, making no attempt to restart.
+
+\begin{lstlisting}
+[suite servers]
+    run hosts = pub
+    condemned hosts = foo, bar!
+\end{lstlisting}
+
+To prevent large numbers of suites attempting to restart simultaneously the
+\lstinline=auto restart delay= setting defines a period of time in seconds.
+Suites will wait for a random period of time between zero and
+\lstinline=auto restart delay= seconds before attempting to stop and restart.
+
+At present the auto shutdown-restart functionality can only operate provided
+that the user hasn't specified any behaviour which is not preserved by
+\lstinline=cylc restart= (e.g.\ user specified hold point or run mode). This
+caveat will be removed in a future version, currently Cylc will not attempt to
+auto shutdown-restart suites which meet this criterion but will log a critical
+error message to alert the user.
+
+See the \lstinline=[suite servers]= configuration section
+(\ref{global-suite-servers}) for more details.
 
 \section{Suite Storage, Discovery, Revision Control, and Deployment}
 \label{SuiteStorageEtc}

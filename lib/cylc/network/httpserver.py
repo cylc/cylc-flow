@@ -31,6 +31,8 @@ import traceback
 from uuid import uuid4
 
 import cherrypy
+
+from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.exceptions import CylcError
 import cylc.flags
@@ -38,7 +40,6 @@ from cylc.network import (
     NO_PASSPHRASE, PRIVILEGE_LEVELS, PRIV_IDENTITY, PRIV_DESCRIPTION,
     PRIV_FULL_READ, PRIV_SHUTDOWN, PRIV_FULL_CONTROL)
 from cylc.hostuserutil import get_host
-from cylc.suite_logging import ERR, LOG
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
 from cylc.unicode_util import utf8_enforce
@@ -92,7 +93,7 @@ class HTTPServer(object):
                 self.pkey = self.srv_files_mgr.get_auth_item(
                     self.srv_files_mgr.FILE_BASE_SSL_PEM, suite)
             except SuiteServiceFileError:
-                ERR.error("no HTTPS/OpenSSL support. Aborting...")
+                LOG.error("no HTTPS/OpenSSL support. Aborting...")
                 raise CylcError("No HTTPS support. "
                                 "Configure user's global.rc to use HTTP.")
         self.start()
@@ -183,8 +184,8 @@ class HTTPServer(object):
         prog_name, user, host, uuid = _get_client_info()[1:]
         connection_denied = self._get_client_connection_denied()
         if connection_denied:
-            LOG.warning(self.__class__.LOG_CONNECT_DENIED_TMPL % (
-                user, host, prog_name, uuid))
+            LOG.warning(
+                self.LOG_CONNECT_DENIED_TMPL, user, host, prog_name, uuid)
 
 
 class SuiteRuntimeService(object):
@@ -659,14 +660,7 @@ class SuiteRuntimeService(object):
     @cherrypy.tools.json_out()
     def signout(self):
         """Forget client, where possible."""
-        uuid = _get_client_info()[4]
-        try:
-            del self.clients[uuid]
-        except KeyError:
-            return False
-        else:
-            LOG.debug(self.LOG_FORGET_TMPL % uuid)
-            return True
+        return self._forget_client(_get_client_info()[4])
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
@@ -764,11 +758,12 @@ class SuiteRuntimeService(object):
         command = inspect.currentframe().f_back.f_code.co_name
         auth_user, prog_name, user, host, uuid = _get_client_info()
         priv_level = self._get_priv_level(auth_user)
-        LOG.debug(self.__class__.LOG_CONNECT_ALLOWED_TMPL % (
-            user, host, prog_name, priv_level, uuid))
+        LOG.debug(
+            self.LOG_CONNECT_ALLOWED_TMPL,
+            user, host, prog_name, priv_level, uuid)
         if cylc.flags.debug or uuid not in self.clients and log_info:
-            LOG.info(self.__class__.LOG_COMMAND_TMPL % (
-                command, user, host, prog_name, uuid))
+            LOG.info(
+                self.LOG_COMMAND_TMPL, command, user, host, prog_name, uuid)
         self.clients.setdefault(uuid, {})
         self.clients[uuid]['time'] = time()
         self._housekeep()
@@ -781,14 +776,12 @@ class SuiteRuntimeService(object):
         interval = now - self._id_start_time
         if interval > self.CLIENT_ID_REPORT_SECONDS:
             rate = float(self._num_id_requests) / interval
-            log = None
             if rate > self.CLIENT_ID_MIN_REPORT_RATE:
-                log = LOG.warning
-            elif cylc.flags.debug:
-                log = LOG.info
-            if log:
-                log(self.__class__.LOG_IDENTIFY_TMPL % (
-                    self._num_id_requests, interval))
+                LOG.warning(
+                    self.LOG_IDENTIFY_TMPL, self._num_id_requests, interval)
+            else:
+                LOG.debug(
+                    self.LOG_IDENTIFY_TMPL, self._num_id_requests, interval)
             self._id_start_time = now
             self._num_id_requests = 0
         uuid = _get_client_info()[4]
@@ -800,17 +793,27 @@ class SuiteRuntimeService(object):
         """Get the privilege level for this authenticated user."""
         if auth_user == "cylc":
             return PRIVILEGE_LEVELS[-1]
-        return self.schd.config.cfg['cylc']['authentication']['public']
+        elif self.schd.config.cfg['cylc']['authentication']['public']:
+            return self.schd.config.cfg['cylc']['authentication']['public']
+        else:
+            return glbl_cfg().get(['authentication', 'public'])
+
+    def _forget_client(self, uuid):
+        """Forget a client."""
+        try:
+            client_info = self.clients.pop(uuid)
+        except KeyError:
+            return False
+        if client_info.get('err_log_handler') is not None:
+            LOG.removeHandler(client_info.get('err_log_handler'))
+        LOG.debug(self.LOG_FORGET_TMPL, uuid)
+        return True
 
     def _housekeep(self):
         """Forget inactive clients."""
         for uuid, client_info in self.clients.copy().items():
             if time() - client_info['time'] > self.CLIENT_FORGET_SEC:
-                try:
-                    del self.clients[uuid]
-                except KeyError:
-                    pass
-                LOG.debug(self.LOG_FORGET_TMPL % uuid)
+                self._forget_client(uuid)
 
     @staticmethod
     def _literal_eval(key, value, default=None):

@@ -33,8 +33,8 @@ from cylc.gui.util import get_id_summary
 
 class DotUpdater(threading.Thread):
 
-    RIGHT_ARROW = u'\u25b7'  # Unicode enpty triangle facing right.
-    DOWN_ARROW = u'\u25bd'  # Unicode enpty triangle facing down.
+    RIGHT_ARROW = u'\u25b7'  # Unicode empty triangle facing right.
+    DOWN_ARROW = u'\u25bd'  # Unicode empty triangle facing down.
     INDENT = 5  # Number of spaces to indent nested items in transpose view.
 
     def __init__(self, cfg, updater, treeview, info_bar, theme, dot_size):

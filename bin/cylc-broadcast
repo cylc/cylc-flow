@@ -81,16 +81,16 @@ if '--use-ssh' in sys.argv[1:]:
 import re
 from tempfile import NamedTemporaryFile
 
-import cylc.flags
 from cylc.broadcast_report import (
     get_broadcast_change_report, get_broadcast_bad_options_report)
-from cylc.option_parsers import CylcOptionParser as COP
+from cylc.cfgspec.suite import SPEC, upg
+from cylc.cfgvalidate import cylc_config_validate
+import cylc.flags
 from cylc.network.httpclient import SuiteRuntimeServiceClient
+from cylc.option_parsers import CylcOptionParser as COP
 from cylc.print_tree import print_tree
 from cylc.task_id import TaskID
-from cylc.cfgspec.suite import SPEC, upg
-from parsec.config import config
-from parsec.validate import validate
+from parsec.config import ParsecConfig
 
 
 REC_ITEM = re.compile(r'^\[([^\]]*)\](.*)$')
@@ -135,13 +135,14 @@ def get_rdict(left, right=None):
             cur_dict[tail.strip()] = right
             tail = None
     upg({'runtime': {'__MANY__': rdict}}, 'test')
-    validate(rdict, SPEC['runtime']['__MANY__'])
+    cylc_config_validate(rdict, SPEC['runtime']['__MANY__'])
     return rdict
 
 
 def files_to_settings(settings, setting_files, cancel_mode=False):
     """Parse setting files, and append to settings."""
-    cfg = config(SPEC['runtime']['__MANY__'])
+    cfg = ParsecConfig(
+        SPEC['runtime']['__MANY__'], validator=cylc_config_validate)
     for setting_file in setting_files:
         if setting_file == '-':
             with NamedTemporaryFile() as handle:

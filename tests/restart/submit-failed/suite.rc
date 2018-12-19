@@ -17,10 +17,11 @@
             """
 [runtime]
     [[submit_failed_task]]
-        description = "Submit-failed task (runs before restart)"
         script = """
             exit 1  # Should not submit, so this shouldn't run!
         """
+        [[[meta]]]
+            description = "Submit-failed task (runs before restart)"
         [[[job]]]
             batch system = at
             batch submit command template = at oh-no

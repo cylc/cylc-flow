@@ -63,6 +63,9 @@ batch_sys.submit(job_file_path) => ret_code, out, err
       beyond just running a system or shell command. See also
       "batch_sys.SUBMIT_CMD".
 
+batch_sys.manip_job_id(job_id) => job_id
+    * Modify the job ID that is returned by the job submit command.
+
 batch_sys.KILL_CMD_TMPL
     *  A Python string template for getting the batch system command to remove
        and terminate a job ID. The command is formed using the logic:
@@ -78,7 +81,9 @@ batch_sys.POLL_CANT_CONNECT_ERR
 
 batch_sys.SHOULD_KILL_PROC_GROUP
     * A boolean to indicate whether it is necessary to kill a job by sending
-      a signal to its Unix process group.
+      a signal to its Unix process group. This boolean also indicates that
+      a job submitted via this batch system will physically run on the same
+      host it is submitted to.
 
 batch_sys.SHOULD_POLL_PROC_GROUP
     * A boolean to indicate whether it is necessary to poll a job by its PID
@@ -112,6 +117,10 @@ from subprocess import Popen, PIPE
 import sys
 import traceback
 
+
+from parsec.OrderedDict import OrderedDict
+
+
 from cylc.mkdir_p import mkdir_p
 from cylc.task_message import (
     CYLC_JOB_PID, CYLC_JOB_INIT_TIME, CYLC_JOB_EXIT_TIME, CYLC_JOB_EXIT,
@@ -120,8 +129,6 @@ from cylc.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.task_job_logs import (
     JOB_LOG_JOB, JOB_LOG_OUT, JOB_LOG_ERR, JOB_LOG_STATUS)
 from cylc.wallclock import get_current_time_string
-
-from parsec.OrderedDict import OrderedDict
 
 
 class JobPollContext(object):
@@ -132,7 +139,7 @@ class JobPollContext(object):
         'batch_sys_job_id',  # job id in batch system
         'batch_sys_exit_polled',  # 0 for false, 1 for true
         'run_status',  # 0 for success, 1 for failure
-        'run_signal',  # signal recieved on run failure
+        'run_signal',  # signal received on run failure
         'time_submit_exit',  # submit (exit) time
         'time_run',  # run start time
         'time_run_exit',  # run exit time
@@ -244,6 +251,11 @@ class BatchSysManager(object):
         batch_sys = self._get_sys(job_conf['batch_system_name'])
         if hasattr(batch_sys, "get_vacation_signal"):
             return batch_sys.get_vacation_signal(job_conf)
+
+    def is_job_local_to_host(self, batch_sys_name):
+        """Return True if batch system runs jobs local to the submit host."""
+        return getattr(
+            self._get_sys(batch_sys_name), "SHOULD_KILL_PROC_GROUP", False)
 
     def jobs_kill(self, job_log_root, job_log_dirs):
         """Kill multiple jobs.
@@ -468,6 +480,8 @@ class BatchSysManager(object):
                 match = rec_id.match(line)
                 if match:
                     job_id = match.group("id")
+                    if hasattr(batch_sys, "manip_job_id"):
+                        job_id = batch_sys.manip_job_id(job_id)
                     job_status_file = open(st_file_path, "a")
                     job_status_file.write("%s=%s\n" % (
                         self.CYLC_BATCH_SYS_JOB_ID, job_id))

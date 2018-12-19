@@ -6,9 +6,133 @@ milestones](https://github.com/cylc/cylc/milestones?state=closed) for each
 release.
 
 -------------------------------------------------------------------------------
+## __cylc-7.8.0 (2018-11-27)__
+
+Minor release with over 120 issues closed. Significant issues include:
+
+### Enhancements
+
+[#2693](https://github.com/cylc/cylc/pull/2693) - __auto host selection__; and
+[#2809](https://github.com/cylc/cylc/pull/2809) - __auto migration__.  
+`cylc run` and `cylc restart` can now select the best host (based on several
+metrics) on which to launch suite server programs. And running suites
+can be told (via global config) to self-migrate to another available host, e.g.
+for server maintenance. (The pool of suite hosts should see a shared
+filesystem).
+
+[#2614](https://github.com/cylc/cylc/pull/2614) and 
+[#2821](https://github.com/cylc/cylc/pull/2821) - __web-based job log viewer__ -
+ `cylc review` (migration of "Rose Bush" from the Rose project). 
+
+
+[#2339](https://github.com/cylc/cylc/pull/2339) - __general external
+triggering__: tasks can trigger off of arbitrary user-defined Python functions
+called periodically by the suite server program, with built-in functions
+for suite-state (inter-suite) triggering and clock triggering (these
+deprecate the existing suite-state polling tasks and clock-triggered tasks).
+
+[#2734](https://github.com/cylc/cylc/pull/2734) - __EmPy templating__
+support, as an alternative to Jinja2. _"EmPy allows embedding plain Python code
+within templates and doesn't enforce any particular templating philosophy."_
+
+[#2733](https://github.com/cylc/cylc/pull/2733) - enhanced Jinja2 support:
+- __import pure Python modules__ in the same way as template modules
+- Jinja2Tests and Jinja2Globals, for custom "is" tests and global variables
+  (c.f. our existing Jinja2Filters for custom filters).
+
+[#2682](https://github.com/cylc/cylc/pull/2682) - new built-in
+Jinja2 filter to convert ISO8601 date-time durations to
+decimal seconds or hours.
+
+[#2842](https://github.com/cylc/cylc/pull/2842) - `cylc gui` and
+`cylc graph` - better integration with system desktop themes, including dark
+themes; and other minor graph visualization improvements. 
+
+[#2807](https://github.com/cylc/cylc/pull/2807) - task output events (event
+handlers can now be triggered when a task reports a registered output message).
+
+[#2868](https://github.com/cylc/cylc/pull/2868) - a new task
+runtime config item `exit-script`, for scripting to be executed at the
+last moment after successful job completion. (Companion of `err-script`).
+
+[#2781](https://github.com/cylc/cylc/pull/2781) and
+[#2854](https://github.com/cylc/cylc/pull/2854) - improved suite
+server program logging (including: `log/suite/err` is no longer used).
+
+[#2849](https://github.com/cylc/cylc/pull/2849) - record local
+background jobs by host name rather than "localhost".
+
+[#2877](https://github.com/cylc/cylc/pull/2877) - new batch system
+handler `pbs_multi_cluster`, supports PBS 13 clients fronting
+heterogeneous clusters with different home directories from the
+cylc remote. (Not needed for PBS 14+.) (For Rose suites this requires a
+corresponding change to `rose suite-run`:
+[metomi/rose#2252](https://github.com/metomi/rose/pull/2252).)
+
+[#2812](https://github.com/cylc/cylc/pull/2812) - `cylc gscan`:
+show application menu bar by default.
+
+[#2768](https://github.com/cylc/cylc/pull/2768) - `cylc gscan`: display Cylc
+version of running suites.
+
+[#2786](https://github.com/cylc/cylc/pull/2786) - make task try number
+available to event handlers (as for task job submit number).
+
+[#2771](https://github.com/cylc/cylc/pull/2771) - bash command completion:
+complete suite names for commands that take a suite name argument (see
+`etc/cylc-bash-completion`).
+
+[#2769](https://github.com/cylc/cylc/pull/2769) - `cylc check-software` now
+takes arguments to check for availability of specific modules.
+
+[#2763](https://github.com/cylc/cylc/pull/2763) - `cylc monitor` - clean exit
+on Ctrl-C.
+
+[#2704](https://github.com/cylc/cylc/pull/2704) - paginated `cylc help` output.
+
+[#2660](https://github.com/cylc/cylc/pull/2660) - new `gcylc.rc` config item to
+show grouped cyclepoint subgraphs by default.
+
+[#2766](https://github.com/cylc/cylc/pull/2766) - (development) formal test
+coverage reporting and integration with GitHub.
+
+[#2751](https://github.com/cylc/cylc/pull/2751) - (development) new contributor
+guidelines - see `CONTRIBUTING.md`.
+
+### Fixes
+
+[#2876](https://github.com/cylc/cylc/pull/2876) - avoid subprocess hang when
+executing commands that generate a lot of stdout (such as when submitting
+hundreds of jobs at once).
+
+[#2828](https://github.com/cylc/cylc/pull/2828) - `suite.rc` - fail validation
+on detecting trailing whitespace after a line continuation character.
+
+[#2807](https://github.com/cylc/cylc/pull/2807) - handle multiple events of
+the same type with the same message (e.g. warnings) from the same task job.
+
+[#2803](https://github.com/cylc/cylc/pull/2803) - reset job submit number
+correctly after aborting (backing out of) a trigger edit-run.
+
+[#2727](https://github.com/cylc/cylc/pull/2727) - `cylc gui`: fix dropdown list
+of log numbers for re-inserted tasks or after suite
+restart.
+
+[#2759](https://github.com/cylc/cylc/pull/2759) and
+[#2816](https://github.com/cylc/cylc/pull/2816) -
+suite registration tweaks and fixes.
+
+[#2861](https://github.com/cylc/cylc/pull/2861) - improved emacs
+syntax highlighting.
+
+[#2892](https://github.com/cylc/cylc/pull/2892) - print the bad host name along
+with "Name or service not known" exceptions.
+
+
+-------------------------------------------------------------------------------
 ## __cylc-7.7.2 (2018-07-26)__
 
-Minor maintenance release.
+Maintenance release.
 
 (Some minor changes not relevant to normal users may be omitted.)
 

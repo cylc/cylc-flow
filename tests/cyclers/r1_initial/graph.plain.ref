@@ -1,11 +1,11 @@
-edge "cold_foo.20140101T0000Z" "foo.20140101T0000Z" solid
-edge "foo.20140101T0000Z" "foo.20140101T1200Z" solid
-edge "foo.20140101T1200Z" "foo.20140102T0000Z" solid
-edge "foo.20140102T0000Z" "foo.20140102T1200Z" solid
+edge "cold_foo.20140101T0000Z" "foo.20140101T0000Z"
+edge "foo.20140101T0000Z" "foo.20140101T1200Z"
+edge "foo.20140101T1200Z" "foo.20140102T0000Z"
+edge "foo.20140102T0000Z" "foo.20140102T1200Z"
 graph
-node "cold_foo.20140101T0000Z" "cold_foo\n20140101T0000Z" unfilled ellipse black
-node "foo.20140101T0000Z" "foo\n20140101T0000Z" unfilled ellipse black
-node "foo.20140101T1200Z" "foo\n20140101T1200Z" unfilled ellipse black
-node "foo.20140102T0000Z" "foo\n20140102T0000Z" unfilled ellipse black
-node "foo.20140102T1200Z" "foo\n20140102T1200Z" unfilled ellipse black
+node "cold_foo.20140101T0000Z" "cold_foo\n20140101T0000Z"
+node "foo.20140101T0000Z" "foo\n20140101T0000Z"
+node "foo.20140101T1200Z" "foo\n20140101T1200Z"
+node "foo.20140102T0000Z" "foo\n20140102T0000Z"
+node "foo.20140102T1200Z" "foo\n20140102T1200Z"
 stop

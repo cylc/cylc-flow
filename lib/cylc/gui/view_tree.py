@@ -20,19 +20,16 @@ import gtk
 
 from isodatetime.parsers import DurationParser, ISO8601SyntaxError
 
+from cylc.cfgspec.gcylc import HEADINGS
 from cylc.gui.updater_tree import TreeUpdater
 from cylc.task_id import TaskID
 
 
 class ControlTree(object):
     """Text Treeview suite control interface."""
-    headings = [
-        None, 'task', 'state', 'host', 'job system', 'job ID', 'T-submit',
-        'T-start', 'T-finish', 'dT-mean', 'latest message',
-    ]
 
     def __init__(self, cfg, updater, theme, dot_size, info_bar,
-                 get_right_click_menu, log_colors, insert_task_popup):
+                 get_right_click_menu, insert_task_popup):
 
         self.cfg = cfg
         self.updater = updater
@@ -40,7 +37,6 @@ class ControlTree(object):
         self.dot_size = dot_size
         self.info_bar = info_bar
         self.get_right_click_menu = get_right_click_menu
-        self.log_colors = log_colors
         self.insert_task_popup = insert_task_popup
         self.interval_parser = DurationParser()
 
@@ -119,9 +115,9 @@ class ControlTree(object):
         self.ttreeview.connect(
             'button_press_event', self.on_treeview_button_pressed)
 
-        for n in range(1, len(ControlTree.headings)):
+        for n in range(1, len(HEADINGS)):
             # Skip first column (cycle point)
-            tvc = gtk.TreeViewColumn(ControlTree.headings[n])
+            tvc = gtk.TreeViewColumn(HEADINGS[n])
             if n == 1:
                 crp = gtk.CellRendererPixbuf()
                 tvc.pack_start(crp, False)
@@ -222,8 +218,8 @@ class ControlTree(object):
     def sort_by_column(self, col_name=None, col_no=None, ascending=True):
         """Sort this ControlTree by the column selected by the string
         col_name OR by the index col_no."""
-        if col_name is not None and col_name in ControlTree.headings:
-            col_no = ControlTree.headings.index(col_name)
+        if col_name is not None and col_name in HEADINGS:
+            col_no = HEADINGS.index(col_name)
         if col_no is not None:
             self.sort_col_num = col_no
             cols = self.ttreeview.get_columns()

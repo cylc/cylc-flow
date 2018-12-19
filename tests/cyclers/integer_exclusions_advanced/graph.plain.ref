@@ -1,42 +1,42 @@
 graph
-node "bar.1" "bar\n1" unfilled ellipse black
-node "bar.3" "bar\n3" unfilled ellipse black
-node "bar.5" "bar\n5" unfilled ellipse black
-node "bar.7" "bar\n7" unfilled ellipse black
-node "bar.9" "bar\n9" unfilled ellipse black
-node "bar.11" "bar\n11" unfilled ellipse black
-node "bar.13" "bar\n13" unfilled ellipse black
-node "bar.15" "bar\n15" unfilled ellipse black
-node "cthulhu.3" "cthulhu\n3" unfilled ellipse black
-node "cthulhu.5" "cthulhu\n5" unfilled ellipse black
-node "cthulhu.9" "cthulhu\n9" unfilled ellipse black
-node "cthulhu.11" "cthulhu\n11" unfilled ellipse black
-node "cthulhu.15" "cthulhu\n15" unfilled ellipse black
-node "foo.1" "foo\n1" unfilled ellipse black
-node "foo.4" "foo\n4" unfilled ellipse black
-node "foo.5" "foo\n5" unfilled ellipse black
-node "foo.6" "foo\n6" unfilled ellipse black
-node "foo.8" "foo\n8" unfilled ellipse black
-node "foo.9" "foo\n9" unfilled ellipse black
-node "foo.10" "foo\n10" unfilled ellipse black
-node "foo.11" "foo\n11" unfilled ellipse black
-node "foo.12" "foo\n12" unfilled ellipse black
-node "foo.13" "foo\n13" unfilled ellipse black
-node "foo.14" "foo\n14" unfilled ellipse black
-node "foo.15" "foo\n15" unfilled ellipse black
-node "foo.16" "foo\n16" unfilled ellipse black
-node "qux.2" "qux\n2" unfilled ellipse black
-node "qux.4" "qux\n4" unfilled ellipse black
-node "qux.10" "qux\n10" unfilled ellipse black
-node "qux.12" "qux\n12" unfilled ellipse black
-node "qux.14" "qux\n14" unfilled ellipse black
-node "qux.16" "qux\n16" unfilled ellipse black
-node "woo.2" "woo\n2" unfilled ellipse black
-node "woo.4" "woo\n4" unfilled ellipse black
-node "woo.6" "woo\n6" unfilled ellipse black
-node "woo.8" "woo\n8" unfilled ellipse black
-node "woo.10" "woo\n10" unfilled ellipse black
-node "woo.12" "woo\n12" unfilled ellipse black
-node "woo.14" "woo\n14" unfilled ellipse black
-node "woo.16" "woo\n16" unfilled ellipse black
+node "bar.1" "bar\n1"
+node "bar.3" "bar\n3"
+node "bar.5" "bar\n5"
+node "bar.7" "bar\n7"
+node "bar.9" "bar\n9"
+node "bar.11" "bar\n11"
+node "bar.13" "bar\n13"
+node "bar.15" "bar\n15"
+node "cthulhu.3" "cthulhu\n3"
+node "cthulhu.5" "cthulhu\n5"
+node "cthulhu.9" "cthulhu\n9"
+node "cthulhu.11" "cthulhu\n11"
+node "cthulhu.15" "cthulhu\n15"
+node "foo.1" "foo\n1"
+node "foo.4" "foo\n4"
+node "foo.5" "foo\n5"
+node "foo.6" "foo\n6"
+node "foo.8" "foo\n8"
+node "foo.9" "foo\n9"
+node "foo.10" "foo\n10"
+node "foo.11" "foo\n11"
+node "foo.12" "foo\n12"
+node "foo.13" "foo\n13"
+node "foo.14" "foo\n14"
+node "foo.15" "foo\n15"
+node "foo.16" "foo\n16"
+node "qux.2" "qux\n2"
+node "qux.4" "qux\n4"
+node "qux.10" "qux\n10"
+node "qux.12" "qux\n12"
+node "qux.14" "qux\n14"
+node "qux.16" "qux\n16"
+node "woo.2" "woo\n2"
+node "woo.4" "woo\n4"
+node "woo.6" "woo\n6"
+node "woo.8" "woo\n8"
+node "woo.10" "woo\n10"
+node "woo.12" "woo\n12"
+node "woo.14" "woo\n14"
+node "woo.16" "woo\n16"
 stop

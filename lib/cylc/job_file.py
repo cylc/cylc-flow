@@ -107,10 +107,11 @@ class JobFileWriter(object):
     @staticmethod
     def _check_script_value(value):
         """Return True if script has any executable statements."""
-        for line in value.splitlines():
-            line = line.strip()
-            if line and not line.startswith("#"):
-                return True
+        if value:
+            for line in value.splitlines():
+                line = line.strip()
+                if line and not line.startswith("#"):
+                    return True
         return False
 
     @staticmethod
@@ -242,7 +243,7 @@ class JobFileWriter(object):
             #   export FOO=$( ecko foo )  # error not trapped!
             #   FOO=$( ecko foo )  # error trapped
             # The export is done before variable definition to enable
-            # use of already defiend variables by command substitutions
+            # use of already defined variables by command substitutions
             # in later definitions:
             #   FOO='foo'
             #   BAR=$(script_using_FOO)
@@ -295,9 +296,10 @@ class JobFileWriter(object):
     def _write_script(cls, handle, job_conf):
         """Write (*-)script in functions.
 
-        init-script, env-script, err-script, pre-script, script, post-script
+        init-script, env-script, err-script, pre-script, script, post-script,
+        exit-script
         """
-        for prefix in ['init-', 'env-', 'err-', 'pre-', '', 'post-']:
+        for prefix in ['init-', 'env-', 'err-', 'pre-', '', 'post-', 'exit-']:
             value = job_conf[prefix + 'script']
             if cls._check_script_value(value):
                 handle.write("\n\ncylc__job__inst__%sscript() {" % (

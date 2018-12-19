@@ -21,10 +21,10 @@ from collections import namedtuple
 import os
 from pipes import quote
 
+from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
-from cylc.mp_pool import SuiteProcContext
 from cylc.hostuserutil import get_host, get_user
-from cylc.suite_logging import LOG
+from cylc.subprocctx import SubProcContext
 
 
 class SuiteEventError(Exception):
@@ -34,7 +34,7 @@ class SuiteEventError(Exception):
 
 SuiteEventContext = namedtuple(
     "SuiteEventContext",
-    ["event", "reason", "suite", "owner", "host", "port"])
+    ["event", "reason", "suite", "uuid_str", "owner", "host", "port"])
 
 
 class SuiteEventHandler(object):
@@ -99,7 +99,7 @@ class SuiteEventHandler(object):
                     'port': ctx.port,
                     'owner': ctx.owner,
                     'suite': ctx.suite}
-            proc_ctx = SuiteProcContext(
+            proc_ctx = SubProcContext(
                 (self.SUITE_EVENT_HANDLER, ctx.event),
                 [
                     'mail',
@@ -140,8 +140,9 @@ class SuiteEventHandler(object):
             try:
                 handler_data = {
                     'event': quote(ctx.event),
-                    'suite': quote(ctx.suite),
                     'message': quote(ctx.reason),
+                    'suite': quote(ctx.suite),
+                    'suite_uuid': quote(str(ctx.uuid_str)),
                 }
                 if config.cfg['meta']:
                     for key, value in config.cfg['meta'].items():
@@ -159,7 +160,7 @@ class SuiteEventHandler(object):
                 # Nothing substituted, assume classic interface
                 cmd = "%s '%s' '%s' '%s'" % (
                     handler, ctx.event, ctx.suite, ctx.reason)
-            proc_ctx = SuiteProcContext(
+            proc_ctx = SubProcContext(
                 cmd_key, cmd, env=dict(os.environ), shell=True)
             if abort_on_error or self.proc_pool.closed:
                 # Run command in foreground if abort on failure is set or if

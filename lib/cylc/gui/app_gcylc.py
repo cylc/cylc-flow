@@ -27,6 +27,7 @@ import gobject
 import shlex
 from subprocess import Popen, PIPE, STDOUT
 from uuid import uuid4
+
 from isodatetime.parsers import TimePointParser
 
 from cylc.hostuserutil import is_remote_host, is_remote_user
@@ -34,6 +35,7 @@ from cylc.gui.dbchooser import dbchooser
 from cylc.gui.combo_logviewer import ComboLogViewer
 from cylc.gui.warning_dialog import warning_dialog, info_dialog
 from cylc.task_job_logs import JOB_LOG_OPTS
+from cylc.wallclock import get_current_time_string
 
 try:
     from cylc.gui.view_graph import ControlGraph
@@ -60,14 +62,11 @@ from cylc.task_id import TaskID
 from cylc.task_state_prop import extract_group_state, get_status_prop
 from cylc.version import CYLC_VERSION
 from cylc.gui.option_group import controlled_option_group
-from cylc.gui.color_rotator import ColorRotator
 from cylc.gui.suite_log_viewer import SuiteLogViewer
 from cylc.gui.gcapture import Gcapture
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
-from cylc.suite_logging import SuiteLog
 from cylc.cfgspec.glbl_cfg import glbl_cfg
-from cylc.cfgspec.gcylc import gcfg
-from cylc.wallclock import get_current_time_string
+from cylc.cfgspec.gcylc import GcylcConfig
 from cylc.task_state import (
     TASK_STATUSES_ALL, TASK_STATUSES_RESTRICTED, TASK_STATUSES_CAN_RESET_TO,
     TASK_STATUSES_TRIGGERABLE, TASK_STATUSES_ACTIVE, TASK_STATUS_RUNNING,
@@ -107,7 +106,6 @@ def run_get_stdout(command, filter_=False):
             else:
                 res.append(line)
         return (True, res)
-    return (False, [])
 
 
 class TaskFilterWindow(gtk.Window):
@@ -129,7 +127,7 @@ class TaskFilterWindow(gtk.Window):
 
 class InitData(object):
     """
-Class to hold initialisation data.
+    Class to hold initialisation data.
     """
     def __init__(self, suite, owner, host, port,
                  comms_timeout, template_vars, ungrouped_views,
@@ -156,7 +154,6 @@ Class to hold initialisation data.
         )
         self.imagedir = get_image_dir()
         self.my_uuid = uuid4()
-        self.logdir = None
 
     def reset(self, suite, auth=None):
         self.suite = suite
@@ -174,11 +171,12 @@ Class to hold initialisation data.
             else:
                 self.host = auth
                 self.port = None
-        self.logdir = SuiteLog.get_dir_for_suite(suite)
 
 
 class InfoBar(gtk.VBox):
-    """Class to create an information bar."""
+    """
+    Class to create an information bar.
+    """
 
     DISCONNECTED_TEXT = "(not connected)"
 
@@ -489,7 +487,7 @@ Use *Connect Now* button to reconnect immediately.""")
 
 class ControlApp(object):
     """
-Main Control GUI that displays one or more views or interfaces to the suite.
+    Main Control GUI displaying one or more views or interfaces to the suite.
     """
 
     DEFAULT_VIEW = "text"
@@ -524,6 +522,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             if "graph" in self.__class__.VIEWS_ORDERED:
                 self.__class__.VIEWS_ORDERED.remove('graph')
 
+        gcfg = GcylcConfig.get_inst()
         self.cfg = InitData(
             suite, owner, host, port, comms_timeout, template_vars,
             gcfg.get(["ungrouped views"]),
@@ -544,7 +543,6 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.quitters = []
         self.gcapture_windows = []
 
-        self.log_colors = ColorRotator()
         hcolor = gcfg.get(['task filter highlight color'])
         try:
             self.filter_highlight_color = gtk.gdk.color_parse(hcolor)
@@ -693,7 +691,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         """Change self.theme and then replace each view with itself"""
         if not item.get_active():
             return False
-        self.theme = gcfg.get(['themes', item.theme_name])
+        self.theme = GcylcConfig.get_inst().get(['themes', item.theme_name])
         self.restart_views()
 
     def set_dot_size(self, item, dsize):
@@ -854,7 +852,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         container = self.view_containers[view_num]
         self.current_views[view_num] = self.VIEWS[viewname](
             self.cfg, self.updater, self.theme, self.dot_size, self.info_bar,
-            self.get_right_click_menu, self.log_colors, self.insert_task_popup)
+            self.get_right_click_menu, self.insert_task_popup)
         view = self.current_views[view_num]
         view.name = viewname
         if view_num == 1:
@@ -908,6 +906,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
     def set_view_defaults(self, viewname, view_num):
         """Apply user settings defined in gcylc.rc on a new view.
         Run this method before handling menus or toolbars."""
+        gcfg = GcylcConfig.get_inst()
         # Sort text view by column ('sort column')
         if gcfg.get(['sort column']) != 'none' and viewname == 'text':
             self.current_views[view_num].sort_by_column(
@@ -1723,8 +1722,6 @@ shown here in the state they were in at the time of triggering.''')
     def stopsuite_popup(self, b):
         """Suite shutdown dialog window popup."""
         window = gtk.Window()
-        window.modify_bg(gtk.STATE_NORMAL,
-                         gtk.gdk.color_parse(self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_title("Stop Suite Server Program %s" % self.cfg.suite)
         window.set_transient_for(self.window)
@@ -1916,8 +1913,6 @@ shown here in the state they were in at the time of triggering.''')
     def startsuite_popup(self, b):
         """Suite start-up dialog window popup."""
         window = gtk.Window()
-        window.modify_bg(gtk.STATE_NORMAL,
-                         gtk.gdk.color_parse(self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_title("Start Suite '" + self.cfg.suite + "'")
         window.set_transient_for(self.window)
@@ -2069,8 +2064,6 @@ shown here in the state they were in at the time of triggering.''')
     def point_string_entry_popup(self, b, callback, title):
         """Cycle point entry popup."""
         window = gtk.Window()
-        window.modify_bg(gtk.STATE_NORMAL,
-                         gtk.gdk.color_parse(self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_title(title)
         window.set_transient_for(self.window)
@@ -2099,8 +2092,6 @@ shown here in the state they were in at the time of triggering.''')
     def insert_task_popup(self, *b, **kwargs):
         """Display "Insert Task(s)" pop up box."""
         window = gtk.Window()
-        window.modify_bg(gtk.STATE_NORMAL,
-                         gtk.gdk.color_parse(self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_title("Insert Task(s)")
         window.set_transient_for(self.window)
@@ -2199,13 +2190,11 @@ shown here in the state they were in at the time of triggering.''')
     def _popup_logview(self, task_id, task_state_summary, choice=None):
         """Display task job log files in a combo log viewer."""
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.modify_bg(gtk.STATE_NORMAL,
-                         gtk.gdk.color_parse(self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_size_request(800, 400)
         window.set_title(task_id + ": Log Files")
 
-        nsubmits = len(task_state_summary.get('job_hosts', {}))
+        nsubmits = task_state_summary.get('submit_num', 1)
         viewer = ComboLogViewer(self.cfg.suite, task_id, choice,
                                 self._get_task_extra_job_logs(task_id),
                                 nsubmits, self.get_remote_run_opts())
@@ -2328,7 +2317,7 @@ to reduce network traffic.""")
 
         dot_sizes = ['small', 'medium', 'large', 'extra large']
         dot_size_items = {}
-        self.dot_size = gcfg.get(['dot icon size'])
+        self.dot_size = GcylcConfig.get_inst().get(['dot icon size'])
         dot_size_items[self.dot_size] = gtk.RadioMenuItem(
             label='_' + self.dot_size)
         dot_sizemenu.append(dot_size_items[self.dot_size])
@@ -2373,7 +2362,7 @@ to reduce network traffic.""")
         thememenu.append(theme_items[theme])
         self._set_tooltip(theme_items[theme], theme + " state icon theme")
         theme_items[theme].theme_name = theme
-        for theme in gcfg.get(['themes']):
+        for theme in GcylcConfig.get_inst().get(['themes']):
             if theme == "default":
                 continue
             theme_items[theme] = gtk.RadioMenuItem(
@@ -2384,7 +2373,7 @@ to reduce network traffic.""")
 
         # set_active then connect, to avoid causing an unnecessary toggle now.
         theme_items[self.theme_name].set_active(True)
-        for theme in gcfg.get(['themes']):
+        for theme in GcylcConfig.get_inst().get(['themes']):
             theme_items[theme].connect('toggled', self.set_theme)
 
         self.view_menu.append(gtk.SeparatorMenuItem())
@@ -3076,7 +3065,7 @@ This is what my suite does:..."""
         self.layout_toolbutton.set_label("Layout")
         self.layout_toolbutton.set_homogeneous(False)
         self.layout_toolbutton.connect("toggled", self._cb_change_view_align)
-        self.layout_toolbutton.set_active(self.view_layout_horizontal)
+        self.layout_toolbutton.set_active(bool(self.view_layout_horizontal))
         self._set_tooltip(self.layout_toolbutton,
                           "Toggle views side-by-side.")
         # Insert the view choosers
@@ -3311,6 +3300,8 @@ For more Stop options use the Control menu.""")
 
     def run_suite_log(self, w, log='l'):
         """View suite logs."""
+        if self.cfg.suite is None:
+            return
         foo = SuiteLogViewer(self.cfg.suite, log, self.get_remote_run_opts(),
                              self.updater.task_list)
         self.quitters.append(foo)

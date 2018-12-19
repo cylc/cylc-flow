@@ -34,6 +34,6 @@ PRIVILEGE_LEVELS = [
     PRIV_DESCRIPTION,
     PRIV_STATE_TOTALS,
     PRIV_FULL_READ,
-    PRIV_SHUTDOWN,  # (Not used yet - for the post-passhprase era.)
+    PRIV_SHUTDOWN,  # (Not used yet - for the post-passphrase era.)
     PRIV_FULL_CONTROL,
 ]

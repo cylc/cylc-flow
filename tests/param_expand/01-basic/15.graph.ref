@@ -1,6 +1,6 @@
 graph
-node "X_earthY.1" "X_earthY\n1" unfilled doubleoctagon black
-node "X_marsY.1" "X_marsY\n1" unfilled doubleoctagon black
-node "X_mercuryY.1" "X_mercuryY\n1" unfilled doubleoctagon black
-node "X_venusY.1" "X_venusY\n1" unfilled doubleoctagon black
+node "X_earthY.1" "X_earthY\n1"
+node "X_marsY.1" "X_marsY\n1"
+node "X_mercuryY.1" "X_mercuryY\n1"
+node "X_venusY.1" "X_venusY\n1"
 stop

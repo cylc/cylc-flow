@@ -24,10 +24,10 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
-ERR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/suite/err"
+LOG="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/suite/log"
 
 grep_ok 'WARNING - \[timeout\.20100808T0000Z\] -execution timeout after PT1S' \
-    "${ERR}"
+    "${LOG}"
 
 purge_suite "${SUITE_NAME}"
 exit

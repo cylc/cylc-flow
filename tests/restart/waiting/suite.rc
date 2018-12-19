@@ -16,6 +16,7 @@
             """
 [runtime]
     [[waiting_task]]
-        description = "Waiting task (runs after restart)"
         script = true
+        [[[meta]]]
+            description = "Waiting task (runs after restart)"
 {% include 'suite-runtime-restart.rc' %}

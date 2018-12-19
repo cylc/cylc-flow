@@ -19,12 +19,12 @@
 
 import json
 import sqlite3
-import sys
 import traceback
 
+
+from cylc import LOG
 import cylc.flags
 from cylc.wallclock import get_current_time_string
-from cylc.suite_logging import LOG
 
 
 class CylcSuiteDAOTableColumn(object):
@@ -135,7 +135,7 @@ class CylcSuiteDAOTable(object):
     def add_update_item(self, set_args, where_args):
         """Queue an UPDATE item.
 
-        set_args should be a dict, with colum keys and values to be set.
+        set_args should be a dict, with column keys and values to be set.
         where_args should be a dict, update will only apply to rows matching
         all these items.
 
@@ -362,7 +362,7 @@ class CylcSuiteDAO(object):
     def add_update_item(self, table_name, set_args, where_args=None):
         """Queue an UPDATE item for a given table.
 
-        set_args should be a dict, with colum keys and values to be set.
+        set_args should be a dict, with column keys and values to be set.
         where_args should be a dict, update will only apply to rows matching
         all these items.
 
@@ -476,7 +476,19 @@ class CylcSuiteDAO(object):
             LOG.warning(err_log)
             raise
 
-    def select_broadcast_states(self, callback, id_key=None):
+    def pre_select_broadcast_states(self, id_key=None, order=None):
+        """Query statement and args formation for select_broadcast_states."""
+        form_stmt = r"SELECT point,namespace,key,value FROM %s"
+        if order == "ASC":
+            ordering = " ORDER BY point ASC, namespace ASC, key ASC"
+            form_stmt = form_stmt + ordering
+        if id_key is None or id_key == self.CHECKPOINT_LATEST_ID:
+            return form_stmt % self.TABLE_BROADCAST_STATES, []
+        else:
+            return (form_stmt % self.TABLE_BROADCAST_STATES_CHECKPOINTS +
+                    r" WHERE id==?"), [id_key]
+
+    def select_broadcast_states(self, callback, id_key=None, sort=None):
         """Select from broadcast_states or broadcast_states_checkpoints.
 
         Invoke callback(row_idx, row) on each row, where each row contains:
@@ -486,14 +498,27 @@ class CylcSuiteDAO(object):
         select from broadcast_states table if id_key == CHECKPOINT_LATEST_ID.
         Otherwise select from broadcast_states_checkpoints where id == id_key.
         """
-        form_stmt = r"SELECT point,namespace,key,value FROM %s"
-        if id_key is None or id_key == self.CHECKPOINT_LATEST_ID:
-            stmt = form_stmt % self.TABLE_BROADCAST_STATES
-            stmt_args = []
-        else:
-            stmt = (form_stmt % self.TABLE_BROADCAST_STATES_CHECKPOINTS +
-                    r" WHERE id==?")
-            stmt_args = [id_key]
+        stmt, stmt_args = self.pre_select_broadcast_states(id_key=None,
+                                                           order=sort)
+        for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
+            callback(row_idx, list(row))
+
+    def pre_select_broadcast_events(self, order=None):
+        """Query statement and args formation for select_broadcast_events."""
+        form_stmt = r"SELECT time,change,point,namespace,key,value FROM %s"
+        if order == "DESC":
+            ordering = (" ORDER BY " +
+                        "time DESC, point DESC, namespace DESC, key DESC")
+            form_stmt = form_stmt + ordering
+        return form_stmt % self.TABLE_BROADCAST_EVENTS, []
+
+    def select_broadcast_events(self, callback, id_key=None, sort=None):
+        """Select from broadcast_events.
+
+        Invoke callback(row_idx, row) on each row, where each row contains:
+            [time, change, point, namespace, key, value]
+        """
+        stmt, stmt_args = self.pre_select_broadcast_events(order=sort)
         for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
             callback(row_idx, list(row))
 
@@ -505,7 +530,7 @@ class CylcSuiteDAO(object):
 
         If id_key is specified, add where id == id_key to select.
         """
-        stmt = r"SELECT id,time,event FROM %s" % self.TABLE_CHECKPOINT_ID
+        stmt = r"SELECT id,time,event FROM checkpoint_id"
         stmt_args = []
         if id_key is not None:
             stmt += r" WHERE id==?"
@@ -513,6 +538,14 @@ class CylcSuiteDAO(object):
         stmt += r"  ORDER BY time ASC"
         for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
             callback(row_idx, list(row))
+
+    def select_checkpoint_id_restart_count(self):
+        """Return number of restart event in checkpoint_id table."""
+        stmt = r"SELECT COUNT(event) FROM checkpoint_id WHERE event==?"
+        stmt_args = ['restart']
+        for row in self.connect().execute(stmt, stmt_args):
+            return row[0]
+        return 0
 
     def select_suite_params(self, callback, id_key=None):
         """Select from suite_params or suite_params_checkpoints.
@@ -786,8 +819,7 @@ class CylcSuiteDAO(object):
         """
         id_ = 1
         for max_id, in self.connect().execute(
-                "SELECT MAX(id) FROM %(table)s" %
-                {"table": self.TABLE_CHECKPOINT_ID}):
+                "SELECT MAX(id) FROM checkpoint_id"):
             if max_id >= id_:
                 id_ = max_id + 1
         daos = [self]
@@ -810,7 +842,7 @@ class CylcSuiteDAO(object):
         conn = self.connect()
         # Add hold_swap column task_pool(_checkpoints) tables
         for t_name in [self.TABLE_TASK_POOL, self.TABLE_TASK_POOL_CHECKPOINTS]:
-            sys.stdout.write("Add hold_swap column to %s\n" % (t_name,))
+            LOG.info("Add hold_swap column to %s", t_name)
             conn.execute(
                 r"ALTER TABLE " + t_name + r" ADD COLUMN hold_swap TEXT")
         conn.commit()
@@ -828,7 +860,7 @@ class CylcSuiteDAO(object):
         if check_points:
             # No need to upgrade if latest check point already exists
             return
-        sys.stdout.write("Upgrading suite db with %s ...\n" % state_file_path)
+        LOG.info("Upgrading suite db with %s ...", state_file_path)
         self._upgrade_with_state_file_states(state_file_path)
         self._upgrade_with_state_file_extras()
 
@@ -838,7 +870,7 @@ class CylcSuiteDAO(object):
         Populate the new database tables with information from state file.
         """
         location = None
-        sys.stdout.write("Populating %s table" % self.TABLE_SUITE_PARAMS)
+        LOG.info("Populating %s table", self.TABLE_SUITE_PARAMS)
         for line in open(state_file_path):
             line = line.strip()
             if location is None:
@@ -849,11 +881,9 @@ class CylcSuiteDAO(object):
                 # The "broadcast_states" table should already be populated.
                 if line == "Begin task states":
                     location = "task states"
-                    sys.stdout.write(
-                        "\nPopulating %s table" % self.TABLE_TASK_POOL)
+                    LOG.info("Populating %s table", self.TABLE_TASK_POOL)
             else:
                 self._upgrade_with_state_file_tasks(line)
-        sys.stdout.write("\n")
         self.execute_queued_items()
 
     def _upgrade_with_state_file_header(self, line):
@@ -875,7 +905,7 @@ class CylcSuiteDAO(object):
                 self.add_insert_item(self.TABLE_SUITE_PARAMS, {
                     "key": key,
                     "value": tail})
-                sys.stdout.write("\n + %s=%s" % (key, tail))
+                LOG.info(" + %s=%s", key, tail)
                 if name == "final cycle":
                     return "broadcast"
                 else:
@@ -899,7 +929,7 @@ class CylcSuiteDAO(object):
             "spawned": spawned,
             "status": status,
             "hold_swap": None})
-        sys.stdout.write("\n + %s" % head)
+        LOG.info(" + %s", head)
 
     def _upgrade_with_state_file_extras(self):
         """Upgrade the database tables after reading in state file."""
@@ -917,7 +947,7 @@ class CylcSuiteDAO(object):
 
         # Populate new tables using old column data
         for t_name in [self.TABLE_TASK_STATES, self.TABLE_TASK_EVENTS]:
-            sys.stdout.write(r"Upgrading %s table " % (t_name))
+            LOG.info(r"Upgrading %s table", t_name)
             column_names = [col.name for col in self.tables[t_name].columns]
             for i, row in enumerate(conn.execute(
                     r"SELECT " + ",".join(column_names) +
@@ -925,10 +955,6 @@ class CylcSuiteDAO(object):
                 # These tables can be big, so we don't want to queue the items
                 # in memory.
                 conn.execute(self.tables[t_name].get_insert_stmt(), list(row))
-                if i:
-                    sys.stdout.write("\b" * len("%d rows" % (i)))
-                sys.stdout.write("%d rows" % (i + 1))
-            sys.stdout.write(" done\n")
         conn.commit()
 
         # Drop old tables
@@ -959,17 +985,16 @@ class CylcSuiteDAO(object):
         # Use of "pickle" module is for loading data written by <=7.6.X of Cylc
         # in users' own spaces.
         import pickle
-        sys.stdout.write(r"Upgrading %s table " % (t_name))
+        LOG.info(r"Upgrading %s table", t_name)
         cols = []
         for col in self.tables[t_name].columns:
             if col.name in ['ctx_key', 'ctx', 'delays']:
                 cols.append(col.name + '_pickle')
             else:
                 cols.append(col.name)
-        n_skips = 0
         # Codacy: Possible SQL injection vector through string-based query
         # construction.
-        # This is highly unlikely - all strings in the constuct are from
+        # This is highly unlikely - all strings in the construct are from
         # constants in this module.
         for i, row in enumerate(conn.execute(
                 r"SELECT " + ",".join(cols) + " FROM " + t_name + "_old")):
@@ -990,15 +1015,11 @@ class CylcSuiteDAO(object):
                     else:
                         args.append(cell)
             except (EOFError, TypeError, LookupError, ValueError):
-                n_skips += 1  # skip bad rows
+                pass
             else:
                 # These tables can be big, so we don't want to queue the items
                 # in memory.
                 conn.execute(self.tables[t_name].get_insert_stmt(), args)
-                if i:
-                    sys.stdout.write("\b" * len("%d rows" % (i)))
-                sys.stdout.write("%d rows" % (i + 1))
-        sys.stdout.write(" done, %d skipped\n" % n_skips)
         conn.commit()
 
         # Drop old tables

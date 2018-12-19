@@ -42,3 +42,9 @@ passphrase
 
 # profiling
 .profiling
+
+# coverage
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/

@@ -35,18 +35,17 @@ import traceback
 
 from parsec.util import pdeepcopy, poverride
 
-from cylc.batch_sys_manager import BatchSysManager, JobPollContext
+from cylc import LOG
+from cylc.batch_sys_manager import JobPollContext
 from cylc.cfgspec.glbl_cfg import glbl_cfg
-from cylc.envvar import expandvars
-import cylc.flags
-from cylc.hostuserutil import is_remote_host, is_remote_user
+from cylc.hostuserutil import get_host, is_remote_host, is_remote_user
 from cylc.job_file import JobFileWriter
 from cylc.task_job_logs import (
     JOB_LOG_JOB, get_task_job_log, get_task_job_job_log,
     get_task_job_activity_log, get_task_job_id, NN)
 from cylc.mkdir_p import mkdir_p
-from cylc.mp_pool import SuiteProcPool, SuiteProcContext
-from cylc.suite_logging import LOG
+from cylc.subprocpool import SuiteProcPool
+from cylc.subprocctx import SubProcContext
 from cylc.task_action_timer import TaskActionTimer
 from cylc.task_events_mgr import TaskEventsManager, log_task_job_activity
 from cylc.task_message import FAIL_MESSAGE_PREFIX
@@ -59,7 +58,7 @@ from cylc.task_state import (
     TASK_STATUSES_ACTIVE, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
     TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING)
-from cylc.wallclock import get_current_time_string
+from cylc.wallclock import get_current_time_string, get_utc_mode
 
 
 class TaskJobManager(object):
@@ -77,6 +76,7 @@ class TaskJobManager(object):
     JOBS_KILL = 'jobs-kill'
     JOBS_POLL = 'jobs-poll'
     JOBS_SUBMIT = SuiteProcPool.JOBS_SUBMIT
+    POLL_FAIL = 'poll failed'
     REMOTE_SELECT_MSG = 'waiting for remote host selection'
     REMOTE_INIT_MSG = 'remote host initialising'
     KEY_EXECUTE_TIME_LIMIT = TaskEventsManager.KEY_EXECUTE_TIME_LIMIT
@@ -88,6 +88,7 @@ class TaskJobManager(object):
         self.suite_db_mgr = suite_db_mgr
         self.task_events_mgr = task_events_mgr
         self.job_file_writer = JobFileWriter()
+        self.batch_sys_mgr = self.job_file_writer.batch_sys_mgr
         self.suite_srv_files_mgr = suite_srv_files_mgr
         self.task_remote_mgr = TaskRemoteMgr(
             suite, proc_pool, suite_srv_files_mgr)
@@ -104,9 +105,8 @@ class TaskJobManager(object):
                 poll_tasks.add(itask)
                 if itask.poll_timer.delay is not None:
                     LOG.info(
-                        'poll now, (next in %s)' % (
-                            itask.poll_timer.delay_timeout_as_str()),
-                        itask=itask)
+                        '[%s] -poll now, (next in %s)',
+                        itask, itask.poll_timer.delay_timeout_as_str())
         if poll_tasks:
             self.poll_task_jobs(suite, poll_tasks)
 
@@ -215,21 +215,32 @@ class TaskJobManager(object):
             if is_init is None:
                 # Remote is waiting to be initialised
                 for itask in itasks:
-                    itask.summary['latest_message'] = self.REMOTE_INIT_MSG
+                    itask.set_summary_message(self.REMOTE_INIT_MSG)
                 continue
-            # Persist
-            if owner:
-                owner_at_host = owner + '@' + host
+            # Ensure that localhost background/at jobs are recorded as running
+            # on the host name of the current suite host, rather than just
+            # "localhost". On suite restart on a different suite host, this
+            # allows the restart logic to correctly poll the status of the
+            # background/at jobs that may still be running on the previous
+            # suite host.
+            if (
+                self.batch_sys_mgr.is_job_local_to_host(
+                    itask.summary['batch_sys_name']) and
+                not is_remote_host(host)
+            ):
+                owner_at_host = get_host()
             else:
                 owner_at_host = host
+            # Persist
+            if owner:
+                owner_at_host = owner + '@' + owner_at_host
             now_str = get_current_time_string()
             done_tasks.extend(itasks)
             for itask in itasks:
-                # Log and perist
+                # Log and persist
                 LOG.info(
-                    'submit-num=%d, owner@host=%s' % (
-                        itask.submit_num, owner_at_host),
-                    itask=itask)
+                    '[%s] -submit-num=%d, owner@host=%s',
+                    itask, itask.submit_num, owner_at_host)
                 self.suite_db_mgr.put_insert_task_jobs(itask, {
                     'is_manual_submit': itask.is_manual_submit,
                     'try_num': itask.get_try_num(),
@@ -244,7 +255,7 @@ class TaskJobManager(object):
                 for itask in itasks:
                     itask.local_job_file_path = None  # reset for retry
                     log_task_job_activity(
-                        SuiteProcContext(
+                        SubProcContext(
                             self.JOBS_SUBMIT,
                             '(init %s)' % owner_at_host,
                             err=REMOTE_INIT_FAILED,
@@ -256,9 +267,9 @@ class TaskJobManager(object):
                 continue
             # Build the "cylc jobs-submit" command
             cmd = ['cylc', self.JOBS_SUBMIT]
-            if cylc.flags.debug:
+            if LOG.isEnabledFor(DEBUG):
                 cmd.append('--debug')
-            if cylc.flags.utc:
+            if get_utc_mode():
                 cmd.append('--utc-mode')
             remote_mode = False
             kwargs = {}
@@ -274,33 +285,44 @@ class TaskJobManager(object):
             cmd.append('--')
             cmd.append(glbl_cfg().get_derived_host_item(
                 suite, 'suite job log directory', host, owner))
-            stdin_file_paths = []
-            job_log_dirs = []
-            for itask in sorted(itasks, key=lambda itask: itask.identity):
-                if remote_mode:
-                    stdin_file_paths.append(
-                        get_task_job_job_log(
-                            suite, itask.point, itask.tdef.name,
-                            itask.submit_num))
-                job_log_dirs.append(get_task_job_id(
-                    itask.point, itask.tdef.name, itask.submit_num))
-                # The job file is now (about to be) used: reset the file write
-                # flag so that subsequent manual retrigger will generate a new
-                # job file.
-                itask.local_job_file_path = None
-                itask.state.reset_state(TASK_STATUS_READY)
-                if itask.state.outputs.has_custom_triggers():
-                    self.suite_db_mgr.put_update_task_outputs(itask)
-            cmd += job_log_dirs
-            self.proc_pool.put_command(
-                SuiteProcContext(
-                    self.JOBS_SUBMIT,
-                    cmd,
-                    stdin_file_paths=stdin_file_paths,
-                    job_log_dirs=job_log_dirs,
-                    **kwargs
-                ),
-                self._submit_task_jobs_callback, [suite, itasks])
+            # Chop itasks into a series of shorter lists if it's very big
+            # to prevent overloading of stdout and stderr pipes.
+            itasks = sorted(itasks, key=lambda itask: itask.identity)
+            chunk_size = len(itasks) // ((len(itasks) // 100) + 1) + 1
+            itasks_batches = [
+                itasks[i:i + chunk_size] for i in range(0,
+                                                        len(itasks),
+                                                        chunk_size)]
+            LOG.debug(
+                '%s ... # will invoke in batches, sizes=%s',
+                cmd, [len(b) for b in itasks_batches])
+            for i, itasks_batch in enumerate(itasks_batches):
+                stdin_file_paths = []
+                job_log_dirs = []
+                for itask in itasks_batch:
+                    if remote_mode:
+                        stdin_file_paths.append(
+                            get_task_job_job_log(
+                                suite, itask.point, itask.tdef.name,
+                                itask.submit_num))
+                    job_log_dirs.append(get_task_job_id(
+                        itask.point, itask.tdef.name, itask.submit_num))
+                    # The job file is now (about to be) used: reset the file
+                    # write flag so that subsequent manual retrigger will
+                    # generate a new job file.
+                    itask.local_job_file_path = None
+                    itask.state.reset_state(TASK_STATUS_READY)
+                    if itask.state.outputs.has_custom_triggers():
+                        self.suite_db_mgr.put_update_task_outputs(itask)
+                self.proc_pool.put_command(
+                    SubProcContext(
+                        self.JOBS_SUBMIT,
+                        cmd + job_log_dirs,
+                        stdin_file_paths=stdin_file_paths,
+                        job_log_dirs=job_log_dirs,
+                        **kwargs
+                    ),
+                    self._submit_task_jobs_callback, [suite, itasks_batch])
         return done_tasks
 
     @staticmethod
@@ -358,19 +380,22 @@ class TaskJobManager(object):
             # Automatic suite state polling script
             comstr = "cylc suite-state " + \
                      " --task=" + itask.tdef.suite_polling_cfg['task'] + \
-                     " --point=" + str(itask.point) + \
-                     " --status=" + itask.tdef.suite_polling_cfg['status']
-            if cylc.flags.debug:
+                     " --point=" + str(itask.point)
+            if LOG.isEnabledFor(DEBUG):
                 comstr += ' --debug'
             for key, fmt in [
                     ('user', ' --%s=%s'),
                     ('host', ' --%s=%s'),
                     ('interval', ' --%s=%d'),
                     ('max-polls', ' --%s=%s'),
-                    ('run-dir', ' --%s=%s'),
-                    ('template', ' --%s=%s')]:
+                    ('run-dir', ' --%s=%s')]:
                 if rtconfig['suite state polling'][key]:
                     comstr += fmt % (key, rtconfig['suite state polling'][key])
+            if rtconfig['suite state polling']['message']:
+                comstr += " --message='%s'" % (
+                    rtconfig['suite state polling']['message'])
+            else:
+                comstr += " --status=" + itask.tdef.suite_polling_cfg['status']
             comstr += " " + itask.tdef.suite_polling_cfg['suite']
             script = "echo " + comstr + "\n" + comstr
         return pre_script, script, post_script
@@ -401,7 +426,7 @@ class TaskJobManager(object):
                 handle.write(owner_at_host + line)
         except IOError as exc:
             LOG.warning("%s: write failed\n%s" % (job_activity_log, exc))
-            LOG.warning(owner_at_host + line, itask=itask)
+            LOG.warning("[%s] -%s%s", itask, owner_at_host, + line)
 
     def _kill_task_jobs_callback(self, ctx, suite, itasks):
         """Callback when kill tasks command exits."""
@@ -410,11 +435,12 @@ class TaskJobManager(object):
             suite,
             itasks,
             self._kill_task_job_callback,
-            {BatchSysManager.OUT_PREFIX_COMMAND: self._job_cmd_out_callback})
+            {self.batch_sys_mgr.OUT_PREFIX_COMMAND: self._job_cmd_out_callback}
+        )
 
     def _kill_task_job_callback(self, suite, itask, cmd_ctx, line):
         """Helper for _kill_task_jobs_callback, on one task job."""
-        ctx = SuiteProcContext(self.JOBS_KILL, None)
+        ctx = SubProcContext(self.JOBS_KILL, None)
         ctx.out = line
         try:
             ctx.timestamp, _, ctx.ret_code = line.split("|", 2)
@@ -436,23 +462,20 @@ class TaskJobManager(object):
             self.task_events_mgr.process_message(
                 itask, CRITICAL, self.task_events_mgr.EVENT_SUBMIT_FAILED,
                 ctx.timestamp)
-            cylc.flags.iflag = True
         elif itask.state.status == TASK_STATUS_RUNNING:
             self.task_events_mgr.process_message(
                 itask, CRITICAL, TASK_OUTPUT_FAILED)
-            cylc.flags.iflag = True
         else:
             log_lvl = DEBUG
             log_msg = (
                 'ignoring job kill result, unexpected task state: %s' %
                 itask.state.status)
-        itask.summary['latest_message'] = log_msg
+        itask.set_summary_message(log_msg)
         LOG.log(log_lvl, "[%s] -job(%02d) %s" % (
             itask.identity, itask.submit_num, log_msg))
 
-    @staticmethod
     def _manip_task_jobs_callback(
-            ctx, suite, itasks, summary_callback, more_callbacks=None):
+            self, ctx, suite, itasks, summary_callback, more_callbacks=None):
         """Callback when submit/poll/kill tasks command exits."""
         if ctx.ret_code:
             LOG.error(ctx)
@@ -467,7 +490,7 @@ class TaskJobManager(object):
             if itask.point is not None and itask.submit_num:
                 submit_num = "%02d" % (itask.submit_num)
                 tasks[(str(itask.point), itask.tdef.name, submit_num)] = itask
-        handlers = [(BatchSysManager.OUT_PREFIX_SUMMARY, summary_callback)]
+        handlers = [(self.batch_sys_mgr.OUT_PREFIX_SUMMARY, summary_callback)]
         if more_callbacks:
             for prefix, callback in more_callbacks.items():
                 handlers.append((prefix, callback))
@@ -480,7 +503,7 @@ class TaskJobManager(object):
             for job_log_dir in job_log_dirs:
                 point, name, submit_num = job_log_dir.split(os.sep, 2)
                 itask = tasks[(point, name, submit_num)]
-                out += (BatchSysManager.OUT_PREFIX_SUMMARY +
+                out += (self.batch_sys_mgr.OUT_PREFIX_SUMMARY +
                         "|".join([ctx.timestamp, job_log_dir, "1"]) + "\n")
         for line in out.splitlines(True):
             for prefix, callback in handlers:
@@ -491,11 +514,10 @@ class TaskJobManager(object):
                         point, name, submit_num = path.split(os.sep, 2)
                         itask = tasks[(point, name, submit_num)]
                         callback(suite, itask, ctx, line)
-                    except (KeyError, ValueError):
-                        if cylc.flags.debug:
-                            LOG.warning('Unhandled %s output: %s' % (
-                                ctx.cmd_key, line))
-                            LOG.warning(traceback.format_exc())
+                    except (LookupError, ValueError) as exc:
+                        LOG.warning(
+                            'Unhandled %s output: %s', ctx.cmd_key, line)
+                        LOG.exception(exc)
 
     def _poll_task_jobs_callback(self, ctx, suite, itasks):
         """Callback when poll tasks command exits."""
@@ -504,12 +526,12 @@ class TaskJobManager(object):
             suite,
             itasks,
             self._poll_task_job_callback,
-            {BatchSysManager.OUT_PREFIX_MESSAGE:
+            {self.batch_sys_mgr.OUT_PREFIX_MESSAGE:
              self._poll_task_job_message_callback})
 
     def _poll_task_job_callback(self, suite, itask, cmd_ctx, line):
         """Helper for _poll_task_jobs_callback, on one task job."""
-        ctx = SuiteProcContext(self.JOBS_POLL, None)
+        ctx = SubProcContext(self.JOBS_POLL, None)
         ctx.out = line
         ctx.ret_code = 0
 
@@ -526,8 +548,7 @@ class TaskJobManager(object):
                     x, key in enumerate(JobPollContext.CONTEXT_ATTRIBUTES))
                 job_log_dir = items.pop('job_log_dir')
             except (ValueError, IndexError):
-                itask.summary['latest_message'] = 'poll failed'
-                cylc.flags.iflag = True
+                itask.set_summary_message(self.POLL_FAIL)
                 ctx.cmd = cmd_ctx.cmd  # print original command on failure
                 return
         finally:
@@ -581,7 +602,7 @@ class TaskJobManager(object):
 
     def _poll_task_job_message_callback(self, suite, itask, cmd_ctx, line):
         """Helper for _poll_task_jobs_callback, on message of one task job."""
-        ctx = SuiteProcContext(self.JOBS_POLL, None)
+        ctx = SubProcContext(self.JOBS_POLL, None)
         ctx.out = line
         try:
             event_time, severity, message = line.split("|")[2:5]
@@ -611,7 +632,7 @@ class TaskJobManager(object):
             auth_itasks[(itask.task_host, itask.task_owner)].append(itask)
         for (host, owner), itasks in sorted(auth_itasks.items()):
             cmd = ["cylc", cmd_key]
-            if cylc.flags.debug:
+            if LOG.isEnabledFor(DEBUG):
                 cmd.append("--debug")
             if is_remote_host(host):
                 cmd.append("--host=%s" % (host))
@@ -626,7 +647,7 @@ class TaskJobManager(object):
                     itask.point, itask.tdef.name, itask.submit_num))
             cmd += job_log_dirs
             self.proc_pool.put_command(
-                SuiteProcContext(cmd_key, cmd), callback, [suite, itasks])
+                SubProcContext(cmd_key, cmd), callback, [suite, itasks])
 
     @staticmethod
     def _set_retry_timers(itask, rtconfig=None):
@@ -643,6 +664,8 @@ class TaskJobManager(object):
                     (TASK_STATUS_SUBMIT_RETRYING, 'submission retry delays'),
                     (TASK_STATUS_RETRYING, 'execution retry delays')]:
                 delays = rtconfig['job'][cfg_key]
+                if delays is None:
+                    delays = []
                 try:
                     itask.try_timers[key].set_delays(delays)
                 except KeyError:
@@ -668,11 +691,12 @@ class TaskJobManager(object):
             suite,
             itasks,
             self._submit_task_job_callback,
-            {BatchSysManager.OUT_PREFIX_COMMAND: self._job_cmd_out_callback})
+            {self.batch_sys_mgr.OUT_PREFIX_COMMAND: self._job_cmd_out_callback}
+        )
 
     def _submit_task_job_callback(self, suite, itask, cmd_ctx, line):
         """Helper for _submit_task_jobs_callback, on one task job."""
-        ctx = SuiteProcContext(self.JOBS_SUBMIT, None)
+        ctx = SubProcContext(self.JOBS_SUBMIT, None)
         ctx.out = line
         items = line.split("|")
         try:
@@ -737,7 +761,7 @@ class TaskJobManager(object):
             return False
         else:
             if task_host is None:  # host select not ready
-                itask.summary['latest_message'] = self.REMOTE_SELECT_MSG
+                itask.set_summary_message(self.REMOTE_SELECT_MSG)
                 return
             itask.task_host = task_host
             # Submit number not yet incremented
@@ -760,8 +784,8 @@ class TaskJobManager(object):
 
         if dry_run:
             # This will be shown next to submit num in gcylc:
-            itask.summary['latest_message'] = 'job file written (edit/dry-run)'
-            LOG.debug(itask.summary['latest_message'], itask=itask)
+            itask.set_summary_message('job file written (edit/dry-run)')
+            LOG.debug('[%s] -%s', itask, itask.summary['latest_message'])
 
         # Return value used by "cylc submit" and "cylc jobscript":
         return itask
@@ -772,10 +796,10 @@ class TaskJobManager(object):
         LOG.debug(traceback.format_exc())
         LOG.error(exc)
         log_task_job_activity(
-            SuiteProcContext(self.JOBS_SUBMIT, action, err=exc, ret_code=1),
+            SubProcContext(self.JOBS_SUBMIT, action, err=exc, ret_code=1),
             suite, itask.point, itask.tdef.name, submit_num=itask.submit_num)
         if not dry_run:
-            # Perist
+            # Persist
             self.suite_db_mgr.put_insert_task_jobs(itask, {
                 'is_manual_submit': itask.is_manual_submit,
                 'try_num': itask.get_try_num(),
@@ -798,7 +822,8 @@ class TaskJobManager(object):
 
         itask.summary['batch_sys_name'] = rtconfig['job']['batch system']
         for name in rtconfig['extra log files']:
-            itask.summary['logfiles'].append(expandvars(name))
+            itask.summary['logfiles'].append(
+                os.path.expanduser(os.path.expandvars(name)))
         try:
             batch_sys_conf = self.task_events_mgr.get_host_conf(
                 itask, 'batch systems')[itask.summary['batch_sys_name']]
@@ -832,6 +857,7 @@ class TaskJobManager(object):
             'execution_time_limit': itask.summary[self.KEY_EXECUTE_TIME_LIMIT],
             'env-script': rtconfig['env-script'],
             'err-script': rtconfig['err-script'],
+            'exit-script': rtconfig['exit-script'],
             'host': itask.task_host,
             'init-script': rtconfig['init-script'],
             'job_file_path': job_file_path,

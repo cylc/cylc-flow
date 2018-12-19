@@ -19,75 +19,74 @@
 
 import os
 import sys
-import gtk
 from copy import deepcopy, copy
 
 from parsec import ParsecError
-from parsec.config import config, ItemNotFoundError, itemstr
-from parsec.validate import coercers, validator as vdr
+from parsec.config import ParsecConfig, ItemNotFoundError, itemstr
 from parsec.upgrade import upgrader
 from parsec.util import printcfg
-from cylc.gui.view_tree import ControlTree
+from cylc.cfgvalidate import (
+    cylc_config_validate, CylcConfigValidator as VDR, DurationFloat)
 from cylc.task_state import (
     TASK_STATUSES_ALL, TASK_STATUS_RUNAHEAD, TASK_STATUS_HELD,
     TASK_STATUS_WAITING, TASK_STATUS_EXPIRED, TASK_STATUS_QUEUED,
     TASK_STATUS_READY, TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED,
     TASK_STATUS_FAILED, TASK_STATUS_RETRYING)
-from cylc.cfgspec.utils import (coerce_interval, DurationFloat)
 
 
-coercers['interval'] = coerce_interval
 OLD_SITE_FILE = os.path.join(
     os.environ['CYLC_DIR'], 'etc', 'gcylcrc', 'themes.rc')
 SITE_FILE = os.path.join(
     os.environ['CYLC_DIR'], 'etc', 'gcylc-themes.rc')
 USER_FILE = os.path.join(os.environ['HOME'], '.cylc', 'gcylc.rc')
+HEADINGS = (
+    None, 'task', 'state', 'host', 'job system', 'job ID', 'T-submit',
+    'T-start', 'T-finish', 'dT-mean', 'latest message',)
+
+# Nested dict of spec items.
+# Spec value is [value_type, default, allowed_2, allowed_3, ...]
+# where:
+# - value_type: value type (compulsory).
+# - default: the default value (optional).
+# - allowed_2, ...: the only other allowed values of this setting (optional).
 SPEC = {
-    'dot icon size': vdr(
-        vtype='string',
-        default="medium",
-        options=["small", "medium", "large", "extra large"]),
-    'initial side-by-side views': vdr(vtype='boolean', default=False),
-    'initial views': vdr(vtype='string_list', default=["text"]),
-    'maximum update interval': vdr(
-        vtype='interval', default=DurationFloat(15)),
-    'sort by definition order': vdr(vtype='boolean', default=True),
-    'sort column': vdr(
-        vtype='string',
-        default='none',
-        options=[heading for heading in ControlTree.headings if heading is not
-                 None] + ['none']),
-    'sort column ascending': vdr(vtype='boolean', default=True),
-    'task filter highlight color': vdr(vtype='string', default='PowderBlue'),
-    'task states to filter out': vdr(
-        vtype='string_list',
-        default=[TASK_STATUS_RUNAHEAD]),
+    'dot icon size': [
+        VDR.V_STRING, "medium", "small", "medium", "large", "extra large"],
+    'initial side-by-side views': [VDR.V_BOOLEAN],
+    'initial views': [VDR.V_STRING_LIST, ["text"]],
+    'maximum update interval': [VDR.V_INTERVAL, DurationFloat(15)],
+    'sort by definition order': [VDR.V_BOOLEAN, True],
+    'sort column': [VDR.V_STRING] + list(HEADINGS),
+    'sort column ascending': [VDR.V_BOOLEAN, True],
+    'sub-graphs on': [VDR.V_BOOLEAN, False],
+    'task filter highlight color': [VDR.V_STRING, 'PowderBlue'],
+    'task states to filter out': [
+        VDR.V_STRING_LIST, [TASK_STATUS_RUNAHEAD]],
     'themes': {
         '__MANY__': {
-            'inherit': vdr(vtype='string', default="default"),
-            'defaults': vdr(vtype='string_list'),
-            TASK_STATUS_WAITING: vdr(vtype='string_list'),
-            TASK_STATUS_HELD: vdr(vtype='string_list'),
-            TASK_STATUS_QUEUED: vdr(vtype='string_list'),
-            TASK_STATUS_READY: vdr(vtype='string_list'),
-            TASK_STATUS_EXPIRED: vdr(vtype='string_list'),
-            TASK_STATUS_SUBMITTED: vdr(vtype='string_list'),
-            TASK_STATUS_SUBMIT_FAILED: vdr(vtype='string_list'),
-            TASK_STATUS_RUNNING: vdr(vtype='string_list'),
-            TASK_STATUS_SUCCEEDED: vdr(vtype='string_list'),
-            TASK_STATUS_FAILED: vdr(vtype='string_list'),
-            TASK_STATUS_RETRYING: vdr(vtype='string_list'),
-            TASK_STATUS_SUBMIT_RETRYING: vdr(vtype='string_list'),
-            TASK_STATUS_RUNAHEAD: vdr(vtype='string_list'),
+            'inherit': [VDR.V_STRING, "default"],
+            'defaults': [VDR.V_STRING_LIST],
+            TASK_STATUS_WAITING: [VDR.V_STRING_LIST],
+            TASK_STATUS_HELD: [VDR.V_STRING_LIST],
+            TASK_STATUS_QUEUED: [VDR.V_STRING_LIST],
+            TASK_STATUS_READY: [VDR.V_STRING_LIST],
+            TASK_STATUS_EXPIRED: [VDR.V_STRING_LIST],
+            TASK_STATUS_SUBMITTED: [VDR.V_STRING_LIST],
+            TASK_STATUS_SUBMIT_FAILED: [VDR.V_STRING_LIST],
+            TASK_STATUS_RUNNING: [VDR.V_STRING_LIST],
+            TASK_STATUS_SUCCEEDED: [VDR.V_STRING_LIST],
+            TASK_STATUS_FAILED: [VDR.V_STRING_LIST],
+            TASK_STATUS_RETRYING: [VDR.V_STRING_LIST],
+            TASK_STATUS_SUBMIT_RETRYING: [VDR.V_STRING_LIST],
+            TASK_STATUS_RUNAHEAD: [VDR.V_STRING_LIST],
         },
     },
-    'transpose dot': vdr(vtype='boolean', default=False),
-    'transpose graph': vdr(vtype='boolean', default=False),
-    'ungrouped views': vdr(vtype='string_list', default=[]),
-    'sub-graphs on': vdr(vtype='boolean', default=False),
-    'use theme': vdr(vtype='string', default="default"),
-    'window size': vdr(vtype='integer_list', default=[800, 500]),
+    'transpose dot': [VDR.V_BOOLEAN],
+    'transpose graph': [VDR.V_BOOLEAN],
+    'ungrouped views': [VDR.V_STRING_LIST],
+    'use theme': [VDR.V_STRING, "default"],
+    'window size': [VDR.V_INTEGER_LIST, [800, 500]],
 }
 
 
@@ -100,7 +99,7 @@ def upg(cfg, descr):
     u.upgrade()
 
 
-class gconfig(config):
+class GcylcConfig(ParsecConfig):
     """gcylc user configuration - default view panels, task themes etc."""
 
     _INST = None
@@ -111,18 +110,17 @@ class gconfig(config):
         if cls._INST is None:
             cls._INST = cls(SPEC, upg)
             try:
-                cls._INST.loadcfg(SITE_FILE, "site config")
+                cls._INST.loadcfg(SITE_FILE, upgrader.SITE_CONFIG)
             except ParsecError as exc:
-                sys.stderr.write(
-                    "WARNING: ignoring bad site GUI config %s:\n"
-                    "%s\n" % (SITE_FILE, str(exc)))
+                LOG.warning(
+                    'ignoring bad %s %s\n%s',
+                    upgrader.SITE_CONFIG, SITE_FILE, exc)
 
             if os.access(USER_FILE, os.F_OK | os.R_OK):
                 try:
-                    cls._INST.loadcfg(USER_FILE, "user config")
+                    cls._INST.loadcfg(USER_FILE, upgrader.USER_CONFIG)
                 except ParsecError as exc:
-                    sys.stderr.write(
-                        "ERROR: bad user GUI config %s:\n" % USER_FILE)
+                    LOG.error('bad %s %s', upgrader.USER_CONFIG, USER_FILE)
                     raise
 
             # check and correct initial view config etc.
@@ -131,8 +129,8 @@ class gconfig(config):
             cls._INST.transform()
         return cls._INST
 
-    def __init__(self, *args):
-        config.__init__(self, *args)
+    def __init__(self, spec, upg):
+        ParsecConfig.__init__(self, spec, upg, validator=cylc_config_validate)
         self.default_theme = None
         self.use_theme = None
 
@@ -156,9 +154,8 @@ class gconfig(config):
 
         # and check it is valid
         if self.use_theme not in cfg['themes']:
-            print >> sys.stderr, (
-                "WARNING: theme " + self.use_theme + " not found, using '" +
-                self.default_theme + "'")
+            sys.stderr.write("WARNING: theme %s not found, using '%s'\n" % (
+                self.use_theme, self.default_theme))
             cfg['use theme'] = 'default'
             self.use_theme = self.default_theme
 
@@ -174,9 +171,9 @@ class gconfig(config):
                 if cfg['themes'][name]['inherit']:
                     parent = cfg['themes'][name]['inherit']
                     if parent not in cfg['themes']:
-                        print >> sys.stderr, (
-                            "WARNING: undefined parent '" + parent +
-                            "' (theme '" + label + "')")
+                        sys.stderr.write(
+                            "WARNING: undefined parent '%s' (theme '%s')\n" %
+                            (parent, label))
                         parent = "default"
                 else:
                     break
@@ -209,9 +206,10 @@ class gconfig(config):
                     continue
                 state = item
                 if state not in TASK_STATUSES_ALL:
-                    print >> sys.stderr, (
-                        "WARNING, ignoring illegal task state '" + state +
-                        "' in theme", theme)
+                    sys.stderr.write(
+                        ("WARNING, "
+                         "ignoring illegal task state '%s' in theme %s\n") %
+                        (state, theme))
                 # reverse inherit (override)
                 tcfg = deepcopy(defs)
                 self.inherit(tcfg, self.parse_state(theme, item, val))
@@ -227,12 +225,14 @@ class gconfig(config):
         if 'window size' in cfg:
             fail = False
             if len(cfg['window size']) != 2:
-                print >> sys.stderr, ("WARNING: window size requires two "
-                                      "values (x, y). Using default.")
+                sys.stderr.write(
+                    "WARNING: window size requires two values (x, y). "
+                    "Using default.\n")
                 fail = True
             elif cfg['window size'][0] < 0 or cfg['window size'][1] < 0:
-                print >> sys.stderr, ("WARNING: window size values must be "
-                                      "positive. Using default.")
+                sys.stderr.write(
+                    "WARNING: window size values must be positive. "
+                    "Using default.\n")
                 fail = True
             # TODO: check for daft window sizes? (10, 5), (80000, 5000) ?
             if fail:
@@ -244,14 +244,14 @@ class gconfig(config):
         views = copy(cfg['initial views'])
         for view in views:
             if view not in ['dot', 'text', 'graph']:
-                print >> sys.stderr, (
-                    "WARNING: ignoring illegal view name '" + view + "'")
+                sys.stderr.write(
+                    "WARNING: ignoring illegal view name '%s'\n" % (view))
                 cfg['initial views'].remove(view)
         views = cfg['initial views']
         if len(views) == 0:
             # at least one view required
-            print >> sys.stderr, (
-                "WARNING: no initial views defined, defaulting to 'text'")
+            sys.stderr.write(
+                "WARNING: no initial views defined, defaulting to 'text'\n")
             cfg['initial views'] = ['text']
 
     @staticmethod
@@ -261,15 +261,17 @@ class gconfig(config):
         for item in cfglist:
             key, val = item.split('=')
             if key not in allowed_keys:
-                raise SystemExit('ERROR, gcylc.rc, illegal: ' + theme + ': ' +
-                                 name + ' = ' + cfglist)
+                sys.exit(
+                    'ERROR, gcylc.rc, illegal: %s: %s = %s' %
+                    (theme, name, cfglist))
             if key == 'color' or key == 'fontcolor':
                 try:
+                    import gtk
                     gtk.gdk.color_parse(val)
                 except ValueError as exc:
-                    print >> sys.stderr, 'ERROR', exc
-                    sys.exit('ERROR, gcylc.rc, illegal color: ' + theme +
-                             ': ' + name + '="' + item + '"')
+                    sys.exit(
+                        'ERROR, gcylc.rc, illegal color: %s: %s="%s"\n%s' %
+                        (theme, name, item, exc))
             cfg[key] = val
         return cfg
 
@@ -282,7 +284,7 @@ class gconfig(config):
             else:
                 target[item] = source[item]
 
-    def dump(self, keys, sparse=False, pnative=False, prefix='',
+    def dump(self, keys=None, sparse=False, pnative=False, prefix='',
              none_str=''):
         """Override parse.config.dump().
 
@@ -309,10 +311,6 @@ class gconfig(config):
                 parents.append(key)
 
         if pnative:
-            print cfg
+            print(cfg)
         else:
             printcfg(cfg, prefix=prefix, level=len(keys))
-
-
-# load on import if not already loaded
-gcfg = gconfig.get_inst()

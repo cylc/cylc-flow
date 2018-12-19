@@ -27,6 +27,7 @@ from logging import getLevelName, WARNING, ERROR, CRITICAL
 import os
 import sys
 
+
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
 from cylc.network.httpclient import SuiteRuntimeServiceClient, ClientInfoError

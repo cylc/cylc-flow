@@ -35,9 +35,11 @@ from fnmatch import fnmatchcase
 import json
 from time import time
 
+from parsec.OrderedDict import OrderedDict
+
+from cylc import LOG
 from cylc.config import SuiteConfigError
 from cylc.cycling.loader import get_point, standardise_point_string
-from cylc.suite_logging import LOG
 from cylc.task_action_timer import TaskActionTimer
 from cylc.task_events_mgr import (
     CustomTaskEventHandlerContext, TaskEventMailContext,
@@ -54,7 +56,6 @@ from cylc.task_state import (
     TASK_STATUS_RETRYING)
 from cylc.wallclock import (
     get_current_time_string, get_time_string_from_unix_time)
-from parsec.OrderedDict import OrderedDict
 
 
 class TaskPool(object):
@@ -169,7 +170,7 @@ class TaskPool(object):
             itask = self.add_to_runahead_pool(TaskProxy(
                 taskdef, point, stop_point=stop_point, submit_num=submit_num))
             if itask:
-                LOG.info("inserted", itask=itask)
+                LOG.info("[%s] -inserted", itask)
         return n_warnings
 
     def add_to_runahead_pool(self, itask, is_new=True):
@@ -200,12 +201,12 @@ class TaskPool(object):
         # add in held state if beyond the suite hold point
         if self.hold_point and itask.point > self.hold_point:
             LOG.info(
-                "holding (beyond suite hold point) %s" % self.hold_point,
-                itask=itask)
+                "[%s] -holding (beyond suite hold point) %s",
+                itask, self.hold_point)
             itask.state.set_held()
         elif (self.stop_point and itask.point <= self.stop_point and
                 self.task_has_future_trigger_overrun(itask)):
-            LOG.info("holding (future trigger beyond stop point)", itask=itask)
+            LOG.info("[%s] -holding (future trigger beyond stop point)", itask)
             self.held_future_tasks.append(itask.identity)
             itask.state.set_held()
         elif self.is_held and itask.state.status == TASK_STATUS_WAITING:
@@ -331,10 +332,10 @@ class TaskPool(object):
         as submitted or running are polled to confirm their true status.
 
         Prerequisite status (satisfied or not) is inferred from task status:
-           WAITING or HELD  - all prerequisites unsatisified
+           WAITING or HELD  - all prerequisites unsatisfied
            status > QUEUED - all prerequisites satisfied.
         TODO - this is not correct, e.g. a held task may have some (but not
-        all) satisified prerequisites; and a running task (etc.) could have
+        all) satisfied prerequisites; and a running task (etc.) could have
         been manually triggered with unsatisfied prerequisites. See comments
         in GitHub #2329 on how to fix this in the future.
 
@@ -424,10 +425,6 @@ class TaskPool(object):
         (cycle, name, ctx_key_raw, ctx_raw, delays_raw, num, delay,
          timeout) = row
         id_ = TaskID.get(name, cycle)
-        itask = self.get_task_by_id(id_)
-        if itask is None:
-            LOG.warning("%(id)s: task not found, skip" % {"id": id_})
-            return
         try:
             # Extract type namedtuple variables from JSON strings
             ctx_key = json.loads(str(ctx_key_raw))
@@ -491,7 +488,7 @@ class TaskPool(object):
         self.pool.setdefault(itask.point, {})
         self.pool[itask.point][itask.identity] = itask
         self.pool_changed = True
-        LOG.debug("released to the task pool", itask=itask)
+        LOG.debug("[%s] -released to the task pool", itask)
         del self.runahead_pool[itask.point][itask.identity]
         if not self.runahead_pool[itask.point]:
             del self.runahead_pool[itask.point]
@@ -521,7 +518,7 @@ class TaskPool(object):
         msg = "task proxy removed"
         if reason:
             msg += " (%s)" % reason
-        LOG.debug(msg, itask=itask)
+        LOG.debug("[%s] -%s", itask, msg)
         if itask.tdef.max_future_prereq_offset is not None:
             self.set_max_future_offset()
         del itask
@@ -738,13 +735,13 @@ class TaskPool(object):
                         TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING,
                         TASK_STATUS_HELD]:
                     # Remove orphaned task if it hasn't started running yet.
-                    LOG.warning("(task orphaned by suite reload)", itask=itask)
+                    LOG.warning("[%s] -(task orphaned by suite reload)", itask)
                     self.remove(itask)
                 else:
                     # Keep active orphaned task, but stop it from spawning.
                     itask.has_spawned = True
                     LOG.warning(
-                        "last instance (orphaned by reload)", itask=itask)
+                        "[%s] -last instance (orphaned by reload)", itask)
             else:
                 self.remove(itask, '(suite definition reload)')
                 new_task = self.add_to_runahead_pool(TaskProxy(
@@ -752,12 +749,12 @@ class TaskPool(object):
                     itask.state.status, stop_point=itask.stop_point,
                     submit_num=itask.submit_num))
                 new_task.copy_pre_reload(itask)
-                LOG.info('reloaded task definition', itask=itask)
+                LOG.info('[%s] -reloaded task definition', itask)
                 if itask.state.status in TASK_STATUSES_ACTIVE:
                     LOG.warning(
-                        "job(%02d) active with pre-reload settings" %
-                        itask.submit_num,
-                        itask=itask)
+                        "[%s] -job(%02d) active with pre-reload settings",
+                        itask,
+                        itask.submit_num)
         LOG.info("Reload completed.")
         self.do_reload = False
 
@@ -770,9 +767,9 @@ class TaskPool(object):
                     itask.state.status in [TASK_STATUS_WAITING,
                                            TASK_STATUS_QUEUED]):
                 LOG.warning(
-                    "not running (beyond suite stop cycle) %s" %
-                    self.stop_point,
-                    itask=itask)
+                    "[%s] -not running (beyond suite stop cycle) %s",
+                    itask,
+                    self.stop_point)
                 itask.state.set_held()
 
     def can_stop(self, stop_mode):
@@ -953,7 +950,7 @@ class TaskPool(object):
         if itask.has_spawned:
             return None
         itask.has_spawned = True
-        LOG.debug('forced spawning', itask=itask)
+        LOG.debug('[%s] -forced spawning', itask)
         next_point = itask.next_point()
         if next_point is None:
             return
@@ -1002,9 +999,9 @@ class TaskPool(object):
                 if itask.state.status in [TASK_STATUS_READY,
                                           TASK_STATUS_SUBMITTED,
                                           TASK_STATUS_RUNNING]:
-                    LOG.warning('suiciding while active', itask=itask)
+                    LOG.warning('[%s] -suiciding while active', itask)
                 else:
-                    LOG.info('suiciding', itask=itask)
+                    LOG.info('[%s] -suiciding', itask)
                 self.force_spawn(itask)
                 self.remove(itask, 'suicide')
                 num_removed += 1
@@ -1067,7 +1064,7 @@ class TaskPool(object):
         itasks, bad_items = self.filter_task_proxies(items)
         for itask in itasks:
             if not itask.has_spawned:
-                LOG.info("forced spawning", itask=itask)
+                LOG.info("[%s] -forced spawning", itask)
                 self.force_spawn(itask)
         return len(bad_items)
 
@@ -1076,7 +1073,7 @@ class TaskPool(object):
         itasks, bad_items = self.filter_task_proxies(items)
         for itask in itasks:
             if status and status != itask.state.status:
-                LOG.info("resetting state to %s" % status, itask=itask)
+                LOG.info("[%s] -resetting state to %s", itask, status)
                 itask.state.reset_state(status)
                 if status in [TASK_STATUS_FAILED, TASK_STATUS_SUCCEEDED]:
                     itask.set_summary_time('finished',
@@ -1089,12 +1086,12 @@ class TaskPool(object):
                         output = output[1:]
                     if output == '*' and is_completed:
                         itask.state.outputs.set_all_completed()
-                        LOG.info("reset all outputs to completed",
-                                 itask=itask)
+                        LOG.info("[%s] -reset all outputs to completed",
+                                 itask)
                     elif output == '*':
                         itask.state.outputs.set_all_incomplete()
-                        LOG.info("reset all outputs to incomplete",
-                                 itask=itask)
+                        LOG.info("[%s] -reset all outputs to incomplete",
+                                 itask)
                     else:
                         ret = itask.state.outputs.set_msg_trg_completion(
                             message=output, is_completed=is_completed)
@@ -1103,16 +1100,15 @@ class TaskPool(object):
                                 trigger=output, is_completed=is_completed)
                         if ret is None:
                             LOG.warning(
-                                "cannot reset output: %s" % output,
-                                itask=itask)
+                                "[%s] -cannot reset output: %s", itask, output)
                         elif ret:
                             LOG.info(
-                                "reset output to complete: %s" % output,
-                                itask=itask)
+                                "[%s] -reset output to complete: %s",
+                                itask, output)
                         else:
                             LOG.info(
-                                "reset output to incomplete: %s" % output,
-                                itask=itask)
+                                "[%s] -reset output to incomplete: %s",
+                                itask, output)
                 self.suite_db_mgr.put_update_task_outputs(itask)
         return len(bad_items)
 
@@ -1214,7 +1210,7 @@ class TaskPool(object):
                 itask.get_offset_as_seconds(itask.tdef.expiration_offset))
         if now > itask.expire_time:
             msg = 'Task expired (skipping job).'
-            LOG.warning(msg, itask=itask)
+            LOG.warning('[%s] -%s', itask, msg)
             self.task_events_mgr.setup_event_handlers(itask, "expired", msg)
             itask.state.reset_state(TASK_STATUS_EXPIRED)
             return True

@@ -22,15 +22,11 @@ import math
 
 from cylc.conditional_simplifier import ConditionalSimplifier
 from cylc.cycling.loader import get_point
-from cylc.suite_logging import ERR
 
 
-class TriggerExpressionError(Exception):
-    def __init__(self, msg):
-        self.msg = msg
-
-    def __str__(self):
-        return repr(self.msg)
+class TriggerExpressionError(ValueError):
+    """Trigger expression syntax issue."""
+    pass
 
 
 class Prerequisite(object):
@@ -59,7 +55,7 @@ class Prerequisite(object):
         # cylc.cycling.PointBase
         self.start_point = start_point
 
-        # List of cycle point strings that this prerequiste depends on.
+        # List of cycle point strings that this prerequisite depends on.
         self.target_point_strings = []
 
         # Dictionary of messages pertaining to this prerequisite.
@@ -74,9 +70,9 @@ class Prerequisite(object):
         # 'foo.1 failed & bar.1 succeeded'
         self.conditional_expression = None
 
-        # The cashed state of this prerequisite:
+        # The cached state of this prerequisite:
         # * `None` (no cached state)
-        # * `True` (prereuisite satisfied)
+        # * `True` (prerequisite satisfied)
         # * `False` (prerequisite unsatisfied).
         self._all_satisfied = None
 
@@ -187,11 +183,10 @@ class Prerequisite(object):
         except (SyntaxError, ValueError) as exc:
             err_msg = str(exc)
             if str(exc).find("unexpected EOF") != -1:
-                err_msg += ("\n(?could be unmatched parentheses in the graph "
-                            "string?)")
-            ERR.error(err_msg)
+                err_msg += (
+                    " (could be unmatched parentheses in the graph string?)")
             raise TriggerExpressionError(
-                '"%s"' % self.get_raw_conditional_expression())
+                '"%s":\n%s' % (self.get_raw_conditional_expression(), err_msg))
         return res
 
     def satisfy_me(self, all_task_outputs):
@@ -234,7 +229,7 @@ class Prerequisite(object):
         return res
 
     def set_satisfied(self):
-        """Force this prerequiste into the satisfied state.
+        """Force this prerequisite into the satisfied state.
 
         State can be overridden by calling `self.satisfy_me`.
 

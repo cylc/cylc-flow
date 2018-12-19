@@ -147,15 +147,6 @@ The suite event log, held under the suite run directory, is maintained
 as a rolling archive. Logs are rolled over (backed up and started anew)
 when they reach a configurable limit size.
 
-\subsubsection[roll over at start-up]{[suite logging] \textrightarrow roll over at start-up}
-
-If True, a new suite log will be started for a new suite run.
-
-\begin{myitemize}
-\item {\em type:} boolean
-\item {\em default:} True
-\end{myitemize}
-
 \subsubsection[rolling archive length]{[suite logging] \textrightarrow rolling archive length}
 
 How many rolled logs to retain in the archive.
@@ -436,22 +427,31 @@ file.
 
 \paragraph[run directory]{[hosts] \textrightarrow [[HOST]] \textrightarrow run directory }
 
-The top level of the directory tree that holds suite-specific output logs,
-run database, etc.
+The top level for suite logs and service files, etc. Can contain
+\lstinline=$HOME= or \lstinline=$USER= but not other environment variables (the
+item cannot actually be evaluated by the shell on HOST before use, but the
+remote home directory is where \lstinline=rsync= and \lstinline=ssh= naturally
+land, and the remote username is known by the suite server program).
 
 \begin{myitemize}
 \item {\em type:} string (directory path)
 \item {\em default:} \lstinline=$HOME/cylc-run=
+\item {\em example:} \lstinline=/nfs/data/$USER/cylc-run=
 \end{myitemize}
 
 \paragraph[work directory]{[hosts] \textrightarrow [[HOST]] \textrightarrow work directory }
 \label{workdirectory}
 
-The top level for suite work and share directories.
+The top level for suite work and share directories. Can contain
+\lstinline=$HOME= or \lstinline=$USER= but not other environment variables
+(the item cannot actually be evaluated by the shell on HOST before use, but the
+remote home directory is where \lstinline=rsync= and \lstinline=ssh= naturally
+land, and the remote username is known by the suite server program).
 
 \begin{myitemize}
 \item {\em type:} string (directory path)
-\item {\em localhost default:} \lstinline@$HOME/cylc-run@
+\item {\em localhost default:} \lstinline=$HOME/cylc-run=
+\item {\em example:} \lstinline=/nfs/data/$USER/cylc-run=
 \end{myitemize}
 
 
@@ -752,11 +752,37 @@ exceeds its execution time limit.
 
 \subsection{[suite servers] }
 
+\label{global-suite-servers}
+
 Configure allowed suite hosts and ports for starting up (running or
 restarting) suites and enabling them to be detected whilst running via
 utilities such as \lstinline=cylc gscan=. Additionally configure host
 selection settings specifying how to determine the most suitable run host at
 any given time from those configured.
+
+\subsubsection[run hosts]{[suite servers] \textrightarrow auto restart delay}
+
+Relates to Cylc's auto stop-restart mechanism (see~\ref{auto-stop-restart}).
+When a host is set to automatically shutdown/restart it will first wait a
+random period of time between zero and \lstinline=auto restart delay=
+seconds before beginning the process. This is to prevent large numbers
+of suites from restarting simultaneously. 
+
+\begin{myitemize}
+\item {\em type:} integer
+\item {\em default:} \lstinline=0=
+\end{myitemize}
+
+\subsubsection[run hosts]{[suite servers] \textrightarrow condemned hosts}
+
+Hosts specified in \lstinline=condemned hosts= will not be considered as suite
+run hosts. If suites are already running on \lstinline=condemned hosts= they
+will be automatically shutdown and restarted (see~\ref{auto-stop-restart}).
+
+\begin{myitemize}
+\item {\em type:} comma-separated list of host names and/or IP addresses.
+\item {\em default:} (none)
+\end{myitemize}
 
 \subsubsection[run hosts]{[suite servers] \textrightarrow run hosts }
 

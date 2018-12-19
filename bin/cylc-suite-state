@@ -28,9 +28,6 @@ it (consider max-polls*interval as an overall timeout).
 
 Note for non-cycling tasks --point=1 must be provided.
 
-Important: cylc suite-state only works with task states and does not work with
-task messages.
-
 For your own suites the database location is determined by your
 site/user config. For other suites, e.g. those owned by others, or
 mirrored suite databases, use --run-dir=DIR to specify the location.

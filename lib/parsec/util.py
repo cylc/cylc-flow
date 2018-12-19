@@ -26,6 +26,75 @@ from copy import copy
 from parsec.OrderedDict import OrderedDictWithDefaults
 
 
+def intlistjoin(lst):
+    """Return dump string for int list.
+
+    Attempt grouping on sequences with 3 or more numbers:
+    * Consider sequential int values in list, group them together in
+      `START..END[..STEP]` syntax where relevant.
+    * Consider same numbers in list, group them together in `N*INT` syntax.
+
+    Arguments:
+        lst (list): a list of int numbers.
+
+    Return (str):
+        The (hopefully) nicely formatted dump string.
+
+    Examples:
+        >>> intlistjoin([])
+        ''
+        >>> intlistjoin([10])
+        '10'
+        >>> intlistjoin([10, 10])
+        '10, 10'
+        >>> intlistjoin([10, 10, 10])
+        '3*10'
+        >>> intlistjoin([10, 11])
+        '10, 11'
+        >>> intlistjoin([10, 11, 12])
+        '10..12'
+        >>> intlistjoin([-1, 1, 3, 5, 0, 0, 0, 8, 9, 11, -1, 0, 1, 2])
+        '-1..5..2, 3*0, 8, 9, 11, -1..2'
+        >>> intlistjoin([-1, 1, 3, 5, 0, 0, 0, 8, 9, 11, 11, 12])
+        '-1..5..2, 3*0, 8, 9, 11, 11, 12'
+        >>> intlistjoin(
+        ...     [-10, -10, -1, 1, 3, 5, 0, 0, 0, 8, 9, 11, -1, 0, 1, 2])
+        '-10, -10, -1..5..2, 3*0, 8, 9, 11, -1..2'
+        >>> intlistjoin(
+        ...     [64747, -10, -10, -10, -1, 1, 3, 5, 0, 0, 0, 8, 9, 11, -1, 0,
+        ...      1, 2, 3, 4, 19, 19, 19, 20, 20, 20, 21, 22, 23])
+        '64747, 3*-10, -1..5..2, 3*0, 8, 9, 11, -1..4, 3*19, 3*20, 21..23'
+    """
+    rets = []
+    items = list(lst)
+    while items:
+        group = [items.pop(0)]
+        while items:
+            if (len(group) == 1 or
+                    items[0] - group[-1] == group[-1] - group[-2]):
+                group.append(items.pop(0))
+            else:
+                # If 2 numbers only, return 1 back if grouping still possible
+                # in subsequent lots.
+                if len(group) == 2 and len(items) >= 2:
+                    items.insert(0, group.pop())
+                break
+        if len(group) <= 2:
+            # Less than 2 numbers
+            rets += [str(item) for item in group]
+        elif group[1] - group[0] > 1:
+            # Sequence of numbers with equal steps > 1
+            rets.append(
+                '%d..%d..%d' % (group[0], group[-1], group[1] - group[0]))
+        elif group[1] - group[0] == 1:
+            # Sequence of incremental numbers
+            rets.append('%d..%d' % (group[0], group[-1]))
+        else:
+            # Sequence of same number
+            rets.append('%d*%d' % (len(group), group[0]))
+    return ', '.join(rets)
+
+
 def listjoin(lst, none_str=''):
     """Return string from joined list.
 
@@ -37,6 +106,8 @@ def listjoin(lst, none_str=''):
     if not lst:
         # empty list
         return none_str
+    if len(lst) > 2 and all(isinstance(item, int) for item in lst):
+        return intlistjoin(lst)
     items = []
     for item in lst:
         if item is None:
@@ -139,7 +210,6 @@ def poverride(target, sparse, prepend=False):
 
     """
     if not sparse:
-        target = OrderedDictWithDefaults()
         return
     for key, val in sparse.items():
         if isinstance(val, dict):
@@ -164,7 +234,6 @@ def m_override(target, sparse):
     the right position.
     """
     if not sparse:
-        target = OrderedDictWithDefaults()
         return
     stack = [(sparse, target, [], OrderedDictWithDefaults())]
     defaults_list = []

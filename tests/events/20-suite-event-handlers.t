@@ -23,7 +23,7 @@ if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
     create_test_globalrc "" "
 [cylc]
     [[events]]
-        handlers = echo 'Your %(suite)s suite has a %(event)s event and URL %(suite_url)s and suite-priority as %(suite-priority)s.'
+        handlers = echo 'Your %(suite)s suite has a %(event)s event and URL %(suite_url)s and suite-priority as %(suite-priority)s and suite-UUID as %(suite_uuid)s.'
         handler events = startup"
     OPT_SET='-s GLOBALCFG=True'
 fi
@@ -34,9 +34,11 @@ run_ok "${TEST_NAME_BASE}-validate" \
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach ${OPT_SET} "${SUITE_NAME}"
 
-LOG_FILE="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/suite/log"
+LOGD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log"
+SUITE_UUID="$(sqlite3 "${LOGD}/db" 'SELECT value FROM suite_params WHERE key=="uuid_str"')"
+LOG_FILE="${LOGD}/suite/log"
 grep_ok "\\[('suite-event-handler-00', 'startup') ret_code\\] 0" "${LOG_FILE}"
-grep_ok "\\[('suite-event-handler-00', 'startup') out\\] Your ${SUITE_NAME} suite has a startup event and URL http://mysuites.com/${SUITE_NAME}.html and suite-priority as HIGH." "${LOG_FILE}"
+grep_ok "\\[('suite-event-handler-00', 'startup') out\\] Your ${SUITE_NAME} suite has a startup event and URL http://mysuites.com/${SUITE_NAME}.html and suite-priority as HIGH and suite-UUID as ${SUITE_UUID}." "${LOG_FILE}"
 
 purge_suite "${SUITE_NAME}"
 exit

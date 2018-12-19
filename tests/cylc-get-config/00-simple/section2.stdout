@@ -2,6 +2,7 @@
     script = echo "RUN: run-var.sh"
     env-script = 
     err-script = 
+    exit-script = 
     extra log files = 
     work sub-directory = 
     init-script = 
@@ -58,9 +59,9 @@
         interval = 
         host = 
         max-polls = 
+        message = 
         run-dir = 
         user = 
-        template = 
         verbose mode = 
     [[[remote]]]
         owner = 
@@ -82,6 +83,7 @@
     script = echo "RUN: run-ops.sh"
     env-script = 
     err-script = 
+    exit-script = 
     extra log files = 
     work sub-directory = 
     init-script = 
@@ -137,9 +139,9 @@
         interval = 
         host = 
         max-polls = 
+        message = 
         run-dir = 
         user = 
-        template = 
         verbose mode = 
     [[[remote]]]
         owner = 
@@ -161,6 +163,7 @@
     script = echo "RUN: run-ops.sh"
     env-script = 
     err-script = 
+    exit-script = 
     extra log files = 
     work sub-directory = 
     init-script = 
@@ -217,9 +220,9 @@
         interval = 
         host = 
         max-polls = 
+        message = 
         run-dir = 
         user = 
-        template = 
         verbose mode = 
     [[[remote]]]
         owner = 
@@ -241,6 +244,7 @@
     script = echo "RUN: run-ops.sh"
     env-script = 
     err-script = 
+    exit-script = 
     extra log files = 
     work sub-directory = 
     init-script = 
@@ -297,9 +301,9 @@
         interval = 
         host = 
         max-polls = 
+        message = 
         run-dir = 
         user = 
-        template = 
         verbose mode = 
     [[[remote]]]
         owner = 
@@ -321,6 +325,7 @@
     script = echo "RUN: run-ops.sh"
     env-script = 
     err-script = 
+    exit-script = 
     extra log files = 
     work sub-directory = 
     init-script = 
@@ -377,9 +382,9 @@
         interval = 
         host = 
         max-polls = 
+        message = 
         run-dir = 
         user = 
-        template = 
         verbose mode = 
     [[[remote]]]
         owner = 
@@ -401,6 +406,7 @@
     script = echo "RUN: run-ops.sh"
     env-script = 
     err-script = 
+    exit-script = 
     extra log files = 
     work sub-directory = 
     init-script = 
@@ -457,9 +463,9 @@
         interval = 
         host = 
         max-polls = 
+        message = 
         run-dir = 
         user = 
-        template = 
         verbose mode = 
     [[[remote]]]
         owner = 
@@ -481,6 +487,7 @@
     script = echo "RUN: run-var.sh"
     env-script = 
     err-script = 
+    exit-script = 
     extra log files = 
     work sub-directory = 
     init-script = 
@@ -537,9 +544,9 @@
         interval = 
         host = 
         max-polls = 
+        message = 
         run-dir = 
         user = 
-        template = 
         verbose mode = 
     [[[remote]]]
         owner = 
@@ -561,6 +568,7 @@
     script = echo "RUN: run-var.sh"
     env-script = 
     err-script = 
+    exit-script = 
     extra log files = 
     work sub-directory = 
     init-script = 
@@ -616,9 +624,9 @@
         interval = 
         host = 
         max-polls = 
+        message = 
         run-dir = 
         user = 
-        template = 
         verbose mode = 
     [[[remote]]]
         owner = 
@@ -640,6 +648,7 @@
     script = echo "RUN: run-var.sh"
     env-script = 
     err-script = 
+    exit-script = 
     extra log files = 
     work sub-directory = 
     init-script = 
@@ -696,9 +705,9 @@
         interval = 
         host = 
         max-polls = 
+        message = 
         run-dir = 
         user = 
-        template = 
         verbose mode = 
     [[[remote]]]
         owner = 
@@ -719,6 +728,7 @@
 [[SERIAL]]
     env-script = 
     err-script = 
+    exit-script = 
     script = 
     extra log files = 
     work sub-directory = 
@@ -776,9 +786,9 @@
         interval = 
         host = 
         max-polls = 
+        message = 
         run-dir = 
         user = 
-        template = 
         verbose mode = 
     [[[remote]]]
         owner = 
@@ -799,6 +809,7 @@
 [[root]]
     env-script = 
     err-script = 
+    exit-script = 
     script = 
     extra log files = 
     work sub-directory = 
@@ -855,9 +866,9 @@
         interval = 
         host = 
         max-polls = 
+        message = 
         run-dir = 
         user = 
-        template = 
         verbose mode = 
     [[[remote]]]
         owner = 
@@ -878,6 +889,7 @@
 [[PARALLEL]]
     env-script = 
     err-script = 
+    exit-script = 
     script = 
     extra log files = 
     work sub-directory = 
@@ -935,9 +947,9 @@
         interval = 
         host = 
         max-polls = 
+        message = 
         run-dir = 
         user = 
-        template = 
         verbose mode = 
     [[[remote]]]
         owner = 
@@ -959,6 +971,7 @@
     script = echo "RUN: run-var.sh"
     env-script = 
     err-script = 
+    exit-script = 
     extra log files = 
     work sub-directory = 
     init-script = 
@@ -1015,9 +1028,9 @@
         interval = 
         host = 
         max-polls = 
+        message = 
         run-dir = 
         user = 
-        template = 
         verbose mode = 
     [[[remote]]]
         owner = 

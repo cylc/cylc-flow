@@ -27,6 +27,8 @@ Multiple items can be specified at once."""
 
 import sys
 from optparse import OptionParser
+
+from cylc.cfgspec.gcylc import GcylcConfig
 import cylc.flags
 
 
@@ -63,8 +65,8 @@ def main():
         parser.error("ERROR: wrong number of arguments")
 
     # Import gcfg here to avoid aborting before command help is printed.
-    from cylc.cfgspec.gcylc import gcfg
-    gcfg.idump(options.item, sparse=options.sparse, pnative=options.pnative)
+    GcylcConfig.get_inst().idump(
+        options.item, sparse=options.sparse, pnative=options.pnative)
 
 
 if __name__ == "__main__":

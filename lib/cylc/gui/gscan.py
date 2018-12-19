@@ -27,8 +27,8 @@ import gobject
 from isodatetime.data import (
     get_timepoint_from_seconds_since_unix_epoch as timepoint_from_epoch)
 
-from cylc.cfgspec.gcylc import gcfg
-from cylc.cfgspec.gscan import gsfg
+from cylc.cfgspec.gcylc import GcylcConfig
+from cylc.cfgspec.gscan import GScanConfig
 from cylc.gui.legend import ThemeLegendWindow
 from cylc.gui.dot_maker import DotMaker
 from cylc.gui.scanutil import (
@@ -83,8 +83,8 @@ class ScanApp(object):
 
         self.warnings = {}
 
-        self.theme_name = gcfg.get(['use theme'])
-        self.theme = gcfg.get(['themes', self.theme_name])
+        self.theme_name = GcylcConfig.get_inst().get(['use theme'])
+        self.theme = GcylcConfig.get_inst().get(['themes', self.theme_name])
 
         suite_treemodel = gtk.TreeStore(
             str,  # group
@@ -102,6 +102,7 @@ class ScanApp(object):
         self.treeview = gtk.TreeView(suite_treemodel)
 
         # Visibility of columns
+        gsfg = GScanConfig.get_inst()
         vis_cols = gsfg.get(["columns"])
         hide_main_menu_bar = gsfg.get(["hide main menubar"])
         # Doesn't make any sense without suite name column
@@ -182,7 +183,7 @@ class ScanApp(object):
 
         self.updater.start()
 
-        self.dot_size = gcfg.get(['dot icon size'])
+        self.dot_size = GcylcConfig.get_inst().get(['dot icon size'])
         self.dots = None
         self._set_dots()
 
@@ -297,7 +298,7 @@ class ScanApp(object):
         theme_items[theme] = gtk.RadioMenuItem(label=theme)
         thememenu.append(theme_items[theme])
         theme_items[theme].theme_name = theme
-        for theme in gcfg.get(['themes']):
+        for theme in GcylcConfig.get_inst().get(['themes']):
             if theme == "default":
                 continue
             theme_items[theme] = gtk.RadioMenuItem(
@@ -307,7 +308,7 @@ class ScanApp(object):
 
         # set_active then connect, to avoid causing an unnecessary toggle now.
         theme_items[self.theme_name].set_active(True)
-        for theme in gcfg.get(['themes']):
+        for theme in GcylcConfig.get_inst().get(['themes']):
             theme_items[theme].show()
             theme_items[theme].connect(
                 'toggled',
@@ -428,7 +429,7 @@ class ScanApp(object):
             if not pth:
                 return False
             path, column, cell_x = pth[:3]
-            if column.get_title() == gsfg.COL_STATUS:
+            if column.get_title() == GScanConfig.get_inst().COL_STATUS:
                 dot_offset, dot_width = tuple(column.cell_get_position(
                     column.get_cell_renderers()[1]))
                 if not dot_width:
@@ -543,6 +544,7 @@ class ScanApp(object):
             self._prev_tooltip_location_id = location_id
             tooltip.set_text(None)
             return False
+        gsfg = GScanConfig.get_inst()
         if column.get_title() in [
                 gsfg.COL_HOST, gsfg.COL_OWNER, gsfg.COL_SUITE]:
             tooltip.set_text("%s - %s:%s" % (suite, owner, host))
@@ -740,7 +742,7 @@ class ScanApp(object):
     def _set_theme(self, new_theme_name):
         """Set GUI theme."""
         self.theme_name = new_theme_name
-        self.theme = gcfg.get(['themes', self.theme_name])
+        self.theme = GcylcConfig.get_inst().get(['themes', self.theme_name])
         self._set_dots()
         self.updater.update()
         self.update_theme_legend()
@@ -768,6 +770,7 @@ class ScanAppUpdater(threading.Thread):
         else:
             self.hosts = []
         self.comms_timeout = comms_timeout
+        gsfg = GScanConfig.get_inst()
         if interval is None:
             interval = gsfg.get(['suite listing update interval'])
         self.interval_full = interval
@@ -931,7 +934,7 @@ class ScanAppUpdater(threading.Thread):
                 title = suite_info.get(KEY_TITLE)
                 group = suite_info.get(KEY_GROUP)
             # For the purpose of this method, it is OK to handle both
-            # witheld (None) and unset (empty string) together
+            # withheld (None) and unset (empty string) together
             if not group:
                 group = self.UNGROUPED
 
@@ -987,10 +990,6 @@ class ScanAppUpdater(threading.Thread):
                     suite_updated_time, None, None, warning_text])
 
         self.suite_treemodel.foreach(self._expand_row, row_ids)
-        if len(hosts) > 1:
-            self.treeview.get_column(ScanApp.HOST_COLUMN).set_visible(True)
-        if len(owners) > 1:
-            self.treeview.get_column(ScanApp.OWNER_COLUMN).set_visible(True)
         return False
 
     def _update_group_counts(self):
@@ -1003,7 +1002,7 @@ class ScanAppUpdater(threading.Thread):
                 # Compat:<=7.5.0
                 group_id = suite_info.get(KEY_GROUP)
             # For the purpose of this method, it is OK to handle both
-            # witheld (None) and unset (empty string) together
+            # withheld (None) and unset (empty string) together
             if not group_id:
                 group_id = self.UNGROUPED
 

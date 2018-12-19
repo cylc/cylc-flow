@@ -1,42 +1,42 @@
-edge "artichoke.1" "banana.1" solid
-edge "artichoke.1" "blackberry.1" solid
-edge "artichoke.1" "blueberry.1" solid
-edge "arugula.1" "breadfruit.1" solid
-edge "asparagus.1" "banana.1" solid
-edge "azuki.1" "banana.1" solid
-edge "azuki.1" "blackberry.1" solid
-edge "azuki.1" "blueberry.1" solid
-edge "banana.1" "celery.1" solid
-edge "banana.1" "cherry.1" solid
-edge "blackberry.1" "cherry.1" solid
-edge "blueberry.1" "cherry.1" solid
-edge "breadfruit.1" "carrot.1" solid
-edge "cherry.1" "date.1" solid
-edge "cherry.1" "durian.1" solid
-edge "coconut.1" "date.1" solid
-edge "date.1" "elderberry.1" solid
-edge "durian.1" "elderberry.1" solid
-edge "durian.1" "fennel.1" solid
-edge "elderberry.1" "fava.1" solid
-edge "elderberry.1" "fennel.1" solid
-edge "fennel.1" "grape.1" solid
+edge "artichoke.1" "banana.1"
+edge "artichoke.1" "blackberry.1"
+edge "artichoke.1" "blueberry.1"
+edge "arugula.1" "breadfruit.1"
+edge "asparagus.1" "banana.1"
+edge "azuki.1" "banana.1"
+edge "azuki.1" "blackberry.1"
+edge "azuki.1" "blueberry.1"
+edge "banana.1" "celery.1"
+edge "banana.1" "cherry.1"
+edge "blackberry.1" "cherry.1"
+edge "blueberry.1" "cherry.1"
+edge "breadfruit.1" "carrot.1"
+edge "cherry.1" "date.1"
+edge "cherry.1" "durian.1"
+edge "coconut.1" "date.1"
+edge "date.1" "elderberry.1"
+edge "durian.1" "elderberry.1"
+edge "durian.1" "fennel.1"
+edge "elderberry.1" "fava.1"
+edge "elderberry.1" "fennel.1"
+edge "fennel.1" "grape.1"
 graph
-node "artichoke.1" "artichoke\n1" unfilled ellipse black
-node "arugula.1" "arugula\n1" unfilled ellipse black
-node "asparagus.1" "asparagus\n1" unfilled ellipse black
-node "azuki.1" "azuki\n1" unfilled ellipse black
-node "banana.1" "banana\n1" unfilled ellipse black
-node "blackberry.1" "blackberry\n1" unfilled ellipse black
-node "blueberry.1" "blueberry\n1" unfilled ellipse black
-node "breadfruit.1" "breadfruit\n1" unfilled ellipse black
-node "carrot.1" "carrot\n1" unfilled ellipse black
-node "celery.1" "celery\n1" unfilled ellipse black
-node "cherry.1" "cherry\n1" unfilled ellipse black
-node "coconut.1" "coconut\n1" unfilled ellipse black
-node "date.1" "date\n1" unfilled ellipse black
-node "durian.1" "durian\n1" unfilled ellipse black
-node "elderberry.1" "elderberry\n1" unfilled ellipse black
-node "fava.1" "fava\n1" unfilled ellipse black
-node "fennel.1" "fennel\n1" unfilled ellipse black
-node "grape.1" "grape\n1" unfilled ellipse black
+node "artichoke.1" "artichoke\n1"
+node "arugula.1" "arugula\n1"
+node "asparagus.1" "asparagus\n1"
+node "azuki.1" "azuki\n1"
+node "banana.1" "banana\n1"
+node "blackberry.1" "blackberry\n1"
+node "blueberry.1" "blueberry\n1"
+node "breadfruit.1" "breadfruit\n1"
+node "carrot.1" "carrot\n1"
+node "celery.1" "celery\n1"
+node "cherry.1" "cherry\n1"
+node "coconut.1" "coconut\n1"
+node "date.1" "date\n1"
+node "durian.1" "durian\n1"
+node "elderberry.1" "elderberry\n1"
+node "fava.1" "fava\n1"
+node "fennel.1" "fennel\n1"
+node "grape.1" "grape\n1"
 stop

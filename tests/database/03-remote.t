@@ -41,7 +41,7 @@ sqlite3 "${DB_FILE}" \
      FROM task_jobs ORDER BY name' \
     >"${NAME}"
 cmp_ok "${NAME}" <<__SELECT__
-20200101T0000Z|t1|1|1|0|0|localhost|background
+20200101T0000Z|t1|1|1|0|0|$(hostname -f)|background
 20200101T0000Z|t2|1|1|0|0|${CYLC_TEST_HOST}|background
 __SELECT__
 

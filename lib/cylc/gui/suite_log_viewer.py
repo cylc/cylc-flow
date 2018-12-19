@@ -21,7 +21,6 @@ from cylc.task_id import TaskID
 from cylc.gui.logviewer import logviewer
 from cylc.gui.tailer import Tailer
 from cylc.gui.util import get_icon
-from cylc.suite_logging import SUITE_LOG_OPTS
 
 
 class SuiteLogViewer(logviewer):
@@ -42,7 +41,6 @@ class SuiteLogViewer(logviewer):
             self.task_list = task_list
         self.suite_name = suite_name
         self.suite_log = suite_log
-        self.suite_log_name = SUITE_LOG_OPTS[suite_log]
         self.rotation = 0
         self.cmd_tmpl = "cylc cat-log %s" % remote_run_opts + (
             " -m t -r %(rotation)s -f %(suite_log)s %(suite_name)s")
@@ -155,6 +153,6 @@ class SuiteLogViewer(logviewer):
         s, e = logbuffer.get_bounds()
         self.reset_logbuffer()
         logbuffer.delete(s, e)
-        label = "%s (rot %d)" % (self.suite_log_name, self.rotation)
+        label = "log (rot %d)" % self.rotation
         self.log_label.set_text(label)
         self.connect()

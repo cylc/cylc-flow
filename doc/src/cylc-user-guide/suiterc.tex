@@ -337,6 +337,7 @@ substituted with actual values:
     \item \%(event)s: event name (see below)
     \item \%(suite)s: suite name
     \item \%(suite\_url)s: suite URL
+    \item \%(suite\_uuid)s: suite UUID string
     \item \%(message)s: event message, if any
     \item any suite [meta] item, e.g.:
     \begin{myitemize}
@@ -1165,14 +1166,14 @@ parents are listed \lstinline=root= is assumed.
 
 \paragraph[init-script]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow init-script}
 
-This is invoked by the task job script before the task execution
-environment is configured, so it does not have access to any suite or task
-environment variables. It can be a single command or multiple lines of
-scripting. The original intention was to allow remote tasks to
+Custom script invoked by the task job script before the task execution environment
+is configured - so it does not have access to any suite or task
+environment variables. It can be an external command or script, or inlined
+scripting. The original intention for this item was to allow remote tasks to
 source login scripts to configure their access to cylc, but this should no
 longer be necessary (see~\ref{HowTasksGetAccessToCylc}). See also
-\lstinline=env-script=, \lstinline=err-script=, \lstinline=pre-script=,
-\lstinline=script=, and \lstinline=post-script=.
+\lstinline=env-script=, \lstinline=err-script=, \lstinline=exit-script=,
+\lstinline=pre-script=, \lstinline=script=, and \lstinline=post-script=.
 
 \begin{myitemize}
 \item {\em type:} string
@@ -1182,13 +1183,13 @@ longer be necessary (see~\ref{HowTasksGetAccessToCylc}). See also
 
 \paragraph[env-script]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow env-script}
 
-This is invoked by the task job script between the cylc-defined environment
+Custom script invoked by the task job script between the cylc-defined environment
 (suite and task identity, etc.) and the user-defined task runtime environment -
-i.e.\ it has access to the cylc environment, and the task environment has
-access to variables defined by this scripting. It can be a single command or
-multiple lines of scripting.  See also \lstinline=init-script=,
-\lstinline=err-script=, \lstinline=pre-script=, \lstinline=script=, and
-\lstinline=post-script=.
+so it has access to the cylc environment (and the task environment has
+access to variables defined by this scripting). It can be an external command
+or script, or inlined scripting. See also \lstinline=init-script=,
+\lstinline=err-script=, \lstinline=exit-script=, \lstinline=pre-script=,
+\lstinline=script=, and \lstinline=post-script=.
 
 \begin{myitemize}
 \item {\em type:} string
@@ -1196,16 +1197,32 @@ multiple lines of scripting.  See also \lstinline=init-script=,
 \item {\em example:} \lstinline@env-script = "echo Hello World"@
 \end{myitemize}
 
+\paragraph[exit-script]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow exit-script}
+
+Custom script invoked at the very end of {\em successful} job execution, just
+before the job script exits. It should execute very quickly. Companion of
+\lstinline=err-script=, which is executed on job failure. It can be an external
+command or script, or inlined scripting. See also \lstinline=init-script=,
+\lstinline=env-script=, \lstinline=exit-script=, \lstinline=pre-script=,
+\lstinline=script=, and \lstinline=post-script=.
+
+\begin{myitemize}
+\item {\em type:} string
+\item {\em default:} (none)
+\item {\em example:} \lstinline@exit-script = "rm -f $TMP_FILES"@
+\end{myitemize}
+
 \paragraph[err-script]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow err-script}
 
-This is any custom script to be invoked at the end of the error trap, (if the
-error trap is triggered due to failure of a command in the task job). The
+Custom script to be invoked at the end of the error trap, which is triggered
+due to failure of a command in the task job script or trapable job kill. The
 output of this will always be sent to STDERR and \lstinline=$1= is set to the
 name of the signal caught by the error trap. The script should be fast and use
 very little system resource to ensure that the error trap can return quickly.
-It can be a single command or multiple lines of scripting. See also
-\lstinline=init-script=, \lstinline=env-script=, \lstinline=pre-script=,
-\lstinline=script=, and \lstinline=post-script=.
+Companion of \lstinline=exit-script=, which is executed on job success.
+It can be an external command or script, or inlined scripting. See also
+\lstinline=init-script=, \lstinline=env-script=, \lstinline=exit-script=,
+\lstinline=pre-script=, \lstinline=script=, and \lstinline=post-script=.
 
 \begin{myitemize}
 \item {\em type:} string
@@ -1215,10 +1232,11 @@ It can be a single command or multiple lines of scripting. See also
 
 \paragraph[pre-script]{ [runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow pre-script}
 
-This is invoked by the task job script immediately before the \lstinline=script=
-item (just below). It can be a single command or multiple lines of scripting.
-See also \lstinline=init-script=, \lstinline=env-script=, \lstinline=err-script=,
-\lstinline=script=, and \lstinline=post-script=.
+Custom script invoked by the task job script immediately before the \lstinline=script=
+item (just below). It can be an external command or script, or inlined scripting.
+See also \lstinline=init-script=, \lstinline=env-script=,
+\lstinline=err-script=, \lstinline=exit-script=, \lstinline=script=, and
+\lstinline=post-script=.
 
 \begin{myitemize}
 \item {\em type:} string
@@ -1234,10 +1252,10 @@ See also \lstinline=init-script=, \lstinline=env-script=, \lstinline=err-script=
 \paragraph[script]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow script}
 \label{ScriptItem}
 
-The is the main user-defined scripting to run when the task is ready. It can be a
-single command or multiple lines of scripting. See also \lstinline=init-script=,
-\lstinline=env-script=, \lstinline=err-script=, \lstinline=pre-script=, and
-\lstinline=post-script=.
+The main custom script invoked from the task job script. It can be an
+external command or script, or inlined scripting. See also
+\lstinline=init-script=, \lstinline=env-script=, \lstinline=err-script=,
+\lstinline=exit-script=, \lstinline=pre-script=, and \lstinline=post-script=.
 
 \begin{myitemize}
 \item {\em type:} string
@@ -1245,12 +1263,11 @@ single command or multiple lines of scripting. See also \lstinline=init-script=,
 \end{myitemize}
 
 \paragraph[post-script]{ [runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow post-script}
-
-This is invoked by the task job script immediately after the \lstinline=script=
-item (just above).  It can be a single command or multiple lines of scripting.
-See also
+Custom script invoked by the task job script immediately after the
+\lstinline=script= item (just above). It can be an external command or script,
+or inlined scripting.  See also
 \lstinline=init-script=, \lstinline=env-script=, \lstinline=err-script=,
-\lstinline=pre-script=, and \lstinline=script=.
+\lstinline=exit-script=, \lstinline=pre-script=, and \lstinline=script=.
 
 \begin{myitemize}
 \item {\em type:} string
@@ -1652,6 +1669,7 @@ will be substituted with actual values:
 \begin{myitemize}
     \item \%(event)s: event name
     \item \%(suite)s: suite name
+    \item \%(suite\_uuid)s: suite UUID string
     \item \%(point)s: cycle point
     \item \%(name)s: task name
     \item \%(submit\_num)s: submit number
@@ -2011,16 +2029,6 @@ suite-name sub-directory of this location).
     \item {\em default:} as configured by site/user config (for your own suites)
 \end{myitemize}
 
-\subparagraph[template]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[suite state polling]]] \textrightarrow template}
-
-Cycle point template of the target suite, if different from that of the polling suite.
-
-\begin{myitemize}
-    \item {\em type:} string
-    \item {\em default:} cycle point format of the polling suite
-    \item {\em example:} \lstinline=%Y-%m-%dT%H=
-\end{myitemize}
-
 \subparagraph[interval]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[suite state polling]]] \textrightarrow interval}
 
 Polling interval expressed as an ISO 8601 duration/interval.
@@ -2057,6 +2065,16 @@ will be invoked on the remote account.
 
 \begin{myitemize}
     \item {\em type:} string (hostname)
+    \item {\em default:} (none)
+\end{myitemize}
+
+\subparagraph[host]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[suite state polling]]] \textrightarrow message}
+
+Wait for the target task in the target suite to receive a specified message
+rather than achieve a state.
+
+\begin{myitemize}
+    \item {\em type:} string (the message)
     \item {\em default:} (none)
 \end{myitemize}
 

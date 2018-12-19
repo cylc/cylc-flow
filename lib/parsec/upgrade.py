@@ -17,14 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Support automatic deprecation and obsoletion of parsec config items."""
 
-import sys
-if __name__ == '__main__':
-    import os
-    sys.path.append(os.path.dirname(__file__) + '/..')
+from logging import DEBUG, WARNING
 
-from parsec import ParsecError
+from parsec import LOG, ParsecError
 from parsec.OrderedDict import OrderedDict
-import cylc.flags
 
 
 class UpgradeError(ParsecError):
@@ -47,6 +43,9 @@ class converter(object):
 
 class upgrader(object):
     """Handles upgrading of deprecated config values."""
+
+    SITE_CONFIG = 'site config'
+    USER_CONFIG = 'user config'
 
     def __init__(self, cfg, descr):
         """Store the config dict to be upgraded if necessary."""
@@ -99,8 +98,9 @@ class upgrader(object):
         if '__MANY__' not in upg['old']:
             return [upg]
         if upg['old'].count('__MANY__') > 1:
-            sys.stderr.write('%s\n' % upg['old'])
-            raise UpgradeError("Multiple simultaneous __MANY__ not supported")
+            raise UpgradeError(
+                'Multiple simultaneous __MANY__ not supported: %s' %
+                upg['old'])
         exp_upgs = []
         pre = []
         post = []
@@ -151,10 +151,7 @@ class upgrader(object):
 
     def upgrade(self):
         warnings = OrderedDict()
-        do_warn = False
         for vn, upgs in self.upgrades.items():
-            warnings[vn] = []
-
             for u in upgs:
                 try:
                     exp = self.expand(u)
@@ -175,23 +172,33 @@ class upgrader(object):
                             upg['new'] = upg['old']
                         msg += " - " + upg['cvt'].describe()
                         if not upg['silent']:
+                            warnings.setdefault(vn, [])
                             warnings[vn].append(msg)
-                            do_warn = True
                         self.del_item(upg['old'])
                         if upg['cvt'].describe() != "DELETED (OBSOLETE)":
                             self.put_item(upg['new'], upg['cvt'].convert(old))
-        if do_warn and cylc.flags.verbose:
-            sys.stderr.write(
-                'WARNING: deprecated items were automatically upgraded in' +
-                " '%s':\n" % self.descr)
+        if warnings:
+            level = WARNING
+            if self.descr == self.SITE_CONFIG:
+                # Site level configuration, user cannot easily fix.
+                # Only log at debug level.
+                level = DEBUG
+            else:
+                # User level configuration, user should be able to fix.
+                # Log at warning level.
+                level = WARNING
+            LOG.log(
+                level,
+                "deprecated items were automatically upgraded in '%s':",
+                self.descr)
             for vn, msgs in warnings.items():
-                for m in msgs:
-                    sys.stderr.write(' * (%s) %s\n' % (vn, m))
+                for msg in msgs:
+                    LOG.log(level, ' * (%s) %s', vn, msg)
 
 
 if __name__ == "__main__":
-    from util import printcfg
-    cylc.flags.verbose = True
+    import sys
+    from parsec.util import printcfg
 
     cfg = {
         'item one': 1,

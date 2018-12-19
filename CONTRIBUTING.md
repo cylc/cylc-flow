@@ -43,7 +43,7 @@ requests_).
  - Kerry Day
  - Prasanna Challuri
  - David Matthews
- - (Tim Whitcomb)
+ - Tim Whitcomb
  - (Scott Wales)
  - Tomek Trzeciak
  - (Thomas Coleman)

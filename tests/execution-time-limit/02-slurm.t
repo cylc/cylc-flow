@@ -51,8 +51,6 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 
 LOGD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/job/1/foo"
 grep_ok '#SBATCH --time=1:10' "${LOGD}/01/job"
-#grep_ok 'CYLC_JOB_EXIT=EXIT' "${LOGD}/01/job.status"
-#grep_ok 'CYLC_JOB_EXIT=SUCCEEDED' "${LOGD}/02/job.status"
 
 if [[ "${CYLC_TEST_BATCH_TASK_HOST}" != 'localhost' ]]; then
     purge_suite_remote "${CYLC_TEST_BATCH_TASK_HOST}" "${SUITE_NAME}"

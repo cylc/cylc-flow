@@ -56,7 +56,12 @@ sqlite3 "${DB_FILE}" \
             user_at_host, batch_sys_name
      FROM task_jobs ORDER BY name' \
     >"${NAME}"
-cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
+LOCALHOST="$(hostname -f)"
+cmp_ok - "${NAME}" <<__SELECT__
+1|bar|1|1|0|0|${LOCALHOST}|background
+1|baz|1|1|0|0|${LOCALHOST}|background
+1|foo|1|1|0|0|${LOCALHOST}|background
+__SELECT__
 
 NAME='select-task-jobs-times.out'
 sqlite3 "${DB_FILE}" \

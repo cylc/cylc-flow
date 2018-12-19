@@ -21,15 +21,16 @@
 # imported on demand.
 import os
 import re
-import sys
 from uuid import uuid4
 from string import ascii_letters, digits
 
+from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
 from cylc.mkdir_p import mkdir_p
 from cylc.hostuserutil import (
-    get_local_ip_address, get_host, get_user, is_remote, is_remote_host)
+    get_local_ip_address, get_host, get_user, is_remote, is_remote_host,
+    is_remote_user)
 
 
 class SuiteServiceFileError(Exception):
@@ -158,9 +159,8 @@ class SuiteSrvFilesManager(object):
         fname = self.get_contact_file(reg)
         ret_code = proc.wait()
         out, err = proc.communicate()
-        if cylc.flags.debug and ret_code:
-            sys.stderr.write(
-                "%s  # return %d\n%s\n" % (' '.join(cmd), ret_code, err))
+        if ret_code:
+            LOG.debug("$ %s  # return %d\n%s", ' '.join(cmd), ret_code, err)
         for line in reversed(out.splitlines()):
             if line.strip() == old_proc_str:
                 # Suite definitely still running
@@ -318,13 +318,22 @@ To start a new run, stop the old one first with one or more of these:
             self.FILE_BASE_SUITE_RC)
 
     def get_suite_source_dir(self, reg, suite_owner=None):
-        """Return the source directory path of a suite."""
+        """Return the source directory path of a suite.
+
+        Will register un-registered suites located in the cylc run dir.
+        """
         srv_d = self.get_suite_srv_dir(reg, suite_owner)
         fname = os.path.join(srv_d, self.FILE_BASE_SOURCE)
         try:
             source = os.readlink(fname)
         except OSError:
-            raise SuiteServiceFileError("ERROR: Suite not found %s" % reg)
+            suite_d = os.path.dirname(srv_d)
+            if os.path.exists(suite_d) and not is_remote_user(suite_owner):
+                # suite exists but is not yet registered
+                self.register(reg=reg, source=suite_d)
+                return suite_d
+            else:
+                raise SuiteServiceFileError("ERROR: Suite not found %s" % reg)
         else:
             if os.path.isabs(source):
                 return source
@@ -372,7 +381,7 @@ To start a new run, stop the old one first with one or more of these:
                     self.get_suite_source_dir(reg),
                     self.get_suite_title(reg)])
             except (IOError, SuiteServiceFileError) as exc:
-                print >> sys.stderr, str(exc)
+                LOG.error('%s: %s', reg, exc)
         return results
 
     def load_contact_file(self, reg, owner=None, host=None, file_base=None):
@@ -431,67 +440,63 @@ To start a new run, stop the old one first with one or more of these:
                 Another suite already has this name (unless --redirect).
         """
         if reg is None:
-            # Take name of parent dir as suite name.
             reg = os.path.basename(os.getcwd())
 
         if os.path.isabs(reg):
             raise SuiteServiceFileError(
                 "ERROR: suite name cannot be an absolute path: %s" % reg)
 
-        # Suite service directory.
-        srv_d = self.get_suite_srv_dir(reg)
-
-        # Check if reg is already used.
-        target = os.path.join(srv_d, self.FILE_BASE_SOURCE)
-        try:
-            # Already used?
-            orig_source = os.readlink(target)
-        except OSError:
-            orig_source = None
-
         if source is not None:
-            # Regularize: want suite dir name only (not dir/suite.rc).
             if os.path.basename(source) == self.FILE_BASE_SUITE_RC:
                 source = os.path.dirname(source)
         else:
-            # Assume source is $PWD unless reg is already used.
-            if orig_source is None:
-                source = os.getcwd()
-            else:
-                source = orig_source
+            source = os.getcwd()
 
         # suite.rc must exist so we can detect accidentally reversed args.
         source = os.path.abspath(source)
         if not os.path.isfile(os.path.join(source, self.FILE_BASE_SUITE_RC)):
             raise SuiteServiceFileError("ERROR: no suite.rc in %s" % source)
 
-        if orig_source is None:
-            mkdir_p(srv_d)
-            os.symlink(source, target)
+        # Suite service directory.
+        srv_d = self.get_suite_srv_dir(reg)
 
-        elif orig_source != source:
-            # Redirecting an existing name and run directory to another suite.
+        # Does symlink to suite source already exist?
+        target = os.path.join(srv_d, self.FILE_BASE_SOURCE)
+        try:
+            orig_source = os.readlink(target)
+        except OSError:
+            orig_source = None
+
+        # Create service dir if necessary.
+        mkdir_p(srv_d)
+
+        # Redirect an existing name to another suite?
+        if orig_source is not None and source != orig_source:
             if not redirect:
                 raise SuiteServiceFileError(
-                    "ERROR: the suite name '%s' is already used for %s." % (
-                        reg, orig_source))
-            else:
-                sys.stderr.write(
-                    "WARNING: the suite name '%s' was used for %s.\n"
-                    "The run directory will be reused for %s.\n" % (
-                        reg, orig_source, source))
+                    "ERROR: the name '%s' already points to %s.\nUse "
+                    "--redirect to re-use an existing name and run "
+                    "directory." % (reg, orig_source))
+            LOG.warning(
+                "the name '%(reg)s' points to %(old)s.\nIt will now"
+                " be redirected to %(new)s.\nFiles in the existing %(reg)s run"
+                " directory will be overwritten.\n",
+                {'reg': reg, 'old': orig_source, 'new': source})
+            # Remove symlink to the original suite.
             os.unlink(target)
+
+        # Create symlink to the suite, if it doesn't already exist.
+        if source != orig_source:
             os.symlink(source, target)
 
-        # Report the new (or renewed) registration.
-        print 'REGISTERED %s -> %s' % (reg, source)
+        print('REGISTERED %s -> %s' % (reg, source))
         return reg
 
     def create_auth_files(self, reg):
         """Create or renew passphrase and SSL files for suite 'reg'."""
-
         # Suite service directory.
         srv_d = self.get_suite_srv_dir(reg)
+        mkdir_p(srv_d)
 
         # Create a new passphrase for the suite if necessary.
         if not self._locate_item(self.FILE_BASE_PASSPHRASE, srv_d):
@@ -594,8 +599,7 @@ To start a new run, stop the old one first with one or more of these:
         handle.close()
         fname = os.path.join(path, item)
         os.rename(handle.name, fname)
-        if cylc.flags.verbose:
-            print 'Generated %s' % fname
+        LOG.debug('Generated %s', fname)
 
     def _get_cache_dir(self, reg, owner, host):
         """Return the cache directory for remote suite service files."""
@@ -727,16 +731,15 @@ To start a new run, stop the old one first with one or more of these:
             elif line.strip() == prefix:
                 can_read = True
         if not content or ret_code:
-            if cylc.flags.debug:
-                print >> sys.stderr, (
-                    'ERROR: %(command)s # code=%(ret_code)s\n%(err)s\n'
-                ) % {
+            LOG.debug(
+                '$ %(command)s  # code=%(ret_code)s\n%(err)s',
+                {
                     'command': command,
                     # STDOUT may contain passphrase, so not safe to print
                     # 'out': out,
                     'err': err,
                     'ret_code': ret_code,
-                }
+                })
             return
         return content
 
