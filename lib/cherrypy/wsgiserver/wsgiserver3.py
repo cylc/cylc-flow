@@ -1630,8 +1630,9 @@ class HTTPServer(object):
             # So everyone can access the socket, this was set to 777
             # https://docs.openstack.org/developer/bandit/plugins/set_bad_file_permissions.html
             # This plugin test looks for the use of chmod and will alert when
-            # it is used to set particularly permissive control flags. A MEDIUM warning is
-            # generated if a file is set to group executable and a HIGH warning is reported if a file
+            # it is used to set particularly permissive control flags.
+            # A MEDIUM warning is generated if a file is set to group
+            # executable and a HIGH warning is reported if a file
             # is set world writable. Warnings are given with HIGH confidence.
             try:
                 os.chmod(self.bind_addr, 0o755)

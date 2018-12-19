@@ -66,3 +66,7 @@ lib/cherrypy/test/test\.error\.log
 Pipfile
 
 lib/cherrypy/test/test\.conf
+
+lib/cherrypy/test/static/bigfile\.log
+
+lib/cherrypy/test/test_misc_tools\.log

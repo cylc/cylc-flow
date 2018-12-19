@@ -1,43 +1,49 @@
 import sys
+
 import six
-# XMLRPC is particularly dangerous as it is also concerned with
-# communicating data over a network. Use defused.xmlrpc.monkey_patch()
-# function to monkey-patch xmlrpclib and mitigate remote XML attacks.
 # https://docs.openstack.org/developer/bandit/blacklists/blacklist_imports.html#b411-import-xmlrpclib
 try:
-    import defusedxml
-
+    from xmlrpclib import (DateTime,  # nosec
+                           Fault,
+                           ProtocolError,
+                           ServerProxy,
+                           SafeTransport)
+    # from defusedxml.xmlrpclib import DateTime, Fault, ProtocolError 
+    # from defusedxml.xmlrpclib import ServerProxy, SafeTransport
 except ImportError:
-    import defusedxml
+    from xmlrpc.client import (DateTime,
+                               Fault,
+                               ProtocolError,
+                               ServerProxy,
+                               SafeTransport)
 
 if six.PY3:
-    HTTPSTransport = defusedxml.xmlrpclib.monkey_patch().SafeTransport
+    HTTPSTransport = SafeTransport
 
     # Python 3.0's SafeTransport still mistakenly checks for socket.ssl
     import socket
     if not hasattr(socket, "ssl"):
         socket.ssl = True
 else:
-    
-    class HTTPSTransport():
+    class HTTPSTransport(SafeTransport):
 
-        """Subclass of SafeTransport to fix sock.recv errors (by using file).   
+        """Subclass of SafeTransport to fix sock.recv errors (by using file).
         """
 
         def request(self, host, handler, request_body, verbose=0):
             # issue XML-RPC request
-            h = defusedxml.xmlrpclib.monkey_patch().make_connection(host)
+            h = self.make_connection(host)
             if verbose:
                 h.set_debuglevel(1)
 
-            defusedxml.xmlrpclib.send_request(h, handler, request_body)
-            defusedxml.xmlrpclib.send_host(h, host)
-            defusedxml.xmlrpclib.send_user_agent(h)
-            defusedxml.xmlrpclib.send_content(h, request_body)
+            self.send_request(h, handler, request_body)
+            self.send_host(h, host)
+            self.send_user_agent(h)
+            self.send_content(h, request_body)
 
             errcode, errmsg, headers = h.getreply()
             if errcode != 200:
-                raise defusedxml.xmlrpclib.monkey_patch().ProtocolError(host + handler, errcode, errmsg, headers)
+                raise ProtocolError(host + handler, errcode, errmsg, headers)
 
             self.verbose = verbose
 
@@ -48,7 +54,7 @@ else:
             #     sock = None
             # return self._parse_response(h.getfile(), sock)
 
-            return defusedxml.xmlrpclib.parse_response(h.getfile())
+            return self.parse_response(h.getfile())
 
 import cherrypy
 
@@ -98,7 +104,7 @@ def setup_server():
 
         @cherrypy.expose
         def return_datetime(self):
-            return defusedxml.xmlrpclib.monkey_patch().DateTime((2003, 10, 7, 8, 1, 0, 1, 280, -1))
+            return DateTime((2003, 10, 7, 8, 1, 0, 1, 280, -1))
 
         @cherrypy.expose
         def return_boolean(self):
@@ -110,7 +116,7 @@ def setup_server():
 
         @cherrypy.expose
         def test_returning_Fault(self):
-            return defusedxml.xmlrpclib.monkey_patch().Fault(1, "custom Fault response")
+            return Fault(1, "custom Fault response")
 
     root = Root()
     root.xmlrpc = XmlRpc()
@@ -122,17 +128,19 @@ def setup_server():
 
 from cherrypy.test import helper
 
+
 class XmlRpcTest(helper.CPWebCase):
     setup_server = staticmethod(setup_server)
 
     def testXmlRpc(self):
+
         scheme = self.scheme
         if scheme == "https":
             url = 'https://%s:%s/xmlrpc/' % (self.interface(), self.PORT)
-            proxy = defusedxml.xmlrpclib.monkey_patch().ServerProxy(url, transport=HTTPSTransport())
-        # else:
+            proxy = ServerProxy(url, transport=HTTPSTransport())
+        else:
             url = 'http://%s:%s/xmlrpc/' % (self.interface(), self.PORT)
-            proxy = defusedxml.xmlrpclib.client.monkey_patch().ServerProxy(url)
+            proxy = ServerProxy(url)
 
         # begin the tests ...
         self.getPage("/xmlrpc/foo")
@@ -149,7 +157,7 @@ class XmlRpcTest(helper.CPWebCase):
         self.assertEqual(proxy.return_int(), 42)
         self.assertEqual(proxy.return_float(), 3.14)
         self.assertEqual(proxy.return_datetime(),
-                         defusedxml.xmlrpclib.monkey_patch().DateTime((2003, 10, 7, 8, 1, 0, 1, 280, -1)))
+                         DateTime((2003, 10, 7, 8, 1, 0, 1, 280, -1)))
         self.assertEqual(proxy.return_boolean(), True)
         self.assertEqual(proxy.test_argument_passing(22), 22 * 2)
 
@@ -158,7 +166,7 @@ class XmlRpcTest(helper.CPWebCase):
             proxy.test_argument_passing({})
         except Exception:
             x = sys.exc_info()[1]
-            self.assertEqual(x.__class__, defusedxml.xmlrpclib.monkey_patch().Fault)
+            self.assertEqual(x.__class__, Fault)
             self.assertEqual(x.faultString, ("unsupported operand type(s) "
                                              "for *: 'dict' and 'int'"))
         else:
@@ -170,7 +178,7 @@ class XmlRpcTest(helper.CPWebCase):
             proxy.non_method()
         except Exception:
             x = sys.exc_info()[1]
-            self.assertEqual(x.__class__, defusedxml.xmlrpclib.monkey_patch().Fault)
+            self.assertEqual(x.__class__, Fault)
             self.assertEqual(x.faultString,
                              'method "non_method" is not supported')
         else:
@@ -181,7 +189,7 @@ class XmlRpcTest(helper.CPWebCase):
             proxy.test_returning_Fault()
         except Exception:
             x = sys.exc_info()[1]
-            self.assertEqual(x.__class__, defusedxml.xmlrpclib.monkey_patch().Fault)
+            self.assertEqual(x.__class__, Fault)
             self.assertEqual(x.faultString, ("custom Fault response"))
         else:
             self.fail("Expected xmlrpclib.Fault")
