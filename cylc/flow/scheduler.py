@@ -48,6 +48,14 @@ from cylc.flow.loggingutil import TimestampRotatingFileHandler,\
     ReferenceLogFileHandler
 from cylc.flow.log_diagnosis import LogSpec
 from cylc.flow.network.server import SuiteRuntimeServer
+from cylc.flow.pathutil import (
+    get_suite_run_dir,
+    get_suite_run_log_dir,
+    get_suite_run_rc_dir,
+    get_suite_run_share_dir,
+    get_suite_run_work_dir,
+    make_suite_run_tree,
+)
 from cylc.flow.profiler import Profiler
 from cylc.flow.state_summary_mgr import StateSummaryMgr
 from cylc.flow.subprocpool import SubProcPool
@@ -145,14 +153,10 @@ class Scheduler(object):
         # For user-defined batch system handlers
         sys.path.append(os.path.join(self.suite_dir, 'python'))
         sys.path.append(os.path.join(self.suite_dir, 'lib', 'python'))
-        self.suite_run_dir = glbl_cfg().get_derived_host_item(
-            self.suite, 'suite run directory')
-        self.suite_work_dir = glbl_cfg().get_derived_host_item(
-            self.suite, 'suite work directory')
-        self.suite_share_dir = glbl_cfg().get_derived_host_item(
-            self.suite, 'suite share directory')
-        self.suite_log_dir = glbl_cfg().get_derived_host_item(
-            self.suite, 'suite log directory')
+        self.suite_run_dir = get_suite_run_dir(self.suite)
+        self.suite_work_dir = get_suite_run_work_dir(self.suite)
+        self.suite_share_dir = get_suite_run_share_dir(self.suite)
+        self.suite_log_dir = get_suite_run_log_dir(self.suite)
 
         self.config = None
 
@@ -240,7 +244,7 @@ class Scheduler(object):
         """Start the server."""
         self._start_print_blurb()
 
-        glbl_cfg().create_cylc_run_tree(self.suite)
+        make_suite_run_tree(self.suite)
 
         if self.is_restart:
             self.suite_db_mgr.restart_upgrade()
@@ -983,8 +987,6 @@ see `COPYING' in the Cylc source distribution.
         )
         self.suiterc_update_time = time()
         # Dump the loaded suiterc for future reference.
-        cfg_logdir = glbl_cfg().get_derived_host_item(
-            self.suite, 'suite config log directory')
         time_str = get_current_time_string(
             override_use_utc=True, use_basic_format=True,
             display_sub_seconds=False
@@ -995,8 +997,8 @@ see `COPYING' in the Cylc source distribution.
             load_type = "restart"
         else:
             load_type = "run"
-        base_name = "%s-%s.rc" % (time_str, load_type)
-        file_name = os.path.join(cfg_logdir, base_name)
+        file_name = get_suite_run_rc_dir(
+            self.suite, f"{time_str}-{load_type}.rc")
         with open(file_name, "wb") as handle:
             handle.write(b"# cylc-version: %s\n" % CYLC_VERSION.encode())
             printcfg(self.config.cfg, none_str=None, handle=handle)

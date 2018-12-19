@@ -36,6 +36,7 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import TaskRemoteMgmtError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote, is_remote_host, is_remote_user
+from cylc.flow.pathutil import get_remote_suite_run_dir
 from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.task_remote_cmd import (
     FILE_BASE_UUID, REMOTE_INIT_DONE, REMOTE_INIT_NOT_REQUIRED)
@@ -95,14 +96,11 @@ class TaskRemoteMgr(object):
                     host_str = value  # command succeeded
             else:
                 # Command not launched (or already reset)
-                timeout = glbl_cfg().get(['task host select command timeout'])
-                if timeout:
-                    cmd = ['timeout', str(int(timeout)), 'bash', '-c', cmd_str]
-                else:
-                    cmd = ['bash', '-c', cmd_str]
                 self.proc_pool.put_command(
                     SubProcContext(
-                        'remote-host-select', cmd, env=dict(os.environ)),
+                        'remote-host-select',
+                        ['bash', '-c', cmd_str],
+                        env=dict(os.environ)),
                     self._remote_host_select_callback, [cmd_str])
                 self.remote_host_str_map[cmd_str] = None
                 return self.remote_host_str_map[cmd_str]
@@ -198,8 +196,7 @@ class TaskRemoteMgr(object):
         if comm_meth in ['ssh']:
             cmd.append('--indirect-comm=%s' % comm_meth)
         cmd.append(str(self.uuid_str))
-        cmd.append(glbl_cfg().get_derived_host_item(
-            self.suite, 'suite run directory', host, owner))
+        cmd.append(get_remote_suite_run_dir(host, owner, self.suite))
         self.proc_pool.put_command(
             SubProcContext('remote-init', cmd, stdin_files=[tmphandle]),
             self._remote_init_callback,
@@ -237,8 +234,7 @@ class TaskRemoteMgr(object):
                 cmd.append('--user=%s' % owner)
             if cylc.flow.flags.debug:
                 cmd.append('--debug')
-            cmd.append(os.path.join(glbl_cfg().get_derived_host_item(
-                self.suite, 'suite run directory', host, owner)))
+            cmd.append(get_remote_suite_run_dir(host, owner, self.suite))
             procs[(host, owner)] = (
                 cmd,
                 Popen(cmd, stdout=PIPE, stderr=PIPE, stdin=open(os.devnull)))

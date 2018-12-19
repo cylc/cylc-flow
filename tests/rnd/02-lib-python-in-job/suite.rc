@@ -12,7 +12,7 @@
             grep -q "${CYLC_SUITE_RUN_DIR}/lib/python" <<< "${PYTHONPATH}"
 
             # run a toy example
-            python -c '
+            python3 -c '
             from pub import beer
             assert beer.drink() == "98 bottles of beer on the wall."
             assert beer.drink() == "97 bottles of beer on the wall."

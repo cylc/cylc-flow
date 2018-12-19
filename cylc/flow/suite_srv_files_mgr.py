@@ -26,6 +26,7 @@ from string import ascii_letters, digits
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import SuiteServiceFileError
+from cylc.flow.pathutil import get_remote_suite_run_dir, get_suite_run_dir
 from cylc.flow.pkg_resources import extract_pkg_resources
 import cylc.flow.flags
 from cylc.flow.hostuserutil import (
@@ -345,8 +346,7 @@ To start a new run, stop the old one first with one or more of these:
         run_d = os.getenv("CYLC_SUITE_RUN_DIR")
         if (not run_d or os.getenv("CYLC_SUITE_NAME") != reg or
                 os.getenv("CYLC_SUITE_OWNER") != suite_owner):
-            run_d = glbl_cfg().get_derived_host_item(
-                reg, 'suite run directory')
+            run_d = get_suite_run_dir(reg)
         return os.path.join(run_d, self.DIR_BASE_SRV)
 
     def list_suites(self, regfilter=None):
@@ -615,9 +615,7 @@ To start a new run, stop the old one first with one or more of these:
         if item == self.FILE_BASE_CONTACT and not is_remote_host(host):
             # Attempt to read suite contact file via the local filesystem.
             path = r'%(run_d)s/%(srv_base)s' % {
-                'run_d': glbl_cfg().get_derived_host_item(
-                    reg, 'suite run directory', 'localhost', owner,
-                    replace_home=False),
+                'run_d': get_remote_suite_run_dir('localhost', owner, reg),
                 'srv_base': self.DIR_BASE_SRV,
             }
             content = self._load_local_item(item, path)
@@ -632,8 +630,7 @@ To start a new run, stop the old one first with one or more of these:
             r'''cat "%(run_d)s/%(srv_base)s/%(item)s"'''
         ) % {
             'prefix': prefix,
-            'run_d': glbl_cfg().get_derived_host_item(
-                reg, 'suite run directory', host, owner),
+            'run_d': get_remote_suite_run_dir(host, owner, reg),
             'srv_base': self.DIR_BASE_SRV,
             'item': item
         }

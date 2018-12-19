@@ -22,7 +22,7 @@ import os
 import sys
 from time import sleep, time
 
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.pathutil import get_suite_run_log_name
 
 
 SUITE_SCAN_INFO_TMPL = r"""
@@ -53,9 +53,9 @@ def daemonize(server):
     http://code.activestate.com/recipes/66012-fork-a-daemon-process-on-unix/
 
     """
-    logpath = glbl_cfg().get_derived_host_item(server.suite, 'suite log')
+    logfname = get_suite_run_log_name(server.suite)
     try:
-        old_log_mtime = os.stat(logpath).st_mtime
+        old_log_mtime = os.stat(logfname).st_mtime
     except OSError:
         old_log_mtime = None
     # fork 1
@@ -75,11 +75,11 @@ def daemonize(server):
                     #  LOG-PREFIX Suite server program: url=URL, pid=PID
                     # Otherwise, something has gone wrong, print the suite log
                     # and exit with an error.
-                    log_stat = os.stat(logpath)
+                    log_stat = os.stat(logfname)
                     if (log_stat.st_mtime == old_log_mtime or
                             log_stat.st_size == 0):
                         continue
-                    for line in open(logpath):
+                    for line in open(logfname):
                         if server.START_MESSAGE_PREFIX in line:
                             suite_url, suite_pid = (
                                 item.rsplit("=", 1)[-1]
@@ -88,7 +88,7 @@ def daemonize(server):
                         elif ' ERROR -' in line or ' CRITICAL -' in line:
                             # ERROR and CRITICAL before suite starts
                             try:
-                                sys.stderr.write(open(logpath).read())
+                                sys.stderr.write(open(logfname).read())
                                 sys.exit(1)
                             except IOError:
                                 sys.exit("Suite server program exited")

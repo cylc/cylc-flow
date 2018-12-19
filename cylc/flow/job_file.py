@@ -26,6 +26,9 @@ from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.batch_sys_manager import BatchSysManager
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flow.flags
+from cylc.flow.pathutil import (
+    get_remote_suite_run_dir,
+    get_remote_suite_work_dir)
 
 
 class JobFileWriter(object):
@@ -56,7 +59,8 @@ class JobFileWriter(object):
         # variables: NEXT_CYCLE=$( cylc cycle-point --offset-hours=6 )
 
         tmp_name = local_job_file_path + '.tmp'
-        run_d = self._get_derived_host_item(job_conf, 'suite run directory')
+        run_d = get_remote_suite_run_dir(
+            job_conf['host'], job_conf['owner'], job_conf['suite_name'])
         try:
             with open(tmp_name, 'w') as handle:
                 self._write_header(handle, job_conf)
@@ -115,12 +119,6 @@ class JobFileWriter(object):
                 if line and not line.startswith("#"):
                     return True
         return False
-
-    @staticmethod
-    def _get_derived_host_item(job_conf, key):
-        """Return derived host item from glbl_cfg()."""
-        return glbl_cfg().get_derived_host_item(
-            job_conf['suite_name'], key, job_conf["host"], job_conf["owner"])
 
     @staticmethod
     def _get_host_item(job_conf, key):
@@ -194,7 +192,8 @@ class JobFileWriter(object):
 
         handle.write('\n')
         # override and write task-host-specific suite variables
-        work_d = self._get_derived_host_item(job_conf, 'suite work root')
+        work_d = get_remote_suite_work_dir(
+            job_conf["host"], job_conf["owner"], job_conf['suite_name'])
         handle.write('\n    export CYLC_SUITE_RUN_DIR="%s"' % run_d)
         if work_d != run_d:
             # Note: not an environment variable, but used by job.sh

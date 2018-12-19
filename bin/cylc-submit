@@ -39,13 +39,13 @@ import os
 from time import sleep
 
 from cylc.flow import LOG
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import SuiteConfig
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.exceptions import UserInputError
 import cylc.flow.flags
 from cylc.flow.subprocpool import SubProcPool
 from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.pathutil import make_suite_run_tree
 from cylc.flow.suite_db_mgr import SuiteDatabaseManager
 from cylc.flow.broadcast_mgr import BroadcastMgr
 from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
@@ -106,7 +106,7 @@ def main():
                 taskdef, get_point(point_str).standardise(), is_startup=True))
 
     # Initialise job submit environment
-    glbl_cfg().create_cylc_run_tree(suite)
+    make_suite_run_tree(suite)
     pool = SubProcPool()
     db_mgr = SuiteDatabaseManager()
     task_job_mgr = TaskJobManager(

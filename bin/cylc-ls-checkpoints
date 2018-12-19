@@ -30,8 +30,8 @@ if remrun():
 
 import os
 
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.pathutil import get_suite_run_pub_db_name
 from cylc.flow.rundb import CylcSuiteDAO
 from cylc.flow.terminal import cli_function
 
@@ -98,12 +98,7 @@ def list_checkpoints(suite, callback):
 
 def _get_dao(suite):
     """Return the DAO (public) for suite."""
-
-    suite_log_dir = glbl_cfg().get_derived_host_item(
-        suite, 'suite log directory')
-    pub_db_path = os.path.join(os.path.dirname(suite_log_dir),
-                               CylcSuiteDAO.DB_FILE_BASE_NAME)
-    return CylcSuiteDAO(pub_db_path, is_public=True)
+    return CylcSuiteDAO(get_suite_run_pub_db_name(suite), is_public=True)
 
 
 def _write_row(title, row_idx, row):

@@ -18,7 +18,7 @@
 """Define task job log filenames and option names."""
 
 import os
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.pathutil import get_suite_run_job_dir
 
 # Task job log filenames.
 JOB_LOG_JOB = "job"
@@ -56,7 +56,7 @@ def get_task_job_id(point, name, submit_num=None):
 def get_task_job_log(suite, point, name, submit_num=None, suffix=None):
     """Return the full job log path."""
     args = [
-        glbl_cfg().get_derived_host_item(suite, "suite job log directory"),
+        get_suite_run_job_dir(suite),
         get_task_job_id(point, name, submit_num)]
     if suffix is not None:
         args.append(suffix)

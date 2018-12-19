@@ -17,15 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Cylc site and user configuration file spec."""
 
-import atexit
 import os
 import re
-import shutil
-from tempfile import mkdtemp
 
 from cylc.flow import LOG
 from cylc.flow import __version__ as CYLC_VERSION
-from cylc.flow.exceptions import GlobalConfigError
 from cylc.flow.hostuserutil import get_user_home, is_remote_user
 from cylc.flow.network import Priv
 from cylc.flow.parsec.config import ParsecConfig
@@ -41,21 +37,21 @@ from cylc.flow.parsec.validate import (
 # - default: the default value (optional).
 # - allowed_2, ...: the only other allowed values of this setting (optional).
 SPEC = {
+    # suite
     'process pool size': [VDR.V_INTEGER, 4],
     'process pool timeout': [VDR.V_INTERVAL, DurationFloat(600)],
-    'temporary directory': [VDR.V_STRING],
-    'state dump rolling archive length': [VDR.V_INTEGER, 10],
+    # client
     'disable interactive command prompts': [VDR.V_BOOLEAN, True],
-    'enable run directory housekeeping': [VDR.V_BOOLEAN],
-    'run directory rolling archive length': [VDR.V_INTEGER, 2],
-    'task host select command timeout': [VDR.V_INTERVAL, DurationFloat(10)],
-    'xtrigger function timeout': [VDR.V_INTERVAL, DurationFloat(10)],
+    # suite
+    'run directory rolling archive length': [VDR.V_INTEGER, -1],
+    # suite-task communication
     'task messaging': {
         'retry interval': [VDR.V_INTERVAL, DurationFloat(5)],
         'maximum number of tries': [VDR.V_INTEGER, 7],
         'connection timeout': [VDR.V_INTERVAL, DurationFloat(30)],
     },
 
+    # suite
     'cylc': {
         'UTC mode': [VDR.V_BOOLEAN],
         'health check interval': [VDR.V_INTERVAL, DurationFloat(600)],
@@ -82,11 +78,13 @@ SPEC = {
         },
     },
 
+    # suite
     'suite logging': {
         'rolling archive length': [VDR.V_INTEGER, 5],
         'maximum size in bytes': [VDR.V_INTEGER, 1000000],
     },
 
+    # general
     'documentation': {
         'local': [VDR.V_STRING, ''],
         'online': [VDR.V_STRING,
@@ -94,19 +92,23 @@ SPEC = {
         'cylc homepage': [VDR.V_STRING, 'http://cylc.github.io/'],
     },
 
+    # general
     'document viewers': {
         'html': [VDR.V_STRING, 'firefox'],
     },
 
+    # client
     'editors': {
         'terminal': [VDR.V_STRING, 'vim'],
         'gui': [VDR.V_STRING, 'gvim -f'],
     },
 
+    # client
     'monitor': {
         'sort order': [VDR.V_STRING, 'definition', 'alphanumeric'],
     },
 
+    # task
     'hosts': {
         'localhost': {
             'run directory': [VDR.V_STRING, '$HOME/cylc-run'],
@@ -175,6 +177,7 @@ SPEC = {
         },
     },
 
+    # task
     'task events': {
         'execution timeout': [VDR.V_INTERVAL],
         'handlers': [VDR.V_STRING_LIST],
@@ -188,6 +191,7 @@ SPEC = {
         'submission timeout': [VDR.V_INTERVAL],
     },
 
+    # client
     'test battery': {
         'remote host with shared fs': [VDR.V_STRING],
         'remote host': [VDR.V_STRING],
@@ -204,12 +208,14 @@ SPEC = {
         },
     },
 
+    # suite
     'suite host self-identification': {
         'method': [VDR.V_STRING, 'name', 'address', 'hardwired'],
         'target': [VDR.V_STRING, 'google.com'],
         'host': [VDR.V_STRING],
     },
 
+    # suite
     'authentication': {
         # Allow owners to grant public shutdown rights at the most, not full
         # control.
@@ -220,6 +226,7 @@ SPEC = {
                 Priv.STATE_TOTALS, Priv.READ, Priv.SHUTDOWN]])
     },
 
+    # suite
     'suite servers': {
         'run hosts': [VDR.V_SPACELESS_STRING_LIST],
         'run ports': [VDR.V_INTEGER_LIST, list(range(43001, 43101))],
@@ -258,6 +265,10 @@ def upg(cfg, descr):
     u.obsolete('8.0.0', ['suite servers', 'scan hosts'])
     u.obsolete('8.0.0', ['suite servers', 'scan ports'])
     u.obsolete('8.0.0', ['communication'])
+    u.obsolete('8.0.0', ['temporary directory'])
+    u.obsolete('8.0.0', ['task host select command timeout'])
+    u.obsolete('8.0.0', ['xtrigger function timeout'])
+    u.obsolete('8.0.0', ['enable run directory housekeeping'])
 
     u.upgrade()
 
@@ -266,9 +277,6 @@ class GlobalConfig(ParsecConfig):
     """
     Handle global (all suites) site and user configuration for cylc.
     User file values override site file values.
-
-    For all derived items - paths hardwired under the configurable top
-    levels - use the get_derived_host_item(suite,host) method.
     """
 
     _DEFAULT = None
@@ -328,49 +336,7 @@ class GlobalConfig(ParsecConfig):
                         LOG.error('bad %s %s', conf_type, fname)
                         raise
         # (OK if no flow.rc is found, just use system defaults).
-        self.transform()
-
-    def get_derived_host_item(
-            self, suite, item, host=None, owner=None, replace_home=False):
-        """Compute hardwired paths relative to the configurable top dirs."""
-
-        # suite run dir
-        srdir = os.path.join(
-            self.get_host_item('run directory', host, owner, replace_home),
-            suite)
-        # suite workspace
-        swdir = os.path.join(
-            self.get_host_item('work directory', host, owner, replace_home),
-            suite)
-
-        if item == 'suite run directory':
-            value = srdir
-
-        elif item == 'suite log directory':
-            value = os.path.join(srdir, 'log', 'suite')
-
-        elif item == 'suite log':
-            value = os.path.join(srdir, 'log', 'suite', 'log')
-
-        elif item == 'suite job log directory':
-            value = os.path.join(srdir, 'log', 'job')
-
-        elif item == 'suite config log directory':
-            value = os.path.join(srdir, 'log', 'suiterc')
-
-        elif item == 'suite work root':
-            value = swdir
-
-        elif item == 'suite work directory':
-            value = os.path.join(swdir, 'work')
-
-        elif item == 'suite share directory':
-            value = os.path.join(swdir, 'share')
-
-        else:
-            raise GlobalConfigError("Illegal derived item: " + item)
-
-        return value
+        self._transform()
 
     def get_host_item(self, item, host=None, owner=None, replace_home=False,
                       owner_home=None):
@@ -420,85 +386,7 @@ class GlobalConfig(ParsecConfig):
             value = 'zmq'
         return value
 
-    def roll_directory(self, dir_, name, archlen=0):
-        """Create a directory after rolling back any previous instances of it.
-
-        E.g. if archlen = 2 we keep:
-            dir_, dir_.1, dir_.2. If 0 keep no old ones.
-        """
-        for i in range(archlen, -1, -1):  # archlen...0
-            if i > 0:
-                dpath = dir_ + '.' + str(i)
-            else:
-                dpath = dir_
-            if os.path.exists(dpath):
-                if i >= archlen:
-                    # remove oldest backup
-                    shutil.rmtree(dpath)
-                else:
-                    # roll others over
-                    os.rename(dpath, dir_ + '.' + str(i + 1))
-        self.create_directory(dir_, name)
-
-    @staticmethod
-    def create_directory(dir_, name):
-        """Create directory. Raise GlobalConfigError on error."""
-        try:
-            os.makedirs(dir_, exist_ok=True)
-        except OSError as exc:
-            LOG.exception(exc)
-            raise GlobalConfigError(
-                'Failed to create directory "' + name + '"')
-
-    def create_cylc_run_tree(self, suite):
-        """Create all top-level cylc-run output dirs on the suite host."""
-        cfg = self.get()
-        item = 'suite run directory'
-        idir = self.get_derived_host_item(suite, item)
-        LOG.debug('creating %s: %s', item, idir)
-        if cfg['enable run directory housekeeping']:
-            self.roll_directory(
-                idir, item, cfg['run directory rolling archive length'])
-
-        for item in [
-                'suite log directory',
-                'suite job log directory',
-                'suite config log directory',
-                'suite work directory',
-                'suite share directory']:
-            idir = self.get_derived_host_item(suite, item)
-            LOG.debug('creating %s: %s', item, idir)
-            self.create_directory(idir, item)
-
-        item = 'temporary directory'
-        value = cfg[item]
-        if value:
-            self.create_directory(value, item)
-
-    def get_tmpdir(self):
-        """Make a new temporary directory and arrange for it to be
-        deleted automatically when we're finished with it. Call this
-        explicitly just before use to ensure the directory is not
-        deleted by other processes before it is needed. THIS IS
-        CURRENTLY ONLY USED BY A FEW CYLC COMMANDS. If cylc suites
-        ever need it this must be called AFTER FORKING TO DAEMON MODE or
-        atexit() will delete the directory when the initial process
-        exits after forking."""
-
-        cfg = self.get()
-        tdir = cfg['temporary directory']
-        if tdir:
-            tdir = os.path.expandvars(tdir)
-            tmpdir = mkdtemp(prefix="cylc-", dir=os.path.expandvars(tdir))
-        else:
-            tmpdir = mkdtemp(prefix="cylc-")
-        # self-cleanup
-        atexit.register(lambda: shutil.rmtree(tmpdir))
-        # now replace the original item to allow direct access
-        cfg['temporary directory'] = tmpdir
-        return tmpdir
-
-    def transform(self):
+    def _transform(self):
         """Transform various settings.
 
         Host item values of None default to modified localhost values.

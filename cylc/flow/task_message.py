@@ -28,9 +28,9 @@ import os
 import sys
 
 
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flow.flags
 from cylc.flow.network.client import SuiteRuntimeClient
+from cylc.flow.pathutil import get_suite_run_job_dir
 from cylc.flow.task_outputs import TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED
 from cylc.flow.wallclock import get_current_time_string
 
@@ -93,9 +93,7 @@ def _append_job_status_file(suite, task_job, event_time, messages):
     """Write messages to job status file."""
     job_log_name = os.getenv('CYLC_TASK_LOG_ROOT')
     if not job_log_name:
-        job_log_name = os.path.join(
-            glbl_cfg().get_derived_host_item(suite, 'suite job log directory'),
-            'job')
+        job_log_name = get_suite_run_job_dir(suite, task_job, 'job')
     try:
         job_status_file = open(job_log_name + '.status', 'a')
     except IOError:

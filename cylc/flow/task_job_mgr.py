@@ -37,17 +37,17 @@ from cylc.flow.parsec.util import pdeepcopy, poverride
 
 from cylc.flow import LOG
 from cylc.flow.batch_sys_manager import JobPollContext
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.hostuserutil import get_host, is_remote_host, is_remote_user
 from cylc.flow.job_file import JobFileWriter
-from cylc.flow.task_job_logs import (
-    JOB_LOG_JOB, get_task_job_log, get_task_job_job_log,
-    get_task_job_activity_log, get_task_job_id, NN)
+from cylc.flow.pathutil import get_remote_suite_run_job_dir
 from cylc.flow.subprocpool import SubProcPool
 from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.task_action_timer import TaskActionTimer
 from cylc.flow.task_events_mgr import TaskEventsManager, log_task_job_activity
 from cylc.flow.task_message import FAIL_MESSAGE_PREFIX
+from cylc.flow.task_job_logs import (
+    JOB_LOG_JOB, get_task_job_log, get_task_job_job_log,
+    get_task_job_activity_log, get_task_job_id, NN)
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED)
@@ -282,8 +282,7 @@ class TaskJobManager(object):
             if remote_mode:
                 cmd.append('--remote-mode')
             cmd.append('--')
-            cmd.append(glbl_cfg().get_derived_host_item(
-                suite, 'suite job log directory', host, owner))
+            cmd.append(get_remote_suite_run_job_dir(host, owner, suite))
             # Chop itasks into a series of shorter lists if it's very big
             # to prevent overloading of stdout and stderr pipes.
             itasks = sorted(itasks, key=lambda itask: itask.identity)
@@ -651,8 +650,7 @@ class TaskJobManager(object):
             if is_remote_user(owner):
                 cmd.append("--user=%s" % (owner))
             cmd.append("--")
-            cmd.append(glbl_cfg().get_derived_host_item(
-                suite, "suite job log directory", host, owner))
+            cmd.append(get_remote_suite_run_job_dir(host, owner, suite))
             job_log_dirs = []
             for itask in sorted(itasks, key=lambda itask: itask.identity):
                 job_log_dirs.append(get_task_job_id(
@@ -852,11 +850,8 @@ class TaskJobManager(object):
         self._create_job_log_path(suite, itask)
         job_d = get_task_job_id(
             itask.point, itask.tdef.name, itask.submit_num)
-        job_file_path = os.path.join(
-            glbl_cfg().get_derived_host_item(
-                suite, "suite job log directory",
-                itask.task_host, itask.task_owner),
-            job_d, JOB_LOG_JOB)
+        job_file_path = get_remote_suite_run_job_dir(
+            itask.task_host, itask.task_owner, suite, job_d, JOB_LOG_JOB)
         return {
             'batch_system_name': rtconfig['job']['batch system'],
             'batch_submit_command_template': (

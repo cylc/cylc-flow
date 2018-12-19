@@ -20,7 +20,7 @@
 
 set_test_number 2
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-if [[ -n "${PYTHONPATH}" ]]; then
+if [[ -n "${PYTHONPATH:-}" ]]; then
     export PYTHONPATH="${PWD}/lib:${PYTHONPATH}"
 else
     export PYTHONPATH="${PWD}/lib"

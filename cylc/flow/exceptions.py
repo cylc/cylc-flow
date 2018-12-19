@@ -55,10 +55,6 @@ class SuiteConfigError(CylcConfigError):
     """Exception for configuration errors in a Cylc suite configuration."""
 
 
-class GlobalConfigError(CylcConfigError):
-    """Exception for configuration errors in a Cylc global configuration."""
-
-
 class GraphParseError(SuiteConfigError):
     """Exception for errors in Cylc suite graphing."""
 
