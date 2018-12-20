@@ -42,24 +42,16 @@ passphrase
 coverage.xml
 htmlcov/
 
-\.vscode/settings\.json
+# vscode
+.vscode/*
 
-\.pytest_cache/v/cache/
+# pytest
+.pytest_cache/v/cache/
 
-\.vscode/launch\.json
+# cherrypy
+lib/cherrypy/**/*.log
+lib/cherrypy/**/**/*.log
+lib/cherrypy/test/test.conf
 
-lib/cherrypy/test/access\.log
-
-lib/cherrypy/test/error\.log
-
-lib/cherrypy/test/test\.access\.log
-
-lib/cherrypy/test/test\.error\.log
-
+# pipenv
 Pipfile
-
-lib/cherrypy/test/test\.conf
-
-lib/cherrypy/test/static/bigfile\.log
-
-lib/cherrypy/test/test_misc_tools\.log
