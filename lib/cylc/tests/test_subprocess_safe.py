@@ -43,11 +43,12 @@ class TestSubprocessSafe(unittest.TestCase):
         Popen = MockPopen()
         Popen.set_command(command)
         process = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
-        out, err = process.communicate('foo')
+        err, out = process.communicate('foo')
         compare([
                 call.Popen(command, shell=True, stderr=-1, stdout=-1),
                 call.Popen_instance.communicate('foo'),
                 ], Popen.mock.method_calls)
+        return err, out
 
     def test_subprocess_safe_read_from_stdout_and_stderr(self):
         cmd = "a command"
@@ -60,7 +61,7 @@ class TestSubprocessSafe(unittest.TestCase):
         compare([
                 call.Popen(command, shell=True, stderr=PIPE, stdout=PIPE),
                 ], Popen.mock.method_calls)
-           
+
     def test_subprocess_safe_write_to_stdin(self):
         cmd = "a command"
         command = quote(cmd)

@@ -8,8 +8,6 @@ try:
                            ProtocolError,
                            ServerProxy,
                            SafeTransport)
-    # from defusedxml.xmlrpclib import DateTime, Fault, ProtocolError 
-    # from defusedxml.xmlrpclib import ServerProxy, SafeTransport
 except ImportError:
     from xmlrpc.client import (DateTime,
                                Fault,

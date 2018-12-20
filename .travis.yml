@@ -76,6 +76,8 @@ install:
     # Coverage dependencies
     - pip install coverage pytest-cov mock
     - export COVERAGE_PROCESS_START="${TRAVIS_BUILD_DIR}/.coveragerc"
+    # Testfixtures
+    - pip install testfixtures
 
 # Run tests
 script:

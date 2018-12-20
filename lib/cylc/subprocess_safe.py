@@ -21,8 +21,8 @@
     https://docs.openstack.org/developer/bandit/plugins/subprocess_popen_with_shell_equals_true.html
     REASON IGNORED:
     Bandit can't determine if the command input is sanitized, it just raises
-    an issue if it detects Popen with with the option shell=True and so nosec
-    is used here to supress false positives.
+    an issue if it detects Popen with the option shell=True and so nosec
+    is used here to suppress false positives.
 """
 
 import sys
