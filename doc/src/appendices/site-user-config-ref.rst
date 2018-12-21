@@ -705,13 +705,13 @@ overrides :ref:`tail-command-template` above.
 .. code-block:: cylc
 
    [hosts]
-	   [[ myhpc*]]
-		   [[[batch systems]]]
-			   [[[[pbs]]]]
-				   err tailer = qcat -f -e %(job_id)s
-				   out tailer = qcat -f -o %(job_id)s
-				   err viewer = qcat -e %(job_id)s
-				   out viewer = qcat -o %(job_id)s
+       [[ myhpc*]]
+           [[[batch systems]]]
+               [[[[pbs]]]]
+                   err tailer = qcat -f -e %(job_id)s
+                   out tailer = qcat -f -o %(job_id)s
+                   err viewer = qcat -e %(job_id)s
+                   out viewer = qcat -o %(job_id)s
 
 
 .. _out-tailer:

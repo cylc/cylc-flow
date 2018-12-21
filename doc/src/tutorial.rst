@@ -526,7 +526,7 @@ Cylc Review. It displays suite information in web pages, as shown in
 
 .. _fig-review-screenshot:
 
-.. figure:: ../graphics/png/orig/cylc-review-screenshot.png
+.. figure:: graphics/png/orig/cylc-review-screenshot.png
    :align: center
 
    Screenshot of a Cylc Review web page
@@ -978,13 +978,13 @@ It should look like :ref:`Figure X <fig-tut-hello-multi>` (with the
 
 .. _fig-tut-hello-multi:
 
-.. figure:: ../graphics/png/orig/tut-hello-multi-1.png
+.. figure:: graphics/png/orig/tut-hello-multi-1.png
    :align: center
 
-.. figure:: ../graphics/png/orig/tut-hello-multi-2.png
+.. figure:: graphics/png/orig/tut-hello-multi-2.png
    :align: center
 
-.. figure:: ../graphics/png/orig/tut-hello-multi-3.png
+.. figure:: graphics/png/orig/tut-hello-multi-3.png
    :align: center
 
    The ``tut/oneoff/ftrigger2`` dependency and runtime inheritance graphs
@@ -1078,7 +1078,7 @@ cycling dummy tasks).
 
 .. _fig-tut-one:
 
-.. figure:: ../graphics/png/orig/tut-one.png
+.. figure:: graphics/png/orig/tut-one.png
    :align: center
 
    The ``tut/cycling/one`` suite
@@ -1153,7 +1153,7 @@ cycling graph sections together.
 
 .. _fig-tut-two:
 
-.. figure:: ../graphics/png/orig/tut-two.png
+.. figure:: graphics/png/orig/tut-two.png
    :align: center
 
    The ``tut/cycling/two`` suite
@@ -1247,7 +1247,7 @@ actually look like:
 
 .. _fig-tut-three:
 
-.. figure:: ../graphics/png/orig/tut-three.png
+.. figure:: graphics/png/orig/tut-three.png
    :align: center
 
    The ``tut/cycling/three`` suite
@@ -1277,7 +1277,7 @@ ADD-IN: ../../../etc/examples/tutorial/cycling/integer/suite.rc
 
 .. _fig-tut-int:
 
-.. figure:: ../graphics/png/orig/tut-cyc-int.png
+.. figure:: graphics/png/orig/tut-cyc-int.png
    :align: center
 
    The ``tut/cycling/integer`` suite

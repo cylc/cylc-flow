@@ -281,7 +281,7 @@ use default task runtime properties such as ``script``).
 
    .. container:: image
 
-      .. figure:: ../graphics/png/orig/dep-eg-1.png
+      .. figure:: graphics/png/orig/dep-eg-1.png
          :align: center
 
    .. container:: caption
@@ -486,7 +486,7 @@ successors (once they're all finished the suite just exits). The integer
 
    .. container:: image
 
-      .. figure:: ../graphics/png/orig/test1.png
+      .. figure:: graphics/png/orig/test1.png
          :align: center
 
    .. container:: caption
@@ -518,7 +518,7 @@ shows a small suite of cycling tasks.
 
    .. container:: image
 
-      .. figure:: ../graphics/png/orig/test2.png
+      .. figure:: graphics/png/orig/test2.png
          :align: center
 
    .. container:: caption
@@ -912,7 +912,7 @@ For example, we can write our suite like :ref:`Figure X <fig-test4>`.
 
    .. container:: image
 
-      .. figure:: ../graphics/png/orig/test4.png
+      .. figure:: graphics/png/orig/test4.png
          :align: center
 
    .. container:: caption
@@ -961,7 +961,7 @@ that has one-off dependencies with other task sets at different cycles.
 
    .. container:: image
 
-      .. figure:: ../graphics/png/orig/test5.png
+      .. figure:: graphics/png/orig/test5.png
          :align: center
 
    .. container:: caption
@@ -1089,7 +1089,7 @@ shown in :ref:`Figure X <fig-satellite>`.
 
 .. _fig-satellite:
 
-.. figure:: ../graphics/png/orig/satellite.png
+.. figure:: graphics/png/orig/satellite.png
    :align: center
 
    The ``etc/examples/satellite`` integer suite.
@@ -1319,7 +1319,7 @@ used, as shown in :ref:`Figure X <fig-conditional>`
 
    .. container:: image
 
-      .. figure:: ../graphics/png/orig/conditional-triggers.png
+      .. figure:: graphics/png/orig/conditional-triggers.png
          :align: center
 
    .. container:: caption
@@ -1364,7 +1364,7 @@ you toggle them on with *View* ``->`` *Options* ``->``
 
    .. container:: image
 
-      .. figure:: ../graphics/png/orig/suicide.png
+      .. figure:: graphics/png/orig/suicide.png
          :align: center
 
    .. container:: caption
@@ -2021,7 +2021,7 @@ cycle point:
 
 .. _ghost-node-screenshot:
 
-.. figure:: ../graphics/png/orig/ghost-node-example.png
+.. figure:: graphics/png/orig/ghost-node-example.png
    :align: center
 
    Screenshot of ``cylc graph`` showing one task as a "ghost node".
@@ -2523,22 +2523,22 @@ task families in the *namespaces* example suite.
 
 .. _fig-namespaces:
 
-.. figure:: ../graphics/png/orig/inherit-2.png
+.. figure:: graphics/png/orig/inherit-2.png
    :align: center
 
-.. figure:: ../graphics/png/orig/inherit-3.png
+.. figure:: graphics/png/orig/inherit-3.png
    :align: center
 
-.. figure:: ../graphics/png/orig/inherit-4.png
+.. figure:: graphics/png/orig/inherit-4.png
    :align: center
 
-.. figure:: ../graphics/png/orig/inherit-5.png
+.. figure:: graphics/png/orig/inherit-5.png
    :align: center
 
-.. figure:: ../graphics/png/orig/inherit-6.png
+.. figure:: graphics/png/orig/inherit-6.png
    :align: center
 
-.. figure:: ../graphics/png/orig/inherit-7.png
+.. figure:: graphics/png/orig/inherit-7.png
    :align: center
 
    Graphs of the *namespaces* example suite showing various states of
@@ -2721,7 +2721,7 @@ Here's a more complex graph using two parameters (``[runtime]`` omitted):
 
 .. _fig-params-1:
 
-.. figure:: ../graphics/png/orig/params1.png
+.. figure:: graphics/png/orig/params1.png
    :align: center
 
    Parameter expansion example.
@@ -3099,10 +3099,10 @@ workflow will be visible at all times as the suite runs.
 
 .. _fig-eg2:
 
-.. figure:: ../graphics/png/orig/eg2-static.png
+.. figure:: graphics/png/orig/eg2-static.png
    :align: center
 
-.. figure:: ../graphics/png/orig/eg2-dynamic.png
+.. figure:: graphics/png/orig/eg2-dynamic.png
    :align: center
 
    Parameterized (top) and cycling (bottom) versions of the same
@@ -3231,7 +3231,7 @@ with standard programming techniques.
 
 .. _fig-jinja2-ensemble:
 
-.. figure:: ../graphics/png/orig/jinja2-ensemble-graph.png
+.. figure:: graphics/png/orig/jinja2-ensemble-graph.png
    :align: center
 
    The Jinja2 ensemble example suite graph.
@@ -3283,7 +3283,7 @@ ADD-IN: \lstinputlisting{../../../etc/examples/jinja2/cities/suite.rc}
 
 .. _fig-jinja2-cities:
 
-.. figure:: ../graphics/png/orig/jinja2-suite-graph.png
+.. figure:: graphics/png/orig/jinja2-suite-graph.png
    :align: center
 
    The Jinja2 cities example suite graph, with the

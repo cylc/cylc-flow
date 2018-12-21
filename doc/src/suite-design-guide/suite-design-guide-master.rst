@@ -18,9 +18,9 @@ Version 1.0 - 23 March 2017
    :maxdepth: 2
 
    sdg-introduction
-   style-guidelines
-   basic-principles
-   efficiency-maintainability
+   style-guide
+   general-principles
+   efficiency
    portable-suites
    roadmap
 

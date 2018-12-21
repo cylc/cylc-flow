@@ -47,12 +47,25 @@ centralized alerting; and cryptographic suite security.
    :maxdepth: 3
    :numbered:
 
-   introduction/introduction-master
-   getting-started/getting-started-master
-   user-guide/user-guide-master
+   introduction
+   screenshots
+   installation
+   terminology
+   workflows
+   global-site-user-conf
+   tutorial
+   suite-name-reg
+   suite-config
+   task-implementation
+   task-job-submission
+   external-triggers
+   running-suites
+   suite-storage-etc
+
+   appendices/appendices-master
+
    suite-design-guide/suite-design-guide-master
-   references/references-master
-   miscellaneous/miscellaneous-master
+
 
 --------
 

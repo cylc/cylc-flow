@@ -1,11 +1,7 @@
-Background
-==========
-
-
 .. _Workflows For Cycling Systems:
 
 Workflows For Cycling Systems
------------------------------
+=============================
 
 A model run and associated processing may need to be cycled for the following
 reasons:
@@ -23,7 +19,7 @@ Cylc provides two ways of constructing workflows for cycling systems:
 .. _Cycling Workflows:
 
 Cycling Workflows
-^^^^^^^^^^^^^^^^^
+-----------------
 
 This is cylc's classic cycling mode as described in the Introduction. Each
 instance of a cycling job is represented by a new instance of *the same task*,
@@ -46,7 +42,7 @@ cycling sequences can be used at once in the same suite. See
 .. _Parameterized-Tasks-as-a-Proxy-for-Cycling:
 
 Parameterized Tasks as a Proxy for Cycling
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------------------
 
 It is also possible to run cycling jobs with a pre-defined static workflow in
 which each instance of a cycling job is represented by *a different task*:
@@ -74,34 +70,9 @@ cycling.
 
 
 Mixed Cycling Workflows
-^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------
 
 For completeness we note that parameterized cycling can be used within a
 cycling workflow. For example, in a daily cycling workflow long (daily)
 model runs could be split into four shorter runs by parameterized cycling.
 A simpler six-hourly cycling workflow should be considered first, however.
-
-
-Cylc Terminology
-----------------
-
-
-Jobs and Tasks
-^^^^^^^^^^^^^^
-
-A *job* is a program or script that runs on a computer, and a *task* is
-a workflow abstraction - a node in the suite dependency graph - that represents
-a job.
-
-
-Cycle Points
-^^^^^^^^^^^^
-
-A *cycle point* is a particular date-time (or integer) point in a sequence
-of date-time (or integer) points. Each cylc task has a private cycle point and
-can advance independently to subsequent cycle points. It may sometimes be
-convenient, however, to refer to the "current cycle point" of a suite (or the
-previous or next one, etc.) with reference to a particular task, or in the
-sense of all tasks instances that "belong to" a particular cycle point. But
-keep in mind that different tasks may pass through the "current cycle point"
-(etc.) at different times as the suite evolves.
