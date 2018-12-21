@@ -184,15 +184,13 @@ Suite configurations can be validated to detect syntax (and other) errors:
 Hello World in Cylc
 -------------------
 
-suite: ``tut/oneoff/basic``
+**suite**: ``tut/oneoff/basic``
 
 Here's the traditional *Hello World* program rendered as a cylc
 suite:
 
-.. todo::
-   add-in:
-
-ADD-IN: ../../../etc/examples/tutorial/oneoff/basic/suite.rc
+.. literalinclude:: ../../etc/examples/tutorial/oneoff/basic/suite.rc
+   :language: cylc
 
 Cylc suites feature a clean separation of scheduling configuration,
 which determines *when* tasks are ready to run; and runtime
@@ -212,10 +210,8 @@ prototyping of new suites, it is submitted to run as a background job on
 the suite host. In fact cylc even provides a default task implementation
 that makes the entire ``[runtime]`` section technically optional:
 
-.. todo::
-   add-in:
-
-ADD-IN: ../../../etc/examples/tutorial/oneoff/minimal/suite.rc
+.. literalinclude:: ../../etc/examples/tutorial/oneoff/minimal/suite.rc
+   :language: cylc
 
 (the resulting *dummy task* just prints out some identifying
 information and exits).
@@ -815,10 +811,8 @@ Each subsection is a *namespace* that represents a task, or if it is
 inherited by other namespaces, a *family*. This allows common configuration
 to be factored out of related tasks very efficiently.
 
-.. todo::
-   add-in.
-
-ADD-IN:../../../etc/examples/tutorial/oneoff/inherit/suite.rc
+.. literalinclude:: ../../etc/examples/tutorial/oneoff/inherit/suite.rc
+   :language: cylc
 
 The ``[root]`` namespace provides defaults for all tasks in the suite.
 Here both tasks inherit ``script`` from ``root``, which they
@@ -862,10 +856,8 @@ i.e. if ``foo`` succeeds, trigger all members of
 ``GREETERS`` at once. Here's the full suite with runtime
 hierarchy shown:
 
-.. todo::
-   add-in.
-
-ADD-IN: ../../../etc/examples/tutorial/oneoff/ftrigger1/suite.rc
+.. literalinclude:: ../../etc/examples/tutorial/oneoff/ftrigger1/suite.rc
+   :language: cylc
 
 .. note::
 
@@ -1005,18 +997,14 @@ commands, scripts, or executables. To try this, let's return to the
 basic Hello World suite and cut the implementation of the task
 ``hello`` out to a file ``hello.sh`` in the suite bin directory:
 
-.. todo::
-   auto-include.
-
-ADD-IN (bash lang): ../../../etc/examples/tutorial/oneoff/external/bin/hello.sh
+.. literalinclude:: ../../etc/examples/tutorial/oneoff/external/bin/hello.sh
+   :language: bash
 
 Make the task script executable, and change the ``hello`` task
 runtime section to invoke it:
 
-.. todo::
-   add-in.
-
-ADD-IN: ../../../etc/examples/tutorial/oneoff/external/suite.rc
+.. literalinclude:: ../../etc/examples/tutorial/oneoff/external/suite.rc
+   :language: cylc
 
 If you run the suite now the new greeting from the external task script
 should appear in the ``hello`` task stdout log. This works
@@ -1055,10 +1043,8 @@ belonging to that sequence may only run once.
 
 Open the ``tut/cycling/one`` suite:
 
-.. todo::
-   add-in.
-
-ADD-IN: ../../../etc/examples/tutorial/cycling/one/suite.rc
+.. literalinclude:: ../../etc/examples/tutorial/cycling/one/suite.rc
+   :language: cylc
 
 The difference between cycling and non-cycling suites is all in the
 ``[scheduling]`` section, so we will leave the
@@ -1270,10 +1256,8 @@ date-time based.
 Open the ``tut/cycling/integer`` suite, which is plotted in
 :num:`fig-tut-int`.
 
-.. todo::
-   add-in.
-
-ADD-IN: ../../../etc/examples/tutorial/cycling/integer/suite.rc
+.. literalinclude:: ../../etc/examples/tutorial/cycling/integer/suite.rc
+   :language: cylc
 
 .. _fig-tut-int:
 
@@ -1312,10 +1296,8 @@ uses of Jinja2: changing suite content or structure based on the value
 of a logical switch; and iteratively generating dependencies and runtime
 configuration for groups of related tasks:
 
-.. todo::
-   add-in.
-
-ADD-IN: ../../../etc/examples/tutorial/oneoff/jinja2/suite.rc
+.. literalinclude:: ../../etc/examples/tutorial/oneoff/jinja2/suite.rc
+   :language: cylc
 
 To view the result of Jinja2 processing with the Jinja2 flag
 ``MULTI`` set to ``False``:
@@ -1371,10 +1353,8 @@ An environment variable ``$CYLC_TASK_TRY_NUMBER`` increments
 from ``1`` on each successive try, and is passed to the task to allow
 different behaviour on the retry:
 
-.. todo::
-  add-in:
-
-TODO ADD-IN: ../../../etc/examples/tutorial/oneoff/retry/suite.rc
+.. literalinclude:: ../../etc/examples/tutorial/oneoff/retry/suite.rc
+   :language: cylc
 
 If a task with configured retries fails, it goes into the *retrying* state
 until the next retry delay is up, then it resubmits. It only enters the

@@ -141,18 +141,14 @@ As a simple example, consider the suites in
 ``<cylc-dir>/etc/dev-suites/xtrigger/suite_state/``. The "upstream"
 suite (which we want to trigger off of) looks like this:
 
-.. todo::
-   add-in:
-
-ADD-IN: \lstinputlisting{../../../etc/dev-suites/xtrigger/suite_state/upstream/suite.rc}
+.. literalinclude:: ../../etc/dev-suites/xtrigger/suite_state/upstream/suite.rc
+   :language: cylc
 
 It must be registered and run under the name *up*, as referenced in the
 "downstream" suite that depends on it:
 
-.. todo::
-   add-in:
-
-ADD-IN: \lstinputlisting{../../../etc/dev-suites/xtrigger/suite_state/downstream/suite.rc}
+.. literalinclude:: ../../etc/dev-suites/xtrigger/suite_state/downstream/suite.rc
+   :language: cylc
 
 Try starting the downstream suite first, then the upstream, and
 watch what happens.

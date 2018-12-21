@@ -1246,10 +1246,8 @@ refers to the item name of the registered output message.
 The example suite ``<cylc-dir>/etc/examples/message-triggers`` illustrates
 message triggering.
 
-.. todo::
-   add-in:
-
-ADD-IN: \lstinputlisting{../../../etc/examples/message-triggers/suite.rc}
+.. literalinclude:: ../../etc/examples/message-triggers/suite.rc
+   :language: cylc
 
 
 Job Submission Triggers
@@ -2115,10 +2113,8 @@ Runtime Inheritance - Single
 The following listing of the *inherit.single.one* example suite
 illustrates basic runtime inheritance with single parents.
 
-.. todo::
-   add-in:
-
-ADD-IN: \lstinputlisting{../../../etc/examples/inherit/single/one/suite.rc}
+.. literalinclude:: ../../etc/examples/inherit/single/one/suite.rc
+   :language: cylc
 
 
 Runtime Inheritance - Multiple
@@ -2137,10 +2133,8 @@ but for detailed documentation of how the algorithm works refer to the
 The *inherit.multi.one* example suite, listed here, makes use of
 multiple inheritance:
 
-.. todo::
-   add-in:
-
-ADD-IN: \lstinputlisting{../../../etc/examples/inherit/multi/one/suite.rc}
+.. literalinclude:: ../../etc/examples/inherit/multi/one/suite.rc
+   :language: cylc
 
 ``cylc get-suite-config`` provides an easy way to check the result of
 inheritance in a suite. You can extract specific items, e.g.:
@@ -3276,10 +3270,8 @@ add the city name to list at the top of the file. The suite is graphed,
 with the New York City task family expanded, in
 :num:`fig-jinja2-cities`.
 
-.. todo::
-   add-in:
-
-ADD-IN: \lstinputlisting{../../../etc/examples/jinja2/cities/suite.rc}
+.. literalinclude:: ../../etc/examples/jinja2/cities/suite.rc
+   :language: cylc
 
 .. _fig-jinja2-cities:
 
@@ -3692,10 +3684,8 @@ An example suite ``empy.cities`` demostrating its use is shown below.
 It is a translation of ``jinja2.cities`` example from
 :ref:`Jinja` and can be directly compared against it.
 
-.. todo::
-   add-in:
-
-ADD-IN: \lstinputlisting{../../../etc/examples/empy/cities/suite.rc}
+.. literalinclude:: ../../etc/examples/empy/cities/suite.rc
+   :language: cylc
 
 For basic usage the difference between Jinja2 and EmPy amounts to a different
 markup syntax with little else to distinguish them. EmPy might be preferable,

@@ -780,10 +780,8 @@ queue. The *queues* example suite illustrates how queues work by
 running two task trees side by side (as seen in the graph GUI) each
 limited to 2 and 3 tasks respectively:
 
-.. todo::
-   add-ins:
-
-ADD-IN: \lstinputlisting{../../../etc/examples/queues/suite.rc}
+.. literalinclude:: ../../etc/examples/queues/suite.rc
+   :language: cylc
 
 
 .. _TaskRetries:

@@ -1,6 +1,24 @@
 Cylc README File
 ================
 
-.. todo::
-   placeholder for the moment (should auto-generate inclusion of file)
-   as not sure whether we want this in the docs.
+.. literalinclude:: ../../../README.md
+
+
+.. insert vertical whitespace else sidebar menu overhangs short page (ugly)
+
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
