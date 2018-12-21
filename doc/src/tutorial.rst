@@ -73,7 +73,7 @@ GUI does not affect the suite itself.
    $ cylc gui & # Single suite control GUI.
    $ cylc gscan & # Multi-suite monitor GUI.
 
-Clicking on a suite in gscan, shown in :ref:`Figure X <fig-gscan>`, opens a
+Clicking on a suite in gscan, shown in :num:`fig-gscan`, opens a
 gcylc instance for it.
 
 Suite Configuration
@@ -363,7 +363,7 @@ GUI tools:
    # GUI summary view of running suites:
    $ cylc gscan &
 
-The scan GUI is shown in :ref:`Figure X <fig-gscan>`; clicking on a suite in
+The scan GUI is shown in :num:`fig-gscan`; clicking on a suite in
 it opens gcylc.
 
 
@@ -522,7 +522,7 @@ Viewing Suite Logs via Web Browser: Cylc Review
 
 Cylc provides a utility for viewing the status and logs of suites called
 Cylc Review. It displays suite information in web pages, as shown in
-:ref:`Figure X <fig-review-screenshot>`.
+:num:`fig-review-screenshot`.
 
 .. _fig-review-screenshot:
 
@@ -969,7 +969,7 @@ To display the graph in an interactive viewer:
    $ cylc graph tut/oneoff/ftrigger2 &    # dependency graph
    $ cylc graph -n tut/oneoff/ftrigger2 & # runtime inheritance graph
 
-It should look like :ref:`Figure X <fig-tut-hello-multi>` (with the
+It should look like :num:`fig-tut-hello-multi` (with the
 ``GREETERS`` family node expanded on the right).
 
 .. todo::
@@ -1071,7 +1071,7 @@ cycling dummy tasks).
    task under it have a succession of cycle points ending in ``00`` or
    ``12`` hours, between specified initial and final cycle
    points (or indefinitely if no final cycle point is given), as shown in
-   :ref:`Figure X <fig-tut-one>`.
+   :num:`fig-tut-one`.
 
 .. todo::
    Image out of date now.
@@ -1148,7 +1148,7 @@ cycling graph section heading, ``bar`` triggers off
 ``foo`` as before, but now ``foo`` triggers off its own
 previous instance ``foo[-PT12H]``. Date-time offsets in
 inter-cycle triggers are expressed as ISO 8601 intervals (12 hours
-in this case). :ref:`Figure X <fig-tut-two>` shows how this connects the
+in this case). :num:`fig-tut-two` shows how this connects the
 cycling graph sections together.
 
 .. _fig-tut-two:
@@ -1213,7 +1213,7 @@ For example, in ``tut/cycling/three``:
            [[[T00,T12]]]
                graph = "foo[-PT12H] => foo => bar"
 
-This is shown in :ref:`Figure X <fig-tut-three>`.
+This is shown in :num:`fig-tut-three`.
 
 .. note::
 
@@ -1268,7 +1268,7 @@ Cylc can do also do integer cycling for repeating workflows that are not
 date-time based.
 
 Open the ``tut/cycling/integer`` suite, which is plotted in
-:ref:`Figure X <fig-tut-int>`.
+:num:`fig-tut-int`.
 
 .. todo::
    add-in.

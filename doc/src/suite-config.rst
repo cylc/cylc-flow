@@ -268,7 +268,7 @@ vary depending on the particular cycle point:
            [[[T06,T18]]] # hours
                graph = "C => X"
 
-:ref:`Figure X <fig-dep-eg-1>` shows the complete suite.rc listing alongside
+:num:`fig-dep-eg-1` shows the complete suite.rc listing alongside
 the suite graph. This is a complete, valid, runnable suite (it will
 use default task runtime properties such as ``script``).
 
@@ -472,7 +472,7 @@ to generate the final graph.
 One-off (Non-Cycling)
 """""""""""""""""""""
 
-:ref:`Figure X <fig-test1>` shows a small suite of one-off non-cycling
+:num:`fig-test1` shows a small suite of one-off non-cycling
 tasks; these all share a single cycle point (``1``) and don't spawn
 successors (once they're all finished the suite just exits). The integer
 ``1`` attached to each graph node is just an arbitrary label here.
@@ -506,7 +506,7 @@ Cycling Graphs
 """"""""""""""
 
 For cycling tasks the graph section heading defines a sequence of cycle points
-for which the subsequent graph section is valid. :ref:`Figure X <fig-test2>`
+for which the subsequent graph section is valid. :num:`fig-test2`
 shows a small suite of cycling tasks.
 
 .. Need to use a 'container' directive to get centered image with
@@ -901,7 +901,7 @@ a single ``prep`` task, at a single cycle.
 We can write this using a special case of the ``task[-interval]`` syntax -
 if the interval is null, this implies the task at the initial cycle point.
 
-For example, we can write our suite like :ref:`Figure X <fig-test4>`.
+For example, we can write our suite like :num:`fig-test4`.
 
 .. Need to use a 'container' directive to get centered image with
    left-aligned caption (as required for code block text).
@@ -991,12 +991,12 @@ that has one-off dependencies with other task sets at different cycles.
                   bar = "color=orange"
 
 
-A different kind of requirement is displayed in :ref:`Figure X <fig-test5>`.
+A different kind of requirement is displayed in :num:`fig-test5`.
 Usually, we want to specify additional tasks and dependencies at the initial
 cycle point. What if we want our first cycle point to be entirely special,
 with some tasks missing compared to subsequent cycle points?
 
-In :ref:`Figure X <fig-test5>`, ``bar`` will not be run at the initial
+In :num:`fig-test5`, ``bar`` will not be run at the initial
 cycle point, but will still run at subsequent cycle points.
 ``[[[+PT6H/PT6H]]]`` means start at ``+PT6H`` (6 hours after
 the initial cycle point) and then repeat every ``PT6H`` (6 hours).
@@ -1085,7 +1085,7 @@ dataset at the same time as the downstream tasks in cycle point 1 are
 processing the first one, and so on. In this way multiple datasets can be
 processed at once if they happen to come in quickly. A single shutdown task
 runs at the end of the final cycle to collate results. The suite graph is
-shown in :ref:`Figure X <fig-satellite>`.
+shown in :num:`fig-satellite`.
 
 .. _fig-satellite:
 
@@ -1307,7 +1307,7 @@ can only appear on the left [1]_ :
 
 Forecasting suites typically have simple conditional
 triggering requirements, but any valid conditional expression can be
-used, as shown in :ref:`Figure X <fig-conditional>`
+used, as shown in :num:`fig-conditional`
 (conditional triggers are plotted with open arrow heads).
 
 .. Need to use a 'container' directive to get centered image with
@@ -1345,7 +1345,7 @@ Suicide Triggers
 
 Suicide triggers take tasks out of the suite. This can be used for
 automated failure recovery. The suite.rc listing and accompanying
-graph in :ref:`Figure X <fig-suicide>` show how to define a chain of failure
+graph in :num:`fig-suicide` show how to define a chain of failure
 recovery tasks that trigger if they're needed but
 otherwise remove themselves from the
 suite (you can run the *AutoRecover.async* example suite to see how
@@ -2015,7 +2015,7 @@ cycle point:
 .. note::
 
    ``cylc graph`` will display un-satisfiable inter-cycle
-   dependencies as "ghost nodes". :ref:`Figure X <ghost-node-screenshot>`
+   dependencies as "ghost nodes". :num:`ghost-node-screenshot`
    is a screenshot of cylc graph displaying the above example with the
    un-satisfiable task (foo) displayed as a "ghost node".
 
@@ -2513,7 +2513,7 @@ members of collapsed families) are plotted as rectangular nodes to
 the right if they are doing anything interesting (submitted, running,
 failed).
 
-:ref:`Figure X <fig-namespaces>` illustrates successive expansion of nested
+:num:`fig-namespaces` illustrates successive expansion of nested
 task families in the *namespaces* example suite.
 
 .. todo::
@@ -2716,7 +2716,7 @@ Here's a more complex graph using two parameters (``[runtime]`` omitted):
                prep => init_run2 => model_run2_cat => post_run2_cat => wrap_run2 => done
                    init_run2 => model_run2_dog => post_run2_dog => wrap_run2"""
 
-:ref:`Figure X <fig-params-1>` shows the result as visualized by
+:num:`fig-params-1` shows the result as visualized by
 ``cylc graph``.
 
 .. _fig-params-1:
@@ -3085,7 +3085,7 @@ And here's how to do the same thing with parameterized tasks:
    OFFSET=P${OFFSET_MONTHS}M  # e.g. P4M for chunk=3
    run-model $(cylc cyclepoint --offset=$OFFSET $INITIAL_POINT)"""
 
-The two workflows are shown together in :ref:`Figure X <fig-eg2>`.
+The two workflows are shown together in :num:`fig-eg2`.
 They both achieve the same result, and both can
 include special tasks at the start, end, or
 anywhere in between. But as noted earlier the parameterized version has
@@ -3238,7 +3238,7 @@ with standard programming techniques.
 
 
 The ``jinja2.ensemble`` example, graphed in
-:ref:`Figure X <fig-jinja2-ensemble>`, shows an ensemble of similar tasks
+:num:`fig-jinja2-ensemble`, shows an ensemble of similar tasks
 generated using Jinja2:
 
 .. code-block:: cylc
@@ -3274,7 +3274,7 @@ relationships for a group of tasks that is repeated for each city in the
 suite. To add a new city and associated tasks and dependencies simply
 add the city name to list at the top of the file. The suite is graphed,
 with the New York City task family expanded, in
-:ref:`Figure X <fig-jinja2-cities>`.
+:num:`fig-jinja2-cities`.
 
 .. todo::
    add-in:

@@ -15,8 +15,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+usage() {
+    echo "Usage: cylc [admin] make-docs [--help]"
+    echo "This command builds the HTML documentation, which is auto-generated"
+    echo "with the tool Sphinx. It wraps the 'sphinx-build' command."
+    echo ""
+    echo "Options:"
+    echo "  --help   Print this usage message."
+}
+
+if [[ $# != 0 ]]; then
+    usage
+    if [[ $1 == "--help" ]]; then
+        exit 0
+    else
+        echo "ERROR: illegal command line arguments"
+        exit 1
+    fi
+fi
+
 echo >&2
 echo "Building the HTML Cylc Documentation with Sphinx..."
 echo >&2
 cd "$CYLC_DIR"/doc/
-sphinx-build -n -b html ./src built/
+sphinx-build -n -b html ./src install/

@@ -21,7 +21,7 @@ import os
 # -- General configuration ------------------------------------------------
 
 # minimal Sphinx version required.
-needs_sphinx = '1.0'
+needs_sphinx = '1.2'
 
 # Sphinx extension module names.
 sys.path.append(os.path.abspath('custom'))  # path to custom extensions.
@@ -30,6 +30,7 @@ extensions = [
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
+    'numfig',
     'cylc_lang',
 ]
 
@@ -56,7 +57,11 @@ exclude_patterns = ['_build']
 pygments_style = 'manni'
 
 # Enable automatic numbering of any captioned figures, tables & code blocks.
-numfig = True
+# 'numfig' THIS REQUIRES v1.3+, & assume only v1.2 for now, so can't use.
+#numfig = True
+#numfig_secnum_depth = 0
+# Therefore must use the 'numfig' extension, configuring as such:
+figure_caption_prefix = "Fig. "
 
 
 # -- Options for HTML output ----------------------------------------------
