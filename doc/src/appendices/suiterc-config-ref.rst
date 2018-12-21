@@ -357,6 +357,7 @@ substituted with actual values:
 - \%(event)s: event name (see below)
 - \%(suite)s: suite name
 - \%(suite\_url)s: suite URL
+- \%(suite\_uuid)s: suite UUID string
 - \%(message)s: event message, if any
 - any suite [meta] item, e.g.:
   - \%(title)s: suite title
@@ -1764,6 +1765,7 @@ will be substituted with actual values:
 
 - \%(event)s: event name
 - \%(suite)s: suite name
+- \%(suite\_uuid)s: suite UUID string
 - \%(point)s: cycle point
 - \%(name)s: task name
 - \%(submit\_num)s: submit number

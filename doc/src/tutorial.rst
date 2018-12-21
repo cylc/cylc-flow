@@ -567,12 +567,12 @@ You will find the access and error logs under ``~/.cylc/cylc-review*``.
 
 Alternatively you can run the Cylc Review web service under Apache
 ``mod_wsgi``. To do this you will need to set up an Apache module
-configuration file (typically in ``/etc/httpd/conf.d/rose-wsgi.conf``)
+configuration file (typically in ``/etc/httpd/conf.d/cylc-wsgi.conf``)
 containing the following (with the paths set appropriately):
 
 .. code-block:: bash
 
-   WSGIPythonPath /path/to/rose/lib/python
+   WSGIPythonPath /path/to/cylc/lib
    WSGIScriptAlias /cylc-review /path/to/lib/cylc/review.py
 
 Use the Apache log at e.g. ``/var/log/httpd/`` to debug problems.

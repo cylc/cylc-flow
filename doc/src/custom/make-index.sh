@@ -20,20 +20,16 @@
 
 set -e
 
+# All paths relative to the '$CYLC_HOME/doc/' directory.
 OUT=install
 rm -rf $OUT
 mkdir -p $OUT
-cp src/index.css $OUT
-cp -r src/cylc-user-guide/graphics $OUT
-cp src/cylc-logo.png $OUT/graphics
-
-CYLC_VERSION=$($(dirname $0)/../../bin/cylc --version)
+cp src/custom/index.css $OUT
+cp -r src/graphics $OUT
+CYLC_VERSION=$($(dirname $0)/../../../bin/cylc --version)
 INDEX=$OUT/index.html
 
-CUG_PDF=src/cylc-user-guide/pdf/cug-pdf.pdf
-CUG_HTML_SINGLE=src/cylc-user-guide/html/single/
-CUG_HTML_MULTI=src/cylc-user-guide/html/multi/
-SDG_PDF=src/suite-design-guide/document.pdf
+HTML_DOCS=built-sphinx/
 
 cat > $INDEX <<__END__
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
@@ -64,61 +60,19 @@ cylc COMMAND --help
 </div>
 
 <div class="lbox">
-<h3 style="margin:10px">User Guide</h3>
+<h3 style="margin:10px">HTML Guides: User Guide & Suite Design Guide</h3>
 <ul>
 __END__
 
-if [[ -f $CUG_PDF ]]; then
-  cp $CUG_PDF $OUT/cylc-user-guide.pdf
+mkdir -p $OUT/html/
+if [[ -f $HTML_DOCS/index.html ]]; then
+  cp -r $HTML_DOCS $OUT/html/
   cat >> $INDEX <<__END__
-  <li><a href="cylc-user-guide.pdf">PDF</a></li>
+  <li><a href="html/built-sphinx.html">HTML (multi page)</a></li>
 __END__
 else
     cat >> $INDEX <<__END__
-    <li>PDF <i>(not generated)</i></li>
-__END__
-fi
-
-mkdir -p $OUT/html
-if [[ -f $CUG_HTML_SINGLE/cug-html.html ]]; then
-  cp -r $CUG_HTML_SINGLE $OUT/html/single
-  cat >> $INDEX <<__END__
-  <li><a href="html/single/cug-html.html">HTML (single page)</a> </li>
-__END__
-else
-    cat >> $INDEX <<__END__
-    <li>HTML single page <i>(not generated)</i></li>
-__END__
-fi
-
-if [[ -f $CUG_HTML_MULTI/cug-html.html ]]; then
-  cp -r $CUG_HTML_MULTI $OUT/html/multi
-  cat >> $INDEX <<__END__
-  <li><a href="html/multi/cug-html.html">HTML (multi page)</a></li>
-__END__
-else
-    cat >> $INDEX <<__END__
-    <li>HTML multi page <i>(not generated)</i></li>
-__END__
-fi
-
-cat >> $INDEX <<__END__
-</ul>
-</div>
-
-<div class="lbox">
-<h3 style="margin:10px">Suite Design Guide</h3>
-<ul>
-__END__
-
-if [[ -f $SDG_PDF ]]; then
-  cp $SDG_PDF $OUT/suite-design-guide.pdf
-  cat >> $INDEX <<__END__
-  <li><a href="suite-design-guide.pdf">PDF</a></li>
-__END__
-else
-    cat >> $INDEX <<__END__
-    <li>PDF <i>(not generated)</i></li>
+    <li>HTML Guides multi page <i>(not generated)</i></li>
 __END__
 fi
 

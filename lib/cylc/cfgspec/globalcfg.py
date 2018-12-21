@@ -90,7 +90,7 @@ SPEC = {
     'documentation': {
         'files': {
             'html user guides': [
-                VDR.V_STRING, '$CYLC_DIR/doc/install/index.html'],
+                VDR.V_STRING, '$CYLC_DIR/doc/built-sphinx/index.html'],
         },
         'urls': {
             'internet homepage': [VDR.V_STRING, 'http://cylc.github.io/cylc/'],
