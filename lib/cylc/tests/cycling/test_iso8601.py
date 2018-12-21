@@ -19,7 +19,7 @@
 import unittest
 
 from cylc.cycling.iso8601 import init, ISO8601Sequence, ISO8601Point,\
-    ISO8601Interval
+    ISO8601Interval, ingest_time
 
 
 class TestISO8601Sequence(unittest.TestCase):
