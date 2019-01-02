@@ -271,26 +271,24 @@ def send_response(req, status, headers, body, stream=False):
 # --------------- Startup tools for CherryPy + mod_python --------------- #
 import os
 import re
-from cylc.subprocess_safe import popencylc
+from cylc.subprocess_safe import pcylc
+import subprocess
 
-try:
-    import subprocess
-    # import pipes
 
-    def popen(fullcmd):
-        p = popencylc(fullcmd, shell=True,
-                      stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                      close_fds=True)
-        return p.stdout
-except ImportError:
-    def popen(fullcmd):
-        pipein, pipeout = popencylc(fullcmd)
-        return pipeout
+def popen(fullcmd):
+    p = pcylc(fullcmd, shell=True,
+              stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+              close_fds=True)
+    pipeout = p.stdout
+    return pipeout
 
 
 def read_process(cmd, args=""):
-    fullcmd = "%s %s" % (cmd, args)
-    pipeout = popen(fullcmd)
+    p = pcylc("%s %s" % (cmd, args),
+              stdin=subprocess.PIPE,
+              stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+              close_fds=True)
+    pipeout = p.stdout
     try:
         firstline = pipeout.readline()
         cmd_not_found = re.search(

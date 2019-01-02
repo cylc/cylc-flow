@@ -23,7 +23,7 @@ from signal import SIGTERM
 from subprocess import PIPE
 from time import sleep, time
 
-from subprocess_safe import popencylc
+from subprocess_safe import pcylc
 
 
 ERR_TIMEOUT = "ERROR: command timed out (>%ds), terminated by signal %d\n%s"
@@ -46,7 +46,7 @@ def run_get_stdout(command, timeout=None, poll_delay=None):
 
     """
     try:
-        popen = popencylc(
+        popen = pcylc(
             command, shell=True, preexec_fn=setpgrp, stdin=open(devnull),
             stderr=PIPE, stdout=PIPE)
         is_killed_after_timeout = False

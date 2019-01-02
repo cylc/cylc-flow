@@ -31,15 +31,8 @@ class TestSubprocessSafe(unittest.TestCase):
     def setUp(self):
         self.Popen = MockPopen()
 
-    def test_subprocess_safe_quote(self):
-        cmd = "$!#&'()|<>`\ ; "
-        command = quote(cmd)
-        self.assertEqual(command, '\'$!#&\'"\'"\'()|<>`\\ ; \'')
-        self.assertEqual(command, quote("$!#&'()|<>`\\ ; "))
-
     def test_subprocess_safe_communicate_with_input(self):
-        cmd = "a command"
-        command = quote(cmd)
+        command = "a command"
         Popen = MockPopen()
         Popen.set_command(command)
         process = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
@@ -51,8 +44,7 @@ class TestSubprocessSafe(unittest.TestCase):
         return err, out
 
     def test_subprocess_safe_read_from_stdout_and_stderr(self):
-        cmd = "a command"
-        command = quote(cmd)
+        command = "a command"
         Popen = MockPopen()
         Popen.set_command(command, stdout=b'foo', stderr=b'bar')
         process = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
@@ -63,8 +55,7 @@ class TestSubprocessSafe(unittest.TestCase):
                 ], Popen.mock.method_calls)
 
     def test_subprocess_safe_write_to_stdin(self):
-        cmd = "a command"
-        command = quote(cmd)
+        command = "a command"
         Popen = MockPopen()
         Popen.set_command(command)
         process = Popen(command, stdin=PIPE, shell=True)
@@ -77,8 +68,7 @@ class TestSubprocessSafe(unittest.TestCase):
                 ], Popen.mock.method_calls)
 
     def test_subprocess_safe_wait_and_return_code(self):
-        cmd = "a command"
-        command = quote(cmd)
+        command = "a command"
         Popen = MockPopen()
         Popen.set_command(command, returncode=3)
         process = Popen(command)
