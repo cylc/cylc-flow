@@ -24,9 +24,7 @@
     isn't possible.
 """
 
-# import sys
 from subprocess import Popen
-# from cylc import LOG
 
 # pylint: disable=too-many-arguments
 # pylint: disable=too-many-locals
@@ -37,13 +35,9 @@ def pcylc(cmd, bufsize=0, executable=None, stdin=None, stdout=None,
           close_fds=False, shell=False, cwd=None, env=None,
           universal_newlines=False, startupinfo=None, creationflags=0):
 
-    # try:
-    process = Popen(cmd, bufsize, executable, stdin, stdout,  # nosec
-                    stderr, preexec_fn, close_fds, shell, cwd, env,
-                    universal_newlines, startupinfo, creationflags)
+    process = Popen(cmd, bufsize, executable, stdin,  # nosec
+                    stdout, stderr, preexec_fn, close_fds,
+                    shell, cwd, env, universal_newlines,
+                    startupinfo, creationflags)
+
     return process
-    # except OSError as exc:
-    #     LOG.exception(exc)
-    #     sys.exit(str(exc))
-    # if process.returncode:
-    #     raise RuntimeError(process.communicate()[1])
