@@ -31,9 +31,7 @@ def main(argv):
     sname = argv[0]
     rundir = argv[1]
     
-    p = pcylc("cylc cat-state " + sname,
-              shell=True, stdout=subprocess.PIPE,
-              stderr=subprocess.PIPE)
+    p = pcylc(['cylc', 'cat-state', sname])
     state, err = p.communicate()
 
     if p.returncode > 0:
