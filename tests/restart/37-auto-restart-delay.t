@@ -25,7 +25,7 @@ if [[ -z "${CYLC_TEST_HOST}" ]]; then
 fi
 set_test_number 6
 time_gt () {
-    python -c "
+    python2 -c "
 import sys
 from isodatetime.parsers import TimePointParser
 parser = TimePointParser()

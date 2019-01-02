@@ -19,4 +19,4 @@
 # Run tests for the ISO 8601 parsing and data model functionality."""
 #-----------------------------------------------------------------------------
 cd "$(dirname "$0")/../"
-TZ=UTC python -m isodatetime.tests
+TZ=UTC python2 -m isodatetime.tests

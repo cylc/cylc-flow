@@ -20,7 +20,8 @@ import os
 import unittest
 
 from cylc.hostuserutil import (
-    get_fqdn_by_host, get_host, is_remote_host, is_remote_user)
+    get_fqdn_by_host, get_host, get_user, get_user_home, is_remote_host,
+    is_remote_user)
 
 
 class TestHostUserUtil(unittest.TestCase):
@@ -48,6 +49,14 @@ class TestHostUserUtil(unittest.TestCase):
             self.assertEqual(
                 "[Errno -2] Name or service not known: '%s'" % bad_host,
                 str(exc))
+
+    def test_get_user(self):
+        """get_user."""
+        self.assertEqual(os.getenv('USER'), get_user())
+
+    def test_get_user_home(self):
+        """get_user_home."""
+        self.assertEqual(os.getenv('HOME'), get_user_home())
 
 
 if __name__ == '__main__':
