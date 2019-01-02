@@ -20,33 +20,30 @@
     Bandit B602: subprocess_popen_with_shell_equals_true
     https://docs.openstack.org/developer/bandit/plugins/subprocess_popen_with_shell_equals_true.html
     REASON IGNORED:
-    Bandit can't determine if the command input is sanitized, it just raises
-    an issue if it detects Popen with the option shell=True and so nosec
-    is used here to suppress false positives.
+    Cylc inherently requires shell characters so escaping them
+    isn't possible.
 """
 
-import sys
-from pipes import quote
+# import sys
 from subprocess import Popen
-from cylc import LOG
+# from cylc import LOG
 
 # pylint: disable=too-many-arguments
 # pylint: disable=too-many-locals
 
 
-def popencylc(cmd, bufsize=0, executable=None, stdin=None, stdout=None,
-              stderr=None, preexec_fn=None,
-              close_fds=False, shell=False, cwd=None, env=None,
-              universal_newlines=False, startupinfo=None, creationflags=0):
+def pcylc(cmd, bufsize=0, executable=None, stdin=None, stdout=None,
+          stderr=None, preexec_fn=None,
+          close_fds=False, shell=False, cwd=None, env=None,
+          universal_newlines=False, startupinfo=None, creationflags=0):
 
-    try:
-        command = quote(cmd)
-        process = Popen(command, bufsize, executable, stdin, stdout,  # nosec
-                        stderr, preexec_fn, close_fds, shell, cwd, env,
-                        universal_newlines, startupinfo, creationflags)
-        return process
-    except OSError as exc:
-        LOG.exception(exc)
-        sys.exit(str(exc))
-    if process.returncode:
-        raise RuntimeError(process.communicate()[1])
+    # try:
+    process = Popen(cmd, bufsize, executable, stdin, stdout,  # nosec
+                    stderr, preexec_fn, close_fds, shell, cwd, env,
+                    universal_newlines, startupinfo, creationflags)
+    return process
+    # except OSError as exc:
+    #     LOG.exception(exc)
+    #     sys.exit(str(exc))
+    # if process.returncode:
+    #     raise RuntimeError(process.communicate()[1])

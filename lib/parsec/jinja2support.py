@@ -24,6 +24,7 @@ from glob import glob
 import os
 import sys
 from jinja2 import (
+    select_autoescape,
     BaseLoader,
     ChoiceLoader,
     Environment,
@@ -93,11 +94,14 @@ def jinja2environment(dir_=None):
         dir_ = os.getcwd()
 
     env = Environment(
+        autoescape=select_autoescape(
+            enabled_extensions=('rc'),
+            default_for_string=False,
+            default=True),
         loader=ChoiceLoader([FileSystemLoader(dir_), PyModuleLoader()]),
         undefined=StrictUndefined,
-        extensions=['jinja2.ext.do'],
-        autoescape=True
-        )
+        extensions=['jinja2.ext.do']
+    )
 
     # Load any custom Jinja2 filters, tests or globals in the suite
     # definition directory

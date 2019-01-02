@@ -113,8 +113,8 @@ import shlex
 from shutil import rmtree
 from signal import SIGKILL
 import stat
-from subprocess import Popen, PIPE
-from cylc.subprocess_safe import popencylc
+from subprocess import PIPE
+from cylc.subprocess_safe import pcylc
 import sys
 import traceback
 
@@ -421,7 +421,7 @@ class BatchSysManager(object):
                     command = shlex.split(
                         batch_sys.KILL_CMD_TMPL % {"job_id": job_id})
                     try:
-                        proc = Popen(
+                        proc = pcylc(
                             command, stdin=open(os.devnull), stderr=PIPE)
                     except OSError as exc:
                         # subprocess.Popen has a bad habit of not setting the
@@ -554,7 +554,7 @@ class BatchSysManager(object):
                 # Simple poll command that takes a list of job IDs
                 cmd = [batch_sys.POLL_CMD] + exp_ids
             try:
-                proc = Popen(
+                proc = pcylc(
                     cmd, stdin=open(os.devnull), stderr=PIPE, stdout=PIPE)
             except OSError as exc:
                 # subprocess.Popen has a bad habit of not setting the
@@ -660,7 +660,7 @@ class BatchSysManager(object):
                 # that we do not have a shell, and still manage to get as far
                 # as here.
                 batch_sys_cmd = batch_submit_cmd_tmpl % {"job": job_file_path}
-                proc = popencylc(
+                proc = pcylc(
                     batch_sys_cmd,
                     stdin=proc_stdin_arg, stdout=PIPE, stderr=PIPE,
                     shell=True, env=env)
@@ -668,7 +668,7 @@ class BatchSysManager(object):
                 command = shlex.split(
                     batch_sys.SUBMIT_CMD_TMPL % {"job": job_file_path})
                 try:
-                    proc = Popen(
+                    proc = pcylc(
                         command,
                         stdin=proc_stdin_arg, stdout=PIPE, stderr=PIPE,
                         env=env)

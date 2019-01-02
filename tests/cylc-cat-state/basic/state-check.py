@@ -19,7 +19,7 @@ import os
 import sqlite3
 import subprocess
 import sys
-from cylc.subprocess_safe import popencylc
+from cylc.subprocess_safe import pcylc
 
 
 def main(argv):
@@ -30,10 +30,10 @@ def main(argv):
 
     sname = argv[0]
     rundir = argv[1]
-
-    p = popencylc("cylc cat-state " + sname,
-                  shell=True, stdout=subprocess.PIPE,
-                  stderr=subprocess.PIPE)
+    
+    p = pcylc("cylc cat-state " + sname,
+              shell=True, stdout=subprocess.PIPE,
+              stderr=subprocess.PIPE)
     state, err = p.communicate()
 
     if p.returncode > 0:
