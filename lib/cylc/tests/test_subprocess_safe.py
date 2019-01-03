@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
-from pipes import quote
 from subprocess import PIPE
 
 from mock import call
