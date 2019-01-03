@@ -30,8 +30,10 @@ sudo apt-get install graphviz libgraphviz-dev python-gtk2-dev heirloom-mailx
 # install dependencies required for running unit tests
 if grep 'unit-tests' <<< "${args[@]}"; then
     pip install EmPy pyopenssl pycodestyle pytest mock
+fi
+
 # install dependencies required for running functional tests
-elif grep 'functional-tests' <<< "${args[@]}"; then
+if grep 'functional-tests' <<< "${args[@]}"; then
     # pygraphviz needs special treatment to avoid an error from "from . import release"
     pip install EmPy pyopenssl
     pip install pygraphviz \
