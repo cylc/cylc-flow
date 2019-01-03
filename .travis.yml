@@ -47,6 +47,7 @@ env:
   - CYLC_TEST_RUN_PLATFORM=false
   # Custom diff command to ignore Xlib errors (xvfb has not RANDR extension).
   - CYLC_TEST_DIFF_CMD="diff -I Xlib -u"
+  - COVERAGE_PROCESS_START="${TRAVIS_BUILD_DIR}/.coveragerc"
   matrix:
   - CHUNK="1/4"
   - CHUNK="2/4"
@@ -56,9 +57,15 @@ env:
 # this is the default test stage, which is used for functional-tests
 install: .travis/install.sh functional-tests docs
 script:
-# Run tests with virtual frame buffer for X support.
-- xvfb-run -a cylc test-battery --chunk $CHUNK --state=save -j 5 || (echo -e "\n\nRerunning Failed Tests...\n\n"; cylc test-battery --state=failed -j 5)
+- export PYTHONPATH="${TRAVIS_BUILD_DIR}/.travis"
+- coverage run .travis/cover.py
+- unset PYTHONPATH
 after_script: .travis/after_script.sh
+after_success:
+# Report metrics, such as coverage
+- coverage combine --append
+- coverage xml --ignore-errors
+- bash <(curl -s https://codecov.io/bash)
 
 jobs:
   include:
@@ -67,5 +74,5 @@ jobs:
     - .travis/install.sh unit-tests functional-tests
     script:
     - pycodestyle --ignore=E402,W503,W504 lib/cylc lib/Jinja2Filters/*.py lib/parsec/*.py $(grep -l '#!.*\<python\>' bin/*)
-    - PYTHONPATH=$(pwd -P)/lib/ pytest lib/cylc/
+    - PYTHONPATH=$(pwd -P)/lib/ pytest --cov-append --cov=lib/cylc --cov=lib/parsec
     after_script: true
