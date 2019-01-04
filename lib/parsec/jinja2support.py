@@ -95,7 +95,7 @@ def jinja2environment(dir_=None):
 
     env = Environment(
         autoescape=select_autoescape(
-            enabled_extensions=('rc'),
+            enabled_extensions=(),
             default_for_string=False,
             default=True),
         loader=ChoiceLoader([FileSystemLoader(dir_), PyModuleLoader()]),
