@@ -39,7 +39,7 @@ class TestSubprocessSafe(unittest.TestCase):
         process = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
         err, out = process.communicate('foo')
         compare([
-                call.Popen(command, shell=True, stderr=-1, stdout=-1),
+                call.Popen(command, shell=True, stderr=-1, stdout=-1),  # nosec
                 call.Popen_instance.communicate('foo'),
                 ], Popen.mock.method_calls)
         return err, out
@@ -48,22 +48,23 @@ class TestSubprocessSafe(unittest.TestCase):
         command = "a command"
         Popen = MockPopen()
         Popen.set_command(command, stdout=b'foo', stderr=b'bar')
-        process = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
+        process = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)  # nosec
         compare(process.stdout.read(), b'foo')
         compare(process.stderr.read(), b'bar')
         compare([
-                call.Popen(command, shell=True, stderr=PIPE, stdout=PIPE),
+                call.Popen(command, shell=True, stderr=PIPE,  # nosec
+                           stdout=PIPE),
                 ], Popen.mock.method_calls)
 
     def test_subprocess_safe_write_to_stdin(self):
         command = "a command"
         Popen = MockPopen()
         Popen.set_command(command)
-        process = Popen(command, stdin=PIPE, shell=True)
+        process = Popen(command, stdin=PIPE, shell=True)  # nosec
         process.stdin.write(command)
         process.stdin.close()
         compare([
-                call.Popen(command, shell=True, stdin=PIPE),
+                call.Popen(command, shell=True, stdin=PIPE),  # nosec
                 call.Popen_instance.stdin.write(command),
                 call.Popen_instance.stdin.close(),
                 ], Popen.mock.method_calls)
