@@ -39,6 +39,7 @@ class TestSubprocessSafe(unittest.TestCase):
         process = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
         err, out = process.communicate('foo')
         compare([
+                #  only static input used so using nosec
                 call.Popen(command, shell=True, stderr=-1, stdout=-1),  # nosec
                 call.Popen_instance.communicate('foo'),
                 ], Popen.mock.method_calls)
