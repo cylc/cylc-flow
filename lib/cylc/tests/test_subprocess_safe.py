@@ -17,11 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
-from subprocess import PIPE
 
 from mock import call
 from testfixtures import compare
-from testfixtures.popen import MockPopen
+from testfixtures.popen import PIPE, MockPopen
+
+# Method could be a function
+# pylint: disable=no-self-use
 
 
 class TestSubprocessSafe(unittest.TestCase):

@@ -24,7 +24,7 @@
     isn't possible.
 """
 
-from subprocess import Popen
+from subprocess import Popen  # nosec
 
 # pylint: disable=too-many-arguments
 # pylint: disable=too-many-locals
