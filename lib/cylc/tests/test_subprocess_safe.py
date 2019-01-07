@@ -72,7 +72,7 @@ class TestSubprocessSafe(unittest.TestCase):
         process.stdin.write(command)
         process.stdin.close()
         compare([
-                #  only static input used with simulated mockpopen
+                # static input used with simulated mockpopen
                 # codacy mistakenly sees this as a call to popen
                 call.Popen(command, shell=True, stdin=PIPE),  # nosec
                 call.Popen_instance.stdin.write(command),
