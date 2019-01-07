@@ -36,10 +36,13 @@ class TestSubprocessSafe(unittest.TestCase):
         command = "a command"
         Popen = MockPopen()
         Popen.set_command(command)
-        process = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
+        #  only static input used with simulated mockpopen
+        # codacy mistakenly sees this as a call to popen
+        process = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)  # nosec
         err, out = process.communicate('foo')
         compare([
-                #  only static input used so using nosec
+                #  only static input used with simulated mockpopen
+                # codacy mistakenly sees this as a call to popen
                 call.Popen(command, shell=True, stderr=-1, stdout=-1),  # nosec
                 call.Popen_instance.communicate('foo'),
                 ], Popen.mock.method_calls)
@@ -48,6 +51,8 @@ class TestSubprocessSafe(unittest.TestCase):
     def test_subprocess_safe_read_from_stdout_and_stderr(self):
         command = "a command"
         Popen = MockPopen()
+        #  only static input used with simulated mockpopen
+        # codacy mistakenly sees this as a call to popen
         Popen.set_command(command, stdout=b'foo', stderr=b'bar')
         process = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)  # nosec
         compare(process.stdout.read(), b'foo')
@@ -61,10 +66,14 @@ class TestSubprocessSafe(unittest.TestCase):
         command = "a command"
         Popen = MockPopen()
         Popen.set_command(command)
+        #  only static input used with simulated mockpopen
+        # codacy mistakenly sees this as a call to popen
         process = Popen(command, stdin=PIPE, shell=True)  # nosec
         process.stdin.write(command)
         process.stdin.close()
         compare([
+                #  only static input used with simulated mockpopen
+                # codacy mistakenly sees this as a call to popen
                 call.Popen(command, shell=True, stdin=PIPE),  # nosec
                 call.Popen_instance.stdin.write(command),
                 call.Popen_instance.stdin.close(),
