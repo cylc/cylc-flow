@@ -22,7 +22,8 @@ import json
 import os
 import select
 from signal import SIGKILL
-from subprocess import Popen, PIPE
+from subprocess import PIPE
+from cylc.subprocess_safe import pcylc
 import sys
 from tempfile import TemporaryFile
 from threading import RLock
@@ -326,7 +327,7 @@ class SuiteProcPool(object):
                 stdin_file.seek(0)
             else:
                 stdin_file = open(os.devnull)
-            proc = Popen(
+            proc = pcylc(
                 ctx.cmd, stdin=stdin_file, stdout=PIPE, stderr=PIPE,
                 # Execute command as a process group leader,
                 # so we can use "os.killpg" to kill the whole group.
