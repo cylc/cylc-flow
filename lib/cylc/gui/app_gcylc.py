@@ -34,6 +34,7 @@ from cylc.hostuserutil import is_remote_host, is_remote_user
 from cylc.gui.dbchooser import dbchooser
 from cylc.gui.combo_logviewer import ComboLogViewer
 from cylc.gui.warning_dialog import warning_dialog, info_dialog
+from cylc.subprocess_safe import pcylc
 from cylc.task_job_logs import JOB_LOG_OPTS
 from cylc.wallclock import get_current_time_string
 
@@ -75,12 +76,12 @@ from cylc.task_state import (
 
 def run_get_stdout(command, filter_=False):
     try:
-        popen = Popen(
+        proc = pcylc(
             command,
             shell=True, stdin=open(os.devnull), stderr=PIPE, stdout=PIPE)
-        out = popen.stdout.read()
-        err = popen.stderr.read()
-        res = popen.wait()
+        out = proc.stdout.read()
+        err = proc.stderr.read()
+        res = proc.wait()
         if res < 0:
             warning_dialog(
                 "ERROR: command terminated by signal %d\n%s" % (res, err)
@@ -1202,7 +1203,7 @@ been defined for this suite""").inform()
             pass  # Cannot print to terminal (session may be closed).
 
         try:
-            Popen([command], shell=True, stdin=open(os.devnull))
+            pcylc([command], shell=True, stdin=open(os.devnull))
         except OSError:
             warning_dialog('Error: failed to start ' + self.cfg.suite,
                            self.window).warn()

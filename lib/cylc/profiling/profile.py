@@ -22,6 +22,7 @@ System calls to cylc are performed here.
 import os
 import shutil
 from subprocess import Popen, PIPE, call
+from cylc.subprocess_safe import pcylc
 import sys
 import tempfile
 import time
@@ -187,7 +188,7 @@ def run_suite(reg, options, out_file, profile_modes, mode='live',
     # Execute.
     print '$ ' + ' '.join(cmds)
     try:
-        proc = Popen(' '.join(cmds), shell=True, stderr=open(time_err, 'w+'),
+        proc = pcylc(' '.join(cmds), shell=True, stderr=open(time_err, 'w+'),
                      stdout=open(startup_file, 'w+'), env=env)
         if proc.wait():
             raise SuiteFailedException(run_cmds, cmd_out, cmd_err)

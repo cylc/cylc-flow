@@ -20,13 +20,14 @@ import gobject
 import gtk
 import os
 import pango
-from subprocess import Popen, STDOUT
+from subprocess import STDOUT
 import tempfile
 
 from cylc.gui.tailer import Tailer
 from cylc.gui.util import get_icon
 from cylc.gui.warning_dialog import warning_dialog, info_dialog
 from cylc.cfgspec.glbl_cfg import glbl_cfg
+from cylc.subprocess_safe import pcylc
 
 
 class Gcapture(object):
@@ -130,7 +131,7 @@ class Gcapture(object):
         self.window.show()
 
     def run(self):
-        proc = Popen(
+        proc = pcylc(
             self.command, stdin=open(os.devnull), stdout=self.stdoutfile,
             stderr=STDOUT, shell=True)
         self.proc = proc
