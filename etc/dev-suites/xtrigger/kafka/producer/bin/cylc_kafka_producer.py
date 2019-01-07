@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 """
 A generic Kafka producer for use as a Cylc event handler.
 
