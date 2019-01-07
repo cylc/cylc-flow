@@ -47,7 +47,7 @@ def run_get_stdout(command, timeout=None, poll_delay=None):
     """
     try:
         proc = pcylc(
-            command, shell=True, preexec_fn=setpgrp, 
+            command, shell=True, preexec_fn=setpgrp,
             stdin=open(devnull), stderr=PIPE, stdout=PIPE)  # nosec
         is_killed_after_timeout = False
         if timeout:
