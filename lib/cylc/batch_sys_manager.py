@@ -113,7 +113,7 @@ import shlex
 from shutil import rmtree
 from signal import SIGKILL
 import stat
-from subprocess import PIPE
+from subprocess import PIPE  # nosec
 from cylc.subprocess_safe import pcylc
 import sys
 import traceback
@@ -663,7 +663,7 @@ class BatchSysManager(object):
                 proc = pcylc(
                     batch_sys_cmd,
                     stdin=proc_stdin_arg, stdout=PIPE, stderr=PIPE,
-                    shell=True, env=env)
+                    shell=True, env=env)   # nosec
             else:
                 command = shlex.split(
                     batch_sys.SUBMIT_CMD_TMPL % {"job": job_file_path})
