@@ -23,8 +23,10 @@
     Cylc inherently requires shell characters so escaping them
     isn't possible.
 """
-
+from inspect import getframeinfo, stack
 from subprocess import Popen  # nosec
+
+from cylc import LOG
 
 # pylint: disable=too-many-arguments
 # pylint: disable=too-many-locals
@@ -34,6 +36,12 @@ def pcylc(cmd, bufsize=0, executable=None, stdin=None, stdout=None,
           stderr=None, preexec_fn=None,
           close_fds=False, shell=False, cwd=None, env=None,
           universal_newlines=False, startupinfo=None, creationflags=0):
+
+    caller = getframeinfo(stack()[1][0])
+    LOG.debug("pcylc: calling function: {}".format(caller.function))
+    LOG.debug("pcylc: caller: %s:%d" % (caller.filename, caller.lineno))
+    LOG.debug("pcylc: command: {}".format(cmd))
+    LOG.debug("pcylc: shell == : %r " % shell)
 
     process = Popen(cmd, bufsize, executable, stdin,  # nosec
                     stdout, stderr, preexec_fn, close_fds,
