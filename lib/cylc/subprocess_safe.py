@@ -43,9 +43,8 @@ def pcylc(cmd, bufsize=0, executable=None, stdin=None, stdout=None,
     LOG.debug("pcylc: command: {}".format(cmd))
     LOG.debug("pcylc: shell == : %r " % shell)
 
-    process = Popen(cmd, bufsize, executable, stdin,  # nosec
-                    stdout, stderr, preexec_fn, close_fds,
-                    shell, cwd, env, universal_newlines,
+    process = Popen(cmd, bufsize, executable, stdin, stdout, stderr,  # nosec
+                    preexec_fn, close_fds, shell, cwd, env, universal_newlines,
                     startupinfo, creationflags)
 
     return process
