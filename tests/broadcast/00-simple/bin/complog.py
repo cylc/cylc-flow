@@ -2,7 +2,7 @@
 
 import os
 import sys
-import subprocess
+from cylc.subprocess_safe import pcylc
 
 print
 print "This is the broadcast test suite log comparator"
@@ -34,7 +34,7 @@ if reflines != loglines:
 else:
     print "broadcast logs compare OK"
 
-# call the usual handler too
-res = subprocess.call("cylc check-triggering " + event + " " + suite)
-if res != 0:
+res = pcylc(["cylc check-triggering " + event + " " + suite], shell=True)
+status = res.wait()
+if status != 0:
     sys.exit(1)
