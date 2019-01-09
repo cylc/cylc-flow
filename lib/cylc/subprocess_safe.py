@@ -16,12 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-""" Function to sanitize input to a spawning subprocess where shell==True
+""" A wrapper function to aggregate these calls in one file, with logging for
+    what is calling it and the commands given
     Bandit B602: subprocess_popen_with_shell_equals_true
     https://docs.openstack.org/developer/bandit/plugins/subprocess_popen_with_shell_equals_true.html
+    B605: start_process_with_a_shell
+    https://docs.openstack.org/developer/bandit/plugins/start_process_with_a_shell.html
     REASON IGNORED:
-    Cylc inherently requires shell characters so escaping them
-    isn't possible.
+    Cylc inherently requires shell characters so escaping them isn't possible.
 """
 from inspect import getframeinfo, stack
 from subprocess import Popen  # nosec
