@@ -114,6 +114,8 @@ from shutil import rmtree
 from signal import SIGKILL
 import stat
 from subprocess import PIPE  # nosec
+# calls to open a shell are aggregated in subprocess_safe.pcylc()
+# with logging for what is calling it and the commands given
 from cylc.subprocess_safe import pcylc
 import sys
 import traceback
@@ -664,6 +666,8 @@ class BatchSysManager(object):
                     batch_sys_cmd,
                     stdin=proc_stdin_arg, stdout=PIPE, stderr=PIPE,
                     shell=True, env=env)   # nosec
+                # calls to open a shell are aggregated in subprocess_safe.pcylc()
+                # with logging for what is calling it and the commands given
             else:
                 command = shlex.split(
                     batch_sys.SUBMIT_CMD_TMPL % {"job": job_file_path})
