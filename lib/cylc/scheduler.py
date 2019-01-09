@@ -301,7 +301,12 @@ class Scheduler(object):
         LOG.info("DONE")  # main thread exit
         self.profiler.stop()
         for handler in LOG.handlers:
-            handler.close()
+            try:
+                handler.close()
+            except IOError:
+                # suppress traceback which `logging` might try to write to the
+                # log we are trying to close
+                pass
 
     @staticmethod
     def _start_print_blurb():
