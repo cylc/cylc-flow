@@ -40,10 +40,10 @@ def pcylc(cmd, bufsize=0, executable=None, stdin=None, stdout=None,
           universal_newlines=False, startupinfo=None, creationflags=0):
 
     caller = getframeinfo(stack()[1][0])
-    LOG.debug("pcylc: calling function: {}".format(caller.function))
-    LOG.debug("pcylc: caller: %s:%d" % (caller.filename, caller.lineno))
-    LOG.debug("pcylc: command: {}".format(cmd))
-    LOG.debug("pcylc: shell == : %r " % shell)
+    LOG.debug('[pcylc: calling function] {}'.format(caller.function))
+    LOG.debug('[pcylc: caller] %s:%d' % (caller.filename, caller.lineno))
+    LOG.debug('[pcylc: command] {}'.format(cmd))
+    LOG.debug('[pcylc: shell] => %r ' % shell)
 
     process = Popen(cmd, bufsize, executable, stdin, stdout, stderr,  # nosec
                     preexec_fn, close_fds, shell, cwd, env, universal_newlines,
