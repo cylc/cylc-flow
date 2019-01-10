@@ -25,6 +25,7 @@ will correspond to the inlined version seen by the parser; use
 'cylc view -i,--inline SUITE' for comparison."""
 
 import sys
+import textwrap
 from cylc.remote import remrun
 if remrun():
     sys.exit(0)
@@ -85,15 +86,24 @@ def main():
         cli_initial_point_string=options.icp,
         is_validate=True, strict=options.strict, run_mode=options.run_mode,
         output_fname=options.output, mem_log_func=profiler.log_memory)
+
     # Check bounds of sequences
-    for seq in cfg.sequences:
-        if seq.get_first_point(cfg.start_point) is None:
-            mesg = '%s: sequence out of bound for initial cycle point %s' % (
-                seq, cfg.start_point)
-            if options.strict:
-                raise SuiteConfigError(mesg)
-            elif cylc.flags.verbose:
-                sys.stderr.write(' + %s\n' % mesg)
+    out_of_bounds = [str(seq) for seq in cfg.sequences
+                     if seq.get_first_point(cfg.start_point) is None]
+    if out_of_bounds:
+        if len(out_of_bounds) > 1:
+            # avoid spamming users with multiple warnings
+            msg = ('multiple sequences out of bounds for initial cycle point '
+                   '%s:\n%s' % (
+                       cfg.start_point,
+                       '\n'.join(textwrap.wrap(', '.join(out_of_bounds), 70))))
+        else:
+            msg = '%s: sequence out of bounds for initial cycle point %s' % (
+                out_of_bounds[0], cfg.start_point)
+        if options.strict:
+            LOG.warning(msg)
+        elif cylc.flags.verbose:
+            sys.stderr.write(' + %s\n' % msg)
 
     # Instantiate tasks and force evaluation of trigger expressions.
     # (Taken from config.py to avoid circular import problems.)
