@@ -457,20 +457,20 @@ To start a new run, stop the old one first with one or more of these:
         if not os.path.isfile(os.path.join(source, self.FILE_BASE_SUITE_RC)):
             raise SuiteServiceFileError("ERROR: no suite.rc in %s" % source)
 
-        # Suite service directory.
-        srv_d = self.get_suite_srv_dir(reg)
-
-        # Does symlink to suite source already exist?
-        target = os.path.join(srv_d, self.FILE_BASE_SOURCE)
-        try:
-            orig_source = os.readlink(target)
-        except OSError:
-            orig_source = None
-
         # Create service dir if necessary.
+        srv_d = self.get_suite_srv_dir(reg)
         mkdir_p(srv_d)
 
-        # Redirect an existing name to another suite?
+        # See if suite already has a source or not
+        try:
+            orig_source = os.readlink(
+                os.path.join(srv_d, self.FILE_BASE_SOURCE))
+        except OSError:
+            orig_source = None
+        else:
+            if not os.path.isabs(orig_source):
+                orig_source = os.path.normpath(
+                    os.path.join(srv_d, orig_source))
         if orig_source is not None and source != orig_source:
             if not redirect:
                 raise SuiteServiceFileError(
@@ -483,11 +483,19 @@ To start a new run, stop the old one first with one or more of these:
                 " directory will be overwritten.\n",
                 {'reg': reg, 'old': orig_source, 'new': source})
             # Remove symlink to the original suite.
-            os.unlink(target)
+            os.unlink(os.path.join(srv_d, self.FILE_BASE_SOURCE))
 
         # Create symlink to the suite, if it doesn't already exist.
-        if source != orig_source:
-            os.symlink(source, target)
+        if orig_source is None or source != orig_source:
+            target = os.path.join(srv_d, self.FILE_BASE_SOURCE)
+            if (os.path.abspath(source) ==
+                    os.path.abspath(os.path.dirname(srv_d))):
+                # If source happens to be the run directory,
+                # create .service/source -> ..
+                source_str = ".."
+            else:
+                source_str = source
+            os.symlink(source_str, target)
 
         print('REGISTERED %s -> %s' % (reg, source))
         return reg

@@ -298,7 +298,7 @@ class MyDotWindow(CylcDotViewerCommon):
         self.add_accel_group(accelgroup)
 
         # create new stock icons for group and ungroup actions
-        imagedir = os.environ['CYLC_DIR'] + '/images/icons'
+        imagedir = util.get_image_dir() + '/icons'
         factory = gtk.IconFactory()
         for i in ['group', 'ungroup']:
             pixbuf = gtk.gdk.pixbuf_new_from_file(imagedir + '/' + i + '.png')
