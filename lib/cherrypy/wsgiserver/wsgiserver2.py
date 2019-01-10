@@ -1,3 +1,37 @@
+import os
+try:
+    import queue
+except:  # noqa: E722
+    import Queue as queue
+import re
+import email.utils
+import socket
+import sys
+import threading
+import time
+import traceback as traceback_
+import operator
+from urllib import unquote
+from urlparse import urlparse
+import errno
+import logging
+import os
+try:
+    import queue
+except:  # noqa: E722
+    import Queue as queue
+import re
+import email.utils
+import socket
+import sys
+import threading
+import time
+import traceback as traceback_
+import operator
+from urllib import unquote
+from urlparse import urlparse
+import errno
+import logging
 """A high-speed, production ready, thread pooled, generic HTTP server.
 
 Simplest example on how to use this module directly
@@ -78,23 +112,6 @@ __all__ = ['HTTPRequest', 'HTTPConnection', 'HTTPServer',
            'WSGIPathInfoDispatcher', 'get_ssl_adapter_class',
            'socket_errors_to_ignore']
 
-import os
-try:
-    import queue
-except:  # noqa: E722
-    import Queue as queue
-import re
-import email.utils
-import socket
-import sys
-import threading
-import time
-import traceback as traceback_
-import operator
-from urllib import unquote
-from urlparse import urlparse
-import errno
-import logging
 try:
     # prefer slower Python-based io module
     import _pyio as io
@@ -941,8 +958,8 @@ class HTTPRequest(object):
             if status < 200 or status in (204, 205, 304):
                 pass
             else:
-                if (self.response_protocol == 'HTTP/1.1'
-                        and self.method != 'HEAD'):
+                if (self.response_protocol == 'HTTP/1.1' and
+                        self.method != 'HEAD'):
                     # Use the chunked transfer-coding
                     self.chunked_write = True
                     self.outheaders.append(("Transfer-Encoding", "chunked"))
@@ -1039,8 +1056,8 @@ class CP_fileobject(socket._fileobject):
                 self.bytes_read += len(data)
                 return data
             except socket.error, e:
-                if (e.args[0] not in socket_errors_nonblocking
-                        and e.args[0] not in socket_error_eintr):
+                if (e.args[0] not in socket_errors_nonblocking and e.args[0]
+                        not in socket_error_eintr):
                     raise
 
     if not _fileobject_uses_str_type:
@@ -1914,7 +1931,7 @@ class HTTPServer(object):
                 # executable and a HIGH warning is reported if a file is set
                 # world writable. Warnings are given with HIGH confidence.
                 os.chmod(self.bind_addr, 0o755)
-            except:  # noqa: E722 
+            except:  # noqa: E722
                 pass
 
             info = [
@@ -2000,8 +2017,8 @@ class HTTPServer(object):
         # If listening on the IPV6 any address ('::' = IN6ADDR_ANY),
         # activate dual-stack. See
         # https://github.com/cherrypy/cherrypy/issues/871.
-        if (hasattr(socket, 'AF_INET6') and family == socket.AF_INET6
-                and self.bind_addr[0] in ('::', '::0', '::0.0.0.0')):
+        if (hasattr(socket, 'AF_INET6') and family == socket.AF_INET6 and
+                self.bind_addr[0] in ('::', '::0', '::0.0.0.0')):
             try:
                 self.socket.setsockopt(
                     socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
