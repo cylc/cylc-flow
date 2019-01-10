@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
+from datetime import datetime
 
 from cylc.cycling.iso8601 import init, ISO8601Sequence, ISO8601Point,\
     ISO8601Interval, ingest_time
@@ -529,6 +530,9 @@ class TestISO8601Sequence(unittest.TestCase):
 class TestRelativeCyclePoint(unittest.TestCase):
     """Contains unit tests for cycle point relative to current time."""
 
+    def setUp(self):
+        init(time_zone='Z')
+
     def test_next_simple(self):
         """Test the generation of CP using 'next' from single input."""
         my_now = '20100808T1540Z'
@@ -732,6 +736,46 @@ class TestRelativeCyclePoint(unittest.TestCase):
                                   '20180314T0000Z',
                                   '20180401T0000Z',
                                   '20171231T1200Z'])
+
+    def test_next_simple_no_now(self):
+        """Test the generation of CP using 'next' with no value for `now`."""
+        my_now = None
+        point = 'next(T00Z)+P1D'
+        output = ingest_time(point, my_now)
+
+        current_time = datetime.utcnow()
+        # my_now is None, but ingest_time will have used a similar time, and
+        # the returned value must be after current_time
+        output_time = datetime.strptime(output, "%Y%m%dT%H%MZ")
+        self.assertTrue(current_time < output_time)
+
+    def test_integer_cycling_is_returned(self):
+        """Test that when integer points are given, the same value is
+        returned."""
+        integer_point = "1"
+        self.assertEqual(integer_point, ingest_time(integer_point, None))
+
+    def test_expanded_dates_are_returned(self):
+        """Test that when expanded dates are given, the same value is
+        returned."""
+        expanded_date = "+0100400101T0000Z"
+        self.assertEqual(expanded_date, ingest_time(expanded_date, None))
+
+    def test_timepoint_truncated(self):
+        """Test that when a timepoint is given, and is truncated, then the
+        value is added to `now`."""
+        my_now = '2018-03-14T15:12Z'
+        timepoint_truncated = "T15:00Z"  # 20180315T1500Z
+        output = ingest_time(timepoint_truncated, my_now)
+        self.assertEqual("20180315T1500Z", output)
+
+    def test_timepoint(self):
+        """Test that when a timepoint is given, and is not truncated, the
+        same value is returned."""
+        my_now = '2018-03-14T15:12Z'
+        timepoint_truncated = "19951231T0630"  # 19951231T0630
+        output = ingest_time(timepoint_truncated, my_now)
+        self.assertEqual("19951231T0630", output)
 
 
 if __name__ == '__main__':
