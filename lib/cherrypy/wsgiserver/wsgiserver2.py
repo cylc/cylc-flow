@@ -15,23 +15,7 @@ from urllib import unquote
 from urlparse import urlparse
 import errno
 import logging
-import os
-try:
-    import queue
-except:  # noqa: E722
-    import Queue as queue
-import re
-import email.utils
-import socket
-import sys
-import threading
-import time
-import traceback as traceback_
-import operator
-from urllib import unquote
-from urlparse import urlparse
-import errno
-import logging
+
 """A high-speed, production ready, thread pooled, generic HTTP server.
 
 Simplest example on how to use this module directly

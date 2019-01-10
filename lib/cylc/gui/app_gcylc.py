@@ -25,7 +25,9 @@ import gtk
 import pango
 import gobject
 import shlex
-from subprocess import Popen, PIPE, STDOUT
+from subprocess import Popen, PIPE, STDOUT  # nosec
+# calls to open a shell are aggregated in subprocess_safe.pcylc()
+# with logging for what is calling it and the commands given
 from uuid import uuid4
 
 from isodatetime.parsers import TimePointParser
@@ -77,8 +79,10 @@ from cylc.task_state import (
 def run_get_stdout(command, filter_=False):
     try:
         proc = pcylc(
-            command,
-            shell=True, stdin=open(os.devnull), stderr=PIPE, stdout=PIPE)
+            command, shell=True, stdout=PIPE, stderr=PIPE,  # nosec
+            stdin=open(os.devnull))
+        # calls to open a shell are aggregated in subprocess_safe.pcylc()
+        # with logging for what is calling it and the commands given
         out = proc.stdout.read()
         err = proc.stderr.read()
         res = proc.wait()
@@ -1203,7 +1207,9 @@ been defined for this suite""").inform()
             pass  # Cannot print to terminal (session may be closed).
 
         try:
-            pcylc([command], shell=True, stdin=open(os.devnull))
+            pcylc([command], shell=True, stdin=open(os.devnull))  # nosec
+            # calls to open a shell are aggregated in subprocess_safe.pcylc()
+            # with logging for what is calling it and the commands given
         except OSError:
             warning_dialog('Error: failed to start ' + self.cfg.suite,
                            self.window).warn()
