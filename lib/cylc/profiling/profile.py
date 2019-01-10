@@ -188,8 +188,8 @@ def run_suite(reg, options, out_file, profile_modes, mode='live',
     # Execute.
     print '$ ' + ' '.join(cmds)
     try:
-        proc = pcylc(' '.join(cmds), shell=True,
-                     stderr=open(time_err, 'w+'),  # nosec
+        proc = pcylc(' '.join(cmds), shell=True,  # nosec
+                     stderr=open(time_err, 'w+'),
                      # calls to open a shell are aggregated in
                      # subprocess_safe.pcylc() with logging for
                      # what is calling it and the commands given
