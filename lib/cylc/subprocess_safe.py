@@ -22,8 +22,6 @@
     https://docs.openstack.org/developer/bandit/plugins/subprocess_popen_with_shell_equals_true.html
     B605: start_process_with_a_shell
     https://docs.openstack.org/developer/bandit/plugins/start_process_with_a_shell.html
-    REASON IGNORED:
-    Cylc inherently requires shell characters so escaping them isn't possible.
 """
 from inspect import getframeinfo, stack
 from subprocess import Popen  # nosec
