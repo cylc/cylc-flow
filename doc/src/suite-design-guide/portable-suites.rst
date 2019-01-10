@@ -431,7 +431,7 @@ and ``site/niwa.rc``:
 
 and finally, an optional app config file for the local model domain:
 
-.. code-block:: cylc
+.. code-block:: bash
 
    app/model/rose-app.conf  # Main app config.
    app/model/opt/rose-app-niwa.conf  # NIWA site settings.

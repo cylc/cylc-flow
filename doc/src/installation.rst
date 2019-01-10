@@ -46,18 +46,10 @@ The following packages are necessary for running all the tests in Cylc:
 
 - `mock <https://mock.readthedocs.io>`_
 
-The User Guide is generated from LaTeX source files by running
-``make`` in the top level Cylc directory. The specific packages
-required may vary by distribution, e.g.:
+To generate the HTML User Guide, you will need:
 
-- texlive
-- texlive-tocloft
-- texlive-framed
-- texlive-preprint (for ``fullpage.sty``)
-- texlive-tex4ht
-- texlive-generic-extra (for ``dirtree.sty``)
-
-To generate the HTML User Guide **ImageMagick** is also needed.
+- `Sphinx <http://www.sphinx-doc.org/en/master/>`_ of compatible version,
+  ``>=`` **1.5.3** and ``<=`` **1.7.9**.
 
 In most modern Linux distributions all of the software above can be installed
 via the system package manager. Otherwise download packages manually and follow
@@ -70,39 +62,34 @@ are installed properly:
    Checking your software...
 
    Individual results:
-   =============================================================================
-   Package (version requirements)                        Outcome (version found)
-   =============================================================================
-                               *REQUIRED SOFTWARE*                                 
-   Python (2.6+, <3)...................FOUND & min. version MET (2.7.12.final.0)
+   ===============================================================================
+   Package (version requirements)                          Outcome (version found)
+   ===============================================================================
+                                 *REQUIRED SOFTWARE*                              
+   Python (2.6+, <3).....................FOUND & min. version MET (2.7.12.final.0)
 
-     *OPTIONAL SOFTWARE for the GUI & dependency graph visualisation*           
-   Python:pygtk (2.0+).........................FOUND & min. version MET (2.24.0)
-   graphviz (any).................................................FOUND (2.38.0)
-   Python:pygraphviz (any).........................................FOUND (1.3.1)
+          *OPTIONAL SOFTWARE for the GUI & dependency graph visualisation*       
+   Python:pygraphviz (any)...........................................NOT FOUND (-)
+   graphviz (any)...................................................FOUND (2.26.0)
+   Python:pygtk (2.0+)...............................................NOT FOUND (-)
 
-                   *OPTIONAL SOFTWARE for the HTML User Guide*                     
-   ImageMagick (any).............................................FOUND (6.8.9-9)
+               *OPTIONAL SOFTWARE for the HTTPS communications layer*            
+   Python:requests (2.4.2+)......................FOUND & min. version MET (2.11.1)
+   Python:urllib3 (any)..............................................NOT FOUND (-)
+   Python:OpenSSL (any)..............................................NOT FOUND (-)
 
-              *OPTIONAL SOFTWARE for the HTTPS communications layer*                
-   Python:urllib3 (any)...........................................FOUND (1.13.1)
-   Python:OpenSSL (any)...........................................FOUND (17.2.0)
-   Python:requests (2.4.2+).....................FOUND & min. version MET (2.9.1)
+                *OPTIONAL SOFTWARE for the configuration templating*             
+   Python:EmPy (any).................................................NOT FOUND (-)
 
-                   *OPTIONAL SOFTWARE for the LaTeX User Guide*                     
-   TeX:framed (any)..................................................FOUND (n/a)
-   TeX (3.0+)..............................FOUND & min. version MET (3.14159265)
-   TeX:preprint (any)................................................FOUND (n/a)
-   TeX:tex4ht (any)..................................................FOUND (n/a)
-   TeX:tocloft (any).................................................FOUND (n/a)
-   TeX:texlive (any).................................................FOUND (n/a)
-   =============================================================================
+                   *OPTIONAL SOFTWARE for the HTML documentation*                
+   Python:sphinx (1.5.3+).........................FOUND & min. version MET (1.7.0)
+   ===============================================================================
 
    Summary:
-                           ****************************                             
-                              Core requirements: ok                                
-                              Full-functionality: ok                                
-                           ****************************
+                            ****************************                         
+                                Core requirements: ok                             
+                             Full-functionality: not ok                          
+                            ****************************
 
 If errors are reported then the packages concerned are either not installed or
 not in your Python search path.

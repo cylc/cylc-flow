@@ -21,7 +21,7 @@ strings."""
 
 from pygments.lexer import RegexLexer, bygroups, include
 from pygments.token import (Name, Comment, Text, Operator, String,
-                            Punctuation, Error, Keyword)
+                            Punctuation, Error, Keyword, Other)
 
 
 class CylcLexer(RegexLexer):
@@ -32,8 +32,17 @@ class CylcLexer(RegexLexer):
     HEADING_TOKEN = Name.Tag
     SETTING_TOKEN = Name.Variable
     GRAPH_TASK_TOKEN = Keyword.Declaration
+    GRAPH_XTRIGGER_TOKEN = Keyword.Type
     PARAMETERISED_TASK_TOKEN = Name.Builtin
+    EXTERNAL_SUITE_TOKEN = Name.Builtin.Pseudo
     INTERCYCLE_OFFSET_TOKEN = Name.Builtin
+
+    EMPY_BLOCK_REGEX = r'@\{([^\{\}]+|\{[^\}]+\})+\}'
+    EMPY_BLOCK_REGEX = (
+        r'@\%(open)s('  # open empy block
+        r'[^\%(open)s\%(close)s]+|'  # either not a close character
+        r'\%(open)s([^\%(close)s]+)?\%(close)s)+'  # or permit 1 level nesting
+        r'\%(close)s')  # close empy block
 
     # Pygments values.
     name = 'Cylc'
@@ -45,10 +54,7 @@ class CylcLexer(RegexLexer):
     tokens = {
         'root': [
             # Jinja2 opening braces:  {{  {%  {#
-            include('jinja2-openers'),
-
-            # Jinja2 shebang:  #!Jinja2
-            (r'#![Jj]inja2', Comment.Hashbang),
+            include('preproc'),
 
             # Cylc comments:  # ...
             include('comment'),
@@ -74,25 +80,29 @@ class CylcLexer(RegexLexer):
                          Operator), 'inline-graph'),
 
             # Multi-line settings:  key = """ ...
-            (r'(.*)(\s+)?(=)([\s+])?(\"\"\")',
+            (r'([^=\n]+)(=)([\s+])?(\"\"\")',
                 bygroups(SETTING_TOKEN,
-                         Text,
                          Operator,
                          Text,
                          String.Double), 'multiline-setting'),
 
             # Inline settings:  key = ...
-            (r'(.*)(\s+)?(=)',
+            (r'([^=\n]+)(=)',
                 bygroups(SETTING_TOKEN,
-                         Text,
-                         Operator), 'setting')
+                         Operator), 'setting'),
+
+            # Include files
+            (r'(%include)( )(.*)', bygroups(Operator, Text, String)),
+
+            # Arbitrary whitespace
+            (r'\s', Text)
         ],
 
         'heading': [
             (r'[\]]+', HEADING_TOKEN, '#pop'),
-            include('jinja2-openers'),
+            include('preproc'),
             include('parameterisation'),
-            (r'.', HEADING_TOKEN),
+            (r'(\\\n|.)', HEADING_TOKEN),  # Allow line continuation chars.
         ],
 
         # Cylc comments.
@@ -105,9 +115,8 @@ class CylcLexer(RegexLexer):
 
         # The value in a key = value pair.
         'setting': [
-
             include('comment'),
-            include('jinja2-openers'),
+            include('preproc'),
             (r'\\\n', String),
             (r'.', String),
 
@@ -117,22 +126,35 @@ class CylcLexer(RegexLexer):
         'multiline-setting': [
             (r'\"\"\"', String.Double, '#pop'),
             include('comment'),
-            include('jinja2-openers'),
+            include('preproc'),
             (r'(\n|.)', String.Double)
         ],
 
         # Graph strings:  foo => bar & baz
         'graph': [
-            include('jinja2-openers'),
+            include('preproc'),
             include('comment'),
+            include('inter-suite-trigger'),
             include('parameterisation'),
+            (r'@\w+', GRAPH_XTRIGGER_TOKEN),
             (r'\w+', GRAPH_TASK_TOKEN),
+            (r'\!\w+', Other),
             (r'\s', Text),
             (r'=>', Operator),
-            (r'[\&\|\!]', Operator),
+            (r'[\&\|]', Operator),
             (r'[\(\)]', Punctuation),
             (r'\[', Text, 'intercycle-offset'),
             (r'.', Comment)
+        ],
+
+        'inter-suite-trigger': [
+            (r'(\<)'
+             r'([^\>]+)'  # foreign suite
+             r'(::)'
+             r'([^\>]+)'  # foreign task
+             r'(\>)',
+             bygroups(Text, EXTERNAL_SUITE_TOKEN, Text,
+                      PARAMETERISED_TASK_TOKEN, Text)),
         ],
 
         # Parameterised syntax:  <foo=1>
@@ -217,30 +239,30 @@ class CylcLexer(RegexLexer):
             include('graph')
         ],
 
-        # Provides entry points for the other Jinja2 sections.
-        'jinja2-openers': [
-            (r'\{\{', Comment.Preproc, 'jinja2-inline'),
-            (r'\{\%', Comment.Preproc, 'jinja2-block'),
-            # Capture "{#" (jinja2) but not "${#" (bash).
-            (r'(?<!\$)\{#', Comment.Multi, 'jinja2-comment'),
+        'empy': [
+            (r'#![Ee]mpy', Comment.Hashbang),  # #!empy
+            (r'@@', Text),  # @@
+            # @[...]
+            (EMPY_BLOCK_REGEX % {'open': '(', 'close': ')'}, Comment.Preproc),
+            # @{...}
+            (EMPY_BLOCK_REGEX % {'open': '{', 'close': '}'}, Comment.Preproc),
+            # @(...)
+            (EMPY_BLOCK_REGEX % {'open': '[', 'close': ']'}, Comment.Preproc),
+            (r'@empy\.[\w]+[^\n]+', Comment.Preproc),  # @empy...
+            (r'(\s+)?@#.*', Comment.Multi),  # @# ...
+            (r'@[\w.]+', Comment.Preproc)  # @...
         ],
 
-        #  {# ... #}
-        'jinja2-comment': [
-            (r'#\}', Comment.Multi, '#pop'),
-            (r'(.|\n)', Comment.Multi)
+        'jinja2': [
+            (r'#![Jj]inja2', Comment.Hashbang),  # #!jinja2
+            (r'\{\{((.|\n)+?)(?=\}\})\}\}', Comment.Preproc),  # {{...}}
+            (r'\{\%((.|\n)+?)(?=\%\})\%\}', Comment.Preproc),  # {%...%}
+            (r'\{\#((.|\n)+?)(?=\#\})\#\}', Comment.Multi),  # {#...#}
         ],
 
-        #  {% ... %}
-        'jinja2-block': [
-            (r'\%\}', Comment.Preproc, '#pop'),
-            (r'(.|\n)', Comment.Preproc)
-        ],
-
-        #  {{ ... }}
-        'jinja2-inline': [
-            (r'\}\}', Comment.Preproc, '#pop'),
-            (r'(.|\n)', Comment.Preproc)
+        'preproc': [
+            include('empy'),
+            include('jinja2')
         ]
 
     }

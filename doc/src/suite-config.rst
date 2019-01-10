@@ -26,7 +26,7 @@ A cylc *suite configuration directory* contains:
   - And any include-files used in it (see below; may be
     kept in sub-directories).
 
-- **A ``bin/`` sub-directory** (optional)
+- **A** ``bin/`` **sub-directory** (optional)
 
   - For scripts and executables that implement, or are
     used by, suite tasks.
@@ -36,7 +36,7 @@ A cylc *suite configuration directory* contains:
     commands, scripts, or programs; or they can be scripted
     entirely within the suite.rc file.
 
-- **A ``lib/python/`` sub-directory** (optional)
+- **A** ``lib/python/`` **sub-directory** (optional)
 
   - For custom job submission modules
     (see :ref:`CustomJobSubmissionMethods`)
@@ -268,18 +268,18 @@ vary depending on the particular cycle point:
            [[[T06,T18]]] # hours
                graph = "C => X"
 
-:num:`fig-dep-eg-1` shows the complete suite.rc listing alongside
+:numref:`fig-dep-eg-1` shows the complete suite.rc listing alongside
 the suite graph. This is a complete, valid, runnable suite (it will
 use default task runtime properties such as ``script``).
 
 .. Need to use a 'container' directive to get centered image with
    left-aligned caption (as required for code block text).
 
-.. _fig-dep-eg-1:
-
 .. container:: twocol
 
    .. container:: image
+
+      .. _fig-dep-eg-1:
 
       .. figure:: graphics/png/orig/dep-eg-1.png
          :align: center
@@ -472,7 +472,7 @@ to generate the final graph.
 One-off (Non-Cycling)
 """""""""""""""""""""
 
-:num:`fig-test1` shows a small suite of one-off non-cycling
+:numref:`fig-test1` shows a small suite of one-off non-cycling
 tasks; these all share a single cycle point (``1``) and don't spawn
 successors (once they're all finished the suite just exits). The integer
 ``1`` attached to each graph node is just an arbitrary label here.
@@ -480,11 +480,11 @@ successors (once they're all finished the suite just exits). The integer
 .. Need to use a 'container' directive to get centered image with
    left-aligned caption (as required for code block text).
 
-.. _fig-test1:
-
 .. container:: twocol
 
    .. container:: image
+
+      .. _fig-test1:
 
       .. figure:: graphics/png/orig/test1.png
          :align: center
@@ -506,17 +506,17 @@ Cycling Graphs
 """"""""""""""
 
 For cycling tasks the graph section heading defines a sequence of cycle points
-for which the subsequent graph section is valid. :num:`fig-test2`
+for which the subsequent graph section is valid. :numref:`fig-test2`
 shows a small suite of cycling tasks.
 
 .. Need to use a 'container' directive to get centered image with
    left-aligned caption (as required for code block text).
 
-.. _fig-test2:
-
 .. container:: twocol
 
    .. container:: image
+
+      .. _fig-test2:
 
       .. figure:: graphics/png/orig/test2.png
          :align: center
@@ -901,16 +901,16 @@ a single ``prep`` task, at a single cycle.
 We can write this using a special case of the ``task[-interval]`` syntax -
 if the interval is null, this implies the task at the initial cycle point.
 
-For example, we can write our suite like :num:`fig-test4`.
+For example, we can write our suite like :numref:`fig-test4`.
 
 .. Need to use a 'container' directive to get centered image with
    left-aligned caption (as required for code block text).
 
-.. _fig-test4:
-
 .. container:: twocol
 
    .. container:: image
+
+      .. _fig-test4:
 
       .. figure:: graphics/png/orig/test4.png
          :align: center
@@ -955,11 +955,11 @@ that has one-off dependencies with other task sets at different cycles.
 .. Need to use a 'container' directive to get centered image with
    left-aligned caption (as required for code block text).
 
-.. _fig-test5:
-
 .. container:: twocol
 
    .. container:: image
+
+      .. _fig-test5:
 
       .. figure:: graphics/png/orig/test5.png
          :align: center
@@ -991,12 +991,12 @@ that has one-off dependencies with other task sets at different cycles.
                   bar = "color=orange"
 
 
-A different kind of requirement is displayed in :num:`fig-test5`.
+A different kind of requirement is displayed in :numref:`fig-test5`.
 Usually, we want to specify additional tasks and dependencies at the initial
 cycle point. What if we want our first cycle point to be entirely special,
 with some tasks missing compared to subsequent cycle points?
 
-In :num:`fig-test5`, ``bar`` will not be run at the initial
+In :numref:`fig-test5`, ``bar`` will not be run at the initial
 cycle point, but will still run at subsequent cycle points.
 ``[[[+PT6H/PT6H]]]`` means start at ``+PT6H`` (6 hours after
 the initial cycle point) and then repeat every ``PT6H`` (6 hours).
@@ -1085,7 +1085,7 @@ dataset at the same time as the downstream tasks in cycle point 1 are
 processing the first one, and so on. In this way multiple datasets can be
 processed at once if they happen to come in quickly. A single shutdown task
 runs at the end of the final cycle to collate results. The suite graph is
-shown in :num:`fig-satellite`.
+shown in :numref:`fig-satellite`.
 
 .. _fig-satellite:
 
@@ -1305,17 +1305,17 @@ can only appear on the left [1]_ :
 
 Forecasting suites typically have simple conditional
 triggering requirements, but any valid conditional expression can be
-used, as shown in :num:`fig-conditional`
+used, as shown in :numref:`fig-conditional`
 (conditional triggers are plotted with open arrow heads).
 
 .. Need to use a 'container' directive to get centered image with
    left-aligned caption (as required for code block text).
 
-.. _fig-conditional:
-
 .. container:: twocol
 
    .. container:: image
+
+      .. _fig-conditional:
 
       .. figure:: graphics/png/orig/conditional-triggers.png
          :align: center
@@ -1343,7 +1343,7 @@ Suicide Triggers
 
 Suicide triggers take tasks out of the suite. This can be used for
 automated failure recovery. The suite.rc listing and accompanying
-graph in :num:`fig-suicide` show how to define a chain of failure
+graph in :numref:`fig-suicide` show how to define a chain of failure
 recovery tasks that trigger if they're needed but
 otherwise remove themselves from the
 suite (you can run the *AutoRecover.async* example suite to see how
@@ -1356,11 +1356,11 @@ you toggle them on with *View* ``->`` *Options* ``->``
 .. Need to use a 'container' directive to get centered image with
    left-aligned caption (as required for code block text).
 
-.. _fig-suicide:
-
 .. container:: twocol
 
    .. container:: image
+
+      .. _fig-suicide:
 
       .. figure:: graphics/png/orig/suicide.png
          :align: center
@@ -2013,7 +2013,7 @@ cycle point:
 .. note::
 
    ``cylc graph`` will display un-satisfiable inter-cycle
-   dependencies as "ghost nodes". :num:`ghost-node-screenshot`
+   dependencies as "ghost nodes". :numref:`ghost-node-screenshot`
    is a screenshot of cylc graph displaying the above example with the
    un-satisfiable task (foo) displayed as a "ghost node".
 
@@ -2507,15 +2507,13 @@ members of collapsed families) are plotted as rectangular nodes to
 the right if they are doing anything interesting (submitted, running,
 failed).
 
-:num:`fig-namespaces` illustrates successive expansion of nested
+:numref:`fig-namespaces` illustrates successive expansion of nested
 task families in the *namespaces* example suite.
 
 .. todo::
 
    Create sub-figures if possible: for now hacked as separate figures with
-   link to first, and caption on final, displayed figure.
-
-.. _fig-namespaces:
+   link and caption on final displayed figure.
 
 .. figure:: graphics/png/orig/inherit-2.png
    :align: center
@@ -2531,6 +2529,8 @@ task families in the *namespaces* example suite.
 
 .. figure:: graphics/png/orig/inherit-6.png
    :align: center
+
+.. _fig-namespaces:
 
 .. figure:: graphics/png/orig/inherit-7.png
    :align: center
@@ -2710,7 +2710,7 @@ Here's a more complex graph using two parameters (``[runtime]`` omitted):
                prep => init_run2 => model_run2_cat => post_run2_cat => wrap_run2 => done
                    init_run2 => model_run2_dog => post_run2_dog => wrap_run2"""
 
-:num:`fig-params-1` shows the result as visualized by
+:numref:`fig-params-1` shows the result as visualized by
 ``cylc graph``.
 
 .. _fig-params-1:
@@ -3079,7 +3079,7 @@ And here's how to do the same thing with parameterized tasks:
    OFFSET=P${OFFSET_MONTHS}M  # e.g. P4M for chunk=3
    run-model $(cylc cyclepoint --offset=$OFFSET $INITIAL_POINT)"""
 
-The two workflows are shown together in :num:`fig-eg2`.
+The two workflows are shown together in :numref:`fig-eg2`.
 They both achieve the same result, and both can
 include special tasks at the start, end, or
 anywhere in between. But as noted earlier the parameterized version has
@@ -3089,12 +3089,12 @@ workflow will be visible at all times as the suite runs.
 
 .. todo::
    Create sub-figures if possible: for now hacked as separate figures with
-   link to first, and caption on final, displayed figure.
-
-.. _fig-eg2:
+   link and caption on final displayed figure.
 
 .. figure:: graphics/png/orig/eg2-static.png
    :align: center
+
+.. _fig-eg2:
 
 .. figure:: graphics/png/orig/eg2-dynamic.png
    :align: center
@@ -3232,7 +3232,7 @@ with standard programming techniques.
 
 
 The ``jinja2.ensemble`` example, graphed in
-:num:`fig-jinja2-ensemble`, shows an ensemble of similar tasks
+:numref:`fig-jinja2-ensemble`, shows an ensemble of similar tasks
 generated using Jinja2:
 
 .. code-block:: cylc
@@ -3268,7 +3268,7 @@ relationships for a group of tasks that is repeated for each city in the
 suite. To add a new city and associated tasks and dependencies simply
 add the city name to list at the top of the file. The suite is graphed,
 with the New York City task family expanded, in
-:num:`fig-jinja2-cities`.
+:numref:`fig-jinja2-cities`.
 
 .. literalinclude:: ../../etc/examples/jinja2/cities/suite.rc
    :language: cylc

@@ -287,7 +287,7 @@ UM System Task Names
 
 For UM System suites we recommend the following full task naming convention:
 
-.. code-block:: cylc
+.. code-block:: none
 
    model_system_function[_member]
 

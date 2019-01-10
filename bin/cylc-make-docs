@@ -42,10 +42,6 @@ echo "... Generating the command reference ..."
 ./src/custom/make-commands.sh
 echo >&2
 
-echo "... Generating the Cylc homepage index..."
-./src/custom/make-index.sh
-echo >&2
-
 echo "... Auto-generating the HTML with Sphinx ..."
 sphinx-build -n -b html ./src built-sphinx/
 echo >&2

@@ -21,7 +21,7 @@ import os
 # -- General configuration ------------------------------------------------
 
 # minimal Sphinx version required.
-needs_sphinx = '1.2'
+needs_sphinx = '1.5.3'
 
 # Sphinx extension module names.
 sys.path.append(os.path.abspath('custom'))  # path to custom extensions.
@@ -30,7 +30,6 @@ extensions = [
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
-    'numfig',
     'cylc_lang',
 ]
 
@@ -57,11 +56,8 @@ exclude_patterns = ['_build']
 pygments_style = 'manni'
 
 # Enable automatic numbering of any captioned figures, tables & code blocks.
-# 'numfig' THIS REQUIRES v1.3+, & assume only v1.2 for now, so can't use.
-#numfig = True
-#numfig_secnum_depth = 0
-# Therefore must use the 'numfig' extension, configuring as such:
-figure_caption_prefix = "Fig. "
+numfig = True
+numfig_secnum_depth = 0
 
 
 # -- Options for HTML output ----------------------------------------------
@@ -69,7 +65,7 @@ figure_caption_prefix = "Fig. "
 # The builtin HTML theme to build upon, with customisations to it. Notably
 # customise with a white 'sticky' sidebar; make headings & links text the Cylc
 # logo colours & make code block background the logo green made much lighter.
-# html_theme = "classic" -> not required to set, as this is the default.
+html_theme = "classic"
 html_theme_options = {
     "stickysidebar": True,
     "sidebarwidth": 250,
@@ -130,7 +126,7 @@ latex_documents = [
 latex_logo = "graphics/png/orig/cylc-logo.png"
 
 # If true, show URL addresses after external links.
-latex_show_urls = True
+latex_show_urls = "footnote"
 
 
 # -- Options for manual page output ---------------------------------------

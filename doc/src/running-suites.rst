@@ -1082,7 +1082,7 @@ When a suite is started with the ``cylc run`` command (cold or
 warm start) the cycle point at which it starts can be given on the command
 line or hardwired into the suite.rc file:
 
-.. code-block:: cylc
+.. code-block:: bash
 
    cylc run foo 20120808T06Z
 

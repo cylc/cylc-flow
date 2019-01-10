@@ -16,7 +16,7 @@ of external driving data: typically one or more tasks will wait on real
 time observations and/or model data from an external system, and these
 will drive other downstream tasks, and so on. The dependency diagram for
 a single forecast cycle point in such a system is a *Directed Acyclic Graph*
-as shown in :num:`fig-dep-one` (in our terminology, a
+as shown in :numref:`fig-dep-one` (in our terminology, a
 *forecast cycle point* is comprised of all tasks with a common *cycle point*,
 which is the nominal analysis time or start time of the forecast
 models in the group). In real time operation processing will consist of
@@ -66,7 +66,7 @@ Intra-cycle Dependence
 
 
 Most dependence between tasks applies within a single forecast cycle
-point. :num:`fig-dep-one` shows the dependency diagram for a single
+point. :numref:`fig-dep-one` shows the dependency diagram for a single
 forecast cycle point of a simple example suite of three forecast models
 (*a*, *b*, and *c*) and three post processing or product generation
 tasks (*d*, *e* and *f*). A scheduler capable of handling this
@@ -99,7 +99,7 @@ upstream tasks.
    extent of a task bar represents its execution time, and the vertical
    blue lines show when the external driving data becomes available.
 
-:num:`fig-time-one` shows the optimal job schedule for two
+:numref:`fig-time-one` shows the optimal job schedule for two
 consecutive cycle points of the example suite in real time operation, given
 execution times represented by the horizontal extent of the task bars.
 There is a time gap between cycle points as the suite waits on new external
@@ -143,8 +143,8 @@ study?  While the forecast model *a* appears to depend only on the
 external data *x* at this stage of the discussion, in fact it would
 typically also depend on its own previous instance for the model
 *background state* used in initializing the new forecast. Thus, as
-alluded to in :num:`fig-dep-two-linked`, task *a* could in principle
-start as soon as its predecessor has finished. :num:`fig-overlap`
+alluded to in :numref:`fig-dep-two-linked`, task *a* could in principle
+start as soon as its predecessor has finished. :numref:`fig-overlap`
 shows, however, that starting a whole new cycle point at this point is
 dangerous - it results in dependency violations in half of the tasks in
 the example suite. In fact the situation could be even worse than this
@@ -152,7 +152,7 @@ the example suite. In fact the situation could be even worse than this
 reason *after* the second cycle point has been launched. Clearly we must
 consider handling inter-cycle dependence explicitly or else agree not to
 start the next cycle point early, as is illustrated in
-:num:`fig-job-no-overlap`.
+:numref:`fig-job-no-overlap`.
 
 
 .. _InterCyclePointDependence:
@@ -170,7 +170,7 @@ the next forecast model run. In real time operation inter-cycle
 dependence can be ignored because it is automatically satisfied when one cycle
 point finishes before the next begins. If it is not ignored it drastically
 complicates the dependency graph by blurring the clean boundary between
-cycle points. :num:`fig-dep-multi` illustrates the problem for our
+cycle points. :numref:`fig-dep-multi` illustrates the problem for our
 simple example suite assuming minimal inter-cycle dependence: the warm
 cycled models (*a*, *b*, and *c*) each depend on their own previous instances.
 
@@ -189,7 +189,7 @@ for suites that have little downtime between forecast cycle points and
 therefore take many cycle points to catch up after a delay. Without taking
 account of inter-cycle dependence, the best that can be done, in
 general, is to reduce the gap between cycle points to zero as shown in
-:num:`fig-job-no-overlap`. A limited crude overlap of the single
+:numref:`fig-job-no-overlap`. A limited crude overlap of the single
 cycle point job schedule may be possible for specific task sets but the
 allowable overlap may change if new tasks are added, and it is still dangerous:
 it amounts to running different parts of a dependent system as if they were not
@@ -218,8 +218,8 @@ contention or task failures) won't result in dependency violations.
    advance, possible in principle when inter-cycle dependence is
    handled explicitly.
 
-:num:`fig-optimal-two` shows, in contrast to
-:num:`fig-overlap`, the optimal two cycle point job schedule
+:numref:`fig-optimal-two` shows, in contrast to
+:numref:`fig-overlap`, the optimal two cycle point job schedule
 obtained by respecting all inter-cycle dependence. This assumes no delays due
 to resource contention or otherwise - i.e. every task runs
 as soon as it is ready to run. The scheduler running
@@ -251,12 +251,12 @@ with dependency violations.
    mode, or after a long delay, when the external driving data are
    available many cycle points in advance. Above the time axis is the optimal
    schedule obtained when the suite is constrained only by its true
-   dependencies, as in :num:`fig-dep-two-linked`, and underneath
+   dependencies, as in :numref:`fig-dep-two-linked`, and underneath
    is the best that can be done, in general, when inter-cycle
    dependence is ignored.
 
 To further illustrate the potential benefits of proper inter-cycle
-dependency handling, :num:`fig-time-three` shows an operational
+dependency handling, :numref:`fig-time-three` shows an operational
 delay of almost one whole cycle point in a suite with little downtime between
 cycle points. Above the time axis is the optimal schedule that is possible in
 principle when inter-cycle dependence is taken into account, and below
@@ -266,7 +266,7 @@ affected, and subsequent cycle points are all on time, whilst in the latter
 case it takes five full cycle points to catch up to normal real time
 operation [2]_.
 
-Similarly, :num:`fig-time-two` shows example suite job schedules
+Similarly, :numref:`fig-time-two` shows example suite job schedules
 for an historical case study, or when catching up after a very long
 delay; i.e. when the external driving data are available many cycle
 points in advance. Task *a*, which as the most upstream forecast
@@ -301,7 +301,7 @@ The Cylc Scheduling Algorithm
    :align: center
 
    The cylc task pool. How cylc sees a suite, in contrast to the
-   multi-cycle-point dependency graph of :num:`fig-dep-multi`.
+   multi-cycle-point dependency graph of :numref:`fig-dep-multi`.
    Task colors represent different cycle points, and the small squares
    and circles represent different prerequisites and outputs. A task
    can run when its prerequisites are satisfied by the outputs
@@ -317,7 +317,7 @@ right. Task proxies are self-contained - they know their own
 prerequisites and outputs but are not aware of the wider suite.
 Inter-cycle dependence is not treated as special, and the task pool can
 be populated with tasks with many different cycle points. The task pool
-is illustrated in :num:`fig-task-pool`. *Whenever any task
+is illustrated in :numref:`fig-task-pool`. *Whenever any task
 changes state due to completion of an output, every task checks to see
 if its own prerequisites have been satisfied* [4]_.
 In effect, cylc gets a pool of tasks to self-organize by negotiating
@@ -328,7 +328,7 @@ previous section, emerges naturally at run time.
 .. [1] Future plans for EcoConnect include additional deterministic regional
        weather forecasts and a statistical ensemble.
 .. [2] Note that simply overlapping the single cycle point schedules of
-       :num:`fig-time-one` from the same start point would have
+       :numref:`fig-time-one` from the same start point would have
        resulted in dependency violation by task *c*.
 .. [3] Finally, we note again that a good job scheduler should be able to
        dynamically adapt to delays in any part of the suite due to resource
