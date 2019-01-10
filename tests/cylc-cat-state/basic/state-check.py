@@ -1,6 +1,6 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -13,7 +13,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-------------------------------------------------------------------------------
 
 import os
 import sqlite3
@@ -30,7 +29,7 @@ def main(argv):
 
     sname = argv[0]
     rundir = argv[1]
-    
+
     p = pcylc("cylc cat-state " + sname,
               shell=True, stdout=subprocess.PIPE,
               stderr=subprocess.PIPE)
@@ -68,14 +67,16 @@ def main(argv):
                 sys.stderr.write("unable to query suite database\n")
                 sys.exit(1)
             if not res[0][0] == status:
-                error_states.append(line + ": state retrieved " + str(res[0][0]))
+                error_states.append(
+                    line + ": state retrieved " + str(res[0][0]))
         elif line == "Begin task states":
             states_begun = True
 
     cnx.close()
 
     if error_states:
-        print >> sys.stderr, "The following task states were not consistent with the database:"
+        st = "The following task states were not consistent with the database:"
+        print >> sys.stderr, st
         for line in error_states:
             print >> sys.stderr, line
         sys.exit(1)
@@ -84,4 +85,4 @@ def main(argv):
 
 
 if __name__ == "__main__":
-   main(sys.argv[1:])
+    main(sys.argv[1:])
