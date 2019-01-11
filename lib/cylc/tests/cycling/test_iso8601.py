@@ -17,9 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
+from datetime import datetime
 
 from cylc.cycling.iso8601 import init, ISO8601Sequence, ISO8601Point,\
-    ISO8601Interval
+    ISO8601Interval, ingest_time
 
 
 class TestISO8601Sequence(unittest.TestCase):
@@ -228,7 +229,7 @@ class TestISO8601Sequence(unittest.TestCase):
 
     def test_exclusions_to_string(self):
         init(time_zone='Z')
-        # Chack that exclusions are not included where they should not be.
+        # Check that exclusions are not included where they should not be.
         basic = ISO8601Sequence('PT1H', '2000', '2001')
         self.assertFalse('!' in str(basic))
 
@@ -486,7 +487,7 @@ class TestISO8601Sequence(unittest.TestCase):
         self.assertEqual(p_start - i, ISO8601Point('20100807T18'))
         self.assertEqual(p_stop + i, ISO8601Point('20100808T08'))
 
-        sequence = ISO8601Sequence('PT10M', str(p_start), str(p_stop), )
+        sequence = ISO8601Sequence('PT10M', str(p_start), str(p_stop),)
         sequence.set_offset(- ISO8601Interval('PT10M'))
         point = sequence.get_next_point(ISO8601Point('20100808T0000'))
         self.assertEqual(point, ISO8601Point('20100808T0010'))
@@ -524,6 +525,257 @@ class TestISO8601Sequence(unittest.TestCase):
 
         self.assertFalse(
             sequence.is_on_sequence(ISO8601Point('20100809T0005')))
+
+
+class TestRelativeCyclePoint(unittest.TestCase):
+    """Contains unit tests for cycle point relative to current time."""
+
+    def setUp(self):
+        init(time_zone='Z')
+
+    def test_next_simple(self):
+        """Test the generation of CP using 'next' from single input."""
+        my_now = '20100808T1540Z'
+        sequence = ('next(T2100Z)',       # 20100808T2100Z
+                    'next(T00)',          # 20100809T0000Z
+                    'next(T-15)',         # 20100808T1615Z
+                    'next(T-45)',         # 20100808T1545Z
+                    'next(-10)',          # 21100101T0000Z
+                    'next(-1008)',        # 21100801T0000Z
+                    'next(--10)',         # 20101001T0000Z
+                    'next(--0325)',       # 20110325T0000Z
+                    'next(---10)',        # 20100810T0000Z
+                    'next(---05T1200Z)')  # 20100905T1200Z
+
+        output = []
+
+        for point in sequence:
+            output.append(ingest_time(point, my_now))
+        self.assertEqual(output, ['20100808T2100Z',
+                                  '20100809T0000Z',
+                                  '20100808T1615Z',
+                                  '20100808T1545Z',
+                                  '21100101T0000Z',
+                                  '21100801T0000Z',
+                                  '20101001T0000Z',
+                                  '20110325T0000Z',
+                                  '20100810T0000Z',
+                                  '20100905T1200Z'])
+
+    def test_previous_simple(self):
+        """Test the generation of CP using 'previous' from single input."""
+        my_now = '20100808T1540Z'
+        sequence = ('previous(T2100Z)',       # 20100807T2100Z
+                    'previous(T00)',          # 20100808T0000Z
+                    'previous(T-15)',         # 20100808T1515Z
+                    'previous(T-45)',         # 20100808T1445Z
+                    'previous(-10)',          # 20100101T0000Z
+                    'previous(-1008)',        # 20100801T0000Z
+                    'previous(--10)',         # 20091001T0000Z
+                    'previous(--0325)',       # 20100325T0000Z
+                    'previous(---10)',        # 20100710T0000Z
+                    'previous(---05T1200Z)')  # 20100805T1200Z
+
+        output = []
+
+        for point in sequence:
+            output.append(ingest_time(point, my_now))
+        self.assertEqual(output, ['20100807T2100Z',
+                                  '20100808T0000Z',
+                                  '20100808T1515Z',
+                                  '20100808T1445Z',
+                                  '20100101T0000Z',
+                                  '20100801T0000Z',
+                                  '20091001T0000Z',
+                                  '20100325T0000Z',
+                                  '20100710T0000Z',
+                                  '20100805T1200Z'])
+
+    def test_sequence(self):
+        """Test the generation of CP from list input."""
+        my_now = '20100808T1540Z'
+        sequence = (
+            'next(T-00;T-15;T-30;T-45)',      # 20100808T1545Z
+            'previous(T-00;T-15;T-30;T-45)',  # 20100808T1530Z
+            'next(T00;T06;T12;T18)',          # 20100808T1800Z
+            'previous(T00;T06;T12;T18)')      # 20100808T1200Z
+
+        output = []
+
+        for point in sequence:
+            output.append(ingest_time(point, my_now))
+        self.assertEqual(output, ['20100808T1545Z',
+                                  '20100808T1530Z',
+                                  '20100808T1800Z',
+                                  '20100808T1200Z'])
+
+    def test_offset_simple(self):
+        """Test the generation of offset CP."""
+        my_now = '20100808T1540Z'
+        sequence = ('PT15M',   # 20100808T1555Z
+                    '-PT30M',  # 20100808T1510Z
+                    'PT1H',    # 20100808T1640Z
+                    '-PT18H',  # 20100807T2140Z
+                    'P3D',     # 20100811T1540Z
+                    '-P2W',    # 20100725T1540Z
+                    'P6M',     # 20110208T1540Z
+                    '-P1M',    # 20100708T1540Z
+                    'P1Y',     # 20110808T1540Z
+                    '-P5Y')    # 20050808T1540Z
+
+        output = []
+
+        for point in sequence:
+            output.append(ingest_time(point, my_now))
+        self.assertEqual(output, ['20100808T1555Z',
+                                  '20100808T1510Z',
+                                  '20100808T1640Z',
+                                  '20100807T2140Z',
+                                  '20100811T1540Z',
+                                  '20100725T1540Z',
+                                  '20110208T1540Z',
+                                  '20100708T1540Z',
+                                  '20110808T1540Z',
+                                  '20050808T1540Z'])
+
+    def test_offset(self):
+        """Test the generation of offset CP with 'next' and 'previous'."""
+        my_now = '20100808T1540Z'
+        sequence = (
+            'next(T06) +P1D',                   # 20100810T0600Z
+            'previous(T-30) -PT12H',            # 20100808T0330Z
+            'next(T00;T06;T12;T18) -P1W',       # 20100801T1800Z
+            'previous(T00;T06;T12;T18) +PT1H')  # 20100808T1300Z
+
+        output = []
+
+        for point in sequence:
+            output.append(ingest_time(point, my_now))
+        self.assertEqual(output, ['20100810T0600Z',
+                                  '20100808T0330Z',
+                                  '20100801T1800Z',
+                                  '20100808T1300Z'])
+
+    def test_weeks_days(self):
+        """Test the generation of CP with day-of-week,
+        ordinal day, and week (with day-of-week specified)."""
+        my_now = '20100808T1540Z'
+        sequence = (
+            'next(-W-1)',        # 20100809T0000Z
+            'previous(-W-4)',    # 20100805T0000Z
+            'next(-010)',        # 20110110T0000Z
+            'previous(-101)',    # 20100411T0000Z
+            'next(-W40-1)',      # 20101004T0000Z
+            'previous(-W05-1)',  # 20100201T0000Z
+            'next(-W05-5)',      # 20110204T0000Z
+            'previous(-W40-4)')  # 20091001T0000Z
+
+        output = []
+
+        for point in sequence:
+            output.append(ingest_time(point, my_now))
+        self.assertEqual(output, ['20100809T0000Z',
+                                  '20100805T0000Z',
+                                  '20110110T0000Z',
+                                  '20100411T0000Z',
+                                  '20101004T0000Z',
+                                  '20100201T0000Z',
+                                  '20110204T0000Z',
+                                  '20091001T0000Z'])
+
+    def test_cug(self):
+        """Test the offset CP examples in the Cylc user guide"""
+        my_now = '2018-03-14T15:12Z'
+        sequence = (
+            'next(T-00)',                        # 20180314T1600Z
+            'previous(T-00)',                    # 20180314T1500Z
+            'next(T-00; T-15; T-30; T-45)',      # 20180314T1515Z
+            'previous(T-00; T-15; T-30; T-45)',  # 20180314T1500Z
+            'next(T00)',                         # 20180315T0000Z
+            'previous(T00)',                     # 20180314T0000Z
+            'next(T06:30Z)',                     # 20180315T0630Z
+            'previous(T06:30) -P1D',             # 20180313T0630Z
+            'next(T00; T06; T12; T18)',          # 20180314T1800Z
+            'previous(T00; T06; T12; T18)',      # 20180314T1200Z
+            'next(T00; T06; T12; T18)+P1W',      # 20180321T1800Z
+            'PT1H',                              # 20180314T1612Z
+            '-P1M',                              # 20180214T1512Z
+            'next(-00)',                         # 21000101T0000Z
+            'previous(--01)',                    # 20180101T0000Z
+            'next(---01)',                       # 20180401T0000Z
+            'previous(--1225)',                  # 20171225T0000Z
+            'next(-2006)',                       # 20200601T0000Z
+            'previous(-W101)',                   # 20180305T0000Z
+            'next(-W-1; -W-3; -W-5)',            # 20180314T0000Z
+            'next(-001; -091; -181; -271)',      # 20180401T0000Z
+            'previous(-365T12Z)')                # 20171231T1200Z
+
+        output = []
+
+        for point in sequence:
+            output.append(ingest_time(point, my_now))
+        self.assertEqual(output, ['20180314T1600Z',
+                                  '20180314T1500Z',
+                                  '20180314T1515Z',
+                                  '20180314T1500Z',
+                                  '20180315T0000Z',
+                                  '20180314T0000Z',
+                                  '20180315T0630Z',
+                                  '20180313T0630Z',
+                                  '20180314T1800Z',
+                                  '20180314T1200Z',
+                                  '20180321T1800Z',
+                                  '20180314T1612Z',
+                                  '20180214T1512Z',
+                                  '21000101T0000Z',
+                                  '20180101T0000Z',
+                                  '20180401T0000Z',
+                                  '20171225T0000Z',
+                                  '20200601T0000Z',
+                                  '20180305T0000Z',
+                                  '20180314T0000Z',
+                                  '20180401T0000Z',
+                                  '20171231T1200Z'])
+
+    def test_next_simple_no_now(self):
+        """Test the generation of CP using 'next' with no value for `now`."""
+        my_now = None
+        point = 'next(T00Z)+P1D'
+        output = ingest_time(point, my_now)
+
+        current_time = datetime.utcnow()
+        # my_now is None, but ingest_time will have used a similar time, and
+        # the returned value must be after current_time
+        output_time = datetime.strptime(output, "%Y%m%dT%H%MZ")
+        self.assertTrue(current_time < output_time)
+
+    def test_integer_cycling_is_returned(self):
+        """Test that when integer points are given, the same value is
+        returned."""
+        integer_point = "1"
+        self.assertEqual(integer_point, ingest_time(integer_point, None))
+
+    def test_expanded_dates_are_returned(self):
+        """Test that when expanded dates are given, the same value is
+        returned."""
+        expanded_date = "+0100400101T0000Z"
+        self.assertEqual(expanded_date, ingest_time(expanded_date, None))
+
+    def test_timepoint_truncated(self):
+        """Test that when a timepoint is given, and is truncated, then the
+        value is added to `now`."""
+        my_now = '2018-03-14T15:12Z'
+        timepoint_truncated = "T15:00Z"  # 20180315T1500Z
+        output = ingest_time(timepoint_truncated, my_now)
+        self.assertEqual("20180315T1500Z", output)
+
+    def test_timepoint(self):
+        """Test that when a timepoint is given, and is not truncated, the
+        same value is returned."""
+        my_now = '2018-03-14T15:12Z'
+        timepoint_truncated = "19951231T0630"  # 19951231T0630
+        output = ingest_time(timepoint_truncated, my_now)
+        self.assertEqual("19951231T0630", output)
 
 
 if __name__ == '__main__':
