@@ -32,8 +32,10 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-suite-run" \
     cylc run --debug --no-detach "${SUITE_NAME}"
 
+# egrep -m <num> is stop matching after <num> matches
+#       -A <num> is number of lines of context after match
 cylc cat-log "${SUITE_NAME}" \
-    | egrep -m 1 -A 3 "ERROR - \[jobs-submit cmd\]" \
+    | egrep -m 1 -A 2 "ERROR - \[jobs-submit cmd\]" \
        | sed -e 's/^.* \(ERROR\)/\1/' > log
 
 SUITE_LOG_DIR=$(cylc cat-log -m p "${SUITE_NAME}")
