@@ -1038,10 +1038,10 @@ cycle point to the ``cylc ext-trigger`` command.
 - *default*: (none)
 - *example*: (note the comma and line-continuation character)
 
-  .. code-block:: cylc
+  .. code-block:: none
 
      external-trigger = get-satx("new sat-X data ready"),
-                          get-saty("new sat-Y data ready for $CYLC_TASK_CYCLE_POINT")
+                        get-saty("new sat-Y data ready for $CYLC_TASK_CYCLE_POINT")
 
 
 [scheduling] ``->`` [[special tasks]] ``->`` sequential

@@ -1563,10 +1563,10 @@ member of ``FAM1`` succeeding you can create a dummy task
        FAM1:succeed-any => FAM1_succeed_any_marker => FAM2
                    """
    [runtime]
-   ...
+   # ...
        [[FAM1_succeed_any_marker]]
            script = true
-   ...
+   # ...
 
 This graph generates only ``N + M`` dependencies, which takes
 significantly less memory and CPU to store and evaluate.
@@ -2835,12 +2835,12 @@ set of model runs:
            run = 1..5
    [scheduling]
        [[dependencies]]
-           graph = """model<run> => post_proc<run>  # general case
-                      model<run=1> => check_first_run  # special case"""
+           graph = """ model<run> => post_proc<run>  # general case
+                       model<run=1> => check_first_run """  # special case
    [runtime]
        [[model<run>]]
            # config for all "model" runs...
-       [[model<run=1>
+       [[model<run=1>]]
            # special config (if any) for the first model run...
        #...
 
@@ -3357,7 +3357,7 @@ and related values in ensemble suites:
 
    {% for i in range(0,100) %}  # 0, 1, ..., 99
        {% set j = i | pad(2,'0') %}
-       A_{{j}}          # A_00, A_01, ..., A_99
+       [[A_{{j}}]]         # [[A_00]], [[A_01]], ..., [[A_99]]
    {% endfor %}
 
 

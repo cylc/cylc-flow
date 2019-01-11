@@ -23,17 +23,17 @@ and explicit.
 
 Nearly all timeouts and delays in cylc were in minutes, except for:
 
-.. code-block:: cylc
+.. code-block:: none
 
    [runtime][[my_task]][[[suite state polling]]]interval
 
-.. code-block:: cylc
+.. code-block:: none
 
    [runtime][[my_task]][[[simulation mode]]]run time range
 
 which were in seconds, and
 
-.. code-block:: cylc
+.. code-block:: none
 
    [scheduling]runahead limit
 
@@ -139,7 +139,7 @@ Pre-cylc-6:
 .. code-block:: cylc
 
    [scheduling]
-       ...
+       # ...
        [[dependencies]]
            [[[0,12]]]
                graph = foo[T-12] => foo & bar => baz
@@ -149,7 +149,7 @@ Cylc-6+:
 .. code-block:: cylc
 
    [scheduling]
-       ...
+       # ...
        [[dependencies]]
            [[[T00,T12]]]
                graph = foo[-PT12H] => foo & bar => baz
