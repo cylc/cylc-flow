@@ -105,7 +105,7 @@ migrated to Cylc soon though).
 
 - with ``--new`` it invokes bash over SSH and a raw shell
   expression, to delete previous-run files
-- it invokes itself over over SSH to create top level suite directories
+- it invokes itself over SSH to create top level suite directories
   and install source files
 
   - skips installation if server UUID file is found on the job host

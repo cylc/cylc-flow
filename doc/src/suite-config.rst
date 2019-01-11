@@ -745,7 +745,7 @@ It is also valid to use sequences for exclusions. For example:
 .. code-block:: cylc
 
    [[[ PT1H ! PT6H ]]]         # Run hourly from the initial cycle point but
-                               # not 6-hourly from the intial cycle point.
+                               # not 6-hourly from the initial cycle point.
    [[[ T-00 ! PT6H ]]]         # Run hourly on the hour but not 6-hourly
                                # on the hour.
        # Same as [[[ T-00 ! T-00/PT6H ]]] (T-00 context is implied)
@@ -1137,7 +1137,7 @@ integer points, an integer sequence, or a combination of both:
    [[[ P1 ! +P1/P2 ]]]   # Run with step 1 from the initial cycle point,
                          # excluding every other step beginning one step
                          # after the initial cycle point.
-   [[[ P1 !(P2,6,8) ]]]  # Run with step 1 from the intial cycle point,
+   [[[ P1 !(P2,6,8) ]]]  # Run with step 1 from the initial cycle point,
                          # excluding every other step, and also excluding
                          # steps 6 and 8.
 
@@ -3680,7 +3680,7 @@ the first line of the suite.rc file:
    #!empy
    # ...
 
-An example suite ``empy.cities`` demostrating its use is shown below.
+An example suite ``empy.cities`` demonstrating its use is shown below.
 It is a translation of ``jinja2.cities`` example from
 :ref:`Jinja` and can be directly compared against it.
 

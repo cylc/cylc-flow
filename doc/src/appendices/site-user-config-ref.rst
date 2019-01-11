@@ -441,7 +441,7 @@ of the hostname string (as specified in the suite configuration) and they
 do not have to match through to the end of the string (use the
 string-end matching character ``'$'`` in the expression to force this).
 
-A hierachy of host match expressions from specific to general can be
+A hierarchy of host match expressions from specific to general can be
 used because config items are processed in the order specified in the
 file.
 

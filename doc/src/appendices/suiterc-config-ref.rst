@@ -141,7 +141,7 @@ for ``+`` or ``-`` here) for writing down date-time cycle
 points, which follows one of the basic formats outlined in the ISO 8601
 standard. For example, a cycle point on the 3rd of February 2001 at 4:50 in
 the morning, UTC (+0000 timezone), would be written
-``20010203T0450Z``. Similarly, for the the 3rd of February 2001 at
+``20010203T0450Z``. Similarly, for the 3rd of February 2001 at
 4:50 in the morning, +1300 timezone, cylc would write
 ``20010203T0450+1300``.
 
@@ -515,7 +515,7 @@ default for this at the site level (see :ref:`SiteCylcHooks`).
 
 If ``True`` (the default) the suite timer will continually reset
 after any task changes state, so you can time out after some interval
-since the last activity occured rather than on absolute suite execution
+since the last activity occurred rather than on absolute suite execution
 time.
 
 - *type*: boolean
@@ -636,7 +636,7 @@ verifies.
 - *type*: string (event handler command name or path)
 - *default*: ``cylc hook check-triggering``
 
-As for any event handler, the full path can be ommited if the script is
+As for any event handler, the full path can be omitted if the script is
 located somewhere in ``$PATH`` or in the suite bin directory.
 
 
@@ -1256,7 +1256,7 @@ configuration can be factored out in a multiple-inheritance hierarchy of
 runtime namespaces that culminates in the tasks of the suite. Order of
 precedence is determined by the C3 linearization algorithm as used to
 find the *method resolution order* in Python language class
-hiearchies. For details and examples see :ref:`NIORP`.
+hierarchies. For details and examples see :ref:`NIORP`.
 
 
 [runtime] ``->`` [[\_\_NAME\_\_]]
@@ -1953,7 +1953,7 @@ If a task has not finished after the specified ISO 8601 duration/interval, the
 If you set an execution timeout the timer can be reset to zero every
 time a message is received from the running task (which indicates the
 task is still alive).  Otherwise, the task will timeout if it does not
-finish in the alotted time regardless of incoming messages.
+finish in the allotted time regardless of incoming messages.
 
 - *type*: boolean
 - *default*: False

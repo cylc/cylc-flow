@@ -22,7 +22,7 @@ The recommended way to do this, which we expand on below, is:
 
 - Put all site-specific settings in include-files loaded at the end
   of a generic "core" suite definition.
-- Use "optional optional" app config files for site-specific variations
+- Use "optional" app config files for site-specific variations
   in the core suite's Rose apps.
 - (Make minimal use of inlined site switches too, if necessary).
 - When referencing files, reference them within the suite structure and
@@ -295,7 +295,7 @@ Site-Specific Optional App Configs
 Typically a few but not all apps will need some site customization, e.g. for
 local archive configuration, local science options, or whatever. To avoid
 explicit site-customization of individual task-run command lines use Rose's
-built-in *optional optional app config* capability:
+built-in *optional app config* capability:
 
 .. code-block:: cylc
 
@@ -503,7 +503,7 @@ portability) into include-files that are only loaded in the operational
 environment. Improvements and upgrades can be developed on feature branches in
 the research environment. Operations staff can check out completed feature
 branches for testing in the operational environment before merging to trunk or
-refering back to research if problems are found. After sufficient testing the
+referring back to research if problems are found. After sufficient testing the
 new suite version can be deployed into operations.
 
 .. note::

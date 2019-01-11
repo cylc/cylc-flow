@@ -133,7 +133,7 @@ The suite state trigger function signature looks like this:
 
 The first three arguments are compulsory; they single out the target suite name
 (``suite``) task name (``task``) and cycle point
-(``point``). The function argments mirror the arguments and options of
+(``point``). The function arguments mirror the arguments and options of
 the ``cylc suite-state`` command - see
 ``cylc suite-state --help`` for documentation.
 
