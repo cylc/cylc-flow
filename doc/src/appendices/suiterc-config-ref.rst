@@ -796,6 +796,93 @@ Minutes (or hours, etc.) may be ignored depending on your cycle point format
 (:ref:`cycle-point-format`).
 
 
+[scheduling] ``->`` [[initial cycle point]] ``->`` initial cycle point relative to current time
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This can be used to set the initial cycle point time relative to the
+current time.
+
+Two additional commands, ``next`` and ``previous``, can be used when setting
+the initial cycle point.
+
+The syntax uses truncated ISO8601 time representations, and is of the style:
+``next(Thh:mmZ)``, ``previous(T-mm)``; e.g.
+
+* ``initial cycle point = next(T15:00Z)``
+* ``initial cycle point = previous(T09:00)``
+* ``initial cycle point = next(T12)``
+* ``initial cycle point = previous(T-20)``
+
+Examples of interpretation are given in
+:numref:`fig-relative-initial-cycle-point-time-syntax-interpretation`.
+
+A list of times, separated by semicolons, can be provided, e.g.
+``next(T-00;T-15;T-30;T-45)``. At least one time is required within the
+brackets, and if more than one is given, the major time unit in each (hours
+or minutes) should all be of the same type.
+
+If an offset from the specified date or time is required, this should be
+used in the form: ``previous(Thh:mm) +/- PxTy`` in the same way as is used
+for determining cycle periods, e.g.
+
+* ``initial cycle point = previous(T06) +P1D``
+* ``initial cycle point = next(T-30) -PT1H``
+
+The section in the bracket attached to the next/previous command is
+interpreted first, and then the offset is applied.
+
+The offset can also be used independently without a ``next`` or ``previous``
+command, and will be interpreted as an offset from "now".
+
+.. _fig-relative-initial-cycle-point-time-syntax-interpretation:
+
+.. table:: Examples of setting relative initial cycle point for times and offsets using ``now = 2018-03-14T15:12Z`` (and UTC mode)
+
+   ====================================  ==================
+   Syntax                                Interpretation
+   ====================================  ==================
+   ``next(T-00)``                        2018-03-14T16:00Z
+   ``previous(T-00)``                    2018-03-14T15:00Z
+   ``next(T-00; T-15; T-30; T-45)``      2018-03-14T15:15Z
+   ``previous(T-00; T-15; T-30; T-45)``  2018-03-14T15:00Z
+   ``next(T00)``                         2018-03-15T00:00Z
+   ``previous(T00)``                     2018-03-14T00:00Z
+   ``next(T06:30Z)``                     2018-03-15T06:30Z
+   ``previous(T06:30) -P1D``             2018-03-13T06:30Z
+   ``next(T00; T06; T12; T18)``          2018-03-14T18:00Z
+   ``previous(T00; T06; T12; T18)``      2018-03-14T12:00Z
+   ``next(T00; T06; T12; T18) +P1W``     2018-03-21T18:00Z
+   ``PT1H``                              2018-03-14T16:12Z
+   ``-P1M``                              2018-02-14T15:12Z
+   ====================================  ==================
+
+The relative initial cycle point also works with truncated dates, including
+weeks and ordinal date, using ISO8601 truncated date representations.
+Note that day-of-week should always be specified when using weeks. If a time
+is not included, the calculation of the next or previous corresponding
+point will be done from midnight of the current day.
+Examples of interpretation are given in
+:numref:`fig-relative-initial-cycle-point-date-syntax-interpretation`.
+
+.. _fig-relative-initial-cycle-point-date-syntax-interpretation:
+
+.. table:: Examples of setting relative initial cycle point for dates using ``now = 2018-03-14T15:12Z`` (and UTC mode)
+
+   ====================================  ==================
+   Syntax                                Interpretation
+   ====================================  ==================
+   ``next(-00)``                         2100-01-01T00:00Z
+   ``previous(--01)``                    2018-01-01T00:00Z
+   ``next(---01)``                       2018-04-01T00:00Z
+   ``previous(--1225)``                  2017-12-25T00:00Z
+   ``next(-2006)``                       2020-06-01T00:00Z
+   ``previous(-W101)``                   2018-03-05T00:00Z
+   ``next(-W-1; -W-3; -W-5)``            2018-03-14T00:00Z
+   ``next(-001; -091; -181; -271)``      2018-04-01T00:00Z
+   ``previous(-365T12Z)``                2017-12-31T12:00Z
+   ====================================  ==================
+
+
 [scheduling] ``->`` final cycle point
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
