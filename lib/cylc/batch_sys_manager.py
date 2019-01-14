@@ -115,7 +115,6 @@ from signal import SIGKILL
 import stat
 from subprocess import PIPE  # nosec
 # calls to open a shell are aggregated in subprocess_safe.pcylc()
-# with logging for what is calling it and the commands given
 from cylc.subprocess_safe import pcylc
 import sys
 import traceback
@@ -423,8 +422,8 @@ class BatchSysManager(object):
                     command = shlex.split(
                         batch_sys.KILL_CMD_TMPL % {"job_id": job_id})
                     try:
-                        proc = pcylc(
-                            command, stdin=open(os.devnull), stderr=PIPE)
+                        proc = pcylc(command, stdin=open(os.devnull),
+                                     stderr=PIPE)
                     except OSError as exc:
                         # subprocess.Popen has a bad habit of not setting the
                         # filename of the executable when it raises an OSError.
@@ -556,8 +555,8 @@ class BatchSysManager(object):
                 # Simple poll command that takes a list of job IDs
                 cmd = [batch_sys.POLL_CMD] + exp_ids
             try:
-                proc = pcylc(
-                    cmd, stdin=open(os.devnull), stderr=PIPE, stdout=PIPE)
+                proc = pcylc(cmd, stdin=open(os.devnull),
+                             stderr=PIPE, stdout=PIPE)
             except OSError as exc:
                 # subprocess.Popen has a bad habit of not setting the
                 # filename of the executable when it raises an OSError.
@@ -662,21 +661,16 @@ class BatchSysManager(object):
                 # that we do not have a shell, and still manage to get as far
                 # as here.
                 batch_sys_cmd = batch_submit_cmd_tmpl % {"job": job_file_path}
-                proc = pcylc(
-                    batch_sys_cmd,
-                    stdin=proc_stdin_arg, stdout=PIPE, stderr=PIPE,
-                    shell=True, env=env)   # nosec
+                proc = pcylc(batch_sys_cmd, stdin=proc_stdin_arg, stdout=PIPE,
+                             stderr=PIPE, useshell=True, env=env)
                 # calls to open a shell are aggregated in
-                # subprocess_safe.pcylc() with logging for what is calling it
-                # and the commands given
+                # subprocess_safe.pcylc()
             else:
                 command = shlex.split(
                     batch_sys.SUBMIT_CMD_TMPL % {"job": job_file_path})
                 try:
-                    proc = pcylc(
-                        command,
-                        stdin=proc_stdin_arg, stdout=PIPE, stderr=PIPE,
-                        env=env)
+                    proc = pcylc(command, stdin=proc_stdin_arg,
+                                 stdout=PIPE, stderr=PIPE, env=env)
                 except OSError as exc:
                     # subprocess.Popen has a bad habit of not setting the
                     # filename of the executable when it raises an OSError.

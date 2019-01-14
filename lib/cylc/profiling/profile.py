@@ -20,18 +20,19 @@ System calls to cylc are performed here.
 """
 
 import os
+import shlex
 import shutil
-from subprocess import Popen, PIPE, call
-from cylc.subprocess_safe import pcylc
 import sys
 import tempfile
-import time
 import traceback
+from subprocess import PIPE, Popen, call
 
-from . import (PROFILE_MODE_TIME, PROFILE_MODE_CYLC, PROFILE_MODES,
-               PROFILE_FILES, SUITE_STARTUP_STRING)
+import time
+from . import PROFILE_FILES, PROFILE_MODES, PROFILE_MODE_CYLC, \
+    PROFILE_MODE_TIME, SUITE_STARTUP_STRING
 from .analysis import extract_results
-from .git import (checkout, describe, GitCheckoutError,)
+from .git import GitCheckoutError, checkout, describe
+from cylc.subprocess_safe import pcylc
 
 
 def cylc_env(cylc_conf_path=''):
@@ -187,12 +188,12 @@ def run_suite(reg, options, out_file, profile_modes, mode='live',
 
     # Execute.
     print '$ ' + ' '.join(cmds)
+
     try:
-        proc = pcylc(' '.join(cmds), shell=True,  # nosec
+        proc = pcylc([' '.join(cmds)], useshell=True,
                      stderr=open(time_err, 'w+'),
                      # calls to open a shell are aggregated in
-                     # subprocess_safe.pcylc() with logging for
-                     # what is calling it and the commands given
+                     # subprocess_safe.pcylc()
                      stdout=open(startup_file, 'w+'), env=env)
         if proc.wait():
             raise SuiteFailedException(run_cmds, cmd_out, cmd_err)

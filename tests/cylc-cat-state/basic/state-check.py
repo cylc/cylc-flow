@@ -19,6 +19,7 @@ import sqlite3
 import subprocess
 import sys
 from cylc.subprocess_safe import pcylc
+import shlex
 
 
 def main(argv):
@@ -29,9 +30,9 @@ def main(argv):
 
     sname = argv[0]
     rundir = argv[1]
+    command = "cylc cat-state " + sname
 
-    p = pcylc("cylc cat-state " + sname,
-              shell=True, stdout=subprocess.PIPE,
+    p = pcylc(command, useshell=True, stdout=subprocess.PIPE,
               stderr=subprocess.PIPE)
     state, err = p.communicate()
 
@@ -63,7 +64,7 @@ def main(argv):
                 while next:
                     res.append(next[0])
                     next = cur.fetchmany()
-            except:
+            except:  # noqa: E722
                 sys.stderr.write("unable to query suite database\n")
                 sys.exit(1)
             if not res[0][0] == status:
