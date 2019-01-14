@@ -25,9 +25,8 @@ import gtk
 import pango
 import gobject
 import shlex
-from subprocess import Popen, PIPE, STDOUT  # nosec
+from subprocess import PIPE, STDOUT  # nosec
 # calls to open a shell are aggregated in subprocess_safe.pcylc()
-# with logging for what is calling it and the commands given
 from uuid import uuid4
 
 from isodatetime.parsers import TimePointParser
@@ -78,11 +77,9 @@ from cylc.task_state import (
 
 def run_get_stdout(command, filter_=False):
     try:
-        proc = pcylc(
-            command, shell=True, stdout=PIPE, stderr=PIPE,  # nosec
-            stdin=open(os.devnull))
+        proc = pcylc(command, useshell=True,  # nosec
+                     stdout=PIPE, stderr=PIPE, stdin=open(os.devnull))
         # calls to open a shell are aggregated in subprocess_safe.pcylc()
-        # with logging for what is calling it and the commands given
         out = proc.stdout.read()
         err = proc.stderr.read()
         res = proc.wait()
@@ -999,7 +996,7 @@ class ControlApp(object):
             # process can detach as a process group leader and not subjected to
             # SIGHUP from the current process.
             # See also "cylc.batch_sys_handlers.background".
-            Popen(
+            pcylc(
                 [
                     "nohup",
                     "bash",
@@ -1207,9 +1204,8 @@ been defined for this suite""").inform()
             pass  # Cannot print to terminal (session may be closed).
 
         try:
-            pcylc([command], shell=True, stdin=open(os.devnull))  # nosec
+            pcylc(command, useshell=True, stdin=open(os.devnull))  # nosec
             # calls to open a shell are aggregated in subprocess_safe.pcylc()
-            # with logging for what is calling it and the commands given
         except OSError:
             warning_dialog('Error: failed to start ' + self.cfg.suite,
                            self.window).warn()
@@ -2859,7 +2855,7 @@ This is what my suite does:..."""
         cat_menu.append(cylc_help_item)
         cylc_help_item.connect('activate', self.command_help)
 
-        cout = Popen(
+        cout = pcylc(
             ["cylc", "categories"],
             stdin=open(os.devnull), stdout=PIPE).communicate()[0]
         categories = cout.rstrip().split()
@@ -2868,7 +2864,7 @@ This is what my suite does:..."""
             cat_menu.append(foo_item)
             com_menu = gtk.Menu()
             foo_item.set_submenu(com_menu)
-            cout = Popen(
+            cout = pcylc(
                 ["cylc-help", "category=" + category],
                 stdin=open(os.devnull), stdout=PIPE).communicate()[0]
             commands = cout.rstrip().split()
