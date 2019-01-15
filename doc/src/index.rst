@@ -9,35 +9,13 @@ Current version: 7.8.0
 
 *Released Under the GNU GPL v3.0 Software License*
 
-*Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.*
+*Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.*
 
 -----------
 
-Cylc (“*silk*”) is a metascheduler [1]_ for cycling environmental forecasting
-suites containing many forecast models and associated processing tasks. Cylc
-has a novel self-organising scheduling algorithm: a pool of task proxy objects,
-that each know just their own inputs and outputs, negotiate dependencies so that
-correct scheduling emerges naturally at run time. Cylc does not group tasks
-artificially by forecast cycle [2]_ (each task has a private cycle time and is
-self-spawning - there is no suite-wide cycle time) and handles dependencies
-within and between cycles equally so that tasks from multiple cycles can run at
-once to the maximum possible extent.  This matters in particular whenever the
-external driving data [3]_ for upcoming cycles are available in advance: cylc
-suites can catch up from delays very quickly, parallel test suites can be
-started behind the main operation to catch up quickly, and one can likewise
-achieve greater throughput in historical case studies; the usual sequence of
-distinct forecast cycles emerges naturally if a suite catches up to real time
-operation. Cylc can easily use existing tasks and can run suites distributed
-across a heterogenous network. Suites can be stopped and restarted in any state
-of operation, and they dynamically adapt to insertion and removal of tasks, and
-to delays or failures in particular tasks or in the external environment:
-tasks not directly affected will carry on cycling as normal while the problem
-is addressed, and then the affected tasks will catch up as quickly as possible.
-Cylc has comprehensive command line and graphical interfaces, including a
-dependency graph based suite control GUI. Other notable features include
-suite databases; a fast simulation mode; a structured, validated suite
-definition file format; dependency graph plotting; task event hooks for
-centralized alerting; and cryptographic suite security.
+Cylc ("*silk*") is a workflow engine for cycling systems - it orchestrates
+distributed suites of interdependent cycling tasks that may continue to run
+indefinitely.
 
 -----------
 
@@ -65,20 +43,3 @@ centralized alerting; and cryptographic suite security.
    appendices/appendices-master
 
    suite-design-guide/suite-design-guide-master
-
-
---------
-
-.. [1] A metascheduler determines when dependent jobs are ready to run and then
-   submits them to run by other means, usually a batch queue scheduler. The term
-   can also refer to an aggregate view of multiple distributed resource
-   managers, but that is not the topic of this document. We drop the “meta”
-   prefix from here on because a metascheduler is also a type of scheduler.
-
-.. [2] A forecast cycle comprises all tasks with a common cycle time (later
-   referred to here as cycle point) i.e. the analysis time or nominal start time
-   of a forecast model, or that of the associated forecast model(s) for other
-   tasks.
-
-.. [3] Forecast suites are typically driven by real time observational data or
-   timely model fields from an external forecasting system.

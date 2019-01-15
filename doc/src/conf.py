@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'The Cylc Suite Engine'
-copyright = u'2008-2018 NIWA & British Crown (Met Office) & Contributors'
+copyright = u'2008-2019 NIWA & British Crown (Met Office) & Contributors'
 version = '7.8'  # The short X.Y version.
 release = '7.8.0'  # The full version, including alpha/beta/rc tags.
 
@@ -94,9 +94,6 @@ html_logo = "graphics/png/orig/cylc-logo.png"
 # sphinx specifies this should be .ico format
 html_favicon = "graphics/cylc-favicon.ico"
 
-# Any paths that contain custom static files (such as style sheets).
-html_static_path = ['_static']
-
 # Disable timestamp otherwise inserted at bottom of every page.
 html_last_updated_fmt = ''
 
@@ -119,7 +116,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
   ('index', 'cylc.tex', u'Cylc Documentation',
-   u'2008-2018 NIWA & British Crown (Met Office) & Contributors', 'manual'),
+   u'2008-2019 NIWA & British Crown (Met Office) & Contributors', 'manual'),
 ]
 
 # Image file to place at the top of the title page.
@@ -135,7 +132,7 @@ latex_show_urls = "footnote"
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'cylc', u'cylc Documentation',
-     u'2008-2018 NIWA & British Crown (Met Office) & Contributors', 1),
+     u'2008-2019 NIWA & British Crown (Met Office) & Contributors', 1),
 ]
 
 # If true, show URL addresses after external links.
@@ -149,7 +146,7 @@ man_show_urls = True
 #  dir menu entry, description, category)
 texinfo_documents = [
   ('index', 'cylc', u'Cylc Documentation',
-   u'2008-2018 NIWA & British Crown (Met Office) & Contributors',
+   u'2008-2019 NIWA & British Crown (Met Office) & Contributors',
   'cylc', 'The Cylc Suite Engine', 'Miscellaneous'),
 ]
 

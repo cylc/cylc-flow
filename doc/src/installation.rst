@@ -53,7 +53,7 @@ To generate the HTML User Guide, you will need:
 
 In most modern Linux distributions all of the software above can be installed
 via the system package manager. Otherwise download packages manually and follow
-their native installation instructions. To check that all (non LaTeX packages)
+their native installation instructions. To check that all packages
 are installed properly:
 
 .. code-block:: none
@@ -109,7 +109,7 @@ example:
 
 .. code-block:: bash
 
-   $ cylc check-software Python graphviz imagemagick
+   $ cylc check-software graphviz Python urllib3
 
 With arguments, check-software provides an exit status indicating a
 collective pass (zero) or a failure of that number of packages to satisfy
