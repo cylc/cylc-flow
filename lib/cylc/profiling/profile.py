@@ -24,15 +24,16 @@ import shlex
 import shutil
 import sys
 import tempfile
+import time
 import traceback
 from subprocess import PIPE, Popen, call
 
-import time
-from . import PROFILE_FILES, PROFILE_MODES, PROFILE_MODE_CYLC, \
-    PROFILE_MODE_TIME, SUITE_STARTUP_STRING
+from cylc.sprocess import pcylc
+
+from . import (PROFILE_FILES, PROFILE_MODE_CYLC, PROFILE_MODE_TIME,
+               PROFILE_MODES, SUITE_STARTUP_STRING)
 from .analysis import extract_results
 from .git import GitCheckoutError, checkout, describe
-from cylc.sprocess import pcylc
 
 
 def cylc_env(cylc_conf_path=''):
@@ -193,7 +194,7 @@ def run_suite(reg, options, out_file, profile_modes, mode='live',
         proc = pcylc([' '.join(cmds)], usesh=True, stderr=open(time_err, 'w+'),
                      # calls to open a shell are aggregated in
                      # sprocess.pcylc()
-                     stdout=open(startup_file, 'w+'), env=env, splitcmd=True)
+                     stdout=open(startup_file, 'w+'), env=env)
         if proc.wait():
             raise SuiteFailedException(run_cmds, cmd_out, cmd_err)
     except KeyboardInterrupt:

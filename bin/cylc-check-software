@@ -32,10 +32,11 @@ Arguments:
                 valid module arguments (lower-case equivalents accepted).
 """
 
-import sys
-import re
 import os
-from subprocess import check_call, PIPE, CalledProcessError
+import re
+import sys
+from subprocess import PIPE, CalledProcessError, check_call
+
 from cylc.sprocess import pcylc
 
 # Standardised output messages
@@ -189,10 +190,9 @@ def tex_module_search(tex_module, write=True):
     cmd = ['kpsewhich', '%s.sty' % tex_module]
     # This is less intensive & quicker than searching via 'find' or 'locate'.
     try:
-        process = pcylc(cmd, stdin=open(os.devnull), stdoutpipe=True,
-                        splitcmd=True),
+        process = pcylc(cmd, stdin=open(os.devnull), stdoutpipe=True),
         check_call(['test', '-n', process.communicate()[0].strip()],
-                   stdin=open(os.devnull), stdout=PIPE, stderr=PIPE)
+                   stdin=open(os.devnull), stdout=PIPE, stder=PIPE)
 
     except (CalledProcessError, OSError):
         if write:
@@ -215,12 +215,13 @@ def cmd_find_ver(module, min_ver, cmd_base, ver_opt, ver_extr, outfile=1,
     for cmd in cmd_base:
         try_next_cmd = True
         if pcylc(['which', cmd], stdin=open(os.devnull),
-                 stdoutpipe=True).wait():
+                 stdoutpipe=True, stderrpipe=True).wait():
             res = [NOTFOUND_MSG, False]
         else:
             try:
-                output = pcylc([cmd, ver_opt], stdoutpipe=True, splitcmd=True,
-                               stdin=open(os.devnull)).communicate()
+                output = pcylc([cmd, ver_opt], stdoutpipe=True,
+                               stdin=open(os.devnull),
+                               stderrpipe=True).communicate()
                 [outfile - 1].strip()
                 version = re.search(ver_extr, output).groups()[0]
                 try_next_cmd = False
