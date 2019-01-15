@@ -17,23 +17,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Manage queueing and pooling of subprocesses for the suite server program."""
 
-from collections import deque
 import json
 import os
 import select
-from signal import SIGKILL
-# calls to open a shell are aggregated in sprocess.pcylc()
-from cylc.sprocess import pcylc
 import sys
+from collections import deque
+from signal import SIGKILL
 from tempfile import TemporaryFile
 from threading import RLock
 from time import time
 
-
 from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
+from cylc.sprocess import pcylc
 from cylc.wallclock import get_current_time_string
-
 
 _XTRIG_FUNCS = {}
 

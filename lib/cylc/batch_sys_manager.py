@@ -107,29 +107,24 @@ batch_sys.SUBMIT_CMD_TMPL
 
 """
 
-import os
 import json
+import os
 import shlex
-from shutil import rmtree
-from signal import SIGKILL
 import stat
-# calls to open a shell are aggregated in sprocess.pcylc()
-from cylc.sprocess import pcylc
 import sys
 import traceback
-
-
-from parsec.OrderedDict import OrderedDict
-
+from shutil import rmtree
+from signal import SIGKILL
 
 from cylc.mkdir_p import mkdir_p
-from cylc.task_message import (
-    CYLC_JOB_PID, CYLC_JOB_INIT_TIME, CYLC_JOB_EXIT_TIME, CYLC_JOB_EXIT,
-    CYLC_MESSAGE)
+from cylc.sprocess import pcylc
+from cylc.task_job_logs import (JOB_LOG_ERR, JOB_LOG_JOB, JOB_LOG_OUT,
+                                JOB_LOG_STATUS)
+from cylc.task_message import (CYLC_JOB_EXIT, CYLC_JOB_EXIT_TIME,
+                               CYLC_JOB_INIT_TIME, CYLC_JOB_PID, CYLC_MESSAGE)
 from cylc.task_outputs import TASK_OUTPUT_SUCCEEDED
-from cylc.task_job_logs import (
-    JOB_LOG_JOB, JOB_LOG_OUT, JOB_LOG_ERR, JOB_LOG_STATUS)
 from cylc.wallclock import get_current_time_string
+from parsec.OrderedDict import OrderedDict
 
 
 class JobPollContext(object):

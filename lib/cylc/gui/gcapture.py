@@ -16,18 +16,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import gobject
-import gtk
 import os
-import pango
 import shlex
-# calls to open a shell are aggregated in sprocess.pcylc()
 import tempfile
 
+import gobject
+import gtk
+import pango
+from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.gui.tailer import Tailer
 from cylc.gui.util import get_icon
-from cylc.gui.warning_dialog import warning_dialog, info_dialog
-from cylc.cfgspec.glbl_cfg import glbl_cfg
+from cylc.gui.warning_dialog import info_dialog, warning_dialog
 from cylc.sprocess import pcylc
 
 
@@ -134,7 +133,7 @@ class Gcapture(object):
     def run(self):
         proc = pcylc(self.command, stdin=open(os.devnull),
                      stdout=self.stdoutfile, stderrout=True,
-                     usesh=True, splitcmd=True)
+                     usesh=True)
         # calls to open a shell are aggregated in sprocess.pcylc()
         self.proc = proc
         gobject.timeout_add(40, self.pulse_proc_progress)
