@@ -21,7 +21,6 @@ import gtk
 import os
 import pango
 import shlex
-from subprocess import STDOUT  # nosec
 # calls to open a shell are aggregated in subprocess_safe.pcylc()
 import tempfile
 
@@ -29,7 +28,7 @@ from cylc.gui.tailer import Tailer
 from cylc.gui.util import get_icon
 from cylc.gui.warning_dialog import warning_dialog, info_dialog
 from cylc.cfgspec.glbl_cfg import glbl_cfg
-from cylc.subprocess_safe import pcylc
+from cylc.sprocess import pcylc
 
 
 class Gcapture(object):
@@ -133,9 +132,9 @@ class Gcapture(object):
         self.window.show()
 
     def run(self):
-        proc = pcylc(
-            self.command, stdin=open(os.devnull),
-            stdout=self.stdoutfile, stderr=STDOUT, useshell=True)
+        proc = pcylc(self.command, stdin=open(os.devnull),
+                     stdout=self.stdoutfile, stderrout=True,
+                     usesh=True)
         # calls to open a shell are aggregated in subprocess_safe.pcylc()
         self.proc = proc
         gobject.timeout_add(40, self.pulse_proc_progress)

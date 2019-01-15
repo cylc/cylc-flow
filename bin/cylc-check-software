@@ -92,7 +92,7 @@ opt_result = {}
 
 def output_width(min_width=65, max_width=90):
     """Return a suitable output alignment width given user terminal width."""
-    proc = pcylc(['stty', 'size'], stdout=PIPE)
+    proc = pcylc(['stty', 'size'], stdoutpipe=True)
     if proc.wait():
         return int((min_width + max_width) / 2)
     else:
@@ -199,9 +199,10 @@ def tex_module_search(tex_module, write=True):
     cmd = ['kpsewhich', '%s.sty' % tex_module]
     # This is less intensive & quicker than searching via 'find' or 'locate'.
     try:
-        process = pcylc(cmd, stdin=open(os.devnull), stdout=PIPE),
+        process = pcylc(cmd, stdin=open(os.devnull), stdoutpipe=True),
         check_call(['test', '-n', process.communicate()[0].strip()],
                    stdin=open(os.devnull), stdout=PIPE, stderr=PIPE)
+
     except (CalledProcessError, OSError):
         if write:
             shell_align_write('.', msg, NOTFOUND_MSG)
@@ -223,11 +224,11 @@ def cmd_find_ver(module, min_ver, cmd_base, ver_opt, ver_extr, outfile=1,
     for cmd in cmd_base:
         try_next_cmd = True
         if pcylc(['which', cmd], stdin=open(os.devnull),
-                 stdout=PIPE).wait():
+                 stdoutpipe=True).wait():
             res = [NOTFOUND_MSG, False]
         else:
             try:
-                output = pcylc([cmd, ver_opt], stdout=PIPE,
+                output = pcylc([cmd, ver_opt], stdoutpipe=True,
                                stdin=open(os.devnull)).communicate()
                 [outfile - 1].strip()
                 version = re.search(ver_extr, output).groups()[0]

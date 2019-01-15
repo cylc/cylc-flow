@@ -37,13 +37,12 @@ site dependent -- see cylc global config documentation."""
 import os
 import shlex
 import sys
-from subprocess import PIPE
 from time import sleep
 
 import cylc.flags
 from cylc.config import SuiteConfig
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.subprocess_safe import pcylc
+from cylc.sprocess import pcylc
 from cylc.subprocpool import SuiteProcPool
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.task_remote_mgr import TaskRemoteMgr
@@ -114,7 +113,8 @@ def main():
             user_at_host = host
         if verbose:
             print "%s: %s" % (user_at_host, ' '.join(argv))
-        proc = pcylc(argv, stdin=open(os.devnull), stdout=PIPE, stderr=PIPE)
+        proc = pcylc(argv, stdin=open(os.devnull), stdoutpipe=True,
+                     stderrpipe=True)
         out, err = proc.communicate()
         if proc.wait() == 0:
             if verbose:

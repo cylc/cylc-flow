@@ -5,7 +5,7 @@ import shlex
 import sys
 from distutils import command
 
-from cylc.subprocess_safe import pcylc
+from cylc.sprocess import pcylc
 
 
 print
@@ -38,7 +38,7 @@ if reflines != loglines:
 else:
     print "broadcast logs compare OK"
 
-res = pcylc(["cylc check-triggering " + event + " " + suite], useshell=True)
+res = pcylc(["cylc check-triggering " + event + " " + suite], usesh=True)
 status = res.wait()
 if status != 0:
     sys.exit(1)

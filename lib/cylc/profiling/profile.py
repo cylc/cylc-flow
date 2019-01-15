@@ -32,7 +32,7 @@ from . import PROFILE_FILES, PROFILE_MODES, PROFILE_MODE_CYLC, \
     PROFILE_MODE_TIME, SUITE_STARTUP_STRING
 from .analysis import extract_results
 from .git import GitCheckoutError, checkout, describe
-from cylc.subprocess_safe import pcylc
+from cylc.sprocess import pcylc
 
 
 def cylc_env(cylc_conf_path=''):
@@ -190,8 +190,7 @@ def run_suite(reg, options, out_file, profile_modes, mode='live',
     print '$ ' + ' '.join(cmds)
 
     try:
-        proc = pcylc([' '.join(cmds)], useshell=True,
-                     stderr=open(time_err, 'w+'),
+        proc = pcylc([' '.join(cmds)], usesh=True, stderr=open(time_err, 'w+'),
                      # calls to open a shell are aggregated in
                      # subprocess_safe.pcylc()
                      stdout=open(startup_file, 'w+'), env=env)

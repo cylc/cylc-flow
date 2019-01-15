@@ -20,11 +20,10 @@
 
 from os import devnull, killpg, setpgrp
 from signal import SIGTERM
-from subprocess import PIPE  # nosec
 from time import sleep, time
 
 import shlex
-from subprocess_safe import pcylc  # nosec
+from cylc.sprocess import pcylc
 # calls to open a shell are aggregated in subprocess_safe.pcylc()
 
 
@@ -49,8 +48,8 @@ def run_get_stdout(command, timeout=None, poll_delay=None):
     """
     try:
         proc = pcylc(
-            command, useshell=True, preexec_fn=setpgrp,
-            stdin=open(devnull), stderr=PIPE, stdout=PIPE)
+            command, usesh=True, preexec_fn=setpgrp,
+            stdin=open(devnull), stderrpipe=True, stdoutpipe=True)
         # calls to open a shell are aggregated in subprocess_safe.pcylc()
         is_killed_after_timeout = False
         if timeout:
