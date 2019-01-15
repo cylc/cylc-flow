@@ -35,7 +35,7 @@ from cylc import LOG
 def pcylc(cmd, bufsize=0, executable=None, stdin=None, stdout=None,
           stderr=None, preexec_fn=None, close_fds=False, usesh=False,
           cwd=None, env=None, universal_newlines=False, startupinfo=None,
-          creationflags=0, splitcmd=False, stdoutpipe=False, stdoutout=True,
+          creationflags=0, splitcmd=False, stdoutpipe=False, stdoutout=False,
           stderrpipe=False, stderrout=False):
 
     shell = usesh

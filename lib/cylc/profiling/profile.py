@@ -192,7 +192,7 @@ def run_suite(reg, options, out_file, profile_modes, mode='live',
     try:
         proc = pcylc([' '.join(cmds)], usesh=True, stderr=open(time_err, 'w+'),
                      # calls to open a shell are aggregated in
-                     # subprocess_safe.pcylc()
+                     # sprocess.pcylc()
                      stdout=open(startup_file, 'w+'), env=env)
         if proc.wait():
             raise SuiteFailedException(run_cmds, cmd_out, cmd_err)

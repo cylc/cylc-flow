@@ -22,7 +22,7 @@ import json
 import os
 import select
 from signal import SIGKILL
-# calls to open a shell are aggregated in subprocess_safe.pcylc()
+# calls to open a shell are aggregated in sprocess.pcylc()
 from cylc.sprocess import pcylc
 import sys
 from tempfile import TemporaryFile
@@ -318,7 +318,7 @@ class SuiteProcPool(object):
                 preexec_fn=os.setpgrp,
                 env=ctx.cmd_kwargs.get('env'),
                 usesh=ctx.cmd_kwargs.get('shell'))
-            # calls to open a shell are aggregated in subprocess_safe.pcylc()
+            # calls to open a shell are aggregated in sprocess.pcylc()
             # with logging for what is calling it and the commands given
         except (IOError, OSError) as exc:
             if exc.filename is None:

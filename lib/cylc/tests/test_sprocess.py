@@ -27,7 +27,7 @@ from testfixtures.popen import PIPE, MockPopen
 
 
 class TestSubprocessSafe(unittest.TestCase):
-    """Unit tests for the parameter subprocess_safe utility function"""
+    """Unit tests for the parameter sprocess utility function"""
 
     def setUp(self):
         self.Popen = MockPopen()

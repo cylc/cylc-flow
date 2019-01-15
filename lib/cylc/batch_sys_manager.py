@@ -113,7 +113,7 @@ import shlex
 from shutil import rmtree
 from signal import SIGKILL
 import stat
-# calls to open a shell are aggregated in subprocess_safe.pcylc()
+# calls to open a shell are aggregated in sprocess.pcylc()
 from cylc.sprocess import pcylc
 import sys
 import traceback
@@ -664,7 +664,7 @@ class BatchSysManager(object):
                              stdoutpipe=True, stderrpipe=True, usesh=True,
                              env=env)
                 # calls to open a shell are aggregated in
-                # subprocess_safe.pcylc()
+                # sprocess.pcylc()
             else:
                 command = shlex.split(
                     batch_sys.SUBMIT_CMD_TMPL % {"job": job_file_path})
