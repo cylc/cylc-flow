@@ -24,7 +24,7 @@ from time import sleep, time
 
 import shlex
 from cylc.sprocess import pcylc
-# calls to open a shell are aggregated in subprocess_safe.pcylc()
+# calls to open a shell are aggregated in sprocess.pcylc()
 
 
 ERR_TIMEOUT = "ERROR: command timed out (>%ds), terminated by signal %d\n%s"
@@ -50,7 +50,7 @@ def run_get_stdout(command, timeout=None, poll_delay=None):
         proc = pcylc(
             command, usesh=True, preexec_fn=setpgrp,
             stdin=open(devnull), stderrpipe=True, stdoutpipe=True)
-        # calls to open a shell are aggregated in subprocess_safe.pcylc()
+        # calls to open a shell are aggregated in sprocess.pcylc()
         is_killed_after_timeout = False
         if timeout:
             if poll_delay is None:

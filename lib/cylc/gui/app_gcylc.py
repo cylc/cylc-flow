@@ -25,7 +25,7 @@ import gtk
 import pango
 import gobject
 import shlex
-# calls to open a shell are aggregated in subprocess_safe.pcylc()
+# calls to open a shell are aggregated in sprocess.pcylc()
 from uuid import uuid4
 
 from isodatetime.parsers import TimePointParser
@@ -78,7 +78,7 @@ def run_get_stdout(command, filter_=False):
     try:
         proc = pcylc(command, usesh=True, stdoutpipe=True, stderrpipe=True,
                      stdin=open(os.devnull))
-        # calls to open a shell are aggregated in subprocess_safe.pcylc()
+        # calls to open a shell are aggregated in sprocess.pcylc()
         out = proc.stdout.read()
         err = proc.stderr.read()
         res = proc.wait()
@@ -1204,7 +1204,7 @@ been defined for this suite""").inform()
 
         try:
             pcylc(command, usesh=True, stdin=open(os.devnull))
-            # calls to open a shell are aggregated in subprocess_safe.pcylc()
+            # calls to open a shell are aggregated in sprocess.pcylc()
         except OSError:
             warning_dialog('Error: failed to start ' + self.cfg.suite,
                            self.window).warn()

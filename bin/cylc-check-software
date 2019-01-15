@@ -36,7 +36,7 @@ import sys
 import re
 import os
 from subprocess import check_call, PIPE, CalledProcessError
-from cylc.subprocess_safe import pcylc
+from cylc.sprocess import pcylc
 
 # Standardised output messages
 FOUND_NOVER_MSG = 'FOUND'

@@ -21,7 +21,7 @@ import gtk
 import os
 import pango
 import shlex
-# calls to open a shell are aggregated in subprocess_safe.pcylc()
+# calls to open a shell are aggregated in sprocess.pcylc()
 import tempfile
 
 from cylc.gui.tailer import Tailer
@@ -135,7 +135,7 @@ class Gcapture(object):
         proc = pcylc(self.command, stdin=open(os.devnull),
                      stdout=self.stdoutfile, stderrout=True,
                      usesh=True)
-        # calls to open a shell are aggregated in subprocess_safe.pcylc()
+        # calls to open a shell are aggregated in sprocess.pcylc()
         self.proc = proc
         gobject.timeout_add(40, self.pulse_proc_progress)
         tail_cmd_tmpl = glbl_cfg().get_host_item("tail command template")
