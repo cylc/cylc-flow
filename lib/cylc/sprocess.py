@@ -44,14 +44,10 @@ def pcylc(cmd, bufsize=0, executable=None, stdin=None, stdout=None,
         stdout = PIPE
     elif stdoutout is True:
         stdout = STDOUT
-    else:
-        stdout = stdout
     if stderrpipe is True:
         stderr = PIPE
     elif stderrout is True:
         stderr = STDOUT
-    else:
-        stderr = stderr
 
     if splitcmd is True:
         command = split(cmd)

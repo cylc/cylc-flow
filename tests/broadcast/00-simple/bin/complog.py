@@ -38,7 +38,8 @@ if reflines != loglines:
 else:
     print "broadcast logs compare OK"
 
-res = pcylc(["cylc check-triggering " + event + " " + suite], usesh=True)
+res = pcylc(["cylc check-triggering " + event + " " + suite], usesh=True,
+            splitcmd=True)
 status = res.wait()
 if status != 0:
     sys.exit(1)

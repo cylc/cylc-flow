@@ -193,7 +193,7 @@ def run_suite(reg, options, out_file, profile_modes, mode='live',
         proc = pcylc([' '.join(cmds)], usesh=True, stderr=open(time_err, 'w+'),
                      # calls to open a shell are aggregated in
                      # sprocess.pcylc()
-                     stdout=open(startup_file, 'w+'), env=env)
+                     stdout=open(startup_file, 'w+'), env=env, splitcmd=True)
         if proc.wait():
             raise SuiteFailedException(run_cmds, cmd_out, cmd_err)
     except KeyboardInterrupt:
