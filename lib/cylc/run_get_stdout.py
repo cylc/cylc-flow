@@ -47,9 +47,8 @@ def run_get_stdout(command, timeout=None, poll_delay=None):
 
     """
     try:
-        proc = pcylc(
-            command, usesh=True, preexec_fn=setpgrp,
-            stdin=open(devnull), stderrpipe=True, stdoutpipe=True)
+        proc = pcylc(command, usesh=True, preexec_fn=setpgrp, splitcmd=True,
+                     stdin=open(devnull), stderrpipe=True, stdoutpipe=True)
         # calls to open a shell are aggregated in sprocess.pcylc()
         is_killed_after_timeout = False
         if timeout:

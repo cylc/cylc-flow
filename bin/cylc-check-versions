@@ -114,7 +114,7 @@ def main():
         if verbose:
             print "%s: %s" % (user_at_host, ' '.join(argv))
         proc = pcylc(argv, stdin=open(os.devnull), stdoutpipe=True,
-                     stderrpipe=True)
+                     stderrpipe=True, splitcmd=True)
         out, err = proc.communicate()
         if proc.wait() == 0:
             if verbose:

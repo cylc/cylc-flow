@@ -77,7 +77,7 @@ from cylc.task_state import (
 def run_get_stdout(command, filter_=False):
     try:
         proc = pcylc(command, usesh=True, stdoutpipe=True, stderrpipe=True,
-                     stdin=open(os.devnull))
+                     stdin=open(os.devnull), splitcmd=True)
         # calls to open a shell are aggregated in sprocess.pcylc()
         out = proc.stdout.read()
         err = proc.stderr.read()

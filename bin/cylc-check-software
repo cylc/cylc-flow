@@ -189,7 +189,8 @@ def tex_module_search(tex_module, write=True):
     cmd = ['kpsewhich', '%s.sty' % tex_module]
     # This is less intensive & quicker than searching via 'find' or 'locate'.
     try:
-        process = pcylc(cmd, stdin=open(os.devnull), stdoutpipe=True),
+        process = pcylc(cmd, stdin=open(os.devnull), stdoutpipe=True,
+                        splitcmd=True),
         check_call(['test', '-n', process.communicate()[0].strip()],
                    stdin=open(os.devnull), stdout=PIPE, stderr=PIPE)
 
@@ -218,7 +219,7 @@ def cmd_find_ver(module, min_ver, cmd_base, ver_opt, ver_extr, outfile=1,
             res = [NOTFOUND_MSG, False]
         else:
             try:
-                output = pcylc([cmd, ver_opt], stdoutpipe=True,
+                output = pcylc([cmd, ver_opt], stdoutpipe=True, splitcmd=True,
                                stdin=open(os.devnull)).communicate()
                 [outfile - 1].strip()
                 version = re.search(ver_extr, output).groups()[0]
