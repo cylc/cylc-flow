@@ -25,7 +25,6 @@ import gtk
 import pango
 import gobject
 import shlex
-from subprocess import PIPE, STDOUT  # nosec
 # calls to open a shell are aggregated in subprocess_safe.pcylc()
 from uuid import uuid4
 
@@ -35,7 +34,7 @@ from cylc.hostuserutil import is_remote_host, is_remote_user
 from cylc.gui.dbchooser import dbchooser
 from cylc.gui.combo_logviewer import ComboLogViewer
 from cylc.gui.warning_dialog import warning_dialog, info_dialog
-from cylc.subprocess_safe import pcylc
+from cylc.sprocess import pcylc
 from cylc.task_job_logs import JOB_LOG_OPTS
 from cylc.wallclock import get_current_time_string
 
@@ -77,8 +76,8 @@ from cylc.task_state import (
 
 def run_get_stdout(command, filter_=False):
     try:
-        proc = pcylc(command, useshell=True,  # nosec
-                     stdout=PIPE, stderr=PIPE, stdin=open(os.devnull))
+        proc = pcylc(command, usesh=True, stdoutpipe=True, stderrpipe=True,
+                     stdin=open(os.devnull))
         # calls to open a shell are aggregated in subprocess_safe.pcylc()
         out = proc.stdout.read()
         err = proc.stderr.read()
@@ -1007,7 +1006,7 @@ class ControlApp(object):
                 preexec_fn=os.setpgrp,
                 stdin=open(os.devnull),
                 stdout=open(os.devnull, "wb"),
-                stderr=STDOUT)
+                stderrout=True)
         else:
             self.reset(reg, auth)
 
@@ -1204,7 +1203,7 @@ been defined for this suite""").inform()
             pass  # Cannot print to terminal (session may be closed).
 
         try:
-            pcylc(command, useshell=True, stdin=open(os.devnull))  # nosec
+            pcylc(command, usesh=True, stdin=open(os.devnull))
             # calls to open a shell are aggregated in subprocess_safe.pcylc()
         except OSError:
             warning_dialog('Error: failed to start ' + self.cfg.suite,
@@ -2857,7 +2856,7 @@ This is what my suite does:..."""
 
         cout = pcylc(
             ["cylc", "categories"],
-            stdin=open(os.devnull), stdout=PIPE).communicate()[0]
+            stdin=open(os.devnull), stdoutpipe=True).communicate()[0]
         categories = cout.rstrip().split()
         for category in categories:
             foo_item = gtk.MenuItem(category)
@@ -2866,7 +2865,7 @@ This is what my suite does:..."""
             foo_item.set_submenu(com_menu)
             cout = pcylc(
                 ["cylc-help", "category=" + category],
-                stdin=open(os.devnull), stdout=PIPE).communicate()[0]
+                stdin=open(os.devnull), stdoutpipe=True).communicate()[0]
             commands = cout.rstrip().split()
             for command in commands:
                 bar_item = gtk.MenuItem(command)

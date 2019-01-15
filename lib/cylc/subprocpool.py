@@ -22,9 +22,8 @@ import json
 import os
 import select
 from signal import SIGKILL
-from subprocess import PIPE  # nosec
 # calls to open a shell are aggregated in subprocess_safe.pcylc()
-from cylc.subprocess_safe import pcylc
+from cylc.sprocess import pcylc
 import sys
 from tempfile import TemporaryFile
 from threading import RLock
@@ -329,12 +328,12 @@ class SuiteProcPool(object):
             else:
                 stdin_file = open(os.devnull)
             proc = pcylc(
-                ctx.cmd, stdin=stdin_file, stdout=PIPE, stderr=PIPE,
+                ctx.cmd, stdin=stdin_file, stdoutpipe=True, stderrpipe=True,
                 # Execute command as a process group leader,
                 # so we can use "os.killpg" to kill the whole group.
                 preexec_fn=os.setpgrp,
                 env=ctx.cmd_kwargs.get('env'),
-                useshell=ctx.cmd_kwargs.get('shell'))
+                usesh=ctx.cmd_kwargs.get('shell'))
             # calls to open a shell are aggregated in subprocess_safe.pcylc()
             # with logging for what is calling it and the commands given
         except (IOError, OSError) as exc:

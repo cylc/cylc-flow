@@ -23,32 +23,40 @@
     B605: start_process_with_a_shell
     https://docs.openstack.org/developer/bandit/plugins/start_process_with_a_shell.html
 """
-from subprocess import Popen  # nosec
+from shlex import split
+from subprocess import PIPE, STDOUT, Popen  # nosec
 
 from cylc import LOG
-from shlex import split
-from inspect import getframeinfo, stack
 
 # pylint: disable=too-many-arguments
 # pylint: disable=too-many-locals
 
 
 def pcylc(cmd, bufsize=0, executable=None, stdin=None, stdout=None,
-          stderr=None, preexec_fn=None, close_fds=False, useshell=False,
+          stderr=None, preexec_fn=None, close_fds=False, usesh=False,
           cwd=None, env=None, universal_newlines=False, startupinfo=None,
-          creationflags=0, splitcmd=False):
+          creationflags=0, splitcmd=False, stdoutpipe=False, stdoutout=True,
+          stderrpipe=False, stderrout=False):
 
-    shell = useshell
+    shell = usesh
+
+    if stdoutpipe is True:
+        stdout = PIPE
+    elif stdoutout is True:
+        stdout = STDOUT
+    else:
+        stdout = stdout
+    if stderrpipe is True:
+        stderr = PIPE
+    elif stderrout is True:
+        stderr = STDOUT
+    else:
+        stderr = stderr
+
     if splitcmd is True:
         command = split(cmd)
     else:
         command = cmd
-
-    #   caller = getframeinfo(stack()[1][0])
-    #   LOG.debug('[pcylc: calling function] {}'.format(caller.function))
-    #   LOG.debug('[pcylc: caller] %s:%d' % (caller.filename, caller.lineno))
-    #   LOG.debug('[pcylc: command] {}'.format(cmd))
-    #   LOG.debug('[pcylc: shell] => %r ' % shell)
 
     process = Popen(command, bufsize, executable, stdin, stdout,  # nosec
                     stderr, preexec_fn, close_fds, shell, cwd, env,
