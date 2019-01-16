@@ -190,9 +190,9 @@ def tex_module_search(tex_module, write=True):
     cmd = ['kpsewhich', '%s.sty' % tex_module]
     # This is less intensive & quicker than searching via 'find' or 'locate'.
     try:
-        process = pcylc(cmd, stdin=open(os.devnull), stdoutpipe=True),
+        process = pcylc(cmd, stdin=open(os.devnull), stdoutpipe=True)
         check_call(['test', '-n', process.communicate()[0].strip()],
-                   stdin=open(os.devnull), stdout=PIPE, stder=PIPE)
+                   stdin=open(os.devnull), stdout=PIPE, stderr=PIPE)
 
     except (CalledProcessError, OSError):
         if write:
