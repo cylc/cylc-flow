@@ -28,6 +28,7 @@ from subprocess import Popen, PIPE
 import sys
 from time import sleep, time
 import traceback
+from uuid import uuid4
 
 from isodatetime.parsers import TimePointParser
 from parsec.util import printcfg
@@ -85,6 +86,17 @@ class SchedulerStop(CylcError):
     pass
 
 
+class SchedulerUUID(object):
+    """Scheduler identifier - which persists on restart."""
+    __slots__ = ('value')
+
+    def __init__(self):
+        self.value = str(uuid4())
+
+    def __str__(self):
+        return self.value
+
+
 class Scheduler(object):
     """Cylc scheduler server."""
 
@@ -130,6 +142,7 @@ class Scheduler(object):
         self.profiler = Profiler(self.options.profile_mode)
         self.suite_srv_files_mgr = SuiteSrvFilesManager()
         self.suite = args[0]
+        self.uuid_str = SchedulerUUID()
         self.suite_dir = self.suite_srv_files_mgr.get_suite_source_dir(
             self.suite)
         self.suiterc = self.suite_srv_files_mgr.get_suite_rc(self.suite)
@@ -288,7 +301,12 @@ class Scheduler(object):
         LOG.info("DONE")  # main thread exit
         self.profiler.stop()
         for handler in LOG.handlers:
-            handler.close()
+            try:
+                handler.close()
+            except IOError:
+                # suppress traceback which `logging` might try to write to the
+                # log we are trying to close
+                pass
 
     @staticmethod
     def _start_print_blurb():
@@ -345,9 +363,11 @@ conditions; see `cylc conditions`.
         self.suite_event_handler = SuiteEventHandler(self.proc_pool)
         self.task_events_mgr = TaskEventsManager(
             self.suite, self.proc_pool, self.suite_db_mgr, self.broadcast_mgr)
+        self.task_events_mgr.uuid_str = self.uuid_str
         self.task_job_mgr = TaskJobManager(
             self.suite, self.proc_pool, self.suite_db_mgr,
             self.suite_srv_files_mgr, self.task_events_mgr)
+        self.task_job_mgr.task_remote_mgr.uuid_str = self.uuid_str
 
         if self.is_restart:
             # This logic handles the lack of initial cycle point in "suite.rc".
@@ -1030,7 +1050,7 @@ conditions; see `cylc conditions`.
                 ['task messaging', 'retry interval']))),
             mgr.KEY_TASK_MSG_TIMEOUT: str(float(glbl_cfg().get(
                 ['task messaging', 'connection timeout']))),
-            mgr.KEY_UUID: self.task_job_mgr.task_remote_mgr.uuid_str,
+            mgr.KEY_UUID: self.uuid_str.value,
             mgr.KEY_VERSION: CYLC_VERSION}
         try:
             mgr.dump_contact_file(self.suite, contact_data)
@@ -1112,7 +1132,7 @@ conditions; see `cylc conditions`.
             self.cli_start_point_string = value
             self.task_events_mgr.pflag = True
         elif key == 'uuid_str':
-            self.task_job_mgr.task_remote_mgr.uuid_str = str(value)
+            self.uuid_str.value = value
 
     def _load_template_vars(self, _, row):
         """Load suite start up template variables."""
@@ -1215,8 +1235,8 @@ conditions; see `cylc conditions`.
             pass
         try:
             self.suite_event_handler.handle(self.config, SuiteEventContext(
-                event, reason, self.suite, self.owner, self.host,
-                self.httpserver.port))
+                event, reason, self.suite, self.uuid_str, self.owner,
+                self.host, self.httpserver.port))
         except SuiteEventError as exc:
             if event == self.EVENT_SHUTDOWN and self.options.reftest:
                 LOG.error('SUITE REFERENCE TEST FAILED')

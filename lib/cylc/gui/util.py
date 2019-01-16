@@ -18,6 +18,7 @@
 
 import glib
 import os
+import pkg_resources
 import sys
 import traceback
 
@@ -97,12 +98,9 @@ class EntryDialog(gtk.MessageDialog):
 
 def get_image_dir():
     """Return the root directory for cylc images."""
-    try:
-        cylc_dir = os.environ['CYLC_DIR']
-    except KeyError:
-        # This should not happen (unnecessary)
-        raise SystemExit("ERROR: $CYLC_DIR is not defined!")
-    return os.path.join(cylc_dir, "images")
+    resource_package = __name__
+    resource_path = "/images/"
+    return pkg_resources.resource_filename(resource_package, resource_path)
 
 
 def get_icon():

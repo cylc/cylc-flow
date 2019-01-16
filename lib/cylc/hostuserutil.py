@@ -161,6 +161,10 @@ class HostUtil(object):
         """Return name of current user."""
         return self._get_user_pwent().pw_name
 
+    def get_user_home(self):
+        """Return home directory of current user."""
+        return self._get_user_pwent().pw_dir
+
     def _get_user_pwent(self):
         """Ensure self.user_pwent is set to current user's password entry."""
         if self.user_pwent is None:
@@ -237,6 +241,11 @@ def get_fqdn_by_host(target):
 def get_user():
     """Shorthand for HostUtil.get_inst().get_user()."""
     return HostUtil.get_inst().get_user()
+
+
+def get_user_home():
+    """Shorthand for HostUtil.get_inst().get_user_home()."""
+    return HostUtil.get_inst().get_user_home()
 
 
 def is_remote(host, owner):

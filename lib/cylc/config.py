@@ -46,6 +46,7 @@ from cylc.cycling.loader import (
     get_sequence, get_sequence_cls, init_cyclers, INTEGER_CYCLING_TYPE,
     ISO8601_CYCLING_TYPE)
 from cylc.cycling import IntervalParsingError
+from cylc.cycling.iso8601 import ingest_time
 import cylc.flags
 from cylc.graphnode import GraphNodeParser, GraphNodeError
 from cylc.print_tree import print_tree
@@ -101,9 +102,9 @@ class SuiteConfig(object):
 
     Q_DEFAULT = 'default'
     TASK_EVENT_TMPL_KEYS = (
-        'event', 'suite', 'point', 'name', 'submit_num', 'id', 'message',
-        'batch_sys_name', 'batch_sys_job_id', 'submit_time', 'start_time',
-        'finish_time', 'user@host', 'try_num')
+        'event', 'suite', 'suite_uuid', 'point', 'name', 'submit_num', 'id',
+        'message', 'batch_sys_name', 'batch_sys_job_id', 'submit_time',
+        'start_time', 'finish_time', 'user@host', 'try_num')
 
     def __init__(self, suite, fpath, template_vars=None,
                  owner=None, run_mode='live', is_validate=False, strict=False,
@@ -346,6 +347,12 @@ class SuiteConfig(object):
                 "This suite requires an initial cycle point.")
         if icp == "now":
             icp = get_current_time_string()
+        else:
+            try:
+                my_now = get_current_time_string()
+                icp = ingest_time(icp, my_now)
+            except ValueError as exc:
+                raise SuiteConfigError(str(exc))
         self.initial_point = get_point(icp).standardise()
         self.cfg['scheduling']['initial cycle point'] = str(self.initial_point)
         if cli_start_point_string:

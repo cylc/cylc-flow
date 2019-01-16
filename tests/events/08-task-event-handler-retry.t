@@ -23,7 +23,7 @@ OPT_SET=
 if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
     create_test_globalrc "" "
 [task events]
-    handlers = hello-event-handler %(name)s %(event)s %(suite_url)s %(task_url)s %(message)s %(point)s %(submit_num)s %(id)s
+    handlers = hello-event-handler %(name)s %(event)s %(suite_url)s %(suite_uuid)s %(task_url)s %(message)s %(point)s %(submit_num)s %(id)s
     handler events=succeeded, failed
     handler retry delays=PT0S, 2*PT1S"
     OPT_SET='-s GLOBALCFG=True'
@@ -35,15 +35,17 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 
 SUITE_URL=http://my-suites.com/${SUITE_NAME}.html
 TASK_URL=http://my-suites.com/${SUITE_NAME}/t1.html
-LOG="${SUITE_RUN_DIR}/log/job/1/t1/NN/job-activity.log"
+LOGD="${SUITE_RUN_DIR}/log"
+SUITE_UUID="$(sqlite3 "${LOGD}/db" 'SELECT value FROM suite_params WHERE key=="uuid_str"')"
+LOG="${LOGD}/job/1/t1/NN/job-activity.log"
 sed "/(('event-handler-00', 'succeeded'), 1)/!d; s/^.* \[/[/" "${LOG}" \
     >'edited-job-activity.log'
 cmp_ok 'edited-job-activity.log' <<__LOG__
-[(('event-handler-00', 'succeeded'), 1) cmd] hello-event-handler t1 succeeded ${SUITE_URL} ${TASK_URL} 'job succeeded' 1 1 t1.1
+[(('event-handler-00', 'succeeded'), 1) cmd] hello-event-handler t1 succeeded ${SUITE_URL} ${SUITE_UUID} ${TASK_URL} 'job succeeded' 1 1 t1.1
 [(('event-handler-00', 'succeeded'), 1) ret_code] 1
-[(('event-handler-00', 'succeeded'), 1) cmd] hello-event-handler t1 succeeded ${SUITE_URL} ${TASK_URL} 'job succeeded' 1 1 t1.1
+[(('event-handler-00', 'succeeded'), 1) cmd] hello-event-handler t1 succeeded ${SUITE_URL} ${SUITE_UUID} ${TASK_URL} 'job succeeded' 1 1 t1.1
 [(('event-handler-00', 'succeeded'), 1) ret_code] 1
-[(('event-handler-00', 'succeeded'), 1) cmd] hello-event-handler t1 succeeded ${SUITE_URL} ${TASK_URL} 'job succeeded' 1 1 t1.1
+[(('event-handler-00', 'succeeded'), 1) cmd] hello-event-handler t1 succeeded ${SUITE_URL} ${SUITE_UUID} ${TASK_URL} 'job succeeded' 1 1 t1.1
 [(('event-handler-00', 'succeeded'), 1) ret_code] 0
 [(('event-handler-00', 'succeeded'), 1) out] hello
 __LOG__

@@ -4,7 +4,7 @@ To generate pdf and html (single and multi-page) Cylc User Guides:
  | cd <cylc-dir>/doc
  | make
 
-The following make targets are also avaialable:
+The following make targets are also available:
  | make pdf
  | make html
  | make html-single
