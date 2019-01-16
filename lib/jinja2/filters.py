@@ -8,18 +8,22 @@
     :copyright: (c) 2017 by the Jinja Team.
     :license: BSD, see LICENSE for more details.
 """
-import re
 import math
-import random
+import re
 import warnings
-
-from itertools import groupby, chain
 from collections import namedtuple
-from jinja2.utils import Markup, escape, pformat, urlize, soft_unicode, \
-     unicode_urlencode, htmlsafe_json_dumps
-from jinja2.runtime import Undefined
+from itertools import chain, groupby
+
+from jinja2._compat import PY2, imap, iteritems, string_types, text_type
 from jinja2.exceptions import FilterArgumentError
-from jinja2._compat import imap, string_types, text_type, iteritems, PY2
+from jinja2.runtime import Undefined
+from jinja2.utils import (Markup, escape, htmlsafe_json_dumps, pformat,
+                          soft_unicode, unicode_urlencode, urlize)
+
+try:
+    from secrets import choice, randrange
+except ImportError:
+    from random import choice, randrange
 
 
 _word_re = re.compile(r'\w+', re.UNICODE)
@@ -68,7 +72,8 @@ def make_attrgetter(environment, attribute, postprocess=None):
     if attribute is None:
         attribute = []
     elif isinstance(attribute, string_types):
-        attribute = [int(x) if x.isdigit() else x for x in attribute.split('.')]
+        attribute = [int(x) if x.isdigit()
+                     else x for x in attribute.split('.')]
     else:
         attribute = [attribute]
 
@@ -451,9 +456,10 @@ def do_last(environment, seq):
 def do_random(context, seq):
     """Return a random item from the sequence."""
     try:
-        return random.choice(seq)
+        return choice(seq)
     except IndexError:
-        return context.environment.undefined('No random item, sequence was empty.')
+        return context.environment.undefined(
+            'No random item, sequence was empty.')
 
 
 def do_filesizeformat(value, binary=False):
@@ -601,7 +607,8 @@ def do_truncate(env, s, length=255, killwords=False, end='...', leeway=None):
     """
     if leeway is None:
         leeway = env.policies['truncate.leeway']
-    assert length >= len(end), 'expected length >= %s, got %s' % (len(end), length)
+    assert length >= len(
+        end), 'expected length >= %s, got %s' % (len(end), length)
     assert leeway >= 0, 'expected leeway >= 0, got %s' % leeway
     if len(s) <= length + leeway:
         return s
@@ -629,8 +636,8 @@ def do_wordwrap(environment, s, width=79, break_long_words=True,
         wrapstring = environment.newline_sequence
     import textwrap
     return wrapstring.join(textwrap.wrap(s, width=width, expand_tabs=False,
-                                   replace_whitespace=False,
-                                   break_long_words=break_long_words))
+                                         replace_whitespace=False,
+                                         break_long_words=break_long_words))
 
 
 def do_wordcount(s):
@@ -791,7 +798,7 @@ def do_round(value, precision=0, method='common'):
         {{ 42.55|round|int }}
             -> 43
     """
-    if not method in ('common', 'ceil', 'floor'):
+    if method not in ('common', 'ceil', 'floor'):
         raise FilterArgumentError('method must be common, ceil or floor')
     if method == 'common':
         return round(value, precision)
@@ -807,6 +814,7 @@ def do_round(value, precision=0, method='common'):
 _GroupTuple = namedtuple('_GroupTuple', ['grouper', 'list'])
 _GroupTuple.__repr__ = tuple.__repr__
 _GroupTuple.__str__ = tuple.__str__
+
 
 @environmentfilter
 def do_groupby(environment, value, attribute):
@@ -888,7 +896,8 @@ def do_mark_safe(value):
 
 
 def do_mark_unsafe(value):
-    """Mark a value as unsafe.  This is the reverse operation for :func:`safe`."""
+    """Mark a value as unsafe.  This is the reverse operation for :func:`safe`.
+    """
     return text_type(value)
 
 
@@ -915,7 +924,8 @@ def do_attr(environment, obj, name):
     ``foo.bar`` just that always an attribute is returned and items are not
     looked up.
 
-    See :ref:`Notes on subscriptions <notes-on-subscriptions>` for more details.
+    See :ref:`Notes on subscriptions <notes-on-subscriptions>` for more
+    details.
     """
     try:
         name = str(name)
@@ -1086,7 +1096,7 @@ def prepare_map(args, kwargs):
         attribute = kwargs.pop('attribute')
         if kwargs:
             raise FilterArgumentError('Unexpected keyword argument %r' %
-                next(iter(kwargs)))
+                                      next(iter(kwargs)))
         func = make_attrgetter(context.environment, attribute)
     else:
         try:
@@ -1094,7 +1104,8 @@ def prepare_map(args, kwargs):
             args = args[3:]
         except LookupError:
             raise FilterArgumentError('map requires a filter argument')
-        func = lambda item: context.environment.call_filter(
+
+        def func(item): return context.environment.call_filter(
             name, item, args, kwargs, context=context)
 
     return seq, func
@@ -1112,12 +1123,14 @@ def prepare_select_or_reject(args, kwargs, modfunc, lookup_attr):
         off = 1
     else:
         off = 0
-        transfunc = lambda x: x
+
+        def transfunc(x): return x
 
     try:
         name = args[2 + off]
         args = args[3 + off:]
-        func = lambda item: context.environment.call_test(
+
+        def func(item): return context.environment.call_test(
             name, item, args, kwargs)
     except LookupError:
         func = bool
