@@ -419,8 +419,7 @@ the Cylc GUIs:
           \end{myitemize}
 \end{myitemize}
 
-The Cylc Review service does not need any further packages to those
-already required (Python 2) and bundled with Cylc (CherryPy and Jinja2).
+The Cylc Review service does not need any additional packages.
 
 The following packages are necessary for running all the tests in Cylc:
 
@@ -457,23 +456,23 @@ Individual results:
 =============================================================================
 Package (version requirements)                        Outcome (version found)
 =============================================================================
-                            *REQUIRED SOFTWARE*                                 
+                            *REQUIRED SOFTWARE*
 Python (2.6+, <3)...................FOUND & min. version MET (2.7.12.final.0)
 
-  *OPTIONAL SOFTWARE for the GUI & dependency graph visualisation*           
+  *OPTIONAL SOFTWARE for the GUI & dependency graph visualisation*
 Python:pygtk (2.0+).........................FOUND & min. version MET (2.24.0)
 graphviz (any).................................................FOUND (2.38.0)
 Python:pygraphviz (any).........................................FOUND (1.3.1)
 
-                *OPTIONAL SOFTWARE for the HTML User Guide*                     
+                *OPTIONAL SOFTWARE for the HTML User Guide*
 ImageMagick (any).............................................FOUND (6.8.9-9)
 
-           *OPTIONAL SOFTWARE for the HTTPS communications layer*                
+           *OPTIONAL SOFTWARE for the HTTPS communications layer*
 Python:urllib3 (any)...........................................FOUND (1.13.1)
 Python:OpenSSL (any)...........................................FOUND (17.2.0)
 Python:requests (2.4.2+).....................FOUND & min. version MET (2.9.1)
 
-                *OPTIONAL SOFTWARE for the LaTeX User Guide*                     
+                *OPTIONAL SOFTWARE for the LaTeX User Guide*
 TeX:framed (any)..................................................FOUND (n/a)
 TeX (3.0+)..............................FOUND & min. version MET (3.14159265)
 TeX:preprint (any)................................................FOUND (n/a)
@@ -483,10 +482,10 @@ TeX:texlive (any).................................................FOUND (n/a)
 =============================================================================
 
 Summary:
-                        ****************************                             
-                           Core requirements: ok                                
-                           Full-functionality: ok                                
-                        **************************** 
+                        ****************************
+                           Core requirements: ok
+                           Full-functionality: ok
+                        ****************************
 \end{lstlisting}
 
 If errors are reported then the packages concerned are either not installed or
@@ -600,6 +599,52 @@ appropriate contents.
 
 The job will attempt to source the first of these files it finds to set up its
 environment.
+
+\subsubsection{Configuring Cylc Review Under Apache}
+\label{ConfiguringCylcReviewApache}
+
+The Cylc Review web service displays suite job logs and other information in
+web pages - see~\ref{ViewingSuiteLogsCylcReview} and
+Figure~\ref{fig-review-screenshot}. It can run under a WSGI server (e.g.\
+Apache with \lstinline=mod_wsgi=) as a service for all users, or as an ad hoc
+service under your own user account.
+
+To run Cylc Review under Apache, install \lstinline=mod_wsgi= and configure it
+as follows, with paths modified appropriately:
+
+\lstset{language=bash}
+\begin{lstlisting}
+# Apache mod_wsgi config file, e.g.:
+#   Red Hat Linux: /etc/httpd/conf.d/cylc-wsgi.conf
+#   Ubuntu Linux: /etc/apache2/mods-available/wsgi.conf
+# E.g. for /opt/cylc-7.8.1/
+WSGIPythonPath /opt/cylc-7.8.1/lib
+WSGIScriptAlias /cylc-review /opt/cylc-7.8.1/bin/cylc-review
+\end{lstlisting}
+(Note the \lstinline=WSGIScriptAlias= determines the service URL under the
+server root).
+
+And allow Apache access to the Cylc library:
+
+\begin{lstlisting}
+# Directory access, in main Apache config file, e.g.:
+#   Red Hat Linux: /etc/httpd/conf/httpd.conf
+#   Ubuntu Linux: /etc/apache2/apache2.conf
+# E.g. for /opt/cylc-7.8.1/
+<Directory /opt/cylc-7.8.1/>
+    AllowOverride None
+    Require all granted
+</Directory>
+\end{lstlisting}
+
+The host running the Cylc Review web service, and the service itself (or the
+user that it runs as) must be able to view the \lstinline=~/cylc-run= directory
+of all Cylc users.
+
+Use the web server log, e.g.\ \lstinline=/var/log/httpd/= or
+\lstinline=/var/log/apache2/=, to debug problems.
+
+
 
 \subsection{Automated Tests}
 \label{RTAST}
@@ -1206,11 +1251,18 @@ $ cylc cat-log -e tut/oneoff/basic hello.1   # task stderr log
     such as \lstinline=$CYLC_SUITE_SHARE_DIR=, see~\ref{TaskExecutionEnvironment}.
 \end{myitemize}
 
-\subsection{Viewing Suite Logs via Web Browser: Cylc Review}
+\subsection{Viewing Suite Logs in a Web Browser: Cylc Review}
+\label{ViewingSuiteLogsCylcReview}
 
-Cylc provides a utility for viewing the status and logs of suites called
-Cylc Review. It displays suite information in web pages, as shown in
-Figure~\ref{fig-review-screenshot}.
+The Cylc Review web service displays suite job logs and other information in
+web pages, as shown in Figure~\ref{fig-review-screenshot}. It can run under a
+WSGI server (e.g.\ Apache with \lstinline=mod_wsgi=) as a service for all
+users, or as an ad hoc service under your own user account.
+
+If a central Cylc Review service has been set up at your site (e.g.\ as
+described in~\ref{ConfiguringCylcReviewApache}) the URL will typically be
+something like \lstinline=http://<server>/cylc-review/=.
+
 
 \begin{figure}
     \begin{center}
@@ -1220,53 +1272,15 @@ Figure~\ref{fig-review-screenshot}.
 \label{fig-review-screenshot}
 \end{figure}
 
-If a Cylc Review server is provided at your site, you can open the Cylc
-Review page for a suite by running the \lstinline=cylc review= command.
-See~\ref{HostsforCylcReview} for requirements and~\ref{ConfiguringCylcReview}
-for configuration steps for setting up a host to run the service at your site.
+Otherwise, to start an ad hoc Cylc Review service to view your own suite logs
+(or those of others, if you have read access to them), run:
 
-Otherwise an ad-hoc web server can be set up using the
-\lstinline=cylc review start= command argument.
+\lstinline=setsid cylc review start 0</dev/null 1>/dev/null 2>&1 &=
 
-\subsubsection{Hosts For Running Cylc Review}
-\label{HostsforCylcReview}
-
-Connectivity requirements:
-
-\begin{myitemize}
-
-\item Must be able to access the home directories of users' Cylc run
-directories.
-
-\end {myitemize}
-
-\subsubsection{Configuring Cylc Review}
-\label{ConfiguringCylcReview}
-
-Cylc Review can provide an intranet web service at your site for users to
-view their suite logs using a web browser. Depending on settings at your
-site, you may or may not be able to set up this service
-(see~\ref{HostsforCylcReview}).
-
-You can start an ad-hoc Cylc Review web server by running:
-
-\hilight{\lstinline=setsid /path/to/../cylc review start 0</dev/null 1>/dev/null 2>\&1 \&=}
-
-You will find the access and error logs under \lstinline=~/.cylc/cylc-review*=.
-
-Alternatively you can run the Cylc Review web service under Apache
-\lstinline=mod_wsgi=. To do this you will need to set up an Apache module
-configuration file (typically in
-\lstinline=/etc/httpd/conf.d/cylc-wsgi.conf=) containing the following (with
-the paths set appropriately):
-
-\lstset{language=bash}
-\begin{lstlisting}
-WSGIPythonPath /path/to/cylc/lib
-WSGIScriptAlias /cylc-review /path/to/lib/cylc/review.py
-\end{lstlisting}
-
-Use the Apache log at e.g. \lstinline=/var/log/httpd/= to debug problems.
+The service should start at \lstinline=http://<server>:8080= (the port number
+can optionally be set on the command line). Service logs are written to
+\lstinline=~/.cylc/cylc-review*=. Run \lstinline=cylc review status= to view
+status information, and \lstinline=cylc review stop= to stop the service.
 
 \subsection{Remote Tasks}
 \label{RemoteTasks}
@@ -3739,7 +3753,7 @@ graph:
 
 The sequential declaration is arguably convenient in one unusual situation
 though: if a task has a non-uniform cycling sequence then multiple explicit
-triggers, 
+triggers,
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
@@ -3789,7 +3803,7 @@ other tasks beyond the final point.
 \label{ClockTriggerTasks}
 
 {\em NOTE: please read {\em External Triggers} (\ref{External Triggers}) before
-using the older clock triggers described in this section.} 
+using the older clock triggers described in this section.}
 
 By default, date-time cycle points are not connected to the real time ``wall
 clock''. They are just labels that are passed to task jobs (e.g.\ to
@@ -6353,7 +6367,7 @@ broker.
 
 External triggers are visible in suite visualizations as bare graph nodes (just
 the trigger names). They are plotted against all dependent tasks, not in a
-cycle point specific way like tasks. This is because external triggers may or 
+cycle point specific way like tasks. This is because external triggers may or
 may not be cycle point (or even task name) specific - it depends on the
 arguments passed to the corresponding trigger functions. For example, if an
 external trigger does not depend on task name or cycle point it will only be
@@ -6393,7 +6407,7 @@ wall_clock(offset=None)
 The \lstinline=offset= argument is a date-time duration (\lstinline=PT1H= is 1
 hour) relative to the dependent task's cycle point (automatically passed to the
 function via a second argument not shown above).
- 
+
 In the following suite, task \lstinline=foo= has a daily cycle point sequence,
 and each task instance can trigger once the wall clock time has passed its
 cycle point value by one hour:
@@ -6417,7 +6431,7 @@ often the suite server program checks the clock, is optional.  Here it is
 \lstinline=PT10S= (i.e.\ 10 seconds, which is also the default value).
 
 Argument keywords can be omitted if called in the right order, so the
-\lstinline=clock_1= trigger can also be declared like this: 
+\lstinline=clock_1= trigger can also be declared like this:
 \lstset{language=suiterc}
 \begin{lstlisting}
     [[xtriggers]]
@@ -6474,7 +6488,7 @@ It must be registered and run under the name {\em up}, as referenced in the
 Try starting the downstream suite first, then the upstream, and watch what happens.
 In each cycle point the \lstinline=@upstream= trigger in the downstream suite
 waits on the task \lstinline=foo= (with the same cycle point) in the upstream
-suite to emit the {\em data ready} message. 
+suite to emit the {\em data ready} message.
 
 Some important points to note about this:
 \begin{myitemize}
@@ -6483,7 +6497,7 @@ Some important points to note about this:
     \lstinline=PT10S= (i.e.\ 10 seconds, which is also the default value).
   \item the \lstinline=suite_state= trigger function, like the
     \lstinline=cylc suite-state= command, must have read-access to the upstream
-    suite's public database. 
+    suite's public database.
   \item the cycle point argument is supplied by a string template
     \lstinline=%(point)s=. The string templates available to trigger function
     arguments are described in {\em Custom Trigger Functions} (\ref{Custom
@@ -6513,7 +6527,7 @@ dependent task jobs (the members of the \lstinline=FAM= family in this case).
 To see this, take a look at the job script for one of the downstream tasks:
 
 \begin{lstlisting}
-% cylc cat-log -f j dn f2.2011 
+% cylc cat-log -f j dn f2.2011
 ...
 cylc__job__inst__user_env() {
     # TASK RUNTIME ENVIRONMENT:
@@ -6664,7 +6678,7 @@ function signature is:
 xrandom(percent, secs=0, _=None, debug=False)
 \end{lstlisting}
 
-The \lstinline=percent= argument sets the odds of success in any given call; 
+The \lstinline=percent= argument sets the odds of success in any given call;
 \lstinline=secs= is the number of seconds to sleep before returning; and the
 \lstinline=_= argument (underscore is a conventional name for a variable
 that is not used, in Python) is provided to allow specialization of the trigger
@@ -6867,7 +6881,7 @@ before being shut down or killed.
 $ cylc restart SUITE
 \end{lstlisting}
 
-Tasks recorded in the `submitted' or `running' states are automatically polled 
+Tasks recorded in the `submitted' or `running' states are automatically polled
 (see Section~\ref{Task Job Polling}) at start-up to determine what happened to
 them while the suite was down.
 
@@ -6926,7 +6940,7 @@ $ sqlite3 ~/cylc-run/SUITE-NAME/log/db \
 Note that a checkpoint captures the instantaneous state of every task in the
 suite, including any tasks that are currently active, so you may want to be
 careful where you do it. Tasks recorded as active are polled automatically on
-restart to determine what happened to them. 
+restart to determine what happened to them.
 
 The checkpoint ID 0 (zero) is always used for latest state of the suite, which
 is updated continuously as the suite progresses. The checkpoint IDs of earlier
@@ -7189,13 +7203,13 @@ up these files to clients, but for the moment this functionality requires
 read-access to the relevant files on the suite host.
 
 If you are logged into the suite host account, file-reading commands will just
-work. 
+work.
 
 \subsubsection{Remote Host, Shared Home Directory}
 
 If you are logged into another host with shared home directories (shared
 filesystems are common in HPC environments) file-reading commands will just
-work because suite files will look ``local'' on both hosts. 
+work because suite files will look ``local'' on both hosts.
 
 \subsubsection{Remote Host, Different Home Directory}
 
@@ -7280,7 +7294,7 @@ The gcylc GUI is mainly a network client to retrieve and display suite status
 information from the suite server program, but it can also invoke file-reading
 commands to view and graph the suite configuration and so on. This is entirely
 transparent if the GUI is running on the suite host account, but full
-functionality for remote suites requires either a shared filesystem, or 
+functionality for remote suites requires either a shared filesystem, or
 (see~\ref{RemoteControl}) auth file installation {\em and} non-interactive ssh
 access to the suite host.  Without the auth files you will not be able to connect
 to the suite, and without ssh you will see ``permission denied'' errors on
@@ -7303,7 +7317,7 @@ With a shared filesystem, a suite registered on the remote (server) host is
 also - in effect - registered on the local (client) host.  In this case you
 can invoke client commands without the \lstinline=--host= option; the client
 will automatically read the host and port from the contact file in the
-suite service directory. 
+suite service directory.
 
 To control suite server programs running under other user accounts or on other
 hosts without a shared filesystem, the suite SSL certificate and passphrase
@@ -7326,7 +7340,7 @@ $ cylc gui --user=OWNER --host=HOST SUITE
 Note remote suite auth files do not need to be installed for read-only access -
 see~\ref{PublicAccess} - via the GUI or monitor.
 
-The suite contact file (see~\ref{The Suite Contact File}) is not needed if 
+The suite contact file (see~\ref{The Suite Contact File}) is not needed if
 you have read-access to the remote suite run directory via the local
 filesystem or non-interactive ssh to the suite host account - client commands
 will automatically read it. If you do install the contact file in your auth
@@ -7935,7 +7949,7 @@ you wish:
 \label{SuiteStatePolling}
 
 {\em NOTE: please read {\em External Triggers} (\ref{External Triggers}) before
-using the older inter-suite triggering mechanism described in this section.} 
+using the older inter-suite triggering mechanism described in this section.}
 
 The \lstinline=cylc suite-state= command interrogates suite run databases. It
 has a polling mode that waits for a given task in the target suite to achieve a
@@ -8017,7 +8031,7 @@ cycle point format of the target suite.
 The remote suite does not have to be running when polling commences because the
 command interrogates the suite run database, not the suite server program.
 
-Note that the graph syntax for suite polling tasks cannot be combined with 
+Note that the graph syntax for suite polling tasks cannot be combined with
 cycle point offsets, family triggers, or parameterized task notation. This does
 not present a problem because suite polling tasks can be put on the same
 cycling sequence as the remote-suite target task (as recommended above), and
@@ -8173,7 +8187,7 @@ are:
 
 A warm start (see~\ref{Warm Start}) does not need a suite state checkpoint, but
 it wipes out prior run history, and it could re-run a significant number of
-tasks that had already completed. 
+tasks that had already completed.
 
 To restart the suite, the critical Cylc files that must be restored are:
 
@@ -8186,7 +8200,7 @@ To restart the suite, the critical Cylc files that must be restored are:
     log/rose-suite-run.conf  # (needed to restart a Rose suite)
     .service/db  # private suite DB
     .service/source -> PATH-TO-SUITE-DIR  # symlink to live suite directory
- 
+
 # On job hosts (if no shared filesystem):
 ~/cylc-run/SUITE-NAME/
     log/job/CYCLE-POINT/TASK-NAME/SUBMIT-NUM/job.status
