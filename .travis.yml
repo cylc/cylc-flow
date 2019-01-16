@@ -26,21 +26,33 @@
 
 ---
 language: python
+cache: pip
+virtualenv:
+  # we need system packages in Travis-CI's virtualenv in order to access pygtk, installed via apt-get
+  system_site_packages: true
+dist: xenial
+addons:
+  apt:
+    # instruct travis-ci to always run apt-get before each build
+    update: true
 
-matrix:
-    include:
-    - name: "1/4"
-      env: CHUNK='1/4'
-      before_script:
-        # we must run unit tests only once
-        - PYTHONPATH=$(pwd -P)/lib/ pytest --cov-append --cov=lib/cylc --cov=lib/parsec
-    - name: "2/4"
-      env: CHUNK='2/4'
-    - name: "3/4"
-      env: CHUNK='3/4'
-    - name: "4/4"
-      env: CHUNK='4/4'
+stages:
+- unit-test
+- test
 
+env:
+  global:
+  - PATH="${TRAVIS_BUILD_DIR}/bin:$PATH"
+  # Only run the generic tests on Travis CI.
+  - CYLC_TEST_RUN_PLATFORM=false
+  # Custom diff command to ignore Xlib errors (xvfb has not RANDR extension).
+  - CYLC_TEST_DIFF_CMD="diff -I Xlib -u"
+  - COVERAGE_PROCESS_START="${TRAVIS_BUILD_DIR}/.coveragerc"
+  matrix:
+  - CHUNK="1/4"
+  - CHUNK="2/4"
+  - CHUNK="3/4"
+  - CHUNK="4/4"
 
 # General environment setup before we start installing stuff
 before_install:
@@ -77,25 +89,28 @@ install:
     - pip install coverage pytest-cov mock
     - export COVERAGE_PROCESS_START="${TRAVIS_BUILD_DIR}/.coveragerc"
     # Testfixtures
-    - pip install testfixtures
+    - pip install testfixtures==6.4.3
 
 # Run tests
+# this is the default test stage, which is used for functional-tests
+install: .travis/install.sh functional-tests docs
 script:
-    # Custom diff command to ignore Xlib errors (xvfb has not RANDR extension).
-    - export CYLC_TEST_DIFF_CMD='diff -I Xlib -u'
-    # Only run the generic tests on Travis CI.
-    - export CYLC_TEST_RUN_PLATFORM=false
-    - export PYTHONPATH="${TRAVIS_BUILD_DIR}/.travis"
-    - coverage run .travis/cover.py
-    - unset PYTHONPATH
-
+- export PYTHONPATH="${TRAVIS_BUILD_DIR}/.travis"
+- coverage run .travis/cover.py
+- unset PYTHONPATH
+after_script: .travis/after_script.sh
 after_success:
-    # Report metrics, such as coverage
-    - coverage combine --append
-    - coverage xml --ignore-errors
-    - bash <(curl -s https://codecov.io/bash)
+# Report metrics, such as coverage
+- coverage combine --append
+- coverage xml --ignore-errors
+- bash <(curl -s https://codecov.io/bash)
 
-# Check output (more useful if you narrow down what tests get run)
-after_script:
-    - find $HOME/cylc-run -name '*.err' -type f -exec echo '==== {} ====' \; -exec cat '{}' \;
-    - find /tmp/${USER}/cylctb-* -type f -exec echo '==== {} ====' \; -exec cat '{}' \;
+jobs:
+  include:
+  - stage: unit-test
+    install:
+    - .travis/install.sh unit-tests functional-tests
+    script:
+    - pycodestyle --ignore=E402,W503,W504 lib/cylc lib/Jinja2Filters/*.py lib/parsec/*.py $(grep -l '#!.*\<python\>' bin/*)
+    - PYTHONPATH=$(pwd -P)/lib/ pytest --cov-append --cov=lib/cylc --cov=lib/parsec
+    after_script: true
