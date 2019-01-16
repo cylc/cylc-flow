@@ -89,7 +89,7 @@ install:
     - pip install coverage pytest-cov mock
     - export COVERAGE_PROCESS_START="${TRAVIS_BUILD_DIR}/.coveragerc"
     # Testfixtures
-    - pip install testfixtures==6.4.3
+    - pip install testfixtures==6.3.0
 
 # Run tests
 # this is the default test stage, which is used for functional-tests
