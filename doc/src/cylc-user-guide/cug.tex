@@ -615,8 +615,8 @@ as follows, with paths modified appropriately:
 \lstset{language=bash}
 \begin{lstlisting}
 # Apache mod_wsgi configuration file, e.g.:
-#  Red Hat Linux: /etc/httpd/conf.d/cylc-wsgi.conf
-#  Ubuntu Linux: /etc/apache2/mods-available/wsgi.conf
+#   Red Hat Linux: /etc/httpd/conf.d/cylc-wsgi.conf
+#   Ubuntu Linux: /etc/apache2/mods-available/wsgi.conf
 # E.g. for /opt/cylc-7.8.1/
 WSGIPythonPath /opt/cylc-7.8.1/lib
 WSGIScriptAlias /cylc-review /opt/cylc-7.8.1/bin/cylc-review
@@ -627,9 +627,9 @@ server root).
 And allow Apache access to the Cylc library:
 
 \begin{lstlisting}
-# Directory access configuration in main Apachhe config file, e.g.:
-#  Red Hat Linux: /etc/httpd/conf/httpd.conf
-#  Ubuntu Linux: /etc/apache2/apache2.conf
+# Directory access, in main Apache config file, e.g.:
+#   Red Hat Linux: /etc/httpd/conf/httpd.conf
+#   Ubuntu Linux: /etc/apache2/apache2.conf
 # E.g. for /opt/cylc-7.8.1/
 <Directory /opt/cylc-7.8.1/>
     AllowOverride None
