@@ -22,7 +22,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 test_dump() {
     local TEST_NAME="$1"
-    run_ok "${TEST_NAME}" python - "$@" <<'__PYTHON__'
+    run_ok "${TEST_NAME}" python2 - "$@" <<'__PYTHON__'
 import ast
 import sys
 

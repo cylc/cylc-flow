@@ -21,7 +21,7 @@ The recommended way to do this, which we expand on below, is:
 \begin{itemize}
   \item Put all site-specific settings in include-files loaded at the end
     of a generic ``core'' suite definition.
-  \item Use ``optional optional'' app config files for site-specific variations
+  \item Use ``optional'' app config files for site-specific variations
     in the core suite's Rose apps.
   \item (Make minimal use of inlined site switches too, if necessary).
   \item When referencing files, reference them within the suite structure and
@@ -280,7 +280,7 @@ if a file is missing at the start of a suite rather than part way into a run.
 Typically a few but not all apps will need some site customization, e.g.\ for
 local archive configuration, local science options, or whatever. To avoid
 explicit site-customization of individual task-run command lines use Rose's
-built-in {\em optional optional app config} capability:
+built-in {\em optional app config} capability:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -496,7 +496,7 @@ portability) into include-files that are only loaded in the operational
 environment. Improvements and upgrades can be developed on feature branches in
 the research environment. Operations staff can check out completed feature
 branches for testing in the operational environment before merging to trunk or
-refering back to research if problems are found. After sufficient testing the
+referring back to research if problems are found. After sufficient testing the
 new suite version can be deployed into operations.
 
 \note{This obviously glosses over the myriad complexities of the technical

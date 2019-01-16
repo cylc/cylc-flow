@@ -106,7 +106,12 @@ class TimestampRotatingFileHandler(logging.FileHandler):
         if max_bytes < self.MIN_BYTES:  # No silly value
             max_bytes = self.MIN_BYTES
         msg = "%s\n" % self.format(record)
-        self.stream.seek(0, 2)  # due to non-posix-compliant Windows feature
+        try:
+            # due to non-posix-compliant Windows feature
+            self.stream.seek(0, 2)
+        except ValueError as exc:
+            # intended to catch - ValueError: I/O operation on closed file
+            raise SystemExit(exc)
         return self.stream.tell() + len(msg.encode('utf8')) >= max_bytes
 
     def do_rollover(self):

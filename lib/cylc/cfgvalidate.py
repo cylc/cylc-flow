@@ -78,10 +78,14 @@ class CylcConfigValidator(ParsecValidator):
         if value == 'now':
             # Handle this later in config.py when the suite UTC mode is known.
             return value
+        if "next" in value or "previous" in value:
+            # Handle this later, as for "now".
+            return value
         if value.isdigit():
             # Could be an old date-time cycle point format, or integer format.
             return value
-        if value.startswith('-') or value.startswith('+'):
+        if "P" not in value and (
+                value.startswith('-') or value.startswith('+')):
             # We don't know the value given for num expanded year digits...
             for i in range(1, 101):
                 try:
@@ -90,6 +94,18 @@ class CylcConfigValidator(ParsecValidator):
                     continue
                 return value
             raise IllegalValueError('cycle point', keys, value)
+        if "P" in value:
+            # ICP is an offset
+            parser = DurationParser()
+            try:
+                if value.startswith("-"):
+                    # parser doesn't allow negative duration with this setup?
+                    parser.parse(value[1:])
+                else:
+                    parser.parse(value)
+                return value
+            except ValueError:
+                raise IllegalValueError("cycle point", keys, value)
         try:
             TimePointParser().parse(value)
         except ValueError:

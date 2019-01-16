@@ -34,7 +34,7 @@ class SuiteEventError(Exception):
 
 SuiteEventContext = namedtuple(
     "SuiteEventContext",
-    ["event", "reason", "suite", "owner", "host", "port"])
+    ["event", "reason", "suite", "uuid_str", "owner", "host", "port"])
 
 
 class SuiteEventHandler(object):
@@ -140,8 +140,9 @@ class SuiteEventHandler(object):
             try:
                 handler_data = {
                     'event': quote(ctx.event),
-                    'suite': quote(ctx.suite),
                     'message': quote(ctx.reason),
+                    'suite': quote(ctx.suite),
+                    'suite_uuid': quote(str(ctx.uuid_str)),
                 }
                 if config.cfg['meta']:
                     for key, value in config.cfg['meta'].items():

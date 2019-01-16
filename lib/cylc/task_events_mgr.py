@@ -133,6 +133,7 @@ class TaskEventsManager(object):
         self.suite = suite
         self.suite_url = None
         self.suite_cfg = {}
+        self.uuid_str = None
         self.proc_pool = proc_pool
         self.suite_db_mgr = suite_db_mgr
         self.broadcast_mgr = broadcast_mgr
@@ -577,6 +578,10 @@ class TaskEventsManager(object):
 
     def _job_logs_retrieval_callback(self, proc_ctx, schd_ctx):
         """Call back when log job retrieval completes."""
+        if proc_ctx.ret_code:
+            LOG.error(proc_ctx)
+        else:
+            LOG.debug(proc_ctx)
         for id_key in proc_ctx.cmd_kwargs["id_keys"]:
             key1, point, name, submit_num = id_key
             try:
@@ -855,6 +860,7 @@ class TaskEventsManager(object):
                 handler_data = {
                     "event": quote(event),
                     "suite": quote(self.suite),
+                    'suite_uuid': quote(str(self.uuid_str)),
                     "point": quote(str(itask.point)),
                     "name": quote(itask.tdef.name),
                     "submit_num": itask.submit_num,

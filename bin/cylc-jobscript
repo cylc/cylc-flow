@@ -47,7 +47,7 @@ __END__
 }
 
 editor () {
-    python -c "
+    python2 -c "
 import sys
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 if sys.argv[1] in ['-g', '--gedit']:

@@ -271,8 +271,7 @@ class SuiteDatabaseManager(object):
         else:
             final_point_str = str(schd.final_point)
         self.db_inserts_map[self.TABLE_SUITE_PARAMS].extend([
-            {"key": "uuid_str",
-             "value": schd.task_job_mgr.task_remote_mgr.uuid_str},
+            {"key": "uuid_str", "value": str(schd.uuid_str)},
             {"key": "run_mode", "value": schd.run_mode},
             {"key": "cylc_version", "value": CYLC_VERSION},
             {"key": "UTC_mode", "value": get_utc_mode()},
