@@ -102,11 +102,11 @@ class CylcConfigValidator(ParsecValidator):
         value = cls.strip_and_unquote(keys, value)
         if not value:
             return None
+        if '/' in value:
+            raise IllegalValueError('cycle point format', keys, value)
         test_timepoint = TimePoint(year=2001, month_of_year=3, day_of_month=1,
                                    hour_of_day=4, minute_of_hour=30,
                                    second_of_minute=54)
-        if '/' in value:
-            raise IllegalValueError('cycle point format', keys, value)
         if '%' in value:
             try:
                 TimePointDumper().strftime(test_timepoint, value)
@@ -228,7 +228,6 @@ class CylcConfigValidator(ParsecValidator):
         value = self.strip_and_unquote(keys, value)
         if not value:
             raise IllegalValueError("xtrigger", keys, value)
-        fname = None
         args = []
         kwargs = {}
         match = self._REC_TRIG_FUNC.match(value)

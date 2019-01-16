@@ -335,27 +335,27 @@ class GraphParser(object):
         if right and self.__class__.OP_OR in right:
             raise GraphParseError("ERROR, illegal OR on RHS: %s" % right)
 
-        # Remove qualifiers from right-side nodes.
-        if right:
-            for qual in self.__class__.REC_TRIG_QUAL.findall(right):
-                right = right.replace(qual, '')
-
         # Raise error if suicide triggers on the left of the trigger.
         if left and self.__class__.SUICIDE_MARK in left:
             raise GraphParseError(
                 "ERROR, suicide markers must be"
                 " on the right of a trigger: %s" % left)
 
+        # Check that parentheses match.
+        if left and left.count("(") != left.count(")"):
+            raise GraphParseError(
+                "ERROR, parenthesis mismatch in: \"" + left + "\"")
+
+        # Remove qualifiers from right-side nodes.
+        if right:
+            for qual in self.__class__.REC_TRIG_QUAL.findall(right):
+                right = right.replace(qual, '')
+
         # Cycle point offsets are not allowed on the right side (yet).
         if right and '[' in right:
             raise GraphParseError(
                 "ERROR, illegal cycle point offset on the right: %s => %s" % (
                     left, right))
-
-        # Check that parentheses match.
-        if left and left.count("(") != left.count(")"):
-            raise GraphParseError(
-                "ERROR, parenthesis mismatch in: \"" + left + "\"")
 
         # Split right side on AND.
         rights = right.split(self.__class__.OP_AND)
