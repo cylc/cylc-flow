@@ -27,11 +27,11 @@ args=("$@")
 # pygtk via apt-get, necessary for both unit and functional tests
 sudo apt-get install graphviz libgraphviz-dev python-gtk2-dev heirloom-mailx
 # coverage dependencies
-pip install coverage pytest-cov mock
+pip install coverage pytest-cov mock testfixtures
 
 # install dependencies required for running unit tests
 if grep 'unit-tests' <<< "${args[@]}"; then
-    pip install EmPy pyopenssl pycodestyle pytest mock
+    pip install EmPy pyopenssl pycodestyle pytest mock testfixtures
 fi
 
 # install dependencies required for running functional tests
