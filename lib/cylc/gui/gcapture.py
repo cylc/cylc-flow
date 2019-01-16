@@ -133,7 +133,7 @@ class Gcapture(object):
     def run(self):
         proc = pcylc(self.command, stdin=open(os.devnull),
                      stdout=self.stdoutfile, stderrout=True,
-                     usesh=True)
+                     usesh=True, splitcmd=True)
         # calls to open a shell are aggregated in sprocess.pcylc()
         self.proc = proc
         gobject.timeout_add(40, self.pulse_proc_progress)
