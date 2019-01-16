@@ -82,7 +82,7 @@ before being shut down or killed.
 
    $ cylc restart SUITE
 
-Tasks recorded in the "submitted" or "running" states are automatically polled 
+Tasks recorded in the "submitted" or "running" states are automatically polled
 (see :ref:`Task Job Polling`) at start-up to determine what happened to
 them while the suite was down.
 
@@ -557,7 +557,7 @@ The gcylc GUI is mainly a network client to retrieve and display suite status
 information from the suite server program, but it can also invoke file-reading
 commands to view and graph the suite configuration and so on. This is entirely
 transparent if the GUI is running on the suite host account, but full
-functionality for remote suites requires either a shared filesystem, or 
+functionality for remote suites requires either a shared filesystem, or
 (see :ref:`RemoteControl`) auth file installation *and* non-interactive ssh
 access to the suite host.  Without the auth files you will not be able
 to connect to the suite, and without ssh you will see "permission denied"
@@ -608,7 +608,7 @@ is the suite name. Client commands should then be invoked with the
    Remote suite auth files do not need to be installed for read-only
    access - see :ref:`PublicAccess` - via the GUI or monitor.
 
-The suite contact file (see :ref:`The Suite Contact File`) is not needed if 
+The suite contact file (see :ref:`The Suite Contact File`) is not needed if
 you have read-access to the remote suite run directory via the local
 filesystem or non-interactive ssh to the suite host account - client commands
 will automatically read it. If you do install the contact file in your auth

@@ -25,7 +25,7 @@ broker.
 
 External triggers are visible in suite visualizations as bare graph nodes (just
 the trigger names). They are plotted against all dependent tasks, not in a
-cycle point specific way like tasks. This is because external triggers may or 
+cycle point specific way like tasks. This is because external triggers may or
 may not be cycle point (or even task name) specific - it depends on the
 arguments passed to the corresponding trigger functions. For example, if an
 external trigger does not depend on task name or cycle point it will only be
@@ -66,7 +66,7 @@ the main process. The clock trigger function signature looks like this:
 The ``offset`` argument is a date-time duration (``PT1H`` is 1
 hour) relative to the dependent task's cycle point (automatically passed to the
 function via a second argument not shown above).
- 
+
 In the following suite, task ``foo`` has a daily cycle point sequence,
 and each task instance can trigger once the wall clock time has passed its
 cycle point value by one hour:
@@ -154,7 +154,7 @@ Try starting the downstream suite first, then the upstream, and
 watch what happens.
 In each cycle point the ``@upstream`` trigger in the downstream suite
 waits on the task ``foo`` (with the same cycle point) in the upstream
-suite to emit the *data ready* message. 
+suite to emit the *data ready* message.
 
 Some important points to note about this:
 
@@ -163,7 +163,7 @@ Some important points to note about this:
   ``PT10S`` (i.e. 10 seconds, which is also the default value).
 - the ``suite_state`` trigger function, like the
   ``cylc suite-state`` command, must have read-access to the upstream
-  suite's public database. 
+  suite's public database.
 - the cycle point argument is supplied by a string template
   ``%(point)s``. The string templates available to trigger function
   arguments are described in :ref:`Custom Trigger Functions`).
@@ -194,7 +194,7 @@ To see this, take a look at the job script for one of the downstream tasks:
 
 .. code-block:: bash
 
-   % cylc cat-log -f j dn f2.2011 
+   % cylc cat-log -f j dn f2.2011
    ...
    cylc__job__inst__user_env() {
        # TASK RUNTIME ENVIRONMENT:
@@ -347,7 +347,7 @@ function signature is:
 
    xrandom(percent, secs=0, _=None, debug=False)
 
-The ``percent`` argument sets the odds of success in any given call; 
+The ``percent`` argument sets the odds of success in any given call;
 ``secs`` is the number of seconds to sleep before returning; and the
 ``_`` argument (underscore is a conventional name for a variable
 that is not used, in Python) is provided to allow specialization of the trigger

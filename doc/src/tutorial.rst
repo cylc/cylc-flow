@@ -513,12 +513,19 @@ with the ``cylc cat-log`` command:
   ``$CYLC_SUITE_SHARE_DIR``, see :ref:`TaskExecutionEnvironment`.
 
 
-Viewing Suite Logs via Web Browser: Cylc Review
------------------------------------------------
+.. _ViewingSuiteLogsCylcReview:
 
-Cylc provides a utility for viewing the status and logs of suites called
-Cylc Review. It displays suite information in web pages, as shown in
-:numref:`fig-review-screenshot`.
+Viewing Suite Logs in a Web Browser: Cylc Review
+------------------------------------------------
+
+The Cylc Review web service displays suite job logs and other information in
+web pages, as shown in :numref:`fig-review-screenshot`. It can run under a
+WSGI server (e.g. Apache with ``mod_wsgi``) as a service for all
+users, or as an ad hoc service under your own user account.
+
+If a central Cylc Review service has been set up at your site (e.g. as
+described in :ref:`ConfiguringCylcReviewApache`) the URL will typically be
+something like ``http://<server>/cylc-review/``.
 
 .. _fig-review-screenshot:
 
@@ -527,55 +534,17 @@ Cylc Review. It displays suite information in web pages, as shown in
 
    Screenshot of a Cylc Review web page
 
-If a Cylc Review server is provided at your site, you can open the Cylc
-Review page for a suite by running the ``cylc review`` command.
-See :ref:`HostsforCylcReview` for requirements and
-:ref:`ConfiguringCylcReview` for configuration steps for setting up a
-host to run the service at your site.
+Otherwise, to start an ad hoc Cylc Review service to view your own suite logs
+(or those of others, if you have read access to them), run:
 
-Otherwise an ad-hoc web server can be set up using the
-``cylc review start`` command argument.
+.. code-block:: none
 
+   setsid cylc review start 0</dev/null 1>/dev/null 2>&1 &
 
-.. _HostsforCylcReview:
-
-Hosts For Running Cylc Review
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Connectivity requirements:
-
-- Must be able to access the home directories of users' Cylc run directories.
-
-
-.. _ConfiguringCylcReview:
-
-Configuring Cylc Review
-^^^^^^^^^^^^^^^^^^^^^^^
-
-Cylc Review can provide an intranet web service at your site for users to
-view their suite logs using a web browser. Depending on settings at your
-site, you may or may not be able to set up this service
-(see :ref:`HostsforCylcReview`).
-
-You can start an ad-hoc Cylc Review web server by running:
-
-.. code-block:: bash
-
-   setsid /path/to/../cylc review start 0</dev/null 1>/dev/null 2>\&1 \&
-
-You will find the access and error logs under ``~/.cylc/cylc-review*``.
-
-Alternatively you can run the Cylc Review web service under Apache
-``mod_wsgi``. To do this you will need to set up an Apache module
-configuration file (typically in ``/etc/httpd/conf.d/cylc-wsgi.conf``)
-containing the following (with the paths set appropriately):
-
-.. code-block:: bash
-
-   WSGIPythonPath /path/to/cylc/lib
-   WSGIScriptAlias /cylc-review /path/to/lib/cylc/review.py
-
-Use the Apache log at e.g. ``/var/log/httpd/`` to debug problems.
+The service should start at ``http://<server>:8080`` (the port number
+can optionally be set on the command line). Service logs are written to
+``~/.cylc/cylc-review*``. Run ``cylc review`` to view
+status information, and ``cylc review stop`` to stop the service.
 
 
 .. _RemoteTasks:

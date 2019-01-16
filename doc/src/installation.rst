@@ -39,8 +39,7 @@ the Cylc GUIs:
   - python-devel
   - graphviz-devel
 
-The Cylc Review service does not need any further packages to those
-already required (Python 2) and bundled with Cylc (CherryPy and Jinja2).
+The Cylc Review service does not need any additional packages.
 
 The following packages are necessary for running all the tests in Cylc:
 
@@ -65,30 +64,30 @@ are installed properly:
    ===============================================================================
    Package (version requirements)                          Outcome (version found)
    ===============================================================================
-                                 *REQUIRED SOFTWARE*                              
+                                 *REQUIRED SOFTWARE*
    Python (2.6+, <3).....................FOUND & min. version MET (2.7.12.final.0)
 
-          *OPTIONAL SOFTWARE for the GUI & dependency graph visualisation*       
+          *OPTIONAL SOFTWARE for the GUI & dependency graph visualisation*
    Python:pygraphviz (any)...........................................NOT FOUND (-)
    graphviz (any)...................................................FOUND (2.26.0)
    Python:pygtk (2.0+)...............................................NOT FOUND (-)
 
-               *OPTIONAL SOFTWARE for the HTTPS communications layer*            
+               *OPTIONAL SOFTWARE for the HTTPS communications layer*
    Python:requests (2.4.2+)......................FOUND & min. version MET (2.11.1)
    Python:urllib3 (any)..............................................NOT FOUND (-)
    Python:OpenSSL (any)..............................................NOT FOUND (-)
 
-                *OPTIONAL SOFTWARE for the configuration templating*             
+                *OPTIONAL SOFTWARE for the configuration templating*
    Python:EmPy (any).................................................NOT FOUND (-)
 
-                   *OPTIONAL SOFTWARE for the HTML documentation*                
+                   *OPTIONAL SOFTWARE for the HTML documentation*
    Python:sphinx (1.5.3+).........................FOUND & min. version MET (1.7.0)
    ===============================================================================
 
    Summary:
-                            ****************************                         
-                                Core requirements: ok                             
-                             Full-functionality: not ok                          
+                            ****************************
+                                Core requirements: ok
+                             Full-functionality: not ok
                             ****************************
 
 If errors are reported then the packages concerned are either not installed or
@@ -216,6 +215,54 @@ appropriate contents.
 
 The job will attempt to source the first of these files it finds to set up its
 environment.
+
+
+.. _ConfiguringCylcReviewApache:
+
+Configuring Cylc Review Under Apache
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The Cylc Review web service displays suite job logs and other information in
+web pages - see :ref:`ViewingSuiteLogsCylcReview` and
+:numref:`fig-review-screenshot`. It can run under a WSGI server (e.g.
+Apache with ``mod_wsgi``) as a service for all users, or as an ad hoc
+service under your own user account.
+
+To run Cylc Review under Apache, install ``mod_wsgi`` and configure it
+as follows, with paths modified appropriately:
+
+.. code-block:: bash
+
+   # Apache mod_wsgi config file, e.g.:
+   #   Red Hat Linux: /etc/httpd/conf.d/cylc-wsgi.conf
+   #   Ubuntu Linux: /etc/apache2/mods-available/wsgi.conf
+   # E.g. for /opt/cylc-7.8.1/
+   WSGIPythonPath /opt/cylc-7.8.1/lib
+   WSGIScriptAlias /cylc-review /opt/cylc-7.8.1/bin/cylc-review
+
+(Note the ``WSGIScriptAlias`` determines the service URL under the
+server root).
+
+And allow Apache access to the Cylc library:
+
+.. code-block:: bash
+
+   # Directory access, in main Apache config file, e.g.:
+   #   Red Hat Linux: /etc/httpd/conf/httpd.conf
+   #   Ubuntu Linux: /etc/apache2/apache2.conf
+   # E.g. for /opt/cylc-7.8.1/
+   <Directory /opt/cylc-7.8.1/>
+	   AllowOverride None
+	   Require all granted
+   </Directory>
+
+The host running the Cylc Review web service, and the service itself (or the
+user that it runs as) must be able to view the ``~/cylc-run`` directory
+of all Cylc users.
+
+Use the web server log, e.g. ``/var/log/httpd/`` or ``/var/log/apache2/``, to
+debug problems.
+
 
 .. _RTAST:
 
