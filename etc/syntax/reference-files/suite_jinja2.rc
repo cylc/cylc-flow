@@ -4,7 +4,7 @@
 # SYNTAX numbering matches the table in https://github.com/cylc/cylc/issues/2752
 
 # SYNTAX: 3.2
-# templating code should be displayed diffently to cylc code
+# templating code should be displayed differently to cylc code
 {# no comment #}  # should display as a comment
 {% set foo = "bar" %}
 {% set foo = '%s' % 'bar' %}
@@ -19,13 +19,14 @@
 {% from 'foo' import foo as a, b %}
 
 # SYNTAX 3.3
-# multi-line templating code should be consistent with single-line code
+# multi-line template code should appear the same as single-line template code
+# if it were distributed over multiple lines
 {#
     no comment
-#}  # all three lines should display as a single comment
+#}  # all three lines should display as a single comment with no gaps
 {# a
    b
-   c #}  # all three lines should display as a single comment
+   c #}  # all three lines should display as a single comment with no gaps
 {%
     set foo = {"1": 2, "3", []}
 %}

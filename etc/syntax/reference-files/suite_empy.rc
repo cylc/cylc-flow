@@ -3,8 +3,8 @@
 
 # SYNTAX numbering matches the table in https://github.com/cylc/cylc/issues/2752
 
-# SYNTAX: 3.2
-# templating code should be displayed diffently to cylc code
+# SYNTAX: 3.4
+# templating code should be displayed differently to cylc code
 @# no comment  # should display as a comment
 @foo
 @{foo="bar"}
@@ -19,7 +19,7 @@
 @[if x]a = b@[end if]  # highlight all but "a = b"
 @[if x.y[]]a = b@[end if]  # highlight all but "a = b"
 a = b  
-# SYNTAX 3.3
+# SYNTAX 3.5
 # non-exhaustive list of advanced empy syntax
 @# no comment
 @?NewContextName
@@ -32,8 +32,8 @@ foo = @@  # the @@ should NOT be highlighted
 @os.environ
 @`x`
 @:2 + 2:
-:%title  "Cylc"
-**'@<CONTENTS>'**  # ???
+@%title  "Cylc"
+**'@<CONTENTS>'**  # custom markup
 @[def f(x, y=z, **kwargs)] @[end def]
 @[try]  @[except]
 
@@ -44,7 +44,7 @@ a = @b
 @a = b
 a = @( b + 1 )
 a = @( b_b | c.d('1', "2", 3) )
-[[@a}]]
+[[@a]]
     d = e  # check highlighting of this line un-affected by section
 [[@( a_a | c.d('1', "2", 3) )]]
     d = e  # check highlighting of this line un-affected by section
