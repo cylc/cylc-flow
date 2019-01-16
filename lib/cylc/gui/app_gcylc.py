@@ -75,7 +75,7 @@ else:
 def run_get_stdout(command, filter_=False):
     try:
         proc = pcylc(command, usesh=True, stdoutpipe=True, stderrpipe=True,
-                     stdin=open(os.devnull))
+                     stdin=open(os.devnull), splitcmd=True)
         # calls to open a shell are aggregated in sprocess.pcylc()
         out = proc.stdout.read()
         err = proc.stderr.read()
@@ -1201,7 +1201,7 @@ been defined for this suite""").inform()
             pass  # Cannot print to terminal (session may be closed).
 
         try:
-            pcylc(command, usesh=True, stdin=open(os.devnull))
+            pcylc(command, usesh=True, stdin=open(os.devnull), splitcmd=True)
             # calls to open a shell are aggregated in sprocess.pcylc()
         except OSError:
             warning_dialog('Error: failed to start ' + self.cfg.suite,
