@@ -600,6 +600,52 @@ appropriate contents.
 The job will attempt to source the first of these files it finds to set up its
 environment.
 
+\subsubsection{Configuring Cylc Review Under Apache}
+\label{ConfiguringCylcReviewApache}
+
+The Cylc Review web service displays suite job logs and other information in
+web pages - see~\ref{ViewingSuiteLogsCylcReview} and
+Figure~\ref{fig-review-screenshot}. It can run under a WSGI server (e.g.\
+Apache with \lstinline=mod_wsgi=) as a service for all users, or as an ad hoc
+service under your own user account.
+
+To run Cylc Review under Apache, install \lstinline=mod_wsgi= and configure it
+as follows, with paths modified appropriately:
+
+\lstset{language=bash}
+\begin{lstlisting}
+# Apache mod_wsgi configuration file, e.g.:
+#  Red Hat Linux: /etc/httpd/conf.d/cylc-wsgi.conf
+#  Ubuntu Linux: /etc/apache2/mods-available/wsgi.conf
+# E.g. for /opt/cylc-7.8.1/
+WSGIPythonPath /opt/cylc-7.8.1/lib
+WSGIScriptAlias /cylc-review /opt/cylc-7.8.1/bin/cylc-review
+\end{lstlisting}
+(Note the \lstinline=WSGIScriptAlias= determines the service URL under the
+server root).
+
+And allow Apache access to the Cylc library:
+
+\begin{lstlisting}
+# Directory access configuration in main Apachhe config file, e.g.:
+#  Red Hat Linux: /etc/httpd/conf/httpd.conf
+#  Ubuntu Linux: /etc/apache2/apache2.conf
+# E.g. for /opt/cylc-7.8.1/
+<Directory /opt/cylc-7.8.1/>
+    AllowOverride None
+    Require all granted
+</Directory>
+\end{lstlisting}
+
+The host running the Cylc Review web service, and the service itself (or the
+user that it runs as) must be able to view the \lstinline=~/cylc-run= directory
+of all Cylc users.
+
+Use the web server log, e.g.\ \lstinline=/var/log/httpd/= or
+\lstinline=/var/log/apache2/=, to debug problems.
+
+
+
 \subsection{Automated Tests}
 \label{RTAST}
 
@@ -1206,11 +1252,17 @@ $ cylc cat-log -e tut/oneoff/basic hello.1   # task stderr log
 \end{myitemize}
 
 \subsection{Viewing Suite Logs in a Web Browser: Cylc Review}
+\label{ViewingSuiteLogsCylcReview}
 
 The Cylc Review web service displays suite job logs and other information in
 web pages, as shown in Figure~\ref{fig-review-screenshot}. It can run under a
 WSGI server (e.g.\ Apache with \lstinline=mod_wsgi=) as a service for all
 users, or as an ad hoc service under your own user account.
+
+If a central Cylc Review service has been set up at your site (e.g.\ as
+described in~\ref{ConfiguringCylcReviewApache}) the URL will typically be
+something like \lstinline=http://<server>/cylc-review/=.
+
 
 \begin{figure}
     \begin{center}
@@ -1220,10 +1272,8 @@ users, or as an ad hoc service under your own user account.
 \label{fig-review-screenshot}
 \end{figure}
 
-\subsubsection{Cylc Review as an Ad Hoc Service}
-
-To start an ad hoc Cylc Review service to view your own suite logs (or those of
-others, if you have read access to them), run:
+Otherwise, to start an ad hoc Cylc Review service to view your own suite logs
+(or those of others, if you have read access to them), run:
 
 \lstinline=setsid cylc review start 0</dev/null 1>/dev/null 2>&1 &=
 
@@ -1231,49 +1281,6 @@ The service should start at \lstinline=http://<server>:8080= (the port number
 can optionally be set on the command line). Service logs are written to
 \lstinline=~/.cylc/cylc-review*=. Run \lstinline=cylc review status= to view
 status information, and \lstinline=cylc review stop= to stop the service.
-
-\subsubsection{Cylc Review as a Central Service}
-
-System administrators can configure a WSGI server to run Cylc Review as a
-service for all users - see~\ref{ConfiguringCylcReview} for example. The
-service URL will typically be \lstinline=http://<server>/cylc-review/=.
-
-\subsubsection{Configuring Cylc Review Under Apache}
-\label{ConfiguringCylcReview}
-
-To run Cylc Review under the Apache web server, install \lstinline=mod_wsgi=
-and configure it, e.g.\ in
-    \lstinline=/etc/httpd/conf.d/cylc-wsgi.conf= (Red Hat) or
-    \lstinline=/etc/apache2/mods-available/wsgi.conf= (Ubuntu),
-as follows, with paths modified appropriately:
-
-\lstset{language=bash}
-\begin{lstlisting}
-# Apache mod_wsgi configuration.
-# E.g. for /opt/cylc-7.8.1/
-WSGIPythonPath /opt/cylc-7.8.1/lib
-WSGIScriptAlias /cylc-review /opt/cylc-7.8.1/bin/cylc-review
-\end{lstlisting}
-(Note the \lstinline=WSGIScriptAlias= determines the service URL under the server root).
-
-And in, e.g.\ \lstinline=/etc/httpd/conf/httpd.conf= (Red Hat) or
-\lstinline=/etc/apache2/apache2.conf= (Ubuntu):
-
-\begin{lstlisting}
-# Apache directory access configuration.
-# E.g. for /opt/cylc-7.8.1/
-<Directory /opt/cylc-7.8.1/>
-    AllowOverride None
-    Require all granted
-</Directory>
-\end{lstlisting}
-
-The host running the Cylc Review web service, and the service itself (or the
-user that it runs as) must be able to view the \lstinline=~/cylc-run= directory
-of all Cylc users.
-
-Use the web server log, e.g.\ \lstinline=/var/log/httpd/= or
-\lstinline=/var/log/apache2/=, to debug problems.
 
 \subsection{Remote Tasks}
 \label{RemoteTasks}
