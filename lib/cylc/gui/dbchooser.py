@@ -105,8 +105,11 @@ class db_updater(threading.Thread):
 
         # Scan for running suites
         choices = []
-        for host, port, suite_identity in scan_many(
-                get_scan_items_from_fs(), timeout=self.timeout):
+        scan_results = scan_many(
+            get_scan_items_from_fs(), timeout=self.timeout)
+        if scan_results is None:
+            return
+        for host, port, suite_identity in scan_results:
             name = suite_identity[KEY_NAME]
             owner = suite_identity[KEY_OWNER]
             if is_remote_user(owner):
