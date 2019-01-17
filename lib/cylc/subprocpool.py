@@ -271,15 +271,13 @@ class SuiteProcPool(object):
                 # Nothing readable
                 break
             for fileno in fileno_list:
-                data = ''
-                while True:
-                    # Use the low level `os.read` here instead of
-                    # `file.read` to avoid any buffering that may cause
-                    # the file handle to block.
-                    res = os.read(fileno, 65536)  # 64K
-                    if not res:
-                        break
-                    data += res
+                # Use the low level `os.read` here instead of
+                # `file.read` to avoid any buffering that may cause
+                # the file handle to block.
+                try:
+                    data = os.read(fileno, 65536)  # 64K
+                except OSError:
+                    continue
                 if fileno == proc.stdout.fileno():
                     if ctx.out is None:
                         ctx.out = ''

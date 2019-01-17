@@ -497,14 +497,7 @@ class TaskJobManager(object):
         out = ctx.out
         if not out:
             out = ""
-            # Something is very wrong here
-            # Fallback to use "job_log_dirs" list to report the problem
-            job_log_dirs = ctx.cmd_kwargs.get("job_log_dirs", [])
-            for job_log_dir in job_log_dirs:
-                point, name, submit_num = job_log_dir.split(os.sep, 2)
-                itask = tasks[(point, name, submit_num)]
-                out += (self.batch_sys_mgr.OUT_PREFIX_SUMMARY +
-                        "|".join([ctx.timestamp, job_log_dir, "1"]) + "\n")
+        bad_tasks = dict(tasks)
         for line in out.splitlines(True):
             for prefix, callback in handlers:
                 if line.startswith(prefix):
@@ -518,6 +511,14 @@ class TaskJobManager(object):
                         LOG.warning(
                             'Unhandled %s output: %s', ctx.cmd_key, line)
                         LOG.exception(exc)
+                    else:
+                        if prefix == self.batch_sys_mgr.OUT_PREFIX_SUMMARY:
+                            del bad_tasks[(point, name, submit_num)]
+        for key, itask in bad_tasks.items():
+            line = (
+                self.batch_sys_mgr.OUT_PREFIX_SUMMARY +
+                "|".join([ctx.timestamp, os.sep.join(key), "1"]) + "\n")
+            summary_callback(suite, itask, ctx, line)
 
     def _poll_task_jobs_callback(self, ctx, suite, itasks):
         """Callback when poll tasks command exits."""
@@ -537,7 +538,7 @@ class TaskJobManager(object):
 
         # See cylc.batch_sys_manager.JobPollContext
         try:
-            job_log_dir, context = line.split('|')[1:4]
+            job_log_dir, context = line.split('|')[1:3]
             items = json.loads(context)
         except ValueError:
             # back compat for cylc 7.7.1 and previous
