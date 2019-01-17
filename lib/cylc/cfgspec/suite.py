@@ -77,7 +77,6 @@ SPEC = {
             'stalled handler': [VDR.V_STRING_LIST, None],
             'timeout': [VDR.V_INTERVAL],
             'inactivity': [VDR.V_INTERVAL],
-            'reset inactivity timer': [VDR.V_BOOLEAN, True],
             'abort if startup handler fails': [VDR.V_BOOLEAN],
             'abort if shutdown handler fails': [VDR.V_BOOLEAN],
             'abort if timeout handler fails': [VDR.V_BOOLEAN],
@@ -380,6 +379,7 @@ def upg(cfg, descr):
     u.obsolete('7.8.0', ['runtime', '__MANY__', 'suite state polling',
                          'template'])
     u.obsolete('7.8.1', ['cylc', 'events', 'reset timer'])
+    u.obsolete('7.8.1', ['cylc', 'events', 'reset inactivity timer'])
     u.obsolete('7.8.1', ['runtime', '__MANY__', 'events', 'reset timer'])
     u.upgrade()
 

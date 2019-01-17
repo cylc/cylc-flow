@@ -1272,8 +1272,7 @@ conditions; see `cylc conditions`.
         require renegotiation of dependencies, etc"""
         LOG.debug("BEGIN TASK PROCESSING")
         time0 = time()
-        if (self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT) and
-                self._get_events_conf('reset inactivity timer')):
+        if self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT):
             self.set_suite_inactivity_timer()
         self.pool.match_dependencies()
         if self.stop_mode is None and self.auto_restart_time is None:
