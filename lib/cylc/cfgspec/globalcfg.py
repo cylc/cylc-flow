@@ -205,7 +205,6 @@ SPEC = {
         'mail retry delays': [VDR.V_INTERVAL_LIST],
         'mail smtp': [VDR.V_STRING],
         'mail to': [VDR.V_STRING],
-        'reset timer': [VDR.V_BOOLEAN],
         'submission timeout': [VDR.V_INTERVAL],
     },
 
@@ -365,8 +364,7 @@ def upg(cfg, descr):
     # A special remote tail command template is no longer needed. It used to
     # use 'tail -pid' to kill 'tail' on ssh exit, but we do this in cylc now.
     u.obsolete(
-        '7.6.0',
-        ['hosts', '__MANY__', 'remote tail command template'])
+        '7.6.0', ['hosts', '__MANY__', 'remote tail command template'])
     u.deprecate(
         '7.6.0',
         ['hosts', '__MANY__', 'local tail command template'],
@@ -380,20 +378,14 @@ def upg(cfg, descr):
             int(x) + int(cfg['communication']['maximum number of ports'])),
             "Format as range list"))
     u.obsolete(
-        '7.8.0',
-        ['communication', 'maximum number of ports'])
+        '7.8.0', ['communication', 'maximum number of ports'])
     u.deprecate(
-        '7.8.0',
-        ['suite host scanning'],
-        ['suite servers'])
+        '7.8.0', ['suite host scanning'], ['suite servers'])
     u.deprecate(
-        '7.8.0',
-        ['suite servers', 'hosts'],
-        ['suite servers', 'scan hosts'])
+        '7.8.0', ['suite servers', 'hosts'], ['suite servers', 'scan hosts'])
     # Roll over is always done.
-    u.obsolete(
-        '7.8.0',
-        ['suite logging', 'roll over at start-up'])
+    u.obsolete('7.8.0', ['suite logging', 'roll over at start-up'])
+    u.obsolete('7.8.1', ['cylc', 'events', 'reset timer'])
     u.upgrade()
 
 

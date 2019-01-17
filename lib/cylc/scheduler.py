@@ -1219,7 +1219,6 @@ conditions; see `cylc conditions`.
                         self.run_mode))
             self.config.cfg['cylc']['events'][self.EVENT_TIMEOUT] = (
                 timeout)
-            self.config.cfg['cylc']['events']['reset timer'] = False
 
     def run_event_handlers(self, event, reason):
         """Run a suite event handler.
@@ -1721,6 +1720,7 @@ conditions; see `cylc conditions`.
             self.is_stalled = False
             for itask in updated_tasks:
                 itask.state.is_updated = False
+            # Suite can't be stalled, so stop the suite timer.
             if self.suite_timer_active:
                 self.suite_timer_active = False
                 LOG.debug(
