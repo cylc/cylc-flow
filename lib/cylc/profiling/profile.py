@@ -20,13 +20,12 @@ System calls to cylc are performed here.
 """
 
 import os
-import shlex
 import shutil
 import sys
 import tempfile
 import time
 import traceback
-from subprocess import PIPE, Popen, call
+from subprocess import PIPE, Popen, call  # nosec
 
 from cylc.sprocess import pcylc
 
