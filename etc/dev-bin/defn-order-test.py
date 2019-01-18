@@ -1,13 +1,9 @@
 #!/usr/bin/env python2
 
+import secrets
 import string
 import time
 from copy import deepcopy
-
-try:
-    from secrets import choice, randrange
-except ImportError:
-    from random import choice, randrange
 
 # This is a standalone performance test of the algorithm used in gcylc to
 # sort namespaces into "definition order", i.e. the order in which they are
@@ -20,7 +16,7 @@ N = 10000
 # order").
 names = []
 for i in range(0, N):
-    names.append(''.join(choice(string.ascii_letters)
+    names.append(''.join(secrets.choice(string.ascii_letters)
                          for n in xrange(5+randrange(10))))
 
 # N lists with 2-7 names each (c.f. tree view paths of the inheritance
@@ -28,8 +24,8 @@ for i in range(0, N):
 paths1 = []
 for i in range(0, N):
     p = []
-    for j in range(0, 2+randrange(6)):
-        z = randrange(0, N)
+    for j in range(0, 2+secrets.randrange(6)):
+        z = secrets.randrange(0, N)
         p.append(names[z])
     paths1.append(p)
 

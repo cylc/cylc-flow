@@ -18,6 +18,7 @@
 
 import unittest
 
+from cylc.sprocess import pcylc
 from mock import call
 from testfixtures import compare
 from testfixtures.popen import PIPE, MockPopen
@@ -32,7 +33,15 @@ class TestSubprocessSafe(unittest.TestCase):
     def setUp(self):
         self.Popen = MockPopen()
 
-    def test_subprocess_safe_communicate_with_input(self):
+    def test_sprocess_communicate_with_process(self):
+        foo = ' foo'
+        bar = ' bar'
+        cmd = ["echo", "this is a command" + foo + bar]
+        p = pcylc(cmd, stdoutpipe=True)
+        stdout, _ = p.communicate()
+        assert stdout == b"this is a command foo bar\n"
+
+    def test_sprocess_communicate_with_input(self):
         command = "a command"
         Popen = MockPopen()
         Popen.set_command(command)
@@ -48,7 +57,7 @@ class TestSubprocessSafe(unittest.TestCase):
                 ], Popen.mock.method_calls)
         return err, out
 
-    def test_subprocess_safe_read_from_stdout_and_stderr(self):
+    def test_sprocess_safe_read_from_stdout_and_stderr(self):
         command = "a command"
         Popen = MockPopen()
         #  only static input used with simulated mockpopen
@@ -62,7 +71,7 @@ class TestSubprocessSafe(unittest.TestCase):
                            stdout=PIPE),
                 ], Popen.mock.method_calls)
 
-    def test_subprocess_safe_write_to_stdin(self):
+    def test_sprocess_safe_write_to_stdin(self):
         command = "a command"
         Popen = MockPopen()
         Popen.set_command(command)
@@ -79,7 +88,7 @@ class TestSubprocessSafe(unittest.TestCase):
                 call.Popen_instance.stdin.close(),
                 ], Popen.mock.method_calls)
 
-    def test_subprocess_safe_wait_and_return_code(self):
+    def test_sprocess_safe_wait_and_return_code(self):
         command = "a command"
         Popen = MockPopen()
         Popen.set_command(command, returncode=3)

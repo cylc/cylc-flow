@@ -18,7 +18,6 @@
 """Provide a utility function to get STDOUT from a shell command."""
 
 
-import shlex
 from os import devnull, killpg, setpgrp
 from signal import SIGTERM
 from time import sleep, time
