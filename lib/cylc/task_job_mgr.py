@@ -513,9 +513,8 @@ class TaskJobManager(object):
                         LOG.warning(
                             'Unhandled %s output: %s', ctx.cmd_key, line)
                         LOG.exception(exc)
-        for key, itask in bad_tasks.items():
+        for key, itask in sorted(bad_tasks.items()):
             line = (
-                self.batch_sys_mgr.OUT_PREFIX_SUMMARY +
                 "|".join([ctx.timestamp, os.sep.join(key), "1"]) + "\n")
             summary_callback(suite, itask, ctx, line)
 
