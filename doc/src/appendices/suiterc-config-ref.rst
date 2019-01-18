@@ -510,18 +510,6 @@ default for this at the site level (see :ref:`SiteCylcHooks`).
 - *default*: (none), unless set at the site level.
 
 
-[cylc] ``->`` [[events]] ``->`` reset timer
-"""""""""""""""""""""""""""""""""""""""""""
-
-If ``True`` (the default) the suite timer will continually reset
-after any task changes state, so you can time out after some interval
-since the last activity occurred rather than on absolute suite execution
-time.
-
-- *type*: boolean
-- *default*: True
-
-
 [cylc] ``->`` [[events]] ``->`` abort on stalled
 """"""""""""""""""""""""""""""""""""""""""""""""
 
@@ -1943,20 +1931,6 @@ If a task has not finished after the specified ISO 8601 duration/interval, the
 - *type*: ISO 8601 duration/interval representation (e.g.
   ``PT4H``, 4 hours or ``P1D``, 1 day).
 - *default*: (none)
-
-
-.. _runtime-event-hooks-reset-timer:
-
-[runtime] ``->`` [[\_\_NAME\_\_]] ``->`` [[[events]]] ``->`` reset timer
-''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-
-If you set an execution timeout the timer can be reset to zero every
-time a message is received from the running task (which indicates the
-task is still alive).  Otherwise, the task will timeout if it does not
-finish in the allotted time regardless of incoming messages.
-
-- *type*: boolean
-- *default*: False
 
 
 [runtime] ``->`` [[\_\_NAME\_\_]] ``->`` [[[events]]] ``->`` handlers
