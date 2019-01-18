@@ -45,8 +45,10 @@ master_doc = 'index'
 # General information about the project.
 project = u'The Cylc Suite Engine'
 copyright = u'2008-2019 NIWA & British Crown (Met Office) & Contributors'
-version = '7.8'  # The short X.Y version.
-release = '7.8.0'  # The full version, including alpha/beta/rc tags.
+
+# Version & release set (identically) by override via 'bin/cylc-make-docs'.
+version = ''  # The short X.Y version.
+release = ''  # The full version, including alpha/beta/rc tags.
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.

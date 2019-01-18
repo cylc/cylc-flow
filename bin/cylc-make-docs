@@ -42,7 +42,11 @@ echo "... Generating the command reference ..."
 ./src/custom/make-commands.sh
 echo >&2
 
+# Determine the Cylc version to pass through to the conf.py ('-D' option below)
+# TODO: when Cylc is a package, instead fetch '__version__' within the conf.py
+CYLC_VER=$(cylc --version)
 echo "... Auto-generating the HTML with Sphinx ..."
-sphinx-build -n -b html ./src built-sphinx/
+sphinx-build -D version=${CYLC_VER} -D release=${CYLC_VER} \
+    -n -b html ./src built-sphinx/
 echo >&2
 echo "Done."
