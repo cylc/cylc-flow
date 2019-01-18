@@ -39,7 +39,7 @@ class TestSubprocessSafe(unittest.TestCase):
         cmd = ["echo", "this is a command" + foo + bar]
         p = pcylc(cmd, stdoutpipe=True)
         stdout, _ = p.communicate()
-        assert stdout == b"this is a command foo bar\n"
+        compare(stdout, b"this is a command foo bar\n")
 
     def test_sprocess_communicate_with_input(self):
         command = "a command"
