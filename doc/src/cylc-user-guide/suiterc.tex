@@ -488,18 +488,6 @@ default for this at the site level (see ~\ref{SiteCylcHooks}).
     \item {\em default:} (none), unless set at the site level.
 \end{myitemize}
 
-\paragraph[reset timer]{[cylc] \textrightarrow [[events]] \textrightarrow reset timer}
-
-If \lstinline=True= (the default) the suite timer will continually reset
-after any task changes state, so you can time out after some interval
-since the last activity occurred rather than on absolute suite execution
-time.
-
-\begin{myitemize}
-    \item {\em type:} boolean
-    \item {\em default:} True
-\end{myitemize}
-
 \paragraph[abort on stalled]{[cylc] \textrightarrow [[events]] \textrightarrow abort on stalled}
 
 If this is set to True it will cause the suite to abort with error status
@@ -1842,19 +1830,6 @@ If a task has not finished after the specified ISO 8601 duration/interval, the
     \item {\em type:} ISO 8601 duration/interval representation (e.g.\
  \lstinline=PT4H=, 4 hours or \lstinline=P1D=, 1 day).
     \item {\em default:} (none)
-\end{myitemize}
-
-\subparagraph[reset timer]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[events]]] \textrightarrow reset timer}
-\label{runtime-event-hooks-reset-timer}
-
-If you set an execution timeout the timer can be reset to zero every
-time a message is received from the running task (which indicates the
-task is still alive).  Otherwise, the task will timeout if it does not
-finish in the allotted time regardless of incoming messages.
-
-\begin{myitemize}
-\item {\em type:} boolean
-\item {\em default:} False
 \end{myitemize}
 
 \subparagraph[handlers]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[events]]] \textrightarrow handlers}
