@@ -16,6 +16,7 @@
 
 import sys
 import os
+from cylc.version import CYLC_VERSION
 
 
 # -- General configuration ------------------------------------------------
@@ -46,9 +47,9 @@ master_doc = 'index'
 project = u'The Cylc Suite Engine'
 copyright = u'2008-2019 NIWA & British Crown (Met Office) & Contributors'
 
-# Version & release set (identically) by override via 'bin/cylc-make-docs'.
-version = ''  # The short X.Y version.
-release = ''  # The full version, including alpha/beta/rc tags.
+# Versioning information. Sphinx advises version strictly meaning X.Y.
+version = '.'.join(CYLC_VERSION.split('.')[:2])  # The short X.Y version.
+release = CYLC_VERSION  # The full version, including alpha/beta/rc tags.
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.

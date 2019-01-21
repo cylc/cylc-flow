@@ -231,7 +231,7 @@ service under your own user account.
 To run Cylc Review under Apache, install ``mod_wsgi`` and configure it
 as follows, with paths modified appropriately:
 
-.. code-block:: bash
+.. code-block:: apacheconf
 
    # Apache mod_wsgi config file, e.g.:
    #   Red Hat Linux: /etc/httpd/conf.d/cylc-wsgi.conf
@@ -245,7 +245,7 @@ server root).
 
 And allow Apache access to the Cylc library:
 
-.. code-block:: bash
+.. code-block:: apacheconf
 
    # Directory access, in main Apache config file, e.g.:
    #   Red Hat Linux: /etc/httpd/conf/httpd.conf

@@ -5,7 +5,7 @@ Cylc documentation
 
 **The Cylc Suite Engine**
 
-Current version: |version|
+Current release: |release|
 
 *Released Under the GNU GPL v3.0 Software License*
 
