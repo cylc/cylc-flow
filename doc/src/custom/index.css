@@ -1,0 +1,86 @@
+/* Cylc logo colors:
+ * red: #ff5966;
+ * yellow: #ffcc00;
+ * green: #00c697;
+ * blue: #00b3fd;
+ */
+
+body { 
+    font-family:courier;
+    font-weight:bold;
+    background:LightSteelBlue;
+}
+
+div.uberpage {
+    color:white;
+    margin:0 auto;
+    width:700px;
+    background-image:url(graphics/png/orig/niwa-colour-small.png);
+    background-repeat:no-repeat;
+    background-position: bottom right;
+}
+
+div.page {
+    color:#00b3fd;
+    background:white;
+    background-image:url(graphics/png/orig/cylc-logo.png);
+    background-repeat:no-repeat;
+    background-position: top right;
+    margin:0 auto;
+    margin-top:50px;
+    padding:50px;
+    width:600px;
+}
+
+.lbox {
+    width: 60%;
+}
+
+.rbox {
+    float:right;
+    /*font-size:80%;*/
+}
+
+.info {
+    font-size:80%;
+}
+
+a:link, a:visited { 
+    color: SteelBlue;
+}
+
+h1 {
+    border-bottom:2px solid #00b3fd;
+    margin-top:0;
+}
+h2 {
+    border-bottom:2px solid #00b3fd;
+    margin-right:25%;
+    margin-left:30px;
+}
+h3 {
+    border-bottom:1px solid #00b3fd;
+    margin-right:50%;
+    margin-left:60px;
+    padding-top:20px;
+}
+
+code {
+    font-family: "Courier 10 Pitch", Courier, monospace; 
+    font-size: 90%;
+    font-weight:bold;
+}
+
+pre.code {
+    display:block;
+    margin-top:-10px;
+    padding:10px;
+    font-family: "Courier 10 Pitch", Courier, monospace; 
+    font-size: 90%;
+    font-weight:bold;
+    white-space: pre-wrap; /* css-3 */
+    white-space: -moz-pre-wrap !important; 
+    white-space: -pre-wrap; /* Opera 4-6 */
+    white-space: -o-pre-wrap; /* Opera 7 */
+    word-wrap: break-word; /* Internet Explorer 5.5+ */
+}

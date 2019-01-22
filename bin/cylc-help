@@ -294,6 +294,7 @@ admin_commands['profile-battery'] = ['profile-battery']
 admin_commands['import-examples'] = ['import-examples']
 admin_commands['upgrade-run-dir'] = ['upgrade-run-dir']
 admin_commands['check-software'] = ['check-software']
+admin_commands['make-docs'] = ['make-docs']
 
 license_commands = {}
 license_commands['warranty'] = ['warranty']
@@ -365,6 +366,7 @@ comsum['profile-battery'] = 'Run a battery of profiling tests'
 comsum['import-examples'] = 'Import example suites your suite run directory'
 comsum['upgrade-run-dir'] = 'Upgrade a pre-cylc-6 suite run directory'
 comsum['check-software'] = 'Check required software is installed'
+comsum['make-docs'] = 'Build the HTML documentation with Sphinx.'
 # license
 comsum['warranty'] = 'Print the GPLv3 disclaimer of warranty'
 comsum['conditions'] = 'Print the GNU General Public License v3.0'

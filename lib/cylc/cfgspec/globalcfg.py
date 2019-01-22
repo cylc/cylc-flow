@@ -89,16 +89,8 @@ SPEC = {
 
     'documentation': {
         'files': {
-            'html index': [
-                VDR.V_STRING, '$CYLC_DIR/doc/install/index.html'],
-            'pdf user guide': [
-                VDR.V_STRING, '$CYLC_DIR/doc/install/cylc-user-guide.pdf'],
-            'multi-page html user guide': [
-                VDR.V_STRING,
-                '$CYLC_DIR/doc/install/html/multi/cug-html.html'],
-            'single-page html user guide': [
-                VDR.V_STRING,
-                '$CYLC_DIR/doc/install/html/single/cug-html.html'],
+            'html user guides': [
+                VDR.V_STRING, '$CYLC_DIR/doc/built-sphinx/index.html'],
         },
         'urls': {
             'internet homepage': [VDR.V_STRING, 'http://cylc.github.io/cylc/'],
