@@ -102,7 +102,7 @@ class SuiteProcPool(object):
     using a cylc.subprocctx.SubProcContext object. The caller will add the
     context object using the SuiteProcPool.put_command method. A callback can
     be specified to notify the caller on exit of the subprocess.
-    
+
     A command launched by the pool is expected to write to STDOUT and STDERR.
     These are captured while the command runs and/or when the command exits.
     The contents are appended to the `.out` and `.err` attributes of the
@@ -114,7 +114,7 @@ class SuiteProcPool(object):
     Therefore, log messages will only be written to the suite log by the
     callback function when the command exits (and only if the callback function
     has the logic to do so).
-            
+
     """
 
     ERR_SUITE_STOPPING = 'suite stopping, command not run'
@@ -285,9 +285,9 @@ class SuiteProcPool(object):
                 # Nothing readable
                 break
             for fileno in fileno_list:
-                # If a file handle is readable, read something from it, add results
-                # into the command context object's `.out` or `.err`, whichever
-                # is relevant. To avoid blocking:
+                # If a file handle is readable, read something from it, add
+                # results into the command context object's `.out` or `.err`,
+                # whichever is relevant. To avoid blocking:
                 # 1. Use `os.read` here instead of `file.read` to avoid any
                 #    buffering that may cause the file handle to block.
                 # 2. Call os.read only once after a poll. Poll again before
