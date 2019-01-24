@@ -57,10 +57,13 @@ for I in `eval echo {$N..9}`; do
 done
 
 # Task pool in database contains the correct states
-cylc ls-checkpoints "${SUITE_NAME}" '0' | sed -n '/^# TASK POOL/,$p' | sort \
+# Use LANG=C sort to put # on top
+cylc ls-checkpoints "${SUITE_NAME}" '0' | sed -n '/^# TASK POOL/,$p' \
+    | env LANG=C sort \
     >'cylc-ls-checkpoints.out'
 
 cmp_ok 'cylc-ls-checkpoints.out' <<'__OUT__'
+# TASK POOL (CYCLE|NAME|SPAWNED|STATUS|HOLD_SWAP)
 1|h0|1|succeeded|
 1|h1|1|succeeded|
 1|h2|1|succeeded|
@@ -83,7 +86,6 @@ cmp_ok 'cylc-ls-checkpoints.out' <<'__OUT__'
 1|nh9|0|submit-failed|
 1|starter|1|succeeded|
 1|stopper|1|succeeded|
-# TASK POOL (CYCLE|NAME|SPAWNED|STATUS|HOLD_SWAP)
 __OUT__
 
 purge_suite "${SUITE_NAME}"

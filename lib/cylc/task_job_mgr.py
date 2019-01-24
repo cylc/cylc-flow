@@ -513,6 +513,8 @@ class TaskJobManager(object):
                         LOG.warning(
                             'Unhandled %s output: %s', ctx.cmd_key, line)
                         LOG.exception(exc)
+        # Task jobs that are in the original command but did not get a status
+        # in the output. Handle as failures.
         for key, itask in sorted(bad_tasks.items()):
             line = (
                 "|".join([ctx.timestamp, os.sep.join(key), "1"]) + "\n")
