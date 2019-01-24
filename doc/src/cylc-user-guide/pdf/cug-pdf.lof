@@ -1,0 +1,34 @@
+\contentsline {figure}{\numberline {1}{\ignorespaces A single cycle point dependency graph for a simple suite}}{18}{figure.1}
+\contentsline {figure}{\numberline {2}{\ignorespaces A single cycle point job schedule for real time operation}}{18}{figure.2}
+\contentsline {figure}{\numberline {3}{\ignorespaces What if the external driving data is available early?}}{19}{figure.3}
+\contentsline {figure}{\numberline {4}{\ignorespaces Attempted overlap of consecutive single-cycle-point job schedules}}{19}{figure.4}
+\contentsline {figure}{\numberline {5}{\ignorespaces The only safe multi-cycle-point job schedule?}}{19}{figure.5}
+\contentsline {figure}{\numberline {6}{\ignorespaces The complete multi-cycle-point dependency graph}}{21}{figure.6}
+\contentsline {figure}{\numberline {7}{\ignorespaces The optimal two-cycle-point job schedule}}{21}{figure.7}
+\contentsline {figure}{\numberline {8}{\ignorespaces Comparison of job schedules after a delay}}{21}{figure.8}
+\contentsline {figure}{\numberline {9}{\ignorespaces Optimal job schedule when all external data is available}}{22}{figure.9}
+\contentsline {figure}{\numberline {10}{\ignorespaces The cylc task pool}}{23}{figure.10}
+\contentsline {figure}{\numberline {11}{\ignorespaces gcylc graph and dot views}}{24}{figure.11}
+\contentsline {figure}{\numberline {12}{\ignorespaces gcylc text view}}{24}{figure.12}
+\contentsline {figure}{\numberline {13}{\ignorespaces gscan multi-suite state summary GUI}}{25}{figure.13}
+\contentsline {figure}{\numberline {14}{\ignorespaces A large-ish suite graphed by cylc}}{25}{figure.14}
+\contentsline {figure}{\numberline {15}{\ignorespaces Screenshot of a Cylc Review web page}}{38}{figure.15}
+\contentsline {figure}{\numberline {16}{\ignorespaces The {\em tut/oneoff/ftrigger2} dependency and runtime inheritance graphs}}{45}{figure.16}
+\contentsline {figure}{\numberline {17}{\ignorespaces The \lstinline =tut/cycling/one= suite}}{47}{figure.17}
+\contentsline {figure}{\numberline {18}{\ignorespaces The \lstinline =tut/cycling/two= suite}}{48}{figure.18}
+\contentsline {figure}{\numberline {19}{\ignorespaces The \lstinline =tut/cycling/three= suite}}{50}{figure.19}
+\contentsline {figure}{\numberline {20}{\ignorespaces The \lstinline =tut/cycling/integer= suite}}{51}{figure.20}
+\contentsline {figure}{\numberline {21}{\ignorespaces Example Suite}}{57}{figure.21}
+\contentsline {figure}{\numberline {22}{\ignorespaces One-off (Non-Cycling) Tasks}}{60}{figure.22}
+\contentsline {figure}{\numberline {23}{\ignorespaces Cycling Tasks}}{60}{figure.23}
+\contentsline {figure}{\numberline {24}{\ignorespaces Staggered Start Suite}}{65}{figure.24}
+\contentsline {figure}{\numberline {25}{\ignorespaces Restricted First Cycle Point Suite}}{66}{figure.25}
+\contentsline {figure}{\numberline {26}{\ignorespaces The \lstinline =etc/examples/satellite= integer suite}}{68}{figure.26}
+\contentsline {figure}{\numberline {27}{\ignorespaces Conditional Triggers}}{72}{figure.27}
+\contentsline {figure}{\numberline {28}{\ignorespaces Automated failure recovery via suicide triggers}}{72}{figure.28}
+\contentsline {figure}{\numberline {29}{\ignorespaces Screenshot of \lstinline =cylc graph= showing one task as a ``ghost node''}}{80}{figure.29}
+\contentsline {figure}{\numberline {30}{\ignorespaces {\em namespaces} example suite graphs}}{88}{figure.30}
+\contentsline {figure}{\numberline {31}{\ignorespaces Parameter expansion example.}}{91}{figure.31}
+\contentsline {figure}{\numberline {32}{\ignorespaces Parameterized (top) and cycling (bottom) versions of the same workflow.}}{96}{figure.32}
+\contentsline {figure}{\numberline {33}{\ignorespaces The Jinja2 ensemble example suite graph.}}{97}{figure.33}
+\contentsline {figure}{\numberline {34}{\ignorespaces Jinja2 cities example suite graph.}}{99}{figure.34}

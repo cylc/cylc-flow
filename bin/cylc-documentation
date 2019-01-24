@@ -18,7 +18,7 @@
 
 """cylc [info] documentation|browse [OPTIONS] [SUITE]
 
-View documentation in browser or PDF viewer, as per Cylc global config.
+View documentation in the browser, as per Cylc global config.
 
 % cylc doc [OPTIONS]
    View local or internet [--www] Cylc documentation URLs.
@@ -53,8 +53,9 @@ def main():
     parser = OptionParser(__doc__)
 
     parser.add_option(
-        "-p", "--pdf", help="Open the PDF User Guide directly.",
-        action="store_true", default=False, dest="pdf")
+        "-g", "--guides",
+        help="Open the HTML (User & Suite Design) Guides directly.",
+        action="store_true", default=False, dest="guides")
 
     parser.add_option(
         "-w", "--www", help="Open the cylc internet homepage",
@@ -96,16 +97,13 @@ def main():
     intranet_url = glbl_cfg().get(['documentation', 'urls', 'local index'])
     internet_url = glbl_cfg().get(['documentation', 'urls',
                                    'internet homepage'])
-    html_file = glbl_cfg().get(['documentation', 'files', 'html index'])
+    html_file = glbl_cfg().get(['documentation', 'files', 'html user guides'])
     html_viewer = glbl_cfg().get(['document viewers', 'html'])
-    pdf_file = glbl_cfg().get(['documentation', 'files', 'pdf user guide'])
-    pdf_viewer = glbl_cfg().get(['document viewers', 'pdf'])
     if len(args) == 0:
         # Cylc documentation.
-        if options.pdf:
-            # Force PDF.
-            viewer = pdf_viewer
-            target = pdf_file
+        if options.guides:
+            viewer = html_viewer
+            target = html_file
         elif options.url:
             viewer = html_viewer
             target = options.url
@@ -129,9 +127,9 @@ def main():
 
     elif len(args) == 1:
         # Suite or task documentation.
-        if options.pdf or options.www:
-            print >> sys.stderr, (
-                "(Note: --pdf and --www are ignored for suite documentation).")
+        if options.guides or options.www:
+            print >> sys.stderr, ("(Note: --guides and --www are ignored for "
+                "suite documentation).")
         suite = args[0]
         if options.task_name:
             # Task documentation.
@@ -156,7 +154,7 @@ def main():
     else:
         parser.error("Too many arguments.")
 
-    if target in [pdf_file, html_file] and not os.path.isfile(target):
+    if target in html_file and not os.path.isfile(target):
         sys.exit("ERROR, file not found: %s (see your cylc admin)" % target)
 
     # viewer may have spaces (e.g. 'firefox --no-remote'):

@@ -23,19 +23,16 @@ set_test_number 2
 create_test_globalrc "" "
 [documentation]
    [[files]]
-      pdf user guide = ${PWD}/doc/pdf/cug-pdf.pdf
-      multi-page html user guide = /home/bob/cylc/cylc.git/doc/html/multi/cug-html.html
-      html index = /home/bob/cylc/cylc.git/doc/index.html
-      single-page html user guide = /home/bob/cylc/cylc.git/doc/html/single/cug-html.html
+      html user guides = ${PWD}/doc/built-sphinx/index.html
    [[urls]]
       internet homepage = http://cylc.github.com/cylc/
       local index = http://localhost/cylc/index.html"
 #-------------------------------------------------------------------------------
-mkdir -p doc/pdf
-touch doc/pdf/cug-pdf.pdf
-cylc doc -s -p > stdout1.txt
+mkdir -p doc/built-sphinx
+touch doc/built-sphinx/index.html
+cylc doc -s -g > stdout1.txt
 cmp_ok stdout1.txt <<__END__
-$PWD/doc/pdf/cug-pdf.pdf
+${PWD}/doc/built-sphinx/index.html
 __END__
 #-------------------------------------------------------------------------------
 cylc doc -s > stdout2.txt

@@ -1,0 +1,523 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>Remote Job Management</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"> 
+<meta name="generator" content="TeX4ht (http://www.tug.org/tex4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.tug.org/tex4ht/)"> 
+<!-- html,fn-in,2,next --> 
+<meta name="src" content="cug-html.tex"> 
+<link rel="stylesheet" type="text/css" href="cug-html.css"> 
+</head><body 
+>
+<!--l. 1--><div class="crosslinks"><p class="noindent">[<a 
+href="cug-htmlse20.html" >next</a>] [<a 
+href="cug-htmlse18.html" >prev</a>] [<a 
+href="cug-htmlse18.html#tailcug-htmlse18.html" >prev-tail</a>] [<a 
+href="#tailcug-htmlse19.html">tail</a>] [<a 
+href="cug-html.html#cug-htmlse19.html" >up</a>] </p></div>
+<!--l. 1--><p class="noindent" > <h3 id="E" class="sectionHead"><span class="titlemark"> <a href="#E">E</a>  <a 
+ id="x21-570000E"></a>Remote Job Management </span></h3> <div class="sectionTOCS">
+&#x00A0;<span class="subsectionToc" >E.1 <a 
+href="#x21-571000E.1">SSH-free Job Management?</a></span>
+<br />&#x00A0;<span class="subsectionToc" >E.2 <a 
+href="#x21-572000E.2">SSH-based Job Management</a></span>
+<br />&#x00A0;<span class="subsectionToc" >E.3 <a 
+href="#x21-573000E.3">A Concrete Example</a></span>
+</div>
+<!--l. 3--><p class="noindent" >Managing tasks in a workflow requires more than just job execution: Cylc performs additional actions
+with <span class="lstinline"></span><span 
+class="pcrr7t-">rsync</span> for file transfer, and direct execution of <span class="lstinline"></span><span 
+class="pcrr7t-">cylc</span> sub-commands over non-interactive
+SSH.<span class="footnote-mark"><a 
+href="#fn5x0" id="fn5x0-bk"><sup class="textsuperscript">5</sup></a></span><a 
+ id="x21-570001f5"></a>
+<!--l. 9--><p class="noindent" >
+<!--l. 9--><p class="noindent" > <h4 id="E.1" class="subsectionHead"> <span class="titlemark"> <a href="#E.1"> E.1</a>  <a 
+ id="x21-571000E.1"></a>SSH-free Job Management? </span></h4>
+<!--l. 11--><p class="noindent" >Some sites may want to restrict access to job hosts by whitelisting SSH connections to allow only
+<span class="lstinline"></span><span 
+class="pcrr7t-">rsync</span> for file transfer, and allowing job execution only via a local batch system that sees the job
+hosts.<span class="footnote-mark"><a 
+href="#fn6x0" id="fn6x0-bk"><sup class="textsuperscript">6</sup></a></span><a 
+ id="x21-571001f6"></a>
+We are investigating the feasibility of SSH-free job management when a local batch system is available, but this is
+not yet possible unless your suite and job hosts also share a filesystem, which allows Cylc to treat jobs as entirely
+local.<span class="footnote-mark"><a 
+href="#fn7x0" id="fn7x0-bk"><sup class="textsuperscript">7</sup></a></span><a 
+ id="x21-571002f7"></a>
+<!--l. 24--><p class="noindent" >
+<!--l. 24--><p class="noindent" > <h4 id="E.2" class="subsectionHead"> <span class="titlemark"> <a href="#E.2"> E.2</a>  <a 
+ id="x21-572000E.2"></a>SSH-based Job Management </span></h4>
+<!--l. 26--><p class="noindent" >Cylc does not have persistent agent processes running on job hosts to act on instructions received over the
+network<span class="footnote-mark"><a 
+href="#fn8x0" id="fn8x0-bk"><sup class="textsuperscript">8</sup></a></span><a 
+ id="x21-572001f8"></a>
+so instead we execute job management commands directly on job hosts over SSH. Reasons for this
+include:
+     <ul class="itemize1">
+     <li class="itemize">it works equally for batch system and background jobs
+     </li>
+     <li class="itemize">SSH is <span 
+class="cmti-10">required </span>for background jobs, and for batch jobs if the batch system is not available on the suite
+     host
+                                                                                         
+
+                                                                                         
+     </li>
+     <li class="itemize"><span 
+class="cmti-10">querying the batch system alone is not sufficient for full job polling functionality </span>because jobs can complete
+     (and then be forgotten by the batch system) while the network, suite host, or suite server program is down
+     (e.g.&#x00A0;between suite shutdown and restart)
+         <ul class="itemize2">
+         <li class="itemize">to handle this we get the automatic job wrapper code to write job messages and exit status to
+         <span 
+class="cmti-10">job status files </span>that are interrogated by suite server programs during job polling operations
+         </li>
+         <li class="itemize">job status files reside on the job host, so the interrogation is done over SSH</li></ul>
+     </li>
+     <li class="itemize">job status files also hold batch system name and job ID; this is written by the job submit command, and read
+     by job poll and kill commands (all over SSH)</li></ul>
+<!--l. 51--><p class="noindent" >
+<!--l. 51--><p class="noindent" > <h4 id="E.3" class="subsectionHead"> <span class="titlemark"> <a href="#E.3"> E.3</a>  <a 
+ id="x21-573000E.3"></a>A Concrete Example </span></h4>
+<!--l. 53--><p class="noindent" >The following suite, registered as <span class="lstinline"></span><span 
+class="pcrr7t-">suitex</span>, is used to illustrate our current SSH-based remote job management. It
+submits two jobs to a remote, and a local task views a remote job log then polls and kills the remote
+jobs.
+<!--l. 58-->
+<div class="lstlisting" id="listing-329"><span class="label"><a 
+ id="x21-573001r1"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">suite</span><span 
+class="pcrro7t-">.</span><span 
+class="pcrro7t-">rc</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x21-573002r2"></a></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">scheduling</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x21-573003r3"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">dependencies</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x21-573004r4"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">graph</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">delayer</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=&#x003E;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">master</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&amp;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">REMOTES</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x21-573005r5"></a></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">runtime</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x21-573006r6"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">REMOTES</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x21-573007r7"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">script</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">sleep</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">30</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x21-573008r8"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[[</span><span 
+class="pcrr7t-">remote</span><span 
+class="pcrr7t-">]]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x21-573009r9"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">host</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">wizard</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x21-573010r10"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">owner</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">hobo</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x21-573011r11"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">remote</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">a</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">remote</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">b</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x21-573012r12"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">inherit</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">REMOTES</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x21-573013r13"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">delayer</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x21-573014r14"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">script</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">sleep</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">10</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x21-573015r15"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">master</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x21-573016r16"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">script</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x21-573017r17"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">sleep</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">5</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x21-573018r18"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cat</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">log</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">m</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">c</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">f</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">o</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">CYLC_SUITE_NAME</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">remote</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">a</span><span 
+class="pcrr7t-">.1</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x21-573019r19"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">sleep</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">2</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x21-573020r20"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">poll</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">CYLC_SUITE_NAME</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">REMOTES</span><span 
+class="pcrr7t-">.1</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x21-573021r21"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">sleep</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">2</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x21-573022r22"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">kill</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">CYLC_SUITE_NAME</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">REMOTES</span><span 
+class="pcrr7t-">.1</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x21-573023r23"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">sleep</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">2</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x21-573024r24"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">remove</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">CYLC_SUITE_NAME</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">REMOTES</span><span 
+class="pcrr7t-">.1</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">"</span>
+</div>
+<!--l. 85--><p class="noindent" >The <span 
+class="cmti-10">delayer </span>task just separates suite start-up from remote job submission, for clarity when watching the job host
+(e.g.&#x00A0;with <span class="lstinline"></span><span 
+class="pcrr7t-">watch</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">n</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">1</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">find</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">~/</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">run</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">suitex</span>).
+<!--l. 89--><p class="noindent" >Global config specifies the path to the remote Cylc executable, says to retrieve job logs, and not to use a remote
+login shell: <!--l. 91-->
+<div class="lstlisting" id="listing-330"><span class="label"><a 
+ id="x21-573025r1"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">global</span><span 
+class="pcrro7t-">.</span><span 
+class="pcrro7t-">rc</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x21-573026r2"></a></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">hosts</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x21-573027r3"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">wizard</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x21-573028r4"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">executable</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">opt</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">bin</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x21-573029r5"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">retrieve</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">job</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">logs</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">True</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x21-573030r6"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">use</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">login</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">shell</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">False</span>
+</div>
+<!--l. 100--><p class="noindent" >On running the suite, remote job host actions were captured in the transcripts below by wrapping the <span class="lstinline"></span><span 
+class="pcrr7t-">ssh</span>, <span class="lstinline"></span><span 
+class="pcrr7t-">scp</span>,
+and <span class="lstinline"></span><span 
+class="pcrr7t-">rsync</span> executables in scripts that log their command lines before taking action.
+<!--l. 2--><p class="noindent" ><span 
+class="cmbx-10">NOTE the rest of this section is omitted in the HTML User Guide because the complex formatting</span>
+<span 
+class="cmbx-10">translates badly to HTML. Please see the PDF User Guide for details.</span>
+                                                                                         
+
+                                                                                         
+                                                                                         
+
+                                                                                         
+<div class="footnotes"><!--l. 7--><p class="noindent" ><span class="footnote-mark"><a 
+href="#fn5x0-bk" id="fn5x0"><sup class="textsuperscript">5</sup></a></span><span 
+class="cmr-8">Cylc used to run bare shell expressions over SSH, which required a bash shell and made whitelisting difficult.</span>
+<!--l. 15--><p class="noindent" ><span class="footnote-mark"><a 
+href="#fn6x0-bk" id="fn6x0"><sup class="textsuperscript">6</sup></a></span><span 
+class="cmr-8">A malicious script could be </span><span class="lstinline"></span><span 
+class="pcrr7t-x-x-80">rsync</span><span 
+class="cmr-8">&#8217;d and run from a batch job, but batch jobs are considered easier to audit.</span>
+<!--l. 22--><p class="noindent" ><span class="footnote-mark"><a 
+href="#fn7x0-bk" id="fn7x0"><sup class="textsuperscript">7</sup></a></span><span 
+class="cmr-8">The job ID must also be valid to query and kill the job via the local batch system. This is not the case for Slurm, unless the</span>
+<span class="lstinline"></span><span 
+class="pcrr7t-x-x-80">--</span><span 
+class="pcrr7t-x-x-80">cluster</span> <span 
+class="cmr-8">option is explicitly used in job query and kill commands, otherwise the job ID is not recognized by the local Slurm</span>
+<span 
+class="cmr-8">instance.</span>
+<!--l. 28--><p class="noindent" ><span class="footnote-mark"><a 
+href="#fn8x0-bk" id="fn8x0"><sup class="textsuperscript">8</sup></a></span><span 
+class="cmr-8">This would be a more complex solution, in terms of implementation, administration, and security.</span>                 </div> <!--l. 8335--><div class="crosslinks"><p class="noindent">[<a 
+href="cug-htmlse20.html" >next</a>]
+[<a 
+href="cug-htmlse18.html" >prev</a>] [<a 
+href="cug-htmlse18.html#tailcug-htmlse18.html" >prev-tail</a>] [<a 
+href="cug-htmlse19.html" >front</a>] [<a 
+href="cug-html.html#cug-htmlse19.html" >up</a>] </p></div>
+<!--l. 8335--><p class="noindent" ><a 
+ id="tailcug-htmlse19.html"></a>  
+</body></html> 

@@ -1,0 +1,685 @@
+\contentsline {section}{\numberline {1}Introduction: How Cylc Works}{17}{section.1}
+\contentsline {subsection}{\numberline {1.1}Scheduling Forecast Suites}{17}{subsection.1.1}
+\contentsline {subsection}{\numberline {1.2}EcoConnect}{17}{subsection.1.2}
+\contentsline {subsection}{\numberline {1.3}Dependence Between Tasks}{17}{subsection.1.3}
+\contentsline {subsubsection}{\numberline {1.3.1}Intra-cycle Dependence}{17}{subsubsection.1.3.1}
+\contentsline {subsubsection}{\numberline {1.3.2}Inter-Cycle Dependence}{20}{subsubsection.1.3.2}
+\contentsline {subsection}{\numberline {1.4}The Cylc Scheduling Algorithm}{22}{subsection.1.4}
+\contentsline {section}{\numberline {2}Cylc Screenshots}{23}{section.2}
+\contentsline {section}{\numberline {3}Installation}{26}{section.3}
+\contentsline {subsection}{\numberline {3.1}Third-Party Software Packages}{26}{subsection.3.1}
+\contentsline {subsection}{\numberline {3.2}Software Bundled With Cylc}{27}{subsection.3.2}
+\contentsline {subsection}{\numberline {3.3}Installing Cylc}{28}{subsection.3.3}
+\contentsline {subsubsection}{\numberline {3.3.1}Local User Installation}{28}{subsubsection.3.3.1}
+\contentsline {subsubsection}{\numberline {3.3.2}Create A Site Config File}{28}{subsubsection.3.3.2}
+\contentsline {subsubsection}{\numberline {3.3.3}Configure Site Environment on Job Hosts}{28}{subsubsection.3.3.3}
+\contentsline {subsection}{\numberline {3.4}Automated Tests}{29}{subsection.3.4}
+\contentsline {section}{\numberline {4}Cylc Terminology}{29}{section.4}
+\contentsline {subsection}{\numberline {4.1}Jobs and Tasks}{29}{subsection.4.1}
+\contentsline {subsection}{\numberline {4.2}Cycle Points}{29}{subsection.4.2}
+\contentsline {section}{\numberline {5}Workflows For Cycling Systems}{29}{section.5}
+\contentsline {subsection}{\numberline {5.1}Cycling Workflows}{30}{subsection.5.1}
+\contentsline {subsection}{\numberline {5.2}Parameterized Tasks as a Proxy for Cycling}{30}{subsection.5.2}
+\contentsline {subsection}{\numberline {5.3}Mixed Cycling Workflows}{30}{subsection.5.3}
+\contentsline {section}{\numberline {6}Global (Site, User) Configuration Files}{30}{section.6}
+\contentsline {section}{\numberline {7}Tutorial}{31}{section.7}
+\contentsline {subsection}{\numberline {7.1}User Config File}{31}{subsection.7.1}
+\contentsline {subsubsection}{\numberline {7.1.1}Configure Environment on Job Hosts}{32}{subsubsection.7.1.1}
+\contentsline {subsection}{\numberline {7.2}User Interfaces}{32}{subsection.7.2}
+\contentsline {subsubsection}{\numberline {7.2.1}Command Line Interface (CLI)}{32}{subsubsection.7.2.1}
+\contentsline {subsubsection}{\numberline {7.2.2}Graphical User Interface (GUI)}{32}{subsubsection.7.2.2}
+\contentsline {subsection}{\numberline {7.3}Suite Configuration}{32}{subsection.7.3}
+\contentsline {subsection}{\numberline {7.4}Suite Registration}{33}{subsection.7.4}
+\contentsline {subsection}{\numberline {7.5}Suite Passphrases}{33}{subsection.7.5}
+\contentsline {subsection}{\numberline {7.6}Import The Example Suites}{33}{subsection.7.6}
+\contentsline {subsection}{\numberline {7.7}Rename The Imported Tutorial Suites}{33}{subsection.7.7}
+\contentsline {subsection}{\numberline {7.8}Suite Validation}{34}{subsection.7.8}
+\contentsline {subsection}{\numberline {7.9}Hello World in Cylc}{34}{subsection.7.9}
+\contentsline {subsection}{\numberline {7.10}Editing Suites}{34}{subsection.7.10}
+\contentsline {subsection}{\numberline {7.11}Running Suites}{35}{subsection.7.11}
+\contentsline {subsubsection}{\numberline {7.11.1}CLI}{35}{subsubsection.7.11.1}
+\contentsline {subsubsection}{\numberline {7.11.2}GUI}{36}{subsubsection.7.11.2}
+\contentsline {subsection}{\numberline {7.12}Remote Suites}{36}{subsection.7.12}
+\contentsline {subsection}{\numberline {7.13}Discovering Running Suites}{36}{subsection.7.13}
+\contentsline {subsection}{\numberline {7.14}Task Identifiers}{36}{subsection.7.14}
+\contentsline {subsection}{\numberline {7.15}Job Submission: How Tasks Are Executed}{37}{subsection.7.15}
+\contentsline {subsection}{\numberline {7.16}Locating Suite And Task Output}{37}{subsection.7.16}
+\contentsline {subsection}{\numberline {7.17}Viewing Suite Logs via Web Browser: Cylc Review}{38}{subsection.7.17}
+\contentsline {subsubsection}{\numberline {7.17.1}Hosts For Running Cylc Review}{39}{subsubsection.7.17.1}
+\contentsline {subsubsection}{\numberline {7.17.2}Configuring Cylc Review}{39}{subsubsection.7.17.2}
+\contentsline {subsection}{\numberline {7.18}Remote Tasks}{39}{subsection.7.18}
+\contentsline {subsection}{\numberline {7.19}Task Triggering}{41}{subsection.7.19}
+\contentsline {subsubsection}{\numberline {7.19.1}Task Failure And Suicide Triggering}{41}{subsubsection.7.19.1}
+\contentsline {subsection}{\numberline {7.20}Runtime Inheritance}{42}{subsection.7.20}
+\contentsline {subsection}{\numberline {7.21}Triggering Families}{43}{subsection.7.21}
+\contentsline {subsection}{\numberline {7.22}Triggering Off Of Families}{43}{subsection.7.22}
+\contentsline {subsection}{\numberline {7.23}Suite Visualization}{44}{subsection.7.23}
+\contentsline {subsection}{\numberline {7.24}External Task Scripts}{46}{subsection.7.24}
+\contentsline {subsection}{\numberline {7.25}Cycling Tasks}{46}{subsection.7.25}
+\contentsline {subsubsection}{\numberline {7.25.1}ISO 8601 Date-Time Syntax}{47}{subsubsection.7.25.1}
+\contentsline {subsubsection}{\numberline {7.25.2}Inter-Cycle Triggers}{48}{subsubsection.7.25.2}
+\contentsline {subsubsection}{\numberline {7.25.3}Initial Non-Repeating (R1) Tasks}{49}{subsubsection.7.25.3}
+\contentsline {subsubsection}{\numberline {7.25.4}Integer Cycling}{49}{subsubsection.7.25.4}
+\contentsline {subsection}{\numberline {7.26}Jinja2}{51}{subsection.7.26}
+\contentsline {subsection}{\numberline {7.27}Task Retry On Failure}{52}{subsection.7.27}
+\contentsline {subsection}{\numberline {7.28}Other Users' Suites}{53}{subsection.7.28}
+\contentsline {subsection}{\numberline {7.29}Other Things To Try}{53}{subsection.7.29}
+\contentsline {section}{\numberline {8}Suite Name Registration}{53}{section.8}
+\contentsline {section}{\numberline {9}Suite Configuration}{54}{section.9}
+\contentsline {subsection}{\numberline {9.1}Suite Configuration Directories}{54}{subsection.9.1}
+\contentsline {subsection}{\numberline {9.2}Suite.rc File Overview}{55}{subsection.9.2}
+\contentsline {subsubsection}{\numberline {9.2.1}Syntax}{55}{subsubsection.9.2.1}
+\contentsline {subsubsection}{\numberline {9.2.2}Include-Files}{55}{subsubsection.9.2.2}
+\contentsline {paragraph}{\numberline {9.2.2.1}Editing Temporarily Inlined Suites}{55}{paragraph.9.2.2.1}
+\contentsline {paragraph}{\numberline {9.2.2.2}Include-Files via Jinja2}{56}{paragraph.9.2.2.2}
+\contentsline {subsubsection}{\numberline {9.2.3}Syntax Highlighting For Suite Configuration}{56}{subsubsection.9.2.3}
+\contentsline {subsubsection}{\numberline {9.2.4}Gross File Structure}{56}{subsubsection.9.2.4}
+\contentsline {subsubsection}{\numberline {9.2.5}Validation}{56}{subsubsection.9.2.5}
+\contentsline {subsection}{\numberline {9.3}Scheduling - Dependency Graphs}{57}{subsection.9.3}
+\contentsline {subsubsection}{\numberline {9.3.1}Graph String Syntax}{57}{subsubsection.9.3.1}
+\contentsline {subsubsection}{\numberline {9.3.2}Interpreting Graph Strings}{58}{subsubsection.9.3.2}
+\contentsline {paragraph}{\numberline {9.3.2.1}Splitting Up Long Graph Lines}{59}{paragraph.9.3.2.1}
+\contentsline {subsubsection}{\numberline {9.3.3}Graph Types}{59}{subsubsection.9.3.3}
+\contentsline {paragraph}{\numberline {9.3.3.1}One-off (Non-Cycling)}{59}{paragraph.9.3.3.1}
+\contentsline {paragraph}{\numberline {9.3.3.2}Cycling Graphs}{59}{paragraph.9.3.3.2}
+\contentsline {subsubsection}{\numberline {9.3.4}Graph Section Headings}{60}{subsubsection.9.3.4}
+\contentsline {paragraph}{\numberline {9.3.4.1}Syntax Rules}{60}{paragraph.9.3.4.1}
+\contentsline {paragraph}{\numberline {9.3.4.2}Referencing The Initial And Final Cycle Points}{61}{paragraph.9.3.4.2}
+\contentsline {paragraph}{\numberline {9.3.4.3}Excluding Dates}{62}{paragraph.9.3.4.3}
+\contentsline {paragraph}{\numberline {9.3.4.4}Advanced exclusion syntax}{62}{paragraph.9.3.4.4}
+\contentsline {paragraph}{\numberline {9.3.4.5}How Multiple Graph Strings Combine}{63}{paragraph.9.3.4.5}
+\contentsline {paragraph}{\numberline {9.3.4.6}Advanced Examples}{63}{paragraph.9.3.4.6}
+\contentsline {paragraph}{\numberline {9.3.4.7}Advanced Starting Up}{64}{paragraph.9.3.4.7}
+\contentsline {paragraph}{\numberline {9.3.4.8}Integer Cycling}{67}{paragraph.9.3.4.8}
+\contentsline {subparagraph}{\numberline {9.3.4.8.1}Example}{67}{subparagraph.9.3.4.8.1}
+\contentsline {subparagraph}{\numberline {9.3.4.8.2}Advanced Integer Cycling Syntax}{67}{subparagraph.9.3.4.8.2}
+\contentsline {subsubsection}{\numberline {9.3.5}Task Triggering}{69}{subsubsection.9.3.5}
+\contentsline {paragraph}{\numberline {9.3.5.1}Success Triggers}{69}{paragraph.9.3.5.1}
+\contentsline {paragraph}{\numberline {9.3.5.2}Failure Triggers}{69}{paragraph.9.3.5.2}
+\contentsline {paragraph}{\numberline {9.3.5.3}Start Triggers}{70}{paragraph.9.3.5.3}
+\contentsline {paragraph}{\numberline {9.3.5.4}Finish Triggers}{70}{paragraph.9.3.5.4}
+\contentsline {paragraph}{\numberline {9.3.5.5}Message Triggers}{70}{paragraph.9.3.5.5}
+\contentsline {paragraph}{\numberline {9.3.5.6}Job Submission Triggers}{71}{paragraph.9.3.5.6}
+\contentsline {paragraph}{\numberline {9.3.5.7}Conditional Triggers}{71}{paragraph.9.3.5.7}
+\contentsline {paragraph}{\numberline {9.3.5.8}Suicide Triggers}{71}{paragraph.9.3.5.8}
+\contentsline {paragraph}{\numberline {9.3.5.9}Family Triggers}{73}{paragraph.9.3.5.9}
+\contentsline {paragraph}{\numberline {9.3.5.10}Efficient Inter-Family Triggering}{74}{paragraph.9.3.5.10}
+\contentsline {paragraph}{\numberline {9.3.5.11}Inter-Cycle Triggers}{75}{paragraph.9.3.5.11}
+\contentsline {paragraph}{\numberline {9.3.5.12}Special Sequential Tasks}{76}{paragraph.9.3.5.12}
+\contentsline {paragraph}{\numberline {9.3.5.13}Future Triggers}{77}{paragraph.9.3.5.13}
+\contentsline {paragraph}{\numberline {9.3.5.14}Clock Triggers}{77}{paragraph.9.3.5.14}
+\contentsline {paragraph}{\numberline {9.3.5.15}Clock-Expire Triggers}{78}{paragraph.9.3.5.15}
+\contentsline {paragraph}{\numberline {9.3.5.16}External Triggers}{78}{paragraph.9.3.5.16}
+\contentsline {subsubsection}{\numberline {9.3.6}Model Restart Dependencies}{78}{subsubsection.9.3.6}
+\contentsline {subsubsection}{\numberline {9.3.7}How The Graph Determines Task Instantiation}{79}{subsubsection.9.3.7}
+\contentsline {subsection}{\numberline {9.4}Runtime - Task Configuration}{80}{subsection.9.4}
+\contentsline {subsubsection}{\numberline {9.4.1}Namespace Names}{81}{subsubsection.9.4.1}
+\contentsline {subsubsection}{\numberline {9.4.2}Root - Runtime Defaults}{81}{subsubsection.9.4.2}
+\contentsline {subsubsection}{\numberline {9.4.3}Defining Multiple Namespaces At Once}{81}{subsubsection.9.4.3}
+\contentsline {subsubsection}{\numberline {9.4.4}Runtime Inheritance - Single}{81}{subsubsection.9.4.4}
+\contentsline {subsubsection}{\numberline {9.4.5}Runtime Inheritance - Multiple}{82}{subsubsection.9.4.5}
+\contentsline {paragraph}{\numberline {9.4.5.1}Suite Visualization And Multiple Inheritance}{83}{paragraph.9.4.5.1}
+\contentsline {subsubsection}{\numberline {9.4.6}How Runtime Inheritance Works}{84}{subsubsection.9.4.6}
+\contentsline {subsubsection}{\numberline {9.4.7}Task Execution Environment}{84}{subsubsection.9.4.7}
+\contentsline {paragraph}{\numberline {9.4.7.1}User Environment Variables}{84}{paragraph.9.4.7.1}
+\contentsline {paragraph}{\numberline {9.4.7.2}Overriding Environment Variables}{84}{paragraph.9.4.7.2}
+\contentsline {paragraph}{\numberline {9.4.7.3}Task Job Script Variables}{85}{paragraph.9.4.7.3}
+\contentsline {paragraph}{\numberline {9.4.7.4}Suite Share Directories}{86}{paragraph.9.4.7.4}
+\contentsline {paragraph}{\numberline {9.4.7.5}Task Work Directories}{86}{paragraph.9.4.7.5}
+\contentsline {paragraph}{\numberline {9.4.7.6}Environment Variable Evaluation}{86}{paragraph.9.4.7.6}
+\contentsline {subsubsection}{\numberline {9.4.8}How Tasks Get Access To The Suite Directory}{87}{subsubsection.9.4.8}
+\contentsline {subsubsection}{\numberline {9.4.9}Remote Task Hosting}{87}{subsubsection.9.4.9}
+\contentsline {paragraph}{\numberline {9.4.9.1}Dynamic Host Selection}{87}{paragraph.9.4.9.1}
+\contentsline {paragraph}{\numberline {9.4.9.2}Remote Task Log Directories}{87}{paragraph.9.4.9.2}
+\contentsline {subsection}{\numberline {9.5}Visualization}{88}{subsection.9.5}
+\contentsline {subsubsection}{\numberline {9.5.1}Collapsible Families In Suite Graphs}{88}{subsubsection.9.5.1}
+\contentsline {subsection}{\numberline {9.6}Parameterized Tasks}{89}{subsection.9.6}
+\contentsline {subsubsection}{\numberline {9.6.1}Parameter Expansion}{89}{subsubsection.9.6.1}
+\contentsline {paragraph}{\numberline {9.6.1.1}Zero-Padded Integer Values}{91}{paragraph.9.6.1.1}
+\contentsline {paragraph}{\numberline {9.6.1.2}Parameters as Full Task Names}{91}{paragraph.9.6.1.2}
+\contentsline {subsubsection}{\numberline {9.6.2}Passing Parameter Values To Tasks}{91}{subsubsection.9.6.2}
+\contentsline {subsubsection}{\numberline {9.6.3}Selecting Specific Parameter Values}{92}{subsubsection.9.6.3}
+\contentsline {subsubsection}{\numberline {9.6.4}Selecting Partial Parameter Ranges}{92}{subsubsection.9.6.4}
+\contentsline {subsubsection}{\numberline {9.6.5}Parameter Offsets In The Graph}{93}{subsubsection.9.6.5}
+\contentsline {subsubsection}{\numberline {9.6.6}Task Families And Parameterization}{93}{subsubsection.9.6.6}
+\contentsline {subsubsection}{\numberline {9.6.7}Parameterized Cycling}{95}{subsubsection.9.6.7}
+\contentsline {paragraph}{\numberline {9.6.7.1}Cycle Point And Parameter Offsets At Start-Up}{96}{paragraph.9.6.7.1}
+\contentsline {subsection}{\numberline {9.7}Jinja2}{97}{subsection.9.7}
+\contentsline {subsubsection}{\numberline {9.7.1}Accessing Environment Variables With Jinja2}{99}{subsubsection.9.7.1}
+\contentsline {subsubsection}{\numberline {9.7.2}Custom Jinja2 Filters, Tests and Globals}{99}{subsubsection.9.7.2}
+\contentsline {paragraph}{\numberline {9.7.2.1}pad}{100}{paragraph.9.7.2.1}
+\contentsline {paragraph}{\numberline {9.7.2.2}strftime}{100}{paragraph.9.7.2.2}
+\contentsline {paragraph}{\numberline {9.7.2.3}duration\_as}{101}{paragraph.9.7.2.3}
+\contentsline {subsubsection}{\numberline {9.7.3}Associative Arrays In Jinja2}{101}{subsubsection.9.7.3}
+\contentsline {subsubsection}{\numberline {9.7.4}Jinja2 Default Values And Template Inputs}{102}{subsubsection.9.7.4}
+\contentsline {subsubsection}{\numberline {9.7.5}Jinja2 Variable Scope}{103}{subsubsection.9.7.5}
+\contentsline {subsubsection}{\numberline {9.7.6}Raising Exceptions}{103}{subsubsection.9.7.6}
+\contentsline {paragraph}{\numberline {9.7.6.1}Raise}{103}{paragraph.9.7.6.1}
+\contentsline {paragraph}{\numberline {9.7.6.2}Assert}{103}{paragraph.9.7.6.2}
+\contentsline {subsubsection}{\numberline {9.7.7}Importing additional Python modules}{104}{subsubsection.9.7.7}
+\contentsline {subsection}{\numberline {9.8}EmPy}{104}{subsection.9.8}
+\contentsline {subsection}{\numberline {9.9}Omitting Tasks At Runtime}{105}{subsection.9.9}
+\contentsline {subsection}{\numberline {9.10}Naked Dummy Tasks And Strict Validation}{106}{subsection.9.10}
+\contentsline {section}{\numberline {10}Task Implementation}{106}{section.10}
+\contentsline {subsection}{\numberline {10.1}Task Job Scripts}{106}{subsection.10.1}
+\contentsline {subsection}{\numberline {10.2}Inlined Tasks}{107}{subsection.10.2}
+\contentsline {subsection}{\numberline {10.3}Task Messages}{107}{subsection.10.3}
+\contentsline {subsection}{\numberline {10.4}Aborting Job Scripts on Error}{107}{subsection.10.4}
+\contentsline {subsubsection}{\numberline {10.4.1}Custom Failure Messages}{108}{subsubsection.10.4.1}
+\contentsline {subsection}{\numberline {10.5}Avoid Detaching Processes}{108}{subsection.10.5}
+\contentsline {section}{\numberline {11}Task Job Submission and Management}{109}{section.11}
+\contentsline {subsection}{\numberline {11.1}Supported Job Submission Methods}{109}{subsection.11.1}
+\contentsline {subsubsection}{\numberline {11.1.1}background}{109}{subsubsection.11.1.1}
+\contentsline {subsubsection}{\numberline {11.1.2}at}{109}{subsubsection.11.1.2}
+\contentsline {subsubsection}{\numberline {11.1.3}loadleveler}{109}{subsubsection.11.1.3}
+\contentsline {subsubsection}{\numberline {11.1.4}lsf}{110}{subsubsection.11.1.4}
+\contentsline {subsubsection}{\numberline {11.1.5}pbs}{110}{subsubsection.11.1.5}
+\contentsline {subsubsection}{\numberline {11.1.6}moab}{111}{subsubsection.11.1.6}
+\contentsline {subsubsection}{\numberline {11.1.7}sge}{111}{subsubsection.11.1.7}
+\contentsline {subsubsection}{\numberline {11.1.8}slurm}{112}{subsubsection.11.1.8}
+\contentsline {subsubsection}{\numberline {11.1.9}Default Directives Provided}{112}{subsubsection.11.1.9}
+\contentsline {subsubsection}{\numberline {11.1.10}Directives Section Quirks (PBS, SGE, ...) }{113}{subsubsection.11.1.10}
+\contentsline {subsection}{\numberline {11.2}Task stdout And stderr Logs}{113}{subsection.11.2}
+\contentsline {subsection}{\numberline {11.3}Overriding The Job Submission Command}{114}{subsection.11.3}
+\contentsline {subsection}{\numberline {11.4}Job Polling}{114}{subsection.11.4}
+\contentsline {subsection}{\numberline {11.5}Job Killing}{115}{subsection.11.5}
+\contentsline {subsection}{\numberline {11.6}Execution Time Limit}{115}{subsection.11.6}
+\contentsline {subsubsection}{\numberline {11.6.1}Execution Time Limit and Execution Timeout}{115}{subsubsection.11.6.1}
+\contentsline {subsection}{\numberline {11.7}Custom Job Submission Methods}{116}{subsection.11.7}
+\contentsline {subsubsection}{\numberline {11.7.1}An Example}{116}{subsubsection.11.7.1}
+\contentsline {subsubsection}{\numberline {11.7.2}Where To Put Batch System Handler Modules}{116}{subsubsection.11.7.2}
+\contentsline {section}{\numberline {12}External Triggers}{117}{section.12}
+\contentsline {subsection}{\numberline {12.1}Built-in Clock Triggers}{117}{subsection.12.1}
+\contentsline {subsection}{\numberline {12.2}Built-in Suite State Triggers}{118}{subsection.12.2}
+\contentsline {subsection}{\numberline {12.3}Custom Trigger Functions}{120}{subsection.12.3}
+\contentsline {subsubsection}{\numberline {12.3.1}Toy Examples}{121}{subsubsection.12.3.1}
+\contentsline {paragraph}{\numberline {12.3.1.1}echo}{121}{paragraph.12.3.1.1}
+\contentsline {paragraph}{\numberline {12.3.1.2}xrandom}{122}{paragraph.12.3.1.2}
+\contentsline {subsection}{\numberline {12.4}Current Limitations}{122}{subsection.12.4}
+\contentsline {subsection}{\numberline {12.5}Filesystem Events?}{122}{subsection.12.5}
+\contentsline {subsection}{\numberline {12.6}Continuous Event Watchers?}{122}{subsection.12.6}
+\contentsline {subsection}{\numberline {12.7}Old-Style External Triggers (Deprecated)}{123}{subsection.12.7}
+\contentsline {section}{\numberline {13}Running Suites}{124}{section.13}
+\contentsline {subsection}{\numberline {13.1}Suite Start-Up}{124}{subsection.13.1}
+\contentsline {subsubsection}{\numberline {13.1.1}Cold Start}{124}{subsubsection.13.1.1}
+\contentsline {subsubsection}{\numberline {13.1.2}Warm Start}{124}{subsubsection.13.1.2}
+\contentsline {subsubsection}{\numberline {13.1.3}Restart and Suite State Checkpoints}{125}{subsubsection.13.1.3}
+\contentsline {paragraph}{\numberline {13.1.3.1}Restart From Latest Checkpoint}{125}{paragraph.13.1.3.1}
+\contentsline {paragraph}{\numberline {13.1.3.2}Restart From Another Checkpoint}{125}{paragraph.13.1.3.2}
+\contentsline {paragraph}{\numberline {13.1.3.3}Checkpointing With A Task}{126}{paragraph.13.1.3.3}
+\contentsline {paragraph}{\numberline {13.1.3.4}Behaviour of Tasks on Restart}{126}{paragraph.13.1.3.4}
+\contentsline {subsection}{\numberline {13.2}Reloading The Suite Configuration At Runtime}{127}{subsection.13.2}
+\contentsline {subsection}{\numberline {13.3}Task Job Access To Cylc}{127}{subsection.13.3}
+\contentsline {subsection}{\numberline {13.4}The Suite Contact File}{127}{subsection.13.4}
+\contentsline {subsection}{\numberline {13.5}Task Job Polling}{128}{subsection.13.5}
+\contentsline {subsubsection}{\numberline {13.5.1}Routine Polling}{128}{subsubsection.13.5.1}
+\contentsline {subsection}{\numberline {13.6}Tracking Task State}{128}{subsection.13.6}
+\contentsline {subsubsection}{\numberline {13.6.1}HTTPS Task Messaging}{128}{subsubsection.13.6.1}
+\contentsline {subsubsection}{\numberline {13.6.2}Ssh Task Messaging}{129}{subsubsection.13.6.2}
+\contentsline {subsubsection}{\numberline {13.6.3}Polling to Track Job Status}{129}{subsubsection.13.6.3}
+\contentsline {subsubsection}{\numberline {13.6.4}Task Communications Configuration}{130}{subsubsection.13.6.4}
+\contentsline {subsection}{\numberline {13.7}The Suite Service Directory}{130}{subsection.13.7}
+\contentsline {subsection}{\numberline {13.8}File-Reading Commands}{130}{subsection.13.8}
+\contentsline {subsubsection}{\numberline {13.8.1}Remote Host, Shared Home Directory}{130}{subsubsection.13.8.1}
+\contentsline {subsubsection}{\numberline {13.8.2}Remote Host, Different Home Directory}{130}{subsubsection.13.8.2}
+\contentsline {subsubsection}{\numberline {13.8.3}Same Host, Different User Account}{130}{subsubsection.13.8.3}
+\contentsline {subsection}{\numberline {13.9}Client-Server Interaction}{130}{subsection.13.9}
+\contentsline {subsubsection}{\numberline {13.9.1}Public Access - No Auth Files}{131}{subsubsection.13.9.1}
+\contentsline {subsubsection}{\numberline {13.9.2}Full Control - With Auth Files}{131}{subsubsection.13.9.2}
+\contentsline {subsection}{\numberline {13.10}GUI-to-Suite Interaction}{131}{subsection.13.10}
+\contentsline {subsection}{\numberline {13.11}Remote Control}{132}{subsection.13.11}
+\contentsline {subsection}{\numberline {13.12}Scan And Gscan}{132}{subsection.13.12}
+\contentsline {subsection}{\numberline {13.13}Task States Explained}{132}{subsection.13.13}
+\contentsline {subsection}{\numberline {13.14}What The Suite Control GUI Shows}{133}{subsection.13.14}
+\contentsline {subsection}{\numberline {13.15}Network Connection Timeouts}{133}{subsection.13.15}
+\contentsline {subsection}{\numberline {13.16}Runahead Limiting}{134}{subsection.13.16}
+\contentsline {subsection}{\numberline {13.17}Limiting Activity With Internal Queues}{134}{subsection.13.17}
+\contentsline {subsection}{\numberline {13.18}Automatic Task Retry On Failure}{135}{subsection.13.18}
+\contentsline {subsection}{\numberline {13.19}Task Event Handling}{135}{subsection.13.19}
+\contentsline {subsubsection}{\numberline {13.19.1}Late Events}{137}{subsubsection.13.19.1}
+\contentsline {subsection}{\numberline {13.20}Managing External Command Execution}{138}{subsection.13.20}
+\contentsline {subsection}{\numberline {13.21}Handling Job Preemption}{138}{subsection.13.21}
+\contentsline {subsection}{\numberline {13.22}Manual Task Triggering and Edit-Run}{139}{subsection.13.22}
+\contentsline {subsection}{\numberline {13.23}Cylc Broadcast}{139}{subsection.13.23}
+\contentsline {subsection}{\numberline {13.24}The Meaning And Use Of Initial Cycle Point}{139}{subsection.13.24}
+\contentsline {subsubsection}{\numberline {13.24.1}CYLC\_SUITE\_INITIAL\_CYCLE\_POINT}{139}{subsubsection.13.24.1}
+\contentsline {subsection}{\numberline {13.25}Simulating Suite Behaviour}{140}{subsection.13.25}
+\contentsline {subsubsection}{\numberline {13.25.1}Proportional Simulated Run Length}{140}{subsubsection.13.25.1}
+\contentsline {subsubsection}{\numberline {13.25.2}Limitations Of Suite Simulation}{140}{subsubsection.13.25.2}
+\contentsline {subsubsection}{\numberline {13.25.3}Restarting Suites With A Different Run Mode?}{140}{subsubsection.13.25.3}
+\contentsline {subsection}{\numberline {13.26}Automated Reference Test Suites}{140}{subsection.13.26}
+\contentsline {subsubsection}{\numberline {13.26.1}Roll-your-own Reference Tests}{141}{subsubsection.13.26.1}
+\contentsline {subsection}{\numberline {13.27}Triggering Off Of Tasks In Other Suites}{141}{subsection.13.27}
+\contentsline {subsection}{\numberline {13.28}Suite Server Logs}{143}{subsection.13.28}
+\contentsline {subsection}{\numberline {13.29}Suite Run Databases}{144}{subsection.13.29}
+\contentsline {subsection}{\numberline {13.30}Disaster Recovery}{145}{subsection.13.30}
+\contentsline {subsection}{\numberline {13.31}Auto Stop-Restart}{145}{subsection.13.31}
+\contentsline {section}{\numberline {14}Suite Storage, Discovery, Revision Control, and Deployment}{146}{section.14}
+\contentsline {subsection}{\numberline {14.1}Rose}{146}{subsection.14.1}
+\contentsline {section}{\numberline {A}Suite.rc Reference}{148}{appendix.A}
+\contentsline {subsection}{\numberline {A.1}Top Level Items}{148}{subsection.A.1}
+\contentsline {subsection}{\numberline {A.2}[meta]}{148}{subsection.A.2}
+\contentsline {subsubsection}{\numberline {A.2.1}title}{148}{subsubsection.A.2.1}
+\contentsline {subsubsection}{\numberline {A.2.2}description}{148}{subsubsection.A.2.2}
+\contentsline {subsubsection}{\numberline {A.2.3}URL}{148}{subsubsection.A.2.3}
+\contentsline {subsubsection}{\numberline {A.2.4}group}{149}{subsubsection.A.2.4}
+\contentsline {subsubsection}{\numberline {A.2.5}\_\_MANY\_\_}{149}{subsubsection.A.2.5}
+\contentsline {subsection}{\numberline {A.3}[cylc]}{149}{subsection.A.3}
+\contentsline {subsubsection}{\numberline {A.3.1}required run mode}{149}{subsubsection.A.3.1}
+\contentsline {subsubsection}{\numberline {A.3.2}UTC mode}{149}{subsubsection.A.3.2}
+\contentsline {subsubsection}{\numberline {A.3.3}cycle point format}{150}{subsubsection.A.3.3}
+\contentsline {subsubsection}{\numberline {A.3.4}cycle point num expanded year digits}{150}{subsubsection.A.3.4}
+\contentsline {subsubsection}{\numberline {A.3.5}cycle point time zone}{150}{subsubsection.A.3.5}
+\contentsline {subsubsection}{\numberline {A.3.6}abort if any task fails}{151}{subsubsection.A.3.6}
+\contentsline {subsubsection}{\numberline {A.3.7}health check interval}{151}{subsubsection.A.3.7}
+\contentsline {subsubsection}{\numberline {A.3.8}task event mail interval}{151}{subsubsection.A.3.8}
+\contentsline {subsubsection}{\numberline {A.3.9}disable automatic shutdown}{151}{subsubsection.A.3.9}
+\contentsline {subsubsection}{\numberline {A.3.10}log resolved dependencies}{152}{subsubsection.A.3.10}
+\contentsline {subsubsection}{\numberline {A.3.11}{[[}parameters{]]}}{152}{subsubsection.A.3.11}
+\contentsline {subsubsection}{\numberline {A.3.12}{[[}parameter templates{]]}}{152}{subsubsection.A.3.12}
+\contentsline {subsubsection}{\numberline {A.3.13}{[[}events{]]}}{152}{subsubsection.A.3.13}
+\contentsline {paragraph}{\numberline {A.3.13.1}EVENT handler}{153}{paragraph.A.3.13.1}
+\contentsline {paragraph}{\numberline {A.3.13.2}handlers}{153}{paragraph.A.3.13.2}
+\contentsline {paragraph}{\numberline {A.3.13.3}handler events}{154}{paragraph.A.3.13.3}
+\contentsline {paragraph}{\numberline {A.3.13.4}mail events}{154}{paragraph.A.3.13.4}
+\contentsline {paragraph}{\numberline {A.3.13.5}mail footer}{154}{paragraph.A.3.13.5}
+\contentsline {paragraph}{\numberline {A.3.13.6}mail from}{154}{paragraph.A.3.13.6}
+\contentsline {paragraph}{\numberline {A.3.13.7}mail smtp}{154}{paragraph.A.3.13.7}
+\contentsline {paragraph}{\numberline {A.3.13.8}mail to}{155}{paragraph.A.3.13.8}
+\contentsline {paragraph}{\numberline {A.3.13.9}timeout}{155}{paragraph.A.3.13.9}
+\contentsline {paragraph}{\numberline {A.3.13.10}inactivity}{155}{paragraph.A.3.13.10}
+\contentsline {paragraph}{\numberline {A.3.13.11}reset timer}{155}{paragraph.A.3.13.11}
+\contentsline {paragraph}{\numberline {A.3.13.12}abort on stalled}{155}{paragraph.A.3.13.12}
+\contentsline {paragraph}{\numberline {A.3.13.13}abort on timeout}{156}{paragraph.A.3.13.13}
+\contentsline {paragraph}{\numberline {A.3.13.14}abort on inactivity}{156}{paragraph.A.3.13.14}
+\contentsline {paragraph}{\numberline {A.3.13.15}abort if startup handler fails}{156}{paragraph.A.3.13.15}
+\contentsline {subsubsection}{\numberline {A.3.14}{[[}environment{]]} }{156}{subsubsection.A.3.14}
+\contentsline {paragraph}{\numberline {A.3.14.1}\_\_VARIABLE\_\_ }{156}{paragraph.A.3.14.1}
+\contentsline {subsubsection}{\numberline {A.3.15}{[[}reference test{]]}}{157}{subsubsection.A.3.15}
+\contentsline {paragraph}{\numberline {A.3.15.1}suite shutdown event handler}{157}{paragraph.A.3.15.1}
+\contentsline {paragraph}{\numberline {A.3.15.2}required run mode}{157}{paragraph.A.3.15.2}
+\contentsline {paragraph}{\numberline {A.3.15.3}allow task failures}{157}{paragraph.A.3.15.3}
+\contentsline {paragraph}{\numberline {A.3.15.4}expected task failures}{157}{paragraph.A.3.15.4}
+\contentsline {paragraph}{\numberline {A.3.15.5}live mode suite timeout}{158}{paragraph.A.3.15.5}
+\contentsline {paragraph}{\numberline {A.3.15.6}simulation mode suite timeout}{158}{paragraph.A.3.15.6}
+\contentsline {paragraph}{\numberline {A.3.15.7}dummy mode suite timeout}{158}{paragraph.A.3.15.7}
+\contentsline {subsubsection}{\numberline {A.3.16}{[[}authentication{]]}}{158}{subsubsection.A.3.16}
+\contentsline {paragraph}{\numberline {A.3.16.1}public}{158}{paragraph.A.3.16.1}
+\contentsline {subsubsection}{\numberline {A.3.17}{[[}simulation{]]} }{158}{subsubsection.A.3.17}
+\contentsline {paragraph}{\numberline {A.3.17.1}disable suite event handlers}{159}{paragraph.A.3.17.1}
+\contentsline {subsection}{\numberline {A.4}[scheduling]}{159}{subsection.A.4}
+\contentsline {subsubsection}{\numberline {A.4.1}cycling}{159}{subsubsection.A.4.1}
+\contentsline {subsubsection}{\numberline {A.4.2}initial cycle point}{159}{subsubsection.A.4.2}
+\contentsline {subsubsection}{\numberline {A.4.3}final cycle point}{159}{subsubsection.A.4.3}
+\contentsline {subsubsection}{\numberline {A.4.4}initial cycle point constraints}{160}{subsubsection.A.4.4}
+\contentsline {subsubsection}{\numberline {A.4.5}final cycle point constraints}{160}{subsubsection.A.4.5}
+\contentsline {subsubsection}{\numberline {A.4.6}hold after point}{160}{subsubsection.A.4.6}
+\contentsline {subsubsection}{\numberline {A.4.7}runahead limit}{160}{subsubsection.A.4.7}
+\contentsline {subsubsection}{\numberline {A.4.8}max active cycle points}{160}{subsubsection.A.4.8}
+\contentsline {subsubsection}{\numberline {A.4.9}spawn to max active cycle points}{161}{subsubsection.A.4.9}
+\contentsline {subsubsection}{\numberline {A.4.10}{[[}queues{]]}}{161}{subsubsection.A.4.10}
+\contentsline {paragraph}{\numberline {A.4.10.1}{[[[}\_\_QUEUE\_\_{]]]}}{161}{paragraph.A.4.10.1}
+\contentsline {paragraph}{\numberline {A.4.10.2}limit}{161}{paragraph.A.4.10.2}
+\contentsline {paragraph}{\numberline {A.4.10.3}members}{161}{paragraph.A.4.10.3}
+\contentsline {subsubsection}{\numberline {A.4.11}{[[}xtriggers{]]}}{161}{subsubsection.A.4.11}
+\contentsline {paragraph}{\numberline {A.4.11.1}\_\_MANY\_\_}{162}{paragraph.A.4.11.1}
+\contentsline {subsubsection}{\numberline {A.4.12}{[[}special tasks{]]}}{162}{subsubsection.A.4.12}
+\contentsline {paragraph}{\numberline {A.4.12.1}clock-trigger}{162}{paragraph.A.4.12.1}
+\contentsline {paragraph}{\numberline {A.4.12.2}clock-expire}{162}{paragraph.A.4.12.2}
+\contentsline {paragraph}{\numberline {A.4.12.3}external-trigger}{162}{paragraph.A.4.12.3}
+\contentsline {paragraph}{\numberline {A.4.12.4}sequential}{163}{paragraph.A.4.12.4}
+\contentsline {paragraph}{\numberline {A.4.12.5}exclude at start-up}{163}{paragraph.A.4.12.5}
+\contentsline {paragraph}{\numberline {A.4.12.6}include at start-up}{163}{paragraph.A.4.12.6}
+\contentsline {subsubsection}{\numberline {A.4.13}{[[}dependencies{]]}}{163}{subsubsection.A.4.13}
+\contentsline {paragraph}{\numberline {A.4.13.1}graph}{164}{paragraph.A.4.13.1}
+\contentsline {paragraph}{\numberline {A.4.13.2}{[[[}\_\_RECURRENCE\_\_{]]]}}{164}{paragraph.A.4.13.2}
+\contentsline {subparagraph}{\numberline {A.4.13.2.1}graph}{164}{subparagraph.A.4.13.2.1}
+\contentsline {subsection}{\numberline {A.5}[runtime]}{164}{subsection.A.5}
+\contentsline {subsubsection}{\numberline {A.5.1}{[[}\_\_NAME\_\_{]]}}{165}{subsubsection.A.5.1}
+\contentsline {paragraph}{\numberline {A.5.1.1}inherit}{165}{paragraph.A.5.1.1}
+\contentsline {paragraph}{\numberline {A.5.1.2}inherit}{165}{paragraph.A.5.1.2}
+\contentsline {paragraph}{\numberline {A.5.1.3}init-script}{165}{paragraph.A.5.1.3}
+\contentsline {paragraph}{\numberline {A.5.1.4}env-script}{166}{paragraph.A.5.1.4}
+\contentsline {paragraph}{\numberline {A.5.1.5}exit-script}{166}{paragraph.A.5.1.5}
+\contentsline {paragraph}{\numberline {A.5.1.6}err-script}{166}{paragraph.A.5.1.6}
+\contentsline {paragraph}{\numberline {A.5.1.7}pre-script}{166}{paragraph.A.5.1.7}
+\contentsline {paragraph}{\numberline {A.5.1.8}script}{167}{paragraph.A.5.1.8}
+\contentsline {paragraph}{\numberline {A.5.1.9}post-script}{167}{paragraph.A.5.1.9}
+\contentsline {paragraph}{\numberline {A.5.1.10}work sub-directory}{167}{paragraph.A.5.1.10}
+\contentsline {paragraph}{\numberline {A.5.1.11}{[[[}meta{]]]}}{167}{paragraph.A.5.1.11}
+\contentsline {subparagraph}{\numberline {A.5.1.11.1}title}{168}{subparagraph.A.5.1.11.1}
+\contentsline {subparagraph}{\numberline {A.5.1.11.2}description}{168}{subparagraph.A.5.1.11.2}
+\contentsline {subparagraph}{\numberline {A.5.1.11.3}URL}{168}{subparagraph.A.5.1.11.3}
+\contentsline {subparagraph}{\numberline {A.5.1.11.4}\_\_MANY\_\_}{168}{subparagraph.A.5.1.11.4}
+\contentsline {paragraph}{\numberline {A.5.1.12}{[[[}job{]]]}}{169}{paragraph.A.5.1.12}
+\contentsline {subparagraph}{\numberline {A.5.1.12.1}batch system}{169}{subparagraph.A.5.1.12.1}
+\contentsline {subparagraph}{\numberline {A.5.1.12.2}execution time limit}{169}{subparagraph.A.5.1.12.2}
+\contentsline {subparagraph}{\numberline {A.5.1.12.3}batch submit command template}{169}{subparagraph.A.5.1.12.3}
+\contentsline {subparagraph}{\numberline {A.5.1.12.4}shell}{169}{subparagraph.A.5.1.12.4}
+\contentsline {subparagraph}{\numberline {A.5.1.12.5}submission retry delays}{170}{subparagraph.A.5.1.12.5}
+\contentsline {subparagraph}{\numberline {A.5.1.12.6}execution retry delays}{170}{subparagraph.A.5.1.12.6}
+\contentsline {subparagraph}{\numberline {A.5.1.12.7}submission polling intervals}{170}{subparagraph.A.5.1.12.7}
+\contentsline {subparagraph}{\numberline {A.5.1.12.8}execution polling intervals}{171}{subparagraph.A.5.1.12.8}
+\contentsline {paragraph}{\numberline {A.5.1.13}{[[[}remote{]]]}}{171}{paragraph.A.5.1.13}
+\contentsline {subparagraph}{\numberline {A.5.1.13.1}host}{171}{subparagraph.A.5.1.13.1}
+\contentsline {subparagraph}{\numberline {A.5.1.13.2}owner}{171}{subparagraph.A.5.1.13.2}
+\contentsline {subparagraph}{\numberline {A.5.1.13.3}retrieve job logs}{172}{subparagraph.A.5.1.13.3}
+\contentsline {subparagraph}{\numberline {A.5.1.13.4}retrieve job logs max size}{172}{subparagraph.A.5.1.13.4}
+\contentsline {subparagraph}{\numberline {A.5.1.13.5}retrieve job logs retry delays}{172}{subparagraph.A.5.1.13.5}
+\contentsline {subparagraph}{\numberline {A.5.1.13.6}suite definition directory}{172}{subparagraph.A.5.1.13.6}
+\contentsline {paragraph}{\numberline {A.5.1.14}{[[[}events{]]]}}{173}{paragraph.A.5.1.14}
+\contentsline {subparagraph}{\numberline {A.5.1.14.1}EVENT handler}{173}{subparagraph.A.5.1.14.1}
+\contentsline {subparagraph}{\numberline {A.5.1.14.2}submission timeout}{174}{subparagraph.A.5.1.14.2}
+\contentsline {subparagraph}{\numberline {A.5.1.14.3}execution timeout}{174}{subparagraph.A.5.1.14.3}
+\contentsline {subparagraph}{\numberline {A.5.1.14.4}reset timer}{174}{subparagraph.A.5.1.14.4}
+\contentsline {subparagraph}{\numberline {A.5.1.14.5}handlers}{174}{subparagraph.A.5.1.14.5}
+\contentsline {subparagraph}{\numberline {A.5.1.14.6}handler events}{175}{subparagraph.A.5.1.14.6}
+\contentsline {subparagraph}{\numberline {A.5.1.14.7}handler retry delays}{175}{subparagraph.A.5.1.14.7}
+\contentsline {subparagraph}{\numberline {A.5.1.14.8}mail events}{175}{subparagraph.A.5.1.14.8}
+\contentsline {subparagraph}{\numberline {A.5.1.14.9}mail from}{175}{subparagraph.A.5.1.14.9}
+\contentsline {subparagraph}{\numberline {A.5.1.14.10}mail retry delays}{175}{subparagraph.A.5.1.14.10}
+\contentsline {subparagraph}{\numberline {A.5.1.14.11}mail smtp}{176}{subparagraph.A.5.1.14.11}
+\contentsline {subparagraph}{\numberline {A.5.1.14.12}mail to}{176}{subparagraph.A.5.1.14.12}
+\contentsline {paragraph}{\numberline {A.5.1.15}{[[[}environment{]]]}}{176}{paragraph.A.5.1.15}
+\contentsline {subparagraph}{\numberline {A.5.1.15.1}\_\_VARIABLE\_\_ }{176}{subparagraph.A.5.1.15.1}
+\contentsline {paragraph}{\numberline {A.5.1.16}{[[[}environment filter{]]]}}{177}{paragraph.A.5.1.16}
+\contentsline {subparagraph}{\numberline {A.5.1.16.1}include}{177}{subparagraph.A.5.1.16.1}
+\contentsline {subparagraph}{\numberline {A.5.1.16.2}exclude}{177}{subparagraph.A.5.1.16.2}
+\contentsline {paragraph}{\numberline {A.5.1.17}{[[[}parameter environment templates{]]]}}{177}{paragraph.A.5.1.17}
+\contentsline {subparagraph}{\numberline {A.5.1.17.1}\_\_VARIABLE\_\_ }{177}{subparagraph.A.5.1.17.1}
+\contentsline {paragraph}{\numberline {A.5.1.18}{[[[}directives{]]]}}{178}{paragraph.A.5.1.18}
+\contentsline {subparagraph}{\numberline {A.5.1.18.1}\_\_DIRECTIVE\_\_ }{178}{subparagraph.A.5.1.18.1}
+\contentsline {paragraph}{\numberline {A.5.1.19}{[[[}outputs{]]]}}{178}{paragraph.A.5.1.19}
+\contentsline {subparagraph}{\numberline {A.5.1.19.1}\_\_OUTPUT\_\_ }{178}{subparagraph.A.5.1.19.1}
+\contentsline {paragraph}{\numberline {A.5.1.20}{[[[}suite state polling{]]]}}{178}{paragraph.A.5.1.20}
+\contentsline {subparagraph}{\numberline {A.5.1.20.1}run-dir}{178}{subparagraph.A.5.1.20.1}
+\contentsline {subparagraph}{\numberline {A.5.1.20.2}interval}{179}{subparagraph.A.5.1.20.2}
+\contentsline {subparagraph}{\numberline {A.5.1.20.3}max-polls}{179}{subparagraph.A.5.1.20.3}
+\contentsline {subparagraph}{\numberline {A.5.1.20.4}user}{179}{subparagraph.A.5.1.20.4}
+\contentsline {subparagraph}{\numberline {A.5.1.20.5}host}{179}{subparagraph.A.5.1.20.5}
+\contentsline {subparagraph}{\numberline {A.5.1.20.6}host}{179}{subparagraph.A.5.1.20.6}
+\contentsline {subparagraph}{\numberline {A.5.1.20.7}verbose}{179}{subparagraph.A.5.1.20.7}
+\contentsline {paragraph}{\numberline {A.5.1.21}{[[[}simulation{]]]}}{180}{paragraph.A.5.1.21}
+\contentsline {subparagraph}{\numberline {A.5.1.21.1}default run length}{180}{subparagraph.A.5.1.21.1}
+\contentsline {subparagraph}{\numberline {A.5.1.21.2}speedup factor}{180}{subparagraph.A.5.1.21.2}
+\contentsline {subparagraph}{\numberline {A.5.1.21.3}time limit buffer}{180}{subparagraph.A.5.1.21.3}
+\contentsline {subparagraph}{\numberline {A.5.1.21.4}fail cycle points}{180}{subparagraph.A.5.1.21.4}
+\contentsline {subparagraph}{\numberline {A.5.1.21.5}fail try 1 only}{180}{subparagraph.A.5.1.21.5}
+\contentsline {subparagraph}{\numberline {A.5.1.21.6}disable task event handlers}{181}{subparagraph.A.5.1.21.6}
+\contentsline {subsection}{\numberline {A.6}[visualization]}{181}{subsection.A.6}
+\contentsline {subsubsection}{\numberline {A.6.1}initial cycle point}{181}{subsubsection.A.6.1}
+\contentsline {subsubsection}{\numberline {A.6.2}final cycle point}{181}{subsubsection.A.6.2}
+\contentsline {subsubsection}{\numberline {A.6.3}number of cycle points}{181}{subsubsection.A.6.3}
+\contentsline {subsubsection}{\numberline {A.6.4}collapsed families}{181}{subsubsection.A.6.4}
+\contentsline {subsubsection}{\numberline {A.6.5}use node color for edges}{182}{subsubsection.A.6.5}
+\contentsline {subsubsection}{\numberline {A.6.6}use node fillcolor for edges}{182}{subsubsection.A.6.6}
+\contentsline {subsubsection}{\numberline {A.6.7}node penwidth}{182}{subsubsection.A.6.7}
+\contentsline {subsubsection}{\numberline {A.6.8}edge penwidth}{182}{subsubsection.A.6.8}
+\contentsline {subsubsection}{\numberline {A.6.9}use node color for labels}{182}{subsubsection.A.6.9}
+\contentsline {subsubsection}{\numberline {A.6.10}default node attributes}{182}{subsubsection.A.6.10}
+\contentsline {subsubsection}{\numberline {A.6.11}default edge attributes}{183}{subsubsection.A.6.11}
+\contentsline {subsubsection}{\numberline {A.6.12}{[[}node groups{]]}}{183}{subsubsection.A.6.12}
+\contentsline {paragraph}{\numberline {A.6.12.1}\_\_GROUP\_\_}{183}{paragraph.A.6.12.1}
+\contentsline {subsubsection}{\numberline {A.6.13}{[[}node attributes{]]}}{183}{subsubsection.A.6.13}
+\contentsline {paragraph}{\numberline {A.6.13.1}\_\_NAME\_\_}{183}{paragraph.A.6.13.1}
+\contentsline {section}{\numberline {B}Global (Site, User) Config File Reference}{184}{appendix.B}
+\contentsline {subsection}{\numberline {B.1}Top Level Items}{184}{subsection.B.1}
+\contentsline {subsubsection}{\numberline {B.1.1}temporary directory}{184}{subsubsection.B.1.1}
+\contentsline {subsubsection}{\numberline {B.1.2}process pool size}{184}{subsubsection.B.1.2}
+\contentsline {subsubsection}{\numberline {B.1.3}process pool timeout}{184}{subsubsection.B.1.3}
+\contentsline {subsubsection}{\numberline {B.1.4}disable interactive command prompts}{184}{subsubsection.B.1.4}
+\contentsline {subsubsection}{\numberline {B.1.5}enable run directory housekeeping}{185}{subsubsection.B.1.5}
+\contentsline {subsubsection}{\numberline {B.1.6}run directory rolling archive length}{185}{subsubsection.B.1.6}
+\contentsline {subsubsection}{\numberline {B.1.7}task host select command timeout}{185}{subsubsection.B.1.7}
+\contentsline {subsection}{\numberline {B.2}[task messaging]}{185}{subsection.B.2}
+\contentsline {subsubsection}{\numberline {B.2.1}retry interval}{185}{subsubsection.B.2.1}
+\contentsline {subsubsection}{\numberline {B.2.2}maximum number of tries}{185}{subsubsection.B.2.2}
+\contentsline {subsubsection}{\numberline {B.2.3}connection timeout}{186}{subsubsection.B.2.3}
+\contentsline {subsection}{\numberline {B.3}[suite logging]}{186}{subsection.B.3}
+\contentsline {subsubsection}{\numberline {B.3.1}rolling archive length}{186}{subsubsection.B.3.1}
+\contentsline {subsubsection}{\numberline {B.3.2}maximum size in bytes}{186}{subsubsection.B.3.2}
+\contentsline {subsection}{\numberline {B.4}[documentation]}{186}{subsection.B.4}
+\contentsline {subsubsection}{\numberline {B.4.1}{[[}files{]]}}{186}{subsubsection.B.4.1}
+\contentsline {paragraph}{\numberline {B.4.1.1}html index}{186}{paragraph.B.4.1.1}
+\contentsline {paragraph}{\numberline {B.4.1.2}pdf user guide}{187}{paragraph.B.4.1.2}
+\contentsline {paragraph}{\numberline {B.4.1.3}multi-page html user guide}{187}{paragraph.B.4.1.3}
+\contentsline {paragraph}{\numberline {B.4.1.4}single-page html user guide}{187}{paragraph.B.4.1.4}
+\contentsline {subsubsection}{\numberline {B.4.2}{[[}urls{]]}}{187}{subsubsection.B.4.2}
+\contentsline {paragraph}{\numberline {B.4.2.1}internet homepage}{187}{paragraph.B.4.2.1}
+\contentsline {paragraph}{\numberline {B.4.2.2}local index}{187}{paragraph.B.4.2.2}
+\contentsline {subsection}{\numberline {B.5}[document viewers]}{187}{subsection.B.5}
+\contentsline {subsubsection}{\numberline {B.5.1}pdf}{187}{subsubsection.B.5.1}
+\contentsline {subsubsection}{\numberline {B.5.2}html}{188}{subsubsection.B.5.2}
+\contentsline {subsection}{\numberline {B.6}[editors]}{188}{subsection.B.6}
+\contentsline {subsubsection}{\numberline {B.6.1}terminal}{188}{subsubsection.B.6.1}
+\contentsline {subsubsection}{\numberline {B.6.2}gui}{188}{subsubsection.B.6.2}
+\contentsline {subsection}{\numberline {B.7}[communication]}{188}{subsection.B.7}
+\contentsline {subsubsection}{\numberline {B.7.1}method}{189}{subsubsection.B.7.1}
+\contentsline {subsubsection}{\numberline {B.7.2}base port}{189}{subsubsection.B.7.2}
+\contentsline {subsubsection}{\numberline {B.7.3}maximum number of ports}{189}{subsubsection.B.7.3}
+\contentsline {subsubsection}{\numberline {B.7.4}proxies on}{189}{subsubsection.B.7.4}
+\contentsline {subsubsection}{\numberline {B.7.5}options}{189}{subsubsection.B.7.5}
+\contentsline {subsection}{\numberline {B.8}[monitor]}{190}{subsection.B.8}
+\contentsline {subsubsection}{\numberline {B.8.1}monitor}{190}{subsubsection.B.8.1}
+\contentsline {subsection}{\numberline {B.9}[hosts]}{190}{subsection.B.9}
+\contentsline {subsubsection}{\numberline {B.9.1}{[[}HOST{]]}}{190}{subsubsection.B.9.1}
+\contentsline {paragraph}{\numberline {B.9.1.1}run directory}{191}{paragraph.B.9.1.1}
+\contentsline {paragraph}{\numberline {B.9.1.2}work directory}{191}{paragraph.B.9.1.2}
+\contentsline {paragraph}{\numberline {B.9.1.3}task communication method}{191}{paragraph.B.9.1.3}
+\contentsline {paragraph}{\numberline {B.9.1.4}execution polling intervals}{191}{paragraph.B.9.1.4}
+\contentsline {paragraph}{\numberline {B.9.1.5}submission polling intervals}{192}{paragraph.B.9.1.5}
+\contentsline {paragraph}{\numberline {B.9.1.6}scp command}{192}{paragraph.B.9.1.6}
+\contentsline {paragraph}{\numberline {B.9.1.7}ssh command}{192}{paragraph.B.9.1.7}
+\contentsline {paragraph}{\numberline {B.9.1.8}use login shell}{192}{paragraph.B.9.1.8}
+\contentsline {paragraph}{\numberline {B.9.1.9}cylc executable}{193}{paragraph.B.9.1.9}
+\contentsline {paragraph}{\numberline {B.9.1.10}global init-script}{193}{paragraph.B.9.1.10}
+\contentsline {paragraph}{\numberline {B.9.1.11}copyable environment variables}{193}{paragraph.B.9.1.11}
+\contentsline {paragraph}{\numberline {B.9.1.12}retrieve job logs}{193}{paragraph.B.9.1.12}
+\contentsline {paragraph}{\numberline {B.9.1.13}retrieve job logs command}{193}{paragraph.B.9.1.13}
+\contentsline {paragraph}{\numberline {B.9.1.14}retrieve job logs max size}{193}{paragraph.B.9.1.14}
+\contentsline {paragraph}{\numberline {B.9.1.15}retrieve job logs retry delays}{193}{paragraph.B.9.1.15}
+\contentsline {paragraph}{\numberline {B.9.1.16}task event handler retry delays}{194}{paragraph.B.9.1.16}
+\contentsline {paragraph}{\numberline {B.9.1.17}tail command template}{194}{paragraph.B.9.1.17}
+\contentsline {paragraph}{\numberline {B.9.1.18}{[[[}batch systems{]]]}}{194}{paragraph.B.9.1.18}
+\contentsline {subparagraph}{\numberline {B.9.1.18.1}{[[[[}SYSTEM{]]]]}err tailer}{194}{subparagraph.B.9.1.18.1}
+\contentsline {subparagraph}{\numberline {B.9.1.18.2}{[[[[}SYSTEM{]]]]}out tailer}{194}{subparagraph.B.9.1.18.2}
+\contentsline {subparagraph}{\numberline {B.9.1.18.3}{[[[[}SYSTEM{]]]]}err viewer}{194}{subparagraph.B.9.1.18.3}
+\contentsline {subparagraph}{\numberline {B.9.1.18.4}{[[[[}SYSTEM{]]]]}out viewer}{195}{subparagraph.B.9.1.18.4}
+\contentsline {subparagraph}{\numberline {B.9.1.18.5}{[[[[}SYSTEM{]]]]}job name length maximum}{195}{subparagraph.B.9.1.18.5}
+\contentsline {subparagraph}{\numberline {B.9.1.18.6}{[[[[}SYSTEM{]]]]}execution time limit polling intervals}{195}{subparagraph.B.9.1.18.6}
+\contentsline {subsection}{\numberline {B.10}[suite servers] }{196}{subsection.B.10}
+\contentsline {subsubsection}{\numberline {B.10.1}run hosts}{196}{subsubsection.B.10.1}
+\contentsline {subsubsection}{\numberline {B.10.2}run hosts}{196}{subsubsection.B.10.2}
+\contentsline {subsubsection}{\numberline {B.10.3}run hosts}{196}{subsubsection.B.10.3}
+\contentsline {subsubsection}{\numberline {B.10.4}scan hosts}{196}{subsubsection.B.10.4}
+\contentsline {subsubsection}{\numberline {B.10.5}run ports}{196}{subsubsection.B.10.5}
+\contentsline {subsubsection}{\numberline {B.10.6}scan ports}{197}{subsubsection.B.10.6}
+\contentsline {subsubsection}{\numberline {B.10.7}run host select}{197}{subsubsection.B.10.7}
+\contentsline {paragraph}{\numberline {B.10.7.1}rank}{197}{paragraph.B.10.7.1}
+\contentsline {paragraph}{\numberline {B.10.7.2}thresholds}{197}{paragraph.B.10.7.2}
+\contentsline {subsection}{\numberline {B.11}[suite host self-identification] }{198}{subsection.B.11}
+\contentsline {subsubsection}{\numberline {B.11.1}method}{198}{subsubsection.B.11.1}
+\contentsline {subsubsection}{\numberline {B.11.2}target}{199}{subsubsection.B.11.2}
+\contentsline {subsubsection}{\numberline {B.11.3}host}{199}{subsubsection.B.11.3}
+\contentsline {subsection}{\numberline {B.12}[task events]}{199}{subsection.B.12}
+\contentsline {subsection}{\numberline {B.13}[test battery]}{199}{subsection.B.13}
+\contentsline {subsubsection}{\numberline {B.13.1}remote host with shared fs}{199}{subsubsection.B.13.1}
+\contentsline {subsubsection}{\numberline {B.13.2}remote host}{199}{subsubsection.B.13.2}
+\contentsline {subsubsection}{\numberline {B.13.3}remote owner}{199}{subsubsection.B.13.3}
+\contentsline {subsubsection}{\numberline {B.13.4}{[[}batch systems{]]}}{199}{subsubsection.B.13.4}
+\contentsline {paragraph}{\numberline {B.13.4.1}{[[[}SYSTEM{]]]}}{200}{paragraph.B.13.4.1}
+\contentsline {subparagraph}{\numberline {B.13.4.1.1}host}{200}{subparagraph.B.13.4.1.1}
+\contentsline {subparagraph}{\numberline {B.13.4.1.2}err viewer}{200}{subparagraph.B.13.4.1.2}
+\contentsline {subparagraph}{\numberline {B.13.4.1.3}out viewer}{200}{subparagraph.B.13.4.1.3}
+\contentsline {subparagraph}{\numberline {B.13.4.1.4}{[[[[}directives{]]]]}}{200}{subparagraph.B.13.4.1.4}
+\contentsline {subsection}{\numberline {B.14}[cylc]}{200}{subsection.B.14}
+\contentsline {subsubsection}{\numberline {B.14.1}UTC mode}{200}{subsubsection.B.14.1}
+\contentsline {subsubsection}{\numberline {B.14.2}health check interval}{200}{subsubsection.B.14.2}
+\contentsline {subsubsection}{\numberline {B.14.3}task event mail interval}{200}{subsubsection.B.14.3}
+\contentsline {subsubsection}{\numberline {B.14.4}{[}events{]}}{201}{subsubsection.B.14.4}
+\contentsline {paragraph}{\numberline {B.14.4.1}handlers}{201}{paragraph.B.14.4.1}
+\contentsline {paragraph}{\numberline {B.14.4.2}handler events}{201}{paragraph.B.14.4.2}
+\contentsline {paragraph}{\numberline {B.14.4.3}startup handler}{201}{paragraph.B.14.4.3}
+\contentsline {paragraph}{\numberline {B.14.4.4}shutdown handler}{201}{paragraph.B.14.4.4}
+\contentsline {paragraph}{\numberline {B.14.4.5}mail events}{201}{paragraph.B.14.4.5}
+\contentsline {paragraph}{\numberline {B.14.4.6}mail footer}{201}{paragraph.B.14.4.6}
+\contentsline {paragraph}{\numberline {B.14.4.7}mail from}{201}{paragraph.B.14.4.7}
+\contentsline {paragraph}{\numberline {B.14.4.8}mail smtp}{201}{paragraph.B.14.4.8}
+\contentsline {paragraph}{\numberline {B.14.4.9}mail to}{201}{paragraph.B.14.4.9}
+\contentsline {paragraph}{\numberline {B.14.4.10}timeout handler}{201}{paragraph.B.14.4.10}
+\contentsline {paragraph}{\numberline {B.14.4.11}timeout}{201}{paragraph.B.14.4.11}
+\contentsline {paragraph}{\numberline {B.14.4.12}abort on timeout}{201}{paragraph.B.14.4.12}
+\contentsline {paragraph}{\numberline {B.14.4.13}stalled handler}{201}{paragraph.B.14.4.13}
+\contentsline {paragraph}{\numberline {B.14.4.14}abort on stalled}{201}{paragraph.B.14.4.14}
+\contentsline {paragraph}{\numberline {B.14.4.15}inactivity handler}{201}{paragraph.B.14.4.15}
+\contentsline {paragraph}{\numberline {B.14.4.16}inactivity}{201}{paragraph.B.14.4.16}
+\contentsline {paragraph}{\numberline {B.14.4.17}abort on inactivity}{201}{paragraph.B.14.4.17}
+\contentsline {subsection}{\numberline {B.15}[authentication]}{201}{subsection.B.15}
+\contentsline {subsubsection}{\numberline {B.15.1}public}{202}{subsubsection.B.15.1}
+\contentsline {section}{\numberline {C}Gcylc GUI (cylc gui) Config File Reference}{203}{appendix.C}
+\contentsline {subsection}{\numberline {C.1}Top Level Items}{203}{subsection.C.1}
+\contentsline {subsubsection}{\numberline {C.1.1}dot icon size}{203}{subsubsection.C.1.1}
+\contentsline {subsubsection}{\numberline {C.1.2}initial side-by-side views}{203}{subsubsection.C.1.2}
+\contentsline {subsubsection}{\numberline {C.1.3}initial views}{203}{subsubsection.C.1.3}
+\contentsline {subsubsection}{\numberline {C.1.4}maximum update interval}{203}{subsubsection.C.1.4}
+\contentsline {subsubsection}{\numberline {C.1.5}sort by definition order}{204}{subsubsection.C.1.5}
+\contentsline {subsubsection}{\numberline {C.1.6}sort column}{204}{subsubsection.C.1.6}
+\contentsline {subsubsection}{\numberline {C.1.7}sort column ascending}{204}{subsubsection.C.1.7}
+\contentsline {subsubsection}{\numberline {C.1.8}sub-graphs on}{204}{subsubsection.C.1.8}
+\contentsline {subsubsection}{\numberline {C.1.9}task filter highlight color}{204}{subsubsection.C.1.9}
+\contentsline {subsubsection}{\numberline {C.1.10}task states to filter out}{205}{subsubsection.C.1.10}
+\contentsline {subsubsection}{\numberline {C.1.11}transpose dot}{205}{subsubsection.C.1.11}
+\contentsline {subsubsection}{\numberline {C.1.12}transpose graph}{205}{subsubsection.C.1.12}
+\contentsline {subsubsection}{\numberline {C.1.13}ungrouped views}{205}{subsubsection.C.1.13}
+\contentsline {subsubsection}{\numberline {C.1.14}use theme}{205}{subsubsection.C.1.14}
+\contentsline {subsubsection}{\numberline {C.1.15}window size}{206}{subsubsection.C.1.15}
+\contentsline {subsection}{\numberline {C.2}[themes]}{206}{subsection.C.2}
+\contentsline {subsubsection}{\numberline {C.2.1}{[}THEME{]}}{206}{subsubsection.C.2.1}
+\contentsline {paragraph}{\numberline {C.2.1.1}inherit}{206}{paragraph.C.2.1.1}
+\contentsline {paragraph}{\numberline {C.2.1.2}defaults}{206}{paragraph.C.2.1.2}
+\contentsline {paragraph}{\numberline {C.2.1.3}STATE}{206}{paragraph.C.2.1.3}
+\contentsline {section}{\numberline {D}Gscan GUI (cylc gscan) Config File Reference}{208}{appendix.D}
+\contentsline {subsection}{\numberline {D.1}Top Level Items}{208}{subsection.D.1}
+\contentsline {subsubsection}{\numberline {D.1.1}activate on startup}{208}{subsubsection.D.1.1}
+\contentsline {subsubsection}{\numberline {D.1.2}columns}{208}{subsubsection.D.1.2}
+\contentsline {subsubsection}{\numberline {D.1.3}suite listing update interval}{208}{subsubsection.D.1.3}
+\contentsline {subsubsection}{\numberline {D.1.4}suite status update interval}{209}{subsubsection.D.1.4}
+\contentsline {subsubsection}{\numberline {D.1.5}window size}{209}{subsubsection.D.1.5}
+\contentsline {subsubsection}{\numberline {D.1.6}hide main menubar}{209}{subsubsection.D.1.6}
+\contentsline {section}{\numberline {E}Remote Job Management}{210}{appendix.E}
+\contentsline {subsection}{\numberline {E.1}SSH-free Job Management?}{210}{subsection.E.1}
+\contentsline {subsection}{\numberline {E.2}SSH-based Job Management}{210}{subsection.E.2}
+\contentsline {subsection}{\numberline {E.3}A Concrete Example}{210}{subsection.E.3}
+\contentsline {subsubsection}{\numberline {E.3.1}create suite run directory and install source files}{211}{subsubsection.E.3.1}
+\contentsline {subsubsection}{\numberline {E.3.2}server installs service directory}{212}{subsubsection.E.3.2}
+\contentsline {subsubsection}{\numberline {E.3.3}server submits jobs}{213}{subsubsection.E.3.3}
+\contentsline {subsubsection}{\numberline {E.3.4}server tracks job progress}{214}{subsubsection.E.3.4}
+\contentsline {subsubsection}{\numberline {E.3.5}user views job logs}{214}{subsubsection.E.3.5}
+\contentsline {subsubsection}{\numberline {E.3.6}server cancels or kills jobs}{214}{subsubsection.E.3.6}
+\contentsline {subsubsection}{\numberline {E.3.7}server polls jobs}{214}{subsubsection.E.3.7}
+\contentsline {subsubsection}{\numberline {E.3.8}server retrieves jobs logs}{215}{subsubsection.E.3.8}
+\contentsline {subsubsection}{\numberline {E.3.9}server tidies job remote at shutdown}{215}{subsubsection.E.3.9}
+\contentsline {subsection}{\numberline {E.4}Other Use of SSH in Cylc}{215}{subsection.E.4}
+\contentsline {section}{\numberline {F}Command Reference}{216}{appendix.F}
+\contentsline {subsection}{\numberline {F.1}Command Categories}{216}{subsection.F.1}
+\contentsline {subsubsection}{\numberline {F.1.1}admin}{216}{subsubsection.F.1.1}
+\contentsline {subsubsection}{\numberline {F.1.2}all}{217}{subsubsection.F.1.2}
+\contentsline {subsubsection}{\numberline {F.1.3}control}{219}{subsubsection.F.1.3}
+\contentsline {subsubsection}{\numberline {F.1.4}discovery}{219}{subsubsection.F.1.4}
+\contentsline {subsubsection}{\numberline {F.1.5}hook}{219}{subsubsection.F.1.5}
+\contentsline {subsubsection}{\numberline {F.1.6}information}{219}{subsubsection.F.1.6}
+\contentsline {subsubsection}{\numberline {F.1.7}license}{220}{subsubsection.F.1.7}
+\contentsline {subsubsection}{\numberline {F.1.8}preparation}{220}{subsubsection.F.1.8}
+\contentsline {subsubsection}{\numberline {F.1.9}task}{221}{subsubsection.F.1.9}
+\contentsline {subsubsection}{\numberline {F.1.10}utility}{221}{subsubsection.F.1.10}
+\contentsline {subsection}{\numberline {F.2}Commands}{221}{subsection.F.2}
+\contentsline {subsubsection}{\numberline {F.2.1}5to6}{221}{subsubsection.F.2.1}
+\contentsline {subsubsection}{\numberline {F.2.2}broadcast}{222}{subsubsection.F.2.2}
+\contentsline {subsubsection}{\numberline {F.2.3}cat-log}{224}{subsubsection.F.2.3}
+\contentsline {subsubsection}{\numberline {F.2.4}cat-state}{224}{subsubsection.F.2.4}
+\contentsline {subsubsection}{\numberline {F.2.5}check-software}{225}{subsubsection.F.2.5}
+\contentsline {subsubsection}{\numberline {F.2.6}check-triggering}{225}{subsubsection.F.2.6}
+\contentsline {subsubsection}{\numberline {F.2.7}check-versions}{225}{subsubsection.F.2.7}
+\contentsline {subsubsection}{\numberline {F.2.8}checkpoint}{226}{subsubsection.F.2.8}
+\contentsline {subsubsection}{\numberline {F.2.9}client}{227}{subsubsection.F.2.9}
+\contentsline {subsubsection}{\numberline {F.2.10}conditions}{227}{subsubsection.F.2.10}
+\contentsline {subsubsection}{\numberline {F.2.11}cycle-point}{227}{subsubsection.F.2.11}
+\contentsline {subsubsection}{\numberline {F.2.12}diff}{228}{subsubsection.F.2.12}
+\contentsline {subsubsection}{\numberline {F.2.13}documentation}{229}{subsubsection.F.2.13}
+\contentsline {subsubsection}{\numberline {F.2.14}dump}{229}{subsubsection.F.2.14}
+\contentsline {subsubsection}{\numberline {F.2.15}edit}{230}{subsubsection.F.2.15}
+\contentsline {subsubsection}{\numberline {F.2.16}email-suite}{231}{subsubsection.F.2.16}
+\contentsline {subsubsection}{\numberline {F.2.17}email-task}{231}{subsubsection.F.2.17}
+\contentsline {subsubsection}{\numberline {F.2.18}ext-trigger}{232}{subsubsection.F.2.18}
+\contentsline {subsubsection}{\numberline {F.2.19}function-run}{232}{subsubsection.F.2.19}
+\contentsline {subsubsection}{\numberline {F.2.20}get-directory}{233}{subsubsection.F.2.20}
+\contentsline {subsubsection}{\numberline {F.2.21}get-gui-config}{233}{subsubsection.F.2.21}
+\contentsline {subsubsection}{\numberline {F.2.22}get-host-metrics}{233}{subsubsection.F.2.22}
+\contentsline {subsubsection}{\numberline {F.2.23}get-site-config}{234}{subsubsection.F.2.23}
+\contentsline {subsubsection}{\numberline {F.2.24}get-suite-config}{234}{subsubsection.F.2.24}
+\contentsline {subsubsection}{\numberline {F.2.25}get-suite-contact}{235}{subsubsection.F.2.25}
+\contentsline {subsubsection}{\numberline {F.2.26}get-suite-version}{235}{subsubsection.F.2.26}
+\contentsline {subsubsection}{\numberline {F.2.27}gpanel}{236}{subsubsection.F.2.27}
+\contentsline {subsubsection}{\numberline {F.2.28}graph}{236}{subsubsection.F.2.28}
+\contentsline {subsubsection}{\numberline {F.2.29}graph-diff}{238}{subsubsection.F.2.29}
+\contentsline {subsubsection}{\numberline {F.2.30}gscan}{238}{subsubsection.F.2.30}
+\contentsline {subsubsection}{\numberline {F.2.31}gui}{239}{subsubsection.F.2.31}
+\contentsline {subsubsection}{\numberline {F.2.32}hold}{240}{subsubsection.F.2.32}
+\contentsline {subsubsection}{\numberline {F.2.33}import-examples}{241}{subsubsection.F.2.33}
+\contentsline {subsubsection}{\numberline {F.2.34}insert}{241}{subsubsection.F.2.34}
+\contentsline {subsubsection}{\numberline {F.2.35}jobs-kill}{242}{subsubsection.F.2.35}
+\contentsline {subsubsection}{\numberline {F.2.36}jobs-poll}{242}{subsubsection.F.2.36}
+\contentsline {subsubsection}{\numberline {F.2.37}jobs-submit}{243}{subsubsection.F.2.37}
+\contentsline {subsubsection}{\numberline {F.2.38}jobscript}{243}{subsubsection.F.2.38}
+\contentsline {subsubsection}{\numberline {F.2.39}kill}{243}{subsubsection.F.2.39}
+\contentsline {subsubsection}{\numberline {F.2.40}list}{244}{subsubsection.F.2.40}
+\contentsline {subsubsection}{\numberline {F.2.41}ls-checkpoints}{245}{subsubsection.F.2.41}
+\contentsline {subsubsection}{\numberline {F.2.42}message}{246}{subsubsection.F.2.42}
+\contentsline {subsubsection}{\numberline {F.2.43}monitor}{247}{subsubsection.F.2.43}
+\contentsline {subsubsection}{\numberline {F.2.44}nudge}{248}{subsubsection.F.2.44}
+\contentsline {subsubsection}{\numberline {F.2.45}ping}{248}{subsubsection.F.2.45}
+\contentsline {subsubsection}{\numberline {F.2.46}poll}{249}{subsubsection.F.2.46}
+\contentsline {subsubsection}{\numberline {F.2.47}print}{250}{subsubsection.F.2.47}
+\contentsline {subsubsection}{\numberline {F.2.48}profile-battery}{251}{subsubsection.F.2.48}
+\contentsline {subsubsection}{\numberline {F.2.49}register}{252}{subsubsection.F.2.49}
+\contentsline {subsubsection}{\numberline {F.2.50}release}{252}{subsubsection.F.2.50}
+\contentsline {subsubsection}{\numberline {F.2.51}reload}{253}{subsubsection.F.2.51}
+\contentsline {subsubsection}{\numberline {F.2.52}remote-init}{254}{subsubsection.F.2.52}
+\contentsline {subsubsection}{\numberline {F.2.53}remote-tidy}{255}{subsubsection.F.2.53}
+\contentsline {subsubsection}{\numberline {F.2.54}remove}{255}{subsubsection.F.2.54}
+\contentsline {subsubsection}{\numberline {F.2.55}report-timings}{256}{subsubsection.F.2.55}
+\contentsline {subsubsection}{\numberline {F.2.56}reset}{257}{subsubsection.F.2.56}
+\contentsline {subsubsection}{\numberline {F.2.57}restart}{258}{subsubsection.F.2.57}
+\contentsline {subsubsection}{\numberline {F.2.58}review}{259}{subsubsection.F.2.58}
+\contentsline {subsubsection}{\numberline {F.2.59}run}{259}{subsubsection.F.2.59}
+\contentsline {subsubsection}{\numberline {F.2.60}scan}{260}{subsubsection.F.2.60}
+\contentsline {subsubsection}{\numberline {F.2.61}scp-transfer}{261}{subsubsection.F.2.61}
+\contentsline {subsubsection}{\numberline {F.2.62}search}{262}{subsubsection.F.2.62}
+\contentsline {subsubsection}{\numberline {F.2.63}set-verbosity}{262}{subsubsection.F.2.63}
+\contentsline {subsubsection}{\numberline {F.2.64}show}{263}{subsubsection.F.2.64}
+\contentsline {subsubsection}{\numberline {F.2.65}spawn}{264}{subsubsection.F.2.65}
+\contentsline {subsubsection}{\numberline {F.2.66}stop}{265}{subsubsection.F.2.66}
+\contentsline {subsubsection}{\numberline {F.2.67}submit}{266}{subsubsection.F.2.67}
+\contentsline {subsubsection}{\numberline {F.2.68}suite-state}{267}{subsubsection.F.2.68}
+\contentsline {subsubsection}{\numberline {F.2.69}test-battery}{268}{subsubsection.F.2.69}
+\contentsline {subsubsection}{\numberline {F.2.70}trigger}{269}{subsubsection.F.2.70}
+\contentsline {subsubsection}{\numberline {F.2.71}upgrade-run-dir}{270}{subsubsection.F.2.71}
+\contentsline {subsubsection}{\numberline {F.2.72}validate}{270}{subsubsection.F.2.72}
+\contentsline {subsubsection}{\numberline {F.2.73}view}{271}{subsubsection.F.2.73}
+\contentsline {subsubsection}{\numberline {F.2.74}warranty}{271}{subsubsection.F.2.74}
+\contentsline {section}{\numberline {G}The gcylc Graph View}{272}{appendix.G}
+\contentsline {section}{\numberline {H}Cylc README File}{272}{appendix.H}
+\contentsline {section}{\numberline {I}Cylc INSTALL File}{273}{appendix.I}
+\contentsline {section}{\numberline {J}Cylc Development History - Major Changes}{274}{appendix.J}
+\contentsline {section}{\numberline {K}Communication Method}{275}{appendix.K}
+\contentsline {section}{\numberline {L}Cylc 6 Migration Reference}{275}{appendix.L}
+\contentsline {subsection}{\numberline {L.1}Timeouts and Delays}{275}{subsection.L.1}
+\contentsline {subsection}{\numberline {L.2}Runahead Limit}{275}{subsection.L.2}
+\contentsline {subsection}{\numberline {L.3}Cycle Time/Cycle Point}{276}{subsection.L.3}
+\contentsline {subsection}{\numberline {L.4}Cycling}{276}{subsection.L.4}
+\contentsline {subsection}{\numberline {L.5}No Implicit Creation of Tasks by Offset Triggers}{277}{subsection.L.5}
+\contentsline {section}{\numberline {M}Known Issues}{278}{appendix.M}
+\contentsline {subsection}{\numberline {M.1}Current Known Issues}{278}{subsection.M.1}
+\contentsline {subsection}{\numberline {M.2}Notable Known Issues}{278}{subsection.M.2}
+\contentsline {subsubsection}{\numberline {M.2.1}Use of pipes in job scripts}{278}{subsubsection.M.2.1}
+\contentsline {section}{\numberline {N}GNU GENERAL PUBLIC LICENSE v3.0}{278}{appendix.N}

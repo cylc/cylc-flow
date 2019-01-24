@@ -1,0 +1,238 @@
+%\documentclass[11pt,a4paper]{report}
+%\documentclass[11pt,a4paper,titlepage]{article}
+%\documentclass[11pt,a4paper]{amsart}
+
+\documentclass[titlepage]{article}
+
+\usepackage{parskip} % don't indent paragraphs
+% 1 inch margins
+\usepackage{textcomp}
+\usepackage{fullpage}
+\usepackage{textcomp}  % \textgreater, \textless
+\usepackage{framed}
+\usepackage{listings}
+\usepackage{courier}
+\usepackage{dirtree}
+\usepackage{amsmath}
+\usepackage{verbatim}
+\usepackage{graphicx}             % latex, eps
+%\usepackage[pdftex]{graphicx}    % pdflatex, png, jpg, pdf
+\usepackage[usenames]{color}   % dvips here screws up graphicx png version, above
+\usepackage{hyperref}
+%\usepackage{titletoc}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headheight}{14pt}
+\renewcommand{\headsep}{10pt}
+\lhead{\leftmark}
+\rhead{\rightmark}
+\lfoot{Copyright (C) 2008-2018 NIWA \& British Crown (Met Office) \& Contributors.}
+\rfoot{\thepage}
+
+\usepackage{titlepic}  % off CTAN, held locally in cylc doc dir.
+
+\usepackage{tocloft}
+% prevent double digit sub-sections crowding the toc line
+\addtolength\cftsubsecnumwidth{0.5em}  % see tocloft manual
+
+\definecolor{codeblock}{rgb}{0.95,0.95,1.0}
+%\definecolor{keywords}{rgb}{1.0,0.3,0.0}
+\definecolor{keywords}{rgb}{0.7,0.1,1.0}
+%\definecolor{comments}{rgb}{0.0,0.7,0.8}
+\definecolor{comments}{rgb}{1.0,0.4,0.0}
+\definecolor{identifiers}{rgb}{0.0,0.2,0.5}
+\definecolor{strings}{rgb}{0.0,0.6,0.0}
+\definecolor{basic}{rgb}{0.1,0.1,0.2}
+\definecolor{command}{rgb}{0.0,0.2,0.1}
+\definecolor{transcr}{rgb}{0.0,0.2,0.4}
+\definecolor{level1}{rgb}{1.0,0.2,1.0}
+\definecolor{level2}{rgb}{0.6,0.0,0.6}
+\definecolor{level3}{rgb}{0.2,0.0,0.2}
+
+% hyperlink color:
+%\definecolor{linkc}{rgb}{0,0.2,0.68}
+% colored hyperlink instead of boxed
+%\hypersetup{colorlinks=true, linkcolor=linkc}
+\hypersetup{colorlinks=true, linkcolor=blue}
+
+\definecolor{shadecolor}{rgb}{0.9,0.9,0.1}
+
+\lstset{
+language=,
+%%xleftmargin=2em,
+%%frame=single,
+backgroundcolor=\color{codeblock},
+basicstyle=\color{basic},
+%identifierstyle=\color{identifiers},
+%keywordstyle=\color{keywords},
+%commentstyle=\color{comments},
+%stringstyle=\color{strings},
+%showstringspaces=false,
+numbers=left,
+%%numberstyle=\color{Gray}
+}
+
+\lstdefinelanguage{jobhosts}
+{
+string=[b]{'},
+sensitive=true,
+comment=[l]{\#},
+keywords={ssh, rm, mkdir, bash, scp, rsync, hobo@otherhost, vagrant@localhost},
+}
+
+\lstdefinelanguage{transcript}
+{
+showstringspaces=false,
+string=[b]{"},
+comment=[l][\color{comments}]{\#},
+morecomment=[l][\color{command}]{\%},
+}
+
+%\lstset{
+%language=bash,
+%basicstyle=\color{blue}\ttfamily,
+%stringstyle=\color{black},
+%}
+
+\lstdefinelanguage{suiterc}
+{
+showstringspaces=false,
+string=[b]{"},
+sensitive=true,
+comment=[l]{\#},
+morecomment=[s][\color{level1}]{[}{]},
+morecomment=[s][\color{level2}]{[[}{]]},
+morecomment=[s][\color{level3}]{[[[}{]]]},
+}
+
+\lstdefinelanguage{usage}
+{
+%string=[b]{"},
+%sensitive=false,
+%morecomment=[l]{Usage:},
+%morecomment=[l]{USAGE:},
+%morecomment=[l]{usage:},
+%morecomment=[l]{HELP:},
+%morecomment=[l]{CATEGORY:},
+%morecomment=[l]{COMMANDs:},
+%morecomment=[l]{Arguments:},
+%morecomment=[l]{Options:},
+%morecomment=[l]{arguments:},
+%morecomment=[l]{command-options:},
+%morecomment=[l]{COMMANDS:},
+%morecomment=[l]{options:},
+%%morecomment=[l]{\#},
+numbers=none,
+}
+
+\lstset{
+language=usage,
+basicstyle=\color{basic}\ttfamily,
+}
+
+% allow \paragraph as subsubsubsection
+% and \subparagraph as subsubsubsubsection
+\setcounter{secnumdepth}{5}
+\setcounter{tocdepth}{5}
+
+% the follow makes \paragraph{} be followed
+% by a newline, as for section headings.
+\makeatletter
+\renewcommand\paragraph{%
+   \@startsection{paragraph}{4}{0mm}%
+      {-\baselineskip}%
+      {.5\baselineskip}%
+      {\normalfont\normalsize\bfseries}}
+\makeatother
+% and similarly for \subparagraph{}
+\makeatletter
+\renewcommand\subparagraph{%
+   \@startsection{subparagraph}{4}{0mm}%
+      {-\baselineskip}%
+      {.5\baselineskip}%
+      {\normalfont\normalsize\bfseries}}
+\makeatother
+
+% define a more compact itemized list environment
+\newenvironment{myitemize} {
+\begin{itemize}
+    \setlength{\itemsep}{1pt}
+    \setlength{\parskip}{0pt}
+    \setlength{\parsep}{0pt}
+    \setlength{\topsep}{0pt}
+    }{\end{itemize}}
+
+% define a more compact enumerate list environment
+\newenvironment{myenumerate} {
+\begin{enumerate}
+    \setlength{\itemsep}{1pt}
+    \setlength{\parskip}{0pt}
+    \setlength{\parsep}{0pt}
+    \setlength{\topsep}{0pt}
+    }{\end{enumerate}}
+
+\usepackage{color}
+\newcommand{\hilight}[1]{\colorbox{yellow}{#1}}
+
+\begin{document}
+
+\Configure{section}{}{}{
+    \HCode{
+        <h3 id="\thesection" class="sectionHead"><span class="titlemark">
+        <a href="\#\thesection">\thesection</a>
+    }
+}{
+    \HCode{</span></h3>}
+}
+
+\Configure{subsection}{}{}{
+    \HCode{
+        <h4 id="\thesection.\arabic{subsection}" class="subsectionHead">
+        <span class="titlemark">
+        <a href="\#\thesection.\arabic{subsection}">
+        \thesection.\arabic{subsection}</a>
+    }
+}{
+    \HCode{</span></h4>}
+}
+
+\Configure{subsubsection}{}{}{
+    \HCode{
+        <h4 id="\thesection.\arabic{subsection}.\arabic{subsubsection}"
+         class="subsubsectionHead"><span class="titlemark">
+        <a href="\#\thesection.\arabic{subsection}.\arabic{subsubsection}">
+        \thesection.\arabic{subsection}.\arabic{subsubsection}</a>
+    }
+}{
+    \HCode{</span></h4>}
+}
+
+ % cylc-version.txt is generated each time by doc/process
+\title{The Cylc Suite Engine\\
+User Guide \\
+\protect \input{cylc-version.txt} \\
+GNU GPL v3.0 Software License \\
+Copyright (C) 2008-2018 NIWA \& British Crown (Met Office) \& Contributors.}
+
+\author{Hilary Oliver}
+
+\titlepic{\includegraphics{../graphics/png/orig/logo.png} \\
+\includegraphics{../graphics/png/orig/niwa-colour-small.png}}
+
+\maketitle
+
+%\pagebreak
+%\input{abstract.tex}
+%\pagebreak
+
+\tableofcontents
+%\listoffigures
+%\listoftables
+
+%\pagebreak
+
+\input{cug.tex}
+
+\end{document}

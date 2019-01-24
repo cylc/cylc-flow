@@ -1,0 +1,233 @@
+htfcss: pcrr7t font-family: monospace;
+htfcss: pcrr7tn font-family: monospace;
+htfcss: tcbx font-weight: bold;
+htfcss: pcrro8c  font-family: monospace;    font-style: oblique;
+htfcss: pcrro7t font-family: monospace;    font-style: oblique;
+htfcss: pcrr8c  font-family: monospace;
+htfcss: pcrb7t  font-family: monospace; font-weight: bold;
+htfcss: cmti  font-style: italic;
+htfcss: cmbx  font-weight: bold;
+htfcss: cmbxsl  font-weight: bold; font-style: oblique;
+htfcss: cmmi font-style: italic;
+htfcss: cmmib font-style: italic; font-weight: bold;
+File: cug-html.html
+File: cug-html.css
+File: cug-html.tmp
+Font_Class(4,"4"): <span  class="small-caps"></span>
+Css: p.noindent { text-indent: 0em }
+Css: td p.noindent { text-indent: 0em; margin-top:0em; }
+Css: p.nopar { text-indent: 0em; }
+Css: p.indent{ text-indent: 1.5em }
+Css: @media print {div.crosslinks {visibility:hidden;}}
+Css: a img { border-top: 0; border-left: 0; border-right: 0; }
+Font_Css("4"): .small-caps{font-variant: small-caps; }
+Font_Css("10"): .htf-cmbx {font-weight: bold; font-style:normal;}
+Font_Css("12"): .htf-calligraphy {font-family:cursive}
+Font_Css("14"): .htf-italic {font-style: italic;}
+Font_Css("16"): .htf-bold {font-weight: bold;}
+Font_Css("12"): .htf-calligraphy-bold {font-family:cursive ; font-weight: bold; }
+Css: center { margin-top:1em; margin-bottom:1em; }
+Css: td center { margin-top:0em; margin-bottom:0em; }
+Css: .Canvas { position:relative; }
+Css: img.math{vertical-align:middle;}
+Css: li p.indent { text-indent: 0em }
+Css: li p:first-child{ margin-top:0em; }
+Css: li p:last-child, li div:last-child { margin-bottom:0.5em; }
+Css: li p~ul:last-child, li p~ol:last-child{ margin-bottom:0.5em; }
+Css: .enumerate1 {list-style-type:decimal;}
+Css: .enumerate2 {list-style-type:lower-alpha;}
+Css: .enumerate3 {list-style-type:lower-roman;}
+Css: .enumerate4 {list-style-type:upper-alpha;}
+Css: div.newtheorem { margin-bottom: 2em; margin-top: 2em;}
+Css: .obeylines-h,.obeylines-v {white-space: nowrap; }
+Css: div.obeylines-v p { margin-top:0; margin-bottom:0; }
+Css: .overline{ text-decoration:overline; }
+Css: .overline img{ border-top: 1px solid black; }
+Css: td.displaylines {text-align:center; white-space:nowrap;}
+Css: .centerline {text-align:center;}
+Css: .rightline {text-align:right;}
+Css: div.verbatim {font-family: monospace; white-space: nowrap; text-align:left; clear:both; }
+Css: .fbox {padding-left:3.0pt; padding-right:3.0pt; text-indent:0pt; border:solid black 0.4pt; }
+Css: div.fbox {display:table}
+Css: div.center div.fbox {text-align:center; clear:both; padding-left:3.0pt; padding-right:3.0pt; text-indent:0pt; border:solid black 0.4pt; }
+Css: div.minipage{width:100%;}
+Css: div.center, div.center div.center {text-align: center; margin-left:1em; margin-right:1em;}
+Css: div.center div {text-align: left;}
+Css: div.flushright, div.flushright div.flushright {text-align: right;}
+Css: div.flushright div {text-align: left;}
+Css: div.flushleft {text-align: left;}
+Css: .underline{ text-decoration:underline; }
+Css: .underline img{ border-bottom: 1px solid black; margin-bottom:1pt; }
+Css: .framebox-c, .framebox-l, .framebox-r { padding-left:3.0pt; padding-right:3.0pt; text-indent:0pt; border:solid black 0.4pt; }
+Css: .framebox-c {text-align:center;}
+Css: .framebox-l {text-align:left;}
+Css: .framebox-r {text-align:right;}
+Css: span.thank-mark{ vertical-align: super }
+Css: span.footnote-mark sup.textsuperscript, span.footnote-mark a sup.textsuperscript{ font-size:80%; }
+Css: div.footnotes{border-top:solid 1px black; border-bottom:solid 1px black; padding-bottom:1ex; padding-top:0.5ex; margin-right:15%; margin-top:2ex; font-style:italic; font-size:85%;}
+Css: div.footnotes p{margin-top:0; margin-bottom:0; text-indent:0;}
+Css: div.tabular, div.center div.tabular {text-align: center; margin-top:0.5em; margin-bottom:0.5em; }
+Css: table.tabular td p{margin-top:0em;}
+Css: table.tabular {margin-left: auto; margin-right: auto;}
+Css: td p:first-child{ margin-top:0em; }
+Css: td p:last-child{ margin-bottom:0em; }
+Css: div.td00{ margin-left:0pt; margin-right:0pt; }
+Css: div.td01{ margin-left:0pt; margin-right:5pt; }
+Css: div.td10{ margin-left:5pt; margin-right:0pt; }
+Css: div.td11{ margin-left:5pt; margin-right:5pt; }
+Css: table[rules] {border-left:solid black 0.4pt; border-right:solid black 0.4pt; }
+Css: td.td00{ padding-left:0pt; padding-right:0pt; }
+Css: td.td01{ padding-left:0pt; padding-right:5pt; }
+Css: td.td10{ padding-left:5pt; padding-right:0pt; }
+Css: td.td11{ padding-left:5pt; padding-right:5pt; }
+Css: table[rules] {border-left:solid black 0.4pt; border-right:solid black 0.4pt; }
+Css: .hline hr, .cline hr{ height : 1px; margin:0px; }
+Css: .tabbing-right {text-align:right;}
+Css: span.TEX {letter-spacing: -0.125em; }
+Css: span.TEX span.E{ position:relative;top:0.5ex;left:-0.0417em;}
+Css: a span.TEX span.E {text-decoration: none; }
+Css: span.LATEX span.A{ position:relative; top:-0.5ex; left:-0.4em; font-size:85%;}
+Css: span.LATEX span.TEX{ position:relative; left: -0.4em; }
+Css: div.float, div.figure {margin-left: auto; margin-right: auto;}
+Css: div.float img {text-align:center;}
+Css: div.figure img {text-align:center;}
+Css: .marginpar {width:20%; float:right; text-align:left; margin-left:auto; margin-top:0.5em; font-size:85%; text-decoration:underline;}
+Css: .marginpar p{margin-top:0.4em; margin-bottom:0.4em;}
+Css: table.equation {width:100%;}
+Css: .equation td{text-align:center; }
+Css: td.equation { margin-top:1em; margin-bottom:1em; } 
+Css: td.equation-label { width:5%; text-align:center; }
+Css: td.eqnarray4 { width:5%; white-space: normal; }
+Css: td.eqnarray2 { width:5%; }
+Css: table.eqnarray-star, table.eqnarray {width:100%;}
+Css: div.eqnarray{text-align:center;}
+Css: div.array {text-align:center;}
+Css: div.pmatrix {text-align:center;}
+Css: table.pmatrix {width:100%;}
+Css: span.pmatrix img{vertical-align:middle;}
+Css: div.pmatrix {text-align:center;}
+Css: table.pmatrix {width:100%;}
+Css: span.bar-css {text-decoration:overline;}
+Css: img.cdots{vertical-align:middle;}
+Css: .partToc a, .partToc, .likepartToc a, .likepartToc {line-height: 200%; font-weight:bold; font-size:110%;}
+Css: .index-item, .index-subitem, .index-subsubitem {display:block}
+Css: div.caption {text-indent:-2em; margin-left:3em; margin-right:1em; text-align:left;}
+Css: div.caption span.id{font-weight: bold; white-space: nowrap; }
+Css: h1.partHead{text-align: center}
+Css: p.bibitem { text-indent: -2em; margin-left: 2em; margin-top:0.6em; margin-bottom:0.6em; }
+Css: p.bibitem-p { text-indent: 0em; margin-left: 2em; margin-top:0.6em; margin-bottom:0.6em; }
+Css: .paragraphHead, .likeparagraphHead { margin-top:2em; font-weight: bold;}
+Css: .subparagraphHead, .likesubparagraphHead { font-weight: bold;}
+Css: .quote {margin-bottom:0.25em; margin-top:0.25em; margin-left:1em; margin-right:1em; text-align:justify;}
+Css: .verse{white-space:nowrap; margin-left:2em}
+Css: div.maketitle {text-align:center;}
+Css: h2.titleHead{text-align:center;}
+Css: div.maketitle{ margin-bottom: 2em; }
+Css: div.author, div.date {text-align:center;}
+Css: div.thanks{text-align:left; margin-left:10%; font-size:85%; font-style:italic; }
+Css: .quotation {margin-bottom:0.25em; margin-top:0.25em; margin-left:1em; }
+Css: .abstract p {margin-left:5%; margin-right:5%;}
+Css: div.abstract {width:100%;}
+Css: .framedenv{border: 1px solid black;}
+Css: .lstlisting .label{margin-right:0.5em; }
+Css: div.lstlisting{font-family: monospace; white-space: nowrap; margin-top:0.5em; margin-bottom:0.5em; }
+Css: div.lstinputlisting{ font-family: monospace; white-space: nowrap; }
+Css: .lstinputlisting .label{margin-right:0.5em;}
+Css: .equation td{text-align:center; }
+Css: .equation-star td{text-align:center; }
+Css: table.equation-star { width:100%; }
+Css: table.equation { width:100%; }
+Css: table.align, table.alignat, table.xalignat, table.xxalignat, table.flalign {width:95%; margin-left:5%; white-space: nowrap;}
+Css: table.align-star, table.alignat-star, table.xalignat-star, table.flalign-star {margin-left:auto; margin-right:auto; white-space: nowrap;}
+Css: td.align-label { width:5%; text-align:center; }
+Css: td.align-odd { text-align:right; padding-right:0.3em;}
+Css: td.align-even { text-align:left; padding-right:0.6em;}
+Css: table.multline, table.multline-star {width:100%;}
+Css: td.gather {text-align:center; }
+Css: table.gather {width:100%;}
+Css: div.gather-star {text-align:center;}
+Css: div.verbatiminput {font-family: monospace; white-space: nowrap; }
+Css: .figure img.graphics {margin-left:10%;}
+Css:  .lstlisting { color : crimson; } .lstinputlisting { color : crimson; } .lstinline { color : crimson; } body { width : 700px; border:1px solid grey; padding:50px; margin: 0 auto; margin-top:20px; margin-bottom:80px; background:white } html { background: LightSteelBlue } 
+File: ../../graphics/png/scaled/logo.png
+File: ../../graphics/png/scaled/niwa-colour-small.png
+File: ../../graphics/png/scaled/dep-one-cycle.png
+File: ../../graphics/png/scaled/timeline-one.png
+File: ../../graphics/png/scaled/dep-two-cycles-linked.png
+File: ../../graphics/png/scaled/timeline-one-c.png
+File: ../../graphics/png/scaled/timeline-one-a.png
+File: ../../graphics/png/scaled/dep-multi-cycle.png
+File: ../../graphics/png/scaled/timeline-two-cycles-optimal.png
+File: ../../graphics/png/scaled/timeline-three.png
+File: ../../graphics/png/scaled/timeline-two.png
+File: ../../graphics/png/scaled/task-pool.png
+File: ../../graphics/png/scaled/gcylc-graph-and-dot-views.png
+File: ../../graphics/png/scaled/gcylc-text-view.png
+File: ../../graphics/png/scaled/gscan.png
+File: ../../graphics/png/scaled/ecox-1.png
+Css: div#colorbox1{background-color:#FFFF00;}
+Css: div#colorbox2{background-color:#FFFF00;}
+File: ../../graphics/png/scaled/cylc-review-screenshot.png
+Css: div#colorbox3{background-color:#FFFF00;}
+Css: div#colorbox4{background-color:#FFFF00;}
+Css: div#colorbox5{background-color:#FFFF00;}
+Css: div#colorbox6{background-color:#FFFF00;}
+Css: div#colorbox7{background-color:#FFFF00;}
+Css: div#colorbox8{background-color:#FFFF00;}
+Css: div#colorbox9{background-color:#FFFF00;}
+File: ../../graphics/png/scaled/tut-hello-multi-1.png
+File: ../../graphics/png/scaled/tut-hello-multi-2.png
+File: ../../graphics/png/scaled/tut-hello-multi-3.png
+Css: div#colorbox10{background-color:#FFFF00;}
+Css: div#colorbox11{background-color:#FFFF00;}
+File: ../../graphics/png/scaled/tut-one.png
+Css: div#colorbox12{background-color:#FFFF00;}
+File: ../../graphics/png/scaled/tut-two.png
+Css: span#colorbox13{background-color:#FFFF00;}
+File: ../../graphics/png/scaled/tut-three.png
+Css: span#colorbox14{background-color:#FFFF00;}
+File: ../../graphics/png/scaled/tut-cyc-int.png
+Css: span#colorbox15{background-color:#FFFF00;}
+Css: div#colorbox16{background-color:#FFFF00;}
+File: ../../graphics/png/scaled/dep-eg-1.png
+File: ../../graphics/png/scaled/test1.png
+File: ../../graphics/png/scaled/test2.png
+File: ../../graphics/png/scaled/test4.png
+File: ../../graphics/png/scaled/test5.png
+File: ../../graphics/png/scaled/satellite.png
+File: ../../graphics/png/scaled/conditional-triggers.png
+File: ../../graphics/png/scaled/suicide.png
+File: ../../graphics/png/scaled/ghost-node-example.png
+File: ../../graphics/png/scaled/inherit-2.png
+File: ../../graphics/png/scaled/inherit-3.png
+File: ../../graphics/png/scaled/inherit-4.png
+File: ../../graphics/png/scaled/inherit-5.png
+File: ../../graphics/png/scaled/inherit-6.png
+File: ../../graphics/png/scaled/inherit-7.png
+File: ../../graphics/png/scaled/params1.png
+File: ../../graphics/png/scaled/eg2-static.png
+File: ../../graphics/png/scaled/eg2-dynamic.png
+File: ../../graphics/png/scaled/jinja2-ensemble-graph.png
+File: ../../graphics/png/scaled/jinja2-suite-graph.png
+--- characters ---
+Font("cmr","7","7","100")
+Font("cmr","10","10","100")
+Font("cmmi","7","7","100")
+Font("cmmi","10","10","100")
+Font("cmsy","10","10","100")
+Font("cmr","17","17","100")
+Font("cmr","12","12","100")
+Font("cmr","8","8","100")
+Font("pcrr7t","","10","100")
+Font("cmti","10","10","100")
+Font("cmr","9","9","100")
+Font("cmbx","10","10","100")
+Font("cmti","7","7","100")
+Font("pcrb7t","","10","100")
+Font("tcrm","1000","10","100")
+Font("pcrr8c","","10","100")
+Font("pcrro7t","","10","100")
+Font("pcrro8c","","10","100")
+Font("tcbx","1000","10","100")
+Font("pcrr7t","","10","80")
+Font("cmcsc","10","10","144")

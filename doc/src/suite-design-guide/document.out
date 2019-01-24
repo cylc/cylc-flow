@@ -1,0 +1,77 @@
+\BOOKMARK [1][-]{section.1}{Introduction}{}% 1
+\BOOKMARK [1][-]{section.2}{Style Guidelines}{}% 2
+\BOOKMARK [2][-]{subsection.2.1}{Tab Characters}{section.2}% 3
+\BOOKMARK [2][-]{subsection.2.2}{Trailing Whitespace}{section.2}% 4
+\BOOKMARK [2][-]{subsection.2.3}{Indentation}{section.2}% 5
+\BOOKMARK [3][-]{subsubsection.2.3.1}{Config Items}{subsection.2.3}% 6
+\BOOKMARK [3][-]{subsubsection.2.3.2}{Script String Lines}{subsection.2.3}% 7
+\BOOKMARK [3][-]{subsubsection.2.3.3}{Graph String Lines}{subsection.2.3}% 8
+\BOOKMARK [3][-]{subsubsection.2.3.4}{Jinja2 Code}{subsection.2.3}% 9
+\BOOKMARK [2][-]{subsection.2.4}{Comments}{section.2}% 10
+\BOOKMARK [2][-]{subsection.2.5}{Titles, Descriptions, And URLs}{section.2}% 11
+\BOOKMARK [2][-]{subsection.2.6}{Line Length And Continuation}{section.2}% 12
+\BOOKMARK [2][-]{subsection.2.7}{Task Naming Conventions}{section.2}% 13
+\BOOKMARK [3][-]{subsubsection.2.7.1}{UM System Task Names}{subsection.2.7}% 14
+\BOOKMARK [2][-]{subsection.2.8}{Rose Config Files}{section.2}% 15
+\BOOKMARK [1][-]{section.3}{Basic Principles}{}% 16
+\BOOKMARK [2][-]{subsection.3.1}{UTC Mode}{section.3}% 17
+\BOOKMARK [2][-]{subsection.3.2}{Fine Or Coarse-Grained Suites}{section.3}% 18
+\BOOKMARK [3][-]{subsubsection.3.2.1}{rose bunch}{subsection.3.2}% 19
+\BOOKMARK [2][-]{subsection.3.3}{Monolithic Or Interdependent Suites}{section.3}% 20
+\BOOKMARK [3][-]{subsubsection.3.3.1}{Inter-Suite Triggering}{subsection.3.3}% 21
+\BOOKMARK [2][-]{subsection.3.4}{Self-Contained Suites}{section.3}% 22
+\BOOKMARK [3][-]{subsubsection.3.4.1}{Avoiding External Files}{subsection.3.4}% 23
+\BOOKMARK [3][-]{subsubsection.3.4.2}{Installing Files At Start-up}{subsection.3.4}% 24
+\BOOKMARK [3][-]{subsubsection.3.4.3}{Confining Ouput To The Run Directory}{subsection.3.4}% 25
+\BOOKMARK [2][-]{subsection.3.5}{Task Host Selection}{section.3}% 26
+\BOOKMARK [2][-]{subsection.3.6}{Task Scripting}{section.3}% 27
+\BOOKMARK [3][-]{subsubsection.3.6.1}{Coding Standards}{subsection.3.6}% 28
+\BOOKMARK [3][-]{subsubsection.3.6.2}{Basic Functionality}{subsection.3.6}% 29
+\BOOKMARK [2][-]{subsection.3.7}{Rose Apps}{section.3}% 30
+\BOOKMARK [2][-]{subsection.3.8}{Rose Metadata Compliance}{section.3}% 31
+\BOOKMARK [2][-]{subsection.3.9}{Task Independence}{section.3}% 32
+\BOOKMARK [2][-]{subsection.3.10}{Clock-Triggered Tasks}{section.3}% 33
+\BOOKMARK [2][-]{subsection.3.11}{Rose App File Polling}{section.3}% 34
+\BOOKMARK [2][-]{subsection.3.12}{Task Execution Time Limits}{section.3}% 35
+\BOOKMARK [2][-]{subsection.3.13}{Restricting Suite Activity}{section.3}% 36
+\BOOKMARK [3][-]{subsubsection.3.13.1}{Runahead Limiting}{subsection.3.13}% 37
+\BOOKMARK [3][-]{subsubsection.3.13.2}{Internal Queues}{subsection.3.13}% 38
+\BOOKMARK [2][-]{subsection.3.14}{Suite Housekeeping}{section.3}% 39
+\BOOKMARK [2][-]{subsection.3.15}{Complex Jinja2 Code}{section.3}% 40
+\BOOKMARK [2][-]{subsection.3.16}{Shared Configuration}{section.3}% 41
+\BOOKMARK [3][-]{subsubsection.3.16.1}{Jinja2 Variables}{subsection.3.16}% 42
+\BOOKMARK [3][-]{subsubsection.3.16.2}{Inheritance}{subsection.3.16}% 43
+\BOOKMARK [3][-]{subsubsection.3.16.3}{Shared Task IO Paths}{subsection.3.16}% 44
+\BOOKMARK [2][-]{subsection.3.17}{Varying Behaviour By Cycle Point}{section.3}% 45
+\BOOKMARK [3][-]{subsubsection.3.17.1}{At Start-Up}{subsection.3.17}% 46
+\BOOKMARK [2][-]{subsection.3.18}{Automating Failure Recovery}{section.3}% 47
+\BOOKMARK [3][-]{subsubsection.3.18.1}{Job Submission Retries}{subsection.3.18}% 48
+\BOOKMARK [3][-]{subsubsection.3.18.2}{Job Execution Retries}{subsection.3.18}% 49
+\BOOKMARK [3][-]{subsubsection.3.18.3}{Failure Recovery Workflows}{subsection.3.18}% 50
+\BOOKMARK [2][-]{subsection.3.19}{Include Files}{section.3}% 51
+\BOOKMARK [1][-]{section.4}{Efficiency And Maintainability}{}% 52
+\BOOKMARK [2][-]{subsection.4.1}{The Task Family Hierarchy}{section.4}% 53
+\BOOKMARK [3][-]{subsubsection.4.1.1}{Sharing By Inheritance}{subsection.4.1}% 54
+\BOOKMARK [3][-]{subsubsection.4.1.2}{Family Triggering}{subsection.4.1}% 55
+\BOOKMARK [3][-]{subsubsection.4.1.3}{Family-to-Family Triggering}{subsection.4.1}% 56
+\BOOKMARK [3][-]{subsubsection.4.1.4}{Task Families And Visualization}{subsection.4.1}% 57
+\BOOKMARK [2][-]{subsection.4.2}{Generating Tasks Automatically}{section.4}% 58
+\BOOKMARK [3][-]{subsubsection.4.2.1}{Jinja2 Loops}{subsection.4.2}% 59
+\BOOKMARK [3][-]{subsubsection.4.2.2}{Parameterized Tasks}{subsection.4.2}% 60
+\BOOKMARK [2][-]{subsection.4.3}{Optional App Config Files}{section.4}% 61
+\BOOKMARK [1][-]{section.5}{Portable Suites}{}% 62
+\BOOKMARK [2][-]{subsection.5.1}{The Jinja2 SITE Variable}{section.5}% 63
+\BOOKMARK [2][-]{subsection.5.2}{Site Include-Files}{section.5}% 64
+\BOOKMARK [2][-]{subsection.5.3}{Site-Specific Graphs}{section.5}% 65
+\BOOKMARK [2][-]{subsection.5.4}{Inlined Site-Switching}{section.5}% 66
+\BOOKMARK [2][-]{subsection.5.5}{Site-Specific Suite Variables}{section.5}% 67
+\BOOKMARK [2][-]{subsection.5.6}{Site-Specific Optional Suite Configs}{section.5}% 68
+\BOOKMARK [2][-]{subsection.5.7}{Site-Agnostic File Paths in App Configs}{section.5}% 69
+\BOOKMARK [2][-]{subsection.5.8}{Site-Specific Optional App Configs}{section.5}% 70
+\BOOKMARK [2][-]{subsection.5.9}{An Example}{section.5}% 71
+\BOOKMARK [2][-]{subsection.5.10}{Collaborative Development Model}{section.5}% 72
+\BOOKMARK [2][-]{subsection.5.11}{Research-To-Operations Transition}{section.5}% 73
+\BOOKMARK [1][-]{section.6}{Roadmap}{}% 74
+\BOOKMARK [2][-]{subsection.6.1}{List Item Override In Site Include-Files}{section.6}% 75
+\BOOKMARK [2][-]{subsection.6.2}{UM STASH in Optional App Configs}{section.6}% 76
+\BOOKMARK [2][-]{subsection.6.3}{Modular Suite Design}{section.6}% 77

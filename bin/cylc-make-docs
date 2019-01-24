@@ -1,0 +1,48 @@
+#!/bin/bash
+#
+# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+usage() {
+    echo "Usage: cylc [admin] make-docs [--help]"
+    echo "This command builds the HTML documentation, which is auto-generated"
+    echo "with the tool Sphinx. It wraps the 'sphinx-build' command."
+    echo ""
+    echo "Options:"
+    echo "  --help   Print this usage message."
+}
+
+if [[ $# != 0 ]]; then
+    usage
+    if [[ $1 == "--help" ]]; then
+        exit 0
+    else
+        echo "ERROR: illegal command line arguments"
+        exit 1
+    fi
+fi
+
+echo >&2
+echo "Building the HTML Cylc Documentation with Sphinx:"
+echo >&2
+cd "$CYLC_DIR"/doc/
+echo "... Generating the command reference ..."
+./src/custom/make-commands.sh
+echo >&2
+
+echo "... Auto-generating the HTML with Sphinx ..."
+sphinx-build -n -b html ./src built-sphinx/
+echo >&2
+echo "Done."

@@ -39,7 +39,6 @@
         mail from = 
         execution timeout = 
         submission timeout = 
-        reset timer = 
     [[[environment]]]
     [[[parameter environment templates]]]
     [[[directives]]]
@@ -120,7 +119,6 @@
         mail from = 
         execution timeout = 
         submission timeout = 
-        reset timer = 
     [[[environment]]]
     [[[parameter environment templates]]]
     [[[directives]]]
@@ -200,7 +198,6 @@
         mail from = 
         execution timeout = 
         submission timeout = 
-        reset timer = 
     [[[environment]]]
     [[[parameter environment templates]]]
     [[[directives]]]
@@ -281,7 +278,6 @@
         mail from = 
         execution timeout = 
         submission timeout = 
-        reset timer = 
     [[[environment]]]
     [[[parameter environment templates]]]
     [[[directives]]]
@@ -362,7 +358,6 @@
         mail from = 
         execution timeout = 
         submission timeout = 
-        reset timer = 
     [[[environment]]]
     [[[parameter environment templates]]]
     [[[directives]]]
@@ -428,7 +423,6 @@
         mail from = 
         execution timeout = 
         submission timeout = 
-        reset timer = 
         submission timeout handler = 
         submitted handler = 
         started handler = 
@@ -509,7 +503,6 @@
         mail from = 
         execution timeout = 
         submission timeout = 
-        reset timer = 
         submission timeout handler = 
         submitted handler = 
         started handler = 
@@ -590,7 +583,6 @@
         mail from = 
         execution timeout = 
         submission timeout = 
-        reset timer = 
         submission timeout handler = 
         submitted handler = 
         started handler = 
@@ -670,7 +662,6 @@
         mail from = 
         execution timeout = 
         submission timeout = 
-        reset timer = 
         submission timeout handler = 
         submitted handler = 
         started handler = 
@@ -751,7 +742,6 @@
         mail from = 
         execution timeout = 
         submission timeout = 
-        reset timer = 
         submission timeout handler = 
         submitted handler = 
         started handler = 
@@ -832,7 +822,6 @@
         mail from = 
         execution timeout = 
         submission timeout = 
-        reset timer = 
         submission timeout handler = 
         submitted handler = 
         started handler = 
@@ -912,7 +901,6 @@
         mail from = 
         execution timeout = 
         submission timeout = 
-        reset timer = 
         submission timeout handler = 
         submitted handler = 
         started handler = 
@@ -993,7 +981,6 @@
         mail from = 
         execution timeout = 
         submission timeout = 
-        reset timer = 
         submission timeout handler = 
         submitted handler = 
         started handler = 

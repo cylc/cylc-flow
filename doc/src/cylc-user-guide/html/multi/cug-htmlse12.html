@@ -1,0 +1,2324 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>External Triggers</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"> 
+<meta name="generator" content="TeX4ht (http://www.tug.org/tex4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.tug.org/tex4ht/)"> 
+<!-- html,fn-in,2,next --> 
+<meta name="src" content="cug-html.tex"> 
+<link rel="stylesheet" type="text/css" href="cug-html.css"> 
+</head><body 
+>
+<!--l. 6333--><div class="crosslinks"><p class="noindent">[<a 
+href="cug-htmlse13.html" >next</a>] [<a 
+href="cug-htmlse11.html" >prev</a>] [<a 
+href="cug-htmlse11.html#tailcug-htmlse11.html" >prev-tail</a>] [<a 
+href="#tailcug-htmlse12.html">tail</a>] [<a 
+href="cug-html.html#cug-htmlse12.html" >up</a>] </p></div>
+<!--l. 6333--><p class="noindent" > <h3 id="12" class="sectionHead"><span class="titlemark"> <a href="#12">12</a>  <a 
+ id="x14-19200012"></a>External Triggers </span></h3> <div class="sectionTOCS">
+&#x00A0;<span class="subsectionToc" >12.1 <a 
+href="#x14-19300012.1">Built-in Clock Triggers</a></span>
+<br />&#x00A0;<span class="subsectionToc" >12.2 <a 
+href="#x14-19400012.2">Built-in Suite State Triggers</a></span>
+<br />&#x00A0;<span class="subsectionToc" >12.3 <a 
+href="#x14-19500012.3">Custom Trigger Functions</a></span>
+<br />&#x00A0;<span class="subsectionToc" >12.4 <a 
+href="#x14-19900012.4">Current Limitations</a></span>
+<br />&#x00A0;<span class="subsectionToc" >12.5 <a 
+href="#x14-20000012.5">Filesystem Events?</a></span>
+<br />&#x00A0;<span class="subsectionToc" >12.6 <a 
+href="#x14-20100012.6">Continuous Event Watchers?</a></span>
+<br />&#x00A0;<span class="subsectionToc" >12.7 <a 
+href="#x14-20200012.7">Old-Style External Triggers (Deprecated)</a></span>
+</div>
+<!--l. 6336--><p class="noindent" ><span 
+class="cmti-10">WARNING: this is a new capability and its suite configuration interface may change somewhat in future releases -</span>
+<span 
+class="cmti-10">see </span>Current Limitations <span 
+class="cmti-10">below in</span><span 
+class="cmti-10">&#x00A0;</span><a 
+href="#x14-19900012.4"><span 
+class="cmti-10">12.4</span><!--tex4ht:ref: Current Trigger Function Limitations --></a><span 
+class="cmti-10">.</span>
+<!--l. 6340--><p class="noindent" >External triggers allow tasks to trigger directly off of external events, which is often preferable to implementing
+long-running polling tasks in the workflow. The triggering mechanism described in this section replaces an older and
+less powerful one documented in&#x00A0;<a 
+href="#x14-20200012.7">12.7<!--tex4ht:ref: Old-Style External Triggers --></a>.
+<!--l. 6345--><p class="noindent" >If you can write a Python function to check the status of an external condition or event, the suite server program
+can call it at configurable intervals until it reports success, at which point dependent tasks can trigger
+and data returned by the function will be passed to the job environments of those tasks. Functions
+can be written for triggering off of almost anything, such as delivery of a new dataset, creation of
+a new entry in a database table, or appearance of new data availability notifications in a message
+broker.
+<!--l. 6354--><p class="noindent" >External triggers are visible in suite visualizations as bare graph nodes (just the trigger names). They are plotted
+against all dependent tasks, not in a cycle point specific way like tasks. This is because external triggers
+may or may not be cycle point (or even task name) specific - it depends on the arguments passed
+to the corresponding trigger functions. For example, if an external trigger does not depend on task
+name or cycle point it will only be called once - albeit repeatedly until satisfied - for the entire suite
+run, after which the function result will be remembered for all dependent tasks throughout the suite
+run.
+<!--l. 6364--><p class="noindent" >Several built-in external trigger functions are located in <span class="lstinline"></span><span 
+class="pcrr7t-">&#x003C;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">dir</span><span 
+class="pcrr7t-">&#x003E;/</span><span 
+class="pcrr7t-">lib</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">xtriggers</span><span 
+class="pcrr7t-">/</span>:
+     <ul class="itemize1">
+     <li class="itemize">clock triggers - see&#x00A0;<a 
+href="#x14-19300012.1">12.1<!--tex4ht:ref: Built-in Clock Triggers --></a>
+     </li>
+     <li class="itemize">inter-suite triggers - see&#x00A0;<a 
+href="#x14-19400012.2">12.2<!--tex4ht:ref: Built-in Suite State Triggers --></a></li></ul>
+<!--l. 6371--><p class="noindent" >Trigger functions are normal Python functions, with certain constraints as described below in:
+                                                                                         
+
+                                                                                         
+     <ul class="itemize1">
+     <li class="itemize">custom trigger functions - see&#x00A0;<a 
+href="#x14-19500012.3">12.3<!--tex4ht:ref: Custom Trigger Functions --></a></li></ul>
+<!--l. 6377--><p class="noindent" >
+<!--l. 6377--><p class="noindent" > <h4 id="12.1" class="subsectionHead"> <span class="titlemark"> <a href="#12.1"> 12.1</a>  <a 
+ id="x14-19300012.1"></a>Built-in Clock Triggers </span></h4>
+<!--l. 6380--><p class="noindent" >These are more transparent (exposed in the graph) and efficient (shared among dependent tasks) than the older
+clock triggers described in&#x00A0;<a 
+href="cug-htmlse9.html#x11-1110009.3.5.14">9.3.5.14<!--tex4ht:ref: ClockTriggerTasks --></a>. (However we don&#8217;t recommend wholesale conversion to the new method yet,
+until its interface has stabilized - see&#x00A0;<a 
+href="#x14-19900012.4">12.4<!--tex4ht:ref: Current Trigger Function Limitations --></a>.)
+<!--l. 6386--><p class="noindent" >Clock triggers, unlike other trigger functions, are executed synchronously in the main process. The clock trigger
+function signature looks like this:
+<!--l. 6389-->
+<div class="lstlisting" id="listing-254"><span class="label"><a 
+ id="x14-193001r1"></a></span><span 
+class="pcrr7t-">wall_clock</span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">offset</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">None</span><span 
+class="pcrr7t-">)</span>
+</div>
+<!--l. 6393--><p class="noindent" >The <span class="lstinline"></span><span 
+class="pcrr7t-">offset</span> argument is a date-time duration (<span class="lstinline"></span><span 
+class="pcrr7t-">PT1H</span> is 1 hour) relative to the dependent task&#8217;s cycle point
+(automatically passed to the function via a second argument not shown above).
+<!--l. 6397--><p class="noindent" >In the following suite, task <span class="lstinline"></span><span 
+class="pcrr7t-">foo</span> has a daily cycle point sequence, and each task instance can trigger once the wall
+clock time has passed its cycle point value by one hour:  <!--l. 6401-->
+<div class="lstlisting" id="listing-255"><span class="label"><a 
+ id="x14-193002r1"></a></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">scheduling</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-193003r2"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">initial</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cycle</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">point</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">2018-01-01</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-193004r3"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">xtriggers</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-193005r4"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">clock_1</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">wall_clock</span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">offset</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">PT1H</span><span 
+class="pcrr7t-">):</span><span 
+class="pcrr7t-">PT10S</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-193006r5"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">dependencies</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-193007r6"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[[</span><span 
+class="pcrr7t-">P1D</span><span 
+class="pcrr7t-">]]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-193008r7"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">graph</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">@clock_1</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=&#x003E;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">foo</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-193009r8"></a></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">runtime</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-193010r9"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">foo</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-193011r10"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">script</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">run</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">foo</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">sh</span>
+</div>
+<!--l. 6414--><p class="noindent" >Notice that the short label <span class="lstinline"></span><span 
+class="pcrr7t-">clock_1</span> is used to represent the trigger function in the graph. The function call
+interval, which determines how often the suite server program checks the clock, is optional. Here it is <span class="lstinline"></span><span 
+class="pcrr7t-">PT10S</span> (i.e.&#x00A0;10
+seconds, which is also the default value).
+<!--l. 6419--><p class="noindent" >Argument keywords can be omitted if called in the right order, so the <span class="lstinline"></span><span 
+class="pcrr7t-">clock_1</span> trigger can also be declared like
+this:  <!--l. 6422-->
+<div class="lstlisting" id="listing-256"><span class="label"><a 
+ id="x14-193012r1"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">xtriggers</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-193013r2"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">clock_1</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">wall_clock</span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">PT1H</span><span 
+class="pcrr7t-">)</span>
+</div>
+<!--l. 6427--><p class="noindent" >Finally, a zero-offset clock trigger does not need to be declared under the <span class="lstinline"></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">xtriggers</span><span 
+class="pcrr7t-">]</span> section:
+<!--l. 6430-->
+<div class="lstlisting" id="listing-257"><span class="label"><a 
+ id="x14-193014r1"></a></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">scheduling</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-193015r2"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">initial</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cycle</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">point</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">2018-01-01</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-193016r3"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">dependencies</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-193017r4"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[[</span><span 
+class="pcrr7t-">P1D</span><span 
+class="pcrr7t-">]]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-193018r5"></a></span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">zero</span><span 
+class="pcrro7t-">-</span><span 
+class="pcrro7t-">offset</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">clock</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">trigger</span><span 
+class="pcrro7t-">:</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-193019r6"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">graph</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">@wall_clock</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=&#x003E;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">foo</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-193020r7"></a></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">runtime</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-193021r8"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">foo</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-193022r9"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">script</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">run</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">foo</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">sh</span>
+</div>
+                                                                                         
+
+                                                                                         
+<!--l. 6442--><p class="noindent" >
+<!--l. 6442--><p class="noindent" > <h4 id="12.2" class="subsectionHead"> <span class="titlemark"> <a href="#12.2"> 12.2</a>  <a 
+ id="x14-19400012.2"></a>Built-in Suite State Triggers </span></h4>
+<!--l. 6445--><p class="noindent" >These can be used instead of the older suite state polling tasks described in&#x00A0;<a 
+href="cug-htmlse13.html#x15-25300013.27">13.27<!--tex4ht:ref: SuiteStatePolling --></a> for inter-suite triggering - i.e.&#x00A0;to
+trigger local tasks off of remote task statuses or messages in other suites. (However we don&#8217;t recommend wholesale
+conversion to the new method yet, until its interface has stabilized - see&#x00A0;<a 
+href="#x14-19900012.4">12.4<!--tex4ht:ref: Current Trigger Function Limitations --></a>.)
+<!--l. 6451--><p class="noindent" >The suite state trigger function signature looks like this: <!--l. 6452-->
+<div class="lstlisting" id="listing-258"><span class="label"><a 
+ id="x14-194001r1"></a></span><span 
+class="pcrr7t-">suite_state</span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">suite</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">task</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">point</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">offset</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">None</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">status</span><span 
+class="pcrr7t-">='</span><span 
+class="pcrr7t-">succeeded</span><span 
+class="pcrr7t-">',</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194002r2"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">message</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">None</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc_run_dir</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">None</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">debug</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">False</span><span 
+class="pcrr7t-">)</span>
+</div>
+<!--l. 6457--><p class="noindent" >The first three arguments are compulsory; they single out the target suite name (<span class="lstinline"></span><span 
+class="pcrr7t-">suite</span>) task name (<span class="lstinline"></span><span 
+class="pcrr7t-">task</span>) and
+cycle point (<span class="lstinline"></span><span 
+class="pcrr7t-">point</span>). The function argments mirror the arguments and options of the <span class="lstinline"></span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">suite</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">state</span>
+command - see <span class="lstinline"></span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">suite</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">state</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">--</span><span 
+class="pcrr7t-">help</span> for documentation.
+<!--l. 6463--><p class="noindent" >As a simple example, consider the suites in <span class="lstinline"></span><span 
+class="pcrr7t-">&#x003C;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">dir</span><span 
+class="pcrr7t-">&#x003E;/</span><span 
+class="pcrr7t-">etc</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">dev</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">suites</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">xtrigger</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">suite_state</span><span 
+class="pcrr7t-">/</span>. The
+&#8220;upstream&#8221; suite (which we want to trigger off of) looks like this:
+<!--l. 6467--><div class="lstinputlisting">
+<a 
+ id="x14-194003"></a>
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194004r1"></a></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194005r2"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cycle</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">point</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">format</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">Y</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194006r3"></a></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">scheduling</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194007r4"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">initial</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cycle</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">point</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">2005</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194008r5"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">final</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cycle</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">point</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">2015</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194009r6"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">dependencies</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194010r7"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[[</span><span 
+class="pcrr7t-">P1Y</span><span 
+class="pcrr7t-">]]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194011r8"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">graph</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">foo</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=&#x003E;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">bar</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194012r9"></a></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">runtime</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194013r10"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">bar</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194014r11"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">script</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">sleep</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">10</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194015r12"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">foo</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194016r13"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">script</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">sleep</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">5;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">message</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">data</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">ready</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194017r14"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[[</span><span 
+class="pcrr7t-">outputs</span><span 
+class="pcrr7t-">]]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194018r15"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">x</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">data</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">ready</span><span 
+class="pcrr7t-">"</span>
+</div>
+<!--l. 6469--><p class="noindent" >It must be registered and run under the name <span 
+class="cmti-10">up</span>, as referenced in the &#8220;downstream&#8221; suite that depends on
+it:
+<!--l. 6472--><div class="lstinputlisting">
+<a 
+ id="x14-194019"></a>
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194020r1"></a></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194021r2"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cycle</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">point</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">format</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">Y</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194022r3"></a></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">scheduling</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194023r4"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">initial</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cycle</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">point</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">2010</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194024r5"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">xtriggers</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194025r6"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">upstream</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">suite_state</span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">suite</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">up</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">task</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">foo</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">point</span><span 
+class="pcrr7t-">=%(</span><span 
+class="pcrr7t-">point</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">s</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">\</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194026r7"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">message</span><span 
+class="pcrr7t-">='</span><span 
+class="pcrr7t-">data</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">ready</span><span 
+class="pcrr7t-">'):</span><span 
+class="pcrr7t-">PT10S</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194027r8"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">clock_0</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">wall_clock</span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">offset</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">PT0H</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194028r9"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">dependencies</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194029r10"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[[</span><span 
+class="pcrr7t-">P1Y</span><span 
+class="pcrr7t-">]]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194030r11"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">graph</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194031r12"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">foo</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194032r13"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">@clock_0</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&amp;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">@upstream</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=&#x003E;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">FAM</span><span 
+class="pcrr7t-">:</span><span 
+class="pcrr7t-">succeed</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">all</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=&#x003E;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">blam</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194033r14"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194034r15"></a></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">runtime</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194035r16"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">root</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194036r17"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">script</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">sleep</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">5</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194037r18"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">foo</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">blam</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194038r19"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">FAM</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194039r20"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">f1</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">f2</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">f3</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194040r21"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">inherit</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">FAM</span>
+</div>
+<!--l. 6474--><p class="noindent" >Try starting the downstream suite first, then the upstream, and watch what happens. In each cycle point the
+<span class="lstinline"></span><span 
+class="pcrr7t-">@upstream</span> trigger in the downstream suite waits on the task <span class="lstinline"></span><span 
+class="pcrr7t-">foo</span> (with the same cycle point) in the upstream
+suite to emit the <span 
+class="cmti-10">data ready </span>message.
+<!--l. 6479--><p class="noindent" >Some important points to note about this:
+     <ul class="itemize1">
+     <li class="itemize">the function call interval, which determines how often the suite server program checks the clock, is
+     optional. Here it is <span class="lstinline"></span><span 
+class="pcrr7t-">PT10S</span> (i.e.&#x00A0;10 seconds, which is also the default value).
+     </li>
+     <li class="itemize">the <span class="lstinline"></span><span 
+class="pcrr7t-">suite_state</span> trigger function, like the <span class="lstinline"></span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">suite</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">state</span> command, must have read-access
+     to the upstream suite&#8217;s public database.
+     </li>
+     <li class="itemize">the cycle point argument is supplied by a string template <span class="lstinline"></span><span 
+class="pcrr7t-">%(</span><span 
+class="pcrr7t-">point</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">s</span>. The string templates available
+     to trigger function arguments are described in <span 
+class="cmti-10">Custom Trigger Functions </span>(<a 
+href="#x14-19500012.3">12.3<!--tex4ht:ref: Custom Trigger Functions --></a>).</li></ul>
+<!--l. 6493--><p class="noindent" >The return value of the <span class="lstinline"></span><span 
+class="pcrr7t-">suite_state</span> trigger function looks like this: <!--l. 6495-->
+                                                                                         
+
+                                                                                         
+<div class="lstlisting" id="listing-259"><span class="label"><a 
+ id="x14-194041r1"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">results</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">{</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194042r2"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">'</span><span 
+class="pcrr7t-">suite</span><span 
+class="pcrr7t-">':</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">suite</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194043r3"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">'</span><span 
+class="pcrr7t-">task</span><span 
+class="pcrr7t-">':</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">task</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194044r4"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">'</span><span 
+class="pcrr7t-">point</span><span 
+class="pcrr7t-">':</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">point</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194045r5"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">'</span><span 
+class="pcrr7t-">offset</span><span 
+class="pcrr7t-">':</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">offset</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194046r6"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">'</span><span 
+class="pcrr7t-">status</span><span 
+class="pcrr7t-">':</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">status</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194047r7"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">'</span><span 
+class="pcrr7t-">message</span><span 
+class="pcrr7t-">':</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">message</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194048r8"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">'</span><span 
+class="pcrr7t-">cylc_run_dir</span><span 
+class="pcrr7t-">':</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc_run_dir</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194049r9"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">}</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194050r10"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">return</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">satisfied</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">results</span><span 
+class="pcrr7t-">)</span>
+</div>
+<!--l. 6507--><p class="noindent" >The <span class="lstinline"></span><span 
+class="pcrr7t-">satisified</span> variable is boolean (value True or False, depending on whether or not the trigger condition was
+found to be satisfied). The <span class="lstinline"></span><span 
+class="pcrr7t-">results</span> dictionary contains the names and values of all of the target suite state
+parameters. Each item in it gets qualified with the unique trigger label (&#8220;upstream&#8221; here) and passed to the
+environment of dependent task jobs (the members of the <span class="lstinline"></span><span 
+class="pcrr7t-">FAM</span> family in this case). To see this, take a look at the job
+script for one of the downstream tasks:
+<!--l. 6515-->
+<div class="lstlisting" id="listing-260"><span class="label"><a 
+ id="x14-194051r1"></a></span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cat</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">log</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">f</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">j</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">dn</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">f2</span><span 
+class="pcrr7t-">.2011</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194052r2"></a></span><span 
+class="pcrr7t-">...</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194053r3"></a></span><span 
+class="pcrr7t-">cylc__job__inst__user_env</span><span 
+class="pcrr7t-">()</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">{</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194054r4"></a></span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">TASK</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">RUNTIME</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">ENVIRONMENT</span><span 
+class="pcrro7t-">:</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194055r5"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">export</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">upstream_suite</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">upstream_cylc_run_dir</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">upstream_offset</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">\</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194056r6"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">upstream_message</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">upstream_status</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">upstream_point</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">upstream_task</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194057r7"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">upstream_suite</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">up</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194058r8"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">upstream_cylc_run_dir</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">home</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">vagrant</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">run</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194059r9"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">upstream_offset</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">None</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194060r10"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">upstream_message</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">data</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">ready</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194061r11"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">upstream_status</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">succeeded</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194062r12"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">upstream_point</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">2011</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194063r13"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">upstream_task</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">foo</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194064r14"></a></span><span 
+class="pcrr7t-">}</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-194065r15"></a></span><span 
+class="pcrr7t-">...</span>
+</div>
+<!--l. 6533--><p class="noindent" >Note that the task has to know the name (label) of the external trigger that it depends on - &#8220;upstream&#8221; in this case
+- in order to use this information. However the name could be given to the task environment in the suite
+configuration.
+<!--l. 6538--><p class="noindent" >
+<!--l. 6538--><p class="noindent" > <h4 id="12.3" class="subsectionHead"> <span class="titlemark"> <a href="#12.3"> 12.3</a>  <a 
+ id="x14-19500012.3"></a>Custom Trigger Functions </span></h4>
+<!--l. 6541--><p class="noindent" >Trigger functions are just normal Python functions, with a few special properties:
+     <ul class="itemize1">
+     <li class="itemize">they must be defined in a module with the same name as the function
+     </li>
+     <li class="itemize">they can be located in:
+         <ul class="itemize2">
+         <li class="itemize"><span class="lstinline"></span><span 
+class="pcrr7t-">&#x003C;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">dir</span><span 
+class="pcrr7t-">&#x003E;/</span><span 
+class="pcrr7t-">lib</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">xtriggers</span><span 
+class="pcrr7t-">/</span>
+         </li>
+         <li class="itemize"><span class="lstinline"></span><span 
+class="pcrr7t-">&#x003C;</span><span 
+class="pcrr7t-">suite</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">dir</span><span 
+class="pcrr7t-">&#x003E;/</span><span 
+class="pcrr7t-">lib</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">python</span><span 
+class="pcrr7t-">/</span>
+         </li>
+         <li class="itemize">(or anywhere in your Python library path)</li></ul>
+     </li>
+     <li class="itemize">they can take arbitrary positional and keyword arguments
+     </li>
+     <li class="itemize">suite and task identity, and cycle point, can be passed to trigger functions by using string templates in
+     function arguments (see below)
+     </li>
+     <li class="itemize">integer, float, boolean, and string arguments will be recognized and passed to the function as
+     such
+     </li>
+     <li class="itemize">if a trigger function depends on files or directories (for example) that might not exist when the function is first
+     called, just return unsatisified until everything required does exist.</li></ul>
+<!--l. 6561--><p class="noindent" >Note that trigger functions cannot store data Pythonically between invocations because each call is
+executed in an independent process in the process pool. If necessary the filesystem can be used for this
+purpose.
+                                                                                         
+
+                                                                                         
+<!--l. 6565--><p class="noindent" >The following string templates are available for use, if the trigger function needs any of this information, in function
+arguments in the suite configuration:
+     <ul class="itemize1">
+     <li class="itemize"><span class="lstinline"></span><span 
+class="pcrr7t-">%(</span><span 
+class="pcrr7t-">name</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">s</span> - name of the dependent task
+     </li>
+     <li class="itemize"><span class="lstinline"></span><span 
+class="pcrr7t-">%(</span><span 
+class="pcrr7t-">id</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">s</span> - identity of the dependent task (name.cycle-point)
+     </li>
+     <li class="itemize"><span class="lstinline"></span><span 
+class="pcrr7t-">%(</span><span 
+class="pcrr7t-">point</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">s</span> - cycle point of the dependent task
+     </li>
+     <li class="itemize"><span class="lstinline"></span><span 
+class="pcrr7t-">%(</span><span 
+class="pcrr7t-">debug</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">s</span> - suite debug mode</li></ul>
+<!--l. 6573--><p class="noindent" >and less commonly needed:
+     <ul class="itemize1">
+     <li class="itemize"><span class="lstinline"></span><span 
+class="pcrr7t-">%(</span><span 
+class="pcrr7t-">user_name</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">s</span> - suite owner&#8217;s user name
+     </li>
+     <li class="itemize"><span class="lstinline"></span><span 
+class="pcrr7t-">%(</span><span 
+class="pcrr7t-">suite_name</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">s</span> - registered suite name
+     </li>
+     <li class="itemize"><span class="lstinline"></span><span 
+class="pcrr7t-">%(</span><span 
+class="pcrr7t-">suite_run_dir</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">s</span> - suite run directory
+     </li>
+     <li class="itemize"><span class="lstinline"></span><span 
+class="pcrr7t-">%(</span><span 
+class="pcrr7t-">suite_share_dir</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">s</span> - suite share directory</li></ul>
+<!--l. 6581--><p class="noindent" >Function return values should be as follows:
+     <ul class="itemize1">
+     <li class="itemize">if the trigger condition is <span 
+class="cmti-10">not satisfied</span>:
+         <ul class="itemize2">
+         <li class="itemize">return <span class="lstinline"></span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">False</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">{})</span></li></ul>
+     </li>
+     <li class="itemize">if the trigger condition is <span 
+class="cmti-10">satisfied</span>:
+         <ul class="itemize2">
+         <li class="itemize">return <span class="lstinline"></span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">True</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">results</span><span 
+class="pcrr7t-">)</span></li></ul>
+     </li></ul>
+<!--l. 6592--><p class="noindent" >where <span class="lstinline"></span><span 
+class="pcrr7t-">results</span> is an arbitrary dictionary of information to be passed to dependent tasks. How this looks to these
+tasks is described above in <span 
+class="cmti-10">Built-in Suite State Triggers </span>(<a 
+href="#x14-19400012.2">12.2<!--tex4ht:ref: Built-in Suite State Triggers --></a>).
+<!--l. 6596--><p class="noindent" >The suite server program manages trigger functions as follows:
+     <ul class="itemize1">
+     <li class="itemize">they are called asynchronously in the process pool
+         <ul class="itemize2">
+         <li class="itemize">(except for clock triggers, which are called from the main process)</li></ul>
+     </li>
+     <li class="itemize">they are called repeatedly on a configurable interval, until satisified
+         <ul class="itemize2">
+         <li class="itemize">the call interval defaults to <span class="lstinline"></span><span 
+class="pcrr7t-">PT10S</span> (10 seconds)
+         </li>
+         <li class="itemize">repeat calls are not made until the previous call has returned</li></ul>
+     </li>
+     <li class="itemize">they are subject to the normal process pool command time out - if they take too long to return, the process
+     will be killed
+     </li>
+                                                                                         
+
+                                                                                         
+     <li class="itemize">they are shared for efficiency: a single call will be made for all triggers that share the same function signature -
+     i.e.&#x00A0;the same function name and arguments
+     </li>
+     <li class="itemize">their return status and results are stored in the suite DB and persist across suite restarts
+     </li>
+     <li class="itemize">their stdout, if any, is redirected to stderr and will be visible in the suite log in debug mode (stdout is needed
+     to communicate return values from the sub-process in which the function executes)</li></ul>
+<!--l. 6619--><p class="noindent" >
+<!--l. 6619--><p class="noindent" > <h4 id="12.3.1" class="subsubsectionHead"><span class="titlemark"> <a href="#12.3.1"> 12.3.1</a>  <a 
+ id="x14-19600012.3.1"></a>Toy Examples </span></h4>
+<!--l. 6621--><p class="noindent" >A couple of toy examples in <span class="lstinline"></span><span 
+class="pcrr7t-">&#x003C;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">dir</span><span 
+class="pcrr7t-">&#x003E;/</span><span 
+class="pcrr7t-">lib</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">xtriggers</span><span 
+class="pcrr7t-">/</span> may be a useful aid to understanding trigger
+functions and how they work.
+<!--l. 6624--><p class="noindent" >
+<!--l. 6624--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x14-19700012.3.1.1"></a><span 
+class="cmbx-10">echo</span></span>
+The <span class="lstinline"></span><span 
+class="pcrr7t-">echo</span> function is a trivial one that takes any number of positional and keyword arguments (from the suite
+configuration) and simply prints them to stdout, and then returns False (i.e.&#x00A0;trigger condition not satisfied). Here it
+is in its entirety.
+<!--l. 6631-->
+<div class="lstlisting" id="listing-261"><span class="label"><a 
+ id="x14-197001r1"></a></span><span 
+class="pcrr7t-">def</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">echo</span><span 
+class="pcrr7t-">(&#x22C6;</span><span 
+class="pcrr7t-">args</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x22C6;&#x22C6;</span><span 
+class="pcrr7t-">kwargs</span><span 
+class="pcrr7t-">):</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-197002r2"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">print</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">echo</span><span 
+class="pcrr7t-">:</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">ARGS</span><span 
+class="pcrr7t-">:</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">args</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-197003r3"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">print</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">echo</span><span 
+class="pcrr7t-">:</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">KWARGS</span><span 
+class="pcrr7t-">:</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">kwargs</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-197004r4"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">return</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">False</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">{})</span>
+</div>
+<!--l. 6638--><p class="noindent" >Here&#8217;s an example echo trigger suite: <!--l. 6639-->
+<div class="lstlisting" id="listing-262"><span class="label"><a 
+ id="x14-197005r1"></a></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">scheduling</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-197006r2"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">initial</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cycle</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">point</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">now</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-197007r3"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">xtriggers</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-197008r4"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">echo_1</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">echo</span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">hello</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">99,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">qux</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">True</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">point</span><span 
+class="pcrr7t-">=%(</span><span 
+class="pcrr7t-">point</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">s</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">foo</span><span 
+class="pcrr7t-">=10)</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-197009r5"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">dependencies</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-197010r6"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[[</span><span 
+class="pcrr7t-">PT1H</span><span 
+class="pcrr7t-">]]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-197011r7"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">graph</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">@echo_1</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=&#x003E;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">foo</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-197012r8"></a></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">runtime</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-197013r9"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">foo</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-197014r10"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">script</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">exit</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">1</span>
+</div>
+<!--l. 6652--><p class="noindent" >To see the result, run this suite in debug mode and take a look at the suite log (or run
+<span class="lstinline"></span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">run</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">--</span><span 
+class="pcrr7t-">debug</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">--</span><span 
+class="pcrr7t-">no</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">detach</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x003C;</span><span 
+class="pcrr7t-">suite</span><span 
+class="pcrr7t-">&#x003E;</span> and watch your terminal).
+<!--l. 6656--><p class="noindent" >
+<!--l. 6656--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x14-19800012.3.1.2"></a><span 
+class="cmbx-10">xrandom</span></span>
+The <span class="lstinline"></span><span 
+class="pcrr7t-">xrandom</span> function sleeps for a configurable amount of time (useful for testing the effect of a long-running
+trigger function - which should be avoided) and has a configurable random chance of success. The function signature
+is:
+<!--l. 6663-->
+<div class="lstlisting" id="listing-263"><span class="label"><a 
+ id="x14-198001r1"></a></span><span 
+class="pcrr7t-">xrandom</span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">percent</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">secs</span><span 
+class="pcrr7t-">=0,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">_</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">None</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">debug</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">False</span><span 
+class="pcrr7t-">)</span>
+                                                                                         
+
+                                                                                         
+</div>
+<!--l. 6667--><p class="noindent" >The <span class="lstinline"></span><span 
+class="pcrr7t-">percent</span> argument sets the odds of success in any given call; <span class="lstinline"></span><span 
+class="pcrr7t-">secs</span> is the number of seconds to sleep before
+returning; and the <span class="lstinline"></span><span 
+class="pcrr7t-">_</span> argument (underscore is a conventional name for a variable that is not used, in Python) is
+provided to allow specialization of the trigger to (for example) task name, task ID, or cycle point (just use the
+appropriate string templates in the suite configuration for this).
+<!--l. 6674--><p class="noindent" >An example xrandom trigger suite is <span class="lstinline"></span><span 
+class="pcrr7t-">&#x003C;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">dir</span><span 
+class="pcrr7t-">&#x003E;/</span><span 
+class="pcrr7t-">etc</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">dev</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">suites</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">xtriggers</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">xrandom</span><span 
+class="pcrr7t-">/</span>
+<!--l. 6677--><p class="noindent" >
+<!--l. 6677--><p class="noindent" > <h4 id="12.4" class="subsectionHead"> <span class="titlemark"> <a href="#12.4"> 12.4</a>  <a 
+ id="x14-19900012.4"></a>Current Limitations </span></h4>
+<!--l. 6680--><p class="noindent" >The following issues may be addressed in future Cylc releases:
+     <ul class="itemize1">
+     <li class="itemize">trigger labels cannot currently be used in conditional (OR) expressions in the graph; attempts to do
+     so will fail validation.
+     </li>
+     <li class="itemize">aside from the predefined zero-offset <span class="lstinline"></span><span 
+class="pcrr7t-">wall_clock</span> trigger, all unique trigger function calls must be
+     declared <span 
+class="cmti-10">with all of their arguments </span>under the <span class="lstinline"></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">scheduling</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">xtriggers</span><span 
+class="pcrr7t-">]</span> section, and referred to
+     by label alone in the graph. It would be convenient (and less verbose, although no more functional) if
+     we could just declare a label against the <span 
+class="cmti-10">common </span>arguments, and give remaining arguments (such as
+     different wall clock offsets in clock triggers) as needed in the graph.
+     </li>
+     <li class="itemize">we may move away from the string templating method for providing suite and task attributes to trigger
+     function arguments.</li></ul>
+<!--l. 6695--><p class="noindent" >
+<!--l. 6695--><p class="noindent" > <h4 id="12.5" class="subsectionHead"> <span class="titlemark"> <a href="#12.5"> 12.5</a>  <a 
+ id="x14-20000012.5"></a>Filesystem Events? </span></h4>
+<!--l. 6697--><p class="noindent" >Cylc does not have built-in support for triggering off of filesystem events such as <span class="lstinline"></span><span 
+class="pcrr7t-">inotify</span> on Linux.
+There is no cross-platform standard for this, and in any case filesystem events are not very useful in
+HPC cluster environments where events can only be detected at the specific node on which they were
+generated.
+<!--l. 6703--><p class="noindent" >
+<!--l. 6703--><p class="noindent" > <h4 id="12.6" class="subsectionHead"> <span class="titlemark"> <a href="#12.6"> 12.6</a>  <a 
+ id="x14-20100012.6"></a>Continuous Event Watchers? </span></h4>
+<!--l. 6705--><p class="noindent" >For some applications a persistent process that continually monitors the external world is better than discrete
+periodic checking. This would be more difficult to support as a plugin mechanism in Cylc, but we may decide to
+do it in the future. In the meantime, consider implementing a small daemon process as the watcher
+(e.g.&#x00A0;to watch continuously for filesystem events) and have your Cylc trigger functions interact with
+it.
+                                                                                         
+
+                                                                                         
+<!--l. 6712--><p class="noindent" >
+<!--l. 6712--><p class="noindent" > <h4 id="12.7" class="subsectionHead"> <span class="titlemark"> <a href="#12.7"> 12.7</a>  <a 
+ id="x14-20200012.7"></a>Old-Style External Triggers (Deprecated) </span></h4>
+<!--l. 6715--><p class="noindent" ><span 
+class="cmti-10">NOTE: This mechanism is now technically deprecated by the newer external trigger functions (</span><a 
+href="#x14-19200012"><span 
+class="cmti-10">12</span><!--tex4ht:ref: External Triggers --></a><span 
+class="cmti-10">). (However</span>
+<span 
+class="cmti-10">we don&#8217;t recommend wholesale conversion to the new method yet, until its interface has stabilized -</span>
+<span 
+class="cmti-10">see</span><span 
+class="cmti-10">&#x00A0;</span><a 
+href="#x14-19900012.4"><span 
+class="cmti-10">12.4</span><!--tex4ht:ref: Current Trigger Function Limitations --></a><span 
+class="cmti-10">.)</span>
+<!--l. 6720--><p class="noindent" >These old-style external triggers are hidden task prerequisites that must be satisfied by using the
+<span class="lstinline"></span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">ext</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">trigger</span> client command to send an associated pre-defined event message to the suite along with
+an ID string that distinguishes one instance of the event from another (the name of the target task
+and its current cycle point are not required). The event ID is just an arbitrary string to Cylc, but it
+can be used to identify something associated with the event to the suite - such as the filename of a
+new externally-generated dataset. When the suite server program receives the event notification it
+will trigger the next instance of any task waiting on that trigger (whatever its cycle point) and then
+broadcast (see&#x00A0;<a 
+href="cug-htmlse13.html#x15-24400013.23">13.23<!--tex4ht:ref: cylc-broadcast --></a>) the event ID to the cycle point of the triggered task as <span class="lstinline"></span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">CYLC_EXT_TRIGGER_ID</span>.
+Downstream tasks with the same cycle point therefore know the new event ID too and can use it, if
+they need to, to identify the same new dataset. In this way a whole workflow can be associated with
+each new dataset, and multiple datasets can be processed in parallel if they happen to arrive in quick
+succession.
+<!--l. 6737--><p class="noindent" >An externally-triggered task must register the event it waits on in the suite scheduling section:  <!--l. 6740-->
+<div class="lstlisting" id="listing-264"><span class="label"><a 
+ id="x14-202001r1"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">suite</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">"</span><span 
+class="pcrro7t-">sat</span><span 
+class="pcrro7t-">-</span><span 
+class="pcrro7t-">proc</span><span 
+class="pcrro7t-">"</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-202002r2"></a></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">scheduling</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-202003r3"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cycling</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">mode</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">integer</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-202004r4"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">initial</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cycle</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">point</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">1</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-202005r5"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">special</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">tasks</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-202006r6"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">external</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">trigger</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">get</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">data</span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">new</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">sat</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">X</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">data</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">avail</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-202007r7"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">dependencies</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-202008r8"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[[</span><span 
+class="pcrr7t-">P1</span><span 
+class="pcrr7t-">]]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-202009r9"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">graph</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">get</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">data</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=&#x003E;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">conv</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">data</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=&#x003E;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">products</span>
+</div>
+<!--l. 6752--><p class="noindent" >Then, each time a new dataset arrives the external detection system should notify the suite like this:
+<!--l. 6755-->
+<div class="lstlisting" id="listing-265"><span class="label"><a 
+ id="x14-202010r1"></a></span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">ext</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">trigger</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">sat</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">proc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">new</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">sat</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">X</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">data</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">avail</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">passX12334a</span>
+</div>
+<!--l. 6758--><p class="noindent" >where &#8220;sat-proc&#8221; is the suite name and &#8220;passX12334a&#8221; is the ID string for the new event. The suite passphrase must
+be installed on triggering account.
+<!--l. 6761--><p class="noindent" >Note that only one task in a suite can trigger off a particular external message. Other tasks can trigger off the
+externally triggered task as required, of course.
+<!--l. 6765--><p class="noindent" ><span class="lstinline"></span><span 
+class="pcrr7t-">&#x003C;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">dir</span><span 
+class="pcrr7t-">&#x003E;/</span><span 
+class="pcrr7t-">etc</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">examples</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">satellite</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">ext</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">triggers</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">suite</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">rc</span> is a working example of a simulated
+satellite processing suite.
+<!--l. 6768--><p class="noindent" >External triggers are not normally needed in date-time cycling suites driven by real time data that comes in at
+regular intervals. In these cases a data retrieval task can be clock-triggered (and have appropriate retry intervals) to
+submit at the expected data arrival time, so little time is wasted in polling. However, if the arrival time of the
+cycle-point-specific data is highly variable, external triggering may be used with the cycle point embedded in the
+message:  <!--l. 6776-->
+<div class="lstlisting" id="listing-266"><span class="label"><a 
+ id="x14-202011r1"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">suite</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">"</span><span 
+class="pcrro7t-">data</span><span 
+class="pcrro7t-">-</span><span 
+class="pcrro7t-">proc</span><span 
+class="pcrro7t-">"</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-202012r2"></a></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">scheduling</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-202013r3"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">initial</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cycle</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">point</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">20150125</span><span 
+class="pcrr7t-">T00</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-202014r4"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">final</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cycle</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">point</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">20150126</span><span 
+class="pcrr7t-">T00</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-202015r5"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">special</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">tasks</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-202016r6"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">external</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">trigger</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">get</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">data</span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">data</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">arrived</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">for</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">CYLC_TASK_CYCLE_POINT</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-202017r7"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">dependencies</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-202018r8"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[[</span><span 
+class="pcrr7t-">T00</span><span 
+class="pcrr7t-">]]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-202019r9"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">graph</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">init</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">process</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=&#x003E;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">get</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">data</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=&#x003E;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">post</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">process</span>
+</div>
+<!--l. 6788--><p class="noindent" >Once the variable-length waiting is finished, an external detection system should notify the suite like this:
+<!--l. 6791-->
+                                                                                         
+
+                                                                                         
+<div class="lstlisting" id="listing-267"><span class="label"><a 
+ id="x14-202020r1"></a></span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">ext</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">trigger</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">data</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">proc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">data</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">arrived</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">for</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">20150126</span><span 
+class="pcrr7t-">T00</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">passX12334a</span>
+</div>
+<!--l. 6794--><p class="noindent" >where &#8220;data-proc&#8221; is the suite name, the cycle point has replaced the variable in the trigger string, and
+&#8220;passX12334a&#8221; is the ID string for the new event. The suite passphrase must be installed on the triggering account.
+In this case, the event will trigger for the second cycle point but not the first because of the cycle-point
+matching.
+                                                                                         
+
+                                                                                         
+<!--l. 6800--><div class="crosslinks"><p class="noindent">[<a 
+href="cug-htmlse13.html" >next</a>] [<a 
+href="cug-htmlse11.html" >prev</a>] [<a 
+href="cug-htmlse11.html#tailcug-htmlse11.html" >prev-tail</a>] [<a 
+href="cug-htmlse12.html" >front</a>] [<a 
+href="cug-html.html#cug-htmlse12.html" >up</a>] </p></div>
+<!--l. 6800--><p class="noindent" ><a 
+ id="tailcug-htmlse12.html"></a>  
+</body></html> 

@@ -26,10 +26,7 @@ set_test_number 3
 create_test_globalrc "" "
 [documentation]
    [[files]]
-      pdf user guide = ${PWD}/doc/pdf/cug-pdf.pdf
-      multi-page html user guide = /home/bob/cylc/cylc.git/doc/html/multi/cug-html.html
-      html index = /home/bob/cylc/cylc.git/doc/index.html
-      single-page html user guide = /home/bob/cylc/cylc.git/doc/html/single/cug-html.html
+      html user guides = ${PWD}/doc/built-sphinx/index.html
    [[urls]]
       internet homepage = http://cylc.github.com/cylc/
       local index = http://localhost/cylc/index.html"

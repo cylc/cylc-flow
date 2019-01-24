@@ -27,7 +27,7 @@ function filter_warnings() {
     python2 - "$@" <<'__PYTHON__'
 import re, sys
 msgs = [
-    r'.* (?:INFO|DEBUG) - .*\n(\t.*\n)*',
+    r'(?:INFO|DEBUG) - .*\n(\t.*\n)*',
     r'.*naked dummy tasks detected.*\n(\t.*\n)+',
     r'.*clock-(trigger|expire) offsets are normally positive.*\n']
 file_name = sys.argv[1]

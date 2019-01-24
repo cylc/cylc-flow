@@ -1,0 +1,1367 @@
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017) (preloaded format=pdflatex 2018.12.17)  19 DEC 2018 17:16
+entering extended mode
+ restricted \write18 enabled.
+ %&-line parsing enabled.
+**cug-pdf.tex
+(./cug-pdf.tex
+LaTeX2e <2017-04-15>
+Babel <3.9r> and hyphenation patterns for 3 language(s) loaded.
+(/usr/share/texlive/texmf-dist/tex/latex/base/article.cls
+Document Class: article 2014/09/29 v1.4h Standard LaTeX document class
+(/usr/share/texlive/texmf-dist/tex/latex/base/size11.clo
+File: size11.clo 2014/09/29 v1.4h Standard LaTeX file (size option)
+)
+\c@part=\count79
+\c@section=\count80
+\c@subsection=\count81
+\c@subsubsection=\count82
+\c@paragraph=\count83
+\c@subparagraph=\count84
+\c@figure=\count85
+\c@table=\count86
+\abovecaptionskip=\skip41
+\belowcaptionskip=\skip42
+\bibindent=\dimen102
+)
+(/usr/share/texlive/texmf-dist/tex/latex/parskip/parskip.sty
+Package: parskip 2001/04/09 non-zero parskip adjustments
+)
+(/usr/share/texlive/texmf-dist/tex/latex/base/textcomp.sty
+Package: textcomp 2017/04/05 v2.0i Standard LaTeX package
+Package textcomp Info: Sub-encoding information:
+(textcomp)               5 = only ISO-Adobe without \textcurrency
+(textcomp)               4 = 5 + \texteuro
+(textcomp)               3 = 4 + \textohm
+(textcomp)               2 = 3 + \textestimated + \textcurrency
+(textcomp)               1 = TS1 - \textcircled - \t
+(textcomp)               0 = TS1 (full)
+(textcomp)             Font families with sub-encoding setting implement
+(textcomp)             only a restricted character set as indicated.
+(textcomp)             Family '?' is the default used for unknown fonts.
+(textcomp)             See the documentation for details.
+Package textcomp Info: Setting ? sub-encoding to TS1/1 on input line 79.
+
+(/usr/share/texlive/texmf-dist/tex/latex/base/ts1enc.def
+File: ts1enc.def 2001/06/05 v3.0e (jk/car/fm) Standard LaTeX file
+)
+LaTeX Info: Redefining \oldstylenums on input line 334.
+Package textcomp Info: Setting cmr sub-encoding to TS1/0 on input line 349.
+Package textcomp Info: Setting cmss sub-encoding to TS1/0 on input line 350.
+Package textcomp Info: Setting cmtt sub-encoding to TS1/0 on input line 351.
+Package textcomp Info: Setting cmvtt sub-encoding to TS1/0 on input line 352.
+Package textcomp Info: Setting cmbr sub-encoding to TS1/0 on input line 353.
+Package textcomp Info: Setting cmtl sub-encoding to TS1/0 on input line 354.
+Package textcomp Info: Setting ccr sub-encoding to TS1/0 on input line 355.
+Package textcomp Info: Setting ptm sub-encoding to TS1/4 on input line 356.
+Package textcomp Info: Setting pcr sub-encoding to TS1/4 on input line 357.
+Package textcomp Info: Setting phv sub-encoding to TS1/4 on input line 358.
+Package textcomp Info: Setting ppl sub-encoding to TS1/3 on input line 359.
+Package textcomp Info: Setting pag sub-encoding to TS1/4 on input line 360.
+Package textcomp Info: Setting pbk sub-encoding to TS1/4 on input line 361.
+Package textcomp Info: Setting pnc sub-encoding to TS1/4 on input line 362.
+Package textcomp Info: Setting pzc sub-encoding to TS1/4 on input line 363.
+Package textcomp Info: Setting bch sub-encoding to TS1/4 on input line 364.
+Package textcomp Info: Setting put sub-encoding to TS1/5 on input line 365.
+Package textcomp Info: Setting uag sub-encoding to TS1/5 on input line 366.
+Package textcomp Info: Setting ugq sub-encoding to TS1/5 on input line 367.
+Package textcomp Info: Setting ul8 sub-encoding to TS1/4 on input line 368.
+Package textcomp Info: Setting ul9 sub-encoding to TS1/4 on input line 369.
+Package textcomp Info: Setting augie sub-encoding to TS1/5 on input line 370.
+Package textcomp Info: Setting dayrom sub-encoding to TS1/3 on input line 371.
+Package textcomp Info: Setting dayroms sub-encoding to TS1/3 on input line 372.
+
+Package textcomp Info: Setting pxr sub-encoding to TS1/0 on input line 373.
+Package textcomp Info: Setting pxss sub-encoding to TS1/0 on input line 374.
+Package textcomp Info: Setting pxtt sub-encoding to TS1/0 on input line 375.
+Package textcomp Info: Setting txr sub-encoding to TS1/0 on input line 376.
+Package textcomp Info: Setting txss sub-encoding to TS1/0 on input line 377.
+Package textcomp Info: Setting txtt sub-encoding to TS1/0 on input line 378.
+Package textcomp Info: Setting lmr sub-encoding to TS1/0 on input line 379.
+Package textcomp Info: Setting lmdh sub-encoding to TS1/0 on input line 380.
+Package textcomp Info: Setting lmss sub-encoding to TS1/0 on input line 381.
+Package textcomp Info: Setting lmssq sub-encoding to TS1/0 on input line 382.
+Package textcomp Info: Setting lmvtt sub-encoding to TS1/0 on input line 383.
+Package textcomp Info: Setting lmtt sub-encoding to TS1/0 on input line 384.
+Package textcomp Info: Setting qhv sub-encoding to TS1/0 on input line 385.
+Package textcomp Info: Setting qag sub-encoding to TS1/0 on input line 386.
+Package textcomp Info: Setting qbk sub-encoding to TS1/0 on input line 387.
+Package textcomp Info: Setting qcr sub-encoding to TS1/0 on input line 388.
+Package textcomp Info: Setting qcs sub-encoding to TS1/0 on input line 389.
+Package textcomp Info: Setting qpl sub-encoding to TS1/0 on input line 390.
+Package textcomp Info: Setting qtm sub-encoding to TS1/0 on input line 391.
+Package textcomp Info: Setting qzc sub-encoding to TS1/0 on input line 392.
+Package textcomp Info: Setting qhvc sub-encoding to TS1/0 on input line 393.
+Package textcomp Info: Setting futs sub-encoding to TS1/4 on input line 394.
+Package textcomp Info: Setting futx sub-encoding to TS1/4 on input line 395.
+Package textcomp Info: Setting futj sub-encoding to TS1/4 on input line 396.
+Package textcomp Info: Setting hlh sub-encoding to TS1/3 on input line 397.
+Package textcomp Info: Setting hls sub-encoding to TS1/3 on input line 398.
+Package textcomp Info: Setting hlst sub-encoding to TS1/3 on input line 399.
+Package textcomp Info: Setting hlct sub-encoding to TS1/5 on input line 400.
+Package textcomp Info: Setting hlx sub-encoding to TS1/5 on input line 401.
+Package textcomp Info: Setting hlce sub-encoding to TS1/5 on input line 402.
+Package textcomp Info: Setting hlcn sub-encoding to TS1/5 on input line 403.
+Package textcomp Info: Setting hlcw sub-encoding to TS1/5 on input line 404.
+Package textcomp Info: Setting hlcf sub-encoding to TS1/5 on input line 405.
+Package textcomp Info: Setting pplx sub-encoding to TS1/3 on input line 406.
+Package textcomp Info: Setting pplj sub-encoding to TS1/3 on input line 407.
+Package textcomp Info: Setting ptmx sub-encoding to TS1/4 on input line 408.
+Package textcomp Info: Setting ptmj sub-encoding to TS1/4 on input line 409.
+)
+(/usr/share/texlive/texmf-dist/tex/latex/preprint/fullpage.sty
+Package: fullpage 1999/02/23 1.1 (PWD)
+\FP@margin=\skip43
+)
+(/usr/share/texlive/texmf-dist/tex/latex/framed/framed.sty
+Package: framed 2011/10/22 v 0.96: framed or shaded text with page breaks
+\OuterFrameSep=\skip44
+\fb@frw=\dimen103
+\fb@frh=\dimen104
+\FrameRule=\dimen105
+\FrameSep=\dimen106
+)
+(/usr/share/texlive/texmf-dist/tex/latex/listings/listings.sty
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/keyval.sty
+Package: keyval 2014/10/28 v1.15 key=value parser (DPC)
+\KV@toks@=\toks14
+)
+\lst@mode=\count87
+\lst@gtempboxa=\box26
+\lst@token=\toks15
+\lst@length=\count88
+\lst@currlwidth=\dimen107
+\lst@column=\count89
+\lst@pos=\count90
+\lst@lostspace=\dimen108
+\lst@width=\dimen109
+\lst@newlines=\count91
+\lst@lineno=\count92
+\lst@maxwidth=\dimen110
+
+(/usr/share/texlive/texmf-dist/tex/latex/listings/lstmisc.sty
+File: lstmisc.sty 2015/06/04 1.6 (Carsten Heinz)
+\c@lstnumber=\count93
+\lst@skipnumbers=\count94
+\lst@framebox=\box27
+)
+(/usr/share/texlive/texmf-dist/tex/latex/listings/listings.cfg
+File: listings.cfg 2015/06/04 1.6 listings configuration
+))
+Package: listings 2015/06/04 1.6 (Carsten Heinz)
+
+(/usr/share/texlive/texmf-dist/tex/latex/psnfss/courier.sty
+Package: courier 2005/04/12 PSNFSS-v9.2a (WaS) 
+)
+(/usr/share/texlive/texmf-dist/tex/generic/dirtree/dirtree.sty
+Package: dirtree 2012/12/11 v0.32 package wrapper for dirtree
+
+(/usr/share/texlive/texmf-dist/tex/generic/dirtree/dirtree.tex
+`dirtree' v0.32, 2012/12/11 (jcc)
+\DT@offset=\dimen111
+\DT@width=\dimen112
+\DT@sep=\dimen113
+\DT@all=\dimen114
+\DT@rulewidth=\dimen115
+\DT@dotwidth=\dimen116
+\DTbaselineskip=\dimen117
+\DT@counti=\count95
+\DT@countii=\count96
+\DT@countiii=\count97
+\DT@countiv=\count98
+\DT@indent=\dimen118
+\DT@parskip=\dimen119
+\DT@baselineskip=\dimen120
+)
+File: dirtree.tex 2012/12/11 v0.32 `dirtree' (jcc)
+)
+(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsmath.sty
+Package: amsmath 2016/06/28 v2.15d AMS math features
+\@mathmargin=\skip45
+
+For additional information on amsmath, use the `?' option.
+(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amstext.sty
+Package: amstext 2000/06/29 v2.01 AMS text
+
+(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsgen.sty
+File: amsgen.sty 1999/11/30 v2.0 generic functions
+\@emptytoks=\toks16
+\ex@=\dimen121
+))
+(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsbsy.sty
+Package: amsbsy 1999/11/29 v1.2d Bold Symbols
+\pmbraise@=\dimen122
+)
+(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsopn.sty
+Package: amsopn 2016/03/08 v2.02 operator names
+)
+\inf@bad=\count99
+LaTeX Info: Redefining \frac on input line 199.
+\uproot@=\count100
+\leftroot@=\count101
+LaTeX Info: Redefining \overline on input line 297.
+\classnum@=\count102
+\DOTSCASE@=\count103
+LaTeX Info: Redefining \ldots on input line 394.
+LaTeX Info: Redefining \dots on input line 397.
+LaTeX Info: Redefining \cdots on input line 518.
+\Mathstrutbox@=\box28
+\strutbox@=\box29
+\big@size=\dimen123
+LaTeX Font Info:    Redeclaring font encoding OML on input line 634.
+LaTeX Font Info:    Redeclaring font encoding OMS on input line 635.
+\macc@depth=\count104
+\c@MaxMatrixCols=\count105
+\dotsspace@=\muskip10
+\c@parentequation=\count106
+\dspbrk@lvl=\count107
+\tag@help=\toks17
+\row@=\count108
+\column@=\count109
+\maxfields@=\count110
+\andhelp@=\toks18
+\eqnshift@=\dimen124
+\alignsep@=\dimen125
+\tagshift@=\dimen126
+\tagwidth@=\dimen127
+\totwidth@=\dimen128
+\lineht@=\dimen129
+\@envbody=\toks19
+\multlinegap=\skip46
+\multlinetaggap=\skip47
+\mathdisplay@stack=\toks20
+LaTeX Info: Redefining \[ on input line 2739.
+LaTeX Info: Redefining \] on input line 2740.
+)
+(/usr/share/texlive/texmf-dist/tex/latex/tools/verbatim.sty
+Package: verbatim 2014/10/28 v1.5q LaTeX2e package for verbatim enhancements
+\every@verbatim=\toks21
+\verbatim@line=\toks22
+\verbatim@in@stream=\read1
+)
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/graphicx.sty
+Package: graphicx 2014/10/28 v1.0g Enhanced LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/graphics.sty
+Package: graphics 2016/05/09 v1.0r Standard LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/trig.sty
+Package: trig 2016/01/03 v1.10 sin cos tan (DPC)
+)
+(/usr/share/texlive/texmf-dist/tex/latex/graphics-cfg/graphics.cfg
+File: graphics.cfg 2016/01/02 v1.10 sample graphics configuration
+)
+Package graphics Info: Driver file: pdftex.def on input line 96.
+
+(/usr/share/texlive/texmf-dist/tex/latex/graphics-def/pdftex.def
+File: pdftex.def 2016/07/10 v0.06j Graphics/color for pdfTeX
+
+(/usr/share/texlive/texmf-dist/tex/generic/oberdiek/infwarerr.sty
+Package: infwarerr 2016/05/16 v1.4 Providing info/warning/error messages (HO)
+)
+(/usr/share/texlive/texmf-dist/tex/generic/oberdiek/ltxcmds.sty
+Package: ltxcmds 2016/05/16 v1.23 LaTeX kernel commands for general use (HO)
+)
+\Gread@gobject=\count111
+))
+\Gin@req@height=\dimen130
+\Gin@req@width=\dimen131
+)
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/color.sty
+Package: color 2016/05/09 v1.1c Standard LaTeX Color (DPC)
+
+(/usr/share/texlive/texmf-dist/tex/latex/graphics-cfg/color.cfg
+File: color.cfg 2016/01/02 v1.6 sample color configuration
+)
+Package color Info: Driver file: pdftex.def on input line 144.
+)
+(/usr/share/texlive/texmf-dist/tex/latex/hyperref/hyperref.sty
+Package: hyperref 2018/02/06 v6.86b Hypertext links for LaTeX
+
+(/usr/share/texlive/texmf-dist/tex/generic/oberdiek/hobsub-hyperref.sty
+Package: hobsub-hyperref 2016/05/16 v1.14 Bundle oberdiek, subset hyperref (HO)
+
+
+(/usr/share/texlive/texmf-dist/tex/generic/oberdiek/hobsub-generic.sty
+Package: hobsub-generic 2016/05/16 v1.14 Bundle oberdiek, subset generic (HO)
+Package: hobsub 2016/05/16 v1.14 Construct package bundles (HO)
+Package hobsub Info: Skipping package `infwarerr' (already loaded).
+Package hobsub Info: Skipping package `ltxcmds' (already loaded).
+Package: ifluatex 2016/05/16 v1.4 Provides the ifluatex switch (HO)
+Package ifluatex Info: LuaTeX not detected.
+Package: ifvtex 2016/05/16 v1.6 Detect VTeX and its facilities (HO)
+Package ifvtex Info: VTeX not detected.
+Package: intcalc 2016/05/16 v1.2 Expandable calculations with integers (HO)
+Package: ifpdf 2017/03/15 v3.2 Provides the ifpdf switch
+Package: etexcmds 2016/05/16 v1.6 Avoid name clashes with e-TeX commands (HO)
+Package etexcmds Info: Could not find \expanded.
+(etexcmds)             That can mean that you are not using pdfTeX 1.50 or
+(etexcmds)             that some package has redefined \expanded.
+(etexcmds)             In the latter case, load this package earlier.
+Package: kvsetkeys 2016/05/16 v1.17 Key value parser (HO)
+Package: kvdefinekeys 2016/05/16 v1.4 Define keys (HO)
+Package: pdftexcmds 2017/03/19 v0.25 Utility functions of pdfTeX for LuaTeX (HO
+)
+Package pdftexcmds Info: LuaTeX not detected.
+Package pdftexcmds Info: \pdf@primitive is available.
+Package pdftexcmds Info: \pdf@ifprimitive is available.
+Package pdftexcmds Info: \pdfdraftmode found.
+Package: pdfescape 2016/05/16 v1.14 Implements pdfTeX's escape features (HO)
+Package: bigintcalc 2016/05/16 v1.4 Expandable calculations on big integers (HO
+)
+Package: bitset 2016/05/16 v1.2 Handle bit-vector datatype (HO)
+Package: uniquecounter 2016/05/16 v1.3 Provide unlimited unique counter (HO)
+)
+Package hobsub Info: Skipping package `hobsub' (already loaded).
+Package: letltxmacro 2016/05/16 v1.5 Let assignment for LaTeX macros (HO)
+Package: hopatch 2016/05/16 v1.3 Wrapper for package hooks (HO)
+Package: xcolor-patch 2016/05/16 xcolor patch
+Package: atveryend 2016/05/16 v1.9 Hooks at the very end of document (HO)
+Package atveryend Info: \enddocument detected (standard20110627).
+Package: atbegshi 2016/06/09 v1.18 At begin shipout hook (HO)
+Package: refcount 2016/05/16 v3.5 Data extraction from label references (HO)
+Package: hycolor 2016/05/16 v1.8 Color options for hyperref/bookmark (HO)
+)
+(/usr/share/texlive/texmf-dist/tex/generic/ifxetex/ifxetex.sty
+Package: ifxetex 2010/09/12 v0.6 Provides ifxetex conditional
+)
+(/usr/share/texlive/texmf-dist/tex/latex/oberdiek/auxhook.sty
+Package: auxhook 2016/05/16 v1.4 Hooks for auxiliary files (HO)
+)
+(/usr/share/texlive/texmf-dist/tex/latex/oberdiek/kvoptions.sty
+Package: kvoptions 2016/05/16 v3.12 Key value format for package options (HO)
+)
+\@linkdim=\dimen132
+\Hy@linkcounter=\count112
+\Hy@pagecounter=\count113
+
+(/usr/share/texlive/texmf-dist/tex/latex/hyperref/pd1enc.def
+File: pd1enc.def 2018/02/06 v6.86b Hyperref: PDFDocEncoding definition (HO)
+)
+\Hy@SavedSpaceFactor=\count114
+
+(/usr/share/texlive/texmf-dist/tex/latex/latexconfig/hyperref.cfg
+File: hyperref.cfg 2002/06/06 v1.2 hyperref configuration of TeXLive
+)
+Package hyperref Info: Hyper figures OFF on input line 4509.
+Package hyperref Info: Link nesting OFF on input line 4514.
+Package hyperref Info: Hyper index ON on input line 4517.
+Package hyperref Info: Plain pages OFF on input line 4524.
+Package hyperref Info: Backreferencing OFF on input line 4529.
+Package hyperref Info: Implicit mode ON; LaTeX internals redefined.
+Package hyperref Info: Bookmarks ON on input line 4762.
+\c@Hy@tempcnt=\count115
+
+(/usr/share/texlive/texmf-dist/tex/latex/url/url.sty
+\Urlmuskip=\muskip11
+Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
+)
+LaTeX Info: Redefining \url on input line 5115.
+\XeTeXLinkMargin=\dimen133
+\Fld@menulength=\count116
+\Field@Width=\dimen134
+\Fld@charsize=\dimen135
+Package hyperref Info: Hyper figures OFF on input line 6369.
+Package hyperref Info: Link nesting OFF on input line 6374.
+Package hyperref Info: Hyper index ON on input line 6377.
+Package hyperref Info: backreferencing OFF on input line 6384.
+Package hyperref Info: Link coloring OFF on input line 6389.
+Package hyperref Info: Link coloring with OCG OFF on input line 6394.
+Package hyperref Info: PDF/A mode OFF on input line 6399.
+LaTeX Info: Redefining \ref on input line 6439.
+LaTeX Info: Redefining \pageref on input line 6443.
+\Hy@abspage=\count117
+\c@Item=\count118
+\c@Hfootnote=\count119
+)
+Package hyperref Info: Driver (autodetected): hpdftex.
+
+(/usr/share/texlive/texmf-dist/tex/latex/hyperref/hpdftex.def
+File: hpdftex.def 2018/02/06 v6.86b Hyperref driver for pdfTeX
+\Fld@listcount=\count120
+\c@bookmark@seq@number=\count121
+
+(/usr/share/texlive/texmf-dist/tex/latex/oberdiek/rerunfilecheck.sty
+Package: rerunfilecheck 2016/05/16 v1.8 Rerun checks for auxiliary files (HO)
+Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
+82.
+)
+\Hy@SectionHShift=\skip48
+)
+(/usr/share/texlive/texmf-dist/tex/latex/fancyhdr/fancyhdr.sty
+\fancy@headwidth=\skip49
+\f@ncyO@elh=\skip50
+\f@ncyO@erh=\skip51
+\f@ncyO@olh=\skip52
+\f@ncyO@orh=\skip53
+\f@ncyO@elf=\skip54
+\f@ncyO@erf=\skip55
+\f@ncyO@olf=\skip56
+\f@ncyO@orf=\skip57
+)
+(/usr/share/texlive/texmf-dist/tex/latex/tex-gyre/tgbonum.sty
+Package: tgbonum 2009/09/27 v1.2 TeX Gyre Bonum as default roman family
+) (./titlepic.sty
+Package: titlepic 2009/08/03 1.1 Package to display a picture on the title page
+
+) (/usr/share/texlive/texmf-dist/tex/latex/tocloft/tocloft.sty
+Package: tocloft 2013/05/02 v2.3f parameterised ToC, etc., typesetting
+Package tocloft Info: The document has section divisions on input line 44.
+\cftparskip=\skip58
+\cftbeforetoctitleskip=\skip59
+\cftaftertoctitleskip=\skip60
+\cftbeforepartskip=\skip61
+\cftpartnumwidth=\skip62
+\cftpartindent=\skip63
+\cftbeforesecskip=\skip64
+\cftsecindent=\skip65
+\cftsecnumwidth=\skip66
+\cftbeforesubsecskip=\skip67
+\cftsubsecindent=\skip68
+\cftsubsecnumwidth=\skip69
+\cftbeforesubsubsecskip=\skip70
+\cftsubsubsecindent=\skip71
+\cftsubsubsecnumwidth=\skip72
+\cftbeforeparaskip=\skip73
+\cftparaindent=\skip74
+\cftparanumwidth=\skip75
+\cftbeforesubparaskip=\skip76
+\cftsubparaindent=\skip77
+\cftsubparanumwidth=\skip78
+\cftbeforeloftitleskip=\skip79
+\cftafterloftitleskip=\skip80
+\cftbeforefigskip=\skip81
+\cftfigindent=\skip82
+\cftfignumwidth=\skip83
+\c@lofdepth=\count122
+\c@lotdepth=\count123
+\cftbeforelottitleskip=\skip84
+\cftafterlottitleskip=\skip85
+\cftbeforetabskip=\skip86
+\cfttabindent=\skip87
+\cfttabnumwidth=\skip88
+)
+Package hyperref Info: Option `colorlinks' set `true' on input line 63.
+
+(/usr/share/texlive/texmf-dist/tex/latex/lm/lmodern.sty
+Package: lmodern 2009/10/30 v1.6 Latin Modern Fonts
+LaTeX Font Info:    Overwriting symbol font `operators' in version `normal'
+(Font)                  OT1/cmr/m/n --> OT1/lmr/m/n on input line 22.
+LaTeX Font Info:    Overwriting symbol font `letters' in version `normal'
+(Font)                  OML/cmm/m/it --> OML/lmm/m/it on input line 23.
+LaTeX Font Info:    Overwriting symbol font `symbols' in version `normal'
+(Font)                  OMS/cmsy/m/n --> OMS/lmsy/m/n on input line 24.
+LaTeX Font Info:    Overwriting symbol font `largesymbols' in version `normal'
+(Font)                  OMX/cmex/m/n --> OMX/lmex/m/n on input line 25.
+LaTeX Font Info:    Overwriting symbol font `operators' in version `bold'
+(Font)                  OT1/cmr/bx/n --> OT1/lmr/bx/n on input line 26.
+LaTeX Font Info:    Overwriting symbol font `letters' in version `bold'
+(Font)                  OML/cmm/b/it --> OML/lmm/b/it on input line 27.
+LaTeX Font Info:    Overwriting symbol font `symbols' in version `bold'
+(Font)                  OMS/cmsy/b/n --> OMS/lmsy/b/n on input line 28.
+LaTeX Font Info:    Overwriting symbol font `largesymbols' in version `bold'
+(Font)                  OMX/cmex/m/n --> OMX/lmex/m/n on input line 29.
+LaTeX Font Info:    Overwriting math alphabet `\mathbf' in version `normal'
+(Font)                  OT1/cmr/bx/n --> OT1/lmr/bx/n on input line 31.
+LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `normal'
+(Font)                  OT1/cmss/m/n --> OT1/lmss/m/n on input line 32.
+LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `normal'
+(Font)                  OT1/cmr/m/it --> OT1/lmr/m/it on input line 33.
+LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `normal'
+(Font)                  OT1/cmtt/m/n --> OT1/lmtt/m/n on input line 34.
+LaTeX Font Info:    Overwriting math alphabet `\mathbf' in version `bold'
+(Font)                  OT1/cmr/bx/n --> OT1/lmr/bx/n on input line 35.
+LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `bold'
+(Font)                  OT1/cmss/bx/n --> OT1/lmss/bx/n on input line 36.
+LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `bold'
+(Font)                  OT1/cmr/bx/it --> OT1/lmr/bx/it on input line 37.
+LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `bold'
+(Font)                  OT1/cmtt/m/n --> OT1/lmtt/m/n on input line 38.
+)
+(/usr/share/texlive/texmf-dist/tex/latex/base/fontenc.sty
+Package: fontenc 2017/04/05 v2.0i Standard LaTeX package
+
+(/usr/share/texlive/texmf-dist/tex/latex/base/t1enc.def
+File: t1enc.def 2017/04/05 v2.0i Standard LaTeX file
+LaTeX Font Info:    Redeclaring font encoding T1 on input line 48.
+)
+LaTeX Font Info:    Try loading font information for T1+qbk on input line 105.
+
+(/usr/share/texlive/texmf-dist/tex/latex/tex-gyre/t1qbk.fd
+File: t1qbk.fd 2009/09/25 v1.2 font definition file for T1/qbk
+)) (./cug-pdf.aux)
+\openout1 = `cug-pdf.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 196.
+LaTeX Font Info:    ... okay on input line 196.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 196.
+LaTeX Font Info:    ... okay on input line 196.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 196.
+LaTeX Font Info:    ... okay on input line 196.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 196.
+LaTeX Font Info:    ... okay on input line 196.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 196.
+LaTeX Font Info:    ... okay on input line 196.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 196.
+LaTeX Font Info:    ... okay on input line 196.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 196.
+LaTeX Font Info:    Try loading font information for TS1+cmr on input line 196.
+
+
+(/usr/share/texlive/texmf-dist/tex/latex/base/ts1cmr.fd
+File: ts1cmr.fd 2014/09/29 v2.5h Standard LaTeX font definitions
+)
+LaTeX Font Info:    ... okay on input line 196.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 196.
+LaTeX Font Info:    ... okay on input line 196.
+LaTeX Font Info:    Try loading font information for T1+lmr on input line 196.
+
+(/usr/share/texlive/texmf-dist/tex/latex/lm/t1lmr.fd
+File: t1lmr.fd 2009/10/30 v1.6 Font defs for Latin Modern
+)
+\c@lstlisting=\count124
+
+(/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+\scratchcounter=\count125
+\scratchdimen=\dimen136
+\scratchbox=\box30
+\nofMPsegments=\count126
+\nofMParguments=\count127
+\everyMPshowfont=\toks23
+\MPscratchCnt=\count128
+\MPscratchDim=\dimen137
+\MPnumerator=\count129
+\makeMPintoPDFobject=\count130
+\everyMPtoPDFconversion=\toks24
+) (/usr/share/texlive/texmf-dist/tex/latex/oberdiek/epstopdf-base.sty
+Package: epstopdf-base 2016/05/15 v2.6 Base part for package epstopdf
+
+(/usr/share/texlive/texmf-dist/tex/latex/oberdiek/grfext.sty
+Package: grfext 2016/05/16 v1.2 Manage graphics extensions (HO)
+)
+Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
+38.
+Package grfext Info: Graphics extension search list:
+(grfext)             [.png,.pdf,.jpg,.mps,.jpeg,.jbig2,.jb2,.PNG,.PDF,.JPG,.JPE
+G,.JBIG2,.JB2,.eps]
+(grfext)             \AppendGraphicsExtensions on input line 456.
+
+(/usr/share/texlive/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
+File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
+e
+))
+\AtBeginShipoutBox=\box31
+Package hyperref Info: Link coloring ON on input line 196.
+
+(/usr/share/texlive/texmf-dist/tex/latex/hyperref/nameref.sty
+Package: nameref 2016/05/21 v2.44 Cross-referencing by name of section
+
+(/usr/share/texlive/texmf-dist/tex/generic/oberdiek/gettitlestring.sty
+Package: gettitlestring 2016/05/16 v1.5 Cleanup title references (HO)
+)
+\c@section@level=\count131
+)
+LaTeX Info: Redefining \ref on input line 196.
+LaTeX Info: Redefining \pageref on input line 196.
+LaTeX Info: Redefining \nameref on input line 196.
+
+(./cug-pdf.out) (./cug-pdf.out)
+\@outlinefile=\write3
+\openout3 = `cug-pdf.out'.
+
+ (./cylc-version.txt)
+LaTeX Font Info:    Try loading font information for OT1+lmr on input line 198.
+
+
+(/usr/share/texlive/texmf-dist/tex/latex/lm/ot1lmr.fd
+File: ot1lmr.fd 2009/10/30 v1.6 Font defs for Latin Modern
+)
+LaTeX Font Info:    Try loading font information for OML+lmm on input line 198.
+
+
+(/usr/share/texlive/texmf-dist/tex/latex/lm/omllmm.fd
+File: omllmm.fd 2009/10/30 v1.6 Font defs for Latin Modern
+)
+LaTeX Font Info:    Try loading font information for OMS+lmsy on input line 198
+.
+
+(/usr/share/texlive/texmf-dist/tex/latex/lm/omslmsy.fd
+File: omslmsy.fd 2009/10/30 v1.6 Font defs for Latin Modern
+)
+LaTeX Font Info:    Try loading font information for OMX+lmex on input line 198
+.
+
+(/usr/share/texlive/texmf-dist/tex/latex/lm/omxlmex.fd
+File: omxlmex.fd 2009/10/30 v1.6 Font defs for Latin Modern
+)
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <12> on input line 198.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <8> on input line 198.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <6> on input line 198.
+
+<../graphics/png/orig/niwa-colour.png, id=2757, 1003.75pt x 242.9075pt>
+File: ../graphics/png/orig/niwa-colour.png Graphic file (type png)
+
+<use ../graphics/png/orig/niwa-colour.png>
+Package pdftex.def Info: ../graphics/png/orig/niwa-colour.png used on input lin
+e 198.
+(pdftex.def)             Requested size: 226.48395pt x 54.8075pt.
+ [1
+
+{/usr/share/texlive/texmf-dist/fonts/map/pdftex/updmap/pdftex.map} <../graphics
+/png/orig/niwa-colour.png>]
+(./abstract.tex
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <10.95> on input line 4.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <9> on input line 10.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <5> on input line 10.
+pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has 
+been already used, duplicate ignored
+<to be read again> 
+                   \relax 
+l.47 \end{abstract}
+                    [1]) (./cug-pdf.tocpdfTeX warning (ext4): destination with 
+the same identifier (name{page.1}) has been already used, duplicate ignored
+<to be read again> 
+                   \relax 
+l.44 ....14}Task Identifiers}{36}{subsection.7.14}
+                                                   [1] [2] [3] [4] [5] [6]
+[7] [8] [9] [10] [11] [12] [13] [14])
+\tf@toc=\write4
+\openout4 = `cug-pdf.toc'.
+
+ (./cug-pdf.lof
+LaTeX Font Info:    Try loading font information for T1+lmtt on input line 17.
+
+(/usr/share/texlive/texmf-dist/tex/latex/lm/t1lmtt.fd
+File: t1lmtt.fd 2009/10/30 v1.6 Font defs for Latin Modern
+) [15])
+\tf@lof=\write5
+\openout5 = `cug-pdf.lof'.
+
+ [16] (./cug.tex
+<../graphics/png/orig/dep-one-cycle.png, id=3613, 380.16pt x 423.72pt>
+File: ../graphics/png/orig/dep-one-cycle.png Graphic file (type png)
+
+<use ../graphics/png/orig/dep-one-cycle.png>
+Package pdftex.def Info: ../graphics/png/orig/dep-one-cycle.png used on input l
+ine 70.
+(pdftex.def)             Requested size: 170.71652pt x 190.27785pt.
+
+<../graphics/png/orig/timeline-one.png, id=3614, 436.5302pt x 137.74953pt>
+File: ../graphics/png/orig/timeline-one.png Graphic file (type png)
+
+<use ../graphics/png/orig/timeline-one.png>
+Package pdftex.def Info: ../graphics/png/orig/timeline-one.png used on input li
+ne 84.
+(pdftex.def)             Requested size: 227.62204pt x 71.82773pt.
+ [17] [18 <../graphics/png/orig/dep-one-cycle.png> <../graphics/png/orig/timeli
+ne-one.png>]
+<../graphics/png/orig/dep-two-cycles-linked.png, id=3629, 766.5pt x 422.67pt>
+File: ../graphics/png/orig/dep-two-cycles-linked.png Graphic file (type png)
+
+<use ../graphics/png/orig/dep-two-cycles-linked.png>
+Package pdftex.def Info: ../graphics/png/orig/dep-two-cycles-linked.png used on
+ input line 107.
+(pdftex.def)             Requested size: 284.52756pt x 156.9014pt.
+
+<../graphics/png/orig/timeline-one-c.png, id=3630, 336.6pt x 209.88pt>
+File: ../graphics/png/orig/timeline-one-c.png Graphic file (type png)
+
+<use ../graphics/png/orig/timeline-one-c.png>
+Package pdftex.def Info: ../graphics/png/orig/timeline-one-c.png used on input 
+line 117.
+(pdftex.def)             Requested size: 170.71652pt x 106.44812pt.
+
+<../graphics/png/orig/timeline-one-a.png, id=3631, 396.0pt x 128.7pt>
+File: ../graphics/png/orig/timeline-one-a.png Graphic file (type png)
+
+<use ../graphics/png/orig/timeline-one-a.png>
+Package pdftex.def Info: ../graphics/png/orig/timeline-one-a.png used on input 
+line 129.
+(pdftex.def)             Requested size: 227.62204pt x 73.97835pt.
+ [19 <../graphics/png/orig/dep-two-cycles-linked.png> <../graphics/png/orig/tim
+eline-one-c.png> <../graphics/png/orig/timeline-one-a.png>]
+<../graphics/png/orig/dep-multi-cycle.png, id=3644, 594.0pt x 570.24pt>
+File: ../graphics/png/orig/dep-multi-cycle.png Graphic file (type png)
+
+<use ../graphics/png/orig/dep-multi-cycle.png>
+Package pdftex.def Info: ../graphics/png/orig/dep-multi-cycle.png used on input
+ line 198.
+(pdftex.def)             Requested size: 227.62204pt x 218.52069pt.
+
+<../graphics/png/orig/timeline-two-cycles-optimal.png, id=3645, 307.53192pt x 1
+95.28276pt>
+File: ../graphics/png/orig/timeline-two-cycles-optimal.png Graphic file (type p
+ng)
+ <use ../graphics/png/orig/timeline-two-cycles-optimal.png>
+Package pdftex.def Info: ../graphics/png/orig/timeline-two-cycles-optimal.png u
+sed on input line 210.
+(pdftex.def)             Requested size: 170.71652pt x 108.41002pt.
+
+<../graphics/png/orig/timeline-three.png, id=3648, 1398.7742pt x 321.71806pt>
+File: ../graphics/png/orig/timeline-three.png Graphic file (type png)
+
+<use ../graphics/png/orig/timeline-three.png>
+Package pdftex.def Info: ../graphics/png/orig/timeline-three.png used on input 
+line 231.
+(pdftex.def)             Requested size: 341.43306pt x 78.52953pt.
+
+<../graphics/png/orig/timeline-two.png, id=3649, 602.25pt x 385.44pt>
+File: ../graphics/png/orig/timeline-two.png Graphic file (type png)
+
+<use ../graphics/png/orig/timeline-two.png>
+Package pdftex.def Info: ../graphics/png/orig/timeline-two.png used on input li
+ne 245.
+(pdftex.def)             Requested size: 227.62204pt x 145.68062pt.
+ [20] [21 <../graphics/png/orig/dep-multi-cycle.png> <../graphics/png/orig/time
+line-two-cycles-optimal.png> <../graphics/png/orig/timeline-three.png>]
+<../graphics/png/orig/task-pool.png, id=3667, 702.625pt x 545.03625pt>
+File: ../graphics/png/orig/task-pool.png Graphic file (type png)
+
+<use ../graphics/png/orig/task-pool.png>
+Package pdftex.def Info: ../graphics/png/orig/task-pool.png used on input line 
+307.
+(pdftex.def)             Requested size: 227.62204pt x 176.56915pt.
+
+<../graphics/png/orig/gcylc-graph-and-dot-views.png, id=3671, 789.70032pt x 532
+.99126pt>
+File: ../graphics/png/orig/gcylc-graph-and-dot-views.png Graphic file (type png
+)
+ <use ../graphics/png/orig/gcylc-graph-and-dot-views.png>
+Package pdftex.def Info: ../graphics/png/orig/gcylc-graph-and-dot-views.png use
+d on input line 345.
+(pdftex.def)             Requested size: 362.37569pt x 244.57713pt.
+ [22 <../graphics/png/orig/timeline-two.png>]
+<../graphics/png/orig/gcylc-text-view.png, id=3677, 789.70032pt x 532.99126pt>
+File: ../graphics/png/orig/gcylc-text-view.png Graphic file (type png)
+
+<use ../graphics/png/orig/gcylc-text-view.png>
+Package pdftex.def Info: ../graphics/png/orig/gcylc-text-view.png used on input
+ line 353.
+(pdftex.def)             Requested size: 362.37569pt x 244.57713pt.
+
+<../graphics/png/orig/gscan.png, id=3678, 359.09157pt x 289.08pt>
+File: ../graphics/png/orig/gscan.png Graphic file (type png)
+
+<use ../graphics/png/orig/gscan.png>
+Package pdftex.def Info: ../graphics/png/orig/gscan.png used on input line 361.
+
+(pdftex.def)             Requested size: 226.48395pt x 182.32867pt.
+
+<../graphics/png/orig/ecox-1.png, id=3679, 4842.09pt x 2546.51375pt>
+File: ../graphics/png/orig/ecox-1.png Graphic file (type png)
+
+<use ../graphics/png/orig/ecox-1.png>
+Package pdftex.def Info: ../graphics/png/orig/ecox-1.png used on input line 370
+.
+(pdftex.def)             Requested size: 452.9679pt x 238.19109pt.
+ [23 <../graphics/png/orig/task-pool.png>] [24 <../graphics/png/orig/gcylc-grap
+h-and-dot-views.png (PNG copy)> <../graphics/png/orig/gcylc-text-view.png (PNG 
+copy)>] [25 <../graphics/png/orig/gscan.png (PNG copy)> <../graphics/png/orig/e
+cox-1.png>]
+LaTeX Font Info:    Try loading font information for TS1+lmr on input line 397.
+
+
+(/usr/share/texlive/texmf-dist/tex/latex/lm/ts1lmr.fd
+File: ts1lmr.fd 2009/10/30 v1.6 Font defs for Latin Modern
+) [26
+
+] [27] [28]
+Overfull \hbox (81.6732pt too wide) in paragraph at lines 590--595
+[]\T1/lmr/m/n/10.95 Your site ad-min-is-tra-tor may cus-tomise the en-vi-ron-me
+nt for all task jobs by adding a [][][][][][][][][][][][][][][][][][][][][][][]
+[][][][][][][][][]
+ []
+
+[29] [30] (../../../../etc/global.rc.eg) [31] [32] [33]
+(../../../../etc/examples/tutorial/oneoff/basic/suite.rc)
+(../../../../etc/examples/tutorial/oneoff/minimal/suite.rc) [34]
+Overfull \hbox (142.38672pt too wide) in paragraph at lines 972--973
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+[35] [36] [37]
+Overfull \hbox (5.75159pt too wide) in paragraph at lines 1205--1207
+[]\T1/lmr/m/n/10.95 For more on en-vi-ron-ment vari-ables sup-plied to tasks, s
+uch as [][][][][][][], see [][]9.4.7[][]. 
+ []
+
+
+<../graphics/png/orig/cylc-review-screenshot.png, id=4001, 1242.6425pt x 301.12
+5pt>
+File: ../graphics/png/orig/cylc-review-screenshot.png Graphic file (type png)
+ <use ../graphics/png/orig/cylc-review-screenshot.png>
+Package pdftex.def Info: ../graphics/png/orig/cylc-review-screenshot.png used o
+n input line 1217.
+(pdftex.def)             Requested size: 226.48395pt x 54.88019pt.
+ [38 <../graphics/png/orig/cylc-review-screenshot.png>]
+Overfull \hbox (18.91423pt too wide) in paragraph at lines 1257--1262
+\T1/lmr/m/n/10.95 will need to set up an Apache mod-ule con-fig-u-ra-tion file 
+(typ-i-cally in [][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+])
+ []
+
+(/usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
+File: lstlang1.sty 2015/06/04 1.6 listings language file
+)
+(/usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
+File: lstlang1.sty 2015/06/04 1.6 listings language file
+) [39]
+Overfull \hbox (88.83589pt too wide) in paragraph at lines 1358--1362
+[]\T1/lmr/m/n/10.95 Finally, if the disk space of the suite host is lim-ited, y
+ou may want to set [][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+[][][][][][].
+ []
+
+[40]
+Overfull \hbox (34.65588pt too wide) in paragraph at lines 1437--1438
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+
+Overfull \hbox (45.99597pt too wide) in paragraph at lines 1449--1450
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+[41] (../../../../etc/examples/tutorial/oneoff/inherit/suite.rc) [42]
+(../../../../etc/examples/tutorial/oneoff/ftrigger1/suite.rc) [43]
+Overfull \hbox (48.48pt too wide) in paragraph at lines 1635--1639
+\T1/lmr/m/n/10.95 You can style de-pen-dency graphs with an op-tional [][][][][
+][][][][][][][][] sec-tion, as shown in [][][][][][][][][][][][][][][]:
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1635--1639
+
+ []
+
+
+<../graphics/png/orig/tut-hello-multi-1.png, id=4197, 195.73125pt x 338.26375pt
+>
+File: ../graphics/png/orig/tut-hello-multi-1.png Graphic file (type png)
+ <use ../graphics/png/orig/tut-hello-multi-1.png>
+Package pdftex.def Info: ../graphics/png/orig/tut-hello-multi-1.png used on inp
+ut line 1658.
+(pdftex.def)             Requested size: 116.39731pt x 201.1541pt.
+
+<../graphics/png/orig/tut-hello-multi-2.png, id=4198, 292.09125pt x 324.21124pt
+>
+File: ../graphics/png/orig/tut-hello-multi-2.png Graphic file (type png)
+ <use ../graphics/png/orig/tut-hello-multi-2.png>
+Package pdftex.def Info: ../graphics/png/orig/tut-hello-multi-2.png used on inp
+ut line 1660.
+(pdftex.def)             Requested size: 181.2284pt x 201.1541pt.
+
+<../graphics/png/orig/tut-hello-multi-3.png, id=4199, 464.73625pt x 253.94875pt
+>
+File: ../graphics/png/orig/tut-hello-multi-3.png Graphic file (type png)
+ <use ../graphics/png/orig/tut-hello-multi-3.png>
+Package pdftex.def Info: ../graphics/png/orig/tut-hello-multi-3.png used on inp
+ut line 1662.
+(pdftex.def)             Requested size: 368.13039pt x 201.1541pt.
+ [44] [45 <../graphics/png/orig/tut-hello-multi-1.png (PNG copy)> <../graphics/
+png/orig/tut-hello-multi-2.png (PNG copy)> <../graphics/png/orig/tut-hello-mult
+i-3.png (PNG copy)>]
+(../../../../etc/examples/tutorial/oneoff/external/bin/hello.sh)
+(../../../../etc/examples/tutorial/oneoff/external/suite.rc)
+(../../../../etc/examples/tutorial/cycling/one/suite.rc [46])
+<../graphics/png/orig/tut-one.png, id=4268, 516.93124pt x 217.81375pt>
+File: ../graphics/png/orig/tut-one.png Graphic file (type png)
+
+<use ../graphics/png/orig/tut-one.png>
+Package pdftex.def Info: ../graphics/png/orig/tut-one.png used on input line 17
+38.
+(pdftex.def)             Requested size: 226.48395pt x 95.42953pt.
+
+Overfull \hbox (2.57724pt too wide) in paragraph at lines 1757--1771
+[][][][][][][][][][][][][] \T1/lmr/m/n/10.95 could be writ-ten as [][][][][][][
+][][], which is short for [][][][][][][][][][][][][][][][][][][][][][][][][]
+ []
+
+[47 <../graphics/png/orig/tut-one.png>]
+<../graphics/png/orig/tut-two.png, id=4300, 428.60126pt x 437.635pt>
+File: ../graphics/png/orig/tut-two.png Graphic file (type png)
+
+<use ../graphics/png/orig/tut-two.png>
+Package pdftex.def Info: ../graphics/png/orig/tut-two.png used on input line 18
+12.
+(pdftex.def)             Requested size: 226.48395pt x 231.25763pt.
+ [48 <../graphics/png/orig/tut-two.png>]
+<../graphics/png/orig/tut-three.png, id=4313, 377.41pt x 437.635pt>
+File: ../graphics/png/orig/tut-three.png Graphic file (type png)
+
+<use ../graphics/png/orig/tut-three.png>
+Package pdftex.def Info: ../graphics/png/orig/tut-three.png used on input line 
+1902.
+(pdftex.def)             Requested size: 226.48395pt x 262.6231pt.
+ [49]
+(../../../../etc/examples/tutorial/cycling/integer/suite.rc)
+<../graphics/png/orig/tut-cyc-int.png, id=4337, 727.71875pt x 470.75874pt>
+File: ../graphics/png/orig/tut-cyc-int.png Graphic file (type png)
+
+<use ../graphics/png/orig/tut-cyc-int.png>
+Package pdftex.def Info: ../graphics/png/orig/tut-cyc-int.png used on input lin
+e 1931.
+(pdftex.def)             Requested size: 294.42636pt x 190.46948pt.
+ [50 <../graphics/png/orig/tut-three.png>] (../../../../etc/examples/tutorial/o
+neoff/jinja2/suite.rc) [51 <../graphics/png/orig/tut-cyc-int.png>]
+(../../../../etc/examples/tutorial/oneoff/retry/suite.rc) [52] [53]
+Overfull \hbox (4.73763pt too wide) in paragraph at lines 2161--2165
+[]\T1/lmr/m/n/10.95 Portable ac-cess to files here, for run-ning tasks, is pro-
+vided through [][][][][][][]
+ []
+
+[54] [55] [56]
+Overfull \hbox (45.67816pt too wide) in paragraph at lines 2376--2377
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][] 
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2379--2380
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+ []
+
+<../graphics/png/orig/dep-eg-1.png, id=4530, 605.26125pt x 437.635pt>
+File: ../graphics/png/orig/dep-eg-1.png Graphic file (type png)
+
+<use ../graphics/png/orig/dep-eg-1.png>
+Package pdftex.def Info: ../graphics/png/orig/dep-eg-1.png used on input line 2
+394.
+(pdftex.def)             Requested size: 226.48395pt x 163.75879pt.
+
+Overfull \hbox (2.43333pt too wide) in paragraph at lines 2365--2397
+[][]  [] 
+ []
+
+[57 <../graphics/png/orig/dep-eg-1.png>] [58]
+Overfull \hbox (5.98785pt too wide) in paragraph at lines 2562--2563
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][] 
+ []
+
+<../graphics/png/orig/test1.png, id=4602, 179.67125pt x 408.52625pt>
+File: ../graphics/png/orig/test1.png Graphic file (type png)
+
+<use ../graphics/png/orig/test1.png>
+Package pdftex.def Info: ../graphics/png/orig/test1.png used on input line 2569
+.
+(pdftex.def)             Requested size: 56.62099pt x 128.74255pt.
+
+Overfull \hbox (2.43333pt too wide) in paragraph at lines 2555--2572
+[][]  [] 
+ []
+
+
+Overfull \hbox (28.66803pt too wide) in paragraph at lines 2591--2592
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][] 
+ []
+
+<../graphics/png/orig/test2.png, id=4604, 939.51pt x 408.52625pt>
+File: ../graphics/png/orig/test2.png Graphic file (type png)
+
+<use ../graphics/png/orig/test2.png>
+Package pdftex.def Info: ../graphics/png/orig/test2.png used on input line 2598
+.
+(pdftex.def)             Requested size: 226.48395pt x 98.47841pt.
+
+Overfull \hbox (2.43333pt too wide) in paragraph at lines 2582--2601
+[][]  [] 
+ []
+
+[59] [60 <../graphics/png/orig/test1.png> <../graphics/png/orig/test2.png>]
+[61]
+Overfull \hbox (32.27002pt too wide) in paragraph at lines 2753--2756
+\T1/lmr/m/n/10.95 Date-times can be ex-cluded from a re-cur-rence by an ex-cla-
+ma-tion mark for ex-am-ple [][][][][][][][][][][][][][][][][][][][]
+ []
+
+[62]
+Overfull \hbox (6.30566pt too wide) in paragraph at lines 2827--2828
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+[63] <../graphics/png/orig/test4.png, id=4786, 693.59125pt x 547.04375pt>
+File: ../graphics/png/orig/test4.png Graphic file (type png)
+
+<use ../graphics/png/orig/test4.png>
+Package pdftex.def Info: ../graphics/png/orig/test4.png used on input line 2998
+.
+(pdftex.def)             Requested size: 226.48395pt x 178.63017pt.
+
+Overfull \hbox (2.43333pt too wide) in paragraph at lines 2963--3001
+[][]  [] 
+ []
+
+<../graphics/png/orig/test5.png, id=4787, 428.60126pt x 657.45625pt>
+File: ../graphics/png/orig/test5.png Graphic file (type png)
+
+<use ../graphics/png/orig/test5.png>
+Package pdftex.def Info: ../graphics/png/orig/test5.png used on input line 3037
+.
+(pdftex.def)             Requested size: 226.48395pt x 347.41687pt.
+
+Overfull \hbox (2.43333pt too wide) in paragraph at lines 3009--3041
+[]$[]$  $[]$ 
+ []
+
+[64] [65 <../graphics/png/orig/test4.png>] [66 <../graphics/png/orig/test5.png>
+] <../graphics/png/orig/satellite.png, id=4907, 368.37625pt x 808.01875pt>
+File: ../graphics/png/orig/satellite.png Graphic file (type png)
+
+<use ../graphics/png/orig/satellite.png>
+Package pdftex.def Info: ../graphics/png/orig/satellite.png used on input line 
+3144.
+(pdftex.def)             Requested size: 181.18439pt x 397.41219pt.
+ [67] [68 <../graphics/png/orig/satellite.png>] [69] (../../../../etc/examples/
+message-triggers/suite.rc) [70]
+<../graphics/png/orig/conditional-triggers.png, id=5015, 372.39125pt x 389.455p
+t>
+File: ../graphics/png/orig/conditional-triggers.png Graphic file (type png)
+ <use ../graphics/png/orig/conditional-triggers.png>
+Package pdftex.def Info: ../graphics/png/orig/conditional-triggers.png used on 
+input line 3361.
+(pdftex.def)             Requested size: 113.24197pt x 118.43001pt.
+
+Overfull \hbox (2.43333pt too wide) in paragraph at lines 3344--3365
+[][]  [] 
+ []
+
+
+Overfull \hbox (5.98785pt too wide) in paragraph at lines 3390--3391
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
+
+ []
+
+
+Overfull \hbox (5.98785pt too wide) in paragraph at lines 3391--3392
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][] 
+ []
+
+<../graphics/png/orig/suicide.png, id=5017, 252.945pt x 488.82625pt>
+File: ../graphics/png/orig/suicide.png Graphic file (type png)
+
+<use ../graphics/png/orig/suicide.png>
+Package pdftex.def Info: ../graphics/png/orig/suicide.png used on input line 34
+13.
+(pdftex.def)             Requested size: 113.24197pt x 218.84348pt.
+
+Overfull \hbox (2.43333pt too wide) in paragraph at lines 3383--3417
+[][]  [] 
+ []
+
+[71] [72 <../graphics/png/orig/conditional-triggers.png> <../graphics/png/orig/
+suicide.png>] [73] [74] [75] [76] [77] [78] [79]
+<../graphics/png/orig/ghost-node-example.png, id=5337, 1535.7375pt x 711.65875p
+t>
+File: ../graphics/png/orig/ghost-node-example.png Graphic file (type png)
+ <use ../graphics/png/orig/ghost-node-example.png>
+Package pdftex.def Info: ../graphics/png/orig/ghost-node-example.png used on in
+put line 4012.
+(pdftex.def)             Requested size: 271.7835pt x 125.94296pt.
+ [80 <../graphics/png/orig/ghost-node-example.png>] (../../../../etc/examples/i
+nherit/single/one/suite.rc
+[81]) (../../../../etc/examples/inherit/multi/one/suite.rc [82]) [83] [84]
+Overfull \hbox (11.97571pt too wide) in paragraph at lines 4266--4267
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][] 
+ []
+
+
+Overfull \hbox (11.97571pt too wide) in paragraph at lines 4271--4272
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][] 
+ []
+
+
+Overfull \hbox (17.64575pt too wide) in paragraph at lines 4290--4291
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+[85]
+Overfull \hbox (34.65588pt too wide) in paragraph at lines 4292--4293
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+
+Overfull \hbox (11.97571pt too wide) in paragraph at lines 4297--4298
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+[86] [87]
+<../graphics/png/orig/inherit-2.png, id=5638, 384.6872pt x 356.83313pt>
+File: ../graphics/png/orig/inherit-2.png Graphic file (type png)
+
+<use ../graphics/png/orig/inherit-2.png>
+Package pdftex.def Info: ../graphics/png/orig/inherit-2.png used on input line 
+4462.
+(pdftex.def)             Requested size: 135.89174pt x 126.0532pt.
+
+<../graphics/png/orig/inherit-3.png, id=5639, 384.6872pt x 355.3275pt>
+File: ../graphics/png/orig/inherit-3.png Graphic file (type png)
+
+<use ../graphics/png/orig/inherit-3.png>
+Package pdftex.def Info: ../graphics/png/orig/inherit-3.png used on input line 
+4468.
+(pdftex.def)             Requested size: 135.89174pt x 125.52133pt.
+
+<../graphics/png/orig/inherit-4.png, id=5640, 384.6872pt x 355.3275pt>
+File: ../graphics/png/orig/inherit-4.png Graphic file (type png)
+
+<use ../graphics/png/orig/inherit-4.png>
+Package pdftex.def Info: ../graphics/png/orig/inherit-4.png used on input line 
+4474.
+(pdftex.def)             Requested size: 135.89174pt x 125.52133pt.
+
+<../graphics/png/orig/inherit-5.png, id=5641, 381.67593pt x 354.57469pt>
+File: ../graphics/png/orig/inherit-5.png Graphic file (type png)
+
+<use ../graphics/png/orig/inherit-5.png>
+Package pdftex.def Info: ../graphics/png/orig/inherit-5.png used on input line 
+4480.
+(pdftex.def)             Requested size: 135.89174pt x 126.24008pt.
+
+<../graphics/png/orig/inherit-6.png, id=5642, 383.93437pt x 356.0803pt>
+File: ../graphics/png/orig/inherit-6.png Graphic file (type png)
+
+<use ../graphics/png/orig/inherit-6.png>
+Package pdftex.def Info: ../graphics/png/orig/inherit-6.png used on input line 
+4486.
+(pdftex.def)             Requested size: 135.89174pt x 126.03177pt.
+
+<../graphics/png/orig/inherit-7.png, id=5643, 384.6872pt x 354.57469pt>
+File: ../graphics/png/orig/inherit-7.png Graphic file (type png)
+
+<use ../graphics/png/orig/inherit-7.png>
+Package pdftex.def Info: ../graphics/png/orig/inherit-7.png used on input line 
+4492.
+(pdftex.def)             Requested size: 135.89174pt x 125.2554pt.
+ [88 <../graphics/png/orig/inherit-2.png> <../graphics/png/orig/inherit-3.png> 
+<../graphics/png/orig/inherit-4.png> <../graphics/png/orig/inherit-5.png> <../g
+raphics/png/orig/inherit-6.png> <../graphics/png/orig/inherit-7.png>] [89]
+<../graphics/png/orig/params1.png, id=5693, 864.22874pt x 317.185pt>
+File: ../graphics/png/orig/params1.png Graphic file (type png)
+
+<use ../graphics/png/orig/params1.png>
+Package pdftex.def Info: ../graphics/png/orig/params1.png used on input line 46
+49.
+(pdftex.def)             Requested size: 284.52756pt x 104.42453pt.
+ [90] [91 <../graphics/png/orig/params1.png>] [92] [93] [94]
+Overfull \hbox (17.64575pt too wide) in paragraph at lines 4940--4941
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+[][][][][][] 
+ []
+
+<../graphics/png/orig/eg2-static.png, id=5898, 1482.53876pt x 241.90375pt>
+File: ../graphics/png/orig/eg2-static.png Graphic file (type png)
+
+<use ../graphics/png/orig/eg2-static.png>
+Package pdftex.def Info: ../graphics/png/orig/eg2-static.png used on input line
+ 4978.
+(pdftex.def)             Requested size: 455.24408pt x 74.28069pt.
+
+Overfull \hbox (2.27618pt too wide) in paragraph at lines 4978--4979
+ [] 
+ []
+
+<../graphics/png/orig/eg2-dynamic.png, id=5899, 650.43pt x 241.90375pt>
+File: ../graphics/png/orig/eg2-dynamic.png Graphic file (type png)
+
+<use ../graphics/png/orig/eg2-dynamic.png>
+Package pdftex.def Info: ../graphics/png/orig/eg2-dynamic.png used on input lin
+e 4981.
+(pdftex.def)             Requested size: 284.52756pt x 105.82155pt.
+ [95] [96 <../graphics/png/orig/eg2-static.png (PNG copy)> <../graphics/png/ori
+g/eg2-dynamic.png (PNG copy)>]
+<../graphics/png/orig/jinja2-ensemble-graph.png, id=5965, 500.87125pt x 389.455
+pt>
+File: ../graphics/png/orig/jinja2-ensemble-graph.png Graphic file (type png)
+ <use ../graphics/png/orig/jinja2-ensemble-graph.png>
+Package pdftex.def Info: ../graphics/png/orig/jinja2-ensemble-graph.png used on
+ input line 5092.
+(pdftex.def)             Requested size: 284.52756pt x 221.24287pt.
+ [97 <../graphics/png/orig/jinja2-ensemble-graph.png>]
+(../../../../etc/examples/jinja2/cities/suite.rc
+Overfull \hbox (40.32593pt too wide) in paragraph at lines 9--10
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+[][][][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+
+Overfull \hbox (51.66602pt too wide) in paragraph at lines 28--29
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+[][][][][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+
+Overfull \hbox (45.99597pt too wide) in paragraph at lines 40--42
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+[98])
+<../graphics/png/orig/jinja2-suite-graph.png, id=6045, 1865.97125pt x 601.24625
+pt>
+File: ../graphics/png/orig/jinja2-suite-graph.png Graphic file (type png)
+ <use ../graphics/png/orig/jinja2-suite-graph.png>
+Package pdftex.def Info: ../graphics/png/orig/jinja2-suite-graph.png used on in
+put line 5143.
+(pdftex.def)             Requested size: 455.24408pt x 146.68735pt.
+
+Overfull \hbox (2.27618pt too wide) in paragraph at lines 5143--5144
+ [] 
+ []
+
+[99 <../graphics/png/orig/jinja2-suite-graph.png>] [100] [101] [102] [103]
+(/usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
+File: lstlang1.sty 2015/06/04 1.6 listings language file
+)
+(../../../../etc/examples/empy/cities/suite.rc [104]) [105] [106] [107]
+[108] [109] [110] [111] [112] [113] [114]
+Overfull \hbox (45.11311pt too wide) in paragraph at lines 6245--6252
+[]\T1/lmr/m/n/10.95 If you spec-ify an [][][][][][][][][][][] and not an [][][]
+[][][][][][][][][][][][] then the [][][][][][][][][][][][][][][][][][][]
+ []
+
+[115] [116] [117]
+(../../../../etc/dev-suites/xtrigger/suite_state/upstream/suite.rc) [118]
+(../../../../etc/dev-suites/xtrigger/suite_state/downstream/suite.rc) [119]
+[120] [121] [122]
+Overfull \hbox (2.08978pt too wide) in paragraph at lines 6765--6767
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][] \T1/lmr/m/n/10.95 is a work-ing ex-am-ple of a sim-u-lated satel-
+ []
+
+[123] [124] [125] [126] [127] [128] [129] [130] [131] [132] [133]
+(../../../../etc/examples/queues/suite.rc [134])
+Overfull \hbox (6.30566pt too wide) in paragraph at lines 7537--7538
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+
+Overfull \hbox (11.97571pt too wide) in paragraph at lines 7540--7541
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][] 
+ []
+
+[135] [136]
+Overfull \hbox (6.30566pt too wide) in paragraph at lines 7649--7650
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+[137] [138] [139] [140] [141] [142] [143] [144] [145] [146] [147]
+(./suiterc.tex [148] [149] [150] [151] [152] [153] [154] [155] [156] [157]
+[158] [159] [160] [161] [162] [163] [164] [165] [166] [167] [168] [169]
+[170] [171] [172]
+Overfull \hbox (2.71599pt too wide) in paragraph at lines 1702--1705
+\T1/lmr/m/n/10.95 doc-u-men-ta-tion: [][]$\T1/lmtt/m/n/10.95 https : / / docs .
+ python . org / 2 / library / stdtypes . html # string-[]formatting$[][]\T1/lmr
+/m/n/10.95 . 
+ []
+
+[173] [174] [175] [176]
+Overfull \hbox (40.73956pt too wide) in paragraph at lines 1942--1942
+[]\T1/lmr/b/n/10.95 [runtime] \TS1/lmr/b/n/10.95 ^^Y\T1/lmr/b/n/10.95 [[__NAME_
+_]] \TS1/lmr/b/n/10.95 ^^Y\T1/lmr/b/n/10.95 [[[parameter en-vi-ron-ment tem-pla
+tes]]] \TS1/lmr/b/n/10.95 ^^Y\T1/lmr/b/n/10.95 __VARIABLE__ 
+ []
+
+[177] [178] [179] [180]
+Overfull \hbox (10.21548pt too wide) in paragraph at lines 2167--2171
+\T1/lmr/m/n/10.95 men-ta-tion of node shapes and so on can be found at [][]$\T1
+/lmtt/m/n/10.95 http : / / www . graphviz . org / documentation/$[][]\T1/lmr/m/
+n/10.95 . 
+ []
+
+[181] [182]) [183] (./siterc.tex [184] [185] [186] [187] [188] [189] [190]
+[191] [192] [193]
+Overfull \hbox (2.88715pt too wide) in paragraph at lines 641--644
+\T1/lmr/m/n/10.95 placed with the cylc batch sys-tem han-dler name that rep-re-
+sents the batch sys-tem (see [][]A.5.1.12.1[][]). 
+ []
+
+[194] [195] [196]
+Overfull \hbox (7.1384pt too wide) in paragraph at lines 881--889
+[]\T1/lmr/m/it/10.95 type: \T1/lmr/m/n/10.95 string in for-mat [][][][][][][][]
+[][][][][][][][][][][][][][][][][][][][][][][][][][] (etc), where each [][][]
+ []
+
+[197] [198] [199] [200] [201]) [202] (./gcylcrc.tex [203] [204] [205] [206])
+[207] (./gscanrc.tex [208]) [209] (./job-host-1.tex [210]) (./job-host-2.tex
+[211] [212] [213] [214]
+Overfull \hbox (3.03465pt too wide) in paragraph at lines 250--253
+[]\T1/lmr/m/n/10.95 see if a suite is run-ning on an-other host with a shared f
+ilesys-tem - see [][][]
+ []
+
+) [215] (./commands.tex [216] [217] [218] [219] [220] [221] [222] [223]
+[224] [225] [226] [227] [228] [229] [230] [231] [232] [233] [234] [235]
+[236] [237] [238] [239] [240] [241] [242] [243] [244] [245] [246] [247]
+[248] [249] [250] [251] [252] [253] [254] [255] [256] [257] [258] [259]
+[260] [261] [262] [263] [264] [265] [266] [267] [268] [269] [270] [271])
+(../../../../README.md
+Missing character: There is no œ in font ec-lmtt9!
+ [272]) (../../../../INSTALL.md [273]) [274] [275]
+[276] [277] (./gpl-3.0.tex [278] [279] [280] [281] [282] [283] [284] [285]
+[286] [287] [288]))
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 212.
+ [289]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 212.
+ (./cug-pdf.aux)
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 212.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 212.
+Package rerunfilecheck Info: File `cug-pdf.out' has not changed.
+(rerunfilecheck)             Checksum: 6D67C2EB3C614089C9E8727BB0970FC6;53600.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 212.
+ ) 
+Here is how much of TeX's memory you used:
+ 20595 strings out of 494941
+ 314921 string characters out of 6180917
+ 545678 words of memory out of 5000000
+ 15769 multiletter control sequences out of 15000+600000
+ 94964 words of font info for 63 fonts, out of 8000000 for 9000
+ 14 hyphenation exceptions out of 8191
+ 32i,16n,45p,570b,1735s stack positions out of 5000i,500n,10000p,200000b,80000s
+{/usr/share/texlive/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}{/usr/share/texli
+ve/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc}{/usr/share/texlive/texmf-dist/font
+s/enc/dvips/lm/lm-rm.enc}{/usr/share/texlive/texmf-dist/fonts/enc/dvips/lm/lm-m
+athit.enc}</usr/share/texlive/texmf-dist/fonts/type1/public/lm/lmb10.pfb></usr/
+share/texlive/texmf-dist/fonts/type1/public/lm/lmcsc10.pfb></usr/share/texlive/
+texmf-dist/fonts/type1/public/lm/lmmi10.pfb></usr/share/texlive/texmf-dist/font
+s/type1/public/lm/lmmi8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/l
+m/lmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/lm/lmr12.pfb></us
+r/share/texlive/texmf-dist/fonts/type1/public/lm/lmr17.pfb></usr/share/texlive/
+texmf-dist/fonts/type1/public/lm/lmr6.pfb></usr/share/texlive/texmf-dist/fonts/
+type1/public/lm/lmr8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/lm/l
+mr9.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/lm/lmri10.pfb></usr/s
+hare/texlive/texmf-dist/fonts/type1/public/lm/lmri8.pfb></usr/share/texlive/tex
+mf-dist/fonts/type1/public/lm/lmri9.pfb></usr/share/texlive/texmf-dist/fonts/ty
+pe1/public/lm/lmtk10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/lm/l
+mtt10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/lm/lmtt8.pfb></usr/
+share/texlive/texmf-dist/fonts/type1/public/lm/lmtt9.pfb></usr/share/texlive/te
+xmf-dist/fonts/type1/public/lm/lmtti10.pfb>
+Output written on cug-pdf.pdf (291 pages, 3819928 bytes).
+PDF statistics:
+ 13719 PDF objects out of 15390 (max. 8388607)
+ 13204 compressed objects within 133 object streams
+ 7805 named destinations out of 8907 (max. 500000)
+ 5696 words of extra memory for PDF output out of 10000 (max. 10000000)
+
