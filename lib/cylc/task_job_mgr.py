@@ -497,14 +497,7 @@ class TaskJobManager(object):
         out = ctx.out
         if not out:
             out = ""
-            # Something is very wrong here
-            # Fallback to use "job_log_dirs" list to report the problem
-            job_log_dirs = ctx.cmd_kwargs.get("job_log_dirs", [])
-            for job_log_dir in job_log_dirs:
-                point, name, submit_num = job_log_dir.split(os.sep, 2)
-                itask = tasks[(point, name, submit_num)]
-                out += (self.batch_sys_mgr.OUT_PREFIX_SUMMARY +
-                        "|".join([ctx.timestamp, job_log_dir, "1"]) + "\n")
+        bad_tasks = dict(tasks)
         for line in out.splitlines(True):
             for prefix, callback in handlers:
                 if line.startswith(prefix):
@@ -512,12 +505,20 @@ class TaskJobManager(object):
                     try:
                         path = line.split("|", 2)[1]  # timestamp, path, status
                         point, name, submit_num = path.split(os.sep, 2)
+                        if prefix == self.batch_sys_mgr.OUT_PREFIX_SUMMARY:
+                            del bad_tasks[(point, name, submit_num)]
                         itask = tasks[(point, name, submit_num)]
                         callback(suite, itask, ctx, line)
                     except (LookupError, ValueError) as exc:
                         LOG.warning(
                             'Unhandled %s output: %s', ctx.cmd_key, line)
                         LOG.exception(exc)
+        # Task jobs that are in the original command but did not get a status
+        # in the output. Handle as failures.
+        for key, itask in sorted(bad_tasks.items()):
+            line = (
+                "|".join([ctx.timestamp, os.sep.join(key), "1"]) + "\n")
+            summary_callback(suite, itask, ctx, line)
 
     def _poll_task_jobs_callback(self, ctx, suite, itasks):
         """Callback when poll tasks command exits."""
@@ -537,8 +538,13 @@ class TaskJobManager(object):
 
         # See cylc.batch_sys_manager.JobPollContext
         try:
-            job_log_dir, context = line.split('|')[1:4]
+            job_log_dir, context = line.split('|')[1:3]
             items = json.loads(context)
+            jp_ctx = JobPollContext(job_log_dir, **items)
+        except TypeError:
+            itask.set_summary_message(self.POLL_FAIL)
+            ctx.cmd = cmd_ctx.cmd  # print original command on failure
+            return
         except ValueError:
             # back compat for cylc 7.7.1 and previous
             try:
@@ -553,8 +559,6 @@ class TaskJobManager(object):
                 return
         finally:
             log_task_job_activity(ctx, suite, itask.point, itask.tdef.name)
-
-        jp_ctx = JobPollContext(job_log_dir, **items)
 
         flag = self.task_events_mgr.POLLED_FLAG
         if jp_ctx.run_status == 1 and jp_ctx.run_signal in ["ERR", "EXIT"]:
