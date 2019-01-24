@@ -58,12 +58,12 @@ done
 
 # Task pool in database contains the correct states
 # Use LANG=C sort to put # on top
-cylc ls-checkpoints "${SUITE_NAME}" '0' | sed -n '/^# TASK POOL/,$p' \
-    | env LANG=C sort \
-    >'cylc-ls-checkpoints.out'
+cylc ls-checkpoints "${SUITE_NAME}" '0' \
+    | sed -n '/^# TASK POOL/,$p' \
+    | sed '/^# TASK POOL/d' \
+    | sort >'cylc-ls-checkpoints.out'
 
 cmp_ok 'cylc-ls-checkpoints.out' <<'__OUT__'
-# TASK POOL (CYCLE|NAME|SPAWNED|STATUS|HOLD_SWAP)
 1|h0|1|succeeded|
 1|h1|1|succeeded|
 1|h2|1|succeeded|
