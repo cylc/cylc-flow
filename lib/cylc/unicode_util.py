@@ -20,7 +20,7 @@
 
 def utf8_enforce(data):
     """Recursively enforce UTF-8 encoding for Unicode strings."""
-    if isinstance(data, unicode):
+    if isinstance(data, str):
         return data.encode('utf-8')
     if isinstance(data, dict):
         new_dict = {}

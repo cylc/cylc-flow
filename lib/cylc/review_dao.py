@@ -383,7 +383,7 @@ class CylcReviewDAO(object):
                 if seq_key not in entry["seq_logs_indexes"]:
                     entry["seq_logs_indexes"][seq_key] = {}
                 entry["seq_logs_indexes"][seq_key][index_str] = filename
-            for seq_key, indexes in entry["seq_logs_indexes"].items():
+            for seq_key, indexes in list(entry["seq_logs_indexes"].items()):
                 # Only one item, not a sequence
                 if len(indexes) <= 1:
                     entry["seq_logs_indexes"].pop(seq_key)

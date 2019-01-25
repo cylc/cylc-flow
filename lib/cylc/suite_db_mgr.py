@@ -147,7 +147,7 @@ class SuiteDatabaseManager(object):
                 # Just in case the path is a directory!
                 rmtree(self.pri_path, ignore_errors=True)
         self.pri_dao = self.get_pri_dao()
-        os.chmod(self.pri_path, 0600)
+        os.chmod(self.pri_path, 0o600)
         self.pub_dao = CylcSuiteDAO(self.pub_path, is_public=True)
         self.copy_pri_to_pub()
         pub_db_path_symlink = os.path.join(

@@ -195,7 +195,7 @@ class IntegerInterval(IntervalBase):
             return IntegerInterval(string)
 
     def __init__(self, value):
-        if (not isinstance(value, basestring) or
+        if (not isinstance(value, str) or
                 not REC_INTERVAL.search(value)):
             raise IntervalParsingError("IntegerInterval", repr(value))
         super(IntegerInterval, self).__init__(value)
@@ -226,7 +226,7 @@ class IntegerInterval(IntervalBase):
         # Return an interval with all properties multiplied by factor.
         return IntegerInterval.from_integer(int(self) * factor)
 
-    def __nonzero__(self):
+    def __bool__(self):
         # Return True if the interval has any non-zero properties.
         return bool(int(self))
 

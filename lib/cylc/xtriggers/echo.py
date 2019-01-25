@@ -25,6 +25,6 @@ True (success) and some results dict to pass on to dependent tasks.
 
 
 def echo(*args, **kwargs):
-    print "echo: ARGS:", args
-    print "echo: KWARGS:", kwargs
+    print("echo: ARGS:", args)
+    print("echo: KWARGS:", kwargs)
     return (False, {})

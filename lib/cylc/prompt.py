@@ -33,17 +33,9 @@ def prompt(question, force=False, gui=False, no_force=False, no_abort=False,
             not no_force):
         return True
     if gui:
-        import gtk
-        dialog = gtk.MessageDialog(
-            None, gtk.DIALOG_DESTROY_WITH_PARENT,
-            gtk.MESSAGE_QUESTION, gtk.BUTTONS_YES_NO,
-            question
-        )
-        dialog.set_keep_above(keep_above)
-        gui_response = dialog.run()
-        response_no = (gui_response != gtk.RESPONSE_YES)
+        raise NotImplementedError
     else:
-        cli_response = raw_input('%s (y/n)? ' % question)
+        cli_response = input('%s (y/n)? ' % question)
         response_no = (cli_response not in ['y', 'Y'])
     if response_no:
         if no_abort:

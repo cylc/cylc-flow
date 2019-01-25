@@ -124,7 +124,7 @@ SPEC = {
         'hold after point': [VDR.V_CYCLE_POINT],
         'cycling mode': (
             [VDR.V_STRING, Calendar.MODE_GREGORIAN] +
-            Calendar.MODES.keys() + ["integer"]),
+            list(Calendar.MODES) + ["integer"]),
         'runahead limit': [VDR.V_STRING],
         'max active cycle points': [VDR.V_INTEGER, 3],
         'spawn to max active cycle points': [VDR.V_BOOLEAN],

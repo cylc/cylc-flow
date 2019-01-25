@@ -779,7 +779,7 @@ class TaskJobManager(object):
                 suite, itask.point, itask.tdef.name, itask.submit_num)
             self.job_file_writer.write(local_job_file_path, job_conf,
                                        check_syntax=check_syntax)
-        except StandardError as exc:
+        except Exception as exc:
             # Could be a bad command template, IOError, etc
             self._prep_submit_task_job_error(
                 suite, itask, dry_run, '(prepare job file)', exc)

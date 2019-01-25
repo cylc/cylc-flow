@@ -87,17 +87,17 @@ def ws_cli(service_cls, service_docstr, *args, **kwargs):
             port = args[1]
         _ws_init(service_cls, port, opts.service_root_mode, *args, **kwargs)
     elif not status:
-        print "No %s service server running." % service_cls.TITLE
+        print("No %s service server running." % service_cls.TITLE)
     else:
         for key, value in sorted(status.items()):
-            print "%s=%s" % (key, value)
+            print("%s=%s" % (key, value))
         if (arg == "stop" and status.get("pid") and
-                (opts.non_interactive or raw_input(
+                (opts.non_interactive or input(
                  "Stop server via termination? y/n (default=n)") == "y")):
             try:
                 os.killpg(int(status["pid"]), signal.SIGTERM)
             except OSError:
-                print "Termination signal failed."
+                print("Termination signal failed.")
 
 
 def _ws_init(service_cls, port, service_root_mode, *args, **kwargs):

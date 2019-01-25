@@ -175,7 +175,7 @@ class HTTPServer(object):
             # Probably just the initial HTTPS handshake.
             return False
         status = cherrypy.response.status
-        if isinstance(status, basestring):
+        if isinstance(status, str):
             return cherrypy.response.status.split()[0] in ["401", "403"]
         return cherrypy.response.status in [401, 403]
 
@@ -822,7 +822,7 @@ class SuiteRuntimeService(object):
         On SyntaxError or ValueError, return default is default is not None.
         Otherwise, raise HTTPError 400.
         """
-        if isinstance(value, basestring):
+        if isinstance(value, str):
             try:
                 return ast.literal_eval(value)
             except (SyntaxError, ValueError):

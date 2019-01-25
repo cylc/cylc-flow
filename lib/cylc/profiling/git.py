@@ -52,14 +52,14 @@ def checkout(branch, delete_pyc=False):
     """Checkouts the git branch with the provided name."""
     try:
         cmd = ['git', 'checkout', '-q', branch]
-        print '$ ' + ' '.join(cmd)
+        print('$ ' + ' '.join(cmd))
         check_call(cmd, stdin=open(os.devnull))
     except CalledProcessError:
         raise GitCheckoutError()
     try:
         if delete_pyc:
             cmd = ['find', 'lib', '-name', r'\*.pyc', '-delete']
-            print '$ ' + ' '.join(cmd)
+            print('$ ' + ' '.join(cmd))
             check_call(
                 cmd, stdin=open(os.devnull), stdout=open(os.devnull, 'wb'))
     except CalledProcessError:

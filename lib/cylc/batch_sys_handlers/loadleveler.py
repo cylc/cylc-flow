@@ -55,7 +55,7 @@ class LoadlevelerHandler(object):
             directives["wall_clock_limit"] = "%d,%d" % (
                 job_conf["execution_time_limit"] + 60,
                 job_conf["execution_time_limit"])
-        for key, value in job_conf["directives"].items():
+        for key, value in list(job_conf["directives"].items()):
             directives[key] = value
         lines = []
         for key, value in directives.items():

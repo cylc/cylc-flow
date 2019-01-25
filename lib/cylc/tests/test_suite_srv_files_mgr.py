@@ -183,24 +183,24 @@ class TestSuiteSrvFilesManager(unittest.TestCase):
         mocked_os.path.join = os.path.join
         mocked_os.path.normpath = os.path.normpath
         mocked_os.path.dirname = os.path.dirname
-        mocked_mkdir_p.side_effect = lambda (x): True
-        mocked_os.path.abspath.side_effect = lambda (x): x
+        mocked_mkdir_p.side_effect = lambda x: True
+        mocked_os.path.abspath.side_effect = lambda x: x
 
         for reg, source, redirect, cwd, isabs, isfile, \
             suite_srv_dir, readlink, expected_symlink, \
             expected, e_expected, e_message \
                 in get_register_test_cases():
             mocked_os.getcwd.side_effect = lambda: cwd
-            mocked_os.path.isabs.side_effect = lambda (x): isabs
+            mocked_os.path.isabs.side_effect = lambda x: isabs
 
-            mocked_os.path.isfile = lambda (x): isfile
+            mocked_os.path.isfile = lambda x: isfile
             self.suite_srv_files_mgr.get_suite_srv_dir = mock.MagicMock(
                 return_value=suite_srv_dir
             )
             if readlink == OSError:
                 mocked_os.readlink.side_effect = readlink
             else:
-                mocked_os.readlink.side_effect = lambda (x): readlink
+                mocked_os.readlink.side_effect = lambda x: readlink
 
             if e_expected is None:
                 reg = self.suite_srv_files_mgr.register(reg, source, redirect)

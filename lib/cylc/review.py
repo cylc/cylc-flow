@@ -39,7 +39,7 @@ import tarfile
 from tempfile import NamedTemporaryFile
 from time import gmtime, strftime
 import traceback
-import urllib
+import urllib.request
 
 from cylc.hostuserutil import get_host
 from cylc.review_dao import CylcReviewDAO
@@ -506,7 +506,7 @@ class CylcReviewService(object):
                 mime = self.MIME_TEXT_PLAIN
             else:
                 mime = mimetypes.guess_type(
-                    urllib.pathname2url(path_in_tar))[0]
+                    urllib.request.pathname2url(path_in_tar))[0]
             handle.seek(0)
             if (mode == "download" or
                     f_size > view_size_max or
@@ -530,7 +530,8 @@ class CylcReviewService(object):
             if open(f_name).read(2) == "#!":
                 mime = self.MIME_TEXT_PLAIN
             else:
-                mime = mimetypes.guess_type(urllib.pathname2url(f_name))[0]
+                mime = mimetypes.guess_type(
+                    urllib.request.pathname2url(f_name))[0]
             if not mime:
                 mime = self.MIME_TEXT_PLAIN
             if (mode == "download" or
@@ -543,7 +544,7 @@ class CylcReviewService(object):
         try:
             if mode in [None, "text"]:
                 text = jinja2.escape(text)
-            lines = [unicode(line) for line in text.splitlines()]
+            lines = [str(line) for line in text.splitlines()]
         except UnicodeDecodeError:
             if path_in_tar:
                 handle.seek(0)
@@ -635,7 +636,7 @@ class CylcReviewService(object):
             # no search is being performed, client is requesting the whole
             # page
             if mode in [None, "text"]:
-                line_numbers = range(1, len(lines) + 1)
+                line_numbers = list(range(1, len(lines) + 1))
             else:
                 line_numbers = []
             lines = [[line] for line in lines]

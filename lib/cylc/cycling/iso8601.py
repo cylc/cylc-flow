@@ -233,7 +233,7 @@ class ISO8601Interval(IntervalBase):
         """Return an interval with v * factor for v in this one's values."""
         return ISO8601Interval(self._iso_interval_mul(self.value, factor))
 
-    def __nonzero__(self):
+    def __bool__(self):
         """Return whether this interval has any non-null values."""
         return self._iso_interval_nonzero(self.value)
 
@@ -811,7 +811,7 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
             SuiteSpecifics.DUMP_FORMAT = DATE_TIME_FORMAT + time_zone
     else:
         SuiteSpecifics.DUMP_FORMAT = custom_dump_format
-        if u"+X" not in custom_dump_format and num_expanded_year_digits:
+        if "+X" not in custom_dump_format and num_expanded_year_digits:
             raise IllegalValueError(
                 'cycle point format',
                 ('cylc', 'cycle point format'),

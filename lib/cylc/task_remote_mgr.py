@@ -142,7 +142,7 @@ class TaskRemoteMgr(object):
 
         This is normally called after the results are consumed.
         """
-        for key, value in self.remote_host_str_map.copy().items():
+        for key, value in list(self.remote_host_str_map.copy().items()):
             if value is not None:
                 del self.remote_host_str_map[key]
 

@@ -579,7 +579,7 @@ def determine_action(schedule, versions, experiments, non_interactive=False):
             response = None
             while response not in ['y', 'n']:
                 response = input('Do you want to checkout these versions '
-                                     'automatically? (y/n): ')
+                                 'automatically? (y/n): ')
             if response == 'y':
                 to_checkout = automatic_only_versions
             else:
@@ -596,7 +596,7 @@ def update_nested_dictionaries(old, new):
     new = new.copy()
     for key, value in new.items():
         if key in old:
-            if type(value) is dict:
+            if isinstance(value, dict):
                 old[key] = update_nested_dictionaries(old[key], new[key])
             else:
                 old[key] = value
@@ -740,7 +740,7 @@ def run_schedule(schedule, experiments, versions, exps_to_run,
             checkout(r'@{-%d}' % checkout_count, delete_pyc=True)
         except GitCheckoutError:
             print(('ERROR: Could not checkout git repo to original location. '
-                  r'\n\t$ git checkout @{-%d}' % checkout_count))
+                   r'\n\t$ git checkout @{-%d}' % checkout_count))
 
     # Stop here if profiling was un-successfull.
     if not success:
@@ -800,7 +800,8 @@ def run_analysis(experiments, versions, interactive=False,
         if plt_dir:
             print(
                 f'Results for experiment "{experiment["name"]}" have been '
-                f'written out to "{plt_dir}"'
+                f'written out to "{plt_dir}"')
+
 
 def ls(exp_names, ver_names, delete=False):
     """List all results for the provided experiment and version names.
@@ -913,11 +914,10 @@ def promote(experiment_id, yes=False):
 
     print()
     print(('Promote the following results for experiment "{name}" at version '
-          '"{candidate}" to the current version "{target}":'.format(
-              name=experiment_name,
-              candidate=experiment_version,
-              target=cur_exp_id.rsplit('@', 1)[1]
-          )))
+           '"{candidate}" to the current version "{target}":'.format(
+               name=experiment_name,
+               candidate=experiment_version,
+               target=cur_exp_id.rsplit('@', 1)[1])))
     print('\t', ' '.join(candidate_versions))
 
     if not yes:
@@ -946,7 +946,7 @@ def main():
 
     if not prof.IS_GIT_REPO:
         print('ERROR: profiling requires cylc to be a git repository.',
-              file=sys.stderr))
+              file=sys.stderr)
         sys.exit(2)
 
     # Promote mode.

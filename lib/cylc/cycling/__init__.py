@@ -82,7 +82,7 @@ class SequenceDegenerateError(Exception):
         return self.ERROR_MESSAGE.format(*self.args)
 
 
-class PointBase(object):
+class PointBase(object, metaclass=ABCMeta):
 
     """The abstract base class for single points in a cycler sequence.
 
@@ -97,7 +97,6 @@ class PointBase(object):
     method to reprocess their value into a standard form.
 
     """
-    __metaclass__ = ABCMeta
 
     _TYPE = None
     _TYPE_SORT_KEY = None
@@ -113,7 +112,7 @@ class PointBase(object):
         return self._TYPE_SORT_KEY
 
     def __init__(self, value):
-        if not isinstance(value, basestring):
+        if not isinstance(value, str):
             raise TypeError(type(value))
         self.value = value
 
@@ -172,7 +171,7 @@ class PointBase(object):
         return self.add(other)
 
 
-class IntervalBase(object):
+class IntervalBase(object, metaclass=ABCMeta):
 
     """An interval separating points in a cycler sequence.
 
@@ -198,7 +197,6 @@ class IntervalBase(object):
     method to reprocess their value into a standard form.
 
     """
-    __metaclass__ = ABCMeta
 
     _TYPE = None
     _TYPE_SORT_KEY = None
@@ -240,7 +238,7 @@ class IntervalBase(object):
         pass
 
     def __init__(self, value):
-        if not isinstance(value, basestring):
+        if not isinstance(value, str):
             raise TypeError(type(value))
         self.value = value
 
@@ -303,7 +301,7 @@ class IntervalBase(object):
         return self * -1
 
 
-class SequenceBase(object):
+class SequenceBase(object, metaclass=ABCMeta):
 
     """The abstract base class for cycler sequences.
 
@@ -323,7 +321,6 @@ class SequenceBase(object):
     is equal to another (represents the same set of points).
 
     """
-    __metaclass__ = ABCMeta
 
     _TYPE = None
     _TYPE_SORT_KEY = None
@@ -411,11 +408,9 @@ class SequenceBase(object):
         pass
 
 
-class ExclusionBase(object):
+class ExclusionBase(object, metaclass=ABCMeta):
     """A collection of points or sequences that are treated in an
     exclusionary manner"""
-
-    __metaclass__ = ABCMeta
     __slots__ = ('exclusion_sequences', 'exclusion_points',
                  'exclusion_start_point', 'exclusion_end_point')
 

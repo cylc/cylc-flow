@@ -28,11 +28,11 @@ class TestUnicodeUtil(unittest.TestCase):
         self.assertEqual("d", utf8_enforce("d"))
 
     def test_utf8_encode(self):
-        value = unicode("d?")
+        value = str("d?")
         self.assertEqual("d?", utf8_enforce(value))
 
     def test_utf8_encode_with_dictionary(self):
-        value = unicode("d?")
+        value = str("d?")
         d = {
             "simple": "d",
             "complex": value
@@ -44,7 +44,7 @@ class TestUnicodeUtil(unittest.TestCase):
         self.assertEqual(expected, utf8_enforce(d))
 
     def test_utf8_encode_with_list(self):
-        value = unicode("d?")
+        value = str("d?")
         d = ["d", value]
         expected = ["d", "d?"]
         self.assertEqual(expected, utf8_enforce(d))

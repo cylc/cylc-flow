@@ -310,7 +310,7 @@ class SuiteConfig(object):
         self._expand_runtime()
         self.mem_log("config.py: after _expand_runtime")
 
-        self.ns_defn_order = self.cfg['runtime'].keys()
+        self.ns_defn_order = list(self.cfg['runtime'])
 
         self.mem_log("config.py: before compute_family_tree")
         # do sparse inheritance
@@ -607,7 +607,7 @@ class SuiteConfig(object):
             LOG.debug("Checking [visualization] node attributes")
             # TODO - these should probably be done in non-verbose mode too.
             # 1. node groups should contain valid namespace names
-            nspaces = self.cfg['runtime'].keys()
+            nspaces = list(self.cfg['runtime'])
             bad = {}
             for ng, mems in ngs.items():
                 n_bad = []
@@ -821,8 +821,7 @@ class SuiteConfig(object):
                     self.task_param_vars[name] = indices
                     new_environ = OrderedDictWithDefaults()
                     if 'environment' in newruntime[name]:
-                        for k, v in newruntime[name]['environment'].items():
-                            new_environ[k] = v
+                        new_environ = newruntime[name]['environment'].copy()
                     newruntime[name]['environment'] = new_environ
                 if 'inherit' in newruntime[name]:
                     # Allow inheritance from parameterized namespaces.
@@ -1027,7 +1026,7 @@ class SuiteConfig(object):
         already_done = {}  # to store already computed namespaces by mro
 
         # Loop through runtime members, 'root' first.
-        nses = self.cfg['runtime'].keys()
+        nses = list(self.cfg['runtime'])
         nses.sort(key=lambda ns: ns != 'root')
         for ns in nses:
             # for each namespace ...
@@ -1145,7 +1144,7 @@ class SuiteConfig(object):
         # Then reassign to other queues as requested.
         warnings = []
         requeued = []
-        for key, queue in queues.copy().items():
+        for key, queue in list(queues.copy().items()):
             # queues.copy() is essential here to allow items to be removed from
             # the queues dict.
             if key == self.Q_DEFAULT:
@@ -1227,7 +1226,7 @@ class SuiteConfig(object):
                         "ERROR: script cannot be defined for automatic" +
                         " suite polling task '%s':\n%s" % (l_task, cs))
         # Generate the automatic scripting.
-        for name, tdef in self.taskdefs.items():
+        for name, tdef in list(self.taskdefs.items()):
             if name not in self.suite_polling_tasks:
                 continue
             rtc = tdef.rtconfig
@@ -1361,10 +1360,10 @@ class SuiteConfig(object):
         names = []
         if which == 'graphed tasks':
             # tasks used only in the graph
-            names = self.taskdefs.keys()
+            names = list(self.taskdefs)
         elif which == 'all namespaces':
             # all namespaces
-            names = self.cfg['runtime'].keys()
+            names = list(self.cfg['runtime'])
         elif which == 'all tasks':
             for ns in self.cfg['runtime']:
                 if ns not in self.runtime['descendants']:
@@ -1498,7 +1497,7 @@ class SuiteConfig(object):
 
     def get_task_name_list(self):
         # return a list of all tasks used in the dependency graph
-        return self.taskdefs.keys()
+        return list(self.taskdefs)
 
     def generate_edges(self, lexpr, orig_lexpr, left_nodes, right, seq,
                        suicide=False):
@@ -1962,7 +1961,7 @@ class SuiteConfig(object):
         # Note we could exclude 'root' from this and disallow use of 'root' in
         # the graph (which would probably be quite reasonable).
         family_map = {}
-        for family, tasks in self.runtime['descendants'].iteritems():
+        for family, tasks in self.runtime['descendants'].items():
             family_map[family] = [t for t in tasks if (
                 t in self.runtime['parents'] and
                 t not in self.runtime['descendants'])]
@@ -2062,7 +2061,7 @@ class SuiteConfig(object):
 
         # Detect use of xtrigger names with '@' prefix (creates a task).
         overlap = set(self.taskdefs.keys()).intersection(
-            self.cfg['scheduling']['xtriggers'].keys())
+            list(self.cfg['scheduling']['xtriggers']))
         if overlap:
             LOG.error(', '.join(overlap))
             raise SuiteConfigError('task and @xtrigger names clash')

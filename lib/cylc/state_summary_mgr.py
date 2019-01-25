@@ -102,7 +102,7 @@ class StateSummaryMgr(object):
                                         'state': state}
 
         state_count_totals = {}
-        for point_string, count in state_count_cycles.items():
+        for point_string, count in list(state_count_cycles.items()):
             for state, state_count in count.items():
                 state_count_totals.setdefault(state, 0)
                 state_count_totals[state] += state_count

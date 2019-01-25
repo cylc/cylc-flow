@@ -22,7 +22,7 @@ import logging
 from logging.handlers import BufferingHandler
 import os
 from pipes import quote
-from Queue import Empty, Queue
+from queue import Empty, Queue
 from shutil import copytree, rmtree
 from subprocess import Popen, PIPE
 import sys
@@ -336,9 +336,9 @@ conditions; see `cylc conditions`.
         logo_lines = logo.splitlines()
         license_lines = cylc_license.splitlines()
         lmax = max(len(line) for line in license_lines)
-        print('\n'.join((
+        print(('\n'.join((
             ('{0} {1: ^%s}' % lmax).format(*x)
-            for x in zip(logo_lines, license_lines))))
+            for x in zip(logo_lines, license_lines)))))
 
     def _setup_suite_logger(self):
         """Set up logger for suite."""
@@ -1881,7 +1881,7 @@ conditions; see `cylc conditions`.
         try:
             self.suite_db_mgr.process_queued_ops()
             self.suite_db_mgr.on_suite_shutdown()
-        except StandardError as exc:
+        except Exception as exc:
             LOG.exception(exc)
 
         # The getattr() calls and if tests below are used in case the
@@ -2024,7 +2024,7 @@ conditions; see `cylc conditions`.
             if age > 15:
                 amounts.remove((then, amount))
                 continue
-            for minute_num in averages.keys():
+            for minute_num in averages:
                 if age <= minute_num:
                     averages[minute_num].append(amount)
         output_text = "PROFILE: %s:" % category

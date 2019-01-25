@@ -350,8 +350,8 @@ class SuiteRuntimeServiceClient(object):
         # If there are any parameters left in the dict after popping,
         # append them to the url.
         if kwargs:
-            import urllib
-            params = urllib.urlencode(kwargs, doseq=True)
+            import urllib.parse
+            params = urllib.parse.urlencode(kwargs, doseq=True)
             url += "?" + params
         return url
 
@@ -473,7 +473,7 @@ class SuiteRuntimeServiceClient(object):
     def _call_server_impl_urllib2(self, url, method, payload):
         """Call server with "urllib2" library."""
         import json
-        import urllib2
+        import urllib.request, urllib.error
         import ssl
         unverified_context = getattr(ssl, '_create_unverified_context', None)
         if unverified_context is not None:
@@ -481,11 +481,12 @@ class SuiteRuntimeServiceClient(object):
 
         scheme = url.split(':', 1)[0]  # Can use urlparse?
         username, password = self._get_auth(scheme)[0:2]
-        auth_manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
+        auth_manager = urllib.request.HTTPPasswordMgrWithDefaultRealm()
         auth_manager.add_password(None, url, username, password)
-        auth = urllib2.HTTPDigestAuthHandler(auth_manager)
-        opener = urllib2.build_opener(auth, urllib2.HTTPSHandler())
-        headers_list = self._get_headers().items()
+        auth = urllib.request.HTTPDigestAuthHandler(auth_manager)
+        opener = urllib.request.build_opener(
+            auth, urllib.request.HTTPSHandler())
+        headers_list = list(self._get_headers().items())
         if payload:
             payload = json.dumps(payload)
             headers_list.append(('Accept', 'application/json'))
@@ -495,7 +496,7 @@ class SuiteRuntimeServiceClient(object):
             payload = None
             json_headers = {'Content-Length': 0}
         opener.addheaders = headers_list
-        req = urllib2.Request(url, payload, json_headers)
+        req = urllib.request.Request(url, payload, json_headers)
 
         # This is an unpleasant monkey patch, but there isn't an
         # alternative. urllib2 uses POST if there is a data payload
@@ -505,7 +506,7 @@ class SuiteRuntimeServiceClient(object):
         req.get_method = lambda: method
         try:
             response = opener.open(req, timeout=self.timeout)
-        except urllib2.URLError as exc:
+        except urllib.error.URLError as exc:
             if "unknown protocol" in str(exc) and url.startswith("https:"):
                 # Server is using http rather than https, for some reason.
                 sys.stderr.write(self.ERROR_NO_HTTPS_SUPPORT.format(exc))
@@ -678,7 +679,7 @@ def get_exception_from_html(html_text):
     </pre></body>'.
 
     """
-    from HTMLParser import HTMLParser, HTMLParseError
+    from html.parser import HTMLParser, HTMLParseError
 
     class ExceptionPreReader(HTMLParser):
         """Read exception from <pre id="traceback">...</pre> element."""
