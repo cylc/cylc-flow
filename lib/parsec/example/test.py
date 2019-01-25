@@ -31,8 +31,8 @@ cylc.flags.verbose = True
 class testcfg( ParsecConfig ):
     def check( self, sparse ):
         # TEMPORARY EXAMPLE
-        if 'missing item' not in self.sparse.keys():
-            print "missing item is MISSING!!!!"
+        if 'missing item' not in list(self.sparse):
+            print("missing item is MISSING!!!!")
 
 cfg = testcfg( SPEC )
 strict = False

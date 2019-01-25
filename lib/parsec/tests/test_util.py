@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
-from StringIO import StringIO
+from io import StringIO
 
 import mock
 
@@ -322,7 +322,7 @@ class TestUtil(unittest.TestCase):
 
         un_many(target)
 
-        self.assertFalse('__MANY__' in target.keys())
+        self.assertFalse('__MANY__' in list(target))
 
     def test_un_many_keyerror(self):
         """
@@ -345,7 +345,7 @@ class TestUtil(unittest.TestCase):
                         side_effect=KeyError()):
             un_many(target)
 
-        self.assertTrue('__MANY__' in target.keys())
+        self.assertTrue('__MANY__' in list(target))
 
     def test_un_many_keyerror_no_default(self):
         """

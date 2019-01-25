@@ -262,8 +262,8 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
         try:
             flines = inline(
                 flines, fdir, fpath, False, viewcfg=viewcfg, for_edit=asedit)
-        except IncludeFileNotFoundError, x:
-            raise FileParseError(str(x))
+        except IncludeFileNotFoundError as exc:
+            raise FileParseError(str(exc))
 
     # process with EmPy
     if do_empy:
@@ -289,7 +289,7 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
             LOG.debug('Processing with Jinja2')
             try:
                 flines = jinja2process(flines, fdir, template_vars)
-            except (StandardError, TemplateError, UndefinedError) as exc:
+            except (Exception, TemplateError, UndefinedError) as exc:
                 # Extract diagnostic info from the end of the Jinja2 traceback.
                 exc_lines = traceback.format_exc().splitlines()
                 suffix = []
@@ -302,7 +302,7 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
                 lineno = None
                 if hasattr(exc, 'lineno'):
                     lineno = exc.lineno
-                elif (isinstance(exc, StandardError) or
+                elif (isinstance(exc, Exception) or
                         isinstance(exc, UndefinedError)):
                     match = re.search(r'File "<template>", line (\d+)', msg)
                     if match:
@@ -313,7 +313,7 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
                     if getattr(exc, 'source', None) is None:
                         # Jinja2Support strips the shebang line.
                         lines = flines[1:]
-                    elif isinstance(exc.source, basestring):
+                    elif isinstance(exc.source, str):
                         lines = exc.source.splitlines()
                     if lines:
                         min_line_index = max(line_index - 3, 0)

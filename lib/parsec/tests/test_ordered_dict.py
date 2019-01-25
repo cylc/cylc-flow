@@ -46,7 +46,7 @@ class TestOrderedDict(unittest.TestCase):
         d.defaults_ = {
             'address': 'N/A'
         }
-        keys = d.keys()
+        keys = list(d.keys())
         self.assertTrue(len(keys) == 3)
         self.assertTrue('name' in keys)
         self.assertTrue('surname' in keys)
@@ -56,57 +56,57 @@ class TestOrderedDict(unittest.TestCase):
         d = OrderedDictWithDefaults()
         d['name'] = 'Paul'
         d['color'] = 'Green'
-        values = d.values()
+        values = list(d.values())
         self.assertTrue(len(values) == 2)
         self.assertTrue('Paul' in values)
         self.assertTrue('Green' in values)
 
     def test_items(self):
         d = OrderedDictWithDefaults()
-        self.assertEqual([], d.items())
+        self.assertEqual([], list(d.items()))
         d['key'] = 'Birds'
         d['len'] = '89'
-        for _, v in d.items():
+        for _, v in list(d.items()):
             self.assertTrue(v in ['Birds', '89'])
 
     def test_iterkeys(self):
         d = OrderedDictWithDefaults()
-        self.assertEqual([], d.items())
+        self.assertEqual([], list(d.items()))
         d['key'] = 'Birds'
         d['len'] = '89'
         d.defaults_ = {
             'surname': 'Wyndham'
         }
         count = 0
-        for k in d.iterkeys():
+        for k in d.keys():
             self.assertTrue(k in ['key', 'len', 'surname'])
             count += 1
         self.assertEqual(3, count)
 
     def test_itervalues(self):
         d = OrderedDictWithDefaults()
-        self.assertEqual([], d.items())
+        self.assertEqual([], list(d.items()))
         d['key'] = 'Birds'
         d['len'] = '89'
         d.defaults_ = {
             'surname': 'Wyndham'
         }
         count = 0
-        for k in d.itervalues():
+        for k in d.values():
             self.assertTrue(k in ['Birds', '89', 'Wyndham'])
             count += 1
         self.assertEqual(3, count)
 
     def test_iteritems(self):
         d = OrderedDictWithDefaults()
-        self.assertEqual([], d.items())
+        self.assertEqual([], list(d.items()))
         d['key'] = 'Birds'
         d['len'] = '89'
         d.defaults_ = {
             'surname': 'Wyndham'
         }
         count = 0
-        for k, v in d.iteritems():
+        for k, v in d.items():
             self.assertTrue(k in ['key', 'len', 'surname'])
             self.assertTrue(v in ['Birds', '89', 'Wyndham'])
             count += 1
@@ -114,7 +114,7 @@ class TestOrderedDict(unittest.TestCase):
 
     def test_contains(self):
         d = OrderedDictWithDefaults()
-        self.assertEqual([], d.items())
+        self.assertEqual([], list(d.items()))
         d['key'] = 'Birds'
         d.defaults_ = {
             'value': '10'
@@ -135,19 +135,19 @@ class TestOrderedDict(unittest.TestCase):
         d.prepend('year', 1980)
         d.prepend('key', 2000)
 
-        iterator = d.iterkeys()
+        iterator = iter(d.keys())
 
-        self.assertEqual('key', iterator.next())
-        self.assertEqual('year', iterator.next())
+        self.assertEqual('key', next(iterator))
+        self.assertEqual('year', next(iterator))
 
         d = OrderedDictWithDefaults()
         d['key'] = 'Birds'
         d.prepend('year', 1980)
 
-        iterator = d.iterkeys()
+        iterator = iter(d.keys())
 
-        self.assertEqual('year', iterator.next())
-        self.assertEqual('key', iterator.next())
+        self.assertEqual('year', next(iterator))
+        self.assertEqual('key', next(iterator))
 
 
 if __name__ == '__main__':

@@ -161,7 +161,7 @@ class TestUpgrade(unittest.TestCase):
         self.u.upgrade()
         expanded = self.u.expand(upg)
         self.assertEqual(2, len(expanded))
-        self.assertEquals(['section', 'a', 'e'], expanded[0]['new'])
+        self.assertEqual(['section', 'a', 'e'], expanded[0]['new'])
 
     def test_expand_obsolete(self):
         upg = {

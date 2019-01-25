@@ -18,12 +18,8 @@
 
 """Ordered Dictionary data structure used extensively in cylc."""
 
-try:
-    # Python 2.7+ native.
-    from collections import OrderedDict
-except ImportError:
-    # Pre-2.7 backport from ActiveState, packaged with Parsec.
-    from OrderedDictCompat import OrderedDict
+
+from collections import OrderedDict
 
 
 class OrderedDictWithDefaults(OrderedDict):
@@ -82,12 +78,12 @@ class OrderedDictWithDefaults(OrderedDict):
 
     def itervalues(self):
         """Include default values."""
-        for k in self.iterkeys():
+        for k in self.keys():
             yield self[k]
 
     def iteritems(self):
         """Include default key-value pairs."""
-        for k in self.iterkeys():
+        for k in self.keys():
             yield (k, self[k])
 
     def __contains__(self, key):
@@ -96,9 +92,9 @@ class OrderedDictWithDefaults(OrderedDict):
                 return True
         return OrderedDict.__contains__(self, key)
 
-    def __nonzero__(self):
+    def __bool__(self):
         """Include any default keys in the nonzero calculation."""
-        return bool(self.keys())
+        return bool(list(self.keys()))
 
     def prepend(self, key, value, dict_setitem=dict.__setitem__):
         """Prepend new item in the ordered dict.

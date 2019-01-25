@@ -304,7 +304,7 @@ class ParsecValidator(object):
             lower, upper, step = match.groups()
             if not step:
                 step = 1
-            return range(int(lower), int(upper) + 1, int(step))
+            return list(range(int(lower), int(upper) + 1, int(step)))
         else:
             return None
 

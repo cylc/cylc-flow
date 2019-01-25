@@ -115,7 +115,7 @@ class upgrader(object):
                 tmp = self.cfg
                 for j in pre:
                     tmp = tmp[j]
-                many = tmp.keys()
+                many = list(tmp.keys())
                 break
         if not many:
             exp_upgs.append(upg)

@@ -294,7 +294,7 @@ def un_many(cfig):
     """Remove any '__MANY__' items from a nested dict, in-place."""
     if not cfig:
         return
-    for key, val in cfig.items():
+    for key, val in list(cfig.items()):
         if key == '__MANY__':
             try:
                 del cfig[key]
@@ -332,18 +332,18 @@ def itemstr(parents=None, item=None, value=None):
 
 
 if __name__ == "__main__":
-    print 'Item strings:'
-    print '  ', itemstr(['sec1', 'sec2'], 'item', 'value')
-    print '  ', itemstr(['sec1', 'sec2'], 'item')
-    print '  ', itemstr(['sec1', 'sec2'])
-    print '  ', itemstr(['sec1'])
-    print '  ', itemstr(item='item', value='value')
-    print '  ', itemstr(item='item')
-    print '  ', itemstr(value='value')
+    print('Item strings:')
+    print('  ', itemstr(['sec1', 'sec2'], 'item', 'value'))
+    print('  ', itemstr(['sec1', 'sec2'], 'item'))
+    print('  ', itemstr(['sec1', 'sec2']))
+    print('  ', itemstr(['sec1']))
+    print('  ', itemstr(item='item', value='value'))
+    print('  ', itemstr(item='item'))
+    print('  ', itemstr(value='value'))
     # error or useful?
-    print '  ', itemstr(parents=['sec1', 'sec2'], value='value')
+    print('  ', itemstr(parents=['sec1', 'sec2'], value='value'))
 
-    print 'Configs:'
+    print('Configs:')
     printcfg('foo', prefix=' > ')
     printcfg(['foo', 'bar'], prefix=' > ')
     printcfg({}, prefix=' > ')
