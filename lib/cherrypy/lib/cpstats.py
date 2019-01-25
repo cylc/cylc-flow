@@ -612,7 +612,7 @@ table.stats2 th {
         # E.g., the 'Requests' dict.
         headers = []
         try:
-            # python2
+            # python3
             vals = v.itervalues()
         except AttributeError:
             # python3

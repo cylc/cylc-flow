@@ -24,7 +24,7 @@ ABS_PATH_LENGTH=${#CYLC_DIR}
 #-------------------------------------------------------------------------------
 # Filter out certain warnings to prevent tests being failed by them.
 function filter_warnings() {
-    python2 - "$@" <<'__PYTHON__'
+    python3 - "$@" <<'__PYTHON__'
 import re, sys
 msgs = [
     r'(?:INFO|DEBUG) - .*\n(\t.*\n)*',

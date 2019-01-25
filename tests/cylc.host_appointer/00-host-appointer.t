@@ -22,7 +22,7 @@ set_test_number 8
 
 # No run hosts list
 create_test_globalrc '' ''
-run_ok "${TEST_NAME_BASE}-no-host-list" python2 - <<'__PYTHON__'
+run_ok "${TEST_NAME_BASE}-no-host-list" python3 - <<'__PYTHON__'
 from cylc.host_appointer import HostAppointer
 assert HostAppointer().appoint_host() == 'localhost'
 __PYTHON__
@@ -32,7 +32,7 @@ create_test_globalrc '' '
 [suite servers]
     run hosts =
 '
-run_ok "${TEST_NAME_BASE}-empty-host-list" python2 - <<'__PYTHON__'
+run_ok "${TEST_NAME_BASE}-empty-host-list" python3 - <<'__PYTHON__'
 from cylc.host_appointer import HostAppointer
 assert HostAppointer().appoint_host() == 'localhost'
 __PYTHON__
@@ -42,7 +42,7 @@ create_test_globalrc '' "
 [suite servers]
     run hosts = localhost, elephant
 "
-run_ok "${TEST_NAME_BASE}-uncontactable" python2 -c '
+run_ok "${TEST_NAME_BASE}-uncontactable" python3 -c '
 import sys
 from cylc.host_appointer import HostAppointer
 appointer = HostAppointer()
@@ -58,7 +58,7 @@ create_test_globalrc '' "
 [suite servers]
     condemned hosts = localhost
 "
-run_fail "${TEST_NAME_BASE}-invalid" python2 -c '
+run_fail "${TEST_NAME_BASE}-invalid" python3 -c '
 from cylc.host_appointer import HostAppointer
 HostAppointer().appoint_host()
 '
@@ -80,7 +80,7 @@ create_test_globalrc '' "
 [suite servers]
     condemned hosts = localhost
 "
-run_ok "${TEST_NAME_BASE}-condemned-local" python2 -c '
+run_ok "${TEST_NAME_BASE}-condemned-local" python3 -c '
 import sys
 from cylc.host_appointer import HostAppointer
 appointer = HostAppointer()
@@ -96,7 +96,7 @@ create_test_globalrc '' "
 [suite servers]
     condemned hosts = $(hostname -f)
 "
-run_ok "${TEST_NAME_BASE}-condemned-variants" python2 -c '
+run_ok "${TEST_NAME_BASE}-condemned-variants" python3 -c '
 import sys
 from cylc.host_appointer import HostAppointer
 appointer = HostAppointer()
@@ -112,7 +112,7 @@ create_test_globalrc '' "
 [suite servers]
     condemned hosts = localhost
 "
-run_fail "${TEST_NAME_BASE}-condemned-all" python2 -c '
+run_fail "${TEST_NAME_BASE}-condemned-all" python3 -c '
 from cylc.host_appointer import HostAppointer
 HostAppointer().appoint_host()
 '

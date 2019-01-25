@@ -18,7 +18,7 @@
 # Test for "cylc review", behaviour of job entry with no "job.out".
 #-------------------------------------------------------------------------------
 . "$(dirname "$0")/test_header"
-if ! python2 -c 'import cherrypy' 2>'/dev/null'; then
+if ! python3 -c 'import cherrypy' 2>'/dev/null'; then
     skip_all '"cherrypy" not installed'
 fi
 

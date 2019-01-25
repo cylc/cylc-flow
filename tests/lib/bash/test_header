@@ -255,7 +255,7 @@ cmp_ok() {
 }
 
 cmp_json_ok() {
-    run_ok "$1" python2 -c "import sys
+    run_ok "$1" python3 -c "import sys
 import re
 import json
 from cylc.task_state import TASK_STATUSES_ORDERED
@@ -516,7 +516,7 @@ ssh_install_cylc() {
 
 _ssh_mkdtemp_cylc_dir() {
     local RHOST="$1"
-    ssh -oBatchMode=yes -oConnectTimeout=5 "${RHOST}" python2 - <<'__PYTHON__'
+    ssh -oBatchMode=yes -oConnectTimeout=5 "${RHOST}" python3 - <<'__PYTHON__'
 import os
 from tempfile import mkdtemp
 print mkdtemp(dir=os.path.expanduser("~"), prefix="cylc-")
@@ -528,7 +528,7 @@ mock_smtpd_init() {  # Logic borrowed from Rose
     for SMTPD_PORT in 8025 8125 8225 8325 8425 8525 8625 8725 8825 8925; do 
         local SMTPD_HOST="localhost:${SMTPD_PORT}"
         local SMTPD_LOG="${TEST_DIR}/smtpd.log"
-        python2 -m 'smtpd' -c 'DebuggingServer' -d -n "${SMTPD_HOST}" \
+        python3 -m 'smtpd' -c 'DebuggingServer' -d -n "${SMTPD_HOST}" \
             1>"${SMTPD_LOG}" 2>&1 &
         local SMTPD_PID="$!"
         while ! grep -q 'DebuggingServer started' "${SMTPD_LOG}" 2>'/dev/null'
@@ -675,7 +675,7 @@ cylc_ws_kill() {
 cylc_ws_json_greps() {
     local TEST_NAME="$1"
     shift 1
-    run_ok "${TEST_NAME}" python2 - "$@" <<'__PYTHON__'
+    run_ok "${TEST_NAME}" python3 - "$@" <<'__PYTHON__'
 import ast
 import json
 import sys

@@ -18,7 +18,7 @@
 # Test for "cylc review", jobs list no statuses filter logic, #1762.
 #-------------------------------------------------------------------------------
 . "$(dirname "$0")/test_header"
-if ! python2 -c 'import cherrypy' 2>'/dev/null'; then
+if ! python3 -c 'import cherrypy' 2>'/dev/null'; then
     skip_all '"cherrypy" not installed'
 fi
 

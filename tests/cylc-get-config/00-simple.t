@@ -58,7 +58,7 @@ cmp_ok $TEST_NAME.stderr - </dev/null
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-python
 run_ok $TEST_NAME cylc get-config --python --sparse $SUITE_NAME
-run_ok $TEST_NAME-parse-config python2 -c "
+run_ok $TEST_NAME-parse-config python3 -c "
 import sys
 from parsec.OrderedDict import OrderedDictWithDefaults
 with open(sys.argv[1], 'r') as file_:

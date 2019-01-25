@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 """Custom test for "cylc-trigger/07".
 
 Load suite state summary JSON from STDIN. Determine submit number data for task

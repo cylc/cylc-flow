@@ -553,7 +553,7 @@ batch system handler to change the directive prefix from ``#PBS`` to
 
 .. code-block:: python
 
-   #!/usr/bin/env python2
+   #!/usr/bin/env python3
 
    from cylc.batch_sys_handlers.pbs import PBSHandler
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: ascii -*-
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
