@@ -56,7 +56,6 @@ opt_spec = {
     'OpenSSL': [None, 'HTTPSCOMMS', 'PY'],
     'urllib3': [None, 'HTTPSCOMMS', 'PY'],
     'sphinx': [(1, 5, 3), 'HTMLDOCS', 'PY'],
-    'pygtk': [(2, 0), 'GUIORGRAPH', 'PY'],
     'pygraphviz': [None, 'GUIORGRAPH', 'PY'],
     'graphviz': [None, 'GUIORGRAPH', 'OTHER',
                  (['dot'], '-V', r'graphviz version ([^\s]+)', 2)],
@@ -154,10 +153,7 @@ def check_py_module_ver(module, min_ver, write=True):
     msg = 'Python:%s (%s)' % (module, string_ver(min_ver) + '+' if
                               min_ver is not None else 'any')
     try:
-        if module == 'pygtk':
-            import gtk
-            module_version = '.'.join(map(str, gtk.pygtk_version))
-        elif module == 'EmPy':
+        if module == 'EmPy':
             # we want the 'em' module, but there is more than one out there
             # we want the one that provides 'Interpreter'
             from em import Interpreter
