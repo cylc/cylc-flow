@@ -1,6 +1,5 @@
-#!/bin/bash
 # -*- coding: utf-8 -*-
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # Copyright (C) 2013-2019 British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,8 +14,5 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-----------------------------------------------------------------------------
-# Run tests for the ISO 8601 parsing and data model functionality."""
-#-----------------------------------------------------------------------------
-cd "$(dirname "$0")/../"
-TZ=UTC python2 -m isodatetime.tests
+# ----------------------------------------------------------------------------
+"""Test modules for "isodatetime"."""

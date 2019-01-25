@@ -171,69 +171,69 @@ TIME_DESIGNATOR = "T"
 _DATE_TRANSLATE_INFO = [
     (r"\+(?=X)", "(?P<year_sign>[-+])",
      "%(year_sign)s", "year_sign"),
-    ("CC", r"(?P<century>\d\d)",
+    (r"CC", r"(?P<century>[0-9][0-9])",
      "%(century)02d", "century"),
-    ("YY", r"(?P<year_of_century>\d\d)",
+    (r"YY", r"(?P<year_of_century>[0-9][0-9])",
      "%(year_of_century)02d", "year_of_century"),
-    ("MM", r"(?P<month_of_year>\d\d)",
+    (r"MM", r"(?P<month_of_year>[0-9][0-9])",
      "%(month_of_year)02d", "month_of_year"),
-    ("DDD", r"(?P<day_of_year>\d\d\d)",
+    (r"DDD", r"(?P<day_of_year>[0-9][0-9][0-9])",
      "%(day_of_year)03d", "day_of_year"),
-    ("DD", r"(?P<day_of_month>\d\d)",
+    (r"DD", r"(?P<day_of_month>[0-9][0-9])",
      "%(day_of_month)02d", "day_of_month"),
-    ("Www", r"W(?P<week_of_year>\d\d)",
+    (r"Www", r"W(?P<week_of_year>[0-9][0-9])",
      "W%(week_of_year)02d", "week_of_year"),
-    ("D", r"(?P<day_of_week>\d)",
+    (r"D", r"(?P<day_of_week>[0-9])",
      "%(day_of_week)01d", "day_of_week"),
-    ("z", r"(?P<year_of_decade>\d)",
+    (r"z", r"(?P<year_of_decade>[0-9])",
      "%(year_of_decade)01d", "year_of_decade"),
-    ("^---", "(?P<truncated>---)",
+    (r"^---", r"(?P<truncated>---)",
      "---", None),
-    ("^--", "(?P<truncated>--)",
+    (r"^--", r"(?P<truncated>--)",
      "--", None),
-    ("^-", "(?P<truncated>-)",
+    (r"^-", r"(?P<truncated>-)",
      "-", None)
 ]
 _TIME_TRANSLATE_INFO = [
-    ("(?<=^hh)mm", r"(?P<minute_of_hour>\d\d)",
+    (r"(?<=^hh)mm", r"(?P<minute_of_hour>[0-9][0-9])",
      "%(minute_of_hour)02d", "minute_of_hour"),
-    ("(?<=^hh:)mm", r"(?P<minute_of_hour>\d\d)",
+    (r"(?<=^hh:)mm", r"(?P<minute_of_hour>[0-9][0-9])",
      "%(minute_of_hour)02d", "minute_of_hour"),
-    ("(?<=^-)mm", r"(?P<minute_of_hour>\d\d)",
+    (r"(?<=^-)mm", r"(?P<minute_of_hour>[0-9][0-9])",
      "%(minute_of_hour)02d", "minute_of_hour"),
-    ("^hh", r"(?P<hour_of_day>\d\d)",
+    (r"^hh", r"(?P<hour_of_day>[0-9][0-9])",
      "%(hour_of_day)02d", "hour_of_day"),
-    (",ii", r",(?P<hour_of_day_decimal>\d+)",
+    (r",ii", r",(?P<hour_of_day_decimal>[0-9]+)",
      ",%(hour_of_day_decimal_string)s", "hour_of_day_decimal_string"),
-    (r"\.ii", r"\.(?P<hour_of_day_decimal>\d+)",
+    (r"\.ii", r"\.(?P<hour_of_day_decimal>[0-9]+)",
      ".%(hour_of_day_decimal_string)s", "hour_of_day_decimal_string"),
-    (",nn", r",(?P<minute_of_hour_decimal>\d+)",
+    (r",nn", r",(?P<minute_of_hour_decimal>[0-9]+)",
      ",%(minute_of_hour_decimal_string)s", "minute_of_hour_decimal_string"),
-    (r"\.nn", r"\.(?P<minute_of_hour_decimal>\d+)",
+    (r"\.nn", r"\.(?P<minute_of_hour_decimal>[0-9]+)",
      ".%(minute_of_hour_decimal_string)s", "minute_of_hour_decimal_string"),
-    ("ss", r"(?P<second_of_minute>\d\d)",
+    (r"ss", r"(?P<second_of_minute>[0-9][0-9])",
      "%(second_of_minute)02d", "second_of_minute"),
-    (",tt", r",(?P<second_of_minute_decimal>\d+)",
+    (r",tt", r",(?P<second_of_minute_decimal>[0-9]+)",
      ",%(second_of_minute_decimal_string)s",
      "second_of_minute_decimal_string"),
-    (r"\.tt", r"\.(?P<second_of_minute_decimal>\d+)",
+    (r"\.tt", r"\.(?P<second_of_minute_decimal>[0-9]+)",
      ".%(second_of_minute_decimal_string)s",
      "second_of_minute_decimal_string"),
-    ("^--", "(?P<truncated>--)",
+    (r"^--", r"(?P<truncated>--)",
      "--", None),
-    ("^-", "(?P<truncated>-)",
+    (r"^-", r"(?P<truncated>-)",
      "-", None)
 ]
 _TIME_ZONE_TRANSLATE_INFO = [
-    ("mm", r"(?P<time_zone_minute>\d\d)",
+    (r"mm", r"(?P<time_zone_minute>[0-9][0-9])",
      "%(time_zone_minute_abs)02d", "time_zone_minute_abs"),
-    ("mm", r"(?P<time_zone_minute>\d\d)",
+    (r"mm", r"(?P<time_zone_minute>[0-9][0-9])",
      "%(time_zone_minute_abs)02d", "time_zone_minute_abs"),
-    ("hh", r"(?P<time_zone_hour>\d\d)",
+    (r"hh", r"(?P<time_zone_hour>[0-9][0-9])",
      "%(time_zone_hour_abs)02d", "time_zone_hour_abs"),
-    (r"\+", "(?P<time_zone_sign>[-+])",
+    (r"\+", r"(?P<time_zone_sign>[-+])",
      "%(time_zone_sign)s", "time_zone_sign"),
-    ("Z", "(?P<time_zone_utc>Z)",
+    (r"Z", r"(?P<time_zone_utc>Z)",
      "Z", None)
 ]
 
@@ -260,7 +260,7 @@ STRFTIME_TRANSLATE_INFO = {
     "%m": ["month_of_year"],
     "%M": ["minute_of_hour"],
     "%s": (
-        r"(?P<seconds_since_unix_epoch>\d+[,.]?\d*)",
+        r"(?P<seconds_since_unix_epoch>[0-9]+[,.]?[0-9]*)",
         "%(seconds_since_unix_epoch)s", "seconds_since_unix_epoch"),
     "%S": ["second_of_minute"],
     "%X": ["hour_of_day", ":", "minute_of_hour", ":", "second_of_minute"],
@@ -294,7 +294,7 @@ def get_date_translate_info(num_expanded_year_digits=2):
             - format (str) - template string to format date info
             - name (str) - name of this property
     """
-    expanded_year_digit_regex = r"\d" * num_expanded_year_digits
+    expanded_year_digit_regex = r"[0-9]" * num_expanded_year_digits
     return _DATE_TRANSLATE_INFO + [
         ("X",
          "(?P<expanded_year>" + expanded_year_digit_regex + ")",
@@ -357,7 +357,7 @@ def _translate_strftime_token(strftime_token, dump_mode=False,
         get_time_zone_translate_info()
     )
     attr_names = STRFTIME_TRANSLATE_INFO[strftime_token]
-    if isinstance(attr_names, basestring):
+    if isinstance(attr_names, str):
         if dump_mode:
             return attr_names, []
         return re.escape(attr_names), []

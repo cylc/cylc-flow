@@ -19,16 +19,17 @@
 """This tests the ISO 8601 parsing and data model functionality."""
 
 import copy
-import multiprocessing
+import datetime
+from itertools import chain
+import pytest
 import unittest
-import mock
+from unittest.mock import patch, MagicMock, Mock
 
-from . import data
-from . import dumpers
-from . import parsers
-from . import parser_spec
-from . import util
-from . import timezone
+from isodatetime import data
+from isodatetime import dumpers
+from isodatetime import parsers
+from isodatetime import parser_spec
+from isodatetime import timezone
 
 
 def get_timeduration_tests():
@@ -143,16 +144,16 @@ def get_timepoint_dumper_tests():
              ("YYDDDThh:mm:ss", "44004T05:01:02"),
              ("WwwD", "W011"),
              ("CCDDDThh*ss-0600", "00003T23*02-0600"),
-             (u"+XCCYY-MM-DDThh:mm:ss-11:45",
+             ("+XCCYY-MM-DDThh:mm:ss-11:45",
               "+000044-01-03T17:16:02-11:45"),
-             (u"+XCCYYMM-DDThh-01:00", "+00004401-04T04-01:00"),
-             (u"+XCCYYMM-DDThh+13:00", "+00004401-04T18+13:00"),
-             (u"+XCCYYMM-DDThh-0100", "+00004401-04T04-0100"),
-             (u"+XCCYYMM-DDThh+1300", "+00004401-04T18+1300"),
-             (u"+XCCYYMMDDThh-0100", "+0000440104T04-0100"),
-             (u"+XCCYYMMDDThh+13", "+0000440104T18+13"),
-             (u"+XCCYYMMDDThh+hhmm", "+0000440104T05+0000"),
-             (u"+XCCYY-MM-DDThh:mm:ss+hh:mm",
+             ("+XCCYYMM-DDThh-01:00", "+00004401-04T04-01:00"),
+             ("+XCCYYMM-DDThh+13:00", "+00004401-04T18+13:00"),
+             ("+XCCYYMM-DDThh-0100", "+00004401-04T04-0100"),
+             ("+XCCYYMM-DDThh+1300", "+00004401-04T18+1300"),
+             ("+XCCYYMMDDThh-0100", "+0000440104T04-0100"),
+             ("+XCCYYMMDDThh+13", "+0000440104T18+13"),
+             ("+XCCYYMMDDThh+hhmm", "+0000440104T05+0000"),
+             ("+XCCYY-MM-DDThh:mm:ss+hh:mm",
               "+000044-01-04T05:01:02+00:00"),
              ("DD/MM/CCYY is a silly format", "04/01/0044 is a silly format"),
              ("ThhZ", "T05Z"),
@@ -167,20 +168,20 @@ def get_timepoint_dumper_tests():
              ("+XCCYYDDDThh:mm:ss", "+500200209T00:26:08"),
              ("WwwD", "W311"),
              ("+XCCDDDThh*ss-0600", "+5002209T02*08-0600"),
-             (u"+XCCYY-MM-DDThh:mm:ss-11:45",
+             ("+XCCYY-MM-DDThh:mm:ss-11:45",
               "+500200-07-27T21:11:08-11:45"),
-             (u"+XCCYYMM-DDThhmm-01:00", "+50020007-28T0756-01:00"),
-             (u"+XCCYYMM-DDThhmm+13:00", "+50020007-28T2156+13:00"),
-             (u"+XCCYYMM-DDThhmm-0100", "+50020007-28T0756-0100"),
-             (u"+XCCYYMM-DDThhmm+1300", "+50020007-28T2156+1300"),
-             (u"+XCCYYMMDDThhmm-0100", "+5002000728T0756-0100"),
-             (u"+XCCYYMMDDThhmm+13", "+5002000728T2156+13"),
-             (u"+XCCYYMMDDThh+hhmm", "+5002000728T00-0830"),
-             (u"+XCCYYWwwDThhmm+hh", "+500200W311T0026-08"),
-             (u"+XCCYYDDDThhmm+hh", "+500200209T0026-08"),
-             (u"+XCCYY-MM-DDThh:mm:ss+hh:mm",
+             ("+XCCYYMM-DDThhmm-01:00", "+50020007-28T0756-01:00"),
+             ("+XCCYYMM-DDThhmm+13:00", "+50020007-28T2156+13:00"),
+             ("+XCCYYMM-DDThhmm-0100", "+50020007-28T0756-0100"),
+             ("+XCCYYMM-DDThhmm+1300", "+50020007-28T2156+1300"),
+             ("+XCCYYMMDDThhmm-0100", "+5002000728T0756-0100"),
+             ("+XCCYYMMDDThhmm+13", "+5002000728T2156+13"),
+             ("+XCCYYMMDDThh+hhmm", "+5002000728T00-0830"),
+             ("+XCCYYWwwDThhmm+hh", "+500200W311T0026-08"),
+             ("+XCCYYDDDThhmm+hh", "+500200209T0026-08"),
+             ("+XCCYY-MM-DDThh:mm:ss+hh:mm",
               "+500200-07-28T00:26:08-08:30"),
-             (u"+XCCYY-MM-DDThh:mm:ssZ", "+500200-07-28T08:56:08Z"),
+             ("+XCCYY-MM-DDThh:mm:ssZ", "+500200-07-28T08:56:08Z"),
              ("DD/MM/+XCCYY is a silly format",
               "28/07/+500200 is a silly format"),
              ("ThhmmZ", "T0856Z"),
@@ -193,20 +194,20 @@ def get_timepoint_dumper_tests():
              ("+XCCYYDDDThh:mm:ss", "-000056318T05:01:00"),
              ("WwwD", "W461"),
              ("+XCCDDDThh*ss-0600", "-0000317T17*00-0600"),
-             (u"+XCCYY-MM-DDThh:mm:ss-11:45",
+             ("+XCCYY-MM-DDThh:mm:ss-11:45",
               "-000056-11-12T11:16:00-11:45"),
-             (u"+XCCYYMM-DDThhmm-01:00", "-00005611-12T2201-01:00"),
-             (u"+XCCYYMM-DDThhmm+13:00", "-00005611-13T1201+13:00"),
-             (u"+XCCYYMM-DDThhmm-0100", "-00005611-12T2201-0100"),
-             (u"+XCCYYMM-DDThhmm+1300", "-00005611-13T1201+1300"),
-             (u"+XCCYYMMDDThhmm-0100", "-0000561112T2201-0100"),
-             (u"+XCCYYMMDDThhmm+13", "-0000561113T1201+13"),
-             (u"+XCCYYMMDDThh+hhmm", "-0000561113T05+0600"),
-             (u"+XCCYYWwwDThhmm+hh", "-000056W461T0501+06"),
-             (u"+XCCYYDDDThhmm+hh", "-000056318T0501+06"),
-             (u"+XCCYY-MM-DDThh:mm:ss+hh:mm",
+             ("+XCCYYMM-DDThhmm-01:00", "-00005611-12T2201-01:00"),
+             ("+XCCYYMM-DDThhmm+13:00", "-00005611-13T1201+13:00"),
+             ("+XCCYYMM-DDThhmm-0100", "-00005611-12T2201-0100"),
+             ("+XCCYYMM-DDThhmm+1300", "-00005611-13T1201+1300"),
+             ("+XCCYYMMDDThhmm-0100", "-0000561112T2201-0100"),
+             ("+XCCYYMMDDThhmm+13", "-0000561113T1201+13"),
+             ("+XCCYYMMDDThh+hhmm", "-0000561113T05+0600"),
+             ("+XCCYYWwwDThhmm+hh", "-000056W461T0501+06"),
+             ("+XCCYYDDDThhmm+hh", "-000056318T0501+06"),
+             ("+XCCYY-MM-DDThh:mm:ss+hh:mm",
               "-000056-11-13T05:01:00+06:00"),
-             (u"+XCCYY-MM-DDThh:mm:ssZ", "-000056-11-12T23:01:00Z"),
+             ("+XCCYY-MM-DDThh:mm:ssZ", "-000056-11-12T23:01:00Z"),
              ("DD/MM/+XCCYY is a silly format",
               "13/11/-000056 is a silly format"),
              ("ThhmmZ", "T2301Z"),
@@ -569,7 +570,8 @@ def get_timepointparser_tests(allow_only_basic=False,
                             time_expr
                         )
                         combo_info = {}
-                        for key, value in info.items() + time_info.items():
+                        for key, value in chain(
+                                info.items(), time_info.items()):
                             combo_info[key] = value
                         yield combo_expr, combo_info
                         if skip_time_zones:
@@ -578,8 +580,9 @@ def get_timepointparser_tests(allow_only_basic=False,
                         for time_zone_expr, time_zone_info in time_zone_items:
                             tz_expr = combo_expr + time_zone_expr
                             tz_info = {}
-                            for key, value in (combo_info.items() +
-                                               time_zone_info.items()):
+                            for key, value in \
+                                chain(combo_info.items(),
+                                      time_zone_info.items()):
                                 tz_info[key] = value
                             yield tz_expr, tz_info
         if not allow_truncated:
@@ -602,8 +605,9 @@ def get_timepointparser_tests(allow_only_basic=False,
                 for time_zone_expr, time_zone_info in time_zone_items:
                     tz_expr = combo_expr + time_zone_expr
                     tz_info = {}
-                    for key, value in (combo_info.items() +
-                                       time_zone_info.items()):
+                    for key, value in \
+                        chain(combo_info.items(),
+                              time_zone_info.items()):
                         tz_info[key] = value
                     yield tz_expr, tz_info
 
@@ -1033,7 +1037,6 @@ def get_timerecurrenceparser_tests():
 
 def get_local_time_zone_hours_minutes():
     """Provide an independent method of getting the local time zone."""
-    import datetime
     utc_offset = datetime.datetime.now() - datetime.datetime.utcnow()
     # datetime.timedelta represents -21 microseconds as -1 day,
     # +86399 seconds, +999979 microseconds. This is not nice.
@@ -1048,15 +1051,7 @@ def get_local_time_zone_hours_minutes():
 class TestSuite(unittest.TestCase):
     """Test the functionality of parsers and data model manipulation."""
 
-    def assertEqual(self, test, control, info=None):
-        """Override the assertEqual method to provide more information."""
-        superinfo = None
-        if info is not None:
-            superinfo = (
-                "Source %s produced:\n'%s'\nshould be:\n'%s'" %
-                (info, test, control))
-        super(TestSuite, self).assertEqual(test, control, superinfo)
-
+    @pytest.mark.slow
     def test_days_in_year_range(self):
         """Test the summing-over-days-in-year-range shortcut code."""
         for start_year in range(-401, 2):
@@ -1064,7 +1059,7 @@ class TestSuite(unittest.TestCase):
                 test_days = data.get_days_in_year_range(
                     start_year, end_year)
                 control_days = 0
-                for year in xrange(start_year, end_year + 1):
+                for year in range(start_year, end_year + 1):
                     control_days += data.get_days_in_year(year)
                 self.assertEqual(
                     control_days, test_days, "days in %s to %s" % (
@@ -1089,7 +1084,7 @@ class TestSuite(unittest.TestCase):
                 test_data.get_largest_truncated_property_name(),
                 truncated_property_tests[expression]
                 ["largest_truncated_property_name"],
-                info=expression)
+                msg=expression)
 
     def test_smallest_missing_property_name(self):
         """Test the smallest missing property name."""
@@ -1109,7 +1104,7 @@ class TestSuite(unittest.TestCase):
                 test_data.get_smallest_missing_property_name(),
                 truncated_property_tests[expression]
                 ["smallest_missing_property_name"],
-                info=expression)
+                msg=expression)
 
     def test_timeduration(self):
         """Test the duration class methods."""
@@ -1149,12 +1144,6 @@ class TestSuite(unittest.TestCase):
         self.assertEqual(
             str(data.Duration(days=7) + data.Duration(weeks=1)),
             "P14D")
-
-    @staticmethod
-    def test_timepoint():
-        """Test the time point data model (takes a while)."""
-        pool = multiprocessing.Pool(processes=4)
-        pool.map_async(test_timepoint_at_year, range(1801, 2403)).get()
 
     def test_timepoint_plus_float_time_duration_day_of_month_type(self):
         """Test (TimePoint + Duration).day_of_month is an int."""
@@ -1297,15 +1286,15 @@ class TestSuite(unittest.TestCase):
 
     get_test_timepoint_dumper_get_time_zone = [
         ["+250:00", None],
-        ["+25:00", ('25', '00')],
-        ["+12:00", ('12', '00')],
-        ["+12:45", ('12', '45')],
-        ["+01:00", ('01', '00')],
+        ["+25:00", (25, 0)],
+        ["+12:00", (12, 0)],
+        ["+12:45", (12, 45)],
+        ["+01:00", (1, 0)],
         ["Z", (0, 0)],
         ["-03:00", (-3, 0)],
         ["-03:30", (-3, -30)],
         ["-11:00", (-11, 0)],
-        ["+00:00", ('00', '00')],
+        ["+00:00", (0, 0)],
         ["-00:00", (0, 0)]
     ]
 
@@ -1414,9 +1403,8 @@ class TestSuite(unittest.TestCase):
 
     def test_timepoint_strftime_strptime(self):
         """Test the strftime/strptime for date/time expressions."""
-        import datetime
         parser = parsers.TimePointParser()
-        parse_tokens = parser_spec.STRFTIME_TRANSLATE_INFO.keys()
+        parse_tokens = list(parser_spec.STRFTIME_TRANSLATE_INFO.keys())
         parse_tokens.remove("%z")  # Don't test datetime's tz handling.
         format_string = ""
         for i, token in enumerate(parse_tokens):
@@ -1595,30 +1583,6 @@ class TestSuite(unittest.TestCase):
             ctrl_data = str(data.TimeRecurrence(**test_info))
             self.assertEqual(test_data, ctrl_data, expression)
 
-    def test_util_cache(self):
-        """Test the cache provided in the util file"""
-        # here we change the cache size to simplify testing when cache is full
-        util.MAX_CACHE_SIZE = 2
-
-        class TempClass(object):
-            times_called = 0
-
-            @util.cache_results
-            def sum(self, x, y):
-                self.times_called += 1
-                return x + y
-        temp_class = TempClass()
-        # call it twice, filling the cache
-        self.assertEqual(3, temp_class.sum(1, 2))
-        self.assertEqual(3, temp_class.sum(2, 1))
-        # next two calls are cached
-        self.assertEqual(3, temp_class.sum(1, 2))
-        self.assertEqual(3, temp_class.sum(2, 1))
-        # this call should remove element from cache
-        self.assertEqual(2, temp_class.sum(1, 1))
-        # in total, we have only three calls, as 2 were cached!
-        self.assertEqual(3, temp_class.times_called)
-
     # data provider for the test test_get_local_time_zone_no_dst
     # the format for the parameters is
     # [tz_seconds, expected_hours, expected_minutes]]
@@ -1631,7 +1595,7 @@ class TestSuite(unittest.TestCase):
         [-12600, -3, 30]  # america/st_johns, -03:30
     ]
 
-    @mock.patch('isodatetime.timezone.time')
+    @patch('isodatetime.timezone.time')
     def test_get_local_time_zone_no_dst(self, mock_time):
         """Test that the hour/minute returned is correct.
 
@@ -1644,7 +1608,7 @@ class TestSuite(unittest.TestCase):
             # time without dst
             mock_time.daylight = False
             # and localtime also without dst
-            mock_localtime = mock.Mock()
+            mock_localtime = Mock()
             mock_time.localtime.return_value = mock_localtime
             mock_localtime.tm_isdst = 0
             hours, minutes = timezone.get_local_time_zone()
@@ -1663,7 +1627,7 @@ class TestSuite(unittest.TestCase):
         [-12600, -9000, -2, 30]  # america/st_johns, -03:30 and -02:30
     ]
 
-    @mock.patch('isodatetime.timezone.time')
+    @patch('isodatetime.timezone.time')
     def test_get_local_time_zone_with_dst(self, mock_time):
         """Test that the hour/minute returned is correct
 
@@ -1676,7 +1640,7 @@ class TestSuite(unittest.TestCase):
             # time without dst
             mock_time.daylight = True
             # and localtime also without dst
-            mock_localtime = mock.MagicMock()
+            mock_localtime = MagicMock()
             mock_time.localtime.return_value = mock_localtime
             mock_localtime.tm_isdst = 1
             # and with the following alternative time for when dst is set
@@ -1720,7 +1684,7 @@ class TestSuite(unittest.TestCase):
         [-12600, timezone.TimeZoneFormatMode.reduced, "-0330"]
     ]
 
-    @mock.patch('isodatetime.timezone.time')
+    @patch('isodatetime.timezone.time')
     def test_get_local_time_zone_format(self, mock_time):
         """Test that the UTC offset string format is correct
 
@@ -1734,7 +1698,7 @@ class TestSuite(unittest.TestCase):
             # time without dst
             mock_time.daylight = False
             # and localtime also without dst
-            mock_localtime = mock.Mock()
+            mock_localtime = Mock()
             mock_time.localtime.return_value = mock_localtime
             mock_localtime.tm_isdst = 0
             tz_format = timezone.get_local_time_zone_format(tz_format_mode)
@@ -1786,89 +1750,17 @@ class TestSuite(unittest.TestCase):
         t = timepoint + duration
         self.assertEqual(seconds_added, t.second_of_minute)
 
-
-def assert_equal(data1, data2):
-    """A function-level equivalent of the unittest method."""
-    if data1 != data2:
-        raise AssertionError()
-
-
-def test_timepoint_at_year(test_year):
-    """Test the TimePoint and Calendar data model over a given year."""
-    import datetime
-    import random
-    my_date = datetime.datetime(test_year, 1, 1)
-    stop_date = datetime.datetime(test_year + 1, 1, 1)
-    test_duration_attributes = [
-        ("weeks", 110),
-        ("days", 770),
-        ("hours", 770 * 24),
-        ("minutes", 770 * 24 * 60),
-        ("seconds", 770 * 24 * 60 * 60)
-    ]
-    while my_date <= stop_date:
-        ctrl_data = my_date.isocalendar()
-        test_date = data.TimePoint(
-            year=my_date.year,
-            month_of_year=my_date.month,
-            day_of_month=my_date.day
-        )
-        test_week_date = test_date.to_week_date()
-        test_data = test_week_date.get_week_date()
-        assert_equal(test_data, ctrl_data)
-        ctrl_data = (my_date.year, my_date.month, my_date.day)
-        test_data = test_week_date.get_calendar_date()
-        assert_equal(test_data, ctrl_data)
-        ctrl_data = my_date.toordinal()
-        year, day_of_year = test_date.get_ordinal_date()
-        test_data = day_of_year
-        test_data += data.get_days_since_1_ad(year - 1)
-        assert_equal(test_data, ctrl_data)
-        for attribute, attr_max in test_duration_attributes:
-            kwargs = {attribute: random.randrange(0, attr_max)}
-            ctrl_data = my_date + datetime.timedelta(**kwargs)
-            ctrl_data = (ctrl_data.year, ctrl_data.month, ctrl_data.day)
-            test_data = (
-                test_date + data.Duration(
-                    **kwargs)).get_calendar_date()
-            assert_equal(test_data, ctrl_data)
-            ctrl_data = (my_date - datetime.timedelta(**kwargs))
-            ctrl_data = (ctrl_data.year, ctrl_data.month, ctrl_data.day)
-            test_data = (
-                test_date - data.Duration(
-                    **kwargs)).get_calendar_date()
-            assert_equal(test_data, ctrl_data)
-        kwargs = {}
-        for attribute, attr_max in test_duration_attributes:
-            kwargs[attribute] = random.randrange(0, attr_max)
-        test_date_minus = (
-            test_date - data.Duration(**kwargs))
-        test_data = test_date - test_date_minus
-        ctrl_data = data.Duration(**kwargs)
-        assert_equal(test_data, ctrl_data)
-        test_data = (test_date_minus + (test_date - test_date_minus))
-        ctrl_data = test_date
-        assert_equal(test_data, ctrl_data)
-        test_data = (test_date_minus + data.Duration(**kwargs))
-        ctrl_data = test_date
-        assert_equal(test_data, ctrl_data)
-        ctrl_data = (my_date + datetime.timedelta(minutes=450) +
-                     datetime.timedelta(hours=5) -
-                     datetime.timedelta(seconds=500, weeks=5))
-        ctrl_data = [(ctrl_data.year, ctrl_data.month, ctrl_data.day),
-                     (ctrl_data.hour, ctrl_data.minute, ctrl_data.second)]
-        test_data = (
-            test_date + data.Duration(minutes=450) +
-            data.Duration(hours=5) -
-            data.Duration(weeks=5, seconds=500)
-        )
-        test_data = [test_data.get_calendar_date(),
-                     test_data.get_hour_minute_second()]
-        assert_equal(test_data, ctrl_data)
-        timedelta = datetime.timedelta(days=1)
-        my_date += timedelta
+    def test_timepoint_dump_format(self):
+        """Test the timepoint format dump when values are programmatically
+        set to None"""
+        t = data.TimePoint(year="1984")
+        # commenting out month_of_year here is enough to make the test pass
+        t.month_of_year = None
+        t.day_of_year = None
+        t.week_of_year = None
+        with self.assertRaises(RuntimeError):
+            self.assertEqual("1984-01-01T00:00:00Z", str(t))
 
 
-if __name__ == "__main__":
-    unittest.TextTestRunner(verbosity=2).run(
-        unittest.TestLoader().loadTestsFromTestCase(TestSuite))
+if __name__ == '__main__':
+    unittest.main()
