@@ -96,7 +96,7 @@ class TestConfig(unittest.TestCase):
                 [[entries]]
                 key = 'product'
                 value = 1, 2, 3, 4
-                """)
+                """.encode())
                 rcfile.seek(0)
                 parsec_config.loadcfg(rcfile.name, "File test_loadcfg")
 
@@ -138,7 +138,7 @@ class TestConfig(unittest.TestCase):
                 [[entries]]
                 key = 'product'
                 value = 1, 2, 3, 4
-                """)
+                """.encode())
                 rcfile.seek(0)
                 parsec_config.loadcfg(rcfile.name, "1.1")
 
@@ -212,7 +212,7 @@ class TestConfig(unittest.TestCase):
                         name = test
                         [allow_many]
                         anything = yup
-                        """)
+                        """.encode())
                 rcfile.seek(0)
                 parsec_config.loadcfg(rcfile.name, "1.0")
 
@@ -247,7 +247,7 @@ class TestConfig(unittest.TestCase):
                                 name = test
                                 [allow_many]
                                 anything = yup
-                                """)
+                                """.encode())
                 rcfile.seek(0)
                 parsec_config.loadcfg(rcfile.name, "1.0")
 

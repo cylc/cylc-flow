@@ -21,8 +21,10 @@ The copy and override functions below assume values are either dicts
 (nesting) or shallow collections of simple types.
 """
 
-import sys
+from io import StringIO
 from copy import copy
+import sys
+
 from parsec.OrderedDict import OrderedDictWithDefaults
 
 
@@ -137,8 +139,12 @@ def printcfg(cfg, level=0, indent=0, prefix='', none_str='',
                 continue
             if key_i and level_i:
                 # Print heading
-                handle.write("%s%s%s%s%s\n" % (
-                    prefix, spacer, '[' * level_i, str(key_i), ']' * level_i))
+                msg = "%s%s%s%s%s\n" % (
+                    prefix, spacer, '[' * level_i, str(key_i), ']' * level_i)
+                if not isinstance(handle, StringIO) and 'b' in handle.mode:
+                    msg = msg.encode()
+                handle.write(msg)
+
             # Nested sections are printed after normal settings
             subsections = []
             values = []
@@ -166,7 +172,10 @@ def printcfg(cfg, level=0, indent=0, prefix='', none_str='',
             else:
                 value = str(cfg_i)
             if value is not None:
-                handle.write("%s%s%s%s\n" % (prefix, spacer, key, value))
+                msg = "%s%s%s%s\n" % (prefix, spacer, key, value)
+                if not isinstance(handle, StringIO) and 'b' in handle.mode:
+                    msg = msg.encode()
+                handle.write(msg)
 
 
 def replicate(target, source):

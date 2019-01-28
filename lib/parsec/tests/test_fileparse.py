@@ -237,13 +237,14 @@ class TestFileparse(unittest.TestCase):
                 'contin': False, 'inline': False
             }
             asedit = None
-            tf.write("a=b\n")
+            tf.write("a=b\n".encode())
             tf.flush()
             r = read_and_proc(fpath=fpath, template_vars=template_vars,
                               viewcfg=viewcfg, asedit=asedit)
             self.assertEqual(['a=b'], r)
 
-            tf.write("c=\\\nd\n\\")  # last \\ is ignored, becoming just ''
+            # last \\ is ignored, becoming just ''
+            tf.write("c=\\\nd\n\\".encode())
             tf.flush()
 
             viewcfg = {
@@ -265,9 +266,10 @@ class TestFileparse(unittest.TestCase):
             }
             asedit = None
             with tempfile.NamedTemporaryFile() as include_file:
-                include_file.write("c=d")
+                include_file.write("c=d".encode())
                 include_file.flush()
-                tf.write("a=b\n%include \"{0}\"".format(include_file.name))
+                tf.write(("a=b\n%include \"{0}\""
+                          .format(include_file.name)).encode())
                 tf.flush()
                 r = read_and_proc(fpath=fpath, template_vars=template_vars,
                                   viewcfg=viewcfg, asedit=asedit)
@@ -283,7 +285,7 @@ class TestFileparse(unittest.TestCase):
                 'mark': None, 'single': None, 'label': None
             }
             asedit = None
-            tf.write("a=b\n%include \"404.txt\"")
+            tf.write("a=b\n%include \"404.txt\"".encode())
             tf.flush()
             with self.assertRaises(FileParseError) as cm:
                 read_and_proc(fpath=fpath, template_vars=template_vars,
@@ -302,7 +304,7 @@ class TestFileparse(unittest.TestCase):
                 'contin': False, 'inline': False
             }
             asedit = None
-            tf.write("#!jinja2\na={{ name }}\n")
+            tf.write("#!jinja2\na={{ name }}\n".encode())
             tf.flush()
             r = read_and_proc(fpath=fpath, template_vars=template_vars,
                               viewcfg=viewcfg, asedit=asedit)
@@ -319,7 +321,7 @@ class TestFileparse(unittest.TestCase):
                 'contin': False, 'inline': False
             }
             asedit = None
-            tf.write("#!jinja2\na={{ name \n")
+            tf.write("#!jinja2\na={{ name \n".encode())
             tf.flush()
             with self.assertRaises(FileParseError) as cm:
                 read_and_proc(fpath=fpath, template_vars=template_vars,
@@ -340,7 +342,7 @@ class TestFileparse(unittest.TestCase):
             }
             asedit = None
             # first line is missing shebang!
-            tf.write("a={{ name }}\n")
+            tf.write("a={{ name }}\n".encode())
             tf.flush()
             r = read_and_proc(fpath=fpath, template_vars=template_vars,
                               viewcfg=viewcfg, asedit=asedit)
@@ -355,7 +357,7 @@ class TestFileparse(unittest.TestCase):
                 template_vars = {
                     'name': 'Cylc'
                 }
-                tf.write("#!jinja2\na={{ name }}\n")
+                tf.write("#!jinja2\na={{ name }}\n".encode())
                 tf.flush()
                 r = parse(fpath=fpath, output_fname=of.name,
                           template_vars=template_vars)
@@ -363,7 +365,7 @@ class TestFileparse(unittest.TestCase):
                 expected['a'] = 'Cylc'
                 self.assertEqual(expected, r)
                 of.flush()
-                output_file_contents = of.read()
+                output_file_contents = of.read().decode()
                 self.assertEqual('a=Cylc\n', output_file_contents)
 
     def test_parse_keys_only_multiline(self):
@@ -373,7 +375,8 @@ class TestFileparse(unittest.TestCase):
                 template_vars = {
                     'name': 'Cylc'
                 }
-                tf.write("#!jinja2\na='''value is \\\n{{ name }}'''\n")
+                tf.write(
+                    "#!jinja2\na='''value is \\\n{{ name }}'''\n".encode())
                 tf.flush()
                 r = parse(fpath=fpath, output_fname=of.name,
                           template_vars=template_vars)
@@ -388,7 +391,7 @@ class TestFileparse(unittest.TestCase):
                 template_vars = {
                     'name': 'Cylc'
                 }
-                tf.write("#!jinja2\n{{ name }}\n")
+                tf.write("#!jinja2\n{{ name }}\n".encode())
                 tf.flush()
                 with self.assertRaises(FileParseError) as cm:
                     parse(fpath=fpath, output_fname=of.name,
@@ -402,7 +405,7 @@ class TestFileparse(unittest.TestCase):
                 template_vars = {
                     'name': 'Cylc'
                 }
-                tf.write("#!jinja2\na={{ name }}\n# comment!")
+                tf.write("#!jinja2\na={{ name }}\n# comment!".encode())
                 tf.flush()
                 r = parse(fpath=fpath, output_fname=of.name,
                           template_vars=template_vars)
@@ -410,7 +413,7 @@ class TestFileparse(unittest.TestCase):
                 expected['a'] = 'Cylc'
                 self.assertEqual(expected, r)
                 of.flush()
-                output_file_contents = of.read()
+                output_file_contents = of.read().decode()
                 self.assertEqual('a=Cylc\n# comment!\n', output_file_contents)
 
     def test_parse_with_sections(self):
@@ -420,11 +423,11 @@ class TestFileparse(unittest.TestCase):
                 template_vars = {
                     'name': 'Cylc'
                 }
-                tf.write("#!jinja2\n[section1]\n"
+                tf.write(("#!jinja2\n[section1]\n"
                          "a={{ name }}\n# comment!\n"
                          "[[subsection1]]\n"
                          "[[subsection2]]\n"
-                         "[section2]")
+                         "[section2]").encode())
                 tf.flush()
                 r = parse(fpath=fpath, output_fname=of.name,
                           template_vars=template_vars)
@@ -436,7 +439,7 @@ class TestFileparse(unittest.TestCase):
                 expected['section2'] = OrderedDictWithDefaults()
                 self.assertEqual(expected, r)
                 of.flush()
-                output_file_contents = of.read()
+                output_file_contents = of.read().decode()
                 self.assertEqual('[section1]\na=Cylc\n# comment!\n'
                                  '[[subsection1]]\n'
                                  '[[subsection2]]\n'
@@ -449,7 +452,8 @@ class TestFileparse(unittest.TestCase):
             template_vars = {
                 'name': 'Cylc'
             }
-            tf.write("#!jinja2\n[[section1]\na={{ name }}\n# comment!")
+            tf.write(
+                "#!jinja2\n[[section1]\na={{ name }}\n# comment!".encode())
             tf.flush()
             with self.assertRaises(FileParseError) as cm:
                 parse(fpath=fpath, output_fname="",
@@ -463,9 +467,10 @@ class TestFileparse(unittest.TestCase):
                 template_vars = {
                     'name': 'Cylc'
                 }
-                tf.write("#!jinja2\n[section1]\n"
+                tf.write(("#!jinja2\n[section1]\n"
                          "a={{ name }}\n# comment!\n"
                          "[[[subsection1]]]\n")  # expected [[]] instead!
+                         .encode())
                 tf.flush()
                 with self.assertRaises(FileParseError) as cm:
                     parse(fpath=fpath, output_fname=of.name,

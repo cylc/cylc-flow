@@ -123,7 +123,7 @@ def inline(lines, dir_, filename, for_grep=False, for_edit=False, viewcfg=None,
                     if for_grep or single or label or for_edit:
                         outf.append(
                             '#++++ START INLINED INCLUDE FILE ' + match + msg)
-                    h = open(inc, 'rb')
+                    h = open(inc, 'r')
                     finc = [line.rstrip('\n') for line in h]
                     h.close()
                     # recursive inclusion
@@ -186,7 +186,7 @@ def split_file(dir_, lines, filename, recovery=False, level=None):
         newfiles.append(filename)
 
     inclines = []
-    fnew = open(filename, 'wb')
+    fnew = open(filename, 'w')
     match_on = False
     for line in lines:
         if re.match('^# !WARNING!', line):

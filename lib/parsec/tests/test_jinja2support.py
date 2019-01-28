@@ -88,7 +88,8 @@ class TestJinja2support(unittest.TestCase):
         filters_dir = os.path.join(temp_directory, 'Jinja2filters')
         os.mkdir(filters_dir)
         with tempfile.NamedTemporaryFile(dir=filters_dir, suffix=".py") as tf:
-            tf.write("def jinja2jinja()\n    raise Exception('It works!')")
+            tf.write(
+                "def jinja2jinja()\n    raise Exception('It works!')".encode())
             tf.seek(0)
             dir_ = temp_directory
             env = jinja2environment(dir_)
@@ -107,7 +108,8 @@ class TestJinja2support(unittest.TestCase):
         filters_dir = os.path.join(temp_directory, 'Jinja2filters')
         os.mkdir(filters_dir)
         with tempfile.NamedTemporaryFile(dir=filters_dir, suffix=".py") as tf:
-            tf.write("def jinja2jinja()\n    raise Exception('It works!')")
+            tf.write(
+                "def jinja2jinja()\n    raise Exception('It works!')".encode())
             tf.seek(0)
             dir_ = temp_directory
             env = jinja2environment(dir_)

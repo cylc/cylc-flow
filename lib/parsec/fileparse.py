@@ -335,7 +335,7 @@ def parse(fpath, output_fname=None, template_vars=None):
     # read and process the file (jinja2, include-files, line continuation)
     flines = read_and_proc(fpath, template_vars)
     if output_fname:
-        with open(output_fname, 'wb') as handle:
+        with open(output_fname, 'w') as handle:
             handle.write('\n'.join(flines) + '\n')
         LOG.debug('Processed configuration dumped: %s', output_fname)
 
