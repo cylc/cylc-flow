@@ -18,7 +18,7 @@
 
 import unittest
 
-import mock
+from unittest import mock
 
 from cylc import LOG
 from cylc.scheduler import Scheduler

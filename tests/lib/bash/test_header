@@ -519,7 +519,7 @@ _ssh_mkdtemp_cylc_dir() {
     ssh -oBatchMode=yes -oConnectTimeout=5 "${RHOST}" python3 - <<'__PYTHON__'
 import os
 from tempfile import mkdtemp
-print mkdtemp(dir=os.path.expanduser("~"), prefix="cylc-")
+print(mkdtemp(dir=os.path.expanduser("~"), prefix="cylc-"))
 __PYTHON__
 }
 
@@ -688,7 +688,7 @@ for item in sys.argv[2:]:
         for key in keys:
             if isinstance(key, dict):
                 for datum_item in datum:
-                    if all([datum_item.get(k) == v for k, v in key.items()]):
+                    if all((datum_item.get(k) == v for k, v in key.items())):
                         datum = datum_item
                         break
                 else:

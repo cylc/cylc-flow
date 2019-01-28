@@ -19,10 +19,10 @@
 import os
 import unittest
 
-import mock
+from unittest import mock
 
-from cylc.suite_srv_files_mgr import SuiteSrvFilesManager, \
-    SuiteServiceFileError
+from cylc.suite_srv_files_mgr import (
+    SuiteSrvFilesManager, SuiteServiceFileError)
 
 
 def get_register_test_cases():

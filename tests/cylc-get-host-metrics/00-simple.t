@@ -32,8 +32,8 @@ do
     sed -i 's/\(\s\+\)\([0-9]\+\.[0-9]\+\)\(\s*\n*,*\)/\10.10\3/g' "${FILE}"
     cmp_json_ok "${FILE}" "${FILE}" <<__OUTPUT_FORMAT__
 {
-    "load:5": 0.10,
     "load:1": 0.10,
+    "load:5": 0.10,
     "load:15": 0.10
 }
 __OUTPUT_FORMAT__
@@ -99,8 +99,8 @@ sed -i 's/\(\s\+\)\([0-9]\+\.[0-9]\+\)\(\s*\n*,*\)/\10.10\3/g' \
 cmp_json_ok "${TEST_NAME_BASE}-get-host-metric-no-opts.stdout" \
 "${TEST_NAME_BASE}-get-host-metric-no-opts.stdout" <<__OUTPUT_FORMAT__
 {
-    "load:5": 0.10,
     "load:1": 0.10,
+    "load:5": 0.10,
     "load:15": 0.10,
     "memory": 1000000
 }
@@ -118,11 +118,11 @@ do
     sed -i 's/\(\s\+\)\([0-9]\+\.[0-9]\+\)\(\s*\n*,*\)/\10.10\3/g' "${FILE}"
     cmp_json_ok "${FILE}" "${FILE}" <<__OUTPUT_FORMAT__
 {
-    "memory": 1000000, 
+    "disk-space:/": 1000000,
+    "load:1": 0.10000000000000001, 
     "load:5": 0.10000000000000001, 
     "load:15": 0.10000000000000001, 
-    "load:1": 0.10000000000000001, 
-    "disk-space:/": 1000000
+    "memory": 1000000
 }
 __OUTPUT_FORMAT__
 done

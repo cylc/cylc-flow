@@ -1,24 +1,24 @@
-runahead limit = 
-hold after point = 
-max active cycle points = 3
-final cycle point constraints = 
-spawn to max active cycle points = 
-cycling mode = integer
 initial cycle point = 1
-initial cycle point constraints = 
 final cycle point = 1
-[[dependencies]]
-    [[[R1]]]
-        graph = OPS:finish-all => VAR
-[[xtriggers]]
+initial cycle point constraints = 
+final cycle point constraints = 
+hold after point = 
+cycling mode = integer
+runahead limit = 
+max active cycle points = 3
+spawn to max active cycle points = 
 [[queues]]
     [[[default]]]
         limit = 0
-        members = ops_s1, ops_s2, ops_p1, ops_p2, var_p1, var_p2, var_s1, var_s2
+        members = ops_s1, ops_s2, ops_p1, ops_p2, var_s1, var_s2, var_p1, var_p2
 [[special tasks]]
-    external-trigger = 
-    include at start-up = 
     clock-trigger = 
-    sequential = 
+    external-trigger = 
     clock-expire = 
+    sequential = 
     exclude at start-up = 
+    include at start-up = 
+[[xtriggers]]
+[[dependencies]]
+    [[[R1]]]
+        graph = OPS:finish-all => VAR

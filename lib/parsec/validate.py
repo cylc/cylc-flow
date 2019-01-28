@@ -258,7 +258,7 @@ class ParsecValidator(object):
             >>> ParsecValidator.coerce_spaceless_str_list(
             ...     'a, b c, d', ['foo'])
             Traceback (most recent call last):
-            ListValueError: list item "b c" cannot contain a space character:
+            validate.ListValueError: list item "b c" cannot contain a space character:
                 foo = a, b c, d
         """
         lst = cls.strip_and_unquote_list(keys, value)

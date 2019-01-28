@@ -152,7 +152,8 @@ fi
 if perl -e 'use Test::Harness 3.00' 2>/dev/null; then
     NPROC=$(cylc get-global-config '--item=process pool size')
     if [[ -z "${NPROC}" ]]; then
-        NPROC=$(python3 -c 'import multiprocessing as mp; print mp.cpu_count()')
+        NPROC=$(python3 -c \
+            'import multiprocessing as mp; print(mp.cpu_count())')
     fi
     exec prove -j "$NPROC" -s -r "${@:-tests}"
 else

@@ -51,7 +51,7 @@ run_fail "${TEST_NAME}" cylc validate 'suite.rc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERROR__'
 Jinja2Error:
   File "<template>", line 2, in top-level template code
-ValueError: need more than 2 values to unpack
+ValueError: not enough values to unpack (expected 3, got 2)
 Context lines:
 {% set foo = [1, 2] %}
 {% set a, b, c = foo %}	<-- Jinja2Error

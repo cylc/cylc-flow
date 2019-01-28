@@ -36,7 +36,7 @@ def parse_exclusion(expr):
                 raise Exception("'%s': a list of exclusions must be "
                                 "enclosed in parentheses." % exclusions)
 
-        exclusions = exclusions.translate(None, ' ()')
+        exclusions = exclusions.translate(str.maketrans('', '', ' ()'))
         exclusions = exclusions.split(',')
         return remainder.strip(), exclusions
 
@@ -179,7 +179,7 @@ class IntervalBase(object, metaclass=ABCMeta):
 
     Subclasses should provide values for TYPE and TYPE_SORT_KEY.
     They should also provide self.cmp_, self.sub, self.add,
-    self.__mul__, self.__abs__, self.__nonzero__ methods which should
+    self.__mul__, self.__abs__ methods which should
     behave as __cmp__, __sub__, etc standard comparison methods.
 
     They can also just override the provided comparison methods (such
@@ -230,11 +230,6 @@ class IntervalBase(object, metaclass=ABCMeta):
     @abstractmethod
     def __mul__(self, factor):
         # Return an interval with all properties multiplied by factor.
-        pass
-
-    @abstractmethod
-    def __nonzero__(self):
-        # Return True if the interval has any non-zero properties.
         pass
 
     def __init__(self, value):

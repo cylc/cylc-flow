@@ -26,7 +26,7 @@ fi
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_fail "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 cmp_ok "${TEST_NAME_BASE}-validate.stderr" <<'__ERR__'
-"ERROR: bad task event handler template t1: echo %(rubbish)s: KeyError('rubbish',)"
+"ERROR: bad task event handler template t1: echo %(rubbish)s: KeyError('rubbish')"
 __ERR__
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach "${SUITE_NAME}"

@@ -67,7 +67,7 @@ outputs (- => not completed):
 __SHOW_OUTPUT__
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-show-json
-cmp_json_ok "$TEST_NAME-suite" "$TEST_NAME-suite" <<__SHOW_OUTPUT__
+cmp_json "$TEST_NAME-suite" "$TEST_NAME-suite" <<__SHOW_OUTPUT__
 [
     {
         "URL": "", 
@@ -79,7 +79,7 @@ cmp_json_ok "$TEST_NAME-suite" "$TEST_NAME-suite" <<__SHOW_OUTPUT__
 ]
 __SHOW_OUTPUT__
 
-cmp_json_ok "$TEST_NAME-task" "$TEST_NAME-task" <<__SHOW_OUTPUT__
+cmp_json "$TEST_NAME-task" "$TEST_NAME-task" <<__SHOW_OUTPUT__
 [
     {
         "foo": {
@@ -92,7 +92,7 @@ cmp_json_ok "$TEST_NAME-task" "$TEST_NAME-task" <<__SHOW_OUTPUT__
 ]
 __SHOW_OUTPUT__
 
-cmp_json_ok "$TEST_NAME-taskinstance" "$TEST_NAME-taskinstance" \
+cmp_json "$TEST_NAME-taskinstance" "$TEST_NAME-taskinstance" \
     <<__SHOW_OUTPUT__
 [
     {

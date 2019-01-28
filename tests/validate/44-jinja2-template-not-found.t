@@ -27,7 +27,7 @@ sed -i 's/^  File ".*/  File "FILE", line NN, in ROUTINE/g' "$TEST_NAME.stderr"
 cmp_ok "$TEST_NAME.stderr" <<'__ERROR__'
 Jinja2Error:
   File "FILE", line NN, in ROUTINE
-TemplateNotFound: suite-foo.rc
+jinja2.exceptions.TemplateNotFound: suite-foo.rc
 Context lines:
     [[dependencies]]
         graph = foo

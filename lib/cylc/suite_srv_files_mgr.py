@@ -565,10 +565,12 @@ To start a new run, stop the old one first with one or more of these:
             common_name = common_name[:61] + "..."
         # See https://github.com/kennethreitz/requests/issues/2621
         ext = crypto.X509Extension(
-            "subjectAltName",
+            b"subjectAltName",
             False,
-            "DNS:%(dns)s, IP:%(ip)s, DNS:%(ip)s" % {
-                "dns": host, "ip": get_local_ip_address(host)})
+            b"DNS:%(dns)s, IP:%(ip)s, DNS:%(ip)s" % {
+                b"dns": host.encode(),
+                b"ip": get_local_ip_address(host).encode()
+            })
         file_name = self._locate_item(self.FILE_BASE_SSL_CERT, path)
         if file_name:
             cert_obj = crypto.load_certificate(
@@ -611,7 +613,10 @@ To start a new run, stop the old one first with one or more of these:
         mkdir_p(path)
         from tempfile import NamedTemporaryFile
         handle = NamedTemporaryFile(prefix=item, dir=path, delete=False)
-        handle.write(value)
+        try:
+            handle.write(value.encode())
+        except AttributeError:
+            handle.write(value)
         os.fsync(handle.fileno())
         handle.close()
         fname = os.path.join(path, item)

@@ -44,6 +44,11 @@ description: (not given)
 URL: (not given)
 
 prerequisites (- => not satisfied):
+  + (0 | 1 | 2 | 3)
+  - 	0 = foo_x1.1 succeeded
+  - 	1 = foo_x2.1 succeeded
+  - 	2 = foo_x3.1 succeeded
+  + 	3 = foo_x4.1 succeeded
   - ((1 | 0) & (3 | 2) & (5 | 4) & (7 | 6))
   + 	0 = bar_x1.1 failed
   - 	1 = bar_x1.1 succeeded
@@ -53,11 +58,6 @@ prerequisites (- => not satisfied):
   - 	5 = bar_x3.1 succeeded
   - 	6 = bar_x4.1 failed
   - 	7 = bar_x4.1 succeeded
-  + (0 | 1 | 2 | 3)
-  - 	0 = foo_x1.1 succeeded
-  - 	1 = foo_x2.1 succeeded
-  - 	2 = foo_x3.1 succeeded
-  + 	3 = foo_x4.1 succeeded
 
 outputs (- => not completed):
   - baz.1 expired
@@ -77,6 +77,11 @@ description: (not given)
 URL: (not given)
 
 prerequisites (- => not satisfied):
+  + (0 | 1 | 2 | 3)
+  - 	0 = foo_x1.1 succeeded
+  - 	1 = foo_x2.1 succeeded
+  - 	2 = foo_x3.1 succeeded
+  + 	3 = foo_x4.1 succeeded
   + ((1 | 0) & (3 | 2) & (5 | 4) & (7 | 6))
   + 	0 = bar_x1.1 failed
   - 	1 = bar_x1.1 succeeded
@@ -86,11 +91,6 @@ prerequisites (- => not satisfied):
   - 	5 = bar_x3.1 succeeded
   - 	6 = bar_x4.1 failed
   + 	7 = bar_x4.1 succeeded
-  + (0 | 1 | 2 | 3)
-  - 	0 = foo_x1.1 succeeded
-  - 	1 = foo_x2.1 succeeded
-  - 	2 = foo_x3.1 succeeded
-  + 	3 = foo_x4.1 succeeded
 
 outputs (- => not completed):
   - baz.1 expired
@@ -110,6 +110,11 @@ description: (not given)
 URL: (not given)
 
 prerequisites (- => not satisfied):
+  + (0 | 1 | 2 | 3)
+  - 	0 = foo_x1.1 succeeded
+  - 	1 = foo_x2.1 succeeded
+  - 	2 = foo_x3.1 succeeded
+  + 	3 = foo_x4.1 succeeded
   + ((1 | 0) & (3 | 2) & (5 | 4) & (7 | 6))
   + 	0 = bar_x1.1 failed
   - 	1 = bar_x1.1 succeeded
@@ -119,11 +124,6 @@ prerequisites (- => not satisfied):
   - 	5 = bar_x3.1 succeeded
   - 	6 = bar_x4.1 failed
   + 	7 = bar_x4.1 succeeded
-  + (0 | 1 | 2 | 3)
-  - 	0 = foo_x1.1 succeeded
-  - 	1 = foo_x2.1 succeeded
-  - 	2 = foo_x3.1 succeeded
-  + 	3 = foo_x4.1 succeeded
 
 outputs (- => not completed):
   - baz.1 expired
@@ -143,6 +143,11 @@ description: (not given)
 URL: (not given)
 
 prerequisites (- => not satisfied):
+  + (0 | 1 | 2 | 3)
+  - 	0 = foo_x1.1 succeeded
+  - 	1 = foo_x2.1 succeeded
+  - 	2 = foo_x3.1 succeeded
+  + 	3 = foo_x4.1 succeeded
   + ((1 | 0) & (3 | 2) & (5 | 4) & (7 | 6))
   + 	0 = bar_x1.1 failed
   - 	1 = bar_x1.1 succeeded
@@ -152,11 +157,6 @@ prerequisites (- => not satisfied):
   - 	5 = bar_x3.1 succeeded
   - 	6 = bar_x4.1 failed
   + 	7 = bar_x4.1 succeeded
-  + (0 | 1 | 2 | 3)
-  - 	0 = foo_x1.1 succeeded
-  - 	1 = foo_x2.1 succeeded
-  - 	2 = foo_x3.1 succeeded
-  + 	3 = foo_x4.1 succeeded
 
 outputs (- => not completed):
   + baz.1 expired
@@ -176,6 +176,11 @@ description: (not given)
 URL: (not given)
 
 prerequisites (- => not satisfied):
+  + (0 | 1 | 2 | 3)
+  - 	0 = foo_x1.1 succeeded
+  - 	1 = foo_x2.1 succeeded
+  - 	2 = foo_x3.1 succeeded
+  + 	3 = foo_x4.1 succeeded
   + ((1 | 0) & (3 | 2) & (5 | 4) & (7 | 6))
   + 	0 = bar_x1.1 failed
   - 	1 = bar_x1.1 succeeded
@@ -185,11 +190,6 @@ prerequisites (- => not satisfied):
   - 	5 = bar_x3.1 succeeded
   - 	6 = bar_x4.1 failed
   + 	7 = bar_x4.1 succeeded
-  + (0 | 1 | 2 | 3)
-  - 	0 = foo_x1.1 succeeded
-  - 	1 = foo_x2.1 succeeded
-  - 	2 = foo_x3.1 succeeded
-  + 	3 = foo_x4.1 succeeded
 
 outputs (- => not completed):
   - baz.1 expired
@@ -209,6 +209,11 @@ description: (not given)
 URL: (not given)
 
 prerequisites (- => not satisfied):
+  + (0 | 1 | 2 | 3)
+  - 	0 = foo_x1.1 succeeded
+  - 	1 = foo_x2.1 succeeded
+  - 	2 = foo_x3.1 succeeded
+  + 	3 = foo_x4.1 succeeded
   + ((1 | 0) & (3 | 2) & (5 | 4) & (7 | 6))
   + 	0 = bar_x1.1 failed
   - 	1 = bar_x1.1 succeeded
@@ -218,11 +223,6 @@ prerequisites (- => not satisfied):
   - 	5 = bar_x3.1 succeeded
   - 	6 = bar_x4.1 failed
   + 	7 = bar_x4.1 succeeded
-  + (0 | 1 | 2 | 3)
-  - 	0 = foo_x1.1 succeeded
-  - 	1 = foo_x2.1 succeeded
-  - 	2 = foo_x3.1 succeeded
-  + 	3 = foo_x4.1 succeeded
 
 outputs (- => not completed):
   - baz.1 expired
@@ -242,6 +242,11 @@ description: (not given)
 URL: (not given)
 
 prerequisites (- => not satisfied):
+  - (0 | 1 | 2 | 3)
+  - 	0 = foo_x1.1 succeeded
+  - 	1 = foo_x2.1 succeeded
+  - 	2 = foo_x3.1 succeeded
+  - 	3 = foo_x4.1 succeeded
   - ((1 | 0) & (3 | 2) & (5 | 4) & (7 | 6))
   - 	0 = bar_x1.1 failed
   - 	1 = bar_x1.1 succeeded
@@ -251,11 +256,6 @@ prerequisites (- => not satisfied):
   - 	5 = bar_x3.1 succeeded
   - 	6 = bar_x4.1 failed
   - 	7 = bar_x4.1 succeeded
-  - (0 | 1 | 2 | 3)
-  - 	0 = foo_x1.1 succeeded
-  - 	1 = foo_x2.1 succeeded
-  - 	2 = foo_x3.1 succeeded
-  - 	3 = foo_x4.1 succeeded
 
 outputs (- => not completed):
   - baz.1 expired
@@ -275,6 +275,11 @@ description: (not given)
 URL: (not given)
 
 prerequisites (- => not satisfied):
+  - (0 | 1 | 2 | 3)
+  - 	0 = foo_x1.1 succeeded
+  - 	1 = foo_x2.1 succeeded
+  - 	2 = foo_x3.1 succeeded
+  - 	3 = foo_x4.1 succeeded
   - ((1 | 0) & (3 | 2) & (5 | 4) & (7 | 6))
   - 	0 = bar_x1.1 failed
   - 	1 = bar_x1.1 succeeded
@@ -284,11 +289,6 @@ prerequisites (- => not satisfied):
   - 	5 = bar_x3.1 succeeded
   - 	6 = bar_x4.1 failed
   - 	7 = bar_x4.1 succeeded
-  - (0 | 1 | 2 | 3)
-  - 	0 = foo_x1.1 succeeded
-  - 	1 = foo_x2.1 succeeded
-  - 	2 = foo_x3.1 succeeded
-  - 	3 = foo_x4.1 succeeded
 
 outputs (- => not completed):
   - baz.1 expired

@@ -49,16 +49,13 @@ latter grouped as Python, TeX or 'other' (neither). 'opt_spec' item format:
 <MODULE>: [<MIN VER OR 'None'>, <FUNC TAG>, <GROUP>, <'OTHER' TUPLE>] with
 <'OTHER' TUPLE> = ([<BASE CMD(S)>], <VER OPT>, <REGEX>, <OUTFILE ARG>).
 """
-req_py_ver_range = (2, 6), (3,)
+req_py_ver_range = ((3,),)
 opt_spec = {
     'EmPy': [None, 'TEMPLATING', 'PY'],
     'requests': [(2, 4, 2), 'HTTPSCOMMS', 'PY'],
     'OpenSSL': [None, 'HTTPSCOMMS', 'PY'],
     'urllib3': [None, 'HTTPSCOMMS', 'PY'],
     'sphinx': [(1, 5, 3), 'HTMLDOCS', 'PY'],
-    'pygraphviz': [None, 'GUIORGRAPH', 'PY'],
-    'graphviz': [None, 'GUIORGRAPH', 'OTHER',
-                 (['dot'], '-V', r'graphviz version ([^\s]+)', 2)],
 }
 
 # All possible module reqs to accept as arguments, as above or all lower case.

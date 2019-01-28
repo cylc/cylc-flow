@@ -96,28 +96,12 @@ class OrderedDictWithDefaults(OrderedDict):
         """Include any default keys in the nonzero calculation."""
         return bool(list(self.keys()))
 
-    def prepend(self, key, value, dict_setitem=dict.__setitem__):
+    def prepend(self, key, value):
         """Prepend new item in the ordered dict.
 
         https://stackoverflow.com/questions/16664874/
            how-can-i-add-an-element-at-the-top-of-an-ordereddict-in-python
 
-        Tested with Python 2.7 collections.OrderedDict and our bundled
-        ActiveState implementation for Python 2.6.
-
         """
-        root = self._OrderedDict__root
-        first = root[1]
-
-        if key in self:
-            link = self._OrderedDict__map[key]
-            link_prev, link_next, _ = link
-            link_prev[1] = link_next
-            link_next[0] = link_prev
-            link[0] = root
-            link[1] = first
-            root[1] = first[0] = link
-        else:
-            root[1] = first[0] = self._OrderedDict__map[key] = [
-                root, first, key]
-        dict_setitem(self, key, value)
+        self[key] = value
+        self.move_to_end(key, last=False)

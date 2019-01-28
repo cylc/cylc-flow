@@ -227,7 +227,7 @@ class TaskEventsManager(object):
                 continue
             # Set timer if timeout is None.
             if not timer.is_timeout_set():
-                if next(timer) is None:
+                if timer.next() is None:
                     LOG.warning("%s/%s/%02d %s failed" % (
                         point, name, submit_num, key1))
                     del self.event_timers[id_key]
@@ -623,7 +623,7 @@ class TaskEventsManager(object):
             "time_run_exit": event_time,
         })
         if (TASK_STATUS_RETRYING not in itask.try_timers or
-                next(itask.try_timers[TASK_STATUS_RETRYING]) is None):
+                itask.try_timers[TASK_STATUS_RETRYING].next() is None):
             # No retry lined up: definitive failure.
             self.pflag = True
             if itask.state.reset_state(TASK_STATUS_FAILED):
@@ -698,7 +698,7 @@ class TaskEventsManager(object):
         })
         itask.summary['submit_method_id'] = None
         if (TASK_STATUS_SUBMIT_RETRYING not in itask.try_timers or
-                next(itask.try_timers[TASK_STATUS_SUBMIT_RETRYING]) is None):
+                itask.try_timers[TASK_STATUS_SUBMIT_RETRYING].next() is None):
             # No submission retry lined up: definitive failure.
             self.pflag = True
             # See github #476.

@@ -80,7 +80,8 @@ MEMORY_LINE_REGEX = re.compile(
 LOOP_MEMORY_LINE_REGEX = re.compile(
     r'(?:loop #|end main loop \(total loops )([\d]+)(?:: |\): )(.*)')
 # Matches the sleep function line in cylc <cmd> --profile output.
-SLEEP_FUNCTION_REGEX = re.compile(r'([\d.]+)[\s]+[\d.]+[\s]+\{time.sleep\}')
+SLEEP_FUNCTION_REGEX = re.compile(
+    r'([\d.]+)[\s]+[\d.]+[\s]+\{built-in method time.sleep\}')
 # The string prefixing the suite-startup timestamp (unix time).
 SUITE_STARTUP_STRING = 'SUITE STARTUP: '
 

@@ -994,15 +994,9 @@ class SuiteConfig(object):
                 self.runtime['linearized ancestors'][name] = c3.mro(name)
                 self.runtime['first-parent ancestors'][name] = (
                     c3_single.mro(name))
-            except RuntimeError:
-                if cylc.flags.debug:
-                    raise
-                exc_lines = traceback.format_exc().splitlines()
-                if exc_lines[-1].startswith(
-                        "RuntimeError: maximum recursion depth exceeded"):
-                    raise SuiteConfigError(
-                        "ERROR: circular [runtime] inheritance?")
-                raise
+            except RecursionError:
+                raise SuiteConfigError(
+                    "ERROR: circular [runtime] inheritance?")
 
         for name in self.cfg['runtime']:
             ancestors = self.runtime['linearized ancestors'][name]
@@ -1889,7 +1883,7 @@ class SuiteConfig(object):
             # Flatten nested list.
             graph_raw_edges = (
                 [i for sublist in gr_edges.values() for i in sublist])
-        graph_raw_edges.sort()
+        graph_raw_edges.sort(key=lambda x: [y if y else '' for y in x])
         self._last_graph_raw_edges = graph_raw_edges
         return graph_raw_edges
 

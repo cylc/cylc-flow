@@ -24,7 +24,7 @@ class TestMessageSorting(unittest.TestCase):
         for _ in range(5):
             random.shuffle(messages)
             output = sorted(messages, key=TaskOutputs.msg_sort_key)
-            self.assertEquals(output, self.TEST_MESSAGES, output)
+            self.assertEqual(output, self.TEST_MESSAGES, output)
 
 
 if __name__ == '__main__':

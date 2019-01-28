@@ -640,6 +640,9 @@ class ISO8601Sequence(SequenceBase):
     def __str__(self):
         return self.value
 
+    def __hash__(self):
+        return hash(self.value)
+
 
 def _get_old_anchor_step_recurrence(anchor, step, start_point):
     """Return a string representing an old-format recurrence translation."""

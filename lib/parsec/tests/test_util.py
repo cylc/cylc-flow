@@ -17,9 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
+from unittest import mock
 from io import StringIO
-
-import mock
 
 from parsec.util import *
 
@@ -328,24 +327,25 @@ class TestUtil(unittest.TestCase):
         """
         Only way that this may happen is if dict is updated elsewhere.
         """
-        target = OrderedDictWithDefaults()
+        class MyODWD(OrderedDictWithDefaults):
+            def __delitem__(self, _):
+                raise KeyError()
+
+        target = MyODWD()
         target["name"] = "Anything"
         target.defaults_ = dict()
         target.defaults_["name"] = True
         target.defaults_["__MANY__"] = True
-        target['__MANY__'] = OrderedDictWithDefaults()
-        target['__MANY__']['name2'] = OrderedDictWithDefaults()
-        target['__MANY__']['subdict'] = OrderedDictWithDefaults()
+        target['__MANY__'] = MyODWD()
+        target['__MANY__']['name2'] = MyODWD()
+        target['__MANY__']['subdict'] = MyODWD()
         target['__MANY__']['key'] = []
         target['__MANY__']['text'] = "Ad infinitum"
 
         un_many(None)  # harmless, no error/exception
+        un_many(target)
 
-        with mock.patch('collections.OrderedDict.__delitem__',
-                        side_effect=KeyError()):
-            un_many(target)
-
-        self.assertTrue('__MANY__' in list(target))
+        self.assertTrue('__MANY__' in target, target)
 
     def test_un_many_keyerror_no_default(self):
         """
@@ -354,20 +354,22 @@ class TestUtil(unittest.TestCase):
         And in this case, when there is no defaults_, the API raises the
         current KeyError.
         """
-        target = OrderedDictWithDefaults()
+        class MyODWD(OrderedDictWithDefaults):
+            def __delitem__(self, _):
+                raise KeyError()
+
+        target = MyODWD()
         target["name"] = "Anything"
-        target['__MANY__'] = OrderedDictWithDefaults()
-        target['__MANY__']['name2'] = OrderedDictWithDefaults()
-        target['__MANY__']['subdict'] = OrderedDictWithDefaults()
+        target['__MANY__'] = MyODWD()
+        target['__MANY__']['name2'] = MyODWD()
+        target['__MANY__']['subdict'] = MyODWD()
         target['__MANY__']['key'] = []
         target['__MANY__']['text'] = "Ad infinitum"
 
         un_many(None)  # harmless, no error/exception
 
         with self.assertRaises(KeyError):
-            with mock.patch('collections.OrderedDict.__delitem__',
-                            side_effect=KeyError()):
-                un_many(target)
+            un_many(target)
 
     # --- itemstr
 

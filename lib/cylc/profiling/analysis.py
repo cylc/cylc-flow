@@ -111,8 +111,8 @@ def extract_results(result_file_dict, exp):
 def get_startup_time(file_name):
     """Return the value of the "SUITE STARTUP" entry as a string."""
     with open(file_name, 'r') as startup_file:
-        return re.search('SUITE STARTUP: (.*)',
-                         startup_file.read().decode()).groups()[0]
+        return re.search(
+            'SUITE STARTUP: (.*)', startup_file.read()).groups()[0]
 
 
 def process_time_file(file_name):

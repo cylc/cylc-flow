@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
-import mock
+from unittest import mock
 from cylc.task_events_mgr import TaskEventsManager
 from cylc.subprocctx import SubProcContext
 

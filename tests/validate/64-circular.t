@@ -54,7 +54,7 @@ __SUITE_RC__
 
 run_fail "${TEST_NAME_BASE}-simple-fam" cylc validate 'suite.rc'
 contains_ok "${TEST_NAME_BASE}-simple-fam.stderr" <<'__ERR__'
-'ERROR, self-edge detected: g:succeed => g'
+'ERROR, self-edge detected: f:succeed => f'
 __ERR__
 
 cat >'suite.rc' <<'__SUITE_RC__'

@@ -26,7 +26,7 @@ sleep 2
 test $(readlink ${CYLC_SUITE_RUN_DIR}/log/job/1/victim/NN) = '01'
 
 my-suite-state-summary-test \
-    < <(cylc client -n 'get_suite_state_summary' "${CYLC_SUITE_NAME}")
+    <<<$(cylc client -n "${CYLC_SUITE_NAME}" 'get_suite_state_summary')
 
 # Then trigger victim - the original unedited task should run.
 cylc trigger $CYLC_SUITE_NAME victim.1
