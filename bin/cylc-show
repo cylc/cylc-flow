@@ -68,7 +68,7 @@ def main():
             json_filter.append(suite_info)
         else:
             for key, value in sorted(suite_info.items(), reverse=True):
-                print '%s: %s' % (key, value or "(not given)")
+                print('%s: %s' % (key, value or "(not given)"))
 
     task_names = [arg for arg in task_args if TaskID.is_valid_name(arg)]
     task_ids = [arg for arg in task_args if TaskID.is_valid_id_2(arg)]
@@ -80,9 +80,9 @@ def main():
         else:
             for task_name, result in sorted(results.items()):
                 if len(results) > 1:
-                    print "----\nTASK NAME: %s" % task_name
+                    print("----\nTASK NAME: %s" % task_name)
                 for key, value in sorted(result.items(), reverse=True):
-                    print "%s: %s" % (key, value or "(not given)")
+                    print("%s: %s" % (key, value or "(not given)"))
 
     if task_ids:
         results, bad_items = pclient.get_info(
@@ -93,37 +93,37 @@ def main():
         else:
             for task_id, result in sorted(results.items()):
                 if len(results) > 1:
-                    print "----\nTASK ID: %s" % task_id
+                    print("----\nTASK ID: %s" % task_id)
                 if options.list_prereqs:
                     for prereq in result["prerequisites"]:
-                        print prereq
+                        print(prereq)
                 else:
                     for key, value in sorted(
                             result["meta"].items(), reverse=True):
-                        print "%s: %s" % (key, value or "(not given)")
+                        print("%s: %s" % (key, value or "(not given)"))
 
                     for name, done in [("prerequisites", "satisfied"),
                                        ("outputs", "completed")]:
-                        print '\n%s (- => not %s):' % (name, done)
+                        print('\n%s (- => not %s):' % (name, done))
                         if not result[name]:
-                            print '  (None)'
+                            print('  (None)')
                         for msg, state in result[name]:
                             if state:
-                                print '  + ' + msg
+                                print('  + ' + msg)
                             else:
-                                print '  - ' + msg
+                                print('  - ' + msg)
 
                     if result["extras"]:
-                        print '\nother:'
+                        print('\nother:')
                         for key, value in result["extras"].items():
-                            print '  o  %s ... %s' % (key, value)
+                            print('  o  %s ... %s' % (key, value))
             for bad_item in bad_items:
                 sys.stderr.write("No matching tasks found: %s\n" % bad_item)
             if bad_items:
                 sys.exit(1)
 
     if options.json:
-        print json.dumps(json_filter, indent=4)
+        print(json.dumps(json_filter, indent=4))
 
 
 if __name__ == "__main__":

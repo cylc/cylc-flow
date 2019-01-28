@@ -62,7 +62,7 @@ opt_spec = {
 }
 
 # All possible module reqs to accept as arguments, as above or all lower case.
-module_args = ['Python'] + opt_spec.keys()
+module_args = ['Python'] + list(opt_spec)
 upper_case_conv = dict(
     (upper.lower(), upper) for upper in module_args if upper.lower() != upper)
 
@@ -316,6 +316,6 @@ def main():
 
 if __name__ == '__main__':
     if 'help' in sys.argv or '--help' in sys.argv:
-        print __doc__
+        print(__doc__)
     else:
         main()

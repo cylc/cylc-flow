@@ -35,8 +35,8 @@ if remrun():
 def main():
     """Implement "cylc get-directory"."""
     options, args = COP(__doc__, prep=True).parse_args()
-    print SuiteSrvFilesManager().get_suite_source_dir(
-        args[0], options.suite_owner)
+    print(SuiteSrvFilesManager().get_suite_source_dir(
+        args[0], options.suite_owner))
 
 
 if __name__ == "__main__":

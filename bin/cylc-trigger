@@ -160,7 +160,7 @@ def main():
         # Don't allow force-no-prompt in this case.
         if options.geditor:
             # Alert stdout of the dialog window, in case it's missed.
-            print "Editing done. I'm popping up a confirmation dialog now."
+            print("Editing done. I'm popping up a confirmation dialog now.")
 
         # Save a diff to record the changes made.
         difflog = os.path.join(os.path.dirname(jobfile_path), JOB_LOG_DIFF)

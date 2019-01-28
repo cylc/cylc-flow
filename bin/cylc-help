@@ -128,30 +128,30 @@ def pretty_print(incom, choose_dict, indent=True, numbered=False, sort=False):
         if item not in incom:
             raise SystemExit("ERROR: summary for '" + item + "' not found")
 
-        print spacer,
+        print(spacer, end=' ')
         if numbered:
             count += 1
             if pad and count < 10:
                 digit = ' ' + str(count)
             else:
                 digit = str(count)
-            print digit + '/',
-        print "%s %s %s" % (
+            print(digit + '/', end=' ')
+        print("%s %s %s" % (
             label[item],
             '.' * (longest - len(label[item])) + '...',
-            incom[item])
+            incom[item]))
 
 
 def category_help(category):
     coms = eval(category + '_commands')
     alts = '|'.join(categories[category])
-    print 'CATEGORY: ' + alts + ' - ' + catsum[category]
-    print
-    print 'HELP: cylc [' + alts + '] COMMAND help,--help'
-    print '  You can abbreviate ' + alts + ' and COMMAND.'
-    print '  The category ' + alts + ' may be omitted.'
-    print
-    print 'COMMANDS:'
+    print('CATEGORY: ' + alts + ' - ' + catsum[category])
+    print()
+    print('HELP: cylc [' + alts + '] COMMAND help,--help')
+    print('  You can abbreviate ' + alts + ' and COMMAND.')
+    print('  The category ' + alts + ' may be omitted.')
+    print()
+    print('COMMANDS:')
     pretty_print(comsum, coms, sort=True)
 
 
@@ -445,7 +445,7 @@ if __name__ == "__main__":
     # no arguments: print help and exit
     if len(sys.argv) == 1:
         from cylc.version import CYLC_VERSION
-        print usage.replace("__CYLC_VERSION__", CYLC_VERSION)
+        print(usage.replace("__CYLC_VERSION__", CYLC_VERSION))
         pretty_print(catsum, categories)
         sys.exit(0)
 
@@ -454,40 +454,36 @@ if __name__ == "__main__":
     if len(args) == 1:
         if args[0] == 'categories':
             # secret argument for document processing
-            keys = catsum.keys()
-            keys.sort()
-            for key in keys:
-                print key
+            for key in sorted(catsum):
+                print(key)
             sys.exit(0)
         if args[0] == 'commands':
             # secret argument for document processing
-            keys = comsum.keys()
-            keys.sort()
-            for key in keys:
-                print key
+            for key in sorted(comsum):
+                print(key)
             sys.exit(0)
         if args[0].startswith('category='):
             # secret argument for gcylc
             category = args[0][9:]
             commands = eval(category + '_commands')
             for command in commands:
-                print command
+                print(command)
             sys.exit(0)
         if is_help(args[0]):
             # cylc help
             from cylc.version import CYLC_VERSION
-            print usage.replace("__CYLC_VERSION__", CYLC_VERSION)
+            print(usage.replace("__CYLC_VERSION__", CYLC_VERSION))
             pretty_print(catsum, categories)
             sys.exit(0)
         if (args[0] in ['--version', '-V']):
             from cylc.version import CYLC_VERSION
-            print CYLC_VERSION
+            print(CYLC_VERSION)
             sys.exit(0)
 
         # cylc CATEGORY with no args => category help
         try:
             category = match_dict(args[0], categories, 'CATEGORY')
-        except CommandError, x:
+        except CommandError:
             # No matching category
             # (no need to print this, the exception will recur below)
             # Carry on in case of a no-argument command (e.g. 'cylc scan')
@@ -510,13 +506,13 @@ if __name__ == "__main__":
             item = args[1]
         try:
             category = match_dict(item, categories, 'CATEGORY')
-        except CommandError, x:
+        except CommandError as exc:
             # no matching category, try command
             try:
                 command = match_command(typo(item))
-            except CommandError, y:
-                print >> sys.stderr, x
-                raise SystemExit(y)
+            except CommandError as exc2:
+                print(exc, file=sys.stderr)
+                raise SystemExit(exc2)
             else:
                 # cylc COMMAND --help
                 command_args = ['--help']

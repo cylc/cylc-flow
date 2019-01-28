@@ -71,7 +71,7 @@ def main():
         dump_to_stdout(get_stop_state_summary(lines)[1])
     else:
         for line in lines:
-            print line
+            print(line)
 
 
 def _get_state_lines(suite):

@@ -101,7 +101,7 @@ def main():
 
     if options.tree:
         if os.environ['LANG'] == 'C' and options.box:
-            print >> sys.stderr, "WARNING, ignoring -t/--tree: $LANG=C"
+            print("WARNING, ignoring -t/--tree: $LANG=C", file=sys.stderr)
             options.tree = False
 
     if options.titles and options.mro:
@@ -109,7 +109,7 @@ def main():
 
     if options.tree and any(
             [options.all_tasks, options.all_namespaces, options.mro]):
-        print >> sys.stderr, "WARNING: -t chosen, ignoring non-tree options."
+        print("WARNING: -t chosen, ignoring non-tree options.", file=sys.stderr)
     config = SuiteConfig(
         suite, suiterc,
         load_template_vars(options.templatevars, options.templatevars_file),
@@ -119,10 +119,10 @@ def main():
             pretty=options.box, titles=options.titles)
     elif options.crange:
         for node in sorted(config.get_node_labels(tr_start, tr_stop)):
-            print node
+            print(node)
     else:
         result = config.get_namespace_list(which)
-        namespaces = result.keys()
+        namespaces = list(result)
         namespaces.sort()
 
         if (options.mro or options.titles):
@@ -135,15 +135,15 @@ def main():
 
         for ns in namespaces:
             if options.mro:
-                print ns, padding[0:len(padding) - len(ns)],
+                print(ns, padding[0:len(padding) - len(ns)], end=' ')
                 for i in config.get_mro(ns):
-                    print i,
-                print
+                    print(i, end=' ')
+                print()
             elif options.titles:
-                print ns, padding[0:len(padding) - len(ns)],
-                print result[ns]
+                print(ns, padding[0:len(padding) - len(ns)], end=' ')
+                print(result[ns])
             else:
-                print ns
+                print(ns)
 
 
 if __name__ == "__main__":

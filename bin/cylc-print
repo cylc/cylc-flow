@@ -118,7 +118,7 @@ def main():
                 line = suite + ' | ' + dir_
             else:
                 line = suite
-            print line
+            print(line)
     else:
         tree = {}
         if options.align:

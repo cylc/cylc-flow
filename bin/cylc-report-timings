@@ -52,7 +52,7 @@ from cylc.remote import remrun
 if remrun():
     sys.exit(0)
 
-import cStringIO as StringIO
+import io as StringIO
 import collections
 import contextlib
 import os

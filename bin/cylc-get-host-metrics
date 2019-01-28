@@ -108,7 +108,7 @@ def main():
 
     options, args = parser.parse_args()
 
-    print get_host_metric(options.load, options.memory, options.disk)
+    print(get_host_metric(options.load, options.memory, options.disk))
 
     sys.exit()
 

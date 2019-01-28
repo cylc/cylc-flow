@@ -194,7 +194,7 @@ def main():
         sys.exit("ERROR: You must target a cycle point to use an offset")
 
     if options.template:
-        print >> sys.stderr, "WARNING: ignoring --template (no longer needed)"
+        print("WARNING: ignoring --template (no longer needed)", file=sys.stderr)
 
     # Attempt to apply specified offset to the targeted cycle
     if options.offset:

@@ -262,7 +262,7 @@ def main():
         settings = pclient.get_broadcast(task_id=options.showtask)
         padding = get_padding(settings) * ' '
         if options.raw:
-            print str(settings)
+            print(str(settings))
         else:
             print_tree(settings, padding, options.unicode)
         sys.exit(0)
@@ -272,16 +272,16 @@ def main():
             "point_strings": options.point_strings,
             "namespaces": options.namespaces})
         if modified_settings:
-            print get_broadcast_change_report(
-                modified_settings, is_cancel=True)
+            print(get_broadcast_change_report(
+                modified_settings, is_cancel=True))
         sys.exit(get_broadcast_bad_options_report(bad_options))
 
     if options.expire:
         modified_settings, bad_options = pclient.expire_broadcast(
             cutoff=options.expire)
         if modified_settings:
-            print get_broadcast_change_report(
-                modified_settings, is_cancel=True)
+            print(get_broadcast_change_report(
+                modified_settings, is_cancel=True))
         sys.exit(get_broadcast_bad_options_report(bad_options))
 
     # implement namespace and cycle point defaults here
@@ -306,8 +306,8 @@ def main():
             "point_strings": point_strings, "namespaces": namespaces,
             "cancel_settings": settings})
         if modified_settings:
-            print get_broadcast_change_report(
-                modified_settings, is_cancel=True)
+            print(get_broadcast_change_report(
+                modified_settings, is_cancel=True))
         sys.exit(get_broadcast_bad_options_report(bad_options))
 
     if options.settings or options.setting_files:
@@ -323,7 +323,7 @@ def main():
         modified_settings, bad_options = pclient.put_broadcast({
             "point_strings": point_strings, "namespaces": namespaces,
             "settings": settings})
-        print get_broadcast_change_report(modified_settings)
+        print(get_broadcast_change_report(modified_settings))
         sys.exit(get_broadcast_bad_options_report(bad_options, is_set=True))
 
 

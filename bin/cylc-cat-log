@@ -130,7 +130,7 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False):
     logpath = os.path.expandvars(logpath)
     if mode == 'print':
         # Print location even if the suite does not exist yet.
-        print logpath
+        print(logpath)
         return 0
     elif not os.path.exists(logpath) and batchview_cmd is None:
         # Note: batchview_cmd may not need to have access to logpath, so don't
@@ -138,11 +138,11 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False):
         sys.stderr.write('ERROR: file not found: %s\n' % logpath)
         return 1
     elif mode == 'print-dir':
-        print os.path.dirname(logpath)
+        print(os.path.dirname(logpath))
         return 0
     elif mode == 'list-dir':
         for entry in sorted(os.listdir(os.path.dirname(logpath))):
-            print entry
+            print(entry)
         return 0
     elif not remote and mode == 'edit':
         # Copy the log to a temporary read-only file for viewing in editor.
@@ -192,7 +192,7 @@ def get_option_parser():
         "-m", "--mode",
         help="Mode: %s. Default c(cat)." % (
             ', '.join(['%s(%s)' % (i, j) for i, j in MODES.items()])),
-        action="store", choices=MODES.keys() + MODES.values(), default='c',
+        action="store", choices=list(MODES.keys()) + list(MODES.values()), default='c',
         dest="mode")
 
     parser.add_option(

@@ -71,11 +71,11 @@ def main():
         print_uuid=options.print_uuid).get_suite_state_summary()
 
     if options.disp_form == "raw":
-        print summary
+        print(summary)
     else:
         if options.disp_form != "tasks":
             for key, value in sorted(summary[0].items()):
-                print "%s=%s" % (key, value)
+                print("%s=%s" % (key, value))
         if options.disp_form != "global":
             dump_to_stdout(summary[1], options.sort_by_cycle)
 

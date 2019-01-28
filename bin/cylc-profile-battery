@@ -186,7 +186,7 @@ def get_results():
             try:
                 profile_results = json.load(profile_file)
             except ValueError as exc:
-                print exc
+                print(exc)
                 sys.exit('ERROR: Could not read "%s". Check that it is valid'
                          ' JSON or delete the file.' % profile_file_path)
         return profile_results
@@ -196,7 +196,7 @@ def get_result_keys():
     """Return a list of (version_id, experiment_id,) tuples."""
     profile_results = get_results()
     result_keys = []
-    for version_id, experiment_ids in profile_results.iteritems():
+    for version_id, experiment_ids in profile_results.items():
         result_keys.extend([(version_id, experiment_id) for experiment_id
                             in experiment_ids.keys()])
     return result_keys
@@ -278,7 +278,7 @@ def load_experiment_config(experiment_file):
                                                 run['suite dir'])
             run['suite dir'] = os.path.realpath(run['suite dir'])
     except KeyError as exc:
-        print exc
+        print(exc)
         sys.exit('Error: Experiment definition not complete.')
 
     # Apply defaults.
@@ -377,8 +377,8 @@ def install_experiments(experiment_ids, experiments, install_dir,
     for sdir, append_codicil in suite_dirs:
         key = (sdir, append_codicil,)
         for run in suite_dirs[key]['runs']:
-            print 'installing suite "%s" => "%s"' % (
-                sdir, suite_dirs[key]['install dir'])
+            print('installing suite "%s" => "%s"' % (
+                sdir, suite_dirs[key]['install dir']))
             run['suite dir'] = suite_dirs[key]['install dir']
 
     # Global config sourcing.
@@ -429,8 +429,8 @@ def get_experiments(experiment_names):
                                      file_name)
             if not os.path.exists(file_path):
                 # Could not find experiment file in either path. Exit!
-                print 'ERROR: Could not find experiment file for "%s"' % (
-                    experiment_name)
+                print('ERROR: Could not find experiment file for "%s"' % (
+                    experiment_name))
                 experiments.append({'name': experiment_name,
                                     'id': 'Invalid',
                                     'file': None})
@@ -455,8 +455,8 @@ def print_manual_scheme(versions, experiments, all_versions=None):
         ver = ' '.join(version['id'] for version in versions)
     exp = ' '.join(experiment['name'] for experiment in experiments)
     for version in versions:
-        print '\t$ git checkout ' + version['id']
-        print '\t$ cylc profile-battery --experiments ' + exp
+        print('\t$ git checkout ' + version['id'])
+        print('\t$ cylc profile-battery --experiments ' + exp)
     print('\t$ cylc profile-battery --versions {versions} --experiments '
           '{experiments}'.format(versions=ver, experiments=exp))
 
@@ -499,13 +499,14 @@ def determine_action(schedule, versions, experiments, non_interactive=False):
                       ' checkpointing in the main loop.\n')
                 usr = None
                 while usr not in ['y', 'n']:
-                    usr = raw_input('proceed? (y/n): ')
+                    usr = input('proceed? (y/n): ')
                 if usr == 'n':
                     sys.exit('Profiling aborted by user.')
-                print
+                print()
             elif temp:
-                print >> sys.stderr, ('WARNING: You are using profile-mode '
-                                      '"cylc" with older versions of cylc.')
+                print(('WARNING: You are using profile-mode '
+                       '"cylc" with older versions of cylc.'),
+                      file=sys.stderr)
 
     # Prompt user over using automated checkout.
     to_checkout = []
@@ -538,13 +539,13 @@ def determine_action(schedule, versions, experiments, non_interactive=False):
                       ' '.join(version['name'] for version in
                                manual_versions)))
 
-        print
+        print()
 
         if manual_versions and not automatic_only_versions:
             response = None
             while response not in ['y', 'n']:
-                response = raw_input('Do you want to checkout these versions '
-                                     'automatically? (y/n): ')
+                response = input('Do you want to checkout these versions '
+                                 'automatically? (y/n): ')
             if response == 'n':
                 print('You can perform this profiling manually by doing '
                       'something like:')
@@ -556,13 +557,13 @@ def determine_action(schedule, versions, experiments, non_interactive=False):
         elif manual_versions and automatic_only_versions:
             response = None
             while response not in ['some', 'all', 'none']:
-                response = raw_input(
+                response = input(
                     'Which versions should I check out:\n\t'
                     'Only those which cannot be profiled otherwise (some)\n\t'
                     'All versions (all)\n\t'
                     'None (none)\n> ')
             if response == 'some':
-                print 'The remainder can be profiled by doing something like:'
+                print('The remainder can be profiled by doing something like:')
                 print_manual_scheme(manual_versions, experiments,
                                     all_versions=versions)
                 to_checkout = automatic_only_versions
@@ -577,7 +578,7 @@ def determine_action(schedule, versions, experiments, non_interactive=False):
         elif automatic_only_versions:
             response = None
             while response not in ['y', 'n']:
-                response = raw_input('Do you want to checkout these versions '
+                response = input('Do you want to checkout these versions '
                                      'automatically? (y/n): ')
             if response == 'y':
                 to_checkout = automatic_only_versions
@@ -593,7 +594,7 @@ def update_nested_dictionaries(old, new):
     of a conflict."""
     old = old.copy()
     new = new.copy()
-    for key, value in new.iteritems():
+    for key, value in new.items():
         if key in old:
             if type(value) is dict:
                 old[key] = update_nested_dictionaries(old[key], new[key])
@@ -629,7 +630,7 @@ def delete_results(result_keys, interactive=False):
     if interactive:
         usr = None
         while usr not in ['y', 'n']:
-            usr = raw_input('Delete these results (y/n)? ')
+            usr = input('Delete these results (y/n)? ')
         if usr != 'y':
             sys.exit(0)
 
@@ -656,7 +657,7 @@ def install_profiler():
     try:
         # Temp dir to install files to
         tempdir = tempfile.mkdtemp()
-        print 'Installing profiler to:', tempdir
+        print('Installing profiler to:', tempdir)
 
         shutil.copytree(
             os.path.join(prof.CYLC_DIR, 'lib', 'cylc', 'profiling'),
@@ -668,7 +669,7 @@ def install_profiler():
         sys.path.insert(0, os.path.join(tempdir, 'tempprofiling'))
     except Exception as exc:
         # Slightest hint of trouble => abort.
-        print exc
+        print(exc)
         sys.exit('ERROR: Problem installing profiling.')
     return tempdir
 
@@ -738,8 +739,8 @@ def run_schedule(schedule, experiments, versions, exps_to_run,
                 raise GitCheckoutError()
             checkout(r'@{-%d}' % checkout_count, delete_pyc=True)
         except GitCheckoutError:
-            print('ERROR: Could not checkout git repo to original location. '
-                  r'\n\t$ git checkout @{-%d}' % checkout_count)
+            print(('ERROR: Could not checkout git repo to original location. '
+                  r'\n\t$ git checkout @{-%d}' % checkout_count))
 
     # Stop here if profiling was un-successfull.
     if not success:
@@ -783,13 +784,13 @@ def run_analysis(experiments, versions, interactive=False,
             os.makedirs(plt_dir)
 
         # Print a table of results.
-        print
+        print()
         print_table(
             make_table(full_results, versions, experiment,
                        quick_analysis=quick_analysis),
             transpose=not quick_analysis
         )
-        print
+        print()
 
         # Plot results.
         if not plot:
@@ -797,9 +798,9 @@ def run_analysis(experiments, versions, interactive=False,
         plot_results(full_results, versions, experiment, plt_dir,
                      quick_analysis=quick_analysis, lobf_order=lobf_order)
         if plt_dir:
-            print('Results for experiment "{exp}" have been written out to '
-                  '"{dir}"'.format(exp=experiment['name'], dir=plt_dir))
-
+            print(
+                f'Results for experiment "{experiment["name"]}" have been '
+                f'written out to "{plt_dir}"'
 
 def ls(exp_names, ver_names, delete=False):
     """List all results for the provided experiment and version names.
@@ -830,7 +831,7 @@ def ls(exp_names, ver_names, delete=False):
                 include_result(experiment_name, experiment_id, version_id)
     else:
         # List only specified experiments and versions.
-        version_ids = map(git.describe, ver_names)
+        version_ids = list(map(git.describe, ver_names))
         experiment_ids = set(name for name in exp_names if '@' in name)
         experiment_names = set(exp_names) - experiment_ids
 
@@ -845,7 +846,7 @@ def ls(exp_names, ver_names, delete=False):
 
     git.order_identifiers_by_date(all_versions)
 
-    experiments = get_experiments(include.keys())
+    experiments = get_experiments(list(include))
     current_experiment_ids = []
     for experiment in experiments:
         current_experiment_ids.append(experiment['id'])
@@ -905,31 +906,31 @@ def promote(experiment_id, yes=False):
     if target_versions:
         candidate_versions = [version for version in candidate_versions if
                               version not in target_versions]
-        print
+        print()
         print('Only the results for cylc versions not already profiled in '
               'the current experiment version will be promoted.')
     git.order_identifiers_by_date(candidate_versions)
 
-    print
-    print('Promote the following results for experiment "{name}" at version '
+    print()
+    print(('Promote the following results for experiment "{name}" at version '
           '"{candidate}" to the current version "{target}":'.format(
               name=experiment_name,
               candidate=experiment_version,
               target=cur_exp_id.rsplit('@', 1)[1]
-          ))
-    print '\t', ' '.join(candidate_versions)
+          )))
+    print('\t', ' '.join(candidate_versions))
 
     if not yes:
         response = None
         while response not in ['y', 'n']:
-            response = raw_input('Upgrade these versions? (y/n): ')
+            response = input('Upgrade these versions? (y/n): ')
     if yes or response == 'y':
         # Promote results.
         try:
             for version in candidate_versions:
                 results[version][cur_exp_id] = results[version][experiment_id]
         except KeyError as exc:
-            print exc
+            print(exc)
             sys.exit('Unexpected error.')
         else:
             append_new_results(results)
@@ -944,8 +945,8 @@ def main():
     opts = parse_args()
 
     if not prof.IS_GIT_REPO:
-        print >> sys.stderr, ('ERROR: profiling requires cylc to be a git '
-                              'repository.')
+        print('ERROR: profiling requires cylc to be a git repository.',
+              file=sys.stderr))
         sys.exit(2)
 
     # Promote mode.

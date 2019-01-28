@@ -118,7 +118,7 @@ def main():
         parser.error("Too many arguments.")
 
     if options.stdout:
-        print target
+        print(target)
         sys.exit(0)
 
     try:

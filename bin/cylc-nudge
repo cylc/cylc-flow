@@ -54,7 +54,7 @@ def main():
 
     success, msg = pclient.put_command('nudge')
     if success:
-        print msg
+        print(msg)
     else:
         sys.exit(msg)
 

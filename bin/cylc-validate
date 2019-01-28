@@ -109,7 +109,7 @@ def main():
     # (Taken from config.py to avoid circular import problems.)
     # TODO - This is not exhaustive, it only uses the initial cycle point.
     if cylc.flags.verbose:
-        print 'Instantiating tasks to check trigger expressions'
+        print('Instantiating tasks to check trigger expressions')
     for name, taskdef in cfg.taskdefs.items():
         try:
             itask = TaskProxy(taskdef, cfg.start_point, is_startup=True)
@@ -129,20 +129,21 @@ def main():
         except TriggerExpressionError as exc:
             err = str(exc)
             if '@' in err:
-                print >> sys.stderr, (
-                    "ERROR, %s: xtriggers can't be in conditional"
-                    " expressions: %s" % (name, err))
+                print(f"ERROR, {name}: xtriggers can't be in conditional"
+                      f" expressions: {err}",
+                      file=sys.stderr)
             else:
-                print >> sys.stderr, 'ERROR, %s: bad trigger: %s' % (name, err)
+                print('ERROR, %s: bad trigger: %s' % (name, err),
+                      file=sys.stderr)
             raise SuiteConfigError("ERROR: bad trigger")
         except Exception as exc:
-            print >> sys.stderr, str(exc)
+            print(str(exc), file=sys.stderr)
             raise SuiteConfigError(
                 'ERROR, %s: failed to evaluate triggers.' % name)
         if cylc.flags.verbose:
-            print '  + %s ok' % itask.identity
+            print('  + %s ok' % itask.identity)
 
-    print 'Valid for cylc-%s' % CYLC_VERSION
+    print('Valid for cylc-%s' % CYLC_VERSION)
     profiler.stop()
 
 

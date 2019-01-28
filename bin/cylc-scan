@@ -161,7 +161,7 @@ def main():
 
     if options.print_ports:
         run_ports_list = glbl_cfg().get(['suite servers', 'run ports'])
-        print run_ports_list[0], '<= port <=', run_ports_list[-1]
+        print(run_ports_list[0], '<= port <=', run_ports_list[-1])
         sys.exit(0)
 
     indent = "   "
@@ -231,7 +231,7 @@ def main():
             continue
 
         if options.old_format:
-            print name, owner, host, port
+            print(name, owner, host, port)
             continue
 
         if options.raw_format or options.describe:
@@ -254,16 +254,16 @@ def main():
                         key: ' '.join([x.strip() for x in
                                        str(value).split('\n') if x])})
             totals = suite_identity.get(KEY_STATES)
-            print "%s|%s|%s|port|%s" % (name, owner, host, port)
+            print("%s|%s|%s|port|%s" % (name, owner, host, port))
             for key, value in clean_meta_items.items():
-                print "%s|%s|%s|%s|%s" % (name, owner, host, key, value)
+                print("%s|%s|%s|%s|%s" % (name, owner, host, key, value))
             if totals is None:
                 continue
             for point, state_line in get_point_state_count_lines(*totals):
                 key = KEY_STATES
                 if point:
                     key = "%s:%s" % (KEY_STATES, point)
-                print "%s|%s|%s|%s|%s" % (name, owner, host, key, state_line)
+                print("%s|%s|%s|%s|%s" % (name, owner, host, key, state_line))
             continue
 
         line = '%s %s@%s:%s' % (name, owner, host, port)
@@ -271,29 +271,29 @@ def main():
             if skip_one:
                 skip_one = False
                 if state_legend != "":
-                    print state_legend + "\n"
+                    print(state_legend + "\n")
             else:
-                print
-            print bold(line)
+                print()
+            print(bold(line))
         else:
-            print line
+            print(line)
 
         if options.describe:
             # Deal with title first for case of just withheld statement
             if meta_items["title"] is None:
-                print(indent + bold("(description and state totals withheld)"))
+                print((indent + bold("(description and state totals withheld)")))
                 continue
             if not meta_items["title"]:
-                print(indent + bold("Title:\n") + indent * 2 + "(no title)")
+                print((indent + bold("Title:\n") + indent * 2 + "(no title)"))
             else:
-                print(indent + bold("Title:\n") + indent * 2 +
-                      '"%s"' % meta_items["title"])
+                print((indent + bold("Title:\n") + indent * 2 +
+                      '"%s"' % meta_items["title"]))
             for metaitem, metavalue in meta_items.items():
                 if metaitem != "title":
                     if metaitem == "description" or metaitem == "group":
-                        print indent + bold(metaitem.capitalize() + ":")
+                        print(indent + bold(metaitem.capitalize() + ":"))
                     else:
-                        print indent + bold(metaitem + ":")
+                        print(indent + bold(metaitem + ":"))
                     if not metavalue:
                         lines = "(no %s)" % metaitem
                     else:
@@ -305,25 +305,25 @@ def main():
                             # Indent under the double quote.
                             line = " " + line
                         line1 = False
-                        print indent * 2 + line
+                        print(indent * 2 + line)
 
         totals = suite_identity.get(KEY_STATES)
 
         if options.print_totals:
             if totals is None:
-                print indent + bold("(state totals withheld)")
+                print(indent + bold("(state totals withheld)"))
                 continue
-            print indent + bold("Task state totals:")
+            print(indent + bold("Task state totals:"))
             point_state_lines = get_point_state_count_lines(
                 *totals, use_color=options.color)
             for point, state_line in point_state_lines:
                 point_prefix = ""
                 if point:
                     point_prefix = "%s " % point
-                print indent * 2 + "%s%s" % (point_prefix, state_line)
+                print(indent * 2 + "%s%s" % (point_prefix, state_line))
 
     if options.json_format:
-        print json.dumps(json_filter, indent=4)
+        print(json.dumps(json_filter, indent=4))
 
 
 def get_point_state_count_lines(state_count_totals, state_count_cycles,

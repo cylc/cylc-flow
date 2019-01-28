@@ -114,8 +114,8 @@ The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
                 user_at_host, options.port = args[1].split(':')
                 options.owner, options.host = user_at_host.split('@')
             except ValueError:
-                print >> sys.stderr, ('USER_AT_HOST must take the form '
-                                      '"user@host:port"')
+                print(('USER_AT_HOST must take the form '
+                                      '"user@host:port"'), file=sys.stderr)
                 sys.exit(1)
 
         client_name = os.path.basename(sys.argv[0])
@@ -144,13 +144,13 @@ The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
                 glbl, task_summaries = (
                     self.pclient.get_suite_state_summary()[0:2])
             except ClientError as exc:
-                print >> sys.stderr, "\033[1;37;41mERROR\033[0m", str(exc)
+                print("\033[1;37;41mERROR\033[0m", str(exc), file=sys.stderr)
                 self.reset(suite, options.owner, options.host, options.port,
                            options.comms_timeout)
             else:
                 if not glbl:
-                    print >> sys.stderr, (
-                        "\033[1;37;41mWARNING\033[0m suite initialising")
+                    print((
+                        "\033[1;37;41mWARNING\033[0m suite initialising"), file=sys.stderr)
                     continue
                 states = [t["state"] for t in task_summaries.values() if (
                           "state" in t)]
@@ -178,7 +178,7 @@ The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
 
                 task_info = {}
                 name_list = set()
-                task_ids = task_summaries.keys()
+                task_ids = list(task_summaries)
                 for task_id in task_ids:
                     name = task_summaries[task_id]['name']
                     point_string = task_summaries[task_id]['label']
@@ -254,8 +254,8 @@ The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
 
                 if not options.once:
                     os.system("clear")
-                print '\n'.join(blit)
-                indxs = blitlines.keys()
+                print('\n'.join(blit))
+                indxs = list(blitlines)
                 try:
                     int(indxs[1])
                 except (ValueError, IndexError):
@@ -263,7 +263,7 @@ The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
                 else:
                     indxs.sort(key=int)
                 for ix in indxs:
-                    print blitlines[ix]
+                    print(blitlines[ix])
 
 
 if __name__ == "__main__":

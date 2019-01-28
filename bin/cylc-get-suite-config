@@ -127,11 +127,11 @@ def main():
         cli_initial_point_string=options.icp, run_mode=options.run_mode)
     if options.tasks:
         for task in config.get_task_name_list():
-            print prefix + task
+            print(prefix + task)
     elif options.alltasks:
         for task in config.get_task_name_list():
             items = ['[runtime][' + task + ']' + i for i in options.item]
-            print prefix + task,
+            print(prefix + task, end=' ')
             config.pcfg.idump(
                 items, options.sparse, options.pnative, prefix,
                 options.oneline, none_str=options.none_str)

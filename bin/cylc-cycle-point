@@ -165,7 +165,7 @@ def main():
         if options.print_year:
             n_chosen += 1
             if options.num_expanded_year_digits:
-                template = u"±XCCYY"
+                template = "±XCCYY"
             else:
                 template = "CCYY"
 
@@ -252,15 +252,15 @@ def main():
             parser.error('ERROR: offset not valid: %s' % exc)
     cycle_point += offset
     if template is None:
-        print cycle_point
+        print(cycle_point)
     else:
         dump_string = iso_point_dumper.dump(cycle_point, template)
         if (dump_string == template and
                 not any(_ in template for _ in ["CCYY", "MM", "DD", "%"])):
             # A pure time string, no date - not well handled in isodatetime.
-            print iso_point_dumper.dump(cycle_point, "T" + template)[1:]
+            print(iso_point_dumper.dump(cycle_point, "T" + template)[1:])
         else:
-            print dump_string
+            print(dump_string)
 
 
 if __name__ == "__main__":
