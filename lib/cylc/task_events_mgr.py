@@ -82,7 +82,7 @@ def log_task_job_activity(ctx, suite, point, name, submit_num=None):
         suite, point, name, submit_num)
     try:
         with open(job_activity_log, "ab") as handle:
-            handle.write(ctx_str + '\n')
+            handle.write((ctx_str + '\n').encode())
     except IOError as exc:
         # This happens when there is no job directory, e.g. if job host
         # selection command causes an submission failure, there will be no job

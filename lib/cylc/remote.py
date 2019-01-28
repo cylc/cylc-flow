@@ -43,7 +43,7 @@ def get_proc_ancestors():
     ancestors = []
     while True:
         p = Popen(["ps", "-p", str(pid), "-oppid="], stdout=PIPE, stderr=PIPE)
-        ppid = p.communicate()[0].strip()
+        ppid = p.communicate()[0].decode().strip()
         if not ppid:
             return ancestors
         ancestors.append(ppid)
@@ -101,6 +101,8 @@ def run_cmd(command, stdin=None, capture_process=False, capture_status=False,
         stderr = PIPE
         if stdin is None:
             stdin = open(os.devnull)
+    if isinstance(stdin, str):
+        stdin = stdin.encode()
 
     try:
         proc = Popen(command, stdin=stdin, stdout=stdout, stderr=stderr)

@@ -208,7 +208,7 @@ class TaskRemoteMgr(object):
             self.suite_srv_files_mgr.get_suite_srv_dir(self.suite),
             FILE_BASE_UUID)
         if not os.path.exists(uuid_fname):
-            open(uuid_fname, 'wb').write(str(self.uuid_str))
+            open(uuid_fname, 'wb').write(str(self.uuid_str).encode())
         # Build the command
         cmd = ['cylc', 'remote-init']
         if is_remote_host(host):
@@ -272,7 +272,7 @@ class TaskRemoteMgr(object):
                 if proc.poll() is None:
                     continue
                 del procs[(host, owner)]
-                out, err = proc.communicate()
+                out, err = (f.decode() for f in proc.communicate())
                 if proc.wait():
                     LOG.warning(TaskRemoteMgmtError(
                         TaskRemoteMgmtError.MSG_TIDY,

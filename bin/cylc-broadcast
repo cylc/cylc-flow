@@ -146,7 +146,7 @@ def files_to_settings(settings, setting_files, cancel_mode=False):
     for setting_file in setting_files:
         if setting_file == '-':
             with NamedTemporaryFile() as handle:
-                handle.write(sys.stdin.read())
+                handle.write(sys.stdin.read().encode())
                 handle.seek(0, 0)
                 cfg.loadcfg(handle.name)
         else:

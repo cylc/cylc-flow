@@ -56,7 +56,7 @@ class JobFileWriter(object):
 
         tmp_name = local_job_file_path + '.tmp'
         try:
-            with open(tmp_name, 'wb') as handle:
+            with open(tmp_name, 'w') as handle:
                 self._write_header(handle, job_conf)
                 self._write_directives(handle, job_conf)
                 self._write_prelude(handle, job_conf)
@@ -96,7 +96,7 @@ class JobFileWriter(object):
                 if proc.wait():
                     # This will leave behind the temporary file,
                     # which is useful for debugging syntax errors, etc.
-                    raise RuntimeError(proc.communicate()[1])
+                    raise RuntimeError(proc.communicate()[1].decode())
         # Make job file executable
         mode = (
             os.stat(tmp_name).st_mode |

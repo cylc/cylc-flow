@@ -48,7 +48,7 @@ class TestTemplatevars(unittest.TestCase):
             # a comment
             # type=Test
             age=12
-            """)
+            """.encode())
             tf.flush()
             expected = {
                 "name": "John",
@@ -72,7 +72,7 @@ class TestTemplatevars(unittest.TestCase):
             # a comment
             # type=Test
             age=70
-            """)
+            """.encode())
             tf.flush()
             expected = {
                 "name": "John",

@@ -189,7 +189,7 @@ class HostAppointer(object):
                 if proc.poll() is None:
                     continue
                 del host_proc_map[host]
-                out, err = proc.communicate()
+                out, err = (f.decode() for f in proc.communicate())
                 if proc.wait():
                     # Command failed in verbose/debug mode
                     LOG.warning(

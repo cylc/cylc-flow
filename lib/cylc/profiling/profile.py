@@ -71,7 +71,7 @@ def cylc_major_version():
     """Return the first character of the cylc version e.g. '7'."""
     return Popen(
         ['cylc', '--version'], env=CLEAN_ENV, stdin=open(os.devnull),
-        stdout=PIPE).communicate()[0].strip()[0]
+        stdout=PIPE).communicate()[0].decode().strip()[0]
 
 
 def register_suite(reg, sdir):
@@ -158,7 +158,7 @@ def run_suite(reg, options, out_file, profile_modes, mode='live',
         namespaces = Popen(
             ['cylc', 'list', reg] + jinja2_params + tmp,
             stdin=open(os.devnull), stdout=PIPE,
-            env=env).communicate()[0].split() + ['root']
+            env=env).communicate()[0].decode().split() + ['root']
         jinja2_params.append(
             '-s namespaces={0}'.format(','.join(namespaces)))
     cmds.extend(jinja2_params)

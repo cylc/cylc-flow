@@ -158,7 +158,7 @@ class SuiteSrvFilesManager(object):
             sleep(0.1)
         fname = self.get_contact_file(reg)
         ret_code = proc.wait()
-        out, err = proc.communicate()
+        out, err = (f.decode() for f in proc.communicate())
         if ret_code:
             LOG.debug("$ %s  # return %d\n%s", ' '.join(cmd), ret_code, err)
         for line in reversed(out.splitlines()):
@@ -206,7 +206,7 @@ To start a new run, stop the old one first with one or more of these:
         # from by a process on other hosts after the current process returns.
         with open(self.get_contact_file(reg), "wb") as handle:
             for key, value in sorted(data.items()):
-                handle.write("%s=%s\n" % (key, value))
+                handle.write(("%s=%s\n" % (key, value)).encode())
             os.fsync(handle.fileno())
         dir_fileno = os.open(self.get_suite_srv_dir(reg), os.O_DIRECTORY)
         os.fsync(dir_fileno)
@@ -633,6 +633,7 @@ To start a new run, stop the old one first with one or more of these:
         """
         title = self.NO_TITLE
         for line in open(self.get_suite_rc(reg), 'rb'):
+            line = line.decode()
             if line.lstrip().startswith("[meta]"):
                 # continue : title comes inside [meta] section
                 continue
@@ -736,7 +737,7 @@ To start a new run, stop the old one first with one or more of these:
                 import traceback
                 traceback.print_exc()
             return
-        out, err = proc.communicate()
+        out, err = (f.decode() for f in proc.communicate())
         ret_code = proc.wait()
         # Extract passphrase from STDOUT
         # It should live in the line with the correct prefix

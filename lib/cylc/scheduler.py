@@ -1018,7 +1018,7 @@ conditions; see `cylc conditions`.
         proc = Popen(
             ['ps', self.suite_srv_files_mgr.PS_OPTS, pid_str],
             stdin=open(os.devnull), stdout=PIPE, stderr=PIPE)
-        out, err = proc.communicate()
+        out, err = (f.decode() for f in proc.communicate())
         ret_code = proc.wait()
         process_str = None
         for line in out.splitlines():
@@ -1094,7 +1094,7 @@ conditions; see `cylc conditions`.
         file_name = os.path.join(cfg_logdir, base_name)
         try:
             with open(file_name, "wb") as handle:
-                handle.write("# cylc-version: %s\n" % CYLC_VERSION)
+                handle.write(("# cylc-version: %s\n" % CYLC_VERSION).encode())
                 printcfg(self.config.cfg, none_str=None, handle=handle)
         except IOError as exc:
             LOG.exception(exc)
@@ -1441,7 +1441,7 @@ conditions; see `cylc conditions`.
                     msg += (' will retry in %ss'
                             % self.INTERVAL_AUTO_RESTART_ERROR)
                 LOG.critical(msg + '. Restart error:\n%s',
-                             proc.communicate()[1])
+                             proc.communicate()[1].decode())
                 sleep(self.INTERVAL_AUTO_RESTART_ERROR)
             else:
                 LOG.info('Suite now running on "%s".', new_host)

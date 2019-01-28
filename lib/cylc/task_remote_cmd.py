@@ -53,7 +53,7 @@ def remote_init(uuid_str, rund, indirect_comm=None):
     oldcwd = os.getcwd()
     os.chdir(rund)
     try:
-        tarhandle = tarfile.open(fileobj=sys.stdin, mode='r|')
+        tarhandle = tarfile.open(fileobj=sys.stdin.buffer, mode='r|')
         tarhandle.extractall()
         tarhandle.close()
     finally:

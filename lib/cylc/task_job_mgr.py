@@ -423,7 +423,7 @@ class TaskJobManager(object):
             with open(job_activity_log, "ab") as handle:
                 if not line.endswith("\n"):
                     line += "\n"
-                handle.write(owner_at_host + line)
+                handle.write((owner_at_host + line).encode())
         except IOError as exc:
             LOG.warning("%s: write failed\n%s" % (job_activity_log, exc))
             LOG.warning("[%s] -%s%s", itask, owner_at_host, + line)

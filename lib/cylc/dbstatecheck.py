@@ -57,7 +57,7 @@ class CylcSuiteDBChecker(object):
             sys.stderr.write("INFO: No results to display.\n")
         else:
             for row in res:
-                sys.stdout.write((", ").join(row).encode("utf-8") + "\n")
+                sys.stdout.write((", ").join(row) + "\n")
 
     def get_remote_point_format(self):
         """Query a remote suite database for a 'cycle point format' entry"""

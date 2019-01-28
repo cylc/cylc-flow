@@ -155,7 +155,7 @@ class SuiteProcPool(object):
     def _proc_exit(self, proc, err_xtra, ctx, callback, callback_args):
         """Get ret_code, out, err of exited command, and call its callback."""
         ctx.ret_code = proc.wait()
-        out, err = proc.communicate()
+        out, err = (f.decode() for f in proc.communicate())
         if out:
             if ctx.out is None:
                 ctx.out = ''
@@ -240,7 +240,7 @@ class SuiteProcPool(object):
         """
         proc = cls._run_command_init(ctx)
         if proc:
-            ctx.out, ctx.err = proc.communicate()
+            ctx.out, ctx.err = (f.decode() for f in proc.communicate())
             ctx.ret_code = proc.wait()
             cls._run_command_exit(ctx)
 
@@ -293,7 +293,7 @@ class SuiteProcPool(object):
                 # 2. Call os.read only once after a poll. Poll again before
                 #    another read - otherwise the os.read call may block.
                 try:
-                    data = os.read(fileno, 65536)  # 64K
+                    data = os.read(fileno, 65536).decode()  # 64K
                 except OSError:
                     continue
                 if fileno == proc.stdout.fileno():
@@ -321,8 +321,8 @@ class SuiteProcPool(object):
                     stdin_file = open(
                         ctx.cmd_kwargs['stdin_file_paths'][0], 'rb')
             elif ctx.cmd_kwargs.get('stdin_str'):
-                stdin_file = TemporaryFile()
-                stdin_file.write(ctx.cmd_kwargs.get('stdin_str'))
+                stdin_file = TemporaryFile('bw+')
+                stdin_file.write(ctx.cmd_kwargs.get('stdin_str').encode())
                 stdin_file.seek(0)
             else:
                 stdin_file = open(os.devnull)

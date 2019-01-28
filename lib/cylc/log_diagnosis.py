@@ -38,7 +38,7 @@ class LogSpec(object):
     just gets the start and stop cycle points."""
 
     def __init__(self, log):
-        h = open(log, 'rb')
+        h = open(log, 'r')
         self.lines = h.readlines()
         h.close()
 
@@ -92,10 +92,10 @@ class LogAnalyser(object):
     reference test run. Currently just compares triggering info."""
 
     def __init__(self, new_log, ref_log):
-        h = open(new_log, 'rb')
+        h = open(new_log, 'r')
         self.new_loglines = h.readlines()
         h.close()
-        h = open(ref_log, 'rb')
+        h = open(ref_log, 'r')
         self.ref_loglines = h.readlines()
         h.close()
 

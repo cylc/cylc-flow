@@ -44,7 +44,7 @@ def run_get_stdout(command, timeout=None, poll_delay=None):
 
     """
     try:
-        popen = Popen(
+        proc = Popen(
             command, shell=True, preexec_fn=setpgrp, stdin=open(devnull),
             stderr=PIPE, stdout=PIPE)
         is_killed_after_timeout = False
@@ -52,14 +52,14 @@ def run_get_stdout(command, timeout=None, poll_delay=None):
             if poll_delay is None:
                 poll_delay = POLL_DELAY
             timeout_time = time() + timeout
-            while popen.poll() is None:
+            while proc.poll() is None:
                 if time() > timeout_time:
-                    killpg(popen.pid, SIGTERM)
+                    killpg(proc.pid, SIGTERM)
                     is_killed_after_timeout = True
                     break
                 sleep(poll_delay)
-        out, err = popen.communicate()
-        res = popen.wait()
+        out, err = (f.decode() for f in proc.communicate())
+        res = proc.wait()
         if res < 0 and is_killed_after_timeout:
             return (False, [ERR_TIMEOUT % (timeout, -res, err), command])
         elif res < 0:

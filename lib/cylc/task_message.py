@@ -95,7 +95,7 @@ def _append_job_status_file(suite, task_job, event_time, messages):
             glbl_cfg().get_derived_host_item(suite, 'suite job log directory'),
             'job')
     try:
-        job_status_file = open(job_log_name + '.status', 'ab')
+        job_status_file = open(job_log_name + '.status', 'a')
     except IOError:
         if cylc.flags.debug:
             import traceback
@@ -133,7 +133,7 @@ def _append_job_status_file(suite, task_job, event_time, messages):
             for line in open(job_status_file_name):
                 if not line.startswith('CYLC_JOB_'):
                     lines.append(line)
-            job_status_file = open(job_status_file_name, 'wb')
+            job_status_file = open(job_status_file_name, 'w')
             for line in lines:
                 job_status_file.write(line)
             job_status_file.write('%s=%s|%s|%s\n' % (

@@ -32,7 +32,7 @@ def main(argv):
 
     p = subprocess.Popen("cylc cat-state " + sname, shell=True, 
                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    state, err = p.communicate()
+    state, err = (f.decode() for f in p.communicate())
 
     if p.returncode > 0:
         print >> sys.stderr, err
