@@ -108,7 +108,6 @@ RECURRENCE_FORMAT_RECS = [
         (r"^%(reps_1)s//%(end)s$", 4)
     ]
 ]
-del regex, format_num
 
 
 REC_RELATIVE_POINT = re.compile(r"^[-+]P\d+$")
