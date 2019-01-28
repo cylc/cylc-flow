@@ -142,7 +142,7 @@ def main():
         # record original modtime
         modtimes[suiterc] = os.stat(suiterc).st_mtime
         # read the file
-        h = open(suiterc, 'rb')
+        h = open(suiterc, 'r')
         lines0 = h.readlines()
         h.close()
         if lines0[0].startswith('# !WARNING! CYLC EDIT INLINED'):
@@ -160,7 +160,7 @@ def main():
     # overwrite the (now backed up) original with the inlined file:
     h = open(suiterc, 'wb')
     for line in lines:
-        h.write(line + '\n')
+        h.write((line + '\n').encode())
     h.close()
 
     print('PRE-EDIT BACKUPS:')
@@ -190,7 +190,7 @@ def main():
     copy(suiterc, inlined_suiterc_backup)
 
     # read in the edited inlined file
-    h = open(suiterc, 'rb')
+    h = open(suiterc, 'r')
     lines = h.readlines()
     h.close()
 

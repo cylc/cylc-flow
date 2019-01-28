@@ -213,8 +213,8 @@ def cmd_find_ver(
         else:
             try:
                 output = Popen([cmd, ver_opt], stdin=open(os.devnull),
-                               stdout=PIPE,
-                               stderr=PIPE).communicate()[outfile - 1].strip()
+                               stdout=PIPE, stderr=PIPE
+                ).communicate()[outfile - 1].decode().strip()
                 version = re.search(ver_extr, output).groups()[0]
                 try_next_cmd = False
                 if min_ver is None:

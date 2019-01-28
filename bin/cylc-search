@@ -80,7 +80,7 @@ pattern = '|'.join(args[1:])
 suitedir = os.path.dirname(suiterc)
 
 if os.path.isfile(suiterc):
-    h = open(suiterc, 'rb')
+    h = open(suiterc, 'r')
     lines = h.readlines()
     h.close()
     lines = inline(lines, suitedir, suiterc, for_grep=True)

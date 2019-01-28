@@ -266,7 +266,7 @@ def tmpfile_edit(tmpfile, geditor=False):
     cmd = shlex.split(editor)
     cmd.append(tmpfile)
     proc = Popen(cmd, stderr=PIPE)
-    err = proc.communicate()[1]
+    err = proc.communicate()[1].decode()
     ret_code = proc.wait()
     if ret_code == 0:
         if os.stat(tmpfile).st_mtime > modtime1:

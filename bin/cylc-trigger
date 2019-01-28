@@ -170,7 +170,7 @@ def main():
                     open(jobfile_path).readlines(),
                     fromfile="original",
                     tofile="edited"):
-                diff_file.write(line)
+                diff_file.write(line.encode())
         os.unlink(jobfile_copy_path)
 
         msg = "Trigger edited task %s?" % task_id

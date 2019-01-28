@@ -114,6 +114,8 @@ def main():
             print("%s: %s" % (user_at_host, ' '.join(argv)))
         proc = Popen(argv, stdin=open(os.devnull), stdout=PIPE, stderr=PIPE)
         out, err = proc.communicate()
+        out = out.decode()
+        err = err.decode()
         if proc.wait() == 0:
             if verbose:
                 print("   %s" % out)

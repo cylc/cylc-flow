@@ -153,7 +153,7 @@ def _get_state_lines_compat(suite):
         "state", "state")
     lines = []
     for line in open(state_file_path, 'rb').readlines():
-        lines.append(line.rstrip())
+        lines.append(line.rstrip().decode())
     return lines
 
 
