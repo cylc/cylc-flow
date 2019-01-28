@@ -33,8 +33,7 @@ class Prerequisite(object):
     """The concrete result of an abstract logical trigger expression."""
 
     # Memory optimization - constrain possible attributes to this list.
-    __slots__ = ["SATISFIED_TEMPLATE", "MESSAGE_TEMPLATE",
-                 "satisfied", "_all_satisfied",
+    __slots__ = ["satisfied", "_all_satisfied",
                  "target_point_strings", "start_point",
                  "pre_initial_messages", "conditional_expression", "point"]
 

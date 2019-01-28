@@ -41,7 +41,7 @@ class TaskDef(object):
 
     # Memory optimization - constrain possible attributes to this list.
     __slots__ = [
-        "MAX_LEN_ELAPSED_TIMES", "run_mode", "rtconfig", "start_point",
+        "run_mode", "rtconfig", "start_point",
         "spawn_ahead", "sequences",
         "used_in_offset_trigger", "max_future_prereq_offset",
         "intercycle_offsets", "sequential", "is_coldstart",
