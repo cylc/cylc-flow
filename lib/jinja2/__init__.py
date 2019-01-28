@@ -79,5 +79,9 @@ def _patch_async():
         patch_all()
 
 
-_patch_async()
-del _patch_async
+try:
+    _patch_async()
+except ImportError:
+    pass
+finally:
+    del _patch_async
