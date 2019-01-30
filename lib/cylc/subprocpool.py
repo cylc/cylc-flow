@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -96,8 +96,23 @@ class SuiteProcPool(object):
     the SuiteProcPool.run_command can be used as a standalone utility function
     to run the command in a cylc.subprocctx.SubProcContext.
 
-    Arguments:
-        size (int): Pool size.
+    A command to run under a subprocess in the pool is expected to be wrapped
+    using a cylc.subprocctx.SubProcContext object. The caller will add the
+    context object using the SuiteProcPool.put_command method. A callback can
+    be specified to notify the caller on exit of the subprocess.
+
+    A command launched by the pool is expected to write to STDOUT and STDERR.
+    These are captured while the command runs and/or when the command exits.
+    The contents are appended to the `.out` and `.err` attributes of the
+    SubProcContext object as they are read. STDIN can also be specified for the
+    command. This is currently fed into the command using a temporary file.
+
+    Note: For a cylc command that uses `cylc.option_parsers.CylcOptionParser`,
+    the default logging handler writes to the STDERR via a StreamHandler.
+    Therefore, log messages will only be written to the suite log by the
+    callback function when the command exits (and only if the callback function
+    has the logic to do so).
+
     """
 
     ERR_SUITE_STOPPING = 'suite stopping, command not run'
@@ -105,10 +120,8 @@ class SuiteProcPool(object):
     POLLREAD = select.POLLIN | select.POLLPRI
     RET_CODE_SUITE_STOPPING = 999
 
-    def __init__(self, size=None):
-        if not size:
-            size = glbl_cfg().get(['process pool size'])
-        self.size = size
+    def __init__(self):
+        self.size = glbl_cfg().get(['process pool size'])
         self.proc_pool_timeout = glbl_cfg().get(['process pool timeout'])
         self.closed = False  # Close queue
         self.stopping = False  # No more job submit if True
@@ -174,7 +187,8 @@ class SuiteProcPool(object):
                 continue
             # Command still running, see if STDOUT/STDERR are readable or not
             runnings.append([proc, ctx, callback, callback_args])
-            # Unblock proc's STDOUT/STDERR if possible
+            # Unblock proc's STDOUT/STDERR if necessary. Otherwise, a full
+            # STDOUT or STDERR may stop command from proceeding.
             self._poll_proc_pipes(proc, ctx)
 
         # Update list of running items
@@ -269,15 +283,17 @@ class SuiteProcPool(object):
                 # Nothing readable
                 break
             for fileno in fileno_list:
-                data = ''
-                while True:
-                    # Use the low level `os.read` here instead of
-                    # `file.read` to avoid any buffering that may cause
-                    # the file handle to block.
-                    res = os.read(fileno, 65536)  # 64K
-                    if not res:
-                        break
-                    data += res
+                # If a file handle is readable, read something from it, add
+                # results into the command context object's `.out` or `.err`,
+                # whichever is relevant. To avoid blocking:
+                # 1. Use `os.read` here instead of `file.read` to avoid any
+                #    buffering that may cause the file handle to block.
+                # 2. Call os.read only once after a poll. Poll again before
+                #    another read - otherwise the os.read call may block.
+                try:
+                    data = os.read(fileno, 65536)  # 64K
+                except OSError:
+                    continue
                 if fileno == proc.stdout.fileno():
                     if ctx.out is None:
                         ctx.out = ''

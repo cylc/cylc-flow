@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -285,7 +285,12 @@ Arguments:"""
         cylc.flags.verbose = options.verbose
         cylc.flags.debug = options.debug
 
-        # Set up stream logging
+        # Set up stream logging for CLI. Note:
+        # 1. On choosing STDERR: Log messages are diagnostics, so STDERR is the
+        #    better choice for the logging stream. This allows us to use STDOUT
+        #    for verbosity agnostic outputs.
+        # 2. Suite server programs will remove this handler when it becomes a
+        #    daemon.
         if options.debug or options.verbose:
             LOG.setLevel(logging.DEBUG)
         else:
