@@ -87,7 +87,7 @@ class TaskOutputs(object):
 
     def get_all(self):
         """Return an iterator for all outputs."""
-        return sorted(self._by_message.values(), cmp=self._sort_by_message)
+        return sorted(self._by_message.values(), key=self.msg_sort_key)
 
     def get_completed(self):
         """Return all completed output messages."""
@@ -185,21 +185,10 @@ class TaskOutputs(object):
             return self._by_message[message]
 
     @staticmethod
-    def _sort_by_message(item1, item2):
+    def msg_sort_key(item):
         """Compare by _MESSAGE."""
         try:
-            idx1 = _SORT_ORDERS.index(item1[_MESSAGE])
+            ind = _SORT_ORDERS.index(item[_MESSAGE])
         except ValueError:
-            idx1 = None
-        try:
-            idx2 = _SORT_ORDERS.index(item2[_MESSAGE])
-        except ValueError:
-            idx2 = None
-        if idx1 is None and idx2 is None:
-            return cmp(item1[_MESSAGE], item2[_MESSAGE])
-        elif idx1 is None:
-            return 1
-        elif idx2 is None:
-            return -1
-        else:
-            return cmp(idx1, idx2)
+            ind = 999
+        return (ind, item[_MESSAGE] or '')

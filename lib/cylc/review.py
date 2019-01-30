@@ -454,9 +454,9 @@ class CylcReviewService(object):
         elif order == "name_desc":
             data["entries"].sort(key=lambda entry: entry["name"], reverse=True)
         elif order == "time_asc":
-            data["entries"].sort(self._sort_summary_entries, reverse=True)
+            data["entries"].sort(self.summary_entries_sort_key, reverse=True)
         else:  # order == "time_desc"
-            data["entries"].sort(self._sort_summary_entries)
+            data["entries"].sort(self.summary_entries_sort_key)
         data["of_n_entries"] = len(data["entries"])
         if per_page:
             data["n_pages"] = data["of_n_entries"] / per_page
@@ -913,8 +913,9 @@ class CylcReviewService(object):
         return self._check_dir_access(path)
 
     @staticmethod
-    def _sort_summary_entries(suite1, suite2):
+    def summary_entries_sort_key(suite):
         """Sort suites by last_activity_time."""
-        return (cmp(suite2.get("last_activity_time"),
-                    suite1.get("last_activity_time")) or
-                cmp(suite1["name"], suite2["name"]))
+        return (
+            suite.get('last_activity_time'),
+            suite['name']
+        )
