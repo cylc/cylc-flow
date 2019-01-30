@@ -58,6 +58,12 @@ env:
 install: .travis/install.sh functional-tests docs
 script:
 - export PYTHONPATH="${TRAVIS_BUILD_DIR}/.travis"
+# As we fork processes, we need to make sure to point where each forked process
+# will put its .coverage... files. Otherwise they may be created under directories
+# that `coverage combine` isn't expecting, causing the report to omit tests.
+# On the other hand, changing .coveragerc directly affects developers running
+# coverage locally. Therefore, we have this sed line here only for Travis.
+- sed -i -e "s|data_file=.coverage|data_file=${TRAVIS_BUILD_DIR}/.coverage|g" .coveragerc
 - coverage run .travis/cover.py
 - unset PYTHONPATH
 after_script: .travis/after_script.sh
