@@ -252,132 +252,44 @@ def upg(cfg, descr):
     use_ssh = converter(lambda x: "ssh", "set to 'ssh'")
 
     u = upgrader(cfg, descr)
-    u.deprecate(
-        '5.1.1',
-        ['editors', 'in-terminal'],
-        ['editors', 'terminal'])
-    u.deprecate(
-        '5.1.1',
-        ['task hosts'],
-        ['hosts'])
-    u.deprecate(
-        '5.1.1',
-        ['hosts', 'local'],
-        ['hosts', 'localhost'])
-    u.deprecate(
-        '5.1.1',
-        ['hosts', '__MANY__', 'workspace directory'],
-        ['hosts', '__MANY__', 'workdirectory'])
-    u.deprecate(
-        '5.1.1',
-        ['hosts', '__MANY__', 'cylc directory'],
-        ['hosts', '__MANY__', 'cylc bin directory'],
-        add_bin_dir)
-    u.obsolete(
-        '5.2.0',
-        ['hosts', '__MANY__', 'cylc bin directory'],
-        ['hosts', '__MANY__', 'cylc bin directory'])
-    u.deprecate(
-        '5.2.0',
-        ['hosts', '__MANY__', 'use ssh messaging'],
-        ['hosts', '__MANY__', 'task communication method'],
-        use_ssh)
-    u.deprecate(
-        '6.1.2',
-        ['task messaging', 'connection timeout in seconds'],
-        ['task messaging', 'connection timeout'])
-    u.deprecate(
-        '6.1.2',
-        ['task messaging', 'retry interval in seconds'],
-        ['task messaging', 'retry interval'])
-    u.deprecate(
-        '6.4.0',
-        ['runtime', '__MANY__', 'global initial scripting'],
-        ['runtime', '__MANY__', 'global init-script'])
-    for batch_sys_name in ['loadleveler', 'lsf', 'pbs', 'sge', 'slurm']:
-        u.deprecate(
-            '6.4.1',
-            ['test battery', 'directives', batch_sys_name + ' host'],
-            ['test battery', 'batch systems', batch_sys_name, 'host'])
-        u.deprecate(
-            '6.4.1',
-            ['test battery', 'directives', batch_sys_name + ' directives'],
-            ['test battery', 'batch systems', batch_sys_name, 'directives'])
-    u.obsolete(
-        '6.4.1',
-        ['test battery', 'directives'])
-    u.obsolete(
-        '6.11.0',
-        ['state dump rolling archive length'])
-    u.deprecate(
-        '6.11.0',
-        ['cylc', 'event hooks'],
-        ['cylc', 'events'])
-    for key in SPEC['cylc']['events']:
-        u.deprecate(
-            '6.11.0',
-            ['cylc', 'event hooks', key],
-            ['cylc', 'events', key])
-    u.obsolete(
-        '7.0.0',
-        ['pyro', 'base port'])
-    u.obsolete(
-        '7.0.0',
-        ['pyro', 'maximum number of ports'],
-        ['communication', 'maximum number of ports'])
-    u.obsolete(
-        '7.0.0',
-        ['pyro', 'ports directory'])
-    u.obsolete(
-        '7.0.0',
-        ['pyro'])
-    u.obsolete(
-        '7.0.0',
-        ['authentication', 'hashes'])
-    u.obsolete(
-        '7.0.0',
-        ['authentication', 'scan hash'])
-    u.deprecate(
-        '7.0.0',
-        ['execution polling intervals'],
-        ['hosts', 'localhost', 'execution polling intervals'])
-    u.deprecate(
-        '7.0.0',
-        ['submission polling intervals'],
-        ['hosts', 'localhost', 'submission polling intervals'])
-    u.deprecate(
-        '7.3.1',
-        ['hosts', '__MANY__', 'remote shell template'],
-        ['hosts', '__MANY__', 'ssh command'])
-    u.deprecate(
-        '7.3.1',
-        ['hosts', '__MANY__', 'remote copy template'],
-        ['hosts', '__MANY__', 'scp command'])
-    # A special remote tail command template is no longer needed. It used to
-    # use 'tail -pid' to kill 'tail' on ssh exit, but we do this in cylc now.
-    u.obsolete(
-        '7.6.0', ['hosts', '__MANY__', 'remote tail command template'])
-    u.deprecate(
-        '7.6.0',
-        ['hosts', '__MANY__', 'local tail command template'],
-        ['hosts', '__MANY__', 'tail command template'])
-    u.deprecate(
-        '7.8.0',
-        ['communication', 'base port'],
-        ['suite servers', 'run ports'],
-        converter(lambda x: '%s .. %s' % (
-            int(x),
-            int(x) + int(cfg['communication']['maximum number of ports'])),
-            "Format as range list"))
-    u.obsolete(
-        '7.8.0', ['communication', 'maximum number of ports'])
-    u.deprecate(
-        '7.8.0', ['suite host scanning'], ['suite servers'])
-    u.deprecate(
-        '7.8.0', ['suite servers', 'hosts'], ['suite servers', 'scan hosts'])
+
+    u.obsolete('6.4.1', ['test battery', 'directives'])
+    u.obsolete('6.11.0', ['state dump rolling archive length'])
+    u.obsolete('6.11.0', ['cylc', 'event hooks'])
+    u.obsolete('7.0.0', ['pyro', 'base port'])
+    u.obsolete('7.0.0', ['pyro', 'ports directory'])
+    u.obsolete('7.0.0', ['pyro'])
+    u.obsolete('7.0.0', ['authentication', 'hashes'])
+    u.obsolete('7.0.0', ['authentication', 'scan hash'])
+    u.obsolete('7.6.0', ['hosts', '__MANY__', 'remote tail command template'])
+    u.obsolete('7.8.0', ['communication', 'maximum number of ports'])
     # Roll over is always done.
     u.obsolete('7.8.0', ['suite logging', 'roll over at start-up'])
     u.obsolete('7.8.1', ['cylc', 'events', 'reset timer'])
+    u.obsolete('8.0.0', ['task messaging', 'connection timeout in seconds'])
+    u.obsolete('8.0.0', ['task messaging', 'retry interval in seconds'])
+    u.obsolete('8.0.0', ['runtime', '__MANY__', 'global initial scripting'])
+    u.obsolete('8.0.0', ['pyro', 'maximum number of ports'])
+    u.obsolete('8.0.0', ['execution polling intervals'])
+    u.obsolete('8.0.0', ['submission polling intervals'])
+    u.obsolete('8.0.0', ['hosts', '__MANY__', 'remote shell template'])
+    u.obsolete('8.0.0', ['hosts', '__MANY__', 'remote copy template'])
+    u.obsolete('8.0.0', ['hosts', '__MANY__', 'local tail command template'])
+    u.obsolete('8.0.0', ['communication', 'base port'])
+    u.obsolete('8.0.0', ['suite host scanning'], ['suite servers'])
+    u.obsolete('8.0.0', ['suite servers', 'hosts'])
+
+    for batch_sys_name in ['loadleveler', 'lsf', 'pbs', 'sge', 'slurm']:
+        u.obsolete(
+            '8.0.0',
+            ['test battery', 'directives', batch_sys_name + ' host'])
+        u.obsolete(
+            '8.0.0',
+            ['test battery', 'directives', batch_sys_name + ' directives'])
+
+    for key in SPEC['cylc']['events']:
+        u.obsolete('8.0.0', ['cylc', 'event hooks', key])
+
     u.upgrade()
 
 
