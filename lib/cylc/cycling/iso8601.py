@@ -27,7 +27,7 @@ from isodatetime.timezone import (
 from cylc.time_parser import CylcTimeParser
 from cylc.cycling import (
     PointBase, IntervalBase, SequenceBase, ExclusionBase, PointParsingError,
-    IntervalParsingError, SequenceDegenerateError)
+    IntervalParsingError, SequenceDegenerateError, cmp_to_rich, cmp)
 from cylc.wallclock import get_current_time_string
 from parsec.validate import IllegalValueError
 
@@ -166,6 +166,10 @@ class ISO8601Point(PointBase):
         point = point_parse(point_string)
         other_point = point_parse(other_point_string)
         return str(point - other_point)
+
+
+# TODO: replace __cmp__ infrastructure
+cmp_to_rich(ISO8601Point)
 
 
 class ISO8601Interval(IntervalBase):

@@ -454,3 +454,27 @@ class ExclusionBase(object, metaclass=ABCMeta):
         if ',' in ret:
             ret = '(' + ret + ')'
         return ret
+
+
+def cmp(self, other):
+    """Temporary replacement for the Python2 cmp function."""
+    if self == other:
+        return 0
+    if self < other:
+        return -1
+    return 1
+
+
+def cmp_to_rich(cls):
+    """Temporary solution which monkey patches rich comparisons onto a class."""
+    cls.__lt__ = lambda self, other: cls.__cmp__(self, other) == -1
+    cls.__le__ = lambda self, other: cls.__cmp__(self, other) <= 0
+    cls.__gt__ = lambda self, other: cls.__cmp__(self, other) == 1
+    cls.__ge__ = lambda self, other: cls.__cmp__(self, other) >= 0
+    cls.__eq__ = lambda self, other: cls.__cmp__(self, other) == 0
+    cls.__ne__ = lambda self, other: cls.__cmp__(self, other) != 0
+
+
+# TODO: replace __cmp__ infrastructure
+cmp_to_rich(PointBase)
+cmp_to_rich(IntervalBase)
