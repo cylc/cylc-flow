@@ -283,94 +283,6 @@ def upg(cfg, descr):
     """Upgrade old suite configuration."""
     u = upgrader(cfg, descr)
     u.obsolete('6.1.3', ['visualization', 'enable live graph movie'])
-    dep = {
-        'pre-command scripting': 'pre-script',
-        'command scripting': 'script',
-        'post-command scripting': 'post-script',
-        'environment scripting': 'env-script',
-        'initial scripting': 'init-script'
-    }
-    for old, new in dep.items():
-        u.deprecate(
-            '6.4.0',
-            ['runtime', '__MANY__', old],
-            ['runtime', '__MANY__', new])
-        u.deprecate(
-            '6.4.0',
-            ['runtime', '__MANY__', 'dummy mode', old],
-            ['runtime', '__MANY__', 'dummy mode', new])
-    u.deprecate(
-        '6.5.0',
-        ['scheduling', 'special tasks', 'clock-triggered'],
-        ['scheduling', 'special tasks', 'clock-trigger'],
-    )
-    u.deprecate(
-        '6.5.0',
-        ['scheduling', 'special tasks', 'external-triggered'],
-        ['scheduling', 'special tasks', 'external-trigger'],
-    )
-    u.deprecate(
-        '6.11.0', ['cylc', 'event hooks'], ['cylc', 'events'])
-    u.deprecate(
-        '6.11.0',
-        ['runtime', '__MANY__', 'event hooks'],
-        ['runtime', '__MANY__', 'events'])
-    u.deprecate(
-        '6.11.0',
-        ['runtime', '__MANY__', 'job submission'],
-        ['runtime', '__MANY__', 'job'])
-    u.deprecate(
-        '6.11.0',
-        ['runtime', '__MANY__', 'job', 'method'],
-        ['runtime', '__MANY__', 'job', 'batch system'])
-    u.deprecate(
-        '6.11.0',
-        ['runtime', '__MANY__', 'job', 'command template'],
-        ['runtime', '__MANY__', 'job', 'batch submit command template'])
-    u.deprecate(
-        '6.11.0',
-        ['runtime', '__MANY__', 'job', 'retry delays'],
-        ['runtime', '__MANY__', 'job', 'submission retry delays'])
-    u.deprecate(
-        '6.11.0',
-        ['runtime', '__MANY__', 'retry delays'],
-        ['runtime', '__MANY__', 'job', 'execution retry delays'])
-    u.deprecate(
-        '6.11.0',
-        ['runtime', '__MANY__', 'submission polling intervals'],
-        ['runtime', '__MANY__', 'job', 'submission polling intervals'])
-    u.deprecate(
-        '6.11.0',
-        ['runtime', '__MANY__', 'execution polling intervals'],
-        ['runtime', '__MANY__', 'job', 'execution polling intervals'])
-    u.deprecate(
-        '7.5.0',
-        ['runtime', '__MANY__', 'title'],
-        ['runtime', '__MANY__', 'meta', 'title'])
-    u.deprecate(
-        '7.5.0',
-        ['runtime', '__MANY__', 'description'],
-        ['runtime', '__MANY__', 'meta', 'description'])
-    u.deprecate(
-        '7.5.0',
-        ['runtime', '__MANY__', 'URL'],
-        ['runtime', '__MANY__', 'meta', 'URL'])
-    u.deprecate(
-        '7.5.0',
-        ['title'],
-        ['meta', 'title'])
-    u.deprecate(
-        '7.5.0',
-        ['description'],
-        ['meta', 'description'])
-    u.deprecate(
-        '7.5.0',
-        ['URL'],
-        ['meta', 'URL'])
-    u.deprecate(
-        '7.6.0',
-        ['group'],
-        ['meta', 'group'])
     u.obsolete('7.2.2', ['cylc', 'dummy mode'])
     u.obsolete('7.2.2', ['cylc', 'simulation mode'])
     u.obsolete('7.2.2', ['runtime', '__MANY__', 'dummy mode'])
@@ -381,6 +293,34 @@ def upg(cfg, descr):
     u.obsolete('7.8.1', ['cylc', 'events', 'reset timer'])
     u.obsolete('7.8.1', ['cylc', 'events', 'reset inactivity timer'])
     u.obsolete('7.8.1', ['runtime', '__MANY__', 'events', 'reset timer'])
+    u.obsolete('8.0.0', ['scheduling', 'special tasks', 'clock-triggered'])
+    u.obsolete('8.0.0', ['scheduling', 'special tasks', 'external-triggered'])
+    u.obsolete('8.0.0', ['cylc', 'event hooks'])
+    u.obsolete('8.0.0', ['runtime', '__MANY__', 'event hooks'])
+    u.obsolete('8.0.0', ['runtime', '__MANY__', 'job submission'])
+    u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'method'])
+    u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'command template'])
+    u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'retry delays'])
+    u.obsolete('8.0.0', ['runtime', '__MANY__', 'retry delays'])
+    u.obsolete('8.0.0', ['runtime', '__MANY__',
+                         'submission polling intervals'])
+    u.obsolete('8.0.0', ['runtime', '__MANY__', 'execution polling intervals'])
+    u.obsolete('8.0.0', ['runtime', '__MANY__', 'title'])
+    u.obsolete('8.0.0', ['runtime', '__MANY__', 'description'])
+    u.obsolete('8.0.0', ['runtime', '__MANY__', 'URL'])
+    u.obsolete('8.0.0', ['title'])
+    u.obsolete('8.0.0', ['description'])
+    u.obsolete('8.0.0', ['URL'])
+    u.obsolete('8.0.0', ['group'])
+
+    for old, new in [('pre-command scripting', 'pre-script'),
+                     ('command scripting', 'script'),
+                     ('post-command scripting', 'post-script'),
+                     ('environment scripting', 'env-script'),
+                     ('initial scripting', 'init-script')]:
+        u.obsolete('8.0.0', ['runtime', '__MANY__', old])
+        u.obsolete('8.0.0', ['runtime', '__MANY__', 'dummy mode', old])
+
     u.upgrade()
 
 
