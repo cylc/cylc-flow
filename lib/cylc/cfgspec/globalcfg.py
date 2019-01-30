@@ -88,20 +88,16 @@ SPEC = {
     },
 
     'documentation': {
-        'files': {
-            'html user guides': [
-                VDR.V_STRING, '$CYLC_DIR/doc/built-sphinx/index.html'],
-        },
-        'urls': {
-            'internet homepage': [VDR.V_STRING, 'http://cylc.github.io/cylc/'],
-            'local index': [VDR.V_STRING],
-        },
+        'local': [VDR.V_STRING, '$CYLC_DIR/doc/built-sphinx/index.html'],
+        'online': [VDR.V_STRING,
+                   'http://cylc.github.io/cylc/doc/built-sphinx/index.html'],
+        'cylc homepage': [VDR.V_STRING, 'http://cylc.github.io/cylc/'],
     },
 
     'document viewers': {
-        'pdf': [VDR.V_STRING, 'evince'],
         'html': [VDR.V_STRING, 'firefox'],
     },
+
     'editors': {
         'terminal': [VDR.V_STRING, 'vim'],
         'gui': [VDR.V_STRING, 'gvim -f'],
@@ -278,6 +274,19 @@ def upg(cfg, descr):
     u.obsolete('8.0.0', ['communication', 'base port'])
     u.obsolete('8.0.0', ['suite host scanning'], ['suite servers'])
     u.obsolete('8.0.0', ['suite servers', 'hosts'])
+    u.deprecate('8.0.0',
+                ['documentation', 'files', 'html index'],
+                ['documentation', 'local'])
+    u.deprecate('7.8.1',
+                ['documentation', 'files', 'multi-page html user guide'],
+                ['documentation', 'local'])
+    u.deprecate('8.0.0',
+                ['documentation', 'urls', 'internet homepage'],
+                ['documentation', 'cylc homepage'])
+    u.obsolete('7.8.1', ['documentation', 'local index'])
+    u.obsolete('7.8.1', ['documentation', 'files', 'pdf user guide'])
+    u.obsolete('7.8.1', ['documentation', 'files',
+                         'single-page html user guide'])
 
     for batch_sys_name in ['loadleveler', 'lsf', 'pbs', 'sge', 'slurm']:
         u.obsolete(
@@ -578,8 +587,8 @@ class GlobalConfig(ParsecConfig):
         # Expand environment variables and ~user in LOCAL file paths.
         if 'HOME' not in os.environ:
             os.environ['HOME'] = self._HOME
-        for key, val in cfg['documentation']['files'].items():
-            cfg['documentation']['files'][key] = os.path.expandvars(val)
+        cfg['documentation']['local'] = os.path.expandvars(
+            cfg['documentation']['local'])
         for key, val in cfg['hosts']['localhost'].items():
             if val and 'directory' in key:
                 cfg['hosts']['localhost'][key] = os.path.expandvars(val)

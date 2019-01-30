@@ -179,57 +179,18 @@ Suite event logs are rolled over when they reach this file size.
 Documentation locations for the ``cylc doc`` command and gcylc
 Help menus.
 
-
-[documentation] ``->`` [[files]]
+[documentation] ``->`` [[online]]
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-File locations of documentation held locally on the cylc host server.
+URL of the online cylc documentation.
 
+[documentation] ``->`` [[local]]
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-[documentation] ``->`` [[files]] ``->`` html index
-""""""""""""""""""""""""""""""""""""""""""""""""""
+Path where the Cylc documentation will appear if built locally.
 
-File location of the main cylc documentation index.
-
-- *type*: string
-- *default*: ``<cylc-dir>/doc/index.html``
-
-
-[documentation] ``->`` [[files]] ``->`` pdf user guide
-""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-File location of the cylc User Guide, PDF version.
-
-- *type*: string
-- *default*: ``<cylc-dir>/doc/cug-pdf.pdf``
-
-
-[documentation] ``->`` [[files]] ``->`` multi-page html user guide
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-File location of the cylc User Guide, multi-page HTML version.
-
-- *type*: string
-- *default*: ``<cylc-dir>/doc/html/multi/cug-html.html``
-
-
-[documentation] ``->`` [[files]] ``->`` single-page html user guide
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-File location of the cylc User Guide, single-page HTML version.
-
-- *type*: string
-- *default*: ``<cylc-dir>/doc/html/single/cug-html.html``
-
-
-[documentation] ``->`` [[urls]]
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Online documentation URLs.
-
-
-[documentation] ``->`` [[urls]] ``->`` internet homepage
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+[documentation] ``->`` [[cylc homepage]]
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 URL of the cylc internet homepage, with links to documentation for the
 latest official release.
@@ -238,29 +199,10 @@ latest official release.
 - *default*: http://cylc.github.com/cylc/
 
 
-[documentation] ``->`` [[urls]] ``->`` local index
-""""""""""""""""""""""""""""""""""""""""""""""""""
-
-Local intranet URL of the main cylc documentation index.
-
-- *type*: string
-- *default*: (none)
-
-
 [document viewers]
 ------------------
 
 PDF and HTML viewers can be launched by cylc to view the documentation.
-
-
-[document viewers] ``->`` pdf
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Your preferred PDF viewer program.
-
-- *type*: string
-- *default*: evince
-
 
 [document viewers] ``->`` html
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
