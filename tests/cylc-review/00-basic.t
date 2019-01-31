@@ -117,6 +117,10 @@ FOO0="{'cycle': '20000101T0000Z', 'name': 'foo0', 'submit_num': 1}"
 FOO0_JOB='log/job/20000101T0000Z/foo0/01/job'
 FOO1="{'cycle': '20000101T0000Z', 'name': 'foo1', 'submit_num': 1}"
 FOO1_JOB='log/job/20000101T0000Z/foo1/01/job'
+# foo0 in the next cycle
+FOO2="{'cycle': '20010101T0000Z', 'name': 'foo0', 'submit_num': 0}"
+# foo1 in the next cycle
+FOO3="{'cycle': '20010101T0000Z', 'name': 'foo1', 'submit_num': 0}"
 
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('cylc_version',), '$(cylc version | cut -d' ' -f 2)']" \
@@ -134,7 +138,7 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('order',), None]" \
     "[('states', 'is_running',), False]" \
     "[('states', 'is_failed',), False]" \
-    "[('of_n_entries',), 2]" \
+    "[('of_n_entries',), 4]" \
     "[('entries', ${FOO0}, 'task_status',), 'succeeded']" \
     "[('entries', ${FOO0}, 'host',), '$(hostname -f)']" \
     "[('entries', ${FOO0}, 'submit_method',), 'background']" \
@@ -182,7 +186,9 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('entries', ${FOO1}, 'logs', 'job.trace.256.html', 'seq_key'), 'job.trace.*.html']" \
     "[('entries', ${FOO1}, 'seq_logs_indexes', 'job.trace.*.html', '2'), 'job.trace.2.html']" \
     "[('entries', ${FOO1}, 'seq_logs_indexes', 'job.trace.*.html', '32'), 'job.trace.32.html']" \
-    "[('entries', ${FOO1}, 'seq_logs_indexes', 'job.trace.*.html', '256'), 'job.trace.256.html']"
+    "[('entries', ${FOO1}, 'seq_logs_indexes', 'job.trace.*.html', '256'), 'job.trace.256.html']" \
+    "[('entries', ${FOO2}, 'events',), [None, None, None]]" \
+    "[('entries', ${FOO3}, 'events',), [None, None, None]]" \
 
 #-------------------------------------------------------------------------------
 # Data transfer output check for a suite run directory with only a "log/db"
