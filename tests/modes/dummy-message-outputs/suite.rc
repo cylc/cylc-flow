@@ -6,8 +6,6 @@
     [[reference test]]
         required run mode = dummy
         dummy mode suite timeout = PT30S
-    [[dummy mode]]
-        disable suite event hooks = False
 [scheduling]
     [[dependencies]]
         graph = foo:x => bar

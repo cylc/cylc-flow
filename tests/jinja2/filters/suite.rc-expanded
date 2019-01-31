@@ -4,6 +4,6 @@
         graph = foo => bar
 [runtime]
     [[foo]]
-        pre-command scripting = true
-        command scripting = true
+        pre-script = true
+        script = true
     [[bar]]

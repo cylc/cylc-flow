@@ -38,7 +38,7 @@ until triggered by an external system."""
     max active cycle points = 5
     # runahead limit = P5 # (alternative limiting method)
     [[special tasks]]
-        external-triggered = get_data("new dataset ready for processing")
+        external-trigger = get_data("new dataset ready for processing")
     [[dependencies]]
         [[[R1]]] # first cycle
             graph = prep => satsim & get_data
@@ -54,15 +54,15 @@ until triggered by an external system."""
 [runtime]
     [[prep]]
         title = clean the suite output directories
-        command scripting = \
+        script = \
 rm -rf $CYLC_SUITE_SHARE_DIR $CYLC_SUITE_WORK_DIR
 
     [[satsim]]
         title = simulate a satellite data feed
         description = """Generates {{N_DATASETS}} arbitrarily labelled
 datasets very quickly, to show parallel processing streams."""
-        pre-command scripting = mkdir -p {{DATA_IN_DIR}}
-        command scripting = """
+        pre-script = mkdir -p {{DATA_IN_DIR}}
+        script = """
 COUNT=0
 while ((COUNT < {{N_DATASETS}})); do
     # sleep $((RANDOM % 20))
@@ -88,22 +88,22 @@ done"""
         inherit = WORKDIR
         title = retrieve next dataset
         description = just do it - we know it exists already
-        command scripting = mv {{DATA_IN_DIR}}/${DATASET}.raw $PWD
+        script = mv {{DATA_IN_DIR}}/${DATASET}.raw $PWD
 
     [[proc1]]
         inherit = WORKDIR
         title = convert .raw dataset to .proc1 form
-        command scripting = mv ${DATASET}.raw ${DATASET}.proc1
+        script = mv ${DATASET}.raw ${DATASET}.proc1
 
     [[proc2]]
         inherit = WORKDIR
         title = convert .proc1 dataset to .proc2 form
-        command scripting = mv ${DATASET}.proc1 ${DATASET}.proc2
+        script = mv ${DATASET}.proc1 ${DATASET}.proc2
 
     [[products]]
         inherit = WORKDIR
         title = generate products from .proc2 processed dataset
-        command scripting = """
+        script = """
 mkdir -p {{PRODUCT_DIR}}
 mv ${DATASET}.proc2 {{PRODUCT_DIR}}/${DATASET}.prod"""
 
@@ -111,7 +111,7 @@ mv ${DATASET}.proc2 {{PRODUCT_DIR}}/${DATASET}.prod"""
         title = collate all products from the suite run
         # Note you might want to use "cylc suite-state" to check that
         # _all_ product tasks have finished before collating results.
-        command scripting = """
+        script = """
 echo PRODUCTS:
 ls {{PRODUCT_DIR}}
 ##sleep 20"""

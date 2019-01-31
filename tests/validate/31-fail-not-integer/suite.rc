@@ -7,4 +7,4 @@
 
 [runtime]
     [[foo]]
-    command scripting = sleep 10
+    script = sleep 10

@@ -211,7 +211,7 @@ class BroadcastMgr(object):
 
         Return a tuple (modified_settings, bad_options) where:
           modified_settings is list of modified settings in the form:
-            [("20200202", "foo", {"command scripting": "true"}, ...]
+            [("20200202", "foo", {"script": "true"}, ...]
           bad_options is as described in the docstring for self.clear().
         """
         modified_settings = []
@@ -315,7 +315,7 @@ class BroadcastMgr(object):
         Return a list of pruned broadcasts in the form:
 
         [
-            ["20200202", "foo", "command scripting"],
+            ["20200202", "foo", "script"],
             ["20020202", "bar", "environment", "BAR"],
         ]
         """
