@@ -105,9 +105,6 @@ SPEC = {
 
     'communication': {
         'method': [VDR.V_STRING, 'https', 'http'],
-        'base port': [VDR.V_INTEGER, 43001],
-        'maximum number of ports': [VDR.V_INTEGER, 100],
-        'proxies on': [VDR.V_BOOLEAN],
         'options': [VDR.V_STRING_LIST],
     },
 
@@ -251,53 +248,21 @@ def upg(cfg, descr):
 
     u.obsolete('6.4.1', ['test battery', 'directives'])
     u.obsolete('6.11.0', ['state dump rolling archive length'])
-    u.obsolete('6.11.0', ['cylc', 'event hooks'])
-    u.obsolete('7.0.0', ['pyro', 'base port'])
-    u.obsolete('7.0.0', ['pyro', 'ports directory'])
-    u.obsolete('7.0.0', ['pyro'])
-    u.obsolete('7.0.0', ['authentication', 'hashes'])
-    u.obsolete('7.0.0', ['authentication', 'scan hash'])
-    u.obsolete('7.6.0', ['hosts', '__MANY__', 'remote tail command template'])
-    u.obsolete('7.8.0', ['communication', 'maximum number of ports'])
     # Roll over is always done.
     u.obsolete('7.8.0', ['suite logging', 'roll over at start-up'])
-    u.obsolete('7.8.1', ['cylc', 'events', 'reset timer'])
-    u.obsolete('8.0.0', ['task messaging', 'connection timeout in seconds'])
-    u.obsolete('8.0.0', ['task messaging', 'retry interval in seconds'])
-    u.obsolete('8.0.0', ['runtime', '__MANY__', 'global initial scripting'])
-    u.obsolete('8.0.0', ['pyro', 'maximum number of ports'])
-    u.obsolete('8.0.0', ['execution polling intervals'])
-    u.obsolete('8.0.0', ['submission polling intervals'])
-    u.obsolete('8.0.0', ['hosts', '__MANY__', 'remote shell template'])
-    u.obsolete('8.0.0', ['hosts', '__MANY__', 'remote copy template'])
-    u.obsolete('8.0.0', ['hosts', '__MANY__', 'local tail command template'])
-    u.obsolete('8.0.0', ['communication', 'base port'])
-    u.obsolete('8.0.0', ['suite host scanning'], ['suite servers'])
-    u.obsolete('8.0.0', ['suite servers', 'hosts'])
-    u.deprecate('8.0.0',
-                ['documentation', 'files', 'html index'],
-                ['documentation', 'local'])
-    u.deprecate('7.8.1',
-                ['documentation', 'files', 'multi-page html user guide'],
-                ['documentation', 'local'])
-    u.deprecate('8.0.0',
-                ['documentation', 'urls', 'internet homepage'],
-                ['documentation', 'cylc homepage'])
     u.obsolete('7.8.1', ['documentation', 'local index'])
     u.obsolete('7.8.1', ['documentation', 'files', 'pdf user guide'])
     u.obsolete('7.8.1', ['documentation', 'files',
                          'single-page html user guide'])
-
-    for batch_sys_name in ['loadleveler', 'lsf', 'pbs', 'sge', 'slurm']:
-        u.obsolete(
-            '8.0.0',
-            ['test battery', 'directives', batch_sys_name + ' host'])
-        u.obsolete(
-            '8.0.0',
-            ['test battery', 'directives', batch_sys_name + ' directives'])
-
-    for key in SPEC['cylc']['events']:
-        u.obsolete('8.0.0', ['cylc', 'event hooks', key])
+    u.deprecate('7.8.1',
+                ['documentation', 'files', 'multi-page html user guide'],
+                ['documentation', 'local'])
+    u.deprecate('8.0.0',
+                ['documentation', 'files', 'html index'],
+                ['documentation', 'local'])
+    u.deprecate('8.0.0',
+                ['documentation', 'urls', 'internet homepage'],
+                ['documentation', 'cylc homepage'])
 
     u.upgrade()
 

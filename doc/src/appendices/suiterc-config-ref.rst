@@ -324,8 +324,8 @@ to override the default templates.
 
 Cylc has internal "hooks" to which you can attach handlers that are
 called by the suite server program whenever certain events occur. This section
-configures suite event hooks; see :ref:`TaskEventHandling` for
-task event hooks.
+configures suite events; see :ref:`TaskEventHandling` for
+task events.
 
 Event handler commands can send an email or an SMS, call a pager, intervene in
 the operation of their own suite, or whatever.

@@ -12,29 +12,13 @@
         [[[P1D]]]
             graph = foo => cat & dog
     [[special tasks]]
-        clock-triggered = foo(PT1M) # deprecated name
         external-trigger = cat("meow available") # deprecated name
 [runtime]
     [[foo, cat, dog]]
-        initial scripting = "echo init-script" # deprecate
-        environment scripting = "echo env-script" # deprecate
-        pre-script = "echo pre-script" # deprecate
-        script = "echo script" # deprecate
-        post-script = "echo post-script" # deprecate
-        retry delays = 6*PT1H # deprecate
-        submission polling intervals = PT1H, PT2H
-        execution polling intervals = 10*PT30M
         [[[simulation mode]]]
             script = "echo script" # deprecate
         [[[dummy mode]]]
             script = "echo script" # deprecate
-        [[[job submission]]] # deprecate all these
-            command template = qsub something something
-            method = pbs
-            retry delays = PT1M
-        [[[event hooks]]]
-            retry handler = echo "retrying..."
-
 
 [visualization]
     enable live graph movie = True # obsolete

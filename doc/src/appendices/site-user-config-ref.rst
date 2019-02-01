@@ -249,8 +249,6 @@ The editor to be invoked by the cylc GUI.
 
 This section covers options for network communication between cylc
 clients (suite-connecting commands and guis) servers (running suites).
-Each suite listens on a dedicated network port, binding on the first
-available starting at the configured base port.
 
 By default, the communication method is HTTPS secured with HTTP Digest
 Authentication. If the system does not support SSL, you should configure
@@ -270,16 +268,6 @@ Cylc defaults to HTTPS if this setting is not explicitly configured.
   - **https**
   - **http**
 - *default*: https
-
-
-[communication] ``->`` proxies on
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Enable or disable proxy servers for HTTPS - disabled by default.
-
-- *type*: boolean
-- *localhost default*: False
-
 
 [communication] ``->`` options
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -1390,5 +1390,5 @@ and can be copied and modified at will.
 - Use an *internal queue* to prevent more than an alotted number
   of tasks from running at once even though they are ready -
   see :ref:`InternalQueues`.
-- Configure task event hooks to send an email, or shut the suite down,
+- Configure task events to send an email, or shut the suite down,
   on task failure.

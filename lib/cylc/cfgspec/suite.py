@@ -293,33 +293,6 @@ def upg(cfg, descr):
     u.obsolete('7.8.1', ['cylc', 'events', 'reset timer'])
     u.obsolete('7.8.1', ['cylc', 'events', 'reset inactivity timer'])
     u.obsolete('7.8.1', ['runtime', '__MANY__', 'events', 'reset timer'])
-    u.obsolete('8.0.0', ['scheduling', 'special tasks', 'clock-triggered'])
-    u.obsolete('8.0.0', ['scheduling', 'special tasks', 'external-triggered'])
-    u.obsolete('8.0.0', ['cylc', 'event hooks'])
-    u.obsolete('8.0.0', ['runtime', '__MANY__', 'event hooks'])
-    u.obsolete('8.0.0', ['runtime', '__MANY__', 'job submission'])
-    u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'method'])
-    u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'command template'])
-    u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'retry delays'])
-    u.obsolete('8.0.0', ['runtime', '__MANY__', 'retry delays'])
-    u.obsolete('8.0.0', ['runtime', '__MANY__',
-                         'submission polling intervals'])
-    u.obsolete('8.0.0', ['runtime', '__MANY__', 'execution polling intervals'])
-    u.obsolete('8.0.0', ['runtime', '__MANY__', 'title'])
-    u.obsolete('8.0.0', ['runtime', '__MANY__', 'description'])
-    u.obsolete('8.0.0', ['runtime', '__MANY__', 'URL'])
-    u.obsolete('8.0.0', ['title'])
-    u.obsolete('8.0.0', ['description'])
-    u.obsolete('8.0.0', ['URL'])
-    u.obsolete('8.0.0', ['group'])
-
-    for old, new in [('pre-command scripting', 'pre-script'),
-                     ('command scripting', 'script'),
-                     ('post-command scripting', 'post-script'),
-                     ('environment scripting', 'env-script'),
-                     ('initial scripting', 'init-script')]:
-        u.obsolete('8.0.0', ['runtime', '__MANY__', old])
-        u.obsolete('8.0.0', ['runtime', '__MANY__', 'dummy mode', old])
 
     u.upgrade()
 

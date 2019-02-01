@@ -34,15 +34,6 @@ cmp_ok val.out <<__END__
  * (7.2.2) [cylc][simulation mode] - DELETED (OBSOLETE)
  * (7.2.2) [runtime][foo, cat, dog][dummy mode] - DELETED (OBSOLETE)
  * (7.2.2) [runtime][foo, cat, dog][simulation mode] - DELETED (OBSOLETE)
- * (8.0.0) [scheduling][special tasks][clock-triggered] - DELETED (OBSOLETE)
- * (8.0.0) [scheduling][special tasks][external-triggered] - DELETED (OBSOLETE)
- * (8.0.0) [runtime][foo, cat, dog][event hooks] - DELETED (OBSOLETE)
- * (8.0.0) [runtime][foo, cat, dog][job submission] - DELETED (OBSOLETE)
- * (8.0.0) [runtime][foo, cat, dog][retry delays] - DELETED (OBSOLETE)
- * (8.0.0) [runtime][foo, cat, dog][submission polling intervals] - DELETED (OBSOLETE)
- * (8.0.0) [runtime][foo, cat, dog][execution polling intervals] - DELETED (OBSOLETE)
- * (8.0.0) [runtime][foo, cat, dog][environment scripting] - DELETED (OBSOLETE)
- * (8.0.0) [runtime][foo, cat, dog][initial scripting] - DELETED (OBSOLETE)
 __END__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
