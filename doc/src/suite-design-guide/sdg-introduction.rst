@@ -22,7 +22,7 @@ suites), and end with some pointers to future developments.
    please consult the:
  
    - `Cylc documentation <http://cylc.github.io/cylc/documentation.html>`_
-   - `Rose documentation <http://metomi.github.io/rose/doc/rose.html>`_
+   - `Rose documentation <http://metomi.github.io/rose>`_
 
 .. note::
 

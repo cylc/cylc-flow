@@ -163,20 +163,6 @@ The ISO8601 extended date-time format can be used
 (``%Y-%m-%dT%H:%M``) but
 note that the "-" and ":" characters end up in job log directory paths.
 
-The pre cylc-6 legacy 10-digit date-time format YYYYMMDDHH is not ISO8601
-compliant and can no longer be used as the cycle point format. For job
-scripts that still require the old format, use the
-``cylc cyclepoint`` utility to translate the ISO8601 cycle point
-inside job scripts, e.g.:
-
-.. code-block:: cylc
-
-   [runtime]
-       [[root]]
-           [[[environment]]]
-               CYCLE_TIME = $(cylc cyclepoint --template=%Y%m%d%H)
-
-
 .. _cycle-point-num-expanded-year-digits:
 
 [cylc] ``->`` cycle point num expanded year digits

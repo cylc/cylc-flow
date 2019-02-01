@@ -171,7 +171,7 @@ Suite configurations can be validated to detect syntax (and other) errors:
 
    # pass:
    $ cylc validate tut/oneoff/basic
-   Valid for cylc-6.0.0
+   Valid for cylc-7.8.1
    $ echo $?
    0
    # fail:

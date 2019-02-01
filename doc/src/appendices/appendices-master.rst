@@ -17,7 +17,6 @@ Appendices
    readme-file
    install-file
    dev-history-major-changes
-   cylc-6-migration-ref
    known-issues
    licensing
 

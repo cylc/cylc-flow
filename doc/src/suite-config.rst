@@ -1929,10 +1929,9 @@ task exists at these cycle points but has no prerequisites - although other
 prerequisites may be defined for it in other parts of the graph).
 
 *Cylc does not infer the existence of the upstream task in offset
-triggers* like ``foo[-P1D] => bar`` because, as explained in
-:ref:`cylc-6-migration-implicit-cycling`, a typo in the offset interval
-should generate an error rather than silently creating tasks on an erroneous
-cycling sequence.
+triggers* like ``foo[-P1D] => bar`` because a typo in the offset
+interval should generate an error rather than silently creating
+tasks on an erroneous cycling sequence.
 
 As a result you need to be careful not to define inter-cycle dependencies that
 cannot be satisfied at run time. Suite validation catches this kind of error if

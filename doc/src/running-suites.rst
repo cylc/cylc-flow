@@ -759,7 +759,7 @@ the whole suite just set the default queue limit:
 .. code-block:: cylc
 
    [scheduling]
-       [[ queues]]
+       [[queues]]
            # limit the entire suite to 5 active tasks at once
            [[[default]]]
                limit = 5
@@ -770,7 +770,7 @@ members:
 .. code-block:: cylc
 
    [scheduling]
-       [[ queues]]
+       [[queues]]
            [[[q_foo]]]
                limit = 5
                members = foo, bar, baz

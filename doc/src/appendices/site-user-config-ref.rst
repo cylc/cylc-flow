@@ -272,27 +272,6 @@ Cylc defaults to HTTPS if this setting is not explicitly configured.
 - *default*: https
 
 
-[communication] ``->`` base port
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The first port that Cylc is allowed to use. This item (and
-``maximum number of ports``) is deprecated; please use
-``run ports`` under ``[suite servers]`` instead.
-
-- *type*: integer
-- *default*: ``43001``
-
-
-[communication] ``->`` maximum number of ports
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-This setting (and ``base port``) is deprecated; please use
-``run ports`` under ``[suite servers]`` instead.
-
-- *type*: integer
-- *default*: ``100``
-
-
 [communication] ``->`` proxies on
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -811,10 +790,6 @@ A list of allowed ports for Cylc to use to run suites.
    Only one suite can run per port for a given host, so the length
    of this list determines the maximum number of suites that can run
    at once per suite host.
-
-This config item supersedes the deprecated settings ``base port``
-and ``maximum number of ports``, where the base port is equivalent to
-the first port, and the maximum number of ports to the length, of this list.
 
 - *type*: string in the format ``X .. Y`` for
   ``X <= Y`` where ``X`` and ``Y`` are integers.
