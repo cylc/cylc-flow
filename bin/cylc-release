@@ -35,7 +35,7 @@ if '--use-ssh' in sys.argv[1:]:
 import cylc.flags
 from cylc.prompt import prompt
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.httpclient import SuiteRuntimeServiceClient
+from cylc.network.client import SuiteRuntimeClient
 
 
 def main():
@@ -52,15 +52,15 @@ def main():
         prompt('Release task(s) %s in %s' % (args, suite), options.force)
     else:
         prompt('Release suite %s' % suite, options.force)
-    pclient = SuiteRuntimeServiceClient(
+    pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
     if args:
         items = parser.parse_multitask_compat(options, args)
-        pclient.put_command('release_tasks', items=items)
+        pclient('release_tasks', {'items': items})
     else:
-        pclient.put_command('release_suite')
+        pclient('release_suite')
 
 
 if __name__ == "__main__":

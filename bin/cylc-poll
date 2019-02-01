@@ -34,7 +34,7 @@ if '--use-ssh' in sys.argv[1:]:
 import cylc.flags
 from cylc.prompt import prompt
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.httpclient import SuiteRuntimeServiceClient
+from cylc.network.client import SuiteRuntimeClient
 
 
 def main():
@@ -55,7 +55,7 @@ def main():
         prompt('Poll task %s in %s' % (args, suite), options.force)
     else:
         prompt('Poll ALL tasks in %s' % (suite), options.force)
-    pclient = SuiteRuntimeServiceClient(
+    pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
@@ -63,10 +63,9 @@ def main():
     # Back compat: back_out introduced >7.5.0
     # So don't call with "poll_succ" if not necessary to avoid breakage.
     if options.poll_succ:
-        pclient.put_command(
-            'poll_tasks', items=items, poll_succ=options.poll_succ)
+        pclient('poll_tasks', {'items': items, 'poll_succ': options.poll_succ})
     else:
-        pclient.put_command('poll_tasks', items=items)
+        pclient('poll_tasks', {'items': items})
 
 
 if __name__ == "__main__":

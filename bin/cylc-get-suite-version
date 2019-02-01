@@ -31,7 +31,7 @@ if '--use-ssh' in sys.argv[1:]:
 
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.httpclient import SuiteRuntimeServiceClient
+from cylc.network.client import SuiteRuntimeClient
 
 
 def main():
@@ -40,11 +40,10 @@ def main():
     (options, args) = parser.parse_args()
     suite = args[0]
 
-    pclient = SuiteRuntimeServiceClient(
+    pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
-        options.comms_timeout, my_uuid=options.set_uuid,
-        print_uuid=options.print_uuid)
-    print(pclient.get_info('get_cylc_version'))
+        my_uuid=options.set_uuid, print_uuid=options.print_uuid)
+    print(pclient('get_cylc_version', timeout=options.comms_timeout))
 
 
 if __name__ == "__main__":

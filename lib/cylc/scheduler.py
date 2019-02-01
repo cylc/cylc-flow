@@ -46,8 +46,8 @@ from cylc.host_appointer import HostAppointer, EmptyHostList
 from cylc.hostuserutil import get_host, get_user, get_fqdn_by_host
 from cylc.loggingutil import CylcLogFormatter, TimestampRotatingFileHandler
 from cylc.log_diagnosis import LogSpec
-from cylc.network import PRIVILEGE_LEVELS
-from cylc.network.httpserver import HTTPServer
+#from cylc.network import PRIVILEGE_LEVELS
+from cylc.network.server import SuiteRuntimeServer
 from cylc.profiler import Profiler
 from cylc.state_summary_mgr import StateSummaryMgr
 from cylc.subprocpool import SuiteProcPool
@@ -192,7 +192,7 @@ class Scheduler(object):
         self.task_job_mgr = None
         self.task_events_mgr = None
         self.suite_event_handler = None
-        self.httpserver = None
+        self.server = None
         self.port = None
         self.command_queue = None
         self.message_queue = None
@@ -254,8 +254,9 @@ class Scheduler(object):
             if not self.options.no_detach:
                 daemonize(self)
             self._setup_suite_logger()
-            self.httpserver = HTTPServer(self.suite)
-            self.port = self.httpserver.port
+            self.server = SuiteRuntimeServer(self)
+            self.server.start(range(5500, 5600))  # TODO
+            self.port = self.server.port
             self.configure()
             self.profiler.start()
             self.run()
@@ -389,7 +390,6 @@ conditions; see `cylc conditions`.
         self.profiler.log_memory("scheduler.py: before load_suiterc")
         self.load_suiterc()
         self.profiler.log_memory("scheduler.py: after load_suiterc")
-        self.httpserver.connect(self)
 
         self.suite_db_mgr.on_suite_start(self.is_restart)
         if self.config.cfg['scheduling']['hold after point']:
@@ -425,9 +425,9 @@ conditions; see `cylc conditions`.
             TimestampRotatingFileHandler.FILE_NUM: 1}
         LOG.info(
             self.START_MESSAGE_TMPL % {
-                'comms_method': self.httpserver.comms_method,
+                'comms_method': 'tcp',
                 'host': self.host,
-                'port': self.httpserver.port,
+                'port': self.server.port,
                 'pid': os.getpid()},
             extra=log_extra,
         )
@@ -812,21 +812,23 @@ conditions; see `cylc conditions`.
 
     def info_get_identity(self, privileges):
         """Return suite identity, (description, (states))."""
+        # TODO
         result = {}
-        if PRIVILEGE_LEVELS[0] in privileges:
-            result[KEY_NAME] = self.suite
-            result[KEY_OWNER] = self.owner
-            result[KEY_VERSION] = CYLC_VERSION
-        if PRIVILEGE_LEVELS[1] in privileges:
-            result[KEY_META] = self.config.cfg[KEY_META]
-            for key in (KEY_TITLE, KEY_DESCRIPTION, KEY_GROUP):
-                result[key] = self.config.cfg[KEY_META].get(key)
-        if PRIVILEGE_LEVELS[2] in privileges:
-            result[KEY_UPDATE_TIME] = self.state_summary_mgr.update_time
-            result[KEY_STATES] = self.state_summary_mgr.get_state_totals()
-            result[KEY_TASKS_BY_STATE] = (
-                self.state_summary_mgr.get_tasks_by_state())
-        return result
+        return self.suite
+        # if PRIVILEGE_LEVELS[0] in privileges:
+        #     result[KEY_NAME] = self.suite
+        #     result[KEY_OWNER] = self.owner
+        #     result[KEY_VERSION] = CYLC_VERSION
+        # if PRIVILEGE_LEVELS[1] in privileges:
+        #     result[KEY_META] = self.config.cfg[KEY_META]
+        #     for key in (KEY_TITLE, KEY_DESCRIPTION, KEY_GROUP):
+        #         result[key] = self.config.cfg[KEY_META].get(key)
+        # if PRIVILEGE_LEVELS[2] in privileges:
+        #     result[KEY_UPDATE_TIME] = self.state_summary_mgr.update_time
+        #     result[KEY_STATES] = self.state_summary_mgr.get_state_totals()
+        #     result[KEY_TASKS_BY_STATE] = (
+        #         self.state_summary_mgr.get_tasks_by_state())
+        # return result
 
     def info_get_task_requisites(self, items, list_prereqs=False):
         """Return prerequisites of a task."""
@@ -1032,14 +1034,15 @@ conditions; see `cylc conditions`.
         # Preserve contact data in memory, for regular health check.
         mgr = self.suite_srv_files_mgr
         contact_data = {
-            mgr.KEY_API: str(self.httpserver.API),
+            #mgr.KEY_API: str(self.server.API),
+            mgr.KEY_API: '4',
             mgr.KEY_COMMS_PROTOCOL: glbl_cfg().get(
                 ['communication', 'method']),
             mgr.KEY_DIR_ON_SUITE_HOST: os.environ['CYLC_DIR'],
             mgr.KEY_HOST: self.host,
             mgr.KEY_NAME: self.suite,
             mgr.KEY_OWNER: self.owner,
-            mgr.KEY_PORT: str(self.httpserver.port),
+            mgr.KEY_PORT: str(self.server.port),
             mgr.KEY_PROCESS: process_str,
             mgr.KEY_SSH_USE_LOGIN_SHELL: str(glbl_cfg().get_host_item(
                 'use login shell')),
@@ -1235,7 +1238,7 @@ conditions; see `cylc conditions`.
         try:
             self.suite_event_handler.handle(self.config, SuiteEventContext(
                 event, reason, self.suite, self.uuid_str, self.owner,
-                self.host, self.httpserver.port))
+                self.host, self.server.port))
         except SuiteEventError as exc:
             if event == self.EVENT_SHUTDOWN and self.options.reftest:
                 LOG.error('SUITE REFERENCE TEST FAILED')
@@ -1860,8 +1863,10 @@ conditions; see `cylc conditions`.
             except Exception as exc:
                 LOG.exception(exc)
 
-        if self.httpserver:
-            self.httpserver.shutdown()
+        if self.server:
+            LOG.info('stopping server...')
+            self.server.stop()
+            LOG.info('...stopped')
 
         # Flush errors and info before removing suite contact file
         sys.stdout.flush()

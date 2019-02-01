@@ -43,7 +43,7 @@ if '--use-ssh' in sys.argv[1:]:
 import cylc.flags
 from cylc.prompt import prompt
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.httpclient import SuiteRuntimeServiceClient
+from cylc.network.client import SuiteRuntimeClient
 from cylc.task_id import TaskID
 
 
@@ -84,14 +84,15 @@ def main():
                     item, i + 1))
         prompt('Insert %s in %s' % (items, suite), options.force)
 
-    pclient = SuiteRuntimeServiceClient(
+    pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
-        options.comms_timeout, my_uuid=options.set_uuid,
-        print_uuid=options.print_uuid)
+        my_uuid=options.set_uuid, print_uuid=options.print_uuid)
 
-    pclient.put_command(
-        'insert_tasks', items=items, no_check=options.no_check,
-        stop_point_string=options.stop_point_string
+    pclient(
+        'insert_tasks',
+        {'items': items, 'no_check': options.no_check,
+         'stop_point_string': options.stop_point_string},
+        timeout=options.comms_timeout
     )
 
 

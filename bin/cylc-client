@@ -32,38 +32,32 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.httpclient import SuiteRuntimeServiceClient
+from cylc.network.client import SuiteRuntimeClient
 
 
 def main():
     parser = COP(__doc__, comms=True, argdoc=[
-        ('METHOD', 'Network API function name'),
-        ('[REG]', 'Suite name')])
+        ('REG', 'Suite name'),
+        ('METHOD', 'Network API function name')])
+
     parser.add_option(
         '-n', '--no-input',
         help='Do not read from STDIN, assume null input',
         action='store_true', dest='no_input')
     options, args = parser.parse_args()
-    # Client API function name
-    func = args[0]
-    if len(args) == 2:
-        # 2nd argument is suite name, assume authentication required
-        suite = args[1]
-        auth = None
-    else:
-        # No 2nd argument, assume anonymous authentication
-        suite = None
-        auth = SuiteRuntimeServiceClient.ANON_AUTH
-    pclient = SuiteRuntimeServiceClient(
+    suite = args[0]
+    func = args[1]
+    pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
-        options.comms_timeout, my_uuid=options.set_uuid,
-        print_uuid=options.print_uuid, auth=auth)
+        my_uuid=options.set_uuid, print_uuid=options.print_uuid)
     if options.no_input:
         kwargs = {}
     else:
         kwargs = json.load(sys.stdin)
     sys.stdin.close()
-    sys.stdout.write(json.dumps(getattr(pclient, func)(**kwargs), indent=4))
+    sys.stdout.write(json.dumps(
+        pclient(func, kwargs, timeout=options.comms_timeout), indent=4
+    ) + '\n')
 
 
 if __name__ == '__main__':

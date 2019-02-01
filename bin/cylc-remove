@@ -34,7 +34,7 @@ if '--use-ssh' in sys.argv[1:]:
 import cylc.flags
 from cylc.prompt import prompt
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.httpclient import SuiteRuntimeServiceClient
+from cylc.network.client import SuiteRuntimeClient
 
 
 def main():
@@ -53,13 +53,15 @@ def main():
 
     suite = args.pop(0)
     prompt('remove task(s) %s in %s' % (args, suite), options.force)
-    pclient = SuiteRuntimeServiceClient(
+    pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
     items = parser.parse_multitask_compat(options, args)
-    pclient.put_command('remove_tasks', items=items,
-                        spawn=(not options.no_spawn))
+    pclient(
+        'remove_tasks',
+        {'items': items, 'spawn': (not options.no_spawn)}
+    )
 
 
 if __name__ == "__main__":

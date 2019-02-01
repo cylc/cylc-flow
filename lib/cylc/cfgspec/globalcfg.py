@@ -32,7 +32,7 @@ from cylc.cfgvalidate import (
     cylc_config_validate, CylcConfigValidator as VDR, DurationFloat)
 from cylc.hostuserutil import get_user_home, is_remote_user
 from cylc.mkdir_p import mkdir_p
-from cylc.network import PRIVILEGE_LEVELS, PRIV_STATE_TOTALS, PRIV_SHUTDOWN
+from cylc.network import Priv
 from cylc.version import CYLC_VERSION
 
 # Nested dict of spec items.
@@ -219,8 +219,8 @@ SPEC = {
         # Allow owners to grant public shutdown rights at the most, not full
         # control.
         'public': (
-            [VDR.V_STRING, PRIV_STATE_TOTALS] +
-            PRIVILEGE_LEVELS[:PRIVILEGE_LEVELS.index(PRIV_SHUTDOWN) + 1]),
+            [VDR.V_STRING, Priv.STATE_TOTALS, Priv.IDENTITY, Priv.DESCRIPTION,
+             Priv.STATE_TOTALS, Priv.READ, Priv.SHUTDOWN])
     },
 
     'suite servers': {

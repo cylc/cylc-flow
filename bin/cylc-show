@@ -33,7 +33,7 @@ import json
 
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.httpclient import SuiteRuntimeServiceClient
+from cylc.network.client import SuiteRuntimeClient
 from cylc.task_id import TaskID
 
 
@@ -54,16 +54,16 @@ def main():
     options, args = parser.parse_args()
     suite = args[0]
     task_args = args[1:]
-    pclient = SuiteRuntimeServiceClient(
-        suite, options.owner, options.host, options.port,
-        options.comms_timeout, my_uuid=options.set_uuid,
-        print_uuid=options.print_uuid
-    )
+    pclient = SuiteRuntimeClient(suite)
+    #     suite, options.owner, options.host, options.port,
+    #     options.comms_timeout, my_uuid=options.set_uuid,
+    #     print_uuid=options.print_uuid
+    # )
     json_filter = []
 
     if not task_args:
         # Print suite info.
-        suite_info = pclient.get_info('get_suite_info')
+        suite_info = pclient('get_suite_info')
         if options.json:
             json_filter.append(suite_info)
         else:
@@ -74,7 +74,7 @@ def main():
     task_ids = [arg for arg in task_args if TaskID.is_valid_id_2(arg)]
 
     if task_names:
-        results = pclient.get_info('get_task_info', names=task_names)
+        results = pclient('get_task_info', {'names': task_names})
         if options.json:
             json_filter.append(results)
         else:
@@ -85,9 +85,8 @@ def main():
                     print("%s: %s" % (key, value or "(not given)"))
 
     if task_ids:
-        results, bad_items = pclient.get_info(
-            'get_task_requisites', items=task_ids,
-            list_prereqs=options.list_prereqs)
+        results, bad_items = pclient('get_task_requisites', {
+            'items': task_ids, 'list_prereqs': options.list_prereqs})
         if options.json:
             json_filter.append(results)
         else:

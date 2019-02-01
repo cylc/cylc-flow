@@ -21,7 +21,7 @@ import json
 import os
 import sys
 
-from cylc.network.httpclient import SuiteRuntimeServiceClient
+from cylc.network.client import SuiteRuntimeClient
 
 
 def main():
@@ -38,8 +38,8 @@ def main():
         if value == 'None':
             value = None
         kwargs[key] = value
-    client = SuiteRuntimeServiceClient(os.environ['CYLC_SUITE_NAME'])
-    print json.dumps(client.get_info('get_graph_raw', **kwargs), indent=4)
+    client = SuiteRuntimeClient(os.environ['CYLC_SUITE_NAME'])
+    print(json.dumps(client('get_graph_raw', kwargs), indent=4))
 
 
 if __name__ == "__main__":

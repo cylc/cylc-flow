@@ -30,8 +30,8 @@ from uuid import uuid4
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
 from cylc.hostuserutil import is_remote_host, get_host_ip_by_name
-from cylc.network.httpclient import (
-    SuiteRuntimeServiceClient, ClientError, ClientTimeout)
+from cylc.network.client import (
+    SuiteRuntimeClient, ClientError, ClientTimeout)
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
 from cylc.suite_status import (KEY_NAME, KEY_OWNER, KEY_STATES)
@@ -73,11 +73,10 @@ def _scan_item(timeout, my_uuid, srv_files_mgr, item):
             sys.stderr.write("ERROR: %s: %s\n" % (exc, host))
             return (host, port, None)
 
-    client = SuiteRuntimeServiceClient(
-        None, host=host_anon, port=port, my_uuid=my_uuid,
-        timeout=timeout, auth=SuiteRuntimeServiceClient.ANON_AUTH)
+    pclient = SuiteRuntimeClient(
+        None, host=host_anon, port=port, my_uuid=my_uuid, timeout=timeout)
     try:
-        result = client.identify()
+        result = pclient('identify')
     except ClientTimeout:
         return (host, port, MSG_TIMEOUT)
     except ClientError:
@@ -99,11 +98,10 @@ def _scan_item(timeout, my_uuid, srv_files_mgr, item):
                 pass
             else:
                 if pphrase:
-                    client.suite = name
-                    client.owner = owner
-                    client.auth = None
+                    pclient.suite = name
+                    pclient.owner = owner
                     try:
-                        result = client.identify()
+                        result = pclient('identify')
                     except ClientError:
                         # Nope (private suite, wrong passphrase).
                         if cylc.flags.debug:

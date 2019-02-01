@@ -43,7 +43,7 @@ if '--use-ssh' in sys.argv[1:]:
 import cylc.flags
 from cylc.prompt import prompt
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.httpclient import SuiteRuntimeServiceClient
+from cylc.network.client import SuiteRuntimeClient
 from cylc.task_state import TASK_STATUSES_CAN_RESET_TO
 
 
@@ -93,14 +93,15 @@ def main():
         options.state = ''
 
     prompt('Reset task(s) %s in %s' % (args, suite), options.force)
-    pclient = SuiteRuntimeServiceClient(
+    pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
     items = parser.parse_multitask_compat(options, args)
-    pclient.put_command(
-        'reset_task_states', items=items, state=options.state,
-        outputs=options.outputs)
+    pclient(
+        'reset_task_states',
+        {'items': items, 'state': options.state, 'outputs': options.outputs}
+    )
 
 
 if __name__ == "__main__":

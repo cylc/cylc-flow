@@ -18,22 +18,49 @@
 
 """Package for network interfaces to cylc suite server objects."""
 
+from enum import IntEnum
+import getpass
+
+from jose import jwt
+
+from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
+
+
 # Dummy passphrase for client access from users without the suite passphrase.
 NO_PASSPHRASE = 'the quick brown fox'
 
 
-# Ordered privilege levels for authenticated users.
-PRIV_IDENTITY = 'identity'
-PRIV_DESCRIPTION = 'description'
-PRIV_STATE_TOTALS = 'state-totals'
-PRIV_FULL_READ = 'full-read'
-PRIV_SHUTDOWN = 'shutdown'
-PRIV_FULL_CONTROL = 'full-control'
-PRIVILEGE_LEVELS = [
-    PRIV_IDENTITY,
-    PRIV_DESCRIPTION,
-    PRIV_STATE_TOTALS,
-    PRIV_FULL_READ,
-    PRIV_SHUTDOWN,  # (Not used yet - for the post-passphrase era.)
-    PRIV_FULL_CONTROL,
-]
+class Priv(IntEnum):
+    CONTROL = 6
+    SHUTDOWN = 5  # (Not used yet - for the post-passphrase era.)
+    READ = 4
+    STATE_TOTALS = 3
+    DESCRIPTION = 2
+    IDENTITY = 1
+    NONE = 0
+
+    @classmethod
+    def parse(cls, key):
+        return cls.__members__[key]
+
+
+HASH = 'HS256'
+
+
+def get_secret(suite):
+    """Return the secret used for encrypting messages - i.e. the passphrase"""
+    return SuiteSrvFilesManager().get_auth_item(
+        SuiteSrvFilesManager.FILE_BASE_PASSPHRASE,
+        suite
+    )
+
+
+def decrypt(message, secret):
+    message = jwt.decode(message, secret, algorithms=[HASH])
+    # if able to decode assume this is the user
+    message['user'] = getpass.getuser()
+    return message
+
+
+def encrypt(message, secret):
+    return jwt.encode(message, secret, algorithm=HASH)

@@ -35,7 +35,7 @@ from time import sleep, time
 
 from parsec.OrderedDict import OrderedDict
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.httpclient import SuiteRuntimeServiceClient, ClientError
+from cylc.network.client import SuiteRuntimeClient, ClientError
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.task_state import (
     TASK_STATUS_RUNAHEAD, TASK_STATUSES_ORDERED,
@@ -102,7 +102,7 @@ The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
             dest="update_interval")
 
     def reset(self, suite, owner, host, port, timeout):
-        self.pclient = SuiteRuntimeServiceClient(
+        self.pclient = SuiteRuntimeClient(
             suite, owner, host, port, timeout)
 
     def run(self):
@@ -142,7 +142,7 @@ The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
             is_cont = True
             try:
                 glbl, task_summaries = (
-                    self.pclient.get_suite_state_summary()[0:2])
+                    self.pclient('get_suite_state_summary')[0:2])
             except ClientError as exc:
                 print("\033[1;37;41mERROR\033[0m", str(exc), file=sys.stderr)
                 self.reset(suite, options.owner, options.host, options.port,
@@ -210,7 +210,8 @@ The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
                 if run_mode != "live":
                     suite_name += " (%s)" % run_mode
                 prefix = "%s - %d tasks" % (suite_name, int(n_tasks_total))
-                suffix = "%s %s" % (client_name, self.pclient.my_uuid)
+                #suffix = "%s %s" % (client_name, self.pclient.my_uuid)
+                suffix = "%s" % client_name  # TODO
                 title_str = ' ' * len_header
                 title_str = prefix + title_str[len(prefix):]
                 title_str = '\033[1;37;44m%s%s\033[0m' % (

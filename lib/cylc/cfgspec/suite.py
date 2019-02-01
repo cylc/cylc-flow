@@ -24,7 +24,7 @@ from parsec.config import ParsecConfig
 
 from cylc.cfgvalidate import (
     cylc_config_validate, CylcConfigValidator as VDR, DurationFloat)
-from cylc.network import PRIVILEGE_LEVELS, PRIV_SHUTDOWN
+from cylc.network import Priv
 
 
 # Nested dict of spec items.
@@ -112,8 +112,8 @@ SPEC = {
             # Allow owners to grant public shutdown rights at the most, not
             # full control.
             'public': (
-                [VDR.V_STRING, ''] +
-                PRIVILEGE_LEVELS[:PRIVILEGE_LEVELS.index(PRIV_SHUTDOWN) + 1]),
+                [VDR.V_STRING, Priv.NONE, Priv.IDENTITY, Priv.DESCRIPTION,
+                 Priv.STATE_TOTALS, Priv.READ, Priv.SHUTDOWN])
         },
     },
     'scheduling': {

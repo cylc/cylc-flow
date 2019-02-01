@@ -41,7 +41,7 @@ from time import sleep
 from cylc import LOG
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.httpclient import ClientError, SuiteRuntimeServiceClient
+from cylc.network.client import ClientError, SuiteRuntimeClient
 
 
 MAX_N_TRIES = 5
@@ -74,24 +74,28 @@ def main():
 
     LOG.info('Send to suite %s: "%s" (%s)', suite, event_msg, event_id)
 
-    pclient = SuiteRuntimeServiceClient(
+    pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
-        options.comms_timeout, my_uuid=options.set_uuid,
-        print_uuid=options.print_uuid)
+        my_uuid=options.set_uuid, print_uuid=options.print_uuid)
 
     max_n_tries = int(options.max_n_tries)
     retry_intvl_secs = float(options.retry_intvl_secs)
 
     for i_try in range(max_n_tries):
         try:
-            pclient.put_ext_trigger(event_msg, event_id)
+            pclient(
+                'put_ext_trigger',
+                (event_msg, event_id),
+                timeout=options.comms_timeout
+            )
         except ClientError as exc:
             LOG.exception(exc)
             LOG.info(MSG_SEND_FAILED, i_try + 1, max_n_tries)
             if i_try == max_n_tries - 1:  # final attempt
                 sys.exit('ERROR: send failed')
             else:
-                LOG.info(MSG_SEND_RETRY, retry_intvl_secs, pclient.timeout)
+                LOG.info(MSG_SEND_RETRY, retry_intvl_secs,
+                         options.comms_timeout)
                 sleep(retry_intvl_secs)
         else:
             if i_try > 0:

@@ -30,7 +30,7 @@ import sys
 
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
-from cylc.network.httpclient import SuiteRuntimeServiceClient, ClientInfoError
+from cylc.network.client import SuiteRuntimeClient
 from cylc.task_outputs import TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED
 from cylc.wallclock import get_current_time_string
 
@@ -74,17 +74,18 @@ def record_messages(suite, task_job, messages):
     # Write to job.status
     _append_job_status_file(suite, task_job, event_time, messages)
     # Send messages
-    client = SuiteRuntimeServiceClient(suite)
     try:
-        client.put_messages({
-            'task_job': task_job,
-            'event_time': event_time,
-            'messages': messages})
-    except ClientInfoError:
+        pclient = SuiteRuntimeClient(suite)
+    except Exception:
         # Backward communication not possible
         if cylc.flags.debug:
             import traceback
             traceback.print_exc()
+    pclient(
+        'put_messages',
+        {'task_job': task_job, 'event_time': event_time, 'messages': messages}
+    )
+
 
 
 def _append_job_status_file(suite, task_job, event_time, messages):

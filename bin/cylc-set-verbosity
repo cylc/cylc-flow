@@ -34,7 +34,7 @@ if '--use-ssh' in sys.argv[1:]:
 import cylc.flags
 from cylc.prompt import prompt
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.httpclient import SuiteRuntimeServiceClient
+from cylc.network.client import SuiteRuntimeClient
 
 LOGGING_LVL_OF = {
     "INFO": INFO,
@@ -65,12 +65,12 @@ def main():
 
     prompt("Set logging level to %s in %s" % (severity_str, suite),
            options.force)
-    pclient = SuiteRuntimeServiceClient(
+    pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
 
-    pclient.put_command('set_verbosity', level=severity)
+    pclient('set_verbosity', {'level': severity})
 
 
 if __name__ == "__main__":

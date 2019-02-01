@@ -41,7 +41,7 @@ if '--use-ssh' in sys.argv[1:]:
 
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.httpclient import SuiteRuntimeServiceClient
+from cylc.network.client import SuiteRuntimeClient
 from cylc.dump import dump_to_stdout
 
 
@@ -65,10 +65,11 @@ def main():
     options, args = parser.parse_args()
     suite = args[0]
 
-    summary = SuiteRuntimeServiceClient(
+    pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout, my_uuid=options.set_uuid,
-        print_uuid=options.print_uuid).get_suite_state_summary()
+        print_uuid=options.print_uuid)
+    summary = pclient('get_suite_state_summary')
 
     if options.disp_form == "raw":
         print(summary)

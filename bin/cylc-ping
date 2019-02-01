@@ -31,7 +31,7 @@ if '--use-ssh' in sys.argv[1:]:
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.task_id import TaskID
-from cylc.network.httpclient import SuiteRuntimeServiceClient
+from cylc.network.client import SuiteRuntimeClient
 
 
 def main():
@@ -42,14 +42,13 @@ def main():
     (options, args) = parser.parse_args()
     suite = args[0]
 
-    pclient = SuiteRuntimeServiceClient(
+    pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout, my_uuid=options.set_uuid,
-        print_uuid=options.print_uuid,
-        auth=SuiteRuntimeServiceClient.ANON_AUTH)
+        print_uuid=options.print_uuid)
 
     # cylc ping SUITE
-    pclient.get_info('ping_suite')  # (no need to check the result)
+    pclient('ping_suite')  # (no need to check the result)
     if cylc.flags.verbose:
         sys.stdout.write("Running on %s:%s\n" % (pclient.host, pclient.port))
     if len(args) == 1:
@@ -59,7 +58,7 @@ def main():
     task_id = args[1]
     if not TaskID.is_valid_id(task_id):
         sys.exit("Invalid task ID: " + task_id)
-    success, msg = pclient.get_info('ping_task', task_id=task_id)
+    success, msg = pclient('ping_task', {'task_id': task_id})
     if not success:
         sys.exit('ERROR: ' + msg)
 

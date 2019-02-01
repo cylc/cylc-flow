@@ -51,7 +51,7 @@ from subprocess import call
 import cylc.flags
 from cylc.prompt import prompt
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.httpclient import SuiteRuntimeServiceClient
+from cylc.network.client import SuiteRuntimeClient
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.task_job_logs import JOB_LOG_DIFF
 
@@ -80,7 +80,7 @@ def main():
     msg = 'Trigger task(s) %s in %s' % (args, suite)
     prompt(msg, options.force)
 
-    pclient = SuiteRuntimeServiceClient(
+    pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
@@ -90,15 +90,17 @@ def main():
         items = parser.parse_multitask_compat(options, args)
         task_id = items[0]
         # Check that TASK is a unique task.
-        success, msg = pclient.get_info(
-            'ping_task', task_id=task_id, exists_only=True)
+        success, msg = pclient(
+            'ping_task',
+            {'task_id': task_id, 'exists_only': True}
+        )
         if not success:
             sys.exit('ERROR: %s' % msg)
 
         # Get the job filename from the suite server program - the task cycle
         # point may need standardising to the suite cycle point format.
-        jobfile_path = pclient.get_info(
-            'get_task_jobfile_path', task_id=task_id)
+        jobfile_path = pclient(
+            'get_task_jobfile_path', {'task_id': task_id})
         if not jobfile_path:
             sys.exit('ERROR: task not found')
 
@@ -114,8 +116,7 @@ def main():
             old_mtime = None
 
         # Tell the suite server program to generate the job file.
-        pclient.put_command('dry_run_tasks', items=[task_id],
-                            check_syntax=False)
+        pclient('dry_run_tasks', {'items': [task_id], 'check_syntax': False})
 
         # Wait for the new job file to be written. Use mtime because the same
         # file could potentially exist already, left from a previous run.
@@ -194,9 +195,9 @@ def main():
     # Back compat: back_out introduced >7.5.0
     # So don't call with "back_out" if not necessary to avoid breakage.
     if aborted:
-        pclient.put_command('trigger_tasks', items=items, back_out=aborted)
+        pclient('trigger_tasks', {'items': items, 'back_out': aborted})
     else:
-        pclient.put_command('trigger_tasks', items=items)
+        pclient('trigger_tasks', {'items': items})
 
 
 if __name__ == "__main__":
