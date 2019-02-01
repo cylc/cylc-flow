@@ -269,11 +269,58 @@ debug problems.
 Automated Tests
 ^^^^^^^^^^^^^^^
 
-The cylc test battery is primarily intended for developers to check that
-changes to the source code don't break existing functionality.
+For development purposes there are four sets of tests:
 
-.. note::
+Unittests
+   Fast to run Python unittests.
 
-   Some test failures can be expected to result from suites timing out,
-   even if nothing is wrong, if you run too many tests in parallel. See
-   ``cylc test-battery --help``.
+   Location
+      ``tests`` sub directories within the Python code library.
+   Configuration
+      ``pytest.ini``
+   Execution
+      .. code-block:: console
+
+         $ pytest
+
+Residual Tests
+   Large scale integration tests of the whole Cylc machinary.
+
+   Location
+      ``tests/``
+   Execution
+      .. code-block:: console
+
+         $ cylc test-battery
+
+   .. note::
+
+      Some test failures can be expected to result from suites timing out,
+      even if nothing is wrong, if you run too many tests in parallel. See
+      ``cylc test-battery --help``.
+
+Code Style Tests
+   Tests to ensure the codebase conforms to code style.
+
+   Execution
+      .. code-block:: console
+
+         $ pycodestyle --ignore=E402,W503,W504 \
+            lib/cylc \
+            lib/Jinja2Filters/*.py \
+            lib/parsec/*.py \
+            $(grep -l '#!.*\<python\>' bin/*)
+
+Performance Tests
+   A system for measuring the performance of Cylc as measured against reference
+   suites.
+
+   Location
+      * ``etc/profile-experiments/``
+      * ``.profiling/experiments``
+   Configuration
+      ``.profiling``
+   Execution
+      .. code-block:: console
+
+         $ cylc profile-battery -e EXPERIMENT .. -v VERSION ..
