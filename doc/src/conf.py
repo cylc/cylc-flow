@@ -72,17 +72,16 @@ html_theme = "classic"
 html_theme_options = {
     "stickysidebar": True,
     "sidebarwidth": 250,
-
     "relbarbgcolor": "black",
     "footerbgcolor": "black",
     "sidebarbgcolor": "white",
     "sidebartextcolor": "black",
-    "sidebarlinkcolor": "#00B3FD",
+    "sidebarlinkcolor": "#0000EE;",
     "headbgcolor":  "white",
     "headtextcolor":  "#FF5966",
-    "linkcolor": "#00C697",
-    "visitedlinkcolor": "#00C697",
-    "headlinkcolor": "#00C697",
+    "linkcolor": "#0000EE;",
+    "visitedlinkcolor": "#551A8B;",
+    "headlinkcolor": "#0000EE;",
     "codebgcolor": "#ebf9f6",
 }
 
