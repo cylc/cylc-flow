@@ -179,57 +179,18 @@ Suite event logs are rolled over when they reach this file size.
 Documentation locations for the ``cylc doc`` command and gcylc
 Help menus.
 
-
-[documentation] ``->`` [[files]]
+[documentation] ``->`` [[online]]
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-File locations of documentation held locally on the cylc host server.
+URL of the online cylc documentation.
 
+[documentation] ``->`` [[local]]
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-[documentation] ``->`` [[files]] ``->`` html index
-""""""""""""""""""""""""""""""""""""""""""""""""""
+Path where the Cylc documentation will appear if built locally.
 
-File location of the main cylc documentation index.
-
-- *type*: string
-- *default*: ``<cylc-dir>/doc/index.html``
-
-
-[documentation] ``->`` [[files]] ``->`` pdf user guide
-""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-File location of the cylc User Guide, PDF version.
-
-- *type*: string
-- *default*: ``<cylc-dir>/doc/cug-pdf.pdf``
-
-
-[documentation] ``->`` [[files]] ``->`` multi-page html user guide
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-File location of the cylc User Guide, multi-page HTML version.
-
-- *type*: string
-- *default*: ``<cylc-dir>/doc/html/multi/cug-html.html``
-
-
-[documentation] ``->`` [[files]] ``->`` single-page html user guide
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-File location of the cylc User Guide, single-page HTML version.
-
-- *type*: string
-- *default*: ``<cylc-dir>/doc/html/single/cug-html.html``
-
-
-[documentation] ``->`` [[urls]]
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Online documentation URLs.
-
-
-[documentation] ``->`` [[urls]] ``->`` internet homepage
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+[documentation] ``->`` [[cylc homepage]]
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 URL of the cylc internet homepage, with links to documentation for the
 latest official release.
@@ -238,29 +199,10 @@ latest official release.
 - *default*: http://cylc.github.com/cylc/
 
 
-[documentation] ``->`` [[urls]] ``->`` local index
-""""""""""""""""""""""""""""""""""""""""""""""""""
-
-Local intranet URL of the main cylc documentation index.
-
-- *type*: string
-- *default*: (none)
-
-
 [document viewers]
 ------------------
 
 PDF and HTML viewers can be launched by cylc to view the documentation.
-
-
-[document viewers] ``->`` pdf
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Your preferred PDF viewer program.
-
-- *type*: string
-- *default*: evince
-
 
 [document viewers] ``->`` html
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -307,8 +249,6 @@ The editor to be invoked by the cylc GUI.
 
 This section covers options for network communication between cylc
 clients (suite-connecting commands and guis) servers (running suites).
-Each suite listens on a dedicated network port, binding on the first
-available starting at the configured base port.
 
 By default, the communication method is HTTPS secured with HTTP Digest
 Authentication. If the system does not support SSL, you should configure
@@ -328,37 +268,6 @@ Cylc defaults to HTTPS if this setting is not explicitly configured.
   - **https**
   - **http**
 - *default*: https
-
-
-[communication] ``->`` base port
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The first port that Cylc is allowed to use. This item (and
-``maximum number of ports``) is deprecated; please use
-``run ports`` under ``[suite servers]`` instead.
-
-- *type*: integer
-- *default*: ``43001``
-
-
-[communication] ``->`` maximum number of ports
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-This setting (and ``base port``) is deprecated; please use
-``run ports`` under ``[suite servers]`` instead.
-
-- *type*: integer
-- *default*: ``100``
-
-
-[communication] ``->`` proxies on
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Enable or disable proxy servers for HTTPS - disabled by default.
-
-- *type*: boolean
-- *localhost default*: False
-
 
 [communication] ``->`` options
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -869,10 +778,6 @@ A list of allowed ports for Cylc to use to run suites.
    Only one suite can run per port for a given host, so the length
    of this list determines the maximum number of suites that can run
    at once per suite host.
-
-This config item supersedes the deprecated settings ``base port``
-and ``maximum number of ports``, where the base port is equivalent to
-the first port, and the maximum number of ports to the length, of this list.
 
 - *type*: string in the format ``X .. Y`` for
   ``X <= Y`` where ``X`` and ``Y`` are integers.

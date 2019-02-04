@@ -4,7 +4,7 @@
 {% set EVNTLOG = "$CYLC_SUITE_LOG_DIR/events.log" %}
 
 [meta]
-    title = "test all event hooks"
+    title = "test all event handlers"
 
 [cylc]
     [[environment]]
@@ -13,7 +13,7 @@
         live mode suite timeout = PT1M
         suite shutdown event handler = log-check.sh
         expected task failures = bar.1, baz.1
- 
+
 [scheduling]
     [[dependencies]]
         graph = """

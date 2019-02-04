@@ -7,16 +7,11 @@ background thread; (c) job submission in a background worker thread."""
 
 {% set N_LOCAL = 10 %}
 {% set N_REMOTE_PER_LOCAL = 2 %}
-#[cylc]
-#    [[job submission]]
-#        delay between batches = 0
 [scheduling]
     initial cycle point = 20120101
     final cycle point   = 20120110
     cycling mode        = integer
     max active cycle points = 100
-#    [[special tasks]]
-#        cold-start = cold_start
     [[dependencies]]
         [[[R1]]]
             graph = """
@@ -37,7 +32,6 @@ background thread; (c) job submission in a background worker thread."""
         [[[remote]]]
             #host = els003
             host = $(sleep 5; echo oliverh-33586DL.greta.niwa.co.nz)
-            #host = `rose host-select --rank-method=random`
 {% for X in range( 1, N_LOCAL + 1 ) %}
   {% for Y in range( 1, N_REMOTE_PER_LOCAL + 1 ) %}
     [[remote_{{ X }}_{{ Y }}]]

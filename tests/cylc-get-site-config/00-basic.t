@@ -32,7 +32,7 @@ run_ok $TEST_NAME.doc-section-python \
 run_ok $TEST_NAME.multiple-secs \
     cylc get-site-config --item='[documentation]' --item='[hosts]'
 run_ok $TEST_NAME.doc-entry \
-    cylc get-site-config --item='[documentation][files]html user guides'
+    cylc get-site-config --item='[documentation]online'
 run_fail $TEST_NAME.non-existent \
     cylc get-site-config --item='[this][doesnt]exist'
 #-------------------------------------------------------------------------------

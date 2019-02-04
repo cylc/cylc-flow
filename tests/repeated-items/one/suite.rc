@@ -17,11 +17,13 @@
             graph = "dbar => dbaz"
 [runtime]
     [[FOO]]
-        title = "override this"
-        title = "override this too"
-        description = "jumped over the lazy dog"
+        [[[meta]]]
+            title = "override this"
+            title = "override this too"
+            description = "jumped over the lazy dog"
     [[FOO]]
-        title = "the quick brown fox"
+        [[[meta]]]
+            title = "the quick brown fox"
         [[[environment]]]
             VAR1 = "override this"
             VAR1 = "override this too"

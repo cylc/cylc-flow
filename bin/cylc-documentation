@@ -20,16 +20,15 @@
 
 View documentation in the browser, as per Cylc global config.
 
-% cylc doc [OPTIONS]
-   View local or internet [--www] Cylc documentation URLs.
-
+% cylc doc [--local] [OPTIONS]
+    Open the Cylc documentation.
 % cylc doc [-t TASK] SUITE
     View suite or task documentation, if URLs are specified in the suite. This
-parses the suite definition to extract the requested URL. Note that suite
-server programs also hold suite URLs for access from the Cylc GUI.
+    parses the suite definition to extract the requested URL. Note that suite
+    server programs also hold suite URLs for access from the Cylc GUI.
 
 Arguments:
-   [TARGET]    File, URL, or suite name"""
+   [TARGET]    File or suite name"""
 
 import sys
 
@@ -40,8 +39,7 @@ for arg in sys.argv[1:]:
             sys.exit(0)
 
 import os
-import re
-from subprocess import call
+from subprocess import check_call, CalledProcessError
 from optparse import OptionParser
 
 import cylc.flags
@@ -53,13 +51,10 @@ def main():
     parser = OptionParser(__doc__)
 
     parser.add_option(
-        "-g", "--guides",
-        help="Open the HTML (User & Suite Design) Guides directly.",
-        action="store_true", default=False, dest="guides")
-
-    parser.add_option(
-        "-w", "--www", help="Open the cylc internet homepage",
-        action="store_true", default=False, dest="www")
+        "--local",
+        help=("Open the local documentation (if it has been built, see cylc "
+              "make-docs)."),
+        action="store_true", default=False, dest="local")
 
     parser.add_option(
         "-t", "--task", help="Browse task documentation URLs.",
@@ -86,50 +81,23 @@ def main():
         help="Print exception traceback on error.",
         action="store_true", default=False, dest="debug")
 
-    parser.add_option(
-        "--url",
-        help="URL to view in your configured browser.",
-        metavar="URL", default=None, action="store", dest="url")
-
     (options, args) = parser.parse_args()
     cylc.flags.debug = options.debug
 
-    intranet_url = glbl_cfg().get(['documentation', 'urls', 'local index'])
-    internet_url = glbl_cfg().get(['documentation', 'urls',
-                                   'internet homepage'])
-    html_file = glbl_cfg().get(['documentation', 'files', 'html user guides'])
-    html_viewer = glbl_cfg().get(['document viewers', 'html'])
+    viewer = glbl_cfg().get(['document viewers', 'html'])
     if len(args) == 0:
         # Cylc documentation.
-        if options.guides:
-            viewer = html_viewer
-            target = html_file
-        elif options.url:
-            viewer = html_viewer
-            target = options.url
+        if options.local:
+            target = glbl_cfg().get(['documentation', 'local'])
         else:
-            # HTML documentation index.
-            viewer = html_viewer
-            if options.www:
-                # Force internet.
-                if internet_url is not None:
-                    target = internet_url
-                else:
-                    sys.exit("ERROR: cylc internet URL not defined.")
-            elif intranet_url is not None:
-                # Intranet.
-                target = intranet_url
-            else:
-                # Open in file:// mode as a last resort.
-                print >> sys.stderr, ("WARNING: cylc intranet URL not "
-                                      "defined, trying file mode.")
-                target = html_file
+            target = glbl_cfg().get(['documentation', 'online'])
+        if target is None:
+            sys.exit("ERROR: no url defined, see the [documentation][%s'] "
+                     "global configuration" % (
+                         'local' if options.local else 'online'))
 
     elif len(args) == 1:
         # Suite or task documentation.
-        if options.guides or options.www:
-            print >> sys.stderr, ("(Note: --guides and --www are ignored for "
-                "suite documentation).")
         suite = args[0]
         if options.task_name:
             # Task documentation.
@@ -150,31 +118,20 @@ def main():
             else:
                 sys.exit("ERROR: No URL defined for %s." % suite)
         target = stdout[0]
-        viewer = html_viewer
     else:
         parser.error("Too many arguments.")
-
-    if target in html_file and not os.path.isfile(target):
-        sys.exit("ERROR, file not found: %s (see your cylc admin)" % target)
-
-    # viewer may have spaces (e.g. 'firefox --no-remote'):
-    command = '%s %s' % (viewer, target)
-    command_list = re.split(' ', command)
 
     if options.stdout:
         print target
         sys.exit(0)
 
     try:
-        retcode = call(command_list, stdin=open(os.devnull))
-    except OSError:
+        retcode = check_call(
+            # viewer may have spaces (e.g. 'firefox --no-remote'):
+            ('%s %s' % (viewer, target)).split(' '), stdin=open(os.devnull))
+    except CalledProcessError:
         print >> sys.stderr, 'ERROR, failed to execute: %s' % command
-        if cylc.flags.debug:
-            raise
-    else:
-        if retcode != 0:
-            print >> sys.stderr, 'ERROR, command failed: %s' % command
-        sys.exit(retcode)
+        raise
 
 
 if __name__ == "__main__":

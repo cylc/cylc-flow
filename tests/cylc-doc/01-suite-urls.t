@@ -23,13 +23,12 @@
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
+LOCAL="local = ${PWD}/doc/built-sphinx/index.html"
+ONLINE='http://cylc.github.io/cylc/doc/built-sphinx/index.html'
 create_test_globalrc "" "
 [documentation]
-   [[files]]
-      html user guides = ${PWD}/doc/built-sphinx/index.html
-   [[urls]]
-      internet homepage = http://cylc.github.com/cylc/
-      local index = http://localhost/cylc/index.html"
+    local = ${LOCAL}
+    online = ${ONLINE}"
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------

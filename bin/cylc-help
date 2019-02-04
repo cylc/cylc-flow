@@ -284,15 +284,12 @@ utility_commands['report-timings'] = ['report-timings']
 utility_commands['function-run'] = ['function-run']
 
 hook_commands = {}
-hook_commands['email-suite'] = ['email-suite']
-hook_commands['email-task'] = ['email-task']
 hook_commands['check-triggering'] = ['check-triggering']
 
 admin_commands = {}
 admin_commands['test-battery'] = ['test-battery']
 admin_commands['profile-battery'] = ['profile-battery']
 admin_commands['import-examples'] = ['import-examples']
-admin_commands['upgrade-run-dir'] = ['upgrade-run-dir']
 admin_commands['check-software'] = ['check-software']
 admin_commands['make-docs'] = ['make-docs']
 
@@ -307,7 +304,6 @@ preparation_commands['get-directory'] = ['get-directory']
 preparation_commands['edit'] = ['edit']
 preparation_commands['view'] = ['view']
 preparation_commands['validate'] = ['validate']
-preparation_commands['5to6'] = ['5to6']
 preparation_commands['list'] = ['list', 'ls']
 preparation_commands['search'] = ['search', 'grep']
 preparation_commands['graph'] = ['graph']
@@ -364,7 +360,6 @@ comsum = {}
 comsum['test-battery'] = 'Run a battery of self-diagnosing test suites'
 comsum['profile-battery'] = 'Run a battery of profiling tests'
 comsum['import-examples'] = 'Import example suites your suite run directory'
-comsum['upgrade-run-dir'] = 'Upgrade a pre-cylc-6 suite run directory'
 comsum['check-software'] = 'Check required software is installed'
 comsum['make-docs'] = 'Build the HTML documentation with Sphinx.'
 # license
@@ -377,7 +372,6 @@ comsum['get-directory'] = 'Retrieve suite source directory paths'
 comsum['edit'] = 'Edit suite definitions, optionally inlined'
 comsum['view'] = 'View suite definitions, inlined and Jinja2 processed'
 comsum['validate'] = 'Parse and validate suite definitions'
-comsum['5to6'] = 'Improve the cylc 6 compatibility of a cylc 5 suite file'
 comsum['search'] = 'Search in suite definitions'
 comsum['graph'] = 'Plot suite dependency graphs and runtime hierarchies'
 comsum['graph-diff'] = 'Compare two suite dependencies or runtime hierarchies'
@@ -444,8 +438,6 @@ comsum['report-timings'] = 'Generate a report on task timing data'
 comsum['function-run'] = '(Internal) Run a function in the process pool'
 
 # hook
-comsum['email-task'] = 'A task event hook script that sends email alerts'
-comsum['email-suite'] = 'A suite event hook script that sends email alerts'
 comsum['check-triggering'] = 'A suite shutdown event hook for cylc testing'
 
 

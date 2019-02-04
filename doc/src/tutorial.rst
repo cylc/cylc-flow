@@ -171,7 +171,7 @@ Suite configurations can be validated to detect syntax (and other) errors:
 
    # pass:
    $ cylc validate tut/oneoff/basic
-   Valid for cylc-6.0.0
+   Valid for cylc-7.8.1
    $ echo $?
    0
    # fail:
@@ -1390,5 +1390,5 @@ and can be copied and modified at will.
 - Use an *internal queue* to prevent more than an alotted number
   of tasks from running at once even though they are ready -
   see :ref:`InternalQueues`.
-- Configure task event hooks to send an email, or shut the suite down,
+- Configure task events to send an email, or shut the suite down,
   on task failure.

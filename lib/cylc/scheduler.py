@@ -1223,7 +1223,7 @@ conditions; see `cylc conditions`.
     def run_event_handlers(self, event, reason):
         """Run a suite event handler.
 
-        Run suite event hooks in simulation and dummy mode ONLY if enabled.
+        Run suite events in simulation and dummy mode ONLY if enabled.
         """
         try:
             if (self.run_mode in ['simulation', 'dummy'] and

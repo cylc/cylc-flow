@@ -20,8 +20,8 @@
 
 [runtime]
     [[foo_cold, foo]]
-        command scripting = "true"
+        script = "true"
     [[reinsert_foo]]
-        command scripting = """
+        script = """
             cylc insert $CYLC_SUITE_NAME foo_cold.20140101T0000Z
         """

@@ -163,20 +163,6 @@ The ISO8601 extended date-time format can be used
 (``%Y-%m-%dT%H:%M``) but
 note that the "-" and ":" characters end up in job log directory paths.
 
-The pre cylc-6 legacy 10-digit date-time format YYYYMMDDHH is not ISO8601
-compliant and can no longer be used as the cycle point format. For job
-scripts that still require the old format, use the
-``cylc cyclepoint`` utility to translate the ISO8601 cycle point
-inside job scripts, e.g.:
-
-.. code-block:: cylc
-
-   [runtime]
-       [[root]]
-           [[[environment]]]
-               CYCLE_TIME = $(cylc cyclepoint --template=%Y%m%d%H)
-
-
 .. _cycle-point-num-expanded-year-digits:
 
 [cylc] ``->`` cycle point num expanded year digits
@@ -338,8 +324,8 @@ to override the default templates.
 
 Cylc has internal "hooks" to which you can attach handlers that are
 called by the suite server program whenever certain events occur. This section
-configures suite event hooks; see :ref:`TaskEventHandling` for
-task event hooks.
+configures suite events; see :ref:`TaskEventHandling` for
+task events.
 
 Event handler commands can send an email or an SMS, call a pager, intervene in
 the operation of their own suite, or whatever.
