@@ -18,6 +18,7 @@
 """Functionality for selecting Cylc suite hosts."""
 
 import json
+from itertools import dropwhile
 from pipes import quote
 from random import choice
 import socket
@@ -198,6 +199,13 @@ class HostAppointer(object):
                         proc.returncode, err)
                 else:
                     # Command OK
+                    # Users may have profile scripts that write to STDOUT.
+                    # Drop all output lines until the the first character of a
+                    # line is '{'. Hopefully this is enough to find us the
+                    # first line that denotes the beginning of the expected
+                    # JSON data structure.
+                    out = ''.join(dropwhile(
+                        lambda s: not s.startswith('{'), out.splitlines(True)))
                     host_stats[host] = json.loads(out)
             sleep(0.01)
         return host_stats
