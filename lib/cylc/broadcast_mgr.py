@@ -110,7 +110,7 @@ class BroadcastMgr(object):
         if bad_options:
             LOG.error(get_broadcast_bad_options_report(bad_options))
 
-        return (modified_settings, bad_options)
+        return modified_settings, bad_options
 
     def expire_broadcast(self, cutoff=None):
         """Clear all broadcasts targeting cycle points earlier than cutoff."""

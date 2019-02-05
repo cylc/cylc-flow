@@ -44,12 +44,12 @@ run_ok "${TEST_NAME_BASE}-client-cylc" \
 run_ok "${TEST_NAME_BASE}-client-cylc.stdout" \
     grep -qF "\"name\": \"${SUITE_NAME}\"" "${TEST_NAME_BASE}-client-cylc.stdout"
 run_fail "${TEST_NAME_BASE}-client-cylc-bad-ping-task" \
-    cylc client 'get_info' "${SUITE_NAME}" <<'__JSON__'
+    cylc client "${SUITE_NAME}" 'get_info' <<'__JSON__'
 {"command": "ping_task", "task_id": "foo.1", "exists_only": "Truer"}
 __JSON__
 grep_ok 'HTTP.*Error.*400' "${TEST_NAME_BASE}-client-cylc-bad-ping-task.stderr"
 run_ok "${TEST_NAME_BASE}-client-cylc-ping-task" \
-    cylc client 'get_info' "${SUITE_NAME}" <<'__JSON__'
+    cylc client "${SUITE_NAME}" 'get_info' <<'__JSON__'
 {"command": "ping_task", "task_id": "foo.1", "exists_only": "True"}
 __JSON__
 echo >>"${TEST_NAME_BASE}-client-cylc-ping-task.stdout"  # add new line
@@ -68,7 +68,7 @@ cylc suite-state "${SUITE_NAME}" --task=foo --status=failed --point=1 \
 mv "${SRV_D}/passphrase" "${SRV_D}/passphrase.DIS"
 
 # Check scan --full output.
-cylc scan --comms-timeout=5 -fb -n "${SUITE_NAME}" 'localhost' \
+cylc scan --comms-timeout=5 -f --color=never -n "${SUITE_NAME}" 'localhost' \
     >'scan-f.out' 2>'/dev/null'
 cmp_ok scan-f.out << __END__
 ${SUITE_NAME} ${USER}@localhost:${PORT}
@@ -76,7 +76,7 @@ ${SUITE_NAME} ${USER}@localhost:${PORT}
 __END__
 
 # Check scan --describe output.
-cylc scan --comms-timeout=5 -db -n "${SUITE_NAME}" 'localhost' \
+cylc scan --comms-timeout=5 -d --color=never -n "${SUITE_NAME}" 'localhost' \
     >'scan-d.out' 2>'/dev/null'
 cmp_ok scan-d.out << __END__
 ${SUITE_NAME} ${USER}@localhost:${PORT}
@@ -84,14 +84,14 @@ ${SUITE_NAME} ${USER}@localhost:${PORT}
 __END__
 
 # Check scan --raw output.
-cylc scan --comms-timeout=5 -rb -n "${SUITE_NAME}" 'localhost' \
+cylc scan --comms-timeout=5 -r --color=never -n "${SUITE_NAME}" 'localhost' \
     >'scan-r.out' 2>'/dev/null'
 cmp_ok scan-r.out << __END__
 ${SUITE_NAME}|${USER}|localhost|port|${PORT}
 __END__
 
 # Check scan --json output.
-cylc scan --comms-timeout=5 -jb -n "${SUITE_NAME}" 'localhost' \
+cylc scan --comms-timeout=5 -j --color=never -n "${SUITE_NAME}" 'localhost' \
     >'scan-j.out' 2>'/dev/null'
 cmp_json_ok 'scan-j.out' 'scan-j.out' << __END__
 [

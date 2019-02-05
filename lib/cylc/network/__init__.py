@@ -26,11 +26,15 @@ from jose import jwt
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 
 
-# Dummy passphrase for client access from users without the suite passphrase.
-NO_PASSPHRASE = 'the quick brown fox'
+HASH = 'HS256'  # Encoding for JWT
 
 
 class Priv(IntEnum):
+    """Cylc privilege level."""
+
+    # TODO - autodocument from this class.
+    # TODO - revert name changes?
+
     CONTROL = 6
     SHUTDOWN = 5  # (Not used yet - for the post-passphrase era.)
     READ = 4
@@ -41,21 +45,36 @@ class Priv(IntEnum):
 
     @classmethod
     def parse(cls, key):
-        return cls.__members__[key]
-
-
-HASH = 'HS256'
+        """Obtain a privilege enumeration from a string."""
+        return cls.__members__[key.upper().replace('-', '_')]
 
 
 def get_secret(suite):
-    """Return the secret used for encrypting messages - i.e. the passphrase"""
+    """Return the secret used for encrypting messages.
+
+    Currently this is the suite passphrase. This means we are sending
+    many messages all encrypted with the same hash which isn't great.
+
+    TODO: Upgrade the secret to add foreword security.
+
+    """
     return SuiteSrvFilesManager().get_auth_item(
         SuiteSrvFilesManager.FILE_BASE_PASSPHRASE,
-        suite
+        suite, content=True
     )
 
 
 def decrypt(message, secret):
+    """Make a message readable.
+
+    Args:
+        message (str): The message to decode - JWT str.
+        secret (str): The decrypt key.
+
+    Return:
+        dict - The received message plus a `user` field.
+
+    """
     message = jwt.decode(message, secret, algorithms=[HASH])
     # if able to decode assume this is the user
     message['user'] = getpass.getuser()
@@ -63,4 +82,14 @@ def decrypt(message, secret):
 
 
 def encrypt(message, secret):
+    """Make a message unreadable.
+
+    Args:
+        message (str): The message to send, must be serialiseable .
+        secret (str): The encrypt key.
+
+    Return:
+        str - JWT str.
+
+    """
     return jwt.encode(message, secret, algorithm=HASH)

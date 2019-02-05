@@ -22,74 +22,83 @@ Implementation via ZMQ.
 
 import getpass
 import re
-from time import time, sleep
-
+from queue import Queue
+from time import sleep
 from threading import Thread
 
-from jose import jwt
 import zmq
 
 from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
-from cylc.network import NO_PASSPHRASE, Priv, encrypt, decrypt, get_secret
+from cylc.network import Priv, encrypt, decrypt, get_secret
+from cylc.suite_status import (
+    KEY_META, KEY_NAME, KEY_OWNER, KEY_STATES,
+    KEY_TASKS_BY_STATE, KEY_UPDATE_TIME, KEY_VERSION)
 from cylc.version import CYLC_VERSION
 from cylc.wallclock import RE_DATE_TIME_FORMAT_EXTENDED
 
 
 class ZMQServer(object):
-    """A simple ZeroMQ request-response server for a multi-endpoint API.
+    """Initiate the REP part of a ZMQ REQ-REP pair.
 
-    NOTE: Security is provided via the encode / decode interface.
+    This class contains the logic for the ZMQ message interface and client -
+    server communication.
+
+    NOTE: Security to be provided via the encode / decode interface.
 
     Args:
-        encode_method (function): Translates incomming message strings into
-            Python data-structures (e.g. json.loads).
-            ``encode_method(json, secret) -> str``
-        decode_method (function): Translates outgoing Python data-structures
-            into strings (e.g. json.dumps).
-            ``encode_method(str, secret) -> json``
+        encode_method (function): Translates outgoing messages into strings
+            to be sent over the network. ``encode_method(json, secret) -> str``
+        decode_method (function): Translates incoming message strings into
+            digestible data. ``encode_method(str, secret) -> dict``
         secret_method (function): Return the secret for use with the
-            endode/decode methods.
+            encode/decode methods. Called for each encode / decode.
 
-    Endpoints are methods decorated using the expose decorator:
-        class MyServer(ZMQServer):
-            @staticmethod
-            @ZMQServer.expose
-            def my_method(required_arg, optional_arg=None):
-                return {}
+    Usage:
+        * Define endpoints using the ``expose`` decorator.
+        * Call endpoints using the function name.
 
-    Accepts requests of the format:
-        {
-            "command": COMMAND,
-            "args": { ... }
-        }
+    Message interface:
+        * Accepts requests of the format: {"command": CMD, "args": {...}}
+        * Returns responses of the format: {"data": {...}}
+        * Returns error in the format: {"error": {"message": MSG}}
 
-    Returns responces of the format:
-        {
-            "data": { ... }
-        }
-
-    Or error in the format:
-        {
-            "error": {
-                "message": MESSAGE
-            }
-        }
     """
+
+    RECV_TIMEOUT = 1
+    """Max time the ZMQServer will wait for an incomming message in seconds.
+
+    We use a timeout here so as to give the _listener a chance to respond to
+    requests (i.e. stop) from its spawner (the scheduler).
+
+    The alternative would be to spin up a client and send a message to the
+    server, this way seems safer.
+
+    """
+
 
     def __init__(self, encode_method, decode_method, secret_method):
         self.port = None
         self.socket = None
         self.endpoints = None
         self.thread = None
+        self.queue = None
         self.encode = encode_method
         self.decode = decode_method
         self.secret = secret_method
 
     def start(self, ports):
+        """Start the server running
+
+        Args:
+            ports (iterable): Generator of ports (int) to choose from.
+                The lowest available port will be chosen.
+
+        """
         # create socket
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REP)
+        self.socket.RCVTIMEO = int(self.RECV_TIMEOUT) * 1000
 
         # pick port
         for port in ports:
@@ -103,42 +112,68 @@ class ZMQServer(object):
         else:
             raise Exception('No room at the inn, all ports occupied.')
 
-        # register exposed methods
-        self.endpoints = {name: obj
-                          for name, obj in self.__class__.__dict__.items()
-                          if hasattr(obj, 'exposed')}
-
         # start accepting requests
-        # TODO: this in asyncio
+        self.register_endpoints()
+
+        self.queue = Queue()
+        # TODO: this in asyncio? Requires the Cylc main loop in ascyncio first
         self.thread = Thread(target=self._listener)
         self.thread.start()
 
     def stop(self):
-        # TODO: cancel the recv_string so that this works
-        self.port = None
-        self.thread.join()
+        """Finish serving the current request then stop the server."""
+        LOG.debug('stopping zmq server...')
+        self.queue.put('STOP')
+        self.thread.join()  # wait for the listener to return
+        LOG.debug('...stopped')
+
+    def register_endpoints(self):
+        """Register all exposed methods."""
+        self.endpoints = {name: obj
+                          for name, obj in self.__class__.__dict__.items()
+                          if hasattr(obj, 'exposed')}
 
     def _listener(self):
-        while self.port:
-            msg = self.socket.recv_string()
+        """The server main loop, listen for and serve requests."""
+        while True:
+            # process any commands passed to the listner by its parent process
+            if self.queue.qsize():
+                command = self.queue.get()
+                if command == 'STOP':
+                    break
+                else:
+                    raise ValueError('Unknown command "%s"' % command)
 
             try:
+                # wait RECV_TIMEOUT for a message
+                msg = self.socket.recv_string()
+            except zmq.error.Again:
+                # timeout, continue with the loop, this allows the listener
+                # thread to stop
+                continue
+
+            # attempt to decode the message, authenticating the user in the
+            # process
+            try:
                 message = self.decode(msg, self.secret())
-                LOG.info('recieved request: %s from %s' % (
-                    message['command'], message['user']))
-            except Exception as exc:
+                LOG.debug('zmq:recv %s', message)
+            except Exception as exc:  # purposefully catch generic exception
                 # failed to decode message, possibly resulting from failed
                 # authentication
                 response = self.encode(
                     {'error': {'message': str(exc)}}, self.secret())
             else:
+                # success case - serve the request
                 res = self._reciever(message)
                 response = self.encode(res, self.secret())
+                LOG.debug('zmq:send %s', res)
+
+            # send back the response
             self.socket.send_string(response)
-            sleep(0.1)
+            sleep(0)  # yield control to other threads
 
     def _reciever(self, message):
-        """Recieve JSON process as applicable, send JSON."""
+        """Wrap incoming messages and dispatch them to exposed methods."""
         # determine the server method to call
         try:
             method = getattr(self, message['command'])
@@ -158,17 +193,30 @@ class ZMQServer(object):
             response = method(**args)
         except Exception as exc:
             # includes incorrect arguments (TypeError)
-            return {'error': {'message': str(exc)}}
+            LOG.error(exc)  # note the error server side
+            import traceback
+            return {'error': {
+                'message': str(exc), 'traceback': traceback.format_exc()}}
 
         return {'data': response}
 
     @staticmethod
-    def expose(func=None, alias=None):
+    def expose(func=None):
+        """Expose a method on the sever."""
         func.exposed = True
         return func
 
 
 def authorise(req_priv_level):
+    """Add authorisation to an endpoint.
+
+    This decorator extracts the `user` field from the incoming message to
+    determine the client's privilege level.
+
+    Args:
+        level (cylc.network.Priv): A privilege level for the method.
+
+    """
     def wrapper(fcn):
         def _authorise(self, *args, user=None, **kwargs):
             usr_priv_level = self.get_priv_level(user)
@@ -177,7 +225,7 @@ def authorise(req_priv_level):
                     SuiteRuntimeServer.CONNECT_DENIED_PRIV_TMPL,
                     usr_priv_level, req_priv_level, user, 'TODO-host',
                     'TODO-progname', 'TODO-uuid')
-                raise Exception('Authorisation failire')
+                raise Exception('Authorisation failure')
             LOG.info(
                 SuiteRuntimeServer.LOG_COMMAND_TMPL, fcn.__name__,
                 user, 'TODO-host', 'TODO-progname', 'TODO-uuid')
@@ -189,12 +237,11 @@ def authorise(req_priv_level):
 class SuiteRuntimeServer(ZMQServer):
     """Suite runtime service API facade exposed via zmq."""
 
+    API = 4  # cylc API version
+
     CONNECT_DENIED_PRIV_TMPL = (
         "[client-connect] DENIED (privilege '%s' < '%s') %s@%s:%s %s")
     LOG_COMMAND_TMPL = '[client-command] %s %s@%s:%s %s'
-    #LOG_IDENTIFY_TMPL = '[client-identify] %d id requests in PT%dS'
-    #LOG_FORGET_TMPL = '[client-forget] %s'
-    #LOG_CONNECT_ALLOWED_TMPL = "[client-connect] %s@%s:%s privilege='%s' %s"
     RE_MESSAGE_TIME = re.compile(
         r'\A(.+) at (' + RE_DATE_TIME_FORMAT_EXTENDED + r')\Z', re.DOTALL)
 
@@ -202,19 +249,28 @@ class SuiteRuntimeServer(ZMQServer):
         ZMQServer.__init__(
             self,
             encrypt,
-            decrypt, 
+            decrypt,
             lambda: get_secret(schd.suite)
         )
         self.schd = schd
+        self.public_priv = None  # update in get_public_priv()
+
+    def get_public_priv(self):
+        """Return the public privilege level of this suite."""
+        if self.schd.config.cfg['cylc']['authentication']['public']:
+            return Priv.parse(
+                self.schd.config.cfg['cylc']['authentication']['public'])
+        return Priv.parse(glbl_cfg().get(['authentication', 'public']))
 
     def get_priv_level(self, user):
+        """Return the privilege level for the given user for this suite."""
         if user == getpass.getuser():
             return Priv.CONTROL
-        elif self.schd.config.cfg['cylc']['authentication']['public']:
-            return self.schd.config.cfg['cylc']['authentication']['public']
-        else:
-            return glbl_cfg().get(['authentication', 'public'])
-
+        if self.public_priv is None:
+            # cannot do this on initialisation as the suite configuration has
+            # not yet been parsed
+            self.public_priv = self.get_public_priv()
+        return self.public_priv
 
     @authorise(Priv.CONTROL)
     @ZMQServer.expose
@@ -353,6 +409,29 @@ class SuiteRuntimeServer(ZMQServer):
             items = [items]
         self.schd.command_queue.put(("hold_tasks", (items,), {}))
         return (True, 'Command queued')
+
+    @authorise(Priv.IDENTITY)
+    @ZMQServer.expose
+    def identify(self):
+        return {
+            KEY_NAME: self.schd.suite,
+            KEY_OWNER: self.schd.owner,
+            KEY_VERSION: CYLC_VERSION
+        }
+
+    @authorise(Priv.DESCRIPTION)
+    @ZMQServer.expose
+    def describe(self):
+        return {KEY_META: self.schd.config.cfg[KEY_META]}
+
+    @authorise(Priv.STATE_TOTALS)
+    @ZMQServer.expose
+    def state_totals(self):
+        return {
+            KEY_UPDATE_TIME: self.schd.state_summary_mgr.update_time,
+            KEY_STATES: self.schd.state_summary_mgr.get_state_totals(),
+            KEY_TASKS_BY_STATE: self.schd.state_summary_mgr.get_tasks_by_state()
+        }
 
     # @authorise(Priv.IDENTIFY)  # TODO: split method into auth zones
     # @ZMQServer.expose

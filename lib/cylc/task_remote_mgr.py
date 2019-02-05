@@ -336,14 +336,14 @@ class TaskRemoteMgr(object):
             - name is relative path under suite run directory at target remote.
         """
         items = []
-        if comm_meth in ['ssh', 'http', 'https']:
+        if comm_meth in ['ssh', 'zmq']:
             # Contact file
             items.append((
                 self.suite_srv_files_mgr.get_contact_file(self.suite),
                 os.path.join(
                     self.suite_srv_files_mgr.DIR_BASE_SRV,
                     self.suite_srv_files_mgr.FILE_BASE_CONTACT)))
-        if comm_meth in ['http', 'https']:
+        if comm_meth in ['zmq']:
             # Passphrase file
             items.append((
                 self.suite_srv_files_mgr.get_auth_item(
@@ -352,13 +352,4 @@ class TaskRemoteMgr(object):
                 os.path.join(
                     self.suite_srv_files_mgr.DIR_BASE_SRV,
                     self.suite_srv_files_mgr.FILE_BASE_PASSPHRASE)))
-        if comm_meth in ['https']:
-            # SSL cert file
-            items.append((
-                self.suite_srv_files_mgr.get_auth_item(
-                    self.suite_srv_files_mgr.FILE_BASE_SSL_CERT,
-                    self.suite),
-                os.path.join(
-                    self.suite_srv_files_mgr.DIR_BASE_SRV,
-                    self.suite_srv_files_mgr.FILE_BASE_SSL_CERT)))
         return items

@@ -67,7 +67,9 @@ def get_broadcast_change_iter(modified_settings, is_cancel=False):
         change = CHANGE_PREFIX_CANCEL
     else:
         change = CHANGE_PREFIX_SET
-    for modified_setting in sorted(modified_settings):
+    for modified_setting in sorted(modified_settings,
+                                   key=lambda x: (x[0], x[1])):
+        # sorted by (point, namespace)
         point, namespace, setting = modified_setting
         value = setting
         keys_str = ""

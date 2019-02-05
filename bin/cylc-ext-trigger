@@ -85,7 +85,7 @@ def main():
         try:
             pclient(
                 'put_ext_trigger',
-                (event_msg, event_id),
+                {'event_message': event_msg, 'event_id': event_id},
                 timeout=options.comms_timeout
             )
         except ClientError as exc:

@@ -509,11 +509,21 @@ server program is determined by the public access privilege level set in global
 site/user config (:ref:`GlobalAuth`) and optionally overidden in suites
 (:ref:`SuiteAuth`):
 
-- *identity* - only suite and owner names revealed
-- *description* - identity plus suite title and description
-- *state-totals* - identity, description, and task state totals
-- *full-read* - full read-only access for monitor and GUI
-- *shutdown* - full read access plus shutdown, but no other control.
+none
+   Permit no public suite access.
+identity
+   Only suite and owner names revealed.
+description
+   Identity plus suite title and description.
+state-totals
+   Identity, description, and task state totals.
+read
+   Full read-only access for monitor and GUI.
+shutdown
+   *Not yet implemented*
+   Full read access plus shutdown, but no other control.
+control
+   Permit full control (not recommended).
 
 The default public access level is *state-totals*.
 

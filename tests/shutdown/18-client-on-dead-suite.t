@@ -43,7 +43,7 @@ MYHOST=$(sed -n 's/^CYLC_SUITE_HOST=\(.\+\)$/\1/p' "${RUND}/.service/contact")
 MYPORT=$(sed -n 's/^CYLC_SUITE_PORT=\(.\+\)$/\1/p' "${RUND}/.service/contact")
 run_fail "${TEST_NAME_BASE}-1" cylc ping "${SUITE_NAME}"
 contains_ok "${TEST_NAME_BASE}-1.stderr" <<__ERR__
-Cannot connect: ${MYHTTP}://${MYHOST}:${MYPORT}/ping_suite: suite "${SUITE_NAME}" already stopped
+Request returned error: Suite "$SUITE_NAME" already stopped
 __ERR__
 run_fail "${TEST_NAME_BASE}-2" cylc ping "${SUITE_NAME}"
 contains_ok "${TEST_NAME_BASE}-2.stderr" <<__ERR__

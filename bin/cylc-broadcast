@@ -248,7 +248,7 @@ def main():
     options, args = parser.parse_args()
     suite = args[0]
 
-    pclient = SuiteRuntimeServiceClient(
+    pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
@@ -281,7 +281,7 @@ def main():
     if options.expire:
         modified_settings, bad_options = pclient(
             'expire_broadcast',
-            {'cutoff', options.expire}
+            {'cutoff': options.expire}
         )
         if modified_settings:
             print(get_broadcast_change_report(

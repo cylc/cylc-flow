@@ -112,8 +112,10 @@ SPEC = {
             # Allow owners to grant public shutdown rights at the most, not
             # full control.
             'public': (
-                [VDR.V_STRING, Priv.NONE, Priv.IDENTITY, Priv.DESCRIPTION,
-                 Priv.STATE_TOTALS, Priv.READ, Priv.SHUTDOWN])
+                [VDR.V_STRING, '']
+                + [level.name.lower().replace('_', '-') for level in [
+                    Priv.IDENTITY, Priv.DESCRIPTION, Priv.STATE_TOTALS,
+                    Priv.READ, Priv.SHUTDOWN]])
         },
     },
     'scheduling': {

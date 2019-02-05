@@ -28,7 +28,8 @@ suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug --no-detach "${SUITE_NAME}
 
 LOG="${SUITE_RUN_DIR}/log/suite/log"
 sed -n -e 's/^.* \([A-Z]* - \[foo.1\] -(current:running)> .*$\)/\1/p' \
-       -e '/badness\|slowness\|incorrectness/p' "${LOG}" >'sed.out'
+       -e '/\tbadness\|\tslowness\|\tand other incorrectness/p' \
+    "${LOG}" >'sed.out'
 sed -i 's/\(^.*\) at .*$/\1/;' 'sed.out'
 
 # Note: the continuation bit gets printed twice, because the message gets a

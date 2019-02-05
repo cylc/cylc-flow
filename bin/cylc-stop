@@ -49,7 +49,7 @@ import cylc.flags
 from cylc.prompt import prompt
 from cylc.task_id import TaskID
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.client import ClientError, SuiteRuntimeClient
+from cylc.network.client import ClientError, ClientTimeout, SuiteRuntimeClient
 from cylc.command_polling import Poller
 
 
@@ -64,7 +64,7 @@ class StopPoller(Poller):
         """Return True if suite has stopped (success) else False"""
         try:
             self.pclient('ping_suite')
-        except ClientError:
+        except (ClientError, ClientTimeout):
             # failed to ping - suite stopped
             return True
         else:

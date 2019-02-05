@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Test authentication - privilege 'full-read'.
+# Test authentication - privilege 'read'.
 
 . $(dirname $0)/test_header
 set_test_number 11
@@ -28,7 +28,7 @@ run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 # Run the suite.
 create_test_globalrc '' '
 [authentication]
-    public = full-read'
+    public = read'
 cylc run "${SUITE_NAME}"
 unset CYLC_CONF_PATH
 
@@ -177,7 +177,7 @@ grep_ok "\[client-command] get_task_info ${USER}@.*:cylc-show" suite.log2
 TEST_NAME="${TEST_NAME_BASE}-stop"
 run_fail "${TEST_NAME}" cylc stop "${SUITE_NAME}"
 cylc log "${SUITE_NAME}" > suite.log3
-grep_ok "\[client-connect] DENIED (privilege 'full-read' < 'shutdown') ${USER}@.*:cylc-stop" suite.log3
+grep_ok "\[client-connect] DENIED (privilege 'READ' < 'shutdown') ${USER}@.*:cylc-stop" suite.log3
 
 # Restore the passphrase.
 mv "${SRV_D}/passphrase.DIS" "${SRV_D}/passphrase"

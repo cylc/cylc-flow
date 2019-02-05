@@ -104,7 +104,7 @@ SPEC = {
     },
 
     'communication': {
-        'method': [VDR.V_STRING, 'https', 'http'],
+        'method': [VDR.V_STRING, 'zmq'],
         'options': [VDR.V_STRING_LIST],
     },
 
@@ -219,8 +219,10 @@ SPEC = {
         # Allow owners to grant public shutdown rights at the most, not full
         # control.
         'public': (
-            [VDR.V_STRING, Priv.STATE_TOTALS, Priv.IDENTITY, Priv.DESCRIPTION,
-             Priv.STATE_TOTALS, Priv.READ, Priv.SHUTDOWN])
+            [VDR.V_STRING]
+            + [level.name.lower().replace('_', '-') for level in [
+                Priv.STATE_TOTALS, Priv.IDENTITY, Priv.DESCRIPTION,
+                Priv.STATE_TOTALS, Priv.READ, Priv.SHUTDOWN]])
     },
 
     'suite servers': {
@@ -443,7 +445,7 @@ class GlobalConfig(ParsecConfig):
                     owner_home = os.path.expanduser('~%s' % owner)
                 value = value.replace(self._HOME, owner_home)
         if item == "task communication method" and value == "default":
-            # Translate "default" to client-server comms: "https" or "http".
+            # Translate "default" to client-server comms: "zmq"
             value = cfg['communication']['method']
         return value
 

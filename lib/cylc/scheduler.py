@@ -19,7 +19,6 @@
 
 from collections import deque
 import logging
-from logging.handlers import BufferingHandler
 import os
 from pipes import quote
 from queue import Empty, Queue
@@ -44,7 +43,7 @@ from cylc.exceptions import CylcError
 import cylc.flags
 from cylc.host_appointer import HostAppointer, EmptyHostList
 from cylc.hostuserutil import get_host, get_user, get_fqdn_by_host
-from cylc.loggingutil import CylcLogFormatter, TimestampRotatingFileHandler
+from cylc.loggingutil import TimestampRotatingFileHandler
 from cylc.log_diagnosis import LogSpec
 #from cylc.network import PRIVILEGE_LEVELS
 from cylc.network.server import SuiteRuntimeServer
@@ -56,9 +55,7 @@ from cylc.suite_events import (
     SuiteEventContext, SuiteEventError, SuiteEventHandler)
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
-from cylc.suite_status import (
-    KEY_DESCRIPTION, KEY_GROUP, KEY_META, KEY_NAME, KEY_OWNER, KEY_STATES,
-    KEY_TASKS_BY_STATE, KEY_TITLE, KEY_UPDATE_TIME, KEY_VERSION)
+from cylc.suite_status import KEY_NAME, KEY_OWNER, KEY_VERSION
 from cylc.taskdef import TaskDef
 from cylc.task_events_mgr import TaskEventsManager
 from cylc.task_id import TaskID
@@ -255,7 +252,7 @@ class Scheduler(object):
                 daemonize(self)
             self._setup_suite_logger()
             self.server = SuiteRuntimeServer(self)
-            self.server.start(range(5500, 5600))  # TODO
+            self.server.start(glbl_cfg().get(['suite servers', 'run ports']))
             self.port = self.server.port
             self.configure()
             self.profiler.start()
@@ -1034,8 +1031,7 @@ conditions; see `cylc conditions`.
         # Preserve contact data in memory, for regular health check.
         mgr = self.suite_srv_files_mgr
         contact_data = {
-            #mgr.KEY_API: str(self.server.API),
-            mgr.KEY_API: '4',
+            mgr.KEY_API: str(self.server.API),
             mgr.KEY_COMMS_PROTOCOL: glbl_cfg().get(
                 ['communication', 'method']),
             mgr.KEY_DIR_ON_SUITE_HOST: os.environ['CYLC_DIR'],
@@ -1864,9 +1860,7 @@ conditions; see `cylc conditions`.
                 LOG.exception(exc)
 
         if self.server:
-            LOG.info('stopping server...')
             self.server.stop()
-            LOG.info('...stopped')
 
         # Flush errors and info before removing suite contact file
         sys.stdout.flush()
