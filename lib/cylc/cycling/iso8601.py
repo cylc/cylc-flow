@@ -637,6 +637,9 @@ class ISO8601Sequence(SequenceBase):
             return True
         return False
 
+    def __lt__(self, other):
+        return self.value < other.value
+
     def __str__(self):
         return self.value
 

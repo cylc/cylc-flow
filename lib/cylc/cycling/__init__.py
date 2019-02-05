@@ -279,6 +279,8 @@ class IntervalBase(object, metaclass=ABCMeta):
 
     def __cmp__(self, other):
         # Compare self to other (interval).
+        if other is None:
+            return -1
         if self.TYPE != other.TYPE:
             return cmp(self.TYPE_SORT_KEY, other.TYPE_SORT_KEY)
         if self.value == other.value:

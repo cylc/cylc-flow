@@ -23,7 +23,7 @@ import re
 
 from cylc.cycling import (
     PointBase, IntervalBase, SequenceBase, ExclusionBase, PointParsingError,
-    IntervalParsingError, parse_exclusion
+    IntervalParsingError, parse_exclusion, cmp
 )
 from cylc.time_parser import CylcMissingContextPointError
 
@@ -577,6 +577,18 @@ class IntegerSequence(SequenceBase):
                 self.p_start == other.p_start and \
                 self.p_stop == other.p_stop and \
                 self.exclusions == other.exclusions
+
+    def __hash__(self):
+        return hash(tuple((getattr(self, attr) for attr in self.__slots__)))
+
+    def __lt__(self, other: 'IntegerSequence') -> bool:
+        for attr in self.__slots__:
+            try:
+                if getattr(self, attr) < getattr(other, attr):
+                    return True
+            except TypeError:
+                pass
+        return False
 
 
 def init_from_cfg(_):
