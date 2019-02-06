@@ -26,9 +26,9 @@ json_keys_cmp() {
 import json
 import sys
 data = json.load(open(sys.argv[1]))
-exp_keys = [unicode(arg) for arg in sys.argv[2:]]
+exp_keys = [arg for arg in sys.argv[2:]]
 exp_keys.sort()
-act_keys = list(data.keys())
+act_keys = list(data)
 try:
     act_keys.remove('mean_main_loop_interval')  # unreliable
 except ValueError:

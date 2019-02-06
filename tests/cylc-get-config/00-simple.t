@@ -62,7 +62,7 @@ run_ok $TEST_NAME-parse-config python2 -c "
 import sys
 from parsec.OrderedDict import OrderedDictWithDefaults
 with open(sys.argv[1], 'r') as file_:
-    print eval(file_.read())
+    print(eval(file_.read()))
 " "$TEST_NAME.stdout"
 cmp_ok "$TEST_NAME-parse-config.stdout" "$TEST_NAME.stdout"
 cmp_ok "$TEST_NAME-parse-config.stderr" /dev/null

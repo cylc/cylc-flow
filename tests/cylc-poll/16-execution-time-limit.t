@@ -51,7 +51,8 @@ time_offset () {
     python2 - "$@" <<'__PYTHON__'
 import sys
 from isodatetime.parsers import TimePointParser, DurationParser
-print TimePointParser().parse(sys.argv[1]) + DurationParser().parse(sys.argv[2])
+print(
+    TimePointParser().parse(sys.argv[1]) + DurationParser().parse(sys.argv[2]))
 __PYTHON__
 }
 #-------------------------------------------------------------------------------
