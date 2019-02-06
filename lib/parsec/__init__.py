@@ -30,3 +30,5 @@ class ParsecError(Exception):
 
 
 LOG = logging.getLogger('cylc')  # Acceptable?
+if hasattr(logging, 'NullHandler'):  # Back compat Python <2.7
+    LOG.addHandler(logging.NullHandler())  # Start with a null handler
