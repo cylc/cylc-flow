@@ -198,10 +198,19 @@ To start a new run, stop the old one first with one or more of these:
 
     def dump_contact_file(self, reg, data):
         """Create contact file. Data should be a key=value dict."""
+        # Note:
+        # 1st fsync for writing the content of the contact file to disk.
+        # 2nd fsync for writing the file metadata of the contact file to disk.
+        # The double fsync logic ensures that if the contact file is written to
+        # a shared file system e.g. via NFS, it will be immediately visible
+        # from by a process on other hosts after the current process returns.
         with open(self.get_contact_file(reg), "wb") as handle:
             for key, value in sorted(data.items()):
                 handle.write("%s=%s\n" % (key, value))
             os.fsync(handle.fileno())
+        dir_fileno = os.open(self.get_suite_srv_dir(reg), os.O_DIRECTORY)
+        os.fsync(dir_fileno)
+        os.close(dir_fileno)
 
     def get_contact_file(self, reg):
         """Return name of contact file."""
