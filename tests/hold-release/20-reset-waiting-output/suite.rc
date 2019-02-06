@@ -17,14 +17,14 @@ while ! grep -qF 'INFO - Command succeeded: hold_suite()' "${LOG}"; do
 done
 cylc reset --state='succeeded' "${CYLC_SUITE_NAME}" 't2.1'
 while ! grep -q \
-    "INFO - Command succeeded: reset_task_states(\\[u't2.1'\\],.*state=succeeded" \
+    "INFO - Command succeeded: reset_task_states(\\['t2.1'\\],.*state=succeeded" \
     "${LOG}"
 do
     sleep 1  # make sure reset succeeded completes
 done
 cylc reset --state='waiting' "${CYLC_SUITE_NAME}" 't2.1'
 while ! grep -q \
-    "INFO - Command succeeded: reset_task_states(\\[u't2.1'\\],.*state=waiting" \
+    "INFO - Command succeeded: reset_task_states(\\['t2.1'\\],.*state=waiting" \
     "${LOG}"
 do
     sleep 1  # make sure reset waiting completes

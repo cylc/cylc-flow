@@ -1439,7 +1439,7 @@ suite to finish and shut down.  Here's the complete suite log for this run:
    2017-03-30T09:46:42Z WARNING -  * foo.2017-01-01T00Z succeeded
    2017-03-30T09:47:58Z INFO - [client-command] reset_task_states vagrant@cylon:cylc-reset 1e0d8e9f-2833-4dc9-a0c8-9cf263c4c8c3
    2017-03-30T09:47:58Z INFO - [foo.2017-01-01T00Z] -resetting state to succeeded
-   2017-03-30T09:47:58Z INFO - Command succeeded: reset_task_states([u'foo.2017'], state=succeeded)
+   2017-03-30T09:47:58Z INFO - Command succeeded: reset_task_states(['foo.2017'], state=succeeded)
    2017-03-30T09:47:59Z INFO - [bar.2017-01-01T00Z] -submit_method_id=3565
    2017-03-30T09:47:59Z INFO - [bar.2017-01-01T00Z] -submission succeeded
    2017-03-30T09:47:59Z INFO - [bar.2017-01-01T00Z] -(current:submitted)> started at 2017-03-30T09:47:58Z
