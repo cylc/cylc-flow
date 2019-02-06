@@ -24,8 +24,8 @@
         <fieldset class="container-fluid">
           <div class="row">
 {% for key, name, value in [
-    ("cycles",
-     "Cycles (before, after or patterns): &lt;CYCLE | &gt;CYCLE | GLOB ...", cycles),
+    ("cycles", "Cycles (before, after or patterns):" ~
+     "&lt;CYCLE | &gt;CYCLE | GLOB ..." | safe , cycles),
     ("tasks", "Task Name Globs", tasks),
 ] -%}
             <div class="form-group col-sm-12 col-md-6">
@@ -107,28 +107,28 @@
               <select id="order" name="order" title="Sort Order"
               class="form-control">
 {% for k, v in [
-    ("time_desc", "new-&gt;old"),
-    ("time_asc", "old-&gt;new"),
-    ("cycle_desc_name_asc", "new-&gt;old cycle, a-z task name"),
-    ("cycle_desc_name_desc", "new-&gt;old cycle, z-a task name"),
-    ("cycle_asc_name_asc", "old-&gt;new cycle, a-z task name"),
-    ("cycle_asc_name_desc", "old-&gt;new cycle, z-a task name"),
-    ("name_asc_cycle_desc", "a-z task name, new-&gt;old cycle"),
-    ("name_desc_cycle_desc", "z-a task name, new-&gt;old cycle"),
-    ("name_asc_cycle_asc", "a-z task name, old-&gt;new cycle"),
-    ("name_desc_cycle_asc", "z-a task name, old-&gt;new cycle"),
-    ("time_submit_desc", "submit time, new-&gt;old"),
-    ("time_submit_asc", "submit time, old-&gt;new"),
-    ("time_run_desc", "run start time, new-&gt;old"),
-    ("time_run_asc", "run start time, old-&gt;new"),
-    ("time_run_exit_desc", "run exit time, new-&gt;old"),
-    ("time_run_exit_asc", "run exit time, old-&gt;new"),
-    ("duration_queue_desc", "queue duration, long-&gt;short"),
-    ("duration_queue_asc", "queue duration, short-&gt;long"),
-    ("duration_run_desc", "run duration, long-&gt;short"),
-    ("duration_run_asc", "run duration, short-&gt;long"),
-    ("duration_queue_run_desc", "queue+run duration, long-&gt;short"),
-    ("duration_queue_run_asc", "queue+run duration, short-&gt;long"),
+    ("time_desc", "new-&gt;old" | safe ),
+    ("time_asc", "old-&gt;new" | safe ),
+    ("cycle_desc_name_asc", "new-&gt;old cycle, a-z task name" | safe ),
+    ("cycle_desc_name_desc", "new-&gt;old cycle, z-a task name" | safe ),
+    ("cycle_asc_name_asc", "old-&gt;new cycle, a-z task name" | safe ),
+    ("cycle_asc_name_desc", "old-&gt;new cycle, z-a task name" | safe ),
+    ("name_asc_cycle_desc", "a-z task name, new-&gt;old cycle" | safe ),
+    ("name_desc_cycle_desc", "z-a task name, new-&gt;old cycle" | safe ),
+    ("name_asc_cycle_asc", "a-z task name, old-&gt;new cycle" | safe ),
+    ("name_desc_cycle_asc", "z-a task name, old-&gt;new cycle" | safe ),
+    ("time_submit_desc", "submit time, new-&gt;old" | safe ),
+    ("time_submit_asc", "submit time, old-&gt;new" | safe ),
+    ("time_run_desc", "run start time, new-&gt;old" | safe ),
+    ("time_run_asc", "run start time, old-&gt;new" | safe ),
+    ("time_run_exit_desc", "run exit time, new-&gt;old" | safe ),
+    ("time_run_exit_asc", "run exit time, old-&gt;new" | safe ),
+    ("duration_queue_desc", "queue duration, long-&gt;short" | safe ),
+    ("duration_queue_asc", "queue duration, short-&gt;long" | safe ),
+    ("duration_run_desc", "run duration, long-&gt;short" | safe ),
+    ("duration_run_asc", "run duration, short-&gt;long" | safe ),
+    ("duration_queue_run_desc", "queue+run duration, long-&gt;short" | safe ),
+    ("duration_queue_run_asc", "queue+run duration, short-&gt;long" | safe ),
 ] -%}
                 <option
 {% if order and order == k -%}
