@@ -38,8 +38,8 @@
                 <div class="input-group">
                   <label for="order">Sort Order</label>
                   <select name="order" title="Sort Order" class="form-control">
-                  {% for k, v in [("time_desc", "new-&gt;old"),
-                                  ("time_asc", "old-&gt;new")] -%}
+                  {% for k, v in [("time_desc", "new-&gt;old" | safe ),
+                                  ("time_asc", "old-&gt;new" | safe )] -%}
                     <option
                     {% if order and order == k -%}selected="selected"{% endif -%}
                     value="{{k}}">{{v}}</option>
@@ -140,8 +140,8 @@ class="table table-bordered table-condensed table-striped">
 {% for entry in entries -%}
   {% set cycle_in_url = entry.cycle|replace('+', '%2B') -%}
   {% set task_jobs_url = (
-      script ~ "/taskjobs/" ~ user ~ "?&amp;suite=" ~
-      suite|replace('+', '%2F') ~ "&amp;cycles=" ~ cycle_in_url
+      (script ~ "/taskjobs/" ~ user ~ "?&amp;suite=" ~
+       suite|replace('+', '%2F') ~ "&amp;cycles=" ~ cycle_in_url) | safe
   ) -%}
     <tr class="entry">
 
@@ -162,21 +162,22 @@ class="table table-bordered table-condensed table-striped">
   {# task and jobs states -#}
   {% for state, icon, label, title_, unit1, unit2, url_arg in [
       ("active", "play", "info", "active", "task", "tasks",
-       "&amp;task_status=" ~
-       task_status_groups["active"]|join("&amp;task_status=")),
+       ("&amp;task_status=" ~
+        task_status_groups["active"]|join("&amp;task_status=")) | safe ),
       ("job_active", "play-circle", "info", "active", "job", "jobs",
-       "&amp;job_status=submitted,running"),
+       "&amp;job_status=submitted,running" | safe ),
       ("success", "ok", "success", "succeeded", "task", "tasks",
-       "&amp;task_status=" ~
-       task_status_groups["success"]|join("&amp;task_status=")),
+       ("&amp;task_status=" ~
+        task_status_groups["success"]|join("&amp;task_status=")) | safe ),
       ("job_success", "ok-circle", "success", "succeeded", "job", "jobs",
-       "&amp;job_status=succeeded"),
+       "&amp;job_status=succeeded" | safe ),
       ("fail", "remove", "danger", "failed", "task", "tasks",
-       "&amp;task_status=" ~
-       task_status_groups["fail"]|join("&amp;task_status=")),
+       ("&amp;task_status=" ~
+        task_status_groups["fail"]|join("&amp;task_status=")) | safe ),
       ("job_fail", "remove-circle", "danger", "failed", "job", "jobs",
-       "&amp;job_status=submission-failed,failed"),
+       "&amp;job_status=submission-failed,failed" | safe ),
   ] -%}
+
     {% set n_state = entry.n_states[state] -%}
     {% set unit = unit1 -%}
     {% if n_state -%}
@@ -206,8 +207,9 @@ class="table table-bordered table-condensed table-striped">
     <td>
   {% if entry.has_log_job_tar_gz -%}
     {% set download = (
-        script ~ "/view/" ~ user ~ "?&amp;suite=" ~ suite|replace('+', '%2F') ~
-        "&amp;path=log/job-" ~ cycle_in_url ~ ".tar.gz&amp;mode=download"
+        (script ~ "/view/" ~ user ~ "?&amp;suite=" ~
+         suite|replace('+', '%2F') ~ "&amp;path=log/job-" ~ cycle_in_url ~
+         ".tar.gz&amp;mode=download") | safe
     ) -%}
       <a href="{{download}}"
       download="{{user}}-{{suite|replace("/", "%2F")}}-log-job-{{entry.cycle}}.tar.gz">
