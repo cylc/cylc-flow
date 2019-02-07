@@ -67,9 +67,6 @@ avoid this, use the '--no-multitask-compat' option, or use the new syntax
 
         if multitask:
             usage += self.MULTITASK_USAGE
-        usage += """
-
-Arguments:"""
         args = ""
         self.n_compulsory_args = 0
         self.n_optional_args = 0
@@ -87,20 +84,21 @@ Arguments:"""
             if len(arg[0]) > maxlen:
                 maxlen = len(arg[0])
 
-        for arg in argdoc:
-            if arg[0].startswith('['):
-                self.n_optional_args += 1
-            else:
-                self.n_compulsory_args += 1
-            if arg[0].endswith('...]'):
-                self.unlimited_args = True
+        if argdoc:
+            usage += "\n\nArguments:"
+            for arg in argdoc:
+                if arg[0].startswith('['):
+                    self.n_optional_args += 1
+                else:
+                    self.n_compulsory_args += 1
+                if arg[0].endswith('...]'):
+                    self.unlimited_args = True
 
-            args += arg[0] + " "
+                args += arg[0] + " "
 
-            pad = (maxlen - len(arg[0])) * ' ' + '               '
-            usage += "\n   " + arg[0] + pad + arg[1]
-
-        usage = usage.replace('ARGS', args)
+                pad = (maxlen - len(arg[0])) * ' ' + '               '
+                usage += "\n   " + arg[0] + pad + arg[1]
+            usage = usage.replace('ARGS', args)
 
         OptionParser.__init__(self, usage)
 
@@ -295,6 +293,10 @@ Arguments:"""
             LOG.setLevel(logging.DEBUG)
         else:
             LOG.setLevel(logging.INFO)
+        # Remove NullHandler before add the StreamHandler
+        while LOG.handlers:
+            LOG.handlers[0].close()
+            LOG.removeHandler(LOG.handlers[0])
         errhandler = logging.StreamHandler(sys.stderr)
         errhandler.setFormatter(CylcLogFormatter())
         LOG.addHandler(errhandler)

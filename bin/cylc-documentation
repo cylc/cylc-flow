@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [info] documentation|browse [OPTIONS] [SUITE]
+"""cylc [info] documentation|browse [OPTIONS] ARGS
 
 View documentation in the browser, as per Cylc global config.
 
@@ -25,10 +25,7 @@ View documentation in the browser, as per Cylc global config.
 % cylc doc [-t TASK] SUITE
     View suite or task documentation, if URLs are specified in the suite. This
     parses the suite definition to extract the requested URL. Note that suite
-    server programs also hold suite URLs for access from the Cylc GUI.
-
-Arguments:
-   [TARGET]    File or suite name"""
+    server programs also hold suite URLs for access from the Cylc GUI."""
 
 import sys
 
@@ -40,15 +37,15 @@ for arg in sys.argv[1:]:
 
 import os
 from subprocess import check_call, CalledProcessError
-from optparse import OptionParser
 
-import cylc.flags
 from cylc.cfgspec.glbl_cfg import glbl_cfg
+from cylc.option_parsers import CylcOptionParser as COP
 from cylc.run_get_stdout import run_get_stdout
 
 
 def main():
-    parser = OptionParser(__doc__)
+    parser = COP(
+        __doc__, argdoc=[('[TARGET]', 'File or suite name')])
 
     parser.add_option(
         "--local",
@@ -81,8 +78,7 @@ def main():
         help="Print exception traceback on error.",
         action="store_true", default=False, dest="debug")
 
-    (options, args) = parser.parse_args()
-    cylc.flags.debug = options.debug
+    options, args = parser.parse_args(remove_opts=['--host', '--user'])
 
     viewer = glbl_cfg().get(['document viewers', 'html'])
     if len(args) == 0:
@@ -135,9 +131,4 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as exc:
-        if cylc.flags.debug:
-            raise
-        sys.exit(str(exc))
+    main()
