@@ -33,10 +33,11 @@ import sqlite3
 import traceback
 
 from cylc.cfgspec.glbl_cfg import glbl_cfg
-from cylc.dump import dump_to_stdout, get_stop_state_summary
+from cylc.dump import dump_to_stdout
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.rundb import CylcSuiteDAO
+from cylc.task_id import TaskID
 from cylc.wallclock import get_unix_time_from_time_string
 
 
@@ -56,26 +57,21 @@ def main():
     suite = args[0]
 
     try:
-        lines = _get_state_lines(suite)
+        state = get_state(suite)
     except sqlite3.Error:
         if cylc.flags.debug:
             traceback.print_exc()
-        try:
-            lines = _get_state_lines_compat(suite)
-        except IOError:
-            if cylc.flags.debug:
-                traceback.print_exc()
-            sys.exit("ERROR: cannot print suite state for %s" % suite)
+        sys.exit("ERROR: cannot print suite state for %s" % suite)
 
     if options.dumpform:
-        dump_to_stdout(get_stop_state_summary(lines)[1])
+        dump_to_stdout(extract_json(state))
     else:
-        for line in lines:
+        for line in extract_lines(state):
             print(line)
 
 
-def _get_state_lines(suite):
-    """Get state lines from suite runtime DB."""
+def get_state(suite):
+    """Extract suite state and task_pool from the DB"""
     dao = CylcSuiteDAO(
         os.path.join(
             glbl_cfg().get_derived_host_item(suite, 'suite run directory'),
@@ -99,18 +95,37 @@ def _get_state_lines(suite):
     dao.select_task_pool(
         lambda row_idx, row: _callback_task_pool(data, row))
 
-    lines = [
-        r"run mode : %(run_mode)s" % data,
-        r"time : %(time_str)s (%(time_since_epoch)s)" % data,
-        r"initial cycle : %(initial_point)s" % data,
-        r"final cycle : %(final_point)s" % data]
-    lines += pickle.dumps(data["broadcast_states"]).splitlines()
-    lines.append(r"Begin task states")
-    for item in data["task_pool"]:
-        lines.append(
+    return data
+
+
+def extract_json(state):
+    """Map task pool DB fields onto cat-state output fields."""
+    return {
+        TaskID.get(task['name'], task['cycle']): {
+            out_key: task[db_key] for out_key, db_key in (
+                ('name', 'name'),
+                ('point', 'cycle'),
+                ('label', 'cycle'),
+                ('state', 'status'),
+                ('spawned', 'spawned')
+            )
+        } for task in state['task_pool']
+    }
+
+
+def extract_lines(state):
+    """Extract textoral representation of the state."""
+    yield r"run mode : %(run_mode)s" % state
+    yield r"time : %(time_str)s (%(time_since_epoch)s)" % state
+    yield r"initial cycle : %(initial_point)s" % state
+    yield r"final cycle : %(final_point)s" % state
+    yield pickle.dumps(state["broadcast_states"]).splitlines()
+    yield "Begin task states"
+    for item in state["task_pool"]:
+        yield (
             r"%(name)s.%(cycle)s : status=%(status)s, spawned=%(spawned)s" %
-            item)
-    return lines
+            item
+        )
 
 
 def _callback_checkpoint_id(data, row):
@@ -144,17 +159,6 @@ def _callback_task_pool(data, row):
         "name": name,
         "status": status,
         "spawned": bool(spawned)})
-
-
-def _get_state_lines_compat(suite):
-    """Read old state file from normal location, for backward compat."""
-    state_file_path = os.path.join(
-        glbl_cfg().get_derived_host_item(suite, 'suite run directory'),
-        "state", "state")
-    lines = []
-    for line in open(state_file_path, 'rb').readlines():
-        lines.append(line.rstrip().decode())
-    return lines
 
 
 if __name__ == "__main__":
