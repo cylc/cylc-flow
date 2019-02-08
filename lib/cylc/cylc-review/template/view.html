@@ -73,7 +73,7 @@
 {% if mode == "tags" -%}
 {{line|safe}}
 {% else -%}
-{{line|safe|urlise}}
+{{ (line|urlise) | safe }}
 {% endif -%}
 {% endfor -%}
 </pre>
