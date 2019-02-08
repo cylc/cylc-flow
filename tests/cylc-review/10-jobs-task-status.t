@@ -89,9 +89,8 @@ BAR2="{'cycle': '20000101T0000Z', 'name': 'bar', 'submit_num': 2}"
 BAR3="{'cycle': '20000101T0000Z', 'name': 'bar', 'submit_num': 3}"
 BAZ1="{'cycle': '20000101T0000Z', 'name': 'baz', 'submit_num': 1}"
 BAZ2="{'cycle': '20000101T0000Z', 'name': 'baz', 'submit_num': 2}"
-BAZ3="{'cycle': '20010101T0000Z', 'name': 'baz', 'submit_num': 0}"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
-    "[('of_n_entries',), 12]" \
+    "[('of_n_entries',), 9]" \
     "[('job_status',), None]" \
     "[('entries', ${FOO1}, 'task_status',), 'succeeded']" \
     "[('entries', ${FOO1}, 'run_status',), 1]" \
@@ -117,13 +116,7 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('entries', ${BAZ2}, 'task_status',), 'succeeded']" \
     "[('entries', ${BAZ2}, 'submit_status',), 0]" \
     "[('entries', ${BAZ2}, 'run_status',), 0]" \
-    "[('entries', ${BAZ2}, 'run_signal',), None]" \
-    "[('entries', ${BAZ3}, 'submit_status',), None]" \
-    "[('entries', ${BAZ3}, 'run_signal',), None]" \
-    "[('entries', ${BAZ3}, 'host',), None]" \
-    "[('entries', ${BAZ3}, 'submit_method',), None]" \
-    "[('entries', ${BAZ3}, 'submit_method_id',), None]" \
-    "[('entries', ${BAZ3}, 'events',), [None, None, None]]"
+    "[('entries', ${BAZ2}, 'run_signal',), None]"
 
 #-------------------------------------------------------------------------------
 # Data transfer output check for suite's job page, job status filters

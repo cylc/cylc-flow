@@ -42,9 +42,6 @@
               <input type="hidden" name="task_status" value="{{key}}" />
               {% endif -%}
             {% endfor -%}
-            {% if all_task_statuses -%}
-              <input type="hidden" name="task_status" value="" />
-            {% endif -%}
             {% if job_status -%}
               <input type="hidden" name="job_status" value="{{job_status}}" />
             {% endif -%}

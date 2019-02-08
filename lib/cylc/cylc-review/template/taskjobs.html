@@ -43,17 +43,8 @@
             <div class="col-sm-12 col-md-12">
               <strong>Select by Task Statuses</strong>
               <br/>
-              <label class="checkbox-inline" for="all_task_statuses">
-                <input id="all_task_statuses" type="checkbox"
-                name="task_status"
-                value=""
-                title="Display jobs of all tasks"
-{% if all_task_statuses -%}
-                checked="checked"
-{% endif -%}
-                />
-                select all
-              </label>
+              <button id="check_task_statuses" type="button"
+              class="btn btn-default btn-xs">check all</button>
               <button id="uncheck_task_statuses" type="button"
               class="btn btn-default btn-xs">uncheck all</button>
             </div>
@@ -169,8 +160,8 @@
             </div>
             <div class="form-group col-sm-4 col-md-2 btn-toolbar">
               <div class="btn-group pull-right">
-                <input type="reset" class="btn btn-default" value="reset"
-                title="Reset Display Options"/>
+                <input type="button" class="btn btn-default" value="reset"
+                title="Reset Display Options" id="reset_task_statuses"/>
                 <input type="submit" class="btn btn-primary" value="update"
                 title="Update Display Options"/>
               </div>
