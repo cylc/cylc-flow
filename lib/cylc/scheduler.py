@@ -1552,8 +1552,6 @@ conditions; see `cylc conditions`.
         4. Suite contact file has the right info?
 
         """
-        LOG.debug('Performing suite health check')
-
         # 1. check if suite is stalled - if so call handler if defined
         if self.stop_mode is None and not has_changes:
             self.check_suite_stalled()
@@ -1561,6 +1559,7 @@ conditions; see `cylc conditions`.
         now = time()
         if (self.time_next_health_check is None or
                 now > self.time_next_health_check):
+            LOG.debug('Performing suite health check')
 
             # 2. check if suite host is condemned - if so auto restart.
             if self.stop_mode is None:
