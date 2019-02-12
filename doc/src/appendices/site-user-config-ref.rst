@@ -180,14 +180,14 @@ Documentation locations for the ``cylc doc`` command and gcylc
 Help menus.
 
 [documentation] ``->`` [[online]]
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 URL of the online cylc documentation.
 
 [documentation] ``->`` [[local]]
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Path where the Cylc documentation will appear if built locally.
+Path where the cylc documentation will appear if built locally.
 
 [documentation] ``->`` [[cylc homepage]]
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
