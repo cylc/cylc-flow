@@ -18,14 +18,12 @@
 """Suite status constants."""
 
 # Keys for identify API call
-KEY_DESCRIPTION = "description"
 KEY_GROUP = "group"
 KEY_META = "meta"
 KEY_NAME = "name"
 KEY_OWNER = "owner"
 KEY_STATES = "states"
 KEY_TASKS_BY_STATE = "tasks-by-state"
-KEY_TITLE = "title"
 KEY_UPDATE_TIME = "update-time"
 KEY_VERSION = "version"
 

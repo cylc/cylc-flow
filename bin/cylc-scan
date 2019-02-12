@@ -80,14 +80,8 @@ def main():
         __doc__,
         comms=True,
         noforce=True,
-        argdoc=[(
-            "[HOSTS ...]", "Hosts to scan instead of the configured hosts.")]
+        argdoc=[]
     )
-
-    parser.add_option(
-        "-a", "--all",
-        help="Scan all port ranges in known hosts.",
-        action="store_true", default=False, dest="all_ports")
 
     parser.add_option(
         "-n", "--name",
@@ -113,12 +107,12 @@ def main():
         "-s", "--state-totals",
         help="Print number of tasks in each state if available "
              "(total, and by cycle point).",
-        action="store_true", default=False, dest="print_totals")
+        action="store_true", default=False, dest="state_totals")
 
     parser.add_option(
         "-f", "--full",
         help="Print all available information about each suite.",
-        action="store_true", default=False, dest="print_full")
+        action="store_true", default=False, dest="full")
 
     parser.add_option(
         "-c", "--color", "--colour",
@@ -130,10 +124,10 @@ def main():
         help="Don't use any bold text in the command output.",
         action="store_true", default=False, dest="no_bold")
 
-    parser.add_option(
-        "--print-ports",
-        help="Print the port range from the global config file.",
-        action="store_true", default=False, dest="print_ports")
+    # parser.add_option(
+    #     "--print-ports",
+    #     help="Print the port range from the global config file.",
+    #     action="store_true", default=False, dest="print_ports")
 
     parser.add_option(
         "--comms-timeout", metavar="SEC",
@@ -141,49 +135,30 @@ def main():
              "to each running suite. The default is 5 seconds.",
         action="store", default=None, dest="comms_timeout")
 
-    parser.add_option(
-        "--old", "--old-format",
-        help='Legacy output format ("suite owner host port").',
-        action="store_true", default=False, dest="old_format")
-
-    parser.add_option(
-        "-r", "--raw", "--raw-format",
-        help='Parsable format ("suite|owner|host|property|value").',
-        action="store_true", default=False, dest="raw_format")
-
-    parser.add_option(
-        "-j", "--json", "--json-format",
-        help="JSON format.",
-        action="store_true", default=False, dest="json_format"
-    )
+    parser.add_option('--format', default='plain', action='store', help=(
+        'Set output format:\n'
+        ' * plain (default) - text format for interactive use\n'
+        ' * raw - parsable format (suite|owner|host|property|value)\n'
+        ' * json - JSON format ({suite: {owner: OWNER, host: HOST ...)'))
 
     options, args = parser.parse_args()
 
-    if options.print_ports:
-        run_ports_list = glbl_cfg().get(['suite servers', 'run ports'])
-        print(run_ports_list[0], '<= port <=', run_ports_list[-1])
-        sys.exit(0)
+    # if options.print_ports:
+    #     run_ports_list = glbl_cfg().get(['suite servers', 'run ports'])
+    #     print(run_ports_list[0], '<= port <=', run_ports_list[-1])
+    #     sys.exit(0)
 
     indent = "   "
-
     bold = TitleFormatter(options.no_bold)
 
-    if options.print_full:
-        options.describe = options.print_totals = True
+    if options.full:
+        options.describe = options.state_totals = True
+
+    if options.format == 'raw':
+        options.describe = True
 
     if options.color:
-        options.print_totals = True
-
-    # Check for incompatible formatting options
-    incompatibles = [options.raw_format, options.json_format]
-    format_ops = [options.old_format, options.describe, options.print_totals,
-                  options.color]
-    if incompatibles.count(True) == 2:
-        parser.error("--raw and --json are incompatible formatting options.")
-    if incompatibles.count(True) == 1 and format_ops.count(True) >= 1:
-        parser.error("Incompatible format options: --%s forbidden with any "
-                     "of --old-format, --describe, --state-totals or --color."
-                     % ("raw" if incompatibles[0] else "json"))
+        options.state_totals = True  # TODO: why?
 
     state_legend = ""
     if options.color:
@@ -194,58 +169,45 @@ def main():
                 state_legend += "\n"
         state_legend = state_legend.rstrip()
 
+    # name and owner patterns
     if options.patterns_name:
         patterns_name = options.patterns_name
     else:
-        # Any suite name.
-        patterns_name = ['.*']
+        patterns_name = ['.*']  # Any suite name.
     patterns_owner = None
     if options.patterns_owner:
         patterns_owner = options.patterns_owner
-    # Compile and check "name" and "owner" regular expressions
-    try:
+    try:  # Compile and check "name" and "owner" regular expressions
         cre_owner, cre_name = re_compile_filters(patterns_owner, patterns_name)
     except ValueError as exc:
         parser.error(str(exc))
-    if options.all_ports:
-        args.extend(
-            glbl_cfg().get(["suite servers", "scan hosts"]) or ["localhost"])
-    if not args:
-        args = get_scan_items_from_fs(cre_owner)
-    if not args:
-        return
 
-    json_filter = []
+    # list of endpoints to call
+    methods = ['identify']
+    if options.describe:
+        methods.append('describe')
+    if options.state_totals:
+        methods.append('state_totals')
+
+    suites = scan_many(
+        get_scan_items_from_fs(cre_owner, cre_name),
+        timeout=options.comms_timeout,
+        methods=methods
+    )
+
+    if options.format == 'json':
+        print(json.dumps(list(suites)))
+
     skip_one = True
-    for host, port, suite_identity in scan_many(args, options.comms_timeout):
+    for host, port, suite_identity in suites:
         name = suite_identity[KEY_NAME]
         owner = suite_identity[KEY_OWNER]
 
-        if cre_name and not cre_name.match(name):
-            continue
-        if (cre_owner is None and owner != get_user() or
-                cre_owner and not cre_owner.match(owner)):
-            continue
-        if options.json_format:
-            json_filter.append([host, port, suite_identity])
-            continue
-
-        if options.old_format:
-            print(name, owner, host, port)
-            continue
-
-        if options.raw_format or options.describe:
+        if options.describe:
             # Extracting required data for these options before processing
-            try:
-                meta_items = suite_identity[KEY_META]
-            except KeyError:
-                # Compat:<=7.5.0
-                meta_items = {
-                    "title": suite_identity.get(KEY_TITLE),
-                    "description": suite_identity.get(KEY_DESCRIPTION)
-                }
+            meta_items = suite_identity.get(KEY_META)
 
-        if options.raw_format:
+        if options.format == 'raw':
             suite_identity.get(KEY_UPDATE_TIME)
             clean_meta_items = {}
             for key, value in meta_items.items():
@@ -267,7 +229,7 @@ def main():
             continue
 
         line = '%s %s@%s:%s' % (name, owner, host, port)
-        if options.describe or options.print_totals:
+        if options.describe or options.state_totals:
             if skip_one:
                 skip_one = False
                 if state_legend != "":
@@ -280,14 +242,14 @@ def main():
 
         if options.describe:
             # Deal with title first for case of just withheld statement
-            if meta_items["title"] is None:
+            if meta_items is None:
                 print((indent + bold("(description and state totals withheld)")))
                 continue
-            if not meta_items["title"]:
+            if not meta_items['title']:
                 print((indent + bold("Title:\n") + indent * 2 + "(no title)"))
             else:
                 print((indent + bold("Title:\n") + indent * 2 +
-                      '"%s"' % meta_items["title"]))
+                      '"%s"' % meta_items['title']))
             for metaitem, metavalue in meta_items.items():
                 if metaitem != "title":
                     if metaitem == "description" or metaitem == "group":
@@ -307,9 +269,8 @@ def main():
                         line1 = False
                         print(indent * 2 + line)
 
-        totals = suite_identity.get(KEY_STATES)
-
-        if options.print_totals:
+        if options.state_totals:
+            totals = suite_identity.get(KEY_STATES)
             if totals is None:
                 print(indent + bold("(state totals withheld)"))
                 continue
@@ -321,9 +282,6 @@ def main():
                 if point:
                     point_prefix = "%s " % point
                 print(indent * 2 + "%s%s" % (point_prefix, state_line))
-
-    if options.json_format:
-        print(json.dumps(json_filter, indent=4))
 
 
 def get_point_state_count_lines(state_count_totals, state_count_cycles,

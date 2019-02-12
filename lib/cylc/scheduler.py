@@ -807,26 +807,6 @@ conditions; see `cylc conditions`.
             self.config.leaves,
             self.config.feet)
 
-    def info_get_identity(self, privileges):
-        """Return suite identity, (description, (states))."""
-        # TODO
-        result = {}
-        return self.suite
-        # if PRIVILEGE_LEVELS[0] in privileges:
-        #     result[KEY_NAME] = self.suite
-        #     result[KEY_OWNER] = self.owner
-        #     result[KEY_VERSION] = CYLC_VERSION
-        # if PRIVILEGE_LEVELS[1] in privileges:
-        #     result[KEY_META] = self.config.cfg[KEY_META]
-        #     for key in (KEY_TITLE, KEY_DESCRIPTION, KEY_GROUP):
-        #         result[key] = self.config.cfg[KEY_META].get(key)
-        # if PRIVILEGE_LEVELS[2] in privileges:
-        #     result[KEY_UPDATE_TIME] = self.state_summary_mgr.update_time
-        #     result[KEY_STATES] = self.state_summary_mgr.get_state_totals()
-        #     result[KEY_TASKS_BY_STATE] = (
-        #         self.state_summary_mgr.get_tasks_by_state())
-        # return result
-
     def info_get_task_requisites(self, items, list_prereqs=False):
         """Return prerequisites of a task."""
         return self.pool.get_task_requisites(items, list_prereqs=list_prereqs)

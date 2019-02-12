@@ -39,7 +39,7 @@ grep_ok "${SUITE_NAME} - 1 task" "${TEST_NAME}.stdout"
 # Same again, but force a port scan instead of looking under ~/cylc-run.
 # (This also tests GitHub #2795 -"cylc scan -a" abort).
 TEST_NAME="${TEST_NAME_BASE}-monitor-2"
-run_ok "${TEST_NAME}" cylc monitor $(cylc scan -a -n "${SUITE_NAME}") --once
+run_ok "${TEST_NAME}" cylc monitor $(cylc scan -n "${SUITE_NAME}") --once
 grep_ok "${SUITE_NAME} - 1 task" "${TEST_NAME}.stdout"
 
 cylc stop --kill "${SUITE_NAME}"
