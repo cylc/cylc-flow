@@ -46,11 +46,11 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 import cylc.flags
-from cylc.prompt import prompt
 from cylc.task_id import TaskID
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.network.client import ClientError, ClientTimeout, SuiteRuntimeClient
 from cylc.command_polling import Poller
+from cylc.terminal import prompt
 
 
 class StopPoller(Poller):

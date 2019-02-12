@@ -18,6 +18,8 @@
 # Test "cylc scan" on suite suspended with SIGSTOP
 . "$(dirname "$0")/test_header"
 set_test_number 4
+skip 4  # TODO: re-instate when scan runs in parallel again
+exit
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
@@ -32,7 +34,7 @@ SUITE_PORT=$(cylc get-suite-contact ${SUITE_NAME} | \
 sleep 1
 kill -SIGSTOP "${SUITE_PID}"
 sleep 1
-run_ok "${TEST_NAME_BASE}-scan" cylc scan 'localhost'
+run_ok "${TEST_NAME_BASE}-scan" cylc scan
 contains_ok "${TEST_NAME_BASE}-scan.stderr" <<__ERR__
 WARNING, scan timed out, no result for the following:
   localhost:${SUITE_PORT}

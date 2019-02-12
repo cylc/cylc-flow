@@ -49,11 +49,11 @@ import difflib
 from subprocess import call
 
 import cylc.flags
-from cylc.prompt import prompt
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.network.client import SuiteRuntimeClient
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.task_job_logs import JOB_LOG_DIFF
+from cylc.terminal import prompt
 
 
 def main():

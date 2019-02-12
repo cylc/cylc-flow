@@ -32,59 +32,61 @@ from cylc.task_state import (
     TASK_STATUS_FAILED,
     TASK_STATUS_RETRYING)
 
+from colorama import Style, Fore, Back
+
 
 _STATUS_MAP = {
     TASK_STATUS_RUNAHEAD: {
         "gtk_label": "r_unahead",  # GTK widget labels.
-        "ascii_ctrl": "\033[1;37;44m"  # Terminal color control codes.
+        "ascii_ctrl": Style.BRIGHT + Fore.WHITE + Back.BLUE
     },
     TASK_STATUS_WAITING: {
         "gtk_label": "_waiting",
-        "ascii_ctrl": "\033[1;36m"
+        "ascii_ctrl": Style.BRIGHT + Fore.CYAN + Back.RESET
     },
     TASK_STATUS_HELD: {
         "gtk_label": "_held",
-        "ascii_ctrl": "\033[1;37;43m"
+        "ascii_ctrl": Style.BRIGHT + Fore.WHITE + Back.YELLOW
     },
     TASK_STATUS_QUEUED: {
         "gtk_label": "_queued",
-        "ascii_ctrl": "\033[1;38;44m"
+        "ascii_ctrl": Style.BRIGHT + Fore.WHITE + Back.BLUE
     },
     TASK_STATUS_READY: {
         "gtk_label": "rea_dy",
-        "ascii_ctrl": "\033[1;32m"
+        "ascii_ctrl": Style.BRIGHT + Fore.GREEN + Back.RESET
     },
     TASK_STATUS_EXPIRED: {
         "gtk_label": "e_xpired",
-        "ascii_ctrl": "\033[1;37;40m"
+        "ascii_ctrl": Style.BRIGHT + Fore.WHITE + Back.BLACK
     },
     TASK_STATUS_SUBMITTED: {
         "gtk_label": "sub_mitted",
-        "ascii_ctrl": "\033[1;33m"
+        "ascii_ctrl": Style.BRIGHT + Fore.YELLOW + Back.RESET
     },
     TASK_STATUS_SUBMIT_FAILED: {
         "gtk_label": "submit-f_ailed",
-        "ascii_ctrl": "\033[1;34m"
+        "ascii_ctrl": Style.BRIGHT + Fore.BLUE + Back.RESET
     },
     TASK_STATUS_SUBMIT_RETRYING: {
         "gtk_label": "submit-retryin_g",
-        "ascii_ctrl": "\033[1;31m"
+        "ascii_ctrl": Style.BRIGHT + Fore.BLUE + Back.RESET
     },
     TASK_STATUS_RUNNING: {
         "gtk_label": "_running",
-        "ascii_ctrl": "\033[1;37;42m"
+        "ascii_ctrl": Style.BRIGHT + Fore.WHITE + Back.GREEN
     },
     TASK_STATUS_SUCCEEDED: {
         "gtk_label": "_succeeded",
-        "ascii_ctrl": "\033[0m"
+        "ascii_ctrl": Style.NORMAL + Fore.BLACK + Back.RESET
     },
     TASK_STATUS_FAILED: {
         "gtk_label": "_failed",
-        "ascii_ctrl": "\033[1;37;41m"
+        "ascii_ctrl": Style.BRIGHT + Fore.WHITE + Back.RED
     },
     TASK_STATUS_RETRYING: {
         "gtk_label": "retr_ying",
-        "ascii_ctrl": "\033[1;35m"
+        "ascii_ctrl": Style.BRIGHT + Fore.MAGENTA + Back.RESET
     }
 }
 

@@ -17,15 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Port scan utilities."""
 
-from multiprocessing import cpu_count, Process, Pipe
 import os
 from pwd import getpwall
 import re
 import sys
-from time import sleep, time
-import traceback
 import socket
-from uuid import uuid4
 
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
@@ -34,7 +30,6 @@ from cylc.network.client import (
     SuiteRuntimeClient, ClientError, ClientTimeout)
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
-from cylc.suite_status import (KEY_NAME, KEY_OWNER, KEY_STATES)
 
 DEBUG_DELIM = '\n' + ' ' * 4
 INACTIVITY_TIMEOUT = 10.0

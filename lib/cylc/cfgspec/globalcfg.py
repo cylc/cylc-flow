@@ -228,8 +228,6 @@ SPEC = {
     'suite servers': {
         'run hosts': [VDR.V_SPACELESS_STRING_LIST],
         'run ports': [VDR.V_INTEGER_LIST, list(range(43001, 43101))],
-        'scan hosts': [VDR.V_SPACELESS_STRING_LIST],
-        'scan ports': [VDR.V_INTEGER_LIST, list(range(43001, 43101))],
         'condemned hosts': [VDR.V_SPACELESS_STRING_LIST],
         'auto restart delay': [VDR.V_INTERVAL],
         'run host select': {
@@ -265,6 +263,8 @@ def upg(cfg, descr):
     u.deprecate('8.0.0',
                 ['documentation', 'urls', 'internet homepage'],
                 ['documentation', 'cylc homepage'])
+    u.obsolete('8.0.0', ['suite servers', 'scan hosts'])
+    u.obsolete('8.0.0', ['suite servers', 'scan ports'])
 
     u.upgrade()
 

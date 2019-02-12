@@ -20,16 +20,8 @@
 
 Print information about running suites.
 
-By default, it will obtain a listing of running suites for the current user
-from the file system, before connecting to the suites to obtain information.
 Use the -o/--suite-owner option to get information of running suites for other
 users.
-
-If a list of HOSTS is specified, it will obtain a listing of running suites by
-scanning all ports in the relevant range for running suites on the specified
-hosts. If the -a/--all option is specified, it will use the global
-configuration "[suite servers]scan hosts" setting to determine a list of hosts
-to scan.
 
 Suite passphrases are not needed to get identity information (name and owner).
 Titles, descriptions, state totals, and cycle point state totals may also be
@@ -48,34 +40,26 @@ if "--use-ssh" in sys.argv[1:]:
 
 import json
 
-from cylc.cfgspec.glbl_cfg import glbl_cfg
-from cylc.hostuserutil import get_user
+from colorama import Fore, Style, init as color_init
+
 from cylc.network.port_scan import (
     get_scan_items_from_fs, re_compile_filters, scan_many)
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.suite_status import (
-    KEY_DESCRIPTION, KEY_META, KEY_NAME, KEY_OWNER, KEY_STATES,
-    KEY_TITLE, KEY_UPDATE_TIME)
+from cylc.suite_status import KEY_META, KEY_NAME, KEY_OWNER, KEY_STATES
 from cylc.task_state import TASK_STATUSES_ORDERED
 from cylc.task_state_prop import get_status_prop
+from cylc import terminal
 
 
-class TitleFormatter(object):
-    """Format title line, in bold or not if .no_bold set to False."""
-
-    def __init__(self, no_bold=False):
-        self.no_bold = no_bold
-
-    def __call__(self, line):
-        """Add terminal control characters for bold text, if .no_bold=False"""
-        if self.no_bold:
-            return line
-        else:
-            return "\033[1m" + line + "\033[0m"
+INDENT = "   "
+TITLE_STYLE = Style.BRIGHT
+MISSING_STYLE = Fore.MAGENTA
+ERROR_STYLE = Fore.RED
+META_KEY_ORDER = ['title', 'description', 'group']
 
 
-def main():
-    """Implement "cylc scan"."""
+def get_parser():
+    """CLI opts for "cylc scan"."""
     parser = COP(
         __doc__,
         comms=True,
@@ -115,59 +99,41 @@ def main():
         action="store_true", default=False, dest="full")
 
     parser.add_option(
-        "-c", "--color", "--colour",
-        help="Print task state summaries using terminal color control codes.",
-        action="store_true", default=False, dest="color")
-
-    parser.add_option(
-        "-b", "--no-bold",
-        help="Don't use any bold text in the command output.",
-        action="store_true", default=False, dest="no_bold")
-
-    # parser.add_option(
-    #     "--print-ports",
-    #     help="Print the port range from the global config file.",
-    #     action="store_true", default=False, dest="print_ports")
+        '--color', '--colour', action='store', dest='color', default='auto',
+        help='Colorize the output, can be "always", "never" or "auto".')
 
     parser.add_option(
         "--comms-timeout", metavar="SEC",
         help="Set a timeout for network connections "
              "to each running suite. The default is 5 seconds.",
-        action="store", default=None, dest="comms_timeout")
+        action="store", default=5.0, dest="comms_timeout")
 
-    parser.add_option('--format', default='plain', action='store', help=(
-        'Set output format:\n'
-        ' * plain (default) - text format for interactive use\n'
-        ' * raw - parsable format (suite|owner|host|property|value)\n'
-        ' * json - JSON format ({suite: {owner: OWNER, host: HOST ...)'))
+    parser.add_option('-t', '--format', default='plain', action='store',
+        dest='format', help=(
+            'Set output format:\n'
+            ' * plain (default) - text format for interactive use\n'
+            ' * raw - parsable format (suite|owner|host|property|value)\n'
+            ' * json - JSON format ({suite: {owner: OWNER, host: HOST ...)'))
 
-    options, args = parser.parse_args()
+    return parser
 
-    # if options.print_ports:
-    #     run_ports_list = glbl_cfg().get(['suite servers', 'run ports'])
-    #     print(run_ports_list[0], '<= port <=', run_ports_list[-1])
-    #     sys.exit(0)
 
-    indent = "   "
-    bold = TitleFormatter(options.no_bold)
+def main():
+    """Implement "cylc scan"."""
+    parser = get_parser()
+    options, _ = parser.parse_args()
 
     if options.full:
         options.describe = options.state_totals = True
+    if options.format in ['raw', 'json']:
+        options.color = False
 
-    if options.format == 'raw':
-        options.describe = True
-
-    if options.color:
-        options.state_totals = True  # TODO: why?
-
-    state_legend = ""
-    if options.color:
-        n_states = len(TASK_STATUSES_ORDERED)
-        for index, state in enumerate(TASK_STATUSES_ORDERED):
-            state_legend += get_status_prop(state, 'ascii_ctrl')
-            if index == n_states / 2:
-                state_legend += "\n"
-        state_legend = state_legend.rstrip()
+    # color settings
+    if options.color in ['auto', 'always'] and terminal.supports_color():
+        options.color = True
+    else:
+        options.color = False
+    color_init(autoreset=True, strip=not options.color)
 
     # name and owner patterns
     if options.patterns_name:
@@ -189,99 +155,128 @@ def main():
     if options.state_totals:
         methods.append('state_totals')
 
+    # suite generator
     suites = scan_many(
         get_scan_items_from_fs(cre_owner, cre_name),
         timeout=options.comms_timeout,
         methods=methods
     )
 
+    # determine output format
     if options.format == 'json':
-        print(json.dumps(list(suites)))
+        print(json.dumps(list(suites), indent=4))
+    elif options.format == 'raw':
+        formatter = format_raw
+    elif options.format == 'plain':
+        formatter = format_plain
+    else:
+        raise Exception('Unknown format: %s' % options.format)
 
-    skip_one = True
-    for host, port, suite_identity in suites:
-        name = suite_identity[KEY_NAME]
-        owner = suite_identity[KEY_OWNER]
+    # output state legend if necessary
+    state_legend = ""
+    if options.color and options.state_totals:
+        n_states = len(TASK_STATUSES_ORDERED)
+        for index, state in enumerate(TASK_STATUSES_ORDERED):
+            state_legend += get_status_prop(state, 'ascii_ctrl')
+            if index == n_states / 2:
+                state_legend += "\n"
+        print(state_legend.rstrip() + "\n")
 
-        if options.describe:
-            # Extracting required data for these options before processing
-            meta_items = suite_identity.get(KEY_META)
-
-        if options.format == 'raw':
-            suite_identity.get(KEY_UPDATE_TIME)
-            clean_meta_items = {}
-            for key, value in meta_items.items():
-                if value:
-                    clean_meta_items.update({
-                        key: ' '.join([x.strip() for x in
-                                       str(value).split('\n') if x])})
-            totals = suite_identity.get(KEY_STATES)
-            print("%s|%s|%s|port|%s" % (name, owner, host, port))
-            for key, value in clean_meta_items.items():
-                print("%s|%s|%s|%s|%s" % (name, owner, host, key, value))
-            if totals is None:
-                continue
-            for point, state_line in get_point_state_count_lines(*totals):
-                key = KEY_STATES
-                if point:
-                    key = "%s:%s" % (KEY_STATES, point)
-                print("%s|%s|%s|%s|%s" % (name, owner, host, key, state_line))
-            continue
-
-        line = '%s %s@%s:%s' % (name, owner, host, port)
-        if options.describe or options.state_totals:
-            if skip_one:
-                skip_one = False
-                if state_legend != "":
-                    print(state_legend + "\n")
-            else:
-                print()
-            print(bold(line))
+    # work through scan results one by one
+    for reg, host, port, info in suites:
+        if isinstance(info, str):
+            print(ERROR_STYLE + ' '.join([reg, host, port, info]))
+        elif info is None:
+            print(ERROR_STYLE + ' '.join([reg, host, port, 'Error Connecting']))
+        elif info[KEY_NAME] != reg:
+            # TODO - should we do anything here, is this likely?
+            print(ERROR_STYLE + 'Warning: suite has changed name %s => %s' % (
+                reg, info[KEY_NAME]))
         else:
-            print(line)
+            formatter(reg, host, port, info, options)
 
-        if options.describe:
-            # Deal with title first for case of just withheld statement
-            if meta_items is None:
-                print((indent + bold("(description and state totals withheld)")))
-                continue
-            if not meta_items['title']:
-                print((indent + bold("Title:\n") + indent * 2 + "(no title)"))
-            else:
-                print((indent + bold("Title:\n") + indent * 2 +
-                      '"%s"' % meta_items['title']))
-            for metaitem, metavalue in meta_items.items():
-                if metaitem != "title":
-                    if metaitem == "description" or metaitem == "group":
-                        print(indent + bold(metaitem.capitalize() + ":"))
-                    else:
-                        print(indent + bold(metaitem + ":"))
-                    if not metavalue:
-                        lines = "(no %s)" % metaitem
-                    else:
-                        lines = '"%s"' % metavalue
-                    line1 = True
-                    for line in lines.split('\n'):
-                        line = line.lstrip()
-                        if not line1:
-                            # Indent under the double quote.
-                            line = " " + line
-                        line1 = False
-                        print(indent * 2 + line)
 
-        if options.state_totals:
-            totals = suite_identity.get(KEY_STATES)
-            if totals is None:
-                print(indent + bold("(state totals withheld)"))
-                continue
-            print(indent + bold("Task state totals:"))
-            point_state_lines = get_point_state_count_lines(
-                *totals, use_color=options.color)
-            for point, state_line in point_state_lines:
-                point_prefix = ""
-                if point:
-                    point_prefix = "%s " % point
-                print(indent * 2 + "%s%s" % (point_prefix, state_line))
+def sort_meta(item):
+    """Sort meta items for the "plain" output format."""
+    key = item[0]
+    if key in META_KEY_ORDER:
+        return str(META_KEY_ORDER.index(key))
+    return key
+
+
+def format_plain(name, host, port, info, options):
+    """Print a scan result, implements --format=plain"""
+    owner = info[KEY_OWNER]
+
+    print(Style.BRIGHT + name + Style.NORMAL
+          + ' %s@%s:%s' % (owner, host, port))
+
+    if options.describe:
+        meta_items = info.get(KEY_META)
+        if meta_items is None:
+            print(INDENT + MISSING_STYLE + "(description withheld)")
+            return
+        for metaitem, metavalue in sorted(meta_items.items(), key=sort_meta):
+            if metaitem in META_KEY_ORDER:
+                metaitem = metaitem.capitalize()
+            print(INDENT + TITLE_STYLE + metaitem + ":")
+            if not metavalue:
+                metavalue = MISSING_STYLE + '(no %s)' % metaitem + Fore.RESET
+            for line in metavalue.splitlines():
+                print(INDENT * 2 + line)
+
+    if options.state_totals:
+        totals = info.get(KEY_STATES)
+        if totals is None:
+            print(INDENT + MISSING_STYLE + "(state totals withheld)")
+            return
+        print(INDENT + TITLE_STYLE + "Task state totals:")
+        for point, state_line in get_point_state_count_lines(
+                *totals, use_color=options.color):
+            point_prefix = ""
+            if point:
+                point_prefix = "%s " % point
+            print(INDENT * 2 + "%s%s" % (point_prefix, state_line))
+
+
+def format_raw(name, host, port, info, options):
+    """Print a scan result, implements --format=raw"""
+    owner = info[KEY_OWNER]
+
+    print("%s|%s|%s|port|%s" % (name, owner, host, port))
+
+    if options.describe:
+        # Extracting required data for these options before processing
+        meta_items = info.get(KEY_META)
+
+        # clean_meta_items = {}
+        # for key, value in meta_items.items():
+        #     if value:
+        #         clean_meta_items.update({
+        #             key: ' '.join([x.strip() for x in
+        #                            str(value).split('\n') if x])})
+
+        # for key, value in meta_items.items():
+        #     if value:
+        #         clean_meta_items.update({
+        #             key: ' '.join([x.strip() for x in
+        #                            str(value).split('\n') if x])})
+
+        for key, value in sorted(meta_items.items(), key=sort_meta):
+            value = ' '.join(line.strip()
+                             for line in str(value).splitlines()
+                             if line)
+            print("%s|%s|%s|%s|%s" % (name, owner, host, key, value))
+
+    if options.state_totals:
+        totals = info.get(KEY_STATES)
+        if totals is None:
+            return
+        for point, state_line in get_point_state_count_lines(*totals):
+            key = KEY_STATES
+            if point:
+                key = "%s:%s" % (KEY_STATES, point)
+            print("%s|%s|%s|%s|%s" % (name, owner, host, key, state_line))
 
 
 def get_point_state_count_lines(state_count_totals, state_count_cycles,

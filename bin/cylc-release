@@ -33,9 +33,9 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 import cylc.flags
-from cylc.prompt import prompt
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.network.client import SuiteRuntimeClient
+from cylc.terminal import prompt
 
 
 def main():

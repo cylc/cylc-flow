@@ -1,7 +1,7 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -28,39 +28,41 @@ cmp_ok "${SUITE_RUN_DIR}/ctb-get-graph-raw.out" <<'__OUT__'
 [
     [
         [
-            "t1.1", 
-            null, 
-            null, 
-            false, 
+            "t1.1",
+            null,
+            null,
+            false,
             false
-        ], 
+        ],
         [
-            "t1.1", 
-            "T.1", 
-            null, 
-            false, 
+            "t1.1",
+            "T.1",
+            null,
+            false,
             false
-        ], 
+        ],
         [
-            "t1.1", 
-            "T.1", 
-            null, 
-            false, 
+            "t1.1",
+            "T.1",
+            null,
+            false,
             false
         ]
-    ], 
-    {}, 
+    ],
+    {},
     [
-        "t2", 
-        "t3", 
-        "t1"
-    ], 
+        "t1",
+        "t2",
+        "t3"
+    ],
     [
-        "T", 
-        "t1"
+        "t1",
+        "T"
     ]
 ]
 __OUT__
 
 purge_suite "${SUITE_NAME}"
 exit
+
+TODO - the rest of these will require the same treatment

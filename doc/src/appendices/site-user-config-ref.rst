@@ -759,15 +759,6 @@ a ``run`` or ``restart`` command.
 - *default*: ``localhost``
 
 
-[suite servers] ``->`` scan hosts
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-A list of hosts to scan for running suites.
-
-- *type*: comma-separated list of host names and/or IP addresses.
-- *default*: ``localhost``
-
-
 [suite servers] ``->`` run ports
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -778,17 +769,6 @@ A list of allowed ports for Cylc to use to run suites.
    Only one suite can run per port for a given host, so the length
    of this list determines the maximum number of suites that can run
    at once per suite host.
-
-- *type*: string in the format ``X .. Y`` for
-  ``X <= Y`` where ``X`` and ``Y`` are integers.
-- *default*: ``43001 .. 43100`` (equivalent to the list
-  ``43001, 43002, ... , 43099, 43100``)
-
-
-[suite servers] ``->`` scan ports
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-A list of ports to scan for running suites on each host set in scan hosts.
 
 - *type*: string in the format ``X .. Y`` for
   ``X <= Y`` where ``X`` and ``Y`` are integers.

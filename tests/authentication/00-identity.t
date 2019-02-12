@@ -68,7 +68,7 @@ cylc suite-state "${SUITE_NAME}" --task=foo --status=failed --point=1 \
 mv "${SRV_D}/passphrase" "${SRV_D}/passphrase.DIS"
 
 # Check scan --full output.
-cylc scan --comms-timeout=5 -f --color=never -n "${SUITE_NAME}" 'localhost' \
+cylc scan --comms-timeout=5 -f --color=never -n "${SUITE_NAME}" \
     >'scan-f.out' 2>'/dev/null'
 cmp_ok scan-f.out << __END__
 ${SUITE_NAME} ${USER}@localhost:${PORT}
@@ -76,7 +76,7 @@ ${SUITE_NAME} ${USER}@localhost:${PORT}
 __END__
 
 # Check scan --describe output.
-cylc scan --comms-timeout=5 -d --color=never -n "${SUITE_NAME}" 'localhost' \
+cylc scan --comms-timeout=5 -d --color=never -n "${SUITE_NAME}" \
     >'scan-d.out' 2>'/dev/null'
 cmp_ok scan-d.out << __END__
 ${SUITE_NAME} ${USER}@localhost:${PORT}
@@ -84,14 +84,14 @@ ${SUITE_NAME} ${USER}@localhost:${PORT}
 __END__
 
 # Check scan --raw output.
-cylc scan --comms-timeout=5 -r --color=never -n "${SUITE_NAME}" 'localhost' \
+cylc scan --comms-timeout=5 -t raw --color=never -n "${SUITE_NAME}" \
     >'scan-r.out' 2>'/dev/null'
 cmp_ok scan-r.out << __END__
 ${SUITE_NAME}|${USER}|localhost|port|${PORT}
 __END__
 
 # Check scan --json output.
-cylc scan --comms-timeout=5 -j --color=never -n "${SUITE_NAME}" 'localhost' \
+cylc scan --comms-timeout=5 -t json --color=never -n "${SUITE_NAME}" \
     >'scan-j.out' 2>'/dev/null'
 cmp_json_ok 'scan-j.out' 'scan-j.out' << __END__
 [
