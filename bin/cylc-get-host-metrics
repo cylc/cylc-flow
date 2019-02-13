@@ -42,12 +42,12 @@ if '--use-ssh' in sys.argv[1:]:
     if remrun():
         sys.exit(0)
 
-import os  # noqa E402
-import re  # noqa E402
-from subprocess import Popen, PIPE, CalledProcessError  # noqa E402
-import json  # noqa E402
+import os
+import re
+from subprocess import Popen, PIPE, CalledProcessError
+import json
 
-from cylc.option_parsers import OptionParser  # noqa E402
+from cylc.option_parsers import OptionParser
 
 
 """Templates for extracting desired metric data via regular expression.
