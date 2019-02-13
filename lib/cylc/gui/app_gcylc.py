@@ -75,7 +75,7 @@ else:
 def run_get_stdout(command, filter_=False):
     try:
         proc = procopen(command, usesh=True, stdoutpipe=True, stderrpipe=True,
-                     stdin=open(os.devnull), splitcmd=True)
+                        stdin=open(os.devnull), splitcmd=True)
         # calls to open a shell are aggregated in cylc_subproc.procopen()
         out = proc.stdout.read()
         err = proc.stderr.read()
