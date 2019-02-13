@@ -22,7 +22,7 @@ from os import devnull, killpg, setpgrp
 from signal import SIGTERM
 from time import sleep, time
 
-from cylc.sprocess import pcylc
+from cylc.cylc_subproc import procopen
 
 
 ERR_TIMEOUT = "ERROR: command timed out (>%ds), terminated by signal %d\n%s"
@@ -45,9 +45,9 @@ def run_get_stdout(command, timeout=None, poll_delay=None):
 
     """
     try:
-        proc = pcylc(command, usesh=True, preexec_fn=setpgrp,
-                     stdin=open(devnull), stderrpipe=True, stdoutpipe=True)
-        # calls to open a shell are aggregated in sprocess.pcylc()
+        proc = procopen(command, usesh=True, preexec_fn=setpgrp,
+                        stdin=open(devnull), stderrpipe=True, stdoutpipe=True)
+        # calls to open a shell are aggregated in cylc_subproc.procopen()
         is_killed_after_timeout = False
         if timeout:
             if poll_delay is None:

@@ -29,7 +29,7 @@ from time import time
 
 from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
-from cylc.sprocess import pcylc
+from cylc.cylc_subproc import procopen
 from cylc.wallclock import get_current_time_string
 
 _XTRIG_FUNCS = {}
@@ -308,14 +308,14 @@ class SuiteProcPool(object):
                 stdin_file.seek(0)
             else:
                 stdin_file = open(os.devnull)
-            proc = pcylc(
+            proc = procopen(
                 ctx.cmd, stdin=stdin_file, stdoutpipe=True, stderrpipe=True,
                 # Execute command as a process group leader,
                 # so we can use "os.killpg" to kill the whole group.
                 preexec_fn=os.setpgrp,
                 env=ctx.cmd_kwargs.get('env'),
                 usesh=ctx.cmd_kwargs.get('shell'))
-            # calls to open a shell are aggregated in sprocess.pcylc()
+            # calls to open a shell are aggregated in cylc_subproc.procopen()
             # with logging for what is calling it and the commands given
         except (IOError, OSError) as exc:
             if exc.filename is None:

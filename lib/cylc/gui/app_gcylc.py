@@ -44,7 +44,7 @@ from cylc.gui.view_tree import ControlTree
 from cylc.gui.warning_dialog import info_dialog, warning_dialog
 from cylc.hostuserutil import is_remote_host, is_remote_user
 from cylc.network.httpclient import ClientError
-from cylc.sprocess import pcylc
+from cylc.cylc_subproc import procopen
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.suite_status import SUITE_STATUS_STOPPED_WITH
 from cylc.task_id import TaskID
@@ -74,9 +74,9 @@ else:
 
 def run_get_stdout(command, filter_=False):
     try:
-        proc = pcylc(command, usesh=True, stdoutpipe=True, stderrpipe=True,
+        proc = procopen(command, usesh=True, stdoutpipe=True, stderrpipe=True,
                      stdin=open(os.devnull), splitcmd=True)
-        # calls to open a shell are aggregated in sprocess.pcylc()
+        # calls to open a shell are aggregated in cylc_subproc.procopen()
         out = proc.stdout.read()
         err = proc.stderr.read()
         res = proc.wait()
@@ -993,7 +993,7 @@ class ControlApp(object):
             # process can detach as a process group leader and not subjected to
             # SIGHUP from the current process.
             # See also "cylc.batch_sys_handlers.background".
-            pcylc(
+            procopen(
                 [
                     "nohup",
                     "bash",
@@ -1201,8 +1201,9 @@ been defined for this suite""").inform()
             pass  # Cannot print to terminal (session may be closed).
 
         try:
-            pcylc(command, usesh=True, stdin=open(os.devnull), splitcmd=True)
-            # calls to open a shell are aggregated in sprocess.pcylc()
+            procopen(command, usesh=True, stdin=open(os.devnull),
+                     splitcmd=True)
+            # calls to open a shell are aggregated in cylc_subproc.procopen()
         except OSError:
             warning_dialog('Error: failed to start ' + self.cfg.suite,
                            self.window).warn()
@@ -2852,7 +2853,7 @@ This is what my suite does:..."""
         cat_menu.append(cylc_help_item)
         cylc_help_item.connect('activate', self.command_help)
 
-        cout = pcylc(
+        cout = procopen(
             ["cylc", "categories"],
             stdin=open(os.devnull), stdoutpipe=True).communicate()[0]
         categories = cout.rstrip().split()
@@ -2861,7 +2862,7 @@ This is what my suite does:..."""
             cat_menu.append(foo_item)
             com_menu = gtk.Menu()
             foo_item.set_submenu(com_menu)
-            cout = pcylc(
+            cout = procopen(
                 ["cylc-help", "category=" + category],
                 stdin=open(os.devnull), stdoutpipe=True).communicate()[0]
             commands = cout.rstrip().split()
