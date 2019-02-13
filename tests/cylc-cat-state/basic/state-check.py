@@ -18,7 +18,7 @@
 import os
 import sqlite3
 import sys
-from cylc.cylc_subproc import propen
+from cylc.cylc_subproc import procopen
 import shlex
 
 
