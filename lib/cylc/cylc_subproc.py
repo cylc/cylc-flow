@@ -27,7 +27,6 @@ from shlex import split
 from subprocess import PIPE, STDOUT, Popen  # nosec
 
 from cylc import LOG
-
 # pylint: disable=too-many-arguments
 # pylint: disable=too-many-locals
 
