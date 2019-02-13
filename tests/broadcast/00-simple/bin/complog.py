@@ -5,7 +5,7 @@ import shlex
 import sys
 from distutils import command
 
-from cylc.sprocess import pcylc
+from cylc.cylc_subproc import procopen
 
 print
 print "This is the broadcast test suite log comparator"
@@ -37,7 +37,7 @@ if reflines != loglines:
 else:
     print "broadcast logs compare OK"
 
-res = pcylc(["cylc check-triggering " + event + " " + suite], usesh=True)
+res = procopen(["cylc check-triggering " + event + " " + suite], usesh=True)
 status = res.wait()
 if status != 0:
     sys.exit(1)

@@ -27,7 +27,7 @@ import time
 import traceback
 from subprocess import PIPE, Popen, call  # nosec
 
-from cylc.sprocess import pcylc
+from cylc.cylc_subproc import procopen
 
 from . import (PROFILE_FILES, PROFILE_MODE_CYLC, PROFILE_MODE_TIME,
                PROFILE_MODES, SUITE_STARTUP_STRING)
@@ -190,10 +190,11 @@ def run_suite(reg, options, out_file, profile_modes, mode='live',
     print '$ ' + ' '.join(cmds)
 
     try:
-        proc = pcylc([' '.join(cmds)], usesh=True, stderr=open(time_err, 'w+'),
-                     # calls to open a shell are aggregated in
-                     # sprocess.pcylc()
-                     stdout=open(startup_file, 'w+'), env=env)
+        proc = procopen([' '.join(cmds)], usesh=True,
+                        stderr=open(time_err, 'w+'),
+                        # calls to open a shell are aggregated in
+                        # cylc_subproc.procopen()
+                        stdout=open(startup_file, 'w+'), env=env)
         if proc.wait():
             raise SuiteFailedException(run_cmds, cmd_out, cmd_err)
     except KeyboardInterrupt:

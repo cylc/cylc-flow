@@ -17,7 +17,7 @@
 import os
 import sqlite3
 import sys
-from cylc.sprocess import pcylc
+from cylc.cylc_subproc import propen
 import shlex
 
 
@@ -31,7 +31,7 @@ def main(argv):
     rundir = argv[1]
     command = "cylc cat-state " + sname
 
-    p = pcylc(command, usesh=True, stdoutpipe=True, stderrpipe=True)
+    p = procopen(command, usesh=True, stdoutpipe=True, stderrpipe=True)
     state, err = p.communicate()
 
     if p.returncode > 0:

@@ -18,7 +18,7 @@
 
 import unittest
 
-from cylc.sprocess import pcylc
+from cylc.cylc_subproc import procopen
 from mock import call
 from testfixtures import compare
 from testfixtures.popen import PIPE, MockPopen
@@ -28,7 +28,7 @@ from testfixtures.popen import PIPE, MockPopen
 
 
 class TestSubprocessSafe(unittest.TestCase):
-    """Unit tests for the parameter sprocess utility function"""
+    """Unit tests for the parameter procopen utility function"""
 
     def setUp(self):
         self.Popen = MockPopen()
@@ -37,7 +37,7 @@ class TestSubprocessSafe(unittest.TestCase):
         foo = ' foo'
         bar = ' bar'
         cmd = ["echo", "this is a command" + foo + bar]
-        p = pcylc(cmd, stdoutpipe=True)
+        p = procopen(cmd, stdoutpipe=True)
         stdout, _ = p.communicate()
         compare(stdout, b"this is a command foo bar\n")
 
