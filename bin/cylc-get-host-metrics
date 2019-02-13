@@ -35,18 +35,19 @@ keys as requested via the OPTIONS:
 If no options are specified, --load and --memory are invoked by default.
 """
 
+import sys
+if '--use-ssh' in sys.argv[1:]:  # noqa: E402
+    sys.argv.remove('--use-ssh')
+    from cylc.remote import remrun
+    if remrun():
+        sys.exit(0)
+
 import os
 import re
 from subprocess import Popen, PIPE, CalledProcessError
 import json
 
 from cylc.option_parsers import OptionParser
-import sys
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove('--use-ssh')
-    from cylc.remote import remrun
-    if remrun():
-        sys.exit(0)
 
 
 """Templates for extracting desired metric data via regular expression.
