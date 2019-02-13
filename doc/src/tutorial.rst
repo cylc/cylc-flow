@@ -1269,11 +1269,12 @@ configuration for groups of related tasks:
    :language: cylc
 
 To view the result of Jinja2 processing with the Jinja2 flag
-``MULTI`` set to ``False``:
+``MULTI`` set to an empty variable, so the ``{% if MULTI %}`` statement
+evaluates to ``False``:
 
 .. code-block:: bash
 
-   $ cylc view --jinja2 --stdout tut/oneoff/jinja2
+   $ cylc view --set=MULTI= --jinja2 --stdout tut/oneoff/jinja2
 
 .. code-block:: cylc
 
@@ -1286,7 +1287,8 @@ To view the result of Jinja2 processing with the Jinja2 flag
        [[hello]]
            script = "sleep 10; echo Hello World!"
 
-And with ``MULTI`` set to ``True``:
+
+And without setting ``MULTI``, so it assumes the default value of ``True``:
 
 .. code-block:: bash
 

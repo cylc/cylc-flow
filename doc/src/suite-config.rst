@@ -3465,37 +3465,8 @@ The values of Jinja2 variables can be passed in from the cylc command
 line rather than hardwired in the suite configuration.
 Here's an example, from ``<cylc-dir>/etc/examples/jinja2/defaults``:
 
-.. code-block:: cylc
-
-   #!Jinja2
-
-   [meta]
-
-       title = "Jinja2 example: use of defaults and external input"
-
-       description = """
-   The template variable FIRST_TASK must be given on the cylc command line
-   using --set or --set-file=FILE; two other variables, LAST_TASK and
-   N_MEMBERS can be set similarly, but if not they have default values."""
-
-   {% set LAST_TASK = LAST_TASK | default( 'baz' ) %}
-   {% set N_MEMBERS = N_MEMBERS | default( 3 ) | int %}
-
-   {# input of FIRST_TASK is required - no default #}
-
-   [scheduling]
-       initial cycle point = 20100808T00
-       final cycle point   = 20100816T00
-       [[dependencies]]
-           [[[0]]]
-               graph = """{{ FIRST_TASK }} => ENS
-                    ENS:succeed-all => {{ LAST_TASK }}"""
-   [runtime]
-       [[ENS]]
-   {% for I in range( 0, N_MEMBERS ) %}
-       [[ mem_{{ I }} ]]
-           inherit = ENS
-   {% endfor %}
+.. literalinclude:: ../../etc/examples/jinja2/defaults/suite.rc
+   :language: cylc
 
 Here's the result:
 
@@ -3504,23 +3475,23 @@ Here's the result:
    $ cylc list SUITE
    Jinja2 Template Error
    'FIRST_TASK' is undefined
-   cylc-list foo  failed:  1
+   cylc-list SUITE  failed:  1
 
-   $ cylc list --set FIRST_TASK=bob foo
+   $ cylc list --set FIRST_TASK=bob SUITE
    bob
    baz
    mem_2
    mem_1
    mem_0
 
-   $ cylc list --set FIRST_TASK=bob --set LAST_TASK=alice foo
+   $ cylc list --set FIRST_TASK=bob --set LAST_TASK=alice SUITE
    bob
    alice
    mem_2
    mem_1
    mem_0
 
-   $ cylc list --set FIRST_TASK=bob --set N_MEMBERS=10 foo
+   $ cylc list --set FIRST_TASK=bob --set N_MEMBERS=10 SUITE
    mem_9
    mem_8
    mem_7
