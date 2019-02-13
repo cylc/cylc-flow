@@ -203,7 +203,6 @@ def tex_module_search(tex_module, write=True):
         process = pcylc(cmd, stdin=open(os.devnull), stdoutpipe=True)
         check_call(['test', '-n', process.communicate()[0].strip()],
                    stdin=open(os.devnull), stdout=PIPE, stderr=PIPE)
-
     except (CalledProcessError, OSError):
         if write:
             shell_align_write('.', msg, NOTFOUND_MSG)
