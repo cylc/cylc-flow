@@ -29,7 +29,7 @@ class LogAnalyserError(Exception):
         self.msg = msg
 
     def __str__(self):
-        return repr(self.msg)
+        return self.msg
 
 
 class LogSpec(object):
@@ -124,7 +124,7 @@ class LogAnalyser(object):
         ref.sort()
 
         if new != ref:
-            diff = unified_diff(new, ref)
+            diff = unified_diff(new, ref, 'this run', 'reference log')
             raise LogAnalyserError(
                 "ERROR: triggering is NOT consistent with the reference log:" +
                 '\n' + '\n'.join(diff) + '\n')
