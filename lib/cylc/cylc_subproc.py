@@ -16,8 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-""" A wrapper function to aggregate these calls in one file, with logging for
-    what is calling it and the commands given
+""" A wrapper function to aggregate these calls in one file.
     Bandit B602: subprocess_popen_with_shell_equals_true
     https://docs.openstack.org/developer/bandit/plugins/subprocess_popen_with_shell_equals_true.html
     B605: start_process_with_a_shell
