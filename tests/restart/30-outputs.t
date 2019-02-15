@@ -26,7 +26,7 @@ suite_run_fail "${TEST_NAME_BASE}-run" cylc run --no-detach "${SUITE_NAME}"
 if which sqlite3 > '/dev/null'; then
     sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT outputs FROM task_outputs' \
         >'sqlite3.out'
-    cmp_json_ok 'sqlite3.out' 'sqlite3.out' <<<'{"hello": "hello"}'
+    cmp_json 'sqlite3.out' 'sqlite3.out' <<<'{"hello": "hello"}'
 else
     skip 1 'sqlite3 not installed?'
 fi
@@ -38,7 +38,7 @@ suite_run_ok "${TEST_NAME_BASE}-restart-2" \
 if which sqlite3 > '/dev/null'; then
     sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT outputs FROM task_outputs' \
         >'sqlite3.out'
-    cmp_json_ok 'sqlite3.out' 'sqlite3.out' \
+    cmp_json 'sqlite3.out' 'sqlite3.out' \
         <<<'{"hello": "hello", "greet": "greeting"}'
 else
     skip 1 'sqlite3 not installed?'

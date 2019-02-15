@@ -30,7 +30,7 @@ for FILE in "${TEST_NAME_BASE}-get-host-metric-load.stdout" \
     "${TEST_NAME_BASE}-get-host-metric-l.stdout"
 do
     sed -i 's/\(\s\+\)\([0-9]\+\.[0-9]\+\)\(\s*\n*,*\)/\10.10\3/g' "${FILE}"
-    cmp_json_ok "${FILE}" "${FILE}" <<__OUTPUT_FORMAT__
+    cmp_json "${FILE}" "${FILE}" <<__OUTPUT_FORMAT__
 {
     "load:1": 0.10,
     "load:5": 0.10,
@@ -46,7 +46,7 @@ for FILE in "${TEST_NAME_BASE}-get-host-metric-memory.stdout" \
     "${TEST_NAME_BASE}-get-host-metric-m.stdout"
 do
     sed -i 's/\(\s\+\)\([0-9]\+\)\(\s*\n*\)/\11000000\3/g' "${FILE}"
-    cmp_json_ok "${FILE}" "${FILE}" <<__OUTPUT_FORMAT__
+    cmp_json "${FILE}" "${FILE}" <<__OUTPUT_FORMAT__
 {
     "memory": 1000000
 }
@@ -54,12 +54,10 @@ __OUTPUT_FORMAT__
 done
 
 # Disk space option, with a single path specified correctly.
-run_ok "${TEST_NAME_BASE}-get-host-metric-disk-one" cylc get-host-metric \
---disk-space=/
-sed -i 's/\(\s\+\)\([0-9]\+\)\(\s*\n*\)/\11000000\3/g' \
-    "${TEST_NAME_BASE}-get-host-metric-disk-one.stdout"
-cmp_json_ok "${TEST_NAME_BASE}-get-host-metric-disk-one.stdout" \
-"${TEST_NAME_BASE}-get-host-metric-disk-one.stdout" <<__OUTPUT_FORMAT__
+TEST_NAME="${TEST_NAME_BASE}-get-host-metric-disk-one"
+run_ok "${TEST_NAME}" cylc get-host-metric --disk-space=/
+sed -i 's/\(\s\+\)\([0-9]\+\)\(\s*\n*\)/\11000000\3/g' "${TEST_NAME}.stdout"
+cmp_json "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" <<__OUTPUT_FORMAT__
 {
     "disk-space:/": 1000000
 }
@@ -67,14 +65,13 @@ __OUTPUT_FORMAT__
 
 # Disk space option, with multiple paths specified correctly.
 
-run_ok "${TEST_NAME_BASE}-get-host-metric-disk-mult" cylc get-host-metric \
+TEST_NAME="${TEST_NAME_BASE}-get-host-metric-disk-mult"
+run_ok "${TEST_NAME}" cylc get-host-metric \
 --disk-space=/,/  # Host only has root mount dir for certain; as such can only
                   # specify this safely across envs. Just check multiple paths
                   # are accepted, though they combine -> only one key:value.
-sed -i 's/\(\s\+\)\([0-9]\+\)\(\s*\n*,*\)/\11000000\3/g' \
-    "${TEST_NAME_BASE}-get-host-metric-disk-mult.stdout"
-cmp_json_ok "${TEST_NAME_BASE}-get-host-metric-disk-mult.stdout" \
-"${TEST_NAME_BASE}-get-host-metric-disk-mult.stdout" <<__OUTPUT_FORMAT__
+sed -i 's/\(\s\+\)\([0-9]\+\)\(\s*\n*,*\)/\11000000\3/g' "${TEST_NAME}.stdout"
+cmp_json "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" <<__OUTPUT_FORMAT__
 {
     "disk-space:/": 1000000
 }
@@ -91,13 +88,12 @@ grep_ok "$MESSAGE" "${TEST_NAME_BASE}-get-host-metric-disk-bad.stderr"
 # examples in correct format as cannot test for exact values.
 
 # No options; defaults to providing load and memory.
-run_ok "${TEST_NAME_BASE}-get-host-metric-no-opts" cylc get-host-metric
-sed -i 's/\(\s\+\)\([0-9]\+\)\(\s*\n*,*\)/\11000000\3/g' \
-    "${TEST_NAME_BASE}-get-host-metric-no-opts.stdout"
+TEST_NAME="${TEST_NAME_BASE}-get-host-metric-no-opts"
+run_ok "${TEST_NAME}" cylc get-host-metric
+sed -i 's/\(\s\+\)\([0-9]\+\)\(\s*\n*,*\)/\11000000\3/g' "${TEST_NAME}.stdout"
 sed -i 's/\(\s\+\)\([0-9]\+\.[0-9]\+\)\(\s*\n*,*\)/\10.10\3/g' \
-    "${TEST_NAME_BASE}-get-host-metric-no-opts.stdout"
-cmp_json_ok "${TEST_NAME_BASE}-get-host-metric-no-opts.stdout" \
-"${TEST_NAME_BASE}-get-host-metric-no-opts.stdout" <<__OUTPUT_FORMAT__
+    "${TEST_NAME}.stdout"
+cmp_json "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" <<__OUTPUT_FORMAT__
 {
     "load:1": 0.10,
     "load:5": 0.10,
@@ -107,16 +103,14 @@ cmp_json_ok "${TEST_NAME_BASE}-get-host-metric-no-opts.stdout" \
 __OUTPUT_FORMAT__
 
 # All three options.
-run_ok "${TEST_NAME_BASE}-get-host-metric-all-opts" cylc get-host-metric \
---load --memory --disk-space=/
-run_ok "${TEST_NAME_BASE}-get-host-metric-all-opts-short" cylc get-host-metric \
--lm --disk-space=/
-for FILE in "${TEST_NAME_BASE}-get-host-metric-all-opts.stdout" \
-    "${TEST_NAME_BASE}-get-host-metric-all-opts-short.stdout"
+TEST_NAME="${TEST_NAME_BASE}-get-host-metric-all-opts"
+run_ok "${TEST_NAME}" cylc get-host-metric --load --memory --disk-space=/
+run_ok "${TEST_NAME}-short" cylc get-host-metric -lm --disk-space=/
+for FILE in "${TEST_NAME}.stdout" "${TEST_NAME}-short.stdout"
 do
     sed -i 's/\(\s\+\)\([0-9]\+\)\(\s*\n*,*\)/\11000000\3/g' "${FILE}"
     sed -i 's/\(\s\+\)\([0-9]\+\.[0-9]\+\)\(\s*\n*,*\)/\10.10\3/g' "${FILE}"
-    cmp_json_ok "${FILE}" "${FILE}" <<__OUTPUT_FORMAT__
+    cmp_json "${FILE}" "${FILE}" <<__OUTPUT_FORMAT__
 {
     "disk-space:/": 1000000,
     "load:1": 0.10000000000000001, 
