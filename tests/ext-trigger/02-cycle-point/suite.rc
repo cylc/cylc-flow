@@ -5,7 +5,7 @@ cycling suite.  The suite will time out and abort if the ext trigger fails."""
 
 [cylc]
     cycle point format = %Y
-    [[event hooks]]
+    [[events]]
         abort on timeout = True
         timeout = PT30S
 [scheduling]

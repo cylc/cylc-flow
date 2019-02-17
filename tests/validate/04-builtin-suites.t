@@ -1,6 +1,6 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 # 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ function filter_warnings() {
     python2 - "$@" <<'__PYTHON__'
 import re, sys
 msgs = [
-    r'.* (?:INFO|DEBUG) - .*\n(\t.*\n)*',
+    r'(?:INFO|DEBUG) - .*\n(\t.*\n)*',
     r'.*naked dummy tasks detected.*\n(\t.*\n)+',
     r'.*clock-(trigger|expire) offsets are normally positive.*\n']
 file_name = sys.argv[1]

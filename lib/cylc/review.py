@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -79,13 +79,13 @@ class CylcReviewService(object):
         if self.host_name and "." in self.host_name:
             self.host_name = self.host_name.split(".", 1)[0]
         self.cylc_version = CYLC_VERSION
+        # Autoescape markup to prevent code injection from user inputs.
         template_env = jinja2.Environment(
-            autoescape=select_autoescape(
-                enabled_extensions=('rc'),
-                default_for_string=False,
-                default=True),
             loader=jinja2.FileSystemLoader(
-                get_util_home("lib", "cylc", "cylc-review", "template")))
+                get_util_home("lib", "cylc", "cylc-review", "template")),
+            autoescape=jinja2.select_autoescape(
+                enabled_extensions=('html', 'xml'), default_for_string=True),
+        )
         template_env.filters['urlise'] = self.url2hyperlink
         self.template_env = template_env
 

@@ -1,6 +1,6 @@
 [cylc]
     UTC mode = true
-    [[event hooks]]
+    [[events]]
         # Trigger the pre-start foo inserted by the inserter task.
         stalled handler = cylc trigger %(suite)s foo.20100101T1200Z
         abort on timeout = True

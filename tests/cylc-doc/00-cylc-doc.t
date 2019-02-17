@@ -1,6 +1,6 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 # 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,28 +18,18 @@
 # Test the cylc-doc command on printing cylc URLs.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 2
+set_test_number 4
 #-------------------------------------------------------------------------------
+LOCAL="local = ${PWD}/doc/built-sphinx/index.html"
+ONLINE='http://cylc.github.io/cylc/doc/built-sphinx/index.html'
 create_test_globalrc "" "
 [documentation]
-   [[files]]
-      pdf user guide = ${PWD}/doc/pdf/cug-pdf.pdf
-      multi-page html user guide = /home/bob/cylc/cylc.git/doc/html/multi/cug-html.html
-      html index = /home/bob/cylc/cylc.git/doc/index.html
-      single-page html user guide = /home/bob/cylc/cylc.git/doc/html/single/cug-html.html
-   [[urls]]
-      internet homepage = http://cylc.github.com/cylc/
-      local index = http://localhost/cylc/index.html"
+    local = ${LOCAL}
+    online = ${ONLINE}"
 #-------------------------------------------------------------------------------
-mkdir -p doc/pdf
-touch doc/pdf/cug-pdf.pdf
-cylc doc -s -p > stdout1.txt
-cmp_ok stdout1.txt <<__END__
-$PWD/doc/pdf/cug-pdf.pdf
-__END__
-#-------------------------------------------------------------------------------
-cylc doc -s > stdout2.txt
-cmp_ok stdout2.txt <<__END__
-http://localhost/cylc/index.html
-__END__
-#-------------------------------------------------------------------------------
+TEST_NAME="${TEST_NAME_BASE}-online"
+run_ok "${TEST_NAME}" cylc doc -s
+cmp_ok "${TEST_NAME}.stdout" <<< "${ONLINE}"
+TEST_NAME="${TEST_NAME_BASE}-local"
+run_ok "${TEST_NAME}" cylc doc -s --local
+cmp_ok "${TEST_NAME}.stdout" <<< "${LOCAL}"

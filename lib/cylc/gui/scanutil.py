@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -374,7 +374,7 @@ def launch_about_dialog(program_name, hosts):
         # set_program_name() was added in PyGTK 2.12
         about.set_program_name(program_name)
     about.set_version(CYLC_VERSION)
-    about.set_copyright("Copyright (C) 2008-2018 NIWA & British Crown"
+    about.set_copyright("Copyright (C) 2008-2019 NIWA & British Crown"
                         "(Met Office) & contributors")
     about.set_comments(program_name)
     about.set_icon(get_icon())

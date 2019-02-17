@@ -10,7 +10,7 @@
         graph="broadcast => t1"
 [runtime]
     [[broadcast]]
-        command scripting="""
+        script="""
 cylc broadcast -s '[environment]EMPTY=' -p '1' -n 't1' "${CYLC_SUITE_NAME}" \
     | tee 'broadcast.out'
 diff -u - 'broadcast.out' <<__OUT__
@@ -19,7 +19,7 @@ Broadcast set:
 __OUT__
 """
     [[t1]]
-        command scripting = """
+        script = """
 printenv EMPTY | tee 'echo.out'
 diff -u - 'echo.out' <<<''
 """

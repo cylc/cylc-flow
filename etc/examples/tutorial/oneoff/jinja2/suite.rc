@@ -1,6 +1,6 @@
 #!jinja2
 
-{% set MULTI = True %}
+{% set MULTI = MULTI | default( 'True' ) %}
 {% set N_GOODBYES = 3 %}
 
 [meta]

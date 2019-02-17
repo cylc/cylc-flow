@@ -1,6 +1,6 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 # 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@ run_ok $TEST_NAME.doc-section-python \
 run_ok $TEST_NAME.multiple-secs \
     cylc get-site-config --item='[documentation]' --item='[hosts]'
 run_ok $TEST_NAME.doc-entry \
-    cylc get-site-config --item='[documentation][files]html index'
+    cylc get-site-config --item='[documentation]online'
 run_fail $TEST_NAME.non-existent \
     cylc get-site-config --item='[this][doesnt]exist'
 #-------------------------------------------------------------------------------

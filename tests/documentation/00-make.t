@@ -1,6 +1,6 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 # 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,6 +25,6 @@ fi
 set_test_number 1
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-make-docs
-run_ok $TEST_NAME make -C $CYLC_DIR/doc <'/dev/null'
+run_ok $TEST_NAME cylc make-docs <'/dev/null'
 #-------------------------------------------------------------------------------
 exit

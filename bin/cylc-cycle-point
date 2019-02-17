@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [util] cycle-point [OPTIONS] [POINT]
+"""cylc [util] cycle-point [OPTIONS] ARGS
 
 Cycle point date-time offset computation, and filename templating.
 
@@ -50,25 +50,23 @@ Other examples:
   % export CYLC_TASK_CYCLE_POINT=2010-08
   % export MYTEMPLATE=foo-CCYY-MM.nc
   % cylc cycle-point --offset-years=2 --template=MYTEMPLATE
-  foo-2012-08.nc
-
-Arguments:
-   [POINT]  ISO 8601 date-time, e.g. 20140201T0000Z, default
-      $CYLC_TASK_CYCLE_POINT"""
+  foo-2012-08.nc"""
 
 import os
 import sys
-from optparse import OptionParser
 
-import cylc.flags
 import cylc.cycling.iso8601
+from cylc.option_parsers import CylcOptionParser as COP
 import isodatetime.data
 import isodatetime.dumpers
 import isodatetime.parsers
 
 
 def main():
-    parser = OptionParser(__doc__)
+    parser = COP(
+        __doc__,
+        argdoc=[
+            ('[POINT]', 'ISO8601 date-time, default=$CYLC_TASK_CYCLE_POINT')])
 
     parser.add_option(
         "--offset-hours", metavar="HOURS",
@@ -132,7 +130,7 @@ def main():
         "--print-hour", help="Print only hh of result",
         action="store_true", default=False, dest="print_hour")
 
-    (options, args) = parser.parse_args()
+    options, args = parser.parse_args(remove_opts=['--host', '--user'])
 
     if len(args) == 0:
         # input cycle point must be defined in the environment.
@@ -266,9 +264,4 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as exc:
-        if cylc.flags.debug:
-            raise
-        sys.exit(str(exc))
+    main()

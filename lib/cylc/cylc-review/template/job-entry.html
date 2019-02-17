@@ -5,10 +5,12 @@
 {% endif -%}
 {% set cycle_str = entry.cycle|replace('+', '%2B') -%}
 {% set taskjobs_link = (
-    script ~ "/taskjobs/" ~ user ~ "?&amp;suite=" ~ suite|replace('+', '%2F') ~ no_fuzzy_time_str
+    (script ~ "/taskjobs/" ~ user ~ "?&amp;suite=" ~
+     suite|replace('+', '%2F') ~ no_fuzzy_time_str) | safe
 ) -%}
 {% set view_link = (
-    script ~ "/view/" ~ user ~ "?&amp;suite=" ~ suite|replace('+', '%2F') ~ no_fuzzy_time_str
+    (script ~ "/view/" ~ user ~ "?&amp;suite=" ~ suite|replace('+', '%2F') ~
+     no_fuzzy_time_str) | safe
 ) -%}
 <tr class="entry"><!-- entry row -->
   <td>
@@ -17,22 +19,22 @@
       {% set icon = "ok" %}
       {% set label_class = "label-success" %}
       {% set url_arg = (
-        "&amp;task_status=" ~
-        task_status_groups["success"]|join("&amp;task_status=")
+        ("&amp;task_status=" ~
+         task_status_groups["success"]|join("&amp;task_status=")) | safe
       ) -%}
     {% elif entry.task_status in ["failed", "submission failed"] -%}
       {% set icon = "remove" %}
       {% set label_class = "label-danger" %}
       {% set url_arg = (
-        "&amp;task_status=" ~
-        task_status_groups["fail"]|join("&amp;task_status=")
+        ("&amp;task_status=" ~
+         task_status_groups["fail"]|join("&amp;task_status=")) | safe
       ) -%}
     {% else -%}
       {% set icon = "play" %}
       {% set label_class = "label-info" %}
       {% set url_arg = (
-        "&amp;task_status=" ~
-        task_status_groups["active"]|join("&amp;task_status=")
+        ("&amp;task_status=" ~
+         task_status_groups["active"]|join("&amp;task_status=")) | safe
       ) -%}
     {% endif -%}
     <small>
@@ -47,8 +49,8 @@
     <!-- entry: submit_status, run_status -->
     <small>
     {% set link = (
-        script ~ "/taskjobs/" ~ user ~ "?&amp;suite=" ~ suite|replace('+', '%2F') ~
-        no_fuzzy_time_str
+        (script ~ "/taskjobs/" ~ user ~ "?&amp;suite=" ~
+         suite|replace('+', '%2F') ~ no_fuzzy_time_str) | safe
     ) -%}
     {% if entry.run_status == 0 -%}
       <a href="{{taskjobs_link}}&amp;job_status=succeeded"
@@ -161,7 +163,7 @@
         <ul class="list-inline">
           {% for key, log in entry.logs|dictsort if not log.seq_key -%}
             {% if key in ["job.out", "job.err"] -%}
-              {% set key_str = "<strong>" ~ key ~ "</strong>" -%}
+              {% set key_str = ("<strong>" ~ key ~ "</strong>") | safe -%}
             {% else -%}
               {% set key_str = key -%}
             {% endif -%}

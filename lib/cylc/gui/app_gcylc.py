@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1216,7 +1216,7 @@ been defined for this suite""").inform()
                 # set_program_name() was added in PyGTK 2.12
                 about.set_program_name("cylc")
         about.set_version(CYLC_VERSION)
-        about.set_copyright("Copyright (C) 2008-2018 NIWA & British Crown"
+        about.set_copyright("Copyright (C) 2008-2019 NIWA & British Crown"
                             " (Met Office) & contributors")
         about.set_comments(
             "The Cylc Suite Engine.\n\nclient UUID:\n%s" % self.cfg.my_uuid)
@@ -2636,40 +2636,11 @@ to reduce network traffic.""")
         help_menu_root = gtk.MenuItem('_Help')
         help_menu_root.set_submenu(help_menu)
 
-        doc_menu = gtk.Menu()
-        doc_item = gtk.ImageMenuItem("_Documentation")
-        img = gtk.image_new_from_stock(gtk.STOCK_COPY, gtk.ICON_SIZE_MENU)
-        doc_item.set_image(img)
-        doc_item.set_submenu(doc_menu)
-        help_menu.append(doc_item)
-
-        cug_html_item = gtk.ImageMenuItem('(file://) Documentation Index')
+        documentation_item = gtk.ImageMenuItem('(http://) Documentation')
         img = gtk.image_new_from_stock(gtk.STOCK_DND, gtk.ICON_SIZE_MENU)
-        cug_html_item.set_image(img)
-        doc_menu.append(cug_html_item)
-        cug_html_item.connect('activate', self.browse_doc)
-
-        cug_pdf_item = gtk.ImageMenuItem('(file://) PDF User Guide')
-        img = gtk.image_new_from_stock(gtk.STOCK_EDIT, gtk.ICON_SIZE_MENU)
-        cug_pdf_item.set_image(img)
-        doc_menu.append(cug_pdf_item)
-        cug_pdf_item.connect('activate', self.browse_doc, '-p')
-
-        doc_menu.append(gtk.SeparatorMenuItem())
-
-        if glbl_cfg().get(['documentation', 'urls', 'local index']):
-            cug_www_item = gtk.ImageMenuItem('(http://) Local Document Index')
-            img = gtk.image_new_from_stock(gtk.STOCK_JUMP_TO,
-                                           gtk.ICON_SIZE_MENU)
-            cug_www_item.set_image(img)
-            doc_menu.append(cug_www_item)
-            cug_www_item.connect('activate', self.browse_doc, '-x')
-
-        cug_www_item = gtk.ImageMenuItem('(http://) _Internet Home Page')
-        img = gtk.image_new_from_stock(gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU)
-        cug_www_item.set_image(img)
-        doc_menu.append(cug_www_item)
-        cug_www_item.connect('activate', self.browse_doc, '-w')
+        documentation_item.set_image(img)
+        help_menu.append(documentation_item)
+        documentation_item.connect('activate', self.browse_doc)
 
         chelp_menu = gtk.ImageMenuItem('_Command Help')
         img = gtk.image_new_from_stock(gtk.STOCK_EXECUTE, gtk.ICON_SIZE_MENU)
