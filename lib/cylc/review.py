@@ -55,27 +55,9 @@ class CylcReviewService(object):
     """'Cylc Review Service."""
 
     NS = "cylc"
-        template_env = jinja2.Environment(
-            autoescape=select_autoescape(
-                enabled_extensions=('rc'),
-                default_for_string=False,
-                default=True),
-            loader=jinja2.FileSystemLoader(
-                get_util_home("lib", "cylc", "cylc-review", "template")))
-        template_env = jinja2.Environment(
-            autoescape=select_autoescape(
-                enabled_extensions=('rc'),
-                default_for_string=False,
-                default=True),
-            loader=jinja2.FileSystemLoader(
-                get_util_home("lib", "cylc", "cylc-review", "template")))
-        template_env = jinja2.Environment(
-            autoescape=select_autoescape(
-                enabled_extensions=('rc'),
-                default_for_string=False,
-                default=True),
-            loader=jinja2.FileSystemLoader(
-                get_util_home("lib", "cylc", "cylc-review", "template")))
+    UTIL = "review"
+    TITLE = "Cylc Review"
+
     CYCLES_PER_PAGE = 100
     JOBS_PER_PAGE = 15
     JOBS_PER_PAGE_MAX = 300
