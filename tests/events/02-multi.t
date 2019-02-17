@@ -1,7 +1,7 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
-# 
+# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -15,17 +15,38 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# test list of multiple event handlers
-. $(dirname $0)/test_header
-#-------------------------------------------------------------------------------
-set_test_number 2
-#-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --reference-test --debug --no-detach $SUITE_NAME
-#-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+# Test list of multiple event handlers.
+
+. "$(dirname "$0")/test_header"
+
+set_test_number 3
+
+init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
+[scheduling]
+   [[dependencies]]
+      graph = t1
+[runtime]
+    [[t1]]
+        script=true
+        [[[events]]]
+            started handler = echo %(suite)s, echo %(name)s
+__SUITERC__
+
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+
+suite_run_ok "${TEST_NAME_BASE}-run" \
+    cylc run --debug --no-detach "${SUITE_NAME}"
+cylc cat-log "${SUITE_NAME}" \
+    | sed -n -e 's/^.*\(\[(('"'"'event-handler-0.'"'"'.*$\)/\1/p' | sort >'log'
+
+cmp_ok log <<__END__
+[(('event-handler-00', 'started'), 1) cmd] echo ${SUITE_NAME}
+[(('event-handler-00', 'started'), 1) out] ${SUITE_NAME}
+[(('event-handler-00', 'started'), 1) ret_code] 0
+[(('event-handler-01', 'started'), 1) cmd] echo t1
+[(('event-handler-01', 'started'), 1) out] t1
+[(('event-handler-01', 'started'), 1) ret_code] 0
+__END__
+
+purge_suite "${SUITE_NAME}"
+exit

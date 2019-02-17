@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -476,7 +476,7 @@ class SuiteRuntimeService(object):
 
         Return a tuple (modified_settings, bad_options) where:
           modified_settings is list of modified settings in the form:
-            [("20200202", "foo", {"command scripting": "true"}, ...]
+            [("20200202", "foo", {"script": "true"}, ...]
           bad_options is as described in the docstring for self.clear().
         """
         self._check_access_priv_and_report(PRIV_FULL_CONTROL)

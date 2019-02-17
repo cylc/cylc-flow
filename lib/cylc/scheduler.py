@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -323,7 +323,7 @@ class Scheduler(object):
         )
         cylc_license = """
 The Cylc Suite Engine [%s]
-Copyright (C) 2008-2018 NIWA
+Copyright (C) 2008-2019 NIWA
 & British Crown (Met Office) & Contributors.
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 This program comes with ABSOLUTELY NO WARRANTY;
@@ -1219,12 +1219,11 @@ conditions; see `cylc conditions`.
                         self.run_mode))
             self.config.cfg['cylc']['events'][self.EVENT_TIMEOUT] = (
                 timeout)
-            self.config.cfg['cylc']['events']['reset timer'] = False
 
     def run_event_handlers(self, event, reason):
         """Run a suite event handler.
 
-        Run suite event hooks in simulation and dummy mode ONLY if enabled.
+        Run suite events in simulation and dummy mode ONLY if enabled.
         """
         try:
             if (self.run_mode in ['simulation', 'dummy'] and
@@ -1273,8 +1272,7 @@ conditions; see `cylc conditions`.
         require renegotiation of dependencies, etc"""
         LOG.debug("BEGIN TASK PROCESSING")
         time0 = time()
-        if (self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT) and
-                self._get_events_conf('reset inactivity timer')):
+        if self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT):
             self.set_suite_inactivity_timer()
         self.pool.match_dependencies()
         if self.stop_mode is None and self.auto_restart_time is None:
@@ -1721,6 +1719,7 @@ conditions; see `cylc conditions`.
             self.is_stalled = False
             for itask in updated_tasks:
                 itask.state.is_updated = False
+            # Suite can't be stalled, so stop the suite timer.
             if self.suite_timer_active:
                 self.suite_timer_active = False
                 LOG.debug(

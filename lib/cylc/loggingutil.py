@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -44,10 +44,10 @@ class CylcLogFormatter(logging.Formatter):
     Date time in ISO date time with correct time zone.
     """
 
-    def __init__(self):
+    def __init__(self, timestamp=True):
         logging.Formatter.__init__(
-            self,
-            '%(asctime)s %(levelname)-2s - %(message)s',
+            self, ('%(asctime)s ' if timestamp else '')
+            + '%(levelname)-2s - %(message)s',
             '%Y-%m-%dT%H:%M:%S%Z')
 
     def format(self, record):

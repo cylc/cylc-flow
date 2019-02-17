@@ -96,8 +96,8 @@ rel="stylesheet" media="screen" />
                   <label for="order">Sort Order</label>
                   <select name="order" title="Sort Order" class="form-control">
                   {% for k, v in [
-                      ("time_desc", "new-&gt;old"),
-                      ("time_asc", "old-&gt;new"),
+                      ("time_desc", "new-&gt;old" | safe ),
+                      ("time_asc", "old-&gt;new" | safe ),
                       ("name_asc", "a-z suite name"),
                       ("name_desc", "z-a suite name"),
                   ] -%}

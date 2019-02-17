@@ -71,9 +71,9 @@
     'WARNING', '<span class="nocode text-warning">WARNING</span>') -%}
 {% endif -%}
 {% if mode == "tags" -%}
-{{line}}
+{{line|safe}}
 {% else -%}
-{{line|urlise}}
+{{ (line|urlise) | safe }}
 {% endif -%}
 {% endfor -%}
 </pre>

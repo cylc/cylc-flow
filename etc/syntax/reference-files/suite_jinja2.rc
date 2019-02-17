@@ -1,0 +1,71 @@
+#!Jinja2
+# ^ SYNTAX:3.1
+
+# SYNTAX numbering matches the table in https://github.com/cylc/cylc/issues/2752
+
+# SYNTAX: 3.2
+# templating code should be displayed differently to cylc code
+{# no comment #}  # should display as a comment
+{% set foo = "bar" %}
+{% set foo = '%s' % 'bar' %}
+{% set foo = {"1": 2, "3", []} %}
+{% set foo = foo.bar(1, 2, 3) %}
+{{ foo_bar }}
+{{ foo.bar(1, 2, 3) }}
+{{ foo | bar(1, 2, 3) }}
+{% include 'foo' %}
+{% include ['foo', 'bar'] %}
+{% import 'foo' as foo %}
+{% from 'foo' import foo as a, b %}
+
+# SYNTAX 3.3
+# multi-line template code should appear the same as single-line template code
+# if it were distributed over multiple lines
+{#
+    no comment
+#}  # all three lines should display as a single comment with no gaps
+{# a
+   b
+   c #}  # all three lines should display as a single comment with no gaps
+{%
+    set foo = {"1": 2, "3", []}
+%}
+{% set foo = {
+    "1": 2,
+    "3", []} %}
+
+
+
+# SYNTAX 3./1.1
+# keys, values and sections outside of the templating code should display
+# as normal
+a = {{ b }}
+{{ a }} = b
+a = {{ b + 1 }}
+a = {{ b_b | c.d('1', "2", 3) }}
+[[{{ a }}]]
+    d = e  # check highlighting of this line un-affected by section
+[[{{ a_a | c.d('1', "2", 3) }}]]
+    d = e  # check highlighting of this line un-affected by section
+[[a{{ b }}c]]
+    d = e  # check highlighting of this line un-affected by section
+[[{{ "%(foo)s" % {"foo": "abc"}}}]]
+    d = e  # check highlighting of this line un-affected by section
+
+# SYNTAX 3./1.2
+# comments outside of the templating code should display as normal
+{# foo #}  # foo
+{% foo %}  # foo
+{{ foo }}  # foo
+
+# SYNTAX 3./1.3
+# tasks and deps outside of the templating code should display as normal
+graph = """
+    foo => {{ bar }} => qux
+    foo => {{ b_ar | baz.pub('1', "2", 3) }} => qux =>
+{% if BAR %}
+    bar => pub
+{% else %}
+    baz => pub
+{% endif %}
+"""

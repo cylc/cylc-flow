@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -88,28 +88,16 @@ SPEC = {
     },
 
     'documentation': {
-        'files': {
-            'html index': [
-                VDR.V_STRING, '$CYLC_DIR/doc/install/index.html'],
-            'pdf user guide': [
-                VDR.V_STRING, '$CYLC_DIR/doc/install/cylc-user-guide.pdf'],
-            'multi-page html user guide': [
-                VDR.V_STRING,
-                '$CYLC_DIR/doc/install/html/multi/cug-html.html'],
-            'single-page html user guide': [
-                VDR.V_STRING,
-                '$CYLC_DIR/doc/install/html/single/cug-html.html'],
-        },
-        'urls': {
-            'internet homepage': [VDR.V_STRING, 'http://cylc.github.io/cylc/'],
-            'local index': [VDR.V_STRING],
-        },
+        'local': [VDR.V_STRING, '$CYLC_DIR/doc/built-sphinx/index.html'],
+        'online': [VDR.V_STRING,
+                   'http://cylc.github.io/cylc/doc/built-sphinx/index.html'],
+        'cylc homepage': [VDR.V_STRING, 'http://cylc.github.io/cylc/'],
     },
 
     'document viewers': {
-        'pdf': [VDR.V_STRING, 'evince'],
         'html': [VDR.V_STRING, 'firefox'],
     },
+
     'editors': {
         'terminal': [VDR.V_STRING, 'vim'],
         'gui': [VDR.V_STRING, 'gvim -f'],
@@ -117,9 +105,6 @@ SPEC = {
 
     'communication': {
         'method': [VDR.V_STRING, 'https', 'http'],
-        'base port': [VDR.V_INTEGER, 43001],
-        'maximum number of ports': [VDR.V_INTEGER, 100],
-        'proxies on': [VDR.V_BOOLEAN],
         'options': [VDR.V_STRING_LIST],
     },
 
@@ -205,7 +190,6 @@ SPEC = {
         'mail retry delays': [VDR.V_INTERVAL_LIST],
         'mail smtp': [VDR.V_STRING],
         'mail to': [VDR.V_STRING],
-        'reset timer': [VDR.V_BOOLEAN],
         'submission timeout': [VDR.V_INTERVAL],
     },
 
@@ -261,139 +245,25 @@ def upg(cfg, descr):
     use_ssh = converter(lambda x: "ssh", "set to 'ssh'")
 
     u = upgrader(cfg, descr)
-    u.deprecate(
-        '5.1.1',
-        ['editors', 'in-terminal'],
-        ['editors', 'terminal'])
-    u.deprecate(
-        '5.1.1',
-        ['task hosts'],
-        ['hosts'])
-    u.deprecate(
-        '5.1.1',
-        ['hosts', 'local'],
-        ['hosts', 'localhost'])
-    u.deprecate(
-        '5.1.1',
-        ['hosts', '__MANY__', 'workspace directory'],
-        ['hosts', '__MANY__', 'workdirectory'])
-    u.deprecate(
-        '5.1.1',
-        ['hosts', '__MANY__', 'cylc directory'],
-        ['hosts', '__MANY__', 'cylc bin directory'],
-        add_bin_dir)
-    u.obsolete(
-        '5.2.0',
-        ['hosts', '__MANY__', 'cylc bin directory'],
-        ['hosts', '__MANY__', 'cylc bin directory'])
-    u.deprecate(
-        '5.2.0',
-        ['hosts', '__MANY__', 'use ssh messaging'],
-        ['hosts', '__MANY__', 'task communication method'],
-        use_ssh)
-    u.deprecate(
-        '6.1.2',
-        ['task messaging', 'connection timeout in seconds'],
-        ['task messaging', 'connection timeout'])
-    u.deprecate(
-        '6.1.2',
-        ['task messaging', 'retry interval in seconds'],
-        ['task messaging', 'retry interval'])
-    u.deprecate(
-        '6.4.0',
-        ['runtime', '__MANY__', 'global initial scripting'],
-        ['runtime', '__MANY__', 'global init-script'])
-    for batch_sys_name in ['loadleveler', 'lsf', 'pbs', 'sge', 'slurm']:
-        u.deprecate(
-            '6.4.1',
-            ['test battery', 'directives', batch_sys_name + ' host'],
-            ['test battery', 'batch systems', batch_sys_name, 'host'])
-        u.deprecate(
-            '6.4.1',
-            ['test battery', 'directives', batch_sys_name + ' directives'],
-            ['test battery', 'batch systems', batch_sys_name, 'directives'])
-    u.obsolete(
-        '6.4.1',
-        ['test battery', 'directives'])
-    u.obsolete(
-        '6.11.0',
-        ['state dump rolling archive length'])
-    u.deprecate(
-        '6.11.0',
-        ['cylc', 'event hooks'],
-        ['cylc', 'events'])
-    for key in SPEC['cylc']['events']:
-        u.deprecate(
-            '6.11.0',
-            ['cylc', 'event hooks', key],
-            ['cylc', 'events', key])
-    u.obsolete(
-        '7.0.0',
-        ['pyro', 'base port'])
-    u.obsolete(
-        '7.0.0',
-        ['pyro', 'maximum number of ports'],
-        ['communication', 'maximum number of ports'])
-    u.obsolete(
-        '7.0.0',
-        ['pyro', 'ports directory'])
-    u.obsolete(
-        '7.0.0',
-        ['pyro'])
-    u.obsolete(
-        '7.0.0',
-        ['authentication', 'hashes'])
-    u.obsolete(
-        '7.0.0',
-        ['authentication', 'scan hash'])
-    u.deprecate(
-        '7.0.0',
-        ['execution polling intervals'],
-        ['hosts', 'localhost', 'execution polling intervals'])
-    u.deprecate(
-        '7.0.0',
-        ['submission polling intervals'],
-        ['hosts', 'localhost', 'submission polling intervals'])
-    u.deprecate(
-        '7.3.1',
-        ['hosts', '__MANY__', 'remote shell template'],
-        ['hosts', '__MANY__', 'ssh command'])
-    u.deprecate(
-        '7.3.1',
-        ['hosts', '__MANY__', 'remote copy template'],
-        ['hosts', '__MANY__', 'scp command'])
-    # A special remote tail command template is no longer needed. It used to
-    # use 'tail -pid' to kill 'tail' on ssh exit, but we do this in cylc now.
-    u.obsolete(
-        '7.6.0',
-        ['hosts', '__MANY__', 'remote tail command template'])
-    u.deprecate(
-        '7.6.0',
-        ['hosts', '__MANY__', 'local tail command template'],
-        ['hosts', '__MANY__', 'tail command template'])
-    u.deprecate(
-        '7.8.0',
-        ['communication', 'base port'],
-        ['suite servers', 'run ports'],
-        converter(lambda x: '%s .. %s' % (
-            int(x),
-            int(x) + int(cfg['communication']['maximum number of ports'])),
-            "Format as range list"))
-    u.obsolete(
-        '7.8.0',
-        ['communication', 'maximum number of ports'])
-    u.deprecate(
-        '7.8.0',
-        ['suite host scanning'],
-        ['suite servers'])
-    u.deprecate(
-        '7.8.0',
-        ['suite servers', 'hosts'],
-        ['suite servers', 'scan hosts'])
+
+    u.obsolete('6.4.1', ['test battery', 'directives'])
+    u.obsolete('6.11.0', ['state dump rolling archive length'])
     # Roll over is always done.
-    u.obsolete(
-        '7.8.0',
-        ['suite logging', 'roll over at start-up'])
+    u.obsolete('7.8.0', ['suite logging', 'roll over at start-up'])
+    u.obsolete('7.8.1', ['documentation', 'local index'])
+    u.obsolete('7.8.1', ['documentation', 'files', 'pdf user guide'])
+    u.obsolete('7.8.1', ['documentation', 'files',
+                         'single-page html user guide'])
+    u.deprecate('7.8.1',
+                ['documentation', 'files', 'multi-page html user guide'],
+                ['documentation', 'local'])
+    u.deprecate('8.0.0',
+                ['documentation', 'files', 'html index'],
+                ['documentation', 'local'])
+    u.deprecate('8.0.0',
+                ['documentation', 'urls', 'internet homepage'],
+                ['documentation', 'cylc homepage'])
+
     u.upgrade()
 
 
@@ -682,8 +552,8 @@ class GlobalConfig(ParsecConfig):
         # Expand environment variables and ~user in LOCAL file paths.
         if 'HOME' not in os.environ:
             os.environ['HOME'] = self._HOME
-        for key, val in cfg['documentation']['files'].items():
-            cfg['documentation']['files'][key] = os.path.expandvars(val)
+        cfg['documentation']['local'] = os.path.expandvars(
+            cfg['documentation']['local'])
         for key, val in cfg['hosts']['localhost'].items():
             if val and 'directory' in key:
                 cfg['hosts']['localhost'][key] = os.path.expandvars(val)

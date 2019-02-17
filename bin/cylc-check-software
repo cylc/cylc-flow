@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2018 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -57,20 +57,11 @@ opt_spec = {
     'requests': [(2, 4, 2), 'HTTPSCOMMS', 'PY'],
     'OpenSSL': [None, 'HTTPSCOMMS', 'PY'],
     'urllib3': [None, 'HTTPSCOMMS', 'PY'],
+    'sphinx': [(1, 5, 3), 'HTMLDOCS', 'PY'],
     'pygtk': [(2, 0), 'GUIORGRAPH', 'PY'],
     'pygraphviz': [None, 'GUIORGRAPH', 'PY'],
-    'texlive': [None, 'LATEXGUIDE', 'TEX'],
-    'tocloft': [None, 'LATEXGUIDE', 'TEX'],
-    'framed': [None, 'LATEXGUIDE', 'TEX'],
-    'preprint': [None, 'LATEXGUIDE', 'TEX'],
-    'tex4ht': [None, 'LATEXGUIDE', 'TEX'],
-    'TeX': [(3, 0), 'LATEXGUIDE', 'OTHER',
-            (['tex'], '-v', r'TeX ([^\s]+)')],
     'graphviz': [None, 'GUIORGRAPH', 'OTHER',
                  (['dot'], '-V', r'graphviz version ([^\s]+)', 2)],
-    'ImageMagick': [None, 'HTMLUGUIDE', 'OTHER',
-                    (['magick convert', 'convert'],
-                     '-version', r'ImageMagick ([^\s]+)')]
 }
 
 # All possible module reqs to accept as arguments, as above or all lower case.
@@ -83,8 +74,7 @@ func_tags_and_text = {
     'TEMPLATING': 'configuration templating',
     'HTTPSCOMMS': 'HTTPS communications layer',
     'GUIORGRAPH': 'GUI & dependency graph visualisation',
-    'LATEXGUIDE': 'LaTeX User Guide',
-    'HTMLUGUIDE': 'HTML User Guide'
+    'HTMLDOCS': 'HTML documentation',
 }
 
 # Initialise results dict

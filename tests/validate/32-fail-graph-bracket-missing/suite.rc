@@ -5,4 +5,4 @@
                     """
 [runtime]
 [[foo, bar, baz]]
-     command scripting = echo "Hello"
+     script = echo "Hello"

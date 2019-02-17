@@ -2,19 +2,12 @@
 # python bytecode
 *.pyc
 
-# Generated documentation files.
-# - User Guide.
-doc/src/cylc-user-guide/pdf
-doc/src/cylc-user-guide/html
-doc/src/cylc-user-guide/commands.tex
-doc/src/cylc-user-guide/cylc-version.txt
-# - Suite Design Guide.
-doc/src/suite-design-guide/*.aux
-doc/src/suite-design-guide/*.out
-doc/src/suite-design-guide/*.pdf
-doc/src/suite-design-guide/*.log
-doc/src/suite-design-guide/*.toc
-# Installed docs.
+# Generated documentation files (from 'cylc make-docs')
+# - Command reference from called script 'custom/make-commands.sh'.
+doc/src/appendices/command-ref.rst
+# - Main directory of generated sphinx docs (guides) files.
+doc/built-sphinx/
+# - Installed docs
 doc/install/
 
 # VERSION FILE

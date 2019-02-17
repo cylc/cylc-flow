@@ -5,6 +5,6 @@
         graph = foo => bar
 [runtime]
     [[foo]]
-        pre-command scripting = {{ true|truly }}
-        command scripting = {{ false|truly }}
+        pre-script = {{ true|truly }}
+        script = {{ false|truly }}
     [[bar]]
