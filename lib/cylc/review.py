@@ -29,7 +29,6 @@ import cherrypy
 from fnmatch import fnmatch
 from glob import glob
 import jinja2
-from jinja2 import select_autoescape
 import json
 import mimetypes
 import os
@@ -56,9 +55,27 @@ class CylcReviewService(object):
     """'Cylc Review Service."""
 
     NS = "cylc"
-    UTIL = "review"
-    TITLE = "Cylc Review"
-
+        template_env = jinja2.Environment(
+            autoescape=select_autoescape(
+                enabled_extensions=('rc'),
+                default_for_string=False,
+                default=True),
+            loader=jinja2.FileSystemLoader(
+                get_util_home("lib", "cylc", "cylc-review", "template")))
+        template_env = jinja2.Environment(
+            autoescape=select_autoescape(
+                enabled_extensions=('rc'),
+                default_for_string=False,
+                default=True),
+            loader=jinja2.FileSystemLoader(
+                get_util_home("lib", "cylc", "cylc-review", "template")))
+        template_env = jinja2.Environment(
+            autoescape=select_autoescape(
+                enabled_extensions=('rc'),
+                default_for_string=False,
+                default=True),
+            loader=jinja2.FileSystemLoader(
+                get_util_home("lib", "cylc", "cylc-review", "template")))
     CYCLES_PER_PAGE = 100
     JOBS_PER_PAGE = 15
     JOBS_PER_PAGE_MAX = 300
@@ -79,13 +96,13 @@ class CylcReviewService(object):
         if self.host_name and "." in self.host_name:
             self.host_name = self.host_name.split(".", 1)[0]
         self.cylc_version = CYLC_VERSION
+        # Autoescape markup to prevent code injection from user inputs.
         template_env = jinja2.Environment(
-            autoescape=select_autoescape(
-                enabled_extensions=('rc'),
-                default_for_string=False,
-                default=True),
             loader=jinja2.FileSystemLoader(
-                get_util_home("lib", "cylc", "cylc-review", "template")))
+                get_util_home("lib", "cylc", "cylc-review", "template")),
+            autoescape=jinja2.select_autoescape(
+                enabled_extensions=('html', 'xml'), default_for_string=True),
+        )
         template_env.filters['urlise'] = self.url2hyperlink
         self.template_env = template_env
 
