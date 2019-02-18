@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 def faker(name, debug=False):
     print("%s: failing" % name)

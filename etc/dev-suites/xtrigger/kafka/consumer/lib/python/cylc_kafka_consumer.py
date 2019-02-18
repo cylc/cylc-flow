@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 A generic Kakfa consumer for use as a Cylc external trigger function.
 
