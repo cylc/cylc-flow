@@ -82,6 +82,6 @@ jobs:
     install:
     - .travis/install.sh unit-tests functional-tests
     script:
-    - pycodestyle --ignore=E402,W503,W504 lib/cylc lib/Jinja2Filters/*.py lib/parsec/*.py $(grep -l '#!.*\<python\>' bin/*)
+    - pycodestyle --ignore=E402,W503,W504 lib/cylc lib/Jinja2Filters/*.py lib/parsec/*.py tests/lib/python/*.py $(grep -l '#!.*\<python\>' bin/*)
     - PYTHONPATH=$(pwd -P)/lib/ pytest --cov-append --cov=lib/cylc --cov=lib/parsec
     after_script: true

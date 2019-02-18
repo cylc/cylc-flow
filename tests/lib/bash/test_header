@@ -383,7 +383,7 @@ graph_suite() {
     local OUTPUT_FILE="${2}"
     shift 2
     mkdir -p "$(dirname "${OUTPUT_FILE}")"
-    cylc graph --reference "${SUITE_NAME}" "$@" >"${OUTPUT_FILE}" 2>'/dev/null'
+    cylc graph --reference "${SUITE_NAME}" "$@" >"${OUTPUT_FILE}"
 }
 
 init_suite() {
