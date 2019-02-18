@@ -39,6 +39,7 @@ addons:
 stages:
 - unit-test
 - test
+- documentation
 
 env:
   global:
@@ -85,3 +86,10 @@ jobs:
     - pycodestyle --ignore=E402,W503,W504 lib/cylc lib/Jinja2Filters/*.py lib/parsec/*.py tests/lib/python/*.py $(grep -l '#!.*\<python\>' bin/*)
     - PYTHONPATH=$(pwd -P)/lib/ pytest --cov-append --cov=lib/cylc --cov=lib/parsec
     after_script: true
+  - stage: documentation
+    install:
+    - .travis/install.sh docs
+    script:
+    - cylc make-docs
+    after_success:
+    - true

@@ -43,9 +43,13 @@ if grep 'functional-tests' <<< "${args[@]}"; then
       --install-option="--library-path=/usr/lib/graphviz/"
 fi
 
-# install dependencies required for building documentation, only when instructed to do so
+# install dependencies required for building documentation
 if grep 'docs' <<< "${args[@]}$"; then
+    pip install sphinx
     sudo apt-get install texlive-latex-base
+    pip install pygraphviz \
+      --install-option="--include-path=/usr/include/graphviz" \
+      --install-option="--library-path=/usr/lib/graphviz/"
 fi
 
 # configure local SSH for Cylc jobs
