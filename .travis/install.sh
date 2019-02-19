@@ -31,13 +31,18 @@ pip install coverage pytest-cov mock
 
 # install dependencies required for running unit tests
 if grep 'unit-tests' <<< "${args[@]}"; then
-    pip install EmPy pyopenssl pycodestyle pytest mock
+    #pip install EmPy pyopenssl pycodestyle pytest mock
+    # TODO: remove EmPy from testing, see:  #2958
+    pip install pyopenssl pycodestyle pytest mock
 fi
 
 # install dependencies required for running functional tests
 if grep 'functional-tests' <<< "${args[@]}"; then
-    # pygraphviz needs special treatment to avoid an error from "from . import release"
-    pip install EmPy pyopenssl
+    # pygraphviz needs special treatment to avoid an error from 
+    # "from . import release"
+    #pip install EmPy pyopenssl
+    # TODO: remove EmPy from testing, see:  #2958
+    pip install pyopenssl
     pip install pygraphviz \
       --install-option="--include-path=/usr/include/graphviz" \
       --install-option="--library-path=/usr/lib/graphviz/"
