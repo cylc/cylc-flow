@@ -342,12 +342,6 @@ class SuiteRuntimeServer(ZMQServer):
             group_all=group_all,
             ungroup_all=ungroup_all)
 
-    @authorise(Priv.READ)
-    @ZMQServer.expose
-    def get_latest_state(self, full_mode=False):
-        """Return latest suite state (suitable for a GUI update)."""
-        return self.schd.info_get_latest_state(client_info, full_mode)
-
     @authorise(Priv.DESCRIPTION)
     @ZMQServer.expose
     def get_suite_info(self):
@@ -432,17 +426,6 @@ class SuiteRuntimeServer(ZMQServer):
             KEY_STATES: self.schd.state_summary_mgr.get_state_totals(),
             KEY_TASKS_BY_STATE: self.schd.state_summary_mgr.get_tasks_by_state()
         }
-
-    # @authorise(Priv.IDENTIFY)  # TODO: split method into auth zones
-    # @ZMQServer.expose
-    # def identify(self):
-    #     """Return suite identity, (description, (states))."""
-    #     # TODO
-    #     privileges = []
-    #     for privilege in PRIVILEGE_LEVELS[0:3]:
-    #         #if self._access_priv_ok(privilege):
-    #         privileges.append(privilege)
-    #     return self.schd.info_get_identity(privileges)
 
     @authorise(Priv.CONTROL)
     @ZMQServer.expose
@@ -530,24 +513,6 @@ class SuiteRuntimeServer(ZMQServer):
 
     @authorise(Priv.CONTROL)
     @ZMQServer.expose
-    def put_message(self, task_id, severity, message):
-        """(Compat) Put task message.
-
-        Arguments:
-            task_id (str): Task ID in the form "TASK_NAME.CYCLE".
-            severity (str): Severity level of message.
-            message (str): Content of message.
-        """
-        match = self.RE_MESSAGE_TIME.match(message)
-        event_time = None
-        if match:
-            message, event_time = match.groups()
-        self.schd.message_queue.put(
-            (task_id, event_time, severity, message))
-        return (True, 'Message queued')
-
-    @authorise(Priv.CONTROL)
-    @ZMQServer.expose
     def put_messages(self, task_job=None, event_time=None, messages=None):
         """Put task messages in queue for processing later by the main loop.
 
@@ -585,14 +550,6 @@ class SuiteRuntimeServer(ZMQServer):
         if not isinstance(items, list):
             items = [items]
         self.schd.command_queue.put(("release_tasks", (items,), {}))
-        return (True, 'Command queued')
-
-    @authorise(Priv.CONTROL)
-    @ZMQServer.expose
-    def remove_cycle(self, point_string, spawn=False):
-        """Remove tasks in a cycle from task pool."""
-        self.schd.command_queue.put(
-            ("remove_tasks", ('%s/*' % point_string,), {"spawn": spawn}))
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
