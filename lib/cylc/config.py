@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Parse and validate the suite definition file
 
+Set suite variables in local environment as soon as possible.
 Do some consistency checking, then construct task proxy objects and graph
 structures.
 """
@@ -56,7 +57,7 @@ from cylc.taskdef import TaskDef, TaskDefError
 from cylc.task_id import TaskID
 from cylc.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.task_trigger import TaskTrigger, Dependency
-from cylc.wallclock import get_current_time_string, set_utc_mode
+from cylc.wallclock import get_current_time_string, set_utc_mode, get_utc_mode
 from cylc.xtrigger_mgr import XtriggerManager
 
 
@@ -106,13 +107,14 @@ class SuiteConfig(object):
         'message', 'batch_sys_name', 'batch_sys_job_id', 'submit_time',
         'start_time', 'finish_time', 'user@host', 'try_num')
 
-    def __init__(self, suite, fpath, template_vars=None,
-                 owner=None, run_mode='live', is_validate=False, strict=False,
-                 collapsed=None, cli_initial_point_string=None,
-                 cli_start_point_string=None, cli_final_point_string=None,
-                 is_reload=False, output_fname=None,
-                 vis_start_string=None, vis_stop_string=None,
-                 xtrigger_mgr=None, mem_log_func=None):
+    def __init__(self, suite, fpath, suite_dir, suite_run_dir, suite_log_dir,
+                 suite_work_dir, suite_share_dir,
+                 template_vars=None, owner=None, run_mode='live',
+                 is_validate=False, strict=False, collapsed=None,
+                 cli_initial_point_string=None, cli_start_point_string=None,
+                 cli_final_point_string=None, is_reload=False,
+                 output_fname=None, vis_start_string=None,
+                 vis_stop_string=None, xtrigger_mgr=None, mem_log_func=None):
 
         self.mem_log = mem_log_func
         if mem_log_func is None:
@@ -129,6 +131,7 @@ class SuiteConfig(object):
         self.taskdefs = {}
         self.initial_point = None
         self.start_point = None
+        self.final_point = None
         self.first_graph = True
         self.clock_offsets = {}
         self.expiration_offsets = {}
@@ -174,6 +177,22 @@ class SuiteConfig(object):
         self.leaves = []
         # one up from root
         self.feet = []
+
+        # Set local values of variables to give suite context before parsing
+        # config, i.e for template filters (Jinja2, python ...etc). Potentially
+        # task-specific due to different directory paths on different task
+        # hosts, however, they are overridden by tasks prior to job submission
+        # and in principle they could be needed locally by and  event handlers:
+        for var, val in [
+                ('CYLC_SUITE_NAME', self.suite),
+                ('CYLC_DEBUG', str(cylc.flags.debug).lower()),
+                ('CYLC_VERBOSE', str(cylc.flags.verbose).lower()),
+                ('CYLC_SUITE_RUN_DIR', suite_run_dir),
+                ('CYLC_SUITE_LOG_DIR', suite_log_dir),
+                ('CYLC_SUITE_WORK_DIR', suite_work_dir),
+                ('CYLC_SUITE_SHARE_DIR', suite_share_dir),
+                ('CYLC_SUITE_DEF_PATH', suite_dir)]:
+            os.environ[var] = val
 
         # parse, upgrade, validate the suite, but don't expand with default
         # items
@@ -339,6 +358,7 @@ class SuiteConfig(object):
             set_utc_mode(glbl_cfg().get(['cylc', 'UTC mode']))
         else:
             set_utc_mode(self.cfg['cylc']['UTC mode'])
+        os.environ['CYLC_UTC'] = str(get_utc_mode())
 
         # Initial point from suite definition (or CLI override above).
         icp = self.cfg['scheduling']['initial cycle point']
@@ -382,54 +402,56 @@ class SuiteConfig(object):
                 raise SuiteConfigError(
                     ("Initial cycle point %s does not meet the constraints " +
                      "%s") % (
-                        str(self.initial_point),
-                        constraints_str
-                    )
+                         str(self.initial_point),
+                         constraints_str
+                         )
                 )
+
+        os.environ['CYLC_SUITE_INITIAL_CYCLE_POINT'] = str(self.initial_point)
 
         if (self.cfg['scheduling']['final cycle point'] is not None and
                 self.cfg['scheduling']['final cycle point'].strip() is ""):
             self.cfg['scheduling']['final cycle point'] = None
         final_point_string = (cli_final_point_string or
                               self.cfg['scheduling']['final cycle point'])
-        final_point = None
         if final_point_string is not None:
             # Is the final "point"(/interval) relative to initial?
             if get_interval_cls().get_null().TYPE == INTEGER_CYCLING_TYPE:
                 if "P" in final_point_string:
                     # Relative, integer cycling.
-                    final_point = get_point_relative(
+                    self.final_point = get_point_relative(
                         self.cfg['scheduling']['final cycle point'],
                         self.initial_point
                     ).standardise()
             else:
                 try:
                     # Relative, ISO8601 cycling.
-                    final_point = get_point_relative(
+                    self.final_point = get_point_relative(
                         final_point_string, self.initial_point).standardise()
                 except ValueError:
                     # (not relative)
                     pass
-            if final_point is None:
+            if self.final_point is None:
                 # Must be absolute.
-                final_point = get_point(final_point_string).standardise()
-            self.cfg['scheduling']['final cycle point'] = str(final_point)
+                self.final_point = get_point(final_point_string).standardise()
+            self.cfg['scheduling']['final cycle point'] = str(self.final_point)
 
-        if final_point is not None and self.initial_point > final_point:
+        if (self.final_point is not None and
+                self.initial_point > self.final_point):
             raise SuiteConfigError(
                 "The initial cycle point:" +
                 str(self.initial_point) + " is after the final cycle point:" +
-                str(final_point) + ".")
+                str(self.final_point) + ".")
 
         # Validate final cycle point against any constraints
-        if (final_point is not None and
+        if (self.final_point is not None and
                 self.cfg['scheduling']['final cycle point constraints']):
             valid_fcp = False
             for entry in (
                     self.cfg['scheduling']['final cycle point constraints']):
                 possible_pt = get_point_relative(
-                    entry, final_point).standardise()
-                if final_point == possible_pt:
+                    entry, self.final_point).standardise()
+                if self.final_point == possible_pt:
                     valid_fcp = True
                     break
             if not valid_fcp:
@@ -437,7 +459,9 @@ class SuiteConfig(object):
                     self.cfg['scheduling']['final cycle point constraints'])
                 raise SuiteConfigError(
                     "Final cycle point %s does not meet the constraints %s" % (
-                        str(final_point), constraints_str))
+                        str(self.final_point), constraints_str))
+
+        os.environ['CYLC_SUITE_FINAL_CYCLE_POINT'] = str(self.final_point)
 
         # Parse special task cycle point offsets, and replace family names.
         LOG.debug("Parsing [special tasks]")
@@ -507,6 +531,8 @@ class SuiteConfig(object):
                     self.ext_triggers[name] = self.dequote(ext_trigger_msg)
 
             self.cfg['scheduling']['special tasks'][s_type] = result
+
+        os.environ['CYLC_CYCLING_MODE'] = self.cfg['scheduling']['cycling mode']
 
         self.collapsed_families_rc = (
             self.cfg['visualization']['collapsed families'])
@@ -702,10 +728,10 @@ class SuiteConfig(object):
             vfcp = None
 
         # A viz final point can't be beyond the suite final point.
-        if vfcp is not None and final_point is not None:
-            if vfcp > final_point:
+        if vfcp is not None and self.final_point is not None:
+            if vfcp > self.final_point:
                 self.cfg['visualization']['final cycle point'] = str(
-                    final_point)
+                    self.final_point)
 
         # Replace suite and task name in suite and task URLs.
         self.cfg['meta']['URL'] = self.cfg['meta']['URL'] % {
@@ -721,6 +747,18 @@ class SuiteConfig(object):
                 self.suite, cfg['meta']['URL'])
             cfg['meta']['URL'] = RE_TASK_NAME_VAR.sub(
                 name, cfg['meta']['URL'])
+
+        # Set local runtime environment
+        #     (global config auto expands environment variables in local paths)
+        cenv = self.cfg['cylc']['environment'].copy()
+        for var, val in cenv.items():
+            cenv[var] = os.path.expandvars(val)
+        #     path to suite bin directory for suite and event handlers
+        cenv['PATH'] = os.pathsep.join([
+            os.path.join(suite_dir, 'bin'), os.environ['PATH']])
+        #     and to suite event handlers in this process.
+        for var, val in cenv.items():
+            os.environ[var] = val
 
         if is_validate:
             self.mem_log("config.py: before _check_circular()")
@@ -1261,8 +1299,8 @@ class SuiteConfig(object):
                 ).get_seconds()
             rtc['job']['execution time limit'] = (
                 sleep_sec + DurationParser().parse(str(
-                    rtc['simulation']['time limit buffer'])
-                ).get_seconds())
+                    rtc['simulation']['time limit buffer'])).get_seconds()
+            )
             rtc['job']['simulated run length'] = sleep_sec
 
             # Generate dummy scripting.
