@@ -971,11 +971,9 @@ conditions; see `cylc conditions`.
 
     def load_suiterc(self, is_reload=False):
         """Load, and log the suite definition."""
-        # Suite context is exported to the environment therein.
+        # Local suite environment set therein.
         self.config = SuiteConfig(
-            self.suite, self.suiterc, self.suite_dir, self.suite_run_dir,
-            self.suite_log_dir, self.suite_work_dir, self.suite_share_dir,
-            template_vars=self.template_vars,
+            self.suite, self.suiterc, self.template_vars,
             run_mode=self.run_mode,
             cli_initial_point_string=self.cli_initial_point_string,
             cli_start_point_string=self.cli_start_point_string,
@@ -986,6 +984,10 @@ conditions; see `cylc conditions`.
             output_fname=os.path.join(
                 self.suite_run_dir,
                 self.suite_srv_files_mgr.FILE_BASE_SUITE_RC + '.processed'),
+            run_dir=self.suite_run_dir,
+            log_dir=self.suite_log_dir,
+            work_dir=self.suite_work_dir,
+            share_dir=self.suite_share_dir,
         )
         self.suiterc_update_time = time()
         # Dump the loaded suiterc for future reference.

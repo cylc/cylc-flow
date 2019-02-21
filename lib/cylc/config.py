@@ -17,7 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Parse and validate the suite definition file
 
-Set suite variables in local environment as soon as possible.
+Suite context is exported to the environment, which may be used in
+configuration parsing (as this has utility for both running and
+non-running suites).
+
 Do some consistency checking, then construct task proxy objects and graph
 structures.
 """
@@ -107,14 +110,15 @@ class SuiteConfig(object):
         'message', 'batch_sys_name', 'batch_sys_job_id', 'submit_time',
         'start_time', 'finish_time', 'user@host', 'try_num')
 
-    def __init__(self, suite, fpath, suite_dir, suite_run_dir, suite_log_dir,
-                 suite_work_dir, suite_share_dir,
-                 template_vars=None, owner=None, run_mode='live',
-                 is_validate=False, strict=False, collapsed=None,
-                 cli_initial_point_string=None, cli_start_point_string=None,
-                 cli_final_point_string=None, is_reload=False,
-                 output_fname=None, vis_start_string=None,
-                 vis_stop_string=None, xtrigger_mgr=None, mem_log_func=None):
+    def __init__(self, suite, fpath, template_vars=None,
+                 owner=None, run_mode='live', is_validate=False, strict=False,
+                 collapsed=None, cli_initial_point_string=None,
+                 cli_start_point_string=None, cli_final_point_string=None,
+                 is_reload=False, output_fname=None,
+                 vis_start_string=None, vis_stop_string=None,
+                 xtrigger_mgr=None, mem_log_func=None,
+                 run_dir=None, log_dir=None,
+                 work_dir=None, share_dir=None):
 
         self.mem_log = mem_log_func
         if mem_log_func is None:
@@ -123,6 +127,14 @@ class SuiteConfig(object):
         self.suite = suite  # suite name
         self.fpath = fpath  # suite definition
         self.fdir = os.path.dirname(fpath)
+        self.run_dir = run_dir or glbl_cfg().get_derived_host_item(
+            self.suite, 'suite run directory')
+        self.log_dir = log_dir or glbl_cfg().get_derived_host_item(
+            self.suite, 'suite log directory')
+        self.work_dir = work_dir or glbl_cfg().get_derived_host_item(
+            self.suite, 'suite work directory')
+        self.share_dir = share_dir or glbl_cfg().get_derived_host_item(
+            self.suite, 'suite share directory')
         self.owner = owner
         self.run_mode = run_mode
         self.strict = strict
@@ -178,21 +190,7 @@ class SuiteConfig(object):
         # one up from root
         self.feet = []
 
-        # Set local values of variables to give suite context before parsing
-        # config, i.e for template filters (Jinja2, python ...etc). Potentially
-        # task-specific due to different directory paths on different task
-        # hosts, however, they are overridden by tasks prior to job submission
-        # and in principle they could be needed locally by and  event handlers:
-        for var, val in [
-                ('CYLC_SUITE_NAME', self.suite),
-                ('CYLC_DEBUG', str(cylc.flags.debug).lower()),
-                ('CYLC_VERBOSE', str(cylc.flags.verbose).lower()),
-                ('CYLC_SUITE_RUN_DIR', suite_run_dir),
-                ('CYLC_SUITE_LOG_DIR', suite_log_dir),
-                ('CYLC_SUITE_WORK_DIR', suite_work_dir),
-                ('CYLC_SUITE_SHARE_DIR', suite_share_dir),
-                ('CYLC_SUITE_DEF_PATH', suite_dir)]:
-            os.environ[var] = val
+        self.process_suite_env()
 
         # parse, upgrade, validate the suite, but don't expand with default
         # items
@@ -358,7 +356,6 @@ class SuiteConfig(object):
             set_utc_mode(glbl_cfg().get(['cylc', 'UTC mode']))
         else:
             set_utc_mode(self.cfg['cylc']['UTC mode'])
-        os.environ['CYLC_UTC'] = str(get_utc_mode())
 
         # Initial point from suite definition (or CLI override above).
         icp = self.cfg['scheduling']['initial cycle point']
@@ -406,8 +403,6 @@ class SuiteConfig(object):
                          constraints_str
                          )
                 )
-
-        os.environ['CYLC_SUITE_INITIAL_CYCLE_POINT'] = str(self.initial_point)
 
         if (self.cfg['scheduling']['final cycle point'] is not None and
                 self.cfg['scheduling']['final cycle point'].strip() is ""):
@@ -460,8 +455,6 @@ class SuiteConfig(object):
                 raise SuiteConfigError(
                     "Final cycle point %s does not meet the constraints %s" % (
                         str(self.final_point), constraints_str))
-
-        os.environ['CYLC_SUITE_FINAL_CYCLE_POINT'] = str(self.final_point)
 
         # Parse special task cycle point offsets, and replace family names.
         LOG.debug("Parsing [special tasks]")
@@ -532,8 +525,6 @@ class SuiteConfig(object):
 
             self.cfg['scheduling']['special tasks'][s_type] = result
 
-        os.environ['CYLC_CYCLING_MODE'] = self.cfg['scheduling']['cycling mode']
-
         self.collapsed_families_rc = (
             self.cfg['visualization']['collapsed families'])
         for fam in self.collapsed_families_rc:
@@ -562,7 +553,7 @@ class SuiteConfig(object):
         if self.cfg['cylc']['force run mode']:
             self.run_mode = self.cfg['cylc']['force run mode']
 
-        self.process_directories()
+        self.process_config_env()
 
         self.mem_log("config.py: before load_graph()")
         self.load_graph()
@@ -748,17 +739,6 @@ class SuiteConfig(object):
             cfg['meta']['URL'] = RE_TASK_NAME_VAR.sub(
                 name, cfg['meta']['URL'])
 
-        # Set local runtime environment
-        #     (global config auto expands environment variables in local paths)
-        cenv = self.cfg['cylc']['environment'].copy()
-        for var, val in cenv.items():
-            cenv[var] = os.path.expandvars(val)
-        #     path to suite bin directory for suite and event handlers
-        cenv['PATH'] = os.pathsep.join([
-            os.path.join(suite_dir, 'bin'), os.environ['PATH']])
-        #     and to suite event handlers in this process.
-        for var, val in cenv.items():
-            os.environ[var] = val
 
         if is_validate:
             self.mem_log("config.py: before _check_circular()")
@@ -1448,9 +1428,39 @@ class SuiteConfig(object):
 
         print_tree(tree, padding=padding, use_unicode=pretty)
 
-    def process_directories(self):
-        os.environ['CYLC_SUITE_NAME'] = self.suite
-        os.environ['CYLC_SUITE_DEF_PATH'] = self.fdir
+    def process_suite_env(self):
+        # Set local values of variables to give suite context before parsing
+        # config, i.e for template filters (Jinja2, python ...etc) and possibly
+        # needed locally by event handlers. Potentially task-specific due to
+        # different directory paths on different task hosts, however, they are
+        # overridden by tasks prior to job submission:
+        for var, val in [
+                ('CYLC_SUITE_NAME', self.suite),
+                ('CYLC_DEBUG', str(cylc.flags.debug).lower()),
+                ('CYLC_VERBOSE', str(cylc.flags.verbose).lower()),
+                ('CYLC_SUITE_DEF_PATH', self.fdir),
+                ('CYLC_SUITE_RUN_DIR', self.run_dir),
+                ('CYLC_SUITE_LOG_DIR', self.log_dir),
+                ('CYLC_SUITE_WORK_DIR', self.work_dir),
+                ('CYLC_SUITE_SHARE_DIR', self.share_dir)]:
+            os.environ[var] = val
+
+    def process_config_env(self):
+        # Set local runtime environment
+        os.environ['CYLC_UTC'] = str(get_utc_mode())
+        os.environ['CYLC_SUITE_INITIAL_CYCLE_POINT'] = str(self.initial_point)
+        os.environ['CYLC_SUITE_FINAL_CYCLE_POINT'] = str(self.final_point)
+        os.environ['CYLC_CYCLING_MODE'] = self.cfg['scheduling']['cycling mode']
+        #     (global config auto expands environment variables in local paths)
+        cenv = self.cfg['cylc']['environment'].copy()
+        for var, val in cenv.items():
+            cenv[var] = os.path.expandvars(val)
+        #     path to suite bin directory for suite and event handlers
+        cenv['PATH'] = os.pathsep.join([
+            os.path.join(self.fdir, 'bin'), os.environ['PATH']])
+        #     and to suite event handlers in this process.
+        for var, val in cenv.items():
+            os.environ[var] = val
 
     def check_tasks(self):
         """Call after all tasks are defined.
