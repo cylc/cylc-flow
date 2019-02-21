@@ -1879,8 +1879,7 @@ conditions; see `cylc conditions`.
                 self.stop_clock_time))
             self.stop_clock_time = None
             return True
-        else:
-            return False
+        return False
 
     def _update_profile_info(self, category, amount, amount_format="%s"):
         """Update the 1, 5, 15 minute dt averages for a given category."""
