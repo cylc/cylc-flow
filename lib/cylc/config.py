@@ -398,10 +398,7 @@ class SuiteConfig(object):
                     self.cfg['scheduling']['initial cycle point constraints'])
                 raise SuiteConfigError(
                     ("Initial cycle point %s does not meet the constraints " +
-                     "%s") % (
-                         str(self.initial_point),
-                         constraints_str
-                         )
+                     "%s") % (str(self.initial_point), constraints_str)
                 )
 
         if (self.cfg['scheduling']['final cycle point'] is not None and
@@ -738,7 +735,6 @@ class SuiteConfig(object):
                 self.suite, cfg['meta']['URL'])
             cfg['meta']['URL'] = RE_TASK_NAME_VAR.sub(
                 name, cfg['meta']['URL'])
-
 
         if is_validate:
             self.mem_log("config.py: before _check_circular()")
@@ -1450,7 +1446,8 @@ class SuiteConfig(object):
         os.environ['CYLC_UTC'] = str(get_utc_mode())
         os.environ['CYLC_SUITE_INITIAL_CYCLE_POINT'] = str(self.initial_point)
         os.environ['CYLC_SUITE_FINAL_CYCLE_POINT'] = str(self.final_point)
-        os.environ['CYLC_CYCLING_MODE'] = self.cfg['scheduling']['cycling mode']
+        os.environ['CYLC_CYCLING_MODE'] = self.cfg['scheduling'][
+            'cycling mode']
         #     (global config auto expands environment variables in local paths)
         cenv = self.cfg['cylc']['environment'].copy()
         for var, val in cenv.items():

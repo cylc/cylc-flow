@@ -1037,12 +1037,12 @@ conditions; see `cylc conditions`.
             'CYLC_SUITE_FINAL_CYCLE_POINT': str(self.final_point),
         })
 
-
     def _load_suite_params_1(self, _, row):
         """Load previous initial cycle point or (warm) start cycle point.
 
         For restart, these may be missing from "suite.rc", but was specified as
         a command line argument on cold/warm start.
+
         """
         key, value = row
         if key == 'initial_point':
