@@ -3241,9 +3241,35 @@ automatically imports the user environment to template's global namespace
            [[[environment]]]
                SUITE_OWNER_HOME_DIR_ON_SUITE_HOST = {{environ['HOME']}}
 
-This example is emphasizes that *the environment is read on the suite
-host at the time the suite configuration is parsed* - it is not, for
-instance, read at task run time on the task host.
+In addition, the following variables are exported to this environment
+prior to configuration parsing to provide suite context:
+
+.. code-block:: bash
+
+   CYLC_DEBUG                      # Debug mode, true or not defined
+   CYLC_DIR                        # Location of cylc installation used
+   CYLC_VERBOSE                    # Verbose mode, True or False
+   CYLC_VERSION                    # Version of cylc installation used
+
+   CYLC_SUITE_NAME                 # Suite name
+
+   CYLC_SUITE_DEF_PATH             # Location of the suite source
+                                   # configuration path on suite host, 
+                                   # e.g. ~/cylc-run/foo
+   CYLC_SUITE_LOG_DIR              # Suite log directory.
+   CYLC_SUITE_RUN_DIR              # Location of the suite run directory in
+                                   # suite host, e.g. ~/cylc-run/foo
+   CYLC_SUITE_SHARE_DIR            # Suite (or task post parsing!)
+                                   # shared directory.
+   CYLC_SUITE_WORK_DIR             # Suite work directory.
+
+
+.. note::
+
+    The above example is emphasizes that *the environment is read on the suite
+    host at the time the suite configuration is parsed* - it is not, for
+    instance, read at task run time on the task host. This also pertains to some
+    of the above-listed suite context.
 
 
 .. _CustomJinja2Filters:

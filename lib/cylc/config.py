@@ -17,9 +17,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Parse and validate the suite definition file
 
-Suite context is exported to the environment, which may be used in
-configuration parsing (as this has utility for both running and
-non-running suites).
+Set local values of variables to give suite context before parsing
+config, i.e for template filters (Jinja2, python ...etc) and possibly
+needed locally by event handlers. This is needed for both running and
+non-running suite parsing (obtaining config/graph info). Potentially
+task-specific due to different directory paths on different task hosts,
+however, they are overridden by tasks prior to job submission.
 
 Do some consistency checking, then construct task proxy objects and graph
 structures.
@@ -190,6 +193,7 @@ class SuiteConfig(object):
         # one up from root
         self.feet = []
 
+        # Export local environmental suite context before config parsing.
         self.process_suite_env()
 
         # parse, upgrade, validate the suite, but don't expand with default
@@ -1425,11 +1429,7 @@ class SuiteConfig(object):
         print_tree(tree, padding=padding, use_unicode=pretty)
 
     def process_suite_env(self):
-        # Set local values of variables to give suite context before parsing
-        # config, i.e for template filters (Jinja2, python ...etc) and possibly
-        # needed locally by event handlers. Potentially task-specific due to
-        # different directory paths on different task hosts, however, they are
-        # overridden by tasks prior to job submission:
+        """Suite context is exported to the local environment."""
         for var, val in [
                 ('CYLC_SUITE_NAME', self.suite),
                 ('CYLC_DEBUG', str(cylc.flags.debug).lower()),
@@ -1442,7 +1442,7 @@ class SuiteConfig(object):
             os.environ[var] = val
 
     def process_config_env(self):
-        # Set local runtime environment
+        """Set local config derived environment."""
         os.environ['CYLC_UTC'] = str(get_utc_mode())
         os.environ['CYLC_SUITE_INITIAL_CYCLE_POINT'] = str(self.initial_point)
         os.environ['CYLC_SUITE_FINAL_CYCLE_POINT'] = str(self.final_point)
