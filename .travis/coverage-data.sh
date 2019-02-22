@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Travis-CI after_script
-
-# Check output (more useful if you narrow down what tests get run)
-
-find $HOME/cylc-run -name '*.err' -type f -exec echo '==== {} ====' \; -exec cat '{}' \;
-find /tmp/${USER}/cylctb-* -type f -exec echo '==== {} ====' \; -exec cat '{}' \;
+# When we run cylc commands, there are processes being forked, that get a
+# new working directory. As .coveragerc contains relatives paths, it fails
+# to produce the correct coverage, unless we use absolute paths. The `sed`
+# call below tries to define the data_file, and sources locations for Travis.
+sed -e "s|data_file=.coverage|data_file=${TRAVIS_BUILD_DIR}/.coverage|g; s|./bin|${TRAVIS_BUILD_DIR}/bin|g; s|./lib|${TRAVIS_BUILD_DIR}/lib|g" .coveragerc > /tmp/.coveragerc
+# And some tests fail if we touch files in the git working directory, due
+# to Cylc's version appearing with the "dirty" suffix. To avoid this, we
