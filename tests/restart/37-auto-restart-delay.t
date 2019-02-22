@@ -71,7 +71,7 @@ create_test_globalrc '' "
 ${BASE_GLOBALRC}
 [suite servers]
     run hosts = ${CYLC_TEST_HOST}
-    condemned hosts = localhost
+    condemned hosts = $(hostname)
     auto restart delay = PT20S
 "
 

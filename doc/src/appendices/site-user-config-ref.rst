@@ -744,6 +744,12 @@ Hosts specified in ``condemned hosts`` will not be considered as suite
 run hosts. If suites are already running on ``condemned hosts`` they
 will be automatically shutdown and restarted (see :ref:`auto-stop-restart`).
 
+.. warning::
+
+   Cylc will reject hosts with ambiguous names such as ``localhost`` or
+   ``127.0.0.1`` for this configuration as ``condemned hosts`` are evaluated
+   on the suite host server.
+
 - *type*: comma-separated list of host names and/or IP addresses.
 - *default*: (none)
 

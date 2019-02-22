@@ -228,7 +228,7 @@ SPEC = {
     'suite servers': {
         'run hosts': [VDR.V_SPACELESS_STRING_LIST],
         'run ports': [VDR.V_INTEGER_LIST, list(range(43001, 43101))],
-        'condemned hosts': [VDR.V_SPACELESS_STRING_LIST],
+        'condemned hosts': [VDR.V_ABSOLUTE_HOST_LIST],
         'auto restart delay': [VDR.V_INTERVAL],
         'run host select': {
             'rank': [VDR.V_STRING, 'random', 'load:1', 'load:5', 'load:15',

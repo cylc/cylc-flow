@@ -100,6 +100,8 @@ class ParsecValidator(object):
     # Parameterized names containing at least one comma.
     _REC_MULTI_PARAM = re.compile(r'<[\w]+,.*?>')
 
+    SELF_REFERENCE_PATTERNS = ['localhost', '127.0.0.1', '0.0.0.0']
+
     # Value type constants
     V_BOOLEAN = 'V_BOOLEAN'
     V_FLOAT = 'V_FLOAT'
@@ -109,6 +111,7 @@ class ParsecValidator(object):
     V_STRING = 'V_STRING'
     V_STRING_LIST = 'V_STRING_LIST'
     V_SPACELESS_STRING_LIST = 'V_SPACELESS_STRING_LIST'
+    V_ABSOLUTE_HOST_LIST = 'V_ABSOLUTE_HOST_LIST'
 
     def __init__(self):
         self.coercers = {
@@ -120,6 +123,8 @@ class ParsecValidator(object):
             self.V_STRING: self.coerce_str,
             self.V_STRING_LIST: self.coerce_str_list,
             self.V_SPACELESS_STRING_LIST: self.coerce_spaceless_str_list,
+            self.V_SPACELESS_STRING_LIST: self.coerce_spaceless_str_list,
+            self.V_ABSOLUTE_HOST_LIST: self.coerce_asbolute_host_list
         }
 
     def validate(self, cfg_root, spec_root):
@@ -258,7 +263,7 @@ class ParsecValidator(object):
             >>> ParsecValidator.coerce_spaceless_str_list(
             ...     'a, b c, d', ['foo'])
             Traceback (most recent call last):
-            validate.ListValueError: list item "b c" cannot contain a space character:
+            parsec.validate.ListValueError: list item "b c" cannot contain a space character:
                 foo = a, b c, d
         """
         lst = cls.strip_and_unquote_list(keys, value)
@@ -269,6 +274,25 @@ class ParsecValidator(object):
                     msg='list item "%s" cannot contain a space character:' %
                     item)
         return lst
+
+    @classmethod
+    def coerce_asbolute_host_list(cls, value, keys):
+        """Do not permit self reference in host names.
+
+        Example:
+            >>> ParsecValidator.coerce_asbolute_host_list(
+            ...     'foo, bar, 127.0.0.1:8080, baz', ['pub'])
+            Traceback (most recent call last):
+            parsec.validate.ListValueError: ambiguous host "127.0.0.1:8080"
+                pub = foo, bar, 127.0.0.1:8080, baz
+        """
+        hosts = cls.coerce_spaceless_str_list(value, keys)
+        for host in hosts:
+            if any(host.startswith(pattern)
+                   for pattern in cls.SELF_REFERENCE_PATTERNS):
+                raise ListValueError(
+                    keys, value, msg='ambiguous host "%s"' % host)
+        return hosts
 
     @classmethod
     def expand_list(cls, values, keys, type_):

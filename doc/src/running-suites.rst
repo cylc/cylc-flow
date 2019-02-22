@@ -1621,6 +1621,12 @@ running on ``bar`` will stop immediately, making no attempt to restart.
        run hosts = pub
        condemned hosts = foo, bar!
 
+.. warning::
+
+   Cylc will reject hosts with ambiguous names such as ``localhost`` or
+   ``127.0.0.1`` for this configuration as ``condemned hosts`` are evaluated
+   on the suite host server.
+
 To prevent large numbers of suites attempting to restart simultaneously the
 ``auto restart delay`` setting defines a period of time in seconds.
 Suites will wait for a random period of time between zero and

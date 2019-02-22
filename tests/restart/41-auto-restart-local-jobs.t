@@ -93,7 +93,7 @@ grep_fail "$(job-ps-line bar)" "${TEST_NAME}-ps-2.stdout"
 poll test -f "${SUITE_RUN_DIR}/.service/contact"
 FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)
 log_scan "${TEST_NAME}-restart" "${FILE}" 20 1 \
-    "Suite server: url=https://$(ssh "${CYLC_TEST_HOST2}" hostname -f)"
+    "Suite server: url=tcp://$(ssh "${CYLC_TEST_HOST2}" hostname -f)"
 sleep 1
 #-------------------------------------------------------------------------------
 # auto stop-restart - force mode:
