@@ -41,23 +41,22 @@ cylc suite-state "${SUITE_NAME}" --task=foo --status=failed --point=1 \
 SRV_D="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/.service"
 HOST="$(sed -n 's/^CYLC_SUITE_HOST=//p' "${SRV_D}/contact")"
 PORT="$(sed -n 's/^CYLC_SUITE_PORT=//p' "${SRV_D}/contact")"
-cylc scan --comms-timeout=5 -f --color=never -n "${SUITE_NAME}" \
-    >'scan-f.out' 2>'/dev/null'
+cylc scan --comms-timeout=5 -f --color=never -n "${SUITE_NAME}" >'scan-f.out'
 cmp_ok 'scan-f.out' <<__END__
 ${SUITE_NAME} ${USER}@${HOST}:${PORT}
    Title:
-      "Authentication test suite."
-   Group:
-      (no group)
+      Authentication test suite.
    Description:
-      "Stalls when the first task fails.
-       Here we test out a multi-line description!"
+      Stalls when the first task fails.
+      Here we test out a multi-line description!
+   Group:
+      (no Group)
    URL:
       (no URL)
    another_metadata:
-      "1"
+      1
    custom_metadata:
-      "something_custom"
+      something_custom
    Task state totals:
       failed:1 waiting:2
       1 failed:1 waiting:1
@@ -65,52 +64,52 @@ ${SUITE_NAME} ${USER}@${HOST}:${PORT}
 __END__
 
 # Check scan --describe output.
-cylc scan --comms-timeout=5 -d --color=never -n "${SUITE_NAME}" \
-    >'scan-d.out' 2>'/dev/null'
+cylc scan --comms-timeout=5 -d --color=never -n "${SUITE_NAME}" >'scan-d.out'
 cmp_ok 'scan-d.out' <<__END__
 ${SUITE_NAME} ${USER}@${HOST}:${PORT}
    Title:
-      "Authentication test suite."
-   Group:
-      (no group)
+      Authentication test suite.
    Description:
-      "Stalls when the first task fails.
-       Here we test out a multi-line description!"
+      Stalls when the first task fails.
+      Here we test out a multi-line description!
+   Group:
+      (no Group)
    URL:
       (no URL)
    another_metadata:
-      "1"
+      1
    custom_metadata:
-      "something_custom"
+      something_custom
 __END__
 
 # Check scan --raw output.
-cylc scan --comms-timeout=5 -t raw --color=never -n "${SUITE_NAME}" \
-    >'scan-r.out' 2>'/dev/null'
+cylc scan --comms-timeout=5 -f -t raw --color=never -n "${SUITE_NAME}" \
+    >'scan-r.out'
 cmp_ok 'scan-r.out' <<__END__
 ${SUITE_NAME}|${USER}|${HOST}|port|${PORT}
+${SUITE_NAME}|${USER}|${HOST}|title|Authentication test suite.
+${SUITE_NAME}|${USER}|${HOST}|description|Stalls when the first task fails. Here we test out a multi-line description!
+${SUITE_NAME}|${USER}|${HOST}|group|
+${SUITE_NAME}|${USER}|${HOST}|URL|
 ${SUITE_NAME}|${USER}|${HOST}|another_metadata|1
 ${SUITE_NAME}|${USER}|${HOST}|custom_metadata|something_custom
-${SUITE_NAME}|${USER}|${HOST}|description|Stalls when the first task fails. Here we test out a multi-line description!
-${SUITE_NAME}|${USER}|${HOST}|title|Authentication test suite.
 ${SUITE_NAME}|${USER}|${HOST}|states|failed:1 waiting:2
 ${SUITE_NAME}|${USER}|${HOST}|states:1|failed:1 waiting:1
 ${SUITE_NAME}|${USER}|${HOST}|states:2|waiting:1
 __END__
 
 # Check scan --json output.
-cylc scan --comms-timeout=5 -t json --color=never -n "${SUITE_NAME}" \
-    >'scan-j.out' 2>'/dev/null'
-cmp_json_ok 'scan-j.out' 'scan-j.out' <<__END__
+cylc scan --comms-timeout=5 -f -t json --color=never -n "${SUITE_NAME}" \
+    >'scan-j.out'
+sed -i -r 's/[0-9\.]{10,}/"<FLOAT_REPLACED>"/' 'scan-j.out'
+cmp_json 'scan-j.out' 'scan-j.out' <<__END__
 [
     [
+        "${SUITE_NAME}",
         "${HOST}",
         "${PORT}",
         {
-            "group":"",
             "version":"$(cylc version)",
-            "description":"Stalls when the first task fails.\n                     Here we test out a multi-line description!",
-            "title":"Authentication test suite.",
             "states":[
                 {
                     "failed":1,
@@ -149,7 +148,7 @@ cmp_json_ok 'scan-j.out' 'scan-j.out' <<__END__
             },
             "meta":{
                 "group":"",
-                "description":"Stalls when the first task fails.\n                     Here we test out a multi-line description!",
+                "description":"Stalls when the first task fails.\nHere we test out a multi-line description!",
                 "title":"Authentication test suite.",
                 "URL":"",
                 "another_metadata":"1",
@@ -167,20 +166,26 @@ __END__
 TEST_NAME="${TEST_NAME_BASE}-show1"
 run_ok "${TEST_NAME}" cylc show "${SUITE_NAME}"
 cylc log "${SUITE_NAME}" > suite.log1
-grep_ok "\[client-command\] get_suite_info ${USER}@.*:cylc-show" suite.log1
+# TODO - provide client details in log
+#grep_ok "\[client-command\] get_suite_info ${USER}@TODO-host:cylc-show" suite.log1
+grep_ok "\[client-command\] get_suite_info ${USER}@" 'suite.log1'
 
 # "cylc show" (task info) OK.
 TEST_NAME="${TEST_NAME_BASE}-show2"
 run_ok "${TEST_NAME}" cylc show "${SUITE_NAME}" foo
 cylc log "${SUITE_NAME}" > suite.log2
-grep_ok "\[client-command\] get_task_info ${USER}@.*:cylc-show" suite.log2
+# TODO - provide client details in log
+#grep_ok "\[client-command\] get_task_info ${USER}@.*:cylc-show" suite.log2
+grep_ok "\[client-command\] get_task_info ${USER}@" 'suite.log2'
 
 # Commands OK.
 # (Reset to same state).
 TEST_NAME="${TEST_NAME_BASE}-trigger"
 run_ok "${TEST_NAME}" cylc reset "${SUITE_NAME}" -s failed foo 1
 cylc log "${SUITE_NAME}" > suite.log3
-grep_ok "\[client-command\] reset_task_states ${USER}@.*:cylc-reset" suite.log3
+# TODO - provide client details in log
+#grep_ok "\[client-command\] reset_task_states ${USER}@.*:cylc-reset" suite.log3
+grep_ok "\[client-command\] reset_task_states ${USER}@" 'suite.log3'
 
 # Shutdown and purge.
 TEST_NAME="${TEST_NAME_BASE}-stop"

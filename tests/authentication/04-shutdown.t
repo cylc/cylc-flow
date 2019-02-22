@@ -18,6 +18,7 @@
 # Test authentication - privilege 'shutdown'.
 
 . $(dirname $0)/test_header
+skip_all 'anon auth not supported'  # TODO
 set_test_number 12
 
 install_suite "${TEST_NAME_BASE}" basic
@@ -102,7 +103,7 @@ __END__
 # Check scan --json output.
 cylc scan --comms-timeout=5 -t json --color=never -n "${SUITE_NAME}" \
     >'scan-j.out' 2>'/dev/null'
-cmp_json_ok 'scan-j.out' 'scan-j.out' <<__END__
+cmp_json 'scan-j.out' 'scan-j.out' <<__END__
 [
     [
         "${HOST}",
