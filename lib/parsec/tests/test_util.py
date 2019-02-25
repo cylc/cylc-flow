@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
-from unittest import mock
 from io import StringIO
 
 from parsec.util import *

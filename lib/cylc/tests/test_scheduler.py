@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import unittest
 
 from unittest import mock
@@ -37,22 +38,29 @@ class Options(object):
 
 class TestScheduler(unittest.TestCase):
 
+    @mock.patch("cylc.scheduler.BroadcastMgr")
+    @mock.patch("cylc.scheduler.SuiteDatabaseManager")
     @mock.patch("cylc.scheduler.SuiteSrvFilesManager")
-    def test_ioerror_is_ignored(self, mocked_suite_srv_files_mgr):
+    def test_ioerror_is_ignored(self, mocked_suite_srv_files_mgr,
+                                mocked_suite_db_mgr, mocked_broadcast_mgr):
         """Test that IOError's are ignored when closing Scheduler logs.
         When a disk errors occurs, the scheduler.close_logs method may
         result in an IOError. This, combined with other variables, may cause
         an infinite loop. So it is better that it is ignored."""
+        mocked_suite_srv_files_mgr.return_value\
+            .get_suite_source_dir.return_value = "."
         options = Options()
         args = ["suiteA"]
         scheduler = Scheduler(is_restart=False, options=options, args=args)
 
         handler = mock.MagicMock()
         handler.close.side_effect = IOError
+        handler.level = logging.INFO
         LOG.addHandler(handler)
 
         scheduler.close_logs()
         self.assertEqual(1, handler.close.call_count)
+        LOG.removeHandler(handler)
 
 
 if __name__ == '__main__':

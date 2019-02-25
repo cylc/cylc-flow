@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import io
 import logging
 import tempfile
 import unittest
@@ -38,6 +39,7 @@ class TestLoggingutil(unittest.TestCase):
             mocked = mock.MagicMock()
             mocked_glbl_cfg.return_value = mocked
             mocked.get_derived_host_item.return_value = tf.name
+            mocked.get.return_value = 100
             file_handler = TimestampRotatingFileHandler("suiteA", False)
             # next line is important as pytest can have a "Bad file descriptor"
             # due to a FileHandler with default "a" (pytest tries to r/w).
@@ -46,6 +48,12 @@ class TestLoggingutil(unittest.TestCase):
             # enable the logger
             LOG.setLevel(logging.INFO)
             LOG.addHandler(file_handler)
+
+            # Disable raising uncaught exceptions in logging, due to file
+            # handler using stdin.fileno. See the following links for more.
+            # https://github.com/pytest-dev/pytest/issues/2276 &
+            # https://github.com/pytest-dev/pytest/issues/1585
+            logging.raiseExceptions = False
 
             # first message will initialize the stream and the handler
             LOG.info("What could go")
@@ -66,8 +74,11 @@ class TestLoggingutil(unittest.TestCase):
             finally:
                 # clean up
                 file_handler.stream = old_stream
-                for log_handler in LOG.handlers:
-                    log_handler.close()
+                # for log_handler in LOG.handlers:
+                #     log_handler.close()
+                file_handler.close()
+                LOG.removeHandler(file_handler)
+                logging.raiseExceptions = True
 
 
 if __name__ == '__main__':
