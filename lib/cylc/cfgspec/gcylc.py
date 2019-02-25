@@ -25,6 +25,7 @@ from parsec import ParsecError
 from parsec.config import ParsecConfig, ItemNotFoundError, itemstr
 from parsec.upgrade import upgrader
 from parsec.util import printcfg
+from cylc import LOG
 from cylc.cfgvalidate import (
     cylc_config_validate, CylcConfigValidator as VDR, DurationFloat)
 from cylc.task_state import (
