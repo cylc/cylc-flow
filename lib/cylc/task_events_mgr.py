@@ -697,10 +697,10 @@ class TaskEventsManager(object):
             "submit_status": 1,
         })
         itask.summary['submit_method_id'] = None
+        self.pflag = True
         if (TASK_STATUS_SUBMIT_RETRYING not in itask.try_timers or
                 itask.try_timers[TASK_STATUS_SUBMIT_RETRYING].next() is None):
             # No submission retry lined up: definitive failure.
-            self.pflag = True
             # See github #476.
             if itask.state.reset_state(TASK_STATUS_SUBMIT_FAILED):
                 self.setup_event_handlers(
