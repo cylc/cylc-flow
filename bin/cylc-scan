@@ -68,6 +68,11 @@ def get_parser():
     )
 
     parser.add_option(
+        '--ordered',
+        help='Display results in order, this may take longer.',
+        action='store_true')
+
+    parser.add_option(
         "-n", "--name",
         metavar="PATTERN",
         help="List suites with name matching PATTERN (regular expression). "
@@ -159,7 +164,8 @@ def main():
     suites = scan_many(
         get_scan_items_from_fs(cre_owner, cre_name),
         timeout=options.comms_timeout,
-        methods=methods
+        methods=methods,
+        ordered=options.ordered
     )
 
     # determine output format

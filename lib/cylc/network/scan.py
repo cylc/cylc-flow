@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Port scan utilities."""
 
+import asyncio
 import os
 from pwd import getpwall
 import re
@@ -38,25 +39,107 @@ MSG_TIMEOUT = "TIMEOUT"
 SLEEP_INTERVAL = 0.01
 
 
-def scan_many(items, methods=None, timeout=None, updater=None):
+def async_map(coroutine, iterator):
+    """Map iterator iterator onto a coroutine.
+
+    * Yields results in order as an when they are ready
+    * Slow workers can block.
+
+    Args:
+        coroutine (asyncio.coroutine):
+            I.E. an async function.
+        iterator (iter):
+            Should yield tuples to be passed into the coroutine.
+
+    Yields:
+        list - List of results
+
+    Example:
+        >>> async def square(number): return number ** 2
+        >>> generator = async_map(square, ((i,) for i in range(5)))
+        >>> list(generator)
+        [0, 1, 4, 9, 16]
+
+    """
+    loop = asyncio.get_event_loop()
+
+    awaiting = []
+    for ind, args in enumerate(iterator):
+        task = loop.create_task(coroutine(*args))
+        task.ind = ind
+        awaiting.append(task)
+
+    index = 0
+    buff = []
+    while awaiting:
+        completed, awaiting = loop.run_until_complete(
+            asyncio.wait(awaiting, return_when=asyncio.FIRST_COMPLETED))
+        buff.extend(completed)
+
+        old_len = -1
+        while len(buff) != old_len:
+            old_len = len(buff)
+            for task in buff:
+                if task.ind == index:
+                    index += 1
+                    buff.remove(task)
+                    yield task.result()
+
+
+def async_unordered_map(coroutine, iterator):
+    """Map iterator iterator onto a coroutine.
+
+    Args:
+        coroutine (asyncio.coroutine):
+            I.E. an async function.
+        iterator (iter):
+            Should yield tuples to be passed into the coroutine.
+
+    Yields:
+        tuple - (args, result)
+
+    Example:
+        >>> async def square(number): return number ** 2
+        >>> generator = async_unordered_map(square, ((i,) for i in range(5)))
+        >>> sorted(list(generator))
+        [((0,), 0), ((1,), 1), ((2,), 4), ((3,), 9), ((4,), 16)]
+
+    """
+    loop = asyncio.get_event_loop()
+
+    awaiting = []
+    for args in iterator:
+        task = loop.create_task(coroutine(*args))
+        task.args = args
+        awaiting.append(task)
+
+    while awaiting:
+        completed, awaiting = loop.run_until_complete(
+            asyncio.wait(awaiting, return_when=asyncio.FIRST_COMPLETED))
+        for task in completed:
+            yield (task.args, task.result())
+
+
+def scan_many(items, methods=None, timeout=None, ordered=False):
     """Call "identify" method of suites on many host:port.
 
     Args:
         items (list): list of 'host' string or ('host', port) tuple to scan.
         timeout (float): connection timeout, default is CONNECT_TIMEOUT.
-        updater (object): quit scan cleanly if updater.quit is set.
 
     Return:
         list: [(host, port, identify_result), ...]
 
-    TODO: Asyncio ...
-
     """
-    for args in items:
-        yield scan_one(*args, methods=methods, timeout=timeout)
+    args = ((reg, host, port, timeout, methods) for reg, host, port in items)
+
+    if ordered:
+        yield from async_map(scan_one, args)
+    else:
+        yield from (result for _, result in async_unordered_map(scan_one, args))
 
 
-def scan_one(reg, host, port, timeout=None, methods=None):
+async def scan_one(reg, host, port, timeout=None, methods=None):
     if not methods:
         methods = ['identify']
 
@@ -72,6 +155,7 @@ def scan_one(reg, host, port, timeout=None, methods=None):
     # NOTE: Connect to the suite by host:port, this was the
     #       SuiteRuntimeClient will not attempt to check the contact file
     #       which would be unnecessary as we have already done so.
+    # NOTE: This part of the scan *is* IO blocking.
     client = SuiteRuntimeClient(reg, host=host, port=port, timeout=timeout)
 
     result = {}
@@ -79,7 +163,7 @@ def scan_one(reg, host, port, timeout=None, methods=None):
         # work our way up the chain of identity methods, extract as much
         # information as we can before the suite rejects us
         try:
-            msg = client(method)
+            msg = await client.async_request(method)
         except ClientTimeout as exc:
             return (reg, host, port, MSG_TIMEOUT)
         except ClientError as exc:
