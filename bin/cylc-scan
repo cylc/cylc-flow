@@ -42,7 +42,7 @@ import json
 
 from colorama import Fore, Style, init as color_init
 
-from cylc.network.port_scan import (
+from cylc.network.scan import (
     get_scan_items_from_fs, re_compile_filters, scan_many)
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.suite_status import KEY_META, KEY_NAME, KEY_OWNER, KEY_STATES

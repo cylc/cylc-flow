@@ -20,10 +20,12 @@
 Implementation currently via requests (urllib3) or urllib2.
 """
 
+import asyncio
 import sys
 
 import jose.exceptions
 import zmq
+import zmq.asyncio
 
 import cylc.flags
 from cylc.hostuserutil import get_host, get_fqdn_by_host
@@ -110,7 +112,7 @@ class ZMQClient(object):
         self.timeout_handler = timeout_handler
 
         # open the ZMQ socket
-        self.context = zmq.Context()
+        self.context = zmq.asyncio.Context()
         self.socket = self.context.socket(zmq.REQ)
         self.socket.connect('tcp://%s:%d' % (host, port))
         # if there is no server don't keep the client hanging around
@@ -120,7 +122,7 @@ class ZMQClient(object):
         self.poller = zmq.Poller()
         self.poller.register(self.socket, zmq.POLLIN)
 
-    def request(self, command, args=None, timeout=None):
+    async def async_request(self, command, args=None, timeout=None):
         """Send a request.
 
         For convenience use __call__ to call this method.
@@ -151,7 +153,7 @@ class ZMQClient(object):
         self.socket.send_string(message)
 
         if self.poller.poll(timeout):
-            res = self.socket.recv_string()
+            res = await self.socket.recv_string()
         else:
             if self.timeout_handler:
                 self.timeout_handler()
@@ -170,7 +172,11 @@ class ZMQClient(object):
         else:  # if else to avoid complicating the traceback stack
             raise ClientError(response['error'])
 
-    __call__ = request
+    def serial_request(self, command, args=None, timeout=None):
+        return asyncio.run(
+            self.async_request(command, args, timeout))
+
+    __call__ = serial_request
 
 
 class SuiteRuntimeClient(ZMQClient):
