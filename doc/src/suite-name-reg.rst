@@ -22,21 +22,6 @@ which creates the suite run directory structure and some service files
 underneath it. Otherwise, ``cylc run`` will do this at suite start up.
 
 
-.. insert vertical whitespace else sidebar menu overhangs short page (ugly)
+.. only:: builder_html
 
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
+   .. include:: custom/whitespace_include
