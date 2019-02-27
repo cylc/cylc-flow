@@ -26,21 +26,6 @@ cylc. It is available under the open source GPL license.
 - `Rose source repository <https://github.com/metomi/rose>`_
 
 
-.. insert vertical whitespace else sidebar menu overhangs short page (ugly)
+.. only:: builder_html
 
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
+   .. include:: custom/whitespace_include

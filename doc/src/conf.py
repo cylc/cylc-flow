@@ -73,7 +73,8 @@ html_theme_options = {
     "stickysidebar": True,
     "sidebarwidth": 250,
     "relbarbgcolor": "black",
-    "footerbgcolor": "black",
+    "footerbgcolor": "white",  # single-page HTML flashes this colour on scroll
+    "footertextcolor": "black",
     "sidebarbgcolor": "white",
     "sidebartextcolor": "black",
     "sidebarlinkcolor": "#0000EE;",
