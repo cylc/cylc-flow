@@ -39,21 +39,6 @@ The second message is ignored by the suite, and so the behaviour can be safely
 ignored. (You should probably still investigate the failure, however!)
 
 
-.. insert vertical whitespace else sidebar menu overhangs short page (ugly)
+.. only:: builder_html
 
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
+   .. include:: ../custom/whitespace_include

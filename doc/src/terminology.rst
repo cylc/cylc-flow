@@ -23,21 +23,6 @@ keep in mind that different tasks may pass through the "current cycle point"
 (etc.) at different times as the suite evolves.
 
 
-.. insert vertical whitespace else sidebar menu overhangs short page (ugly)
+.. only:: builder_html
 
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
+   .. include:: custom/whitespace_include

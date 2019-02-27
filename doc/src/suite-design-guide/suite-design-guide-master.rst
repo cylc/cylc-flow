@@ -27,21 +27,6 @@ Version 1.0 - 23 March 2017
 -----------
 
 
-.. insert vertical whitespace else sidebar menu overhangs short page (ugly)
+.. only:: builder_html
 
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
+   .. include:: ../custom/whitespace_include

@@ -19,7 +19,10 @@ indefinitely.
 
 -----------
 
-**Table of Contents**:
+
+.. only:: builder_html
+
+   **Table of Contents**:
 
 .. toctree::
    :maxdepth: 3
