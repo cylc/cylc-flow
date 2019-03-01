@@ -106,12 +106,10 @@ class CylcReviewDAO(object):
             prefix = "~"
             if user_name:
                 prefix += user_name
-            for name in [os.path.join("log", "db"), "cylc-suite.db"]:
-                db_f_name = os.path.expanduser(os.path.join(
-                    prefix, os.path.join("cylc-run", suite_name, name)))
-                self.daos[key] = CylcSuiteDAO(db_f_name, is_public=True)
-                if os.path.exists(db_f_name):
-                    break
+            name = os.path.join("log", "db")
+            db_f_name = os.path.expanduser(os.path.join(
+                prefix, os.path.join("cylc-run", suite_name, name)))
+            self.daos[key] = CylcSuiteDAO(db_f_name, is_public=True)
         return self.daos[key]
 
     def _db_close(self, user_name, suite_name):

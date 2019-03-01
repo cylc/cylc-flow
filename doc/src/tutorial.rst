@@ -454,7 +454,6 @@ time-stamped suite log file, and task job scripts and job logs
    |    |-- source           # symbolic link to source directory
    |    |-- ssl.cert         # SSL certificate for the suite server
    |    `-- ssl.pem          # SSL private key
-   |-- cylc-suite.db         # back compat symlink to public suite run database
    |-- share                 # suite share directory (not used in this example)
    |-- work                  # task work space (sub-dirs are deleted if not used)
    |    `-- 1                   # task cycle point directory (or 1)

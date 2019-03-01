@@ -170,7 +170,6 @@ class CylcSuiteDAO(object):
 
     CONN_TIMEOUT = 0.2
     DB_FILE_BASE_NAME = "db"
-    OLD_DB_FILE_BASE_NAME = "cylc-suite.db"
     MAX_TRIES = 100
     CHECKPOINT_LATEST_ID = 0
     CHECKPOINT_LATEST_EVENT = "latest"

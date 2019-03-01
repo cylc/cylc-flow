@@ -233,12 +233,9 @@ def get_scan_items_from_fs(owner_pattern=None, reg_pattern=None, updater=None):
             if updater and updater.quit:
                 return
             # Always descend for top directory, but
-            # don't descend further if it has a:
-            # * .service/ or log/
-            # * cylc-suite.db: (pre-cylc-7 suites don't have ".service/").
+            # don't descend further if it has a .service/ or log/ dir
             if dirpath != run_d and (
-                    srv_files_mgr.DIR_BASE_SRV in dnames or 'log' in dnames or
-                    'cylc-suite.db' in fnames):
+                    srv_files_mgr.DIR_BASE_SRV in dnames or 'log' in dnames):
                 dnames[:] = []
 
             # Filter suites by name

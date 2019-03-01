@@ -149,20 +149,6 @@ class SuiteDatabaseManager(object):
         os.chmod(self.pri_path, 0o600)
         self.pub_dao = CylcSuiteDAO(self.pub_path, is_public=True)
         self.copy_pri_to_pub()
-        pub_db_path_symlink = os.path.join(
-            os.path.dirname(os.path.dirname(self.pub_path)),
-            CylcSuiteDAO.OLD_DB_FILE_BASE_NAME)
-        try:
-            orig_source = os.readlink(pub_db_path_symlink)
-        except OSError:
-            orig_source = None
-        source = os.path.join('log', CylcSuiteDAO.DB_FILE_BASE_NAME)
-        if orig_source != source:
-            try:
-                os.unlink(pub_db_path_symlink)
-            except OSError:
-                pass
-            os.symlink(source, pub_db_path_symlink)
 
     def on_suite_shutdown(self):
         """Close data access objects."""

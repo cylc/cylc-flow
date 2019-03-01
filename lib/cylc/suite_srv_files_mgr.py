@@ -367,11 +367,8 @@ To start a new run, stop the old one first with one or more of these:
         results = []
         for dirpath, dnames, fnames in os.walk(run_d, followlinks=True):
             # Always descend for top directory, but
-            # don't descend further if it has a:
-            # * .service/
-            # * cylc-suite.db: (pre-cylc-7 suites don't have ".service/").
-            if dirpath != run_d and (
-                    self.DIR_BASE_SRV in dnames or "cylc-suite.db" in fnames):
+            # don't descend further if it has a .service/ dir
+            if dirpath != run_d and self.DIR_BASE_SRV in dnames:
                 dnames[:] = []
             # Choose only suites with .service and matching filter
             reg = os.path.relpath(dirpath, run_d)
