@@ -52,9 +52,6 @@ latter grouped as Python, TeX or 'other' (neither). 'opt_spec' item format:
 req_py_ver_range = ((3,),)
 opt_spec = {
     'EmPy': [None, 'TEMPLATING', 'PY'],
-    'requests': [(2, 4, 2), 'HTTPSCOMMS', 'PY'],
-    'OpenSSL': [None, 'HTTPSCOMMS', 'PY'],
-    'urllib3': [None, 'HTTPSCOMMS', 'PY'],
     'sphinx': [(1, 5, 3), 'HTMLDOCS', 'PY'],
 }
 
@@ -66,7 +63,6 @@ upper_case_conv = dict(
 # Package-dep. functionality dict; item format <FUNC TAG>: <FULL DESCRIPTION>
 func_tags_and_text = {
     'TEMPLATING': 'configuration templating',
-    'HTTPSCOMMS': 'HTTPS communications layer',
     'HTMLDOCS': 'HTML documentation',
 }
 
@@ -293,7 +289,12 @@ def main():
 
     # Individual results section in mock-table format.
     shell_centre_write(False, '*REQUIRED SOFTWARE*')
-    req_result = check_py_ver(*req_py_ver_range)
+    req_result = (
+        check_py_ver(*req_py_ver_range)
+        and check_py_module_ver('zmq', None)
+        and check_py_module_ver('jose', None)
+        and check_py_module_ver('colorama', None)
+    )
     for tag, text in func_tags_and_text.items():
         shell_centre_write(True, '*OPTIONAL SOFTWARE for the ' + text + '*')
         functionality_print(tag)

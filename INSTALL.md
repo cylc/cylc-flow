@@ -63,33 +63,27 @@ $ cylc check-software
 Checking your software...
 
 Individual results:
-===============================================================================
-Package (version requirements)                          Outcome (version found)
-===============================================================================
-                              *REQUIRED SOFTWARE*                              
-Python (2.6+, <3).....................FOUND & min. version MET (2.7.12.final.0)
+================================================================================
+Package (version requirements)                           Outcome (version found)
+================================================================================
+                              *REQUIRED SOFTWARE*
+Python (3+).............................FOUND & min. version MET (3.7.2.final.0)
+Python:zmq (any)..................................................FOUND (17.1.2)
+Python:jose (any)..................................................FOUND (2.0.2)
+Python:colorama (any)..............................................FOUND (0.4.1)
 
-                  *OPTIONAL SOFTWARE for the HTML User Guide*                  
-ImageMagick (any)...............................................FOUND (6.8.9-9)
+              *OPTIONAL SOFTWARE for the configuration templating*
+Python:EmPy (any)..................................................FOUND (3.3.2)
 
-            *OPTIONAL SOFTWARE for the HTTPS communications layer*            
-Python:urllib3 (any).............................................FOUND (1.13.1)
-Python:OpenSSL (any).............................................FOUND (17.2.0)
-
-                 *OPTIONAL SOFTWARE for the LaTeX User Guide*                 
-TeX:framed (any)....................................................FOUND (n/a)
-TeX (3.0+)................................FOUND & min. version MET (3.14159265)
-TeX:preprint (any)..................................................FOUND (n/a)
-TeX:tex4ht (any)....................................................FOUND (n/a)
-TeX:tocloft (any)...................................................FOUND (n/a)
-TeX:texlive (any)...................................................FOUND (n/a)
-===============================================================================
+                 *OPTIONAL SOFTWARE for the HTML documentation*
+Python:sphinx (1.5.3+)..........................FOUND & min. version MET (1.8.4)
+================================================================================
 
 Summary:
-                         ****************************                         
-                             Core requirements: ok                             
-                            Full-functionality: ok                            
-                         ****************************  
+                          ****************************
+                             Core requirements: ok
+                             Full-functionality: ok
+                          ****************************
 ```
 
 ### Installing The Documentation

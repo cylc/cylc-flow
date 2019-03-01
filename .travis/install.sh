@@ -29,7 +29,7 @@ if grep -E '(unit-tests|functional-tests)' <<< "${args[@]}"; then
     # coverage dependencies
     pip install coverage pytest-cov mock
     # common Cylc reqirements
-    pip install pyopenssl colorama python-jose zmq
+    pip install colorama python-jose zmq
 fi
 
 if grep 'unit-tests' <<< "${args[@]}"; then

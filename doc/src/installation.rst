@@ -10,25 +10,26 @@ including Apple OS X, but they are not officially tested and supported.
 Third-Party Software Packages
 -----------------------------
 
-**Python 2** ``>=`` **2.6** is required. **Python 2** ``>=`` **2.7.9** is
-recommended for the best security. `Python <https://python.org/>`_ 2 should
-already be installed in your Linux system.
+Requirements:
 
-The Cylc Review service does not need any additional packages.
+- Python 3.6+
 
-The following packages are necessary for running all the tests in Cylc:
+  - `python-jose <https://pypi.org/project/python-jose/>`_
+  - `zmq <https://pypi.org/project/zmq/>`_
+  - `colorama <https://pypi.org/project/colorama/>`_
+
+The following packages are necessary for running tests in Cylc:
 
 - `mock <https://mock.readthedocs.io>`_
+- `pytest <https://pytest.org>`_
 
 To generate the HTML User Guide, you will need:
 
 - `Sphinx <http://www.sphinx-doc.org/en/master/>`_ of compatible version,
   ``>=`` **1.5.3** and ``<=`` **1.7.9**.
 
-In most modern Linux distributions all of the software above can be installed
-via the system package manager. Otherwise download packages manually and follow
-their native installation instructions. To check that all packages
-are installed properly:
+To check that dependencies are installed and environment is configured
+correctly run ``cylc check-software``:
 
 .. code-block:: none
 
@@ -36,24 +37,28 @@ are installed properly:
    Checking your software...
 
    Individual results:
-   ===============================================================================
-   Package (version requirements)                          Outcome (version found)
-   ===============================================================================
+   ================================================================================
+   Package (version requirements)                           Outcome (version found)
+   ================================================================================
                                  *REQUIRED SOFTWARE*
-   Python (2.6+, <3).....................FOUND & min. version MET (2.7.12.final.0)
+   Python (3+).............................FOUND & min. version MET (3.7.2.final.0)
+   Python:zmq (any)..................................................FOUND (17.1.2)
+   Python:jose (any)..................................................FOUND (2.0.2)
+   Python:colorama (any)..............................................FOUND (0.4.1)
 
-                *OPTIONAL SOFTWARE for the configuration templating*
-   Python:EmPy (any).................................................NOT FOUND (-)
+                 *OPTIONAL SOFTWARE for the configuration templating*
+   Python:EmPy (any)..................................................FOUND (3.3.2)
 
-                   *OPTIONAL SOFTWARE for the HTML documentation*
-   Python:sphinx (1.5.3+).........................FOUND & min. version MET (1.7.0)
-   ===============================================================================
+                    *OPTIONAL SOFTWARE for the HTML documentation*
+   Python:sphinx (1.5.3+)..........................FOUND & min. version MET (1.8.4)
+   ================================================================================
 
    Summary:
-                            ****************************
+                             ****************************
                                 Core requirements: ok
-                             Full-functionality: not ok
-                            ****************************
+                                Full-functionality: ok
+                             ****************************
+
 
 If errors are reported then the packages concerned are either not installed or
 not in your Python search path.
