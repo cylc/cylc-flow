@@ -32,12 +32,8 @@ cylc run --hold "${SUITE_NAME}" 1>'cylc-run.out' 2>&1
 RUND="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
 MYPID=$(sed -n 's/^CYLC_SUITE_PROCESS=\([0-9]\+\) .*$/\1/p' \
     "${RUND}/.service/contact")
-kill "${MYPID}"
-# Should leave behind the contact file
-sleep 1
-while ps "${MYPID}" 1>'/dev/null' 2>&1; do
-    sleep 1
-done
+kill "${MYPID}"  # Should leave behind the contact file
+wait "${MYPID}" || true
 MYHTTP=$(sed -n 's/^CYLC_COMMS_PROTOCOL=\(.\+\)$/\1/p' "${RUND}/.service/contact")
 MYHOST=$(sed -n 's/^CYLC_SUITE_HOST=\(.\+\)$/\1/p' "${RUND}/.service/contact")
 MYPORT=$(sed -n 's/^CYLC_SUITE_PORT=\(.\+\)$/\1/p' "${RUND}/.service/contact")
