@@ -8,7 +8,6 @@ obsoletion, deprecation and upgrade, and site/user-style file override
 ###  Used in Cylc for:
 
    * suite definition files
-   * gcylc config files
    * site/user config files
 
 

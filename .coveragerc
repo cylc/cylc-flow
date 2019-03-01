@@ -29,13 +29,8 @@ debug=
 #include
 note=
 omit=
-    */lib/cherrypy/*
-    */lib/cylc/gui/*
     */lib/cylc/tests/*
-    */lib/cylc/cylc_xdot.py
     */lib/cylc/profiler.py
-    */lib/cylc/cfgspec/gcylc.py
-    */lib/cylc/cfgspec/gscan.py
     */lib/cylc/profiling/*
     */lib/cylc/mkdir_p.py
     */lib/parsec/OrderedDictCompat.py
@@ -43,7 +38,6 @@ omit=
     */lib/jinja2/*
     */lib/markupsafe/*
     */lib/parsec/tests/*
-    */lib/xdot.py
 parallel = True
 plugins=
 source=
@@ -64,13 +58,8 @@ fail_under=0
 ignore_errors = False
 include=
 omit=
-    */lib/cherrypy/*
-    */lib/cylc/gui/*
     */lib/cylc/tests/*
-    */lib/cylc/cylc_xdot.py
     */lib/cylc/profiler.py
-    */lib/cylc/cfgspec/gcylc.py
-    */lib/cylc/cfgspec/gscan.py
     */lib/cylc/profiling/*
     */lib/cylc/mkdir_p.py
     */lib/parsec/OrderedDictCompat.py
@@ -78,7 +67,6 @@ omit=
     */lib/jinja2/*
     */lib/markupsafe/*
     */lib/parsec/tests/*
-    */lib/xdot.py
 partial_branches=
 precision=2
 show_missing=False

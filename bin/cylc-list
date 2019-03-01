@@ -22,8 +22,9 @@ Print runtime namespace names (tasks and families), the first-parent
 inheritance graph, or actual tasks for a given cycle range.
 
 The first-parent inheritance graph determines the primary task family
-groupings that are collapsible in gcylc suite views and the graph
-viewer tool. To visualize the full multiple inheritance hierarchy use:
+groupings that are collapsible in cylc visualisation tools.
+
+To visualize the full multiple inheritance hierarchy use:
   'cylc graph -n'."""
 
 import os

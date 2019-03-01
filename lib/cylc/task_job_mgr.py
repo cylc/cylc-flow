@@ -787,7 +787,6 @@ class TaskJobManager(object):
         itask.local_job_file_path = local_job_file_path
 
         if dry_run:
-            # This will be shown next to submit num in gcylc:
             itask.set_summary_message('job file written (edit/dry-run)')
             LOG.debug('[%s] -%s', itask, itask.summary['latest_message'])
 

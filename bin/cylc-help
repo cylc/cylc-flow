@@ -19,6 +19,7 @@ import sys
 
 # Import cylc to initialise CYLC_DIR and the path for python (__init__.py).
 import cylc
+from cylc.version import CYLC_VERSION
 
 
 class CommandError(Exception):
@@ -155,22 +156,13 @@ def category_help(category):
     pretty_print(comsum, coms, sort=True)
 
 
-def typo(str):
-    corrected = str
-    if str == 'gcycl':
-        corrected = 'gcylc'
-    return corrected
-
-
 # BEGIN MAIN
-general_usage = """Cylc ("silk") is a workflow engine for orchestrating complex
+general_usage = f"""Cylc ("silk") is a workflow engine for orchestrating complex
 *suites* of inter-dependent distributed cycling (repeating) tasks, as well as
 ordinary non-cycling workflows.
 For detailed documentation see the Cylc User Guide (cylc doc --help).
 
-Version __CYLC_VERSION__
-
-The graphical user interface for cylc is "gcylc" (a.k.a. "cylc gui").
+Version {CYLC_VERSION}
 
 USAGE:
   % cylc -V,--version,version           # print cylc version
@@ -227,9 +219,6 @@ categories['license'] = ['license', 'GPL']
 
 information_commands = {}
 
-information_commands['gscan'] = ['gscan', 'gsummary']
-information_commands['gpanel'] = ['gpanel']
-information_commands['gui'] = ['gui', 'gcylc']
 information_commands['list'] = ['list', 'ls']
 information_commands['dump'] = ['dump']
 information_commands['cat-state'] = ['cat-state']
@@ -246,11 +235,9 @@ information_commands['monitor'] = ['monitor']
 information_commands['get-suite-config'] = ['get-suite-config', 'get-config']
 information_commands['get-site-config'] = [
     'get-site-config', 'get-global-config']
-information_commands['get-gui-config'] = ['get-gui-config']
 information_commands['get-host-metrics'] = ['get-host-metrics']
 
 control_commands = {}
-control_commands['gui'] = ['gui']
 # NOTE: don't change 'run' to 'start' or the category [control]
 # becomes compulsory to disambiguate from 'cylc [task] started'.
 # Keeping 'start' as an alias however: 'cylc con start'.
@@ -383,19 +370,15 @@ comsum['cat-state'] = 'Print the state of tasks from the state dump'
 comsum['show'] = 'Print task state (prerequisites and outputs etc.)'
 comsum['cat-log'] = 'Print various suite and task log files'
 comsum['documentation'] = 'Display cylc documentation (User Guide etc.)'
-comsum['monitor'] = 'An in-terminal suite monitor (see also gcylc)'
+comsum['monitor'] = 'An in-terminal suite monitor'
 comsum['get-suite-config'] = 'Print suite configuration items'
 comsum['get-site-config'] = 'Print site/user configuration items'
-comsum['get-gui-config'] = 'Print gcylc configuration items'
 comsum['get-host-metrics'] = 'Print localhost metric data'
 comsum['get-suite-contact'] = (
     'Print contact information of a suite server program')
 comsum['get-suite-version'] = 'Print cylc version of a suite server program'
-comsum['gscan'] = 'Scan GUI for monitoring multiple suites'
-comsum['gpanel'] = 'Internal interface for GNOME 2 panel applet'
 comsum['review'] = 'Start/stop ad-hoc Cylc Review web service server.'
 # control
-comsum['gui'] = '(a.k.a. gcylc) cylc GUI for suite control etc.'
 comsum['run'] = 'Start a suite at a given cycle point'
 comsum['stop'] = 'Shut down running suites'
 comsum['restart'] = 'Restart a suite from a previous state'
@@ -444,7 +427,6 @@ comsum['check-triggering'] = 'A suite shutdown event hook for cylc testing'
 if __name__ == "__main__":
     # no arguments: print help and exit
     if len(sys.argv) == 1:
-        from cylc.version import CYLC_VERSION
         print(usage.replace("__CYLC_VERSION__", CYLC_VERSION))
         pretty_print(catsum, categories)
         sys.exit(0)
@@ -471,12 +453,10 @@ if __name__ == "__main__":
             sys.exit(0)
         if is_help(args[0]):
             # cylc help
-            from cylc.version import CYLC_VERSION
-            print(usage.replace("__CYLC_VERSION__", CYLC_VERSION))
+            print(usage)
             pretty_print(catsum, categories)
             sys.exit(0)
         if (args[0] in ['--version', '-V']):
-            from cylc.version import CYLC_VERSION
             print(CYLC_VERSION)
             sys.exit(0)
 
@@ -509,7 +489,7 @@ if __name__ == "__main__":
         except CommandError as exc:
             # no matching category, try command
             try:
-                command = match_command(typo(item))
+                command = match_command(item)
             except CommandError as exc2:
                 print(exc, file=sys.stderr)
                 raise SystemExit(exc2)
