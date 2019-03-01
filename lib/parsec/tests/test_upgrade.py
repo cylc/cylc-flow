@@ -125,7 +125,7 @@ class TestUpgrade(unittest.TestCase):
         with self.assertRaises(UpgradeError) as cm:
             self.u.expand(upg)
         self.assertTrue('Multiple simultaneous __MANY__ not supported' in
-                         str(cm.exception))
+                        str(cm.exception))
 
     def test_expand_deprecate_many_mismatch(self):
         upg = {

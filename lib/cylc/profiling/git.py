@@ -30,7 +30,8 @@ def describe(ref=None):
         cmd = ['git', 'describe', '--tags', '--always']
         if ref:
             cmd.append(ref)
-        return Popen(cmd, stdin=open(os.devnull), stdout=PIPE
+        return Popen(
+            cmd, stdin=open(os.devnull), stdout=PIPE
         ).communicate()[0].decode().strip()
     except CalledProcessError:
         return None
@@ -39,8 +40,9 @@ def describe(ref=None):
 def is_ancestor_commit(commit1, commit2):
     """Returns True if commit1 is an ancestor of commit2."""
     try:
-        ancestor = Popen(['git', 'merge-base', commit1, commit2],
-                         stdin=open(os.devnull), stdout=PIPE
+        ancestor = Popen(
+            ['git', 'merge-base', commit1, commit2],
+            stdin=open(os.devnull), stdout=PIPE
         ).communicate()[0].decode().strip()
         return ancestor == commit1
     except CalledProcessError:
@@ -90,8 +92,8 @@ def order_identifiers_by_date(versions):
 def has_changes_to_be_committed():
     """Returns True if there are any un-committed changes to the working
     copy."""
-    git_status = Popen(['git', 'status'], stdout=PIPE
-                 ).communicate()[0].decode()
+    git_status = Popen(
+        ['git', 'status'], stdout=PIPE).communicate()[0].decode()
     if 'Changes to be committed' in git_status:
         return True
     if 'Changed but not updated' in git_status:

@@ -424,10 +424,10 @@ class TestFileparse(unittest.TestCase):
                     'name': 'Cylc'
                 }
                 tf.write(("#!jinja2\n[section1]\n"
-                         "a={{ name }}\n# comment!\n"
-                         "[[subsection1]]\n"
-                         "[[subsection2]]\n"
-                         "[section2]").encode())
+                          "a={{ name }}\n# comment!\n"
+                          "[[subsection1]]\n"
+                          "[[subsection2]]\n"
+                          "[section2]").encode())
                 tf.flush()
                 r = parse(fpath=fpath, output_fname=of.name,
                           template_vars=template_vars)
@@ -468,8 +468,8 @@ class TestFileparse(unittest.TestCase):
                     'name': 'Cylc'
                 }
                 tf.write(("#!jinja2\n[section1]\n"
-                         "a={{ name }}\n# comment!\n"
-                         "[[[subsection1]]]\n")  # expected [[]] instead!
+                          "a={{ name }}\n# comment!\n"
+                          "[[[subsection1]]]\n")  # expected [[]] instead!
                          .encode())
                 tf.flush()
                 with self.assertRaises(FileParseError) as cm:

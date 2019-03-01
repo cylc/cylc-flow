@@ -21,25 +21,23 @@ from parsec.validate import ParsecValidator as vdr
 
 
 SPEC = {
-        'title' : [vdr.V_STRING],
-        'single values' :
-        {
-            'integers' : { '__MANY__' : [vdr.V_INTEGER] },
-            'booleans' : { '__MANY__' : [vdr.V_BOOLEAN] },
-            'floats'   : { '__MANY__' : [vdr.V_FLOAT] },
-            'strings'  : { '__MANY__' : [vdr.V_STRING] },
-            'strings with internal comments'  : { '__MANY__' : [vdr.V_STRING] },
-            'multiline strings'  : { '__MANY__' : [vdr.V_STRING] },
-            'multiline strings with internal comments'  : { '__MANY__' : [vdr.V_STRING] },
-             },
-        'list values' :
-        {
-            'string lists' :
-            {
-                '__MANY__'   : [vdr.V_STRING_LIST],
-                'compulsory' : [vdr.V_STRING_LIST, ["jumped","over","the"]]
-                },
-            'integer lists' : { '__MANY__' : [vdr.V_INTEGER_LIST] },
-            'float lists'   : { '__MANY__' : [vdr.V_FLOAT_LIST] },
-            },
-        }
+    'title': [vdr.V_STRING],
+    'single values': {
+        'integers': {'__MANY__': [vdr.V_INTEGER]},
+        'booleans': {'__MANY__': [vdr.V_BOOLEAN]},
+        'floats': {'__MANY__': [vdr.V_FLOAT]},
+        'strings': {'__MANY__': [vdr.V_STRING]},
+        'strings with internal comments': {'__MANY__': [vdr.V_STRING]},
+        'multiline strings': {'__MANY__': [vdr.V_STRING]},
+        'multiline strings with internal comments': {
+            '__MANY__': [vdr.V_STRING]}
+    },
+    'list values': {
+        'string lists': {
+            '__MANY__': [vdr.V_STRING_LIST],
+            'compulsory': [vdr.V_STRING_LIST, ["jumped", "over", "the"]]
+        },
+        'integer lists': {'__MANY__': [vdr.V_INTEGER_LIST]},
+        'float lists': {'__MANY__': [vdr.V_FLOAT_LIST]}
+    }
+}

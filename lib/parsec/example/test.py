@@ -17,32 +17,37 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import os, sys
-# parse:
-sys.path.append( os.path.join( os.path.dirname(os.path.abspath(__file__)), '..' ))
-# cylc:
-sys.path.append( os.path.join( os.path.dirname(os.path.abspath(__file__)), '../..' ))
+import os
+import sys
 
 from cfgspec import SPEC
 from parsec.config import ParsecConfig
 import cylc.flags
 
+# parse:
+sys.path.append(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+# cylc:
+sys.path.append(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), '../..'))
+
 cylc.flags.verbose = True
-class testcfg( ParsecConfig ):
-    def check( self, sparse ):
+
+
+class Testcfg(ParsecConfig):
+
+    def check(self, sparse):
         # TEMPORARY EXAMPLE
         if 'missing item' not in list(self.sparse):
             print("missing item is MISSING!!!!")
 
-cfg = testcfg( SPEC )
+
+cfg = Testcfg(SPEC)
 strict = False
-cfg.loadcfg( os.path.join( os.path.dirname( __file__ ), 'site.rc' )) # TODO: test strict=False (fail but accept defaults)
-cfg.loadcfg( os.path.join( os.path.dirname( __file__ ), 'user.rc' ))
+cfg.loadcfg(os.path.join(os.path.dirname(__file__), 'site.rc'))
+cfg.loadcfg(os.path.join(os.path.dirname(__file__), 'user.rc'))
 
 cfg.dump()
-#print
-#cfg.dump( ['list values'] )
-#print
-#cfg.dump( ['list values', 'integers'] )
-#print
-#cfg.dump( ['single values', 'strings with internal comments'] )
+cfg.dump(['list values'])
+cfg.dump(['list values', 'integers'])
+cfg.dump(['single values', 'strings with internal comments'])

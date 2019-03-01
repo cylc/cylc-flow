@@ -39,8 +39,8 @@ class ClientError(Exception):
     # TODO: ServerError class
 
     def __init__(self, error):
-        self.message = error.get('message',
-            'Request failed but returned no error message.')
+        self.message = error.get(
+            'message', 'Request failed but returned no error message.')
         traceback = error.get('traceback')
         self.traceback = '\n%s' % traceback if traceback else ''
 

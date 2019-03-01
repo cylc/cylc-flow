@@ -55,7 +55,7 @@ def _match_msg(cylc_msg, kafka_msg):
 
 
 def cylc_kafka_consumer(kafka_server, kafka_topic, group_id, message, debug):
-    """Look for a matching message in a Kafka topic.
+    r"""Look for a matching message in a Kafka topic.
 
     ARGUMENTS:
      * kafka_server - Kafka server URL, e.g. "localhost:9092".
@@ -89,9 +89,10 @@ def cylc_kafka_consumer(kafka_server, kafka_topic, group_id, message, debug):
     should be represented as:
         "system:prod point:2025 data:<nwp.*\.nc>"
 
-    A match occurs Kafka if all message dict items match, and the result returned
-    is the sub-dict of the actual values of items containing
-    angle-bracket-delineated regex patterns. E.g. above {'data': 'nwp-2025.nc'}.
+    A match occurs Kafka if all message dict items match, and the result
+    returned is the sub-dict of the actual values of items containing
+    angle-bracket-delineated regex patterns.
+    E.g. above {'data': 'nwp-2025.nc'}.
 
     """
 

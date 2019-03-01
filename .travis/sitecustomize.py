@@ -16,8 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# This file is used by Travis-CI to start the coverage process. In order to make
-# Cylc and Python aware of it, we export PYTHONPATH when running the tests
+# This file is used by Travis-CI to start the coverage process.
+# In order to make Cylc and Python aware of it, we export PYTHONPATH when
+# running the tests.
 
 import coverage
 coverage.process_startup()

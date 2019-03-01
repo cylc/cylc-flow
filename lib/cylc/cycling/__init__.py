@@ -463,7 +463,7 @@ def cmp(self, other):
 
 
 def cmp_to_rich(cls):
-    """Temporary solution which monkey patches rich comparisons onto a class."""
+    """Temporary solution which monkey patches rich comparisons."""
     cls.__lt__ = lambda self, other: cls.__cmp__(self, other) == -1
     cls.__le__ = lambda self, other: cls.__cmp__(self, other) <= 0
     cls.__gt__ = lambda self, other: cls.__cmp__(self, other) == 1

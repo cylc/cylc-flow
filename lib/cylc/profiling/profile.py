@@ -235,8 +235,8 @@ def run_experiment(exp):
                 conf_path=run.get('globalrc', ''))
             # Handle errors.
             if err_file:
-                print(('WARNING: non-empty suite error log: ' +
-                                      err_file), file=sys.stderr)
+                print(('WARNING: non-empty suite error log: '
+                       + err_file), file=sys.stderr)
             # Tidy up.
             if cylc_maj_version == '6':
                 unregister_suite(reg)
@@ -254,9 +254,8 @@ def run_experiment(exp):
 
         if to_purge:
             print(('ERROR: The following suite(s) run '
-                                  'directories could not be deleted:\n'
-                                  '\t' + ' '.join(to_purge)
-                                  ), file=sys.stderr)
+                   'directories could not be deleted:\n'
+                   '\t' + ' '.join(to_purge)), file=sys.stderr)
 
     return result_files
 
@@ -313,7 +312,7 @@ def profile(schedule):
             except SuiteFailedException as exc:
                 # Experiment failed to run, move onto the next one.
                 print(('Experiment "%s" failed at version "%s"'
-                                      '' % (experiment['name'], version_id)), file=sys.stderr)
+                       '' % (experiment['name'], version_id)), file=sys.stderr)
                 print(exc, file=sys.stderr)
                 success = False
                 continue

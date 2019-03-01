@@ -45,7 +45,6 @@ from cylc.host_appointer import HostAppointer, EmptyHostList
 from cylc.hostuserutil import get_host, get_user, get_fqdn_by_host
 from cylc.loggingutil import TimestampRotatingFileHandler
 from cylc.log_diagnosis import LogSpec
-#from cylc.network import PRIVILEGE_LEVELS
 from cylc.network.server import SuiteRuntimeServer
 from cylc.profiler import Profiler
 from cylc.state_summary_mgr import StateSummaryMgr

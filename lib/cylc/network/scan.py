@@ -136,7 +136,8 @@ def scan_many(items, methods=None, timeout=None, ordered=False):
     if ordered:
         yield from async_map(scan_one, args)
     else:
-        yield from (result for _, result in async_unordered_map(scan_one, args))
+        yield from (
+            result for _, result in async_unordered_map(scan_one, args))
 
 
 async def scan_one(reg, host, port, timeout=None, methods=None):

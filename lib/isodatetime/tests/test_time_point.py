@@ -34,12 +34,12 @@ def daterange(start_date, end_date):
 
 
 test_duration_attributes = [
-                ("weeks", 110),
-                ("days", 770),
-                ("hours", 770 * 24),
-                ("minutes", 770 * 24 * 60),
-                ("seconds", 770 * 24 * 60 * 60)
-            ]
+    ("weeks", 110),
+    ("days", 770),
+    ("hours", 770 * 24),
+    ("minutes", 770 * 24 * 60),
+    ("seconds", 770 * 24 * 60 * 60)
+]
 
 
 @pytest.mark.slow

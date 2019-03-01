@@ -274,9 +274,6 @@ def main(args):
         # skip all diff logic if possible
         sys.exit(0)
 
-    #if not isinstance(this, dict) and isinstance(that, dict):
-    #    sys.exit('%s: %s\n%s: %s' % (this, args.name1, that, args.name2))
-
     if args.contains:
         # test if items from one file present in the other
         if args.contains == 2:
@@ -284,7 +281,6 @@ def main(args):
             args.name1, args.name2 = args.name2, args.name1
         diff = Diff(this, that, args.name1, args.name2)
         for _ in diff.filter('-', '?'):
-            #print(diff, file=sys.stderr)
             sys.stderr.write(str(diff))
             sys.exit(1)
         sys.exit(0)
@@ -293,7 +289,6 @@ def main(args):
     if diff:
         sys.exit(0)
     else:
-        # print(diff, file=sys.stderr)
         sys.stderr.write(str(diff))
         sys.exit(len(diff))
 

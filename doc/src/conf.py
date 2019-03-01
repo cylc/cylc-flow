@@ -78,8 +78,8 @@ html_theme_options = {
     "sidebarbgcolor": "white",
     "sidebartextcolor": "black",
     "sidebarlinkcolor": "#0000EE;",
-    "headbgcolor":  "white",
-    "headtextcolor":  "#FF5966",
+    "headbgcolor": "white",
+    "headtextcolor": "#FF5966",
     "linkcolor": "#0000EE;",
     "visitedlinkcolor": "#551A8B;",
     "headlinkcolor": "#0000EE;",
@@ -88,8 +88,8 @@ html_theme_options = {
 
 # Custom sidebar templates, maps document names to template names.
 html_sidebars = {
-   '**': ['globaltoc.html', 'searchbox.html', 'sourcelink.html'],
-   'using/windows': ['windowssidebar.html', 'searchbox.html'],
+    '**': ['globaltoc.html', 'searchbox.html', 'sourcelink.html'],
+    'using/windows': ['windowssidebar.html', 'searchbox.html'],
 }
 
 # Logo and favicon to display.
@@ -110,16 +110,16 @@ htmlhelp_basename = 'cylcdoc'
 # -- Options for LaTeX output ---------------------------------------------
 
 latex_elements = {
-'papersize': 'a4paper',
-'pointsize': '11pt',
+    'papersize': 'a4paper',
+    'pointsize': '11pt',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'cylc.tex', 'Cylc Documentation',
-   '2008-2019 NIWA & British Crown (Met Office) & Contributors', 'manual'),
+    ('index', 'cylc.tex', 'Cylc Documentation',
+     '2008-2019 NIWA & British Crown (Met Office) & Contributors', 'manual'),
 ]
 
 # Image file to place at the top of the title page.
@@ -148,9 +148,9 @@ man_show_urls = True
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'cylc', 'Cylc Documentation',
-   '2008-2019 NIWA & British Crown (Met Office) & Contributors',
-  'cylc', 'The Cylc Suite Engine', 'Miscellaneous'),
+    ('index', 'cylc', 'Cylc Documentation',
+     '2008-2019 NIWA & British Crown (Met Office) & Contributors',
+     'cylc', 'The Cylc Suite Engine', 'Miscellaneous'),
 ]
 
 # How to display URL addresses.

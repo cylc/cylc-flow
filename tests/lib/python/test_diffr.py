@@ -182,7 +182,7 @@ class TestDiff(unittest.TestCase):
                 self.assertTrue(Diff(this, this))
 
     def test_list_equal_length(self):
-        diff = Diff([1,2,3], [4,5,6])
+        diff = Diff([1, 2, 3], [4, 5, 6])
         self.assertFalse(diff)
         self.assertEqual(
             list(diff.modified()),
@@ -193,7 +193,7 @@ class TestDiff(unittest.TestCase):
             ]
         )
 
-        diff = Diff([1,2,3], [3,2,1])
+        diff = Diff([1, 2, 3], [3, 2, 1])
         self.assertFalse(diff)
         self.assertEqual(
             list(diff.modified()),
@@ -204,7 +204,7 @@ class TestDiff(unittest.TestCase):
         )
 
     def test_list_different_length(self):
-        that, this = [1,2,3,4,5,6], [-1,2,3]
+        that, this = [1, 2, 3, 4, 5, 6], [-1, 2, 3]
 
         diff = Diff(that, this)
         self.assertFalse(diff)
@@ -282,7 +282,7 @@ class TestDiff(unittest.TestCase):
               ],
             - 3: 6
              ]
-            ''').strip()  + '\n'
+            ''').strip() + '\n'
         )
 
     def test_mixed(self):

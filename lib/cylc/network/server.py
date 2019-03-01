@@ -76,7 +76,6 @@ class ZMQServer(object):
 
     """
 
-
     def __init__(self, encode_method, decode_method, secret_method):
         self.port = None
         self.socket = None
@@ -424,7 +423,8 @@ class SuiteRuntimeServer(ZMQServer):
         return {
             KEY_UPDATE_TIME: self.schd.state_summary_mgr.update_time,
             KEY_STATES: self.schd.state_summary_mgr.get_state_totals(),
-            KEY_TASKS_BY_STATE: self.schd.state_summary_mgr.get_tasks_by_state()
+            KEY_TASKS_BY_STATE:
+                self.schd.state_summary_mgr.get_tasks_by_state()
         }
 
     @authorise(Priv.CONTROL)

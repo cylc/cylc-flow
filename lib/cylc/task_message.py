@@ -87,7 +87,6 @@ def record_messages(suite, task_job, messages):
     )
 
 
-
 def _append_job_status_file(suite, task_job, event_time, messages):
     """Write messages to job status file."""
     job_log_name = os.getenv('CYLC_TASK_LOG_ROOT')

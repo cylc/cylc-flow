@@ -29,6 +29,6 @@ TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --reference-test --debug --no-detach $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-cat-check
-run_ok $TEST_NAME python $TEST_SOURCE_DIR/basic/state-check.py $SUITE_NAME $(cylc get-global-conf --print-run-dir)
+run_ok $TEST_NAME python3 $TEST_SOURCE_DIR/basic/state-check.py $SUITE_NAME $(cylc get-global-conf --print-run-dir)
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

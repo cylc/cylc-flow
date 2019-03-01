@@ -54,7 +54,7 @@ unittest: &unittest
     - .travis/install.sh unit-tests
   script:
     - export PYTHONPATH=$(pwd -P)/lib/
-    - # pycodestyle  TODO - temporally disable to allow unittest stage to pass
+    - pycodestyle
     - pytest --cov-append --cov=lib/cylc --cov=lib/parsec
   after_success:
     # Report metrics, such as coverage
