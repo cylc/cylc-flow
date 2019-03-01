@@ -22,6 +22,9 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug --no-detach "${SUITE_NAME}"
+while cylc ping "${SUITE_NAME}" 2>/dev/null; do
+    sleep 1  # wait for suite to shut down
+done
 suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart --debug --no-detach "${SUITE_NAME}"
 
 if ! which sqlite3 > /dev/null; then

@@ -22,7 +22,7 @@
 
 . $(dirname $0)/test_header
 
-set_test_number 10
+set_test_number 9
 
 install_suite $TEST_NAME_BASE prereqs-outputs
 SHARE=$(cylc get-site-config --print-run-dir)/${SUITE_NAME}/share
@@ -44,11 +44,11 @@ description: (not given)
 URL: (not given)
 
 prerequisites (- => not satisfied):
-  + (0 | 1 | 2 | 3)
+  - (0 | 1 | 2 | 3)
   - 	0 = foo_x1.1 succeeded
   - 	1 = foo_x2.1 succeeded
   - 	2 = foo_x3.1 succeeded
-  + 	3 = foo_x4.1 succeeded
+  - 	3 = foo_x4.1 succeeded
   - ((1 | 0) & (3 | 2) & (5 | 4) & (7 | 6))
   + 	0 = bar_x1.1 failed
   - 	1 = bar_x1.1 succeeded
@@ -228,39 +228,6 @@ outputs (- => not completed):
   - baz.1 expired
   - baz.1 submitted
   + baz.1 submit-failed
-  - baz.1 started
-  - baz.1 succeeded
-  - baz.1 failed
-__SHOW_OUTPUT__
-
-#-------------------------------------------------------------------------------
-# After removing upstream dependences and then resetting baz.1 to waiting.
-TEST_NAME=$TEST_NAME_BASE-show-waiting
-cmp_ok "${SHARE}/waiting.out" <<__SHOW_OUTPUT__
-title: (not given)
-description: (not given)
-URL: (not given)
-
-prerequisites (- => not satisfied):
-  - (0 | 1 | 2 | 3)
-  - 	0 = foo_x1.1 succeeded
-  - 	1 = foo_x2.1 succeeded
-  - 	2 = foo_x3.1 succeeded
-  - 	3 = foo_x4.1 succeeded
-  - ((1 | 0) & (3 | 2) & (5 | 4) & (7 | 6))
-  - 	0 = bar_x1.1 failed
-  - 	1 = bar_x1.1 succeeded
-  - 	2 = bar_x2.1 failed
-  - 	3 = bar_x2.1 succeeded
-  - 	4 = bar_x3.1 failed
-  - 	5 = bar_x3.1 succeeded
-  - 	6 = bar_x4.1 failed
-  - 	7 = bar_x4.1 succeeded
-
-outputs (- => not completed):
-  - baz.1 expired
-  - baz.1 submitted
-  - baz.1 submit-failed
   - baz.1 started
   - baz.1 succeeded
   - baz.1 failed
