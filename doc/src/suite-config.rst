@@ -3253,8 +3253,8 @@ prior to configuration parsing to provide suite context:
 
    CYLC_SUITE_NAME                 # Suite name
 
-   CYLC_SUITE_DEF_PATH             # Location of the suite source
-                                   # configuration path on suite host, 
+   CYLC_SUITE_DEF_PATH             # Location of the suite configuration
+                                   # source path on suite host,
                                    # e.g. ~/cylc-run/foo
    CYLC_SUITE_LOG_DIR              # Suite log directory.
    CYLC_SUITE_RUN_DIR              # Location of the suite run directory in
@@ -3266,10 +3266,10 @@ prior to configuration parsing to provide suite context:
 
 .. note::
 
-    The above example is emphasizes that *the environment is read on the suite
-    host at the time the suite configuration is parsed* - it is not, for
-    instance, read at task run time on the task host. This also pertains to some
-    of the above-listed suite context.
+    The above example gives emphasis that *the environment is read on the
+    suite host at the time the suite configuration is parsed* - it is not, for
+    instance, read at task run time on the task host. This also pertains to
+    some of the above-listed suite context.
 
 
 .. _CustomJinja2Filters:
