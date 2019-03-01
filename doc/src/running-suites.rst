@@ -580,7 +580,6 @@ must be installed under your ``$HOME/.cylc/`` directory:
 .. code-block:: bash
 
    $HOME/.cylc/auth/OWNER@HOST/SUITE/
-         ssl.cert
          passphrase
          contact  # (optional - see below)
 

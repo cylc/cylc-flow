@@ -245,7 +245,7 @@ that you can exit the terminal or even log out without killing the suite:
          .___! |           are welcome to redistribute it under certain
          !_____!                conditions; see `cylc conditions`.
 
-   *** listening on https://nwp-1:43027/ ***
+   *** listening on tcp://nwp-1:43027/ ***
 
    To view suite server program contact information:
     $ cylc get-suite-contact tut/oneoff/basic
@@ -401,9 +401,7 @@ time-stamped suite log file, and task job scripts and job logs
    |    |-- contact          # detail on how to contact the running suite
    |    |-- db               # private suite run database
    |    |-- passphrase       # passphrase for client authentication
-   |    |-- source           # symbolic link to source directory
-   |    |-- ssl.cert         # SSL certificate for the suite server
-   |    `-- ssl.pem          # SSL private key
+   |    `-- source           # symbolic link to source directory
    |-- share                 # suite share directory (not used in this example)
    |-- work                  # task work space (sub-dirs are deleted if not used)
    |    `-- 1                   # task cycle point directory (or 1)

@@ -258,15 +258,14 @@ if HTTPS is not available.
 [communication] ``->`` method
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The choice of client-server communication method - currently only HTTPS
-and HTTP are supported, although others could be developed and plugged in.
-Cylc defaults to HTTPS if this setting is not explicitly configured.
+The choice of client-server communication method - currently only ZeroMQ
+over TCP is supported.
+
 
 - *type*: string
 - *options*:
-  - **https**
-  - **http**
-- *default*: https
+  - **zmq**
+- *default*: zmq
 
 [communication] ``->`` options
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

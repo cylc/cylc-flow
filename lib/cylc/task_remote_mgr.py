@@ -155,7 +155,6 @@ class TaskRemoteMgr(object):
         Call "cylc remote-init" to install suite items to remote:
             ".service/contact": HTTP(S) and SSH+HTTP(S) task comm
             ".service/passphrase": HTTP(S) task comm
-            ".service/ssl.cert": HTTPS task comm
             "python/": if source exists
 
         Return:

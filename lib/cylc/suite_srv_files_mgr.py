@@ -563,7 +563,7 @@ To start a new run, stop the old one first with one or more of these:
         return title
 
     def _is_local_auth_ok(self, reg, owner, host):
-        """Return True if it is OK to use local passphrase, ssl.* files.
+        """Return True if it is OK to use local passphrase file.
 
         Use values in ~/cylc-run/REG/.service/contact to make a judgement.
         Cache results in self.can_use_load_auths.

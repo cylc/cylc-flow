@@ -75,7 +75,6 @@ ImageMagick (any)...............................................FOUND (6.8.9-9)
             *OPTIONAL SOFTWARE for the HTTPS communications layer*            
 Python:urllib3 (any).............................................FOUND (1.13.1)
 Python:OpenSSL (any).............................................FOUND (17.2.0)
-Python:requests (2.4.2+).......................FOUND & min. version MET (2.9.1)
 
                  *OPTIONAL SOFTWARE for the LaTeX User Guide*                 
 TeX:framed (any)....................................................FOUND (n/a)

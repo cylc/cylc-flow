@@ -14,13 +14,6 @@ Third-Party Software Packages
 recommended for the best security. `Python <https://python.org/>`_ 2 should
 already be installed in your Linux system.
 
-For Cylc's HTTPS communications layer:
-
-- `OpenSSL <https://www.openssl.org/>`_
-- `pyOpenSSL <http://www.pyopenssl.org/>`_
-- `python-requests <http://docs.python-requests.org/>`_
-- **python-urllib3** - should be bundled with python-requests
-
 The Cylc Review service does not need any additional packages.
 
 The following packages are necessary for running all the tests in Cylc:
@@ -48,11 +41,6 @@ are installed properly:
    ===============================================================================
                                  *REQUIRED SOFTWARE*
    Python (2.6+, <3).....................FOUND & min. version MET (2.7.12.final.0)
-
-               *OPTIONAL SOFTWARE for the HTTPS communications layer*
-   Python:requests (2.4.2+)......................FOUND & min. version MET (2.11.1)
-   Python:urllib3 (any)..............................................NOT FOUND (-)
-   Python:OpenSSL (any)..............................................NOT FOUND (-)
 
                 *OPTIONAL SOFTWARE for the configuration templating*
    Python:EmPy (any).................................................NOT FOUND (-)
@@ -96,15 +84,6 @@ Software Bundled With Cylc
 
 Cylc bundles several third party packages which do not need to be installed
 separately.
-
-- `cherrypy <http://www.cherrypy.org/>`_ **6.0.2** (slightly modified): a pure
-  Python HTTP framework that we use as a web server for communication between
-  server processes (suite server programs) and client programs (running tasks,
-  CLI commands).
-
-  - Client communication is via the Python
-    `requests <http://docs.python-requests.org/>`_ library if available
-    (recommended) or else pure Python via **urllib2**.
 
 - `Jinja2 <http://jinja.pocoo.org/>`_ **2.10**: a full featured template
   engine for Python, and its dependency

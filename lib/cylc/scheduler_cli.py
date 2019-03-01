@@ -95,8 +95,7 @@ def main(is_restart=False):
     except SuiteServiceFileError as exc:
         sys.exit(exc)
 
-    # Create auth files if needed. On a shared FS if the suite host changes
-    # this may (will?) renew the ssl.cert to reflect the change in host name.
+    # Create auth files if needed.
     SuiteSrvFilesManager().create_auth_files(args[0])
 
     # Check whether a run host is explicitly specified, else select one.
