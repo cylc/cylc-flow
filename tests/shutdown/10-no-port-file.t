@@ -34,7 +34,6 @@ if [[ -z "${PORT}" ]]; then
 fi
 rm -f "${SRVD}/contact"
 run_fail "${TEST_NAME_BASE}-stop-1" cylc stop "${SUITE_NAME}"
-cat "${TEST_NAME_BASE}-stop-1.stderr" >&2
 contains_ok "${TEST_NAME_BASE}-stop-1.stderr" <<__ERR__
 Contact info not found for suite "${SUITE_NAME}", suite not running?
 __ERR__
