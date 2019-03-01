@@ -19,8 +19,8 @@
 
 All new task proxies (including spawned ones) are added first to the runahead
 pool, which does not participate in dependency matching and is not visible in
-the GUI. Tasks are then released to the task pool if not beyond the current
-runahead limit.
+cylc monitoring tools. Tasks are then released to the task pool if not beyond
+the current runahead limit.
 
 check_auto_shutdown() and remove_spent_tasks() have to consider tasks in the
 runahead pool too.

@@ -20,7 +20,7 @@ and description.
 ------
 
 Section containing metadata items for this suite. Several items
-(title, description, URL) are pre-defined and are used by the GUI. Others
+(title, description, URL) are pre-defined and are used by Cylc. Others
 can be user-defined and passed to suite event handlers to be interpreted
 according to your needs. For example, the value of a "suite-priority" item
 could determine how an event handler responds to failure events.
@@ -29,8 +29,7 @@ could determine how an event handler responds to failure events.
 [meta] ``->`` title
 ^^^^^^^^^^^^^^^^^^^
 
-A single line description of the suite. It is displayed in the GUI
-"Open Another Suite" window and can be retrieved at run time with the
+A single line description of the suite, can be retrieved at run time with the
 ``cylc show`` command.
 
 - *type*: single line string
@@ -53,7 +52,7 @@ with the ``cylc show`` command.
 ^^^^^^^^^^^^^^^^^
 
 A web URL to suite documentation.  If present it can be browsed with the
-``cylc doc`` command, or from the gcylc Suite menu. The string
+``cylc doc`` command. The string
 template ``%(suite_name)s`` will be replaced with the actual suite
 name. See also :ref:`TaskURL`.
 
@@ -65,8 +64,7 @@ name. See also :ref:`TaskURL`.
 [meta] ``->`` group
 ^^^^^^^^^^^^^^^^^^^
 
-A group name for a suite. In the gscan GUI, suites with the same group name can
-be collapsed into a single state summary when the "group" column is displayed.
+A group name for a suite.
 
 - *type*: single line string
 - *default*: (none)
@@ -754,7 +752,7 @@ leap year) and 366 (always a leap year) calendars.
 In a cold start each cycling task (unless specifically excluded under
 ``[special tasks]``) will be loaded into the suite with this cycle point,
 or with the closest subsequent valid cycle point for the task.  This item can
-be overridden on the command line or in the gcylc suite start panel.
+be overridden on the command line.
 
 In date-time cycling, if you do not provide time zone information for this,
 it will be assumed to be local time, or in UTC if :ref:`UTC-mode` is set, or in
@@ -862,8 +860,7 @@ Examples of interpretation are given in
 
 Cycling tasks are held once they pass the final cycle point, if one is
 specified. Once all tasks have achieved this state the suite will shut
-down. If this item is provided you can override it on the command line
-or in the gcylc suite start panel.
+down. If this item is provided you can override it on the command line.
 
 In date-time cycling, if you do not provide time zone information for this,
 it will be assumed to be local time, or in UTC if :ref:`UTC-mode` is set, or in
@@ -909,7 +906,7 @@ constraints.
 Cycling tasks are held once they pass the hold after cycle point, if one is
 specified. Unlike the final cycle point suite will not shut down once all tasks
 have passed this point. If this item is provided you can override it on the
-command line or in the gcylc suite start panel.
+command line.
 
 
 .. _runahead limit:
@@ -956,8 +953,8 @@ Allows tasks to spawn out to ``max active cycle points``
 submitted before its successor can be spawned.
 
 *Important*: This should be used with care given the potential impact of
-additional task proxies both in terms of memory and cpu for the cylc daemon as
-well as overheads in rendering all the additional tasks in gcylc. Also, use
+additional task proxies in terms of memory and cpu for the cylc daemon.
+Also, use
 of the setting may highlight any issues with suite design relying on the
 default behaviour where downstream tasks would otherwise be waiting on ones
 upstream submitting and the suite would have stalled e.g. a housekeeping task
@@ -1264,8 +1261,7 @@ for all tasks in the suite.
 [runtime] ``->`` [[\_\_NAME\_\_]] ``->`` extra log files
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-A list of user-defined log files associated with a task. Files defined here
-will appear alongside the default log files in the cylc GUI. Log files
+A list of user-defined log files associated with a task. Log files
 must reside in the job log directory ``$CYLC_TASK_LOG_DIR`` and ideally
 should be named using the ``$CYLC_TASK_LOG_ROOT`` prefix
 (see :ref:`Task Job Script Variables`).
@@ -1431,7 +1427,7 @@ large data area) by a global config setting (see :ref:`workdirectory`).
 
 Section containing metadata items for this task or family namespace.
 Several items (title, description, URL) are pre-defined and are used by
-the GUI. Others can be user-defined and passed to task event handlers to be
+Cylc. Others can be user-defined and passed to task event handlers to be
 interpreted according to your needs. For example, the value of an
 "importance" item could determine how an event handler responds to task
 failure events.
@@ -1474,8 +1470,7 @@ A multi-line description of this namespace, retrievable from running tasks with 
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
 A web URL to task documentation for this suite.  If present it can be browsed
-with the ``cylc doc`` command, or by right-clicking on the task in
-gcylc. The string templates ``%(suite_name)s`` and
+with the ``cylc doc`` command. The string templates ``%(suite_name)s`` and
 ``%(task_name)s`` will be replaced with the actual suite and task names.
 See also :ref:`SuiteURL`.
 
@@ -2330,11 +2325,7 @@ in simulation or dummy modes.
 [visualization]
 ---------------
 
-Configuration of suite graphing for the ``cylc graph`` command (graph
-extent, styling, and initial family-collapsed state) and the gcylc graph view
-(initial family-collapsed state). See the
-`Graphviz documentation of node shapes <http://www.graphviz.org/documentation/>`_.
-
+Configure the appearance of suites when displayed in Cylc visualisation tools.
 
 [visualization] ``->`` initial cycle point
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2376,11 +2367,9 @@ it can be overridden by an explicit *final cycle point* (above).
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A list of family (namespace) names to be shown in the collapsed state
-(i.e. the family members will be replaced by a single family node) when
-the suite is first plotted in the graph viewer or the gcylc graph view.
+(i.e. the family members will be replaced by a single family node)
+by default.
 If this item is not set, the default is to collapse all families at first.
-Interactive GUI controls can then be used to group and ungroup family
-nodes at will.
 
 - *type*: Comma-separated list of family names.
 - *default*: (none)

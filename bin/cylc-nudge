@@ -25,8 +25,7 @@ task processing (dependency negotation etc.) is required, or if a
 clock-trigger task is ready to run.
 
 The main reason to use this command is to update the "estimated time till
-completion" intervals shown in the tree-view suite control GUI, during
-periods when nothing else is happening.
+completion" intervals, during periods when nothing else is happening.
 """
 
 import sys

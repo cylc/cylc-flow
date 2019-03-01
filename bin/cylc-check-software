@@ -67,7 +67,6 @@ upper_case_conv = dict(
 func_tags_and_text = {
     'TEMPLATING': 'configuration templating',
     'HTTPSCOMMS': 'HTTPS communications layer',
-    'GUIORGRAPH': 'GUI & dependency graph visualisation',
     'HTMLDOCS': 'HTML documentation',
 }
 

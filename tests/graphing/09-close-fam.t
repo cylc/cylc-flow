@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test that ungrouped graphing works without having to use the viewer GUI.
+# Test that ungrouped graphing works.
 . "$(dirname "$0")/test_header"
 set_test_number 4
 

@@ -37,8 +37,8 @@ See :ref:`Configure Site Environment on Job Hosts` for information.
 User Interfaces
 ---------------
 
-You should have access to the cylc command line (CLI) and graphical (GUI) user
-interfaces once cylc has been installed as described in
+You should have access to the cylc command line (CLI) user
+interface once cylc has been installed as described in
 Section :ref:`InstallCylc`.
 
 Command Line Interface (CLI)
@@ -53,28 +53,11 @@ and their help documentation.
    $ cylc help       # Top level command help.
    $ cylc run --help # Example command-specific help.
 
-Command help transcripts are printed in :ref:`CommandReference` and are
-available from the GUI Help menu.
+Command help transcripts are printed in :ref:`CommandReference`.
 
 Cylc is *scriptable* - the error status returned by commands can be
 relied on.
 
-Graphical User Interface (GUI)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The cylc GUI covers the same functionality as the CLI, but it has more
-sophisticated suite monitoring capability. It can start and stop suites, or
-connect to suites that are already running; in either case, shutting down the
-GUI does not affect the suite itself.
-
-.. code-block:: bash
-
-   $ gcylc & # or:
-   $ cylc gui & # Single suite control GUI.
-   $ cylc gscan & # Multi-suite monitor GUI.
-
-Clicking on a suite in gscan, shown in :numref:`fig-gscan`, opens a
-gcylc instance for it.
 
 Suite Configuration
 -------------------
@@ -229,14 +212,6 @@ just above and open the *Hello World* suite in your text editor:
    $ cylc edit tut/oneoff/basic # in-terminal
    $ cylc edit -g tut/oneoff/basic & # or GUI
 
-Alternatively, start gcylc on the suite:
-
-.. code-block:: bash
-
-   $ gcylc tut/oneoff/basic &
-
-and choose *Suite* ``->`` *Edit* from the menu.
-
 The editor will be invoked from within the suite configuration directory
 for easy access to other suite files (in this case there are none). There are
 syntax highlighting control files for several text editors under
@@ -308,23 +283,6 @@ overwritten if a job is resubmitted for any reason).
 
 The suite shuts down automatically once all tasks have succeeded.
 
-GUI
-^^^
-
-The cylc GUI can start and stop suites, or (re)connect to suites that
-are already running:
-
-.. code-block:: bash
-
-   $ cylc gui tut/oneoff/basic &
-
-Use the tool bar *Play* button, or the *Control* ``->`` *Run* menu item, to
-run the suite again. You may want to alter the suite configuration slightly
-to make the task take longer to run. Try right-clicking on the
-``hello`` task to view its output logs. The relative merits of the three
-*suite views* - dot, text, and graph - will be more apparent later when we
-have more tasks. Closing the GUI does not affect the suite itself.
-
 
 .. _RemoteSuites:
 
@@ -347,20 +305,13 @@ provided, then ranking according to the given *rank* method.
 Discovering Running Suites
 --------------------------
 
-Suites that are currently running can be detected with command line or
-GUI tools:
+Suites that are currently running can be detected using ``cylc scan``:
 
 .. code-block:: bash
 
    # list currently running suites and their port numbers:
    $ cylc scan
    tut/oneoff/basic oliverh@nwp-1:43001
-
-   # GUI summary view of running suites:
-   $ cylc gscan &
-
-The scan GUI is shown in :numref:`fig-gscan`; clicking on a suite in
-it opens gcylc.
 
 
 Task Identifiers
@@ -388,8 +339,7 @@ specified in the suite configuration (environment, script, etc.) in
 error trapping code, messaging calls to report task progress back to the suite
 server program, and so forth. Job scripts are written to the *suite job log
 directory* where they can be viewed alongside the job output logs. They
-can be accessed at run time by right-clicking on the task in the cylc GUI, or
-printed to the terminal:
+can printed to the terminal:
 
 .. code-block:: bash
 
@@ -429,7 +379,7 @@ system.
 Cylc supports a number of different batch systems. Tasks
 submitted to external batch queuing systems like ``at``,
 ``PBS``, ``SLURM``, ``Moab``, or ``LoadLeveler``, are displayed as
-*submitted* in the cylc GUI until they start executing.
+*submitted* until they start executing.
 
 - For more on task job scripts, see :ref:`JobScripts`.
 - For more on batch systems, see :ref:`AvailableMethods`.
@@ -490,10 +440,7 @@ config files if necessary, and the suite share and work locations can be
 configured separately because of the potentially larger disk space
 requirement.
 
-Task job logs can be viewed by right-clicking on tasks in the gcylc
-GUI (so long as the task proxy is live in the suite), manually
-accessed from the log directory (of course), or printed to the terminal
-with the ``cylc cat-log`` command:
+Task job logs can be viewed with the ``cylc cat-log`` command:
 
 .. code-block:: bash
 
@@ -595,8 +542,8 @@ directories, transfer any essential service files, send the task job script
 over, and submit it to run there by the configured batch system.
 
 Remote task job logs are saved to the suite run directory on the task remote,
-not on the account running the suite. They can be retrieved by right-clicking
-on the task in the GUI, or to have cylc pull them back to the suite account
+not on the account running the suite. They can be retrieved by
+``cylc cat-log``, or to have cylc pull them back to the suite account
 automatically do this:
 
 .. code-block:: cylc
@@ -1330,8 +1277,8 @@ If a task with configured retries fails, it goes into the *retrying* state
 until the next retry delay is up, then it resubmits. It only enters the
 *failed* state on a final definitive failure.
 
-If a task with configured retries is *killed* (by ``cylc kill`` or
-via the GUI) it goes to the *held* state so that the operator can decide
+If a task with configured retries is *killed*
+it goes to the *held* state so that the operator can decide
 whether to release it and continue the retry sequence or to abort the retry
 sequence by manually resetting it to the *failed* state.
 
@@ -1383,9 +1330,6 @@ and can be copied and modified at will.
   then modify the suite configuration and ``cylc reload`` it
   before using ``cylc release`` to continue (you can also
   reload without holding).
-- Use the gcylc View menu to show the task state color key and
-  watch tasks in the ``task-states`` example evolve
-  as the suite runs.
 - Manually re-run a task that has already completed or failed,
   with ``cylc trigger``.
 - Use an *internal queue* to prevent more than an alotted number

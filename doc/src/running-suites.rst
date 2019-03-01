@@ -91,8 +91,7 @@ Restart From Latest Checkpoint
 """"""""""""""""""""""""""""""
 
 To restart from the latest checkpoint simply invoke the ``cylc restart``
-command with the suite name (or select "restart" in the GUI suite start dialog
-window):
+command with the suite name.
 
 .. code-block:: bash
 
@@ -162,8 +161,6 @@ Once you have identified the right checkpoint, restart the suite like this:
 .. code-block:: bash
 
    $ cylc restart --checkpoint=CHECKPOINT-ID SUITE
-
-or enter the checkpoint ID in the space provided in the GUI restart window.
 
 
 Checkpointing With A Task
@@ -289,7 +286,7 @@ Task Job Polling
 At any point after job submission task jobs can be *polled* to check that
 their true state conforms to what is currently recorded by the suite server
 program.  See ``cylc poll --help`` for how to poll one or more tasks
-manually, or right-click poll a task or family in GUI.
+manually.
 
 Polling may be necessary if, for example, a task job gets killed by the
 untrappable SIGKILL signal (e.g. ``kill -9 PID``), or if a network
@@ -337,8 +334,7 @@ consider installing dedicated Cylc servers or
 VMs inside the HPC trust zone (where HTTPS and ssh should be allowed).
 
 It is also possible to run Cylc suite server programs on HPC login
-nodes, but this is not recommended for load, run duration,
-and GUI reasons.
+nodes, but this is not recommended for load and run duration,
 
 Finally, it has been suggested that *port forwarding* may provide another
 solution - but that is beyond the scope of this document.
@@ -368,7 +364,7 @@ Cylc can be configured to re-invoke task messaging commands on the
 suite host via non-interactive ssh (from job host to suite host).
 Then a local HTTPS connection is made to the suite server program.
 
-(User-invoked client commands (aside from the GUI, which requires HTTPS)
+(User-invoked client commands
 can do the same thing with the ``--use-ssh`` command option).
 
 This is less efficient than direct HTTPS messaging, but it may be useful at
@@ -444,7 +440,7 @@ information from the contact file, if they have access to it.
 File-Reading Commands
 ---------------------
 
-Some Cylc commands and GUI actions parse suite configurations or read
+Some Cylc commands parse suite configurations or read
 other files
 from the suite host account, rather than communicate with a suite server
 program over the network. In future we plan to have suite server program serve
@@ -484,8 +480,7 @@ Client-Server Interaction
 -------------------------
 
 Cylc server programs listen on dedicated network ports for
-HTTPS communications from Cylc clients (task jobs, and user-invoked commands
-and GUIs).
+HTTPS communications from Cylc clients (task jobs and user-invoked commands)
 
 Use ``cylc scan`` to see which suites are listening on which ports on
 scanned hosts (this lists your own suites by default, but it can show others
@@ -518,7 +513,7 @@ description
 state-totals
    Identity, description, and task state totals.
 read
-   Full read-only access for monitor and GUI.
+   Full read-only access.
 shutdown
    *Not yet implemented*
    Full read access plus shutdown, but no other control.
@@ -527,7 +522,7 @@ control
 
 The default public access level is *state-totals*.
 
-The ``cylc scan`` command and the ``cylc gscan`` GUI can print
+The ``cylc scan`` command can print
 descriptions and task state totals in addition to basic suite identity, if the
 that information is revealed publicly.
 
@@ -558,28 +553,12 @@ SSL certificate, and contact file too, for automatic connection to suites.
 if you do not have a shared filesystem - see below.*
 
 
-.. _GUI-to-Suite Interaction:
-
-GUI-to-Suite Interaction
-------------------------
-
-The gcylc GUI is mainly a network client to retrieve and display suite status
-information from the suite server program, but it can also invoke file-reading
-commands to view and graph the suite configuration and so on. This is entirely
-transparent if the GUI is running on the suite host account, but full
-functionality for remote suites requires either a shared filesystem, or
-(see :ref:`RemoteControl`) auth file installation *and* non-interactive ssh
-access to the suite host.  Without the auth files you will not be able
-to connect to the suite, and without ssh you will see "permission denied"
-errors on attempting file access.
-
-
 .. _RemoteControl:
 
 Remote Control
 --------------
 
-Cylc client programs - command line and GUI - can interact with suite server
+Cylc client programs can interact with suite server
 programs running on other accounts or hosts. How this works depends on whether
 or not you have:
 
@@ -611,12 +590,12 @@ is the suite name. Client commands should then be invoked with the
 
 .. code-block:: bash
 
-   $ cylc gui --user=OWNER --host=HOST SUITE
+   $ cylc edit --user=OWNER --host=HOST SUITE
 
 .. note::
 
    Remote suite auth files do not need to be installed for read-only
-   access - see :ref:`PublicAccess` - via the GUI or monitor.
+   access - see :ref:`PublicAccess`.
 
 The suite contact file (see :ref:`The Suite Contact File`) is not needed if
 you have read-access to the remote suite run directory via the local
@@ -636,18 +615,12 @@ the suite port number and use the ``--port`` client command option.
    accounts to which you already have full access.
 
 
-.. _Scan And Gscan:
+Scan
+----
 
-Scan And Gscan
---------------
-
-Both ``cylc scan`` and the ``cylc gscan`` GUI can display
+``cylc scan`` can display
 suites owned by other users on other hosts, including task state totals if the
-public access level permits that (see :ref:`PublicAccess`). Clicking on a
-remote suite in ``gscan`` will open a ``cylc gui`` to connect to that
-suite. This will give you full control, if you have the suite auth files
-installed; or it will display full read only information if the public access
-level allows that.
+public access level permits that (see :ref:`PublicAccess`).
 
 
 Task States Explained
@@ -687,25 +660,6 @@ As a suite runs, its task proxies may pass through the following states:
 - **expired** - will not be submitted to run, due to falling too far
   behind the wall-clock relative to its cycle point -
   see :ref:`ClockExpireTasks`.
-
-
-What The Suite Control GUI Shows
---------------------------------
-
-The GUI Text-tree and Dot Views display the state of every task proxy present
-in the task pool. Once a task has succeeded and Cylc has determined that it can
-no longer be needed to satisfy the prerequisites of other tasks, its proxy will
-be cleaned up (removed from the pool) and it will disappear from the GUI. To
-rerun a task that has disappeared from the pool, you need to re-insert its task
-proxy and then re-trigger it.
-
-The Graph View is slightly different: it displays the complete dependency graph
-over the range of cycle points currently present in the task pool. This often
-includes some greyed-out *base* or *ghost nodes* that are empty - i.e.
-there are no corresponding task proxies currently present in the pool. Base
-nodes just flesh out the graph structure. Groups of them may be cut out and
-replaced by single *scissor nodes* in sections of the graph that are
-currently inactive.
 
 
 Network Connection Timeouts
@@ -787,7 +741,7 @@ members:
 
 Any tasks not assigned to a particular queue will remain in the default
 queue. The *queues* example suite illustrates how queues work by
-running two task trees side by side (as seen in the graph GUI) each
+running two task trees side by side each
 limited to 2 and 3 tasks respectively:
 
 .. literalinclude:: ../../etc/examples/queues/suite.rc
@@ -806,8 +760,8 @@ ISO 8601 durations. If the task job fails it will go into the *retrying*
 state and resubmit after the next configured delay interval. An example is
 shown in the suite listed below under :ref:`EventHandling`.
 
-If a task with configured retries is *killed* (by ``cylc kill`` or
-via the GUI) it goes to the *held* state so that the operator can decide
+If a task with configured retries is *killed* (by ``cylc kill``
+it goes to the *held* state so that the operator can decide
 whether to release it and continue the retry sequence or to abort the retry
 sequence by manually resetting it to the *failed* state.
 
@@ -1052,12 +1006,12 @@ Manual Task Triggering and Edit-Run
 -----------------------------------
 
 Any task proxy currently present in the suite can be manually triggered at any
-time using the ``cylc trigger`` command, or from the right-click task
-menu in gcylc. If the task belongs to a limited internal queue
+time using the ``cylc trigger`` command.
+If the task belongs to a limited internal queue
 (see :ref:`InternalQueues`), this will queue it; if not, or if it is already
 queued, it will submit immediately.
 
-With ``cylc trigger --edit`` (also in the gcylc right-click task menu)
+With ``cylc trigger --edit``
 you can edit the generated task job script to make one-off changes before the
 task submits.
 
@@ -1149,8 +1103,7 @@ running the suite's real jobs - which may be long-running and resource-hungry:
 
   - simulates scheduling without generating any job files.
 
-Set the run mode (default *live*) in the GUI suite start dialog box, or on
-the command line:
+Set the run mode (default *live*) on the command line:
 
 .. code-block:: bash
 

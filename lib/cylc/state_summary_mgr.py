@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Manage suite state summary for client, e.g. GUI."""
+"""Manage suite state summary for client."""
 
 from time import time
 
@@ -31,7 +31,7 @@ from cylc.wallclock import (
 
 
 class StateSummaryMgr(object):
-    """Manage suite state summary for client, e.g. GUI."""
+    """Manage suite state summary for client."""
 
     TIME_FIELDS = ['submitted_time', 'started_time', 'finished_time']
 

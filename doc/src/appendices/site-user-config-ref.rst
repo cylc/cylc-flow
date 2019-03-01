@@ -176,8 +176,7 @@ Suite event logs are rolled over when they reach this file size.
 [documentation]
 ---------------
 
-Documentation locations for the ``cylc doc`` command and gcylc
-Help menus.
+Documentation locations for the ``cylc doc`` command.
 
 [documentation] ``->`` [[online]]
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -235,7 +234,7 @@ The editor to be invoked by the cylc command line interface.
 [editors] ``->`` gui
 ^^^^^^^^^^^^^^^^^^^^
 
-The editor to be invoked by the cylc GUI.
+GUI Text editor to be invoked by Cylc:
 
 - *type*: string
 - *default*: ``gvim -f``
@@ -248,7 +247,7 @@ The editor to be invoked by the cylc GUI.
 ---------------
 
 This section covers options for network communication between cylc
-clients (suite-connecting commands and guis) servers (running suites).
+clients (suite-connecting commands) servers (running suites).
 
 By default, the communication method is HTTPS secured with HTTP Digest
 Authentication. If the system does not support SSL, you should configure
@@ -582,7 +581,7 @@ setting.
 """"""""""""""""""""""""""""""""""""""""""""""""""""
 
 A command template (with ``%(filename)s`` substitution) to tail-follow
-job logs on HOST, by the GUI log viewer and ``cylc cat-log``. You are
+job logs on HOST, by ``cylc cat-log``. You are
 unlikely to need to override this.
 
 - *type*: string
@@ -718,8 +717,7 @@ exceeds its execution time limit.
 ---------------
 
 Configure allowed suite hosts and ports for starting up (running or
-restarting) suites and enabling them to be detected whilst running via
-utilities such as ``cylc gscan``. Additionally configure host
+restarting) suites. Additionally configure host
 selection settings specifying how to determine the most suitable run host at
 any given time from those configured.
 
@@ -1150,7 +1148,7 @@ suite passphrase required.
   state-totals
      Identity, description, and task state totals.
   read
-     Full read-only access for monitor and GUI.
+     Full read-only access.
   shutdown
      *Not yet implemented*
      Full read access plus shutdown, but no other control.

@@ -1621,7 +1621,7 @@ conditions; see `cylc conditions`.
             # END MAIN LOOP
 
     def update_state_summary(self):
-        """Update state summary, e.g. for GUI."""
+        """Update state summary."""
         updated_tasks = [
             t for t in self.pool.get_all_tasks() if t.state.is_updated]
         has_updated = self.is_updated or updated_tasks

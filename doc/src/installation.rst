@@ -21,24 +21,6 @@ For Cylc's HTTPS communications layer:
 - `python-requests <http://docs.python-requests.org/>`_
 - **python-urllib3** - should be bundled with python-requests
 
-The following packages are highly recommended, but are technically optional as
-you can construct and run suites without dependency graph visualisation or
-the Cylc GUIs:
-
-- `PyGTK <http://www.pygtk.org>`_ - GUI toolkit.
-
-  .. note::
-
-     PyGTK typically comes with your system Python. It is allegedly quite
-     difficult to install if you need to do so for another Python version.
-
-- `Graphviz <http://www.graphviz.org>`_ - graph layout engine (tested 2.36.0)
-- `Pygraphviz <http://pygraphviz.github.io/>`_ - Python Graphviz interface
-  (tested 1.2). To build this you may need some *devel* packages too:
-  
-  - python-devel
-  - graphviz-devel
-
 The Cylc Review service does not need any additional packages.
 
 The following packages are necessary for running all the tests in Cylc:
@@ -66,11 +48,6 @@ are installed properly:
    ===============================================================================
                                  *REQUIRED SOFTWARE*
    Python (2.6+, <3).....................FOUND & min. version MET (2.7.12.final.0)
-
-          *OPTIONAL SOFTWARE for the GUI & dependency graph visualisation*
-   Python:pygraphviz (any)...........................................NOT FOUND (-)
-   graphviz (any)...................................................FOUND (2.26.0)
-   Python:pygtk (2.0+)...............................................NOT FOUND (-)
 
                *OPTIONAL SOFTWARE for the HTTPS communications layer*
    Python:requests (2.4.2+)......................FOUND & min. version MET (2.11.1)
@@ -123,7 +100,7 @@ separately.
 - `cherrypy <http://www.cherrypy.org/>`_ **6.0.2** (slightly modified): a pure
   Python HTTP framework that we use as a web server for communication between
   server processes (suite server programs) and client programs (running tasks,
-  GUIs, CLI commands).
+  CLI commands).
 
   - Client communication is via the Python
     `requests <http://docs.python-requests.org/>`_ library if available
@@ -133,9 +110,6 @@ separately.
   engine for Python, and its dependency
   `MarkupSafe <http://www.pocoo.org/projects/markupsafe/>`_ **0.23**; both
   BSD licensed.
-
-- the `xdot <https://github.com/jrfonseca/xdot.py>`_ graph viewer (modified),
-  LGPL licensed.
 
 
 .. _InstallCylc:

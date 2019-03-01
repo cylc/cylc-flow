@@ -24,8 +24,7 @@ View documentation in the browser, as per Cylc global config.
     Open the Cylc documentation.
 % cylc doc [-t TASK] SUITE
     View suite or task documentation, if URLs are specified in the suite. This
-    parses the suite definition to extract the requested URL. Note that suite
-    server programs also hold suite URLs for access from the Cylc GUI."""
+    parses the suite definition to extract the requested URL."""
 
 import sys
 

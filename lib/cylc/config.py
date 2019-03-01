@@ -654,7 +654,8 @@ class SuiteConfig(object):
         # results in root appearing last in the ordered dict of node
         # names, so it overrides the styling for lesser groups and
         # nodes, whereas the reverse is needed - fixing this would
-        # require reordering task_attr in lib/cylc/graphing.py).
+        # require reordering task_attr in lib/cylc/graphing.py
+        # TODO: graphing.py is gone now! ).
 
         self.leaves = self.get_task_name_list()
         for ancestors in self.runtime['first-parent ancestors'].values():

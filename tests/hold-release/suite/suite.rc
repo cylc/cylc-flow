@@ -1,9 +1,10 @@
 [meta]
     title = "hold/release test suite"
 
-    description = """One task that holds then releases the suite, with
-short sleeps to make the effect on the downstream task obvious in the
-GUI (waiting to held to waiting)"""
+    description = """
+        One task that holds then releases the suite, with
+        short sleeps to make the effect on the downstream task obvious.
+    """
 
 # ref: bug-fix GitHub Pull Request #843 (5412d01)
 

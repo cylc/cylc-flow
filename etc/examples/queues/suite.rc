@@ -1,10 +1,10 @@
 [meta]
     title = demonstrates internal queueing
     description = """
-Two trees of tasks: the first uses the default queue set to a limit of
-two active tasks at once; the second uses another queue limited to three
-active tasks at once. Run via the graph control GUI for a clear view.
-              """
+        Two trees of tasks: the first uses the default queue set to a limit of
+        two active tasks at once; the second uses another queue limited to three
+        active tasks at once.
+    """
 [scheduling]
     [[queues]]
         [[[default]]]

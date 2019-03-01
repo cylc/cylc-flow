@@ -69,11 +69,6 @@ Package (version requirements)                          Outcome (version found)
                               *REQUIRED SOFTWARE*                              
 Python (2.6+, <3).....................FOUND & min. version MET (2.7.12.final.0)
 
-       *OPTIONAL SOFTWARE for the GUI & dependency graph visualisation*       
-Python:pygtk (2.0+)...........................FOUND & min. version MET (2.24.0)
-graphviz (any)...................................................FOUND (2.38.0)
-Python:pygraphviz (any)...........................................FOUND (1.3.1)
-
                   *OPTIONAL SOFTWARE for the HTML User Guide*                  
 ImageMagick (any)...............................................FOUND (6.8.9-9)
 

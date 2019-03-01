@@ -32,8 +32,8 @@ If remote job logs are retrieved to the suite host on completion (global config
 '[JOB-HOST]retrieve job logs = True') and the job is not currently running, the
 local (retrieved) log will be accessed unless '-o/--force-remote' is used.
 
-Custom job logs (written to $CYLC_TASK_LOG_DIR on the job host) are available
-from the GUI if listed in 'extra log files' in the suite definition. The file
+Custom job logs (written to $CYLC_TASK_LOG_DIR on the job host) can be 
+listed in 'extra log files' in the suite definition. The file
 name must be given here, but can be discovered with '--mode=l' (list-dir).
 
 The correct cycle point format of the suite must be for task job logs.
@@ -81,7 +81,7 @@ from cylc.task_job_logs import (
 #        => on host C: cat-log spawns subprocess
 #                       tail -f <task-on-C>.out
 #
-# Then Ctrl-C (or exit GUI log viewer) on host-A:
+# Then Ctrl-C (or exit log viewer) on host-A:
 #    => ssh from A to B dies
 #       => on B: cat-log detects the previous,
 #                  and kills its ssh subprocess to C

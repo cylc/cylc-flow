@@ -374,7 +374,7 @@ to here will be complete task job logs.
 Some batch systems, such as ``pbs``, redirect a job's stdout
 and stderr streams to a separate cache area while the job is running. The
 contents are only copied to the normal locations when the job completes. This
-means that ``cylc cat-log`` or the gcylc GUI will be unable to find the
+means that ``cylc cat-log`` will be unable to find the
 job's stdout and stderr streams while the job is running. Some sites with these
 batch systems are known to provide commands for viewing and/or
 tail-follow a job's stdout and stderr streams that are redirected to these
@@ -431,7 +431,7 @@ Polling may be required to update the suite state correctly after unusual
 events such as a machine being rebooted with tasks running on it, or network
 problems that prevent task messages from getting back to the suite host.
 
-Tasks can be polled on demand by right-clicking on them in gcylc or using the
+Tasks can be polled on demand by using the
 ``cylc poll`` command.
 
 Tasks are polled automatically, once, if they timeout while queueing in a
@@ -482,8 +482,7 @@ For supported batch systems, the suite server program can execute a process on
 the task host, by non-interactive ssh, to kill a submitted or running job
 according to its batch system.
 
-Tasks can be killed on demand by right-clicking on them in gcylc or using the
-``cylc kill`` command.
+Tasks can be killed on demand by using the ``cylc kill`` command.
 
 
 Execution Time Limit

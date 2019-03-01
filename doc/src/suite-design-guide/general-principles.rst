@@ -54,11 +54,6 @@ through inter-suite triggering. Each approach has its pros and cons, depending
 on your requirements and preferences with respect to the complexity and
 manageability of the resulting system.
 
-The ``cylc gscan`` GUI lets you monitor multiple suites at a time, and
-you can define virtual groups of suites that collapse into a single state
-summary.
-
-
 Inter-Suite Triggering
 ^^^^^^^^^^^^^^^^^^^^^^
 
@@ -112,7 +107,7 @@ Installing Files At Start-up
 Use ``rose suite-run`` *file creation mode* or ``R1``
 install tasks to copy files to the self-contained suite run directory at
 start-up.  Install tasks are preferred for time-consuming installations because
-they don't slow the suite start-up process, they can be monitored in the GUI,
+they don't slow the suite start-up process, they can be monitored,
 they can run directly on target platforms, and you can rerun them later without
 restarting the suite. If you are using symbolic links to install files under
 your suite directory it is recommended that the linking should be set up to
