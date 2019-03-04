@@ -27,6 +27,7 @@ import jose.exceptions
 import zmq
 import zmq.asyncio
 
+from cylc import LOG
 import cylc.flags
 from cylc.hostuserutil import get_host, get_fqdn_by_host
 from cylc.network import encrypt, decrypt, get_secret
@@ -96,8 +97,7 @@ class ZMQClient(object):
 
     """
 
-    DEFAULT_TIMEOUT = 1.  # 1 second
-    DEFAULT_TIMEOUT = 5.  # 5 second
+    DEFAULT_TIMEOUT = 5.  # 5 seconds
 
     def __init__(self, host, port, encode_method, decode_method, secret_method,
                  timeout=None, timeout_handler=None):
@@ -148,10 +148,20 @@ class ZMQClient(object):
         if not args:
             args = {}
 
+        # get secret for this request
+        # assumes secret won't change during the request
+        try:
+            secret = self.secret()
+        except cylc.suite_srv_files_mgr.SuiteServiceFileError:
+            raise ClientError({'message': 'could not read suite passphrase'})
+
         # send message
-        message = encrypt({"command": command, "args": args}, self.secret())
+        msg = {'command': command, 'args': args}
+        LOG.debug('zmq:send %s' % msg)
+        message = encrypt(msg, secret)
         self.socket.send_string(message)
 
+        # receive response
         if self.poller.poll(timeout):
             res = await self.socket.recv_string()
         else:
@@ -160,7 +170,8 @@ class ZMQClient(object):
             raise ClientTimeout('Timeout waiting for server response.')
 
         try:
-            response = decrypt(res, self.secret())
+            response = decrypt(res, secret)
+            LOG.debug('zmq:recv %s' % response)
         except jose.exceptions.JWTError:
             raise ClientError({
                 'message': 'Could not decrypt response. Has the passphrase '

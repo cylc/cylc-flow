@@ -365,7 +365,7 @@ To start a new run, stop the old one first with one or more of these:
                 raise ValueError("%s: %s" % (regfilter, exc))
         run_d = glbl_cfg().get_host_item('run directory')
         results = []
-        for dirpath, dnames, fnames in os.walk(run_d, followlinks=True):
+        for dirpath, dnames, _ in os.walk(run_d, followlinks=True):
             # Always descend for top directory, but
             # don't descend further if it has a .service/ dir
             if dirpath != run_d and self.DIR_BASE_SRV in dnames:

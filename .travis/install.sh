@@ -27,13 +27,13 @@ args=("$@")
 if grep -E '(unit-tests|functional-tests)' <<< "${args[@]}"; then
     sudo apt-get install heirloom-mailx
     # coverage dependencies
-    pip install coverage pytest-cov mock
+    pip install coverage pytest-cov
     # common Cylc reqirements
     pip install colorama python-jose zmq
 fi
 
 if grep 'unit-tests' <<< "${args[@]}"; then
-    pip install pycodestyle pytest mock
+    pip install pycodestyle pytest
     # TODO: EmPy removed from testing, see:  #2958
 fi
 

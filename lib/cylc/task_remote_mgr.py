@@ -276,7 +276,7 @@ class TaskRemoteMgr(object):
                     LOG.warning(TaskRemoteMgmtError(
                         TaskRemoteMgmtError.MSG_TIDY,
                         (host, owner), ' '.join(quote(item) for item in cmd),
-                        proc.ret_code, out, err))
+                        proc.returncode, out, err))
         # Terminate any remaining commands
         for (host, owner), (cmd, proc) in procs.items():
             try:

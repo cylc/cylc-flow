@@ -18,7 +18,7 @@
 
 """This module provides base classes for cycling data objects."""
 
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod
 
 
 def parse_exclusion(expr):
@@ -103,11 +103,11 @@ class PointBase(object, metaclass=ABCMeta):
 
     __slots__ = ('value')
 
-    @abstractproperty
+    @abstractmethod
     def TYPE(self):
         return self._TYPE
 
-    @abstractproperty
+    @abstractmethod
     def TYPE_SORT_KEY(self):
         return self._TYPE_SORT_KEY
 
@@ -203,11 +203,11 @@ class IntervalBase(object, metaclass=ABCMeta):
 
     __slots__ = ('value')
 
-    @abstractproperty
+    @abstractmethod
     def TYPE(self):
         return self._TYPE
 
-    @abstractproperty
+    @abstractmethod
     def TYPE_SORT_KEY(self):
         return self._TYPE_SORT_KEY
 
@@ -324,11 +324,11 @@ class SequenceBase(object, metaclass=ABCMeta):
 
     __slots__ = ()
 
-    @abstractproperty
+    @abstractmethod
     def TYPE(self):
         return self._TYPE
 
-    @abstractproperty
+    @abstractmethod
     def TYPE_SORT_KEY(self):
         return self._TYPE_SORT_KEY
 

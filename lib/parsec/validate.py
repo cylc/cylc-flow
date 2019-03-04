@@ -123,7 +123,6 @@ class ParsecValidator(object):
             self.V_STRING: self.coerce_str,
             self.V_STRING_LIST: self.coerce_str_list,
             self.V_SPACELESS_STRING_LIST: self.coerce_spaceless_str_list,
-            self.V_SPACELESS_STRING_LIST: self.coerce_spaceless_str_list,
             self.V_ABSOLUTE_HOST_LIST: self.coerce_asbolute_host_list
         }
 

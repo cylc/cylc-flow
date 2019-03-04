@@ -163,7 +163,7 @@ class ZMQServer(object):
                     {'error': {'message': str(exc)}}, self.secret())
             else:
                 # success case - serve the request
-                res = self._reciever(message)
+                res = self._receiver(message)
                 response = self.encode(res, self.secret())
                 LOG.debug('zmq:send %s', res)
 
@@ -171,7 +171,7 @@ class ZMQServer(object):
             self.socket.send_string(response)
             sleep(0)  # yield control to other threads
 
-    def _reciever(self, message):
+    def _receiver(self, message):
         """Wrap incoming messages and dispatch them to exposed methods."""
         # determine the server method to call
         try:
@@ -213,7 +213,7 @@ def authorise(req_priv_level):
     determine the client's privilege level.
 
     Args:
-        level (cylc.network.Priv): A privilege level for the method.
+        req_priv_level (cylc.network.Priv): A privilege level for the method.
 
     """
     def wrapper(fcn):

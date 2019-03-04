@@ -120,12 +120,12 @@ def main():
         print(target)
         sys.exit(0)
 
+    # viewer may have spaces (e.g. 'firefox --no-remote'):
+    command = ('%s %s' % (viewer, target)).split(' ')
     try:
-        retcode = check_call(
-            # viewer may have spaces (e.g. 'firefox --no-remote'):
-            ('%s %s' % (viewer, target)).split(' '), stdin=open(os.devnull))
+        check_call(command, stdin=open(os.devnull))
     except CalledProcessError:
-        print >> sys.stderr, 'ERROR, failed to execute: %s' % command
+        print('ERROR, failed to execute: %s' % command, file=sys.stderr)
         raise
 
 

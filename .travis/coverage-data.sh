@@ -23,3 +23,4 @@
 sed -e "s|data_file=.coverage|data_file=${TRAVIS_BUILD_DIR}/.coverage|g; s|./bin|${TRAVIS_BUILD_DIR}/bin|g; s|./lib|${TRAVIS_BUILD_DIR}/lib|g" .coveragerc > /tmp/.coveragerc
 # And some tests fail if we touch files in the git working directory, due
 # to Cylc's version appearing with the "dirty" suffix. To avoid this, we
+# are using a new coveragerc created under the temporary directory.

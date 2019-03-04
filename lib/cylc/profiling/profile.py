@@ -275,9 +275,8 @@ def profile(schedule):
     """Perform profiling for the provided schedule.
 
     Args:
-        schedule (list): A list of tuples of the form
-            [(version_id, experiments)] where experiments is a list of
-            experiment objects.
+        schedule (dict): Dictionary of cylc version ids containing lists
+            of the experiments to run for each.
 
     Returns:
         tuple - (results, checkout_count, success)

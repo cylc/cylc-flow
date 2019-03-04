@@ -230,7 +230,7 @@ def get_scan_items_from_fs(owner_pattern=None, reg_pattern=None, updater=None):
             DEBUG_DELIM, DEBUG_DELIM.join(item[1] for item in run_dirs if
                                           item[1] is not None)))
     for run_d, owner in run_dirs:
-        for dirpath, dnames, fnames in os.walk(run_d, followlinks=True):
+        for dirpath, dnames, _ in os.walk(run_d, followlinks=True):
             if updater and updater.quit:
                 return
             # Always descend for top directory, but

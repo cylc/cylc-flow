@@ -54,7 +54,6 @@ from cylc.suite_events import (
     SuiteEventContext, SuiteEventError, SuiteEventHandler)
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
-from cylc.suite_status import KEY_NAME, KEY_OWNER, KEY_VERSION
 from cylc.taskdef import TaskDef
 from cylc.task_events_mgr import TaskEventsManager
 from cylc.task_id import TaskID

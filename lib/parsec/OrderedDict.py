@@ -70,7 +70,7 @@ class OrderedDictWithDefaults(OrderedDict):
 
     def iterkeys(self):
         """Include default keys"""
-        for key in OrderedDict.iterkeys(self):
+        for key in OrderedDict.keys(self):
             yield key
         for key in getattr(self, 'defaults_', []):
             if not OrderedDict.__contains__(self, key):

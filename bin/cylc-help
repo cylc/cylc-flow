@@ -18,7 +18,6 @@
 import sys
 
 # Import cylc to initialise CYLC_DIR and the path for python (__init__.py).
-import cylc
 from cylc.version import CYLC_VERSION
 
 
