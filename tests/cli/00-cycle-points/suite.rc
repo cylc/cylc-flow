@@ -1,13 +1,18 @@
+#!Jinja2
 [cylc]
     UTC mode = true
     [[events]]
         abort on timeout = true
         timeout = PT20S
 [scheduling]
+{% if INTEGER is not defined %}
     initial cycle point = 2015-01
     final cycle point = 2015-01
+{% endif %}
     [[dependencies]]
+{% if INTEGER is not defined %}
         [[[P1D]]]
+{% endif %}
             graph = foo
 [runtime]
     [[foo]]

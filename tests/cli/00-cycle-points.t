@@ -20,7 +20,7 @@
 
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 4
+set_test_number 6
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
@@ -37,5 +37,12 @@ suite_run_ok $TEST_NAME cylc run --until=2015-04 --debug --no-detach $SUITE_NAME
 TEST_NAME=$TEST_NAME_BASE-run-fail
 # This should fail as the final cycle point  is < the initial one.
 suite_run_fail $TEST_NAME cylc run --until=2015-03 --debug --no-detach $SUITE_NAME 2015-04
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-invalid-syntax-conflict
+# This should fail as the final cycle point  is < the initial one.
+suite_run_fail $TEST_NAME cylc run --debug --no-detach $SUITE_NAME invalid \
+    -s 'INTEGER=True'
+grep_ok 'Did you mean to provide "invalid" as the initial cycle point?' \
+    "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

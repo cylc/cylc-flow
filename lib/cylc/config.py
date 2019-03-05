@@ -83,16 +83,9 @@ def check_varnames(env):
 
 
 class SuiteConfigError(Exception):
-    """
-    Attributes:
-        message - what the problem is.
-        TODO - element - config element causing the problem
-    """
-    def __init__(self, msg):
-        self.msg = msg
+    """Catch all exception for suite configuration errors."""
+    pass
 
-    def __str__(self):
-        return repr(self.msg)
 
 # TODO: separate config for run and non-run purposes?
 
@@ -228,10 +221,15 @@ class SuiteConfig(object):
                 fcp = self.cfg['scheduling'].get('final cycle point')
                 if just_has_async_graph and not (
                         icp in [None, "1"] and fcp in [None, icp]):
-                    raise SuiteConfigError(
-                        'Conflicting syntax: integer vs ' +
-                        'cycling suite: ' +
-                        'are you missing a [dependencies][[[R1]]] section?')
+                    msg = (
+                        'Conflicting syntax: integer vs cycling suite:'
+                        '\n* Are you missing a [dependencies][R1] section?')
+                    if cli_initial_point_string:
+                        msg += (
+                            '\n* Did you mean to provide "%s" as the initial '
+                            'cycle point?' % cli_initial_point_string)
+                    raise SuiteConfigError(msg)
+
                 if just_has_async_graph:
                     # There aren't any other graphs, so set integer cycling.
                     self.cfg['scheduling']['cycling mode'] = (
