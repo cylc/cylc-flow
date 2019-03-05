@@ -10,7 +10,7 @@
 """
 import re
 import string
-from collections import Mapping
+from collections.abc import Mapping
 from markupsafe._compat import text_type, string_types, int_types, \
      unichr, iteritems, PY2
 
