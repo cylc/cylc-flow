@@ -44,7 +44,7 @@ from cylc.task_job_logs import (
     JOB_LOG_JOB, get_task_job_log, get_task_job_job_log,
     get_task_job_activity_log, get_task_job_id, NN)
 from cylc.mkdir_p import mkdir_p
-from cylc.subprocpool import SuiteProcPool
+from cylc.subprocpool import SubProcPool
 from cylc.subprocctx import SubProcContext
 from cylc.task_action_timer import TaskActionTimer
 from cylc.task_events_mgr import TaskEventsManager, log_task_job_activity
@@ -75,7 +75,7 @@ class TaskJobManager(object):
 
     JOBS_KILL = 'jobs-kill'
     JOBS_POLL = 'jobs-poll'
-    JOBS_SUBMIT = SuiteProcPool.JOBS_SUBMIT
+    JOBS_SUBMIT = SubProcPool.JOBS_SUBMIT
     POLL_FAIL = 'poll failed'
     REMOTE_SELECT_MSG = 'waiting for remote host selection'
     REMOTE_INIT_MSG = 'remote host initialising'
@@ -297,11 +297,11 @@ class TaskJobManager(object):
                 '%s ... # will invoke in batches, sizes=%s',
                 cmd, [len(b) for b in itasks_batches])
             for i, itasks_batch in enumerate(itasks_batches):
-                stdin_file_paths = []
+                stdin_files = []
                 job_log_dirs = []
                 for itask in itasks_batch:
                     if remote_mode:
-                        stdin_file_paths.append(
+                        stdin_files.append(
                             get_task_job_job_log(
                                 suite, itask.point, itask.tdef.name,
                                 itask.submit_num))
@@ -318,7 +318,7 @@ class TaskJobManager(object):
                     SubProcContext(
                         self.JOBS_SUBMIT,
                         cmd + job_log_dirs,
-                        stdin_file_paths=stdin_file_paths,
+                        stdin_files=stdin_files,
                         job_log_dirs=job_log_dirs,
                         **kwargs
                     ),
@@ -714,7 +714,7 @@ class TaskJobManager(object):
                 ctx.cmd = cmd_ctx.cmd  # print original command on failure
         log_task_job_activity(ctx, suite, itask.point, itask.tdef.name)
 
-        if ctx.ret_code == SuiteProcPool.RET_CODE_SUITE_STOPPING:
+        if ctx.ret_code == SubProcPool.RET_CODE_SUITE_STOPPING:
             return
 
         try:
