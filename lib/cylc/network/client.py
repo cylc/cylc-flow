@@ -15,12 +15,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""HTTP(S) client for suite runtime API.
-
-Implementation currently via requests (urllib3) or urllib2.
-"""
+"""Client for suite runtime API."""
 
 import asyncio
+import os
+import socket
 import sys
 
 import jose.exceptions
@@ -86,6 +85,7 @@ class ZMQClient(object):
             Optional function which runs before ClientTimeout is raised.
             This provides an interface for raising more specific exceptions in
             the event of a communication timeout.
+        header (dict): Request "header" data to attach to each request.
 
     Usage:
         * Call endpoints using ``ZMQClient.__call__``.
@@ -100,7 +100,7 @@ class ZMQClient(object):
     DEFAULT_TIMEOUT = 5.  # 5 seconds
 
     def __init__(self, host, port, encode_method, decode_method, secret_method,
-                 timeout=None, timeout_handler=None):
+                 timeout=None, timeout_handler=None, header=None):
         self.encode = encode_method
         self.decode = decode_method
         self.secret = secret_method
@@ -121,6 +121,11 @@ class ZMQClient(object):
         # create a poller to handle timeouts
         self.poller = zmq.Poller()
         self.poller.register(self.socket, zmq.POLLIN)
+
+        if not header:
+            self.header = {}
+        else:
+            self.header = dict(header)
 
     async def async_request(self, command, args=None, timeout=None):
         """Send a request.
@@ -157,6 +162,7 @@ class ZMQClient(object):
 
         # send message
         msg = {'command': command, 'args': args}
+        msg.update(self.header)
         LOG.debug('zmq:send %s' % msg)
         message = encrypt(msg, secret)
         self.socket.send_string(message)
@@ -190,7 +196,7 @@ class ZMQClient(object):
     __call__ = serial_request
 
 
-class SuiteRuntimeClient(ZMQClient):
+class SuiteRuntimeClient:
     """Initiate a client to the suite runtime API.
 
     This class contains the logic specific to communicating with Cylc suites.
@@ -208,41 +214,47 @@ class SuiteRuntimeClient(ZMQClient):
             Message receive timeout in seconds. Also used to set the
             "linger" time, see ``ZMQClient``.
 
-    Determine host and port from the contact file unless they are both
-    provided.
+    Determine host and port from the contact file unless provided.
 
     If there is no socket bound to the specified host/port the client will
     bail after ``timeout`` seconds.
-
-    TODO: Implement or remove:
-    * my_uuid
-    * print_uuid
-    * auth
 
     """
 
     NOT_RUNNING = "Contact info not found for suite \"%s\", suite not running?"
 
-    def __init__(self, suite, owner=None, host=None, port=None,
-                 timeout=None, my_uuid=None, print_uuid=False, auth=None):
-        self.suite = suite
+    def __new__(cls, suite, owner=None, host=None, port=None, timeout=None):
         if isinstance(timeout, str):
             timeout = float(timeout)
 
         # work out what we are connecting to
-        if host and port:
+        if port:
             port = int(port)
-        elif host or port:
-            raise ValueError('Provide both host and port')
-        else:
-            host, port = self.get_location(suite, owner, host)
+        if not (host and port):
+            host, port = cls.get_location(suite, owner, host)
 
         # create connection
-        ZMQClient.__init__(
-            self, host, port, encrypt, decrypt, lambda: get_secret(suite),
-            timeout=timeout,
-            timeout_handler=lambda: self._timeout_handler(suite, host, port)
+        return ZMQClient(
+            host, port, encrypt, decrypt, lambda: get_secret(suite),
+            timeout=timeout, header=cls.get_header(),
+            timeout_handler=lambda: cls._timeout_handler(suite, host, port)
         )
+
+    @staticmethod
+    def get_header():
+        """Return "header" data to attach to each request for traceability."""
+        CYLC_EXE = os.path.join(os.environ['CYLC_DIR'], 'bin', '')
+        cmd = sys.argv[0]
+
+        if cmd.startswith(CYLC_EXE):
+            cmd = cmd.replace(CYLC_EXE, '')
+
+        return {
+            'meta': {
+                'prog': cmd,
+                'host': socket.gethostname()
+            }
+        }
 
     @staticmethod
     def _timeout_handler(suite, host, port):

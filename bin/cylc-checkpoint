@@ -43,8 +43,7 @@ def main():
 
     pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
-        options.comms_timeout, my_uuid=options.set_uuid,
-        print_uuid=options.print_uuid)
+        options.comms_timeout)
     pclient('take_checkpoints', {'items': [name]})
 
 

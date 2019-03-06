@@ -85,8 +85,7 @@ def main():
         prompt('Insert %s in %s' % (items, suite), options.force)
 
     pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port,
-        my_uuid=options.set_uuid, print_uuid=options.print_uuid)
+        suite, options.owner, options.host, options.port)
 
     pclient(
         'insert_tasks',

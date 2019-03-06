@@ -63,8 +63,7 @@ def main():
         prompt('Hold suite %s' % suite, options.force)
 
     pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port,
-        my_uuid=options.set_uuid, print_uuid=options.print_uuid)
+        suite, options.owner, options.host, options.port)
 
     if args:
         items = parser.parse_multitask_compat(options, args)

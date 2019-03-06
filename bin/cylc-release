@@ -54,8 +54,7 @@ def main():
         prompt('Release suite %s' % suite, options.force)
     pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
-        options.comms_timeout, my_uuid=options.set_uuid,
-        print_uuid=options.print_uuid)
+        options.comms_timeout)
     if args:
         items = parser.parse_multitask_compat(options, args)
         pclient('release_tasks', {'items': items})

@@ -15,10 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""HTTP(S) server, and suite runtime API service facade exposed.
-
-Implementation via ZMQ.
-"""
+"""Server for suite runtime API."""
 
 import getpass
 import re
@@ -178,6 +175,8 @@ class ZMQServer(object):
             method = getattr(self, message['command'])
             args = message['args']
             args.update({'user': message['user']})
+            if 'meta' in message:
+                args['meta'] = message['meta']
         except KeyError:
             # malformed message
             return {'error': {
@@ -217,32 +216,40 @@ def authorise(req_priv_level):
 
     """
     def wrapper(fcn):
-        def _authorise(self, *args, user=None, **kwargs):
+        def _authorise(self, *args, user='?', meta=None, **kwargs):
+            host = meta.get('host', '?')
+            prog = meta.get('prog', '?')
+
             usr_priv_level = self.get_priv_level(user)
             if usr_priv_level < req_priv_level:
                 LOG.info(
-                    SuiteRuntimeServer.CONNECT_DENIED_PRIV_TMPL,
-                    usr_priv_level, req_priv_level, user, 'TODO-host',
-                    'TODO-progname', 'TODO-uuid')
+                    "[client-connect] DENIED (privilege '%s' < '%s') %s@%s:%s",
+                    usr_priv_level, req_priv_level, user, host, prog)
                 raise Exception('Authorisation failure')
             LOG.info(
-                SuiteRuntimeServer.LOG_COMMAND_TMPL, fcn.__name__,
-                user, 'TODO-host', 'TODO-progname', 'TODO-uuid')
+                '[client-command] %s %s@%s:%s', fcn.__name__, user, host, prog)
             return fcn(self, *args, **kwargs)
         return _authorise
     return wrapper
 
 
 class SuiteRuntimeServer(ZMQServer):
-    """Suite runtime service API facade exposed via zmq."""
+    """Suite runtime service API facade exposed via zmq.
+
+    This class contains the cylc endpoints.
+
+    Note the following argument names are protected:
+
+    user
+        The authenticated user (determined server side)
+    host
+        The client host (if provided by client) - non trustworthy
+    prog
+        The client program name (if provided by client) - non trustworthy
+
+    """
 
     API = 4  # cylc API version
-
-    CONNECT_DENIED_PRIV_TMPL = (
-        "[client-connect] DENIED (privilege '%s' < '%s') %s@%s:%s %s")
-    LOG_COMMAND_TMPL = '[client-command] %s %s@%s:%s %s'
-    RE_MESSAGE_TIME = re.compile(
-        r'\A(.+) at (' + RE_DATE_TIME_FORMAT_EXTENDED + r')\Z', re.DOTALL)
 
     def __init__(self, schd):
         ZMQServer.__init__(

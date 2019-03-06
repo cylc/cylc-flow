@@ -56,9 +56,7 @@ def main():
     task_args = args[1:]
     pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
-        options.comms_timeout, my_uuid=options.set_uuid,
-        print_uuid=options.print_uuid
-    )
+        options.comms_timeout)
     json_filter = []
 
     if not task_args:

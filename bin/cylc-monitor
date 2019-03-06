@@ -210,8 +210,7 @@ The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
                 if run_mode != "live":
                     suite_name += " (%s)" % run_mode
                 prefix = "%s - %d tasks" % (suite_name, int(n_tasks_total))
-                #suffix = "%s %s" % (client_name, self.pclient.my_uuid)
-                suffix = "%s" % client_name  # TODO
+                suffix = "%s" % client_name
                 title_str = ' ' * len_header
                 title_str = prefix + title_str[len(prefix):]
                 title_str = '\033[1;37;44m%s%s\033[0m' % (

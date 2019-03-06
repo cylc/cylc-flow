@@ -53,8 +53,7 @@ def main():
     else:
         prompt('Kill ALL tasks in %s' % (suite), options.force)
     pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port,
-        my_uuid=options.set_uuid, print_uuid=options.print_uuid)
+        suite, options.owner, options.host, options.port)
     pclient(
         'kill_tasks',
         {'items': parser.parse_multitask_compat(options, args)},

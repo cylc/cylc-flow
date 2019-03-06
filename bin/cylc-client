@@ -48,8 +48,7 @@ def main():
     suite = args[0]
     func = args[1]
     pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port,
-        my_uuid=options.set_uuid, print_uuid=options.print_uuid)
+        suite, options.owner, options.host, options.port)
     if options.no_input:
         kwargs = {}
     else:

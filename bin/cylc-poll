@@ -57,8 +57,7 @@ def main():
         prompt('Poll ALL tasks in %s' % (suite), options.force)
     pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
-        options.comms_timeout, my_uuid=options.set_uuid,
-        print_uuid=options.print_uuid)
+        options.comms_timeout)
     items = parser.parse_multitask_compat(options, args)
     # Back compat: back_out introduced >7.5.0
     # So don't call with "poll_succ" if not necessary to avoid breakage.

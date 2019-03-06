@@ -41,8 +41,7 @@ def main():
     suite = args[0]
 
     pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port,
-        my_uuid=options.set_uuid, print_uuid=options.print_uuid)
+        suite, options.owner, options.host, options.port)
     print(pclient('get_cylc_version', timeout=options.comms_timeout))
 
 

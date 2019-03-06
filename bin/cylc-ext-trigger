@@ -75,8 +75,7 @@ def main():
     LOG.info('Send to suite %s: "%s" (%s)', suite, event_msg, event_id)
 
     pclient = SuiteRuntimeClient(
-        suite, options.owner, options.host, options.port,
-        my_uuid=options.set_uuid, print_uuid=options.print_uuid)
+        suite, options.owner, options.host, options.port)
 
     max_n_tries = int(options.max_n_tries)
     retry_intvl_secs = float(options.retry_intvl_secs)
