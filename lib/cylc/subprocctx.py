@@ -47,8 +47,9 @@ class SubProcContext(object):
                     Default return code.
                 shell (boolean):
                     Launch command with "/bin/sh"?
-                stdin_file_paths (list):
+                stdin_files (list):
                     Files with content to send to command's STDIN.
+                    Can be file paths or opened file handles.
                 stdin_str (str):
                     Content to send to command's STDIN.
         .err (str):
@@ -84,9 +85,9 @@ class SubProcContext(object):
             value = getattr(self, attr, None)
             if value is not None and str(value).strip():
                 mesg = ''
-                if attr == 'cmd' and self.cmd_kwargs.get('stdin_file_paths'):
+                if attr == 'cmd' and self.cmd_kwargs.get('stdin_files'):
                     mesg += 'cat'
-                    for file_path in self.cmd_kwargs.get('stdin_file_paths'):
+                    for file_path in self.cmd_kwargs.get('stdin_files'):
                         mesg += ' ' + quote(file_path)
                     mesg += ' | '
                 if attr == 'cmd' and isinstance(value, list):
