@@ -21,7 +21,7 @@ Coerce more value type from string (to time point, duration, xtriggers, etc.).
 """
 
 import json
-from pipes import quote
+from shlex import quote
 
 from cylc.wallclock import get_current_time_string
 

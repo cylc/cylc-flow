@@ -51,7 +51,7 @@ if remrun(abort_if='edit', forward_x11=True):
 import os
 import shlex
 from glob import glob
-from pipes import quote
+from shlex import quote
 from stat import S_IRUSR
 from tempfile import mkstemp
 from subprocess import Popen, PIPE

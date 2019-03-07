@@ -19,7 +19,7 @@
 
 import json
 from itertools import dropwhile
-from pipes import quote
+from shlex import quote
 from random import choice
 import socket
 from time import sleep

@@ -19,7 +19,7 @@
 
 from collections import namedtuple
 import os
-from pipes import quote
+from shlex import quote
 
 from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg

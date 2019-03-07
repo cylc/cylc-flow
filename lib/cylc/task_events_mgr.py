@@ -30,7 +30,7 @@ This module provides logic to:
 from collections import namedtuple
 from logging import getLevelName, CRITICAL, ERROR, WARNING, INFO, DEBUG
 import os
-from pipes import quote
+from shlex import quote
 import shlex
 from time import time
 

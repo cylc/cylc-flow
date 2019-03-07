@@ -25,7 +25,7 @@ This module provides logic to:
 """
 
 import os
-from pipes import quote
+from shlex import quote
 import re
 from subprocess import Popen, PIPE
 import tarfile

@@ -20,7 +20,7 @@
 from collections import deque
 import logging
 import os
-from pipes import quote
+from shlex import quote
 from queue import Empty, Queue
 from shutil import copytree, rmtree
 from subprocess import Popen, PIPE

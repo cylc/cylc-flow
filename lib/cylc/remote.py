@@ -18,7 +18,7 @@
 """Run command on a remote, (i.e. a remote [user@]host)."""
 
 import os
-from pipes import quote
+from shlex import quote
 from posix import WIFSIGNALED
 import shlex
 import signal
