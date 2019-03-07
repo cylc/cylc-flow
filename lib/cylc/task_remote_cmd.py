@@ -22,7 +22,6 @@ import sys
 import tarfile
 
 import cylc.flags
-from cylc.mkdir_p import mkdir_p
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 
 
@@ -49,7 +48,7 @@ def remote_init(uuid_str, rund, indirect_comm=None):
         if orig_uuid_str == uuid_str:
             print(REMOTE_INIT_NOT_REQUIRED)
             return
-    mkdir_p(rund)
+    os.makedirs(rund, exist_ok=True)
     oldcwd = os.getcwd()
     os.chdir(rund)
     try:

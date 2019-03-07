@@ -174,16 +174,18 @@ class TestSuiteSrvFilesManager(unittest.TestCase):
     def setUp(self):
         self.suite_srv_files_mgr = SuiteSrvFilesManager()
 
-    @mock.patch('cylc.suite_srv_files_mgr.mkdir_p')
     @mock.patch('cylc.suite_srv_files_mgr.os')
-    def test_register(self, mocked_os, mocked_mkdir_p):
+    def test_register(self, mocked_os):
         """Test the SuiteSrvFilesManager register function."""
+        def mkdirs_standin(_, exist_ok=False):
+            True
+
         # we do not need to mock these functions
         mocked_os.path.basename.side_effect = os.path.basename
         mocked_os.path.join = os.path.join
         mocked_os.path.normpath = os.path.normpath
         mocked_os.path.dirname = os.path.dirname
-        mocked_mkdir_p.side_effect = lambda x: True
+        mocked_os.makedirs.side_effect = mkdirs_standin
         mocked_os.path.abspath.side_effect = lambda x: x
 
         for reg, source, redirect, cwd, isabs, isfile, \

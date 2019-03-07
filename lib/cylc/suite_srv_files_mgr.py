@@ -26,7 +26,6 @@ from string import ascii_letters, digits
 from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
-from cylc.mkdir_p import mkdir_p
 from cylc.hostuserutil import (
     get_host, get_user, is_remote, is_remote_host, is_remote_user)
 
@@ -460,7 +459,7 @@ To start a new run, stop the old one first with one or more of these:
 
         # Create service dir if necessary.
         srv_d = self.get_suite_srv_dir(reg)
-        mkdir_p(srv_d)
+        os.makedirs(srv_d, exist_ok=True)
 
         # See if suite already has a source or not
         try:
@@ -505,7 +504,7 @@ To start a new run, stop the old one first with one or more of these:
         """Create or renew passphrase and SSL files for suite 'reg'."""
         # Suite service directory.
         srv_d = self.get_suite_srv_dir(reg)
-        mkdir_p(srv_d)
+        os.makedirs(srv_d, exist_ok=True)
 
         # Create a new passphrase for the suite if necessary.
         if not self._locate_item(self.FILE_BASE_PASSPHRASE, srv_d):
@@ -522,7 +521,7 @@ To start a new run, stop the old one first with one or more of these:
         2. The combination of os.fsync and os.rename should guarantee
            that we don't end up with an incomplete file.
         """
-        mkdir_p(path)
+        os.makedirs(path, exist_ok=True)
         from tempfile import NamedTemporaryFile
         handle = NamedTemporaryFile(prefix=item, dir=path, delete=False)
         try:

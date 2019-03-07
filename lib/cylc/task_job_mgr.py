@@ -43,7 +43,6 @@ from cylc.job_file import JobFileWriter
 from cylc.task_job_logs import (
     JOB_LOG_JOB, get_task_job_log, get_task_job_job_log,
     get_task_job_activity_log, get_task_job_id, NN)
-from cylc.mkdir_p import mkdir_p
 from cylc.subprocpool import SuiteProcPool
 from cylc.subprocctx import SubProcContext
 from cylc.task_action_timer import TaskActionTimer
@@ -352,7 +351,7 @@ class TaskJobManager(object):
         else:
             rmtree(job_file_dir, ignore_errors=True)
 
-        mkdir_p(job_file_dir)
+        os.makedirs(job_file_dir, exist_ok=True)
         target = os.path.join(task_log_dir, NN)
         source = os.path.basename(job_file_dir)
         try:

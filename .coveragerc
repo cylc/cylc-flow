@@ -32,7 +32,6 @@ omit=
     */lib/cylc/tests/*
     */lib/cylc/profiler.py
     */lib/cylc/profiling/*
-    */lib/cylc/mkdir_p.py
     */lib/parsec/OrderedDictCompat.py
     */lib/isodatetime/*
     */lib/jinja2/*
@@ -61,7 +60,6 @@ omit=
     */lib/cylc/tests/*
     */lib/cylc/profiler.py
     */lib/cylc/profiling/*
-    */lib/cylc/mkdir_p.py
     */lib/parsec/OrderedDictCompat.py
     */lib/isodatetime/*
     */lib/jinja2/*

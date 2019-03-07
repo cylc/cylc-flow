@@ -31,7 +31,6 @@ import logging
 
 
 from cylc.cfgspec.glbl_cfg import glbl_cfg
-from cylc.mkdir_p import mkdir_p
 from cylc.wallclock import (
     get_current_time_string, get_time_string_from_unix_time)
 
@@ -119,7 +118,7 @@ class TimestampRotatingFileHandler(logging.FileHandler):
         # Generate new file name
         self.stamp = get_current_time_string(use_basic_format=True)
         filename = self.baseFilename + '.' + self.stamp
-        mkdir_p(os.path.dirname(filename))
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
         # Touch file
         with open(filename, 'w+'):
             os.utime(filename, None)

@@ -31,7 +31,6 @@ from cylc import LOG
 from cylc.cfgvalidate import (
     cylc_config_validate, CylcConfigValidator as VDR, DurationFloat)
 from cylc.hostuserutil import get_user_home, is_remote_user
-from cylc.mkdir_p import mkdir_p
 from cylc.network import Priv
 from cylc.version import CYLC_VERSION
 
@@ -473,7 +472,7 @@ class GlobalConfig(ParsecConfig):
     def create_directory(dir_, name):
         """Create directory. Raise GlobalConfigError on error."""
         try:
-            mkdir_p(dir_)
+            os.makedirs(dir_, exist_ok=True)
         except OSError as exc:
             LOG.exception(exc)
             raise GlobalConfigError(

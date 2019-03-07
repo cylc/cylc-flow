@@ -121,7 +121,6 @@ import traceback
 from parsec.OrderedDict import OrderedDict
 
 
-from cylc.mkdir_p import mkdir_p
 from cylc.task_message import (
     CYLC_JOB_PID, CYLC_JOB_INIT_TIME, CYLC_JOB_EXIT_TIME, CYLC_JOB_EXIT,
     CYLC_MESSAGE)
@@ -776,7 +775,9 @@ class BatchSysManager(object):
             elif cur_line.startswith(self.LINE_PREFIX_JOB_LOG_DIR):
                 job_log_dir = cur_line.replace(
                     self.LINE_PREFIX_JOB_LOG_DIR, "").strip()
-                mkdir_p(os.path.join(job_log_root, job_log_dir))
+                os.makedirs(
+                    os.path.join(job_log_root, job_log_dir),
+                    exist_ok=True)
                 handle = open(
                     os.path.join(job_log_root, job_log_dir, "job.tmp"), "wb")
 
