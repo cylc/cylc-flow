@@ -20,7 +20,6 @@ Requirements:
 
 The following packages are necessary for running tests in Cylc:
 
-- `mock <https://mock.readthedocs.io>`_
 - `pytest <https://pytest.org>`_
 
 To generate the HTML User Guide, you will need:

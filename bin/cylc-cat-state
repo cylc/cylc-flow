@@ -27,7 +27,7 @@ if remrun():
     sys.exit(0)
 
 import os
-import pickle
+import json
 import re
 import sqlite3
 import traceback
@@ -119,7 +119,7 @@ def extract_lines(state):
     yield r"time : %(time_str)s (%(time_since_epoch)s)" % state
     yield r"initial cycle : %(initial_point)s" % state
     yield r"final cycle : %(final_point)s" % state
-    yield pickle.dumps(state["broadcast_states"]).splitlines()
+    yield json.dumps(state["broadcast_states"]).splitlines()
     yield "Begin task states"
     for item in state["task_pool"]:
         yield (

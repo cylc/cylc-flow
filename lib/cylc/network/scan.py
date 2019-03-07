@@ -42,7 +42,7 @@ SLEEP_INTERVAL = 0.01
 def async_map(coroutine, iterator):
     """Map iterator iterator onto a coroutine.
 
-    * Yields results in order as an when they are ready
+    * Yields results in order as and when they are ready.
     * Slow workers can block.
 
     Args:
@@ -52,7 +52,7 @@ def async_map(coroutine, iterator):
             Should yield tuples to be passed into the coroutine.
 
     Yields:
-        list - List of results
+        list - List of results.
 
     Example:
         >>> async def square(number): return number ** 2
@@ -70,20 +70,18 @@ def async_map(coroutine, iterator):
         awaiting.append(task)
 
     index = 0
-    buff = []
+    completed_tasks = {}
     while awaiting:
         completed, awaiting = loop.run_until_complete(
             asyncio.wait(awaiting, return_when=asyncio.FIRST_COMPLETED))
-        buff.extend(completed)
+        completed_tasks.update({t.ind: t.result() for t in completed})
 
-        old_len = -1
-        while len(buff) != old_len:
-            old_len = len(buff)
-            for task in buff:
-                if task.ind == index:
-                    index += 1
-                    buff.remove(task)
-                    yield task.result()
+        changed = True
+        while changed and completed_tasks:
+            if index in completed_tasks:
+                yield completed_tasks.pop(index)
+                changed = True
+                index += 1
 
 
 def async_unordered_map(coroutine, iterator):
@@ -196,7 +194,7 @@ def re_compile_filters(patterns_owner=None, patterns_name=None):
     return (cres['owner'], cres['name'])
 
 
-def get_scan_items_from_fs(owner_pattern=None, reg_pattern=None, updater=None):
+def get_scan_items_from_fs(owner_pattern=None, reg_pattern=None):
     """Scrape list of suites from the filesystem.
 
     Walk users' "~/cylc-run/" to get (host, port) from ".service/contact" for
@@ -231,8 +229,6 @@ def get_scan_items_from_fs(owner_pattern=None, reg_pattern=None, updater=None):
                                           item[1] is not None)))
     for run_d, owner in run_dirs:
         for dirpath, dnames, _ in os.walk(run_d, followlinks=True):
-            if updater and updater.quit:
-                return
             # Always descend for top directory, but
             # don't descend further if it has a .service/ or log/ dir
             if dirpath != run_d and (

@@ -178,7 +178,7 @@ class TestSuiteSrvFilesManager(unittest.TestCase):
     def test_register(self, mocked_os):
         """Test the SuiteSrvFilesManager register function."""
         def mkdirs_standin(_, exist_ok=False):
-            True
+            return True
 
         # we do not need to mock these functions
         mocked_os.path.basename.side_effect = os.path.basename

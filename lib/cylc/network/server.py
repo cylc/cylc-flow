@@ -18,7 +18,6 @@
 """Server for suite runtime API."""
 
 import getpass
-import re
 from queue import Queue
 from time import sleep
 from threading import Thread
@@ -32,7 +31,6 @@ from cylc.suite_status import (
     KEY_META, KEY_NAME, KEY_OWNER, KEY_STATES,
     KEY_TASKS_BY_STATE, KEY_UPDATE_TIME, KEY_VERSION)
 from cylc.version import CYLC_VERSION
-from cylc.wallclock import RE_DATE_TIME_FORMAT_EXTENDED
 
 
 class ZMQServer(object):
@@ -106,7 +104,7 @@ class ZMQServer(object):
                 self.port = port
                 break
         else:
-            raise Exception('No room at the inn, all ports occupied.')
+            raise IOError('No room at the inn, all ports occupied.')
 
         # start accepting requests
         self.register_endpoints()
@@ -152,7 +150,6 @@ class ZMQServer(object):
             # process
             try:
                 message = self.decode(msg, self.secret())
-                LOG.debug('zmq:recv %s', message)
             except Exception as exc:  # purposefully catch generic exception
                 # failed to decode message, possibly resulting from failed
                 # authentication
@@ -160,6 +157,7 @@ class ZMQServer(object):
                     {'error': {'message': str(exc)}}, self.secret())
             else:
                 # success case - serve the request
+                LOG.debug('zmq:recv %s', message)
                 res = self._receiver(message)
                 response = self.encode(res, self.secret())
                 LOG.debug('zmq:send %s', res)
@@ -191,7 +189,7 @@ class ZMQServer(object):
             response = method(**args)
         except Exception as exc:
             # includes incorrect arguments (TypeError)
-            LOG.error(exc)  # note the error server side
+            LOG.exception(exc)  # note the error server side
             import traceback
             return {'error': {
                 'message': str(exc), 'traceback': traceback.format_exc()}}
@@ -214,6 +212,14 @@ def authorise(req_priv_level):
     Args:
         req_priv_level (cylc.network.Priv): A privilege level for the method.
 
+    Wrapped function args:
+        user
+            The authenticated user (determined server side)
+        host
+            The client host (if provided by client) - non trustworthy
+        prog
+            The client program name (if provided by client) - non trustworthy
+
     """
     def wrapper(fcn):
         def _authorise(self, *args, user='?', meta=None, **kwargs):
@@ -222,7 +228,7 @@ def authorise(req_priv_level):
 
             usr_priv_level = self.get_priv_level(user)
             if usr_priv_level < req_priv_level:
-                LOG.info(
+                LOG.warn(
                     "[client-connect] DENIED (privilege '%s' < '%s') %s@%s:%s",
                     usr_priv_level, req_priv_level, user, host, prog)
                 raise Exception('Authorisation failure')
@@ -237,15 +243,6 @@ class SuiteRuntimeServer(ZMQServer):
     """Suite runtime service API facade exposed via zmq.
 
     This class contains the cylc endpoints.
-
-    Note the following argument names are protected:
-
-    user
-        The authenticated user (determined server side)
-    host
-        The client host (if provided by client) - non trustworthy
-    prog
-        The client program name (if provided by client) - non trustworthy
 
     """
 
@@ -306,8 +303,6 @@ class SuiteRuntimeServer(ZMQServer):
 
         items[0] is an identifier for matching a task proxy.
         """
-        if not isinstance(items, list):
-            items = [items]
         self.schd.command_queue.put(('dry_run_tasks', (items,),
                                     {'check_syntax': check_syntax}))
         return (True, 'Command queued')
@@ -338,8 +333,6 @@ class SuiteRuntimeServer(ZMQServer):
                       ungroup_all=False):
         """Return raw suite graph."""
         # Ensure that a "None" str is converted to the None value.
-        if stop_point_string is not None:
-            stop_point_string = str(stop_point_string)
         return self.schd.info_get_graph_raw(
             start_point_string, stop_point_string,
             group_nodes=group_nodes,
@@ -364,8 +357,6 @@ class SuiteRuntimeServer(ZMQServer):
     @ZMQServer.expose
     def get_task_info(self, names):
         """Return info of a task."""
-        if not isinstance(names, list):
-            names = [names]
         return self.schd.info_get_task_info(names)
 
     @authorise(Priv.READ)
@@ -378,10 +369,8 @@ class SuiteRuntimeServer(ZMQServer):
     @ZMQServer.expose
     def get_task_requisites(self, items=None, list_prereqs=False):
         """Return prerequisites of a task."""
-        if not isinstance(items, list):
-            items = [items]
         return self.schd.info_get_task_requisites(
-            items, list_prereqs=(list_prereqs in [True, 'True']))
+            items, list_prereqs=list_prereqs)
 
     @authorise(Priv.CONTROL)
     @ZMQServer.expose
@@ -405,8 +394,6 @@ class SuiteRuntimeServer(ZMQServer):
 
         items is a list of identifiers for matching task proxies.
         """
-        if not isinstance(items, list):
-            items = [items]
         self.schd.command_queue.put(("hold_tasks", (items,), {}))
         return (True, 'Command queued')
 
@@ -441,15 +428,10 @@ class SuiteRuntimeServer(ZMQServer):
 
         items is a list of identifiers of (families of) task instances.
         """
-        if not isinstance(items, list):
-            items = [items]
-        if stop_point_string == "None":
-            stop_point_string = None
         self.schd.command_queue.put((
             "insert_tasks",
             (items,),
-            {"stop_point_string": stop_point_string,
-             "no_check": no_check in ['True', True]}))
+            {"stop_point_string": stop_point_string, "no_check": no_check}))
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
@@ -459,8 +441,6 @@ class SuiteRuntimeServer(ZMQServer):
 
         items is a list of identifiers for matching task proxies.
         """
-        if not isinstance(items, list):
-            items = [items]
         self.schd.command_queue.put(("kill_tasks", (items,), {}))
         return (True, 'Command queued')
 
@@ -490,11 +470,8 @@ class SuiteRuntimeServer(ZMQServer):
 
         items is a list of identifiers for matching task proxies.
         """
-        if items is not None and not isinstance(items, list):
-            items = [items]
         self.schd.command_queue.put(
-            ("poll_tasks", (items,),
-                {"poll_succ": poll_succ in ['True', True]}))
+            ("poll_tasks", (items,), {"poll_succ": poll_succ}))
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
@@ -554,8 +531,6 @@ class SuiteRuntimeServer(ZMQServer):
 
         items is a list of identifiers for matching task proxies.
         """
-        if not isinstance(items, list):
-            items = [items]
         self.schd.command_queue.put(("release_tasks", (items,), {}))
         return (True, 'Command queued')
 
@@ -566,8 +541,6 @@ class SuiteRuntimeServer(ZMQServer):
 
         items is a list of identifiers for matching task proxies.
         """
-        if not isinstance(items, list):
-            items = [items]
         self.schd.command_queue.put(
             ("remove_tasks", (items,), {"spawn": spawn}))
         return (True, 'Command queued')
@@ -579,10 +552,6 @@ class SuiteRuntimeServer(ZMQServer):
 
         items is a list of identifiers for matching task proxies.
         """
-        if not isinstance(items, list):
-            items = [items]
-        if outputs and not isinstance(outputs, list):
-            outputs = [outputs]
         self.schd.command_queue.put((
             "reset_task_states",
             (items,), {"state": state, "outputs": outputs}))
@@ -634,8 +603,6 @@ class SuiteRuntimeServer(ZMQServer):
 
         items is a list of identifiers for matching task proxies.
         """
-        if not isinstance(items, list):
-            items = [items]
         self.schd.command_queue.put(("spawn_tasks", (items,), {}))
         return (True, 'Command queued')
 
@@ -653,8 +620,6 @@ class SuiteRuntimeServer(ZMQServer):
 
         items[0] is the name of the checkpoint.
         """
-        if not isinstance(items, list):
-            items = [items]
         self.schd.command_queue.put(("take_checkpoints", (items,), {}))
         return (True, 'Command queued')
 
@@ -665,9 +630,6 @@ class SuiteRuntimeServer(ZMQServer):
 
         items is a list of identifiers for matching task proxies.
         """
-        if not isinstance(items, list):
-            items = [items]
-        items = [str(item) for item in items]
         self.schd.command_queue.put(
             ("trigger_tasks", (items,), {"back_out": back_out}))
         return (True, 'Command queued')

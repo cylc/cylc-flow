@@ -133,7 +133,7 @@ def main():
             print("All", contacted, "accounts have cylc-" + CYLC_VERSION)
     else:
         print("WARNING: failed to invoke cylc-%s on %d accounts:" % (
-            CYLC_VERSION, len(list(warn.keys()))))
+            CYLC_VERSION, len(warn)))
         m = max(len(ac) for ac in warn)
         for ac, warning in warn.items():
             print(' ', ac.ljust(m), warning)

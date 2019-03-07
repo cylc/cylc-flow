@@ -496,7 +496,7 @@ To start a new run, stop the old one first with one or more of these:
                 source_str = source
             os.symlink(source_str, target)
 
-        print(('REGISTERED %s -> %s' % (reg, source)))
+        print('REGISTERED %s -> %s' % (reg, source))
         return reg
 
     def create_auth_files(self, reg):

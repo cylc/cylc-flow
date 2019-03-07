@@ -49,7 +49,7 @@ latter grouped as Python, TeX or 'other' (neither). 'opt_spec' item format:
 <MODULE>: [<MIN VER OR 'None'>, <FUNC TAG>, <GROUP>, <'OTHER' TUPLE>] with
 <'OTHER' TUPLE> = ([<BASE CMD(S)>], <VER OPT>, <REGEX>, <OUTFILE ARG>).
 """
-req_py_ver_range = ((3,),)
+req_py_ver_range = ((3,6),)
 opt_spec = {
     'EmPy': [None, 'TEMPLATING', 'PY'],
     'sphinx': [(1, 5, 3), 'HTMLDOCS', 'PY'],

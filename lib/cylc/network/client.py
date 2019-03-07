@@ -28,7 +28,7 @@ import zmq.asyncio
 
 from cylc import LOG
 import cylc.flags
-from cylc.hostuserutil import get_host, get_fqdn_by_host
+from cylc.hostuserutil import get_fqdn_by_host
 from cylc.network import encrypt, decrypt, get_secret
 from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
@@ -286,11 +286,9 @@ class SuiteRuntimeClient:
             # exc.args = (cls.NOT_RUNNING % suite,)
             # raise
 
-        if host and host.split('.')[0] == 'localhost':
-            host = get_host()
-        elif host and '.' not in host:  # Not IP and no domain
-            host = get_fqdn_by_host(host)
-        else:
+        if not host:
             host = contact[SuiteSrvFilesManager.KEY_HOST]
+        host = get_fqdn_by_host(host)
+
         port = int(contact[SuiteSrvFilesManager.KEY_PORT])
         return host, port

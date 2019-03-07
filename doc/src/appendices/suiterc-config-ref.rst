@@ -953,8 +953,8 @@ Allows tasks to spawn out to ``max active cycle points``
 submitted before its successor can be spawned.
 
 *Important*: This should be used with care given the potential impact of
-additional task proxies in terms of memory and cpu for the cylc daemon.
-Also, use
+additional task proxies in terms of memory and cpu for the cylc server
+program. Also, use
 of the setting may highlight any issues with suite design relying on the
 default behaviour where downstream tasks would otherwise be waiting on ones
 upstream submitting and the suite would have stalled e.g. a housekeeping task

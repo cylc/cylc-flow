@@ -114,12 +114,14 @@ latex_elements = {
     'pointsize': '11pt',
 }
 
+# Title for the cylc documentation section
+CYLC_DOC_TITLE = 'Cylc Documentation'
+
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    ('index', 'cylc.tex', 'Cylc Documentation',
-     '2008-2019 NIWA & British Crown (Met Office) & Contributors', 'manual'),
+    ('index', 'cylc.tex', CYLC_DOC_TITLE, copyright, 'manual'),
 ]
 
 # Image file to place at the top of the title page.
@@ -134,8 +136,7 @@ latex_show_urls = "footnote"
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'cylc', 'cylc Documentation',
-     '2008-2019 NIWA & British Crown (Met Office) & Contributors', 1),
+    ('index', 'cylc', CYLC_DOC_TITLE, copyright, 1),
 ]
 
 # If true, show URL addresses after external links.
@@ -148,9 +149,8 @@ man_show_urls = True
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    ('index', 'cylc', 'Cylc Documentation',
-     '2008-2019 NIWA & British Crown (Met Office) & Contributors',
-     'cylc', 'The Cylc Suite Engine', 'Miscellaneous'),
+    ('index', 'cylc', CYLC_DOC_TITLE, copyright, 'cylc', project,
+     'Miscellaneous'),
 ]
 
 # How to display URL addresses.
