@@ -693,7 +693,7 @@ class TaskEventsManager(object):
         if event_time is None:
             event_time = get_current_time_string()
         self.suite_db_mgr.put_update_task_jobs(itask, {
-            "time_submit_exit": get_current_time_string(),
+            "time_submit_exit": event_time,
             "submit_status": 1,
         })
         itask.summary['submit_method_id'] = None
