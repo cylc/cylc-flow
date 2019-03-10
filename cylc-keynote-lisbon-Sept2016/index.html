@@ -1,0 +1,2457 @@
+<!DOCTYPE html>
+
+<head>
+<link href="etc/prism/prism.css" rel="stylesheet" />
+<link href="etc/my-dzslides.css" rel="stylesheet" />
+<!-- to use online fonts:
+<link href="https://fonts.googleapis.com/css?family=Titillium+Web" rel="stylesheet">
+--> 
+</head>
+
+<meta charset="utf-8">
+<script src="etc/prism/prism.js"></script>
+
+<title>cylc - Lisbon, September 2016</title>
+
+<!--prism.js syntax highlight: use double-quotes for cylc strings,
+single for jinja2 strings-->
+
+<!-- One section is one slide -->
+
+<section class="chapter">
+  <h1>
+    <span style="color:#ff5966">c</span>
+    <span style="color:#eebb00">y</span>
+    <span style="color:#00c798">l</span>
+    <span style="color:#00b4fd">c</span>
+    <img src='etc/gfx/cylc-logo.svg' style="width:150px; margin-bottom:-30px"/>
+  </h1>
+  <p/>
+  <h3>Recent Progress <br/>&amp; Future Plans</h3>
+
+  <footer style="padding:25px;">
+    <div style="float:right">
+      Hilary James Oliver, <a href="http://niwa.co.nz">NIWA</a> &nbsp;
+      <div class="nav" style="float:right">
+        <a href="shells/onstage.html?../index.html#../index.html">onstage</a>
+      </div>
+      &nbsp;
+      <span style="color:#ff5966">c</span>
+      <span style="color:#eebb00">y</span>
+      <span style="color:#00c798">l</span>
+      <span style="color:#00b4fd">c</span>
+      <img src='etc/gfx/cylc-logo.svg' style="width:25px; margin-bottom:-5px"/>
+    </div>
+  </footer>
+</section>
+
+<section>
+  <img src="etc/gfx/nz-globe.svg" style="height:90%; margin:5%; margin-left:15%"/>
+  <div role="note">
+    <p> 2500km south - a cold frozen wasteland,
+    <p> 2500km west - a hot cultural wasteland.
+  </div>
+</section>
+
+<section>
+  <h3>overview</h3>
+  <ul>
+    <li> a cycling workflow primer
+    <li> why you should use cylc!
+    <ul>
+      <li> who's using cylc?
+    </ul>
+    <li> a bird's-eye view of cylc
+    <li> progress since Hamburg 2014
+    <li> future development plans
+  </ul>
+</section>
+
+<section class="dark">
+  <h2>a cycling <br/>workflow primer</h2>
+</section>
+
+<section>
+  <h3 class="subtitle">NWP &amp; climate cycling</h3>
+  <h4 class="subtitle">for research &amp; operational use</h4>
+  <p>need to manage <strong>workflows</strong> of <strong>tasks</strong>
+  that represent real <strong>jobs</strong></p>
+  <ul class="incremental">
+    <li> jobs may depend on other jobs (input/output files etc.)
+    <li> jobs may be <strong>cycled</strong> (repeated for a sequence of
+    date-times)
+    <ul>
+      <li> cycling may need to continue indefinitely (operational use)
+      <li> jobs may depend on previous-cycle jobs (e.g. restart files)
+    </ul>
+    <li> jobs may be clock dependent too (e.g. real-time driving data)
+  </ul>
+</section>
+
+<section>
+  <figure class="white">
+    <img src="etc/gfx/graph1-1.svg" style="float:left">
+    <div style="margin-left:280px; margin-top:130px">
+      <h4>a small workflow <strong>graph</strong></h4>
+      <ul>
+        <li> <strong>nodes</strong> represent <strong>tasks</strong><br/>
+        (which represent real jobs)
+        <li> <strong>edges </strong>represent <strong>dependence</strong><br/>
+        (typically input/output files)
+      </ul>
+    </div>
+  </figure>
+</section>
+
+<section>
+  <figure class="white">
+    <img src="etc/gfx/graph1-2.svg">
+    <p style="margin-top:160px; margin-left:530px"><strong>repeat</strong>,
+    for the next forecast...</p>
+  </figure>
+</section>
+
+<section>
+  <figure class="white">
+    <img src="etc/gfx/graph1-2a.svg">
+    <p style="margin-top:160px; margin-left:530px; margin-right:0px">
+    BUT NOTE there is <strong>inter-cycle dependence</strong>
+    (e.g. model restart files)<br/>
+    <code>foo[1] => foo[2]</code> 
+    <code>baz[1] => bar[2]</code> 
+    </p>
+  </figure>
+</section>
+
+<section>
+  <figure class="white">
+    <img src="etc/gfx/graph1-3a.svg">
+  </figure>
+</section>
+
+<section>
+  <figure class="white">
+    <img src="etc/gfx/graph1-cont.svg">
+    <p style="margin-left:380px; margin-top:40px">
+    this is really<br/> &nbsp; &nbsp; <strong>a continuous workflow</strong></p>
+  </figure>
+</section>
+
+<section>
+  <figure class="white">
+    <img src="etc/gfx/graph1-cont5.svg">
+    <p style="margin-left:400px; margin-top:60px">
+    with <strong>no hard cycle boundaries</strong></p>
+  </figure>
+</section>
+
+<section>
+  <figure class="white">
+    <img src="etc/gfx/graph1-cont20.svg">
+    <p style="margin-left:350px; margin-top:60px">
+    and it may need to <br>&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; <strong>continue
+      cycling indefinitely...</strong></p>
+  </figure>
+</section>
+
+<section>
+  <figure class="white">
+    <img src="etc/gfx/graph1-cont50.svg">
+  </figure>
+</section>
+
+<section>
+  <figure class="white">
+    <img src="etc/gfx/graph1-cont100.svg">
+  </figure>
+</section>
+
+<section>
+  <figure class="white">
+    <img src="etc/gfx/graph1-cont250.svg">
+  </figure>
+</section>
+
+<section class="dark">
+  <h2>how can we run</h2>
+  <h2 style="margin-top:0px">such a system?!</h2>
+</section>
+
+<section>
+  <h3>real-time scheduling?</h3>
+  <p>just real-time clock dependence<br/>
+  &nbsp; &nbsp; e.g. <strong>cron</strong>
+  </p>
+  <ul class="incremental">
+    <li> run each job at some specified time of the day
+    <li> <strong class="warning">inter-task dependence?</strong>
+    <li> <strong class="warning">delayed or historical runs?</strong>
+  </ul>
+  <div role="note">
+    <p>We could do this is with careful timing of tasks, IF nothing ever changed, failed, or was delayed!</p>
+  </div>
+</section> 
+
+<section>
+  <h3>static workflow?</h3>
+  <p>inter-task dependence, but no concept of "cycling"<br/>
+  &nbsp; &nbsp; e.g. non-NWP workflow schedulers</p>
+  <ul class="incremental">
+    <li> these systems <strong>can</strong> run cycling jobs!
+    <ul>
+      <li> break up long model runs into "steps" or "chunks"
+      <li> and every job instance is represented by a <strong>different task</strong>
+      <li> (loop over chunks to generate the static workflow)
+    </ul>
+
+    <li> but <strong class="warning">cannot continue indefinitely</strong>
+    (must be finite in extent)
+
+    <li> <strong class="warning">performance and monitoring</strong> of
+    very large workflows?
+    <li> <strong class="warning">clock-triggers?</strong>
+  </ul>
+  <div role="note">
+    <p>As far as the abstract workflow is concerned these are all distinct tasks -
+    i.e.  there is no logical relationship between foo_c1 and foo_c2 etc.</p>
+  </div>
+</section> 
+
+<section>
+  <img src="etc/gfx/basic-static2.svg" style="height:90%; margin:2%; margin-left:10%"/>
+  <div style="position:absolute; top:50px; right:20px; width:400px">
+    <code>foo_c1</code> runs <code>foo.exe</code> for T = 1 <br/>
+    <code>bar_c2</code> runs <code>bar.exe</code> for T = 2 <br/>
+    <code>foo_c2</code> runs <code>foo.exe</code> for T = 2, etc.
+  </div>
+</section>
+
+<!--
+<section>
+  <img src="etc/gfx/basic-static4.svg" style="height:90%; margin:2%; margin-left:10%"/>
+  <div style="position:absolute; top:50px; right:20px; width:400px">
+    <code>foo_bird</code> runs <code>foo.exe</code> for T = 1 <br/>
+    <code>bar_fish</code> runs <code>bar.exe</code> for T = 2 <br/>
+    <code>foo_fish</code> runs <code>foo.exe</code> for T = 2, etc.
+  </div>
+</section>
+-->
+
+<section>
+  <img src="etc/gfx/mad-static.svg" style="height:90%; margin:1%; margin-left:10%"/>
+  <div style="position:absolute; top:50px; right:20px; width:400px">
+    <code>pink &nbsp;</code> runs <code>foo.exe</code> for T = 1 <br/>
+    <code>purple</code> runs <code>bar.exe</code> for T = 2 <br/>
+    <code>yellow</code> runs <code>foo.exe</code> for T = 2, etc.
+  </div>
+</section>
+
+<section>
+  <div class="vid">
+    <h4>static (video)</h4>
+    <video onclick="this.paused ? this.play() : this.pause();"
+      style="width:100%;">
+      <source src="etc/gfx/cylc-static-5.webm">
+      Your browser does not support webm video
+    </video>
+  </div>
+  <div class="vid">
+    <h4>static (vis.)</h4>
+    <img src="etc/gfx/static5.svg" style="width:90%">
+  </div>
+  <div role="note">
+    <p>a static workflow does do optimaly scheduling (unless somwhere
+    restrained): every task can submit as soon as its inputs are satsified.</p>
+  </div>
+</section>
+
+<section>
+  <h3>real time + static workflow?</h3>
+  <p>run a static workflow at specified clock times <br/>
+  &nbsp; &nbsp; e.g. very expensive corporate workflow schedulers
+  </p>
+  <ul class="incremental">
+    <li> can continue cycling indefinitely, but:
+    <li> <strong class="warning">hard boundaries between the real-time
+      cycles</strong>
+    <ul>
+      <li> (but could have multi-step static workflows at each cycle)
+    </ul>
+    <li> <strong class="warning">historical or delayed runs?</strong>
+  </ul>
+</section> 
+
+<section>
+  <!-- note: repeat stat-1 graph each time here -->
+  <h4>real-time + static</h4>
+  <div style="float:left; margin-left:3%; width:30%">
+    <img src="etc/gfx/clock-1.png"/> <br/>
+    <img src="etc/gfx/stat1.svg" style="width:70%"/>
+  </div>
+  <div style="float:left; margin-left:3%; width:30%">
+    <img src="etc/gfx/clock-2.png"/> <br/>
+    <img src="etc/gfx/stat1.svg" style="width:70%"/>
+  </div>
+  <div style="float:left; margin-left:3%; width:30%">
+    <img src="etc/gfx/clock-3.png"/> <br/>
+    <img src="etc/gfx/stat1.svg" style="width:70%"/>
+  </div>
+  <div role="note">
+  </div>
+</section>
+
+<section>
+  <h3>fixed cycling workflow?</h3>
+  <p><strong>sequentially repeat the full single-cycle workflow</strong><br/>
+  &nbsp; &nbsp; e.g. traditional operational NWP workflow schedulers</p>
+  <ul class="incremental">
+    <li> the obvious way to get an ongoing cycling workflow
+    <ul>
+      <li> fine for clock-limited operational NWP (mostly...!)
+      <li> can continue indefinitely, but:
+    </ul>
+    <li> <strong class="warning">hard boundaries between cycles</strong>
+    <ul>
+      <li> (but could have multi-step static workflows at each cycle)
+    </ul>
+  </ul>
+</section> 
+
+<section>
+  <div class="vid">
+    <h4>fixed cycling (video)</h4>
+    <video onclick="this.paused ? this.play() : this.pause();"
+      style="width:100%; margin-top:30%">
+      <source src="etc/gfx/cylc-fixed-5.webm">
+      Your browser does not support webm video
+    </video>
+  </div>
+  <div class="vid">
+    <h4>cycling workflow (vis.)</h4>
+    <img src="etc/gfx/cycling5.svg" style="width:88%">
+  </div>
+</section>
+
+<section>
+  <h3>free cycling workflow (only cylc!)</h3>
+  <p><strong>cycling jobs</strong> are represented by <strong>cycling
+    tasks</strong>, no global loop</p>
+  <ul class="incremental">
+    <li> same scheduling efficiency as a static workflow (no hard boundary
+    between cycles), but
+    <ul>
+      <li> can continue cycling indefinitely
+    </ul>
+    <li> the scheduler doesn't need to "know about" the entire workflow
+    <ul>
+      <li> instead, it can <strong>generate workflow as required</strong> on
+      the fly
+    </ul>
+  </ul>
+</section> 
+
+<section>
+  <div class="vid">
+    <h4>cycling (vis.)<h4>
+    <img src="etc/gfx/cycling5.svg" style="width:90%"/>
+  </div>
+  <div class="vid">
+    <h4>static (vis.)</h4>
+    <img src="etc/gfx/static5.svg" style="width:90%"/>
+  </div>
+  <div role="note">
+  </div>
+</section>
+
+<section>
+  <div style="margin-top:10%"></div>
+  <div class="vid">
+    <h4>cycling (vis.)</h4>
+    <img src="etc/gfx/cycling5-zoom.svg" style="width:88%">
+  </div>
+  <div class="vid">
+    <h4>static (vis.)</h4>
+    <img src="etc/gfx/static5-zoom.svg" style="width:88%">
+  </div>
+</section>
+
+<section>
+  <div class="vid">
+    <h4>cycling (video)</h4>
+    <video onclick="this.paused ? this.play() : this.pause();"
+      style="width:100%; margin-top:30%">
+      <source src="etc/gfx/cylc-cycling-5.webm">
+      Your browser does not support webm video
+    </video>
+  </div>
+  <div class="vid">
+    <h4>cycling (vis.)</h4>
+    <img src="etc/gfx/cycling5.svg" style="width:88%">
+  </div>
+</section>
+
+<section>
+  <div class="vid" style="float:left">
+    <h4>static (video)</h4>
+    <video onclick="this.paused ? this.play() : this.pause();"
+      style="width:140%">
+      <source src="etc/gfx/comp-static-workflow-10.webm">
+      Your browser does not support webm video
+    </video>
+  </div>
+  <div class="vid" style="float:left">
+    <h4>cycling (video)</h4>
+    <video onclick="this.paused ? this.play() : this.pause();"
+      style="width:100%;">
+      <source src="etc/gfx/comp-cycling-workflow-10.webm">
+      Your browser does not support webm video
+    </video>
+  </div>
+</section>
+
+<section>
+  <div class="vid">
+    <h4>cycling, with a delay</h4>
+    <video onclick="this.paused ? this.play() : this.pause();"
+      style="width:100%">
+      <source src="etc/gfx/cycling-workflow-10-retries.webm">
+      Your browser does not support webm video
+    </video>
+  </div>
+  <div class="vid">
+    <h4>cycling</h4>
+    <video onclick="this.paused ? this.play() : this.pause();"
+      style="width:100%">
+      <source src="etc/gfx/cycling-workflow-10.webm">
+      Your browser does not support webm video
+    </video>
+  </div>
+</section>
+
+<section>
+  <figure class="white">
+    <img src="etc/gfx/complex-0.png">
+  </figure>
+</section>
+
+
+<section>
+  <figure class="white">
+    <img src="etc/gfx/complex-1.png">
+  </figure>
+</section>
+
+
+<section>
+  <figure class="white">
+    <img src="etc/gfx/complex-2.png">
+  </figure>
+</section>
+
+<!--
+<section>
+  <figure class="white">
+    <img src="etc/gfx/u-ab778.svg">
+  </figure>
+</section>
+-->
+
+<section>
+  <figure class="white">
+    <img src="etc/gfx/u-ab778-3.svg">
+  </figure>
+</section>
+
+<section class="dark">
+  <figure class="dark">
+    <img src="etc/gfx/string-art-fun2.jpg" style="padding-left:200px; width:600px">
+  </figure>
+</section>
+
+<section>
+  <img src="etc/gfx/have-I-got-a-deal-for-you.jpg" style="height:100%"/>
+</section>
+
+<section class="dark">
+  <h2>why you should use cylc!</h2>
+</section>
+
+<section>
+  <h4>things to consider<br/>
+  when choosing a workflow engine</h4>
+  <ul class="incremental">
+    <li> (obviously:) is it fit for purpose?
+    <ul>
+      <li> <strong>but don't limit yourself to your immediate needs!</strong>
+    </ul>
+    <li> licensing (Open Source: GPL-3.0)
+    <li> documentation (web site, user guide)
+    <li> support (cylc@googlegroups.com, ESiWACE)
+    <li> development model (distributed - GitHub Flow)
+    <li> community size (...)
+  </ul>
+</section>
+
+<section class="dark">
+  <h4 style="position:absolute; top:-42px; right:0">
+    <a style="color:black" href="https://cylc.github.io/cylc/">
+      https://cylc.github.io/cylc/</a></h4>
+    <img style="width:100%; height:100%" src="etc/gfx/cylc-web.png">
+</section>
+
+<section>
+  <img style="width:100%; height:100%" src="etc/gfx/cylc-cug.png">
+</section>
+
+<section>
+  <h4 style="position:absolute; top:-42px; right:0">
+    <a style="color:black" href="https://cylc.github.io/cylc/">
+      https://cylc.github.io/cylc/</a>
+  </h4>
+  <img style="width:100%; height:100%" src="etc/gfx/cylc-prs.png">
+  <div role="note">
+    <p>mention development practice: automated testing, double code
+    review; open discussion.
+    </p>
+  </div>
+</section>
+
+<section>
+  <h4 style="position:absolute; top:-42px; right:0">
+    <a style="color:black"
+      href="https://groups.google.com/forum/#!forum/cylc">
+      https://groups.google.com/forum/#!forum/cylc</a></h4>
+    <img style="width:100%; height:100%" src="etc/gfx/cylc-group.png">
+</section>
+
+<section>
+  <h4 style="position:absolute; top:-42px; right:0">
+    <a style="color:black"
+      href="https://www.esiwace.eu/services/sup_cylc">
+      https://www.esiwace.eu/services/sup_cylc</a></h4>
+    <img style="width:100%; height:100%" src="etc/gfx/cylc-esiwace.png">
+</section>
+
+<section class="map">
+  <h3 style="color:black">who's using cylc?</h3>
+  <div role="note">
+    <p>many of these are UM sites - however, cylc is not UM-specific in any
+    way.</p>
+  </div>
+</section>
+
+<section>
+  <p style="font-size:80%"> NIWA (NZ) *
+  <br/> Met Office (UK) *
+  <br/> Max-Planck-Institut f&uuml;r Meteorologie (DE)
+  <br/> Deutches Klimarechenzentrum (DE)
+  <br/> Bureau of Meteorology (AU) *
+  <br/> NRL Marine Meteorology Division (US)
+  <br/> 557th Weather Wing (US) *
+  <br/> Geophysical Fluid Dynamics Laboratory (US)
+  <br/> Meteorological Service Singapore (SG) *
+  <br/> South African Weather Service (ZA) *
+  <br/> National Centre for Medium Range Weather Forecasting (IN) *
+  <br/> Korean Meteorological Administration (KR) *
+  <br/> <!-- Centre of Excellence in Simulation of Weather and Climate in
+  Europe (EU) --><br/>
+  <span style="font-size:70%">
+    <em>* = used with Rose, a framework for managing
+      meteorological suites.</em> <br/>
+    <br/>
+    Others: hydrologists at Delft University of
+    Technology, Netherlands; someone in the French postal service; a High
+    School robotics club in the US: a small private company in the
+    US,...?</span> </p>
+</section>
+
+<section>
+  <h3> cylc is a general purpose workflow tool</h3>
+  <p>cylc can handle any(?) kind of workflow</p>
+  <ul class="incremental">
+    <li> static workflows (for non-cycling or cycling jobs)
+    <li> continuous cycling workflows
+    <ul>
+      <li> date-time cycling via ISO 8601 recurrence expressions
+      <li> integer cycling
+      <li> external-triggered workflows (e.g. satellite processing)
+    </ul>
+    <li> real time operational workflows
+    <ul>
+      <li> date-time clock triggers
+      <li> continuous cycling
+    </ul>
+  </ul>
+</section>
+
+<section>
+  <h3> ease of use (workflow construction)</h3>
+  <ul class="incremental">
+    <li> <strong>simple workflows are very easy</strong> - just a few
+    lines
+    <li> <strong>large complex workflows are relatively easy</strong>
+    <ul>
+      <li> efficient graph notation: families, parameters, conditional
+      triggering, ISO 8601 cycling notation ...
+      <li> efficient task configuration: shared settings via multiple
+      inheritance
+      <li> Jinja2 templating (programming logic)
+      <li> failure recovery (flexible retries, alternate workflows)
+    </ul>
+    <li> simulation and dummy modes
+    <li> visualization
+  </ul>
+  <div role="note">
+  </div>
+</section>
+
+<section>
+  <h3> ease of use (runtime)</h3>
+  <ul class="incremental">
+    <!--
+    <li> no central server (low admin, low security footprint)
+    -->
+    <li> <strong>a modern control GUI</strong> - <code>cylc gui</code>
+    (aka <code>gcylc</code>)
+    <ul>
+      <li> three different state "views" (graph, dot, text tree)
+      <li> interact with suite and tasks (re-trigger jobs, view logs
+      etc.)
+    </ul>
+    <li> <strong>a multi-suite summary GUI</strong> - <code>cylc
+    gscan</code>
+  <li> <strong>a super-powerful command line interface (CLI)</strong>
+    <ul>
+      <li> e.g. to re-trigger all failed tasks with names starting
+      with "get_" in all "2020*" cycle points, in suite "expt1":<br/>
+      <code>cylc trigger expt1 2020*/get_*:failed</code>
+    </ul>
+    <li> viewing job logs (later...)
+  </ul>
+</section>
+
+<section>
+  <figure>
+    <img style="" src="etc/gfx/gcylc-1.png">
+  </figure>
+  <div role="note">
+    <p>plus cylc is fun to use, and colourful!</p>
+  </div>
+</section>
+
+<section>
+  <figure>
+    <img style="" src="etc/gfx/gcylc-3.png">
+  </figure>
+</section>
+
+<section class="dark">
+    <img style="width:100%" src="etc/gfx/gscan.png">
+</section>
+
+<section class="dark">
+  <h2>a bird's-eye<br/> view of cylc</h2>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ [scheduling]
+    [[dependencies]]
+       graph = "hello => goodbye & farewell"
+ [runtime]
+    [[hello]]
+       script = echo "Hello World!"
+    [[goodbye]]
+       script = echo "Goodbye World!"
+    [[farewell]]
+       script = echo "Farewell World!"</code></pre>
+  <p><strong>cylc is easy</strong>: most of the important concepts can be demonstrated with this
+  simple suite</p>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ [scheduling]
+    [[dependencies]]
+       graph = "hello => goodbye & farewell"
+.[runtime]
+.   [[hello]]
+.      script = echo "Hello World!"
+.   [[goodbye]]
+.      script = echo "Goodbye World!"
+.   [[farewell]]
+.      script = echo "Farewell World!"</code></pre>
+  <p><code>[scheduling]</code> (task scheduling): determines WHEN tasks run<p>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+.[scheduling]
+.   [[dependencies]]
+.      graph = "hello => goodbye & farewell"
+ [runtime]
+    [[hello]]
+       script = echo "Hello World!"
+    [[goodbye]]
+       script = echo "Goodbye World!"
+    [[farewell]]
+       script = echo "Farewell World!"</code></pre>
+  <p><code>[runtime]</code> (task configuration): determines WHAT to run (and
+  WHERE and HOW) when each task is ready<p>
+  <div role="note">
+    <p>clarity of expression; plus in principle dependence is a workflow
+    propery, not a task configuration property like input file locations etc.
+    </p>
+  </div>
+</section>
+
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ [scheduling]
+    [[dependencies]]
+       graph = "hello => goodbye & farewell"
+ # ...
+</code></pre>
+  <img src="etc/gfx/hello.svg"
+  style="width:40%; margin-left:30%"/>
+    </div>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ [scheduling]
+    [[dependencies]]
+       graph = """
+               hello => goodbye
+               hello => farewell
+               """
+ # ...
+</code></pre>
+  <img src="etc/gfx/hello.svg"
+  style="width:40%; margin-left:30%"/>
+    </div>
+</section>
+
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ [scheduling]
+    [[dependencies]]
+       graph = """# a comment
+               hello => goodbye
+                  # another comment
+               hello => farewell
+               """
+ # ...
+</code></pre>
+  <img src="etc/gfx/hello.svg"
+  style="width:40%; margin-left:30%"/>
+    </div>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ [scheduling]
+    [[dependencies]]
+       graph = "hello => goodbye & farewell"
+ # ...
+</code></pre>
+  <img src="etc/gfx/hello.svg"
+  style="width:40%; margin-left:30%"/>
+    </div>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ [scheduling]
+    [[dependencies]]
+       graph = "hello => goodbye & farewell"
+ # ...
+</code></pre>
+<p><code>foo => bar</code> means <code>foo:succeed => bar</code><br/>
+but we can also trigger off states other than success...</p>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ [scheduling]
+    [[dependencies]]
+       graph = "hello:fail => goodbye & farewell"
+ # ...
+</code></pre>
+<p>(trigger if task fails)</p>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ [scheduling]
+    [[dependencies]]
+       graph = "hello:submit => goodbye & farewell"
+ # ...
+</code></pre>
+<p>(trigger when task submits)</p>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ [scheduling]
+    [[dependencies]]
+       graph = "hello:start => goodbye & farewell"
+ # ...
+</code></pre>
+<p>(trigger when task starts executing)</p>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ [scheduling]
+    [[dependencies]]
+       graph = "hello:file1 => goodbye & farewell"
+ [runtime]
+    [[hello]]
+       [[[outputs]]]
+          file1 = "first data file written out"  
+ # ...
+</code></pre>
+<p>(trigger off a custom message emitted by the task)</p>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ [scheduling]
+    [[dependencies]]
+       graph = "hello => goodbye & farewell"
+.[runtime]
+.   [[hello]]
+.      script = echo "Hello World!"
+.   [[goodbye]]
+.      script = echo "Goodbye World!"
+.   [[farewell]]
+.      script = echo "Farewell World!"</code></pre>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ [scheduling]
+    [[dependencies]]
+       graph = "hello => goodbye & farewell"
+ [runtime]
+    [[hello]]
+       script = echo "Hello World!"
+    [[goodbye]]
+       script = echo "Goodbye World!"
+    [[farewell]]
+       script = echo "Farewell World!"</code></pre>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+.[scheduling]
+.   [[dependencies]]
+.      graph = "hello => goodbye & farewell"
+ [runtime]
+    [[hello]]
+       script = echo "Hello World!"
+.   [[goodbye]]
+.      script = echo "Goodbye World!"
+.   [[farewell]]
+.      script = echo "Farewell World!"</code></pre>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ # ...
+ [runtime]
+    [[hello]]
+       script = echo "Hello World!"
+ # ...
+</code></pre>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ # ...
+ [runtime]
+    [[hello]]
+       script = hello-world.sh
+ # ...
+</code></pre>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ # ...
+ [runtime]
+    [[hello]]
+       script = hello.sh "World" 10
+ # ...
+</code></pre>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ # ...
+ [runtime]
+    [[hello]]
+       script = hello.sh  # says 'Hello' to $OBJECT
+       [[[environment]]]
+          OBJECT = World  # set $OBJECT to 'World'
+ # ...
+</code></pre>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ # ...
+ [runtime]
+    [[hello]]
+       script = """
+           echo 'Hello World!' > hello.txt
+           cat farewell.txt
+                """
+ # ...
+</code></pre>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ # ...
+ [runtime]
+    [[hello]]
+       script = echo "Hello World!"
+ # ...
+</code></pre>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ # ...
+ [runtime]
+    [[hello]]
+       script = echo "Hello World!"
+       [[[remote]]]
+          host = hpc-1.niwa.co.nz
+       [[[job]]]
+          batch system = slurm
+ # ...
+</code></pre>
+</section>
+
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ # ...
+ [runtime]
+    [[hello]]
+       script = echo "Hello World!"
+       [[[remote]]]
+          host = hpc-1.niwa.co.nz
+       [[[job]]]
+          batch system = slurm
+          execution time limit = PT1H 
+       [[[directives]]] 
+          --nodes = 5 
+          --account = QXZ5W2
+ # ...
+</code></pre>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ # ...
+ [runtime]
+    [[goodbye]]
+       script = echo "Goodbye World!"
+    [[farewell]]
+       script = echo "Farewell World!"
+ # ...
+</code></pre>
+</section>
+
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ # ...
+ [runtime]
+    [[goodbye]]
+       script = echo "Goodbye ${OBJECT}!"
+       [[[environment]]]
+          OBJECT = World 
+    [[farewell]]
+       script = echo "Farewell World!"
+ # ...
+</code></pre>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ # ...
+ [runtime]
+    [[goodbye]]
+       script = echo "Goodbye ${OBJECT}!"
+       [[[environment]]]
+          OBJECT = World
+    [[farewell]]
+       script = echo "Farewell ${OBJECT}!"
+       [[[environment]]]
+          OBJECT = World
+ # ...
+</code></pre>
+</section>
+
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ # ...
+ [runtime]
+    [[goodbye]]
+       script = echo "Goodbye ${OBJECT}!"
+       [[[environment]]]
+          OBJECT = World  # &lt;---
+    [[farewell]]
+       script = echo "Farewell ${OBJECT}!"
+       [[[environment]]]
+          OBJECT = World
+ # ...
+</code></pre>
+</section>
+
+
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ # ...
+ [runtime]
+    [[goodbye]]
+       script = echo "Goodbye ${OBJECT}!"
+       [[[environment]]]
+          OBJECT = World  # &lt;---
+    [[farewell]]
+       script = echo "Farewell ${OBJECT}!"
+       [[[environment]]]
+          OBJECT = World  # &lt;---
+ # ...
+</code></pre>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ # ...
+ [runtime]
+    [[BYE_ALL]]
+       [[[environment]]]
+          OBJECT = World  # &lt;--
+    [[goodbye]]
+       inherit = BYE_ALL
+       script = echo "Goodbye ${OBJECT}!"
+    [[farewell]]
+       inherit = BYE_ALL
+       script = echo "Farewell ${OBJECT}!"
+ # ...
+</code></pre>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ # ...
+ [runtime]
+    [[BYE_ALL]]
+.      [[[environment]]]
+.         OBJECT = World
+    [[goodbye]]
+       inherit = BYE_ALL
+.      script = echo "Goodbye ${OBJECT}!"
+    [[farewell]]
+       inherit = BYE_ALL
+.      script = echo "Farewell ${OBJECT}!"
+ # ...
+</code></pre>
+</section>
+
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ # ...
+ [runtime]
+    [[BYE_ALL]]
+.      [[[environment]]]
+.         OBJECT = World 
+    [[goodbye]]
+       inherit = BYE_ALL, HPC-1
+.      script = echo "Goodbye ${OBJECT}!"
+    [[farewell]]
+       inherit = BYE_ALL, HPC-2
+.      script = echo "Farewell ${OBJECT}!"
+ # ...
+</code></pre>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ [scheduling]
+    [[dependencies]]
+       graph = hello => goodbye & farewell
+ [runtime]
+    [[BYE_ALL]]
+.      [[[environment]]]
+.         OBJECT = World 
+    [[goodbye]]
+       inherit = BYE_ALL
+.      script = echo "Goodbye ${OBJECT}!"
+    [[farewell]]
+       inherit = BYE_ALL
+.      script = echo "Farewell ${OBJECT}!"
+ # ...
+</code></pre>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ [scheduling]
+    [[dependencies]]
+       graph = hello => BYE_ALL
+ [runtime]
+    [[BYE_ALL]]
+.      [[[environment]]]
+.         OBJECT = World 
+    [[goodbye]]
+       inherit = BYE_ALL
+.      script = echo "Goodbye ${OBJECT}!"
+    [[farewell]]
+       inherit = BYE_ALL
+.      script = echo "Farewell ${OBJECT}!"
+ # ...
+</code></pre>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ [scheduling]
+    [[dependencies]]
+       graph = hello => BYE_ALL
+.[runtime]
+.   [[BYE_ALL]]
+.      [[[environment]]]
+.         OBJECT = World 
+.   [[goodbye]]
+.      inherit = BYE_ALL
+.      script = echo "Goodbye ${OBJECT}!"
+.   [[farewell]]
+.      inherit = BYE_ALL
+.      script = echo "Farewell ${OBJECT}!"
+ # ...
+</code></pre>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ [scheduling]
+    [[dependencies]]
+       graph = """hello => BYE_ALL
+                  BYE_ALL:succeed-all => jump"""
+.[runtime]
+.   [[BYE_ALL]]
+.      [[[environment]]]
+.         OBJECT = World 
+.   [[goodbye]]
+.      inherit = BYE_ALL
+.      script = echo "Goodbye ${OBJECT}!"
+.   [[farewell]]
+.      inherit = BYE_ALL
+.      script = echo "Farewell ${OBJECT}!"
+ # ...
+</code></pre>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ [scheduling]
+    [[dependencies]]
+       graph = "hello => goodbye & farewell"
+ [runtime]
+    [[hello]]
+       script = echo "Hello World!"
+    [[goodbye]]
+       script = echo "Goodbye World!"
+    [[farewell]]
+       script = echo "Farewell World!"</code></pre>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> # Hello World Plus!
+
+ [scheduling]
+    [[dependencies]]
+       graph = "hello => goodbye & farewell"
+.[runtime]
+.   [[hello]]
+.      script = echo "Hello World!"
+.   [[goodbye]]
+.      script = echo "Goodbye World!"
+.   [[farewell]]
+.      script = echo "Farewell World!"</code></pre>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> #!Jinja2
+ {% set SAY_GOODBYE = false %}
+ [scheduling]
+    [[dependencies]]
+       graph = """hello
+ {% if SAY_GOODBYE %} 
+           => goodbye & farewell
+ {% endif %}
+               """
+.[runtime]
+.   [[hello]]
+.      script = echo "Hello World!"
+.   [[goodbye]]
+.      script = echo "Goodbye World!"
+.   [[farewell]]
+.      script = echo "Farewell World!"</code></pre>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> #!Jinja2
+ {% set SAY_GOODBYE = false %}
+.[scheduling]
+.   [[dependencies]]
+       graph = """hello
+ {% if SAY_GOODBYE %} 
+           => goodbye & farewell
+ {% endif %}
+               """
+.[runtime]
+.   [[hello]]
+.      script = echo "Hello World!"
+.   [[goodbye]]
+.      script = echo "Goodbye World!"
+.   [[farewell]]
+.      script = echo "Farewell World!"</code></pre>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> #!Jinja2
+ {% set SAY_GOODBYE = false %}
+ {% set FWTASK = 'farewell' %}
+.[scheduling]
+.   [[dependencies]]
+       graph = """hello
+ {% if SAY_GOODBYE %} 
+           => goodbye & {{FWTASK}}
+ {% endif %}
+               """
+.[runtime]
+.   [[hello]]
+.      script = echo "Hello World!"
+.   [[goodbye]]
+.      script = echo "Goodbye World!"
+.   [[farewell]]
+.      script = echo "Farewell World!"</code></pre>
+</section>
+
+
+<section class="dark">
+  <h2>recent developments</h2>
+  <p>since Hamburg 2014 (cylc-5.4.14)</p>
+</section>
+
+<section>
+  <ul>
+    <li> cylc-6: ISO 8601 date-time support
+    <li> many efficiency improvements:
+    <ul>
+      <li> GUI
+      <li> multi-processing pool
+      <li> batching of job submission and event handlers etc.
+    </ul>
+    <li> powerful command line
+    <li> parameterized tasks
+  </ul>
+</section>
+
+<section>
+  <h3>Support for the ISO 8601 date-time standard</h3>
+
+  <ul class="incremental">
+    <li> all <strong>date-time points</strong> and <strong>intervals</strong>
+    in ISO 8601 notation, e.g.
+    <ul>
+      <li> <code>2020-08-23T06:00+13</code> (point)
+      <li> <code>P3M</code> (3 month interval)
+    </ul>
+    <li> <strong>cycling</strong> specified with ISO 8601 recurrence
+    expressions, e.g:
+    <ul>
+      <li> <code>R25/2020/P3M</code> (repeat <em>this section of workflow</em>
+      25 times at 3 month intervals, starting from 2020)
+    </ul>
+  </ul>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> [scheduling]
+    [[dependencies]]
+        graph = "foo => bar & baz => qux"</code></pre>
+  <p><img src="etc/gfx/foo-0.svg" style="width:20%"></p>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> [cylc]
+    cycle point format = %Y-%m
+ [scheduling]
+    initial cycle point = 2010-01
+    [[dependencies]]
+       [[[P1M]]]  # or R/^/P1M
+          graph = "foo => bar & baz => qux"</code></pre>
+  <p><img src="etc/gfx/foo-1.svg" style="width:100%"></p>
+</section>
+
+<section>
+  <pre><code class="language-cylc">.[cylc]
+    cycle point format = %Y-%m
+ [scheduling]
+    initial cycle point = 2010-01
+    [[dependencies]]
+       [[[R1]]]  # or R1/^
+          graph = prep => foo
+       [[[P1M]]]  # or R/^/P1M
+          graph = "foo => bar & baz => qux"</code></pre>
+  <p><img src="etc/gfx/foo-2.svg" style="width:60%"></p>
+</section>
+
+<section>
+  <pre><code class="language-cylc">.[cylc]
+.   cycle point format = %Y-%m
+.[scheduling]
+.   initial cycle point = 2010-01
+.   [[dependencies]]
+       [[[R1]]]  # or R1/^
+          graph = prep => foo
+.      [[[P1M]]]  # or R/^/P1M
+.         graph = "foo => bar & baz => qux"</code></pre>
+  <p><img src="etc/gfx/foo-2.svg" style="width:60%"></p>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> [cylc]
+    cycle point format = %Y-%m
+ [scheduling]
+    initial cycle point = 2010-01
+    [[dependencies]]
+       [[[R1]]]  # or R1/^
+          graph = prep => foo
+       [[[P1M]]]   # or R/^/P1M
+          graph = """foo[-P1M] => foo
+                foo => bar & baz => qux"""</code></pre>
+<img src="etc/gfx/foo-3.svg" style="width:30%; margin-left:35%">
+</section>
+
+<section>
+  <pre><code class="language-cylc">.[cylc]
+.   cycle point format = %Y-%m
+.[scheduling]
+.   initial cycle point = 2010-01
+.   [[dependencies]]
+.      [[[R1]]]  # or R1/^
+.         graph = prep => foo
+.      [[[P1M]]]   # or R/^/P1M
+          graph = """foo[-P1M] => foo
+                foo => bar & baz => qux"""</code></pre>
+<img src="etc/gfx/foo-3.svg" style="width:30%; margin-left:35%">
+</section>
+
+<section>
+<img src="etc/gfx/foo-3.svg" style="width:50%; margin-left:25%"/>
+</section>
+
+<section>
+<img src="etc/gfx/foo-3a.svg" style="width:70%; margin-left:15%"/>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> [cylc]
+    cycle point format = %Y-%m
+ [scheduling]
+    initial cycle point = 2010-01
+    [[dependencies]]
+       [[[R1]]]  # or R1/^
+          graph = prep => foo
+       [[[P1M]]]   # or R/^/P1M
+          graph = """foo[-P1M] => foo
+                foo => bar & baz => qux"""
+       [[[R2/^+P2M/P1M]]]
+          graph = baz & qux[-P2M] => boo</code></pre>
+</section>
+
+<section>
+  <pre><code class="language-cylc">.[cylc]
+.   cycle point format = %Y-%m
+.[scheduling]
+.   initial cycle point = 2010-01
+.   [[dependencies]]
+.      [[[R1]]]  # or R1/^
+.         graph = prep => foo
+.      [[[P1M]]]   # or R/^/P1M
+.         graph = """foo[-P1M] => foo
+.               foo => bar & baz => qux"""
+       [[[R2/^+P2M/P1M]]]
+          graph = baz & qux[-P2M] => boo</code></pre>
+</section>
+
+<section>
+<img src="etc/gfx/foo-4.svg" style="width:70%; margin-left:15%"/>
+</section>
+
+<section>
+  <h3>parameterized tasks</h3>
+  <h4>(hot off the press at cylc-6.11.0)</h3>
+
+  <ul>
+    <li>historically we've used (nested) Jinja2 loops to generate tasks
+    <ul>
+      <li><strong class="warning">this works, but it seriously
+        compromises graph clarity</strong>
+    </ul>
+    <li><strong>parameterized tasks simplify and restore clarity</strong>
+  </ul>
+</section>
+
+<section>
+  <div>
+    <p>a simple workflow:</p>
+    <img src="etc/gfx/param-simple.svg"
+    style="width:40%; margin-left:30%"/>
+  </div>
+  <div class="incremental">
+    <p>how can we replicate it over 5 members, like this?:</p>
+    <img src="etc/gfx/params-5.svg"
+    style="width:50%; margin-left:25%">
+  </div>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> [scheduling]
+     [[dependencies]]
+         graph = "pre => sim => post => done"
+ [runtime]
+     # (task config omitted)
+     [[pre]]
+     [[sim]]
+     [[post]]
+     [[done]]</code></pre>
+  <img src="etc/gfx/param-simple.svg"
+  style="width:50%; margin-left:25%; margin-top:10%"/>
+</section>
+
+<section>
+  <h4>the old way: Jinja2 loops</h4>
+  <pre><code class="language-cylc"> #!Jinja2
+ {% set MEMS = range(1,6) %}  # 1, 2, 3, 4, 5
+ [scheduling]
+     [[dependencies]]
+         graph = """
+ {% for M in MEMS %}  # loop over members
+     pre => sim_m{{M}} => post_m{{M}} => done
+ {% endfor %}"""
+ [runtime]
+     [[pre]]
+ {% for M in MEMS %}  # loop over members
+     [[sim_m{{M}}]]
+     [[post_m{{M}}]]
+ {% endfor %}
+     [[done]]
+  </code></pre>
+</section>
+
+<!--for prism match params <m> in headings, replace only the first < with &lt; -->
+<section>
+  <h4>the new way: parameters</h4>
+  <pre><code class="language-cylc"> [cylc]
+    [[parameters]]
+        m = 1..5  # 1, 2, 3, 4, 5
+ [scheduling]
+     [[dependencies]]
+         graph = "pre => sim&lt;m&gt; => post&lt;m&gt; => done"
+ [runtime]
+     [[pre]]
+     [[sim&lt;m>]]
+     [[post&lt;m>]]
+     [[done]]
+  </code></pre>
+</section>
+
+<section>
+  <pre><code class="language-cylc">graph = pre => sim => post => done</code></pre>
+  <img src="etc/gfx/param-simple.svg"
+  style="height:15%; margin-left:25%">
+  <pre><code class="language-cylc">graph = "pre => sim&lt;m> => post&lt;m> => done"  # m = 1..5</code></pre>
+  <img src="etc/gfx/params-5.svg"
+  style="height:60%; margin-left:25%">
+</section>
+
+<!--
+<section style="line-height:15px;">
+  <div style="float:left; width:50%">
+    <pre><code class="language-cylc" style="font-size:50%"> # ORIGINAL
+ [scheduling]
+     [[dependencies]]
+         graph = "pre => sim => post => done"
+ [runtime]
+     [[pre]]
+     [[sim]]
+     [[post]]
+     [[done]]</code></pre>
+    <img src="etc/gfx/param-simple.svg" style="width:100%">
+  </div>
+</section>
+
+<section style="line-height:15px;">
+  <div style="float:left; width:50%">
+    <pre><code class="language-cylc" style="font-size:50%"> # ORIGINAL
+ [scheduling]
+     [[dependencies]]
+         graph = "pre => sim => post => done"
+ [runtime]
+     [[pre]]
+     [[sim]]
+     [[post]]
+     [[done]]</code></pre>
+    <img src="etc/gfx/param-simple.svg"
+    style="margin-left:5%; width:90%">
+    <img src="etc/gfx/params-5.svg"
+    style="width:90%; margin-left:5%; margin-top:-4%">
+  </div>
+  <div style="float:left; width:50%">
+    <pre><code class="language-cylc" style="font-size:50%"> #!Jinja2
+ {% set MEMS = range(1,6) %}   
+ [scheduling]
+     [[dependencies]]
+         graph = """
+ {% for M in MEMS %}  # loop over members
+     pre => sim_m{{M}} => post_m{{M}} => done
+ {% endfor %}"""
+ [runtime]
+     [[pre]]
+ {% for M in MEMS %}  # loop over members
+     [[sim_m{{M}}]]
+     [[post_m{{M}}]]
+ {% endfor %}
+     [[done]]
+    </code></pre>
+  </div>
+</section>
+
+<section style="line-height:15px;">
+  <div style="float:left; width:50%">
+    <pre><code class="language-cylc" style="font-size:50%"> # ORIGINAL
+ [scheduling]
+     [[dependencies]]
+         graph = "pre => sim => post => done"
+ [runtime]
+     [[pre]]
+     [[sim]]
+     [[post]]
+     [[done]]</code></pre>
+    <img src="etc/gfx/param-simple.svg"
+    style="margin-left:5%; width:90%">
+    <img src="etc/gfx/params-5.svg"
+    style="width:90%; margin-left:5%; margin-top:-4%">
+  </div>
+  <div style="float:left; width:50%">
+    <pre><code class="language-cylc" style="font-size:50%"> # parameterized
+ [scheduling]
+     [[dependencies]]
+         graph = "pre => sim&lt;m&gt; => post&lt;m&gt; => done"
+ [runtime]
+     [[pre]]
+     [[sim&lt;m>]]
+     [[post&lt;m>]]
+     [[done]]
+ [cylc]
+    [[parameters]]
+        m = 1..5
+    </code></pre>
+  </div>
+</section>
+
+<section style="line-height:15px;">
+  <div style="float:left; width:50%">
+    <pre><code class="language-cylc" style="font-size:50%"> # ORIGINAL
+ [scheduling]
+     [[dependencies]]
+         graph = "pre => sim => post => done"
+ [runtime]
+     [[pre]]
+     [[sim]]
+     [[post]]
+     [[done]]</code></pre>
+    <img src="etc/gfx/param-simple.svg"
+    style="margin-left:5%; width:90%">
+    <img src="etc/gfx/params-5.svg"
+    style="width:90%; margin-left:5%; margin-top:-4%">
+  </div>
+  <div style="float:left; width:50%">
+    <pre><code class="language-cylc" style="font-size:50%"> # parameterized
+ [scheduling]
+     [[dependencies]]
+         graph = "pre => sim&lt;m&gt; => post&lt;m&gt; => done"
+ [runtime]
+     [[pre]]
+     [[sim&lt;m>]]
+     [[post&lt;m>]]
+     [[done]]
+.[cylc]
+.   [[parameters]]
+.       m = 1..5
+    </code></pre>
+  </div>
+</section>
+-->
+
+<section>
+  <div>
+    <p>another simple workflow:</p>
+  <img src="etc/gfx/pre-param.svg"
+  style="width:70%; margin-left:15%"/>
+  </div>
+  <div class="incremental">
+    <p>can we replicate it over 3 runs and 3 members, like this?:</p>
+  <img src="etc/gfx/param1-tasks.svg"
+  style="width:80%; margin-left:10%">
+  </div>
+</section>
+
+<section>
+  <pre><code class="language-cylc"> [scheduling]
+     [[dependencies]]
+         graph = """
+    prep => init => sim => post => close => done"""
+ [runtime]
+     # (task config omitted)
+     [[prep]]
+     [[init]]
+     [[sim]]
+     [[post]]
+     [[close]]
+     [[done]]</code></pre>
+  <img src="etc/gfx/pre-param.svg"
+  style="width:80%; margin-left:10%; margin-top:5%"/>
+</section>
+
+<section>
+  <h4>the old way: Jinja2 nested loops</h4>
+  <pre><code class="language-cylc"> #!Jinja2
+ {% set RUNS = range(1,4) %}
+ {% set MEMS = ['a', 'b', 'c'] %}
+ [scheduling]
+     [[dependencies]]
+         graph = """
+ {% for R in RUNS %}  # loop over runs
+        prep => init_r{{R}}
+    {% for M in MEMS %}  # loop over members
+        init_r{{R}} => sim_r{{R}}_{{M}} => 
+            post_r{{R}}_{{M}} => close_r{{R}}
+    {% endfor %}
+        close_r{{R}} => done
+ {% endfor %}
+ """
+  </code></pre>
+</section>
+
+<section>
+  <h4>the new way: parameters</h4>
+
+  <pre><code class="language-cylc"> [cylc]
+     [[parameters]]
+         r = 1..3  # runs
+         m = a, b, c  # members
+ [scheduling]
+     [[dependencies]]
+         graph = """
+            prep => init&lt;r&gt; => sim&lt;r,m&gt; =>
+               post&lt;r,m&gt; => close&lt;r&gt; => done"""
+  </code></pre>
+</section>
+
+<section>
+  <pre><code class="language-cylc" style="font-size:70%">graph = "prep => init => sim => post => close => done"</code></pre>
+  <img src="etc/gfx/pre-param.svg" style="width:70%; margin-left:15%">
+  <pre><code class="language-cylc"  style="font-size:70%">graph = "prep => init&lt;r> => sim&lt;r,m> => post&lt;r,m> => close&lt;r> => done"
+#  for r = 1..3, and m = a, b, c</code></pre>
+  <img src="etc/gfx/param1-tasks.svg" style="width:70%; margin-left:15%">
+</section>
+
+<section style="line-height:15px;">
+  <div style="float:left; width:50%">
+    <pre><code class="language-cylc" style="font-size:50%"> # ORIGINAL
+ [scheduling]
+     [[dependencies]]
+         graph = """
+            prep => init => sim =>
+               post => close => done"""
+ [runtime]
+     [[prep]]
+     [[init]]
+     [[sim]]
+     [[post]]
+     [[close]]
+     [[done]]</code></pre>
+    <img src="etc/gfx/pre-param.svg" style="width:100%">
+  </div>
+</section>
+
+<section style="line-height:15px;">
+  <div style="float:left; width:50%">
+    <pre><code class="language-cylc" style="font-size:50%"> # ORIGINAL
+ [scheduling]
+     [[dependencies]]
+         graph = """
+            prep => init => sim =>
+               post => close => done"""
+ [runtime]
+     [[prep]]
+     [[init]]
+     [[sim]]
+     [[post]]
+     [[close]]
+     [[done]]</code></pre>
+    <img src="etc/gfx/pre-param.svg" style="width:100%">
+    <img src="etc/gfx/param1-tasks.svg"
+    style="width:100%; margin-top:-4%">
+  </div>
+
+  <div style="float:left; width:50%">
+    <pre><code class="language-cylc" style="font-size:50%"> #!Jinja2
+ {% set RUNS = range(1,4) %}
+ {% set MEMS = 'a', 'b', 'c' %}
+ [scheduling]
+     [[dependencies]]
+         graph = """
+ {% for R in RUNS %}  # loop over runs
+        prep => init_r{{R}}
+    {% for M in MEMS %}  # loop over members
+        init_r{{R}} => sim_r{{R}}_{{M}} => 
+            post_r{{R}}_{{M}} => close_r{{R}}
+    {% endfor %}
+        close_r{{R}} => done
+ {% endfor %}"""
+ [runtime]
+    [[prep]]
+ {% for R in RUNS %}  # loop over runs
+    [[init_r{{R}}]]
+    {% for M in MEMS %}  # loop over members
+    [[sim_r{{R}}_{{M}}]]
+    [[post_r{{R}}_{{M}}]]
+    {% endfor %}
+    [[close_r{{R}}]]
+ {% endfor %}
+    [[done]]
+    </code></pre>
+  </div>
+</section>
+
+<section style="line-height:15px;">
+  <div style="float:left; width:50%">
+    <pre><code class="language-cylc" style="font-size:50%"> # ORIGINAL
+ [scheduling]
+     [[dependencies]]
+         graph = """
+            prep => init => sim =>
+               post => close => done"""
+ [runtime]
+     [[prep]]
+     [[init]]
+     [[sim]]
+     [[post]]
+     [[close]]
+     [[done]]</code></pre>
+    <img src="etc/gfx/pre-param.svg" style="width:100%">
+    <img src="etc/gfx/param1-tasks.svg" style="width:100%; margin-top:-4%">
+
+  </div>
+  <div style="float:left; width:50%">
+    <pre><code class="language-cylc" style="font-size:50%"> # parameterized
+ [scheduling]
+     [[dependencies]]
+         graph = """
+            prep => init&lt;r&gt; => sim&lt;r,m&gt; =>
+               post&lt;r,m&gt; => close&lt;r&gt; => done"""
+ [runtime]
+     [[prep]]
+     [[init&lt;r&gt;]]
+     [[sim&lt;r,m&gt;]]
+     [[post&lt;r,m&gt;]]
+     [[close&lt;r&gt;]]
+     [[done]]
+ [cylc]
+     [[parameters]]
+         r = 1..3  # runs
+         m = a, b, c  # members</code></pre>
+  </div>
+</section>
+
+<section style="line-height:15px;">
+  <div style="float:left; width:50%">
+    <pre><code class="language-cylc" style="font-size:50%"> # ORIGINAL
+ [scheduling]
+     [[dependencies]]
+         graph = """
+            prep => init => sim =>
+               post => close => done"""
+ [runtime]
+     [[prep]]
+     [[init]]
+     [[sim]]
+     [[post]]
+     [[close]]
+     [[done]]</code></pre>
+    <img src="etc/gfx/pre-param.svg" style="width:100%">
+    <img src="etc/gfx/param1-tasks.svg" style="width:100%; margin-top:-4%">
+  </div>
+  <div style="float:left; width:50%">
+    <pre><code class="language-cylc" style="font-size:50%"> # parameterized
+ [scheduling]
+     [[dependencies]]
+         graph = """
+            prep => init&lt;r&gt; => sim&lt;r,m&gt; =>
+               post&lt;r,m&gt; => close&lt;r&gt; => done"""
+ [runtime]
+     [[prep]]
+     [[init&lt;r&gt;]]
+     [[sim&lt;r,m&gt;]]
+     [[post&lt;r,m&gt;]]
+     [[close&lt;r&gt;]]
+     [[done]]
+.[cylc]
+.    [[parameters]]
+.        r = 1..3  # runs
+.        m = a, b, c  # members</code></pre>
+  </div>
+</section>
+
+<section class="dark">
+  <h2>future plans</h2>
+  <p>since Hamburg 2014 (cylc-5.4.14)</p>
+</section>
+
+<section>
+  <p>future plans include</p>
+  <ul>
+    <li> support for suite modules
+    <li> HTTPS communications layer (... web based GUIs!)
+    <li> more efficiency improvements
+    <li> migrate <code>rose suite-run</code> to cylc
+    <li> migrate <code>rose bush</code> to cylc
+    <li> queue prioritization
+  </ul>
+</section>
+
+<section>
+  <h4 style="position:absolute; top:-42px; right:0">Rose Bush</h4>
+    <img style="width:100%; height:100%"
+    src="etc/gfx/cylc-rose-bush.png">
+</section>
+
+<section class="dark">
+  <img style="height:100%" src="etc/gfx/cylc-https.png"/>
+</section>
+
+<section>
+  <h3>thanks to the development team</h3>
+  
+  <div>
+    <div style="float-left; width:40%">
+      <p style="font-size:50%"><b>cylc contributors</b>:<br/>
+      Hilary Oliver<br/>
+      Ben Fitzpatrick<br/>
+      Matt Shin<br/>
+      Andrew Clark<br/>
+      Luis Kornblueh<br/>
+      Kerry Day<br/>
+      David Matthews<br/>
+      Scott Wales<br/>
+      Tim Whitcomb<br/>
+      Oliver Sanders<br/>
+      Annette Osprey<br/>
+      Domingo Manubens Gil<br/>
+      Alex Reinecke<br/>
+      Bruno Kinoshita<br/>
+      Chandin Wilson<br/>
+      Kevin Pulo
+      </p>
+    </div>
+    <div style="margin-left:41%; margin-top:-350px">
+      <p><b>the core team</b>:</p>
+      <ul>
+        <li> (myself)
+        <li> David Matthews
+        <li> Ben Fitzpatrick (*)
+        <li> Matt Shin
+        <li> Andy Clarke
+        <li> Kerry Day (*)
+        <li> Oliver Sanders
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="chapter">
+  <br/>
+  <br/>
+  <h1>end</h1>
+  <footer style="padding:25px;">
+    <div style="float:right">
+      Hilary James Oliver, <a href="http://niwa.co.nz">NIWA</a> &nbsp;
+      <div class="nav" style="float:right">
+        <a href="shells/onstage.html?../index.html#../index.html">onstage</a>
+      </div>
+      &nbsp;
+      <span style="color:#ff5966">c</span>
+      <span style="color:#eebb00">y</span>
+      <span style="color:#00c798">l</span>
+      <span style="color:#00b4fd">c</span>
+      <img src='etc/gfx/cylc-logo.svg' style="width:25px; margin-bottom:-5px"/>
+    </div>
+  </footer>
+</section>
+
+
+<!-- Your Style -->
+<!-- HJO - cut out for common use -->
+<!-- Define the style of your presentation -->
+
+<!--firefox: disable fullscreen approval dialog in about:config -->
+
+<!--
+I've downloaded the font .woff files for offline use.
+(or converted ttf to woff at https://andrewsun.com/tools/woffer-woff-font-converter/)
+<link href='http://fonts.googleapis.com/css?family=Oswald' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Share+Tech+Mono' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=VT323' rel='stylesheet' type='text/css'>
+-->
+
+<style>
+@font-face {
+  font-family: 'Titillium Web';
+  font-style: normal;
+  font-weight: 400;
+  src: local('TitilliumWeb'),
+  url('etc/fonts/TitilliumWeb/TitilliumWeb-Regular.WOFF')
+  format('woff');
+}
+</style>
+
+
+<!-- {{{{ dzslides core
+#
+#
+#     __  __  __       .  __   ___  __
+#    |  \  / /__` |    | |  \ |__  /__`
+#    |__/ /_ .__/ |___ | |__/ |___ .__/ core :€
+#
+#
+# The following block of code is not supposed to be edited.
+# But if you want to change the behavior of these slides,
+# feel free to hack it!
+#
+-->
+
+<div id="progress-bar"></div>
+
+<!-- Default Style -->
+<style>
+* { margin: 0; padding: 0; -moz-box-sizing: border-box; -webkit-box-sizing: border-box; box-sizing: border-box; }
+[role="note"] { display: none; }
+body {
+  width: 800px; height: 600px;
+  margin-left: -400px; margin-top: -300px;
+  position: absolute; top: 50%; left: 50%;
+  overflow: hidden;
+  display: none;
+}
+.view body {
+  position: static;
+  margin: 0; padding: 0;
+  width: 100%; height: 100%;
+  display: inline-block;
+  overflow: visible; overflow-x: hidden;
+  /* undo Dz.onresize */
+  transform: none !important;
+  -moz-transform: none !important;
+  -webkit-transform: none !important;
+  -o-transform: none !important;
+  -ms-transform: none !important;
+}
+.view head, .view head > title { display: block }
+section {
+  position: absolute;
+  pointer-events: none;
+  width: 100%; height: 100%;
+}
+.view section {
+  pointer-events: auto;
+  position: static;
+  width: 800px; height: 600px;
+  margin: -150px -200px;
+  float: left;
+  transform: scale(.4);
+  -moz-transform: scale(.4);
+  -webkit-transform: scale(.4);
+  -o-transform: scale(.4);
+  -ms-transform: scale(.4);
+}
+.view section > * { pointer-events: none; }
+section[aria-selected] { pointer-events: auto; }
+html { overflow: hidden; }
+html.view { overflow: visible; }
+body.loaded { display: block; }
+.incremental {visibility: hidden; }
+.incremental[active] {visibility: visible; }
+#progress-bar{
+  bottom: 0;
+  position: absolute;
+  -moz-transition: width 400ms linear 0s;
+  -webkit-transition: width 400ms linear 0s;
+  -ms-transition: width 400ms linear 0s;
+  transition: width 400ms linear 0s;
+}
+.view #progress-bar {
+  display: none;
+}
+</style>
+
+<script>
+var Dz = {
+remoteWindows: [],
+               idx: -1,
+               step: 0,
+               html: null,
+               slides: null,
+               progressBar : null,
+               params: {
+                 //autoplay: "1"
+               }
+};
+
+Dz.init = function() {
+  document.body.className = "loaded";
+  this.slides = Array.prototype.slice.call($$("body > section"));
+  this.progressBar = $("#progress-bar");
+  this.html = document.body.parentNode;
+  this.setupParams();
+  this.onhashchange();
+  this.setupTouchEvents();
+  this.onresize();
+  this.setupView();
+}
+
+Dz.setupParams = function() {
+  var p = window.location.search.substr(1).split('&');
+  p.forEach(function(e, i, a) {
+      var keyVal = e.split('=');
+      Dz.params[keyVal[0]] = decodeURIComponent(keyVal[1]);
+      });
+  // Specific params handling
+  //  if (!+this.params.autoplay)
+  //   $$.forEach($$("video"), function(v){ v.controls = true });
+}
+
+Dz.onkeydown = function(aEvent) {
+  // Don't intercept keyboard shortcuts
+  if (aEvent.altKey
+      || aEvent.ctrlKey
+      || aEvent.metaKey
+      || aEvent.shiftKey) {
+    return;
+  }
+  if ( aEvent.keyCode == 37 // left arrow
+      || aEvent.keyCode == 38 // up arrow
+      || aEvent.keyCode == 33 // page up
+     ) {
+    aEvent.preventDefault();
+    this.back();
+  }
+  if ( aEvent.keyCode == 39 // right arrow
+      || aEvent.keyCode == 40 // down arrow
+      || aEvent.keyCode == 34 // page down
+     ) {
+    aEvent.preventDefault();
+    this.forward();
+  }
+  if (aEvent.keyCode == 35) { // end
+    aEvent.preventDefault();
+    this.goEnd();
+  }
+  if (aEvent.keyCode == 36) { // home
+    aEvent.preventDefault();
+    this.goStart();
+  }
+  if (aEvent.keyCode == 32) { // space
+    aEvent.preventDefault();
+    this.toggleContent();
+  }
+  if (aEvent.keyCode == 70) { // f
+    aEvent.preventDefault();
+    this.goFullscreen();
+  }
+  if (aEvent.keyCode == 79) { // o
+    aEvent.preventDefault();
+    this.toggleView();
+  }
+}
+
+/* Touch Events */
+
+Dz.setupTouchEvents = function() {
+  var orgX, newX;
+  var tracking = false;
+
+  var db = document.body;
+  db.addEventListener("touchstart", start.bind(this), false);
+  db.addEventListener("touchmove", move.bind(this), false);
+
+  function start(aEvent) {
+    aEvent.preventDefault();
+    tracking = true;
+    orgX = aEvent.changedTouches[0].pageX;
+  }
+
+  function move(aEvent) {
+    if (!tracking) return;
+    newX = aEvent.changedTouches[0].pageX;
+    if (orgX - newX > 100) {
+      tracking = false;
+      this.forward();
+    } else {
+      if (orgX - newX < -100) {
+        tracking = false;
+        this.back();
+      }
+    }
+  }
+}
+
+Dz.setupView = function() {
+  document.body.addEventListener("click", function ( e ) {
+      if (!Dz.html.classList.contains("view")) return;
+      if (!e.target || e.target.nodeName != "SECTION") return;
+
+      Dz.html.classList.remove("view");
+      Dz.setCursor(Dz.slides.indexOf(e.target) + 1);
+      }, false);
+}
+
+/* Adapt the size of the slides to the window */
+
+Dz.onresize = function() {
+  var db = document.body;
+  var sx = db.clientWidth / window.innerWidth;
+  var sy = db.clientHeight / window.innerHeight;
+  var transform = "scale(" + (1/Math.max(sx, sy)) + ")";
+
+  db.style.MozTransform = transform;
+  db.style.WebkitTransform = transform;
+  db.style.OTransform = transform;
+  db.style.msTransform = transform;
+  db.style.transform = transform;
+}
+
+
+Dz.getNotes = function(aIdx) {
+  var s = $("section:nth-of-type(" + aIdx + ")");
+  var d = s.$("[role='note']");
+  return d ? d.innerHTML : "";
+}
+
+Dz.onmessage = function(aEvent) {
+  var argv = aEvent.data.split(" "), argc = argv.length;
+  argv.forEach(function(e, i, a) { a[i] = decodeURIComponent(e) });
+  var win = aEvent.source;
+  if (argv[0] === "REGISTER" && argc === 1) {
+    this.remoteWindows.push(win);
+    this.postMsg(win, "REGISTERED", document.title, this.slides.length);
+    this.postMsg(win, "CURSOR", this.idx + "." + this.step);
+    return;
+  }
+  if (argv[0] === "BACK" && argc === 1)
+    this.back();
+  if (argv[0] === "FORWARD" && argc === 1)
+    this.forward();
+  if (argv[0] === "START" && argc === 1)
+    this.goStart();
+  if (argv[0] === "END" && argc === 1)
+    this.goEnd();
+  if (argv[0] === "TOGGLE_CONTENT" && argc === 1)
+    this.toggleContent();
+  if (argv[0] === "SET_CURSOR" && argc === 2)
+    window.location.hash = "#" + argv[1];
+  if (argv[0] === "GET_CURSOR" && argc === 1)
+    this.postMsg(win, "CURSOR", this.idx + "." + this.step);
+  if (argv[0] === "GET_NOTES" && argc === 1)
+    this.postMsg(win, "NOTES", this.getNotes(this.idx));
+}
+
+Dz.toggleContent = function() {
+  // If a Video is present in this new slide, play it.
+  // If a Video is present in the previous slide, stop it.
+  var s = $("section[aria-selected]");
+  if (s) {
+    var video = s.$("video");
+    if (video) {
+      if (video.ended || video.paused) {
+        video.play();
+      } else {
+        video.pause();
+      }
+    }
+  }
+}
+
+Dz.setCursor = function(aIdx, aStep) {
+  // If the user change the slide number in the URL bar, jump
+  // to this slide.
+  aStep = (aStep != 0 && typeof aStep !== "undefined") ? "." + aStep : ".0";
+  window.location.hash = "#" + aIdx + aStep;
+}
+
+Dz.onhashchange = function() {
+  var cursor = window.location.hash.split("#"),
+      newidx = 1,
+      newstep = 0;
+  if (cursor.length == 2) {
+    newidx = ~~cursor[1].split(".")[0];
+    newstep = ~~cursor[1].split(".")[1];
+    if (newstep > Dz.slides[newidx - 1].$$('.incremental > *').length) {
+      newstep = 0;
+      newidx++;
+    }
+  }
+  this.setProgress(newidx, newstep);
+  if (newidx != this.idx) {
+    this.setSlide(newidx);
+  }
+  if (newstep != this.step) {
+    this.setIncremental(newstep);
+  }
+  for (var i = 0; i < this.remoteWindows.length; i++) {
+    this.postMsg(this.remoteWindows[i], "CURSOR", this.idx + "." + this.step);
+  }
+}
+
+Dz.back = function() {
+  if (this.idx == 1 && this.step == 0) {
+    return;
+  }
+  if (this.step == 0) {
+    this.setCursor(this.idx - 1,
+        this.slides[this.idx - 2].$$('.incremental > *').length);
+  } else {
+    this.setCursor(this.idx, this.step - 1);
+  }
+}
+
+Dz.forward = function() {
+  if (this.idx >= this.slides.length &&
+      this.step >= this.slides[this.idx - 1].$$('.incremental > *').length) {
+    return;
+  }
+  if (this.step >= this.slides[this.idx - 1].$$('.incremental > *').length) {
+    this.setCursor(this.idx + 1, 0);
+  } else {
+    this.setCursor(this.idx, this.step + 1);
+  }
+}
+
+Dz.goStart = function() {
+  this.setCursor(1, 0);
+}
+
+Dz.goEnd = function() {
+  var lastIdx = this.slides.length;
+  var lastStep = this.slides[lastIdx - 1].$$('.incremental > *').length;
+  this.setCursor(lastIdx, lastStep);
+}
+
+Dz.toggleView = function() {
+  this.html.classList.toggle("view");
+
+  if (this.html.classList.contains("view")) {
+    $("section[aria-selected]").scrollIntoView(true);
+  }
+}
+
+Dz.setSlide = function(aIdx) {
+  this.idx = aIdx;
+  var old = $("section[aria-selected]");
+  var next = $("section:nth-of-type("+ this.idx +")");
+  if (old) {
+    old.removeAttribute("aria-selected");
+    var video = old.$("video");
+    if (video) {
+      video.pause();
+    }
+  }
+  if (next) {
+    next.setAttribute("aria-selected", "true");
+    if (this.html.classList.contains("view")) {
+      next.scrollIntoView();
+    }
+    var video = next.$("video");
+    //if (video && !!+this.params.autoplay) {
+    //  video.play();
+    //}
+  } else {
+    // That should not happen
+    this.idx = -1;
+    // console.warn("Slide doesn't exist.");
+  }
+}
+
+Dz.setIncremental = function(aStep) {
+  this.step = aStep;
+  var old = this.slides[this.idx - 1].$('.incremental > *[aria-selected]');
+  if (old) {
+    old.removeAttribute('aria-selected');
+  }
+  var incrementals = $$('.incremental');
+  if (this.step <= 0) {
+    $$.forEach(incrementals, function(aNode) {
+        aNode.removeAttribute('active');
+        });
+    return;
+  }
+  var next = this.slides[this.idx - 1].$$('.incremental > *')[this.step - 1];
+  if (next) {
+    next.setAttribute('aria-selected', true);
+    next.parentNode.setAttribute('active', true);
+    var found = false;
+    $$.forEach(incrementals, function(aNode) {
+        if (aNode != next.parentNode)
+        if (found)
+        aNode.removeAttribute('active');
+        else
+        aNode.setAttribute('active', true);
+        else
+        found = true;
+        });
+  } else {
+    setCursor(this.idx, 0);
+  }
+  return next;
+}
+
+Dz.goFullscreen = function() {
+  var html = $('html'),
+      requestFullscreen = html.requestFullscreen || html.requestFullScreen || html.mozRequestFullScreen || html.webkitRequestFullScreen;
+  if (requestFullscreen) {
+    requestFullscreen.apply(html);
+  }
+}
+
+Dz.setProgress = function(aIdx, aStep) {
+  var slide = $("section:nth-of-type("+ aIdx +")");
+  if (!slide)
+    return;
+  var steps = slide.$$('.incremental > *').length + 1,
+      slideSize = 100 / (this.slides.length - 1),
+      stepSize = slideSize / steps;
+  this.progressBar.style.width = ((aIdx - 1) * slideSize + aStep * stepSize) + '%';
+}
+
+Dz.postMsg = function(aWin, aMsg) { // [arg0, [arg1...]]
+  aMsg = [aMsg];
+  for (var i = 2; i < arguments.length; i++)
+    aMsg.push(encodeURIComponent(arguments[i]));
+  aWin.postMessage(aMsg.join(" "), "*");
+}
+
+function init() {
+  Dz.init();
+  window.onkeydown = Dz.onkeydown.bind(Dz);
+  window.onresize = Dz.onresize.bind(Dz);
+  window.onhashchange = Dz.onhashchange.bind(Dz);
+  window.onmessage = Dz.onmessage.bind(Dz);
+}
+
+window.onload = init;
+</script>
+
+
+<script> // Helpers
+if (!Function.prototype.bind) {
+  Function.prototype.bind = function (oThis) {
+
+    // closest thing possible to the ECMAScript 5 internal IsCallable
+    // function 
+    if (typeof this !== "function")
+      throw new TypeError(
+          "Function.prototype.bind - what is trying to be fBound is not callable"
+          );
+
+    var aArgs = Array.prototype.slice.call(arguments, 1),
+        fToBind = this,
+        fNOP = function () {},
+        fBound = function () {
+          return fToBind.apply( this instanceof fNOP ? this : oThis || window,
+              aArgs.concat(Array.prototype.slice.call(arguments)));
+        };
+
+    fNOP.prototype = this.prototype;
+    fBound.prototype = new fNOP();
+
+    return fBound;
+  };
+}
+
+var $ = (HTMLElement.prototype.$ = function(aQuery) {
+    return this.querySelector(aQuery);
+    }).bind(document);
+
+var $$ = (HTMLElement.prototype.$$ = function(aQuery) {
+    return this.querySelectorAll(aQuery);
+    }).bind(document);
+
+$$.forEach = function(nodeList, fun) {
+  Array.prototype.forEach.call(nodeList, fun);
+}
+
+</script>
+<!-- vim: set fdm=marker: }}} -->

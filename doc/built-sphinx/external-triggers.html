@@ -1,0 +1,591 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>12. External Triggers &#8212; The Cylc Suite Engine 7.8.1-39-gf3b0d documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <link rel="shortcut icon" href="_static/cylc-favicon.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="13. Running Suites" href="running-suites.html" />
+    <link rel="prev" title="11. Task Job Submission and Management" href="task-job-submission.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="running-suites.html" title="13. Running Suites"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="task-job-submission.html" title="11. Task Job Submission and Management"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">The Cylc Suite Engine 7.8.1-39-gf3b0d documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="external-triggers">
+<span id="id1"></span><h1>12. External Triggers<a class="headerlink" href="#external-triggers" title="Permalink to this headline">¶</a></h1>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">This is a new capability and its suite configuration
+interface may change somewhat in future releases - see Current
+Limitations below in <a class="reference internal" href="#current-trigger-function-limitations"><span class="std std-ref">Current Limitations</span></a>.</p>
+</div>
+<p>External triggers allow tasks to trigger directly off of external events, which
+is often preferable to implementing long-running polling tasks in the workflow.
+The triggering mechanism described in this section replaces an older and less
+powerful one documented in <a class="reference internal" href="#old-style-external-triggers"><span class="std std-ref">Old-Style External Triggers (Deprecated)</span></a>.</p>
+<p>If you can write a Python function to check the status of an external
+condition or event, the suite server program can call it at configurable
+intervals until it reports success, at which point dependent tasks can trigger
+and data returned by the function will be passed to the job environments of
+those tasks. Functions can be written for triggering off of almost anything,
+such as delivery of a new dataset, creation of a new entry in a database
+table, or appearance of new data availability notifications in a message
+broker.</p>
+<p>External triggers are visible in suite visualizations as bare graph nodes (just
+the trigger names). They are plotted against all dependent tasks, not in a
+cycle point specific way like tasks. This is because external triggers may or
+may not be cycle point (or even task name) specific - it depends on the
+arguments passed to the corresponding trigger functions. For example, if an
+external trigger does not depend on task name or cycle point it will only be
+called once - albeit repeatedly until satisfied - for the entire suite run,
+after which the function result will be remembered for all dependent tasks
+throughout the suite run.</p>
+<p>Several built-in external trigger functions are located in
+<code class="docutils literal notranslate"><span class="pre">&lt;cylc-dir&gt;/lib/cylc/xtriggers/</span></code>:</p>
+<ul class="simple">
+<li>clock triggers - see <a class="reference internal" href="#built-in-clock-triggers"><span class="std std-ref">Built-in Clock Triggers</span></a></li>
+<li>inter-suite triggers - see <a class="reference internal" href="#built-in-suite-state-triggers"><span class="std std-ref">Built-in Suite State Triggers</span></a></li>
+</ul>
+<p>Trigger functions are normal Python functions, with certain constraints as
+described below in:</p>
+<ul class="simple">
+<li>custom trigger functions - see <a class="reference internal" href="#custom-trigger-functions"><span class="std std-ref">Custom Trigger Functions</span></a></li>
+</ul>
+<div class="section" id="built-in-clock-triggers">
+<span id="id2"></span><h2>12.1. Built-in Clock Triggers<a class="headerlink" href="#built-in-clock-triggers" title="Permalink to this headline">¶</a></h2>
+<p>These are more transparent (exposed in the graph) and efficient (shared among
+dependent tasks) than the older clock triggers described
+in <a class="reference internal" href="suite-config.html#clocktriggertasks"><span class="std std-ref">Clock Triggers</span></a>. (However we don’t recommend wholesale conversion
+to the new method yet, until its interface has stabilized -
+see <a class="reference internal" href="#current-trigger-function-limitations"><span class="std std-ref">Current Limitations</span></a>.)</p>
+<p>Clock triggers, unlike other trigger functions, are executed synchronously in
+the main process. The clock trigger function signature looks like this:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">wall_clock</span><span class="p">(</span><span class="n">offset</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">offset</span></code> argument is a date-time duration (<code class="docutils literal notranslate"><span class="pre">PT1H</span></code> is 1
+hour) relative to the dependent task’s cycle point (automatically passed to the
+function via a second argument not shown above).</p>
+<p>In the following suite, task <code class="docutils literal notranslate"><span class="pre">foo</span></code> has a daily cycle point sequence,
+and each task instance can trigger once the wall clock time has passed its
+cycle point value by one hour:</p>
+<div class="highlight-cylc notranslate"><div class="highlight"><pre><span></span><span class="nt">[scheduling]</span>
+    <span class="nv">initial cycle point </span><span class="o">=</span><span class="s"> 2018-01-01</span>
+    <span class="nt">[[xtriggers]]</span>
+        <span class="nv">clock_1 </span><span class="o">=</span><span class="s"> wall_clock(offset=PT1H):PT10S</span>
+    <span class="nt">[[dependencies]]</span>
+        <span class="nt">[[[P1D]]]</span>
+            <span class="nv">graph</span><span class="s"> </span><span class="o">=</span> <span class="c">&quot;</span><span class="cp">@clock_1</span> <span class="o">=&gt;</span> <span class="kd">foo</span><span class="c">&quot;</span>
+<span class="nt">[runtime]</span>
+    <span class="nt">[[foo]]</span>
+        <span class="nv">script </span><span class="o">=</span><span class="s"> run-foo.sh</span>
+</pre></div>
+</div>
+<p>Notice that the short label <code class="docutils literal notranslate"><span class="pre">clock_1</span></code> is used to represent the
+trigger function in the graph. The function call interval, which determines how
+often the suite server program checks the clock, is optional.  Here it is
+<code class="docutils literal notranslate"><span class="pre">PT10S</span></code> (i.e. 10 seconds, which is also the default value).</p>
+<p>Argument keywords can be omitted if called in the right order, so the
+<code class="docutils literal notranslate"><span class="pre">clock_1</span></code> trigger can also be declared like this:</p>
+<div class="highlight-cylc notranslate"><div class="highlight"><pre><span></span><span class="nt">[[xtriggers]]</span>
+    <span class="nv">clock_1 </span><span class="o">=</span><span class="s"> wall_clock(PT1H)</span>
+</pre></div>
+</div>
+<p>Finally, a zero-offset clock trigger does not need to be declared under
+the <code class="docutils literal notranslate"><span class="pre">[xtriggers]</span></code> section:</p>
+<div class="highlight-cylc notranslate"><div class="highlight"><pre><span></span><span class="nt">[scheduling]</span>
+    <span class="nv">initial cycle point </span><span class="o">=</span><span class="s"> 2018-01-01</span>
+    <span class="nt">[[dependencies]]</span>
+        <span class="nt">[[[P1D]]]</span>
+            <span class="c1"># zero-offset clock trigger:</span>
+            <span class="nv">graph</span><span class="s"> </span><span class="o">=</span> <span class="c">&quot;</span><span class="cp">@wall_clock</span> <span class="o">=&gt;</span> <span class="kd">foo</span><span class="c">&quot;</span>
+<span class="nt">[runtime]</span>
+    <span class="nt">[[foo]]</span>
+        <span class="nv">script </span><span class="o">=</span><span class="s"> run-foo.sh</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="built-in-suite-state-triggers">
+<span id="id3"></span><h2>12.2. Built-in Suite State Triggers<a class="headerlink" href="#built-in-suite-state-triggers" title="Permalink to this headline">¶</a></h2>
+<p>These can be used instead of the older suite state polling tasks described
+in <a class="reference internal" href="running-suites.html#suitestatepolling"><span class="std std-ref">Triggering Off Of Tasks In Other Suites</span></a> for inter-suite triggering - i.e. to trigger local
+tasks off of remote task statuses or messages in other suites. (However we
+don’t recommend wholesale conversion to the new method yet, until its
+interface has stabilized - see <a class="reference internal" href="#current-trigger-function-limitations"><span class="std std-ref">Current Limitations</span></a>.)</p>
+<p>The suite state trigger function signature looks like this:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">suite_state</span><span class="p">(</span><span class="n">suite</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">point</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="s1">&#39;succeeded&#39;</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cylc_run_dir</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The first three arguments are compulsory; they single out the target suite name
+(<code class="docutils literal notranslate"><span class="pre">suite</span></code>) task name (<code class="docutils literal notranslate"><span class="pre">task</span></code>) and cycle point
+(<code class="docutils literal notranslate"><span class="pre">point</span></code>). The function arguments mirror the arguments and options of
+the <code class="docutils literal notranslate"><span class="pre">cylc</span> <span class="pre">suite-state</span></code> command - see
+<code class="docutils literal notranslate"><span class="pre">cylc</span> <span class="pre">suite-state</span> <span class="pre">--help</span></code> for documentation.</p>
+<p>As a simple example, consider the suites in
+<code class="docutils literal notranslate"><span class="pre">&lt;cylc-dir&gt;/etc/dev-suites/xtrigger/suite_state/</span></code>. The “upstream”
+suite (which we want to trigger off of) looks like this:</p>
+<div class="highlight-cylc notranslate"><div class="highlight"><pre><span></span><span class="nt">[cylc]</span>
+    <span class="nv">cycle point format </span><span class="o">=</span><span class="s"> %Y</span>
+<span class="nt">[scheduling]</span>
+    <span class="nv">initial cycle point </span><span class="o">=</span><span class="s"> 2005</span>
+    <span class="nv">final cycle point </span><span class="o">=</span><span class="s"> 2015</span>
+   <span class="nt">[[dependencies]]</span>
+      <span class="nt">[[[P1Y]]]</span>
+          <span class="nv">graph</span><span class="s"> </span><span class="o">=</span> <span class="c">&quot;</span><span class="kd">foo</span> <span class="o">=&gt;</span> <span class="kd">bar</span><span class="c">&quot;</span>
+<span class="nt">[runtime]</span>
+   <span class="nt">[[bar]]</span>
+      <span class="nv">script </span><span class="o">=</span><span class="s"> sleep 10</span>
+   <span class="nt">[[foo]]</span>
+      <span class="nv">script </span><span class="o">=</span><span class="s"> sleep 5; cylc message &quot;data ready&quot;</span>
+      <span class="nt">[[[outputs]]]</span>
+          <span class="nv">x </span><span class="o">=</span><span class="s"> &quot;data ready&quot;</span>
+</pre></div>
+</div>
+<p>It must be registered and run under the name <em>up</em>, as referenced in the
+“downstream” suite that depends on it:</p>
+<div class="highlight-cylc notranslate"><div class="highlight"><pre><span></span><span class="nt">[cylc]</span>
+  <span class="nv">cycle point format </span><span class="o">=</span><span class="s"> %Y</span>
+<span class="nt">[scheduling]</span>
+    <span class="nv">initial cycle point </span><span class="o">=</span><span class="s"> 2010</span>
+    <span class="nt">[[xtriggers]]</span>
+         <span class="nv">upstream </span><span class="o">=</span><span class="s"> suite_state(suite=up, task=foo, point=%(point)s, \</span>
+<span class="s">            message=&#39;data ready&#39;):PT10S</span>
+         <span class="nv">clock_0 </span><span class="o">=</span><span class="s"> wall_clock(offset=PT0H)</span>
+   <span class="nt">[[dependencies]]</span>
+        <span class="nt">[[[P1Y]]]</span>
+           <span class="nv">graph</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+              <span class="kd">foo</span>
+              <span class="cp">@clock_0</span> <span class="o">&amp;</span> <span class="cp">@upstream</span> <span class="o">=&gt;</span> <span class="kd">FAM</span><span class="c">:</span><span class="kd">succeed</span><span class="c">-</span><span class="kd">all</span> <span class="o">=&gt;</span> <span class="kd">blam</span>
+                   <span class="s2">&quot;&quot;&quot;</span>
+<span class="nt">[runtime]</span>
+    <span class="nt">[[root]]</span>
+        <span class="nv">script </span><span class="o">=</span><span class="s"> sleep 5</span>
+    <span class="nt">[[foo, blam]]</span>
+    <span class="nt">[[FAM]]</span>
+    <span class="nt">[[f1,f2,f3]]</span>
+        <span class="nv">inherit </span><span class="o">=</span><span class="s"> FAM</span>
+</pre></div>
+</div>
+<p>Try starting the downstream suite first, then the upstream, and
+watch what happens.
+In each cycle point the <code class="docutils literal notranslate"><span class="pre">&#64;upstream</span></code> trigger in the downstream suite
+waits on the task <code class="docutils literal notranslate"><span class="pre">foo</span></code> (with the same cycle point) in the upstream
+suite to emit the <em>data ready</em> message.</p>
+<p>Some important points to note about this:</p>
+<ul class="simple">
+<li>the function call interval, which determines how often the suite
+server program checks the clock, is optional. Here it is
+<code class="docutils literal notranslate"><span class="pre">PT10S</span></code> (i.e. 10 seconds, which is also the default value).</li>
+<li>the <code class="docutils literal notranslate"><span class="pre">suite_state</span></code> trigger function, like the
+<code class="docutils literal notranslate"><span class="pre">cylc</span> <span class="pre">suite-state</span></code> command, must have read-access to the upstream
+suite’s public database.</li>
+<li>the cycle point argument is supplied by a string template
+<code class="docutils literal notranslate"><span class="pre">%(point)s</span></code>. The string templates available to trigger function
+arguments are described in <a class="reference internal" href="#custom-trigger-functions"><span class="std std-ref">Custom Trigger Functions</span></a>).</li>
+</ul>
+<p>The return value of the <code class="docutils literal notranslate"><span class="pre">suite_state</span></code> trigger function looks like
+this:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;suite&#39;</span><span class="p">:</span> <span class="n">suite</span><span class="p">,</span>
+    <span class="s1">&#39;task&#39;</span><span class="p">:</span> <span class="n">task</span><span class="p">,</span>
+    <span class="s1">&#39;point&#39;</span><span class="p">:</span> <span class="n">point</span><span class="p">,</span>
+    <span class="s1">&#39;offset&#39;</span><span class="p">:</span> <span class="n">offset</span><span class="p">,</span>
+    <span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="n">status</span><span class="p">,</span>
+    <span class="s1">&#39;message&#39;</span><span class="p">:</span> <span class="n">message</span><span class="p">,</span>
+    <span class="s1">&#39;cylc_run_dir&#39;</span><span class="p">:</span> <span class="n">cylc_run_dir</span>
+<span class="p">}</span>
+<span class="k">return</span> <span class="p">(</span><span class="n">satisfied</span><span class="p">,</span> <span class="n">results</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">satisified</span></code> variable is boolean (value True or False, depending
+on whether or not the trigger condition was found to be satisfied). The
+<code class="docutils literal notranslate"><span class="pre">results</span></code> dictionary contains the names and values of all of the
+target suite state parameters. Each item in it gets qualified with the
+unique trigger label (“upstream” here) and passed to the environment of
+dependent task jobs (the members of the <code class="docutils literal notranslate"><span class="pre">FAM</span></code> family in this case).
+To see this, take a look at the job script for one of the downstream tasks:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% cylc cat-log -f j dn f2.2011
+...
+cylc__job__inst__user_env<span class="o">()</span> <span class="o">{</span>
+    <span class="c1"># TASK RUNTIME ENVIRONMENT:</span>
+    <span class="nb">export</span> upstream_suite upstream_cylc_run_dir upstream_offset <span class="se">\</span>
+      upstream_message upstream_status upstream_point upstream_task
+    <span class="nv">upstream_suite</span><span class="o">=</span><span class="s2">&quot;up&quot;</span>
+    <span class="nv">upstream_cylc_run_dir</span><span class="o">=</span><span class="s2">&quot;/home/vagrant/cylc-run&quot;</span>
+    <span class="nv">upstream_offset</span><span class="o">=</span><span class="s2">&quot;None&quot;</span>
+    <span class="nv">upstream_message</span><span class="o">=</span><span class="s2">&quot;data ready&quot;</span>
+    <span class="nv">upstream_status</span><span class="o">=</span><span class="s2">&quot;succeeded&quot;</span>
+    <span class="nv">upstream_point</span><span class="o">=</span><span class="s2">&quot;2011&quot;</span>
+    <span class="nv">upstream_task</span><span class="o">=</span><span class="s2">&quot;foo&quot;</span><span class="o">}</span>
+...
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The task has to know the name (label) of the external trigger that it
+depends on - “upstream” in this case - in order to use this information.
+However the name could be given to the task environment in the suite
+configuration.</p>
+</div>
+</div>
+<div class="section" id="custom-trigger-functions">
+<span id="id4"></span><h2>12.3. Custom Trigger Functions<a class="headerlink" href="#custom-trigger-functions" title="Permalink to this headline">¶</a></h2>
+<p>Trigger functions are just normal Python functions, with a few special
+properties:</p>
+<ul class="simple">
+<li>they must be defined in a module with the same name as the function</li>
+<li>they can be located in:
+- <code class="docutils literal notranslate"><span class="pre">&lt;cylc-dir&gt;/lib/cylc/xtriggers/</span></code>
+- <code class="docutils literal notranslate"><span class="pre">&lt;suite-dir&gt;/lib/python/</span></code>
+- (or anywhere in your Python library path)</li>
+<li>they can take arbitrary positional and keyword arguments</li>
+<li>suite and task identity, and cycle point, can be passed to trigger
+functions by using string templates in function arguments (see below)</li>
+<li>integer, float, boolean, and string arguments will be recognized and
+passed to the function as such</li>
+<li>if a trigger function depends on files or directories (for example)
+that might not exist when the function is first called, just return
+unsatisified until everything required does exist.</li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Trigger functions cannot store data Pythonically between invocations
+because each call is executed in an independent process in the process
+pool. If necessary the filesystem can be used for this purpose.</p>
+</div>
+<p>The following string templates are available for use, if the trigger function
+needs any of this information, in function arguments in the suite configuration:</p>
+<ul class="simple">
+<li><code class="docutils literal notranslate"><span class="pre">%(name)s</span></code> - name of the dependent task</li>
+<li><code class="docutils literal notranslate"><span class="pre">%(id)s</span></code> - identity of the dependent task (name.cycle-point)</li>
+<li><code class="docutils literal notranslate"><span class="pre">%(point)s</span></code> - cycle point of the dependent task</li>
+<li><code class="docutils literal notranslate"><span class="pre">%(debug)s</span></code> - suite debug mode</li>
+</ul>
+<p>and less commonly needed:</p>
+<ul class="simple">
+<li><code class="docutils literal notranslate"><span class="pre">%(user_name)s</span></code> - suite owner’s user name</li>
+<li><code class="docutils literal notranslate"><span class="pre">%(suite_name)s</span></code> - registered suite name</li>
+<li><code class="docutils literal notranslate"><span class="pre">%(suite_run_dir)s</span></code> - suite run directory</li>
+<li><code class="docutils literal notranslate"><span class="pre">%(suite_share_dir)s</span></code> - suite share directory</li>
+</ul>
+<p>Function return values should be as follows:</p>
+<ul class="simple">
+<li>if the trigger condition is <em>not satisfied</em>:<ul>
+<li>return <code class="docutils literal notranslate"><span class="pre">(False,</span> <span class="pre">{})</span></code></li>
+</ul>
+</li>
+<li>if the trigger condition is <em>satisfied</em>:<ul>
+<li>return <code class="docutils literal notranslate"><span class="pre">(True,</span> <span class="pre">results)</span></code></li>
+</ul>
+</li>
+</ul>
+<p>where <code class="docutils literal notranslate"><span class="pre">results</span></code> is an arbitrary dictionary of information to be
+passed to dependent tasks. How this looks to these tasks is described above
+in <a class="reference internal" href="#built-in-suite-state-triggers"><span class="std std-ref">Built-in Suite State Triggers</span></a>.</p>
+<p>The suite server program manages trigger functions as follows:</p>
+<ul class="simple">
+<li>they are called asynchronously in the process pool
+- (except for clock triggers, which are called from the main process)</li>
+<li>they are called repeatedly on a configurable interval, until satisified
+- the call interval defaults to <code class="docutils literal notranslate"><span class="pre">PT10S</span></code> (10 seconds)
+- repeat calls are not made until the previous call has returned</li>
+<li>they are subject to the normal process pool command time out - if they
+take too long to return, the process will be killed</li>
+<li>they are shared for efficiency: a single call will be made for all
+triggers that share the same function signature - i.e.the same function
+name and arguments</li>
+<li>their return status and results are stored in the suite DB and persist across
+suite restarts</li>
+<li>their stdout, if any, is redirected to stderr and will be visible in
+the suite log in debug mode (stdout is needed to communicate return values
+from the sub-process in which the function executes)</li>
+</ul>
+<div class="section" id="toy-examples">
+<h3>12.3.1. Toy Examples<a class="headerlink" href="#toy-examples" title="Permalink to this headline">¶</a></h3>
+<p>A couple of toy examples in <code class="docutils literal notranslate"><span class="pre">&lt;cylc-dir&gt;/lib/cylc/xtriggers/</span></code> may
+be a useful aid to understanding trigger functions and how they work.</p>
+<div class="section" id="echo">
+<h4>12.3.1.1. echo<a class="headerlink" href="#echo" title="Permalink to this headline">¶</a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">echo</span></code> function is a trivial one that takes any number of
+positional and keyword arguments (from the suite configuration) and simply
+prints them to stdout, and then returns False (i.e. trigger condition not
+satisfied). Here it is in its entirety.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">echo</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">print</span> <span class="s2">&quot;echo: ARGS:&quot;</span><span class="p">,</span> <span class="n">args</span>
+    <span class="k">print</span> <span class="s2">&quot;echo: KWARGS:&quot;</span><span class="p">,</span> <span class="n">kwargs</span>
+    <span class="k">return</span> <span class="p">(</span><span class="bp">False</span><span class="p">,</span> <span class="p">{})</span>
+</pre></div>
+</div>
+<p>Here’s an example echo trigger suite:</p>
+<div class="highlight-cylc notranslate"><div class="highlight"><pre><span></span><span class="nt">[scheduling]</span>
+    <span class="nv">initial cycle point </span><span class="o">=</span><span class="s"> now</span>
+    <span class="nt">[[xtriggers]]</span>
+        <span class="nv">echo_1 </span><span class="o">=</span><span class="s"> echo(hello, 99, qux=True, point=%(point)s, foo=10)</span>
+    <span class="nt">[[dependencies]]</span>
+        <span class="nt">[[[PT1H]]]</span>
+            <span class="nv">graph</span><span class="s"> </span><span class="o">=</span> <span class="c">&quot;</span><span class="cp">@echo_1</span> <span class="o">=&gt;</span> <span class="kd">foo</span><span class="c">&quot;</span>
+<span class="nt">[runtime]</span>
+    <span class="nt">[[foo]]</span>
+        <span class="nv">script </span><span class="o">=</span><span class="s"> exit 1</span>
+</pre></div>
+</div>
+<p>To see the result, run this suite in debug mode and take a look at the
+suite log (or run <code class="docutils literal notranslate"><span class="pre">cylc</span> <span class="pre">run</span> <span class="pre">--debug</span> <span class="pre">--no-detach</span> <span class="pre">&lt;suite&gt;</span></code> and watch
+your terminal).</p>
+</div>
+<div class="section" id="xrandom">
+<h4>12.3.1.2. xrandom<a class="headerlink" href="#xrandom" title="Permalink to this headline">¶</a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">xrandom</span></code> function sleeps for a configurable amount of time
+(useful for testing the effect of a long-running trigger function - which
+should be avoided) and has a configurable random chance of success. The
+function signature is:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">xrandom</span><span class="p">(</span><span class="n">percent</span><span class="p">,</span> <span class="n">secs</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">_</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">percent</span></code> argument sets the odds of success in any given call;
+<code class="docutils literal notranslate"><span class="pre">secs</span></code> is the number of seconds to sleep before returning; and the
+<code class="docutils literal notranslate"><span class="pre">_</span></code> argument (underscore is a conventional name for a variable
+that is not used, in Python) is provided to allow specialization of the trigger
+to (for example) task name, task ID, or cycle point (just use the appropriate
+string templates in the suite configuration for this).</p>
+<p>An example xrandom trigger suite is
+<code class="docutils literal notranslate"><span class="pre">&lt;cylc-dir&gt;/etc/dev-suites/xtriggers/xrandom/</span></code>.</p>
+</div>
+</div>
+</div>
+<div class="section" id="current-limitations">
+<span id="current-trigger-function-limitations"></span><h2>12.4. Current Limitations<a class="headerlink" href="#current-limitations" title="Permalink to this headline">¶</a></h2>
+<p>The following issues may be addressed in future Cylc releases:</p>
+<ul class="simple">
+<li>trigger labels cannot currently be used in conditional (OR) expressions
+in the graph; attempts to do so will fail validation.</li>
+<li>aside from the predefined zero-offset <code class="docutils literal notranslate"><span class="pre">wall_clock</span></code> trigger, all
+unique trigger function calls must be declared <em>with all of
+their arguments</em> under the <code class="docutils literal notranslate"><span class="pre">[scheduling][xtriggers]</span></code> section, and
+referred to by label alone in the graph. It would be convenient (and less
+verbose, although no more functional) if we could just declare a label
+against the <em>common</em> arguments, and give remaining arguments (such as
+different wall clock offsets in clock triggers) as needed in the graph.</li>
+<li>we may move away from the string templating method for providing suite
+and task attributes to trigger function arguments.</li>
+</ul>
+</div>
+<div class="section" id="filesystem-events">
+<h2>12.5. Filesystem Events?<a class="headerlink" href="#filesystem-events" title="Permalink to this headline">¶</a></h2>
+<p>Cylc does not have built-in support for triggering off of filesystem events
+such as <code class="docutils literal notranslate"><span class="pre">inotify</span></code> on Linux. There is no cross-platform standard for
+this, and in any case filesystem events are not very useful in HPC cluster
+environments where events can only be detected at the specific node on which
+they were generated.</p>
+</div>
+<div class="section" id="continuous-event-watchers">
+<h2>12.6. Continuous Event Watchers?<a class="headerlink" href="#continuous-event-watchers" title="Permalink to this headline">¶</a></h2>
+<p>For some applications a persistent process that continually monitors the
+external world is better than discrete periodic checking. This would be more
+difficult to support as a plugin mechanism in Cylc, but we may decide to do it
+in the future. In the meantime, consider implementing a small daemon process as
+the watcher (e.g. to watch continuously for filesystem events) and have your
+Cylc trigger functions interact with it.</p>
+</div>
+<div class="section" id="old-style-external-triggers-deprecated">
+<span id="old-style-external-triggers"></span><h2>12.7. Old-Style External Triggers (Deprecated)<a class="headerlink" href="#old-style-external-triggers-deprecated" title="Permalink to this headline">¶</a></h2>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This mechanism is now technically deprecated by the newer external
+trigger functions (<a class="reference internal" href="#external-triggers"><span class="std std-ref">External Triggers</span></a>). (However we don’t recommend
+wholesale conversion to the new method yet, until its interface has
+stabilized - see <a class="reference internal" href="#current-trigger-function-limitations"><span class="std std-ref">Current Limitations</span></a>.)</p>
+</div>
+<p>These old-style external triggers are hidden task prerequisites that must be
+satisfied by using the <code class="docutils literal notranslate"><span class="pre">cylc</span> <span class="pre">ext-trigger</span></code> client command to send an
+associated pre-defined event message to the suite along with an ID string that
+distinguishes one instance of the event from another (the name of the target
+task and its current cycle point are not required). The event ID is just an
+arbitrary string to Cylc, but it can be used to identify something associated
+with the event to the suite - such as the filename of a new
+externally-generated dataset. When the suite server program receives the event
+notification it will trigger the next instance of any task waiting on that
+trigger (whatever its cycle point) and then broadcast
+(see <a class="reference internal" href="running-suites.html#cylc-broadcast"><span class="std std-ref">Cylc Broadcast</span></a>) the event ID to the cycle point of the triggered
+task as <code class="docutils literal notranslate"><span class="pre">$CYLC_EXT_TRIGGER_ID</span></code>. Downstream tasks with the same cycle
+point therefore know the new event ID too and can use it, if they need to, to
+identify the same new dataset. In this way a whole workflow can be associated
+with each new dataset, and multiple datasets can be processed in parallel if
+they happen to arrive in quick succession.</p>
+<p>An externally-triggered task must register the event it waits on in the suite
+scheduling section:</p>
+<div class="highlight-cylc notranslate"><div class="highlight"><pre><span></span><span class="c1"># suite &quot;sat-proc&quot;</span>
+<span class="nt">[scheduling]</span>
+    <span class="nv">cycling mode </span><span class="o">=</span><span class="s"> integer</span>
+    <span class="nv">initial cycle point </span><span class="o">=</span><span class="s"> 1</span>
+    <span class="nt">[[special tasks]]</span>
+        <span class="nv">external-trigger </span><span class="o">=</span><span class="s"> get-data(&quot;new sat X data avail&quot;)</span>
+    <span class="nt">[[dependencies]]</span>
+        <span class="nt">[[[P1]]]</span>
+            <span class="nv">graph</span><span class="s"> </span><span class="o">=</span> <span class="kd">get</span><span class="c">-</span><span class="kd">data</span> <span class="o">=&gt;</span> <span class="kd">conv</span><span class="c">-</span><span class="kd">data</span> <span class="o">=&gt;</span> <span class="kd">products</span>
+</pre></div>
+</div>
+<p>Then, each time a new dataset arrives the external detection system should
+notify the suite like this:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ cylc ext-trigger sat-proc <span class="s2">&quot;new sat X data avail&quot;</span> passX12334a
+</pre></div>
+</div>
+<p>where “sat-proc” is the suite name and “passX12334a” is the ID string for
+the new event. The suite passphrase must be installed on triggering account.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Only one task in a suite can trigger off a particular external message.
+Other tasks can trigger off the externally triggered task as required,
+of course.</p>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">&lt;cylc-dir&gt;/etc/examples/satellite/ext-triggers/suite.rc</span></code> is a working
+example of a simulated satellite processing suite.</p>
+<p>External triggers are not normally needed in date-time cycling suites driven
+by real time data that comes in at regular intervals. In these cases a data
+retrieval task can be clock-triggered (and have appropriate retry intervals) to
+submit at the expected data arrival time, so little time is wasted in polling.
+However, if the arrival time of the cycle-point-specific data is highly
+variable, external triggering may be used with the cycle point embedded in the
+message:</p>
+<div class="highlight-cylc notranslate"><div class="highlight"><pre><span></span><span class="c1"># suite &quot;data-proc&quot;</span>
+<span class="nt">[scheduling]</span>
+    <span class="nv">initial cycle point </span><span class="o">=</span><span class="s"> 20150125T00</span>
+    <span class="nv">final cycle point   </span><span class="o">=</span><span class="s"> 20150126T00</span>
+    <span class="nt">[[special tasks]]</span>
+        <span class="nv">external-trigger </span><span class="o">=</span><span class="s"> get-data(&quot;data arrived for $CYLC_TASK_CYCLE_POINT&quot;)</span>
+    <span class="nt">[[dependencies]]</span>
+        <span class="nt">[[[T00]]]</span>
+            <span class="nv">graph</span><span class="s"> </span><span class="o">=</span> <span class="kd">init</span><span class="c">-</span><span class="kd">process</span> <span class="o">=&gt;</span> <span class="kd">get</span><span class="c">-</span><span class="kd">data</span> <span class="o">=&gt;</span> <span class="kd">post</span><span class="c">-</span><span class="kd">process</span>
+</pre></div>
+</div>
+<p>Once the variable-length waiting is finished, an external detection system
+should notify the suite like this:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ cylc ext-trigger data-proc <span class="s2">&quot;data arrived for 20150126T00&quot;</span> passX12334a
+</pre></div>
+</div>
+<p>where “data-proc” is the suite name, the cycle point has replaced the
+variable in the trigger string, and “passX12334a” is the ID string for
+the new event. The suite passphrase must be installed on the triggering
+account. In this case, the event will trigger for the second cycle point but
+not the first because of the cycle-point matching.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/cylc-logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="index.html">Table of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">1. Introduction: How Cylc Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="screenshots.html">2. Cylc Screenshots</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">3. Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="terminology.html">4. Cylc Terminology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflows.html">5. Workflows For Cycling Systems</a></li>
+<li class="toctree-l1"><a class="reference internal" href="global-site-user-conf.html">6. Global (Site, User) Configuration Files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">7. Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="suite-name-reg.html">8. Suite Name Registration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="suite-config.html">9. Suite Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="task-implementation.html">10. Task Implementation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="task-job-submission.html">11. Task Job Submission and Management</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">12. External Triggers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#built-in-clock-triggers">12.1. Built-in Clock Triggers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#built-in-suite-state-triggers">12.2. Built-in Suite State Triggers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#custom-trigger-functions">12.3. Custom Trigger Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#toy-examples">12.3.1. Toy Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#current-limitations">12.4. Current Limitations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#filesystem-events">12.5. Filesystem Events?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#continuous-event-watchers">12.6. Continuous Event Watchers?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#old-style-external-triggers-deprecated">12.7. Old-Style External Triggers (Deprecated)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="running-suites.html">13. Running Suites</a></li>
+<li class="toctree-l1"><a class="reference internal" href="suite-storage-etc.html">14. Suite Storage, Discovery, Revision Control, and Deployment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendices/appendices-master.html">15. Appendices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="suite-design-guide/suite-design-guide-master.html">16. Suite Design Guide</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/external-triggers.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="running-suites.html" title="13. Running Suites"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="task-job-submission.html" title="11. Task Job Submission and Management"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">The Cylc Suite Engine 7.8.1-39-gf3b0d documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2008-2019 NIWA &amp; British Crown (Met Office) &amp; Contributors.
+      Last updated on Mar 01, 2019.
+    </div>
+  </body>
+</html>

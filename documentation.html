@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>cylc - documentation</title>
+		<link rel="stylesheet" type="text/css" href="css/main.css">
+	</head>
+	<body>
+        <div id="header">
+            <div class="page">
+                <div class="container">
+                    <div class="column">
+                        <a href="index.html" id="logo_top">
+                            <span style="color:#ff5966">c</span>
+                            <span style="color:#eebb00">y</span>
+                            <span style="color:#00c798">l</span>
+                            <span style="color:#00b4fd">c</span>
+                        </a>
+                    </div>  <!--column-->
+                    <div class="column">
+                        <div id="nav">
+                            <a href="features.html">Features</a>
+                            <a href="screenshots.html">Screenshots</a>
+                            <a href="documentation.html">Documentation</a>
+                            <a href="support.html">Support</a>
+                        </div>  <!--nav-->
+                    </div>  <!--column-->
+                </div>  <!--container-->
+            </div>  <!--page-->
+        </div>  <!--header-->
+
+		<div id="wrapper">
+			<div class="page">
+				<h1 class="no_toc" id="table-of-contents">Table of Contents</h1>
+
+<ul id="markdown-toc">
+  <li><a href="#documentation-and-information-links" id="markdown-toc-documentation-and-information-links">Documentation And Information Links</a>    <ul>
+      <li><a href="#the-cylc-user-guide" id="markdown-toc-the-cylc-user-guide">The Cylc User Guide</a></li>
+      <li><a href="#presentations" id="markdown-toc-presentations">Presentations</a></li>
+      <li><a href="#publications-citations-and-references" id="markdown-toc-publications-citations-and-references">Publications, Citations, and References</a>        <ul>
+          <li><a href="#cylc-response-to-assessment-report-on-autosubmit-cylc-and-ecflow" id="markdown-toc-cylc-response-to-assessment-report-on-autosubmit-cylc-and-ecflow">Cylc Response to “Assessment Report on Autosubmit, Cylc and ecFlow”</a></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li><a href="#a-cycling-workflow-example" id="markdown-toc-a-cycling-workflow-example">A Cycling Workflow Example</a>    <ul>
+      <li><a href="#create-a-new-suite" id="markdown-toc-create-a-new-suite">Create A New Suite</a></li>
+      <li><a href="#register" id="markdown-toc-register">Register</a></li>
+      <li><a href="#validate" id="markdown-toc-validate">Validate</a></li>
+      <li><a href="#visualize" id="markdown-toc-visualize">Visualize</a></li>
+      <li><a href="#run" id="markdown-toc-run">Run</a></li>
+      <li><a href="#view-task-job-output" id="markdown-toc-view-task-job-output">View Task Job Output</a></li>
+    </ul>
+  </li>
+</ul>
+
+<hr />
+
+<h2 id="documentation-and-information-links">Documentation And Information Links</h2>
+
+<h3 id="the-cylc-user-guide">The Cylc User Guide</h3>
+
+<p>If you have access to cylc already, type <code class="highlighter-rouge">cylc doc</code> or use the GUI “Help” menu
+to view the User Guide.  Otherwise, an online copy is available here:</p>
+
+<ul>
+  <li><a href="doc/built-sphinx/index.html">Multi-Page version</a> (with word search box)</li>
+  <li><a href="doc/built-sphinx-single/index.html">Single-Page version</a> - (search with browser Ctrl-F)</li>
+</ul>
+
+<p>(Includes the formerly-separate Suite Design Guide).</p>
+
+<h3 id="presentations">Presentations</h3>
+
+<p>Format HTML5 with embedded .webm videos (plays natively in Firefox or Chrome).
+Hit the “Home” and “End” keys to skip to the beginning and end of the
+presentation, and the ‘o’ key for a multi-slide summary. This is the
+<a href="https://github.com/paulrouget/dzslides">dzslides</a> framework by Paul Roget.</p>
+
+<ul>
+  <li>
+    <p><a href="cylc-keynote-lisbon-Sept2016/index.html">Cylc Keynote</a> - from
+the IS-ENES2 Workshop on Workflow in Earth Systems Modeling, Lisbon,
+September 2016</p>
+  </li>
+  <li>
+    <p><a href="BoM-Feb-2017/index.html">Cylc High Level Introduction</a> - Bureau of
+Meteorology, Melbourne, February 2017</p>
+  </li>
+</ul>
+
+<h3 id="publications-citations-and-references">Publications, Citations, and References</h3>
+
+<p>Please cite Cylc in your publications if you used it to automate your
+workflows.</p>
+
+<ul>
+  <li>
+    <p><a href="https://zenodo.org/badge/latestdoi/1836229"><img src="https://zenodo.org/badge/1836229.svg" alt="DOI" /></a> - Citable DOI for Cylc source code</p>
+  </li>
+  <li>
+    <p><a href="https://doi.org/10.21105/joss.00737"><img src="http://joss.theoj.org/papers/10.21105/joss.00737/status.svg" alt="DOI" /></a> - A short paper in the Journal of Open Source Software.
+Cite as:</p>
+    <blockquote>
+      <p><em>Oliver et al., (2018). Cylc: A Workflow Engine for Cycling Systems. Journal of
+Open Source Software, 3(27), 737, <a href="https://doi.org/10.21105/joss.00737">https://doi.org/10.21105/joss.00737</a></em></p>
+    </blockquote>
+  </li>
+</ul>
+
+<h4 id="cylc-response-to-assessment-report-on-autosubmit-cylc-and-ecflow">Cylc Response to “Assessment Report on Autosubmit, Cylc and ecFlow”</h4>
+
+<p><em>The Cylc developers would like to respond to a recent comparison paper,
+<strong>Assessment report on Autosubmit, Cylc and ecFlow</strong> (2016, Domingo Manubens-Gil
+et. al.) and another that references it, <strong>Seamless Management of Ensemble
+Climate Prediction Experiments on HPC Platforms</strong> (2016, Domingo Manubens-Gil
+et. al.).  Two of us are listed as contributors to the first paper but it should
+be noted that the contribution was limited by time and workload constraints to
+major corrections relating to Cylc (all of which were addressed by the lead
+author).</em></p>
+
+<p><em>The lead author of both papers is also the lead developer of Autosubmit.
+Perhaps inevitably as the developers of Cylc we have a rather different view on
+the strengths and weaknesses of the different systems.  In particular we would
+like to address the following points.</em></p>
+
+<p>…<a href="doc/cylc-autosub-response.pdf">CLICK HERE FOR THE FULL RESPONSE</a> (PDF)</p>
+
+<hr />
+
+<h2 id="a-cycling-workflow-example">A Cycling Workflow Example</h2>
+
+<p>The following example is intended to convey something of basic Cylc
+functionality.  However, it barely scratches the surface; to understand more,
+read the User Guide!</p>
+
+<h3 id="create-a-new-suite">Create A New Suite</h3>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">$</span> <span class="n">mkdir</span> <span class="p">-</span><span class="n">p</span> <span class="p">~/</span><span class="n">suites</span><span class="p">/</span><span class="n">test</span><span class="p">/</span>
+<span class="p">$</span> <span class="n">vim</span> <span class="p">~/</span><span class="n">suites</span><span class="p">/</span><span class="n">test</span><span class="p">/</span><span class="n">suite</span><span class="p">.</span><span class="n">rc</span>
+
+<span class="p">#</span> <span class="n">suite</span><span class="p">.</span><span class="n">rc</span><span class="p">:</span>
+<span class="p">[</span><span class="n">meta</span><span class="p">]</span>
+  <span class="n">title</span> <span class="p">=</span> <span class="n">Test</span> <span class="n">Suite</span> <span class="n">One</span>
+
+<span class="p">[</span><span class="n">cylc</span><span class="p">]</span>
+  <span class="n">cycle</span> <span class="n">point</span> <span class="n">format</span> <span class="p">=</span> <span class="p">%</span><span class="n">Y</span>
+
+<span class="p">[</span><span class="n">scheduling</span><span class="p">]</span>
+  <span class="n">initial</span> <span class="n">cycle</span> <span class="n">point</span> <span class="p">=</span> <span class="m">2021</span>
+  <span class="n">final</span> <span class="n">cycle</span> <span class="n">point</span> <span class="p">=</span> <span class="m">2023</span>
+  <span class="p">[[</span><span class="n">dependencies</span><span class="p">]]</span>
+    <span class="p">[[[</span><span class="n">R1</span><span class="p">]]]</span>  <span class="p">#</span> <span class="n">Initial</span> <span class="n">cycle</span> <span class="n">point</span><span class="p">.</span>
+      <span class="n">graph</span> <span class="p">=</span> <span class="n">prep</span> <span class="p">=&gt;</span> <span class="k">model</span>
+    <span class="p">[[[</span><span class="n">R</span><span class="p">//</span><span class="n">P1Y</span><span class="p">]]]</span>  <span class="p">#</span> <span class="n">Yearly</span> <span class="n">cycling</span><span class="p">.</span>
+      <span class="n">graph</span> <span class="p">=</span> <span class="k">model</span><span class="p">[-</span><span class="n">P1Y</span><span class="p">]</span> <span class="p">=&gt;</span> <span class="k">model</span> <span class="p">=&gt;</span> <span class="n">post</span>
+    <span class="p">[[[</span><span class="n">R1</span><span class="p">/</span><span class="n">P0Y</span><span class="p">]]]</span>  <span class="p">#</span> <span class="n">Final</span> <span class="n">cycle</span> <span class="n">point</span><span class="p">.</span>
+      <span class="n">graph</span> <span class="p">=</span> <span class="n">post</span> <span class="p">=&gt;</span> <span class="nf">stop</span>
+
+<span class="p">[</span><span class="n">runtime</span><span class="p">]</span>
+  <span class="p">[[</span><span class="n">root</span><span class="p">]]</span>  <span class="p">#</span> <span class="n">Inherited</span> <span class="n">by</span> <span class="n">all</span> <span class="n">tasks</span><span class="p">.</span>
+    <span class="n">script</span> <span class="p">=</span> <span class="nf">sleep</span> <span class="m">10</span>
+  <span class="p">[[</span><span class="k">model</span><span class="p">]]</span>
+    <span class="n">script</span> <span class="p">=</span> <span class="n">echo</span> <span class="s2">"my FOOD is $FOOD"</span><span class="p">;</span> <span class="nf">sleep</span> <span class="m">10</span>
+    <span class="p">[[[</span><span class="n">environment</span><span class="p">]]]</span>
+      <span class="n">FOOD</span> <span class="p">=</span> <span class="n">icecream</span>
+  <span class="p">[[</span><span class="n">prep</span><span class="p">]]</span>
+    <span class="p">#</span> <span class="p">...</span>
+  <span class="p">#</span> <span class="p">...</span>
+
+<span class="p">[</span><span class="n">visualization</span><span class="p">]</span>
+  <span class="n">use</span> <span class="n">node</span> <span class="n">color</span> <span class="n">for</span> <span class="n">edges</span> <span class="p">=</span> <span class="nb">True</span>
+  <span class="p">[[</span><span class="n">node</span> <span class="n">attributes</span><span class="p">]]</span>
+    <span class="n">root</span> <span class="p">=</span> <span class="s2">"style=filled"</span><span class="p">,</span> <span class="s2">"fontcolor=white"</span>
+    <span class="n">prep</span> <span class="p">=</span>  <span class="s2">"color=#00a778"</span>
+    <span class="nf">stop</span> <span class="p">=</span>  <span class="s2">"color=#bf9c00"</span>
+    <span class="k">model</span> <span class="p">=</span> <span class="s2">"color=#0074cd"</span>
+    <span class="n">post</span> <span class="p">=</span>  <span class="s2">"color=#af3936"</span>
+</code></pre></div></div>
+
+<h3 id="register">Register</h3>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ cylc register test1 ~/suites/test
+REGISTER test1: /home/bob/suites/test
+
+$ cylc print test1
+test1 | A first test suite | ~/suites/test
+
+$ cylc edit test1  # Open the suite in your editor again.
+
+$ cylc help  # See other commands!
+</code></pre></div></div>
+
+<h3 id="validate">Validate</h3>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ cylc validate test1
+Valid for cylc-7.8.1
+</code></pre></div></div>
+
+<h3 id="visualize">Visualize</h3>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ cylc graph test1 &amp;
+</code></pre></div></div>
+
+<p><img src="img/cylc-graph.png" alt="img/cylc-graph.png" /></p>
+
+<h3 id="run">Run</h3>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ cylc run test1
+    # OR
+$ gcylc test1 &amp;  # (and run it from the GUI)
+</code></pre></div></div>
+
+<p><img src="img/gcylc-example.png" alt="img/gcylc-example.png" /></p>
+
+<h3 id="view-task-job-output">View Task Job Output</h3>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ cylc log -m cat -f o test1 model.2021
+
+Suite    : test1
+Task Job : 2021/model/01 (try 1)
+User@Host: bob@hpc-1.niwa.co.nz
+
+my FOOD is icecream
+
+2017-03-20T19:37:49Z NORMAL - started
+2017-03-20T19:37:59Z NORMAL - succeeded
+</code></pre></div></div>
+
+            </div> <!--page-->
+        </div> <!--wrapper-->
+        <div id="footer">
+            <div class="page">
+                <div class="container">
+                    <div class="column" style="width:25%">
+                        <h4>Support</h4>
+                        <ul>
+                            <li><a href="https://groups.google.com/d/forum/cylc">Forum</a></li>
+                            <li><a href="https://github.com/cylc/cylc/issues">Issues</a></li>
+                        </ul>
+                    </div>  <!--column-->
+                    <div class="column" style="width:25%">
+                        <h4>About</h4>
+                        <ul>
+                            <li><a href="users.html">Users</a></li>
+                            <li><a href="license.html">License</a></li>
+                        </ul>
+                    </div>  <!--column-->
+                    <div class="column" style="width:25%">
+                        <h4>Development</h4>
+                        <ul>
+                            <li><a href="https://github.com/cylc/cylc">Repository</a></li>
+                            <li> <a href="/blob/master/CHANGES.md">Changes</a>
+ 
+                        </ul>
+                    </div>  <!--column-->
+                    <div class="column" style="width:25%">
+                        <a href="index.html" id="logo_bot">
+                            <span style="color:#ff5966">c</span>
+                            <span style="color:#eebb00">y</span>
+                            <span style="color:#00c798">l</span>
+                            <span style="color:#00b4fd">c</span>
+                        </a>
+                    </div>  <!--column-->
+                </div>  <!--container-->
+            </div>  <!--page-->
+        </div>  <!--footer-->
+
+	</body>
+</html>

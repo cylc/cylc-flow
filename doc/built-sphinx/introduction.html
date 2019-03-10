@@ -1,0 +1,426 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>1. Introduction: How Cylc Works &#8212; The Cylc Suite Engine 7.8.1-39-gf3b0d documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <link rel="shortcut icon" href="_static/cylc-favicon.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="2. Cylc Screenshots" href="screenshots.html" />
+    <link rel="prev" title="Cylc documentation" href="index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="screenshots.html" title="2. Cylc Screenshots"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Cylc documentation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">The Cylc Suite Engine 7.8.1-39-gf3b0d documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="introduction-how-cylc-works">
+<span id="howcylcworks"></span><h1>1. Introduction: How Cylc Works<a class="headerlink" href="#introduction-how-cylc-works" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="scheduling-forecast-suites">
+<span id="schedulingforecastsuites"></span><h2>1.1. Scheduling Forecast Suites<a class="headerlink" href="#scheduling-forecast-suites" title="Permalink to this headline">¶</a></h2>
+<p>Environmental forecasting suites generate forecast products from a
+potentially large group of interdependent scientific models and
+associated data processing tasks. They are constrained by availability
+of external driving data: typically one or more tasks will wait on real
+time observations and/or model data from an external system, and these
+will drive other downstream tasks, and so on. The dependency diagram for
+a single forecast cycle point in such a system is a <em>Directed Acyclic Graph</em>
+as shown in <a class="reference internal" href="#fig-dep-one"><span class="std std-numref">Fig. 1</span></a> (in our terminology, a
+<em>forecast cycle point</em> is comprised of all tasks with a common <em>cycle point</em>,
+which is the nominal analysis time or start time of the forecast
+models in the group). In real time operation processing will consist of
+a series of distinct forecast cycle points that are each initiated, after a
+gap, by arrival of the new cycle point’s external driving data.</p>
+<p>From a job scheduling perspective task execution order in such a system
+must be carefully controlled in order to avoid dependency violations.
+Ideally, each task should be queued for execution at the instant its
+last prerequisite is satisfied; this is the best that can be done even
+if queued tasks are not able to execute immediately because of resource
+contention.</p>
+</div>
+<div class="section" id="ecoconnect">
+<span id="id1"></span><h2>1.2. EcoConnect<a class="headerlink" href="#ecoconnect" title="Permalink to this headline">¶</a></h2>
+<p>Cylc was developed for the EcoConnect Forecasting System at NIWA
+(National Institute of Water and Atmospheric Research, New Zealand).
+EcoConnect takes real time atmospheric and stream flow observations, and
+operational global weather forecasts from the Met Office (UK), and uses
+these to drive global sea state and regional data assimilating weather
+models, which in turn drive regional sea state, storm surge, and
+catchment river models, plus tide prediction, and a large number of
+associated data collection, quality control, preprocessing,
+post-processing, product generation, and archiving tasks <a class="footnote-reference" href="#id6" id="id2">[1]</a>.
+The global sea state forecast runs once daily. The regional
+weather forecast runs four times daily but
+it supplies surface winds and pressure to several downstream models that
+run only twice daily, and precipitation accumulations to catchment river
+models that run on an hourly cycle assimilating real time stream flow
+observations and using the most recently available regional weather
+forecast. EcoConnect runs on heterogeneous distributed hardware,
+including a massively parallel supercomputer and several Linux servers.</p>
+</div>
+<div class="section" id="dependence-between-tasks">
+<h2>1.3. Dependence Between Tasks<a class="headerlink" href="#dependence-between-tasks" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="intra-cycle-dependence">
+<span id="intracycledependence"></span><h3>1.3.1. Intra-cycle Dependence<a class="headerlink" href="#intra-cycle-dependence" title="Permalink to this headline">¶</a></h3>
+<p>Most dependence between tasks applies within a single forecast cycle
+point. <a class="reference internal" href="#fig-dep-one"><span class="std std-numref">Fig. 1</span></a> shows the dependency diagram for a single
+forecast cycle point of a simple example suite of three forecast models
+(<em>a</em>, <em>b</em>, and <em>c</em>) and three post processing or product generation
+tasks (<em>d</em>, <em>e</em> and <em>f</em>). A scheduler capable of handling this
+must manage, within a single forecast cycle point, multiple parallel
+streams of execution that branch when one task generates output for
+several downstream tasks, and merge when one task takes input from several
+upstream tasks.</p>
+<div class="figure align-center" id="id10">
+<span id="fig-dep-one"></span><img alt="_images/dep-one-cycle.png" src="_images/dep-one-cycle.png" />
+<p class="caption"><span class="caption-number">Fig. 1 </span><span class="caption-text">A single cycle point dependency graph for a simple suite.
+The dependency graph for a single forecast cycle point of a simple
+example suite. Tasks <em>a</em>, <em>b</em>, and <em>c</em> represent forecast models,
+<em>d</em>, <em>e</em> and <em>f</em> are post processing or product generation
+tasks, and <em>x</em> represents external data that the upstream
+forecast model depends on.</span></p>
+</div>
+<div class="figure align-center" id="id11">
+<span id="fig-time-one"></span><img alt="_images/timeline-one.png" src="_images/timeline-one.png" />
+<p class="caption"><span class="caption-number">Fig. 2 </span><span class="caption-text">A single cycle point job schedule for real time operation.
+The optimal job schedule for two consecutive cycle points of our
+example suite during real time operation, assuming that all tasks
+trigger off upstream tasks finishing completely. The horizontal
+extent of a task bar represents its execution time, and the vertical
+blue lines show when the external driving data becomes available.</span></p>
+</div>
+<p><a class="reference internal" href="#fig-time-one"><span class="std std-numref">Fig. 2</span></a> shows the optimal job schedule for two
+consecutive cycle points of the example suite in real time operation, given
+execution times represented by the horizontal extent of the task bars.
+There is a time gap between cycle points as the suite waits on new external
+driving data. Each task in the example suite happens to trigger off
+upstream tasks <em>finishing</em>, rather than off any intermediate output
+or event; this is merely a simplification that makes for clearer
+diagrams.</p>
+<div class="figure align-center" id="id12">
+<span id="fig-dep-two-linked"></span><img alt="_images/dep-two-cycles-linked.png" src="_images/dep-two-cycles-linked.png" />
+<p class="caption"><span class="caption-number">Fig. 3 </span><span class="caption-text">What if the external driving data is available early? If the external
+driving data is available in advance, can we start running the next cycle
+point early?</span></p>
+</div>
+<div class="figure align-center" id="id13">
+<span id="fig-overlap"></span><img alt="_images/timeline-one-c.png" src="_images/timeline-one-c.png" />
+<p class="caption"><span class="caption-number">Fig. 4 </span><span class="caption-text">Attempted overlap of consecutive single-cycle-point job
+schedules. A naive attempt to overlap two consecutive cycle
+points using the single-cycle-point dependency graph. The red shaded
+tasks will fail because of dependency violations (or will not be able to
+run because of upstream dependency violations).</span></p>
+</div>
+<div class="figure align-center" id="id14">
+<span id="fig-job-no-overlap"></span><img alt="_images/timeline-one-a.png" src="_images/timeline-one-a.png" />
+<p class="caption"><span class="caption-number">Fig. 5 </span><span class="caption-text">The only safe multi-cycle-point job schedule? The best that can be done
+<em>in general</em> when inter-cycle dependence is ignored.</span></p>
+</div>
+<p>Now the question arises, what happens if the external driving data for
+upcoming cycle points is available in advance, as it would be after a
+significant delay in operations, or when running a historical case
+study?  While the forecast model <em>a</em> appears to depend only on the
+external data <em>x</em> at this stage of the discussion, in fact it would
+typically also depend on its own previous instance for the model
+<em>background state</em> used in initializing the new forecast. Thus, as
+alluded to in <a class="reference internal" href="#fig-dep-two-linked"><span class="std std-numref">Fig. 3</span></a>, task <em>a</em> could in principle
+start as soon as its predecessor has finished. <a class="reference internal" href="#fig-overlap"><span class="std std-numref">Fig. 4</span></a>
+shows, however, that starting a whole new cycle point at this point is
+dangerous - it results in dependency violations in half of the tasks in
+the example suite. In fact the situation could be even worse than this
+- imagine that task <em>b</em> in the first cycle point is delayed for some
+reason <em>after</em> the second cycle point has been launched. Clearly we must
+consider handling inter-cycle dependence explicitly or else agree not to
+start the next cycle point early, as is illustrated in
+<a class="reference internal" href="#fig-job-no-overlap"><span class="std std-numref">Fig. 5</span></a>.</p>
+</div>
+<div class="section" id="inter-cycle-dependence">
+<span id="intercyclepointdependence"></span><h3>1.3.2. Inter-Cycle Dependence<a class="headerlink" href="#inter-cycle-dependence" title="Permalink to this headline">¶</a></h3>
+<p>Forecast models typically depend on their own most recent previous
+forecast for background state or restart files of some kind (this is
+called <em>warm cycling</em>) but there can also be inter-cycle dependence
+between different tasks. In an atmospheric forecast analysis suite, for
+instance, the weather model may generate background states for observation
+processing and data-assimilation tasks in the next cycle point as well as for
+the next forecast model run. In real time operation inter-cycle
+dependence can be ignored because it is automatically satisfied when one cycle
+point finishes before the next begins. If it is not ignored it drastically
+complicates the dependency graph by blurring the clean boundary between
+cycle points. <a class="reference internal" href="#fig-dep-multi"><span class="std std-numref">Fig. 6</span></a> illustrates the problem for our
+simple example suite assuming minimal inter-cycle dependence: the warm
+cycled models (<em>a</em>, <em>b</em>, and <em>c</em>) each depend on their own previous instances.</p>
+<p>For this reason, and because we tend to see forecasting suites in terms of
+their real time characteristics, other metaschedulers have ignored
+inter-cycle dependence and are thus restricted to running entire cycle
+points in sequence at all times. This does not affect normal real time
+operation but it can be a serious impediment when advance availability of
+external driving data makes it possible, in principle, to run some tasks from
+upcoming cycle points before the current cycle point is finished - as was
+suggested at the end of the previous section. This can occur, for instance,
+after operational delays (late arrival of external data, system maintenance,
+etc.) and to an even greater extent in historical case studies and parallel
+test suites started behind a real time operation. It can be a serious problem
+for suites that have little downtime between forecast cycle points and
+therefore take many cycle points to catch up after a delay. Without taking
+account of inter-cycle dependence, the best that can be done, in
+general, is to reduce the gap between cycle points to zero as shown in
+<a class="reference internal" href="#fig-job-no-overlap"><span class="std std-numref">Fig. 5</span></a>. A limited crude overlap of the single
+cycle point job schedule may be possible for specific task sets but the
+allowable overlap may change if new tasks are added, and it is still dangerous:
+it amounts to running different parts of a dependent system as if they were not
+dependent and as such it cannot be guaranteed that some unforeseen delay in
+one cycle point, after the next cycle point has begun, (e.g. due to resource
+contention or task failures) won’t result in dependency violations.</p>
+<div class="figure align-center" id="id15">
+<span id="fig-dep-multi"></span><img alt="_images/dep-multi-cycle.png" src="_images/dep-multi-cycle.png" />
+<p class="caption"><span class="caption-number">Fig. 6 </span><span class="caption-text">The complete multi-cycle-point dependency graph.
+The complete dependency graph for the example suite, assuming
+the least possible inter-cycle dependence: the forecast models (<em>a</em>,
+<em>b</em>, and <em>c</em>) depend on their own previous instances. The dashed arrows
+show connections to previous and subsequent forecast cycle points.</span></p>
+</div>
+<div class="figure align-center" id="id16">
+<span id="fig-optimal-two"></span><img alt="_images/timeline-two-cycles-optimal.png" src="_images/timeline-two-cycles-optimal.png" />
+<p class="caption"><span class="caption-number">Fig. 7 </span><span class="caption-text">The optimal two-cycle-point job schedule. The optimal two cycle job
+schedule when the next cycle’s driving data is available in
+advance, possible in principle when inter-cycle dependence is
+handled explicitly.</span></p>
+</div>
+<p><a class="reference internal" href="#fig-optimal-two"><span class="std std-numref">Fig. 7</span></a> shows, in contrast to
+<a class="reference internal" href="#fig-overlap"><span class="std std-numref">Fig. 4</span></a>, the optimal two cycle point job schedule
+obtained by respecting all inter-cycle dependence. This assumes no delays due
+to resource contention or otherwise - i.e. every task runs
+as soon as it is ready to run. The scheduler running
+this suite must be able to adapt dynamically to external conditions
+that impact on multi-cycle-point scheduling in the presence of
+inter-cycle dependence or else, again, risk bringing the system down
+with dependency violations.</p>
+<div class="figure align-center" id="id17">
+<span id="fig-time-three"></span><img alt="_images/timeline-three.png" src="_images/timeline-three.png" />
+<p class="caption"><span class="caption-number">Fig. 8 </span><span class="caption-text">Comparison of job schedules after a delay. Job
+schedules for the example suite after a delay of almost one whole
+forecast cycle point, when inter-cycle dependence is
+taken into account (above the time axis), and when it is not
+(below the time axis). The colored lines indicate the time that
+each cycle point is delayed, and normal “caught up” cycle points
+are shaded gray.</span></p>
+</div>
+<div class="figure align-center" id="id18">
+<span id="fig-time-two"></span><img alt="_images/timeline-two.png" src="_images/timeline-two.png" />
+<p class="caption"><span class="caption-number">Fig. 9 </span><span class="caption-text">Optimal job schedule when all external data is
+available. Job schedules for the example suite in case study
+mode, or after a long delay, when the external driving data are
+available many cycle points in advance. Above the time axis is the optimal
+schedule obtained when the suite is constrained only by its true
+dependencies, as in <a class="reference internal" href="#fig-dep-two-linked"><span class="std std-numref">Fig. 3</span></a>, and underneath
+is the best that can be done, in general, when inter-cycle
+dependence is ignored.</span></p>
+</div>
+<p>To further illustrate the potential benefits of proper inter-cycle
+dependency handling, <a class="reference internal" href="#fig-time-three"><span class="std std-numref">Fig. 8</span></a> shows an operational
+delay of almost one whole cycle point in a suite with little downtime between
+cycle points. Above the time axis is the optimal schedule that is possible in
+principle when inter-cycle dependence is taken into account, and below
+it is the only safe schedule possible <em>in general</em> when it is ignored.
+In the former case, even the cycle point immediately after the delay is hardly
+affected, and subsequent cycle points are all on time, whilst in the latter
+case it takes five full cycle points to catch up to normal real time
+operation <a class="footnote-reference" href="#id7" id="id3">[2]</a>.</p>
+<p>Similarly, <a class="reference internal" href="#fig-time-two"><span class="std std-numref">Fig. 9</span></a> shows example suite job schedules
+for an historical case study, or when catching up after a very long
+delay; i.e. when the external driving data are available many cycle
+points in advance. Task <em>a</em>, which as the most upstream forecast
+model is likely to be a resource intensive atmosphere or ocean model,
+has no upstream dependence on co-temporal tasks and can therefore run
+continuously, regardless of how much downstream processing is yet to be
+completed in its own, or any previous, forecast cycle point (actually,
+task <em>a</em> does depend on co-temporal task <em>x</em> which waits on the
+external driving data, but that returns immediately when the data is
+available in advance, so the result stands). The other forecast models
+can also cycle continuously or with a short gap between, and some
+post processing tasks, which have no previous-instance dependence, can
+run continuously or even overlap (e.g. <em>e</em> in this case). Thus,
+even for this very simple example suite, tasks from three or four
+different cycle points can in principle run simultaneously at any given time.</p>
+<p>In fact, if our tasks are able to trigger off internal outputs of
+upstream tasks (message triggers) rather than waiting on full completion,
+then successive instances of the forecast models could overlap as well
+(because model restart outputs are generally completed early in the forecast)
+for an even more efficient job schedule <a class="footnote-reference" href="#id8" id="id4">[3]</a>.</p>
+</div>
+</div>
+<div class="section" id="the-cylc-scheduling-algorithm">
+<span id="thecylcschedulingalgorithm"></span><h2>1.4. The Cylc Scheduling Algorithm<a class="headerlink" href="#the-cylc-scheduling-algorithm" title="Permalink to this headline">¶</a></h2>
+<div class="figure align-center" id="id19">
+<span id="fig-task-pool"></span><img alt="_images/task-pool.png" src="_images/task-pool.png" />
+<p class="caption"><span class="caption-number">Fig. 10 </span><span class="caption-text">The cylc task pool. How cylc sees a suite, in contrast to the
+multi-cycle-point dependency graph of <a class="reference internal" href="#fig-dep-multi"><span class="std std-numref">Fig. 6</span></a>.
+Task colors represent different cycle points, and the small squares
+and circles represent different prerequisites and outputs. A task
+can run when its prerequisites are satisfied by the outputs
+of other tasks in the pool.</span></p>
+</div>
+<p>Cylc manages a pool of proxy objects that represent the real tasks in a
+suite. Task proxies know how to run the real tasks that they represent,
+and they receive progress messages from the tasks as they run (usually
+reports of completed outputs). There is no global cycling mechanism to
+advance the suite; instead individual task proxies have their own
+private cycle point and spawn their own successors when the time is
+right. Task proxies are self-contained - they know their own
+prerequisites and outputs but are not aware of the wider suite.
+Inter-cycle dependence is not treated as special, and the task pool can
+be populated with tasks with many different cycle points. The task pool
+is illustrated in <a class="reference internal" href="#fig-task-pool"><span class="std std-numref">Fig. 10</span></a>. <em>Whenever any task
+changes state due to completion of an output, every task checks to see
+if its own prerequisites have been satisfied</em> <a class="footnote-reference" href="#id9" id="id5">[4]</a>.
+In effect, cylc gets a pool of tasks to self-organize by negotiating
+their own dependencies so that optimal scheduling, as described in the
+previous section, emerges naturally at run time.</p>
+<table class="docutils footnote" frame="void" id="id6" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[1]</a></td><td>Future plans for EcoConnect include additional deterministic regional
+weather forecasts and a statistical ensemble.</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id7" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id3">[2]</a></td><td>Note that simply overlapping the single cycle point schedules of
+<a class="reference internal" href="#fig-time-one"><span class="std std-numref">Fig. 2</span></a> from the same start point would have
+resulted in dependency violation by task <em>c</em>.</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id8" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id4">[3]</a></td><td>Finally, we note again that a good job scheduler should be able to
+dynamically adapt to delays in any part of the suite due to resource
+contention, varying run times, or anything else that will inevitably
+modify the depicted job schedules.</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id9" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id5">[4]</a></td><td>In fact this dependency negotiation goes through a broker
+object (rather than every task literally checking every other task)
+which scales as <em>n</em> (rather than <em>n</em><sup>2</sup>) where <em>n</em> is the number
+of task proxies in the pool.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/cylc-logo.png" alt="Logo"/>
+            </a></p>
+<h3><a href="index.html">Table of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">1. Introduction: How Cylc Works</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#scheduling-forecast-suites">1.1. Scheduling Forecast Suites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#ecoconnect">1.2. EcoConnect</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dependence-between-tasks">1.3. Dependence Between Tasks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#intra-cycle-dependence">1.3.1. Intra-cycle Dependence</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#inter-cycle-dependence">1.3.2. Inter-Cycle Dependence</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#the-cylc-scheduling-algorithm">1.4. The Cylc Scheduling Algorithm</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="screenshots.html">2. Cylc Screenshots</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">3. Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="terminology.html">4. Cylc Terminology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflows.html">5. Workflows For Cycling Systems</a></li>
+<li class="toctree-l1"><a class="reference internal" href="global-site-user-conf.html">6. Global (Site, User) Configuration Files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">7. Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="suite-name-reg.html">8. Suite Name Registration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="suite-config.html">9. Suite Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="task-implementation.html">10. Task Implementation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="task-job-submission.html">11. Task Job Submission and Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="external-triggers.html">12. External Triggers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="running-suites.html">13. Running Suites</a></li>
+<li class="toctree-l1"><a class="reference internal" href="suite-storage-etc.html">14. Suite Storage, Discovery, Revision Control, and Deployment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendices/appendices-master.html">15. Appendices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="suite-design-guide/suite-design-guide-master.html">16. Suite Design Guide</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/introduction.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="screenshots.html" title="2. Cylc Screenshots"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Cylc documentation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">The Cylc Suite Engine 7.8.1-39-gf3b0d documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2008-2019 NIWA &amp; British Crown (Met Office) &amp; Contributors.
+      Last updated on Mar 01, 2019.
+    </div>
+  </body>
+</html>
