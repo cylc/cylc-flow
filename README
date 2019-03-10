@@ -1,7 +1,0 @@
-Source for the Cylc web site.
-
-Recently taken from gh-pages branch in cylc/cylc.
-
-TODO:
- - tidy this up, now that it is more visible as a distinct repository.
- - fix repo metadata (release versions etc.) from cylc/cylc
