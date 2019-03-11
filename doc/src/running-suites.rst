@@ -310,7 +310,7 @@ to find out what happened to them while the suite was down.
 
 Finally, in necessary routine polling can be configured as a way to track job
 status on job hosts that do not allow networking routing back to the suite host
-for task messaging by HTTPS or ssh. See :ref:`Polling To Track Job Status`.
+for task messaging by TCP or SSH. See :ref:`Polling To Track Job Status`.
 
 
 .. _TaskComms:
@@ -320,18 +320,18 @@ Tracking Task State
 
 Cylc supports three ways of tracking task state on job hosts:
 
-- task-to-suite messaging via HTTPS
-- task-to-suite messaging via non-interactive ssh to the suite host,
-  then local HTTPS
+- task-to-suite messaging via TCP (using ZMQ protocol)
+- task-to-suite messaging via non-interactive SSH to the suite host,
+  then local TCP
 - regular polling by the suite server program
 
 These can be configured per job host in the Cylc global config file - see
 :ref:`SiteRCReference`.
 
-If your site prohibits HTTPS and ssh back from job hosts to
+If your site prohibits TCP and SSH back from job hosts to
 suite hosts, before resorting to the polling method you should
 consider installing dedicated Cylc servers or
-VMs inside the HPC trust zone (where HTTPS and ssh should be allowed).
+VMs inside the HPC trust zone (where TCP and SSH should be allowed).
 
 It is also possible to run Cylc suite server programs on HPC login
 nodes, but this is not recommended for load and run duration,
@@ -340,16 +340,16 @@ Finally, it has been suggested that *port forwarding* may provide another
 solution - but that is beyond the scope of this document.
 
 
-HTTPS Task Messaging
-^^^^^^^^^^^^^^^^^^^^
+TCP Task Messaging
+^^^^^^^^^^^^^^^^^^
 
 Task job wrappers automatically invoke ``cylc message`` to report
 progress back to the suite server program when they begin executing,
 at normal exit (success) and abnormal exit (failure).
 
-By default the messaging occurs via an authenticated, HTTPS connection to the
-suite server program. This is the preferred task communications
-method - it is efficient and direct.
+By default the messaging occurs via an authenticated, TCP connection to the
+suite server program using the ZMQ protocol.
+This is the preferred task communications method - it is efficient and direct.
 
 Suite server programs automatically install suite contact information
 and credentials on job hosts.  Users only need to do this manually
@@ -361,14 +361,14 @@ Ssh Task Messaging
 ^^^^^^^^^^^^^^^^^^
 
 Cylc can be configured to re-invoke task messaging commands on the
-suite host via non-interactive ssh (from job host to suite host).
-Then a local HTTPS connection is made to the suite server program.
+suite host via non-interactive SSH (from job host to suite host).
+Then a local TCP connection is made to the suite server program.
 
 (User-invoked client commands
 can do the same thing with the ``--use-ssh`` command option).
 
-This is less efficient than direct HTTPS messaging, but it may be useful at
-sites where the HTTPS ports are blocked but non-interactive ssh is allowed.
+This is less efficient than direct TCP messaging, but it may be useful at
+sites where the TCP ports are blocked but non-interactive SSH is allowed.
 
 
 .. _Polling To Track Job Status:
@@ -377,15 +377,15 @@ Polling to Track Job Status
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Finally, suite server programs can actively poll task jobs at
-configurable intervals, via non-interactive ssh to the job host.
+configurable intervals, via non-interactive SSH to the job host.
 
 Polling is the least efficient task communications method because task state is
 updated only at intervals, not when task events actually occur.  However, it
-may be needed at sites that do not allow HTTPS or non-interactive ssh from job
+may be needed at sites that do not allow TCP or non-interactive SSH from job
 host to suite host.
 
 Be careful to avoid spamming task hosts with polling commands. Each poll
-opens (and then closes) a new ssh connection.
+opens (and then closes) a new SSH connection.
 
 Polling intervals are configurable under ``[runtime]`` because
 they should may depend on the expected execution time. For instance, a
@@ -463,7 +463,7 @@ Remote Host, Different Home Directory
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you are logged into another host with no shared home directory, file-reading
-commands require non-interactive ssh to the suite host account, and use of the
+commands require non-interactive SSH to the suite host account, and use of the
 ``--host`` and ``--user`` options to re-invoke the command
 on the suite account.
 
@@ -480,7 +480,7 @@ Client-Server Interaction
 -------------------------
 
 Cylc server programs listen on dedicated network ports for
-HTTPS communications from Cylc clients (task jobs and user-invoked commands)
+TCP communications from Cylc clients (task jobs and user-invoked commands)
 
 Use ``cylc scan`` to see which suites are listening on which ports on
 scanned hosts (this lists your own suites by default, but it can show others
@@ -543,7 +543,7 @@ possess the passphrase file for that suite. Fine-grained access to a single
 suite server program via distinct user accounts is not currently supported.
 
 Suite server programs automatically install their auth and contact files to job
-hosts via ssh, to enable task jobs to connect back to the suite server program
+hosts via SSH, to enable task jobs to connect back to the suite server program
 for task messaging.
 
 Client programs invoked by the suite owner automatically load the passphrase,
@@ -564,7 +564,7 @@ or not you have:
 
 - a *shared filesystem* such that you see the same home directory on
   both hosts.
-- *non-interactive ssh* from the client account to the server
+- *non-interactive SSH* from the client account to the server
   account.
 
 With a shared filesystem, a suite registered on the remote (server) host is
@@ -598,7 +598,7 @@ is the suite name. Client commands should then be invoked with the
 
 The suite contact file (see :ref:`The Suite Contact File`) is not needed if
 you have read-access to the remote suite run directory via the local
-filesystem or non-interactive ssh to the suite host account - client commands
+filesystem or non-interactive SSH to the suite host account - client commands
 will automatically read it. If you do install the contact file in your auth
 directory note that the port number will need to be updated if the suite gets
 restarted on a different port. Otherwise use ``cylc scan`` to determine
@@ -609,7 +609,7 @@ the suite port number and use the ``--port`` client command option.
    Possession of a suite passphrase gives full control over the
    target suite, including edit run functionality - which lets you run
    arbitrary scripting on job hosts as the suite owner. Further,
-   non-interactive ssh gives full access to the target user account, so we
+   non-interactive SSH gives full access to the target user account, so we
    recommended that this is only used to interact with suites running on
    accounts to which you already have full access.
 

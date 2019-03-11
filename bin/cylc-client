@@ -19,7 +19,7 @@
 """cylc client [OPTIONS] ARGS
 
 (This command is for internal use.)
-Invoke HTTP(S) client, expect JSON from STDIN for keyword arguments.
+Invoke suite runtime client, expect JSON from STDIN for keyword arguments.
 Use the -n option if client function requires no keyword arguments.
 """
 

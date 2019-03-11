@@ -396,7 +396,7 @@ comsum['set-verbosity'] = 'Change a running suite\'s logging verbosity'
 comsum['broadcast'] = 'Change suite [runtime] settings on the fly'
 comsum['ext-trigger'] = 'Report an external trigger event to a suite'
 comsum['checkpoint'] = 'Tell suite to checkpoint its current state'
-comsum['client'] = '(Internal) Invoke HTTP(S) client, expect JSON input'
+comsum['client'] = '(Internal) Invoke suite runtime client, expect JSON input'
 # discovery
 comsum['ping'] = 'Check that a suite is running'
 comsum['scan'] = 'Scan a host for running suites'

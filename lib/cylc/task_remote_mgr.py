@@ -153,8 +153,8 @@ class TaskRemoteMgr(object):
         shared file system with suite host.
 
         Call "cylc remote-init" to install suite items to remote:
-            ".service/contact": HTTP(S) and SSH+HTTP(S) task comm
-            ".service/passphrase": HTTP(S) task comm
+            ".service/contact": For TCP task communication
+            ".service/passphrase": For TCP task communication
             "python/": if source exists
 
         Return:
