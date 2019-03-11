@@ -28,12 +28,15 @@ if '--use-ssh' in sys.argv[1:]:
     if remrun():
         sys.exit(0)
 
+from cylc.exceptions import UserInputError
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.task_id import TaskID
 from cylc.network.client import SuiteRuntimeClient
+from cylc.terminal import cli_function
 
 
+@cli_function
 def main():
     parser = COP(
         __doc__, comms=True,
@@ -58,16 +61,9 @@ def main():
     # cylc ping SUITE TASKID
     task_id = args[1]
     if not TaskID.is_valid_id(task_id):
-        sys.exit("Invalid task ID: " + task_id)
+        raise UserInputError("Invalid task ID: %s" % task_id)
     success, msg = pclient('ping_task', {'task_id': task_id})
-    if not success:
-        sys.exit('ERROR: ' + msg)
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as exc:
-        if cylc.flags.debug:
-            raise
-        sys.exit(str(exc))
+    main()

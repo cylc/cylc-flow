@@ -36,6 +36,5 @@ cat > suite.rc <<__END__
         [[[directives]]]
             -l  select=1:ncpus=24:mem=20GB  # ERROR!
 __END__
-run_fail $TEST_NAME cylc validate --debug -v suite.rc
-grep_ok "Illegal item (consecutive spaces):\
- \[runtime\]\[task1\]\[directives\]-l  select" $TEST_NAME.stderr
+run_fail $TEST_NAME cylc validate -v suite.rc
+grep_ok "IllegalItemError: \[runtime\]\[task1\]\[directives\]-l  select - (consecutive spaces)" $TEST_NAME.stderr

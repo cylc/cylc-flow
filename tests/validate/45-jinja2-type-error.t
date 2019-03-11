@@ -31,7 +31,7 @@ cat >'suite.rc' <<'__SUITERC__'
 __SUITERC__
 run_fail "${TEST_NAME}" cylc validate 'suite.rc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERROR__'
-Jinja2Error:
+FileParseError: Jinja2Error:
   File "<template>", line 5, in top-level template code
 TypeError: unsupported operand type(s) for /: 'int' and 'str'
 Context lines:
@@ -49,7 +49,7 @@ cat >'suite.rc' <<'__SUITERC__'
 __SUITERC__
 run_fail "${TEST_NAME}" cylc validate 'suite.rc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERROR__'
-Jinja2Error:
+FileParseError: Jinja2Error:
   File "<template>", line 2, in top-level template code
 ValueError: not enough values to unpack (expected 3, got 2)
 Context lines:

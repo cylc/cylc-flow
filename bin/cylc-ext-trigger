@@ -39,9 +39,11 @@ import sys
 from time import sleep
 
 from cylc import LOG
+from cylc.exceptions import CylcError, ClientError
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.client import ClientError, SuiteRuntimeClient
+from cylc.network.client import SuiteRuntimeClient
+from cylc.terminal import cli_function
 
 
 MAX_N_TRIES = 5
@@ -52,6 +54,7 @@ MSG_SEND_RETRY = "Retrying in %s seconds, timeout is %s"
 MSG_SEND_SUCCEED = "Send message: try %s of %s succeeded"
 
 
+@cli_function
 def main():
     parser = COP(
         __doc__, comms=True,
@@ -91,7 +94,7 @@ def main():
             LOG.exception(exc)
             LOG.info(MSG_SEND_FAILED, i_try + 1, max_n_tries)
             if i_try == max_n_tries - 1:  # final attempt
-                sys.exit('ERROR: send failed')
+                raise CylcError('send failed')
             else:
                 LOG.info(MSG_SEND_RETRY, retry_intvl_secs,
                          options.comms_timeout)
@@ -103,9 +106,4 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as exc:
-        if cylc.flags.debug:
-            raise
-        sys.exit(str(exc))
+    main()

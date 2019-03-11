@@ -38,6 +38,7 @@ from cylc.option_parsers import CylcOptionParser as COP
 from cylc.config import SuiteConfig
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.templatevars import load_template_vars
+from cylc.terminal import cli_function
 
 n_oone = 0
 n_otwo = 0
@@ -112,6 +113,7 @@ def prdict(dct, arrow='<', section='', level=0, diff=False, nested=False):
                 print(' ' + arrow + '  ', key, '=', dct[key])
 
 
+@cli_function
 def main():
     parser = COP(
         __doc__, jset=True, prep=True, icp=True,
@@ -174,9 +176,4 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as exc:
-        if cylc.flags.debug:
-            raise
-        sys.exit(str(exc))
+    main()

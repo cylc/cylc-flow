@@ -117,7 +117,7 @@ foo<i> => bar<i>
 __SUITE__
 run_fail "${TEST_NAME_BASE}-05" cylc validate "suite.rc"
 cmp_ok "${TEST_NAME_BASE}-05.stderr" <<'__ERR__'
-Illegal parameter value: [cylc][parameters]i = space is dangerous: space is dangerous: bad value
+IllegalValueError: (type=parameter) [cylc][parameters]i = space is dangerous - (space is dangerous: bad value)
 __ERR__
 
 cat >'suite.rc' <<'__SUITE__'
@@ -137,7 +137,7 @@ foo<i> => bar<i>
 __SUITE__
 run_fail "${TEST_NAME_BASE}-06" cylc validate "suite.rc"
 cmp_ok "${TEST_NAME_BASE}-06.stderr" <<'__ERR__'
-Illegal parameter value: [cylc][parameters]i = mix, 1..10: mixing int range and str
+IllegalValueError: (type=parameter) [cylc][parameters]i = mix, 1..10 - (mixing int range and str)
 __ERR__
 
 cat >'suite.rc' <<'__SUITE__'
@@ -176,7 +176,7 @@ foo<i> => bar<i>
 __SUITE__
 run_fail "${TEST_NAME_BASE}-08" cylc validate "suite.rc"
 cmp_ok "${TEST_NAME_BASE}-08.stderr" <<'__ERR__'
-Illegal parameter value: [cylc][parameters]i = 1..2 3..4: 1..2 3..4: bad value
+IllegalValueError: (type=parameter) [cylc][parameters]i = 1..2 3..4 - (1..2 3..4: bad value)
 __ERR__
 
 cat >'suite.rc' <<'__SUITE__'
@@ -196,7 +196,7 @@ foo<i> => bar<i>
 __SUITE__
 run_fail "${TEST_NAME_BASE}-09" cylc validate "suite.rc"
 cmp_ok "${TEST_NAME_BASE}-09.stderr" <<'__ERR__'
-ERROR, parameter i is not defined in foo<i>
+ParamExpandError: parameter i is not defined in foo<i>
 __ERR__
 
 cat >'suite.rc' <<'__SUITE__'
@@ -213,7 +213,7 @@ foo<i> => bar<i>
 __SUITE__
 run_fail "${TEST_NAME_BASE}-10" cylc validate "suite.rc"
 cmp_ok "${TEST_NAME_BASE}-10.stderr" <<'__ERR__'
-ERROR, parameter i is not defined in <i>: foo<i> => bar<i>
+ParamExpandError: parameter i is not defined in <i>: foo<i>=>bar<i>
 __ERR__
 
 cat >'suite.rc' <<'__SUITE__'

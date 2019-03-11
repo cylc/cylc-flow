@@ -35,8 +35,10 @@ import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.network.client import SuiteRuntimeClient
 from cylc.task_id import TaskID
+from cylc.terminal import cli_function
 
 
+@cli_function
 def main():
     """Implement "cylc show" CLI."""
     parser = COP(
@@ -124,9 +126,4 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as exc:
-        if cylc.flags.debug:
-            raise
-        sys.exit(str(exc))
+    main()

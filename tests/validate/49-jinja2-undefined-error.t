@@ -24,7 +24,7 @@ install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 TEST_NAME=$TEST_NAME_BASE-val
 run_fail "$TEST_NAME" cylc validate suite.rc
 cmp_ok "$TEST_NAME.stderr" <<'__ERROR__'
-Jinja2Error:
+FileParseError: Jinja2Error:
   File "<template>", line 5, in top-level template code
 jinja2.exceptions.UndefinedError: 'UNDEFINED_WHATEVER' is undefined
 Context lines:

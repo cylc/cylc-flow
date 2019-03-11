@@ -141,7 +141,7 @@ def addict(cfig, key, val, parents, index):
     if not isinstance(cfig, dict):
         # an item of this name has already been encountered at this level
         raise FileParseError(
-            'ERROR line %d: already encountered %s',
+            'line %d: already encountered %s',
             index, itemstr(parents, key, val))
 
     if key in cfig:

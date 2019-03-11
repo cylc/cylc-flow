@@ -35,7 +35,7 @@ __SUITE_RC__
 
 run_fail "${TEST_NAME_BASE}" cylc validate 'suite.rc'
 cmp_ok "${TEST_NAME_BASE}.stderr" <<'__ERR__'
-Sequence R/20100101T0000Z/P0Y, point format CCYYMMDDThhmmZ: equal adjacent points: 20100101T0000Z => 20100101T0000Z.
+SequenceDegenerateError: R/20100101T0000Z/P0Y, point format CCYYMMDDThhmmZ: equal adjacent points: 20100101T0000Z => 20100101T0000Z.
 __ERR__
 
 exit

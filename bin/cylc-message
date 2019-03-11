@@ -76,8 +76,10 @@ import sys
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.task_message import record_messages
+from cylc.terminal import cli_function
 
 
+@cli_function
 def main():
     """CLI."""
     parser = COP(

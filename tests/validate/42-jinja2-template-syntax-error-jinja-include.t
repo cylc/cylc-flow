@@ -25,7 +25,7 @@ TEST_NAME=$TEST_NAME_BASE-val
 run_fail "$TEST_NAME" cylc validate suite.rc
 sed -i 's/^  File ".*", line/  File "FILE", line/g' "$TEST_NAME.stderr"
 cmp_ok "$TEST_NAME.stderr" <<'__ERROR__'
-Jinja2Error:
+FileParseError: Jinja2Error:
   File "FILE", line 59, in fail
     raise exc(msg, lineno, self.name, self.filename)
 jinja2.exceptions.TemplateSyntaxError: Encountered unknown tag 'end'. Jinja was looking for the following tags: 'elif' or 'else' or 'endif'. The innermost block that needs to be closed is 'if'.

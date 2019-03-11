@@ -32,15 +32,17 @@ import os
 import re
 from time import sleep, time
 
-
 from parsec.OrderedDict import OrderedDict
+
+from cylc.exceptions import ClientError
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.client import SuiteRuntimeClient, ClientError
+from cylc.network.client import SuiteRuntimeClient
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.task_state import (
     TASK_STATUS_RUNAHEAD, TASK_STATUSES_ORDERED,
     TASK_STATUSES_RESTRICTED)
 from cylc.task_state_prop import get_status_prop
+from cylc.terminal import cli_function
 from cylc.wallclock import get_time_string_from_unix_time
 
 
@@ -105,6 +107,7 @@ The USER_AT_HOST argument allows suite selection by 'cylc scan' output:
         self.pclient = SuiteRuntimeClient(
             suite, owner, host, port, timeout)
 
+    @cli_function
     def run(self):
         (options, args) = self.parser.parse_args()
         suite = args[0]

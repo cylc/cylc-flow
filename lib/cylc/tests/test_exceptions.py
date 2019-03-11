@@ -25,8 +25,7 @@ class TestExceptions(unittest.TestCase):
 
     def test_cylc_error(self):
         error = CylcError("abcd")
-        self.assertEqual("abcd", error.msg)
-        self.assertEqual("'abcd'", str(error))
+        self.assertEqual("CylcError: abcd", str(error))
 
 
 if __name__ == '__main__':

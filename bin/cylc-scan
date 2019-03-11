@@ -42,6 +42,7 @@ import json
 
 from colorama import Fore, Style, init as color_init
 
+from cylc.exceptions import UserInputError
 from cylc.network.scan import (
     get_scan_items_from_fs, re_compile_filters, scan_many)
 from cylc.option_parsers import CylcOptionParser as COP
@@ -123,6 +124,7 @@ def get_parser():
     return parser
 
 
+@terminal.cli_function
 def main():
     """Implement "cylc scan"."""
     parser = get_parser()
@@ -176,7 +178,7 @@ def main():
     elif options.format == 'plain':
         formatter = format_plain
     else:
-        raise Exception('Unknown format: %s' % options.format)
+        raise UserInputError('Unknown format: %s' % options.format)
 
     # output state legend if necessary
     state_legend = ""

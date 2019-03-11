@@ -23,7 +23,7 @@ set_test_number 2
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE
-run_fail $TEST_NAME cylc validate --debug -v $SUITE_NAME
+run_fail $TEST_NAME cylc validate -v $SUITE_NAME
 grep_ok \
     "Node attributes must be of the form 'key1=value1', 'key2=value2', etc." \
     $TEST_NAME.stderr

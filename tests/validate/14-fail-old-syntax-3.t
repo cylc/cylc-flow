@@ -23,9 +23,8 @@ set_test_number 2
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE
-run_fail $TEST_NAME cylc validate --debug -v $SUITE_NAME
-grep_ok "Illegal ISO 8601 interval value: \
-\[runtime\]\[root\]\[events\]execution timeout = 3" $TEST_NAME.stderr
+run_fail $TEST_NAME cylc validate -v $SUITE_NAME
+grep_ok "IllegalValueError: (type=ISO 8601 interval) \[runtime\]\[root\]\[events\]execution timeout = 3" $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
 exit

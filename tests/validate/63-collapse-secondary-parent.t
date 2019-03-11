@@ -39,7 +39,7 @@ __SUITE_RC__
 
 run_fail "${TEST_NAME_BASE}" cylc validate 'suite.rc'
 
-ERR='ERROR \[visualization\]collapsed families: BAR is not a first parent'
+ERR='SuiteConfigError: \[visualization\]collapsed families: BAR is not a first parent'
 grep_ok "$ERR" "${TEST_NAME_BASE}.stderr"
 
 exit

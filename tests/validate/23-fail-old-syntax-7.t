@@ -24,7 +24,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}"
 run_fail "${TEST_NAME}" cylc validate -v "${SUITE_NAME}"
-contains_ok "${TEST_NAME}.stderr" <<<'Illegal item: [scheduling]initial cycle time'
+contains_ok "${TEST_NAME}.stderr" <<<'IllegalItemError: [scheduling]initial cycle time'
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
 exit

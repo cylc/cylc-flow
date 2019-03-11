@@ -36,10 +36,10 @@ from cylc import LOG
 from cylc.broadcast_mgr import BroadcastMgr
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.config import SuiteConfig
-from cylc.cycling import PointParsingError
 from cylc.cycling.loader import get_point, standardise_point_string
 from cylc.daemonize import daemonize
-from cylc.exceptions import CylcError
+from cylc.exceptions import (
+    CylcError, PointParsingError, TaskProxySequenceBoundsError)
 import cylc.flags
 from cylc.host_appointer import HostAppointer, EmptyHostList
 from cylc.hostuserutil import get_host, get_user, get_fqdn_by_host
@@ -61,7 +61,7 @@ from cylc.task_id import TaskID
 from cylc.task_job_logs import JOB_LOG_JOB, get_task_job_log
 from cylc.task_job_mgr import TaskJobManager
 from cylc.task_pool import TaskPool
-from cylc.task_proxy import TaskProxy, TaskProxySequenceBoundsError
+from cylc.task_proxy import TaskProxy
 from cylc.task_state import (
     TASK_STATUSES_ACTIVE, TASK_STATUSES_NEVER_ACTIVE, TASK_STATUS_FAILED)
 from cylc.templatevars import load_template_vars
@@ -414,7 +414,7 @@ conditions; see `cylc conditions`.
         if reqmode:
             if reqmode != self.run_mode:
                 raise SchedulerError(
-                    'ERROR: this suite requires the %s run mode' % reqmode)
+                    'this suite requires the %s run mode' % reqmode)
 
         self.broadcast_mgr.linearized_ancestors.update(
             self.config.get_linearized_ancestors())
@@ -935,7 +935,7 @@ conditions; see `cylc conditions`.
                 break
         if ret_code or not process_str:
             raise SchedulerError(
-                'ERROR, cannot get process "args" from "ps": %s' % err)
+                'cannot get process "args" from "ps": %s' % err)
         # Write suite contact file.
         # Preserve contact data in memory, for regular health check.
         mgr = self.suite_srv_files_mgr
@@ -962,7 +962,7 @@ conditions; see `cylc conditions`.
             mgr.dump_contact_file(self.suite, contact_data)
         except IOError as exc:
             raise SchedulerError(
-                'ERROR, cannot write suite contact file: %s: %s' %
+                'cannot write suite contact file: %s: %s' %
                 (mgr.get_contact_file(self.suite), exc))
         else:
             self.contact_data = contact_data
@@ -1071,7 +1071,7 @@ conditions; see `cylc conditions`.
             req = rtc['required run mode']
             if req and req != self.run_mode:
                 raise SchedulerError(
-                    'ERROR: suite allows only ' + req + ' reference tests')
+                    'suite allows only ' + req + ' reference tests')
             handlers = self._get_events_conf('shutdown handler')
             if handlers:
                 LOG.warning('shutdown handlers replaced by reference test')
@@ -1094,7 +1094,7 @@ conditions; see `cylc conditions`.
             timeout = rtc[self.run_mode + ' mode suite timeout']
             if not timeout:
                 raise SchedulerError(
-                    'ERROR: timeout not defined for %s reference tests' % (
+                    'timeout not defined for %s reference tests' % (
                         self.run_mode))
             self.config.cfg['cylc']['events'][self.EVENT_TIMEOUT] = (
                 timeout)

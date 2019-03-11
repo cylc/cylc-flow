@@ -19,15 +19,12 @@ import sys
 
 # Import cylc to initialise CYLC_DIR and the path for python (__init__.py).
 from cylc import __version__ as CYLC_VERSION
+from cylc.exceptions import CylcError
+from cylc.terminal import cli_function
 
 
-class CommandError(Exception):
-
-    def __init__(self, msg):
-        self.msg = msg
-
-    def __str__(self):
-        return repr(self.msg)
+class CommandError(CylcError):
+    pass
 
 
 class CommandNotFoundError(CommandError):
@@ -419,7 +416,8 @@ comsum['function-run'] = '(Internal) Run a function in the process pool'
 comsum['check-triggering'] = 'A suite shutdown event hook for cylc testing'
 
 
-if __name__ == "__main__":
+@cli_function
+def main():
     # no arguments: print help and exit
     if len(sys.argv) == 1:
         print(usage.replace("__CYLC_VERSION__", CYLC_VERSION))
@@ -495,3 +493,7 @@ if __name__ == "__main__":
             # cylc help CATEGORY
             category_help(category)
             sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()

@@ -21,10 +21,7 @@ from difflib import unified_diff
 
 
 from cylc import LOG
-
-
-class LogAnalyserError(Exception):
-    pass
+from cylc.exceptions import LogAnalyserError
 
 
 class LogSpec(object):
@@ -79,7 +76,7 @@ class LogSpec(object):
         if found:
             return point_string
         else:
-            raise LogAnalyserError("ERROR: logged stop point not found")
+            raise LogAnalyserError("logged stop point not found")
 
 
 class LogAnalyser(object):
@@ -109,11 +106,11 @@ class LogAnalyser(object):
 
         if len(new) == 0:
             raise LogAnalyserError(
-                "ERROR: new log contains no triggering info.")
+                "new log contains no triggering info.")
 
         if len(ref) == 0:
             raise LogAnalyserError(
-                "ERROR: reference log contains no triggering info.")
+                "reference log contains no triggering info.")
 
         new.sort()
         ref.sort()
@@ -121,7 +118,7 @@ class LogAnalyser(object):
         if new != ref:
             diff = unified_diff(new, ref, 'this run', 'reference log')
             raise LogAnalyserError(
-                "ERROR: triggering is NOT consistent with the reference log:" +
+                "triggering is NOT consistent with the reference log:" +
                 '\n' + '\n'.join(diff) + '\n')
         else:
             LOG.info(

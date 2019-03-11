@@ -60,6 +60,7 @@ foo_m1=>bar_m1_n2
 
 import re
 
+from cylc.exceptions import ParamExpandError
 from cylc.task_id import TaskID
 from parsec.OrderedDict import OrderedDictWithDefaults
 
@@ -87,11 +88,6 @@ def item_in_iterable(item, itt):
     except ValueError:
         return False
     return int(item) in (int(i) for i in itt)
-
-
-class ParamExpandError(Exception):
-    """For parameter expansion errors."""
-    pass
 
 
 class NameExpander(object):
@@ -139,12 +135,12 @@ class NameExpander(object):
                     pname, sval = REC_P_OFFS.match(item.strip()).groups()
                     if not self.param_cfg.get(pname, None):
                         raise ParamExpandError(
-                            "ERROR, parameter %s is not defined in %s" % (
+                            "parameter %s is not defined in %s" % (
                                 pname, runtime_heading))
                     if sval:
                         if sval.startswith('+') or sval.startswith('-'):
                             raise ParamExpandError(
-                                "ERROR, parameter index offsets are not"
+                                "parameter index offsets are not"
                                 " supported in name expansion: %s%s" % (
                                     pname, sval))
                         elif sval.startswith('='):
@@ -158,7 +154,7 @@ class NameExpander(object):
                             if not item_in_iterable(
                                     nval, self.param_cfg[pname]):
                                 raise ParamExpandError(
-                                    "ERROR, parameter %s out of range: %s" % (
+                                    "parameter %s out of range: %s" % (
                                         pname, p_list_str))
                             spec_vals[pname] = nval
                     else:
@@ -199,7 +195,7 @@ class NameExpander(object):
             try:
                 results.append((tmpl % current_values, current_values))
             except KeyError as exc:
-                raise ParamExpandError('ERROR: parameter %s is not '
+                raise ParamExpandError('parameter %s is not '
                                        'defined.' % str(exc.args[0]))
         else:
             for param_val in params[0][1]:
@@ -226,7 +222,7 @@ class NameExpander(object):
         for item in (i.strip() for i in p_list_str.split(',')):
             if '-' in item or '+' in item:
                 raise ParamExpandError(
-                    "ERROR, parameter offsets illegal here: '%s'" % origin)
+                    "parameter offsets illegal here: '%s'" % origin)
             elif '=' in item:
                 # Specific value given.
                 pname, pval = [val.strip() for val in item.split('=', 1)]
@@ -236,11 +232,11 @@ class NameExpander(object):
                     pass
                 if pname not in self.param_cfg:
                     raise ParamExpandError(
-                        "ERROR, parameter '%s' undefined in '%s'" % (
+                        "parameter '%s' undefined in '%s'" % (
                             pname, origin))
                 elif pval not in self.param_cfg[pname]:
                     raise ParamExpandError(
-                        "ERROR, illegal value '%s=%s' in '%s'" % (
+                        "illegal value '%s=%s' in '%s'" % (
                             pname, pval, origin))
                 used[pname] = pval
             else:
@@ -249,7 +245,7 @@ class NameExpander(object):
                     used[item] = param_values[item]
                 except KeyError:
                     raise ParamExpandError(
-                        "ERROR, parameter '%s' undefined in '%s'" % (
+                        "parameter '%s' undefined in '%s'" % (
                             item, origin))
         if head:
             tmpl = head
@@ -313,7 +309,7 @@ class GraphExpander(object):
                 pname, offs = REC_P_OFFS.match(item).groups()
                 if not self.param_cfg.get(pname, None):
                     raise ParamExpandError(
-                        "ERROR, parameter %s is not defined in <%s>: %s" % (
+                        "parameter %s is not defined in <%s>: %s" % (
                             pname, p_group, line))
                 if offs and offs.startswith('='):
                     # Check that specific parameter values exist.
@@ -324,7 +320,7 @@ class GraphExpander(object):
                         nval = val
                     if not item_in_iterable(nval, self.param_cfg[pname]):
                         raise ParamExpandError(
-                            "ERROR, parameter %s out of range: %s" % (
+                            "parameter %s out of range: %s" % (
                                 pname, p_group))
                 if pname not in used_pnames:
                     used_pnames.append(pname)
@@ -374,7 +370,7 @@ class GraphExpander(object):
                 try:
                     repl = tmpl % param_values
                 except KeyError as exc:
-                    raise ParamExpandError('ERROR: parameter %s is not '
+                    raise ParamExpandError('parameter %s is not '
                                            'defined.' % str(exc.args[0]))
                 line = line.replace('<' + p_group + '>', repl)
                 # Remove out-of-range nodes

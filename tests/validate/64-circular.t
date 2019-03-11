@@ -28,7 +28,7 @@ __SUITE_RC__
 
 run_fail "${TEST_NAME_BASE}-simple-1" cylc validate 'suite.rc'
 contains_ok "${TEST_NAME_BASE}-simple-1.stderr" <<'__ERR__'
-'ERROR, self-edge detected: a:succeed => a'
+SuiteConfigError: self-edge detected: a:succeed => a
 __ERR__
 
 cat >'suite.rc' <<'__SUITE_RC__'
@@ -39,7 +39,7 @@ __SUITE_RC__
 
 run_fail "${TEST_NAME_BASE}-simple-2" cylc validate 'suite.rc'
 contains_ok "${TEST_NAME_BASE}-simple-2.stderr" <<'__ERR__'
-'ERROR: circular edges detected:  d.1 => a.1  a.1 => b.1  b.1 => c.1  c.1 => d.1'
+SuiteConfigError: circular edges detected:  d.1 => a.1  a.1 => b.1  b.1 => c.1  c.1 => d.1
 __ERR__
 
 cat >'suite.rc' <<'__SUITE_RC__'
@@ -54,7 +54,7 @@ __SUITE_RC__
 
 run_fail "${TEST_NAME_BASE}-simple-fam" cylc validate 'suite.rc'
 contains_ok "${TEST_NAME_BASE}-simple-fam.stderr" <<'__ERR__'
-'ERROR, self-edge detected: f:succeed => f'
+SuiteConfigError: self-edge detected: f:succeed => f
 __ERR__
 
 cat >'suite.rc' <<'__SUITE_RC__'
@@ -73,7 +73,7 @@ __SUITE_RC__
 
 run_fail "${TEST_NAME_BASE}-intercycle-1" cylc validate 'suite.rc'
 contains_ok "${TEST_NAME_BASE}-intercycle-1.stderr" <<'__ERR__'
-'ERROR: circular edges detected:  a.2002 => a.2001  a.2001 => a.2002  a.2003 => a.2002  a.2002 => a.2003'
+SuiteConfigError: circular edges detected:  a.2002 => a.2001  a.2001 => a.2002  a.2003 => a.2002  a.2002 => a.2003
 __ERR__
 
 cat >'suite.rc' <<'__SUITE_RC__'
@@ -89,7 +89,7 @@ __SUITE_RC__
 
 run_fail "${TEST_NAME_BASE}-intercycle-2" cylc validate 'suite.rc'
 contains_ok "${TEST_NAME_BASE}-intercycle-2.stderr" <<'__ERR__'
-'ERROR: circular edges detected:  foo.8 => bar.8  bar.8 => baz.8  baz.8 => foo.8'
+SuiteConfigError: circular edges detected:  foo.8 => bar.8  bar.8 => baz.8  baz.8 => foo.8
 __ERR__
 
 cat >'suite.rc' <<'__SUITE_RC__'
@@ -106,7 +106,7 @@ __SUITE_RC__
 
 run_fail "${TEST_NAME_BASE}-param-1" cylc validate 'suite.rc'
 contains_ok "${TEST_NAME_BASE}-param-1.stderr" <<'__ERR__'
-'ERROR: circular edges detected:  fool_foo2.1 => fool_foo1.1  fool_foo1.1 => fool_foo2.1'
+SuiteConfigError: circular edges detected:  fool_foo2.1 => fool_foo1.1  fool_foo1.1 => fool_foo2.1
 __ERR__
 
 cat >'suite.rc' <<'__SUITE_RC__'

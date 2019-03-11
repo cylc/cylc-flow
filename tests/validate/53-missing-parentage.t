@@ -24,6 +24,6 @@ install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-val
 run_fail $TEST_NAME cylc validate $SUITE_NAME
-grep_ok 'ERROR: null parentage for foo' "$TEST_NAME.stderr"
+grep_ok 'SuiteConfigError: null parentage for foo' "$TEST_NAME.stderr"
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

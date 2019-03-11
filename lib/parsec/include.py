@@ -91,7 +91,7 @@ def inline(lines, dir_, filename, for_grep=False, for_edit=False, viewcfg=None,
         if m:
             q1, match, q2 = m.groups()
             if q1 and (q1 != q2):
-                raise ParsecError("ERROR, mismatched quotes: " + line)
+                raise ParsecError("mismatched quotes: " + line)
             inc = os.path.join(dir_, match)
             if inc not in done:
                 if single or for_edit:

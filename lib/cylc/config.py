@@ -43,7 +43,8 @@ from parsec.util import replicate
 from cylc import LOG
 from cylc.c3mro import C3
 from cylc.conditional_simplifier import ConditionalSimplifier
-from cylc.exceptions import CylcError
+from cylc.exceptions import (
+    CylcError, SuiteConfigError, IntervalParsingError, TaskDefError)
 from cylc.graph_parser import GraphParser
 from cylc.param_expand import NameExpander
 from cylc.cfgspec.glbl_cfg import glbl_cfg
@@ -52,15 +53,14 @@ from cylc.cycling.loader import (
     get_point, get_point_relative, get_interval, get_interval_cls,
     get_sequence, get_sequence_cls, init_cyclers, INTEGER_CYCLING_TYPE,
     ISO8601_CYCLING_TYPE)
-from cylc.cycling import IntervalParsingError
 from cylc.cycling.iso8601 import ingest_time
 import cylc.flags
-from cylc.graphnode import GraphNodeParser, GraphNodeError
+from cylc.graphnode import GraphNodeParser
 from cylc.print_tree import print_tree
 from cylc.subprocctx import SubFuncContext
 from cylc.subprocpool import get_func
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
-from cylc.taskdef import TaskDef, TaskDefError
+from cylc.taskdef import TaskDef
 from cylc.task_id import TaskID
 from cylc.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.task_trigger import TaskTrigger, Dependency
@@ -88,19 +88,6 @@ def check_varnames(env):
         if not re.match(r'^[a-zA-Z_][\w]*$', varname):
             bad.append(varname)
     return bad
-
-
-class SuiteConfigError(Exception):
-    """
-    Attributes:
-        message - what the problem is.
-        TODO - element - config element causing the problem
-    """
-    def __init__(self, msg):
-        self.msg = msg
-
-    def __str__(self):
-        return repr(self.msg)
 
 # TODO: separate config for run and non-run purposes?
 
@@ -208,17 +195,17 @@ class SuiteConfig(object):
 
         # First check for the essential scheduling section.
         if 'scheduling' not in self.cfg:
-            raise SuiteConfigError("ERROR: missing [scheduling] section.")
+            raise SuiteConfigError("missing [scheduling] section.")
         if 'dependencies' not in self.cfg['scheduling']:
             raise SuiteConfigError(
-                "ERROR: missing [scheduling][[dependencies]] section.")
+                "missing [scheduling][[dependencies]] section.")
         # (The check that 'graph' is defined is below).
         # The two runahead limiting schemes are mutually exclusive.
         rlim = self.cfg['scheduling'].get('runahead limit')
         mact = self.cfg['scheduling'].get('max active cycle points')
         if rlim and mact:
             raise SuiteConfigError(
-                "ERROR: use 'runahead limit' OR "
+                "use 'runahead limit' OR "
                 "'max active cycle points', not both")
 
         # Override the suite defn with an initial point from the CLI.
@@ -469,7 +456,7 @@ class SuiteConfig(object):
                     match = RE_EXT_TRIGGER.match(item)
                     if match is None:
                         raise SuiteConfigError(
-                            "ERROR: Illegal %s spec: %s" % (s_type, item)
+                            "Illegal %s spec: %s" % (s_type, item)
                         )
                     name, ext_trigger_msg = match.groups()
                     extn = "(" + ext_trigger_msg + ")"
@@ -478,12 +465,12 @@ class SuiteConfig(object):
                     match = RE_CLOCK_OFFSET.match(item)
                     if match is None:
                         raise SuiteConfigError(
-                            "ERROR: Illegal %s spec: %s" % (s_type, item)
+                            "Illegal %s spec: %s" % (s_type, item)
                         )
                     if (self.cfg['scheduling']['cycling mode'] !=
                             Calendar.MODE_GREGORIAN):
                         raise SuiteConfigError(
-                            "ERROR: %s tasks require "
+                            "%s tasks require "
                             "[scheduling]cycling mode=%s" % (
                                 s_type, Calendar.MODE_GREGORIAN)
                         )
@@ -500,7 +487,7 @@ class SuiteConfig(object):
                             get_interval(offset_string).standardise())
                     except IntervalParsingError:
                         raise SuiteConfigError(
-                            "ERROR: Illegal %s spec: %s" % (
+                            "Illegal %s spec: %s" % (
                                 s_type, offset_string))
                     extn = "(" + offset_string + ")"
 
@@ -532,7 +519,7 @@ class SuiteConfig(object):
         for fam in self.collapsed_families_rc:
             if fam not in self.runtime['first-parent descendants']:
                 raise SuiteConfigError(
-                    'ERROR [visualization]collapsed families: '
+                    '[visualization]collapsed families: '
                     '%s is not a first parent' % fam)
 
         if is_reload and collapsed:
@@ -583,7 +570,7 @@ class SuiteConfig(object):
                 LOG.warning(err_msg)
             if self.strict:
                 raise SuiteConfigError(
-                    'ERROR: strict validation fails naked dummy tasks')
+                    'strict validation fails naked dummy tasks')
 
         if is_validate:
             self.check_tasks()
@@ -601,7 +588,7 @@ class SuiteConfig(object):
                         "External trigger '%s'\n  used in tasks %s and %s." % (
                             msg, name, seen[msg]))
                     raise SuiteConfigError(
-                        "ERROR: external triggers must be used only once.")
+                        "external triggers must be used only once.")
 
         ngs = self.cfg['visualization']['node groups']
         # If a node group member is a family, include its descendants too.
@@ -772,7 +759,7 @@ class SuiteConfig(object):
                         TaskID.get(*lhs), TaskID.get(*rhs))
             if err_msg:
                 raise SuiteConfigError(
-                    'ERROR: circular edges detected:' + err_msg)
+                    'circular edges detected:' + err_msg)
 
     @staticmethod
     def _check_circular_helper(x2ys, y2xs):
@@ -988,11 +975,11 @@ class SuiteConfig(object):
                     continue
                 if p not in self.cfg['runtime']:
                     raise SuiteConfigError(
-                        "ERROR, undefined parent for " + name + ": " + p)
+                        "undefined parent for " + name + ": " + p)
             if pts[0] == "None":
                 if len(pts) < 2:
                     raise SuiteConfigError(
-                        "ERROR: null parentage for " + name)
+                        "null parentage for " + name)
                 demoted[name] = pts[1]
                 pts = pts[1:]
                 first_parents[name] = ['root']
@@ -1016,7 +1003,11 @@ class SuiteConfig(object):
                     c3_single.mro(name))
             except RecursionError:
                 raise SuiteConfigError(
-                    "ERROR: circular [runtime] inheritance?")
+                    "circular [runtime] inheritance?")
+            except Exception as exc:
+                # catch inheritance errors
+                # TODO - specialise MRO exceptions
+                raise SuiteConfigError(str(exc))
 
         for name in self.cfg['runtime']:
             ancestors = self.runtime['linearized ancestors'][name]
@@ -1105,7 +1096,7 @@ class SuiteConfig(object):
         max_cycles = self.cfg['scheduling']['max active cycle points']
         if max_cycles == 0:
             raise SuiteConfigError(
-                "ERROR: max cycle points must be greater than %s" %
+                "max cycle points must be greater than %s" %
                 (max_cycles)
             )
         self.max_num_active_cycle_points = self.cfg['scheduling'][
@@ -1237,7 +1228,7 @@ class SuiteConfig(object):
                 if cs:
                     # (allow explicit blanking of inherited script)
                     raise SuiteConfigError(
-                        "ERROR: script cannot be defined for automatic" +
+                        "script cannot be defined for automatic" +
                         " suite polling task '%s':\n%s" % (l_task, cs))
         # Generate the automatic scripting.
         for name, tdef in list(self.taskdefs.items()):
@@ -1398,7 +1389,7 @@ class SuiteConfig(object):
         try:
             mro = self.runtime['linearized ancestors'][ns]
         except KeyError:
-            mro = ["ERROR: no such namespace: " + ns]
+            mro = ["no such namespace: " + ns]
         return mro
 
     def print_first_parent_tree(self, pretty=False, titles=False):
@@ -1478,10 +1469,7 @@ class SuiteConfig(object):
         """
 
         for taskdef in self.taskdefs.values():
-            try:
-                taskdef.check_for_explicit_cycling()
-            except TaskDefError as exc:
-                raise SuiteConfigError(str(exc))
+            taskdef.check_for_explicit_cycling()
             # Check use of ksh in "[job]shell" setting
             job_shell = taskdef.rtconfig['job']['shell']
             if job_shell and 'ksh' in os.path.basename(job_shell):
@@ -1508,7 +1496,7 @@ class SuiteConfig(object):
                                 value % subs
                             except (KeyError, ValueError) as exc:
                                 raise SuiteConfigError(
-                                    'ERROR: bad task event handler template'
+                                    'bad task event handler template'
                                     ' %s: %s: %s' % (
                                         taskdef.name, value, repr(exc)))
         if cylc.flags.verbose:
@@ -1527,12 +1515,12 @@ class SuiteConfig(object):
                     name = name.split('(', 1)[0]
                 if not TaskID.is_valid_name(name):
                     raise SuiteConfigError(
-                        'ERROR: Illegal %s task name: %s' % (task_type, name))
+                        'Illegal %s task name: %s' % (task_type, name))
                 if (name not in self.taskdefs and
                         name not in self.cfg['runtime']):
                     msg = '%s task "%s" is not defined.' % (task_type, name)
                     if self.strict:
-                        raise SuiteConfigError("ERROR: " + msg)
+                        raise SuiteConfigError(msg)
                     else:
                         LOG.warning(msg)
 
@@ -1572,7 +1560,7 @@ class SuiteConfig(object):
                 if orig_lexpr != lexpr:
                     LOG.error("%s => %s" % (orig_lexpr, right))
                 raise SuiteConfigError(
-                    "ERROR, self-edge detected: %s => %s" % (
+                    "self-edge detected: %s => %s" % (
                         left, right))
             self.edges[seq].add((left, right, suicide, conditional))
 
@@ -1584,12 +1572,8 @@ class SuiteConfig(object):
                 # if right is None, lefts are lone nodes
                 # for which we still define the taskdefs
                 continue
-            try:
-                name, offset_is_from_icp, _, offset, _ = (
-                    GraphNodeParser.get_inst().parse(node))
-            except GraphNodeError as exc:
-                LOG.error(orig_expr)
-                raise SuiteConfigError(str(exc))
+            name, offset_is_from_icp, _, offset, _ = (
+                GraphNodeParser.get_inst().parse(node))
 
             if name not in self.cfg['runtime']:
                 # naked dummy task, implicit inheritance from root
@@ -1634,7 +1618,7 @@ class SuiteConfig(object):
                     # Check for obsolete task message offsets.
                     if BCOMPAT_MSG_RE_C6.match(item[1]):
                         raise SuiteConfigError(
-                            'ERROR: Message trigger offsets are obsolete.')
+                            'Message trigger offsets are obsolete.')
 
     def generate_triggers(self, lexpression, left_nodes, right, seq,
                           suicide, task_triggers):
@@ -1659,7 +1643,7 @@ class SuiteConfig(object):
             if left.startswith('@'):
                 xtrig_labels.add(left[1:])
                 continue
-            # (GraphNodeError checked above)
+            # (GraphParseError checked above)
             name, offset_is_from_icp, offset_is_irregular, offset, output = (
                 GraphNodeParser.get_inst().parse(left))
             ltaskdef = self.taskdefs[name]
@@ -2030,12 +2014,12 @@ class SuiteConfig(object):
             if icp:
                 section = section.replace("^", icp)
             elif "^" in section:
-                raise SuiteConfigError("ERROR: Initial cycle point referenced"
+                raise SuiteConfigError("Initial cycle point referenced"
                                        " (^) but not defined.")
             if fcp:
                 section = section.replace("$", fcp)
             elif "$" in section:
-                raise SuiteConfigError("ERROR: Final cycle point referenced"
+                raise SuiteConfigError("Final cycle point referenced"
                                        " ($) but not defined.")
             # If the section consists of more than one sequence, split it up.
             new_sections = RE_SEC_MULTI_SEQ.split(section)
@@ -2053,11 +2037,11 @@ class SuiteConfig(object):
             except (AttributeError, TypeError, ValueError, CylcError) as exc:
                 if cylc.flags.debug:
                     traceback.print_exc()
-                msg = 'ERROR: Cannot process recurrence %s' % section
+                msg = 'Cannot process recurrence %s' % section
                 msg += ' (initial cycle point=%s)' % icp
                 msg += ' (final cycle point=%s)' % fcp
                 if isinstance(exc, CylcError):
-                    msg += ' %s' % str(exc)
+                    msg += ' %s' % exc.args[0]
                 raise SuiteConfigError(msg)
             self.sequences.append(seq)
             parser = GraphParser(family_map, self.parameters)
@@ -2079,7 +2063,7 @@ class SuiteConfig(object):
                             'wall_clock', 'wall_clock', [], {})
                     else:
                         raise SuiteConfigError(
-                            "ERROR, undefined xtrigger label: %s" % label)
+                            "undefined xtrigger label: %s" % label)
                 if xtrig.func_name.startswith('wall_clock'):
                     self.xtrigger_mgr.add_clock(label, xtrig)
                     # Replace existing xclock if the new offset is larger.

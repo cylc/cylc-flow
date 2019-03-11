@@ -30,21 +30,21 @@ from cylc.remote import remrun
 if remrun():
     sys.exit(0)
 
-from cylc import LOG
+from cylc import LOG, __version__ as CYLC_VERSION
+from cylc.config import SuiteConfig
+from cylc.exceptions import (
+    SuiteConfigError, TriggerExpressionError, TaskProxySequenceBoundsError)
 import cylc.flags
-from cylc.option_parsers import CylcOptionParser as COP
 from cylc.loggingutil import CylcLogFormatter
-from cylc import __version__ as CYLC_VERSION
-from cylc.config import SuiteConfig, SuiteConfigError
-from cylc.prerequisite import TriggerExpressionError
-from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
-from cylc.task_proxy import TaskProxy, TaskProxySequenceBoundsError
-from cylc.templatevars import load_template_vars
+from cylc.option_parsers import CylcOptionParser as COP
 from cylc.profiler import Profiler
+from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
+from cylc.task_proxy import TaskProxy
+from cylc.templatevars import load_template_vars
+from cylc.terminal import cli_function
 
 
-def main():
-    """cylc validate CLI."""
+def parse_args():
     parser = COP(__doc__, jset=True, prep=True, icp=True)
 
     parser.add_option(
@@ -69,7 +69,13 @@ def main():
         default="live", dest="run_mode",
         choices=['live', 'dummy', 'dummy-local', 'simulation'])
 
-    (options, args) = parser.parse_args()
+    return parser.parse_args()
+
+
+@cli_function
+def main():
+    """cylc validate CLI."""
+    options, args = parse_args()
 
     profiler = Profiler(options.profile_mode)
     profiler.start()
@@ -121,7 +127,7 @@ def main():
             continue
         except Exception as exc:
             raise SuiteConfigError(
-                'ERROR, failed to instantiate task %s: %s' % (name, exc))
+                'failed to instantiate task %s: %s' % (name, exc))
 
         # force trigger evaluation now
         try:
@@ -139,7 +145,7 @@ def main():
         except Exception as exc:
             print(str(exc), file=sys.stderr)
             raise SuiteConfigError(
-                'ERROR, %s: failed to evaluate triggers.' % name)
+                '%s: failed to evaluate triggers.' % name)
         if cylc.flags.verbose:
             print('  + %s ok' % itask.identity)
 
@@ -148,11 +154,4 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as exc:
-        if cylc.flags.debug:
-            import traceback
-            traceback.print_exc()
-            raise
-        sys.exit(str(exc))
+    main()

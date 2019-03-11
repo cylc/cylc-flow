@@ -23,9 +23,9 @@ set_test_number 2
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE
-run_fail $TEST_NAME cylc validate --debug -v $SUITE_NAME
-grep_ok "'Obsolete syntax: mixed integer \[dependencies\]graph with cycling \
-\[dependencies\]\[12\]'" $TEST_NAME.stderr
+run_fail $TEST_NAME cylc validate -v $SUITE_NAME
+grep_ok "SuiteConfigError: Obsolete syntax: mixed integer \[dependencies\]graph with cycling \
+\[dependencies\]\[12\]" $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
 exit

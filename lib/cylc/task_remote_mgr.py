@@ -33,6 +33,7 @@ from time import time
 
 from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
+from cylc.exceptions import TaskRemoteMgmtError
 import cylc.flags
 from cylc.hostuserutil import is_remote, is_remote_host, is_remote_user
 from cylc.subprocctx import SubProcContext
@@ -42,28 +43,6 @@ from cylc.task_remote_cmd import (
 
 REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
 REMOTE_INIT_FAILED = 'REMOTE INIT FAILED'
-
-
-class TaskRemoteMgmtError(Exception):
-    """Cannot initialise suite run directory of remote job host."""
-
-    MSG_INIT = '%s: initialisation did not complete:\n'  # %s owner_at_host
-    MSG_SELECT = "%s: host selection failed:\n"  # %s host
-    MSG_TIDY = '%s: clean up did not complete:\n'  # %s owner_at_host
-
-    def __str__(self):
-        msg, (host, owner), cmd_str, ret_code, out, err = self.args
-        if owner:
-            owner_at_host = owner + '@' + host
-        else:
-            owner_at_host = host
-        ret = (msg + 'COMMAND FAILED (%d): %s\n') % (
-            owner_at_host, ret_code, cmd_str)
-        for label, item in ('STDOUT', out), ('STDERR', err):
-            if item:
-                for line in item.splitlines(True):  # keep newline chars
-                    ret += 'COMMAND %s: %s' % (label, line)
-        return ret
 
 
 class TaskRemoteMgr(object):

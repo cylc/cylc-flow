@@ -18,7 +18,8 @@
 
 import unittest
 
-from cylc.param_expand import NameExpander, GraphExpander, ParamExpandError
+from cylc.exceptions import ParamExpandError
+from cylc.param_expand import NameExpander, GraphExpander
 
 
 class TestParamExpand(unittest.TestCase):

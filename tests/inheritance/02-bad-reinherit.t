@@ -27,7 +27,7 @@ run_fail $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-cmp
 cmp_ok $TEST_NAME_BASE-validate.stderr <<__ERR__
-ERROR: foo: bad runtime namespace inheritance hierarchy.
+SuiteConfigError: ERROR: foo: bad runtime namespace inheritance hierarchy.
 See the cylc documentation on multiple inheritance.
 __ERR__
 #-------------------------------------------------------------------------------

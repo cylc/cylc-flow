@@ -91,7 +91,7 @@ contains_ok "${TEST_NAME}-validate.stdout" <<__OUT__
 REGISTERED ${TESTD} -> ${CYLC_RUN_DIR}/${TESTD}
 __OUT__
 contains_ok "${TEST_NAME}-validate.stderr" <<__ERR__
-Illegal item: sched
+IllegalItemError: sched
 __ERR__
 
 purge_suite $TESTD

@@ -21,17 +21,11 @@
 from isodatetime.timezone import get_local_time_zone
 
 import cylc.cycling.iso8601
+from cylc.exceptions import TaskProxySequenceBoundsError
 from cylc.task_id import TaskID
 from cylc.task_state import (
     TaskState, TASK_STATUS_WAITING, TASK_STATUS_RETRYING)
 from cylc.wallclock import get_unix_time_from_time_string as str2time
-
-
-class TaskProxySequenceBoundsError(ValueError):
-    """Error on TaskProxy.__init__ with out of sequence bounds start point."""
-
-    def __str__(self):
-        return 'Not loading %s (out of sequence bounds)' % self.args[0]
 
 
 class TaskProxy(object):

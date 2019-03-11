@@ -18,18 +18,13 @@
 """Module for parsing cylc graph strings."""
 
 import re
-from cylc.param_expand import GraphExpander, ParamExpandError
+
+from cylc.exceptions import GraphParseError
+from cylc.param_expand import GraphExpander
 from cylc.task_id import TaskID
 
 
 ARROW = '=>'
-
-
-class GraphParseError(Exception):
-    """For graph string parsing errors."""
-    def __str__(self):
-        # Restore some spaces for readability.
-        return self.args[0].replace(ARROW, ' %s ' % ARROW)
 
 
 class Replacement(object):
@@ -210,7 +205,7 @@ class GraphParser(object):
                 # First line can't start with an arrow.
                 if this_line.startswith(ARROW):
                     raise GraphParseError(
-                        "ERROR, leading arrow: %s" % this_line)
+                        "leading arrow: %s" % this_line)
             try:
                 next_line = non_blank_lines[i + 1]
             except IndexError:
@@ -218,7 +213,7 @@ class GraphParser(object):
                 if this_line.endswith(ARROW):
                     # Last line can't end with an arrow.
                     raise GraphParseError(
-                        "ERROR, trailing arrow: %s" % this_line)
+                        "trailing arrow: %s" % this_line)
             part_lines.append(this_line)
             if (this_line.endswith(ARROW) or next_line.startswith(ARROW)):
                 continue
@@ -245,11 +240,11 @@ class GraphParser(object):
         for line in full_lines:
             if self.__class__.OP_AND_ERR in line:
                 raise GraphParseError(
-                    "ERROR, the graph AND operator is '%s': %s" % (
+                    "the graph AND operator is '%s': %s" % (
                         self.__class__.OP_AND, line))
             if self.__class__.OP_OR_ERR in line:
                 raise GraphParseError(
-                    "ERROR, the graph OR operator is '%s': %s" % (
+                    "the graph OR operator is '%s': %s" % (
                         self.__class__.OP_OR, line))
             # Check node syntax. First drop all non-node characters.
             node_str = line
@@ -273,11 +268,8 @@ class GraphParser(object):
             if not self.__class__.REC_PARAMS.search(line):
                 line_set.add(line)
                 continue
-            try:
-                for l in graph_expander.expand(line):
-                    line_set.add(l)
-            except ParamExpandError as exc:
-                raise GraphParseError(str(exc))
+            for l in graph_expander.expand(line):
+                line_set.add(l)
 
         # Process chains of dependencies as pairs: left => right.
         # Parameterization can duplicate some dependencies, so use a set.
@@ -311,7 +303,7 @@ class GraphParser(object):
         GraphParseError -- always. This is the sole purpose of this method
         """
         raise GraphParseError(
-            "ERROR, bad graph node format:\n"
+            "bad graph node format:\n"
             "  " + "\n  ".join(lines) + "\n"
             "Correct format is:\n"
             " @ACTION or "
@@ -333,7 +325,7 @@ class GraphParser(object):
         """
         # Raise error for right-hand-side OR operators.
         if right and self.__class__.OP_OR in right:
-            raise GraphParseError("ERROR, illegal OR on RHS: %s" % right)
+            raise GraphParseError("illegal OR on RHS: %s" % right)
 
         # Remove qualifiers from right-side nodes.
         if right:
@@ -343,25 +335,25 @@ class GraphParser(object):
         # Raise error if suicide triggers on the left of the trigger.
         if left and self.__class__.SUICIDE_MARK in left:
             raise GraphParseError(
-                "ERROR, suicide markers must be"
+                "suicide markers must be"
                 " on the right of a trigger: %s" % left)
 
         # Cycle point offsets are not allowed on the right side (yet).
         if right and '[' in right:
             raise GraphParseError(
-                "ERROR, illegal cycle point offset on the right: %s => %s" % (
+                "illegal cycle point offset on the right: %s => %s" % (
                     left, right))
 
         # Check that parentheses match.
         if left and left.count("(") != left.count(")"):
             raise GraphParseError(
-                "ERROR, parenthesis mismatch in: \"" + left + "\"")
+                "parenthesis mismatch in: \"" + left + "\"")
 
         # Split right side on AND.
         rights = right.split(self.__class__.OP_AND)
         if '' in rights or right and not all(rights):
             raise GraphParseError(
-                "ERROR, null task name in graph: %s=>%s" % (left, right))
+                "null task name in graph: %s => %s" % (left, right))
 
         if not left or (self.__class__.OP_OR in left or '(' in left):
             # Treat conditional or bracketed expressions as a single entity.
@@ -371,7 +363,7 @@ class GraphParser(object):
             lefts = left.split(self.__class__.OP_AND)
         if '' in lefts or left and not all(lefts):
             raise GraphParseError(
-                "ERROR, null task name in graph: %s=>%s" % (left, right))
+                "null task name in graph: %s => %s" % (left, right))
 
         for left in lefts:
             # Extract information about all nodes on the left.
@@ -416,12 +408,12 @@ class GraphParser(object):
                     else:
                         # Unqualified (FAM => foo) or bad (FAM:bad => foo).
                         raise GraphParseError(
-                            "ERROR, bad family trigger in %s" % expr)
+                            "bad family trigger in %s" % expr)
                     family_trig_map[(name, trig)] = (ttype, ext)
                 else:
                     if (trig.endswith(self.__class__.FAM_TRIG_EXT_ANY) or
                             trig.endswith(self.__class__.FAM_TRIG_EXT_ALL)):
-                        raise GraphParseError("ERROR, family trigger on non-"
+                        raise GraphParseError("family trigger on non-"
                                               "family namespace %s" % expr)
             self._families_all_to_all(expr, rights, info, family_trig_map)
 

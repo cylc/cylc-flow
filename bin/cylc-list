@@ -38,10 +38,11 @@ import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.templatevars import load_template_vars
+from cylc.terminal import cli_function
 
 
+@cli_function
 def main():
-
     parser = COP(__doc__, jset=True, prep=True, icp=True)
 
     parser.add_option(
@@ -146,9 +147,4 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as exc:
-        if cylc.flags.debug:
-            raise
-        sys.exit(str(exc))
+    main()

@@ -57,10 +57,12 @@ import collections
 import contextlib
 import os
 
+from cylc.exceptions import CylcError
 import cylc.flags
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.rundb import CylcSuiteDAO
+from cylc.terminal import cli_function
 
 
 @contextlib.contextmanager
@@ -83,6 +85,7 @@ def smart_open(filename=None):
             fh.close()
 
 
+@cli_function
 def main():
     parser = COP(
         __doc__,
@@ -244,7 +247,7 @@ class TimingSummary(object):
         try:
             import pandas
         except ImportError:
-            raise Exception('Cannot import pandas - summary unavailable.')
+            raise CylcError('Cannot import pandas - summary unavailable.')
         else:
             del pandas
 
@@ -387,16 +390,11 @@ class HTMLTimingSummary(TimingSummary):
             import matplotlib
             matplotlib.use('Agg')
         except ImportError:
-            raise Exception(
+            raise CylcError(
                 'Cannot import matplotlib - HTML summary unavailable.'
             )
         super(HTMLTimingSummary, self)._check_imports()
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as exc:
-        if cylc.flags.debug:
-            raise
-        sys.exit(str(exc))
+    main()

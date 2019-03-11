@@ -25,7 +25,7 @@ TEST_NAME=$TEST_NAME_BASE-val
 run_fail "$TEST_NAME" cylc validate suite.rc
 sed -i 's/^  File ".*/  File "FILE", line NN, in ROUTINE/g' "$TEST_NAME.stderr"
 cmp_ok "$TEST_NAME.stderr" <<'__ERROR__'
-Jinja2Error:
+FileParseError: Jinja2Error:
   File "FILE", line NN, in ROUTINE
 jinja2.exceptions.TemplateNotFound: suite-foo.rc
 Context lines:

@@ -5,6 +5,8 @@ import sys
 from parsec.exceptions import ParsecError
 
 from cylc.cfgspec.glbl_cfg import glbl_cfg
+from cylc.exceptions import CylcError
+import cylc.flags
 
 
 def is_terminal():
@@ -50,3 +52,24 @@ def prompt(question, force=False, gui=False, no_force=False, no_abort=False,
             sys.exit(0)
     else:
         return True
+
+
+def cli_function(function):
+    """Decorator for CLI entry points.
+
+    Catches "known" errors and suppresses [full] traceback.
+
+    """
+    def wrapper(*args, **kwargs):
+        try:
+            function(*args, **kwargs)
+        except (CylcError, ParsecError) as exc:
+            if is_terminal() or not cylc.flags.debug:
+                # catch "known" CylcErrors which should have sensible short
+                # summations of the issue, full traceback not necessary
+                sys.exit(str(exc))
+            else:
+                # if command is running non-interactively just raise the full
+                # traceback
+                raise
+    return wrapper

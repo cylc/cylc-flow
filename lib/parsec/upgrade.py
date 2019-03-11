@@ -136,7 +136,7 @@ class upgrader(object):
                     npre = nkeys[:i]
                     npost = nkeys[i + 1:]
             if not npre or not npost:
-                raise UpgradeError('ERROR: __MANY__ mismatch')
+                raise UpgradeError('__MANY__ mismatch')
             for m in many:
                 exp_upgs.append({
                     'old': pre + [m] + post,

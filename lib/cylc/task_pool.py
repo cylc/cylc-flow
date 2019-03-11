@@ -38,8 +38,8 @@ from time import time
 from parsec.OrderedDict import OrderedDict
 
 from cylc import LOG
-from cylc.config import SuiteConfigError
 from cylc.cycling.loader import get_point, standardise_point_string
+from cylc.exceptions import SuiteConfigError, PointParsingError
 from cylc.task_action_timer import TaskActionTimer
 from cylc.task_events_mgr import (
     CustomTaskEventHandlerContext, TaskEventMailContext,
@@ -125,7 +125,7 @@ class TaskPool(object):
                 continue
             try:
                 point_str = standardise_point_string(point_str)
-            except ValueError as exc:
+            except PointParsingError as exc:
                 LOG.warning(
                     self.ERR_PREFIX_TASKID_MATCH + ("%s (%s)" % (item, exc)))
                 n_warnings += 1
@@ -144,7 +144,7 @@ class TaskPool(object):
             try:
                 stop_point = get_point(
                     standardise_point_string(stop_point_str))
-            except ValueError as exc:
+            except PointParsingError as exc:
                 LOG.warning("Invalid stop point: %s (%s)" % (
                     stop_point_str, exc))
                 n_warnings += 1
@@ -1333,7 +1333,7 @@ class TaskPool(object):
                 else:
                     try:
                         point_str = standardise_point_string(point_str)
-                    except ValueError:
+                    except PointParsingError:
                         # point_str may be a glob
                         pass
                 tasks_found = False

@@ -75,9 +75,11 @@ import cylc.flags
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
+from cylc.terminal import cli_function
 from cylc.wallclock import get_current_time_string
 
 
+@cli_function
 def main():
     parser = COP(__doc__, prep=True)
 
@@ -118,7 +120,7 @@ def main():
 
         # edit the suite.rc file
         if not os.path.isfile(suiterc):
-            print('ERROR, file not found: ', suiterc, file=sys.stderr)
+            print('file not found: ', suiterc, file=sys.stderr)
             sys.exit(1)
 
         # in case editor has options, e.g. 'emacs -nw':
@@ -210,9 +212,4 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as exc:
-        if cylc.flags.debug:
-            raise
-        sys.exit(str(exc))
+    main()

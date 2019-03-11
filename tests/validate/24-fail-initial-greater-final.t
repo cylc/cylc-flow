@@ -23,7 +23,7 @@ set_test_number 2
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE
-run_fail $TEST_NAME cylc validate --debug -v $SUITE_NAME
+run_fail $TEST_NAME cylc validate -v $SUITE_NAME
 grep_ok "The initial cycle point:20141208T0000Z is after the final cycle \
 point:20141207T0000Z."    $TEST_NAME.stderr
 #-------------------------------------------------------------------------------

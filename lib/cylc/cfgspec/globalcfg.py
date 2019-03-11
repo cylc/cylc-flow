@@ -30,6 +30,7 @@ from parsec.upgrade import upgrader, converter
 from cylc import LOG
 from cylc.cfgvalidate import (
     cylc_config_validate, CylcConfigValidator as VDR, DurationFloat)
+from cylc.exceptions import GlobalConfigError
 from cylc.hostuserutil import get_user_home, is_remote_user
 from cylc.network import Priv
 from cylc import __version__ as CYLC_VERSION
@@ -262,13 +263,6 @@ def upg(cfg, descr):
     u.obsolete('8.0.0', ['communication'])
 
     u.upgrade()
-
-
-class GlobalConfigError(Exception):
-    """Error in global site/user configuration."""
-
-    def __str__(self):
-        return repr(self.args[0])
 
 
 class GlobalConfig(ParsecConfig):

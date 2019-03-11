@@ -35,7 +35,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 run_fail "${TEST_NAME_BASE}-get-suite-contact-1" \
     cylc get-suite-contact "${SUITE_NAME}"
 cmp_ok "${TEST_NAME_BASE}-get-suite-contact-1.stderr" <<__ERR__
-${SUITE_NAME}: cannot get contact info, suite not running?
+CylcError: ${SUITE_NAME}: cannot get contact info, suite not running?
 __ERR__
 run_ok "${TEST_NAME_BASE}-run-hold" cylc run --hold "${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-get-suite-contact-2" \

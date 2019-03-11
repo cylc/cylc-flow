@@ -38,10 +38,13 @@ import os
 from subprocess import check_call, CalledProcessError
 
 from cylc.cfgspec.glbl_cfg import glbl_cfg
+from cylc.exceptions import UserInputError
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.run_get_stdout import run_get_stdout
+from cylc.terminal import cli_function
 
 
+@cli_function
 def main():
     parser = COP(
         __doc__, argdoc=[('[TARGET]', 'File or suite name')])
@@ -87,9 +90,10 @@ def main():
         else:
             target = glbl_cfg().get(['documentation', 'online'])
         if target is None:
-            sys.exit("ERROR: no url defined, see the [documentation][%s'] "
-                     "global configuration" % (
-                         'local' if options.local else 'online'))
+            raise UserInputError(
+                "no url defined, see the [documentation][%s'] "
+                "global configuration" % (
+                    'local' if options.local else 'online'))
 
     elif len(args) == 1:
         # Suite or task documentation.
@@ -105,13 +109,13 @@ def main():
                 "cylc get-suite-config -i [meta]URL %s" % suite)
         if not res:
             # (Illegal config item)
-            sys.exit(stdout)
+            raise UserInputError(stdout)
         elif len(stdout) == 0:
             if options.task_name is not None:
-                sys.exit("ERROR: No URL defined for %s in %s." % (
+                raise UserInputError("No URL defined for %s in %s." % (
                     options.task_name, suite))
             else:
-                sys.exit("ERROR: No URL defined for %s." % suite)
+                raise UserInputError("No URL defined for %s." % suite)
         target = stdout[0]
     else:
         parser.error("Too many arguments.")
@@ -125,7 +129,7 @@ def main():
     try:
         check_call(command, stdin=open(os.devnull))
     except CalledProcessError:
-        print('ERROR, failed to execute: %s' % command, file=sys.stderr)
+        print('failed to execute: %s' % command, file=sys.stderr)
         raise
 
 

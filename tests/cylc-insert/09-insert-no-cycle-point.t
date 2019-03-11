@@ -23,10 +23,10 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_fail "${TEST_NAME_BASE}" \
-    cylc run -v -v --reference-test --debug --no-detach "${SUITE_NAME}"
+    cylc run -v -v --reference-test --no-detach "${SUITE_NAME}"
 JOB_LOG_D="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/job"
 contains_ok "${JOB_LOG_D}/20140101T0000+01/prep/NN/job.err" \
-    <<<'ERROR: "foo": invalid task ID (argument 1)'
+    <<<'UserInputError: "foo": invalid task ID (argument 1)'
 
 purge_suite "${SUITE_NAME}"
 exit

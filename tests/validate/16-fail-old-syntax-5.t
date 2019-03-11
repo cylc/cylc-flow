@@ -23,8 +23,9 @@ set_test_number 2
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE
-run_fail $TEST_NAME cylc validate --debug -v $SUITE_NAME
-grep_ok "Illegal item: \[scheduling\]\[special tasks\]start-up" $TEST_NAME.stderr
+run_fail $TEST_NAME cylc validate -v $SUITE_NAME
+grep_ok "IllegalItemError: \[scheduling\]\[special tasks\]start-up" \
+    $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
 exit

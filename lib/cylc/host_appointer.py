@@ -26,11 +26,12 @@ from time import sleep
 
 from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
+from cylc.exceptions import CylcError
 from cylc.hostuserutil import is_remote_host, get_fqdn_by_host
 from cylc.remote import remote_cylc_cmd, run_cmd
 
 
-class EmptyHostList(RuntimeError):
+class EmptyHostList(CylcError):
     """Exception to be raised if there are no valid run hosts.
 
     Raise if, from the global configuration settings, no hosts are listed
@@ -41,7 +42,7 @@ class EmptyHostList(RuntimeError):
     """
 
     def __str__(self):
-        msg = ("\nERROR: No hosts currently compatible with this global "
+        msg = ("\nNo hosts currently compatible with this global "
                "configuration:")
         suite_server_cfg_items = (['run hosts'], ['run host select', 'rank'],
                                   ['run host select', 'thresholds'])

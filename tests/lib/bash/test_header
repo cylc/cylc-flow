@@ -262,6 +262,8 @@ contains_ok() {
         mkdir -p "${TEST_LOG_DIR}"
         echo "Missing lines:" >>"${TEST_NAME}.stderr"
         cat "${TEST_NAME}.stdout" >>"${TEST_NAME}.stderr"
+        echo 'Test File:' >>"${TEST_NAME}.stderr"
+        cat "${FILE_TEST}" >>"${TEST_NAME}.stderr"
         cp -p "${TEST_NAME}.stderr" "${TEST_LOG_DIR}/${TEST_NAME}.stderr"
         fail "${TEST_NAME}"
         return
@@ -294,7 +296,13 @@ grep_ok() {
         return
     fi
     mkdir -p "${TEST_LOG_DIR}"
-    echo "Can't find ${BRE} in ${FILE}" >"${TEST_LOG_DIR}/${TEST_NAME}.stderr"
+    echo "Can't find:
+===========
+${BRE}
+===========
+in:
+===========
+$(cat ${FILE})" >"${TEST_LOG_DIR}/${TEST_NAME}.stderr"
     fail "${TEST_NAME}"
 }
 

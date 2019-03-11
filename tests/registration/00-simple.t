@@ -39,7 +39,7 @@ CYLC_RUN_DIR=$(cylc get-global --print-run-dir)
 TEST_NAME="${TEST_NAME_BASE}-noreg"
 run_fail "${TEST_NAME}" cylc register "${SUITE_NAME}" "${PWD}/zilch"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-ERROR: no suite.rc in ${PWD}/zilch
+SuiteServiceFileError: no suite.rc in ${PWD}/zilch
 __ERR__
 
 CHEESE=${PRE}-cheese
@@ -103,7 +103,7 @@ run_ok "${TEST_NAME}" cylc register $CHEESE $CHEESE
 TEST_NAME="${TEST_NAME_BASE}-repurpose1"
 run_fail "${TEST_NAME}" cylc register $CHEESE $YOGHURT
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-ERROR: the name '$CHEESE' already points to ${PWD}/$CHEESE.
+SuiteServiceFileError: the name '$CHEESE' already points to ${PWD}/$CHEESE.
 Use --redirect to re-use an existing name and run directory.
 __ERR__
 
