@@ -11,6 +11,17 @@ Cylc (“silk”) orchestrates complex distributed suites of interdependent cycl
 forecasting systems at [NIWA](https://www.niwa.co.nz). Cylc is a general
 workflow engine, however; it is not specialized to forecasting in any way.
 
+### Python 2 or Python 3 ?
+
+Currently in the source code repository:
+ - **master branch:** Python 3, ZeroMQ network layer, **no GUI** -  **Cylc-8 Work In Progress**
+ - **7.8.x branch:** Python 2, Cherrpy network layer, PyGTK GUI - **Cylc-7 Maintenance**
+
+The first official Cylc-8 release (with a new web UI) is not expected until late 2019.
+
+Until then we recommend the latest cylc-7.8 release for production use.
+
+
 [Quick Installation](INSTALL.md) |
 [Web Site](https://cylc.github.io/cylc) |
 [Documentation](https://cylc.github.io/cylc/documentation) |
