@@ -28,7 +28,7 @@ if grep -E '(unit-tests|functional-tests)' <<< "${args[@]}"; then
     sudo apt-get install heirloom-mailx
     # coverage dependencies
     pip install coverage pytest-cov
-    # common Cylc reqirements
+    # common Cylc requirements
     pip install colorama python-jose zmq empy
 fi
 
