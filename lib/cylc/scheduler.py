@@ -945,8 +945,6 @@ conditions; see `cylc conditions`.
         mgr = self.suite_srv_files_mgr
         contact_data = {
             mgr.KEY_API: str(self.server.API),
-            mgr.KEY_COMMS_PROTOCOL: glbl_cfg().get(
-                ['communication', 'method']),
             mgr.KEY_DIR_ON_SUITE_HOST: os.environ['CYLC_DIR'],
             mgr.KEY_HOST: self.host,
             mgr.KEY_NAME: self.suite,

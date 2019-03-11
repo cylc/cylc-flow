@@ -34,9 +34,6 @@ RUND="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
 poll '!' test -f "${RUND}/.service/contact"
 kill "${MYPID}"  # Should leave behind the contact file
 wait "${MYPID}" 1>'/dev/null' 2>&1 || true
-MYHTTP=$(sed -n 's/^CYLC_COMMS_PROTOCOL=\(.\+\)$/\1/p' "${RUND}/.service/contact")
-MYHOST=$(sed -n 's/^CYLC_SUITE_HOST=\(.\+\)$/\1/p' "${RUND}/.service/contact")
-MYPORT=$(sed -n 's/^CYLC_SUITE_PORT=\(.\+\)$/\1/p' "${RUND}/.service/contact")
 run_fail "${TEST_NAME_BASE}-1" cylc ping "${SUITE_NAME}"
 contains_ok "${TEST_NAME_BASE}-1.stderr" <<__ERR__
 Request returned error: Suite "$SUITE_NAME" already stopped

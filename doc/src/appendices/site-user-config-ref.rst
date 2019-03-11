@@ -243,46 +243,6 @@ GUI Text editor to be invoked by Cylc:
   - ``gui = xterm -e vim``
 
 
-[communication]
----------------
-
-This section covers options for network communication between cylc
-clients (suite-connecting commands) servers (running suites).
-
-By default, the communication method is HTTPS secured with HTTP Digest
-Authentication. If the system does not support SSL, you should configure
-this section to use HTTP. Cylc will not automatically fall back to HTTP
-if HTTPS is not available.
-
-
-[communication] ``->`` method
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The choice of client-server communication method - currently only ZeroMQ
-over TCP is supported.
-
-
-- *type*: string
-- *options*:
-  - **zmq**
-- *default*: zmq
-
-[communication] ``->`` options
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Option flags for the communication method. Currently only 'SHA1' is
-supported for HTTPS, which alters HTTP Digest Auth to use the SHA1 hash
-algorithm rather than the standard MD5. This is more secure but is also
-less well supported by third party web clients including web browsers.
-You may need to add the 'SHA1' option if you are running on platforms
-where MD5 is discouraged (e.g. under FIPS).
-
-- *type*: string\_list
-- *default*: ``[]``
-- *options*:
-  - **SHA1**
-
-
 [monitor]
 ---------
 

@@ -47,7 +47,6 @@ class SuiteSrvFilesManager(object):
     FILE_BASE_SOURCE = "source"
     FILE_BASE_SUITE_RC = "suite.rc"
     KEY_API = "CYLC_API"
-    KEY_COMMS_PROTOCOL = "CYLC_COMMS_PROTOCOL"  # default (or none?)
     KEY_COMMS_PROTOCOL_2 = "CYLC_COMMS_PROTOCOL_2"  # indirect comms
     KEY_DIR_ON_SUITE_HOST = "CYLC_DIR_ON_SUITE_HOST"
     KEY_HOST = "CYLC_SUITE_HOST"

@@ -102,11 +102,6 @@ SPEC = {
         'gui': [VDR.V_STRING, 'gvim -f'],
     },
 
-    'communication': {
-        'method': [VDR.V_STRING, 'zmq'],
-        'options': [VDR.V_STRING_LIST],
-    },
-
     'monitor': {
         'sort order': [VDR.V_STRING, 'definition', 'alphanumeric'],
     },
@@ -264,6 +259,7 @@ def upg(cfg, descr):
                 ['documentation', 'cylc homepage'])
     u.obsolete('8.0.0', ['suite servers', 'scan hosts'])
     u.obsolete('8.0.0', ['suite servers', 'scan ports'])
+    u.obsolete('8.0.0', ['communication'])
 
     u.upgrade()
 
@@ -445,7 +441,7 @@ class GlobalConfig(ParsecConfig):
                 value = value.replace(self._HOME, owner_home)
         if item == "task communication method" and value == "default":
             # Translate "default" to client-server comms: "zmq"
-            value = cfg['communication']['method']
+            value = 'zmq'
         return value
 
     def roll_directory(self, dir_, name, archlen=0):
