@@ -15,7 +15,7 @@ workflow engine, however; it is not specialized to forecasting in any way.
 
 Currently in the source code repository:
  - **master branch:** Python 3, ZeroMQ network layer, **no GUI** -  **Cylc-8 Work In Progress**
- - **7.8.x branch:** Python 2, Cherrpy network layer, PyGTK GUI - **Cylc-7 Maintenance**
+ - **7.8.x branch:** Python 2, Cherrypy network layer, PyGTK GUI - **Cylc-7 Maintenance**
 
 The first official Cylc-8 release (with a new web UI) is not expected until late 2019.
 Until then we recommend the latest cylc-7.8 release for production use.
