@@ -140,7 +140,7 @@ class TestUpgrade(unittest.TestCase):
         }
         with self.assertRaises(UpgradeError) as cm:
             self.u.expand(upg)
-        self.assertEqual('ERROR: __MANY__ mismatch', str(cm.exception))
+        self.assertIn('__MANY__ mismatch', str(cm.exception))
 
     def test_expand_deprecate(self):
 

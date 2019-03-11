@@ -24,7 +24,7 @@ import shutil
 from tempfile import mkdtemp
 
 from parsec.config import ParsecConfig
-from parsec import ParsecError
+from parsec.exceptions import ParsecError
 from parsec.upgrade import upgrader, converter
 
 from cylc import LOG

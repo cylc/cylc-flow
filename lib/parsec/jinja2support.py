@@ -77,6 +77,7 @@ class PyModuleLoader(BaseLoader):
 
 def raise_helper(message, error_type='Error'):
     """Provides a Jinja2 function for raising exceptions."""
+    # TODO - this more nicely
     raise Exception('Jinja2 %s: %s' % (error_type, message))
 
 
@@ -106,10 +107,13 @@ def jinja2environment(dir_=None):
     # |     return str(value).rjust( int(length), str(fillchar) )
     for namespace in ['filters', 'tests', 'globals']:
         nspdir = 'Jinja2' + namespace.capitalize()
-        for fdir in [
-                os.path.join(os.environ['CYLC_DIR'], 'lib', nspdir),
-                os.path.join(dir_, nspdir),
-                os.path.join(os.environ['HOME'], '.cylc', nspdir)]:
+        fdirs = [
+            os.path.join(dir_, nspdir),
+            os.path.join(os.environ['HOME'], '.cylc', nspdir)
+        ]
+        if 'CYLC_DIR' in os.environ:
+            fdirs.append(os.path.join(os.environ['CYLC_DIR'], 'lib', nspdir))
+        for fdir in fdirs:
             if os.path.isdir(fdir):
                 sys.path.append(os.path.abspath(fdir))
                 for name in glob(os.path.join(fdir, '*.py')):

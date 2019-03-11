@@ -19,12 +19,9 @@
 
 from logging import DEBUG, WARNING
 
-from parsec import LOG, ParsecError
+from parsec import LOG
+from parsec.exceptions import UpgradeError
 from parsec.OrderedDict import OrderedDict
-
-
-class UpgradeError(ParsecError):
-    pass
 
 
 class converter(object):

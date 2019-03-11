@@ -84,7 +84,7 @@ class TestEmpysupport1(unittest.TestCase):
             with self.assertRaises(FileParseError) as cm:
                 read_and_proc(fpath=fpath, template_vars=template_vars,
                               viewcfg=viewcfg, asedit=asedit)
-            self.assertTrue("EmPyError" in cm.exception.msg)
+            self.assertTrue("EmPyError" in str(cm.exception))
             sys.stdout.getvalue = lambda: ''
 
         sys.stdout.getvalue = lambda: ''

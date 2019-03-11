@@ -20,6 +20,7 @@ import tempfile
 import unittest
 
 import parsec.config
+from parsec.exceptions import ParsecError
 import parsec.validate
 from cylc.cfgvalidate import CylcConfigValidator as VDR
 from cylc.cfgvalidate import cylc_config_validate
@@ -61,7 +62,7 @@ def get_checkspec_params():
 
     return [
         (spec1, parents1, None),
-        (spec2, parents2, parsec.config.ParsecError)
+        (spec2, parents2, ParsecError)
     ]
 
 
@@ -268,13 +269,11 @@ class TestConfig(unittest.TestCase):
 
     def test_item_not_found_error(self):
         error = parsec.config.ItemNotFoundError("internal error")
-        self.assertEqual('ERROR: item not found: internal error',
-                         error.msg)
+        self.assertIn('item not found: internal error', str(error))
 
     def test_not_single_item_error(self):
         error = parsec.config.NotSingleItemError("internal error")
-        self.assertEqual('ERROR: not a singular item: internal error',
-                         error.msg)
+        self.assertIn('not a singular item: internal error', str(error))
 
 
 if __name__ == '__main__':

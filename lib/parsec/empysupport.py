@@ -25,13 +25,7 @@ import em
 import os
 import sys
 
-
-class EmPyError(Exception):
-    """Wrapper class for EmPy exceptions."""
-
-    def __init__(self, exc, lineno):
-        Exception.__init__(self, exc)
-        self.lineno = lineno
+from parsec.exceptions import EmPyError
 
 
 def empyprocess(flines, dir_, template_vars=None):
