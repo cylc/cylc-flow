@@ -1,5 +1,16 @@
 # Cylc: Quick Installation Guide
 
+### Python 2 or Python 3 ?
+
+Currently in the source code repository:
+
+- **master branch:** Python 3, ZeroMQ network layer, **no GUI** - Cylc-8 Work In Progress
+- **7.8.x branch:** Python 2, Cherrpy network layer, PyGTK GUI - Cylc-7 Maintenance
+
+The first official Cylc-8 release (with a new web UI) is not expected until late 2019.
+
+Until then we recommend the latest cylc-7.8 release for production use.
+
 **See [The Cylc User Guide](https://cylc.github.io/cylc/documentation.html) for
 more detailed information.**
 
@@ -21,24 +32,23 @@ such as `/opt`:
 
 ```bash
 cd /opt
-tar xzf cylc-7.7.0.tar.gz
+tar xzf cylc-7.8.1.tar.gz
 # DO NOT CHANGE THE NAME OF THE UNPACKED CYLC SOURCE DIRECTORY.
-cd cylc-7.7.0
+cd cylc-7.8.1
 export PATH=$PWD/bin:$PATH
 make
 ```
 
 Then make (or update) a symlink to the latest installed version:
 ```bash
-ln -s /opt/cylc-7.7.0 /opt/cylc
+ln -s /opt/cylc-7.8.1 /opt/cylc
 ```
 
 When you type `make`:
   * A file called VERSION is created, containing the Cylc version number
     * The version number is taken from the name of the parent directory. DO
       NOT CHANGE THE NAME OF THE UNPACKED CYLC SOURCE DIRECTORY
-  * The Cylc documentation is generated from source and put in doc/install/
-    (if you have pdflatex, tex4ht, and several other LateX packages installed).
+  * The Cylc User Guide is generated from source (if you have sphinx-doc installed).
 
 If this is the first installed version of Cylc, copy the wrapper script
 `usr/bin/cylc` to a location in the system executable path, such as
@@ -46,7 +56,7 @@ If this is the first installed version of Cylc, copy the wrapper script
 instructions - to point to the Cylc install location:
 
 ```bash
-cp /opt/cylc-7.7.0/usr/bin/cylc /usr/local/bin/
+cp /opt/cylc-7.8.1/usr/bin/cylc /usr/local/bin/
 # (and EDIT /usr/local/bin/cylc as instructed)
 ```
 
@@ -61,32 +71,4 @@ version.
 ```
 $ cylc check-software
 Checking your software...
-
-Individual results:
-================================================================================
-Package (version requirements)                           Outcome (version found)
-================================================================================
-                              *REQUIRED SOFTWARE*
-Python (3+).............................FOUND & min. version MET (3.7.2.final.0)
-Python:zmq (any)..................................................FOUND (17.1.2)
-Python:jose (any)..................................................FOUND (2.0.2)
-Python:colorama (any)..............................................FOUND (0.4.1)
-
-              *OPTIONAL SOFTWARE for the configuration templating*
-Python:EmPy (any)..................................................FOUND (3.3.2)
-
-                 *OPTIONAL SOFTWARE for the HTML documentation*
-Python:sphinx (1.5.3+)..........................FOUND & min. version MET (1.8.4)
-================================================================================
-
-Summary:
-                          ****************************
-                             Core requirements: ok
-                             Full-functionality: ok
-                          ****************************
-```
-
-### Installing The Documentation
-
-After running `make`, copy the `doc/install` directory to a location such as
-`/var/www/html/` and update your Cylc site config file to point to it.
+...
