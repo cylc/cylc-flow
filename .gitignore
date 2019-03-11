@@ -1,6 +1,7 @@
 
 # python bytecode
-*.pyc
+*.py[cod]
+__pycache__/
 
 # Generated documentation files (from 'cylc make-docs')
 # - Command reference from called script 'custom/make-commands.sh'.

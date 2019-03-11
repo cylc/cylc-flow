@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -30,7 +30,7 @@ import sys
 
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
-from cylc.network.httpclient import SuiteRuntimeServiceClient, ClientInfoError
+from cylc.network.client import SuiteRuntimeClient
 from cylc.task_outputs import TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED
 from cylc.wallclock import get_current_time_string
 
@@ -74,17 +74,17 @@ def record_messages(suite, task_job, messages):
     # Write to job.status
     _append_job_status_file(suite, task_job, event_time, messages)
     # Send messages
-    client = SuiteRuntimeServiceClient(suite)
     try:
-        client.put_messages({
-            'task_job': task_job,
-            'event_time': event_time,
-            'messages': messages})
-    except ClientInfoError:
+        pclient = SuiteRuntimeClient(suite)
+    except Exception:
         # Backward communication not possible
         if cylc.flags.debug:
             import traceback
             traceback.print_exc()
+    pclient(
+        'put_messages',
+        {'task_job': task_job, 'event_time': event_time, 'messages': messages}
+    )
 
 
 def _append_job_status_file(suite, task_job, event_time, messages):
@@ -95,7 +95,7 @@ def _append_job_status_file(suite, task_job, event_time, messages):
             glbl_cfg().get_derived_host_item(suite, 'suite job log directory'),
             'job')
     try:
-        job_status_file = open(job_log_name + '.status', 'ab')
+        job_status_file = open(job_log_name + '.status', 'a')
     except IOError:
         if cylc.flags.debug:
             import traceback
@@ -133,7 +133,7 @@ def _append_job_status_file(suite, task_job, event_time, messages):
             for line in open(job_status_file_name):
                 if not line.startswith('CYLC_JOB_'):
                     lines.append(line)
-            job_status_file = open(job_status_file_name, 'wb')
+            job_status_file = open(job_status_file_name, 'w')
             for line in lines:
                 job_status_file.write(line)
             job_status_file.write('%s=%s|%s|%s\n' % (

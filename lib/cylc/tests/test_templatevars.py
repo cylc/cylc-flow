@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -48,7 +48,7 @@ class TestTemplatevars(unittest.TestCase):
             # a comment
             # type=Test
             age=12
-            """)
+            """.encode())
             tf.flush()
             expected = {
                 "name": "John",
@@ -72,7 +72,7 @@ class TestTemplatevars(unittest.TestCase):
             # a comment
             # type=Test
             age=70
-            """)
+            """.encode())
             tf.flush()
             expected = {
                 "name": "John",

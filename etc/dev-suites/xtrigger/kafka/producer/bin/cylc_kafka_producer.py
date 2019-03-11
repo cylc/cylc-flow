@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 A generic Kafka producer for use as a Cylc event handler.
 
@@ -30,14 +30,14 @@ def main():
     """
 
     if 'help' in sys.argv[1]:
-        print cleandoc(main.__doc__)
+        print(cleandoc(main.__doc__))
         sys.exit(0)
 
     # TODO exception handling for bad inputs etc.
     kafka_server = sys.argv[1]
     kafka_topic = sys.argv[2]
     # Construct a message dict from kwargs.
-    dmsg = dict([k.split('=') for k in sys.argv[3:]])
+    dmsg = {k.split('=') for k in sys.argv[3:]}
 
     producer = KafkaProducer(
         bootstrap_servers=kafka_server,

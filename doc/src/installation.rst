@@ -10,50 +10,25 @@ including Apple OS X, but they are not officially tested and supported.
 Third-Party Software Packages
 -----------------------------
 
-**Python 2** ``>=`` **2.6** is required. **Python 2** ``>=`` **2.7.9** is
-recommended for the best security. `Python <https://python.org/>`_ 2 should
-already be installed in your Linux system.
+Requirements:
 
-For Cylc's HTTPS communications layer:
+- Python 3.6+
 
-- `OpenSSL <https://www.openssl.org/>`_
-- `pyOpenSSL <http://www.pyopenssl.org/>`_
-- `python-requests <http://docs.python-requests.org/>`_
-- **python-urllib3** - should be bundled with python-requests
+  - `python-jose <https://pypi.org/project/python-jose/>`_
+  - `zmq <https://pypi.org/project/zmq/>`_
+  - `colorama <https://pypi.org/project/colorama/>`_
 
-The following packages are highly recommended, but are technically optional as
-you can construct and run suites without dependency graph visualisation or
-the Cylc GUIs:
+The following packages are necessary for running tests in Cylc:
 
-- `PyGTK <http://www.pygtk.org>`_ - GUI toolkit.
-
-  .. note::
-
-     PyGTK typically comes with your system Python. It is allegedly quite
-     difficult to install if you need to do so for another Python version.
-
-- `Graphviz <http://www.graphviz.org>`_ - graph layout engine (tested 2.36.0)
-- `Pygraphviz <http://pygraphviz.github.io/>`_ - Python Graphviz interface
-  (tested 1.2). To build this you may need some *devel* packages too:
-  
-  - python-devel
-  - graphviz-devel
-
-The Cylc Review service does not need any additional packages.
-
-The following packages are necessary for running all the tests in Cylc:
-
-- `mock <https://mock.readthedocs.io>`_
+- `pytest <https://pytest.org>`_
 
 To generate the HTML User Guide, you will need:
 
 - `Sphinx <http://www.sphinx-doc.org/en/master/>`_ of compatible version,
   ``>=`` **1.5.3** and ``<=`` **1.7.9**.
 
-In most modern Linux distributions all of the software above can be installed
-via the system package manager. Otherwise download packages manually and follow
-their native installation instructions. To check that all packages
-are installed properly:
+To check that dependencies are installed and environment is configured
+correctly run ``cylc check-software``:
 
 .. code-block:: none
 
@@ -61,34 +36,28 @@ are installed properly:
    Checking your software...
 
    Individual results:
-   ===============================================================================
-   Package (version requirements)                          Outcome (version found)
-   ===============================================================================
+   ================================================================================
+   Package (version requirements)                           Outcome (version found)
+   ================================================================================
                                  *REQUIRED SOFTWARE*
-   Python (2.6+, <3).....................FOUND & min. version MET (2.7.12.final.0)
+   Python (3+).............................FOUND & min. version MET (3.7.2.final.0)
+   Python:zmq (any)..................................................FOUND (17.1.2)
+   Python:jose (any)..................................................FOUND (2.0.2)
+   Python:colorama (any)..............................................FOUND (0.4.1)
 
-          *OPTIONAL SOFTWARE for the GUI & dependency graph visualisation*
-   Python:pygraphviz (any)...........................................NOT FOUND (-)
-   graphviz (any)...................................................FOUND (2.26.0)
-   Python:pygtk (2.0+)...............................................NOT FOUND (-)
+                 *OPTIONAL SOFTWARE for the configuration templating*
+   Python:EmPy (any)..................................................FOUND (3.3.2)
 
-               *OPTIONAL SOFTWARE for the HTTPS communications layer*
-   Python:requests (2.4.2+)......................FOUND & min. version MET (2.11.1)
-   Python:urllib3 (any)..............................................NOT FOUND (-)
-   Python:OpenSSL (any)..............................................NOT FOUND (-)
-
-                *OPTIONAL SOFTWARE for the configuration templating*
-   Python:EmPy (any).................................................NOT FOUND (-)
-
-                   *OPTIONAL SOFTWARE for the HTML documentation*
-   Python:sphinx (1.5.3+).........................FOUND & min. version MET (1.7.0)
-   ===============================================================================
+                    *OPTIONAL SOFTWARE for the HTML documentation*
+   Python:sphinx (1.5.3+)..........................FOUND & min. version MET (1.8.4)
+   ================================================================================
 
    Summary:
-                            ****************************
+                             ****************************
                                 Core requirements: ok
-                             Full-functionality: not ok
-                            ****************************
+                                Full-functionality: ok
+                             ****************************
+
 
 If errors are reported then the packages concerned are either not installed or
 not in your Python search path.
@@ -120,22 +89,10 @@ Software Bundled With Cylc
 Cylc bundles several third party packages which do not need to be installed
 separately.
 
-- `cherrypy <http://www.cherrypy.org/>`_ **6.0.2** (slightly modified): a pure
-  Python HTTP framework that we use as a web server for communication between
-  server processes (suite server programs) and client programs (running tasks,
-  GUIs, CLI commands).
-
-  - Client communication is via the Python
-    `requests <http://docs.python-requests.org/>`_ library if available
-    (recommended) or else pure Python via **urllib2**.
-
 - `Jinja2 <http://jinja.pocoo.org/>`_ **2.10**: a full featured template
   engine for Python, and its dependency
   `MarkupSafe <http://www.pocoo.org/projects/markupsafe/>`_ **0.23**; both
   BSD licensed.
-
-- the `xdot <https://github.com/jrfonseca/xdot.py>`_ graph viewer (modified),
-  LGPL licensed.
 
 
 .. _InstallCylc:

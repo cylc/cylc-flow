@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -262,8 +262,8 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
         try:
             flines = inline(
                 flines, fdir, fpath, False, viewcfg=viewcfg, for_edit=asedit)
-        except IncludeFileNotFoundError, x:
-            raise FileParseError(str(x))
+        except IncludeFileNotFoundError as exc:
+            raise FileParseError(str(exc))
 
     # process with EmPy
     if do_empy:
@@ -289,7 +289,7 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
             LOG.debug('Processing with Jinja2')
             try:
                 flines = jinja2process(flines, fdir, template_vars)
-            except (StandardError, TemplateError, UndefinedError) as exc:
+            except Exception as exc:
                 # Extract diagnostic info from the end of the Jinja2 traceback.
                 exc_lines = traceback.format_exc().splitlines()
                 suffix = []
@@ -302,8 +302,7 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
                 lineno = None
                 if hasattr(exc, 'lineno'):
                     lineno = exc.lineno
-                elif (isinstance(exc, StandardError) or
-                        isinstance(exc, UndefinedError)):
+                else:
                     match = re.search(r'File "<template>", line (\d+)', msg)
                     if match:
                         lineno = int(match.groups()[0])
@@ -313,7 +312,7 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
                     if getattr(exc, 'source', None) is None:
                         # Jinja2Support strips the shebang line.
                         lines = flines[1:]
-                    elif isinstance(exc.source, basestring):
+                    elif isinstance(exc.source, str):
                         lines = exc.source.splitlines()
                     if lines:
                         min_line_index = max(line_index - 3, 0)
@@ -335,7 +334,7 @@ def parse(fpath, output_fname=None, template_vars=None):
     # read and process the file (jinja2, include-files, line continuation)
     flines = read_and_proc(fpath, template_vars)
     if output_fname:
-        with open(output_fname, 'wb') as handle:
+        with open(output_fname, 'w') as handle:
             handle.write('\n'.join(flines) + '\n')
         LOG.debug('Processed configuration dumped: %s', output_fname)
 

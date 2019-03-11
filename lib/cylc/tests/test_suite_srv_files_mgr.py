@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -19,10 +19,10 @@
 import os
 import unittest
 
-import mock
+from unittest import mock
 
-from cylc.suite_srv_files_mgr import SuiteSrvFilesManager, \
-    SuiteServiceFileError
+from cylc.suite_srv_files_mgr import (
+    SuiteSrvFilesManager, SuiteServiceFileError)
 
 
 def get_register_test_cases():
@@ -174,33 +174,35 @@ class TestSuiteSrvFilesManager(unittest.TestCase):
     def setUp(self):
         self.suite_srv_files_mgr = SuiteSrvFilesManager()
 
-    @mock.patch('cylc.suite_srv_files_mgr.mkdir_p')
     @mock.patch('cylc.suite_srv_files_mgr.os')
-    def test_register(self, mocked_os, mocked_mkdir_p):
+    def test_register(self, mocked_os):
         """Test the SuiteSrvFilesManager register function."""
+        def mkdirs_standin(_, exist_ok=False):
+            return True
+
         # we do not need to mock these functions
         mocked_os.path.basename.side_effect = os.path.basename
         mocked_os.path.join = os.path.join
         mocked_os.path.normpath = os.path.normpath
         mocked_os.path.dirname = os.path.dirname
-        mocked_mkdir_p.side_effect = lambda (x): True
-        mocked_os.path.abspath.side_effect = lambda (x): x
+        mocked_os.makedirs.side_effect = mkdirs_standin
+        mocked_os.path.abspath.side_effect = lambda x: x
 
         for reg, source, redirect, cwd, isabs, isfile, \
             suite_srv_dir, readlink, expected_symlink, \
             expected, e_expected, e_message \
                 in get_register_test_cases():
             mocked_os.getcwd.side_effect = lambda: cwd
-            mocked_os.path.isabs.side_effect = lambda (x): isabs
+            mocked_os.path.isabs.side_effect = lambda x: isabs
 
-            mocked_os.path.isfile = lambda (x): isfile
+            mocked_os.path.isfile = lambda x: isfile
             self.suite_srv_files_mgr.get_suite_srv_dir = mock.MagicMock(
                 return_value=suite_srv_dir
             )
             if readlink == OSError:
                 mocked_os.readlink.side_effect = readlink
             else:
-                mocked_os.readlink.side_effect = lambda (x): readlink
+                mocked_os.readlink.side_effect = lambda x: readlink
 
             if e_expected is None:
                 reg = self.suite_srv_files_mgr.register(reg, source, redirect)

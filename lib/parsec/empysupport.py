@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -20,7 +20,7 @@
 Importing code should catch ImportError in case EmPy is not installed.
 """
 
-from StringIO import StringIO
+from io import StringIO
 import em
 import os
 import sys
@@ -47,7 +47,8 @@ def empyprocess(flines, dir_, template_vars=None):
         interpreter.file(ftempl, '<template>', template_vars)
     except Exception as exc:
         lineno = interpreter.contexts[-1].identify()[1]
-        raise EmPyError(interpreter.meta(exc), lineno), None, sys.exc_info()[2]
+        raise EmPyError(
+            interpreter.meta(exc), lineno).with_traceback(sys.exc_info()[2])
     finally:
         interpreter.shutdown()
         xsuite = xtempl.getvalue()

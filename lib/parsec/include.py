@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -123,7 +123,7 @@ def inline(lines, dir_, filename, for_grep=False, for_edit=False, viewcfg=None,
                     if for_grep or single or label or for_edit:
                         outf.append(
                             '#++++ START INLINED INCLUDE FILE ' + match + msg)
-                    h = open(inc, 'rb')
+                    h = open(inc, 'r')
                     finc = [line.rstrip('\n') for line in h]
                     h.close()
                     # recursive inclusion
@@ -150,11 +150,11 @@ def inline(lines, dir_, filename, for_grep=False, for_edit=False, viewcfg=None,
 
 
 def cleanup(suitedir):
-    print 'CLEANUP REQUESTED, deleting:'
+    print('CLEANUP REQUESTED, deleting:')
     for root, _, files in os.walk(suitedir):
         for filename in files:
             if '.EDIT.' in filename:
-                print ' + %s' % filename.replace(suitedir + '/', '')
+                print(' + %s' % filename.replace(suitedir + '/', ''))
                 os.unlink(os.path.join(root, filename))
 
 
@@ -186,7 +186,7 @@ def split_file(dir_, lines, filename, recovery=False, level=None):
         newfiles.append(filename)
 
     inclines = []
-    fnew = open(filename, 'wb')
+    fnew = open(filename, 'w')
     match_on = False
     for line in lines:
         if re.match('^# !WARNING!', line):
@@ -219,13 +219,13 @@ def split_file(dir_, lines, filename, recovery=False, level=None):
     if match_on:
         for line in inclines:
             fnew.write(line)
-        print >> sys.stderr
-        print >> sys.stderr, (
+        print(file=sys.stderr)
+        print((
             "ERROR: end-of-file reached while matching include-file",
-            inc_filename + ".")
-        print >> sys.stderr, (
+            inc_filename + "."), file=sys.stderr)
+        print((
             """This probably means you have corrupted the inlined file by
 modifying one of the include-file boundary markers. Fix the backed-
 up inlined file, copy it to the original filename and invoke another
-inlined edit session split the file up again.""")
-        print >> sys.stderr
+inlined edit session split the file up again."""), file=sys.stderr)
+        print(file=sys.stderr)

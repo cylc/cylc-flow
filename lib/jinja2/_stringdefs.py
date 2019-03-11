@@ -44,22 +44,22 @@ if __name__ == '__main__':
         categories.setdefault(cat, []).append(c)
 
     # from 8.0.0 PropList (Other_ID_Start) + underscore
-    id_start = set(u'_\u2118\u212E\u309B\u309C')
+    id_start = set('_\u2118\u212E\u309B\u309C')
     for cat in 'Lu', 'Ll', 'Lt', 'Lm', 'Lo', 'Nl':
         id_start.update(categories[cat])
 
     # from 8.0.0 PropList (Other_ID_Continue)
     id_continue = set(id_start)
-    id_continue.update(u'\u00B7\u0387\u1369\u1370\u1371\u19DA')
+    id_continue.update('\u00B7\u0387\u1369\u1370\u1371\u19DA')
     for cat in 'Mn', 'Mc', 'Nd', 'Pc':
         id_continue.update(categories[cat])
 
-    xid_start = u''.join(sorted(c for c in id_continue if
-                                unicodedata.normalize('NFKC', c)
-                                in id_start))
-    xid_continue = u''.join(sorted(c for c in id_continue if
-                                   unicodedata.normalize('NFKC', c) in
-                                   id_continue))
+    xid_start = ''.join(sorted(c for c in id_continue if
+                               unicodedata.normalize('NFKC', c)
+                               in id_start))
+    xid_continue = ''.join(sorted(c for c in id_continue if
+                                  unicodedata.normalize('NFKC', c) in
+                                  id_continue))
 
     f = open(__file__, 'w')
     f.write(header)

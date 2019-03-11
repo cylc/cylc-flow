@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -30,7 +30,7 @@ This module provides logic to:
 from collections import namedtuple
 from logging import getLevelName, CRITICAL, ERROR, WARNING, INFO, DEBUG
 import os
-from pipes import quote
+from shlex import quote
 import shlex
 from time import time
 
@@ -82,7 +82,7 @@ def log_task_job_activity(ctx, suite, point, name, submit_num=None):
         suite, point, name, submit_num)
     try:
         with open(job_activity_log, "ab") as handle:
-            handle.write(ctx_str + '\n')
+            handle.write((ctx_str + '\n').encode())
     except IOError as exc:
         # This happens when there is no job directory, e.g. if job host
         # selection command causes an submission failure, there will be no job

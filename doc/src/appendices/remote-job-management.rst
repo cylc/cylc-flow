@@ -182,7 +182,6 @@ Result:
    |__.service  # SUITE SERVICE DIRECTORY
    |  |__contact  # server address information
    |  |__passphrase  # suite passphrase
-   |  |__ssl.cert  # suite SSL certificate
    |__log->log.20180418T025047Z  # LOG DIRECTORIES
    |__log.20180418T025047Z  # log directory for current suite run
    |__suiter.rc
@@ -216,7 +215,6 @@ Result:
    |__.service  # SUITE SERVICE DIRECTORY
    |  |__contact  # server address information
    |  |__passphrase  # suite passphrase
-   |  |__ssl.cert  # suite SSL certificate
    |__log->log.20180418T025047Z  # LOG DIRECTORIES
    |__log.20180418T025047Z  # log directory for current suite run
    |  |__ job  # job logs (to be distinguished from log/suite/ on the suite host)
@@ -263,8 +261,7 @@ Server tracks job progress
 User views job logs
 ^^^^^^^^^^^^^^^^^^^
 
-- command ``cylc cat-log`` via CLI or GUI, invokes itself over SSH to the
-  remote
+- command ``cylc cat-log``, invokes itself over SSH to the remote
 - suites will serve job logs in future, but this will still be needed
   (e.g. if the suite is down)
 

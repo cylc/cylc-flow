@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -41,10 +41,10 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 import cylc.flags
-from cylc.prompt import prompt
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.httpclient import SuiteRuntimeServiceClient
+from cylc.network.client import SuiteRuntimeClient
 from cylc.task_id import TaskID
+from cylc.terminal import prompt
 
 
 def main():
@@ -84,14 +84,14 @@ def main():
                     item, i + 1))
         prompt('Insert %s in %s' % (items, suite), options.force)
 
-    pclient = SuiteRuntimeServiceClient(
-        suite, options.owner, options.host, options.port,
-        options.comms_timeout, my_uuid=options.set_uuid,
-        print_uuid=options.print_uuid)
+    pclient = SuiteRuntimeClient(
+        suite, options.owner, options.host, options.port)
 
-    pclient.put_command(
-        'insert_tasks', items=items, no_check=options.no_check,
-        stop_point_string=options.stop_point_string
+    pclient(
+        'insert_tasks',
+        {'items': items, 'no_check': options.no_check,
+         'stop_point_string': options.stop_point_string},
+        timeout=options.comms_timeout
     )
 
 

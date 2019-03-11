@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -24,12 +24,7 @@ from cylc import LOG
 
 
 class LogAnalyserError(Exception):
-    def __init__(self, msg):
-        Exception.__init__(self, msg)
-        self.msg = msg
-
-    def __str__(self):
-        return repr(self.msg)
+    pass
 
 
 class LogSpec(object):
@@ -38,7 +33,7 @@ class LogSpec(object):
     just gets the start and stop cycle points."""
 
     def __init__(self, log):
-        h = open(log, 'rb')
+        h = open(log, 'r')
         self.lines = h.readlines()
         h.close()
 
@@ -92,10 +87,10 @@ class LogAnalyser(object):
     reference test run. Currently just compares triggering info."""
 
     def __init__(self, new_log, ref_log):
-        h = open(new_log, 'rb')
+        h = open(new_log, 'r')
         self.new_loglines = h.readlines()
         h.close()
-        h = open(ref_log, 'rb')
+        h = open(ref_log, 'r')
         self.ref_loglines = h.readlines()
         h.close()
 
@@ -124,7 +119,7 @@ class LogAnalyser(object):
         ref.sort()
 
         if new != ref:
-            diff = unified_diff(new, ref)
+            diff = unified_diff(new, ref, 'this run', 'reference log')
             raise LogAnalyserError(
                 "ERROR: triggering is NOT consistent with the reference log:" +
                 '\n' + '\n'.join(diff) + '\n')

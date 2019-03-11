@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -21,8 +21,10 @@ The copy and override functions below assume values are either dicts
 (nesting) or shallow collections of simple types.
 """
 
-import sys
+from io import StringIO
 from copy import copy
+import sys
+
 from parsec.OrderedDict import OrderedDictWithDefaults
 
 
@@ -137,8 +139,12 @@ def printcfg(cfg, level=0, indent=0, prefix='', none_str='',
                 continue
             if key_i and level_i:
                 # Print heading
-                handle.write("%s%s%s%s%s\n" % (
-                    prefix, spacer, '[' * level_i, str(key_i), ']' * level_i))
+                msg = "%s%s%s%s%s\n" % (
+                    prefix, spacer, '[' * level_i, str(key_i), ']' * level_i)
+                if not isinstance(handle, StringIO) and 'b' in handle.mode:
+                    msg = msg.encode()
+                handle.write(msg)
+
             # Nested sections are printed after normal settings
             subsections = []
             values = []
@@ -166,7 +172,10 @@ def printcfg(cfg, level=0, indent=0, prefix='', none_str='',
             else:
                 value = str(cfg_i)
             if value is not None:
-                handle.write("%s%s%s%s\n" % (prefix, spacer, key, value))
+                msg = "%s%s%s%s\n" % (prefix, spacer, key, value)
+                if not isinstance(handle, StringIO) and 'b' in handle.mode:
+                    msg = msg.encode()
+                handle.write(msg)
 
 
 def replicate(target, source):
@@ -294,7 +303,7 @@ def un_many(cfig):
     """Remove any '__MANY__' items from a nested dict, in-place."""
     if not cfig:
         return
-    for key, val in cfig.items():
+    for key, val in list(cfig.items()):
         if key == '__MANY__':
             try:
                 del cfig[key]
@@ -332,18 +341,18 @@ def itemstr(parents=None, item=None, value=None):
 
 
 if __name__ == "__main__":
-    print 'Item strings:'
-    print '  ', itemstr(['sec1', 'sec2'], 'item', 'value')
-    print '  ', itemstr(['sec1', 'sec2'], 'item')
-    print '  ', itemstr(['sec1', 'sec2'])
-    print '  ', itemstr(['sec1'])
-    print '  ', itemstr(item='item', value='value')
-    print '  ', itemstr(item='item')
-    print '  ', itemstr(value='value')
+    print('Item strings:')
+    print('  ', itemstr(['sec1', 'sec2'], 'item', 'value'))
+    print('  ', itemstr(['sec1', 'sec2'], 'item'))
+    print('  ', itemstr(['sec1', 'sec2']))
+    print('  ', itemstr(['sec1']))
+    print('  ', itemstr(item='item', value='value'))
+    print('  ', itemstr(item='item'))
+    print('  ', itemstr(value='value'))
     # error or useful?
-    print '  ', itemstr(parents=['sec1', 'sec2'], value='value')
+    print('  ', itemstr(parents=['sec1', 'sec2'], value='value'))
 
-    print 'Configs:'
+    print('Configs:')
     printcfg('foo', prefix=' > ')
     printcfg(['foo', 'bar'], prefix=' > ')
     printcfg({}, prefix=' > ')

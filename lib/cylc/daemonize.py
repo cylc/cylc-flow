@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -130,5 +130,5 @@ def daemonize(server):
     # Note that simply reassigning the sys streams is not sufficient
     # if we import modules that write to stdin and stdout from C
     # code - evidently the subprocess module is in this category!
-    dvnl = file(os.devnull, 'r')
+    dvnl = open(os.devnull, 'r')
     os.dup2(dvnl.fileno(), sys.stdin.fileno())

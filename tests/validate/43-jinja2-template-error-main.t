@@ -34,7 +34,7 @@ run_fail "${TEST_NAME_BASE}" cylc validate 'suite.rc'
 contains_ok "${TEST_NAME_BASE}.stderr" <<'__ERROR__'
 Jinja2Error:
     'You can only sort by either "key" or "value"'
-FilterArgumentError: You can only sort by either "key" or "value"
+jinja2.exceptions.FilterArgumentError: You can only sort by either "key" or "value"
 __ERROR__
 
 exit

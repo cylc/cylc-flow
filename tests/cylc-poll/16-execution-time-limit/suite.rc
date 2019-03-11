@@ -12,6 +12,7 @@
 [runtime]
     [[foo]]
         script = """
+            wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
             export PATH=/bin  # Disable task message.
             sleep 30  # Job must exceed exeuction time limit.
         """

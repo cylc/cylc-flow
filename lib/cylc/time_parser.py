@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -126,11 +126,11 @@ class CylcTimeParser(object):
         self.timepoint_parser, self.duration_parser, self.recurrence_parser = (
             parsers)
 
-        if isinstance(context_start_point, basestring):
+        if isinstance(context_start_point, str):
             context_start_point = self._get_point_from_expression(
                 context_start_point, None)[0]
         self.context_start_point = context_start_point
-        if isinstance(context_end_point, basestring):
+        if isinstance(context_end_point, str):
             context_end_point = self._get_point_from_expression(
                 context_end_point, None)[0]
         self.context_end_point = context_end_point
@@ -150,7 +150,7 @@ class CylcTimeParser(object):
 
         if dump_format is None:
             if num_expanded_year_digits:
-                dump_format = u"+XCCYYMMDDThhmmZ"
+                dump_format = "+XCCYYMMDDThhmmZ"
             else:
                 dump_format = "CCYYMMDDThhmmZ"
 

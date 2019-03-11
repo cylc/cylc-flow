@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -24,8 +24,7 @@ View documentation in the browser, as per Cylc global config.
     Open the Cylc documentation.
 % cylc doc [-t TASK] SUITE
     View suite or task documentation, if URLs are specified in the suite. This
-    parses the suite definition to extract the requested URL. Note that suite
-    server programs also hold suite URLs for access from the Cylc GUI."""
+    parses the suite definition to extract the requested URL."""
 
 import sys
 
@@ -118,15 +117,15 @@ def main():
         parser.error("Too many arguments.")
 
     if options.stdout:
-        print target
+        print(target)
         sys.exit(0)
 
+    # viewer may have spaces (e.g. 'firefox --no-remote'):
+    command = ('%s %s' % (viewer, target)).split(' ')
     try:
-        retcode = check_call(
-            # viewer may have spaces (e.g. 'firefox --no-remote'):
-            ('%s %s' % (viewer, target)).split(' '), stdin=open(os.devnull))
+        check_call(command, stdin=open(os.devnull))
     except CalledProcessError:
-        print >> sys.stderr, 'ERROR, failed to execute: %s' % command
+        print('ERROR, failed to execute: %s' % command, file=sys.stderr)
         raise
 
 

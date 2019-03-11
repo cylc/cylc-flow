@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -25,9 +25,9 @@ class TestParsec(unittest.TestCase):
 
     def test_parsec_error_msg(self):
         parsec_error = parsec.ParsecError()
-        self.assertEquals('', parsec_error.msg)
+        self.assertEqual('', parsec_error.msg)
         # TBD: why do we have msg if the Exception class provides message?
-        self.assertEquals(parsec_error.msg, str(parsec_error))
+        self.assertEqual(parsec_error.msg, str(parsec_error))
 
     def test_parsec_error_str(self):
         msg = 'Turbulence!'

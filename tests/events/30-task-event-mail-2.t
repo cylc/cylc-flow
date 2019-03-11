@@ -43,22 +43,22 @@ suite_run_fail "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach ${OPT_SET} "${SUITE_NAME}"
 
 contains_ok "${TEST_SMTPD_LOG}" <<__LOG__
-retry: 1/t1/01
-retry: 1/t2/01
-retry: 1/t3/01
-retry: 1/t4/01
-retry: 1/t5/01
-retry: 1/t1/02
-retry: 1/t2/02
-retry: 1/t3/02
-retry: 1/t4/02
-retry: 1/t5/02
-failed: 1/t1/03
-failed: 1/t2/03
-failed: 1/t3/03
-failed: 1/t4/03
-failed: 1/t5/03
-see: http://localhost/stuff/${USER}/${SUITE_NAME}/
+b'retry: 1/t1/01'
+b'retry: 1/t2/01'
+b'retry: 1/t3/01'
+b'retry: 1/t4/01'
+b'retry: 1/t5/01'
+b'retry: 1/t1/02'
+b'retry: 1/t2/02'
+b'retry: 1/t3/02'
+b'retry: 1/t4/02'
+b'retry: 1/t5/02'
+b'failed: 1/t1/03'
+b'failed: 1/t2/03'
+b'failed: 1/t3/03'
+b'failed: 1/t4/03'
+b'failed: 1/t5/03'
+b'see: http://localhost/stuff/${USER}/${SUITE_NAME}/'
 __LOG__
 run_ok "${TEST_NAME_BASE}-grep-log" \
     grep -q "Subject: \\[. tasks retry\\].* ${SUITE_NAME}" "${TEST_SMTPD_LOG}"

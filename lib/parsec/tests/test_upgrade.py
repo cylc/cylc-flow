@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -125,7 +125,7 @@ class TestUpgrade(unittest.TestCase):
         with self.assertRaises(UpgradeError) as cm:
             self.u.expand(upg)
         self.assertTrue('Multiple simultaneous __MANY__ not supported' in
-                         str(cm.exception))
+                        str(cm.exception))
 
     def test_expand_deprecate_many_mismatch(self):
         upg = {
@@ -161,7 +161,7 @@ class TestUpgrade(unittest.TestCase):
         self.u.upgrade()
         expanded = self.u.expand(upg)
         self.assertEqual(2, len(expanded))
-        self.assertEquals(['section', 'a', 'e'], expanded[0]['new'])
+        self.assertEqual(['section', 'a', 'e'], expanded[0]['new'])
 
     def test_expand_obsolete(self):
         upg = {

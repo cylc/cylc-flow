@@ -22,7 +22,7 @@ set_test_number 2
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 get_local_ip_address() {
-    python2 - "$1" <<'__PYTHON__'
+    python3 - "$1" <<'__PYTHON__'
 import sys
 from cylc.hostuserutil import get_local_ip_address
 sys.stdout.write("%s\n" % get_local_ip_address(sys.argv[1]))

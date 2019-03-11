@@ -18,7 +18,7 @@
         script = """
 wait "${CYLC_TASK_MESSAGE_STARTED_PID}"
 sleep 1
-cylc shutdown --now --max-polls=30 --interval=2 "${CYLC_SUITE_NAME}"
+cylc shutdown --now --max-polls=30 --interval=1 "${CYLC_SUITE_NAME}"
 """
     [[foo, p2]]
         script = true

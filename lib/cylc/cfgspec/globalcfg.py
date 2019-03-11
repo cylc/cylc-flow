@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -31,8 +31,7 @@ from cylc import LOG
 from cylc.cfgvalidate import (
     cylc_config_validate, CylcConfigValidator as VDR, DurationFloat)
 from cylc.hostuserutil import get_user_home, is_remote_user
-from cylc.mkdir_p import mkdir_p
-from cylc.network import PRIVILEGE_LEVELS, PRIV_STATE_TOTALS, PRIV_SHUTDOWN
+from cylc.network import Priv
 from cylc.version import CYLC_VERSION
 
 # Nested dict of spec items.
@@ -101,11 +100,6 @@ SPEC = {
     'editors': {
         'terminal': [VDR.V_STRING, 'vim'],
         'gui': [VDR.V_STRING, 'gvim -f'],
-    },
-
-    'communication': {
-        'method': [VDR.V_STRING, 'https', 'http'],
-        'options': [VDR.V_STRING_LIST],
     },
 
     'monitor': {
@@ -219,16 +213,16 @@ SPEC = {
         # Allow owners to grant public shutdown rights at the most, not full
         # control.
         'public': (
-            [VDR.V_STRING, PRIV_STATE_TOTALS] +
-            PRIVILEGE_LEVELS[:PRIVILEGE_LEVELS.index(PRIV_SHUTDOWN) + 1]),
+            [VDR.V_STRING]
+            + [level.name.lower().replace('_', '-') for level in [
+                Priv.STATE_TOTALS, Priv.IDENTITY, Priv.DESCRIPTION,
+                Priv.STATE_TOTALS, Priv.READ, Priv.SHUTDOWN]])
     },
 
     'suite servers': {
         'run hosts': [VDR.V_SPACELESS_STRING_LIST],
-        'run ports': [VDR.V_INTEGER_LIST, range(43001, 43101)],
-        'scan hosts': [VDR.V_SPACELESS_STRING_LIST],
-        'scan ports': [VDR.V_INTEGER_LIST, range(43001, 43101)],
-        'condemned hosts': [VDR.V_SPACELESS_STRING_LIST],
+        'run ports': [VDR.V_INTEGER_LIST, list(range(43001, 43101))],
+        'condemned hosts': [VDR.V_ABSOLUTE_HOST_LIST],
         'auto restart delay': [VDR.V_INTERVAL],
         'run host select': {
             'rank': [VDR.V_STRING, 'random', 'load:1', 'load:5', 'load:15',
@@ -263,6 +257,9 @@ def upg(cfg, descr):
     u.deprecate('8.0.0',
                 ['documentation', 'urls', 'internet homepage'],
                 ['documentation', 'cylc homepage'])
+    u.obsolete('8.0.0', ['suite servers', 'scan hosts'])
+    u.obsolete('8.0.0', ['suite servers', 'scan ports'])
+    u.obsolete('8.0.0', ['communication'])
 
     u.upgrade()
 
@@ -443,8 +440,8 @@ class GlobalConfig(ParsecConfig):
                     owner_home = os.path.expanduser('~%s' % owner)
                 value = value.replace(self._HOME, owner_home)
         if item == "task communication method" and value == "default":
-            # Translate "default" to client-server comms: "https" or "http".
-            value = cfg['communication']['method']
+            # Translate "default" to client-server comms: "zmq"
+            value = 'zmq'
         return value
 
     def roll_directory(self, dir_, name, archlen=0):
@@ -471,7 +468,7 @@ class GlobalConfig(ParsecConfig):
     def create_directory(dir_, name):
         """Create directory. Raise GlobalConfigError on error."""
         try:
-            mkdir_p(dir_)
+            os.makedirs(dir_, exist_ok=True)
         except OSError as exc:
             LOG.exception(exc)
             raise GlobalConfigError(

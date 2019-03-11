@@ -29,7 +29,6 @@ indefinitely.
    :numbered:
 
    introduction
-   screenshots
    installation
    terminology
    workflows

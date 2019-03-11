@@ -25,7 +25,7 @@ if [[ -z "${CYLC_TEST_HOST}" ]]; then
 fi
 set_test_number 6
 time_gt () {
-    python2 -c "
+    python3 -c "
 import sys
 from isodatetime.parsers import TimePointParser
 parser = TimePointParser()
@@ -71,7 +71,7 @@ create_test_globalrc '' "
 ${BASE_GLOBALRC}
 [suite servers]
     run hosts = ${CYLC_TEST_HOST}
-    condemned hosts = localhost
+    condemned hosts = $(hostname)
     auto restart delay = PT20S
 "
 

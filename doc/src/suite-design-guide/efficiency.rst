@@ -20,7 +20,7 @@ A properly designed family hierarchy fulfils three purposes in Cylc:
   tasks
 - efficient bulk triggering, for clear scheduling graphs
 - clean suite visualization and monitoring, because families are
-  collapsible in the GUIs
+  collapsible
 
 
 .. _Sharing By Inheritance:

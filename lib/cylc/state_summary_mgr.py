@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Manage suite state summary for client, e.g. GUI."""
+"""Manage suite state summary for client."""
 
 from time import time
 
@@ -31,7 +31,7 @@ from cylc.wallclock import (
 
 
 class StateSummaryMgr(object):
-    """Manage suite state summary for client, e.g. GUI."""
+    """Manage suite state summary for client."""
 
     TIME_FIELDS = ['submitted_time', 'started_time', 'finished_time']
 
@@ -102,7 +102,7 @@ class StateSummaryMgr(object):
                                         'state': state}
 
         state_count_totals = {}
-        for point_string, count in state_count_cycles.items():
+        for point_string, count in list(state_count_cycles.items()):
             for state, state_count in count.items():
                 state_count_totals.setdefault(state, 0)
                 state_count_totals[state] += state_count

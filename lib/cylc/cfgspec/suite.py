@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -24,7 +24,7 @@ from parsec.config import ParsecConfig
 
 from cylc.cfgvalidate import (
     cylc_config_validate, CylcConfigValidator as VDR, DurationFloat)
-from cylc.network import PRIVILEGE_LEVELS, PRIV_SHUTDOWN
+from cylc.network import Priv
 
 
 # Nested dict of spec items.
@@ -112,8 +112,10 @@ SPEC = {
             # Allow owners to grant public shutdown rights at the most, not
             # full control.
             'public': (
-                [VDR.V_STRING, ''] +
-                PRIVILEGE_LEVELS[:PRIVILEGE_LEVELS.index(PRIV_SHUTDOWN) + 1]),
+                [VDR.V_STRING, '']
+                + [level.name.lower().replace('_', '-') for level in [
+                    Priv.IDENTITY, Priv.DESCRIPTION, Priv.STATE_TOTALS,
+                    Priv.READ, Priv.SHUTDOWN]])
         },
     },
     'scheduling': {
@@ -124,7 +126,7 @@ SPEC = {
         'hold after point': [VDR.V_CYCLE_POINT],
         'cycling mode': (
             [VDR.V_STRING, Calendar.MODE_GREGORIAN] +
-            Calendar.MODES.keys() + ["integer"]),
+            list(Calendar.MODES) + ["integer"]),
         'runahead limit': [VDR.V_STRING],
         'max active cycle points': [VDR.V_INTEGER, 3],
         'spawn to max active cycle points': [VDR.V_BOOLEAN],

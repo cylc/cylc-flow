@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -18,22 +18,78 @@
 
 """Package for network interfaces to cylc suite server objects."""
 
-# Dummy passphrase for client access from users without the suite passphrase.
-NO_PASSPHRASE = 'the quick brown fox'
+from enum import IntEnum
+import getpass
+
+from jose import jwt
+
+from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 
 
-# Ordered privilege levels for authenticated users.
-PRIV_IDENTITY = 'identity'
-PRIV_DESCRIPTION = 'description'
-PRIV_STATE_TOTALS = 'state-totals'
-PRIV_FULL_READ = 'full-read'
-PRIV_SHUTDOWN = 'shutdown'
-PRIV_FULL_CONTROL = 'full-control'
-PRIVILEGE_LEVELS = [
-    PRIV_IDENTITY,
-    PRIV_DESCRIPTION,
-    PRIV_STATE_TOTALS,
-    PRIV_FULL_READ,
-    PRIV_SHUTDOWN,  # (Not used yet - for the post-passphrase era.)
-    PRIV_FULL_CONTROL,
-]
+HASH = 'HS256'  # Encoding for JWT
+
+
+class Priv(IntEnum):
+    """Cylc privilege level."""
+
+    # TODO - autodocument from this class.
+    # TODO - revert name changes?
+
+    CONTROL = 6
+    SHUTDOWN = 5  # (Not used yet - for the post-passphrase era.)
+    READ = 4
+    STATE_TOTALS = 3
+    DESCRIPTION = 2
+    IDENTITY = 1
+    NONE = 0
+
+    @classmethod
+    def parse(cls, key):
+        """Obtain a privilege enumeration from a string."""
+        return cls.__members__[key.upper().replace('-', '_')]
+
+
+def get_secret(suite):
+    """Return the secret used for encrypting messages.
+
+    Currently this is the suite passphrase. This means we are sending
+    many messages all encrypted with the same hash which isn't great.
+
+    TODO: Upgrade the secret to add foreword security.
+
+    """
+    return SuiteSrvFilesManager().get_auth_item(
+        SuiteSrvFilesManager.FILE_BASE_PASSPHRASE,
+        suite, content=True
+    )
+
+
+def decrypt(message, secret):
+    """Make a message readable.
+
+    Args:
+        message (str): The message to decode - JWT str.
+        secret (str): The decrypt key.
+
+    Return:
+        dict - The received message plus a `user` field.
+
+    """
+    message = jwt.decode(message, secret, algorithms=[HASH])
+    # if able to decode assume this is the user
+    message['user'] = getpass.getuser()
+    return message
+
+
+def encrypt(message, secret):
+    """Make a message unreadable.
+
+    Args:
+        message (str): The message to send, must be serialiseable .
+        secret (str): The encrypt key.
+
+    Return:
+        str - JWT str.
+
+    """
+    return jwt.encode(message, secret, algorithm=HASH)

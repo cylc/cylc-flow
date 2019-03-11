@@ -27,7 +27,7 @@ from isodatetime.timezone import (
 from cylc.time_parser import CylcTimeParser
 from cylc.cycling import (
     PointBase, IntervalBase, SequenceBase, ExclusionBase, PointParsingError,
-    IntervalParsingError, SequenceDegenerateError)
+    IntervalParsingError, SequenceDegenerateError, cmp_to_rich, cmp)
 from cylc.wallclock import get_current_time_string
 from parsec.validate import IllegalValueError
 
@@ -168,6 +168,10 @@ class ISO8601Point(PointBase):
         return str(point - other_point)
 
 
+# TODO: replace __cmp__ infrastructure
+cmp_to_rich(ISO8601Point)
+
+
 class ISO8601Interval(IntervalBase):
 
     """The interval between points in an ISO8601 date time sequence."""
@@ -233,7 +237,7 @@ class ISO8601Interval(IntervalBase):
         """Return an interval with v * factor for v in this one's values."""
         return ISO8601Interval(self._iso_interval_mul(self.value, factor))
 
-    def __nonzero__(self):
+    def __bool__(self):
         """Return whether this interval has any non-null values."""
         return self._iso_interval_nonzero(self.value)
 
@@ -633,8 +637,14 @@ class ISO8601Sequence(SequenceBase):
             return True
         return False
 
+    def __lt__(self, other):
+        return self.value < other.value
+
     def __str__(self):
         return self.value
+
+    def __hash__(self):
+        return hash(self.value)
 
 
 def _get_old_anchor_step_recurrence(anchor, step, start_point):
@@ -811,7 +821,7 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
             SuiteSpecifics.DUMP_FORMAT = DATE_TIME_FORMAT + time_zone
     else:
         SuiteSpecifics.DUMP_FORMAT = custom_dump_format
-        if u"+X" not in custom_dump_format and num_expanded_year_digits:
+        if "+X" not in custom_dump_format and num_expanded_year_digits:
             raise IllegalValueError(
                 'cycle point format',
                 ('cylc', 'cycle point format'),

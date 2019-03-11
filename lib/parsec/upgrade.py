@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -115,7 +115,7 @@ class upgrader(object):
                 tmp = self.cfg
                 for j in pre:
                     tmp = tmp[j]
-                many = tmp.keys()
+                many = list(tmp.keys())
                 break
         if not many:
             exp_upgs.append(upg)

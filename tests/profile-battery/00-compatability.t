@@ -21,7 +21,7 @@
 set_test_number 4
 #-------------------------------------------------------------------------------
 # Check the format of `cylc version --long`.
-run_ok "${TEST_NAME_BASE}-cylc-version" python2 -c "
+run_ok "${TEST_NAME_BASE}-cylc-version" python3 -c "
 import os
 import sys
 os.chdir('${CYLC_DIR}/lib')

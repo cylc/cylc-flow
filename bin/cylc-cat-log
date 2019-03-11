@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -32,8 +32,8 @@ If remote job logs are retrieved to the suite host on completion (global config
 '[JOB-HOST]retrieve job logs = True') and the job is not currently running, the
 local (retrieved) log will be accessed unless '-o/--force-remote' is used.
 
-Custom job logs (written to $CYLC_TASK_LOG_DIR on the job host) are available
-from the GUI if listed in 'extra log files' in the suite definition. The file
+Custom job logs (written to $CYLC_TASK_LOG_DIR on the job host) can be 
+listed in 'extra log files' in the suite definition. The file
 name must be given here, but can be discovered with '--mode=l' (list-dir).
 
 The correct cycle point format of the suite must be for task job logs.
@@ -51,7 +51,7 @@ if remrun(abort_if='edit', forward_x11=True):
 import os
 import shlex
 from glob import glob
-from pipes import quote
+from shlex import quote
 from stat import S_IRUSR
 from tempfile import mkstemp
 from subprocess import Popen, PIPE
@@ -81,7 +81,7 @@ from cylc.task_job_logs import (
 #        => on host C: cat-log spawns subprocess
 #                       tail -f <task-on-C>.out
 #
-# Then Ctrl-C (or exit GUI log viewer) on host-A:
+# Then Ctrl-C (or exit log viewer) on host-A:
 #    => ssh from A to B dies
 #       => on B: cat-log detects the previous,
 #                  and kills its ssh subprocess to C
@@ -130,7 +130,7 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False):
     logpath = os.path.expandvars(logpath)
     if mode == 'print':
         # Print location even if the suite does not exist yet.
-        print logpath
+        print(logpath)
         return 0
     elif not os.path.exists(logpath) and batchview_cmd is None:
         # Note: batchview_cmd may not need to have access to logpath, so don't
@@ -138,11 +138,11 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False):
         sys.stderr.write('ERROR: file not found: %s\n' % logpath)
         return 1
     elif mode == 'print-dir':
-        print os.path.dirname(logpath)
+        print(os.path.dirname(logpath))
         return 0
     elif mode == 'list-dir':
         for entry in sorted(os.listdir(os.path.dirname(logpath))):
-            print entry
+            print(entry)
         return 0
     elif not remote and mode == 'edit':
         # Copy the log to a temporary read-only file for viewing in editor.
@@ -192,7 +192,7 @@ def get_option_parser():
         "-m", "--mode",
         help="Mode: %s. Default c(cat)." % (
             ', '.join(['%s(%s)' % (i, j) for i, j in MODES.items()])),
-        action="store", choices=MODES.keys() + MODES.values(), default='c',
+        action="store", choices=list(MODES.keys()) + list(MODES.values()), default='c',
         dest="mode")
 
     parser.add_option(
@@ -266,7 +266,7 @@ def tmpfile_edit(tmpfile, geditor=False):
     cmd = shlex.split(editor)
     cmd.append(tmpfile)
     proc = Popen(cmd, stderr=PIPE)
-    err = proc.communicate()[1]
+    err = proc.communicate()[1].decode()
     ret_code = proc.wait()
     if ret_code == 0:
         if os.stat(tmpfile).st_mtime > modtime1:

@@ -26,7 +26,7 @@ run_fail "$TEST_NAME" cylc validate suite.rc
 cmp_ok "$TEST_NAME.stderr" <<'__ERROR__'
 Jinja2Error:
   File "<template>", line 5, in top-level template code
-UndefinedError: 'UNDEFINED_WHATEVER' is undefined
+jinja2.exceptions.UndefinedError: 'UNDEFINED_WHATEVER' is undefined
 Context lines:
 [scheduling]
     [[dependencies]]

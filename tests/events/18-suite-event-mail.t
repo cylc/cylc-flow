@@ -42,11 +42,11 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach ${OPT_SET} "${SUITE_NAME}"
 
 contains_ok "${TEST_SMTPD_LOG}" <<__LOG__
-suite event: startup
-reason: suite starting
-suite event: shutdown
-reason: AUTOMATIC
-see: http://localhost/stuff/${USER}/${SUITE_NAME}/
+b'suite event: startup'
+b'reason: suite starting'
+b'suite event: shutdown'
+b'reason: AUTOMATIC'
+b'see: http://localhost/stuff/${USER}/${SUITE_NAME}/'
 __LOG__
 
 purge_suite "${SUITE_NAME}"

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -20,16 +20,16 @@ An empty config file should successfully yield an empty sparse config dict.
 """
 
 
-import os, sys
-
-fpath = os.path.dirname(os.path.abspath(__file__))
-# parsec
-sys.path.append(fpath + '/../../..')
-
+import os
+import sys
 
 from parsec.config import ParsecConfig
 from parsec.validate import ParsecValidator as VDR
 from parsec.OrderedDict import OrderedDict
+
+fpath = os.path.dirname(os.path.abspath(__file__))
+# parsec
+sys.path.append(fpath + '/../../..')
 
 SPEC = {'meta': {'title': [VDR.V_STRING]}}
 cfg = ParsecConfig(SPEC)

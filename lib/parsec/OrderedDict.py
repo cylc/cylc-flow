@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -18,12 +18,8 @@
 
 """Ordered Dictionary data structure used extensively in cylc."""
 
-try:
-    # Python 2.7+ native.
-    from collections import OrderedDict
-except ImportError:
-    # Pre-2.7 backport from ActiveState, packaged with Parsec.
-    from OrderedDictCompat import OrderedDict
+
+from collections import OrderedDict
 
 
 class OrderedDictWithDefaults(OrderedDict):
@@ -74,7 +70,7 @@ class OrderedDictWithDefaults(OrderedDict):
 
     def iterkeys(self):
         """Include default keys"""
-        for key in OrderedDict.iterkeys(self):
+        for key in OrderedDict.keys(self):
             yield key
         for key in getattr(self, 'defaults_', []):
             if not OrderedDict.__contains__(self, key):
@@ -82,12 +78,12 @@ class OrderedDictWithDefaults(OrderedDict):
 
     def itervalues(self):
         """Include default values."""
-        for k in self.iterkeys():
+        for k in self.keys():
             yield self[k]
 
     def iteritems(self):
         """Include default key-value pairs."""
-        for k in self.iterkeys():
+        for k in self.keys():
             yield (k, self[k])
 
     def __contains__(self, key):
@@ -96,32 +92,16 @@ class OrderedDictWithDefaults(OrderedDict):
                 return True
         return OrderedDict.__contains__(self, key)
 
-    def __nonzero__(self):
+    def __bool__(self):
         """Include any default keys in the nonzero calculation."""
-        return bool(self.keys())
+        return bool(list(self.keys()))
 
-    def prepend(self, key, value, dict_setitem=dict.__setitem__):
+    def prepend(self, key, value):
         """Prepend new item in the ordered dict.
 
         https://stackoverflow.com/questions/16664874/
            how-can-i-add-an-element-at-the-top-of-an-ordereddict-in-python
 
-        Tested with Python 2.7 collections.OrderedDict and our bundled
-        ActiveState implementation for Python 2.6.
-
         """
-        root = self._OrderedDict__root
-        first = root[1]
-
-        if key in self:
-            link = self._OrderedDict__map[key]
-            link_prev, link_next, _ = link
-            link_prev[1] = link_next
-            link_next[0] = link_prev
-            link[0] = root
-            link[1] = first
-            root[1] = first[0] = link
-        else:
-            root[1] = first[0] = self._OrderedDict__map[key] = [
-                root, first, key]
-        dict_setitem(self, key, value)
+        self[key] = value
+        self.move_to_end(key, last=False)

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -106,12 +106,10 @@ class CylcReviewDAO(object):
             prefix = "~"
             if user_name:
                 prefix += user_name
-            for name in [os.path.join("log", "db"), "cylc-suite.db"]:
-                db_f_name = os.path.expanduser(os.path.join(
-                    prefix, os.path.join("cylc-run", suite_name, name)))
-                self.daos[key] = CylcSuiteDAO(db_f_name, is_public=True)
-                if os.path.exists(db_f_name):
-                    break
+            name = os.path.join("log", "db")
+            db_f_name = os.path.expanduser(os.path.join(
+                prefix, os.path.join("cylc-run", suite_name, name)))
+            self.daos[key] = CylcSuiteDAO(db_f_name, is_public=True)
         return self.daos[key]
 
     def _db_close(self, user_name, suite_name):
@@ -383,7 +381,7 @@ class CylcReviewDAO(object):
                 if seq_key not in entry["seq_logs_indexes"]:
                     entry["seq_logs_indexes"][seq_key] = {}
                 entry["seq_logs_indexes"][seq_key][index_str] = filename
-            for seq_key, indexes in entry["seq_logs_indexes"].items():
+            for seq_key, indexes in list(entry["seq_logs_indexes"].items()):
                 # Only one item, not a sequence
                 if len(indexes) <= 1:
                     entry["seq_logs_indexes"].pop(seq_key)

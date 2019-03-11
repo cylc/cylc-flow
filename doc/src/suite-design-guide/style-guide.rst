@@ -235,8 +235,7 @@ Titles, Descriptions, And URLs
 ------------------------------
 
 Document the suite and its tasks with ``title``,
-``description``, and ``url`` items instead of comments. These
-can be displayed, or linked to, by the GUI at runtime.
+``description``, and ``url`` items instead of comments.
 
 
 .. _Line Length:
@@ -276,7 +275,7 @@ Use ``UPPERCASE`` for family names and ``lowercase``
 for tasks, so you can distinguish them at a glance.
 
 Choose a convention for multi-component names and use it consistently. Put the
-most general name components first for natural grouping in the GUI, e.g.
+most general name components first for natural grouping, e.g.
 ``obs_sonde``, ``obs_radar`` (not ``sonde_obs`` etc.)
 
 Within your convention keep names as short as possible.

@@ -146,13 +146,14 @@ done
 # Recompile *.pyc files to ensure we are running the current code.
 if [[ -w "$CYLC_DIR/lib" ]]; then
     find "$CYLC_DIR/lib" -name '*.pyc' -type 'f' -delete
-    python2 -mcompileall -q "$CYLC_DIR/lib"
+    python3 -mcompileall -q "$CYLC_DIR/lib"
 fi
 
 if perl -e 'use Test::Harness 3.00' 2>/dev/null; then
     NPROC=$(cylc get-global-config '--item=process pool size')
     if [[ -z "${NPROC}" ]]; then
-        NPROC=$(python2 -c 'import multiprocessing as mp; print mp.cpu_count()')
+        NPROC=$(python3 -c \
+            'import multiprocessing as mp; print(mp.cpu_count())')
     fi
     exec prove -j "$NPROC" -s -r "${@:-tests}"
 else

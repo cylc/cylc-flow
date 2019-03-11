@@ -18,7 +18,7 @@
 # Test that "cylc graph --reference -O foo.ref SUITE" works. GitHub #2249.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 3
+set_test_number 2
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
@@ -26,7 +26,7 @@ TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate "$SUITE_NAME"
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-graph
-run_ok $TEST_NAME cylc graph --reference -O new.ref "$SUITE_NAME"
+graph_suite "${SUITE_NAME}" "new.ref"
 cmp_ok new.ref $TEST_SOURCE_DIR/$TEST_NAME_BASE/graph.ref
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

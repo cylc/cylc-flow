@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -45,7 +45,7 @@ class SGEHandler(object):
                 job_conf["execution_time_limit"] / 3600,
                 (job_conf["execution_time_limit"] / 60) % 60,
                 job_conf["execution_time_limit"] % 60)
-        for key, value in job_conf['directives'].items():
+        for key, value in list(job_conf['directives'].items()):
             directives[key] = value
         lines = []
         for key, value in directives.items():

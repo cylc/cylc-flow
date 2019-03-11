@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -147,7 +147,7 @@ class C3(object):
         """Compute the precedence list (mro) according to C3"""
         # copy() required here for tree to remain unchanged
         return self.merge(
-            [[C]] + map(self.mro, self.tree[C]) + [copy(self.tree[C])],
+            [[C]] + [self.mro(x) for x in self.tree[C]] + [copy(self.tree[C])],
             label=C)
 
 
@@ -158,7 +158,7 @@ if __name__ == "__main__":
     parents['b'] = ['root']
     parents['foo'] = ['a', 'b']
 
-    print 'foo', C3(parents).mro('foo')
+    print('foo', C3(parents).mro('foo'))
 
     parents = {}
     parents['o'] = []
@@ -172,7 +172,7 @@ if __name__ == "__main__":
     parents['k3'] = ['d', 'a']
     parents['z'] = ['k1', 'k2', 'k3']
 
-    print 'z', C3(parents).mro('z')
+    print('z', C3(parents).mro('z'))
 
     # Note we can get Python's result by defining an equivalent class
     # hierarchy (with empty class bodies) and printing foo.__mro__.

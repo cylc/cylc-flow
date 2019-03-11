@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -33,4 +33,4 @@ cfg = ParsecConfig(SPEC)
 cfg.loadcfg("test.rc")
 
 cfg.mdump(
-    [['foo','bar','baz'], ['foo','bar','qux']], oneline=True, sparse=True)
+    [['foo', 'bar', 'baz'], ['foo', 'bar', 'qux']], oneline=True, sparse=True)

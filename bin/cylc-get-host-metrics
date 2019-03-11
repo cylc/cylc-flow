@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA
@@ -108,7 +108,7 @@ def main():
 
     options, args = parser.parse_args()
 
-    print get_host_metric(options.load, options.memory, options.disk)
+    print(get_host_metric(options.load, options.memory, options.disk))
 
     sys.exit()
 
@@ -122,7 +122,7 @@ def run_command_string(command_string):
     # Note: can replace function w/ 'subprocess.check_output()' when drop v2.6.
     process = Popen(command_sequence, stdin=open(os.devnull), stdout=PIPE,
                     stderr=PIPE)
-    stdoutput = process.communicate()[0]
+    stdoutput = process.communicate()[0].decode()
     process.wait()
     return_code = process.returncode
     if return_code:

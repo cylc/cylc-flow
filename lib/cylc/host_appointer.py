@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -19,7 +19,7 @@
 
 import json
 from itertools import dropwhile
-from pipes import quote
+from shlex import quote
 from random import choice
 import socket
 from time import sleep
@@ -152,7 +152,7 @@ class HostAppointer(object):
         the required options given rank method and thresholds specified.
         """
         # Convert config keys to associated command options. Ignore 'random'.
-        considerations = [self.rank_method] + self.parsed_thresholds.keys()
+        considerations = [self.rank_method] + list(self.parsed_thresholds)
         opts = set()
         for spec in considerations:
             if spec.startswith("load"):
@@ -185,11 +185,11 @@ class HostAppointer(object):
                     ['cylc'] + cmd, capture_process=True)
         # Collect results from commands
         while host_proc_map:
-            for host, proc in host_proc_map.copy().items():
+            for host, proc in list(host_proc_map.copy().items()):
                 if proc.poll() is None:
                     continue
                 del host_proc_map[host]
-                out, err = proc.communicate()
+                out, err = (f.decode() for f in proc.communicate())
                 if proc.wait():
                     # Command failed in verbose/debug mode
                     LOG.warning(
@@ -225,7 +225,7 @@ class HostAppointer(object):
                 return {}
             host_stats = self._get_host_metrics()
         # Analyse get-host-metrics results
-        for host, data in dict(host_stats).items():
+        for host, data in list(dict(host_stats).items()):
             if not data:
                 # No results for host (command failed) -> skip.
                 host_stats.pop(host)
@@ -256,8 +256,9 @@ class HostAppointer(object):
         """
         # Convert all dict values from full metrics structures to single
         # metric data values corresponding to the rank method to rank with.
-        hosts_with_vals_to_rank = dict((host, metric[self.rank_method]) for
-                                       host, metric in all_host_stats.items())
+        hosts_with_vals_to_rank = dict(
+            (host, metric[self.rank_method])
+            for host, metric in all_host_stats.items())
         LOG.debug(
             "INFO: host %s values extracted are: %s",
             self.rank_method,
@@ -291,7 +292,7 @@ class HostAppointer(object):
         good_host_stats = self._remove_bad_hosts(mock_host_stats)
 
         # Re-check for triviality after bad host removal; otherwise must rank.
-        pre_rank_check = self._trivial_choice(good_host_stats.keys())
+        pre_rank_check = self._trivial_choice(list(good_host_stats))
         if pre_rank_check:
             return pre_rank_check
 

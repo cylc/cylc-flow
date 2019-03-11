@@ -1,7 +1,9 @@
 [meta]
     title = Authentication test suite.
-    description = """Stalls when the first task fails.
-                     Here we test out a multi-line description!"""
+    description = """
+        Stalls when the first task fails.
+        Here we test out a multi-line description!
+    """
     custom_metadata = something_custom
     another_metadata = 1
 [cylc]

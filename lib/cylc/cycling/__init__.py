@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -18,7 +18,7 @@
 
 """This module provides base classes for cycling data objects."""
 
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod
 
 
 def parse_exclusion(expr):
@@ -36,7 +36,7 @@ def parse_exclusion(expr):
                 raise Exception("'%s': a list of exclusions must be "
                                 "enclosed in parentheses." % exclusions)
 
-        exclusions = exclusions.translate(None, ' ()')
+        exclusions = exclusions.translate(str.maketrans('', '', ' ()'))
         exclusions = exclusions.split(',')
         return remainder.strip(), exclusions
 
@@ -82,7 +82,7 @@ class SequenceDegenerateError(Exception):
         return self.ERROR_MESSAGE.format(*self.args)
 
 
-class PointBase(object):
+class PointBase(object, metaclass=ABCMeta):
 
     """The abstract base class for single points in a cycler sequence.
 
@@ -97,23 +97,22 @@ class PointBase(object):
     method to reprocess their value into a standard form.
 
     """
-    __metaclass__ = ABCMeta
 
     _TYPE = None
     _TYPE_SORT_KEY = None
 
     __slots__ = ('value')
 
-    @abstractproperty
+    @abstractmethod
     def TYPE(self):
         return self._TYPE
 
-    @abstractproperty
+    @abstractmethod
     def TYPE_SORT_KEY(self):
         return self._TYPE_SORT_KEY
 
     def __init__(self, value):
-        if not isinstance(value, basestring):
+        if not isinstance(value, str):
             raise TypeError(type(value))
         self.value = value
 
@@ -172,7 +171,7 @@ class PointBase(object):
         return self.add(other)
 
 
-class IntervalBase(object):
+class IntervalBase(object, metaclass=ABCMeta):
 
     """An interval separating points in a cycler sequence.
 
@@ -180,7 +179,7 @@ class IntervalBase(object):
 
     Subclasses should provide values for TYPE and TYPE_SORT_KEY.
     They should also provide self.cmp_, self.sub, self.add,
-    self.__mul__, self.__abs__, self.__nonzero__ methods which should
+    self.__mul__, self.__abs__ methods which should
     behave as __cmp__, __sub__, etc standard comparison methods.
 
     They can also just override the provided comparison methods (such
@@ -198,18 +197,17 @@ class IntervalBase(object):
     method to reprocess their value into a standard form.
 
     """
-    __metaclass__ = ABCMeta
 
     _TYPE = None
     _TYPE_SORT_KEY = None
 
     __slots__ = ('value')
 
-    @abstractproperty
+    @abstractmethod
     def TYPE(self):
         return self._TYPE
 
-    @abstractproperty
+    @abstractmethod
     def TYPE_SORT_KEY(self):
         return self._TYPE_SORT_KEY
 
@@ -234,13 +232,8 @@ class IntervalBase(object):
         # Return an interval with all properties multiplied by factor.
         pass
 
-    @abstractmethod
-    def __nonzero__(self):
-        # Return True if the interval has any non-zero properties.
-        pass
-
     def __init__(self, value):
-        if not isinstance(value, basestring):
+        if not isinstance(value, str):
             raise TypeError(type(value))
         self.value = value
 
@@ -286,6 +279,8 @@ class IntervalBase(object):
 
     def __cmp__(self, other):
         # Compare self to other (interval).
+        if other is None:
+            return -1
         if self.TYPE != other.TYPE:
             return cmp(self.TYPE_SORT_KEY, other.TYPE_SORT_KEY)
         if self.value == other.value:
@@ -303,7 +298,7 @@ class IntervalBase(object):
         return self * -1
 
 
-class SequenceBase(object):
+class SequenceBase(object, metaclass=ABCMeta):
 
     """The abstract base class for cycler sequences.
 
@@ -323,18 +318,17 @@ class SequenceBase(object):
     is equal to another (represents the same set of points).
 
     """
-    __metaclass__ = ABCMeta
 
     _TYPE = None
     _TYPE_SORT_KEY = None
 
     __slots__ = ()
 
-    @abstractproperty
+    @abstractmethod
     def TYPE(self):
         return self._TYPE
 
-    @abstractproperty
+    @abstractmethod
     def TYPE_SORT_KEY(self):
         return self._TYPE_SORT_KEY
 
@@ -411,11 +405,9 @@ class SequenceBase(object):
         pass
 
 
-class ExclusionBase(object):
+class ExclusionBase(object, metaclass=ABCMeta):
     """A collection of points or sequences that are treated in an
     exclusionary manner"""
-
-    __metaclass__ = ABCMeta
     __slots__ = ('exclusion_sequences', 'exclusion_points',
                  'exclusion_start_point', 'exclusion_end_point')
 
@@ -459,3 +451,27 @@ class ExclusionBase(object):
         if ',' in ret:
             ret = '(' + ret + ')'
         return ret
+
+
+def cmp(self, other):
+    """Temporary replacement for the Python2 cmp function."""
+    if self == other:
+        return 0
+    if self < other:
+        return -1
+    return 1
+
+
+def cmp_to_rich(cls):
+    """Temporary solution which monkey patches rich comparisons."""
+    cls.__lt__ = lambda self, other: cls.__cmp__(self, other) == -1
+    cls.__le__ = lambda self, other: cls.__cmp__(self, other) <= 0
+    cls.__gt__ = lambda self, other: cls.__cmp__(self, other) == 1
+    cls.__ge__ = lambda self, other: cls.__cmp__(self, other) >= 0
+    cls.__eq__ = lambda self, other: cls.__cmp__(self, other) == 0
+    cls.__ne__ = lambda self, other: cls.__cmp__(self, other) != 0
+
+
+# TODO: replace __cmp__ infrastructure
+cmp_to_rich(PointBase)
+cmp_to_rich(IntervalBase)

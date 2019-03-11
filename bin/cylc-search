@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -57,7 +57,7 @@ def section_level(heading):
 
 
 def print_heading(heading):
-    print '>>>' + '->'.join(heading)
+    print('>>>' + '->'.join(heading))
 
 
 parser = COP(
@@ -80,7 +80,7 @@ pattern = '|'.join(args[1:])
 suitedir = os.path.dirname(suiterc)
 
 if os.path.isfile(suiterc):
-    h = open(suiterc, 'rb')
+    h = open(suiterc, 'r')
     lines = h.readlines()
     h.close()
     lines = inline(lines, suitedir, suiterc, for_grep=True)
@@ -138,16 +138,16 @@ for line in lines:
 
         if curr_file != prev_file:
             prev_file = curr_file
-            print "\nFILE:", curr_file
+            print("\nFILE:", curr_file)
 
         # Print the nested section headings
         section_key = '->'.join(sections)
         if section_key != prev_section_key:
             prev_section_key = section_key
-            print '   SECTION:', section_key
+            print('   SECTION:', section_key)
 
         # Print the pattern match, with line number
-        print '      (' + str(line_no) + '):', line.rstrip('\n')
+        print('      (' + str(line_no) + '):', line.rstrip('\n'))
 
 if not options.search_bin:
     sys.exit(0)
@@ -155,7 +155,7 @@ if not options.search_bin:
 # search files in suite bin directory
 bin_ = os.path.join(suitedir, 'bin')
 if not os.path.isdir(bin_):
-    print >> sys.stderr, "\nSuite " + suite + " has no bin directory"
+    print("\nSuite " + suite + " has no bin directory", file=sys.stderr)
     sys.exit(0)
 
 for name in os.listdir(bin_):
@@ -165,11 +165,11 @@ for name in os.listdir(bin_):
         continue
     new_file = True
     try:
-        h = open(os.path.join(bin_, name), 'rb')
-    except IOError, x:
+        h = open(os.path.join(bin_, name), 'r')
+    except IOError as exc:
         # e.g. there's a sub-directory under bin; ignore it.
-        print >> sys.stderr, 'Unable to open file ' + os.path.join(bin_, name)
-        print >> sys.stderr, x
+        print('Unable to open file ' + os.path.join(bin_, name), file=sys.stderr)
+        print(exc, file=sys.stderr)
         continue
     contents = h.readlines()
     h.close()
@@ -180,6 +180,6 @@ for name in os.listdir(bin_):
         count += 1
         if re.search(pattern, line):
             if new_file:
-                print '\nFILE:', os.path.join(bin_, name)
+                print('\nFILE:', os.path.join(bin_, name))
                 new_file = False
-            print '   (' + str(count) + '): ' + line
+            print('   (' + str(count) + '): ' + line)

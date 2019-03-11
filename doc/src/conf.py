@@ -44,8 +44,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'The Cylc Suite Engine'
-copyright = u'2008-2019 NIWA & British Crown (Met Office) & Contributors'
+project = 'The Cylc Suite Engine'
+copyright = '2008-2019 NIWA & British Crown (Met Office) & Contributors'
 
 # Versioning information. Sphinx advises version strictly meaning X.Y.
 version = '.'.join(CYLC_VERSION.split('.')[:2])  # The short X.Y version.
@@ -78,8 +78,8 @@ html_theme_options = {
     "sidebarbgcolor": "white",
     "sidebartextcolor": "black",
     "sidebarlinkcolor": "#0000EE;",
-    "headbgcolor":  "white",
-    "headtextcolor":  "#FF5966",
+    "headbgcolor": "white",
+    "headtextcolor": "#FF5966",
     "linkcolor": "#0000EE;",
     "visitedlinkcolor": "#551A8B;",
     "headlinkcolor": "#0000EE;",
@@ -88,8 +88,8 @@ html_theme_options = {
 
 # Custom sidebar templates, maps document names to template names.
 html_sidebars = {
-   '**': ['globaltoc.html', 'searchbox.html', 'sourcelink.html'],
-   'using/windows': ['windowssidebar.html', 'searchbox.html'],
+    '**': ['globaltoc.html', 'searchbox.html', 'sourcelink.html'],
+    'using/windows': ['windowssidebar.html', 'searchbox.html'],
 }
 
 # Logo and favicon to display.
@@ -110,16 +110,18 @@ htmlhelp_basename = 'cylcdoc'
 # -- Options for LaTeX output ---------------------------------------------
 
 latex_elements = {
-'papersize': 'a4paper',
-'pointsize': '11pt',
+    'papersize': 'a4paper',
+    'pointsize': '11pt',
 }
+
+# Title for the cylc documentation section
+CYLC_DOC_TITLE = 'Cylc Documentation'
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'cylc.tex', u'Cylc Documentation',
-   u'2008-2019 NIWA & British Crown (Met Office) & Contributors', 'manual'),
+    ('index', 'cylc.tex', CYLC_DOC_TITLE, copyright, 'manual'),
 ]
 
 # Image file to place at the top of the title page.
@@ -134,8 +136,7 @@ latex_show_urls = "footnote"
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'cylc', u'cylc Documentation',
-     u'2008-2019 NIWA & British Crown (Met Office) & Contributors', 1),
+    ('index', 'cylc', CYLC_DOC_TITLE, copyright, 1),
 ]
 
 # If true, show URL addresses after external links.
@@ -148,9 +149,8 @@ man_show_urls = True
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'cylc', u'Cylc Documentation',
-   u'2008-2019 NIWA & British Crown (Met Office) & Contributors',
-  'cylc', 'The Cylc Suite Engine', 'Miscellaneous'),
+    ('index', 'cylc', CYLC_DOC_TITLE, copyright, 'cylc', project,
+     'Miscellaneous'),
 ]
 
 # How to display URL addresses.

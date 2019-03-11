@@ -61,7 +61,7 @@ cylc suite-state "${SUITE_NAME}" --task='foo' --status='running' --point=1 \
 create_test_globalrc '' "
 ${BASE_GLOBALRC}
 [suite servers]
-    condemned hosts = localhost
+    condemned hosts = $(hostname)
 "
 
 # wait for suite to die of natural causes

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -25,7 +25,7 @@ This module provides logic to:
 """
 
 import os
-from pipes import quote
+from shlex import quote
 import re
 from subprocess import Popen, PIPE
 import tarfile
@@ -142,7 +142,7 @@ class TaskRemoteMgr(object):
 
         This is normally called after the results are consumed.
         """
-        for key, value in self.remote_host_str_map.copy().items():
+        for key, value in list(self.remote_host_str_map.copy().items()):
             if value is not None:
                 del self.remote_host_str_map[key]
 
@@ -153,9 +153,8 @@ class TaskRemoteMgr(object):
         shared file system with suite host.
 
         Call "cylc remote-init" to install suite items to remote:
-            ".service/contact": HTTP(S) and SSH+HTTP(S) task comm
-            ".service/passphrase": HTTP(S) task comm
-            ".service/ssl.cert": HTTPS task comm
+            ".service/contact": For TCP task communication
+            ".service/passphrase": For TCP task communication
             "python/": if source exists
 
         Return:
@@ -208,7 +207,7 @@ class TaskRemoteMgr(object):
             self.suite_srv_files_mgr.get_suite_srv_dir(self.suite),
             FILE_BASE_UUID)
         if not os.path.exists(uuid_fname):
-            open(uuid_fname, 'wb').write(str(self.uuid_str))
+            open(uuid_fname, 'wb').write(str(self.uuid_str).encode())
         # Build the command
         cmd = ['cylc', 'remote-init']
         if is_remote_host(host):
@@ -272,12 +271,12 @@ class TaskRemoteMgr(object):
                 if proc.poll() is None:
                     continue
                 del procs[(host, owner)]
-                out, err = proc.communicate()
+                out, err = (f.decode() for f in proc.communicate())
                 if proc.wait():
                     LOG.warning(TaskRemoteMgmtError(
                         TaskRemoteMgmtError.MSG_TIDY,
                         (host, owner), ' '.join(quote(item) for item in cmd),
-                        proc.ret_code, out, err))
+                        proc.returncode, out, err))
         # Terminate any remaining commands
         for (host, owner), (cmd, proc) in procs.items():
             try:
@@ -336,14 +335,14 @@ class TaskRemoteMgr(object):
             - name is relative path under suite run directory at target remote.
         """
         items = []
-        if comm_meth in ['ssh', 'http', 'https']:
+        if comm_meth in ['ssh', 'zmq']:
             # Contact file
             items.append((
                 self.suite_srv_files_mgr.get_contact_file(self.suite),
                 os.path.join(
                     self.suite_srv_files_mgr.DIR_BASE_SRV,
                     self.suite_srv_files_mgr.FILE_BASE_CONTACT)))
-        if comm_meth in ['http', 'https']:
+        if comm_meth in ['zmq']:
             # Passphrase file
             items.append((
                 self.suite_srv_files_mgr.get_auth_item(
@@ -352,13 +351,4 @@ class TaskRemoteMgr(object):
                 os.path.join(
                     self.suite_srv_files_mgr.DIR_BASE_SRV,
                     self.suite_srv_files_mgr.FILE_BASE_PASSPHRASE)))
-        if comm_meth in ['https']:
-            # SSL cert file
-            items.append((
-                self.suite_srv_files_mgr.get_auth_item(
-                    self.suite_srv_files_mgr.FILE_BASE_SSL_CERT,
-                    self.suite),
-                os.path.join(
-                    self.suite_srv_files_mgr.DIR_BASE_SRV,
-                    self.suite_srv_files_mgr.FILE_BASE_SSL_CERT)))
         return items

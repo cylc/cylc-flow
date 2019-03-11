@@ -57,11 +57,10 @@ def duration_as(iso8601_duration, units):
         3600.0
 
         >>> # Exceptions.
-        >>> try:
-        ...     duration_as('invalid', 's')  # Invalid duration
-        ... except Exception as exc:
-        ...     print type(exc)
-        <class 'isodatetime.parsers.ISO8601SyntaxError'>
+        >>> duration_as('invalid', 's')  # doctest: +NORMALIZE_WHITESPACE
+        Traceback (most recent call last):
+        isodatetime.parsers.ISO8601SyntaxError: Invalid ISO 8601 duration \
+        representation: invalid
     """
     for converter_names in CONVERSIONS:
         if units.lower() in converter_names:
@@ -75,5 +74,5 @@ def duration_as(iso8601_duration, units):
 if __name__ == "__main__":
     for duration in ['PT1H', 'P1D', 'P7D']:
         for short_name, _ in CONVERSIONS:
-            print short_name, duration_as(duration, short_name)
-        print '\n'
+            print(short_name, duration_as(duration, short_name))
+        print('\n')

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -32,6 +32,6 @@ from cylc.subprocpool import run_function
 
 if __name__ == "__main__":
     if sys.argv[1] in ['help', '--help'] or len(sys.argv) != 5:
-        print __doc__
+        print(__doc__)
         sys.exit(0)
     run_function(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])

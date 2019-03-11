@@ -26,7 +26,7 @@ cylc run --reference-test --hold --debug --no-detach "${SUITE_NAME}" \
 CYLC_RUN_PID=$!
 poll ! test -f "${SUITE_RUN_DIR}/.service/contact"
 run_ok "${TEST_NAME_BASE}-client" \
-    cylc client 'put_command' "${SUITE_NAME}" <<<'{"command": "release_suite"}'
+    cylc client "${SUITE_NAME}" 'release_suite' -n
 run_ok "${TEST_NAME_BASE}-run" wait "${CYLC_RUN_PID}"
 purge_suite "${SUITE_NAME}"
 exit

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -25,6 +25,6 @@ True (success) and some results dict to pass on to dependent tasks.
 
 
 def echo(*args, **kwargs):
-    print "echo: ARGS:", args
-    print "echo: KWARGS:", kwargs
+    print("echo: ARGS:", args)
+    print("echo: KWARGS:", kwargs)
     return (False, {})

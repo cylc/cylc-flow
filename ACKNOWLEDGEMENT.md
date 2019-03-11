@@ -2,10 +2,6 @@
 
 Licences for non-cylc work included in this distribution can be found in the
 `licences/` directory.
- * `lib/cherrypy/`:
-    External software library released under a BSD license.
-    Minor modification to ignore an import warning.
-    See [cherrypy](http://www.cherrypy.org/).
  * `lib/isodatetime/`:
     Unmodified external software library released under the LGPL license.
     See [metomi/isodatetime](https://github.com/metomi/isodatetime/).
@@ -15,10 +11,6 @@ Licences for non-cylc work included in this distribution can be found in the
  * `lib/markupsafe/`:
     External software library released under a BSD license, used by Jinja2.
     See [MarkupSafe](http://www.pocoo.org/projects/markupsafe/).
- * `lib/xdot.py`:
-    External software released under the LGPL license.
-    Modifications based on version 0.6. See
-    [xdot](https://github.com/jrfonseca/xdot.py)
  * `lib/cylc/cylc-review/static/css/bootstrap-???`,
    `lib/cylc/cylc-review/static/images/glyphicons-halflings-???` &
    `lib/cylc/cylc-review/static/js/bootstrap.min.js`:

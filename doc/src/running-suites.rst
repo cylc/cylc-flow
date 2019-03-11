@@ -91,8 +91,7 @@ Restart From Latest Checkpoint
 """"""""""""""""""""""""""""""
 
 To restart from the latest checkpoint simply invoke the ``cylc restart``
-command with the suite name (or select "restart" in the GUI suite start dialog
-window):
+command with the suite name.
 
 .. code-block:: bash
 
@@ -162,8 +161,6 @@ Once you have identified the right checkpoint, restart the suite like this:
 .. code-block:: bash
 
    $ cylc restart --checkpoint=CHECKPOINT-ID SUITE
-
-or enter the checkpoint ID in the space provided in the GUI restart window.
 
 
 Checkpointing With A Task
@@ -289,7 +286,7 @@ Task Job Polling
 At any point after job submission task jobs can be *polled* to check that
 their true state conforms to what is currently recorded by the suite server
 program.  See ``cylc poll --help`` for how to poll one or more tasks
-manually, or right-click poll a task or family in GUI.
+manually.
 
 Polling may be necessary if, for example, a task job gets killed by the
 untrappable SIGKILL signal (e.g. ``kill -9 PID``), or if a network
@@ -313,7 +310,7 @@ to find out what happened to them while the suite was down.
 
 Finally, in necessary routine polling can be configured as a way to track job
 status on job hosts that do not allow networking routing back to the suite host
-for task messaging by HTTPS or ssh. See :ref:`Polling To Track Job Status`.
+for task messaging by TCP or SSH. See :ref:`Polling To Track Job Status`.
 
 
 .. _TaskComms:
@@ -323,37 +320,36 @@ Tracking Task State
 
 Cylc supports three ways of tracking task state on job hosts:
 
-- task-to-suite messaging via HTTPS
-- task-to-suite messaging via non-interactive ssh to the suite host,
-  then local HTTPS
+- task-to-suite messaging via TCP (using ZMQ protocol)
+- task-to-suite messaging via non-interactive SSH to the suite host,
+  then local TCP
 - regular polling by the suite server program
 
 These can be configured per job host in the Cylc global config file - see
 :ref:`SiteRCReference`.
 
-If your site prohibits HTTPS and ssh back from job hosts to
+If your site prohibits TCP and SSH back from job hosts to
 suite hosts, before resorting to the polling method you should
 consider installing dedicated Cylc servers or
-VMs inside the HPC trust zone (where HTTPS and ssh should be allowed).
+VMs inside the HPC trust zone (where TCP and SSH should be allowed).
 
 It is also possible to run Cylc suite server programs on HPC login
-nodes, but this is not recommended for load, run duration,
-and GUI reasons.
+nodes, but this is not recommended for load and run duration,
 
 Finally, it has been suggested that *port forwarding* may provide another
 solution - but that is beyond the scope of this document.
 
 
-HTTPS Task Messaging
-^^^^^^^^^^^^^^^^^^^^
+TCP Task Messaging
+^^^^^^^^^^^^^^^^^^
 
 Task job wrappers automatically invoke ``cylc message`` to report
 progress back to the suite server program when they begin executing,
 at normal exit (success) and abnormal exit (failure).
 
-By default the messaging occurs via an authenticated, HTTPS connection to the
-suite server program. This is the preferred task communications
-method - it is efficient and direct.
+By default the messaging occurs via an authenticated, TCP connection to the
+suite server program using the ZMQ protocol.
+This is the preferred task communications method - it is efficient and direct.
 
 Suite server programs automatically install suite contact information
 and credentials on job hosts.  Users only need to do this manually
@@ -365,14 +361,14 @@ Ssh Task Messaging
 ^^^^^^^^^^^^^^^^^^
 
 Cylc can be configured to re-invoke task messaging commands on the
-suite host via non-interactive ssh (from job host to suite host).
-Then a local HTTPS connection is made to the suite server program.
+suite host via non-interactive SSH (from job host to suite host).
+Then a local TCP connection is made to the suite server program.
 
-(User-invoked client commands (aside from the GUI, which requires HTTPS)
+(User-invoked client commands
 can do the same thing with the ``--use-ssh`` command option).
 
-This is less efficient than direct HTTPS messaging, but it may be useful at
-sites where the HTTPS ports are blocked but non-interactive ssh is allowed.
+This is less efficient than direct TCP messaging, but it may be useful at
+sites where the TCP ports are blocked but non-interactive SSH is allowed.
 
 
 .. _Polling To Track Job Status:
@@ -381,15 +377,15 @@ Polling to Track Job Status
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Finally, suite server programs can actively poll task jobs at
-configurable intervals, via non-interactive ssh to the job host.
+configurable intervals, via non-interactive SSH to the job host.
 
 Polling is the least efficient task communications method because task state is
 updated only at intervals, not when task events actually occur.  However, it
-may be needed at sites that do not allow HTTPS or non-interactive ssh from job
+may be needed at sites that do not allow TCP or non-interactive SSH from job
 host to suite host.
 
 Be careful to avoid spamming task hosts with polling commands. Each poll
-opens (and then closes) a new ssh connection.
+opens (and then closes) a new SSH connection.
 
 Polling intervals are configurable under ``[runtime]`` because
 they should may depend on the expected execution time. For instance, a
@@ -444,7 +440,7 @@ information from the contact file, if they have access to it.
 File-Reading Commands
 ---------------------
 
-Some Cylc commands and GUI actions parse suite configurations or read
+Some Cylc commands parse suite configurations or read
 other files
 from the suite host account, rather than communicate with a suite server
 program over the network. In future we plan to have suite server program serve
@@ -467,7 +463,7 @@ Remote Host, Different Home Directory
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you are logged into another host with no shared home directory, file-reading
-commands require non-interactive ssh to the suite host account, and use of the
+commands require non-interactive SSH to the suite host account, and use of the
 ``--host`` and ``--user`` options to re-invoke the command
 on the suite account.
 
@@ -484,8 +480,7 @@ Client-Server Interaction
 -------------------------
 
 Cylc server programs listen on dedicated network ports for
-HTTPS communications from Cylc clients (task jobs, and user-invoked commands
-and GUIs).
+TCP communications from Cylc clients (task jobs and user-invoked commands)
 
 Use ``cylc scan`` to see which suites are listening on which ports on
 scanned hosts (this lists your own suites by default, but it can show others
@@ -509,15 +504,25 @@ server program is determined by the public access privilege level set in global
 site/user config (:ref:`GlobalAuth`) and optionally overidden in suites
 (:ref:`SuiteAuth`):
 
-- *identity* - only suite and owner names revealed
-- *description* - identity plus suite title and description
-- *state-totals* - identity, description, and task state totals
-- *full-read* - full read-only access for monitor and GUI
-- *shutdown* - full read access plus shutdown, but no other control.
+none
+   Permit no public suite access.
+identity
+   Only suite and owner names revealed.
+description
+   Identity plus suite title and description.
+state-totals
+   Identity, description, and task state totals.
+read
+   Full read-only access.
+shutdown
+   *Not yet implemented*
+   Full read access plus shutdown, but no other control.
+control
+   Permit full control (not recommended).
 
 The default public access level is *state-totals*.
 
-The ``cylc scan`` command and the ``cylc gscan`` GUI can print
+The ``cylc scan`` command can print
 descriptions and task state totals in addition to basic suite identity, if the
 that information is revealed publicly.
 
@@ -538,7 +543,7 @@ possess the passphrase file for that suite. Fine-grained access to a single
 suite server program via distinct user accounts is not currently supported.
 
 Suite server programs automatically install their auth and contact files to job
-hosts via ssh, to enable task jobs to connect back to the suite server program
+hosts via SSH, to enable task jobs to connect back to the suite server program
 for task messaging.
 
 Client programs invoked by the suite owner automatically load the passphrase,
@@ -548,34 +553,18 @@ SSL certificate, and contact file too, for automatic connection to suites.
 if you do not have a shared filesystem - see below.*
 
 
-.. _GUI-to-Suite Interaction:
-
-GUI-to-Suite Interaction
-------------------------
-
-The gcylc GUI is mainly a network client to retrieve and display suite status
-information from the suite server program, but it can also invoke file-reading
-commands to view and graph the suite configuration and so on. This is entirely
-transparent if the GUI is running on the suite host account, but full
-functionality for remote suites requires either a shared filesystem, or
-(see :ref:`RemoteControl`) auth file installation *and* non-interactive ssh
-access to the suite host.  Without the auth files you will not be able
-to connect to the suite, and without ssh you will see "permission denied"
-errors on attempting file access.
-
-
 .. _RemoteControl:
 
 Remote Control
 --------------
 
-Cylc client programs - command line and GUI - can interact with suite server
+Cylc client programs can interact with suite server
 programs running on other accounts or hosts. How this works depends on whether
 or not you have:
 
 - a *shared filesystem* such that you see the same home directory on
   both hosts.
-- *non-interactive ssh* from the client account to the server
+- *non-interactive SSH* from the client account to the server
   account.
 
 With a shared filesystem, a suite registered on the remote (server) host is
@@ -591,7 +580,6 @@ must be installed under your ``$HOME/.cylc/`` directory:
 .. code-block:: bash
 
    $HOME/.cylc/auth/OWNER@HOST/SUITE/
-         ssl.cert
          passphrase
          contact  # (optional - see below)
 
@@ -601,16 +589,16 @@ is the suite name. Client commands should then be invoked with the
 
 .. code-block:: bash
 
-   $ cylc gui --user=OWNER --host=HOST SUITE
+   $ cylc edit --user=OWNER --host=HOST SUITE
 
 .. note::
 
    Remote suite auth files do not need to be installed for read-only
-   access - see :ref:`PublicAccess` - via the GUI or monitor.
+   access - see :ref:`PublicAccess`.
 
 The suite contact file (see :ref:`The Suite Contact File`) is not needed if
 you have read-access to the remote suite run directory via the local
-filesystem or non-interactive ssh to the suite host account - client commands
+filesystem or non-interactive SSH to the suite host account - client commands
 will automatically read it. If you do install the contact file in your auth
 directory note that the port number will need to be updated if the suite gets
 restarted on a different port. Otherwise use ``cylc scan`` to determine
@@ -621,23 +609,17 @@ the suite port number and use the ``--port`` client command option.
    Possession of a suite passphrase gives full control over the
    target suite, including edit run functionality - which lets you run
    arbitrary scripting on job hosts as the suite owner. Further,
-   non-interactive ssh gives full access to the target user account, so we
+   non-interactive SSH gives full access to the target user account, so we
    recommended that this is only used to interact with suites running on
    accounts to which you already have full access.
 
 
-.. _Scan And Gscan:
+Scan
+----
 
-Scan And Gscan
---------------
-
-Both ``cylc scan`` and the ``cylc gscan`` GUI can display
+``cylc scan`` can display
 suites owned by other users on other hosts, including task state totals if the
-public access level permits that (see :ref:`PublicAccess`). Clicking on a
-remote suite in ``gscan`` will open a ``cylc gui`` to connect to that
-suite. This will give you full control, if you have the suite auth files
-installed; or it will display full read only information if the public access
-level allows that.
+public access level permits that (see :ref:`PublicAccess`).
 
 
 Task States Explained
@@ -677,25 +659,6 @@ As a suite runs, its task proxies may pass through the following states:
 - **expired** - will not be submitted to run, due to falling too far
   behind the wall-clock relative to its cycle point -
   see :ref:`ClockExpireTasks`.
-
-
-What The Suite Control GUI Shows
---------------------------------
-
-The GUI Text-tree and Dot Views display the state of every task proxy present
-in the task pool. Once a task has succeeded and Cylc has determined that it can
-no longer be needed to satisfy the prerequisites of other tasks, its proxy will
-be cleaned up (removed from the pool) and it will disappear from the GUI. To
-rerun a task that has disappeared from the pool, you need to re-insert its task
-proxy and then re-trigger it.
-
-The Graph View is slightly different: it displays the complete dependency graph
-over the range of cycle points currently present in the task pool. This often
-includes some greyed-out *base* or *ghost nodes* that are empty - i.e.
-there are no corresponding task proxies currently present in the pool. Base
-nodes just flesh out the graph structure. Groups of them may be cut out and
-replaced by single *scissor nodes* in sections of the graph that are
-currently inactive.
 
 
 Network Connection Timeouts
@@ -777,7 +740,7 @@ members:
 
 Any tasks not assigned to a particular queue will remain in the default
 queue. The *queues* example suite illustrates how queues work by
-running two task trees side by side (as seen in the graph GUI) each
+running two task trees side by side each
 limited to 2 and 3 tasks respectively:
 
 .. literalinclude:: ../../etc/examples/queues/suite.rc
@@ -796,8 +759,8 @@ ISO 8601 durations. If the task job fails it will go into the *retrying*
 state and resubmit after the next configured delay interval. An example is
 shown in the suite listed below under :ref:`EventHandling`.
 
-If a task with configured retries is *killed* (by ``cylc kill`` or
-via the GUI) it goes to the *held* state so that the operator can decide
+If a task with configured retries is *killed* (by ``cylc kill``
+it goes to the *held* state so that the operator can decide
 whether to release it and continue the retry sequence or to abort the retry
 sequence by manually resetting it to the *failed* state.
 
@@ -1042,12 +1005,12 @@ Manual Task Triggering and Edit-Run
 -----------------------------------
 
 Any task proxy currently present in the suite can be manually triggered at any
-time using the ``cylc trigger`` command, or from the right-click task
-menu in gcylc. If the task belongs to a limited internal queue
+time using the ``cylc trigger`` command.
+If the task belongs to a limited internal queue
 (see :ref:`InternalQueues`), this will queue it; if not, or if it is already
 queued, it will submit immediately.
 
-With ``cylc trigger --edit`` (also in the gcylc right-click task menu)
+With ``cylc trigger --edit``
 you can edit the generated task job script to make one-off changes before the
 task submits.
 
@@ -1139,8 +1102,7 @@ running the suite's real jobs - which may be long-running and resource-hungry:
 
   - simulates scheduling without generating any job files.
 
-Set the run mode (default *live*) in the GUI suite start dialog box, or on
-the command line:
+Set the run mode (default *live*) on the command line:
 
 .. code-block:: bash
 
@@ -1429,7 +1391,7 @@ suite to finish and shut down.  Here's the complete suite log for this run:
    2017-03-30T09:46:42Z WARNING -  * foo.2017-01-01T00Z succeeded
    2017-03-30T09:47:58Z INFO - [client-command] reset_task_states vagrant@cylon:cylc-reset 1e0d8e9f-2833-4dc9-a0c8-9cf263c4c8c3
    2017-03-30T09:47:58Z INFO - [foo.2017-01-01T00Z] -resetting state to succeeded
-   2017-03-30T09:47:58Z INFO - Command succeeded: reset_task_states([u'foo.2017'], state=succeeded)
+   2017-03-30T09:47:58Z INFO - Command succeeded: reset_task_states(['foo.2017'], state=succeeded)
    2017-03-30T09:47:59Z INFO - [bar.2017-01-01T00Z] -submit_method_id=3565
    2017-03-30T09:47:59Z INFO - [bar.2017-01-01T00Z] -submission succeeded
    2017-03-30T09:47:59Z INFO - [bar.2017-01-01T00Z] -(current:submitted)> started at 2017-03-30T09:47:58Z
@@ -1610,6 +1572,12 @@ running on ``bar`` will stop immediately, making no attempt to restart.
    [suite servers]
        run hosts = pub
        condemned hosts = foo, bar!
+
+.. warning::
+
+   Cylc will reject hosts with ambiguous names such as ``localhost`` or
+   ``127.0.0.1`` for this configuration as ``condemned hosts`` are evaluated
+   on the suite host server.
 
 To prevent large numbers of suites attempting to restart simultaneously the
 ``auto restart delay`` setting defines a period of time in seconds.

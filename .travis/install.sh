@@ -24,27 +24,23 @@ shopt -s extglob
 
 args=("$@")
 
-# pygtk via apt-get, necessary for both unit and functional tests
-sudo apt-get install graphviz libgraphviz-dev python-gtk2-dev heirloom-mailx
-# coverage dependencies
-pip install coverage pytest-cov mock
+if grep -E '(unit-tests|functional-tests)' <<< "${args[@]}"; then
+    sudo apt-get install heirloom-mailx
+    # coverage dependencies
+    pip install coverage pytest-cov
+    # common Cylc reqirements
+    pip install colorama python-jose zmq
+fi
 
-# install dependencies required for running unit tests
 if grep 'unit-tests' <<< "${args[@]}"; then
-    pip install EmPy pyopenssl pycodestyle pytest mock
+    pip install pycodestyle pytest
+    # TODO: EmPy removed from testing, see:  #2958
 fi
 
-# install dependencies required for running functional tests
-if grep 'functional-tests' <<< "${args[@]}"; then
-    # pygraphviz needs special treatment to avoid an error from "from . import release"
-    pip install EmPy pyopenssl
-    pip install pygraphviz \
-      --install-option="--include-path=/usr/include/graphviz" \
-      --install-option="--library-path=/usr/lib/graphviz/"
-fi
-
-# install dependencies required for building documentation, only when instructed to do so
+# install dependencies required for building documentation
 if grep 'docs' <<< "${args[@]}$"; then
+    pip install sphinx
+    # for PDF output via LaTeX builder
     sudo apt-get install texlive-latex-base
 fi
 

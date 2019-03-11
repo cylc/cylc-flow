@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -28,7 +28,6 @@ This module provides the logic to:
 import json
 import os
 from shutil import copy, rmtree
-from subprocess import call
 from tempfile import mkstemp
 
 
@@ -147,23 +146,9 @@ class SuiteDatabaseManager(object):
                 # Just in case the path is a directory!
                 rmtree(self.pri_path, ignore_errors=True)
         self.pri_dao = self.get_pri_dao()
-        os.chmod(self.pri_path, 0600)
+        os.chmod(self.pri_path, 0o600)
         self.pub_dao = CylcSuiteDAO(self.pub_path, is_public=True)
         self.copy_pri_to_pub()
-        pub_db_path_symlink = os.path.join(
-            os.path.dirname(os.path.dirname(self.pub_path)),
-            CylcSuiteDAO.OLD_DB_FILE_BASE_NAME)
-        try:
-            orig_source = os.readlink(pub_db_path_symlink)
-        except OSError:
-            orig_source = None
-        source = os.path.join('log', CylcSuiteDAO.DB_FILE_BASE_NAME)
-        if orig_source != source:
-            try:
-                os.unlink(pub_db_path_symlink)
-            except OSError:
-                pass
-            os.symlink(source, pub_db_path_symlink)
 
     def on_suite_shutdown(self):
         """Close data access objects."""
@@ -238,7 +223,7 @@ class SuiteDatabaseManager(object):
                 inserts = []
                 for insert in self.db_inserts_map[self.TABLE_BROADCAST_STATES]:
                     if any(insert[key] != broadcast_change[key]
-                            for key in ["point", "namespace", "key"]):
+                           for key in ["point", "namespace", "key"]):
                         inserts.append(insert)
                 self.db_inserts_map[self.TABLE_BROADCAST_STATES] = inserts
             else:
@@ -457,53 +442,6 @@ class SuiteDatabaseManager(object):
 
     def restart_upgrade(self):
         """Vacuum/upgrade runtime DB on restart."""
-        # Backward compat, upgrade database with state file if necessary
-        suite_run_d = os.path.dirname(os.path.dirname(self.pub_path))
-        old_pri_db_path = os.path.join(
-            suite_run_d, 'state', CylcSuiteDAO.OLD_DB_FILE_BASE_NAME)
-        old_pri_db_path_611 = os.path.join(
-            suite_run_d, CylcSuiteDAO.OLD_DB_FILE_BASE_NAME_611[0])
-        old_state_file_path = os.path.join(suite_run_d, "state", "state")
-        if (os.path.exists(old_pri_db_path) and
-                os.path.exists(old_state_file_path) and
-                not os.path.exists(self.pri_path)):
-            # Upgrade pre-6.11.X runtime database + state file
-            copy(old_pri_db_path, self.pri_path)
-            pri_dao = self.get_pri_dao()
-            pri_dao.upgrade_with_state_file(old_state_file_path)
-            target = os.path.join(suite_run_d, "state.tar.gz")
-            cmd = ["tar", "-C", suite_run_d, "-czf", target, "state"]
-            if call(cmd, stdin=open(os.devnull)) == 0:
-                rmtree(os.path.join(suite_run_d, "state"), ignore_errors=True)
-            else:
-                try:
-                    os.unlink(os.path.join(suite_run_d, "state.tar.gz"))
-                except OSError:
-                    pass
-                LOG.error("cannot tar-gzip + remove old state/ directory")
-            # Remove old files as well
-            try:
-                os.unlink(os.path.join(suite_run_d, "cylc-suite-env"))
-            except OSError:
-                pass
-        elif (os.path.exists(old_pri_db_path_611) and
-                not os.path.exists(self.pri_path)):
-            # Upgrade 6.11.X runtime database
-            os.rename(old_pri_db_path_611, self.pri_path)
-            pri_dao = self.get_pri_dao()
-            pri_dao.upgrade_from_611()
-            # Remove old files as well
-            for name in [
-                    CylcSuiteDAO.OLD_DB_FILE_BASE_NAME_611[1],
-                    "cylc-suite-env"]:
-                try:
-                    os.unlink(os.path.join(suite_run_d, name))
-                except OSError:
-                    pass
-        else:
-            pri_dao = self.get_pri_dao()
-            pri_dao.upgrade_pickle_to_json()
-
-        # Vacuum the primary/private database file
+        pri_dao = self.get_pri_dao()
         pri_dao.vacuum()
         pri_dao.close()

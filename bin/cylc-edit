@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -118,7 +118,7 @@ def main():
 
         # edit the suite.rc file
         if not os.path.isfile(suiterc):
-            print >> sys.stderr, 'ERROR, file not found: ', suiterc
+            print('ERROR, file not found: ', suiterc, file=sys.stderr)
             sys.exit(1)
 
         # in case editor has options, e.g. 'emacs -nw':
@@ -129,7 +129,7 @@ def main():
         retcode = call(command_list)
         if retcode != 0:
             # the command returned non-zero exist status
-            print >> sys.stderr, command, 'failed:', retcode
+            print(command, 'failed:', retcode, file=sys.stderr)
             sys.exit(1)
 
         # !!!EDITING FINISHED!!!
@@ -142,11 +142,11 @@ def main():
         # record original modtime
         modtimes[suiterc] = os.stat(suiterc).st_mtime
         # read the file
-        h = open(suiterc, 'rb')
+        h = open(suiterc, 'r')
         lines0 = h.readlines()
         h.close()
         if lines0[0].startswith('# !WARNING! CYLC EDIT INLINED'):
-            print 'WARNING: RECOVERING A PREVIOUSLY INLINED FILE'
+            print('WARNING: RECOVERING A PREVIOUSLY INLINED FILE')
             recovery = True
             lines = lines0
         else:
@@ -160,14 +160,14 @@ def main():
     # overwrite the (now backed up) original with the inlined file:
     h = open(suiterc, 'wb')
     for line in lines:
-        h.write(line + '\n')
+        h.write((line + '\n').encode())
     h.close()
 
-    print 'PRE-EDIT BACKUPS:'
+    print('PRE-EDIT BACKUPS:')
     for file in backups:
         src = re.sub(suitedir + '/', '', file)
         dst = re.sub(suitedir + '/', '', backups[file])
-        print ' + ' + src + ' ---> ' + dst
+        print(' + ' + src + ' ---> ' + dst)
 
     # in case editor has options, e.g. 'emacs -nw':
     command_list = re.split(' ', editor)
@@ -177,9 +177,9 @@ def main():
     retcode = call(command_list)
     if retcode != 0:
         # the command returned non-zero exist status
-        print >> sys.stderr, command, 'failed:', retcode
+        print(command, 'failed:', retcode, file=sys.stderr)
         sys.exit(1)
-    print 'EDITING DONE'
+    print('EDITING DONE')
 
     # Now back up the inlined file in case of absolute disaster, so as the
     # user or his editor corrupting the inlined-include-file marker lines.
@@ -190,22 +190,22 @@ def main():
     copy(suiterc, inlined_suiterc_backup)
 
     # read in the edited inlined file
-    h = open(suiterc, 'rb')
+    h = open(suiterc, 'r')
     lines = h.readlines()
     h.close()
 
     # split it back into separate files
     split_file(suitedir, lines, suiterc, recovery)
 
-    print ' + edited:', suiterc
-    print ' + backup:', inlined_suiterc_backup
-    print 'INCLUDE-FILES WRITTEN:'
+    print(' + edited:', suiterc)
+    print(' + backup:', inlined_suiterc_backup)
+    print('INCLUDE-FILES WRITTEN:')
     for file in newfiles:
         f = re.sub(suitedir + '/', '', file)
         if re.search(r'\.EDIT\.NEW\.', f):
-            print ' + ' + f + ' (!!! WARNING: original changed on disk !!!)'
+            print(' + ' + f + ' (!!! WARNING: original changed on disk !!!)')
         else:
-            print ' + ' + f
+            print(' + ' + f)
     # DONE
 
 

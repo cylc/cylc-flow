@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -34,9 +34,9 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 import cylc.flags
-from cylc.prompt import prompt
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.httpclient import SuiteRuntimeServiceClient
+from cylc.network.client import SuiteRuntimeClient
+from cylc.terminal import prompt
 
 
 def main():
@@ -61,20 +61,28 @@ def main():
             'Hold suite after %s' % options.hold_point_string, options.force)
     else:
         prompt('Hold suite %s' % suite, options.force)
-    pclient = SuiteRuntimeServiceClient(
-        suite, options.owner, options.host, options.port,
-        options.comms_timeout, my_uuid=options.set_uuid,
-        print_uuid=options.print_uuid)
+
+    pclient = SuiteRuntimeClient(
+        suite, options.owner, options.host, options.port)
+
     if args:
         items = parser.parse_multitask_compat(options, args)
-        pclient.put_command('hold_tasks', items=items)
+        pclient(
+            'hold_tasks',
+            {'items': items},
+            timeout=options.comms_timeout
+        )
     elif options.hold_point_string:
-        pclient.put_command(
+        pclient(
             'hold_after_point_string',
-            point_string=options.hold_point_string
+            {'point_string': options.hold_point_string},
+            timeout=options.comms_timeout
         )
     else:
-        pclient.put_command('hold_suite')
+        pclient(
+            'hold_suite',
+            timeout=options.comms_timeout
+        )
 
 
 if __name__ == "__main__":

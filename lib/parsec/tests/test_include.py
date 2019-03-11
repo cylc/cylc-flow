@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -105,7 +105,7 @@ class TestInclude(unittest.TestCase):
             # system operations. So we avoid testing that option here.
 
             # test that whatever is in the included file appears in the output
-            tf.write("[section2]")
+            tf.write("[section2]".encode())
             tf.flush()
             r = inline(lines=file_lines_with_include,
                        dir_=os.path.dirname(tf.name),

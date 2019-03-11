@@ -31,8 +31,8 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug --no-detach ${OPT_SET} "${SUITE_NAME}"
 
 contains_ok "${TEST_SMTPD_LOG}" <<__LOG__
-retry: 1/t1/01
-see: http://localhost/stuff/${USER}/${SUITE_NAME}/
+b'retry: 1/t1/01'
+b'see: http://localhost/stuff/${USER}/${SUITE_NAME}/'
 __LOG__
 run_ok "${TEST_NAME_BASE}-grep-log" \
     grep -q "Subject: \\[1/t1/01 retry\\].* ${SUITE_NAME}" "${TEST_SMTPD_LOG}"

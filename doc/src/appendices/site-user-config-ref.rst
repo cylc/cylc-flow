@@ -176,8 +176,7 @@ Suite event logs are rolled over when they reach this file size.
 [documentation]
 ---------------
 
-Documentation locations for the ``cylc doc`` command and gcylc
-Help menus.
+Documentation locations for the ``cylc doc`` command.
 
 [documentation] ``->`` [[online]]
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -235,54 +234,13 @@ The editor to be invoked by the cylc command line interface.
 [editors] ``->`` gui
 ^^^^^^^^^^^^^^^^^^^^
 
-The editor to be invoked by the cylc GUI.
+GUI Text editor to be invoked by Cylc:
 
 - *type*: string
 - *default*: ``gvim -f``
 - *examples*:
   - ``gui = emacs``
   - ``gui = xterm -e vim``
-
-
-[communication]
----------------
-
-This section covers options for network communication between cylc
-clients (suite-connecting commands and guis) servers (running suites).
-
-By default, the communication method is HTTPS secured with HTTP Digest
-Authentication. If the system does not support SSL, you should configure
-this section to use HTTP. Cylc will not automatically fall back to HTTP
-if HTTPS is not available.
-
-
-[communication] ``->`` method
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The choice of client-server communication method - currently only HTTPS
-and HTTP are supported, although others could be developed and plugged in.
-Cylc defaults to HTTPS if this setting is not explicitly configured.
-
-- *type*: string
-- *options*:
-  - **https**
-  - **http**
-- *default*: https
-
-[communication] ``->`` options
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Option flags for the communication method. Currently only 'SHA1' is
-supported for HTTPS, which alters HTTP Digest Auth to use the SHA1 hash
-algorithm rather than the standard MD5. This is more secure but is also
-less well supported by third party web clients including web browsers.
-You may need to add the 'SHA1' option if you are running on platforms
-where MD5 is discouraged (e.g. under FIPS).
-
-- *type*: string\_list
-- *default*: ``[]``
-- *options*:
-  - **SHA1**
 
 
 [monitor]
@@ -582,7 +540,7 @@ setting.
 """"""""""""""""""""""""""""""""""""""""""""""""""""
 
 A command template (with ``%(filename)s`` substitution) to tail-follow
-job logs on HOST, by the GUI log viewer and ``cylc cat-log``. You are
+job logs on HOST, by ``cylc cat-log``. You are
 unlikely to need to override this.
 
 - *type*: string
@@ -718,8 +676,7 @@ exceeds its execution time limit.
 ---------------
 
 Configure allowed suite hosts and ports for starting up (running or
-restarting) suites and enabling them to be detected whilst running via
-utilities such as ``cylc gscan``. Additionally configure host
+restarting) suites. Additionally configure host
 selection settings specifying how to determine the most suitable run host at
 any given time from those configured.
 
@@ -744,6 +701,12 @@ Hosts specified in ``condemned hosts`` will not be considered as suite
 run hosts. If suites are already running on ``condemned hosts`` they
 will be automatically shutdown and restarted (see :ref:`auto-stop-restart`).
 
+.. warning::
+
+   Cylc will reject hosts with ambiguous names such as ``localhost`` or
+   ``127.0.0.1`` for this configuration as ``condemned hosts`` are evaluated
+   on the suite host server.
+
 - *type*: comma-separated list of host names and/or IP addresses.
 - *default*: (none)
 
@@ -759,15 +722,6 @@ a ``run`` or ``restart`` command.
 - *default*: ``localhost``
 
 
-[suite servers] ``->`` scan hosts
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-A list of hosts to scan for running suites.
-
-- *type*: comma-separated list of host names and/or IP addresses.
-- *default*: ``localhost``
-
-
 [suite servers] ``->`` run ports
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -778,17 +732,6 @@ A list of allowed ports for Cylc to use to run suites.
    Only one suite can run per port for a given host, so the length
    of this list determines the maximum number of suites that can run
    at once per suite host.
-
-- *type*: string in the format ``X .. Y`` for
-  ``X <= Y`` where ``X`` and ``Y`` are integers.
-- *default*: ``43001 .. 43100`` (equivalent to the list
-  ``43001, 43002, ... , 43099, 43100``)
-
-
-[suite servers] ``->`` scan ports
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-A list of ports to scan for running suites on each host set in scan hosts.
 
 - *type*: string in the format ``X .. Y`` for
   ``X <= Y`` where ``X`` and ``Y`` are integers.
@@ -1155,11 +1098,20 @@ suite passphrase required.
 - *type*: string (must be one of the following options)
 - *options*:
 
-  - *identity* - only suite and owner names revealed
-  - *description* - identity plus suite title and description
-  - *state-totals* - identity, description, and task state totals
-  - *full-read* - full read-only access for monitor and GUI
-  - *shutdown* - full read access plus shutdown, but no other
-    control.
+  none
+     Permit no public suite access.
+  identity
+     Only suite and owner names revealed.
+  description
+     Identity plus suite title and description.
+  state-totals
+     Identity, description, and task state totals.
+  read
+     Full read-only access.
+  shutdown
+     *Not yet implemented*
+     Full read access plus shutdown, but no other control.
+  control
+     Permit full control (not recommended).
 
 - *default*: state-totals

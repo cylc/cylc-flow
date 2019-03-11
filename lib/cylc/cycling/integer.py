@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -23,7 +23,7 @@ import re
 
 from cylc.cycling import (
     PointBase, IntervalBase, SequenceBase, ExclusionBase, PointParsingError,
-    IntervalParsingError, parse_exclusion
+    IntervalParsingError, parse_exclusion, cmp
 )
 from cylc.time_parser import CylcMissingContextPointError
 
@@ -108,7 +108,6 @@ RECURRENCE_FORMAT_RECS = [
         (r"^%(reps_1)s//%(end)s$", 4)
     ]
 ]
-del regex, format_num
 
 
 REC_RELATIVE_POINT = re.compile(r"^[-+]P\d+$")
@@ -195,7 +194,7 @@ class IntegerInterval(IntervalBase):
             return IntegerInterval(string)
 
     def __init__(self, value):
-        if (not isinstance(value, basestring) or
+        if (not isinstance(value, str) or
                 not REC_INTERVAL.search(value)):
             raise IntervalParsingError("IntegerInterval", repr(value))
         super(IntegerInterval, self).__init__(value)
@@ -226,7 +225,7 @@ class IntegerInterval(IntervalBase):
         # Return an interval with all properties multiplied by factor.
         return IntegerInterval.from_integer(int(self) * factor)
 
-    def __nonzero__(self):
+    def __bool__(self):
         # Return True if the interval has any non-zero properties.
         return bool(int(self))
 
@@ -578,6 +577,18 @@ class IntegerSequence(SequenceBase):
                 self.p_start == other.p_start and \
                 self.p_stop == other.p_stop and \
                 self.exclusions == other.exclusions
+
+    def __hash__(self):
+        return hash(tuple((getattr(self, attr) for attr in self.__slots__)))
+
+    def __lt__(self, other: 'IntegerSequence') -> bool:
+        for attr in self.__slots__:
+            try:
+                if getattr(self, attr) < getattr(other, attr):
+                    return True
+            except TypeError:
+                pass
+        return False
 
 
 def init_from_cfg(_):

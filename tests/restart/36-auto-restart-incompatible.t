@@ -83,7 +83,7 @@ for opt in "${OPTS[@]}"; do
     ${BASE_GLOBALRC}
     [suite servers]
         run hosts = ${CYLC_TEST_HOST}
-        condemned hosts = localhost
+        condemned hosts = $(hostname)
     "
 
     log_scan "${TEST_NAME}-no-restart" \

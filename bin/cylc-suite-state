@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -194,7 +194,7 @@ def main():
         sys.exit("ERROR: You must target a cycle point to use an offset")
 
     if options.template:
-        print >> sys.stderr, "WARNING: ignoring --template (no longer needed)"
+        print("WARNING: ignoring --template (no longer needed)", file=sys.stderr)
 
     # Attempt to apply specified offset to the targeted cycle
     if options.offset:

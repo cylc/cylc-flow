@@ -46,3 +46,9 @@ Cylc Development History - Major Changes
 
   - Replaced the Pyro communications layer with RESTful HTTPS
   - Removed deprecated pre cylc-6 syntax and features.
+
+- **cylc-8**
+
+  - Upgraded to Python3
+  - Replaced the RESTful HTTP(S) communications layer with ZMQ over TCP
+  - Removed deprecated pre cylc-6 syntax and features.

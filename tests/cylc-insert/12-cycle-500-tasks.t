@@ -32,7 +32,7 @@ cut -d' ' -f 2- "${LOG}" >'trimmed-log'
     for I in {001..500}; do
         echo "INFO - [v_i${I}.2008] -inserted"
     done
-    echo "INFO - Command succeeded: insert_tasks([u'2008/*'], stop_point_string=None, no_check=False)"
+    echo "INFO - Command succeeded: insert_tasks(['2008/*'], stop_point_string=None, no_check=False)"
 } >'expected-log'
 contains_ok 'trimmed-log' 'expected-log'
 

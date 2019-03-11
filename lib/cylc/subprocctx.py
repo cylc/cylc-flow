@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -21,7 +21,7 @@ Coerce more value type from string (to time point, duration, xtriggers, etc.).
 """
 
 import json
-from pipes import quote
+from shlex import quote
 
 from cylc.wallclock import get_current_time_string
 

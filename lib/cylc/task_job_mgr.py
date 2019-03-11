@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -43,7 +43,6 @@ from cylc.job_file import JobFileWriter
 from cylc.task_job_logs import (
     JOB_LOG_JOB, get_task_job_log, get_task_job_job_log,
     get_task_job_activity_log, get_task_job_id, NN)
-from cylc.mkdir_p import mkdir_p
 from cylc.subprocpool import SuiteProcPool
 from cylc.subprocctx import SubProcContext
 from cylc.task_action_timer import TaskActionTimer
@@ -352,7 +351,7 @@ class TaskJobManager(object):
         else:
             rmtree(job_file_dir, ignore_errors=True)
 
-        mkdir_p(job_file_dir)
+        os.makedirs(job_file_dir, exist_ok=True)
         target = os.path.join(task_log_dir, NN)
         source = os.path.basename(job_file_dir)
         try:
@@ -423,7 +422,7 @@ class TaskJobManager(object):
             with open(job_activity_log, "ab") as handle:
                 if not line.endswith("\n"):
                     line += "\n"
-                handle.write(owner_at_host + line)
+                handle.write((owner_at_host + line).encode())
         except IOError as exc:
             LOG.warning("%s: write failed\n%s" % (job_activity_log, exc))
             LOG.warning("[%s] -%s%s", itask, owner_at_host, line)
@@ -779,7 +778,7 @@ class TaskJobManager(object):
                 suite, itask.point, itask.tdef.name, itask.submit_num)
             self.job_file_writer.write(local_job_file_path, job_conf,
                                        check_syntax=check_syntax)
-        except StandardError as exc:
+        except Exception as exc:
             # Could be a bad command template, IOError, etc
             self._prep_submit_task_job_error(
                 suite, itask, dry_run, '(prepare job file)', exc)
@@ -787,7 +786,6 @@ class TaskJobManager(object):
         itask.local_job_file_path = local_job_file_path
 
         if dry_run:
-            # This will be shown next to submit num in gcylc:
             itask.set_summary_message('job file written (edit/dry-run)')
             LOG.debug('[%s] -%s', itask, itask.summary['latest_message'])
 

@@ -25,9 +25,9 @@ from .git import is_git_repo
 
 def get_cylc_directory():
     """Returns the location of cylc's working copy."""
-    ver_str, _ = Popen(
+    ver_str = Popen(
         ['cylc', 'version', '--long'],
-        stdout=PIPE, stdin=open(os.devnull)).communicate()
+        stdout=PIPE, stdin=open(os.devnull)).communicate()[0].decode()
     try:
         return os.path.realpath(re.search(r'\((.*)\)', ver_str).groups()[0])
     except IndexError:
@@ -80,7 +80,8 @@ MEMORY_LINE_REGEX = re.compile(
 LOOP_MEMORY_LINE_REGEX = re.compile(
     r'(?:loop #|end main loop \(total loops )([\d]+)(?:: |\): )(.*)')
 # Matches the sleep function line in cylc <cmd> --profile output.
-SLEEP_FUNCTION_REGEX = re.compile(r'([\d.]+)[\s]+[\d.]+[\s]+\{time.sleep\}')
+SLEEP_FUNCTION_REGEX = re.compile(
+    r'([\d.]+)[\s]+[\d.]+[\s]+\{built-in method time.sleep\}')
 # The string prefixing the suite-startup timestamp (unix time).
 SUITE_STARTUP_STRING = 'SUITE STARTUP: '
 

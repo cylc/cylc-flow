@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -111,30 +111,32 @@ def main():
             argv += ["--host=%s" % host]
             user_at_host = host
         if verbose:
-            print "%s: %s" % (user_at_host, ' '.join(argv))
+            print("%s: %s" % (user_at_host, ' '.join(argv)))
         proc = Popen(argv, stdin=open(os.devnull), stdout=PIPE, stderr=PIPE)
         out, err = proc.communicate()
+        out = out.decode()
+        err = err.decode()
         if proc.wait() == 0:
             if verbose:
-                print "   %s" % out
+                print("   %s" % out)
             contacted += 1
             out = out.strip()
             if out != CYLC_VERSION:
                 warn[user_at_host] = out
         else:
-            print >> sys.stderr, 'ERROR ' + user_at_host + ':'
-            print >> sys.stderr, err
+            print('ERROR ' + user_at_host + ':', file=sys.stderr)
+            print(err, file=sys.stderr)
 
     # report results
     if not warn:
         if contacted:
-            print "All", contacted, "accounts have cylc-" + CYLC_VERSION
+            print("All", contacted, "accounts have cylc-" + CYLC_VERSION)
     else:
-        print "WARNING: failed to invoke cylc-%s on %d accounts:" % (
-            CYLC_VERSION, len(warn.keys()))
+        print("WARNING: failed to invoke cylc-%s on %d accounts:" % (
+            CYLC_VERSION, len(warn)))
         m = max(len(ac) for ac in warn)
         for ac, warning in warn.items():
-            print ' ', ac.ljust(m), warning
+            print(' ', ac.ljust(m), warning)
         if options.error:
             sys.exit(1)
 

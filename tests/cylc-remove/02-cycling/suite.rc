@@ -12,7 +12,11 @@
         [[[R1]]]
             graph = remover
         [[[P1Y]]]
-            graph = foo => bar & baz
+            # NOTE: Graph changed to make test pass on Python3.
+            #       The reason for this is that without the dependency from
+            #       remover[^] => foo there was no guarantee that remover would
+            #       finish before baz ran.
+            graph = remover[^] => foo => bar & baz
 [runtime]
     [[remover]]
         script = """

@@ -107,7 +107,7 @@ for ear in $(seq 1 "${EARS}"); do
     # test the restart procedure
     FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)
     log_scan2 "${TEST_NAME_BASE}-${ear}-restart" "${FILE}" 20 1 \
-        "Suite server: url=https://$(ssh "${JOKERS}" hostname -f)"
+        "Suite server: url=tcp://$(ssh "${JOKERS}" hostname -f)"
     sleep 2
 done
 

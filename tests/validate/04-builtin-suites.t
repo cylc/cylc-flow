@@ -19,12 +19,13 @@
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 # Generate a list of suites.
-SUITES=($(find "${CYLC_DIR}/"{etc/examples,etc/dev-suites} -name 'suite.rc'))
+SUITES=($(find "${CYLC_DIR}/"{etc/examples,etc/dev-suites} -name 'suite.rc' \
+    | grep -v 'empy' ))  # TODO - don't validate empy suites see: #2958
 ABS_PATH_LENGTH=${#CYLC_DIR}
 #-------------------------------------------------------------------------------
 # Filter out certain warnings to prevent tests being failed by them.
 function filter_warnings() {
-    python2 - "$@" <<'__PYTHON__'
+    python3 - "$@" <<'__PYTHON__'
 import re, sys
 msgs = [
     r'(?:INFO|DEBUG) - .*\n(\t.*\n)*',

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -19,7 +19,7 @@
 
 import os
 import cProfile
-import StringIO
+import io
 import pstats
 from subprocess import Popen, PIPE
 
@@ -46,11 +46,11 @@ class Profiler(object):
         if not self.enabled:
             return
         self.prof.disable()
-        string_stream = StringIO.StringIO()
+        string_stream = io.StringIO()
         stats = pstats.Stats(self.prof, stream=string_stream)
         stats.sort_stats('cumulative')
         stats.print_stats()
-        print string_stream.getvalue()
+        print(string_stream.getvalue())
 
     def log_memory(self, message):
         """Print a message to standard out with the current memory usage."""
@@ -60,4 +60,4 @@ class Profiler(object):
             ["ps", "h", "-orss", str(os.getpid())],
             stdin=open(os.devnull), stdout=PIPE)
         memory = int(proc.communicate()[0])
-        print "PROFILE: Memory: %d KiB: %s" % (memory, message)
+        print("PROFILE: Memory: %d KiB: %s" % (memory, message))

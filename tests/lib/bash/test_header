@@ -47,10 +47,11 @@
 #         compare files. However, if an alternate command such as "xxdiff -D"
 #         is desirable (e.g. for debugging),
 #         "export CYLC_TEST_DIFF_CMD=xxdiff -D".
-#     cmp_json_ok FILE_TEST [FILE_CONTROL]
-#         Compare FILE_TEST with a file or stdin given by FILE_CONTROL (stdin
-#         if FILE_CONTROL is "-" or missing), where FILE_TEST must also be in
-#         valid JSON format.
+#     cmp_json FILE_TEST [FILE_CONTROL]
+#         Alternative implementation to cmp_json_ok, compare two JSON files
+#         and display any differences as a unified(ish) diff:
+#         * Works with nested dictionaries.
+#         * Impervious to dictionary order.
 #     contains_ok FILE_TEST [FILE_CONTROL]
 #         Make sure that each line in FILE_TEST is present in FILE_CONTROL
 #         (stdin if FILE_CONTROL is "-" or missing).
@@ -254,43 +255,22 @@ cmp_ok() {
     fail "${TEST_NAME}"
 }
 
-cmp_json_ok() {
-    run_ok "$1" python2 -c "import sys
-import re
-import json
-from cylc.task_state import TASK_STATUSES_ORDERED
+cmp_json() {
+    local TEST_NAME="$1"
+    local FILE1="$2"
+    shift; shift
 
-# Load data; no need for JSON object try/except as get stderr traceback anyway
-output = json.load(open(sys.argv[1], 'r'))
-if sys.argv[2]:
-    expected_output = json.load(open(sys.argv[2], 'r'))
-else:
-    expected_output = json.load(sys.stdin)
-
-# Replace arbitary time floats in JSON structures for effective comparison
-def float_repl(some_output, marker):
-    new_output = re.sub(r'((\'|\")update-time(\'|\")\s*:\s*)\d*\.\d*',
-                        r'\1' + marker, str(some_output))
-    # Deal with cylc scan TIME_FIELDS (see cylc.state_summary_mgr)
-    for status in TASK_STATUSES_ORDERED:
-        new_regex = (r'((\'|\")%s(\'|\")\s*:\s*\[\n*\s*\[\n*\s*)\d*\.\d*' %
-                     status)
-        new_output = re.sub(new_regex, r'\1' + marker, str(new_output))
-    return new_output
-
-# Unicode (u'...') for 'loaded' outputs; double-quoted strings for 'dumps'
-u_marker = \"u'<FLOAT_REPLACED>'\"
-s_marker = '\"<FLOAT_REPLACED>\"'
-
-# Check for match; if different, process for easy stderr lifting -> tests
-if float_repl(output, u_marker) == float_repl(expected_output, u_marker):
-    sys.exit(0)
-else:
-    sys.exit('LOADED:\n%s\n!=\n%s\n OR DUMPED:\n%s\n!=\n%s' % (
-        float_repl(output, u_marker), float_repl(expected_output, u_marker),
-        float_repl(json.dumps(output, indent=4), s_marker),
-        float_repl(json.dumps(expected_output, indent=4),
-                   s_marker)))" "$2" "${3:-}"
+    if python3 "$CYLC_DIR/tests/lib/python/diffr.py" \
+        "$(cat "${FILE1}")" "$@" >"${TEST_NAME}.stdout" 2>"${TEST_NAME}.stderr"
+    then
+        ok "${TEST_NAME}"
+        return
+    else
+        cat "${TEST_NAME}.stderr" >&2
+    fi
+    mkdir -p "${TEST_LOG_DIR}"
+    cp -p "${TEST_NAME}.stderr" "${TEST_LOG_DIR}/${TEST_NAME}.stderr"
+    fail "${TEST_NAME}"
 }
 
 contains_ok() {
@@ -383,7 +363,7 @@ graph_suite() {
     local OUTPUT_FILE="${2}"
     shift 2
     mkdir -p "$(dirname "${OUTPUT_FILE}")"
-    cylc graph --reference "${SUITE_NAME}" "$@" >"${OUTPUT_FILE}" 2>'/dev/null'
+    cylc graph --reference "${SUITE_NAME}" "$@" >"${OUTPUT_FILE}"
 }
 
 init_suite() {
@@ -516,10 +496,10 @@ ssh_install_cylc() {
 
 _ssh_mkdtemp_cylc_dir() {
     local RHOST="$1"
-    ssh -oBatchMode=yes -oConnectTimeout=5 "${RHOST}" python2 - <<'__PYTHON__'
+    ssh -oBatchMode=yes -oConnectTimeout=5 "${RHOST}" python3 - <<'__PYTHON__'
 import os
 from tempfile import mkdtemp
-print mkdtemp(dir=os.path.expanduser("~"), prefix="cylc-")
+print(mkdtemp(dir=os.path.expanduser("~"), prefix="cylc-"))
 __PYTHON__
 }
 
@@ -528,7 +508,7 @@ mock_smtpd_init() {  # Logic borrowed from Rose
     for SMTPD_PORT in 8025 8125 8225 8325 8425 8525 8625 8725 8825 8925; do 
         local SMTPD_HOST="localhost:${SMTPD_PORT}"
         local SMTPD_LOG="${TEST_DIR}/smtpd.log"
-        python2 -m 'smtpd' -c 'DebuggingServer' -d -n "${SMTPD_HOST}" \
+        python3 -m 'smtpd' -c 'DebuggingServer' -d -n "${SMTPD_HOST}" \
             1>"${SMTPD_LOG}" 2>&1 &
         local SMTPD_PID="$!"
         while ! grep -q 'DebuggingServer started' "${SMTPD_LOG}" 2>'/dev/null'
@@ -675,7 +655,7 @@ cylc_ws_kill() {
 cylc_ws_json_greps() {
     local TEST_NAME="$1"
     shift 1
-    run_ok "${TEST_NAME}" python2 - "$@" <<'__PYTHON__'
+    run_ok "${TEST_NAME}" python3 - "$@" <<'__PYTHON__'
 import ast
 import json
 import sys
@@ -688,7 +668,7 @@ for item in sys.argv[2:]:
         for key in keys:
             if isinstance(key, dict):
                 for datum_item in datum:
-                    if all([datum_item.get(k) == v for k, v in key.items()]):
+                    if all((datum_item.get(k) == v for k, v in key.items())):
                         datum = datum_item
                         break
                 else:

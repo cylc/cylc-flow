@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -110,7 +110,7 @@ class BroadcastMgr(object):
         if bad_options:
             LOG.error(get_broadcast_bad_options_report(bad_options))
 
-        return (modified_settings, bad_options)
+        return modified_settings, bad_options
 
     def expire_broadcast(self, cutoff=None):
         """Clear all broadcasts targeting cycle points earlier than cutoff."""
@@ -182,7 +182,7 @@ class BroadcastMgr(object):
         if not self.ext_triggers or not itask.state.external_triggers:
             return
         has_changed = False
-        for trig, satisfied in itask.state.external_triggers.items():
+        for trig, satisfied in list(itask.state.external_triggers.items()):
             if satisfied:
                 continue
             for qmsg, qid in self.ext_triggers.copy():
@@ -292,7 +292,7 @@ class BroadcastMgr(object):
                         bad_options[opt_name].discard(opt)
                         if not bad_options[opt_name]:
                             break
-        for key, value in bad_options.copy().items():
+        for key, value in list(bad_options.copy().items()):
             if value:
                 bad_options[key] = list(value)
             else:

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -123,7 +123,7 @@ class XtriggerManager(object):
         self.functx_map[label] = fctx
         # Check any string templates in the function arg values (note this
         # won't catch bad task-specific values - which are added dynamically).
-        for argv in fctx.func_args + fctx.func_kwargs.values():
+        for argv in fctx.func_args + list(fctx.func_kwargs.values()):
             try:
                 for match in RE_STR_TMPL.findall(argv):
                     if match not in ARG_VAL_TEMPLATES:

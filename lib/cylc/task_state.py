@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -158,16 +158,6 @@ TASK_STATUSES_TRIGGERABLE = set([
     TASK_STATUS_SUCCEEDED,
     TASK_STATUS_FAILED,
     TASK_STATUS_RETRYING
-])
-
-# Tasks statuses to auto-expand in the gcylc tree view.
-TASK_STATUSES_AUTO_EXPAND = set([
-    TASK_STATUS_QUEUED,
-    TASK_STATUS_READY,
-    TASK_STATUS_EXPIRED,
-    TASK_STATUS_SUBMITTED,
-    TASK_STATUS_RUNNING,
-    TASK_STATUS_FAILED,
 ])
 
 # Tasks statuses grouped for cylc review 'create_suite_cycles_summary()'

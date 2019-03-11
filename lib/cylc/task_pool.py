@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -19,8 +19,8 @@
 
 All new task proxies (including spawned ones) are added first to the runahead
 pool, which does not participate in dependency matching and is not visible in
-the GUI. Tasks are then released to the task pool if not beyond the current
-runahead limit.
+cylc monitoring tools. Tasks are then released to the task pool if not beyond
+the current runahead limit.
 
 check_auto_shutdown() and remove_spent_tasks() have to consider tasks in the
 runahead pool too.
@@ -533,7 +533,7 @@ class TaskPool(object):
             self.pool_changed = False
             self.pool_list = []
             for itask_id_maps in self.queues.values():
-                self.pool_list.extend(itask_id_maps.values())
+                self.pool_list.extend(list(itask_id_maps.values()))
         return self.pool_list
 
     def get_rh_tasks(self):
@@ -542,21 +542,21 @@ class TaskPool(object):
             self.rhpool_changed = False
             self.rhpool_list = []
             for itask_id_maps in self.runahead_pool.values():
-                self.rhpool_list.extend(itask_id_maps.values())
+                self.rhpool_list.extend(list(itask_id_maps.values()))
         return self.rhpool_list
 
     def get_tasks_by_point(self, incl_runahead):
         """Return a map of task proxies by cycle point."""
         point_itasks = {}
         for point, itask_id_map in self.pool.items():
-            point_itasks[point] = itask_id_map.values()
+            point_itasks[point] = list(itask_id_map.values())
 
         if not incl_runahead:
             return point_itasks
 
         for point, itask_id_map in self.runahead_pool.items():
             point_itasks.setdefault(point, [])
-            point_itasks[point].extend(itask_id_map.values())
+            point_itasks[point].extend(list(itask_id_map.values()))
         return point_itasks
 
     def get_task_by_id(self, id_):
@@ -564,7 +564,9 @@ class TaskPool(object):
 
         Return None if task does not exist.
         """
-        for itask_ids in self.queues.values() + self.runahead_pool.values():
+        for itask_ids in (
+                list(self.queues.values())
+                + list(self.runahead_pool.values())):
             try:
                 return itask_ids[id_]
             except KeyError:
@@ -596,10 +598,8 @@ class TaskPool(object):
         qconfig = self.config.cfg['scheduling']['queues']
 
         for queue in self.queues:
-            tasks = self.queues[queue].values()
-
             # 1) queue unqueued tasks that are ready to run or manually forced
-            for itask in tasks:
+            for itask in list(self.queues[queue].values()):
                 if itask.state.status != TASK_STATUS_QUEUED:
                     # only need to check that unqueued tasks are ready
                     if itask.is_ready(now):
@@ -614,7 +614,7 @@ class TaskPool(object):
             n_active = 0
             n_release = 0
             n_limit = qconfig[queue]['limit']
-            tasks = self.queues[queue].values()
+            tasks = list(self.queues[queue].values())
 
             # 2.1) count active tasks and compare to queue limit
             if n_limit:
@@ -654,7 +654,7 @@ class TaskPool(object):
 
     def get_min_point(self):
         """Return the minimum cycle point currently in the pool."""
-        cycles = self.pool.keys()
+        cycles = list(self.pool)
         minc = None
         if cycles:
             minc = min(cycles)
@@ -662,7 +662,7 @@ class TaskPool(object):
 
     def get_max_point(self):
         """Return the maximum cycle point currently in the pool."""
-        cycles = self.pool.keys()
+        cycles = list(self.pool)
         maxc = None
         if cycles:
             maxc = max(cycles)
@@ -670,7 +670,7 @@ class TaskPool(object):
 
     def get_max_point_runahead(self):
         """Return the maximum cycle point currently in the runahead pool."""
-        cycles = self.runahead_pool.keys()
+        cycles = list(self.runahead_pool)
         maxc = None
         if cycles:
             maxc = max(cycles)
@@ -857,7 +857,7 @@ class TaskPool(object):
                         prereqs_map[itask.identity].append(prereq_str)
 
         # prune tree to ignore items that are elsewhere in it
-        for id_, prereqs in prereqs_map.copy().items():
+        for id_, prereqs in list(prereqs_map.copy().items()):
             for prereq in prereqs:
                 prereq_strs = prereq.split()
                 if prereq_strs[0] == "LABEL:":

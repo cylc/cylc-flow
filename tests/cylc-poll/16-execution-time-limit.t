@@ -36,7 +36,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 #-------------------------------------------------------------------------------
 cmp_times () {
     # Test if the times $1 and $2 are within $3 seconds of each other.
-    python2 - "$@" <<'__PYTHON__'
+    python3 - "$@" <<'__PYTHON__'
 import sys
 from isodatetime.parsers import TimePointParser
 parser = TimePointParser()
@@ -48,10 +48,11 @@ __PYTHON__
 }
 time_offset () {
     # Add an ISO8601 duration to an ISO8601 date-time.
-    python2 - "$@" <<'__PYTHON__'
+    python3 - "$@" <<'__PYTHON__'
 import sys
 from isodatetime.parsers import TimePointParser, DurationParser
-print TimePointParser().parse(sys.argv[1]) + DurationParser().parse(sys.argv[2])
+print(
+    TimePointParser().parse(sys.argv[1]) + DurationParser().parse(sys.argv[2]))
 __PYTHON__
 }
 #-------------------------------------------------------------------------------
@@ -65,12 +66,14 @@ run_ok "${TEST_NAME}" grep -q 'health check settings: execution timeout=PT10S' \
 PREDICTED_POLL_TIME=$(time_offset \
     "$(cut -d ' ' -f 1 <<< "${LINE}")" \
     "$(sed 's/.*execution timeout=\([^,]\+\).*/\1/' <<< "${LINE}")")
-ACTUALL_POLL_TIME=$(sed -n \
+ACTUAL_POLL_TIME=$(sed -n \
     's/\(.*\) INFO - \[foo.1\] -(current:running)(polled) failed .*/\1/p' \
     "${LOG_FILE}")
 # Test execution timeout polling.
+# Main loop is roughly 1 second, but integer rounding may give an apparent 2
+# seconds delay, so set threshold as 2 seconds.
 run_ok "${TEST_NAME_BASE}-poll-time" \
-    cmp_times "${PREDICTED_POLL_TIME}" "${ACTUALL_POLL_TIME}" '1'
+    cmp_times "${PREDICTED_POLL_TIME}" "${ACTUAL_POLL_TIME}" '2'
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
 exit

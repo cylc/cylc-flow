@@ -1,14 +1,14 @@
-edge "foo_99+1.1" "bar_99+1.1"
 edge "foo_100.1" "bar_100.1"
+edge "foo_99+1.1" "bar_99+1.1"
 edge "foo_hundred.1" "bar_hundred.1"
 edge "foo_one-hundred.1" "bar_one-hundred.1"
 graph
-node "bar_99+1.1" "bar_99+1\n1"
 node "bar_100.1" "bar_100\n1"
+node "bar_99+1.1" "bar_99+1\n1"
 node "bar_hundred.1" "bar_hundred\n1"
 node "bar_one-hundred.1" "bar_one-hundred\n1"
-node "foo_99+1.1" "foo_99+1\n1"
 node "foo_100.1" "foo_100\n1"
+node "foo_99+1.1" "foo_99+1\n1"
 node "foo_hundred.1" "foo_hundred\n1"
 node "foo_one-hundred.1" "foo_one-hundred\n1"
 stop

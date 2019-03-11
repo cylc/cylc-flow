@@ -71,29 +71,29 @@ def cylc_major_version():
     """Return the first character of the cylc version e.g. '7'."""
     return Popen(
         ['cylc', '--version'], env=CLEAN_ENV, stdin=open(os.devnull),
-        stdout=PIPE).communicate()[0].strip()[0]
+        stdout=PIPE).communicate()[0].decode().strip()[0]
 
 
 def register_suite(reg, sdir):
     """Registers the suite located in sdir with the registration name reg."""
     cmd = ['cylc', 'register', reg, sdir]
-    print '$ ' + ' '.join(cmd)
+    print('$ ' + ' '.join(cmd))
     if not call(cmd, stdin=open(os.devnull), stdout=PIPE, env=CLEAN_ENV):
         return True
-    print '\tFailed'
+    print('\tFailed')
     return False
 
 
 def unregister_suite(reg):
     """Unregisters the suite reg."""
     cmd = ['cylc', 'unregister', reg]
-    print '$ ' + ' '.join(cmd)
+    print('$ ' + ' '.join(cmd))
     call(cmd, stdin=open(os.devnull), stdout=PIPE, env=CLEAN_ENV)
 
 
 def purge_suite(reg):
     """Deletes the run directory for this suite."""
-    print '$ rm -rf ' + os.path.expanduser(os.path.join('~', 'cylc-run', reg))
+    print('$ rm -rf ' + os.path.expanduser(os.path.join('~', 'cylc-run', reg)))
     try:
         shutil.rmtree(os.path.expanduser(os.path.join('~', 'cylc-run', reg)))
     except OSError:
@@ -158,7 +158,7 @@ def run_suite(reg, options, out_file, profile_modes, mode='live',
         namespaces = Popen(
             ['cylc', 'list', reg] + jinja2_params + tmp,
             stdin=open(os.devnull), stdout=PIPE,
-            env=env).communicate()[0].split() + ['root']
+            env=env).communicate()[0].decode().split() + ['root']
         jinja2_params.append(
             '-s namespaces={0}'.format(','.join(namespaces)))
     cmds.extend(jinja2_params)
@@ -185,7 +185,7 @@ def run_suite(reg, options, out_file, profile_modes, mode='live',
         cmds += ["'"]  # Close shell.
 
     # Execute.
-    print '$ ' + ' '.join(cmds)
+    print('$ ' + ' '.join(cmds))
     try:
         proc = Popen(' '.join(cmds), shell=True, stderr=open(time_err, 'w+'),
                      stdout=open(startup_file, 'w+'), env=env)
@@ -193,7 +193,7 @@ def run_suite(reg, options, out_file, profile_modes, mode='live',
             raise SuiteFailedException(run_cmds, cmd_out, cmd_err)
     except KeyboardInterrupt:
         kill_cmd = ['cylc', 'stop', '--kill', reg]
-        print '$ ' + ' '.join(kill_cmd)
+        print('$ ' + ' '.join(kill_cmd))
         call(kill_cmd, env=env, stdin=open(os.devnull))
         raise ProfilingKilledException(run_cmds, cmd_out, cmd_err)
 
@@ -235,8 +235,8 @@ def run_experiment(exp):
                 conf_path=run.get('globalrc', ''))
             # Handle errors.
             if err_file:
-                print >> sys.stderr, ('WARNING: non-empty suite error log: ' +
-                                      err_file)
+                print(('WARNING: non-empty suite error log: '
+                       + err_file), file=sys.stderr)
             # Tidy up.
             if cylc_maj_version == '6':
                 unregister_suite(reg)
@@ -253,10 +253,9 @@ def run_experiment(exp):
                 to_purge.remove(reg)
 
         if to_purge:
-            print >> sys.stderr, ('ERROR: The following suite(s) run '
-                                  'directories could not be deleted:\n'
-                                  '\t' + ' '.join(to_purge)
-                                  )
+            print(('ERROR: The following suite(s) run '
+                   'directories could not be deleted:\n'
+                   '\t' + ' '.join(to_purge)), file=sys.stderr)
 
     return result_files
 
@@ -276,9 +275,8 @@ def profile(schedule):
     """Perform profiling for the provided schedule.
 
     Args:
-        schedule (list): A list of tuples of the form
-            [(version_id, experiments)] where experiments is a list of
-            experiment objects.
+        schedule (dict): Dictionary of cylc version ids containing lists
+            of the experiments to run for each.
 
     Returns:
         tuple - (results, checkout_count, success)
@@ -292,7 +290,7 @@ def profile(schedule):
     checkout_count = 0
     results = {}
     success = True
-    for version_id, experiments in sorted(schedule.iteritems()):
+    for version_id, experiments in sorted(schedule.items()):
         # Checkout cylc version.
         if version_id != describe():
             try:
@@ -308,13 +306,13 @@ def profile(schedule):
                 result_files = run_experiment(experiment['config'])
             except ProfilingKilledException as exc:
                 # Profiling has been terminated, return what results we have.
-                print exc
+                print(exc)
                 return results, checkout_count, False
             except SuiteFailedException as exc:
                 # Experiment failed to run, move onto the next one.
-                print >> sys.stderr, ('Experiment "%s" failed at version "%s"'
-                                      '' % (experiment['name'], version_id))
-                print >> sys.stderr, exc
+                print(('Experiment "%s" failed at version "%s"'
+                       '' % (experiment['name'], version_id)), file=sys.stderr)
+                print(exc, file=sys.stderr)
                 success = False
                 continue
             else:
@@ -328,17 +326,17 @@ def profile(schedule):
                     exp_files = []
                     for run in result_files:
                         exp_files.extend(result_files[run])
-                    print >> sys.stderr, (
+                    print((
                         'Analysis failed on results from experiment "%s" '
                         'running at version "%s".\n\tProfile files: %s' % (
                             experiment['name'],
                             version_id,
-                            ' '.join(exp_files)))
+                            ' '.join(exp_files))), file=sys.stderr)
                     if any(PROFILE_MODES[mode] == PROFILE_MODE_CYLC
                             for mode in experiment['config']['profile modes']):
-                        print >> sys.stderr, (
+                        print((
                             'Are you trying to use profile mode "cylc" '
-                            'with an older version of cylc?')
+                            'with an older version of cylc?'), file=sys.stderr)
                     success = False
                     continue
                 else:

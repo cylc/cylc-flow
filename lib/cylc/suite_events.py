@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -19,7 +19,7 @@
 
 from collections import namedtuple
 import os
-from pipes import quote
+from shlex import quote
 
 from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg

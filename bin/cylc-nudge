@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -25,8 +25,7 @@ task processing (dependency negotation etc.) is required, or if a
 clock-trigger task is ready to run.
 
 The main reason to use this command is to update the "estimated time till
-completion" intervals shown in the tree-view suite control GUI, during
-periods when nothing else is happening.
+completion" intervals, during periods when nothing else is happening.
 """
 
 import sys
@@ -38,7 +37,7 @@ if '--use-ssh' in sys.argv[1:]:
 
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.httpclient import SuiteRuntimeServiceClient
+from cylc.network.client import SuiteRuntimeClient
 
 
 def main():
@@ -47,14 +46,13 @@ def main():
     (options, args) = parser.parse_args()
     suite = args[0]
 
-    pclient = SuiteRuntimeServiceClient(
+    pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
-        options.comms_timeout, my_uuid=options.set_uuid,
-        print_uuid=options.print_uuid)
+        options.comms_timeout)
 
-    success, msg = pclient.put_command('nudge')
+    success, msg = pclient('nudge')
     if success:
-        print msg
+        print(msg)
     else:
         sys.exit(msg)
 

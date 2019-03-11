@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -49,29 +49,20 @@ latter grouped as Python, TeX or 'other' (neither). 'opt_spec' item format:
 <MODULE>: [<MIN VER OR 'None'>, <FUNC TAG>, <GROUP>, <'OTHER' TUPLE>] with
 <'OTHER' TUPLE> = ([<BASE CMD(S)>], <VER OPT>, <REGEX>, <OUTFILE ARG>).
 """
-req_py_ver_range = (2, 6), (3,)
+req_py_ver_range = ((3,6),)
 opt_spec = {
     'EmPy': [None, 'TEMPLATING', 'PY'],
-    'requests': [(2, 4, 2), 'HTTPSCOMMS', 'PY'],
-    'OpenSSL': [None, 'HTTPSCOMMS', 'PY'],
-    'urllib3': [None, 'HTTPSCOMMS', 'PY'],
     'sphinx': [(1, 5, 3), 'HTMLDOCS', 'PY'],
-    'pygtk': [(2, 0), 'GUIORGRAPH', 'PY'],
-    'pygraphviz': [None, 'GUIORGRAPH', 'PY'],
-    'graphviz': [None, 'GUIORGRAPH', 'OTHER',
-                 (['dot'], '-V', r'graphviz version ([^\s]+)', 2)],
 }
 
 # All possible module reqs to accept as arguments, as above or all lower case.
-module_args = ['Python'] + opt_spec.keys()
+module_args = ['Python'] + list(opt_spec)
 upper_case_conv = dict(
     (upper.lower(), upper) for upper in module_args if upper.lower() != upper)
 
 # Package-dep. functionality dict; item format <FUNC TAG>: <FULL DESCRIPTION>
 func_tags_and_text = {
     'TEMPLATING': 'configuration templating',
-    'HTTPSCOMMS': 'HTTPS communications layer',
-    'GUIORGRAPH': 'GUI & dependency graph visualisation',
     'HTMLDOCS': 'HTML documentation',
 }
 
@@ -154,10 +145,7 @@ def check_py_module_ver(module, min_ver, write=True):
     msg = 'Python:%s (%s)' % (module, string_ver(min_ver) + '+' if
                               min_ver is not None else 'any')
     try:
-        if module == 'pygtk':
-            import gtk
-            module_version = '.'.join(map(str, gtk.pygtk_version))
-        elif module == 'EmPy':
+        if module == 'EmPy':
             # we want the 'em' module, but there is more than one out there
             # we want the one that provides 'Interpreter'
             from em import Interpreter
@@ -217,8 +205,8 @@ def cmd_find_ver(
         else:
             try:
                 output = Popen([cmd, ver_opt], stdin=open(os.devnull),
-                               stdout=PIPE,
-                               stderr=PIPE).communicate()[outfile - 1].strip()
+                               stdout=PIPE, stderr=PIPE
+                ).communicate()[outfile - 1].decode().strip()
                 version = re.search(ver_extr, output).groups()[0]
                 try_next_cmd = False
                 if min_ver is None:
@@ -301,7 +289,12 @@ def main():
 
     # Individual results section in mock-table format.
     shell_centre_write(False, '*REQUIRED SOFTWARE*')
-    req_result = check_py_ver(*req_py_ver_range)
+    req_result = (
+        check_py_ver(*req_py_ver_range)
+        and check_py_module_ver('zmq', None)
+        and check_py_module_ver('jose', None)
+        and check_py_module_ver('colorama', None)
+    )
     for tag, text in func_tags_and_text.items():
         shell_centre_write(True, '*OPTIONAL SOFTWARE for the ' + text + '*')
         functionality_print(tag)
@@ -320,6 +313,6 @@ def main():
 
 if __name__ == '__main__':
     if 'help' in sys.argv or '--help' in sys.argv:
-        print __doc__
+        print(__doc__)
     else:
         main()

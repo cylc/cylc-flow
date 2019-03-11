@@ -2044,11 +2044,7 @@ inherit from the *root* namespace (below).
 Nested namespaces define *task families* that can be used in the
 graph as convenient shorthand for triggering all member tasks at once,
 or for triggering other tasks off all members at once -
-see :ref:`FamilyTriggers`. Nested namespaces can be
-progressively expanded and collapsed in the dependency graph viewer, and
-in the gcylc graph and text views. Only the first parent of each
-namespace (as for single-inheritance) is used for suite visualization
-purposes.
+see :ref:`FamilyTriggers`.
 
 
 Namespace Names
@@ -2482,62 +2478,9 @@ Visualization
 -------------
 
 The visualization section of a suite configuration is used to configure
-suite graphing, principally graph node (task) and edge (dependency
-arrow) style attributes. Tasks can be grouped for the purpose of
-applying common style attributes. See :ref:`SuiteRCReference` for details.
+the representation of a suite in Cylc visualisation tools.
 
-
-Collapsible Families In Suite Graphs
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: cylc
-
-   [visualization]
-       collapsed families = family1, family2
-
-Nested families from the runtime inheritance hierarchy can be expanded
-and collapsed in suite graphs and the gcylc graph view. All families
-are displayed in the collapsed state at first, unless
-``[visualization]collapsed families`` is used to single out
-specific families for initial collapsing.
-
-In the gcylc graph view, nodes outside of the main graph (such as the
-members of collapsed families) are plotted as rectangular nodes to
-the right if they are doing anything interesting (submitted, running,
-failed).
-
-:numref:`fig-namespaces` illustrates successive expansion of nested
-task families in the *namespaces* example suite.
-
-.. todo::
-
-   Create sub-figures if possible: for now hacked as separate figures with
-   link and caption on final displayed figure.
-
-.. figure:: graphics/png/orig/inherit-2.png
-   :align: center
-
-.. figure:: graphics/png/orig/inherit-3.png
-   :align: center
-
-.. figure:: graphics/png/orig/inherit-4.png
-   :align: center
-
-.. figure:: graphics/png/orig/inherit-5.png
-   :align: center
-
-.. figure:: graphics/png/orig/inherit-6.png
-   :align: center
-
-.. _fig-namespaces:
-
-.. figure:: graphics/png/orig/inherit-7.png
-   :align: center
-
-   Graphs of the *namespaces* example suite showing various states of
-   expansion of the nested namespace family hierarchy, from all families
-   collapsed (top left) through to all expanded (bottom right). This
-   can also be done by right-clicking on tasks in the gcylc graph view.
+See :ref:`SuiteRCReference` for details.
 
 
 .. _Parameterized Tasks Label:

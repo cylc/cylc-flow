@@ -87,7 +87,7 @@ def extract_results(result_file_dict, exp):
 
     results = {}
     data = {}
-    for run_name, result_files in result_file_dict.iteritems():
+    for run_name, result_files in result_file_dict.items():
         data[run_name] = []
         for result_file in result_files:
             profiling_results = {}
@@ -111,8 +111,8 @@ def extract_results(result_file_dict, exp):
 def get_startup_time(file_name):
     """Return the value of the "SUITE STARTUP" entry as a string."""
     with open(file_name, 'r') as startup_file:
-        return re.search('SUITE STARTUP: (.*)',
-                         startup_file.read()).groups()[0]
+        return re.search(
+            'SUITE STARTUP: (.*)', startup_file.read()).groups()[0]
 
 
 def process_time_file(file_name):
@@ -120,12 +120,11 @@ def process_time_file(file_name):
     profiler."""
     with open(file_name, 'r') as time_file:
         ret = {}
-        lines = time_file.readlines()
-        for line in lines:
+        for line in time_file:
             try:
                 field, value = line.strip().rsplit(': ', 1)
             except ValueError:
-                print 'ERROR: Could not parse line "%s"' % line.strip()
+                print('ERROR: Could not parse line "%s"' % line.strip())
                 continue
             try:  # Try to cast as integer.
                 ret[field] = int(value)
@@ -147,7 +146,7 @@ def process_time_file(file_name):
                         ret[field] = seconds
                     else:  # Cannot parse.
                         if 'Command being timed' not in line:
-                            print 'ERROR: Could not parse value "%s"' % line
+                            print('ERROR: Could not parse value "%s"' % line)
                             ret[field] = value
         if sys.platform == 'darwin':  # MacOS
             ret['total cpu time'] = (ret['user'] + ret['sys'])
@@ -232,7 +231,7 @@ def process_results(results):
     """Average over results for each run."""
     processed_results = {}
     all_metrics = set(METRICS.keys())
-    for run_name, run in results.iteritems():
+    for run_name, run in results.items():
         processed_results[run_name] = {}
         this_result = dict((metric, []) for metric in all_metrics)
         for result in run:
@@ -245,7 +244,7 @@ def process_results(results):
             if this_result[metric]:
                 processed_results[run_name][metric] = mean(this_result[metric])
     for metric in set(METRICS.keys()) - all_metrics:
-        for run_name, run in processed_results.iteritems():
+        for run_name, run in processed_results.items():
             del run[metric]
     return processed_results
 
@@ -292,7 +291,7 @@ def make_table(results, versions, experiment, quick_analysis=False):
     try:
         for version in versions:
             data = results[version['id']][experiment['id']]
-            run_names = data.keys()
+            run_names = list(data)
             try:
                 run_names.sort(key=int)
             except ValueError:
@@ -314,7 +313,7 @@ def print_table(table, transpose=False):
     None values are printed as hyphens, use '' for blank cells.
     """
     if transpose:
-        table = map(list, zip(*table))
+        table = list(map(list, list(zip(*table))))
     if not table:
         return
     for row_no, _ in enumerate(table):
@@ -391,8 +390,8 @@ def plot_scale(results, run_names, versions, metric, experiment,
         # Compute and plot line of best fit.
         if lobf_order >= 1:
             if lobf_order > 8:
-                print('WARNING: Line of best fit order too high (' +
-                      lobf_order + '). Order has been set to 3.')
+                print(('WARNING: Line of best fit order too high (' +
+                      lobf_order + '). Order has been set to 3.'))
                 lobf_order = 3
             lobf = numpy.polyfit(x_data, y_data, lobf_order)
             line = numpy.linspace(x_data[0], x_data[-1], 100)

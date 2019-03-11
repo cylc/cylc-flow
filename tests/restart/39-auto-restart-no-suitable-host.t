@@ -54,7 +54,7 @@ create_test_globalrc '' "
 ${BASE_GLOBALRC}
 [suite servers]
     run hosts = localhost
-    condemned hosts = localhost
+    condemned hosts = $(hostname)
 "
 
 FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)

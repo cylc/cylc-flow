@@ -56,21 +56,20 @@ def strftime(iso8601_datetime, strftime_str, strptime_str=None):
         '10661014T08'
 
         >>> # Exceptions.
-        >>> try:
-        ...     strftime('invalid', '%H')  # Invalid datetime.
-        ... except Exception as exc:
-        ...     print type(exc)
+        >>> strftime('invalid', '%H')  # doctest: +NORMALIZE_WHITESPACE
+        Traceback (most recent call last):
         <class 'isodatetime.parsers.ISO8601SyntaxError'>
-        >>> try:
-        ...     strftime('2000', '%invalid')  # Invalid strftime.
-        ... except Exception as exc:
-        ...     print type(exc)
-        <class 'isodatetime.parser_spec.StrftimeSyntaxError'>
-        >>> try:
-        ...     strftime('2000', '%Y', '%invalid')  # Invalid strptime.
-        ... except Exception as exc:
-        ...     print type(exc)
-        <class 'isodatetime.parser_spec.StrftimeSyntaxError'>
+        isodatetime.parsers.ISO8601SyntaxError: Invalid ISO 8601 date \
+        representation: invalid
+        >>> strftime('2000', '%invalid')  # doctest: +NORMALIZE_WHITESPACE
+        Traceback (most recent call last):
+        isodatetime.parser_spec.StrftimeSyntaxError: Invalid \
+        strftime/strptime representation: %i
+        >>> strftime('2000', '%Y', '%invalid')
+        ... # doctest: +NORMALIZE_WHITESPACE
+        Traceback (most recent call last):
+        isodatetime.parser_spec.StrftimeSyntaxError: Invalid \
+        strftime/strptime representation: %i
     """
     if not strptime_str:
         return TimePointParser().parse(iso8601_datetime).strftime(strftime_str)

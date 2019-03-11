@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -73,7 +73,7 @@ class TestEmpysupport1(unittest.TestCase):
                 'contin': False, 'inline': False
             }
             asedit = None
-            tf.write("#!empy\na=@name\n")
+            tf.write("#!empy\na=@name\n".encode())
             tf.flush()
             r = read_and_proc(fpath=fpath, template_vars=template_vars,
                               viewcfg=viewcfg, asedit=asedit)

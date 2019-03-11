@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -100,16 +100,16 @@ def prdict(dct, arrow='<', section='', level=0, diff=False, nested=False):
         else:
             if not foo:
                 if nested:
-                    print '  ', sctn
+                    print('  ', sctn)
                 else:
-                    print '\n  ', sctn
+                    print('\n  ', sctn)
                 foo = True
 
             if diff:
-                print ' <  ', key, '=', dct[key][0]
-                print ' >  ', key, '=', dct[key][1]
+                print(' <  ', key, '=', dct[key][0])
+                print(' >  ', key, '=', dct[key][1])
             else:
-                print ' ' + arrow + '  ', key, '=', dct[key]
+                print(' ' + arrow + '  ', key, '=', dct[key])
 
 
 def main():
@@ -130,22 +130,22 @@ def main():
     suite2, suite2rc = srv_files_manager.parse_suite_arg(options, args[1])
     if suite1 == suite2:
         parser.error("You can't diff a single suite.")
-    print "Parsing %s (%s)" % (suite1, suite1rc)
+    print("Parsing %s (%s)" % (suite1, suite1rc))
     template_vars = load_template_vars(
         options.templatevars, options.templatevars_file)
     config1 = SuiteConfig(
         suite1, suite1rc, template_vars,
         cli_initial_point_string=options.icp).cfg
-    print "Parsing %s (%s)" % (suite2, suite2rc)
+    print("Parsing %s (%s)" % (suite2, suite2rc))
     config2 = SuiteConfig(
         suite2, suite2rc, template_vars,
         cli_initial_point_string=options.icp, is_reload=True).cfg
 
     if config1 == config2:
-        print "Suite definitions %s and %s are identical" % (suite1, suite2)
+        print("Suite definitions %s and %s are identical" % (suite1, suite2))
         sys.exit(0)
 
-    print "Suite definitions %s and %s differ" % (suite1, suite2)
+    print("Suite definitions %s and %s differ" % (suite1, suite2))
 
     suite1_only = {}
     suite2_only = {}
@@ -154,22 +154,22 @@ def main():
     diffdict(config1, config2, suite1_only, suite2_only, diff_1_2)
 
     if n_oone > 0:
-        print
+        print()
         msg = str(n_oone) + ' items only in ' + suite1 + ' (<)'
-        print msg
+        print(msg)
         prdict(suite1_only, '<', nested=options.nested)
 
     if n_otwo > 0:
-        print
+        print()
         msg = str(n_otwo) + ' items only in ' + suite2 + ' (>)'
-        print msg
+        print(msg)
         prdict(suite2_only, '>', nested=options.nested)
 
     if n_diff > 0:
-        print
+        print()
         msg = (str(n_diff) + ' common items differ ' +
                suite1 + '(<) ' + suite2 + '(>)')
-        print msg
+        print(msg)
         prdict(diff_1_2, '', diff=True, nested=options.nested)
 
 

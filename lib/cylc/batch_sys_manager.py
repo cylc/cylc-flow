@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -121,7 +121,6 @@ import traceback
 from parsec.OrderedDict import OrderedDict
 
 
-from cylc.mkdir_p import mkdir_p
 from cylc.task_message import (
     CYLC_JOB_PID, CYLC_JOB_INIT_TIME, CYLC_JOB_EXIT_TIME, CYLC_JOB_EXIT,
     CYLC_MESSAGE)
@@ -430,7 +429,7 @@ class BatchSysManager(object):
                         traceback.print_exc()
                         return (1, str(exc))
                     else:
-                        return (proc.wait(), proc.communicate()[1])
+                        return (proc.wait(), proc.communicate()[1].decode())
             return (1, "Cannot determine batch job ID from %s file" % (
                        JOB_LOG_STATUS))
         except IOError as exc:
@@ -563,7 +562,7 @@ class BatchSysManager(object):
                 sys.stderr.write(str(exc) + "\n")
                 return
             ret_code = proc.wait()
-            out, err = proc.communicate()
+            out, err = (f.decode() for f in proc.communicate())
             debug_messages.append('%s - %s' % (
                 batch_sys, len(out.split('\n'))))
             sys.stderr.write(err)
@@ -645,6 +644,10 @@ class BatchSysManager(object):
         if hasattr(batch_sys, "get_submit_stdin"):
             proc_stdin_arg, proc_stdin_value = batch_sys.get_submit_stdin(
                 job_file_path, submit_opts)
+            if isinstance(proc_stdin_arg, str):
+                proc_stdin_arg = proc_stdin_arg.encode()
+            if isinstance(proc_stdin_value, str):
+                proc_stdin_value = proc_stdin_value.encode()
         if hasattr(batch_sys, "submit"):
             # batch_sys.submit should handle OSError, if relevant.
             ret_code, out, err = batch_sys.submit(job_file_path, submit_opts)
@@ -677,7 +680,7 @@ class BatchSysManager(object):
                     if not exc.filename:
                         exc.filename = command[0]
                     return 1, "", str(exc), ""
-            out, err = proc.communicate(proc_stdin_value)
+            out, err = (f.decode() for f in proc.communicate(proc_stdin_value))
             ret_code = proc.wait()
 
         # Filter submit command output, if relevant
@@ -772,7 +775,9 @@ class BatchSysManager(object):
             elif cur_line.startswith(self.LINE_PREFIX_JOB_LOG_DIR):
                 job_log_dir = cur_line.replace(
                     self.LINE_PREFIX_JOB_LOG_DIR, "").strip()
-                mkdir_p(os.path.join(job_log_root, job_log_dir))
+                os.makedirs(
+                    os.path.join(job_log_root, job_log_dir),
+                    exist_ok=True)
                 handle = open(
                     os.path.join(job_log_root, job_log_dir, "job.tmp"), "wb")
 
@@ -780,7 +785,7 @@ class BatchSysManager(object):
                 lines.append(cur_line)
             else:
                 for line in lines + [cur_line]:
-                    handle.write(line)
+                    handle.write(line.encode())
                 lines = []
                 if cur_line.startswith(self.LINE_PREFIX_EOF + job_log_dir):
                     handle.close()

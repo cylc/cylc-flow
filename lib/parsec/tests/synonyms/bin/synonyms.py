@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -38,9 +38,9 @@ cfg.loadcfg(rcfile)
 
 res = cfg.get(sparse=True)
 
-for expected in res[rcname].keys():
+for expected in res[rcname]:
 
-    vals = cfg.get([rcname, expected], sparse=True).values()
+    vals = list(cfg.get([rcname, expected], sparse=True).values())
     expected = expected.replace('COMMA', ',').replace('NULL', '')
 
     if rcname == 'boolean':
@@ -65,7 +65,7 @@ for expected in res[rcname].keys():
             expected = []
 
     if vals.count(expected) != len(vals):
-        print >> sys.stderr, vals, ' is not all ', expected
+        print(vals, ' is not all ', expected, file=sys.stderr)
         sys.exit("FAIL")
     else:
-        print "OK"
+        print("OK")
