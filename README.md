@@ -18,9 +18,7 @@ Currently in the source code repository:
  - **7.8.x branch:** Python 2, Cherrpy network layer, PyGTK GUI - **Cylc-7 Maintenance**
 
 The first official Cylc-8 release (with a new web UI) is not expected until late 2019.
-
 Until then we recommend the latest cylc-7.8 release for production use.
-
 
 [Quick Installation](INSTALL.md) |
 [Web Site](https://cylc.github.io/cylc) |
