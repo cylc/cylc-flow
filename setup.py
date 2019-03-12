@@ -54,7 +54,6 @@ install_requires = [
     'pyzmq==18.0.1'
 ]
 tests_require = [
-    'mock',
     'codecov',
     'coverage',
     'pytest-cov',
