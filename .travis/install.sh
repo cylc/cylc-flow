@@ -26,15 +26,12 @@ args=("$@")
 
 if grep -E '(unit-tests|functional-tests)' <<< "${args[@]}"; then
     sudo apt-get install heirloom-mailx
-    # coverage dependencies
-    pip install coverage pytest-cov
-    # common Cylc requirements
-    pip install colorama python-jose zmq empy
+    pip install -e .[all]
 fi
 
 if grep 'unit-tests' <<< "${args[@]}"; then
     sudo apt-get install shellcheck
-    pip install pycodestyle pytest testfixtures empy
+    pip install -e .[all]
 fi
 
 # install dependencies required for building documentation
