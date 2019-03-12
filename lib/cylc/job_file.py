@@ -26,6 +26,8 @@ from cylc.batch_sys_manager import BatchSysManager
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
 
+RE_SPACES_AND_COMMA = re.compile(r'\s*,\s*')
+
 
 class JobFileWriter(object):
 
@@ -249,37 +251,67 @@ class JobFileWriter(object):
             #   BAR=$(script_using_FOO)
             handle.write("\n    export")
             for var in job_conf['environment']:
-                handle.write(" " + var)
+                handle.write(" " + RE_SPACES_AND_COMMA.sub(" ", var))
 
             for var, val in job_conf['environment'].items():
                 value = str(val)  # (needed?)
-                match = re.match(r"^(~[^/\s]*/)(.*)$", value)
-                if match:
-                    # ~foo/bar or ~/bar
-                    # write as ~foo/"bar" or ~/"bar"
-                    head, tail = match.groups()
-                    handle.write('\n    %s=%s"%s"' % (var, head, tail))
-                elif re.match(r"^~[^\s]*$", value):
-                    # plain ~foo or just ~
-                    # just leave unquoted as subsequent spaces don't
-                    # make sense in this case anyway
-                    handle.write('\n    %s=%s' % (var, value))
+                if "," in var:
+                    cmd = JobFileWriter._get_multi_variable_command(var, value)
+                    handle.write('\n    %s' % cmd)
                 else:
-                    # Non tilde values - quote the lot.
-                    # This gets values like "~one ~two" too, but these
-                    # (in variable values) aren't expanded by the shell
-                    # anyway so it doesn't matter.
-                    handle.write('\n    %s="%s"' % (var, value))
-
-                # NOTE ON TILDE EXPANSION:
-                # The code above handles the following correctly:
-                # | ~foo/bar
-                # | ~/bar
-                # | ~/filename with spaces
-                # | ~foo
-                # | ~
-
+                    value = JobFileWriter._get_variable_value_definition(value)
+                    handle.write('\n    %s=%s' % (var, value))
             handle.write("\n}")
+
+    @staticmethod
+    def _get_variable_value_definition(value):
+        """Create a quoted command which handles '~'
+
+        Args:
+            value: value to assign to a variable
+
+        Returns:
+            str: Properly handled '~' value
+        """
+        match = re.match(r"^(~[^/\s]*/)(.*)$", value)
+        if match:
+            # ~foo/bar or ~/bar
+            # write as ~foo/"bar" or ~/"bar"
+            head, tail = match.groups()
+            return '%s"%s"' % (head, tail)
+        elif re.match(r"^~[^\s]*$", value):
+            # plain ~foo or just ~
+            # just leave unquoted as subsequent spaces don't
+            # make sense in this case anyway
+            return value
+        else:
+            # Non tilde values - quote the lot.
+            # This gets values like "~one ~two" too, but these
+            # (in variable values) aren't expanded by the shell
+            # anyway so it doesn't matter.
+            return '"%s"' % value
+
+        # NOTE ON TILDE EXPANSION:
+        # The code above handles the following correctly:
+        # | ~foo/bar
+        # | ~/bar
+        # | ~/filename with spaces
+        # | ~foo
+        # | ~
+
+    @staticmethod
+    def _get_multi_variable_command(var, value):
+        """Create a command to extract multiple variables
+
+        Args:
+            var: comma separated string of variables
+            value: command to execute to obtain variables for each variable
+
+        Returns:
+            str: read command to put in environment section
+        """
+        var_spaced = RE_SPACES_AND_COMMA.sub(" ", var)
+        return 'read -r %s <<< %s' % (var_spaced, value)
 
     @classmethod
     def _write_global_init_script(cls, handle, job_conf):

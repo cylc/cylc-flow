@@ -66,6 +66,9 @@ RE_SEC_MULTI_SEQ = re.compile(r'(?![^(]+\)),')
 RE_SUITE_NAME_VAR = re.compile(r'\${?CYLC_SUITE_(REG_)?NAME}?')
 RE_TASK_NAME_VAR = re.compile(r'\${?CYLC_TASK_NAME}?')
 
+# Variable name, including comma separated list of variables
+RE_VAR_NAME = re.compile(r'^[a-zA-Z_]\w*(?:\s*,\s*[a-zA-Z_]\w*)*$')
+
 # Message trigger offset regex.
 BCOMPAT_MSG_RE_C6 = re.compile(r'^(.*)\[\s*(([+-])?\s*(.*))?\s*\](.*)$')
 
@@ -77,7 +80,7 @@ def check_varnames(env):
     """
     bad = []
     for varname in env:
-        if not re.match(r'^[a-zA-Z_][\w]*$', varname):
+        if not RE_VAR_NAME.match(varname):
             bad.append(varname)
     return bad
 
