@@ -58,9 +58,7 @@ tests_require = [
     'coverage',
     'pytest-cov',
     'pytest',
-    'pycodestyle',
-    'virtualenv',
-    'tox-travis'
+    'pycodestyle'
 ]
 
 extra_requires = {
