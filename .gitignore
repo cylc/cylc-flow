@@ -40,3 +40,14 @@ passphrase
 .coverage.*
 coverage.xml
 htmlcov/
+
+# distutils files
+build
+dist
+MANIFEST
+cylc.egg-info
+.eggs
+
+# virtualenv
+venv
+
