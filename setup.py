@@ -72,40 +72,19 @@ extra_requires['all'] += extra_requires['empy']
 extra_requires['all'] += tests_require
 
 setup(
-    name="cylc",
     version=get_cylc_version(),
-    description="Cylc (\"silk\") is a workflow engine for cycling systems - "
-                "it orchestrates distributed suites of interdependent "
-                "cycling tasks that may continue to run indefinitely.",
     long_description=open('README.md').read(),
     long_description_content_type="text/markdown",
-    keywords=["scheduling", "forecast"],
-    author="Hilary Oliver",
-    author_email="cylc@googlegroups.com",
-    url="https://cylc.github.io/cylc/",
+    scripts=glob(join('bin', '*')),
     packages=find_packages("lib/") + ["Jinja2Filters"],
     package_dir={"": "lib"},
-    scripts=glob(join('bin', '*')),
-    license="GPL",
-    platforms="any",
     package_data={
         '': ['*.txt', '*.md', '*.sh']
     },
     include_package_data=False,
-    python_requires=">=3.5",
-    setup_requires=['pytest-runner'],
     install_requires=install_requires,
     tests_require=tests_require,
     extras_require=extra_requires,
-    classifiers=[
-        "Intended Audience :: Developers",
-        "Intended Audience :: System Administrators",
-        "Intended Audience :: Science/Research",
-        "License :: OSI Approved :: License :: OSI Approved :: "
-        "GNU General Public License v3 (GPLv3)",
-        "Programming Language :: Python",
-        "Programming Language :: Python :: 3",
-    ],
     project_urls={
         "Documentation": "https://cylc.github.io/documentation.html",
         "Source": "https://github.com/cylc/cylc",
