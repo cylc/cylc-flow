@@ -1,0 +1,21 @@
+[cylc]
+    [[reference test]]
+        live mode suite timeout = PT30S
+        dummy mode suite timeout = PT30S
+        simulation mode suite timeout = PT30S
+    [[events]]
+        abort on stalled = True
+[scheduling]
+    [[dependencies]]
+        graph = a
+[runtime]
+    [[root]]
+        script = """
+echo "A is '$A'"
+echo "B is '$B'"
+echo "C is '$C'"
+echo "D is '$D'"
+"""
+    [[a]]
+        [[[environment]]]
+            A,B ,C , D = $(echo 1 2 3 4 5)

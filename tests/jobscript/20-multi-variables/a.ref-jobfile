@@ -1,0 +1,50 @@
+#!/bin/bash -l
+#
+# ++++ THIS IS A CYLC TASK JOB SCRIPT ++++
+# Suite: ##suitename##
+# Task: a.1
+# Job log directory: 1/a/01
+# Job submit method: background
+export CYLC_DIR=
+export CYLC_VERSION=
+CYLC_FAIL_SIGNALS='EXIT ERR TERM XCPU'
+
+cylc__job__inst__cylc_env() {
+    # CYLC SUITE ENVIRONMENT:
+    export CYLC_CYCLING_MODE=
+    export CYLC_SUITE_FINAL_CYCLE_POINT=
+    export CYLC_SUITE_INITIAL_CYCLE_POINT=
+    export CYLC_SUITE_NAME=
+    export CYLC_UTC=
+    export CYLC_VERBOSE=
+
+    export CYLC_SUITE_RUN_DIR=
+    export CYLC_SUITE_DEF_PATH=
+    export CYLC_SUITE_DEF_PATH_ON_SUITE_HOST=
+    export CYLC_SUITE_UUID=
+
+    # CYLC TASK ENVIRONMENT:
+    export CYLC_TASK_JOB=
+    export CYLC_TASK_NAMESPACE_HIERARCHY=
+    export CYLC_TASK_DEPENDENCIES=
+    export CYLC_TASK_TRY_NUMBER=
+}
+
+cylc__job__inst__user_env() {
+    # TASK RUNTIME ENVIRONMENT:
+    export A B C D
+    read -r A B C D <<< $(echo 1 2 3 4 5)
+}
+
+cylc__job__inst__script() {
+# SCRIPT:
+echo "A is '$A'"
+echo "B is '$B'"
+echo "C is '$C'"
+echo "D is '$D'"
+}
+
+. "${CYLC_DIR}/lib/cylc/job.sh"
+cylc__job__main
+
+#EOF: 1/a/01
