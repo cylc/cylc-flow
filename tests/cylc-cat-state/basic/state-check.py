@@ -1,6 +1,6 @@
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -25,7 +25,7 @@ import shlex
 def main(argv):
 
     if len(argv) != 2:
-        print >> sys.stderr, "Incorrect number of args"
+        print("Incorrect number of args", sys.stderr)
         sys.exit(1)
 
     sname = argv[0]
@@ -33,10 +33,10 @@ def main(argv):
     command = "cylc cat-state " + sname
 
     p = procopen(command, usesh=True, stdoutpipe=True, stderrpipe=True)
-    state, err = p.communicate()
+    state, err = (f.decode() for f in p.communicate())
 
     if p.returncode > 0:
-        print >> sys.stderr, err
+        print(err, sys.stderr)
         sys.exit(1)
 
     db = (os.sep).join([rundir, sname, "log", "db"])
@@ -51,7 +51,7 @@ def main(argv):
     error_states = []
 
     for line in state:
-        if states_begun and line is not '':
+        if states_begun and line != '':
             line2 = line.split(':')
             task_and_cycle = line2[0].strip().split(".")
             status = line2[1].split(',')[0].strip().split("=")[1]
@@ -59,11 +59,11 @@ def main(argv):
             res = []
             try:
                 cur.execute(qbase, [task_and_cycle[0], task_and_cycle[1]])
-                next = cur.fetchmany()
-                while next:
-                    res.append(next[0])
-                    next = cur.fetchmany()
-            except:  # noqa: E722
+                next_ = cur.fetchmany()
+                while next_:
+                    res.append(next_[0])
+                    next_ = cur.fetchmany()
+            except Exception:
                 sys.stderr.write("unable to query suite database\n")
                 sys.exit(1)
             if not res[0][0] == status:
@@ -75,10 +75,12 @@ def main(argv):
     cnx.close()
 
     if error_states:
-        st = "The following task states were not consistent with the database:"
-        print >> sys.stderr, st
+        print(
+            "The following task states were not consistent with the database:",
+            sys.stderr
+        )
         for line in error_states:
-            print >> sys.stderr, line
+            print(line, sys.stderr)
         sys.exit(1)
     else:
         sys.exit(0)

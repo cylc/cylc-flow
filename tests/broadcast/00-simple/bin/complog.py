@@ -1,14 +1,11 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 import os
-import shlex
 import sys
-from distutils import command
 
+print()
+print("This is the broadcast test suite log comparator")
 from cylc.cylc_subproc import procopen
-
-print
-print "This is the broadcast test suite log comparator"
 
 event, suite = sys.argv[1], sys.argv[2]
 if event != 'shutdown':
@@ -17,8 +14,8 @@ if event != 'shutdown':
 try:
     log_dir = os.path.expandvars(os.environ['CYLC_SUITE_LOG_DIR'])
     suite_dir = os.path.expandvars(os.environ['CYLC_SUITE_DEF_PATH'])
-except KeyError, x:
-    raise SystemExit(x)
+except KeyError as exc:
+    raise SystemExit(exc)
 
 ref = os.path.join(suite_dir, 'broadcast.ref')
 log = os.path.join(suite_dir, 'broadcast.log')
@@ -35,7 +32,7 @@ loglines.sort()
 if reflines != loglines:
     sys.exit("ERROR: broadcast logs do not compare")
 else:
-    print "broadcast logs compare OK"
+    print("broadcast logs compare OK")
 
 res = procopen(["cylc check-triggering " + event + " " + suite], usesh=True)
 status = res.wait()

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -59,7 +59,7 @@ def run_get_stdout(command, timeout=None, poll_delay=None):
                     is_killed_after_timeout = True
                     break
                 sleep(poll_delay)
-        out, err = proc.communicate()
+        out, err = (f.decode() for f in proc.communicate())
         res = proc.wait()
         if res < 0 and is_killed_after_timeout:
             return (False, [ERR_TIMEOUT % (timeout, -res, err), command])

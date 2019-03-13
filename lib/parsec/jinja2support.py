@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
@@ -107,7 +107,7 @@ def jinja2environment(dir_=None):
     # definition directory
     # Example: a filter to pad integer values some fill character:
     # |(file SUITE_DEFINITION_DIRECTORY/Jinja2/foo.py)
-    # |  #!/usr/bin/env python2
+    # |  #!/usr/bin/env python3
     # |  def foo( value, length, fillchar ):
     # |     return str(value).rjust( int(length), str(fillchar) )
     for namespace in ['filters', 'tests', 'globals']:
