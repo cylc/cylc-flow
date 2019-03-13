@@ -24,8 +24,8 @@ install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE
 run_fail $TEST_NAME cylc validate --debug -v $SUITE_NAME
-grep_ok "'Obsolete syntax: mixed integer \[dependencies\]graph with cycling \
-\[dependencies\]\[12\]'" $TEST_NAME.stderr
+grep_ok "Obsolete syntax: mixed integer \[dependencies\]graph with cycling \
+\[dependencies\]\[12\]" $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
 exit
