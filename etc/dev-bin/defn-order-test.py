@@ -17,14 +17,14 @@ N = 10000
 names = []
 for i in range(0, N):
     names.append(''.join(secrets.choice(string.ascii_letters)
-                         for n in xrange(5+randrange(10))))
+                         for n in range(5 + secrets.randrange(10))))
 
 # N lists with 2-7 names each (c.f. tree view paths of the inheritance
 # hierarchy).
 paths1 = []
 for i in range(0, N):
     p = []
-    for j in range(0, 2+secrets.randrange(6)):
+    for j in range(0, 2 + secrets.randrange(6)):
         z = secrets.randrange(0, N)
         p.append(names[z])
     paths1.append(p)
