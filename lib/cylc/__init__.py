@@ -64,3 +64,5 @@ def environ_path_add(dirs, key='PATH'):
 
 
 environ_init()
+
+__version__ = "8.0.0-a0"

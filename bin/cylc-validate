@@ -34,7 +34,7 @@ from cylc import LOG
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.loggingutil import CylcLogFormatter
-from cylc.version import CYLC_VERSION
+from cylc import __version__ as CYLC_VERSION
 from cylc.config import SuiteConfig, SuiteConfigError
 from cylc.prerequisite import TriggerExpressionError
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
