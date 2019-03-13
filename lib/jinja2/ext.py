@@ -596,7 +596,8 @@ def babel_extract(fileobj, keywords, comment_tags, options):
         getbool(options, 'keep_trailing_newline', KEEP_TRAILING_NEWLINE),
         frozenset(extensions),
         cache_size=0,
-        auto_reload=False
+        auto_reload=False,
+        autoescape=True
     )
 
     if getbool(options, 'trimmed'):

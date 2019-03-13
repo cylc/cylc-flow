@@ -17,22 +17,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Manage queueing and pooling of subprocesses for the suite server program."""
 
-from collections import deque
 import json
 import os
 import select
-from signal import SIGKILL
-from subprocess import Popen, PIPE
 import sys
+from collections import deque
+from signal import SIGKILL
 from tempfile import TemporaryFile
 from threading import RLock
 from time import time
 
-
 from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
+from cylc.cylc_subproc import procopen
 from cylc.wallclock import get_current_time_string
-
 
 _XTRIG_FUNCS = {}
 
@@ -326,13 +324,15 @@ class SuiteProcPool(object):
                 stdin_file.seek(0)
             else:
                 stdin_file = open(os.devnull)
-            proc = Popen(
-                ctx.cmd, stdin=stdin_file, stdout=PIPE, stderr=PIPE,
+            proc = procopen(
+                ctx.cmd, stdin=stdin_file, stdoutpipe=True, stderrpipe=True,
                 # Execute command as a process group leader,
                 # so we can use "os.killpg" to kill the whole group.
                 preexec_fn=os.setpgrp,
                 env=ctx.cmd_kwargs.get('env'),
-                shell=ctx.cmd_kwargs.get('shell'))
+                usesh=ctx.cmd_kwargs.get('shell'))
+            # calls to open a shell are aggregated in cylc_subproc.procopen()
+            # with logging for what is calling it and the commands given
         except (IOError, OSError) as exc:
             if exc.filename is None:
                 exc.filename = ctx.cmd[0]
