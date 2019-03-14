@@ -19,6 +19,11 @@ How to apply an annotated tag to the repository:
 eof
 }
 
+get_version() {
+    CYLC_VERSION="$(python -c "from cylc import __version__;\
+        print(__version__)")"
+}
+
 for ARG in "$@"; do
     if [[ $ARG == '--help' || $ARG == "help" ]]; then
         usage
@@ -31,10 +36,9 @@ if [[ ! -d .git && ! -f .git ]]; then
     exit 1
 fi
 
-THIS_DIR=$( cd $( dirname $0 ); pwd; )
-VERSION=$( "$THIS_DIR/get-repo-version" )
+get_version
 
-RELEASE=cylc-$VERSION
+RELEASE="cylc-${CYLC_VERSION}"
 TARBALL=${RELEASE}.tar.gz
 BRANCH=$( git rev-parse --abbrev-ref HEAD )
 

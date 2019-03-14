@@ -64,7 +64,7 @@ from cylc.task_proxy import TaskProxy, TaskProxySequenceBoundsError
 from cylc.task_state import (
     TASK_STATUSES_ACTIVE, TASK_STATUSES_NEVER_ACTIVE, TASK_STATUS_FAILED)
 from cylc.templatevars import load_template_vars
-from cylc.version import CYLC_VERSION
+from cylc import __version__ as CYLC_VERSION
 from cylc.wallclock import (
     get_current_time_string, get_seconds_as_interval_string,
     get_time_string_from_unix_time as time2str, get_utc_mode)

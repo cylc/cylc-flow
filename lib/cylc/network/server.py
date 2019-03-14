@@ -30,7 +30,7 @@ from cylc.network import Priv, encrypt, decrypt, get_secret
 from cylc.suite_status import (
     KEY_META, KEY_NAME, KEY_OWNER, KEY_STATES,
     KEY_TASKS_BY_STATE, KEY_UPDATE_TIME, KEY_VERSION)
-from cylc.version import CYLC_VERSION
+from cylc import __version__ as CYLC_VERSION
 
 
 class ZMQServer(object):

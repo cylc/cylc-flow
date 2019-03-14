@@ -54,7 +54,6 @@ from cylc.task_events_mgr import TaskEventsManager
 from cylc.task_proxy import TaskProxy
 from cylc.task_state import TASK_STATUS_SUBMIT_FAILED
 from cylc.templatevars import load_template_vars
-import cylc.version  # Ensures '$CYLC_VERSION' is set.
 
 
 def main():

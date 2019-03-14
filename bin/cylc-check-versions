@@ -41,7 +41,7 @@ from time import sleep
 
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.version import CYLC_VERSION
+from cylc import __version__ as CYLC_VERSION
 from cylc.config import SuiteConfig
 from cylc.subprocpool import SuiteProcPool
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager

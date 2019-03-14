@@ -22,26 +22,8 @@ CATEGORIES=('control' 'con' 'information' 'info' 'all' 'task' 'license' \
 HELP_OPTS=('help' '--help' '-h' 'h' '?')
 
 get_version() {
-    # If there is a version file present, use that
-    if [[ -f "${CYLC_DIR}/VERSION" ]]; then
-        CYLC_VERSION="$(cat "${CYLC_DIR}/VERSION")"
-    # Otherwise, use git (if in a git repo and not a bare clone)
-    # to determine version
-    elif git --git-dir "${CYLC_DIR}/.git" rev-parse && \
-            [[ -n "$(git --git-dir "${CYLC_DIR}/.git" rev-parse \
-                --show-toplevel)" ]]; then
-        CYLC_VERSION="$(cd "${CYLC_DIR}" && git describe --abbrev=4 --always)"
-        # Append "-dirty" if there are uncommitted changes.
-        if [[ -n "$(cd "${CYLC_DIR}" && git status \
-                --untracked-files=no --porcelain)" ]]; then
-            CYLC_VERSION="${CYLC_VERSION}-dirty"
-        fi
-    # Else we must be in a standalone cylc folder/tarball with no verion info.
-    # (make has not yet been run)
-    else
-        echo "No version is set, cylc must be built first. Aborting..." >&2
-        exit 1
-    fi
+    CYLC_VERSION="$(python -c "from cylc import __version__;\
+        print(__version__)")"
 }
 
 print_version() {
