@@ -240,8 +240,8 @@ def run_experiment(exp):
                 conf_path=run.get('globalrc', ''))
             # Handle errors.
             if err_file:
-                print(('WARNING: non-empty suite error log: '
-                       + err_file), file=sys.stderr)
+                print(('WARNING: non-empty suite error log: ' +
+                       err_file), file=sys.stderr)
             # Tidy up.
             if cylc_maj_version == '6':
                 unregister_suite(reg)
