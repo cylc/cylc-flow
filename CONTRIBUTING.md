@@ -61,6 +61,7 @@ requests_).
  - (Martin Dix)
  - (Ivor Blockley)
  - Alexander Paulsell
+ - David Sutherland
 
 (All contributors are identifiable with email addresses in the git version
 control logs or otherwise.)

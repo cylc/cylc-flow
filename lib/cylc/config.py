@@ -17,6 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Parse and validate the suite definition file
 
+Set local values of variables to give suite context before parsing
+config, i.e for template filters (Jinja2, python ...etc) and possibly
+needed locally by event handlers. This is needed for both running and
+non-running suite parsing (obtaining config/graph info). Potentially
+task-specific due to different directory paths on different task hosts,
+however, they are overridden by tasks prior to job submission.
+
 Do some consistency checking, then construct task proxy objects and graph
 structures.
 """
@@ -56,7 +63,7 @@ from cylc.taskdef import TaskDef, TaskDefError
 from cylc.task_id import TaskID
 from cylc.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.task_trigger import TaskTrigger, Dependency
-from cylc.wallclock import get_current_time_string, set_utc_mode
+from cylc.wallclock import get_current_time_string, set_utc_mode, get_utc_mode
 from cylc.xtrigger_mgr import XtriggerManager
 
 
@@ -105,7 +112,9 @@ class SuiteConfig(object):
                  cli_start_point_string=None, cli_final_point_string=None,
                  is_reload=False, output_fname=None,
                  vis_start_string=None, vis_stop_string=None,
-                 xtrigger_mgr=None, mem_log_func=None):
+                 xtrigger_mgr=None, mem_log_func=None,
+                 run_dir=None, log_dir=None,
+                 work_dir=None, share_dir=None):
 
         self.mem_log = mem_log_func
         if mem_log_func is None:
@@ -114,6 +123,14 @@ class SuiteConfig(object):
         self.suite = suite  # suite name
         self.fpath = fpath  # suite definition
         self.fdir = os.path.dirname(fpath)
+        self.run_dir = run_dir or glbl_cfg().get_derived_host_item(
+            self.suite, 'suite run directory')
+        self.log_dir = log_dir or glbl_cfg().get_derived_host_item(
+            self.suite, 'suite log directory')
+        self.work_dir = work_dir or glbl_cfg().get_derived_host_item(
+            self.suite, 'suite work directory')
+        self.share_dir = share_dir or glbl_cfg().get_derived_host_item(
+            self.suite, 'suite share directory')
         self.owner = owner
         self.run_mode = run_mode
         self.strict = strict
@@ -122,6 +139,7 @@ class SuiteConfig(object):
         self.taskdefs = {}
         self.initial_point = None
         self.start_point = None
+        self.final_point = None
         self.first_graph = True
         self.clock_offsets = {}
         self.expiration_offsets = {}
@@ -167,6 +185,9 @@ class SuiteConfig(object):
         self.leaves = []
         # one up from root
         self.feet = []
+
+        # Export local environmental suite context before config parsing.
+        self.process_suite_env()
 
         # parse, upgrade, validate the suite, but don't expand with default
         # items
@@ -379,10 +400,7 @@ class SuiteConfig(object):
                     self.cfg['scheduling']['initial cycle point constraints'])
                 raise SuiteConfigError(
                     ("Initial cycle point %s does not meet the constraints " +
-                     "%s") % (
-                        str(self.initial_point),
-                        constraints_str
-                    )
+                     "%s") % (str(self.initial_point), constraints_str)
                 )
 
         if (self.cfg['scheduling']['final cycle point'] is not None and
@@ -390,44 +408,44 @@ class SuiteConfig(object):
             self.cfg['scheduling']['final cycle point'] = None
         final_point_string = (cli_final_point_string or
                               self.cfg['scheduling']['final cycle point'])
-        final_point = None
         if final_point_string is not None:
             # Is the final "point"(/interval) relative to initial?
             if get_interval_cls().get_null().TYPE == INTEGER_CYCLING_TYPE:
                 if "P" in final_point_string:
                     # Relative, integer cycling.
-                    final_point = get_point_relative(
+                    self.final_point = get_point_relative(
                         self.cfg['scheduling']['final cycle point'],
                         self.initial_point
                     ).standardise()
             else:
                 try:
                     # Relative, ISO8601 cycling.
-                    final_point = get_point_relative(
+                    self.final_point = get_point_relative(
                         final_point_string, self.initial_point).standardise()
                 except ValueError:
                     # (not relative)
                     pass
-            if final_point is None:
+            if self.final_point is None:
                 # Must be absolute.
-                final_point = get_point(final_point_string).standardise()
-            self.cfg['scheduling']['final cycle point'] = str(final_point)
+                self.final_point = get_point(final_point_string).standardise()
+            self.cfg['scheduling']['final cycle point'] = str(self.final_point)
 
-        if final_point is not None and self.initial_point > final_point:
+        if (self.final_point is not None and
+                self.initial_point > self.final_point):
             raise SuiteConfigError(
                 "The initial cycle point:" +
                 str(self.initial_point) + " is after the final cycle point:" +
-                str(final_point) + ".")
+                str(self.final_point) + ".")
 
         # Validate final cycle point against any constraints
-        if (final_point is not None and
+        if (self.final_point is not None and
                 self.cfg['scheduling']['final cycle point constraints']):
             valid_fcp = False
             for entry in (
                     self.cfg['scheduling']['final cycle point constraints']):
                 possible_pt = get_point_relative(
-                    entry, final_point).standardise()
-                if final_point == possible_pt:
+                    entry, self.final_point).standardise()
+                if self.final_point == possible_pt:
                     valid_fcp = True
                     break
             if not valid_fcp:
@@ -435,7 +453,7 @@ class SuiteConfig(object):
                     self.cfg['scheduling']['final cycle point constraints'])
                 raise SuiteConfigError(
                     "Final cycle point %s does not meet the constraints %s" % (
-                        str(final_point), constraints_str))
+                        str(self.final_point), constraints_str))
 
         # Parse special task cycle point offsets, and replace family names.
         LOG.debug("Parsing [special tasks]")
@@ -534,7 +552,7 @@ class SuiteConfig(object):
         if self.cfg['cylc']['force run mode']:
             self.run_mode = self.cfg['cylc']['force run mode']
 
-        self.process_directories()
+        self.process_config_env()
 
         self.mem_log("config.py: before load_graph()")
         self.load_graph()
@@ -699,10 +717,10 @@ class SuiteConfig(object):
             vfcp = None
 
         # A viz final point can't be beyond the suite final point.
-        if vfcp is not None and final_point is not None:
-            if vfcp > final_point:
+        if vfcp is not None and self.final_point is not None:
+            if vfcp > self.final_point:
                 self.cfg['visualization']['final cycle point'] = str(
-                    final_point)
+                    self.final_point)
 
         # Replace suite and task name in suite and task URLs.
         self.cfg['meta']['URL'] = self.cfg['meta']['URL'] % {
@@ -1265,8 +1283,8 @@ class SuiteConfig(object):
                 ).get_seconds()
             rtc['job']['execution time limit'] = (
                 sleep_sec + DurationParser().parse(str(
-                    rtc['simulation']['time limit buffer'])
-                ).get_seconds())
+                    rtc['simulation']['time limit buffer'])).get_seconds()
+            )
             rtc['job']['simulated run length'] = sleep_sec
 
             # Generate dummy scripting.
@@ -1414,9 +1432,36 @@ class SuiteConfig(object):
 
         print_tree(tree, padding=padding, use_unicode=pretty)
 
-    def process_directories(self):
-        os.environ['CYLC_SUITE_NAME'] = self.suite
-        os.environ['CYLC_SUITE_DEF_PATH'] = self.fdir
+    def process_suite_env(self):
+        """Suite context is exported to the local environment."""
+        for var, val in [
+                ('CYLC_SUITE_NAME', self.suite),
+                ('CYLC_DEBUG', str(cylc.flags.debug).lower()),
+                ('CYLC_VERBOSE', str(cylc.flags.verbose).lower()),
+                ('CYLC_SUITE_DEF_PATH', self.fdir),
+                ('CYLC_SUITE_RUN_DIR', self.run_dir),
+                ('CYLC_SUITE_LOG_DIR', self.log_dir),
+                ('CYLC_SUITE_WORK_DIR', self.work_dir),
+                ('CYLC_SUITE_SHARE_DIR', self.share_dir)]:
+            os.environ[var] = val
+
+    def process_config_env(self):
+        """Set local config derived environment."""
+        os.environ['CYLC_UTC'] = str(get_utc_mode())
+        os.environ['CYLC_SUITE_INITIAL_CYCLE_POINT'] = str(self.initial_point)
+        os.environ['CYLC_SUITE_FINAL_CYCLE_POINT'] = str(self.final_point)
+        os.environ['CYLC_CYCLING_MODE'] = self.cfg['scheduling'][
+            'cycling mode']
+        #     (global config auto expands environment variables in local paths)
+        cenv = self.cfg['cylc']['environment'].copy()
+        for var, val in cenv.items():
+            cenv[var] = os.path.expandvars(val)
+        #     path to suite bin directory for suite and event handlers
+        cenv['PATH'] = os.pathsep.join([
+            os.path.join(self.fdir, 'bin'), os.environ['PATH']])
+        #     and to suite event handlers in this process.
+        for var, val in cenv.items():
+            os.environ[var] = val
 
     def check_tasks(self):
         """Call after all tasks are defined.
