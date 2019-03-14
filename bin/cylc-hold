@@ -69,7 +69,7 @@ def main():
         items = parser.parse_multitask_compat(options, args)
         pclient(
             'hold_tasks',
-            {'items': items},
+            {'task_globs': items},
             timeout=options.comms_timeout
         )
     elif options.hold_point_string:
