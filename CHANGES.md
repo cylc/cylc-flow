@@ -14,24 +14,24 @@ Selected user-facing changes:
 
 ### Enhancements
 
-[#2910](https://github.com/cylc/cylc/pull/#2910) - replace LaTeX-generated HTML
+[#2910](https://github.com/cylc/cylc/pull/2910) - replace LaTeX-generated HTML
 and PDF User Guide with Sphinx-generated HTML.
 
-[2815](https://github.com/cylc/cylc/pull/2815) - allow initial cycle point
+[#2815](https://github.com/cylc/cylc/pull/2815) - allow initial cycle point
 relative to current time.
 
-[#2902](https://github.com/cylc/cylc/pull/#2902) - expose suite UUID to event
+[#2902](https://github.com/cylc/cylc/pull/2902) - expose suite UUID to event
 handlers.
 
 ### Fixes
 
-[#2932](https://github.com/cylc/cylc/pull/#2932) - fix possible blocking pipe
+[#2932](https://github.com/cylc/cylc/pull/2932) - fix possible blocking pipe
 due to chatty job submission (and other subprocess) commands.
 
-[#2921](https://github.com/cylc/cylc/pull/#2921) - better suite validation
+[#2921](https://github.com/cylc/cylc/pull/2921) - better suite validation
 warning for out-of-bounds cycling sequences. 
 
-[#2924](https://github.com/cylc/cylc/pull/#2924) - fix and expand 7.8.0 `cylc
+[#2924](https://github.com/cylc/cylc/pull/2924) - fix and expand 7.8.0 `cylc
 review` documentation in the User Guide. 
 
 -------------------------------------------------------------------------------
