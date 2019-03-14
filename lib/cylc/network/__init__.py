@@ -30,18 +30,36 @@ HASH = 'HS256'  # Encoding for JWT
 
 
 class Priv(IntEnum):
-    """Cylc privilege level."""
+    """Cylc privilege levels.
 
-    # TODO - autodocument from this class.
-    # TODO - revert name changes?
+    In Cylc configurations use the lower-case form of each privilege level
+    e.g. ``control`` for ``Priv.CONTORL``.
+
+    These levels are ordered (by the integer associated with each) from 0.
+    Each privilege level grants access to the levels below it.
+
+    """
 
     CONTROL = 6
+    """Provides full control of a suite."""
+
     SHUTDOWN = 5  # (Not used yet - for the post-passphrase era.)
+    """Allows issuing of the shutdown command."""
+
     READ = 4
+    """Permits read access to the suite's state."""
+
     STATE_TOTALS = 3
+    """Provides access to the count of tasks in each state."""
+
     DESCRIPTION = 2
+    """Permits reading of suite metadata."""
+
     IDENTITY = 1
+    """Provides read access to the suite name, owner and Cylc version."""
+
     NONE = 0
+    """No access."""
 
     @classmethod
     def parse(cls, key):
