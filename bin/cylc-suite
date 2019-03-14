@@ -1,0 +1,230 @@
+#!/usr/bin/env python3
+
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""cylc client [OPTIONS] ARGS
+
+(This command is for internal use.)
+Invoke suite runtime client, expect JSON from STDIN for keyword arguments.
+Use the -n option if client function requires no keyword arguments.
+"""
+
+import argparse
+import json
+import sys
+
+from sphinx.ext.napoleon import Config
+from sphinx.ext.napoleon.docstring import GoogleDocstring
+
+from cylc.network.client import SuiteRuntimeClient
+
+
+class ArgumentBuilder:
+    """"Abstract interface for building a CLI."""
+
+    def __init__(self, prog):
+        self.parser = argparse.ArgumentParser(
+            prog,
+            formatter_class=argparse.RawDescriptionHelpFormatter
+        )
+        self.description_lines = []
+        self.section_type = None
+        self.all = []
+
+    def notify(self, section_type):
+        self.section_type = section_type.lower()
+
+    def add(self, args):
+        if not self.section_type:
+            self.description_lines += args
+        elif self.section_type in ['args', 'arguments', 'params']:
+            self.add_argument(args)
+        elif self.section_type in ['return', 'returns', 'yield', 'yields']:
+            args = args[0]
+            if isinstance(args, str):
+                return
+            _, ret_type, lines = args
+            self.description_lines += ['', '']
+            self.description_lines += [
+                '%s: %s - %s' % (self.section_type, ret_type, lines[0])]
+            self.description_lines.extend(
+                ['    %s' % line for line in lines[1:]])
+
+    def add_argument(self, args):
+        name, typestring, lines = args
+        name = name.replace('\\', '')
+        self.all.append(name)
+        types = [type_.strip() for type_ in typestring.split(',')]
+        if 'optional' in types:
+            name = '--%s' % name
+            types.remove('optional')
+
+        if len(types) != 1:
+            raise Exception('len(types)')  # TODO
+
+        typ = types[0]
+        if not typ:  # TODO: this better
+            typ = None
+        elif typ == 'bool':
+            typ = bool
+        elif typ == 'int':
+            typ = int
+        elif typ == 'str':
+            typ = str
+        elif typ == 'float':
+            typ = float
+        elif typ == 'list':
+            typ = list
+        elif typ == 'dict':
+            typ = dict
+        else:
+            raise Exception('type: %s' % typ)  # TODO
+
+        args = (name,)
+        kwargs = {
+            'help': '\n'.join(lines).strip(),
+            'type': typ
+        }
+
+        self.parser.add_argument(*args, **kwargs)
+
+    def close(self):
+        # TODO: context manager
+        self.parser.description = '\n'.join(self.description_lines)
+        return self.parser, self.all
+
+
+def wrap(host, before=None, after=None):
+    """Wrap host function with parasites.
+
+    Args:
+        host (function):
+            The function to wrap
+        before (function, optional):
+            Called before ``host``. Takes no arguments, provides no return.
+        after (function, optional):
+            Called after ``host``. Takes one argument (the return value
+            of ``host``), provides no return.
+
+    Returns:
+        function: The wrapped function
+
+    """
+    def wrapper(self, *args, **kwargs):
+        if before:
+            before()
+        ret = host(self, *args, **kwargs)
+        if after:
+            after(ret)
+        return ret
+    return wrapper
+
+
+def docstring_to_argument_parser(docstring, prog):
+    """Convert a docstring into a :py:class:`argparse.ArgumentParser`.
+
+    Args:
+        docstring (str): The docstring with indentation removed.
+        prog (str): The program name (for argparse)
+
+    Returns
+        tuple: (parser, arg_list)
+
+        parser (argparse.ArgumentParser):
+            Parser with opts and args scraped from the docstring.
+        arg_list (list):
+            List of all arguments (as strings) scraped from the docstring.
+
+    """
+    builder = ArgumentBuilder(prog)
+    GoogleDocstring._consume_field = wrap(
+        GoogleDocstring._consume_field,
+        after=builder.add
+    )
+    GoogleDocstring._consume_section_header = wrap(
+        GoogleDocstring._consume_section_header,
+        after=builder.notify
+    )
+    GoogleDocstring._consume_contiguous = wrap(
+        GoogleDocstring._consume_contiguous,
+        after=builder.add
+    )
+    GoogleDocstring._consume_returns_section = wrap(
+        GoogleDocstring._consume_returns_section,
+        after=builder.add
+    )
+    config = Config(napoleon_use_param=True, napoleon_use_rtype=True)
+    GoogleDocstring(docstring, config)
+    return builder.close()
+
+
+def parse_client_args():
+    """Pass arguments for this executable."""
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument('suite')
+    parser.add_argument('endpoint')
+    parser.add_argument('--owner', action='store')
+    parser.add_argument('--host', action='store')
+    parser.add_argument('--port', action='store')
+    parser.add_argument('--help', action='store_true')
+    parser.add_argument('--no-input', action='store_true')
+    try:
+        known, unknown = parser.parse_known_args()
+    except SystemExit:
+        # TODO: this much nicer
+        if '--help' in sys.argv:
+            parser.print_help()
+            sys.exit()
+    if known.help:
+        unknown.append('--help')
+    return known, unknown
+
+
+def main():
+    """implement cylc client2.
+
+    TODO:
+
+    * Get docstrings from cylc.network.server.SuiteRuntimeServer when suite
+      isn't provided.
+    * Make the argument stuff nicer.
+    * Nicer output.
+    * Better handling of --help.
+
+    """
+    client_args, api_args = parse_client_args()
+
+    pclient = SuiteRuntimeClient(
+        client_args.suite, client_args.owner, client_args.host,
+        client_args.port
+    )
+
+    docstring = pclient('api', {'endpoint': client_args.endpoint})
+    api_parser, arg_list = docstring_to_argument_parser(
+        docstring, client_args.endpoint)
+    api_args = api_parser.parse_args(api_args)
+
+    print(json.dumps(
+        pclient(
+            client_args.endpoint,
+            {arg: getattr(api_args, arg) for arg in arg_list}
+        )
+    ))
+
+
+if __name__ == '__main__':
+    main()
