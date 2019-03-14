@@ -38,7 +38,7 @@ echo "Building the HTML Cylc Documentation with Sphinx:"
 echo >&2
 cd "$CYLC_DIR"/doc/
 echo "... Generating the command reference ..."
-./src/custom/make-commands.sh
+#./src/custom/make-commands.sh
 echo >&2
 
 echo "... Generating multi-page User Guide..."
