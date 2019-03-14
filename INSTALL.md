@@ -43,9 +43,6 @@ ln -s /opt/cylc-7.8.1 /opt/cylc
 ```
 
 When you type `make`:
-  * A file called VERSION is created, containing the Cylc version number
-    * The version number is taken from the name of the parent directory. DO
-      NOT CHANGE THE NAME OF THE UNPACKED CYLC SOURCE DIRECTORY
   * The Cylc User Guide is generated from source (if you have sphinx-doc installed).
 
 If this is the first installed version of Cylc, copy the wrapper script

@@ -12,9 +12,6 @@ doc/built-sphinx-single/
 # - Installed docs
 doc/install/
 
-# VERSION FILE
-VERSION
-
 # vim backup files
 *.swp
 

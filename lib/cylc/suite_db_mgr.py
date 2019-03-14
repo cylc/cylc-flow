@@ -34,7 +34,7 @@ from tempfile import mkstemp
 from cylc import LOG
 from cylc.broadcast_report import get_broadcast_change_iter
 from cylc.rundb import CylcSuiteDAO
-from cylc.version import CYLC_VERSION
+from cylc import __version__ as CYLC_VERSION
 from cylc.wallclock import get_current_time_string, get_utc_mode
 
 

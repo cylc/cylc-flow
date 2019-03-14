@@ -32,7 +32,7 @@ from cylc.cfgvalidate import (
     cylc_config_validate, CylcConfigValidator as VDR, DurationFloat)
 from cylc.hostuserutil import get_user_home, is_remote_user
 from cylc.network import Priv
-from cylc.version import CYLC_VERSION
+from cylc import __version__ as CYLC_VERSION
 
 # Nested dict of spec items.
 # Spec value is [value_type, default, allowed_2, allowed_3, ...]
@@ -282,14 +282,12 @@ class GlobalConfig(ParsecConfig):
 
     _DEFAULT = None
     _HOME = os.getenv('HOME') or get_user_home()
-    # For working with git clones, just go to minor version number.
-    cylc_version = re.sub('-.*', '', CYLC_VERSION)
     CONF_BASE = "global.rc"
     # Site global.rc loc preference: if not in etc/ look in old conf/.
     SITE_CONF_DIR = os.path.join(os.environ["CYLC_DIR"], "etc")
     SITE_CONF_DIR_OLD = os.path.join(os.environ["CYLC_DIR"], "conf")
     # User global.rc loc preference: if not in .cylc/x.y.z/ look in .cylc/.
-    USER_CONF_DIR_1 = os.path.join(_HOME, '.cylc', cylc_version)
+    USER_CONF_DIR_1 = os.path.join(_HOME, '.cylc', CYLC_VERSION)
     USER_CONF_DIR_2 = os.path.join(_HOME, '.cylc')
 
     @classmethod

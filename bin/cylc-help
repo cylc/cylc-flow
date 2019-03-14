@@ -18,7 +18,7 @@
 import sys
 
 # Import cylc to initialise CYLC_DIR and the path for python (__init__.py).
-from cylc.version import CYLC_VERSION
+from cylc import __version__ as CYLC_VERSION
 
 
 class CommandError(Exception):

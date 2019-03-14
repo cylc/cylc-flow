@@ -34,7 +34,7 @@ from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
 from cylc.hostuserutil import is_remote
-from cylc.version import CYLC_VERSION
+from cylc import __version__ as CYLC_VERSION
 
 
 def get_proc_ancestors():

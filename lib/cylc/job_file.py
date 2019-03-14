@@ -22,6 +22,7 @@ import re
 import stat
 from subprocess import Popen, PIPE
 
+from cylc import __version__ as CYLC_VERSION
 from cylc.batch_sys_manager import BatchSysManager
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
@@ -158,7 +159,8 @@ class JobFileWriter(object):
         handle.write("\nexport CYLC_DIR='%s'" % (os.environ['CYLC_DIR']))
         if cylc.flags.debug:
             handle.write("\nexport CYLC_DEBUG=true")
-        for key in ['CYLC_VERSION'] + self._get_host_item(
+        handle.write("\nexport CYLC_VERSION='%s'" % CYLC_VERSION)
+        for key in self._get_host_item(
                 job_conf, 'copyable environment variables'):
             if key in os.environ:
                 handle.write("\nexport %s='%s'" % (key, os.environ[key]))
