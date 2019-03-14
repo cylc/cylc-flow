@@ -455,7 +455,6 @@ conditions; see `cylc conditions`.
         self.suite_db_mgr.put_suite_params(self)
         self.suite_db_mgr.put_suite_template_vars(self.template_vars)
         self.suite_db_mgr.put_runtime_inheritance(self.config)
-        self.configure_suite_environment()
 
         # Copy local python modules from source to run directory
         for sub_dir in ["python", os.path.join("lib", "python")]:
@@ -979,7 +978,6 @@ conditions; see `cylc conditions`.
         for task in add:
             LOG.warning("Added task: '%s'" % (task,))
 
-        self.configure_suite_environment()
         if self.options.genref or self.options.reftest:
             self.configure_reftest(recon=True)
         self.suite_db_mgr.put_suite_params(self)
@@ -1062,7 +1060,8 @@ conditions; see `cylc conditions`.
             self.contact_data = contact_data
 
     def load_suiterc(self, is_reload=False):
-        """Load and log the suite definition."""
+        """Load, and log the suite definition."""
+        # Local suite environment set therein.
         self.config = SuiteConfig(
             self.suite, self.suiterc, self.template_vars,
             run_mode=self.run_mode,
@@ -1075,6 +1074,10 @@ conditions; see `cylc conditions`.
             output_fname=os.path.join(
                 self.suite_run_dir,
                 self.suite_srv_files_mgr.FILE_BASE_SUITE_RC + '.processed'),
+            run_dir=self.suite_run_dir,
+            log_dir=self.suite_log_dir,
+            work_dir=self.suite_work_dir,
+            share_dir=self.suite_share_dir,
         )
         self.suiterc_update_time = time()
         # Dump the loaded suiterc for future reference.
@@ -1103,12 +1106,7 @@ conditions; see `cylc conditions`.
         # self.config already alters the 'initial cycle point' for CLI.
         self.initial_point = self.config.initial_point
         self.start_point = self.config.start_point
-        self.final_point = get_point(
-            self.options.final_point_string or
-            self.config.cfg['scheduling']['final cycle point']
-        )
-        if self.final_point is not None:
-            self.final_point.standardise()
+        self.final_point = self.config.final_point
 
         if not self.initial_point and not self.is_restart:
             LOG.warning('No initial cycle point provided - no cycling tasks '
@@ -1117,11 +1115,24 @@ conditions; see `cylc conditions`.
         if self.run_mode != self.config.run_mode:
             self.run_mode = self.config.run_mode
 
+        # Pass static cylc and suite variables to job script generation code
+        self.task_job_mgr.job_file_writer.set_suite_env({
+            'CYLC_UTC': str(get_utc_mode()),
+            'CYLC_DEBUG': str(cylc.flags.debug).lower(),
+            'CYLC_VERBOSE': str(cylc.flags.verbose).lower(),
+            'CYLC_SUITE_NAME': self.suite,
+            'CYLC_CYCLING_MODE': str(
+                self.config.cfg['scheduling']['cycling mode']),
+            'CYLC_SUITE_INITIAL_CYCLE_POINT': str(self.initial_point),
+            'CYLC_SUITE_FINAL_CYCLE_POINT': str(self.final_point),
+        })
+
     def _load_suite_params_1(self, _, row):
         """Load previous initial cycle point or (warm) start cycle point.
 
         For restart, these may be missing from "suite.rc", but was specified as
         a command line argument on cold/warm start.
+
         """
         key, value = row
         if key == 'initial_point':
@@ -1140,47 +1151,6 @@ conditions; see `cylc conditions`.
         # Command line argument takes precedence
         if key not in self.template_vars:
             self.template_vars[key] = value
-
-    def configure_suite_environment(self):
-        """Configure suite environment."""
-        # Pass static cylc and suite variables to job script generation code
-        self.task_job_mgr.job_file_writer.set_suite_env({
-            'CYLC_UTC': str(get_utc_mode()),
-            'CYLC_DEBUG': str(cylc.flags.debug).lower(),
-            'CYLC_VERBOSE': str(cylc.flags.verbose).lower(),
-            'CYLC_SUITE_NAME': self.suite,
-            'CYLC_CYCLING_MODE': str(
-                self.config.cfg['scheduling']['cycling mode']),
-            'CYLC_SUITE_INITIAL_CYCLE_POINT': str(self.initial_point),
-            'CYLC_SUITE_FINAL_CYCLE_POINT': str(self.final_point),
-        })
-
-        # Make suite vars available to [cylc][environment]:
-        for var, val in self.task_job_mgr.job_file_writer.suite_env.items():
-            os.environ[var] = val
-        # Set local values of variables that are potentially task-specific
-        # due to different directory paths on different task hosts. These
-        # are overridden by tasks prior to job submission, but in
-        # principle they could be needed locally by event handlers:
-        for var, val in [
-                ('CYLC_SUITE_RUN_DIR', self.suite_run_dir),
-                ('CYLC_SUITE_LOG_DIR', self.suite_log_dir),
-                ('CYLC_SUITE_WORK_DIR', self.suite_work_dir),
-                ('CYLC_SUITE_SHARE_DIR', self.suite_share_dir),
-                ('CYLC_SUITE_DEF_PATH', self.suite_dir)]:
-            os.environ[var] = val
-
-        # (global config auto expands environment variables in local paths)
-        cenv = self.config.cfg['cylc']['environment'].copy()
-        for var, val in cenv.items():
-            cenv[var] = os.path.expandvars(val)
-        # path to suite bin directory for suite and event handlers
-        cenv['PATH'] = os.pathsep.join([
-            os.path.join(self.suite_dir, 'bin'), os.environ['PATH']])
-
-        # and to suite event handlers in this process.
-        for var, val in cenv.items():
-            os.environ[var] = val
 
     def configure_reftest(self, recon=False):
         """Configure the reference test."""
@@ -1227,8 +1197,8 @@ conditions; see `cylc conditions`.
         """
         try:
             if (self.run_mode in ['simulation', 'dummy'] and
-                self.config.cfg['cylc']['simulation'][
-                    'disable suite event handlers']):
+                    self.config.cfg['cylc']['simulation'][
+                        'disable suite event handlers']):
                 return
         except KeyError:
             pass
@@ -1389,7 +1359,7 @@ conditions; see `cylc conditions`.
             else:
                 raise SchedulerStop(self.stop_mode)
         elif (self.time_next_kill is not None and
-                time() > self.time_next_kill):
+              time() > self.time_next_kill):
             self.command_poll_tasks()
             self.command_kill_tasks()
             self.time_next_kill = time() + self.INTERVAL_STOP_KILL
@@ -1404,12 +1374,10 @@ conditions; see `cylc conditions`.
             #           * Ensure the host can be safely taken down once the
             #             suite has stopped running.
             for itask in self.pool.get_tasks():
-                if (
-                    itask.state.status in TASK_STATUSES_ACTIVE
-                    and itask.summary['batch_sys_name']
-                    and self.task_job_mgr.batch_sys_mgr.is_job_local_to_host(
-                        itask.summary['batch_sys_name'])
-                ):
+                if (itask.state.status in TASK_STATUSES_ACTIVE and
+                        itask.summary['batch_sys_name'] and
+                        self.task_job_mgr.batch_sys_mgr.is_job_local_to_host(
+                            itask.summary['batch_sys_name'])):
                     LOG.info('Waiting for jobs running on localhost to '
                              'complete before attempting restart')
                     break
@@ -1595,10 +1563,8 @@ conditions; see `cylc conditions`.
                                 '    $ cylc restart %s', self.suite)
                             if self.set_auto_restart(mode=mode):
                                 return  # skip remaining health checks
-                        elif (
-                            self.set_auto_restart(current_glbl_cfg.get(
-                                ['suite servers', 'auto restart delay']))
-                        ):
+                        elif (self.set_auto_restart(current_glbl_cfg.get(
+                                ['suite servers', 'auto restart delay']))):
                             # server is condemned -> configure the suite to
                             # auto stop-restart if possible, else, report the
                             # issue preventing this
@@ -2004,8 +1970,7 @@ conditions; see `cylc conditions`.
                 self.stop_clock_time))
             self.stop_clock_time = None
             return True
-        else:
-            return False
+        return False
 
     def _update_profile_info(self, category, amount, amount_format="%s"):
         """Update the 1, 5, 15 minute dt averages for a given category."""
