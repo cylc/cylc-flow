@@ -3324,10 +3324,9 @@ prior to configuration parsing to provide suite context:
 
 .. note::
 
-    The above example gives emphasis that *the environment is read on the
-    suite host at the time the suite configuration is parsed* - it is not, for
-    instance, read at task run time on the task host. This also pertains to
-    some of the above-listed suite context.
+    The example above emphasizes that *the environment - including the suite
+    context variables - is read on the suite host when the suite configuration
+    is parsed*, not at task run time on job hosts.
 
 
 .. _CustomJinja2Filters:
