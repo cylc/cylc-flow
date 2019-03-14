@@ -504,23 +504,9 @@ server program is determined by the public access privilege level set in global
 site/user config (:ref:`GlobalAuth`) and optionally overridden in suites
 (:ref:`SuiteAuth`):
 
-none
-   Permit no public suite access.
-identity
-   Only suite and owner names revealed.
-description
-   Identity plus suite title and description.
-state-totals
-   Identity, description, and task state totals.
-read
-   Full read-only access.
-shutdown
-   *Not yet implemented*
-   Full read access plus shutdown, but no other control.
-control
-   Permit full control (not recommended).
+See Cylc privilege levels: :py:obj:`cylc.network.Priv`.
 
-The default public access level is *state-totals*.
+The default public access level is :py:obj:`cylc.network.Priv.STATE_TOTALS`.
 
 The ``cylc scan`` command can print
 descriptions and task state totals in addition to basic suite identity, if the

@@ -27,6 +27,16 @@ The available "commands" or ("endpoints") are contained in
 :py:class:`cylc.network.server.SuiteRuntimeServer` class.
 
 
+Privilege Levels
+----------------
+
+Cylc protects its network interface with configurable privilege levels which
+can be used to allocate different levels of control to different users.
+
+.. autoclass:: cylc.network.Priv
+   :members:
+
+
 Client
 ------
 
