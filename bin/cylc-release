@@ -58,7 +58,7 @@ def main():
         options.comms_timeout)
     if args:
         items = parser.parse_multitask_compat(options, args)
-        pclient('release_tasks', {'items': items})
+        pclient('release_tasks', {'task_globs': items})
     else:
         pclient('release_suite')
 

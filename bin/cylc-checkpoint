@@ -46,7 +46,7 @@ def main():
     pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout)
-    pclient('take_checkpoints', {'items': [name]})
+    pclient('take_checkpoints', {'name': name})
 
 
 if __name__ == "__main__":

@@ -55,7 +55,7 @@ def main():
 
     pclient(
         'spawn_tasks',
-        {'items': parser.parse_multitask_compat(options, args)}
+        {'task_globs': parser.parse_multitask_compat(options, args)}
     )
 
 

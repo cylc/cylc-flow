@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Server for suite runtime API."""
 
+from functools import wraps
 import getpass
 from queue import Queue
 from time import sleep
@@ -222,13 +223,15 @@ def authorise(req_priv_level):
 
     """
     def wrapper(fcn):
+        """Warp"""
+        @wraps(fcn)  # preserve args and docstrings
         def _authorise(self, *args, user='?', meta=None, **kwargs):
             if not meta:
                 meta = {}
             host = meta.get('host', '?')
             prog = meta.get('prog', '?')
 
-            usr_priv_level = self.get_priv_level(user)
+            usr_priv_level = self._get_priv_level(user)
             if usr_priv_level < req_priv_level:
                 LOG.warn(
                     "[client-connect] DENIED (privilege '%s' < '%s') %s@%s:%s",
@@ -244,7 +247,32 @@ def authorise(req_priv_level):
 class SuiteRuntimeServer(ZMQServer):
     """Suite runtime service API facade exposed via zmq.
 
-    This class contains the cylc endpoints.
+    This class contains the Cylc endpoints.
+
+    Common Arguments:
+        Arguments which are shared between multiple commands.
+
+        .. _task identifier:
+
+        task identifier (str):
+            A task identifier in the format ``task.cycle-point``
+            e.g. ``foo.1`` or ``bar.20000101T0000Z``.
+
+        .. _task globs:
+
+        task globs (list):
+            A list of strings in the format
+            ``name[.cycle_point][:task_state]`` where ``name`` could be a
+            task or family name.
+
+             Glob-like patterns may be used to match multiple items e.g.
+
+             ``*``
+                Matches everything.
+             ``*.1``
+                Matches everything in cycle ``1``.
+             ``*.*:failed``
+                Matches all failed tasks.
 
     """
 
@@ -260,21 +288,21 @@ class SuiteRuntimeServer(ZMQServer):
         self.schd = schd
         self.public_priv = None  # update in get_public_priv()
 
-    def get_public_priv(self):
+    def _get_public_priv(self):
         """Return the public privilege level of this suite."""
         if self.schd.config.cfg['cylc']['authentication']['public']:
             return Priv.parse(
                 self.schd.config.cfg['cylc']['authentication']['public'])
         return Priv.parse(glbl_cfg().get(['authentication', 'public']))
 
-    def get_priv_level(self, user):
+    def _get_priv_level(self, user):
         """Return the privilege level for the given user for this suite."""
         if user == getpass.getuser():
             return Priv.CONTROL
         if self.public_priv is None:
             # cannot do this on initialisation as the suite configuration has
             # not yet been parsed
-            self.public_priv = self.get_public_priv()
+            self.public_priv = self._get_public_priv()
         return self.public_priv
 
     @authorise(Priv.CONTROL)
@@ -283,42 +311,84 @@ class SuiteRuntimeServer(ZMQServer):
             self, point_strings=None, namespaces=None, cancel_settings=None):
         """Clear settings globally, or for listed namespaces and/or points.
 
-        Return a tuple (modified_settings, bad_options), where:
-        * modified_settings is similar to the return value of the "put" method,
-          but for removed settings.
-        * bad_options is a dict in the form:
-              {"point_strings": ["20020202", ..."], ...}
-          The dict is only populated if there are options not associated with
-          previous broadcasts. The keys can be:
-          * point_strings: a list of bad point strings.
-          * namespaces: a list of bad namespaces.
-          * cancel: a list of tuples. Each tuple contains the keys of a bad
-            setting.
+        Args:
+            point_strings (list):
+                List of point strings for this operation to apply to or
+                ``None`` to apply to all cycle points.
+            namespaces (list):
+                List of namespace string (task / family names) for this
+                operation to apply to or ``None`` to apply to all namespaces.
+            cancel_settings (list):
+                List of broadcast keys to cancel.
+
+        Returns:
+            tuple: (modified_settings, bad_options)
+
+                modified_settings
+                   similar to the return value of the "put" method, but for
+                   removed settings.
+                bad_options
+                   A dict in the form:
+                   ``{"point_strings": ["20020202", ..."], ...}``.
+                   The dict is only populated if there are options not
+                   associated with previous broadcasts. The keys can be:
+
+                   * point_strings: a list of bad point strings.
+                   * namespaces: a list of bad namespaces.
+                   * cancel: a list of tuples. Each tuple contains the keys of
+                     a bad setting.
+
         """
         return self.schd.task_events_mgr.broadcast_mgr.clear_broadcast(
             point_strings, namespaces, cancel_settings)
 
     @authorise(Priv.CONTROL)
     @ZMQServer.expose
-    def dry_run_tasks(self, items, check_syntax=True):
+    def dry_run_tasks(self, task_globs, check_syntax=True):
         """Prepare job file for a task.
 
-        items[0] is an identifier for matching a task proxy.
+        Args:
+            task_globs (list): List of identifiers, see `task globs`_
+            check_syntax (bool): Check shell syntax.
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
         """
-        self.schd.command_queue.put(('dry_run_tasks', (items,),
+        self.schd.command_queue.put(('dry_run_tasks', (task_glob,),
                                     {'check_syntax': check_syntax}))
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
     @ZMQServer.expose
     def expire_broadcast(self, cutoff=None):
-        """Clear all settings targeting cycle points earlier than cutoff."""
+        """Clear all settings targeting cycle points earlier than cutoff.
+
+        Args:
+            cutoff (str):
+                Cycle point, broadcasts earlier than but not inclusive of the
+                cutoff will be canceled.
+
+        """
         return self.schd.task_events_mgr.broadcast_mgr.expire_broadcast(cutoff)
 
     @authorise(Priv.READ)
     @ZMQServer.expose
     def get_broadcast(self, task_id=None):
-        """Retrieve all broadcast variables that target a given task ID."""
+        """Retrieve all broadcast variables that target a given task ID.
+
+        Args:
+            task_id (str): A `task identifier`_
+
+        Returns:
+            dict: all broadcast variables that target the given task ID.
+
+        """
         return self.schd.task_events_mgr.broadcast_mgr.get_broadcast(task_id)
 
     @authorise(Priv.IDENTITY)
@@ -333,7 +403,55 @@ class SuiteRuntimeServer(ZMQServer):
                       group_nodes=None, ungroup_nodes=None,
                       ungroup_recursive=False, group_all=False,
                       ungroup_all=False):
-        """Return raw suite graph."""
+        """Return a textural representation of the suite graph.
+
+        .. warning::
+
+           The grouping options:
+
+           * ``group_nodes``
+           * ``ungroup_nodes``
+           * ``group_all``
+           * ``ungroup_all``
+
+           Are mutually exclusive.
+
+        Args:
+            start_point_string (str):
+                Cycle point as a string to define the window of view of the
+                suite graph.
+            stop_point_string (str):
+                Cycle point as a string to define the window of view of the
+                suite graph.
+            group_nodes (list):
+                List of (graph nodes) family names to group (collapse according
+                to inheritance) in the output graph.
+            ungroup_nodes (list):
+                List of (graph nodes) family names to ungroup (expand according
+                to inheritance) in the output graph.
+            ungroup_recursive (bool):
+                Recursively ungroup families.
+            group_all (bool):
+                Group all families (collapse according to inheritance).
+            ungroup_all (bool):
+                Ungroup all families (expand according to inheritance).
+
+        Returns:
+            list: [left, right, None, is_suicide, condition]
+
+            left (str):
+                `Task identifier <task identifier>` for the dependency of
+                an edge.
+            right (str):
+                `Task identifier <task identifier>` for the dependant task
+                of an edge.
+            is_suicide (bool):
+                True if edge represents a suicide trigger.
+            condition:
+                Conditional expression if edge represents a conditional trigger
+                else ``None``.
+
+        """
         # Ensure that a "None" str is converted to the None value.
         return self.schd.info_get_graph_raw(
             start_point_string, stop_point_string,
@@ -346,38 +464,95 @@ class SuiteRuntimeServer(ZMQServer):
     @authorise(Priv.DESCRIPTION)
     @ZMQServer.expose
     def get_suite_info(self):
-        """Return a dict containing the suite title and description."""
+        """Return a dictionary containing the suite title and description.
+
+        Returns:
+            dict: The `[meta]` section of a suite configuration
+
+        """
         return self.schd.info_get_suite_info()
 
     @authorise(Priv.READ)
     @ZMQServer.expose
     def get_suite_state_summary(self):
-        """Return the global, task, and family summary data structures."""
+        """Return the global, task, and family summary data summaries.
+
+        Returns:
+            tuple: (global_summary, task_summary, family_summary)
+
+            global_summary (dict):
+                Contains suite status items e.g. ``last_updated``.
+            task_summary (dict):
+                A dictionary of `task identifiers <task identifier>`_
+                in the format ``{task_id: {...}, ...}``.
+            family_summary (dict):
+                Contains task family information in the format
+                ``{family_id: {...}, ...}``.
+
+        """
         return self.schd.info_get_suite_state_summary()
 
     @authorise(Priv.READ)
     @ZMQServer.expose
     def get_task_info(self, names):
-        """Return info of a task."""
+        """Return the configurations for the provided tasks.
+
+        Args:
+            names (list): A list of task names to request information for.
+
+        Returns:
+            dict: Dictionary in the format ``{'task': {...}, ...}``
+
+        """
         return self.schd.info_get_task_info(names)
 
     @authorise(Priv.READ)
     @ZMQServer.expose
     def get_task_jobfile_path(self, task_id):
-        """Return task job file path."""
+        """Return task job file path.
+
+        Args:
+            task_id: A `task identifier`_
+
+        Returns:
+            str: The jobfile path.
+
+        """
         return self.schd.info_get_task_jobfile_path(task_id)
 
     @authorise(Priv.READ)
     @ZMQServer.expose
-    def get_task_requisites(self, items=None, list_prereqs=False):
-        """Return prerequisites of a task."""
+    def get_task_requisites(self, task_globs=None, list_prereqs=False):
+        """Return prerequisites of a task.
+
+        Args:
+            task_globs (list): List of identifiers, see `task globs`_
+
+        Returns:
+            list: Dictionary of `task identifiers <task identifier>`_
+            in the format ``{task_id: { ... }, ...}``.
+
+        """
         return self.schd.info_get_task_requisites(
             items, list_prereqs=list_prereqs)
 
     @authorise(Priv.CONTROL)
     @ZMQServer.expose
     def hold_after_point_string(self, point_string):
-        """Set hold point of suite."""
+        """Set hold point of suite.
+
+        Args:
+            point_string (str): The cycle point to hold the suite *after.*
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
+        """
         self.schd.command_queue.put(
             ("hold_after_point_string", (point_string,), {}))
         return (True, 'Command queued')
@@ -385,23 +560,56 @@ class SuiteRuntimeServer(ZMQServer):
     @authorise(Priv.CONTROL)
     @ZMQServer.expose
     def hold_suite(self):
-        """Hold the suite."""
+        """Hold the suite.
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
+        """
         self.schd.command_queue.put(("hold_suite", (), {}))
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
     @ZMQServer.expose
-    def hold_tasks(self, items):
+    def hold_tasks(self, task_globs):
         """Hold tasks.
 
-        items is a list of identifiers for matching task proxies.
+        Args:
+            task_globs (list): List of identifiers, see `task globs`_
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
         """
-        self.schd.command_queue.put(("hold_tasks", (items,), {}))
+        self.schd.command_queue.put(("hold_tasks", (task_globs,), {}))
         return (True, 'Command queued')
 
     @authorise(Priv.IDENTITY)
     @ZMQServer.expose
     def identify(self):
+        """Return basic information about the suite.
+
+        Returns:
+            dict: Dictionary containing the keys
+
+            cylc.suite_status.KEY_NAME
+               The suite name.
+            cylc.suite_status.KEY_OWNER
+               The user account the suite is running under.
+            cylc.suite_status.KEY_VERSION
+               The Cylc version the suite is runnin with.
+
+        """
         return {
             KEY_NAME: self.schd.suite,
             KEY_OWNER: self.schd.owner,
@@ -411,11 +619,37 @@ class SuiteRuntimeServer(ZMQServer):
     @authorise(Priv.DESCRIPTION)
     @ZMQServer.expose
     def describe(self):
+        """Return the suite metadata.]
+
+        Returns:
+            dict: ``{cylc.suite_status: { ... }}``
+
+        """
         return {KEY_META: self.schd.config.cfg[KEY_META]}
 
     @authorise(Priv.STATE_TOTALS)
     @ZMQServer.expose
     def state_totals(self):
+        """Returns counts of the task states present in the suite.
+
+        Returns:
+            dict: Dictionary with the keys:
+
+            cylc.suite_status.KEY_UPDATE_TIME
+               ISO8601 timestamp of when this data snapshot was made.
+            cylc.suite_status.KEY_STATES
+               Tuple of the form ``(state_count_totals, state_count_cycles)``
+
+               state_count_totals (dict):
+                  Dictionary of the form ``{task_state: task_count}``.
+               state_count_cycles (dict):
+                  Dictionary of the form ``{cycle_point: task_count}``.
+            cylc.suite_status.KEY_TASKS_BY_STATE
+               Dictionary in the form
+               ``{state: [(most_recent_time_string, task_name, point_string),``
+               ``...]}``.
+
+        """
         return {
             KEY_UPDATE_TIME: self.schd.state_summary_mgr.update_time,
             KEY_STATES: self.schd.state_summary_mgr.get_state_totals(),
@@ -428,7 +662,19 @@ class SuiteRuntimeServer(ZMQServer):
     def insert_tasks(self, items, stop_point_string=None, no_check=False):
         """Insert task proxies.
 
-        items is a list of identifiers of (families of) task instances.
+        Args:
+            items (list):
+                A list of `task globs`_ (strings) which *cannot* contain
+                any glob characters (``*``).
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
         """
         self.schd.command_queue.put((
             "insert_tasks",
@@ -438,39 +684,98 @@ class SuiteRuntimeServer(ZMQServer):
 
     @authorise(Priv.CONTROL)
     @ZMQServer.expose
-    def kill_tasks(self, items):
+    def kill_tasks(self, task_globs):
         """Kill task jobs.
 
-        items is a list of identifiers for matching task proxies.
+        Args:
+            task_globs (list): List of identifiers, see `task globs`_
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
         """
-        self.schd.command_queue.put(("kill_tasks", (items,), {}))
+        self.schd.command_queue.put(("kill_tasks", (task_globs,), {}))
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
     @ZMQServer.expose
     def nudge(self):
-        """Tell suite to try task processing."""
+        """Tell suite to try task processing.
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
+        """
         self.schd.command_queue.put(("nudge", (), {}))
         return (True, 'Command queued')
 
     @authorise(Priv.IDENTITY)
     @ZMQServer.expose
     def ping_suite(self):
-        """Return True."""
+        """Return True.
+
+        This serves as a basic network comms tests.
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
+        """
         return True
 
     @authorise(Priv.READ)
     @ZMQServer.expose
     def ping_task(self, task_id, exists_only=False):
-        """Return True if task_id exists (and running)."""
+        """Return True if task_id exists (and is running).
+
+        Args:
+            task_id:
+                A `task identifier`_
+            exists_only (bool):
+                If True only test that the task exists, if False check both
+                that the task exists and that it is running.
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool):
+                True if task exists (and is running).
+            message (str):
+                A string describing the outcome / state of the task.
+
+        """
         return self.schd.info_ping_task(task_id, exists_only=exists_only)
 
     @authorise(Priv.CONTROL)
     @ZMQServer.expose
-    def poll_tasks(self, items=None, poll_succ=False):
-        """Poll task jobs.
+    def poll_tasks(self, task_globs=None, poll_succ=False):
+        """Request the suite to poll task jobs.
 
-        items is a list of identifiers for matching task proxies.
+        Args:
+            task_globs (list): List of identifiers, see `task globs`_
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
         """
         self.schd.command_queue.put(
             ("poll_tasks", (items,), {"poll_succ": poll_succ}))
@@ -482,10 +787,35 @@ class SuiteRuntimeServer(ZMQServer):
             self, point_strings=None, namespaces=None, settings=None):
         """Add new broadcast settings (server side interface).
 
-        Return a tuple (modified_settings, bad_options) where:
-          modified_settings is list of modified settings in the form:
-            [("20200202", "foo", {"command scripting": "true"}, ...]
-          bad_options is as described in the docstring for self.clear().
+        Args:
+            point_strings (list):
+                List of point strings for this operation to apply to or
+                ``None`` to apply to all cycle points.
+            namespaces (list):
+                List of namespace string (task / family names) for this
+                operation to apply to or ``None`` to apply to all namespaces.
+            settings (list):
+                List of strings in the format ``key=value`` where ``key`` is a
+                Cylc configuration including section names e.g.
+                ``[section][subsection]item``.
+
+        Returns:
+            tuple: (modified_settings, bad_options)
+
+                modified_settings
+                   similar to the return value of the "put" method, but for
+                   removed settings.
+                bad_options
+                   A dict in the form:
+                   ``{"point_strings": ["20020202", ..."], ...}``.
+                   The dict is only populated if there are options not
+                   associated with previous broadcasts. The keys can be:
+
+                   * point_strings: a list of bad point strings.
+                   * namespaces: a list of bad namespaces.
+                   * cancel: a list of tuples. Each tuple contains the keys of
+                     a bad setting.
+
         """
         return self.schd.task_events_mgr.broadcast_mgr.put_broadcast(
             point_strings, namespaces, settings)
@@ -493,7 +823,21 @@ class SuiteRuntimeServer(ZMQServer):
     @authorise(Priv.CONTROL)
     @ZMQServer.expose
     def put_ext_trigger(self, event_message, event_id):
-        """Server-side external event trigger interface."""
+        """Server-side external event trigger interface.
+
+        Args:
+            event_message (str): The external trigger message.
+            event_id (str): The unique trigger ID.
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
+        """
         self.schd.ext_trigger_queue.put((event_message, event_id))
         return (True, 'Event queued')
 
@@ -503,10 +847,24 @@ class SuiteRuntimeServer(ZMQServer):
         """Put task messages in queue for processing later by the main loop.
 
         Arguments:
-            task_job (str): Task job in the form "CYCLE/TASK_NAME/SUBMIT_NUM".
-            event_time (str): Event time as string.
-            messages (list): List in the form [[severity, message], ...].
+            task_job (str):
+                Task job in the format ``CYCLE/TASK_NAME/SUBMIT_NUM``.
+            event_time (str):
+                Event time as an ISO8601 string.
+            messages (list):
+                List in the format ``[[severity, message], ...]``.
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
         """
+        #  TODO: standardise the task_job interface to one of the other
+        #        systems
         for severity, message in messages:
             self.schd.message_queue.put(
                 (task_job, event_time, severity, message))
@@ -515,54 +873,129 @@ class SuiteRuntimeServer(ZMQServer):
     @authorise(Priv.CONTROL)
     @ZMQServer.expose
     def reload_suite(self):
-        """Tell suite to reload the suite definition."""
+        """Tell suite to reload the suite definition.
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
+        """
         self.schd.command_queue.put(("reload_suite", (), {}))
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
     @ZMQServer.expose
     def release_suite(self):
-        """Unhold suite."""
+        """Unhold suite.
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
+        """
         self.schd.command_queue.put(("release_suite", (), {}))
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
     @ZMQServer.expose
-    def release_tasks(self, items):
+    def release_tasks(self, task_globs):
         """Unhold tasks.
 
-        items is a list of identifiers for matching task proxies.
+        Args:
+            task_globs (list): List of identifiers, see `task globs`_
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
         """
-        self.schd.command_queue.put(("release_tasks", (items,), {}))
+        self.schd.command_queue.put(("release_tasks", (task_globs,), {}))
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
     @ZMQServer.expose
-    def remove_tasks(self, items, spawn=False):
+    def remove_tasks(self, task_globs, spawn=False):
         """Remove tasks from task pool.
 
-        items is a list of identifiers for matching task proxies.
+        Args:
+            task_globs (list): List of identifiers, see `task globs`_
+            spawn (bool): If True ensure task has spawned before removal.
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
         """
         self.schd.command_queue.put(
-            ("remove_tasks", (items,), {"spawn": spawn}))
+            ("remove_tasks", (task_globs,), {"spawn": spawn}))
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
     @ZMQServer.expose
-    def reset_task_states(self, items, state=None, outputs=None):
+    def reset_task_states(self, task_globs, state=None, outputs=None):
         """Reset statuses tasks.
 
-        items is a list of identifiers for matching task proxies.
+        Args:
+            task_globs (list):
+                List of identifiers, see `task globs`_
+            state (str):
+                Task state to reset task to.
+                See ``cylc.task_state.TASK_STATUSES_CAN_RESET_TO``.
+            outputs (list):
+                Find task output by message string or trigger string
+                set complete or incomplete with !OUTPUT
+                ``*`` to set all complete, ``!*`` to set all incomplete.
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
         """
         self.schd.command_queue.put((
             "reset_task_states",
-            (items,), {"state": state, "outputs": outputs}))
+            (task_globs,), {"state": state, "outputs": outputs}))
         return (True, 'Command queued')
 
     @authorise(Priv.SHUTDOWN)
     @ZMQServer.expose
     def set_stop_after_clock_time(self, datetime_string):
-        """Set suite to stop after wallclock time."""
+        """Set suite to stop after wallclock time.
+
+        Args:
+            datetime_string (str):
+                An ISO8601 formatted date-time of the wallclock
+                (real-world as opposed to simulation) time
+                to stop the suite after.
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
+        """
         self.schd.command_queue.put(
             ("set_stop_after_clock_time", (datetime_string,), {}))
         return (True, 'Command queued')
@@ -570,7 +1003,21 @@ class SuiteRuntimeServer(ZMQServer):
     @authorise(Priv.SHUTDOWN)
     @ZMQServer.expose
     def set_stop_after_point(self, point_string):
-        """Set suite to stop after cycle point."""
+        """Set suite to stop after cycle point.
+
+        Args:
+            point_string (str):
+                The cycle point to stop the suite after.
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
+        """
         self.schd.command_queue.put(
             ("set_stop_after_point", (point_string,), {}))
         return (True, 'Command queued')
@@ -578,7 +1025,20 @@ class SuiteRuntimeServer(ZMQServer):
     @authorise(Priv.SHUTDOWN)
     @ZMQServer.expose
     def set_stop_after_task(self, task_id):
-        """Set suite to stop after an instance of a task."""
+        """Set suite to stop after an instance of a task.
+
+        Args:
+            task_id (str): A `task identifier`_
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
+        """
         self.schd.command_queue.put(
             ("set_stop_after_task", (task_id,), {}))
         return (True, 'Command queued')
@@ -586,7 +1046,25 @@ class SuiteRuntimeServer(ZMQServer):
     @authorise(Priv.SHUTDOWN)
     @ZMQServer.expose
     def set_stop_cleanly(self, kill_active_tasks=False):
-        """Set suite to stop cleanly or after kill active tasks."""
+        """Set suite to stop cleanly or after kill active tasks.
+
+        The suite will wait for all active (running, submitted) tasks
+        to complete before stopping.
+
+        Args:
+            kill_active_tasks (bool):
+                If True the suite will attempt to kill any active
+                (running, submitted) tasks
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
+        """
         self.schd.command_queue.put(
             ("set_stop_cleanly", (), {"kill_active_tasks": kill_active_tasks}))
         return (True, 'Command queued')
@@ -594,44 +1072,104 @@ class SuiteRuntimeServer(ZMQServer):
     @authorise(Priv.CONTROL)
     @ZMQServer.expose
     def set_verbosity(self, level):
-        """Set suite verbosity to new level."""
+        """Set suite verbosity to new level (for suite logs).
+
+        Args:
+            level (str): A logging level e.g. ``INFO`` or ``ERROR``.
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
+        """
         self.schd.command_queue.put(("set_verbosity", (level,), {}))
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
     @ZMQServer.expose
-    def spawn_tasks(self, items):
+    def spawn_tasks(self, task_globs):
         """Spawn tasks.
 
-        items is a list of identifiers for matching task proxies.
+        Args:
+            task_globs (list): List of identifiers, see `task globs`_
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
         """
-        self.schd.command_queue.put(("spawn_tasks", (items,), {}))
+        self.schd.command_queue.put(("spawn_tasks", (task_globs,), {}))
         return (True, 'Command queued')
 
     @authorise(Priv.SHUTDOWN)
     @ZMQServer.expose
     def stop_now(self, terminate=False):
-        """Stop suite on event handler completion, or terminate right away."""
+        """Stop suite on event handler completion, or terminate right away.
+
+        Args:
+            terminate (bool):
+                If False Cylc will run event handlers, if True it will not.
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
+        """
         self.schd.command_queue.put(("stop_now", (), {"terminate": terminate}))
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
     @ZMQServer.expose
-    def take_checkpoints(self, items):
+    def take_checkpoints(self, name):
         """Checkpoint current task pool.
 
-        items[0] is the name of the checkpoint.
+        Args:
+            name (str): The checkpoint name
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
         """
-        self.schd.command_queue.put(("take_checkpoints", (items,), {}))
+        self.schd.command_queue.put(("take_checkpoints", (name,), {}))
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
     @ZMQServer.expose
-    def trigger_tasks(self, items, back_out=False):
+    def trigger_tasks(self, task_globs, back_out=False):
         """Trigger submission of task jobs where possible.
 
-        items is a list of identifiers for matching task proxies.
+        Args:
+            task_globs (list):
+                List of identifiers, see `task globs`_
+            back_out (bool):
+                Abort e.g. in the event of a rejected trigger-edit.
+
+        Returns:
+            tuple: (outcome, message)
+
+            outcome (bool)
+                True if command successfully queued.
+            message (str)
+                Information about outcome.
+
         """
         self.schd.command_queue.put(
-            ("trigger_tasks", (items,), {"back_out": back_out}))
+            ("trigger_tasks", (task_globs,), {"back_out": back_out}))
         return (True, 'Command queued')

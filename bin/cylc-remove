@@ -60,7 +60,7 @@ def main():
     items = parser.parse_multitask_compat(options, args)
     pclient(
         'remove_tasks',
-        {'items': items, 'spawn': (not options.no_spawn)}
+        {'task_globs': items, 'spawn': (not options.no_spawn)}
     )
 
 

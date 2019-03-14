@@ -63,9 +63,10 @@ def main():
     # Back compat: back_out introduced >7.5.0
     # So don't call with "poll_succ" if not necessary to avoid breakage.
     if options.poll_succ:
-        pclient('poll_tasks', {'items': items, 'poll_succ': options.poll_succ})
+        pclient('poll_tasks',
+                {'task_globs': items, 'poll_succ': options.poll_succ})
     else:
-        pclient('poll_tasks', {'items': items})
+        pclient('poll_tasks', {'task_globs': items})
 
 
 if __name__ == "__main__":

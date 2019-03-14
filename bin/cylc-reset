@@ -100,7 +100,8 @@ def main():
     items = parser.parse_multitask_compat(options, args)
     pclient(
         'reset_task_states',
-        {'items': items, 'state': options.state, 'outputs': options.outputs}
+        {'task_globs': items, 'state': options.state,
+         'outputs': options.outputs}
     )
 
 

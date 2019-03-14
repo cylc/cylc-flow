@@ -86,7 +86,7 @@ def main():
 
     if task_ids:
         results, bad_items = pclient('get_task_requisites', {
-            'items': task_ids, 'list_prereqs': options.list_prereqs})
+            'task_globs': task_ids, 'list_prereqs': options.list_prereqs})
         if options.json:
             json_filter.append(results)
         else:

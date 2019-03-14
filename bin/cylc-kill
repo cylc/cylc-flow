@@ -57,7 +57,7 @@ def main():
         suite, options.owner, options.host, options.port)
     pclient(
         'kill_tasks',
-        {'items': parser.parse_multitask_compat(options, args)},
+        {'task_globs': parser.parse_multitask_compat(options, args)},
         timeout=options.comms_timeout
     )
 

@@ -1838,9 +1838,9 @@ conditions; see `cylc conditions`.
         """Force spawn task successors."""
         return self.pool.spawn_tasks(items)
 
-    def command_take_checkpoints(self, items):
+    def command_take_checkpoints(self, name):
         """Insert current task_pool, etc to checkpoints tables."""
-        return self.suite_db_mgr.checkpoint(items[0])
+        return self.suite_db_mgr.checkpoint(name)
 
     def filter_initial_task_list(self, inlist):
         """Return list of initial tasks after applying a filter."""

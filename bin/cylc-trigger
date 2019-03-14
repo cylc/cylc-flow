@@ -115,7 +115,8 @@ def main():
             old_mtime = None
 
         # Tell the suite server program to generate the job file.
-        pclient('dry_run_tasks', {'items': [task_id], 'check_syntax': False})
+        pclient('dry_run_tasks', {
+                'task_globs': [task_id], 'check_syntax': False})
 
         # Wait for the new job file to be written. Use mtime because the same
         # file could potentially exist already, left from a previous run.
@@ -195,9 +196,9 @@ def main():
     # Back compat: back_out introduced >7.5.0
     # So don't call with "back_out" if not necessary to avoid breakage.
     if aborted:
-        pclient('trigger_tasks', {'items': items, 'back_out': aborted})
+        pclient('trigger_tasks', {'task_globs': items, 'back_out': aborted})
     else:
-        pclient('trigger_tasks', {'items': items})
+        pclient('trigger_tasks', {'task_globs': items})
 
 
 if __name__ == "__main__":
