@@ -20,6 +20,7 @@
 from functools import wraps
 import getpass
 from queue import Queue
+from textwrap import dedent
 from time import sleep
 from threading import Thread
 
@@ -305,6 +306,39 @@ class SuiteRuntimeServer(ZMQServer):
             self.public_priv = self._get_public_priv()
         return self.public_priv
 
+    @authorise(Priv.IDENTITY)
+    @ZMQServer.expose
+    def api(self, endpoint=None):
+        """Return information about this API.
+
+        Returns a list of callable endpoints.
+
+        Args:
+            endpoint (str, optional):
+                If specified the documentation for the endpoint
+                will be returned instead.
+
+        Returns:
+            list/str: List of endpoints or string documentation of the
+            requested endpoint.
+
+        """
+        if not endpoint:
+            return [
+                method for method in dir(self)
+                if getattr(getattr(self, method), 'exposed', False)
+            ]
+
+        try:
+            method = getattr(self, endpoint)
+        except AttributeError:
+            return 'No method by name "%s"' % endpoint
+        if method.exposed:
+            head, tail = method.__doc__.split('\n', 1)
+            tail = dedent(tail)
+            return '%s\n%s' % (head, tail)
+        return 'No method by name "%s"' % endpoint
+
     @authorise(Priv.CONTROL)
     @ZMQServer.expose
     def clear_broadcast(
@@ -312,13 +346,13 @@ class SuiteRuntimeServer(ZMQServer):
         """Clear settings globally, or for listed namespaces and/or points.
 
         Args:
-            point_strings (list):
+            point_strings (list, optional):
                 List of point strings for this operation to apply to or
                 ``None`` to apply to all cycle points.
-            namespaces (list):
+            namespaces (list, optional):
                 List of namespace string (task / family names) for this
                 operation to apply to or ``None`` to apply to all namespaces.
-            cancel_settings (list):
+            cancel_settings (list, optional):
                 List of broadcast keys to cancel.
 
         Returns:
@@ -349,7 +383,7 @@ class SuiteRuntimeServer(ZMQServer):
 
         Args:
             task_globs (list): List of identifiers, see `task globs`_
-            check_syntax (bool): Check shell syntax.
+            check_syntax (bool, optional): Check shell syntax.
 
         Returns:
             tuple: (outcome, message)
@@ -370,7 +404,7 @@ class SuiteRuntimeServer(ZMQServer):
         """Clear all settings targeting cycle points earlier than cutoff.
 
         Args:
-            cutoff (str):
+            cutoff (str, optional):
                 Cycle point, broadcasts earlier than but not inclusive of the
                 cutoff will be canceled.
 
@@ -383,7 +417,7 @@ class SuiteRuntimeServer(ZMQServer):
         """Retrieve all broadcast variables that target a given task ID.
 
         Args:
-            task_id (str): A `task identifier`_
+            task_id (str, optional): A `task identifier`_
 
         Returns:
             dict: all broadcast variables that target the given task ID.
@@ -423,17 +457,17 @@ class SuiteRuntimeServer(ZMQServer):
             stop_point_string (str):
                 Cycle point as a string to define the window of view of the
                 suite graph.
-            group_nodes (list):
+            group_nodes (list, optional):
                 List of (graph nodes) family names to group (collapse according
                 to inheritance) in the output graph.
-            ungroup_nodes (list):
+            ungroup_nodes (list, optional):
                 List of (graph nodes) family names to ungroup (expand according
                 to inheritance) in the output graph.
-            ungroup_recursive (bool):
+            ungroup_recursive (bool, optional):
                 Recursively ungroup families.
-            group_all (bool):
+            group_all (bool, optional):
                 Group all families (collapse according to inheritance).
-            ungroup_all (bool):
+            ungroup_all (bool, optional):
                 Ungroup all families (expand according to inheritance).
 
         Returns:
@@ -526,7 +560,8 @@ class SuiteRuntimeServer(ZMQServer):
         """Return prerequisites of a task.
 
         Args:
-            task_globs (list): List of identifiers, see `task globs`_
+            task_globs (list, optional):
+                List of identifiers, see `task globs`_
 
         Returns:
             list: Dictionary of `task identifiers <task identifier>`_
@@ -534,7 +569,7 @@ class SuiteRuntimeServer(ZMQServer):
 
         """
         return self.schd.info_get_task_requisites(
-            items, list_prereqs=list_prereqs)
+            task_globs, list_prereqs=list_prereqs)
 
     @authorise(Priv.CONTROL)
     @ZMQServer.expose
@@ -666,7 +701,11 @@ class SuiteRuntimeServer(ZMQServer):
             items (list):
                 A list of `task globs`_ (strings) which *cannot* contain
                 any glob characters (``*``).
-
+            stop_point_string (str, optional):
+                Optional hold/stop cycle point for inserted task.
+            no_check (bool, optional):
+                Add task even if the provided cycle point is not valid
+                for the given task.
         Returns:
             tuple: (outcome, message)
 
@@ -745,7 +784,7 @@ class SuiteRuntimeServer(ZMQServer):
         Args:
             task_id:
                 A `task identifier`_
-            exists_only (bool):
+            exists_only (bool, optional):
                 If True only test that the task exists, if False check both
                 that the task exists and that it is running.
 
@@ -766,7 +805,10 @@ class SuiteRuntimeServer(ZMQServer):
         """Request the suite to poll task jobs.
 
         Args:
-            task_globs (list): List of identifiers, see `task globs`_
+            task_globs (list, optional):
+                List of identifiers, see `task globs`_
+            poll_succ (bool, optional):
+                Allow polling of remote tasks if True.
 
         Returns:
             tuple: (outcome, message)
@@ -778,7 +820,7 @@ class SuiteRuntimeServer(ZMQServer):
 
         """
         self.schd.command_queue.put(
-            ("poll_tasks", (items,), {"poll_succ": poll_succ}))
+            ("poll_tasks", (task_globs,), {"poll_succ": poll_succ}))
         return (True, 'Command queued')
 
     @authorise(Priv.CONTROL)
@@ -788,13 +830,13 @@ class SuiteRuntimeServer(ZMQServer):
         """Add new broadcast settings (server side interface).
 
         Args:
-            point_strings (list):
+            point_strings (list, optional):
                 List of point strings for this operation to apply to or
                 ``None`` to apply to all cycle points.
-            namespaces (list):
+            namespaces (list, optional):
                 List of namespace string (task / family names) for this
                 operation to apply to or ``None`` to apply to all namespaces.
-            settings (list):
+            settings (list, optional):
                 List of strings in the format ``key=value`` where ``key`` is a
                 Cylc configuration including section names e.g.
                 ``[section][subsection]item``.
@@ -847,11 +889,11 @@ class SuiteRuntimeServer(ZMQServer):
         """Put task messages in queue for processing later by the main loop.
 
         Arguments:
-            task_job (str):
+            task_job (str, optional):
                 Task job in the format ``CYCLE/TASK_NAME/SUBMIT_NUM``.
-            event_time (str):
+            event_time (str, optional):
                 Event time as an ISO8601 string.
-            messages (list):
+            messages (list, optional):
                 List in the format ``[[severity, message], ...]``.
 
         Returns:
@@ -930,8 +972,10 @@ class SuiteRuntimeServer(ZMQServer):
         """Remove tasks from task pool.
 
         Args:
-            task_globs (list): List of identifiers, see `task globs`_
-            spawn (bool): If True ensure task has spawned before removal.
+            task_globs (list):
+                List of identifiers, see `task globs`_
+            spawn (bool, optional):
+                If True ensure task has spawned before removal.
 
         Returns:
             tuple: (outcome, message)
@@ -954,10 +998,10 @@ class SuiteRuntimeServer(ZMQServer):
         Args:
             task_globs (list):
                 List of identifiers, see `task globs`_
-            state (str):
+            state (str, optional):
                 Task state to reset task to.
                 See ``cylc.task_state.TASK_STATUSES_CAN_RESET_TO``.
-            outputs (list):
+            outputs (list, optional):
                 Find task output by message string or trigger string
                 set complete or incomplete with !OUTPUT
                 ``*`` to set all complete, ``!*`` to set all incomplete.
@@ -1052,7 +1096,7 @@ class SuiteRuntimeServer(ZMQServer):
         to complete before stopping.
 
         Args:
-            kill_active_tasks (bool):
+            kill_active_tasks (bool, optional):
                 If True the suite will attempt to kill any active
                 (running, submitted) tasks
 
@@ -1115,7 +1159,7 @@ class SuiteRuntimeServer(ZMQServer):
         """Stop suite on event handler completion, or terminate right away.
 
         Args:
-            terminate (bool):
+            terminate (bool, optional):
                 If False Cylc will run event handlers, if True it will not.
 
         Returns:
@@ -1158,7 +1202,7 @@ class SuiteRuntimeServer(ZMQServer):
         Args:
             task_globs (list):
                 List of identifiers, see `task globs`_
-            back_out (bool):
+            back_out (bool, optional):
                 Abort e.g. in the event of a rejected trigger-edit.
 
         Returns:
