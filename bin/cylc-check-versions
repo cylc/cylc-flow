@@ -41,9 +41,8 @@ from time import sleep
 
 import cylc.flags
 from cylc.config import SuiteConfig
-from cylc.option_parsers import CylcOptionParser as COP
 from cylc.cylc_subproc import procopen
-from cylc.subprocpool import SuiteProcPool
+from cylc.subprocpool import SubProcPool
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.task_remote_mgr import TaskRemoteMgr
 from cylc.templatevars import load_template_vars
@@ -74,7 +73,7 @@ def main():
             config.get_config(['runtime', name, 'remote', 'owner']),
             config.get_config(['runtime', name, 'remote', 'host'])))
     task_remote_mgr = TaskRemoteMgr(
-        suite, SuiteProcPool(), suite_srv_files_mgr)
+        suite, SubProcPool(), suite_srv_files_mgr)
     for _, host_str in account_set:
         task_remote_mgr.remote_host_select(host_str)
     accounts = []

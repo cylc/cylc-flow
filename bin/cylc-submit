@@ -43,7 +43,7 @@ from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.config import SuiteConfig
 from cylc.cycling.loader import get_point
 import cylc.flags
-from cylc.subprocpool import SuiteProcPool
+from cylc.subprocpool import SubProcPool
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.suite_db_mgr import SuiteDatabaseManager
 from cylc.broadcast_mgr import BroadcastMgr
@@ -104,7 +104,7 @@ def main():
 
     # Initialise job submit environment
     glbl_cfg().create_cylc_run_tree(suite)
-    pool = SuiteProcPool()
+    pool = SubProcPool()
     db_mgr = SuiteDatabaseManager()
     task_job_mgr = TaskJobManager(
         suite, pool, db_mgr, suite_srv_mgr,
