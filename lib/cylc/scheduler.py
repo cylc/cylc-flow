@@ -48,7 +48,7 @@ from cylc.log_diagnosis import LogSpec
 from cylc.network.server import SuiteRuntimeServer
 from cylc.profiler import Profiler
 from cylc.state_summary_mgr import StateSummaryMgr
-from cylc.subprocpool import SuiteProcPool
+from cylc.subprocpool import SubProcPool
 from cylc.suite_db_mgr import SuiteDatabaseManager
 from cylc.suite_events import (
     SuiteEventContext, SuiteEventError, SuiteEventHandler)
@@ -351,7 +351,7 @@ conditions; see `cylc conditions`.
         self.profiler.log_memory("scheduler.py: start configure")
 
         # Start up essential services
-        self.proc_pool = SuiteProcPool()
+        self.proc_pool = SubProcPool()
         self.state_summary_mgr = StateSummaryMgr()
         self.command_queue = Queue()
         self.message_queue = Queue()
