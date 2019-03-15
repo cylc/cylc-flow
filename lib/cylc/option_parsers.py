@@ -32,7 +32,8 @@ class CylcOptionParser(OptionParser):
     """Common options for all cylc CLI commands."""
 
     MULTITASK_USAGE = """
-TASKID is a pattern to match task proxies or task families, or groups of them:
+TASK_GLOB is a pattern to match task proxies or task families,
+or groups of them:
 * [CYCLE-POINT-GLOB/]TASK-NAME-GLOB[:TASK-STATE]
 * [CYCLE-POINT-GLOB/]FAMILY-NAME-GLOB[:TASK-STATE]
 * TASK-NAME-GLOB[.CYCLE-POINT-GLOB][:TASK-STATE]
@@ -49,7 +50,7 @@ For example, to match:
 
 The old 'MATCH POINT' syntax will be automatically detected and supported. To
 avoid this, use the '--no-multitask-compat' option, or use the new syntax
-(with a '/' or a '.') when specifying 2 TASKID arguments."""
+(with a '/' or a '.') when specifying 2 TASK_GLOB arguments."""
 
     def __init__(self, usage, argdoc=None, comms=False, noforce=False,
                  jset=False, multitask=False, prep=False, auto_add=True,
@@ -212,15 +213,6 @@ avoid this, use the '--no-multitask-compat' option, or use the new syntax
                 action="store", default=None, dest="templatevars_file")
 
         if self.multitask:
-            self.add_std_option(
-                "-m", "--family",
-                help=(
-                    "(Obsolete) This option is now ignored "
-                    "and is retained for backward compatibility only. "
-                    "TASKID in the argument list can be used to match "
-                    "task and family names regardless of this option."),
-                action="store_true", default=False, dest="is_family")
-
             self.add_std_option(
                 "--no-multitask-compat",
                 help="Disallow backward compatible multitask interface.",

@@ -26,9 +26,7 @@ cylc remove --no-spawn "$CYLC_SUITE_NAME" "FAM-?.$CYLC_TASK_CYCLE_POINT"
 """
     [[inserter]]
         # Re-insert one family.
-        script = """
-cylc insert -m $CYLC_SUITE_NAME FAM-A $CYLC_TASK_CYCLE_POINT
-"""
+        script = cylc insert $CYLC_SUITE_NAME FAM-A $CYLC_TASK_CYCLE_POINT
     [[FAM-A, FAM-B]]
     [[a1, a2]]
         inherit = FAM-A

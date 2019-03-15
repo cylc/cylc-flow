@@ -42,7 +42,7 @@ def main():
         __doc__, comms=True, multitask=True,
         argdoc=[
             ('REG', 'Suite name'),
-            ('[TASKID ...]', 'Task identifiers')])
+            ('[TASK_GLOB ...]', 'Task matching patterns')])
 
     options, args = parser.parse_args()
 

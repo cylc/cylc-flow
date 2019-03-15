@@ -18,7 +18,7 @@
 
 """cylc [control] release|unhold [OPTIONS] ARGS
 
-Release one or more held tasks (cylc release REG TASKID)
+Release one or more held tasks (cylc release REG TASK_GLOB)
 or the whole suite (cylc release REG). Held tasks do not
 submit even if they are ready to run.
 
@@ -44,7 +44,7 @@ def main():
         __doc__, comms=True, multitask=True,
         argdoc=[
             ("REG", 'Suite name'),
-            ('[TASKID ...]', 'Task identifiers')])
+            ('[TASK_GLOB ...]', 'Task matching patterns')])
 
     options, args = parser.parse_args()
     suite = args.pop(0)
@@ -57,8 +57,8 @@ def main():
         suite, options.owner, options.host, options.port,
         options.comms_timeout)
     if args:
-        items = parser.parse_multitask_compat(options, args)
-        pclient('release_tasks', {'task_globs': items})
+        task_globs = parser.parse_multitask_compat(options, args)
+        pclient('release_tasks', {'task_globs': task_globs})
     else:
         pclient('release_suite')
 

@@ -45,7 +45,7 @@ def main():
         __doc__, comms=True, noforce=True, multitask=True,
         argdoc=[
             ('REG', 'Suite name'),
-            ('[TASKID ...]', 'Task names or identifiers')])
+            ('[TASK_GLOB ...]', 'Task matching patterns')])
 
     parser.add_option('--list-prereqs', action="store_true", default=False,
                       help="Print a task's pre-requisites as a list.")

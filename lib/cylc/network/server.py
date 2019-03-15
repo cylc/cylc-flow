@@ -397,7 +397,7 @@ class SuiteRuntimeServer(ZMQServer):
                 Information about outcome.
 
         """
-        self.schd.command_queue.put(('dry_run_tasks', (task_glob,),
+        self.schd.command_queue.put(('dry_run_tasks', (task_globs,),
                                     {'check_syntax': check_syntax}))
         return (True, 'Command queued')
 

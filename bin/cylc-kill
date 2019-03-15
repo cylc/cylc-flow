@@ -20,7 +20,7 @@
 
 Kill jobs of active tasks and update their statuses accordingly.
 
-To kill one or more tasks, "cylc kill REG TASKID ..."; to kill all active
+To kill one or more tasks, "cylc kill REG TASK_GLOB ..."; to kill all active
 tasks: "cylc kill REG".
 """
 
@@ -44,7 +44,7 @@ def main():
         __doc__, comms=True, multitask=True,
         argdoc=[
             ('REG', 'Suite name'),
-            ('[TASKID ...]', 'Task identifiers')])
+            ('[TASK_GLOB ...]', 'Task matching patterns')])
 
     options, args = parser.parse_args()
 

@@ -53,7 +53,7 @@ def main():
         __doc__, comms=True, multitask=True,
         argdoc=[
             ('REG', 'Suite name'),
-            ('[TASKID ...]', 'Task identifiers')])
+            ('[TASK_GLOB ...]', 'Task matching patterns')])
 
     parser.add_option(
         "-s", "--state", metavar="STATE",
@@ -97,10 +97,10 @@ def main():
     pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout)
-    items = parser.parse_multitask_compat(options, args)
+    task_globs = parser.parse_multitask_compat(options, args)
     pclient(
         'reset_task_states',
-        {'task_globs': items, 'state': options.state,
+        {'task_globs': task_globs, 'state': options.state,
          'outputs': options.outputs}
     )
 

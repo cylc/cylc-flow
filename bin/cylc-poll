@@ -20,8 +20,8 @@
 
 Poll (query) task jobs to verify and update their statuses.
 
-Use "cylc poll REG" to poll all active tasks, or "cylc poll REG TASKID" to poll
-individual tasks or families, or groups of them.
+Use "cylc poll REG" to poll all active tasks, or "cylc poll REG TASK_GLOB"
+to poll individual tasks or families, or groups of them.
 """
 
 import sys
@@ -43,7 +43,7 @@ def main():
         __doc__, comms=True, multitask=True,
         argdoc=[
             ('REG', 'Suite name'),
-            ('[TASKID ...]', 'Task identifiers')])
+            ('[TASK_GLOB ...]', 'Task matching patterns')])
 
     parser.add_option(
         "-s", "--succeeded", help="Allow polling of succeeded tasks.",
@@ -59,14 +59,9 @@ def main():
     pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout)
-    items = parser.parse_multitask_compat(options, args)
-    # Back compat: back_out introduced >7.5.0
-    # So don't call with "poll_succ" if not necessary to avoid breakage.
-    if options.poll_succ:
-        pclient('poll_tasks',
-                {'task_globs': items, 'poll_succ': options.poll_succ})
-    else:
-        pclient('poll_tasks', {'task_globs': items})
+    task_globs = parser.parse_multitask_compat(options, args)
+    pclient('poll_tasks',
+            {'task_globs': task_globs, 'poll_succ': options.poll_succ})
 
 
 if __name__ == "__main__":

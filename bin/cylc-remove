@@ -18,7 +18,7 @@
 
 """cylc [control] remove [OPTIONS] ARGS
 
-Remove one or more tasks (cylc remove REG TASKID), or all tasks with a
+Remove one or more tasks (cylc remove REG TASK_GLOB), or all tasks with a
 given cycle point (cylc remove REG *.POINT) from a running suite.
 
 Tasks will spawn successors first if they have not done so already.
@@ -43,7 +43,7 @@ def main():
         __doc__, comms=True, multitask=True,
         argdoc=[
             ("REG", "Suite name"),
-            ('TASKID [...]', 'Task identifiers')])
+            ('TASK_GLOB [...]', 'Task matching patterns')])
 
     parser.add_option(
         "--no-spawn",
@@ -57,10 +57,10 @@ def main():
     pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout)
-    items = parser.parse_multitask_compat(options, args)
+    task_globs = parser.parse_multitask_compat(options, args)
     pclient(
         'remove_tasks',
-        {'task_globs': items, 'spawn': (not options.no_spawn)}
+        {'task_globs': task_globs, 'spawn': (not options.no_spawn)}
     )
 
 

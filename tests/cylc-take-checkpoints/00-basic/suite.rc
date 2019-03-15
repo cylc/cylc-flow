@@ -20,7 +20,7 @@ if [[ "${CYLC_TASK_CYCLE_POINT}" == '2017' ]]; then
     sleep 2  # state of current task should be recorded after 2 seconds
     cylc checkpoint "${CYLC_SUITE_NAME}" 'snappy'
     LOG="${CYLC_SUITE_LOG_DIR}/log"
-    while ! grep -qF "INFO - Command succeeded: take_checkpoints(['snappy'])" \
+    while ! grep -qF "INFO - Command succeeded: take_checkpoints(snappy)" \
         "${LOG}"
     do
         sleep 1  # make sure take_checkpoints command completes

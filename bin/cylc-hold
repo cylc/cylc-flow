@@ -18,7 +18,7 @@
 
 """cylc [control] hold [OPTIONS] ARGS
 
-Hold one or more waiting tasks (cylc hold REG TASKID ...), or
+Hold one or more waiting tasks (cylc hold REG TASK_GLOB ...), or
 a whole suite (cylc hold REG).
 
 Held tasks do not submit even if they are ready to run.
@@ -45,7 +45,7 @@ def main():
         __doc__, comms=True, multitask=True,
         argdoc=[
             ("REG", "Suite name"),
-            ('[TASKID ...]', 'Task identifiers')])
+            ('[TASK_GLOB ...]', 'Task matching patterns')])
 
     parser.add_option(
         "--after",
@@ -67,10 +67,10 @@ def main():
         suite, options.owner, options.host, options.port)
 
     if args:
-        items = parser.parse_multitask_compat(options, args)
+        task_globs = parser.parse_multitask_compat(options, args)
         pclient(
             'hold_tasks',
-            {'task_globs': items},
+            {'task_globs': task_globs},
             timeout=options.comms_timeout
         )
     elif options.hold_point_string:
