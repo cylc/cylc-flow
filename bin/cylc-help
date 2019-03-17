@@ -274,7 +274,6 @@ hook_commands['check-triggering'] = ['check-triggering']
 
 admin_commands = {}
 admin_commands['test-battery'] = ['test-battery']
-admin_commands['profile-battery'] = ['profile-battery']
 admin_commands['import-examples'] = ['import-examples']
 admin_commands['check-software'] = ['check-software']
 admin_commands['make-docs'] = ['make-docs']
@@ -344,7 +343,6 @@ catsum['utility'] = "Cycle arithmetic and templating, etc."
 comsum = {}
 # admin
 comsum['test-battery'] = 'Run a battery of self-diagnosing test suites'
-comsum['profile-battery'] = 'Run a battery of profiling tests'
 comsum['import-examples'] = 'Import example suites your suite run directory'
 comsum['check-software'] = 'Check required software is installed'
 comsum['make-docs'] = 'Build the HTML documentation with Sphinx.'
