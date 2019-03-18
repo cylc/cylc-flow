@@ -41,12 +41,14 @@ from time import sleep
 
 import cylc.flags
 from cylc.config import SuiteConfig
+from cylc.option_parsers import CylcOptionParser as COP
 from cylc.cylc_subproc import procopen
+from cylc import __version__ as CYLC_VERSION
+from cylc.config import SuiteConfig
 from cylc.subprocpool import SubProcPool
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 from cylc.task_remote_mgr import TaskRemoteMgr
 from cylc.templatevars import load_template_vars
-from cylc.version import CYLC_VERSION
 
 
 def main():
