@@ -356,8 +356,12 @@ class ParsecValidator(object):
             Processed value as a list.
         """
         if value.startswith('"') or value.startswith("'"):
-            lexer = shlex.shlex(value, posix=True)
-            values = [t for t in lexer if t != ","]
+            lexer = shlex.shlex(value, posix=True, punctuation_chars=",")
+            lexer.commenters = '#'
+            lexer.whitespace_split = False
+            lexer.whitespace = "\t\n\r"
+            lexer.wordchars += " "
+            values = [t.strip() for t in lexer if t != ","]
         else:
             # unquoted values (may contain internal quoted strings with list
             # delimiters inside 'em!)
