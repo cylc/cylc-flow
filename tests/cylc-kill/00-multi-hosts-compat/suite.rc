@@ -21,6 +21,6 @@ KILLABLE:start-all => killer
             host={{CYLC_TEST_HOST}}
     [[killer]]
         script="""
-cylc kill -m "${CYLC_SUITE_NAME}" KILLABLE 1
+cylc kill "${CYLC_SUITE_NAME}" KILLABLE 1
 cylc stop "${CYLC_SUITE_NAME}"
 """

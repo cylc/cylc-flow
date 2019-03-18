@@ -33,7 +33,7 @@ class Priv(IntEnum):
     """Cylc privilege levels.
 
     In Cylc configurations use the lower-case form of each privilege level
-    e.g. ``control`` for ``Priv.CONTORL``.
+    e.g. ``control`` for ``Priv.CONTROL``.
 
     These levels are ordered (by the integer associated with each) from 0.
     Each privilege level grants access to the levels below it.

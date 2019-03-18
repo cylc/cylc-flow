@@ -12,15 +12,15 @@
     [[dependencies]]
         [[[P1Y]]]
             graph = """
-t1[-P1Y] => t1 => t2
-"""
+                t1[-P1Y] => t1 => t2
+            """
 [runtime]
     [[t1]]
         script = """
-if [[ "${CYLC_TASK_CYCLE_POINT}" == '2016' ]]; then
-    cylc hold "${CYLC_SUITE_NAME}"
-    cylc stop "${CYLC_SUITE_NAME}"
-fi
-"""
+            if [[ "${CYLC_TASK_CYCLE_POINT}" == '2016' ]]; then
+                cylc hold "${CYLC_SUITE_NAME}"
+                cylc stop "${CYLC_SUITE_NAME}"
+            fi
+        """
     [[t2]]
         script = true
