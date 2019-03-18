@@ -184,7 +184,7 @@ this:
    }
    return (satisfied, results)
 
-The ``satisified`` variable is boolean (value True or False, depending
+The ``satisfied`` variable is boolean (value True or False, depending
 on whether or not the trigger condition was found to be satisfied). The
 ``results`` dictionary contains the names and values of all of the
 target suite state parameters. Each item in it gets qualified with the
@@ -237,7 +237,7 @@ properties:
   passed to the function as such
 - if a trigger function depends on files or directories (for example)
   that might not exist when the function is first called, just return
-  unsatisified until everything required does exist.
+  unsatisfied until everything required does exist.
 
 .. note::
 
@@ -278,7 +278,7 @@ The suite server program manages trigger functions as follows:
 
 - they are called asynchronously in the process pool
   - (except for clock triggers, which are called from the main process)
-- they are called repeatedly on a configurable interval, until satisified
+- they are called repeatedly on a configurable interval, until satisfied
   - the call interval defaults to ``PT10S`` (10 seconds)
   - repeat calls are not made until the previous call has returned
 - they are subject to the normal process pool command time out - if they

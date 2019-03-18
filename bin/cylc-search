@@ -29,7 +29,7 @@ Note that this command performs a text search on the suite definition,
 it does not search the data structure that results from parsing the
 suite definition - so it will not report implicit default settings.
 
-For case insenstive matching use '(?i)PATTERN'."""
+For case insensitive matching use '(?i)PATTERN'."""
 
 import sys
 from cylc.remote import remrun

@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validation with initial and final cycle points in schelduling but no R1.
+# Test validation with initial and final cycle points in scheduling but no R1.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2

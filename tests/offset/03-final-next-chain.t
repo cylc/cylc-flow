@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test specifying final cycle as an offset to the next occurance of T06
+# Test specifying final cycle as an offset to the next occurrence of T06
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2

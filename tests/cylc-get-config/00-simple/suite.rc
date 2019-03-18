@@ -41,7 +41,7 @@
 [visualization]
     # NOTE ON VISUALIZATION AND MULTIPLE INHERITANCE: overlapping
     # family groups can have overlapping attributes, so long as 
-    # non-conflictling attributes are used to style each group. Below,
+    # non-conflicting attributes are used to style each group. Below,
     # for example, OPS tasks are filled green and SERIAL tasks are
     # outlined blue, so that ops_s1 and ops_s2 are green with a blue
     # outline. But if the SERIAL tasks are explicitly styled as "not

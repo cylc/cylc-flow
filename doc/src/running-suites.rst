@@ -501,7 +501,7 @@ Public Access - No Auth Files
 
 Without a suite passphrase the amount of information revealed by a suite
 server program is determined by the public access privilege level set in global
-site/user config (:ref:`GlobalAuth`) and optionally overidden in suites
+site/user config (:ref:`GlobalAuth`) and optionally overridden in suites
 (:ref:`SuiteAuth`):
 
 none

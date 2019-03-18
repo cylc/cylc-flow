@@ -13,7 +13,7 @@
                 prep => model
             """
         [[[P1M]]]
-            # sequence anchored on Januray 1st, 2010)
+            # sequence anchored on January 1st, 2010)
             graph = """
                 model[-P1M] => model
                     """

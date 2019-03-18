@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validatation error message, LHS suicide.
+# Test validation error message, LHS suicide.
 . "$(dirname "$0")/test_header"
 set_test_number 2
 

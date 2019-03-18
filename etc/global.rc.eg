@@ -31,7 +31,7 @@
 # The USER FILE LOCATIONS are:
 #   1) ~/.cylc/<CYLC-VERSION>/global.rc  # e.g. ~/.cylc/7.7.0/global.rc
 #   2) ~/.cylc/global.rc
-# If the first lcoation is not found, the second will be checked.
+# If the first location is not found, the second will be checked.
 # 
 # The version-specific location is preferred - see FORWARD COMPATIBILITY above.
 # WHEN YOU FIRST USE A NEW VERSION OF CYLC, COPY OVER YOUR OLD USER GLOBAL
