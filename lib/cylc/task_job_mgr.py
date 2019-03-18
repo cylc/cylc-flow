@@ -509,7 +509,7 @@ class TaskJobManager(object):
                             del bad_tasks[(point, name, submit_num)]
                         itask = tasks[(point, name, submit_num)]
                         callback(suite, itask, ctx, line)
-                    except (LookupError, ValueError) as exc:
+                    except (LookupError, ValueError, KeyError) as exc:
                         LOG.warning(
                             'Unhandled %s output: %s', ctx.cmd_key, line)
                         LOG.exception(exc)
