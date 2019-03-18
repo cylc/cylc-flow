@@ -71,9 +71,7 @@ def main():
               "Can be used more than once to reset multiple task outputs."),
         action="append", default=[], dest="outputs")
 
-    options, args = parser.parse_args()
-
-    suite = args.pop(0)
+    options, (suite, *task_globs) = parser.parse_args()
 
     if not options.state and not options.outputs:
         parser.error("Neither --state=STATE nor --output=OUTPUT is set")
@@ -84,7 +82,7 @@ def main():
             "'cylc reset -s spawn' is deprecated; calling 'cylc spawn'\n")
         cmd = sys.argv[0].replace('reset', 'spawn')
         try:
-            os.execvp(cmd, [cmd] + args)
+            os.execvp(cmd, [cmd] + task_globs)
         except OSError as exc:
             if exc.filename is None:
                 exc.filename = cmd
@@ -93,11 +91,10 @@ def main():
     if not options.state:
         options.state = ''
 
-    prompt('Reset task(s) %s in %s' % (args, suite), options.force)
+    prompt('Reset task(s) %s in %s' % (task_globs, suite), options.force)
     pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout)
-    task_globs = parser.parse_multitask_compat(options, args)
     pclient(
         'reset_task_states',
         {'task_globs': task_globs, 'state': options.state,

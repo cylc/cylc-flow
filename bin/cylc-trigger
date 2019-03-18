@@ -76,10 +76,9 @@ def main():
         help="(with --edit) force use of the configured GUI editor.",
         action="store_true", default=False, dest="geditor")
 
-    options, args = parser.parse_args()
-    suite = args.pop(0)
+    options, (suite, *task_globs) = parser.parse_args()
 
-    msg = 'Trigger task(s) %s in %s' % (args, suite)
+    msg = 'Trigger task(s) %s in %s' % (task_globs, suite)
     prompt(msg, options.force)
 
     pclient = SuiteRuntimeClient(
@@ -88,7 +87,6 @@ def main():
 
     aborted = False
     if options.edit_run:
-        task_globs = parser.parse_multitask_compat(options, args)
         task_id = task_globs[0]
         # Check that TASK is a unique task.
         success, msg = pclient(
@@ -192,10 +190,10 @@ def main():
             aborted = True
 
     # Trigger the task proxy(s).
-    pclient('trigger_tasks', {
-        'task_globs': parser.parse_multitask_compat(options, args),
-        'back_out': aborted
-    })
+    pclient(
+        'trigger_tasks',
+        {'task_globs': task_globs, 'back_out': aborted}
+    )
 
 
 if __name__ == "__main__":

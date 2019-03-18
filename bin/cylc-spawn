@@ -44,18 +44,16 @@ def main():
             ('REG', 'Suite name'),
             ('[TASK_GLOB ...]', 'Task matching patterns')])
 
-    options, args = parser.parse_args()
+    options, (suite, *task_globs) = parser.parse_args()
 
-    suite = args.pop(0)
-
-    prompt('Spawn task(s) %s in %s' % (args, suite), options.force)
+    prompt('Spawn task(s) %s in %s' % (task_globs, suite), options.force)
     pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout)
 
     pclient(
         'spawn_tasks',
-        {'task_globs': parser.parse_multitask_compat(options, args)}
+        {'task_globs': task_globs}
     )
 
 

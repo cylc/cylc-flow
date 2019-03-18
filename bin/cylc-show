@@ -45,7 +45,7 @@ def main():
         __doc__, comms=True, noforce=True, multitask=True,
         argdoc=[
             ('REG', 'Suite name'),
-            ('[TASK_GLOB ...]', 'Task matching patterns')])
+            ('[TASKS ...]', 'Task names or ids (name.cycle)')])
 
     parser.add_option('--list-prereqs', action="store_true", default=False,
                       help="Print a task's pre-requisites as a list.")
@@ -53,9 +53,8 @@ def main():
     parser.add_option('--json', action="store_true", default=False,
                       help="Print output in JSON format.")
 
-    options, args = parser.parse_args()
-    suite = args[0]
-    task_args = args[1:]
+    options, (suite, *task_args) = parser.parse_args()
+
     pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout)
@@ -85,8 +84,10 @@ def main():
                     print("%s: %s" % (key, value or "(not given)"))
 
     if task_ids:
-        results, bad_items = pclient('get_task_requisites', {
-            'task_globs': task_ids, 'list_prereqs': options.list_prereqs})
+        results, bad_items = pclient(
+            'get_task_requisites',
+            {'task_globs': task_ids, 'list_prereqs': options.list_prereqs}
+        )
         if options.json:
             json_filter.append(results)
         else:

@@ -67,12 +67,9 @@ def main():
     options, args = parser.parse_args()
     suite = args.pop(0)
 
-    # See "cop.parse_multitask_compat" for back compat discussion
-    # "cop.parse_multitask_compat" cannot be used here because argument 3
-    # (after suite argument) used to be "options.stop_point_string".
-    if (options.multitask_compat and len(args) in [2, 3] and
-            all("/" not in arg for arg in args) and
-            all("." not in arg for arg in args[1:])):
+    if (len(args) in [2, 3]
+            and all("/" not in arg for arg in args)
+            and all("." not in arg for arg in args[1:])):
         items = [(args[0] + "." + args[1])]
         if len(args) == 3:
             options.stop_point_string = args[2]

@@ -49,19 +49,19 @@ def main():
         "-s", "--succeeded", help="Allow polling of succeeded tasks.",
         action="store_true", default=False, dest="poll_succ")
 
-    options, args = parser.parse_args()
+    options, (suite, *task_globs) = parser.parse_args()
 
-    suite = args.pop(0)
-    if args:
-        prompt('Poll task %s in %s' % (args, suite), options.force)
+    if task_globs:
+        prompt('Poll task %s in %s' % (task_globs, suite), options.force)
     else:
         prompt('Poll ALL tasks in %s' % (suite), options.force)
     pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout)
-    task_globs = parser.parse_multitask_compat(options, args)
-    pclient('poll_tasks',
-            {'task_globs': task_globs, 'poll_succ': options.poll_succ})
+    pclient(
+        'poll_tasks',
+        {'task_globs': task_globs, 'poll_succ': options.poll_succ}
+    )
 
 
 if __name__ == "__main__":

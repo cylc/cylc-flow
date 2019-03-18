@@ -50,14 +50,12 @@ def main():
         help="Do not spawn successors before removal.",
         action="store_true", default=False, dest="no_spawn")
 
-    options, args = parser.parse_args()
+    options, (suite, *task_globs) = parser.parse_args()
 
-    suite = args.pop(0)
-    prompt('remove task(s) %s in %s' % (args, suite), options.force)
+    prompt('remove task(s) %s in %s' % (task_globs, suite), options.force)
     pclient = SuiteRuntimeClient(
         suite, options.owner, options.host, options.port,
         options.comms_timeout)
-    task_globs = parser.parse_multitask_compat(options, args)
     pclient(
         'remove_tasks',
         {'task_globs': task_globs, 'spawn': (not options.no_spawn)}

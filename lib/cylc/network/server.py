@@ -155,8 +155,9 @@ class ZMQServer(object):
             except Exception as exc:  # purposefully catch generic exception
                 # failed to decode message, possibly resulting from failed
                 # authentication
-                response = self.encode(
-                    {'error': {'message': str(exc)}}, self.secret())
+                import traceback
+                return {'error': {
+                    'message': str(exc), 'traceback': traceback.format_exc()}}
             else:
                 # success case - serve the request
                 LOG.debug('zmq:recv %s', message)
@@ -224,7 +225,6 @@ def authorise(req_priv_level):
 
     """
     def wrapper(fcn):
-        """Warp"""
         @wraps(fcn)  # preserve args and docstrings
         def _authorise(self, *args, user='?', meta=None, **kwargs):
             if not meta:
