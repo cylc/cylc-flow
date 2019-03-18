@@ -23,7 +23,7 @@ init_suite "${TEST_NAME_BASE}" '/dev/null'
 # Populate its cylc-run dir with empty log files.
 LOG_DIR="$(dirname "$(cylc cat-log -m p "${SUITE_NAME}")")"
 mkdir -p "${LOG_DIR}"
-# Note: .0 .1 .2: back compatability to old log rotation system
+# Note: .0 .1 .2: back compatibility to old log rotation system
 # (short sleeps to get different file mtimes)
 touch "${LOG_DIR}/log.20000103T00Z"
 sleep 1

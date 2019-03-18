@@ -1240,7 +1240,7 @@ represents a group or family of tasks if other namespaces inherit from
 it, or a task if no others inherit from it.
 
 .. todo::
-   follolwing para here is a '%' thing i.e. not ment to be seen /comment:
+   following para here is a '%' thing i.e. not meant to be seen /comment:
 
   Names may not contain colons (which would preclude use of directory paths
   involving the registration name in ``$PATH`` variables). They
@@ -1333,7 +1333,7 @@ command or script, or inlined scripting. See also ``init-script``,
 """""""""""""""""""""""""""""""""""""""""""""""""""
 
 Custom script to be invoked at the end of the error trap, which is triggered
-due to failure of a command in the task job script or trapable job kill. The
+due to failure of a command in the task job script or trappable job kill. The
 output of this will always be sent to STDERR and ``$1`` is set to the
 name of the signal caught by the error trap. The script should be fast and use
 very little system resource to ensure that the error trap can return quickly.

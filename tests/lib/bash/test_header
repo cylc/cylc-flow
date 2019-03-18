@@ -540,7 +540,7 @@ mock_smtpd_kill() {  # Logic borrowed from Rose
 }
 
 create_test_globalrc() {
-    # (Documentated in file header).
+    # (Documented in file header).
     local PRE=
     local POST=
     if (( $# == 1 )); then

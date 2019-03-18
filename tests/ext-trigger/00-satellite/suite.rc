@@ -5,7 +5,7 @@
 [meta]
     title = Real time satellite data processing demo, variant 3 of 3
     description = """
-        Successive cycle points retrieve and processe the next arbitrarily
+        Successive cycle points retrieve and processes the next arbitrarily
         timed and labelled dataset, in parallel if the data comes in quickly.
         This variant of the suite has initial get_data tasks with external
         triggers: they do not submit until triggered by an external system.

@@ -123,7 +123,7 @@ class ParsecValidator(object):
             self.V_STRING: self.coerce_str,
             self.V_STRING_LIST: self.coerce_str_list,
             self.V_SPACELESS_STRING_LIST: self.coerce_spaceless_str_list,
-            self.V_ABSOLUTE_HOST_LIST: self.coerce_asbolute_host_list
+            self.V_ABSOLUTE_HOST_LIST: self.coerce_absolute_host_list
         }
 
     def validate(self, cfg_root, spec_root):
@@ -276,11 +276,11 @@ class ParsecValidator(object):
         return lst
 
     @classmethod
-    def coerce_asbolute_host_list(cls, value, keys):
+    def coerce_absolute_host_list(cls, value, keys):
         """Do not permit self reference in host names.
 
         Example:
-            >>> ParsecValidator.coerce_asbolute_host_list(
+            >>> ParsecValidator.coerce_absolute_host_list(
             ...     'foo, bar, 127.0.0.1:8080, baz', ['pub'])
             Traceback (most recent call last):
             parsec.validate.ListValueError: ambiguous host "127.0.0.1:8080"

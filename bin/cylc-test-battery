@@ -50,7 +50,7 @@ Commits or Pull Requests to cylc/cylc on GitHub will trigger Travis CI to run
 generic (non platform-specific) tests - see $CYLC_DIR/.travis.yml.
 
 By default all tests are executed.  To run just a subset of them:
-  * list individual tests or test directories to run on the comand line
+  * list individual tests or test directories to run on the command line
   * list individual tests or test directories to skip in \$CYLC_TEST_SKIP
   * skip all generic tests with CYLC_TEST_RUN_GENERIC=false
   * skip all platform-specific tests with CYLC_TEST_RUN_PLATFORM=false
