@@ -67,7 +67,7 @@ def cli_function(function):
             if is_terminal() or not cylc.flags.debug:
                 # catch "known" CylcErrors which should have sensible short
                 # summations of the issue, full traceback not necessary
-                sys.exit(str(exc))
+                sys.exit(f'{exc.__class__.__name__}: {exc}')
             else:
                 # if command is running non-interactively just raise the full
                 # traceback

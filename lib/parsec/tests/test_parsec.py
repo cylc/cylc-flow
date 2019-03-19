@@ -25,12 +25,16 @@ class TestParsec(unittest.TestCase):
 
     def test_parsec_error_msg(self):
         parsec_error = ParsecError()
-        self.assertEqual('ParsecError', str(parsec_error))
+        self.assertEqual('', str(parsec_error))
+        parsec_error = ParsecError('foo')
+        self.assertEqual('foo', str(parsec_error))
+        parsec_error = ParsecError('foo', 'bar', 'baz')
+        self.assertEqual('foo bar baz', str(parsec_error))
 
     def test_parsec_error_str(self):
         msg = 'Turbulence!'
         parsec_error = ParsecError(msg)
-        self.assertIn(msg, str(parsec_error))
+        self.assertEqual(msg, str(parsec_error))
 
 
 if __name__ == '__main__':

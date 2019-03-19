@@ -26,10 +26,7 @@ class ParsecError(Exception):
     """Generic exception for Parsec errors."""
 
     def __str__(self):
-        ret = self.__class__.__name__
-        if self.args:
-            ret += ': ' + ' '.join(self.args)
-        return ret
+        return ' '.join(self.args)
 
 
 class ItemNotFoundError(ParsecError, KeyError):

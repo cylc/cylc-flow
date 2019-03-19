@@ -81,7 +81,7 @@ def get_parsec_validator_invalid_values():
     }
     cfg = OrderedDictWithDefaults()
     cfg['value'] = "1, 2, 5"
-    msg = 'value = [1, 2, 5]'
+    msg = '(type=option) value = [1, 2, 5]'
     values.append((spec, cfg, msg))
 
     # set 3 (f, f, t, f)
@@ -99,7 +99,7 @@ def get_parsec_validator_invalid_values():
     }
     cfg = OrderedDictWithDefaults()
     cfg['value'] = "5"
-    msg = 'value = 5'
+    msg = '(type=option) value = 5'
     values.append((spec, cfg, msg))
 
     return values
@@ -113,10 +113,7 @@ class TestValidate(unittest.TestCase):
         value = 'a sample value'
         error = ListValueError(keys, value, "who cares:")
         output = str(error)
-        expected = (
-            "ListValueError: who cares:\n"
-            "    [a,][b]c = a sample value"
-        )
+        expected = 'who cares:\n    [a,][b]c = a sample value'
         self.assertEqual(expected, output)
 
     def test_list_value_error_with_exception(self):
@@ -125,10 +122,7 @@ class TestValidate(unittest.TestCase):
         exc = Exception('test')
         error = ListValueError(keys, value, "who cares:", exc)
         output = str(error)
-        expected = (
-            'ListValueError: who cares:\n'
-            '    [a,][b]c = a sample value: test'
-        )
+        expected = 'who cares:\n    [a,][b]c = a sample value: test'
         self.assertEqual(expected, output)
 
     def test_illegal_value_error(self):
@@ -137,8 +131,8 @@ class TestValidate(unittest.TestCase):
         value = 'a sample value'
         error = IllegalValueError(value_type, keys, value)
         output = str(error)
-        expected = "[a,][b]c = a sample value"
-        self.assertIn(expected, output)
+        expected = "(type=ClassA) [a,][b]c = a sample value"
+        self.assertEqual(expected, output)
 
     def test_illegal_value_error_with_exception(self):
         value_type = 'ClassA'
@@ -148,7 +142,7 @@ class TestValidate(unittest.TestCase):
         error = IllegalValueError(value_type, keys, value, exc)
         output = str(error)
         expected = "(type=ClassA) [a,][b]c = a sample value - (test)"
-        self.assertIn(expected, output)
+        self.assertEqual(expected, output)
 
     def test_illegal_item_error(self):
         keys = ['a,', 'b', 'c']
@@ -156,7 +150,7 @@ class TestValidate(unittest.TestCase):
         error = IllegalItemError(keys, key)
         output = str(error)
         expected = "[a,][b][c]a sample value"
-        self.assertIn(expected, output)
+        self.assertEqual(expected, output)
 
     def test_illegal_item_error_message(self):
         keys = ['a,', 'b', 'c']
@@ -164,8 +158,8 @@ class TestValidate(unittest.TestCase):
         message = "invalid"
         error = IllegalItemError(keys, key, message)
         output = str(error)
-        expected = "[a,][b][c]a sample value"
-        self.assertIn(expected, output)
+        expected = "[a,][b][c]a sample value - (invalid)"
+        self.assertEqual(expected, output)
 
     def test_parsec_validator_invalid_key(self):
         parsec_validator = ParsecValidator()
@@ -198,7 +192,7 @@ class TestValidate(unittest.TestCase):
         cfg['section  3000000'] = 'test'
         with self.assertRaises(IllegalItemError) as cm:
             parsec_validator.validate(cfg, SAMPLE_SPEC_1)
-        self.assertIn(
+        self.assertEqual(
             "section  3000000 - (consecutive spaces)",
             str(cm.exception))
 
@@ -208,7 +202,7 @@ class TestValidate(unittest.TestCase):
             if msg is not None:
                 with self.assertRaises(IllegalValueError) as cm:
                     parsec_validator.validate(cfg, spec)
-                self.assertIn(msg, str(cm.exception))
+                self.assertEqual(msg, str(cm.exception))
             else:
                 # parsec_validator.validate(cfg, spec)
                 # let's use the alias `parsec_validate` here

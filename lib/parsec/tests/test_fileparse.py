@@ -36,7 +36,7 @@ def get_multiline():
             0,
             0,
             FileParseError,
-            "FileParseError: Multiline string not closed:\n   '''single line"
+            "Multiline string not closed:\n   '''single line"
         ),
         (
             ["'''", "single line"],
@@ -44,7 +44,7 @@ def get_multiline():
             0,
             0,
             FileParseError,
-            "FileParseError: Invalid line:\n   '''"
+            "Invalid line:\n   '''"
         ),
         (
             ["", "another value"],  # multiline, but we forgot to close quotes
@@ -52,7 +52,7 @@ def get_multiline():
             0,
             1,
             FileParseError,
-            "FileParseError: Multiline string not closed"
+            "Multiline string not closed"
         ),
         (
             ["", "c'''"],
@@ -76,7 +76,7 @@ def get_multiline():
             0,
             3,
             FileParseError,
-            "FileParseError: Multiline string not closed"
+            "Multiline string not closed"
         ),
         (
             ["", "c", "hello", ""],
@@ -92,7 +92,7 @@ def get_multiline():
             0,
             3,
             FileParseError,
-            "FileParseError: Invalid line:\n   a'''c"
+            "Invalid line:\n   a'''c"
         )
     ]
     return r
@@ -102,17 +102,17 @@ class TestFileparse(unittest.TestCase):
 
     def test_file_parse_error(self):
         error = FileParseError(reason="No reason")
-        self.assertEqual("FileParseError: No reason", str(error))
+        self.assertEqual("No reason", str(error))
 
         error = FileParseError("", index=2)
-        self.assertEqual("FileParseError:  (line 3)\n"
+        self.assertEqual(" (line 3)\n"
                          "(line numbers match 'cylc view -p')", str(error))
 
         error = FileParseError("", line="test")
-        self.assertEqual("FileParseError: :\n   test", str(error))
+        self.assertEqual(":\n   test", str(error))
 
         error = FileParseError("", lines=["a", "b"])
-        self.assertEqual("FileParseError: \nContext lines:\n"
+        self.assertEqual("\nContext lines:\n"
                          "a\nb\t<-- ", str(error))
 
     def test_addsect(self):
@@ -224,7 +224,7 @@ class TestFileparse(unittest.TestCase):
                 with self.assertRaises(exc) as cm:
                     multiline(flines, value, index, maxline)
                 if isinstance(cm.exception, FileParseError):
-                    self.assertIn(expected, str(cm.exception))
+                    self.assertEqual(expected, str(cm.exception))
             else:
                 r = multiline(flines, value, index, maxline)
                 self.assertEqual(expected, r)
@@ -291,8 +291,7 @@ class TestFileparse(unittest.TestCase):
             with self.assertRaises(IncludeFileNotFoundError) as cm:
                 read_and_proc(fpath=fpath, template_vars=template_vars,
                               viewcfg=viewcfg, asedit=asedit)
-            self.assertTrue("Include-file not found: 404.txt",
-                            str(cm.exception))
+            self.assertIn("404.txt", str(cm.exception))
 
     def test_read_and_proc_jinja2(self):
         with tempfile.NamedTemporaryFile() as tf:
@@ -460,7 +459,8 @@ class TestFileparse(unittest.TestCase):
             with self.assertRaises(FileParseError) as cm:
                 parse(fpath=fpath, output_fname="",
                       template_vars=template_vars)
-            self.assertIn("bracket mismatch", str(cm.exception))
+            self.assertEqual("bracket mismatch:\n   [[section1]",
+                             str(cm.exception))
 
     def test_parse_with_sections_error_wrong_level(self):
         with tempfile.NamedTemporaryFile() as of:
@@ -477,8 +477,8 @@ class TestFileparse(unittest.TestCase):
                 with self.assertRaises(FileParseError) as cm:
                     parse(fpath=fpath, output_fname=of.name,
                           template_vars=template_vars)
-                self.assertIn(
-                    "FileParseError: Error line 4: [[[subsection1]]]",
+                self.assertEqual(
+                    "Error line 4: [[[subsection1]]]",
                     str(cm.exception))
 
 

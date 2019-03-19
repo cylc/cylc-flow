@@ -269,11 +269,11 @@ class TestConfig(unittest.TestCase):
 
     def test_item_not_found_error(self):
         error = parsec.config.ItemNotFoundError("internal error")
-        self.assertIn('item not found: internal error', str(error))
+        self.assertEqual('item not found: internal error', str(error))
 
     def test_not_single_item_error(self):
         error = parsec.config.NotSingleItemError("internal error")
-        self.assertIn('not a singular item: internal error', str(error))
+        self.assertEqual('not a singular item: internal error', str(error))
 
 
 if __name__ == '__main__':

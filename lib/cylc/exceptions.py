@@ -28,9 +28,6 @@ class CylcError(Exception):
 
     """
 
-    def __str__(self):
-        return '%s: %s' % (self.__class__.__name__, self.args[0])
-
 
 class UserInputError(CylcError):
     """Exception covering erroneous user imput to a Cylc interface.

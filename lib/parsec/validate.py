@@ -227,7 +227,7 @@ class ParsecValidator(object):
             >>> ParsecValidator.coerce_spaceless_str_list(
             ...     'a, b c, d', ['foo'])  # doctest: +NORMALIZE_WHITESPACE
             Traceback (most recent call last):
-            parsec.exceptions.ListValueError: ListValueError: \
+            parsec.exceptions.ListValueError:\
             list item "b c" cannot contain a space character:
                 foo = a, b c, d
 
@@ -250,7 +250,7 @@ class ParsecValidator(object):
             ...     'foo, bar, 127.0.0.1:8080, baz', ['pub']
             ... )  # doctest: +NORMALIZE_WHITESPACE
             Traceback (most recent call last):
-            parsec.exceptions.ListValueError: ListValueError: \
+            parsec.exceptions.ListValueError: \
             ambiguous host "127.0.0.1:8080"
                 pub = foo, bar, 127.0.0.1:8080, baz
 
