@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from tempfile import NamedTemporaryFile, TemporaryFile
+from tempfile import NamedTemporaryFile, SpooledTemporaryFile, TemporaryFile
 import unittest
 
 from cylc.subprocctx import SubProcContext
@@ -24,6 +24,11 @@ from cylc.subprocpool import SubProcPool
 
 
 class TestSubProcPool(unittest.TestCase):
+
+    def test_get_temporary_file(self):
+        """Test SubProcPool.get_temporary_file."""
+        self.assertIsInstance(
+            SubProcPool.get_temporary_file(), SpooledTemporaryFile)
 
     def test_run_command_returns_0(self):
         """Test basic usage, command returns 0"""

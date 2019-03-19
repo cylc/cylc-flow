@@ -17,13 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Manage queueing and pooling of subprocesses for the suite server program."""
 
+from collections import deque
 import json
 import os
 import select
-import sys
-from collections import deque
 from signal import SIGKILL
-from tempfile import TemporaryFile
+import sys
+from tempfile import SpooledTemporaryFile
 from threading import RLock
 from time import time
 
@@ -138,6 +138,11 @@ class SubProcPool(object):
         """Close pool."""
         self.set_stopping()
         self.closed = True
+
+    @staticmethod
+    def get_temporary_file():
+        """Return a SpooledTemporaryFile for feeding data to command STDIN."""
+        return SpooledTemporaryFile()
 
     def is_not_done(self):
         """Return True if queuings or runnings not empty."""
@@ -311,7 +316,7 @@ class SubProcPool(object):
         try:
             if ctx.cmd_kwargs.get('stdin_files'):
                 if len(ctx.cmd_kwargs['stdin_files']) > 1:
-                    stdin_file = TemporaryFile()
+                    stdin_file = cls.get_temporary_file()
                     for file_ in ctx.cmd_kwargs['stdin_files']:
                         if hasattr(file_, 'read'):
                             stdin_file.write(file_.read())
@@ -324,7 +329,7 @@ class SubProcPool(object):
                     stdin_file = open(
                         ctx.cmd_kwargs['stdin_files'][0], 'rb')
             elif ctx.cmd_kwargs.get('stdin_str'):
-                stdin_file = TemporaryFile()
+                stdin_file = cls.get_temporary_file()
                 stdin_file.write(ctx.cmd_kwargs.get('stdin_str'))
                 stdin_file.seek(0)
             else:
