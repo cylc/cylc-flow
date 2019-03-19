@@ -29,7 +29,6 @@ from shlex import quote
 import re
 from subprocess import Popen, PIPE
 import tarfile
-from tempfile import TemporaryFile
 from time import time
 
 from cylc import LOG
@@ -197,7 +196,7 @@ class TaskRemoteMgr(object):
 
         # Create a TAR archive with the service files,
         # so they can be sent later via SSH's STDIN to the task remote.
-        tmphandle = TemporaryFile()
+        tmphandle = self.proc_pool.get_temporary_file()
         tarhandle = tarfile.open(fileobj=tmphandle, mode='w')
         for path, arcname in items:
             tarhandle.add(path, arcname=arcname)
