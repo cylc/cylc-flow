@@ -35,6 +35,10 @@ from cylc.suite_srv_files_mgr import (
     SuiteSrvFilesManager, SuiteServiceFileError)
 
 
+# we should only have one ZMQ context per-process
+CONTEXT = zmq.asyncio.Context()
+
+
 class ZMQClient(object):
     """Initiate the REQ part of a ZMQ REQ-REP pair.
 
@@ -92,8 +96,7 @@ class ZMQClient(object):
         self.timeout_handler = timeout_handler
 
         # open the ZMQ socket
-        self.context = zmq.asyncio.Context()
-        self.socket = self.context.socket(zmq.REQ)
+        self.socket = CONTEXT.socket(zmq.REQ)
         self.socket.connect('tcp://%s:%d' % (host, port))
         # if there is no server don't keep the client hanging around
         self.socket.setsockopt(zmq.LINGER, int(self.DEFAULT_TIMEOUT))
