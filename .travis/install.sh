@@ -43,8 +43,10 @@ if grep 'functional-tests' <<< "${args[@]}"; then
       --install-option="--library-path=/usr/lib/graphviz/"
 fi
 
-# install dependencies required for building documentation, only when instructed to do so
+# install dependencies required for building documentation
 if grep 'docs' <<< "${args[@]}$"; then
+    pip install sphinx
+    # for PDF output via LaTeX builder
     sudo apt-get install texlive-latex-base
 fi
 
