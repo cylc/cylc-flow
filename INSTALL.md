@@ -1,5 +1,11 @@
 # Cylc: Quick Installation Guide
 
+**See [The Cylc User Guide](https://cylc.github.io/cylc/documentation.html) for
+more detailed information.**
+
+Cylc must be installed on suite and task job hosts. Third-party dependencies
+(below) are not required on job hosts.
+
 ### Python 2 or Python 3 ?
 
 Currently in the source code repository:
@@ -9,11 +15,7 @@ Currently in the source code repository:
 The first official Cylc-8 release (with a new web UI) is not expected until late 2019.
 Until then we recommend the latest cylc-7.8 release for production use.
 
-**See [The Cylc User Guide](https://cylc.github.io/cylc/documentation.html) for
-more detailed information.**
-
-Cylc must be installed on suite and task job hosts. Third-party dependencies
-(below) are not required on job hosts.
+**THIS IS THE master (PYTHON 3) INSTALL.md**
 
 ### Third-party Software Packages
 
