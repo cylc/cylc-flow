@@ -39,7 +39,7 @@ for arg in sys.argv[1:]:
 import os
 import re
 import shlex
-from subprocess import call
+from subprocess import call, check_call, CalledProcessError
 
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.option_parsers import CylcOptionParser as COP
