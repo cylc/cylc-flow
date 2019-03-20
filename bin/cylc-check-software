@@ -35,8 +35,6 @@ Arguments:
 import os
 import re
 import sys
-from subprocess import PIPE, CalledProcessError, check_call
-
 from cylc.cylc_subproc import procopen
 
 # Standardised output messages
