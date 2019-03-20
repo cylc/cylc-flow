@@ -17,32 +17,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
+import codecs
+import re
 from glob import glob
-from os import environ
-from os.path import join, dirname, realpath
+from os.path import join, dirname, abspath
 
 from setuptools import setup, find_packages
-# Monkey patching to disable version normalization, as we are using dates with
-# leading zeroes
-# https://github.com/pypa/setuptools/issues/308
-from setuptools.extern.packaging import version as v
 
-v.Version = v.LegacyVersion
+here = abspath(dirname(__file__))
 
 
-def get_cylc_version():
-    """Get Cylc version."""
-    dir_path = dirname(realpath(__file__))
-    module_path = join(dir_path, "lib")
-    sys.path.append(module_path)
-    # TODO: Cylc __init__.py changes PYTHONPATH, breaking setup.py
-    previous_path = sys.path
-    from cylc import version
+def read(*parts):
+    with codecs.open(join(here, *parts), 'r') as fp:
+        return fp.read()
 
-    sys.path = previous_path
-    environ["PYTHONPATH"] = ""
-    return version.CYLC_VERSION
+
+def find_version(*file_paths):
+    version_file = read(*file_paths)
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
+                              version_file, re.M)
+    if version_match:
+        return version_match.group(1)
+    raise RuntimeError("Unable to find version string.")
 
 
 install_requires = [
@@ -69,7 +65,7 @@ extra_requires['all'] += extra_requires['empy']
 extra_requires['all'] += tests_require
 
 setup(
-    version=get_cylc_version(),
+    version=find_version("lib", "cylc", "__init__.py"),
     long_description=open('README.md').read(),
     long_description_content_type="text/markdown",
     scripts=glob(join('bin', '*')),
