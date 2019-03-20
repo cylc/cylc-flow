@@ -19,7 +19,7 @@
 import unittest
 
 from cylc.cylc_subproc import procopen
-from mock import call
+from unittest.mock import call
 from testfixtures import compare
 from testfixtures.popen import PIPE, MockPopen
 
