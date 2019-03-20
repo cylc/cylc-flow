@@ -74,7 +74,7 @@ DATASET=$( ls {{DATA_IN_DIR}}/dataset-*.raw 2>/dev/null | head -n 1 )
 [[ -z $DATASET ]] && exit 1
 mv $DATASET $PWD"""
         [[[meta]]]
-            title = retreive next dataset
+            title = retrieve next dataset
             description = grab ONE new dataset if available else retry
 
         [[[job]]]

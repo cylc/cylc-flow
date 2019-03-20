@@ -90,7 +90,7 @@ for _ in range(10):
         sys.exit(1)
 '
 
-# Condemned host specified using altenative host name
+# Condemned host specified using alternative host name
 create_test_globalrc '' "
 [suite servers]
     run hosts = localhost, ${CYLC_TEST_HOST}

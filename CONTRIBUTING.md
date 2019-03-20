@@ -46,7 +46,7 @@ requests_).
  - Tim Whitcomb
  - (Scott Wales)
  - Tomek Trzeciak
- - (Thomas Coleman)
+ - Thomas Coleman
  - Bruno Kinoshita
  - (Annette Osprey)
  - (Jonathan Thomas)

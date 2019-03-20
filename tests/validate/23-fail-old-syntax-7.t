@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validation with a  prev-style cycle synax and post-style retry syntax
+# Test validation with a  prev-style cycle syntax and post-style retry syntax
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2

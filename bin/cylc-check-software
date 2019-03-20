@@ -18,7 +18,7 @@
 
 """cylc [admin] check-software [MODULES]
 
-Check for Cylc external software dependencices, including minimum versions.
+Check for Cylc external software dependencies, including minimum versions.
 
 With no arguments, prints a table of results for all core & optional external
 module requirements, grouped by functionality. With module argument(s),
@@ -107,7 +107,7 @@ def string_ver(version_tuple):
 def shell_align_write(one_delimiter, left_msg, right_msg):
     """Write two messages aligned with the terminal edges.
 
-    Messages are seaparated by a given delimiter and have a minimum separation
+    Messages are separated by a given delimiter and have a minimum separation
     of two characters.
     """
     gap = output_width() - len(left_msg) - len(right_msg)
@@ -228,7 +228,7 @@ def cmd_find_ver(module, min_ver, cmd_base, ver_opt, ver_extr, outfile=1,
 
 
 def functionality_print(func):
-    """Print outcome of module checks as necessary for some funcionality."""
+    """Print outcome of module checks as necessary for some functionality."""
     for module, items in opt_spec.items():
         ver_req, func_dep, tag = items[:3]
         if func_dep == func:
@@ -263,7 +263,7 @@ def main():
     Search local filesystem for external software packages of at least minimum
     version as required for both minimal core and fully-functional Cylc.
 
-    If arguments are suppied, test for those module(s) only and return an exit
+    If arguments are supplied, test for those module(s) only and return an exit
     code where zero indicates a collective pass and a non-zero integer
     indicates the number of module arguments that fail or are invalid, else
     check for all dependencies and print results in a table.

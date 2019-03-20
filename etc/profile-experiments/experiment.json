@@ -1,9 +1,0 @@
-{
-    "runs": [
-        {
-           "name": "hello world suite",
-           "suite dir": "~/roses/hello_world"
-        }
-    ],
-    "profile modes": ["time", "cylc"]
-}

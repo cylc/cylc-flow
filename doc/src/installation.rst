@@ -267,17 +267,3 @@ Code Style Tests
             lib/Jinja2Filters/*.py \
             lib/parsec/*.py \
             $(grep -l '#!.*\<python\>' bin/*)
-
-Performance Tests
-   A system for measuring the performance of Cylc as measured against reference
-   suites.
-
-   Location
-      * ``etc/profile-experiments/``
-      * ``.profiling/experiments``
-   Configuration
-      ``.profiling``
-   Execution
-      .. code-block:: console
-
-         $ cylc profile-battery -e EXPERIMENT .. -v VERSION ..
