@@ -35,12 +35,14 @@ Use -v/--verbose to see the command invoked to determine the remote version
 site dependent -- see cylc global config documentation."""
 
 import os
+import shlex
 import sys
-from subprocess import Popen, PIPE
 from time import sleep
 
 import cylc.flags
+from cylc.config import SuiteConfig
 from cylc.option_parsers import CylcOptionParser as COP
+from cylc.cylc_subproc import procopen
 from cylc import __version__ as CYLC_VERSION
 from cylc.config import SuiteConfig
 from cylc.subprocpool import SubProcPool
@@ -112,7 +114,8 @@ def main():
             user_at_host = host
         if verbose:
             print("%s: %s" % (user_at_host, ' '.join(argv)))
-        proc = Popen(argv, stdin=open(os.devnull), stdout=PIPE, stderr=PIPE)
+        proc = procopen(argv, stdin=open(os.devnull), stdoutpipe=True,
+                        stderrpipe=True)
         out, err = proc.communicate()
         out = out.decode()
         err = err.decode()

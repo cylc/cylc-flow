@@ -107,27 +107,24 @@ batch_sys.SUBMIT_CMD_TMPL
 
 """
 
-import os
 import json
+import os
 import shlex
-from shutil import rmtree
-from signal import SIGKILL
 import stat
-from subprocess import Popen, PIPE
 import sys
 import traceback
-
-
-from parsec.OrderedDict import OrderedDict
-
+from shutil import rmtree
+from signal import SIGKILL
 
 from cylc.task_message import (
     CYLC_JOB_PID, CYLC_JOB_INIT_TIME, CYLC_JOB_EXIT_TIME, CYLC_JOB_EXIT,
     CYLC_MESSAGE)
+from cylc.cylc_subproc import procopen
+from cylc.task_job_logs import (JOB_LOG_ERR, JOB_LOG_JOB, JOB_LOG_OUT,
+                                JOB_LOG_STATUS)
 from cylc.task_outputs import TASK_OUTPUT_SUCCEEDED
-from cylc.task_job_logs import (
-    JOB_LOG_JOB, JOB_LOG_OUT, JOB_LOG_ERR, JOB_LOG_STATUS)
 from cylc.wallclock import get_current_time_string
+from parsec.OrderedDict import OrderedDict
 
 
 class JobPollContext(object):
@@ -419,8 +416,8 @@ class BatchSysManager(object):
                     command = shlex.split(
                         batch_sys.KILL_CMD_TMPL % {"job_id": job_id})
                     try:
-                        proc = Popen(
-                            command, stdin=open(os.devnull), stderr=PIPE)
+                        proc = procopen(command, stdin=open(os.devnull),
+                                        stderrpipe=True)
                     except OSError as exc:
                         # subprocess.Popen has a bad habit of not setting the
                         # filename of the executable when it raises an OSError.
@@ -552,8 +549,8 @@ class BatchSysManager(object):
                 # Simple poll command that takes a list of job IDs
                 cmd = [batch_sys.POLL_CMD] + exp_ids
             try:
-                proc = Popen(
-                    cmd, stdin=open(os.devnull), stderr=PIPE, stdout=PIPE)
+                proc = procopen(cmd, stdin=open(os.devnull),
+                                stderrpipe=True, stdoutpipe=True)
             except OSError as exc:
                 # subprocess.Popen has a bad habit of not setting the
                 # filename of the executable when it raises an OSError.
@@ -662,18 +659,17 @@ class BatchSysManager(object):
                 # that we do not have a shell, and still manage to get as far
                 # as here.
                 batch_sys_cmd = batch_submit_cmd_tmpl % {"job": job_file_path}
-                proc = Popen(
-                    batch_sys_cmd,
-                    stdin=proc_stdin_arg, stdout=PIPE, stderr=PIPE,
-                    shell=True, env=env)
+                proc = procopen(batch_sys_cmd, stdin=proc_stdin_arg,
+                                stdoutpipe=True, stderrpipe=True, usesh=True,
+                                env=env)
+                # calls to open a shell are aggregated in
+                # cylc_subproc.procopen()
             else:
                 command = shlex.split(
                     batch_sys.SUBMIT_CMD_TMPL % {"job": job_file_path})
                 try:
-                    proc = Popen(
-                        command,
-                        stdin=proc_stdin_arg, stdout=PIPE, stderr=PIPE,
-                        env=env)
+                    proc = procopen(command, stdin=proc_stdin_arg,
+                                    stdoutpipe=True, stderrpipe=True, env=env)
                 except OSError as exc:
                     # subprocess.Popen has a bad habit of not setting the
                     # filename of the executable when it raises an OSError.

@@ -33,7 +33,7 @@ if grep -E '(unit-tests|functional-tests)' <<< "${args[@]}"; then
 fi
 
 if grep 'unit-tests' <<< "${args[@]}"; then
-    pip install pycodestyle pytest
+    pip install pycodestyle pytest testfixtures
     # TODO: EmPy removed from testing, see:  #2958
 fi
 

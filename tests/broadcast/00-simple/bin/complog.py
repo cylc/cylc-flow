@@ -5,6 +5,7 @@ import sys
 
 print()
 print("This is the broadcast test suite log comparator")
+from cylc.cylc_subproc import procopen
 
 event, suite = sys.argv[1], sys.argv[2]
 if event != 'shutdown':
@@ -33,7 +34,7 @@ if reflines != loglines:
 else:
     print("broadcast logs compare OK")
 
-# call the usual handler too
-res = os.system("cylc check-triggering " + event + " " + suite)
-if res != 0:
+res = procopen(["cylc check-triggering " + event + " " + suite], usesh=True)
+status = res.wait()
+if status != 0:
     sys.exit(1)

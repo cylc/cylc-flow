@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
+import secrets
+import string
 import time
-from string import ascii_letters
-import random
 from copy import deepcopy
 
 # This is a standalone performance test of the algorithm used in gcylc to
@@ -16,17 +16,16 @@ N = 10000
 # order").
 names = []
 for i in range(0, N):
-    names.append(''.join(
-        random.choice(ascii_letters)
-        for n in range(5 + random.randrange(10))))
+    names.append(''.join(secrets.choice(string.ascii_letters)
+                         for n in range(5 + secrets.randrange(10))))
 
 # N lists with 2-7 names each (c.f. tree view paths of the inheritance
 # hierarchy).
 paths1 = []
 for i in range(0, N):
     p = []
-    for j in range(0, 2 + random.randrange(6)):
-        z = random.randrange(0, N)
+    for j in range(0, 2 + secrets.randrange(6)):
+        z = secrets.randrange(0, N)
         p.append(names[z])
     paths1.append(p)
 

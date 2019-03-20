@@ -91,8 +91,7 @@ def cylc_kafka_consumer(kafka_server, kafka_topic, group_id, message, debug):
 
     A match occurs Kafka if all message dict items match, and the result
     returned is the sub-dict of the actual values of items containing
-    angle-bracket-delineated regex patterns.
-    E.g. above {'data': 'nwp-2025.nc'}.
+    angle-bracket-delineated regex patterns. E.g. above {'data': 'nwp-2025.nc'}
 
     """
 
