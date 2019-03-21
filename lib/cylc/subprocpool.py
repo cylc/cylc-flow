@@ -89,16 +89,16 @@ def run_function(func_name, json_args, json_kwargs, src_dir):
     sys.stdout.write(json.dumps(res))
 
 
-class SuiteProcPool(object):
+class SubProcPool(object):
     """Manage queueing and pooling of subprocesses.
 
     This is mainly used by the main loop of the suite server program, although
-    the SuiteProcPool.run_command can be used as a standalone utility function
+    the SubProcPool.run_command can be used as a standalone utility function
     to run the command in a cylc.subprocctx.SubProcContext.
 
     A command to run under a subprocess in the pool is expected to be wrapped
     using a cylc.subprocctx.SubProcContext object. The caller will add the
-    context object using the SuiteProcPool.put_command method. A callback can
+    context object using the SubProcPool.put_command method. A callback can
     be specified to notify the caller on exit of the subprocess.
 
     A command launched by the pool is expected to write to STDOUT and STDERR.
@@ -309,15 +309,20 @@ class SuiteProcPool(object):
     def _run_command_init(cls, ctx, callback=None, callback_args=None):
         """Prepare and launch shell command in ctx."""
         try:
-            if ctx.cmd_kwargs.get('stdin_file_paths'):
-                if len(ctx.cmd_kwargs['stdin_file_paths']) > 1:
+            if ctx.cmd_kwargs.get('stdin_files'):
+                if len(ctx.cmd_kwargs['stdin_files']) > 1:
                     stdin_file = TemporaryFile()
-                    for file_path in ctx.cmd_kwargs['stdin_file_paths']:
-                        stdin_file.write(open(file_path, 'rb').read())
+                    for file_ in ctx.cmd_kwargs['stdin_files']:
+                        if hasattr(file_, 'read'):
+                            stdin_file.write(file_.read())
+                        else:
+                            stdin_file.write(open(file_, 'rb').read())
                     stdin_file.seek(0)
+                elif hasattr(ctx.cmd_kwargs['stdin_files'][0], 'read'):
+                    stdin_file = ctx.cmd_kwargs['stdin_files'][0]
                 else:
                     stdin_file = open(
-                        ctx.cmd_kwargs['stdin_file_paths'][0], 'rb')
+                        ctx.cmd_kwargs['stdin_files'][0], 'rb')
             elif ctx.cmd_kwargs.get('stdin_str'):
                 stdin_file = TemporaryFile()
                 stdin_file.write(ctx.cmd_kwargs.get('stdin_str'))

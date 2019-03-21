@@ -29,7 +29,7 @@ from pipes import quote
 import re
 from subprocess import Popen, PIPE
 import tarfile
-from tempfile import NamedTemporaryFile
+from tempfile import TemporaryFile
 from time import time
 
 from cylc import LOG
@@ -196,8 +196,9 @@ class TaskRemoteMgr(object):
             self.remote_init_map[(host, owner)] = REMOTE_INIT_NOT_REQUIRED
             return self.remote_init_map[(host, owner)]
 
-        # Create "stdin_file_paths" file, with "items" in it.
-        tmphandle = NamedTemporaryFile()
+        # Create a TAR archive with the service files,
+        # so they can be sent later via SSH's STDIN to the task remote.
+        tmphandle = TemporaryFile()
         tarhandle = tarfile.open(fileobj=tmphandle, mode='w')
         for path, arcname in items:
             tarhandle.add(path, arcname=arcname)
@@ -223,8 +224,7 @@ class TaskRemoteMgr(object):
         cmd.append(glbl_cfg().get_derived_host_item(
             self.suite, 'suite run directory', host, owner))
         self.proc_pool.put_command(
-            SubProcContext(
-                'remote-init', cmd, stdin_file_paths=[tmphandle.name]),
+            SubProcContext('remote-init', cmd, stdin_files=[tmphandle]),
             self._remote_init_callback,
             [host, owner, tmphandle])
         # None status: Waiting for command to finish
