@@ -1154,7 +1154,7 @@ be made to trigger off of the state of other tasks (indicated by a
 name in the graph) and, and off the clock, and arbitrary external events.
 
 External triggering is relatively more complicated, and is documented
-separately in :ref:`External Triggers`.
+separately in :ref:`Section External Triggers`.
 
 
 Success Triggers
@@ -1793,7 +1793,7 @@ Clock Triggers
 
 .. note::
 
-   Please read External Triggers (:ref:`External Triggers`) before
+   Please read External Triggers (:ref:`Section External Triggers`) before
    using the older clock triggers described in this section.
 
 By default, date-time cycle points are not connected to the real time "wall
@@ -1862,10 +1862,12 @@ workflow is skipped, if it is more than one day behind the wall-clock (see also
                  copy:expired => !proc"""
 
 
+.. _SuiteConfigExternalTriggers:
+
 External Triggers
 """""""""""""""""
 
-This is a substantial topic, documented in :ref:`External Triggers`.
+This is a substantial topic, documented in :ref:`Section External Triggers`.
 
 
 .. _ModelRestartDependencies:

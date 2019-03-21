@@ -1225,7 +1225,7 @@ Triggering Off Of Tasks In Other Suites
 
 .. note::
 
-   Please read :ref:`External Triggers` before using
+   Please read :ref:`Section External Triggers` before using
    the older inter-suite triggering mechanism described in this section.
 
 The ``cylc suite-state`` command interrogates suite run databases. It

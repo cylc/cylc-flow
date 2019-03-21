@@ -1010,7 +1010,7 @@ A list of member tasks, or task family names, to assign to this queue
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This section is for *External Trigger* function declarations -
-see :ref:`External Triggers`.
+see :ref:`Section External Triggers`.
 
 
 [scheduling] ``->`` [[xtriggers]] ``->`` \_\_MANY\_\_
@@ -1022,7 +1022,7 @@ declarations and corresponding labels for use in the graph:
 - *type*: string: function signature followed by optional call interval
 - *example*: ``trig_1 = my_trigger(arg1, arg2, kwarg1, kwarg2):PT10S``
 
-(See :ref:`External Triggers` for details).
+(See :ref:`Section External Triggers` for details).
 
 
 [scheduling] ``->`` [[special tasks]]
@@ -1037,7 +1037,7 @@ be used in special task lists as shorthand for listing all member tasks.
 
 .. note::
 
-   Please read :ref:`External Triggers` before
+   Please read :ref:`Section External Triggers` before
    using the older clock triggers described in this section.
 
 Clock-trigger tasks (see :ref:`ClockTriggerTasks`) wait on a wall clock time
@@ -1082,7 +1082,7 @@ see :ref:`ClockExpireTasks`.
 
 .. note::
 
-   Please read :ref:`External Triggers` before
+   Please read :ref:`Section External Triggers` before
    using the older mechanism described in this section.
 
 Externally triggered tasks (see :ref:`Old-Style External Triggers`) wait on

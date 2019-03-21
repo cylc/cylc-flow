@@ -1,4 +1,4 @@
-.. _External Triggers:
+.. _Section External Triggers:
 
 External Triggers
 =================
@@ -407,7 +407,7 @@ Old-Style External Triggers (Deprecated)
 .. note::
 
    This mechanism is now technically deprecated by the newer external
-   trigger functions (:ref:`External Triggers`). (However we don't recommend
+   trigger functions (:ref:`Section External Triggers`). (However we don't recommend
    wholesale conversion to the new method yet, until its interface has
    stabilized - see :ref:`Current Trigger Function Limitations`.)
 
