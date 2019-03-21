@@ -748,7 +748,7 @@ class TaskPool(object):
                     self.config.get_taskdef(itask.tdef.name), itask.point,
                     itask.state.status, stop_point=itask.stop_point,
                     submit_num=itask.submit_num))
-                new_task.copy_pre_reload(itask)
+                itask.copy_to_reload_successor(new_task)
                 LOG.info('[%s] -reloaded task definition', itask)
                 if itask.state.status in TASK_STATUSES_ACTIVE:
                     LOG.warning(

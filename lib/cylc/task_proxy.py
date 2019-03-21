@@ -70,6 +70,11 @@ class TaskProxy(object):
             Cycle point as seconds since epoch.
         .poll_timer (cylc.task_action_timer.TaskActionTimer):
             Schedule for polling submitted or running jobs.
+        .reload_successor (cylc.task_proxy.TaskProxy):
+            The task proxy object that replaces the current instance on reload.
+            This attribute provides a useful link to the latest replacement
+            instance while the current object may still be referenced by a job
+            manipulation command.
         .stop_point (cylc.cycling.PointBase):
             Do not spawn successor beyond this point.
         .submit_num (int):
@@ -163,6 +168,7 @@ class TaskProxy(object):
         'point',
         'point_as_seconds',
         'poll_timer',
+        'reload_successor',
         'submit_num',
         'tdef',
         'state',
@@ -202,6 +208,7 @@ class TaskProxy(object):
         self.identity = TaskID.get(self.tdef.name, self.point)
 
         self.has_spawned = has_spawned
+        self.reload_successor = None
         self.point_as_seconds = None
 
         # Manually inserted tasks may have a final cycle point set.
@@ -263,21 +270,23 @@ class TaskProxy(object):
         """Stringify using "self.identity"."""
         return self.identity
 
-    def copy_pre_reload(self, pre_reload_inst):
-        """Copy attributes from pre-reload instant."""
-        self.submit_num = pre_reload_inst.submit_num
-        self.has_spawned = pre_reload_inst.has_spawned
-        self.manual_trigger = pre_reload_inst.manual_trigger
-        self.is_manual_submit = pre_reload_inst.is_manual_submit
-        self.summary = pre_reload_inst.summary
-        self.local_job_file_path = pre_reload_inst.local_job_file_path
-        self.try_timers = pre_reload_inst.try_timers
-        self.task_host = pre_reload_inst.task_host
-        self.task_owner = pre_reload_inst.task_owner
-        self.job_vacated = pre_reload_inst.job_vacated
-        self.poll_timer = pre_reload_inst.poll_timer
-        self.timeout = pre_reload_inst.timeout
-        self.state.outputs = pre_reload_inst.state.outputs
+    def copy_to_reload_successor(self, reload_successor):
+        """Copy attributes to successor on reload of this task proxy."""
+        self.reload_successor = reload_successor
+        reload_successor.submit_num = self.submit_num
+        reload_successor.has_spawned = self.has_spawned
+        reload_successor.manual_trigger = self.manual_trigger
+        reload_successor.is_manual_submit = self.is_manual_submit
+        reload_successor.summary = self.summary
+        reload_successor.local_job_file_path = self.local_job_file_path
+        reload_successor.try_timers = self.try_timers
+        reload_successor.task_host = self.task_host
+        reload_successor.task_owner = self.task_owner
+        reload_successor.job_vacated = self.job_vacated
+        reload_successor.poll_timer = self.poll_timer
+        reload_successor.timeout = self.timeout
+        reload_successor.state.outputs = self.state.outputs
+        reload_successor.state.is_updated = self.state.is_updated
 
     @staticmethod
     def get_offset_as_seconds(offset):

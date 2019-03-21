@@ -480,12 +480,21 @@ class TaskJobManager(object):
             LOG.error(ctx)
         else:
             LOG.debug(ctx)
-        tasks = {}
+        # A dict for easy reference of (CYCLE, NAME, SUBMIT_NUM) -> TaskProxy
+        #
+        # Note for "reload": A TaskProxy instance may be replaced on reload, so
+        # the "itasks" list may not reference the TaskProxy objects that
+        # replace the old ones. The .reload_successor attribute provides the
+        # link(s) for us to get to the latest replacement.
+        #
         # Note for "kill": It is possible for a job to trigger its trap and
         # report back to the suite back this logic is called. If so, the task
         # will no longer be TASK_STATUS_SUBMITTED or TASK_STATUS_RUNNING, and
         # its output line will be ignored here.
+        tasks = {}
         for itask in itasks:
+            while itask.reload_successor is not None:
+                itask = itask.reload_successor
             if itask.point is not None and itask.submit_num:
                 submit_num = "%02d" % (itask.submit_num)
                 tasks[(str(itask.point), itask.tdef.name, submit_num)] = itask
